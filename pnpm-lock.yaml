@@ -35,8 +35,8 @@ importers:
         specifier: ^0.10.0
         version: 0.10.0
       '@openai/agents':
-        specifier: ^0.4.10
-        version: 0.4.10(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+        specifier: ^0.15.0
+        version: 0.15.0(@aws-sdk/credential-provider-node@3.972.21)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
       '@typescript-eslint/parser':
         specifier: ^8.50.1
         version: 8.54.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3)
@@ -235,7 +235,7 @@ importers:
         version: 5.41.0
       svelte-check:
         specifier: ^4.3.3
-        version: 4.3.3(picomatch@4.0.5)(svelte@5.41.0)(typescript@5.9.3)
+        version: 4.3.3(picomatch@4.0.3)(svelte@5.41.0)(typescript@5.9.3)
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
@@ -487,16 +487,16 @@ importers:
         version: 1.58.2
       '@sveltejs/adapter-auto':
         specifier: 7.0.0
-        version: 7.0.0(@sveltejs/kit@2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))
+        version: 7.0.0(@sveltejs/kit@2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))
       '@sveltejs/adapter-cloudflare':
         specifier: 7.2.4
-        version: 7.2.4(@sveltejs/kit@2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+        version: 7.2.4(@sveltejs/kit@2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
       '@sveltejs/kit':
         specifier: 2.47.1
-        version: 2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+        version: 2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       '@sveltejs/vite-plugin-svelte':
         specifier: 6.2.1
-        version: 6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+        version: 6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       '@types/node':
         specifier: 24.10.9
         version: 24.10.9
@@ -541,7 +541,7 @@ importers:
         version: 5.9.3
       vite:
         specifier: 7.1.10
-        version: 7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)
+        version: 7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)
       wrangler:
         specifier: 4.103.0
         version: 4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
@@ -762,7 +762,7 @@ importers:
     dependencies:
       agents:
         specifier: ^0.1.0
-        version: 0.1.6(@cfworker/json-schema@4.1.1)(@cloudflare/workers-types@5.20260712.1)(@solana/sysvars@5.5.1(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3))(@tanstack/query-core@5.101.2)(@tanstack/react-query@5.91.0(react@19.2.4))(@types/react@19.2.14)(aws4fetch@1.0.20)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)(ws@8.18.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+        version: 0.1.6(@cfworker/json-schema@4.1.1)(@cloudflare/workers-types@5.20260712.1)(@solana/sysvars@5.5.1(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3))(@tanstack/query-core@5.101.2)(@tanstack/react-query@5.91.0(react@19.2.4))(@types/react@19.2.14)(aws4fetch@1.0.20)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)(ws@7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6))
     devDependencies:
       typescript:
         specifier: ^5.7.2
@@ -815,13 +815,13 @@ importers:
         version: 4.20260621.1
       '@sveltejs/adapter-cloudflare':
         specifier: ^7.2.4
-        version: 7.2.4(@sveltejs/kit@2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+        version: 7.2.4(@sveltejs/kit@2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
       '@sveltejs/kit':
         specifier: ^2.47.1
-        version: 2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+        version: 2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       '@sveltejs/vite-plugin-svelte':
         specifier: ^6.2.1
-        version: 6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+        version: 6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       autoprefixer:
         specifier: ^10.4.22
         version: 10.4.22(postcss@8.5.6)
@@ -842,7 +842,7 @@ importers:
         version: 5.9.3
       vite:
         specifier: ^7.1.10
-        version: 7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)
+        version: 7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)
       wrangler:
         specifier: ^4.103.0
         version: 4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
@@ -1292,7 +1292,7 @@ importers:
     devDependencies:
       '@cloudflare/sandbox':
         specifier: 0.12.3
-        version: 0.12.3(@openai/agents@0.4.10(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6))
+        version: 0.12.3(@openai/agents@0.15.0(@aws-sdk/credential-provider-node@3.972.21)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6))
       '@cloudflare/workers-types':
         specifier: ^4.20260621.1
         version: 4.20260621.1
@@ -1419,13 +1419,13 @@ importers:
     dependencies:
       '@composio/core':
         specifier: ^0.6.4
-        version: 0.6.4(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
+        version: 0.6.4(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
       '@create-something/mcp-core':
         specifier: workspace:*
         version: link:../mcp-core
       zod:
-        specifier: ^3.23.0
-        version: 3.25.76
+        specifier: ^4.3.6
+        version: 4.3.6
     devDependencies:
       '@types/node':
         specifier: 24.10.9
@@ -2081,7 +2081,7 @@ importers:
     dependencies:
       '@composio/core':
         specifier: ^0.6.4
-        version: 0.6.4(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
+        version: 0.6.4(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
       '@create-something/composio-bridge':
         specifier: workspace:*
         version: link:../composio-bridge
@@ -2090,16 +2090,16 @@ importers:
         version: link:../mcp-core
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6)
       '@openai/agents':
-        specifier: ^0.4.10
-        version: 0.4.10(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(hono@4.12.30)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
+        specifier: ^0.15.0
+        version: 0.15.0(@aws-sdk/credential-provider-node@3.972.21)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
       agents:
         specifier: ^0.3.10
-        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.12.30)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
+        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6))(ai@6.0.235(zod@4.3.6))(zod@4.3.6))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@4.3.6))(hono@4.12.30)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@4.3.6))(zod@4.3.6)
       zod:
-        specifier: ^3.23.0
-        version: 3.25.76
+        specifier: ^4.3.6
+        version: 4.3.6
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^4.20260621.1
@@ -2121,16 +2121,16 @@ importers:
         version: link:../../mcp-core
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6)
       '@openai/agents':
-        specifier: ^0.4.10
-        version: 0.4.10(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(hono@4.12.30)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
+        specifier: ^0.15.0
+        version: 0.15.0(@aws-sdk/credential-provider-node@3.972.21)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
       agents:
         specifier: ^0.3.10
-        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.12.30)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
+        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6))(ai@6.0.235(zod@4.3.6))(zod@4.3.6))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@4.3.6))(hono@4.12.30)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@4.3.6))(zod@4.3.6)
       zod:
-        specifier: ^3.23.0
-        version: 3.25.76
+        specifier: ^4.3.6
+        version: 4.3.6
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^4.20260621.1
@@ -2897,13 +2897,13 @@ importers:
     dependencies:
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6)
       langfuse:
         specifier: ^3.0.0
         version: 3.38.6
       zod:
-        specifier: ^3.25.34
-        version: 3.25.76
+        specifier: ^4.3.6
+        version: 4.3.6
     devDependencies:
       '@types/node':
         specifier: 24.10.9
@@ -3308,7 +3308,7 @@ importers:
     dependencies:
       '@openai/agents':
         specifier: ^0.4.10
-        version: 0.4.10(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(hono@4.11.7)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+        version: 0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(hono@4.11.7)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
       hono:
         specifier: ^4.11.7
         version: 4.11.7
@@ -3371,8 +3371,8 @@ importers:
         specifier: 1.25.3
         version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6)
       '@openai/agents':
-        specifier: ^0.4.10
-        version: 0.4.10(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(hono@4.12.30)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+        specifier: ^0.15.0
+        version: 0.15.0(@aws-sdk/credential-provider-node@3.972.21)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
       agents:
         specifier: ^0.3.10
         version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6))(ai@6.0.235(zod@4.3.6))(zod@4.3.6))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@4.3.6))(hono@4.12.30)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@4.3.6))(zod@4.3.6)
@@ -4146,7 +4146,7 @@ importers:
         version: 5.48.5
       svelte-check:
         specifier: ^4.3.3
-        version: 4.3.5(picomatch@4.0.3)(svelte@5.48.5)(typescript@5.9.3)
+        version: 4.3.5(picomatch@4.0.5)(svelte@5.48.5)(typescript@5.9.3)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -8696,6 +8696,14 @@ packages:
     engines: {node: '>=22.0.0'}
     hasBin: true
 
+  '@modelcontextprotocol/client@2.0.0':
+    resolution: {integrity: sha512-8f1OghQ2rjzIOfqgUCP+8GiUWqRs89njoWLNqAe8kWmDePv3s1fZXseej+QXemssEuuOvLLmLO/kqM3IQHtISw==}
+    engines: {node: '>=20'}
+
+  '@modelcontextprotocol/core@2.0.0':
+    resolution: {integrity: sha512-pJCEwGG7Lfr/+PQp9ZTwKXNeO5wzbfKL7H3MYpCorM4oFBoQrdjnBgEoqG+RjhsvS1FKrDbKux+M1HhlnGWqcA==}
+    engines: {node: '>=20'}
+
   '@modelcontextprotocol/sdk@1.25.3':
     resolution: {integrity: sha512-vsAMBMERybvYgKbg/l4L1rhS7VXV1c0CtyJg72vwxONVX0l4ZfKVAnZEWTQixJGTzKnELjQ59e4NbdFDALRiAQ==}
     engines: {node: '>=18'}
@@ -9029,6 +9037,14 @@ packages:
       zod:
         optional: true
 
+  '@openai/agents-core@0.15.0':
+    resolution: {integrity: sha512-5kd9RzlyhPCA133RsfXb5j8BMx96zQB602Psak5KHQxhi22z5I+z2FDwnzW3CWoNIyNBelQDS1fgAQ+Yek/ofA==}
+    peerDependencies:
+      zod: ^4.0.0
+    peerDependenciesMeta:
+      zod:
+        optional: true
+
   '@openai/agents-core@0.4.10':
     resolution: {integrity: sha512-U2uu22OZGFZ53Ogm5Qtzymg1Oc1FFNdkh+fg0QWDJ7mERQU5G4LzhbTiwS/jylVgKPj74e2uBb8oj/X5rHwxDQ==}
     peerDependencies:
@@ -9042,6 +9058,11 @@ packages:
     peerDependencies:
       zod: ^4.0.0
 
+  '@openai/agents-openai@0.15.0':
+    resolution: {integrity: sha512-ntZ9abweLpFz8KmQsOWXMP9i4gbqcEWFpCrYzQUVuZJWheyNGU7X9Iy3WY9ktL+VE8jUlYZiONr+J7lYkASRAg==}
+    peerDependencies:
+      zod: ^4.0.0
+
   '@openai/agents-openai@0.4.10':
     resolution: {integrity: sha512-z0HxNpchPRhAugDeO7mwzj7i8QcEEfWppXYTVbyYYbbN6zni5uIFm2N9t7fxbGXtaKCT7s7Io6aKrOsifRXncw==}
     peerDependencies:
@@ -9052,6 +9073,11 @@ packages:
     peerDependencies:
       zod: ^4.0.0
 
+  '@openai/agents-realtime@0.15.0':
+    resolution: {integrity: sha512-guIIPZEIFMxrHxfYcM22vUE9J36492NrY8N/flRUZXCYYC/FPMpaARTCbxdI/X71Gx9Nu8/SV0jbHEKAs67yFQ==}
+    peerDependencies:
+      zod: ^4.0.0
+
   '@openai/agents-realtime@0.4.10':
     resolution: {integrity: sha512-cUU7tUgWJEZpewHfK+O4Gi36TMst7AStC1RKBm7uwm2t7WYQRIxY042Ykl6sou1wsLg/dXlY2UM07lZPN7TT5A==}
     peerDependencies:
@@ -9059,6 +9085,11 @@ packages:
 
   '@openai/agents@0.13.5':
     resolution: {integrity: sha512-zmVEQrl2gIvD0Xq9ZcxPMXRkfafgaitESHU/CHA+ill10A8OQu4/pKgKW4oWb99KnJD/lP4Tnn9vX0LgCx9ouw==}
+    peerDependencies:
+      zod: ^4.0.0
+
+  '@openai/agents@0.15.0':
+    resolution: {integrity: sha512-O7a1CSeUmfTPHD8Hu5D3wA0nAQsw0feobn81jP5XHSevMRjuAeAJX2Cw8ApEC236J/OfF+zYAVVDFFxWCcZMYA==}
     peerDependencies:
       zod: ^4.0.0
 
@@ -16728,6 +16759,27 @@ packages:
       zod:
         optional: true
 
+  openai@7.4.0:
+    resolution: {integrity: sha512-+C9Muit5x8j9R8ej8ZzVgKcrVDtqFqTy9gxFdov0EItLgU68zrJtF9ZeT0cyqJQW9S3PCJkdFgADtRGquRBtew==}
+    engines: {node: '>=22.0.0'}
+    peerDependencies:
+      '@aws-sdk/credential-provider-node': '>=3.972.0 <4'
+      '@smithy/hash-node': '>=4.3.0 <5'
+      '@smithy/signature-v4': '>=5.4.0 <6'
+      ws: ^8.18.0
+      zod: ^3.25 || ^4.0
+    peerDependenciesMeta:
+      '@aws-sdk/credential-provider-node':
+        optional: true
+      '@smithy/hash-node':
+        optional: true
+      '@smithy/signature-v4':
+        optional: true
+      ws:
+        optional: true
+      zod:
+        optional: true
+
   openapi-fetch@0.13.8:
     resolution: {integrity: sha512-yJ4QKRyNxE44baQ9mY5+r/kAzZ8yXMemtNAOFwOzRXJscdjSxxzWSNlyBAr+o5JjkUw9Lc3W7OIoca0cY3PYnQ==}
 
@@ -22267,14 +22319,14 @@ snapshots:
       uuid: 8.3.2
       worker-timers: 7.0.60
 
-  '@cloudflare/sandbox@0.12.3(@openai/agents@0.4.10(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6))':
+  '@cloudflare/sandbox@0.12.3(@openai/agents@0.15.0(@aws-sdk/credential-provider-node@3.972.21)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6))':
     dependencies:
       '@cloudflare/containers': 0.3.7
       aws4fetch: 1.0.20
       capnweb: 0.8.0
       hono: 4.12.30
     optionalDependencies:
-      '@openai/agents': 0.4.10(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      '@openai/agents': 0.15.0(@aws-sdk/credential-provider-node@3.972.21)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
 
   '@cloudflare/sandbox@0.4.18':
     dependencies:
@@ -22592,20 +22644,6 @@ snapshots:
 
   '@composio/client@0.1.0-alpha.60': {}
 
-  '@composio/core@0.6.4(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)':
-    dependencies:
-      '@composio/client': 0.1.0-alpha.60
-      '@composio/json-schema-to-zod': 0.1.20(zod@3.25.76)
-      '@types/json-schema': 7.0.15
-      chalk: 4.1.2
-      openai: 6.22.0(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
-      pusher-js: 8.4.0
-      semver: 7.7.3
-      zod: 3.25.76
-      zod-to-json-schema: 3.25.1(zod@3.25.76)
-    transitivePeerDependencies:
-      - ws
-
   '@composio/core@0.6.4(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
     dependencies:
       '@composio/client': 0.1.0-alpha.60
@@ -22619,10 +22657,6 @@ snapshots:
       zod-to-json-schema: 3.25.1(zod@4.3.6)
     transitivePeerDependencies:
       - ws
-
-  '@composio/json-schema-to-zod@0.1.20(zod@3.25.76)':
-    dependencies:
-      zod: 3.25.76
 
   '@composio/json-schema-to-zod@0.1.20(zod@4.3.6)':
     dependencies:
@@ -24379,6 +24413,22 @@ snapshots:
       uuid: 11.1.0
       zod: 3.25.76
 
+  '@modelcontextprotocol/client@2.0.0':
+    dependencies:
+      '@modelcontextprotocol/core': 2.0.0
+      cross-spawn: 7.0.6
+      eventsource: 3.0.7
+      eventsource-parser: 3.1.0
+      jose: 6.1.3
+      pkce-challenge: 5.0.1
+      zod: 4.3.6
+    optional: true
+
+  '@modelcontextprotocol/core@2.0.0':
+    dependencies:
+      zod: 4.3.6
+    optional: true
+
   '@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.11.7)(zod@4.3.6)':
     dependencies:
       '@hono/node-server': 1.19.9(hono@4.11.7)
@@ -24848,41 +24898,32 @@ snapshots:
       - supports-color
       - ws
 
-  '@openai/agents-core@0.4.10(@cfworker/json-schema@4.1.1)(hono@4.11.7)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
+  '@openai/agents-core@0.15.0(@aws-sdk/credential-provider-node@3.972.21)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
     dependencies:
       debug: 4.4.3
-      openai: 6.22.0(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      openai: 7.4.0(@aws-sdk/credential-provider-node@3.972.21)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+    optionalDependencies:
+      '@modelcontextprotocol/client': 2.0.0
+      zod: 4.3.6
+    transitivePeerDependencies:
+      - '@aws-sdk/credential-provider-node'
+      - '@smithy/hash-node'
+      - '@smithy/signature-v4'
+      - supports-color
+      - ws
+
+  '@openai/agents-core@0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(hono@4.11.7)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
+    dependencies:
+      debug: 4.4.3
+      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.21)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
     optionalDependencies:
       '@modelcontextprotocol/sdk': 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.11.7)(zod@4.3.6)
       zod: 4.3.6
     transitivePeerDependencies:
+      - '@aws-sdk/credential-provider-node'
       - '@cfworker/json-schema'
-      - hono
-      - supports-color
-      - ws
-
-  '@openai/agents-core@0.4.10(@cfworker/json-schema@4.1.1)(hono@4.12.30)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)':
-    dependencies:
-      debug: 4.4.3
-      openai: 6.22.0(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
-    optionalDependencies:
-      '@modelcontextprotocol/sdk': 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
-      zod: 3.25.76
-    transitivePeerDependencies:
-      - '@cfworker/json-schema'
-      - hono
-      - supports-color
-      - ws
-
-  '@openai/agents-core@0.4.10(@cfworker/json-schema@4.1.1)(hono@4.12.30)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
-    dependencies:
-      debug: 4.4.3
-      openai: 6.22.0(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
-    optionalDependencies:
-      '@modelcontextprotocol/sdk': 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6)
-      zod: 4.3.6
-    transitivePeerDependencies:
-      - '@cfworker/json-schema'
+      - '@smithy/hash-node'
+      - '@smithy/signature-v4'
       - hono
       - supports-color
       - ws
@@ -24902,50 +24943,30 @@ snapshots:
       - supports-color
       - ws
 
-  '@openai/agents-openai@0.4.10(@cfworker/json-schema@4.1.1)(hono@4.11.7)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
+  '@openai/agents-openai@0.15.0(@aws-sdk/credential-provider-node@3.972.21)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
     dependencies:
-      '@openai/agents-core': 0.4.10(@cfworker/json-schema@4.1.1)(hono@4.11.7)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      '@openai/agents-core': 0.15.0(@aws-sdk/credential-provider-node@3.972.21)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
       debug: 4.4.3
-      openai: 6.22.0(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      openai: 7.4.0(@aws-sdk/credential-provider-node@3.972.21)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
       zod: 4.3.6
     transitivePeerDependencies:
-      - '@cfworker/json-schema'
-      - hono
+      - '@aws-sdk/credential-provider-node'
+      - '@smithy/hash-node'
+      - '@smithy/signature-v4'
       - supports-color
       - ws
 
-  '@openai/agents-openai@0.4.10(@cfworker/json-schema@4.1.1)(hono@4.12.30)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)':
+  '@openai/agents-openai@0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(hono@4.11.7)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
     dependencies:
-      '@openai/agents-core': 0.4.10(@cfworker/json-schema@4.1.1)(hono@4.12.30)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
+      '@openai/agents-core': 0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(hono@4.11.7)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
       debug: 4.4.3
-      openai: 6.22.0(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
-      zod: 3.25.76
-    transitivePeerDependencies:
-      - '@cfworker/json-schema'
-      - hono
-      - supports-color
-      - ws
-
-  '@openai/agents-openai@0.4.10(@cfworker/json-schema@4.1.1)(hono@4.12.30)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
-    dependencies:
-      '@openai/agents-core': 0.4.10(@cfworker/json-schema@4.1.1)(hono@4.12.30)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
-      debug: 4.4.3
-      openai: 6.22.0(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.21)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
       zod: 4.3.6
     transitivePeerDependencies:
+      - '@aws-sdk/credential-provider-node'
       - '@cfworker/json-schema'
-      - hono
-      - supports-color
-      - ws
-
-  '@openai/agents-openai@0.4.10(@cfworker/json-schema@4.1.1)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
-    dependencies:
-      '@openai/agents-core': 0.4.10(@cfworker/json-schema@4.1.1)(hono@4.11.7)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
-      debug: 4.4.3
-      openai: 6.22.0(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
-      zod: 4.3.6
-    transitivePeerDependencies:
-      - '@cfworker/json-schema'
+      - '@smithy/hash-node'
+      - '@smithy/signature-v4'
       - hono
       - supports-color
       - ws
@@ -24967,57 +24988,33 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@openai/agents-realtime@0.4.10(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(hono@4.11.7)(utf-8-validate@6.0.6)(zod@4.3.6)':
+  '@openai/agents-realtime@0.15.0(@aws-sdk/credential-provider-node@3.972.21)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(zod@4.3.6)':
     dependencies:
-      '@openai/agents-core': 0.4.10(@cfworker/json-schema@4.1.1)(hono@4.11.7)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      '@openai/agents-core': 0.15.0(@aws-sdk/credential-provider-node@3.972.21)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
       '@types/ws': 8.18.1
       debug: 4.4.3
       ws: 8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       zod: 4.3.6
     transitivePeerDependencies:
-      - '@cfworker/json-schema'
+      - '@aws-sdk/credential-provider-node'
+      - '@smithy/hash-node'
+      - '@smithy/signature-v4'
       - bufferutil
-      - hono
       - supports-color
       - utf-8-validate
 
-  '@openai/agents-realtime@0.4.10(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(hono@4.12.30)(utf-8-validate@6.0.6)(zod@3.25.76)':
+  '@openai/agents-realtime@0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(hono@4.11.7)(utf-8-validate@6.0.6)(zod@4.3.6)':
     dependencies:
-      '@openai/agents-core': 0.4.10(@cfworker/json-schema@4.1.1)(hono@4.12.30)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
-      '@types/ws': 8.18.1
-      debug: 4.4.3
-      ws: 8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
-      zod: 3.25.76
-    transitivePeerDependencies:
-      - '@cfworker/json-schema'
-      - bufferutil
-      - hono
-      - supports-color
-      - utf-8-validate
-
-  '@openai/agents-realtime@0.4.10(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(hono@4.12.30)(utf-8-validate@6.0.6)(zod@4.3.6)':
-    dependencies:
-      '@openai/agents-core': 0.4.10(@cfworker/json-schema@4.1.1)(hono@4.12.30)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      '@openai/agents-core': 0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(hono@4.11.7)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
       '@types/ws': 8.18.1
       debug: 4.4.3
       ws: 8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       zod: 4.3.6
     transitivePeerDependencies:
+      - '@aws-sdk/credential-provider-node'
       - '@cfworker/json-schema'
-      - bufferutil
-      - hono
-      - supports-color
-      - utf-8-validate
-
-  '@openai/agents-realtime@0.4.10(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(zod@4.3.6)':
-    dependencies:
-      '@openai/agents-core': 0.4.10(@cfworker/json-schema@4.1.1)(hono@4.11.7)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
-      '@types/ws': 8.18.1
-      debug: 4.4.3
-      ws: 8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
-      zod: 4.3.6
-    transitivePeerDependencies:
-      - '@cfworker/json-schema'
+      - '@smithy/hash-node'
+      - '@smithy/signature-v4'
       - bufferutil
       - hono
       - supports-color
@@ -25042,64 +25039,36 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@openai/agents@0.4.10(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(hono@4.11.7)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
+  '@openai/agents@0.15.0(@aws-sdk/credential-provider-node@3.972.21)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
     dependencies:
-      '@openai/agents-core': 0.4.10(@cfworker/json-schema@4.1.1)(hono@4.11.7)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
-      '@openai/agents-openai': 0.4.10(@cfworker/json-schema@4.1.1)(hono@4.11.7)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
-      '@openai/agents-realtime': 0.4.10(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(hono@4.11.7)(utf-8-validate@6.0.6)(zod@4.3.6)
+      '@openai/agents-core': 0.15.0(@aws-sdk/credential-provider-node@3.972.21)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      '@openai/agents-openai': 0.15.0(@aws-sdk/credential-provider-node@3.972.21)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      '@openai/agents-realtime': 0.15.0(@aws-sdk/credential-provider-node@3.972.21)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(zod@4.3.6)
       debug: 4.4.3
-      openai: 6.22.0(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      openai: 7.4.0(@aws-sdk/credential-provider-node@3.972.21)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
       zod: 4.3.6
     transitivePeerDependencies:
-      - '@cfworker/json-schema'
+      - '@aws-sdk/credential-provider-node'
+      - '@smithy/hash-node'
+      - '@smithy/signature-v4'
       - bufferutil
-      - hono
       - supports-color
       - utf-8-validate
       - ws
 
-  '@openai/agents@0.4.10(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(hono@4.12.30)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)':
+  '@openai/agents@0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(hono@4.11.7)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
     dependencies:
-      '@openai/agents-core': 0.4.10(@cfworker/json-schema@4.1.1)(hono@4.12.30)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
-      '@openai/agents-openai': 0.4.10(@cfworker/json-schema@4.1.1)(hono@4.12.30)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
-      '@openai/agents-realtime': 0.4.10(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(hono@4.12.30)(utf-8-validate@6.0.6)(zod@3.25.76)
-      debug: 4.4.3
-      openai: 6.22.0(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
-      zod: 3.25.76
-    transitivePeerDependencies:
-      - '@cfworker/json-schema'
-      - bufferutil
-      - hono
-      - supports-color
-      - utf-8-validate
-      - ws
-
-  '@openai/agents@0.4.10(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(hono@4.12.30)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
-    dependencies:
-      '@openai/agents-core': 0.4.10(@cfworker/json-schema@4.1.1)(hono@4.12.30)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
-      '@openai/agents-openai': 0.4.10(@cfworker/json-schema@4.1.1)(hono@4.12.30)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
-      '@openai/agents-realtime': 0.4.10(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(hono@4.12.30)(utf-8-validate@6.0.6)(zod@4.3.6)
+      '@openai/agents-core': 0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(hono@4.11.7)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      '@openai/agents-openai': 0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(hono@4.11.7)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      '@openai/agents-realtime': 0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(hono@4.11.7)(utf-8-validate@6.0.6)(zod@4.3.6)
       debug: 4.4.3
       openai: 6.22.0(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
       zod: 4.3.6
     transitivePeerDependencies:
+      - '@aws-sdk/credential-provider-node'
       - '@cfworker/json-schema'
-      - bufferutil
-      - hono
-      - supports-color
-      - utf-8-validate
-      - ws
-
-  '@openai/agents@0.4.10(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
-    dependencies:
-      '@openai/agents-core': 0.4.10(@cfworker/json-schema@4.1.1)(hono@4.11.7)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
-      '@openai/agents-openai': 0.4.10(@cfworker/json-schema@4.1.1)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
-      '@openai/agents-realtime': 0.4.10(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(zod@4.3.6)
-      debug: 4.4.3
-      openai: 6.22.0(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
-      zod: 4.3.6
-    transitivePeerDependencies:
-      - '@cfworker/json-schema'
+      - '@smithy/hash-node'
+      - '@smithy/signature-v4'
       - bufferutil
       - hono
       - supports-color
@@ -25315,14 +25284,14 @@ snapshots:
       '@remotion/media-parser': 4.0.410
       '@remotion/studio': 4.0.410(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(utf-8-validate@6.0.6)
       '@remotion/studio-shared': 4.0.410(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      css-loader: 5.2.7(webpack@5.96.1(esbuild@0.24.2))
+      css-loader: 5.2.7(webpack@5.96.1(esbuild@0.25.0))
       esbuild: 0.25.0
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
       react-refresh: 0.9.0
       remotion: 4.0.410(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       source-map: 0.7.3
-      style-loader: 4.0.0(webpack@5.96.1(esbuild@0.24.2))
+      style-loader: 4.0.0(webpack@5.96.1(esbuild@0.25.0))
       webpack: 5.96.1(esbuild@0.25.0)
     transitivePeerDependencies:
       - '@swc/core'
@@ -26778,22 +26747,22 @@ snapshots:
 
   '@socket.io/component-emitter@3.1.2': {}
 
-  '@solana-program/compute-budget@0.8.0(@solana/kit@2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(ws@8.18.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)))':
+  '@solana-program/compute-budget@0.8.0(@solana/kit@2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(ws@7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6)))':
     dependencies:
-      '@solana/kit': 2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(ws@8.18.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+      '@solana/kit': 2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(ws@7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6))
 
   '@solana-program/system@0.10.0(@solana/kit@5.5.1(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@6.0.6))':
     dependencies:
       '@solana/kit': 5.5.1(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@6.0.6)
 
-  '@solana-program/token-2022@0.4.2(@solana/kit@2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(ws@8.18.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)))(@solana/sysvars@5.5.1(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3))':
+  '@solana-program/token-2022@0.4.2(@solana/kit@2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(ws@7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6)))(@solana/sysvars@5.5.1(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3))':
     dependencies:
-      '@solana/kit': 2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(ws@8.18.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+      '@solana/kit': 2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(ws@7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6))
       '@solana/sysvars': 5.5.1(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)
 
-  '@solana-program/token@0.5.1(@solana/kit@2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(ws@8.18.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)))':
+  '@solana-program/token@0.5.1(@solana/kit@2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(ws@7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6)))':
     dependencies:
-      '@solana/kit': 2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(ws@8.18.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+      '@solana/kit': 2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(ws@7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6))
 
   '@solana-program/token@0.9.0(@solana/kit@5.5.1(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@6.0.6))':
     dependencies:
@@ -27019,7 +26988,7 @@ snapshots:
     transitivePeerDependencies:
       - fastestsmallesttextencoderdecoder
 
-  '@solana/kit@2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(ws@8.18.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))':
+  '@solana/kit@2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(ws@7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6))':
     dependencies:
       '@solana/accounts': 2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)
       '@solana/addresses': 2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)
@@ -27032,11 +27001,11 @@ snapshots:
       '@solana/rpc': 2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)
       '@solana/rpc-parsed-types': 2.3.0(typescript@5.9.3)
       '@solana/rpc-spec-types': 2.3.0(typescript@5.9.3)
-      '@solana/rpc-subscriptions': 2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(ws@8.18.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+      '@solana/rpc-subscriptions': 2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(ws@7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6))
       '@solana/rpc-types': 2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)
       '@solana/signers': 2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)
       '@solana/sysvars': 2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)
-      '@solana/transaction-confirmation': 2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(ws@8.18.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+      '@solana/transaction-confirmation': 2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(ws@7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6))
       '@solana/transaction-messages': 2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)
       '@solana/transactions': 2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)
       typescript: 5.9.3
@@ -27241,14 +27210,14 @@ snapshots:
     transitivePeerDependencies:
       - fastestsmallesttextencoderdecoder
 
-  '@solana/rpc-subscriptions-channel-websocket@2.3.0(typescript@5.9.3)(ws@8.18.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))':
+  '@solana/rpc-subscriptions-channel-websocket@2.3.0(typescript@5.9.3)(ws@7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6))':
     dependencies:
       '@solana/errors': 2.3.0(typescript@5.9.3)
       '@solana/functional': 2.3.0(typescript@5.9.3)
       '@solana/rpc-subscriptions-spec': 2.3.0(typescript@5.9.3)
       '@solana/subscribable': 2.3.0(typescript@5.9.3)
       typescript: 5.9.3
-      ws: 8.18.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      ws: 7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   '@solana/rpc-subscriptions-channel-websocket@5.5.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)':
     dependencies:
@@ -27280,7 +27249,7 @@ snapshots:
     optionalDependencies:
       typescript: 5.9.3
 
-  '@solana/rpc-subscriptions@2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(ws@8.18.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))':
+  '@solana/rpc-subscriptions@2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(ws@7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6))':
     dependencies:
       '@solana/errors': 2.3.0(typescript@5.9.3)
       '@solana/fast-stable-stringify': 2.3.0(typescript@5.9.3)
@@ -27288,7 +27257,7 @@ snapshots:
       '@solana/promises': 2.3.0(typescript@5.9.3)
       '@solana/rpc-spec-types': 2.3.0(typescript@5.9.3)
       '@solana/rpc-subscriptions-api': 2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)
-      '@solana/rpc-subscriptions-channel-websocket': 2.3.0(typescript@5.9.3)(ws@8.18.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+      '@solana/rpc-subscriptions-channel-websocket': 2.3.0(typescript@5.9.3)(ws@7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6))
       '@solana/rpc-subscriptions-spec': 2.3.0(typescript@5.9.3)
       '@solana/rpc-transformers': 2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)
       '@solana/rpc-types': 2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)
@@ -27476,7 +27445,7 @@ snapshots:
     transitivePeerDependencies:
       - fastestsmallesttextencoderdecoder
 
-  '@solana/transaction-confirmation@2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(ws@8.18.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))':
+  '@solana/transaction-confirmation@2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(ws@7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6))':
     dependencies:
       '@solana/addresses': 2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)
       '@solana/codecs-strings': 2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)
@@ -27484,7 +27453,7 @@ snapshots:
       '@solana/keys': 2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)
       '@solana/promises': 2.3.0(typescript@5.9.3)
       '@solana/rpc': 2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)
-      '@solana/rpc-subscriptions': 2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(ws@8.18.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+      '@solana/rpc-subscriptions': 2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(ws@7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6))
       '@solana/rpc-types': 2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)
       '@solana/transaction-messages': 2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)
       '@solana/transactions': 2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)
@@ -27617,9 +27586,9 @@ snapshots:
     dependencies:
       acorn: 8.15.0
 
-  '@sveltejs/adapter-auto@7.0.0(@sveltejs/kit@2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))':
+  '@sveltejs/adapter-auto@7.0.0(@sveltejs/kit@2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))':
     dependencies:
-      '@sveltejs/kit': 2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+      '@sveltejs/kit': 2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
 
   '@sveltejs/adapter-auto@7.0.0(@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))':
     dependencies:
@@ -30125,7 +30094,7 @@ snapshots:
     dependencies:
       humanize-ms: 1.2.1
 
-  agents@0.1.6(@cfworker/json-schema@4.1.1)(@cloudflare/workers-types@5.20260712.1)(@solana/sysvars@5.5.1(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3))(@tanstack/query-core@5.101.2)(@tanstack/react-query@5.91.0(react@19.2.4))(@types/react@19.2.14)(aws4fetch@1.0.20)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)(ws@8.18.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)):
+  agents@0.1.6(@cfworker/json-schema@4.1.1)(@cloudflare/workers-types@5.20260712.1)(@solana/sysvars@5.5.1(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3))(@tanstack/query-core@5.101.2)(@tanstack/react-query@5.91.0(react@19.2.4))(@types/react@19.2.14)(aws4fetch@1.0.20)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)(ws@7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6)):
     dependencies:
       '@modelcontextprotocol/sdk': 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(zod@3.25.76)
       ai: 5.0.48(zod@3.25.76)
@@ -30135,7 +30104,7 @@ snapshots:
       partyserver: 0.0.74(@cloudflare/workers-types@5.20260712.1)
       partysocket: 1.1.5
       react: 19.2.4
-      x402: 0.6.6(@solana/sysvars@5.5.1(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3))(@tanstack/query-core@5.101.2)(@tanstack/react-query@5.91.0(react@19.2.4))(@types/react@19.2.14)(aws4fetch@1.0.20)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)(ws@8.18.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+      x402: 0.6.6(@solana/sysvars@5.5.1(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3))(@tanstack/query-core@5.101.2)(@tanstack/react-query@5.91.0(react@19.2.4))(@types/react@19.2.14)(aws4fetch@1.0.20)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)(ws@7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6))
       zod: 3.25.76
     transitivePeerDependencies:
       - '@azure/app-configuration'
@@ -31487,7 +31456,7 @@ snapshots:
     dependencies:
       utrie: 1.0.2
 
-  css-loader@5.2.7(webpack@5.96.1(esbuild@0.24.2)):
+  css-loader@5.2.7(webpack@5.96.1(esbuild@0.25.0)):
     dependencies:
       icss-utils: 5.1.0(postcss@8.5.6)
       loader-utils: 2.0.4
@@ -31499,7 +31468,7 @@ snapshots:
       postcss-value-parser: 4.2.0
       schema-utils: 3.3.0
       semver: 7.7.3
-      webpack: 5.96.1(esbuild@0.24.2)
+      webpack: 5.96.1(esbuild@0.25.0)
 
   css-loader@7.1.3(@rspack/core@1.7.4(@swc/helpers@0.5.18))(webpack@5.104.1(esbuild@0.24.2)):
     dependencies:
@@ -35589,17 +35558,18 @@ snapshots:
       is-docker: 2.2.1
       is-wsl: 2.2.0
 
-  openai@6.22.0(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76):
-    optionalDependencies:
-      ws: 8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
-      zod: 3.25.76
-
   openai@6.22.0(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6):
     optionalDependencies:
       ws: 8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       zod: 4.3.6
 
   openai@6.49.0(@aws-sdk/credential-provider-node@3.972.21)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6):
+    optionalDependencies:
+      '@aws-sdk/credential-provider-node': 3.972.21
+      ws: 8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      zod: 4.3.6
+
+  openai@7.4.0(@aws-sdk/credential-provider-node@3.972.21)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6):
     optionalDependencies:
       '@aws-sdk/credential-provider-node': 3.972.21
       ws: 8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
@@ -37644,9 +37614,9 @@ snapshots:
     dependencies:
       '@tokenizer/token': 0.3.0
 
-  style-loader@4.0.0(webpack@5.96.1(esbuild@0.24.2)):
+  style-loader@4.0.0(webpack@5.96.1(esbuild@0.25.0)):
     dependencies:
-      webpack: 5.96.1(esbuild@0.24.2)
+      webpack: 5.96.1(esbuild@0.25.0)
 
   style-mod@4.1.3: {}
 
@@ -37705,18 +37675,6 @@ snapshots:
       picocolors: 1.1.1
       sade: 1.8.1
       svelte: 5.41.0
-      typescript: 5.9.3
-    transitivePeerDependencies:
-      - picomatch
-
-  svelte-check@4.3.5(picomatch@4.0.3)(svelte@5.48.5)(typescript@5.9.3):
-    dependencies:
-      '@jridgewell/trace-mapping': 0.3.31
-      chokidar: 4.0.3
-      fdir: 6.5.0(picomatch@4.0.3)
-      picocolors: 1.1.1
-      sade: 1.8.1
-      svelte: 5.48.5
       typescript: 5.9.3
     transitivePeerDependencies:
       - picomatch
@@ -37977,17 +37935,6 @@ snapshots:
     optionalDependencies:
       esbuild: 0.24.2
 
-  terser-webpack-plugin@5.3.16(esbuild@0.24.2)(webpack@5.96.1(esbuild@0.24.2)):
-    dependencies:
-      '@jridgewell/trace-mapping': 0.3.31
-      jest-worker: 27.5.1
-      schema-utils: 4.3.3
-      serialize-javascript: 6.0.2
-      terser: 5.46.0
-      webpack: 5.96.1(esbuild@0.24.2)
-    optionalDependencies:
-      esbuild: 0.24.2
-
   terser-webpack-plugin@5.3.16(esbuild@0.25.0)(webpack@5.96.1(esbuild@0.24.2)):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
@@ -37995,7 +37942,7 @@ snapshots:
       schema-utils: 4.3.3
       serialize-javascript: 6.0.2
       terser: 5.46.0
-      webpack: 5.96.1(esbuild@0.24.2)
+      webpack: 5.96.1(esbuild@0.25.0)
     optionalDependencies:
       esbuild: 0.25.0
 
@@ -39340,36 +39287,6 @@ snapshots:
       - esbuild
       - uglify-js
 
-  webpack@5.96.1(esbuild@0.24.2):
-    dependencies:
-      '@types/eslint-scope': 3.7.7
-      '@types/estree': 1.0.9
-      '@webassemblyjs/ast': 1.14.1
-      '@webassemblyjs/wasm-edit': 1.14.1
-      '@webassemblyjs/wasm-parser': 1.14.1
-      acorn: 8.15.0
-      browserslist: 4.28.1
-      chrome-trace-event: 1.0.4
-      enhanced-resolve: 5.18.4
-      es-module-lexer: 1.7.0
-      eslint-scope: 5.1.1
-      events: 3.3.0
-      glob-to-regexp: 0.4.1
-      graceful-fs: 4.2.11
-      json-parse-even-better-errors: 2.3.1
-      loader-runner: 4.3.1
-      mime-types: 2.1.35
-      neo-async: 2.6.2
-      schema-utils: 3.3.0
-      tapable: 2.3.0
-      terser-webpack-plugin: 5.3.16(esbuild@0.24.2)(webpack@5.96.1(esbuild@0.24.2))
-      watchpack: 2.5.1
-      webpack-sources: 3.3.3
-    transitivePeerDependencies:
-      - '@swc/core'
-      - esbuild
-      - uglify-js
-
   webpack@5.96.1(esbuild@0.25.0):
     dependencies:
       '@types/eslint-scope': 3.7.7
@@ -39772,14 +39689,14 @@ snapshots:
       is-wsl: 3.1.0
       powershell-utils: 0.1.0
 
-  x402@0.6.6(@solana/sysvars@5.5.1(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3))(@tanstack/query-core@5.101.2)(@tanstack/react-query@5.91.0(react@19.2.4))(@types/react@19.2.14)(aws4fetch@1.0.20)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)(ws@8.18.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)):
+  x402@0.6.6(@solana/sysvars@5.5.1(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3))(@tanstack/query-core@5.101.2)(@tanstack/react-query@5.91.0(react@19.2.4))(@types/react@19.2.14)(aws4fetch@1.0.20)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)(ws@7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6)):
     dependencies:
       '@scure/base': 1.2.6
-      '@solana-program/compute-budget': 0.8.0(@solana/kit@2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(ws@8.18.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)))
-      '@solana-program/token': 0.5.1(@solana/kit@2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(ws@8.18.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)))
-      '@solana-program/token-2022': 0.4.2(@solana/kit@2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(ws@8.18.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)))(@solana/sysvars@5.5.1(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3))
-      '@solana/kit': 2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(ws@8.18.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))
-      '@solana/transaction-confirmation': 2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(ws@8.18.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+      '@solana-program/compute-budget': 0.8.0(@solana/kit@2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(ws@7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6)))
+      '@solana-program/token': 0.5.1(@solana/kit@2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(ws@7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6)))
+      '@solana-program/token-2022': 0.4.2(@solana/kit@2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(ws@7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6)))(@solana/sysvars@5.5.1(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3))
+      '@solana/kit': 2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(ws@7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+      '@solana/transaction-confirmation': 2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(ws@7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6))
       viem: 2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76)
       wagmi: 2.19.5(@tanstack/query-core@5.101.2)(@tanstack/react-query@5.91.0(react@19.2.4))(@types/react@19.2.14)(aws4fetch@1.0.20)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
       zod: 3.25.76
