@@ -295,6 +295,11 @@ printf '{"discovered_changed_files":3,"analyzable_changed_files":1,"changed_file
     receipt.targets.map((target) => target.coverage.excluded_changed_files),
     [[], []]
   );
+  assert.deepEqual(
+    receipt.targets.map((target) => target.coverage.analyzed_changed_files),
+    [['packages/one/src/index.ts'], ['packages/two/src/index.ts']]
+  );
+  assert.equal(receipt.coverage.analyzable_changed_files, 2);
 });
 
 test('CLI excludes deleted paths from analyzed coverage in a mixed package change', (t) => {
