@@ -4,6 +4,74 @@ import test from 'node:test';
 import { databaseLayerWorkerState } from '../worker/generated-state.mjs';
 import worker from '../worker/index.mjs';
 
+function createCommercialReceiptHealthDatabase({ tablePresent = true } = {}) {
+  return {
+    prepare(sql) {
+      assert.match(sql, /sqlite_schema/);
+      return {
+        bind(tableName) {
+          assert.equal(tableName, 'agent_commercial_authorization_receipts');
+          return {
+            async first() {
+              return tablePresent ? { name: tableName } : null;
+            }
+          };
+        }
+      };
+    }
+  };
+}
+
+test('agent commercial readiness proves D1 while charging remains disabled', async () => {
+  const response = await worker.fetch(
+    new Request('https://database-layer.local/api/agent-commercial/readiness'),
+    { COMMERCIAL_RECEIPTS: createCommercialReceiptHealthDatabase() }
+  );
+  const body = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('cache-control'), 'no-store');
+  assert.equal(body.contractId, 'create-something.agent-commercial.v1');
+  assert.equal(body.receiptSink.status, 'ready');
+  assert.equal(body.payment.status, 'approval_required');
+  assert.equal(body.payment.price.state, 'unset');
+  assert.deepEqual(body.controls, {
+    charging: 'disabled',
+    maxPaidRequestsPerMinute: 0,
+    maxPerRequestUsd: '0',
+    maxDailySpendUsd: '0',
+    automaticRetry: false
+  });
+  assert.equal(body.nextGate, 'approved_price_and_public_copy');
+});
+
+test('agent commercial readiness fails closed without the production receipt schema', async () => {
+  for (const env of [
+    undefined,
+    { COMMERCIAL_RECEIPTS: createCommercialReceiptHealthDatabase({ tablePresent: false }) }
+  ]) {
+    const response = await worker.fetch(
+      new Request('https://database-layer.local/api/agent-commercial/readiness'),
+      env
+    );
+    const body = await response.json();
+
+    assert.equal(response.status, 503);
+    assert.equal(body.receiptSink.status, 'unavailable');
+    assert.equal(body.controls.charging, 'disabled');
+  }
+});
+
+test('agent commercial readiness exposes no write method', async () => {
+  const response = await worker.fetch(
+    new Request('https://database-layer.local/api/agent-commercial/readiness', { method: 'POST' }),
+    { COMMERCIAL_RECEIPTS: createCommercialReceiptHealthDatabase() }
+  );
+
+  assert.equal(response.status, 405);
+  assert.equal(response.headers.get('allow'), 'GET, HEAD');
+});
+
 test('database-layer Worker host serves operating slices through fetch', async () => {
   const response = await worker.fetch(
     new Request('https://database-layer.local/api/substrate/operating-slices', {
@@ -54,8 +122,8 @@ test('database-layer Worker host serves MCP-style resources and tool calls', asy
     })
   );
   const resources = await resourceList.json();
-  const readinessResource = resources.resources.find(
-    (resource) => resource.uri.endsWith(`${first.slug}/readiness`)
+  const readinessResource = resources.resources.find((resource) =>
+    resource.uri.endsWith(`${first.slug}/readiness`)
   );
   const resourceRead = await worker.fetch(
     new Request(
@@ -71,7 +139,10 @@ test('database-layer Worker host serves MCP-style resources and tool calls', asy
   );
 
   assert.equal(resourceList.status, 200);
-  assert.equal(resources.resources.length, databaseLayerWorkerState.managementSurface.resources.length);
+  assert.equal(
+    resources.resources.length,
+    databaseLayerWorkerState.managementSurface.resources.length
+  );
   assert.equal(resourceRead.status, 200);
   assert.equal((await resourceRead.json()).productionStatus, 'approval_required');
   assert.equal(toolCall.status, 200);
@@ -99,7 +170,10 @@ test('database-layer Worker host lazy-loads client overlay detail', async () => 
   );
 
   assert.equal(list.status, 200);
-  assert.equal(listBody.overlays.length, databaseLayerWorkerState.clientOverlayCoverage.overlays.length);
+  assert.equal(
+    listBody.overlays.length,
+    databaseLayerWorkerState.clientOverlayCoverage.overlays.length
+  );
   assert.equal(detail.status, 200);
   assert.equal((await detail.json()).packages.length, 3);
   assert.equal(toolCall.status, 200);

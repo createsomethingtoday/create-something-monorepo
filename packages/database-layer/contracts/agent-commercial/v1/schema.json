@@ -14,6 +14,7 @@
     "commercialInterfaceRef",
     "defaultDecision",
     "receiptPolicy",
+    "productionControls",
     "accessClasses",
     "providerAdapters",
     "paymentPolicies",
@@ -30,6 +31,7 @@
     "commercialInterfaceRef": { "type": "string", "minLength": 1 },
     "defaultDecision": { "const": "deny" },
     "receiptPolicy": { "$ref": "#/$defs/receiptPolicy" },
+    "productionControls": { "$ref": "#/$defs/productionControls" },
     "accessClasses": {
       "type": "object",
       "additionalProperties": false,
@@ -86,6 +88,26 @@
           "uniqueItems": true,
           "items": { "type": "string", "minLength": 1 }
         }
+      }
+    },
+    "productionControls": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "charging",
+        "maxPaidRequestsPerMinute",
+        "maxPerRequestUsd",
+        "maxDailySpendUsd",
+        "automaticRetry",
+        "rollbackRunbookRef"
+      ],
+      "properties": {
+        "charging": { "enum": ["disabled", "enabled"] },
+        "maxPaidRequestsPerMinute": { "type": "integer", "minimum": 0 },
+        "maxPerRequestUsd": { "type": "string", "pattern": "^[0-9]+(\\.[0-9]+)?$" },
+        "maxDailySpendUsd": { "type": "string", "pattern": "^[0-9]+(\\.[0-9]+)?$" },
+        "automaticRetry": { "type": "boolean" },
+        "rollbackRunbookRef": { "type": "string", "minLength": 1 }
       }
     },
     "providerAdapter": {

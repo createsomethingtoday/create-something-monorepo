@@ -1,5 +1,6 @@
 name = "create-something-database-layer"
 main = "index.mjs"
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
 compatibility_date = "2026-07-07"
 compatibility_flags = ["nodejs_compat"]
 
@@ -8,3 +9,9 @@ enabled = true
 
 [vars]
 DATABASE_LAYER_MODE = "read_only"
+
+[[d1_databases]]
+binding = "COMMERCIAL_RECEIPTS"
+database_name = "create-something-agent-commercial-receipts"
+database_id = "35d05341-7506-48d5-8f5d-e40dcfca1c81"
+migrations_dir = "migrations"
