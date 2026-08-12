@@ -70,10 +70,10 @@ function normalizePath(path) {
   return path.split(sep).join('/').replace(/^\.\//, '');
 }
 
-function trackedChanges(root, base) {
+function trackedChanges(root, base, cached = false) {
   const fields = run(
     'git',
-    ['diff', '--name-status', '-z', '--find-renames', base, '--'],
+    ['diff', ...(cached ? ['--cached'] : []), '--name-status', '-z', '--find-renames', base, '--'],
     root
   ).split('\0');
   const changes = [];
@@ -93,11 +93,24 @@ function trackedChanges(root, base) {
 }
 
 function changedFiles(root, base) {
-  const tracked = trackedChanges(root, base).map(({ path }) => path);
+  const tracked = [...trackedChanges(root, base), ...trackedChanges(root, base, true)].map(
+    ({ path }) => path
+  );
   const untracked = run('git', ['ls-files', '-z', '--others', '--exclude-standard'], root)
     .split('\0')
     .filter(Boolean);
   return [...new Set([...tracked, ...untracked].map(normalizePath))].sort();
+}
+
+function indexWorktreeMismatchFiles(root, base) {
+  const staged = new Set(trackedChanges(root, base, true).map(({ path }) => path));
+  return new Set(
+    run('git', ['diff', '--name-only', '-z', '--'], root)
+      .split('\0')
+      .filter(Boolean)
+      .map(normalizePath)
+      .filter((path) => staged.has(path))
+  );
 }
 
 function addedFiles(root, base, files) {
@@ -267,10 +280,7 @@ function normalizeFinding(root, finding) {
       typeof path === 'string' ? receiptPath(root, path) : path
     );
   }
-  if (
-    normalized.type === 'duplicate_function' ||
-    normalized.type === 'cross_package_duplicate'
-  ) {
+  if (normalized.type === 'duplicate_function' || normalized.type === 'cross_package_duplicate') {
     // Ground currently reports duplicates that overlap changed files, but it
     // does not baseline the duplicate pair against the base revision. Keep the
     // observation while avoiding an unsupported claim that this branch
@@ -331,6 +341,7 @@ export function buildReceipt({
   baseSha,
   files,
   added,
+  indexWorktreeMismatch,
   deleted,
   unmerged,
   unreadable,
@@ -342,6 +353,7 @@ export function buildReceipt({
         .filter(
           (file) =>
             !deleted.has(file) &&
+            !indexWorktreeMismatch.has(file) &&
             !unmerged.has(file) &&
             !unreadable.has(file) &&
             !generatedSource(file)
@@ -367,6 +379,7 @@ export function buildReceipt({
               changedSet.has(file) &&
               file.startsWith(`${path}/`) &&
               !deleted.has(file) &&
+              !indexWorktreeMismatch.has(file) &&
               !unmerged.has(file) &&
               !unreadable.has(file) &&
               !generatedSource(file)
@@ -382,6 +395,7 @@ export function buildReceipt({
               supportedSource(file) &&
               !generatedSource(file) &&
               !deleted.has(file) &&
+              !indexWorktreeMismatch.has(file) &&
               !unmerged.has(file) &&
               !unreadable.has(file)
           )
@@ -441,6 +455,7 @@ export function buildReceipt({
     .filter(
       (file) =>
         deleted.has(file) ||
+        indexWorktreeMismatch.has(file) ||
         unmerged.has(file) ||
         unreadable.has(file) ||
         generatedSource(file) ||
@@ -450,15 +465,17 @@ export function buildReceipt({
       path,
       reason: unmerged.has(path)
         ? 'unmerged_file'
-        : deleted.has(path)
-          ? 'deleted_file'
-          : unreadable.has(path)
-            ? 'unreadable_file'
-            : generatedSource(path)
-              ? 'generated_file'
-              : supportedSource(path)
-                ? 'outside_package_source'
-                : 'unsupported_extension'
+        : indexWorktreeMismatch.has(path)
+          ? 'index_worktree_mismatch'
+          : deleted.has(path)
+            ? 'deleted_file'
+            : unreadable.has(path)
+              ? 'unreadable_file'
+              : generatedSource(path)
+                ? 'generated_file'
+                : supportedSource(path)
+                  ? 'outside_package_source'
+                  : 'unsupported_extension'
     }));
   for (const exclusion of outsideTargets) {
     const target = targets.find(({ path }) => exclusion.path.startsWith(`${path}/`));
@@ -479,6 +496,7 @@ export function buildReceipt({
     .filter(
       (file) =>
         !deleted.has(file) &&
+        !indexWorktreeMismatch.has(file) &&
         !unmerged.has(file) &&
         !unreadable.has(file) &&
         !generatedSource(file) &&
@@ -613,6 +631,7 @@ function main() {
     if (!baseSha) throw new Error(`No merge base found for ${options.base} and HEAD.`);
     const files = changedFiles(root, baseSha);
     const added = addedFiles(root, baseSha, files);
+    const indexWorktreeMismatch = indexWorktreeMismatchFiles(root, baseSha);
     const deleted = deletedFiles(root, baseSha);
     const unmerged = unmergedFiles(root);
     const unreadable = unreadableFiles(root, files, deleted);
@@ -622,6 +641,7 @@ function main() {
       baseSha,
       files,
       added,
+      indexWorktreeMismatch,
       deleted,
       unmerged,
       unreadable,
