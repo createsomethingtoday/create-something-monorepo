@@ -126,6 +126,32 @@ test('CLI makes zero analyzable coverage explicit without requiring Ground', (t)
   ]);
 });
 
+test('Markdown receipts escape control characters in evidence paths', () => {
+  const markdown = formatMarkdown({
+    mode: 'advisory',
+    base: 'HEAD',
+    status: 'findings',
+    coverage: {
+      discovered_changed_files: 1,
+      analyzable_changed_files: 0,
+      excluded_changed_files: [{ path: 'packages/example/src/line\n# injected.ts', reason: 'x' }]
+    },
+    targets: [],
+    findings: [
+      {
+        type: 'test',
+        target: 'packages/example',
+        path: 'packages/example/src/tab\t.ts',
+        files: ['packages/example/src/line\n.ts']
+      }
+    ]
+  });
+
+  assert.match(markdown, /line\\n# injected\.ts/);
+  assert.match(markdown, /tab\\t\.ts/);
+  assert.doesNotMatch(markdown, /\n# injected\.ts/);
+});
+
 test('CLI excludes upstream-only changes when the worktree is behind its base ref', (t) => {
   const repo = mkdtempSync(join(tmpdir(), 'ground-review-behind-'));
   const binaryDir = mkdtempSync(join(tmpdir(), 'ground-review-behind-binary-'));
@@ -697,5 +723,29 @@ test('CLI excludes a package source path replaced by a directory', (t) => {
   assert.deepEqual(receipt.coverage.excluded_changed_files, [
     { path: 'packages/example/src/value.ts', reason: 'unreadable_file' },
     { path: 'packages/example/src/value.ts/nested.txt', reason: 'unsupported_extension' }
+  ]);
+});
+
+test('CLI excludes generated TypeScript from calibration coverage', (t) => {
+  const repo = mkdtempSync(join(tmpdir(), 'ground-review-generated-'));
+  t.after(() => rmSync(repo, { recursive: true, force: true }));
+
+  mustRun('git', ['init', '-b', 'main'], repo);
+  mustRun('git', ['config', 'core.hooksPath', '/dev/null'], repo);
+  writeFixtureFile(repo, 'packages/example/package.json', '{"name":"@example/pkg"}\n');
+  writeFixtureFile(repo, 'packages/example/src/catalog.generated.ts', 'export const value = 1;\n');
+  mustRun('git', ['add', '.'], repo);
+  mustRun('git', ['commit', '-m', 'baseline'], repo);
+  writeFixtureFile(repo, 'packages/example/src/catalog.generated.ts', 'export const value = 2;\n');
+
+  const result = run(process.execPath, [scriptPath, '--base', 'HEAD', '--format', 'json'], repo, {
+    GROUND_BINARY: join(repo, 'missing-ground')
+  });
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const receipt = JSON.parse(result.stdout);
+  assert.deepEqual(receipt.targets, []);
+  assert.deepEqual(receipt.coverage.excluded_changed_files, [
+    { path: 'packages/example/src/catalog.generated.ts', reason: 'generated_file' }
   ]);
 });
