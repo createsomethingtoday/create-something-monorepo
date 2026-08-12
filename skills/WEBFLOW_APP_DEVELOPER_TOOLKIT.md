@@ -32,7 +32,7 @@ Give the skill only findings the recipient is authorized to receive. Do not atta
 
 ## Where App Review Preflight fits
 
-The **App Review Preflight** system — a Designer Extension as the developer surface plus a reviewer web app backed by a Webflow-controlled runtime pipeline — can supplement either skill with bundle analysis and authorized runtime observations when the required App and sandbox are available. A partner-supplied runtime test package is **test input only, not evidence**: the security result comes solely from the Webflow-controlled run. Its output is evidence—not Marketplace approval—and does not replace human policy decisions, incident response, or authorization tests that require two controlled identities.
+The **App Review Preflight** system — a Designer Extension as the developer surface ([install it into your Workspace](https://webflow.com/oauth/authorize?response_type=code&client_id=0b5411e62233387925e082350666ef374377f81a9abba0dcc2542d6b5b1e4388&scope=authorized_user%3Aread)) plus a reviewer web app backed by a Webflow-controlled runtime pipeline — can supplement either skill with bundle analysis and authorized runtime observations when the required App and sandbox are available. A partner-supplied runtime test package is **test input only, not evidence**: the security result comes solely from the Webflow-controlled run. Its output is evidence—not Marketplace approval—and does not replace human policy decisions, incident response, or authorization tests that require two controlled identities.
 
 ## Provenance and decision boundaries
 

@@ -12,7 +12,7 @@
 | **Designer Extension source** | Upload the `bundle.zip` (built via `webflow extension bundle`) through the App version manager. Reviewers read it.                                                                                                                                              |
 | **Source maps for review**    | The submission form has a dedicated private upload: one `.map` file or a ZIP of version-3 maps from the exact build that produced the bundle. Required when the submission ships a new or changed minified/generated bundle. Never include them in the public production bundle. |
 | **Published testing site**    | A `.webflow.io` site with the App installed where reviewers can exercise the full experience — including anything the App adds to the published site. Required for every submission.                                                                             |
-| **Preflight receipt**         | Run **App Review Preflight** in the Designer on the same bundle + source-map artifact you attach to the form; paste the issued `wfpre_…` receipt code into the form so reviewers can reconcile the submission with the validated artifacts.                     |
+| **Preflight receipt**         | Run **App Review Preflight** ([install](https://webflow.com/oauth/authorize?response_type=code&client_id=0b5411e62233387925e082350666ef374377f81a9abba0dcc2542d6b5b1e4388&scope=authorized_user%3Aread)) in the Designer on the same bundle + source-map artifact you attach to the form; paste the issued `wfpre_…` receipt code into the form so reviewers can reconcile the submission with the validated artifacts. |
 
 ## Privacy & data protection
 
@@ -36,7 +36,7 @@ Practical consequence most Apps miss: if your backend stores customer data, **un
 - **Designer Extensions:** upload the client-side **source code** through the App version manager (reviewers read it).
 - **A published `.webflow.io` testing site** with the App installed, entered in the submission form.
 - **Source maps for review** attached in the form's private upload when the submission ships a minified or generated bundle.
-- **An App Review Preflight run** on the same artifacts, with its `wfpre_…` receipt pasted into the form.
+- **An App Review Preflight run** ([install the tool](https://webflow.com/oauth/authorize?response_type=code&client_id=0b5411e62233387925e082350666ef374377f81a9abba0dcc2542d6b5b1e4388&scope=authorized_user%3Aread)) on the same artifacts, with its `wfpre_…` receipt pasted into the form.
 
 ## What gets an App rejected or removed
 

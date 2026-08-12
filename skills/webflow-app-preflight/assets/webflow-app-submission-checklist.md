@@ -109,7 +109,7 @@ Reviewers verify these by calling your endpoints and asking for evidence, not by
 
 - [ ] A published `.webflow.io` testing site exists with the App installed, and the full experience — including anything the App adds to the published site — works there end to end.
 - [ ] Source maps ready for the form's private upload (one `.map` or one ZIP of version-3 maps from the exact build that produced the bundle) when the submission ships a minified or generated bundle. Not in the public bundle, not in notes.
-- [ ] App Review Preflight run in the Designer on the same bundle + source-map artifact (Data Clients: on the declared production JavaScript URLs), findings resolved, and the `wfpre_…` submission receipt copied for the form.
+- [ ] App Review Preflight ([install into your Workspace](https://webflow.com/oauth/authorize?response_type=code&client_id=0b5411e62233387925e082350666ef374377f81a9abba0dcc2542d6b5b1e4388&scope=authorized_user%3Aread)) run in the Designer on the same bundle + source-map artifact (Data Clients: on the declared production JavaScript URLs), findings resolved, and the `wfpre_…` submission receipt copied for the form.
 
 ### Account
 
