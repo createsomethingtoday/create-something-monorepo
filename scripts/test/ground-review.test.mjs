@@ -1,5 +1,13 @@
 import assert from 'node:assert/strict';
-import { chmodSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import {
+  chmodSync,
+  mkdirSync,
+  mkdtempSync,
+  renameSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -519,6 +527,87 @@ printf '%s\\n' '{"discovered_changed_files":1,"analyzable_changed_files":0,"chan
   ]);
   assert.deepEqual(receipt.targets[0].coverage.excluded_changed_files, [
     { path: 'packages/example/src/café.ts', reason: 'ground_path_mismatch' }
+  ]);
+  assert.equal(receipt.status, 'no_analyzable_files');
+});
+
+test('CLI preserves both sides of a cross-package rename', (t) => {
+  const repo = mkdtempSync(join(tmpdir(), 'ground-review-rename-'));
+  const binaryDir = mkdtempSync(join(tmpdir(), 'ground-review-rename-binary-'));
+  t.after(() => {
+    rmSync(repo, { recursive: true, force: true });
+    rmSync(binaryDir, { recursive: true, force: true });
+  });
+
+  mustRun('git', ['init', '-b', 'main'], repo);
+  mustRun('git', ['config', 'core.hooksPath', '/dev/null'], repo);
+  writeFixtureFile(repo, 'packages/one/package.json', '{"name":"@example/one"}\n');
+  const source = writeFixtureFile(repo, 'packages/one/src/value.ts', 'export const value = 1;\n');
+  writeFixtureFile(repo, 'packages/two/package.json', '{"name":"@example/two"}\n');
+  mkdirSync(join(repo, 'packages/two/src'), { recursive: true });
+  mustRun('git', ['add', '.'], repo);
+  mustRun('git', ['commit', '-m', 'baseline'], repo);
+  const destination = join(repo, 'packages/two/src/value.ts');
+  renameSync(source, destination);
+
+  const fakeGround = writeFixtureFile(
+    binaryDir,
+    'fake-ground',
+    `#!/bin/sh
+printf '%s\\n' '{"discovered_changed_files":2,"analyzable_changed_files":1,"changed_file_list":["packages/two/src/value.ts"],"excluded_changed_files":[],"new_issues":[]}'
+`
+  );
+  chmodSync(fakeGround, 0o755);
+
+  const result = run(process.execPath, [scriptPath, '--base', 'HEAD', '--format', 'json'], repo, {
+    GROUND_BINARY: fakeGround
+  });
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const receipt = JSON.parse(result.stdout);
+  assert.deepEqual(receipt.changed_files, [
+    'packages/one/src/value.ts',
+    'packages/two/src/value.ts'
+  ]);
+  assert.deepEqual(receipt.targets[0].coverage.analyzed_changed_files, [
+    'packages/two/src/value.ts'
+  ]);
+  assert.deepEqual(receipt.coverage.excluded_changed_files, [
+    { path: 'packages/one/src/value.ts', reason: 'deleted_file' }
+  ]);
+});
+
+test('CLI excludes a dangling package source symlink as unreadable', (t) => {
+  const repo = mkdtempSync(join(tmpdir(), 'ground-review-dangling-'));
+  const binaryDir = mkdtempSync(join(tmpdir(), 'ground-review-dangling-binary-'));
+  t.after(() => {
+    rmSync(repo, { recursive: true, force: true });
+    rmSync(binaryDir, { recursive: true, force: true });
+  });
+
+  mustRun('git', ['init', '-b', 'main'], repo);
+  mustRun('git', ['config', 'core.hooksPath', '/dev/null'], repo);
+  writeFixtureFile(repo, 'packages/example/package.json', '{"name":"@example/pkg"}\n');
+  const source = writeFixtureFile(
+    repo,
+    'packages/example/src/link.ts',
+    'export const value = 1;\n'
+  );
+  mustRun('git', ['add', '.'], repo);
+  mustRun('git', ['commit', '-m', 'baseline'], repo);
+  rmSync(source);
+  symlinkSync('missing.ts', source);
+
+  const result = run(process.execPath, [scriptPath, '--base', 'HEAD', '--format', 'json'], repo, {
+    GROUND_BINARY: join(repo, 'missing-ground')
+  });
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const receipt = JSON.parse(result.stdout);
+  assert.deepEqual(receipt.changed_files, ['packages/example/src/link.ts']);
+  assert.deepEqual(receipt.targets, []);
+  assert.deepEqual(receipt.coverage.excluded_changed_files, [
+    { path: 'packages/example/src/link.ts', reason: 'unreadable_file' }
   ]);
   assert.equal(receipt.status, 'no_analyzable_files');
 });
