@@ -14,7 +14,7 @@
     "@create-something/mcp-core": "workspace:*",
     "@create-something/observability": "workspace:*",
     "@modelcontextprotocol/sdk": "1.25.2",
-    "@openai/agents": "^0.4.10",
+    "@openai/agents": "^0.15.0",
     "agents": "^0.3.10",
     "zod": "^4.3.6"
   },
