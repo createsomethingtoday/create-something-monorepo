@@ -24,6 +24,11 @@ test('upstream contribution report keeps acceptance evidence and relationship li
       href.startsWith('https://github.com/')
     )
   );
+  const originalCodexSecurityProposal = upstreamContributionFieldReport.sources.find(
+    ({ id }) => id === '#OAI-71'
+  );
+  assert.equal(originalCodexSecurityProposal?.state, 'archived');
+  assert.match(originalCodexSecurityProposal?.detail ?? '', /closed as superseded by #88/i);
   assert.equal(upstreamContributionFieldReport.sources.at(-1)?.id, '#OAI-0.1.9');
   assert.match(upstreamContributionFieldReport.limits.join(' '), /do not establish a partnership/i);
 });
@@ -40,6 +45,7 @@ test('upstream contribution page exposes primary receipts without implying endor
   assert.match(route, /CTX failed to compile on macOS ARM64/i);
   assert.match(route, /OpenAI maintainers narrowed the security change/i);
   assert.match(route, /Contributor does not mean partner\./i);
+  assert.match(route, /archived original proposal is marked as superseded/i);
   assert.match(route, /upstreamContributionFieldReport\.sources/);
   assert.match(route, /Independent contributor/);
   assert.doesNotMatch(route, /OpenAI partner|trusted by OpenAI|endorsed by OpenAI/i);

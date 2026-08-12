@@ -103,7 +103,7 @@
     id="evidence"
     eyebrow="Primary-source receipts"
     title="Open the review, merge, and release records."
-    description="The links lead to the maintainers' public repositories. The open original proposal is marked for review; accepted and released records are verified."
+    description="The links lead to the maintainers' public repositories. The archived original proposal is marked as superseded; accepted and released records are verified."
     items={evidenceItems}
     ariaLabel="CTX and OpenAI Codex Security contribution receipts"
   />

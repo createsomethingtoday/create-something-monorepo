@@ -9,6 +9,7 @@
   } from '@create-something/canon';
   import PlaybookField from '$lib/components/PlaybookField.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
+  import { playbookHeroMedia } from '$lib/data/playbookHeroMedia';
 
   const auditScenes: PerformanceNarrativeScene[] = [
     {
@@ -62,8 +63,8 @@
     title="See what AI buyers understand—and get wrong—about your business."
     lede="We test 25 high-intent buyer questions across major AI answer surfaces, compare the answers with up to three competitors, and inspect whether agents can find your pricing, proof, documentation, policies, and implementation details."
     density="compact"
-    artifactOwnsMedia
-    artifactMobilePlacement="flow"
+    media={playbookHeroMedia.agentReadiness}
+    mediaMobilePlacement="background"
     proof={[
       { label: 'Price', value: '$3,000 one-time' },
       { label: 'Scope', value: 'One brand · one market' },
@@ -71,12 +72,7 @@
     ]}
   >
     {#snippet actions()}
-      <Button href={agencyCoreMessaging.agentReadinessAuditBookingHref}>
-        Book the audit
-      </Button>
-    {/snippet}
-    {#snippet artifact()}
-      <PlaybookField variant="agent-readiness" />
+      <Button href={agencyCoreMessaging.agentReadinessAuditBookingHref}>Book the audit</Button>
     {/snippet}
   </PerformanceCampaignOpening>
 
@@ -89,11 +85,15 @@
     ariaLabel="AI Buyer Readiness Audit process"
   >
     {#snippet artifact(scene: PerformanceNarrativeScene)}
-      <aside class="audit-record" aria-label={`${scene.label} audit record`}>
-        <span>{scene.label}</span>
-        <strong>{scene.summary}</strong>
-        <p>{scene.detail}</p>
-      </aside>
+      {#if scene.id === 'comparison'}
+        <PlaybookField variant="agent-readiness" />
+      {:else}
+        <aside class="audit-record" aria-label={`${scene.label} audit record`}>
+          <span>{scene.label}</span>
+          <strong>{scene.summary}</strong>
+          <p>{scene.detail}</p>
+        </aside>
+      {/if}
     {/snippet}
   </PerformanceNarrativeStage>
 
@@ -110,9 +110,7 @@
     }}
   >
     {#snippet actions()}
-      <Button href={agencyCoreMessaging.agentReadinessAuditBookingHref}>
-        Book the audit
-      </Button>
+      <Button href={agencyCoreMessaging.agentReadinessAuditBookingHref}>Book the audit</Button>
     {/snippet}
   </PerformanceConversionHandoff>
 </main>

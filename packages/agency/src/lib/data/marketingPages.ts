@@ -741,7 +741,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     search: {
       changefreq: 'monthly',
       priority: '0.82',
-      lastmod: '2026-08-11'
+      lastmod: '2026-08-12'
     },
     selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
   },
@@ -786,7 +786,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     search: {
       changefreq: 'monthly',
       priority: '0.84',
-      lastmod: '2026-08-11'
+      lastmod: '2026-08-12'
     },
     selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
   },

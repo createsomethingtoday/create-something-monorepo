@@ -43,6 +43,10 @@ const expectedHashes: Record<PlaybookHeroRoute, { desktop: string; mobile: strin
   templateReview: {
     desktop: 'd6c9aaaab394231f5f263d71f4f4163003d1b3b46eeb23dc89b90cfd85323e27',
     mobile: 'ffd9e469ddb49138f9d40d09dbb9f827eb66d3ab5eb530270ea725dab9483d97'
+  },
+  agentReadiness: {
+    desktop: 'a9132c5bfce203fd9707477ef2a74ad593de83f3f68223cb14b9c6088033cbde',
+    mobile: '7c5081428ace7394f01bd0f7b120ab027f4695c183a621aea78e2e52c9980cf6'
   }
 };
 

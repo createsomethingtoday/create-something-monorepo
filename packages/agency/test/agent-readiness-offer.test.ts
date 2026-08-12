@@ -26,6 +26,11 @@ test('AI Buyer Readiness Audit is a bounded public diagnostic before Build and C
   assert.match(route, /PerformanceCampaignOpening/);
   assert.match(route, /PerformanceNarrativeStage/);
   assert.match(route, /PerformanceConversionHandoff/);
+  assert.match(route, /import \{ playbookHeroMedia \} from '\$lib\/data\/playbookHeroMedia'/);
+  assert.match(route, /media=\{playbookHeroMedia\.agentReadiness\}/);
+  assert.match(route, /mediaMobilePlacement="background"/);
+  assert.match(route, /<PlaybookField variant="agent-readiness" \/>/);
+  assert.doesNotMatch(route, /artifactOwnsMedia|artifactMobilePlacement/);
   assert.match(route, /agencyCoreMessaging\.agentReadinessAuditBookingHref/);
   assert.doesNotMatch(route, /x402|USDC|checkout/i);
 
@@ -38,7 +43,10 @@ test('AI Buyer Readiness Audit is a bounded public diagnostic before Build and C
   assert.match(salesContract, /self_service_checkout: "inactive"/);
 
   assert.match(commercialInterface, /buyer_readiness_audit:/);
-  assert.match(commercialInterface, /contract_ref: "packages\/agency\/content\/sales\/ai-buyer-readiness-audit\.yaml"/);
+  assert.match(
+    commercialInterface,
+    /contract_ref: "packages\/agency\/content\/sales\/ai-buyer-readiness-audit\.yaml"/
+  );
 });
 
 test('the $49 machine snapshot remains a candidate with production charging disabled', () => {
