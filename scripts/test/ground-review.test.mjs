@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { chmodSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -7,7 +7,9 @@ import { spawnSync } from 'node:child_process';
 import test from 'node:test';
 
 const scriptPath = fileURLToPath(new URL('../ground-review.mjs', import.meta.url));
-const { resolveGroundBinary } = await import(new URL('../ground-review.mjs', import.meta.url));
+const { formatMarkdown, resolveGroundBinary } = await import(
+  new URL('../ground-review.mjs', import.meta.url)
+);
 
 function run(command, args, cwd, env = {}) {
   return spawnSync(command, args, {
@@ -84,6 +86,10 @@ printf '%s\\n' '{"discovered_changed_files":1,"analyzable_changed_files":1,"chan
   assert.equal(receipt.targets[0].path, 'packages/example');
   assert.equal(receipt.targets[0].package_name, '@example/pkg');
   assert.equal(receipt.status, 'findings');
+  const markdown = formatMarkdown(receipt);
+  assert.match(markdown, /## Findings/);
+  assert.match(markdown, /duplicate_function in packages\/example/);
+  assert.match(markdown, /packages\/example\/src\/copy\.ts/);
 });
 
 test('CLI makes zero analyzable coverage explicit without requiring Ground', (t) => {
@@ -281,4 +287,75 @@ printf '{"discovered_changed_files":3,"analyzable_changed_files":1,"changed_file
     receipt.targets.map((target) => target.coverage.excluded_changed_files),
     [[], []]
   );
+});
+
+test('CLI excludes deleted paths from analyzed coverage in a mixed package change', (t) => {
+  const repo = mkdtempSync(join(tmpdir(), 'ground-review-mixed-delete-'));
+  const binaryDir = mkdtempSync(join(tmpdir(), 'ground-review-mixed-delete-binary-'));
+  t.after(() => {
+    rmSync(repo, { recursive: true, force: true });
+    rmSync(binaryDir, { recursive: true, force: true });
+  });
+
+  mustRun('git', ['init', '-b', 'main'], repo);
+  mustRun('git', ['config', 'core.hooksPath', '/dev/null'], repo);
+  writeFixtureFile(repo, 'packages/example/package.json', '{"name":"@example/pkg"}\n');
+  writeFixtureFile(repo, 'packages/example/src/live.ts', 'export const live = 1;\n');
+  const deleted = writeFixtureFile(
+    repo,
+    'packages/example/src/deleted.ts',
+    'export const gone = 1;\n'
+  );
+  mustRun('git', ['add', '.'], repo);
+  mustRun('git', ['commit', '-m', 'baseline'], repo);
+  writeFixtureFile(repo, 'packages/example/src/live.ts', 'export const live = 2;\n');
+  rmSync(deleted);
+
+  const fakeGround = writeFixtureFile(
+    binaryDir,
+    'fake-ground',
+    `#!/bin/sh
+printf '%s\\n' '{"discovered_changed_files":2,"analyzable_changed_files":2,"changed_file_list":["packages/example/src/live.ts","packages/example/src/deleted.ts"],"excluded_changed_files":[],"new_issues":[]}'
+`
+  );
+  chmodSync(fakeGround, 0o755);
+
+  const result = run(process.execPath, [scriptPath, '--base', 'HEAD', '--format', 'json'], repo, {
+    GROUND_BINARY: fakeGround
+  });
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const receipt = JSON.parse(result.stdout);
+  assert.equal(receipt.coverage.analyzable_changed_files, 1);
+  assert.deepEqual(receipt.targets[0].coverage.analyzed_changed_files, [
+    'packages/example/src/live.ts'
+  ]);
+  assert.deepEqual(receipt.coverage.excluded_changed_files, [
+    { path: 'packages/example/src/deleted.ts', reason: 'deleted_file' }
+  ]);
+});
+
+test('CLI includes tracked file type changes in discovery', (t) => {
+  const repo = mkdtempSync(join(tmpdir(), 'ground-review-type-change-'));
+  t.after(() => rmSync(repo, { recursive: true, force: true }));
+
+  mustRun('git', ['init', '-b', 'main'], repo);
+  mustRun('git', ['config', 'core.hooksPath', '/dev/null'], repo);
+  const source = writeFixtureFile(repo, 'review.ts', 'export const value = 1;\n');
+  writeFixtureFile(repo, 'README.md', 'target\n');
+  mustRun('git', ['add', '.'], repo);
+  mustRun('git', ['commit', '-m', 'baseline'], repo);
+  rmSync(source);
+  symlinkSync('README.md', source);
+
+  const result = run(process.execPath, [scriptPath, '--base', 'HEAD', '--format', 'json'], repo, {
+    GROUND_BINARY: join(repo, 'missing-ground')
+  });
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const receipt = JSON.parse(result.stdout);
+  assert.deepEqual(receipt.changed_files, ['review.ts']);
+  assert.deepEqual(receipt.coverage.excluded_changed_files, [
+    { path: 'review.ts', reason: 'outside_package_source' }
+  ]);
 });

@@ -55,7 +55,7 @@ function normalizePath(path) {
 }
 
 function changedFiles(root, base) {
-  const tracked = run('git', ['diff', '--name-only', '--diff-filter=ACMRD', base, '--'], root)
+  const tracked = run('git', ['diff', '--name-only', base, '--'], root)
     .split(/\r?\n/)
     .filter(Boolean);
   const untracked = run('git', ['ls-files', '--others', '--exclude-standard'], root)
@@ -188,15 +188,19 @@ export function buildReceipt({ root, base, baseSha, files, deleted, groundBinary
     const result = parseGroundJson(
       run(groundBinary, ['diff', path, '--base', baseSha, '--checks', CHECKS.join(',')], root)
     );
+    const analyzedChangedFiles = (result.changed_file_list ?? [])
+      .map((file) => receiptPath(root, file))
+      .filter((file) => !deleted.has(file));
     return {
       path,
       package_name: packageName(root, path),
       coverage: {
         discovered_changed_files: result.discovered_changed_files ?? 0,
-        analyzable_changed_files: result.analyzable_changed_files ?? result.changed_files ?? 0,
-        analyzed_changed_files: (result.changed_file_list ?? []).map((file) =>
-          receiptPath(root, file)
-        ),
+        analyzable_changed_files:
+          result.changed_file_list == null || result.changed_file_list.length === 0
+            ? (result.analyzable_changed_files ?? result.changed_files ?? 0)
+            : analyzedChangedFiles.length,
+        analyzed_changed_files: analyzedChangedFiles,
         excluded_changed_files: (result.excluded_changed_files ?? []).map((exclusion) => ({
           ...exclusion,
           path: receiptPath(root, exclusion.path)
@@ -289,6 +293,18 @@ export function formatMarkdown(receipt) {
     lines.push('', '## Coverage exclusions', '');
     for (const exclusion of receipt.coverage.excluded_changed_files) {
       lines.push(`- ${exclusion.path}: ${exclusion.reason}`);
+    }
+  }
+  if (receipt.findings.length > 0) {
+    lines.push('', '## Findings', '');
+    for (const finding of receipt.findings) {
+      const { target, type, path, files, ...evidence } = finding;
+      lines.push(`- ${type ?? 'finding'}${target ? ` in ${target}` : ''}`);
+      if (path) lines.push(`  - Path: ${path}`);
+      if (Array.isArray(files) && files.length > 0) lines.push(`  - Files: ${files.join(', ')}`);
+      if (Object.keys(evidence).length > 0) {
+        lines.push(`  - Evidence: ${JSON.stringify(evidence)}`);
+      }
     }
   }
   lines.push('', '_Advisory evidence only; findings do not block promotion during calibration._');
