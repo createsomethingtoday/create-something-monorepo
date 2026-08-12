@@ -33,6 +33,9 @@ reason to leave production-relevant agentic work at a local diff.
    checkout. For delegated or shared work, start from a Linear issue.
 2. Build context from repo artifacts and package docs.
 3. Run the narrow relevant checks for the touched surface.
+   Include `pnpm ground:review -- --base origin/main` for an advisory,
+   machine-derived changed-code receipt; preserve its exclusions alongside its
+   findings instead of treating unsupported files as checked-clean.
 4. Deploy directly to DEV or preview from the current workspace if runtime evidence is needed.
 5. Record the deploy evidence in Linear when the checkpoint affects handoff,
    review, rollback, or promotion.

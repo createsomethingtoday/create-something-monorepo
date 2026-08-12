@@ -43,6 +43,41 @@ Run the fast contract checks before relying on this lane for broader work:
 pnpm agent:solo-loop:check
 ```
 
+The check includes an advisory Ground review of package source changed from
+`origin/main`. The receipt reports every discovered change, which files Ground
+could analyze with its duplicate and orphan checks, explicit coverage
+exclusions, and observed findings. Duplicate findings are marked as observations
+because Ground does not yet baseline duplicate pairs against the base revision.
+The receipt also separates per-check coverage: duplicate analysis applies to all
+analyzable changed files, while orphan analysis applies only to files absent from
+the base revision and not excluded by the extended `.ground.yml` path policy.
+During calibration, a finding or unavailable
+Ground binary is visible in the step evidence but does not make the solo-loop
+fail.
+
+Run or capture the receipt directly when it belongs in a Linear or promotion
+handoff:
+
+```bash
+pnpm ground:review -- --base origin/main
+pnpm ground:review:json -- --base origin/main
+```
+
+The pilot covers changed TypeScript, JavaScript, and `.mjs` files beneath a
+package with `package.json`. Svelte, Rust, root scripts, other unsupported
+paths, and source files following the repository's
+`*.generated.{ts,tsx,js,jsx,mjs}` convention remain named exclusions rather
+than being reported as checked-clean. A file whose staged content differs from
+its worktree content is also named as an `index_worktree_mismatch` exclusion;
+Ground analyzes the live worktree and cannot claim coverage of both versions.
+Mode-only source changes remain visible as `mode_only_change` exclusions rather
+than producing findings from unchanged code.
+
+Keep the receipt advisory until at least 20 representative PRs have recorded
+finding precision, false positives, and coverage exclusions. Promotion to a
+blocking gate requires an explicit policy change based on that calibration; a
+successful advisory receipt is not approval to merge or deploy.
+
 The default command is read-only. It reports checkout dirtiness, upstream
 divergence, Codex command availability, and the recommended operating
 loop. It does not mutate git, Linear, deployments, secrets, or production
@@ -165,6 +200,7 @@ For this guide and its command:
 
 ```bash
 pnpm agent:solo-loop:test
+node --test scripts/test/ground-review.test.mjs
 pnpm agent:solo-loop:check
 git diff --check
 ```

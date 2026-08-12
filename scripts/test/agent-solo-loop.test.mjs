@@ -172,6 +172,7 @@ test('home-base CLI passes exact main and fails dirty or non-main checkouts', (t
   mustRun('git', ['init', '--bare'], remote);
   mkdirSync(repo);
   mustRun('git', ['init', '-b', 'main'], repo);
+  mustRun('git', ['config', 'core.hooksPath', '/dev/null'], repo);
 
   for (const relativePath of [
     'AGENTS.md',
@@ -208,6 +209,7 @@ test('home-base CLI passes exact main and fails dirty or non-main checkouts', (t
 
 test('repo contract exposes home-base verification and worktree disposition closeout', () => {
   const packageJson = JSON.parse(readFileSync(join(repoRoot, 'package.json'), 'utf8'));
+  const soloLoop = readFileSync(join(repoRoot, 'scripts/agent-solo-loop.mjs'), 'utf8');
   const agents = readFileSync(join(repoRoot, 'AGENTS.md'), 'utf8');
   const soloGuide = readFileSync(
     join(repoRoot, 'docs/guides/SOLO_OPERATOR_AGENT_LOOP.md'),
@@ -222,6 +224,9 @@ test('repo contract exposes home-base verification and worktree disposition clos
     packageJson.scripts['agent:home-base'],
     'node scripts/agent-solo-loop.mjs --home-base'
   );
+  assert.equal(packageJson.scripts['ground:review'], 'node scripts/ground-review.mjs');
+  assert.match(soloLoop, /Run advisory Ground changed-code review/);
+  assert.match(soloLoop, /scripts\/ground-review\.mjs/);
   assert.match(agents, /pnpm agent:home-base/);
   assert.match(soloGuide, /clean `main`.*exact `origin\/main`/s);
   assert.match(harnessGuide, /Worktree disposition:/);

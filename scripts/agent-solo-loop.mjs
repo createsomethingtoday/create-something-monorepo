@@ -247,7 +247,7 @@ Peter Steinberger-inspired solo-operator loop readiness for this repo.
 Default mode is read-only and never mutates git, Linear, or deployments.
 
 Options:
-  --check              Run fast repo-local validation commands for the solo-loop contract.
+  --check              Run fast repo-local validation commands and an advisory Ground review.
   --home-base          Require clean main at the exact origin/main SHA.
   --strict             Fail when checkout is dirty or behind upstream.
   --json               Print machine-readable output.
@@ -313,6 +313,25 @@ function main() {
   steps.push(step('codex-command', 'Check optional Codex CLI availability', codexProbe, true));
 
   if (options.check) {
+    steps.push(
+      step(
+        'ground-review',
+        'Run advisory Ground changed-code review',
+        run('node', ['scripts/ground-review.mjs', '--format', 'json'], {
+          summarize: (stdout, stderr, ok) => {
+            if (!ok)
+              return `Advisory Ground review unavailable: ${summarize(`${stdout}${stderr}`)}`;
+            try {
+              const receipt = JSON.parse(stdout);
+              return `Ground review ${receipt.status}: ${receipt.coverage?.discovered_changed_files ?? 0} changed, ${receipt.coverage?.analyzable_changed_files ?? 0} analyzable, ${receipt.findings?.length ?? 0} finding(s).`;
+            } catch {
+              return summarize(stdout);
+            }
+          }
+        }),
+        true
+      )
+    );
     steps.push(
       step(
         'agent-legibility',
