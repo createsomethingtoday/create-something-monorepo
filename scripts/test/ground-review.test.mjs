@@ -15,7 +15,7 @@ import { spawnSync } from 'node:child_process';
 import test from 'node:test';
 
 const scriptPath = fileURLToPath(new URL('../ground-review.mjs', import.meta.url));
-const { formatMarkdown, resolveGroundBinary } = await import(
+const { formatMarkdown, matchesPathGlob, resolveGroundBinary } = await import(
   new URL('../ground-review.mjs', import.meta.url)
 );
 
@@ -46,6 +46,13 @@ function writeFixtureFile(root, relativePath, contents) {
   writeFileSync(absolutePath, contents);
   return absolutePath;
 }
+
+test('path policy glob matching supports the declared Node 20 runtime floor', () => {
+  assert.equal(matchesPathGlob('src/routes/+page.server.ts', '**/**/+page.server.ts'), true);
+  assert.equal(matchesPathGlob('src/lib/types.d.ts', '**/*.d.ts'), true);
+  assert.equal(matchesPathGlob('scripts/review/run.ts', '**/scripts/**'), true);
+  assert.equal(matchesPathGlob('src/routes/+page.ts', '**/**/+page.server.ts'), false);
+});
 
 test('CLI emits an advisory JSON receipt for a changed package', (t) => {
   const repo = mkdtempSync(join(tmpdir(), 'ground-review-'));
