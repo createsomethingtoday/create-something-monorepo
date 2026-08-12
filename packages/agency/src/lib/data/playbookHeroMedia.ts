@@ -8,7 +8,8 @@ export type PlaybookHeroRoute =
   | 'fieldReports'
   | 'workflows'
   | 'map'
-  | 'templateReview';
+  | 'templateReview'
+  | 'agentReadiness';
 
 const imageRoot = '/images/performance-lab';
 
@@ -86,6 +87,14 @@ export const playbookHeroMedia: Record<PlaybookHeroRoute, PerformanceCampaignMed
     src: `${imageRoot}/playbook-template-review-human-gate.webp`,
     mobileSrc: `${imageRoot}/playbook-template-review-human-gate-mobile.webp`,
     alt: 'Macro-real Playbook court with an ivory AI agent marker stopped before a human approval gate and a proof-green terminal beyond it.',
+    width: 1536,
+    height: 1024,
+    colorMode: 'natural'
+  },
+  agentReadiness: {
+    src: `${imageRoot}/playbook-agent-readiness-source-check.webp`,
+    mobileSrc: `${imageRoot}/playbook-agent-readiness-source-check-mobile.webp`,
+    alt: 'Macro-real Playbook court with an ivory AI agent checking two source tiles, one missing-source boundary, and a proof-green receipt.',
     width: 1536,
     height: 1024,
     colorMode: 'natural'
