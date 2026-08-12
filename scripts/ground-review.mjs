@@ -448,15 +448,28 @@ export function buildReceipt({
   );
   const changedSet = new Set(files);
   const targets = packageRoots.map((path) => {
-    const scanLimitExceeded = exceedsGroundScanLimit(resolve(root, path));
-    const result = scanLimitExceeded
-      ? { changed_file_list: [], excluded_changed_files: [], new_issues: [] }
-      : parseGroundJson(
-          run(groundBinary, ['diff', path, '--base', baseSha, '--checks', CHECKS.join(',')], root)
-        );
+    const requiresCompletionEvidence = exceedsGroundScanLimit(resolve(root, path));
+    const result = parseGroundJson(
+      run(groundBinary, ['diff', path, '--base', baseSha, '--checks', CHECKS.join(',')], root)
+    );
+    const duplicateCompletion = result.check_coverage?.duplicates;
+    const duplicateStatus = ['completed', 'partial', 'failed'].includes(duplicateCompletion?.status)
+      ? duplicateCompletion.status
+      : requiresCompletionEvidence
+        ? 'partial'
+        : 'completed';
+    const orphanCompletion = result.check_coverage?.orphans;
+    const orphanStatus = ['completed', 'partial', 'failed'].includes(orphanCompletion?.status)
+      ? orphanCompletion.status
+      : 'completed';
+    const duplicateReportedFiles = Array.isArray(duplicateCompletion?.analyzed_changed_files)
+      ? duplicateCompletion.analyzed_changed_files
+      : requiresCompletionEvidence
+        ? []
+        : (result.changed_file_list ?? []);
     const reportedAnalyzedChangedFiles = [
       ...new Set(
-        (result.changed_file_list ?? [])
+        duplicateReportedFiles
           .map((file) => receiptPath(root, file))
           .filter(
             (file) =>
@@ -471,34 +484,52 @@ export function buildReceipt({
           )
       )
     ];
-    const analyzedChangedFiles = scanLimitExceeded ? [] : reportedAnalyzedChangedFiles;
-    const scanLimitExclusions = scanLimitExceeded
-      ? files
-          .filter(
-            (file) =>
-              file.startsWith(`${path}/`) &&
-              supportedSource(file) &&
-              !generatedSource(file) &&
-              !deleted.has(file) &&
-              !indexWorktreeMismatch.has(file) &&
-              !modeOnly.has(file) &&
-              !unmerged.has(file) &&
-              !unreadable.has(file)
-          )
-          .map((file) => ({ path: file, reason: 'ground_scan_cap' }))
-      : [];
+    const analyzedChangedFiles = reportedAnalyzedChangedFiles;
+    const completionExclusions = Array.isArray(duplicateCompletion?.excluded_changed_files)
+      ? duplicateCompletion.excluded_changed_files.map((exclusion) => ({
+          ...exclusion,
+          path: receiptPath(root, exclusion.path)
+        }))
+      : requiresCompletionEvidence
+        ? files
+            .filter(
+              (file) =>
+                file.startsWith(`${path}/`) &&
+                supportedSource(file) &&
+                !generatedSource(file) &&
+                !deleted.has(file) &&
+                !indexWorktreeMismatch.has(file) &&
+                !modeOnly.has(file) &&
+                !unmerged.has(file) &&
+                !unreadable.has(file)
+            )
+            .map((file) => ({ path: file, reason: 'ground_completion_evidence_missing' }))
+        : [];
     const analyzedPathSet = new Set(analyzedChangedFiles);
-    const orphanAnalyzedFiles = analyzedChangedFiles.filter(
-      (file) => added.has(file) && !groundPolicyIgnored(root, path, file, ignorePatterns)
-    );
-    const orphanExcludedFiles = analyzedChangedFiles
-      .filter((file) => !orphanAnalyzedFiles.includes(file))
-      .map((file) => ({
-        path: file,
-        reason: added.has(file)
-          ? 'ground_policy_exclusion'
-          : 'existing_file_not_checked_for_orphans'
-      }));
+    const orphanAnalyzedFiles = Array.isArray(orphanCompletion?.analyzed_changed_files)
+      ? [
+          ...new Set(
+            orphanCompletion.analyzed_changed_files
+              .map((file) => receiptPath(root, file))
+              .filter((file) => changedSet.has(file) && file.startsWith(`${path}/`))
+          )
+        ]
+      : analyzedChangedFiles.filter(
+          (file) => added.has(file) && !groundPolicyIgnored(root, path, file, ignorePatterns)
+        );
+    const orphanExcludedFiles = Array.isArray(orphanCompletion?.excluded_changed_files)
+      ? orphanCompletion.excluded_changed_files.map((exclusion) => ({
+          ...exclusion,
+          path: receiptPath(root, exclusion.path)
+        }))
+      : analyzedChangedFiles
+          .filter((file) => !orphanAnalyzedFiles.includes(file))
+          .map((file) => ({
+            path: file,
+            reason: added.has(file)
+              ? 'ground_policy_exclusion'
+              : 'existing_file_not_checked_for_orphans'
+          }));
     const orphanAnalyzedSet = new Set(orphanAnalyzedFiles);
     return {
       path,
@@ -509,11 +540,13 @@ export function buildReceipt({
         analyzed_changed_files: analyzedChangedFiles,
         checks: {
           duplicates: {
+            status: duplicateStatus,
             analyzable_changed_files: analyzedChangedFiles.length,
             analyzed_changed_files: analyzedChangedFiles,
             excluded_changed_files: []
           },
           orphans: {
+            status: orphanStatus,
             analyzable_changed_files: orphanAnalyzedFiles.length,
             analyzed_changed_files: orphanAnalyzedFiles,
             excluded_changed_files: orphanExcludedFiles
@@ -524,7 +557,7 @@ export function buildReceipt({
             ...exclusion,
             path: receiptPath(root, exclusion.path)
           })),
-          ...scanLimitExclusions
+          ...completionExclusions
         ]
       },
       findings: (result.new_issues ?? [])
@@ -643,11 +676,21 @@ export function buildReceipt({
   const analyzable = analyzedSet.size;
   const checkCoverage = {
     duplicates: {
+      status: targets.some((target) => target.coverage.checks.duplicates.status === 'failed')
+        ? 'failed'
+        : targets.every((target) => target.coverage.checks.duplicates.status === 'completed')
+          ? 'completed'
+          : 'partial',
       analyzable_changed_files: analyzable,
       analyzed_changed_files: [...analyzedSet],
       excluded_changed_files: excluded.filter((exclusion) => supportedSource(exclusion.path))
     },
     orphans: {
+      status: targets.some((target) => target.coverage.checks.orphans.status === 'failed')
+        ? 'failed'
+        : targets.every((target) => target.coverage.checks.orphans.status === 'completed')
+          ? 'completed'
+          : 'partial',
       analyzable_changed_files: targets.reduce(
         (count, target) => count + target.coverage.checks.orphans.analyzable_changed_files,
         0
@@ -665,6 +708,9 @@ export function buildReceipt({
       ]
     }
   };
+  const checksComplete = Object.values(checkCoverage).every(
+    (coverage) => coverage.status === 'completed'
+  );
 
   return {
     schema_version: 'ground-review-receipt.v1',
@@ -682,7 +728,14 @@ export function buildReceipt({
       excluded_changed_files: excluded
     },
     findings,
-    status: findings.length > 0 ? 'findings' : analyzable > 0 ? 'clear' : 'no_analyzable_files'
+    status:
+      findings.length > 0
+        ? 'findings'
+        : analyzable === 0
+          ? 'no_analyzable_files'
+          : checksComplete
+            ? 'clear'
+            : 'partial'
   };
 }
 
@@ -705,7 +758,9 @@ export function formatMarkdown(receipt) {
   if (receipt.coverage.checks) {
     lines.push(
       `- Duplicate-check coverage: ${receipt.coverage.checks.duplicates.analyzable_changed_files} file(s)`,
-      `- Orphan-check coverage: ${receipt.coverage.checks.orphans.analyzable_changed_files} new file(s)`
+      `- Duplicate-check status: ${receipt.coverage.checks.duplicates.status}`,
+      `- Orphan-check coverage: ${receipt.coverage.checks.orphans.analyzable_changed_files} new file(s)`,
+      `- Orphan-check status: ${receipt.coverage.checks.orphans.status}`
     );
   }
   if (receipt.targets.length > 0) {

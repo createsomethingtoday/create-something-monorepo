@@ -90,6 +90,15 @@ reason an excluded path was not analyzed. Analyzability is derived from the
 requested checks, so a source language unsupported by those checks is reported
 as `unsupported_by_requested_checks` rather than checked-clean.
 
+For promotion evidence, read `check_coverage.<check>.status`,
+`analyzed_changed_files`, and `excluded_changed_files`. Ground 0.3.2 removes
+`ground diff`'s silent 500-file truncation and makes source traversal
+deterministic and cycle-safe. Diff mode parses the complete corpus but only
+compares pairs involving changed files. A changed file is only listed as
+analyzed for a check after that check completed for the file; partial or failed
+analysis stays explicit in the per-check exclusions. Standalone broad duplicate
+scans retain their safety bound and report `scan_complete: false` when it is hit.
+
 ### Check Commands (do these first)
 
 ```bash

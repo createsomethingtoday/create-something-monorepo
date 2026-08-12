@@ -105,6 +105,7 @@ printf '%s\\n' '{"discovered_changed_files":1,"analyzable_changed_files":1,"chan
   assert.equal(receipt.targets[0].package_name, '@example/pkg');
   assert.equal(receipt.status, 'findings');
   assert.deepEqual(receipt.coverage.checks.orphans, {
+    status: 'completed',
     analyzable_changed_files: 0,
     analyzed_changed_files: [],
     excluded_changed_files: [
@@ -157,6 +158,7 @@ printf '%s\\n' '{"changed_file_list":["packages/example/src/existing.ts","packag
     'packages/example/src/new.ts'
   ]);
   assert.deepEqual(receipt.coverage.checks.orphans, {
+    status: 'completed',
     analyzable_changed_files: 1,
     analyzed_changed_files: ['packages/example/src/new.ts'],
     excluded_changed_files: [
@@ -278,6 +280,7 @@ printf '%s\\n' '{"changed_file_list":["packages/example/src/routes/+page.server.
   const receipt = JSON.parse(result.stdout);
   assert.equal(receipt.coverage.checks.duplicates.analyzable_changed_files, 1);
   assert.deepEqual(receipt.coverage.checks.orphans, {
+    status: 'completed',
     analyzable_changed_files: 0,
     analyzed_changed_files: [],
     excluded_changed_files: [
@@ -1061,7 +1064,7 @@ printf '%s\\n' '{"discovered_changed_files":2,"analyzable_changed_files":2,"chan
   assert.equal(receipt.status, 'clear');
 });
 
-test('CLI excludes changed source when the Ground scan cap is exceeded', (t) => {
+test('CLI accepts per-file completion evidence beyond the former Ground scan cap', (t) => {
   const repo = mkdtempSync(join(tmpdir(), 'ground-review-scan-cap-'));
   const binaryDir = mkdtempSync(join(tmpdir(), 'ground-review-scan-cap-binary-'));
   t.after(() => {
@@ -1087,7 +1090,7 @@ test('CLI excludes changed source when the Ground scan cap is exceeded', (t) => 
     binaryDir,
     'fake-ground',
     `#!/bin/sh
-exit 99
+printf '%s\\n' '{"changed_file_list":["packages/example/src/file-500.ts"],"excluded_changed_files":[],"check_coverage":{"duplicates":{"status":"completed","analyzed_changed_files":["packages/example/src/file-500.ts"],"excluded_changed_files":[]},"orphans":{"status":"completed","analyzed_changed_files":[],"excluded_changed_files":[{"path":"packages/example/src/file-500.ts","reason":"existing_file_not_checked_for_orphans"}]}},"new_issues":[]}'
 `
   );
   chmodSync(fakeGround, 0o755);
@@ -1098,15 +1101,116 @@ exit 99
 
   assert.equal(result.status, 0, result.stderr || result.stdout);
   const receipt = JSON.parse(result.stdout);
-  assert.equal(receipt.coverage.analyzable_changed_files, 0);
-  assert.deepEqual(receipt.targets[0].coverage.analyzed_changed_files, []);
-  assert.deepEqual(receipt.coverage.excluded_changed_files, [
-    { path: 'packages/example/src/file-500.ts', reason: 'ground_scan_cap' }
+  assert.equal(receipt.coverage.analyzable_changed_files, 1);
+  assert.deepEqual(receipt.targets[0].coverage.analyzed_changed_files, [
+    'packages/example/src/file-500.ts'
   ]);
-  assert.equal(receipt.status, 'no_analyzable_files');
+  assert.deepEqual(receipt.coverage.excluded_changed_files, []);
+  assert.equal(receipt.status, 'clear');
+
+  writeFixtureFile(
+    binaryDir,
+    'fake-ground',
+    `#!/bin/sh
+printf '%s\\n' '{"changed_file_list":["packages/example/src/file-500.ts"],"excluded_changed_files":[],"new_issues":[]}'
+`
+  );
+  chmodSync(fakeGround, 0o755);
+  const legacyResult = run(
+    process.execPath,
+    [scriptPath, '--base', 'HEAD', '--format', 'json'],
+    repo,
+    { GROUND_BINARY: fakeGround }
+  );
+  assert.equal(legacyResult.status, 0, legacyResult.stderr || legacyResult.stdout);
+  const legacyReceipt = JSON.parse(legacyResult.stdout);
+  assert.equal(legacyReceipt.coverage.analyzable_changed_files, 0);
+  assert.deepEqual(legacyReceipt.coverage.excluded_changed_files, [
+    {
+      path: 'packages/example/src/file-500.ts',
+      reason: 'ground_completion_evidence_missing'
+    }
+  ]);
 });
 
-test('CLI treats symlinked directory aliases as capped Ground traversal', (t) => {
+test('CLI preserves partial Ground completion status in the review receipt', (t) => {
+  const repo = mkdtempSync(join(tmpdir(), 'ground-review-partial-completion-'));
+  const binaryDir = mkdtempSync(join(tmpdir(), 'ground-review-partial-completion-binary-'));
+  t.after(() => {
+    rmSync(repo, { recursive: true, force: true });
+    rmSync(binaryDir, { recursive: true, force: true });
+  });
+
+  mustRun('git', ['init', '-b', 'main'], repo);
+  mustRun('git', ['config', 'core.hooksPath', '/dev/null'], repo);
+  writeFixtureFile(repo, 'packages/example/package.json', '{"name":"@example/pkg"}\n');
+  writeFixtureFile(repo, 'packages/example/src/value.ts', 'export const value = 1;\n');
+  mustRun('git', ['add', '.'], repo);
+  mustRun('git', ['commit', '-m', 'baseline'], repo);
+  writeFixtureFile(repo, 'packages/example/src/value.ts', 'export const value = 2;\n');
+
+  const fakeGround = writeFixtureFile(
+    binaryDir,
+    'fake-ground',
+    `#!/bin/sh
+printf '%s\\n' '{"changed_file_list":["packages/example/src/value.ts"],"excluded_changed_files":[],"check_coverage":{"duplicates":{"status":"partial","analyzed_changed_files":["packages/example/src/value.ts"],"excluded_changed_files":[]},"orphans":{"status":"completed","analyzed_changed_files":[],"excluded_changed_files":[{"path":"packages/example/src/value.ts","reason":"existing_file_not_checked_for_orphans"}]}},"new_issues":[]}'
+`
+  );
+  chmodSync(fakeGround, 0o755);
+
+  const result = run(process.execPath, [scriptPath, '--base', 'HEAD', '--format', 'json'], repo, {
+    GROUND_BINARY: fakeGround
+  });
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const receipt = JSON.parse(result.stdout);
+  assert.equal(receipt.coverage.checks.duplicates.status, 'partial');
+  assert.deepEqual(receipt.coverage.checks.duplicates.analyzed_changed_files, [
+    'packages/example/src/value.ts'
+  ]);
+  assert.equal(receipt.status, 'partial');
+  assert.match(formatMarkdown(receipt), /Duplicate-check status: partial/);
+});
+
+test('CLI preserves Ground orphan per-file failure evidence', (t) => {
+  const repo = mkdtempSync(join(tmpdir(), 'ground-review-orphan-partial-'));
+  const binaryDir = mkdtempSync(join(tmpdir(), 'ground-review-orphan-partial-binary-'));
+  t.after(() => {
+    rmSync(repo, { recursive: true, force: true });
+    rmSync(binaryDir, { recursive: true, force: true });
+  });
+
+  mustRun('git', ['init', '-b', 'main'], repo);
+  mustRun('git', ['config', 'core.hooksPath', '/dev/null'], repo);
+  writeFixtureFile(repo, 'packages/example/package.json', '{"name":"@example/pkg"}\n');
+  mustRun('git', ['add', '.'], repo);
+  mustRun('git', ['commit', '-m', 'baseline'], repo);
+  writeFixtureFile(repo, 'packages/example/src/new.ts', 'export const value = 1;\n');
+
+  const fakeGround = writeFixtureFile(
+    binaryDir,
+    'fake-ground',
+    `#!/bin/sh
+printf '%s\\n' '{"changed_file_list":["packages/example/src/new.ts"],"excluded_changed_files":[],"check_coverage":{"duplicates":{"status":"completed","analyzed_changed_files":["packages/example/src/new.ts"],"excluded_changed_files":[]},"orphans":{"status":"partial","analyzed_changed_files":[],"excluded_changed_files":[{"path":"packages/example/src/new.ts","reason":"orphan_analysis_failed"}]}},"new_issues":[]}'
+`
+  );
+  chmodSync(fakeGround, 0o755);
+
+  const result = run(process.execPath, [scriptPath, '--base', 'HEAD', '--format', 'json'], repo, {
+    GROUND_BINARY: fakeGround
+  });
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const receipt = JSON.parse(result.stdout);
+  assert.equal(receipt.coverage.checks.orphans.status, 'partial');
+  assert.deepEqual(receipt.coverage.checks.orphans.analyzed_changed_files, []);
+  assert.deepEqual(receipt.coverage.checks.orphans.excluded_changed_files, [
+    { path: 'packages/example/src/new.ts', reason: 'orphan_analysis_failed' }
+  ]);
+  assert.equal(receipt.status, 'partial');
+});
+
+test('CLI accepts bounded completion evidence with a symlinked directory alias', (t) => {
   const repo = mkdtempSync(join(tmpdir(), 'ground-review-symlink-directory-'));
   const binaryDir = mkdtempSync(join(tmpdir(), 'ground-review-symlink-directory-binary-'));
   t.after(() => {
@@ -1127,7 +1231,7 @@ test('CLI treats symlinked directory aliases as capped Ground traversal', (t) =>
     binaryDir,
     'fake-ground',
     `#!/bin/sh
-exit 99
+printf '%s\\n' '{"changed_file_list":["packages/example/src/value.ts"],"excluded_changed_files":[],"check_coverage":{"duplicates":{"status":"completed","analyzed_changed_files":["packages/example/src/value.ts"],"excluded_changed_files":[]},"orphans":{"status":"completed","analyzed_changed_files":[],"excluded_changed_files":[{"path":"packages/example/src/value.ts","reason":"existing_file_not_checked_for_orphans"}]}},"new_issues":[]}'
 `
   );
   chmodSync(fakeGround, 0o755);
@@ -1138,8 +1242,6 @@ exit 99
 
   assert.equal(result.status, 0, result.stderr || result.stdout);
   const receipt = JSON.parse(result.stdout);
-  assert.equal(receipt.coverage.analyzable_changed_files, 0);
-  assert.deepEqual(receipt.coverage.excluded_changed_files, [
-    { path: 'packages/example/src/value.ts', reason: 'ground_scan_cap' }
-  ]);
+  assert.equal(receipt.coverage.analyzable_changed_files, 1);
+  assert.deepEqual(receipt.coverage.excluded_changed_files, []);
 });

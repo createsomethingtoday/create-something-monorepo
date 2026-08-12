@@ -58,6 +58,15 @@ was not analyzed, including `unsupported_by_requested_checks`. If no changed
 source is eligible, the result explicitly says so; it does not describe
 excluded files as clean.
 
+For promotion evidence, inspect `check_coverage.<check>.status`,
+`analyzed_changed_files`, and `excluded_changed_files`. Ground 0.3.2 removes
+`ground diff`'s silent 500-file truncation and makes source traversal
+deterministic and cycle-safe. Diff mode parses the complete corpus but only
+compares pairs involving changed files. A changed file is only listed as
+analyzed for a check after that check completed for the file; partial or failed
+analysis stays explicit in the per-check exclusions. Standalone broad duplicate
+scans retain their safety bound and report `scan_complete: false` when it is hit.
+
 The release package includes the native Apple Silicon binaries directly; other
 supported platforms download the matching verified release asset during install.
 
