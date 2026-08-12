@@ -103,8 +103,8 @@ function changedFiles(root, base) {
   return [...new Set([...tracked, ...untracked].map(normalizePath))].sort();
 }
 
-function indexWorktreeMismatchFiles(root, base) {
-  const staged = new Set(trackedChanges(root, base, true).map(({ path }) => path));
+function indexWorktreeMismatchFiles(root) {
+  const staged = new Set(trackedChanges(root, 'HEAD', true).map(({ path }) => path));
   return new Set(
     run('git', ['diff', '--name-only', '-z', '--'], root)
       .split('\0')
@@ -617,8 +617,17 @@ export function buildReceipt({
   }
   const finalTargetExclusions = targets.flatMap((target) => target.coverage.excluded_changed_files);
   for (const target of targets) {
-    target.coverage.checks.duplicates.excluded_changed_files =
-      target.coverage.excluded_changed_files.filter((exclusion) => supportedSource(exclusion.path));
+    const sourceExclusions = target.coverage.excluded_changed_files.filter((exclusion) =>
+      supportedSource(exclusion.path)
+    );
+    target.coverage.checks.duplicates.excluded_changed_files = sourceExclusions;
+    target.coverage.checks.orphans.excluded_changed_files = [
+      ...new Map(
+        [...target.coverage.checks.orphans.excluded_changed_files, ...sourceExclusions].map(
+          (exclusion) => [`${exclusion.path}:${exclusion.reason}`, exclusion]
+        )
+      ).values()
+    ];
   }
   const excluded = [
     ...new Map(
@@ -645,9 +654,14 @@ export function buildReceipt({
       analyzed_changed_files: targets.flatMap(
         (target) => target.coverage.checks.orphans.analyzed_changed_files
       ),
-      excluded_changed_files: targets.flatMap(
-        (target) => target.coverage.checks.orphans.excluded_changed_files
-      )
+      excluded_changed_files: [
+        ...new Map(
+          [
+            ...targets.flatMap((target) => target.coverage.checks.orphans.excluded_changed_files),
+            ...excluded.filter((exclusion) => supportedSource(exclusion.path))
+          ].map((exclusion) => [`${exclusion.path}:${exclusion.reason}`, exclusion])
+        ).values()
+      ]
     }
   };
 
@@ -740,7 +754,7 @@ function main() {
     if (!baseSha) throw new Error(`No merge base found for ${options.base} and HEAD.`);
     const files = changedFiles(root, baseSha);
     const added = addedFiles(root, baseSha, files);
-    const indexWorktreeMismatch = indexWorktreeMismatchFiles(root, baseSha);
+    const indexWorktreeMismatch = indexWorktreeMismatchFiles(root);
     const modeOnly = modeOnlyFiles(root, baseSha);
     const deleted = deletedFiles(root, baseSha);
     const unmerged = unmergedFiles(root);
