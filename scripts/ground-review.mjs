@@ -9,10 +9,20 @@ import {
   realpathSync,
   statSync
 } from 'node:fs';
-import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import {
+  basename,
+  dirname,
+  isAbsolute,
+  join,
+  matchesGlob,
+  relative,
+  resolve,
+  sep
+} from 'node:path';
 import { spawnSync } from 'node:child_process';
 import process from 'node:process';
 import { pathToFileURL } from 'node:url';
+import { parse as parseYaml } from 'yaml';
 
 const SUPPORTED_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs']);
 const CHECKS = ['duplicates', 'orphans'];
@@ -236,6 +246,34 @@ function packageName(root, packageRoot) {
   }
 }
 
+function groundIgnorePatterns(root) {
+  const patterns = [];
+  const visited = new Set();
+
+  function load(path) {
+    const absolute = resolve(path);
+    if (visited.has(absolute) || !existsSync(absolute)) return;
+    visited.add(absolute);
+    const config = parseYaml(readFileSync(absolute, 'utf8')) ?? {};
+    for (const extended of config.extends ?? []) load(resolve(dirname(absolute), extended));
+    patterns.push(...(config.ignore?.paths ?? []));
+  }
+
+  for (const name of ['.ground.yml', '.ground.yaml', 'ground.yml', 'ground.yaml']) {
+    const candidate = resolve(root, name);
+    if (existsSync(candidate)) {
+      load(candidate);
+      break;
+    }
+  }
+  return [...new Set(patterns)];
+}
+
+function groundPolicyIgnored(root, target, file, patterns) {
+  const targetRelative = normalizePath(relative(resolve(root, target), resolve(root, file)));
+  return patterns.some((pattern) => matchesGlob(targetRelative, pattern));
+}
+
 function collapsePackageRoots(paths) {
   return [...paths]
     .sort(
@@ -347,6 +385,7 @@ export function buildReceipt({
   unreadable,
   groundBinary
 }) {
+  const ignorePatterns = groundIgnorePatterns(root);
   const packageRoots = collapsePackageRoots(
     new Set(
       files
@@ -402,10 +441,18 @@ export function buildReceipt({
           .map((file) => ({ path: file, reason: 'ground_scan_cap' }))
       : [];
     const analyzedPathSet = new Set(analyzedChangedFiles);
-    const orphanAnalyzedFiles = analyzedChangedFiles.filter((file) => added.has(file));
+    const orphanAnalyzedFiles = analyzedChangedFiles.filter(
+      (file) => added.has(file) && !groundPolicyIgnored(root, path, file, ignorePatterns)
+    );
     const orphanExcludedFiles = analyzedChangedFiles
-      .filter((file) => !added.has(file))
-      .map((file) => ({ path: file, reason: 'existing_file_not_checked_for_orphans' }));
+      .filter((file) => !orphanAnalyzedFiles.includes(file))
+      .map((file) => ({
+        path: file,
+        reason: added.has(file)
+          ? 'ground_policy_exclusion'
+          : 'existing_file_not_checked_for_orphans'
+      }));
+    const orphanAnalyzedSet = new Set(orphanAnalyzedFiles);
     return {
       path,
       package_name: packageName(root, path),
@@ -435,7 +482,13 @@ export function buildReceipt({
       },
       findings: (result.new_issues ?? [])
         .map((finding) => normalizeFinding(root, finding))
-        .filter((finding) => findingPaths(finding).some((file) => analyzedPathSet.has(file)))
+        .filter((finding) =>
+          findingPaths(finding).some((file) =>
+            finding.type === 'orphan_module'
+              ? orphanAnalyzedSet.has(file)
+              : analyzedPathSet.has(file)
+          )
+        )
     };
   });
 
