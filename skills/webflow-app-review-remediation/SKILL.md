@@ -132,6 +132,8 @@ For every finding include:
 - Authorized runtime evidence, if applicable
 - Remaining limitation or open decision
 
+For the resubmission itself, run **App Review Preflight** on the corrected bundle and the same source-map artifact you will attach to the submission form, and include the issued `wfpre_…` submission receipt in the form. The receipt reconciles the resubmitted artifacts with the preflight run; it does not certify that any finding is accepted. The form also requires a published `.webflow.io` testing site with the corrected revision installed.
+
 End with one of:
 
 - **READY TO RESUBMIT** — every issued P1 or unassigned acceptance criterion has evidence and no containment or open policy (Judgment) blocker remains.
