@@ -827,7 +827,7 @@ test('CLI excludes changed source when the Ground scan cap is exceeded', (t) => 
     binaryDir,
     'fake-ground',
     `#!/bin/sh
-printf '%s\\n' '{"discovered_changed_files":1,"analyzable_changed_files":1,"changed_file_list":["packages/example/src/file-500.ts"],"excluded_changed_files":[],"new_issues":[]}'
+exit 99
 `
   );
   chmodSync(fakeGround, 0o755);
@@ -867,7 +867,7 @@ test('CLI treats symlinked directory aliases as capped Ground traversal', (t) =>
     binaryDir,
     'fake-ground',
     `#!/bin/sh
-printf '%s\\n' '{"discovered_changed_files":1,"analyzable_changed_files":1,"changed_file_list":["packages/example/src/value.ts"],"excluded_changed_files":[],"new_issues":[]}'
+exit 99
 `
   );
   chmodSync(fakeGround, 0o755);
