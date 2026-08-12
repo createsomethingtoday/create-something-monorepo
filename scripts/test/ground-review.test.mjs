@@ -470,7 +470,7 @@ test('CLI analyzes a live replacement after a staged deletion at the same path',
     binaryDir,
     'fake-ground',
     `#!/bin/sh
-printf '%s\\n' '{"discovered_changed_files":1,"analyzable_changed_files":1,"changed_file_list":["packages/example/src/index.ts"],"excluded_changed_files":[],"new_issues":[]}'
+printf '%s\\n' '{"discovered_changed_files":1,"analyzable_changed_files":2,"changed_file_list":["packages/example/src/index.ts","packages/example/src/index.ts"],"excluded_changed_files":[],"new_issues":[]}'
 `
   );
   chmodSync(fakeGround, 0o755);
@@ -529,6 +529,45 @@ printf '%s\\n' '{"discovered_changed_files":1,"analyzable_changed_files":0,"chan
     { path: 'packages/example/src/café.ts', reason: 'ground_path_mismatch' }
   ]);
   assert.equal(receipt.status, 'no_analyzable_files');
+});
+
+test('CLI preserves unsupported Unicode paths when Ground cannot round-trip them', (t) => {
+  const repo = mkdtempSync(join(tmpdir(), 'ground-review-unsupported-unicode-'));
+  const binaryDir = mkdtempSync(join(tmpdir(), 'ground-review-unsupported-unicode-binary-'));
+  t.after(() => {
+    rmSync(repo, { recursive: true, force: true });
+    rmSync(binaryDir, { recursive: true, force: true });
+  });
+
+  mustRun('git', ['init', '-b', 'main'], repo);
+  mustRun('git', ['config', 'core.hooksPath', '/dev/null'], repo);
+  writeFixtureFile(repo, 'packages/example/package.json', '{"name":"@example/pkg"}\n');
+  writeFixtureFile(repo, 'packages/example/src/index.ts', 'export const value = 1;\n');
+  writeFixtureFile(repo, 'packages/example/src/café.svelte', '<p>one</p>\n');
+  mustRun('git', ['add', '.'], repo);
+  mustRun('git', ['commit', '-m', 'baseline'], repo);
+  writeFixtureFile(repo, 'packages/example/src/index.ts', 'export const value = 2;\n');
+  writeFixtureFile(repo, 'packages/example/src/café.svelte', '<p>two</p>\n');
+
+  const fakeGround = writeFixtureFile(
+    binaryDir,
+    'fake-ground',
+    `#!/bin/sh
+printf '%s\\n' '{"discovered_changed_files":2,"analyzable_changed_files":1,"changed_file_list":["packages/example/src/index.ts"],"excluded_changed_files":[],"new_issues":[]}'
+`
+  );
+  chmodSync(fakeGround, 0o755);
+
+  const result = run(process.execPath, [scriptPath, '--base', 'HEAD', '--format', 'json'], repo, {
+    GROUND_BINARY: fakeGround
+  });
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const receipt = JSON.parse(result.stdout);
+  assert.equal(receipt.coverage.analyzable_changed_files, 1);
+  assert.deepEqual(receipt.coverage.excluded_changed_files, [
+    { path: 'packages/example/src/café.svelte', reason: 'unsupported_extension' }
+  ]);
 });
 
 test('CLI preserves both sides of a cross-package rename', (t) => {
