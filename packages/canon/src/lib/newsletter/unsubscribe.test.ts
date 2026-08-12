@@ -7,16 +7,18 @@ describe('unsubscribe lifecycle', () => {
     const token = btoa('reader@example.com:123456');
     const db = {
       prepare(sql: string) {
-        return {
-          bind(...values: unknown[]) {
-            return {
-              async run() {
-                calls.push({ sql, values });
-                return { success: true };
-              }
-            };
+        let values: unknown[] = [];
+        const statement = {
+          bind(...nextValues: unknown[]) {
+            values = nextValues;
+            return statement;
+          },
+          async run() {
+            calls.push({ sql, values });
+            return { success: true };
           }
         };
+        return statement;
       }
     };
 
