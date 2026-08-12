@@ -46,10 +46,25 @@ function getBinaryName() {
   return name;
 }
 
-function getDownloadUrl(binaryName) {
-  const ext = process.platform === 'win32' ? 'zip' : 'tar.gz';
-  // Tag format: v0.2.0
-  return `https://github.com/${REPO}/releases/download/v${VERSION}/ground-${binaryName}.${ext}`;
+function getDownloadUrl(binaryName, platform = process.platform) {
+  const ext = platform === 'win32' ? 'zip' : 'tar.gz';
+  return `https://github.com/${REPO}/releases/download/ground-v${VERSION}/ground-${binaryName}.${ext}`;
+}
+
+function hasBundledNativeBinaries() {
+  // The npm artifact includes a release-built Apple Silicon bootstrap pair.
+  // Other platforms continue through the release-asset downloader below.
+  if (getPlatformKey() !== 'darwin-arm64') return false;
+
+  const binDir = path.join(__dirname, 'bin');
+  return ['ground', 'ground-mcp'].every((name) => {
+    const binary = path.join(binDir, name);
+    try {
+      return fs.statSync(binary).isFile() && (fs.statSync(binary).mode & 0o111) !== 0;
+    } catch {
+      return false;
+    }
+  });
 }
 
 async function download(url) {
@@ -101,6 +116,11 @@ async function install() {
 
   if (IS_SOURCE_TREE_INSTALL) {
     console.log('Ground MCP: Skipping binary install in source checkout');
+    return;
+  }
+
+  if (hasBundledNativeBinaries()) {
+    console.log('Ground MCP: Using bundled darwin-arm64 binaries');
     return;
   }
 
@@ -178,5 +198,10 @@ async function install() {
   }
 }
 
-// Run installer
-install();
+if (require.main === module) {
+  install();
+}
+
+module.exports = {
+  getDownloadUrl,
+};

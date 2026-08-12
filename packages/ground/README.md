@@ -66,6 +66,22 @@ The binary is at `target/release/ground`.
 
 ## Commands
 
+### Verified agent loop
+
+For an agent working on the current checkout, use the batch commands first:
+
+```bash
+# Return structured, computed findings for the current source tree
+ground analyze ./src --checks duplicates,dead_exports
+
+# Only examine changed files under ./src relative to the Git baseline
+ground diff ./src --base origin/main --checks duplicates
+```
+
+The MCP equivalents are `ground_analyze`, `ground_diff`, `ground_verify_fix`,
+and `ground_explain`. CTX remains complementary: it retrieves prior agent
+history, while Ground computes facts from the source currently on disk.
+
 ### Check Commands (do these first)
 
 ```bash

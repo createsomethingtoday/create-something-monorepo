@@ -2660,9 +2660,15 @@ fn handle_diff(args: &Value) -> ToolResult {
     let cross_package = args.get("cross_package")
         .and_then(|v| v.as_bool())
         .unwrap_or(false);
+
+    let analysis_root = directory.canonicalize().unwrap_or_else(|_| directory.clone());
+    let repo_root = match git_repository_root(&directory) {
+        Ok(root) => root,
+        Err(e) => return ToolResult::error(format!("Failed to find git repository: {}", e)),
+    };
     
     // Get changed files since base using git
-    let changed_files = match get_changed_files_since(&directory, base_ref) {
+    let changed_files = match get_changed_files_since(&repo_root, base_ref) {
         Ok(files) => files,
         Err(e) => {
             return ToolResult::error(format!(
@@ -2688,13 +2694,17 @@ fn handle_diff(args: &Value) -> ToolResult {
     // Filter changed files by config ignore patterns and file type
     let relevant_files: Vec<PathBuf> = changed_files.iter()
         .filter(|f| {
-            // Only TypeScript/JavaScript files
+            if !f.starts_with(&analysis_root) {
+                return false;
+            }
+
+            // Keep diff filtering aligned with the CLI's supported-language default.
             let ext = f.extension().and_then(|e| e.to_str()).unwrap_or("");
-            if !matches!(ext, "ts" | "tsx" | "js" | "jsx") {
+            if !matches!(ext, "ts" | "tsx" | "js" | "jsx" | "rs") {
                 return false;
             }
             // Apply config path filters
-            !config.should_ignore_path(f)
+            !config.should_ignore_path(f.strip_prefix(&analysis_root).unwrap_or(f))
         })
         .cloned()
         .collect();
@@ -2772,7 +2782,7 @@ fn handle_diff(args: &Value) -> ToolResult {
             }
             
             // Check if this is a new file (not in base)
-            let is_new_file = is_file_new_since(&directory, file, base_ref);
+            let is_new_file = is_file_new_since(&repo_root, file, base_ref);
             
             if is_new_file {
                 // Check connections for this specific file
@@ -2817,13 +2827,13 @@ fn handle_diff(args: &Value) -> ToolResult {
 }
 
 /// Get list of files changed since a git ref
-fn get_changed_files_since(repo_dir: &Path, base_ref: &str) -> Result<Vec<PathBuf>, String> {
+fn get_changed_files_since(repo_root: &Path, base_ref: &str) -> Result<Vec<PathBuf>, String> {
     use std::process::Command;
     
     // Get the merge base between current HEAD and the base ref
     let merge_base_output = Command::new("git")
         .args(["merge-base", base_ref, "HEAD"])
-        .current_dir(repo_dir)
+        .current_dir(repo_root)
         .output()
         .map_err(|e| format!("Failed to run git merge-base: {}", e))?;
     
@@ -2837,7 +2847,7 @@ fn get_changed_files_since(repo_dir: &Path, base_ref: &str) -> Result<Vec<PathBu
     // Get diff against merge base
     let output = Command::new("git")
         .args(["diff", "--name-only", &merge_base])
-        .current_dir(repo_dir)
+        .current_dir(repo_root)
         .output()
         .map_err(|e| format!("Failed to run git diff: {}", e))?;
     
@@ -2851,13 +2861,13 @@ fn get_changed_files_since(repo_dir: &Path, base_ref: &str) -> Result<Vec<PathBu
     let files: Vec<PathBuf> = String::from_utf8_lossy(&output.stdout)
         .lines()
         .filter(|line| !line.is_empty())
-        .map(|line| repo_dir.join(line))
+        .map(|line| repo_root.join(line))
         .collect();
     
     // Also get untracked files (new files not yet committed)
     let untracked_output = Command::new("git")
         .args(["ls-files", "--others", "--exclude-standard"])
-        .current_dir(repo_dir)
+        .current_dir(repo_root)
         .output()
         .map_err(|e| format!("Failed to run git ls-files: {}", e))?;
     
@@ -2866,7 +2876,7 @@ fn get_changed_files_since(repo_dir: &Path, base_ref: &str) -> Result<Vec<PathBu
         let untracked: Vec<PathBuf> = String::from_utf8_lossy(&untracked_output.stdout)
             .lines()
             .filter(|line| !line.is_empty())
-            .map(|line| repo_dir.join(line))
+            .map(|line| repo_root.join(line))
             .collect();
         all_files.extend(untracked);
     }
@@ -2874,17 +2884,33 @@ fn get_changed_files_since(repo_dir: &Path, base_ref: &str) -> Result<Vec<PathBu
     Ok(all_files)
 }
 
+fn git_repository_root(directory: &Path) -> Result<PathBuf, String> {
+    use std::process::Command;
+
+    let output = Command::new("git")
+        .args(["rev-parse", "--show-toplevel"])
+        .current_dir(directory)
+        .output()
+        .map_err(|e| format!("Failed to run git rev-parse: {}", e))?;
+
+    if !output.status.success() {
+        return Err(String::from_utf8_lossy(&output.stderr).trim().to_string());
+    }
+
+    Ok(PathBuf::from(String::from_utf8_lossy(&output.stdout).trim()))
+}
+
 /// Check if a file is new (didn't exist in base ref)
-fn is_file_new_since(repo_dir: &Path, file: &Path, base_ref: &str) -> bool {
+fn is_file_new_since(repo_root: &Path, file: &Path, base_ref: &str) -> bool {
     use std::process::Command;
     
     // Get relative path
-    let relative = file.strip_prefix(repo_dir).unwrap_or(file);
+    let relative = file.strip_prefix(repo_root).unwrap_or(file);
     
     // Try to show the file at the base ref
     let output = Command::new("git")
         .args(["show", &format!("{}:{}", base_ref, relative.display())])
-        .current_dir(repo_dir)
+        .current_dir(repo_root)
         .output();
     
     match output {
@@ -3603,5 +3629,43 @@ mod tests {
         assert!(result.success);
         assert_eq!(result.content["claimed"], false);
         assert_eq!(result.content["blocked"], true);
+    }
+
+    #[test]
+    fn diff_paths_are_root_relative_when_called_from_a_subdirectory() {
+        use std::fs;
+        use std::process::Command;
+
+        let repo = tempdir().unwrap();
+        let run_git = |args: &[&str]| {
+            let status = Command::new("git")
+                .args(args)
+                .current_dir(repo.path())
+                .status()
+                .unwrap();
+            assert!(status.success(), "git {:?} failed", args);
+        };
+
+        run_git(&["init", "--quiet"]);
+        run_git(&["config", "user.email", "ground@example.test"]);
+        run_git(&["config", "user.name", "Ground test"]);
+
+        let package = repo.path().join("packages/ground");
+        fs::create_dir_all(&package).unwrap();
+        let tracked = package.join("tracked.rs");
+        fs::write(&tracked, "fn before() {}\n").unwrap();
+        run_git(&["add", "."]);
+        run_git(&["commit", "--quiet", "-m", "baseline"]);
+
+        fs::write(&tracked, "fn after() {}\n").unwrap();
+        let untracked = package.join("untracked.ts");
+        fs::write(&untracked, "export const newFile = true;\n").unwrap();
+
+        let root = git_repository_root(&package).unwrap();
+        assert_eq!(root.canonicalize().unwrap(), repo.path().canonicalize().unwrap());
+
+        let changed = get_changed_files_since(&root, "HEAD").unwrap();
+        assert!(changed.contains(&root.join("packages/ground/tracked.rs")));
+        assert!(changed.contains(&root.join("packages/ground/untracked.ts")));
     }
 }
