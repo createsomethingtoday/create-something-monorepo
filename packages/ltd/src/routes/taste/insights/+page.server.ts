@@ -7,12 +7,12 @@
  */
 
 import type { PageServerLoad } from './$types';
+import { fetchTasteInsights, EMPTY_INSIGHTS, type InsightsData } from '$lib/taste/insights';
 import {
-	fetchTasteInsights,
-	EMPTY_INSIGHTS,
-	type InsightsData,
-} from '$lib/taste/insights';
-import { getTokenFromRequest, validateToken, type AuthEnv } from '@create-something/canon/auth/server';
+	getTokenFromRequest,
+	validateToken,
+	type AuthEnv,
+} from '@create-something/canon/auth/server';
 
 export const load: PageServerLoad = async ({ request, platform }) => {
 	const db = platform?.env?.DB;
@@ -20,7 +20,8 @@ export const load: PageServerLoad = async ({ request, platform }) => {
 	if (!db) {
 		return {
 			...EMPTY_INSIGHTS,
-			error: 'Database not available',
+			error: 'Insights are temporarily unavailable. Your reading history is still safe.',
+			errorKind: 'unavailable',
 		} satisfies InsightsData;
 	}
 
@@ -29,7 +30,8 @@ export const load: PageServerLoad = async ({ request, platform }) => {
 	if (!token) {
 		return {
 			...EMPTY_INSIGHTS,
-			error: 'Sign in to view your reading insights',
+			error: 'Sign in to see the reading history saved to your account.',
+			errorKind: 'signed-out',
 		} satisfies InsightsData;
 	}
 
@@ -37,7 +39,8 @@ export const load: PageServerLoad = async ({ request, platform }) => {
 	if (!user) {
 		return {
 			...EMPTY_INSIGHTS,
-			error: 'Sign in to view your reading insights',
+			error: 'Sign in to see the reading history saved to your account.',
+			errorKind: 'signed-out',
 		} satisfies InsightsData;
 	}
 
@@ -56,7 +59,8 @@ export const load: PageServerLoad = async ({ request, platform }) => {
 		return {
 			...EMPTY_INSIGHTS,
 			userId,
-			error: 'Failed to load insights',
+			error: 'Insights could not load. Try again before starting another study session.',
+			errorKind: 'unavailable',
 		} satisfies InsightsData;
 	}
 };

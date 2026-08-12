@@ -67,6 +67,7 @@ export interface InsightsData {
 	dailyActivity: DailyActivity[];
 	profile: TasteProfile;
 	error?: string;
+	errorKind?: 'signed-out' | 'unavailable';
 }
 
 // =============================================================================
@@ -127,6 +128,23 @@ export function formatTime(seconds: number): string {
 	const hours = Math.floor(seconds / 3600);
 	const mins = Math.round((seconds % 3600) / 60);
 	return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+}
+
+/**
+ * Format a database date without allowing the reader's timezone to shift the day.
+ * D1 returns these values as YYYY-MM-DD rather than as instants in time.
+ */
+export function formatDateOnly(value: string): string {
+	const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+	if (!match) return value;
+
+	const [, year, month, day] = match;
+	const date = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+	return date.toLocaleDateString('en-US', {
+		month: 'short',
+		day: 'numeric',
+		timeZone: 'UTC',
+	});
 }
 
 // =============================================================================

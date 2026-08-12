@@ -2,96 +2,142 @@
   import { browser } from '$app/environment';
   import { SEO } from '@create-something/canon';
 
-  // Asset definitions
-  const icons = [
-    {
-      name: 'Icon with Background',
-      file: 'icon-with-bg.svg',
-      description: '512×512 with black background'
-    },
-    {
-      name: 'Icon Circular',
-      file: 'icon-circular.svg',
-      description: 'Circular variant for avatars'
-    },
-    {
-      name: 'Icon Only',
-      file: 'icon-only.svg',
-      description: 'Transparent, scalable'
-    }
-  ];
+  type BrandAsset = {
+    name: string;
+    file: string;
+    description: string;
+    preview: 'dark' | 'light';
+    size: 'icon' | 'lockup' | 'wordmark';
+  };
 
-  const wordmarks = [
+  const assetGroups: Array<{ title: string; guidance: string; assets: BrandAsset[] }> = [
     {
-      name: 'Wordmark White',
-      file: 'wordmark-white.svg',
-      description: 'For dark backgrounds',
-      bg: 'dark'
+      title: 'Icons',
+      guidance: 'Use an icon for avatars, app tiles, and small square placements.',
+      assets: [
+        {
+          name: 'Icon with Background',
+          file: 'icon-with-bg.svg',
+          description: '512×512 with a black background',
+          preview: 'dark',
+          size: 'icon'
+        },
+        {
+          name: 'Icon Circular',
+          file: 'icon-circular.svg',
+          description: 'Circular variant for avatars',
+          preview: 'dark',
+          size: 'icon'
+        },
+        {
+          name: 'Icon Only',
+          file: 'icon-only.svg',
+          description: 'Transparent and scalable',
+          preview: 'dark',
+          size: 'icon'
+        }
+      ]
     },
     {
-      name: 'Wordmark Black',
-      file: 'wordmark-black.svg',
-      description: 'For light backgrounds',
-      bg: 'light'
-    }
-  ];
-
-  const lockups = [
-    {
-      name: 'Horizontal Light',
-      file: 'lockup-horizontal-light.svg',
-      description: 'For dark backgrounds',
-      bg: 'dark'
+      title: 'Lockups',
+      guidance: 'Use a lockup when the mark and name must appear together.',
+      assets: [
+        {
+          name: 'Horizontal Light',
+          file: 'lockup-horizontal-light.svg',
+          description: 'For dark backgrounds',
+          preview: 'dark',
+          size: 'lockup'
+        },
+        {
+          name: 'Horizontal Dark',
+          file: 'lockup-horizontal-dark.svg',
+          description: 'For light backgrounds',
+          preview: 'light',
+          size: 'lockup'
+        },
+        {
+          name: 'Stacked Light',
+          file: 'lockup-stacked-light.svg',
+          description: 'For dark, narrow placements',
+          preview: 'dark',
+          size: 'lockup'
+        },
+        {
+          name: 'Stacked Dark',
+          file: 'lockup-stacked-dark.svg',
+          description: 'For light, narrow placements',
+          preview: 'light',
+          size: 'lockup'
+        }
+      ]
     },
     {
-      name: 'Horizontal Dark',
-      file: 'lockup-horizontal-dark.svg',
-      description: 'For light backgrounds',
-      bg: 'light'
-    },
-    {
-      name: 'Stacked Light',
-      file: 'lockup-stacked-light.svg',
-      description: 'For dark backgrounds',
-      bg: 'dark'
-    },
-    {
-      name: 'Stacked Dark',
-      file: 'lockup-stacked-dark.svg',
-      description: 'For light backgrounds',
-      bg: 'light'
+      title: 'Wordmarks',
+      guidance: 'Use a wordmark when the name matters more than the cube.',
+      assets: [
+        {
+          name: 'Wordmark White',
+          file: 'wordmark-white.svg',
+          description: 'For dark backgrounds',
+          preview: 'dark',
+          size: 'wordmark'
+        },
+        {
+          name: 'Wordmark Black',
+          file: 'wordmark-black.svg',
+          description: 'For light backgrounds',
+          preview: 'light',
+          size: 'wordmark'
+        }
+      ]
     }
   ];
 
   const colors = [
-    { name: 'Pure Black', value: '#000000', token: '--color-performance-bg-pure' },
-    { name: 'Elevated', value: '#0a0a0a', token: '--color-performance-bg-elevated' },
-    { name: 'Surface', value: '#111111', token: '--color-performance-bg-surface' },
-    { name: 'Pure White', value: '#ffffff', token: '--color-performance-fg-primary' }
+    {
+      name: 'Pure background',
+      token: '--color-performance-bg-pure',
+      dark: '#000000',
+      light: '#ffffff'
+    },
+    {
+      name: 'Elevated background',
+      token: '--color-performance-bg-elevated',
+      dark: '#0a0a0a',
+      light: '#fafafa'
+    },
+    {
+      name: 'Surface background',
+      token: '--color-performance-bg-surface',
+      dark: '#111111',
+      light: '#f5f5f5'
+    },
+    {
+      name: 'Primary foreground',
+      token: '--color-performance-fg-primary',
+      dark: '#ffffff',
+      light: '#1a1a1a'
+    }
   ];
 
-  function copyToClipboard(text: string) {
-    if (browser) {
-      navigator.clipboard.writeText(text);
-    }
-  }
+  let copyResult = $state<{ token: string; status: 'copied' | 'failed' } | null>(null);
 
-  function downloadSvg(filename: string) {
-    if (browser) {
-      const link = document.createElement('a');
-      link.href = `/brand/${filename}?download=1&v=${Date.now()}`;
-      link.download = filename;
-      link.rel = 'noopener';
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+  async function copyToken(token: string) {
+    if (!browser) return;
+
+    try {
+      await navigator.clipboard.writeText(token);
+      copyResult = { token, status: 'copied' };
+    } catch {
+      copyResult = { token, status: 'failed' };
     }
   }
 </script>
 
 <SEO
   title="Brand Assets"
-  description="Official brand assets for CREATE SOMETHING. Download logos, wordmarks, and lockups."
+  description="Choose and download official CREATE SOMETHING brand assets, then check their usage rules."
   propertyName="ltd"
   breadcrumbs={[
     { name: 'Home', url: 'https://createsomething.ltd' },
@@ -99,366 +145,399 @@
   ]}
 />
 
-<main class="brand-page">
-  <header class="brand-header">
-    <h1 class="brand-title">Brand Assets</h1>
-    <p class="brand-subtitle">Official assets for CREATE SOMETHING. Use responsibly.</p>
-  </header>
-
-  <!-- Icons Section -->
-  <section class="asset-section">
-    <h2 class="section-title">Icons</h2>
-    <div class="asset-grid icons-grid">
-      {#each icons as icon}
-        <button class="asset-card" onclick={() => downloadSvg(icon.file)} type="button">
-          <div class="asset-preview dark">
-            <img src="/brand/{icon.file}" alt={icon.name} class="preview-image" />
-          </div>
-          <div class="asset-info">
-            <span class="asset-name">{icon.name}</span>
-            <span class="asset-description">{icon.description}</span>
-          </div>
-        </button>
-      {/each}
-    </div>
+<div class="brand-page">
+  <section class="chapter intro" data-performance-chapter="task-state">
+    <p class="eyebrow">Brand kit</p>
+    <h1>Choose the asset that fits the placement.</h1>
+    <p class="lede">
+      Download an SVG below. Use a light asset on a dark background and a dark asset on a light
+      background.
+    </p>
+    <noscript>
+      <p class="notice">JavaScript is off. The direct download links remain available.</p>
+    </noscript>
   </section>
 
-  <!-- Lockups Section -->
-  <section class="asset-section">
-    <h2 class="section-title">Lockups</h2>
-    <div class="asset-grid lockups-grid">
-      {#each lockups as lockup}
-        <button class="asset-card" onclick={() => downloadSvg(lockup.file)} type="button">
-          <div class="asset-preview {lockup.bg}">
-            <img src="/brand/{lockup.file}" alt={lockup.name} class="preview-image lockup" />
-          </div>
-          <div class="asset-info">
-            <span class="asset-name">{lockup.name}</span>
-            <span class="asset-description">{lockup.description}</span>
-          </div>
-        </button>
-      {/each}
+  <section class="chapter" data-performance-chapter="workspace">
+    <div class="section-heading">
+      <p class="eyebrow">Assets</p>
+      <h2>Download an SVG</h2>
     </div>
-  </section>
 
-  <!-- Wordmarks Section -->
-  <section class="asset-section">
-    <h2 class="section-title">Wordmarks</h2>
-    <div class="asset-grid wordmarks-grid">
-      {#each wordmarks as wordmark}
-        <button class="asset-card" onclick={() => downloadSvg(wordmark.file)} type="button">
-          <div class="asset-preview {wordmark.bg}">
-            <img src="/brand/{wordmark.file}" alt={wordmark.name} class="preview-image wordmark" />
-          </div>
-          <div class="asset-info">
-            <span class="asset-name">{wordmark.name}</span>
-            <span class="asset-description">{wordmark.description}</span>
-          </div>
-        </button>
-      {/each}
-    </div>
-  </section>
-
-  <!-- Colors Section -->
-  <section class="asset-section">
-    <h2 class="section-title">Colors</h2>
-    <div class="colors-grid">
-      {#each colors as color}
-        <button
-          class="color-card"
-          onclick={() => copyToClipboard(color.value)}
-          type="button"
-          title="Click to copy"
-        >
-          <div class="color-swatch" style="background-color: {color.value}"></div>
-          <div class="color-info">
-            <span class="color-name">{color.name}</span>
-            <span class="color-value">{color.value}</span>
-            <span class="color-token">{color.token}</span>
-          </div>
-        </button>
-      {/each}
-    </div>
-  </section>
-
-  <!-- Typography Section -->
-  <section class="asset-section">
-    <h2 class="section-title">Typography</h2>
-    <div class="typography-grid">
-      <div class="type-card">
-        <span class="type-sample sans">Canon Sans</span>
-        <span class="type-meta">Arial / Helvetica / system · Weight 700 · Neutral tracking</span>
+    {#each assetGroups as group}
+      <div class="asset-group">
+        <div class="group-heading">
+          <h3>{group.title}</h3>
+          <p>{group.guidance}</p>
+        </div>
+        <div class="asset-grid">
+          {#each group.assets as asset}
+            <a class="asset-card" href="/brand/{asset.file}?download=1" download={asset.file}>
+              <span class="asset-preview {asset.preview}">
+                <img src="/brand/{asset.file}" alt="" class={asset.size} />
+              </span>
+              <span class="asset-copy">
+                <strong>{asset.name}</strong>
+                <span>{asset.description}</span>
+                <span class="download-label">Download SVG</span>
+              </span>
+            </a>
+          {/each}
+        </div>
       </div>
-      <div class="type-card">
-        <span class="type-sample mono">Canon Mono</span>
-        <span class="type-meta">Platform monospace · Operational state and technical content</span>
+    {/each}
+
+    <div class="system-grid">
+      <div>
+        <div class="group-heading">
+          <h3>Color tokens</h3>
+          <p>
+            These are Canon defaults. A token can resolve differently by theme and property overlay,
+            so copy the token—not a fixed color—into product code.
+          </p>
+        </div>
+        <div class="token-list">
+          {#each colors as color}
+            <div class="token-card">
+              <div class="swatches" aria-hidden="true">
+                <span style={`background-color: ${color.dark}`}></span>
+                <span style={`background-color: ${color.light}`}></span>
+              </div>
+              <div class="token-copy">
+                <strong>{color.name}</strong>
+                <code>{color.token}</code>
+                <span>Dark theme {color.dark} · Light theme {color.light}</span>
+              </div>
+              <button type="button" onclick={() => copyToken(color.token)}>
+                {#if copyResult?.token === color.token && copyResult.status === 'copied'}
+                  Copied
+                {:else if copyResult?.token === color.token && copyResult.status === 'failed'}
+                  Could not copy
+                {:else}
+                  Copy token
+                {/if}
+              </button>
+            </div>
+          {/each}
+        </div>
+        <noscript>
+          <p class="notice">
+            Copy the token text manually. Color values remain readable without JavaScript.
+          </p>
+        </noscript>
+      </div>
+
+      <div>
+        <div class="group-heading">
+          <h3>Typography</h3>
+          <p>Use the shared stacks so type remains stable across platforms.</p>
+        </div>
+        <div class="type-card">
+          <strong class="sans">Canon Sans</strong>
+          <span>Arial / Helvetica / system · Weight 700 · Neutral tracking</span>
+        </div>
+        <div class="type-card">
+          <strong class="mono">Canon Mono</strong>
+          <span>Platform monospace · Operational state and technical content</span>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- Guidelines Section -->
-  <section class="asset-section guidelines-section">
-    <h2 class="section-title">Usage Guidelines</h2>
-    <ul class="guidelines-list">
-      <li>Match logo variant to background (light logo on dark, dark on light)</li>
-      <li>Maintain clear space around the logo equal to the cube height</li>
-      <li>Do not rotate, skew, or apply effects to the logo</li>
-      <li>Do not change the logo colors or opacity values</li>
-      <li>Do not place on busy or patterned backgrounds</li>
-    </ul>
+  <section class="chapter receipt" data-performance-chapter="decision-receipt">
+    <div>
+      <p class="eyebrow">Before publishing</p>
+      <h2>Usage Guidelines</h2>
+      <ul>
+        <li>Match the asset to its background: light on dark, dark on light.</li>
+        <li>Keep clear space around the logo equal to the cube height.</li>
+        <li>Do not rotate, skew, or add effects.</li>
+        <li>Do not change logo colors or opacity.</li>
+        <li>Do not place the logo on a busy or patterned background.</li>
+      </ul>
+    </div>
+    <div class="handoff">
+      <p>Need implementation details?</p>
+      <a href="/canon/foundations/colors">Check Canon color tokens</a>
+      <a href="/canon/foundations/typography">Check Canon typography</a>
+    </div>
   </section>
-</main>
+</div>
 
 <style>
   .brand-page {
-    max-width: 1200px;
+    width: min(1120px, calc(100% - 2rem));
     margin: 0 auto;
-    padding: var(--space-performance-xl) var(--space-performance-lg);
+    padding: clamp(2rem, 6vw, 5rem) 0;
   }
 
-  .brand-header {
-    text-align: center;
-    margin-bottom: var(--space-performance-2xl);
-    padding-bottom: var(--space-performance-xl);
+  .chapter {
+    padding: clamp(2rem, 5vw, 4rem) 0;
+    border-top: 1px solid var(--color-performance-border-default);
   }
 
-  .brand-title {
-    font-size: var(--text-performance-display);
-    font-weight: var(--font-performance-bold);
-    color: var(--color-performance-fg-primary);
-    margin-bottom: var(--space-performance-sm);
+  .intro {
+    padding-top: 0;
+    border-top: 0;
   }
 
-  .brand-subtitle {
-    font-size: var(--text-performance-body-lg);
+  .eyebrow {
+    margin: 0 0 0.75rem;
+    font-family: var(--font-performance-mono);
+    font-size: var(--text-performance-caption);
     color: var(--color-performance-fg-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
   }
 
-  .asset-section {
-    margin-bottom: var(--space-performance-2xl);
+  h1,
+  h2,
+  h3,
+  p {
+    margin-top: 0;
   }
 
-  .section-title {
-    font-size: var(--text-performance-h2);
-    font-weight: var(--font-performance-semibold);
-    color: var(--color-performance-fg-primary);
-    margin-bottom: var(--space-performance-lg);
+  h1 {
+    max-width: 15ch;
+    margin-bottom: 1rem;
+    font-size: clamp(2.5rem, 7vw, 5.5rem);
+    line-height: 0.95;
+    letter-spacing: -0.055em;
+  }
+
+  h2 {
+    font-size: clamp(1.75rem, 4vw, 3rem);
+    letter-spacing: -0.035em;
+  }
+
+  h3 {
+    margin-bottom: 0.35rem;
+    font-size: var(--text-performance-h3);
+  }
+
+  .lede,
+  .group-heading p {
+    max-width: 62ch;
+    color: var(--color-performance-fg-secondary);
+    line-height: 1.6;
+  }
+
+  .lede {
+    font-size: var(--text-performance-body-lg);
+  }
+
+  .notice {
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    background: var(--color-performance-bg-surface);
+    color: var(--color-performance-fg-secondary);
+  }
+
+  .section-heading,
+  .asset-group,
+  .system-grid {
+    margin-bottom: clamp(2rem, 5vw, 4rem);
+  }
+
+  .group-heading {
+    margin-bottom: 1rem;
   }
 
   .asset-grid {
     display: grid;
-    gap: var(--space-performance-md);
-  }
-
-  .icons-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .lockups-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .wordmarks-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1px;
+    background: var(--color-performance-border-default);
+    border: 1px solid var(--color-performance-border-default);
   }
 
   .asset-card {
-    display: flex;
-    flex-direction: column;
-    background: transparent;
-    border-radius: var(--radius-performance-scale-lg);
-    overflow: hidden;
-    cursor: pointer;
-    transition: border-color var(--duration-performance-micro) var(--ease-performance-standard);
-    text-align: left;
+    display: grid;
+    grid-template-columns: minmax(8rem, 0.9fr) minmax(10rem, 1.1fr);
+    min-height: 12rem;
+    background: var(--color-performance-bg-pure);
+    color: var(--color-performance-fg-primary);
+    text-decoration: none;
   }
 
+  .asset-card:focus-visible,
   .asset-card:hover {
-    border-color: var(--color-performance-border-emphasis);
-  }
-
-  .asset-card:focus-visible {
     outline: 2px solid var(--color-performance-focus);
-    outline-offset: 2px;
+    outline-offset: -2px;
   }
 
   .asset-preview {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: var(--space-performance-xl);
-    min-height: 160px;
+    min-height: 10rem;
+    padding: 1.5rem;
   }
 
   .asset-preview.dark {
-    background: var(--color-performance-bg-pure);
+    background: #000;
   }
 
   .asset-preview.light {
-    background: #ffffff;
+    background: #fff;
   }
 
-  .preview-image {
+  .asset-preview img {
     max-width: 100%;
-    max-height: 80px;
-    object-fit: contain;
+    max-height: 5rem;
   }
 
-  .preview-image.lockup {
-    max-height: 60px;
+  .asset-preview img.lockup {
+    max-height: 4rem;
   }
 
-  .preview-image.wordmark {
-    max-height: 32px;
+  .asset-preview img.wordmark {
+    max-height: 2rem;
   }
 
-  .asset-info {
+  .asset-copy {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
-    padding: var(--space-performance-md);
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 1.25rem;
   }
 
-  .asset-name {
-    font-size: var(--text-performance-body);
-    font-weight: var(--font-performance-medium);
-    color: var(--color-performance-fg-primary);
-  }
-
-  .asset-description {
-    font-size: var(--text-performance-caption);
+  .asset-copy > span:not(.download-label) {
     color: var(--color-performance-fg-muted);
-  }
-
-  /* Colors */
-  .colors-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: var(--space-performance-md);
-  }
-
-  .color-card {
-    display: flex;
-    flex-direction: column;
-    background: transparent;
-    border-radius: var(--radius-performance-scale-lg);
-    overflow: hidden;
-    cursor: pointer;
-    transition: border-color var(--duration-performance-micro) var(--ease-performance-standard);
-    text-align: left;
-  }
-
-  .color-card:hover {
-    border-color: var(--color-performance-border-emphasis);
-  }
-
-  .color-swatch {
-    height: 80px;
-  }
-
-  .color-info {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    padding: var(--space-performance-sm);
-  }
-
-  .color-name {
     font-size: var(--text-performance-body-sm);
-    font-weight: var(--font-performance-medium);
-    color: var(--color-performance-fg-primary);
   }
 
-  .color-value {
+  .download-label {
+    margin-top: 0.6rem;
     font-family: var(--font-performance-mono);
     font-size: var(--text-performance-caption);
-    color: var(--color-performance-fg-secondary);
+    text-transform: uppercase;
   }
 
-  .color-token {
-    font-family: var(--font-performance-mono);
+  .system-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(16rem, 0.5fr);
+    gap: clamp(2rem, 5vw, 4rem);
+  }
+
+  .token-list {
+    border-top: 1px solid var(--color-performance-border-default);
+  }
+
+  .token-card {
+    display: grid;
+    grid-template-columns: 4rem minmax(0, 1fr) auto;
+    gap: 1rem;
+    align-items: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--color-performance-border-default);
+  }
+
+  .swatches {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    height: 3rem;
+    border: 1px solid var(--color-performance-border-default);
+  }
+
+  .token-copy {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .token-copy code,
+  .token-copy span {
     font-size: var(--text-performance-caption);
     color: var(--color-performance-fg-muted);
   }
 
-  /* Typography */
-  .typography-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-performance-md);
+  .token-copy code {
+    overflow-wrap: anywhere;
+  }
+
+  .token-card button,
+  .handoff a {
+    border: 1px solid var(--color-performance-border-emphasis);
+    background: transparent;
+    color: var(--color-performance-fg-primary);
+    padding: 0.65rem 0.8rem;
+    font: inherit;
+    font-size: var(--text-performance-body-sm);
+    cursor: pointer;
   }
 
   .type-card {
     display: flex;
     flex-direction: column;
-    gap: var(--space-performance-sm);
-    padding: var(--space-performance-lg);
-    border-radius: var(--radius-performance-scale-lg);
+    gap: 0.35rem;
+    padding: 1rem 0;
+    border-top: 1px solid var(--color-performance-border-default);
   }
 
-  .type-sample {
-    font-size: var(--text-performance-h2);
-    color: var(--color-performance-fg-primary);
+  .type-card strong {
+    font-size: var(--text-performance-h3);
   }
 
-  .type-sample.sans {
-    font-family: var(--font-performance-sans);
-    font-weight: var(--font-performance-semibold);
-    letter-spacing: var(--tracking-performance-tight);
-  }
-
-  .type-sample.mono {
-    font-family: var(--font-performance-mono);
-    font-weight: var(--font-performance-regular);
-  }
-
-  .type-meta {
-    font-size: var(--text-performance-caption);
+  .type-card span {
     color: var(--color-performance-fg-muted);
+    font-size: var(--text-performance-body-sm);
   }
 
-  /* Guidelines */
-  .guidelines-section {
-    padding: var(--space-performance-lg);
-    background: var(--color-performance-bg-surface);
-    border-radius: var(--radius-performance-scale-lg);
+  .sans {
+    font-family: var(--font-performance-sans);
   }
 
-  .guidelines-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+  .mono {
+    font-family: var(--font-performance-mono);
+  }
+
+  .receipt {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(16rem, 0.5fr);
+    gap: clamp(2rem, 6vw, 5rem);
+  }
+
+  .receipt ul {
+    padding-left: 1.2rem;
+    color: var(--color-performance-fg-secondary);
+    line-height: 1.7;
+  }
+
+  .handoff {
     display: flex;
     flex-direction: column;
-    gap: var(--space-performance-sm);
+    align-items: flex-start;
+    gap: 0.75rem;
   }
 
-  .guidelines-list li {
-    font-size: var(--text-performance-body);
-    color: var(--color-performance-fg-secondary);
-    padding-left: var(--space-performance-md);
-    position: relative;
+  .handoff a {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    text-decoration: none;
   }
 
-  .guidelines-list li::before {
-    content: '—';
-    position: absolute;
-    left: 0;
-    color: var(--color-performance-fg-muted);
-  }
-
-  /* Responsive */
-  @media (max-width: 768px) {
-    .brand-page {
-      padding: var(--space-performance-lg) var(--space-performance-md);
+  @media (max-width: 760px) {
+    .asset-grid,
+    .system-grid,
+    .receipt {
+      grid-template-columns: 1fr;
     }
 
-    .icons-grid,
-    .lockups-grid,
-    .wordmarks-grid,
-    .colors-grid,
-    .typography-grid {
+    .asset-card {
       grid-template-columns: 1fr;
+    }
+
+    .token-card {
+      grid-template-columns: 3rem minmax(0, 1fr);
+    }
+
+    .token-card button {
+      grid-column: 2;
+      justify-self: start;
     }
   }
 </style>
