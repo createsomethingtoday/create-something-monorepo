@@ -65,6 +65,7 @@ normal production promotion path.
 - `schema.json` — closed JSON Schema for the contract.
 - `authorization-receipt.schema.json` — closed schema for committed allow and block receipts.
 - `d1-preview/` — local-only D1 migration and Wrangler configuration for receipt-store proof.
+- `canary-receipts/` — sanitized public testnet evidence; never wallet secrets or raw authorizations.
 - `create-something.json` — canonical CREATE SOMETHING capability catalog.
 - `scripts/verify-agent-commercial-contract.mjs` — schema and semantic verifier.
 - `src/agent-commercial-contract.ts` — provider-neutral decision and receipt-bearing authorization functions.
@@ -84,8 +85,22 @@ The x402 verifier accepts only v2 `exact` authorizations on Base Sepolia
 records `settlement: not_attempted`; it contains no wallet and never calls a
 settlement operation.
 
+The separate CRE-1701 canary is the approval-gated testnet promotion harness.
+It uses a disposable mode-0600 key file, checks the official Base Sepolia test
+USDC balance, checks facilitator support before signing, verifies before one
+settlement attempt, and emits a sanitized receipt without the private key,
+signature, or raw authorization. It is fixed to one atomic unit of test USDC;
+mainnet, production activation, retries after an indeterminate settlement, and
+deployment are outside its contract.
+
 Run:
 
 ```bash
 pnpm --filter @create-something/database-layer agent-commercial:contract:check
+```
+
+The canary CLI is intentionally not a production payment command:
+
+```bash
+pnpm --filter @create-something/database-layer agent-commercial:x402:canary -- preflight --key-file /absolute/path/to/disposable.key
 ```
