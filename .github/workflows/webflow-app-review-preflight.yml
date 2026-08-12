@@ -1,0 +1,74 @@
+name: App Review Preflight Quality Gate
+
+on:
+  pull_request:
+    paths:
+      - 'packages/bundle-scanner-core/**'
+      - 'packages/webflow-app-review-preflight/**'
+      - 'config/workspace-lanes.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - '.github/workflows/webflow-app-review-preflight.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: app-review-preflight-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  quality-gate:
+    name: Validate private artifact receipts
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate bundle scanner
+        run: |
+          pnpm --filter @create-something/bundle-scanner-core test
+          pnpm --filter @create-something/bundle-scanner-core build
+
+      - name: Validate Preflight core
+        run: |
+          pnpm --filter @create-something/webflow-app-review-preflight test
+          pnpm --filter @create-something/webflow-app-review-preflight check
+          pnpm --filter @create-something/webflow-app-review-preflight build
+
+      - name: Validate Designer Extension
+        run: |
+          pnpm --filter @create-something/webflow-app-review-preflight-extension test
+          pnpm --filter @create-something/webflow-app-review-preflight-extension check
+          pnpm --filter @create-something/webflow-app-review-preflight-extension build:production
+          node packages/webflow-app-review-preflight/extension/scripts/verify-production-bundle.mjs
+
+      - name: Install runtime browser
+        run: pnpm --filter @create-something/webflow-app-review-runtime-runner exec playwright install --with-deps chromium
+
+      - name: Validate runtime runner
+        run: |
+          pnpm --filter @create-something/webflow-app-review-runtime-runner test
+          pnpm --filter @create-something/webflow-app-review-runtime-runner check
+          pnpm --filter @create-something/webflow-app-review-runtime-runner build
+
+      - name: Validate Worker
+        run: |
+          pnpm --filter @create-something/webflow-app-review-preflight-worker test
+          pnpm --filter @create-something/webflow-app-review-preflight-worker check
+          pnpm --filter @create-something/webflow-app-review-preflight-worker build

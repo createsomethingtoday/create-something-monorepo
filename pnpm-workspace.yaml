@@ -10,6 +10,7 @@ packages:
   - 'packages/*/dashboard'
   - 'packages/*/extension'
   - 'packages/*/npm'
+  - 'packages/*/runner'
   - 'packages/*/worker'
   - 'packages/*/workers/*'
   - 'packages/huggingface-spaces/*'

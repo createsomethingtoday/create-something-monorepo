@@ -11,14 +11,14 @@ function textFile(path: string, content: string): UnzippedFile {
   return { path, data: encoder.encode(content) };
 }
 
-function sourceMap(path: string, file: string): UnzippedFile {
+function sourceMap(path: string, file: string, mappings = 'AAAA'): UnzippedFile {
   return textFile(
     path,
     JSON.stringify({
       version: 3,
       file,
       sources: [`../src/${file.replace(/\.(min\.)?(js|css)$/i, '.ts')}`],
-      mappings: ''
+      mappings
     })
   );
 }
@@ -37,6 +37,26 @@ describe('analyzeSourceMaps', () => {
     expect(summary.publicExposure).toBe(false);
     expect(summary.matchedGeneratedFiles).toEqual(['dist/app.min.js']);
     expect(summary.missingGeneratedFiles).toEqual([]);
+  });
+
+  it('rejects a source map with no mapped segments', () => {
+    const inventory = buildInventory(
+      [textFile('dist/app.min.js', 'function app(){return 1}')],
+      defaultConfig
+    );
+
+    const summary = analyzeSourceMaps(inventory, [
+      sourceMap('dist/app.min.js.map', 'app.min.js', '')
+    ]);
+
+    expect(summary.status).toBe('invalid');
+    expect(summary.validSourceMapCount).toBe(0);
+    expect(summary.invalidSourceMaps).toEqual([
+      {
+        path: 'dist/app.min.js.map',
+        error: 'Source map must contain at least one mapped segment.'
+      }
+    ]);
   });
 
   it('detects public source map exposure in the production bundle', () => {

@@ -1,0 +1,35 @@
+{
+  "name": "@create-something/webflow-app-review-runtime-runner",
+  "version": "0.1.0",
+  "description": "Webflow-controlled Playwright evidence runner for App Review Preflight",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "webflow-app-review-runtime": "dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts src/cli.ts --format esm --dts --clean",
+    "precheck": "pnpm --filter @create-something/webflow-app-review-preflight build",
+    "check": "tsc --noEmit",
+    "lint": "pnpm run check",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@create-something/webflow-app-review-preflight": "workspace:*",
+    "playwright": "^1.61.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.8"
+  }
+}
