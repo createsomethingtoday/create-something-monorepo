@@ -750,6 +750,57 @@ test('CLI excludes generated TypeScript from calibration coverage', (t) => {
   ]);
 });
 
+test('CLI drops findings sourced only from excluded generated files', (t) => {
+  const repo = mkdtempSync(join(tmpdir(), 'ground-review-generated-finding-'));
+  const binaryDir = mkdtempSync(join(tmpdir(), 'ground-review-generated-finding-binary-'));
+  t.after(() => {
+    rmSync(repo, { recursive: true, force: true });
+    rmSync(binaryDir, { recursive: true, force: true });
+  });
+
+  mustRun('git', ['init', '-b', 'main'], repo);
+  mustRun('git', ['config', 'core.hooksPath', '/dev/null'], repo);
+  writeFixtureFile(repo, 'packages/example/package.json', '{"name":"@example/pkg"}\n');
+  writeFixtureFile(repo, 'packages/example/src/index.ts', 'export const value = 1;\n');
+  writeFixtureFile(
+    repo,
+    'packages/example/src/catalog.generated.ts',
+    'export const catalog = 1;\n'
+  );
+  mustRun('git', ['add', '.'], repo);
+  mustRun('git', ['commit', '-m', 'baseline'], repo);
+  writeFixtureFile(repo, 'packages/example/src/index.ts', 'export const value = 2;\n');
+  writeFixtureFile(
+    repo,
+    'packages/example/src/catalog.generated.ts',
+    'export const catalog = 2;\n'
+  );
+
+  const fakeGround = writeFixtureFile(
+    binaryDir,
+    'fake-ground',
+    `#!/bin/sh
+printf '%s\\n' '{"discovered_changed_files":2,"analyzable_changed_files":2,"changed_file_list":["packages/example/src/index.ts","packages/example/src/catalog.generated.ts"],"excluded_changed_files":[],"new_issues":[{"type":"orphan_module","path":"packages/example/src/catalog.generated.ts"}]}'
+`
+  );
+  chmodSync(fakeGround, 0o755);
+
+  const result = run(process.execPath, [scriptPath, '--base', 'HEAD', '--format', 'json'], repo, {
+    GROUND_BINARY: fakeGround
+  });
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const receipt = JSON.parse(result.stdout);
+  assert.deepEqual(receipt.targets[0].coverage.analyzed_changed_files, [
+    'packages/example/src/index.ts'
+  ]);
+  assert.deepEqual(receipt.coverage.excluded_changed_files, [
+    { path: 'packages/example/src/catalog.generated.ts', reason: 'generated_file' }
+  ]);
+  assert.deepEqual(receipt.findings, []);
+  assert.equal(receipt.status, 'clear');
+});
+
 test('CLI excludes changed source when the Ground scan cap is exceeded', (t) => {
   const repo = mkdtempSync(join(tmpdir(), 'ground-review-scan-cap-'));
   const binaryDir = mkdtempSync(join(tmpdir(), 'ground-review-scan-cap-binary-'));
