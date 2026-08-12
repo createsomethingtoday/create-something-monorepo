@@ -107,6 +107,10 @@ function supportedSource(path) {
   return dot >= 0 && SUPPORTED_EXTENSIONS.has(path.slice(dot));
 }
 
+function generatedSource(path) {
+  return /(^|\/)[^/]+\.generated\.(?:ts|tsx|js|jsx|mjs)$/.test(path);
+}
+
 function unreadableFiles(root, files, deleted) {
   return new Set(
     files.filter((path) => {
@@ -235,7 +239,13 @@ export function buildReceipt({
   const packageRoots = collapsePackageRoots(
     new Set(
       files
-        .filter((file) => !deleted.has(file) && !unmerged.has(file) && !unreadable.has(file))
+        .filter(
+          (file) =>
+            !deleted.has(file) &&
+            !unmerged.has(file) &&
+            !unreadable.has(file) &&
+            !generatedSource(file)
+        )
         .map((file) => findPackageRoot(root, file))
         .filter(Boolean)
     )
@@ -255,7 +265,8 @@ export function buildReceipt({
               file.startsWith(`${path}/`) &&
               !deleted.has(file) &&
               !unmerged.has(file) &&
-              !unreadable.has(file)
+              !unreadable.has(file) &&
+              !generatedSource(file)
           )
       )
     ];
@@ -293,6 +304,7 @@ export function buildReceipt({
         deleted.has(file) ||
         unmerged.has(file) ||
         unreadable.has(file) ||
+        generatedSource(file) ||
         !coveredPrefixes.some((prefix) => file.startsWith(prefix))
     )
     .map((path) => ({
@@ -303,9 +315,11 @@ export function buildReceipt({
           ? 'deleted_file'
           : unreadable.has(path)
             ? 'unreadable_file'
-            : supportedSource(path)
-              ? 'outside_package_source'
-              : 'unsupported_extension'
+            : generatedSource(path)
+              ? 'generated_file'
+              : supportedSource(path)
+                ? 'outside_package_source'
+                : 'unsupported_extension'
     }));
   for (const exclusion of outsideTargets) {
     const target = targets.find(({ path }) => exclusion.path.startsWith(`${path}/`));
@@ -328,6 +342,7 @@ export function buildReceipt({
         !deleted.has(file) &&
         !unmerged.has(file) &&
         !unreadable.has(file) &&
+        !generatedSource(file) &&
         coveredPrefixes.some((prefix) => file.startsWith(prefix)) &&
         !accountedPaths.has(file)
     )
@@ -371,6 +386,10 @@ export function buildReceipt({
 }
 
 export function formatMarkdown(receipt) {
+  const safe = (value) =>
+    String(value).replace(/[\u0000-\u001f\u007f]/g, (character) =>
+      JSON.stringify(character).slice(1, -1)
+    );
   const lines = [
     '# Ground Review Receipt',
     '',
@@ -386,23 +405,25 @@ export function formatMarkdown(receipt) {
     lines.push('', '## Targets', '');
     for (const target of receipt.targets) {
       lines.push(
-        `- ${target.path}${target.package_name ? ` (${target.package_name})` : ''}: ${target.coverage.analyzable_changed_files} analyzable, ${target.findings.length} finding(s)`
+        `- ${safe(target.path)}${target.package_name ? ` (${safe(target.package_name)})` : ''}: ${target.coverage.analyzable_changed_files} analyzable, ${target.findings.length} finding(s)`
       );
     }
   }
   if (receipt.coverage.excluded_changed_files.length > 0) {
     lines.push('', '## Coverage exclusions', '');
     for (const exclusion of receipt.coverage.excluded_changed_files) {
-      lines.push(`- ${exclusion.path}: ${exclusion.reason}`);
+      lines.push(`- ${safe(exclusion.path)}: ${exclusion.reason}`);
     }
   }
   if (receipt.findings.length > 0) {
     lines.push('', '## Findings', '');
     for (const finding of receipt.findings) {
       const { target, type, path, files, ...evidence } = finding;
-      lines.push(`- ${type ?? 'finding'}${target ? ` in ${target}` : ''}`);
-      if (path) lines.push(`  - Path: ${path}`);
-      if (Array.isArray(files) && files.length > 0) lines.push(`  - Files: ${files.join(', ')}`);
+      lines.push(`- ${type ?? 'finding'}${target ? ` in ${safe(target)}` : ''}`);
+      if (path) lines.push(`  - Path: ${safe(path)}`);
+      if (Array.isArray(files) && files.length > 0) {
+        lines.push(`  - Files: ${files.map(safe).join(', ')}`);
+      }
       if (Object.keys(evidence).length > 0) {
         lines.push(`  - Evidence: ${JSON.stringify(evidence)}`);
       }
