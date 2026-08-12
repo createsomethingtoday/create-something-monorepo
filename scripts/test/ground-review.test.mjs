@@ -278,6 +278,9 @@ test('CLI preserves mode-only source changes as explicit exclusions', (t) => {
   assert.deepEqual(receipt.coverage.excluded_changed_files, [
     { path: 'packages/example/src/index.ts', reason: 'mode_only_change' }
   ]);
+  assert.deepEqual(receipt.coverage.checks.duplicates.excluded_changed_files, [
+    { path: 'packages/example/src/index.ts', reason: 'mode_only_change' }
+  ]);
   assert.equal(receipt.status, 'no_analyzable_files');
 });
 
@@ -929,6 +932,9 @@ test('CLI excludes generated TypeScript from calibration coverage', (t) => {
   assert.deepEqual(receipt.coverage.excluded_changed_files, [
     { path: 'packages/example/src/catalog.generated.ts', reason: 'generated_file' }
   ]);
+  assert.deepEqual(receipt.coverage.checks.duplicates.excluded_changed_files, [
+    { path: 'packages/example/src/catalog.generated.ts', reason: 'generated_file' }
+  ]);
 });
 
 test('CLI drops findings sourced only from excluded generated files', (t) => {
@@ -976,6 +982,12 @@ printf '%s\\n' '{"discovered_changed_files":2,"analyzable_changed_files":2,"chan
     'packages/example/src/index.ts'
   ]);
   assert.deepEqual(receipt.coverage.excluded_changed_files, [
+    { path: 'packages/example/src/catalog.generated.ts', reason: 'generated_file' }
+  ]);
+  assert.deepEqual(receipt.targets[0].coverage.checks.duplicates.excluded_changed_files, [
+    { path: 'packages/example/src/catalog.generated.ts', reason: 'generated_file' }
+  ]);
+  assert.deepEqual(receipt.coverage.checks.duplicates.excluded_changed_files, [
     { path: 'packages/example/src/catalog.generated.ts', reason: 'generated_file' }
   ]);
   assert.deepEqual(receipt.findings, []);
