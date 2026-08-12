@@ -53,7 +53,7 @@
   },
   "scripts": {
     "postinstall": "node install.js",
-    "pilot:build": "cargo build --release --manifest-path ../Cargo.toml --bin ground-mcp",
+    "pilot:build": "cargo build --release --manifest-path ../Cargo.toml --bin ground --bin ground-mcp",
     "pilot:benchmark": "tsx pilot/benchmark.ts",
     "pilot:check": "tsc --noEmit -p pilot/tsconfig.json",
     "pilot:receipt:validate": "tsx pilot/validate-receipt.ts",

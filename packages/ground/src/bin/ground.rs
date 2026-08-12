@@ -330,6 +330,10 @@ fn main() {
 }
 
 fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
+    if let Some(parent) = cli.db.parent().filter(|parent| !parent.as_os_str().is_empty()) {
+        std::fs::create_dir_all(parent)?;
+    }
+
     match cli.command {
         Commands::Init => {
             std::fs::create_dir_all(".ground")?;

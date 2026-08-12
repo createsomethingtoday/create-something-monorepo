@@ -59,6 +59,7 @@ serde_yaml = "0.9"  # YAML config parsing
 
 # Concurrency
 lazy_static = "1.4"
+rayon = { version = "1.10", optional = true }
 
 [dev-dependencies]
 tempfile = "3"
@@ -66,6 +67,7 @@ tempfile = "3"
 [features]
 default = []
 mcp = []  # Enable MCP server support
+rayon = ["dep:rayon"]
 
 [profile.release]
 lto = true

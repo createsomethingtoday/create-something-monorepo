@@ -46,10 +46,9 @@ function getBinaryName() {
   return name;
 }
 
-function getDownloadUrl(binaryName) {
-  const ext = process.platform === 'win32' ? 'zip' : 'tar.gz';
-  // Tag format: v0.2.0
-  return `https://github.com/${REPO}/releases/download/v${VERSION}/ground-${binaryName}.${ext}`;
+function getDownloadUrl(binaryName, platform = process.platform) {
+  const ext = platform === 'win32' ? 'zip' : 'tar.gz';
+  return `https://github.com/${REPO}/releases/download/ground-v${VERSION}/ground-${binaryName}.${ext}`;
 }
 
 function hasBundledNativeBinaries() {
@@ -199,5 +198,10 @@ async function install() {
   }
 }
 
-// Run installer
-install();
+if (require.main === module) {
+  install();
+}
+
+module.exports = {
+  getDownloadUrl,
+};
