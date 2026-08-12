@@ -416,7 +416,7 @@
     "@create-something/observability": "workspace:*",
     "@iarna/toml": "^2.2.5",
     "@mizchi/lsmcp": "^0.10.0",
-    "@openai/agents": "^0.4.10",
+    "@openai/agents": "^0.15.0",
     "@typescript-eslint/parser": "^8.50.1",
     "ajv": "^8.17.1",
     "esbuild": "^0.24.2",

@@ -42,6 +42,11 @@
    That contract classifies agent resources and tools as `free`, `entitled`,
    `paid`, or `private` without changing the service-level pricing model.
 
+8. **AI Buyer Readiness Audit contract (manual diagnostic offer)**
+   - `ai-buyer-readiness-audit.yaml`
+   - Purpose: bind the public $3,000 one-time audit to one brand, one market, 25 buyer questions, up to three competitors, cited evidence, and a prioritized 30-day plan.
+   - Boundary: the audit diagnoses only. Build is separately scoped, Control starts from $900 per month after launch, and self-service checkout is inactive.
+
 ### Commercial boundary
 
 - Managed AI Operations starts at $900 per month after launch for one standard-risk managed production environment.
@@ -50,18 +55,19 @@
 - Forecasted usage at 75% of monthly coverage triggers a capacity review, not an automatic charge.
 - New workflows and integrations are separately scoped Build work.
 - Higher-risk, regulated, multi-environment, and priority-response operations require custom scope.
+- The $49 Agent Buyer Readiness Snapshot is a founding candidate only. Its approved price remains unset and the capability remains inactive.
 - Machine payment is inactive until a price, receipt path, spend caps, rollback, and production promotion are separately approved.
 - Payment never grants private data access or permission to execute a write.
 
-8. **Discovery note (required after every call)**
+9. **Discovery note (required after every call)**
    - `../templates/sales/discovery-note-template.md`
    - Purpose: standardize proposal inputs in one pass.
 
-9. **Client-facing Workflow Mapping Session agenda**
+10. **Client-facing Workflow Mapping Session agenda**
    - `../templates/sales/workflow-mapping-session-agenda.md`
    - Purpose: align stakeholders on session inputs, structure, and outputs before the paid mapping session.
 
-10. **Delivery artifact templates**
+11. **Delivery artifact templates**
    - `../templates/delivery/README.md`
    - `../templates/delivery/mcp_contract.yaml`
    - `../templates/delivery/agent_contract.yaml`
@@ -72,11 +78,11 @@
    - `../templates/delivery/halfdozen-mcp-onboarding-checklist.md`
    - Purpose: convert workflow mapping outputs into implementation-ready artifact drafts.
 
-11. **Proposal input template (delivery handoff)**
+12. **Proposal input template (delivery handoff)**
    - `../templates/sales/policy-os-proposal-input-template.md`
    - Purpose: convert discovery output into proposal scope and contract artifact implications.
 
-12. **Follow-up sequence (post-call execution)**
+13. **Follow-up sequence (post-call execution)**
    - `../templates/sales/policy-os-follow-up-sequence.md`
    - Purpose: move high and medium fit deals to decision with clear owner and date.
 

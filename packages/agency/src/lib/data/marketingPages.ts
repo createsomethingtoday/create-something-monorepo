@@ -208,6 +208,25 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     selfHealing: ['copy:heal', 'search-route:sync']
   },
   {
+    path: '/agent-readiness',
+    cluster: 'core-services',
+    role: 'support',
+    decision: 'index',
+    audience: 'Business owners who need evidence of what AI buyers understand before implementation.',
+    funnelStage: 'book',
+    intent: 'Diagnose AI buyer readiness with bounded questions, cited sources, and a prioritized plan.',
+    primaryAction: 'Book the audit',
+    requiredTerms: ['AI Buyer Readiness Audit', 'buyer questions', 'cited sources', 'Build', 'Control'],
+    requiredLinks: ['/services', '/control'],
+    schema: 'page',
+    search: {
+      changefreq: 'monthly',
+      priority: '0.9',
+      lastmod: '2026-08-12'
+    },
+    selfHealing: ['copy:heal', 'search-route:sync']
+  },
+  {
     path: '/book',
     cluster: 'conversion',
     role: 'pillar',

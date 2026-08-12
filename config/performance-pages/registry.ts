@@ -22,6 +22,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'agency',
     [
       'about',
+      'agent-readiness',
       'ai-workflow-control',
       'ai-workflow-recovery',
       'cloudflare',

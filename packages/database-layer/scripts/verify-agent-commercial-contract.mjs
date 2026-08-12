@@ -83,6 +83,25 @@ const x402 = contract.providerAdapters.find((adapter) => adapter.id === 'cloudfl
 assert.equal(x402?.status, 'inactive');
 assert.equal(x402?.activationApproval, 'required');
 
+const buyerReadinessPolicy = paymentPolicies.get('x402.agent-readiness-audit.v1');
+assert.equal(buyerReadinessPolicy?.status, 'approval_required');
+assert.deepEqual(buyerReadinessPolicy?.price, {
+  state: 'unset',
+  amount: null,
+  foundingCandidate: {
+    amount: 49,
+    denomination: 'USD',
+    billingUnit: 'completed_report',
+    approval: 'separate_production_approval'
+  }
+});
+
+const buyerReadinessCapability = contract.capabilities.find(
+  (capability) => capability.id === 'agency.agent-readiness-audit'
+);
+assert.equal(buyerReadinessCapability?.title, 'Agent Buyer Readiness Snapshot');
+assert.equal(buyerReadinessCapability?.status, 'inactive');
+
 const commercialReceipts = contract.providerAdapters.find(
   (adapter) => adapter.id === contract.receiptPolicy.sinkAdapterId
 );

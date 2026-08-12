@@ -10,7 +10,8 @@
     | 'proof'
     | 'marketplace-review'
     | 'workflow-recovery'
-    | 'workflow-control';
+    | 'workflow-control'
+    | 'agent-readiness';
 
   type Point = { x: number; y: number; label: string };
   type Route = { d: string; label: string; tone?: 'signal' | 'growth' | 'review' };
@@ -347,6 +348,33 @@
         state: 'Client-owned',
         record: 'CTRL-01 / RUN',
         evidence: 'Decision + result'
+      }
+    },
+    'agent-readiness': {
+      code: 'PB / READ-01',
+      phase: 'AI buyer readiness',
+      call: 'Ask → Compare → Prove',
+      summary: 'Question / answer / source / gap',
+      description:
+        'AI Buyer Readiness Playbook: a high-intent question is tested across AI answer surfaces, unsupported claims stop at an evidence check, and the business owner receives cited gaps and a prioritized plan.',
+      owners: [
+        { x: 142, y: 202, label: 'AI buyer question' },
+        { x: 304, y: 132, label: 'AI answer' },
+        { x: 474, y: 280, label: 'Business owner' }
+      ],
+      constraints: [{ x: 474, y: 122, label: 'Missing source' }],
+      routes: [
+        { d: 'M 164 196 C 212 166, 250 140, 280 134', label: 'Ask', tone: 'signal' },
+        { d: 'M 328 144 C 368 180, 390 246, 450 276', label: 'Verify', tone: 'review' }
+      ],
+      gate: { x: 390, y: 246, label: 'Evidence check' },
+      receipt: {
+        x: 494,
+        y: 282,
+        label: 'Readiness report',
+        state: 'Review',
+        record: 'READ-01 / AUDIT',
+        evidence: 'Answers + sources + plan'
       }
     }
   };
