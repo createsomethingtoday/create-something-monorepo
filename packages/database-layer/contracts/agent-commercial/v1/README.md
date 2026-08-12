@@ -12,6 +12,10 @@ decision surface:
 
 `evaluate(capability, principal, entitlement, payment, approval) -> allow | deny | payment_required | approval_required`
 
+Runtime adapters use the receipt-bearing interface before execution:
+
+`authorize(contract, request, decision identity, receipt store) -> decision + committed receipt`
+
 Cloudflare Workers, Identity, D1, and x402 are adapters behind that interface.
 They do not own the commercial policy. PostgreSQL is not required by this
 contract.
@@ -59,9 +63,16 @@ normal production promotion path.
 ## Files
 
 - `schema.json` — closed JSON Schema for the contract.
+- `authorization-receipt.schema.json` — closed schema for committed allow and block receipts.
 - `create-something.json` — canonical CREATE SOMETHING capability catalog.
 - `scripts/verify-agent-commercial-contract.mjs` — schema and semantic verifier.
-- `src/agent-commercial-contract.ts` — provider-neutral decision function.
+- `src/agent-commercial-contract.ts` — provider-neutral decision and receipt-bearing authorization functions.
+
+`authorizeAgentCommercialAccess` requires a store adapter with an atomic `commit`
+operation. A retry with identical facts replays the existing receipt. Reusing a
+decision ID for different facts throws `AgentCommercialReceiptConflictError`.
+Provider execution starts only after an `allow` decision and a committed receipt.
+The contract does not activate x402 or a production D1 sink.
 
 Run:
 

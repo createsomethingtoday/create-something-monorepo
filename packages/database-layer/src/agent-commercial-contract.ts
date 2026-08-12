@@ -53,6 +53,53 @@ export type AgentCommercialDecision = {
   requiredPolicyId?: string;
 };
 
+export type AgentCommercialAuthorizationReceipt = {
+  receiptId: string;
+  decisionId: string;
+  contractId: string;
+  capabilityId: string;
+  principalId: string;
+  decision: AgentCommercialDecision['decision'];
+  reason: string;
+  entitlementOrPaymentRef: string | null;
+  approvalReceiptId: string | null;
+  outcome: 'authorized' | 'blocked';
+  environment: 'preview' | 'production';
+  occurredAt: string;
+};
+
+export type AgentCommercialAuthorizationContext = {
+  decisionId: string;
+  occurredAt: string;
+};
+
+export type AgentCommercialAuthorizationStore = {
+  commit(receipt: AgentCommercialAuthorizationReceipt): Promise<{
+    status: 'inserted' | 'existing';
+    receipt: AgentCommercialAuthorizationReceipt;
+  }>;
+};
+
+export type AgentCommercialAuthorizationResult = {
+  decision: AgentCommercialDecision;
+  receipt: AgentCommercialAuthorizationReceipt;
+  replayed: boolean;
+};
+
+export class AgentCommercialReceiptConflictError extends Error {
+  constructor(decisionId: string) {
+    super(`Commercial decision id ${decisionId} is already bound to different facts`);
+    this.name = 'AgentCommercialReceiptConflictError';
+  }
+}
+
+export class AgentCommercialAuthorizationInputError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'AgentCommercialAuthorizationInputError';
+  }
+}
+
 function decision(
   contract: AgentCommercialContract,
   request: AgentCommercialAccessRequest,
@@ -144,4 +191,90 @@ export function evaluateAgentCommercialAccess(
   if (approvalRequired) allowReason = 'approval_verified';
 
   return decision(contract, request, 'allow', allowReason);
+}
+
+function authorizationReference(
+  capability: AgentCommercialCapability | undefined,
+  request: AgentCommercialAccessRequest
+): string | null {
+  if (request.payment?.receiptId) return request.payment.receiptId;
+  if (capability?.entitlementId && request.entitlementIds?.includes(capability.entitlementId)) {
+    return capability.entitlementId;
+  }
+  if (capability?.grantId && request.grantIds?.includes(capability.grantId)) {
+    return capability.grantId;
+  }
+  return null;
+}
+
+function receiptFacts(receipt: AgentCommercialAuthorizationReceipt): string {
+  return JSON.stringify([
+    receipt.receiptId,
+    receipt.decisionId,
+    receipt.contractId,
+    receipt.capabilityId,
+    receipt.principalId,
+    receipt.decision,
+    receipt.reason,
+    receipt.entitlementOrPaymentRef,
+    receipt.approvalReceiptId,
+    receipt.outcome,
+    receipt.environment,
+    receipt.occurredAt
+  ]);
+}
+
+/**
+ * Evaluate a commercial request and atomically commit its authorization receipt.
+ * The store adapter owns durable idempotency; provider-specific execution must
+ * not begin until this function returns an `allow` decision with a committed
+ * receipt.
+ */
+export function authorizeAgentCommercialAccess(
+  contract: AgentCommercialContract,
+  request: AgentCommercialAccessRequest,
+  context: AgentCommercialAuthorizationContext,
+  store: AgentCommercialAuthorizationStore
+): Promise<AgentCommercialAuthorizationResult> {
+  if (!context.decisionId.trim()) {
+    return Promise.reject(
+      new AgentCommercialAuthorizationInputError('Commercial decision id is required')
+    );
+  }
+  const occurredAt = new Date(context.occurredAt);
+  if (Number.isNaN(occurredAt.valueOf()) || occurredAt.toISOString() !== context.occurredAt) {
+    return Promise.reject(
+      new AgentCommercialAuthorizationInputError(
+        'Commercial receipt occurredAt must be a canonical ISO timestamp'
+      )
+    );
+  }
+
+  const accessDecision = evaluateAgentCommercialAccess(contract, request);
+  const capability = contract.capabilities.find((entry) => entry.id === request.capabilityId);
+  const receipt: AgentCommercialAuthorizationReceipt = {
+    receiptId: `agent-commercial:${contract.contractId}:${context.decisionId}`,
+    decisionId: context.decisionId,
+    contractId: contract.contractId,
+    capabilityId: request.capabilityId,
+    principalId: request.principal?.id ?? 'anonymous',
+    decision: accessDecision.decision,
+    reason: accessDecision.reason,
+    entitlementOrPaymentRef: authorizationReference(capability, request),
+    approvalReceiptId: request.approval?.receiptId ?? null,
+    outcome: accessDecision.decision === 'allow' ? 'authorized' : 'blocked',
+    environment: request.environment ?? 'production',
+    occurredAt: context.occurredAt
+  };
+  return store.commit(receipt).then((committed) => {
+    if (receiptFacts(committed.receipt) !== receiptFacts(receipt)) {
+      throw new AgentCommercialReceiptConflictError(context.decisionId);
+    }
+
+    return {
+      decision: accessDecision,
+      receipt: committed.receipt,
+      replayed: committed.status === 'existing'
+    };
+  });
 }
