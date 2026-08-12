@@ -123,6 +123,27 @@ test('approved send uses working private links, reply-to, tags, and Resend idemp
   ]);
 });
 
+test('provider fetch keeps the Worker global receiver', async () => {
+  const artifact = await buildReengagementCampaignArtifact({
+    replyTo: 'micah@createsomething.io',
+    audience: { total: 1, eligible: 1, excluded: 0 }
+  });
+  const store = createStore({ ...artifact, status: 'approved' }, 1);
+  const workerFetch = function (this: unknown) {
+    if (this !== globalThis) throw new TypeError('Illegal invocation');
+    return Promise.resolve(
+      new Response(JSON.stringify({ id: 'resend-receipt-worker' }), { status: 200 })
+    );
+  } as typeof globalThis.fetch;
+
+  const result = await sendApprovedReengagementCampaign(store, {
+    ...resendInput(),
+    fetch: workerFetch
+  });
+
+  assert.deepEqual(result, { sent: 1, skipped: 0 });
+});
+
 function resendInput() {
   return {
     apiKey: 'test-key',

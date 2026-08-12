@@ -329,7 +329,7 @@ export async function sendReengagementSeed(
     checkInUrl: `${input.baseUrl ?? REENGAGEMENT_BASE_URL}/check-in?preview=operator-seed`,
     unsubscribeUrl: `${input.baseUrl ?? REENGAGEMENT_BASE_URL}/unsubscribe?preview=operator-seed`
   });
-  const response = await input.fetch('https://api.resend.com/emails', {
+  const response = await callProviderFetch(input.fetch, 'https://api.resend.com/emails', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${input.apiKey}`,
@@ -381,7 +381,8 @@ export async function syncReengagementDeliveryReceipts(
   let failed = 0;
 
   for (const resendEmailId of ids) {
-    const response = await input.fetch(
+    const response = await callProviderFetch(
+      input.fetch,
       `https://api.resend.com/emails/${encodeURIComponent(resendEmailId)}`,
       {
         headers: { Authorization: `Bearer ${input.apiKey}` }
@@ -515,7 +516,7 @@ export async function sendApprovedReengagementCampaign(
     const checkInUrl = `${baseUrl}/check-in?token=${encodeURIComponent(rawToken)}`;
     const unsubscribeUrl = `${baseUrl}/unsubscribe?token=${encodeURIComponent(subscriber.unsubscribe_token)}`;
     const email = buildSubscriberReengagementEmail({ checkInUrl, unsubscribeUrl });
-    const response = await input.fetch('https://api.resend.com/emails', {
+    const response = await callProviderFetch(input.fetch, 'https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${input.apiKey}`,
@@ -554,6 +555,14 @@ export async function sendApprovedReengagementCampaign(
 async function sha256Hex(value: string): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+function callProviderFetch(
+  fetcher: typeof globalThis.fetch,
+  input: Parameters<typeof globalThis.fetch>[0],
+  init?: Parameters<typeof globalThis.fetch>[1]
+): ReturnType<typeof globalThis.fetch> {
+  return fetcher.call(globalThis, input, init);
 }
 
 export async function deterministicCheckInToken(
