@@ -145,7 +145,9 @@ export const PUBLIC_COPY_RULES = [
   },
   {
     id: 'buyer-language',
-    pattern: /\bbuyers?\b/gi,
+    // "Buyer" is internal funnel shorthand unless it names the approved
+    // AI Buyer Readiness category or its bounded buyer-question artifact.
+    pattern: /(?<!AI )\bbuyers?\b(?!\s+questions\b)/gi,
     replacement: 'teams'
   },
   {

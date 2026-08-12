@@ -113,6 +113,7 @@
       ariaLabel: 'Commercial paths',
       links: [
         { label: 'How It Works', href: '/services' },
+        { label: 'AI Buyer Readiness Audit', href: '/agent-readiness' },
         { label: 'What You Keep', href: '/stack' },
         { label: 'Products', href: '/products' },
         { label: 'Field Reports', href: '/field-reports' },
