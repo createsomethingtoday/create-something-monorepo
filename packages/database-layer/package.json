@@ -27,6 +27,7 @@
     "./business-digital-thread/v1/verifier-spec.json": "./contracts/business-digital-thread/v1/verifier-spec.json",
     "./business-digital-thread/v1/performance-baseline.json": "./contracts/business-digital-thread/v1/performance-baseline.json",
     "./agent-commercial/v1/schema.json": "./contracts/agent-commercial/v1/schema.json",
+    "./agent-commercial/v1/authorization-receipt.schema.json": "./contracts/agent-commercial/v1/authorization-receipt.schema.json",
     "./agent-commercial/v1/create-something.json": "./contracts/agent-commercial/v1/create-something.json",
     "./client-overlay-coverage.json": "./data/create-something-client-overlay-coverage.json",
     "./internal-topology.3d.json": "./data/create-something-internal-topology.3d.json",

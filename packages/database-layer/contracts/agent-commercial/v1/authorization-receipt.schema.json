@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://createsomething.agency/contracts/agent-commercial/v1/authorization-receipt.schema.json",
+  "title": "CREATE SOMETHING Agent Commercial Authorization Receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receiptId",
+    "decisionId",
+    "contractId",
+    "capabilityId",
+    "principalId",
+    "decision",
+    "reason",
+    "entitlementOrPaymentRef",
+    "approvalReceiptId",
+    "outcome",
+    "environment",
+    "occurredAt"
+  ],
+  "properties": {
+    "receiptId": {
+      "type": "string",
+      "pattern": "^agent-commercial:",
+      "minLength": 20
+    },
+    "decisionId": { "type": "string", "minLength": 1 },
+    "contractId": { "type": "string", "minLength": 1 },
+    "capabilityId": { "type": "string", "minLength": 1 },
+    "principalId": { "type": "string", "minLength": 1 },
+    "decision": {
+      "enum": ["allow", "deny", "payment_required", "approval_required"]
+    },
+    "reason": { "type": "string", "minLength": 1 },
+    "entitlementOrPaymentRef": { "type": ["string", "null"] },
+    "approvalReceiptId": { "type": ["string", "null"] },
+    "outcome": { "enum": ["authorized", "blocked"] },
+    "environment": { "enum": ["preview", "production"] },
+    "occurredAt": { "type": "string", "format": "date-time" }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "decision": { "const": "allow" } },
+        "required": ["decision"]
+      },
+      "then": {
+        "properties": { "outcome": { "const": "authorized" } }
+      },
+      "else": {
+        "properties": { "outcome": { "const": "blocked" } }
+      }
+    }
+  ]
+}

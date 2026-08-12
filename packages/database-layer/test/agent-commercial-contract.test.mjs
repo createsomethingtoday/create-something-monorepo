@@ -1,8 +1,14 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
+import Ajv2020 from 'ajv/dist/2020.js';
 
-import { evaluateAgentCommercialAccess } from '../dist/index.js';
+import {
+  AgentCommercialAuthorizationInputError,
+  authorizeAgentCommercialAccess,
+  AgentCommercialReceiptConflictError,
+  evaluateAgentCommercialAccess
+} from '../dist/index.js';
 
 const canonicalContract = JSON.parse(
   readFileSync(
@@ -10,6 +16,17 @@ const canonicalContract = JSON.parse(
     'utf8'
   )
 );
+const authorizationReceiptSchema = JSON.parse(
+  readFileSync(
+    new URL('../contracts/agent-commercial/v1/authorization-receipt.schema.json', import.meta.url),
+    'utf8'
+  )
+);
+const validateAuthorizationReceipt = new Ajv2020({
+  allErrors: true,
+  strict: true,
+  validateFormats: false
+}).compile(authorizationReceiptSchema);
 
 const contract = {
   contractId: 'agent-commercial-contract.test.v1',
@@ -212,4 +229,180 @@ test('canonical CREATE SOMETHING catalog is executable through the public evalua
     }).reason,
     'capability_inactive'
   );
+});
+
+test('authorization commits a storage-ready receipt for an allowed request', async () => {
+  const committed = [];
+  const store = {
+    async commit(receipt) {
+      committed.push(receipt);
+      return { status: 'inserted', receipt };
+    }
+  };
+
+  const result = await authorizeAgentCommercialAccess(
+    contract,
+    { capabilityId: 'content.search', environment: 'preview' },
+    {
+      decisionId: 'decision-1',
+      occurredAt: '2026-08-12T05:00:00.000Z'
+    },
+    store
+  );
+
+  assert.deepEqual(result, {
+    decision: {
+      decision: 'allow',
+      reason: 'free_access',
+      capabilityId: 'content.search',
+      contractId: 'agent-commercial-contract.test.v1',
+      receiptRequired: true
+    },
+    receipt: {
+      receiptId: 'agent-commercial:agent-commercial-contract.test.v1:decision-1',
+      decisionId: 'decision-1',
+      contractId: 'agent-commercial-contract.test.v1',
+      capabilityId: 'content.search',
+      principalId: 'anonymous',
+      decision: 'allow',
+      reason: 'free_access',
+      entitlementOrPaymentRef: null,
+      approvalReceiptId: null,
+      outcome: 'authorized',
+      environment: 'preview',
+      occurredAt: '2026-08-12T05:00:00.000Z'
+    },
+    replayed: false
+  });
+  assert.deepEqual(committed, [result.receipt]);
+  assert.equal(
+    validateAuthorizationReceipt(result.receipt),
+    true,
+    JSON.stringify(validateAuthorizationReceipt.errors)
+  );
+});
+
+test('authorization replays the original receipt for an idempotent retry', async () => {
+  let stored;
+  const store = {
+    async commit(receipt) {
+      if (stored) return { status: 'existing', receipt: stored };
+      stored = receipt;
+      return { status: 'inserted', receipt };
+    }
+  };
+  const context = {
+    decisionId: 'decision-retry',
+    occurredAt: '2026-08-12T05:01:00.000Z'
+  };
+
+  const first = await authorizeAgentCommercialAccess(
+    contract,
+    { capabilityId: 'content.search', environment: 'preview' },
+    context,
+    store
+  );
+  const replay = await authorizeAgentCommercialAccess(
+    contract,
+    { capabilityId: 'content.search', environment: 'preview' },
+    context,
+    store
+  );
+
+  assert.equal(first.replayed, false);
+  assert.equal(replay.replayed, true);
+  assert.deepEqual(replay.receipt, first.receipt);
+});
+
+test('authorization fails closed when a decision id is reused for different facts', async () => {
+  let stored;
+  const store = {
+    async commit(receipt) {
+      if (stored) return { status: 'existing', receipt: stored };
+      stored = receipt;
+      return { status: 'inserted', receipt };
+    }
+  };
+  const context = {
+    decisionId: 'decision-conflict',
+    occurredAt: '2026-08-12T05:02:00.000Z'
+  };
+
+  await authorizeAgentCommercialAccess(
+    contract,
+    { capabilityId: 'content.search', environment: 'preview' },
+    context,
+    store
+  );
+
+  await assert.rejects(
+    authorizeAgentCommercialAccess(
+      contract,
+      { capabilityId: 'client.workspace', environment: 'preview' },
+      context,
+      store
+    ),
+    AgentCommercialReceiptConflictError
+  );
+});
+
+test('paid preview execution is blocked until a verified payment receipt is committed', async () => {
+  const receipts = new Map();
+  const store = {
+    async commit(receipt) {
+      const existing = receipts.get(receipt.decisionId);
+      if (existing) return { status: 'existing', receipt: existing };
+      receipts.set(receipt.decisionId, receipt);
+      return { status: 'inserted', receipt };
+    }
+  };
+
+  const blocked = await authorizeAgentCommercialAccess(
+    contract,
+    { capabilityId: 'audit.agent-readiness', environment: 'preview' },
+    { decisionId: 'decision-unpaid', occurredAt: '2026-08-12T05:03:00.000Z' },
+    store
+  );
+  const paid = await authorizeAgentCommercialAccess(
+    contract,
+    {
+      capabilityId: 'audit.agent-readiness',
+      environment: 'preview',
+      payment: {
+        status: 'verified',
+        receiptId: 'x402-testnet-receipt-1',
+        policyId: 'x402.agent-readiness.v1'
+      }
+    },
+    { decisionId: 'decision-paid', occurredAt: '2026-08-12T05:04:00.000Z' },
+    store
+  );
+
+  assert.equal(blocked.decision.decision, 'payment_required');
+  assert.equal(blocked.receipt.outcome, 'blocked');
+  assert.equal(blocked.receipt.entitlementOrPaymentRef, null);
+  assert.equal(paid.decision.decision, 'allow');
+  assert.equal(paid.receipt.outcome, 'authorized');
+  assert.equal(paid.receipt.entitlementOrPaymentRef, 'x402-testnet-receipt-1');
+});
+
+test('authorization rejects invalid receipt identity before calling storage', async () => {
+  let commitCalls = 0;
+  const store = {
+    async commit(receipt) {
+      commitCalls += 1;
+      return { status: 'inserted', receipt };
+    }
+  };
+
+  await assert.rejects(
+    authorizeAgentCommercialAccess(
+      contract,
+      { capabilityId: 'content.search', environment: 'preview' },
+      { decisionId: ' ', occurredAt: 'not-a-timestamp' },
+      store
+    ),
+    AgentCommercialAuthorizationInputError
+  );
+  assert.equal(commitCalls, 0);
 });
