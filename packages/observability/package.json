@@ -46,6 +46,7 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "lint": "pnpm run typecheck",
+    "test": "node --import tsx --test test/*.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [

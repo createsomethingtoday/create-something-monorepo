@@ -188,6 +188,9 @@ Session-scoped identity (optional):
 
 - Hub invocations are written to `mcp_tool_invocations`/`mcp_run_counts` in `TELEMETRY_DB`.
 - Hub-observed downstream routes are written to `mcp_hub_routes` in `TELEMETRY_DB`.
+- A Cloudflare Cron runs `production_watchdog` every 15 minutes. It probes the live Hub, checks unsampled D1 failures from the prior 15 minutes, and records the result as a correlated Langfuse trace with the Boolean `execution_success` score.
+- Watchdog findings are emailed through Resend and deduplicated for one hour in `HUB_STATE_KV`. `RESEND_API_KEY` is loaded from Infisical; `WATCHDOG_ALERT_EMAIL`, `WATCHDOG_EMAIL_FROM`, and `WATCHDOG_HEALTH_URL` are non-secret deploy variables.
+- Langfuse traces are marked with `environment=production` and the Cloudflare Worker version as their release so production regressions can be isolated by deploy.
 - Each brokered downstream call carries correlation via MCP `relatedTask.taskId`.
 - Use `hub_trace_lookup` (or `cs-telemetry` `query_activity` with `correlationId`) to inspect:
   - `hubInvocations` (hub tool handling)

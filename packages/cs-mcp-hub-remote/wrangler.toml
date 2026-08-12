@@ -7,6 +7,12 @@ account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
 [observability]
 enabled = true
 
+[triggers]
+crons = ["*/15 * * * *"]
+
+[version_metadata]
+binding = "CF_VERSION_METADATA"
+
 [[d1_databases]]
 binding = "TELEMETRY_DB"
 database_name = "cs-telemetry"
@@ -25,6 +31,11 @@ service = "identity-worker"
 # Discovery defaults (used when per-account discovery prefs are not persisted in KV)
 HUB_DISCOVERY_MODE = "compact"
 HUB_DISCOVERY_SHARED_PACK = "shared-auth-core"
+LANGFUSE_PROJECT_NAME = "CREATE SOMETHING"
+LANGFUSE_TRACING_ENVIRONMENT = "production"
+WATCHDOG_ALERT_EMAIL = "micah@createsomething.io"
+WATCHDOG_EMAIL_FROM = "CREATE SOMETHING Ops <notifications@createsomething.io>"
+WATCHDOG_HEALTH_URL = "https://cs-mcp-hub-remote.createsomething.workers.dev/health"
 # Identity resolution mode:
 # - "session_required" (default): requires X-MCP-Session-Token + resolver config
 # - "compat": keeps legacy header/bearer fallback identity behavior
@@ -38,6 +49,7 @@ HUB_DISCOVERY_SHARED_PACK = "shared-auth-core"
 # Set secret at deploy-time:
 # wrangler secret put LANGFUSE_SECRET_KEY
 # wrangler secret put LANGFUSE_PUBLIC_KEY
+# wrangler secret put RESEND_API_KEY
 
 # Optional. If set, /mcp requires Authorization: Bearer <token>
 # HUB_API_TOKEN = ""
