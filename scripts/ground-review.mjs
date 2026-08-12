@@ -123,6 +123,33 @@ function indexWorktreeMismatchFiles(root, base) {
   );
 }
 
+function modeOnlyFiles(root, base) {
+  const modified = new Set(
+    [...trackedChanges(root, base), ...trackedChanges(root, base, true)]
+      .filter(({ status }) => status === 'M')
+      .map(({ path }) => path)
+  );
+  return new Set(
+    [...modified].filter((path) => {
+      const absolute = resolve(root, path);
+      if (!existsSync(absolute)) return false;
+      const baseResult = spawnSync('git', ['rev-parse', `${base}:${path}`], {
+        cwd: root,
+        encoding: 'utf8'
+      });
+      const currentResult = spawnSync('git', ['hash-object', '--', path], {
+        cwd: root,
+        encoding: 'utf8'
+      });
+      return (
+        baseResult.status === 0 &&
+        currentResult.status === 0 &&
+        baseResult.stdout.trim() === currentResult.stdout.trim()
+      );
+    })
+  );
+}
+
 function addedFiles(root, base, files) {
   const baseFiles = new Set(
     run('git', ['ls-tree', '-r', '-z', '--name-only', base, '--'], root)
@@ -380,6 +407,7 @@ export function buildReceipt({
   files,
   added,
   indexWorktreeMismatch,
+  modeOnly,
   deleted,
   unmerged,
   unreadable,
@@ -393,6 +421,7 @@ export function buildReceipt({
           (file) =>
             !deleted.has(file) &&
             !indexWorktreeMismatch.has(file) &&
+            !modeOnly.has(file) &&
             !unmerged.has(file) &&
             !unreadable.has(file) &&
             !generatedSource(file)
@@ -419,6 +448,7 @@ export function buildReceipt({
               file.startsWith(`${path}/`) &&
               !deleted.has(file) &&
               !indexWorktreeMismatch.has(file) &&
+              !modeOnly.has(file) &&
               !unmerged.has(file) &&
               !unreadable.has(file) &&
               !generatedSource(file)
@@ -435,6 +465,7 @@ export function buildReceipt({
               !generatedSource(file) &&
               !deleted.has(file) &&
               !indexWorktreeMismatch.has(file) &&
+              !modeOnly.has(file) &&
               !unmerged.has(file) &&
               !unreadable.has(file)
           )
@@ -509,6 +540,7 @@ export function buildReceipt({
       (file) =>
         deleted.has(file) ||
         indexWorktreeMismatch.has(file) ||
+        modeOnly.has(file) ||
         unmerged.has(file) ||
         unreadable.has(file) ||
         generatedSource(file) ||
@@ -520,15 +552,17 @@ export function buildReceipt({
         ? 'unmerged_file'
         : indexWorktreeMismatch.has(path)
           ? 'index_worktree_mismatch'
-          : deleted.has(path)
-            ? 'deleted_file'
-            : unreadable.has(path)
-              ? 'unreadable_file'
-              : generatedSource(path)
-                ? 'generated_file'
-                : supportedSource(path)
-                  ? 'outside_package_source'
-                  : 'unsupported_extension'
+          : modeOnly.has(path)
+            ? 'mode_only_change'
+            : deleted.has(path)
+              ? 'deleted_file'
+              : unreadable.has(path)
+                ? 'unreadable_file'
+                : generatedSource(path)
+                  ? 'generated_file'
+                  : supportedSource(path)
+                    ? 'outside_package_source'
+                    : 'unsupported_extension'
     }));
   for (const exclusion of outsideTargets) {
     const target = targets.find(({ path }) => exclusion.path.startsWith(`${path}/`));
@@ -550,6 +584,7 @@ export function buildReceipt({
       (file) =>
         !deleted.has(file) &&
         !indexWorktreeMismatch.has(file) &&
+        !modeOnly.has(file) &&
         !unmerged.has(file) &&
         !unreadable.has(file) &&
         !generatedSource(file) &&
@@ -685,6 +720,7 @@ function main() {
     const files = changedFiles(root, baseSha);
     const added = addedFiles(root, baseSha, files);
     const indexWorktreeMismatch = indexWorktreeMismatchFiles(root, baseSha);
+    const modeOnly = modeOnlyFiles(root, baseSha);
     const deleted = deletedFiles(root, baseSha);
     const unmerged = unmergedFiles(root);
     const unreadable = unreadableFiles(root, files, deleted);
@@ -695,6 +731,7 @@ function main() {
       files,
       added,
       indexWorktreeMismatch,
+      modeOnly,
       deleted,
       unmerged,
       unreadable,
