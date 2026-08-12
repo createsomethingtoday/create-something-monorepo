@@ -16,6 +16,7 @@
       success: boolean;
       error: string | null;
       email: string | null;
+      preview?: boolean;
     };
     property: PropertyDomain;
   }
@@ -42,7 +43,15 @@
   <div class="max-w-md mx-auto px-6 py-16 text-center">
     <div class="logo mb-8">CREATE SOMETHING</div>
 
-    {#if data.success}
+    {#if data.preview}
+      <div class="success-section">
+        <h1 class="page-title mb-4">Unsubscribe preview</h1>
+        <p class="body-text mb-6">
+          A production link removes the confirmed subscriber immediately. This seed preview changes
+          nothing.
+        </p>
+      </div>
+    {:else if data.success}
       <div class="success-section">
         <h1 class="page-title mb-4">Unsubscribed</h1>
         <p class="body-text mb-6">

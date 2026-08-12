@@ -11,6 +11,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { createLogger } from '@create-something/canon/utils';
+import { recordNewsletterDeliveryReceipt } from '$lib/server/newsletter-delivery-receipt';
 
 const logger = createLogger('NewsletterWebhook');
 
@@ -67,10 +68,15 @@ async function verifyWebhookSignature(
 	svixId: string | null,
 	svixTimestamp: string | null,
 	svixSignature: string | null,
-	webhookSecret: string | undefined
+	webhookSecret: string | undefined,
+	environment: string | undefined
 ): Promise<boolean> {
-	// If no secret configured, skip verification (development mode)
+	// Local development may omit the secret. Production fails closed.
 	if (!webhookSecret) {
+		if (environment === 'production') {
+			logger.error('RESEND_WEBHOOK_SECRET is required in production');
+			return false;
+		}
 		logger.warn('RESEND_WEBHOOK_SECRET not configured - skipping signature verification');
 		return true;
 	}
@@ -91,9 +97,7 @@ async function verifyWebhookSignature(
 	}
 
 	// Extract the base64 secret (remove 'whsec_' prefix if present)
-	const secretKey = webhookSecret.startsWith('whsec_')
-		? webhookSecret.slice(6)
-		: webhookSecret;
+	const secretKey = webhookSecret.startsWith('whsec_') ? webhookSecret.slice(6) : webhookSecret;
 
 	try {
 		// Decode the base64 secret
@@ -115,9 +119,7 @@ async function verifyWebhookSignature(
 
 		// Calculate expected signature
 		const signatureBuffer = await crypto.subtle.sign('HMAC', key, data);
-		const expectedSignature = btoa(
-			String.fromCharCode(...new Uint8Array(signatureBuffer))
-		);
+		const expectedSignature = btoa(String.fromCharCode(...new Uint8Array(signatureBuffer)));
 
 		// Parse the signature header (may contain multiple signatures)
 		// Format: "v1,base64sig v1,base64sig2"
@@ -154,7 +156,8 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			svixId,
 			svixTimestamp,
 			svixSignature,
-			webhookSecret
+			webhookSecret,
+			platform?.env?.ENVIRONMENT
 		);
 
 		if (!isValid) {
@@ -164,18 +167,19 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		// Parse the verified payload
 		const event = JSON.parse(payload) as ResendWebhookPayload;
 
-		// Only process bounce and complaint events
-		if (event.type !== 'email.bounced' && event.type !== 'email.complained') {
-			// Acknowledge other events but don't process them
-			return json({ success: true, message: `Event ${event.type} acknowledged` });
-		}
-
 		if (!platform?.env?.DB) {
 			logger.error('Database not available');
 			return json({ success: false, message: 'Database not available' }, { status: 500 });
 		}
 
 		const db = platform.env.DB;
+		await recordNewsletterDeliveryReceipt(db, event.data.email_id, event.type);
+
+		// Open and click events are deliberately not retained. Delivery events are
+		// recorded above; only bounces and complaints also suppress subscribers.
+		if (event.type !== 'email.bounced' && event.type !== 'email.complained') {
+			return json({ success: true, message: `Event ${event.type} acknowledged` });
+		}
 		const recipients = event.data.to;
 
 		// Determine status based on event type
@@ -223,13 +227,16 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 						.bind(newStatus, autoUnsubscribeReason, newBounceCount, email)
 						.run();
 
-					logger.info('Hard bounce processed', { 
-						email, 
-						status: newStatus, 
-						bounceCount: newBounceCount, 
-						autoUnsubscribed: newBounceCount >= 3 
+					logger.info('Hard bounce processed', {
+						status: newStatus,
+						bounceCount: newBounceCount,
+						autoUnsubscribed: newBounceCount >= 3
 					});
-					return { email, success: true, bounceCount: newBounceCount, autoUnsubscribed: newBounceCount >= 3 };
+					return {
+						success: true,
+						bounceCount: newBounceCount,
+						autoUnsubscribed: newBounceCount >= 3
+					};
 				} else {
 					// Soft bounce or complaint - don't increment bounce count
 					await db
@@ -244,12 +251,12 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 						.bind(status, bounceReason, email)
 						.run();
 
-					logger.info('Soft bounce/complaint processed', { email, status });
-					return { email, success: true };
+					logger.info('Soft bounce/complaint processed', { status });
+					return { success: true };
 				}
 			} catch (err) {
-				logger.error('Failed to update subscriber', { email, error: err });
-				return { email, success: false, error: err };
+				logger.error('Failed to update subscriber suppression state', { error: err });
+				return { success: false, error: err };
 			}
 		});
 
