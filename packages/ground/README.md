@@ -82,6 +82,14 @@ The MCP equivalents are `ground_analyze`, `ground_diff`, `ground_verify_fix`,
 and `ground_explain`. CTX remains complementary: it retrieves prior agent
 history, while Ground computes facts from the source currently on disk.
 
+`ground diff` includes `.mjs` with JavaScript source analysis. Its
+`changed_files` and `changed_file_list` fields remain the analyzable-file view;
+read `discovered_changed_files`, `analyzable_changed_files`, and
+`excluded_changed_files` to see every Git change and the policy or language
+reason an excluded path was not analyzed. Analyzability is derived from the
+requested checks, so a source language unsupported by those checks is reported
+as `unsupported_by_requested_checks` rather than checked-clean.
+
 ### Check Commands (do these first)
 
 ```bash

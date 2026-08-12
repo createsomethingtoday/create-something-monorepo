@@ -1027,7 +1027,7 @@ fn find_importers_recursive(
             let _ = find_importers_recursive(target, module_name, &path, importers);
         } else if path.is_file() && path != target {
             let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
-            if matches!(ext, "ts" | "tsx" | "js" | "jsx" | "svelte") {
+            if matches!(ext, "ts" | "tsx" | "js" | "jsx" | "mjs" | "svelte") {
                 if let Ok(content) = fs::read_to_string(&path) {
                     // Check if this file imports our target module
                     // Handle ESM-style .js imports pointing to .ts files
@@ -1093,6 +1093,7 @@ fn imports_module(content: &str, module_name: &str) -> bool {
                final_segment == format!("{}.ts", module_name) ||
                final_segment == format!("{}.tsx", module_name) ||
                final_segment == format!("{}.jsx", module_name) ||
+               final_segment == format!("{}.mjs", module_name) ||
                final_segment == "index" && import_path.contains(&format!("/{}", module_name)) ||
                final_segment == "index.js" && import_path.contains(&format!("/{}", module_name)) ||
                final_segment == "index.ts" && import_path.contains(&format!("/{}", module_name)) {
@@ -1188,6 +1189,28 @@ mod tests {
         
         assert!(evidence.is_connected);
         assert!(evidence.incoming_connections >= 1);
+    }
+
+    #[test]
+    fn test_mjs_importer_connects_mjs_module() {
+        let dir = tempdir().unwrap();
+
+        File::create(dir.path().join("package.json")).unwrap()
+            .write_all(b"{\"type\":\"module\"}").unwrap();
+
+        let utils = dir.path().join("utils.mjs");
+        File::create(&utils).unwrap()
+            .write_all(b"export function validate() {}").unwrap();
+
+        let main = dir.path().join("main.mjs");
+        File::create(&main).unwrap()
+            .write_all(b"import { validate } from './utils.mjs';\nvalidate();").unwrap();
+
+        let evidence = analyze_connectivity(&utils).unwrap();
+
+        assert!(evidence.is_connected);
+        assert_eq!(evidence.incoming_connections, 1);
+        assert!(evidence.imported_by.iter().any(|path| path.ends_with("main.mjs")));
     }
     
     #[test]

@@ -1832,7 +1832,7 @@ fn collect_ts_files(dir: &PathBuf, files: &mut Vec<PathBuf>) {
             collect_ts_files(&path, files);
         } else if path.is_file() {
             let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
-            if matches!(ext, "ts" | "tsx" | "js" | "jsx") {
+            if matches!(ext, "ts" | "tsx" | "js" | "jsx" | "mjs") {
                 files.push(path);
             }
         }
@@ -2642,6 +2642,15 @@ fn check_export_exists(path: &Path, export_name: &str) -> bool {
 // Incremental/Diff Mode
 // ─────────────────────────────────────────────────────────────────────────────
 
+fn diff_checks_support_extension(extension: &str, checks: &[&str]) -> bool {
+    checks.iter().any(|check| match *check {
+        "duplicates" | "orphans" => {
+            matches!(extension, "ts" | "tsx" | "js" | "jsx" | "mjs")
+        }
+        _ => false,
+    })
+}
+
 fn handle_diff(args: &Value) -> ToolResult {
     let directory = match args.get("directory").and_then(|v| v.as_str()) {
         Some(d) => PathBuf::from(d),
@@ -2682,6 +2691,10 @@ fn handle_diff(args: &Value) -> ToolResult {
         return ToolResult::success(json!({
             "base": base_ref,
             "changed_files": 0,
+            "changed_file_list": [],
+            "discovered_changed_files": 0,
+            "analyzable_changed_files": 0,
+            "excluded_changed_files": [],
             "new_issues": [],
             "total_new_issues": 0,
             "message": format!("No files changed since '{}'. Nothing to analyze.", base_ref)
@@ -2691,23 +2704,43 @@ fn handle_diff(args: &Value) -> ToolResult {
     // Load config
     let config = find_config_in_ancestors(&directory).unwrap_or_default();
     
-    // Filter changed files by config ignore patterns and file type
-    let relevant_files: Vec<PathBuf> = changed_files.iter()
-        .filter(|f| {
-            if !f.starts_with(&analysis_root) {
-                return false;
-            }
+    // Classify every discovered file so a clean diff result cannot imply that
+    // unsupported or policy-excluded changes were analyzed.
+    let mut relevant_files = Vec::new();
+    let mut excluded_changed_files = Vec::new();
 
-            // Keep diff filtering aligned with the CLI's supported-language default.
-            let ext = f.extension().and_then(|e| e.to_str()).unwrap_or("");
-            if !matches!(ext, "ts" | "tsx" | "js" | "jsx" | "rs") {
-                return false;
+    for file in &changed_files {
+        let reason = if !file.starts_with(&analysis_root) {
+            Some("outside_analysis_root")
+        } else {
+            // Report analyzability for the requested checks, not for Ground as a whole.
+            let ext = file.extension().and_then(|e| e.to_str()).unwrap_or("");
+            if diff_checks_support_extension(ext, &checks) {
+                None
+            } else if matches!(
+                ext,
+                "ts" | "tsx" | "js" | "jsx" | "mjs" | "rs" | "py" | "go" | "svelte"
+            ) {
+                Some("unsupported_by_requested_checks")
+            } else {
+                Some("unsupported_extension")
             }
-            // Apply config path filters
-            !config.should_ignore_path(f.strip_prefix(&analysis_root).unwrap_or(f))
-        })
-        .cloned()
-        .collect();
+            .or_else(|| {
+                config
+                    .should_ignore_path(file.strip_prefix(&analysis_root).unwrap_or(file))
+                    .then_some("ignored_by_config")
+            })
+        };
+
+        if let Some(reason) = reason {
+            excluded_changed_files.push(json!({
+                "path": file.to_string_lossy(),
+                "reason": reason
+            }));
+        } else {
+            relevant_files.push(file.clone());
+        }
+    }
     
     let mut new_issues: Vec<Value> = Vec::new();
     
@@ -2801,15 +2834,29 @@ fn handle_diff(args: &Value) -> ToolResult {
         }
     }
     
-    let message = if new_issues.is_empty() {
+    let excluded_summary = if excluded_changed_files.is_empty() {
+        String::new()
+    } else {
         format!(
-            "No new issues introduced since '{}'. {} files changed, all clean.",
-            base_ref, relevant_files.len()
+            " {} changed file(s) were excluded by the current language or ignore policy.",
+            excluded_changed_files.len()
+        )
+    };
+
+    let message = if relevant_files.is_empty() {
+        format!(
+            "No analyzable files changed since '{}'.{}",
+            base_ref, excluded_summary
+        )
+    } else if new_issues.is_empty() {
+        format!(
+            "No new issues introduced since '{}'. {} analyzable changed file(s) are clean.{}",
+            base_ref, relevant_files.len(), excluded_summary
         )
     } else {
         format!(
-            "Found {} new issue(s) in {} changed files since '{}'.",
-            new_issues.len(), relevant_files.len(), base_ref
+            "Found {} new issue(s) in {} analyzable changed file(s) since '{}'.{}",
+            new_issues.len(), relevant_files.len(), base_ref, excluded_summary
         )
     };
     
@@ -2819,6 +2866,9 @@ fn handle_diff(args: &Value) -> ToolResult {
         "changed_file_list": relevant_files.iter()
             .map(|f| f.to_string_lossy().to_string())
             .collect::<Vec<_>>(),
+        "discovered_changed_files": changed_files.len(),
+        "analyzable_changed_files": relevant_files.len(),
+        "excluded_changed_files": excluded_changed_files,
         "new_issues": new_issues,
         "total_new_issues": new_issues.len(),
         "checks_run": checks,
@@ -3667,5 +3717,169 @@ mod tests {
         let changed = get_changed_files_since(&root, "HEAD").unwrap();
         assert!(changed.contains(&root.join("packages/ground/tracked.rs")));
         assert!(changed.contains(&root.join("packages/ground/untracked.ts")));
+    }
+
+    #[test]
+    fn diff_reports_committed_mjs_duplicates() {
+        use std::fs;
+        use std::process::Command;
+
+        let repo = tempdir().unwrap();
+        let run_git = |args: &[&str]| {
+            let status = Command::new("git")
+                .args(args)
+                .current_dir(repo.path())
+                .status()
+                .unwrap();
+            assert!(status.success(), "git {:?} failed", args);
+        };
+
+        run_git(&["init", "--quiet"]);
+        run_git(&["config", "user.email", "ground@example.test"]);
+        run_git(&["config", "user.name", "Ground test"]);
+
+        let source = repo.path().join("src");
+        fs::create_dir_all(&source).unwrap();
+        fs::write(
+            source.join("baseline.mjs"),
+            "export function normalizeLabel(value) {\n    const trimmed = value.trim();\n    if (!trimmed) return 'Unknown';\n    return trimmed.toUpperCase();\n}\n",
+        )
+        .unwrap();
+        run_git(&["add", "."]);
+        run_git(&["commit", "--quiet", "-m", "baseline"]);
+
+        fs::write(
+            source.join("duplicate.mjs"),
+            "export function normalizeLabel(value) {\n    const trimmed = value.trim();\n    if (!trimmed) return 'Unknown';\n    return trimmed.toUpperCase();\n}\n",
+        )
+        .unwrap();
+        run_git(&["add", "."]);
+        run_git(&["commit", "--quiet", "-m", "add duplicate"]);
+
+        let result = handle_diff(&json!({
+            "directory": repo.path(),
+            "base": "HEAD~1",
+            "checks": ["duplicates"]
+        }));
+
+        assert!(result.success, "{:?}", result.content);
+        assert_eq!(result.content["discovered_changed_files"], 1);
+        assert_eq!(result.content["analyzable_changed_files"], 1);
+        assert_eq!(result.content["changed_files"], 1);
+        assert_eq!(result.content["total_new_issues"], 1);
+        assert!(result.content["changed_file_list"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|path| path.as_str().unwrap().ends_with("src/duplicate.mjs")));
+    }
+
+    #[test]
+    fn diff_does_not_count_rust_as_analyzed_by_duplicate_check() {
+        use std::fs;
+        use std::process::Command;
+
+        let repo = tempdir().unwrap();
+        let run_git = |args: &[&str]| {
+            let status = Command::new("git")
+                .args(args)
+                .current_dir(repo.path())
+                .status()
+                .unwrap();
+            assert!(status.success(), "git {:?} failed", args);
+        };
+
+        run_git(&["init", "--quiet"]);
+        run_git(&["config", "user.email", "ground@example.test"]);
+        run_git(&["config", "user.name", "Ground test"]);
+        fs::write(repo.path().join("README.md"), "baseline\n").unwrap();
+        run_git(&["add", "."]);
+        run_git(&["commit", "--quiet", "-m", "baseline"]);
+
+        let source = repo.path().join("src");
+        fs::create_dir_all(&source).unwrap();
+        fs::write(source.join("change.rs"), "fn changed() {}\n").unwrap();
+        run_git(&["add", "."]);
+        run_git(&["commit", "--quiet", "-m", "change rust"]);
+
+        let result = handle_diff(&json!({
+            "directory": repo.path(),
+            "base": "HEAD~1",
+            "checks": ["duplicates"]
+        }));
+
+        assert!(result.success, "{:?}", result.content);
+        assert_eq!(result.content["discovered_changed_files"], 1);
+        assert_eq!(result.content["analyzable_changed_files"], 0);
+        assert_eq!(result.content["changed_files"], 0);
+        assert_eq!(
+            result.content["excluded_changed_files"][0]["reason"],
+            "unsupported_by_requested_checks"
+        );
+        assert!(result.content["message"]
+            .as_str()
+            .unwrap()
+            .contains("No analyzable files changed"));
+    }
+
+    #[test]
+    fn diff_makes_zero_analyzable_coverage_explicit() {
+        use std::fs;
+        use std::process::Command;
+
+        let repo = tempdir().unwrap();
+        let run_git = |args: &[&str]| {
+            let status = Command::new("git")
+                .args(args)
+                .current_dir(repo.path())
+                .status()
+                .unwrap();
+            assert!(status.success(), "git {:?} failed", args);
+        };
+
+        run_git(&["init", "--quiet"]);
+        run_git(&["config", "user.email", "ground@example.test"]);
+        run_git(&["config", "user.name", "Ground test"]);
+        fs::write(repo.path().join("README.md"), "baseline\n").unwrap();
+        fs::write(
+            repo.path().join(".ground.yml"),
+            "ignore:\n  paths:\n    - \"**/*.test.ts\"\n",
+        )
+        .unwrap();
+        run_git(&["add", "."]);
+        run_git(&["commit", "--quiet", "-m", "baseline"]);
+
+        let config = repo.path().join("config");
+        fs::create_dir_all(&config).unwrap();
+        fs::write(config.join("ground.json"), "{\"mode\":\"safe\"}\n").unwrap();
+        let source = repo.path().join("src");
+        fs::create_dir_all(&source).unwrap();
+        fs::write(source.join("sample.test.ts"), "export const value = true;\n").unwrap();
+        run_git(&["add", "."]);
+        run_git(&["commit", "--quiet", "-m", "change configuration"]);
+
+        let result = handle_diff(&json!({
+            "directory": repo.path(),
+            "base": "HEAD~1",
+            "checks": ["duplicates"]
+        }));
+
+        assert!(result.success, "{:?}", result.content);
+        assert_eq!(result.content["discovered_changed_files"], 2);
+        assert_eq!(result.content["analyzable_changed_files"], 0);
+        assert_eq!(result.content["changed_files"], 0);
+        let excluded = result.content["excluded_changed_files"].as_array().unwrap();
+        assert!(excluded.iter().any(|file| {
+            file["path"].as_str().unwrap().ends_with("config/ground.json")
+                && file["reason"] == "unsupported_extension"
+        }));
+        assert!(excluded.iter().any(|file| {
+            file["path"].as_str().unwrap().ends_with("src/sample.test.ts")
+                && file["reason"] == "ignored_by_config"
+        }));
+        assert!(result.content["message"]
+            .as_str()
+            .unwrap()
+            .contains("No analyzable files changed"));
     }
 }
