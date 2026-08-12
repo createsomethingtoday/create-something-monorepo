@@ -53,6 +53,7 @@
 //! - Reduce propagated bugs (same-file clones have ~18% higher bug rate)
 //! - Apply the Subtractive Triad: DRY at implementation level
 
+use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::fs;
 use serde::{Serialize, Deserialize};
@@ -638,6 +639,27 @@ pub fn analyze_function_dry_with_options(
     threshold: f64,
     options: &FunctionDryOptions,
 ) -> Result<FunctionDryReport, ComputationError> {
+    analyze_function_dry_internal(files, None, threshold, options)
+}
+
+/// Analyze a complete source corpus while only comparing pairs that involve a
+/// focus file. Diff mode uses this to preserve full duplicate evidence without
+/// paying the cost of unrelated all-pairs comparisons.
+pub fn analyze_function_dry_focused_with_options(
+    files: &[PathBuf],
+    focus_files: &HashSet<PathBuf>,
+    threshold: f64,
+    options: &FunctionDryOptions,
+) -> Result<FunctionDryReport, ComputationError> {
+    analyze_function_dry_internal(files, Some(focus_files), threshold, options)
+}
+
+fn analyze_function_dry_internal(
+    files: &[PathBuf],
+    focus_files: Option<&HashSet<PathBuf>>,
+    threshold: f64,
+    options: &FunctionDryOptions,
+) -> Result<FunctionDryReport, ComputationError> {
     let mut all_functions: Vec<(PathBuf, ExtractedFunction)> = Vec::new();
     let mut skipped_files = Vec::new();
     let mut analyzed_files = Vec::new();
@@ -679,6 +701,12 @@ pub fn analyze_function_dry_with_options(
         for j in (i + 1)..all_functions.len() {
             let (path_a, func_a) = &all_functions[i];
             let (path_b, func_b) = &all_functions[j];
+
+            if focus_files.is_some_and(|focus| {
+                !focus.contains(path_a) && !focus.contains(path_b)
+            }) {
+                continue;
+            }
             
             let same_file = path_a == path_b;
             let same_name = func_a.name == func_b.name;

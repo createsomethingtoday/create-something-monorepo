@@ -448,15 +448,19 @@ export function buildReceipt({
   );
   const changedSet = new Set(files);
   const targets = packageRoots.map((path) => {
-    const scanLimitExceeded = exceedsGroundScanLimit(resolve(root, path));
-    const result = scanLimitExceeded
-      ? { changed_file_list: [], excluded_changed_files: [], new_issues: [] }
-      : parseGroundJson(
-          run(groundBinary, ['diff', path, '--base', baseSha, '--checks', CHECKS.join(',')], root)
-        );
+    const requiresCompletionEvidence = exceedsGroundScanLimit(resolve(root, path));
+    const result = parseGroundJson(
+      run(groundBinary, ['diff', path, '--base', baseSha, '--checks', CHECKS.join(',')], root)
+    );
+    const duplicateCompletion = result.check_coverage?.duplicates;
+    const duplicateReportedFiles = Array.isArray(duplicateCompletion?.analyzed_changed_files)
+      ? duplicateCompletion.analyzed_changed_files
+      : requiresCompletionEvidence
+        ? []
+        : result.changed_file_list ?? [];
     const reportedAnalyzedChangedFiles = [
       ...new Set(
-        (result.changed_file_list ?? [])
+        duplicateReportedFiles
           .map((file) => receiptPath(root, file))
           .filter(
             (file) =>
@@ -471,8 +475,13 @@ export function buildReceipt({
           )
       )
     ];
-    const analyzedChangedFiles = scanLimitExceeded ? [] : reportedAnalyzedChangedFiles;
-    const scanLimitExclusions = scanLimitExceeded
+    const analyzedChangedFiles = reportedAnalyzedChangedFiles;
+    const completionExclusions = Array.isArray(duplicateCompletion?.excluded_changed_files)
+      ? duplicateCompletion.excluded_changed_files.map((exclusion) => ({
+          ...exclusion,
+          path: receiptPath(root, exclusion.path)
+        }))
+      : requiresCompletionEvidence
       ? files
           .filter(
             (file) =>
@@ -485,7 +494,7 @@ export function buildReceipt({
               !unmerged.has(file) &&
               !unreadable.has(file)
           )
-          .map((file) => ({ path: file, reason: 'ground_scan_cap' }))
+          .map((file) => ({ path: file, reason: 'ground_completion_evidence_missing' }))
       : [];
     const analyzedPathSet = new Set(analyzedChangedFiles);
     const orphanAnalyzedFiles = analyzedChangedFiles.filter(
@@ -524,7 +533,7 @@ export function buildReceipt({
             ...exclusion,
             path: receiptPath(root, exclusion.path)
           })),
-          ...scanLimitExclusions
+          ...completionExclusions
         ]
       },
       findings: (result.new_issues ?? [])

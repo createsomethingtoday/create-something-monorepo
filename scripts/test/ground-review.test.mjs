@@ -1061,7 +1061,7 @@ printf '%s\\n' '{"discovered_changed_files":2,"analyzable_changed_files":2,"chan
   assert.equal(receipt.status, 'clear');
 });
 
-test('CLI excludes changed source when the Ground scan cap is exceeded', (t) => {
+test('CLI accepts per-file completion evidence beyond the former Ground scan cap', (t) => {
   const repo = mkdtempSync(join(tmpdir(), 'ground-review-scan-cap-'));
   const binaryDir = mkdtempSync(join(tmpdir(), 'ground-review-scan-cap-binary-'));
   t.after(() => {
@@ -1087,7 +1087,7 @@ test('CLI excludes changed source when the Ground scan cap is exceeded', (t) => 
     binaryDir,
     'fake-ground',
     `#!/bin/sh
-exit 99
+printf '%s\\n' '{"changed_file_list":["packages/example/src/file-500.ts"],"excluded_changed_files":[],"check_coverage":{"duplicates":{"status":"completed","analyzed_changed_files":["packages/example/src/file-500.ts"],"excluded_changed_files":[]},"orphans":{"status":"completed","analyzed_changed_files":[],"excluded_changed_files":[{"path":"packages/example/src/file-500.ts","reason":"existing_file_not_checked_for_orphans"}]}},"new_issues":[]}'
 `
   );
   chmodSync(fakeGround, 0o755);
@@ -1098,15 +1098,39 @@ exit 99
 
   assert.equal(result.status, 0, result.stderr || result.stdout);
   const receipt = JSON.parse(result.stdout);
-  assert.equal(receipt.coverage.analyzable_changed_files, 0);
-  assert.deepEqual(receipt.targets[0].coverage.analyzed_changed_files, []);
-  assert.deepEqual(receipt.coverage.excluded_changed_files, [
-    { path: 'packages/example/src/file-500.ts', reason: 'ground_scan_cap' }
+  assert.equal(receipt.coverage.analyzable_changed_files, 1);
+  assert.deepEqual(receipt.targets[0].coverage.analyzed_changed_files, [
+    'packages/example/src/file-500.ts'
   ]);
-  assert.equal(receipt.status, 'no_analyzable_files');
+  assert.deepEqual(receipt.coverage.excluded_changed_files, []);
+  assert.equal(receipt.status, 'clear');
+
+  writeFixtureFile(
+    binaryDir,
+    'fake-ground',
+    `#!/bin/sh
+printf '%s\\n' '{"changed_file_list":["packages/example/src/file-500.ts"],"excluded_changed_files":[],"new_issues":[]}'
+`
+  );
+  chmodSync(fakeGround, 0o755);
+  const legacyResult = run(
+    process.execPath,
+    [scriptPath, '--base', 'HEAD', '--format', 'json'],
+    repo,
+    { GROUND_BINARY: fakeGround }
+  );
+  assert.equal(legacyResult.status, 0, legacyResult.stderr || legacyResult.stdout);
+  const legacyReceipt = JSON.parse(legacyResult.stdout);
+  assert.equal(legacyReceipt.coverage.analyzable_changed_files, 0);
+  assert.deepEqual(legacyReceipt.coverage.excluded_changed_files, [
+    {
+      path: 'packages/example/src/file-500.ts',
+      reason: 'ground_completion_evidence_missing'
+    }
+  ]);
 });
 
-test('CLI treats symlinked directory aliases as capped Ground traversal', (t) => {
+test('CLI accepts bounded completion evidence with a symlinked directory alias', (t) => {
   const repo = mkdtempSync(join(tmpdir(), 'ground-review-symlink-directory-'));
   const binaryDir = mkdtempSync(join(tmpdir(), 'ground-review-symlink-directory-binary-'));
   t.after(() => {
@@ -1127,7 +1151,7 @@ test('CLI treats symlinked directory aliases as capped Ground traversal', (t) =>
     binaryDir,
     'fake-ground',
     `#!/bin/sh
-exit 99
+printf '%s\\n' '{"changed_file_list":["packages/example/src/value.ts"],"excluded_changed_files":[],"check_coverage":{"duplicates":{"status":"completed","analyzed_changed_files":["packages/example/src/value.ts"],"excluded_changed_files":[]},"orphans":{"status":"completed","analyzed_changed_files":[],"excluded_changed_files":[{"path":"packages/example/src/value.ts","reason":"existing_file_not_checked_for_orphans"}]}},"new_issues":[]}'
 `
   );
   chmodSync(fakeGround, 0o755);
@@ -1138,8 +1162,6 @@ exit 99
 
   assert.equal(result.status, 0, result.stderr || result.stdout);
   const receipt = JSON.parse(result.stdout);
-  assert.equal(receipt.coverage.analyzable_changed_files, 0);
-  assert.deepEqual(receipt.coverage.excluded_changed_files, [
-    { path: 'packages/example/src/value.ts', reason: 'ground_scan_cap' }
-  ]);
+  assert.equal(receipt.coverage.analyzable_changed_files, 1);
+  assert.deepEqual(receipt.coverage.excluded_changed_files, []);
 });

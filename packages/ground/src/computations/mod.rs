@@ -46,7 +46,8 @@ pub use usage::{count_usages, find_dead_exports, UsageEvidence, UsageLocation, U
 pub use connectivity::{analyze_connectivity, ConnectivityEvidence, ArchitecturalConnections, ServiceBinding};
 pub use ast_similarity::{extract_fingerprint, compare_fingerprints, AstFingerprint, AstSimilarity};
 pub use function_dry::{
-    extract_functions, analyze_function_dry, analyze_function_dry_with_options, compare_functions,
+    extract_functions, analyze_function_dry, analyze_function_dry_with_options,
+    analyze_function_dry_focused_with_options, compare_functions,
     ExtractedFunction, FunctionDryEvidence, FunctionDryReport, FunctionDryOptions, is_test_file,
     IntraFileDryEvidence, DEFAULT_INTRA_FILE_THRESHOLD,
 };

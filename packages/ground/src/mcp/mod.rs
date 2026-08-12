@@ -29,12 +29,15 @@
 
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
 use crate::{VerifiedTriad, VerifiedTriadError};
-use crate::computations::{analyze_function_dry_with_options, FunctionDryOptions};
+use crate::computations::{
+    analyze_function_dry_focused_with_options, analyze_function_dry_with_options,
+    FunctionDryOptions,
+};
 use crate::computations::environment::{analyze_environment_safety, WarningSeverity, RuntimeEnvironment};
 use crate::computations::{BloomFilter, HyperLogLog};
 use crate::computations::confidence::orphan_confidence;
@@ -876,6 +879,15 @@ fn handle_find_duplicate_functions(args: &Value) -> ToolResult {
     
     let intra_file_threshold = args.get("intra_file_threshold")
         .and_then(|v| v.as_f64());
+
+    let mut focus_files = args.get("focus_files")
+        .and_then(|value| value.as_array())
+        .map(|files| {
+            files.iter()
+                .filter_map(|file| file.as_str())
+                .map(PathBuf::from)
+                .collect::<HashSet<_>>()
+        });
     
     // Build options
     let options = FunctionDryOptions {
@@ -893,22 +905,32 @@ fn handle_find_duplicate_functions(args: &Value) -> ToolResult {
     // and pair ignores during result filtering.
     let mut files: Vec<PathBuf> = Vec::new();
     let mut file_to_package: std::collections::HashMap<PathBuf, String> = std::collections::HashMap::new();
+    let mut files_discovered = 0;
     let max_files = 500;
     
-    'outer: for dir in &directories {
+    for dir in &directories {
         let package_name = extract_package_name(dir);
         let mut dir_files: Vec<PathBuf> = Vec::new();
         collect_ts_files(dir, &mut dir_files);
+        files_discovered += dir_files.len();
         
         for file in dir_files {
+            if focus_files.is_none() && files.len() >= max_files {
+                continue;
+            }
             file_to_package.insert(file.clone(), package_name.clone());
             files.push(file);
-            
-            // Early exit if we hit the file limit
-            if files.len() >= max_files {
-                break 'outer;
-            }
         }
+    }
+
+    if let Some(requested_focus) = focus_files.take() {
+        let normalized_focus = requested_focus.iter()
+            .map(|file| canonicalize_parent(file))
+            .collect::<HashSet<_>>();
+        focus_files = Some(files.iter()
+            .filter(|file| normalized_focus.contains(&canonicalize_parent(file)))
+            .cloned()
+            .collect());
     }
     
     let is_cross_package_scan = directories.len() > 1;
@@ -919,6 +941,9 @@ fn handle_find_duplicate_functions(args: &Value) -> ToolResult {
             "directories": directories.iter().map(|d| d.to_string_lossy()).collect::<Vec<_>>(),
             "packages_scanned": directories.len(),
             "files_checked": 0,
+            "files_discovered": files_discovered,
+            "file_list": [],
+            "scan_complete": files_discovered == 0,
             "functions_found": 0,
             "duplicates": [],
             "cross_package_duplicates": [],
@@ -928,7 +953,13 @@ fn handle_find_duplicate_functions(args: &Value) -> ToolResult {
     
     mcp_log!("Analyzing {} files for duplicate functions (threshold={:.0}%)", files.len(), threshold * 100.0);
     
-    match analyze_function_dry_with_options(&files, threshold, &options) {
+    let analysis = if let Some(ref focus_files) = focus_files {
+        analyze_function_dry_focused_with_options(&files, focus_files, threshold, &options)
+    } else {
+        analyze_function_dry_with_options(&files, threshold, &options)
+    };
+
+    match analysis {
         Ok(report) => {
             // Categorize duplicates: same-package vs cross-package
             // Apply config ignore patterns
@@ -1005,7 +1036,7 @@ fn handle_find_duplicate_functions(args: &Value) -> ToolResult {
             let intra_file_count = intra_file_dups.len();
             let total_dup_count = inter_file_count + intra_file_count;
             
-            let message = if total_dup_count == 0 {
+            let mut message = if total_dup_count == 0 {
                 "No duplicate functions found.".to_string()
             } else {
                 let mut parts = Vec::new();
@@ -1030,12 +1061,23 @@ fn handle_find_duplicate_functions(args: &Value) -> ToolResult {
                 
                 format!("Found {}. Consider consolidating.", parts.join(", "))
             };
+            if files.len() < files_discovered {
+                message.push_str(&format!(
+                    " Scan incomplete: checked the bounded first {} of {} discovered files.",
+                    files.len(), files_discovered
+                ));
+            }
             
             let mut response = json!({
                 "found": true,
                 "directories": directories.iter().map(|d| d.to_string_lossy()).collect::<Vec<_>>(),
                 "packages_scanned": directories.len(),
                 "files_checked": report.files.len(),
+                "files_discovered": files_discovered,
+                "file_list": report.files.iter()
+                    .map(|file| file.to_string_lossy().to_string())
+                    .collect::<Vec<_>>(),
+                "scan_complete": files.len() == files_discovered,
                 "functions_found": report.total_functions,
                 "duplicate_count": inter_file_count,
                 "cross_package_count": cross_package_dups.len(),
@@ -1813,24 +1855,57 @@ fn collect_workspace_candidates() -> Vec<PathBuf> {
 }
 
 fn collect_ts_files(dir: &PathBuf, files: &mut Vec<PathBuf>) {
-    let entries = match std::fs::read_dir(dir) {
-        Ok(e) => e,
+    let mut visited_directories = HashSet::new();
+    collect_ts_files_inner(dir, files, &mut visited_directories);
+    files.sort();
+}
+
+fn collect_ts_files_inner(
+    dir: &Path,
+    files: &mut Vec<PathBuf>,
+    visited_directories: &mut HashSet<PathBuf>,
+) {
+    let canonical_directory = match dir.canonicalize() {
+        Ok(path) => path,
         Err(_) => return,
     };
-    
-    for entry in entries.filter_map(|e| e.ok()) {
+    if !visited_directories.insert(canonical_directory) {
+        return;
+    }
+
+    let entries = match std::fs::read_dir(dir) {
+        Ok(entries) => entries,
+        Err(_) => return,
+    };
+
+    let mut entries = entries.filter_map(|entry| entry.ok()).collect::<Vec<_>>();
+    entries.sort_by_key(|entry| entry.file_name());
+
+    for entry in entries {
         let path = entry.path();
-        
+
         if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-            if name.starts_with('.') || 
+            if name.starts_with('.') ||
                matches!(name, "node_modules" | "target" | "dist" | "build" | ".svelte-kit") {
                 continue;
             }
         }
-        
-        if path.is_dir() {
-            collect_ts_files(&path, files);
-        } else if path.is_file() {
+
+        let file_type = match entry.file_type() {
+            Ok(file_type) => file_type,
+            Err(_) => continue,
+        };
+
+        // Directory aliases can make traversal order-dependent and may form cycles.
+        // The real directory is discovered through its lexical entry, so aliases do
+        // not add source coverage and are intentionally skipped.
+        if file_type.is_symlink() && path.is_dir() {
+            continue;
+        }
+
+        if file_type.is_dir() {
+            collect_ts_files_inner(&path, files, visited_directories);
+        } else if file_type.is_file() || (file_type.is_symlink() && path.is_file()) {
             let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
             if matches!(ext, "ts" | "tsx" | "js" | "jsx" | "mjs") {
                 files.push(path);
@@ -2235,6 +2310,7 @@ fn handle_batch_analyze(args: &Value) -> ToolResult {
             "orphans": [],
             "environment_issues": []
         },
+        "coverage": {},
         "summary": {
             "total_issues": 0,
             "auto_fixable": 0,
@@ -2244,6 +2320,7 @@ fn handle_batch_analyze(args: &Value) -> ToolResult {
     
     let mut total_issues = 0;
     let mut auto_fixable = 0;
+    let mut analysis_complete = true;
     
     // Run duplicate check
     if checks.contains(&"duplicates") {
@@ -2254,6 +2331,15 @@ fn handle_batch_analyze(args: &Value) -> ToolResult {
         });
         
         if let ToolResult { success: true, content, .. } = handle_find_duplicate_functions(&dup_args) {
+            let duplicate_scan_complete = content.get("scan_complete")
+                .and_then(|value| value.as_bool())
+                .unwrap_or(false);
+            analysis_complete &= duplicate_scan_complete;
+            results["coverage"]["duplicates"] = json!({
+                "status": if duplicate_scan_complete { "completed" } else { "partial" },
+                "files_discovered": content.get("files_discovered"),
+                "files_checked": content.get("files_checked")
+            });
             // Convert duplicates to structured findings with fixes
             let mut structured_dups: Vec<Value> = Vec::new();
             
@@ -2451,8 +2537,10 @@ fn handle_batch_analyze(args: &Value) -> ToolResult {
     results["summary"]["auto_fixable"] = json!(auto_fixable);
     results["summary"]["needs_review"] = json!(total_issues - auto_fixable);
     
-    let message = if total_issues == 0 {
+    let message = if total_issues == 0 && analysis_complete {
         "No issues found. Codebase is clean.".to_string()
+    } else if total_issues == 0 {
+        "No issues found in the completed portion; one or more checks were partial.".to_string()
     } else {
         format!(
             "Found {} issue(s): {} auto-fixable, {} need review.",
@@ -2651,6 +2739,16 @@ fn diff_checks_support_extension(extension: &str, checks: &[&str]) -> bool {
     })
 }
 
+fn canonicalize_parent(path: &Path) -> PathBuf {
+    match (path.parent(), path.file_name()) {
+        (Some(parent), Some(file_name)) => parent
+            .canonicalize()
+            .map(|canonical_parent| canonical_parent.join(file_name))
+            .unwrap_or_else(|_| path.to_path_buf()),
+        _ => path.to_path_buf(),
+    }
+}
+
 fn handle_diff(args: &Value) -> ToolResult {
     let directory = match args.get("directory").and_then(|v| v.as_str()) {
         Some(d) => PathBuf::from(d),
@@ -2688,6 +2786,13 @@ fn handle_diff(args: &Value) -> ToolResult {
     };
     
     if changed_files.is_empty() {
+        let check_coverage = checks.iter().map(|check| {
+            ((*check).to_string(), json!({
+                "status": "completed",
+                "analyzed_changed_files": [],
+                "excluded_changed_files": []
+            }))
+        }).collect::<serde_json::Map<_, _>>();
         return ToolResult::success(json!({
             "base": base_ref,
             "changed_files": 0,
@@ -2695,6 +2800,7 @@ fn handle_diff(args: &Value) -> ToolResult {
             "discovered_changed_files": 0,
             "analyzable_changed_files": 0,
             "excluded_changed_files": [],
+            "check_coverage": check_coverage,
             "new_issues": [],
             "total_new_issues": 0,
             "message": format!("No files changed since '{}'. Nothing to analyze.", base_ref)
@@ -2743,16 +2849,49 @@ fn handle_diff(args: &Value) -> ToolResult {
     }
     
     let mut new_issues: Vec<Value> = Vec::new();
+    let mut check_coverage = serde_json::Map::new();
     
     // Run duplicate check on changed files
     if checks.contains(&"duplicates") {
         let dup_args = json!({
             "directory": directory.to_string_lossy(),
             "cross_package": cross_package,
-            "threshold": config.similarity_threshold()
+            "threshold": config.similarity_threshold(),
+            "focus_files": relevant_files.iter()
+                .map(|file| file.to_string_lossy().to_string())
+                .collect::<Vec<_>>()
         });
         
-        if let ToolResult { success: true, content, .. } = handle_find_duplicate_functions(&dup_args) {
+        let duplicate_result = handle_find_duplicate_functions(&dup_args);
+        if duplicate_result.success {
+            let content = duplicate_result.content;
+            let scanned_files = content.get("file_list")
+                .and_then(|value| value.as_array())
+                .map(|files| {
+                    files.iter()
+                        .filter_map(|file| file.as_str())
+                        .map(PathBuf::from)
+                        .map(|file| canonicalize_parent(&file))
+                        .collect::<HashSet<_>>()
+                })
+                .unwrap_or_default();
+            let analyzed_changed_files = relevant_files.iter()
+                .filter(|file| scanned_files.contains(&canonicalize_parent(file)))
+                .map(|file| file.to_string_lossy().to_string())
+                .collect::<Vec<_>>();
+            let excluded_changed_files = relevant_files.iter()
+                .filter(|file| !scanned_files.contains(&canonicalize_parent(file)))
+                .map(|file| json!({
+                    "path": file.to_string_lossy(),
+                    "reason": "duplicate_analysis_incomplete"
+                }))
+                .collect::<Vec<_>>();
+            check_coverage.insert("duplicates".to_string(), json!({
+                "status": if excluded_changed_files.is_empty() { "completed" } else { "partial" },
+                "analyzed_changed_files": analyzed_changed_files,
+                "excluded_changed_files": excluded_changed_files
+            }));
+
             // Filter duplicates to only those involving changed files
             if let Some(dups) = content.get("duplicates").and_then(|v| v.as_array()) {
                 for dup in dups {
@@ -2802,15 +2941,30 @@ fn handle_diff(args: &Value) -> ToolResult {
                     }
                 }
             }
+        } else {
+            check_coverage.insert("duplicates".to_string(), json!({
+                "status": "failed",
+                "analyzed_changed_files": [],
+                "excluded_changed_files": relevant_files.iter().map(|file| json!({
+                    "path": file.to_string_lossy(),
+                    "reason": "duplicate_analysis_failed"
+                })).collect::<Vec<_>>()
+            }));
         }
     }
     
     // Run orphan check on changed files
     if checks.contains(&"orphans") {
+        let mut analyzed_changed_files = Vec::new();
+        let mut orphan_exclusions = Vec::new();
         // For orphans, we check if any of the NEW files are orphaned
         for file in &relevant_files {
             // Skip if file was deleted (doesn't exist)
             if !file.exists() {
+                orphan_exclusions.push(json!({
+                    "path": file.to_string_lossy(),
+                    "reason": "file_unavailable"
+                }));
                 continue;
             }
             
@@ -2820,18 +2974,41 @@ fn handle_diff(args: &Value) -> ToolResult {
             if is_new_file {
                 // Check connections for this specific file
                 use crate::computations::analyze_connectivity;
-                if let Ok(evidence) = analyze_connectivity(file) {
-                    if evidence.total_connections() == 0 && evidence.architectural.is_none() {
-                        new_issues.push(json!({
-                            "type": "orphan_module",
-                            "path": file.to_string_lossy(),
-                            "introduced_by": "current_branch",
-                            "is_new_file": true
-                        }));
+                match analyze_connectivity(file) {
+                    Ok(evidence) => {
+                        analyzed_changed_files.push(file.to_string_lossy().to_string());
+                        if evidence.total_connections() == 0 && evidence.architectural.is_none() {
+                            new_issues.push(json!({
+                                "type": "orphan_module",
+                                "path": file.to_string_lossy(),
+                                "introduced_by": "current_branch",
+                                "is_new_file": true
+                            }));
+                        }
                     }
+                    Err(_) => orphan_exclusions.push(json!({
+                        "path": file.to_string_lossy(),
+                        "reason": "orphan_analysis_failed"
+                    }))
                 }
+            } else {
+                orphan_exclusions.push(json!({
+                    "path": file.to_string_lossy(),
+                    "reason": "existing_file_not_checked_for_orphans"
+                }));
             }
         }
+        let status = if orphan_exclusions.iter().any(|exclusion| {
+            matches!(
+                exclusion.get("reason").and_then(|reason| reason.as_str()),
+                Some("file_unavailable" | "orphan_analysis_failed")
+            )
+        }) { "partial" } else { "completed" };
+        check_coverage.insert("orphans".to_string(), json!({
+            "status": status,
+            "analyzed_changed_files": analyzed_changed_files,
+            "excluded_changed_files": orphan_exclusions
+        }));
     }
     
     let excluded_summary = if excluded_changed_files.is_empty() {
@@ -2869,6 +3046,7 @@ fn handle_diff(args: &Value) -> ToolResult {
         "discovered_changed_files": changed_files.len(),
         "analyzable_changed_files": relevant_files.len(),
         "excluded_changed_files": excluded_changed_files,
+        "check_coverage": check_coverage,
         "new_issues": new_issues,
         "total_new_issues": new_issues.len(),
         "checks_run": checks,
@@ -3772,6 +3950,138 @@ mod tests {
             .unwrap()
             .iter()
             .any(|path| path.as_str().unwrap().ends_with("src/duplicate.mjs")));
+    }
+
+    #[test]
+    fn diff_reports_duplicate_check_completion_beyond_legacy_scan_cap() {
+        use std::fs;
+        use std::process::Command;
+
+        let repo = tempdir().unwrap();
+        let run_git = |args: &[&str]| {
+            let status = Command::new("git")
+                .args(args)
+                .current_dir(repo.path())
+                .status()
+                .unwrap();
+            assert!(status.success(), "git {:?} failed", args);
+        };
+
+        run_git(&["init", "--quiet"]);
+        run_git(&["config", "user.email", "ground@example.test"]);
+        run_git(&["config", "user.name", "Ground test"]);
+
+        let source = repo.path().join("src");
+        fs::create_dir_all(&source).unwrap();
+        for index in 0..=500 {
+            fs::write(
+                source.join(format!("file-{index:03}.ts")),
+                format!("export const value{index} = {index};\n"),
+            )
+            .unwrap();
+        }
+        run_git(&["add", "."]);
+        run_git(&["commit", "--quiet", "-m", "baseline"]);
+
+        let changed = source.join("file-500.ts");
+        fs::write(&changed, "export const value500 = 501;\n").unwrap();
+
+        let result = handle_diff(&json!({
+            "directory": repo.path(),
+            "base": "HEAD",
+            "checks": ["duplicates"]
+        }));
+
+        assert!(result.success, "{:?}", result.content);
+        let completed = result.content["check_coverage"]["duplicates"]
+            ["analyzed_changed_files"]
+            .as_array()
+            .expect("duplicate coverage must enumerate completed changed files");
+        assert!(completed
+            .iter()
+            .any(|path| path.as_str().unwrap().ends_with("src/file-500.ts")));
+        assert_eq!(
+            result.content["check_coverage"]["duplicates"]["status"],
+            "completed"
+        );
+    }
+
+    #[test]
+    fn broad_duplicate_scan_reports_its_safety_bound() {
+        use std::fs;
+
+        let directory = tempdir().unwrap();
+        for index in 0..=500 {
+            fs::write(
+                directory.path().join(format!("file-{index:03}.ts")),
+                format!("export const value{index} = {index};\n"),
+            )
+            .unwrap();
+        }
+
+        let result = handle_find_duplicate_functions(&json!({
+            "directory": directory.path()
+        }));
+
+        assert!(result.success, "{:?}", result.content);
+        assert_eq!(result.content["files_discovered"], 501);
+        assert_eq!(result.content["files_checked"], 500);
+        assert_eq!(result.content["scan_complete"], false);
+        assert!(result.content["message"]
+            .as_str()
+            .unwrap()
+            .contains("Scan incomplete"));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn diff_duplicate_completion_is_bounded_by_symlink_directory_cycles() {
+        use std::fs;
+        use std::os::unix::fs::symlink;
+        use std::process::Command;
+
+        let repo = tempdir().unwrap();
+        let run_git = |args: &[&str]| {
+            let status = Command::new("git")
+                .args(args)
+                .current_dir(repo.path())
+                .status()
+                .unwrap();
+            assert!(status.success(), "git {:?} failed", args);
+        };
+
+        run_git(&["init", "--quiet"]);
+        run_git(&["config", "user.email", "ground@example.test"]);
+        run_git(&["config", "user.name", "Ground test"]);
+
+        let source = repo.path().join("src");
+        fs::create_dir_all(&source).unwrap();
+        let changed = source.join("value.ts");
+        fs::write(&changed, "export const value = 1;\n").unwrap();
+        symlink("..", source.join("cycle")).unwrap();
+        run_git(&["add", "."]);
+        run_git(&["commit", "--quiet", "-m", "baseline"]);
+
+        fs::write(&changed, "export const value = 2;\n").unwrap();
+        let result = handle_diff(&json!({
+            "directory": repo.path(),
+            "base": "HEAD",
+            "checks": ["duplicates"]
+        }));
+
+        assert!(result.success, "{:?}", result.content);
+        assert_eq!(
+            result.content["check_coverage"]["duplicates"]["status"],
+            "completed"
+        );
+        assert_eq!(
+            result.content["check_coverage"]["duplicates"]
+                ["analyzed_changed_files"]
+                .as_array()
+                .unwrap()
+                .len(),
+            1
+        );
     }
 
     #[test]
