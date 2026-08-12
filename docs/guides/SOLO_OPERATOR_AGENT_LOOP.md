@@ -43,6 +43,31 @@ Run the fast contract checks before relying on this lane for broader work:
 pnpm agent:solo-loop:check
 ```
 
+The check includes an advisory Ground review of package source changed from
+`origin/main`. The receipt reports every discovered change, which files Ground
+could analyze with its duplicate and orphan checks, explicit coverage
+exclusions, and verified findings. During calibration, a finding or unavailable
+Ground binary is visible in the step evidence but does not make the solo-loop
+fail.
+
+Run or capture the receipt directly when it belongs in a Linear or promotion
+handoff:
+
+```bash
+pnpm ground:review -- --base origin/main
+pnpm ground:review:json -- --base origin/main
+```
+
+The pilot covers changed TypeScript, JavaScript, and `.mjs` files beneath a
+package with `package.json`. Svelte, Rust, generated artifacts, root scripts,
+and other unsupported paths remain named exclusions rather than being reported
+as checked-clean.
+
+Keep the receipt advisory until at least 20 representative PRs have recorded
+finding precision, false positives, and coverage exclusions. Promotion to a
+blocking gate requires an explicit policy change based on that calibration; a
+successful advisory receipt is not approval to merge or deploy.
+
 The default command is read-only. It reports checkout dirtiness, upstream
 divergence, Codex command availability, and the recommended operating
 loop. It does not mutate git, Linear, deployments, secrets, or production
@@ -165,6 +190,7 @@ For this guide and its command:
 
 ```bash
 pnpm agent:solo-loop:test
+node --test scripts/test/ground-review.test.mjs
 pnpm agent:solo-loop:check
 git diff --check
 ```
