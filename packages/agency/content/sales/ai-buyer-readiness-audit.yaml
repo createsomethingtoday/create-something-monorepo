@@ -1,0 +1,36 @@
+version: "1.0"
+status: "approved_manual_offer"
+public_name: "AI Buyer Readiness Audit"
+owner: "CREATE SOMETHING .agency"
+updated_at: "2026-08-12"
+
+pricing:
+  one_time_usd: 3000
+  billing_unit: "one_brand_one_market"
+  self_service_checkout: "inactive"
+  collection: "manual_invoice_or_approved_proposal"
+
+scope:
+  brand_limit: 1
+  market_limit: 1
+  buyer_questions: 25
+  competitor_limit: 3
+  delivery_business_days: 7
+  answer_surfaces: "major_ai_answer_surfaces_available_during_delivery"
+
+outputs:
+  - "timestamped_answers_with_surface_and_retrieval_context"
+  - "competitor_answer_comparison"
+  - "cited_source_inventory_and_evidence_gaps"
+  - "prioritized_thirty_day_plan"
+
+boundaries:
+  diagnosis_only: true
+  implementation: "separately_scoped_build"
+  managed_operations: "control_from_900_usd_per_month_after_launch"
+  guaranteed_rankings_citations_or_recommendations: false
+
+machine_snapshot:
+  status: "inactive_candidate"
+  public_activation: "separate_production_approval"
+  contract_ref: "packages/database-layer/contracts/agent-commercial/v1/create-something.json"

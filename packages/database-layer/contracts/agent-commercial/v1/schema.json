@@ -151,7 +151,18 @@
           "required": ["state", "amount"],
           "properties": {
             "state": { "enum": ["unset", "approved"] },
-            "amount": { "type": ["number", "null"], "exclusiveMinimum": 0 }
+            "amount": { "type": ["number", "null"], "exclusiveMinimum": 0 },
+            "foundingCandidate": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["amount", "denomination", "billingUnit", "approval"],
+              "properties": {
+                "amount": { "type": "number", "exclusiveMinimum": 0 },
+                "denomination": { "const": "USD" },
+                "billingUnit": { "const": "completed_report" },
+                "approval": { "const": "separate_production_approval" }
+              }
+            }
           }
         },
         "settlement": {

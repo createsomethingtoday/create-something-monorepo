@@ -120,7 +120,13 @@
       "providerAdapterId": "cloudflare.agents.x402",
       "price": {
         "state": "unset",
-        "amount": null
+        "amount": null,
+        "foundingCandidate": {
+          "amount": 49,
+          "denomination": "USD",
+          "billingUnit": "completed_report",
+          "approval": "separate_production_approval"
+        }
       },
       "settlement": {
         "asset": "USDC",
@@ -233,8 +239,8 @@
     },
     {
       "id": "agency.agent-readiness-audit",
-      "title": "Agent-readiness audit",
-      "description": "Candidate bounded audit producing a structured readiness report and receipt; no approved price or active payment path exists yet.",
+      "title": "Agent Buyer Readiness Snapshot",
+      "description": "Inactive candidate for a bounded machine-readable readiness snapshot; its founding price is not approved and no active payment path exists.",
       "owner": "CREATE SOMETHING .agency",
       "kind": "tool",
       "accessClass": "paid",
@@ -244,15 +250,15 @@
       "approval": "never",
       "surface": {
         "protocol": "mcp",
-        "locator": "candidate://agency/agent-readiness-audit"
+        "locator": "candidate://agency/agent-buyer-readiness-snapshot"
       },
       "freshness": {
         "mode": "request",
         "maxAgeMinutes": 0
       },
       "provenanceRefs": [
-        "docs/guides/CLOUDFLARE_BOT_ACCESS_HARDENING.md",
-        "packages/agency/content/sales/control-commercial-interface-spec.yaml"
+        "packages/agency/content/sales/ai-buyer-readiness-audit.yaml",
+        "packages/agency/src/routes/agent-readiness/+page.svelte"
       ],
       "outcomeMetric": "accepted_readiness_recommendation"
     },

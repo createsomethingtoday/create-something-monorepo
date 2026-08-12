@@ -63,6 +63,27 @@ test('public agency copy guard catches phrases split across markup whitespace', 
   }
 });
 
+test('public agency copy guard permits the bounded AI Buyer Readiness category', () => {
+  const tempDir = mkdtempSync(path.join(tmpdir(), 'agency-copy-'));
+  const fixture = path.join(tempDir, '+page.svelte');
+
+  try {
+    writeFileSync(
+      fixture,
+      '<h1>AI Buyer Readiness Audit</h1><p>Test 25 buyer questions for AI buyers.</p>'
+    );
+    assert.deepEqual(auditPublicCopy([fixture]), []);
+
+    writeFileSync(fixture, '<p>The buyer needs a funnel.</p>');
+    assert.deepEqual(
+      auditPublicCopy([fixture]).map((finding) => finding.rule),
+      ['buyer-language']
+    );
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
 test('public agency copy guard catches old lane and partner framing', () => {
   const tempDir = mkdtempSync(path.join(tmpdir(), 'agency-copy-'));
   const fixture = path.join(tempDir, '+page.svelte');

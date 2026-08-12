@@ -1,4 +1,4 @@
-version: "2.1"
+version: "2.2"
 name: "CREATE SOMETHING Control Commercial Interface"
 owner: "CREATE SOMETHING .agency"
 updated_at: "2026-08-12"
@@ -19,6 +19,13 @@ product_path:
     purpose: "Turn an approved Map into an owned, connected implementation."
   - name: "CREATE SOMETHING Control"
     purpose: "Operate the approved workflow with monitoring, approvals, evidence, recovery, and recurring improvement."
+
+buyer_readiness_audit:
+  public_name: "AI Buyer Readiness Audit"
+  one_time_usd: 3000
+  role: "diagnostic_before_build_or_control"
+  contract_ref: "packages/agency/content/sales/ai-buyer-readiness-audit.yaml"
+  self_service_checkout: "inactive"
 
 managed_operations:
   starting_monthly_usd: 900
