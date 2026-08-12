@@ -15,6 +15,11 @@ import type {
 } from './types.js';
 import { recordServerConversion } from '../analytics/conversions.js';
 import type { Property } from '../analytics/types.js';
+import {
+  escapePerformanceEmailAttribute,
+  performanceEmailTokens as emailTokens,
+  renderPerformanceEmail
+} from '../performance/email.js';
 
 /**
  * Environment bindings required for newsletter operations
@@ -92,7 +97,7 @@ export function createNewsletterHandler(options: { property: PropertyDomain }) {
 
     const body = (await request.json()) as NewsletterRequest;
 
-    console.log(`[NewsletterAPI:${options.property}] Signup`, { email: body.email });
+    console.log(`[NewsletterAPI:${options.property}] Signup requested`);
 
     const { result, status } = await processSubscription(
       body,
@@ -102,10 +107,9 @@ export function createNewsletterHandler(options: { property: PropertyDomain }) {
     );
 
     if (result.success) {
-      console.log(`[NewsletterAPI:${options.property}] Signup successful`, { email: body.email });
+      console.log(`[NewsletterAPI:${options.property}] Signup successful`);
     } else {
       console.warn(`[NewsletterAPI:${options.property}] Signup failed`, {
-        email: body.email,
         message: result.message
       });
     }
@@ -123,32 +127,30 @@ export function createNewsletterHandler(options: { property: PropertyDomain }) {
  * Uses inline styles for email client compatibility (Gmail strips <style> tags)
  */
 export function generateConfirmationEmailHtml(confirmUrl: string): string {
-  return `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #000000; color: #ffffff;">
-  <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-    <div style="margin-bottom: 40px;">
-      <div style="font-size: 14px; font-weight: 500; color: #808080; letter-spacing: 0.1em; text-transform: uppercase;">CREATE SOMETHING</div>
-    </div>
+  return renderPerformanceEmail({
+    preheader: 'Confirm your CREATE SOMETHING note.',
+    status: 'SUBSCRIPTION / CONFIRM',
+    title: 'Confirm the note.',
+    media: PLAYBOOK_EMAIL_MEDIA,
+    contentHtml: `
+      <p style="margin:0 0 ${emailTokens.layout.spaceMd};font-size:17px;line-height:1.6;color:${emailTokens.color.inkSoft};">You asked for occasional notes from CREATE SOMETHING.</p>
+      <p style="margin:0 0 ${emailTokens.layout.spaceLg};font-size:16px;line-height:1.65;color:${emailTokens.color.muted};">Confirm once. We will send only when there is a useful playbook, field report, or operating pattern to share.</p>
+      <a href="${escapePerformanceEmailAttribute(confirmUrl)}" style="display:inline-block;padding:14px 20px;border:1px solid ${emailTokens.color.ink};border-radius:${emailTokens.layout.radius};background-color:${emailTokens.color.ink};color:${emailTokens.color.panel};font-family:${emailTokens.font.mono};font-size:13px;line-height:1.2;text-decoration:none;">Confirm the note</a>
+      <p style="margin:${emailTokens.layout.spaceLg} 0 0;padding-top:${emailTokens.layout.spaceMd};border-top:1px solid ${emailTokens.color.line};font-size:13px;line-height:1.55;color:${emailTokens.color.muted};">If you did not ask for this, ignore the message. Nothing else will be sent.</p>`,
+    footerHtml: 'CONTROLLED SUBSCRIPTION&nbsp;&nbsp;/&nbsp;&nbsp;NO FIXED CADENCE'
+  });
+}
 
-    <div style="line-height: 1.8;">
-      <p style="font-style: italic; color: #ffffff; font-size: 20px; margin: 30px 0;">"Weniger, aber besser."</p>
-      <p style="color: #b3b3b3; margin-bottom: 20px;">Less, but better. This guides everything we build.</p>
-      <p style="color: #b3b3b3; margin-bottom: 20px;">Please confirm that you want occasional notes on research, runtime evidence, and operating patterns worth carrying into the next decision.</p>
-      <a href="${confirmUrl}" style="display: inline-block; margin-top: 20px; padding: 12px 24px; background: #ffffff; color: #000000; text-decoration: none; font-weight: 500;">Confirm the note</a>
-      <p style="margin-top: 30px; font-size: 14px; color: #808080;">If you didn't request this subscription, you can safely ignore this email.</p>
-    </div>
+export function generateConfirmationEmailText(confirmUrl: string): string {
+  return `Confirm the note.
 
-    <div style="margin-top: 60px; padding-top: 30px; border-top: 1px solid #1a1a1a; color: #4d4d4d; font-size: 13px;">
-      <p style="margin: 0;">CREATE SOMETHING</p>
-    </div>
-  </div>
-</body>
-</html>`;
+You asked for occasional notes from CREATE SOMETHING.
+
+Confirm once. We will send only when there is a useful playbook, field report, or operating pattern to share.
+
+Confirm the note: ${confirmUrl}
+
+If you did not ask for this, ignore the message. Nothing else will be sent.`;
 }
 
 /**
@@ -159,35 +161,47 @@ export function generateWelcomeEmailHtml(
   unsubscribeToken: string,
   property: PropertyDomain
 ): string {
-  const unsubscribeDomain = `createsomething.${property}`;
+  const sourceLabel = property === 'io' ? 'research' : `.${property}`;
+  const unsubscribeUrl = `https://createsomething.io/unsubscribe?token=${encodeURIComponent(unsubscribeToken)}`;
 
-  return `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #000000; color: #ffffff;">
-  <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-    <div style="margin-bottom: 40px;">
-      <div style="font-size: 14px; font-weight: 500; color: #808080; letter-spacing: 0.1em; text-transform: uppercase;">CREATE SOMETHING</div>
-    </div>
-
-    <div style="line-height: 1.8;">
-      <p style="font-style: italic; color: #ffffff; font-size: 20px; margin: 30px 0;">"Weniger, aber besser."</p>
-      <p style="color: #b3b3b3; margin-bottom: 20px;">Less, but better. This guides everything we build.</p>
-      <p style="color: #b3b3b3; margin-bottom: 20px;">You'll receive quiet notes on research, runtime evidence, and operating patterns that make the work easier to defend.</p>
-      <a href="https://createsomething.ltd/ethos" style="display: inline-block; margin-top: 20px; padding: 12px 24px; background: #ffffff; color: #000000; text-decoration: none; font-weight: 500;">Read the operating ethos</a>
-    </div>
-
-    <div style="margin-top: 60px; padding-top: 30px; border-top: 1px solid #1a1a1a; color: #4d4d4d; font-size: 13px;">
-      <p style="margin: 0 0 10px 0;">CREATE SOMETHING</p>
-      <p style="margin: 0;"><a href="https://${unsubscribeDomain}/unsubscribe?token=${unsubscribeToken}" style="color: #666666;">Unsubscribe</a></p>
-    </div>
-  </div>
-</body>
-</html>`;
+  return renderPerformanceEmail({
+    preheader: 'Your CREATE SOMETHING subscription is confirmed.',
+    status: 'SUBSCRIPTION / READY',
+    title: 'You are on the list.',
+    media: PLAYBOOK_EMAIL_MEDIA,
+    contentHtml: `
+      <p style="margin:0 0 ${emailTokens.layout.spaceMd};font-size:17px;line-height:1.6;color:${emailTokens.color.inkSoft};">Your request from ${sourceLabel} is confirmed.</p>
+      <p style="margin:0 0 ${emailTokens.layout.spaceLg};font-size:16px;line-height:1.65;color:${emailTokens.color.muted};">We will share useful field evidence, operating patterns, and Playbook updates. No roundup for the sake of a roundup.</p>
+      <a href="https://createsomething.agency/field-reports" style="display:inline-block;padding:14px 20px;border:1px solid ${emailTokens.color.ink};border-radius:${emailTokens.layout.radius};background-color:${emailTokens.color.ink};color:${emailTokens.color.panel};font-family:${emailTokens.font.mono};font-size:13px;line-height:1.2;text-decoration:none;">See the field reports</a>
+      <p style="margin:${emailTokens.layout.spaceLg} 0 0;padding-top:${emailTokens.layout.spaceMd};border-top:1px solid ${emailTokens.color.line};font-size:13px;line-height:1.55;color:${emailTokens.color.muted};"><a href="${escapePerformanceEmailAttribute(unsubscribeUrl)}" style="color:${emailTokens.color.muted};text-underline-offset:3px;">Unsubscribe whenever the notes stop being useful.</a></p>`,
+    footerHtml:
+      'SOURCE&nbsp;&nbsp;/&nbsp;&nbsp;' + escapePerformanceEmailAttribute(sourceLabel.toUpperCase())
+  });
 }
+
+export function generateWelcomeEmailText(
+  unsubscribeToken: string,
+  property: PropertyDomain
+): string {
+  const sourceLabel = property === 'io' ? 'research' : `.${property}`;
+  const unsubscribeUrl = `https://createsomething.io/unsubscribe?token=${encodeURIComponent(unsubscribeToken)}`;
+  return `You are on the list.
+
+Your request from ${sourceLabel} is confirmed.
+
+We will share useful field evidence, operating patterns, and Playbook updates. No roundup for the sake of a roundup.
+
+See the field reports: https://createsomething.agency/field-reports
+
+Unsubscribe: ${unsubscribeUrl}`;
+}
+
+const PLAYBOOK_EMAIL_MEDIA = {
+  src: 'https://createsomething.agency/images/performance-lab/playbook-home-agent-macro.webp',
+  alt: 'Macro-real Playbook court with an ivory AI-agent marker inside a control ring and an amber workflow route.',
+  width: 1536,
+  height: 1024
+} as const;
 
 /**
  * Process a newsletter subscription request.
@@ -209,7 +223,8 @@ export async function processSubscription(
   clientIP: string,
   property: PropertyDomain
 ): Promise<{ result: NewsletterResult; status: number }> {
-  const { email, website, turnstileToken, source } = body;
+  const { email: rawEmail, website, turnstileToken, source } = body;
+  const email = rawEmail?.trim().toLowerCase() ?? '';
   // Default source to property, allow override
   const subscriberSource = source || property;
 
@@ -222,7 +237,7 @@ export async function processSubscription(
   }
 
   // Validate email
-  if (!email || !email.trim()) {
+  if (!email) {
     return {
       result: { success: false, message: 'Email is required' },
       status: 400
@@ -302,6 +317,7 @@ export async function processSubscription(
 
   // Generate tokens for unsubscribe and confirmation
   const timestamp = Date.now();
+  const consentRequestedAt = new Date(timestamp).toISOString();
   const unsubscribeToken = btoa(`${email}:${timestamp}`);
   const confirmationToken = btoa(`confirm:${email}:${timestamp}:${crypto.randomUUID()}`);
 
@@ -343,19 +359,30 @@ export async function processSubscription(
 				     unsubscribe_token = ?,
 				     unsubscribed_at = NULL,
 				     confirmed_at = NULL,
+				     consent_requested_at = ?,
+				     consent_confirmed_at = NULL,
+				     consent_method = 'double_opt_in',
+				     consent_evidence = 'pending_confirmation',
+				     confirmation_email_id = NULL,
+				     welcome_email_id = NULL,
+				     active = 1,
+				     status = 'active',
 				     subscribed_at = datetime('now'),
 				     source = ?
 				 WHERE email = ?`
       )
-        .bind(confirmationToken, unsubscribeToken, subscriberSource, email)
+        .bind(confirmationToken, unsubscribeToken, consentRequestedAt, subscriberSource, email)
         .run();
     } else {
       // Insert new subscriber
       await env.DB.prepare(
-        `INSERT INTO newsletter_subscribers (email, subscribed_at, unsubscribe_token, confirmation_token, confirmed_at, source)
-				 VALUES (?, datetime('now'), ?, ?, NULL, ?)`
+        `INSERT INTO newsletter_subscribers (
+           email, subscribed_at, unsubscribe_token, confirmation_token,
+           confirmed_at, source, consent_requested_at, consent_method,
+           consent_evidence, active, status
+         ) VALUES (?, datetime('now'), ?, ?, NULL, ?, ?, 'double_opt_in', 'pending_confirmation', 1, 'active')`
       )
-        .bind(email, unsubscribeToken, confirmationToken, subscriberSource)
+        .bind(email, unsubscribeToken, confirmationToken, subscriberSource, consentRequestedAt)
         .run();
     }
   } catch (dbError) {
@@ -378,7 +405,8 @@ export async function processSubscription(
       from: 'CREATE SOMETHING <hello@createsomething.io>',
       to: email,
       subject: 'Confirm your subscription to CREATE SOMETHING',
-      html: generateConfirmationEmailHtml(confirmUrl)
+      html: generateConfirmationEmailHtml(confirmUrl),
+      text: generateConfirmationEmailText(confirmUrl)
     })
   });
 
@@ -390,6 +418,20 @@ export async function processSubscription(
       result: { success: false, message: 'Failed to send confirmation email' },
       status: 500
     };
+  }
+
+  if (resendData.id) {
+    try {
+      await env.DB.prepare(
+        `UPDATE newsletter_subscribers
+         SET confirmation_email_id = ?, updated_at = datetime('now')
+         WHERE email = ?`
+      )
+        .bind(resendData.id, email)
+        .run();
+    } catch (receiptError) {
+      console.warn('Newsletter confirmation receipt update failed:', receiptError);
+    }
   }
 
   try {

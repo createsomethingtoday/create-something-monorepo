@@ -91,7 +91,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
   group(
     'agency-public-index',
     'agency',
-    ['experiments', 'field-reports', 'products', 'workflows'],
+    ['arcs', 'experiments', 'field-reports', 'products', 'workflows'],
     'migrated',
     contract(
       'index',
@@ -105,6 +105,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'agency',
     [
       'experiments/[slug]',
+      'arc/[slug]',
       'products/decision',
       'products/ground',
       'products/loom',
@@ -176,6 +177,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
       'admin/security/contracts',
       'admin/security/partners',
       'admin/security/seeds',
+      'admin/subscriber-reengagement',
       'admin/social'
     ],
     'pending',
@@ -546,7 +548,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
   group(
     'io-subscription',
     'io',
-    ['confirm', 'subscribe', 'unsubscribe'],
+    ['check-in', 'confirm', 'subscribe', 'unsubscribe'],
     'pending',
     contract(
       'commercial',
