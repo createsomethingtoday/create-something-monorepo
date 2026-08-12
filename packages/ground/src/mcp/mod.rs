@@ -2894,8 +2894,16 @@ fn handle_diff(args: &Value) -> ToolResult {
                     "reason": "duplicate_analysis_incomplete"
                 }))
                 .collect::<Vec<_>>();
+            let scan_complete = content.get("scan_complete")
+                .and_then(|value| value.as_bool())
+                .unwrap_or(false);
+            let status = if scan_complete && excluded_changed_files.is_empty() {
+                "completed"
+            } else {
+                "partial"
+            };
             check_coverage.insert("duplicates".to_string(), json!({
-                "status": if excluded_changed_files.is_empty() { "completed" } else { "partial" },
+                "status": status,
                 "analyzed_changed_files": analyzed_changed_files,
                 "excluded_changed_files": excluded_changed_files
             }));
@@ -3027,15 +3035,23 @@ fn handle_diff(args: &Value) -> ToolResult {
             excluded_changed_files.len()
         )
     };
+    let checks_complete = check_coverage.values().all(|coverage| {
+        coverage.get("status").and_then(|status| status.as_str()) == Some("completed")
+    });
 
     let message = if relevant_files.is_empty() {
         format!(
             "No analyzable files changed since '{}'.{}",
             base_ref, excluded_summary
         )
-    } else if new_issues.is_empty() {
+    } else if new_issues.is_empty() && checks_complete {
         format!(
             "No new issues introduced since '{}'. {} analyzable changed file(s) are clean.{}",
+            base_ref, relevant_files.len(), excluded_summary
+        )
+    } else if new_issues.is_empty() {
+        format!(
+            "No new issues found in the completed portion since '{}'. Coverage is partial for {} analyzable changed file(s).{}",
             base_ref, relevant_files.len(), excluded_summary
         )
     } else {
@@ -4071,6 +4087,55 @@ mod tests {
             .as_str()
             .unwrap()
             .contains("completed portion"));
+    }
+
+    #[test]
+    fn diff_duplicate_coverage_is_partial_when_unchanged_corpus_file_is_unparseable() {
+        use std::fs;
+        use std::process::Command;
+
+        let repo = tempdir().unwrap();
+        let run_git = |args: &[&str]| {
+            let status = Command::new("git")
+                .args(args)
+                .current_dir(repo.path())
+                .status()
+                .unwrap();
+            assert!(status.success(), "git {:?} failed", args);
+        };
+
+        run_git(&["init", "--quiet"]);
+        run_git(&["config", "user.email", "ground@example.test"]);
+        run_git(&["config", "user.name", "Ground test"]);
+
+        let source = repo.path().join("src");
+        fs::create_dir_all(&source).unwrap();
+        let changed = source.join("changed.ts");
+        fs::write(&changed, "export const value = 1;\n").unwrap();
+        fs::write(source.join("invalid.js"), [0xff, 0xfe, 0xfd]).unwrap();
+        run_git(&["add", "."]);
+        run_git(&["commit", "--quiet", "-m", "baseline"]);
+
+        fs::write(&changed, "export const value = 2;\n").unwrap();
+        let result = handle_diff(&json!({
+            "directory": repo.path(),
+            "base": "HEAD",
+            "checks": ["duplicates"]
+        }));
+
+        assert!(result.success, "{:?}", result.content);
+        assert_eq!(
+            result.content["check_coverage"]["duplicates"]["status"],
+            "partial"
+        );
+        assert!(result.content["message"]
+            .as_str()
+            .unwrap()
+            .contains("completed portion"));
+        assert!(!result.content["message"]
+            .as_str()
+            .unwrap()
+            .contains("are clean"));
     }
 
     #[cfg(unix)]
