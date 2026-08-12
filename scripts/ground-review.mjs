@@ -1,6 +1,14 @@
 #!/usr/bin/env node
 
-import { accessSync, constants, existsSync, readFileSync, realpathSync, statSync } from 'node:fs';
+import {
+  accessSync,
+  constants,
+  existsSync,
+  readFileSync,
+  readdirSync,
+  realpathSync,
+  statSync
+} from 'node:fs';
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import process from 'node:process';
@@ -8,6 +16,14 @@ import { pathToFileURL } from 'node:url';
 
 const SUPPORTED_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs']);
 const CHECKS = ['duplicates', 'orphans'];
+const GROUND_SCAN_LIMIT = 500;
+const IGNORED_SCAN_DIRECTORIES = new Set([
+  'node_modules',
+  'target',
+  'dist',
+  'build',
+  '.svelte-kit'
+]);
 
 export function parseArgs(argv) {
   const options = { base: 'origin/main', format: 'markdown' };
@@ -109,6 +125,48 @@ function supportedSource(path) {
 
 function generatedSource(path) {
   return /(^|\/)[^/]+\.generated\.(?:ts|tsx|js|jsx|mjs)$/.test(path);
+}
+
+function exceedsGroundScanLimit(directory) {
+  const visited = new Set();
+  let count = 0;
+
+  function visit(path) {
+    let canonical;
+    try {
+      canonical = realpathSync(path);
+    } catch {
+      return false;
+    }
+    if (visited.has(canonical)) return false;
+    visited.add(canonical);
+
+    let entries;
+    try {
+      entries = readdirSync(path, { withFileTypes: true });
+    } catch {
+      return false;
+    }
+    for (const entry of entries) {
+      if (entry.name.startsWith('.') || IGNORED_SCAN_DIRECTORIES.has(entry.name)) continue;
+      const candidate = join(path, entry.name);
+      let metadata;
+      try {
+        metadata = statSync(candidate);
+      } catch {
+        continue;
+      }
+      if (metadata.isDirectory()) {
+        if (visit(candidate)) return true;
+      } else if (metadata.isFile() && supportedSource(entry.name)) {
+        count += 1;
+        if (count > GROUND_SCAN_LIMIT) return true;
+      }
+    }
+    return false;
+  }
+
+  return visit(directory);
 }
 
 function unreadableFiles(root, files, deleted) {
@@ -252,10 +310,11 @@ export function buildReceipt({
   );
   const changedSet = new Set(files);
   const targets = packageRoots.map((path) => {
+    const scanLimitExceeded = exceedsGroundScanLimit(resolve(root, path));
     const result = parseGroundJson(
       run(groundBinary, ['diff', path, '--base', baseSha, '--checks', CHECKS.join(',')], root)
     );
-    const analyzedChangedFiles = [
+    const reportedAnalyzedChangedFiles = [
       ...new Set(
         (result.changed_file_list ?? [])
           .map((file) => receiptPath(root, file))
@@ -270,6 +329,20 @@ export function buildReceipt({
           )
       )
     ];
+    const analyzedChangedFiles = scanLimitExceeded ? [] : reportedAnalyzedChangedFiles;
+    const scanLimitExclusions = scanLimitExceeded
+      ? files
+          .filter(
+            (file) =>
+              file.startsWith(`${path}/`) &&
+              supportedSource(file) &&
+              !generatedSource(file) &&
+              !deleted.has(file) &&
+              !unmerged.has(file) &&
+              !unreadable.has(file)
+          )
+          .map((file) => ({ path: file, reason: 'ground_scan_cap' }))
+      : [];
     return {
       path,
       package_name: packageName(root, path),
@@ -277,10 +350,13 @@ export function buildReceipt({
         discovered_changed_files: files.filter((file) => file.startsWith(`${path}/`)).length,
         analyzable_changed_files: analyzedChangedFiles.length,
         analyzed_changed_files: analyzedChangedFiles,
-        excluded_changed_files: (result.excluded_changed_files ?? []).map((exclusion) => ({
-          ...exclusion,
-          path: receiptPath(root, exclusion.path)
-        }))
+        excluded_changed_files: [
+          ...(result.excluded_changed_files ?? []).map((exclusion) => ({
+            ...exclusion,
+            path: receiptPath(root, exclusion.path)
+          })),
+          ...scanLimitExclusions
+        ]
       },
       findings: (result.new_issues ?? []).map((finding) => normalizeFinding(root, finding))
     };
