@@ -9,6 +9,13 @@ export interface LangfuseConfig {
   enabled?: boolean;
   flushAt?: number;
   flushInterval?: number;
+  environment?: string;
+  release?: string;
+}
+
+export interface ToolInvocationOutcome {
+  success: boolean;
+  error?: string;
 }
 
 export interface GovernanceTraceContext {
@@ -75,6 +82,38 @@ function defaultHost(): string {
   );
 }
 
+function extractMcpErrorText(result: Record<string, unknown>): string | undefined {
+  if (!Array.isArray(result.content)) return undefined;
+
+  const messages = result.content
+    .map((item) => {
+      if (!item || typeof item !== 'object') return null;
+      const text = (item as Record<string, unknown>).text;
+      return typeof text === 'string' && text.trim().length > 0 ? text.trim() : null;
+    })
+    .filter((value): value is string => Boolean(value));
+
+  return messages.length > 0 ? messages.join('\n') : undefined;
+}
+
+/**
+ * Resolve a returned tool value into the signal Langfuse should record.
+ * MCP transports commonly return failures as successful promises with
+ * `isError: true`; observability must not confuse transport success with tool
+ * success.
+ */
+export function resolveToolInvocationOutcome(result: unknown): ToolInvocationOutcome {
+  if (!result || typeof result !== 'object' || (result as Record<string, unknown>).isError !== true) {
+    return { success: true };
+  }
+
+  const record = result as Record<string, unknown>;
+  return {
+    success: false,
+    error: extractMcpErrorText(record) ?? 'MCP tool returned isError=true',
+  };
+}
+
 function governanceMetadata(traceContext: GovernanceTraceContext | undefined): Record<string, string> {
   if (!traceContext) return {};
 
@@ -125,6 +164,9 @@ export function initLangfuse(config: LangfuseConfig = {}): Langfuse | null {
     baseUrl: config.host ?? defaultHost(),
     flushAt: config.flushAt ?? 1,
     flushInterval: config.flushInterval ?? 250,
+    environment:
+      config.environment ?? optionalEnv('LANGFUSE_TRACING_ENVIRONMENT') ?? optionalEnv('ENVIRONMENT'),
+    release: config.release ?? optionalEnv('LANGFUSE_RELEASE'),
   });
 
   return client;
@@ -204,6 +246,13 @@ export async function emitToolInvocation(event: ToolInvocationEvent): Promise<vo
       })
       .end();
 
+    trace.score({
+      name: 'execution_success',
+      value: event.success ? 1 : 0,
+      dataType: 'BOOLEAN',
+      comment: event.error,
+    });
+
     await client.flushAsync();
   } catch (err) {
     console.warn('[langfuse] emitToolInvocation failed:', err);
@@ -223,6 +272,7 @@ export function wrapMcpToolWithLangfuse<TArgs extends Record<string, unknown>, T
 
     try {
       const result = await handler(args);
+      const outcome = resolveToolInvocationOutcome(result);
       await emitToolInvocation({
         serverName: options.serverName,
         toolName: options.toolName,
@@ -231,7 +281,8 @@ export function wrapMcpToolWithLangfuse<TArgs extends Record<string, unknown>, T
         input: args,
         output: result,
         durationMs: Date.now() - start,
-        success: true,
+        success: outcome.success,
+        error: outcome.error,
         aiTaskType: options.aiTaskType,
         atlasMetadata: options.atlasMetadata,
       });

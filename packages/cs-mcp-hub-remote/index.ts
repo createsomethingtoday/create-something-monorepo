@@ -1,5 +1,6 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { Langfuse } from 'langfuse';
+import { runProductionWatchdog } from './production-watchdog.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
@@ -352,6 +353,13 @@ interface Env {
   LANGFUSE_HOST?: string;
   LANGFUSE_BASE_URL?: string;
   LANGFUSE_ENABLED?: string;
+  LANGFUSE_TRACING_ENVIRONMENT?: string;
+  LANGFUSE_RELEASE?: string;
+  RESEND_API_KEY?: string;
+  WATCHDOG_ALERT_EMAIL?: string;
+  WATCHDOG_EMAIL_FROM?: string;
+  WATCHDOG_HEALTH_URL?: string;
+  CF_VERSION_METADATA?: { id: string; tag?: string; timestamp?: string };
   HUB_STATE_KV?: KVNamespace;
   TELEMETRY_DB?: D1Database;
   IDENTITY_WORKER?: Fetcher;
@@ -844,6 +852,48 @@ export default {
     }
 
     return withCors(new Response('Not found', { status: 404 }));
+  },
+  async scheduled(_controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
+    ctx.waitUntil(
+      (async () => {
+        const result = await runProductionWatchdog(env);
+        const errorMessage =
+          result.findings.length > 0
+            ? result.findings.map((finding) => `${finding.rule}: ${finding.message}`).join(' | ')
+            : null;
+
+        await recordHubInvocation(
+          env,
+          {
+            accountId: 'production-watchdog',
+            toolName: 'production_watchdog',
+            success: result.findings.length === 0,
+            durationMs: result.durationMs,
+            errorMessage,
+            trace: {
+              requestId: result.correlationId,
+              correlationId: result.correlationId,
+              transportRequestId: result.correlationId,
+            },
+            metadata: {
+              type: 'synthetic',
+              entrypoint: 'cloudflare-cron',
+              checkedAt: result.checkedAt,
+              healthStatus: result.healthStatus,
+              invocationCount: result.invocationCount,
+              failureCount: result.failureCount,
+              alertDelivered: result.alertDelivered,
+              rules: result.findings.map((finding) => finding.rule),
+            },
+          },
+          ctx,
+        );
+      })().catch((error) => {
+        console.error(
+          `[production-watchdog] scheduled run failed: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }),
+    );
   },
 };
 
@@ -5000,7 +5050,11 @@ function getLangfuseClient(env: Env): Langfuse | null {
     readEnvString(env, 'LANGFUSE_BASE_URL')?.trim() ||
     readEnvString(env, 'LANGFUSE_HOST')?.trim() ||
     'https://us.cloud.langfuse.com';
-  const nextKey = `${publicKey}::${secretKey}::${host}::${projectName}`;
+  const environment =
+    readEnvString(env, 'LANGFUSE_TRACING_ENVIRONMENT')?.trim() || 'production';
+  const release =
+    readEnvString(env, 'LANGFUSE_RELEASE')?.trim() || env.CF_VERSION_METADATA?.id || HUB_VERSION;
+  const nextKey = `${publicKey}::${secretKey}::${host}::${projectName}::${environment}::${release}`;
 
   if (!langfuseClient || langfuseClientKey !== nextKey) {
     langfuseClient = new Langfuse({
@@ -5009,6 +5063,8 @@ function getLangfuseClient(env: Env): Langfuse | null {
       baseUrl: host,
       flushAt: 1,
       flushInterval: 250,
+      environment,
+      release,
     });
     langfuseClientKey = nextKey;
   }
@@ -5075,6 +5131,12 @@ async function emitHubInvocationToLangfuse(env: Env, log: HubInvocationLog): Pro
         statusMessage: log.errorMessage ?? undefined,
       })
       .end();
+    trace.score({
+      name: 'execution_success',
+      value: log.success ? 1 : 0,
+      dataType: 'BOOLEAN',
+      comment: log.errorMessage ?? undefined,
+    });
     await flushLangfuse(client);
   } catch (error) {
     console.warn(
@@ -5129,6 +5191,12 @@ async function emitHubRouteToLangfuse(env: Env, log: HubRouteLog): Promise<void>
         statusMessage: log.errorMessage ?? undefined,
       })
       .end();
+    trace.score({
+      name: 'execution_success',
+      value: log.success ? 1 : 0,
+      dataType: 'BOOLEAN',
+      comment: log.errorMessage ?? undefined,
+    });
     await flushLangfuse(client);
   } catch (error) {
     console.warn(
