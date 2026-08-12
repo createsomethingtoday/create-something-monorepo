@@ -9,16 +9,7 @@ import {
   realpathSync,
   statSync
 } from 'node:fs';
-import {
-  basename,
-  dirname,
-  isAbsolute,
-  join,
-  matchesGlob,
-  relative,
-  resolve,
-  sep
-} from 'node:path';
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import process from 'node:process';
 import { pathToFileURL } from 'node:url';
@@ -296,9 +287,34 @@ function groundIgnorePatterns(root) {
   return [...new Set(patterns)];
 }
 
+export function matchesPathGlob(path, pattern) {
+  let source = '^';
+  for (let index = 0; index < pattern.length; index += 1) {
+    const character = pattern[index];
+    if (character === '*') {
+      if (pattern[index + 1] === '*') {
+        index += 1;
+        if (pattern[index + 1] === '/') {
+          index += 1;
+          source += '(?:.*/)?';
+        } else {
+          source += '.*';
+        }
+      } else {
+        source += '[^/]*';
+      }
+    } else if (character === '?') {
+      source += '[^/]';
+    } else {
+      source += character.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&');
+    }
+  }
+  return new RegExp(`${source}$`).test(normalizePath(path));
+}
+
 function groundPolicyIgnored(root, target, file, patterns) {
   const targetRelative = normalizePath(relative(resolve(root, target), resolve(root, file)));
-  return patterns.some((pattern) => matchesGlob(targetRelative, pattern));
+  return patterns.some((pattern) => matchesPathGlob(targetRelative, normalizePath(pattern)));
 }
 
 function collapsePackageRoots(paths) {
