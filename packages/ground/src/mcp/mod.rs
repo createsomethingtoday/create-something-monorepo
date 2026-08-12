@@ -1928,7 +1928,9 @@ fn collect_ts_files_inner(
             }
         };
 
-        if file_type.is_dir() || (file_type.is_symlink() && path.is_dir()) {
+        if file_type.is_symlink() && !path.is_dir() && !path.is_file() {
+            discovery_complete = false;
+        } else if file_type.is_dir() || (file_type.is_symlink() && path.is_dir()) {
             discovery_complete &= collect_ts_files_inner(&path, files, visited_directories);
         } else if file_type.is_file() || (file_type.is_symlink() && path.is_file()) {
             let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
@@ -2892,6 +2894,9 @@ fn handle_diff(args: &Value) -> ToolResult {
         let duplicate_result = handle_find_duplicate_functions(&dup_args);
         if duplicate_result.success {
             let content = duplicate_result.content;
+            let canonical_relevant_files = relevant_files.iter()
+                .map(|file| canonicalize_parent(file))
+                .collect::<HashSet<_>>();
             let scanned_files = content.get("file_list")
                 .and_then(|value| value.as_array())
                 .map(|files| {
@@ -2934,10 +2939,8 @@ fn handle_diff(args: &Value) -> ToolResult {
                     let file_b = dup.get("file_b").and_then(|v| v.as_str()).unwrap_or("");
                     
                     // Include if either file is in the changed set
-                    let involves_changed = relevant_files.iter().any(|f| {
-                        let f_str = f.to_string_lossy();
-                        file_a.ends_with(&*f_str) || file_b.ends_with(&*f_str) ||
-                        f_str.ends_with(file_a) || f_str.ends_with(file_b)
+                    let involves_changed = [file_a, file_b].iter().any(|file| {
+                        canonical_relevant_files.contains(&canonicalize_parent(Path::new(file)))
                     });
                     
                     if involves_changed {
@@ -2958,10 +2961,8 @@ fn handle_diff(args: &Value) -> ToolResult {
                     let file_a = dup.get("file_a").and_then(|v| v.as_str()).unwrap_or("");
                     let file_b = dup.get("file_b").and_then(|v| v.as_str()).unwrap_or("");
                     
-                    let involves_changed = relevant_files.iter().any(|f| {
-                        let f_str = f.to_string_lossy();
-                        file_a.ends_with(&*f_str) || file_b.ends_with(&*f_str) ||
-                        f_str.ends_with(file_a) || f_str.ends_with(file_b)
+                    let involves_changed = [file_a, file_b].iter().any(|file| {
+                        canonical_relevant_files.contains(&canonicalize_parent(Path::new(file)))
                     });
                     
                     if involves_changed {
@@ -4116,6 +4117,66 @@ mod tests {
         assert_eq!(result.content["files_discovered"], 0);
         assert_eq!(result.content["files_checked"], 0);
         assert_eq!(result.content["scan_complete"], false);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn duplicate_scan_reports_dangling_symlink_as_incomplete() {
+        use std::os::unix::fs::symlink;
+
+        let directory = tempdir().unwrap();
+        symlink("missing", directory.path().join("src")).unwrap();
+
+        let result = handle_find_duplicate_functions(&json!({
+            "directory": directory.path()
+        }));
+
+        assert!(result.success, "{:?}", result.content);
+        assert_eq!(result.content["files_discovered"], 0);
+        assert_eq!(result.content["scan_complete"], false);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn diff_matches_duplicate_evidence_through_an_earlier_symlink_alias() {
+        use std::fs;
+        use std::os::unix::fs::symlink;
+        use std::process::Command;
+
+        let repo = tempdir().unwrap();
+        let run_git = |args: &[&str]| {
+            let status = Command::new("git")
+                .args(args)
+                .current_dir(repo.path())
+                .status()
+                .unwrap();
+            assert!(status.success(), "git {:?} failed", args);
+        };
+
+        run_git(&["init", "--quiet"]);
+        run_git(&["config", "user.email", "ground@example.test"]);
+        run_git(&["config", "user.name", "Ground test"]);
+        let source = repo.path().join("src");
+        fs::create_dir_all(&source).unwrap();
+        let duplicate_body = "export function normalize(value: string) {\n  const trimmed = value.trim();\n  if (!trimmed) return 'UNKNOWN';\n  const upper = trimmed.toUpperCase();\n  return upper;\n}\n";
+        fs::write(source.join("baseline.ts"), duplicate_body).unwrap();
+        symlink("src", repo.path().join("alias")).unwrap();
+        run_git(&["add", "."]);
+        run_git(&["commit", "--quiet", "-m", "baseline"]);
+
+        fs::write(source.join("duplicate.ts"), duplicate_body).unwrap();
+        let result = handle_diff(&json!({
+            "directory": repo.path(),
+            "base": "HEAD",
+            "checks": ["duplicates"]
+        }));
+
+        assert!(result.success, "{:?}", result.content);
+        assert_eq!(result.content["total_new_issues"], 1);
+        assert_eq!(
+            result.content["check_coverage"]["duplicates"]["status"],
+            "completed"
+        );
     }
 
     #[test]
