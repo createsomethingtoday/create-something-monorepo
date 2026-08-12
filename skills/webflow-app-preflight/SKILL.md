@@ -120,15 +120,24 @@ See `reference/listing-and-submission.md` for the full submission checklist.
 
 Run `checklists/pre-submission-quality-gate.md` end to end. Every item must pass. The gate tags items `[control]` where a check is a security or engineering control rather than verbatim published Webflow policy — keep that distinction when reporting findings. Then review `checklists/governance-pitfalls.md` — these are the specific, real-world patterns that most often cause a rejection or a security-review escalation. If any apply, fix before submitting.
 
+### Prepare the three submission artifacts
+
+The submission form validates these, so have them ready before you open it:
+
+1. **A published `.webflow.io` testing site** with your App installed. Reviewers test the full experience there — including anything your App adds to the published site, which is where most runtime failures show up. Required for every submission, new and update.
+2. **Source maps for review.** A single `.map` file or one ZIP of the version-3 maps produced by the exact build that produced your bundle. Required when your submission ships a new or changed Designer Extension bundle that is minified or generated. Upload them in the form's dedicated field — not in notes, not in the public bundle. They stay private to review.
+3. **An App Review Preflight run and its submission receipt.** In the Designer, open **App Review Preflight** and run it on the same bundle and source-map artifact you will attach to the form (Data Clients: declare your production JavaScript URLs instead). The run issues a receipt code (`wfpre_…`) — paste it into the form so the review team can reconcile your submission with the artifacts preflight validated. A passing preflight is not an approval; it removes the wasted round where a reviewer finds what the scanner would have told you first. Production-runtime findings surfaced by preflight must be resolved — code your App delivers to customers' published sites is in review scope.
+
 Only submit when:
 
 - The quality gate is fully green,
+- The three submission artifacts above are ready,
 - Two-factor auth is enabled on an admin account of the submitting Workspace,
 - Backend services are live and demo access is provided,
 - The listing matches actual behavior,
 - The App is complete and production-ready — beta, incomplete, or pre-release Apps should not be published. To validate with outside users first, use Webflow's **user testing process**, which is separate from publishing a private App.
 
-Submit through the form at <https://developers.webflow.com/submit>. Reviews take ~10–15 business days. Every later change to the reviewed experience — bundle, Data Client behavior, permissions, or scripts delivered via the Custom Code API — goes through the same review as an **App update** (submit the form, select "App Update"; only App Name and Client ID are required).
+Submit through the form at <https://developers.webflow.com/submit>. Reviews take ~10–15 business days. Every later change to the reviewed experience — bundle, Data Client behavior, permissions, or scripts delivered via the Custom Code API — goes through the same review as an **App update** (submit the form, select "App Update"; only App Name and Client ID are required, and the form asks whether the update ships a new or changed bundle — if it does, the source-map and preflight expectations above apply to it).
 
 ## Anti-advice — do not recommend these
 

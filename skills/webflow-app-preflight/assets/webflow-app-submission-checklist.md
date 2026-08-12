@@ -105,6 +105,12 @@ Reviewers verify these by calling your endpoints and asking for evidence, not by
 - [ ] Demo video, 2–5 minutes, install through usage. Data Client Apps must show OAuth approval **and** denial.
 - [ ] Homepage URL is valid HTTPS.
 
+### Submission artifacts
+
+- [ ] A published `.webflow.io` testing site exists with the App installed, and the full experience — including anything the App adds to the published site — works there end to end.
+- [ ] Source maps ready for the form's private upload (one `.map` or one ZIP of version-3 maps from the exact build that produced the bundle) when the submission ships a minified or generated bundle. Not in the public bundle, not in notes.
+- [ ] App Review Preflight run in the Designer on the same bundle + source-map artifact (Data Clients: on the declared production JavaScript URLs), findings resolved, and the `wfpre_…` submission receipt copied for the form.
+
 ### Account
 
 - [ ] Two-factor authentication enabled on an admin account of the submitting Workspace.
