@@ -18,7 +18,7 @@ export type UpstreamContributionFieldReport = {
     kind: 'Pull request' | 'Merge commit' | 'Release';
     title: string;
     detail: string;
-    state: 'verified' | 'review';
+    state: 'verified' | 'review' | 'archived';
     date: string;
     href: string;
   }>;
@@ -71,9 +71,10 @@ export const upstreamContributionFieldReport: UpstreamContributionFieldReport = 
       id: '#OAI-71',
       kind: 'Pull request',
       title: 'Original Codex Security contribution',
-      detail: 'The original pull request preserves the proposed design and authored history.',
-      state: 'review',
-      date: 'August 2026',
+      detail:
+        'The original authored proposal was closed as superseded by #88; its design, validation evidence, and authored history remain public.',
+      state: 'archived',
+      date: 'August 12, 2026',
       href: 'https://github.com/openai/codex-security/pull/71'
     },
     {
