@@ -205,6 +205,7 @@ printf '%s\\n' '{"discovered_changed_files":2,"analyzable_changed_files":2,"chan
     receipt.targets.map((target) => target.path),
     ['packages/parent']
   );
+  assert.equal(receipt.targets[0].coverage.discovered_changed_files, 2);
   assert.equal(receipt.coverage.analyzable_changed_files, 2);
 });
 
@@ -294,6 +295,10 @@ printf '{"discovered_changed_files":3,"analyzable_changed_files":1,"changed_file
   assert.deepEqual(
     receipt.targets.map((target) => target.coverage.excluded_changed_files),
     [[], []]
+  );
+  assert.deepEqual(
+    receipt.targets.map((target) => target.coverage.discovered_changed_files),
+    [1, 1]
   );
   assert.deepEqual(
     receipt.targets.map((target) => target.coverage.analyzed_changed_files),
