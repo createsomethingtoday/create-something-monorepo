@@ -75,6 +75,42 @@ test('x402 verifier rejects mainnet before calling the facilitator', async () =>
   assert.equal(calls, 0);
 });
 
+test('x402 verifier rejects non-v2 and non-exact payloads before facilitator I/O', async () => {
+  let calls = 0;
+  const facilitator = {
+    async verify() {
+      calls += 1;
+      return { isValid: true };
+    }
+  };
+
+  await assert.rejects(
+    verifyX402TestnetPayment({
+      decisionId: 'decision-v1',
+      policyId: 'x402.agent-readiness.v1',
+      requirements,
+      paymentPayload: { ...paymentPayload, x402Version: 1 },
+      facilitator
+    }),
+    X402TestnetVerificationError
+  );
+  await assert.rejects(
+    verifyX402TestnetPayment({
+      decisionId: 'decision-scheme',
+      policyId: 'x402.agent-readiness.v1',
+      requirements: { ...requirements, scheme: 'upto' },
+      paymentPayload: {
+        ...paymentPayload,
+        accepted: { ...requirements, scheme: 'upto' }
+      },
+      facilitator
+    }),
+    X402TestnetVerificationError
+  );
+
+  assert.equal(calls, 0);
+});
+
 test('x402 verifier fails closed on mismatched or invalid payment facts', async () => {
   await assert.rejects(
     verifyX402TestnetPayment({

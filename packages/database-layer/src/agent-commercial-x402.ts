@@ -142,6 +142,15 @@ export function verifyX402TestnetPayment(input: {
   paymentPayload: X402TestnetPaymentPayload;
   facilitator: X402TestnetFacilitator;
 }): Promise<X402TestnetVerificationResult> {
+  if (
+    input.paymentPayload.x402Version !== 2 ||
+    input.requirements.scheme !== 'exact' ||
+    input.paymentPayload.accepted.scheme !== 'exact'
+  ) {
+    return Promise.reject(
+      new X402TestnetVerificationError('x402 verification requires protocol v2 with exact scheme')
+    );
+  }
   const network = normalizedNetwork(input.requirements.network);
   if (!network || !normalizedNetwork(input.paymentPayload.accepted.network)) {
     return Promise.reject(
