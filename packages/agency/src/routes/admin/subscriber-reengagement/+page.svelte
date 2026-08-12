@@ -194,6 +194,9 @@
               <p class="eyebrow">
                 {response.responded_at} / INTEREST {response.still_interested} / UPDATES {response.updates_seen}
               </p>
+              <p class="eyebrow">
+                NOTIFICATION {response.notification_status} / WARM LEAD {response.warm_lead_status}
+              </p>
               <dl>
                 <div>
                   <dt>Why they joined</dt>

@@ -38,7 +38,8 @@ export const load: PageServerLoad = async ({ cookies, platform, url }) => {
     .all<{ status: string; count: number }>();
   const responses = await db
     .prepare(
-      `SELECT original_reason, still_interested, updates_seen, wanted_next, responded_at
+      `SELECT original_reason, still_interested, updates_seen, wanted_next, responded_at,
+              notification_status, warm_lead_status
        FROM newsletter_reengagement_responses
        WHERE campaign_id = ? AND retention_expires_at > datetime('now')
        ORDER BY responded_at DESC`
@@ -50,6 +51,8 @@ export const load: PageServerLoad = async ({ cookies, platform, url }) => {
       updates_seen: string;
       wanted_next: string | null;
       responded_at: string;
+      notification_status: string;
+      warm_lead_status: string;
     }>();
   return {
     error: null,

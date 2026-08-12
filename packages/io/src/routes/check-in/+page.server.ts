@@ -1,6 +1,8 @@
 import { fail } from '@sveltejs/kit';
+import { upsertWarmLead } from '@create-something/canon/analytics';
 import type { Actions, PageServerLoad } from './$types';
 import {
+  dispatchNewsletterCheckInFollowUp,
   loadNewsletterCheckIn,
   saveNewsletterCheckIn,
   validateNewsletterCheckInInput
@@ -60,11 +62,18 @@ export const actions: Actions = {
         wantedNext: formData.get('wantedNext')
       });
 
-      await saveNewsletterCheckIn(
+      const responseFingerprint = await saveNewsletterCheckIn(
         db,
         { campaignId: checkIn.campaignId, subscriberId: checkIn.subscriberId },
         response
       );
+      const followUp = dispatchNewsletterCheckInFollowUp(
+        db,
+        { campaignId: checkIn.campaignId, subscriberId: checkIn.subscriberId },
+        responseFingerprint,
+        { apiKey: platform.env.RESEND_API_KEY, fetch: globalThis.fetch, warmLead: upsertWarmLead }
+      ).catch((error) => console.error('Subscriber check-in follow-up failed:', error));
+      platform.context.waitUntil(followUp);
 
       return {
         success: true,
