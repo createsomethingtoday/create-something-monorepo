@@ -435,3 +435,47 @@ test('CLI excludes an unresolved package source conflict from analyzed coverage'
     { path: 'packages/example/src/index.ts', reason: 'unmerged_file' }
   ]);
 });
+
+test('CLI analyzes a live replacement after a staged deletion at the same path', (t) => {
+  const repo = mkdtempSync(join(tmpdir(), 'ground-review-recreated-'));
+  const binaryDir = mkdtempSync(join(tmpdir(), 'ground-review-recreated-binary-'));
+  t.after(() => {
+    rmSync(repo, { recursive: true, force: true });
+    rmSync(binaryDir, { recursive: true, force: true });
+  });
+
+  mustRun('git', ['init', '-b', 'main'], repo);
+  mustRun('git', ['config', 'core.hooksPath', '/dev/null'], repo);
+  writeFixtureFile(repo, 'packages/example/package.json', '{"name":"@example/pkg"}\n');
+  const source = writeFixtureFile(
+    repo,
+    'packages/example/src/index.ts',
+    'export const value = 1;\n'
+  );
+  mustRun('git', ['add', '.'], repo);
+  mustRun('git', ['commit', '-m', 'baseline'], repo);
+  rmSync(source);
+  mustRun('git', ['add', 'packages/example/src/index.ts'], repo);
+  writeFixtureFile(repo, 'packages/example/src/index.ts', 'export const value = 2;\n');
+
+  const fakeGround = writeFixtureFile(
+    binaryDir,
+    'fake-ground',
+    `#!/bin/sh
+printf '%s\\n' '{"discovered_changed_files":1,"analyzable_changed_files":1,"changed_file_list":["packages/example/src/index.ts"],"excluded_changed_files":[],"new_issues":[]}'
+`
+  );
+  chmodSync(fakeGround, 0o755);
+
+  const result = run(process.execPath, [scriptPath, '--base', 'HEAD', '--format', 'json'], repo, {
+    GROUND_BINARY: fakeGround
+  });
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const receipt = JSON.parse(result.stdout);
+  assert.equal(receipt.coverage.analyzable_changed_files, 1);
+  assert.deepEqual(receipt.targets[0].coverage.analyzed_changed_files, [
+    'packages/example/src/index.ts'
+  ]);
+  assert.deepEqual(receipt.coverage.excluded_changed_files, []);
+});

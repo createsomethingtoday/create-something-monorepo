@@ -70,6 +70,7 @@ function deletedFiles(root, base) {
       .split(/\r?\n/)
       .filter(Boolean)
       .map(normalizePath)
+      .filter((path) => !existsSync(resolve(root, path)))
   );
 }
 
