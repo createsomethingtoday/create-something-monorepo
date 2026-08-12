@@ -60,7 +60,7 @@ export interface ReengagementCampaignStore {
     subscriberId: number;
     tokenHash: string;
     expiresAt: string;
-  }): Promise<void>;
+  }): Promise<boolean>;
   markDeliverySent(campaignId: string, subscriberId: number, resendEmailId: string): Promise<void>;
   markDeliveryFailed(campaignId: string, subscriberId: number, errorCode: string): Promise<void>;
   setCampaignStatus(campaignId: string, status: 'sending' | 'sent' | 'stopped'): Promise<void>;
@@ -118,7 +118,15 @@ export async function prepareReengagementCampaign(
   replyTo = REENGAGEMENT_REPLY_TO
 ): Promise<StoredReengagementCampaign> {
   const audience = await getReengagementAudienceReceipt(db);
-  const artifact = await buildReengagementCampaignArtifact({ replyTo, audience });
+  const eligibleSubscribers = await createD1ReengagementStore(db).getEligibleSubscribers();
+  if (eligibleSubscribers.length !== audience.eligible) {
+    throw new Error('Audience changed while preparing. Refresh and prepare again.');
+  }
+  const artifact = await buildReengagementCampaignArtifact({
+    replyTo,
+    audience,
+    audienceMemberIds: eligibleSubscribers.map((subscriber) => subscriber.id)
+  });
   await db
     .prepare(
       `INSERT INTO newsletter_reengagement_campaigns (
@@ -269,20 +277,26 @@ export function createD1ReengagementStore(db: D1Database): ReengagementCampaignS
         )
         .bind(input.campaignId, input.subscriberId, input.campaignId, input.subscriberId)
         .run();
-      await db
+      const result = await db
         .prepare(
           `INSERT INTO newsletter_reengagement_tokens
          (id, campaign_id, subscriber_id, token_hash, expires_at)
-         VALUES (?, ?, ?, ?, ?)`
+         SELECT ?, ?, ?, ?, ?
+         WHERE EXISTS (
+           SELECT 1 FROM newsletter_reengagement_campaigns
+           WHERE id = ? AND status = 'sending'
+         )`
         )
         .bind(
           crypto.randomUUID(),
           input.campaignId,
           input.subscriberId,
           input.tokenHash,
-          input.expiresAt
+          input.expiresAt,
+          input.campaignId
         )
         .run();
+      return result.success && result.meta.changes === 1;
     },
     async markDeliverySent(campaignId, subscriberId, resendEmailId) {
       await db
@@ -311,9 +325,14 @@ export function createD1ReengagementStore(db: D1Database): ReengagementCampaignS
          SET status = ?, sent_at = CASE WHEN ? = 'sent' THEN datetime('now') ELSE sent_at END,
              stopped_at = CASE WHEN ? = 'stopped' THEN datetime('now') ELSE stopped_at END,
              updated_at = datetime('now')
-         WHERE id = ?`
+         WHERE id = ?
+           AND (
+             ? = 'stopped'
+             OR (? = 'sending' AND status IN ('approved', 'sending'))
+             OR (? = 'sent' AND status = 'sending')
+           )`
         )
-        .bind(status, status, status, campaignId)
+        .bind(status, status, status, campaignId, status, status, status)
         .run();
     }
   };
@@ -429,6 +448,7 @@ export function normalizeResendLastEvent(event: string | undefined): string {
 export async function buildReengagementCampaignArtifact(input: {
   replyTo: string;
   audience: ReengagementAudienceSummary;
+  audienceMemberIds: number[];
 }): Promise<ReengagementCampaignArtifact> {
   const email = buildSubscriberReengagementEmail({
     checkInUrl: '{{CHECK_IN_URL}}',
@@ -440,7 +460,8 @@ export async function buildReengagementCampaignArtifact(input: {
       preheader: email.preheader,
       html: email.html,
       text: email.text,
-      replyTo: input.replyTo
+      replyTo: input.replyTo,
+      audienceMemberIds: [...new Set(input.audienceMemberIds)].sort((a, b) => a - b)
     })
   );
 
@@ -472,21 +493,22 @@ export async function sendApprovedReengagementCampaign(
     throw new Error('The campaign has not been explicitly approved.');
   }
 
+  const subscribers = await store.getEligibleSubscribers();
+  if (subscribers.length !== campaign.eligibleCount) {
+    throw new Error('Audience changed after approval. Prepare and approve it again.');
+  }
+
   const locked = await buildReengagementCampaignArtifact({
     replyTo: campaign.replyTo,
     audience: {
       total: campaign.eligibleCount + campaign.excludedCount,
       eligible: campaign.eligibleCount,
       excluded: campaign.excludedCount
-    }
+    },
+    audienceMemberIds: subscribers.map((subscriber) => subscriber.id)
   });
   if (locked.contentHash !== campaign.contentHash) {
-    throw new Error('Campaign content changed after approval. Prepare and approve it again.');
-  }
-
-  const subscribers = await store.getEligibleSubscribers();
-  if (subscribers.length !== campaign.eligibleCount) {
-    throw new Error('Audience changed after approval. Prepare and approve it again.');
+    throw new Error('Audience or campaign content changed after approval. Prepare and approve it again.');
   }
 
   await store.setCampaignStatus(campaign.id, 'sending');
@@ -494,6 +516,10 @@ export async function sendApprovedReengagementCampaign(
   let skipped = 0;
 
   for (const subscriber of subscribers) {
+    const currentCampaign = await store.getCampaign(campaign.id);
+    if (!currentCampaign || currentCampaign.status !== 'sending') {
+      throw new Error('Campaign was stopped; no further deliveries were attempted.');
+    }
     const existing = await store.getDelivery(campaign.id, subscriber.id);
     if (existing?.resendEmailId) {
       skipped += 1;
@@ -505,12 +531,20 @@ export async function sendApprovedReengagementCampaign(
       campaign.id,
       subscriber.unsubscribe_token
     );
-    await store.replaceCheckInToken({
+    const tokenReady = await store.replaceCheckInToken({
       campaignId: campaign.id,
       subscriberId: subscriber.id,
       tokenHash: await sha256Hex(rawToken),
       expiresAt: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString()
     });
+    if (!tokenReady) {
+      throw new Error('Campaign was stopped; no further deliveries were attempted.');
+    }
+
+    const beforeProviderCall = await store.getCampaign(campaign.id);
+    if (!beforeProviderCall || beforeProviderCall.status !== 'sending') {
+      throw new Error('Campaign was stopped; no further deliveries were attempted.');
+    }
 
     const baseUrl = input.baseUrl ?? REENGAGEMENT_BASE_URL;
     const checkInUrl = `${baseUrl}/check-in?token=${encodeURIComponent(rawToken)}`;
@@ -548,6 +582,10 @@ export async function sendApprovedReengagementCampaign(
     sent += 1;
   }
 
+  const beforeCompletion = await store.getCampaign(campaign.id);
+  if (!beforeCompletion || beforeCompletion.status !== 'sending') {
+    throw new Error('Campaign was stopped; no further deliveries were attempted.');
+  }
   await store.setCampaignStatus(campaign.id, 'sent');
   return { sent, skipped };
 }

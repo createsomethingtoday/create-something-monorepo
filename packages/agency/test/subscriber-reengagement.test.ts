@@ -33,7 +33,8 @@ test('check-in token is stable across an idempotent delivery retry', async () =>
 test('campaign artifact locks copy, reply-to, and aggregate audience receipt', async () => {
   const artifact = await buildReengagementCampaignArtifact({
     replyTo: 'micah@createsomething.io',
-    audience: { total: 11, eligible: 1, excluded: 10 }
+    audience: { total: 11, eligible: 1, excluded: 10 },
+    audienceMemberIds: [1]
   });
 
   assert.equal(artifact.id, REENGAGEMENT_CAMPAIGN_ID);
@@ -53,7 +54,8 @@ test('campaign artifact locks copy, reply-to, and aggregate audience receipt', a
 test('production send refuses draft status and audience drift', async () => {
   const artifact = await buildReengagementCampaignArtifact({
     replyTo: 'micah@createsomething.io',
-    audience: { total: 11, eligible: 1, excluded: 10 }
+    audience: { total: 11, eligible: 1, excluded: 10 },
+    audienceMemberIds: [1]
   });
   const draftStore = createStore({ ...artifact, status: 'draft' }, 1);
 
@@ -72,7 +74,8 @@ test('production send refuses draft status and audience drift', async () => {
 test('production send is idempotent and never resends a recorded delivery', async () => {
   const artifact = await buildReengagementCampaignArtifact({
     replyTo: 'micah@createsomething.io',
-    audience: { total: 1, eligible: 1, excluded: 0 }
+    audience: { total: 1, eligible: 1, excluded: 0 },
+    audienceMemberIds: [1]
   });
   const store = createStore({ ...artifact, status: 'approved' }, 1, 'already-sent-id');
   let fetchCalls = 0;
@@ -92,7 +95,8 @@ test('production send is idempotent and never resends a recorded delivery', asyn
 test('approved send uses working private links, reply-to, tags, and Resend idempotency', async () => {
   const artifact = await buildReengagementCampaignArtifact({
     replyTo: 'micah@createsomething.io',
-    audience: { total: 1, eligible: 1, excluded: 0 }
+    audience: { total: 1, eligible: 1, excluded: 0 },
+    audienceMemberIds: [1]
   });
   const store = createStore({ ...artifact, status: 'approved' }, 1);
   let request: RequestInit | undefined;
@@ -126,7 +130,8 @@ test('approved send uses working private links, reply-to, tags, and Resend idemp
 test('provider fetch keeps the Worker global receiver', async () => {
   const artifact = await buildReengagementCampaignArtifact({
     replyTo: 'micah@createsomething.io',
-    audience: { total: 1, eligible: 1, excluded: 0 }
+    audience: { total: 1, eligible: 1, excluded: 0 },
+    audienceMemberIds: [1]
   });
   const store = createStore({ ...artifact, status: 'approved' }, 1);
   const workerFetch = function (this: unknown) {
@@ -144,6 +149,62 @@ test('provider fetch keeps the Worker global receiver', async () => {
   assert.deepEqual(result, { sent: 1, skipped: 0 });
 });
 
+test('approval locks exact audience membership, not only its count', async () => {
+  const artifact = await buildReengagementCampaignArtifact({
+    replyTo: 'micah@createsomething.io',
+    audience: { total: 1, eligible: 1, excluded: 0 },
+    audienceMemberIds: [1]
+  });
+  const swappedAudienceStore = createStore(
+    { ...artifact, status: 'approved' },
+    1,
+    null,
+    [2]
+  );
+
+  await assert.rejects(
+    sendApprovedReengagementCampaign(swappedAudienceStore, resendInput()),
+    /Audience or campaign content changed after approval/
+  );
+});
+
+test('a stop receipt prevents every subsequent provider call and remains stopped', async () => {
+  const artifact = await buildReengagementCampaignArtifact({
+    replyTo: 'micah@createsomething.io',
+    audience: { total: 2, eligible: 2, excluded: 0 },
+    audienceMemberIds: [1, 2]
+  });
+  let campaignStatus = 'approved';
+  const baseStore = createStore({ ...artifact, status: 'approved' }, 2);
+  const store: ReengagementCampaignStore = {
+    ...baseStore,
+    async getCampaign() {
+      return { ...artifact, status: campaignStatus };
+    },
+    async setCampaignStatus(_campaignId, status) {
+      campaignStatus = status;
+    }
+  };
+  let fetchCalls = 0;
+
+  await assert.rejects(
+    sendApprovedReengagementCampaign(store, {
+      ...resendInput(),
+      fetch: async () => {
+        fetchCalls += 1;
+        campaignStatus = 'stopped';
+        return new Response(JSON.stringify({ id: `resend-receipt-${fetchCalls}` }), {
+          status: 200
+        });
+      }
+    }),
+    /stopped/
+  );
+
+  assert.equal(fetchCalls, 1);
+  assert.equal(campaignStatus, 'stopped');
+});
+
 function resendInput() {
   return {
     apiKey: 'test-key',
@@ -156,16 +217,18 @@ function resendInput() {
 function createStore(
   campaign: Awaited<ReturnType<typeof buildReengagementCampaignArtifact>> & { status: string },
   audienceCount: number,
-  existingDeliveryId: string | null = null
+  existingDeliveryId: string | null = null,
+  subscriberIds: number[] = Array.from({ length: audienceCount }, (_, index) => index + 1)
 ): ReengagementCampaignStore {
-  const subscribers = Array.from({ length: audienceCount }, (_, index) => ({
-    id: index + 1,
+  let currentCampaign = { ...campaign };
+  const subscribers = subscriberIds.map((id, index) => ({
+    id,
     email: `reader-${index + 1}@example.com`,
     unsubscribe_token: `unsubscribe-${index + 1}`
   }));
   return {
     async getCampaign() {
-      return campaign;
+      return currentCampaign;
     },
     async getEligibleSubscribers() {
       return subscribers;
@@ -174,9 +237,13 @@ function createStore(
       return existingDeliveryId ? { resendEmailId: existingDeliveryId } : null;
     },
     async queueDelivery() {},
-    async replaceCheckInToken() {},
+    async replaceCheckInToken() {
+      return true;
+    },
     async markDeliverySent() {},
     async markDeliveryFailed() {},
-    async setCampaignStatus() {}
+    async setCampaignStatus(_campaignId, status) {
+      currentCampaign = { ...currentCampaign, status };
+    }
   };
 }
