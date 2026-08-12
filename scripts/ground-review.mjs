@@ -307,6 +307,15 @@ export function buildReceipt({
               ? 'outside_package_source'
               : 'unsupported_extension'
     }));
+  for (const exclusion of outsideTargets) {
+    const target = targets.find(({ path }) => exclusion.path.startsWith(`${path}/`));
+    if (
+      target &&
+      !target.coverage.excluded_changed_files.some(({ path }) => path === exclusion.path)
+    ) {
+      target.coverage.excluded_changed_files.push(exclusion);
+    }
+  }
   const targetExclusions = targets.flatMap((target) => target.coverage.excluded_changed_files);
   const accountedPaths = new Set([
     ...analyzedSet,
