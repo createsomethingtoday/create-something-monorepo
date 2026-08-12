@@ -16,7 +16,7 @@
  *   - Judgment: tool filtering, read-only enforcement (user-controlled via policy)
  */
 
-import { z } from 'zod';
+import { z, type ZodRawShape } from 'zod';
 import type { ScopedMcpServer } from '@create-something/mcp-core';
 import { ComposioClient, type ComposioToolDef } from './client.js';
 import type {
@@ -78,7 +78,7 @@ function jsonSchemaPropertyToZod(
         break;
       }
       case 'object':
-        schema = z.record(z.string(), z.unknown());
+        schema = z.record(z.unknown());
         break;
       default:
         // Unknown type — accept anything
@@ -98,13 +98,13 @@ function jsonSchemaPropertyToZod(
 }
 
 /**
- * Convert a Composio tool's JSON Schema parameters to a mutable Zod shape
+ * Convert a Composio tool's JSON Schema parameters to a ZodRawShape
  * suitable for ScopedMcpServer.tool() registration.
  */
 function jsonSchemaToZodShape(
   parameters: ComposioToolDef['parameters'],
-): Record<string, z.ZodTypeAny> {
-  const shape: Record<string, z.ZodTypeAny> = {};
+): ZodRawShape {
+  const shape: ZodRawShape = {};
   const properties = parameters.properties ?? {};
   const required = new Set(parameters.required ?? []);
 

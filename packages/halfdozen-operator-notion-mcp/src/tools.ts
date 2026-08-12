@@ -135,7 +135,7 @@ const pinnedToolSchema = {
     'bulk_update',
     'bulk_archive',
   ]),
-  args: z.record(z.string(), z.unknown()).default({}),
+  args: z.record(z.unknown()).default({}),
 };
 
 const accountToolSchema = {
@@ -149,7 +149,7 @@ const accountToolSchema = {
     'pin_account',
     'set_sync_enabled',
   ]),
-  args: z.record(z.string(), z.unknown()).default({}),
+  args: z.record(z.unknown()).default({}),
 };
 
 const syncToolSchema = {
@@ -173,7 +173,7 @@ const syncContractsToolSchema = {
     'validate_contract',
     'preview_run',
   ]),
-  args: z.record(z.string(), z.unknown()).default({}),
+  args: z.record(z.unknown()).default({}),
 };
 
 const runSyncContractToolSchema = {
@@ -184,7 +184,7 @@ const runSyncContractToolSchema = {
 
 const routerToolSchema = {
   request: z.string(),
-  context: z.record(z.string(), z.unknown()).optional(),
+  context: z.record(z.unknown()).optional(),
 };
 
 const routerAgentDecisionSchema = z.object({
