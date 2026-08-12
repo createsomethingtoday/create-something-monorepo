@@ -9,7 +9,7 @@
   <header>
     <p class="eyebrow">CRE-1713 / OPERATOR APPROVAL</p>
     <h1>Subscriber re-engagement</h1>
-    <p>One reviewed message, one confirmed-consent audience, and a receipt for every decision.</p>
+    <p>One reviewed message, one reviewed signup audience, and a receipt for every decision.</p>
   </header>
 
   {#if data.error || form?.error}<p class="notice error" role="alert">
@@ -36,6 +36,16 @@
       </dl>
       <dl class="exclusions">
         <div>
+          <dt>Direct confirmed</dt>
+          <dd>{data.audience.directConfirmed}</dd>
+        </div>
+        <div>
+          <dt>Legacy single opt-in</dt>
+          <dd>{data.audience.legacySingleOptIn}</dd>
+        </div>
+      </dl>
+      <dl class="exclusions">
+        <div>
           <dt>Unconfirmed</dt>
           <dd>{data.audience.unconfirmed}</dd>
         </div>
@@ -53,8 +63,9 @@
         </div>
       </dl>
       <p class="boundary">
-        No addresses are rendered here. Customers, contacts, internal/test records, migration-only
-        rows, and suppression states are ineligible.
+        No addresses are rendered here. Eligibility is limited to direct confirmations and the
+        separately reviewed legacy signup lane. Customers, contacts, internal/test records,
+        migration-only rows, and suppression states are ineligible.
       </p>
       <form method="POST" action="?/prepare">
         <button type="submit">Prepare locked draft</button>

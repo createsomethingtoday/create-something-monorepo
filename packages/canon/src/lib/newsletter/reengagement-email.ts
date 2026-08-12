@@ -38,7 +38,7 @@ export function buildSubscriberReengagementEmail(
           <p style="margin:0 0 24px;"><a href="${checkInUrl}" style="display:inline-block;padding:13px 18px;border-radius:8px;background:#181713;color:#fffdf7;font-weight:650;text-decoration:none;">Tell me what would help</a></p>
           <p style="margin:0;font-size:15px;line-height:1.6;">If you would rather leave, that is completely fine. Either answer is useful.</p>
           <p style="margin:24px 0 0;font-size:15px;line-height:1.6;">Micah<br />CREATE SOMETHING</p>`,
-    footerHtml: `You received this because you confirmed a CREATE SOMETHING email subscription. <a href="${unsubscribeUrl}" style="color:inherit;text-decoration:underline;">Unsubscribe</a>.`
+    footerHtml: `You received this because you signed up for CREATE SOMETHING email updates. <a href="${unsubscribeUrl}" style="color:inherit;text-decoration:underline;">Unsubscribe</a>.`
   });
 
   const text = `What brought you here?

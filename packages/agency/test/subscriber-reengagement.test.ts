@@ -1,14 +1,155 @@
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import test from 'node:test';
 import {
   REENGAGEMENT_CAMPAIGN_ID,
   approvalPhraseFor,
   buildReengagementCampaignArtifact,
+  createD1ReengagementStore,
   deterministicCheckInToken,
+  getReengagementAudienceReceipt,
   normalizeResendLastEvent,
   sendApprovedReengagementCampaign,
   type ReengagementCampaignStore
 } from '../src/lib/server/subscriber-reengagement.ts';
+
+class SqliteD1Statement {
+  constructor(
+    private readonly database: string,
+    private readonly sql: string
+  ) {}
+
+  async first<T>() {
+    const output = execFileSync('sqlite3', ['-json', this.database], {
+      input: this.sql,
+      encoding: 'utf8'
+    }).trim();
+    return (output ? (JSON.parse(output) as T[]) : [])[0] ?? null;
+  }
+
+  async all<T>() {
+    const output = execFileSync('sqlite3', ['-json', this.database], {
+      input: this.sql,
+      encoding: 'utf8'
+    }).trim();
+    return { success: true, results: output ? (JSON.parse(output) as T[]) : [], meta: {} };
+  }
+}
+
+function createSqliteD1(database: string): D1Database {
+  return {
+    prepare(sql: string) {
+      return new SqliteD1Statement(database, sql) as unknown as D1PreparedStatement;
+    }
+  } as unknown as D1Database;
+}
+
+test('legacy single-opt-in migration is exact, guarded, and idempotent', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'reengagement-migration-'));
+  const database = join(directory, 'migration.db');
+  const migration = readFileSync(
+    new URL('../migrations/0042_newsletter_legacy_single_opt_in.sql', import.meta.url),
+    'utf8'
+  );
+  try {
+    execFileSync('sqlite3', [database], {
+      input: `CREATE TABLE newsletter_subscribers (
+        id INTEGER PRIMARY KEY, source TEXT, subscribed_at TEXT, confirmed_at TEXT,
+        active INTEGER, status TEXT, unsubscribed_at TEXT, consent_requested_at TEXT,
+        consent_confirmed_at TEXT, consent_method TEXT, consent_evidence TEXT,
+        audience_classification TEXT
+      );
+      ${[
+        [1, '2025-11-17 02:23:40'],
+        [3, '2025-11-20 00:00:00'],
+        [13, '2025-11-26 14:54:18'],
+        [16, '2025-11-27 05:22:51'],
+        [19, '2025-11-29 09:10:51'],
+        [22, '2025-12-03 14:23:54']
+      ]
+        .map(
+          ([id, subscribedAt]) =>
+            `INSERT INTO newsletter_subscribers VALUES (${id}, NULL, '${subscribedAt}', '2025-12-23 04:35:59', 1, 'active', NULL, NULL, NULL, NULL, NULL, 'legacy_or_unknown');`
+        )
+        .join('\n')}
+      ${migration}
+      ${migration}`,
+      encoding: 'utf8'
+    });
+    const rows = JSON.parse(
+      execFileSync('sqlite3', ['-json', database], {
+        input: `SELECT id, consent_method, consent_evidence, consent_confirmed_at,
+                       audience_classification
+                FROM newsletter_subscribers ORDER BY id`,
+        encoding: 'utf8'
+      })
+    ) as Array<Record<string, unknown>>;
+
+    assert.deepEqual(
+      rows.filter(({ consent_method }) => consent_method === 'single_opt_in').map(({ id }) => id),
+      [1, 13, 16, 19, 22]
+    );
+    assert.equal(rows.find(({ id }) => id === 3)?.audience_classification, 'legacy_or_unknown');
+    assert.ok(
+      rows
+        .filter(({ id }) => id !== 3)
+        .every(
+          ({ consent_evidence, consent_confirmed_at, audience_classification }) =>
+            consent_evidence === 'legacy_signup_form' &&
+            consent_confirmed_at == null &&
+            audience_classification === 'confirmed_subscriber'
+        )
+    );
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test('re-engagement distinguishes direct confirmation from reviewed legacy single opt-in', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'reengagement-audience-'));
+  const database = join(directory, 'audience.db');
+  try {
+    execFileSync('sqlite3', [database], {
+      input: `CREATE TABLE newsletter_subscribers (
+        id INTEGER PRIMARY KEY, email TEXT, source TEXT, unsubscribe_token TEXT,
+        active INTEGER, status TEXT, unsubscribed_at TEXT, confirmed_at TEXT,
+        consent_requested_at TEXT, consent_confirmed_at TEXT, consent_method TEXT,
+        consent_evidence TEXT, audience_classification TEXT
+      );
+      INSERT INTO newsletter_subscribers VALUES
+        (1, 'direct@example.com', 'io', 'u1', 1, 'active', NULL, '2026-01-01', '2026-01-01', '2026-01-01', 'double_opt_in', 'confirmation_link', 'confirmed_subscriber'),
+        (13, 'legacy@example.com', NULL, 'u13', 1, 'active', NULL, '2025-12-23', '2025-11-20', NULL, 'single_opt_in', 'legacy_signup_form', 'confirmed_subscriber'),
+        (20, 'unknown@example.com', NULL, 'u20', 1, 'active', NULL, '2025-12-23', NULL, NULL, NULL, NULL, 'legacy_or_unknown'),
+        (21, 'suppressed@example.com', NULL, 'u21', 0, 'inactive', '2026-01-02', NULL, NULL, NULL, NULL, NULL, 'excluded');`,
+      encoding: 'utf8'
+    });
+    const db = createSqliteD1(database);
+
+    const receipt = await getReengagementAudienceReceipt(db);
+    const subscribers = await createD1ReengagementStore(db).getEligibleSubscribers();
+
+    assert.deepEqual(receipt, {
+      total: 4,
+      eligible: 2,
+      excluded: 2,
+      directConfirmed: 1,
+      legacySingleOptIn: 1,
+      unconfirmed: 0,
+      consentUnproved: 1,
+      audienceUnreviewed: 0,
+      suppressed: 1
+    });
+    assert.deepEqual(
+      subscribers.map(({ id }) => id),
+      [1, 13]
+    );
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
 
 test('provider events collapse to delivery state without open or click metrics', () => {
   assert.equal(normalizeResendLastEvent('delivered'), 'delivered');
@@ -155,12 +296,7 @@ test('approval locks exact audience membership, not only its count', async () =>
     audience: { total: 1, eligible: 1, excluded: 0 },
     audienceMemberIds: [1]
   });
-  const swappedAudienceStore = createStore(
-    { ...artifact, status: 'approved' },
-    1,
-    null,
-    [2]
-  );
+  const swappedAudienceStore = createStore({ ...artifact, status: 'approved' }, 1, null, [2]);
 
   await assert.rejects(
     sendApprovedReengagementCampaign(swappedAudienceStore, resendInput()),

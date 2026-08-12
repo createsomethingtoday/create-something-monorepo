@@ -1,11 +1,35 @@
 import { buildSubscriberReengagementEmail } from '@create-something/canon/newsletter/reengagement-email';
-import { ELIGIBLE_SUBSCRIBERS_SQL } from '@create-something/canon/newsletter/audience';
 
 export const REENGAGEMENT_CAMPAIGN_ID = 'cre-1713-subscriber-check-in-v1';
 export const REENGAGEMENT_CAMPAIGN_SLUG = 'subscriber-check-in-2026-08';
 export const REENGAGEMENT_REPLY_TO = 'micah@createsomething.io';
 const REENGAGEMENT_FROM = 'CREATE SOMETHING <hello@createsomething.io>';
 const REENGAGEMENT_BASE_URL = 'https://createsomething.io';
+
+export const REENGAGEMENT_ELIGIBLE_SUBSCRIBERS_SQL = `
+  SELECT id, email, source, unsubscribe_token, consent_confirmed_at
+  FROM newsletter_subscribers
+  WHERE active = 1
+    AND status = 'active'
+    AND unsubscribed_at IS NULL
+    AND confirmed_at IS NOT NULL
+    AND audience_classification = 'confirmed_subscriber'
+    AND (
+      (
+        consent_confirmed_at IS NOT NULL
+        AND consent_method = 'double_opt_in'
+        AND consent_evidence = 'confirmation_link'
+      )
+      OR
+      (
+        consent_requested_at IS NOT NULL
+        AND consent_confirmed_at IS NULL
+        AND consent_method = 'single_opt_in'
+        AND consent_evidence = 'legacy_signup_form'
+      )
+    )
+  ORDER BY id ASC
+`;
 
 export interface ReengagementAudienceSummary {
   total: number;
@@ -14,6 +38,8 @@ export interface ReengagementAudienceSummary {
 }
 
 export interface ReengagementAudienceReceipt extends ReengagementAudienceSummary {
+  directConfirmed: number;
+  legacySingleOptIn: number;
   unconfirmed: number;
   consentUnproved: number;
   audienceUnreviewed: number;
@@ -79,7 +105,9 @@ export async function getReengagementAudienceReceipt(
   const row = await db
     .prepare(
       `SELECT COUNT(*) AS total,
-            SUM(CASE WHEN reason = 'eligible' THEN 1 ELSE 0 END) AS eligible,
+            SUM(CASE WHEN reason IN ('direct_confirmed', 'legacy_single_opt_in') THEN 1 ELSE 0 END) AS eligible,
+            SUM(CASE WHEN reason = 'direct_confirmed' THEN 1 ELSE 0 END) AS direct_confirmed,
+            SUM(CASE WHEN reason = 'legacy_single_opt_in' THEN 1 ELSE 0 END) AS legacy_single_opt_in,
             SUM(CASE WHEN reason = 'unconfirmed' THEN 1 ELSE 0 END) AS unconfirmed,
             SUM(CASE WHEN reason = 'consent_unproved' THEN 1 ELSE 0 END) AS consent_unproved,
             SUM(CASE WHEN reason = 'audience_unreviewed' THEN 1 ELSE 0 END) AS audience_unreviewed,
@@ -90,11 +118,19 @@ export async function getReengagementAudienceReceipt(
            OR COALESCE(active, 0) != 1
            OR COALESCE(status, '') != 'active' THEN 'suppressed'
          WHEN confirmed_at IS NULL THEN 'unconfirmed'
+         WHEN COALESCE(audience_classification, '') = 'confirmed_subscriber'
+           AND consent_confirmed_at IS NOT NULL
+           AND consent_method = 'double_opt_in'
+           AND consent_evidence = 'confirmation_link' THEN 'direct_confirmed'
+         WHEN COALESCE(audience_classification, '') = 'confirmed_subscriber'
+           AND consent_requested_at IS NOT NULL
+           AND consent_confirmed_at IS NULL
+           AND consent_method = 'single_opt_in'
+           AND consent_evidence = 'legacy_signup_form' THEN 'legacy_single_opt_in'
          WHEN consent_confirmed_at IS NULL
-           OR COALESCE(consent_method, '') != 'double_opt_in'
-           OR COALESCE(consent_evidence, '') != 'confirmation_link' THEN 'consent_unproved'
-         WHEN COALESCE(audience_classification, '') != 'confirmed_subscriber' THEN 'audience_unreviewed'
-         ELSE 'eligible'
+           OR COALESCE(consent_method, '') NOT IN ('double_opt_in', 'single_opt_in')
+           OR COALESCE(consent_evidence, '') NOT IN ('confirmation_link', 'legacy_signup_form') THEN 'consent_unproved'
+         ELSE 'audience_unreviewed'
        END AS reason
        FROM newsletter_subscribers
      )`
@@ -106,6 +142,8 @@ export async function getReengagementAudienceReceipt(
     total,
     eligible,
     excluded: total - eligible,
+    directConfirmed: Number(row?.direct_confirmed ?? 0),
+    legacySingleOptIn: Number(row?.legacy_single_opt_in ?? 0),
     unconfirmed: Number(row?.unconfirmed ?? 0),
     consentUnproved: Number(row?.consent_unproved ?? 0),
     audienceUnreviewed: Number(row?.audience_unreviewed ?? 0),
@@ -238,7 +276,7 @@ export function createD1ReengagementStore(db: D1Database): ReengagementCampaignS
     },
     async getEligibleSubscribers() {
       const result = await db
-        .prepare(ELIGIBLE_SUBSCRIBERS_SQL)
+        .prepare(REENGAGEMENT_ELIGIBLE_SUBSCRIBERS_SQL)
         .all<EligibleReengagementSubscriber>();
       return result.results;
     },
