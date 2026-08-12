@@ -196,6 +196,46 @@ test('CLI discovers staged content hidden by a base-matching worktree copy', (t)
   assert.equal(receipt.status, 'no_analyzable_files');
 });
 
+test('CLI does not mistake committed branch changes for staged content', (t) => {
+  const repo = mkdtempSync(join(tmpdir(), 'ground-review-committed-worktree-'));
+  const binaryDir = mkdtempSync(join(tmpdir(), 'ground-review-committed-worktree-binary-'));
+  t.after(() => {
+    rmSync(repo, { recursive: true, force: true });
+    rmSync(binaryDir, { recursive: true, force: true });
+  });
+
+  mustRun('git', ['init', '-b', 'main'], repo);
+  mustRun('git', ['config', 'core.hooksPath', '/dev/null'], repo);
+  writeFixtureFile(repo, 'packages/example/package.json', '{"name":"@example/pkg"}\n');
+  writeFixtureFile(repo, 'packages/example/src/index.ts', 'export const value = 1;\n');
+  mustRun('git', ['add', '.'], repo);
+  mustRun('git', ['commit', '-m', 'baseline'], repo);
+  writeFixtureFile(repo, 'packages/example/src/index.ts', 'export const value = 2;\n');
+  mustRun('git', ['add', 'packages/example/src/index.ts'], repo);
+  mustRun('git', ['commit', '-m', 'branch change'], repo);
+  writeFixtureFile(repo, 'packages/example/src/index.ts', 'export const value = 3;\n');
+
+  const fakeGround = writeFixtureFile(
+    binaryDir,
+    'fake-ground',
+    `#!/bin/sh
+printf '%s\\n' '{"changed_file_list":["packages/example/src/index.ts"],"excluded_changed_files":[],"new_issues":[]}'
+`
+  );
+  chmodSync(fakeGround, 0o755);
+
+  const result = run(process.execPath, [scriptPath, '--base', 'HEAD~1', '--format', 'json'], repo, {
+    GROUND_BINARY: fakeGround
+  });
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const receipt = JSON.parse(result.stdout);
+  assert.deepEqual(receipt.coverage.checks.duplicates.analyzed_changed_files, [
+    'packages/example/src/index.ts'
+  ]);
+  assert.deepEqual(receipt.coverage.excluded_changed_files, []);
+});
+
 test('CLI honors extended Ground path policy in orphan coverage and findings', (t) => {
   const repo = mkdtempSync(join(tmpdir(), 'ground-review-policy-'));
   const binaryDir = mkdtempSync(join(tmpdir(), 'ground-review-policy-binary-'));
@@ -279,6 +319,9 @@ test('CLI preserves mode-only source changes as explicit exclusions', (t) => {
     { path: 'packages/example/src/index.ts', reason: 'mode_only_change' }
   ]);
   assert.deepEqual(receipt.coverage.checks.duplicates.excluded_changed_files, [
+    { path: 'packages/example/src/index.ts', reason: 'mode_only_change' }
+  ]);
+  assert.deepEqual(receipt.coverage.checks.orphans.excluded_changed_files, [
     { path: 'packages/example/src/index.ts', reason: 'mode_only_change' }
   ]);
   assert.equal(receipt.status, 'no_analyzable_files');
@@ -935,6 +978,9 @@ test('CLI excludes generated TypeScript from calibration coverage', (t) => {
   assert.deepEqual(receipt.coverage.checks.duplicates.excluded_changed_files, [
     { path: 'packages/example/src/catalog.generated.ts', reason: 'generated_file' }
   ]);
+  assert.deepEqual(receipt.coverage.checks.orphans.excluded_changed_files, [
+    { path: 'packages/example/src/catalog.generated.ts', reason: 'generated_file' }
+  ]);
 });
 
 test('CLI drops findings sourced only from excluded generated files', (t) => {
@@ -985,6 +1031,13 @@ printf '%s\\n' '{"discovered_changed_files":2,"analyzable_changed_files":2,"chan
     { path: 'packages/example/src/catalog.generated.ts', reason: 'generated_file' }
   ]);
   assert.deepEqual(receipt.targets[0].coverage.checks.duplicates.excluded_changed_files, [
+    { path: 'packages/example/src/catalog.generated.ts', reason: 'generated_file' }
+  ]);
+  assert.deepEqual(receipt.targets[0].coverage.checks.orphans.excluded_changed_files, [
+    {
+      path: 'packages/example/src/index.ts',
+      reason: 'existing_file_not_checked_for_orphans'
+    },
     { path: 'packages/example/src/catalog.generated.ts', reason: 'generated_file' }
   ]);
   assert.deepEqual(receipt.coverage.checks.duplicates.excluded_changed_files, [
