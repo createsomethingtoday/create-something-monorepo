@@ -31,7 +31,7 @@ export function renderPerformanceEmail(input: PerformanceEmailInput): string {
   const tokens = performanceEmailTokens;
   const media = input.media
     ? `<tr><td style="padding:0;line-height:0;">
-          <img src="${escapePerformanceEmailAttribute(input.media.src)}" alt="${escapePerformanceEmailAttribute(input.media.alt)}"${input.media.width ? ` width="${input.media.width}"` : ''}${input.media.height ? ` height="${input.media.height}"` : ''} style="display:block;width:100%;height:auto;border:0;max-width:${tokens.layout.maxWidth};background-color:${tokens.color.ink};" />
+          <img src="${escapePerformanceEmailAttribute(input.media.src)}" alt="${escapePerformanceEmailAttribute(input.media.alt)}"${input.media.width ? ` width="${input.media.width}"` : ''}${input.media.height ? ` height="${input.media.height}"` : ''} style="display:block;width:100%;height:auto;border:0;max-width:${tokens.layout.maxWidth};background-color:${tokens.color.ink};color:${tokens.color.paper};font-family:${escapePerformanceEmailAttribute(tokens.font.display)};font-size:14px;line-height:1.4;text-align:center;" />
         </td></tr>`
     : '';
 
