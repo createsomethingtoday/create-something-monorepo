@@ -3,6 +3,10 @@ const DEFAULT_ALERT_EMAIL = 'micah@createsomething.io';
 const DEFAULT_EMAIL_FROM = 'CREATE SOMETHING Ops <notifications@createsomething.io>';
 const RESEND_EMAIL_API_URL = 'https://api.resend.com/emails';
 const ALERT_COOLDOWN_SECONDS = 60 * 60;
+// A cold Hub health request connects every enabled downstream and currently
+// takes about 26 seconds in production. Keep the synthetic above that measured
+// cold-start envelope while remaining bounded below the 15-minute cadence.
+const HEALTH_PROBE_TIMEOUT_MS = 60_000;
 
 export interface WatchdogFinding {
   rule: 'health_probe_failed' | 'mcp_failures' | 'telemetry_query_failed';
@@ -89,7 +93,7 @@ async function probeHealth(
   fetcher: typeof fetch,
 ): Promise<{ ok: boolean; status: number }> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 20_000);
+  const timeout = setTimeout(() => controller.abort(), HEALTH_PROBE_TIMEOUT_MS);
   try {
     const response = await fetcher(env.WATCHDOG_HEALTH_URL ?? DEFAULT_HEALTH_URL, {
       headers: { Accept: 'application/json', 'User-Agent': 'create-something-production-watchdog/1.0' },
