@@ -18,6 +18,9 @@ describe('subscriber re-engagement email', () => {
     expect(email.html).toContain('https://createsomething.io/check-in?token=check-in-safe');
     expect(email.html).toContain('https://createsomething.io/unsubscribe?token=unsubscribe-safe');
     expect(email.html).toContain('playbook-home-agent-macro.webp');
+    expect(email.html).toContain(
+      'background-color:#090909;color:#f3f3f0;font-family:Arial, &quot;Helvetica Neue&quot;, Helvetica, system-ui, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:14px;line-height:1.4;text-align:center;'
+    );
     expect(email.text).toContain('Tell me what would help');
     expect(email.text).toContain(
       'Unsubscribe: https://createsomething.io/unsubscribe?token=unsubscribe-safe'
