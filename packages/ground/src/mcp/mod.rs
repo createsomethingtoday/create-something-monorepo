@@ -1061,10 +1061,18 @@ fn handle_find_duplicate_functions(args: &Value) -> ToolResult {
                 
                 format!("Found {}. Consider consolidating.", parts.join(", "))
             };
+            let accounted_files = report.files.len() + report.skipped_files.len();
+            let scan_complete = files.len() == files_discovered && accounted_files == files.len();
             if files.len() < files_discovered {
                 message.push_str(&format!(
                     " Scan incomplete: checked the bounded first {} of {} discovered files.",
                     files.len(), files_discovered
+                ));
+            } else if accounted_files < files.len() {
+                message.push_str(&format!(
+                    " Scan incomplete: {} of {} selected files could not be analyzed.",
+                    files.len() - accounted_files,
+                    files.len()
                 ));
             }
             
@@ -1077,7 +1085,7 @@ fn handle_find_duplicate_functions(args: &Value) -> ToolResult {
                 "file_list": report.files.iter()
                     .map(|file| file.to_string_lossy().to_string())
                     .collect::<Vec<_>>(),
-                "scan_complete": files.len() == files_discovered,
+                "scan_complete": scan_complete,
                 "functions_found": report.total_functions,
                 "duplicate_count": inter_file_count,
                 "cross_package_count": cross_package_dups.len(),
@@ -4031,6 +4039,38 @@ mod tests {
             .as_str()
             .unwrap()
             .contains("Scan incomplete"));
+    }
+
+    #[test]
+    fn duplicate_scan_reports_unparseable_source_as_incomplete() {
+        use std::fs;
+
+        let directory = tempdir().unwrap();
+        fs::write(directory.path().join("invalid.js"), [0xff, 0xfe, 0xfd]).unwrap();
+
+        let result = handle_find_duplicate_functions(&json!({
+            "directory": directory.path()
+        }));
+
+        assert!(result.success, "{:?}", result.content);
+        assert_eq!(result.content["files_discovered"], 1);
+        assert_eq!(result.content["files_checked"], 0);
+        assert_eq!(result.content["scan_complete"], false);
+        assert!(result.content["message"]
+            .as_str()
+            .unwrap()
+            .contains("could not be analyzed"));
+
+        let batch = handle_batch_analyze(&json!({
+            "directory": directory.path(),
+            "checks": ["duplicates"]
+        }));
+        assert!(batch.success, "{:?}", batch.content);
+        assert_eq!(batch.content["coverage"]["duplicates"]["status"], "partial");
+        assert!(batch.content["message"]
+            .as_str()
+            .unwrap()
+            .contains("completed portion"));
     }
 
     #[cfg(unix)]
