@@ -1172,6 +1172,44 @@ printf '%s\\n' '{"changed_file_list":["packages/example/src/value.ts"],"excluded
   assert.match(formatMarkdown(receipt), /Duplicate-check status: partial/);
 });
 
+test('CLI preserves Ground orphan per-file failure evidence', (t) => {
+  const repo = mkdtempSync(join(tmpdir(), 'ground-review-orphan-partial-'));
+  const binaryDir = mkdtempSync(join(tmpdir(), 'ground-review-orphan-partial-binary-'));
+  t.after(() => {
+    rmSync(repo, { recursive: true, force: true });
+    rmSync(binaryDir, { recursive: true, force: true });
+  });
+
+  mustRun('git', ['init', '-b', 'main'], repo);
+  mustRun('git', ['config', 'core.hooksPath', '/dev/null'], repo);
+  writeFixtureFile(repo, 'packages/example/package.json', '{"name":"@example/pkg"}\n');
+  mustRun('git', ['add', '.'], repo);
+  mustRun('git', ['commit', '-m', 'baseline'], repo);
+  writeFixtureFile(repo, 'packages/example/src/new.ts', 'export const value = 1;\n');
+
+  const fakeGround = writeFixtureFile(
+    binaryDir,
+    'fake-ground',
+    `#!/bin/sh
+printf '%s\\n' '{"changed_file_list":["packages/example/src/new.ts"],"excluded_changed_files":[],"check_coverage":{"duplicates":{"status":"completed","analyzed_changed_files":["packages/example/src/new.ts"],"excluded_changed_files":[]},"orphans":{"status":"partial","analyzed_changed_files":[],"excluded_changed_files":[{"path":"packages/example/src/new.ts","reason":"orphan_analysis_failed"}]}},"new_issues":[]}'
+`
+  );
+  chmodSync(fakeGround, 0o755);
+
+  const result = run(process.execPath, [scriptPath, '--base', 'HEAD', '--format', 'json'], repo, {
+    GROUND_BINARY: fakeGround
+  });
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const receipt = JSON.parse(result.stdout);
+  assert.equal(receipt.coverage.checks.orphans.status, 'partial');
+  assert.deepEqual(receipt.coverage.checks.orphans.analyzed_changed_files, []);
+  assert.deepEqual(receipt.coverage.checks.orphans.excluded_changed_files, [
+    { path: 'packages/example/src/new.ts', reason: 'orphan_analysis_failed' }
+  ]);
+  assert.equal(receipt.status, 'partial');
+});
+
 test('CLI accepts bounded completion evidence with a symlinked directory alias', (t) => {
   const repo = mkdtempSync(join(tmpdir(), 'ground-review-symlink-directory-'));
   const binaryDir = mkdtempSync(join(tmpdir(), 'ground-review-symlink-directory-binary-'));

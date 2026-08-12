@@ -506,17 +506,30 @@ export function buildReceipt({
             .map((file) => ({ path: file, reason: 'ground_completion_evidence_missing' }))
         : [];
     const analyzedPathSet = new Set(analyzedChangedFiles);
-    const orphanAnalyzedFiles = analyzedChangedFiles.filter(
-      (file) => added.has(file) && !groundPolicyIgnored(root, path, file, ignorePatterns)
-    );
-    const orphanExcludedFiles = analyzedChangedFiles
-      .filter((file) => !orphanAnalyzedFiles.includes(file))
-      .map((file) => ({
-        path: file,
-        reason: added.has(file)
-          ? 'ground_policy_exclusion'
-          : 'existing_file_not_checked_for_orphans'
-      }));
+    const orphanAnalyzedFiles = Array.isArray(orphanCompletion?.analyzed_changed_files)
+      ? [
+          ...new Set(
+            orphanCompletion.analyzed_changed_files
+              .map((file) => receiptPath(root, file))
+              .filter((file) => changedSet.has(file) && file.startsWith(`${path}/`))
+          )
+        ]
+      : analyzedChangedFiles.filter(
+          (file) => added.has(file) && !groundPolicyIgnored(root, path, file, ignorePatterns)
+        );
+    const orphanExcludedFiles = Array.isArray(orphanCompletion?.excluded_changed_files)
+      ? orphanCompletion.excluded_changed_files.map((exclusion) => ({
+          ...exclusion,
+          path: receiptPath(root, exclusion.path)
+        }))
+      : analyzedChangedFiles
+          .filter((file) => !orphanAnalyzedFiles.includes(file))
+          .map((file) => ({
+            path: file,
+            reason: added.has(file)
+              ? 'ground_policy_exclusion'
+              : 'existing_file_not_checked_for_orphans'
+          }));
     const orphanAnalyzedSet = new Set(orphanAnalyzedFiles);
     return {
       path,

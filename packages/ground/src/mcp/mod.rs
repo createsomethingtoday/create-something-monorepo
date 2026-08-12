@@ -906,12 +906,13 @@ fn handle_find_duplicate_functions(args: &Value) -> ToolResult {
     let mut files: Vec<PathBuf> = Vec::new();
     let mut file_to_package: std::collections::HashMap<PathBuf, String> = std::collections::HashMap::new();
     let mut files_discovered = 0;
+    let mut discovery_complete = true;
     let max_files = 500;
     
     for dir in &directories {
         let package_name = extract_package_name(dir);
         let mut dir_files: Vec<PathBuf> = Vec::new();
-        collect_ts_files(dir, &mut dir_files);
+        discovery_complete &= collect_ts_files(dir, &mut dir_files);
         files_discovered += dir_files.len();
         
         for file in dir_files {
@@ -943,11 +944,15 @@ fn handle_find_duplicate_functions(args: &Value) -> ToolResult {
             "files_checked": 0,
             "files_discovered": files_discovered,
             "file_list": [],
-            "scan_complete": files_discovered == 0,
+            "scan_complete": discovery_complete && files_discovered == 0,
             "functions_found": 0,
             "duplicates": [],
             "cross_package_duplicates": [],
-            "message": "No TypeScript/JavaScript files found"
+            "message": if discovery_complete {
+                "No TypeScript/JavaScript files found"
+            } else {
+                "Scan incomplete: one or more source directories could not be discovered."
+            }
         }));
     }
     
@@ -1062,8 +1067,14 @@ fn handle_find_duplicate_functions(args: &Value) -> ToolResult {
                 format!("Found {}. Consider consolidating.", parts.join(", "))
             };
             let accounted_files = report.files.len() + report.skipped_files.len();
-            let scan_complete = files.len() == files_discovered && accounted_files == files.len();
-            if files.len() < files_discovered {
+            let scan_complete = discovery_complete
+                && files.len() == files_discovered
+                && accounted_files == files.len();
+            if !discovery_complete {
+                message.push_str(
+                    " Scan incomplete: one or more source directories could not be discovered.",
+                );
+            } else if files.len() < files_discovered {
                 message.push_str(&format!(
                     " Scan incomplete: checked the bounded first {} of {} discovered files.",
                     files.len(), files_discovered
@@ -1525,7 +1536,7 @@ fn handle_find_orphans(args: &Value) -> ToolResult {
     
     // Collect files
     let mut files = Vec::new();
-    collect_ts_files(&directory, &mut files);
+    let _ = collect_ts_files(&directory, &mut files);
     let total_files_before_filter = files.len();
     
     // Filter using config path patterns first
@@ -1862,31 +1873,41 @@ fn collect_workspace_candidates() -> Vec<PathBuf> {
     candidates
 }
 
-fn collect_ts_files(dir: &PathBuf, files: &mut Vec<PathBuf>) {
+fn collect_ts_files(dir: &PathBuf, files: &mut Vec<PathBuf>) -> bool {
     let mut visited_directories = HashSet::new();
-    collect_ts_files_inner(dir, files, &mut visited_directories);
+    let discovery_complete = collect_ts_files_inner(dir, files, &mut visited_directories);
     files.sort();
+    discovery_complete
 }
 
 fn collect_ts_files_inner(
     dir: &Path,
     files: &mut Vec<PathBuf>,
     visited_directories: &mut HashSet<PathBuf>,
-) {
+) -> bool {
     let canonical_directory = match dir.canonicalize() {
         Ok(path) => path,
-        Err(_) => return,
+        Err(_) => return false,
     };
     if !visited_directories.insert(canonical_directory) {
-        return;
+        return true;
     }
 
     let entries = match std::fs::read_dir(dir) {
         Ok(entries) => entries,
-        Err(_) => return,
+        Err(_) => return false,
     };
 
-    let mut entries = entries.filter_map(|entry| entry.ok()).collect::<Vec<_>>();
+    let mut discovery_complete = true;
+    let mut entries = entries
+        .filter_map(|entry| match entry {
+            Ok(entry) => Some(entry),
+            Err(_) => {
+                discovery_complete = false;
+                None
+            }
+        })
+        .collect::<Vec<_>>();
     entries.sort_by_key(|entry| entry.file_name());
 
     for entry in entries {
@@ -1901,11 +1922,14 @@ fn collect_ts_files_inner(
 
         let file_type = match entry.file_type() {
             Ok(file_type) => file_type,
-            Err(_) => continue,
+            Err(_) => {
+                discovery_complete = false;
+                continue;
+            }
         };
 
         if file_type.is_dir() || (file_type.is_symlink() && path.is_dir()) {
-            collect_ts_files_inner(&path, files, visited_directories);
+            discovery_complete &= collect_ts_files_inner(&path, files, visited_directories);
         } else if file_type.is_file() || (file_type.is_symlink() && path.is_file()) {
             let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
             if matches!(ext, "ts" | "tsx" | "js" | "jsx" | "mjs") {
@@ -1913,6 +1937,8 @@ fn collect_ts_files_inner(
             }
         }
     }
+
+    discovery_complete
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -4075,6 +4101,21 @@ mod tests {
             .as_str()
             .unwrap()
             .contains("completed portion"));
+    }
+
+    #[test]
+    fn duplicate_scan_reports_source_discovery_failure_as_incomplete() {
+        let directory = tempdir().unwrap();
+        let missing = directory.path().join("missing");
+
+        let result = handle_find_duplicate_functions(&json!({
+            "directory": missing
+        }));
+
+        assert!(result.success, "{:?}", result.content);
+        assert_eq!(result.content["files_discovered"], 0);
+        assert_eq!(result.content["files_checked"], 0);
+        assert_eq!(result.content["scan_complete"], false);
     }
 
     #[test]
