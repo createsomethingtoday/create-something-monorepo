@@ -37,6 +37,11 @@
    - `control-commercial-interface-spec.yaml`
    - Purpose: standardize the Map, Build, and Managed AI Operations offer, including pricing, usage, scope, one-pager inputs, and call-script branches.
 
+   Its capability-level companion is
+   `../../../database-layer/contracts/agent-commercial/v1/create-something.json`.
+   That contract classifies agent resources and tools as `free`, `entitled`,
+   `paid`, or `private` without changing the service-level pricing model.
+
 ### Commercial boundary
 
 - Managed AI Operations starts at $900 per month after launch for one standard-risk managed production environment.
@@ -45,6 +50,8 @@
 - Forecasted usage at 75% of monthly coverage triggers a capacity review, not an automatic charge.
 - New workflows and integrations are separately scoped Build work.
 - Higher-risk, regulated, multi-environment, and priority-response operations require custom scope.
+- Machine payment is inactive until a price, receipt path, spend caps, rollback, and production promotion are separately approved.
+- Payment never grants private data access or permission to execute a write.
 
 8. **Discovery note (required after every call)**
    - `../templates/sales/discovery-note-template.md`

@@ -32,6 +32,29 @@ The package models:
 - Atlas/Substrate agent wiki projection
 - read-only demo state
 
+## Agent Commercial Contract v1
+
+`contracts/agent-commercial/v1/` is the commercial policy layer over
+agent-facing infrastructure. It classifies capabilities as `free`, `entitled`,
+`paid`, or `private`, fails closed for uncataloged capabilities, and requires a
+receipt for every decision. The pure evaluator is exported as
+`evaluateAgentCommercialAccess`.
+
+Cloudflare runtime, Identity, D1 entitlements, D1 receipts, and x402 are adapters
+behind this interface. The x402 adapter and first paid candidate remain inactive
+until pricing and production activation are separately approved.
+
+```bash
+pnpm --filter @create-something/database-layer agent-commercial:contract:check
+```
+
+Package exports:
+
+```text
+@create-something/database-layer/agent-commercial/v1/schema.json
+@create-something/database-layer/agent-commercial/v1/create-something.json
+```
+
 ## Business Digital Thread v1
 
 The frozen Business Digital Thread v1 prototype lives at
@@ -101,7 +124,7 @@ pnpm --filter @create-something/database-layer agent-wiki:check
 <!-- prettier-ignore-start -->
 | Field | Value |
 | --- | --- |
-| Entry point | `src/index.ts` |
+| Entry point | `src/index.ts`, `contracts/agent-commercial/v1/README.md` |
 | Boot command | `pnpm --filter @create-something/database-layer build` |
 | Smoke command | `pnpm --filter @create-something/database-layer typecheck && pnpm --filter @create-something/database-layer build` |
 | Validation surfaces | `test/*.test.mjs`, `data/*.json`, `worker/generated-state.mjs` |

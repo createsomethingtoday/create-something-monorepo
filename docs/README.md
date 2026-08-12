@@ -72,6 +72,7 @@ Read in this order when you need broad repo context:
 - [internal/BUSINESS_DIGITAL_THREAD_LIFETIME_CONTROL_BASELINE_2026-07-23.md](./internal/BUSINESS_DIGITAL_THREAD_LIFETIME_CONTROL_BASELINE_2026-07-23.md)
 - [internal/ADR_BUSINESS_DIGITAL_THREAD_V1_BOUNDARY_2026-07-23.md](./internal/ADR_BUSINESS_DIGITAL_THREAD_V1_BOUNDARY_2026-07-23.md)
 - [Business Digital Thread v1 contract](../packages/database-layer/contracts/business-digital-thread/v1/README.md)
+- [Agent Commercial Contract v1](../packages/database-layer/contracts/agent-commercial/v1/README.md)
 - [CREATE_SOMETHING_DATABASE_LAYER.md](./CREATE_SOMETHING_DATABASE_LAYER.md)
 - [CANON_DATABASE_LAYER_DESIGN.md](./CANON_DATABASE_LAYER_DESIGN.md)
 - [guides/SUBSTRATE_TOPOLOGY_OPERATOR_CONTRACT.md](./guides/SUBSTRATE_TOPOLOGY_OPERATOR_CONTRACT.md)

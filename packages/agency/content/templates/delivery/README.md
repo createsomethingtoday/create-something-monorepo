@@ -32,6 +32,9 @@ Each artifact must carry the Policy OS metadata required by the canonical bundle
 ## Usage notes
 
 - `mcp_contract.yaml` defines systems, tools, resources, scopes, and failure model.
+- Every MCP resource and tool maps to the shared Agent Commercial Contract using
+  `commercial_capability_id` and one access class: `free`, `entitled`, `paid`,
+  or `private`. Uncataloged capabilities are denied.
 - `agent_contract.yaml` defines behavior, approval boundaries, escalation logic, and runtime guardrails.
 - `outcome_contract.md` defines workflow scope, success criteria, fallback path, and accountability.
 - `golden_tasks.yaml` defines must-pass scenarios that prove the workflow behaves correctly before release.

@@ -1,0 +1,234 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://createsomething.ltd/contracts/agent-commercial/v1/schema.json",
+  "title": "CREATE SOMETHING Agent Commercial Contract v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contractId",
+    "version",
+    "contractType",
+    "status",
+    "owner",
+    "updatedAt",
+    "commercialInterfaceRef",
+    "defaultDecision",
+    "receiptPolicy",
+    "accessClasses",
+    "providerAdapters",
+    "paymentPolicies",
+    "capabilities"
+  ],
+  "properties": {
+    "$schema": { "type": "string" },
+    "contractId": { "type": "string", "pattern": "^[a-z0-9.-]+$" },
+    "version": { "const": "1.0" },
+    "contractType": { "const": "agent_commercial_contract" },
+    "status": { "enum": ["draft", "active", "deprecated"] },
+    "owner": { "type": "string", "minLength": 1 },
+    "updatedAt": { "type": "string", "format": "date" },
+    "commercialInterfaceRef": { "type": "string", "minLength": 1 },
+    "defaultDecision": { "const": "deny" },
+    "receiptPolicy": { "$ref": "#/$defs/receiptPolicy" },
+    "accessClasses": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["free", "entitled", "paid", "private"],
+      "properties": {
+        "free": { "$ref": "#/$defs/accessClass" },
+        "entitled": { "$ref": "#/$defs/accessClass" },
+        "paid": { "$ref": "#/$defs/accessClass" },
+        "private": { "$ref": "#/$defs/accessClass" }
+      }
+    },
+    "providerAdapters": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/providerAdapter" }
+    },
+    "paymentPolicies": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/paymentPolicy" }
+    },
+    "capabilities": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/capability" }
+    }
+  },
+  "$defs": {
+    "accessClass": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "description",
+        "identityRequired",
+        "verifiedPaymentRequired",
+        "explicitGrantRequired"
+      ],
+      "properties": {
+        "description": { "type": "string", "minLength": 1 },
+        "identityRequired": { "type": "boolean" },
+        "verifiedPaymentRequired": { "type": "boolean" },
+        "explicitGrantRequired": { "type": "boolean" }
+      }
+    },
+    "receiptPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "sinkAdapterId", "requiredFields"],
+      "properties": {
+        "required": { "const": true },
+        "sinkAdapterId": { "type": "string", "minLength": 1 },
+        "requiredFields": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "providerAdapter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "provider", "role", "status", "implementationRefs", "activationApproval"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9.-]+$" },
+        "provider": { "type": "string", "minLength": 1 },
+        "role": { "enum": ["runtime", "identity", "entitlement", "payment", "receipt"] },
+        "status": { "enum": ["active", "preview", "inactive"] },
+        "implementationRefs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "activationApproval": { "enum": ["not_required", "required"] }
+      }
+    },
+    "paymentPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "status",
+        "protocol",
+        "providerAdapterId",
+        "price",
+        "settlement",
+        "activationRequirements"
+      ],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9.-]+$" },
+        "status": { "enum": ["approval_required", "active", "retired"] },
+        "protocol": { "enum": ["x402"] },
+        "providerAdapterId": { "type": "string", "minLength": 1 },
+        "price": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["state", "amount"],
+          "properties": {
+            "state": { "enum": ["unset", "approved"] },
+            "amount": { "type": ["number", "null"], "exclusiveMinimum": 0 }
+          }
+        },
+        "settlement": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["asset", "network"],
+          "properties": {
+            "asset": { "type": "string", "minLength": 1 },
+            "network": { "type": "string", "minLength": 1 }
+          }
+        },
+        "activationRequirements": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "capability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "description",
+        "owner",
+        "kind",
+        "accessClass",
+        "sideEffect",
+        "status",
+        "approval",
+        "surface",
+        "freshness",
+        "provenanceRefs",
+        "outcomeMetric"
+      ],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9.-]+$" },
+        "title": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "owner": { "type": "string", "minLength": 1 },
+        "kind": { "enum": ["resource", "tool", "prompt"] },
+        "accessClass": { "enum": ["free", "entitled", "paid", "private"] },
+        "sideEffect": { "enum": ["read", "write", "destructive"] },
+        "status": { "enum": ["active", "preview", "inactive"] },
+        "approval": { "enum": ["never", "always"] },
+        "entitlementId": { "type": "string", "minLength": 1 },
+        "paymentPolicyId": { "type": "string", "minLength": 1 },
+        "grantId": { "type": "string", "minLength": 1 },
+        "surface": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["protocol", "locator"],
+          "properties": {
+            "protocol": { "enum": ["http", "mcp", "internal"] },
+            "locator": { "type": "string", "minLength": 1 }
+          }
+        },
+        "freshness": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "maxAgeMinutes"],
+          "properties": {
+            "mode": { "enum": ["build", "request", "event", "operator"] },
+            "maxAgeMinutes": { "type": ["integer", "null"], "minimum": 0 }
+          }
+        },
+        "provenanceRefs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "outcomeMetric": { "type": "string", "minLength": 1 }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "accessClass": { "const": "entitled" } },
+            "required": ["accessClass"]
+          },
+          "then": { "required": ["entitlementId"] }
+        },
+        {
+          "if": {
+            "properties": { "accessClass": { "const": "paid" } },
+            "required": ["accessClass"]
+          },
+          "then": { "required": ["paymentPolicyId"] }
+        },
+        {
+          "if": {
+            "properties": { "accessClass": { "const": "private" } },
+            "required": ["accessClass"]
+          },
+          "then": { "required": ["grantId"] }
+        }
+      ]
+    }
+  }
+}

@@ -94,6 +94,11 @@ test('canonical commercial interface sells managed Control operation instead of 
   assert.match(commercialInterface, /automatic_charge: false/);
   assert.match(commercialInterface, /new_workflows: "separately_scoped_build"/);
   assert.match(commercialInterface, /higher_risk_operation: "custom"/);
+  assert.match(commercialInterface, /canonical_contract_ref: .*agent-commercial\/v1\/create-something\.json/);
+  assert.match(commercialInterface, /uncataloged_capability: "deny"/);
+  assert.match(commercialInterface, /decision_receipt_required: true/);
+  assert.match(commercialInterface, /machine_payment_status: "inactive_until_price_receipts_caps_rollback_and_production_approval"/);
+  assert.match(commercialInterface, /payment_never_grants_private_or_write_access/);
   assert.doesNotMatch(commercialInterface, /name: "Policy OS Commercial Interface"/);
 });
 
