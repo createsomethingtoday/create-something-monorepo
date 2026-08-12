@@ -198,20 +198,21 @@ export function buildReceipt({ root, base, baseSha, files, deleted, unmerged, gr
         .filter(Boolean)
     )
   );
+  const changedSet = new Set(files);
   const targets = packageRoots.map((path) => {
     const result = parseGroundJson(
       run(groundBinary, ['diff', path, '--base', baseSha, '--checks', CHECKS.join(',')], root)
     );
     const analyzedChangedFiles = (result.changed_file_list ?? [])
       .map((file) => receiptPath(root, file))
-      .filter((file) => !deleted.has(file) && !unmerged.has(file));
+      .filter((file) => changedSet.has(file) && !deleted.has(file) && !unmerged.has(file));
     return {
       path,
       package_name: packageName(root, path),
       coverage: {
         discovered_changed_files: result.discovered_changed_files ?? 0,
         analyzable_changed_files:
-          result.changed_file_list == null || result.changed_file_list.length === 0
+          result.changed_file_list == null
             ? (result.analyzable_changed_files ?? result.changed_files ?? 0)
             : analyzedChangedFiles.length,
         analyzed_changed_files: analyzedChangedFiles,
@@ -224,7 +225,6 @@ export function buildReceipt({ root, base, baseSha, files, deleted, unmerged, gr
     };
   });
 
-  const changedSet = new Set(files);
   const analyzedSet = new Set(targets.flatMap((target) => target.coverage.analyzed_changed_files));
   for (const target of targets) {
     const prefix = `${target.path}/`;
@@ -254,9 +254,29 @@ export function buildReceipt({ root, base, baseSha, files, deleted, unmerged, gr
             ? 'outside_package_source'
             : 'unsupported_extension'
     }));
+  const targetExclusions = targets.flatMap((target) => target.coverage.excluded_changed_files);
+  const accountedPaths = new Set([
+    ...analyzedSet,
+    ...targetExclusions.map((exclusion) => exclusion.path),
+    ...outsideTargets.map((exclusion) => exclusion.path)
+  ]);
+  const unmatchedTargetSources = files
+    .filter(
+      (file) =>
+        !deleted.has(file) &&
+        !unmerged.has(file) &&
+        supportedSource(file) &&
+        coveredPrefixes.some((prefix) => file.startsWith(prefix)) &&
+        !accountedPaths.has(file)
+    )
+    .map((path) => ({ path, reason: 'ground_path_mismatch' }));
+  for (const exclusion of unmatchedTargetSources) {
+    const target = targets.find(({ path }) => exclusion.path.startsWith(`${path}/`));
+    target?.coverage.excluded_changed_files.push(exclusion);
+  }
   const excluded = [
     ...new Map(
-      [...targets.flatMap((target) => target.coverage.excluded_changed_files), ...outsideTargets]
+      [...targetExclusions, ...outsideTargets, ...unmatchedTargetSources]
         .filter((exclusion) => !analyzedSet.has(exclusion.path))
         .map((exclusion) => [`${exclusion.path}:${exclusion.reason}`, exclusion])
     ).values()
