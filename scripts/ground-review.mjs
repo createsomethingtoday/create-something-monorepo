@@ -123,7 +123,11 @@ function canonicalPath(path) {
 
 function receiptPath(root, path) {
   if (!isAbsolute(path)) return normalizePath(path);
-  const candidate = relative(canonicalPath(root), canonicalPath(path));
+  // Canonicalize the containing directory to reconcile aliases such as
+  // /var and /private/var, but keep the lexical filename. Resolving the full
+  // path would follow a changed symlink and misattribute coverage to its target.
+  const canonicalFile = join(canonicalPath(dirname(path)), basename(path));
+  const candidate = relative(canonicalPath(root), canonicalFile);
   return candidate.startsWith('..') || isAbsolute(candidate)
     ? normalizePath(path)
     : normalizePath(candidate);

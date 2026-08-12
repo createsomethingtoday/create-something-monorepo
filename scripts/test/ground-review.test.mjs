@@ -359,3 +359,45 @@ test('CLI includes tracked file type changes in discovery', (t) => {
     { path: 'review.ts', reason: 'outside_package_source' }
   ]);
 });
+
+test('CLI preserves a package symlink path when Ground reports an absolute file', (t) => {
+  const repo = mkdtempSync(join(tmpdir(), 'ground-review-symlink-path-'));
+  const binaryDir = mkdtempSync(join(tmpdir(), 'ground-review-symlink-path-binary-'));
+  t.after(() => {
+    rmSync(repo, { recursive: true, force: true });
+    rmSync(binaryDir, { recursive: true, force: true });
+  });
+
+  mustRun('git', ['init', '-b', 'main'], repo);
+  mustRun('git', ['config', 'core.hooksPath', '/dev/null'], repo);
+  writeFixtureFile(repo, 'packages/example/package.json', '{"name":"@example/pkg"}\n');
+  const source = writeFixtureFile(
+    repo,
+    'packages/example/src/link.ts',
+    'export const value = 1;\n'
+  );
+  writeFixtureFile(repo, 'README.md', 'target\n');
+  mustRun('git', ['add', '.'], repo);
+  mustRun('git', ['commit', '-m', 'baseline'], repo);
+  rmSync(source);
+  symlinkSync('../../../README.md', source);
+
+  const fakeGround = writeFixtureFile(
+    binaryDir,
+    'fake-ground',
+    `#!/bin/sh
+printf '%s\\n' '{"discovered_changed_files":1,"analyzable_changed_files":1,"changed_file_list":["${source}"],"excluded_changed_files":[],"new_issues":[]}'
+`
+  );
+  chmodSync(fakeGround, 0o755);
+
+  const result = run(process.execPath, [scriptPath, '--base', 'HEAD', '--format', 'json'], repo, {
+    GROUND_BINARY: fakeGround
+  });
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const receipt = JSON.parse(result.stdout);
+  assert.deepEqual(receipt.targets[0].coverage.analyzed_changed_files, [
+    'packages/example/src/link.ts'
+  ]);
+});
