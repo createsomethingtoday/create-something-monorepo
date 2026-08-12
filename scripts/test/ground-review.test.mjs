@@ -351,6 +351,10 @@ printf '%s\\n' '{"discovered_changed_files":2,"analyzable_changed_files":2,"chan
   assert.deepEqual(receipt.coverage.excluded_changed_files, [
     { path: 'packages/example/src/deleted.ts', reason: 'deleted_file' }
   ]);
+  assert.deepEqual(receipt.targets[0].coverage.excluded_changed_files, [
+    { path: 'packages/example/src/deleted.ts', reason: 'deleted_file' }
+  ]);
+  assert.equal(receipt.targets[0].coverage.discovered_changed_files, 2);
 });
 
 test('CLI includes tracked file type changes in discovery', (t) => {
