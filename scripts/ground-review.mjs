@@ -73,6 +73,15 @@ function deletedFiles(root, base) {
   );
 }
 
+function unmergedFiles(root) {
+  return new Set(
+    run('git', ['diff', '--name-only', '--diff-filter=U', '--'], root)
+      .split(/\r?\n/)
+      .filter(Boolean)
+      .map(normalizePath)
+  );
+}
+
 function supportedSource(path) {
   const dot = path.lastIndexOf('.');
   return dot >= 0 && SUPPORTED_EXTENSIONS.has(path.slice(dot));
@@ -179,11 +188,11 @@ function parseGroundJson(output) {
   return JSON.parse(output.slice(start, end + 1));
 }
 
-export function buildReceipt({ root, base, baseSha, files, deleted, groundBinary }) {
+export function buildReceipt({ root, base, baseSha, files, deleted, unmerged, groundBinary }) {
   const packageRoots = collapsePackageRoots(
     new Set(
       files
-        .filter((file) => !deleted.has(file))
+        .filter((file) => !deleted.has(file) && !unmerged.has(file))
         .map((file) => findPackageRoot(root, file))
         .filter(Boolean)
     )
@@ -194,7 +203,7 @@ export function buildReceipt({ root, base, baseSha, files, deleted, groundBinary
     );
     const analyzedChangedFiles = (result.changed_file_list ?? [])
       .map((file) => receiptPath(root, file))
-      .filter((file) => !deleted.has(file));
+      .filter((file) => !deleted.has(file) && !unmerged.has(file));
     return {
       path,
       package_name: packageName(root, path),
@@ -229,15 +238,20 @@ export function buildReceipt({ root, base, baseSha, files, deleted, groundBinary
   const coveredPrefixes = packageRoots.map((path) => `${path}/`);
   const outsideTargets = files
     .filter(
-      (file) => deleted.has(file) || !coveredPrefixes.some((prefix) => file.startsWith(prefix))
+      (file) =>
+        deleted.has(file) ||
+        unmerged.has(file) ||
+        !coveredPrefixes.some((prefix) => file.startsWith(prefix))
     )
     .map((path) => ({
       path,
-      reason: deleted.has(path)
-        ? 'deleted_file'
-        : supportedSource(path)
-          ? 'outside_package_source'
-          : 'unsupported_extension'
+      reason: unmerged.has(path)
+        ? 'unmerged_file'
+        : deleted.has(path)
+          ? 'deleted_file'
+          : supportedSource(path)
+            ? 'outside_package_source'
+            : 'unsupported_extension'
     }));
   const excluded = [
     ...new Map(
@@ -330,12 +344,14 @@ function main() {
     if (!baseSha) throw new Error(`No merge base found for ${options.base} and HEAD.`);
     const files = changedFiles(root, baseSha);
     const deleted = deletedFiles(root, baseSha);
+    const unmerged = unmergedFiles(root);
     const receipt = buildReceipt({
       root,
       base: options.base,
       baseSha,
       files,
       deleted,
+      unmerged,
       groundBinary: resolveGroundBinary(root)
     });
     console.log(

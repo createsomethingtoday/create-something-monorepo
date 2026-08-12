@@ -401,3 +401,37 @@ printf '%s\\n' '{"discovered_changed_files":1,"analyzable_changed_files":1,"chan
     'packages/example/src/link.ts'
   ]);
 });
+
+test('CLI excludes an unresolved package source conflict from analyzed coverage', (t) => {
+  const repo = mkdtempSync(join(tmpdir(), 'ground-review-unmerged-'));
+  t.after(() => rmSync(repo, { recursive: true, force: true }));
+
+  mustRun('git', ['init', '-b', 'main'], repo);
+  mustRun('git', ['config', 'core.hooksPath', '/dev/null'], repo);
+  writeFixtureFile(repo, 'packages/example/package.json', '{"name":"@example/pkg"}\n');
+  writeFixtureFile(repo, 'packages/example/src/index.ts', 'export const value = 1;\n');
+  mustRun('git', ['add', '.'], repo);
+  mustRun('git', ['commit', '-m', 'baseline'], repo);
+  mustRun('git', ['switch', '-c', 'other'], repo);
+  writeFixtureFile(repo, 'packages/example/src/index.ts', 'export const value = 2;\n');
+  mustRun('git', ['add', '.'], repo);
+  mustRun('git', ['commit', '-m', 'other change'], repo);
+  mustRun('git', ['switch', 'main'], repo);
+  writeFixtureFile(repo, 'packages/example/src/index.ts', 'export const value = 3;\n');
+  mustRun('git', ['add', '.'], repo);
+  mustRun('git', ['commit', '-m', 'main change'], repo);
+  const merge = run('git', ['merge', 'other'], repo);
+  assert.notEqual(merge.status, 0);
+
+  const result = run(process.execPath, [scriptPath, '--base', 'HEAD^', '--format', 'json'], repo, {
+    GROUND_BINARY: join(repo, 'missing-ground')
+  });
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const receipt = JSON.parse(result.stdout);
+  assert.deepEqual(receipt.changed_files, ['packages/example/src/index.ts']);
+  assert.deepEqual(receipt.targets, []);
+  assert.deepEqual(receipt.coverage.excluded_changed_files, [
+    { path: 'packages/example/src/index.ts', reason: 'unmerged_file' }
+  ]);
+});
