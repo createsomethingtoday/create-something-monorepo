@@ -330,9 +330,11 @@ export function buildReceipt({
   const changedSet = new Set(files);
   const targets = packageRoots.map((path) => {
     const scanLimitExceeded = exceedsGroundScanLimit(resolve(root, path));
-    const result = parseGroundJson(
-      run(groundBinary, ['diff', path, '--base', baseSha, '--checks', CHECKS.join(',')], root)
-    );
+    const result = scanLimitExceeded
+      ? { changed_file_list: [], excluded_changed_files: [], new_issues: [] }
+      : parseGroundJson(
+          run(groundBinary, ['diff', path, '--base', baseSha, '--checks', CHECKS.join(',')], root)
+        );
     const reportedAnalyzedChangedFiles = [
       ...new Set(
         (result.changed_file_list ?? [])
