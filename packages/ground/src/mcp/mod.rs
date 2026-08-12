@@ -2642,6 +2642,15 @@ fn check_export_exists(path: &Path, export_name: &str) -> bool {
 // Incremental/Diff Mode
 // ─────────────────────────────────────────────────────────────────────────────
 
+fn diff_checks_support_extension(extension: &str, checks: &[&str]) -> bool {
+    checks.iter().any(|check| match *check {
+        "duplicates" | "orphans" => {
+            matches!(extension, "ts" | "tsx" | "js" | "jsx" | "mjs")
+        }
+        _ => false,
+    })
+}
+
 fn handle_diff(args: &Value) -> ToolResult {
     let directory = match args.get("directory").and_then(|v| v.as_str()) {
         Some(d) => PathBuf::from(d),
@@ -2704,15 +2713,23 @@ fn handle_diff(args: &Value) -> ToolResult {
         let reason = if !file.starts_with(&analysis_root) {
             Some("outside_analysis_root")
         } else {
-            // Keep diff filtering aligned with the CLI's supported-language default.
+            // Report analyzability for the requested checks, not for Ground as a whole.
             let ext = file.extension().and_then(|e| e.to_str()).unwrap_or("");
-            if !matches!(ext, "ts" | "tsx" | "js" | "jsx" | "mjs" | "rs") {
-                Some("unsupported_extension")
-            } else if config.should_ignore_path(file.strip_prefix(&analysis_root).unwrap_or(file)) {
-                Some("ignored_by_config")
-            } else {
+            if diff_checks_support_extension(ext, &checks) {
                 None
+            } else if matches!(
+                ext,
+                "ts" | "tsx" | "js" | "jsx" | "mjs" | "rs" | "py" | "go" | "svelte"
+            ) {
+                Some("unsupported_by_requested_checks")
+            } else {
+                Some("unsupported_extension")
             }
+            .or_else(|| {
+                config
+                    .should_ignore_path(file.strip_prefix(&analysis_root).unwrap_or(file))
+                    .then_some("ignored_by_config")
+            })
         };
 
         if let Some(reason) = reason {
@@ -3755,6 +3772,54 @@ mod tests {
             .unwrap()
             .iter()
             .any(|path| path.as_str().unwrap().ends_with("src/duplicate.mjs")));
+    }
+
+    #[test]
+    fn diff_does_not_count_rust_as_analyzed_by_duplicate_check() {
+        use std::fs;
+        use std::process::Command;
+
+        let repo = tempdir().unwrap();
+        let run_git = |args: &[&str]| {
+            let status = Command::new("git")
+                .args(args)
+                .current_dir(repo.path())
+                .status()
+                .unwrap();
+            assert!(status.success(), "git {:?} failed", args);
+        };
+
+        run_git(&["init", "--quiet"]);
+        run_git(&["config", "user.email", "ground@example.test"]);
+        run_git(&["config", "user.name", "Ground test"]);
+        fs::write(repo.path().join("README.md"), "baseline\n").unwrap();
+        run_git(&["add", "."]);
+        run_git(&["commit", "--quiet", "-m", "baseline"]);
+
+        let source = repo.path().join("src");
+        fs::create_dir_all(&source).unwrap();
+        fs::write(source.join("change.rs"), "fn changed() {}\n").unwrap();
+        run_git(&["add", "."]);
+        run_git(&["commit", "--quiet", "-m", "change rust"]);
+
+        let result = handle_diff(&json!({
+            "directory": repo.path(),
+            "base": "HEAD~1",
+            "checks": ["duplicates"]
+        }));
+
+        assert!(result.success, "{:?}", result.content);
+        assert_eq!(result.content["discovered_changed_files"], 1);
+        assert_eq!(result.content["analyzable_changed_files"], 0);
+        assert_eq!(result.content["changed_files"], 0);
+        assert_eq!(
+            result.content["excluded_changed_files"][0]["reason"],
+            "unsupported_by_requested_checks"
+        );
+        assert!(result.content["message"]
+            .as_str()
+            .unwrap()
+            .contains("No analyzable files changed"));
     }
 
     #[test]

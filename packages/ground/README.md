@@ -86,7 +86,9 @@ history, while Ground computes facts from the source currently on disk.
 `changed_files` and `changed_file_list` fields remain the analyzable-file view;
 read `discovered_changed_files`, `analyzable_changed_files`, and
 `excluded_changed_files` to see every Git change and the policy or language
-reason an excluded path was not analyzed.
+reason an excluded path was not analyzed. Analyzability is derived from the
+requested checks, so a source language unsupported by those checks is reported
+as `unsupported_by_requested_checks` rather than checked-clean.
 
 ### Check Commands (do these first)
 

@@ -48,13 +48,15 @@ safe to run from a package inside a monorepo.
 
 ### Diff coverage
 
-`ground diff` analyzes TypeScript, JavaScript, `.mjs`, and Rust source paths.
-Its legacy `changed_files` and `changed_file_list` fields continue to describe
-only analyzable source files. Use the added `discovered_changed_files`,
-`analyzable_changed_files`, and `excluded_changed_files` fields to see the full
-Git change scope and why a path was not analyzed. If no changed source is
-eligible, the result explicitly says so; it does not describe excluded files as
-clean.
+`ground diff` determines analyzability from the requested checks. Its current
+duplicate and orphan checks cover TypeScript, JavaScript, and `.mjs` source
+paths. The legacy `changed_files` and `changed_file_list` fields continue to
+describe only analyzable source files. Use the added
+`discovered_changed_files`, `analyzable_changed_files`, and
+`excluded_changed_files` fields to see the full Git change scope and why a path
+was not analyzed, including `unsupported_by_requested_checks`. If no changed
+source is eligible, the result explicitly says so; it does not describe
+excluded files as clean.
 
 The release package includes the native Apple Silicon binaries directly; other
 supported platforms download the matching verified release asset during install.
