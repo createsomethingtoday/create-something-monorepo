@@ -615,9 +615,14 @@ export function buildReceipt({
     const target = targets.find(({ path }) => exclusion.path.startsWith(`${path}/`));
     target?.coverage.excluded_changed_files.push(exclusion);
   }
+  const finalTargetExclusions = targets.flatMap((target) => target.coverage.excluded_changed_files);
+  for (const target of targets) {
+    target.coverage.checks.duplicates.excluded_changed_files =
+      target.coverage.excluded_changed_files.filter((exclusion) => supportedSource(exclusion.path));
+  }
   const excluded = [
     ...new Map(
-      [...targetExclusions, ...outsideTargets, ...unmatchedTargetFiles]
+      [...finalTargetExclusions, ...outsideTargets]
         .filter((exclusion) => !analyzedSet.has(exclusion.path))
         .map((exclusion) => [`${exclusion.path}:${exclusion.reason}`, exclusion])
     ).values()
@@ -630,7 +635,7 @@ export function buildReceipt({
     duplicates: {
       analyzable_changed_files: analyzable,
       analyzed_changed_files: [...analyzedSet],
-      excluded_changed_files: []
+      excluded_changed_files: excluded.filter((exclusion) => supportedSource(exclusion.path))
     },
     orphans: {
       analyzable_changed_files: targets.reduce(
