@@ -189,6 +189,61 @@ test('CLI discovers staged content hidden by a base-matching worktree copy', (t)
   assert.equal(receipt.status, 'no_analyzable_files');
 });
 
+test('CLI honors extended Ground path policy in orphan coverage and findings', (t) => {
+  const repo = mkdtempSync(join(tmpdir(), 'ground-review-policy-'));
+  const binaryDir = mkdtempSync(join(tmpdir(), 'ground-review-policy-binary-'));
+  t.after(() => {
+    rmSync(repo, { recursive: true, force: true });
+    rmSync(binaryDir, { recursive: true, force: true });
+  });
+
+  mustRun('git', ['init', '-b', 'main'], repo);
+  mustRun('git', ['config', 'core.hooksPath', '/dev/null'], repo);
+  writeFixtureFile(repo, '.ground.yml', 'extends:\n  - .ground/framework.yml\n');
+  writeFixtureFile(
+    repo,
+    '.ground/framework.yml',
+    'ignore:\n  paths:\n    - "**/**/+page.server.ts"\n'
+  );
+  writeFixtureFile(repo, 'packages/example/package.json', '{"name":"@example/pkg"}\n');
+  mustRun('git', ['add', '.'], repo);
+  mustRun('git', ['commit', '-m', 'baseline'], repo);
+  writeFixtureFile(
+    repo,
+    'packages/example/src/routes/+page.server.ts',
+    'export const load = () => ({ ok: true });\n'
+  );
+
+  const fakeGround = writeFixtureFile(
+    binaryDir,
+    'fake-ground',
+    `#!/bin/sh
+printf '%s\\n' '{"changed_file_list":["packages/example/src/routes/+page.server.ts"],"excluded_changed_files":[],"new_issues":[{"type":"orphan_module","path":"packages/example/src/routes/+page.server.ts","introduced_by":"current_branch","is_new_file":true}]}'
+`
+  );
+  chmodSync(fakeGround, 0o755);
+
+  const result = run(process.execPath, [scriptPath, '--base', 'HEAD', '--format', 'json'], repo, {
+    GROUND_BINARY: fakeGround
+  });
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const receipt = JSON.parse(result.stdout);
+  assert.equal(receipt.coverage.checks.duplicates.analyzable_changed_files, 1);
+  assert.deepEqual(receipt.coverage.checks.orphans, {
+    analyzable_changed_files: 0,
+    analyzed_changed_files: [],
+    excluded_changed_files: [
+      {
+        path: 'packages/example/src/routes/+page.server.ts',
+        reason: 'ground_policy_exclusion'
+      }
+    ]
+  });
+  assert.deepEqual(receipt.findings, []);
+  assert.equal(receipt.status, 'clear');
+});
+
 test('CLI makes zero analyzable coverage explicit without requiring Ground', (t) => {
   const repo = mkdtempSync(join(tmpdir(), 'ground-review-docs-'));
   t.after(() => rmSync(repo, { recursive: true, force: true }));
