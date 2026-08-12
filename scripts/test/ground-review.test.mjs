@@ -749,3 +749,48 @@ test('CLI excludes generated TypeScript from calibration coverage', (t) => {
     { path: 'packages/example/src/catalog.generated.ts', reason: 'generated_file' }
   ]);
 });
+
+test('CLI excludes changed source when the Ground scan cap is exceeded', (t) => {
+  const repo = mkdtempSync(join(tmpdir(), 'ground-review-scan-cap-'));
+  const binaryDir = mkdtempSync(join(tmpdir(), 'ground-review-scan-cap-binary-'));
+  t.after(() => {
+    rmSync(repo, { recursive: true, force: true });
+    rmSync(binaryDir, { recursive: true, force: true });
+  });
+
+  mustRun('git', ['init', '-b', 'main'], repo);
+  mustRun('git', ['config', 'core.hooksPath', '/dev/null'], repo);
+  writeFixtureFile(repo, 'packages/example/package.json', '{"name":"@example/pkg"}\n');
+  for (let index = 0; index <= 500; index += 1) {
+    writeFixtureFile(
+      repo,
+      `packages/example/src/file-${String(index).padStart(3, '0')}.ts`,
+      `export const value${index} = ${index};\n`
+    );
+  }
+  mustRun('git', ['add', '.'], repo);
+  mustRun('git', ['commit', '-m', 'baseline'], repo);
+  writeFixtureFile(repo, 'packages/example/src/file-500.ts', 'export const value500 = 501;\n');
+
+  const fakeGround = writeFixtureFile(
+    binaryDir,
+    'fake-ground',
+    `#!/bin/sh
+printf '%s\\n' '{"discovered_changed_files":1,"analyzable_changed_files":1,"changed_file_list":["packages/example/src/file-500.ts"],"excluded_changed_files":[],"new_issues":[]}'
+`
+  );
+  chmodSync(fakeGround, 0o755);
+
+  const result = run(process.execPath, [scriptPath, '--base', 'HEAD', '--format', 'json'], repo, {
+    GROUND_BINARY: fakeGround
+  });
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const receipt = JSON.parse(result.stdout);
+  assert.equal(receipt.coverage.analyzable_changed_files, 0);
+  assert.deepEqual(receipt.targets[0].coverage.analyzed_changed_files, []);
+  assert.deepEqual(receipt.coverage.excluded_changed_files, [
+    { path: 'packages/example/src/file-500.ts', reason: 'ground_scan_cap' }
+  ]);
+  assert.equal(receipt.status, 'no_analyzable_files');
+});
