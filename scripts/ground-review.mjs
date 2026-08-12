@@ -245,12 +245,19 @@ export function buildReceipt({
     const result = parseGroundJson(
       run(groundBinary, ['diff', path, '--base', baseSha, '--checks', CHECKS.join(',')], root)
     );
-    const analyzedChangedFiles = (result.changed_file_list ?? [])
-      .map((file) => receiptPath(root, file))
-      .filter(
-        (file) =>
-          changedSet.has(file) && !deleted.has(file) && !unmerged.has(file) && !unreadable.has(file)
-      );
+    const analyzedChangedFiles = [
+      ...new Set(
+        (result.changed_file_list ?? [])
+          .map((file) => receiptPath(root, file))
+          .filter(
+            (file) =>
+              changedSet.has(file) &&
+              !deleted.has(file) &&
+              !unmerged.has(file) &&
+              !unreadable.has(file)
+          )
+      )
+    ];
     return {
       path,
       package_name: packageName(root, path),
@@ -308,24 +315,26 @@ export function buildReceipt({
     ...targetExclusions.map((exclusion) => exclusion.path),
     ...outsideTargets.map((exclusion) => exclusion.path)
   ]);
-  const unmatchedTargetSources = files
+  const unmatchedTargetFiles = files
     .filter(
       (file) =>
         !deleted.has(file) &&
         !unmerged.has(file) &&
         !unreadable.has(file) &&
-        supportedSource(file) &&
         coveredPrefixes.some((prefix) => file.startsWith(prefix)) &&
         !accountedPaths.has(file)
     )
-    .map((path) => ({ path, reason: 'ground_path_mismatch' }));
-  for (const exclusion of unmatchedTargetSources) {
+    .map((path) => ({
+      path,
+      reason: supportedSource(path) ? 'ground_path_mismatch' : 'unsupported_extension'
+    }));
+  for (const exclusion of unmatchedTargetFiles) {
     const target = targets.find(({ path }) => exclusion.path.startsWith(`${path}/`));
     target?.coverage.excluded_changed_files.push(exclusion);
   }
   const excluded = [
     ...new Map(
-      [...targetExclusions, ...outsideTargets, ...unmatchedTargetSources]
+      [...targetExclusions, ...outsideTargets, ...unmatchedTargetFiles]
         .filter((exclusion) => !analyzedSet.has(exclusion.path))
         .map((exclusion) => [`${exclusion.path}:${exclusion.reason}`, exclusion])
     ).values()
