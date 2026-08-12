@@ -57,7 +57,7 @@ test('CLI emits an advisory JSON receipt for a changed package', (t) => {
     binaryDir,
     'fake-ground',
     `#!/bin/sh
-printf '%s\\n' '{"discovered_changed_files":1,"analyzable_changed_files":1,"changed_files":1,"changed_file_list":["packages/example/src/index.ts"],"excluded_changed_files":[],"checks_run":["duplicates","orphans"],"new_issues":[{"type":"duplicate","path":"packages/example/src/index.ts"}],"total_new_issues":1}'
+printf '%s\\n' '{"discovered_changed_files":1,"analyzable_changed_files":1,"changed_files":1,"changed_file_list":["${repo}/packages/example/src/index.ts"],"excluded_changed_files":[{"path":"${repo}/packages/example/README.md","reason":"unsupported_extension"}],"checks_run":["duplicates","orphans"],"new_issues":[{"type":"duplicate_function","files":["${repo}/packages/example/src/index.ts","${repo}/packages/example/src/copy.ts"]}],"total_new_issues":1}'
 `
   );
   chmodSync(fakeGround, 0o755);
@@ -75,6 +75,14 @@ printf '%s\\n' '{"discovered_changed_files":1,"analyzable_changed_files":1,"chan
   assert.equal(receipt.coverage.discovered_changed_files, 1);
   assert.equal(receipt.coverage.analyzable_changed_files, 1);
   assert.equal(receipt.findings.length, 1);
+  assert.deepEqual(receipt.findings[0].files, [
+    'packages/example/src/index.ts',
+    'packages/example/src/copy.ts'
+  ]);
+  assert.equal(
+    receipt.targets[0].coverage.excluded_changed_files[0].path,
+    'packages/example/README.md'
+  );
   assert.equal(receipt.targets[0].path, 'packages/example');
   assert.equal(receipt.targets[0].package_name, '@example/pkg');
   assert.equal(receipt.status, 'findings');
@@ -145,4 +153,45 @@ printf '%s\\n' '{"discovered_changed_files":1,"analyzable_changed_files":1,"chan
   const receipt = JSON.parse(result.stdout);
   assert.deepEqual(receipt.changed_files, ['packages/example/src/index.ts']);
   assert.doesNotMatch(JSON.stringify(receipt), /README\.md/);
+});
+
+test('CLI collapses nested package changes into one non-overlapping target', (t) => {
+  const repo = mkdtempSync(join(tmpdir(), 'ground-review-nested-'));
+  const binaryDir = mkdtempSync(join(tmpdir(), 'ground-review-nested-binary-'));
+  t.after(() => {
+    rmSync(repo, { recursive: true, force: true });
+    rmSync(binaryDir, { recursive: true, force: true });
+  });
+
+  mustRun('git', ['init', '-b', 'main'], repo);
+  mustRun('git', ['config', 'core.hooksPath', '/dev/null'], repo);
+  writeFixtureFile(repo, 'packages/parent/package.json', '{"name":"@example/parent"}\n');
+  writeFixtureFile(repo, 'packages/parent/src/index.ts', 'export const parent = 1;\n');
+  writeFixtureFile(repo, 'packages/parent/worker/package.json', '{"name":"@example/worker"}\n');
+  writeFixtureFile(repo, 'packages/parent/worker/src/index.ts', 'export const worker = 1;\n');
+  mustRun('git', ['add', '.'], repo);
+  mustRun('git', ['commit', '-m', 'baseline'], repo);
+  writeFixtureFile(repo, 'packages/parent/src/index.ts', 'export const parent = 2;\n');
+  writeFixtureFile(repo, 'packages/parent/worker/src/index.ts', 'export const worker = 2;\n');
+
+  const fakeGround = writeFixtureFile(
+    binaryDir,
+    'fake-ground',
+    `#!/bin/sh
+printf '%s\\n' '{"discovered_changed_files":2,"analyzable_changed_files":2,"changed_files":2,"changed_file_list":[],"excluded_changed_files":[],"checks_run":["duplicates","orphans"],"new_issues":[],"total_new_issues":0}'
+`
+  );
+  chmodSync(fakeGround, 0o755);
+
+  const result = run(process.execPath, [scriptPath, '--base', 'HEAD', '--format', 'json'], repo, {
+    GROUND_BINARY: fakeGround
+  });
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const receipt = JSON.parse(result.stdout);
+  assert.deepEqual(
+    receipt.targets.map((target) => target.path),
+    ['packages/parent']
+  );
+  assert.equal(receipt.coverage.analyzable_changed_files, 2);
 });

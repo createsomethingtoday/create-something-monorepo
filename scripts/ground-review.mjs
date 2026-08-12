@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-import { accessSync, constants, existsSync, readFileSync } from 'node:fs';
-import { dirname, join, relative, resolve, sep } from 'node:path';
+import { accessSync, constants, existsSync, readFileSync, realpathSync } from 'node:fs';
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import process from 'node:process';
 import { pathToFileURL } from 'node:url';
@@ -89,6 +89,49 @@ function packageName(root, packageRoot) {
   }
 }
 
+function collapsePackageRoots(paths) {
+  return [...paths]
+    .sort(
+      (left, right) => left.split('/').length - right.split('/').length || left.localeCompare(right)
+    )
+    .reduce((targets, path) => {
+      if (!targets.some((target) => path.startsWith(`${target}/`))) targets.push(path);
+      return targets;
+    }, []);
+}
+
+function canonicalPath(path) {
+  let cursor = resolve(path);
+  const suffix = [];
+  while (!existsSync(cursor)) {
+    const parent = dirname(cursor);
+    if (parent === cursor) return resolve(path);
+    suffix.unshift(basename(cursor));
+    cursor = parent;
+  }
+  return join(realpathSync(cursor), ...suffix);
+}
+
+function receiptPath(root, path) {
+  if (!isAbsolute(path)) return normalizePath(path);
+  const candidate = relative(canonicalPath(root), canonicalPath(path));
+  return candidate.startsWith('..') || isAbsolute(candidate)
+    ? normalizePath(path)
+    : normalizePath(candidate);
+}
+
+function normalizeFinding(root, finding) {
+  if (!finding || typeof finding !== 'object' || Array.isArray(finding)) return finding;
+  const normalized = { ...finding };
+  if (typeof normalized.path === 'string') normalized.path = receiptPath(root, normalized.path);
+  if (Array.isArray(normalized.files)) {
+    normalized.files = normalized.files.map((path) =>
+      typeof path === 'string' ? receiptPath(root, path) : path
+    );
+  }
+  return normalized;
+}
+
 function resolveGroundBinary(root) {
   const candidates = [
     process.env.GROUND_BINARY,
@@ -115,9 +158,9 @@ function parseGroundJson(output) {
 }
 
 export function buildReceipt({ root, base, baseSha, files, groundBinary }) {
-  const packageRoots = [
-    ...new Set(files.map((file) => findPackageRoot(root, file)).filter(Boolean))
-  ].sort();
+  const packageRoots = collapsePackageRoots(
+    new Set(files.map((file) => findPackageRoot(root, file)).filter(Boolean))
+  );
   const targets = packageRoots.map((path) => {
     const result = parseGroundJson(
       run(groundBinary, ['diff', path, '--base', baseSha, '--checks', CHECKS.join(',')], root)
@@ -128,9 +171,12 @@ export function buildReceipt({ root, base, baseSha, files, groundBinary }) {
       coverage: {
         discovered_changed_files: result.discovered_changed_files ?? 0,
         analyzable_changed_files: result.analyzable_changed_files ?? result.changed_files ?? 0,
-        excluded_changed_files: result.excluded_changed_files ?? []
+        excluded_changed_files: (result.excluded_changed_files ?? []).map((exclusion) => ({
+          ...exclusion,
+          path: receiptPath(root, exclusion.path)
+        }))
       },
-      findings: result.new_issues ?? []
+      findings: (result.new_issues ?? []).map((finding) => normalizeFinding(root, finding))
     };
   });
 
@@ -146,7 +192,7 @@ export function buildReceipt({ root, base, baseSha, files, groundBinary }) {
     ...outsideTargets
   ];
   const findings = targets.flatMap((target) =>
-    target.findings.map((finding) => ({ target: target.path, ...finding }))
+    target.findings.map((finding) => ({ ...finding, target: target.path }))
   );
   const analyzable = targets.reduce(
     (total, target) => total + target.coverage.analyzable_changed_files,
