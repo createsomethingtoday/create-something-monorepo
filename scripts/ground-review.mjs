@@ -150,6 +150,16 @@ function exceedsGroundScanLimit(directory) {
     for (const entry of entries) {
       if (entry.name.startsWith('.') || IGNORED_SCAN_DIRECTORIES.has(entry.name)) continue;
       const candidate = join(path, entry.name);
+      // Ground follows symlinked directories without canonical deduplication.
+      // Treat that traversal as capped conservatively: aliases can double-count
+      // a tree, and cycles do not provide reliable per-file completion evidence.
+      if (entry.isSymbolicLink()) {
+        try {
+          if (statSync(candidate).isDirectory()) return true;
+        } catch {
+          continue;
+        }
+      }
       let metadata;
       try {
         metadata = statSync(candidate);
