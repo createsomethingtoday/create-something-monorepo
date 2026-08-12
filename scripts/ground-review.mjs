@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { accessSync, constants, existsSync, readFileSync, realpathSync } from 'node:fs';
+import { accessSync, constants, existsSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import process from 'node:process';
@@ -113,7 +113,7 @@ function unreadableFiles(root, files, deleted) {
       if (!supportedSource(path) || deleted.has(path)) return false;
       try {
         accessSync(resolve(root, path), constants.R_OK);
-        return false;
+        return !statSync(resolve(root, path)).isFile();
       } catch {
         return true;
       }
