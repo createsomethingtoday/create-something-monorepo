@@ -252,6 +252,7 @@ export function buildReceipt({
           .filter(
             (file) =>
               changedSet.has(file) &&
+              file.startsWith(`${path}/`) &&
               !deleted.has(file) &&
               !unmerged.has(file) &&
               !unreadable.has(file)
@@ -263,10 +264,7 @@ export function buildReceipt({
       package_name: packageName(root, path),
       coverage: {
         discovered_changed_files: result.discovered_changed_files ?? 0,
-        analyzable_changed_files:
-          result.changed_file_list == null
-            ? (result.analyzable_changed_files ?? result.changed_files ?? 0)
-            : analyzedChangedFiles.length,
+        analyzable_changed_files: analyzedChangedFiles.length,
         analyzed_changed_files: analyzedChangedFiles,
         excluded_changed_files: (result.excluded_changed_files ?? []).map((exclusion) => ({
           ...exclusion,
@@ -342,10 +340,7 @@ export function buildReceipt({
   const findings = targets.flatMap((target) =>
     target.findings.map((finding) => ({ ...finding, target: target.path }))
   );
-  const analyzable = targets.reduce(
-    (total, target) => total + target.coverage.analyzable_changed_files,
-    0
-  );
+  const analyzable = analyzedSet.size;
 
   return {
     schema_version: 'ground-review-receipt.v1',
