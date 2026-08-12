@@ -64,6 +64,7 @@ normal production promotion path.
 
 - `schema.json` — closed JSON Schema for the contract.
 - `authorization-receipt.schema.json` — closed schema for committed allow and block receipts.
+- `d1-preview/` — local-only D1 migration and Wrangler configuration for receipt-store proof.
 - `create-something.json` — canonical CREATE SOMETHING capability catalog.
 - `scripts/verify-agent-commercial-contract.mjs` — schema and semantic verifier.
 - `src/agent-commercial-contract.ts` — provider-neutral decision and receipt-bearing authorization functions.
@@ -73,6 +74,15 @@ operation. A retry with identical facts replays the existing receipt. Reusing a
 decision ID for different facts throws `AgentCommercialReceiptConflictError`.
 Provider execution starts only after an `allow` decision and a committed receipt.
 The contract does not activate x402 or a production D1 sink.
+
+The D1 adapter uses prepared statements and one atomic `batch()` containing the
+idempotent insert and primary readback. The preview Wrangler configuration uses
+an all-zero local database ID and is not a deployable production binding.
+
+The x402 verifier accepts only v2 `exact` authorizations on Base Sepolia
+(`eip155:84532`). It calls a supplied facilitator's verification operation and
+records `settlement: not_attempted`; it contains no wallet and never calls a
+settlement operation.
 
 Run:
 
