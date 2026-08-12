@@ -263,7 +263,7 @@ export function buildReceipt({
       path,
       package_name: packageName(root, path),
       coverage: {
-        discovered_changed_files: result.discovered_changed_files ?? 0,
+        discovered_changed_files: files.filter((file) => file.startsWith(`${path}/`)).length,
         analyzable_changed_files: analyzedChangedFiles.length,
         analyzed_changed_files: analyzedChangedFiles,
         excluded_changed_files: (result.excluded_changed_files ?? []).map((exclusion) => ({
