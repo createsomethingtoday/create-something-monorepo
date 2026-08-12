@@ -582,11 +582,12 @@ export function buildReceipt({
     }));
   for (const exclusion of outsideTargets) {
     const target = targets.find(({ path }) => exclusion.path.startsWith(`${path}/`));
-    if (
-      target &&
-      !target.coverage.excluded_changed_files.some(({ path }) => path === exclusion.path)
-    ) {
-      target.coverage.excluded_changed_files.push(exclusion);
+    if (target) {
+      target.coverage.excluded_changed_files = [
+        ...new Map(
+          [...target.coverage.excluded_changed_files, exclusion].map((entry) => [entry.path, entry])
+        ).values()
+      ];
     }
   }
   const targetExclusions = targets.flatMap((target) => target.coverage.excluded_changed_files);
@@ -624,7 +625,7 @@ export function buildReceipt({
     target.coverage.checks.orphans.excluded_changed_files = [
       ...new Map(
         [...target.coverage.checks.orphans.excluded_changed_files, ...sourceExclusions].map(
-          (exclusion) => [`${exclusion.path}:${exclusion.reason}`, exclusion]
+          (exclusion) => [exclusion.path, exclusion]
         )
       ).values()
     ];
@@ -633,7 +634,7 @@ export function buildReceipt({
     ...new Map(
       [...finalTargetExclusions, ...outsideTargets]
         .filter((exclusion) => !analyzedSet.has(exclusion.path))
-        .map((exclusion) => [`${exclusion.path}:${exclusion.reason}`, exclusion])
+        .map((exclusion) => [exclusion.path, exclusion])
     ).values()
   ];
   const findings = targets.flatMap((target) =>
@@ -659,7 +660,7 @@ export function buildReceipt({
           [
             ...targets.flatMap((target) => target.coverage.checks.orphans.excluded_changed_files),
             ...excluded.filter((exclusion) => supportedSource(exclusion.path))
-          ].map((exclusion) => [`${exclusion.path}:${exclusion.reason}`, exclusion])
+          ].map((exclusion) => [exclusion.path, exclusion])
         ).values()
       ]
     }

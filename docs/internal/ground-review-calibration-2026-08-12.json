@@ -1,0 +1,62 @@
+{
+  "schema_version": "ground-review-calibration.v1",
+  "calibrated_at": "2026-08-12",
+  "ground_version": "0.3.1",
+  "sample_count": 20,
+  "aggregate": {
+    "discovered_changed_files": 214,
+    "duplicate_analyzed_files": 19,
+    "orphan_analyzed_files": 9,
+    "excluded_changed_files": 195,
+    "findings": 0,
+    "execution_failures": 0
+  },
+  "status_counts": {
+    "clear": 8,
+    "no_analyzable_files": 12
+  },
+  "exclusion_reasons": {
+    "deleted_file": 8,
+    "ground_scan_cap": 41,
+    "ignored_by_config": 36,
+    "outside_package_source": 3,
+    "unsupported_by_requested_checks": 7,
+    "unsupported_extension": 100
+  },
+  "samples": [
+    [1321, "c6e6d246084751b5314dab00ed47bd584825accf", "no_analyzable_files", 2, 0, 0, 2, 0],
+    [1324, "61e871c25424751ed60802da5fb129e3b07b8f7d", "no_analyzable_files", 25, 0, 0, 25, 0],
+    [1325, "66f69b855ca36237d7b01bd53fee655d42aa6a13", "no_analyzable_files", 2, 0, 0, 2, 0],
+    [1327, "99503f1ee87008f7e557f89561ad4dba6b31f37b", "no_analyzable_files", 11, 0, 0, 11, 0],
+    [1332, "ebae85e4586af87a681707a1ceb5a330ed8d37d0", "clear", 22, 4, 3, 18, 0],
+    [1333, "da3b48bb16d295e58b4761820c8320a46bc30359", "no_analyzable_files", 4, 0, 0, 4, 0],
+    [1334, "1a6488179543fa21d7597a2aeb9991ae8bd1e3e9", "no_analyzable_files", 4, 0, 0, 4, 0],
+    [1337, "b35901f3301625b83d3bc186782907d87c625910", "clear", 10, 3, 0, 7, 0],
+    [1338, "cf474dee3931266c77596bb1d168f7b61fdb219d", "clear", 19, 2, 0, 17, 0],
+    [1344, "48e19c137a492c42176c090edefcb1e07aaf93b0", "clear", 23, 4, 2, 19, 0],
+    [1345, "83b6c923ba7d1cb80cbeb119c0b4d435d03008e5", "no_analyzable_files", 9, 0, 0, 9, 0],
+    [1346, "d6c8d39abb9283e219fddae78c8c784c99f0e4ed", "clear", 17, 1, 1, 16, 0],
+    [1347, "6bdd750d60b961138fc83b2394584ef361bbc5fa", "clear", 5, 1, 0, 4, 0],
+    [1348, "69ffe31d3800f69b1c2cef9565a3c98d259760f3", "clear", 8, 2, 2, 6, 0],
+    [1349, "0ccfc4792c0ced7876a6eba6483e65207fc8d0c6", "no_analyzable_files", 8, 0, 0, 8, 0],
+    [1351, "e5966c5c45b10505c0154b0ff7ad7bc737a23099", "clear", 11, 2, 1, 9, 0],
+    [1352, "5d69b4407e7c13c30c9bf99122b0c174aa79e719", "no_analyzable_files", 17, 0, 0, 17, 0],
+    [1353, "03dc2438d36bb401cf5418793a5169e12acf7891", "no_analyzable_files", 3, 0, 0, 3, 0],
+    [1354, "b956e47ff1afa3236a3d5b76adbe92c31714040b", "no_analyzable_files", 10, 0, 0, 10, 0],
+    [1355, "a4dd168c8cca8c8f49365d4503a443331d506369", "no_analyzable_files", 4, 0, 0, 4, 0]
+  ],
+  "sample_fields": [
+    "pr",
+    "commit",
+    "status",
+    "discovered_changed_files",
+    "duplicate_analyzed_files",
+    "orphan_analyzed_files",
+    "excluded_changed_files",
+    "findings"
+  ],
+  "recommendation": {
+    "mode": "advisory",
+    "reason": "Coverage is too sparse and no positive findings were observed, so precision cannot be estimated."
+  }
+}

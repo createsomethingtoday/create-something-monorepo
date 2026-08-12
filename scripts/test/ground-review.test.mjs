@@ -586,7 +586,7 @@ test('CLI excludes deleted paths from analyzed coverage in a mixed package chang
     binaryDir,
     'fake-ground',
     `#!/bin/sh
-printf '%s\\n' '{"discovered_changed_files":2,"analyzable_changed_files":2,"changed_file_list":["packages/example/src/live.ts","packages/example/src/deleted.ts"],"excluded_changed_files":[],"new_issues":[]}'
+printf '%s\\n' '{"discovered_changed_files":2,"analyzable_changed_files":2,"changed_file_list":["packages/example/src/live.ts","packages/example/src/deleted.ts"],"excluded_changed_files":[{"path":"packages/example/src/deleted.ts","reason":"ignored_by_config"}],"new_issues":[]}'
 `
   );
   chmodSync(fakeGround, 0o755);
@@ -607,6 +607,20 @@ printf '%s\\n' '{"discovered_changed_files":2,"analyzable_changed_files":2,"chan
   assert.deepEqual(receipt.targets[0].coverage.excluded_changed_files, [
     { path: 'packages/example/src/deleted.ts', reason: 'deleted_file' }
   ]);
+  assert.deepEqual(receipt.coverage.checks.duplicates.excluded_changed_files, [
+    { path: 'packages/example/src/deleted.ts', reason: 'deleted_file' }
+  ]);
+  assert.deepEqual(receipt.coverage.checks.orphans.excluded_changed_files, [
+    {
+      path: 'packages/example/src/live.ts',
+      reason: 'existing_file_not_checked_for_orphans'
+    },
+    { path: 'packages/example/src/deleted.ts', reason: 'deleted_file' }
+  ]);
+  assert.equal(
+    receipt.coverage.analyzable_changed_files + receipt.coverage.excluded_changed_files.length,
+    receipt.coverage.discovered_changed_files
+  );
   assert.equal(receipt.targets[0].coverage.discovered_changed_files, 2);
 });
 
