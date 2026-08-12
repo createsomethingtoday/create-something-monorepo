@@ -23,6 +23,14 @@ if (!validate(contract)) {
 
 assert.equal(contract.defaultDecision, 'deny');
 assert.equal(contract.receiptPolicy.required, true);
+assert.deepEqual(contract.productionControls, {
+  charging: 'disabled',
+  maxPaidRequestsPerMinute: 0,
+  maxPerRequestUsd: '0',
+  maxDailySpendUsd: '0',
+  automaticRetry: false,
+  rollbackRunbookRef: 'packages/database-layer/contracts/agent-commercial/v1/PRODUCTION_ROLLBACK.md'
+});
 
 const capabilityIds = contract.capabilities.map((capability) => capability.id);
 assert.equal(new Set(capabilityIds).size, capabilityIds.length, 'Capability IDs must be unique.');
@@ -74,6 +82,12 @@ for (const capability of contract.capabilities) {
 const x402 = contract.providerAdapters.find((adapter) => adapter.id === 'cloudflare.agents.x402');
 assert.equal(x402?.status, 'inactive');
 assert.equal(x402?.activationApproval, 'required');
+
+const commercialReceipts = contract.providerAdapters.find(
+  (adapter) => adapter.id === contract.receiptPolicy.sinkAdapterId
+);
+assert.equal(commercialReceipts?.status, 'active');
+assert.equal(commercialReceipts?.activationApproval, 'required');
 
 const paymentActivation = contract.paymentPolicies.some(
   (policy) => policy.status === 'approval_required'

@@ -56,15 +56,17 @@ including denials and payment requirements.
 - x402 may satisfy a `paid` policy only after its price and production activation are approved.
 - Payment never bypasses entitlement, private grant, side-effect approval, or status checks.
 
-The current x402 adapter and agent-readiness audit are intentionally inactive.
-Activating them requires the requirements recorded in the payment policy plus a
-normal production promotion path.
+The production D1 receipt schema and read-only readiness surface are active.
+The current x402 adapter and agent-readiness audit remain intentionally
+inactive. Activating them requires the requirements recorded in the payment
+policy plus a separate production promotion path.
 
 ## Files
 
 - `schema.json` — closed JSON Schema for the contract.
 - `authorization-receipt.schema.json` — closed schema for committed allow and block receipts.
 - `d1-preview/` — local-only D1 migration and Wrangler configuration for receipt-store proof.
+- `PRODUCTION_ROLLBACK.md` — fail-closed controls, rollback triggers, and verification.
 - `canary-receipts/` — sanitized public testnet evidence; never wallet secrets or raw authorizations.
 - `create-something.json` — canonical CREATE SOMETHING capability catalog.
 - `scripts/verify-agent-commercial-contract.mjs` — schema and semantic verifier.
@@ -74,7 +76,9 @@ normal production promotion path.
 operation. A retry with identical facts replays the existing receipt. Reusing a
 decision ID for different facts throws `AgentCommercialReceiptConflictError`.
 Provider execution starts only after an `allow` decision and a committed receipt.
-The contract does not activate x402 or a production D1 sink.
+The contract does not activate x402. The production D1 sink is bound to the
+database-layer Worker, but that Worker exposes readiness only and no public
+receipt-write route.
 
 The D1 adapter uses prepared statements and one atomic `batch()` containing the
 idempotent insert and primary readback. The preview Wrangler configuration uses

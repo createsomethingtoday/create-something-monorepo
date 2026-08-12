@@ -103,3 +103,23 @@ test('D1 preview migration owns a unique decision id and no production binding',
   assert.match(migration, /receipt_id TEXT NOT NULL UNIQUE/);
   assert.doesNotMatch(migration, /database_id|binding|remote/i);
 });
+
+test('production Worker binds the dedicated D1 ledger to the additive receipt migration', () => {
+  const wrangler = readFileSync(new URL('../worker/wrangler.toml', import.meta.url), 'utf8');
+  const migration = readFileSync(
+    new URL(
+      '../worker/migrations/0001_agent_commercial_authorization_receipts.sql',
+      import.meta.url
+    ),
+    'utf8'
+  );
+
+  assert.match(wrangler, /DATABASE_LAYER_MODE = "read_only"/);
+  assert.match(wrangler, /binding = "COMMERCIAL_RECEIPTS"/);
+  assert.match(wrangler, /database_name = "create-something-agent-commercial-receipts"/);
+  assert.match(wrangler, /database_id = "35d05341-7506-48d5-8f5d-e40dcfca1c81"/);
+  assert.match(wrangler, /migrations_dir = "migrations"/);
+  assert.match(migration, /decision_id TEXT PRIMARY KEY/);
+  assert.match(migration, /receipt_id TEXT NOT NULL UNIQUE/);
+  assert.match(migration, /environment IN \('preview', 'production'\)/);
+});

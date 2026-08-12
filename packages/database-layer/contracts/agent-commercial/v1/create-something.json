@@ -24,6 +24,14 @@
       "occurredAt"
     ]
   },
+  "productionControls": {
+    "charging": "disabled",
+    "maxPaidRequestsPerMinute": 0,
+    "maxPerRequestUsd": "0",
+    "maxDailySpendUsd": "0",
+    "automaticRetry": false,
+    "rollbackRunbookRef": "packages/database-layer/contracts/agent-commercial/v1/PRODUCTION_ROLLBACK.md"
+  },
   "accessClasses": {
     "free": {
       "description": "Public, read-only discovery or education with no identity or payment requirement.",
@@ -85,10 +93,11 @@
       "id": "cloudflare.d1.commercial-receipts",
       "provider": "Cloudflare D1",
       "role": "receipt",
-      "status": "preview",
+      "status": "active",
       "implementationRefs": [
-        "packages/agency/src/routes/api/governance/receipts/+server.ts",
-        "packages/create-something-mcp/README.md#telemetry"
+        "packages/database-layer/worker/wrangler.toml",
+        "packages/database-layer/worker/migrations/0001_agent_commercial_authorization_receipts.sql",
+        "packages/database-layer/worker/agent-commercial-readiness.mjs"
       ],
       "activationApproval": "required"
     },
