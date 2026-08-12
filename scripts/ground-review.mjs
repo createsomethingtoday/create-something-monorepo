@@ -54,10 +54,30 @@ function normalizePath(path) {
   return path.split(sep).join('/').replace(/^\.\//, '');
 }
 
+function trackedChanges(root, base) {
+  const fields = run(
+    'git',
+    ['diff', '--name-status', '-z', '--find-renames', base, '--'],
+    root
+  ).split('\0');
+  const changes = [];
+  for (let index = 0; index < fields.length; ) {
+    const status = fields[index++];
+    if (!status) continue;
+    if (status.startsWith('R') || status.startsWith('C')) {
+      const source = normalizePath(fields[index++]);
+      const destination = normalizePath(fields[index++]);
+      if (status.startsWith('R')) changes.push({ path: source, status: 'rename_source' });
+      changes.push({ path: destination, status });
+    } else {
+      changes.push({ path: normalizePath(fields[index++]), status });
+    }
+  }
+  return changes;
+}
+
 function changedFiles(root, base) {
-  const tracked = run('git', ['diff', '--name-only', '-z', base, '--'], root)
-    .split('\0')
-    .filter(Boolean);
+  const tracked = trackedChanges(root, base).map(({ path }) => path);
   const untracked = run('git', ['ls-files', '-z', '--others', '--exclude-standard'], root)
     .split('\0')
     .filter(Boolean);
@@ -66,10 +86,9 @@ function changedFiles(root, base) {
 
 function deletedFiles(root, base) {
   return new Set(
-    run('git', ['diff', '--name-only', '-z', '--diff-filter=D', base, '--'], root)
-      .split('\0')
-      .filter(Boolean)
-      .map(normalizePath)
+    trackedChanges(root, base)
+      .filter(({ status }) => status === 'D' || status === 'rename_source')
+      .map(({ path }) => path)
       .filter((path) => !existsSync(resolve(root, path)))
   );
 }
@@ -86,6 +105,20 @@ function unmergedFiles(root) {
 function supportedSource(path) {
   const dot = path.lastIndexOf('.');
   return dot >= 0 && SUPPORTED_EXTENSIONS.has(path.slice(dot));
+}
+
+function unreadableFiles(root, files, deleted) {
+  return new Set(
+    files.filter((path) => {
+      if (!supportedSource(path) || deleted.has(path)) return false;
+      try {
+        accessSync(resolve(root, path), constants.R_OK);
+        return false;
+      } catch {
+        return true;
+      }
+    })
+  );
 }
 
 function findPackageRoot(root, changedPath) {
@@ -189,11 +222,20 @@ function parseGroundJson(output) {
   return JSON.parse(output.slice(start, end + 1));
 }
 
-export function buildReceipt({ root, base, baseSha, files, deleted, unmerged, groundBinary }) {
+export function buildReceipt({
+  root,
+  base,
+  baseSha,
+  files,
+  deleted,
+  unmerged,
+  unreadable,
+  groundBinary
+}) {
   const packageRoots = collapsePackageRoots(
     new Set(
       files
-        .filter((file) => !deleted.has(file) && !unmerged.has(file))
+        .filter((file) => !deleted.has(file) && !unmerged.has(file) && !unreadable.has(file))
         .map((file) => findPackageRoot(root, file))
         .filter(Boolean)
     )
@@ -205,7 +247,10 @@ export function buildReceipt({ root, base, baseSha, files, deleted, unmerged, gr
     );
     const analyzedChangedFiles = (result.changed_file_list ?? [])
       .map((file) => receiptPath(root, file))
-      .filter((file) => changedSet.has(file) && !deleted.has(file) && !unmerged.has(file));
+      .filter(
+        (file) =>
+          changedSet.has(file) && !deleted.has(file) && !unmerged.has(file) && !unreadable.has(file)
+      );
     return {
       path,
       package_name: packageName(root, path),
@@ -242,6 +287,7 @@ export function buildReceipt({ root, base, baseSha, files, deleted, unmerged, gr
       (file) =>
         deleted.has(file) ||
         unmerged.has(file) ||
+        unreadable.has(file) ||
         !coveredPrefixes.some((prefix) => file.startsWith(prefix))
     )
     .map((path) => ({
@@ -250,9 +296,11 @@ export function buildReceipt({ root, base, baseSha, files, deleted, unmerged, gr
         ? 'unmerged_file'
         : deleted.has(path)
           ? 'deleted_file'
-          : supportedSource(path)
-            ? 'outside_package_source'
-            : 'unsupported_extension'
+          : unreadable.has(path)
+            ? 'unreadable_file'
+            : supportedSource(path)
+              ? 'outside_package_source'
+              : 'unsupported_extension'
     }));
   const targetExclusions = targets.flatMap((target) => target.coverage.excluded_changed_files);
   const accountedPaths = new Set([
@@ -265,6 +313,7 @@ export function buildReceipt({ root, base, baseSha, files, deleted, unmerged, gr
       (file) =>
         !deleted.has(file) &&
         !unmerged.has(file) &&
+        !unreadable.has(file) &&
         supportedSource(file) &&
         coveredPrefixes.some((prefix) => file.startsWith(prefix)) &&
         !accountedPaths.has(file)
@@ -366,6 +415,7 @@ function main() {
     const files = changedFiles(root, baseSha);
     const deleted = deletedFiles(root, baseSha);
     const unmerged = unmergedFiles(root);
+    const unreadable = unreadableFiles(root, files, deleted);
     const receipt = buildReceipt({
       root,
       base: options.base,
@@ -373,6 +423,7 @@ function main() {
       files,
       deleted,
       unmerged,
+      unreadable,
       groundBinary: resolveGroundBinary(root)
     });
     console.log(
