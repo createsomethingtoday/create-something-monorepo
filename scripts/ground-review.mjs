@@ -55,13 +55,22 @@ function normalizePath(path) {
 }
 
 function changedFiles(root, base) {
-  const tracked = run('git', ['diff', '--name-only', '--diff-filter=ACMR', base, '--'], root)
+  const tracked = run('git', ['diff', '--name-only', '--diff-filter=ACMRD', base, '--'], root)
     .split(/\r?\n/)
     .filter(Boolean);
   const untracked = run('git', ['ls-files', '--others', '--exclude-standard'], root)
     .split(/\r?\n/)
     .filter(Boolean);
   return [...new Set([...tracked, ...untracked].map(normalizePath))].sort();
+}
+
+function deletedFiles(root, base) {
+  return new Set(
+    run('git', ['diff', '--name-only', '--diff-filter=D', base, '--'], root)
+      .split(/\r?\n/)
+      .filter(Boolean)
+      .map(normalizePath)
+  );
 }
 
 function supportedSource(path) {
@@ -132,12 +141,21 @@ function normalizeFinding(root, finding) {
   return normalized;
 }
 
-function resolveGroundBinary(root) {
+export function resolveGroundBinary(
+  root,
+  platform = process.platform,
+  architecture = process.arch
+) {
   const candidates = [
     process.env.GROUND_BINARY,
-    join(root, 'packages/ground/target/release/ground'),
-    join(root, 'packages/ground/npm/bin/ground')
-  ].filter(Boolean);
+    join(root, 'packages/ground/target/release/ground')
+  ];
+  // The binary checked into the npm package is the release artifact for this
+  // repository's development platform. Other platforms must use their installed
+  // Ground binary rather than attempting to execute an incompatible Mach-O file.
+  if (platform === 'darwin' && architecture === 'arm64') {
+    candidates.push(join(root, 'packages/ground/npm/bin/ground'));
+  }
 
   for (const candidate of candidates) {
     try {
@@ -157,9 +175,14 @@ function parseGroundJson(output) {
   return JSON.parse(output.slice(start, end + 1));
 }
 
-export function buildReceipt({ root, base, baseSha, files, groundBinary }) {
+export function buildReceipt({ root, base, baseSha, files, deleted, groundBinary }) {
   const packageRoots = collapsePackageRoots(
-    new Set(files.map((file) => findPackageRoot(root, file)).filter(Boolean))
+    new Set(
+      files
+        .filter((file) => !deleted.has(file))
+        .map((file) => findPackageRoot(root, file))
+        .filter(Boolean)
+    )
   );
   const targets = packageRoots.map((path) => {
     const result = parseGroundJson(
@@ -171,6 +194,9 @@ export function buildReceipt({ root, base, baseSha, files, groundBinary }) {
       coverage: {
         discovered_changed_files: result.discovered_changed_files ?? 0,
         analyzable_changed_files: result.analyzable_changed_files ?? result.changed_files ?? 0,
+        analyzed_changed_files: (result.changed_file_list ?? []).map((file) =>
+          receiptPath(root, file)
+        ),
         excluded_changed_files: (result.excluded_changed_files ?? []).map((exclusion) => ({
           ...exclusion,
           path: receiptPath(root, exclusion.path)
@@ -180,16 +206,37 @@ export function buildReceipt({ root, base, baseSha, files, groundBinary }) {
     };
   });
 
+  const changedSet = new Set(files);
+  const analyzedSet = new Set(targets.flatMap((target) => target.coverage.analyzed_changed_files));
+  for (const target of targets) {
+    const prefix = `${target.path}/`;
+    target.coverage.excluded_changed_files = target.coverage.excluded_changed_files.filter(
+      (exclusion) =>
+        changedSet.has(exclusion.path) &&
+        !analyzedSet.has(exclusion.path) &&
+        exclusion.path.startsWith(prefix)
+    );
+  }
+
   const coveredPrefixes = packageRoots.map((path) => `${path}/`);
   const outsideTargets = files
-    .filter((file) => !coveredPrefixes.some((prefix) => file.startsWith(prefix)))
+    .filter(
+      (file) => deleted.has(file) || !coveredPrefixes.some((prefix) => file.startsWith(prefix))
+    )
     .map((path) => ({
       path,
-      reason: supportedSource(path) ? 'outside_package_source' : 'unsupported_extension'
+      reason: deleted.has(path)
+        ? 'deleted_file'
+        : supportedSource(path)
+          ? 'outside_package_source'
+          : 'unsupported_extension'
     }));
   const excluded = [
-    ...targets.flatMap((target) => target.coverage.excluded_changed_files),
-    ...outsideTargets
+    ...new Map(
+      [...targets.flatMap((target) => target.coverage.excluded_changed_files), ...outsideTargets]
+        .filter((exclusion) => !analyzedSet.has(exclusion.path))
+        .map((exclusion) => [`${exclusion.path}:${exclusion.reason}`, exclusion])
+    ).values()
   ];
   const findings = targets.flatMap((target) =>
     target.findings.map((finding) => ({ ...finding, target: target.path }))
@@ -262,11 +309,13 @@ function main() {
     const baseSha = run('git', ['merge-base', options.base, 'HEAD'], root).trim();
     if (!baseSha) throw new Error(`No merge base found for ${options.base} and HEAD.`);
     const files = changedFiles(root, baseSha);
+    const deleted = deletedFiles(root, baseSha);
     const receipt = buildReceipt({
       root,
       base: options.base,
       baseSha,
       files,
+      deleted,
       groundBinary: resolveGroundBinary(root)
     });
     console.log(

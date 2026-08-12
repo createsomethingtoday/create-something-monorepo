@@ -7,6 +7,7 @@ import { spawnSync } from 'node:child_process';
 import test from 'node:test';
 
 const scriptPath = fileURLToPath(new URL('../ground-review.mjs', import.meta.url));
+const { resolveGroundBinary } = await import(new URL('../ground-review.mjs', import.meta.url));
 
 function run(command, args, cwd, env = {}) {
   return spawnSync(command, args, {
@@ -79,10 +80,7 @@ printf '%s\\n' '{"discovered_changed_files":1,"analyzable_changed_files":1,"chan
     'packages/example/src/index.ts',
     'packages/example/src/copy.ts'
   ]);
-  assert.equal(
-    receipt.targets[0].coverage.excluded_changed_files[0].path,
-    'packages/example/README.md'
-  );
+  assert.deepEqual(receipt.targets[0].coverage.excluded_changed_files, []);
   assert.equal(receipt.targets[0].path, 'packages/example');
   assert.equal(receipt.targets[0].package_name, '@example/pkg');
   assert.equal(receipt.status, 'findings');
@@ -194,4 +192,93 @@ printf '%s\\n' '{"discovered_changed_files":2,"analyzable_changed_files":2,"chan
     ['packages/parent']
   );
   assert.equal(receipt.coverage.analyzable_changed_files, 2);
+});
+
+test('CLI preserves a deleted source file as an explicit coverage exclusion', (t) => {
+  const repo = mkdtempSync(join(tmpdir(), 'ground-review-deleted-'));
+  t.after(() => rmSync(repo, { recursive: true, force: true }));
+
+  mustRun('git', ['init', '-b', 'main'], repo);
+  mustRun('git', ['config', 'core.hooksPath', '/dev/null'], repo);
+  writeFixtureFile(repo, 'packages/example/package.json', '{"name":"@example/pkg"}\n');
+  const source = writeFixtureFile(
+    repo,
+    'packages/example/src/index.ts',
+    'export const value = 1;\n'
+  );
+  mustRun('git', ['add', '.'], repo);
+  mustRun('git', ['commit', '-m', 'baseline'], repo);
+  rmSync(source);
+
+  const result = run(process.execPath, [scriptPath, '--base', 'HEAD', '--format', 'json'], repo, {
+    GROUND_BINARY: join(repo, 'missing-ground')
+  });
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const receipt = JSON.parse(result.stdout);
+  assert.deepEqual(receipt.changed_files, ['packages/example/src/index.ts']);
+  assert.deepEqual(receipt.targets, []);
+  assert.deepEqual(receipt.coverage.excluded_changed_files, [
+    { path: 'packages/example/src/index.ts', reason: 'deleted_file' }
+  ]);
+});
+
+test('repository npm binary is only selected on its compatible development platform', (t) => {
+  const repo = mkdtempSync(join(tmpdir(), 'ground-review-platform-'));
+  t.after(() => rmSync(repo, { recursive: true, force: true }));
+  const npmGround = writeFixtureFile(repo, 'packages/ground/npm/bin/ground', '#!/bin/sh\n');
+  chmodSync(npmGround, 0o755);
+
+  assert.equal(resolveGroundBinary(repo, 'linux', 'x64'), 'ground');
+  assert.equal(resolveGroundBinary(repo, 'darwin', 'arm64'), npmGround);
+});
+
+test('CLI reconciles cross-target exclusions against analyzed coverage', (t) => {
+  const repo = mkdtempSync(join(tmpdir(), 'ground-review-reconcile-'));
+  const binaryDir = mkdtempSync(join(tmpdir(), 'ground-review-reconcile-binary-'));
+  t.after(() => {
+    rmSync(repo, { recursive: true, force: true });
+    rmSync(binaryDir, { recursive: true, force: true });
+  });
+
+  mustRun('git', ['init', '-b', 'main'], repo);
+  mustRun('git', ['config', 'core.hooksPath', '/dev/null'], repo);
+  writeFixtureFile(repo, 'packages/one/package.json', '{"name":"@example/one"}\n');
+  writeFixtureFile(repo, 'packages/one/src/index.ts', 'export const one = 1;\n');
+  writeFixtureFile(repo, 'packages/two/package.json', '{"name":"@example/two"}\n');
+  writeFixtureFile(repo, 'packages/two/src/index.ts', 'export const two = 1;\n');
+  writeFixtureFile(repo, 'README.md', 'baseline\n');
+  mustRun('git', ['add', '.'], repo);
+  mustRun('git', ['commit', '-m', 'baseline'], repo);
+  writeFixtureFile(repo, 'packages/one/src/index.ts', 'export const one = 2;\n');
+  writeFixtureFile(repo, 'packages/two/src/index.ts', 'export const two = 2;\n');
+  writeFixtureFile(repo, 'README.md', 'changed\n');
+
+  const fakeGround = writeFixtureFile(
+    binaryDir,
+    'fake-ground',
+    `#!/bin/sh
+if [ "$2" = "packages/one" ]; then
+  analyzed="packages/one/src/index.ts"
+else
+  analyzed="packages/two/src/index.ts"
+fi
+printf '{"discovered_changed_files":3,"analyzable_changed_files":1,"changed_file_list":["%s"],"excluded_changed_files":[{"path":"packages/one/src/index.ts","reason":"outside_analysis_root"},{"path":"packages/two/src/index.ts","reason":"outside_analysis_root"},{"path":"README.md","reason":"outside_analysis_root"}],"new_issues":[]}\\n' "$analyzed"
+`
+  );
+  chmodSync(fakeGround, 0o755);
+
+  const result = run(process.execPath, [scriptPath, '--base', 'HEAD', '--format', 'json'], repo, {
+    GROUND_BINARY: fakeGround
+  });
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const receipt = JSON.parse(result.stdout);
+  assert.deepEqual(receipt.coverage.excluded_changed_files, [
+    { path: 'README.md', reason: 'unsupported_extension' }
+  ]);
+  assert.deepEqual(
+    receipt.targets.map((target) => target.coverage.excluded_changed_files),
+    [[], []]
+  );
 });
