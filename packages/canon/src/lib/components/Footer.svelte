@@ -381,13 +381,17 @@
         <p>Operating systems for work that has to hold up.</p>
       </a>
     {:else}
-      <div class="footer-editorial-identity" aria-hidden="true">
+      <a
+        href="/"
+        class="footer-editorial-identity footer-editorial-identity--link"
+        aria-label={`CREATE SOMETHING .${mode} home`}
+      >
         <div>
           <span>CREATE</span>
           <span>SOMETHING</span>
         </div>
         <p>Operating systems for work that has to hold up.</p>
-      </div>
+      </a>
     {/if}
   {/if}
 
@@ -397,7 +401,7 @@
       <div class="footer-links-grid">
         <!-- About / Brand Column -->
         <div class="footer-brand-column">
-          {#if (usesPerformanceStyle && !usesEditorialStyle) || (usesEditorialStyle && !brandAsset)}
+          {#if usesPerformanceStyle && !usesEditorialStyle}
             <a
               href="/"
               class="footer-mark"
@@ -413,7 +417,9 @@
           {/if}
 
           {#if aboutText}
-            {#if !brandAsset}<div class="brand-title mb-4">CREATE SOMETHING</div>{/if}
+            {#if !brandAsset && !usesEditorialStyle}
+              <div class="brand-title mb-4">CREATE SOMETHING</div>
+            {/if}
             <p class="brand-description max-w-md mb-6">
               {aboutText}
             </p>
@@ -1272,17 +1278,6 @@
     border-radius: var(--radius-performance-editorial, 0.375rem);
     background: var(--color-performance-editorial-dark-secondary, #2e2927);
     box-shadow: none;
-  }
-
-  .footer-editorial .footer-mark {
-    --color-performance-fg-primary: var(--color-performance-editorial-brand, #fcaa2d);
-    color: var(--color-performance-editorial-brand, #fcaa2d);
-  }
-
-  .footer-editorial .footer-mark__asset {
-    width: min(13.5rem, 100%);
-    height: auto;
-    max-height: 3.5rem;
   }
 
   .footer-editorial .brand-title {

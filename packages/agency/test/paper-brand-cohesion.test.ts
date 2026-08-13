@@ -36,7 +36,7 @@ test('the Agency footer uses one linked lockup instead of repeating the brand in
   );
   assert.match(
     footer,
-    /\{#if \(usesPerformanceStyle && !usesEditorialStyle\) \|\| \(usesEditorialStyle && !brandAsset\)\}/
+    /\{#if usesPerformanceStyle && !usesEditorialStyle\}/
   );
   assert.match(footer, /\.footer-editorial-identity--link:focus-visible/);
 });

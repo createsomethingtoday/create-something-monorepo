@@ -189,6 +189,7 @@
   <div class="layout-root property-performance">
     <Navigation
       logo="CREATE SOMETHING"
+      logoSuffix=".io"
       links={navLinks}
       currentPath={$page.url.pathname}
       fixed={true}
