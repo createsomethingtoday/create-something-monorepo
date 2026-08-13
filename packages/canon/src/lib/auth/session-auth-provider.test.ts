@@ -106,10 +106,79 @@ describe('createAuthHooks provider ownership', () => {
 			'https://id.createsomething.space/v1/auth/logout',
 			expect.objectContaining({ method: 'POST' }),
 		);
-		expect(cleared).toEqual(['cs_access_token', 'cs_refresh_token']);
+		expect(cleared).toEqual([
+			'cs_access_token',
+			'cs_refresh_token',
+			'cs_access_token',
+			'cs_refresh_token',
+		]);
 		expect(await response.json()).toEqual({
 			success: true,
 			logoutUrl: 'https://createsomething.agency/login',
+			revocation: 'succeeded',
+		});
+	});
+
+	it('clears both host-only and property-domain cookies during production logout', async () => {
+		vi.stubGlobal('fetch', vi.fn(async () => Response.json({ success: true })));
+		const cleared: Array<{ name: string; domain?: string }> = [];
+
+		const response = await handleLogout(
+			new Request('https://createsomething.agency/api/auth/logout', {
+				method: 'POST',
+				headers: { Cookie: 'cs_refresh_token=identity-refresh-token' },
+			}),
+			{
+				get: () => undefined,
+				set: (name: string, value: string, options: { domain?: string }) => {
+					if (value === '') cleared.push({ name, domain: options.domain });
+				},
+				delete: () => undefined,
+			},
+			{ env: { ENVIRONMENT: 'production' } },
+			{ authProvider: { type: 'identity-worker' } },
+		);
+
+		expect(response.status).toBe(200);
+		expect(cleared).toEqual([
+			{ name: 'cs_access_token', domain: undefined },
+			{ name: 'cs_refresh_token', domain: undefined },
+			{ name: 'cs_access_token', domain: '.createsomething.agency' },
+			{ name: 'cs_refresh_token', domain: '.createsomething.agency' },
+		]);
+	});
+
+	it('reports remote revocation failure without preserving the local session', async () => {
+		vi.stubGlobal('fetch', vi.fn(async () => Response.json({ error: 'unavailable' }, { status: 503 })));
+		const cleared: string[] = [];
+
+		const response = await handleLogout(
+			new Request('https://createsomething.agency/api/auth/logout', {
+				method: 'POST',
+				headers: { Cookie: 'cs_refresh_token=identity-refresh-token' },
+			}),
+			{
+				get: () => undefined,
+				set: (name: string, value: string) => {
+					if (value === '') cleared.push(name);
+				},
+				delete: () => undefined,
+			},
+			{ env: { ENVIRONMENT: 'production' } },
+			{ authProvider: { type: 'identity-worker' } },
+		);
+
+		expect(response.status).toBe(200);
+		expect(cleared).toEqual([
+			'cs_access_token',
+			'cs_refresh_token',
+			'cs_access_token',
+			'cs_refresh_token',
+		]);
+		expect(await response.json()).toEqual({
+			success: true,
+			logoutUrl: 'https://createsomething.agency/login',
+			revocation: 'failed',
 		});
 	});
 });

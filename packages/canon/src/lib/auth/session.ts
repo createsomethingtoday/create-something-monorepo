@@ -676,14 +676,24 @@ export async function handleLogout(
 			getAuth0Config(platform?.env as Record<string, string | undefined> | undefined) ??
 			undefined;
 
-		// Get refresh token to revoke at Identity Worker
-		const refreshToken = getRefreshTokenFromRequest(request);
-		if (refreshToken) {
-			await revokeSession(refreshToken, authProvider);
+		// Clear the host-only cookies used by the current first-party handlers.
+		clearSessionCookies(cookies, isProduction ?? true);
+
+		// Also clear legacy property-domain cookies when production previously set them.
+		if (domain) {
+			clearSessionCookies(cookies, isProduction ?? true, domain);
 		}
 
-		// Clear JWT cookies
-		clearSessionCookies(cookies, isProduction ?? true, domain);
+		// Revoke the refresh token after local session removal is guaranteed.
+		const refreshToken = getRefreshTokenFromRequest(request);
+		let revocation: 'succeeded' | 'failed' | 'not_attempted' = 'not_attempted';
+		if (refreshToken) {
+			const revoked = await revokeSession(refreshToken, authProvider);
+			revocation = revoked ? 'succeeded' : 'failed';
+			if (!revoked) {
+				console.warn('Remote session revocation failed after local logout');
+			}
+		}
 
 		const logoutUrl =
 			authProvider?.type === 'auth0'
@@ -693,7 +703,7 @@ export async function handleLogout(
 					})
 				: `${url.origin}/login`;
 
-		return new Response(JSON.stringify({ success: true, logoutUrl }), {
+		return new Response(JSON.stringify({ success: true, logoutUrl, revocation }), {
 			status: 200,
 			headers: {
 				'Content-Type': 'application/json',
