@@ -6,7 +6,7 @@
 
 `THRESHOLD_DWELLING_ASSEMBLY_SCHEDULE` is the canonical material/assembly contract for the current deterministic massing guide. It binds every Rev 0.8 plan zone and both rendered wall classes to a stable material number and a conceptual assembly.
 
-The exported GLB and local browser massing guide read these bindings directly. They do not assign colors from room type or a separate rendering palette. The browser guide is a Three.js mesh built directly from the current inch-coordinate plan, converted to meter render space only for viewing; it does not import a decorative mesh as an alternate source of dimensions. The render receipt and client-safe spatial package record the schedule ID and the material IDs actually present in the asset.
+The exported GLB and local browser massing guide read these bindings directly. They do not assign colors from room type or a separate rendering palette. The browser guide is a Three.js mesh built directly from the current inch-coordinate plan, converted to meter render space only for viewing; it does not import a decorative mesh as an alternate source of dimensions. Its material-study mode generates four procedural client-side recipes for the roles presently bound to geometry: polished concrete, porcelain, mineral rainscreen, and gypsum/mineral finish. It uses no external image or manufacturer asset. Cedar, structural concrete and steel, glass, formed metal, casework, terrace, and grade roles stay visible as deferred references until their geometry is issued. The render receipt and client-safe spatial package record the schedule ID and the material IDs actually present in the asset.
 
 | Exact in the current package | Meaning |
 | --- | --- |
