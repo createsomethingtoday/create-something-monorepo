@@ -5,7 +5,8 @@ import {
 import { THRESHOLD_DWELLING_INTERIOR_INFILL } from '@create-something/canon/experiments/threshold-dwelling/interior-infill';
 import {
   THRESHOLD_DWELLING_ASSEMBLY_SCHEDULE,
-  resolveThresholdDwellingAssemblyBinding
+  resolveThresholdDwellingAssemblyBinding,
+  splitThresholdDwellingExteriorWallForMaterialStudy
 } from '@create-something/canon/experiments/threshold-dwelling/assembly-schedule';
 import {
   THRESHOLD_DWELLING_PRIVATE_GEOMETRY_EVIDENCE_PACKET,
@@ -199,7 +200,7 @@ const assets = [
   {
     id: 'browser-massing-glb',
     clientPath: 'experiments/threshold-dwelling/renders/threshold-dwelling-r08-massing-guide.glb',
-    sha256: '03b92e329d3ecc5c729d9ee038bf0db19cca886a979a3dd4ba22b9a363b610f9'
+    sha256: '1b03a571ec788492b1994792c1349d2b151860f69d01eaef36d05c4584892091'
   }
 ] as const satisfies readonly WorkWayClientAsset[];
 
@@ -240,10 +241,15 @@ function massingMaterialIds(): string[] {
     }
     return binding.renderMaterialId;
   });
-  const wallMaterialIds = ['exterior', 'interior'].map((id) => {
-    const binding = resolveThresholdDwellingAssemblyBinding('wall-class', id);
+  const wallMaterialIds = THRESHOLD_DWELLING_LIVING_SYSTEM_FLOOR_PLAN.walls.flatMap((wall) => {
+    if (wall.exterior) {
+      return splitThresholdDwellingExteriorWallForMaterialStudy(wall).map(
+        (segment) => segment.materialId
+      );
+    }
+    const binding = resolveThresholdDwellingAssemblyBinding('wall-class', 'interior');
     if (!binding?.renderInMassingGuide) {
-      throw new Error(`Threshold Dwelling spatial package is missing a massing wall material binding for ${id}.`);
+      throw new Error('Threshold Dwelling spatial package is missing an interior massing wall material binding.');
     }
     return binding.renderMaterialId;
   });

@@ -24,7 +24,7 @@ test('derives a browser 3D massing guide from the same Rev 0.8 plan used for 2D 
     'threshold-dwelling-rev-0.8-design-intent-assembly-schedule'
   );
   assert.equal(geometry.floors.length, 11);
-  assert.equal(geometry.walls.length, 34);
+  assert.equal(geometry.walls.length, 41);
   assert.ok(geometry.floors.every((floor) => floor.vertices.every((vertex) => vertex.yIn === 0)));
   assert.deepEqual(
     [...new Set(geometry.floors.map((floor) => floor.materialId))],
@@ -32,7 +32,20 @@ test('derives a browser 3D massing guide from the same Rev 0.8 plan used for 2D 
   );
   assert.deepEqual(
     [...new Set(geometry.walls.map((wall) => wall.materialId))],
-    ['M-ENV-001', 'M-ENV-002']
+    ['M-ENV-002', 'M-ENV-001']
+  );
+  const exteriorWallLengthInByMaterial = geometry.walls
+    .filter((wall) => wall.exterior)
+    .reduce<Record<string, number>>((lengths, wall) => {
+      const [start, end] = wall.vertices;
+      const lengthIn = Math.hypot(end.xIn - start.xIn, end.zIn - start.zIn);
+      lengths[wall.materialId] = (lengths[wall.materialId] ?? 0) + lengthIn;
+      return lengths;
+    }, {});
+  assert.equal(exteriorWallLengthInByMaterial['M-ENV-001'], 1140);
+  assert.equal(exteriorWallLengthInByMaterial['M-ENV-002'], 1356);
+  assert.ok(
+    exteriorWallLengthInByMaterial['M-ENV-002'] > exteriorWallLengthInByMaterial['M-ENV-001']
   );
   assert.ok(
     [...geometry.floors, ...geometry.walls].every(

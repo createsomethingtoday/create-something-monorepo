@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { THRESHOLD_DWELLING_LIVING_SYSTEM_FLOOR_PLAN } from './living-system-revision.js';
 import {
   THRESHOLD_DWELLING_ASSEMBLY_SCHEDULE,
+  THRESHOLD_DWELLING_FACADE_MATERIAL_STUDY,
   resolveThresholdDwellingAssemblyBinding
 } from './assembly-schedule.js';
 
@@ -57,15 +58,26 @@ describe('Threshold Dwelling assembly schedule', () => {
     );
   });
 
-  it('keeps glass dominant outside, concrete primary inside, cedar restrained, and steel limited to support roles', () => {
+  it('keeps concrete dominant outside and inside, concentrates glass at review-only spans, and limits steel to support roles', () => {
     const schedule = THRESHOLD_DWELLING_ASSEMBLY_SCHEDULE;
     const exteriorBinding = resolveThresholdDwellingAssemblyBinding('wall-class', 'exterior');
     const interiorBinding = resolveThresholdDwellingAssemblyBinding('wall-class', 'interior');
     const exteriorAssembly = schedule.assemblies.find((assembly) => assembly.id === 'A-WAL-001');
     const glazingAssembly = schedule.assemblies.find((assembly) => assembly.id === 'A-OPN-001');
 
-    expect(exteriorBinding?.renderMaterialId).toBe('M-ENV-001');
+    expect(exteriorBinding?.renderMaterialId).toBe('M-ENV-002');
     expect(interiorBinding?.renderMaterialId).toBe('M-ENV-002');
+    expect(THRESHOLD_DWELLING_FACADE_MATERIAL_STUDY).toMatchObject({
+      visualStatus: 'horizontal-material-allocation-study-not-elevation',
+      targetGlazingToGrossExteriorWallRatio: 950 / 2140,
+      constructionReady: false
+    });
+    expect(THRESHOLD_DWELLING_FACADE_MATERIAL_STUDY.spans.map((span) => span.id)).toEqual([
+      'north-public-glazing-field',
+      'east-arrival-glazing-field',
+      'south-private-glazing-field',
+      'west-hall-glazing-field'
+    ]);
     expect(schedule.materials.find((material) => material.id === 'M-ENV-002')?.name).toBe(
       'Architectural Concrete'
     );
@@ -76,7 +88,7 @@ describe('Threshold Dwelling assembly schedule', () => {
         expect.objectContaining({ materialId: 'M-STR-002' })
       ])
     );
-    expect(glazingAssembly?.purpose).toMatch(/Maximize useful floor-to-ceiling glass/i);
+    expect(glazingAssembly?.purpose).toMatch(/Concentrate useful floor-to-ceiling glass/i);
     expect(glazingAssembly?.layers).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ materialId: 'M-ENV-001' }),

@@ -22,6 +22,8 @@
   } from 'three';
   import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
+  import { THRESHOLD_DWELLING_FACADE_MATERIAL_STUDY } from '@create-something/canon/experiments/threshold-dwelling/assembly-schedule';
+
   import {
     toThreeMassingVector,
     type WorkWayMassingGeometry,
@@ -47,6 +49,10 @@
 
   const initialCameraPosition = { x: 14.6, y: 12.4, z: 17.2 };
   const initialCameraTarget = { x: 0, y: 1.15, z: 0 };
+  const glazingTargetPercent = Math.round(
+    THRESHOLD_DWELLING_FACADE_MATERIAL_STUDY.targetGlazingToGrossExteriorWallRatio * 100
+  );
+  const concreteTargetPercent = 100 - glazingTargetPercent;
 
   let canvas: HTMLCanvasElement;
   let renderer: WebGLRenderer | undefined;
@@ -441,6 +447,11 @@
       <p>
         These are deterministic Three.js texture recipes generated from the current role schedule. They are not manufacturer assets, selected products, thicknesses, or performance claims.
       </p>
+      <div class="facade-study-summary" data-testid="facade-material-study">
+        <p>Facade allocation study</p>
+        <strong>Concrete ≈ {concreteTargetPercent}% · Glass ≈ {glazingTargetPercent}%</strong>
+        <span>Concrete is the exterior default; four selected spans are transparent. Horizontal allocation only.</span>
+      </div>
     </div>
     <ul>
       {#each THRESHOLD_DWELLING_MATERIAL_STUDIES as study}
@@ -453,7 +464,7 @@
     <details>
       <summary>Deferred roles · {THRESHOLD_DWELLING_DEFERRED_MATERIAL_STUDY_ROLES.length} not drawn</summary>
       <p>
-        Cedar, steel, structural concrete, gypsum/mineral finish, casework, roof/trim, terrace, and grade roles remain visible in the schedule but have no issued 3D geometry in this revision. An exterior wall rendered as glass denotes the design role; the 60% aggregate target is not pane geometry or exact glass coverage.
+        Cedar, steel, structural concrete, gypsum/mineral finish, casework, roof/trim, terrace, and grade roles remain visible in the schedule but have no issued 3D geometry in this revision. Glass is allocated only to four review spans; the approximately 45% target is not pane geometry, exact glass coverage, or an elevation issue.
       </p>
       <ul>
         {#each THRESHOLD_DWELLING_DEFERRED_MATERIAL_STUDY_ROLES as role}
@@ -619,6 +630,27 @@
     color: #aaa89d;
     font-size: 0.73rem;
     line-height: 1.45;
+  }
+
+  .facade-study-summary {
+    display: grid;
+    gap: 0.18rem;
+    margin-top: 0.65rem;
+    padding: 0.55rem 0.6rem;
+    border-left: 2px solid #d5b66a;
+    background: rgba(226, 217, 188, 0.06);
+  }
+
+  .facade-study-summary p,
+  .facade-study-summary span {
+    color: #c4c0b2;
+    font: 0.64rem ui-monospace, SFMono-Regular, Menlo, monospace;
+    line-height: 1.4;
+  }
+
+  .facade-study-summary strong {
+    color: #f0ddaa;
+    font: 0.76rem ui-monospace, SFMono-Regular, Menlo, monospace;
   }
 
   .material-study-panel > ul,
