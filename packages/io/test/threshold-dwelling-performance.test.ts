@@ -78,6 +78,19 @@ test('Threshold Dwelling exposes build quantities and unit-rate cost drivers', (
   assert.match(pageSource, /Planning allowance/);
 });
 
+test('Threshold Dwelling presents the approved 10 by 27 foot east projection consistently', () => {
+  assert.match(pageSource, /overhang\(65, 13, 10, 14, 'Covered\\nEntry'\)/);
+  assert.match(pageSource, /overhang\(65, 13, 10, 14, 'Entry'\)/);
+  assert.match(pageSource, /entry:\s*\{ x: 75, y: 16 \}/);
+  assert.doesNotMatch(pageSource, /overhang\(65, 13, 8, 14/);
+});
+
+test('Threshold Dwelling names the approved Entry Hall in the floor plan and circulation context', () => {
+  assert.match(pageSource, /zone\(55, 13, 10, 7, 'public'\), \/\/ Entry hall/);
+  assert.match(pageSource, /room\(60, 16\.5, 'Entry\\nHall', true\)/);
+  assert.match(pageSource, /zones: pavilion\.zones/);
+});
+
 test('Threshold Dwelling keeps interactive diagrams outside fullscreen trigger buttons', () => {
   for (const component of ['LightStudy', 'Circulation', 'DailyRhythm']) {
     assert.match(

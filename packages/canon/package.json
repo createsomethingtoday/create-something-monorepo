@@ -154,6 +154,34 @@
 			"types": "./dist/experiments/threshold-dwelling/index.d.ts",
 			"svelte": "./dist/experiments/threshold-dwelling/index.js"
 		},
+		"./experiments/threshold-dwelling/dimensioned-project": {
+			"types": "./dist/experiments/threshold-dwelling/dimensioned-project.d.ts",
+			"default": "./dist/experiments/threshold-dwelling/dimensioned-project.js"
+		},
+		"./experiments/threshold-dwelling/living-system-revision": {
+			"types": "./dist/experiments/threshold-dwelling/living-system-revision.d.ts",
+			"default": "./dist/experiments/threshold-dwelling/living-system-revision.js"
+		},
+		"./experiments/threshold-dwelling/interior-infill": {
+			"types": "./dist/experiments/threshold-dwelling/interior-infill.d.ts",
+			"default": "./dist/experiments/threshold-dwelling/interior-infill.js"
+		},
+		"./experiments/threshold-dwelling/assembly-schedule": {
+			"types": "./dist/experiments/threshold-dwelling/assembly-schedule.d.ts",
+			"default": "./dist/experiments/threshold-dwelling/assembly-schedule.js"
+		},
+		"./experiments/threshold-dwelling/geometry-issuance": {
+			"types": "./dist/experiments/threshold-dwelling/geometry-issuance.d.ts",
+			"default": "./dist/experiments/threshold-dwelling/geometry-issuance.js"
+		},
+		"./experiments/threshold-dwelling/geometry-evidence-packet": {
+			"types": "./dist/experiments/threshold-dwelling/geometry-evidence-packet.d.ts",
+			"default": "./dist/experiments/threshold-dwelling/geometry-evidence-packet.js"
+		},
+		"./experiments/threshold-dwelling/professional-review": {
+			"types": "./dist/experiments/threshold-dwelling/professional-review.d.ts",
+			"default": "./dist/experiments/threshold-dwelling/professional-review.js"
+		},
 		"./experiments/kinetic-typography": {
 			"types": "./dist/experiments/kinetic-typography/index.d.ts",
 			"svelte": "./dist/experiments/kinetic-typography/index.js"

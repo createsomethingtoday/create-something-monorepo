@@ -22,7 +22,8 @@
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
 		"test:search": "vitest run src/lib/search/sitemap.test.ts",
-		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings && pnpm test:search",
+		"test:workway": "tsx --test src/lib/workway/threshold-dwelling-spatial-package.test.ts src/lib/workway/threshold-dwelling-massing.test.ts src/lib/workway/threshold-dwelling-material-study.test.ts",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings && pnpm test:search && pnpm test:workway",
 		"test:nba": "tsx --test src/lib/nba/scoreboard-state.test.ts src/lib/nba/api.test.ts workers/nba-proxy/src/scoreboard.test.ts workers/nba-proxy/src/archive.test.ts workers/nba-proxy/src/index.test.ts",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings --watch",
 		"deploy": "pnpm build && CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=create-something-space --commit-dirty=true",
@@ -40,6 +41,7 @@
 		"@types/d3-force": "^3.0.10",
 		"@types/d3-selection": "^3.0.11",
 		"@types/node": "^24.10.1",
+		"@types/three": "^0.170.0",
 		"autoprefixer": "^10.4.22",
 		"highlight.js": "^11.11.1",
 		"marked": "^17.0.0",
@@ -71,6 +73,7 @@
 		"codemirror": "^6.0.2",
 		"d3-force": "^3.0.0",
 		"d3-selection": "^3.0.0",
-		"lucide-svelte": "^0.562.0"
+		"lucide-svelte": "^0.562.0",
+		"three": "^0.170.0"
 	}
 }

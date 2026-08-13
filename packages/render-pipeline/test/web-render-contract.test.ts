@@ -1,18 +1,74 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { test } from 'node:test';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import {
   createRenderReceipt,
+  generateFloorPlanSvg,
   hashRenderRecipe,
   inspectGlb,
   normalizeRenderRecipe,
   type RenderRecipeInput
 } from '../src/index.js';
+import { THRESHOLD_DWELLING } from '../data/threshold-dwelling.js';
+import { THRESHOLD_DWELLING_LIVING_SYSTEM_PUBLIC_ROOM_RENDER } from '../data/threshold-dwelling-living-system-render.js';
+
+import { THRESHOLD_DWELLING_LIVING_SYSTEM_FLOOR_PLAN } from '@create-something/canon/experiments/threshold-dwelling/living-system-revision';
 
 const SOURCE_HASH = 'a'.repeat(64);
+
+test('uses Canon’s derived Threshold Dwelling revision instead of a second render geometry source', () => {
+  assert.equal(THRESHOLD_DWELLING, THRESHOLD_DWELLING_LIVING_SYSTEM_FLOOR_PLAN);
+  assert.equal(THRESHOLD_DWELLING.width, 65);
+  assert.equal(THRESHOLD_DWELLING.depth, 42);
+  assert.equal(THRESHOLD_DWELLING.doors?.length, 13);
+  assert.deepEqual(THRESHOLD_DWELLING.entry, { x: 75, y: 16 });
+  assert.deepEqual(
+    THRESHOLD_DWELLING.overhangs?.find((overhang) => overhang.label === 'Arrival\nLoggia'),
+    { x: 65, y: 13, width: 10, height: 14, label: 'Arrival\nLoggia' }
+  );
+  assert.deepEqual(
+    THRESHOLD_DWELLING.zones.find((zone) => zone.x === 55 && zone.y === 13),
+    { x: 55, y: 13, width: 10, height: 7, type: 'public' }
+  );
+  assert.deepEqual(
+    THRESHOLD_DWELLING.rooms.find((room) => room.name === 'Entry\nHall'),
+    { x: 60, y: 16.5, name: 'Entry\nHall', small: true }
+  );
+  assert.deepEqual(
+    THRESHOLD_DWELLING.overhangs?.find((overhang) => overhang.label === 'Companion\nCarport'),
+    { x: 80, y: 0, width: 12, height: 27, label: 'Companion\nCarport' }
+  );
+  const svg = generateFloorPlanSvg(THRESHOLD_DWELLING);
+  assert.match(svg, />Arrival<\/text>/);
+  assert.match(svg, />Loggia<\/text>/);
+  assert.match(svg, />Companion<\/text>/);
+  assert.match(svg, />Carport<\/text>/);
+});
+
+test('records the public-room render as an auditable Rev 0.8 visualization rather than construction evidence', async () => {
+  const render = THRESHOLD_DWELLING_LIVING_SYSTEM_PUBLIC_ROOM_RENDER;
+
+  assert.equal(render.project.baseRevision, '0.7');
+  assert.equal(render.project.derivedRevision, '0.8');
+  assert.equal(render.status, 'proposed-design-visualization');
+  assert.equal(render.visualChecks.circulationEdgeVisiblyClear, true);
+  assert.equal(render.visualChecks.constructionEvidence, 'not-supplied');
+  assert.equal(render.constructionReady, false);
+  assert.match(render.asset.sha256, /^[a-f0-9]{64}$/);
+
+  const asset = await readFile(
+    new URL(
+      '../../space/static/experiments/threshold-dwelling/renders/living-system-public-room-hero-v1.png',
+      import.meta.url
+    )
+  );
+  const actualHash = createHash('sha256').update(asset).digest('hex');
+  assert.equal(actualHash, render.asset.sha256);
+});
 
 function validRecipe(): RenderRecipeInput {
   return {

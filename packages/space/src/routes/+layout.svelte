@@ -8,6 +8,7 @@
 
   let { children } = $props();
   let mobileNavigationOpen = $state(false);
+  const isWorkWayLocalPreview = $derived($page.url.pathname === '/workway/threshold-dwelling');
 
   // View Transitions API - Hermeneutic Navigation
   // .space: Experimental (300ms)
@@ -131,6 +132,11 @@
 
 <LayoutSEO property="space" />
 
+{#if isWorkWayLocalPreview}
+  <main id="main-content" class="workway-local-shell">
+    {@render children()}
+  </main>
+{:else}
 <Analytics property="space" />
 
 <!-- Unified Search - Cmd/Ctrl+K to open -->
@@ -190,6 +196,7 @@
 
   <ModeIndicator current="space" />
 </div>
+{/if}
 
 <style>
   .layout {
@@ -199,5 +206,9 @@
 
   .content {
     padding-top: 72px;
+  }
+
+  .workway-local-shell {
+    min-height: 100vh;
   }
 </style>

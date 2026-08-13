@@ -72,6 +72,8 @@ apps/guard-performance-lab/build/
 apps/guard-performance-lab/node_modules/
 !apps/meeting-capture/
 !apps/meeting-capture/**
+!apps/workway-visionos/
+!apps/workway-visionos/**
 !apps/atlas-studio-desktop/
 !apps/atlas-studio-desktop/**
 apps/atlas-studio-desktop/node_modules/

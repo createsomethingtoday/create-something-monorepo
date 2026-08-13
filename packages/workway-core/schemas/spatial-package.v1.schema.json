@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://workway.local/schemas/spatial-package.v1.schema.json",
+  "title": "WorkWay Spatial Package v1",
+  "description": "A client-safe, derived scene and navigation package. It never authorizes construction or includes private source documents.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "canonicalProject",
+    "spatialRevision",
+    "clientSourceDocuments",
+    "assets",
+    "sceneRepresentations",
+    "entityRenderBindings",
+    "roomChapters",
+    "portals",
+    "validationReceipts",
+    "constructionReady"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "workway.spatial-package.v1" },
+    "id": { "type": "string", "minLength": 1 },
+    "canonicalProject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["projectId", "projectRevision"],
+      "properties": {
+        "projectId": { "type": "string", "minLength": 1 },
+        "projectRevision": { "type": "string", "minLength": 1 }
+      }
+    },
+    "spatialRevision": { "type": "string", "minLength": 1 },
+    "clientSourceDocuments": { "const": "excluded" },
+    "assets": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/asset" }
+    },
+    "sceneRepresentations": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/representation" }
+    },
+    "entityRenderBindings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/entityBinding" }
+    },
+    "roomChapters": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/roomChapter" }
+    },
+    "portals": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/portal" }
+    },
+    "validationReceipts": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/receipt" }
+    },
+    "constructionReady": { "const": false }
+  },
+  "$defs": {
+    "asset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "clientPath", "sha256"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "clientPath": { "type": "string", "pattern": "^[A-Za-z0-9._/-]+$" },
+        "sha256": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" }
+      }
+    },
+    "representation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "format", "status", "canonicalRevision", "spatialRevision", "assetId"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "format": { "enum": ["svg", "png", "glb", "usd", "usdz"] },
+        "status": { "enum": ["available", "unissued"] },
+        "canonicalRevision": { "type": "string", "minLength": 1 },
+        "spatialRevision": { "type": "string", "minLength": 1 },
+        "assetId": { "type": ["string", "null"] }
+      }
+    },
+    "entityBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entityId", "renderEntityId"],
+      "properties": {
+        "entityId": { "type": "string", "minLength": 1 },
+        "renderEntityId": { "type": "string", "minLength": 1 }
+      }
+    },
+    "roomChapter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "entityId", "widthIn", "depthIn", "scale", "safeStage"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "entityId": { "type": "string", "minLength": 1 },
+        "widthIn": { "type": "integer", "minimum": 1 },
+        "depthIn": { "type": "integer", "minimum": 1 },
+        "scale": { "const": "one-to-one" },
+        "safeStage": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["minimumWidthIn", "minimumDepthIn", "locomotion", "statement"],
+          "properties": {
+            "minimumWidthIn": { "type": "integer", "minimum": 1 },
+            "minimumDepthIn": { "type": "integer", "minimum": 1 },
+            "locomotion": { "const": "room-chapter-rebase" },
+            "statement": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    },
+    "portal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "fromChapterId", "toChapterId", "traversal"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "fromChapterId": { "type": "string", "minLength": 1 },
+        "toChapterId": { "type": "string", "minLength": 1 },
+        "traversal": { "const": "explicit-transition" }
+      }
+    },
+    "receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "assessment", "sourceRevision"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "assessment": { "type": "string", "minLength": 1 },
+        "sourceRevision": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

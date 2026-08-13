@@ -33,8 +33,8 @@ Bedroom</text>
 <line x1="346" y1="208" x2="346" y2="112" stroke="rgba(0,0,0,0.3)" stroke-width="0.5"/>
 <line x1="382" y1="208" x2="382" y2="112" stroke="rgba(0,0,0,0.3)" stroke-width="0.5"/>
 <rect x="484" y="112" width="96" height="72" fill="none" stroke="black" stroke-width="1"/>
-<line x1="616" y1="208" x2="616" y2="100" stroke="black" stroke-width="3"/>
 <line x1="112" y1="208" x2="112" y2="76" stroke="black" stroke-width="3"/>
+<line x1="616" y1="208" x2="616" y2="100" stroke="black" stroke-width="3"/>
 <line x1="352" y1="208" x2="352" y2="100" stroke="black" stroke-width="2"/>
 <line x1="436" y1="208" x2="436" y2="100" stroke="black" stroke-width="2"/>
 <text x="40" y="25" font-family="Inter, system-ui, sans-serif" font-size="10" font-weight="bold" fill="black">SECTION B-B</text>
