@@ -27,6 +27,20 @@ test('Agency uses its property-owned outlined logo assets without changing Canon
   }
 });
 
+test('the Agency footer uses one linked lockup instead of repeating the brand inside its link panel', () => {
+  const footer = read('../canon/src/lib/components/Footer.svelte');
+
+  assert.match(
+    footer,
+    /class="footer-editorial-identity footer-editorial-identity--link"[\s\S]*?aria-label=\{`\$\{brandAsset\.label\} home`\}/
+  );
+  assert.match(
+    footer,
+    /\{#if \(usesPerformanceStyle && !usesEditorialStyle\) \|\| \(usesEditorialStyle && !brandAsset\)\}/
+  );
+  assert.match(footer, /\.footer-editorial-identity--link:focus-visible/);
+});
+
 test('the Agency operating story uses a scoped GSAP motion intent with an immediate reduced-motion state', () => {
   const home = read('src/routes/+page.svelte');
   const narrative = read(
