@@ -68,6 +68,7 @@ test('shared chrome and route SEO reference the canonical ring identity', () => 
   const navigation = readFileSync(resolve(agencyRoot, '../canon/src/lib/components/Navigation.svelte'), 'utf8');
   const footer = readFileSync(resolve(agencyRoot, '../canon/src/lib/components/Footer.svelte'), 'utf8');
   const layoutSeo = readFileSync(resolve(agencyRoot, '../canon/src/lib/components/LayoutSEO.svelte'), 'utf8');
+  const agencyLayout = readFileSync(resolve(agencyRoot, 'src/routes/+layout.svelte'), 'utf8');
   const seo = readFileSync(resolve(agencyRoot, '../canon/src/lib/components/SEO.svelte'), 'utf8');
 
   assert.match(navigation, /import \{ RingMark \}/);
@@ -75,6 +76,8 @@ test('shared chrome and route SEO reference the canonical ring identity', () => 
   assert.match(layoutSeo, /rel="manifest" href="\/manifest\.json"/);
   assert.match(layoutSeo, /rel="apple-touch-icon" href="\/apple-touch-icon\.png"/);
   assert.match(layoutSeo, /rel="mask-icon" href="\/mask-icon\.svg"/);
+  assert.match(agencyLayout, /LayoutSEO/);
+  assert.match(agencyLayout, /<LayoutSEO property="agency"\s*\/>/);
   assert.match(seo, /https:\/\/createsomething\.ltd\/#organization/);
   assert.match(
     seo,
