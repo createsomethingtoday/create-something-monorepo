@@ -4,9 +4,13 @@
     THRESHOLD_DWELLING_SPATIAL_PACKAGE,
     assetBrowserUrl,
     chapterForId,
+    createKitchenIslandClearanceProposal,
     createSessionAnnotation,
+    createSessionProposalDecision,
     portalsFrom,
-    type WorkWaySessionAnnotation
+    type WorkWaySessionAnnotation,
+    type WorkWaySessionOperation,
+    type WorkWaySessionProposalDecision
   } from '$lib/workway/threshold-dwelling-spatial-package';
 
   const spatialPackage = THRESHOLD_DWELLING_SPATIAL_PACKAGE;
@@ -18,12 +22,18 @@
   let activeChapterId = $state('kitchen');
   let annotationText = $state('Island clearance: compare the proposed 4 in south move.');
   let annotations = $state<WorkWaySessionAnnotation[]>([]);
+  let proposalDecision = $state<WorkWaySessionProposalDecision | null>(null);
 
+  const kitchenIslandProposal = createKitchenIslandClearanceProposal(spatialPackage);
   const activeChapter = $derived(chapterForId(spatialPackage, activeChapterId));
   const activePortals = $derived(portalsFrom(spatialPackage, activeChapterId));
   const activeDimensions = $derived(
     `${activeChapter.widthIn / 12} ft × ${activeChapter.depthIn / 12} ft`
   );
+  const sessionOperations = $derived<readonly WorkWaySessionOperation[]>([
+    ...(proposalDecision ? [proposalDecision] : []),
+    ...annotations
+  ]);
 
   function enterChapter(chapterId: string) {
     activeChapterId = chapterId;
@@ -48,6 +58,10 @@
 
   function returnToTabletop() {
     mode = 'tabletop';
+  }
+
+  function recordProposalDecision(decision: WorkWaySessionProposalDecision['decision']) {
+    proposalDecision = createSessionProposalDecision(spatialPackage, kitchenIslandProposal, decision);
   }
 </script>
 
@@ -187,6 +201,17 @@
               <img src={publicRoomVisual} alt="Proposed public room material visualization" />
             {/if}
             <div class="chapter-grid"></div>
+            {#if activeChapterId === kitchenIslandProposal.chapterId}
+              <div
+                class:decision-recorded={proposalDecision !== null}
+                class="proposal-overlay"
+                data-testid="island-clearance-proposal"
+              >
+                <p>PROPOSED · REVIEW BEFORE APPLY</p>
+                <strong>Island → 4 in south</strong>
+                <span>Refrigerator clearance 38 → 42 in · opposite aisle 48 → 44 in</span>
+              </div>
+            {/if}
             <div class="dimension-card">
               <p>Dimensionally meaningful</p>
               <strong data-testid="chapter-dimensions">{activeDimensions}</strong>
@@ -225,6 +250,45 @@
           </p>
         </div>
 
+        <section class="proposal-card" aria-label="Kitchen island clearance proposal">
+          <p class="section-label">Proposed change</p>
+          <h3>Kitchen island clearance</h3>
+          <p>{kitchenIslandProposal.intent}</p>
+          <dl class="proposal-measurements">
+            {#each kitchenIslandProposal.measurements as measurement}
+              <div>
+                <dt>{measurement.id.replaceAll('-', ' ')}</dt>
+                <dd>{measurement.currentIn} → {measurement.proposedIn} in{measurement.targetIn ? ` · target ${measurement.targetIn} in` : ''}</dd>
+              </div>
+            {/each}
+          </dl>
+          {#if proposalDecision}
+            <p class="decision-status" data-testid="proposal-decision-status">
+              {proposalDecision.decision === 'accepted' ? 'Accepted' : 'Rejected'} locally. Canonical geometry has not changed.
+            </p>
+          {:else}
+            <div class="proposal-actions">
+              <button
+                class="primary-action"
+                onclick={() => recordProposalDecision('accepted')}
+                data-testid="accept-island-proposal"
+              >
+                Approve and record
+              </button>
+              <button
+                class="secondary-action"
+                onclick={() => recordProposalDecision('rejected')}
+                data-testid="reject-island-proposal"
+              >
+                Reject
+              </button>
+            </div>
+          {/if}
+          <p class="proposal-boundary">
+            Local decision only. It neither applies geometry nor establishes construction or code compliance.
+          </p>
+        </section>
+
         <label for="annotation">Add an annotation</label>
         <textarea id="annotation" bind:value={annotationText} rows="4" data-testid="annotation-input"></textarea>
         <button class="primary-action" onclick={createAnnotation} data-testid="create-annotation">
@@ -232,13 +296,22 @@
         </button>
 
         <ol class="timeline" data-testid="session-timeline">
-          {#each annotations as annotation}
-            <li>
-              <span class="timeline-type">{annotation.kind}</span>
-              <strong>{annotation.text}</strong>
-              <code data-testid="annotation-operation-id">{annotation.operationId}</code>
-              <small>{chapterForId(spatialPackage, annotation.chapterId).title} · Rev {annotation.spatialRevision}</small>
-            </li>
+          {#each sessionOperations as operation}
+            {#if operation.kind === 'create-annotation'}
+              <li>
+                <span class="timeline-type">{operation.kind}</span>
+                <strong>{operation.text}</strong>
+                <code data-testid="annotation-operation-id">{operation.operationId}</code>
+                <small>{chapterForId(spatialPackage, operation.chapterId).title} · Rev {operation.spatialRevision}</small>
+              </li>
+            {:else}
+              <li>
+                <span class="timeline-type">{operation.kind}</span>
+                <strong>Kitchen island proposal {operation.decision}</strong>
+                <code data-testid="proposal-decision-operation-id">{operation.operationId}</code>
+                <small>Local session record · Rev {operation.spatialRevision}</small>
+              </li>
+            {/if}
           {:else}
             <li class="timeline-empty">No session operations yet.</li>
           {/each}
@@ -300,6 +373,7 @@
 
   h1,
   h2,
+  h3,
   p,
   dl {
     margin: 0;
@@ -591,6 +665,38 @@
     background: repeating-linear-gradient(90deg, rgba(244, 242, 233, 0.14) 0 1px, transparent 1px 2rem);
   }
 
+  .proposal-overlay {
+    position: absolute;
+    z-index: 1;
+    top: 3.75rem;
+    left: 1.25rem;
+    display: grid;
+    gap: 0.25rem;
+    max-width: min(21rem, calc(100% - 2.5rem));
+    padding: 0.7rem;
+    border: 1px solid rgba(229, 189, 117, 0.85);
+    color: #f8f0dc;
+    background: rgba(42, 35, 23, 0.84);
+    font-size: 0.72rem;
+  }
+
+  .proposal-overlay p {
+    color: #eccb85;
+    font-size: 0.63rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+  }
+
+  .proposal-overlay span {
+    color: #ded5bd;
+    line-height: 1.4;
+  }
+
+  .proposal-overlay.decision-recorded {
+    border-color: #8c9e79;
+    background: rgba(37, 49, 33, 0.87);
+  }
+
   .dimension-card {
     left: 1.25rem;
     bottom: 1.25rem;
@@ -625,6 +731,68 @@
 
   .session-note {
     margin-top: 0.5rem;
+  }
+
+  .proposal-card {
+    display: grid;
+    gap: 0.55rem;
+    padding: 0.8rem;
+    border: 1px solid #5a594f;
+    background: rgba(31, 31, 26, 0.78);
+  }
+
+  .proposal-card h3 {
+    font-size: 1rem;
+    font-weight: 500;
+  }
+
+  .proposal-card > p:not(.section-label):not(.proposal-boundary):not(.decision-status) {
+    color: #d1cec0;
+    font-size: 0.75rem;
+    line-height: 1.4;
+  }
+
+  .proposal-measurements {
+    display: grid;
+    gap: 0.35rem;
+    margin: 0;
+  }
+
+  .proposal-measurements div {
+    display: grid;
+    gap: 0.12rem;
+  }
+
+  .proposal-measurements dt,
+  .proposal-measurements dd {
+    color: #bbb7a8;
+    font-size: 0.66rem;
+    letter-spacing: normal;
+    text-transform: none;
+  }
+
+  .proposal-measurements dd {
+    margin: 0;
+    color: #f0e1ba;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  .proposal-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+  }
+
+  .decision-status {
+    color: #d6e2c8;
+    font-size: 0.75rem;
+    line-height: 1.4;
+  }
+
+  .proposal-boundary {
+    color: #aaa79b;
+    font-size: 0.67rem;
+    line-height: 1.4;
   }
 
   label {

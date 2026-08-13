@@ -5,7 +5,9 @@ import {
   THRESHOLD_DWELLING_SPATIAL_PACKAGE,
   assetBrowserUrl,
   chapterForId,
+  createKitchenIslandClearanceProposal,
   createSessionAnnotation,
+  createSessionProposalDecision,
   createThresholdDwellingSpatialPackage,
   portalsFrom,
   validateSpatialPackage
@@ -83,6 +85,53 @@ test('uses explicit portals and immutable session annotation operations', () => 
     chapterId: 'dining',
     text: 'Move island 4 in south.'
   });
+});
+
+test('expresses the kitchen-island suggestion as a bounded deterministic proposal', () => {
+  const packageValue = THRESHOLD_DWELLING_SPATIAL_PACKAGE;
+  const proposal = createKitchenIslandClearanceProposal(packageValue);
+
+  assert.deepEqual(proposal.operation, {
+    kind: 'move-entity',
+    entityId: 'kitchen-island',
+    deltaXIn: 0,
+    deltaYIn: 4
+  });
+  assert.deepEqual(proposal.measurements, [
+    {
+      id: 'island-to-refrigerator-clearance',
+      currentIn: 38,
+      proposedIn: 42,
+      targetIn: 42
+    },
+    {
+      id: 'island-to-opposite-run-clearance',
+      currentIn: 48,
+      proposedIn: 44,
+      targetIn: null
+    }
+  ]);
+  assert.equal(proposal.constructionReady, false);
+  assert.equal(proposal.requiresProfessionalReview, true);
+  assert.deepEqual(createSessionProposalDecision(packageValue, proposal, 'accepted'), {
+    operationId: 'threshold-dwelling-r08-spatial-package:0.8:proposal-decision:accepted:0001',
+    kind: 'record-proposal-decision',
+    packageId: 'threshold-dwelling-r08-spatial-package',
+    spatialRevision: '0.8',
+    proposalId: 'threshold-dwelling-r08:proposal:kitchen-island-clearance-0001',
+    decision: 'accepted'
+  });
+});
+
+test('refuses to record a decision against a different package revision', () => {
+  const packageValue = THRESHOLD_DWELLING_SPATIAL_PACKAGE;
+  const proposal = createKitchenIslandClearanceProposal(packageValue);
+  const mismatchedPackage = { ...packageValue, spatialRevision: '0.9' };
+
+  assert.throws(
+    () => createSessionProposalDecision(mismatchedPackage, proposal, 'accepted'),
+    /active WorkWay package revision/
+  );
 });
 
 test('rejects client package paths that could expose a private source document', () => {

@@ -93,6 +93,41 @@ export interface WorkWaySessionAnnotation {
   text: string;
 }
 
+export interface WorkWayDesignProposal {
+  id: string;
+  packageId: string;
+  projectId: string;
+  canonicalRevision: string;
+  spatialRevision: string;
+  chapterId: string;
+  intent: string;
+  operation: {
+    kind: 'move-entity';
+    entityId: string;
+    deltaXIn: number;
+    deltaYIn: number;
+  };
+  measurements: readonly {
+    id: string;
+    currentIn: number;
+    proposedIn: number;
+    targetIn: number | null;
+  }[];
+  requiresProfessionalReview: true;
+  constructionReady: false;
+}
+
+export interface WorkWaySessionProposalDecision {
+  operationId: string;
+  kind: 'record-proposal-decision';
+  packageId: string;
+  spatialRevision: string;
+  proposalId: string;
+  decision: 'accepted' | 'rejected';
+}
+
+export type WorkWaySessionOperation = WorkWaySessionAnnotation | WorkWaySessionProposalDecision;
+
 const stageStatement =
   'Minimum physical-stage guidance for a rebased room chapter; not a physical safety certification or architectural clearance.';
 
@@ -488,6 +523,74 @@ export function createSessionAnnotation(
     spatialRevision: packageValue.spatialRevision,
     chapterId,
     text: normalizedText
+  };
+}
+
+/**
+ * A deterministic, reviewable change set for the kitchen-island conversation
+ * in the local preview. It does not modify Canon geometry or claim code
+ * compliance; a future project-graph engine would validate and apply it.
+ */
+export function createKitchenIslandClearanceProposal(
+  packageValue: WorkWaySpatialPackage
+): WorkWayDesignProposal {
+  chapterForId(packageValue, 'kitchen');
+
+  return {
+    id: 'threshold-dwelling-r08:proposal:kitchen-island-clearance-0001',
+    packageId: packageValue.id,
+    projectId: packageValue.canonicalProject.projectId,
+    canonicalRevision: packageValue.canonicalProject.projectRevision,
+    spatialRevision: packageValue.spatialRevision,
+    chapterId: 'kitchen',
+    intent: 'Move the kitchen island 4 inches south to improve refrigerator clearance.',
+    operation: {
+      kind: 'move-entity',
+      entityId: 'kitchen-island',
+      deltaXIn: 0,
+      deltaYIn: 4
+    },
+    measurements: [
+      {
+        id: 'island-to-refrigerator-clearance',
+        currentIn: 38,
+        proposedIn: 42,
+        targetIn: 42
+      },
+      {
+        id: 'island-to-opposite-run-clearance',
+        currentIn: 48,
+        proposedIn: 44,
+        targetIn: null
+      }
+    ],
+    requiresProfessionalReview: true,
+    constructionReady: false
+  };
+}
+
+/** Records a local decision without mutating the canonical project revision. */
+export function createSessionProposalDecision(
+  packageValue: WorkWaySpatialPackage,
+  proposal: WorkWayDesignProposal,
+  decision: WorkWaySessionProposalDecision['decision']
+): WorkWaySessionProposalDecision {
+  if (
+    proposal.packageId !== packageValue.id ||
+    proposal.projectId !== packageValue.canonicalProject.projectId ||
+    proposal.spatialRevision !== packageValue.spatialRevision
+  ) {
+    throw new Error('A proposal decision must target the active WorkWay package revision.');
+  }
+  chapterForId(packageValue, proposal.chapterId);
+
+  return {
+    operationId: `${packageValue.id}:${packageValue.spatialRevision}:proposal-decision:${decision}:0001`,
+    kind: 'record-proposal-decision',
+    packageId: packageValue.id,
+    spatialRevision: packageValue.spatialRevision,
+    proposalId: proposal.id,
+    decision
   };
 }
 

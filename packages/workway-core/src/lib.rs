@@ -2,8 +2,14 @@
 //!
 //! This crate owns no rendering and makes no construction-readiness claim.
 
+pub mod change_proposal;
 pub mod spatial_package;
 
+pub use change_proposal::{
+    threshold_dwelling_kitchen_island_clearance_proposal_v08, validate_change_proposal,
+    ChangeProposal, ChangeProposalValidation, DeterministicOperation, MeasurementDelta,
+    CHANGE_PROPOSAL_SCHEMA_VERSION,
+};
 pub use spatial_package::{
     threshold_dwelling_spatial_package_v08, validate_spatial_package, ClientAsset,
     ClientSourceDocumentAccess, EntityRenderBinding, LocomotionModel, PortalTraversal,

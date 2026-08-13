@@ -1,6 +1,8 @@
 use workway_core::{
-    threshold_dwelling_spatial_package_v08, validate_spatial_package, SceneFormat,
-    SceneRepresentationStatus, SPATIAL_PACKAGE_SCHEMA_VERSION,
+    threshold_dwelling_kitchen_island_clearance_proposal_v08,
+    threshold_dwelling_spatial_package_v08, validate_change_proposal, validate_spatial_package,
+    DeterministicOperation, SceneFormat, SceneRepresentationStatus, CHANGE_PROPOSAL_SCHEMA_VERSION,
+    SPATIAL_PACKAGE_SCHEMA_VERSION,
 };
 
 #[test]
@@ -84,4 +86,53 @@ fn spatial_package_requires_explicit_asset_capability_state_and_valid_delivery_r
     assert!(validation
         .issue_ids
         .contains(&"unissued-representation-must-not-name-client-asset".into()));
+}
+
+#[test]
+fn kitchen_island_proposal_is_a_deterministic_review_delta_not_a_construction_release() {
+    let proposal = threshold_dwelling_kitchen_island_clearance_proposal_v08();
+    let validation = validate_change_proposal(&proposal);
+
+    assert_eq!(proposal.schema_version, CHANGE_PROPOSAL_SCHEMA_VERSION);
+    assert_eq!(
+        proposal.package_id,
+        "threshold-dwelling-r08-spatial-package"
+    );
+    assert_eq!(proposal.chapter_id, "kitchen");
+    assert_eq!(
+        proposal.operation,
+        DeterministicOperation::MoveEntity {
+            entity_id: "kitchen-island".into(),
+            delta_x_in: 0,
+            delta_y_in: 4,
+        }
+    );
+    assert_eq!(proposal.measurements[0].current_in, 38);
+    assert_eq!(proposal.measurements[0].proposed_in, 42);
+    assert_eq!(proposal.measurements[0].target_in, Some(42));
+    assert!(validation.is_valid());
+    assert!(validation.issue_ids.is_empty());
+    assert!(!proposal.construction_ready());
+    assert!(!validation.construction_ready());
+}
+
+#[test]
+fn change_proposal_rejects_a_noop_or_unmet_measurement_target() {
+    let mut proposal = threshold_dwelling_kitchen_island_clearance_proposal_v08();
+    proposal.operation = DeterministicOperation::MoveEntity {
+        entity_id: "kitchen-island".into(),
+        delta_x_in: 0,
+        delta_y_in: 0,
+    };
+    proposal.measurements[0].proposed_in = 41;
+
+    let validation = validate_change_proposal(&proposal);
+
+    assert!(!validation.is_valid());
+    assert!(validation
+        .issue_ids
+        .contains(&"operation-must-change-project-state".into()));
+    assert!(validation
+        .issue_ids
+        .contains(&"measurement-target-not-met".into()));
 }
