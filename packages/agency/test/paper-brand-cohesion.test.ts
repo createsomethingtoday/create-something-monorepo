@@ -49,7 +49,7 @@ test('Agency uses its property-owned outlined logo assets without changing Canon
   assert.ok(existsSync(favicon), `${favicon} must be served by the Agency package`);
   assert.ok(
     statSync(favicon).size > 300,
-    'the V3 favicon must retain its rounded-square micro-mark geometry'
+    'the V3 favicon must retain its rounded-square site-icon geometry'
   );
   assert.ok(existsSync(maskIcon), `${maskIcon} must be served by the Agency package`);
   assert.deepEqual(manifest.icons, [
@@ -75,7 +75,7 @@ test('Agency serves the approved V3 logo files byte-for-byte at its public asset
       'static/brand/create-something-mark-black.svg',
       'd50ace76dbeabc2fee672599e81434addfe0e83dc41e35e0865ebc4f69942ff2'
     ],
-    ['static/favicon.svg', 'e68987e7dc4dc33e7e8845245d5aa96362a32c60ea4c8f70c9c7c9a820841875'],
+    ['static/favicon.svg', '30e68ec91bd9f550e1efdba377802a581ec2cfb924d8d6e431187f27a5a8403d'],
     ['static/mask-icon.svg', 'd50ace76dbeabc2fee672599e81434addfe0e83dc41e35e0865ebc4f69942ff2']
   ]);
 

@@ -14,14 +14,18 @@ const requiredRasterAssets = [
   ['icon-512-maskable.png', 512]
 ] as const;
 const v3Hashes = {
-  favicon: 'e68987e7dc4dc33e7e8845245d5aa96362a32c60ea4c8f70c9c7c9a820841875',
+  favicon: '30e68ec91bd9f550e1efdba377802a581ec2cfb924d8d6e431187f27a5a8403d',
   mark: 'd50ace76dbeabc2fee672599e81434addfe0e83dc41e35e0865ebc4f69942ff2',
   horizontal: '1f4ff733da74d0a5514988513e659a4eef457c711eb54e135011530a185753bb',
   footer: 'b0e0793f267d1375e6f0dba6f544db668d4c20b13712e9cec001154972bdc630',
   agencyEndorsement: '44a3adcadc32632cc69038c60c7860c1efb01fe13e4f053cbcd89ceb091293d8',
-  appleTouch: '1d7a7ae2461836289457c8425102ce5c9117ac4c235dae429e2d78d0b11dd6ea',
-  icon192: '80aabf6abbb31d55072f7b77c2c8a6f86ed401c51006d5aa2d24d257feba1f6d',
-  icon512: '7a4042eb5e78f16c80e08c3d6d302a42cb47811d28fa42d8ebaba0df5ec0b6ca'
+  favicon16: 'a9d72a2feb73de0e5feaac452103906a0e54fce7a0f57cd89137c4448fa55450',
+  favicon32: '019bf3c693571418fdb19a3ab43f6049e3fd6a19b48461016e676f3463171d60',
+  favicon48: '76fa6e870a990aca9166d6a8afd31e2263a9ad986fb7e89d22652a36747732be',
+  faviconIco: 'e374eed37cffe562c70fe43e87dd35cf87df879703b8182671c413013fbbb712',
+  appleTouch: '5076639e638b88389a300a53fd77069f33eccd79cc0393258e217800749a535e',
+  icon192: '5d51ada15bc5dd296413d4d0855a1d693749bf295c53e569f316b7cea736ecc9',
+  icon512: '012a6fae0eab7524be24e4413cbc2437d65bf65f61da7475979bc699a38aeb49'
 } as const;
 
 function staticPath(property: (typeof properties)[number], asset: string) {
@@ -52,6 +56,22 @@ test('every public property owns the complete V3 icon and social-card contract',
 
     assert.equal(sha256(faviconSvg), v3Hashes.favicon, `${property} favicon uses V3 source`);
     assert.equal(sha256(maskIcon), v3Hashes.mark, `${property} mask icon uses the V3 master mark`);
+    assert.equal(
+      sha256(staticPath(property, 'favicon-16x16.png')),
+      v3Hashes.favicon16,
+      `${property} 16px favicon uses V3 source`
+    );
+    assert.equal(
+      sha256(staticPath(property, 'favicon-32x32.png')),
+      v3Hashes.favicon32,
+      `${property} 32px favicon uses V3 source`
+    );
+    assert.equal(
+      sha256(staticPath(property, 'favicon-48x48.png')),
+      v3Hashes.favicon48,
+      `${property} 48px favicon uses V3 source`
+    );
+    assert.equal(sha256(faviconIco), v3Hashes.faviconIco, `${property} ICO uses V3 source`);
     assert.equal(
       sha256(staticPath(property, 'apple-touch-icon.png')),
       v3Hashes.appleTouch,

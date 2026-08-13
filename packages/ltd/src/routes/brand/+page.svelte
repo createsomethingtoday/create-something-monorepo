@@ -20,7 +20,7 @@
     {
       name: 'Site Icon',
       file: 'create-something-site-icon.svg',
-      description: 'Prepared micro mark on the owned near-black app field',
+      description: 'Prepared master ring mark on the owned black app field',
       bg: 'dark'
     }
   ];
@@ -210,8 +210,8 @@
       <li>Do not change the logo colors or opacity values</li>
       <li>Do not place on busy or patterned backgrounds</li>
       <li>
-        Use the full master mark at 40 CSS px or larger; use prepared micro marks only from 16–32
-        CSS px
+        Use the prepared site icon for browser and web-clip surfaces; use the full master mark at 40
+        CSS px or larger in page layouts
       </li>
     </ul>
   </section>
