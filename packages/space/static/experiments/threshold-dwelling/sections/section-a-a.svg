@@ -42,10 +42,13 @@ Utility</text>
 <line x1="796" y1="208" x2="796" y2="100" stroke="black" stroke-width="0.5"/>
 <line x1="286" y1="208" x2="286" y2="112" stroke="rgba(0,0,0,0.3)" stroke-width="0.5"/>
 <line x1="322" y1="208" x2="322" y2="112" stroke="rgba(0,0,0,0.3)" stroke-width="0.5"/>
-<line x1="196" y1="208" x2="196" y2="100" stroke="black" stroke-width="3"/>
 <line x1="976" y1="208" x2="976" y2="100" stroke="black" stroke-width="3"/>
+<line x1="196" y1="208" x2="196" y2="100" stroke="black" stroke-width="3"/>
 <line x1="340" y1="208" x2="340" y2="100" stroke="black" stroke-width="2"/>
 <line x1="856" y1="208" x2="856" y2="76" stroke="black" stroke-width="2"/>
+<rect x="320.13772060250255" y="100" width="6" height="108" fill="black"/>
+<rect x="585.2550190883477" y="76" width="6" height="132" fill="black"/>
+<rect x="854.335013438726" y="100" width="6" height="108" fill="black"/>
 <text x="40" y="25" font-family="Inter, system-ui, sans-serif" font-size="10" font-weight="bold" fill="black">SECTION A-A</text>
 <text x="1132" y="25" font-family="Inter, system-ui, sans-serif" font-size="8" fill="black" text-anchor="end">Looking South ↓</text>
 <line x1="40" y1="228" x2="160" y2="228" stroke="black" stroke-width="1"/>
