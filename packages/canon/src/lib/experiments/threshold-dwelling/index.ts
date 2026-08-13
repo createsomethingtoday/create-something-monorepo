@@ -20,6 +20,26 @@ export { default as Section } from './Section.svelte';
 export { default as SitePlan } from './SitePlan.svelte';
 export { default as Systems } from './Systems.svelte';
 export {
+  THRESHOLD_DWELLING_CARPORT_INFILL_RECOMMENDATION,
+  assessThresholdDwellingCarportInfill,
+  type ThresholdDwellingCarportInfillAssessment,
+  type ThresholdDwellingCarportInfillRecommendation
+} from './carport-infill.js';
+export {
+  THRESHOLD_DWELLING_INTERIOR_INFILL,
+  assessThresholdDwellingInteriorInfill,
+  type ThresholdDwellingInteriorInfill,
+  type ThresholdDwellingInteriorInfillAssessment
+} from './interior-infill.js';
+export {
+  assessThresholdDwellingBuildLogic,
+  type ThresholdDwellingBuildLogicAssessment,
+  type ThresholdDwellingBuildLogicFinding,
+  type ThresholdDwellingBuildLogicFindingId,
+  type ThresholdDwellingBuildLogicFindingStatus,
+  type ThresholdDwellingBuildLogicMetrics
+} from './design-logic-review.js';
+export {
   THRESHOLD_DWELLING_PROFESSIONAL_DETERMINATION_REGISTER,
   THRESHOLD_DWELLING_PROFESSIONAL_REVIEW_REQUIREMENTS,
   assessThresholdDwellingProfessionalReview,
