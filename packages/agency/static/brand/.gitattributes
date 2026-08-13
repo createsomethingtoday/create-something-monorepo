@@ -1,0 +1,2 @@
+# Preserve the approved V3 SVG byte stream for checksum verification.
+*.svg whitespace=-trailing-space

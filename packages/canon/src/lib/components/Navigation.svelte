@@ -20,6 +20,8 @@
     src: string;
     /** Used for the linked home destination; the decorative image itself remains hidden from assistive tech. */
     label: string;
+    /** Optional narrow-screen source for a property-owned logo system. */
+    mobileSrc?: string;
   }
 
   interface Props {
@@ -87,7 +89,8 @@
   let mobileMenuButton = $state<HTMLButtonElement>();
   let navigationElement = $state<HTMLElement>();
   let openDesktopMenu = $state<string | null>(null);
-  let logoRouteMotionElement = $state<SVGSVGElement>();
+  let logoRouteMotionDesktopElement = $state<SVGSVGElement>();
+  let logoRouteMotionMobileElement = $state<SVGSVGElement>();
   let logoRouteMotionRequest = 0;
   let logoRouteMotionTimeline: { kill: () => void } | undefined;
   const usesPerformanceStyle = $derived(
@@ -129,8 +132,10 @@
     if (!enableRouteLogoMotion || !logoAsset || typeof window === 'undefined') return;
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
 
-    const motionElement = logoRouteMotionElement;
-    if (!motionElement) return;
+    const motionElements = [logoRouteMotionDesktopElement, logoRouteMotionMobileElement].filter(
+      (element): element is SVGSVGElement => Boolean(element)
+    );
+    if (!motionElements.length) return;
 
     cancelLogoRouteMotion();
     const request = logoRouteMotionRequest;
@@ -141,25 +146,29 @@
       const { gsap } = await import('gsap');
       if (request !== logoRouteMotionRequest) return;
 
-      const rings = [...motionElement.querySelectorAll<SVGCircleElement>('[data-logo-route-ring]')];
-      const pulse = motionElement.querySelector<SVGCircleElement>('[data-logo-route-pulse]');
-      if (!rings.length || !pulse) return;
+      const rings = motionElements.flatMap((element) => [
+        ...element.querySelectorAll<SVGGeometryElement>('[data-logo-route-ring]')
+      ]);
+      const pulses = motionElements.flatMap((element) => [
+        ...element.querySelectorAll<SVGCircleElement>('[data-logo-route-pulse]')
+      ]);
+      if (!rings.length || !pulses.length) return;
 
-      gsap.set(motionElement, { autoAlpha: 1 });
+      gsap.set(motionElements, { autoAlpha: 1 });
       gsap.set(rings, { strokeDasharray: '0.24 0.76', strokeDashoffset: 0 });
-      gsap.set(pulse, { autoAlpha: 0, scale: 0.55, transformOrigin: '50% 50%' });
+      gsap.set(pulses, { autoAlpha: 0, scale: 0.55, transformOrigin: '50% 50%' });
       logoRouteMotionTimeline = gsap
         .timeline({
           onComplete: () => {
             if (request !== logoRouteMotionRequest) return;
-            gsap.set(motionElement, { autoAlpha: 0 });
+            gsap.set(motionElements, { autoAlpha: 0 });
             logoRouteMotionTimeline = undefined;
           }
         })
         .to(rings, { strokeDashoffset: -1, duration: 0.32, ease: 'none', stagger: 0.025 })
-        .to(pulse, { autoAlpha: 1, scale: 1, duration: 0.12, ease: 'power1.out' }, 0.06)
-        .to(pulse, { autoAlpha: 0, scale: 1.35, duration: 0.17, ease: 'power1.in' }, 0.18)
-        .to(motionElement, { autoAlpha: 0, duration: 0.08, ease: 'power1.out' }, 0.32);
+        .to(pulses, { autoAlpha: 1, scale: 1, duration: 0.12, ease: 'power1.out' }, 0.06)
+        .to(pulses, { autoAlpha: 0, scale: 1.35, duration: 0.17, ease: 'power1.in' }, 0.18)
+        .to(motionElements, { autoAlpha: 0, duration: 0.08, ease: 'power1.out' }, 0.32);
     } catch {
       // The supplied SVG stays intact when the enhancement runtime is unavailable.
     }
@@ -215,35 +224,68 @@
       >
         {#if logoAsset}
           <span class="nav-logo-asset-frame">
-            <img class="nav-logo-asset" src={logoAsset.src} alt="" />
+            <picture class="nav-logo-asset-picture">
+              {#if logoAsset.mobileSrc}
+                <source media="(max-width: 640px)" srcset={logoAsset.mobileSrc} />
+              {/if}
+              <img class="nav-logo-asset" src={logoAsset.src} alt="" />
+            </picture>
             {#if enableRouteLogoMotion}
               <svg
-                bind:this={logoRouteMotionElement}
-                class="nav-logo-route-motion"
-                viewBox="0 0 550 120"
+                bind:this={logoRouteMotionDesktopElement}
+                class="nav-logo-route-motion nav-logo-route-motion--desktop"
+                viewBox="0 0 480 80"
                 aria-hidden="true"
               >
-                <circle
+                <g transform="translate(0 16.8) scale(0.385)">
+                  <path
+                    class="nav-logo-route-motion__ring"
+                    data-logo-route-ring
+                    d="M30.2261 41.7261 A31.5 31.5 0 1 1 30.2261 86.2739"
+                    pathLength="1"
+                  />
+                  <circle
+                    class="nav-logo-route-motion__ring"
+                    data-logo-route-ring
+                    cx="65.5"
+                    cy="64"
+                    r="41.5"
+                    pathLength="1"
+                  />
+                  <circle
+                    class="nav-logo-route-motion__pulse"
+                    data-logo-route-pulse
+                    cx="109"
+                    cy="64"
+                    r="5.5"
+                  />
+                </g>
+              </svg>
+              <svg
+                bind:this={logoRouteMotionMobileElement}
+                class="nav-logo-route-motion nav-logo-route-motion--mobile"
+                viewBox="0 0 128 128"
+                aria-hidden="true"
+              >
+                <path
                   class="nav-logo-route-motion__ring"
                   data-logo-route-ring
-                  cx="63"
-                  cy="60"
-                  r="41.5"
+                  d="M30.2261 41.7261 A31.5 31.5 0 1 1 30.2261 86.2739"
                   pathLength="1"
                 />
                 <circle
                   class="nav-logo-route-motion__ring"
                   data-logo-route-ring
-                  cx="53.5"
-                  cy="60"
-                  r="31.5"
+                  cx="65.5"
+                  cy="64"
+                  r="41.5"
                   pathLength="1"
                 />
                 <circle
                   class="nav-logo-route-motion__pulse"
                   data-logo-route-pulse
-                  cx="100"
-                  cy="60"
+                  cx="109"
+                  cy="64"
                   r="5.5"
                 />
               </svg>
@@ -489,6 +531,10 @@
     flex: 0 0 auto;
   }
 
+  .nav-logo-asset-picture {
+    display: block;
+  }
+
   .nav-logo-route-motion {
     position: absolute;
     inset: 0;
@@ -509,6 +555,10 @@
 
   .nav-logo-route-motion__pulse {
     fill: currentColor;
+  }
+
+  .nav-logo-route-motion--mobile {
+    display: none;
   }
 
   /* Navigation Links */
@@ -1032,6 +1082,13 @@
       width: min(100% - 1.5rem, var(--content-width-performance, 85rem));
     }
 
+    /* The property-owned V3 master mark has a 40px minimum. */
+    .nav-clear .nav-logo-asset {
+      width: 2.5rem;
+      max-width: 2.5rem;
+      height: 2.5rem;
+    }
+
     .nav-clear.nav-show-mobile-logo-text .nav-logo {
       gap: 0.4rem;
     }
@@ -1047,6 +1104,14 @@
       font-size: 0.72rem;
       letter-spacing: 0.03em;
       text-transform: uppercase;
+    }
+
+    .nav-logo-route-motion--desktop {
+      display: none;
+    }
+
+    .nav-logo-route-motion--mobile {
+      display: block;
     }
   }
 

@@ -426,6 +426,7 @@
     logoSuffix=".agency"
     logoAsset={{
       src: '/brand/create-something-horizontal-black.svg',
+      mobileSrc: '/brand/create-something-mark-black.svg',
       label: 'CREATE SOMETHING .agency'
     }}
     enableRouteLogoMotion={true}

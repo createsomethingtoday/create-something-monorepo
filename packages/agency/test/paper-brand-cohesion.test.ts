@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync, statSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 import test from 'node:test';
 
@@ -12,23 +13,77 @@ test('Agency uses its property-owned outlined logo assets without changing Canon
   const layout = read('src/routes/+layout.svelte');
   const headerLogo = resolve(agencyRoot, 'static/brand/create-something-horizontal-black.svg');
   const footerLogo = resolve(agencyRoot, 'static/brand/create-something-agency-white.svg');
+  const mobileMark = resolve(agencyRoot, 'static/brand/create-something-mark-black.svg');
   const favicon = resolve(agencyRoot, 'static/favicon.svg');
+  const maskIcon = resolve(agencyRoot, 'static/mask-icon.svg');
+  const manifest = JSON.parse(read('static/manifest.json')) as {
+    icons: Array<{ src: string; sizes: string; type?: string; purpose?: string }>;
+  };
 
   assert.match(navigation, /logoAsset\?: NavigationLogoAsset/);
-  assert.match(navigation, /<img class="nav-logo-asset" src=\{logoAsset\.src\} alt="" \/>/);
+  assert.match(navigation, /mobileSrc\?: string/);
+  assert.match(navigation, /<picture class="nav-logo-asset-picture">/);
+  assert.match(navigation, /media="\(max-width: 640px\)" srcset=\{logoAsset\.mobileSrc\}/);
+  assert.match(
+    navigation,
+    /@media \(max-width: 640px\)[\s\S]*?\.nav-clear \.nav-logo-asset\s*\{[\s\S]*?height:\s*2\.5rem;/
+  );
   assert.match(footer, /brandAsset\?: FooterBrandAsset/);
-  assert.match(footer, /<img class="footer-mark__asset" src=\{brandAsset\.src\} alt="" \/>/);
+  assert.match(
+    footer,
+    /<img class="footer-editorial-identity__asset" src=\{brandAsset\.src\} alt="" \/>/
+  );
   assert.match(layout, /create-something-horizontal-black\.svg/);
+  assert.match(layout, /create-something-mark-black\.svg/);
   assert.match(layout, /create-something-agency-white\.svg/);
   assert.match(layout, /enableRouteLogoMotion=\{true\}/);
   for (const asset of [headerLogo, footerLogo]) {
     assert.ok(existsSync(asset), `${asset} must be served by the Agency package`);
     assert.ok(statSync(asset).size > 1_000, `${asset} must be a substantive outlined vector`);
   }
+  assert.ok(existsSync(mobileMark), `${mobileMark} must be served by the Agency package`);
+  assert.ok(
+    statSync(mobileMark).size > 300,
+    'the master mobile mark must retain substantive V3 vector geometry'
+  );
   assert.ok(existsSync(favicon), `${favicon} must be served by the Agency package`);
-  const faviconSource = readFileSync(favicon, 'utf8');
-  assert.match(faviconSource, /<circle cx="53" cy="50" r="41\.5"/);
-  assert.match(faviconSource, /<circle cx="43\.5" cy="50" r="31\.5"/);
+  assert.ok(
+    statSync(favicon).size > 300,
+    'the V3 favicon must retain its rounded-square micro-mark geometry'
+  );
+  assert.ok(existsSync(maskIcon), `${maskIcon} must be served by the Agency package`);
+  assert.deepEqual(manifest.icons, [
+    { src: 'favicon.svg', type: 'image/svg+xml', sizes: 'any' },
+    { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
+    { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+    { src: 'icon-512-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+    { src: 'favicon.png', type: 'image/png', sizes: '512x512' }
+  ]);
+});
+
+test('Agency serves the approved V3 logo files byte-for-byte at its public asset paths', () => {
+  const expectedSha256 = new Map([
+    [
+      'static/brand/create-something-horizontal-black.svg',
+      '1f4ff733da74d0a5514988513e659a4eef457c711eb54e135011530a185753bb'
+    ],
+    [
+      'static/brand/create-something-agency-white.svg',
+      '44a3adcadc32632cc69038c60c7860c1efb01fe13e4f053cbcd89ceb091293d8'
+    ],
+    [
+      'static/brand/create-something-mark-black.svg',
+      'd50ace76dbeabc2fee672599e81434addfe0e83dc41e35e0865ebc4f69942ff2'
+    ],
+    ['static/favicon.svg', 'e68987e7dc4dc33e7e8845245d5aa96362a32c60ea4c8f70c9c7c9a820841875'],
+    ['static/mask-icon.svg', 'd50ace76dbeabc2fee672599e81434addfe0e83dc41e35e0865ebc4f69942ff2']
+  ]);
+
+  for (const [relativePath, expected] of expectedSha256) {
+    const asset = readFileSync(resolve(agencyRoot, relativePath));
+    const actual = createHash('sha256').update(asset).digest('hex');
+    assert.equal(actual, expected, `${relativePath} must preserve the approved V3 source`);
+  }
 });
 
 test('the Agency footer uses one linked lockup instead of repeating the brand inside its link panel', () => {
@@ -38,10 +93,7 @@ test('the Agency footer uses one linked lockup instead of repeating the brand in
     footer,
     /class="footer-editorial-identity footer-editorial-identity--link"[\s\S]*?aria-label=\{`\$\{brandAsset\.label\} home`\}/
   );
-  assert.match(
-    footer,
-    /\{#if usesPerformanceStyle && !usesEditorialStyle\}/
-  );
+  assert.match(footer, /\{#if usesPerformanceStyle && !usesEditorialStyle\}/);
   assert.match(footer, /\.footer-editorial-identity--link:focus-visible/);
 });
 

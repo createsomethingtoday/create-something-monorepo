@@ -36,8 +36,13 @@ test('every public property owns the complete ring-icon and social-card contract
     }
 
     const favicon = readFileSync(faviconSvg, 'utf8');
-    assert.match(favicon, /<circle cx="53" cy="50" r="41\.5"/);
-    assert.match(favicon, /<circle cx="43\.5" cy="50" r="31\.5"/);
+    if (property === 'agency') {
+      assert.match(favicon, /id="cs-micro-mark-v3"/);
+      assert.match(favicon, /<circle cx="64" cy="64" r="39"/);
+    } else {
+      assert.match(favicon, /<circle cx="53" cy="50" r="41\.5"/);
+      assert.match(favicon, /<circle cx="43\.5" cy="50" r="31\.5"/);
+    }
 
     for (const [asset, expectedSize] of requiredRasterAssets) {
       const dimensions = readPngDimensions(staticPath(property, asset));

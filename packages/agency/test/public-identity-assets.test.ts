@@ -35,8 +35,15 @@ test('all public properties ship one ring-mark browser, web-clip, and social-ima
     }
 
     const favicon = readFileSync(resolve(staticRoot, 'favicon.svg'), 'utf8');
-    assert.equal(favicon, canonicalSvg, `${property} must use the shared ring source`);
-    assert.match(favicon, /<circle cx="53" cy="50" r="41\.5"\s*\/>/);
+    if (property === 'agency') {
+      // Agency is the only approved V3 identity adoption; the other public
+      // properties remain on the shared ring source until separately approved.
+      assert.match(favicon, /id="cs-micro-mark-v3"/);
+      assert.match(favicon, /<circle cx="64" cy="64" r="39"\s+stroke-width="11"\/>/);
+    } else {
+      assert.equal(favicon, canonicalSvg, `${property} must use the shared ring source`);
+      assert.match(favicon, /<circle cx="53" cy="50" r="41\.5"\s*\/>/);
+    }
     assert.doesNotMatch(favicon, /Isometric Cube Mark|M 16 4 L 26\.39 10/);
     assert.deepEqual(pngSize(resolve(staticRoot, 'favicon.png')), [512, 512]);
     assert.deepEqual(pngSize(resolve(staticRoot, 'apple-touch-icon.png')), [180, 180]);
@@ -49,7 +56,13 @@ test('all public properties ship one ring-mark browser, web-clip, and social-ima
     assert.match(manifest.name, new RegExp(`\\.${property}`));
     assert.deepEqual(
       new Set(manifest.icons.map((icon: { src: string }) => icon.src)),
-      new Set(['favicon.svg', 'favicon.png', 'icon-192.png', 'icon-512.png', 'icon-512-maskable.png'])
+      new Set([
+        'favicon.svg',
+        'favicon.png',
+        'icon-192.png',
+        'icon-512.png',
+        'icon-512-maskable.png'
+      ])
     );
     assert.equal(
       manifest.icons.find((icon: { src: string }) => icon.src === 'icon-512-maskable.png')?.purpose,
@@ -59,11 +72,24 @@ test('all public properties ship one ring-mark browser, web-clip, and social-ima
 });
 
 test('the layout owns identity links and the route-level SEO component owns page metadata', () => {
-  const layoutSeo = readFileSync(resolve(packageRoot, 'canon/src/lib/components/LayoutSEO.svelte'), 'utf8');
-  const routeSeo = readFileSync(resolve(packageRoot, 'canon/src/lib/components/SEO.svelte'), 'utf8');
+  const layoutSeo = readFileSync(
+    resolve(packageRoot, 'canon/src/lib/components/LayoutSEO.svelte'),
+    'utf8'
+  );
+  const routeSeo = readFileSync(
+    resolve(packageRoot, 'canon/src/lib/components/SEO.svelte'),
+    'utf8'
+  );
   const agencyLayout = readFileSync(resolve(agencyRoot, 'src/routes/+layout.svelte'), 'utf8');
 
-  for (const asset of ['favicon.svg', 'favicon.ico', 'favicon.png', 'apple-touch-icon.png', 'mask-icon.svg', 'manifest.json']) {
+  for (const asset of [
+    'favicon.svg',
+    'favicon.ico',
+    'favicon.png',
+    'apple-touch-icon.png',
+    'mask-icon.svg',
+    'manifest.json'
+  ]) {
     assert.match(layoutSeo, new RegExp(`/` + asset.replace('.', '\\.')));
   }
   assert.match(agencyLayout, /<LayoutSEO property="agency" \/>/);
