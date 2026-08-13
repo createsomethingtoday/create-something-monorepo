@@ -994,9 +994,9 @@
 
   .footer-mark__asset {
     display: block;
-    width: auto;
-    max-width: min(13.5rem, 100%);
-    height: 3rem;
+    width: min(13.5rem, 100%);
+    height: auto;
+    max-height: 3rem;
   }
 
   .footer-clear .brand-title {

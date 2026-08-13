@@ -190,6 +190,11 @@
     <Navigation
       logo="CREATE SOMETHING"
       logoSuffix=".io"
+      logoAsset={{
+        src: '/brand/create-something-horizontal-black.svg',
+        mobileSrc: '/brand/create-something-mark-black.svg',
+        label: 'CREATE SOMETHING .io'
+      }}
       links={navLinks}
       currentPath={$page.url.pathname}
       fixed={true}
@@ -201,8 +206,6 @@
       loginHref="/login"
       accountHref="/account"
       visualStyle="editorial"
-      showMobileLogoText={true}
-      showDesktopLogoText={true}
       onMobileMenuChange={(open) => (mobileNavigationOpen = open)}
     />
 
@@ -237,6 +240,10 @@
         showSocial={true}
         isAuthenticated={!!data.user}
         visualStyle="editorial"
+        brandAsset={{
+          src: '/brand/create-something-footer-white.svg',
+          label: 'CREATE SOMETHING .io'
+        }}
       />
     </div>
 
