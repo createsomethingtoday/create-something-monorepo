@@ -1,0 +1,137 @@
+{
+  "schemaVersion": "workway.spatial-package.v1",
+  "id": "threshold-dwelling-r08-spatial-package",
+  "canonicalProject": { "projectId": "threshold-dwelling", "projectRevision": "0.7" },
+  "spatialRevision": "0.8",
+  "clientSourceDocuments": "excluded",
+  "materialContract": {
+    "scheduleId": "threshold-dwelling-rev-0.8-design-intent-assembly-schedule",
+    "materialBindingStatus": "role-codified-product-unselected",
+    "renderedMaterialIds": ["M-INT-002", "M-INT-001", "M-ENV-001", "M-ENV-002"],
+    "constructionReady": false
+  },
+  "physicalSceneContract": {
+    "issuanceId": "threshold-dwelling-rev-0.8-physical-scene-gate",
+    "status": "blocked-vertical-geometry-unissued",
+    "coordinateTruth": "revised-plan-horizontal-only",
+    "clientSourceDocuments": "excluded",
+    "unissuedFactIds": [
+      "finished-floor-and-site-datum",
+      "exterior-wall-assembly-geometry",
+      "interior-partition-geometry",
+      "roof-and-ceiling-geometry",
+      "door-opening-geometry",
+      "window-and-glass-opening-geometry",
+      "structural-support-and-lateral-geometry",
+      "mep-service-coordination-geometry",
+      "exterior-grade-and-threshold-geometry"
+    ],
+    "evidenceFacts": [
+      {
+        "id": "finished-floor-and-site-datum",
+        "title": "Finished-floor elevation and site datum",
+        "evidenceStatus": "missing",
+        "requiredReviewerRoles": ["Registered professional land surveyor", "Architect or qualified residential design professional"]
+      },
+      {
+        "id": "exterior-wall-assembly-geometry",
+        "title": "Exterior-wall assembly geometry",
+        "evidenceStatus": "missing",
+        "requiredReviewerRoles": ["Architect or qualified residential design professional", "Energy rater or qualified energy-compliance professional"]
+      },
+      {
+        "id": "interior-partition-geometry",
+        "title": "Interior-partition geometry",
+        "evidenceStatus": "missing",
+        "requiredReviewerRoles": ["Architect or qualified residential design professional", "Licensed or jurisdiction-qualified MEP professionals"]
+      },
+      {
+        "id": "roof-and-ceiling-geometry",
+        "title": "Roof and ceiling geometry",
+        "evidenceStatus": "missing",
+        "requiredReviewerRoles": ["Architect or qualified residential design professional", "Licensed structural engineer", "Energy rater or qualified energy-compliance professional"]
+      },
+      {
+        "id": "door-opening-geometry",
+        "title": "Door-opening geometry",
+        "evidenceStatus": "missing",
+        "requiredReviewerRoles": ["Architect or qualified residential design professional", "Authority having jurisdiction and project team"]
+      },
+      {
+        "id": "window-and-glass-opening-geometry",
+        "title": "Window and glass-opening geometry",
+        "evidenceStatus": "missing",
+        "requiredReviewerRoles": ["Architect or qualified residential design professional", "Licensed structural engineer", "Energy rater or qualified energy-compliance professional", "Authority having jurisdiction and project team"]
+      },
+      {
+        "id": "structural-support-and-lateral-geometry",
+        "title": "Structural support and lateral geometry",
+        "evidenceStatus": "missing",
+        "requiredReviewerRoles": ["Licensed structural engineer"]
+      },
+      {
+        "id": "mep-service-coordination-geometry",
+        "title": "MEP service-coordination geometry",
+        "evidenceStatus": "missing",
+        "requiredReviewerRoles": ["Licensed or jurisdiction-qualified MEP professionals", "Energy rater or qualified energy-compliance professional"]
+      },
+      {
+        "id": "exterior-grade-and-threshold-geometry",
+        "title": "Exterior grade and threshold geometry",
+        "evidenceStatus": "missing",
+        "requiredReviewerRoles": ["Registered professional land surveyor", "Architect or qualified residential design professional", "Authority having jurisdiction and project team"]
+      }
+    ],
+    "canGeneratePhysicalOneToOneScene": false,
+    "constructionReady": false
+  },
+  "assets": [
+    { "id": "tabletop-plan-svg", "clientPath": "experiments/threshold-dwelling/renders/floor-plan.svg", "sha256": "c83c9deb796c34f8a94497a2f4e77fdbbbfbc6d584480ea0cf3f9c08bc48e017" },
+    { "id": "tabletop-plan-png", "clientPath": "experiments/threshold-dwelling/renders/floor-plan.png", "sha256": "6bb7955a32628e0fd499b58e7ca57f9c9f3a93cfca46a84ecb1ffc84fdde2a5c" },
+    { "id": "public-room-hero-png", "clientPath": "experiments/threshold-dwelling/renders/living-system-public-room-hero-v1.png", "sha256": "ff78a4af53c0c1117c1cf83db22e451728733dffaba9bd2356a046ebc9ad63ba" },
+    { "id": "browser-massing-glb", "clientPath": "experiments/threshold-dwelling/renders/threshold-dwelling-r08-massing-guide.glb", "sha256": "03b92e329d3ecc5c729d9ee038bf0db19cca886a979a3dd4ba22b9a363b610f9" }
+  ],
+  "sceneRepresentations": [
+    { "id": "tabletop-svg", "format": "svg", "status": "available", "canonicalRevision": "0.7", "spatialRevision": "0.8", "assetId": "tabletop-plan-svg" },
+    { "id": "tabletop-png", "format": "png", "status": "available", "canonicalRevision": "0.7", "spatialRevision": "0.8", "assetId": "tabletop-plan-png" },
+    { "id": "public-room-hero-png", "format": "png", "status": "available", "canonicalRevision": "0.7", "spatialRevision": "0.8", "assetId": "public-room-hero-png" },
+    { "id": "browser-massing-glb", "format": "glb", "status": "available", "canonicalRevision": "0.7", "spatialRevision": "0.8", "assetId": "browser-massing-glb" },
+    { "id": "native-usd", "format": "usd", "status": "unissued", "canonicalRevision": "0.7", "spatialRevision": "0.8", "assetId": null },
+    { "id": "native-usdz", "format": "usdz", "status": "unissued", "canonicalRevision": "0.7", "spatialRevision": "0.8", "assetId": null }
+  ],
+  "entityRenderBindings": [
+    { "entityId": "public-room-kitchen", "renderEntityId": "public-room/kitchen" },
+    { "entityId": "public-room-dining", "renderEntityId": "public-room/dining" },
+    { "entityId": "public-room-living", "renderEntityId": "public-room/living" },
+    { "entityId": "private-room-daughter-sleep-zone", "renderEntityId": "private-room/daughter-sleep-zone" },
+    { "entityId": "private-room-primary-sleep-zone", "renderEntityId": "private-room/primary-sleep-zone" },
+    { "entityId": "private-room-inlaw-sleep-zone", "renderEntityId": "private-room/inlaw-sleep-zone" },
+    { "entityId": "private-room-inlaw-sitting-zone", "renderEntityId": "private-room/inlaw-sitting-zone" },
+    { "entityId": "arrival-loggia", "renderEntityId": "arrival/loggia" }
+  ],
+  "roomChapters": [
+    { "id": "kitchen", "entityId": "public-room-kitchen", "widthIn": 180, "depthIn": 156, "scale": "one-to-one", "safeStage": { "minimumWidthIn": 96, "minimumDepthIn": 96, "locomotion": "room-chapter-rebase", "statement": "Minimum physical-stage guidance for a rebased room chapter; not a physical safety certification or architectural clearance." } },
+    { "id": "dining", "entityId": "public-room-dining", "widthIn": 156, "depthIn": 156, "scale": "one-to-one", "safeStage": { "minimumWidthIn": 96, "minimumDepthIn": 96, "locomotion": "room-chapter-rebase", "statement": "Minimum physical-stage guidance for a rebased room chapter; not a physical safety certification or architectural clearance." } },
+    { "id": "living", "entityId": "public-room-living", "widthIn": 180, "depthIn": 156, "scale": "one-to-one", "safeStage": { "minimumWidthIn": 96, "minimumDepthIn": 96, "locomotion": "room-chapter-rebase", "statement": "Minimum physical-stage guidance for a rebased room chapter; not a physical safety certification or architectural clearance." } },
+    { "id": "arrival", "entityId": "arrival-loggia", "widthIn": 120, "depthIn": 168, "scale": "one-to-one", "safeStage": { "minimumWidthIn": 96, "minimumDepthIn": 96, "locomotion": "room-chapter-rebase", "statement": "Minimum physical-stage guidance for a rebased room chapter; not a physical safety certification or architectural clearance." } },
+    { "id": "daughter-sleep-zone", "entityId": "private-room-daughter-sleep-zone", "widthIn": 216, "depthIn": 168, "scale": "one-to-one", "safeStage": { "minimumWidthIn": 96, "minimumDepthIn": 96, "locomotion": "room-chapter-rebase", "statement": "Minimum physical-stage guidance for a rebased room chapter; not a physical safety certification or architectural clearance." } },
+    { "id": "primary-sleep-zone", "entityId": "private-room-primary-sleep-zone", "widthIn": 252, "depthIn": 180, "scale": "one-to-one", "safeStage": { "minimumWidthIn": 96, "minimumDepthIn": 96, "locomotion": "room-chapter-rebase", "statement": "Minimum physical-stage guidance for a rebased room chapter; not a physical safety certification or architectural clearance." } },
+    { "id": "inlaw-sleep-zone", "entityId": "private-room-inlaw-sleep-zone", "widthIn": 192, "depthIn": 264, "scale": "one-to-one", "safeStage": { "minimumWidthIn": 96, "minimumDepthIn": 96, "locomotion": "room-chapter-rebase", "statement": "Minimum physical-stage guidance for a rebased room chapter; not a physical safety certification or architectural clearance." } },
+    { "id": "inlaw-sitting-zone", "entityId": "private-room-inlaw-sitting-zone", "widthIn": 120, "depthIn": 168, "scale": "one-to-one", "safeStage": { "minimumWidthIn": 96, "minimumDepthIn": 96, "locomotion": "room-chapter-rebase", "statement": "Minimum physical-stage guidance for a rebased room chapter; not a physical safety certification or architectural clearance." } }
+  ],
+  "portals": [
+    { "id": "kitchen-to-dining", "fromChapterId": "kitchen", "toChapterId": "dining", "traversal": "explicit-transition" },
+    { "id": "dining-to-living", "fromChapterId": "dining", "toChapterId": "living", "traversal": "explicit-transition" },
+    { "id": "living-to-arrival", "fromChapterId": "living", "toChapterId": "arrival", "traversal": "explicit-transition" },
+    { "id": "arrival-to-daughter-sleep", "fromChapterId": "arrival", "toChapterId": "daughter-sleep-zone", "traversal": "explicit-transition" },
+    { "id": "daughter-sleep-to-primary-sleep", "fromChapterId": "daughter-sleep-zone", "toChapterId": "primary-sleep-zone", "traversal": "explicit-transition" },
+    { "id": "primary-sleep-to-inlaw-sleep", "fromChapterId": "primary-sleep-zone", "toChapterId": "inlaw-sleep-zone", "traversal": "explicit-transition" },
+    { "id": "inlaw-sleep-to-inlaw-sitting", "fromChapterId": "inlaw-sleep-zone", "toChapterId": "inlaw-sitting-zone", "traversal": "explicit-transition" }
+  ],
+  "validationReceipts": [
+    { "id": "dimensioned-project-review", "assessment": "Design-intent geometry and revision lineage recorded; no survey or construction determination supplied.", "sourceRevision": "0.8" },
+    { "id": "living-system-review", "assessment": "Room chapters, circulation intent, material roles, and carport proposal remain proposed design intent.", "sourceRevision": "0.8" },
+    { "id": "public-room-visual-receipt", "assessment": "The local public-room visualization is content-addressed and explicitly non-construction evidence.", "sourceRevision": "0.8" }
+  ],
+  "constructionReady": false
+}

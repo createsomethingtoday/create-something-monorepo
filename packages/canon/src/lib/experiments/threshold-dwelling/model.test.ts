@@ -16,7 +16,7 @@ describe('Threshold Dwelling construction allowance', () => {
     const lineItemCost = (description: string) =>
       allowance.lineItems.find((item) => item.description === description)?.estimate;
 
-    expect(THRESHOLD_DWELLING_DESIGN.revision).toBe('0.3');
+    expect(THRESHOLD_DWELLING_DESIGN.revision).toBe('0.5');
     expect(baseConstructionCost).toBe(814_000);
     expect(allowance.contingencyRate).toBe(0.1);
     expect(allowance.workingConstructionAuthorization).toBe(895_400);
@@ -48,6 +48,18 @@ describe('Threshold Dwelling construction allowance', () => {
     const allowanceText = JSON.stringify(THRESHOLD_DWELLING_DESIGN.constructionAllowance);
 
     expect(strategy.foundation.primaryMaterial).toBe('reinforced concrete');
+    expect(strategy.envelope).toEqual({
+      exteriorWallIntent:
+        'glazing-majority exterior field with architectural concrete concentrated at selective opaque zones',
+      glazingIntent:
+        'target 60% aggregate exterior glazing by illustrative wall area, concentrated by verified view and climate conditions while preserving required privacy, safety, thermal, water-management, and egress determinations',
+      energyComplianceStrategy: 'performance-or-energy-rating-index-analysis-required',
+      steelRole: 'localized primary support at glazed spans and required frame/lateral conditions'
+    });
+    expect(strategy.interior).toEqual({
+      primaryWallMaterial: 'architectural concrete',
+      gypsumRole: 'selective ceiling and non-concrete service-finish planes'
+    });
     expect(strategy.cedar.allowedLocations).toEqual([
       'recessed entry and selected protected soffits',
       'one public-room ceiling plane',
@@ -80,6 +92,9 @@ describe('Threshold Dwelling construction allowance', () => {
       metrics.buildingPerimeterLF * metrics.averageExteriorWallHeightFT
     );
     expect(metrics.opaqueWallAreaSF + metrics.glazingAreaSF).toBe(metrics.grossExteriorWallAreaSF);
+    expect(metrics.glazingAreaSF).toBeGreaterThan(metrics.opaqueWallAreaSF);
+    expect(metrics.glazingToGrossExteriorWallRatio).toBe(0.6);
+    expect(metrics.glazingToConditionedFloorAreaRatio).toBeCloseTo(1284 / 2730);
 
     for (const item of lineItems) {
       expect(item.estimate, item.description).toBe(Math.round(item.quantity * item.unitRate));
@@ -88,8 +103,10 @@ describe('Threshold Dwelling construction allowance', () => {
     expect(lineItem('Engineered concrete foundation datum')?.quantity).toBe(
       metrics.conditionedFloorAreaSF
     );
-    expect(lineItem('Primary opaque rainscreen walls')?.quantity).toBe(metrics.opaqueWallAreaSF);
-    expect(lineItem('Windows & glazing')?.quantity).toBe(metrics.glazingAreaSF);
+    expect(lineItem('Selective opaque concrete exterior zones')?.quantity).toBe(
+      metrics.opaqueWallAreaSF
+    );
+    expect(lineItem('Glazing-majority exterior envelope')?.quantity).toBe(metrics.glazingAreaSF);
     expect(lineItem('Standing-seam roofing')?.quantity).toBe(metrics.roofAreaSF);
     expect(lineItem('Service carport structure')?.quantity).toBe(metrics.carportAreaSF);
     expect(lineItem('Independent concrete terraces')?.quantity).toBe(metrics.terraceAreaSF);
