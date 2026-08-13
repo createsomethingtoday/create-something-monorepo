@@ -158,6 +158,10 @@
 			"types": "./dist/experiments/threshold-dwelling/dimensioned-project.d.ts",
 			"default": "./dist/experiments/threshold-dwelling/dimensioned-project.js"
 		},
+		"./experiments/threshold-dwelling/professional-review": {
+			"types": "./dist/experiments/threshold-dwelling/professional-review.d.ts",
+			"default": "./dist/experiments/threshold-dwelling/professional-review.js"
+		},
 		"./experiments/kinetic-typography": {
 			"types": "./dist/experiments/kinetic-typography/index.d.ts",
 			"svelte": "./dist/experiments/kinetic-typography/index.js"

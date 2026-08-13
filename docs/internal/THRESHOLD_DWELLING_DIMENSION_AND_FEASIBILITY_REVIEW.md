@@ -72,9 +72,11 @@ These are performance and resilience objectives to give the architect and engine
 
 WorkWay may ingest this model now as `candidate-design-intent`. It must remain read-only for authoritative construction operations until all gates below pass:
 
+The machine-readable [Professional Review Intake](./THRESHOLD_DWELLING_PROFESSIONAL_REVIEW_INTAKE.md) is now the sole evidence register for those gates.
+
 1. A licensed survey establishes the parcel, setbacks, easements, utilities, grades, and a project datum.
 2. Architect publishes coordinated dimensioned plan, elevations, sections, door/window/finish schedules, and room/fixture clearances.
-3. Structural and MEP professionals supply jurisdiction-appropriate calculations and drawings.
+3. Structural, MEP, and energy professionals supply jurisdiction-appropriate calculations and drawings.
 4. The local authority having jurisdiction confirms the current permit/code path; the facts above are a dated screen of city guidance, not a code determination.
 5. The approved package is ingested as a new immutable revision, with its source documents and reviewer decisions attached.
 

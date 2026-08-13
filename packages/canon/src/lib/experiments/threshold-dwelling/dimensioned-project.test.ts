@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import {
   THRESHOLD_DWELLING_DIMENSION_CANDIDATE,
   THRESHOLD_DWELLING_FLOOR_PLAN,
+  THRESHOLD_DWELLING_PROFESSIONAL_REVIEW_REQUIREMENTS,
+  assessThresholdDwellingProfessionalReview,
   validateThresholdDwellingDimensions
 } from './index.js';
 
@@ -85,6 +87,71 @@ describe('Threshold Dwelling dimension candidate', () => {
       expect.arrayContaining([
         expect.objectContaining({ id: 'construction-evidence-not-supplied' })
       ])
+    );
+  });
+
+  it('creates a complete professional-review intake without claiming construction readiness', () => {
+    const assessment = assessThresholdDwellingProfessionalReview(
+      THRESHOLD_DWELLING_DIMENSION_CANDIDATE
+    );
+
+    expect(assessment.constructionReady).toBe(false);
+    expect(assessment.canRequestProfessionalDetermination).toBe(false);
+    expect(assessment.missingRequirementIds).toEqual(
+      THRESHOLD_DWELLING_PROFESSIONAL_REVIEW_REQUIREMENTS.map((requirement) => requirement.id)
+    );
+    expect(assessment.requirements).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'licensed-site-survey', status: 'missing' }),
+        expect.objectContaining({ id: 'coordinated-architectural-package', status: 'missing' }),
+        expect.objectContaining({ id: 'structural-and-wind-design', status: 'missing' }),
+        expect.objectContaining({ id: 'mechanical-electrical-plumbing-design', status: 'missing' }),
+        expect.objectContaining({ id: 'energy-compliance-package', status: 'missing' }),
+        expect.objectContaining({ id: 'jurisdictional-determination', status: 'missing' })
+      ])
+    );
+  });
+
+  it('permits a human determination request only after every review artifact is accepted', () => {
+    const acceptedEvidence = THRESHOLD_DWELLING_PROFESSIONAL_REVIEW_REQUIREMENTS.map(
+      (requirement) => ({
+        requirementId: requirement.id,
+        status: 'accepted' as const,
+        documentId: `${requirement.id}-revision-01`,
+        submittedBy: 'qualified professional',
+        reviewedBy: 'project reviewer'
+      })
+    );
+    const assessment = assessThresholdDwellingProfessionalReview(
+      THRESHOLD_DWELLING_DIMENSION_CANDIDATE,
+      acceptedEvidence
+    );
+
+    expect(assessment.missingRequirementIds).toEqual([]);
+    expect(assessment.canRequestProfessionalDetermination).toBe(true);
+    expect(assessment.constructionReady).toBe(false);
+  });
+
+  it('does not treat an unreviewed document as accepted evidence', () => {
+    const unreviewedEvidence = THRESHOLD_DWELLING_PROFESSIONAL_REVIEW_REQUIREMENTS.map(
+      (requirement) => ({
+        requirementId: requirement.id,
+        status: 'accepted' as const,
+        documentId: `${requirement.id}-revision-01`,
+        submittedBy: 'unreviewed submitter'
+      })
+    );
+    const assessment = assessThresholdDwellingProfessionalReview(
+      THRESHOLD_DWELLING_DIMENSION_CANDIDATE,
+      unreviewedEvidence
+    );
+
+    expect(assessment.canRequestProfessionalDetermination).toBe(false);
+    expect(assessment.missingRequirementIds).toHaveLength(
+      THRESHOLD_DWELLING_PROFESSIONAL_REVIEW_REQUIREMENTS.length
+    );
+    expect(assessment.requirements.every((requirement) => requirement.status === 'submitted')).toBe(
+      true
     );
   });
 });

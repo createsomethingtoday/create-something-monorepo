@@ -20,6 +20,16 @@ export { default as Section } from './Section.svelte';
 export { default as SitePlan } from './SitePlan.svelte';
 export { default as Systems } from './Systems.svelte';
 export {
+  THRESHOLD_DWELLING_PROFESSIONAL_REVIEW_REQUIREMENTS,
+  assessThresholdDwellingProfessionalReview,
+  type ThresholdDwellingEvidenceRecord,
+  type ThresholdDwellingEvidenceStatus,
+  type ThresholdDwellingProfessionalReviewAssessment,
+  type ThresholdDwellingProfessionalReviewRequirement,
+  type ThresholdDwellingProfessionalReviewRequirementAssessment,
+  type ThresholdDwellingProfessionalReviewRequirementId
+} from './professional-review.js';
+export {
   THRESHOLD_DWELLING_DIMENSION_CANDIDATE,
   THRESHOLD_DWELLING_FLOOR_PLAN,
   validateThresholdDwellingDimensions,
