@@ -141,9 +141,9 @@ function codifiedMaterial(
 
 const materials = [
   codifiedMaterial('M-STR-001', 'Reinforced Concrete', 'foundation and conditioned-slab substrate'),
-  codifiedMaterial('M-STR-002', 'Coated Steel', 'primary structure and selected exposed supports'),
-  codifiedMaterial('M-ENV-001', 'Low-E Insulated Glass', 'glazing role; actual units and performance unselected'),
-  codifiedMaterial('M-ENV-002', 'Mineral Rainscreen', 'primary opaque exterior field'),
+  codifiedMaterial('M-STR-002', 'Coated Steel', 'localized primary structure and glazed-span support role'),
+  codifiedMaterial('M-ENV-001', 'Low-E Insulated Glass', 'maximize-useful-glazing role; actual units and performance unselected'),
+  codifiedMaterial('M-ENV-002', 'Architectural Concrete', 'primary opaque exterior mass'),
   codifiedMaterial('M-ENV-003', 'Formed Metal', 'roof, service volumes, flashings, and trim role'),
   codifiedMaterial('M-ENV-004', 'Protected Cedar', 'sheltered exterior accent role'),
   codifiedMaterial('M-INT-001', 'Polished Concrete', 'continuous conditioned-floor finish datum'),
@@ -196,17 +196,18 @@ const assemblies = [
   },
   {
     id: 'A-WAL-001',
-    name: 'Opaque exterior envelope concept',
-    purpose: 'Ventilated mineral rainscreen and formed-metal role; not a wall section.',
+    name: 'Architectural concrete exterior envelope concept',
+    purpose: 'Architectural concrete is the primary opaque mass; coated steel is localized at glazed spans and required frame/lateral conditions. This is not a wall section or structural design.',
     layers: [
-      { role: 'primary cladding field', materialId: 'M-ENV-002', nominalThicknessIn: null, status: 'design-intent-only-not-issued' },
-      { role: 'formed-metal field and trim', materialId: 'M-ENV-003', nominalThicknessIn: null, status: 'design-intent-only-not-issued' },
+      { role: 'primary opaque exterior mass', materialId: 'M-ENV-002', nominalThicknessIn: null, status: 'design-intent-only-not-issued' },
+      { role: 'localized glazed-span and frame support', materialId: 'M-STR-002', nominalThicknessIn: null, status: 'design-intent-only-not-issued' },
       { role: 'air, water, thermal, and structural backing systems', materialId: null, nominalThicknessIn: null, status: 'design-intent-only-not-issued' }
     ],
     constructionStatus: 'conceptual-assembly-not-issued',
     requiredDeterminations: [
-      'wall thickness, structure, insulation, and control-layer design',
-      'tested drainage, flashing, movement, corrosion, and installation details'
+      'architectural concrete system, thickness, reinforcement, finish, movement, and mockup design',
+      'glazed-span steel support, lateral, connection, corrosion, and installation design',
+      'tested drainage, flashing, air/water, thermal, and installation details'
     ]
   },
   {
@@ -226,10 +227,11 @@ const assemblies = [
   {
     id: 'A-OPN-001',
     name: 'Glazing concept',
-    purpose: 'Maximized useful glass intent; exact units, height, operation, and support are not issued.',
+    purpose: 'Maximize useful floor-to-ceiling glass where site, safety, privacy, energy, water-management, and engineered support determinations allow. Exact units, height, operation, and support are not issued.',
     layers: [
       { role: 'glazing unit', materialId: 'M-ENV-001', nominalThicknessIn: null, status: 'design-intent-only-not-issued' },
-      { role: 'frame, support, air, water, and shade systems', materialId: null, nominalThicknessIn: null, status: 'design-intent-only-not-issued' }
+      { role: 'localized steel support at glazed spans', materialId: 'M-STR-002', nominalThicknessIn: null, status: 'design-intent-only-not-issued' },
+      { role: 'frame, air, water, and shade systems', materialId: null, nominalThicknessIn: null, status: 'design-intent-only-not-issued' }
     ],
     constructionStatus: 'conceptual-assembly-not-issued',
     requiredDeterminations: [

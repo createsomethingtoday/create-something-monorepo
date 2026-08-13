@@ -48,6 +48,12 @@ describe('Threshold Dwelling construction allowance', () => {
     const allowanceText = JSON.stringify(THRESHOLD_DWELLING_DESIGN.constructionAllowance);
 
     expect(strategy.foundation.primaryMaterial).toBe('reinforced concrete');
+    expect(strategy.envelope).toEqual({
+      primaryOpaqueMaterial: 'architectural concrete',
+      glazingIntent:
+        'maximize useful glass while preserving required privacy, safety, thermal, water-management, and egress determinations',
+      steelRole: 'localized primary support at glazed spans and required frame/lateral conditions'
+    });
     expect(strategy.cedar.allowedLocations).toEqual([
       'recessed entry and selected protected soffits',
       'one public-room ceiling plane',
@@ -88,7 +94,9 @@ describe('Threshold Dwelling construction allowance', () => {
     expect(lineItem('Engineered concrete foundation datum')?.quantity).toBe(
       metrics.conditionedFloorAreaSF
     );
-    expect(lineItem('Primary opaque rainscreen walls')?.quantity).toBe(metrics.opaqueWallAreaSF);
+    expect(lineItem('Architectural concrete exterior walls')?.quantity).toBe(
+      metrics.opaqueWallAreaSF
+    );
     expect(lineItem('Windows & glazing')?.quantity).toBe(metrics.glazingAreaSF);
     expect(lineItem('Standing-seam roofing')?.quantity).toBe(metrics.roofAreaSF);
     expect(lineItem('Service carport structure')?.quantity).toBe(metrics.carportAreaSF);

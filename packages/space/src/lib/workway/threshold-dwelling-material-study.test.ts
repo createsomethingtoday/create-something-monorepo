@@ -43,3 +43,17 @@ test('keeps cedar and structural roles visible as deferred references rather tha
     ]
   );
 });
+
+test('makes architectural concrete the rendered exterior mass while glass and steel remain determination-gated', () => {
+  assert.deepEqual(resolveThresholdDwellingMaterialStudy('M-ENV-002'), {
+    materialId: 'M-ENV-002',
+    materialName: 'Architectural Concrete',
+    recipe: 'architectural-concrete-mottle',
+    surfaceKind: 'wall',
+    visualSource: 'workway-procedural-threejs-role-study',
+    productStatus: 'role-codified-product-unselected',
+    constructionReady: false
+  });
+  assert.equal(resolveThresholdDwellingMaterialStudy('M-ENV-001'), undefined);
+  assert.equal(resolveThresholdDwellingMaterialStudy('M-STR-002'), undefined);
+});

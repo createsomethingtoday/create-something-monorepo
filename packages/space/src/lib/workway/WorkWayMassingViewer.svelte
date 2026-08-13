@@ -144,21 +144,22 @@
         }
         break;
       }
-      case 'mineral-rainscreen-panels': {
-        context.fillStyle = '#c4c2b7';
+      case 'architectural-concrete-mottle': {
+        context.fillStyle = '#aaa79f';
         context.fillRect(0, 0, 384, 384);
-        context.strokeStyle = 'rgba(64, 63, 57, 0.36)';
-        context.lineWidth = 4;
-        for (let offset = 0; offset <= 384; offset += 96) {
+        for (let index = 0; index < 620; index += 1) {
+          const size = 1 + random() * 3;
+          context.fillStyle = `rgba(56, 53, 49, ${0.012 + random() * 0.03})`;
           context.beginPath();
-          context.moveTo(offset, 0);
-          context.lineTo(offset, 384);
-          context.stroke();
+          context.arc(random() * 384, random() * 384, size, 0, Math.PI * 2);
+          context.fill();
         }
-        for (let index = 0; index < 180; index += 1) {
-          context.fillStyle = `rgba(63, 62, 57, ${0.01 + random() * 0.035})`;
-          context.fillRect(random() * 384, random() * 384, 1 + random() * 2, 1);
-        }
+        context.strokeStyle = 'rgba(59, 56, 51, 0.07)';
+        context.lineWidth = 1;
+        context.beginPath();
+        context.moveTo(0, 192);
+        context.lineTo(384, 192);
+        context.stroke();
         break;
       }
       case 'gypsum-mineral-finish': {
@@ -186,8 +187,8 @@
         return { roughness: 0.42, metalness: 0.03, textureScaleM: 2.4 };
       case 'large-format-porcelain-grid':
         return { roughness: 0.26, metalness: 0.01, textureScaleM: 0.6 };
-      case 'mineral-rainscreen-panels':
-        return { roughness: 0.8, metalness: 0, textureScaleM: 1.2 };
+      case 'architectural-concrete-mottle':
+        return { roughness: 0.84, metalness: 0, textureScaleM: 2.4 };
       case 'gypsum-mineral-finish':
         return { roughness: 0.93, metalness: 0, textureScaleM: 1.8 };
       default:

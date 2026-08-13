@@ -77,10 +77,12 @@ export interface ThresholdDwellingMaterialStrategy {
     systemStatus: 'geotechnical-and-structural-design-required';
   };
   envelope: {
-    primaryOpaqueCladding: 'mineral panel and formed metal rainscreen';
+    primaryOpaqueMaterial: 'architectural concrete';
+    glazingIntent: 'maximize useful glass while preserving required privacy, safety, thermal, water-management, and egress determinations';
+    steelRole: 'localized primary support at glazed spans and required frame/lateral conditions';
   };
   cedar: {
-    role: 'protected accent';
+    role: 'restrained protected and tactile accent';
     allowedLocations: string[];
     prohibitedLocations: string[];
   };
@@ -141,13 +143,13 @@ const lineItems: ThresholdDwellingCostLineItem[] = [
   },
   {
     category: 'Structure',
-    description: 'Coated steel frame & columns',
+    description: 'Coated steel frame & glazed-span support',
     estimate: 85_000,
     quantity: buildMetrics.conditionedFloorAreaSF,
     unit: 'SF',
     unitRate: 85_000 / buildMetrics.conditionedFloorAreaSF,
     materialGroup: 'steelRoofCarportAssemblies',
-    notes: 'High-performance coating or galvanizing · reprice with fabricator'
+    notes: 'Localized at glazed spans and required frame conditions only · final member sizes, coating, connections, and fabrication pricing require engineering and fabricator input'
   },
   {
     category: 'Structure',
@@ -160,13 +162,13 @@ const lineItems: ThresholdDwellingCostLineItem[] = [
   },
   {
     category: 'Envelope',
-    description: 'Primary opaque rainscreen walls',
+    description: 'Architectural concrete exterior walls',
     estimate: 48_000,
     quantity: buildMetrics.opaqueWallAreaSF,
     unit: 'SF',
     unitRate: 48_000 / buildMetrics.opaqueWallAreaSF,
     materialGroup: 'opaqueEnvelope',
-    notes: 'Mineral panels with formed-metal service fields · ventilated drainage cavity'
+    notes: 'Primary opaque mass only · concrete system, structure, insulation, control layers, finish, movement, and enclosure details require coordinated design and current trade pricing'
   },
   {
     category: 'Envelope',
@@ -176,7 +178,7 @@ const lineItems: ThresholdDwellingCostLineItem[] = [
     unit: 'SF',
     unitRate: 95_000 / buildMetrics.glazingAreaSF,
     materialGroup: 'glazing',
-    notes: 'Low-E insulated glazing · obtain current installed package quote'
+    notes: 'Maximize useful glazed opening zones subject to orientation, shade, safety, privacy, egress, water-management, structure, and energy coordination · obtain current installed package quote'
   },
   {
     category: 'Envelope',
@@ -429,10 +431,13 @@ const materialStrategy: ThresholdDwellingMaterialStrategy = {
     systemStatus: 'geotechnical-and-structural-design-required'
   },
   envelope: {
-    primaryOpaqueCladding: 'mineral panel and formed metal rainscreen'
+    primaryOpaqueMaterial: 'architectural concrete',
+    glazingIntent:
+      'maximize useful glass while preserving required privacy, safety, thermal, water-management, and egress determinations',
+    steelRole: 'localized primary support at glazed spans and required frame/lateral conditions'
   },
   cedar: {
-    role: 'protected accent',
+    role: 'restrained protected and tactile accent',
     allowedLocations: [
       'recessed entry and selected protected soffits',
       'one public-room ceiling plane',
@@ -470,11 +475,11 @@ const materialPalette: ThresholdDwellingMaterial[] = [
     notes: 'Performance and shading study required'
   },
   {
-    name: 'Mineral Rainscreen',
+    name: 'Architectural Concrete',
     category: 'envelope',
-    color: '#c8c6bf',
-    location: 'Primary opaque wall fields',
-    notes: 'Ventilated drainage and drying cavity'
+    color: '#aaa79f',
+    location: 'Primary opaque exterior mass',
+    notes: 'Role-only concrete mass; system, structure, finish, movement, and enclosure design require coordinated issue and mockup review'
   },
   {
     name: 'Formed Metal',

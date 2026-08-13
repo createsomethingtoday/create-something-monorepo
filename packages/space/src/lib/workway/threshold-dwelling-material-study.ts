@@ -6,7 +6,7 @@ import {
 export type WorkWayMaterialStudyRecipe =
   | 'polished-concrete-mottle'
   | 'large-format-porcelain-grid'
-  | 'mineral-rainscreen-panels'
+  | 'architectural-concrete-mottle'
   | 'gypsum-mineral-finish';
 
 export interface WorkWayMaterialStudy {
@@ -72,7 +72,7 @@ function deferredMaterialRole(
 export const THRESHOLD_DWELLING_MATERIAL_STUDIES = [
   materialStudy('M-INT-001', 'polished-concrete-mottle', 'floor'),
   materialStudy('M-INT-002', 'large-format-porcelain-grid', 'floor'),
-  materialStudy('M-ENV-002', 'mineral-rainscreen-panels', 'wall'),
+  materialStudy('M-ENV-002', 'architectural-concrete-mottle', 'wall'),
   materialStudy('M-INT-003', 'gypsum-mineral-finish', 'wall')
 ] as const satisfies readonly WorkWayMaterialStudy[];
 

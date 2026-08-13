@@ -56,4 +56,29 @@ describe('Threshold Dwelling assembly schedule', () => {
       'energy model, glazing performance, and room-by-room HVAC loads'
     );
   });
+
+  it('keeps concrete primary, cedar restrained, and steel/glass limited to their intended roles', () => {
+    const schedule = THRESHOLD_DWELLING_ASSEMBLY_SCHEDULE;
+    const exteriorBinding = resolveThresholdDwellingAssemblyBinding('wall-class', 'exterior');
+    const exteriorAssembly = schedule.assemblies.find((assembly) => assembly.id === 'A-WAL-001');
+    const glazingAssembly = schedule.assemblies.find((assembly) => assembly.id === 'A-OPN-001');
+
+    expect(exteriorBinding?.renderMaterialId).toBe('M-ENV-002');
+    expect(schedule.materials.find((material) => material.id === 'M-ENV-002')?.name).toBe(
+      'Architectural Concrete'
+    );
+    expect(exteriorAssembly?.layers).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ materialId: 'M-ENV-002' }),
+        expect.objectContaining({ materialId: 'M-STR-002' })
+      ])
+    );
+    expect(glazingAssembly?.purpose).toMatch(/Maximize useful floor-to-ceiling glass/i);
+    expect(glazingAssembly?.layers).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ materialId: 'M-ENV-001' }),
+        expect.objectContaining({ materialId: 'M-STR-002' })
+      ])
+    );
+  });
 });
