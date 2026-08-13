@@ -66,6 +66,23 @@ approval boundary:
 Mirage is deprecated and is not a delivery item. Use native lazy loading and
 responsive images instead.
 
+### Cache Analytics baseline
+
+Cache Analytics is already active with Pro; it does not require a separate
+enablement switch. The 2026-08-12 dashboard readback used the exact-host filter
+`createsomething.agency`, deliberately excluding the high-volume MCP hosts.
+For the preceding 24 hours it reported 14.53k total requests, with 7.46k
+served by Cloudflare and 7.08k served by origin. Cache statuses were 4.78k
+dynamic, 4.26k hit, 3.20k none, 1.61k miss, 373 revalidated, 202 expired, and
+111 bypassed.
+
+This is a measurement baseline, not justification for an automatic cache rule.
+The same public-host view contained 3.22k `404` responses and 2.57k `301`
+responses. First compare that view after a full day of the scanner WAF rule,
+then investigate the remaining high-volume paths and their response/cache
+semantics before proposing any cache-policy change. Do not let aggregate
+zone-level MCP traffic decide a public-site caching policy.
+
 ## Tier Mapping
 
 - Database: Cloudflare analytics, AI Crawl Control tables, WAF events, and this
