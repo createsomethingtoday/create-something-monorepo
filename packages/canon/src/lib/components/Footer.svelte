@@ -371,17 +371,24 @@
   {/if}
 
   {#if usesEditorialStyle}
-    <div class="footer-editorial-identity" aria-hidden="true">
-      {#if brandAsset}
+    {#if brandAsset}
+      <a
+        href="/"
+        class="footer-editorial-identity footer-editorial-identity--link"
+        aria-label={`${brandAsset.label} home`}
+      >
         <img class="footer-editorial-identity__asset" src={brandAsset.src} alt="" />
-      {:else}
+        <p>Operating systems for work that has to hold up.</p>
+      </a>
+    {:else}
+      <div class="footer-editorial-identity" aria-hidden="true">
         <div>
           <span>CREATE</span>
           <span>SOMETHING</span>
         </div>
-      {/if}
-      <p>Operating systems for work that has to hold up.</p>
-    </div>
+        <p>Operating systems for work that has to hold up.</p>
+      </div>
+    {/if}
   {/if}
 
   <!-- Footer Links -->
@@ -390,7 +397,7 @@
       <div class="footer-links-grid">
         <!-- About / Brand Column -->
         <div class="footer-brand-column">
-          {#if usesPerformanceStyle || usesEditorialStyle}
+          {#if (usesPerformanceStyle && !usesEditorialStyle) || (usesEditorialStyle && !brandAsset)}
             <a
               href="/"
               class="footer-mark"
@@ -1205,6 +1212,16 @@
     margin-inline: auto;
     padding: clamp(4rem, 9vw, 8rem) 0 0;
     color: var(--color-performance-editorial-light, #f3ebe4);
+  }
+
+  .footer-editorial-identity--link {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .footer-editorial-identity--link:focus-visible {
+    outline: 2px solid var(--color-performance-editorial-brand, #fcaa2d);
+    outline-offset: 0.5rem;
   }
 
   .footer-editorial-identity div {
