@@ -7,6 +7,7 @@
     Button,
     Dialog,
     AssetsDisplay,
+    AssetWorkQueue,
     OverviewStats,
     SubmissionTracker,
     DataFreshnessIndicator
@@ -14,6 +15,7 @@
   import { toast } from '$lib/stores/toast';
   import { trackEvent } from '$lib/utils/analytics';
   import { getPortfolioTitle } from '$lib/utils/portfolio-title';
+  import { getActionableAssetWorkQueue } from '$lib/utils/asset-actions';
   import { LoaderCircle } from 'lucide-svelte';
 
   let { data }: { data: PageData } = $props();
@@ -62,6 +64,7 @@
       : `Track published ${heroAssetLabelPlural}, upcoming submissions, and marketplace signals in one place.`
   );
   const portfolioTitle = $derived(getPortfolioTitle(data.assets || []));
+  const actionableAssetWorkQueue = $derived(getActionableAssetWorkQueue(data.assets || []));
   const openingEditAssetName = $derived(
     (data.assets || []).find((asset) => asset.id === openingEditAssetId)?.name ?? 'asset'
   );
@@ -287,6 +290,14 @@
         <div class="dashboard-summary-grid">
           <OverviewStats assets={data.assets || []} />
         </div>
+
+        <AssetWorkQueue
+          items={actionableAssetWorkQueue}
+          {openingEditAssetId}
+          onView={handleViewAsset}
+          onPreloadView={preloadAssetDetail}
+          onEdit={handleEditAsset}
+        />
       </section>
 
       <section class="assets-section" id="asset-portfolio">
@@ -340,8 +351,8 @@
   >
     <div class="confirm-dialog">
       <p>
-        <strong>{archiveConfirmAssetName}</strong> will be archived and removed from the active
-        dashboard workflow. This action cannot be undone here.
+        <strong>{archiveConfirmAssetName}</strong> will be archived and removed from the active dashboard
+        workflow. This action cannot be undone here.
       </p>
       <div class="confirm-actions">
         <Button
