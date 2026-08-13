@@ -8,8 +8,8 @@ function encodeBase64Url(value: string | ArrayBuffer): string {
 	return Buffer.from(typeof value === 'string' ? value : new Uint8Array(value)).toString('base64url');
 }
 
-async function createAgencyDiscoveryAccessToken() {
-	const issuer = 'https://identity.example.test';
+async function createAgencyDiscoveryAccessToken(kind: 'oauth_access_token' | 'agent_auth_access_token' = 'oauth_access_token') {
+	const issuer = `https://${kind}.identity.example.test`;
 	const keyPair = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, [
 		'sign',
 		'verify'
@@ -35,7 +35,7 @@ async function createAgencyDiscoveryAccessToken() {
 				aud: ['https://createsomething.agency'],
 				iat: now - 30,
 				exp: now + 300,
-				kind: 'oauth_access_token',
+				kind,
 				client_id: 'oauth_agent',
 				scope: 'openid mcp',
 				resource: 'https://createsomething.agency'
@@ -237,7 +237,8 @@ test('auth.md and protected-resource metadata describe the same real OAuth resou
 	assert.deepEqual(body.bearer_methods_supported, ['header']);
 	assert.match(auth, /^# auth\.md$/m);
 	assert.match(auth, /user authorization and PKCE/i);
-	assert.match(auth, /does not publish autonomous account or credential provisioning/i);
+	assert.match(auth, /anonymous agent registration/i);
+	assert.match(auth, /POST https:\/\/id\.createsomething\.space\/agent\/auth/);
 });
 
 test('the OAuth-protected agent endpoint gives unauthenticated agents the resource metadata pointer', async () => {
@@ -253,7 +254,7 @@ test('the OAuth-protected agent endpoint gives unauthenticated agents the resour
 	);
 });
 
-test('the OAuth-protected agent endpoint accepts a verified resource-bound mcp token only', async () => {
+test('the OAuth-protected agent endpoint accepts a verified resource-bound discovery token only', async () => {
 	const { GET } = await import('../src/routes/api/agent-access/+server.ts');
 	const { issuer, token, jwks } = await createAgencyDiscoveryAccessToken();
 	const response = await GET({
@@ -274,4 +275,23 @@ test('the OAuth-protected agent endpoint accepts a verified resource-bound mcp t
 	assert.equal(body.authenticated, true);
 	assert.equal(body.subject, 'usr_agent');
 	assert.deepEqual(body.allowed, ['read_agent_discovery']);
+});
+
+test('the OAuth-protected agent endpoint accepts the short-lived anonymous agent registration token', async () => {
+	const { GET } = await import('../src/routes/api/agent-access/+server.ts');
+	const { issuer, token, jwks } = await createAgencyDiscoveryAccessToken('agent_auth_access_token');
+	const response = await GET({
+		request: new Request('https://createsomething.agency/api/agent-access', {
+			headers: { authorization: `Bearer ${token}` }
+		}),
+		platform: {
+			env: {
+				CS_IDENTITY_ISSUER: issuer,
+				CS_IDENTITY_JWKS_URL: `${issuer}/.well-known/jwks.json`
+			}
+		},
+		fetch: async () => Response.json(jwks)
+	} as never);
+
+	assert.equal(response.status, 200);
 });
