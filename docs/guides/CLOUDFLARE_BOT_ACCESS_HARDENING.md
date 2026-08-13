@@ -37,6 +37,25 @@ show generic scanner probes such as `.env`, `.git`, `wp-*`, random `.php`, and
 WordPress plugin/theme paths. Treat those scanner probes as abuse, not as
 monetizable agent demand.
 
+### 2026-08-12 Pro baseline
+
+The `.agency` zone is now on Cloudflare Pro. Dashboard inspection found 0 custom
+rules, 0 rate limiting rules, and 0 managed rules. It does have 10 active
+account-level IP allow rules, which are inherited configuration rather than a
+replacement for a zone policy. This is a configuration baseline, not evidence
+that a new rule should be enabled.
+
+Pro makes the following useful to the operating loop without changing the
+approval boundary:
+
+- Cloudflare and OWASP managed WAF rules, plus two zone rate-limiting rules
+- Super Bot Fight Mode and its bot report
+- Cache Analytics with seven days of retention
+- Polish image optimization after asset and existing-transform checks
+
+Mirage is deprecated and is not a delivery item. Use native lazy loading and
+responsive images instead.
+
 ## Tier Mapping
 
 - Database: Cloudflare analytics, AI Crawl Control tables, WAF events, and this
@@ -64,6 +83,33 @@ Phase 1 must not:
 - charge internal MCP, client MCP, reviewer MCP, or operator automation traffic
 - mutate Cloudflare paid-plan settings without an approval note and rollback
   path
+
+## Control Service Module
+
+**Edge Security & Performance Control** is a bounded Control module, not a
+generic security claim. It can include:
+
+- WAF managed-rule and custom-rule policy for one approved zone
+- scoped rate-limit policy for exposed write or high-cost endpoints
+- bot policy that protects abuse without breaking required agent, search, API,
+  or MCP traffic
+- Security Events and Cache Analytics review, then a recorded change proposal
+- an image-delivery evaluation before enabling Polish
+
+It does not include a twenty-four-seven security operations center, guaranteed
+attack prevention, or a client plan/add-on charge. The client owns its Cloudflare
+account, plan, and change approval; CREATE SOMETHING owns the policy artifact,
+the evidence review, the approved change plan and rollback, and the recurring
+operating review.
+
+The required lifecycle is **baseline → observe → propose → approved apply →
+verify → recurring review**. For `.agency`, preserve Markdown for Agents,
+agent-readable discovery, and machine-facing MCP routes throughout the change.
+
+Do not use Super Bot Fight Mode as a blanket default: it applies to the whole
+domain and can challenge API, browser-agent, or other machine traffic. Review
+its bot report first, and add narrowly scoped exceptions before turning on an
+action that could affect a required route.
 
 ## Dry-Run WAF Candidates
 

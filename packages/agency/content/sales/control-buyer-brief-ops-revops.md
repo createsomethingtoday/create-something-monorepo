@@ -31,6 +31,10 @@ CREATE SOMETHING Control manages that operating layer after launch. It covers ru
 - Monthly operating review and usage forecast
 - Approval, escalation, and rollback maintenance
 - A current Map of the operating system and its trust boundaries
+- When a Cloudflare zone is in the approved scope: WAF and bot policy, Security
+  Events and Cache Analytics review, plus a measured image-delivery plan. Every
+  enforcement change has an approved change plan and rollback; this is not a
+  twenty-four-seven security operations center.
 
 Control maintains the system that was launched. It does not quietly absorb unrelated product development or unlimited model usage.
 

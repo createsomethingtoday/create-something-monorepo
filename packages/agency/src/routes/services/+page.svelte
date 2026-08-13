@@ -68,6 +68,11 @@
       question: 'Do clients own the implementation?',
       answer:
         'Yes. Clients retain ownership of code, workflows, operating documentation, and approval authority.'
+    },
+    {
+      question: 'Does Control include WAF?',
+      answer:
+        'When a Cloudflare zone is in the approved scope, Control can operate its WAF and bot policy: baseline traffic, propose scoped managed-rule or rate-limit changes, verify the result, and retain a rollback path. It keeps necessary agent and machine routes available, and it is not a twenty-four-seven security operations center or a guarantee that every attack is prevented.'
     }
   ];
 </script>

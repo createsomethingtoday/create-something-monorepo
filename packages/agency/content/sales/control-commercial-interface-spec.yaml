@@ -45,6 +45,39 @@ managed_operations:
     - "monthly_performance_review"
     - "standard_support_window"
 
+edge_security_performance_control:
+  public_name: "Edge Security & Performance Control"
+  role: "approved_control_module_after_baseline"
+  availability: "cloudflare_plan_and_zone_capability_dependent"
+  included_when: "part_of_the_approved_control_scope"
+  client_owns:
+    - "cloudflare_plan_and_add_on_charges"
+    - "zone_ownership_and_change_approval"
+    - "business_acceptance_of_residual_risk"
+  create_something_owns:
+    - "waf_policy_and_managed_rules"
+    - "rate_limit_policy"
+    - "bot_policy_and_automation_exceptions"
+    - "security_event_and_cache_analytics_review"
+    - "approved_change_with_rollback"
+  lifecycle:
+    - "baseline"
+    - "observe"
+    - "propose"
+    - "approved_apply"
+    - "verify"
+    - "recurring_review"
+  guardrails:
+    preserve_agent_discovery: true
+    preserve_machine_facing_mcp_routes: true
+    super_bot_fight_mode: "not_blanket_default"
+    image_optimization: "measure_before_polish"
+    mirage: "not_offered_deprecated"
+    prohibited_claims:
+      - "guaranteed_attack_prevention"
+      - "twenty_four_seven_security_operations_center"
+      - "blocking_without_evidence_or_approval"
+
 usage_control:
   public_term: "AI usage"
   internal_cost_basis: "landed_ai_and_runtime_cost"
