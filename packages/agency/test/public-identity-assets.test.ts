@@ -35,15 +35,9 @@ test('all public properties ship one ring-mark browser, web-clip, and social-ima
     }
 
     const favicon = readFileSync(resolve(staticRoot, 'favicon.svg'), 'utf8');
-    if (property === 'agency') {
-      // Agency is the only approved V3 identity adoption; the other public
-      // properties remain on the shared ring source until separately approved.
-      assert.match(favicon, /id="cs-micro-mark-v3"/);
-      assert.match(favicon, /<circle cx="64" cy="64" r="39"\s+stroke-width="11"\/>/);
-    } else {
-      assert.equal(favicon, canonicalSvg, `${property} must use the shared ring source`);
-      assert.match(favicon, /<circle cx="53" cy="50" r="41\.5"\s*\/>/);
-    }
+    assert.equal(favicon, canonicalSvg, `${property} must use the shared ring source`);
+    assert.match(favicon, /<circle\s+cx="53"\s+cy="50"\s+r="41\.5"/);
+    assert.match(favicon, /<circle\s+cx="43\.5"\s+cy="50"\s+r="31\.5"/);
     assert.doesNotMatch(favicon, /Isometric Cube Mark|M 16 4 L 26\.39 10/);
     assert.deepEqual(pngSize(resolve(staticRoot, 'favicon.png')), [512, 512]);
     assert.deepEqual(pngSize(resolve(staticRoot, 'apple-touch-icon.png')), [180, 180]);
