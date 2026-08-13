@@ -10,7 +10,7 @@ import {
 test('offers deterministic procedural studies only for the material roles present in the current massing', () => {
   assert.deepEqual(
     THRESHOLD_DWELLING_MATERIAL_STUDIES.map((study) => study.materialId),
-    ['M-INT-001', 'M-INT-002', 'M-ENV-002', 'M-INT-003']
+    ['M-INT-001', 'M-INT-002', 'M-ENV-001', 'M-ENV-002']
   );
   assert.ok(
     THRESHOLD_DWELLING_MATERIAL_STUDIES.every(
@@ -44,7 +44,16 @@ test('keeps cedar and structural roles visible as deferred references rather tha
   );
 });
 
-test('makes architectural concrete the rendered exterior mass while glass and steel remain determination-gated', () => {
+test('makes glass the rendered exterior field and architectural concrete the interior-wall study', () => {
+  assert.deepEqual(resolveThresholdDwellingMaterialStudy('M-ENV-001'), {
+    materialId: 'M-ENV-001',
+    materialName: 'Low-E Insulated Glass',
+    recipe: 'low-e-glass-intent',
+    surfaceKind: 'wall',
+    visualSource: 'workway-procedural-threejs-role-study',
+    productStatus: 'role-codified-product-unselected',
+    constructionReady: false
+  });
   assert.deepEqual(resolveThresholdDwellingMaterialStudy('M-ENV-002'), {
     materialId: 'M-ENV-002',
     materialName: 'Architectural Concrete',
@@ -54,6 +63,6 @@ test('makes architectural concrete the rendered exterior mass while glass and st
     productStatus: 'role-codified-product-unselected',
     constructionReady: false
   });
-  assert.equal(resolveThresholdDwellingMaterialStudy('M-ENV-001'), undefined);
+  assert.equal(resolveThresholdDwellingMaterialStudy('M-INT-003'), undefined);
   assert.equal(resolveThresholdDwellingMaterialStudy('M-STR-002'), undefined);
 });

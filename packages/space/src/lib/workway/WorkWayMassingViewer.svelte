@@ -144,6 +144,19 @@
         }
         break;
       }
+      case 'low-e-glass-intent': {
+        context.fillStyle = '#c7dce0';
+        context.fillRect(0, 0, 384, 384);
+        context.strokeStyle = 'rgba(255, 255, 255, 0.16)';
+        context.lineWidth = 2;
+        context.beginPath();
+        context.moveTo(0, 56);
+        context.lineTo(384, 0);
+        context.moveTo(0, 248);
+        context.lineTo(384, 192);
+        context.stroke();
+        break;
+      }
       case 'architectural-concrete-mottle': {
         context.fillStyle = '#aaa79f';
         context.fillRect(0, 0, 384, 384);
@@ -187,6 +200,8 @@
         return { roughness: 0.42, metalness: 0.03, textureScaleM: 2.4 };
       case 'large-format-porcelain-grid':
         return { roughness: 0.26, metalness: 0.01, textureScaleM: 0.6 };
+      case 'low-e-glass-intent':
+        return { roughness: 0.08, metalness: 0.04, textureScaleM: 2.4 };
       case 'architectural-concrete-mottle':
         return { roughness: 0.84, metalness: 0, textureScaleM: 2.4 };
       case 'gypsum-mineral-finish':
@@ -218,6 +233,7 @@
       : undefined;
     const studyParameters = materialStudyParameters(study);
     const texture = study ? materialStudyTexture(study) : undefined;
+    const glassIntent = study?.recipe === 'low-e-glass-intent';
     const surfaceGeometry = createSurfaceGeometry(
       surface.vertices,
       kind,
@@ -229,7 +245,8 @@
       roughness: studyParameters.roughness,
       metalness: studyParameters.metalness,
       transparent: true,
-      opacity,
+      opacity: glassIntent ? Math.min(opacity, 0.3) : opacity,
+      depthWrite: !glassIntent,
       side: DoubleSide
     });
     const mesh = new Mesh(surfaceGeometry, material);
@@ -252,7 +269,7 @@
     const edgeMaterial = new LineBasicMaterial({
       color: kind === 'wall' && 'exterior' in surface && surface.exterior ? '#fff6db' : '#f0f0e8',
       transparent: true,
-      opacity: kind === 'wall' ? 0.78 : 0.26
+      opacity: glassIntent ? 0.42 : kind === 'wall' ? 0.78 : 0.26
     });
     const edges = new LineSegments(edgeGeometry, edgeMaterial);
     edges.userData = mesh.userData;
@@ -436,7 +453,7 @@
     <details>
       <summary>Deferred roles · {THRESHOLD_DWELLING_DEFERRED_MATERIAL_STUDY_ROLES.length} not drawn</summary>
       <p>
-        Cedar, glass, structural concrete and steel, casework, roof/trim, terrace, and grade roles remain visible in the schedule but have no issued 3D geometry in this revision.
+        Cedar, steel, structural concrete, gypsum/mineral finish, casework, roof/trim, terrace, and grade roles remain visible in the schedule but have no issued 3D geometry in this revision. An exterior wall rendered as glass denotes the design role; the 60% aggregate target is not pane geometry or exact glass coverage.
       </p>
       <ul>
         {#each THRESHOLD_DWELLING_DEFERRED_MATERIAL_STUDY_ROLES as role}

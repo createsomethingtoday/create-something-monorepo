@@ -142,13 +142,13 @@ function codifiedMaterial(
 const materials = [
   codifiedMaterial('M-STR-001', 'Reinforced Concrete', 'foundation and conditioned-slab substrate'),
   codifiedMaterial('M-STR-002', 'Coated Steel', 'localized primary structure and glazed-span support role'),
-  codifiedMaterial('M-ENV-001', 'Low-E Insulated Glass', 'maximize-useful-glazing role; actual units and performance unselected'),
-  codifiedMaterial('M-ENV-002', 'Architectural Concrete', 'primary opaque exterior mass'),
+  codifiedMaterial('M-ENV-001', 'Low-E Insulated Glass', 'glazing-majority exterior field; actual units and performance unselected'),
+  codifiedMaterial('M-ENV-002', 'Architectural Concrete', 'primary interior wall mass and selective opaque exterior zones'),
   codifiedMaterial('M-ENV-003', 'Formed Metal', 'roof, service volumes, flashings, and trim role'),
   codifiedMaterial('M-ENV-004', 'Protected Cedar', 'sheltered exterior accent role'),
   codifiedMaterial('M-INT-001', 'Polished Concrete', 'continuous conditioned-floor finish datum'),
   codifiedMaterial('M-INT-002', 'Large-Format Porcelain', 'wet-area finish role'),
-  codifiedMaterial('M-INT-003', 'Gypsum + Mineral Finish', 'interior partition and ceiling finish role'),
+  codifiedMaterial('M-INT-003', 'Gypsum + Mineral Finish', 'selective ceiling and non-concrete service-finish role'),
   codifiedMaterial('M-INT-004', 'Cedar Accent', 'limited public ceiling and tactile millwork role'),
   codifiedMaterial('M-INT-005', 'Durable Casework', 'kitchen and storage role'),
   codifiedMaterial('M-EXT-001', 'Concrete Terrace', 'independent exterior slab role'),
@@ -196,31 +196,35 @@ const assemblies = [
   },
   {
     id: 'A-WAL-001',
-    name: 'Architectural concrete exterior envelope concept',
-    purpose: 'Architectural concrete is the primary opaque mass; coated steel is localized at glazed spans and required frame/lateral conditions. This is not a wall section or structural design.',
+    name: 'Glazing-majority exterior envelope concept',
+    purpose: 'Low-E insulated glass is the predominant aggregate exterior-wall design intent, concentrated by verified view and climate conditions; architectural concrete is concentrated at selective opaque zones and coated steel is localized at glazed spans and required frame/lateral conditions. This is not a window schedule, wall section, or structural design.',
     layers: [
-      { role: 'primary opaque exterior mass', materialId: 'M-ENV-002', nominalThicknessIn: null, status: 'design-intent-only-not-issued' },
+      { role: 'glazing-majority exterior field', materialId: 'M-ENV-001', nominalThicknessIn: null, status: 'design-intent-only-not-issued' },
+      { role: 'selective opaque exterior zones', materialId: 'M-ENV-002', nominalThicknessIn: null, status: 'design-intent-only-not-issued' },
       { role: 'localized glazed-span and frame support', materialId: 'M-STR-002', nominalThicknessIn: null, status: 'design-intent-only-not-issued' },
       { role: 'air, water, thermal, and structural backing systems', materialId: null, nominalThicknessIn: null, status: 'design-intent-only-not-issued' }
     ],
     constructionStatus: 'conceptual-assembly-not-issued',
     requiredDeterminations: [
-      'architectural concrete system, thickness, reinforcement, finish, movement, and mockup design',
+      'facade-specific glazing ratio, apertures, units, operation, shaded-zone design, and Miesian-precedent non-transfer review',
+      'architectural concrete system, thickness, reinforcement, finish, movement, and mockup design at selective opaque zones',
       'glazed-span steel support, lateral, connection, corrosion, and installation design',
       'tested drainage, flashing, air/water, thermal, and installation details'
     ]
   },
   {
     id: 'A-WAL-002',
-    name: 'Interior partition finish concept',
-    purpose: 'Repairable quiet neutral interior field around structure and services.',
+    name: 'Interior architectural concrete wall-mass concept',
+    purpose: 'Architectural concrete is the primary interior-wall design intent; gypsum/mineral finish remains selective at ceilings and non-concrete service-finish planes. This is not a partition, structural, acoustic, or MEP detail.',
     layers: [
-      { role: 'interior finish', materialId: 'M-INT-003', nominalThicknessIn: null, status: 'design-intent-only-not-issued' },
-      { role: 'partition structure, acoustic, and service cavity', materialId: null, nominalThicknessIn: null, status: 'design-intent-only-not-issued' }
+      { role: 'primary interior wall mass', materialId: 'M-ENV-002', nominalThicknessIn: null, status: 'design-intent-only-not-issued' },
+      { role: 'selective ceiling and service-finish planes', materialId: 'M-INT-003', nominalThicknessIn: null, status: 'design-intent-only-not-issued' },
+      { role: 'partition structure, acoustic, and service routing', materialId: null, nominalThicknessIn: null, status: 'design-intent-only-not-issued' }
     ],
     constructionStatus: 'conceptual-assembly-not-issued',
     requiredDeterminations: [
-      'partition thickness, ratings, acoustic criteria, and MEP routing',
+      'interior concrete wall system, thickness, reinforcement, openings, ratings, and MEP routing',
+      'acoustic criteria and selective gypsum/mineral finish locations',
       'door swings and final clearance review'
     ]
   },
@@ -274,7 +278,7 @@ const bindings = [
     id: 'B-wall-exterior',
     target: { kind: 'wall-class', id: 'exterior' },
     assemblyId: 'A-WAL-001',
-    renderMaterialId: 'M-ENV-002',
+    renderMaterialId: 'M-ENV-001',
     renderInMassingGuide: true,
     scopeQuantity: {
       value: THRESHOLD_DWELLING_DIMENSION_CANDIDATE.footprint.perimeterFt,
@@ -282,13 +286,13 @@ const bindings = [
       status: 'plan-derived-scope-not-procurement-quantity'
     },
     note:
-      'Exact only as conceptual plan-perimeter linework. Wall height, thickness, openings, assemblies, and takeoff remain unissued.'
+      'The massing renders a glazing-majority exterior field over exact plan-perimeter linework only. It does not assert glass-panel locations, pane count, mullions, heights, thicknesses, openings, assemblies, or takeoff.'
   },
   {
     id: 'B-wall-interior',
     target: { kind: 'wall-class', id: 'interior' },
     assemblyId: 'A-WAL-002',
-    renderMaterialId: 'M-INT-003',
+    renderMaterialId: 'M-ENV-002',
     renderInMassingGuide: true,
     scopeQuantity: {
       value: null,
@@ -296,7 +300,7 @@ const bindings = [
       status: 'design-development-allowance-not-plan-quantity'
     },
     note:
-      'No interior-wall linear quantity is asserted because segmented render lines are not a partition takeoff.'
+      'The massing renders an interior architectural-concrete field over exact plan linework only. No interior-wall linear quantity, thickness, reinforcement, opening, service, or partition takeoff is asserted.'
   },
   ...THRESHOLD_DWELLING_DIMENSION_CANDIDATE.windows.map((opening) => ({
     id: `B-${opening.id}`,

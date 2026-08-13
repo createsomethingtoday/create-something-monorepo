@@ -32,7 +32,7 @@ test('derives a browser 3D massing guide from the same Rev 0.8 plan used for 2D 
   );
   assert.deepEqual(
     [...new Set(geometry.walls.map((wall) => wall.materialId))],
-    ['M-ENV-002', 'M-INT-003']
+    ['M-ENV-001', 'M-ENV-002']
   );
   assert.ok(
     [...geometry.floors, ...geometry.walls].every(

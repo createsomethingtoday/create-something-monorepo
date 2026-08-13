@@ -38,6 +38,8 @@ export interface ThresholdDwellingBuildMetrics {
   grossExteriorWallAreaSF: number;
   glazingAreaSF: number;
   opaqueWallAreaSF: number;
+  glazingToGrossExteriorWallRatio: number;
+  glazingToConditionedFloorAreaRatio: number;
   roofAreaSF: number;
   drivewayAreaSF: number;
   terraceAreaSF: number;
@@ -77,9 +79,14 @@ export interface ThresholdDwellingMaterialStrategy {
     systemStatus: 'geotechnical-and-structural-design-required';
   };
   envelope: {
-    primaryOpaqueMaterial: 'architectural concrete';
-    glazingIntent: 'maximize useful glass while preserving required privacy, safety, thermal, water-management, and egress determinations';
+    exteriorWallIntent: 'glazing-majority exterior field with architectural concrete concentrated at selective opaque zones';
+    glazingIntent: 'target 60% aggregate exterior glazing by illustrative wall area, concentrated by verified view and climate conditions while preserving required privacy, safety, thermal, water-management, and egress determinations';
+    energyComplianceStrategy: 'performance-or-energy-rating-index-analysis-required';
     steelRole: 'localized primary support at glazed spans and required frame/lateral conditions';
+  };
+  interior: {
+    primaryWallMaterial: 'architectural concrete';
+    gypsumRole: 'selective ceiling and non-concrete service-finish planes';
   };
   cedar: {
     role: 'restrained protected and tactile accent';
@@ -95,8 +102,10 @@ const buildMetrics: ThresholdDwellingBuildMetrics = {
   buildingPerimeterLF: 214,
   averageExteriorWallHeightFT: 10,
   grossExteriorWallAreaSF: 2140,
-  glazingAreaSF: 950,
-  opaqueWallAreaSF: 1190,
+  glazingAreaSF: 1284,
+  opaqueWallAreaSF: 856,
+  glazingToGrossExteriorWallRatio: 0.6,
+  glazingToConditionedFloorAreaRatio: 1284 / 2730,
   roofAreaSF: 3000,
   drivewayAreaSF: 800,
   terraceAreaSF: 450,
@@ -162,23 +171,23 @@ const lineItems: ThresholdDwellingCostLineItem[] = [
   },
   {
     category: 'Envelope',
-    description: 'Architectural concrete exterior walls',
+    description: 'Selective opaque concrete exterior zones',
     estimate: 48_000,
     quantity: buildMetrics.opaqueWallAreaSF,
     unit: 'SF',
     unitRate: 48_000 / buildMetrics.opaqueWallAreaSF,
     materialGroup: 'opaqueEnvelope',
-    notes: 'Primary opaque mass only · concrete system, structure, insulation, control layers, finish, movement, and enclosure details require coordinated design and current trade pricing'
+    notes: 'Legacy scenario allowance retained only for like-for-like comparison; it is not an opaque-envelope saving claim · concrete system, structure, insulation, control layers, finish, movement, and enclosure details require coordinated design and current trade pricing'
   },
   {
     category: 'Envelope',
-    description: 'Windows & glazing',
+    description: 'Glazing-majority exterior envelope',
     estimate: 95_000,
     quantity: buildMetrics.glazingAreaSF,
     unit: 'SF',
     unitRate: 95_000 / buildMetrics.glazingAreaSF,
     materialGroup: 'glazing',
-    notes: 'Maximize useful glazed opening zones subject to orientation, shade, safety, privacy, egress, water-management, structure, and energy coordination · obtain current installed package quote'
+    notes: 'Legacy scenario allowance retained only for like-for-like comparison; it is not a glazing bid, rate, or feasibility conclusion · 60% illustrative wall-area target; exact apertures remain unissued and must respond to orientation, shade, safety, privacy, egress, water-management, structure, and energy coordination · obtain current installed package quote'
   },
   {
     category: 'Envelope',
@@ -201,12 +210,13 @@ const lineItems: ThresholdDwellingCostLineItem[] = [
   },
   {
     category: 'Interior',
-    description: 'Interior walls & doors',
+    description: 'Interior concrete wall mass & doors',
     estimate: 32_000,
     quantity: buildMetrics.conditionedFloorAreaSF,
     unit: 'SF',
     unitRate: 32_000 / buildMetrics.conditionedFloorAreaSF,
-    materialGroup: 'other'
+    materialGroup: 'other',
+    notes: 'Architectural-concrete interior-wall intent only · partition system, reinforcement, services, ratings, openings, and door details require coordinated issue'
   },
   {
     category: 'Interior',
@@ -431,10 +441,16 @@ const materialStrategy: ThresholdDwellingMaterialStrategy = {
     systemStatus: 'geotechnical-and-structural-design-required'
   },
   envelope: {
-    primaryOpaqueMaterial: 'architectural concrete',
+    exteriorWallIntent:
+      'glazing-majority exterior field with architectural concrete concentrated at selective opaque zones',
     glazingIntent:
-      'maximize useful glass while preserving required privacy, safety, thermal, water-management, and egress determinations',
+      'target 60% aggregate exterior glazing by illustrative wall area, concentrated by verified view and climate conditions while preserving required privacy, safety, thermal, water-management, and egress determinations',
+    energyComplianceStrategy: 'performance-or-energy-rating-index-analysis-required',
     steelRole: 'localized primary support at glazed spans and required frame/lateral conditions'
+  },
+  interior: {
+    primaryWallMaterial: 'architectural concrete',
+    gypsumRole: 'selective ceiling and non-concrete service-finish planes'
   },
   cedar: {
     role: 'restrained protected and tactile accent',
@@ -471,15 +487,15 @@ const materialPalette: ThresholdDwellingMaterial[] = [
     name: 'Low-E Insulated Glass',
     category: 'envelope',
     color: '#a8c7d1',
-    location: 'Primary openings',
-    notes: 'Performance and shading study required'
+    location: 'Glazing-majority exterior wall field',
+    notes: '60% illustrative wall-area target; exact units, operation, performance, shading, and water-management require coordinated design'
   },
   {
     name: 'Architectural Concrete',
     category: 'envelope',
     color: '#aaa79f',
-    location: 'Primary opaque exterior mass',
-    notes: 'Role-only concrete mass; system, structure, finish, movement, and enclosure design require coordinated issue and mockup review'
+    location: 'Interior wall mass + selective opaque exterior zones',
+    notes: 'Role-only concrete mass; system, structure, finish, movement, service routing, and enclosure design require coordinated issue and mockup review'
   },
   {
     name: 'Formed Metal',
@@ -513,8 +529,8 @@ const materialPalette: ThresholdDwellingMaterial[] = [
     name: 'Gypsum + Mineral Finish',
     category: 'interior',
     color: '#eeede7',
-    location: 'Walls + bedroom ceilings',
-    notes: 'Quiet neutral field around the structural frame'
+    location: 'Selective ceilings + non-concrete service-finish planes',
+    notes: 'Quiet neutral finish only where the interior concrete wall mass is not expressed'
   },
   {
     name: 'Cedar Accent',

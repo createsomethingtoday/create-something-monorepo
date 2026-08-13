@@ -6,6 +6,7 @@ import {
 export type WorkWayMaterialStudyRecipe =
   | 'polished-concrete-mottle'
   | 'large-format-porcelain-grid'
+  | 'low-e-glass-intent'
   | 'architectural-concrete-mottle'
   | 'gypsum-mineral-finish';
 
@@ -72,8 +73,8 @@ function deferredMaterialRole(
 export const THRESHOLD_DWELLING_MATERIAL_STUDIES = [
   materialStudy('M-INT-001', 'polished-concrete-mottle', 'floor'),
   materialStudy('M-INT-002', 'large-format-porcelain-grid', 'floor'),
-  materialStudy('M-ENV-002', 'architectural-concrete-mottle', 'wall'),
-  materialStudy('M-INT-003', 'gypsum-mineral-finish', 'wall')
+  materialStudy('M-ENV-001', 'low-e-glass-intent', 'wall'),
+  materialStudy('M-ENV-002', 'architectural-concrete-mottle', 'wall')
 ] as const satisfies readonly WorkWayMaterialStudy[];
 
 /**
@@ -83,9 +84,9 @@ export const THRESHOLD_DWELLING_MATERIAL_STUDIES = [
 export const THRESHOLD_DWELLING_DEFERRED_MATERIAL_STUDY_ROLES = [
   deferredMaterialRole('M-STR-001', 'Foundation and slab-substrate geometry is unissued.'),
   deferredMaterialRole('M-STR-002', 'Structural support geometry is unissued.'),
-  deferredMaterialRole('M-ENV-001', 'Window and glass-opening geometry is unissued.'),
   deferredMaterialRole('M-ENV-003', 'Roof and trim geometry is unissued.'),
   deferredMaterialRole('M-ENV-004', 'No protected-cedar accent geometry is currently issued.'),
+  deferredMaterialRole('M-INT-003', 'Concrete is the current interior-wall study; gypsum/mineral finish geometry is unissued.'),
   deferredMaterialRole('M-INT-004', 'No cedar ceiling or millwork geometry is currently issued.'),
   deferredMaterialRole('M-INT-005', 'No casework geometry is currently issued.'),
   deferredMaterialRole('M-EXT-001', 'Exterior terrace geometry is unissued.'),

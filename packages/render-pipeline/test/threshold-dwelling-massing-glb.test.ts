@@ -30,8 +30,8 @@ test('creates a compact GLB from the Canon Rev 0.8 plan without inventing vertic
     assert.deepEqual(result.receipt.renderedMaterialIds, [
       'M-INT-002',
       'M-INT-001',
-      'M-ENV-002',
-      'M-INT-003'
+      'M-ENV-001',
+      'M-ENV-002'
     ]);
     assert.equal(result.receipt.constructionReady, false);
     assert.equal(inspection.generator, 'CREATE SOMETHING WorkWay deterministic massing exporter');

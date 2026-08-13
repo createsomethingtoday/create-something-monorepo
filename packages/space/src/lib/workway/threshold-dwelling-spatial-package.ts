@@ -199,7 +199,7 @@ const assets = [
   {
     id: 'browser-massing-glb',
     clientPath: 'experiments/threshold-dwelling/renders/threshold-dwelling-r08-massing-guide.glb',
-    sha256: '807b85dea1b6cb276621fc96cde962285112e984946134e26f6fa39e53f75754'
+    sha256: '03b92e329d3ecc5c729d9ee038bf0db19cca886a979a3dd4ba22b9a363b610f9'
   }
 ] as const satisfies readonly WorkWayClientAsset[];
 

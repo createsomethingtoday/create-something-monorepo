@@ -6,7 +6,7 @@
 
 `THRESHOLD_DWELLING_ASSEMBLY_SCHEDULE` is the canonical material/assembly contract for the current deterministic massing guide. It binds every Rev 0.8 plan zone and both rendered wall classes to a stable material number and a conceptual assembly.
 
-The exported GLB and local browser massing guide read these bindings directly. They do not assign colors from room type or a separate rendering palette. The browser guide is a Three.js mesh built directly from the current inch-coordinate plan, converted to meter render space only for viewing; it does not import a decorative mesh as an alternate source of dimensions. Its material-study mode generates four procedural client-side recipes for the roles presently bound to geometry: polished concrete, porcelain, architectural concrete, and gypsum/mineral finish. It uses no external image or manufacturer asset. The design hierarchy is concrete as the primary mass, restrained cedar as the protected/tactile accent, and coated steel localized only where engineered glass support and the frame require it. The project continues to maximize useful glazing, but glass and steel remain deferred from this viewer until exact opening and support geometry is issued. The render receipt and client-safe spatial package record the schedule ID and the material IDs actually present in the asset.
+The exported GLB and local browser massing guide read these bindings directly. They do not assign colors from room type or a separate rendering palette. The browser guide is a Three.js mesh built directly from the current inch-coordinate plan, converted to meter render space only for viewing; it does not import a decorative mesh as an alternate source of dimensions. Its material-study mode generates four procedural client-side recipes for the roles presently bound to geometry: polished concrete, porcelain, low-E glass, and architectural concrete. It uses no external image or manufacturer asset. The design hierarchy is a glazing-majority exterior field, architectural concrete as the interior-wall mass and selective opaque exterior zones, restrained cedar as the protected/tactile accent, and coated steel localized only where engineered glass support and the frame require it. An exterior wall-class rendered as glass denotes the exterior design role; it does **not** establish that 60% of the exact vertical wall area is represented as glass. The 60% figure remains an aggregate, illustrative target until a facade/panel model exists. The render receipt and client-safe spatial package record the schedule ID and the material IDs actually present in the asset.
 
 | Exact in the current package | Meaning |
 | --- | --- |
@@ -27,9 +27,9 @@ The 9 ft vertical mass is still an illustrative viewer parameter. It is not a wa
 | --- | --- | --- |
 | `M-INT-001` | Polished Concrete | Continuous conditioned floor datum outside wet areas |
 | `M-INT-002` | Large-Format Porcelain | Laundry and guest-bath floor role |
-| `M-ENV-002` | Architectural Concrete | Exterior massing walls / primary opaque mass |
-| `M-INT-003` | Gypsum + Mineral Finish | Interior massing walls |
-| `M-ENV-001` | Low-E Insulated Glass | Maximize-useful-glazing role linked to plan openings; not yet represented as 3D glazing |
+| `M-ENV-001` | Low-E Insulated Glass | Glazing-majority exterior massing field; 60% illustrative gross-wall target, not 3D panel geometry |
+| `M-ENV-002` | Architectural Concrete | Interior massing walls + selective opaque exterior zones |
+| `M-INT-003` | Gypsum + Mineral Finish | Selective ceiling + non-concrete service-finish role; not independently represented in the current massing guide |
 | `M-STR-001`, `M-STR-002` | Reinforced Concrete; Coated Steel | Conceptual substrate and localized glass-support/structure roles; not geometry in the current massing guide |
 | `M-ENV-003`, `M-ENV-004` | Formed Metal; Protected Cedar | Envelope/accent roles; not independently represented in the current massing guide |
 | `M-INT-004`, `M-INT-005` | Cedar Accent; Durable Casework | Interior roles; not independently represented in the current massing guide |
@@ -37,7 +37,7 @@ The 9 ft vertical mass is still an illustrative viewer parameter. It is not a wa
 
 ## Assembly boundary
 
-The schedule currently contains five conceptual assemblies: conditioned polished-concrete floor, wet-area porcelain finish, architectural-concrete exterior envelope, interior partition finish, and glazing concept. Their layer order communicates intent only. Thicknesses and unselected systems are intentionally `null`; the schedule never invents a wall section, waterproofing product, air/water control layer, frame, steel member, connection, insulation value, or glazing unit.
+The schedule currently contains five conceptual assemblies: conditioned polished-concrete floor, wet-area porcelain finish, glazing-majority exterior envelope, interior architectural-concrete wall mass, and glazing concept. Their layer order communicates intent only. Thicknesses and unselected systems are intentionally `null`; the schedule never invents a wall section, waterproofing product, air/water control layer, frame, steel member, connection, insulation value, glazing unit, or panel pattern.
 
 For example, `A-FLR-002` makes the wet-area logic explicit—substrate, unselected waterproofing system, and porcelain finish—while refusing to claim the waterproofing, slope, drain, transition, slip resistance, or maintenance solution is selected.
 
@@ -46,7 +46,7 @@ For example, `A-FLR-002` makes the wet-area logic explicit—substrate, unselect
 The model can claim a physical material is one-to-one only after the responsible project team attaches a revision-specific selected product and properties, maps it to actual geometry, and accepts the relevant professional determinations. At minimum that requires:
 
 1. A coordinated architectural material/finish, wall, door, and window schedule with selected manufacturers, products, thicknesses, details, and locations.
-2. Structural, MEP, and energy design that resolves the real wall, roof, slab, glazing, support, opening, and service assemblies.
+2. Structural, MEP, and energy design that resolves the real wall, roof, slab, glazing, support, opening, and service assemblies; for the glazing-majority target, this includes a facade-specific simulated-performance or ERI analysis rather than an assumed prescriptive outcome.
 3. Wet-area waterproofing/slip, glazing safety/egress, solar/shade, air/water, fire/acoustic, durability, and maintenance determinations as applicable.
 4. Surveyed site orientation and jurisdictional review for the actual parcel.
 5. A new immutable WorkWay revision, regenerated 2D/3D/GLB assets, and a receipt showing the selected schedule revision and asset hash.

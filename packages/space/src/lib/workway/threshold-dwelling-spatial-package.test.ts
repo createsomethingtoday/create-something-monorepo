@@ -31,7 +31,7 @@ test('derives a client-safe Rev 0.8 package from the Canon living-system revisio
   assert.deepEqual(packageValue.materialContract, {
     scheduleId: 'threshold-dwelling-rev-0.8-design-intent-assembly-schedule',
     materialBindingStatus: 'role-codified-product-unselected',
-    renderedMaterialIds: ['M-INT-002', 'M-INT-001', 'M-ENV-002', 'M-INT-003'],
+    renderedMaterialIds: ['M-INT-002', 'M-INT-001', 'M-ENV-001', 'M-ENV-002'],
     constructionReady: false
   });
   const { evidenceFacts, ...physicalSceneContractWithoutEvidenceFacts } =

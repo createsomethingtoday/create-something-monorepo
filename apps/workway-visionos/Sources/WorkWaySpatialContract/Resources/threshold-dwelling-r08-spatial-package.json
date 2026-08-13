@@ -7,7 +7,7 @@
   "materialContract": {
     "scheduleId": "threshold-dwelling-rev-0.8-design-intent-assembly-schedule",
     "materialBindingStatus": "role-codified-product-unselected",
-    "renderedMaterialIds": ["M-INT-002", "M-INT-001", "M-ENV-002", "M-INT-003"],
+    "renderedMaterialIds": ["M-INT-002", "M-INT-001", "M-ENV-001", "M-ENV-002"],
     "constructionReady": false
   },
   "physicalSceneContract": {
@@ -89,7 +89,7 @@
     { "id": "tabletop-plan-svg", "clientPath": "experiments/threshold-dwelling/renders/floor-plan.svg", "sha256": "c83c9deb796c34f8a94497a2f4e77fdbbbfbc6d584480ea0cf3f9c08bc48e017" },
     { "id": "tabletop-plan-png", "clientPath": "experiments/threshold-dwelling/renders/floor-plan.png", "sha256": "6bb7955a32628e0fd499b58e7ca57f9c9f3a93cfca46a84ecb1ffc84fdde2a5c" },
     { "id": "public-room-hero-png", "clientPath": "experiments/threshold-dwelling/renders/living-system-public-room-hero-v1.png", "sha256": "ff78a4af53c0c1117c1cf83db22e451728733dffaba9bd2356a046ebc9ad63ba" },
-    { "id": "browser-massing-glb", "clientPath": "experiments/threshold-dwelling/renders/threshold-dwelling-r08-massing-guide.glb", "sha256": "807b85dea1b6cb276621fc96cde962285112e984946134e26f6fa39e53f75754" }
+    { "id": "browser-massing-glb", "clientPath": "experiments/threshold-dwelling/renders/threshold-dwelling-r08-massing-guide.glb", "sha256": "03b92e329d3ecc5c729d9ee038bf0db19cca886a979a3dd4ba22b9a363b610f9" }
   ],
   "sceneRepresentations": [
     { "id": "tabletop-svg", "format": "svg", "status": "available", "canonicalRevision": "0.7", "spatialRevision": "0.8", "assetId": "tabletop-plan-svg" },
