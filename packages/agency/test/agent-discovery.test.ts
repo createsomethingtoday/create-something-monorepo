@@ -262,6 +262,29 @@ test('auth.md and protected-resource metadata describe the same real OAuth resou
 	assert.match(auth, /POST https:\/\/id\.createsomething\.space\/agent\/auth/);
 });
 
+test('resource-level OAuth discovery redirects to the sole first-party Identity issuer', async () => {
+	const { GET: getAuthorizationServer } = await import(
+		'../src/routes/.well-known/oauth-authorization-server/+server.ts'
+	);
+	const { GET: getOpenIdConfiguration } = await import(
+		'../src/routes/.well-known/openid-configuration/+server.ts'
+	);
+
+	const authorizationServer = await getAuthorizationServer({} as never);
+	const openIdConfiguration = await getOpenIdConfiguration({} as never);
+
+	assert.equal(authorizationServer.status, 308);
+	assert.equal(
+		authorizationServer.headers.get('location'),
+		'https://id.createsomething.space/.well-known/oauth-authorization-server'
+	);
+	assert.equal(openIdConfiguration.status, 308);
+	assert.equal(
+		openIdConfiguration.headers.get('location'),
+		'https://id.createsomething.space/.well-known/openid-configuration'
+	);
+});
+
 test('the OAuth-protected agent endpoint gives unauthenticated agents the resource metadata pointer', async () => {
 	const { GET } = await import('../src/routes/api/agent-access/+server.ts');
 	const response = await GET({
