@@ -53,6 +53,7 @@ MCP_REGISTRY_SWEEP_CRON_UTC_HOURS = "4,13,18,23"
 # wrangler secret put OPENAI_API_KEY
 # wrangler secret put HALFDOZEN_AGENT_ROUTE_TOKEN
 # wrangler secret put RESEND_API_KEY
+# wrangler secret put LANGFUSE_ALERT_WEBHOOK_SECRET
 # wrangler secret put INK_BRIDGE_TOKEN
 
 # Optional Langfuse tracing:
