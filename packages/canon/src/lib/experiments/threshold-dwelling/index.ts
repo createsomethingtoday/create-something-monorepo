@@ -20,6 +20,15 @@ export { default as Section } from './Section.svelte';
 export { default as SitePlan } from './SitePlan.svelte';
 export { default as Systems } from './Systems.svelte';
 export {
+  THRESHOLD_DWELLING_LIVING_SYSTEM_FLOOR_PLAN,
+  THRESHOLD_DWELLING_LIVING_SYSTEM_REVISION,
+  assessThresholdDwellingLivingSystemRevision,
+  type ThresholdDwellingLivingSystemAssessment,
+  type ThresholdDwellingLivingSystemLoop,
+  type ThresholdDwellingLivingSystemOperation,
+  type ThresholdDwellingLivingSystemRevision
+} from './living-system-revision.js';
+export {
   THRESHOLD_DWELLING_CARPORT_INFILL_RECOMMENDATION,
   assessThresholdDwellingCarportInfill,
   type ThresholdDwellingCarportInfillAssessment,

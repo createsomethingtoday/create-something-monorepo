@@ -452,47 +452,54 @@ function segmentWallAroundDoors(
   return segments;
 }
 
-/** The existing SVG plan is a projection of the candidate—not a second geometry source. */
-export const THRESHOLD_DWELLING_FLOOR_PLAN: FloorPlanData = {
+/**
+ * Projects a dimension candidate into the shared render shape. The renderer is
+ * intentionally downstream of this function so derived, reviewable revisions
+ * do not need to recreate a second set of walls, labels, and opening geometry.
+ */
+export function projectThresholdDwellingFloorPlan(
+  candidate: ThresholdDwellingDimensionCandidate = THRESHOLD_DWELLING_DIMENSION_CANDIDATE
+): FloorPlanData {
+  return {
   name: 'Miesian Family Pavilion',
-  width: feet(THRESHOLD_DWELLING_DIMENSION_CANDIDATE.footprint.widthIn),
-  depth: feet(THRESHOLD_DWELLING_DIMENSION_CANDIDATE.footprint.depthIn),
+  width: feet(candidate.footprint.widthIn),
+  depth: feet(candidate.footprint.depthIn),
   bedrooms: 3,
   bathrooms: 4,
   features: 'In-Law Suite',
-  zones: THRESHOLD_DWELLING_DIMENSION_CANDIDATE.zones.map((zone) => ({
+  zones: candidate.zones.map((zone) => ({
     x: feet(zone.xIn),
     y: feet(zone.yIn),
     width: feet(zone.widthIn),
     height: feet(zone.heightIn),
     type: zone.type
   })),
-  walls: THRESHOLD_DWELLING_DIMENSION_CANDIDATE.walls.flatMap((wallRun) =>
-    segmentWallAroundDoors(THRESHOLD_DWELLING_DIMENSION_CANDIDATE, wallRun)
+  walls: candidate.walls.flatMap((wallRun) =>
+    segmentWallAroundDoors(candidate, wallRun)
   ),
-  rooms: THRESHOLD_DWELLING_DIMENSION_CANDIDATE.labels.map((item) => ({
+  rooms: candidate.labels.map((item) => ({
     x: feet(item.xIn),
     y: feet(item.yIn),
     name: item.name,
     small: item.small
   })),
-  doors: THRESHOLD_DWELLING_DIMENSION_CANDIDATE.doors.map((item) => ({
+  doors: candidate.doors.map((item) => ({
     x: feet(item.center.xIn),
     y: feet(item.center.yIn),
     width: feet(item.planOpeningWidthIn),
     orientation: item.orientation
   })),
-  windows: THRESHOLD_DWELLING_DIMENSION_CANDIDATE.windows.map((item) => ({
+  windows: candidate.windows.map((item) => ({
     x: feet(item.center.xIn),
     y: feet(item.center.yIn),
     width: feet(item.planOpeningWidthIn),
     orientation: item.orientation
   })),
-  columns: THRESHOLD_DWELLING_DIMENSION_CANDIDATE.columns.map((item) => ({
+  columns: candidate.columns.map((item) => ({
     x: feet(item.xIn),
     y: feet(item.yIn)
   })),
-  overhangs: THRESHOLD_DWELLING_DIMENSION_CANDIDATE.overhangs.map((item) => ({
+  overhangs: candidate.overhangs.map((item) => ({
     x: feet(item.xIn),
     y: feet(item.yIn),
     width: feet(item.widthIn),
@@ -500,7 +507,12 @@ export const THRESHOLD_DWELLING_FLOOR_PLAN: FloorPlanData = {
     label: item.label
   })),
   entry: { x: 75, y: 16 }
-};
+  };
+}
+
+/** The existing SVG plan is a projection of the candidate—not a second geometry source. */
+export const THRESHOLD_DWELLING_FLOOR_PLAN: FloorPlanData =
+  projectThresholdDwellingFloorPlan();
 
 function pointIsIntegral(pointIn: ThresholdDwellingPointIn): boolean {
   return Number.isInteger(pointIn.xIn) && Number.isInteger(pointIn.yIn);

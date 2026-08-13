@@ -158,6 +158,10 @@
 			"types": "./dist/experiments/threshold-dwelling/dimensioned-project.d.ts",
 			"default": "./dist/experiments/threshold-dwelling/dimensioned-project.js"
 		},
+		"./experiments/threshold-dwelling/living-system-revision": {
+			"types": "./dist/experiments/threshold-dwelling/living-system-revision.d.ts",
+			"default": "./dist/experiments/threshold-dwelling/living-system-revision.js"
+		},
 		"./experiments/threshold-dwelling/professional-review": {
 			"types": "./dist/experiments/threshold-dwelling/professional-review.d.ts",
 			"default": "./dist/experiments/threshold-dwelling/professional-review.js"

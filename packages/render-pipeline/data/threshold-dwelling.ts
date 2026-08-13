@@ -6,8 +6,13 @@
  * baseline while preserving the candidate's explicit non-construction status.
  */
 
-import { THRESHOLD_DWELLING_FLOOR_PLAN } from '@create-something/canon/experiments/threshold-dwelling/dimensioned-project';
+import { THRESHOLD_DWELLING_LIVING_SYSTEM_FLOOR_PLAN } from '@create-something/canon/experiments/threshold-dwelling/living-system-revision';
 
 import type { FloorPlanData } from '../src/floor-plan-svg.js';
 
-export const THRESHOLD_DWELLING: FloorPlanData = THRESHOLD_DWELLING_FLOOR_PLAN;
+/**
+ * Regeneration uses the explicit Rev 0.8 living-system proposal. The 0.7
+ * candidate remains available independently for comparison and is not
+ * overwritten by render work.
+ */
+export const THRESHOLD_DWELLING: FloorPlanData = THRESHOLD_DWELLING_LIVING_SYSTEM_FLOOR_PLAN;
