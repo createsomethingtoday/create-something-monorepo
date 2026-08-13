@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { CubeMark } from '../brand/marks/index.js';
+  import { RingMark } from '../brand/marks/index.js';
   import { getAnalytics } from '../analytics/client.js';
   import MeridianOfferPanel from './meridian/MeridianOfferPanel.svelte';
 
@@ -411,7 +411,7 @@
               {#if brandAsset}
                 <img class="footer-mark__asset" src={brandAsset.src} alt="" />
               {:else}
-                <CubeMark size={44} variant="mono" />
+                <RingMark size={44} />
               {/if}
             </a>
           {/if}

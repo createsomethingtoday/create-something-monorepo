@@ -44,7 +44,7 @@
 	title="Subscribe | CREATE SOMETHING.io"
 	description="Get early access to autonomous agents, agentic component libraries, and recorded workshops. Launch January 2025."
 	keywords="subscription, autonomous agents, agentic systems, component library, workshops"
-	ogImage="/og-image.svg"
+	ogImage="/og-image.png"
 	propertyName="io"
 />
 

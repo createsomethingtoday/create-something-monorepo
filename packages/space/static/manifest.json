@@ -1,12 +1,34 @@
 {
-  "short_name": "CREATE SOMETHING",
-  "name": "CREATE SOMETHING | AI-Native Development Research",
-  "description": "Systematic evaluation of AI-native development with tracked experiments and real data",
+  "short_name": "CS .space",
+  "name": "CREATE SOMETHING .space",
+  "description": "A live workbench for testing tools, runtimes, and interaction patterns.",
   "icons": [
     {
       "src": "favicon.svg",
       "type": "image/svg+xml",
       "sizes": "any"
+    },
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512-maskable.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    },
+    {
+      "src": "favicon.png",
+      "type": "image/png",
+      "sizes": "512x512"
     }
   ],
   "start_url": "/",
@@ -14,5 +36,5 @@
   "theme_color": "#000000",
   "background_color": "#000000",
   "orientation": "portrait-primary",
-  "categories": ["development", "research", "technology"]
+  "categories": ["development", "education", "technology"]
 }

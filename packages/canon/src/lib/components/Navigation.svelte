@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
-  import { CubeMark } from '../brand/marks/index.js';
+  import { RingMark } from '../brand/marks/index.js';
   import { UserMenu } from '../auth/components/index.js';
   import type { User } from '../auth/types.js';
 
@@ -252,7 +252,7 @@
         {:else}
           {#if usesPerformanceStyle || usesEditorialStyle}
             <span class="nav-logo-mark" aria-hidden="true">
-              <CubeMark size={28} variant="mono" />
+              <RingMark size={28} />
             </span>
           {/if}
           <span class="nav-logo-text">{logo}</span>

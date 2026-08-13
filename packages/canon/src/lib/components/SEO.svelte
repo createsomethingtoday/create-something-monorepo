@@ -75,26 +75,41 @@
   const canonicalUrl = canonical || `${config.domain}${canonicalPath === '/' ? '' : canonicalPath}`;
   const fullOgImage = ogImage.startsWith('http') ? ogImage : `${config.domain}${ogImage}`;
   const effectiveBreadcrumbs = breadcrumbs.length > 0 ? breadcrumbs : createBreadcrumbs(canonicalPath);
+  const organizationId = 'https://createsomething.ltd/#organization';
+  const organizationLogo = 'https://createsomething.ltd/icon-512.png';
+  const websiteId = `${config.domain}/#website`;
+  const organizationReference = { '@id': organizationId };
+  const socialImageSchema = {
+    '@type': 'ImageObject',
+    '@id': `${canonicalUrl}#primaryimage`,
+    url: fullOgImage,
+    contentUrl: fullOgImage,
+    width: 1200,
+    height: 630
+  };
 
   // Schema.org Organization
   const organizationSchema = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
+    '@id': organizationId,
     name: 'CREATE SOMETHING',
     alternateName: 'Create Something Agency',
-    url: config.domain,
-    logo: `${config.domain}/favicon.png`,
+    url: 'https://createsomething.ltd',
+    logo: {
+      '@type': 'ImageObject',
+      '@id': `${organizationLogo}#logo`,
+      url: organizationLogo,
+      contentUrl: organizationLogo,
+      width: 512,
+      height: 512
+    },
     sameAs: [
       'https://www.linkedin.com/in/micahryanjohnson/',
       'https://github.com/createsomethingtoday'
     ],
-    description: propertyName === 'agency'
-      ? 'CREATE SOMETHING builds calm, transparent AI workflow systems with MCP connectivity, operating boundaries, and evidence-backed delivery.'
-      : propertyName === 'io'
-      ? 'Research papers on AI-native development with tracked experiments and rigorous methodology'
-      : propertyName === 'space'
-      ? 'Interactive tutorials for learning AI-native development by doing'
-      : 'Design and technology practice',
+    description:
+      'CREATE SOMETHING builds the connectivity and control layer between tools and AI: operator-owned workflows, governed automation, and proof that holds up.',
     founder: {
       '@type': 'Person',
       name: 'Micah Johnson',
@@ -125,10 +140,11 @@
   const websiteSchema = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
+    '@id': websiteId,
     name: config.name,
     url: config.domain,
     description: config.tagline,
-    publisher: organizationSchema,
+    publisher: organizationReference,
     inLanguage: 'en-US'
   };
 
@@ -139,12 +155,13 @@
     headline: title,
     description: fullDescription,
     url: canonicalUrl,
+    '@id': canonicalUrl,
     isPartOf: {
-      '@type': 'WebSite',
-      name: config.name,
-      url: config.domain
+      '@id': websiteId
     },
-    publisher: organizationSchema,
+    publisher: organizationReference,
+    primaryImageOfPage: socialImageSchema,
+    image: fullOgImage,
     inLanguage: 'en-US',
     about: propertyName === 'agency'
       ? [
@@ -170,7 +187,7 @@
       name: author,
       url: authorUrl || (authorType === 'Organization' ? config.domain : undefined)
     },
-    publisher: organizationSchema,
+    publisher: organizationReference,
     mainEntityOfPage: {
       '@type': 'WebPage',
       '@id': canonicalUrl
@@ -185,7 +202,7 @@
     '@type': 'Service',
     name: service.name,
     description: service.description,
-    provider: organizationSchema,
+    provider: organizationReference,
     serviceType: service.type || 'Professional Service',
     areaServed: {
       '@type': 'Place',
@@ -425,10 +442,4 @@
     {@html jsonLd(courseSchema)}
   {/if}
 
-  <!-- Additional SEO -->
-  <link rel="icon" href="/favicon.png" type="image/png" />
-  <link rel="apple-touch-icon" href="/favicon.png" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="format-detection" content="telephone=no" />
-  <meta http-equiv="x-ua-compatible" content="IE=edge" />
 </svelte:head>

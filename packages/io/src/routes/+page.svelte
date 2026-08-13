@@ -136,7 +136,7 @@
   title="Research | CREATE SOMETHING .io"
   description="CREATE SOMETHING .io publishes experiments, papers, and operator notes for teams building automation they can explain, defend, and extend."
   keywords="AI-native development research, MCP patterns, workflow evidence, automation operations, technical papers, governed execution research"
-  ogImage="/og-image.svg"
+  ogImage="/og-image.png"
   propertyName="io"
 />
 

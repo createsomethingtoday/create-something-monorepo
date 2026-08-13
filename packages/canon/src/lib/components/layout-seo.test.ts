@@ -11,11 +11,24 @@ describe('LayoutSEO SSR', () => {
     });
 
     expect(head).toContain('name="theme-color"');
-    expect(head).toContain('rel="icon"');
+    expect(head).toContain('rel="manifest" href="/manifest.json"');
+    expect(head).toContain('href="/favicon.svg"');
+    expect(head).toContain('href="/apple-touch-icon.png"');
+    expect(head).toContain('href="/mask-icon.svg"');
     expect(head).not.toContain('<title>');
     expect(head).not.toContain('rel="canonical"');
     expect(head).not.toContain('name="description"');
     expect(head).not.toContain('name="robots"');
     expect(head).not.toContain('application/ld+json');
+  });
+
+  it('does not advertise the public-property icon contract from the LMS shell', () => {
+    const { head } = render(LayoutSEO, {
+      props: { property: 'lms' }
+    });
+
+    expect(head).toContain('href="/favicon.svg"');
+    expect(head).not.toContain('rel="manifest"');
+    expect(head).not.toContain('apple-touch-icon');
   });
 });
