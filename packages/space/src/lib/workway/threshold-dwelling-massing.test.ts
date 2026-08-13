@@ -4,6 +4,7 @@ import test from 'node:test';
 import {
   THRESHOLD_DWELLING_MASSING_GUIDE,
   createThresholdDwellingMassingGeometry,
+  toThreeMassingVector,
   validateThresholdDwellingMassingGuide
 } from './threshold-dwelling-massing.js';
 
@@ -49,4 +50,17 @@ test('derives a browser 3D massing guide from the same Rev 0.8 plan used for 2D 
     isSafeForReview: true,
     constructionReady: false
   });
+});
+
+test('converts issued plan inches to a centered one-to-one meter coordinate system for Three.js', () => {
+  const vector = toThreeMassingVector(
+    { xIn: 0, yIn: 108, zIn: 0 },
+    THRESHOLD_DWELLING_MASSING_GUIDE
+  );
+
+  assert.ok(Math.abs(vector.xM + 9.906) < 1e-12);
+  assert.ok(Math.abs(vector.yM - 2.7432) < 1e-12);
+  assert.ok(Math.abs(vector.zM + 6.4008) < 1e-12);
+  assert.equal(vector.coordinateTruth, 'revised-plan-horizontal-only');
+  assert.equal(vector.verticalStatus, 'illustrative-visualization-parameter');
 });

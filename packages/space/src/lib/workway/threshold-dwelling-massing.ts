@@ -36,6 +36,18 @@ export interface WorkWayMassingVertex {
   zIn: number;
 }
 
+/**
+ * A meter-space point for browser renderers. The plan center becomes the
+ * render origin; every value remains derived from issued plan inches.
+ */
+export interface WorkWayThreeMassingVector {
+  xM: number;
+  yM: number;
+  zM: number;
+  coordinateTruth: 'revised-plan-horizontal-only';
+  verticalStatus: 'illustrative-visualization-parameter';
+}
+
 export interface WorkWayMassingFloor {
   id: string;
   type: string;
@@ -66,6 +78,7 @@ export interface WorkWayMassingGuideValidation {
 }
 
 const feetToInches = (value: number): number => value * 12;
+const INCH_TO_METER = 0.0254;
 
 /**
  * This guide intentionally preserves only the issued horizontal design-intent
@@ -92,6 +105,24 @@ export const THRESHOLD_DWELLING_MASSING_GUIDE = {
   },
   constructionReady: false
 } as const satisfies WorkWayMassingGuide;
+
+/**
+ * Converts one issued inch coordinate into Three.js's meter-based render
+ * space. Centering is a camera/rendering convenience only: it does not alter
+ * a plan coordinate or confer vertical-geometry authority.
+ */
+export function toThreeMassingVector(
+  vertex: WorkWayMassingVertex,
+  guide: WorkWayMassingGuide = THRESHOLD_DWELLING_MASSING_GUIDE
+): WorkWayThreeMassingVector {
+  return {
+    xM: (vertex.xIn - guide.dimensions.widthIn / 2) * INCH_TO_METER,
+    yM: vertex.yIn * INCH_TO_METER,
+    zM: (vertex.zIn - guide.dimensions.depthIn / 2) * INCH_TO_METER,
+    coordinateTruth: 'revised-plan-horizontal-only',
+    verticalStatus: guide.dimensions.verticalStatus
+  };
+}
 
 function floorVertices(x: number, y: number, width: number, height: number): readonly WorkWayMassingVertex[] {
   const x1 = feetToInches(x);

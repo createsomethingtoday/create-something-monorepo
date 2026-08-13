@@ -1,10 +1,30 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import {
+    AmbientLight,
+    BufferGeometry,
+    Color,
+    DirectionalLight,
+    DoubleSide,
+    EdgesGeometry,
+    Float32BufferAttribute,
+    Group,
+    LineBasicMaterial,
+    LineSegments,
+    Mesh,
+    MeshStandardMaterial,
+    PerspectiveCamera,
+    Scene,
+    SRGBColorSpace,
+    WebGLRenderer
+  } from 'three';
+  import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
-  import type {
-    WorkWayMassingGeometry,
-    WorkWayMassingGuide,
-    WorkWayMassingVertex
+  import {
+    toThreeMassingVector,
+    type WorkWayMassingGeometry,
+    type WorkWayMassingGuide,
+    type WorkWayMassingVertex
   } from './threshold-dwelling-massing';
 
   let {
@@ -15,164 +35,191 @@
     guide: WorkWayMassingGuide;
   } = $props();
 
-  type ProjectedPoint = { x: number; y: number; depth: number };
+  type Disposable = { dispose: () => void };
+
+  const initialCameraPosition = { x: 14.6, y: 12.4, z: 17.2 };
+  const initialCameraTarget = { x: 0, y: 1.15, z: 0 };
 
   let canvas: HTMLCanvasElement;
-  let yaw = $state(-0.78);
-  let pitch = $state(-0.56);
-  let zoom = $state(1);
-  let dragging = $state<{ pointerId: number; x: number; y: number } | null>(null);
+  let renderer: WebGLRenderer | undefined;
+  let scene: Scene | undefined;
+  let camera: PerspectiveCamera | undefined;
+  let controls: OrbitControls | undefined;
+  let massingGroup: Group | undefined;
   let resizeObserver: ResizeObserver | undefined;
+  let massingResources: Disposable[] = [];
+  let rendererUnavailable = $state(false);
 
-  function project(vertex: WorkWayMassingVertex, width: number, height: number): ProjectedPoint {
-    const x = (vertex.xIn - guide.dimensions.widthIn / 2) / guide.dimensions.widthIn;
-    const y = vertex.yIn / guide.dimensions.widthIn;
-    const z = (vertex.zIn - guide.dimensions.depthIn / 2) / guide.dimensions.widthIn;
-    const yawCos = Math.cos(yaw);
-    const yawSin = Math.sin(yaw);
-    const pitchCos = Math.cos(pitch);
-    const pitchSin = Math.sin(pitch);
-    const rotatedX = x * yawCos - z * yawSin;
-    const yawDepth = x * yawSin + z * yawCos;
-    const rotatedY = y * pitchCos - yawDepth * pitchSin;
-    const depth = y * pitchSin + yawDepth * pitchCos;
-    const perspective = (Math.min(width, height) * 2.35 * zoom) / (3 + depth);
+  function createSurfaceGeometry(vertices: readonly WorkWayMassingVertex[]): BufferGeometry {
+    const positions = vertices.flatMap((vertex) => {
+      const position = toThreeMassingVector(vertex, guide);
+      return [position.xM, position.yM, position.zM];
+    });
+    const surfaceGeometry = new BufferGeometry();
+    surfaceGeometry.setAttribute('position', new Float32BufferAttribute(positions, 3));
+    surfaceGeometry.setIndex([0, 1, 2, 0, 2, 3]);
+    surfaceGeometry.computeVertexNormals();
+    return surfaceGeometry;
+  }
 
-    return {
-      x: width / 2 + rotatedX * perspective,
-      y: height * 0.57 - rotatedY * perspective,
-      depth
+  function render() {
+    if (renderer && scene && camera) renderer.render(scene, camera);
+  }
+
+  function disposeMassing() {
+    for (const resource of massingResources) resource.dispose();
+    massingResources = [];
+    if (massingGroup && scene) scene.remove(massingGroup);
+    massingGroup = undefined;
+  }
+
+  function addSurface(
+    group: Group,
+    surface: WorkWayMassingGeometry['floors'][number] | WorkWayMassingGeometry['walls'][number],
+    kind: 'floor' | 'wall',
+    opacity: number
+  ) {
+    const surfaceGeometry = createSurfaceGeometry(surface.vertices);
+    const material = new MeshStandardMaterial({
+      color: new Color(surface.materialColor),
+      roughness: kind === 'floor' ? 0.86 : 0.72,
+      metalness: 0,
+      transparent: true,
+      opacity,
+      side: DoubleSide
+    });
+    const mesh = new Mesh(surfaceGeometry, material);
+    mesh.userData = {
+      entityId: surface.id,
+      materialId: surface.materialId,
+      materialSelectionStatus: surface.materialSelectionStatus,
+      surfaceKind: kind
     };
+    group.add(mesh);
+
+    const edgeGeometry = new EdgesGeometry(surfaceGeometry, 20);
+    const edgeMaterial = new LineBasicMaterial({
+      color: kind === 'wall' && 'exterior' in surface && surface.exterior ? '#fff6db' : '#f0f0e8',
+      transparent: true,
+      opacity: kind === 'wall' ? 0.78 : 0.26
+    });
+    const edges = new LineSegments(edgeGeometry, edgeMaterial);
+    edges.userData = mesh.userData;
+    group.add(edges);
+
+    massingResources.push(surfaceGeometry, material, edgeGeometry, edgeMaterial);
   }
 
-  function tracePolygon(
-    context: CanvasRenderingContext2D,
-    vertices: readonly WorkWayMassingVertex[],
-    width: number,
-    height: number
-  ): number {
-    const points = vertices.map((vertex) => project(vertex, width, height));
-    context.beginPath();
-    context.moveTo(points[0].x, points[0].y);
-    for (const point of points.slice(1)) context.lineTo(point.x, point.y);
-    context.closePath();
-    return points.reduce((total, point) => total + point.depth, 0) / points.length;
+  function rebuildMassing() {
+    if (!scene) return;
+    disposeMassing();
+
+    const group = new Group();
+    group.name = 'threshold-dwelling-r08-plan-derived-massing';
+    group.userData = {
+      coordinateTruth: 'revised-plan-horizontal-only',
+      verticalStatus: guide.dimensions.verticalStatus,
+      constructionReady: false
+    };
+
+    for (const floor of geometry.floors) {
+      addSurface(group, floor, 'floor', floor.type === 'open' ? 0.78 : 0.67);
+    }
+    for (const wall of geometry.walls) {
+      addSurface(group, wall, 'wall', wall.exterior ? 0.93 : 0.64);
+    }
+
+    scene.add(group);
+    massingGroup = group;
+    render();
   }
 
-  function resizeAndDraw() {
-    if (!canvas) return;
+  function resizeAndRender() {
+    if (!canvas || !renderer || !camera) return;
     const bounds = canvas.getBoundingClientRect();
-    const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
-    const width = Math.max(1, Math.round(bounds.width * pixelRatio));
-    const height = Math.max(1, Math.round(bounds.height * pixelRatio));
-    if (canvas.width !== width || canvas.height !== height) {
-      canvas.width = width;
-      canvas.height = height;
-    }
-    draw();
-  }
-
-  function draw() {
-    if (!canvas) return;
-    const context = canvas.getContext('2d');
-    if (!context) return;
-    const { width, height } = canvas;
-
-    context.clearRect(0, 0, width, height);
-    context.fillStyle = '#11130f';
-    context.fillRect(0, 0, width, height);
-
-    const horizon = Math.round(height * 0.57);
-    const gradient = context.createLinearGradient(0, 0, 0, height);
-    gradient.addColorStop(0, '#1b1d18');
-    gradient.addColorStop(1, '#0d0f0c');
-    context.fillStyle = gradient;
-    context.fillRect(0, horizon, width, height - horizon);
-
-    const floors = geometry.floors
-      .map((floor) => ({
-        floor,
-        depth: floor.vertices.reduce((total, vertex) => total + project(vertex, width, height).depth, 0) /
-          floor.vertices.length
-      }))
-      .sort((a, b) => b.depth - a.depth);
-    for (const { floor } of floors) {
-      tracePolygon(context, floor.vertices, width, height);
-      context.fillStyle = floor.materialColor;
-      context.globalAlpha = floor.type === 'open' ? 0.78 : 0.67;
-      context.fill();
-      context.globalAlpha = 1;
-      context.strokeStyle = 'rgba(245, 241, 226, 0.23)';
-      context.lineWidth = Math.max(1, width / 1000);
-      context.stroke();
-    }
-
-    const walls = geometry.walls
-      .map((wall) => ({
-        wall,
-        depth: wall.vertices.reduce((total, vertex) => total + project(vertex, width, height).depth, 0) /
-          wall.vertices.length
-      }))
-      .sort((a, b) => b.depth - a.depth);
-    for (const { wall } of walls) {
-      tracePolygon(context, wall.vertices, width, height);
-      context.fillStyle = wall.materialColor;
-      context.fill();
-      context.strokeStyle = wall.exterior ? 'rgba(255, 246, 219, 0.92)' : 'rgba(240, 240, 232, 0.54)';
-      context.lineWidth = wall.exterior ? Math.max(2, width / 500) : Math.max(1, width / 900);
-      context.stroke();
-    }
-
-    context.fillStyle = 'rgba(244, 242, 233, 0.78)';
-    context.font = `${Math.max(10, width / 88)}px ui-monospace, SFMono-Regular, Menlo, monospace`;
-    context.fillText('N', width * 0.5, Math.max(18, height * 0.08));
-  }
-
-  function startDrag(event: PointerEvent) {
-    const target = event.currentTarget as HTMLCanvasElement | null;
-    if (!target) return;
-    dragging = { pointerId: event.pointerId, x: event.clientX, y: event.clientY };
-    target.setPointerCapture(event.pointerId);
-  }
-
-  function moveDrag(event: PointerEvent) {
-    if (!dragging || dragging.pointerId !== event.pointerId) return;
-    yaw += (event.clientX - dragging.x) / 180;
-    pitch = Math.max(-1.15, Math.min(-0.16, pitch + (event.clientY - dragging.y) / 230));
-    dragging = { pointerId: event.pointerId, x: event.clientX, y: event.clientY };
-  }
-
-  function endDrag(event: PointerEvent) {
-    const target = event.currentTarget as HTMLCanvasElement | null;
-    if (dragging?.pointerId !== event.pointerId) return;
-    dragging = null;
-    if (target?.hasPointerCapture(event.pointerId)) target.releasePointerCapture(event.pointerId);
-  }
-
-  function adjustZoom(amount: number) {
-    zoom = Math.max(0.72, Math.min(1.45, zoom + amount));
+    if (bounds.width <= 0 || bounds.height <= 0) return;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(bounds.width, bounds.height, false);
+    camera.aspect = bounds.width / bounds.height;
+    camera.updateProjectionMatrix();
+    render();
   }
 
   function resetCamera() {
-    yaw = -0.78;
-    pitch = -0.56;
-    zoom = 1;
+    if (!camera || !controls) return;
+    camera.position.set(
+      initialCameraPosition.x,
+      initialCameraPosition.y,
+      initialCameraPosition.z
+    );
+    controls.target.set(initialCameraTarget.x, initialCameraTarget.y, initialCameraTarget.z);
+    controls.update();
+    render();
+  }
+
+  function adjustZoom(amount: number) {
+    if (!camera || !controls) return;
+    const distance = camera.position.distanceTo(controls.target);
+    const scale = amount < 0 ? 1.16 : 0.84;
+    const nextDistance = Math.min(
+      controls.maxDistance,
+      Math.max(controls.minDistance, distance * scale)
+    );
+    camera.position
+      .sub(controls.target)
+      .setLength(nextDistance)
+      .add(controls.target);
+    controls.update();
+    render();
   }
 
   $effect(() => {
-    yaw;
-    pitch;
-    zoom;
     geometry;
     guide;
-    resizeAndDraw();
+    rebuildMassing();
   });
 
   onMount(() => {
-    resizeObserver = new ResizeObserver(resizeAndDraw);
-    resizeObserver.observe(canvas);
-    resizeAndDraw();
-    return () => resizeObserver?.disconnect();
+    try {
+      scene = new Scene();
+      scene.background = new Color('#11130f');
+
+      camera = new PerspectiveCamera(36, 1, 0.1, 100);
+      renderer = new WebGLRenderer({ canvas, antialias: true, alpha: false });
+      renderer.outputColorSpace = SRGBColorSpace;
+
+      scene.add(new AmbientLight('#f1ebdc', 1.85));
+      const sun = new DirectionalLight('#ffe5ba', 2.7);
+      sun.position.set(7, 14, 9);
+      scene.add(sun);
+      const fill = new DirectionalLight('#b7cae0', 0.9);
+      fill.position.set(-10, 5, -8);
+      scene.add(fill);
+
+      controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = false;
+      controls.enablePan = false;
+      controls.minDistance = 4.5;
+      controls.maxDistance = 32;
+      controls.minPolarAngle = Math.PI * 0.14;
+      controls.maxPolarAngle = Math.PI * 0.47;
+      controls.addEventListener('change', render);
+      resetCamera();
+      rebuildMassing();
+
+      resizeObserver = new ResizeObserver(resizeAndRender);
+      resizeObserver.observe(canvas);
+      resizeAndRender();
+    } catch {
+      rendererUnavailable = true;
+    }
+
+    return () => {
+      resizeObserver?.disconnect();
+      controls?.dispose();
+      disposeMassing();
+      renderer?.dispose();
+    };
   });
 </script>
 
@@ -180,25 +227,27 @@
   <div class="canvas-shell">
     <canvas
       bind:this={canvas}
-      aria-label="Interactive 3D massing guide based on the Threshold Dwelling Rev 0.8 floor plan"
+      aria-label="Interactive Three.js massing guide based on the Threshold Dwelling Rev 0.8 floor plan"
+      data-renderer="threejs"
       data-testid="massing-canvas"
-      onpointerdown={startDrag}
-      onpointermove={moveDrag}
-      onpointerup={endDrag}
-      onpointercancel={endDrag}
     ></canvas>
     <div class="canvas-stamp">
       <p>Horizontal geometry</p>
       <strong>{guide.dimensions.widthIn / 12} ft × {guide.dimensions.depthIn / 12} ft</strong>
-      <span>from the Rev 0.8 plan</span>
+      <span>direct plan-derived mesh · meter render space</span>
       <p class="material-contract" title={guide.materialContract.scheduleId}>Material schedule · Rev 0.8</p>
       <span>material roles codified · products unselected</span>
     </div>
+    {#if rendererUnavailable}
+      <p class="renderer-notice">
+        This browser cannot initialize the Three.js guide. The exact 2D plan and downloadable GLB remain available.
+      </p>
+    {/if}
   </div>
 
   <div class="viewer-footer">
     <p>
-      Drag to orbit. Floor, zone, and wall placement are derived from the 2D plan; the {guide.dimensions.verticalMassingHeightIn / 12} ft vertical mass is illustrative only.
+      Orbit or pinch to inspect plan-derived floors and walls. The {guide.dimensions.verticalMassingHeightIn / 12} ft vertical mass is illustrative only.
     </p>
     <div class="controls" aria-label="3D massing controls">
       <button type="button" onclick={() => adjustZoom(-0.1)} aria-label="Zoom out">−</button>
@@ -241,62 +290,90 @@
     bottom: 0.85rem;
     display: grid;
     gap: 0.15rem;
-    max-width: 14rem;
+    max-width: 15rem;
     padding: 0.65rem 0.7rem;
-    color: #f2eee1;
-    background: rgba(15, 17, 13, 0.87);
-    font-size: 0.7rem;
+    border: 1px solid rgba(228, 222, 204, 0.3);
+    background: rgba(17, 19, 15, 0.86);
+    color: #e6e2d5;
   }
 
   .canvas-stamp p,
-  .canvas-stamp span {
+  .canvas-stamp span,
+  .viewer-footer p {
     margin: 0;
-    color: #c1bdae;
+  }
+
+  .canvas-stamp p {
+    color: #cbc7ba;
+    font: 0.64rem ui-monospace, SFMono-Regular, Menlo, monospace;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
   }
 
   .canvas-stamp strong {
-    font: 0.86rem ui-monospace, SFMono-Regular, Menlo, monospace;
+    font: 0.95rem ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  .canvas-stamp span {
+    color: #b7b6ac;
+    font-size: 0.7rem;
+  }
+
+  .canvas-stamp .material-contract {
+    margin-top: 0.34rem;
+  }
+
+  .renderer-notice {
+    position: absolute;
+    inset: auto 0.85rem 0.85rem 0.85rem;
+    max-width: 35rem;
+    margin: 0;
+    padding: 0.7rem;
+    border: 1px solid #a96b4b;
+    background: rgba(30, 20, 15, 0.94);
+    color: #f1ddd0;
+    font-size: 0.76rem;
+    line-height: 1.45;
   }
 
   .viewer-footer {
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 0.8rem;
+    gap: 1rem;
     padding: 0.75rem 0.85rem;
-    border-top: 1px solid #45463f;
-    background: #191b17;
+    border-top: 1px solid #41433a;
+    color: #b8b6aa;
+    font-size: 0.78rem;
+    line-height: 1.45;
   }
 
-  .viewer-footer > p {
-    flex: 1 1 20rem;
-    margin: 0;
-    color: #bab6aa;
-    font-size: 0.73rem;
-    line-height: 1.45;
+  .viewer-footer p {
+    max-width: 54rem;
   }
 
   .controls {
     display: flex;
-    border: 1px solid #666459;
+    flex: 0 0 auto;
+    gap: 0.35rem;
   }
 
   .controls button {
-    min-height: 2rem;
-    padding: 0.4rem 0.65rem;
-    border: 0;
-    border-right: 1px solid #666459;
-    color: #ebe7da;
-    background: #242620;
-    font-size: 0.72rem;
-  }
-
-  .controls button:last-child {
-    border-right: 0;
+    border: 1px solid #6c6b60;
+    background: transparent;
+    color: #e7e3d8;
+    font: 0.7rem ui-monospace, SFMono-Regular, Menlo, monospace;
   }
 
   .controls button:hover {
-    background: #34362e;
+    border-color: #d5b66a;
+    color: #f2cb72;
+  }
+
+  @media (max-width: 44rem) {
+    .viewer-footer {
+      align-items: flex-start;
+      flex-direction: column;
+    }
   }
 </style>
