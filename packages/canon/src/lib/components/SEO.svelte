@@ -68,6 +68,8 @@
     }
   };
 
+  const organizationId = 'https://createsomething.ltd/#organization';
+  const organizationLogoUrl = 'https://createsomething.ltd/brand/create-something-ring-mark-512.png';
   const config = propertyConfig[propertyName];
   const fullTitle = title ? title.includes('CREATE SOMETHING') ? title : `${title} | ${config.name}` : config.name;
   const fullDescription = description || config.tagline;
@@ -75,20 +77,22 @@
   const canonicalUrl = canonical || `${config.domain}${canonicalPath === '/' ? '' : canonicalPath}`;
   const fullOgImage = ogImage.startsWith('http') ? ogImage : `${config.domain}${ogImage}`;
   const effectiveBreadcrumbs = breadcrumbs.length > 0 ? breadcrumbs : createBreadcrumbs(canonicalPath);
-  const organizationId = 'https://createsomething.ltd/#organization';
-  const organizationLogo = 'https://createsomething.ltd/icon-512.png';
+
   const websiteId = `${config.domain}/#website`;
+  const webPageId = `${canonicalUrl}#webpage`;
+  const socialImageId = `${fullOgImage}#image`;
   const organizationReference = { '@id': organizationId };
-  const socialImageSchema = {
+  const socialImage = {
     '@type': 'ImageObject',
-    '@id': `${canonicalUrl}#primaryimage`,
+    '@id': socialImageId,
     url: fullOgImage,
     contentUrl: fullOgImage,
     width: 1200,
     height: 630
   };
 
-  // Schema.org Organization
+  // Schema.org Organization. This remains intentionally property-neutral so
+  // answer engines receive one entity graph across every public surface.
   const organizationSchema = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
@@ -98,9 +102,9 @@
     url: 'https://createsomething.ltd',
     logo: {
       '@type': 'ImageObject',
-      '@id': `${organizationLogo}#logo`,
-      url: organizationLogo,
-      contentUrl: organizationLogo,
+      '@id': `${organizationLogoUrl}#image`,
+      url: organizationLogoUrl,
+      contentUrl: organizationLogoUrl,
       width: 512,
       height: 512
     },
@@ -108,8 +112,7 @@
       'https://www.linkedin.com/in/micahryanjohnson/',
       'https://github.com/createsomethingtoday'
     ],
-    description:
-      'CREATE SOMETHING builds the connectivity and control layer between tools and AI: operator-owned workflows, governed automation, and proof that holds up.',
+    description: 'CREATE SOMETHING makes delegated work trustworthy with practical playbooks, operating boundaries, and evidence-backed delivery.',
     founder: {
       '@type': 'Person',
       name: 'Micah Johnson',
@@ -151,17 +154,14 @@
   const webPageSchema = {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
+    '@id': webPageId,
     name: title,
     headline: title,
     description: fullDescription,
     url: canonicalUrl,
-    '@id': canonicalUrl,
-    isPartOf: {
-      '@id': websiteId
-    },
+    isPartOf: { '@id': websiteId },
     publisher: organizationReference,
-    primaryImageOfPage: socialImageSchema,
-    image: fullOgImage,
+    primaryImageOfPage: socialImage,
     inLanguage: 'en-US',
     about: propertyName === 'agency'
       ? [
@@ -179,18 +179,19 @@
     '@type': 'Article',
     headline: title,
     description: description,
-    image: fullOgImage,
+    image: socialImage,
     ...(publishedTime && { datePublished: publishedTime }),
     ...((modifiedTime || publishedTime) && { dateModified: modifiedTime || publishedTime }),
-    author: {
-      '@type': authorType,
-      name: author,
-      url: authorUrl || (authorType === 'Organization' ? config.domain : undefined)
-    },
+    author: authorType === 'Organization'
+      ? { '@id': organizationId, name: author }
+      : {
+          '@type': 'Person',
+          name: author,
+          ...(authorUrl && { url: authorUrl })
+        },
     publisher: organizationReference,
     mainEntityOfPage: {
-      '@type': 'WebPage',
-      '@id': canonicalUrl
+      '@id': webPageId
     },
     ...(articleSection && { articleSection }),
     ...(articleTags.length > 0 && { keywords: articleTags.join(', ') })
@@ -293,11 +294,7 @@
     '@type': 'Course',
     name: course.name || title,
     description: course.description || description,
-    provider: {
-      '@type': 'Organization',
-      name: config.name,
-      url: config.domain
-    },
+    provider: organizationReference,
     ...(course.instructor && {
       instructor: {
         '@type': 'Person',
@@ -381,6 +378,11 @@
   <meta property="og:title" content={fullTitle} />
   <meta property="og:description" content={fullDescription} />
   <meta property="og:image" content={fullOgImage} />
+  <meta property="og:image:secure_url" content={fullOgImage} />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content={fullTitle} />
   <meta property="og:site_name" content={config.name} />
   {#if ogType === 'article'}
     {#if publishedTime}
@@ -403,6 +405,7 @@
   <meta property="twitter:title" content={fullTitle} />
   <meta property="twitter:description" content={fullDescription} />
   <meta property="twitter:image" content={fullOgImage} />
+  <meta property="twitter:image:alt" content={fullTitle} />
 
   <!-- Schema.org JSON-LD -->
   {@html jsonLd(organizationSchema)}
@@ -442,4 +445,8 @@
     {@html jsonLd(courseSchema)}
   {/if}
 
+  <!-- Additional SEO -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="format-detection" content="telephone=no" />
+  <meta http-equiv="x-ua-compatible" content="IE=edge" />
 </svelte:head>

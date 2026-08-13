@@ -1,19 +1,15 @@
 import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
-// The isometric cube paths (from favicon.svg)
-const CUBE_PATHS = {
-	top: 'M 16 4 L 26.39 10 L 16 16 L 5.61 10 Z',
-	left: 'M 5.61 10 L 16 16 L 16 28 L 5.61 22 Z',
-	right: 'M 16 16 L 26.39 10 L 26.39 22 L 16 28 Z'
-};
-
-// Canon face opacity values
-const CUBE_OPACITY = {
-	top: 1.0,
-	left: 0.6,
-	right: 0.3
-};
+// The supplied offset-ring mark is the canonical CREATE SOMETHING identity.
+// Keep the compact geometry in one generator so every public download matches
+// browser, web-clip, social, and Organization assets.
+function ringMark(color: string, transform: string): string {
+	return `<g transform="${transform}" fill="none" stroke="${color}" stroke-width="8.5">
+    <circle cx="53" cy="50" r="41.5"/>
+    <circle cx="43.5" cy="50" r="31.5"/>
+  </g>`;
+}
 
 const WORDMARK_DEFS = `<defs>
     <style>
@@ -70,28 +66,18 @@ const assets: Record<string, (params: { light?: boolean }) => string> = {
 	// Icon with background (512x512)
 	'icon-with-bg': () => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <rect width="512" height="512" fill="#000000" rx="64"/>
-  <g transform="translate(128, 128) scale(8)">
-    <path d="${CUBE_PATHS.top}" fill="#FFFFFF" fill-opacity="${CUBE_OPACITY.top}"/>
-    <path d="${CUBE_PATHS.left}" fill="#FFFFFF" fill-opacity="${CUBE_OPACITY.left}"/>
-    <path d="${CUBE_PATHS.right}" fill="#FFFFFF" fill-opacity="${CUBE_OPACITY.right}"/>
-  </g>
+  ${ringMark('#FFFFFF', 'translate(56 56) scale(4)')}
 </svg>`,
 
 	// Icon circular (512x512)
 	'icon-circular': () => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <circle cx="256" cy="256" r="256" fill="#000000"/>
-  <g transform="translate(128, 128) scale(8)">
-    <path d="${CUBE_PATHS.top}" fill="#FFFFFF" fill-opacity="${CUBE_OPACITY.top}"/>
-    <path d="${CUBE_PATHS.left}" fill="#FFFFFF" fill-opacity="${CUBE_OPACITY.left}"/>
-    <path d="${CUBE_PATHS.right}" fill="#FFFFFF" fill-opacity="${CUBE_OPACITY.right}"/>
-  </g>
+  ${ringMark('#FFFFFF', 'translate(56 56) scale(4)')}
 </svg>`,
 
 	// Icon only (transparent background)
 	'icon-only': () => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <path d="${CUBE_PATHS.top}" fill="#FFFFFF" fill-opacity="${CUBE_OPACITY.top}"/>
-  <path d="${CUBE_PATHS.left}" fill="#FFFFFF" fill-opacity="${CUBE_OPACITY.left}"/>
-  <path d="${CUBE_PATHS.right}" fill="#FFFFFF" fill-opacity="${CUBE_OPACITY.right}"/>
+  ${ringMark('#FFFFFF', 'translate(3.5 3.5) scale(.25)')}
 </svg>`,
 
 	// Wordmark white (for dark backgrounds) - local/system font stack
@@ -109,33 +95,21 @@ const assets: Record<string, (params: { light?: boolean }) => string> = {
 	// Horizontal lockup light (for dark backgrounds)
 	'lockup-horizontal-light': () => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 40">
   ${WORDMARK_DEFS}
-  <g transform="translate(4, 4) scale(1)">
-    <path d="${CUBE_PATHS.top}" fill="#FFFFFF" fill-opacity="${CUBE_OPACITY.top}"/>
-    <path d="${CUBE_PATHS.left}" fill="#FFFFFF" fill-opacity="${CUBE_OPACITY.left}"/>
-    <path d="${CUBE_PATHS.right}" fill="#FFFFFF" fill-opacity="${CUBE_OPACITY.right}"/>
-  </g>
+  ${ringMark('#FFFFFF', 'translate(4 4) scale(.25)')}
   <text x="44" y="28" class="wm" fill="#FFFFFF" font-size="22">CREATE SOMETHING</text>
 </svg>`,
 
 	// Horizontal lockup dark (for light backgrounds)
 	'lockup-horizontal-dark': () => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 40">
   ${WORDMARK_DEFS}
-  <g transform="translate(4, 4) scale(1)">
-    <path d="${CUBE_PATHS.top}" fill="#000000" fill-opacity="${CUBE_OPACITY.top}"/>
-    <path d="${CUBE_PATHS.left}" fill="#000000" fill-opacity="${CUBE_OPACITY.left}"/>
-    <path d="${CUBE_PATHS.right}" fill="#000000" fill-opacity="${CUBE_OPACITY.right}"/>
-  </g>
+  ${ringMark('#000000', 'translate(4 4) scale(.25)')}
   <text x="44" y="28" class="wm" fill="#000000" font-size="22">CREATE SOMETHING</text>
 </svg>`,
 
 	// Stacked lockup light (for dark backgrounds)
 	'lockup-stacked-light': () => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 90">
   ${WORDMARK_DEFS}
-  <g transform="translate(64, 4) scale(1)">
-    <path d="${CUBE_PATHS.top}" fill="#FFFFFF" fill-opacity="${CUBE_OPACITY.top}"/>
-    <path d="${CUBE_PATHS.left}" fill="#FFFFFF" fill-opacity="${CUBE_OPACITY.left}"/>
-    <path d="${CUBE_PATHS.right}" fill="#FFFFFF" fill-opacity="${CUBE_OPACITY.right}"/>
-  </g>
+  ${ringMark('#FFFFFF', 'translate(64 4) scale(.25)')}
   <text x="80" y="55" class="wm" fill="#FFFFFF" font-size="16" text-anchor="middle">CREATE</text>
   <text x="80" y="75" class="wm" fill="#FFFFFF" font-size="16" text-anchor="middle">SOMETHING</text>
 </svg>`,
@@ -143,11 +117,7 @@ const assets: Record<string, (params: { light?: boolean }) => string> = {
 	// Stacked lockup dark (for light backgrounds)
 	'lockup-stacked-dark': () => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 90">
   ${WORDMARK_DEFS}
-  <g transform="translate(64, 4) scale(1)">
-    <path d="${CUBE_PATHS.top}" fill="#000000" fill-opacity="${CUBE_OPACITY.top}"/>
-    <path d="${CUBE_PATHS.left}" fill="#000000" fill-opacity="${CUBE_OPACITY.left}"/>
-    <path d="${CUBE_PATHS.right}" fill="#000000" fill-opacity="${CUBE_OPACITY.right}"/>
-  </g>
+  ${ringMark('#000000', 'translate(64 4) scale(.25)')}
   <text x="80" y="55" class="wm" fill="#000000" font-size="16" text-anchor="middle">CREATE</text>
   <text x="80" y="75" class="wm" fill="#000000" font-size="16" text-anchor="middle">SOMETHING</text>
 </svg>`

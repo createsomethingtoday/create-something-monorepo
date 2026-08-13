@@ -16,7 +16,7 @@ This guide covers the implementation of comprehensive SEO (Search Engine Optimiz
 ### Social Media (Open Graph)
 - ✅ Facebook/LinkedIn sharing
 - ✅ Twitter Cards
-- ✅ Custom OG images
+- ✅ Property-owned 1200×630 PNG social images
 - ✅ Article metadata (publish/modified times, sections, tags)
 
 ### AEO Features (Answer Engine Optimization)
@@ -24,6 +24,7 @@ This guide covers the implementation of comprehensive SEO (Search Engine Optimiz
 - ✅ Schema.org WebSite markup
 - ✅ Schema.org Article markup (for blog posts/papers)
 - ✅ JSON-LD structured data
+- ✅ One canonical Organization identifier and logo ImageObject across all properties
 - ✅ Rich snippets support
 
 ## Usage
@@ -144,10 +145,16 @@ The component automatically generates three types of JSON-LD structured data:
 {
   "@context": "https://schema.org",
   "@type": "Organization",
-  "name": "Create Something",
+  "@id": "https://createsomething.ltd/#organization",
+  "name": "CREATE SOMETHING",
   "url": "https://createsomething.ltd",
-  "logo": "https://createsomething.ltd/favicon.png",
-  "description": "Design practice following Dieter Rams principles",
+  "logo": {
+    "@type": "ImageObject",
+    "url": "https://createsomething.ltd/brand/create-something-ring-mark-512.png",
+    "width": 512,
+    "height": 512
+  },
+  "description": "CREATE SOMETHING makes delegated work trustworthy.",
   "founder": {
     "@type": "Person",
     "name": "Micah Johnson"
@@ -164,7 +171,7 @@ The component automatically generates three types of JSON-LD structured data:
   "name": "Create Something Practice",
   "url": "https://createsomething.space",
   "description": "Live experiments in design and development",
-  "publisher": { ... },
+  "publisher": { "@id": "https://createsomething.ltd/#organization" },
   "inLanguage": "en-US"
 }
 ```
@@ -204,10 +211,25 @@ The component automatically generates three types of JSON-LD structured data:
 - Match user search intent
 
 ### Open Graph Images
-- Minimum size: 1200x630px
-- Format: PNG or JPG
+- Default property image: `/og-image.png`, served as an absolute 1200×630 PNG
+- Preserve a property-specific card; do not reuse another property's campaign image
+- Route-specific cards may replace the default only when the page owns that visual
 - File size: < 1MB
 - Include text overlay for context
+
+### Browser, web-clip, and Organization identity
+
+`LayoutSEO.svelte` owns this document-level contract for every public property:
+
+- `favicon.svg`, `favicon.ico`, and the 512px PNG fallback;
+- `apple-touch-icon.png` for Apple web clips;
+- `icon-192.png`, `icon-512.png`, and `icon-512-maskable.png` in `manifest.json`;
+- `mask-icon.svg` for Safari pinned tabs.
+
+The supplied ring mark is the shared small-format identity. Its canonical
+Organization image is `https://createsomething.ltd/brand/create-something-ring-mark-512.png`.
+Route-level `SEO.svelte` must not add its own icon or manifest links. It emits
+the page's property-specific `primaryImageOfPage` instead.
 
 ### Canonical URLs
 - Always use absolute URLs
@@ -250,8 +272,11 @@ The component automatically generates three types of JSON-LD structured data:
 - [ ] All pages have unique descriptions
 - [ ] Canonical URLs are set correctly
 - [ ] OG images render properly
+- [ ] The default social image is an absolute, property-owned 1200×630 PNG
 - [ ] Schema markup validates
 - [ ] No broken links in structured data
+- [ ] Organization `@id` and 512px `.ltd` logo are consistent across properties
+- [ ] Browser, Apple web-clip, Safari mask, and manifest icons resolve
 - [ ] Mobile-friendly test passes
 - [ ] Core Web Vitals pass
 
@@ -268,10 +293,10 @@ pngquant og-image.png --output og-image-optimized.png
 
 ### Favicon Generation
 ```bash
-# Generate multiple sizes
-convert favicon.png -resize 16x16 favicon-16.png
-convert favicon.png -resize 32x32 favicon-32.png
-convert favicon.png -resize 180x180 apple-touch-icon.png
+# Generate browser, web-clip, and manifest derivatives from the canonical SVG
+rsvg-convert --width 180 --height 180 favicon.svg --output apple-touch-icon.png
+rsvg-convert --width 192 --height 192 favicon.svg --output icon-192.png
+rsvg-convert --width 512 --height 512 favicon.svg --output icon-512.png
 ```
 
 ## Example Implementations

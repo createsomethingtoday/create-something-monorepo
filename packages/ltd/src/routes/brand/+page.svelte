@@ -201,7 +201,7 @@
     <h2 class="section-title">Usage Guidelines</h2>
     <ul class="guidelines-list">
       <li>Match logo variant to background (light logo on dark, dark on light)</li>
-      <li>Maintain clear space around the logo equal to the cube height</li>
+      <li>Maintain clear space around the logo equal to the ring height</li>
       <li>Do not rotate, skew, or apply effects to the logo</li>
       <li>Do not change the logo colors or opacity values</li>
       <li>Do not place on busy or patterned backgrounds</li>
