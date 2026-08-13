@@ -27,6 +27,10 @@ fn threshold_dwelling_v08_spatial_package_is_client_safe_without_claiming_native
         package.physical_scene_contract.status,
         "blocked-vertical-geometry-unissued"
     );
+    assert_eq!(
+        package.physical_scene_contract.client_source_documents,
+        "excluded"
+    );
     assert_eq!(package.physical_scene_contract.unissued_fact_ids.len(), 9);
     assert!(
         !package

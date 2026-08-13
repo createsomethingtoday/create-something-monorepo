@@ -8,8 +8,12 @@ import {
   resolveThresholdDwellingAssemblyBinding
 } from '@create-something/canon/experiments/threshold-dwelling/assembly-schedule';
 import {
+  THRESHOLD_DWELLING_PRIVATE_GEOMETRY_EVIDENCE_PACKET,
+  applyThresholdDwellingPrivateGeometryEvidence,
+  projectThresholdDwellingClientSafeGeometryIssuance
+} from '@create-something/canon/experiments/threshold-dwelling/geometry-evidence-packet';
+import {
   THRESHOLD_DWELLING_PHYSICAL_SCENE_ISSUANCE,
-  assessThresholdDwellingPhysicalSceneIssuance,
   type ThresholdDwellingPhysicalSceneFactId,
   type ThresholdDwellingPhysicalSceneStatus
 } from '@create-something/canon/experiments/threshold-dwelling/geometry-issuance';
@@ -85,6 +89,7 @@ export interface WorkWayPhysicalSceneContract {
   issuanceId: string;
   status: ThresholdDwellingPhysicalSceneStatus;
   coordinateTruth: 'revised-plan-horizontal-only';
+  clientSourceDocuments: 'excluded';
   unissuedFactIds: readonly ThresholdDwellingPhysicalSceneFactId[];
   canGeneratePhysicalOneToOneScene: boolean;
   constructionReady: false;
@@ -247,8 +252,13 @@ export function createThresholdDwellingSpatialPackage(): WorkWaySpatialPackage {
   const floorPlan = THRESHOLD_DWELLING_LIVING_SYSTEM_FLOOR_PLAN;
   const interior = THRESHOLD_DWELLING_INTERIOR_INFILL;
   const assemblySchedule = THRESHOLD_DWELLING_ASSEMBLY_SCHEDULE;
-  const physicalSceneIssuance = THRESHOLD_DWELLING_PHYSICAL_SCENE_ISSUANCE;
-  const physicalSceneAssessment = assessThresholdDwellingPhysicalSceneIssuance(physicalSceneIssuance);
+  const physicalSceneIssuance = applyThresholdDwellingPrivateGeometryEvidence(
+    THRESHOLD_DWELLING_PHYSICAL_SCENE_ISSUANCE,
+    THRESHOLD_DWELLING_PRIVATE_GEOMETRY_EVIDENCE_PACKET
+  );
+  const physicalSceneProjection = projectThresholdDwellingClientSafeGeometryIssuance(
+    physicalSceneIssuance
+  );
   const arrivalLoggia = requireValue(
     floorPlan.overhangs?.find((overhang) => overhang.label === 'Arrival\nLoggia'),
     'Threshold Dwelling Rev 0.8 requires an Arrival Loggia render projection.'
@@ -292,11 +302,12 @@ export function createThresholdDwellingSpatialPackage(): WorkWaySpatialPackage {
       constructionReady: false
     },
     physicalSceneContract: {
-      issuanceId: physicalSceneAssessment.issuanceId,
-      status: physicalSceneAssessment.physicalSceneStatus,
+      issuanceId: physicalSceneProjection.issuanceId,
+      status: physicalSceneProjection.status,
       coordinateTruth: physicalSceneIssuance.coordinateTruth,
-      unissuedFactIds: physicalSceneAssessment.unissuedFactIds,
-      canGeneratePhysicalOneToOneScene: physicalSceneAssessment.canGeneratePhysicalOneToOneScene,
+      clientSourceDocuments: physicalSceneProjection.clientSourceDocuments,
+      unissuedFactIds: physicalSceneProjection.unissuedFactIds,
+      canGeneratePhysicalOneToOneScene: physicalSceneProjection.canGeneratePhysicalOneToOneScene,
       constructionReady: false
     },
     assets,
@@ -504,6 +515,7 @@ export function validateSpatialPackage(
   if (
     !physicalScene.issuanceId.trim() ||
     physicalScene.coordinateTruth !== 'revised-plan-horizontal-only' ||
+    physicalScene.clientSourceDocuments !== 'excluded' ||
     duplicateIds(physicalScene.unissuedFactIds) ||
     physicalScene.status !== expectedPhysicalSceneStatus ||
     (physicalScene.canGeneratePhysicalOneToOneScene && physicalScene.unissuedFactIds.length > 0) ||

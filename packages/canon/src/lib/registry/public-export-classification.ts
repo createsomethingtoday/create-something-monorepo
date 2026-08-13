@@ -491,6 +491,13 @@ const PACKAGE_EXPORT_PATH_POLICIES: CanonPublicExportClassificationRule[] = [
       'Threshold Dwelling physical-scene evidence gate is a project-specific experiment contract, not a reusable Canon primitive.'
   },
   {
+    exportPath: './experiments/threshold-dwelling/geometry-evidence-packet',
+    classification: 'experiment',
+    registryPolicy: 'classified-out',
+    rationale:
+      'Threshold Dwelling private-evidence packet is a project-specific intake boundary, not a reusable Canon primitive.'
+  },
+  {
     exportPath: './experiments/living-arena',
     classification: 'experiment',
     registryPolicy: 'classified-out',

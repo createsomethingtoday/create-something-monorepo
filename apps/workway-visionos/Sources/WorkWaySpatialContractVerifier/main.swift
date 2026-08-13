@@ -11,6 +11,7 @@ private struct VerificationReceipt: Codable {
     let renderedMaterialIDs: [String]
     let physicalSceneStatus: String
     let physicalOneToOneSceneEligible: Bool
+    let physicalSceneClientSourceDocuments: String
     let constructionReady: Bool
     let contractIssues: [String]
     let kitchenDimensionsMeters: [Double]
@@ -57,6 +58,7 @@ struct WorkWaySpatialContractVerifier {
                 renderedMaterialIDs: package.materialContract.renderedMaterialIds,
                 physicalSceneStatus: preflight.physicalSceneStatus,
                 physicalOneToOneSceneEligible: preflight.physicalOneToOneSceneEligible,
+                physicalSceneClientSourceDocuments: package.physicalSceneContract.clientSourceDocuments,
                 constructionReady: package.constructionReady,
                 contractIssues: package.contractIssues.map(\.rawValue),
                 kitchenDimensionsMeters: [kitchen.widthMeters, kitchen.depthMeters],

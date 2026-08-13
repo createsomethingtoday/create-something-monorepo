@@ -39,3 +39,5 @@ Only when every fact is accepted and traceable may WorkWay mark the **visual** p
 The TypeScript, Rust, and Swift spatial-package contracts carry the same `physicalSceneContract`. Native preflight can still permit a primitive plan-based room guide, but reports `physicalOneToOneSceneEligible: false` for Rev 0.8. The local browser labels the 3D massing and chapter views accordingly.
 
 When the evidence gate is actually clear, create a new immutable WorkWay revision, regenerate all affected 2D/3D/USD assets from those issued values, revalidate hashes and client packages, then retain the source/reviewer receipts in the private project graph.
+
+For the client-safe private-evidence boundary and the requirements before a real upload service is introduced, see [Private Geometry Evidence](./THRESHOLD_DWELLING_PRIVATE_GEOMETRY_EVIDENCE.md).

@@ -38,6 +38,7 @@ test('derives a client-safe Rev 0.8 package from the Canon living-system revisio
     issuanceId: 'threshold-dwelling-rev-0.8-physical-scene-gate',
     status: 'blocked-vertical-geometry-unissued',
     coordinateTruth: 'revised-plan-horizontal-only',
+    clientSourceDocuments: 'excluded',
     unissuedFactIds: [
       'finished-floor-and-site-datum',
       'exterior-wall-assembly-geometry',
@@ -217,6 +218,19 @@ test('rejects a physical-scene contract that tries to elevate illustrative massi
     physicalSceneContract: {
       ...packageValue.physicalSceneContract,
       canGeneratePhysicalOneToOneScene: true as never
+    }
+  };
+
+  assert.deepEqual(validateSpatialPackage(invalid).issueIds, ['invalid-physical-scene-contract']);
+});
+
+test('rejects a physical-scene contract that tries to include private source documents', () => {
+  const packageValue = createThresholdDwellingSpatialPackage();
+  const invalid = {
+    ...packageValue,
+    physicalSceneContract: {
+      ...packageValue.physicalSceneContract,
+      clientSourceDocuments: 'included' as never
     }
   };
 

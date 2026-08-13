@@ -58,6 +58,7 @@ pub struct PhysicalSceneContract {
     pub issuance_id: String,
     pub status: String,
     pub coordinate_truth: String,
+    pub client_source_documents: String,
     pub unissued_fact_ids: Vec<String>,
     pub can_generate_physical_one_to_one_scene: bool,
     pub construction_ready: bool,
@@ -278,6 +279,7 @@ pub fn validate_spatial_package(package: &SpatialPackage) -> SpatialPackageValid
         .trim()
         .is_empty()
         || package.physical_scene_contract.coordinate_truth != "revised-plan-horizontal-only"
+        || package.physical_scene_contract.client_source_documents != "excluded"
         || contains_duplicate_ids(
             package
                 .physical_scene_contract
@@ -483,6 +485,7 @@ pub fn threshold_dwelling_spatial_package_v08() -> SpatialPackage {
             issuance_id: "threshold-dwelling-rev-0.8-physical-scene-gate".into(),
             status: "blocked-vertical-geometry-unissued".into(),
             coordinate_truth: "revised-plan-horizontal-only".into(),
+            client_source_documents: "excluded".into(),
             unissued_fact_ids: vec![
                 "finished-floor-and-site-datum".into(),
                 "exterior-wall-assembly-geometry".into(),

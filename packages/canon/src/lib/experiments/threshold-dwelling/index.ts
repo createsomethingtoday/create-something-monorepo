@@ -105,6 +105,15 @@ export {
   type ThresholdDwellingPhysicalSceneStatus
 } from './geometry-issuance.js';
 export {
+  THRESHOLD_DWELLING_PRIVATE_GEOMETRY_EVIDENCE_PACKET,
+  applyThresholdDwellingPrivateGeometryEvidence,
+  projectThresholdDwellingClientSafeGeometryIssuance,
+  type ThresholdDwellingClientSafeGeometryIssuanceProjection,
+  type ThresholdDwellingPrivateDocumentReference,
+  type ThresholdDwellingPrivateGeometryEvidencePacket,
+  type ThresholdDwellingPrivateGeometryEvidenceRecord
+} from './geometry-evidence-packet.js';
+export {
   THRESHOLD_DWELLING_DESIGN,
   type ThresholdDwellingBuildMetrics,
   type ThresholdDwellingConstructionAllowance,

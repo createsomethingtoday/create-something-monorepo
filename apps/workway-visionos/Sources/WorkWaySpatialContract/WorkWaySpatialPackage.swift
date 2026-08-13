@@ -33,6 +33,7 @@ public struct WorkWaySpatialPackage: Codable, Equatable, Sendable {
         public let issuanceId: String
         public let status: String
         public let coordinateTruth: String
+        public let clientSourceDocuments: String
         public let unissuedFactIds: [String]
         public let canGeneratePhysicalOneToOneScene: Bool
         public let constructionReady: Bool
@@ -166,6 +167,7 @@ public struct WorkWaySpatialPackage: Codable, Equatable, Sendable {
             : "blocked-vertical-geometry-unissued"
         if physicalSceneContract.issuanceId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
             physicalSceneContract.coordinateTruth != "revised-plan-horizontal-only" ||
+            physicalSceneContract.clientSourceDocuments != "excluded" ||
             Set(physicalSceneContract.unissuedFactIds).count != physicalSceneContract.unissuedFactIds.count ||
             physicalSceneContract.status != expectedPhysicalSceneStatus ||
             (physicalSceneContract.canGeneratePhysicalOneToOneScene && !physicalSceneContract.unissuedFactIds.isEmpty) ||
