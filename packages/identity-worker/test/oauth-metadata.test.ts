@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-import identityWorker from '../src/index.ts';
+import identityWorker, { requiresS256PkceForOAuthResource } from '../src/index.ts';
 
 function makeEnv() {
   return {
@@ -166,6 +166,12 @@ test('anonymous agent registration rejects resources outside the public discover
     message: 'The requested resource is not available for anonymous registration',
     status: 400,
   });
+});
+
+test('the .agency OAuth resource requires S256 PKCE before it can issue an access token', () => {
+  assert.equal(requiresS256PkceForOAuthResource('https://createsomething.agency'), true);
+  assert.equal(requiresS256PkceForOAuthResource('https://createsomething.agency/'), true);
+  assert.equal(requiresS256PkceForOAuthResource('https://webflow-template-review-mcp.createsomething.workers.dev/mcp'), false);
 });
 
 test('identity worker creates dynamically registered ChatGPT OAuth clients', async () => {

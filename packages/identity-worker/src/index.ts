@@ -1337,9 +1337,20 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 		if (authorizationCodeClaims.client_id !== body.client_id || authorizationCodeClaims.redirect_uri !== body.redirect_uri) {
 			return oauthErrorResponse('invalid_grant', 400, 'Authorization code does not match client_id or redirect_uri.');
 		}
+		const requiresS256 = requiresS256PkceForOAuthResource(authorizationCodeClaims.resource);
 		if (
-			authorizationCodeClaims.code_challenge
-			&& !(await verifyPkce(body.code_verifier, authorizationCodeClaims.code_challenge, authorizationCodeClaims.code_challenge_method))
+			requiresS256 &&
+			(!authorizationCodeClaims.code_challenge ||
+				authorizationCodeClaims.code_challenge_method !== 'S256' ||
+				!body.code_verifier ||
+				!(await verifyPkce(body.code_verifier, authorizationCodeClaims.code_challenge, 'S256')))
+		) {
+			return oauthErrorResponse('invalid_grant', 400, 'S256 code_verifier is required.');
+		}
+		if (
+			!requiresS256 &&
+			authorizationCodeClaims.code_challenge &&
+			!(await verifyPkce(body.code_verifier, authorizationCodeClaims.code_challenge, authorizationCodeClaims.code_challenge_method))
 		) {
 			return oauthErrorResponse('invalid_grant', 400, 'Invalid code_verifier.');
 		}
@@ -4376,6 +4387,10 @@ function normalizeUrlOrigin(origin: string): string {
 	return origin.replace(/\/+$/, '');
 }
 
+export function requiresS256PkceForOAuthResource(resource: string): boolean {
+	return normalizeUrlOrigin(resource) === AGENCY_PUBLIC_DISCOVERY_RESOURCE;
+}
+
 function validateOAuthAuthorizeRequest(params: URLSearchParams): string | null {
 	if (params.get('response_type') !== 'code') return 'unsupported_response_type';
 	if (!params.get('client_id')) return 'invalid_client';
@@ -4383,6 +4398,13 @@ function validateOAuthAuthorizeRequest(params: URLSearchParams): string | null {
 	if (!redirectUri || !isValidHttpUrl(redirectUri)) return 'invalid_redirect_uri';
 	const resource = params.get('resource');
 	if (resource && !isValidHttpUrl(resource)) return 'invalid_target';
+	if (
+		resource &&
+		requiresS256PkceForOAuthResource(resource) &&
+		(!params.get('code_challenge') || params.get('code_challenge_method') !== 'S256')
+	) {
+		return 'invalid_request';
+	}
 	return null;
 }
 

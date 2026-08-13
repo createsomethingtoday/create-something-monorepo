@@ -64,12 +64,14 @@ function forwardHeaders(request: Request): Headers {
  * than creating a second execution path or claiming workflow authority.
  */
 export const POST: RequestHandler = async ({ request, fetch }) => {
-	let body: A2ARequest;
+	let body: A2ARequest | null;
 	try {
-		body = (await request.json()) as A2ARequest;
+		const parsed = await request.json();
+		body = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? (parsed as A2ARequest) : null;
 	} catch {
 		return jsonRpcError(null, -32700, 'Parse error', 400);
 	}
+	if (!body) return jsonRpcError(null, -32600, 'Invalid Request', 400);
 
 	const id = rpcId(body.id);
 	const message = textFromMessage(body);

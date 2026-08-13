@@ -196,6 +196,27 @@ test('the A2A endpoint delegates only a text mapping request to the bounded publ
 	assert.equal(body.result.status.message.parts[0]?.text, 'I mapped the review gate.');
 });
 
+test('the A2A endpoint returns a JSON-RPC invalid-request envelope for non-object JSON', async () => {
+	const { POST } = await import('../src/routes/a2a/+server.ts');
+	const response = await POST({
+		request: new Request('https://createsomething.agency/a2a', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: 'null'
+		}),
+		fetch: async () => {
+			throw new Error('non-object JSON must not call the workflow mapper');
+		}
+	} as never);
+
+	assert.equal(response.status, 400);
+	assert.deepEqual(await response.json(), {
+		jsonrpc: '2.0',
+		id: null,
+		error: { code: -32600, message: 'Invalid Request' }
+	});
+});
+
 test('the A2A agent card advertises only the implemented non-streaming mapping skill', async () => {
 	const { GET } = await import('../src/routes/.well-known/agent-card.json/+server.ts');
 	const response = await GET({} as never);

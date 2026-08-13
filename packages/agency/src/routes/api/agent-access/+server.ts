@@ -38,7 +38,7 @@ export const GET: RequestHandler = async ({ request, platform, fetch }) => {
 	});
 	const claims = identity?.claims as Record<string, unknown> | undefined;
 	const acceptedTokenKinds = new Set(['oauth_access_token', 'agent_auth_access_token']);
-	if (!identity || !acceptedTokenKinds.has(String(claims?.kind)) || !scopeIncludes(claims.scope, 'mcp')) {
+	if (!identity || !acceptedTokenKinds.has(String(claims?.kind)) || !scopeIncludes(claims?.scope, 'mcp')) {
 		return json(
 			{ error: 'invalid_or_insufficient_token', resource_metadata: metadataUrl },
 			{ status: 401, headers: { 'www-authenticate': discoveryChallenge(), 'cache-control': 'no-store' } }
