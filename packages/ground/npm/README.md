@@ -48,24 +48,30 @@ safe to run from a package inside a monorepo.
 
 ### Diff coverage
 
-`ground diff` determines analyzability from the requested checks. Its current
-duplicate and orphan checks cover TypeScript, JavaScript, and `.mjs` source
-paths. The legacy `changed_files` and `changed_file_list` fields continue to
-describe only analyzable source files. Use the added
-`discovered_changed_files`, `analyzable_changed_files`, and
-`excluded_changed_files` fields to see the full Git change scope and why a path
-was not analyzed, including `unsupported_by_requested_checks`. If no changed
-source is eligible, the result explicitly says so; it does not describe
-excluded files as clean.
+Every batch, diff, and duplicate-function response has a
+`verification_status`; `ground diff` also returns the same status per requested
+check in `check_coverage.<check>.status`. The contract is explicit:
 
-For promotion evidence, inspect `check_coverage.<check>.status`,
-`analyzed_changed_files`, and `excluded_changed_files`. Ground 0.3.2 removes
-`ground diff`'s silent 500-file truncation and makes source traversal
-deterministic and cycle-safe. Diff mode parses the complete corpus but only
-compares pairs involving changed files. A changed file is only listed as
-analyzed for a check after that check completed for the file; partial or failed
-analysis stays explicit in the per-check exclusions. Standalone broad duplicate
-scans retain their safety bound and report `scan_complete: false` when it is hit.
+- `PASS`: the check completed for the relevant supported files and found no issue.
+- `FAIL`: the check found an issue or could not complete because of a read/parse failure.
+- `NOT_APPLICABLE`: no changed file needs that check.
+- `UNSUPPORTED`: relevant source exists, but the requested check cannot analyze its language (including Svelte duplicate-function scans).
+- `TIMEOUT`: duplicate analysis reached its deadline before a complete result was available.
+
+`ground analyze` and `ground diff` accept `--timeout-ms` (120000 by default).
+The MCP equivalents accept `timeout_ms`; a deadline returns `TIMEOUT`, never a
+clean result. `ground diff` includes `.mjs` with JavaScript source analysis.
+Its `changed_files` and `changed_file_list` fields remain the analyzable-file
+view; read `discovered_changed_files`, `analyzable_changed_files`, and
+`excluded_changed_files` for the full Git scope. Per-check coverage also names
+`unsupported_changed_files` and `excluded_changed_files`, so a clean claim is
+valid only with `PASS`.
+
+Ground 0.3.2 removes `ground diff`'s silent 500-file truncation and makes
+source traversal deterministic and cycle-safe. Diff mode parses the complete
+corpus but only compares pairs involving changed files. Standalone broad
+duplicate scans retain their safety bound and report their non-pass status with
+`scan_complete: false` when the bound is hit.
 
 The release package includes the native Apple Silicon binaries directly; other
 supported platforms download the matching verified release asset during install.

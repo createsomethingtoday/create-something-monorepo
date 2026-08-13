@@ -79,6 +79,9 @@ enum Commands {
         /// Scan across packages in a monorepo
         #[arg(long)]
         cross_package: bool,
+        /// Maximum duplicate-analysis time in milliseconds
+        #[arg(long, default_value_t = 120_000)]
+        timeout_ms: u64,
     },
 
     /// Report only verified issues involving files changed since a git baseline
@@ -95,6 +98,9 @@ enum Commands {
         /// Scan across packages in a monorepo
         #[arg(long)]
         cross_package: bool,
+        /// Maximum duplicate-analysis time in milliseconds
+        #[arg(long, default_value_t = 120_000)]
+        timeout_ms: u64,
     },
     
     /// Make a claim (only works if you've checked first)
@@ -490,7 +496,7 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
         
         Commands::Find(find_cmd) => run_find(find_cmd, &cli.db),
 
-        Commands::Analyze { directory, checks, entry_points, cross_package } => {
+        Commands::Analyze { directory, checks, entry_points, cross_package, timeout_ms } => {
             run_mcp_analysis(
                 "ground_analyze",
                 &cli.db,
@@ -499,11 +505,12 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                     "checks": checks,
                     "entry_points": entry_points,
                     "cross_package": cross_package,
+                    "timeout_ms": timeout_ms,
                 }),
             )
         }
 
-        Commands::Diff { directory, base, checks, cross_package } => {
+        Commands::Diff { directory, base, checks, cross_package, timeout_ms } => {
             run_mcp_analysis(
                 "ground_diff",
                 &cli.db,
@@ -512,6 +519,7 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                     "base": base,
                     "checks": checks,
                     "cross_package": cross_package,
+                    "timeout_ms": timeout_ms,
                 }),
             )
         }

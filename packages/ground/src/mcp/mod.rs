@@ -27,16 +27,17 @@
 //! - `ground_claim_dead_code` - Claim code is dead (blocked until verified)
 //! - `ground_claim_orphan` - Claim module is orphaned (blocked until verified)
 
+use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
-use std::collections::{HashMap, HashSet};
+use std::time::{Duration, Instant};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
 use crate::{VerifiedTriad, VerifiedTriadError};
 use crate::computations::{
     analyze_function_dry_focused_with_options, analyze_function_dry_with_options,
-    FunctionDryOptions,
+    ComputationError, FunctionDryOptions,
 };
 use crate::computations::environment::{analyze_environment_safety, WarningSeverity, RuntimeEnvironment};
 use crate::computations::{BloomFilter, HyperLogLog};
@@ -169,6 +170,11 @@ pub fn list_tools() -> Vec<ToolDefinition> {
                     "min_lines": {
                         "type": "number",
                         "description": "Minimum function lines to analyze. Filters out trivial 1-3 line functions. Default: no minimum"
+                    },
+                    "timeout_ms": {
+                        "type": "number",
+                        "minimum": 0,
+                        "description": "Maximum duplicate-analysis time in milliseconds. Defaults to 120000. A timeout returns verification_status TIMEOUT with explicit coverage."
                     },
                     "config": {
                         "type": "string",
@@ -360,6 +366,11 @@ pub fn list_tools() -> Vec<ToolDefinition> {
                     "cross_package": {
                         "type": "boolean",
                         "description": "Scan across packages in monorepo. Default: false"
+                    },
+                    "timeout_ms": {
+                        "type": "number",
+                        "minimum": 0,
+                        "description": "Maximum duplicate-analysis time in milliseconds. Defaults to 120000. A timeout is reported as TIMEOUT, not clean."
                     }
                 },
                 "required": ["directory"]
@@ -390,6 +401,11 @@ pub fn list_tools() -> Vec<ToolDefinition> {
                     "cross_package": {
                         "type": "boolean",
                         "description": "Scan across packages in monorepo. Default: false"
+                    },
+                    "timeout_ms": {
+                        "type": "number",
+                        "minimum": 0,
+                        "description": "Maximum duplicate-analysis time in milliseconds. Defaults to 120000. A timeout is reported as TIMEOUT, not clean."
                     }
                 },
                 "required": ["directory"]
@@ -547,6 +563,85 @@ pub struct ToolResult {
     pub content: Value,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<String>,
+}
+
+/// A verifier outcome. `PASS` only means the requested check completed with
+/// sufficient coverage and no findings; it never stands in for "no output".
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum VerificationStatus {
+    Pass,
+    Fail,
+    NotApplicable,
+    Unsupported,
+    Timeout,
+}
+
+/// A source path Ground did not analyze, together with the specific reason.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VerificationFile {
+    pub path: String,
+    pub reason: String,
+}
+
+/// Per-check coverage and outcome returned by verification commands.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VerificationResult {
+    pub status: VerificationStatus,
+    #[serde(rename = "analyzed_changed_files", default)]
+    pub analyzed_files: Vec<String>,
+    #[serde(rename = "unsupported_changed_files", default)]
+    pub unsupported_files: Vec<VerificationFile>,
+    #[serde(rename = "excluded_changed_files", default)]
+    pub excluded_files: Vec<VerificationFile>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timeout_ms: Option<u64>,
+}
+
+impl VerificationResult {
+    fn new(status: VerificationStatus) -> Self {
+        Self {
+            status,
+            analyzed_files: Vec::new(),
+            unsupported_files: Vec::new(),
+            excluded_files: Vec::new(),
+            timeout_ms: None,
+        }
+    }
+
+    fn as_value(&self) -> Value {
+        serde_json::to_value(self).expect("verification result must serialize")
+    }
+}
+
+const DEFAULT_DUPLICATE_TIMEOUT_MS: u64 = 120_000;
+
+fn verification_status_from_value(value: Option<&Value>) -> VerificationStatus {
+    value
+        .cloned()
+        .and_then(|value| serde_json::from_value(value).ok())
+        .unwrap_or(VerificationStatus::Fail)
+}
+
+fn aggregate_verification_status<'a>(statuses: impl IntoIterator<Item = &'a VerificationStatus>) -> VerificationStatus {
+    let statuses = statuses.into_iter().copied().collect::<Vec<_>>();
+    if statuses.contains(&VerificationStatus::Timeout) {
+        VerificationStatus::Timeout
+    } else if statuses.contains(&VerificationStatus::Fail) {
+        VerificationStatus::Fail
+    } else if statuses.contains(&VerificationStatus::Unsupported) {
+        VerificationStatus::Unsupported
+    } else if statuses.contains(&VerificationStatus::Pass) {
+        VerificationStatus::Pass
+    } else {
+        VerificationStatus::NotApplicable
+    }
+}
+
+fn duplicate_timeout_ms(args: &Value) -> u64 {
+    args.get("timeout_ms")
+        .and_then(|value| value.as_u64())
+        .unwrap_or(DEFAULT_DUPLICATE_TIMEOUT_MS)
 }
 
 impl ToolResult {
@@ -786,6 +881,9 @@ fn handle_check_connections(g: &mut VerifiedTriad, args: &Value) -> ToolResult {
 }
 
 fn handle_find_duplicate_functions(args: &Value) -> ToolResult {
+    let timeout_ms = duplicate_timeout_ms(args);
+    let started_at = Instant::now();
+    let deadline = started_at + Duration::from_millis(timeout_ms);
     let exclude_tests = args.get("exclude_tests")
         .and_then(|v| v.as_bool())
         .unwrap_or(false);
@@ -895,6 +993,7 @@ fn handle_find_duplicate_functions(args: &Value) -> ToolResult {
         min_function_lines: min_lines,
         detect_intra_file,
         intra_file_threshold,
+        deadline: Some(deadline),
         ..Default::default()
     };
     
@@ -907,12 +1006,27 @@ fn handle_find_duplicate_functions(args: &Value) -> ToolResult {
     let mut file_to_package: std::collections::HashMap<PathBuf, String> = std::collections::HashMap::new();
     let mut files_discovered = 0;
     let mut discovery_complete = true;
+    let mut unsupported_files = Vec::new();
     let max_files = 500;
     
     for dir in &directories {
         let package_name = extract_package_name(dir);
         let mut dir_files: Vec<PathBuf> = Vec::new();
-        discovery_complete &= collect_ts_files(dir, &mut dir_files);
+        if dir.is_file() {
+            let extension = dir.extension().and_then(|value| value.to_str()).unwrap_or("");
+            if duplicate_function_supports_extension(extension) {
+                dir_files.push(dir.clone());
+            } else if is_ground_source_extension(extension) {
+                files_discovered += 1;
+                unsupported_files.push(VerificationFile {
+                    path: dir.to_string_lossy().to_string(),
+                    reason: "unsupported_language".to_string(),
+                });
+                continue;
+            }
+        } else {
+            discovery_complete &= collect_ts_files(dir, &mut dir_files);
+        }
         files_discovered += dir_files.len();
         
         for file in dir_files {
@@ -936,22 +1050,55 @@ fn handle_find_duplicate_functions(args: &Value) -> ToolResult {
     
     let is_cross_package_scan = directories.len() > 1;
     
-    if files.is_empty() {
+    if started_at >= deadline {
         return ToolResult::success(json!({
+            "verification_status": VerificationStatus::Timeout,
+            "directories": directories.iter().map(|directory| directory.to_string_lossy()).collect::<Vec<_>>(),
+            "packages_scanned": directories.len(),
+            "files_selected": files.len(),
+            "files_checked": 0,
+            "files_discovered": files_discovered,
+            "file_list": [],
+            "unsupported_files": unsupported_files,
+            "scan_complete": false,
+            "timeout_ms": timeout_ms,
+            "elapsed_ms": started_at.elapsed().as_millis() as u64,
+            "functions_found": 0,
+            "duplicates": [],
+            "cross_package_duplicates": [],
+            "message": format!("Duplicate analysis timed out after {} ms before a complete result was available.", timeout_ms)
+        }));
+    }
+
+    if files.is_empty() {
+        let verification_status = if !unsupported_files.is_empty() {
+            VerificationStatus::Unsupported
+        } else if discovery_complete {
+            VerificationStatus::NotApplicable
+        } else {
+            VerificationStatus::Fail
+        };
+        return ToolResult::success(json!({
+            "verification_status": verification_status,
             "found": true,
             "directories": directories.iter().map(|d| d.to_string_lossy()).collect::<Vec<_>>(),
             "packages_scanned": directories.len(),
             "files_checked": 0,
             "files_discovered": files_discovered,
             "file_list": [],
+            "unsupported_files": unsupported_files,
             "scan_complete": discovery_complete && files_discovered == 0,
+            "timeout_ms": timeout_ms,
+            "elapsed_ms": started_at.elapsed().as_millis() as u64,
             "functions_found": 0,
             "duplicates": [],
             "cross_package_duplicates": [],
-            "message": if discovery_complete {
-                "No TypeScript/JavaScript files found"
+            "message": if verification_status == VerificationStatus::Unsupported {
+                "UNSUPPORTED: the requested source file language has no duplicate-function analyzer."
+            } else if discovery_complete {
+                "NOT_APPLICABLE: no TypeScript/JavaScript files found"
             } else {
-                "Scan incomplete: one or more source directories could not be discovered."
+                "FAIL: one or more source directories could not be discovered."
             }
         }));
     }
@@ -1087,7 +1234,13 @@ fn handle_find_duplicate_functions(args: &Value) -> ToolResult {
                 ));
             }
             
+            let verification_status = if scan_complete && total_dup_count == 0 {
+                VerificationStatus::Pass
+            } else {
+                VerificationStatus::Fail
+            };
             let mut response = json!({
+                "verification_status": verification_status,
                 "found": true,
                 "directories": directories.iter().map(|d| d.to_string_lossy()).collect::<Vec<_>>(),
                 "packages_scanned": directories.len(),
@@ -1096,7 +1249,10 @@ fn handle_find_duplicate_functions(args: &Value) -> ToolResult {
                 "file_list": report.files.iter()
                     .map(|file| file.to_string_lossy().to_string())
                     .collect::<Vec<_>>(),
+                "unsupported_files": unsupported_files,
                 "scan_complete": scan_complete,
+                "timeout_ms": timeout_ms,
+                "elapsed_ms": started_at.elapsed().as_millis() as u64,
                 "functions_found": report.total_functions,
                 "duplicate_count": inter_file_count,
                 "cross_package_count": cross_package_dups.len(),
@@ -1128,7 +1284,40 @@ fn handle_find_duplicate_functions(args: &Value) -> ToolResult {
             
             ToolResult::success(response)
         }
-        Err(e) => ToolResult::error(format!("Analysis failed: {}", e)),
+        Err(ComputationError::Timeout) => ToolResult::success(json!({
+            "verification_status": VerificationStatus::Timeout,
+            "directories": directories.iter().map(|directory| directory.to_string_lossy()).collect::<Vec<_>>(),
+            "packages_scanned": directories.len(),
+            "files_selected": files.len(),
+            "files_checked": 0,
+            "files_discovered": files_discovered,
+            "file_list": [],
+            "unsupported_files": unsupported_files,
+            "scan_complete": false,
+            "timeout_ms": timeout_ms,
+            "elapsed_ms": started_at.elapsed().as_millis() as u64,
+            "functions_found": 0,
+            "duplicates": [],
+            "cross_package_duplicates": [],
+            "message": format!("Duplicate analysis timed out after {} ms before a complete result was available.", timeout_ms)
+        })),
+        Err(e) => ToolResult::success(json!({
+            "verification_status": VerificationStatus::Fail,
+            "directories": directories.iter().map(|directory| directory.to_string_lossy()).collect::<Vec<_>>(),
+            "packages_scanned": directories.len(),
+            "files_selected": files.len(),
+            "files_checked": 0,
+            "files_discovered": files_discovered,
+            "file_list": [],
+            "unsupported_files": unsupported_files,
+            "scan_complete": false,
+            "timeout_ms": timeout_ms,
+            "elapsed_ms": started_at.elapsed().as_millis() as u64,
+            "functions_found": 0,
+            "duplicates": [],
+            "cross_package_duplicates": [],
+            "message": format!("FAIL: duplicate analysis could not complete: {}", e)
+        })),
     }
 }
 
@@ -2308,6 +2497,7 @@ fn handle_batch_analyze(args: &Value) -> ToolResult {
         .unwrap_or_else(|| vec!["duplicates", "dead_exports", "orphans"]);
     
     mcp_log!("Batch analyze: {} checks={:?}", directory.display(), checks);
+    let timeout_ms = duplicate_timeout_ms(args);
     
     let cross_package = args.get("cross_package")
         .and_then(|v| v.as_bool())
@@ -2349,25 +2539,21 @@ fn handle_batch_analyze(args: &Value) -> ToolResult {
     
     let mut total_issues = 0;
     let mut auto_fixable = 0;
-    let mut analysis_complete = true;
-    
     // Run duplicate check
     if checks.contains(&"duplicates") {
         let dup_args = json!({
             "directory": directory.to_string_lossy(),
             "cross_package": cross_package,
-            "threshold": config.similarity_threshold()
+            "threshold": config.similarity_threshold(),
+            "timeout_ms": timeout_ms
         });
         
         if let ToolResult { success: true, content, .. } = handle_find_duplicate_functions(&dup_args) {
-            let duplicate_scan_complete = content.get("scan_complete")
-                .and_then(|value| value.as_bool())
-                .unwrap_or(false);
-            analysis_complete &= duplicate_scan_complete;
             results["coverage"]["duplicates"] = json!({
-                "status": if duplicate_scan_complete { "completed" } else { "partial" },
+                "status": verification_status_from_value(content.get("verification_status")),
                 "files_discovered": content.get("files_discovered"),
-                "files_checked": content.get("files_checked")
+                "files_checked": content.get("files_checked"),
+                "timeout_ms": content.get("timeout_ms")
             });
             // Convert duplicates to structured findings with fixes
             let mut structured_dups: Vec<Value> = Vec::new();
@@ -2451,7 +2637,21 @@ fn handle_batch_analyze(args: &Value) -> ToolResult {
             }
             
             results["findings"]["duplicates"] = json!(structured_dups);
+        } else {
+            results["coverage"]["duplicates"] = json!({
+                "status": VerificationStatus::Fail,
+                "files_discovered": 0,
+                "files_checked": 0,
+                "timeout_ms": timeout_ms
+            });
         }
+    }
+
+    if checks.contains(&"dead_exports") {
+        results["coverage"]["dead_exports"] = json!({
+            "status": VerificationStatus::NotApplicable,
+            "reason": "batch_requires_explicit_module"
+        });
     }
     
     // Run orphan check
@@ -2462,6 +2662,7 @@ fn handle_batch_analyze(args: &Value) -> ToolResult {
         });
         
         if let ToolResult { success: true, content, .. } = handle_find_orphans(&orphan_args) {
+            let mut orphan_status = VerificationStatus::Fail;
             if let Some(orphans) = content.get("orphans").and_then(|v| v.as_array()) {
                 let structured_orphans: Vec<Value> = orphans.iter().filter_map(|o| {
                     let path_str = o.get("path").and_then(|v| v.as_str()).unwrap_or("");
@@ -2518,14 +2719,32 @@ fn handle_batch_analyze(args: &Value) -> ToolResult {
                     }))
                 }).collect();
                 
+                orphan_status = if structured_orphans.is_empty() {
+                    VerificationStatus::Pass
+                } else {
+                    VerificationStatus::Fail
+                };
                 results["findings"]["orphans"] = json!(structured_orphans);
             }
+            results["coverage"]["orphans"] = json!({
+                "status": orphan_status
+            });
+        } else {
+            results["coverage"]["orphans"] = json!({
+                "status": VerificationStatus::Fail
+            });
         }
     }
     
     // Run environment check if entry points provided
-    if checks.contains(&"environment") && !entry_points.is_empty() {
+    if checks.contains(&"environment") && entry_points.is_empty() {
+        results["coverage"]["environment"] = json!({
+            "status": VerificationStatus::NotApplicable,
+            "reason": "no_entry_points_provided"
+        });
+    } else if checks.contains(&"environment") {
         let mut env_issues: Vec<Value> = Vec::new();
+        let mut environment_failed = false;
         
         for entry in &entry_points {
             let env_args = json!({
@@ -2536,6 +2755,7 @@ fn handle_batch_analyze(args: &Value) -> ToolResult {
                 if content.get("is_safe") == Some(&json!(false)) {
                     if let Some(warnings) = content.get("warnings").and_then(|v| v.as_array()) {
                         for warning in warnings {
+                            environment_failed = true;
                             total_issues += 1;
                             env_issues.push(json!({
                                 "type": "environment_issue",
@@ -2555,10 +2775,19 @@ fn handle_batch_analyze(args: &Value) -> ToolResult {
                         }
                     }
                 }
+            } else {
+                environment_failed = true;
             }
         }
         
         results["findings"]["environment_issues"] = json!(env_issues);
+        results["coverage"]["environment"] = json!({
+            "status": if environment_failed {
+                VerificationStatus::Fail
+            } else {
+                VerificationStatus::Pass
+            }
+        });
     }
     
     // Update summary
@@ -2566,17 +2795,28 @@ fn handle_batch_analyze(args: &Value) -> ToolResult {
     results["summary"]["auto_fixable"] = json!(auto_fixable);
     results["summary"]["needs_review"] = json!(total_issues - auto_fixable);
     
-    let message = if total_issues == 0 && analysis_complete {
-        "No issues found. Codebase is clean.".to_string()
-    } else if total_issues == 0 {
-        "No issues found in the completed portion; one or more checks were partial.".to_string()
-    } else {
-        format!(
-            "Found {} issue(s): {} auto-fixable, {} need review.",
+    let coverage_statuses = results["coverage"]
+        .as_object()
+        .map(|coverage| {
+            coverage.values()
+                .map(|result| verification_status_from_value(result.get("status")))
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
+    let verification_status = aggregate_verification_status(coverage_statuses.iter());
+    let message = match verification_status {
+        VerificationStatus::Pass => "PASS: no issues found in completed checks.".to_string(),
+        VerificationStatus::Fail if total_issues > 0 => format!(
+            "FAIL: found {} issue(s): {} auto-fixable, {} need review.",
             total_issues, auto_fixable, total_issues - auto_fixable
-        )
+        ),
+        VerificationStatus::Fail => "FAIL: Ground could not complete every requested check.".to_string(),
+        VerificationStatus::Unsupported => "UNSUPPORTED: one or more requested checks cannot analyze the relevant source.".to_string(),
+        VerificationStatus::Timeout => "TIMEOUT: duplicate analysis did not complete before its deadline.".to_string(),
+        VerificationStatus::NotApplicable => "NOT_APPLICABLE: the requested checks need more specific inputs.".to_string(),
     };
     
+    results["verification_status"] = json!(verification_status);
     results["message"] = json!(message);
     
     ToolResult::success(results)
@@ -2759,11 +2999,20 @@ fn check_export_exists(path: &Path, export_name: &str) -> bool {
 // Incremental/Diff Mode
 // ─────────────────────────────────────────────────────────────────────────────
 
+fn duplicate_function_supports_extension(extension: &str) -> bool {
+    matches!(extension, "ts" | "tsx" | "js" | "jsx" | "mjs")
+}
+
+fn is_ground_source_extension(extension: &str) -> bool {
+    matches!(
+        extension,
+        "ts" | "tsx" | "js" | "jsx" | "mjs" | "rs" | "py" | "go" | "svelte"
+    )
+}
+
 fn diff_checks_support_extension(extension: &str, checks: &[&str]) -> bool {
     checks.iter().any(|check| match *check {
-        "duplicates" | "orphans" => {
-            matches!(extension, "ts" | "tsx" | "js" | "jsx" | "mjs")
-        }
+        "duplicates" | "orphans" => duplicate_function_supports_extension(extension),
         _ => false,
     })
 }
@@ -2796,6 +3045,7 @@ fn handle_diff(args: &Value) -> ToolResult {
     let cross_package = args.get("cross_package")
         .and_then(|v| v.as_bool())
         .unwrap_or(false);
+    let timeout_ms = duplicate_timeout_ms(args);
 
     let analysis_root = directory.canonicalize().unwrap_or_else(|_| directory.clone());
     let repo_root = match git_repository_root(&directory) {
@@ -2816,13 +3066,13 @@ fn handle_diff(args: &Value) -> ToolResult {
     
     if changed_files.is_empty() {
         let check_coverage = checks.iter().map(|check| {
-            ((*check).to_string(), json!({
-                "status": "completed",
-                "analyzed_changed_files": [],
-                "excluded_changed_files": []
-            }))
+            (
+                (*check).to_string(),
+                VerificationResult::new(VerificationStatus::NotApplicable).as_value(),
+            )
         }).collect::<serde_json::Map<_, _>>();
         return ToolResult::success(json!({
+            "verification_status": VerificationStatus::NotApplicable,
             "base": base_ref,
             "changed_files": 0,
             "changed_file_list": [],
@@ -2843,6 +3093,7 @@ fn handle_diff(args: &Value) -> ToolResult {
     // unsupported or policy-excluded changes were analyzed.
     let mut relevant_files = Vec::new();
     let mut excluded_changed_files = Vec::new();
+    let mut unsupported_changed_files = Vec::new();
 
     for file in &changed_files {
         let reason = if !file.starts_with(&analysis_root) {
@@ -2852,10 +3103,7 @@ fn handle_diff(args: &Value) -> ToolResult {
             let ext = file.extension().and_then(|e| e.to_str()).unwrap_or("");
             if diff_checks_support_extension(ext, &checks) {
                 None
-            } else if matches!(
-                ext,
-                "ts" | "tsx" | "js" | "jsx" | "mjs" | "rs" | "py" | "go" | "svelte"
-            ) {
+            } else if is_ground_source_extension(ext) {
                 Some("unsupported_by_requested_checks")
             } else {
                 Some("unsupported_extension")
@@ -2868,6 +3116,12 @@ fn handle_diff(args: &Value) -> ToolResult {
         };
 
         if let Some(reason) = reason {
+            if reason == "unsupported_by_requested_checks" {
+                unsupported_changed_files.push(VerificationFile {
+                    path: file.to_string_lossy().to_string(),
+                    reason: "unsupported_language".to_string(),
+                });
+            }
             excluded_changed_files.push(json!({
                 "path": file.to_string_lossy(),
                 "reason": reason
@@ -2882,18 +3136,33 @@ fn handle_diff(args: &Value) -> ToolResult {
     
     // Run duplicate check on changed files
     if checks.contains(&"duplicates") {
-        let dup_args = json!({
-            "directory": directory.to_string_lossy(),
-            "cross_package": cross_package,
-            "threshold": config.similarity_threshold(),
-            "focus_files": relevant_files.iter()
-                .map(|file| file.to_string_lossy().to_string())
-                .collect::<Vec<_>>()
-        });
-        
-        let duplicate_result = handle_find_duplicate_functions(&dup_args);
-        if duplicate_result.success {
-            let content = duplicate_result.content;
+        let mut coverage = if relevant_files.is_empty() {
+            VerificationResult::new(if unsupported_changed_files.is_empty() {
+                VerificationStatus::NotApplicable
+            } else {
+                VerificationStatus::Unsupported
+            })
+        } else {
+            VerificationResult::new(VerificationStatus::Fail)
+        };
+        coverage.unsupported_files = unsupported_changed_files.clone();
+        coverage.timeout_ms = Some(timeout_ms);
+
+        if !relevant_files.is_empty() {
+            let dup_args = json!({
+                "directory": directory.to_string_lossy(),
+                "cross_package": cross_package,
+                "threshold": config.similarity_threshold(),
+                "timeout_ms": timeout_ms,
+                "focus_files": relevant_files.iter()
+                    .map(|file| file.to_string_lossy().to_string())
+                    .collect::<Vec<_>>()
+            });
+
+            let duplicate_result = handle_find_duplicate_functions(&dup_args);
+            if duplicate_result.success {
+                let content = duplicate_result.content;
+                coverage.status = verification_status_from_value(content.get("verification_status"));
             let canonical_relevant_files = relevant_files.iter()
                 .map(|file| canonicalize_parent(file))
                 .collect::<HashSet<_>>();
@@ -2911,96 +3180,98 @@ fn handle_diff(args: &Value) -> ToolResult {
                 .filter(|file| scanned_files.contains(&canonicalize_parent(file)))
                 .map(|file| file.to_string_lossy().to_string())
                 .collect::<Vec<_>>();
-            let excluded_changed_files = relevant_files.iter()
+                let excluded_files = relevant_files.iter()
                 .filter(|file| !scanned_files.contains(&canonicalize_parent(file)))
-                .map(|file| json!({
-                    "path": file.to_string_lossy(),
-                    "reason": "duplicate_analysis_incomplete"
-                }))
+                .map(|file| VerificationFile {
+                    path: file.to_string_lossy().to_string(),
+                    reason: "duplicate_analysis_incomplete".to_string(),
+                })
                 .collect::<Vec<_>>();
-            let scan_complete = content.get("scan_complete")
-                .and_then(|value| value.as_bool())
-                .unwrap_or(false);
-            let status = if scan_complete && excluded_changed_files.is_empty() {
-                "completed"
-            } else {
-                "partial"
-            };
-            check_coverage.insert("duplicates".to_string(), json!({
-                "status": status,
-                "analyzed_changed_files": analyzed_changed_files,
-                "excluded_changed_files": excluded_changed_files
-            }));
+                if coverage.status == VerificationStatus::Pass && !excluded_files.is_empty() {
+                    coverage.status = VerificationStatus::Fail;
+                }
+                coverage.status = aggregate_verification_status([
+                    &coverage.status,
+                    if coverage.unsupported_files.is_empty() {
+                        &VerificationStatus::NotApplicable
+                    } else {
+                        &VerificationStatus::Unsupported
+                    },
+                ]);
+                coverage.analyzed_files = analyzed_changed_files;
+                coverage.excluded_files = excluded_files;
 
-            // Filter duplicates to only those involving changed files
-            if let Some(dups) = content.get("duplicates").and_then(|v| v.as_array()) {
-                for dup in dups {
-                    let file_a = dup.get("file_a").and_then(|v| v.as_str()).unwrap_or("");
-                    let file_b = dup.get("file_b").and_then(|v| v.as_str()).unwrap_or("");
-                    
-                    // Include if either file is in the changed set
-                    let involves_changed = [file_a, file_b].iter().any(|file| {
-                        canonical_relevant_files.contains(&canonicalize_parent(Path::new(file)))
-                    });
-                    
-                    if involves_changed {
-                        new_issues.push(json!({
-                            "type": "duplicate_function",
-                            "function": dup.get("function"),
-                            "similarity": dup.get("similarity"),
-                            "files": [file_a, file_b],
-                            "introduced_by": "current_branch"
-                        }));
+                // Filter duplicates to only those involving changed files
+                if let Some(dups) = content.get("duplicates").and_then(|v| v.as_array()) {
+                    for dup in dups {
+                        let file_a = dup.get("file_a").and_then(|v| v.as_str()).unwrap_or("");
+                        let file_b = dup.get("file_b").and_then(|v| v.as_str()).unwrap_or("");
+
+                        let involves_changed = [file_a, file_b].iter().any(|file| {
+                            canonical_relevant_files.contains(&canonicalize_parent(Path::new(file)))
+                        });
+
+                        if involves_changed {
+                            new_issues.push(json!({
+                                "type": "duplicate_function",
+                                "function": dup.get("function"),
+                                "similarity": dup.get("similarity"),
+                                "files": [file_a, file_b],
+                                "introduced_by": "current_branch"
+                            }));
+                        }
                     }
                 }
-            }
-            
-            // Also check cross-package duplicates
-            if let Some(cross_dups) = content.get("cross_package_duplicates").and_then(|v| v.as_array()) {
-                for dup in cross_dups {
-                    let file_a = dup.get("file_a").and_then(|v| v.as_str()).unwrap_or("");
-                    let file_b = dup.get("file_b").and_then(|v| v.as_str()).unwrap_or("");
-                    
-                    let involves_changed = [file_a, file_b].iter().any(|file| {
-                        canonical_relevant_files.contains(&canonicalize_parent(Path::new(file)))
-                    });
-                    
-                    if involves_changed {
-                        new_issues.push(json!({
-                            "type": "cross_package_duplicate",
-                            "function": dup.get("function"),
-                            "similarity": dup.get("similarity"),
-                            "files": [file_a, file_b],
-                            "packages": [dup.get("package_a"), dup.get("package_b")],
-                            "introduced_by": "current_branch"
-                        }));
+
+                // Also check cross-package duplicates
+                if let Some(cross_dups) = content.get("cross_package_duplicates").and_then(|v| v.as_array()) {
+                    for dup in cross_dups {
+                        let file_a = dup.get("file_a").and_then(|v| v.as_str()).unwrap_or("");
+                        let file_b = dup.get("file_b").and_then(|v| v.as_str()).unwrap_or("");
+
+                        let involves_changed = [file_a, file_b].iter().any(|file| {
+                            canonical_relevant_files.contains(&canonicalize_parent(Path::new(file)))
+                        });
+
+                        if involves_changed {
+                            new_issues.push(json!({
+                                "type": "cross_package_duplicate",
+                                "function": dup.get("function"),
+                                "similarity": dup.get("similarity"),
+                                "files": [file_a, file_b],
+                                "packages": [dup.get("package_a"), dup.get("package_b")],
+                                "introduced_by": "current_branch"
+                            }));
+                        }
                     }
                 }
+            } else {
+                coverage.status = VerificationStatus::Fail;
+                coverage.excluded_files = relevant_files.iter().map(|file| VerificationFile {
+                    path: file.to_string_lossy().to_string(),
+                    reason: "duplicate_analysis_failed".to_string(),
+                }).collect();
             }
-        } else {
-            check_coverage.insert("duplicates".to_string(), json!({
-                "status": "failed",
-                "analyzed_changed_files": [],
-                "excluded_changed_files": relevant_files.iter().map(|file| json!({
-                    "path": file.to_string_lossy(),
-                    "reason": "duplicate_analysis_failed"
-                })).collect::<Vec<_>>()
-            }));
         }
+        check_coverage.insert("duplicates".to_string(), coverage.as_value());
     }
     
     // Run orphan check on changed files
     if checks.contains(&"orphans") {
         let mut analyzed_changed_files = Vec::new();
         let mut orphan_exclusions = Vec::new();
+        let mut attempted_new_file = false;
+        let mut orphan_found = false;
+        let mut analysis_failed = false;
         // For orphans, we check if any of the NEW files are orphaned
         for file in &relevant_files {
             // Skip if file was deleted (doesn't exist)
             if !file.exists() {
-                orphan_exclusions.push(json!({
-                    "path": file.to_string_lossy(),
-                    "reason": "file_unavailable"
-                }));
+                analysis_failed = true;
+                orphan_exclusions.push(VerificationFile {
+                    path: file.to_string_lossy().to_string(),
+                    reason: "file_unavailable".to_string(),
+                });
                 continue;
             }
             
@@ -3008,12 +3279,14 @@ fn handle_diff(args: &Value) -> ToolResult {
             let is_new_file = is_file_new_since(&repo_root, file, base_ref);
             
             if is_new_file {
+                attempted_new_file = true;
                 // Check connections for this specific file
                 use crate::computations::analyze_connectivity;
                 match analyze_connectivity(file) {
                     Ok(evidence) => {
                         analyzed_changed_files.push(file.to_string_lossy().to_string());
                         if evidence.total_connections() == 0 && evidence.architectural.is_none() {
+                            orphan_found = true;
                             new_issues.push(json!({
                                 "type": "orphan_module",
                                 "path": file.to_string_lossy(),
@@ -3022,24 +3295,41 @@ fn handle_diff(args: &Value) -> ToolResult {
                             }));
                         }
                     }
-                    Err(_) => orphan_exclusions.push(json!({
-                        "path": file.to_string_lossy(),
-                        "reason": "orphan_analysis_failed"
-                    }))
+                    Err(_) => {
+                        analysis_failed = true;
+                        orphan_exclusions.push(VerificationFile {
+                            path: file.to_string_lossy().to_string(),
+                            reason: "orphan_analysis_failed".to_string(),
+                        });
+                    }
                 }
             } else {
-                orphan_exclusions.push(json!({
-                    "path": file.to_string_lossy(),
-                    "reason": "existing_file_not_checked_for_orphans"
-                }));
+                orphan_exclusions.push(VerificationFile {
+                    path: file.to_string_lossy().to_string(),
+                    reason: "existing_file_not_checked_for_orphans".to_string(),
+                });
             }
         }
-        let status = if orphan_exclusions.is_empty() { "completed" } else { "partial" };
-        check_coverage.insert("orphans".to_string(), json!({
-            "status": status,
-            "analyzed_changed_files": analyzed_changed_files,
-            "excluded_changed_files": orphan_exclusions
-        }));
+        let base_status = if analysis_failed || orphan_found {
+            VerificationStatus::Fail
+        } else if attempted_new_file {
+            VerificationStatus::Pass
+        } else {
+            VerificationStatus::NotApplicable
+        };
+        let unsupported_status = if unsupported_changed_files.is_empty() {
+            VerificationStatus::NotApplicable
+        } else {
+            VerificationStatus::Unsupported
+        };
+        let coverage = VerificationResult {
+            status: aggregate_verification_status([&base_status, &unsupported_status]),
+            analyzed_files: analyzed_changed_files,
+            unsupported_files: unsupported_changed_files.clone(),
+            excluded_files: orphan_exclusions,
+            timeout_ms: None,
+        };
+        check_coverage.insert("orphans".to_string(), coverage.as_value());
     }
     
     let excluded_summary = if excluded_changed_files.is_empty() {
@@ -3050,33 +3340,41 @@ fn handle_diff(args: &Value) -> ToolResult {
             excluded_changed_files.len()
         )
     };
-    let checks_complete = check_coverage.values().all(|coverage| {
-        coverage.get("status").and_then(|status| status.as_str()) == Some("completed")
-    });
+    let check_statuses = check_coverage
+        .values()
+        .map(|coverage| verification_status_from_value(coverage.get("status")))
+        .collect::<Vec<_>>();
+    let verification_status = aggregate_verification_status(check_statuses.iter());
 
-    let message = if relevant_files.is_empty() {
-        format!(
-            "No analyzable files changed since '{}'.{}",
-            base_ref, excluded_summary
-        )
-    } else if new_issues.is_empty() && checks_complete {
-        format!(
-            "No new issues introduced since '{}'. {} analyzable changed file(s) are clean.{}",
+    let message = match verification_status {
+        VerificationStatus::Pass => format!(
+            "PASS: no new issues introduced since '{}'. {} analyzable changed file(s) are clean.{}",
             base_ref, relevant_files.len(), excluded_summary
-        )
-    } else if new_issues.is_empty() {
-        format!(
-            "No new issues found in the completed portion since '{}'. Coverage is partial for {} analyzable changed file(s).{}",
-            base_ref, relevant_files.len(), excluded_summary
-        )
-    } else {
-        format!(
-            "Found {} new issue(s) in {} analyzable changed file(s) since '{}'.{}",
+        ),
+        VerificationStatus::Fail if !new_issues.is_empty() => format!(
+            "FAIL: found {} new issue(s) in {} analyzable changed file(s) since '{}'.{}",
             new_issues.len(), relevant_files.len(), base_ref, excluded_summary
-        )
+        ),
+        VerificationStatus::Fail => format!(
+            "FAIL: Ground could not complete every requested check since '{}'; inspect check_coverage for the affected paths.{}",
+            base_ref, excluded_summary
+        ),
+        VerificationStatus::Unsupported => format!(
+            "UNSUPPORTED: relevant changed source files cannot be analyzed by the requested checks since '{}'.{}",
+            base_ref, excluded_summary
+        ),
+        VerificationStatus::Timeout => format!(
+            "TIMEOUT: Ground stopped before duplicate analysis completed since '{}'; inspect check_coverage before treating the diff as clean.{}",
+            base_ref, excluded_summary
+        ),
+        VerificationStatus::NotApplicable => format!(
+            "NOT_APPLICABLE: no requested check applies to changed files since '{}'.{}",
+            base_ref, excluded_summary
+        ),
     };
     
     ToolResult::success(json!({
+        "verification_status": verification_status,
         "base": base_ref,
         "changed_files": relevant_files.len(),
         "changed_file_list": relevant_files.iter()
@@ -3992,7 +4290,7 @@ mod tests {
     }
 
     #[test]
-    fn diff_reports_duplicate_check_completion_beyond_legacy_scan_cap() {
+    fn diff_reports_duplicate_check_pass_beyond_legacy_scan_cap() {
         use std::fs;
         use std::process::Command;
 
@@ -4041,7 +4339,7 @@ mod tests {
             .any(|path| path.as_str().unwrap().ends_with("src/file-500.ts")));
         assert_eq!(
             result.content["check_coverage"]["duplicates"]["status"],
-            "completed"
+            "PASS"
         );
     }
 
@@ -4073,6 +4371,129 @@ mod tests {
     }
 
     #[test]
+    fn duplicate_scan_reports_timeout_explicitly() {
+        use std::fs;
+
+        let directory = tempdir().unwrap();
+        fs::write(
+            directory.path().join("component.ts"),
+            "export function render() { return 'component'; }\n",
+        )
+        .unwrap();
+
+        let result = handle_find_duplicate_functions(&json!({
+            "directory": directory.path(),
+            "timeout_ms": 0
+        }));
+
+        assert!(result.success, "{:?}", result.content);
+        assert_eq!(result.content["verification_status"], "TIMEOUT");
+        assert_eq!(result.content["scan_complete"], false);
+        assert_eq!(result.content["files_checked"], 0);
+    }
+
+    #[test]
+    fn diff_reports_svelte_duplicate_check_as_unsupported() {
+        use std::fs;
+        use std::process::Command;
+
+        let repo = tempdir().unwrap();
+        let run_git = |args: &[&str]| {
+            let status = Command::new("git")
+                .args(args)
+                .current_dir(repo.path())
+                .status()
+                .unwrap();
+            assert!(status.success(), "git {:?} failed", args);
+        };
+
+        run_git(&["init", "--quiet"]);
+        run_git(&["config", "user.email", "ground@example.test"]);
+        run_git(&["config", "user.name", "Ground test"]);
+
+        let source = repo.path().join("src");
+        fs::create_dir_all(&source).unwrap();
+        let component = source.join("Footer.svelte");
+        fs::write(&component, "<footer>before</footer>\n").unwrap();
+        run_git(&["add", "."]);
+        run_git(&["commit", "--quiet", "-m", "baseline"]);
+
+        fs::write(&component, "<footer>after</footer>\n").unwrap();
+        run_git(&["add", "."]);
+        run_git(&["commit", "--quiet", "-m", "change Svelte component"]);
+
+        let result = handle_diff(&json!({
+            "directory": repo.path(),
+            "base": "HEAD~1",
+            "checks": ["duplicates"]
+        }));
+
+        assert!(result.success, "{:?}", result.content);
+        assert_eq!(result.content["verification_status"], "UNSUPPORTED");
+        assert_eq!(
+            result.content["check_coverage"]["duplicates"]["status"],
+            "UNSUPPORTED"
+        );
+        assert_eq!(
+            result.content["check_coverage"]["duplicates"]["unsupported_changed_files"][0]["reason"],
+            "unsupported_language"
+        );
+    }
+
+    #[test]
+    fn targeted_svelte_duplicate_analysis_is_unsupported() {
+        use std::fs;
+
+        let directory = tempdir().unwrap();
+        let component = directory.path().join("Footer.svelte");
+        fs::write(&component, "<footer>Ground must report coverage</footer>\n").unwrap();
+
+        let result = handle_batch_analyze(&json!({
+            "directory": component,
+            "checks": ["duplicates"]
+        }));
+
+        assert!(result.success, "{:?}", result.content);
+        assert_eq!(result.content["verification_status"], "UNSUPPORTED");
+        assert_eq!(result.content["coverage"]["duplicates"]["status"], "UNSUPPORTED");
+    }
+
+    #[test]
+    fn diff_with_no_changes_is_not_applicable() {
+        use std::process::Command;
+
+        let repo = tempdir().unwrap();
+        let run_git = |args: &[&str]| {
+            let status = Command::new("git")
+                .args(args)
+                .current_dir(repo.path())
+                .status()
+                .unwrap();
+            assert!(status.success(), "git {:?} failed", args);
+        };
+
+        run_git(&["init", "--quiet"]);
+        run_git(&["config", "user.email", "ground@example.test"]);
+        run_git(&["config", "user.name", "Ground test"]);
+        std::fs::write(repo.path().join("baseline.ts"), "export const baseline = true;\n").unwrap();
+        run_git(&["add", "."]);
+        run_git(&["commit", "--quiet", "-m", "baseline"]);
+
+        let result = handle_diff(&json!({
+            "directory": repo.path(),
+            "base": "HEAD",
+            "checks": ["duplicates"]
+        }));
+
+        assert!(result.success, "{:?}", result.content);
+        assert_eq!(result.content["verification_status"], "NOT_APPLICABLE");
+        assert_eq!(
+            result.content["check_coverage"]["duplicates"]["status"],
+            "NOT_APPLICABLE"
+        );
+    }
+
+    #[test]
     fn duplicate_scan_reports_unparseable_source_as_incomplete() {
         use std::fs;
 
@@ -4097,11 +4518,11 @@ mod tests {
             "checks": ["duplicates"]
         }));
         assert!(batch.success, "{:?}", batch.content);
-        assert_eq!(batch.content["coverage"]["duplicates"]["status"], "partial");
+        assert_eq!(batch.content["coverage"]["duplicates"]["status"], "FAIL");
         assert!(batch.content["message"]
             .as_str()
             .unwrap()
-            .contains("completed portion"));
+            .contains("FAIL:"));
     }
 
     #[test]
@@ -4175,12 +4596,12 @@ mod tests {
         assert_eq!(result.content["total_new_issues"], 1);
         assert_eq!(
             result.content["check_coverage"]["duplicates"]["status"],
-            "completed"
+            "FAIL"
         );
     }
 
     #[test]
-    fn diff_duplicate_coverage_is_partial_when_unchanged_corpus_file_is_unparseable() {
+    fn diff_duplicate_coverage_fails_when_unchanged_corpus_file_is_unparseable() {
         use std::fs;
         use std::process::Command;
 
@@ -4216,12 +4637,12 @@ mod tests {
         assert!(result.success, "{:?}", result.content);
         assert_eq!(
             result.content["check_coverage"]["duplicates"]["status"],
-            "partial"
+            "FAIL"
         );
         assert!(result.content["message"]
             .as_str()
             .unwrap()
-            .contains("completed portion"));
+            .contains("FAIL:"));
         assert!(!result.content["message"]
             .as_str()
             .unwrap()
@@ -4255,7 +4676,7 @@ mod tests {
     }
 
     #[test]
-    fn diff_orphan_coverage_is_partial_for_existing_changed_files() {
+    fn diff_orphan_check_is_not_applicable_for_existing_changed_files() {
         use std::fs;
         use std::process::Command;
 
@@ -4285,11 +4706,14 @@ mod tests {
         }));
 
         assert!(result.success, "{:?}", result.content);
-        assert_eq!(result.content["check_coverage"]["orphans"]["status"], "partial");
+        assert_eq!(
+            result.content["check_coverage"]["orphans"]["status"],
+            "NOT_APPLICABLE"
+        );
         assert!(result.content["message"]
             .as_str()
             .unwrap()
-            .contains("completed portion"));
+            .contains("NOT_APPLICABLE:"));
         assert!(!result.content["message"]
             .as_str()
             .unwrap()
@@ -4335,7 +4759,7 @@ mod tests {
         assert!(result.success, "{:?}", result.content);
         assert_eq!(
             result.content["check_coverage"]["duplicates"]["status"],
-            "completed"
+            "PASS"
         );
         assert_eq!(
             result.content["check_coverage"]["duplicates"]
@@ -4389,10 +4813,11 @@ mod tests {
             result.content["excluded_changed_files"][0]["reason"],
             "unsupported_by_requested_checks"
         );
+        assert_eq!(result.content["verification_status"], "UNSUPPORTED");
         assert!(result.content["message"]
             .as_str()
             .unwrap()
-            .contains("No analyzable files changed"));
+            .contains("UNSUPPORTED:"));
     }
 
     #[test]
@@ -4453,6 +4878,6 @@ mod tests {
         assert!(result.content["message"]
             .as_str()
             .unwrap()
-            .contains("No analyzable files changed"));
+            .contains("NOT_APPLICABLE:"));
     }
 }

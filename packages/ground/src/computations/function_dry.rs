@@ -56,6 +56,7 @@
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::fs;
+use std::time::Instant;
 use serde::{Serialize, Deserialize};
 use uuid::Uuid;
 use chrono::{DateTime, Utc};
@@ -204,6 +205,11 @@ pub struct FunctionDryOptions {
     /// Defaults to 0.85 if not specified (higher than inter-file to reduce false positives)
     /// Since we're comparing different-named functions, we need higher confidence
     pub intra_file_threshold: Option<f64>,
+
+    /// Stop analysis once this deadline is reached. This is intentionally an
+    /// absolute deadline so a caller can apply one budget across discovery and
+    /// duplicate comparison work.
+    pub deadline: Option<Instant>,
 }
 
 /// Default threshold for intra-file detection (higher than inter-file)
@@ -240,6 +246,11 @@ impl FunctionDryOptions {
     /// Get the effective intra-file threshold
     pub fn effective_intra_file_threshold(&self) -> f64 {
         self.intra_file_threshold.unwrap_or(DEFAULT_INTRA_FILE_THRESHOLD)
+    }
+
+    /// Whether the caller's analysis budget has expired.
+    pub fn timed_out(&self) -> bool {
+        self.deadline.is_some_and(|deadline| Instant::now() >= deadline)
     }
     
     /// Check if a path should be excluded
@@ -666,6 +677,10 @@ fn analyze_function_dry_internal(
     
     // Extract functions from all files
     for path in files {
+        if options.timed_out() {
+            return Err(ComputationError::Timeout);
+        }
+
         // Check if we should skip this file
         if options.should_exclude(path) {
             skipped_files.push(path.clone());
@@ -738,10 +753,16 @@ fn analyze_function_dry_internal(
 
     if let Some(focus) = focus_files {
         for i in 0..all_functions.len() {
+            if options.timed_out() {
+                return Err(ComputationError::Timeout);
+            }
             if !focus.contains(&all_functions[i].0) {
                 continue;
             }
             for j in 0..all_functions.len() {
+                if options.timed_out() {
+                    return Err(ComputationError::Timeout);
+                }
                 if i == j || (focus.contains(&all_functions[j].0) && j < i) {
                     continue;
                 }
@@ -751,6 +772,9 @@ fn analyze_function_dry_internal(
     } else {
         for i in 0..all_functions.len() {
             for j in (i + 1)..all_functions.len() {
+                if options.timed_out() {
+                    return Err(ComputationError::Timeout);
+                }
                 compare_pair(i, j);
             }
         }
