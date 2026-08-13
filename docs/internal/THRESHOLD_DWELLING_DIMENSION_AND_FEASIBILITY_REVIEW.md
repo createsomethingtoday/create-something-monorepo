@@ -13,22 +13,24 @@ The source of truth is `THRESHOLD_DWELLING_DIMENSION_CANDIDATE` in Canon. It use
 | Enclosed rectangle | 65 ft × 42 ft | Exact within the rendered coordinate system |
 | Enclosed geometric area | 2,730 sq ft | Derived: 65 × 42 |
 | Exterior geometric perimeter | 214 ft | Derived: 2 × (65 + 42) |
-| Named plan zones | 2,660 sq ft | Exact arithmetic; not a net-area schedule |
-| Unclassified enclosed band | 70 sq ft | Exact arithmetic; east 10 ft × 7 ft band |
+| Named plan zones | 2,730 sq ft | Exact arithmetic; not a net-area schedule |
+| Entry Hall / arrival zone | 70 sq ft; east 10 ft × 7 ft band | Owner-approved program assignment |
 | Plan doors | 13, all drawn as 36 in openings | Plan opening only, not a measured clear opening |
 | Plan windows | 9 | Width and position only; no sill, head, operation, glass, or performance data |
 | East projection | dog kennel 10 × 6 ft; carport 10 × 7 ft; covered entry 10 × 14 ft | Approved as one 10 × 27 ft projection |
 
 No wall thickness, finish buildup, survey datum, structural grid, elevation benchmark, or site boundary is present. Accordingly, `65 ft × 42 ft` is a **concept-envelope dimension**, not a field, permitting, or construction dimension.
 
-## Approved decision
+## Approved decisions
 
 The project owner selected the **10 ft × 27 ft east projection** as the current design-intent envelope. Its dog-kennel, carport, and covered-entry segments are respectively 10 × 6 ft, 10 × 7 ft, and 10 × 14 ft. The floor plan, light study, section/roof/site geometry, cost allowance, and render pipeline now use that envelope. This is revision 0.4 of the concept baseline.
 
+The project owner also classified the prior 70 sq ft semantic gap as the **Entry Hall / arrival zone**. It is a 10 ft × 7 ft public-space band at `x=55–65 ft`, `y=13–20 ft`, joining the main entry to the central hall. The candidate, visual floor plan, circulation view, and render pipeline now carry that name. This is revision 0.5 of the concept baseline.
+
 ## Remaining blockers
 
-1. **A 70 sq ft enclosed space is unnamed.** The zone rectangles leave the 10 ft × 7 ft band at `x=55–65 ft`, `y=13–20 ft` semantically undefined. It may be an entry, hall, vestibule, or service zone, but that cannot be inferred safely.
-2. **Other render sources are stale or divergent.** The historical render-pipeline data described a different column/overhang arrangement. It has been removed from the active pipeline and remains historical idea evidence, not corroboration of the candidate.
+1. **Construction and safety evidence remains absent.** The concept has no wall assemblies, door swings/clear widths, window sill/head/openability, fixtures, structural/MEP design, site survey, grading/drainage, or energy data. The Entry Hall name is program intent—not evidence that its egress, accessibility, weather protection, or construction details are suitable.
+2. **Other render sources are historical idea evidence only.** The former render-pipeline data described a different column/overhang arrangement. It has been removed from the active pipeline and does not corroborate the candidate.
 
 ## Practicality review
 
@@ -36,7 +38,7 @@ The program is coherent at a concept level: three labeled sleeping suites, four 
 
 That is not enough to establish day-to-day functionality. The rendering lacks door swings, furniture and appliance layouts, fixture locations, counter depths, closet layouts, turning spaces, storage, window operation, thresholds, and exact ceiling/elevation coordination. In particular, a nominal 36 in plan opening cannot be treated as a verified clear width after the selected door, frame, swing, hardware, and wall assembly are known.
 
-Before a practical-layout approval, add a dimensioned room/fixture plan, door schedule with swings and clear openings, appliance and cabinetry schedule, and a named entry/hall solution for the 70 sq ft gap.
+Before a practical-layout approval, add a dimensioned room/fixture plan, door schedule with swings and clear openings, appliance and cabinetry schedule, and a detailed Entry Hall arrival/egress/threshold layout.
 
 ## Safety and permitting review
 
@@ -70,11 +72,10 @@ These are performance and resilience objectives to give the architect and engine
 
 WorkWay may ingest this model now as `candidate-design-intent`. It must remain read-only for authoritative construction operations until all gates below pass:
 
-1. Owner/designer names and bounds the 70 sq ft zone.
-2. A licensed survey establishes the parcel, setbacks, easements, utilities, grades, and a project datum.
-3. Architect publishes coordinated dimensioned plan, elevations, sections, door/window/finish schedules, and room/fixture clearances.
-4. Structural and MEP professionals supply jurisdiction-appropriate calculations and drawings.
-5. The local authority having jurisdiction confirms the current permit/code path; the facts above are a dated screen of city guidance, not a code determination.
-6. The approved package is ingested as a new immutable revision, with its source documents and reviewer decisions attached.
+1. A licensed survey establishes the parcel, setbacks, easements, utilities, grades, and a project datum.
+2. Architect publishes coordinated dimensioned plan, elevations, sections, door/window/finish schedules, and room/fixture clearances.
+3. Structural and MEP professionals supply jurisdiction-appropriate calculations and drawings.
+4. The local authority having jurisdiction confirms the current permit/code path; the facts above are a dated screen of city guidance, not a code determination.
+5. The approved package is ingested as a new immutable revision, with its source documents and reviewer decisions attached.
 
 Until then, the candidate is useful for visual walkthroughs, rough program comparisons, proposed-change previews, and decision capture only. It must not output field staking, quantities for procurement, permit documents, or safety/compliance assertions.

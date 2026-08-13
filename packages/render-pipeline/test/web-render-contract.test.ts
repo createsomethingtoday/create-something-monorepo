@@ -27,6 +27,14 @@ test('uses Canon’s Threshold Dwelling candidate projection instead of a second
     THRESHOLD_DWELLING.overhangs?.find((overhang) => overhang.label === 'Covered\nEntry'),
     { x: 65, y: 13, width: 10, height: 14, label: 'Covered\nEntry' }
   );
+  assert.deepEqual(
+    THRESHOLD_DWELLING.zones.find((zone) => zone.x === 55 && zone.y === 13),
+    { x: 55, y: 13, width: 10, height: 7, type: 'public' }
+  );
+  assert.deepEqual(
+    THRESHOLD_DWELLING.rooms.find((room) => room.name === 'Entry\nHall'),
+    { x: 60, y: 16.5, name: 'Entry\nHall', small: true }
+  );
 });
 
 function validRecipe(): RenderRecipeInput {

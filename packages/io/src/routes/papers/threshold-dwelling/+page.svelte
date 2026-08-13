@@ -273,6 +273,7 @@
 			// Public corridor (west side + center)
 			zone(0, 13, 12, 7, 'public'), // West hallway - separates pantry from daughter
 			zone(12, 13, 43, 7, 'public'), // Center corridor
+			zone(55, 13, 10, 7, 'public'), // Entry hall - main arrival to center corridor
 			// Private
 			zone(0, 20, 18, 22, 'private'), // Daughter's suite
 			zone(18, 20, 21, 22, 'private'), // Primary suite
@@ -350,6 +351,7 @@
 			room(6, 8.5, 'Pantry\nSit-in'), // Wine/smoke nook, respects hallway
 			room(60, 3, 'Dog\nUtility', true),
 			room(60, 9.5, 'Guest\nBath', true), // East side, near entry
+			room(60, 16.5, 'Entry\nHall', true),
 			room(20, 6.5, 'Kitchen'),
 			room(33, 6.5, 'Dining'),
 			room(46, 6.5, 'Living')

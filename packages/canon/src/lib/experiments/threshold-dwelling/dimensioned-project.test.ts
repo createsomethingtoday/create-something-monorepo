@@ -31,10 +31,31 @@ describe('Threshold Dwelling dimension candidate', () => {
       )
     ).toBe(true);
     expect(validation.nonIntegralCoordinateIds).toEqual([]);
-    expect(validation.unclassifiedEnclosedAreaSqFt).toBe(70);
+    expect(validation.unclassifiedEnclosedAreaSqFt).toBe(0);
+    expect(candidate.zones).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'zone-entry-hall',
+          xIn: 660,
+          yIn: 156,
+          widthIn: 120,
+          heightIn: 84,
+          type: 'public'
+        })
+      ])
+    );
+    expect(candidate.decisions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'entry-hall-program',
+          status: 'approved',
+          decision: expect.stringContaining('Entry Hall')
+        })
+      ])
+    );
   });
 
-  it('uses the approved 10 by 27 foot east projection while retaining construction-evidence blockers', () => {
+  it('uses the approved east projection and entry hall while retaining construction-evidence blockers', () => {
     const validation = validateThresholdDwellingDimensions(
       THRESHOLD_DWELLING_DIMENSION_CANDIDATE
     );
@@ -57,9 +78,11 @@ describe('Threshold Dwelling dimension candidate', () => {
     expect(validation.blockers).not.toEqual(
       expect.arrayContaining([expect.objectContaining({ id: 'entry-projection-width-conflict' })])
     );
+    expect(validation.blockers).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: 'unclassified-enclosed-area' })])
+    );
     expect(validation.blockers).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ id: 'unclassified-enclosed-area' }),
         expect.objectContaining({ id: 'construction-evidence-not-supplied' })
       ])
     );

@@ -77,7 +77,7 @@ export interface ThresholdDwellingDimensionCandidate {
   };
   source: {
     primary: 'packages/io/src/routes/papers/threshold-dwelling/+page.svelte';
-    revision: '0.4';
+    revision: '0.5';
     statement: string;
   };
   decisions: ThresholdDwellingProjectDecision[];
@@ -171,7 +171,7 @@ export const THRESHOLD_DWELLING_DIMENSION_CANDIDATE: ThresholdDwellingDimensionC
   },
   source: {
     primary: 'packages/io/src/routes/papers/threshold-dwelling/+page.svelte',
-    revision: '0.4',
+    revision: '0.5',
     statement:
       'Exact only within the authored concept coordinate system. It is not a survey, permit, code-compliance, structural, MEP, or construction source.'
   },
@@ -183,6 +183,14 @@ export const THRESHOLD_DWELLING_DIMENSION_CANDIDATE: ThresholdDwellingDimensionC
       title: 'Use the 10 ft by 27 ft east projection',
       decision:
         'The dog kennel, carport, and covered entry form one 10 ft by 27 ft east projection; the covered-entry segment is 10 ft by 14 ft.'
+    },
+    {
+      id: 'entry-hall-program',
+      status: 'approved',
+      authority: 'project owner',
+      title: 'Classify the east arrival band as the Entry Hall',
+      decision:
+        'The 10 ft by 7 ft enclosed band at x=55–65 ft and y=13–20 ft is the Entry Hall / arrival zone connecting the main entry to the central hall.'
     }
   ],
   footprint: {
@@ -247,6 +255,7 @@ export const THRESHOLD_DWELLING_DIMENSION_CANDIDATE: ThresholdDwellingDimensionC
     zone('zone-guest-bath', 55, 6, 10, 7, 'public'),
     zone('zone-west-hall', 0, 13, 12, 7, 'public'),
     zone('zone-center-hall', 12, 13, 43, 7, 'public'),
+    zone('zone-entry-hall', 55, 13, 10, 7, 'public'),
     zone('zone-daughter-suite', 0, 20, 18, 22, 'private'),
     zone('zone-primary-suite', 18, 20, 21, 22, 'private'),
     zone('zone-inlaw-suite', 39, 20, 26, 22, 'private'),
@@ -265,6 +274,7 @@ export const THRESHOLD_DWELLING_DIMENSION_CANDIDATE: ThresholdDwellingDimensionC
     label('label-pantry', 6, 8.5, 'Pantry\nSit-in'),
     label('label-dog-utility', 60, 3, 'Dog\nUtility', true),
     label('label-guest-bath', 60, 9.5, 'Guest\nBath', true),
+    label('label-entry-hall', 60, 16.5, 'Entry\nHall', true),
     label('label-kitchen', 20, 6.5, 'Kitchen'),
     label('label-dining', 33, 6.5, 'Dining'),
     label('label-living', 46, 6.5, 'Living')
@@ -283,15 +293,6 @@ export const THRESHOLD_DWELLING_DIMENSION_CANDIDATE: ThresholdDwellingDimensionC
     { id: 'overhang-covered-entry', ...rect(65, 13, 10, 14), label: 'Covered\nEntry' }
   ],
   blockers: [
-    {
-      id: 'unclassified-enclosed-area',
-      severity: 'high',
-      title: '70 SF of the 2,730 SF footprint has no named zone',
-      evidence:
-        'The authored zones total 2,660 SF. The east 10 ft by 7 ft band between the guest-bath/service row and private-suite row is inside the footprint but has no semantic zone.',
-      requiredResolution:
-        'Name and bound this space, then determine its room, circulation, egress and MEP role.'
-    },
     {
       id: 'construction-evidence-not-supplied',
       severity: 'critical',

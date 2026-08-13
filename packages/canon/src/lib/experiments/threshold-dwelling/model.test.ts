@@ -16,7 +16,7 @@ describe('Threshold Dwelling construction allowance', () => {
     const lineItemCost = (description: string) =>
       allowance.lineItems.find((item) => item.description === description)?.estimate;
 
-    expect(THRESHOLD_DWELLING_DESIGN.revision).toBe('0.4');
+    expect(THRESHOLD_DWELLING_DESIGN.revision).toBe('0.5');
     expect(baseConstructionCost).toBe(814_000);
     expect(allowance.contingencyRate).toBe(0.1);
     expect(allowance.workingConstructionAuthorization).toBe(895_400);
