@@ -19,6 +19,7 @@
 
   function scroll(direction: -1 | 1) {
     if (!rail) return;
+    handleScroll();
     if ((direction === -1 && atStart) || (direction === 1 && atEnd)) return;
     const card = rail.querySelector<HTMLElement>('[data-evidence-card]');
     const scrollDistance = card?.offsetWidth || rail.clientWidth;
@@ -42,12 +43,24 @@
   }
 
   onMount(() => {
+    if (!rail) return;
     let active = true;
-    queueMicrotask(() => {
-      if (active) handleScroll();
-    });
+    const scheduleMeasurement = () => {
+      queueMicrotask(() => {
+        if (active) handleScroll();
+      });
+    };
+    const resizeObserver =
+      typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(scheduleMeasurement);
+
+    resizeObserver?.observe(rail);
+    window.addEventListener('resize', scheduleMeasurement);
+    scheduleMeasurement();
+
     return () => {
       active = false;
+      resizeObserver?.disconnect();
+      window.removeEventListener('resize', scheduleMeasurement);
     };
   });
 </script>

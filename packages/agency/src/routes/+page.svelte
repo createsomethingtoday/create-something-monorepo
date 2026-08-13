@@ -2,7 +2,6 @@
   import {
     Button,
     MeridianAccordion,
-    MeridianCardGrid,
     MeridianEvidenceCarousel,
     MeridianMetrics,
     PerformanceCampaignOpening,
@@ -10,12 +9,12 @@
     PerformanceNarrativeStage,
     PerformanceWorkflowMiniArtifact,
     SEO,
-    type MeridianCard,
     type MeridianEvidence,
     type PerformanceCampaignProof,
     type PerformanceFieldStudyMetric,
     type PerformanceNarrativeScene
   } from '@create-something/canon';
+  import type { MotionIntent } from '@create-something/canon/motion';
   import HeroTrustArtifact from '$lib/components/HeroTrustArtifact.svelte';
   import AgencyPerformanceReadback from '$lib/components/AgencyPerformanceReadback.svelte';
   import AdoptionPathChooser from '$lib/components/AdoptionPathChooser.svelte';
@@ -80,42 +79,6 @@
       question: 'What do clients leave with?',
       answer:
         'Clients leave with a visible workflow map, connected-system plan, approval path, run/wait/stop states, and an audit trail the team can inspect.'
-    }
-  ];
-
-  const deliveryCards: MeridianCard[] = [
-    {
-      eyebrow: 'First possession',
-      title: 'Map one workflow',
-      description:
-        'Start with the handoff that makes the cost of waiting, guessing, or rechecking most visible.',
-      href: agencyCoreMessaging.selfMapHref,
-      ctaLabel: 'Start the map',
-      meta: 'Fixed first scope',
-      kind: 'offer',
-      tone: 'paper'
-    },
-    {
-      eyebrow: 'Installed route',
-      title: 'Build the controlled path',
-      description:
-        'Connect the systems, AI tasks, approval points, and safe stops that let known work move.',
-      href: '/services',
-      ctaLabel: 'See the practice',
-      meta: 'Scoped implementation',
-      kind: 'service',
-      tone: 'ink'
-    },
-    {
-      eyebrow: 'Owned handoff',
-      title: 'Keep the Playbook',
-      description:
-        'Your team keeps the rules, records, recovery path, and review rhythm when the first pilot is done.',
-      href: '/stack',
-      ctaLabel: 'See what you keep',
-      meta: 'Client-owned system',
-      kind: 'case',
-      tone: 'brand'
     }
   ];
 
@@ -282,6 +245,46 @@
       receipts: ['workflow map', templateReviewFieldReport.id, 'recovery path']
     }
   ];
+
+  const agencyOperatingStoryMotion: MotionIntent = {
+    version: 1,
+    id: 'agency-operating-story-v1',
+    event: 'agency.operating-story.scene.selected',
+    interruption: 'replace',
+    reducedMotion: 'settle-immediately',
+    stages: [
+      {
+        id: 'map-boundary-visible',
+        label: 'Map',
+        intent: 'apply',
+        target: 'agency-operating-story.map',
+        durationMs: 220,
+        channels: ['opacity', 'transform'],
+        colorRole: 'performance.signal',
+        announce: 'Map boundary selected.'
+      },
+      {
+        id: 'build-route-installed',
+        label: 'Build',
+        intent: 'update',
+        target: 'agency-operating-story.build',
+        durationMs: 260,
+        channels: ['opacity', 'transform'],
+        colorRole: 'performance.growth',
+        announce: 'Build route selected.'
+      },
+      {
+        id: 'control-receipt-settled',
+        label: 'Control',
+        intent: 'settle',
+        target: 'agency-operating-story.control',
+        durationMs: 300,
+        channels: ['opacity', 'transform'],
+        colorRole: 'performance.gold',
+        announce: 'Control record selected.'
+      }
+    ]
+  };
 </script>
 
 <SEO
@@ -333,6 +336,7 @@
     title="Map the play. Build the system. Keep control."
     description="We work beside an operator to map one workflow and install its AI infrastructure. Your team decides what can run, what needs approval, and what must stop. Your team keeps a Playbook it can inspect, run, stop, recover, and review with proof."
     scenes={agencyScenes}
+    motionIntent={agencyOperatingStoryMotion}
     ariaLabel="Shared Playbook delivery story"
     density="compact"
   >
@@ -481,14 +485,6 @@
   </details>
 
   <div class="home-supporting-record__deferred home-supporting-record__deferred--early">
-    <MeridianCardGrid
-      eyebrow="The delivery roster"
-      title="Each engagement earns a clear next move."
-      description="The card system makes scope, action, and ownership legible without inventing a rate card or a promise the work has not earned."
-      cards={deliveryCards}
-      ariaLabel="CREATE SOMETHING delivery paths"
-    />
-
     <MeridianEvidenceCarousel
       eyebrow="Operator proof"
       title="Evidence replaces borrowed testimonials."

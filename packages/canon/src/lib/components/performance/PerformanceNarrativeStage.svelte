@@ -1,6 +1,12 @@
 <script lang="ts">
   import { pushState } from '$app/navigation';
-  import { onMount, type Snippet } from 'svelte';
+  import { onMount, tick, type Snippet } from 'svelte';
+  import {
+    resolveMotionStages,
+    selectMotionRuntime,
+    type MotionIntent,
+    type MotionRuntime
+  } from '../../motion/intent.js';
 
   export type PerformanceNarrativeTone = 'allow' | 'review' | 'block' | 'neutral';
   export type PerformanceNarrativeExpression = 'field' | 'editorial';
@@ -35,6 +41,8 @@
     ariaLabel?: string;
     density?: 'standard' | 'compact';
     expression?: PerformanceNarrativeExpression;
+    /** Optional semantic contract for an explicitly triggered scene transition. */
+    motionIntent?: MotionIntent;
     enablePresentation?: boolean;
     preview?: Snippet;
     artifact?: Snippet<[PerformanceNarrativeScene, number]>;
@@ -49,6 +57,7 @@
     ariaLabel = 'Narrative scenes',
     density = 'compact',
     expression = 'field',
+    motionIntent,
     enablePresentation = false,
     preview,
     artifact
@@ -60,7 +69,10 @@
   let tabElements = $state<HTMLButtonElement[]>([]);
   let stageElement = $state<HTMLElement>();
   let presentButton = $state<HTMLButtonElement>();
+  let sceneMotionRuntime = $state<MotionRuntime>('native');
   let previousBodyOverflow = '';
+  let sceneMotionRequest = 0;
+  let activeSceneTimeline: { kill: () => void } | undefined;
 
   const interactiveSelector =
     'a[href], button, input, textarea, select, summary, [contenteditable="true"]';
@@ -86,9 +98,73 @@
     if (fragmentIndex >= 0) activeIndex = fragmentIndex;
   }
 
+  function cancelSceneMotion() {
+    sceneMotionRequest += 1;
+    activeSceneTimeline?.kill();
+    activeSceneTimeline = undefined;
+  }
+
+  async function animateSceneTransition(index: number) {
+    if (!motionIntent || typeof window === 'undefined') return;
+
+    const motionStage = motionIntent.stages[index];
+    if (!motionStage) return;
+
+    cancelSceneMotion();
+    const request = sceneMotionRequest;
+    const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+
+    if (reducedMotion) {
+      // `resolveMotionStages` validates the intent and guarantees the immediate final state.
+      resolveMotionStages(motionIntent, { reducedMotion: true });
+      sceneMotionRuntime = 'instant';
+      return;
+    }
+
+    if (selectMotionRuntime(motionIntent, { gsap: true, reducedMotion }) !== 'gsap') {
+      sceneMotionRuntime = 'native';
+      return;
+    }
+
+    try {
+      // GSAP is intentionally requested only after a user selects a story scene.
+      // It stays out of SSR, initial paint, reduced-motion, and unrelated routes.
+      const { gsap } = await import('gsap');
+      await tick();
+      if (request !== sceneMotionRequest) return;
+
+      const target = stageElement?.querySelector<HTMLElement>(
+        `[data-motion-target="${motionStage.target}"]`
+      );
+      if (!target) {
+        sceneMotionRuntime = 'native';
+        return;
+      }
+
+      sceneMotionRuntime = 'gsap';
+      activeSceneTimeline = gsap.fromTo(
+        target,
+        { autoAlpha: 0.88, y: 12 },
+        {
+          autoAlpha: 1,
+          y: 0,
+          duration: motionStage.durationMs / 1_000,
+          ease: 'power2.out',
+          overwrite: 'auto',
+          clearProps: 'transform,opacity,visibility'
+        }
+      );
+    } catch {
+      // A static, already-selected panel is the complete native fallback.
+      if (request === sceneMotionRequest) sceneMotionRuntime = 'native';
+    }
+  }
+
   function selectScene(index: number, pushHistory = true, moveFocus = false) {
     if (!scenes[index]) return;
+    const sceneChanged = activeIndex !== index;
     activeIndex = index;
+    if (sceneChanged && enhanced && motionIntent) void animateSceneTransition(index);
 
     if (pushHistory && typeof window !== 'undefined') {
       const fragment = fragmentFor(scenes[index]);
@@ -192,6 +268,7 @@
       window.removeEventListener('hashchange', syncFromFragment);
       window.removeEventListener('popstate', syncFromFragment);
       window.removeEventListener('keydown', handlePresentationKeydown);
+      cancelSceneMotion();
       if (presenting) document.body.style.overflow = previousBodyOverflow;
     };
   });
@@ -204,6 +281,8 @@
   data-density={density}
   data-expression={expression}
   data-enhanced={enhanced}
+  data-motion-intent={motionIntent?.id}
+  data-motion-runtime={sceneMotionRuntime}
   data-presentation-enabled={enablePresentation}
   data-presenting={presenting}
   role={presenting ? 'dialog' : undefined}
@@ -276,6 +355,8 @@
             role="tabpanel"
             aria-labelledby={`${id}-tab-${scene.id}`}
             data-state={controlState(scene.tone)}
+            data-motion-stage={motionIntent?.stages[index]?.id}
+            data-motion-target={motionIntent?.stages[index]?.target}
             hidden={enhanced && index !== activeIndex}
           >
             <div class="performance-narrative-stage__scene-head">

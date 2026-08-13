@@ -2,7 +2,7 @@
 
 Status: implementation manifest  
 Owner: CREATE SOMETHING  
-Tracking: CRE-1646 (initial shell), CRE-1647 (complete component adoption)
+Tracking: CRE-1646 (initial shell), CRE-1647 (component adoption), CRE-1719 (translation repair)
 
 ## Licensed end-product map
 
@@ -41,6 +41,10 @@ Source and deployed font SHA-256:
 - No template CDN assets are hotlinked.
 - Playbook fields, operating receipts, Performance Lab semantics, property routes, and property-specific actions remain first-party.
 - The source contributes bounded design decisions: editorial serif contrast, warm neutral casing, paired text/artifact composition, compact radii, aligned metadata, and deliberate section pacing.
+- The shared reference is not a uniform public shell: `.agency`, `.io`, and
+  `.space` use editorial Meridian-derived casing where it serves their role;
+  `.ltd` deliberately keeps its first-party court/Playbook performance
+  expression and operator-library composition.
 - Typography roles are explicit: Gambarino-derived `CS Editorial` is display-only at its actual 400 weight; variable Geist is the interface and reading face; IBM Plex Mono remains limited to receipts, labels, and operational state. Performance surfaces disable font synthesis so the single editorial face is never faux-bolded or faux-italicized.
 - The complete native component inventory and public-property map live in
   [`MERIDIAN_COMPONENT_ADOPTION_MAP.md`](./MERIDIAN_COMPONENT_ADOPTION_MAP.md).
@@ -49,4 +53,9 @@ Webflow Studio conversion is deferred until Studio is generally available and th
 
 ## Rollback
 
-Remove the `expression="editorial"` and `propertyRole` opt-ins from the four homepage openings, remove the editorial-only Canon selectors and token, and remove the four self-hosted font copies. The default `field` expression remains the unchanged component fallback.
+Remove editorial `expression="editorial"` and `propertyRole` opt-ins from the
+`.agency`, `.io`, and `.space` homepage openings, remove the editorial-only
+Canon selectors and token, and remove the four self-hosted font copies. The
+default `field` expression remains the unchanged component fallback. `.ltd`'s
+court/Playbook performance composition is first-party and remains unless a
+separate property decision changes it.

@@ -14,8 +14,8 @@ function layoutSource(property: 'agency' | 'io' | 'ltd' | 'space'): string {
   return readFileSync(join(REPO_ROOT, 'packages', property, 'src/routes/+layout.svelte'), 'utf8');
 }
 
-describe('Licensed editorial public-system rollout', () => {
-  it('uses one owned editorial shell and exact licensed-reference palette across all four properties', () => {
+describe('Licensed Meridian public-system rollout', () => {
+  it('uses property-specific shells with an exact licensed-reference palette where editorial expression applies', () => {
     const tokens = readFileSync(
       join(REPO_ROOT, 'packages/canon/src/lib/styles/tokens.css'),
       'utf8'
@@ -34,11 +34,15 @@ describe('Licensed editorial public-system rollout', () => {
     );
     const packageManifest = readFileSync(join(REPO_ROOT, 'packages/canon/package.json'), 'utf8');
 
-    for (const property of ['agency', 'io', 'ltd', 'space'] as const) {
+    for (const property of ['agency', 'io', 'space'] as const) {
       const layout = layoutSource(property);
       expect(layout).toContain('visualStyle="editorial"');
       expect(layout).not.toContain('visualStyle="performance"');
     }
+
+    const ltdLayout = layoutSource('ltd');
+    expect(ltdLayout).toContain('visualStyle="performance"');
+    expect(ltdLayout).not.toContain('visualStyle="editorial"');
 
     for (const value of ['#181312', '#2e2927', '#f3ebe4', '#d8cdbc', '#fcaa2d']) {
       expect(tokens).toContain(value);
@@ -74,7 +78,7 @@ describe('Licensed editorial public-system rollout', () => {
     expect(manifest).toContain(expectedHash);
   });
 
-  it('adopts every licensed navigation, section, card, proof, form, and footer pattern as owned components', () => {
+  it('keeps the licensed component inventory owned while each property adopts its approved expression', () => {
     const adoptionMap = readFileSync(
       join(REPO_ROOT, 'docs/internal/MERIDIAN_COMPONENT_ADOPTION_MAP.md'),
       'utf8'
@@ -106,6 +110,9 @@ describe('Licensed editorial public-system rollout', () => {
 
     expect(navigation).toContain('nav-dropdown__menu');
     expect(navigation).toContain('nav-mobile-submenu');
+    expect(navigation).toContain('class="nav-dropdown__chevron"');
+    expect(navigation).toContain('viewBox="0 0 16 16"');
+    expect(navigation).not.toContain('>⌄</span>');
     expect(footer).toContain("import MeridianOfferPanel from './meridian/MeridianOfferPanel.svelte'");
     expect(footer).toContain('<MeridianOfferPanel');
     expect(footer).toContain('footer-editorial-identity');
@@ -116,9 +123,12 @@ describe('Licensed editorial public-system rollout', () => {
     expect(routeSource('agency')).toContain('<MeridianAccordion');
     expect(routeSource('io')).toContain('<MeridianFeatureSplit');
     expect(routeSource('io')).toContain('<MeridianCardGrid');
-    expect(routeSource('ltd')).toContain('<MeridianFeatureSplit');
-    expect(routeSource('ltd')).toContain("kind: 'profile'");
-    expect(routeSource('space')).toContain('<MeridianCardGrid');
+    expect(routeSource('ltd')).toContain('ltdOperatingFieldMedia');
+    expect(routeSource('ltd')).toContain('<PerformanceCardGrid');
+    expect(routeSource('ltd')).toContain('<PropertyFunnel');
+    expect(routeSource('space')).toContain('<PerformanceDecisionPanel');
+    expect(routeSource('space')).toContain('<PerformanceCardGrid');
+    expect(routeSource('space')).toContain('<PerformanceConversionHandoff');
     expect(layoutSource('agency')).toContain('children: [');
   });
 
@@ -151,7 +161,14 @@ describe('Licensed editorial public-system rollout', () => {
     expect(offer).toContain("ltd: { code: 'PL / 01'");
     expect(offer).toContain("space: { code: 'RT / 01'");
     expect(offer).not.toContain('Free Download');
-    expect(offer).not.toContain('<img');
+    expect(offer).toContain('media?: MeridianOfferMedia');
+    expect(offer).toContain('{#if media}');
+    expect(offer).toContain('alt={media.alt}');
+    expect(offer).toContain('loading="lazy"');
+    expect(offer).toContain('decoding="async"');
+    expect(offer).toContain('{:else}');
+    expect(offer).toContain('meridian-offer-panel__artifact');
+    expect(offer).not.toContain('meridian-wf-template');
   });
 
   it('keeps the Agency ownership proposition in the editorial public-heading expression', () => {
@@ -182,14 +199,15 @@ describe('Licensed editorial public-system rollout', () => {
     expect(source).toContain('Read The Papers');
   });
 
-  it('keeps .ltd distinct as the canon and operating-standards property', () => {
+  it('keeps .ltd distinct as the court and Playbook operator library', () => {
     const source = routeSource('ltd');
 
-    expect(source).toContain('expression="editorial"');
-    expect(source.match(/expression="editorial"/g)).toHaveLength(2);
-    expect(source).toContain('propertyRole="Canon + operating standards"');
-    expect(source).toContain('The philosophy of automation infrastructure.');
-    expect(source).toContain('Read The Canon');
+    expect(layoutSource('ltd')).toContain('visualStyle="performance"');
+    expect(source).toContain('ltdOperatingFieldMedia');
+    expect(source).toContain('Run AI work people can trust.');
+    expect(source).toContain('<PerformanceCardGrid');
+    expect(source).toContain('<PropertyFunnel');
+    expect(source).toContain('<NewsletterSignup');
   });
 
   it('keeps .space distinct as the public systems workbench', () => {

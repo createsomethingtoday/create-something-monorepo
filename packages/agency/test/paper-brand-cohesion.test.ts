@@ -6,18 +6,42 @@ import test from 'node:test';
 const agencyRoot = resolve(import.meta.dirname, '..');
 const read = (relativePath: string) => readFileSync(resolve(agencyRoot, relativePath), 'utf8');
 
-test('Agency opts into a visible desktop wordmark without changing Canon defaults', () => {
+test('Agency uses its property-owned outlined logo assets without changing Canon defaults', () => {
   const navigation = read('../canon/src/lib/components/Navigation.svelte');
+  const footer = read('../canon/src/lib/components/Footer.svelte');
   const layout = read('src/routes/+layout.svelte');
+  const headerLogo = resolve(agencyRoot, 'static/brand/create-something-horizontal-black.svg');
+  const footerLogo = resolve(agencyRoot, 'static/brand/create-something-agency-white.svg');
+  const favicon = resolve(agencyRoot, 'static/favicon.svg');
 
-  assert.match(navigation, /showDesktopLogoText\?: boolean/);
-  assert.match(navigation, /showDesktopLogoText = false/);
-  assert.match(navigation, /class:nav-show-desktop-logo-text=\{showDesktopLogoText\}/);
-  assert.match(
-    navigation,
-    /@media \(min-width: 641px\)[\s\S]*?\.nav-show-desktop-logo-text \.nav-logo-text/
+  assert.match(navigation, /logoAsset\?: NavigationLogoAsset/);
+  assert.match(navigation, /<img class="nav-logo-asset" src=\{logoAsset\.src\} alt="" \/>/);
+  assert.match(footer, /brandAsset\?: FooterBrandAsset/);
+  assert.match(footer, /<img class="footer-mark__asset" src=\{brandAsset\.src\} alt="" \/>/);
+  assert.match(layout, /create-something-horizontal-black\.svg/);
+  assert.match(layout, /create-something-agency-white\.svg/);
+  assert.match(layout, /enableRouteLogoMotion=\{true\}/);
+  for (const asset of [headerLogo, footerLogo, favicon]) {
+    assert.ok(existsSync(asset), `${asset} must be served by the Agency package`);
+    assert.ok(statSync(asset).size > 1_000, `${asset} must be a substantive outlined vector`);
+  }
+});
+
+test('the Agency operating story uses a scoped GSAP motion intent with an immediate reduced-motion state', () => {
+  const home = read('src/routes/+page.svelte');
+  const narrative = read(
+    '../canon/src/lib/components/performance/PerformanceNarrativeStage.svelte'
   );
-  assert.match(layout, /showDesktopLogoText=\{true\}/);
+
+  assert.match(home, /id: 'agency-operating-story-v1'/);
+  assert.match(home, /event: 'agency\.operating-story\.scene\.selected'/);
+  assert.match(home, /reducedMotion: 'settle-immediately'/);
+  assert.match(home, /motionIntent=\{agencyOperatingStoryMotion\}/);
+  assert.match(narrative, /motionIntent\?: MotionIntent/);
+  assert.match(narrative, /await import\('gsap'\)/);
+  assert.match(narrative, /prefers-reduced-motion: reduce/);
+  assert.match(narrative, /cancelSceneMotion\(\);/);
+  assert.doesNotMatch(home, /ScrollTrigger|Lenis|SmoothScroll/);
 });
 
 test('the Agency hero makes the Playbook operating grammar visible without a provider logo lockup', () => {

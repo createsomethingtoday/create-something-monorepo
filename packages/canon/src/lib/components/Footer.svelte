@@ -26,6 +26,12 @@
     };
   }
 
+  interface FooterBrandAsset {
+    src: string;
+    /** Used for the linked home destination; the image itself is decorative there. */
+    label: string;
+  }
+
   type FooterVisualStyle = 'classic' | 'performance' | 'clear' | 'editorial';
 
   interface Props {
@@ -46,6 +52,8 @@
     isAuthenticated?: boolean;
     /** Visual treatment. Defaults preserve existing property footers. */
     visualStyle?: FooterVisualStyle;
+    /** Property-owned vector lockup for editorial footer treatments. */
+    brandAsset?: FooterBrandAsset;
   }
 
   interface NewsletterApiResponse {
@@ -69,7 +77,8 @@
     showSocial = false,
     turnstileSiteKey = '',
     isAuthenticated = false,
-    visualStyle = 'classic'
+    visualStyle = 'classic',
+    brandAsset
   }: Props = $props();
 
   // Map mode to target for cross-domain SSO
@@ -363,10 +372,14 @@
 
   {#if usesEditorialStyle}
     <div class="footer-editorial-identity" aria-hidden="true">
-      <div>
-        <span>CREATE</span>
-        <span>SOMETHING</span>
-      </div>
+      {#if brandAsset}
+        <img class="footer-editorial-identity__asset" src={brandAsset.src} alt="" />
+      {:else}
+        <div>
+          <span>CREATE</span>
+          <span>SOMETHING</span>
+        </div>
+      {/if}
       <p>Operating systems for work that has to hold up.</p>
     </div>
   {/if}
@@ -378,13 +391,22 @@
         <!-- About / Brand Column -->
         <div class="footer-brand-column">
           {#if usesPerformanceStyle || usesEditorialStyle}
-            <a href="/" class="footer-mark" aria-label="CREATE SOMETHING home">
-              <CubeMark size={44} variant="mono" />
+            <a
+              href="/"
+              class="footer-mark"
+              class:footer-mark--asset={!!brandAsset}
+              aria-label={`${brandAsset?.label ?? 'CREATE SOMETHING'} home`}
+            >
+              {#if brandAsset}
+                <img class="footer-mark__asset" src={brandAsset.src} alt="" />
+              {:else}
+                <CubeMark size={44} variant="mono" />
+              {/if}
             </a>
           {/if}
 
           {#if aboutText}
-            <div class="brand-title mb-4">CREATE SOMETHING</div>
+            {#if !brandAsset}<div class="brand-title mb-4">CREATE SOMETHING</div>{/if}
             <p class="brand-description max-w-md mb-6">
               {aboutText}
             </p>
@@ -950,6 +972,20 @@
     text-decoration: none;
   }
 
+  .footer-clear .footer-mark.footer-mark--asset {
+    display: block;
+    width: min(13.5rem, 100%);
+    height: auto;
+    min-height: 3rem;
+  }
+
+  .footer-mark__asset {
+    display: block;
+    width: auto;
+    max-width: min(13.5rem, 100%);
+    height: 3rem;
+  }
+
   .footer-clear .brand-title {
     color: var(--color-performance-ink, #090909);
     font-family: var(--font-performance-mono);
@@ -1185,6 +1221,13 @@
     color: var(--color-performance-editorial-brand, #fcaa2d);
   }
 
+  .footer-editorial-identity__asset {
+    display: block;
+    width: min(100%, 46rem);
+    height: auto;
+    max-height: 14rem;
+  }
+
   .footer-editorial-identity p {
     max-width: 15rem;
     margin: 0 0 0.25rem;
@@ -1217,6 +1260,12 @@
   .footer-editorial .footer-mark {
     --color-performance-fg-primary: var(--color-performance-editorial-brand, #fcaa2d);
     color: var(--color-performance-editorial-brand, #fcaa2d);
+  }
+
+  .footer-editorial .footer-mark__asset {
+    width: min(13.5rem, 100%);
+    height: auto;
+    max-height: 3.5rem;
   }
 
   .footer-editorial .brand-title {
@@ -1283,6 +1332,11 @@
     .footer-editorial-identity div {
       font-size: clamp(3.55rem, 18vw, 6.5rem);
       line-height: 0.75;
+    }
+
+    .footer-editorial-identity__asset {
+      width: min(100%, 24rem);
+      max-height: none;
     }
 
     .footer-editorial .footer-inner {
