@@ -34,8 +34,7 @@ export interface ThresholdDwellingEvidenceRecord {
   reviewedBy?: string;
 }
 
-export interface ThresholdDwellingProfessionalReviewRequirementAssessment
-  extends ThresholdDwellingProfessionalReviewRequirement {
+export interface ThresholdDwellingProfessionalReviewRequirementAssessment extends ThresholdDwellingProfessionalReviewRequirement {
   status: ThresholdDwellingEvidenceStatus;
   evidence: ThresholdDwellingEvidenceRecord[];
 }
@@ -97,7 +96,8 @@ export const THRESHOLD_DWELLING_PROFESSIONAL_REVIEW_REQUIREMENTS = [
       'topographic grades and project datum',
       'utility and right-of-way context'
     ],
-    purpose: 'Establish the parcel, setbacks, access, grades, and site reference for every downstream drawing.'
+    purpose:
+      'Establish the parcel, setbacks, access, grades, and site reference for every downstream drawing.'
   },
   {
     id: 'coordinated-architectural-package',
@@ -105,10 +105,11 @@ export const THRESHOLD_DWELLING_PROFESSIONAL_REVIEW_REQUIREMENTS = [
     responsibleRole: 'Architect or qualified residential design professional',
     requiredArtifacts: [
       'dimensioned plans, sections, and elevations',
-      'wall, door, window, fixture, finish, and accessibility/clearance schedules',
+      'wall, door, window, fixture, finish, accessibility/clearance, and glazing-intent schedules',
       'site/threshold and weather-protection details'
     ],
-    purpose: 'Resolve real assemblies, room use, egress/clearance intent, and coordination across drawings.'
+    purpose:
+      'Resolve real assemblies, room use, egress/clearance intent, and coordination across drawings.'
   },
   {
     id: 'structural-and-wind-design',
@@ -119,7 +120,8 @@ export const THRESHOLD_DWELLING_PROFESSIONAL_REVIEW_REQUIREMENTS = [
       'lateral/wind bracing plan with design criteria',
       'calculation package and special inspection requirements, if applicable'
     ],
-    purpose: 'Establish the load path, wind resistance, foundation approach, and connection details.'
+    purpose:
+      'Establish the load path, wind resistance, foundation approach, and connection details.'
   },
   {
     id: 'mechanical-electrical-plumbing-design',
@@ -130,7 +132,8 @@ export const THRESHOLD_DWELLING_PROFESSIONAL_REVIEW_REQUIREMENTS = [
       'electrical, low-voltage, lighting, and life-safety plans',
       'plumbing supply, waste, vent, fixture, and water-heating design'
     ],
-    purpose: 'Coordinate services with the architecture and confirm required systems are designed by qualified parties.'
+    purpose:
+      'Coordinate services with the architecture and confirm required systems are designed by qualified parties.'
   },
   {
     id: 'energy-compliance-package',
@@ -152,7 +155,8 @@ export const THRESHOLD_DWELLING_PROFESSIONAL_REVIEW_REQUIREMENTS = [
       'permit-submittal requirements and adopted-code confirmation',
       'documented exceptions, conditions, and review comments'
     ],
-    purpose: 'Confirm the actual project path rather than treating general guidance as a permit decision.'
+    purpose:
+      'Confirm the actual project path rather than treating general guidance as a permit decision.'
   }
 ] as const satisfies readonly ThresholdDwellingProfessionalReviewRequirement[];
 
@@ -163,7 +167,7 @@ const determinationScopeByRequirement: Record<
   'licensed-site-survey':
     'Establish the parcel boundary, easements, topographic datum, and site reference.',
   'coordinated-architectural-package':
-    'Coordinate revision 0.5 plans, elevations, sections, schedules, and assembly details.',
+    'Coordinate current plans, elevations, sections, schedules, glazing intent, and assembly details.',
   'structural-and-wind-design':
     'Establish foundation, load path, wind/bracing criteria, connections, and roof framing.',
   'mechanical-electrical-plumbing-design':
@@ -175,7 +179,7 @@ const determinationScopeByRequirement: Record<
 };
 
 /**
- * The v0.5 register begins with no determination requested or issued. Future
+ * The current register begins with no determination requested or issued. Future
  * clients attach a revision-specific external document and named issuer; they
  * may never infer a building permit from this data.
  */

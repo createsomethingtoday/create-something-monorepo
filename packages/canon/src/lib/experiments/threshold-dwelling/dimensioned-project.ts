@@ -77,7 +77,7 @@ export interface ThresholdDwellingDimensionCandidate {
   };
   source: {
     primary: 'packages/io/src/routes/papers/threshold-dwelling/+page.svelte';
-    revision: '0.5';
+    revision: '0.5' | '0.6' | '0.7';
     statement: string;
   };
   decisions: ThresholdDwellingProjectDecision[];
@@ -111,7 +111,12 @@ const point = (xFt: number, yFt: number): ThresholdDwellingPointIn => ({
   xIn: inches(xFt),
   yIn: inches(yFt)
 });
-const rect = (xFt: number, yFt: number, widthFt: number, heightFt: number): ThresholdDwellingRectIn => ({
+const rect = (
+  xFt: number,
+  yFt: number,
+  widthFt: number,
+  heightFt: number
+): ThresholdDwellingRectIn => ({
   ...point(xFt, yFt),
   widthIn: inches(widthFt),
   heightIn: inches(heightFt)
@@ -153,7 +158,13 @@ const zone = (
   type: ThresholdDwellingPlanZone['type']
 ): ThresholdDwellingPlanZone => ({ id, ...rect(xFt, yFt, widthFt, heightFt), type });
 
-const label = (id: string, xFt: number, yFt: number, name: string, small = false): ThresholdDwellingRoomLabel => ({
+const label = (
+  id: string,
+  xFt: number,
+  yFt: number,
+  name: string,
+  small = false
+): ThresholdDwellingRoomLabel => ({
   id,
   ...point(xFt, yFt),
   name,
@@ -171,7 +182,7 @@ export const THRESHOLD_DWELLING_DIMENSION_CANDIDATE: ThresholdDwellingDimensionC
   },
   source: {
     primary: 'packages/io/src/routes/papers/threshold-dwelling/+page.svelte',
-    revision: '0.6',
+    revision: '0.7',
     statement:
       'Exact only within the authored concept coordinate system. It is not a survey, permit, code-compliance, structural, MEP, or construction source.'
   },
@@ -223,6 +234,14 @@ export const THRESHOLD_DWELLING_DIMENSION_CANDIDATE: ThresholdDwellingDimensionC
       title: 'Place sleeping-suite window candidates on exterior walls',
       decision:
         'Each sleeping suite now carries an exterior-window candidate. Sill, head, net clear opening, operation, glazing, and adopted-code compliance remain unsupplied and must be scheduled by the design professional.'
+    },
+    {
+      id: 'maximum-useful-glazing-intent',
+      status: 'approved',
+      authority: 'project owner',
+      title: 'Prioritize maximum useful floor-to-ceiling glazing',
+      decision:
+        'Prioritize a floor-to-ceiling visual connection to the landscape, especially across the public open-room facade, while retaining intentional opaque/service/structural bays and resolving privacy, egress, safety glazing, solar control, water management, and lateral design through qualified review.'
     }
   ],
   footprint: {
@@ -275,9 +294,9 @@ export const THRESHOLD_DWELLING_DIMENSION_CANDIDATE: ThresholdDwellingDimensionC
     opening('window-primary-bedroom', 'wall-exterior-south', 'window', 28, 42, 8, 'horizontal'),
     opening('window-primary-bath', 'wall-exterior-south', 'window', 38, 42, 5, 'horizontal'),
     opening('window-inlaw-suite', 'wall-exterior-south', 'window', 54, 42, 6, 'horizontal'),
-    opening('window-kitchen', 'wall-exterior-north', 'window', 20, 0, 8, 'horizontal'),
-    opening('window-living-dining', 'wall-exterior-north', 'window', 35, 0, 10, 'horizontal'),
-    opening('window-open-zone', 'wall-exterior-north', 'window', 50, 0, 5, 'horizontal'),
+    opening('window-kitchen', 'wall-exterior-north', 'window', 22, 0, 12, 'horizontal'),
+    opening('window-living-dining', 'wall-exterior-north', 'window', 37, 0, 12, 'horizontal'),
+    opening('window-open-zone', 'wall-exterior-north', 'window', 49.5, 0, 7, 'horizontal'),
     opening('window-living-east', 'wall-exterior-east', 'window', 65, 30, 6, 'vertical')
   ],
   zones: [
@@ -342,6 +361,24 @@ export const THRESHOLD_DWELLING_DIMENSION_CANDIDATE: ThresholdDwellingDimensionC
         'The candidate now places an exterior window at each sleeping suite, but it does not contain sill heights, head heights, net clear opening, operation, glazing, window-well conditions, or an adopted-code determination.',
       requiredResolution:
         'The architectural professional must issue a coordinated door and window schedule and verify required exterior escape/rescue or alternate egress provisions under the confirmed adopted code.'
+    },
+    {
+      id: 'site-orientation-and-glazing-performance-not-specified',
+      severity: 'high',
+      title: 'Site orientation, shade, and glazing performance are not specified',
+      evidence:
+        'The plan north datum is an authored drawing coordinate, not a surveyed compass orientation. The candidate has no site azimuth, horizon or obstruction survey, shade study, glazing U-factor/SHGC selection, room-by-room load calculation, or energy-compliance determination.',
+      requiredResolution:
+        'Tie the design to the surveyed site, issue a facade-specific solar/shade study, select verified glazing performance, and coordinate the final enclosure with the energy and HVAC design professionals.'
+    },
+    {
+      id: 'glazing-structure-and-water-management-not-specified',
+      severity: 'high',
+      title: 'Glazing support, safety, and water management are not specified',
+      evidence:
+        'The enlarged public-facade openings are plan widths only. They contain no elevation, sill/head, mullion, structural support, lateral system, safety-glazing, drainage-plane, flashing, sill-pan, manufacturer, installation, or warranty information.',
+      requiredResolution:
+        'Coordinate facade elevations, engineered support and lateral design, hazardous-glazing determinations, tested window/wall systems, and weather-protection details before pricing or construction use.'
     }
   ]
 };
@@ -366,7 +403,8 @@ function segmentWallAroundDoors(
     })
     .sort((a, b) => a.start - b.start);
 
-  const segments: Array<{ x1: number; y1: number; x2: number; y2: number; exterior?: boolean }> = [];
+  const segments: Array<{ x1: number; y1: number; x2: number; y2: number; exterior?: boolean }> =
+    [];
   let cursor = low;
   for (const interval of doorIntervals) {
     const openingStart = Math.max(low, interval.start);

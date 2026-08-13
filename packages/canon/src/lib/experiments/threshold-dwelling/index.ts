@@ -1,9 +1,9 @@
 /**
  * Threshold Dwelling - Complete System
- * 
+ *
  * Architectural visualization experiment exploring dwelling spaces.
  * Status: 1 of 1 (experiment-specific)
- * 
+ *
  * Graduation: If used in another architecture experiment,
  * generalize to `@create-something/canon/components/architecture`
  */
@@ -46,6 +46,13 @@ export {
   type ThresholdDwellingProjectDecision,
   type ThresholdDwellingWallRun
 } from './dimensioned-project.js';
+export {
+  THRESHOLD_DWELLING_GLAZING_STRATEGY,
+  type ThresholdDwellingGlazingFacadeStrategy,
+  type ThresholdDwellingGlazingPanelIntent,
+  type ThresholdDwellingGlazingStrategy,
+  type ThresholdDwellingPlanDatumFacade
+} from './glazing-strategy.js';
 export {
   THRESHOLD_DWELLING_DESIGN,
   type ThresholdDwellingBuildMetrics,

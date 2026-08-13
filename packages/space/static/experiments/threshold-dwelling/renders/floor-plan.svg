@@ -85,9 +85,9 @@
 <line x1="308" y1="18" x2="404" y2="18" stroke="black" stroke-width="1"/>
 <line x1="446" y1="18" x2="506" y2="18" stroke="black" stroke-width="1"/>
 <line x1="632" y1="18" x2="704" y2="18" stroke="black" stroke-width="1"/>
-<line x1="212" y1="522" x2="308" y2="522" stroke="black" stroke-width="1"/>
-<line x1="380" y1="522" x2="500" y2="522" stroke="black" stroke-width="1"/>
-<line x1="590" y1="522" x2="650" y2="522" stroke="black" stroke-width="1"/>
+<line x1="212" y1="522" x2="356" y2="522" stroke="black" stroke-width="1"/>
+<line x1="392" y1="522" x2="536" y2="522" stroke="black" stroke-width="1"/>
+<line x1="572" y1="522" x2="656" y2="522" stroke="black" stroke-width="1"/>
 <line x1="798" y1="128" x2="798" y2="200" stroke="black" stroke-width="1"/>
 <text x="128" y="104" font-family="Inter, system-ui, sans-serif" font-size="7" fill="black" text-anchor="middle" dominant-baseline="middle">Daughter's</text>
 <text x="128" y="114" font-family="Inter, system-ui, sans-serif" font-size="7" fill="black" text-anchor="middle" dominant-baseline="middle">Bedroom</text>

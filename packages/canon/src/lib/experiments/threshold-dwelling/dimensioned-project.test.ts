@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   THRESHOLD_DWELLING_DIMENSION_CANDIDATE,
   THRESHOLD_DWELLING_FLOOR_PLAN,
+  THRESHOLD_DWELLING_GLAZING_STRATEGY,
   THRESHOLD_DWELLING_PROFESSIONAL_DETERMINATION_REGISTER,
   THRESHOLD_DWELLING_PROFESSIONAL_REVIEW_REQUIREMENTS,
   assessThresholdDwellingProfessionalReview,
@@ -15,7 +16,7 @@ describe('Threshold Dwelling dimension candidate', () => {
     const validation = validateThresholdDwellingDimensions(candidate);
 
     expect(candidate.status).toBe('candidate-design-intent');
-    expect(candidate.source.revision).toBe('0.6');
+    expect(candidate.source.revision).toBe('0.7');
     expect(candidate.coordinateSystem.unit).toBe('in');
     expect(candidate.footprint.widthIn).toBe(780);
     expect(candidate.footprint.depthIn).toBe(504);
@@ -65,12 +66,38 @@ describe('Threshold Dwelling dimension candidate', () => {
         }
       )
     ).toBe(true);
+    expect(candidate.decisions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'maximum-useful-glazing-intent',
+          status: 'approved',
+          decision: expect.stringContaining('floor-to-ceiling')
+        })
+      ])
+    );
+    expect(candidate.windows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'window-kitchen',
+          center: { xIn: 264, yIn: 0 },
+          planOpeningWidthIn: 144
+        }),
+        expect.objectContaining({
+          id: 'window-living-dining',
+          center: { xIn: 444, yIn: 0 },
+          planOpeningWidthIn: 144
+        }),
+        expect.objectContaining({
+          id: 'window-open-zone',
+          center: { xIn: 594, yIn: 0 },
+          planOpeningWidthIn: 84
+        })
+      ])
+    );
   });
 
   it('uses the approved east projection and entry hall while retaining construction-evidence blockers', () => {
-    const validation = validateThresholdDwellingDimensions(
-      THRESHOLD_DWELLING_DIMENSION_CANDIDATE
-    );
+    const validation = validateThresholdDwellingDimensions(THRESHOLD_DWELLING_DIMENSION_CANDIDATE);
     const coveredEntry = THRESHOLD_DWELLING_DIMENSION_CANDIDATE.overhangs.find(
       (overhang) => overhang.id === 'overhang-covered-entry'
     );
@@ -96,9 +123,33 @@ describe('Threshold Dwelling dimension candidate', () => {
     expect(validation.blockers).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: 'construction-evidence-not-supplied' }),
-        expect.objectContaining({ id: 'sleeping-room-egress-not-specified' })
+        expect.objectContaining({ id: 'sleeping-room-egress-not-specified' }),
+        expect.objectContaining({ id: 'site-orientation-and-glazing-performance-not-specified' }),
+        expect.objectContaining({ id: 'glazing-structure-and-water-management-not-specified' })
       ])
     );
+  });
+
+  it('keeps the floor-to-ceiling glazing preference site-aware and review-gated', () => {
+    const strategy = THRESHOLD_DWELLING_GLAZING_STRATEGY;
+    const publicFacade = strategy.facadeStrategies.find(
+      (facade) => facade.planDatumFacade === 'north'
+    );
+
+    expect(strategy.schemaVersion).toBe('workway.glazing-strategy.v1');
+    expect(strategy.projectRevision).toBe('0.7');
+    expect(strategy.siteOrientation.status).toBe('unmapped');
+    expect(strategy.constructionReady).toBe(false);
+    expect(publicFacade).toMatchObject({
+      openingIds: ['window-kitchen', 'window-living-dining', 'window-open-zone'],
+      planOpeningWidthIn: 372,
+      actualCompassOrientation: 'unmapped'
+    });
+    expect(
+      strategy.panelIntents
+        .filter((panel) => panel.role === 'sleeping-suite')
+        .every((panel) => panel.egress === 'professional-determination-required')
+    ).toBe(true);
   });
 
   it('creates a complete professional-review intake without claiming construction readiness', () => {
@@ -128,7 +179,7 @@ describe('Threshold Dwelling dimension candidate', () => {
 
     expect(register.schemaVersion).toBe('workway.professional-review-packet.v1');
     expect(register.projectId).toBe(THRESHOLD_DWELLING_DIMENSION_CANDIDATE.id);
-    expect(register.projectRevision).toBe('0.6');
+    expect(register.projectRevision).toBe('0.7');
     expect(register.constructionReady).toBe(false);
     expect(register.determinations).toHaveLength(
       THRESHOLD_DWELLING_PROFESSIONAL_REVIEW_REQUIREMENTS.length
