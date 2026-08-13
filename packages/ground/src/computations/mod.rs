@@ -130,4 +130,7 @@ pub enum ComputationError {
     
     #[error("Unsupported language: {0}")]
     UnsupportedLanguage(String),
+
+    #[error("Analysis timed out")]
+    Timeout,
 }
