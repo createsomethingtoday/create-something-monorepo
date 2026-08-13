@@ -1,0 +1,21 @@
+{
+  "$schema": "create-something/runbook@1",
+  "id": "runbook-demo-operator-handoff",
+  "playbook": {
+    "id": "playbook-operator-handoff",
+    "version": "1.0.0"
+  },
+  "title": "Synthetic Notion operator handoff",
+  "owner": "Demo Operator",
+  "approvalStatus": "review",
+  "target": "Disposable Notion workspace approved for the hosted smoke",
+  "rollbackPlan": "Disable the Worker, preserve the receipt, and trash only the uniquely named demo resources after readback.",
+  "steps": [
+    { "id": "confirm-target", "status": "pending" },
+    { "id": "run-readiness", "status": "ready" },
+    { "id": "preview-instantiation", "status": "ready" },
+    { "id": "deploy-worker", "status": "blocked_on_disposable_target_approval" },
+    { "id": "verify-and-receipt", "status": "blocked_on_disposable_target_approval" }
+  ],
+  "evidence": ["evidence-demo-map", "evidence-demo-smoke", "evidence-demo-approval"]
+}

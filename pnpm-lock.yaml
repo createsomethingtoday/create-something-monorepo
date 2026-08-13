@@ -3068,6 +3068,28 @@ importers:
         specifier: ^4.103.0
         version: 4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
+  packages/notion-operator-playbook:
+    dependencies:
+      '@notionhq/client':
+        specifier: ^5.25.2
+        version: 5.25.2
+      '@notionhq/workers':
+        specifier: ^0.8.10
+        version: 0.8.10(@notionhq/client@5.25.2)
+    devDependencies:
+      '@types/node':
+        specifier: 24.10.9
+        version: 24.10.9
+      esbuild:
+        specifier: ^0.24.2
+        version: 0.24.2
+      tsx:
+        specifier: 4.21.0
+        version: 4.21.0
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
   packages/notion-sync-mcp:
     dependencies:
       '@create-something/mcp-core':
@@ -9019,6 +9041,10 @@ packages:
     resolution: {integrity: sha512-l7WqTCpQqC+HibkB9chghONQTYcxNQT0/rOJemBfmuKQRTu2vuV8B3yA395iKaUdDo7HI+0KvQaz9687Xskzkw==}
     engines: {node: '>=12'}
 
+  '@notionhq/client@5.25.2':
+    resolution: {integrity: sha512-kbaCZxiTxuWS7nTP29s3q9qbfMGd4cyfjMMdpVr7vK7SuB+0C6zBAP1sw8Gx/HKa+giWGnReuFovamN696Qy8w==}
+    engines: {node: '>=18'}
+
   '@notionhq/client@5.9.0':
     resolution: {integrity: sha512-TvAVMfwtVv61hsPrRfB9ehgzSjX6DaAi1ZRAnpg8xFjzaXhzhEfbO0PhBRm3ecSv1azDuO2kBuyQHh2/z7G4YQ==}
     engines: {node: '>=18'}
@@ -9028,6 +9054,13 @@ packages:
     engines: {node: '>=22.0.0', npm: '>=10.9.2'}
     peerDependencies:
       '@notionhq/client': ^2.2.15
+
+  '@notionhq/workers@0.8.10':
+    resolution: {integrity: sha512-9KthR8/1zKl5pQLXFZeUM6fAtlpHkyu0WphD0RWbMmFQYj+bNFiUOB/MrivhaE3jlLXWLJ7zHYIS4Tkmm3rCZg==}
+    engines: {node: '>=22.0.0', npm: '>=10.9.2'}
+    hasBin: true
+    peerDependencies:
+      '@notionhq/client': '>=2.2.15'
 
   '@openai/agents-core@0.13.5':
     resolution: {integrity: sha512-RI9OwHG94c6ZTLNeEB7mfIpHbncgVxu4YElAmCAhq04EqLPzsLyouWhDgli8wZL/IhN/cYTaBwHvxktFzEbeyQ==}
@@ -24892,6 +24925,8 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
+  '@notionhq/client@5.25.2': {}
+
   '@notionhq/client@5.9.0': {}
 
   '@notionhq/workers@0.3.0(@notionhq/client@2.3.0)':
@@ -24899,6 +24934,13 @@ snapshots:
       '@notionhq/client': 2.3.0
       ajv: 8.17.1
       ajv-formats: 3.0.1(ajv@8.17.1)
+
+  '@notionhq/workers@0.8.10(@notionhq/client@5.25.2)':
+    dependencies:
+      '@notionhq/client': 5.25.2
+      ajv: 8.17.1
+      ajv-formats: 3.0.1(ajv@8.17.1)
+      rolldown: 1.2.0
 
   '@openai/agents-core@0.13.5(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
     dependencies:

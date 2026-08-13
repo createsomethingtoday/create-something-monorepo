@@ -1,0 +1,40 @@
+{
+  "name": "@create-something/notion-operator-playbook",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Sanitized Notion Worker reference for governed Playbooks, Runbooks, and receipts.",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc && node scripts/build-worker.mjs",
+    "check": "pnpm test && pnpm typecheck && pnpm build && pnpm manifest:check",
+    "demo": "pnpm build && node scripts/run-local-demo.mjs",
+    "manifest": "pnpm build && node scripts/print-manifest.mjs",
+    "manifest:check": "node scripts/check-manifest.mjs",
+    "receipt": "pnpm build && node scripts/print-local-receipt.mjs",
+    "test": "node --import tsx --test src/*.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "dependencies": {
+    "@notionhq/client": "^5.25.2",
+    "@notionhq/workers": "^0.8.10"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "esbuild": "^0.24.2",
+    "tsx": "4.21.0",
+    "typescript": "^5.9.3"
+  },
+  "keywords": [
+    "notion",
+    "notion-workers",
+    "playbook",
+    "runbook",
+    "create-something"
+  ],
+  "author": "CREATE SOMETHING <hello@createsomething.agency>",
+  "license": "MIT"
+}
