@@ -7,6 +7,7 @@ export { default as BackNavigation } from './BackNavigation.svelte';
 
 // Asset components
 export { default as AssetsDisplay } from './AssetsDisplay.svelte';
+export { default as AssetWorkQueue } from './AssetWorkQueue.svelte';
 export { default as AssetTableRow } from './AssetTableRow.svelte';
 export { default as ActionsDropdown } from './ActionsDropdown.svelte';
 export { default as StatusBadge } from './StatusBadge.svelte';
