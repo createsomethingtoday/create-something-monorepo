@@ -3,12 +3,28 @@
 //! This crate owns no rendering and makes no construction-readiness claim.
 
 pub mod change_proposal;
+pub mod composer;
+pub mod project_graph;
 pub mod spatial_package;
 
 pub use change_proposal::{
     threshold_dwelling_kitchen_island_clearance_proposal_v08, validate_change_proposal,
     ChangeProposal, ChangeProposalValidation, DeterministicOperation, MeasurementDelta,
     CHANGE_PROPOSAL_SCHEMA_VERSION,
+};
+pub use composer::{
+    decide_composer_proposal, interpret_threshold_dwelling_composer_intent, ComposerDecision,
+    ComposerDecisionReceipt, ComposerInterpretation,
+};
+pub use project_graph::{
+    project_client_evidence_readiness, threshold_dwelling_evidence_manifest_v08,
+    threshold_dwelling_project_graph_v08, validate_private_evidence_manifest,
+    validate_project_graph, ClientEvidenceReadiness, ClientEvidenceReadinessEntry,
+    DimensionTruthScope, EvidenceReference, EvidenceSourceClass, PrivateEvidenceManifest,
+    PrivateEvidenceManifestValidation, PrivateEvidenceRecord, PrivateEvidenceReviewStatus,
+    ProjectGraph, ProjectGraphValidation, SemanticEntity, SemanticEntityKind,
+    CLIENT_EVIDENCE_READINESS_SCHEMA_VERSION, PRIVATE_EVIDENCE_MANIFEST_SCHEMA_VERSION,
+    PROJECT_GRAPH_SCHEMA_VERSION,
 };
 pub use spatial_package::{
     threshold_dwelling_spatial_package_v08, validate_spatial_package, ClientAsset,
