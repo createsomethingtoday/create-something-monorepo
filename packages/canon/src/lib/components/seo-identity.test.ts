@@ -89,7 +89,8 @@ describe('SEO public identity graph', () => {
     expect(head).toContain('property="og:image:type" content="image/png"');
     expect(head).toContain('property="og:image:width" content="1200"');
     expect(head).toContain('property="og:image:height" content="630"');
-    expect(head).toContain(`property="twitter:image" content="${socialImage}"`);
+    expect(head).toContain(`name="twitter:image" content="${socialImage}"`);
+    expect(head).toContain('name="twitter:image:alt"');
   });
 
   it('makes Article records reuse the page image and canonical Organization', () => {
