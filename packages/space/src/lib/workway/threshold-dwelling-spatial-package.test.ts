@@ -34,7 +34,9 @@ test('derives a client-safe Rev 0.8 package from the Canon living-system revisio
     renderedMaterialIds: ['M-INT-002', 'M-INT-001', 'M-ENV-002', 'M-INT-003'],
     constructionReady: false
   });
-  assert.deepEqual(packageValue.physicalSceneContract, {
+  const { evidenceFacts, ...physicalSceneContractWithoutEvidenceFacts } =
+    packageValue.physicalSceneContract;
+  assert.deepEqual(physicalSceneContractWithoutEvidenceFacts, {
     issuanceId: 'threshold-dwelling-rev-0.8-physical-scene-gate',
     status: 'blocked-vertical-geometry-unissued',
     coordinateTruth: 'revised-plan-horizontal-only',
@@ -53,6 +55,25 @@ test('derives a client-safe Rev 0.8 package from the Canon living-system revisio
     canGeneratePhysicalOneToOneScene: false,
     constructionReady: false
   });
+  assert.equal(evidenceFacts.length, 9);
+  assert.deepEqual(
+    evidenceFacts.map((fact) => fact.id),
+    packageValue.physicalSceneContract.unissuedFactIds
+  );
+  assert.deepEqual(
+    evidenceFacts.find(
+      (fact) => fact.id === 'door-opening-geometry'
+    ),
+    {
+      id: 'door-opening-geometry',
+      title: 'Door-opening geometry',
+      evidenceStatus: 'missing',
+      requiredReviewerRoles: [
+        'Architect or qualified residential design professional',
+        'Authority having jurisdiction and project team'
+      ]
+    }
+  );
   assert.equal(validation.clientSafe, true);
   assert.deepEqual(validation.issueIds, []);
   assert.deepEqual(
@@ -231,6 +252,21 @@ test('rejects a physical-scene contract that tries to include private source doc
     physicalSceneContract: {
       ...packageValue.physicalSceneContract,
       clientSourceDocuments: 'included' as never
+    }
+  };
+
+  assert.deepEqual(validateSpatialPackage(invalid).issueIds, ['invalid-physical-scene-contract']);
+});
+
+test('rejects an evidence-readiness summary that tries to mark an unissued fact accepted', () => {
+  const packageValue = createThresholdDwellingSpatialPackage();
+  const invalid = {
+    ...packageValue,
+    physicalSceneContract: {
+      ...packageValue.physicalSceneContract,
+      evidenceFacts: packageValue.physicalSceneContract.evidenceFacts.map((fact, index) =>
+        index === 0 ? { ...fact, evidenceStatus: 'accepted' as never } : fact
+      )
     }
   };
 

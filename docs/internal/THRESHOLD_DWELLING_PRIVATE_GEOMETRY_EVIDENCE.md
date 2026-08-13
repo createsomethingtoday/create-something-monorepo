@@ -17,7 +17,7 @@ private project graph: opaque document ID + fact-scoped evidence record
         ↓ named reviewer accepts one asserted geometry value
 private physical-scene issuance
         ↓ source-free projection only
-browser / iPad / Vision Pro spatial package
+browser / iPad / Vision Pro spatial package: source-free readiness projection
 ```
 
 An accepted record can issue only its matching fact. For example, an accepted door schedule/elevation record can populate `door-opening-geometry`; it cannot silently establish wall thicknesses, structural support, glass geometry, roof geometry, or site grade.
@@ -30,11 +30,12 @@ The source-free projection contains only:
 
 - the issuance identifier and revision-scoped gate status;
 - the horizontal-coordinate truth label;
+- a readiness item for each geometry fact: its ID, plain-language title, submitted/accepted/missing state, and required reviewer disciplines;
 - fact IDs still unissued;
 - whether a physical 1:1 scene is eligible for visualization; and
 - `clientSourceDocuments: "excluded"` plus `constructionReady: false`.
 
-It deliberately excludes the evidence records and opaque document identifiers themselves. The WorkWay spatial package repeats the same exclusion at its outer level and at its physical-scene contract level. Rust and Swift validators reject a package that tries to include private source documents.
+The readiness items are not evidence records. They deliberately exclude opaque document identifiers, asserted values, document locations, source references, reviewer identities, timestamps, and acceptance rationale. The WorkWay spatial package repeats the same source-document exclusion at its outer level and at its physical-scene contract level. Rust and Swift validators reject a package that tries to include private source documents, and the browser renders only the readiness projection.
 
 ## Future upload implementation requirements
 

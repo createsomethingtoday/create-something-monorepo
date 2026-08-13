@@ -60,8 +60,21 @@ pub struct PhysicalSceneContract {
     pub coordinate_truth: String,
     pub client_source_documents: String,
     pub unissued_fact_ids: Vec<String>,
+    pub evidence_facts: Vec<PhysicalSceneEvidenceFact>,
     pub can_generate_physical_one_to_one_scene: bool,
     pub construction_ready: bool,
+}
+
+/// Client-safe request metadata for one physical-scene geometry fact.
+/// It intentionally contains no document reference, asserted value, or
+/// reviewer identity.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PhysicalSceneEvidenceFact {
+    pub id: String,
+    pub title: String,
+    pub evidence_status: String,
+    pub required_reviewer_roles: Vec<String>,
 }
 
 /// A scene representation consumers may request after pre-caching a package.
@@ -273,6 +286,25 @@ pub fn validate_spatial_package(package: &SpatialPackage) -> SpatialPackageValid
     } else {
         "blocked-vertical-geometry-unissued"
     };
+    let evidence_fact_ids = package
+        .physical_scene_contract
+        .evidence_facts
+        .iter()
+        .map(|fact| fact.id.as_str())
+        .collect::<Vec<_>>();
+    let evidence_fact_unissued_ids = package
+        .physical_scene_contract
+        .evidence_facts
+        .iter()
+        .filter(|fact| fact.evidence_status != "accepted")
+        .map(|fact| fact.id.as_str())
+        .collect::<BTreeSet<_>>();
+    let declared_unissued_fact_ids = package
+        .physical_scene_contract
+        .unissued_fact_ids
+        .iter()
+        .map(String::as_str)
+        .collect::<BTreeSet<_>>();
     if package
         .physical_scene_contract
         .issuance_id
@@ -287,6 +319,25 @@ pub fn validate_spatial_package(package: &SpatialPackage) -> SpatialPackageValid
                 .iter()
                 .map(String::as_str),
         )
+        || package.physical_scene_contract.evidence_facts.is_empty()
+        || contains_duplicate_ids(evidence_fact_ids)
+        || package
+            .physical_scene_contract
+            .evidence_facts
+            .iter()
+            .any(|fact| {
+                fact.title.trim().is_empty()
+                    || fact.required_reviewer_roles.is_empty()
+                    || fact
+                        .required_reviewer_roles
+                        .iter()
+                        .any(|role| role.trim().is_empty())
+                    || !matches!(
+                        fact.evidence_status.as_str(),
+                        "missing" | "submitted" | "accepted"
+                    )
+            })
+        || evidence_fact_unissued_ids != declared_unissued_fact_ids
         || package.physical_scene_contract.status != expected_physical_scene_status
         || (package
             .physical_scene_contract
@@ -496,6 +547,90 @@ pub fn threshold_dwelling_spatial_package_v08() -> SpatialPackage {
                 "structural-support-and-lateral-geometry".into(),
                 "mep-service-coordination-geometry".into(),
                 "exterior-grade-and-threshold-geometry".into(),
+            ],
+            evidence_facts: vec![
+                PhysicalSceneEvidenceFact {
+                    id: "finished-floor-and-site-datum".into(),
+                    title: "Finished-floor elevation and site datum".into(),
+                    evidence_status: "missing".into(),
+                    required_reviewer_roles: vec![
+                        "Registered professional land surveyor".into(),
+                        "Architect or qualified residential design professional".into(),
+                    ],
+                },
+                PhysicalSceneEvidenceFact {
+                    id: "exterior-wall-assembly-geometry".into(),
+                    title: "Exterior-wall assembly geometry".into(),
+                    evidence_status: "missing".into(),
+                    required_reviewer_roles: vec![
+                        "Architect or qualified residential design professional".into(),
+                        "Energy rater or qualified energy-compliance professional".into(),
+                    ],
+                },
+                PhysicalSceneEvidenceFact {
+                    id: "interior-partition-geometry".into(),
+                    title: "Interior-partition geometry".into(),
+                    evidence_status: "missing".into(),
+                    required_reviewer_roles: vec![
+                        "Architect or qualified residential design professional".into(),
+                        "Licensed or jurisdiction-qualified MEP professionals".into(),
+                    ],
+                },
+                PhysicalSceneEvidenceFact {
+                    id: "roof-and-ceiling-geometry".into(),
+                    title: "Roof and ceiling geometry".into(),
+                    evidence_status: "missing".into(),
+                    required_reviewer_roles: vec![
+                        "Architect or qualified residential design professional".into(),
+                        "Licensed structural engineer".into(),
+                        "Energy rater or qualified energy-compliance professional".into(),
+                    ],
+                },
+                PhysicalSceneEvidenceFact {
+                    id: "door-opening-geometry".into(),
+                    title: "Door-opening geometry".into(),
+                    evidence_status: "missing".into(),
+                    required_reviewer_roles: vec![
+                        "Architect or qualified residential design professional".into(),
+                        "Authority having jurisdiction and project team".into(),
+                    ],
+                },
+                PhysicalSceneEvidenceFact {
+                    id: "window-and-glass-opening-geometry".into(),
+                    title: "Window and glass-opening geometry".into(),
+                    evidence_status: "missing".into(),
+                    required_reviewer_roles: vec![
+                        "Architect or qualified residential design professional".into(),
+                        "Licensed structural engineer".into(),
+                        "Energy rater or qualified energy-compliance professional".into(),
+                        "Authority having jurisdiction and project team".into(),
+                    ],
+                },
+                PhysicalSceneEvidenceFact {
+                    id: "structural-support-and-lateral-geometry".into(),
+                    title: "Structural support and lateral geometry".into(),
+                    evidence_status: "missing".into(),
+                    required_reviewer_roles: vec!["Licensed structural engineer".into()],
+                },
+                PhysicalSceneEvidenceFact {
+                    id: "mep-service-coordination-geometry".into(),
+                    title: "MEP service-coordination geometry".into(),
+                    evidence_status: "missing".into(),
+                    required_reviewer_roles: vec![
+                        "Licensed or jurisdiction-qualified MEP professionals".into(),
+                        "Energy rater or qualified energy-compliance professional".into(),
+                    ],
+                },
+                PhysicalSceneEvidenceFact {
+                    id: "exterior-grade-and-threshold-geometry".into(),
+                    title: "Exterior grade and threshold geometry".into(),
+                    evidence_status: "missing".into(),
+                    required_reviewer_roles: vec![
+                        "Registered professional land surveyor".into(),
+                        "Architect or qualified residential design professional".into(),
+                        "Authority having jurisdiction and project team".into(),
+                    ],
+                },
             ],
             can_generate_physical_one_to_one_scene: false,
             construction_ready: false,

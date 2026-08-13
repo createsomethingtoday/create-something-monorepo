@@ -26,6 +26,10 @@
 
   const massingGuide = THRESHOLD_DWELLING_MASSING_GUIDE;
   const massingGeometry = createThresholdDwellingMassingGeometry(massingGuide);
+  const physicalSceneEvidenceFacts = spatialPackage.physicalSceneContract.evidenceFacts;
+  const acceptedPhysicalSceneEvidenceCount = physicalSceneEvidenceFacts.filter(
+    (fact) => fact.evidenceStatus === 'accepted'
+  ).length;
 
   let mode = $state<'tabletop' | 'massing' | 'chapter'>('tabletop');
   let activeChapterId = $state('kitchen');
@@ -234,6 +238,29 @@
               accepted geometry.
             </span>
           </aside>
+
+          <details class="evidence-readiness" data-testid="physical-scene-evidence-readiness">
+            <summary>
+              Evidence readiness · {acceptedPhysicalSceneEvidenceCount} of {physicalSceneEvidenceFacts.length} accepted
+            </summary>
+            <p>
+              This client receives status and required reviewer roles only. Private documents, source
+              references, asserted values, and reviewer identities remain outside the spatial package.
+            </p>
+            <ul>
+              {#each physicalSceneEvidenceFacts as fact}
+                <li>
+                  <div>
+                    <strong>{fact.title}</strong>
+                    <span class:accepted={fact.evidenceStatus === 'accepted'} class="evidence-status">
+                      {fact.evidenceStatus}
+                    </span>
+                  </div>
+                  <span>Review: {fact.requiredReviewerRoles.join(' · ')}</span>
+                </li>
+              {/each}
+            </ul>
+          </details>
 
           <div class="tabletop-actions">
             <button class="secondary-action" onclick={returnToTabletop} data-testid="massing-return-tabletop">
@@ -702,6 +729,69 @@
     color: #cbc0a8;
     font-size: 0.76rem;
     line-height: 1.5;
+  }
+
+  .evidence-readiness {
+    padding: 0.8rem 0.9rem;
+    border: 1px solid #56574f;
+    background: #1c1e1a;
+  }
+
+  .evidence-readiness summary {
+    cursor: pointer;
+    color: #e7e2d4;
+    font: 0.74rem ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  .evidence-readiness > p {
+    max-width: 52rem;
+    margin: 0.8rem 0;
+    color: #b8b5aa;
+    font-size: 0.75rem;
+    line-height: 1.5;
+  }
+
+  .evidence-readiness ul {
+    display: grid;
+    gap: 0.4rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .evidence-readiness li {
+    display: grid;
+    gap: 0.16rem;
+    padding: 0.55rem 0;
+    border-top: 1px solid #3c3e37;
+  }
+
+  .evidence-readiness li > div {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.45rem;
+  }
+
+  .evidence-readiness strong {
+    color: #e4e0d4;
+    font-size: 0.78rem;
+  }
+
+  .evidence-readiness li > span {
+    color: #a9a79c;
+    font-size: 0.72rem;
+    line-height: 1.4;
+  }
+
+  .evidence-status {
+    color: #e1b966;
+    font: 0.65rem ui-monospace, SFMono-Regular, Menlo, monospace;
+    text-transform: uppercase;
+  }
+
+  .evidence-status.accepted {
+    color: #a9ce9d;
   }
 
   .primary-action,

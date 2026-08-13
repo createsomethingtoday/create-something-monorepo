@@ -15,8 +15,10 @@ import {
 import {
   THRESHOLD_DWELLING_PHYSICAL_SCENE_ISSUANCE,
   type ThresholdDwellingPhysicalSceneFactId,
+  type ThresholdDwellingPhysicalSceneIssuance,
   type ThresholdDwellingPhysicalSceneStatus
 } from '@create-something/canon/experiments/threshold-dwelling/geometry-issuance';
+import { THRESHOLD_DWELLING_PROFESSIONAL_REVIEW_REQUIREMENTS } from '@create-something/canon/experiments/threshold-dwelling/professional-review';
 
 export const WORKWAY_SPATIAL_PACKAGE_SCHEMA_VERSION = 'workway.spatial-package.v1' as const;
 
@@ -91,8 +93,17 @@ export interface WorkWayPhysicalSceneContract {
   coordinateTruth: 'revised-plan-horizontal-only';
   clientSourceDocuments: 'excluded';
   unissuedFactIds: readonly ThresholdDwellingPhysicalSceneFactId[];
+  evidenceFacts: readonly WorkWayPhysicalSceneEvidenceFact[];
   canGeneratePhysicalOneToOneScene: boolean;
   constructionReady: false;
+}
+
+/** Client-safe request metadata for one physical-scene geometry fact. */
+export interface WorkWayPhysicalSceneEvidenceFact {
+  id: ThresholdDwellingPhysicalSceneFactId;
+  title: string;
+  evidenceStatus: 'missing' | 'submitted' | 'accepted';
+  requiredReviewerRoles: readonly string[];
 }
 
 export interface WorkWaySpatialPackage {
@@ -194,6 +205,30 @@ const assets = [
 
 function unique<T>(values: readonly T[]): T[] {
   return [...new Set(values)];
+}
+
+function physicalSceneEvidenceFacts(
+  issuance: ThresholdDwellingPhysicalSceneIssuance
+): WorkWayPhysicalSceneEvidenceFact[] {
+  const requirementById = new Map(
+    THRESHOLD_DWELLING_PROFESSIONAL_REVIEW_REQUIREMENTS.map((requirement) => [
+      requirement.id,
+      requirement
+    ])
+  );
+
+  return issuance.facts.map((fact) => ({
+    id: fact.id,
+    title: fact.title,
+    evidenceStatus: fact.evidenceStatus,
+    requiredReviewerRoles: unique(
+      fact.requiredProfessionalReviewIds.map((id) => {
+        const requirement = requirementById.get(id);
+        if (!requirement) throw new Error(`Missing professional-review requirement for ${id}.`);
+        return requirement.responsibleRole;
+      })
+    )
+  }));
 }
 
 function massingMaterialIds(): string[] {
@@ -307,6 +342,7 @@ export function createThresholdDwellingSpatialPackage(): WorkWaySpatialPackage {
       coordinateTruth: physicalSceneIssuance.coordinateTruth,
       clientSourceDocuments: physicalSceneProjection.clientSourceDocuments,
       unissuedFactIds: physicalSceneProjection.unissuedFactIds,
+      evidenceFacts: physicalSceneEvidenceFacts(physicalSceneIssuance),
       canGeneratePhysicalOneToOneScene: physicalSceneProjection.canGeneratePhysicalOneToOneScene,
       constructionReady: false
     },
@@ -512,11 +548,27 @@ export function validateSpatialPackage(
   const expectedPhysicalSceneStatus = physicalScene.canGeneratePhysicalOneToOneScene
     ? 'eligible-with-professional-review'
     : 'blocked-vertical-geometry-unissued';
+  const evidenceFactIds = physicalScene.evidenceFacts.map((fact) => fact.id);
+  const evidenceFactUnissuedIds = physicalScene.evidenceFacts
+    .filter((fact) => fact.evidenceStatus !== 'accepted')
+    .map((fact) => fact.id)
+    .sort();
+  const declaredUnissuedFactIds = [...physicalScene.unissuedFactIds].sort();
   if (
     !physicalScene.issuanceId.trim() ||
     physicalScene.coordinateTruth !== 'revised-plan-horizontal-only' ||
     physicalScene.clientSourceDocuments !== 'excluded' ||
     duplicateIds(physicalScene.unissuedFactIds) ||
+    !physicalScene.evidenceFacts.length ||
+    duplicateIds(evidenceFactIds) ||
+    physicalScene.evidenceFacts.some(
+      (fact) =>
+        !fact.title.trim() ||
+        !fact.requiredReviewerRoles.length ||
+        fact.requiredReviewerRoles.some((role) => !role.trim()) ||
+        !['missing', 'submitted', 'accepted'].includes(fact.evidenceStatus)
+    ) ||
+    evidenceFactUnissuedIds.join(',') !== declaredUnissuedFactIds.join(',') ||
     physicalScene.status !== expectedPhysicalSceneStatus ||
     (physicalScene.canGeneratePhysicalOneToOneScene && physicalScene.unissuedFactIds.length > 0) ||
     (!physicalScene.canGeneratePhysicalOneToOneScene && physicalScene.unissuedFactIds.length === 0) ||

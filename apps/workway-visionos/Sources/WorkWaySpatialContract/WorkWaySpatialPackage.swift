@@ -30,11 +30,19 @@ public struct WorkWaySpatialPackage: Codable, Equatable, Sendable {
     /// A renderer-facing truth gate for physical 1:1 vertical scene geometry.
     /// It can make a scene eligible for visualization, never construction.
     public struct PhysicalSceneContract: Codable, Equatable, Sendable {
+        public struct EvidenceFact: Codable, Equatable, Sendable {
+            public let id: String
+            public let title: String
+            public let evidenceStatus: String
+            public let requiredReviewerRoles: [String]
+        }
+
         public let issuanceId: String
         public let status: String
         public let coordinateTruth: String
         public let clientSourceDocuments: String
         public let unissuedFactIds: [String]
+        public let evidenceFacts: [EvidenceFact]
         public let canGeneratePhysicalOneToOneScene: Bool
         public let constructionReady: Bool
     }
@@ -165,10 +173,28 @@ public struct WorkWaySpatialPackage: Codable, Equatable, Sendable {
         let expectedPhysicalSceneStatus = physicalSceneContract.canGeneratePhysicalOneToOneScene
             ? "eligible-with-professional-review"
             : "blocked-vertical-geometry-unissued"
+        let evidenceFactIDs = physicalSceneContract.evidenceFacts.map(\.id)
+        let evidenceFactUnissuedIDs = Set(
+            physicalSceneContract.evidenceFacts
+                .filter { $0.evidenceStatus != "accepted" }
+                .map(\.id)
+        )
+        let declaredUnissuedFactIDs = Set(physicalSceneContract.unissuedFactIds)
         if physicalSceneContract.issuanceId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
             physicalSceneContract.coordinateTruth != "revised-plan-horizontal-only" ||
             physicalSceneContract.clientSourceDocuments != "excluded" ||
             Set(physicalSceneContract.unissuedFactIds).count != physicalSceneContract.unissuedFactIds.count ||
+            physicalSceneContract.evidenceFacts.isEmpty ||
+            Set(evidenceFactIDs).count != evidenceFactIDs.count ||
+            physicalSceneContract.evidenceFacts.contains(where: {
+                $0.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+                    $0.requiredReviewerRoles.isEmpty ||
+                    $0.requiredReviewerRoles.contains(where: {
+                        $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                    }) ||
+                    !["missing", "submitted", "accepted"].contains($0.evidenceStatus)
+            }) ||
+            evidenceFactUnissuedIDs != declaredUnissuedFactIDs ||
             physicalSceneContract.status != expectedPhysicalSceneStatus ||
             (physicalSceneContract.canGeneratePhysicalOneToOneScene && !physicalSceneContract.unissuedFactIds.isEmpty) ||
             (!physicalSceneContract.canGeneratePhysicalOneToOneScene && physicalSceneContract.unissuedFactIds.isEmpty) ||

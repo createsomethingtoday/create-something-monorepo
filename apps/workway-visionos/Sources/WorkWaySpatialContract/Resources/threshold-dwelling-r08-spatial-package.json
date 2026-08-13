@@ -26,6 +26,62 @@
       "mep-service-coordination-geometry",
       "exterior-grade-and-threshold-geometry"
     ],
+    "evidenceFacts": [
+      {
+        "id": "finished-floor-and-site-datum",
+        "title": "Finished-floor elevation and site datum",
+        "evidenceStatus": "missing",
+        "requiredReviewerRoles": ["Registered professional land surveyor", "Architect or qualified residential design professional"]
+      },
+      {
+        "id": "exterior-wall-assembly-geometry",
+        "title": "Exterior-wall assembly geometry",
+        "evidenceStatus": "missing",
+        "requiredReviewerRoles": ["Architect or qualified residential design professional", "Energy rater or qualified energy-compliance professional"]
+      },
+      {
+        "id": "interior-partition-geometry",
+        "title": "Interior-partition geometry",
+        "evidenceStatus": "missing",
+        "requiredReviewerRoles": ["Architect or qualified residential design professional", "Licensed or jurisdiction-qualified MEP professionals"]
+      },
+      {
+        "id": "roof-and-ceiling-geometry",
+        "title": "Roof and ceiling geometry",
+        "evidenceStatus": "missing",
+        "requiredReviewerRoles": ["Architect or qualified residential design professional", "Licensed structural engineer", "Energy rater or qualified energy-compliance professional"]
+      },
+      {
+        "id": "door-opening-geometry",
+        "title": "Door-opening geometry",
+        "evidenceStatus": "missing",
+        "requiredReviewerRoles": ["Architect or qualified residential design professional", "Authority having jurisdiction and project team"]
+      },
+      {
+        "id": "window-and-glass-opening-geometry",
+        "title": "Window and glass-opening geometry",
+        "evidenceStatus": "missing",
+        "requiredReviewerRoles": ["Architect or qualified residential design professional", "Licensed structural engineer", "Energy rater or qualified energy-compliance professional", "Authority having jurisdiction and project team"]
+      },
+      {
+        "id": "structural-support-and-lateral-geometry",
+        "title": "Structural support and lateral geometry",
+        "evidenceStatus": "missing",
+        "requiredReviewerRoles": ["Licensed structural engineer"]
+      },
+      {
+        "id": "mep-service-coordination-geometry",
+        "title": "MEP service-coordination geometry",
+        "evidenceStatus": "missing",
+        "requiredReviewerRoles": ["Licensed or jurisdiction-qualified MEP professionals", "Energy rater or qualified energy-compliance professional"]
+      },
+      {
+        "id": "exterior-grade-and-threshold-geometry",
+        "title": "Exterior grade and threshold geometry",
+        "evidenceStatus": "missing",
+        "requiredReviewerRoles": ["Registered professional land surveyor", "Architect or qualified residential design professional", "Authority having jurisdiction and project team"]
+      }
+    ],
     "canGeneratePhysicalOneToOneScene": false,
     "constructionReady": false
   },
