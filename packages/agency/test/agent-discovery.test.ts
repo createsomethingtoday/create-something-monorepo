@@ -88,7 +88,12 @@ test('robots tells AI crawlers to allow search and agent input, not model traini
 
 test('homepage responses carry the catalog, API, docs, and manifest discovery links', async () => {
 	const response = withAgentDiscoveryLinks(
-		new Response('<!doctype html>', { headers: { 'content-type': 'text/html; charset=utf-8' } })
+		new Response('<!doctype html>', {
+			headers: {
+				'content-type': 'text/html; charset=utf-8',
+				link: '<https://createsomething.agency/_app/immutable/entry.js>; rel="modulepreload"'
+			}
+		})
 	);
 	const linkText = response.headers.get('link') ?? '';
 
@@ -96,6 +101,8 @@ test('homepage responses carry the catalog, API, docs, and manifest discovery li
 	assert.match(linkText, /rel="service-desc"/);
 	assert.match(linkText, /rel="service-doc"/);
 	assert.match(linkText, /rel="describedby"/);
+	assert.match(linkText, /^<https:\/\/createsomething\.agency\/\.well-known\/api-catalog>; rel="api-catalog"/);
+	assert.match(linkText, /rel="modulepreload"$/);
 	assert.equal(response.headers.get('content-type'), 'text/html; charset=utf-8');
 });
 

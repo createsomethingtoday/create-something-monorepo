@@ -23,7 +23,14 @@ const discoveryLinkValues = [
 /** Adds only public, source-backed discovery links to a response. */
 export function withAgentDiscoveryLinks(response: Response): Response {
 	const headers = new Headers(response.headers);
-	for (const value of discoveryLinkValues) headers.append('Link', value);
+	// SvelteKit emits many preload links. Put discovery relations first in the
+	// combined header so bounded Link parsers encounter the machine interface
+	// before asset hints.
+	const existingLinkValues = headers.get('Link');
+	headers.set(
+		'Link',
+		[...discoveryLinkValues, existingLinkValues].filter(Boolean).join(', ')
+	);
 
 	return new Response(response.body, {
 		status: response.status,
