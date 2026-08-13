@@ -1,6 +1,8 @@
 use workway_core::{
-    assess_professional_review, threshold_dwelling_baseline_v05, EvidenceRecord, EvidenceStatus,
-    PlanZone, ProfessionalReviewRequirement, ProjectBaseline, ProjectStatus,
+    assess_professional_review, threshold_dwelling_baseline_v05,
+    threshold_dwelling_determination_register_v05, DeterminationStatus, EvidenceRecord,
+    EvidenceStatus, PlanZone, ProfessionalReviewRequirement, ProjectBaseline, ProjectStatus,
+    PROFESSIONAL_REVIEW_PACKET_SCHEMA_VERSION,
 };
 
 #[test]
@@ -17,6 +19,38 @@ fn json_contract_keeps_project_and_readiness_fields_client_safe() {
     assert_eq!(
         review_json["missingRequirements"].as_array().map(Vec::len),
         Some(6)
+    );
+}
+
+#[test]
+fn determination_register_tracks_unissued_human_decisions_without_authority_to_construct() {
+    let register = threshold_dwelling_determination_register_v05();
+    let register_json = serde_json::to_value(&register).expect("determination register serializes");
+
+    assert_eq!(
+        register.schema_version,
+        PROFESSIONAL_REVIEW_PACKET_SCHEMA_VERSION
+    );
+    assert_eq!(register.project_id, "threshold-dwelling");
+    assert_eq!(register.project_revision, "0.5");
+    assert_eq!(register.determinations.len(), 6);
+    assert!(register
+        .determinations
+        .iter()
+        .all(|determination| determination.status == DeterminationStatus::NotRequested));
+    assert!(!register.construction_ready());
+    assert_eq!(
+        register_json["schemaVersion"],
+        PROFESSIONAL_REVIEW_PACKET_SCHEMA_VERSION
+    );
+    assert_eq!(register_json["constructionReady"], false);
+    assert_eq!(
+        register_json["determinations"][0]["id"],
+        "licensed-site-survey-determination"
+    );
+    assert_eq!(
+        register_json["determinations"][0]["requirementId"],
+        "licensed-site-survey"
     );
 }
 

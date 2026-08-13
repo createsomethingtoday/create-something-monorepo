@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   THRESHOLD_DWELLING_DIMENSION_CANDIDATE,
   THRESHOLD_DWELLING_FLOOR_PLAN,
+  THRESHOLD_DWELLING_PROFESSIONAL_DETERMINATION_REGISTER,
   THRESHOLD_DWELLING_PROFESSIONAL_REVIEW_REQUIREMENTS,
   assessThresholdDwellingProfessionalReview,
   validateThresholdDwellingDimensions
@@ -110,6 +111,21 @@ describe('Threshold Dwelling dimension candidate', () => {
         expect.objectContaining({ id: 'jurisdictional-determination', status: 'missing' })
       ])
     );
+  });
+
+  it('exposes a versioned register of unissued professional determinations', () => {
+    const register = THRESHOLD_DWELLING_PROFESSIONAL_DETERMINATION_REGISTER;
+
+    expect(register.schemaVersion).toBe('workway.professional-review-packet.v1');
+    expect(register.projectId).toBe(THRESHOLD_DWELLING_DIMENSION_CANDIDATE.id);
+    expect(register.projectRevision).toBe('0.5');
+    expect(register.constructionReady).toBe(false);
+    expect(register.determinations).toHaveLength(
+      THRESHOLD_DWELLING_PROFESSIONAL_REVIEW_REQUIREMENTS.length
+    );
+    expect(
+      register.determinations.every((determination) => determination.status === 'notRequested')
+    ).toBe(true);
   });
 
   it('permits a human determination request only after every review artifact is accepted', () => {

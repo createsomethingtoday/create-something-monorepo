@@ -1,4 +1,7 @@
-import type { ThresholdDwellingDimensionCandidate } from './dimensioned-project.js';
+import {
+  THRESHOLD_DWELLING_DIMENSION_CANDIDATE,
+  type ThresholdDwellingDimensionCandidate
+} from './dimensioned-project.js';
 
 /**
  * Evidence the Composer must receive before it can request a human
@@ -51,6 +54,37 @@ export interface ThresholdDwellingProfessionalReviewAssessment {
     'proposed-change previews',
     'decision capture'
   ];
+}
+
+/**
+ * Human-determined workflow state. `issued` can reference a responsible
+ * professional's external document but does not give WorkWay authority to
+ * authorize construction.
+ */
+export type ThresholdDwellingProfessionalDeterminationStatus =
+  | 'notRequested'
+  | 'requested'
+  | 'issued';
+
+export interface ThresholdDwellingProfessionalDetermination {
+  id: string;
+  requirementId: ThresholdDwellingProfessionalReviewRequirementId;
+  status: ThresholdDwellingProfessionalDeterminationStatus;
+  scope: string;
+  sourceDocumentId?: string;
+  issuedBy?: string;
+  issuerCredential?: string;
+  issuedAt?: string;
+  conditions: readonly string[];
+}
+
+/** A read model of determination progress, not a construction authorization. */
+export interface ThresholdDwellingProfessionalDeterminationRegister {
+  schemaVersion: 'workway.professional-review-packet.v1';
+  projectId: ThresholdDwellingDimensionCandidate['id'];
+  projectRevision: ThresholdDwellingDimensionCandidate['source']['revision'];
+  determinations: readonly ThresholdDwellingProfessionalDetermination[];
+  constructionReady: false;
 }
 
 export const THRESHOLD_DWELLING_PROFESSIONAL_REVIEW_REQUIREMENTS = [
@@ -121,6 +155,43 @@ export const THRESHOLD_DWELLING_PROFESSIONAL_REVIEW_REQUIREMENTS = [
     purpose: 'Confirm the actual project path rather than treating general guidance as a permit decision.'
   }
 ] as const satisfies readonly ThresholdDwellingProfessionalReviewRequirement[];
+
+const determinationScopeByRequirement: Record<
+  ThresholdDwellingProfessionalReviewRequirementId,
+  string
+> = {
+  'licensed-site-survey':
+    'Establish the parcel boundary, easements, topographic datum, and site reference.',
+  'coordinated-architectural-package':
+    'Coordinate revision 0.5 plans, elevations, sections, schedules, and assembly details.',
+  'structural-and-wind-design':
+    'Establish foundation, load path, wind/bracing criteria, connections, and roof framing.',
+  'mechanical-electrical-plumbing-design':
+    'Coordinate HVAC, electrical, plumbing, ventilation, condensate, and equipment clearances.',
+  'energy-compliance-package':
+    'Establish the jurisdiction-appropriate energy compliance basis for the selected envelope and systems.',
+  'jurisdictional-determination':
+    'Confirm zoning, plat, setbacks, access, permit path, and authority conditions for the actual parcel.'
+};
+
+/**
+ * The v0.5 register begins with no determination requested or issued. Future
+ * clients attach a revision-specific external document and named issuer; they
+ * may never infer a building permit from this data.
+ */
+export const THRESHOLD_DWELLING_PROFESSIONAL_DETERMINATION_REGISTER = {
+  schemaVersion: 'workway.professional-review-packet.v1',
+  projectId: THRESHOLD_DWELLING_DIMENSION_CANDIDATE.id,
+  projectRevision: THRESHOLD_DWELLING_DIMENSION_CANDIDATE.source.revision,
+  determinations: THRESHOLD_DWELLING_PROFESSIONAL_REVIEW_REQUIREMENTS.map((requirement) => ({
+    id: `${requirement.id}-determination`,
+    requirementId: requirement.id,
+    status: 'notRequested' as const,
+    scope: determinationScopeByRequirement[requirement.id],
+    conditions: []
+  })),
+  constructionReady: false
+} as const satisfies ThresholdDwellingProfessionalDeterminationRegister;
 
 function statusForRequirement(
   requirementId: ThresholdDwellingProfessionalReviewRequirementId,

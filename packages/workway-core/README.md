@@ -17,6 +17,8 @@ The v0.5 Threshold Dwelling fixture proves that a complete, non-overlapping 2,73
 
 Every requirement must carry reviewer-attested accepted evidence before the core permits a request for a professional determination. The core itself always returns `construction_ready = false`.
 
+`schemas/professional-determination-register.v1.schema.json` is the client-safe contract for the separate determination register. It preserves an unissued/requested/issued trail and requires a named, revision-specific external artifact when a row is `issued`; it cannot express construction authorization.
+
 ## Commands
 
 ```bash

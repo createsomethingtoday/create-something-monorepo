@@ -4,6 +4,10 @@
 
 use serde::{Deserialize, Serialize};
 
+/// Versioned, client-safe contract for professional-review evidence and
+/// determination progress. It is a workflow contract, never a permit.
+pub const PROFESSIONAL_REVIEW_PACKET_SCHEMA_VERSION: &str = "workway.professional-review-packet.v1";
+
 /// The only status available to an imported design until professionals attach
 /// and review the required source documents.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -166,7 +170,7 @@ impl DimensionValidation {
 /// Required discipline-specific evidence before a project can ask a human for
 /// a construction-readiness determination.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "kebab-case")]
 pub enum ProfessionalReviewRequirement {
     LicensedSiteSurvey,
     CoordinatedArchitecturalPackage,
@@ -185,6 +189,66 @@ impl ProfessionalReviewRequirement {
         Self::EnergyCompliancePackage,
         Self::JurisdictionalDetermination,
     ];
+
+    #[must_use]
+    pub const fn id(self) -> &'static str {
+        match self {
+            Self::LicensedSiteSurvey => "licensed-site-survey",
+            Self::CoordinatedArchitecturalPackage => "coordinated-architectural-package",
+            Self::StructuralAndWindDesign => "structural-and-wind-design",
+            Self::MechanicalElectricalPlumbingDesign => "mechanical-electrical-plumbing-design",
+            Self::EnergyCompliancePackage => "energy-compliance-package",
+            Self::JurisdictionalDetermination => "jurisdictional-determination",
+        }
+    }
+}
+
+/// Workflow state for a human professional or authority determination. An
+/// issued determination must be attached as an external artifact; this core
+/// never turns it into construction authorization.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum DeterminationStatus {
+    NotRequested,
+    Requested,
+    Issued,
+}
+
+/// A reference to a determination that a responsible professional or the
+/// authority having jurisdiction may issue outside WorkWay.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProfessionalDetermination {
+    pub id: String,
+    pub requirement_id: ProfessionalReviewRequirement,
+    pub status: DeterminationStatus,
+    pub scope: String,
+    pub source_document_id: Option<String>,
+    pub issued_by: Option<String>,
+    pub issuer_credential: Option<String>,
+    pub issued_at: Option<String>,
+    pub conditions: Vec<String>,
+}
+
+/// The determination portion of a professional-review packet. It models
+/// progress transparently while preserving the rule that only the responsible
+/// professionals and applicable authority control construction permission.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DeterminationRegister {
+    pub schema_version: String,
+    pub project_id: String,
+    pub project_revision: String,
+    pub determinations: Vec<ProfessionalDetermination>,
+    construction_ready: bool,
+}
+
+impl DeterminationRegister {
+    /// This core has no authority to issue a permit or construction release.
+    #[must_use]
+    pub const fn construction_ready(&self) -> bool {
+        self.construction_ready
+    }
 }
 
 /// Status of the evidence attached to a review requirement.
@@ -220,7 +284,7 @@ pub struct RequirementAssessment {
 /// Evidence progress. `construction_ready` is intentionally immutable at
 /// `false`; the final determination belongs to responsible professionals and
 /// the authority having jurisdiction.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ProfessionalReviewAssessment {
     pub project_id: String,
@@ -292,6 +356,60 @@ pub fn assess_professional_review(
         requirements,
         can_request_professional_determination: missing_requirements.is_empty(),
         missing_requirements,
+        construction_ready: false,
+    }
+}
+
+/// Initial determination register for the v0.5 Threshold Dwelling candidate.
+/// Every row is deliberately unissued until a responsible professional or the
+/// authority having jurisdiction supplies a revision-specific artifact.
+#[must_use]
+pub fn threshold_dwelling_determination_register_v05() -> DeterminationRegister {
+    let determinations = [
+        (
+            ProfessionalReviewRequirement::LicensedSiteSurvey,
+            "Establish the parcel boundary, easements, topographic datum, and site reference.",
+        ),
+        (
+            ProfessionalReviewRequirement::CoordinatedArchitecturalPackage,
+            "Coordinate revision 0.5 plans, elevations, sections, schedules, and assembly details.",
+        ),
+        (
+            ProfessionalReviewRequirement::StructuralAndWindDesign,
+            "Establish foundation, load path, wind/bracing criteria, connections, and roof framing.",
+        ),
+        (
+            ProfessionalReviewRequirement::MechanicalElectricalPlumbingDesign,
+            "Coordinate HVAC, electrical, plumbing, ventilation, condensate, and equipment clearances.",
+        ),
+        (
+            ProfessionalReviewRequirement::EnergyCompliancePackage,
+            "Establish the jurisdiction-appropriate energy compliance basis for the selected envelope and systems.",
+        ),
+        (
+            ProfessionalReviewRequirement::JurisdictionalDetermination,
+            "Confirm zoning, plat, setbacks, access, permit path, and authority conditions for the actual parcel.",
+        ),
+    ]
+    .into_iter()
+    .map(|(requirement, scope)| ProfessionalDetermination {
+        id: format!("{}-determination", requirement.id()),
+        requirement_id: requirement,
+        status: DeterminationStatus::NotRequested,
+        scope: scope.into(),
+        source_document_id: None,
+        issued_by: None,
+        issuer_credential: None,
+        issued_at: None,
+        conditions: vec![],
+    })
+    .collect();
+
+    DeterminationRegister {
+        schema_version: PROFESSIONAL_REVIEW_PACKET_SCHEMA_VERSION.into(),
+        project_id: "threshold-dwelling".into(),
+        project_revision: "0.5".into(),
+        determinations,
         construction_ready: false,
     }
 }

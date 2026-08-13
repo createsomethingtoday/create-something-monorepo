@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://workway.local/schemas/professional-determination-register.v1.schema.json",
+  "title": "WorkWay Professional Determination Register v1",
+  "description": "A versioned read model for professional-review progress. It never authorizes construction or substitutes for an authority decision.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "projectId",
+    "projectRevision",
+    "determinations",
+    "constructionReady"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "workway.professional-review-packet.v1"
+    },
+    "projectId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "projectRevision": {
+      "type": "string",
+      "minLength": 1
+    },
+    "determinations": {
+      "type": "array",
+      "minItems": 6,
+      "items": {
+        "$ref": "#/$defs/determination"
+      }
+    },
+    "constructionReady": {
+      "const": false
+    }
+  },
+  "$defs": {
+    "determination": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "requirementId", "status", "scope", "conditions"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+-determination$"
+        },
+        "requirementId": {
+          "enum": [
+            "licensed-site-survey",
+            "coordinated-architectural-package",
+            "structural-and-wind-design",
+            "mechanical-electrical-plumbing-design",
+            "energy-compliance-package",
+            "jurisdictional-determination"
+          ]
+        },
+        "status": {
+          "enum": ["notRequested", "requested", "issued"]
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sourceDocumentId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "issuedBy": {
+          "type": "string",
+          "minLength": 1
+        },
+        "issuerCredential": {
+          "type": "string",
+          "minLength": 1
+        },
+        "issuedAt": {
+          "type": "string",
+          "format": "date"
+        },
+        "conditions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "issued"
+              }
+            },
+            "required": ["status"]
+          },
+          "then": {
+            "required": ["sourceDocumentId", "issuedBy", "issuerCredential", "issuedAt"]
+          }
+        }
+      ]
+    }
+  }
+}

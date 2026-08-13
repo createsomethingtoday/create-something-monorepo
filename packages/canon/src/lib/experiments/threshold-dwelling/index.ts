@@ -20,8 +20,12 @@ export { default as Section } from './Section.svelte';
 export { default as SitePlan } from './SitePlan.svelte';
 export { default as Systems } from './Systems.svelte';
 export {
+  THRESHOLD_DWELLING_PROFESSIONAL_DETERMINATION_REGISTER,
   THRESHOLD_DWELLING_PROFESSIONAL_REVIEW_REQUIREMENTS,
   assessThresholdDwellingProfessionalReview,
+  type ThresholdDwellingProfessionalDetermination,
+  type ThresholdDwellingProfessionalDeterminationRegister,
+  type ThresholdDwellingProfessionalDeterminationStatus,
   type ThresholdDwellingEvidenceRecord,
   type ThresholdDwellingEvidenceStatus,
   type ThresholdDwellingProfessionalReviewAssessment,
