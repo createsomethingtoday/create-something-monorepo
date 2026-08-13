@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { test } from 'node:test';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -13,6 +14,7 @@ import {
   type RenderRecipeInput
 } from '../src/index.js';
 import { THRESHOLD_DWELLING } from '../data/threshold-dwelling.js';
+import { THRESHOLD_DWELLING_LIVING_SYSTEM_PUBLIC_ROOM_RENDER } from '../data/threshold-dwelling-living-system-render.js';
 
 import { THRESHOLD_DWELLING_LIVING_SYSTEM_FLOOR_PLAN } from '@create-something/canon/experiments/threshold-dwelling/living-system-revision';
 
@@ -45,6 +47,27 @@ test('uses Canon’s derived Threshold Dwelling revision instead of a second ren
   assert.match(svg, />Loggia<\/text>/);
   assert.match(svg, />Companion<\/text>/);
   assert.match(svg, />Carport<\/text>/);
+});
+
+test('records the public-room render as an auditable Rev 0.8 visualization rather than construction evidence', async () => {
+  const render = THRESHOLD_DWELLING_LIVING_SYSTEM_PUBLIC_ROOM_RENDER;
+
+  assert.equal(render.project.baseRevision, '0.7');
+  assert.equal(render.project.derivedRevision, '0.8');
+  assert.equal(render.status, 'proposed-design-visualization');
+  assert.equal(render.visualChecks.circulationEdgeVisiblyClear, true);
+  assert.equal(render.visualChecks.constructionEvidence, 'not-supplied');
+  assert.equal(render.constructionReady, false);
+  assert.match(render.asset.sha256, /^[a-f0-9]{64}$/);
+
+  const asset = await readFile(
+    new URL(
+      '../../space/static/experiments/threshold-dwelling/renders/living-system-public-room-hero-v1.png',
+      import.meta.url
+    )
+  );
+  const actualHash = createHash('sha256').update(asset).digest('hex');
+  assert.equal(actualHash, render.asset.sha256);
 });
 
 function validRecipe(): RenderRecipeInput {

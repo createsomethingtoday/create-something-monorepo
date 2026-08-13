@@ -1,0 +1,87 @@
+use workway_core::{
+    threshold_dwelling_spatial_package_v08, validate_spatial_package, SceneFormat,
+    SceneRepresentationStatus, SPATIAL_PACKAGE_SCHEMA_VERSION,
+};
+
+#[test]
+fn threshold_dwelling_v08_spatial_package_is_client_safe_without_claiming_native_delivery() {
+    let package = threshold_dwelling_spatial_package_v08();
+    let validation = validate_spatial_package(&package);
+
+    assert_eq!(package.schema_version, SPATIAL_PACKAGE_SCHEMA_VERSION);
+    assert_eq!(package.canonical_project.project_id, "threshold-dwelling");
+    assert_eq!(package.canonical_project.project_revision, "0.7");
+    assert_eq!(package.spatial_revision, "0.8");
+    assert!(validation.is_valid());
+    assert!(validation.issue_ids.is_empty());
+    assert!(!validation.construction_ready);
+    assert_eq!(package.room_chapters.len(), 8);
+    assert_eq!(package.portals.len(), 7);
+    assert!(package.scene_representations.iter().any(|representation| {
+        representation.format == SceneFormat::Usd
+            && representation.status == SceneRepresentationStatus::Unissued
+            && representation.asset_id.is_none()
+    }));
+    assert!(package.scene_representations.iter().any(|representation| {
+        representation.format == SceneFormat::Usdz
+            && representation.status == SceneRepresentationStatus::Unissued
+            && representation.asset_id.is_none()
+    }));
+}
+
+#[test]
+fn spatial_package_rejects_revision_private_asset_entity_portal_and_readiness_failures() {
+    let mut package = threshold_dwelling_spatial_package_v08();
+    package.construction_ready = true;
+    package.assets[0].client_path = "sources/private/home-plan.pdf".into();
+    package.scene_representations[0].spatial_revision = "0.9".into();
+    package.entity_render_bindings[1].render_entity_id = "public-room/kitchen".into();
+    package.portals[0].to_chapter_id = "unissued-room".into();
+
+    let validation = validate_spatial_package(&package);
+
+    assert!(!validation.is_valid());
+    assert!(validation
+        .issue_ids
+        .contains(&"construction-ready-must-be-false".into()));
+    assert!(validation
+        .issue_ids
+        .contains(&"unsafe-client-asset-path".into()));
+    assert!(validation
+        .issue_ids
+        .contains(&"representation-spatial-revision-mismatch".into()));
+    assert!(validation
+        .issue_ids
+        .contains(&"duplicate-render-entity-id".into()));
+    assert!(validation
+        .issue_ids
+        .contains(&"portal-target-chapter-missing".into()));
+}
+
+#[test]
+fn spatial_package_requires_explicit_asset_capability_state_and_valid_delivery_references() {
+    let mut package = threshold_dwelling_spatial_package_v08();
+    package
+        .scene_representations
+        .retain(|representation| representation.format != SceneFormat::Usdz);
+    package.scene_representations[0].asset_id = Some("missing-asset".into());
+    package
+        .scene_representations
+        .iter_mut()
+        .find(|representation| representation.format == SceneFormat::Usd)
+        .expect("the fixture declares USD as unissued")
+        .asset_id = Some("tabletop-plan-png".into());
+
+    let validation = validate_spatial_package(&package);
+
+    assert!(!validation.is_valid());
+    assert!(validation
+        .issue_ids
+        .contains(&"spatial-asset-capability-not-declared".into()));
+    assert!(validation
+        .issue_ids
+        .contains(&"available-representation-missing-client-asset".into()));
+    assert!(validation
+        .issue_ids
+        .contains(&"unissued-representation-must-not-name-client-asset".into()));
+}

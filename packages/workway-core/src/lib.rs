@@ -2,6 +2,16 @@
 //!
 //! This crate owns no rendering and makes no construction-readiness claim.
 
+pub mod spatial_package;
+
+pub use spatial_package::{
+    threshold_dwelling_spatial_package_v08, validate_spatial_package, ClientAsset,
+    ClientSourceDocumentAccess, EntityRenderBinding, LocomotionModel, PortalTraversal,
+    ProjectRevisionReference, RoomChapter, SafeStageGuidance, SceneFormat, SceneRepresentation,
+    SceneRepresentationStatus, SpatialPackage, SpatialPackageValidation, SpatialPortal,
+    SpatialScale, ValidationReceipt, SPATIAL_PACKAGE_SCHEMA_VERSION,
+};
+
 use serde::{Deserialize, Serialize};
 
 /// Versioned, client-safe contract for professional-review evidence and

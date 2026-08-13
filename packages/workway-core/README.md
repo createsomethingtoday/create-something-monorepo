@@ -1,8 +1,10 @@
 # WorkWay Core
 
-`workway-core` is the Rust kernel for deterministic WorkWay project state. It owns integer-inch geometry arithmetic, versioned project decisions, evidence-status evaluation, and the construction-readiness guard.
+`workway-core` is the Rust kernel for deterministic WorkWay project state. It owns integer-inch geometry arithmetic, versioned project decisions, evidence-status evaluation, client-safe spatial-package validation, and the construction-readiness guard.
 
 It does not render a scene, import CAD/BIM, call an AI model, decide code compliance, or issue a permit. Swift/RealityKit remains the Apple client layer; TypeScript remains the present prototype/control surface. Those surfaces should communicate with the core through versioned JSON contracts and contract tests.
+
+`schemas/spatial-package.v1.schema.json` specifies the derived package a client may receive: revision identity, content-addressed assets, scene-representation availability, semantic-to-render mappings, one-to-one room chapters, explicit portals, and validation receipts. It rejects private-source paths and `constructionReady: true`. The initial Threshold Dwelling Rev 0.8 fixture intentionally declares USD/USDZ as `unissued`; the deterministic web representation is a product proof, not a native spatial delivery.
 
 ## Current proof
 
