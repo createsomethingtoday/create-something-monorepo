@@ -6,6 +6,8 @@ It does not render a scene, import CAD/BIM, call an AI model, decide code compli
 
 `schemas/spatial-package.v1.schema.json` specifies the derived package a client may receive: revision identity, content-addressed assets, scene-representation availability, semantic-to-render mappings, one-to-one room chapters, explicit portals, and validation receipts. It rejects private-source paths and `constructionReady: true`. The initial Threshold Dwelling Rev 0.8 fixture intentionally declares USD/USDZ as `unissued`; the deterministic web representation is a product proof, not a native spatial delivery.
 
+`apps/workway-visionos` is the companion Swift/RealityKit validation package. It checks the same client-safe fixture, converts integer inches to meters only at the native rendering edge, and exposes a visionOS-only `RealityView` adapter for a primitive room guide. Its portable verifier must pass before a native client can be considered contract-aligned. A full Xcode visionOS build, Simulator run, and physical Vision Pro review remain separate evidence gates.
+
 ## Current proof
 
 The v0.5 Threshold Dwelling fixture proves that a complete, non-overlapping 2,730 sq ft design-intent baseline can be represented with integer inches and that six required professional-review disciplines remain explicit:

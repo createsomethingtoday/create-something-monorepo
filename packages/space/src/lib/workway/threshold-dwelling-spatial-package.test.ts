@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import {
@@ -144,4 +145,24 @@ test('rejects client package paths that could expose a private source document',
   };
 
   assert.deepEqual(validateSpatialPackage(invalid).issueIds, ['unsafe-client-asset-path']);
+});
+
+test('keeps the native Swift fixture in exact contract parity with the spatial package', () => {
+  const nativeFixture = JSON.parse(
+    readFileSync(
+      new URL(
+        '../../../../../apps/workway-visionos/Sources/WorkWaySpatialContract/Resources/threshold-dwelling-r08-spatial-package.json',
+        import.meta.url
+      ),
+      'utf8'
+    )
+  );
+  const expectedNativeProjection = {
+    ...THRESHOLD_DWELLING_SPATIAL_PACKAGE,
+    roomChapters: THRESHOLD_DWELLING_SPATIAL_PACKAGE.roomChapters.map(({ title: _title, ...chapter }) =>
+      chapter
+    )
+  };
+
+  assert.deepEqual(nativeFixture, expectedNativeProjection);
 });
