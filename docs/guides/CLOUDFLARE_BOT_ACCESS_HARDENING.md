@@ -45,6 +45,16 @@ account-level IP allow rules, which are inherited configuration rather than a
 replacement for a zone policy. This is a configuration baseline, not evidence
 that a new rule should be enabled.
 
+**Applied production receipt (2026-08-12):** after explicit operator approval,
+the `.agency` zone received the active custom rule
+`CRE-1730 .agency block scanner probes outside MCP`. It returns the default
+Cloudflare `403` response only for common probe families (`/.env`, `/.git`,
+`/wp-*`, WordPress asset paths, `/xmlrpc.php`, `/cgi-bin/`, and `.php` paths)
+and explicitly excludes `*.mcp.createsomething.*` hosts. Read-back verified the
+rule as Active in the dashboard; direct checks returned `403` for five probe
+paths while the public homepage and Markdown-for-Agents `/book` route still
+returned `200`.
+
 Pro makes the following useful to the operating loop without changing the
 approval boundary:
 
