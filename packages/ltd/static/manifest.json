@@ -1,7 +1,7 @@
 {
-  "short_name": "CS .agency",
-  "name": "CREATE SOMETHING .agency",
-  "description": "Calm, transparent AI workflow systems with operating boundaries and evidence-backed delivery.",
+  "short_name": "CS .ltd",
+  "name": "CREATE SOMETHING .ltd",
+  "description": "The operating library for AI work: practical playbooks, standards, and proof.",
   "icons": [
     {
       "src": "favicon.svg",
@@ -36,5 +36,5 @@
   "theme_color": "#000000",
   "background_color": "#000000",
   "orientation": "portrait-primary",
-  "categories": ["business", "productivity", "technology"]
+  "categories": ["business", "reference", "technology"]
 }

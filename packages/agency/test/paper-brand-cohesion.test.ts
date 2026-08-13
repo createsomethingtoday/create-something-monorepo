@@ -21,10 +21,14 @@ test('Agency uses its property-owned outlined logo assets without changing Canon
   assert.match(layout, /create-something-horizontal-black\.svg/);
   assert.match(layout, /create-something-agency-white\.svg/);
   assert.match(layout, /enableRouteLogoMotion=\{true\}/);
-  for (const asset of [headerLogo, footerLogo, favicon]) {
+  for (const asset of [headerLogo, footerLogo]) {
     assert.ok(existsSync(asset), `${asset} must be served by the Agency package`);
     assert.ok(statSync(asset).size > 1_000, `${asset} must be a substantive outlined vector`);
   }
+  assert.ok(existsSync(favicon), `${favicon} must be served by the Agency package`);
+  const faviconSource = readFileSync(favicon, 'utf8');
+  assert.match(faviconSource, /<circle cx="53" cy="50" r="41\.5"/);
+  assert.match(faviconSource, /<circle cx="43\.5" cy="50" r="31\.5"/);
 });
 
 test('the Agency footer uses one linked lockup instead of repeating the brand inside its link panel', () => {

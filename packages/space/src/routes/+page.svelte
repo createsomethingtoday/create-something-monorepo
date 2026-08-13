@@ -125,7 +125,7 @@
   title="Workbench | CREATE SOMETHING .space"
   description="CREATE SOMETHING .space is the live workbench for testing tools, runtimes, and interaction patterns on Cloudflare Workers."
   keywords="developer tools, code playground, motion analysis, realtime dashboards, Cloudflare Workers, live workbench, automation practice"
-  ogImage="/og-image.svg"
+  ogImage="/og-image.png"
   propertyName="space"
 />
 

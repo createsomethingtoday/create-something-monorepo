@@ -20,11 +20,13 @@
   let { property }: Props = $props();
 
   const propertyConfig = {
-    io: { color: '#000000' },
-    space: { color: '#000000' },
-    agency: { color: '#000000' },
-    ltd: { color: '#000000' },
-    lms: { color: '#000000' }
+    io: { color: '#000000', hasCompleteIdentityAssets: true },
+    space: { color: '#000000', hasCompleteIdentityAssets: true },
+    agency: { color: '#000000', hasCompleteIdentityAssets: true },
+    ltd: { color: '#000000', hasCompleteIdentityAssets: true },
+    // LMS is not part of the public-property asset release. Keep its existing
+    // served SVG link rather than advertising files it does not own.
+    lms: { color: '#000000', hasCompleteIdentityAssets: false }
   };
 
   const config = $derived(propertyConfig[property]);
@@ -34,10 +36,16 @@
   <meta name="theme-color" content={config.color} />
 
   <!-- Favicons -->
-  <link rel="icon" href="/favicon.png" type="image/png" />
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-  <link rel="icon" href="/favicon.ico" sizes="any" />
-  <link rel="apple-touch-icon" href="/favicon.png" />
+  {#if config.hasCompleteIdentityAssets}
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" sizes="any" />
+    <link rel="icon" href="/favicon.png" type="image/png" sizes="512x512" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
+    <link rel="mask-icon" href="/mask-icon.svg" color={config.color} />
+  {:else}
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" sizes="any" />
+  {/if}
 
   <!-- Additional SEO -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
