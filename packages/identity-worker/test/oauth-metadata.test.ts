@@ -2,13 +2,53 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-import identityWorker from '../src/index.ts';
+import identityWorker, { requiresS256PkceForOAuthResource } from '../src/index.ts';
 
 function makeEnv() {
   return {
     ENVIRONMENT: 'test',
     ALLOWED_ORIGINS: 'https://chatgpt.com',
     MCP_HUB_URL: 'https://mj.mcp.createsomething.agency/mcp',
+  } as any;
+}
+
+function makeAgentAuthEnv() {
+  let signingKey: Record<string, unknown> | null = null;
+
+  return {
+    ...makeEnv(),
+    DB: {
+      prepare(sql: string) {
+        let values: unknown[] = [];
+        return {
+          bind(...input: unknown[]) {
+            values = input;
+            return this;
+          },
+          async first() {
+            if (sql.includes('FROM rate_limits')) return null;
+            if (sql.includes('FROM signing_keys')) return signingKey;
+            return null;
+          },
+          async all() {
+            return { results: signingKey ? [signingKey] : [] };
+          },
+          async run() {
+            if (sql.includes('INSERT INTO signing_keys')) {
+              signingKey = {
+                id: values[0],
+                private_key: values[1],
+                public_key: values[2],
+                algorithm: values[3],
+                active: 1,
+                created_at: new Date().toISOString(),
+              };
+            }
+            return { success: true };
+          },
+        };
+      },
+    },
   } as any;
 }
 
@@ -43,6 +83,95 @@ test('identity worker serves oauth authorization server metadata', async () => {
     'cracked-sync:read',
     'cracked-sync:write',
   ]);
+  assert.deepEqual(body.agent_auth, {
+    skill: 'https://createsomething.agency/auth.md',
+    register_uri: 'https://id.createsomething.space/agent/auth',
+    identity_types_supported: ['anonymous'],
+    anonymous: {
+      credential_types_supported: ['access_token'],
+      claim_uri: 'https://id.createsomething.space/agent/claim',
+    },
+  });
+});
+
+test('identity worker registers a short-lived anonymous credential only for .agency discovery', async () => {
+  const env = makeAgentAuthEnv();
+  const registration = await identityWorker.fetch(
+    new Request('https://id.createsomething.space/agent/auth', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'CF-Connecting-IP': '203.0.113.25',
+      },
+      body: JSON.stringify({
+        type: 'anonymous',
+        requested_credential_type: 'access_token',
+        resource: 'https://createsomething.agency',
+      }),
+    }),
+    env,
+  );
+
+  assert.equal(registration.status, 201);
+  assert.equal(registration.headers.get('cache-control'), 'no-store');
+  const body = await registration.json() as Record<string, unknown>;
+  assert.equal(body.credential_type, 'access_token');
+  assert.equal(body.token_type, 'Bearer');
+  assert.equal(body.expires_in, 900);
+  assert.equal(body.scope, 'mcp');
+  assert.equal(body.resource, 'https://createsomething.agency');
+  const accessToken = String(body.access_token);
+  const claims = JSON.parse(Buffer.from(accessToken.split('.')[1]!, 'base64url').toString()) as Record<string, unknown>;
+  assert.match(String(claims.sub), /^agent_/);
+  assert.equal(claims.kind, 'agent_auth_access_token');
+  assert.deepEqual(claims.aud, ['https://createsomething.agency']);
+  assert.equal(claims.exp, Number(claims.iat) + 900);
+
+  const claim = await identityWorker.fetch(
+    new Request('https://id.createsomething.space/agent/claim', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }),
+    env,
+  );
+  assert.equal(claim.status, 200);
+  assert.deepEqual(await claim.json(), {
+    claim_type: 'anonymous_agent_access',
+    subject: claims.sub,
+    credential_type: 'access_token',
+    resource: 'https://createsomething.agency',
+    scope: 'mcp',
+    expires_at: new Date(Number(claims.exp) * 1000).toISOString(),
+    boundary: 'This claim does not create an account or grant write authority.',
+  });
+});
+
+test('anonymous agent registration rejects resources outside the public discovery boundary', async () => {
+  const response = await identityWorker.fetch(
+    new Request('https://id.createsomething.space/agent/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'anonymous',
+        requested_credential_type: 'access_token',
+        resource: 'https://example.com',
+      }),
+    }),
+    makeEnv(),
+  );
+
+  assert.equal(response.status, 400);
+  assert.deepEqual(await response.json(), {
+    error: 'invalid_resource',
+    message: 'The requested resource is not available for anonymous registration',
+    status: 400,
+  });
+});
+
+test('the .agency OAuth resource requires S256 PKCE before it can issue an access token', () => {
+  assert.equal(requiresS256PkceForOAuthResource('https://createsomething.agency'), true);
+  assert.equal(requiresS256PkceForOAuthResource('https://createsomething.agency/'), true);
+  assert.equal(requiresS256PkceForOAuthResource('https://webflow-template-review-mcp.createsomething.workers.dev/mcp'), false);
 });
 
 test('identity worker creates dynamically registered ChatGPT OAuth clients', async () => {

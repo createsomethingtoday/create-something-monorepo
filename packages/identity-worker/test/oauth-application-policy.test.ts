@@ -74,6 +74,16 @@ test('Half Dozen onboarding OAuth uses an exact resource-bound application polic
 	);
 });
 
+test('Agency public-agent discovery OAuth is bound to the .agency origin only', () => {
+	const resource = 'https://createsomething.agency';
+	assert.deepEqual(resolveOAuthApplicationAccessPolicy(resource), {
+		applicationId: 'agency-public-agent-discovery',
+		resource,
+		expiresIn: 3600,
+	});
+	assert.equal(resolveOAuthApplicationAccessPolicy(`${resource}/api/agent-access`), null);
+});
+
 test('unknown OAuth resources do not bypass managed bearer governance', () => {
 	assert.equal(resolveOAuthApplicationAccessPolicy('https://unknown.example/mcp'), null);
 	assert.deepEqual(

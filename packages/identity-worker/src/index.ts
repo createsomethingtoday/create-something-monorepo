@@ -128,6 +128,8 @@ async function route(request: Request, env: Env, method: string, path: string): 
 			'Cache-Control': 'public, max-age=300',
 		});
 	}
+	if (path === '/agent/auth' && method === 'POST') return handleAgentAuthRegister(request, env);
+	if (path === '/agent/claim' && method === 'POST') return handleAgentAuthClaim(request, env);
 	if (path === '/oauth/register' && method === 'POST') return handleOAuthRegister(request, env);
 	if (path === '/oauth/authorize' && method === 'GET') return handleOAuthAuthorizePage(request, env);
 	if (path === '/oauth/authorize' && method === 'POST') return handleOAuthAuthorize(request, env);
@@ -634,6 +636,18 @@ interface OAuthAccessTokenClaims extends JWTPayload {
 	roles?: Array<'account_owner' | 'agency_operator' | 'account_reader'>;
 }
 
+interface AgentAuthAccessTokenClaims extends JWTPayload {
+	kind: 'agent_auth_access_token';
+	scope: 'mcp';
+	resource: typeof AGENCY_PUBLIC_DISCOVERY_RESOURCE;
+}
+
+interface AgentAuthRegistrationBody {
+	type?: unknown;
+	requested_credential_type?: unknown;
+	resource?: unknown;
+}
+
 interface CreateMcpSessionBody {
 	tenant_id?: string;
 	host?: string;
@@ -840,6 +854,8 @@ const DEFAULT_OAUTH_RESOURCE = DEFAULT_MCP_HUB_URL;
 const OAUTH_AUTHORIZATION_CODE_TTL_SECONDS = 300;
 const OAUTH_MANAGED_BEARER_EXPIRES_IN = 31536000;
 const OAUTH_APPLICATION_ACCESS_TOKEN_EXPIRES_IN = 3600;
+const AGENT_AUTH_ACCESS_TOKEN_EXPIRES_IN = 15 * 60;
+const AGENCY_PUBLIC_DISCOVERY_RESOURCE = 'https://createsomething.agency';
 const OAUTH_ID_TOKEN_TTL_SECONDS = 3600;
 const OAUTH_REFRESH_TOKEN_TTL_SECONDS = 30 * 24 * 60 * 60;
 const OAUTH_SUPPORTED_SCOPES = [
@@ -896,6 +912,14 @@ const OAUTH_APPLICATION_ACCESS_POLICIES = new Map<string, {
 		{
 			applicationId: 'halfdozen-cracked-sync-mcp',
 			resource: 'https://halfdozen-cracked-sync-mcp.createsomething.workers.dev/mcp',
+			expiresIn: OAUTH_APPLICATION_ACCESS_TOKEN_EXPIRES_IN,
+		},
+	],
+	[
+		'https://createsomething.agency',
+		{
+			applicationId: 'agency-public-agent-discovery',
+			resource: 'https://createsomething.agency',
 			expiresIn: OAUTH_APPLICATION_ACCESS_TOKEN_EXPIRES_IN,
 		},
 	],
@@ -1096,6 +1120,99 @@ async function handleOAuthRegister(request: Request, _env: Env): Promise<Respons
 	}, 201);
 }
 
+/**
+ * Browserless agent registration has a deliberately small blast radius. It
+ * never creates a user or account; the resulting token can only inspect the
+ * public .agency discovery directory for fifteen minutes.
+ */
+async function handleAgentAuthRegister(request: Request, env: Env): Promise<Response> {
+	const body = await parseJSON<AgentAuthRegistrationBody>(request);
+	if (!body) return json({ error: 'invalid_request', message: 'Invalid JSON', status: 400 }, 400);
+	if (body.type !== 'anonymous') {
+		return json(
+			{ error: 'unsupported_identity_type', message: 'Only anonymous agent registration is supported', status: 400 },
+			400
+		);
+	}
+	if (body.requested_credential_type !== 'access_token') {
+		return json(
+			{ error: 'unsupported_credential_type', message: 'Only access_token credentials are supported', status: 400 },
+			400
+		);
+	}
+	const requestedResource =
+		typeof body.resource === 'string' ? body.resource.trim().replace(/\/+$/, '') : AGENCY_PUBLIC_DISCOVERY_RESOURCE;
+	if (requestedResource !== AGENCY_PUBLIC_DISCOVERY_RESOURCE) {
+		return json(
+			{ error: 'invalid_resource', message: 'The requested resource is not available for anonymous registration', status: 400 },
+			400
+		);
+	}
+
+	const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+	const rateKey = `agent_auth:${ip}`;
+	const { allowed } = await checkRateLimit(env.DB, rateKey, 10, 60);
+	if (!allowed) {
+		return json({ error: 'rate_limited', message: 'Too many agent registration attempts', status: 429 }, 429);
+	}
+	await incrementRateLimit(env.DB, rateKey);
+
+	const now = Math.floor(Date.now() / 1000);
+	const accessToken = await createSignedToken(env.DB, {
+		sub: `agent_${generateUUID().replace(/-/g, '')}`,
+		email: 'anonymous-agent@createsomething.agency',
+		tier: 'free',
+		source: 'space',
+		iss: getOauthIssuer(new URL(request.url), env),
+		aud: [AGENCY_PUBLIC_DISCOVERY_RESOURCE],
+		iat: now,
+		exp: now + AGENT_AUTH_ACCESS_TOKEN_EXPIRES_IN,
+		kind: 'agent_auth_access_token',
+		scope: 'mcp',
+		resource: AGENCY_PUBLIC_DISCOVERY_RESOURCE,
+	} satisfies AgentAuthAccessTokenClaims);
+
+	return json(
+		{
+			credential_type: 'access_token',
+			access_token: accessToken,
+			token_type: 'Bearer',
+			expires_in: AGENT_AUTH_ACCESS_TOKEN_EXPIRES_IN,
+			scope: 'mcp',
+			resource: AGENCY_PUBLIC_DISCOVERY_RESOURCE,
+		},
+		201,
+		{ 'Cache-Control': 'no-store' }
+	);
+}
+
+/**
+ * Anonymous registrations cannot be attached to an account. This gives an
+ * agent a verifiable claim receipt for its live credential without expanding
+ * its scope or minting a replacement token.
+ */
+async function handleAgentAuthClaim(request: Request, env: Env): Promise<Response> {
+	const token = request.headers.get('Authorization')?.match(/^Bearer\s+(.+)$/i)?.[1]?.trim();
+	if (!token) return json({ error: 'invalid_token', message: 'Bearer token required', status: 401 }, 401);
+	const issuer = getOauthIssuer(new URL(request.url), env);
+	const claims = await validateAgentAuthAccessToken(token, env, issuer);
+	if (!claims) return json({ error: 'invalid_token', message: 'Invalid or expired agent credential', status: 401 }, 401);
+
+	return json(
+		{
+			claim_type: 'anonymous_agent_access',
+			subject: claims.sub,
+			credential_type: 'access_token',
+			resource: claims.resource,
+			scope: claims.scope,
+			expires_at: new Date(claims.exp * 1000).toISOString(),
+			boundary: 'This claim does not create an account or grant write authority.',
+		},
+		200,
+		{ 'Cache-Control': 'no-store' }
+	);
+}
+
 async function handleOAuthAuthorizePage(request: Request, env: Env): Promise<Response> {
 	const params = new URL(request.url).searchParams;
 	const validationError = validateOAuthAuthorizeRequest(params);
@@ -1220,9 +1337,20 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 		if (authorizationCodeClaims.client_id !== body.client_id || authorizationCodeClaims.redirect_uri !== body.redirect_uri) {
 			return oauthErrorResponse('invalid_grant', 400, 'Authorization code does not match client_id or redirect_uri.');
 		}
+		const requiresS256 = requiresS256PkceForOAuthResource(authorizationCodeClaims.resource);
 		if (
-			authorizationCodeClaims.code_challenge
-			&& !(await verifyPkce(body.code_verifier, authorizationCodeClaims.code_challenge, authorizationCodeClaims.code_challenge_method))
+			requiresS256 &&
+			(!authorizationCodeClaims.code_challenge ||
+				authorizationCodeClaims.code_challenge_method !== 'S256' ||
+				!body.code_verifier ||
+				!(await verifyPkce(body.code_verifier, authorizationCodeClaims.code_challenge, 'S256')))
+		) {
+			return oauthErrorResponse('invalid_grant', 400, 'S256 code_verifier is required.');
+		}
+		if (
+			!requiresS256 &&
+			authorizationCodeClaims.code_challenge &&
+			!(await verifyPkce(body.code_verifier, authorizationCodeClaims.code_challenge, authorizationCodeClaims.code_challenge_method))
 		) {
 			return oauthErrorResponse('invalid_grant', 400, 'Invalid code_verifier.');
 		}
@@ -4219,6 +4347,15 @@ function buildOAuthAuthorizationServerMetadata(url: URL, env: Env) {
 		grant_types_supported: ['authorization_code', 'refresh_token'],
 		token_endpoint_auth_methods_supported: ['none', 'client_secret_post'],
 		code_challenge_methods_supported: ['S256', 'plain'],
+		agent_auth: {
+			skill: 'https://createsomething.agency/auth.md',
+			register_uri: `${issuer}/agent/auth`,
+			identity_types_supported: ['anonymous'],
+			anonymous: {
+				credential_types_supported: ['access_token'],
+				claim_uri: `${issuer}/agent/claim`,
+			},
+		},
 	};
 }
 
@@ -4250,6 +4387,10 @@ function normalizeUrlOrigin(origin: string): string {
 	return origin.replace(/\/+$/, '');
 }
 
+export function requiresS256PkceForOAuthResource(resource: string): boolean {
+	return normalizeUrlOrigin(resource) === AGENCY_PUBLIC_DISCOVERY_RESOURCE;
+}
+
 function validateOAuthAuthorizeRequest(params: URLSearchParams): string | null {
 	if (params.get('response_type') !== 'code') return 'unsupported_response_type';
 	if (!params.get('client_id')) return 'invalid_client';
@@ -4257,6 +4398,13 @@ function validateOAuthAuthorizeRequest(params: URLSearchParams): string | null {
 	if (!redirectUri || !isValidHttpUrl(redirectUri)) return 'invalid_redirect_uri';
 	const resource = params.get('resource');
 	if (resource && !isValidHttpUrl(resource)) return 'invalid_target';
+	if (
+		resource &&
+		requiresS256PkceForOAuthResource(resource) &&
+		(!params.get('code_challenge') || params.get('code_challenge_method') !== 'S256')
+	) {
+		return 'invalid_request';
+	}
 	return null;
 }
 
@@ -4539,6 +4687,28 @@ async function validateOAuthAccessToken(
 		const publicKey = await importPublicKey(jwk);
 		const payload = (await validateJWT(token, publicKey, expectedIssuer)) as OAuthAccessTokenClaims | null;
 		if (payload && isOAuthAccessTokenClaimsForApplication(payload, env.CONTROL_RUNTIME_RESOURCES)) {
+			return payload;
+		}
+	}
+	return null;
+}
+
+async function validateAgentAuthAccessToken(
+	token: string,
+	env: Env,
+	expectedIssuer: string
+): Promise<AgentAuthAccessTokenClaims | null> {
+	const jwks = await getJWKS(env.DB);
+	for (const jwk of jwks.keys) {
+		const publicKey = await importPublicKey(jwk);
+		const payload = (await validateJWT(token, publicKey, expectedIssuer)) as AgentAuthAccessTokenClaims | null;
+		if (
+			payload?.kind === 'agent_auth_access_token' &&
+			payload.resource === AGENCY_PUBLIC_DISCOVERY_RESOURCE &&
+			Array.isArray(payload.aud) &&
+			payload.aud.includes(AGENCY_PUBLIC_DISCOVERY_RESOURCE) &&
+			scopeIncludes(payload.scope, 'mcp')
+		) {
 			return payload;
 		}
 	}
