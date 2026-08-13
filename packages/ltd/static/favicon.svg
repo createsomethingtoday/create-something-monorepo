@@ -1,9 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
-  <title id="title">CREATE SOMETHING site icon</title>
-  <desc id="desc">White CREATE SOMETHING ring mark on a black rounded square.</desc>
-  <rect width="64" height="64" rx="10" fill="#000" />
-  <g fill="none" stroke="#fff" stroke-width="8.5" transform="translate(7 7) scale(.5)">
-    <circle cx="53" cy="50" r="41.5" />
-    <circle cx="43.5" cy="50" r="31.5" />
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 128 128" width="128" height="128" role="img" aria-labelledby="title desc" style="color:#ffffff">
+  <title id="title">CREATE SOMETHING favicon</title>
+  <desc id="desc">White micro mark on a near-black rounded-square favicon field.</desc>
+  <rect width="128" height="128" rx="24" fill="#050505"/>
+  <g id="cs-micro-mark-v3" fill="none" stroke="currentColor" stroke-linejoin="round">
+    <path d="M30.0797 42.0797 A31 31 0 1 1 30.0797 85.9203" stroke-width="9" stroke-linecap="butt"/>
+    <circle cx="64" cy="64" r="39" stroke-width="11"/>
   </g>
+
 </svg>

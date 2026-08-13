@@ -97,6 +97,11 @@
 		<Navigation
 			logo="CREATE SOMETHING"
 			logoSuffix=".ltd"
+			logoAsset={{
+				src: '/brand/create-something-horizontal-black.svg',
+				mobileSrc: '/brand/create-something-mark-black.svg',
+				label: 'CREATE SOMETHING .ltd'
+			}}
 			links={navLinks}
 			currentPath={data?.pathname || '/'}
 			user={data.user}
@@ -122,6 +127,10 @@
 			showSocial={true}
 			isAuthenticated={!!data.user}
 			visualStyle="performance"
+			brandAsset={{
+				src: '/brand/create-something-footer-white.svg',
+				label: 'CREATE SOMETHING .ltd'
+			}}
 		/>
 
 		<ModeIndicator current="ltd" />

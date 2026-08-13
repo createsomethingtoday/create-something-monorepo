@@ -145,6 +145,11 @@
   <Navigation
     logo="CREATE SOMETHING"
     logoSuffix=".space"
+    logoAsset={{
+      src: '/brand/create-something-horizontal-black.svg',
+      mobileSrc: '/brand/create-something-mark-black.svg',
+      label: 'CREATE SOMETHING .space'
+    }}
     links={navLinks}
     currentPath={$page.url.pathname}
     fixed={true}
@@ -152,8 +157,6 @@
     ctaHref="https://createsomething.io"
     showLogin={false}
     visualStyle="editorial"
-    showMobileLogoText={true}
-    showDesktopLogoText={true}
     onMobileMenuChange={(open) => (mobileNavigationOpen = open)}
   />
 
@@ -179,6 +182,10 @@
     }}
     showSocial={true}
     visualStyle="editorial"
+    brandAsset={{
+      src: '/brand/create-something-footer-white.svg',
+      label: 'CREATE SOMETHING .space'
+    }}
   />
 
   <ModeIndicator current="space" />

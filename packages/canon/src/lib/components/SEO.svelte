@@ -69,7 +69,7 @@
   };
 
   const organizationId = 'https://createsomething.ltd/#organization';
-  const organizationLogoUrl = 'https://createsomething.ltd/brand/create-something-ring-mark-512.png';
+  const organizationLogoUrl = 'https://createsomething.ltd/icon-512.png';
   const config = propertyConfig[propertyName];
   const fullTitle = title ? title.includes('CREATE SOMETHING') ? title : `${title} | ${config.name}` : config.name;
   const fullDescription = description || config.tagline;
