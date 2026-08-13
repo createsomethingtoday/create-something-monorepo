@@ -536,7 +536,7 @@ const materialPalette: ThresholdDwellingMaterial[] = [
 
 export const THRESHOLD_DWELLING_DESIGN = {
   status: 'design-development',
-  revision: '0.3',
+  revision: '0.4',
   buildMetrics,
   materialStrategy,
   constructionAllowance,

@@ -29,6 +29,7 @@ export {
   type ThresholdDwellingDimensionValidation,
   type ThresholdDwellingPlanOpening,
   type ThresholdDwellingPlanZone,
+  type ThresholdDwellingProjectDecision,
   type ThresholdDwellingWallRun
 } from './dimensioned-project.js';
 export {

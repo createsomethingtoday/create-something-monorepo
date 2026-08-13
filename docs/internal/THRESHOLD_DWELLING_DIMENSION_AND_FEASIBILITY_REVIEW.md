@@ -17,15 +17,18 @@ The source of truth is `THRESHOLD_DWELLING_DIMENSION_CANDIDATE` in Canon. It use
 | Unclassified enclosed band | 70 sq ft | Exact arithmetic; east 10 ft × 7 ft band |
 | Plan doors | 13, all drawn as 36 in openings | Plan opening only, not a measured clear opening |
 | Plan windows | 9 | Width and position only; no sill, head, operation, glass, or performance data |
-| East overhangs on floor-plan render | dog kennel 10 × 6 ft; carport 10 × 7 ft; covered entry 8 × 14 ft | Conflicts with other render projections below |
+| East projection | dog kennel 10 × 6 ft; carport 10 × 7 ft; covered entry 10 × 14 ft | Approved as one 10 × 27 ft projection |
 
 No wall thickness, finish buildup, survey datum, structural grid, elevation benchmark, or site boundary is present. Accordingly, `65 ft × 42 ft` is a **concept-envelope dimension**, not a field, permitting, or construction dimension.
 
-## Blocking conflicts
+## Approved decision
 
-1. **East projection geometry conflicts.** The floor plan draws an 8 ft × 14 ft covered entry (maximum east extent 73 ft). The section, roof plan, site plan, and the 270 sq ft carport allowance instead imply a 10 ft × 27 ft east projection (maximum east extent 75 ft). One approved envelope must regenerate all five views and the cost model.
-2. **A 70 sq ft enclosed space is unnamed.** The zone rectangles leave the 10 ft × 7 ft band at `x=55–65 ft`, `y=13–20 ft` semantically undefined. It may be an entry, hall, vestibule, or service zone, but that cannot be inferred safely.
-3. **Other render sources are stale or divergent.** The historical render-pipeline data describes a different column/overhang arrangement. It is evidence of idea exploration, not corroboration of the candidate.
+The project owner selected the **10 ft × 27 ft east projection** as the current design-intent envelope. Its dog-kennel, carport, and covered-entry segments are respectively 10 × 6 ft, 10 × 7 ft, and 10 × 14 ft. The floor plan, light study, section/roof/site geometry, cost allowance, and render pipeline now use that envelope. This is revision 0.4 of the concept baseline.
+
+## Remaining blockers
+
+1. **A 70 sq ft enclosed space is unnamed.** The zone rectangles leave the 10 ft × 7 ft band at `x=55–65 ft`, `y=13–20 ft` semantically undefined. It may be an entry, hall, vestibule, or service zone, but that cannot be inferred safely.
+2. **Other render sources are stale or divergent.** The historical render-pipeline data described a different column/overhang arrangement. It has been removed from the active pipeline and remains historical idea evidence, not corroboration of the candidate.
 
 ## Practicality review
 
@@ -67,7 +70,7 @@ These are performance and resilience objectives to give the architect and engine
 
 WorkWay may ingest this model now as `candidate-design-intent`. It must remain read-only for authoritative construction operations until all gates below pass:
 
-1. Owner/designer resolves the east projection and names the 70 sq ft zone.
+1. Owner/designer names and bounds the 70 sq ft zone.
 2. A licensed survey establishes the parcel, setbacks, easements, utilities, grades, and a project datum.
 3. Architect publishes coordinated dimensioned plan, elevations, sections, door/window/finish schedules, and room/fixture clearances.
 4. Structural and MEP professionals supply jurisdiction-appropriate calculations and drawings.

@@ -409,10 +409,10 @@
 		overhangs: [
 			overhang(65, 0, 10, 6, 'Dog\nKennel'),
 			overhang(65, 6, 10, 7, 'Carport'),
-			overhang(65, 13, 8, 14, 'Covered\nEntry')
+			overhang(65, 13, 10, 14, 'Covered\nEntry')
 		],
 
-    entry: { x: 73, y: 16 }
+    entry: { x: 75, y: 16 }
 	};
 
 	// ============================================================================
@@ -722,7 +722,7 @@
 		overhangs: [
 			overhang(65, 0, 10, 6, 'Kennel'),
 			overhang(65, 6, 10, 7, 'Carport'),
-			overhang(65, 13, 8, 14, 'Entry')
+			overhang(65, 13, 10, 14, 'Entry')
 		],
 
 		// Sun paths for Texas latitude (~32.7°N)

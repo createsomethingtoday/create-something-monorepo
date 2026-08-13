@@ -34,15 +34,31 @@ describe('Threshold Dwelling dimension candidate', () => {
     expect(validation.unclassifiedEnclosedAreaSqFt).toBe(70);
   });
 
-  it('refuses to present the concept as finalized while its sources or safety evidence conflict', () => {
+  it('uses the approved 10 by 27 foot east projection while retaining construction-evidence blockers', () => {
     const validation = validateThresholdDwellingDimensions(
       THRESHOLD_DWELLING_DIMENSION_CANDIDATE
     );
+    const coveredEntry = THRESHOLD_DWELLING_DIMENSION_CANDIDATE.overhangs.find(
+      (overhang) => overhang.id === 'overhang-covered-entry'
+    );
 
     expect(validation.canFinalize).toBe(false);
+    expect(coveredEntry).toMatchObject({ widthIn: 120, heightIn: 168 });
+    expect(THRESHOLD_DWELLING_FLOOR_PLAN.entry).toEqual({ x: 75, y: 16 });
+    expect(THRESHOLD_DWELLING_DIMENSION_CANDIDATE.decisions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'east-projection-envelope',
+          status: 'approved',
+          decision: expect.stringContaining('10 ft by 27 ft')
+        })
+      ])
+    );
+    expect(validation.blockers).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: 'entry-projection-width-conflict' })])
+    );
     expect(validation.blockers).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ id: 'entry-projection-width-conflict' }),
         expect.objectContaining({ id: 'unclassified-enclosed-area' }),
         expect.objectContaining({ id: 'construction-evidence-not-supplied' })
       ])

@@ -58,6 +58,14 @@ export interface ThresholdDwellingDimensionBlocker {
   requiredResolution: string;
 }
 
+export interface ThresholdDwellingProjectDecision {
+  id: string;
+  status: 'approved';
+  authority: 'project owner';
+  title: string;
+  decision: string;
+}
+
 export interface ThresholdDwellingDimensionCandidate {
   id: 'threshold-dwelling';
   status: ThresholdDwellingDimensionStatus;
@@ -69,9 +77,10 @@ export interface ThresholdDwellingDimensionCandidate {
   };
   source: {
     primary: 'packages/io/src/routes/papers/threshold-dwelling/+page.svelte';
-    revision: '0.3';
+    revision: '0.4';
     statement: string;
   };
+  decisions: ThresholdDwellingProjectDecision[];
   footprint: {
     widthIn: number;
     depthIn: number;
@@ -162,10 +171,20 @@ export const THRESHOLD_DWELLING_DIMENSION_CANDIDATE: ThresholdDwellingDimensionC
   },
   source: {
     primary: 'packages/io/src/routes/papers/threshold-dwelling/+page.svelte',
-    revision: '0.3',
+    revision: '0.4',
     statement:
       'Exact only within the authored concept coordinate system. It is not a survey, permit, code-compliance, structural, MEP, or construction source.'
   },
+  decisions: [
+    {
+      id: 'east-projection-envelope',
+      status: 'approved',
+      authority: 'project owner',
+      title: 'Use the 10 ft by 27 ft east projection',
+      decision:
+        'The dog kennel, carport, and covered entry form one 10 ft by 27 ft east projection; the covered-entry segment is 10 ft by 14 ft.'
+    }
+  ],
   footprint: {
     widthIn: 780,
     depthIn: 504,
@@ -261,18 +280,9 @@ export const THRESHOLD_DWELLING_DIMENSION_CANDIDATE: ThresholdDwellingDimensionC
   overhangs: [
     { id: 'overhang-dog-kennel', ...rect(65, 0, 10, 6), label: 'Dog\nKennel' },
     { id: 'overhang-carport', ...rect(65, 6, 10, 7), label: 'Carport' },
-    { id: 'overhang-covered-entry', ...rect(65, 13, 8, 14), label: 'Covered\nEntry' }
+    { id: 'overhang-covered-entry', ...rect(65, 13, 10, 14), label: 'Covered\nEntry' }
   ],
   blockers: [
-    {
-      id: 'entry-projection-width-conflict',
-      severity: 'critical',
-      title: 'The east projection has conflicting authored widths',
-      evidence:
-        'The floor plan renders the covered entry as 8 ft wide, while the section, roof plan, site plan and 270 SF carport allowance use a 10 ft by 27 ft east projection.',
-      requiredResolution:
-        'Approve one measured east-projection envelope and regenerate every plan, section, roof, site, cost and render projection from it.'
-    },
     {
       id: 'unclassified-enclosed-area',
       severity: 'high',
@@ -409,7 +419,7 @@ export const THRESHOLD_DWELLING_FLOOR_PLAN: FloorPlanData = {
     height: feet(item.heightIn),
     label: item.label
   })),
-  entry: { x: 73, y: 16 }
+  entry: { x: 75, y: 16 }
 };
 
 function pointIsIntegral(pointIn: ThresholdDwellingPointIn): boolean {
