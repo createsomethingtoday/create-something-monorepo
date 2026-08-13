@@ -80,6 +80,23 @@ Or manually:
 ./scripts/install.sh
 ```
 
+### Optional RTK local summaries
+
+RTK reduces terminal noise for an agent or operator reading a successful local
+test, build, or lint summary. It is optional: repositories, CI, and production
+commands always work without it. To install it locally on a Homebrew-enabled
+machine:
+
+```bash
+pnpm --filter @create-something/dotfiles install-rtk
+```
+
+The installer verifies that RTK has **no global hook**. Use it explicitly at a
+final summary boundary, such as `rtk test pnpm test` or `rtk err pnpm check`.
+Do not filter CTX retrieval, Ground findings, Linear/Git receipts, raw diffs,
+exact errors, source reads, or pipelines/redirections; run those natively (or
+use `rtk proxy <command>` only for byte-for-byte native passthrough tracking).
+
 ## Keybinding Grammar
 
 Consistent across all tools:
