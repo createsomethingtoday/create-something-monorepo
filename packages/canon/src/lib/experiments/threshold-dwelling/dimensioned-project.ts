@@ -171,7 +171,7 @@ export const THRESHOLD_DWELLING_DIMENSION_CANDIDATE: ThresholdDwellingDimensionC
   },
   source: {
     primary: 'packages/io/src/routes/papers/threshold-dwelling/+page.svelte',
-    revision: '0.5',
+    revision: '0.6',
     statement:
       'Exact only within the authored concept coordinate system. It is not a survey, permit, code-compliance, structural, MEP, or construction source.'
   },
@@ -191,6 +191,38 @@ export const THRESHOLD_DWELLING_DIMENSION_CANDIDATE: ThresholdDwellingDimensionC
       title: 'Classify the east arrival band as the Entry Hall',
       decision:
         'The 10 ft by 7 ft enclosed band at x=55–65 ft and y=13–20 ft is the Entry Hall / arrival zone connecting the main entry to the central hall.'
+    },
+    {
+      id: 'ground-up-replacement-scope',
+      status: 'approved',
+      authority: 'project owner',
+      title: 'Use a ground-up replacement-home scope',
+      decision:
+        'The candidate is a new ground-up replacement home at the existing homesite, not a renovation or addition.'
+    },
+    {
+      id: 'replacement-removal-sequence',
+      status: 'approved',
+      authority: 'project owner',
+      title: 'Remove and decommission the existing home before construction',
+      decision:
+        'The existing home is to be removed and decommissioned before new-home construction, subject to authority, utility, environmental, and contractor requirements.'
+    },
+    {
+      id: 'all-electric-resilience-basis',
+      status: 'approved',
+      authority: 'project owner',
+      title: 'Use an all-electric, solar/battery-ready basis of design',
+      decision:
+        'The project reserves an all-electric basis of design with solar and battery readiness; equipment, service, load, and interconnection design remain professional determinations.'
+    },
+    {
+      id: 'sleeping-suite-exterior-egress-intent',
+      status: 'approved',
+      authority: 'project owner',
+      title: 'Place sleeping-suite window candidates on exterior walls',
+      decision:
+        'Each sleeping suite now carries an exterior-window candidate. Sill, head, net clear opening, operation, glazing, and adopted-code compliance remain unsupplied and must be scheduled by the design professional.'
     }
   ],
   footprint: {
@@ -239,13 +271,13 @@ export const THRESHOLD_DWELLING_DIMENSION_CANDIDATE: ThresholdDwellingDimensionC
   ],
   windows: [
     opening('window-west-hall', 'wall-exterior-west', 'window', 0, 16.5, 4, 'vertical'),
-    opening('window-daughter-suite', 'wall-daughter-suite-north', 'window', 12, 20, 6, 'horizontal'),
-    opening('window-primary-bedroom', 'wall-primary-suite-north', 'window', 28, 20, 8, 'horizontal'),
-    opening('window-primary-bath', 'wall-primary-suite-north', 'window', 38, 20, 5, 'horizontal'),
-    opening('window-inlaw-suite', 'wall-inlaw-suite-north', 'window', 54, 20, 6, 'horizontal'),
-    opening('window-kitchen', 'wall-exterior-south', 'window', 20, 42, 8, 'horizontal'),
-    opening('window-living-dining', 'wall-exterior-south', 'window', 35, 42, 10, 'horizontal'),
-    opening('window-open-zone', 'wall-exterior-south', 'window', 50, 42, 5, 'horizontal'),
+    opening('window-daughter-suite', 'wall-exterior-south', 'window', 12, 42, 6, 'horizontal'),
+    opening('window-primary-bedroom', 'wall-exterior-south', 'window', 28, 42, 8, 'horizontal'),
+    opening('window-primary-bath', 'wall-exterior-south', 'window', 38, 42, 5, 'horizontal'),
+    opening('window-inlaw-suite', 'wall-exterior-south', 'window', 54, 42, 6, 'horizontal'),
+    opening('window-kitchen', 'wall-exterior-north', 'window', 20, 0, 8, 'horizontal'),
+    opening('window-living-dining', 'wall-exterior-north', 'window', 35, 0, 10, 'horizontal'),
+    opening('window-open-zone', 'wall-exterior-north', 'window', 50, 0, 5, 'horizontal'),
     opening('window-living-east', 'wall-exterior-east', 'window', 65, 30, 6, 'vertical')
   ],
   zones: [
@@ -301,6 +333,15 @@ export const THRESHOLD_DWELLING_DIMENSION_CANDIDATE: ThresholdDwellingDimensionC
         'Wall thicknesses and assemblies, structural loads, door swings and clear widths, window sill/head/openability, fixtures, grading, drainage, electrical, mechanical and plumbing engineering are absent.',
       requiredResolution:
         'Complete the jurisdictional, survey, architectural and engineering review register before promoting this candidate beyond concept status.'
+    },
+    {
+      id: 'sleeping-room-egress-not-specified',
+      severity: 'critical',
+      title: 'Sleeping-room exterior opening compliance is not specified',
+      evidence:
+        'The candidate now places an exterior window at each sleeping suite, but it does not contain sill heights, head heights, net clear opening, operation, glazing, window-well conditions, or an adopted-code determination.',
+      requiredResolution:
+        'The architectural professional must issue a coordinated door and window schedule and verify required exterior escape/rescue or alternate egress provisions under the confirmed adopted code.'
     }
   ]
 };

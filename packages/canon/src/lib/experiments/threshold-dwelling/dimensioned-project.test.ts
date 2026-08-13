@@ -15,6 +15,7 @@ describe('Threshold Dwelling dimension candidate', () => {
     const validation = validateThresholdDwellingDimensions(candidate);
 
     expect(candidate.status).toBe('candidate-design-intent');
+    expect(candidate.source.revision).toBe('0.6');
     expect(candidate.coordinateSystem.unit).toBe('in');
     expect(candidate.footprint.widthIn).toBe(780);
     expect(candidate.footprint.depthIn).toBe(504);
@@ -56,6 +57,14 @@ describe('Threshold Dwelling dimension candidate', () => {
         })
       ])
     );
+    expect(
+      ['window-daughter-suite', 'window-primary-bedroom', 'window-inlaw-suite'].every(
+        (windowId) => {
+          const window = candidate.windows.find((item) => item.id === windowId);
+          return window && candidate.walls.find((wall) => wall.id === window.wallId)?.exterior;
+        }
+      )
+    ).toBe(true);
   });
 
   it('uses the approved east projection and entry hall while retaining construction-evidence blockers', () => {
@@ -86,7 +95,8 @@ describe('Threshold Dwelling dimension candidate', () => {
     );
     expect(validation.blockers).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ id: 'construction-evidence-not-supplied' })
+        expect.objectContaining({ id: 'construction-evidence-not-supplied' }),
+        expect.objectContaining({ id: 'sleeping-room-egress-not-specified' })
       ])
     );
   });
@@ -118,7 +128,7 @@ describe('Threshold Dwelling dimension candidate', () => {
 
     expect(register.schemaVersion).toBe('workway.professional-review-packet.v1');
     expect(register.projectId).toBe(THRESHOLD_DWELLING_DIMENSION_CANDIDATE.id);
-    expect(register.projectRevision).toBe('0.5');
+    expect(register.projectRevision).toBe('0.6');
     expect(register.constructionReady).toBe(false);
     expect(register.determinations).toHaveLength(
       THRESHOLD_DWELLING_PROFESSIONAL_REVIEW_REQUIREMENTS.length
