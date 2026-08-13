@@ -21,6 +21,8 @@ The source of truth is `THRESHOLD_DWELLING_DIMENSION_CANDIDATE` in Canon. It use
 
 No wall thickness, finish buildup, survey datum, structural grid, elevation benchmark, or site boundary is present. Accordingly, `65 ft × 42 ft` is a **concept-envelope dimension**, not a field, permitting, or construction dimension.
 
+The Rev 0.8 massing guide now resolves every rendered surface through a stable material/assembly role code. This makes render-to-schedule identity deterministic; it does not make material products, thicknesses, wall sections, performance values, or procurement quantities exact. See the [Material and Assembly Schedule](./THRESHOLD_DWELLING_MATERIAL_AND_ASSEMBLY_SCHEDULE.md).
+
 ## Approved decisions
 
 The project owner selected the **10 ft × 27 ft east projection** as the current design-intent envelope. Its dog-kennel, carport, and covered-entry segments are respectively 10 × 6 ft, 10 × 7 ft, and 10 × 14 ft. The floor plan, light study, section/roof/site geometry, cost allowance, and render pipeline now use that envelope. This is revision 0.4 of the concept baseline.

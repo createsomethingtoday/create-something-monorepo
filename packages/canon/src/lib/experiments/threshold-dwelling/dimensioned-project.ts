@@ -468,6 +468,7 @@ export function projectThresholdDwellingFloorPlan(
   bathrooms: 4,
   features: 'In-Law Suite',
   zones: candidate.zones.map((zone) => ({
+    id: zone.id,
     x: feet(zone.xIn),
     y: feet(zone.yIn),
     width: feet(zone.widthIn),

@@ -2,6 +2,12 @@ import {
   THRESHOLD_DWELLING_LIVING_SYSTEM_FLOOR_PLAN,
   THRESHOLD_DWELLING_LIVING_SYSTEM_REVISION
 } from '@create-something/canon/experiments/threshold-dwelling/living-system-revision';
+import {
+  THRESHOLD_DWELLING_ASSEMBLY_SCHEDULE,
+  resolveThresholdDwellingAssemblyBinding,
+  resolveThresholdDwellingCodifiedMaterial,
+  type ThresholdDwellingMaterialSelectionStatus
+} from '@create-something/canon/experiments/threshold-dwelling/assembly-schedule';
 
 export interface WorkWayMassingGuide {
   id: 'threshold-dwelling-r08-browser-massing-guide';
@@ -10,6 +16,10 @@ export interface WorkWayMassingGuide {
     projectRevision: string;
   };
   spatialRevision: string;
+  materialContract: {
+    scheduleId: string;
+    materialBindingStatus: 'role-codified-product-unselected';
+  };
   dimensions: {
     widthIn: number;
     depthIn: number;
@@ -29,12 +39,18 @@ export interface WorkWayMassingVertex {
 export interface WorkWayMassingFloor {
   id: string;
   type: string;
+  materialId: string;
+  materialColor: string;
+  materialSelectionStatus: ThresholdDwellingMaterialSelectionStatus;
   vertices: readonly WorkWayMassingVertex[];
 }
 
 export interface WorkWayMassingWall {
   id: string;
   exterior: boolean;
+  materialId: string;
+  materialColor: string;
+  materialSelectionStatus: ThresholdDwellingMaterialSelectionStatus;
   vertices: readonly WorkWayMassingVertex[];
 }
 
@@ -63,6 +79,10 @@ export const THRESHOLD_DWELLING_MASSING_GUIDE = {
     projectRevision: THRESHOLD_DWELLING_LIVING_SYSTEM_REVISION.base.revision
   },
   spatialRevision: THRESHOLD_DWELLING_LIVING_SYSTEM_REVISION.proposedRevision,
+  materialContract: {
+    scheduleId: THRESHOLD_DWELLING_ASSEMBLY_SCHEDULE.id,
+    materialBindingStatus: 'role-codified-product-unselected'
+  },
   dimensions: {
     widthIn: feetToInches(THRESHOLD_DWELLING_LIVING_SYSTEM_FLOOR_PLAN.width),
     depthIn: feetToInches(THRESHOLD_DWELLING_LIVING_SYSTEM_FLOOR_PLAN.depth),
@@ -102,6 +122,18 @@ function wallVertices(
   ];
 }
 
+function renderMaterial(kind: 'plan-zone' | 'wall-class', id: string) {
+  const binding = resolveThresholdDwellingAssemblyBinding(kind, id);
+  if (!binding?.renderInMassingGuide) {
+    throw new Error(`Threshold Dwelling massing requires a renderable material binding for ${kind}:${id}.`);
+  }
+  const material = resolveThresholdDwellingCodifiedMaterial(binding.renderMaterialId);
+  if (!material) {
+    throw new Error(`Threshold Dwelling massing binding references missing material ${binding.renderMaterialId}.`);
+  }
+  return material;
+}
+
 /**
  * Produces the small, client-safe geometry used by the local browser renderer.
  * It is derived anew from Canon whenever the module loads; no visual asset is
@@ -113,22 +145,36 @@ export function createThresholdDwellingMassingGeometry(
   const floorPlan = THRESHOLD_DWELLING_LIVING_SYSTEM_FLOOR_PLAN;
 
   return {
-    floors: floorPlan.zones.map((zone, index) => ({
-      id: `zone-${index + 1}`,
-      type: zone.type,
-      vertices: floorVertices(zone.x, zone.y, zone.width, zone.height)
-    })),
-    walls: floorPlan.walls.map((wall, index) => ({
-      id: `wall-${index + 1}`,
-      exterior: Boolean(wall.exterior),
-      vertices: wallVertices(
-        wall.x1,
-        wall.y1,
-        wall.x2,
-        wall.y2,
-        guide.dimensions.verticalMassingHeightIn
-      )
-    }))
+    floors: floorPlan.zones.map((zone) => {
+      if (!zone.id) throw new Error('Threshold Dwelling massing requires stable plan-zone IDs.');
+      const material = renderMaterial('plan-zone', zone.id);
+      return {
+        id: zone.id,
+        type: zone.type,
+        materialId: material.id,
+        materialColor: material.visualColor,
+        materialSelectionStatus: material.selectionStatus,
+        vertices: floorVertices(zone.x, zone.y, zone.width, zone.height)
+      };
+    }),
+    walls: floorPlan.walls.map((wall, index) => {
+      const exterior = Boolean(wall.exterior);
+      const material = renderMaterial('wall-class', exterior ? 'exterior' : 'interior');
+      return {
+        id: `wall-${index + 1}`,
+        exterior,
+        materialId: material.id,
+        materialColor: material.visualColor,
+        materialSelectionStatus: material.selectionStatus,
+        vertices: wallVertices(
+          wall.x1,
+          wall.y1,
+          wall.x2,
+          wall.y2,
+          guide.dimensions.verticalMassingHeightIn
+        )
+      };
+    })
   };
 }
 
@@ -147,6 +193,12 @@ export function validateThresholdDwellingMassingGuide(
   }
   if (guide.spatialRevision !== THRESHOLD_DWELLING_LIVING_SYSTEM_REVISION.proposedRevision) {
     issueIds.push('spatial-revision-mismatch');
+  }
+  if (
+    guide.materialContract.scheduleId !== THRESHOLD_DWELLING_ASSEMBLY_SCHEDULE.id ||
+    guide.materialContract.materialBindingStatus !== 'role-codified-product-unselected'
+  ) {
+    issueIds.push('material-contract-mismatch');
   }
   if (
     guide.dimensions.widthIn !== feetToInches(floorPlan.width) ||

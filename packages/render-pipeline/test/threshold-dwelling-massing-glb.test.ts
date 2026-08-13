@@ -22,6 +22,17 @@ test('creates a compact GLB from the Canon Rev 0.8 plan without inventing vertic
     assert.equal(result.receipt.horizontalDimensionsIn.depth, 504);
     assert.equal(result.receipt.verticalMassingHeightIn, 108);
     assert.equal(result.receipt.verticalStatus, 'illustrative-visualization-parameter');
+    assert.equal(
+      result.receipt.assemblyScheduleId,
+      'threshold-dwelling-rev-0.8-design-intent-assembly-schedule'
+    );
+    assert.equal(result.receipt.materialBindingStatus, 'role-codified-product-unselected');
+    assert.deepEqual(result.receipt.renderedMaterialIds, [
+      'M-INT-002',
+      'M-INT-001',
+      'M-ENV-002',
+      'M-INT-003'
+    ]);
     assert.equal(result.receipt.constructionReady, false);
     assert.equal(inspection.generator, 'CREATE SOMETHING WorkWay deterministic massing exporter');
     assert.equal(inspection.counts.scenes, 1);

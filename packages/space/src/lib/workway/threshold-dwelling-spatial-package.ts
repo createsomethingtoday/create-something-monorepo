@@ -3,6 +3,10 @@ import {
   THRESHOLD_DWELLING_LIVING_SYSTEM_REVISION
 } from '@create-something/canon/experiments/threshold-dwelling/living-system-revision';
 import { THRESHOLD_DWELLING_INTERIOR_INFILL } from '@create-something/canon/experiments/threshold-dwelling/interior-infill';
+import {
+  THRESHOLD_DWELLING_ASSEMBLY_SCHEDULE,
+  resolveThresholdDwellingAssemblyBinding
+} from '@create-something/canon/experiments/threshold-dwelling/assembly-schedule';
 
 export const WORKWAY_SPATIAL_PACKAGE_SCHEMA_VERSION = 'workway.spatial-package.v1' as const;
 
@@ -59,6 +63,14 @@ export interface WorkWayValidationReceipt {
   sourceRevision: string;
 }
 
+/** A client-safe reference to the project graph's material schedule. */
+export interface WorkWayMaterialContract {
+  scheduleId: string;
+  materialBindingStatus: 'role-codified-product-unselected';
+  renderedMaterialIds: readonly string[];
+  constructionReady: false;
+}
+
 export interface WorkWaySpatialPackage {
   schemaVersion: typeof WORKWAY_SPATIAL_PACKAGE_SCHEMA_VERSION;
   id: string;
@@ -68,6 +80,7 @@ export interface WorkWaySpatialPackage {
   };
   spatialRevision: string;
   clientSourceDocuments: 'excluded';
+  materialContract: WorkWayMaterialContract;
   assets: readonly WorkWayClientAsset[];
   sceneRepresentations: readonly WorkWaySceneRepresentation[];
   entityRenderBindings: readonly WorkWayEntityRenderBinding[];
@@ -150,9 +163,32 @@ const assets = [
   {
     id: 'browser-massing-glb',
     clientPath: 'experiments/threshold-dwelling/renders/threshold-dwelling-r08-massing-guide.glb',
-    sha256: 'ebd492d900ca4e65c4232e07aa2fe9c47d842cb5ddb195b30ce9b4935436db04'
+    sha256: '807b85dea1b6cb276621fc96cde962285112e984946134e26f6fa39e53f75754'
   }
 ] as const satisfies readonly WorkWayClientAsset[];
+
+function unique<T>(values: readonly T[]): T[] {
+  return [...new Set(values)];
+}
+
+function massingMaterialIds(): string[] {
+  const zoneMaterialIds = THRESHOLD_DWELLING_LIVING_SYSTEM_FLOOR_PLAN.zones.map((zone) => {
+    if (!zone.id) throw new Error('Threshold Dwelling spatial package requires stable plan-zone IDs.');
+    const binding = resolveThresholdDwellingAssemblyBinding('plan-zone', zone.id);
+    if (!binding?.renderInMassingGuide) {
+      throw new Error(`Threshold Dwelling spatial package is missing a massing material binding for ${zone.id}.`);
+    }
+    return binding.renderMaterialId;
+  });
+  const wallMaterialIds = ['exterior', 'interior'].map((id) => {
+    const binding = resolveThresholdDwellingAssemblyBinding('wall-class', id);
+    if (!binding?.renderInMassingGuide) {
+      throw new Error(`Threshold Dwelling spatial package is missing a massing wall material binding for ${id}.`);
+    }
+    return binding.renderMaterialId;
+  });
+  return unique([...zoneMaterialIds, ...wallMaterialIds]);
+}
 
 function requireValue<T>(value: T | undefined, message: string): T {
   if (value === undefined) throw new Error(message);
@@ -190,6 +226,7 @@ export function createThresholdDwellingSpatialPackage(): WorkWaySpatialPackage {
   const livingRevision = THRESHOLD_DWELLING_LIVING_SYSTEM_REVISION;
   const floorPlan = THRESHOLD_DWELLING_LIVING_SYSTEM_FLOOR_PLAN;
   const interior = THRESHOLD_DWELLING_INTERIOR_INFILL;
+  const assemblySchedule = THRESHOLD_DWELLING_ASSEMBLY_SCHEDULE;
   const arrivalLoggia = requireValue(
     floorPlan.overhangs?.find((overhang) => overhang.label === 'Arrival\nLoggia'),
     'Threshold Dwelling Rev 0.8 requires an Arrival Loggia render projection.'
@@ -226,6 +263,12 @@ export function createThresholdDwellingSpatialPackage(): WorkWaySpatialPackage {
     },
     spatialRevision: livingRevision.proposedRevision,
     clientSourceDocuments: 'excluded',
+    materialContract: {
+      scheduleId: assemblySchedule.id,
+      materialBindingStatus: 'role-codified-product-unselected',
+      renderedMaterialIds: massingMaterialIds(),
+      constructionReady: false
+    },
     assets,
     sceneRepresentations: [
       {
@@ -415,6 +458,15 @@ export function validateSpatialPackage(
   }
   if (packageValue.constructionReady) issueIds.push('construction-ready-must-be-false');
   if (packageValue.clientSourceDocuments !== 'excluded') issueIds.push('client-source-documents-must-be-excluded');
+  if (
+    !packageValue.materialContract.scheduleId.trim() ||
+    packageValue.materialContract.materialBindingStatus !== 'role-codified-product-unselected' ||
+    !packageValue.materialContract.renderedMaterialIds.length ||
+    duplicateIds(packageValue.materialContract.renderedMaterialIds) ||
+    packageValue.materialContract.constructionReady
+  ) {
+    issueIds.push('invalid-material-contract');
+  }
   if (duplicateIds(assetIds)) issueIds.push('duplicate-asset-id');
   for (const asset of packageValue.assets) {
     if (!safeClientPath(asset.clientPath)) issueIds.push('unsafe-client-asset-path');

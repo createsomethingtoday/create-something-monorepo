@@ -6,6 +6,9 @@ private struct VerificationReceipt: Codable {
     let canonicalRevision: String
     let spatialRevision: String
     let clientSourceDocuments: String
+    let materialScheduleID: String
+    let materialBindingStatus: String
+    let renderedMaterialIDs: [String]
     let constructionReady: Bool
     let contractIssues: [String]
     let kitchenDimensionsMeters: [Double]
@@ -46,6 +49,9 @@ struct WorkWaySpatialContractVerifier {
                 canonicalRevision: package.canonicalProject.projectRevision,
                 spatialRevision: package.spatialRevision,
                 clientSourceDocuments: package.clientSourceDocuments,
+                materialScheduleID: package.materialContract.scheduleId,
+                materialBindingStatus: package.materialContract.materialBindingStatus,
+                renderedMaterialIDs: package.materialContract.renderedMaterialIds,
                 constructionReady: package.constructionReady,
                 contractIssues: package.contractIssues.map(\.rawValue),
                 kitchenDimensionsMeters: [kitchen.widthMeters, kitchen.depthMeters],

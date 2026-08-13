@@ -19,6 +19,14 @@ public struct WorkWaySpatialPackage: Codable, Equatable, Sendable {
         public let sha256: String
     }
 
+    /// Deliberately contains role identity only, never product or performance claims.
+    public struct MaterialContract: Codable, Equatable, Sendable {
+        public let scheduleId: String
+        public let materialBindingStatus: String
+        public let renderedMaterialIds: [String]
+        public let constructionReady: Bool
+    }
+
     public enum SceneFormat: String, Codable, CaseIterable, Sendable {
         case svg
         case png
@@ -89,6 +97,7 @@ public struct WorkWaySpatialPackage: Codable, Equatable, Sendable {
     public let canonicalProject: CanonicalProject
     public let spatialRevision: String
     public let clientSourceDocuments: String
+    public let materialContract: MaterialContract
     public let assets: [Asset]
     public let sceneRepresentations: [SceneRepresentation]
     public let entityRenderBindings: [EntityRenderBinding]
@@ -103,6 +112,7 @@ public struct WorkWaySpatialPackage: Codable, Equatable, Sendable {
         case canonicalProject
         case spatialRevision
         case clientSourceDocuments
+        case materialContract
         case assets
         case sceneRepresentations
         case entityRenderBindings
@@ -130,6 +140,14 @@ public struct WorkWaySpatialPackage: Codable, Equatable, Sendable {
         }
         if clientSourceDocuments != "excluded" { issues.append(.sourceDocumentsNotExcluded) }
         if constructionReady { issues.append(.constructionReadyMustBeFalse) }
+        if materialContract.scheduleId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+            materialContract.materialBindingStatus != "role-codified-product-unselected" ||
+            materialContract.renderedMaterialIds.isEmpty ||
+            Set(materialContract.renderedMaterialIds).count != materialContract.renderedMaterialIds.count ||
+            materialContract.constructionReady
+        {
+            issues.append(.materialContractInvalid)
+        }
         if assets.contains(where: { !Self.isSafeClientPath($0.clientPath) }) {
             issues.append(.unsafeClientAssetPath)
         }
@@ -230,6 +248,7 @@ public enum WorkWayNativeContractIssue: String, CaseIterable, Comparable, Sendab
     case identityMissing = "identity-missing"
     case sourceDocumentsNotExcluded = "source-documents-not-excluded"
     case constructionReadyMustBeFalse = "construction-ready-must-be-false"
+    case materialContractInvalid = "material-contract-invalid"
     case unsafeClientAssetPath = "unsafe-client-asset-path"
     case invalidClientAssetHash = "invalid-client-asset-hash"
     case roomDimensionsInvalid = "room-dimensions-invalid"

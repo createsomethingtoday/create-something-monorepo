@@ -28,6 +28,12 @@ test('derives a client-safe Rev 0.8 package from the Canon living-system revisio
   assert.equal(packageValue.spatialRevision, '0.8');
   assert.equal(packageValue.clientSourceDocuments, 'excluded');
   assert.equal(packageValue.constructionReady, false);
+  assert.deepEqual(packageValue.materialContract, {
+    scheduleId: 'threshold-dwelling-rev-0.8-design-intent-assembly-schedule',
+    materialBindingStatus: 'role-codified-product-unselected',
+    renderedMaterialIds: ['M-INT-002', 'M-INT-001', 'M-ENV-002', 'M-INT-003'],
+    constructionReady: false
+  });
   assert.equal(validation.clientSafe, true);
   assert.deepEqual(validation.issueIds, []);
   assert.deepEqual(
@@ -171,6 +177,19 @@ test('rejects client package paths that could expose a private source document',
   };
 
   assert.deepEqual(validateSpatialPackage(invalid).issueIds, ['unsafe-client-asset-path']);
+});
+
+test('rejects a material contract that tries to imply construction readiness', () => {
+  const packageValue = createThresholdDwellingSpatialPackage();
+  const invalid = {
+    ...packageValue,
+    materialContract: {
+      ...packageValue.materialContract,
+      constructionReady: true as never
+    }
+  };
+
+  assert.deepEqual(validateSpatialPackage(invalid).issueIds, ['invalid-material-contract']);
 });
 
 test('keeps the native Swift fixture in exact contract parity with the spatial package', () => {

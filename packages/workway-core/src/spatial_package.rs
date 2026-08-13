@@ -38,6 +38,18 @@ pub struct ClientAsset {
     pub sha256: String,
 }
 
+/// Client-safe reference to a project-graph material schedule. This holds
+/// codified roles only; it never claims a selected product or construction
+/// performance value.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MaterialContract {
+    pub schedule_id: String,
+    pub material_binding_status: String,
+    pub rendered_material_ids: Vec<String>,
+    pub construction_ready: bool,
+}
+
 /// A scene representation consumers may request after pre-caching a package.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -152,6 +164,7 @@ pub struct SpatialPackage {
     pub canonical_project: ProjectRevisionReference,
     pub spatial_revision: String,
     pub client_source_documents: ClientSourceDocumentAccess,
+    pub material_contract: MaterialContract,
     pub assets: Vec<ClientAsset>,
     pub scene_representations: Vec<SceneRepresentation>,
     pub entity_render_bindings: Vec<EntityRenderBinding>,
@@ -222,6 +235,20 @@ pub fn validate_spatial_package(package: &SpatialPackage) -> SpatialPackageValid
     }
     if package.construction_ready {
         issue_ids.push("construction-ready-must-be-false".into());
+    }
+    if package.material_contract.schedule_id.trim().is_empty()
+        || package.material_contract.material_binding_status != "role-codified-product-unselected"
+        || package.material_contract.rendered_material_ids.is_empty()
+        || contains_duplicate_ids(
+            package
+                .material_contract
+                .rendered_material_ids
+                .iter()
+                .map(String::as_str),
+        )
+        || package.material_contract.construction_ready
+    {
+        issue_ids.push("invalid-material-contract".into());
     }
 
     if contains_duplicate_ids(package.assets.iter().map(|asset| asset.id.as_str())) {
@@ -393,6 +420,17 @@ pub fn threshold_dwelling_spatial_package_v08() -> SpatialPackage {
         },
         spatial_revision: "0.8".into(),
         client_source_documents: ClientSourceDocumentAccess::Excluded,
+        material_contract: MaterialContract {
+            schedule_id: "threshold-dwelling-rev-0.8-design-intent-assembly-schedule".into(),
+            material_binding_status: "role-codified-product-unselected".into(),
+            rendered_material_ids: vec![
+                "M-INT-002".into(),
+                "M-INT-001".into(),
+                "M-ENV-002".into(),
+                "M-INT-003".into(),
+            ],
+            construction_ready: false,
+        },
         assets: vec![
             ClientAsset {
                 id: "tabletop-plan-svg".into(),
@@ -412,7 +450,7 @@ pub fn threshold_dwelling_spatial_package_v08() -> SpatialPackage {
             ClientAsset {
                 id: "browser-massing-glb".into(),
                 client_path: "experiments/threshold-dwelling/renders/threshold-dwelling-r08-massing-guide.glb".into(),
-                sha256: "ebd492d900ca4e65c4232e07aa2fe9c47d842cb5ddb195b30ce9b4935436db04".into(),
+                sha256: "807b85dea1b6cb276621fc96cde962285112e984946134e26f6fa39e53f75754".into(),
             },
         ],
         scene_representations: vec![

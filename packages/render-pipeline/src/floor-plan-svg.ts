@@ -19,6 +19,8 @@ export interface FloorPlanRenderOptions {
 }
 
 export interface Zone {
+  /** Stable Canon source identity when the plan comes from a codified project. */
+  id?: string;
   x: number;
   y: number;
   width: number;

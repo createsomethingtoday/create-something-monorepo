@@ -166,6 +166,10 @@
 			"types": "./dist/experiments/threshold-dwelling/interior-infill.d.ts",
 			"default": "./dist/experiments/threshold-dwelling/interior-infill.js"
 		},
+		"./experiments/threshold-dwelling/assembly-schedule": {
+			"types": "./dist/experiments/threshold-dwelling/assembly-schedule.d.ts",
+			"default": "./dist/experiments/threshold-dwelling/assembly-schedule.js"
+		},
 		"./experiments/threshold-dwelling/professional-review": {
 			"types": "./dist/experiments/threshold-dwelling/professional-review.d.ts",
 			"default": "./dist/experiments/threshold-dwelling/professional-review.js"

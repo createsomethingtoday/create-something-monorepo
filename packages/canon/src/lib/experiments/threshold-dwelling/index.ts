@@ -83,6 +83,19 @@ export {
   type ThresholdDwellingPlanDatumFacade
 } from './glazing-strategy.js';
 export {
+  THRESHOLD_DWELLING_ASSEMBLY_SCHEDULE,
+  resolveThresholdDwellingAssemblyBinding,
+  resolveThresholdDwellingCodifiedMaterial,
+  type ThresholdDwellingAssembly,
+  type ThresholdDwellingAssemblyBinding,
+  type ThresholdDwellingAssemblyBindingTargetKind,
+  type ThresholdDwellingAssemblyLayer,
+  type ThresholdDwellingAssemblySchedule,
+  type ThresholdDwellingCodifiedMaterial,
+  type ThresholdDwellingMaterialSelectionStatus,
+  type ThresholdDwellingScopeQuantityStatus
+} from './assembly-schedule.js';
+export {
   THRESHOLD_DWELLING_DESIGN,
   type ThresholdDwellingBuildMetrics,
   type ThresholdDwellingConstructionAllowance,

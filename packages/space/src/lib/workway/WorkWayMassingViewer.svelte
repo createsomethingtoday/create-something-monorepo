@@ -24,14 +24,6 @@
   let dragging = $state<{ pointerId: number; x: number; y: number } | null>(null);
   let resizeObserver: ResizeObserver | undefined;
 
-  const floorColors: Record<string, string> = {
-    service: '#5a635d',
-    public: '#9d8256',
-    private: '#71818a',
-    open: '#b5a47a',
-    outer: '#4d504b'
-  };
-
   function project(vertex: WorkWayMassingVertex, width: number, height: number): ProjectedPoint {
     const x = (vertex.xIn - guide.dimensions.widthIn / 2) / guide.dimensions.widthIn;
     const y = vertex.yIn / guide.dimensions.widthIn;
@@ -106,7 +98,7 @@
       .sort((a, b) => b.depth - a.depth);
     for (const { floor } of floors) {
       tracePolygon(context, floor.vertices, width, height);
-      context.fillStyle = floorColors[floor.type] ?? '#77736a';
+      context.fillStyle = floor.materialColor;
       context.globalAlpha = floor.type === 'open' ? 0.78 : 0.67;
       context.fill();
       context.globalAlpha = 1;
@@ -124,7 +116,7 @@
       .sort((a, b) => b.depth - a.depth);
     for (const { wall } of walls) {
       tracePolygon(context, wall.vertices, width, height);
-      context.fillStyle = wall.exterior ? 'rgba(239, 225, 186, 0.78)' : 'rgba(225, 230, 221, 0.46)';
+      context.fillStyle = wall.materialColor;
       context.fill();
       context.strokeStyle = wall.exterior ? 'rgba(255, 246, 219, 0.92)' : 'rgba(240, 240, 232, 0.54)';
       context.lineWidth = wall.exterior ? Math.max(2, width / 500) : Math.max(1, width / 900);
@@ -199,6 +191,8 @@
       <p>Horizontal geometry</p>
       <strong>{guide.dimensions.widthIn / 12} ft × {guide.dimensions.depthIn / 12} ft</strong>
       <span>from the Rev 0.8 plan</span>
+      <p class="material-contract" title={guide.materialContract.scheduleId}>Material schedule · Rev 0.8</p>
+      <span>material roles codified · products unselected</span>
     </div>
   </div>
 

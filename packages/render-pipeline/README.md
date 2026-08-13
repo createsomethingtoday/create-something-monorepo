@@ -66,9 +66,12 @@ pnpm --filter @create-something/render-pipeline generate:threshold-massing-glb
 ```
 
 The GLB stores coordinates in meters as glTF requires, but its receipt records
-the 780 × 504 in plan basis. Its 9 ft vertical mass is an illustrative display
-parameter—not an elevation, structural, glazing, energy, code, or construction
-claim. USD and USDZ remain separate, unissued native delivery formats.
+the 780 × 504 in plan basis. Rendered floor/wall materials resolve from Canon's
+Rev 0.8 material/assembly schedule and retain their `M-*` role IDs in GLB
+metadata; they are not selected physical products. Its 9 ft vertical mass is an
+illustrative display parameter—not an elevation, structural, glazing, energy,
+code, or construction claim. USD and USDZ remain separate, unissued native
+delivery formats.
 
 ## Rights and production boundary
 

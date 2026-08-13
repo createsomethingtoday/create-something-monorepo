@@ -14,6 +14,15 @@ fn threshold_dwelling_v08_spatial_package_is_client_safe_without_claiming_native
     assert_eq!(package.canonical_project.project_id, "threshold-dwelling");
     assert_eq!(package.canonical_project.project_revision, "0.7");
     assert_eq!(package.spatial_revision, "0.8");
+    assert_eq!(
+        package.material_contract.schedule_id,
+        "threshold-dwelling-rev-0.8-design-intent-assembly-schedule"
+    );
+    assert_eq!(
+        package.material_contract.rendered_material_ids,
+        vec!["M-INT-002", "M-INT-001", "M-ENV-002", "M-INT-003"]
+    );
+    assert!(!package.material_contract.construction_ready);
     assert!(validation.is_valid());
     assert!(validation.issue_ids.is_empty());
     assert!(!validation.construction_ready);
@@ -44,6 +53,7 @@ fn spatial_package_rejects_revision_private_asset_entity_portal_and_readiness_fa
     package.scene_representations[0].spatial_revision = "0.9".into();
     package.entity_render_bindings[1].render_entity_id = "public-room/kitchen".into();
     package.portals[0].to_chapter_id = "unissued-room".into();
+    package.material_contract.construction_ready = true;
 
     let validation = validate_spatial_package(&package);
 
@@ -63,6 +73,9 @@ fn spatial_package_rejects_revision_private_asset_entity_portal_and_readiness_fa
     assert!(validation
         .issue_ids
         .contains(&"portal-target-chapter-missing".into()));
+    assert!(validation
+        .issue_ids
+        .contains(&"invalid-material-contract".into()));
 }
 
 #[test]

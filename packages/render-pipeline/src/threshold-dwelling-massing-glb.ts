@@ -1,5 +1,12 @@
 import { Buffer } from 'node:buffer';
 
+import {
+  THRESHOLD_DWELLING_ASSEMBLY_SCHEDULE,
+  resolveThresholdDwellingAssemblyBinding,
+  resolveThresholdDwellingCodifiedMaterial,
+  type ThresholdDwellingCodifiedMaterial
+} from '@create-something/canon/experiments/threshold-dwelling/assembly-schedule';
+
 import type { FloorPlanData } from './floor-plan-svg.js';
 
 const METERS_PER_FOOT = 0.3048;
@@ -11,6 +18,9 @@ const BINARY_CHUNK_TYPE = 0x004e4942;
 
 export interface ThresholdDwellingMassingGlbReceipt {
   canonicalPlanName: string;
+  assemblyScheduleId: string;
+  materialBindingStatus: 'role-codified-product-unselected';
+  renderedMaterialIds: string[];
   horizontalDimensionsIn: {
     width: number;
     depth: number;
@@ -27,7 +37,7 @@ export interface ThresholdDwellingMassingGlbResult {
 
 interface PrimitiveGeometry {
   name: string;
-  material: number;
+  materialId: string;
   positions: number[];
   indices: number[];
 }
@@ -92,20 +102,32 @@ function extent(values: readonly number[]): { min: number[]; max: number[] } {
   return { min, max };
 }
 
+function materialForBinding(
+  kind: 'plan-zone' | 'wall-class',
+  id: string
+): ThresholdDwellingCodifiedMaterial {
+  const binding = resolveThresholdDwellingAssemblyBinding(kind, id);
+  if (!binding || !binding.renderInMassingGuide) {
+    throw new Error(`Threshold Dwelling massing has no renderable assembly binding for ${kind}:${id}.`);
+  }
+  const material = resolveThresholdDwellingCodifiedMaterial(binding.renderMaterialId);
+  if (!material) {
+    throw new Error(`Threshold Dwelling assembly binding references missing material ${binding.renderMaterialId}.`);
+  }
+  return material;
+}
+
 function floorGeometry(plan: FloorPlanData): PrimitiveGeometry[] {
-  const materials = new Map<string, number>([
-    ['service', 0],
-    ['public', 1],
-    ['private', 2],
-    ['open', 3]
-  ]);
   const groups = new Map<string, PrimitiveGeometry>();
 
   for (const zone of plan.zones) {
-    const key = materials.has(zone.type) ? zone.type : 'open';
-    const group = groups.get(key) ?? {
-      name: `Floor · ${key}`,
-      material: materials.get(key) ?? 3,
+    if (!zone.id) {
+      throw new Error('Threshold Dwelling massing requires stable plan-zone IDs for material binding.');
+    }
+    const material = materialForBinding('plan-zone', zone.id);
+    const group = groups.get(material.id) ?? {
+      name: `Floor · ${material.id} · ${material.name}`,
+      materialId: material.id,
       positions: [],
       indices: []
     };
@@ -114,21 +136,22 @@ function floorGeometry(plan: FloorPlanData): PrimitiveGeometry[] {
     const z1 = feetToMeters(zone.y);
     const z2 = feetToMeters(zone.y + zone.height);
     appendQuad(group, [x1, 0, z1, x1, 0, z2, x2, 0, z2, x2, 0, z1]);
-    groups.set(key, group);
+    groups.set(material.id, group);
   }
 
   return [...groups.values()];
 }
 
 function wallGeometry(plan: FloorPlanData): PrimitiveGeometry[] {
-  const groups = new Map<boolean, PrimitiveGeometry>();
+  const groups = new Map<string, PrimitiveGeometry>();
   const height = VERTICAL_MASSING_HEIGHT_IN / 12 * METERS_PER_FOOT;
 
   for (const wall of plan.walls) {
     const exterior = Boolean(wall.exterior);
-    const group = groups.get(exterior) ?? {
-      name: exterior ? 'Wall · exterior' : 'Wall · interior',
-      material: exterior ? 4 : 5,
+    const material = materialForBinding('wall-class', exterior ? 'exterior' : 'interior');
+    const group = groups.get(material.id) ?? {
+      name: `Wall · ${material.id} · ${material.name}`,
+      materialId: material.id,
       positions: [],
       indices: []
     };
@@ -137,7 +160,7 @@ function wallGeometry(plan: FloorPlanData): PrimitiveGeometry[] {
     const z1 = feetToMeters(wall.y1);
     const z2 = feetToMeters(wall.y2);
     appendQuad(group, [x1, 0, z1, x2, 0, z2, x2, height, z2, x1, height, z1]);
-    groups.set(exterior, group);
+    groups.set(material.id, group);
   }
 
   return [...groups.values()];
@@ -145,6 +168,7 @@ function wallGeometry(plan: FloorPlanData): PrimitiveGeometry[] {
 
 function appendPrimitive(
   geometry: PrimitiveGeometry,
+  material: number,
   binary: BinaryBufferBuilder,
   bufferViews: GltfBufferView[],
   accessors: GltfAccessor[]
@@ -189,7 +213,7 @@ function appendPrimitive(
   return {
     attributes: { POSITION: positionAccessor },
     indices: indexAccessor,
-    material: geometry.material,
+    material,
     mode: 4
   };
 }
@@ -197,6 +221,40 @@ function appendPrimitive(
 function fourBytePad(buffer: Buffer, fill: number): Buffer {
   const padding = (4 - (buffer.length % 4)) % 4;
   return padding ? Buffer.concat([buffer, Buffer.alloc(padding, fill)]) : buffer;
+}
+
+function hexToColorFactor(color: string): [number, number, number, number] {
+  const value = color.startsWith('#') ? color.slice(1) : color;
+  if (!/^[0-9a-fA-F]{6}$/.test(value)) {
+    throw new Error(`Threshold Dwelling material has an invalid visual color: ${color}`);
+  }
+  return [
+    Number.parseInt(value.slice(0, 2), 16) / 255,
+    Number.parseInt(value.slice(2, 4), 16) / 255,
+    Number.parseInt(value.slice(4, 6), 16) / 255,
+    1
+  ];
+}
+
+function gltfMaterial(material: ThresholdDwellingCodifiedMaterial) {
+  return {
+    name: `${material.id} · ${material.name} · role codified / product unselected`,
+    pbrMetallicRoughness: {
+      baseColorFactor: hexToColorFactor(material.visualColor),
+      metallicFactor: 0,
+      roughnessFactor: 0.85
+    },
+    extensions: { KHR_materials_unlit: {} },
+    doubleSided: true,
+    extras: {
+      workway: {
+        materialId: material.id,
+        paletteSourceName: material.paletteSourceName,
+        selectionStatus: material.selectionStatus,
+        productSelection: 'unissued'
+      }
+    }
+  };
 }
 
 /**
@@ -211,16 +269,34 @@ export function createThresholdDwellingMassingGlb(
     throw new Error('Threshold Dwelling massing requires positive plan dimensions.');
   }
   const geometries = [...floorGeometry(plan), ...wallGeometry(plan)];
+  const renderedMaterialIds = [...new Set(geometries.map((geometry) => geometry.materialId))];
+  const renderedMaterials = renderedMaterialIds.map((id) => {
+    const material = resolveThresholdDwellingCodifiedMaterial(id);
+    if (!material) throw new Error(`Threshold Dwelling massing references missing material ${id}.`);
+    return material;
+  });
+  const materialIndexById = new Map(
+    renderedMaterials.map((material, index) => [material.id, index])
+  );
   const binary = new BinaryBufferBuilder();
   const bufferViews: GltfBufferView[] = [];
   const accessors: GltfAccessor[] = [];
-  const meshes = geometries.map((geometry) => ({
-    name: geometry.name,
-    primitives: [appendPrimitive(geometry, binary, bufferViews, accessors)]
-  }));
+  const meshes = geometries.map((geometry) => {
+    const materialIndex = materialIndexById.get(geometry.materialId);
+    if (materialIndex === undefined) {
+      throw new Error(`Threshold Dwelling massing failed to index ${geometry.materialId}.`);
+    }
+    return {
+      name: geometry.name,
+      primitives: [appendPrimitive(geometry, materialIndex, binary, bufferViews, accessors)]
+    };
+  });
   const binaryBuffer = binary.toBuffer();
   const receipt: ThresholdDwellingMassingGlbReceipt = {
     canonicalPlanName: plan.name,
+    assemblyScheduleId: THRESHOLD_DWELLING_ASSEMBLY_SCHEDULE.id,
+    materialBindingStatus: 'role-codified-product-unselected',
+    renderedMaterialIds,
     horizontalDimensionsIn: {
       width: plan.width * 12,
       depth: plan.depth * 12
@@ -242,14 +318,7 @@ export function createThresholdDwellingMassingGlb(
     scenes: [{ name: 'Threshold Dwelling Rev 0.8 massing guide', nodes: meshes.map((_, index) => index) }],
     nodes: meshes.map((mesh, index) => ({ name: mesh.name, mesh: index })),
     meshes,
-    materials: [
-      { name: 'Service floor', pbrMetallicRoughness: { baseColorFactor: [0.28, 0.34, 0.31, 1], metallicFactor: 0, roughnessFactor: 0.85 }, extensions: { KHR_materials_unlit: {} }, doubleSided: true },
-      { name: 'Public floor', pbrMetallicRoughness: { baseColorFactor: [0.62, 0.51, 0.34, 1], metallicFactor: 0, roughnessFactor: 0.85 }, extensions: { KHR_materials_unlit: {} }, doubleSided: true },
-      { name: 'Private floor', pbrMetallicRoughness: { baseColorFactor: [0.39, 0.48, 0.53, 1], metallicFactor: 0, roughnessFactor: 0.85 }, extensions: { KHR_materials_unlit: {} }, doubleSided: true },
-      { name: 'Open floor', pbrMetallicRoughness: { baseColorFactor: [0.71, 0.64, 0.47, 1], metallicFactor: 0, roughnessFactor: 0.85 }, extensions: { KHR_materials_unlit: {} }, doubleSided: true },
-      { name: 'Exterior walls', pbrMetallicRoughness: { baseColorFactor: [0.93, 0.88, 0.73, 1], metallicFactor: 0, roughnessFactor: 0.75 }, extensions: { KHR_materials_unlit: {} }, doubleSided: true },
-      { name: 'Interior walls', pbrMetallicRoughness: { baseColorFactor: [0.85, 0.89, 0.85, 1], metallicFactor: 0, roughnessFactor: 0.8 }, extensions: { KHR_materials_unlit: {} }, doubleSided: true }
-    ],
+    materials: renderedMaterials.map(gltfMaterial),
     buffers: [{ byteLength: binaryBuffer.length }],
     bufferViews,
     accessors

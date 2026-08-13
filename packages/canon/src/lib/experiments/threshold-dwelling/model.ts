@@ -498,6 +498,13 @@ const materialPalette: ThresholdDwellingMaterial[] = [
     notes: 'Coordinate joints, curing, sealer, and tolerance'
   },
   {
+    name: 'Large-Format Porcelain',
+    category: 'interior',
+    color: '#d8d5cf',
+    location: 'Baths + laundry',
+    notes: 'Role-only finish datum; select product, waterproofing, slip resistance, transitions, and maintenance requirements before issue'
+  },
+  {
     name: 'Gypsum + Mineral Finish',
     category: 'interior',
     color: '#eeede7',
