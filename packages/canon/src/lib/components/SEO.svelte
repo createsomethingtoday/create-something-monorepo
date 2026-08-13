@@ -400,12 +400,12 @@
   {/if}
 
   <!-- Twitter -->
-  <meta property="twitter:card" content={twitterCard} />
-  <meta property="twitter:url" content={canonicalUrl} />
-  <meta property="twitter:title" content={fullTitle} />
-  <meta property="twitter:description" content={fullDescription} />
-  <meta property="twitter:image" content={fullOgImage} />
-  <meta property="twitter:image:alt" content={fullTitle} />
+  <meta name="twitter:card" content={twitterCard} />
+  <meta name="twitter:url" content={canonicalUrl} />
+  <meta name="twitter:title" content={fullTitle} />
+  <meta name="twitter:description" content={fullDescription} />
+  <meta name="twitter:image" content={fullOgImage} />
+  <meta name="twitter:image:alt" content={fullTitle} />
 
   <!-- Schema.org JSON-LD -->
   {@html jsonLd(organizationSchema)}
