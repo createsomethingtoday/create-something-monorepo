@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import test from 'node:test';
 
 import {
@@ -66,6 +68,30 @@ test('keeps native USD and USDZ declarative but explicitly unissued', () => {
     { format: 'usd', status: 'unissued', assetId: null },
     { format: 'usdz', status: 'unissued', assetId: null }
   ]);
+});
+
+test('delivers the deterministic browser massing GLB without claiming a native asset', () => {
+  const browserMassing = THRESHOLD_DWELLING_SPATIAL_PACKAGE.sceneRepresentations.find(
+    (representation) => representation.id === 'browser-massing-glb'
+  );
+
+  assert.deepEqual(browserMassing, {
+    id: 'browser-massing-glb',
+    format: 'glb',
+    status: 'available',
+    canonicalRevision: '0.7',
+    spatialRevision: '0.8',
+    assetId: 'browser-massing-glb'
+  });
+});
+
+test('keeps each available 2D visual asset content-addressed to its local package receipt', () => {
+  const packageValue = THRESHOLD_DWELLING_SPATIAL_PACKAGE;
+
+  for (const asset of packageValue.assets) {
+    const contents = readFileSync(resolve(process.cwd(), 'static', asset.clientPath));
+    assert.equal(createHash('sha256').update(contents).digest('hex'), asset.sha256, asset.id);
+  }
 });
 
 test('uses explicit portals and immutable session annotation operations', () => {

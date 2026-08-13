@@ -77,7 +77,7 @@
       "required": ["id", "format", "status", "canonicalRevision", "spatialRevision", "assetId"],
       "properties": {
         "id": { "type": "string", "minLength": 1 },
-        "format": { "enum": ["svg", "png", "usd", "usdz"] },
+        "format": { "enum": ["svg", "png", "glb", "usd", "usdz"] },
         "status": { "enum": ["available", "unissued"] },
         "canonicalRevision": { "type": "string", "minLength": 1 },
         "spatialRevision": { "type": "string", "minLength": 1 },

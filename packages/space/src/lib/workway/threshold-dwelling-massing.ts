@@ -1,0 +1,172 @@
+import {
+  THRESHOLD_DWELLING_LIVING_SYSTEM_FLOOR_PLAN,
+  THRESHOLD_DWELLING_LIVING_SYSTEM_REVISION
+} from '@create-something/canon/experiments/threshold-dwelling/living-system-revision';
+
+export interface WorkWayMassingGuide {
+  id: 'threshold-dwelling-r08-browser-massing-guide';
+  canonicalProject: {
+    projectId: string;
+    projectRevision: string;
+  };
+  spatialRevision: string;
+  dimensions: {
+    widthIn: number;
+    depthIn: number;
+    horizontalSource: 'canon-rev-0.8-floor-plan';
+    verticalMassingHeightIn: number;
+    verticalStatus: 'illustrative-visualization-parameter';
+  };
+  constructionReady: false;
+}
+
+export interface WorkWayMassingVertex {
+  xIn: number;
+  yIn: number;
+  zIn: number;
+}
+
+export interface WorkWayMassingFloor {
+  id: string;
+  type: string;
+  vertices: readonly WorkWayMassingVertex[];
+}
+
+export interface WorkWayMassingWall {
+  id: string;
+  exterior: boolean;
+  vertices: readonly WorkWayMassingVertex[];
+}
+
+export interface WorkWayMassingGeometry {
+  floors: readonly WorkWayMassingFloor[];
+  walls: readonly WorkWayMassingWall[];
+}
+
+export interface WorkWayMassingGuideValidation {
+  issueIds: readonly string[];
+  isSafeForReview: boolean;
+  constructionReady: false;
+}
+
+const feetToInches = (value: number): number => value * 12;
+
+/**
+ * This guide intentionally preserves only the issued horizontal design-intent
+ * dimensions. Its 9 ft vertical mass is a clear visual parameter, not an
+ * architectural elevation, structural depth, glazing height, or code claim.
+ */
+export const THRESHOLD_DWELLING_MASSING_GUIDE = {
+  id: 'threshold-dwelling-r08-browser-massing-guide',
+  canonicalProject: {
+    projectId: THRESHOLD_DWELLING_LIVING_SYSTEM_REVISION.base.projectId,
+    projectRevision: THRESHOLD_DWELLING_LIVING_SYSTEM_REVISION.base.revision
+  },
+  spatialRevision: THRESHOLD_DWELLING_LIVING_SYSTEM_REVISION.proposedRevision,
+  dimensions: {
+    widthIn: feetToInches(THRESHOLD_DWELLING_LIVING_SYSTEM_FLOOR_PLAN.width),
+    depthIn: feetToInches(THRESHOLD_DWELLING_LIVING_SYSTEM_FLOOR_PLAN.depth),
+    horizontalSource: 'canon-rev-0.8-floor-plan',
+    verticalMassingHeightIn: 108,
+    verticalStatus: 'illustrative-visualization-parameter'
+  },
+  constructionReady: false
+} as const satisfies WorkWayMassingGuide;
+
+function floorVertices(x: number, y: number, width: number, height: number): readonly WorkWayMassingVertex[] {
+  const x1 = feetToInches(x);
+  const x2 = feetToInches(x + width);
+  const z1 = feetToInches(y);
+  const z2 = feetToInches(y + height);
+
+  return [
+    { xIn: x1, yIn: 0, zIn: z1 },
+    { xIn: x2, yIn: 0, zIn: z1 },
+    { xIn: x2, yIn: 0, zIn: z2 },
+    { xIn: x1, yIn: 0, zIn: z2 }
+  ];
+}
+
+function wallVertices(
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  heightIn: number
+): readonly WorkWayMassingVertex[] {
+  return [
+    { xIn: feetToInches(x1), yIn: 0, zIn: feetToInches(y1) },
+    { xIn: feetToInches(x2), yIn: 0, zIn: feetToInches(y2) },
+    { xIn: feetToInches(x2), yIn: heightIn, zIn: feetToInches(y2) },
+    { xIn: feetToInches(x1), yIn: heightIn, zIn: feetToInches(y1) }
+  ];
+}
+
+/**
+ * Produces the small, client-safe geometry used by the local browser renderer.
+ * It is derived anew from Canon whenever the module loads; no visual asset is
+ * permitted to become an alternate source of dimensions.
+ */
+export function createThresholdDwellingMassingGeometry(
+  guide: WorkWayMassingGuide = THRESHOLD_DWELLING_MASSING_GUIDE
+): WorkWayMassingGeometry {
+  const floorPlan = THRESHOLD_DWELLING_LIVING_SYSTEM_FLOOR_PLAN;
+
+  return {
+    floors: floorPlan.zones.map((zone, index) => ({
+      id: `zone-${index + 1}`,
+      type: zone.type,
+      vertices: floorVertices(zone.x, zone.y, zone.width, zone.height)
+    })),
+    walls: floorPlan.walls.map((wall, index) => ({
+      id: `wall-${index + 1}`,
+      exterior: Boolean(wall.exterior),
+      vertices: wallVertices(
+        wall.x1,
+        wall.y1,
+        wall.x2,
+        wall.y2,
+        guide.dimensions.verticalMassingHeightIn
+      )
+    }))
+  };
+}
+
+export function validateThresholdDwellingMassingGuide(
+  guide: WorkWayMassingGuide
+): WorkWayMassingGuideValidation {
+  const issueIds: string[] = [];
+  const floorPlan = THRESHOLD_DWELLING_LIVING_SYSTEM_FLOOR_PLAN;
+
+  if (guide.constructionReady) issueIds.push('construction-ready-must-be-false');
+  if (guide.canonicalProject.projectId !== THRESHOLD_DWELLING_LIVING_SYSTEM_REVISION.base.projectId) {
+    issueIds.push('canonical-project-mismatch');
+  }
+  if (guide.canonicalProject.projectRevision !== THRESHOLD_DWELLING_LIVING_SYSTEM_REVISION.base.revision) {
+    issueIds.push('canonical-revision-mismatch');
+  }
+  if (guide.spatialRevision !== THRESHOLD_DWELLING_LIVING_SYSTEM_REVISION.proposedRevision) {
+    issueIds.push('spatial-revision-mismatch');
+  }
+  if (
+    guide.dimensions.widthIn !== feetToInches(floorPlan.width) ||
+    guide.dimensions.depthIn !== feetToInches(floorPlan.depth)
+  ) {
+    issueIds.push('horizontal-dimensions-mismatch');
+  }
+  if (guide.dimensions.horizontalSource !== 'canon-rev-0.8-floor-plan') {
+    issueIds.push('horizontal-source-mismatch');
+  }
+  if (guide.dimensions.verticalMassingHeightIn <= 0) {
+    issueIds.push('vertical-massing-height-must-be-positive');
+  }
+  if (guide.dimensions.verticalStatus !== 'illustrative-visualization-parameter') {
+    issueIds.push('vertical-massing-status-mismatch');
+  }
+
+  return {
+    issueIds,
+    isSafeForReview: issueIds.length === 0,
+    constructionReady: false
+  };
+}

@@ -7,12 +7,14 @@
   "assets": [
     { "id": "tabletop-plan-svg", "clientPath": "experiments/threshold-dwelling/renders/floor-plan.svg", "sha256": "c83c9deb796c34f8a94497a2f4e77fdbbbfbc6d584480ea0cf3f9c08bc48e017" },
     { "id": "tabletop-plan-png", "clientPath": "experiments/threshold-dwelling/renders/floor-plan.png", "sha256": "6bb7955a32628e0fd499b58e7ca57f9c9f3a93cfca46a84ecb1ffc84fdde2a5c" },
-    { "id": "public-room-hero-png", "clientPath": "experiments/threshold-dwelling/renders/living-system-public-room-hero-v1.png", "sha256": "ff78a4af53c0c1117c1cf83db22e451728733dffaba9bd2356a046ebc9ad63ba" }
+    { "id": "public-room-hero-png", "clientPath": "experiments/threshold-dwelling/renders/living-system-public-room-hero-v1.png", "sha256": "ff78a4af53c0c1117c1cf83db22e451728733dffaba9bd2356a046ebc9ad63ba" },
+    { "id": "browser-massing-glb", "clientPath": "experiments/threshold-dwelling/renders/threshold-dwelling-r08-massing-guide.glb", "sha256": "ebd492d900ca4e65c4232e07aa2fe9c47d842cb5ddb195b30ce9b4935436db04" }
   ],
   "sceneRepresentations": [
     { "id": "tabletop-svg", "format": "svg", "status": "available", "canonicalRevision": "0.7", "spatialRevision": "0.8", "assetId": "tabletop-plan-svg" },
     { "id": "tabletop-png", "format": "png", "status": "available", "canonicalRevision": "0.7", "spatialRevision": "0.8", "assetId": "tabletop-plan-png" },
     { "id": "public-room-hero-png", "format": "png", "status": "available", "canonicalRevision": "0.7", "spatialRevision": "0.8", "assetId": "public-room-hero-png" },
+    { "id": "browser-massing-glb", "format": "glb", "status": "available", "canonicalRevision": "0.7", "spatialRevision": "0.8", "assetId": "browser-massing-glb" },
     { "id": "native-usd", "format": "usd", "status": "unissued", "canonicalRevision": "0.7", "spatialRevision": "0.8", "assetId": null },
     { "id": "native-usdz", "format": "usdz", "status": "unissued", "canonicalRevision": "0.7", "spatialRevision": "0.8", "assetId": null }
   ],

@@ -22,6 +22,7 @@ public struct WorkWaySpatialPackage: Codable, Equatable, Sendable {
     public enum SceneFormat: String, Codable, CaseIterable, Sendable {
         case svg
         case png
+        case glb
         case usd
         case usdz
     }

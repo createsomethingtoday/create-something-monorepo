@@ -22,7 +22,7 @@
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
 		"test:search": "vitest run src/lib/search/sitemap.test.ts",
-		"test:workway": "tsx --test src/lib/workway/threshold-dwelling-spatial-package.test.ts",
+		"test:workway": "tsx --test src/lib/workway/threshold-dwelling-spatial-package.test.ts src/lib/workway/threshold-dwelling-massing.test.ts",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings && pnpm test:search && pnpm test:workway",
 		"test:nba": "tsx --test src/lib/nba/scoreboard-state.test.ts src/lib/nba/api.test.ts workers/nba-proxy/src/scoreboard.test.ts workers/nba-proxy/src/archive.test.ts workers/nba-proxy/src/index.test.ts",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings --watch",

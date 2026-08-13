@@ -44,6 +44,7 @@ pub struct ClientAsset {
 pub enum SceneFormat {
     Svg,
     Png,
+    Glb,
     Usd,
     Usdz,
 }
@@ -408,6 +409,11 @@ pub fn threshold_dwelling_spatial_package_v08() -> SpatialPackage {
                 client_path: "experiments/threshold-dwelling/renders/living-system-public-room-hero-v1.png".into(),
                 sha256: "ff78a4af53c0c1117c1cf83db22e451728733dffaba9bd2356a046ebc9ad63ba".into(),
             },
+            ClientAsset {
+                id: "browser-massing-glb".into(),
+                client_path: "experiments/threshold-dwelling/renders/threshold-dwelling-r08-massing-guide.glb".into(),
+                sha256: "ebd492d900ca4e65c4232e07aa2fe9c47d842cb5ddb195b30ce9b4935436db04".into(),
+            },
         ],
         scene_representations: vec![
             SceneRepresentation {
@@ -433,6 +439,14 @@ pub fn threshold_dwelling_spatial_package_v08() -> SpatialPackage {
                 canonical_revision: "0.7".into(),
                 spatial_revision: "0.8".into(),
                 asset_id: Some("public-room-hero-png".into()),
+            },
+            SceneRepresentation {
+                id: "browser-massing-glb".into(),
+                format: SceneFormat::Glb,
+                status: SceneRepresentationStatus::Available,
+                canonical_revision: "0.7".into(),
+                spatial_revision: "0.8".into(),
+                asset_id: Some("browser-massing-glb".into()),
             },
             SceneRepresentation {
                 id: "native-usd".into(),

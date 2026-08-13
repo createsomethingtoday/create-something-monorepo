@@ -16,8 +16,10 @@
     "dev": "tsc --watch",
     "docs": "tsx src/bin/generate-docs.ts",
     "generate-sections": "tsx scripts/generate-sections.ts",
+    "generate:threshold-massing-glb": "tsx scripts/generate-threshold-dwelling-massing-glb.ts",
     "render-lab": "node web-render/server.mjs",
-    "test:web-render": "tsx --test test/web-render-contract.test.ts"
+    "test:web-render": "tsx --test test/web-render-contract.test.ts",
+    "test:threshold-massing-glb": "tsx --test test/threshold-dwelling-massing-glb.test.ts"
   },
   "dependencies": {
     "@create-something/canon": "workspace:^",

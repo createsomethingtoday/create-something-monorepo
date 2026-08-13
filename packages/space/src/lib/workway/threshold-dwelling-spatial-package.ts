@@ -6,7 +6,7 @@ import { THRESHOLD_DWELLING_INTERIOR_INFILL } from '@create-something/canon/expe
 
 export const WORKWAY_SPATIAL_PACKAGE_SCHEMA_VERSION = 'workway.spatial-package.v1' as const;
 
-type SceneFormat = 'svg' | 'png' | 'usd' | 'usdz';
+type SceneFormat = 'svg' | 'png' | 'glb' | 'usd' | 'usdz';
 type SceneRepresentationStatus = 'available' | 'unissued';
 type SpatialScale = 'one-to-one';
 type Locomotion = 'room-chapter-rebase';
@@ -146,6 +146,11 @@ const assets = [
     id: 'public-room-hero-png',
     clientPath: 'experiments/threshold-dwelling/renders/living-system-public-room-hero-v1.png',
     sha256: 'ff78a4af53c0c1117c1cf83db22e451728733dffaba9bd2356a046ebc9ad63ba'
+  },
+  {
+    id: 'browser-massing-glb',
+    clientPath: 'experiments/threshold-dwelling/renders/threshold-dwelling-r08-massing-guide.glb',
+    sha256: 'ebd492d900ca4e65c4232e07aa2fe9c47d842cb5ddb195b30ce9b4935436db04'
   }
 ] as const satisfies readonly WorkWayClientAsset[];
 
@@ -246,6 +251,14 @@ export function createThresholdDwellingSpatialPackage(): WorkWaySpatialPackage {
         canonicalRevision: livingRevision.base.revision,
         spatialRevision: livingRevision.proposedRevision,
         assetId: 'public-room-hero-png'
+      },
+      {
+        id: 'browser-massing-glb',
+        format: 'glb',
+        status: 'available',
+        canonicalRevision: livingRevision.base.revision,
+        spatialRevision: livingRevision.proposedRevision,
+        assetId: 'browser-massing-glb'
       },
       {
         id: 'native-usd',

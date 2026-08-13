@@ -12,13 +12,22 @@
     type WorkWaySessionOperation,
     type WorkWaySessionProposalDecision
   } from '$lib/workway/threshold-dwelling-spatial-package';
+  import WorkWayMassingViewer from '$lib/workway/WorkWayMassingViewer.svelte';
+  import {
+    THRESHOLD_DWELLING_MASSING_GUIDE,
+    createThresholdDwellingMassingGeometry
+  } from '$lib/workway/threshold-dwelling-massing';
 
   const spatialPackage = THRESHOLD_DWELLING_SPATIAL_PACKAGE;
   const tabletopPlan = assetBrowserUrl(spatialPackage, 'tabletop-plan-svg');
   const publicRoomVisual = assetBrowserUrl(spatialPackage, 'public-room-hero-png');
+  const massingGlb = assetBrowserUrl(spatialPackage, 'browser-massing-glb');
   const localPreview = dev;
 
-  let mode = $state<'tabletop' | 'chapter'>('tabletop');
+  const massingGuide = THRESHOLD_DWELLING_MASSING_GUIDE;
+  const massingGeometry = createThresholdDwellingMassingGeometry(massingGuide);
+
+  let mode = $state<'tabletop' | 'massing' | 'chapter'>('tabletop');
   let activeChapterId = $state('kitchen');
   let annotationText = $state('Island clearance: compare the proposed 4 in south move.');
   let annotations = $state<WorkWaySessionAnnotation[]>([]);
@@ -58,6 +67,10 @@
 
   function returnToTabletop() {
     mode = 'tabletop';
+  }
+
+  function enterMassing() {
+    mode = 'massing';
   }
 
   function recordProposalDecision(decision: WorkWaySessionProposalDecision['decision']) {
@@ -109,7 +122,8 @@
       <span class="guardrail-mark">●</span>
       <p>
         Derived visualization only. No source documents, construction authority, survey claim, or
-        shipped USD/USDZ asset is present in this local client package.
+        shipped USD/USDZ asset is present in this local client package. The browser 3D massing guide
+        is review-only and marks its vertical parameter separately.
       </p>
     </section>
 
@@ -122,6 +136,13 @@
             data-testid="tabletop-mode"
           >
             Tabletop
+          </button>
+          <button
+            class:active={mode === 'massing'}
+            onclick={enterMassing}
+            data-testid="massing-mode"
+          >
+            3D guide
           </button>
           <button
             class:active={mode === 'chapter'}
@@ -149,7 +170,9 @@
         </div>
 
         <div class="navigator-section capability">
-          <p class="section-label">Native delivery</p>
+          <p class="section-label">Render delivery</p>
+          <p>2D plan · available</p>
+          <p>Browser 3D · available</p>
           <p>USD · unissued</p>
           <p>USDZ · unissued</p>
         </div>
@@ -179,12 +202,41 @@
           </div>
 
           <div class="tabletop-actions">
-            <button class="primary-action" onclick={() => enterChapter('kitchen')} data-testid="enter-kitchen">
+            <button class="primary-action" onclick={enterMassing} data-testid="enter-massing">
+              Inspect 3D massing
+            </button>
+            <button class="secondary-action" onclick={() => enterChapter('kitchen')} data-testid="enter-kitchen">
               Enter kitchen chapter
             </button>
             <p>
               Tabletop is a project-scale review. Entering a chapter preserves room dimensions and
               rebases the local stage; it does not simulate free walking through the full house.
+            </p>
+          </div>
+        {:else if mode === 'massing'}
+          <div class="scene-heading">
+            <div>
+              <p class="section-label">3D massing / dimensional floor-plan basis</p>
+              <h2>Inspect the same proposal as a spatial volume.</h2>
+            </div>
+            <span class="mode-pill" data-testid="mode-state">3D guide</span>
+          </div>
+
+          <WorkWayMassingViewer geometry={massingGeometry} guide={massingGuide} />
+
+          <div class="tabletop-actions">
+            <button class="secondary-action" onclick={returnToTabletop} data-testid="massing-return-tabletop">
+              Return to tabletop
+            </button>
+            <a class="secondary-action" href={massingGlb} download data-testid="download-massing-glb">
+              Download GLB
+            </a>
+            <button class="primary-action" onclick={() => enterChapter('kitchen')}>
+              Enter kitchen chapter
+            </button>
+            <p>
+              This is a dimensional plan-based massing view, not an elevation, window schedule,
+              structural model, or permitted building model.
             </p>
           </div>
         {:else}
@@ -469,7 +521,7 @@
 
   .mode-switcher {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     border: 1px solid #3b3c37;
   }
 
@@ -625,6 +677,10 @@
     padding: 0.72rem 0.85rem;
     font-size: 0.78rem;
     line-height: 1.1;
+  }
+
+  a.secondary-action {
+    text-decoration: none;
   }
 
   .primary-action {

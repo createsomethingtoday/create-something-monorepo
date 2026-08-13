@@ -29,6 +29,11 @@ fn threshold_dwelling_v08_spatial_package_is_client_safe_without_claiming_native
             && representation.status == SceneRepresentationStatus::Unissued
             && representation.asset_id.is_none()
     }));
+    assert!(package.scene_representations.iter().any(|representation| {
+        representation.format == SceneFormat::Glb
+            && representation.status == SceneRepresentationStatus::Available
+            && representation.asset_id.as_deref() == Some("browser-massing-glb")
+    }));
 }
 
 #[test]

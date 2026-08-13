@@ -122,6 +122,12 @@ export {
 
 export { inspectGlb, type GlbInspection } from './web-render/inspect-glb.js';
 
+export {
+  createThresholdDwellingMassingGlb,
+  type ThresholdDwellingMassingGlbReceipt,
+  type ThresholdDwellingMassingGlbResult
+} from './threshold-dwelling-massing-glb.js';
+
 import type { RenderFromSvgOptions, RenderResult, ControlNetModel } from './types.js';
 
 /**
