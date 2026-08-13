@@ -1,21 +1,21 @@
-# Threshold Dwelling Glazing-Majority Feasibility Brief
+# Threshold Dwelling High-Glazing Feasibility Brief
 
 **Status:** Rev 0.8 design-development decision record. This is a feasibility screen, not structural design, energy-code compliance documentation, a bid, or a permit determination.
 
 ## Decision encoded in the model
 
-The design now targets **60% aggregate glazing by illustrative gross exterior-wall area**: 1,284 SF of glass field and 856 SF of selective opaque concrete zones within the current 2,140 SF wall-area allowance. It is a whole-envelope target, **not a direction-by-direction requirement**: the actual distribution must concentrate glass where verified views and solar conditions support it, with more opaque concrete at privacy, service, lateral, and high-solar-load conditions. Architectural concrete is the primary interior-wall mass. Cedar stays confined to protected and tactile accents. Coated steel is a localized support material for glazed spans and required frame/lateral conditions; it is not an exterior visual field.
+The design now targets **approximately 45% aggregate glazing by illustrative gross exterior-wall area**: 950 SF of concentrated glass and 1,190 SF of architectural-concrete exterior field within the current 2,140 SF wall-area allowance. It is a whole-envelope target, **not a direction-by-direction requirement**: the review render allocates glass to four horizontal spans—the public room, arrival, private-view, and hall—and keeps concrete as the exterior default. Those spans are visual allocation only; the actual distribution must respond to verified views, solar conditions, privacy, services, lateral strategy, and high-solar-load conditions. Architectural concrete remains the primary interior-wall mass. Cedar stays confined to protected and tactile accents. Coated steel is a localized support material for glazed spans and required frame/lateral conditions; it is not an exterior visual field.
 
-The 60% ratio is a design-development target, not an issued aperture layout. The current plan has exact horizontal perimeter linework only. It does not establish glass panel sizes, mullions, vertical wall dimensions, steel sizes, connections, foundation reactions, opening operation, or actual glazing area.
+The approximately 45% ratio is a design-development target, not an issued aperture layout. The current plan has exact horizontal perimeter linework only. It does not establish glass panel sizes, mullions, vertical wall dimensions, steel sizes, connections, foundation reactions, opening operation, or actual glazing area.
 
 ## Is it feasible?
 
-**Technically credible, conditionally.** A one-story custom residence can use a glazing-majority exterior when the glass, supports, opaque zones, shading, HVAC, and water management are designed as one facade system. The ratio is not itself a safety or structural solution. The design may retain the 60% target only if the gates below are accepted for the actual homesite.
+**Technically credible, conditionally.** A one-story custom residence can use concentrated high glazing when the glass, supports, concrete zones, shading, HVAC, and water management are designed as one facade system. The ratio is not itself a safety or structural solution. The design may retain the approximately 45% target only if the gates below are accepted for the actual homesite.
 
 | Gate | Why it controls the design | Current WorkWay status |
 | --- | --- | --- |
 | Site orientation and obstructions | Solar gain, glare, privacy, views, and shade cannot be assigned from drawing north. | Unissued |
-| Energy model / ERI | The proposed 1,284 SF glass field is about 47% of the 2,730 SF conditioned floor area. The 2015 IRC simulated-performance reference design uses 15% of conditioned floor area when proposed glazing reaches that threshold, so a glazing-majority design needs performance/ERI analysis rather than an assumed prescriptive result. | Required before permit / product selection |
+| Energy model / ERI | The proposed 950 SF glass field is about 35% of the 2,730 SF conditioned floor area. The 2015 IRC simulated-performance reference design uses 15% of conditioned floor area when proposed glazing reaches that threshold, so this high-glazing design needs performance/ERI analysis rather than an assumed prescriptive result. | Required before permit / product selection |
 | Glass package | Whole-unit U-factor, SHGC, air leakage, frame thermal breaks, visible transmittance, operability, and NFRC labels determine comfort and HVAC implications. | Product-unselected |
 | Structural support | Wind, gravity, lateral, deflection, anchorage, glass bite, and concrete/steel interfaces determine where glass can actually run floor-to-ceiling. | Engineer-required |
 | Safety and egress | Large low glass and glass near doors, wet areas, and sleeping rooms need safety-glazing, fall-protection, and operable egress review. | Architect/code official-required |
@@ -44,16 +44,16 @@ DOE notes that fenestration selection is driven principally by whole-product U-f
 
 ## Economically responsible route
 
-Do not price this as generic windows plus a little steel. Price it as a coordinated glazing-majority envelope.
+Do not price this as generic windows plus a little steel. Price it as a coordinated high-glazing concrete envelope.
 
-The existing model allowance is retained only to compare design scenarios at the same conceptual level. It is neither a current glazing rate nor a determination that a 60% glass target costs an acceptable amount. No savings are assumed from reducing opaque concrete, and no custom glass/steel premium is asserted before a selected system and comparable installed-scope proposals exist.
+The existing model allowance is retained only to compare design scenarios at the same conceptual level. It is neither a current glazing rate nor a determination that an approximately 45% glass target costs an acceptable amount. No savings are assumed from reducing opaque concrete, and no custom glass/steel premium is asserted before a selected system and comparable installed-scope proposals exist.
 
 1. Ask three qualified local teams for comparable, installed-scope budgets: high-performance residential window-wall, hybrid fixed/operable window system, and the chosen glazing-support approach. Each bid should separate glass, frames, shop drawings/engineering, steel, concrete interface, waterproofing, exterior shade, access/handling, testing, and warranty.
-2. Request a facade-specific energy model with the actual orientation, shading, glass U-factor/SHGC/VT, infiltration assumption, and room-by-room loads. Use the result to size HVAC and to decide whether the 60% aggregate ratio holds, where it is concentrated, and where it is reduced.
+2. Request a facade-specific energy model with the actual orientation, shading, glass U-factor/SHGC/VT, infiltration assumption, and room-by-room loads. Use the result to size HVAC and to decide whether the approximately 45% aggregate ratio holds, where it is concentrated, and where it is reduced.
 3. Use a structural engineer to set the spacing and locations of steel/concrete supports from design loads and selected glazing limits. Do not reverse-engineer member sizes from the render.
 4. Build a full-size representative mockup before procurement: floor-to-ceiling glass, frame, concrete transition, sill/head/jamb drainage, shade condition, and one operable/egress location. Review comfort, glare, water management, movement, and finish quality.
 
-For reliable current costs, use paid trade pricing such as RSMeans and qualified fabricator/installer proposals at the issued system level. Public consumer window prices are not a substitute for a custom glazing-majority facade budget.
+For reliable current costs, use paid trade pricing such as RSMeans and qualified fabricator/installer proposals at the issued system level. Public consumer window prices are not a substitute for a custom high-glazing facade budget.
 
 ## Public sources checked on August 13, 2026
 

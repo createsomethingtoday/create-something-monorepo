@@ -102,6 +102,187 @@ export interface ThresholdDwellingAssemblySchedule {
   constructionReady: false;
 }
 
+/**
+ * A review-only horizontal allocation for the massing guide. It makes the
+ * concrete-to-glass study visible without inventing an elevation, panel
+ * schedule, glazing height, or construction geometry.
+ */
+export interface ThresholdDwellingFacadeMaterialStudySpan {
+  id: string;
+  sourceWallId: string;
+  startIn: { xIn: number; yIn: number };
+  endIn: { xIn: number; yIn: number };
+  materialId: 'M-ENV-001';
+  role: 'concentrated-glazing-study';
+}
+
+export interface ThresholdDwellingFacadeMaterialStudy {
+  id: 'threshold-dwelling-r08-concrete-majority-facade-study';
+  visualStatus: 'horizontal-material-allocation-study-not-elevation';
+  targetGlazingToGrossExteriorWallRatio: number;
+  spans: readonly ThresholdDwellingFacadeMaterialStudySpan[];
+  constructionReady: false;
+}
+
+export interface ThresholdDwellingFacadeWallInput {
+  id?: string;
+  exterior?: boolean;
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}
+
+export interface ThresholdDwellingFacadeWallSegment {
+  id?: string;
+  exterior?: boolean;
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  materialId: string;
+  studyRole: 'concentrated-glazing-study' | 'opaque-concrete-study';
+}
+
+const INCHES_PER_FOOT = 12;
+const FACADE_STUDY_EPSILON = 1e-6;
+
+const facadeStudySpans = [
+  {
+    id: 'north-public-glazing-field',
+    sourceWallId: 'wall-exterior-north',
+    startIn: { xIn: 12 * INCHES_PER_FOOT, yIn: 0 },
+    endIn: { xIn: 55 * INCHES_PER_FOOT, yIn: 0 },
+    materialId: 'M-ENV-001',
+    role: 'concentrated-glazing-study'
+  },
+  {
+    id: 'east-arrival-glazing-field',
+    sourceWallId: 'wall-exterior-east',
+    startIn: { xIn: 65 * INCHES_PER_FOOT, yIn: 17.5 * INCHES_PER_FOOT },
+    endIn: { xIn: 65 * INCHES_PER_FOOT, yIn: 32.5 * INCHES_PER_FOOT },
+    materialId: 'M-ENV-001',
+    role: 'concentrated-glazing-study'
+  },
+  {
+    id: 'south-private-glazing-field',
+    sourceWallId: 'wall-exterior-south',
+    startIn: { xIn: 44 * INCHES_PER_FOOT, yIn: 42 * INCHES_PER_FOOT },
+    endIn: { xIn: 17 * INCHES_PER_FOOT, yIn: 42 * INCHES_PER_FOOT },
+    materialId: 'M-ENV-001',
+    role: 'concentrated-glazing-study'
+  },
+  {
+    id: 'west-hall-glazing-field',
+    sourceWallId: 'wall-exterior-west',
+    startIn: { xIn: 0, yIn: 22 * INCHES_PER_FOOT },
+    endIn: { xIn: 0, yIn: 12 * INCHES_PER_FOOT },
+    materialId: 'M-ENV-001',
+    role: 'concentrated-glazing-study'
+  }
+] as const satisfies readonly ThresholdDwellingFacadeMaterialStudySpan[];
+
+export const THRESHOLD_DWELLING_FACADE_MATERIAL_STUDY = {
+  id: 'threshold-dwelling-r08-concrete-majority-facade-study',
+  visualStatus: 'horizontal-material-allocation-study-not-elevation',
+  targetGlazingToGrossExteriorWallRatio: THRESHOLD_DWELLING_DESIGN.buildMetrics.glazingToGrossExteriorWallRatio,
+  spans: facadeStudySpans,
+  constructionReady: false
+} as const satisfies ThresholdDwellingFacadeMaterialStudy;
+
+function clampUnitInterval(value: number): number {
+  return Math.max(0, Math.min(1, value));
+}
+
+function pointAlongWall(
+  wall: ThresholdDwellingFacadeWallInput,
+  t: number
+): { x: number; y: number } {
+  return {
+    x: wall.x1 + (wall.x2 - wall.x1) * t,
+    y: wall.y1 + (wall.y2 - wall.y1) * t
+  };
+}
+
+function projectPointOntoWall(
+  wall: ThresholdDwellingFacadeWallInput,
+  pointIn: { xIn: number; yIn: number }
+): number | undefined {
+  const dx = wall.x2 - wall.x1;
+  const dy = wall.y2 - wall.y1;
+  const lengthSquared = dx * dx + dy * dy;
+  if (lengthSquared <= FACADE_STUDY_EPSILON) return undefined;
+
+  const pointX = pointIn.xIn / INCHES_PER_FOOT;
+  const pointY = pointIn.yIn / INCHES_PER_FOOT;
+  const cross = (pointX - wall.x1) * dy - (pointY - wall.y1) * dx;
+  if (Math.abs(cross) > FACADE_STUDY_EPSILON) return undefined;
+
+  return ((pointX - wall.x1) * dx + (pointY - wall.y1) * dy) / lengthSquared;
+}
+
+/**
+ * Splits an exterior plan-line segment only for the renderer's material study.
+ * The returned subsegments preserve the input's exact horizontal coordinates;
+ * their material allocation is not a facade elevation or construction issue.
+ */
+export function splitThresholdDwellingExteriorWallForMaterialStudy(
+  wall: ThresholdDwellingFacadeWallInput
+): readonly ThresholdDwellingFacadeWallSegment[] {
+  const fallbackBinding = resolveThresholdDwellingAssemblyBinding('wall-class', 'exterior');
+  if (!fallbackBinding) {
+    throw new Error('Threshold Dwelling facade study requires an exterior wall binding.');
+  }
+
+  if (!wall.exterior || !wall.id) {
+    return [
+      {
+        ...wall,
+        materialId: fallbackBinding.renderMaterialId,
+        studyRole: 'opaque-concrete-study'
+      }
+    ];
+  }
+
+  const intervals = THRESHOLD_DWELLING_FACADE_MATERIAL_STUDY.spans
+    .filter((span) => span.sourceWallId === wall.id)
+    .flatMap((span) => {
+      const startT = projectPointOntoWall(wall, span.startIn);
+      const endT = projectPointOntoWall(wall, span.endIn);
+      if (startT === undefined || endT === undefined) return [];
+      const start = clampUnitInterval(Math.min(startT, endT));
+      const end = clampUnitInterval(Math.max(startT, endT));
+      return end - start > FACADE_STUDY_EPSILON ? [{ start, end, span }] : [];
+    });
+  const breaks = [...new Set([0, 1, ...intervals.flatMap(({ start, end }) => [start, end])])].sort(
+    (a, b) => a - b
+  );
+
+  return breaks.slice(0, -1).flatMap((start, index) => {
+    const end = breaks[index + 1];
+    if (end - start <= FACADE_STUDY_EPSILON) return [];
+    const midpoint = (start + end) / 2;
+    const glazing = intervals.find(
+      (interval) => midpoint > interval.start - FACADE_STUDY_EPSILON && midpoint < interval.end + FACADE_STUDY_EPSILON
+    );
+    const startPoint = pointAlongWall(wall, start);
+    const endPoint = pointAlongWall(wall, end);
+
+    return [
+      {
+        id: wall.id,
+        exterior: true,
+        x1: startPoint.x,
+        y1: startPoint.y,
+        x2: endPoint.x,
+        y2: endPoint.y,
+        materialId: glazing?.span.materialId ?? fallbackBinding.renderMaterialId,
+        studyRole: glazing ? 'concentrated-glazing-study' : 'opaque-concrete-study'
+      }
+    ];
+  });
+}
+
 const PALETTE_BY_NAME = new Map(
   THRESHOLD_DWELLING_DESIGN.materialPalette.map((material) => [material.name, material])
 );
@@ -142,8 +323,8 @@ function codifiedMaterial(
 const materials = [
   codifiedMaterial('M-STR-001', 'Reinforced Concrete', 'foundation and conditioned-slab substrate'),
   codifiedMaterial('M-STR-002', 'Coated Steel', 'localized primary structure and glazed-span support role'),
-  codifiedMaterial('M-ENV-001', 'Low-E Insulated Glass', 'glazing-majority exterior field; actual units and performance unselected'),
-  codifiedMaterial('M-ENV-002', 'Architectural Concrete', 'primary interior wall mass and selective opaque exterior zones'),
+  codifiedMaterial('M-ENV-001', 'Low-E Insulated Glass', 'concentrated floor-to-ceiling facade spans; actual units and performance unselected'),
+  codifiedMaterial('M-ENV-002', 'Architectural Concrete', 'primary interior wall mass and concrete-majority exterior envelope'),
   codifiedMaterial('M-ENV-003', 'Formed Metal', 'roof, service volumes, flashings, and trim role'),
   codifiedMaterial('M-ENV-004', 'Protected Cedar', 'sheltered exterior accent role'),
   codifiedMaterial('M-INT-001', 'Polished Concrete', 'continuous conditioned-floor finish datum'),
@@ -196,18 +377,18 @@ const assemblies = [
   },
   {
     id: 'A-WAL-001',
-    name: 'Glazing-majority exterior envelope concept',
-    purpose: 'Low-E insulated glass is the predominant aggregate exterior-wall design intent, concentrated by verified view and climate conditions; architectural concrete is concentrated at selective opaque zones and coated steel is localized at glazed spans and required frame/lateral conditions. This is not a window schedule, wall section, or structural design.',
+    name: 'Concrete-majority exterior envelope with concentrated glazing concept',
+    purpose: 'Architectural concrete is the predominant aggregate exterior-wall design intent; Low-E insulated glass is concentrated at selected public, view, and arrival spans, and coated steel is localized at glazed spans and required frame/lateral conditions. This is not a window schedule, wall section, or structural design.',
     layers: [
-      { role: 'glazing-majority exterior field', materialId: 'M-ENV-001', nominalThicknessIn: null, status: 'design-intent-only-not-issued' },
-      { role: 'selective opaque exterior zones', materialId: 'M-ENV-002', nominalThicknessIn: null, status: 'design-intent-only-not-issued' },
+      { role: 'concrete-majority exterior field', materialId: 'M-ENV-002', nominalThicknessIn: null, status: 'design-intent-only-not-issued' },
+      { role: 'concentrated floor-to-ceiling glazing spans', materialId: 'M-ENV-001', nominalThicknessIn: null, status: 'design-intent-only-not-issued' },
       { role: 'localized glazed-span and frame support', materialId: 'M-STR-002', nominalThicknessIn: null, status: 'design-intent-only-not-issued' },
       { role: 'air, water, thermal, and structural backing systems', materialId: null, nominalThicknessIn: null, status: 'design-intent-only-not-issued' }
     ],
     constructionStatus: 'conceptual-assembly-not-issued',
     requiredDeterminations: [
       'facade-specific glazing ratio, apertures, units, operation, shaded-zone design, and Miesian-precedent non-transfer review',
-      'architectural concrete system, thickness, reinforcement, finish, movement, and mockup design at selective opaque zones',
+      'architectural concrete system, thickness, reinforcement, finish, movement, and mockup design at the exterior field and interior wall mass',
       'glazed-span steel support, lateral, connection, corrosion, and installation design',
       'tested drainage, flashing, air/water, thermal, and installation details'
     ]
@@ -231,7 +412,7 @@ const assemblies = [
   {
     id: 'A-OPN-001',
     name: 'Glazing concept',
-    purpose: 'Maximize useful floor-to-ceiling glass where site, safety, privacy, energy, water-management, and engineered support determinations allow. Exact units, height, operation, and support are not issued.',
+    purpose: 'Concentrate useful floor-to-ceiling glass at the facade-study spans where site, safety, privacy, energy, water-management, and engineered support determinations allow. Exact units, height, operation, and support are not issued.',
     layers: [
       { role: 'glazing unit', materialId: 'M-ENV-001', nominalThicknessIn: null, status: 'design-intent-only-not-issued' },
       { role: 'localized steel support at glazed spans', materialId: 'M-STR-002', nominalThicknessIn: null, status: 'design-intent-only-not-issued' },
@@ -278,7 +459,7 @@ const bindings = [
     id: 'B-wall-exterior',
     target: { kind: 'wall-class', id: 'exterior' },
     assemblyId: 'A-WAL-001',
-    renderMaterialId: 'M-ENV-001',
+    renderMaterialId: 'M-ENV-002',
     renderInMassingGuide: true,
     scopeQuantity: {
       value: THRESHOLD_DWELLING_DIMENSION_CANDIDATE.footprint.perimeterFt,
@@ -286,7 +467,7 @@ const bindings = [
       status: 'plan-derived-scope-not-procurement-quantity'
     },
     note:
-      'The massing renders a glazing-majority exterior field over exact plan-perimeter linework only. It does not assert glass-panel locations, pane count, mullions, heights, thicknesses, openings, assemblies, or takeoff.'
+      'The massing defaults to a concrete-majority exterior field, then applies review-only horizontal glazing spans over exact plan-perimeter linework. It does not assert glass-panel locations, pane count, mullions, heights, thicknesses, openings, assemblies, or takeoff.'
   },
   {
     id: 'B-wall-interior',

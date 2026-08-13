@@ -6,6 +6,7 @@ import {
   THRESHOLD_DWELLING_ASSEMBLY_SCHEDULE,
   resolveThresholdDwellingAssemblyBinding,
   resolveThresholdDwellingCodifiedMaterial,
+  splitThresholdDwellingExteriorWallForMaterialStudy,
   type ThresholdDwellingMaterialSelectionStatus
 } from '@create-something/canon/experiments/threshold-dwelling/assembly-schedule';
 
@@ -165,6 +166,14 @@ function renderMaterial(kind: 'plan-zone' | 'wall-class', id: string) {
   return material;
 }
 
+function renderMaterialById(materialId: string) {
+  const material = resolveThresholdDwellingCodifiedMaterial(materialId);
+  if (!material) {
+    throw new Error(`Threshold Dwelling massing references missing material ${materialId}.`);
+  }
+  return material;
+}
+
 /**
  * Produces the small, client-safe geometry used by the local browser renderer.
  * It is derived anew from Canon whenever the module loads; no visual asset is
@@ -188,23 +197,34 @@ export function createThresholdDwellingMassingGeometry(
         vertices: floorVertices(zone.x, zone.y, zone.width, zone.height)
       };
     }),
-    walls: floorPlan.walls.map((wall, index) => {
+    walls: floorPlan.walls.flatMap((wall, index) => {
       const exterior = Boolean(wall.exterior);
-      const material = renderMaterial('wall-class', exterior ? 'exterior' : 'interior');
-      return {
-        id: `wall-${index + 1}`,
-        exterior,
-        materialId: material.id,
-        materialColor: material.visualColor,
-        materialSelectionStatus: material.selectionStatus,
-        vertices: wallVertices(
-          wall.x1,
-          wall.y1,
-          wall.x2,
-          wall.y2,
-          guide.dimensions.verticalMassingHeightIn
-        )
-      };
+      const studySegments = exterior
+        ? splitThresholdDwellingExteriorWallForMaterialStudy(wall)
+        : [
+            {
+              ...wall,
+              materialId: renderMaterial('wall-class', 'interior').id
+            }
+          ];
+
+      return studySegments.map((segment, segmentIndex) => {
+        const material = renderMaterialById(segment.materialId);
+        return {
+          id: `wall-${index + 1}-${segmentIndex + 1}`,
+          exterior,
+          materialId: material.id,
+          materialColor: material.visualColor,
+          materialSelectionStatus: material.selectionStatus,
+          vertices: wallVertices(
+            segment.x1,
+            segment.y1,
+            segment.x2,
+            segment.y2,
+            guide.dimensions.verticalMassingHeightIn
+          )
+        };
+      });
     })
   };
 }

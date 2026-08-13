@@ -44,7 +44,7 @@ test('keeps cedar and structural roles visible as deferred references rather tha
   );
 });
 
-test('makes glass the rendered exterior field and architectural concrete the interior-wall study', () => {
+test('makes glass and architectural concrete available for the facade allocation and interior-wall studies', () => {
   assert.deepEqual(resolveThresholdDwellingMaterialStudy('M-ENV-001'), {
     materialId: 'M-ENV-001',
     materialName: 'Low-E Insulated Glass',

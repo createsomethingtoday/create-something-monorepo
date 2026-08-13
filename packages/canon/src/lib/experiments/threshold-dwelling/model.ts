@@ -79,8 +79,8 @@ export interface ThresholdDwellingMaterialStrategy {
     systemStatus: 'geotechnical-and-structural-design-required';
   };
   envelope: {
-    exteriorWallIntent: 'glazing-majority exterior field with architectural concrete concentrated at selective opaque zones';
-    glazingIntent: 'target 60% aggregate exterior glazing by illustrative wall area, concentrated by verified view and climate conditions while preserving required privacy, safety, thermal, water-management, and egress determinations';
+    exteriorWallIntent: 'concrete-majority exterior envelope with concentrated floor-to-ceiling glazing at selected public, view, and arrival spans';
+    glazingIntent: 'target approximately 45% aggregate exterior glazing by illustrative wall area, concentrated by verified view and climate conditions while preserving required privacy, safety, thermal, water-management, and egress determinations';
     energyComplianceStrategy: 'performance-or-energy-rating-index-analysis-required';
     steelRole: 'localized primary support at glazed spans and required frame/lateral conditions';
   };
@@ -102,10 +102,10 @@ const buildMetrics: ThresholdDwellingBuildMetrics = {
   buildingPerimeterLF: 214,
   averageExteriorWallHeightFT: 10,
   grossExteriorWallAreaSF: 2140,
-  glazingAreaSF: 1284,
-  opaqueWallAreaSF: 856,
-  glazingToGrossExteriorWallRatio: 0.6,
-  glazingToConditionedFloorAreaRatio: 1284 / 2730,
+  glazingAreaSF: 950,
+  opaqueWallAreaSF: 1190,
+  glazingToGrossExteriorWallRatio: 950 / 2140,
+  glazingToConditionedFloorAreaRatio: 950 / 2730,
   roofAreaSF: 3000,
   drivewayAreaSF: 800,
   terraceAreaSF: 450,
@@ -181,13 +181,13 @@ const lineItems: ThresholdDwellingCostLineItem[] = [
   },
   {
     category: 'Envelope',
-    description: 'Glazing-majority exterior envelope',
+    description: 'Concrete-majority exterior envelope with concentrated glazing',
     estimate: 95_000,
     quantity: buildMetrics.glazingAreaSF,
     unit: 'SF',
     unitRate: 95_000 / buildMetrics.glazingAreaSF,
     materialGroup: 'glazing',
-    notes: 'Legacy scenario allowance retained only for like-for-like comparison; it is not a glazing bid, rate, or feasibility conclusion · 60% illustrative wall-area target; exact apertures remain unissued and must respond to orientation, shade, safety, privacy, egress, water-management, structure, and energy coordination · obtain current installed package quote'
+    notes: 'Legacy scenario allowance retained only for like-for-like comparison; it is not a glazing bid, rate, or feasibility conclusion · approximately 45% illustrative wall-area target; exact apertures remain unissued and must respond to orientation, shade, safety, privacy, egress, water-management, structure, and energy coordination · obtain current installed package quote'
   },
   {
     category: 'Envelope',
@@ -442,9 +442,9 @@ const materialStrategy: ThresholdDwellingMaterialStrategy = {
   },
   envelope: {
     exteriorWallIntent:
-      'glazing-majority exterior field with architectural concrete concentrated at selective opaque zones',
+      'concrete-majority exterior envelope with concentrated floor-to-ceiling glazing at selected public, view, and arrival spans',
     glazingIntent:
-      'target 60% aggregate exterior glazing by illustrative wall area, concentrated by verified view and climate conditions while preserving required privacy, safety, thermal, water-management, and egress determinations',
+      'target approximately 45% aggregate exterior glazing by illustrative wall area, concentrated by verified view and climate conditions while preserving required privacy, safety, thermal, water-management, and egress determinations',
     energyComplianceStrategy: 'performance-or-energy-rating-index-analysis-required',
     steelRole: 'localized primary support at glazed spans and required frame/lateral conditions'
   },
@@ -487,8 +487,8 @@ const materialPalette: ThresholdDwellingMaterial[] = [
     name: 'Low-E Insulated Glass',
     category: 'envelope',
     color: '#a8c7d1',
-    location: 'Glazing-majority exterior wall field',
-    notes: '60% illustrative wall-area target; exact units, operation, performance, shading, and water-management require coordinated design'
+    location: 'Selected public, view, and arrival glazing spans',
+    notes: 'Approximately 45% illustrative wall-area target; exact units, operation, performance, shading, and water-management require coordinated design'
   },
   {
     name: 'Architectural Concrete',

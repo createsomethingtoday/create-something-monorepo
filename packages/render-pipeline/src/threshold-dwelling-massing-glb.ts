@@ -4,6 +4,7 @@ import {
   THRESHOLD_DWELLING_ASSEMBLY_SCHEDULE,
   resolveThresholdDwellingAssemblyBinding,
   resolveThresholdDwellingCodifiedMaterial,
+  splitThresholdDwellingExteriorWallForMaterialStudy,
   type ThresholdDwellingCodifiedMaterial
 } from '@create-something/canon/experiments/threshold-dwelling/assembly-schedule';
 
@@ -117,6 +118,14 @@ function materialForBinding(
   return material;
 }
 
+function materialForId(materialId: string): ThresholdDwellingCodifiedMaterial {
+  const material = resolveThresholdDwellingCodifiedMaterial(materialId);
+  if (!material) {
+    throw new Error(`Threshold Dwelling massing references missing material ${materialId}.`);
+  }
+  return material;
+}
+
 function floorGeometry(plan: FloorPlanData): PrimitiveGeometry[] {
   const groups = new Map<string, PrimitiveGeometry>();
 
@@ -148,19 +157,25 @@ function wallGeometry(plan: FloorPlanData): PrimitiveGeometry[] {
 
   for (const wall of plan.walls) {
     const exterior = Boolean(wall.exterior);
-    const material = materialForBinding('wall-class', exterior ? 'exterior' : 'interior');
-    const group = groups.get(material.id) ?? {
-      name: `Wall · ${material.id} · ${material.name}`,
-      materialId: material.id,
-      positions: [],
-      indices: []
-    };
-    const x1 = feetToMeters(wall.x1);
-    const x2 = feetToMeters(wall.x2);
-    const z1 = feetToMeters(wall.y1);
-    const z2 = feetToMeters(wall.y2);
-    appendQuad(group, [x1, 0, z1, x2, 0, z2, x2, height, z2, x1, height, z1]);
-    groups.set(material.id, group);
+    const studySegments = exterior
+      ? splitThresholdDwellingExteriorWallForMaterialStudy(wall)
+      : [{ ...wall, materialId: materialForBinding('wall-class', 'interior').id }];
+
+    for (const segment of studySegments) {
+      const material = materialForId(segment.materialId);
+      const group = groups.get(material.id) ?? {
+        name: `Wall · ${material.id} · ${material.name}`,
+        materialId: material.id,
+        positions: [],
+        indices: []
+      };
+      const x1 = feetToMeters(segment.x1);
+      const x2 = feetToMeters(segment.x2);
+      const z1 = feetToMeters(segment.y1);
+      const z2 = feetToMeters(segment.y2);
+      appendQuad(group, [x1, 0, z1, x2, 0, z2, x2, height, z2, x1, height, z1]);
+      groups.set(material.id, group);
+    }
   }
 
   return [...groups.values()];

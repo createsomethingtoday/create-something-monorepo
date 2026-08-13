@@ -386,7 +386,7 @@ export const THRESHOLD_DWELLING_DIMENSION_CANDIDATE: ThresholdDwellingDimensionC
 function segmentWallAroundDoors(
   candidate: ThresholdDwellingDimensionCandidate,
   wallRun: ThresholdDwellingWallRun
-): Array<{ x1: number; y1: number; x2: number; y2: number; exterior?: boolean }> {
+): Array<{ id: string; x1: number; y1: number; x2: number; y2: number; exterior?: boolean }> {
   const horizontal = wallRun.start.yIn === wallRun.end.yIn;
   const start = horizontal ? wallRun.start.xIn : wallRun.start.yIn;
   const end = horizontal ? wallRun.end.xIn : wallRun.end.yIn;
@@ -413,6 +413,7 @@ function segmentWallAroundDoors(
       segments.push(
         horizontal
           ? {
+              id: wallRun.id,
               x1: feet(cursor),
               y1: feet(wallRun.start.yIn),
               x2: feet(openingStart),
@@ -420,6 +421,7 @@ function segmentWallAroundDoors(
               exterior: wallRun.exterior
             }
           : {
+              id: wallRun.id,
               x1: feet(wallRun.start.xIn),
               y1: feet(cursor),
               x2: feet(wallRun.end.xIn),
@@ -434,6 +436,7 @@ function segmentWallAroundDoors(
     segments.push(
       horizontal
         ? {
+            id: wallRun.id,
             x1: feet(cursor),
             y1: feet(wallRun.start.yIn),
             x2: feet(high),
@@ -441,6 +444,7 @@ function segmentWallAroundDoors(
             exterior: wallRun.exterior
           }
         : {
+            id: wallRun.id,
             x1: feet(wallRun.start.xIn),
             y1: feet(cursor),
             x2: feet(wallRun.end.xIn),

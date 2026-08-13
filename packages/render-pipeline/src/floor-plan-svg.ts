@@ -29,6 +29,8 @@ export interface Zone {
 }
 
 export interface Wall {
+  /** Stable source identity when a plan is projected from a codified project. */
+  id?: string;
   x1: number;
   y1: number;
   x2: number;
