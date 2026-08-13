@@ -71,7 +71,7 @@ describe('Performance composition cross-property rollout', () => {
 		expect(responsiveRules).toContain('grid-template-columns: 1fr;');
 	});
 
-	it('lands the .agency story in three chapters without dropping the boundary or proof', () => {
+	it('lands the .agency story in three chapters without duplicating its delivery roster', () => {
 		const source = routeSource('packages/agency/src/routes/+page.svelte');
 
 		expect(homepageSectionCount(source)).toBeLessThanOrEqual(3);
@@ -82,30 +82,27 @@ describe('Performance composition cross-property rollout', () => {
 		expect(source).not.toContain('PerformancePageSection');
 		expect(source).not.toContain('PerformanceFieldSequence');
 		expect(source).not.toContain('PerformanceEvidenceIndex');
-		expect(source).toContain('Stop watching the workflow. Keep the judgment.');
-		expect(source).toContain('Test the boundary before work moves.');
-		expect(source).toContain('Map the work before AI runs it.');
-		expect(source).toContain('Map signals. Route decisions. Leave proof.');
-		expect(source).toContain('See what passed—and what did not.');
-		expect(source).toContain('Built with OpenAI Codex. Designed to remain yours.');
+		expect(source).not.toContain('MeridianCardGrid');
+		expect(source).toContain('Your people and AI need the same playbook.');
+		expect(source).toContain('Map the play before AI runs it.');
+		expect(source).toContain('Advance approved work');
+		expect(source).toContain('Protect the decision');
+		expect(source).toContain('Review the receipt');
+		expect(source).toContain('Built with OpenAI and Cloudflare. Designed to remain yours.');
 	});
 
-	it('lands the .ltd canon in three chapters instead of using the grammar as a template', () => {
+	it('keeps .ltd as a court and Playbook operator library instead of restoring the editorial shell', () => {
 		const source = routeSource('packages/ltd/src/routes/+page.svelte');
 
-		expect(homepageSectionCount(source)).toBeLessThanOrEqual(3);
+		expect(homepageSectionCount(source)).toBeLessThanOrEqual(6);
+		expect(source).toContain('ltdOperatingFieldMedia');
+		expect(source).toContain('Run AI work people can trust.');
 		expect(source).toContain('PerformanceCampaignOpening');
-		expect(source).toContain('PerformanceNarrativeStage');
+		expect(source).toContain('PerformanceCardGrid');
 		expect(source).not.toContain('PerformanceDecisionPanel');
-		expect(source).not.toContain('PerformancePageSection');
 		expect(source).toContain('PropertyFunnel');
 		expect(source).toContain('NewsletterSignup');
 		expect(source).not.toContain('PerformanceThesisConditions');
-		expect(source).toContain('Build, govern, prove.');
-		expect(source).toContain('MCP consumption is commoditized. MCP creation is not.');
-		expect(source).toContain('Crystallization');
-		expect(source).toContain('Dieter Rams');
-		expect(source).toContain('Ludwig Mies van der Rohe');
 		expect(source).not.toContain('PerformancePlatformHero');
 		expect(source).not.toContain('PerformanceLabBand');
 	});
@@ -132,13 +129,19 @@ describe('Performance composition cross-property rollout', () => {
 		expect(source).not.toContain('PerformanceCtaBand');
 	});
 
-	it('uses shared runtime-oriented compositions on the .space entry surface', () => {
+	it('distills the .space entry surface to opening, runtime proof, route collection, and handoff', () => {
 		const source = routeSource('packages/space/src/routes/+page.svelte');
 
+		expect(homepageSectionCount(source)).toBeLessThanOrEqual(4);
 		expect(source).toContain('PerformanceCampaignOpening');
-		expect(source).toContain('PerformanceThesisConditions');
-		expect(source).toContain('PerformanceContrastChapter');
+		expect(source).toContain('PerformanceDecisionPanel');
+		expect(source).toContain('PerformancePageSection');
 		expect(source).toContain('PerformanceConversionHandoff');
+		expect(source).toContain('PerformanceCardGrid');
+		expect(source).not.toContain('PerformanceThesisConditions');
+		expect(source).not.toContain('PerformanceContrastChapter');
+		expect(source).not.toContain('MeridianCardGrid');
+		expect(source).not.toContain('PropertyFunnel');
 		expect(source).not.toContain('PerformanceLabBand');
 		expect(source).not.toContain('PerformanceCtaBand');
 	});
@@ -173,14 +176,10 @@ describe('Performance composition cross-property rollout', () => {
 				'createsomething.ltd/canon/concepts/conviction-without-dependence'
 			],
 			'packages/ltd/src/routes/+page.svelte': [
-				'/canon',
-				'/masters',
-				'/patterns/crystallization',
-				'/standards',
-				'/patterns',
-				'createsomething.io',
-				'createsomething.space',
-				'createsomething.agency/practice'
+				'/playbooks',
+				'/readiness',
+				'PropertyFunnel',
+				'NewsletterSignup'
 			],
 			'packages/io/src/routes/+page.svelte': [
 				'/papers',

@@ -422,6 +422,11 @@
   <Navigation
     logo="CREATE SOMETHING"
     logoSuffix=".agency"
+    logoAsset={{
+      src: '/brand/create-something-horizontal-black.svg',
+      label: 'CREATE SOMETHING .agency'
+    }}
+    enableRouteLogoMotion={true}
     links={navLinks}
     currentPath={$page.url.pathname}
     fixed={true}
@@ -431,8 +436,6 @@
     onLogout={handleLogout}
     accountHref="/account"
     visualStyle="editorial"
-    showMobileLogoText={true}
-    showDesktopLogoText={true}
     onMobileMenuChange={(open) => (mobileNavigationOpen = open)}
   />
 
@@ -459,6 +462,10 @@
     showSocial={true}
     isAuthenticated={!!data.user}
     visualStyle="editorial"
+    brandAsset={{
+      src: '/brand/create-something-agency-white.svg',
+      label: 'CREATE SOMETHING .agency'
+    }}
   />
 
   {#if !routeOwnsPerformanceEnding && $page.url.pathname !== '/basketball-systems-lab' && !isDifyArticleRoute}

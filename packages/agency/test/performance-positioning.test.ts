@@ -33,7 +33,7 @@ const handoffBoundaryMetadata = read(
 test('every indexed public marketing route receives a route-owned or shared Performance ending', () => {
   const indexedRoutes = marketingPagePortfolio.filter((entry) => entry.decision === 'index');
 
-  assert.equal(indexedRoutes.length, 39);
+  assert.equal(indexedRoutes.length, 41);
   assert.ok(indexedRoutes.some((entry) => entry.path === '/'));
   assert.match(layout, /marketingPagePortfolio/);
   assert.match(layout, /entry\.decision !== 'archive'/);

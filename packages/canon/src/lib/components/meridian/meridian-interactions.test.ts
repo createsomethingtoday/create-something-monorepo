@@ -13,6 +13,7 @@ afterEach(() => {
     unmount(instance as never);
     instance = undefined;
   }
+  vi.unstubAllGlobals();
   document.body.innerHTML = '';
 });
 
@@ -94,6 +95,53 @@ describe('MeridianEvidenceCarousel', () => {
       scrollWidth: { configurable: true, value: 600 },
       scrollLeft: { configurable: true, value: 12, writable: true }
     });
+    await Promise.resolve();
+    flushSync();
+
+    expect(target.querySelector<HTMLButtonElement>('[aria-label="Previous evidence"]')?.disabled).toBe(true);
+    expect(target.querySelector<HTMLButtonElement>('[aria-label="Next evidence"]')?.disabled).toBe(false);
+  });
+
+  it('remeasures when a previously hidden rail becomes visible', async () => {
+    let resizeCallback: ResizeObserverCallback | undefined;
+    class ResizeObserverMock {
+      constructor(callback: ResizeObserverCallback) {
+        resizeCallback = callback;
+      }
+      observe() {}
+      disconnect() {}
+    }
+    vi.stubGlobal('ResizeObserver', ResizeObserverMock);
+
+    target = document.createElement('div');
+    document.body.appendChild(target);
+    instance = mount(MeridianEvidenceCarousel, {
+      target,
+      props: {
+        title: 'Evidence',
+        items: [
+          { eyebrow: 'Map', title: 'First', detail: 'First detail', source: 'Source one' },
+          { eyebrow: 'Build', title: 'Second', detail: 'Second detail', source: 'Source two' }
+        ]
+      }
+    }) as Record<string, unknown>;
+    flushSync();
+
+    const rail = target.querySelector<HTMLDivElement>('.meridian-evidence__rail');
+    Object.defineProperties(rail!, {
+      clientWidth: { configurable: true, value: 0 },
+      scrollWidth: { configurable: true, value: 0 },
+      scrollLeft: { configurable: true, value: 0, writable: true }
+    });
+    await Promise.resolve();
+    flushSync();
+    expect(target.querySelector<HTMLButtonElement>('[aria-label="Next evidence"]')?.disabled).toBe(true);
+
+    Object.defineProperties(rail!, {
+      clientWidth: { configurable: true, value: 300 },
+      scrollWidth: { configurable: true, value: 600 }
+    });
+    resizeCallback?.([], {} as ResizeObserver);
     await Promise.resolve();
     flushSync();
 

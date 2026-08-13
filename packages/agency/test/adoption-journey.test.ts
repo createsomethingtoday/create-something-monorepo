@@ -9,7 +9,7 @@ test('the public shell exposes Practice and keeps client-service adoption one cl
   const home = read('../src/routes/+page.svelte');
   const chooser = read('../src/lib/components/AdoptionPathChooser.svelte');
 
-  assert.match(layout, /label: 'Practice', href: '\/practice'/);
+  assert.match(layout, /label:\s*'Practice',\s*href:\s*'\/practice'/);
   assert.match(layout, /label: 'Field Reports', href: '\/field-reports'/);
   assert.match(layout, /label: 'Use With Clients', href: '\/for-service-providers'/);
   assert.match(home, /<AdoptionPathChooser \/>/);

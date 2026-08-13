@@ -13,4 +13,16 @@ describe('clear navigation mobile drawer layering', () => {
 		expect(source).toContain('.nav-clear .nav-mobile-menu {');
 		expect(source).toContain('position: fixed;');
 	});
+
+	it('keeps a property logo static until an internal route is deliberately engaged', () => {
+		const source = readFileSync(join(process.cwd(), 'src/lib/components/Navigation.svelte'), 'utf8');
+
+		expect(source).toContain('enableRouteLogoMotion?: boolean;');
+		expect(source).toContain('onclickcapture={handleRouteEngagement}');
+		expect(source).toContain("await import('gsap')");
+		expect(source).toContain("prefers-reduced-motion: reduce");
+		expect(source).toContain('cancelLogoRouteMotion();');
+		expect(source).toContain('.nav-logo-route-motion {');
+		expect(source).toMatch(/\.nav-logo-route-motion\s*\{[\s\S]*?opacity:\s*0;/);
+	});
 });

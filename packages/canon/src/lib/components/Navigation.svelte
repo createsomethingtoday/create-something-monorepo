@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onDestroy } from 'svelte';
   import { CubeMark } from '../brand/marks/index.js';
   import { UserMenu } from '../auth/components/index.js';
   import type { User } from '../auth/types.js';
@@ -15,6 +16,12 @@
 
   type NavigationVisualStyle = 'classic' | 'performance' | 'clear' | 'editorial';
 
+  interface NavigationLogoAsset {
+    src: string;
+    /** Used for the linked home destination; the decorative image itself remains hidden from assistive tech. */
+    label: string;
+  }
+
   interface Props {
     logo: string;
     logoSuffix?: string;
@@ -22,6 +29,16 @@
     showMobileLogoText?: boolean;
     /** Show the full performance wordmark at desktop and tablet widths. */
     showDesktopLogoText?: boolean;
+    /**
+     * An optional property-owned vector lockup. Canon keeps the image seam generic
+     * so each property can opt in without changing another property's identity.
+     */
+    logoAsset?: NavigationLogoAsset;
+    /**
+     * Lets an owning property signal a deliberate internal-route transition through
+     * its supplied SVG lockup. It never autoplays or responds to hover.
+     */
+    enableRouteLogoMotion?: boolean;
     logoHref?: string;
     links: NavLink[];
     currentPath?: string;
@@ -49,6 +66,8 @@
     logoSuffix,
     showMobileLogoText = false,
     showDesktopLogoText = false,
+    logoAsset,
+    enableRouteLogoMotion = false,
     logoHref = '/',
     links,
     currentPath = $bindable('/'),
@@ -66,7 +85,11 @@
 
   let mobileMenuOpen = $state(false);
   let mobileMenuButton = $state<HTMLButtonElement>();
+  let navigationElement = $state<HTMLElement>();
   let openDesktopMenu = $state<string | null>(null);
+  let logoRouteMotionElement = $state<SVGSVGElement>();
+  let logoRouteMotionRequest = 0;
+  let logoRouteMotionTimeline: { kill: () => void } | undefined;
   const usesPerformanceStyle = $derived(
     visualStyle === 'performance' || visualStyle === 'clear' || visualStyle === 'editorial'
   );
@@ -96,6 +119,65 @@
     if (restoreFocus) queueMicrotask(() => mobileMenuButton?.focus());
   }
 
+  function cancelLogoRouteMotion() {
+    logoRouteMotionRequest += 1;
+    logoRouteMotionTimeline?.kill();
+    logoRouteMotionTimeline = undefined;
+  }
+
+  async function animateRouteLogo() {
+    if (!enableRouteLogoMotion || !logoAsset || typeof window === 'undefined') return;
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+
+    const motionElement = logoRouteMotionElement;
+    if (!motionElement) return;
+
+    cancelLogoRouteMotion();
+    const request = logoRouteMotionRequest;
+
+    try {
+      // Load only after a person has selected an internal route. The static SVG is
+      // the complete SSR, no-JS, initial-paint, and reduced-motion experience.
+      const { gsap } = await import('gsap');
+      if (request !== logoRouteMotionRequest) return;
+
+      const rings = [...motionElement.querySelectorAll<SVGCircleElement>('[data-logo-route-ring]')];
+      const pulse = motionElement.querySelector<SVGCircleElement>('[data-logo-route-pulse]');
+      if (!rings.length || !pulse) return;
+
+      gsap.set(motionElement, { autoAlpha: 1 });
+      gsap.set(rings, { strokeDasharray: '0.24 0.76', strokeDashoffset: 0 });
+      gsap.set(pulse, { autoAlpha: 0, scale: 0.55, transformOrigin: '50% 50%' });
+      logoRouteMotionTimeline = gsap
+        .timeline({
+          onComplete: () => {
+            if (request !== logoRouteMotionRequest) return;
+            gsap.set(motionElement, { autoAlpha: 0 });
+            logoRouteMotionTimeline = undefined;
+          }
+        })
+        .to(rings, { strokeDashoffset: -1, duration: 0.32, ease: 'none', stagger: 0.025 })
+        .to(pulse, { autoAlpha: 1, scale: 1, duration: 0.12, ease: 'power1.out' }, 0.06)
+        .to(pulse, { autoAlpha: 0, scale: 1.35, duration: 0.17, ease: 'power1.in' }, 0.18)
+        .to(motionElement, { autoAlpha: 0, duration: 0.08, ease: 'power1.out' }, 0.32);
+    } catch {
+      // The supplied SVG stays intact when the enhancement runtime is unavailable.
+    }
+  }
+
+  function handleRouteEngagement(event: MouseEvent) {
+    if (!enableRouteLogoMotion || event.defaultPrevented || event.button !== 0) return;
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    if (!(event.target instanceof Element)) return;
+    if (!navigationElement?.contains(event.target)) return;
+
+    const link = event.target.closest<HTMLAnchorElement>('a[href]');
+    const href = link?.getAttribute('href');
+    if (!href || !href.startsWith('/') || href.startsWith('//')) return;
+
+    void animateRouteLogo();
+  }
+
   function handleWindowKeydown(event: KeyboardEvent) {
     if (event.key !== 'Escape') return;
     if (openDesktopMenu) {
@@ -106,11 +188,14 @@
     event.preventDefault();
     closeMobileMenu(true);
   }
+
+  onDestroy(cancelLogoRouteMotion);
 </script>
 
-<svelte:window onkeydown={handleWindowKeydown} />
+<svelte:window onkeydown={handleWindowKeydown} onclickcapture={handleRouteEngagement} />
 
 <nav
+  bind:this={navigationElement}
   class="nav-container"
   class:nav-fixed={fixed}
   class:nav-clear={usesPerformanceStyle}
@@ -123,15 +208,57 @@
   <div class="nav-inner shell-inner">
     <div class="flex items-center justify-between">
       <!-- Logo / Home -->
-      <a href={logoHref} class="nav-logo">
-        {#if usesPerformanceStyle || usesEditorialStyle}
-          <span class="nav-logo-mark" aria-hidden="true">
-            <CubeMark size={28} variant="mono" />
+      <a
+        href={logoHref}
+        class="nav-logo"
+        aria-label={`${logoAsset?.label ?? `${logo}${logoSuffix ?? ''}`} home`}
+      >
+        {#if logoAsset}
+          <span class="nav-logo-asset-frame">
+            <img class="nav-logo-asset" src={logoAsset.src} alt="" />
+            {#if enableRouteLogoMotion}
+              <svg
+                bind:this={logoRouteMotionElement}
+                class="nav-logo-route-motion"
+                viewBox="0 0 550 120"
+                aria-hidden="true"
+              >
+                <circle
+                  class="nav-logo-route-motion__ring"
+                  data-logo-route-ring
+                  cx="63"
+                  cy="60"
+                  r="41.5"
+                  pathLength="1"
+                />
+                <circle
+                  class="nav-logo-route-motion__ring"
+                  data-logo-route-ring
+                  cx="53.5"
+                  cy="60"
+                  r="31.5"
+                  pathLength="1"
+                />
+                <circle
+                  class="nav-logo-route-motion__pulse"
+                  data-logo-route-pulse
+                  cx="100"
+                  cy="60"
+                  r="5.5"
+                />
+              </svg>
+            {/if}
           </span>
-        {/if}
-        <span class="nav-logo-text">{logo}</span>
-        {#if logoSuffix}
-          <span class="nav-logo-suffix">{logoSuffix}</span>
+        {:else}
+          {#if usesPerformanceStyle || usesEditorialStyle}
+            <span class="nav-logo-mark" aria-hidden="true">
+              <CubeMark size={28} variant="mono" />
+            </span>
+          {/if}
+          <span class="nav-logo-text">{logo}</span>
+          {#if logoSuffix}
+            <span class="nav-logo-suffix">{logoSuffix}</span>
+          {/if}
         {/if}
       </a>
 
@@ -151,7 +278,12 @@
                     onclick={() =>
                       (openDesktopMenu = openDesktopMenu === link.href ? null : link.href)}
                   >
-                    {link.label}<span aria-hidden="true">⌄</span>
+                    {link.label}
+                    <span class="nav-dropdown__chevron" aria-hidden="true">
+                      <svg viewBox="0 0 16 16" fill="none" focusable="false">
+                        <path d="m4 6 4 4 4-4" stroke="currentColor" stroke-linecap="round" />
+                      </svg>
+                    </span>
                   </button>
                   {#if openDesktopMenu === link.href}
                     <div
@@ -344,6 +476,41 @@
     color: var(--color-performance-fg-muted);
   }
 
+  .nav-logo-asset {
+    display: block;
+    width: auto;
+    max-width: min(10.5rem, 48vw);
+    height: 1.5rem;
+  }
+
+  .nav-logo-asset-frame {
+    position: relative;
+    display: block;
+    flex: 0 0 auto;
+  }
+
+  .nav-logo-route-motion {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+    color: var(--color-performance-editorial-brand, #fcaa2d);
+    opacity: 0;
+  }
+
+  .nav-logo-route-motion__ring {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 5.5;
+    stroke-linecap: round;
+  }
+
+  .nav-logo-route-motion__pulse {
+    fill: currentColor;
+  }
+
   /* Navigation Links */
   .nav-link {
     font-family: var(--font-performance-mono);
@@ -386,9 +553,19 @@
     cursor: pointer;
   }
 
-  .nav-dropdown__trigger > span {
-    font-size: 0.9em;
-    line-height: 0.8;
+  .nav-dropdown__chevron {
+    display: grid;
+    flex: 0 0 0.8rem;
+    width: 0.8rem;
+    height: 0.8rem;
+    place-items: center;
+  }
+
+  .nav-dropdown__chevron svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    stroke-width: 1.75;
   }
 
   .nav-dropdown__menu {
@@ -659,6 +836,11 @@
     height: 2.35rem;
     color: var(--color-performance-ink, #090909);
     flex: 0 0 auto;
+  }
+
+  .nav-clear .nav-logo-asset {
+    max-width: min(11.5rem, 48vw);
+    height: 1.65rem;
   }
 
   .nav-clear .nav-logo-text,
