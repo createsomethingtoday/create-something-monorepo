@@ -1,6 +1,6 @@
 <script lang="ts">
   import '../app.css';
-  import { Navigation, Footer, ModeIndicator } from '@create-something/canon';
+  import { Navigation, Footer, LayoutSEO, ModeIndicator } from '@create-something/canon';
   import { UnifiedSearch } from '@create-something/canon/navigation';
   import PrivacyAnalytics from '$lib/components/PrivacyAnalytics.svelte';
   import AgencyPerformanceHandoff from '$lib/components/AgencyPerformanceHandoff.svelte';
@@ -404,6 +404,8 @@
     }
   }
 </script>
+
+<LayoutSEO property="agency" />
 
 <PrivacyAnalytics
   property="agency"

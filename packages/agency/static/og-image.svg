@@ -28,8 +28,12 @@
     <rect x="817" y="433" width="34" height="20" rx="3" fill="#73882A"/>
   </g>
 
-  <text x="80" y="77" fill="#11110F" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700" letter-spacing="1.8">CREATE SOMETHING</text>
-  <text x="80" y="105" fill="#5E6268" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="600" letter-spacing="1.1">.agency / PAPER OPERATING SYSTEMS</text>
+  <g transform="translate(76 42) scale(.78)" fill="none" stroke="#11110F" stroke-width="8.5">
+    <circle cx="53" cy="50" r="41.5"/>
+    <circle cx="43.5" cy="50" r="31.5"/>
+  </g>
+  <text x="160" y="77" fill="#11110F" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700" letter-spacing="1.8">CREATE SOMETHING</text>
+  <text x="160" y="105" fill="#5E6268" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="600" letter-spacing="1.1">.agency / PAPER OPERATING SYSTEMS</text>
   <text x="1074" y="77" fill="#5E6268" font-family="'Courier New', monospace" font-size="13" text-anchor="end" letter-spacing="1.1">CS / OS-01</text>
 
   <text x="80" y="211" fill="#11110F" font-family="Arial, Helvetica, sans-serif" font-size="53" font-weight="700" letter-spacing="-2.5">OPERATING SYSTEMS</text>
