@@ -20,6 +20,18 @@ export { default as Section } from './Section.svelte';
 export { default as SitePlan } from './SitePlan.svelte';
 export { default as Systems } from './Systems.svelte';
 export {
+  THRESHOLD_DWELLING_DIMENSION_CANDIDATE,
+  THRESHOLD_DWELLING_FLOOR_PLAN,
+  validateThresholdDwellingDimensions,
+  type ThresholdDwellingDimensionBlocker,
+  type ThresholdDwellingDimensionCandidate,
+  type ThresholdDwellingDimensionStatus,
+  type ThresholdDwellingDimensionValidation,
+  type ThresholdDwellingPlanOpening,
+  type ThresholdDwellingPlanZone,
+  type ThresholdDwellingWallRun
+} from './dimensioned-project.js';
+export {
   THRESHOLD_DWELLING_DESIGN,
   type ThresholdDwellingBuildMetrics,
   type ThresholdDwellingConstructionAllowance,

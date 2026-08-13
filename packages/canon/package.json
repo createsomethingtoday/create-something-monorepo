@@ -154,6 +154,10 @@
 			"types": "./dist/experiments/threshold-dwelling/index.d.ts",
 			"svelte": "./dist/experiments/threshold-dwelling/index.js"
 		},
+		"./experiments/threshold-dwelling/dimensioned-project": {
+			"types": "./dist/experiments/threshold-dwelling/dimensioned-project.d.ts",
+			"default": "./dist/experiments/threshold-dwelling/dimensioned-project.js"
+		},
 		"./experiments/kinetic-typography": {
 			"types": "./dist/experiments/kinetic-typography/index.d.ts",
 			"svelte": "./dist/experiments/kinetic-typography/index.js"

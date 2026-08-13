@@ -11,8 +11,18 @@ import {
   normalizeRenderRecipe,
   type RenderRecipeInput
 } from '../src/index.js';
+import { THRESHOLD_DWELLING } from '../data/threshold-dwelling.js';
+
+import { THRESHOLD_DWELLING_FLOOR_PLAN } from '@create-something/canon/experiments/threshold-dwelling/dimensioned-project';
 
 const SOURCE_HASH = 'a'.repeat(64);
+
+test('uses Canon’s Threshold Dwelling candidate projection instead of a second render geometry source', () => {
+  assert.equal(THRESHOLD_DWELLING, THRESHOLD_DWELLING_FLOOR_PLAN);
+  assert.equal(THRESHOLD_DWELLING.width, 65);
+  assert.equal(THRESHOLD_DWELLING.depth, 42);
+  assert.equal(THRESHOLD_DWELLING.doors?.length, 13);
+});
 
 function validRecipe(): RenderRecipeInput {
   return {
