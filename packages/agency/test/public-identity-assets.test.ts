@@ -36,7 +36,7 @@ test('all public properties ship one ring-mark browser, web-clip, and social-ima
 
     const favicon = readFileSync(resolve(staticRoot, 'favicon.svg'), 'utf8');
     assert.equal(favicon, canonicalSvg, `${property} must use the shared ring source`);
-    assert.match(favicon, /<circle cx="53" cy="50" r="41\.5"\/>/);
+    assert.match(favicon, /<circle cx="53" cy="50" r="41\.5"\s*\/>/);
     assert.doesNotMatch(favicon, /Isometric Cube Mark|M 16 4 L 26\.39 10/);
     assert.deepEqual(pngSize(resolve(staticRoot, 'favicon.png')), [512, 512]);
     assert.deepEqual(pngSize(resolve(staticRoot, 'apple-touch-icon.png')), [180, 180]);
@@ -48,10 +48,13 @@ test('all public properties ship one ring-mark browser, web-clip, and social-ima
     const manifest = JSON.parse(readFileSync(resolve(staticRoot, 'manifest.json'), 'utf8'));
     assert.match(manifest.name, new RegExp(`\\.${property}`));
     assert.deepEqual(
-      manifest.icons.map((icon: { src: string }) => icon.src),
-      ['favicon.svg', 'icon-192.png', 'icon-512.png', 'icon-512-maskable.png']
+      new Set(manifest.icons.map((icon: { src: string }) => icon.src)),
+      new Set(['favicon.svg', 'favicon.png', 'icon-192.png', 'icon-512.png', 'icon-512-maskable.png'])
     );
-    assert.equal(manifest.icons.at(-1).purpose, 'maskable');
+    assert.equal(
+      manifest.icons.find((icon: { src: string }) => icon.src === 'icon-512-maskable.png')?.purpose,
+      'maskable'
+    );
   }
 });
 

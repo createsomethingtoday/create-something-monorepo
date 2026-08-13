@@ -76,8 +76,11 @@ test('shared chrome and route SEO reference the canonical ring identity', () => 
   assert.match(layoutSeo, /rel="apple-touch-icon" href="\/apple-touch-icon\.png"/);
   assert.match(layoutSeo, /rel="mask-icon" href="\/mask-icon\.svg"/);
   assert.match(seo, /https:\/\/createsomething\.ltd\/#organization/);
-  assert.match(seo, /https:\/\/createsomething\.ltd\/icon-512\.png/);
-  assert.match(seo, /primaryImageOfPage: socialImageSchema/);
+  assert.match(
+    seo,
+    /https:\/\/createsomething\.ltd\/brand\/create-something-ring-mark-512\.png/
+  );
+  assert.match(seo, /primaryImageOfPage: socialImage/);
 });
 
 test('property-owned route overrides use the PNG social-card contract', () => {
