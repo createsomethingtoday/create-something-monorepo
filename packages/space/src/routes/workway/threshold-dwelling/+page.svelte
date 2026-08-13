@@ -261,7 +261,7 @@
   .preview-shell,
   .unavailable {
     box-sizing: border-box;
-    min-height: calc(100vh - 72px);
+    min-height: 100vh;
     color: #f4f2e9;
     background:
       radial-gradient(circle at 73% 6%, rgba(171, 137, 80, 0.18), transparent 25rem),
