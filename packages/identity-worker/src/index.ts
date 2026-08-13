@@ -899,6 +899,14 @@ const OAUTH_APPLICATION_ACCESS_POLICIES = new Map<string, {
 			expiresIn: OAUTH_APPLICATION_ACCESS_TOKEN_EXPIRES_IN,
 		},
 	],
+	[
+		'https://createsomething.agency',
+		{
+			applicationId: 'agency-public-agent-discovery',
+			resource: 'https://createsomething.agency',
+			expiresIn: OAUTH_APPLICATION_ACCESS_TOKEN_EXPIRES_IN,
+		},
+	],
 ]);
 
 export const CONTROL_RUNTIME_RESOURCE =

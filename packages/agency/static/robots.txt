@@ -1,6 +1,10 @@
 # CREATE SOMETHING Agency - AI workflow systems, MCP connectivity, and Policy OS
 # https://createsomething.agency
 
+# Public content may be indexed and used as agent input or reference material.
+# Model training is not permitted.
+Content-Signal: search=yes, ai-input=yes, ai-train=no, use=reference
+
 User-agent: *
 Allow: /
 
