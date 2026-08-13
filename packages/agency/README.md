@@ -737,6 +737,37 @@ pnpm --filter @create-something/agency research:clarity-capture
 The capture hashes visible copy, fails closed when a route is unavailable, and
 is useful for before/after review. It is not evidence of human comprehension.
 
+## Markdown for Agents measurement loop
+
+`.agency` alone is enrolled in Cloudflare Pro Markdown for Agents. Keep this
+as a paid distribution capability with a bounded commercial proof loop, not a
+claim that Markdown delivery creates demand by itself.
+
+```bash
+# Week 0 and every seven days: prove the five priority routes still negotiate Markdown.
+pnpm --filter @create-something/agency agent-readiness:markdown:verify
+
+# Week 0, 7, 14, 21, and 30: read the attributed readiness-booking funnel.
+# This query is SELECT-only and targets the CREATE SOMETHING Cloudflare account.
+pnpm --filter @create-something/agency analytics:agent-readiness -- --days 30 --remote
+```
+
+The Markdown receipt requires a successful response with `text/markdown`,
+`Vary: Accept`, positive source and Markdown token counts, and the active
+`ai-input=yes` Content Signal across `/`, `/agent-readiness`, `/workflows`,
+`/map`, and `/book`.
+
+The commercial report tracks external, automated, and preview sessions that
+reach the owned `/book` path with the bounded
+`source=agent-readiness&intent=ai-readiness-audit` context. It reports handoff,
+form-start, initiation, and completed-booking stages separately. This is an
+AI Buyer Readiness offer-attribution signal, not proof that a specific external
+agent caused a visit; do not describe it as agent-originated without an
+explicit agent-specific referral signal. Keep `.agency` on Pro after 30 days
+only when the report supports a qualified commercial outcome or another
+explicitly approved benefit. Do not extend Pro to another zone without a new
+cost and scope decision.
+
 ## CREATE SOMETHING Identity
 
 `.agency` uses CREATE SOMETHING Identity as its only browser identity provider. The
