@@ -170,6 +170,10 @@
 			"types": "./dist/experiments/threshold-dwelling/assembly-schedule.d.ts",
 			"default": "./dist/experiments/threshold-dwelling/assembly-schedule.js"
 		},
+		"./experiments/threshold-dwelling/geometry-issuance": {
+			"types": "./dist/experiments/threshold-dwelling/geometry-issuance.d.ts",
+			"default": "./dist/experiments/threshold-dwelling/geometry-issuance.js"
+		},
 		"./experiments/threshold-dwelling/professional-review": {
 			"types": "./dist/experiments/threshold-dwelling/professional-review.d.ts",
 			"default": "./dist/experiments/threshold-dwelling/professional-review.js"

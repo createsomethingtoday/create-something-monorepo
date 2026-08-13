@@ -10,6 +10,24 @@
     "renderedMaterialIds": ["M-INT-002", "M-INT-001", "M-ENV-002", "M-INT-003"],
     "constructionReady": false
   },
+  "physicalSceneContract": {
+    "issuanceId": "threshold-dwelling-rev-0.8-physical-scene-gate",
+    "status": "blocked-vertical-geometry-unissued",
+    "coordinateTruth": "revised-plan-horizontal-only",
+    "unissuedFactIds": [
+      "finished-floor-and-site-datum",
+      "exterior-wall-assembly-geometry",
+      "interior-partition-geometry",
+      "roof-and-ceiling-geometry",
+      "door-opening-geometry",
+      "window-and-glass-opening-geometry",
+      "structural-support-and-lateral-geometry",
+      "mep-service-coordination-geometry",
+      "exterior-grade-and-threshold-geometry"
+    ],
+    "canGeneratePhysicalOneToOneScene": false,
+    "constructionReady": false
+  },
   "assets": [
     { "id": "tabletop-plan-svg", "clientPath": "experiments/threshold-dwelling/renders/floor-plan.svg", "sha256": "c83c9deb796c34f8a94497a2f4e77fdbbbfbc6d584480ea0cf3f9c08bc48e017" },
     { "id": "tabletop-plan-png", "clientPath": "experiments/threshold-dwelling/renders/floor-plan.png", "sha256": "6bb7955a32628e0fd499b58e7ca57f9c9f3a93cfca46a84ecb1ffc84fdde2a5c" },

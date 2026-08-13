@@ -27,6 +27,17 @@ public struct WorkWaySpatialPackage: Codable, Equatable, Sendable {
         public let constructionReady: Bool
     }
 
+    /// A renderer-facing truth gate for physical 1:1 vertical scene geometry.
+    /// It can make a scene eligible for visualization, never construction.
+    public struct PhysicalSceneContract: Codable, Equatable, Sendable {
+        public let issuanceId: String
+        public let status: String
+        public let coordinateTruth: String
+        public let unissuedFactIds: [String]
+        public let canGeneratePhysicalOneToOneScene: Bool
+        public let constructionReady: Bool
+    }
+
     public enum SceneFormat: String, Codable, CaseIterable, Sendable {
         case svg
         case png
@@ -98,6 +109,7 @@ public struct WorkWaySpatialPackage: Codable, Equatable, Sendable {
     public let spatialRevision: String
     public let clientSourceDocuments: String
     public let materialContract: MaterialContract
+    public let physicalSceneContract: PhysicalSceneContract
     public let assets: [Asset]
     public let sceneRepresentations: [SceneRepresentation]
     public let entityRenderBindings: [EntityRenderBinding]
@@ -113,6 +125,7 @@ public struct WorkWaySpatialPackage: Codable, Equatable, Sendable {
         case spatialRevision
         case clientSourceDocuments
         case materialContract
+        case physicalSceneContract
         case assets
         case sceneRepresentations
         case entityRenderBindings
@@ -147,6 +160,19 @@ public struct WorkWaySpatialPackage: Codable, Equatable, Sendable {
             materialContract.constructionReady
         {
             issues.append(.materialContractInvalid)
+        }
+        let expectedPhysicalSceneStatus = physicalSceneContract.canGeneratePhysicalOneToOneScene
+            ? "eligible-with-professional-review"
+            : "blocked-vertical-geometry-unissued"
+        if physicalSceneContract.issuanceId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+            physicalSceneContract.coordinateTruth != "revised-plan-horizontal-only" ||
+            Set(physicalSceneContract.unissuedFactIds).count != physicalSceneContract.unissuedFactIds.count ||
+            physicalSceneContract.status != expectedPhysicalSceneStatus ||
+            (physicalSceneContract.canGeneratePhysicalOneToOneScene && !physicalSceneContract.unissuedFactIds.isEmpty) ||
+            (!physicalSceneContract.canGeneratePhysicalOneToOneScene && physicalSceneContract.unissuedFactIds.isEmpty) ||
+            physicalSceneContract.constructionReady
+        {
+            issues.append(.physicalSceneContractInvalid)
         }
         if assets.contains(where: { !Self.isSafeClientPath($0.clientPath) }) {
             issues.append(.unsafeClientAssetPath)
@@ -209,7 +235,10 @@ public struct WorkWaySpatialPackage: Codable, Equatable, Sendable {
             chapter: roomChapter(id: chapterID),
             contractIssues: contractIssues,
             issuedNativeAssetIDs: issuedNativeAssetIDs.sorted(),
-            unissuedNativeFormats: unissuedNativeFormats.sorted { $0.rawValue < $1.rawValue }
+            unissuedNativeFormats: unissuedNativeFormats.sorted { $0.rawValue < $1.rawValue },
+            physicalSceneStatus: physicalSceneContract.status,
+            physicalOneToOneSceneEligible: contractIssues.isEmpty &&
+                physicalSceneContract.canGeneratePhysicalOneToOneScene
         )
     }
 
@@ -249,6 +278,7 @@ public enum WorkWayNativeContractIssue: String, CaseIterable, Comparable, Sendab
     case sourceDocumentsNotExcluded = "source-documents-not-excluded"
     case constructionReadyMustBeFalse = "construction-ready-must-be-false"
     case materialContractInvalid = "material-contract-invalid"
+    case physicalSceneContractInvalid = "physical-scene-contract-invalid"
     case unsafeClientAssetPath = "unsafe-client-asset-path"
     case invalidClientAssetHash = "invalid-client-asset-hash"
     case roomDimensionsInvalid = "room-dimensions-invalid"
@@ -266,6 +296,8 @@ public struct WorkWayRealityKitPreflight: Equatable, Sendable {
     public let contractIssues: [WorkWayNativeContractIssue]
     public let issuedNativeAssetIDs: [String]
     public let unissuedNativeFormats: [WorkWaySpatialPackage.SceneFormat]
+    public let physicalSceneStatus: String
+    public let physicalOneToOneSceneEligible: Bool
 
     /// A primitive room guide uses verified dimensions and does not need a
     /// USD/USDZ asset. RealityKit device execution remains a separate gate.

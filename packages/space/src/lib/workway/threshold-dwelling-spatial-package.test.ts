@@ -34,6 +34,24 @@ test('derives a client-safe Rev 0.8 package from the Canon living-system revisio
     renderedMaterialIds: ['M-INT-002', 'M-INT-001', 'M-ENV-002', 'M-INT-003'],
     constructionReady: false
   });
+  assert.deepEqual(packageValue.physicalSceneContract, {
+    issuanceId: 'threshold-dwelling-rev-0.8-physical-scene-gate',
+    status: 'blocked-vertical-geometry-unissued',
+    coordinateTruth: 'revised-plan-horizontal-only',
+    unissuedFactIds: [
+      'finished-floor-and-site-datum',
+      'exterior-wall-assembly-geometry',
+      'interior-partition-geometry',
+      'roof-and-ceiling-geometry',
+      'door-opening-geometry',
+      'window-and-glass-opening-geometry',
+      'structural-support-and-lateral-geometry',
+      'mep-service-coordination-geometry',
+      'exterior-grade-and-threshold-geometry'
+    ],
+    canGeneratePhysicalOneToOneScene: false,
+    constructionReady: false
+  });
   assert.equal(validation.clientSafe, true);
   assert.deepEqual(validation.issueIds, []);
   assert.deepEqual(
@@ -190,6 +208,19 @@ test('rejects a material contract that tries to imply construction readiness', (
   };
 
   assert.deepEqual(validateSpatialPackage(invalid).issueIds, ['invalid-material-contract']);
+});
+
+test('rejects a physical-scene contract that tries to elevate illustrative massing', () => {
+  const packageValue = createThresholdDwellingSpatialPackage();
+  const invalid = {
+    ...packageValue,
+    physicalSceneContract: {
+      ...packageValue.physicalSceneContract,
+      canGeneratePhysicalOneToOneScene: true as never
+    }
+  };
+
+  assert.deepEqual(validateSpatialPackage(invalid).issueIds, ['invalid-physical-scene-contract']);
 });
 
 test('keeps the native Swift fixture in exact contract parity with the spatial package', () => {

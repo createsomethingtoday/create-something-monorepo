@@ -23,6 +23,16 @@ fn threshold_dwelling_v08_spatial_package_is_client_safe_without_claiming_native
         vec!["M-INT-002", "M-INT-001", "M-ENV-002", "M-INT-003"]
     );
     assert!(!package.material_contract.construction_ready);
+    assert_eq!(
+        package.physical_scene_contract.status,
+        "blocked-vertical-geometry-unissued"
+    );
+    assert_eq!(package.physical_scene_contract.unissued_fact_ids.len(), 9);
+    assert!(
+        !package
+            .physical_scene_contract
+            .can_generate_physical_one_to_one_scene
+    );
     assert!(validation.is_valid());
     assert!(validation.issue_ids.is_empty());
     assert!(!validation.construction_ready);
@@ -54,6 +64,9 @@ fn spatial_package_rejects_revision_private_asset_entity_portal_and_readiness_fa
     package.entity_render_bindings[1].render_entity_id = "public-room/kitchen".into();
     package.portals[0].to_chapter_id = "unissued-room".into();
     package.material_contract.construction_ready = true;
+    package
+        .physical_scene_contract
+        .can_generate_physical_one_to_one_scene = true;
 
     let validation = validate_spatial_package(&package);
 
@@ -76,6 +89,9 @@ fn spatial_package_rejects_revision_private_asset_entity_portal_and_readiness_fa
     assert!(validation
         .issue_ids
         .contains(&"invalid-material-contract".into()));
+    assert!(validation
+        .issue_ids
+        .contains(&"invalid-physical-scene-contract".into()));
 }
 
 #[test]

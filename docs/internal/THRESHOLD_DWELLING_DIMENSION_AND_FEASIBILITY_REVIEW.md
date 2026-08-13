@@ -23,6 +23,8 @@ No wall thickness, finish buildup, survey datum, structural grid, elevation benc
 
 The Rev 0.8 massing guide now resolves every rendered surface through a stable material/assembly role code. This makes render-to-schedule identity deterministic; it does not make material products, thicknesses, wall sections, performance values, or procurement quantities exact. See the [Material and Assembly Schedule](./THRESHOLD_DWELLING_MATERIAL_AND_ASSEMBLY_SCHEDULE.md).
 
+The spatial package now also carries a hard [Physical 1:1 Scene Issuance](./THRESHOLD_DWELLING_PHYSICAL_SCENE_ISSUANCE.md) gate. It blocks elevation-, opening-, assembly-, and site-dependent scene geometry until traceable evidence is accepted; the current plan basis remains horizontal only.
+
 ## Approved decisions
 
 The project owner selected the **10 ft × 27 ft east projection** as the current design-intent envelope. Its dog-kennel, carport, and covered-entry segments are respectively 10 × 6 ft, 10 × 7 ft, and 10 × 14 ft. The floor plan, light study, section/roof/site geometry, cost allowance, and render pipeline now use that envelope. This is revision 0.4 of the concept baseline.

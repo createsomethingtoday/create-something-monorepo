@@ -9,6 +9,8 @@ private struct VerificationReceipt: Codable {
     let materialScheduleID: String
     let materialBindingStatus: String
     let renderedMaterialIDs: [String]
+    let physicalSceneStatus: String
+    let physicalOneToOneSceneEligible: Bool
     let constructionReady: Bool
     let contractIssues: [String]
     let kitchenDimensionsMeters: [Double]
@@ -38,6 +40,7 @@ struct WorkWaySpatialContractVerifier {
             }
             guard preflight.canRenderPrimitiveRoomGuide,
                   !preflight.canLoadIssuedNativeSceneAsset,
+                  !preflight.physicalOneToOneSceneEligible,
                   preflight.issuedNativeAssetIDs.isEmpty,
                   preflight.unissuedNativeFormats == [.usd, .usdz]
             else {
@@ -52,6 +55,8 @@ struct WorkWaySpatialContractVerifier {
                 materialScheduleID: package.materialContract.scheduleId,
                 materialBindingStatus: package.materialContract.materialBindingStatus,
                 renderedMaterialIDs: package.materialContract.renderedMaterialIds,
+                physicalSceneStatus: preflight.physicalSceneStatus,
+                physicalOneToOneSceneEligible: preflight.physicalOneToOneSceneEligible,
                 constructionReady: package.constructionReady,
                 contractIssues: package.contractIssues.map(\.rawValue),
                 kitchenDimensionsMeters: [kitchen.widthMeters, kitchen.depthMeters],

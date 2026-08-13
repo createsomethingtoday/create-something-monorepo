@@ -13,9 +13,10 @@ pub use change_proposal::{
 pub use spatial_package::{
     threshold_dwelling_spatial_package_v08, validate_spatial_package, ClientAsset,
     ClientSourceDocumentAccess, EntityRenderBinding, LocomotionModel, MaterialContract,
-    PortalTraversal, ProjectRevisionReference, RoomChapter, SafeStageGuidance, SceneFormat,
-    SceneRepresentation, SceneRepresentationStatus, SpatialPackage, SpatialPackageValidation,
-    SpatialPortal, SpatialScale, ValidationReceipt, SPATIAL_PACKAGE_SCHEMA_VERSION,
+    PhysicalSceneContract, PortalTraversal, ProjectRevisionReference, RoomChapter,
+    SafeStageGuidance, SceneFormat, SceneRepresentation, SceneRepresentationStatus, SpatialPackage,
+    SpatialPackageValidation, SpatialPortal, SpatialScale, ValidationReceipt,
+    SPATIAL_PACKAGE_SCHEMA_VERSION,
 };
 
 use serde::{Deserialize, Serialize};

@@ -7,6 +7,12 @@ import {
   THRESHOLD_DWELLING_ASSEMBLY_SCHEDULE,
   resolveThresholdDwellingAssemblyBinding
 } from '@create-something/canon/experiments/threshold-dwelling/assembly-schedule';
+import {
+  THRESHOLD_DWELLING_PHYSICAL_SCENE_ISSUANCE,
+  assessThresholdDwellingPhysicalSceneIssuance,
+  type ThresholdDwellingPhysicalSceneFactId,
+  type ThresholdDwellingPhysicalSceneStatus
+} from '@create-something/canon/experiments/threshold-dwelling/geometry-issuance';
 
 export const WORKWAY_SPATIAL_PACKAGE_SCHEMA_VERSION = 'workway.spatial-package.v1' as const;
 
@@ -71,6 +77,19 @@ export interface WorkWayMaterialContract {
   constructionReady: false;
 }
 
+/**
+ * A client-safe projection of the physical 1:1 scene gate. It prevents a
+ * horizontal-plan massing from being represented as issued vertical geometry.
+ */
+export interface WorkWayPhysicalSceneContract {
+  issuanceId: string;
+  status: ThresholdDwellingPhysicalSceneStatus;
+  coordinateTruth: 'revised-plan-horizontal-only';
+  unissuedFactIds: readonly ThresholdDwellingPhysicalSceneFactId[];
+  canGeneratePhysicalOneToOneScene: boolean;
+  constructionReady: false;
+}
+
 export interface WorkWaySpatialPackage {
   schemaVersion: typeof WORKWAY_SPATIAL_PACKAGE_SCHEMA_VERSION;
   id: string;
@@ -81,6 +100,7 @@ export interface WorkWaySpatialPackage {
   spatialRevision: string;
   clientSourceDocuments: 'excluded';
   materialContract: WorkWayMaterialContract;
+  physicalSceneContract: WorkWayPhysicalSceneContract;
   assets: readonly WorkWayClientAsset[];
   sceneRepresentations: readonly WorkWaySceneRepresentation[];
   entityRenderBindings: readonly WorkWayEntityRenderBinding[];
@@ -227,6 +247,8 @@ export function createThresholdDwellingSpatialPackage(): WorkWaySpatialPackage {
   const floorPlan = THRESHOLD_DWELLING_LIVING_SYSTEM_FLOOR_PLAN;
   const interior = THRESHOLD_DWELLING_INTERIOR_INFILL;
   const assemblySchedule = THRESHOLD_DWELLING_ASSEMBLY_SCHEDULE;
+  const physicalSceneIssuance = THRESHOLD_DWELLING_PHYSICAL_SCENE_ISSUANCE;
+  const physicalSceneAssessment = assessThresholdDwellingPhysicalSceneIssuance(physicalSceneIssuance);
   const arrivalLoggia = requireValue(
     floorPlan.overhangs?.find((overhang) => overhang.label === 'Arrival\nLoggia'),
     'Threshold Dwelling Rev 0.8 requires an Arrival Loggia render projection.'
@@ -267,6 +289,14 @@ export function createThresholdDwellingSpatialPackage(): WorkWaySpatialPackage {
       scheduleId: assemblySchedule.id,
       materialBindingStatus: 'role-codified-product-unselected',
       renderedMaterialIds: massingMaterialIds(),
+      constructionReady: false
+    },
+    physicalSceneContract: {
+      issuanceId: physicalSceneAssessment.issuanceId,
+      status: physicalSceneAssessment.physicalSceneStatus,
+      coordinateTruth: physicalSceneIssuance.coordinateTruth,
+      unissuedFactIds: physicalSceneAssessment.unissuedFactIds,
+      canGeneratePhysicalOneToOneScene: physicalSceneAssessment.canGeneratePhysicalOneToOneScene,
       constructionReady: false
     },
     assets,
@@ -466,6 +496,21 @@ export function validateSpatialPackage(
     packageValue.materialContract.constructionReady
   ) {
     issueIds.push('invalid-material-contract');
+  }
+  const physicalScene = packageValue.physicalSceneContract;
+  const expectedPhysicalSceneStatus = physicalScene.canGeneratePhysicalOneToOneScene
+    ? 'eligible-with-professional-review'
+    : 'blocked-vertical-geometry-unissued';
+  if (
+    !physicalScene.issuanceId.trim() ||
+    physicalScene.coordinateTruth !== 'revised-plan-horizontal-only' ||
+    duplicateIds(physicalScene.unissuedFactIds) ||
+    physicalScene.status !== expectedPhysicalSceneStatus ||
+    (physicalScene.canGeneratePhysicalOneToOneScene && physicalScene.unissuedFactIds.length > 0) ||
+    (!physicalScene.canGeneratePhysicalOneToOneScene && physicalScene.unissuedFactIds.length === 0) ||
+    physicalScene.constructionReady
+  ) {
+    issueIds.push('invalid-physical-scene-contract');
   }
   if (duplicateIds(assetIds)) issueIds.push('duplicate-asset-id');
   for (const asset of packageValue.assets) {

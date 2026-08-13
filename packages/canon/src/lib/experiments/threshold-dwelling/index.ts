@@ -96,6 +96,15 @@ export {
   type ThresholdDwellingScopeQuantityStatus
 } from './assembly-schedule.js';
 export {
+  THRESHOLD_DWELLING_PHYSICAL_SCENE_ISSUANCE,
+  assessThresholdDwellingPhysicalSceneIssuance,
+  type ThresholdDwellingPhysicalSceneFact,
+  type ThresholdDwellingPhysicalSceneFactId,
+  type ThresholdDwellingPhysicalSceneIssuance,
+  type ThresholdDwellingPhysicalSceneIssuanceAssessment,
+  type ThresholdDwellingPhysicalSceneStatus
+} from './geometry-issuance.js';
+export {
   THRESHOLD_DWELLING_DESIGN,
   type ThresholdDwellingBuildMetrics,
   type ThresholdDwellingConstructionAllowance,

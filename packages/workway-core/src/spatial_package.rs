@@ -50,6 +50,19 @@ pub struct MaterialContract {
     pub construction_ready: bool,
 }
 
+/// A client-safe visual-truth gate. It blocks physical 1:1 vertical scenes
+/// until geometry has accepted, traceable evidence; it never authorizes work.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PhysicalSceneContract {
+    pub issuance_id: String,
+    pub status: String,
+    pub coordinate_truth: String,
+    pub unissued_fact_ids: Vec<String>,
+    pub can_generate_physical_one_to_one_scene: bool,
+    pub construction_ready: bool,
+}
+
 /// A scene representation consumers may request after pre-caching a package.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -165,6 +178,7 @@ pub struct SpatialPackage {
     pub spatial_revision: String,
     pub client_source_documents: ClientSourceDocumentAccess,
     pub material_contract: MaterialContract,
+    pub physical_scene_contract: PhysicalSceneContract,
     pub assets: Vec<ClientAsset>,
     pub scene_representations: Vec<SceneRepresentation>,
     pub entity_render_bindings: Vec<EntityRenderBinding>,
@@ -249,6 +263,40 @@ pub fn validate_spatial_package(package: &SpatialPackage) -> SpatialPackageValid
         || package.material_contract.construction_ready
     {
         issue_ids.push("invalid-material-contract".into());
+    }
+    let expected_physical_scene_status = if package
+        .physical_scene_contract
+        .can_generate_physical_one_to_one_scene
+    {
+        "eligible-with-professional-review"
+    } else {
+        "blocked-vertical-geometry-unissued"
+    };
+    if package
+        .physical_scene_contract
+        .issuance_id
+        .trim()
+        .is_empty()
+        || package.physical_scene_contract.coordinate_truth != "revised-plan-horizontal-only"
+        || contains_duplicate_ids(
+            package
+                .physical_scene_contract
+                .unissued_fact_ids
+                .iter()
+                .map(String::as_str),
+        )
+        || package.physical_scene_contract.status != expected_physical_scene_status
+        || (package
+            .physical_scene_contract
+            .can_generate_physical_one_to_one_scene
+            && !package.physical_scene_contract.unissued_fact_ids.is_empty())
+        || (!package
+            .physical_scene_contract
+            .can_generate_physical_one_to_one_scene
+            && package.physical_scene_contract.unissued_fact_ids.is_empty())
+        || package.physical_scene_contract.construction_ready
+    {
+        issue_ids.push("invalid-physical-scene-contract".into());
     }
 
     if contains_duplicate_ids(package.assets.iter().map(|asset| asset.id.as_str())) {
@@ -429,6 +477,24 @@ pub fn threshold_dwelling_spatial_package_v08() -> SpatialPackage {
                 "M-ENV-002".into(),
                 "M-INT-003".into(),
             ],
+            construction_ready: false,
+        },
+        physical_scene_contract: PhysicalSceneContract {
+            issuance_id: "threshold-dwelling-rev-0.8-physical-scene-gate".into(),
+            status: "blocked-vertical-geometry-unissued".into(),
+            coordinate_truth: "revised-plan-horizontal-only".into(),
+            unissued_fact_ids: vec![
+                "finished-floor-and-site-datum".into(),
+                "exterior-wall-assembly-geometry".into(),
+                "interior-partition-geometry".into(),
+                "roof-and-ceiling-geometry".into(),
+                "door-opening-geometry".into(),
+                "window-and-glass-opening-geometry".into(),
+                "structural-support-and-lateral-geometry".into(),
+                "mep-service-coordination-geometry".into(),
+                "exterior-grade-and-threshold-geometry".into(),
+            ],
+            can_generate_physical_one_to_one_scene: false,
             construction_ready: false,
         },
         assets: vec![

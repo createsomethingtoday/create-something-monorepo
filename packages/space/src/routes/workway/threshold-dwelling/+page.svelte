@@ -123,7 +123,8 @@
       <p>
         Derived visualization only. No source documents, construction authority, survey claim, or
         shipped USD/USDZ asset is present in this local client package. The browser 3D massing guide
-        is review-only and marks its vertical parameter separately.
+        is review-only: the physical 1:1 scene gate is blocked until issued vertical, opening, and
+        site geometry is accepted.
       </p>
     </section>
 
@@ -224,6 +225,16 @@
 
           <WorkWayMassingViewer geometry={massingGeometry} guide={massingGuide} />
 
+          <aside class="truth-gate" data-testid="physical-scene-gate" aria-label="Physical scene issuance gate">
+            <p class="section-label">Physical 1:1 scene</p>
+            <strong>Blocked · {spatialPackage.physicalSceneContract.unissuedFactIds.length} geometry fact sets unissued</strong>
+            <span>
+              The plan is exact in its issued horizontal scope. Elevations, wall/roof assemblies,
+              openings, structure, MEP coordination, and site thresholds still require traceable,
+              accepted geometry.
+            </span>
+          </aside>
+
           <div class="tabletop-actions">
             <button class="secondary-action" onclick={returnToTabletop} data-testid="massing-return-tabletop">
               Return to tabletop
@@ -267,6 +278,7 @@
             <div class="dimension-card">
               <p>Dimensionally meaningful</p>
               <strong data-testid="chapter-dimensions">{activeDimensions}</strong>
+              <span>horizontal plan scope only · physical 1:1 scene blocked pending issued geometry</span>
               <span>local stage: {activeChapter.safeStage.minimumWidthIn / 12} × {activeChapter.safeStage.minimumDepthIn / 12} ft minimum guidance</span>
             </div>
             <p class="rebase-note">ROOM-CHAPTER REBASE · NOT GLOBAL FREE ROAM</p>
@@ -669,6 +681,26 @@
     flex: 1 1 20rem;
     color: #b5b2a7;
     font-size: 0.78rem;
+    line-height: 1.5;
+  }
+
+  .truth-gate {
+    display: grid;
+    gap: 0.35rem;
+    padding: 0.8rem 0.9rem;
+    border: 1px solid #8f7140;
+    background: #2a261c;
+  }
+
+  .truth-gate strong {
+    color: #efd18f;
+    font-size: 0.82rem;
+  }
+
+  .truth-gate span {
+    max-width: 52rem;
+    color: #cbc0a8;
+    font-size: 0.76rem;
     line-height: 1.5;
   }
 
