@@ -370,6 +370,11 @@ const assets = [
     id: 'browser-massing-glb',
     clientPath: 'experiments/threshold-dwelling/renders/threshold-dwelling-r08-massing-guide.glb',
     sha256: '1b03a571ec788492b1994792c1349d2b151860f69d01eaef36d05c4584892091'
+  },
+  {
+    id: 'native-massing-usdz',
+    clientPath: 'experiments/threshold-dwelling/renders/threshold-dwelling-r08-massing-guide.usdz',
+    sha256: '5f2b2ac1f8447ea4b4cbce90ede32de280f0b9833735e3e330fb6a2a2f83aba6'
   }
 ] as const satisfies readonly WorkWayClientAsset[];
 
@@ -566,10 +571,10 @@ export function createThresholdDwellingSpatialPackage(): WorkWaySpatialPackage {
       {
         id: 'native-usdz',
         format: 'usdz',
-        status: 'unissued',
+        status: 'available',
         canonicalRevision: livingRevision.base.revision,
         spatialRevision: livingRevision.proposedRevision,
-        assetId: null
+        assetId: 'native-massing-usdz'
       }
     ],
     entityRenderBindings: [

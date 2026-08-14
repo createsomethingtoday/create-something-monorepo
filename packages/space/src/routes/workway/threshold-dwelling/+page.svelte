@@ -29,6 +29,7 @@
   const tabletopPlan = assetBrowserUrl(spatialPackage, 'tabletop-plan-svg');
   const publicRoomVisual = assetBrowserUrl(spatialPackage, 'public-room-hero-png');
   const massingGlb = assetBrowserUrl(spatialPackage, 'browser-massing-glb');
+  const nativeMassingUsdz = assetBrowserUrl(spatialPackage, 'native-massing-usdz');
   const localPreview = dev;
 
   const massingGuide = THRESHOLD_DWELLING_MASSING_GUIDE;
@@ -185,9 +186,9 @@
       <span class="guardrail-mark">●</span>
       <p>
         Derived visualization only. No source documents, construction authority, survey claim, or
-        shipped USD/USDZ asset is present in this local client package. The browser 3D massing guide
-        is review-only: the physical 1:1 scene gate is blocked until issued vertical, opening, and
-        site geometry is accepted.
+        physical 1:1 construction scene is present in this local client package. The browser 3D guide
+        and issued USDZ are design-intent visualizations only: the physical-scene gate is blocked
+        until vertical, opening, and site geometry is issued and accepted.
       </p>
     </section>
 
@@ -238,7 +239,7 @@
           <p>2D plan · available</p>
           <p>Browser 3D · available</p>
           <p>USD · unissued</p>
-          <p>USDZ · unissued</p>
+          <a href={nativeMassingUsdz}>USDZ · design intent · available</a>
         </div>
       </aside>
 
@@ -832,6 +833,7 @@
 
   .chapter-list small,
   .capability p,
+  .capability a,
   .session-note,
   .quiet-note {
     color: #a9a79c;
@@ -843,6 +845,11 @@
     margin-top: auto;
     padding-top: 1rem;
     border-top: 1px solid #3b3c37;
+  }
+
+  .capability a {
+    display: block;
+    text-underline-offset: 0.2em;
   }
 
   .scene {

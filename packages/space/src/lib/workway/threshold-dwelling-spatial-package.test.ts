@@ -110,18 +110,18 @@ test('derives a client-safe Rev 0.8 package from the Canon living-system revisio
   );
 });
 
-test('keeps native USD and USDZ declarative but explicitly unissued', () => {
+test('keeps USD unissued while delivering a content-addressed design-intent USDZ massing asset', () => {
   const spatialFormats = THRESHOLD_DWELLING_SPATIAL_PACKAGE.sceneRepresentations
     .filter((representation) => representation.format === 'usd' || representation.format === 'usdz')
     .map((representation) => ({ format: representation.format, status: representation.status, assetId: representation.assetId }));
 
   assert.deepEqual(spatialFormats, [
     { format: 'usd', status: 'unissued', assetId: null },
-    { format: 'usdz', status: 'unissued', assetId: null }
+    { format: 'usdz', status: 'available', assetId: 'native-massing-usdz' }
   ]);
 });
 
-test('delivers the deterministic browser massing GLB without claiming a native asset', () => {
+test('delivers deterministic browser massing and validator-backed native design-intent assets', () => {
   const browserMassing = THRESHOLD_DWELLING_SPATIAL_PACKAGE.sceneRepresentations.find(
     (representation) => representation.id === 'browser-massing-glb'
   );
@@ -134,15 +134,37 @@ test('delivers the deterministic browser massing GLB without claiming a native a
     spatialRevision: '0.8',
     assetId: 'browser-massing-glb'
   });
+
+  const nativeMassing = THRESHOLD_DWELLING_SPATIAL_PACKAGE.sceneRepresentations.find(
+    (representation) => representation.id === 'native-usdz'
+  );
+
+  assert.deepEqual(nativeMassing, {
+    id: 'native-usdz',
+    format: 'usdz',
+    status: 'available',
+    canonicalRevision: '0.7',
+    spatialRevision: '0.8',
+    assetId: 'native-massing-usdz'
+  });
 });
 
-test('keeps each available 2D visual asset content-addressed to its local package receipt', () => {
+test('keeps each available visual asset content-addressed to its local package receipt', () => {
   const packageValue = THRESHOLD_DWELLING_SPATIAL_PACKAGE;
 
   for (const asset of packageValue.assets) {
     const contents = readFileSync(resolve(process.cwd(), 'static', asset.clientPath));
     assert.equal(createHash('sha256').update(contents).digest('hex'), asset.sha256, asset.id);
   }
+});
+
+test('declares the Apple USDZ MIME type at the static delivery boundary', () => {
+  const headers = readFileSync(resolve(process.cwd(), '_headers'), 'utf8');
+
+  assert.match(
+    headers,
+    /\/experiments\/threshold-dwelling\/renders\/threshold-dwelling-r08-massing-guide\.usdz\n\s+Content-Type: model\/vnd\.usdz\+zip\n\s+X-Content-Type-Options: nosniff/
+  );
 });
 
 test('projects Rust-authored evidence handoff requirements without an upload or document contents', () => {

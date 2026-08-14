@@ -6,7 +6,7 @@ use workway_core::{
 };
 
 #[test]
-fn threshold_dwelling_v08_spatial_package_is_client_safe_without_claiming_native_delivery() {
+fn threshold_dwelling_v08_spatial_package_is_client_safe_with_design_intent_native_delivery() {
     let package = threshold_dwelling_spatial_package_v08();
     let validation = validate_spatial_package(&package);
 
@@ -20,7 +20,7 @@ fn threshold_dwelling_v08_spatial_package_is_client_safe_without_claiming_native
     );
     assert_eq!(
         package.material_contract.rendered_material_ids,
-        vec!["M-INT-002", "M-INT-001", "M-ENV-002", "M-INT-003"]
+        vec!["M-INT-002", "M-INT-001", "M-ENV-002", "M-ENV-001"]
     );
     assert!(!package.material_contract.construction_ready);
     assert_eq!(
@@ -49,8 +49,8 @@ fn threshold_dwelling_v08_spatial_package_is_client_safe_without_claiming_native
     }));
     assert!(package.scene_representations.iter().any(|representation| {
         representation.format == SceneFormat::Usdz
-            && representation.status == SceneRepresentationStatus::Unissued
-            && representation.asset_id.is_none()
+            && representation.status == SceneRepresentationStatus::Available
+            && representation.asset_id.as_deref() == Some("native-massing-usdz")
     }));
     assert!(package.scene_representations.iter().any(|representation| {
         representation.format == SceneFormat::Glb
