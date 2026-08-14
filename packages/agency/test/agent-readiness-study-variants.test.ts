@@ -4,6 +4,7 @@ import { test } from 'node:test';
 import {
   agentReadinessStudyVariantIds,
   agentReadinessStudyVariants,
+  productionAgentReadinessVariantId,
   resolveAgentReadinessStudyVariant
 } from '../src/lib/data/agentReadinessStudyVariants.ts';
 
@@ -33,8 +34,9 @@ test('every local-only study variant retains the Buyer Readiness offer and bound
   }
 });
 
-test('unknown study selectors resolve to the production baseline', () => {
-  assert.equal(resolveAgentReadinessStudyVariant(null).id, 'baseline');
-  assert.equal(resolveAgentReadinessStudyVariant('not-a-study').id, 'baseline');
+test('the production route defaults to the approved outcome-first hierarchy', () => {
+  assert.equal(productionAgentReadinessVariantId, 'outcome-first');
+  assert.equal(resolveAgentReadinessStudyVariant(null).id, 'outcome-first');
+  assert.equal(resolveAgentReadinessStudyVariant('not-a-study').id, 'outcome-first');
   assert.equal(resolveAgentReadinessStudyVariant('proof-first').id, 'proof-first');
 });

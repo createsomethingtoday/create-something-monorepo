@@ -4,6 +4,8 @@ export const agentReadinessStudyVariantIds = ['baseline', 'proof-first', 'outcom
 
 export type AgentReadinessStudyVariantId = (typeof agentReadinessStudyVariantIds)[number];
 
+export const productionAgentReadinessVariantId: AgentReadinessStudyVariantId = 'outcome-first';
+
 export interface AgentReadinessStudyVariant {
   id: AgentReadinessStudyVariantId;
   hero: {
@@ -218,5 +220,5 @@ export function resolveAgentReadinessStudyVariant(value: string | null | undefin
   if (value && agentReadinessStudyVariantIds.includes(value as AgentReadinessStudyVariantId)) {
     return agentReadinessStudyVariants[value as AgentReadinessStudyVariantId];
   }
-  return agentReadinessStudyVariants.baseline;
+  return agentReadinessStudyVariants[productionAgentReadinessVariantId];
 }
