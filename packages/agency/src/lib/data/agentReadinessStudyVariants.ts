@@ -4,7 +4,7 @@ export const agentReadinessStudyVariantIds = ['baseline', 'proof-first', 'outcom
 
 export type AgentReadinessStudyVariantId = (typeof agentReadinessStudyVariantIds)[number];
 
-export const productionAgentReadinessVariantId: AgentReadinessStudyVariantId = 'outcome-first';
+export const productionAgentReadinessVariantId: AgentReadinessStudyVariantId = 'baseline';
 
 export interface AgentReadinessStudyVariant {
   id: AgentReadinessStudyVariantId;
