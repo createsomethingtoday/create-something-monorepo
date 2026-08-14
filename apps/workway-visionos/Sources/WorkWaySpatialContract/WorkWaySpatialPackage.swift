@@ -27,6 +27,42 @@ public struct WorkWaySpatialPackage: Codable, Equatable, Sendable {
         public let constructionReady: Bool
     }
 
+    /// A source-free occupancy, opening, and systems-location layer for
+    /// experience review. It is intentionally not an equipment schedule,
+    /// installation instruction, or construction release.
+    public struct OutfittingContract: Codable, Equatable, Sendable {
+        public struct Placement: Codable, Equatable, Sendable {
+            public let xIn: Double
+            public let yIn: Double
+            public let widthIn: Double
+            public let depthIn: Double
+            public let renderHeightIn: Double
+        }
+
+        public struct Item: Codable, Equatable, Sendable {
+            public let id: String
+            public let category: String
+            public let title: String
+            public let chapterId: String?
+            public let sourceOpeningId: String?
+            public let placement: Placement
+            public let rendering: String
+            public let basis: String
+            public let reviewNote: String
+            public let constructionReady: Bool
+        }
+
+        public let schemaVersion: String
+        public let id: String
+        public let projectId: String
+        public let canonicalRevision: String
+        public let spatialRevision: String
+        public let status: String
+        public let statement: String
+        public let items: [Item]
+        public let constructionReady: Bool
+    }
+
     /// A renderer-facing truth gate for physical 1:1 vertical scene geometry.
     /// It can make a scene eligible for visualization, never construction.
     public struct PhysicalSceneContract: Codable, Equatable, Sendable {
@@ -118,6 +154,7 @@ public struct WorkWaySpatialPackage: Codable, Equatable, Sendable {
     public let spatialRevision: String
     public let clientSourceDocuments: String
     public let materialContract: MaterialContract
+    public let outfitting: OutfittingContract
     public let physicalSceneContract: PhysicalSceneContract
     public let assets: [Asset]
     public let sceneRepresentations: [SceneRepresentation]
@@ -134,6 +171,7 @@ public struct WorkWaySpatialPackage: Codable, Equatable, Sendable {
         case spatialRevision
         case clientSourceDocuments
         case materialContract
+        case outfitting
         case physicalSceneContract
         case assets
         case sceneRepresentations
@@ -169,6 +207,34 @@ public struct WorkWaySpatialPackage: Codable, Equatable, Sendable {
             materialContract.constructionReady
         {
             issues.append(.materialContractInvalid)
+        }
+        let outfittingIDs = outfitting.items.map(\.id)
+        if outfitting.schemaVersion != "workway.outfitting-system.v1" ||
+            outfitting.id != "threshold-dwelling-r08-design-intent-outfitting" ||
+            outfitting.projectId != canonicalProject.projectId ||
+            outfitting.canonicalRevision != canonicalProject.projectRevision ||
+            outfitting.spatialRevision != spatialRevision ||
+            outfitting.status != "design-intent-experience-layer" ||
+            outfitting.statement.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+            outfitting.items.isEmpty ||
+            Set(outfittingIDs).count != outfittingIDs.count ||
+            outfitting.items.contains(where: {
+                $0.id.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+                    $0.category.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+                    $0.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+                    $0.reviewNote.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+                    $0.placement.widthIn <= 0 ||
+                    $0.placement.depthIn <= 0 ||
+                    $0.placement.renderHeightIn <= 0 ||
+                    $0.constructionReady
+            }) ||
+            !outfitting.items.contains(where: {
+                $0.id == "opening-window-daughter-suite" &&
+                    $0.sourceOpeningId == "window-daughter-suite"
+            }) ||
+            outfitting.constructionReady
+        {
+            issues.append(.outfittingContractInvalid)
         }
         let expectedPhysicalSceneStatus = physicalSceneContract.canGeneratePhysicalOneToOneScene
             ? "eligible-with-professional-review"
@@ -306,6 +372,7 @@ public enum WorkWayNativeContractIssue: String, CaseIterable, Comparable, Sendab
     case sourceDocumentsNotExcluded = "source-documents-not-excluded"
     case constructionReadyMustBeFalse = "construction-ready-must-be-false"
     case materialContractInvalid = "material-contract-invalid"
+    case outfittingContractInvalid = "outfitting-contract-invalid"
     case physicalSceneContractInvalid = "physical-scene-contract-invalid"
     case unsafeClientAssetPath = "unsafe-client-asset-path"
     case invalidClientAssetHash = "invalid-client-asset-hash"

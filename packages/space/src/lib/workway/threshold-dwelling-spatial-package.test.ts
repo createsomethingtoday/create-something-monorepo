@@ -16,6 +16,7 @@ import {
   createSessionProposalDecision,
   createThresholdDwellingSpatialPackage,
   interpretThresholdDwellingComposerIntent,
+  nativeThresholdDwellingSpatialPackageProjection,
   portalsFrom,
   validateSpatialPackage
 } from './threshold-dwelling-spatial-package.js';
@@ -33,6 +34,24 @@ test('derives a client-safe Rev 0.8 package from the Canon living-system revisio
   assert.equal(packageValue.spatialRevision, '0.8');
   assert.equal(packageValue.clientSourceDocuments, 'excluded');
   assert.equal(packageValue.constructionReady, false);
+  assert.equal(packageValue.outfitting.id, 'threshold-dwelling-r08-design-intent-outfitting');
+  assert.equal(packageValue.outfitting.items.length > 22, true);
+  assert.deepEqual(
+    packageValue.outfitting.items.find((item) => item.id === 'opening-window-daughter-suite'),
+    {
+      id: 'opening-window-daughter-suite',
+      category: 'opening',
+      title: 'Window opening marker',
+      chapterId: 'daughter-sleep-zone',
+      sourceOpeningId: 'window-daughter-suite',
+      placement: { xIn: 108, yIn: 500, widthIn: 72, depthIn: 4, renderHeightIn: 3 },
+      rendering: 'plan-opening-marker',
+      basis: 'plan-opening',
+      reviewNote:
+        'Plan location and span are derived from the candidate plan. Operation, clear opening, sill, head, elevation, safety, and installation remain professional determinations.',
+      constructionReady: false
+    }
+  );
   assert.deepEqual(packageValue.materialContract, {
     scheduleId: 'threshold-dwelling-rev-0.8-design-intent-assembly-schedule',
     materialBindingStatus: 'role-codified-product-unselected',
@@ -422,12 +441,7 @@ test('keeps the native Swift fixture in exact contract parity with the spatial p
       'utf8'
     )
   );
-  const expectedNativeProjection = {
-    ...THRESHOLD_DWELLING_SPATIAL_PACKAGE,
-    roomChapters: THRESHOLD_DWELLING_SPATIAL_PACKAGE.roomChapters.map(({ title: _title, ...chapter }) =>
-      chapter
-    )
-  };
+  const expectedNativeProjection = nativeThresholdDwellingSpatialPackageProjection();
 
   assert.deepEqual(nativeFixture, expectedNativeProjection);
 });

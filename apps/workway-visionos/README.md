@@ -6,6 +6,7 @@ This is the native-client boundary for WorkWay’s Threshold Dwelling spatial pa
 
 - Swift decodes a bundled `workway.spatial-package.v1` fixture with source documents excluded and `constructionReady: false`.
 - The kitchen contract retains its exact 180 in × 156 in dimensions, converting to 4.572 m × 3.9624 m only at the Apple-rendering edge.
+- The bundled fixture carries 58 review-only openings, furnishings, plumbing, HVAC, electrical, life-safety, and shading markers. They are nominal experience proxies, never an equipment schedule, routing model, or construction release.
 - A RealityKit primitive room guide can be eligible from that verified contract.
 - A content-addressed USDZ of the same design-intent massing is issued after strict Apple RealityKit validation and a local macOS RealityKit load. Plain USD remains unissued.
 - The issued USDZ does not alter the blocked physical-scene gate, the horizontal-only truth boundary, or `constructionReady: false`.
@@ -16,6 +17,14 @@ Run the portable contract proof:
 cd apps/workway-visionos
 swift run WorkWaySpatialContractVerifier
 ```
+
+When the Canon outfitting contract changes, regenerate the client-safe Swift fixture before running that proof:
+
+```bash
+pnpm --filter @create-something/space generate:threshold-spatial-fixture
+```
+
+The Space contract test enforces exact JSON contract parity between that generated fixture and the native projection.
 
 ## RealityKit adapter
 
