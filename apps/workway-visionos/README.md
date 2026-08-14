@@ -33,12 +33,29 @@ Apple describes `RealityView` as the SwiftUI container for RealityKit content an
 
 ## Current native-validation gate
 
-This Mac has Xcode 26.6 and full local Apple USD/RealityKit tooling. The issued USDZ passes `usdchecker --arkit --strict` and loads through local macOS RealityKit. A visionOS SDK and Vision Pro Simulator runtime are not installed, so the following gates are intentionally **not run**:
+This Mac has Xcode 26.6, the visionOS 26.5 Simulator runtime, and full local
+Apple USD/RealityKit tooling. The issued USDZ passes `usdchecker --arkit
+--strict` and loads through local macOS RealityKit.
+
+Run the reproducible Simulator SDK compile check:
+
+```bash
+cd apps/workway-visionos
+./scripts/check-visionos-simulator.sh
+```
+
+It compiles the public `WorkWayRealityKitAdapter` target against the installed
+`xrsimulator` SDK. It deliberately does not cross-link the macOS-only
+`WorkWaySpatialContractVerifier` as a visionOS executable. That verifier stays
+the portable fixture/contract proof; a future app target owns simulator
+rendering.
+
+The remaining gates are intentionally **not claimed**:
 
 | Gate | Evidence required |
 | --- | --- |
-| RealityKit compile | Full Xcode with the visionOS platform; build `WorkWayRealityKitAdapter` for a visionOS app target. |
-| Simulator render | An Apple Vision Pro simulator launch; verify the kitchen footprint, local-stage messaging, and that only the issued design-intent USDZ loads. |
+| RealityKit compile | Passed locally: compile `WorkWayRealityKitAdapter` against the installed visionOS Simulator SDK. |
+| Simulator render | A launchable Apple Vision Pro app target; verify the kitchen footprint, local-stage messaging, and that only the issued design-intent USDZ loads. |
 | Device interaction | Physical Vision Pro: inspect scale, gestures, comfort, occlusion, and session recovery. |
 | Shared spatial alignment | Two Vision Pros with the selected Apple collaboration approach; verify state/anchor consistency and failure recovery. |
 
