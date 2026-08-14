@@ -436,6 +436,9 @@ importers:
       '@composio/core':
         specifier: ^0.6.4
         version: 0.6.4(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      '@create-something/arc':
+        specifier: workspace:*
+        version: link:../arc
       '@create-something/atlas-composition':
         specifier: workspace:*
         version: link:../atlas-composition
@@ -556,6 +559,12 @@ importers:
 
   packages/agency/clients/jandjhomehealth:
     dependencies:
+      '@create-something/arc':
+        specifier: workspace:*
+        version: link:../../../arc
+      '@create-something/atlas-composition':
+        specifier: workspace:*
+        version: link:../../../atlas-composition
       '@openai/agents':
         specifier: ^0.13.5
         version: 0.13.5(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
@@ -874,6 +883,46 @@ importers:
       '@tauri-apps/cli':
         specifier: ^2
         version: 2.11.2
+
+  packages/arc:
+    dependencies:
+      '@create-something/atlas-composition':
+        specifier: workspace:*
+        version: link:../atlas-composition
+      '@create-something/canon':
+        specifier: workspace:*
+        version: link:../canon
+    devDependencies:
+      '@sveltejs/adapter-auto':
+        specifier: ^7.0.0
+        version: 7.0.0(@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))
+      '@sveltejs/kit':
+        specifier: ^2.47.1
+        version: 2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+      '@sveltejs/package':
+        specifier: ^2.5.4
+        version: 2.5.7(svelte@5.48.5)(typescript@5.9.3)
+      '@sveltejs/vite-plugin-svelte':
+        specifier: ^6.2.1
+        version: 6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+      publint:
+        specifier: ^0.3.14
+        version: 0.3.17
+      svelte:
+        specifier: ^5.41.0
+        version: 5.48.5
+      svelte-check:
+        specifier: ^4.3.3
+        version: 4.3.5(picomatch@4.0.5)(svelte@5.48.5)(typescript@5.9.3)
+      tsx:
+        specifier: ^4.21.0
+        version: 4.21.0
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vite:
+        specifier: ^7.1.10
+        version: 7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)
 
   packages/ascii-renderer:
     devDependencies:

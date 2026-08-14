@@ -30,6 +30,7 @@
     evidence?: string[];
     receipts?: string[];
     actions?: PerformanceNarrativeAction[];
+    notes?: string;
   }
 
   interface Props {
@@ -44,6 +45,8 @@
     /** Optional semantic contract for an explicitly triggered scene transition. */
     motionIntent?: MotionIntent;
     enablePresentation?: boolean;
+    onSceneChange?: (scene: PerformanceNarrativeScene, index: number) => void;
+    onPresentationChange?: (presenting: boolean) => void;
     preview?: Snippet;
     artifact?: Snippet<[PerformanceNarrativeScene, number]>;
   }
@@ -59,6 +62,8 @@
     expression = 'field',
     motionIntent,
     enablePresentation = false,
+    onSceneChange,
+    onPresentationChange,
     preview,
     artifact
   }: Props = $props();
@@ -73,6 +78,11 @@
   let previousBodyOverflow = '';
   let sceneMotionRequest = 0;
   let activeSceneTimeline: { kill: () => void } | undefined;
+  let notesVisible = $state(false);
+  let chromeVisible = $state(true);
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let chromeTimer: ReturnType<typeof setTimeout> | undefined;
 
   const interactiveSelector =
     'a[href], button, input, textarea, select, summary, [contenteditable="true"]';
@@ -95,7 +105,10 @@
 
   function syncFromFragment() {
     const fragmentIndex = indexFromFragment();
-    if (fragmentIndex >= 0) activeIndex = fragmentIndex;
+    if (fragmentIndex >= 0) {
+      activeIndex = fragmentIndex;
+      onSceneChange?.(scenes[activeIndex], activeIndex);
+    }
   }
 
   function cancelSceneMotion() {
@@ -164,6 +177,7 @@
     if (!scenes[index]) return;
     const sceneChanged = activeIndex !== index;
     activeIndex = index;
+    if (sceneChanged) onSceneChange?.(scenes[index], index);
     if (sceneChanged && enhanced && motionIntent) void animateSceneTransition(index);
 
     if (pushHistory && typeof window !== 'undefined') {
@@ -179,6 +193,45 @@
     }
 
     if (moveFocus) tabElements[index]?.focus();
+    notesVisible = false;
+    revealChrome();
+  }
+
+  function revealChrome() {
+    chromeVisible = true;
+    if (chromeTimer) clearTimeout(chromeTimer);
+    if (presenting) chromeTimer = setTimeout(() => (chromeVisible = false), 2400);
+  }
+
+  function handlePointerMove() {
+    if (presenting) revealChrome();
+  }
+
+  function handleStageClick(event: MouseEvent) {
+    if (!presenting || event.defaultPrevented || !stageElement) return;
+    if (event.target instanceof HTMLElement && event.target.closest(interactiveSelector)) return;
+    const bounds = stageElement.getBoundingClientRect();
+    const position = (event.clientX - bounds.left) / bounds.width;
+    if (position <= 0.24) selectScene(Math.max(activeIndex - 1, 0));
+    if (position >= 0.76) selectScene(Math.min(activeIndex + 1, scenes.length - 1));
+  }
+
+  function handleTouchStart(event: TouchEvent) {
+    const touch = event.changedTouches[0];
+    if (!touch) return;
+    touchStartX = touch.clientX;
+    touchStartY = touch.clientY;
+    revealChrome();
+  }
+
+  function handleTouchEnd(event: TouchEvent) {
+    if (!presenting) return;
+    const touch = event.changedTouches[0];
+    if (!touch) return;
+    const dx = touch.clientX - touchStartX;
+    const dy = touch.clientY - touchStartY;
+    if (Math.abs(dx) < 48 || Math.abs(dx) <= Math.abs(dy)) return;
+    selectScene(dx < 0 ? Math.min(activeIndex + 1, scenes.length - 1) : Math.max(activeIndex - 1, 0));
   }
 
   function handleTabKeydown(event: KeyboardEvent, index: number) {
@@ -202,6 +255,14 @@
   function handlePresentationKeydown(event: KeyboardEvent) {
     if (!presenting || event.defaultPrevented) return;
 
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      setPresenting(false);
+      return;
+    }
+
+    revealChrome();
+
     if (event.key === 'Tab' && stageElement) {
       const focusable = [...stageElement.querySelectorAll<HTMLElement>(interactiveSelector)].filter(
         (element) => !element.hasAttribute('disabled') && element.getAttribute('aria-hidden') !== 'true'
@@ -220,7 +281,20 @@
     }
 
     if (event.target instanceof HTMLElement && event.target.closest(interactiveSelector)) {
-      return;
+      const presentationChrome = event.target.closest(
+        '.performance-narrative-stage__present, .performance-narrative-stage__controls, .performance-narrative-stage__index'
+      );
+      const directionalKey = [
+        'ArrowRight',
+        'ArrowDown',
+        'PageDown',
+        'ArrowLeft',
+        'ArrowUp',
+        'PageUp',
+        'Home',
+        'End'
+      ].includes(event.key);
+      if (!presentationChrome || !directionalKey) return;
     }
 
     let nextIndex = activeIndex;
@@ -232,9 +306,6 @@
       nextIndex = 0;
     } else if (event.key === 'End') {
       nextIndex = scenes.length - 1;
-    } else if (event.key === 'Escape') {
-      setPresenting(false);
-      return;
     } else {
       return;
     }
@@ -246,13 +317,21 @@
   function setPresenting(next: boolean) {
     if (presenting === next) return;
     presenting = next;
+    onPresentationChange?.(next);
 
     if (typeof document === 'undefined') return;
     if (next) {
       previousBodyOverflow = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
+      notesVisible = false;
+      requestAnimationFrame(() => {
+        presentButton?.focus();
+        revealChrome();
+      });
     } else {
       document.body.style.overflow = previousBodyOverflow;
+      if (chromeTimer) clearTimeout(chromeTimer);
+      chromeVisible = true;
       requestAnimationFrame(() => presentButton?.focus());
     }
   }
@@ -260,6 +339,7 @@
   onMount(() => {
     enhanced = true;
     syncFromFragment();
+    onSceneChange?.(scenes[activeIndex], activeIndex);
     window.addEventListener('hashchange', syncFromFragment);
     window.addEventListener('popstate', syncFromFragment);
     window.addEventListener('keydown', handlePresentationKeydown);
@@ -270,6 +350,7 @@
       window.removeEventListener('keydown', handlePresentationKeydown);
       cancelSceneMotion();
       if (presenting) document.body.style.overflow = previousBodyOverflow;
+      if (chromeTimer) clearTimeout(chromeTimer);
     };
   });
 </script>
@@ -285,9 +366,14 @@
   data-motion-runtime={sceneMotionRuntime}
   data-presentation-enabled={enablePresentation}
   data-presenting={presenting}
+  data-chrome-visible={chromeVisible}
   role={presenting ? 'dialog' : undefined}
   aria-modal={presenting ? 'true' : undefined}
   aria-label={presenting ? `${ariaLabel} presentation` : ariaLabel}
+  onpointermove={handlePointerMove}
+  onclick={handleStageClick}
+  ontouchstart={handleTouchStart}
+  ontouchend={handleTouchEnd}
 >
   <div class="performance-narrative-stage__inner">
     <header class="performance-narrative-stage__header">
@@ -420,6 +506,12 @@
             {/if}
 
             {#if enhanced && index === activeIndex && scenes.length > 1}
+              {#if presenting && notesVisible}
+                <aside class="performance-narrative-stage__speaker-notes" aria-label="Speaker notes">
+                  <span>Speaker notes</span>
+                  <p>{scene.notes ?? scene.detail}</p>
+                </aside>
+              {/if}
               <div class="performance-narrative-stage__controls" aria-label="Scene controls">
                 <button
                   type="button"
@@ -429,6 +521,13 @@
                   {presenting ? 'Previous slide' : 'Previous'}
                 </button>
                 <span aria-live="polite">Slide {index + 1} of {scenes.length} · {scene.label}</span>
+                {#if presenting}
+                  <button
+                    type="button"
+                    aria-pressed={notesVisible}
+                    onclick={() => (notesVisible = !notesVisible)}
+                  >Notes</button>
+                {/if}
                 <button
                   type="button"
                   disabled={index === scenes.length - 1}
@@ -437,6 +536,13 @@
                   {presenting ? 'Next slide' : 'Next'}
                 </button>
               </div>
+              {#if presenting}
+                <i
+                  class="performance-narrative-stage__progress"
+                  style:--presentation-progress={`${((index + 1) / scenes.length) * 100}%`}
+                  aria-hidden="true"
+                ></i>
+              {/if}
             {/if}
           </div>
         {/each}
@@ -1053,7 +1159,8 @@
   }
 
   .performance-narrative-stage[data-presenting='true'] .performance-narrative-stage__inner {
-    grid-template-rows: auto minmax(0, 1fr);
+    position: relative;
+    grid-template-rows: minmax(0, 1fr);
     gap: 0;
     width: 100%;
     height: 100%;
@@ -1061,7 +1168,11 @@
   }
 
   .performance-narrative-stage[data-presenting='true'] .performance-narrative-stage__header {
-    z-index: 2;
+    position: absolute;
+    z-index: 5;
+    top: 0;
+    right: 0;
+    left: 0;
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 1rem;
     align-items: center;
@@ -1069,6 +1180,14 @@
     padding: 0.5rem clamp(0.75rem, 2vw, 1.5rem);
     border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
     background: var(--color-performance-panel, #fff);
+    transition: opacity 180ms ease, transform 180ms ease;
+  }
+
+  .performance-narrative-stage[data-presenting='true'][data-chrome-visible='false']
+    .performance-narrative-stage__header {
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(-100%);
   }
 
   .performance-narrative-stage[data-presenting='true']
@@ -1107,7 +1226,7 @@
   .performance-narrative-stage[data-presenting='true']
     .performance-narrative-stage__composition {
     grid-template-columns: 1fr;
-    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
     min-height: 0;
     height: 100%;
     overflow: hidden;
@@ -1116,15 +1235,7 @@
   }
 
   .performance-narrative-stage[data-presenting='true'] .performance-narrative-stage__index {
-    position: static;
-    display: grid;
-    grid-template-columns: repeat(var(--scene-count, 1), minmax(7rem, 1fr));
-    grid-auto-flow: row;
-    overflow-x: auto;
-    border-right: 0;
-    border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
-    background: var(--color-performance-court, #e6e6e0);
-    scrollbar-width: thin;
+    display: none;
   }
 
   .performance-narrative-stage[data-presenting='true']
@@ -1155,13 +1266,14 @@
   .performance-narrative-stage[data-presenting='true'] .performance-narrative-stage__panel,
   .performance-narrative-stage[data-presenting='true'][data-expression='editorial']
     .performance-narrative-stage__panel {
+    position: relative;
     grid-template-rows: auto minmax(0, 1fr) auto;
     align-content: stretch;
     gap: clamp(0.65rem, 1.5vw, 1rem);
     min-height: 0;
     height: 100%;
     overflow: hidden;
-    padding: clamp(0.75rem, 2vw, 1.5rem);
+    padding: clamp(1rem, 2vw, 1.75rem);
   }
 
   .performance-narrative-stage[data-presenting='true']
@@ -1180,8 +1292,7 @@
 
   .performance-narrative-stage[data-presenting='true']
     .performance-narrative-stage__stakeholders {
-    grid-column: 1 / -1;
-    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+    display: none;
   }
 
   .performance-narrative-stage[data-presenting='true']
@@ -1200,14 +1311,13 @@
     > p {
     max-width: 38rem;
     padding-bottom: 0.15rem;
-    font-size: clamp(0.86rem, 1.35vw, 1rem);
+    font-size: clamp(1rem, 1.35vw, 1.125rem);
   }
 
   .performance-narrative-stage[data-presenting='true'] .performance-narrative-stage__artifact {
     min-height: 0;
-    overflow: auto;
+    overflow: hidden;
     padding-block: 0.5rem;
-    overscroll-behavior: contain;
   }
 
   .performance-narrative-stage[data-presenting='true'] .performance-narrative-stage__proof,
@@ -1216,10 +1326,58 @@
   }
 
   .performance-narrative-stage[data-presenting='true'] .performance-narrative-stage__controls {
-    z-index: 2;
+    z-index: 4;
+    grid-template-columns: auto 1fr auto auto;
     margin: 0;
-    padding-top: 0.55rem;
+    padding: 0.55rem;
+    border: 1px solid var(--color-performance-line, #d7d7d2);
     background: var(--color-performance-panel, #fff);
+    transition: opacity 180ms ease, transform 180ms ease;
+  }
+
+  .performance-narrative-stage[data-presenting='true'][data-chrome-visible='false']
+    .performance-narrative-stage__controls {
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(calc(100% + 1rem));
+  }
+
+  .performance-narrative-stage__speaker-notes {
+    position: absolute;
+    z-index: 6;
+    right: clamp(1rem, 2vw, 1.75rem);
+    bottom: 5.25rem;
+    width: min(28rem, calc(100% - 2rem));
+    padding: 1rem;
+    border: 1px solid var(--color-performance-line-strong, #9c9c96);
+    background: rgb(255 255 255 / .96);
+    box-shadow: 0 .75rem 2rem rgb(9 9 9 / .14);
+  }
+
+  .performance-narrative-stage__speaker-notes span {
+    color: var(--color-performance-muted, #5e6268);
+    font: 650 .68rem/1.2 var(--font-performance-mono, ui-monospace, monospace);
+    text-transform: uppercase;
+  }
+
+  .performance-narrative-stage__speaker-notes p {
+    margin-top: .5rem;
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+
+  .performance-narrative-stage__progress {
+    position: absolute;
+    z-index: 7;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(
+      90deg,
+      var(--color-performance-controlled, #0057b8) var(--presentation-progress),
+      var(--color-performance-line, #d7d7d2) var(--presentation-progress)
+    );
   }
 
   @media (max-width: 47.99rem) {
@@ -1238,25 +1396,6 @@
       .performance-narrative-stage__header
       h2 {
       font-size: 0.85rem;
-    }
-
-    .performance-narrative-stage[data-presenting='true']
-      .performance-narrative-stage__composition {
-      grid-template-rows: auto minmax(0, 1fr);
-    }
-
-    .performance-narrative-stage[data-presenting='true']
-      .performance-narrative-stage__index {
-      grid-template-columns: none;
-      grid-auto-flow: column;
-      grid-auto-columns: minmax(7.75rem, 36vw);
-      scroll-snap-type: inline mandatory;
-    }
-
-    .performance-narrative-stage[data-presenting='true']
-      .performance-narrative-stage__index
-      button {
-      scroll-snap-align: start;
     }
 
     .performance-narrative-stage[data-presenting='true']
@@ -1285,27 +1424,33 @@
     .performance-narrative-stage[data-presenting='true']
       .performance-narrative-stage__scene-head
       > p {
-      font-size: 0.84rem;
-      line-height: 1.4;
+      font-size: 1rem;
+      line-height: 1.42;
     }
 
     .performance-narrative-stage[data-presenting='true']
       .performance-narrative-stage__stakeholders {
       display: flex;
-      overflow-x: auto;
-      scroll-snap-type: x proximity;
+      overflow: hidden;
     }
 
     .performance-narrative-stage[data-presenting='true']
       .performance-narrative-stage__stakeholders
       p {
-      min-width: min(15rem, 72vw);
-      scroll-snap-align: start;
+      flex: 1 1 0;
+      min-width: 0;
     }
 
     .performance-narrative-stage[data-presenting='true']
       .performance-narrative-stage__controls {
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr auto 1fr;
+    }
+
+    .performance-narrative-stage[data-presenting='true']
+      .performance-narrative-stage__controls
+      > span {
+      grid-column: 1 / -1;
+      grid-row: 1;
     }
   }
 
