@@ -195,6 +195,15 @@
     },
     {
       "receipt": {
+        "id": "ground-review-pr-1390-a245ee3",
+        "source": "https://github.com/createsomethingtoday/create-something-monorepo/commit/a245ee314b04081fafcbfbf4cbd426f2c8b23705",
+        "completion": "complete",
+        "observed_findings": 0
+      },
+      "verdicts": []
+    },
+    {
+      "receipt": {
         "id": "ground-review-pr-1403-6c5b0a2",
         "source": "https://github.com/createsomethingtoday/create-something-monorepo/commit/6c5b0a258bc5c128235e4a08dde1cf52fa45c43a",
         "completion": "complete",
