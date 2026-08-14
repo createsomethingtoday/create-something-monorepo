@@ -75,8 +75,9 @@ test('summarizes adjudicated Ground findings and keeps insufficient evidence adv
   assert.deepEqual(summary.receipts, { total: 2, complete: 1, partial: 1, no_analyzable: 0 });
   assert.deepEqual(summary.findings, {
     observed: 3,
+    classified: 3,
     adjudicated: 3,
-    unadjudicated: 0,
+    unclassified: 0,
     confirmed: 2,
     false_positive: 1,
     out_of_scope: 0
@@ -136,25 +137,68 @@ test('CLI emits a deterministic JSON summary from a repo-owned ledger', (t) => {
   assert.equal(summary.findings.confirmed, 2);
 });
 
-test('the repository ledger records current observations without inventing adjudications or precision', () => {
+test('out-of-scope classifications remain auditable but do not satisfy the calibration gate', () => {
+  const ledger = fixture({
+    records: [
+      {
+        receipt: {
+          id: 'preexisting-pairs',
+          source: 'https://example.test/pr/preexisting',
+          completion: 'complete',
+          observed_findings: 2
+        },
+        verdicts: [
+          {
+            finding_id: 'pair-a',
+            check: 'duplicates',
+            verdict: 'out_of_scope',
+            rationale: 'The duplicate was present in the base revision.'
+          },
+          {
+            finding_id: 'pair-b',
+            check: 'duplicates',
+            verdict: 'out_of_scope',
+            rationale: 'The duplicate was present in the base revision.'
+          }
+        ]
+      }
+    ]
+  });
+
+  const summary = summarizeLedger(ledger);
+  assert.deepEqual(summary.findings, {
+    observed: 2,
+    classified: 2,
+    adjudicated: 0,
+    unclassified: 0,
+    confirmed: 0,
+    false_positive: 0,
+    out_of_scope: 2
+  });
+  assert.equal(summary.precision, null);
+  assert.match(summary.promotion.reasons.join(','), /insufficient_adjudicated_findings/);
+  assert.doesNotMatch(summary.promotion.reasons.join(','), /unclassified_findings/);
+});
+
+test('the repository ledger records current observations without treating out-of-scope classifications as calibration evidence', () => {
   const ledger = JSON.parse(readFileSync(repositoryLedgerPath, 'utf8'));
   const summary = summarizeLedger(ledger);
 
   assert.deepEqual(summary.receipts, { total: 21, complete: 3, partial: 11, no_analyzable: 7 });
   assert.deepEqual(summary.findings, {
     observed: 14,
+    classified: 14,
     adjudicated: 0,
-    unadjudicated: 14,
+    unclassified: 0,
     confirmed: 0,
     false_positive: 0,
-    out_of_scope: 0
+    out_of_scope: 14
   });
   assert.equal(summary.precision, null);
   assert.equal(summary.promotion.ready, false);
   assert.deepEqual(summary.promotion.reasons, [
     'complete_receipt_threshold_not_configured',
     'insufficient_adjudicated_findings',
-    'unadjudicated_findings',
     'precision_threshold_not_configured',
     'false_positive_rate_threshold_not_configured'
   ]);
