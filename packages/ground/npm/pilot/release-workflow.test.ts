@@ -27,8 +27,14 @@ test('Ground release assets publish checksums, provenance, and through npm trust
   assert.match(workflow, /id-token:\s*write/);
   assert.match(workflow, /publish-npm:/);
   assert.match(workflow, /needs:\s*release/);
+  assert.match(workflow, /publish_only:/);
+  assert.match(workflow, /Skip build and GitHub Release creation; publish an existing verified release to npm only/);
+  assert.match(workflow, /github\.event_name != 'workflow_dispatch' \|\| !inputs\.publish_only/);
+  assert.match(workflow, /always\(\) && \(inputs\.publish_only \|\| needs\.release\.result == 'success'\)/);
   assert.match(workflow, /actions\/setup-node@v6/);
   assert.match(workflow, /node-version:\s*'24'/);
+  assert.match(workflow, /Verify release tag matches package version/);
+  assert.match(workflow, /expected_tag="ground-v\$\(node -p \"require\('\.\/package\.json'\)\.version\"\)"/);
   assert.match(workflow, /npm publish --access public/);
   assert.doesNotMatch(workflow, /NODE_AUTH_TOKEN/);
 });
