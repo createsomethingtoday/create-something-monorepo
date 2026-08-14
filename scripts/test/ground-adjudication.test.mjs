@@ -184,7 +184,7 @@ test('the repository ledger records current observations without treating out-of
   const ledger = JSON.parse(readFileSync(repositoryLedgerPath, 'utf8'));
   const summary = summarizeLedger(ledger);
 
-  assert.deepEqual(summary.receipts, { total: 21, complete: 3, partial: 11, no_analyzable: 7 });
+  assert.deepEqual(summary.receipts, { total: 22, complete: 4, partial: 11, no_analyzable: 7 });
   assert.deepEqual(summary.findings, {
     observed: 14,
     classified: 14,
