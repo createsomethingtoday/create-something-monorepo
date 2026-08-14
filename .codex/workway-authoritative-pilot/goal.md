@@ -61,3 +61,21 @@ Repair the earliest failing contract or real-surface transition; rerun its close
 - Commands, worktree/commit evidence, and a separate list of remaining authority/hardware gates.
 
 Companion plan: [plan.md](plan.md)
+
+## Evidence record — 2026-08-13
+
+- The browser consumes `threshold-dwelling-composer-contract.json`, a
+  client-safe Rust emission. `workway-core` tests compare the checked-in JSON
+  semantically to the live Rust projection, preventing Composer values or
+  facade policy from being silently duplicated in TypeScript.
+- The browser route has demonstrated the supported kitchen proposal,
+  deterministic 38 → 42 inch clearance result, explicit local acceptance,
+  reload boundary, and the blocked exterior-glass request. The capture had no
+  page-owned console errors; its SHA-256 was
+  `9007028ef13e7d80f26c5f396561f20d76dfc785430593fef9e82fb1a324b4c7`.
+- The current native state is declarative only: the Swift contract verifier
+  passes, but USD/USDZ are explicitly unissued and no visionOS simulator or
+  device result is claimed.
+- Implementation commit: `3439fd5b4 feat(workway): derive browser composer contract from rust`.
+  It is local to `codex/CRE-1756-agent-worktree`; no push, PR, deployment, or
+  external project-data write occurred.
