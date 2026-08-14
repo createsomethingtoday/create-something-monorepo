@@ -53,11 +53,34 @@ pub mod ui_resources;
 pub mod desire_paths;
 
 use std::path::Path;
+use serde::Serialize;
 use thiserror::Error;
 
 pub use computations::{SimilarityEvidence, UsageEvidence, ConnectivityEvidence};
 pub use registry::VerificationRegistry;
 pub use claims::{DryViolation, ExistenceClaim, ConnectivityClaim, ClaimRejected};
+
+pub const GROUND_RECEIPT_SCHEMA_VERSION: &str = "ground-review-receipt.v1";
+
+/// Immutable facts about the compiled Ground artifact.
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
+pub struct BuildInfo {
+    pub name: &'static str,
+    pub version: &'static str,
+    pub source_sha: &'static str,
+    pub target_triple: &'static str,
+    pub receipt_schema_version: &'static str,
+}
+
+pub fn build_info() -> BuildInfo {
+    BuildInfo {
+        name: "ground",
+        version: env!("CARGO_PKG_VERSION"),
+        source_sha: env!("GROUND_SOURCE_SHA"),
+        target_triple: env!("GROUND_TARGET_TRIPLE"),
+        receipt_schema_version: GROUND_RECEIPT_SCHEMA_VERSION,
+    }
+}
 
 /// Configuration for claim thresholds
 #[derive(Debug, Clone)]
