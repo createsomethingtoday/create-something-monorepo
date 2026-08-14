@@ -403,8 +403,14 @@ function segmentWallAroundDoors(
     })
     .sort((a, b) => a.start - b.start);
 
-  const segments: Array<{ x1: number; y1: number; x2: number; y2: number; exterior?: boolean }> =
-    [];
+  const segments: Array<{
+    id: string;
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
+    exterior?: boolean;
+  }> = [];
   let cursor = low;
   for (const interval of doorIntervals) {
     const openingStart = Math.max(low, interval.start);
