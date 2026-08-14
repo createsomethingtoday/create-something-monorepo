@@ -1,0 +1,35 @@
+{
+  "schema_version": "agency.matraix-buyer-readiness.v1",
+  "provenance": {
+    "task_version": "0.1.0",
+    "persona_id": "persona_0042",
+    "model": "local-test-model",
+    "surface_url": "http://127.0.0.1:4173/agent-readiness"
+  },
+  "offer_facts": {
+    "price": "$3,000 one-time",
+    "scope": "One brand · one market",
+    "delivery": "7 business days",
+    "buyer_questions": 25,
+    "competitor_limit": 3,
+    "evidence": ["timestamped answers", "cited sources", "prioritized 30-day plan"],
+    "implementation_boundary": "separately scoped Build",
+    "control_boundary": "Control from $900/month after launch",
+    "no_guarantees": "No guaranteed rankings, citations, or recommendations."
+  },
+  "evidence_discovered": ["25 high-intent buyer questions", "up to three competitors", "timestamped answers", "cited sources", "prioritized 30-day plan"],
+  "actions": ["page_loaded", "offer_reviewed", "booking_intent_recorded"],
+  "terminal_decision": {
+    "outcome": "book_intent",
+    "reason": "The bounded diagnostic and evidence package fit the current evaluation need."
+  },
+  "safety": {
+    "booking_submitted": false,
+    "payment_attempted": false,
+    "calendar_opened": false,
+    "crm_mutated": false,
+    "analytics_emitted": false,
+    "navigated_to_booking_route": false,
+    "external_hosts_contacted": []
+  }
+}

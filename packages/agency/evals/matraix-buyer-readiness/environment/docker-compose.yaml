@@ -1,0 +1,36 @@
+services:
+  main:
+    networks:
+      - agent_interior
+
+  agency-bridge:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["python", "/bridge/agency_bridge.py"]
+    environment:
+      UPSTREAM_HOST: host.docker.internal
+      UPSTREAM_PORT: "4173"
+    volumes:
+      - ./agency_bridge.py:/bridge/agency_bridge.py:ro
+    networks:
+      - agent_interior
+      - host_bridge
+
+  llm-bridge:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["python", "/bridge/llm_bridge.py"]
+    environment:
+      ALLOWED_CONNECT_HOSTS: auth.openai.com,chatgpt.com,api.openai.com
+    volumes:
+      - ./llm_bridge.py:/bridge/llm_bridge.py:ro
+    networks:
+      - agent_interior
+      - host_bridge
+
+networks:
+  agent_interior:
+    internal: true
+  host_bridge: {}

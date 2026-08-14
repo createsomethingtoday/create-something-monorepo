@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { page } from '$app/stores';
   import {
     Button,
     PerformanceCampaignOpening,
@@ -8,45 +9,14 @@
     type PerformanceNarrativeScene
   } from '@create-something/canon';
   import PlaybookField from '$lib/components/PlaybookField.svelte';
+  import {
+    agentReadinessStudyHandoff,
+    resolveAgentReadinessStudyVariant
+  } from '$lib/data/agentReadinessStudyVariants';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
   import { playbookHeroMedia } from '$lib/data/playbookHeroMedia';
 
-  const auditScenes: PerformanceNarrativeScene[] = [
-    {
-      id: 'questions',
-      label: 'Ask',
-      summary: '25 buyer questions',
-      title: 'Test the questions people ask before they contact you.',
-      detail:
-        'We run 25 high-intent buyer questions across major AI answer surfaces and preserve the model, surface, retrieval context, and time of every response.',
-      tone: 'review',
-      receipts: ['one brand', 'one market', 'timestamped answers']
-    },
-    {
-      id: 'comparison',
-      label: 'Compare',
-      summary: 'Your answer set in context',
-      title: 'See where competitors are easier to understand.',
-      detail:
-        'We compare your answer set with up to three competitors and inspect whether agents can find usable pricing, proof, documentation, policies, and implementation details.',
-      tone: 'neutral',
-      receipts: ['answer comparison', 'source coverage', 'unsupported claims']
-    },
-    {
-      id: 'plan',
-      label: 'Prove',
-      summary: 'Evidence before implementation',
-      title: 'Turn the gaps into a bounded 30-day plan.',
-      detail:
-        'You receive cited sources, the evidence behind each gap, and a prioritized 30-day plan. The audit diagnoses the problem; it does not include implementation.',
-      tone: 'allow',
-      evidence: ['cited sources', 'priority and owner', '30-day sequence'],
-      actions: [
-        { label: 'See the service path', href: '/services' },
-        { label: 'See ongoing Control', href: '/control' }
-      ]
-    }
-  ];
+  $: studyVariant = resolveAgentReadinessStudyVariant($page.url.searchParams.get('study'));
 </script>
 
 <SEO
@@ -60,16 +30,12 @@
   <PerformanceCampaignOpening
     eyebrow="AI Buyer Readiness Audit"
     expression="editorial"
-    title="See what AI buyers understand—and get wrong—about your business."
-    lede="We test 25 high-intent buyer questions across major AI answer surfaces, compare the answers with up to three competitors, and inspect whether agents can find your pricing, proof, documentation, policies, and implementation details."
+    title={studyVariant.hero.title}
+    lede={studyVariant.hero.lede}
     density="compact"
     media={playbookHeroMedia.agentReadiness}
     mediaMobilePlacement="background"
-    proof={[
-      { label: 'Price', value: '$3,000 one-time' },
-      { label: 'Scope', value: 'One brand · one market' },
-      { label: 'Delivery', value: '7 business days' }
-    ]}
+    proof={studyVariant.hero.proof}
   >
     {#snippet actions()}
       <Button href={agencyCoreMessaging.agentReadinessAuditBookingHref}>Book the audit</Button>
@@ -79,9 +45,9 @@
   <PerformanceNarrativeStage
     id="agent-readiness-audit-story"
     eyebrow="The diagnostic"
-    title="Ask, compare, and prove before you rebuild anything."
-    description="The audit separates answer-surface symptoms from missing business evidence, then gives each recommended change a source, priority, and owner."
-    scenes={auditScenes}
+    title={studyVariant.diagnostic.title}
+    description={studyVariant.diagnostic.description}
+    scenes={studyVariant.diagnostic.scenes}
     ariaLabel="AI Buyer Readiness Audit process"
   >
     {#snippet artifact(scene: PerformanceNarrativeScene)}
@@ -100,14 +66,9 @@
   <PerformanceConversionHandoff
     expression="editorial"
     eyebrow="The boundary"
-    title="Start with evidence before changing the site."
-    description="The $3,000 audit diagnoses the problem; it does not include implementation. If the evidence justifies action, CREATE SOMETHING proposes a separately scoped Build. Control from $900/month after launch is available for ongoing Managed AI Operations. No guaranteed rankings, citations, or recommendations."
-    handoff={{
-      owner: 'Business owner',
-      authority: 'Approve the 30-day plan',
-      proof: 'Answers + sources + priorities',
-      state: 'ready'
-    }}
+    title={studyVariant.handoff.title}
+    description={studyVariant.handoff.description}
+    handoff={agentReadinessStudyHandoff}
   >
     {#snippet actions()}
       <Button href={agencyCoreMessaging.agentReadinessAuditBookingHref}>Book the audit</Button>
