@@ -391,11 +391,19 @@ export function resolveGroundBinary(
     process.env.GROUND_BINARY,
     join(root, 'packages/ground/target/release/ground')
   ];
-  // The binary checked into the npm package is the release artifact for this
-  // repository's development platform. Other platforms must use their installed
-  // Ground binary rather than attempting to execute an incompatible Mach-O file.
+  // The npm package ships a platform-neutral JavaScript wrapper. It installs
+  // the matching verified release asset into its native directory at install time.
   if (platform === 'darwin' && architecture === 'arm64') {
-    candidates.push(join(root, 'packages/ground/npm/bin/ground'));
+    const wrapper = join(root, 'packages/ground/npm/bin/ground.js');
+    const nativeBinary = join(root, 'packages/ground/npm/bin/native/ground');
+    try {
+      accessSync(wrapper, constants.X_OK);
+      accessSync(nativeBinary, constants.X_OK);
+      candidates.push(wrapper);
+    } catch {
+      // A source checkout can contain the wrapper before postinstall has
+      // fetched its release asset. Do not report that as an available binary.
+    }
   }
 
   for (const candidate of candidates) {

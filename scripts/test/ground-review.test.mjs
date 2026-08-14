@@ -497,11 +497,26 @@ test('CLI preserves a deleted source file as an explicit coverage exclusion', (t
 test('repository npm binary is only selected on its compatible development platform', (t) => {
   const repo = mkdtempSync(join(tmpdir(), 'ground-review-platform-'));
   t.after(() => rmSync(repo, { recursive: true, force: true }));
-  const npmGround = writeFixtureFile(repo, 'packages/ground/npm/bin/ground', '#!/bin/sh\n');
+  const npmGround = writeFixtureFile(repo, 'packages/ground/npm/bin/ground.js', '#!/bin/sh\n');
+  const npmNativeGround = writeFixtureFile(
+    repo,
+    'packages/ground/npm/bin/native/ground',
+    '#!/bin/sh\n'
+  );
   chmodSync(npmGround, 0o755);
+  chmodSync(npmNativeGround, 0o755);
 
   assert.equal(resolveGroundBinary(repo, 'linux', 'x64'), 'ground');
   assert.equal(resolveGroundBinary(repo, 'darwin', 'arm64'), npmGround);
+});
+
+test('repository npm wrapper is not selected before its native release asset exists', (t) => {
+  const repo = mkdtempSync(join(tmpdir(), 'ground-review-wrapper-'));
+  t.after(() => rmSync(repo, { recursive: true, force: true }));
+  const npmGround = writeFixtureFile(repo, 'packages/ground/npm/bin/ground.js', '#!/bin/sh\n');
+  chmodSync(npmGround, 0o755);
+
+  assert.equal(resolveGroundBinary(repo, 'darwin', 'arm64'), 'ground');
 });
 
 test('CLI reconciles cross-target exclusions against analyzed coverage', (t) => {

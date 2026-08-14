@@ -45,6 +45,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - name: Record source provenance
+        id: provenance
+        shell: bash
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -61,6 +68,7 @@ jobs:
         working-directory: packages/ground
         run: cargo build --release --target ${{ matrix.target }}
         env:
+          GROUND_SOURCE_SHA: ${{ steps.provenance.outputs.sha }}
           CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
 
       - name: Package (Unix)
@@ -97,6 +105,14 @@ jobs:
         with:
           path: artifacts
 
+      - name: Generate checksums
+        run: |
+          find artifacts -type f -name 'ground-*' -print0 \
+            | sort -z \
+            | xargs -0 sha256sum \
+            | sed 's#  .*/#  #' > SHA256SUMS
+          cat SHA256SUMS
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
@@ -104,7 +120,9 @@ jobs:
           name: Ground ${{ github.event.inputs.tag || github.ref_name }}
           draft: false
           prerelease: false
-          files: artifacts/**/*
+          files: |
+            artifacts/**/*
+            SHA256SUMS
           body: |
             ## Installation
 
