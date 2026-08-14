@@ -40,10 +40,10 @@ struct WorkWaySpatialContractVerifier {
                 throw VerificationError.contractIssues(package.contractIssues)
             }
             guard preflight.canRenderPrimitiveRoomGuide,
-                  !preflight.canLoadIssuedNativeSceneAsset,
+                  preflight.canLoadIssuedNativeSceneAsset,
                   !preflight.physicalOneToOneSceneEligible,
-                  preflight.issuedNativeAssetIDs.isEmpty,
-                  preflight.unissuedNativeFormats == [.usd, .usdz]
+                  preflight.issuedNativeAssetIDs == ["native-massing-usdz"],
+                  preflight.unissuedNativeFormats == [.usd]
             else {
                 throw VerificationError.unexpectedNativeAssetReadiness
             }

@@ -504,9 +504,10 @@ pub fn validate_spatial_package(package: &SpatialPackage) -> SpatialPackageValid
     }
 }
 
-/// The first spatial package fixture. It is intentionally limited to
-/// deterministic browser assets. USD and USDZ are declared but unissued so no
-/// consumer confuses the web proof with a shipped native spatial client.
+/// The first spatial package fixture provides deterministic browser assets plus
+/// one validator-backed USDZ design-intent massing asset. Plain USD remains
+/// unissued, and the physical-scene gate remains blocked, so native delivery
+/// cannot be confused with a construction or physical 1:1 claim.
 #[must_use]
 pub fn threshold_dwelling_spatial_package_v08() -> SpatialPackage {
     let stage_statement =
@@ -528,7 +529,7 @@ pub fn threshold_dwelling_spatial_package_v08() -> SpatialPackage {
                 "M-INT-002".into(),
                 "M-INT-001".into(),
                 "M-ENV-002".into(),
-                "M-INT-003".into(),
+                "M-ENV-001".into(),
             ],
             construction_ready: false,
         },
@@ -654,7 +655,12 @@ pub fn threshold_dwelling_spatial_package_v08() -> SpatialPackage {
             ClientAsset {
                 id: "browser-massing-glb".into(),
                 client_path: "experiments/threshold-dwelling/renders/threshold-dwelling-r08-massing-guide.glb".into(),
-                sha256: "807b85dea1b6cb276621fc96cde962285112e984946134e26f6fa39e53f75754".into(),
+                sha256: "1b03a571ec788492b1994792c1349d2b151860f69d01eaef36d05c4584892091".into(),
+            },
+            ClientAsset {
+                id: "native-massing-usdz".into(),
+                client_path: "experiments/threshold-dwelling/renders/threshold-dwelling-r08-massing-guide.usdz".into(),
+                sha256: "5f2b2ac1f8447ea4b4cbce90ede32de280f0b9833735e3e330fb6a2a2f83aba6".into(),
             },
         ],
         scene_representations: vec![
@@ -701,10 +707,10 @@ pub fn threshold_dwelling_spatial_package_v08() -> SpatialPackage {
             SceneRepresentation {
                 id: "native-usdz".into(),
                 format: SceneFormat::Usdz,
-                status: SceneRepresentationStatus::Unissued,
+                status: SceneRepresentationStatus::Available,
                 canonical_revision: "0.7".into(),
                 spatial_revision: "0.8".into(),
-                asset_id: None,
+                asset_id: Some("native-massing-usdz".into()),
             },
         ],
         entity_render_bindings: vec![
