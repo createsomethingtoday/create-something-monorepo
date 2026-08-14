@@ -112,6 +112,13 @@ export interface SnippetRotateTokenRequest {
 	siteName?: string;
 }
 
+export interface ValidationRunScope {
+	selectedChecks: string[];
+	pageScope: 'all' | 'current';
+	publishedChecks: 'full' | 'designer-only';
+	pageSlugsCount: number;
+}
+
 export interface ValidationSubmitRequest {
 	siteId: string;
 	siteName?: string;
@@ -127,6 +134,7 @@ export interface ValidationSubmitRequest {
 				message?: string;
 			}>;
 		}>;
+		scope?: Partial<ValidationRunScope>;
 	};
 }
 
@@ -256,6 +264,8 @@ export interface PageData {
 	collectionId?: string | null;
 	collectionName?: string | null;
 	isCmsTemplate?: boolean;
+	isDraft?: boolean;
+	kind?: string;
 	isHomePage?: boolean;
 	seo?: {
 		title?: string;
@@ -439,6 +449,7 @@ export interface PageSEOData {
 export interface LinkAnalysis {
 	totalLinks: number;
 	internalLinks: number;
+	internalLinkPaths?: string[];
 	externalLinks: number;
 	brokenLinks: Array<{
 		href: string;

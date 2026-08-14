@@ -565,6 +565,8 @@
     throw lastError instanceof Error ? lastError : new Error("Request failed");
   }
   function buildValidationSubmitPayload(validationResults) {
+    const projectData = Array.isArray(validationResults.collectedData) ? validationResults.collectedData[0] : void 0;
+    const scope = projectData?.validationScope;
     return {
       url: validationResults.url,
       summary: validationResults.summary,
@@ -575,7 +577,15 @@
           severity: issue.severity,
           message: issue.message
         })) : []
-      })) : []
+      })) : [],
+      // The marketplace form uses this to reject partial runs (skipped checks or
+      // current-page scope) — a 100% pass only counts when the full suite ran.
+      scope: scope ? {
+        selectedChecks: scope.selectedChecks,
+        pageScope: scope.pageScope,
+        publishedChecks: scope.publishedChecks,
+        pageSlugsCount: scope.pageSlugsCount
+      } : void 0
     };
   }
   async function submitValidationResults({

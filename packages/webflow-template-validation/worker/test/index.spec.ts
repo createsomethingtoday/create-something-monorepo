@@ -471,6 +471,148 @@ describe('Designer Validator', () => {
 		const sample = (namingIssue as any).details?.sample || [];
 		expect(sample.join(' ')).toMatch(/Primary_Color|primary color/);
 	});
+
+	it('requires exact root slugs for Style Guide, Licenses, Changelog and a custom 404', async () => {
+		const result = await validateDesignerData({
+			variables: { collections: [] },
+			components: [],
+			styles: [],
+			pages: [
+				{ id: 'p1', name: 'Home', slug: '', type: 'Page', isHomePage: true, publishPath: '/' },
+				// Near-miss: singular /license must not satisfy the /licenses requirement
+				{ id: 'p2', name: 'License', slug: 'license', type: 'Page', publishPath: '/license' },
+				// Nested style guide must not satisfy the exact root slug requirement
+				{ id: 'p3', name: 'Style Guide', slug: 'style-guide', type: 'Page', publishPath: '/template/style-guide' }
+			],
+			assets: []
+		} as any);
+
+		const requiredPages = result.categories.find(c => c.category === 'Required Pages');
+		expect(requiredPages).toBeTruthy();
+		expect(requiredPages!.passed).toBe(false);
+		const ids = requiredPages!.issues.map(i => i.id);
+		expect(ids).toContain('required-pages.missing-style-guide');
+		expect(ids).toContain('required-pages.missing-license');
+		expect(ids).toContain('required-pages.missing-changelog');
+		expect(ids).toContain('required-pages.missing-404');
+		const licenseIssue = requiredPages!.issues.find(i => i.id === 'required-pages.missing-license');
+		expect(licenseIssue!.howToFix).toContain('/license');
+		expect(licenseIssue!.severity).toBe('error');
+	});
+
+	it('passes Required Pages when the exact root slugs and a 404 page exist', async () => {
+		const result = await validateDesignerData({
+			variables: { collections: [] },
+			components: [],
+			styles: [],
+			pages: [
+				{ id: 'p1', name: 'Home', slug: '', type: 'Page', isHomePage: true, publishPath: '/' },
+				{ id: 'p2', name: 'Style Guide', slug: 'style-guide', type: 'Page', publishPath: '/style-guide' },
+				{ id: 'p3', name: 'Licenses', slug: 'licenses', type: 'Page', publishPath: '/licenses' },
+				{ id: 'p4', name: 'Changelog', slug: 'changelog', type: 'Page', publishPath: '/changelog' },
+				{ id: 'p5', name: '404 Not Found', slug: '404', type: 'Page', publishPath: '/404' }
+			],
+			assets: []
+		} as any);
+
+		const requiredPages = result.categories.find(c => c.category === 'Required Pages');
+		expect(requiredPages!.passed).toBe(true);
+		expect(requiredPages!.issues.filter(i => i.severity === 'error')).toEqual([]);
+	});
+
+	it('reports missing, duplicate, and CMS-template SEO metadata from Designer API data as errors', async () => {
+		const result = await validateDesignerData({
+			variables: { collections: [] },
+			components: [],
+			styles: [],
+			pages: [
+				{
+					id: 'p1', name: 'Home', slug: '', type: 'Page', isHomePage: true, publishPath: '/',
+					seo: { title: 'Acme - Webflow HTML website template', description: 'A'.repeat(140) }
+				},
+				{
+					id: 'p2', name: 'About', slug: 'about', type: 'Page', publishPath: '/about',
+					seo: { title: 'Shared Title', description: 'Shared description that is reused on multiple pages across the whole site.' }
+				},
+				{
+					id: 'p3', name: 'Contact', slug: 'contact', type: 'Page', publishPath: '/contact',
+					seo: { title: 'Shared Title', description: 'Shared description that is reused on multiple pages across the whole site.' }
+				},
+				// CMS template page with no dynamic SEO settings at all
+				{
+					id: 'p4', name: 'Blog Template', slug: 'detail_blog', type: 'Page', isCmsTemplate: true,
+					collectionId: 'col1', publishPath: '/blog/detail_blog', seo: {}
+				},
+				// Draft pages must be ignored
+				{
+					id: 'p5', name: 'Draft Page', slug: 'draft', type: 'Page', isDraft: true, publishPath: '/draft', seo: {}
+				}
+			],
+			assets: []
+		} as any);
+
+		const seoCategory = result.categories.find(c => c.category === 'SEO Metadata');
+		expect(seoCategory).toBeTruthy();
+		expect(seoCategory!.passed).toBe(false);
+		const byId = (id: string) => seoCategory!.issues.find(i => i.id === id);
+
+		const missingTitle = byId('seo.missing-title');
+		expect(missingTitle?.severity).toBe('error');
+		expect(JSON.stringify(missingTitle?.details)).toContain('Blog Template');
+		expect(JSON.stringify(missingTitle?.details)).not.toContain('Draft Page');
+
+		expect(byId('seo.missing-description')?.severity).toBe('error');
+		expect(byId('seo.duplicate-title')?.severity).toBe('error');
+		expect(byId('seo.duplicate-description')?.severity).toBe('error');
+		// Home page has no OG image configured
+		expect(byId('seo.missing-og-image-home')?.severity).toBe('error');
+	});
+
+	it('does not block on SEO Metadata when Designer SEO collection failed for every page', async () => {
+		const result = await validateDesignerData({
+			variables: { collections: [] },
+			components: [],
+			styles: [],
+			pages: [
+				// seo: null/undefined means the extension could not collect SEO data
+				{ id: 'p1', name: 'Home', slug: '', type: 'Page', isHomePage: true, publishPath: '/', seo: null },
+				{ id: 'p2', name: 'About', slug: 'about', type: 'Page', publishPath: '/about' }
+			],
+			assets: []
+		} as any);
+
+		const seoCategory = result.categories.find(c => c.category === 'SEO Metadata');
+		expect(seoCategory!.passed).toBe(true);
+		expect(seoCategory!.issues.map(i => i.id)).toEqual(['seo.data-unavailable']);
+		expect(seoCategory!.issues[0].severity).toBe('warning');
+	});
+
+	it('passes SEO Metadata when every page has unique metadata and the home page has an OG image', async () => {
+		const result = await validateDesignerData({
+			variables: { collections: [] },
+			components: [],
+			styles: [],
+			pages: [
+				{
+					id: 'p1', name: 'Home', slug: '', type: 'Page', isHomePage: true, publishPath: '/',
+					seo: {
+						title: 'Acme - Webflow HTML website template',
+						description: 'D'.repeat(140),
+						openGraphImage: 'https://example.com/og.jpg'
+					}
+				},
+				{
+					id: 'p2', name: 'About', slug: 'about', type: 'Page', publishPath: '/about',
+					seo: { title: 'About Acme', description: 'E'.repeat(140) }
+				}
+			],
+			assets: []
+		} as any);
+
+		const seoCategory = result.categories.find(c => c.category === 'SEO Metadata');
+		expect(seoCategory!.passed).toBe(true);
+		expect(seoCategory!.issues.filter(i => i.severity === 'error')).toEqual([]);
+	});
 });
 
 describe('Content Validator', () => {
@@ -500,10 +642,10 @@ describe('Content Validator', () => {
 		const second = await validateContent('https://example.com/about');
 
 		expect(first.issues.find((issue) => issue.id === 'lorem-ipsum-detected')).toEqual(expect.objectContaining({
-			severity: 'warning'
+			severity: 'error'
 		}));
 		expect(second.issues.find((issue) => issue.id === 'lorem-ipsum-detected')).toEqual(expect.objectContaining({
-			severity: 'warning'
+			severity: 'error'
 		}));
 	});
 
@@ -575,7 +717,7 @@ describe('Content Validator', () => {
 		const result = await validateContent('https://example.com/about');
 
 		expect(result.issues.find((issue) => issue.id === 'lorem-ipsum-detected')).toEqual(expect.objectContaining({
-			severity: 'warning'
+			severity: 'error'
 		}));
 	});
 
@@ -936,7 +1078,7 @@ describe('Content Validator', () => {
 		});
 
 		expect(issues.map(i => i.id)).toEqual(['lorem-ipsum-detected']);
-		expect(issues[0].severity).toBe('warning');
+		expect(issues[0].severity).toBe('error');
 	});
 
 	it('pageScope=current analyzes only the current page URL and does not crawl slugs', async () => {
@@ -990,6 +1132,66 @@ describe('Content Validator', () => {
 		expect(fetchHTML).toHaveBeenCalledTimes(0);
 		expect(result.issues[0]?.id).toBe('content-excluded-page');
 		expect(result.issues[0]?.severity).toBe('warning');
+	});
+
+	const linkAuditPage = (url: string, internalLinkPaths: string[]) => ({
+		url,
+		title: 'Test',
+		hasLoremIpsum: false,
+		headingHierarchy: { h1Count: 1, hasSkippedLevels: false, errors: [] },
+		imageCount: 0,
+		imagesWithoutAlt: 0,
+		imagesWithoutAltDetails: [],
+		seo: {},
+		links: {
+			totalLinks: internalLinkPaths.length,
+			internalLinks: internalLinkPaths.length,
+			internalLinkPaths,
+			externalLinks: 0,
+			brokenLinks: [],
+			emailLinks: 0,
+			phoneLinks: 0,
+			anchorLinks: 0,
+			downloadLinks: 0,
+			socialMediaLinks: 0
+		},
+		contentQuality: { contentScore: 100, issues: [], wordCount: 500, hasPlaceholderContent: false, hasLoremIpsum: false, hasWebflowDefaults: false }
+	});
+
+	const linkOnlyChecks = { lorem: false, headings: false, altText: false, seo: false, links: true, contentQuality: false };
+
+	it('reports required utility pages that are not linked from anywhere on the site', () => {
+		const issues = generateContentIssues(
+			[
+				linkAuditPage('https://example.com', ['/about', '/licenses']),
+				linkAuditPage('https://example.com/about', ['/'])
+			] as any,
+			linkOnlyChecks as any
+		);
+
+		const issue = issues.find(i => i.id === 'required-pages-not-linked');
+		expect(issue).toBeTruthy();
+		expect(issue!.severity).toBe('error');
+		expect(issue!.message).toContain('/style-guide');
+		expect(issue!.message).toContain('/changelog');
+		expect(issue!.message).not.toContain('/licenses');
+	});
+
+	it('does not report unlinked utility pages when they are linked or only one page was crawled', () => {
+		const linked = generateContentIssues(
+			[
+				linkAuditPage('https://example.com', ['/style-guide', '/licenses', '/changelog']),
+				linkAuditPage('https://example.com/about', ['/'])
+			] as any,
+			linkOnlyChecks as any
+		);
+		expect(linked.some(i => i.id === 'required-pages-not-linked')).toBe(false);
+
+		const singlePage = generateContentIssues(
+			[linkAuditPage('https://example.com', [])] as any,
+			linkOnlyChecks as any
+		);
+		expect(singlePage.some(i => i.id === 'required-pages-not-linked')).toBe(false);
 	});
 });
 
@@ -1207,7 +1409,7 @@ describe('Asset Validator', () => {
 		const maxSizeIssue = issues.find((issue) => issue.id === 'assets-extremely-large');
 
 		expect(compressionIssue).toEqual(expect.objectContaining({
-			severity: 'warning',
+			severity: 'error',
 			message: '1 assets are above the 150KB compression target'
 		}));
 		expect(compressionIssue?.details?.oversizedAssets).toEqual([

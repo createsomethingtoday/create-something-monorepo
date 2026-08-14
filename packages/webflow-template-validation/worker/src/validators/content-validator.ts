@@ -768,7 +768,7 @@ export function generateContentIssues(
 		issues.push({
 			id: 'lorem-ipsum-detected',
 			category: 'Content & Accessibility',
-			severity: 'warning',
+			severity: 'error',
 			message: `Lorem Ipsum or placeholder text detected on ${pagesWithLorem.length} page(s)`,
 			description: 'Webflow Way guidelines require all placeholder text to be replaced with real, relevant content.',
 			howToFix: 'Replace all Lorem Ipsum and placeholder text with actual content relevant to the template purpose',
@@ -1119,6 +1119,7 @@ async function analyzeLinks(parsedHTML: ParsedHTML, baseUrl: string): Promise<Li
 	const baseHostname = new URL(baseUrl).hostname;
 
 	let internalLinks = 0;
+	const internalLinkPaths = new Set<string>();
 	let externalLinks = 0;
 	let emailLinks = 0;
 	let phoneLinks = 0;
@@ -1162,6 +1163,9 @@ async function analyzeLinks(parsedHTML: ParsedHTML, baseUrl: string): Promise<Li
 
 				if (linkUrl.hostname === baseHostname) {
 					internalLinks++;
+					let linkPath = linkUrl.pathname.toLowerCase();
+					if (linkPath.length > 1 && linkPath.endsWith('/')) linkPath = linkPath.slice(0, -1);
+					internalLinkPaths.add(linkPath);
 				} else {
 					externalLinks++;
 
@@ -1196,6 +1200,7 @@ async function analyzeLinks(parsedHTML: ParsedHTML, baseUrl: string): Promise<Li
 	return {
 		totalLinks: links.length,
 		internalLinks,
+		internalLinkPaths: [...internalLinkPaths],
 		externalLinks,
 		brokenLinks,
 		emailLinks,
@@ -1333,7 +1338,7 @@ function generateContentQualityIssues(pages: AnalyzedPage[]): ValidationIssue[] 
 			issues.push({
 				id: 'placeholder-content-detected',
 				category: 'Content & Accessibility',
-				severity: 'warning',
+				severity: 'error',
 				message: `Placeholder content detected on ${placeholderPages.length} page(s)`,
 				description: 'Placeholder text should be replaced with real, relevant content before publishing.',
 				howToFix: 'Replace all placeholder text with actual content that serves your users',
@@ -1351,7 +1356,7 @@ function generateContentQualityIssues(pages: AnalyzedPage[]): ValidationIssue[] 
 			issues.push({
 				id: 'webflow-default-content',
 				category: 'Content & Accessibility',
-				severity: 'warning',
+				severity: 'error',
 				message: `Webflow default content detected on ${webflowDefaultPages.length} page(s)`,
 				description: 'Default Webflow content should be customized to match your brand and message.',
 				howToFix: 'Replace default Webflow text with custom content',
@@ -1468,6 +1473,44 @@ function generateLinkValidationIssues(pages: AnalyzedPage[]): ValidationIssue[] 
 				}))
 			}
 		});
+	}
+
+	// Required utility pages must be reachable — linked from at least one crawled
+	// page (nav, footer, or a utility section). Reviewers reject templates whose
+	// Style Guide/Licenses/Changelog exist but are orphaned. Only meaningful when
+	// more than one page was crawled (full-site scope).
+	if (pages.length > 1) {
+		const allInternalPaths = new Set<string>();
+		for (const page of pages) {
+			for (const path of page.links.internalLinkPaths || []) {
+				allInternalPaths.add(path);
+			}
+		}
+
+		const requiredSlugs = ['style-guide', 'licenses', 'changelog'];
+		const unlinked = requiredSlugs.filter(slug => {
+			const exact = `/${slug}`;
+			if (allInternalPaths.has(exact)) return false;
+			// Tolerate near-miss link targets (e.g. /license) so the slug check —
+			// not this reachability check — reports slug problems.
+			const fragment = slug.split('-')[0];
+			return ![...allInternalPaths].some(path => path.includes(fragment));
+		});
+
+		if (unlinked.length > 0) {
+			issues.push({
+				id: 'required-pages-not-linked',
+				category: 'Content & Accessibility',
+				severity: 'error',
+				message: `Required utility page(s) not linked from anywhere on the site: ${unlinked.map(slug => `/${slug}`).join(', ')}`,
+				description: 'Style Guide, Licenses, and Changelog pages must be reachable from the published site (typically the footer), not just published at a URL.',
+				howToFix: 'Add links to each required utility page from the footer or a utility navigation section.',
+				details: {
+					unlinkedPages: unlinked.map(slug => `/${slug}`),
+					pagesCrawled: pages.length
+				}
+			});
+		}
 	}
 
 	return issues;
