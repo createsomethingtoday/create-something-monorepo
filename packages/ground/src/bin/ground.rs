@@ -42,6 +42,13 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Print immutable build provenance for this Ground binary
+    BuildInfo {
+        /// Emit machine-readable JSON
+        #[arg(long)]
+        json: bool,
+    },
+
     /// Initialize ground in current directory
     Init,
     
@@ -336,11 +343,25 @@ fn main() {
 }
 
 fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
-    if let Some(parent) = cli.db.parent().filter(|parent| !parent.as_os_str().is_empty()) {
-        std::fs::create_dir_all(parent)?;
+    if !matches!(&cli.command, Commands::BuildInfo { .. }) {
+        if let Some(parent) = cli.db.parent().filter(|parent| !parent.as_os_str().is_empty()) {
+            std::fs::create_dir_all(parent)?;
+        }
     }
 
     match cli.command {
+        Commands::BuildInfo { json: as_json } => {
+            let build = ground::build_info();
+            if as_json {
+                println!("{}", serde_json::to_string(&build)?);
+            } else {
+                println!("Ground {}", build.version);
+                println!("  Source SHA: {}", build.source_sha);
+                println!("  Target: {}", build.target_triple);
+                println!("  Receipt schema: {}", build.receipt_schema_version);
+            }
+            Ok(())
+        }
         Commands::Init => {
             std::fs::create_dir_all(".ground")?;
             let _vt = VerifiedTriad::new(&cli.db)?;

@@ -67,14 +67,20 @@ view; read `discovered_changed_files`, `analyzable_changed_files`, and
 `unsupported_changed_files` and `excluded_changed_files`, so a clean claim is
 valid only with `PASS`.
 
-Ground 0.3.2 removes `ground diff`'s silent 500-file truncation and makes
+Ground 0.3.3 keeps `ground diff`'s complete changed-file coverage and makes
 source traversal deterministic and cycle-safe. Diff mode parses the complete
 corpus but only compares pairs involving changed files. Standalone broad
 duplicate scans retain their safety bound and report their non-pass status with
 `scan_complete: false` when the bound is hit.
 
-The release package includes the native Apple Silicon binaries directly; other
-supported platforms download the matching verified release asset during install.
+The release package ships thin command wrappers for every platform. Install
+downloads the matching versioned release asset and verifies its SHA-256 against
+that release's `SHA256SUMS` manifest before extracting it. Record the artifact
+that produced a receipt with:
+
+```bash
+ground build-info --json
+```
 
 ## The Problem
 
@@ -223,7 +229,7 @@ The npm package downloads a platform-specific binary on install. If that failed:
 
 ```bash
 # Check if the binary exists
-ls node_modules/@createsomething/ground-mcp/bin/
+ls node_modules/@createsomething/ground-mcp/bin/native/
 
 # Re-install
 npm install @createsomething/ground-mcp

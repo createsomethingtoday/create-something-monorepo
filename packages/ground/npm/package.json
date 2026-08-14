@@ -1,6 +1,6 @@
 {
   "name": "@createsomething/ground-mcp",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Grounded claims for code. MCP server that prevents AI hallucination in code analysis.",
   "author": "CREATE SOMETHING <hello@createsomething.io>",
   "license": "MIT",
@@ -48,11 +48,12 @@
     "css-analysis"
   ],
   "bin": {
-    "ground": "bin/ground",
-    "ground-mcp": "bin/ground-mcp"
+    "ground": "bin/ground.js",
+    "ground-mcp": "bin/ground-mcp.js"
   },
   "scripts": {
     "postinstall": "node install.js",
+    "prepublishOnly": "node release-verify.js",
     "pilot:build": "cargo build --release --manifest-path ../Cargo.toml --bin ground --bin ground-mcp",
     "pilot:benchmark": "tsx pilot/benchmark.ts",
     "pilot:check": "tsc --noEmit -p pilot/tsconfig.json",

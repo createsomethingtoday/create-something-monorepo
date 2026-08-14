@@ -45,7 +45,8 @@ If you try to claim without checking first, Ground blocks you:
 npm install -g @createsomething/ground-mcp
 ```
 
-This downloads pre-built binaries for your platform.
+This installs thin command wrappers, then downloads the matching versioned
+release asset after verifying it against that release's `SHA256SUMS` manifest.
 
 ### Cargo (from source)
 
@@ -61,6 +62,12 @@ cargo build --release
 ```
 
 The binary is at `target/release/ground`.
+
+Record the exact artifact that produced a receipt:
+
+```bash
+ground build-info --json
+```
 
 ---
 
@@ -101,7 +108,7 @@ view; read `discovered_changed_files`, `analyzable_changed_files`, and
 `unsupported_changed_files` and `excluded_changed_files`, so a clean claim is
 valid only with `PASS`.
 
-Ground 0.3.2 removes `ground diff`'s silent 500-file truncation and makes
+Ground 0.3.3 keeps `ground diff`'s complete changed-file coverage and makes
 source traversal deterministic and cycle-safe. Diff mode parses the complete
 corpus but only compares pairs involving changed files. Standalone broad
 duplicate scans retain their safety bound and report their non-pass status with

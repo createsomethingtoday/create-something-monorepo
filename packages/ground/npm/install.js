@@ -7,10 +7,10 @@
  */
 
 const { execSync } = require('child_process');
+const { createHash } = require('crypto');
 const fs = require('fs');
 const https = require('https');
 const path = require('path');
-const zlib = require('zlib');
 
 const REPO = 'createsomethingtoday/create-something-monorepo';
 const VERSION = require('./package.json').version;
@@ -51,20 +51,24 @@ function getDownloadUrl(binaryName, platform = process.platform) {
   return `https://github.com/${REPO}/releases/download/ground-v${VERSION}/ground-${binaryName}.${ext}`;
 }
 
-function hasBundledNativeBinaries() {
-  // The npm artifact includes a release-built Apple Silicon bootstrap pair.
-  // Other platforms continue through the release-asset downloader below.
-  if (getPlatformKey() !== 'darwin-arm64') return false;
+function getChecksumsUrl() {
+  return `https://github.com/${REPO}/releases/download/ground-v${VERSION}/SHA256SUMS`;
+}
 
-  const binDir = path.join(__dirname, 'bin');
-  return ['ground', 'ground-mcp'].every((name) => {
-    const binary = path.join(binDir, name);
-    try {
-      return fs.statSync(binary).isFile() && (fs.statSync(binary).mode & 0o111) !== 0;
-    } catch {
-      return false;
-    }
-  });
+function verifyArchiveIntegrity(archive, assetName, checksums) {
+  const expected = checksums
+    .split(/\r?\n/)
+    .map((line) => line.trim().match(/^([a-f0-9]{64})\s+\*?(.+)$/i))
+    .find((match) => match?.[2] === assetName)?.[1];
+
+  if (!expected) {
+    throw new Error(`Release checksum manifest does not contain a checksum for ${assetName}`);
+  }
+
+  const actual = createHash('sha256').update(archive).digest('hex');
+  if (actual !== expected.toLowerCase()) {
+    throw new Error(`Release checksum mismatch for ${assetName}`);
+  }
 }
 
 async function download(url) {
@@ -119,16 +123,11 @@ async function install() {
     return;
   }
 
-  if (hasBundledNativeBinaries()) {
-    console.log('Ground MCP: Using bundled darwin-arm64 binaries');
-    return;
-  }
-
   console.log('Ground MCP: Installing binary...');
   
   const binaryName = getBinaryName();
   const url = getDownloadUrl(binaryName);
-  const binDir = path.join(__dirname, 'bin');
+  const binDir = path.join(__dirname, 'bin', 'native');
   
   console.log(`Platform: ${getPlatformKey()}`);
   console.log(`Downloading: ${url}`);
@@ -141,6 +140,8 @@ async function install() {
     
     // Download archive
     const buffer = await download(url);
+    const checksums = await download(getChecksumsUrl());
+    verifyArchiveIntegrity(buffer, path.basename(url), checksums.toString('utf8'));
     console.log(`Downloaded ${(buffer.length / 1024 / 1024).toFixed(2)} MB`);
     
     // Extract based on platform
@@ -203,5 +204,8 @@ if (require.main === module) {
 }
 
 module.exports = {
+  download,
   getDownloadUrl,
+  getChecksumsUrl,
+  verifyArchiveIntegrity,
 };
