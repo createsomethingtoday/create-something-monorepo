@@ -57,6 +57,7 @@
         summary: scene.presentation.reader.takeaway,
         title: scene.presentation.reader.heading,
         detail: scene.presentation.reader.explanation,
+        notes: scene.detail,
         stakeholders: scene.presentation.reader.stakeholders,
         tone: toneByKind[scene.kind],
         evidence: scene.evidence
@@ -198,7 +199,9 @@
               {#each scene.presentation.relationships ?? [] as relationship}
                 <li>
                   <div><span>{nodeRoles[relationship.fromNodeId]}</span><strong>{nodeLabels[relationship.fromNodeId]}</strong></div>
-                  <p><span>{relationship.label}</span><i aria-hidden="true"></i></p>
+                  <p
+                    aria-label={`${nodeLabels[relationship.fromNodeId]}: ${relationship.label} to ${nodeLabels[relationship.toNodeId]}`}
+                  ><span>{relationship.label}</span><i aria-hidden="true"></i></p>
                   <div><span>{nodeRoles[relationship.toNodeId]}</span><strong>{nodeLabels[relationship.toNodeId]}</strong></div>
                 </li>
               {/each}
@@ -242,6 +245,20 @@
             {:else}
               <p class="arc-boundary">Read-only presentation. Open the governed operator surface to propose an action.</p>
             {/if}
+          </section>
+        {:else if scene.presentation.layout === 'demo'}
+          <section class="arc-demo" aria-live="polite">
+            <div class="arc-copy">
+              <span>{scene.presentation.callout?.label}</span>
+              <strong>{scene.presentation.callout?.value}</strong>
+              <p>{scene.presentation.callout?.detail}</p>
+            </div>
+            <dl>
+              <div><dt>Proposal</dt><dd>{proposal?.status ?? 'Not drafted'}</dd></div>
+              <div><dt>External message</dt><dd>Not sent</dd></div>
+              <div><dt>Authority</dt><dd>Named reviewer approval</dd></div>
+              <div><dt>Next step</dt><dd>{proposal?.status === 'approved' ? 'Record the bounded handoff' : 'Wait for a reviewer decision'}</dd></div>
+            </dl>
           </section>
         {:else if scene.presentation.layout === 'proof'}
           <section class="arc-proof">
@@ -313,11 +330,16 @@
   .arc-actions { display: flex; gap: .5rem; padding: 0 3rem 2rem; }
   .arc-actions button { min-height: 2.75rem; padding: .65rem .85rem; border: 1px solid currentColor; background: transparent; color: inherit; font: 650 .72rem/1 var(--font-performance-mono, ui-monospace, monospace); text-transform: uppercase; }
   .arc-boundary, .arc-error { margin: 0; padding: 0 3rem 2rem; color: var(--color-performance-panel, #fff); font-size: .86rem; }
+  .arc-demo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(16rem, .72fr); min-height: 20rem; background: var(--color-performance-panel, #fff); }
+  .arc-demo dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; margin: 0; background: var(--color-performance-line, #d7d7d2); }
+  .arc-demo dl div { display: grid; align-content: center; gap: .5rem; padding: 1rem; background: var(--color-performance-ink, #090909); color: var(--color-performance-paper, #f3f3f0); }
+  .arc-demo dt { color: var(--color-performance-muted, #9c9c96); font: 650 .68rem/1.2 var(--font-performance-mono, ui-monospace, monospace); text-transform: uppercase; }
+  .arc-demo dd { margin: 0; font-size: 1rem; font-weight: 650; line-height: 1.35; }
   .arc-proof { display: grid; grid-template-columns: minmax(0, 1fr) minmax(16rem, .6fr); align-items: stretch; }
   .arc-proof aside { display: grid; align-content: center; gap: .75rem; padding: 1.5rem; border-left: 1px solid var(--color-performance-line-strong, #9c9c96); }
   .arc-proof aside p { margin: 0; line-height: 1.45; }
   @media (max-width: 48rem) {
-    .arc-split, .arc-branches, .arc-proof { grid-template-columns: 1fr; }
+    .arc-split, .arc-branches, .arc-demo, .arc-proof { grid-template-columns: 1fr; }
     .arc-map li { grid-template-columns: 1fr; gap: .5rem; }
     .arc-map li > p i { width: 1px; height: 2rem; }
     .arc-map li > p i::after { top: auto; right: 50%; bottom: 0; transform: translateX(50%) rotate(135deg); }
