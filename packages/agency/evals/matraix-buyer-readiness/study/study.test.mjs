@@ -7,10 +7,10 @@ import { test } from 'node:test';
 
 const studyRoot = new URL('.', import.meta.url);
 
-function writeTrajectory(jobDir, candidateId, personaId, evaluation) {
+function writeTrajectory(jobDir, candidateId, personaId, evaluation, externalHosts = [], personaInput) {
+  const trialDir = resolve(jobDir, `${candidateId}-${personaId}`);
   const output = resolve(
-    jobDir,
-    `${candidateId}-${personaId}`,
+    trialDir,
     'artifacts/app/output/buyer_readiness_trajectory.json'
   );
   mkdirSync(resolve(output, '..'), { recursive: true });
@@ -32,10 +32,16 @@ function writeTrajectory(jobDir, candidateId, personaId, evaluation) {
         crm_mutated: false,
         analytics_emitted: false,
         navigated_to_booking_route: false,
-        external_hosts_contacted: []
+        external_hosts_contacted: externalHosts
       }
     })
   );
+  if (personaInput) {
+    writeFileSync(
+      resolve(trialDir, 'result.json'),
+      JSON.stringify({ config: { agent: { kwargs: { persona_path: personaInput } } } })
+    );
+  }
 }
 
 test('study template fixes each candidate URL and keeps the no-side-effect contract', () => {
@@ -53,7 +59,7 @@ test('study template fixes each candidate URL and keeps the no-side-effect contr
   assert.match(runner, /CODEX_FORCE_AUTH_JSON: "true"/);
 });
 
-test('aggregator requires the complete matched twelve-trajectory cohort and writes a directional report', () => {
+test('aggregator requires complete matched cohorts and writes a directional report', () => {
   const root = mkdtempSync(resolve(tmpdir(), 'agency-buyer-study-'));
   try {
     const jobsDir = resolve(root, 'jobs');
@@ -66,7 +72,14 @@ test('aggregator requires the complete matched twelve-trajectory cohort and writ
     };
     for (const candidateId of Object.keys(ratings)) {
       for (const personaId of ['0001', '0002', '0003', '0004']) {
-        writeTrajectory(jobDir, candidateId, personaId, ratings[candidateId]);
+        writeTrajectory(
+          jobDir,
+          candidateId,
+          personaId,
+          ratings[candidateId],
+          candidateId === 'baseline' && personaId === '0001' ? ['agency-bridge:8080'] : [],
+          `persona/datasets/matraix-persona-dev-sample/persona_${personaId}.yaml`
+        );
       }
     }
 
@@ -80,8 +93,35 @@ test('aggregator requires the complete matched twelve-trajectory cohort and writ
     const report = JSON.parse(readFileSync(resolve(outputDir, 'buyer-readiness-study-report.json'), 'utf8'));
 
     assert.equal(report.cohort.total_trajectories, 12);
+    assert.equal(report.cohort.personas_per_candidate, 4);
     assert.equal(report.winner, 'proof-first');
     assert.match(report.boundary, /not conversion, demand, or human research metrics/i);
+
+    for (const candidateId of Object.keys(ratings)) {
+      for (const personaId of ['0005', '0006', '0007', '0008', '0009', '0010', '0011', '0012']) {
+        writeTrajectory(
+          jobDir,
+          candidateId,
+          personaId,
+          ratings[candidateId],
+          [],
+          `persona/datasets/matraix-persona-dev-sample/persona_${personaId}.yaml`
+        );
+      }
+    }
+    execFileSync(process.execPath, [
+      resolve(new URL('./aggregate-study.mjs', studyRoot).pathname),
+      '--jobs-dir',
+      jobsDir,
+      '--expected-per-candidate',
+      '12',
+      '--output-dir',
+      outputDir
+    ]);
+    const extendedReport = JSON.parse(readFileSync(resolve(outputDir, 'buyer-readiness-study-report.json'), 'utf8'));
+
+    assert.equal(extendedReport.cohort.total_trajectories, 36);
+    assert.equal(extendedReport.cohort.personas_per_candidate, 12);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

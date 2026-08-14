@@ -72,6 +72,13 @@ node /path/to/packages/agency/evals/matraix-buyer-readiness/study/aggregate-stud
   --output-dir /absolute/path/to/study-report
 ```
 
+For an approved larger matched cohort, pass each Harbor job directory with
+`--job-dir` and set `--expected-per-candidate` to the exact number of distinct
+personas per candidate. The aggregation rejects missing, duplicated, or
+side-effecting trajectories. It accepts only the task-owned bridge URL formats
+(`http://agency-bridge:8080/...`, `agency-bridge://...`, and the bridge's
+bare `agency-bridge:8080` endpoint) in recorded host metadata.
+
 The resulting score is a standardized qualitative signal from synthetic agents.
 It is not a conversion, demand, or human-research metric. Every completed
 trajectory must still have zero booking, payment, calendar, CRM, analytics, and

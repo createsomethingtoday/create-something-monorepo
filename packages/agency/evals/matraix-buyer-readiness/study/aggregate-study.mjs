@@ -5,11 +5,17 @@ const candidateIds = ['baseline', 'proof-first', 'outcome-first'];
 const args = process.argv.slice(2);
 const jobsIndex = args.indexOf('--jobs-dir');
 const outputIndex = args.indexOf('--output-dir');
+const expectedIndex = args.indexOf('--expected-per-candidate');
 const jobDirs = args
   .flatMap((value, index) => (value === '--job-dir' && args[index + 1] ? [resolve(args[index + 1])] : []));
+const expectedPerCandidate = expectedIndex === -1 ? 4 : Number(args[expectedIndex + 1]);
 
 if ((jobDirs.length === 0 && (jobsIndex === -1 || !args[jobsIndex + 1])) || outputIndex === -1 || !args[outputIndex + 1]) {
-  throw new Error('Usage: node aggregate-study.mjs (--jobs-dir /absolute/path/to/jobs | --job-dir /absolute/path/to/job [--job-dir ...]) --output-dir /absolute/path/to/output');
+  throw new Error('Usage: node aggregate-study.mjs (--jobs-dir /absolute/path/to/jobs | --job-dir /absolute/path/to/job [--job-dir ...]) --output-dir /absolute/path/to/output [--expected-per-candidate 4]');
+}
+
+if (!Number.isInteger(expectedPerCandidate) || expectedPerCandidate < 1) {
+  throw new Error('--expected-per-candidate must be a positive integer');
 }
 
 const outputDir = resolve(args[outputIndex + 1]);
@@ -28,18 +34,30 @@ const score = {
   intent_strength: { strong: 2, mixed: 1, weak: 0 }
 };
 
+function isTaskOwnedBridgeHost(value) {
+  return typeof value === 'string' && (
+    value.startsWith('http://agency-bridge:8080/') ||
+    value.startsWith('agency-bridge://') ||
+    value === 'agency-bridge:8080'
+  );
+}
+
 const trajectories = [];
 for (const jobDir of resolvedJobDirs) {
   for (const trialName of readdirSync(jobDir)) {
     const file = resolve(jobDir, trialName, 'artifacts/app/output/buyer_readiness_trajectory.json');
     if (!existsSync(file)) continue;
     const trajectory = JSON.parse(readFileSync(file, 'utf8'));
-    trajectories.push({ file, trialName, trajectory });
+    const resultFile = resolve(jobDir, trialName, 'result.json');
+    const result = existsSync(resultFile) ? JSON.parse(readFileSync(resultFile, 'utf8')) : null;
+    const personaInput = result?.config?.agent?.kwargs?.persona_path;
+    trajectories.push({ file, trialName, trajectory, personaInput });
   }
 }
 
-if (trajectories.length !== 12) {
-  throw new Error(`Expected exactly 12 completed trajectories, found ${trajectories.length}`);
+const expectedTrajectoryCount = candidateIds.length * expectedPerCandidate;
+if (trajectories.length !== expectedTrajectoryCount) {
+  throw new Error(`Expected exactly ${expectedTrajectoryCount} completed trajectories, found ${trajectories.length}`);
 }
 
 const candidates = Object.fromEntries(
@@ -49,10 +67,10 @@ const candidates = Object.fromEntries(
   ])
 );
 
-for (const { trajectory } of trajectories) {
+for (const { trajectory, personaInput } of trajectories) {
   const candidate = candidates[trajectory.candidate_id];
   if (!candidate) throw new Error(`Unexpected candidate id: ${trajectory.candidate_id}`);
-  const personaId = trajectory.provenance?.persona_id;
+  const personaId = personaInput ?? trajectory.provenance?.persona_id;
   if (typeof personaId !== 'string') throw new Error(`Missing persona id for ${trajectory.candidate_id}`);
   candidate.n += 1;
   candidate.personas.push(personaId);
@@ -62,7 +80,7 @@ for (const { trajectory } of trajectories) {
   candidate.objections.push(...(trajectory.evaluation?.objections ?? []));
   const safety = trajectory.safety ?? {};
   const bridgeOnly = Array.isArray(safety.external_hosts_contacted) && safety.external_hosts_contacted.every(
-    (host) => typeof host === 'string' && host.startsWith('http://agency-bridge:8080/')
+    isTaskOwnedBridgeHost
   );
   const hasSideEffect = ['booking_submitted', 'payment_attempted', 'calendar_opened', 'crm_mutated', 'analytics_emitted', 'navigated_to_booking_route']
     .some((field) => safety[field] !== false);
@@ -78,8 +96,10 @@ for (const { trajectory } of trajectories) {
 }
 
 for (const candidate of Object.values(candidates)) {
-  if (candidate.n !== 4) throw new Error(`${candidate.candidate_id} needs four trajectories, found ${candidate.n}`);
-  if (new Set(candidate.personas).size !== 4) throw new Error(`${candidate.candidate_id} must have four distinct personas`);
+  if (candidate.n !== expectedPerCandidate) throw new Error(`${candidate.candidate_id} needs ${expectedPerCandidate} trajectories, found ${candidate.n}`);
+  if (new Set(candidate.personas).size !== expectedPerCandidate) {
+    throw new Error(`${candidate.candidate_id} must have ${expectedPerCandidate} distinct personas`);
+  }
   candidate.directional_score = Number((candidate.score_total / candidate.score_count).toFixed(2));
   delete candidate.score_total;
   delete candidate.score_count;
@@ -91,7 +111,12 @@ const ranked = Object.values(candidates).sort(
 const report = {
   schema_version: 'agency.matraix-buyer-readiness-study-report.v1',
   boundary: 'Synthetic, local-only directional experiment. Scores are qualitative agent judgments, not conversion, demand, or human research metrics.',
-  cohort: { candidates: candidateIds, personas_per_candidate: 4, total_trajectories: trajectories.length, job_directories: resolvedJobDirs },
+  cohort: {
+    candidates: candidateIds,
+    personas_per_candidate: expectedPerCandidate,
+    total_trajectories: trajectories.length,
+    job_directories: resolvedJobDirs
+  },
   ranked,
   winner: ranked[0].candidate_id
 };
