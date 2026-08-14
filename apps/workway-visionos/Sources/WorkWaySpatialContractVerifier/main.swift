@@ -9,6 +9,9 @@ private struct VerificationReceipt: Codable {
     let materialScheduleID: String
     let materialBindingStatus: String
     let renderedMaterialIDs: [String]
+    let outfittingItemCount: Int
+    let outfittingCategories: [String]
+    let outfittingConstructionReady: Bool
     let physicalSceneStatus: String
     let physicalOneToOneSceneEligible: Bool
     let physicalSceneClientSourceDocuments: String
@@ -56,6 +59,9 @@ struct WorkWaySpatialContractVerifier {
                 materialScheduleID: package.materialContract.scheduleId,
                 materialBindingStatus: package.materialContract.materialBindingStatus,
                 renderedMaterialIDs: package.materialContract.renderedMaterialIds,
+                outfittingItemCount: package.outfitting.items.count,
+                outfittingCategories: Array(Set(package.outfitting.items.map(\.category))).sorted(),
+                outfittingConstructionReady: package.outfitting.constructionReady,
                 physicalSceneStatus: preflight.physicalSceneStatus,
                 physicalOneToOneSceneEligible: preflight.physicalOneToOneSceneEligible,
                 physicalSceneClientSourceDocuments: package.physicalSceneContract.clientSourceDocuments,

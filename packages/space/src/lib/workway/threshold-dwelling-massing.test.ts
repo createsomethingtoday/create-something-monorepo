@@ -25,6 +25,27 @@ test('derives a browser 3D massing guide from the same Rev 0.8 plan used for 2D 
   );
   assert.equal(geometry.floors.length, 11);
   assert.equal(geometry.walls.length, 41);
+  assert.ok(geometry.outfitting.length > 22);
+  assert.deepEqual(
+    geometry.outfitting.find((item) => item.id === 'opening-window-daughter-suite'),
+    {
+      id: 'opening-window-daughter-suite',
+      category: 'opening',
+      title: 'Window opening marker',
+      chapterId: 'daughter-sleep-zone',
+      rendering: 'plan-opening-marker',
+      basis: 'plan-opening',
+      sourceOpeningId: 'window-daughter-suite',
+      placement: {
+        xIn: 108,
+        yIn: 500,
+        widthIn: 72,
+        depthIn: 4,
+        renderHeightIn: 3
+      },
+      constructionReady: false
+    }
+  );
   assert.ok(geometry.floors.every((floor) => floor.vertices.every((vertex) => vertex.yIn === 0)));
   assert.deepEqual(
     [...new Set(geometry.floors.map((floor) => floor.materialId))],

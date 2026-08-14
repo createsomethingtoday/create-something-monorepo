@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import {
     AmbientLight,
+    BoxGeometry,
     BufferGeometry,
     CanvasTexture,
     Color,
@@ -28,6 +29,7 @@
     toThreeMassingVector,
     type WorkWayMassingGeometry,
     type WorkWayMassingGuide,
+    type WorkWayMassingOutfittingItem,
     type WorkWayMassingVertex
   } from './threshold-dwelling-massing';
   import {
@@ -64,6 +66,9 @@
   let massingResources: Disposable[] = [];
   let rendererUnavailable = $state(false);
   let materialStudyEnabled = $state(true);
+  let openingMarkersEnabled = $state(true);
+  let furnishingsEnabled = $state(true);
+  let systemsEnabled = $state(true);
 
   function createSurfaceGeometry(
     vertices: readonly WorkWayMassingVertex[],
@@ -285,6 +290,84 @@
     if (texture) massingResources.push(texture);
   }
 
+  function shouldRenderOutfitting(item: WorkWayMassingOutfittingItem): boolean {
+    if (item.rendering === 'plan-opening-marker') return openingMarkersEnabled;
+    if (item.rendering === 'systems-location-marker') return systemsEnabled;
+    return furnishingsEnabled;
+  }
+
+  function outfittingColor(item: WorkWayMassingOutfittingItem): string {
+    switch (item.category) {
+      case 'opening':
+        return item.sourceOpeningId?.startsWith('window-') ? '#7db9c7' : '#d8b267';
+      case 'furnishing':
+        return '#9a7653';
+      case 'appliance':
+        return '#697377';
+      case 'plumbing':
+        return '#9fc4cf';
+      case 'hvac':
+        return '#6f9eb0';
+      case 'electrical':
+        return '#e0bd54';
+      case 'life-safety':
+        return '#c96f62';
+      case 'shading':
+        return '#9b8cc0';
+    }
+  }
+
+  function addOutfitting(group: Group, item: WorkWayMassingOutfittingItem) {
+    if (!shouldRenderOutfitting(item)) return;
+    const { placement } = item;
+    const center = toThreeMassingVector(
+      {
+        xIn: placement.xIn + placement.widthIn / 2,
+        yIn: 0,
+        zIn: placement.yIn + placement.depthIn / 2
+      },
+      guide
+    );
+    const widthM = placement.widthIn * 0.0254;
+    const depthM = placement.depthIn * 0.0254;
+    const heightM = Math.max(placement.renderHeightIn * 0.0254, 0.035);
+    const geometry = new BoxGeometry(widthM, heightM, depthM);
+    const isOpening = item.rendering === 'plan-opening-marker';
+    const isSystem = item.rendering === 'systems-location-marker';
+    const material = new MeshStandardMaterial({
+      color: outfittingColor(item),
+      roughness: isSystem ? 0.35 : 0.58,
+      metalness: item.category === 'appliance' || item.category === 'electrical' ? 0.28 : 0.04,
+      transparent: true,
+      opacity: isOpening ? 0.82 : isSystem ? 0.88 : 0.94
+    });
+    const mesh = new Mesh(geometry, material);
+    mesh.position.set(center.xM, center.yM + heightM / 2 + 0.02, center.zM);
+    mesh.userData = {
+      entityId: item.id,
+      title: item.title,
+      category: item.category,
+      chapterId: item.chapterId,
+      sourceOpeningId: item.sourceOpeningId,
+      rendering: item.rendering,
+      basis: item.basis,
+      constructionReady: false
+    };
+    group.add(mesh);
+
+    const edgeGeometry = new EdgesGeometry(geometry, 20);
+    const edgeMaterial = new LineBasicMaterial({
+      color: '#f7efd8',
+      transparent: true,
+      opacity: isOpening ? 0.92 : 0.62
+    });
+    const edges = new LineSegments(edgeGeometry, edgeMaterial);
+    edges.position.copy(mesh.position);
+    edges.userData = mesh.userData;
+    group.add(edges);
+    massingResources.push(geometry, material, edgeGeometry, edgeMaterial);
+  }
+
   function rebuildMassing() {
     if (!scene) return;
     disposeMassing();
@@ -302,6 +385,9 @@
     }
     for (const wall of geometry.walls) {
       addSurface(group, wall, 'wall', wall.exterior ? 0.93 : 0.64);
+    }
+    for (const item of geometry.outfitting) {
+      addOutfitting(group, item);
     }
 
     scene.add(group);
@@ -352,6 +438,9 @@
     geometry;
     guide;
     materialStudyEnabled;
+    openingMarkersEnabled;
+    furnishingsEnabled;
+    systemsEnabled;
     rebuildMassing();
   });
 
@@ -413,6 +502,8 @@
       <span>direct plan-derived mesh · meter render space</span>
       <p class="material-contract" title={guide.materialContract.scheduleId}>Material schedule · Rev 0.8</p>
       <span>material roles codified · products unselected</span>
+      <p class="material-contract">Experience layer · {geometry.outfitting.length} markers</p>
+      <span>openings, furnishings + systems · design intent only</span>
     </div>
     {#if rendererUnavailable}
       <p class="renderer-notice">
@@ -423,7 +514,7 @@
 
   <div class="viewer-footer">
     <p>
-      Orbit or pinch to inspect plan-derived floors and walls. The {guide.dimensions.verticalMassingHeightIn / 12} ft vertical mass is illustrative only.
+      Orbit or pinch to inspect the plan-derived shell and its reviewable experience layer. The {guide.dimensions.verticalMassingHeightIn / 12} ft vertical mass is illustrative only.
     </p>
     <div class="controls" aria-label="3D massing controls">
       <button
@@ -433,6 +524,33 @@
         onclick={() => (materialStudyEnabled = !materialStudyEnabled)}
       >
         Material study: {materialStudyEnabled ? 'on' : 'off'}
+      </button>
+      <button
+        type="button"
+        class:active={openingMarkersEnabled}
+        aria-pressed={openingMarkersEnabled}
+        onclick={() => (openingMarkersEnabled = !openingMarkersEnabled)}
+        data-testid="outfitting-openings-toggle"
+      >
+        Doors + windows: {openingMarkersEnabled ? 'on' : 'off'}
+      </button>
+      <button
+        type="button"
+        class:active={furnishingsEnabled}
+        aria-pressed={furnishingsEnabled}
+        onclick={() => (furnishingsEnabled = !furnishingsEnabled)}
+        data-testid="outfitting-furnishings-toggle"
+      >
+        Furnishings: {furnishingsEnabled ? 'on' : 'off'}
+      </button>
+      <button
+        type="button"
+        class:active={systemsEnabled}
+        aria-pressed={systemsEnabled}
+        onclick={() => (systemsEnabled = !systemsEnabled)}
+        data-testid="outfitting-systems-toggle"
+      >
+        MEP + life safety: {systemsEnabled ? 'on' : 'off'}
       </button>
       <button type="button" onclick={() => adjustZoom(-0.1)} aria-label="Zoom out">−</button>
       <button type="button" onclick={resetCamera}>Reset view</button>

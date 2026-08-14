@@ -9,6 +9,10 @@ import {
   splitThresholdDwellingExteriorWallForMaterialStudy
 } from '@create-something/canon/experiments/threshold-dwelling/assembly-schedule';
 import {
+  THRESHOLD_DWELLING_OUTFITTING_SYSTEM,
+  type ThresholdDwellingOutfittingItem
+} from '@create-something/canon/experiments/threshold-dwelling/outfitting-system';
+import {
   THRESHOLD_DWELLING_PRIVATE_GEOMETRY_EVIDENCE_PACKET,
   applyThresholdDwellingPrivateGeometryEvidence,
   projectThresholdDwellingClientSafeGeometryIssuance
@@ -86,6 +90,19 @@ export interface WorkWayMaterialContract {
   constructionReady: false;
 }
 
+/** A source-free, reviewable occupancy and systems layer for spatial clients. */
+export interface WorkWayOutfittingContract {
+  schemaVersion: 'workway.outfitting-system.v1';
+  id: 'threshold-dwelling-r08-design-intent-outfitting';
+  projectId: string;
+  canonicalRevision: string;
+  spatialRevision: string;
+  status: 'design-intent-experience-layer';
+  statement: string;
+  items: readonly ThresholdDwellingOutfittingItem[];
+  constructionReady: false;
+}
+
 /**
  * A client-safe projection of the physical 1:1 scene gate. It prevents a
  * horizontal-plan massing from being represented as issued vertical geometry.
@@ -119,6 +136,7 @@ export interface WorkWaySpatialPackage {
   spatialRevision: string;
   clientSourceDocuments: 'excluded';
   materialContract: WorkWayMaterialContract;
+  outfitting: WorkWayOutfittingContract;
   physicalSceneContract: WorkWayPhysicalSceneContract;
   assets: readonly WorkWayClientAsset[];
   sceneRepresentations: readonly WorkWaySceneRepresentation[];
@@ -516,6 +534,7 @@ export function createThresholdDwellingSpatialPackage(): WorkWaySpatialPackage {
       renderedMaterialIds: massingMaterialIds(),
       constructionReady: false
     },
+    outfitting: THRESHOLD_DWELLING_OUTFITTING_SYSTEM,
     physicalSceneContract: {
       issuanceId: physicalSceneProjection.issuanceId,
       status: physicalSceneProjection.status,
@@ -723,6 +742,33 @@ export function validateSpatialPackage(
     packageValue.materialContract.constructionReady
   ) {
     issueIds.push('invalid-material-contract');
+  }
+  const outfitting = packageValue.outfitting;
+  if (
+    outfitting.schemaVersion !== 'workway.outfitting-system.v1' ||
+    outfitting.id !== 'threshold-dwelling-r08-design-intent-outfitting' ||
+    outfitting.projectId !== packageValue.canonicalProject.projectId ||
+    outfitting.canonicalRevision !== packageValue.canonicalProject.projectRevision ||
+    outfitting.spatialRevision !== packageValue.spatialRevision ||
+    outfitting.status !== 'design-intent-experience-layer' ||
+    outfitting.constructionReady ||
+    !outfitting.items.length ||
+    duplicateIds(outfitting.items.map((item) => item.id)) ||
+    outfitting.items.some(
+      (item) =>
+        item.constructionReady ||
+        !item.id.trim() ||
+        item.placement.widthIn <= 0 ||
+        item.placement.depthIn <= 0 ||
+        item.placement.renderHeightIn <= 0
+    ) ||
+    !outfitting.items.some(
+      (item) =>
+        item.id === 'opening-window-daughter-suite' &&
+        item.sourceOpeningId === 'window-daughter-suite'
+    )
+  ) {
+    issueIds.push('invalid-outfitting-contract');
   }
   const physicalScene = packageValue.physicalSceneContract;
   const expectedPhysicalSceneStatus = physicalScene.canGeneratePhysicalOneToOneScene
@@ -1115,3 +1161,24 @@ export function createSessionProposalDecision(
 export const THRESHOLD_DWELLING_SPATIAL_PACKAGE = assertValidSpatialPackage(
   createThresholdDwellingSpatialPackage()
 );
+
+/** The native bundle omits presentational chapter titles, but keeps all scene truth. */
+export function nativeThresholdDwellingSpatialPackageProjection(
+  packageValue: WorkWaySpatialPackage = THRESHOLD_DWELLING_SPATIAL_PACKAGE
+) {
+  return {
+    ...packageValue,
+    outfitting: {
+      ...packageValue.outfitting,
+      // JSON does not preserve optional properties with `undefined` values.
+      // Omit them deliberately so the generated Swift fixture is a true
+      // serialization-equivalent projection of the TypeScript contract.
+      items: packageValue.outfitting.items.map(({ chapterId, sourceOpeningId, ...item }) => ({
+        ...item,
+        ...(chapterId ? { chapterId } : {}),
+        ...(sourceOpeningId ? { sourceOpeningId } : {})
+      }))
+    },
+    roomChapters: packageValue.roomChapters.map(({ title: _title, ...chapter }) => chapter)
+  };
+}
