@@ -83,6 +83,16 @@ export {
   type ThresholdDwellingPlanDatumFacade
 } from './glazing-strategy.js';
 export {
+  THRESHOLD_DWELLING_OUTFITTING_SYSTEM,
+  validateThresholdDwellingOutfittingSystem,
+  type ThresholdDwellingOutfittingCategory,
+  type ThresholdDwellingOutfittingItem,
+  type ThresholdDwellingOutfittingPlacement,
+  type ThresholdDwellingOutfittingRendering,
+  type ThresholdDwellingOutfittingSystem,
+  type ThresholdDwellingOutfittingValidation
+} from './outfitting-system.js';
+export {
   THRESHOLD_DWELLING_ASSEMBLY_SCHEDULE,
   resolveThresholdDwellingAssemblyBinding,
   resolveThresholdDwellingCodifiedMaterial,

@@ -9,6 +9,11 @@ import {
   splitThresholdDwellingExteriorWallForMaterialStudy,
   type ThresholdDwellingMaterialSelectionStatus
 } from '@create-something/canon/experiments/threshold-dwelling/assembly-schedule';
+import {
+  THRESHOLD_DWELLING_OUTFITTING_SYSTEM,
+  type ThresholdDwellingOutfittingCategory,
+  type ThresholdDwellingOutfittingRendering
+} from '@create-something/canon/experiments/threshold-dwelling/outfitting-system';
 
 export interface WorkWayMassingGuide {
   id: 'threshold-dwelling-r08-browser-massing-guide';
@@ -67,9 +72,29 @@ export interface WorkWayMassingWall {
   vertices: readonly WorkWayMassingVertex[];
 }
 
+/** A renderable spatial-review proxy, never equipment or construction geometry. */
+export interface WorkWayMassingOutfittingItem {
+  id: string;
+  category: ThresholdDwellingOutfittingCategory;
+  title: string;
+  chapterId?: string;
+  sourceOpeningId?: string;
+  placement: {
+    xIn: number;
+    yIn: number;
+    widthIn: number;
+    depthIn: number;
+    renderHeightIn: number;
+  };
+  rendering: ThresholdDwellingOutfittingRendering;
+  basis: 'plan-opening' | 'design-intent-footprint' | 'systems-location-intent';
+  constructionReady: false;
+}
+
 export interface WorkWayMassingGeometry {
   floors: readonly WorkWayMassingFloor[];
   walls: readonly WorkWayMassingWall[];
+  outfitting: readonly WorkWayMassingOutfittingItem[];
 }
 
 export interface WorkWayMassingGuideValidation {
@@ -225,7 +250,18 @@ export function createThresholdDwellingMassingGeometry(
           )
         };
       });
-    })
+    }),
+    outfitting: THRESHOLD_DWELLING_OUTFITTING_SYSTEM.items.map((item) => ({
+      id: item.id,
+      category: item.category,
+      title: item.title,
+      chapterId: item.chapterId,
+      sourceOpeningId: item.sourceOpeningId,
+      placement: item.placement,
+      rendering: item.rendering,
+      basis: item.basis,
+      constructionReady: false
+    }))
   };
 }
 

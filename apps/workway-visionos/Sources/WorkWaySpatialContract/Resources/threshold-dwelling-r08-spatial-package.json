@@ -1,13 +1,1027 @@
 {
   "schemaVersion": "workway.spatial-package.v1",
   "id": "threshold-dwelling-r08-spatial-package",
-  "canonicalProject": { "projectId": "threshold-dwelling", "projectRevision": "0.7" },
+  "canonicalProject": {
+    "projectId": "threshold-dwelling",
+    "projectRevision": "0.7"
+  },
   "spatialRevision": "0.8",
   "clientSourceDocuments": "excluded",
   "materialContract": {
     "scheduleId": "threshold-dwelling-rev-0.8-design-intent-assembly-schedule",
     "materialBindingStatus": "role-codified-product-unselected",
-    "renderedMaterialIds": ["M-INT-002", "M-INT-001", "M-ENV-002", "M-ENV-001"],
+    "renderedMaterialIds": [
+      "M-INT-002",
+      "M-INT-001",
+      "M-ENV-002",
+      "M-ENV-001"
+    ],
+    "constructionReady": false
+  },
+  "outfitting": {
+    "schemaVersion": "workway.outfitting-system.v1",
+    "id": "threshold-dwelling-r08-design-intent-outfitting",
+    "projectId": "threshold-dwelling",
+    "canonicalRevision": "0.7",
+    "spatialRevision": "0.8",
+    "status": "design-intent-experience-layer",
+    "statement": "A room-comprehension layer for spatial review. Plan openings retain candidate-plan spans; furnishings, fixtures, equipment, and systems locations are nominal proxies only. None is an equipment schedule, final selection, load calculation, installation instruction, code finding, or construction release.",
+    "items": [
+      {
+        "id": "opening-door-laundry-pantry",
+        "category": "opening",
+        "title": "Door opening marker",
+        "placement": {
+          "xIn": 90,
+          "yIn": 46,
+          "widthIn": 36,
+          "depthIn": 4,
+          "renderHeightIn": 3
+        },
+        "rendering": "plan-opening-marker",
+        "basis": "plan-opening",
+        "reviewNote": "Plan location and span are derived from the candidate plan. Operation, clear opening, sill, head, elevation, safety, and installation remain professional determinations.",
+        "constructionReady": false,
+        "sourceOpeningId": "door-laundry-pantry"
+      },
+      {
+        "id": "opening-door-pantry-hall",
+        "category": "opening",
+        "title": "Door opening marker",
+        "placement": {
+          "xIn": 54,
+          "yIn": 154,
+          "widthIn": 36,
+          "depthIn": 4,
+          "renderHeightIn": 3
+        },
+        "rendering": "plan-opening-marker",
+        "basis": "plan-opening",
+        "reviewNote": "Plan location and span are derived from the candidate plan. Operation, clear opening, sill, head, elevation, safety, and installation remain professional determinations.",
+        "constructionReady": false,
+        "sourceOpeningId": "door-pantry-hall"
+      },
+      {
+        "id": "opening-door-daughter-suite",
+        "category": "opening",
+        "title": "Door opening marker",
+        "placement": {
+          "xIn": 42,
+          "yIn": 238,
+          "widthIn": 36,
+          "depthIn": 4,
+          "renderHeightIn": 3
+        },
+        "rendering": "plan-opening-marker",
+        "basis": "plan-opening",
+        "reviewNote": "Plan location and span are derived from the candidate plan. Operation, clear opening, sill, head, elevation, safety, and installation remain professional determinations.",
+        "constructionReady": false,
+        "chapterId": "daughter-sleep-zone",
+        "sourceOpeningId": "door-daughter-suite"
+      },
+      {
+        "id": "opening-door-daughter-bath",
+        "category": "opening",
+        "title": "Door opening marker",
+        "placement": {
+          "xIn": 118,
+          "yIn": 282,
+          "widthIn": 4,
+          "depthIn": 36,
+          "renderHeightIn": 3
+        },
+        "rendering": "plan-opening-marker",
+        "basis": "plan-opening",
+        "reviewNote": "Plan location and span are derived from the candidate plan. Operation, clear opening, sill, head, elevation, safety, and installation remain professional determinations.",
+        "constructionReady": false,
+        "chapterId": "daughter-sleep-zone",
+        "sourceOpeningId": "door-daughter-bath"
+      },
+      {
+        "id": "opening-door-primary-closet",
+        "category": "opening",
+        "title": "Door opening marker",
+        "placement": {
+          "xIn": 246,
+          "yIn": 322,
+          "widthIn": 36,
+          "depthIn": 4,
+          "renderHeightIn": 3
+        },
+        "rendering": "plan-opening-marker",
+        "basis": "plan-opening",
+        "reviewNote": "Plan location and span are derived from the candidate plan. Operation, clear opening, sill, head, elevation, safety, and installation remain professional determinations.",
+        "constructionReady": false,
+        "chapterId": "primary-sleep-zone",
+        "sourceOpeningId": "door-primary-closet"
+      },
+      {
+        "id": "opening-door-primary-suite",
+        "category": "opening",
+        "title": "Door opening marker",
+        "placement": {
+          "xIn": 246,
+          "yIn": 238,
+          "widthIn": 36,
+          "depthIn": 4,
+          "renderHeightIn": 3
+        },
+        "rendering": "plan-opening-marker",
+        "basis": "plan-opening",
+        "reviewNote": "Plan location and span are derived from the candidate plan. Operation, clear opening, sill, head, elevation, safety, and installation remain professional determinations.",
+        "constructionReady": false,
+        "chapterId": "primary-sleep-zone",
+        "sourceOpeningId": "door-primary-suite"
+      },
+      {
+        "id": "opening-door-primary-bath",
+        "category": "opening",
+        "title": "Door opening marker",
+        "placement": {
+          "xIn": 366,
+          "yIn": 322,
+          "widthIn": 36,
+          "depthIn": 4,
+          "renderHeightIn": 3
+        },
+        "rendering": "plan-opening-marker",
+        "basis": "plan-opening",
+        "reviewNote": "Plan location and span are derived from the candidate plan. Operation, clear opening, sill, head, elevation, safety, and installation remain professional determinations.",
+        "constructionReady": false,
+        "chapterId": "primary-sleep-zone",
+        "sourceOpeningId": "door-primary-bath"
+      },
+      {
+        "id": "opening-door-inlaw-suite",
+        "category": "opening",
+        "title": "Door opening marker",
+        "placement": {
+          "xIn": 546,
+          "yIn": 238,
+          "widthIn": 36,
+          "depthIn": 4,
+          "renderHeightIn": 3
+        },
+        "rendering": "plan-opening-marker",
+        "basis": "plan-opening",
+        "reviewNote": "Plan location and span are derived from the candidate plan. Operation, clear opening, sill, head, elevation, safety, and installation remain professional determinations.",
+        "constructionReady": false,
+        "chapterId": "inlaw-sleep-zone",
+        "sourceOpeningId": "door-inlaw-suite"
+      },
+      {
+        "id": "opening-door-inlaw-bath",
+        "category": "opening",
+        "title": "Door opening marker",
+        "placement": {
+          "xIn": 658,
+          "yIn": 270,
+          "widthIn": 4,
+          "depthIn": 36,
+          "renderHeightIn": 3
+        },
+        "rendering": "plan-opening-marker",
+        "basis": "plan-opening",
+        "reviewNote": "Plan location and span are derived from the candidate plan. Operation, clear opening, sill, head, elevation, safety, and installation remain professional determinations.",
+        "constructionReady": false,
+        "chapterId": "inlaw-sleep-zone",
+        "sourceOpeningId": "door-inlaw-bath"
+      },
+      {
+        "id": "opening-door-dog-utility",
+        "category": "opening",
+        "title": "Door opening marker",
+        "placement": {
+          "xIn": 678,
+          "yIn": 70,
+          "widthIn": 36,
+          "depthIn": 4,
+          "renderHeightIn": 3
+        },
+        "rendering": "plan-opening-marker",
+        "basis": "plan-opening",
+        "reviewNote": "Plan location and span are derived from the candidate plan. Operation, clear opening, sill, head, elevation, safety, and installation remain professional determinations.",
+        "constructionReady": false,
+        "sourceOpeningId": "door-dog-utility"
+      },
+      {
+        "id": "opening-door-guest-bath",
+        "category": "opening",
+        "title": "Door opening marker",
+        "placement": {
+          "xIn": 658,
+          "yIn": 102,
+          "widthIn": 4,
+          "depthIn": 36,
+          "renderHeightIn": 3
+        },
+        "rendering": "plan-opening-marker",
+        "basis": "plan-opening",
+        "reviewNote": "Plan location and span are derived from the candidate plan. Operation, clear opening, sill, head, elevation, safety, and installation remain professional determinations.",
+        "constructionReady": false,
+        "sourceOpeningId": "door-guest-bath"
+      },
+      {
+        "id": "opening-door-kennel-utility",
+        "category": "opening",
+        "title": "Door opening marker",
+        "placement": {
+          "xIn": 776,
+          "yIn": 18,
+          "widthIn": 4,
+          "depthIn": 36,
+          "renderHeightIn": 3
+        },
+        "rendering": "plan-opening-marker",
+        "basis": "plan-opening",
+        "reviewNote": "Plan location and span are derived from the candidate plan. Operation, clear opening, sill, head, elevation, safety, and installation remain professional determinations.",
+        "constructionReady": false,
+        "sourceOpeningId": "door-kennel-utility"
+      },
+      {
+        "id": "opening-door-main-entry",
+        "category": "opening",
+        "title": "Door opening marker",
+        "placement": {
+          "xIn": 776,
+          "yIn": 174,
+          "widthIn": 4,
+          "depthIn": 36,
+          "renderHeightIn": 3
+        },
+        "rendering": "plan-opening-marker",
+        "basis": "plan-opening",
+        "reviewNote": "Plan location and span are derived from the candidate plan. Operation, clear opening, sill, head, elevation, safety, and installation remain professional determinations.",
+        "constructionReady": false,
+        "sourceOpeningId": "door-main-entry"
+      },
+      {
+        "id": "opening-window-west-hall",
+        "category": "opening",
+        "title": "Window opening marker",
+        "placement": {
+          "xIn": 0,
+          "yIn": 174,
+          "widthIn": 4,
+          "depthIn": 48,
+          "renderHeightIn": 3
+        },
+        "rendering": "plan-opening-marker",
+        "basis": "plan-opening",
+        "reviewNote": "Plan location and span are derived from the candidate plan. Operation, clear opening, sill, head, elevation, safety, and installation remain professional determinations.",
+        "constructionReady": false,
+        "sourceOpeningId": "window-west-hall"
+      },
+      {
+        "id": "opening-window-daughter-suite",
+        "category": "opening",
+        "title": "Window opening marker",
+        "placement": {
+          "xIn": 108,
+          "yIn": 500,
+          "widthIn": 72,
+          "depthIn": 4,
+          "renderHeightIn": 3
+        },
+        "rendering": "plan-opening-marker",
+        "basis": "plan-opening",
+        "reviewNote": "Plan location and span are derived from the candidate plan. Operation, clear opening, sill, head, elevation, safety, and installation remain professional determinations.",
+        "constructionReady": false,
+        "chapterId": "daughter-sleep-zone",
+        "sourceOpeningId": "window-daughter-suite"
+      },
+      {
+        "id": "opening-window-primary-bedroom",
+        "category": "opening",
+        "title": "Window opening marker",
+        "placement": {
+          "xIn": 288,
+          "yIn": 500,
+          "widthIn": 96,
+          "depthIn": 4,
+          "renderHeightIn": 3
+        },
+        "rendering": "plan-opening-marker",
+        "basis": "plan-opening",
+        "reviewNote": "Plan location and span are derived from the candidate plan. Operation, clear opening, sill, head, elevation, safety, and installation remain professional determinations.",
+        "constructionReady": false,
+        "chapterId": "primary-sleep-zone",
+        "sourceOpeningId": "window-primary-bedroom"
+      },
+      {
+        "id": "opening-window-primary-bath",
+        "category": "opening",
+        "title": "Window opening marker",
+        "placement": {
+          "xIn": 426,
+          "yIn": 500,
+          "widthIn": 60,
+          "depthIn": 4,
+          "renderHeightIn": 3
+        },
+        "rendering": "plan-opening-marker",
+        "basis": "plan-opening",
+        "reviewNote": "Plan location and span are derived from the candidate plan. Operation, clear opening, sill, head, elevation, safety, and installation remain professional determinations.",
+        "constructionReady": false,
+        "chapterId": "primary-sleep-zone",
+        "sourceOpeningId": "window-primary-bath"
+      },
+      {
+        "id": "opening-window-inlaw-suite",
+        "category": "opening",
+        "title": "Window opening marker",
+        "placement": {
+          "xIn": 612,
+          "yIn": 500,
+          "widthIn": 72,
+          "depthIn": 4,
+          "renderHeightIn": 3
+        },
+        "rendering": "plan-opening-marker",
+        "basis": "plan-opening",
+        "reviewNote": "Plan location and span are derived from the candidate plan. Operation, clear opening, sill, head, elevation, safety, and installation remain professional determinations.",
+        "constructionReady": false,
+        "chapterId": "inlaw-sleep-zone",
+        "sourceOpeningId": "window-inlaw-suite"
+      },
+      {
+        "id": "opening-window-kitchen",
+        "category": "opening",
+        "title": "Window opening marker",
+        "placement": {
+          "xIn": 192,
+          "yIn": 0,
+          "widthIn": 144,
+          "depthIn": 4,
+          "renderHeightIn": 3
+        },
+        "rendering": "plan-opening-marker",
+        "basis": "plan-opening",
+        "reviewNote": "Plan location and span are derived from the candidate plan. Operation, clear opening, sill, head, elevation, safety, and installation remain professional determinations.",
+        "constructionReady": false,
+        "chapterId": "kitchen",
+        "sourceOpeningId": "window-kitchen"
+      },
+      {
+        "id": "opening-window-living-dining",
+        "category": "opening",
+        "title": "Window opening marker",
+        "placement": {
+          "xIn": 372,
+          "yIn": 0,
+          "widthIn": 144,
+          "depthIn": 4,
+          "renderHeightIn": 3
+        },
+        "rendering": "plan-opening-marker",
+        "basis": "plan-opening",
+        "reviewNote": "Plan location and span are derived from the candidate plan. Operation, clear opening, sill, head, elevation, safety, and installation remain professional determinations.",
+        "constructionReady": false,
+        "chapterId": "dining",
+        "sourceOpeningId": "window-living-dining"
+      },
+      {
+        "id": "opening-window-open-zone",
+        "category": "opening",
+        "title": "Window opening marker",
+        "placement": {
+          "xIn": 552,
+          "yIn": 0,
+          "widthIn": 84,
+          "depthIn": 4,
+          "renderHeightIn": 3
+        },
+        "rendering": "plan-opening-marker",
+        "basis": "plan-opening",
+        "reviewNote": "Plan location and span are derived from the candidate plan. Operation, clear opening, sill, head, elevation, safety, and installation remain professional determinations.",
+        "constructionReady": false,
+        "chapterId": "living",
+        "sourceOpeningId": "window-open-zone"
+      },
+      {
+        "id": "opening-window-living-east",
+        "category": "opening",
+        "title": "Window opening marker",
+        "placement": {
+          "xIn": 776,
+          "yIn": 324,
+          "widthIn": 4,
+          "depthIn": 72,
+          "renderHeightIn": 3
+        },
+        "rendering": "plan-opening-marker",
+        "basis": "plan-opening",
+        "reviewNote": "Plan location and span are derived from the candidate plan. Operation, clear opening, sill, head, elevation, safety, and installation remain professional determinations.",
+        "constructionReady": false,
+        "chapterId": "living",
+        "sourceOpeningId": "window-living-east"
+      },
+      {
+        "id": "furnishing-kitchen-casework",
+        "category": "furnishing",
+        "title": "Kitchen service run",
+        "placement": {
+          "xIn": 147,
+          "yIn": 4.199999999999999,
+          "widthIn": 174,
+          "depthIn": 24,
+          "renderHeightIn": 36
+        },
+        "rendering": "design-intent-volume",
+        "basis": "design-intent-footprint",
+        "reviewNote": "Nominal experience-review footprint only; product selection, final dimensions, clearances, utilities, installation, and code review remain unissued.",
+        "constructionReady": false,
+        "chapterId": "kitchen"
+      },
+      {
+        "id": "furnishing-kitchen-island",
+        "category": "furnishing",
+        "title": "Kitchen island",
+        "placement": {
+          "xIn": 171,
+          "yIn": 51,
+          "widthIn": 108,
+          "depthIn": 42,
+          "renderHeightIn": 36
+        },
+        "rendering": "design-intent-volume",
+        "basis": "design-intent-footprint",
+        "reviewNote": "Uses the selected 108 in by 42 in design-intent island footprint; final clearances require coordinated review.",
+        "constructionReady": false,
+        "chapterId": "kitchen"
+      },
+      {
+        "id": "appliance-kitchen-refrigerator",
+        "category": "appliance",
+        "title": "Kitchen refrigerator zone",
+        "placement": {
+          "xIn": 291,
+          "yIn": 6.6000000000000005,
+          "widthIn": 36,
+          "depthIn": 33,
+          "renderHeightIn": 70
+        },
+        "rendering": "design-intent-volume",
+        "basis": "design-intent-footprint",
+        "reviewNote": "Nominal experience-review footprint only; product selection, final dimensions, clearances, utilities, installation, and code review remain unissued.",
+        "constructionReady": false,
+        "chapterId": "kitchen"
+      },
+      {
+        "id": "appliance-kitchen-range",
+        "category": "appliance",
+        "title": "Kitchen cooking zone",
+        "placement": {
+          "xIn": 225,
+          "yIn": 5.4,
+          "widthIn": 36,
+          "depthIn": 28.200000000000003,
+          "renderHeightIn": 36
+        },
+        "rendering": "design-intent-volume",
+        "basis": "design-intent-footprint",
+        "reviewNote": "Nominal experience-review footprint only; product selection, final dimensions, clearances, utilities, installation, and code review remain unissued.",
+        "constructionReady": false,
+        "chapterId": "kitchen"
+      },
+      {
+        "id": "furnishing-dining-table",
+        "category": "furnishing",
+        "title": "Dining table",
+        "placement": {
+          "xIn": 339,
+          "yIn": 54,
+          "widthIn": 84,
+          "depthIn": 42,
+          "renderHeightIn": 30
+        },
+        "rendering": "design-intent-volume",
+        "basis": "design-intent-footprint",
+        "reviewNote": "Nominal eight-place table footprint used to judge lived circulation; it is not an accessibility clearance claim.",
+        "constructionReady": false,
+        "chapterId": "dining"
+      },
+      {
+        "id": "furnishing-living-sofa",
+        "category": "furnishing",
+        "title": "Living sofa",
+        "placement": {
+          "xIn": 522,
+          "yIn": 72,
+          "widthIn": 96,
+          "depthIn": 40.8,
+          "renderHeightIn": 32
+        },
+        "rendering": "design-intent-volume",
+        "basis": "design-intent-footprint",
+        "reviewNote": "Nominal experience-review footprint only; product selection, final dimensions, clearances, utilities, installation, and code review remain unissued.",
+        "constructionReady": false,
+        "chapterId": "living"
+      },
+      {
+        "id": "furnishing-living-chair-pair",
+        "category": "furnishing",
+        "title": "Living chairs",
+        "placement": {
+          "xIn": 495,
+          "yIn": 33,
+          "widthIn": 54,
+          "depthIn": 36,
+          "renderHeightIn": 32
+        },
+        "rendering": "design-intent-volume",
+        "basis": "design-intent-footprint",
+        "reviewNote": "Nominal experience-review footprint only; product selection, final dimensions, clearances, utilities, installation, and code review remain unissued.",
+        "constructionReady": false,
+        "chapterId": "living"
+      },
+      {
+        "id": "furnishing-daughter-bed",
+        "category": "furnishing",
+        "title": "Daughter suite bed",
+        "placement": {
+          "xIn": 24,
+          "yIn": 360,
+          "widthIn": 60,
+          "depthIn": 80.03999999999999,
+          "renderHeightIn": 30
+        },
+        "rendering": "design-intent-volume",
+        "basis": "design-intent-footprint",
+        "reviewNote": "Nominal queen-ready sleeping footprint selected only to understand the room; occupant preference and final furniture remain open.",
+        "constructionReady": false,
+        "chapterId": "daughter-sleep-zone"
+      },
+      {
+        "id": "furnishing-daughter-desk",
+        "category": "furnishing",
+        "title": "Daughter suite desk",
+        "placement": {
+          "xIn": 138,
+          "yIn": 438,
+          "widthIn": 48,
+          "depthIn": 24,
+          "renderHeightIn": 30
+        },
+        "rendering": "design-intent-volume",
+        "basis": "design-intent-footprint",
+        "reviewNote": "Nominal experience-review footprint only; product selection, final dimensions, clearances, utilities, installation, and code review remain unissued.",
+        "constructionReady": false,
+        "chapterId": "daughter-sleep-zone"
+      },
+      {
+        "id": "furnishing-daughter-wardrobe",
+        "category": "furnishing",
+        "title": "Daughter suite wardrobe",
+        "placement": {
+          "xIn": 150,
+          "yIn": 267,
+          "widthIn": 54,
+          "depthIn": 24,
+          "renderHeightIn": 72
+        },
+        "rendering": "design-intent-volume",
+        "basis": "design-intent-footprint",
+        "reviewNote": "Nominal experience-review footprint only; product selection, final dimensions, clearances, utilities, installation, and code review remain unissued.",
+        "constructionReady": false,
+        "chapterId": "daughter-sleep-zone"
+      },
+      {
+        "id": "furnishing-primary-bed",
+        "category": "furnishing",
+        "title": "Primary suite bed",
+        "placement": {
+          "xIn": 243,
+          "yIn": 375,
+          "widthIn": 76.08,
+          "depthIn": 80.03999999999999,
+          "renderHeightIn": 34
+        },
+        "rendering": "design-intent-volume",
+        "basis": "design-intent-footprint",
+        "reviewNote": "Nominal experience-review footprint only; product selection, final dimensions, clearances, utilities, installation, and code review remain unissued.",
+        "constructionReady": false,
+        "chapterId": "primary-sleep-zone"
+      },
+      {
+        "id": "furnishing-inlaw-bed",
+        "category": "furnishing",
+        "title": "In-law suite bed",
+        "placement": {
+          "xIn": 498,
+          "yIn": 369,
+          "widthIn": 60,
+          "depthIn": 80.03999999999999,
+          "renderHeightIn": 30
+        },
+        "rendering": "design-intent-volume",
+        "basis": "design-intent-footprint",
+        "reviewNote": "Nominal experience-review footprint only; product selection, final dimensions, clearances, utilities, installation, and code review remain unissued.",
+        "constructionReady": false,
+        "chapterId": "inlaw-sleep-zone"
+      },
+      {
+        "id": "furnishing-inlaw-sitting",
+        "category": "furnishing",
+        "title": "In-law sitting group",
+        "placement": {
+          "xIn": 675,
+          "yIn": 402,
+          "widthIn": 78,
+          "depthIn": 54,
+          "renderHeightIn": 30
+        },
+        "rendering": "design-intent-volume",
+        "basis": "design-intent-footprint",
+        "reviewNote": "Nominal experience-review footprint only; product selection, final dimensions, clearances, utilities, installation, and code review remain unissued.",
+        "constructionReady": false,
+        "chapterId": "inlaw-sitting-zone"
+      },
+      {
+        "id": "plumbing-kitchen-sink",
+        "category": "plumbing",
+        "title": "Kitchen sink zone",
+        "placement": {
+          "xIn": 195,
+          "yIn": 6.6000000000000005,
+          "widthIn": 36,
+          "depthIn": 24,
+          "renderHeightIn": 36
+        },
+        "rendering": "design-intent-fixture",
+        "basis": "design-intent-footprint",
+        "reviewNote": "Nominal experience-review footprint only; product selection, final dimensions, clearances, utilities, installation, and code review remain unissued.",
+        "constructionReady": false,
+        "chapterId": "kitchen"
+      },
+      {
+        "id": "plumbing-laundry-zone",
+        "category": "plumbing",
+        "title": "Laundry water and drain zone",
+        "placement": {
+          "xIn": 12,
+          "yIn": 6,
+          "widthIn": 60,
+          "depthIn": 33,
+          "renderHeightIn": 42
+        },
+        "rendering": "design-intent-fixture",
+        "basis": "systems-location-intent",
+        "reviewNote": "Systems-location intent only; sizing, routing, capacity, circuits, controls, access, performance, and adopted-code compliance require qualified design.",
+        "constructionReady": false
+      },
+      {
+        "id": "plumbing-daughter-bath",
+        "category": "plumbing",
+        "title": "Daughter bath fixture group",
+        "placement": {
+          "xIn": 129,
+          "yIn": 252,
+          "widthIn": 78,
+          "depthIn": 69,
+          "renderHeightIn": 32
+        },
+        "rendering": "design-intent-fixture",
+        "basis": "design-intent-footprint",
+        "reviewNote": "Nominal experience-review footprint only; product selection, final dimensions, clearances, utilities, installation, and code review remain unissued.",
+        "constructionReady": false,
+        "chapterId": "daughter-sleep-zone"
+      },
+      {
+        "id": "plumbing-primary-bath",
+        "category": "plumbing",
+        "title": "Primary bath fixture group",
+        "placement": {
+          "xIn": 318,
+          "yIn": 249,
+          "widthIn": 126,
+          "depthIn": 69,
+          "renderHeightIn": 32
+        },
+        "rendering": "design-intent-fixture",
+        "basis": "design-intent-footprint",
+        "reviewNote": "Nominal experience-review footprint only; product selection, final dimensions, clearances, utilities, installation, and code review remain unissued.",
+        "constructionReady": false,
+        "chapterId": "primary-sleep-zone"
+      },
+      {
+        "id": "plumbing-inlaw-bath",
+        "category": "plumbing",
+        "title": "In-law bath fixture group",
+        "placement": {
+          "xIn": 666,
+          "yIn": 249,
+          "widthIn": 102,
+          "depthIn": 69,
+          "renderHeightIn": 32
+        },
+        "rendering": "design-intent-fixture",
+        "basis": "design-intent-footprint",
+        "reviewNote": "Nominal experience-review footprint only; product selection, final dimensions, clearances, utilities, installation, and code review remain unissued.",
+        "constructionReady": false,
+        "chapterId": "inlaw-sleep-zone"
+      },
+      {
+        "id": "plumbing-water-heater-service-zone",
+        "category": "plumbing",
+        "title": "Water-heating service zone",
+        "placement": {
+          "xIn": 732,
+          "yIn": 12,
+          "widthIn": 30,
+          "depthIn": 30,
+          "renderHeightIn": 60
+        },
+        "rendering": "systems-location-marker",
+        "basis": "systems-location-intent",
+        "reviewNote": "Systems-location intent only; sizing, routing, capacity, circuits, controls, access, performance, and adopted-code compliance require qualified design.",
+        "constructionReady": false
+      },
+      {
+        "id": "hvac-air-handler-service-zone",
+        "category": "hvac",
+        "title": "Air-handler service zone",
+        "placement": {
+          "xIn": 675,
+          "yIn": 12,
+          "widthIn": 42,
+          "depthIn": 42,
+          "renderHeightIn": 60
+        },
+        "rendering": "systems-location-marker",
+        "basis": "systems-location-intent",
+        "reviewNote": "Systems-location intent only; sizing, routing, capacity, circuits, controls, access, performance, and adopted-code compliance require qualified design.",
+        "constructionReady": false
+      },
+      {
+        "id": "hvac-kitchen-supply",
+        "category": "hvac",
+        "title": "Kitchen supply-air intent",
+        "placement": {
+          "xIn": 180,
+          "yIn": 27,
+          "widthIn": 9.959999999999999,
+          "depthIn": 9.959999999999999,
+          "renderHeightIn": 3
+        },
+        "rendering": "systems-location-marker",
+        "basis": "systems-location-intent",
+        "reviewNote": "Systems-location intent only; sizing, routing, capacity, circuits, controls, access, performance, and adopted-code compliance require qualified design.",
+        "constructionReady": false,
+        "chapterId": "kitchen"
+      },
+      {
+        "id": "hvac-dining-supply",
+        "category": "hvac",
+        "title": "Dining supply-air intent",
+        "placement": {
+          "xIn": 372,
+          "yIn": 27,
+          "widthIn": 9.959999999999999,
+          "depthIn": 9.959999999999999,
+          "renderHeightIn": 3
+        },
+        "rendering": "systems-location-marker",
+        "basis": "systems-location-intent",
+        "reviewNote": "Systems-location intent only; sizing, routing, capacity, circuits, controls, access, performance, and adopted-code compliance require qualified design.",
+        "constructionReady": false,
+        "chapterId": "dining"
+      },
+      {
+        "id": "hvac-living-supply",
+        "category": "hvac",
+        "title": "Living supply-air intent",
+        "placement": {
+          "xIn": 564,
+          "yIn": 27,
+          "widthIn": 9.959999999999999,
+          "depthIn": 9.959999999999999,
+          "renderHeightIn": 3
+        },
+        "rendering": "systems-location-marker",
+        "basis": "systems-location-intent",
+        "reviewNote": "Systems-location intent only; sizing, routing, capacity, circuits, controls, access, performance, and adopted-code compliance require qualified design.",
+        "constructionReady": false,
+        "chapterId": "living"
+      },
+      {
+        "id": "hvac-private-suite-supply-intent",
+        "category": "hvac",
+        "title": "Private-suite supply-air intent",
+        "placement": {
+          "xIn": 108,
+          "yIn": 348,
+          "widthIn": 9.959999999999999,
+          "depthIn": 9.959999999999999,
+          "renderHeightIn": 3
+        },
+        "rendering": "systems-location-marker",
+        "basis": "systems-location-intent",
+        "reviewNote": "Systems-location intent only; sizing, routing, capacity, circuits, controls, access, performance, and adopted-code compliance require qualified design.",
+        "constructionReady": false
+      },
+      {
+        "id": "hvac-central-return-intent",
+        "category": "hvac",
+        "title": "Central return-air intent",
+        "placement": {
+          "xIn": 396,
+          "yIn": 192,
+          "widthIn": 12,
+          "depthIn": 12,
+          "renderHeightIn": 3
+        },
+        "rendering": "systems-location-marker",
+        "basis": "systems-location-intent",
+        "reviewNote": "Systems-location intent only; sizing, routing, capacity, circuits, controls, access, performance, and adopted-code compliance require qualified design.",
+        "constructionReady": false
+      },
+      {
+        "id": "electrical-service-panel",
+        "category": "electrical",
+        "title": "Electrical service-panel zone",
+        "placement": {
+          "xIn": 93,
+          "yIn": 6,
+          "widthIn": 30,
+          "depthIn": 9,
+          "renderHeightIn": 72
+        },
+        "rendering": "systems-location-marker",
+        "basis": "systems-location-intent",
+        "reviewNote": "Systems-location intent only; sizing, routing, capacity, circuits, controls, access, performance, and adopted-code compliance require qualified design.",
+        "constructionReady": false
+      },
+      {
+        "id": "electrical-public-lighting-intent",
+        "category": "electrical",
+        "title": "Public-room lighting intent",
+        "placement": {
+          "xIn": 414,
+          "yIn": 73.19999999999999,
+          "widthIn": 12,
+          "depthIn": 12,
+          "renderHeightIn": 3
+        },
+        "rendering": "systems-location-marker",
+        "basis": "systems-location-intent",
+        "reviewNote": "Systems-location intent only; sizing, routing, capacity, circuits, controls, access, performance, and adopted-code compliance require qualified design.",
+        "constructionReady": false,
+        "chapterId": "dining"
+      },
+      {
+        "id": "electrical-kitchen-task-lighting-intent",
+        "category": "electrical",
+        "title": "Kitchen task-lighting intent",
+        "placement": {
+          "xIn": 240,
+          "yIn": 66,
+          "widthIn": 12,
+          "depthIn": 12,
+          "renderHeightIn": 3
+        },
+        "rendering": "systems-location-marker",
+        "basis": "systems-location-intent",
+        "reviewNote": "Systems-location intent only; sizing, routing, capacity, circuits, controls, access, performance, and adopted-code compliance require qualified design.",
+        "constructionReady": false,
+        "chapterId": "kitchen"
+      },
+      {
+        "id": "electrical-daughter-power-data-intent",
+        "category": "electrical",
+        "title": "Daughter suite power and data intent",
+        "placement": {
+          "xIn": 159,
+          "yIn": 429,
+          "widthIn": 12,
+          "depthIn": 12,
+          "renderHeightIn": 3
+        },
+        "rendering": "systems-location-marker",
+        "basis": "systems-location-intent",
+        "reviewNote": "Systems-location intent only; sizing, routing, capacity, circuits, controls, access, performance, and adopted-code compliance require qualified design.",
+        "constructionReady": false,
+        "chapterId": "daughter-sleep-zone"
+      },
+      {
+        "id": "electrical-primary-bedside-intent",
+        "category": "electrical",
+        "title": "Primary bedside power intent",
+        "placement": {
+          "xIn": 336,
+          "yIn": 432,
+          "widthIn": 12,
+          "depthIn": 12,
+          "renderHeightIn": 3
+        },
+        "rendering": "systems-location-marker",
+        "basis": "systems-location-intent",
+        "reviewNote": "Systems-location intent only; sizing, routing, capacity, circuits, controls, access, performance, and adopted-code compliance require qualified design.",
+        "constructionReady": false,
+        "chapterId": "primary-sleep-zone"
+      },
+      {
+        "id": "life-safety-public-intent",
+        "category": "life-safety",
+        "title": "Public-area smoke and CO notification intent",
+        "placement": {
+          "xIn": 408,
+          "yIn": 174,
+          "widthIn": 12,
+          "depthIn": 12,
+          "renderHeightIn": 3
+        },
+        "rendering": "systems-location-marker",
+        "basis": "systems-location-intent",
+        "reviewNote": "Systems-location intent only; sizing, routing, capacity, circuits, controls, access, performance, and adopted-code compliance require qualified design.",
+        "constructionReady": false
+      },
+      {
+        "id": "life-safety-daughter-intent",
+        "category": "life-safety",
+        "title": "Daughter-suite smoke and CO notification intent",
+        "placement": {
+          "xIn": 102,
+          "yIn": 342,
+          "widthIn": 12,
+          "depthIn": 12,
+          "renderHeightIn": 3
+        },
+        "rendering": "systems-location-marker",
+        "basis": "systems-location-intent",
+        "reviewNote": "Systems-location intent only; sizing, routing, capacity, circuits, controls, access, performance, and adopted-code compliance require qualified design.",
+        "constructionReady": false,
+        "chapterId": "daughter-sleep-zone"
+      },
+      {
+        "id": "life-safety-primary-intent",
+        "category": "life-safety",
+        "title": "Primary-suite smoke and CO notification intent",
+        "placement": {
+          "xIn": 348,
+          "yIn": 342,
+          "widthIn": 12,
+          "depthIn": 12,
+          "renderHeightIn": 3
+        },
+        "rendering": "systems-location-marker",
+        "basis": "systems-location-intent",
+        "reviewNote": "Systems-location intent only; sizing, routing, capacity, circuits, controls, access, performance, and adopted-code compliance require qualified design.",
+        "constructionReady": false,
+        "chapterId": "primary-sleep-zone"
+      },
+      {
+        "id": "life-safety-inlaw-intent",
+        "category": "life-safety",
+        "title": "In-law-suite smoke and CO notification intent",
+        "placement": {
+          "xIn": 582,
+          "yIn": 342,
+          "widthIn": 12,
+          "depthIn": 12,
+          "renderHeightIn": 3
+        },
+        "rendering": "systems-location-marker",
+        "basis": "systems-location-intent",
+        "reviewNote": "Systems-location intent only; sizing, routing, capacity, circuits, controls, access, performance, and adopted-code compliance require qualified design.",
+        "constructionReady": false,
+        "chapterId": "inlaw-sleep-zone"
+      },
+      {
+        "id": "shading-public-facade-pocket",
+        "category": "shading",
+        "title": "Public-view recessed-shade intent",
+        "placement": {
+          "xIn": 246,
+          "yIn": 3,
+          "widthIn": 354,
+          "depthIn": 9,
+          "renderHeightIn": 3
+        },
+        "rendering": "systems-location-marker",
+        "basis": "systems-location-intent",
+        "reviewNote": "Systems-location intent only; sizing, routing, capacity, circuits, controls, access, performance, and adopted-code compliance require qualified design.",
+        "constructionReady": false,
+        "chapterId": "living"
+      },
+      {
+        "id": "shading-daughter-window-intent",
+        "category": "shading",
+        "title": "Daughter-suite privacy shade intent",
+        "placement": {
+          "xIn": 108,
+          "yIn": 495,
+          "widthIn": 72,
+          "depthIn": 6,
+          "renderHeightIn": 3
+        },
+        "rendering": "systems-location-marker",
+        "basis": "systems-location-intent",
+        "reviewNote": "Systems-location intent only; sizing, routing, capacity, circuits, controls, access, performance, and adopted-code compliance require qualified design.",
+        "constructionReady": false,
+        "chapterId": "daughter-sleep-zone"
+      }
+    ],
     "constructionReady": false
   },
   "physicalSceneContract": {
@@ -31,108 +1045,367 @@
         "id": "finished-floor-and-site-datum",
         "title": "Finished-floor elevation and site datum",
         "evidenceStatus": "missing",
-        "requiredReviewerRoles": ["Registered professional land surveyor", "Architect or qualified residential design professional"]
+        "requiredReviewerRoles": [
+          "Registered professional land surveyor",
+          "Architect or qualified residential design professional"
+        ]
       },
       {
         "id": "exterior-wall-assembly-geometry",
         "title": "Exterior-wall assembly geometry",
         "evidenceStatus": "missing",
-        "requiredReviewerRoles": ["Architect or qualified residential design professional", "Energy rater or qualified energy-compliance professional"]
+        "requiredReviewerRoles": [
+          "Architect or qualified residential design professional",
+          "Energy rater or qualified energy-compliance professional"
+        ]
       },
       {
         "id": "interior-partition-geometry",
         "title": "Interior-partition geometry",
         "evidenceStatus": "missing",
-        "requiredReviewerRoles": ["Architect or qualified residential design professional", "Licensed or jurisdiction-qualified MEP professionals"]
+        "requiredReviewerRoles": [
+          "Architect or qualified residential design professional",
+          "Licensed or jurisdiction-qualified MEP professionals"
+        ]
       },
       {
         "id": "roof-and-ceiling-geometry",
         "title": "Roof and ceiling geometry",
         "evidenceStatus": "missing",
-        "requiredReviewerRoles": ["Architect or qualified residential design professional", "Licensed structural engineer", "Energy rater or qualified energy-compliance professional"]
+        "requiredReviewerRoles": [
+          "Architect or qualified residential design professional",
+          "Licensed structural engineer",
+          "Energy rater or qualified energy-compliance professional"
+        ]
       },
       {
         "id": "door-opening-geometry",
         "title": "Door-opening geometry",
         "evidenceStatus": "missing",
-        "requiredReviewerRoles": ["Architect or qualified residential design professional", "Authority having jurisdiction and project team"]
+        "requiredReviewerRoles": [
+          "Architect or qualified residential design professional",
+          "Authority having jurisdiction and project team"
+        ]
       },
       {
         "id": "window-and-glass-opening-geometry",
         "title": "Window and glass-opening geometry",
         "evidenceStatus": "missing",
-        "requiredReviewerRoles": ["Architect or qualified residential design professional", "Licensed structural engineer", "Energy rater or qualified energy-compliance professional", "Authority having jurisdiction and project team"]
+        "requiredReviewerRoles": [
+          "Architect or qualified residential design professional",
+          "Licensed structural engineer",
+          "Energy rater or qualified energy-compliance professional",
+          "Authority having jurisdiction and project team"
+        ]
       },
       {
         "id": "structural-support-and-lateral-geometry",
         "title": "Structural support and lateral geometry",
         "evidenceStatus": "missing",
-        "requiredReviewerRoles": ["Licensed structural engineer"]
+        "requiredReviewerRoles": [
+          "Licensed structural engineer"
+        ]
       },
       {
         "id": "mep-service-coordination-geometry",
         "title": "MEP service-coordination geometry",
         "evidenceStatus": "missing",
-        "requiredReviewerRoles": ["Licensed or jurisdiction-qualified MEP professionals", "Energy rater or qualified energy-compliance professional"]
+        "requiredReviewerRoles": [
+          "Licensed or jurisdiction-qualified MEP professionals",
+          "Energy rater or qualified energy-compliance professional"
+        ]
       },
       {
         "id": "exterior-grade-and-threshold-geometry",
         "title": "Exterior grade and threshold geometry",
         "evidenceStatus": "missing",
-        "requiredReviewerRoles": ["Registered professional land surveyor", "Architect or qualified residential design professional", "Authority having jurisdiction and project team"]
+        "requiredReviewerRoles": [
+          "Registered professional land surveyor",
+          "Architect or qualified residential design professional",
+          "Authority having jurisdiction and project team"
+        ]
       }
     ],
     "canGeneratePhysicalOneToOneScene": false,
     "constructionReady": false
   },
   "assets": [
-    { "id": "tabletop-plan-svg", "clientPath": "experiments/threshold-dwelling/renders/floor-plan.svg", "sha256": "c83c9deb796c34f8a94497a2f4e77fdbbbfbc6d584480ea0cf3f9c08bc48e017" },
-    { "id": "tabletop-plan-png", "clientPath": "experiments/threshold-dwelling/renders/floor-plan.png", "sha256": "6bb7955a32628e0fd499b58e7ca57f9c9f3a93cfca46a84ecb1ffc84fdde2a5c" },
-    { "id": "public-room-hero-png", "clientPath": "experiments/threshold-dwelling/renders/living-system-public-room-hero-v1.png", "sha256": "ff78a4af53c0c1117c1cf83db22e451728733dffaba9bd2356a046ebc9ad63ba" },
-    { "id": "browser-massing-glb", "clientPath": "experiments/threshold-dwelling/renders/threshold-dwelling-r08-massing-guide.glb", "sha256": "1b03a571ec788492b1994792c1349d2b151860f69d01eaef36d05c4584892091" },
-    { "id": "native-massing-usdz", "clientPath": "experiments/threshold-dwelling/renders/threshold-dwelling-r08-massing-guide.usdz", "sha256": "5f2b2ac1f8447ea4b4cbce90ede32de280f0b9833735e3e330fb6a2a2f83aba6" }
+    {
+      "id": "tabletop-plan-svg",
+      "clientPath": "experiments/threshold-dwelling/renders/floor-plan.svg",
+      "sha256": "c83c9deb796c34f8a94497a2f4e77fdbbbfbc6d584480ea0cf3f9c08bc48e017"
+    },
+    {
+      "id": "tabletop-plan-png",
+      "clientPath": "experiments/threshold-dwelling/renders/floor-plan.png",
+      "sha256": "6bb7955a32628e0fd499b58e7ca57f9c9f3a93cfca46a84ecb1ffc84fdde2a5c"
+    },
+    {
+      "id": "public-room-hero-png",
+      "clientPath": "experiments/threshold-dwelling/renders/living-system-public-room-hero-v1.png",
+      "sha256": "ff78a4af53c0c1117c1cf83db22e451728733dffaba9bd2356a046ebc9ad63ba"
+    },
+    {
+      "id": "browser-massing-glb",
+      "clientPath": "experiments/threshold-dwelling/renders/threshold-dwelling-r08-massing-guide.glb",
+      "sha256": "1b03a571ec788492b1994792c1349d2b151860f69d01eaef36d05c4584892091"
+    },
+    {
+      "id": "native-massing-usdz",
+      "clientPath": "experiments/threshold-dwelling/renders/threshold-dwelling-r08-massing-guide.usdz",
+      "sha256": "5f2b2ac1f8447ea4b4cbce90ede32de280f0b9833735e3e330fb6a2a2f83aba6"
+    }
   ],
   "sceneRepresentations": [
-    { "id": "tabletop-svg", "format": "svg", "status": "available", "canonicalRevision": "0.7", "spatialRevision": "0.8", "assetId": "tabletop-plan-svg" },
-    { "id": "tabletop-png", "format": "png", "status": "available", "canonicalRevision": "0.7", "spatialRevision": "0.8", "assetId": "tabletop-plan-png" },
-    { "id": "public-room-hero-png", "format": "png", "status": "available", "canonicalRevision": "0.7", "spatialRevision": "0.8", "assetId": "public-room-hero-png" },
-    { "id": "browser-massing-glb", "format": "glb", "status": "available", "canonicalRevision": "0.7", "spatialRevision": "0.8", "assetId": "browser-massing-glb" },
-    { "id": "native-usd", "format": "usd", "status": "unissued", "canonicalRevision": "0.7", "spatialRevision": "0.8", "assetId": null },
-    { "id": "native-usdz", "format": "usdz", "status": "available", "canonicalRevision": "0.7", "spatialRevision": "0.8", "assetId": "native-massing-usdz" }
+    {
+      "id": "tabletop-svg",
+      "format": "svg",
+      "status": "available",
+      "canonicalRevision": "0.7",
+      "spatialRevision": "0.8",
+      "assetId": "tabletop-plan-svg"
+    },
+    {
+      "id": "tabletop-png",
+      "format": "png",
+      "status": "available",
+      "canonicalRevision": "0.7",
+      "spatialRevision": "0.8",
+      "assetId": "tabletop-plan-png"
+    },
+    {
+      "id": "public-room-hero-png",
+      "format": "png",
+      "status": "available",
+      "canonicalRevision": "0.7",
+      "spatialRevision": "0.8",
+      "assetId": "public-room-hero-png"
+    },
+    {
+      "id": "browser-massing-glb",
+      "format": "glb",
+      "status": "available",
+      "canonicalRevision": "0.7",
+      "spatialRevision": "0.8",
+      "assetId": "browser-massing-glb"
+    },
+    {
+      "id": "native-usd",
+      "format": "usd",
+      "status": "unissued",
+      "canonicalRevision": "0.7",
+      "spatialRevision": "0.8",
+      "assetId": null
+    },
+    {
+      "id": "native-usdz",
+      "format": "usdz",
+      "status": "available",
+      "canonicalRevision": "0.7",
+      "spatialRevision": "0.8",
+      "assetId": "native-massing-usdz"
+    }
   ],
   "entityRenderBindings": [
-    { "entityId": "public-room-kitchen", "renderEntityId": "public-room/kitchen" },
-    { "entityId": "public-room-dining", "renderEntityId": "public-room/dining" },
-    { "entityId": "public-room-living", "renderEntityId": "public-room/living" },
-    { "entityId": "private-room-daughter-sleep-zone", "renderEntityId": "private-room/daughter-sleep-zone" },
-    { "entityId": "private-room-primary-sleep-zone", "renderEntityId": "private-room/primary-sleep-zone" },
-    { "entityId": "private-room-inlaw-sleep-zone", "renderEntityId": "private-room/inlaw-sleep-zone" },
-    { "entityId": "private-room-inlaw-sitting-zone", "renderEntityId": "private-room/inlaw-sitting-zone" },
-    { "entityId": "arrival-loggia", "renderEntityId": "arrival/loggia" }
+    {
+      "entityId": "public-room-kitchen",
+      "renderEntityId": "public-room/kitchen"
+    },
+    {
+      "entityId": "public-room-dining",
+      "renderEntityId": "public-room/dining"
+    },
+    {
+      "entityId": "public-room-living",
+      "renderEntityId": "public-room/living"
+    },
+    {
+      "entityId": "private-room-daughter-sleep-zone",
+      "renderEntityId": "private-room/daughter-sleep-zone"
+    },
+    {
+      "entityId": "private-room-primary-sleep-zone",
+      "renderEntityId": "private-room/primary-sleep-zone"
+    },
+    {
+      "entityId": "private-room-inlaw-sleep-zone",
+      "renderEntityId": "private-room/inlaw-sleep-zone"
+    },
+    {
+      "entityId": "private-room-inlaw-sitting-zone",
+      "renderEntityId": "private-room/inlaw-sitting-zone"
+    },
+    {
+      "entityId": "arrival-loggia",
+      "renderEntityId": "arrival/loggia"
+    }
   ],
   "roomChapters": [
-    { "id": "kitchen", "entityId": "public-room-kitchen", "widthIn": 180, "depthIn": 156, "scale": "one-to-one", "safeStage": { "minimumWidthIn": 96, "minimumDepthIn": 96, "locomotion": "room-chapter-rebase", "statement": "Minimum physical-stage guidance for a rebased room chapter; not a physical safety certification or architectural clearance." } },
-    { "id": "dining", "entityId": "public-room-dining", "widthIn": 156, "depthIn": 156, "scale": "one-to-one", "safeStage": { "minimumWidthIn": 96, "minimumDepthIn": 96, "locomotion": "room-chapter-rebase", "statement": "Minimum physical-stage guidance for a rebased room chapter; not a physical safety certification or architectural clearance." } },
-    { "id": "living", "entityId": "public-room-living", "widthIn": 180, "depthIn": 156, "scale": "one-to-one", "safeStage": { "minimumWidthIn": 96, "minimumDepthIn": 96, "locomotion": "room-chapter-rebase", "statement": "Minimum physical-stage guidance for a rebased room chapter; not a physical safety certification or architectural clearance." } },
-    { "id": "arrival", "entityId": "arrival-loggia", "widthIn": 120, "depthIn": 168, "scale": "one-to-one", "safeStage": { "minimumWidthIn": 96, "minimumDepthIn": 96, "locomotion": "room-chapter-rebase", "statement": "Minimum physical-stage guidance for a rebased room chapter; not a physical safety certification or architectural clearance." } },
-    { "id": "daughter-sleep-zone", "entityId": "private-room-daughter-sleep-zone", "widthIn": 216, "depthIn": 168, "scale": "one-to-one", "safeStage": { "minimumWidthIn": 96, "minimumDepthIn": 96, "locomotion": "room-chapter-rebase", "statement": "Minimum physical-stage guidance for a rebased room chapter; not a physical safety certification or architectural clearance." } },
-    { "id": "primary-sleep-zone", "entityId": "private-room-primary-sleep-zone", "widthIn": 252, "depthIn": 180, "scale": "one-to-one", "safeStage": { "minimumWidthIn": 96, "minimumDepthIn": 96, "locomotion": "room-chapter-rebase", "statement": "Minimum physical-stage guidance for a rebased room chapter; not a physical safety certification or architectural clearance." } },
-    { "id": "inlaw-sleep-zone", "entityId": "private-room-inlaw-sleep-zone", "widthIn": 192, "depthIn": 264, "scale": "one-to-one", "safeStage": { "minimumWidthIn": 96, "minimumDepthIn": 96, "locomotion": "room-chapter-rebase", "statement": "Minimum physical-stage guidance for a rebased room chapter; not a physical safety certification or architectural clearance." } },
-    { "id": "inlaw-sitting-zone", "entityId": "private-room-inlaw-sitting-zone", "widthIn": 120, "depthIn": 168, "scale": "one-to-one", "safeStage": { "minimumWidthIn": 96, "minimumDepthIn": 96, "locomotion": "room-chapter-rebase", "statement": "Minimum physical-stage guidance for a rebased room chapter; not a physical safety certification or architectural clearance." } }
+    {
+      "id": "kitchen",
+      "entityId": "public-room-kitchen",
+      "widthIn": 180,
+      "depthIn": 156,
+      "scale": "one-to-one",
+      "safeStage": {
+        "minimumWidthIn": 96,
+        "minimumDepthIn": 96,
+        "locomotion": "room-chapter-rebase",
+        "statement": "Minimum physical-stage guidance for a rebased room chapter; not a physical safety certification or architectural clearance."
+      }
+    },
+    {
+      "id": "dining",
+      "entityId": "public-room-dining",
+      "widthIn": 156,
+      "depthIn": 156,
+      "scale": "one-to-one",
+      "safeStage": {
+        "minimumWidthIn": 96,
+        "minimumDepthIn": 96,
+        "locomotion": "room-chapter-rebase",
+        "statement": "Minimum physical-stage guidance for a rebased room chapter; not a physical safety certification or architectural clearance."
+      }
+    },
+    {
+      "id": "living",
+      "entityId": "public-room-living",
+      "widthIn": 180,
+      "depthIn": 156,
+      "scale": "one-to-one",
+      "safeStage": {
+        "minimumWidthIn": 96,
+        "minimumDepthIn": 96,
+        "locomotion": "room-chapter-rebase",
+        "statement": "Minimum physical-stage guidance for a rebased room chapter; not a physical safety certification or architectural clearance."
+      }
+    },
+    {
+      "id": "arrival",
+      "entityId": "arrival-loggia",
+      "widthIn": 120,
+      "depthIn": 168,
+      "scale": "one-to-one",
+      "safeStage": {
+        "minimumWidthIn": 96,
+        "minimumDepthIn": 96,
+        "locomotion": "room-chapter-rebase",
+        "statement": "Minimum physical-stage guidance for a rebased room chapter; not a physical safety certification or architectural clearance."
+      }
+    },
+    {
+      "id": "daughter-sleep-zone",
+      "entityId": "private-room-daughter-sleep-zone",
+      "widthIn": 216,
+      "depthIn": 168,
+      "scale": "one-to-one",
+      "safeStage": {
+        "minimumWidthIn": 96,
+        "minimumDepthIn": 96,
+        "locomotion": "room-chapter-rebase",
+        "statement": "Minimum physical-stage guidance for a rebased room chapter; not a physical safety certification or architectural clearance."
+      }
+    },
+    {
+      "id": "primary-sleep-zone",
+      "entityId": "private-room-primary-sleep-zone",
+      "widthIn": 252,
+      "depthIn": 180,
+      "scale": "one-to-one",
+      "safeStage": {
+        "minimumWidthIn": 96,
+        "minimumDepthIn": 96,
+        "locomotion": "room-chapter-rebase",
+        "statement": "Minimum physical-stage guidance for a rebased room chapter; not a physical safety certification or architectural clearance."
+      }
+    },
+    {
+      "id": "inlaw-sleep-zone",
+      "entityId": "private-room-inlaw-sleep-zone",
+      "widthIn": 192,
+      "depthIn": 264,
+      "scale": "one-to-one",
+      "safeStage": {
+        "minimumWidthIn": 96,
+        "minimumDepthIn": 96,
+        "locomotion": "room-chapter-rebase",
+        "statement": "Minimum physical-stage guidance for a rebased room chapter; not a physical safety certification or architectural clearance."
+      }
+    },
+    {
+      "id": "inlaw-sitting-zone",
+      "entityId": "private-room-inlaw-sitting-zone",
+      "widthIn": 120,
+      "depthIn": 168,
+      "scale": "one-to-one",
+      "safeStage": {
+        "minimumWidthIn": 96,
+        "minimumDepthIn": 96,
+        "locomotion": "room-chapter-rebase",
+        "statement": "Minimum physical-stage guidance for a rebased room chapter; not a physical safety certification or architectural clearance."
+      }
+    }
   ],
   "portals": [
-    { "id": "kitchen-to-dining", "fromChapterId": "kitchen", "toChapterId": "dining", "traversal": "explicit-transition" },
-    { "id": "dining-to-living", "fromChapterId": "dining", "toChapterId": "living", "traversal": "explicit-transition" },
-    { "id": "living-to-arrival", "fromChapterId": "living", "toChapterId": "arrival", "traversal": "explicit-transition" },
-    { "id": "arrival-to-daughter-sleep", "fromChapterId": "arrival", "toChapterId": "daughter-sleep-zone", "traversal": "explicit-transition" },
-    { "id": "daughter-sleep-to-primary-sleep", "fromChapterId": "daughter-sleep-zone", "toChapterId": "primary-sleep-zone", "traversal": "explicit-transition" },
-    { "id": "primary-sleep-to-inlaw-sleep", "fromChapterId": "primary-sleep-zone", "toChapterId": "inlaw-sleep-zone", "traversal": "explicit-transition" },
-    { "id": "inlaw-sleep-to-inlaw-sitting", "fromChapterId": "inlaw-sleep-zone", "toChapterId": "inlaw-sitting-zone", "traversal": "explicit-transition" }
+    {
+      "id": "kitchen-to-dining",
+      "fromChapterId": "kitchen",
+      "toChapterId": "dining",
+      "traversal": "explicit-transition"
+    },
+    {
+      "id": "dining-to-living",
+      "fromChapterId": "dining",
+      "toChapterId": "living",
+      "traversal": "explicit-transition"
+    },
+    {
+      "id": "living-to-arrival",
+      "fromChapterId": "living",
+      "toChapterId": "arrival",
+      "traversal": "explicit-transition"
+    },
+    {
+      "id": "arrival-to-daughter-sleep",
+      "fromChapterId": "arrival",
+      "toChapterId": "daughter-sleep-zone",
+      "traversal": "explicit-transition"
+    },
+    {
+      "id": "daughter-sleep-to-primary-sleep",
+      "fromChapterId": "daughter-sleep-zone",
+      "toChapterId": "primary-sleep-zone",
+      "traversal": "explicit-transition"
+    },
+    {
+      "id": "primary-sleep-to-inlaw-sleep",
+      "fromChapterId": "primary-sleep-zone",
+      "toChapterId": "inlaw-sleep-zone",
+      "traversal": "explicit-transition"
+    },
+    {
+      "id": "inlaw-sleep-to-inlaw-sitting",
+      "fromChapterId": "inlaw-sleep-zone",
+      "toChapterId": "inlaw-sitting-zone",
+      "traversal": "explicit-transition"
+    }
   ],
   "validationReceipts": [
-    { "id": "dimensioned-project-review", "assessment": "Design-intent geometry and revision lineage recorded; no survey or construction determination supplied.", "sourceRevision": "0.8" },
-    { "id": "living-system-review", "assessment": "Room chapters, circulation intent, material roles, and carport proposal remain proposed design intent.", "sourceRevision": "0.8" },
-    { "id": "public-room-visual-receipt", "assessment": "The local public-room visualization is content-addressed and explicitly non-construction evidence.", "sourceRevision": "0.8" }
+    {
+      "id": "dimensioned-project-review",
+      "assessment": "Design-intent geometry and revision lineage recorded; no survey or construction determination supplied.",
+      "sourceRevision": "0.8"
+    },
+    {
+      "id": "living-system-review",
+      "assessment": "Room chapters, circulation intent, material roles, and carport proposal remain proposed design intent.",
+      "sourceRevision": "0.8"
+    },
+    {
+      "id": "public-room-visual-receipt",
+      "assessment": "The local public-room visualization is content-addressed and explicitly non-construction evidence.",
+      "sourceRevision": "0.8"
+    }
   ],
   "constructionReady": false
 }
