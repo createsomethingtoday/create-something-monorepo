@@ -44,3 +44,35 @@ internal Docker network. It can resolve only two task-owned proxies:
   only to the short-lived task process and never stored in this repository.
 
 The bridge yields a real MatrAIx web-agent run without public browser egress.
+
+## Comparative page study
+
+`study/` is a local-only matched-persona experiment for three query-selected
+renderings of the same route: `baseline`, `proof-first`, and `outcome-first`.
+It preserves the audit offer, source evidence, booking URL, and no-guarantees
+boundary while changing only the hierarchy of the opening, proof rail, and
+three-scene diagnostic.
+
+The runner creates three fresh MatrAIx task directories and a recipe with four
+fresh Docker containers per candidate. It runs at most three trials at once.
+It uses the locally signed-in Codex CLI's `auth.json` only when the host has
+already completed `codex login`; the credential is uploaded to a short-lived
+task container and is never stored in this package or its report.
+
+```bash
+node evals/matraix-buyer-readiness/study/run-study.mjs \
+  --matraix-root /absolute/path/to/MatrAIx-Persona-8B \
+  --jobs-dir /absolute/path/to/matraix-jobs
+
+cd /absolute/path/to/MatrAIx-Persona-8B
+uv run harbor run -c configs/jobs/cre-1763-local-buyer-readiness-study.yaml
+
+node /path/to/packages/agency/evals/matraix-buyer-readiness/study/aggregate-study.mjs \
+  --jobs-dir /absolute/path/to/matraix-jobs \
+  --output-dir /absolute/path/to/study-report
+```
+
+The resulting score is a standardized qualitative signal from synthetic agents.
+It is not a conversion, demand, or human-research metric. Every completed
+trajectory must still have zero booking, payment, calendar, CRM, analytics, and
+external-navigation activity.

@@ -9,20 +9,21 @@ function read(relativePath: string) {
 
 test('AI Buyer Readiness Audit is a bounded public diagnostic before Build and Control', () => {
   const route = read('../src/routes/agent-readiness/+page.svelte');
+  const studyVariants = read('../src/lib/data/agentReadinessStudyVariants.ts');
   const salesContract = read('../content/sales/ai-buyer-readiness-audit.yaml');
   const commercialInterface = read('../content/sales/control-commercial-interface-spec.yaml');
 
-  assert.match(route, /See what AI buyers understand—and get wrong—about your business\./);
-  assert.match(route, /\$3,000 one-time/);
-  assert.match(route, /25 high-intent buyer questions/);
-  assert.match(route, /up to three competitors/i);
-  assert.match(route, /timestamped answers/);
-  assert.match(route, /cited sources/);
-  assert.match(route, /prioritized 30-day plan/);
-  assert.match(route, /does not include implementation/i);
-  assert.match(route, /separately scoped Build/i);
-  assert.match(route, /Control from \$900\/month after launch/i);
-  assert.match(route, /No guaranteed rankings, citations, or recommendations\./);
+  assert.match(studyVariants, /See what AI buyers understand—and get wrong—about your business\./);
+  assert.match(studyVariants, /\$3,000 one-time/);
+  assert.match(studyVariants, /25 high-intent buyer questions/);
+  assert.match(studyVariants, /up to three competitors/i);
+  assert.match(studyVariants, /timestamped answers/);
+  assert.match(studyVariants, /cited sources/);
+  assert.match(studyVariants, /prioritized 30-day plan/);
+  assert.match(studyVariants, /does not include implementation/i);
+  assert.match(studyVariants, /separately scoped Build/i);
+  assert.match(studyVariants, /Control from \$900\/month after launch/i);
+  assert.match(studyVariants, /No guaranteed rankings, citations, or recommendations\./);
   assert.match(route, /PerformanceCampaignOpening/);
   assert.match(route, /PerformanceNarrativeStage/);
   assert.match(route, /PerformanceConversionHandoff/);
@@ -30,6 +31,7 @@ test('AI Buyer Readiness Audit is a bounded public diagnostic before Build and C
   assert.match(route, /media=\{playbookHeroMedia\.agentReadiness\}/);
   assert.match(route, /mediaMobilePlacement="background"/);
   assert.match(route, /<PlaybookField variant="agent-readiness" \/>/);
+  assert.match(route, /resolveAgentReadinessStudyVariant/);
   assert.doesNotMatch(route, /artifactOwnsMedia|artifactMobilePlacement/);
   assert.match(route, /agencyCoreMessaging\.agentReadinessAuditBookingHref/);
   assert.doesNotMatch(route, /x402|USDC|checkout/i);
