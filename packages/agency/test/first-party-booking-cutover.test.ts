@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
 	buildFirstPartySchedulerUrl,
+	buildSchedulerLifecycleAnalyticsMetadata,
 	normalizeSchedulerLifecycleMessage,
 	normalizeSchedulerResizeMessage,
 	normalizeSchedulerAccessUrl,
@@ -101,6 +102,37 @@ test('direct booking does not invent zero-valued Atlas attribution', () => {
 	const iframe = new URL(buildFirstPartySchedulerUrl());
 	assert.equal(iframe.search, '');
 	assert.deepEqual(schedulerHandoffContext(), {});
+});
+
+test('booking lifecycle events retain bounded source context for funnel attribution', () => {
+	const lifecycle = normalizeSchedulerLifecycleMessage({
+		type: 'create-something:scheduler-lifecycle',
+		action: 'booking_completed',
+		schedulerSessionId: 'scheduler_123',
+		bookingId: 'booking_123',
+		receiptId: 'receipt_123',
+		durationMinutes: 60
+	});
+	assert.ok(lifecycle);
+
+	assert.deepEqual(
+		buildSchedulerLifecycleAnalyticsMetadata(
+			lifecycle.metadata,
+			schedulerHandoffContext(
+				'?source=agent-readiness&intent=ai-readiness-audit&lane=workflow_infrastructure&warmup=private-notes'
+			)
+		),
+		{
+			surface: 'first-party-scheduler',
+			schedulerSessionId: 'scheduler_123',
+			bookingId: 'booking_123',
+			receiptId: 'receipt_123',
+			durationMinutes: 60,
+			source: 'agent-readiness',
+			intent: 'ai-readiness-audit',
+			lane: 'workflow_infrastructure'
+		}
+	);
 });
 
 test('the parent turns only the bounded scheduler context into a readable incoming handoff', () => {

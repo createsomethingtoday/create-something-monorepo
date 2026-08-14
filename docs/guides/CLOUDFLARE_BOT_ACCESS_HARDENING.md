@@ -37,6 +37,52 @@ show generic scanner probes such as `.env`, `.git`, `wp-*`, random `.php`, and
 WordPress plugin/theme paths. Treat those scanner probes as abuse, not as
 monetizable agent demand.
 
+### 2026-08-12 Pro baseline
+
+The `.agency` zone is now on Cloudflare Pro. Dashboard inspection found 0 custom
+rules, 0 rate limiting rules, and 0 managed rules. It does have 10 active
+account-level IP allow rules, which are inherited configuration rather than a
+replacement for a zone policy. This is a configuration baseline, not evidence
+that a new rule should be enabled.
+
+**Applied production receipt (2026-08-12):** after explicit operator approval,
+the `.agency` zone received the active custom rule
+`CRE-1730 .agency block scanner probes outside MCP`. It returns the default
+Cloudflare `403` response only for common probe families (`/.env`, `/.git`,
+`/wp-*`, WordPress asset paths, `/xmlrpc.php`, `/cgi-bin/`, and `.php` paths)
+and explicitly excludes `*.mcp.createsomething.*` hosts. Read-back verified the
+rule as Active in the dashboard; direct checks returned `403` for five probe
+paths while the public homepage and Markdown-for-Agents `/book` route still
+returned `200`.
+
+Pro makes the following useful to the operating loop without changing the
+approval boundary:
+
+- Cloudflare and OWASP managed WAF rules, plus two zone rate-limiting rules
+- Super Bot Fight Mode and its bot report
+- Cache Analytics with seven days of retention
+- Polish image optimization after asset and existing-transform checks
+
+Mirage is deprecated and is not a delivery item. Use native lazy loading and
+responsive images instead.
+
+### Cache Analytics baseline
+
+Cache Analytics is already active with Pro; it does not require a separate
+enablement switch. The 2026-08-12 dashboard readback used the exact-host filter
+`createsomething.agency`, deliberately excluding the high-volume MCP hosts.
+For the preceding 24 hours it reported 14.53k total requests, with 7.46k
+served by Cloudflare and 7.08k served by origin. Cache statuses were 4.78k
+dynamic, 4.26k hit, 3.20k none, 1.61k miss, 373 revalidated, 202 expired, and
+111 bypassed.
+
+This is a measurement baseline, not justification for an automatic cache rule.
+The same public-host view contained 3.22k `404` responses and 2.57k `301`
+responses. First compare that view after a full day of the scanner WAF rule,
+then investigate the remaining high-volume paths and their response/cache
+semantics before proposing any cache-policy change. Do not let aggregate
+zone-level MCP traffic decide a public-site caching policy.
+
 ## Tier Mapping
 
 - Database: Cloudflare analytics, AI Crawl Control tables, WAF events, and this
@@ -64,6 +110,33 @@ Phase 1 must not:
 - charge internal MCP, client MCP, reviewer MCP, or operator automation traffic
 - mutate Cloudflare paid-plan settings without an approval note and rollback
   path
+
+## Control Service Module
+
+**Edge Security & Performance Control** is a bounded Control module, not a
+generic security claim. It can include:
+
+- WAF managed-rule and custom-rule policy for one approved zone
+- scoped rate-limit policy for exposed write or high-cost endpoints
+- bot policy that protects abuse without breaking required agent, search, API,
+  or MCP traffic
+- Security Events and Cache Analytics review, then a recorded change proposal
+- an image-delivery evaluation before enabling Polish
+
+It does not include a twenty-four-seven security operations center, guaranteed
+attack prevention, or a client plan/add-on charge. The client owns its Cloudflare
+account, plan, and change approval; CREATE SOMETHING owns the policy artifact,
+the evidence review, the approved change plan and rollback, and the recurring
+operating review.
+
+The required lifecycle is **baseline → observe → propose → approved apply →
+verify → recurring review**. For `.agency`, preserve Markdown for Agents,
+agent-readable discovery, and machine-facing MCP routes throughout the change.
+
+Do not use Super Bot Fight Mode as a blanket default: it applies to the whole
+domain and can challenge API, browser-agent, or other machine traffic. Review
+its bot report first, and add narrowly scoped exceptions before turning on an
+action that could affect a required route.
 
 ## Dry-Run WAF Candidates
 

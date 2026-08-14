@@ -55,6 +55,9 @@
 - Forecasted usage at 75% of monthly coverage triggers a capacity review, not an automatic charge.
 - New workflows and integrations are separately scoped Build work.
 - Higher-risk, regulated, multi-environment, and priority-response operations require custom scope.
+- Edge Security & Performance Control is an optional, Cloudflare-capability-dependent
+  Control module. Client plan and add-on charges remain client-owned; CREATE
+  SOMETHING supplies the policy, evidence review, approved changes, and rollback.
 - The $49 Agent Buyer Readiness Snapshot is a founding candidate only. Its approved price remains unset and the capability remains inactive.
 - Machine payment is inactive until a price, receipt path, spend caps, rollback, and production promotion are separately approved.
 - Payment never grants private data access or permission to execute a write.

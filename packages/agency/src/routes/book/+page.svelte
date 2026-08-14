@@ -5,6 +5,7 @@
 	import { PUBLIC_ATLAS_STORAGE_KEYS } from '$lib/atlas/intake-policy';
 	import {
 		buildFirstPartySchedulerUrl,
+		buildSchedulerLifecycleAnalyticsMetadata,
 		FIRST_PARTY_SCHEDULER_ORIGIN,
 		normalizeSchedulerAccessUrl,
 		normalizeSchedulerLifecycleMessage,
@@ -49,13 +50,14 @@
 		}
 		const lifecycle = normalizeSchedulerLifecycleMessage(event.data);
 		if (!lifecycle) return;
+		const metadata = buildSchedulerLifecycleAnalyticsMetadata(lifecycle.metadata, handoffContext);
 
 		if (lifecycle.action === 'booking_form_started') {
-			getAnalytics()?.track('interaction', lifecycle.action, { metadata: lifecycle.metadata });
+			getAnalytics()?.track('interaction', lifecycle.action, { metadata });
 			return;
 		}
 
-		getAnalytics()?.conversion(lifecycle.action, lifecycle.metadata);
+		getAnalytics()?.conversion(lifecycle.action, metadata);
 	}
 
 	onMount(() => {

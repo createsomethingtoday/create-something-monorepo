@@ -48,6 +48,12 @@ export type NormalizedSchedulerLifecycle = {
 	};
 };
 
+export type SchedulerLifecycleAnalyticsMetadata = NormalizedSchedulerLifecycle['metadata'] & {
+	source?: string;
+	intent?: string;
+	lane?: string;
+};
+
 const DECLARED_TRAFFIC_CLASSES = new Set<SchedulerDeclaredTrafficClass>(['internal', 'test']);
 const SCHEDULER_LIFECYCLE_ACTIONS = new Set<SchedulerLifecycleAction>([
 	'booking_form_started',
@@ -149,6 +155,22 @@ export function schedulerHandoffContext(search = '', warmupNotes?: string): Sche
 		.trim();
 	if (notes) context.warmupNotes = notes.slice(0, 2000);
 	return context;
+}
+
+/**
+ * Carries only the bounded acquisition context into parent-page lifecycle
+ * events. Scheduler messages never receive arbitrary query data or notes.
+ */
+export function buildSchedulerLifecycleAnalyticsMetadata(
+	metadata: NormalizedSchedulerLifecycle['metadata'],
+	context: SchedulerHandoffContext
+): SchedulerLifecycleAnalyticsMetadata {
+	return {
+		...metadata,
+		...(context.source ? { source: context.source } : {}),
+		...(context.intent ? { intent: context.intent } : {}),
+		...(context.lane ? { lane: context.lane } : {})
+	};
 }
 
 function titleCase(value: string): string {
