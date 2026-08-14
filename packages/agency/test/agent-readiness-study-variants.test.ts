@@ -34,9 +34,9 @@ test('every local-only study variant retains the Buyer Readiness offer and bound
   }
 });
 
-test('the production route defaults to the approved outcome-first hierarchy', () => {
-  assert.equal(productionAgentReadinessVariantId, 'outcome-first');
-  assert.equal(resolveAgentReadinessStudyVariant(null).id, 'outcome-first');
-  assert.equal(resolveAgentReadinessStudyVariant('not-a-study').id, 'outcome-first');
+test('the production route defaults to the highest-scoring baseline hierarchy', () => {
+  assert.equal(productionAgentReadinessVariantId, 'baseline');
+  assert.equal(resolveAgentReadinessStudyVariant(null).id, 'baseline');
+  assert.equal(resolveAgentReadinessStudyVariant('not-a-study').id, 'baseline');
   assert.equal(resolveAgentReadinessStudyVariant('proof-first').id, 'proof-first');
 });
