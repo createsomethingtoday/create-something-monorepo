@@ -82,6 +82,22 @@ that produced a receipt with:
 ground build-info --json
 ```
 
+### Maintainers: trusted publishing
+
+Ground tags publish through npm Trusted Publishing rather than a local
+one-time-password or a long-lived write token. Configure the package's
+**Trusted Publisher** in npm with:
+
+- Provider: **GitHub Actions**
+- Organization or user: `createsomethingtoday`
+- Repository: `create-something-monorepo`
+- Workflow filename: `ground-release.yml`
+- Allowed action: **npm publish**
+
+Do not configure an environment unless the release workflow adds one. The
+workflow publishes only after its matching GitHub Release and `SHA256SUMS`
+manifest have completed successfully.
+
 ## The Problem
 
 AI agents are confident. Too confident.

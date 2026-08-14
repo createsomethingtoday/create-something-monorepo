@@ -153,3 +153,31 @@ jobs:
               }
             }
             ```
+
+  publish-npm:
+    name: Publish npm through trusted publishing
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout release source
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - name: Set up Node for npm trusted publishing
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false
+
+      - name: Verify release checksum manifest
+        working-directory: packages/ground/npm
+        run: node release-verify.js
+
+      - name: Publish package through npm trusted publishing
+        working-directory: packages/ground/npm
+        run: npm publish --access public
