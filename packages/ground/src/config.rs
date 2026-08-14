@@ -59,6 +59,10 @@ pub struct GroundConfig {
     /// Ignore patterns
     #[serde(default)]
     pub ignore: IgnoreConfig,
+
+    /// Explicit entry points that are intentionally invoked outside the import graph.
+    #[serde(default)]
+    pub entry_points: EntryPointConfig,
     
     /// Analysis thresholds
     #[serde(default)]
@@ -91,6 +95,14 @@ pub struct IgnoreConfig {
     /// Specific file pairs to ignore in duplicate detection
     #[serde(default)]
     pub duplicate_pairs: Vec<[String; 2]>,
+}
+
+/// Entry-point configuration for analysis checks.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct EntryPointConfig {
+    /// Exact paths, relative to the analysis directory, for documented manual CLIs.
+    #[serde(default)]
+    pub manual: Vec<String>,
 }
 
 /// Threshold configuration
@@ -226,6 +238,7 @@ impl GroundConfig {
         self.ignore.exports.extend(other.ignore.exports);
         self.ignore.paths.extend(other.ignore.paths);
         self.ignore.duplicate_pairs.extend(other.ignore.duplicate_pairs);
+        self.entry_points.manual.extend(other.entry_points.manual);
         
         // Deduplicate
         self.ignore.functions.sort();
@@ -234,6 +247,8 @@ impl GroundConfig {
         self.ignore.exports.dedup();
         self.ignore.paths.sort();
         self.ignore.paths.dedup();
+        self.entry_points.manual.sort();
+        self.entry_points.manual.dedup();
         // duplicate_pairs are harder to dedupe, leave as-is
         
         // For thresholds, keep current values (base config wins)
@@ -327,6 +342,23 @@ impl GroundConfig {
             false
         })
     }
+
+    /// Check whether a path is an explicit manual entry point for this analysis root.
+    /// Manual entries are exact, root-relative paths; glob patterns and parent traversal
+    /// are rejected so they cannot silently suppress unrelated orphan findings.
+    pub fn is_manual_entry_point(&self, analysis_root: &Path, path: &Path) -> bool {
+        let Ok(relative) = path.strip_prefix(analysis_root) else {
+            return false;
+        };
+        let relative = relative.to_string_lossy().replace('\\', "/");
+        self.entry_points.manual.iter().any(|entry| {
+            !entry.is_empty()
+                && !entry.contains('*')
+                && !entry.contains('?')
+                && !entry.split('/').any(|component| component == "..")
+                && entry.trim_start_matches("./") == relative
+        })
+    }
     
     /// Get similarity threshold as f64 (0.0-1.0)
     pub fn similarity_threshold(&self) -> f64 {
@@ -393,6 +425,9 @@ ignore:
     - constructor
   paths:
     - "**/*.test.ts"
+entry_points:
+  manual:
+    - "scripts/install.mjs"
 thresholds:
   duplicate_similarity: 90
   min_function_lines: 10
@@ -402,7 +437,29 @@ report:
         
         let config: GroundConfig = serde_yaml::from_str(yaml).unwrap();
         assert_eq!(config.ignore.functions.len(), 2);
+        assert_eq!(config.entry_points.manual, vec!["scripts/install.mjs"]);
         assert_eq!(config.thresholds.duplicate_similarity, 90);
         assert_eq!(config.report.format, ReportFormat::Markdown);
+    }
+
+    #[test]
+    fn manual_entry_points_are_exact_and_analysis_root_relative() {
+        let mut config = GroundConfig::default();
+        config.entry_points.manual = vec!["scripts/install.mjs".to_string()];
+
+        assert!(config.is_manual_entry_point(
+            Path::new("packages/example"),
+            Path::new("packages/example/scripts/install.mjs")
+        ));
+        assert!(!config.is_manual_entry_point(
+            Path::new("packages/example"),
+            Path::new("packages/example/scripts/install-copy.mjs")
+        ));
+
+        config.entry_points.manual = vec!["scripts/*.mjs".to_string(), "../escape.mjs".to_string()];
+        assert!(!config.is_manual_entry_point(
+            Path::new("packages/example"),
+            Path::new("packages/example/scripts/install.mjs")
+        ));
     }
 }

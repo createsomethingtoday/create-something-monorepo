@@ -3279,6 +3279,13 @@ fn handle_diff(args: &Value) -> ToolResult {
             let is_new_file = is_file_new_since(&repo_root, file, base_ref);
             
             if is_new_file {
+                if config.is_manual_entry_point(&analysis_root, file) {
+                    orphan_exclusions.push(VerificationFile {
+                        path: file.to_string_lossy().to_string(),
+                        reason: "manual_entry_point".to_string(),
+                    });
+                    continue;
+                }
                 attempted_new_file = true;
                 // Check connections for this specific file
                 use crate::computations::analyze_connectivity;
@@ -4718,6 +4725,58 @@ mod tests {
             .as_str()
             .unwrap()
             .contains("are clean"));
+    }
+
+    #[test]
+    fn diff_excludes_configured_manual_entry_points_from_orphan_findings() {
+        use std::fs;
+        use std::process::Command;
+
+        let repo = tempdir().unwrap();
+        let run_git = |args: &[&str]| {
+            let status = Command::new("git")
+                .args(args)
+                .current_dir(repo.path())
+                .status()
+                .unwrap();
+            assert!(status.success(), "git {:?} failed", args);
+        };
+
+        run_git(&["init", "--quiet"]);
+        run_git(&["config", "user.email", "ground@example.test"]);
+        run_git(&["config", "user.name", "Ground test"]);
+        fs::write(
+            repo.path().join(".ground.yml"),
+            "entry_points:\n  manual:\n    - scripts/install.mjs\n",
+        )
+        .unwrap();
+        run_git(&["add", "."]);
+        run_git(&["commit", "--quiet", "-m", "baseline"]);
+
+        let scripts = repo.path().join("scripts");
+        fs::create_dir_all(&scripts).unwrap();
+        fs::write(scripts.join("install.mjs"), "console.log('install');\n").unwrap();
+
+        let result = handle_diff(&json!({
+            "directory": repo.path(),
+            "base": "HEAD",
+            "checks": ["orphans"]
+        }));
+
+        assert!(result.success, "{:?}", result.content);
+        assert_eq!(result.content["total_new_issues"], 0);
+        assert_eq!(
+            result.content["check_coverage"]["orphans"]["status"],
+            "NOT_APPLICABLE"
+        );
+        assert!(result.content["check_coverage"]["orphans"]["excluded_changed_files"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|file| {
+                file["path"].as_str().unwrap().ends_with("scripts/install.mjs")
+                    && file["reason"] == "manual_entry_point"
+            }));
     }
 
     #[cfg(unix)]

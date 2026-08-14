@@ -47,6 +47,17 @@ ignore:
     # - ["src/templates/a.ts", "src/templates/b.ts"]
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Explicit Entry Points
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Manual CLIs or operator scripts with no import-based caller. Paths are exact
+# and relative to the directory passed to `ground diff`; they suppress orphan
+# findings only and remain visible as `manual_entry_point` coverage exclusions.
+entry_points:
+  manual:
+    # - "scripts/rebuild-search-index.mjs"
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Analysis Thresholds
 # ─────────────────────────────────────────────────────────────────────────────
 
