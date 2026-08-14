@@ -98,6 +98,13 @@ Do not configure an environment unless the release workflow adds one. The
 workflow publishes only after its matching GitHub Release and `SHA256SUMS`
 manifest have completed successfully.
 
+If a release was built successfully but npm publication was blocked (for
+example, during Trusted Publishing setup), rerun **Ground Release** manually
+with its exact `ground-v<version>` tag and **publish only** enabled. That path
+checks out the tag, requires it to match `package.json`, and verifies the
+existing release checksum manifest before publishing; it does not rebuild or
+replace GitHub Release assets.
+
 ## The Problem
 
 AI agents are confident. Too confident.

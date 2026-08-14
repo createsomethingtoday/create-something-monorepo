@@ -10,6 +10,11 @@ on:
       tag:
         description: 'Release tag (e.g., ground-v0.1.0)'
         required: true
+      publish_only:
+        description: 'Skip build and GitHub Release creation; publish an existing verified release to npm only'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -20,6 +25,7 @@ env:
 jobs:
   build:
     name: Build ${{ matrix.target }}
+    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.publish_only }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -97,6 +103,7 @@ jobs:
 
   release:
     name: Create Release
+    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.publish_only }}
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -157,6 +164,7 @@ jobs:
   publish-npm:
     name: Publish npm through trusted publishing
     needs: release
+    if: ${{ always() && (inputs.publish_only || needs.release.result == 'success') }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -173,6 +181,14 @@ jobs:
           node-version: '24'
           registry-url: 'https://registry.npmjs.org'
           package-manager-cache: false
+
+      - name: Verify release tag matches package version
+        working-directory: packages/ground/npm
+        env:
+          RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
+        run: |
+          expected_tag="ground-v$(node -p "require('./package.json').version")"
+          test "$RELEASE_TAG" = "$expected_tag"
 
       - name: Verify release checksum manifest
         working-directory: packages/ground/npm
