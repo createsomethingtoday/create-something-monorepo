@@ -97,6 +97,17 @@ export type ArcCommand =
   | { type: 'set_scene_lock'; sceneId: string; locked: boolean }
   | { type: 'set_scene_hidden'; sceneId: string; hidden: boolean }
   | {
+      type: 'attach_media';
+      sceneId: string;
+      source: string;
+      alt: string;
+      caption: string;
+      model: string;
+      promptReference: string;
+      rights: string;
+      costUsd: number | null;
+    }
+  | {
       type: 'propose_scene_patch';
       sceneId: string;
       kind: ArcProposal['kind'];
@@ -130,7 +141,16 @@ export type ArcCommandResult = {
 const editableStatuses = new Set<ArcLifecycleStatus>(['draft', 'review']);
 
 function clone<T>(value: T): T {
-  return structuredClone(value);
+  try {
+    return structuredClone(value);
+  } catch {
+    // Svelte state proxies cannot be structured-cloned in the browser. Arc documents are JSON artifacts.
+    return JSON.parse(JSON.stringify(value)) as T;
+  }
+}
+
+export function cloneArcDocument(document: ArcDocument): ArcDocument {
+  return clone(document);
 }
 
 function sceneById(document: ArcDocument, sceneId: string): AtlasCompositionScene {
@@ -162,6 +182,18 @@ function cleanText(value: string, label: string, max = 4_000): string {
   if (!clean) throw new Error(`${label} cannot be empty.`);
   if (clean.length > max) throw new Error(`${label} must be ${max} characters or fewer.`);
   return clean;
+}
+
+function cleanMediaSource(value: string): string {
+  const source = cleanText(value, 'Media source', 4_000);
+  if (
+    !source.startsWith('/') &&
+    !source.startsWith('https://') &&
+    !/^data:image\/(png|jpeg|webp);base64,/i.test(source)
+  ) {
+    throw new Error('Media source must be a local path, HTTPS URL, or PNG/JPEG/WebP data URL.');
+  }
+  return source;
 }
 
 function newScene(id: string, now: string): AtlasCompositionScene {
@@ -358,6 +390,33 @@ export function applyArcCommand(
     document.sceneMeta[command.sceneId].hidden = command.hidden;
     changedSceneIds = [command.sceneId];
     summary = `${command.hidden ? 'Hid' : 'Revealed'} scene ${command.sceneId}.`;
+  } else if (command.type === 'attach_media') {
+    assertEditable(document);
+    assertUnlocked(document, command.sceneId);
+    const scene = sceneById(document, command.sceneId);
+    const artifactId = `media-${context.id()}`;
+    document.composition.artifacts.push({
+      id: artifactId,
+      kind: 'media',
+      title: `${scene.label} media`,
+      summary: cleanText(command.caption, 'Media caption', 1_000),
+      provenance: {
+        source: cleanMediaSource(command.source),
+        alt: cleanText(command.alt, 'Alternative text', 1_000),
+        model: cleanText(command.model, 'Model or source', 200),
+        promptReference: cleanText(command.promptReference, 'Prompt reference', 4_000),
+        rights: cleanText(command.rights, 'Rights statement', 1_000),
+        costUsd: command.costUsd
+      }
+    });
+    scene.presentation.layout = 'split';
+    scene.presentation.media = {
+      artifactId,
+      caption: cleanText(command.caption, 'Media caption', 1_000),
+      placement: 'beside-copy'
+    };
+    changedSceneIds = [command.sceneId];
+    summary = `Attached provenance-bearing media to scene ${command.sceneId}.`;
   } else if (command.type === 'propose_scene_patch') {
     assertEditable(document);
     assertUnlocked(document, command.sceneId);
@@ -458,5 +517,9 @@ export function visibleComposition(document: ArcDocument, routeId: string): Atla
   const route = composition.routes.find((candidate) => candidate.id === routeId);
   if (!route) throw new Error(`Route not found: ${routeId}.`);
   route.sceneIds = route.sceneIds.filter((sceneId) => !document.sceneMeta[sceneId]?.hidden);
+  for (const scene of composition.scenes) {
+    const notes = document.sceneMeta[scene.id]?.notes.trim();
+    if (notes) scene.detail = notes;
+  }
   return composition;
 }

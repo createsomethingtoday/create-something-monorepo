@@ -45,6 +45,8 @@
     /** Optional semantic contract for an explicitly triggered scene transition. */
     motionIntent?: MotionIntent;
     enablePresentation?: boolean;
+    onSceneChange?: (scene: PerformanceNarrativeScene, index: number) => void;
+    onPresentationChange?: (presenting: boolean) => void;
     preview?: Snippet;
     artifact?: Snippet<[PerformanceNarrativeScene, number]>;
   }
@@ -60,6 +62,8 @@
     expression = 'field',
     motionIntent,
     enablePresentation = false,
+    onSceneChange,
+    onPresentationChange,
     preview,
     artifact
   }: Props = $props();
@@ -101,7 +105,10 @@
 
   function syncFromFragment() {
     const fragmentIndex = indexFromFragment();
-    if (fragmentIndex >= 0) activeIndex = fragmentIndex;
+    if (fragmentIndex >= 0) {
+      activeIndex = fragmentIndex;
+      onSceneChange?.(scenes[activeIndex], activeIndex);
+    }
   }
 
   function cancelSceneMotion() {
@@ -170,6 +177,7 @@
     if (!scenes[index]) return;
     const sceneChanged = activeIndex !== index;
     activeIndex = index;
+    if (sceneChanged) onSceneChange?.(scenes[index], index);
     if (sceneChanged && enhanced && motionIntent) void animateSceneTransition(index);
 
     if (pushHistory && typeof window !== 'undefined') {
@@ -309,6 +317,7 @@
   function setPresenting(next: boolean) {
     if (presenting === next) return;
     presenting = next;
+    onPresentationChange?.(next);
 
     if (typeof document === 'undefined') return;
     if (next) {
@@ -330,6 +339,7 @@
   onMount(() => {
     enhanced = true;
     syncFromFragment();
+    onSceneChange?.(scenes[activeIndex], activeIndex);
     window.addEventListener('hashchange', syncFromFragment);
     window.addEventListener('popstate', syncFromFragment);
     window.addEventListener('keydown', handlePresentationKeydown);
@@ -1421,15 +1431,14 @@
     .performance-narrative-stage[data-presenting='true']
       .performance-narrative-stage__stakeholders {
       display: flex;
-      overflow-x: auto;
-      scroll-snap-type: x proximity;
+      overflow: hidden;
     }
 
     .performance-narrative-stage[data-presenting='true']
       .performance-narrative-stage__stakeholders
       p {
-      min-width: min(15rem, 72vw);
-      scroll-snap-align: start;
+      flex: 1 1 0;
+      min-width: 0;
     }
 
     .performance-narrative-stage[data-presenting='true']

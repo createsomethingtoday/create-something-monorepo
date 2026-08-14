@@ -19,6 +19,8 @@
     assetBaseUrl?: string;
     actionEndpoint?: string;
     enablePresentation?: boolean;
+    onSceneChange?: (sceneId: string, index: number) => void;
+    onPresentationChange?: (presenting: boolean) => void;
   }
 
   let {
@@ -29,7 +31,9 @@
     ariaLabel = 'Arc scenes',
     assetBaseUrl = '',
     actionEndpoint,
-    enablePresentation = true
+    enablePresentation = true,
+    onSceneChange,
+    onPresentationChange
   }: Props = $props();
 
   const route = $derived.by(() => {
@@ -144,6 +148,8 @@
     expression="editorial"
     density="compact"
     {enablePresentation}
+    onSceneChange={(scene, index) => onSceneChange?.(scene.id, index)}
+    {onPresentationChange}
   >
     {#snippet artifact(activeScene)}
       {@const scene = sourceScene(activeScene.id)}

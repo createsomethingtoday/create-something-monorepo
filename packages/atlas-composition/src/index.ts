@@ -662,7 +662,7 @@ export const APP_REVIEW_GOVERNANCE_COMPOSITION: AtlasComposition = {
             produces:
               'A structured proposal with its sources, findings, current status, and the smallest intended next action.',
             boundary:
-              'The agent can prepare and recommend. It cannot silently approve the app or execute a state change.'
+              'The agent can prepare and recommend. It cannot approve the app or execute an approved action.'
           },
           {
             nodeId: 'app-governance-mcp',
@@ -710,7 +710,7 @@ export const APP_REVIEW_GOVERNANCE_COMPOSITION: AtlasComposition = {
         reader: {
           heading: 'Each system keeps one clear job.',
           explanation:
-            'The partner conversation stays attached as supporting context. The durable record stores the decision. The team workspace presents a readable view without becoming a second source of truth.',
+            'The partner conversation (Zendesk) stays attached as supporting context. The durable record (D1) stores the decision. The team workspace (Airtable) presents a readable view without becoming a second source of truth.',
           takeaway: 'One record with clear supporting context',
           stakeholders: [
             { role: 'Partnerships & Support', meaning: 'Your conversation stays visible without becoming the decision.' },
@@ -759,7 +759,7 @@ export const APP_REVIEW_GOVERNANCE_COMPOSITION: AtlasComposition = {
         reader: {
           heading: 'A person decides what happens next.',
           explanation:
-            'The agent may draft a creator update. Proposed means waiting. Approved means the update may run. Request changes, rejection, and exceptions all stay visible.',
+            'The agent may draft a creator update — drafting is all it can do. Proposed means waiting for a person. Approved means the governed path may run that one update. Request changes, rejection, and exceptions all stay visible.',
           takeaway: 'Proposed means waiting',
           stakeholders: [
             { role: 'Creator', meaning: 'You receive a clear outcome and the reason behind it.' },
@@ -859,8 +859,8 @@ export const APP_REVIEW_GOVERNANCE_COMPOSITION: AtlasComposition = {
         reader: {
           heading: 'Only the approved action can run.',
           explanation:
-            'After approval, the governed write path records the bounded step and keeps the result tied to the review. This demo stays in the browser and sends no message.',
-          takeaway: 'Approval unlocks one bounded step',
+            "After a named reviewer approves, the governed write path — not the agent acting on its own — carries out the one approved step and records who ran it in the receipt. The agent's part ended when it drafted the proposal. This demo stays in the browser and sends no message.",
+          takeaway: 'The agent proposes; the governed path executes',
           stakeholders: [
             { role: 'Creator', meaning: 'Only the update a reviewer approved can be prepared for you.' },
             { role: 'Reviewer', meaning: 'Your approval unlocks one named action, not open-ended access.' }

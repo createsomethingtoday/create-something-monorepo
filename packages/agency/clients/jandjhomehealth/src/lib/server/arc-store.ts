@@ -4,7 +4,7 @@ import {
   validateArcDocument,
   type ArcCommand,
   type ArcDocument
-} from '@create-something/arc';
+} from '@create-something/arc/model';
 import type { Db } from './db';
 
 export type ArcReceipt = {

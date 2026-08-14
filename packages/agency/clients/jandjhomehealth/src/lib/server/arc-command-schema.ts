@@ -37,6 +37,17 @@ export const arcCommandSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('set_scene_lock'), sceneId: cleanString(160), locked: z.boolean() }),
   z.object({ type: z.literal('set_scene_hidden'), sceneId: cleanString(160), hidden: z.boolean() }),
   z.object({
+    type: z.literal('attach_media'),
+    sceneId: cleanString(160),
+    source: cleanString(4_000),
+    alt: cleanString(1_000),
+    caption: cleanString(1_000),
+    model: cleanString(200),
+    promptReference: cleanString(4_000),
+    rights: cleanString(1_000),
+    costUsd: z.number().min(0).max(100_000).nullable()
+  }),
+  z.object({
     type: z.literal('propose_scene_patch'),
     sceneId: cleanString(160),
     kind: z.enum(['copy', 'layout', 'motion', 'map-focus', 'image', 'speaker-notes']),

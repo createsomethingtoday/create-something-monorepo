@@ -92,6 +92,31 @@ test('agent proposals preserve a human decision boundary and provenance', () => 
   assert.equal(document.sceneMeta['intake-preflight'].provenance.model, 'operator-agent');
 });
 
+test('locally generated media enters a scene only with provenance and rights', () => {
+  let document = createAppReviewArcDocument('2026-08-11T15:00:00.000Z');
+  document = applyArcCommand(document, {
+    type: 'attach_media',
+    sceneId: 'intake-preflight',
+    source: '/images/app-review/preflight.webp',
+    alt: 'A reviewer checks a preflight evidence bundle before making a decision.',
+    caption: 'Preflight makes missing evidence visible before review.',
+    model: 'logged-in local Codex account',
+    promptReference: 'arc-agent-brief revision 1',
+    rights: 'First-party generated asset approved for this customer Arc.',
+    costUsd: null
+  }, context()).document;
+
+  const scene = document.composition.scenes.find((candidate) => candidate.id === 'intake-preflight')!;
+  const artifact = document.composition.artifacts.find((candidate) => candidate.id === scene.presentation.media?.artifactId)!;
+  assert.equal(scene.presentation.layout, 'split');
+  assert.equal(artifact.kind, 'media');
+  assert.equal(artifact.provenance.model, 'logged-in local Codex account');
+  assert.match(artifact.provenance.rights, /approved/);
+  assert.throws(() => applyArcCommand(document, {
+    type: 'attach_media', sceneId: 'intake-preflight', source: 'javascript:alert(1)', alt: 'x', caption: 'x', model: 'x', promptReference: 'x', rights: 'x', costUsd: null
+  }, context()), /Media source/);
+});
+
 test('review, approval, and publication remain explicit gates', () => {
   let document = createAppReviewArcDocument('2026-08-11T15:00:00.000Z');
   document = applyArcCommand(
