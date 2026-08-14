@@ -136,15 +136,15 @@ test('CLI emits a deterministic JSON summary from a repo-owned ledger', (t) => {
   assert.equal(summary.findings.confirmed, 2);
 });
 
-test('the repository ledger preserves the completed calibration without inventing finding precision', () => {
+test('the repository ledger records current observations without inventing adjudications or precision', () => {
   const ledger = JSON.parse(readFileSync(repositoryLedgerPath, 'utf8'));
   const summary = summarizeLedger(ledger);
 
-  assert.deepEqual(summary.receipts, { total: 20, complete: 2, partial: 11, no_analyzable: 7 });
+  assert.deepEqual(summary.receipts, { total: 21, complete: 3, partial: 11, no_analyzable: 7 });
   assert.deepEqual(summary.findings, {
-    observed: 0,
+    observed: 14,
     adjudicated: 0,
-    unadjudicated: 0,
+    unadjudicated: 14,
     confirmed: 0,
     false_positive: 0,
     out_of_scope: 0
@@ -154,6 +154,7 @@ test('the repository ledger preserves the completed calibration without inventin
   assert.deepEqual(summary.promotion.reasons, [
     'complete_receipt_threshold_not_configured',
     'insufficient_adjudicated_findings',
+    'unadjudicated_findings',
     'precision_threshold_not_configured',
     'false_positive_rate_threshold_not_configured'
   ]);

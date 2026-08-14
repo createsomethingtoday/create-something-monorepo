@@ -9,6 +9,7 @@
   },
   "notes": [
     "This ledger seeds the 2026-08-12 calibration receipts without inventing positive findings or precision.",
+    "PR #1403 adds 14 observed duplicate-function candidates without verdicts; an independent reviewer must adjudicate them before they inform precision.",
     "Numeric coverage and precision thresholds remain an operator decision; this ledger must remain advisory until they are configured."
   ],
   "records": [
@@ -189,6 +190,15 @@
         "source": "docs/internal/ground-review-calibration-2026-08-12.json#1355",
         "completion": "partial",
         "observed_findings": 0
+      },
+      "verdicts": []
+    },
+    {
+      "receipt": {
+        "id": "ground-review-pr-1403-6c5b0a2",
+        "source": "https://github.com/createsomethingtoday/create-something-monorepo/commit/6c5b0a258bc5c128235e4a08dde1cf52fa45c43a",
+        "completion": "complete",
+        "observed_findings": 14
       },
       "verdicts": []
     }
