@@ -45,6 +45,7 @@ export async function validateDesignerData(designerData: DesignerData): Promise<
   categories.push(validateStyles(styles));
   categories.push(validateRequiredPages(pages));
   categories.push(validatePageStructure(pages));
+  categories.push(validatePageSEO(pages));
 
   if (assets) {
     categories.push(validateDesignerAssets(assets));
@@ -427,40 +428,81 @@ function validateStyles(styles: DesignerData['styles']): CategoryResult {
 }
 
 // --- Required Pages Validation ---
+function normalizePagePath(page: DesignerData['pages'][number]): string {
+  const raw = page.publishPath || page.path || page.slug || '';
+  let path = String(raw).trim().toLowerCase();
+  if (!path.startsWith('/')) path = `/${path}`;
+  if (path.length > 1 && path.endsWith('/')) path = path.slice(0, -1);
+  return path;
+}
+
 function validateRequiredPages(pages: DesignerData['pages']): CategoryResult {
   const issues: ValidationIssue[] = [];
-  const pageNames = pages.map(p => p.name?.toLowerCase() || '');
-  const pageSlugs = pages.map(p => p.slug?.toLowerCase() || '');
+  const publishedPages = pages.filter(p => !p.isDraft);
+  const pagePaths = publishedPages.map(normalizePagePath);
+  const pageNames = publishedPages.map(p => p.name?.toLowerCase() || '');
 
-  const hasStyleGuide = pageNames.some(name =>
-    name.includes('style guide') || name.includes('styleguide')
-  ) || pageSlugs.some(slug => slug.includes('style-guide'));
+  const hasExactPath = (slug: string) => pagePaths.includes(`/${slug}`);
+  const findNearMiss = (fragment: string, exactSlug: string) =>
+    publishedPages.find((p, i) =>
+      (pagePaths[i].includes(fragment) || pageNames[i].includes(fragment.replace(/-/g, ' '))) &&
+      pagePaths[i] !== `/${exactSlug}`
+    );
 
-  const hasLicense = pageNames.some(name =>
-    name.includes('license') || name.includes('licenses')
-  ) || pageSlugs.some(slug => slug.includes('license'));
-
+  const hasStyleGuide = hasExactPath('style-guide');
+  const hasLicenses = hasExactPath('licenses');
+  const hasChangelog = hasExactPath('changelog');
+  const hasInstructions = hasExactPath('instructions');
   const hasCustom404 = pageNames.some(name =>
     name.includes('404') || name.includes('not found')
-  );
+  ) || pagePaths.some(path => path === '/404');
 
   if (!hasStyleGuide) {
+    const nearMiss = findNearMiss('style', 'style-guide');
     issues.push({
       id: 'required-pages.missing-style-guide',
       category: 'Required Pages',
       severity: 'error',
-      message: 'Style Guide page is required for template submission.',
-      howToFix: 'Create a Style Guide page with all HTML tags and typography.'
+      message: 'A Style Guide page published at exactly /style-guide is required for template submission.',
+      howToFix: nearMiss
+        ? `Found "${nearMiss.name}" at ${normalizePagePath(nearMiss)} — move it to the root slug /style-guide.`
+        : 'Create a Style Guide page at the root slug /style-guide with all HTML tags and typography.'
     });
   }
 
-  if (!hasLicense) {
+  if (!hasLicenses) {
+    const nearMiss = findNearMiss('license', 'licenses');
     issues.push({
       id: 'required-pages.missing-license',
       category: 'Required Pages',
       severity: 'error',
-      message: 'License page is required for template submission.',
-      howToFix: 'Create a License page with licensing info for all custom assets. It may be nested in a folder if its published URL is accessible.'
+      message: 'A Licenses page published at exactly /licenses (plural) is required for template submission.',
+      howToFix: nearMiss
+        ? `Found "${nearMiss.name}" at ${normalizePagePath(nearMiss)} — the required slug is exactly /licenses. Rename the page slug.`
+        : 'Create a Licenses page at the root slug /licenses with licensing info for all custom assets.'
+    });
+  }
+
+  if (!hasChangelog) {
+    const nearMiss = findNearMiss('changelog', 'changelog');
+    issues.push({
+      id: 'required-pages.missing-changelog',
+      category: 'Required Pages',
+      severity: 'error',
+      message: 'A Changelog page published at exactly /changelog is required for template submission.',
+      howToFix: nearMiss
+        ? `Found "${nearMiss.name}" at ${normalizePagePath(nearMiss)} — move it to the root slug /changelog.`
+        : 'Create a Changelog page at the root slug /changelog documenting template versions.'
+    });
+  }
+
+  if (!hasInstructions) {
+    issues.push({
+      id: 'required-pages.missing-instructions',
+      category: 'Required Pages',
+      severity: 'warning',
+      message: 'No Instructions page found at /instructions.',
+      howToFix: 'An Instructions page at the root slug /instructions is required if the template uses advanced/hidden components, SVG embeds, or GSAP custom code. Add one if any of those apply.'
     });
   }
 
@@ -468,8 +510,8 @@ function validateRequiredPages(pages: DesignerData['pages']): CategoryResult {
     issues.push({
       id: 'required-pages.missing-404',
       category: 'Required Pages',
-      severity: 'warning',
-      message: 'Custom 404 page is recommended.',
+      severity: 'error',
+      message: 'A custom 404 page is required for template submission.',
       howToFix: 'Create a custom branded 404 page with full navigation and CTAs.'
     });
   }
@@ -487,7 +529,177 @@ function validateRequiredPages(pages: DesignerData['pages']): CategoryResult {
     category: 'Required Pages',
     passed: issues.filter(i => i.severity === 'error').length === 0,
     issues,
-    stats: { hasStyleGuide, hasLicense, hasCustom404 }
+    stats: { hasStyleGuide, hasLicenses, hasChangelog, hasInstructions, hasCustom404 }
+  };
+}
+
+// --- Page SEO Validation (Designer API data — covers CMS template pages) ---
+function validatePageSEO(pages: DesignerData['pages']): CategoryResult {
+  const issues: ValidationIssue[] = [];
+  const eligiblePages = pages.filter(
+    p => !p.isDraft && (p.type === 'Page' || p.isCmsTemplate)
+  );
+  // The extension sets `seo` to null when Designer API collection failed for a
+  // page. Only judge pages whose SEO data was actually collected — a collection
+  // failure must not read as "missing metadata" and block submission.
+  const publishedPages = eligiblePages.filter(
+    p => p.seo && typeof p.seo === 'object'
+  );
+
+  if (eligiblePages.length > 0 && publishedPages.length === 0) {
+    return {
+      category: 'SEO Metadata',
+      passed: true,
+      issues: [{
+        id: 'seo.data-unavailable',
+        category: 'SEO Metadata',
+        severity: 'warning',
+        message: 'Page SEO data could not be collected from the Designer API, so SEO metadata was not validated.',
+        howToFix: 'Re-run validation. If this persists, check page settings manually before submitting.'
+      }],
+      stats: { pagesChecked: 0, eligiblePages: eligiblePages.length }
+    };
+  }
+
+  const staticPages = publishedPages.filter(p => !p.isCmsTemplate);
+  const cmsTemplatePages = publishedPages.filter(p => p.isCmsTemplate);
+  const label = (p: DesignerData['pages'][number]) => `${p.name} (${normalizePagePath(p)})`;
+
+  // Pages missing SEO title / description. For CMS template pages the Designer API
+  // returns the configured value including CMS-field bindings, so an empty value
+  // means the dynamic SEO settings are genuinely missing.
+  const missingTitle = publishedPages.filter(p => !p.seo?.title?.trim());
+  const missingDescription = publishedPages.filter(p => !p.seo?.description?.trim());
+
+  if (missingTitle.length > 0) {
+    issues.push({
+      id: 'seo.missing-title',
+      category: 'SEO Metadata',
+      severity: 'error',
+      message: `${missingTitle.length} page(s) are missing an SEO title.`,
+      details: { pages: missingTitle.map(label).slice(0, 10) },
+      howToFix: 'Set a unique SEO title (30-60 characters) in each page\'s settings. CMS template pages should bind the title to a collection field.'
+    });
+  }
+
+  if (missingDescription.length > 0) {
+    issues.push({
+      id: 'seo.missing-description',
+      category: 'SEO Metadata',
+      severity: 'error',
+      message: `${missingDescription.length} page(s) are missing a meta description.`,
+      details: { pages: missingDescription.map(label).slice(0, 10) },
+      howToFix: 'Set a unique meta description (120-160 characters) in each page\'s settings. CMS template pages should bind the description to a collection field.'
+    });
+  }
+
+  // Duplicate titles/descriptions across static pages (reviewers flag copy-pasted metadata).
+  const findDuplicates = (extract: (p: DesignerData['pages'][number]) => string | undefined) => {
+    const groups = new Map<string, string[]>();
+    for (const page of staticPages) {
+      const value = extract(page)?.trim().toLowerCase();
+      if (!value) continue;
+      const group = groups.get(value) || [];
+      group.push(label(page));
+      groups.set(value, group);
+    }
+    return [...groups.values()].filter(group => group.length > 1);
+  };
+
+  const duplicateTitles = findDuplicates(p => p.seo?.title);
+  if (duplicateTitles.length > 0) {
+    issues.push({
+      id: 'seo.duplicate-title',
+      category: 'SEO Metadata',
+      severity: 'error',
+      message: `${duplicateTitles.length} SEO title(s) are duplicated across multiple pages.`,
+      details: { duplicates: duplicateTitles.map(group => group.slice(0, 6)).slice(0, 5) },
+      howToFix: 'Write a unique SEO title for every static page instead of reusing the same one.'
+    });
+  }
+
+  const duplicateDescriptions = findDuplicates(p => p.seo?.description);
+  if (duplicateDescriptions.length > 0) {
+    issues.push({
+      id: 'seo.duplicate-description',
+      category: 'SEO Metadata',
+      severity: 'error',
+      message: `${duplicateDescriptions.length} meta description(s) are duplicated across multiple pages.`,
+      details: { duplicates: duplicateDescriptions.map(group => group.slice(0, 6)).slice(0, 5) },
+      howToFix: 'Write a unique meta description for every static page instead of reusing the same one.'
+    });
+  }
+
+  // Length guidance stays advisory.
+  const longTitles = staticPages.filter(p => (p.seo?.title?.trim().length || 0) > 60);
+  if (longTitles.length > 0) {
+    issues.push({
+      id: 'seo.title-too-long',
+      category: 'SEO Metadata',
+      severity: 'warning',
+      message: `${longTitles.length} SEO title(s) exceed 60 characters and may be truncated in search results.`,
+      details: { pages: longTitles.map(label).slice(0, 10) },
+      howToFix: 'Shorten SEO titles to 60 characters or fewer.'
+    });
+  }
+
+  const longDescriptions = staticPages.filter(p => (p.seo?.description?.trim().length || 0) > 160);
+  if (longDescriptions.length > 0) {
+    issues.push({
+      id: 'seo.description-too-long',
+      category: 'SEO Metadata',
+      severity: 'warning',
+      message: `${longDescriptions.length} meta description(s) exceed 160 characters and may be truncated in search results.`,
+      details: { pages: longDescriptions.map(label).slice(0, 10) },
+      howToFix: 'Shorten meta descriptions to 120-160 characters.'
+    });
+  }
+
+  // Open Graph: the home page must define an OG image; other pages are advisory.
+  const homePage = staticPages.find(p => p.isHomePage);
+  if (homePage && !homePage.seo?.openGraphImage?.trim()) {
+    issues.push({
+      id: 'seo.missing-og-image-home',
+      category: 'SEO Metadata',
+      severity: 'error',
+      message: 'The home page is missing an Open Graph image.',
+      howToFix: 'Set an Open Graph image in the home page settings so shared links render a preview card.'
+    });
+  }
+
+  const cmsMissingOgImage = cmsTemplatePages.filter(p => !p.seo?.openGraphImage?.trim());
+  if (cmsMissingOgImage.length > 0) {
+    issues.push({
+      id: 'seo.missing-og-image-cms',
+      category: 'SEO Metadata',
+      severity: 'warning',
+      message: `${cmsMissingOgImage.length} CMS template page(s) have no Open Graph image selection.`,
+      details: { pages: cmsMissingOgImage.map(label).slice(0, 10) },
+      howToFix: 'Bind the Open Graph image to a collection field on each CMS template page.'
+    });
+  }
+
+  if (issues.length === 0) {
+    issues.push({
+      id: 'seo.complete',
+      category: 'SEO Metadata',
+      severity: 'info',
+      message: 'SEO titles, descriptions, and Open Graph settings look complete.'
+    });
+  }
+
+  return {
+    category: 'SEO Metadata',
+    passed: issues.filter(i => i.severity === 'error').length === 0,
+    issues,
+    stats: {
+      pagesChecked: publishedPages.length,
+      cmsTemplatePagesChecked: cmsTemplatePages.length,
+      missingTitle: missingTitle.length,
+      missingDescription: missingDescription.length,
+      duplicateTitleGroups: duplicateTitles.length,
+      duplicateDescriptionGroups: duplicateDescriptions.length
+    }
   };
 }
 

@@ -841,6 +841,11 @@ async function fetchJsonWithRetry<T>(
 }
 
 function buildValidationSubmitPayload(validationResults: ValidationResponse): Record<string, any> {
+  const projectData = Array.isArray(validationResults.collectedData)
+    ? (validationResults.collectedData[0] as ProjectData | undefined)
+    : undefined;
+  const scope = projectData?.validationScope;
+
   return {
     url: validationResults.url,
     summary: validationResults.summary,
@@ -856,6 +861,16 @@ function buildValidationSubmitPayload(validationResults: ValidationResponse): Re
             : [],
         }))
       : [],
+    // The marketplace form uses this to reject partial runs (skipped checks or
+    // current-page scope) — a 100% pass only counts when the full suite ran.
+    scope: scope
+      ? {
+          selectedChecks: scope.selectedChecks,
+          pageScope: scope.pageScope,
+          publishedChecks: scope.publishedChecks,
+          pageSlugsCount: scope.pageSlugsCount,
+        }
+      : undefined,
   };
 }
 

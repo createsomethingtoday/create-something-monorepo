@@ -34,12 +34,13 @@ import {
 	SnippetInstallResponse,
 	SnippetStatusResponse,
 	SnippetRotateTokenRequest,
+	ValidationRunScope,
 	ValidationSubmitRequest,
 	ValidationSubmitResponse
 } from './types';
 
 const REVIEW_SNIPPET_VERSION = '0.3.0';
-const WORKER_VERSION = '2.3.2';
+const WORKER_VERSION = '2.4.0';
 const REVIEW_SNIPPET_MARKER = '__wf_review_snippet_v1';
 const REVIEW_SNIPPET_ASSET_PATH = '/app-validator/snippet/review.js';
 const REVIEW_JOB_RETENTION_MS = 30 * 60 * 1000;
@@ -177,6 +178,7 @@ interface ValidationResultRecord {
 	summary: ValidationSubmissionSummary;
 	failedCategoryDetails?: ValidationCategoryDetail[];
 	warningCategoryDetails?: ValidationCategoryDetail[];
+	scope?: ValidationRunScope;
 	artifact: ValidationResultArtifactPersistResult;
 }
 
@@ -1066,6 +1068,7 @@ async function handleValidationSubmit(
 		summary: summarizeValidationSubmission(sanitizedResults),
 		failedCategoryDetails: getFailedCategoryDetails(sanitizedResults),
 		warningCategoryDetails: getWarningCategoryDetails(sanitizedResults),
+		scope: sanitizeValidationScope(sanitizedResults.scope),
 		artifact: artifactResult
 	};
 	await persistValidationResultState(env, latestResult);
@@ -1289,6 +1292,7 @@ async function handleValidationSubmissionLatest(
 			summary: record.summary,
 			failedCategoryDetails: record.failedCategoryDetails || [],
 			warningCategoryDetails: record.warningCategoryDetails || [],
+			scope: record.scope,
 			artifact: record.artifact
 		},
 		200,
@@ -2640,7 +2644,29 @@ function sanitizeValidationResults(
 				? validationResults.url.trim()
 				: undefined,
 		summary,
-		categories
+		categories,
+		scope: sanitizeValidationScope(validationResults?.scope)
+	};
+}
+
+function sanitizeValidationScope(
+	scope: ValidationSubmitRequest['validationResults']['scope']
+): ValidationRunScope | undefined {
+	if (!scope || typeof scope !== 'object') return undefined;
+	const selectedChecks = Array.isArray(scope.selectedChecks)
+		? scope.selectedChecks
+				.filter((check): check is string => typeof check === 'string' && check.trim() !== '')
+				.map((check) => check.trim().toLowerCase())
+				.slice(0, 10)
+		: [];
+	return {
+		selectedChecks,
+		pageScope: scope.pageScope === 'current' ? 'current' : 'all',
+		publishedChecks: scope.publishedChecks === 'designer-only' ? 'designer-only' : 'full',
+		pageSlugsCount:
+			typeof scope.pageSlugsCount === 'number' && Number.isFinite(scope.pageSlugsCount)
+				? Math.max(0, Math.floor(scope.pageSlugsCount))
+				: 0
 	};
 }
 
