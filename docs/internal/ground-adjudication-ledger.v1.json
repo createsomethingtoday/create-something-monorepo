@@ -1,0 +1,196 @@
+{
+  "schema_version": "ground-adjudication-ledger.v1",
+  "mode": "advisory",
+  "thresholds": {
+    "minimum_complete_receipts": null,
+    "minimum_adjudicated_findings": 10,
+    "minimum_precision": null,
+    "maximum_false_positive_rate": null
+  },
+  "notes": [
+    "This ledger seeds the 2026-08-12 calibration receipts without inventing positive findings or precision.",
+    "Numeric coverage and precision thresholds remain an operator decision; this ledger must remain advisory until they are configured."
+  ],
+  "records": [
+    {
+      "receipt": {
+        "id": "ground-review-pr-1321",
+        "source": "docs/internal/ground-review-calibration-2026-08-12.json#1321",
+        "completion": "no_analyzable",
+        "observed_findings": 0
+      },
+      "verdicts": []
+    },
+    {
+      "receipt": {
+        "id": "ground-review-pr-1324",
+        "source": "docs/internal/ground-review-calibration-2026-08-12.json#1324",
+        "completion": "partial",
+        "observed_findings": 0
+      },
+      "verdicts": []
+    },
+    {
+      "receipt": {
+        "id": "ground-review-pr-1325",
+        "source": "docs/internal/ground-review-calibration-2026-08-12.json#1325",
+        "completion": "no_analyzable",
+        "observed_findings": 0
+      },
+      "verdicts": []
+    },
+    {
+      "receipt": {
+        "id": "ground-review-pr-1327",
+        "source": "docs/internal/ground-review-calibration-2026-08-12.json#1327",
+        "completion": "partial",
+        "observed_findings": 0
+      },
+      "verdicts": []
+    },
+    {
+      "receipt": {
+        "id": "ground-review-pr-1332",
+        "source": "docs/internal/ground-review-calibration-2026-08-12.json#1332",
+        "completion": "partial",
+        "observed_findings": 0
+      },
+      "verdicts": []
+    },
+    {
+      "receipt": {
+        "id": "ground-review-pr-1333",
+        "source": "docs/internal/ground-review-calibration-2026-08-12.json#1333",
+        "completion": "no_analyzable",
+        "observed_findings": 0
+      },
+      "verdicts": []
+    },
+    {
+      "receipt": {
+        "id": "ground-review-pr-1334",
+        "source": "docs/internal/ground-review-calibration-2026-08-12.json#1334",
+        "completion": "no_analyzable",
+        "observed_findings": 0
+      },
+      "verdicts": []
+    },
+    {
+      "receipt": {
+        "id": "ground-review-pr-1337",
+        "source": "docs/internal/ground-review-calibration-2026-08-12.json#1337",
+        "completion": "partial",
+        "observed_findings": 0
+      },
+      "verdicts": []
+    },
+    {
+      "receipt": {
+        "id": "ground-review-pr-1338",
+        "source": "docs/internal/ground-review-calibration-2026-08-12.json#1338",
+        "completion": "partial",
+        "observed_findings": 0
+      },
+      "verdicts": []
+    },
+    {
+      "receipt": {
+        "id": "ground-review-pr-1344",
+        "source": "docs/internal/ground-review-calibration-2026-08-12.json#1344",
+        "completion": "partial",
+        "observed_findings": 0
+      },
+      "verdicts": []
+    },
+    {
+      "receipt": {
+        "id": "ground-review-pr-1345",
+        "source": "docs/internal/ground-review-calibration-2026-08-12.json#1345",
+        "completion": "no_analyzable",
+        "observed_findings": 0
+      },
+      "verdicts": []
+    },
+    {
+      "receipt": {
+        "id": "ground-review-pr-1346",
+        "source": "docs/internal/ground-review-calibration-2026-08-12.json#1346",
+        "completion": "complete",
+        "observed_findings": 0
+      },
+      "verdicts": []
+    },
+    {
+      "receipt": {
+        "id": "ground-review-pr-1347",
+        "source": "docs/internal/ground-review-calibration-2026-08-12.json#1347",
+        "completion": "partial",
+        "observed_findings": 0
+      },
+      "verdicts": []
+    },
+    {
+      "receipt": {
+        "id": "ground-review-pr-1348",
+        "source": "docs/internal/ground-review-calibration-2026-08-12.json#1348",
+        "completion": "complete",
+        "observed_findings": 0
+      },
+      "verdicts": []
+    },
+    {
+      "receipt": {
+        "id": "ground-review-pr-1349",
+        "source": "docs/internal/ground-review-calibration-2026-08-12.json#1349",
+        "completion": "no_analyzable",
+        "observed_findings": 0
+      },
+      "verdicts": []
+    },
+    {
+      "receipt": {
+        "id": "ground-review-pr-1351",
+        "source": "docs/internal/ground-review-calibration-2026-08-12.json#1351",
+        "completion": "partial",
+        "observed_findings": 0
+      },
+      "verdicts": []
+    },
+    {
+      "receipt": {
+        "id": "ground-review-pr-1352",
+        "source": "docs/internal/ground-review-calibration-2026-08-12.json#1352",
+        "completion": "partial",
+        "observed_findings": 0
+      },
+      "verdicts": []
+    },
+    {
+      "receipt": {
+        "id": "ground-review-pr-1353",
+        "source": "docs/internal/ground-review-calibration-2026-08-12.json#1353",
+        "completion": "no_analyzable",
+        "observed_findings": 0
+      },
+      "verdicts": []
+    },
+    {
+      "receipt": {
+        "id": "ground-review-pr-1354",
+        "source": "docs/internal/ground-review-calibration-2026-08-12.json#1354",
+        "completion": "partial",
+        "observed_findings": 0
+      },
+      "verdicts": []
+    },
+    {
+      "receipt": {
+        "id": "ground-review-pr-1355",
+        "source": "docs/internal/ground-review-calibration-2026-08-12.json#1355",
+        "completion": "partial",
+        "observed_findings": 0
+      },
+      "verdicts": []
+    }
+  ]
+}

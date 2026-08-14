@@ -245,6 +245,8 @@
     "ground:duplicates:json": "tsx scripts/ground-duplicates.ts --json",
     "ground:review": "node scripts/ground-review.mjs",
     "ground:review:json": "node scripts/ground-review.mjs --format json",
+    "ground:adjudication": "node scripts/ground-adjudication.mjs --ledger docs/internal/ground-adjudication-ledger.v1.json",
+    "ground:adjudication:json": "node scripts/ground-adjudication.mjs --ledger docs/internal/ground-adjudication-ledger.v1.json --format json",
     "ground": "pnpm ground:imports && pnpm ground:components && pnpm ground:experiments && pnpm ground:duplicates",
     "authz:compile": "tsx scripts/compile-authz-manifests.ts",
     "authz:publish": "tsx scripts/publish-authz-policy.ts",
