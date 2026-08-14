@@ -1,0 +1,196 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://createsomething.today/schemas/workway/agent-receipt.v1.schema.json",
+  "title": "WorkWay Agent Receipt v1",
+  "description": "A source-free, revision-bound agent result. It is a proposal, block, or escalation receipt; it never accepts evidence, applies geometry, or authorizes construction.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "requestId",
+    "role",
+    "projectId",
+    "canonicalRevision",
+    "spatialRevision",
+    "supportedScope",
+    "outcome",
+    "assumptions",
+    "requiredReview",
+    "proposal",
+    "validation",
+    "block",
+    "constructionReady"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "workway.agent-receipt.v1" },
+    "requestId": {
+      "type": "string",
+      "description": "Opaque client correlation token; it must never encode a prompt, person, filename, or source locator.",
+      "pattern": "^req_[a-f0-9]{32}$"
+    },
+    "role": { "type": "string", "enum": ["composer", "ingestion", "trade-review", "spatial-session"] },
+    "projectId": { "type": "string", "minLength": 1, "maxLength": 160, "pattern": "^[A-Za-z0-9_-]+$" },
+    "canonicalRevision": { "type": "string", "minLength": 1, "maxLength": 80, "pattern": "^[A-Za-z0-9._-]+$" },
+    "spatialRevision": { "type": "string", "minLength": 1, "maxLength": 80, "pattern": "^[A-Za-z0-9._-]+$" },
+    "supportedScope": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "outcome": { "type": "string", "enum": ["proposed", "blocked", "escalated"] },
+    "assumptions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "requiredReview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "roles", "rationale"],
+      "properties": {
+        "required": { "const": true },
+        "roles": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "rationale": { "type": "string", "minLength": 1 }
+      }
+    },
+    "proposal": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "schemaVersion",
+            "id",
+            "packageId",
+            "projectId",
+            "canonicalRevision",
+            "spatialRevision",
+            "chapterId",
+            "operation",
+            "measurements",
+            "requiresProfessionalReview",
+            "constructionReady"
+          ],
+          "properties": {
+            "schemaVersion": { "const": "workway.change-proposal.v1" },
+            "id": { "type": "string", "minLength": 1 },
+            "packageId": { "type": "string", "minLength": 1 },
+            "projectId": { "type": "string", "minLength": 1 },
+            "canonicalRevision": { "type": "string", "minLength": 1 },
+            "spatialRevision": { "type": "string", "minLength": 1 },
+            "chapterId": { "type": "string", "minLength": 1 },
+            "operation": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["moveEntity"],
+                  "properties": {
+                    "moveEntity": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["entityId", "deltaXIn", "deltaYIn"],
+                      "properties": {
+                        "entityId": { "type": "string", "minLength": 1 },
+                        "deltaXIn": { "type": "integer" },
+                        "deltaYIn": { "type": "integer" }
+                      }
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["setMaterialRole"],
+                  "properties": {
+                    "setMaterialRole": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["entityId", "materialRoleId"],
+                      "properties": {
+                        "entityId": { "type": "string", "minLength": 1 },
+                        "materialRoleId": { "type": "string", "minLength": 1 }
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "measurements": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["id", "currentIn", "proposedIn", "targetIn"],
+                "properties": {
+                  "id": { "type": "string", "minLength": 1 },
+                  "currentIn": { "type": "integer" },
+                  "proposedIn": { "type": "integer" },
+                  "targetIn": { "type": ["integer", "null"] }
+                }
+              }
+            },
+            "requiresProfessionalReview": { "const": true },
+            "constructionReady": { "const": false }
+          }
+        }
+      ]
+    },
+    "validation": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["proposalId", "issueIds", "deterministic", "constructionReady"],
+          "properties": {
+            "proposalId": { "type": "string", "minLength": 1 },
+            "issueIds": { "type": "array", "items": { "type": "string" } },
+            "deterministic": { "const": true },
+            "constructionReady": { "const": false }
+          }
+        }
+      ]
+    },
+    "block": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["reasonId", "explanation"],
+          "properties": {
+            "reasonId": { "type": "string", "minLength": 1 },
+            "explanation": { "type": "string", "minLength": 1 }
+          }
+        }
+      ]
+    },
+    "constructionReady": { "const": false }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "outcome": { "const": "proposed" } } },
+      "then": {
+        "properties": {
+          "proposal": { "type": "object" },
+          "validation": { "type": "object" },
+          "block": { "type": "null" }
+        }
+      },
+      "else": {
+        "properties": {
+          "proposal": { "type": "null" },
+          "validation": { "type": "null" },
+          "block": { "type": "object" }
+        }
+      }
+    }
+  ]
+}

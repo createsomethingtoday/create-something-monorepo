@@ -3,6 +3,8 @@
   import {
     THRESHOLD_DWELLING_SPATIAL_PACKAGE,
     DEFAULT_THRESHOLD_DWELLING_COMPOSER_INTENT,
+    agentClientProjectionForPackage,
+    agentScenarioForId,
     assetBrowserUrl,
     chapterForId,
     composerProposalForIntent,
@@ -11,6 +13,7 @@
     interpretThresholdDwellingComposerIntent,
     portalsFrom,
     type WorkWayComposerInterpretation,
+    type WorkWayAgentClientScenario,
     type WorkWaySessionAnnotation,
     type WorkWaySessionOperation,
     type WorkWaySessionProposalDecision
@@ -32,6 +35,7 @@
   const massingGeometry = createThresholdDwellingMassingGeometry(massingGuide);
   const physicalSceneEvidenceFacts = spatialPackage.physicalSceneContract.evidenceFacts;
   const evidenceIntakePacket = evidenceIntakePacketForPackage(spatialPackage);
+  const agentClientProjection = agentClientProjectionForPackage(spatialPackage);
   const acceptedPhysicalSceneEvidenceCount = physicalSceneEvidenceFacts.filter(
     (fact) => fact.evidenceStatus === 'accepted'
   ).length;
@@ -43,6 +47,8 @@
   let proposalDecision = $state<WorkWaySessionProposalDecision | null>(null);
   let composerIntent = $state(DEFAULT_THRESHOLD_DWELLING_COMPOSER_INTENT);
   let composerInterpretation = $state<WorkWayComposerInterpretation | null>(null);
+  let selectedAgentScenarioId = $state(agentClientProjection.scenarios[0]?.id ?? '');
+  let inspectedAgentScenarioId = $state<string | null>(null);
 
   const initialKitchenIslandProposal = composerProposalForIntent(
     spatialPackage,
@@ -61,6 +67,11 @@
     ...(proposalDecision ? [proposalDecision] : []),
     ...annotations
   ]);
+  const inspectedAgentScenario = $derived(
+    inspectedAgentScenarioId
+      ? agentScenarioForId(spatialPackage, inspectedAgentScenarioId)
+      : null
+  );
 
   function enterChapter(chapterId: string) {
     activeChapterId = chapterId;
@@ -109,6 +120,24 @@
       composerInterpretation.proposal,
       decision
     );
+  }
+
+  function inspectAgentScenario() {
+    if (!selectedAgentScenarioId) {
+      throw new Error('A WorkWay agent evaluation scenario must be selected.');
+    }
+    inspectedAgentScenarioId = selectedAgentScenarioId;
+  }
+
+  function agentOperationSummary(
+    proposal: NonNullable<WorkWayAgentClientScenario['receipt']['proposal']>
+  ): string {
+    if ('moveEntity' in proposal.operation) {
+      const operation = proposal.operation.moveEntity;
+      return `${operation.entityId} → ${operation.deltaYIn} in south`;
+    }
+    const operation = proposal.operation.setMaterialRole;
+    return `${operation.entityId} → ${operation.materialRoleId}`;
   }
 </script>
 
@@ -475,6 +504,57 @@
               <p>{composerInterpretation.explanation}</p>
             </div>
           {/if}
+        </section>
+
+        <section
+          class="proposal-card"
+          aria-label="WorkWay agent foundation evaluation"
+          data-testid="agent-foundation-evaluation"
+        >
+          <p class="section-label">Agent foundation / API receipt</p>
+          <h3>Inspect an evaluated boundary</h3>
+          <p>
+            These are fixed Rust-evaluated receipts for the active project revision. This client has
+            no agent endpoint, document intake, acceptance control, or graph-mutation capability.
+          </p>
+          <label for="agent-scenario">Evaluation scenario</label>
+          <select id="agent-scenario" bind:value={selectedAgentScenarioId} data-testid="agent-scenario-select">
+            {#each agentClientProjection.scenarios as scenario}
+              <option value={scenario.id}>{scenario.label}</option>
+            {/each}
+          </select>
+          <button class="primary-action" onclick={inspectAgentScenario} data-testid="inspect-agent-scenario">
+            Inspect receipt
+          </button>
+          {#if inspectedAgentScenario}
+            <div class="composer-result" data-testid="agent-scenario-result">
+              <p class="section-label">{inspectedAgentScenario.expectedOutcome} / expected outcome</p>
+              <code data-testid="agent-receipt-id">{inspectedAgentScenario.receipt.requestId}</code>
+              {#if inspectedAgentScenario.receipt.proposal}
+                <p data-testid="agent-proposal-operation">
+                  {agentOperationSummary(inspectedAgentScenario.receipt.proposal)}
+                </p>
+                <dl class="proposal-measurements">
+                  {#each inspectedAgentScenario.receipt.proposal.measurements as measurement}
+                    <div>
+                      <dt>{measurement.id.replaceAll('-', ' ')}</dt>
+                      <dd>{measurement.currentIn} → {measurement.proposedIn} in{measurement.targetIn ? ` · target ${measurement.targetIn} in` : ''}</dd>
+                    </div>
+                  {/each}
+                </dl>
+              {:else if inspectedAgentScenario.receipt.block}
+                <code data-testid="agent-block-reason">{inspectedAgentScenario.receipt.block.reasonId}</code>
+                <p>{inspectedAgentScenario.receipt.block.explanation}</p>
+              {/if}
+              <p>
+                Required review: {inspectedAgentScenario.receipt.requiredReview.roles.join(' · ')}
+              </p>
+              <p>Construction readiness: {inspectedAgentScenario.receipt.constructionReady ? 'true' : 'false'}</p>
+            </div>
+          {/if}
+          <p class="proposal-boundary">
+            Raw requests, source files, extracted text, vault paths, reviewer identity, and acceptance state are excluded from this receipt.
+          </p>
         </section>
 
         <section class="proposal-card evidence-handoff" aria-label="Secure evidence handoff" data-testid="evidence-handoff">
@@ -1116,16 +1196,20 @@
     font-size: 0.78rem;
   }
 
-  textarea {
+  textarea,
+  select {
     width: 100%;
     box-sizing: border-box;
-    resize: vertical;
     border: 1px solid #5a594f;
     border-radius: 0;
     padding: 0.65rem;
     color: #f0ede3;
     background: #151612;
     font: 0.78rem/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  textarea {
+    resize: vertical;
   }
 
   .timeline {

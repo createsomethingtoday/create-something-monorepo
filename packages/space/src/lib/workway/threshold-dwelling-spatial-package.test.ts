@@ -8,6 +8,8 @@ import {
   THRESHOLD_DWELLING_SPATIAL_PACKAGE,
   DEFAULT_THRESHOLD_DWELLING_COMPOSER_INTENT,
   assetBrowserUrl,
+  agentClientProjectionForPackage,
+  agentScenarioForId,
   chapterForId,
   composerProposalForIntent,
   createSessionAnnotation,
@@ -164,6 +166,46 @@ test('projects Rust-authored evidence handoff requirements without an upload or 
       evidenceIntakePacketForPackage({
         ...packageValue,
         canonicalProject: { ...packageValue.canonicalProject, projectRevision: '0.9' }
+      }),
+    /does not match the active WorkWay package/
+  );
+});
+
+test('projects source-free Rust agent evaluation receipts only for the active package revision', () => {
+  const packageValue = THRESHOLD_DWELLING_SPATIAL_PACKAGE;
+  const projection = agentClientProjectionForPackage(packageValue);
+  const serialized = JSON.stringify(projection);
+
+  assert.equal(projection.schemaVersion, 'workway.agent-client-projection.v1');
+  assert.equal(projection.evaluatorPassed, true);
+  assert.equal(projection.constructionReady, false);
+  assert.deepEqual(
+    projection.scenarios.map((scenario) => [scenario.id, scenario.expectedOutcome]),
+    [
+      ['supported-kitchen-clearance', 'proposed'],
+      ['material-role-alternative', 'proposed'],
+      ['safety-professional-determination', 'escalated'],
+      ['private-document-boundary', 'blocked']
+    ]
+  );
+  assert.equal(
+    agentScenarioForId(packageValue, 'safety-professional-determination').receipt.block?.reasonId,
+    'qualified-professional-determination-required'
+  );
+  for (const forbidden of [
+    '"intent":',
+    'customer-plan.pdf',
+    'vault_',
+    'privateDocument',
+    'evaluation-uploadaprivatepdfandacce'
+  ]) {
+    assert.equal(serialized.includes(forbidden), false, `agent client projection leaked ${forbidden}`);
+  }
+  assert.throws(
+    () =>
+      agentClientProjectionForPackage({
+        ...packageValue,
+        spatialRevision: '0.9'
       }),
     /does not match the active WorkWay package/
   );

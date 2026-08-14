@@ -2,11 +2,26 @@
 //!
 //! This crate owns no rendering and makes no construction-readiness claim.
 
+pub mod agent;
+pub mod agent_evaluation;
 pub mod change_proposal;
 pub mod composer;
 pub mod project_graph;
 pub mod spatial_package;
 
+pub use agent::{
+    execute_threshold_dwelling_agent_request, validate_workway_agent_receipt, WorkWayAgentBlock,
+    WorkWayAgentOutcome, WorkWayAgentProposal, WorkWayAgentReceipt, WorkWayAgentReceiptValidation,
+    WorkWayAgentRequest, WorkWayAgentReviewRequirement, WorkWayAgentRole,
+    WORKWAY_AGENT_RECEIPT_SCHEMA_VERSION, WORKWAY_AGENT_REQUEST_SCHEMA_VERSION,
+};
+pub use agent_evaluation::{
+    evaluate_threshold_dwelling_agent_foundation_v1, threshold_dwelling_agent_client_projection_v1,
+    threshold_dwelling_agent_evaluation_corpus_v1, WorkWayAgentClientProjection,
+    WorkWayAgentClientScenario, WorkWayAgentEvaluationCase, WorkWayAgentEvaluationExpectation,
+    WorkWayAgentEvaluationReport, WorkWayAgentEvaluationResult,
+    WORKWAY_AGENT_CLIENT_PROJECTION_SCHEMA_VERSION, WORKWAY_AGENT_EVALUATION_REPORT_SCHEMA_VERSION,
+};
 pub use change_proposal::{
     threshold_dwelling_concrete_envelope_material_role_proposal_v08,
     threshold_dwelling_kitchen_island_clearance_proposal_v08, validate_change_proposal,

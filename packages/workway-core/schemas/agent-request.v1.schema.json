@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://createsomething.today/schemas/workway/agent-request.v1.schema.json",
+  "title": "WorkWay Agent Request v1",
+  "description": "A source-free, proposal-only request to an enabled WorkWay agent role. It cannot carry a deterministic operation, private document, evidence record, approval, or construction state.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "requestId",
+    "role",
+    "projectId",
+    "canonicalRevision",
+    "spatialRevision",
+    "intent"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "workway.agent-request.v1" },
+    "requestId": {
+      "type": "string",
+      "description": "Opaque client correlation token; it must never encode a prompt, person, filename, or source locator.",
+      "pattern": "^req_[a-f0-9]{32}$"
+    },
+    "role": {
+      "type": "string",
+      "enum": ["composer", "ingestion", "trade-review", "spatial-session"]
+    },
+    "projectId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160,
+      "pattern": "^[A-Za-z0-9_-]+$"
+    },
+    "canonicalRevision": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "pattern": "^[A-Za-z0-9._-]+$"
+    },
+    "spatialRevision": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "pattern": "^[A-Za-z0-9._-]+$"
+    },
+    "intent": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1000
+    }
+  }
+}
