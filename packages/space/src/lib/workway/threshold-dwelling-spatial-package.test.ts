@@ -17,6 +17,7 @@ import {
   portalsFrom,
   validateSpatialPackage
 } from './threshold-dwelling-spatial-package.js';
+import { evidenceIntakePacketForPackage } from './threshold-dwelling-evidence-intake.js';
 
 test('derives a client-safe Rev 0.8 package from the Canon living-system revision', () => {
   const packageValue = THRESHOLD_DWELLING_SPATIAL_PACKAGE;
@@ -140,6 +141,32 @@ test('keeps each available 2D visual asset content-addressed to its local packag
     const contents = readFileSync(resolve(process.cwd(), 'static', asset.clientPath));
     assert.equal(createHash('sha256').update(contents).digest('hex'), asset.sha256, asset.id);
   }
+});
+
+test('projects Rust-authored evidence handoff requirements without an upload or document contents', () => {
+  const packageValue = THRESHOLD_DWELLING_SPATIAL_PACKAGE;
+  const packet = evidenceIntakePacketForPackage(packageValue);
+  const packetJson = JSON.stringify(packet);
+
+  assert.equal(packet.projectId, packageValue.canonicalProject.projectId);
+  assert.equal(packet.canonicalRevision, packageValue.canonicalProject.projectRevision);
+  assert.equal(packet.derivedRevision, packageValue.spatialRevision);
+  assert.equal(packet.clientFileUploadAvailable, false);
+  assert.equal(packet.constructionReady, false);
+  assert.equal(packet.requests.length, 9);
+  assert.equal(packet.requests.find((request) => request.evidenceId === 'evr_glazing')?.reviewStatus, 'missing');
+  assert.equal(packet.requests.every((request) => request.clientFileUploadAvailable === false), true);
+  assert.equal(packetJson.includes('vaultRecordId'), false);
+  assert.equal(packetJson.includes('sourcePath'), false);
+  assert.equal(packetJson.includes('documentContent'), false);
+  assert.throws(
+    () =>
+      evidenceIntakePacketForPackage({
+        ...packageValue,
+        canonicalProject: { ...packageValue.canonicalProject, projectRevision: '0.9' }
+      }),
+    /does not match the active WorkWay package/
+  );
 });
 
 test('uses explicit portals and immutable session annotation operations', () => {

@@ -14,6 +14,8 @@ pub const PROJECT_GRAPH_SCHEMA_VERSION: &str = "workway.project-graph.v1";
 pub const PRIVATE_EVIDENCE_MANIFEST_SCHEMA_VERSION: &str = "workway.private-evidence-manifest.v1";
 /// A client-safe summary of evidence readiness derived from the private manifest.
 pub const CLIENT_EVIDENCE_READINESS_SCHEMA_VERSION: &str = "workway.client-evidence-readiness.v1";
+/// A client-safe secure-handoff checklist. It never transfers document bytes.
+pub const EVIDENCE_INTAKE_PACKET_SCHEMA_VERSION: &str = "workway.evidence-intake-packet.v1";
 
 /// The actual coordinate scope held by the current graph revision.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -164,6 +166,57 @@ pub struct ClientEvidenceReadiness {
 
 impl ClientEvidenceReadiness {
     /// A client readiness projection never represents construction approval.
+    #[must_use]
+    pub const fn construction_ready(&self) -> bool {
+        self.construction_ready
+    }
+}
+
+/// The metadata a future approved intake service must capture outside the
+/// browser. Field names are visible so an operator understands the handoff,
+/// but values and document content are never present in this packet.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum EvidenceIntakeField {
+    OpaqueVaultRecordId,
+    ContentSha256,
+    SourceClassConfirmation,
+    QualifiedReviewRequest,
+}
+
+/// One secure-handoff requirement for an evidence gate. It purposely includes
+/// no upload URL, vault locator, source filename, document body, or reviewer
+/// identity.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EvidenceIntakeRequest {
+    pub evidence_id: String,
+    pub client_label: String,
+    pub purpose: String,
+    pub source_class: EvidenceSourceClass,
+    pub review_status: String,
+    pub required_reviewer_role: String,
+    pub required_fields: Vec<EvidenceIntakeField>,
+    pub client_file_upload_available: bool,
+}
+
+/// A local operator-facing checklist for preparing a later secure evidence
+/// handoff. It models no storage, transfer, parsing, acceptance, or
+/// construction authority.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EvidenceIntakePacket {
+    pub schema_version: String,
+    pub project_id: String,
+    pub canonical_revision: String,
+    pub derived_revision: String,
+    pub requests: Vec<EvidenceIntakeRequest>,
+    pub client_file_upload_available: bool,
+    construction_ready: bool,
+}
+
+impl EvidenceIntakePacket {
+    /// Secure-handoff preparation cannot accept evidence or authorize work.
     #[must_use]
     pub const fn construction_ready(&self) -> bool {
         self.construction_ready
@@ -424,6 +477,58 @@ pub fn project_client_evidence_readiness(
     })
 }
 
+/// Derive the secure-handoff checklist from the same validated graph and
+/// private manifest that drive evidence readiness. A client receives only the
+/// minimum facts needed to prepare a handoff; document transfer is deliberately
+/// unavailable here.
+#[must_use]
+pub fn project_evidence_intake_packet(
+    graph: &ProjectGraph,
+    manifest: &PrivateEvidenceManifest,
+) -> Option<EvidenceIntakePacket> {
+    if !validate_project_graph(graph, manifest).is_valid() {
+        return None;
+    }
+    let entries_by_id = manifest
+        .entries
+        .iter()
+        .map(|entry| (entry.opaque_id.as_str(), entry))
+        .collect::<std::collections::BTreeMap<_, _>>();
+    let requests = graph
+        .evidence_references
+        .iter()
+        .filter_map(|reference| {
+            entries_by_id
+                .get(reference.evidence_id.as_str())
+                .map(|entry| EvidenceIntakeRequest {
+                    evidence_id: entry.opaque_id.clone(),
+                    client_label: entry.client_label.clone(),
+                    purpose: reference.purpose.clone(),
+                    source_class: entry.source_class,
+                    review_status: entry.review_status.client_status().into(),
+                    required_reviewer_role: entry.required_reviewer_role.clone(),
+                    required_fields: vec![
+                        EvidenceIntakeField::OpaqueVaultRecordId,
+                        EvidenceIntakeField::ContentSha256,
+                        EvidenceIntakeField::SourceClassConfirmation,
+                        EvidenceIntakeField::QualifiedReviewRequest,
+                    ],
+                    client_file_upload_available: false,
+                })
+        })
+        .collect();
+
+    Some(EvidenceIntakePacket {
+        schema_version: EVIDENCE_INTAKE_PACKET_SCHEMA_VERSION.into(),
+        project_id: graph.project_id.clone(),
+        canonical_revision: graph.canonical_revision.clone(),
+        derived_revision: graph.derived_revision.clone(),
+        requests,
+        client_file_upload_available: false,
+        construction_ready: false,
+    })
+}
+
 fn missing_evidence(
     opaque_id: &str,
     source_class: EvidenceSourceClass,
@@ -506,6 +611,17 @@ pub fn threshold_dwelling_evidence_manifest_v08() -> PrivateEvidenceManifest {
         ],
         construction_ready: false,
     }
+}
+
+/// Secure-handoff preparation for the current fixture. This does not accept
+/// source evidence; it only describes the requirements for a future approved
+/// private intake path.
+#[must_use]
+pub fn threshold_dwelling_evidence_intake_packet_v08() -> Option<EvidenceIntakePacket> {
+    project_evidence_intake_packet(
+        &threshold_dwelling_project_graph_v08(),
+        &threshold_dwelling_evidence_manifest_v08(),
+    )
 }
 
 /// Semantic graph for the present design-intent revision. Values remain

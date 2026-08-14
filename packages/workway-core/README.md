@@ -23,6 +23,27 @@ Every requirement must carry reviewer-attested accepted evidence before the core
 
 `schemas/professional-determination-register.v1.schema.json` is the client-safe contract for the separate determination register. It preserves an unissued/requested/issued trail and requires a named, revision-specific external artifact when a row is `issued`; it cannot express construction authorization.
 
+## Secure evidence handoff
+
+`threshold_dwelling_evidence_intake_packet_v08()` derives a client-safe,
+revision-bound checklist for the nine currently unissued evidence gates. Each
+request says what a future approved intake service must capture—an opaque vault
+record, content SHA-256, source-class confirmation, and a qualified-review
+request—without exposing a vault locator, source filename/path, document bytes,
+extracted text, reviewer identity, upload URL, or acceptance control.
+
+The checked-in Space projection is emitted with:
+
+```bash
+cargo run --bin emit_threshold_dwelling_evidence_intake_packet
+```
+
+Rust tests require semantic parity between that JSON packet and the kernel
+projection. The local browser can display the checklist, but it cannot upload,
+parse, store, or accept a document. Any such intake path needs explicit user
+approval plus its own storage, authentication, retention, audit, and qualified
+review design.
+
 ## Commands
 
 ```bash

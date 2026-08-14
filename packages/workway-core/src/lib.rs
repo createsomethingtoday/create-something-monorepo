@@ -20,14 +20,16 @@ pub use composer::{
     ComposerSupportedIntent, COMPOSER_CONTRACT_SCHEMA_VERSION,
 };
 pub use project_graph::{
-    project_client_evidence_readiness, threshold_dwelling_evidence_manifest_v08,
+    project_client_evidence_readiness, project_evidence_intake_packet,
+    threshold_dwelling_evidence_intake_packet_v08, threshold_dwelling_evidence_manifest_v08,
     threshold_dwelling_project_graph_v08, validate_private_evidence_manifest,
     validate_project_graph, ClientEvidenceReadiness, ClientEvidenceReadinessEntry,
-    DimensionTruthScope, EvidenceReference, EvidenceSourceClass, PrivateEvidenceManifest,
+    DimensionTruthScope, EvidenceIntakeField, EvidenceIntakePacket, EvidenceIntakeRequest,
+    EvidenceReference, EvidenceSourceClass, PrivateEvidenceManifest,
     PrivateEvidenceManifestValidation, PrivateEvidenceRecord, PrivateEvidenceReviewStatus,
     ProjectGraph, ProjectGraphValidation, SemanticEntity, SemanticEntityKind,
-    CLIENT_EVIDENCE_READINESS_SCHEMA_VERSION, PRIVATE_EVIDENCE_MANIFEST_SCHEMA_VERSION,
-    PROJECT_GRAPH_SCHEMA_VERSION,
+    CLIENT_EVIDENCE_READINESS_SCHEMA_VERSION, EVIDENCE_INTAKE_PACKET_SCHEMA_VERSION,
+    PRIVATE_EVIDENCE_MANIFEST_SCHEMA_VERSION, PROJECT_GRAPH_SCHEMA_VERSION,
 };
 pub use spatial_package::{
     threshold_dwelling_spatial_package_v08, validate_spatial_package, ClientAsset,

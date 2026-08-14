@@ -1,7 +1,8 @@
 use workway_core::{
-    project_client_evidence_readiness, threshold_dwelling_evidence_manifest_v08,
-    threshold_dwelling_project_graph_v08, validate_private_evidence_manifest,
-    validate_project_graph, ProjectGraph, CLIENT_EVIDENCE_READINESS_SCHEMA_VERSION,
+    project_client_evidence_readiness, threshold_dwelling_evidence_intake_packet_v08,
+    threshold_dwelling_evidence_manifest_v08, threshold_dwelling_project_graph_v08,
+    validate_private_evidence_manifest, validate_project_graph, EvidenceIntakeField, ProjectGraph,
+    CLIENT_EVIDENCE_READINESS_SCHEMA_VERSION, EVIDENCE_INTAKE_PACKET_SCHEMA_VERSION,
     PROJECT_GRAPH_SCHEMA_VERSION,
 };
 
@@ -97,4 +98,48 @@ fn private_manifest_rejects_raw_paths_nonopaque_locators_and_invalid_hashes() {
     assert!(validation
         .issue_ids
         .contains(&"unsafe-client-evidence-label".into()));
+}
+
+#[test]
+fn evidence_intake_packet_exposes_secure_handoff_requirements_without_document_access() {
+    let packet = threshold_dwelling_evidence_intake_packet_v08()
+        .expect("the Threshold Dwelling fixture should yield a client-safe handoff packet");
+    let client_json = serde_json::to_string(&packet).expect("packet serializes");
+    let glazing_request = packet
+        .requests
+        .iter()
+        .find(|request| request.evidence_id == "evr_glazing")
+        .expect("the glazing gate must have a secure handoff request");
+
+    assert_eq!(packet.schema_version, EVIDENCE_INTAKE_PACKET_SCHEMA_VERSION);
+    assert_eq!(packet.project_id, "threshold-dwelling");
+    assert_eq!(packet.requests.len(), 9);
+    assert!(!packet.client_file_upload_available);
+    assert!(!packet.construction_ready());
+    assert_eq!(glazing_request.review_status, "missing");
+    assert!(glazing_request
+        .required_fields
+        .contains(&EvidenceIntakeField::ContentSha256));
+    assert!(glazing_request
+        .required_fields
+        .contains(&EvidenceIntakeField::QualifiedReviewRequest));
+    assert!(!glazing_request.client_file_upload_available);
+    assert!(!client_json.contains("vaultRecordId"));
+    assert!(!client_json.contains("sourcePath"));
+    assert!(!client_json.contains("documentContent"));
+}
+
+#[test]
+fn checked_in_browser_evidence_intake_packet_is_an_exact_rust_projection() {
+    let checked_in: serde_json::Value = serde_json::from_str(include_str!(
+        "../../space/src/lib/workway/threshold-dwelling-evidence-intake-packet.json"
+    ))
+    .expect("the checked-in client handoff packet must be valid JSON");
+    let expected = serde_json::to_value(
+        threshold_dwelling_evidence_intake_packet_v08()
+            .expect("the Threshold Dwelling fixture should project safely"),
+    )
+    .expect("the packet serializes");
+
+    assert_eq!(checked_in, expected);
 }

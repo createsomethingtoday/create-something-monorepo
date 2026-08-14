@@ -16,6 +16,7 @@
     type WorkWaySessionProposalDecision
   } from '$lib/workway/threshold-dwelling-spatial-package';
   import WorkWayMassingViewer from '$lib/workway/WorkWayMassingViewer.svelte';
+  import { evidenceIntakePacketForPackage } from '$lib/workway/threshold-dwelling-evidence-intake';
   import {
     THRESHOLD_DWELLING_MASSING_GUIDE,
     createThresholdDwellingMassingGeometry
@@ -30,6 +31,7 @@
   const massingGuide = THRESHOLD_DWELLING_MASSING_GUIDE;
   const massingGeometry = createThresholdDwellingMassingGeometry(massingGuide);
   const physicalSceneEvidenceFacts = spatialPackage.physicalSceneContract.evidenceFacts;
+  const evidenceIntakePacket = evidenceIntakePacketForPackage(spatialPackage);
   const acceptedPhysicalSceneEvidenceCount = physicalSceneEvidenceFacts.filter(
     (fact) => fact.evidenceStatus === 'accepted'
   ).length;
@@ -473,6 +475,48 @@
               <p>{composerInterpretation.explanation}</p>
             </div>
           {/if}
+        </section>
+
+        <section class="proposal-card evidence-handoff" aria-label="Secure evidence handoff" data-testid="evidence-handoff">
+          <p class="section-label">Evidence / secure handoff</p>
+          <h3>Prepare the facts; keep documents out of this preview.</h3>
+          <p>
+            {evidenceIntakePacket.requests.length} required evidence gates remain in their current
+            review state. This is a Rust-authored handoff checklist, not a file-upload or document-review tool.
+          </p>
+          <dl class="proposal-measurements">
+            <div>
+              <dt>Client-side file upload</dt>
+              <dd>{evidenceIntakePacket.clientFileUploadAvailable ? 'available' : 'unavailable'}</dd>
+            </div>
+            <div>
+              <dt>Construction readiness</dt>
+              <dd>{evidenceIntakePacket.constructionReady ? 'true' : 'false'}</dd>
+            </div>
+          </dl>
+          <details class="evidence-readiness">
+            <summary>View secure handoff requirements</summary>
+            <p>
+              A future approved intake service must hold the source record and content hash outside this
+              browser, then request the listed qualified review. This surface cannot submit or accept evidence.
+            </p>
+            <ul>
+              {#each evidenceIntakePacket.requests as request}
+                <li>
+                  <div>
+                    <strong>{request.clientLabel}</strong>
+                    <span class="evidence-status">{request.reviewStatus}</span>
+                  </div>
+                  <span>{request.purpose}</span>
+                  <span>Review: {request.requiredReviewerRole}</span>
+                  <code>{request.requiredFields.join(' · ')}</code>
+                </li>
+              {/each}
+            </ul>
+          </details>
+          <p class="proposal-boundary">
+            No document bytes, names, paths, extraction, OCR, upload endpoint, reviewer identity, or acceptance control is present here.
+          </p>
         </section>
 
         <label for="annotation">Add an annotation</label>
