@@ -122,7 +122,43 @@ export class MarketplaceComponentErrorBoundary extends React.Component<
   }
 
   render(): ReactNode {
-    if (this.state.hasError) return this.props.fallback ?? null;
+    if (this.state.hasError) {
+      if (this.props.fallback !== undefined) return this.props.fallback;
+      return (
+        <div
+          role="alert"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 12px',
+            border: '1px solid #dedede',
+            borderRadius: '4px',
+            color: '#5f5f5f',
+            background: '#fafafa',
+            fontSize: '13px',
+            lineHeight: 1.4,
+          }}
+        >
+          <span>Something went wrong.</span>
+          <button
+            type="button"
+            onClick={() => this.setState({ hasError: false })}
+            style={{
+              padding: '4px 10px',
+              border: '1px solid #d8d8d8',
+              borderRadius: '4px',
+              color: '#080808',
+              background: '#fff',
+              font: 'inherit',
+              cursor: 'pointer',
+            }}
+          >
+            Retry
+          </button>
+        </div>
+      );
+    }
     return this.props.children;
   }
 }

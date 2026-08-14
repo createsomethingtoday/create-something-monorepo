@@ -705,7 +705,6 @@ export const TemplateSearchPage: React.FC<TemplateSearchPageProps> = ({
             x
           </button>
           <TemplateSearchSidebar
-            key={`template-search-filters-${filterVersion}`}
             apiBase={apiBase}
             title="Categories"
             scopeOverride={scopeOverride}

@@ -187,6 +187,12 @@ const HOST_OVERLAY_POLL_MS = 500;
  * main-thread work with nothing to show for it.
  */
 const HOST_OVERLAY_POLL_DEADLINE_MS = 60_000;
+/**
+ * Send swaps to Stop as soon as streaming starts, so a rapid double-click
+ * would abort the request it just sent. Stop activations inside this window
+ * are ignored.
+ */
+const STOP_AFTER_SEND_GRACE_MS = 300;
 
 const DEFAULT_STARTERS =
   'A portfolio with bold animations, An online store for a clothing brand, A restaurant site with a menu, A SaaS landing page with a blog';
@@ -283,6 +289,7 @@ const TemplateChatSurface: React.FC<TemplateChatProps> = ({
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const streamAbortRef = useRef<AbortController | null>(null);
   const sendingRef = useRef(false);
+  const lastSendAtRef = useRef(0);
   const streamBatcherRef = useRef<TextDeltaBatcher | null>(null);
   const slowTurnTimerRef = useRef<number | null>(null);
   const highlightMissesRef = useRef(createHighlightMissState());
@@ -631,7 +638,8 @@ const TemplateChatSurface: React.FC<TemplateChatProps> = ({
   useEffect(() => {
     if (!isModalSurface || typeof document === 'undefined') return;
     const ours = findHostPageBranch(panelRef.current);
-    const siblings = Array.from(document.body.children).filter(
+    if (!ours) return;
+    const siblings = Array.from(document.body?.children ?? []).filter(
       (element): element is HTMLElement => element instanceof HTMLElement && element !== ours,
     );
     return applyHostInert(siblings, panelRef.current);
@@ -750,6 +758,7 @@ const TemplateChatSurface: React.FC<TemplateChatProps> = ({
   }, [track, undoHref]);
 
   const stopStreaming = useCallback(() => {
+    if (Date.now() - lastSendAtRef.current < STOP_AFTER_SEND_GRACE_MS) return;
     streamBatcherRef.current?.flushNow();
     streamAbortRef.current?.abort();
     inputRef.current?.focus();
@@ -809,6 +818,7 @@ const TemplateChatSurface: React.FC<TemplateChatProps> = ({
       // both observe the pre-render state and would open two streams.
       if (!trimmed || streaming || sendingRef.current || !apiBase) return;
       sendingRef.current = true;
+      lastSendAtRef.current = Date.now();
 
       setFollowups([]);
       setInput('');

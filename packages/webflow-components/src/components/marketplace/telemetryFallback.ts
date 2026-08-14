@@ -139,7 +139,7 @@ function postPayload(payload: string): void {
   if (beaconAccepted) return;
 
   try {
-    void fetch(TELEMETRY_FALLBACK_ENDPOINT_SECONDARY, {
+    void fetch(TELEMETRY_FALLBACK_ENDPOINT, {
       method: 'POST',
       body: payload,
       headers: { 'Content-Type': 'text/plain;charset=UTF-8' },

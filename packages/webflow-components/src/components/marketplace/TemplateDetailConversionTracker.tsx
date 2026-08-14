@@ -50,7 +50,12 @@ function inferTemplateSlug(explicitSlug?: string): string | null {
   if (propSlug) return propSlug;
   if (typeof window === 'undefined') return null;
   const match = window.location.pathname.match(/\/templates\/html\/([^/?#]+)/);
-  return match?.[1] ? decodeURIComponent(match[1]) : null;
+  if (!match?.[1]) return null;
+  try {
+    return decodeURIComponent(match[1]);
+  } catch {
+    return match[1];
+  }
 }
 
 function isTemplateDetailPage(): boolean {

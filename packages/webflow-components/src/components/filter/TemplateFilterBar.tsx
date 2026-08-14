@@ -480,6 +480,10 @@ const FILTER_STYLES = `
   visibility: visible;
   opacity: 1;
   pointer-events: auto;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 10000;
   width: 100%;
   max-height: 280px;
   margin-top: 8px;
@@ -831,19 +835,7 @@ function applyRouteContextToUrl(url: URL, context: RouteContext): void {
 }
 
 function buildScopedCategoryHref(slug: string | null): string {
-  if (typeof window === 'undefined') return slug ? `?category=${slug}` : '';
-  const url = new URL(window.location.href);
-  if (!slug) clearCategoryPathContext(url);
-  url.searchParams.delete('subcategory');
-  url.searchParams.delete('child_category_slug');
-  url.searchParams.delete('page');
-  if (slug) {
-    url.searchParams.set('category', slug);
-  } else {
-    url.searchParams.delete('category');
-    url.searchParams.delete('category_group_slug');
-  }
-  return url.toString();
+  return slug ? `?category=${encodeURIComponent(slug)}` : '';
 }
 
 function clearCategoryPathContext(url: URL): void {
@@ -854,17 +846,11 @@ function clearCategoryPathContext(url: URL): void {
 }
 
 function buildScopedSubcategoryHref(slug: string | null, context: RouteContext): string {
-  if (typeof window === 'undefined') return slug ? `?subcategory=${slug}` : '';
-  const url = new URL(window.location.href);
-  url.searchParams.delete('page');
-  if (context.categoryGroupSlug) url.searchParams.set('category', context.categoryGroupSlug);
-  if (slug) {
-    url.searchParams.set('subcategory', slug);
-  } else {
-    url.searchParams.delete('subcategory');
-    url.searchParams.delete('child_category_slug');
-  }
-  return url.toString();
+  const params = new URLSearchParams();
+  if (context.categoryGroupSlug) params.set('category', context.categoryGroupSlug);
+  if (slug) params.set('subcategory', slug);
+  const query = params.toString();
+  return query ? `?${query}` : '';
 }
 
 function writeUrlFilters(state: LocalFilters, defaultSort: TemplateSort = 'popular'): void {
@@ -985,6 +971,12 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
   const [hasHydrated, setHasHydrated] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
 
   const routeContext = useMemo(
     () =>
@@ -1632,8 +1624,8 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
           </button>
         </div>
       )}
+        {renderFilterPanel()}
       </div>
-      {renderFilterPanel()}
     </div>
   );
 };

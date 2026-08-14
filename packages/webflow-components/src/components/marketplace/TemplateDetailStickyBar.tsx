@@ -246,6 +246,7 @@ const TemplateDetailStickyBarInner: React.FC<TemplateDetailStickyBarProps> = ({
   }, [enableAnalytics, isRevealed, offer, resolvedSlug]);
 
   const primaryTarget = targetForHref(offer.primaryHref, offer.primaryTarget);
+  const primaryHrefPresent = Boolean(offer.primaryHref && offer.primaryHref !== '#');
   const priceLine = offer.offerPriceLabel
     ? `${offer.offerPriceLabel} offer - ${offer.priceLabel} standard`
     : offer.priceLabel;
@@ -317,12 +318,15 @@ const TemplateDetailStickyBarInner: React.FC<TemplateDetailStickyBarProps> = ({
         ) : null}
         <a
           className={`wfdt-button${offer.hasOffer ? ' wfdt-button-offer' : ''}`}
-          href={offer.primaryHref}
+          {...(primaryHrefPresent
+            ? { href: offer.primaryHref }
+            : { 'aria-disabled': true, tabIndex: -1 })}
           target={primaryTarget}
           rel={relForHref(offer.primaryHref, primaryTarget)}
           data-template-detail-primary-cta=""
           data-purchase-type={offer.purchaseType}
-          onClick={() =>
+          onClick={(event) => {
+            if (!primaryHrefPresent) event.preventDefault();
             trackMarketplaceEvent(
               'Code Component Event',
               {
@@ -331,11 +335,11 @@ const TemplateDetailStickyBarInner: React.FC<TemplateDetailStickyBarProps> = ({
                 cta_location: 'sticky_bar',
                 purchase_type: offer.purchaseType,
                 cta_label: offer.primaryLabel,
-                primary_href_present: Boolean(offer.primaryHref && offer.primaryHref !== '#'),
+                primary_href_present: primaryHrefPresent,
               },
               enableAnalytics,
-            )
-          }
+            );
+          }}
         >
           {offer.primaryLabel}
         </a>

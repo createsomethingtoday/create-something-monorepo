@@ -1,4 +1,4 @@
-import React, { CSSProperties, useState, useCallback, memo } from 'react';
+import React, { CSSProperties, useState, useCallback, useEffect, memo } from 'react';
 
 export type TemplateCardBadge = 'none' | 'new' | 'featured' | 'reviewed' | 'top-rated';
 
@@ -672,6 +672,17 @@ function relForTarget(target?: string): string | undefined {
   return target === '_blank' ? 'noopener noreferrer' : undefined;
 }
 
+function hrefOrDisabledProps(href?: string): React.AnchorHTMLAttributes<HTMLAnchorElement> {
+  if (!href || href === '#') {
+    return {
+      'aria-disabled': true,
+      tabIndex: -1,
+      onClick: (event) => event.preventDefault(),
+    };
+  }
+  return { href };
+}
+
 function isWithin30Days(dateStr: string): boolean {
   if (!dateStr) return false;
   try {
@@ -751,9 +762,13 @@ const TemplateCardInner: React.FC<TemplateCardProps> = ({
   } as CSSProperties;
 
   // Auto-apply 'new' badge when approvalDate is within 30 days and no explicit variant
+  const [isRecentApproval, setIsRecentApproval] = useState(false);
+  useEffect(() => {
+    setIsRecentApproval(isWithin30Days(approvalDate));
+  }, [approvalDate]);
   const effectiveBadgeVariant: TemplateCardBadge =
     badgeVariant !== 'none' ? badgeVariant :
-    isWithin30Days(approvalDate) ? 'new' : 'none';
+    isRecentApproval ? 'new' : 'none';
 
   const effectiveBadgeText =
     badgeText || (effectiveBadgeVariant === 'new' && !badgeText ? 'New' : '');
@@ -809,7 +824,7 @@ const TemplateCardInner: React.FC<TemplateCardProps> = ({
       {!stylesProvided && <style dangerouslySetInnerHTML={{ __html: TEMPLATE_CARD_STYLES }} />}
       {/* Primary card link with images */}
       <a
-        href={templateLink?.href ?? '#'}
+        {...hrefOrDisabledProps(templateLink?.href)}
         target={templateLink?.target}
         rel={relForTarget(templateLink?.target)}
         aria-label={`View ${templateName} template`}
@@ -921,7 +936,7 @@ const TemplateCardInner: React.FC<TemplateCardProps> = ({
           <div style={S.detailsWrap}>
             <div style={S.nameWrap}>
               <a
-                href={templateLink?.href ?? '#'}
+                {...hrefOrDisabledProps(templateLink?.href)}
                 target={templateLink?.target}
                 rel={relForTarget(templateLink?.target)}
                 className="tmcard-name-link"
@@ -937,7 +952,7 @@ const TemplateCardInner: React.FC<TemplateCardProps> = ({
           </div>
           <div style={S.creatorWrap}>
             <a
-              href={creatorLink?.href ?? '#'}
+              {...hrefOrDisabledProps(creatorLink?.href)}
               target={creatorLink?.target}
               rel={relForTarget(creatorLink?.target)}
               className="tmcard-creator-link"

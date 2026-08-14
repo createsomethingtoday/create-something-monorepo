@@ -124,6 +124,17 @@ function linkRel(link: FeaturedCreatorCardLink | undefined): string | undefined 
   return link?.target === '_blank' ? 'noreferrer' : undefined;
 }
 
+function linkHrefProps(href: string | undefined): React.AnchorHTMLAttributes<HTMLAnchorElement> {
+  if (!href || href === '#') {
+    return {
+      'aria-disabled': true,
+      tabIndex: -1,
+      onClick: (event) => event.preventDefault(),
+    };
+  }
+  return { href };
+}
+
 const S: Record<string, CSSProperties> = {
   card: {
     display: 'flex',
@@ -339,14 +350,14 @@ export const FeaturedCreatorCard = memo(function FeaturedCreatorCard({
   );
   const templateImage = topTemplateImage?.src || FALLBACK_TEMPLATE_IMAGE;
   const templateAlt = topTemplateImage?.alt || (topTemplateName ? `${topTemplateName} template preview` : `${creator} template preview`);
-  const profileHref = creatorLink?.href || '#';
+  const profileLinkProps = linkHrefProps(creatorLink?.href);
   const primaryLink = topTemplateLink?.href ? topTemplateLink : creatorLink;
-  const primaryHref = primaryLink?.href || '#';
+  const primaryLinkProps = linkHrefProps(primaryLink?.href);
 
   return (
     <article className="wf-featured-creator-card" style={{ ...S.card, background: `linear-gradient(180deg, ${palette.wash} 0%, #ffffff 42%)` }}>
       <style dangerouslySetInnerHTML={{ __html: CARD_STYLES }} />
-      <a href={primaryHref} target={linkTarget(primaryLink)} rel={linkRel(primaryLink)} style={S.imageLink} aria-label={`View ${topTemplateName || creator}`}>
+      <a {...primaryLinkProps} target={linkTarget(primaryLink)} rel={linkRel(primaryLink)} style={S.imageLink} aria-label={`View ${topTemplateName || creator}`}>
         <img className="wf-featured-creator-template-image" src={templateImage} alt={templateAlt} style={S.templateImage} loading="lazy" decoding="async" />
         <span aria-hidden="true" style={S.imageOverlay} />
       </a>
@@ -363,7 +374,7 @@ export const FeaturedCreatorCard = memo(function FeaturedCreatorCard({
           <div style={S.eyebrow}>
             <span>{safeText(monthLabel, 'This month')}</span>
           </div>
-          <a href={profileHref} target={linkTarget(creatorLink)} rel={linkRel(creatorLink)} aria-label={`View ${creator}`}>
+          <a {...profileLinkProps} target={linkTarget(creatorLink)} rel={linkRel(creatorLink)} aria-label={`View ${creator}`}>
             <h3 className="wf-featured-creator-title" style={S.creatorName}>{creator}</h3>
           </a>
         </div>
@@ -397,10 +408,10 @@ export const FeaturedCreatorCard = memo(function FeaturedCreatorCard({
       </div>
 
       <div style={S.footer}>
-        <a href={primaryHref} target={linkTarget(primaryLink)} rel={linkRel(primaryLink)} style={S.templateName} aria-label={`View ${topTemplateName || creator}`}>
+        <a {...primaryLinkProps} target={linkTarget(primaryLink)} rel={linkRel(primaryLink)} style={S.templateName} aria-label={`View ${topTemplateName || creator}`}>
           Top template: {safeText(topTemplateName, 'Top template')}
         </a>
-        <a className="wf-featured-creator-cta" href={profileHref} target={linkTarget(creatorLink)} rel={linkRel(creatorLink)} style={S.cta}>
+        <a className="wf-featured-creator-cta" {...profileLinkProps} target={linkTarget(creatorLink)} rel={linkRel(creatorLink)} style={S.cta}>
           {safeText(ctaLabel, 'View creator')}
         </a>
       </div>
