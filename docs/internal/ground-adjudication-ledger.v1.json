@@ -195,6 +195,22 @@
     },
     {
       "receipt": {
+        "id": "ground-review-pr-1394-1d0b7db",
+        "source": "https://github.com/createsomethingtoday/create-something-monorepo/commit/1d0b7dbb8a5b4e6de771290a811f5178f468592f",
+        "completion": "partial",
+        "observed_findings": 1
+      },
+      "verdicts": [
+        {
+          "finding_id": "pr-1394-install-matraix-task-orphan-module",
+          "check": "orphans",
+          "verdict": "false_positive",
+          "rationale": "The new module is a documented operator CLI entry point in the PR README, so its lack of a code import does not make it unreachable."
+        }
+      ]
+    },
+    {
+      "receipt": {
         "id": "ground-review-pr-1390-a245ee3",
         "source": "https://github.com/createsomethingtoday/create-something-monorepo/commit/a245ee314b04081fafcbfbf4cbd426f2c8b23705",
         "completion": "complete",
