@@ -49,7 +49,29 @@ The page publishes a machine-readable receipt in
   `prefers-reduced-motion: reduce`;
 - `?noWebgl=1` — proves the authored static fallback;
 - `?testContextLoss=1` — invokes `WEBGL_lose_context` after the first successful
-  frame and proves last-frame fallback behavior.
+frame and proves last-frame fallback behavior.
+
+## Threshold Dwelling review assets
+
+The Rev 0.8 proposal has two local, content-addressed review representations:
+
+- `floor-plan.svg` and `floor-plan.png` are the canonical 2D tabletop plan;
+- `threshold-dwelling-r08-massing-guide.glb` is a compact 3D browser asset
+  generated from the same horizontal plan geometry.
+
+Regenerate the 3D asset after an accepted plan revision:
+
+```bash
+pnpm --filter @create-something/render-pipeline generate:threshold-massing-glb
+```
+
+The GLB stores coordinates in meters as glTF requires, but its receipt records
+the 780 × 504 in plan basis. Rendered floor/wall materials resolve from Canon's
+Rev 0.8 material/assembly schedule and retain their `M-*` role IDs in GLB
+metadata; they are not selected physical products. Its 9 ft vertical mass is an
+illustrative display parameter—not an elevation, structural, glazing, energy,
+code, or construction claim. USD and USDZ remain separate, unissued native
+delivery formats.
 
 ## Rights and production boundary
 
@@ -67,5 +89,6 @@ deployment. WebGPU can be added later behind the same recipe and receipt boundar
 
 ```bash
 pnpm --filter @create-something/render-pipeline test:web-render
+pnpm --filter @create-something/render-pipeline test:threshold-massing-glb
 pnpm --filter @create-something/render-pipeline build
 ```

@@ -1,0 +1,17 @@
+{
+  "name": "@create-something/workway-core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Deterministic Rust kernel for WorkWay project and evidence state",
+  "scripts": {
+    "test": "cargo test",
+    "fmt:check": "cargo fmt --check",
+    "lint": "cargo clippy --all-targets -- -D warnings"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/createsomethingtoday/create-something-monorepo",
+    "directory": "packages/workway-core"
+  }
+}

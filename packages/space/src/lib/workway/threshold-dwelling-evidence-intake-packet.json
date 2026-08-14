@@ -1,0 +1,100 @@
+{
+  "schemaVersion": "workway.evidence-intake-packet.v1",
+  "projectId": "threshold-dwelling",
+  "canonicalRevision": "0.7",
+  "derivedRevision": "0.8",
+  "requests": [
+    {
+      "evidenceId": "evr_site_datum",
+      "clientLabel": "Site datum and grade evidence",
+      "purpose": "Relate the plan datum to surveyed site grade.",
+      "sourceClass": "site-survey",
+      "reviewStatus": "missing",
+      "requiredReviewerRole": "Registered professional land surveyor",
+      "requiredFields": ["opaque-vault-record-id", "content-sha256", "source-class-confirmation", "qualified-review-request"],
+      "clientFileUploadAvailable": false
+    },
+    {
+      "evidenceId": "evr_exterior_assembly",
+      "clientLabel": "Exterior assembly evidence",
+      "purpose": "Define exterior wall layers and depth.",
+      "sourceClass": "architectural",
+      "reviewStatus": "missing",
+      "requiredReviewerRole": "Architect or qualified residential design professional",
+      "requiredFields": ["opaque-vault-record-id", "content-sha256", "source-class-confirmation", "qualified-review-request"],
+      "clientFileUploadAvailable": false
+    },
+    {
+      "evidenceId": "evr_interior_partitions",
+      "clientLabel": "Interior partition evidence",
+      "purpose": "Define partitions and service backing.",
+      "sourceClass": "architectural",
+      "reviewStatus": "missing",
+      "requiredReviewerRole": "Architect or qualified residential design professional",
+      "requiredFields": ["opaque-vault-record-id", "content-sha256", "source-class-confirmation", "qualified-review-request"],
+      "clientFileUploadAvailable": false
+    },
+    {
+      "evidenceId": "evr_roof_ceiling",
+      "clientLabel": "Roof and ceiling evidence",
+      "purpose": "Define roof, ceiling, and drainage geometry.",
+      "sourceClass": "architectural",
+      "reviewStatus": "missing",
+      "requiredReviewerRole": "Architect or qualified residential design professional",
+      "requiredFields": ["opaque-vault-record-id", "content-sha256", "source-class-confirmation", "qualified-review-request"],
+      "clientFileUploadAvailable": false
+    },
+    {
+      "evidenceId": "evr_openings",
+      "clientLabel": "Door and opening evidence",
+      "purpose": "Define door and opening geometry.",
+      "sourceClass": "architectural",
+      "reviewStatus": "missing",
+      "requiredReviewerRole": "Architect or qualified residential design professional",
+      "requiredFields": ["opaque-vault-record-id", "content-sha256", "source-class-confirmation", "qualified-review-request"],
+      "clientFileUploadAvailable": false
+    },
+    {
+      "evidenceId": "evr_glazing",
+      "clientLabel": "Glass opening and energy evidence",
+      "purpose": "Define glass geometry and energy performance.",
+      "sourceClass": "energy",
+      "reviewStatus": "missing",
+      "requiredReviewerRole": "Energy rater or qualified energy-compliance professional",
+      "requiredFields": ["opaque-vault-record-id", "content-sha256", "source-class-confirmation", "qualified-review-request"],
+      "clientFileUploadAvailable": false
+    },
+    {
+      "evidenceId": "evr_structure",
+      "clientLabel": "Structural and lateral evidence",
+      "purpose": "Define support and lateral system geometry.",
+      "sourceClass": "structural",
+      "reviewStatus": "missing",
+      "requiredReviewerRole": "Licensed structural engineer",
+      "requiredFields": ["opaque-vault-record-id", "content-sha256", "source-class-confirmation", "qualified-review-request"],
+      "clientFileUploadAvailable": false
+    },
+    {
+      "evidenceId": "evr_mep",
+      "clientLabel": "MEP coordination evidence",
+      "purpose": "Define MEP service coordination geometry.",
+      "sourceClass": "mechanical-electrical-plumbing",
+      "reviewStatus": "missing",
+      "requiredReviewerRole": "Licensed or jurisdiction-qualified MEP professionals",
+      "requiredFields": ["opaque-vault-record-id", "content-sha256", "source-class-confirmation", "qualified-review-request"],
+      "clientFileUploadAvailable": false
+    },
+    {
+      "evidenceId": "evr_thresholds",
+      "clientLabel": "Exterior threshold and jurisdiction evidence",
+      "purpose": "Define exterior grade and threshold geometry.",
+      "sourceClass": "jurisdiction",
+      "reviewStatus": "missing",
+      "requiredReviewerRole": "Authority having jurisdiction and project team",
+      "requiredFields": ["opaque-vault-record-id", "content-sha256", "source-class-confirmation", "qualified-review-request"],
+      "clientFileUploadAvailable": false
+    }
+  ],
+  "clientFileUploadAvailable": false,
+  "constructionReady": false
+}

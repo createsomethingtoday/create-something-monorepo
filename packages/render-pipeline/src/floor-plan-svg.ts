@@ -19,6 +19,8 @@ export interface FloorPlanRenderOptions {
 }
 
 export interface Zone {
+  /** Stable Canon source identity when the plan comes from a codified project. */
+  id?: string;
   x: number;
   y: number;
   width: number;
@@ -27,6 +29,8 @@ export interface Zone {
 }
 
 export interface Wall {
+  /** Stable source identity when a plan is projected from a codified project. */
+  id?: string;
   x1: number;
   y1: number;
   x2: number;
@@ -151,6 +155,17 @@ export function generateFloorPlanSvg(
   // Overhangs (dashed)
   for (const oh of plan.overhangs || []) {
     parts.push(`<rect x="${tx(oh.x)}" y="${ty(oh.y + oh.height)}" width="${oh.width * scale}" height="${oh.height * scale}" fill="none" stroke="${colors.fg}" stroke-width="0.5" stroke-dasharray="4 2"/>`);
+    if (oh.label) {
+      const lines = oh.label.split('\n');
+      const centerX = tx(oh.x + oh.width / 2);
+      const centerY = ty(oh.y + oh.height / 2);
+      for (let index = 0; index < lines.length; index++) {
+        const offset = (index - (lines.length - 1) / 2) * 8;
+        parts.push(
+          `<text x="${centerX}" y="${centerY + offset}" font-family="${fontFamily}" font-size="7" fill="${colors.fg}" text-anchor="middle" dominant-baseline="middle">${lines[index]}</text>`
+        );
+      }
+    }
   }
 
   // Walls - high contrast lines

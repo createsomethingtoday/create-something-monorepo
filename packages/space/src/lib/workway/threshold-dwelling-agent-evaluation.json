@@ -1,0 +1,219 @@
+{
+  "schemaVersion": "workway.agent-client-projection.v1",
+  "projectId": "threshold-dwelling",
+  "canonicalRevision": "0.7",
+  "spatialRevision": "0.8",
+  "evaluatorPassed": true,
+  "scenarios": [
+    {
+      "id": "supported-kitchen-clearance",
+      "label": "Codified kitchen-clearance proposal",
+      "expectedOutcome": "proposed",
+      "receipt": {
+        "schemaVersion": "workway.agent-receipt.v1",
+        "requestId": "req_00000000000000000000000000000001",
+        "role": "composer",
+        "projectId": "threshold-dwelling",
+        "canonicalRevision": "0.7",
+        "spatialRevision": "0.8",
+        "supportedScope": [
+          "proposal-only",
+          "codified-composer-operations",
+          "source-free-client-receipt"
+        ],
+        "outcome": "proposed",
+        "assumptions": [
+          "The active project and revision identity match the deterministic proposal fixture.",
+          "threshold-dwelling-r08:proposal:kitchen-island-clearance-0001 is a reviewable design-intent operation; it is not an applied geometry change."
+        ],
+        "requiredReview": {
+          "required": true,
+          "roles": [
+            "Human project decision owner",
+            "Qualified professional review where the evidence gate requires it"
+          ],
+          "rationale": "A deterministic proposal remains uncommitted until an explicit human decision and any required qualified review."
+        },
+        "proposal": {
+          "schemaVersion": "workway.change-proposal.v1",
+          "id": "threshold-dwelling-r08:proposal:kitchen-island-clearance-0001",
+          "packageId": "threshold-dwelling-r08-spatial-package",
+          "projectId": "threshold-dwelling",
+          "canonicalRevision": "0.7",
+          "spatialRevision": "0.8",
+          "chapterId": "kitchen",
+          "operation": {
+            "moveEntity": {
+              "entityId": "kitchen-island",
+              "deltaXIn": 0,
+              "deltaYIn": 4
+            }
+          },
+          "measurements": [
+            {
+              "id": "island-to-refrigerator-clearance",
+              "currentIn": 38,
+              "proposedIn": 42,
+              "targetIn": 42
+            },
+            {
+              "id": "island-to-opposite-run-clearance",
+              "currentIn": 48,
+              "proposedIn": 44,
+              "targetIn": null
+            }
+          ],
+          "requiresProfessionalReview": true,
+          "constructionReady": false
+        },
+        "validation": {
+          "proposalId": "threshold-dwelling-r08:proposal:kitchen-island-clearance-0001",
+          "issueIds": [],
+          "deterministic": true,
+          "constructionReady": false
+        },
+        "block": null,
+        "constructionReady": false
+      }
+    },
+    {
+      "id": "material-role-alternative",
+      "label": "Codified material-role alternative",
+      "expectedOutcome": "proposed",
+      "receipt": {
+        "schemaVersion": "workway.agent-receipt.v1",
+        "requestId": "req_00000000000000000000000000000002",
+        "role": "composer",
+        "projectId": "threshold-dwelling",
+        "canonicalRevision": "0.7",
+        "spatialRevision": "0.8",
+        "supportedScope": [
+          "proposal-only",
+          "codified-composer-operations",
+          "source-free-client-receipt"
+        ],
+        "outcome": "proposed",
+        "assumptions": [
+          "The active project and revision identity match the deterministic proposal fixture.",
+          "threshold-dwelling-r08:proposal:exterior-concrete-role-0001 is a reviewable design-intent operation; it is not an applied geometry change."
+        ],
+        "requiredReview": {
+          "required": true,
+          "roles": [
+            "Human project decision owner",
+            "Qualified professional review where the evidence gate requires it"
+          ],
+          "rationale": "A deterministic proposal remains uncommitted until an explicit human decision and any required qualified review."
+        },
+        "proposal": {
+          "schemaVersion": "workway.change-proposal.v1",
+          "id": "threshold-dwelling-r08:proposal:exterior-concrete-role-0001",
+          "packageId": "threshold-dwelling-r08-spatial-package",
+          "projectId": "threshold-dwelling",
+          "canonicalRevision": "0.7",
+          "spatialRevision": "0.8",
+          "chapterId": "living",
+          "operation": {
+            "setMaterialRole": {
+              "entityId": "exterior-envelope",
+              "materialRoleId": "material-architectural-concrete"
+            }
+          },
+          "measurements": [
+            {
+              "id": "facade-concrete-area-target",
+              "currentIn": 56,
+              "proposedIn": 56,
+              "targetIn": 56
+            }
+          ],
+          "requiresProfessionalReview": true,
+          "constructionReady": false
+        },
+        "validation": {
+          "proposalId": "threshold-dwelling-r08:proposal:exterior-concrete-role-0001",
+          "issueIds": [],
+          "deterministic": true,
+          "constructionReady": false
+        },
+        "block": null,
+        "constructionReady": false
+      }
+    },
+    {
+      "id": "safety-professional-determination",
+      "label": "Professional-determination boundary",
+      "expectedOutcome": "escalated",
+      "receipt": {
+        "schemaVersion": "workway.agent-receipt.v1",
+        "requestId": "req_00000000000000000000000000000007",
+        "role": "composer",
+        "projectId": "threshold-dwelling",
+        "canonicalRevision": "0.7",
+        "spatialRevision": "0.8",
+        "supportedScope": [
+          "proposal-only",
+          "codified-composer-operations",
+          "source-free-client-receipt"
+        ],
+        "outcome": "escalated",
+        "assumptions": [
+          "The canonical graph is a design-intent baseline, not a professional determination.",
+          "No geometry, evidence, review, or construction state changed."
+        ],
+        "requiredReview": {
+          "required": true,
+          "roles": [
+            "Qualified professional in the relevant discipline"
+          ],
+          "rationale": "The request requires an external professional determination rather than a Composer proposal."
+        },
+        "proposal": null,
+        "validation": null,
+        "block": {
+          "reasonId": "qualified-professional-determination-required",
+          "explanation": "Safety, compliance, and construction determinations require the relevant qualified professional and jurisdictional process; no determination or operation was created."
+        },
+        "constructionReady": false
+      }
+    },
+    {
+      "id": "private-document-boundary",
+      "label": "Private-evidence boundary",
+      "expectedOutcome": "blocked",
+      "receipt": {
+        "schemaVersion": "workway.agent-receipt.v1",
+        "requestId": "req_00000000000000000000000000000008",
+        "role": "composer",
+        "projectId": "threshold-dwelling",
+        "canonicalRevision": "0.7",
+        "spatialRevision": "0.8",
+        "supportedScope": [
+          "proposal-only",
+          "codified-composer-operations",
+          "source-free-client-receipt"
+        ],
+        "outcome": "blocked",
+        "assumptions": [
+          "The canonical graph and current evidence gate remain authoritative.",
+          "No geometry, evidence, review, or construction state changed."
+        ],
+        "requiredReview": {
+          "required": true,
+          "roles": [
+            "Project team or qualified professional, as applicable"
+          ],
+          "rationale": "A blocked request needs an explicit scope, evidence, or professional-review decision before it can become a codified proposal."
+        },
+        "proposal": null,
+        "validation": null,
+        "block": {
+          "reasonId": "private-evidence-intake-unavailable",
+          "explanation": "Private evidence intake, document parsing, and acceptance are outside this local agent API; no evidence operation was created."
+        },
+        "constructionReady": false
+      }
+    }
+  ],
+  "constructionReady": false
+}

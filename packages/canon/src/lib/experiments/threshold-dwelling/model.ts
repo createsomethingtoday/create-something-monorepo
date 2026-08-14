@@ -38,6 +38,8 @@ export interface ThresholdDwellingBuildMetrics {
   grossExteriorWallAreaSF: number;
   glazingAreaSF: number;
   opaqueWallAreaSF: number;
+  glazingToGrossExteriorWallRatio: number;
+  glazingToConditionedFloorAreaRatio: number;
   roofAreaSF: number;
   drivewayAreaSF: number;
   terraceAreaSF: number;
@@ -77,10 +79,17 @@ export interface ThresholdDwellingMaterialStrategy {
     systemStatus: 'geotechnical-and-structural-design-required';
   };
   envelope: {
-    primaryOpaqueCladding: 'mineral panel and formed metal rainscreen';
+    exteriorWallIntent: 'concrete-majority exterior envelope with concentrated floor-to-ceiling glazing at selected public, view, and arrival spans';
+    glazingIntent: 'target approximately 45% aggregate exterior glazing by illustrative wall area, concentrated by verified view and climate conditions while preserving required privacy, safety, thermal, water-management, and egress determinations';
+    energyComplianceStrategy: 'performance-or-energy-rating-index-analysis-required';
+    steelRole: 'localized primary support at glazed spans and required frame/lateral conditions';
+  };
+  interior: {
+    primaryWallMaterial: 'architectural concrete';
+    gypsumRole: 'selective ceiling and non-concrete service-finish planes';
   };
   cedar: {
-    role: 'protected accent';
+    role: 'restrained protected and tactile accent';
     allowedLocations: string[];
     prohibitedLocations: string[];
   };
@@ -95,6 +104,8 @@ const buildMetrics: ThresholdDwellingBuildMetrics = {
   grossExteriorWallAreaSF: 2140,
   glazingAreaSF: 950,
   opaqueWallAreaSF: 1190,
+  glazingToGrossExteriorWallRatio: 950 / 2140,
+  glazingToConditionedFloorAreaRatio: 950 / 2730,
   roofAreaSF: 3000,
   drivewayAreaSF: 800,
   terraceAreaSF: 450,
@@ -141,13 +152,13 @@ const lineItems: ThresholdDwellingCostLineItem[] = [
   },
   {
     category: 'Structure',
-    description: 'Coated steel frame & columns',
+    description: 'Coated steel frame & glazed-span support',
     estimate: 85_000,
     quantity: buildMetrics.conditionedFloorAreaSF,
     unit: 'SF',
     unitRate: 85_000 / buildMetrics.conditionedFloorAreaSF,
     materialGroup: 'steelRoofCarportAssemblies',
-    notes: 'High-performance coating or galvanizing · reprice with fabricator'
+    notes: 'Localized at glazed spans and required frame conditions only · final member sizes, coating, connections, and fabrication pricing require engineering and fabricator input'
   },
   {
     category: 'Structure',
@@ -160,23 +171,23 @@ const lineItems: ThresholdDwellingCostLineItem[] = [
   },
   {
     category: 'Envelope',
-    description: 'Primary opaque rainscreen walls',
+    description: 'Selective opaque concrete exterior zones',
     estimate: 48_000,
     quantity: buildMetrics.opaqueWallAreaSF,
     unit: 'SF',
     unitRate: 48_000 / buildMetrics.opaqueWallAreaSF,
     materialGroup: 'opaqueEnvelope',
-    notes: 'Mineral panels with formed-metal service fields · ventilated drainage cavity'
+    notes: 'Legacy scenario allowance retained only for like-for-like comparison; it is not an opaque-envelope saving claim · concrete system, structure, insulation, control layers, finish, movement, and enclosure details require coordinated design and current trade pricing'
   },
   {
     category: 'Envelope',
-    description: 'Windows & glazing',
+    description: 'Concrete-majority exterior envelope with concentrated glazing',
     estimate: 95_000,
     quantity: buildMetrics.glazingAreaSF,
     unit: 'SF',
     unitRate: 95_000 / buildMetrics.glazingAreaSF,
     materialGroup: 'glazing',
-    notes: 'Low-E insulated glazing · obtain current installed package quote'
+    notes: 'Legacy scenario allowance retained only for like-for-like comparison; it is not a glazing bid, rate, or feasibility conclusion · approximately 45% illustrative wall-area target; exact apertures remain unissued and must respond to orientation, shade, safety, privacy, egress, water-management, structure, and energy coordination · obtain current installed package quote'
   },
   {
     category: 'Envelope',
@@ -199,12 +210,13 @@ const lineItems: ThresholdDwellingCostLineItem[] = [
   },
   {
     category: 'Interior',
-    description: 'Interior walls & doors',
+    description: 'Interior concrete wall mass & doors',
     estimate: 32_000,
     quantity: buildMetrics.conditionedFloorAreaSF,
     unit: 'SF',
     unitRate: 32_000 / buildMetrics.conditionedFloorAreaSF,
-    materialGroup: 'other'
+    materialGroup: 'other',
+    notes: 'Architectural-concrete interior-wall intent only · partition system, reinforcement, services, ratings, openings, and door details require coordinated issue'
   },
   {
     category: 'Interior',
@@ -429,10 +441,19 @@ const materialStrategy: ThresholdDwellingMaterialStrategy = {
     systemStatus: 'geotechnical-and-structural-design-required'
   },
   envelope: {
-    primaryOpaqueCladding: 'mineral panel and formed metal rainscreen'
+    exteriorWallIntent:
+      'concrete-majority exterior envelope with concentrated floor-to-ceiling glazing at selected public, view, and arrival spans',
+    glazingIntent:
+      'target approximately 45% aggregate exterior glazing by illustrative wall area, concentrated by verified view and climate conditions while preserving required privacy, safety, thermal, water-management, and egress determinations',
+    energyComplianceStrategy: 'performance-or-energy-rating-index-analysis-required',
+    steelRole: 'localized primary support at glazed spans and required frame/lateral conditions'
+  },
+  interior: {
+    primaryWallMaterial: 'architectural concrete',
+    gypsumRole: 'selective ceiling and non-concrete service-finish planes'
   },
   cedar: {
-    role: 'protected accent',
+    role: 'restrained protected and tactile accent',
     allowedLocations: [
       'recessed entry and selected protected soffits',
       'one public-room ceiling plane',
@@ -466,15 +487,15 @@ const materialPalette: ThresholdDwellingMaterial[] = [
     name: 'Low-E Insulated Glass',
     category: 'envelope',
     color: '#a8c7d1',
-    location: 'Primary openings',
-    notes: 'Performance and shading study required'
+    location: 'Selected public, view, and arrival glazing spans',
+    notes: 'Approximately 45% illustrative wall-area target; exact units, operation, performance, shading, and water-management require coordinated design'
   },
   {
-    name: 'Mineral Rainscreen',
+    name: 'Architectural Concrete',
     category: 'envelope',
-    color: '#c8c6bf',
-    location: 'Primary opaque wall fields',
-    notes: 'Ventilated drainage and drying cavity'
+    color: '#aaa79f',
+    location: 'Interior wall mass + selective opaque exterior zones',
+    notes: 'Role-only concrete mass; system, structure, finish, movement, service routing, and enclosure design require coordinated issue and mockup review'
   },
   {
     name: 'Formed Metal',
@@ -498,11 +519,18 @@ const materialPalette: ThresholdDwellingMaterial[] = [
     notes: 'Coordinate joints, curing, sealer, and tolerance'
   },
   {
+    name: 'Large-Format Porcelain',
+    category: 'interior',
+    color: '#d8d5cf',
+    location: 'Baths + laundry',
+    notes: 'Role-only finish datum; select product, waterproofing, slip resistance, transitions, and maintenance requirements before issue'
+  },
+  {
     name: 'Gypsum + Mineral Finish',
     category: 'interior',
     color: '#eeede7',
-    location: 'Walls + bedroom ceilings',
-    notes: 'Quiet neutral field around the structural frame'
+    location: 'Selective ceilings + non-concrete service-finish planes',
+    notes: 'Quiet neutral finish only where the interior concrete wall mass is not expressed'
   },
   {
     name: 'Cedar Accent',
@@ -536,7 +564,7 @@ const materialPalette: ThresholdDwellingMaterial[] = [
 
 export const THRESHOLD_DWELLING_DESIGN = {
   status: 'design-development',
-  revision: '0.3',
+  revision: '0.5',
   buildMetrics,
   materialStrategy,
   constructionAllowance,
