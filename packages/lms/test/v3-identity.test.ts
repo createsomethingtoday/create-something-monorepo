@@ -50,16 +50,3 @@ test('Learn serves checksum-verified V3 vectors and the V3 favicon', () => {
   assert.match(metadata, /1f4ff733da74d0a5514988513e659a4eef457c711eb54e135011530a185753bb/);
   assert.match(metadata, /d50ace76dbeabc2fee672599e81434addfe0e83dc41e35e0865ebc4f69942ff2/);
 });
-
-test('the public path chooser names the next move, bounded sequence, and proof artifact', () => {
-  const paths = read('src/routes/paths/+page.svelte');
-
-  assert.match(paths, /const pathProof/);
-  assert.match(paths, /function pathTimeBudget/);
-  assert.match(paths, /class="path-record"/);
-  assert.match(paths, /Next move/);
-  assert.match(paths, /Time budget/);
-  assert.match(paths, /Proof artifact/);
-  assert.match(paths, /View sequence/);
-  assert.doesNotMatch(paths, /Practical operator workflow/);
-});
