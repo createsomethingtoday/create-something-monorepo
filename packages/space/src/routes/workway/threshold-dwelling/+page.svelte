@@ -2,12 +2,15 @@
   import { dev } from '$app/environment';
   import {
     THRESHOLD_DWELLING_SPATIAL_PACKAGE,
+    DEFAULT_THRESHOLD_DWELLING_COMPOSER_INTENT,
     assetBrowserUrl,
     chapterForId,
-    createKitchenIslandClearanceProposal,
+    composerProposalForIntent,
     createSessionAnnotation,
     createSessionProposalDecision,
+    interpretThresholdDwellingComposerIntent,
     portalsFrom,
+    type WorkWayComposerInterpretation,
     type WorkWaySessionAnnotation,
     type WorkWaySessionOperation,
     type WorkWaySessionProposalDecision
@@ -36,8 +39,17 @@
   let annotationText = $state('Island clearance: compare the proposed 4 in south move.');
   let annotations = $state<WorkWaySessionAnnotation[]>([]);
   let proposalDecision = $state<WorkWaySessionProposalDecision | null>(null);
+  let composerIntent = $state(DEFAULT_THRESHOLD_DWELLING_COMPOSER_INTENT);
+  let composerInterpretation = $state<WorkWayComposerInterpretation | null>(null);
 
-  const kitchenIslandProposal = createKitchenIslandClearanceProposal(spatialPackage);
+  const initialKitchenIslandProposal = composerProposalForIntent(
+    spatialPackage,
+    DEFAULT_THRESHOLD_DWELLING_COMPOSER_INTENT
+  );
+  if (!initialKitchenIslandProposal) {
+    throw new Error('The Rust-derived default Composer proposal is unavailable for this package.');
+  }
+  const kitchenIslandProposal = initialKitchenIslandProposal;
   const activeChapter = $derived(chapterForId(spatialPackage, activeChapterId));
   const activePortals = $derived(portalsFrom(spatialPackage, activeChapterId));
   const activeDimensions = $derived(
@@ -79,6 +91,22 @@
 
   function recordProposalDecision(decision: WorkWaySessionProposalDecision['decision']) {
     proposalDecision = createSessionProposalDecision(spatialPackage, kitchenIslandProposal, decision);
+  }
+
+  function submitComposerIntent() {
+    composerInterpretation = interpretThresholdDwellingComposerIntent(spatialPackage, composerIntent);
+    proposalDecision = null;
+  }
+
+  function recordComposerProposalDecision(decision: WorkWaySessionProposalDecision['decision']) {
+    if (!composerInterpretation || composerInterpretation.kind !== 'proposed') {
+      throw new Error('A valid Composer proposal is required before recording a decision.');
+    }
+    proposalDecision = createSessionProposalDecision(
+      spatialPackage,
+      composerInterpretation.proposal,
+      decision
+    );
   }
 </script>
 
@@ -378,6 +406,73 @@
           <p class="proposal-boundary">
             Local decision only. It neither applies geometry nor establishes construction or code compliance.
           </p>
+        </section>
+
+        <section class="proposal-card" aria-label="Composer change review" data-testid="composer-review">
+          <p class="section-label">Composer / bounded intent</p>
+          <h3>Propose a typed change</h3>
+          <p>
+            Composer can interpret only codified operations. It proposes a deterministic change set;
+            it does not author mesh geometry or accept its own work.
+          </p>
+          <label for="composer-intent">Change intent</label>
+          <textarea
+            id="composer-intent"
+            bind:value={composerIntent}
+            rows="3"
+            data-testid="composer-intent-input"
+          ></textarea>
+          <button class="primary-action" onclick={submitComposerIntent} data-testid="submit-composer-intent">
+            Propose change
+          </button>
+          {#if composerInterpretation?.kind === 'proposed'}
+            <div class="composer-result" data-testid="composer-proposed-result">
+              <p class="section-label">Deterministic proposal</p>
+              <code data-testid="composer-proposal-id">{composerInterpretation.proposal.id}</code>
+              <p>
+                {composerInterpretation.proposal.operation.kind === 'move-entity'
+                  ? `${composerInterpretation.proposal.operation.entityId} → ${composerInterpretation.proposal.operation.deltaYIn} in south`
+                  : `${composerInterpretation.proposal.operation.entityId} → ${composerInterpretation.proposal.operation.materialRoleId}`}
+              </p>
+              <p>Validation: deterministic · {composerInterpretation.validation.issueIds.length} issues</p>
+              <dl class="proposal-measurements">
+                {#each composerInterpretation.proposal.measurements as measurement}
+                  <div>
+                    <dt>{measurement.id.replaceAll('-', ' ')}</dt>
+                    <dd>{measurement.currentIn} → {measurement.proposedIn} in{measurement.targetIn ? ` · target ${measurement.targetIn} in` : ''}</dd>
+                  </div>
+                {/each}
+              </dl>
+              {#if proposalDecision?.proposalId === composerInterpretation.proposal.id}
+                <p class="decision-status" data-testid="composer-decision-status">
+                  {proposalDecision.decision === 'accepted' ? 'Accepted' : 'Rejected'} locally. Canonical geometry has not changed.
+                </p>
+              {:else}
+                <div class="proposal-actions">
+                  <button
+                    class="primary-action"
+                    onclick={() => recordComposerProposalDecision('accepted')}
+                    data-testid="accept-composer-proposal"
+                  >
+                    Accept and record
+                  </button>
+                  <button
+                    class="secondary-action"
+                    onclick={() => recordComposerProposalDecision('rejected')}
+                    data-testid="reject-composer-proposal"
+                  >
+                    Reject
+                  </button>
+                </div>
+              {/if}
+            </div>
+          {:else if composerInterpretation?.kind === 'blocked'}
+            <div class="composer-result composer-blocked" data-testid="composer-blocked-result">
+              <p class="section-label">Blocked / evidence gate</p>
+              <code>{composerInterpretation.reasonId}</code>
+              <p>{composerInterpretation.explanation}</p>
+            </div>
+          {/if}
         </section>
 
         <label for="annotation">Add an annotation</label>

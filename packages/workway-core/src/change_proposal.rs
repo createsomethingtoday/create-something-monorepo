@@ -13,12 +13,16 @@ pub const CHANGE_PROPOSAL_SCHEMA_VERSION: &str = "workway.change-proposal.v1";
 
 /// A machine-executable operation expressed in project coordinates.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", rename_all_fields = "camelCase")]
 pub enum DeterministicOperation {
     MoveEntity {
         entity_id: String,
         delta_x_in: i32,
         delta_y_in: i32,
+    },
+    SetMaterialRole {
+        entity_id: String,
+        material_role_id: String,
     },
 }
 
@@ -128,6 +132,17 @@ pub fn validate_change_proposal(proposal: &ChangeProposal) -> ChangeProposalVali
                 issue_ids.push("operation-must-change-project-state".into());
             }
         }
+        DeterministicOperation::SetMaterialRole {
+            entity_id,
+            material_role_id,
+        } => {
+            if !required(entity_id) {
+                issue_ids.push("operation-entity-missing".into());
+            }
+            if !required(material_role_id) {
+                issue_ids.push("operation-material-role-missing".into());
+            }
+        }
     }
 
     if proposal.measurements.is_empty() {
@@ -188,6 +203,34 @@ pub fn threshold_dwelling_kitchen_island_clearance_proposal_v08() -> ChangePropo
                 target_in: None,
             },
         ],
+        requires_professional_review: true,
+        construction_ready: false,
+    }
+}
+
+/// A bounded material-role proposal. It selects only a codified visual role,
+/// never a manufacturer product, assembly thickness, or facade geometry.
+#[must_use]
+pub fn threshold_dwelling_concrete_envelope_material_role_proposal_v08() -> ChangeProposal {
+    ChangeProposal {
+        schema_version: CHANGE_PROPOSAL_SCHEMA_VERSION.into(),
+        id: "threshold-dwelling-r08:proposal:exterior-concrete-role-0001".into(),
+        package_id: "threshold-dwelling-r08-spatial-package".into(),
+        project_id: "threshold-dwelling".into(),
+        canonical_revision: "0.7".into(),
+        spatial_revision: "0.8".into(),
+        chapter_id: "living".into(),
+        intent: "Use architectural concrete for the exterior envelope.".into(),
+        operation: DeterministicOperation::SetMaterialRole {
+            entity_id: "exterior-envelope".into(),
+            material_role_id: "material-architectural-concrete".into(),
+        },
+        measurements: vec![MeasurementDelta {
+            id: "facade-concrete-area-target".into(),
+            current_in: 56,
+            proposed_in: 56,
+            target_in: Some(56),
+        }],
         requires_professional_review: true,
         construction_ready: false,
     }

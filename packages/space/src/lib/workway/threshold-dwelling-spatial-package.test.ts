@@ -6,12 +6,14 @@ import test from 'node:test';
 
 import {
   THRESHOLD_DWELLING_SPATIAL_PACKAGE,
+  DEFAULT_THRESHOLD_DWELLING_COMPOSER_INTENT,
   assetBrowserUrl,
   chapterForId,
-  createKitchenIslandClearanceProposal,
+  composerProposalForIntent,
   createSessionAnnotation,
   createSessionProposalDecision,
   createThresholdDwellingSpatialPackage,
+  interpretThresholdDwellingComposerIntent,
   portalsFrom,
   validateSpatialPackage
 } from './threshold-dwelling-spatial-package.js';
@@ -162,7 +164,11 @@ test('uses explicit portals and immutable session annotation operations', () => 
 
 test('expresses the kitchen-island suggestion as a bounded deterministic proposal', () => {
   const packageValue = THRESHOLD_DWELLING_SPATIAL_PACKAGE;
-  const proposal = createKitchenIslandClearanceProposal(packageValue);
+  const proposal = composerProposalForIntent(
+    packageValue,
+    DEFAULT_THRESHOLD_DWELLING_COMPOSER_INTENT
+  );
+  assert.ok(proposal);
 
   assert.deepEqual(proposal.operation, {
     kind: 'move-entity',
@@ -196,9 +202,51 @@ test('expresses the kitchen-island suggestion as a bounded deterministic proposa
   });
 });
 
+test('projects only codified Composer intents and blocks unissued facade geometry', () => {
+  const packageValue = THRESHOLD_DWELLING_SPATIAL_PACKAGE;
+  const materialProposal = composerProposalForIntent(
+    packageValue,
+    'Use architectural concrete for the exterior envelope.'
+  );
+  assert.ok(materialProposal);
+
+  assert.deepEqual(materialProposal.operation, {
+    kind: 'set-material-role',
+    entityId: 'exterior-envelope',
+    materialRoleId: 'material-architectural-concrete'
+  });
+  assert.deepEqual(
+    interpretThresholdDwellingComposerIntent(
+      packageValue,
+      'Move the kitchen island 4 inches south to improve refrigerator clearance.'
+    ),
+    {
+      kind: 'proposed',
+      proposal: composerProposalForIntent(packageValue, DEFAULT_THRESHOLD_DWELLING_COMPOSER_INTENT),
+      validation: { deterministic: true, issueIds: [] }
+    }
+  );
+  assert.deepEqual(
+    interpretThresholdDwellingComposerIntent(
+      packageValue,
+      'Replace the exterior wall with floor-to-ceiling glass.'
+    ),
+    {
+      kind: 'blocked',
+      reasonId: 'window-and-glass-opening-geometry-unissued',
+      explanation:
+        'Glass-opening geometry, support, safety, water-management, and energy evidence remain unissued; no facade operation was created.'
+    }
+  );
+});
+
 test('refuses to record a decision against a different package revision', () => {
   const packageValue = THRESHOLD_DWELLING_SPATIAL_PACKAGE;
-  const proposal = createKitchenIslandClearanceProposal(packageValue);
+  const proposal = composerProposalForIntent(
+    packageValue,
+    DEFAULT_THRESHOLD_DWELLING_COMPOSER_INTENT
+  );
+  assert.ok(proposal);
   const mismatchedPackage = { ...packageValue, spatialRevision: '0.9' };
 
   assert.throws(

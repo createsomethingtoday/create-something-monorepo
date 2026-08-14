@@ -8,13 +8,16 @@ pub mod project_graph;
 pub mod spatial_package;
 
 pub use change_proposal::{
+    threshold_dwelling_concrete_envelope_material_role_proposal_v08,
     threshold_dwelling_kitchen_island_clearance_proposal_v08, validate_change_proposal,
     ChangeProposal, ChangeProposalValidation, DeterministicOperation, MeasurementDelta,
     CHANGE_PROPOSAL_SCHEMA_VERSION,
 };
 pub use composer::{
-    decide_composer_proposal, interpret_threshold_dwelling_composer_intent, ComposerDecision,
-    ComposerDecisionReceipt, ComposerInterpretation,
+    decide_composer_proposal, interpret_threshold_dwelling_composer_intent,
+    threshold_dwelling_composer_contract_v08, ComposerBlockedIntentRule,
+    ComposerContractProjection, ComposerDecision, ComposerDecisionReceipt, ComposerInterpretation,
+    ComposerSupportedIntent, COMPOSER_CONTRACT_SCHEMA_VERSION,
 };
 pub use project_graph::{
     project_client_evidence_readiness, threshold_dwelling_evidence_manifest_v08,

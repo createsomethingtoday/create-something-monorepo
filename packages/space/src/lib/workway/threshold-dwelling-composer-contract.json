@@ -1,0 +1,102 @@
+{
+  "schemaVersion": "workway.composer-contract.v1",
+  "projectId": "threshold-dwelling",
+  "canonicalRevision": "0.7",
+  "spatialRevision": "0.8",
+  "supportedIntents": [
+    {
+      "intent": "Move the kitchen island 4 inches south to improve refrigerator clearance.",
+      "proposal": {
+        "schemaVersion": "workway.change-proposal.v1",
+        "id": "threshold-dwelling-r08:proposal:kitchen-island-clearance-0001",
+        "packageId": "threshold-dwelling-r08-spatial-package",
+        "projectId": "threshold-dwelling",
+        "canonicalRevision": "0.7",
+        "spatialRevision": "0.8",
+        "chapterId": "kitchen",
+        "intent": "Move the kitchen island 4 inches south to improve refrigerator clearance.",
+        "operation": {
+          "moveEntity": {
+            "entityId": "kitchen-island",
+            "deltaXIn": 0,
+            "deltaYIn": 4
+          }
+        },
+        "measurements": [
+          {
+            "id": "island-to-refrigerator-clearance",
+            "currentIn": 38,
+            "proposedIn": 42,
+            "targetIn": 42
+          },
+          {
+            "id": "island-to-opposite-run-clearance",
+            "currentIn": 48,
+            "proposedIn": 44,
+            "targetIn": null
+          }
+        ],
+        "requiresProfessionalReview": true,
+        "constructionReady": false
+      },
+      "validation": {
+        "proposalId": "threshold-dwelling-r08:proposal:kitchen-island-clearance-0001",
+        "issueIds": [],
+        "deterministic": true,
+        "constructionReady": false
+      }
+    },
+    {
+      "intent": "Use architectural concrete for the exterior envelope.",
+      "proposal": {
+        "schemaVersion": "workway.change-proposal.v1",
+        "id": "threshold-dwelling-r08:proposal:exterior-concrete-role-0001",
+        "packageId": "threshold-dwelling-r08-spatial-package",
+        "projectId": "threshold-dwelling",
+        "canonicalRevision": "0.7",
+        "spatialRevision": "0.8",
+        "chapterId": "living",
+        "intent": "Use architectural concrete for the exterior envelope.",
+        "operation": {
+          "setMaterialRole": {
+            "entityId": "exterior-envelope",
+            "materialRoleId": "material-architectural-concrete"
+          }
+        },
+        "measurements": [
+          {
+            "id": "facade-concrete-area-target",
+            "currentIn": 56,
+            "proposedIn": 56,
+            "targetIn": 56
+          }
+        ],
+        "requiresProfessionalReview": true,
+        "constructionReady": false
+      },
+      "validation": {
+        "proposalId": "threshold-dwelling-r08:proposal:exterior-concrete-role-0001",
+        "issueIds": [],
+        "deterministic": true,
+        "constructionReady": false
+      }
+    }
+  ],
+  "blockedIntentRules": [
+    {
+      "ruleId": "unissued-exterior-glass-opening-geometry",
+      "requiredTerms": [
+        "glass"
+      ],
+      "anyTerms": [
+        "exterior",
+        "floor-to-ceiling"
+      ],
+      "reasonId": "window-and-glass-opening-geometry-unissued",
+      "explanation": "Glass-opening geometry, support, safety, water-management, and energy evidence remain unissued; no facade operation was created."
+    }
+  ],
+  "fallbackReasonId": "unsupported-or-ambiguous-intent",
+  "fallbackExplanation": "The local Composer recognizes only explicitly codified operations and will not infer geometry from ambiguous intent.",
+  "constructionReady": false
+}
