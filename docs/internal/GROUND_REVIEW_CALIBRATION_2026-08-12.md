@@ -35,6 +35,27 @@ historical commit was changed.
 The machine-readable summary is
 `docs/internal/ground-review-calibration-2026-08-12.json`.
 
+## Adjudication ledger
+
+`docs/internal/ground-adjudication-ledger.v1.json` carries this calibration
+forward without converting its zero findings into an accuracy claim. Each new
+Ground review receipt can add one record with its receipt source, completion
+state, observed finding count, and a reviewer verdict for every finding:
+`confirmed`, `false_positive`, or `out_of_scope`. Each verdict needs a concrete
+rationale.
+
+Use the deterministic summary before any policy discussion:
+
+```bash
+pnpm ground:adjudication
+pnpm ground:adjudication:json
+```
+
+The ledger is advisory-only. Its coverage and precision thresholds are
+intentionally unconfigured until an operator approves them; an unconfigured
+threshold is reported as **not ready**, never interpreted as permission to
+make Ground blocking.
+
 ## Results
 
 | PR    | Status              | Changed | Duplicate coverage | Orphan coverage | Excluded | Findings |
