@@ -61,6 +61,7 @@ import {
 	findMcpLegacyKeyById,
 	revokeMcpLegacyKey,
 	revokeMcpLongLivedToken,
+	revokeAllIdentityLinkedCredentials,
 	upsertMcpLongLivedToken,
 	findMcpPolicyRollout,
 	createMcpPolicyEvent,
@@ -3491,8 +3492,7 @@ async function handleVerifyEmailChange(request: Request, env: Env): Promise<Resp
 	await deleteEmailChangeRequest(db, changeRequest.id);
 
 	// Revoke all tokens (security - force re-login with new email)
-	await revokeAllUserTokens(db, changeRequest.user_id);
-	await revokeAllMcpSessionsForUser(db, changeRequest.user_id);
+	await revokeAllIdentityLinkedCredentials(db, changeRequest.user_id);
 
 	return json({
 		success: true,
@@ -3533,10 +3533,6 @@ async function handleDeleteMe(request: Request, env: Env): Promise<Response> {
 	if (!deleted) {
 		return json({ error: 'delete_failed', message: 'Failed to delete account', status: 500 }, 500);
 	}
-
-	// Revoke all tokens immediately
-	await revokeAllUserTokens(db, user.id);
-	await revokeAllMcpSessionsForUser(db, user.id);
 
 	// Send confirmation email (if email service is configured)
 	if (env.RESEND_API_KEY) {
@@ -3820,11 +3816,7 @@ async function handleHardDelete(request: Request, env: Env, userId: string): Pro
 		}
 	}
 
-	// Revoke all tokens first (in case any are still valid)
-	await revokeAllUserTokens(db, userId);
-	await revokeAllMcpSessionsForUser(db, userId);
-
-	// Hard delete the user
+	// Atomically revoke every linked credential before removing the identity.
 	const deleted = await hardDeleteUser(db, userId);
 	if (!deleted) {
 		return json({ error: 'delete_failed', message: 'Failed to delete user', status: 500 }, 500);
@@ -3864,11 +3856,7 @@ async function handleCleanupDeletedUsers(request: Request, env: Env): Promise<Re
 	const results: { user_id: string; email: string; deleted: boolean }[] = [];
 
 	for (const user of usersToDelete) {
-		// Revoke any remaining tokens
-		await revokeAllUserTokens(db, user.id);
-		await revokeAllMcpSessionsForUser(db, user.id);
-
-		// Hard delete
+		// Atomically revoke every linked credential before removing the identity.
 		const deleted = await hardDeleteUser(db, user.id);
 		results.push({ user_id: user.id, email: user.email, deleted });
 	}

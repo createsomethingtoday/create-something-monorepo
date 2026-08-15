@@ -477,13 +477,54 @@ export async function cleanExpiredEmailChangeRequests(db: D1Database): Promise<v
 	await db.prepare("DELETE FROM email_change_requests WHERE expires_at < datetime('now')").run();
 }
 
+// Identity lifecycle credential revocation
+function identityCredentialRevocationStatements(db: D1Database, userId: string): D1PreparedStatement[] {
+	return [
+		db
+			.prepare("UPDATE refresh_tokens SET revoked_at = datetime('now') WHERE user_id = ?")
+			.bind(userId),
+		db
+			.prepare(
+				`UPDATE mcp_sessions
+         SET revoked_at = datetime('now'), updated_at = datetime('now')
+         WHERE user_id = ? AND revoked_at IS NULL`,
+			)
+			.bind(userId),
+		db
+			.prepare(
+				`UPDATE mcp_long_lived_tokens
+         SET revoked_at = datetime('now'), updated_at = datetime('now')
+         WHERE auth_subject = ? AND revoked_at IS NULL`,
+			)
+			.bind(userId),
+		db
+			.prepare(
+				`UPDATE mcp_legacy_keys
+         SET revoked_at = datetime('now'), updated_at = datetime('now')
+         WHERE user_id = ? AND revoked_at IS NULL`,
+			)
+			.bind(userId),
+	];
+}
+
+export async function revokeAllIdentityLinkedCredentials(
+	db: D1Database,
+	userId: string,
+): Promise<void> {
+	await db.batch(identityCredentialRevocationStatements(db, userId));
+}
+
 // Soft delete queries
 export async function softDeleteUser(db: D1Database, id: string): Promise<boolean> {
-	const result = await db
-		.prepare("UPDATE users SET deleted_at = datetime('now'), updated_at = datetime('now') WHERE id = ? AND deleted_at IS NULL")
-		.bind(id)
-		.run();
-	return result.meta.changes > 0;
+	const [result] = await db.batch([
+		db
+			.prepare(
+				"UPDATE users SET deleted_at = datetime('now'), updated_at = datetime('now') WHERE id = ? AND deleted_at IS NULL",
+			)
+			.bind(id),
+		...identityCredentialRevocationStatements(db, id),
+	]);
+	return (result?.meta.changes ?? 0) > 0;
 }
 
 export async function restoreUser(db: D1Database, id: string): Promise<User | null> {
@@ -495,8 +536,11 @@ export async function restoreUser(db: D1Database, id: string): Promise<User | nu
 }
 
 export async function hardDeleteUser(db: D1Database, id: string): Promise<boolean> {
-	const result = await db.prepare('DELETE FROM users WHERE id = ?').bind(id).run();
-	return result.meta.changes > 0;
+	const results = await db.batch([
+		...identityCredentialRevocationStatements(db, id),
+		db.prepare('DELETE FROM users WHERE id = ?').bind(id),
+	]);
+	return (results.at(-1)?.meta.changes ?? 0) > 0;
 }
 
 export async function findDeletedUsersForCleanup(db: D1Database): Promise<User[]> {
@@ -899,9 +943,26 @@ export async function createMcpAuthEvent(
 	await db
 		.prepare(
 			`INSERT INTO mcp_auth_events (id, session_id, user_id, event_type, event_data_json)
-       VALUES (?, ?, ?, ?, ?)`
+       VALUES (
+         ?,
+         ?,
+         CASE
+           WHEN ? IS NULL OR EXISTS (SELECT 1 FROM users WHERE id = ?) THEN ?
+           ELSE NULL
+         END,
+         ?,
+         ?
+       )`
 		)
-		.bind(event.id, event.session_id, event.user_id, event.event_type, event.event_data_json)
+		.bind(
+			event.id,
+			event.session_id,
+			event.user_id,
+			event.user_id,
+			event.user_id,
+			event.event_type,
+			event.event_data_json,
+		)
 		.run();
 }
 
