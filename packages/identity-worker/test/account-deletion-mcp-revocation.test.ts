@@ -9,7 +9,11 @@ import identityWorker from '../src/index.ts';
 import {
   createMcpLegacyKey,
   createMcpSession,
+  createOAuthRefreshFamily,
+  createRefreshToken,
+  findRefreshTokenByHash,
   findUserById,
+  isOAuthRefreshFamilyActive,
   upsertMcpLongLivedToken
 } from '../src/db/queries.ts';
 import { hashPassword, hashToken } from '../src/services/crypto.ts';
@@ -126,48 +130,89 @@ async function issueMcpCredentials(db: D1Database, userId: string) {
   const sessionToken = `session-${userId}`;
   const managedToken = `managed-${userId}`;
   const legacyToken = `legacy-${userId}`;
-  await createMcpSession(db, {
-    id: `session-${userId}`,
-    user_id: userId,
-    tenant_id: 'tenant-customer',
-    account_id: 'account-customer',
-    host: 'mcp.createsomething.agency',
-    bound_host: null,
-    tool_mode: 'read_write',
-    toolkit_profile_json: '[]',
-    allowed_tool_prefixes_json: '[]',
-    token_hash: await hashToken(sessionToken),
-    expires_at: '2999-01-01T00:00:00.000Z'
-  });
-  await upsertMcpLongLivedToken(db, {
-    id: `managed-${userId}`,
-    auth_subject: userId,
-    auth_email: 'customer@example.com',
-    tenant_id: 'tenant-customer',
-    account_id: 'account-customer',
-    bound_host: null,
-    tool_mode: 'read_write',
-    toolkit_profile_json: '[]',
-    allowed_tool_prefixes_json: '[]',
-    token_hash: await hashToken(managedToken),
-    token_prefix: 'managed',
-    issued_by: 'test-operator',
-    metadata_json: '{}'
-  });
-  await createMcpLegacyKey(db, {
-    id: `legacy-${userId}`,
-    key_hash: await hashToken(legacyToken),
-    key_prefix: 'legacy',
-    tenant_id: 'tenant-customer',
-    account_id: 'account-customer',
-    user_id: userId,
-    reason: 'account deletion regression',
-    exception_approved_by: 'test-operator',
-    issued_by: 'test-operator',
-    expires_at: '2999-01-01T00:00:00.000Z',
-    sunset_at: '2999-01-01T00:00:00.000Z'
-  });
+  assert.equal(
+    await createMcpSession(db, {
+      id: `session-${userId}`,
+      user_id: userId,
+      tenant_id: 'tenant-customer',
+      account_id: 'account-customer',
+      host: 'mcp.createsomething.agency',
+      bound_host: null,
+      tool_mode: 'read_write',
+      toolkit_profile_json: '[]',
+      allowed_tool_prefixes_json: '[]',
+      token_hash: await hashToken(sessionToken),
+      expires_at: '2999-01-01T00:00:00.000Z'
+    }),
+    true
+  );
+  assert.equal(
+    await upsertMcpLongLivedToken(db, {
+      id: `managed-${userId}`,
+      auth_subject: userId,
+      auth_email: 'customer@example.com',
+      tenant_id: 'tenant-customer',
+      account_id: 'account-customer',
+      bound_host: null,
+      tool_mode: 'read_write',
+      toolkit_profile_json: '[]',
+      allowed_tool_prefixes_json: '[]',
+      token_hash: await hashToken(managedToken),
+      token_prefix: 'managed',
+      issued_by: 'test-operator',
+      metadata_json: '{}'
+    }),
+    true
+  );
+  assert.equal(
+    await createMcpLegacyKey(db, {
+      id: `legacy-${userId}`,
+      key_hash: await hashToken(legacyToken),
+      key_prefix: 'legacy',
+      tenant_id: 'tenant-customer',
+      account_id: 'account-customer',
+      user_id: userId,
+      reason: 'account deletion regression',
+      exception_approved_by: 'test-operator',
+      issued_by: 'test-operator',
+      expires_at: '2999-01-01T00:00:00.000Z',
+      sunset_at: '2999-01-01T00:00:00.000Z'
+    }),
+    true
+  );
+  assert.equal(
+    await createOAuthRefreshFamily(db, {
+      familyId: `oauth-family-${userId}`,
+      clientId: 'oauth-client',
+      userId
+    }),
+    true
+  );
+  assert.equal(
+    await isOAuthRefreshFamilyActive(db, `oauth-family-${userId}`, 'oauth-client', userId),
+    true
+  );
+  assert.equal(
+    await createRefreshToken(db, {
+      id: `refresh-${userId}`,
+      user_id: userId,
+      token_hash: await hashToken(`refresh-${userId}`),
+      family_id: `refresh-family-${userId}`,
+      expires_at: '2999-01-01T00:00:00.000Z',
+      audience: 'space'
+    }),
+    true
+  );
   return { sessionToken, managedToken, legacyToken };
+}
+
+async function assertRefreshTokenInvalidated(
+  db: D1Database,
+  userId: string,
+  allowHardDeleted = false
+): Promise<void> {
+  const token = await findRefreshTokenByHash(db, await hashToken(`refresh-${userId}`));
+  assert.equal(Boolean(token?.revoked_at) || (allowHardDeleted && token === null), true);
 }
 
 async function resolveMcpCredential(db: D1Database, token: string) {
@@ -212,7 +257,7 @@ test('soft deletion immediately invalidates every Identity-linked MCP credential
     const db = createSqliteD1(database);
     const user = await findUserById(db, 'user-customer');
     assert.ok(user);
-    const { accessToken } = await generateTokens(db, user, 'space');
+    const { accessToken, refreshToken } = await generateTokens(db, user, 'space');
     const linked = await issueMcpCredentials(db, user.id);
     const operatorToken = 'legacy-unrelated-operator';
     await createMcpLegacyKey(db, {
@@ -255,7 +300,91 @@ test('soft deletion immediately invalidates every Identity-linked MCP credential
       assert.equal(resolution.valid, false, `${token} must be invalid after account deletion`);
       assert.equal(resolution.reason, 'revoked');
     }
+    assert.equal(
+      await isOAuthRefreshFamilyActive(db, 'oauth-family-user-customer', 'oauth-client', user.id),
+      false
+    );
+    await assertRefreshTokenInvalidated(db, user.id);
+    const refresh = await identityWorker.fetch(
+      new Request('https://id.createsomething.space/v1/auth/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: refreshToken })
+      }),
+      { DB: db, ENVIRONMENT: 'test', ALLOWED_ORIGINS: '' } as never
+    );
+    assert.equal(refresh.status, 401);
     assert.equal((await resolveMcpCredential(db, operatorToken)).valid, true);
+
+    assert.equal(
+      await createMcpSession(db, {
+        id: 'session-after-delete',
+        user_id: user.id,
+        tenant_id: 'tenant-customer',
+        account_id: 'account-customer',
+        host: 'mcp.createsomething.agency',
+        bound_host: null,
+        tool_mode: 'read_write',
+        toolkit_profile_json: '[]',
+        allowed_tool_prefixes_json: '[]',
+        token_hash: await hashToken('session-after-delete'),
+        expires_at: '2999-01-01T00:00:00.000Z'
+      }),
+      false
+    );
+    assert.equal(
+      await upsertMcpLongLivedToken(db, {
+        id: 'managed-after-delete',
+        auth_subject: user.id,
+        auth_email: user.email,
+        tenant_id: 'tenant-customer',
+        account_id: 'account-customer',
+        bound_host: null,
+        tool_mode: 'read_write',
+        toolkit_profile_json: '[]',
+        allowed_tool_prefixes_json: '[]',
+        token_hash: await hashToken('managed-after-delete'),
+        token_prefix: 'managed',
+        issued_by: 'test-operator',
+        metadata_json: '{}'
+      }),
+      false
+    );
+    assert.equal(
+      await createMcpLegacyKey(db, {
+        id: 'legacy-after-delete',
+        key_hash: await hashToken('legacy-after-delete'),
+        key_prefix: 'legacy',
+        tenant_id: 'tenant-customer',
+        account_id: 'account-customer',
+        user_id: user.id,
+        reason: 'stale issuance attempt',
+        exception_approved_by: 'test-operator',
+        issued_by: 'test-operator',
+        expires_at: '2999-01-01T00:00:00.000Z',
+        sunset_at: '2999-01-01T00:00:00.000Z'
+      }),
+      false
+    );
+    assert.equal(
+      await createOAuthRefreshFamily(db, {
+        familyId: 'oauth-family-after-delete',
+        clientId: 'oauth-client',
+        userId: user.id
+      }),
+      false
+    );
+    assert.equal(
+      await createRefreshToken(db, {
+        id: 'refresh-after-delete',
+        user_id: user.id,
+        token_hash: await hashToken('refresh-after-delete'),
+        family_id: 'refresh-family-after-delete',
+        expires_at: '2999-01-01T00:00:00.000Z',
+        audience: 'space'
+      }),
+      false
+    );
   } finally {
     globalThis.fetch = originalFetch;
     rmSync(directory, { recursive: true, force: true });
@@ -271,10 +400,10 @@ test('administrative hard deletion invalidates credentials linked to an already 
     const apiKey = 'hard-delete-api-key';
     execFileSync('sqlite3', ['-bail', database], {
       input: `INSERT INTO users (
-				id, email, email_verified, password_hash, name, tier, source, deleted_at
+				id, email, email_verified, password_hash, name, tier, source
 			) VALUES (
 				'user-hard-delete', 'hard-delete@example.com', 1, 'unused', 'Hard Delete',
-				'agency', 'space', datetime('now')
+				'agency', 'space'
 			);
 			INSERT INTO api_keys (id, service, key_hash, permissions)
 			VALUES (
@@ -285,6 +414,10 @@ test('administrative hard deletion invalidates credentials linked to an already 
     });
     const db = createSqliteD1(database);
     const linked = await issueMcpCredentials(db, 'user-hard-delete');
+    execFileSync('sqlite3', ['-bail', database], {
+      input: "UPDATE users SET deleted_at = datetime('now') WHERE id = 'user-hard-delete';",
+      encoding: 'utf8'
+    });
     const operatorToken = 'legacy-unrelated-hard-delete-operator';
     await createMcpLegacyKey(db, {
       id: 'legacy-unrelated-hard-delete-operator',
@@ -327,6 +460,16 @@ test('administrative hard deletion invalidates credentials linked to an already 
         `${token} must be invalid after administrative hard deletion`
       );
     }
+    assert.equal(
+      await isOAuthRefreshFamilyActive(
+        db,
+        'oauth-family-user-hard-delete',
+        'oauth-client',
+        'user-hard-delete'
+      ),
+      false
+    );
+    await assertRefreshTokenInvalidated(db, 'user-hard-delete', true);
     assert.equal((await resolveMcpCredential(db, operatorToken)).valid, true);
   } finally {
     globalThis.fetch = originalFetch;
@@ -343,10 +486,10 @@ test('scheduled cleanup invalidates credentials linked to every expired deleted 
     const apiKey = 'cleanup-api-key';
     execFileSync('sqlite3', ['-bail', database], {
       input: `INSERT INTO users (
-				id, email, email_verified, password_hash, name, tier, source, deleted_at
+				id, email, email_verified, password_hash, name, tier, source
 			) VALUES (
 				'user-cleanup', 'cleanup@example.com', 1, 'unused', 'Cleanup',
-				'agency', 'space', datetime('now', '-31 days')
+				'agency', 'space'
 			);
 			INSERT INTO api_keys (id, service, key_hash, permissions)
 			VALUES (
@@ -357,6 +500,10 @@ test('scheduled cleanup invalidates credentials linked to every expired deleted 
     });
     const db = createSqliteD1(database);
     const linked = await issueMcpCredentials(db, 'user-cleanup');
+    execFileSync('sqlite3', ['-bail', database], {
+      input: "UPDATE users SET deleted_at = datetime('now', '-31 days') WHERE id = 'user-cleanup';",
+      encoding: 'utf8'
+    });
     const operatorToken = 'legacy-unrelated-cleanup-operator';
     await createMcpLegacyKey(db, {
       id: 'legacy-unrelated-cleanup-operator',
@@ -397,6 +544,16 @@ test('scheduled cleanup invalidates credentials linked to every expired deleted 
         `${token} must be invalid after scheduled cleanup`
       );
     }
+    assert.equal(
+      await isOAuthRefreshFamilyActive(
+        db,
+        'oauth-family-user-cleanup',
+        'oauth-client',
+        'user-cleanup'
+      ),
+      false
+    );
+    await assertRefreshTokenInvalidated(db, 'user-cleanup', true);
     assert.equal((await resolveMcpCredential(db, operatorToken)).valid, true);
   } finally {
     globalThis.fetch = originalFetch;
@@ -466,6 +623,16 @@ test('verified email change invalidates the same Identity-linked MCP credentials
         `${token} must be invalid after verified email change`
       );
     }
+    assert.equal(
+      await isOAuthRefreshFamilyActive(
+        db,
+        'oauth-family-user-email-change',
+        'oauth-client',
+        'user-email-change'
+      ),
+      false
+    );
+    await assertRefreshTokenInvalidated(db, 'user-email-change');
     assert.equal((await resolveMcpCredential(db, operatorToken)).valid, true);
   } finally {
     globalThis.fetch = originalFetch;
@@ -537,6 +704,14 @@ test('soft deletion rolls back identity state when any credential-family revocat
         `${token} must remain valid when deletion rolls back`
       );
     }
+    assert.equal(
+      await isOAuthRefreshFamilyActive(db, 'oauth-family-user-rollback', 'oauth-client', user.id),
+      true
+    );
+    assert.equal(
+      (await findRefreshTokenByHash(db, await hashToken(`refresh-${user.id}`)))?.revoked_at,
+      null
+    );
   } finally {
     console.error = originalConsoleError;
     globalThis.fetch = originalFetch;

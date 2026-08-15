@@ -53,10 +53,13 @@ export async function consumeOAuthGrant(
 export async function createOAuthRefreshFamily(
 	db: D1Database,
 	family: { familyId: string; clientId: string; userId: string },
-): Promise<void> {
-	await db.prepare(
-		'INSERT INTO oauth_refresh_families (family_id, client_id, user_id) VALUES (?, ?, ?)',
-	).bind(family.familyId, family.clientId, family.userId).run();
+): Promise<boolean> {
+	const result = await db.prepare(
+		`INSERT INTO oauth_refresh_families (family_id, client_id, user_id)
+		 SELECT ?, ?, ? FROM users
+		 WHERE id = ? AND deleted_at IS NULL AND email_verified = 1`,
+	).bind(family.familyId, family.clientId, family.userId, family.userId).run();
+	return result.meta.changes === 1;
 }
 
 export async function isOAuthRefreshFamilyActive(
@@ -204,14 +207,24 @@ export async function createRefreshToken(
 		expires_at: string;
 		audience: string;
 	}
-): Promise<void> {
-	await db
+): Promise<boolean> {
+	const result = await db
 		.prepare(
 			`INSERT INTO refresh_tokens (id, user_id, token_hash, family_id, expires_at, audience)
-       VALUES (?, ?, ?, ?, ?, ?)`
+	       SELECT ?, ?, ?, ?, ?, ? FROM users
+	       WHERE id = ? AND deleted_at IS NULL AND email_verified = 1`
 		)
-		.bind(token.id, token.user_id, token.token_hash, token.family_id, token.expires_at, token.audience)
+		.bind(
+			token.id,
+			token.user_id,
+			token.token_hash,
+			token.family_id,
+			token.expires_at,
+			token.audience,
+			token.user_id,
+		)
 		.run();
+	return result.meta.changes === 1;
 }
 
 export async function findRefreshTokenByHash(
@@ -485,6 +498,13 @@ function identityCredentialRevocationStatements(db: D1Database, userId: string):
 			.bind(userId),
 		db
 			.prepare(
+				`UPDATE oauth_refresh_families
+         SET revoked_at = datetime('now')
+         WHERE user_id = ? AND revoked_at IS NULL`,
+			)
+			.bind(userId),
+		db
+			.prepare(
 				`UPDATE mcp_sessions
          SET revoked_at = datetime('now'), updated_at = datetime('now')
          WHERE user_id = ? AND revoked_at IS NULL`,
@@ -682,13 +702,14 @@ export async function createMcpSession(
 		token_hash: string;
 		expires_at: string;
 	}
-): Promise<void> {
-	await db
+): Promise<boolean> {
+	const result = await db
 		.prepare(
 			`INSERT INTO mcp_sessions (
-         id, user_id, tenant_id, account_id, host, bound_host, tool_mode,
-         toolkit_profile_json, allowed_tool_prefixes_json, token_hash, expires_at
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	         id, user_id, tenant_id, account_id, host, bound_host, tool_mode,
+	         toolkit_profile_json, allowed_tool_prefixes_json, token_hash, expires_at
+	       ) SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? FROM users
+	       WHERE id = ? AND deleted_at IS NULL AND email_verified = 1`
 		)
 		.bind(
 			session.id,
@@ -701,9 +722,11 @@ export async function createMcpSession(
 			session.toolkit_profile_json,
 			session.allowed_tool_prefixes_json,
 			session.token_hash,
-			session.expires_at
+			session.expires_at,
+			session.user_id,
 		)
 		.run();
+	return result.meta.changes === 1;
 }
 
 export async function findMcpSessionById(db: D1Database, id: string): Promise<McpSession | null> {
@@ -752,15 +775,16 @@ export async function upsertMcpLongLivedToken(
 		issued_by: string;
 		metadata_json: string;
 	}
-): Promise<void> {
-	await db
+): Promise<boolean> {
+	const result = await db
 		.prepare(
 			`INSERT INTO mcp_long_lived_tokens (
          id, auth_subject, auth_email, tenant_id, account_id, bound_host, tool_mode,
          toolkit_profile_json, allowed_tool_prefixes_json, token_hash, token_prefix,
          issued_by, metadata_json, revoked_at
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)
-       ON CONFLICT(auth_subject) DO UPDATE SET
+	       ) SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL FROM users
+	       WHERE id = ? AND deleted_at IS NULL AND email_verified = 1
+	       ON CONFLICT(auth_subject) DO UPDATE SET
          id = excluded.id,
          auth_email = excluded.auth_email,
          tenant_id = excluded.tenant_id,
@@ -791,8 +815,10 @@ export async function upsertMcpLongLivedToken(
 			token.token_prefix,
 			token.issued_by,
 			token.metadata_json,
+			token.auth_subject,
 		)
 		.run();
+	return result.meta.changes === 1;
 }
 
 export async function findMcpLongLivedTokenByAuthSubject(
@@ -1027,13 +1053,17 @@ export async function createMcpLegacyKey(
 		expires_at: string;
 		sunset_at: string;
 	}
-): Promise<void> {
-	await db
+): Promise<boolean> {
+	const result = await db
 		.prepare(
 			`INSERT INTO mcp_legacy_keys (
          id, key_hash, key_prefix, tenant_id, account_id, user_id,
          reason, exception_approved_by, issued_by, expires_at, sunset_at
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	       ) SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+	       WHERE ? IS NULL OR EXISTS (
+	         SELECT 1 FROM users
+	         WHERE id = ? AND deleted_at IS NULL AND email_verified = 1
+	       )`
 		)
 		.bind(
 			key.id,
@@ -1046,9 +1076,12 @@ export async function createMcpLegacyKey(
 			key.exception_approved_by,
 			key.issued_by,
 			key.expires_at,
-			key.sunset_at
+			key.sunset_at,
+			key.user_id,
+			key.user_id,
 		)
 		.run();
+	return result.meta.changes === 1;
 }
 
 export async function findMcpLegacyKeyById(db: D1Database, id: string): Promise<McpLegacyKey | null> {

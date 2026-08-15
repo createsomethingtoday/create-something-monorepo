@@ -1585,11 +1585,14 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 				? claims.family_id
 				: generateUUID();
 			if (!('family_id' in claims)) {
-				await createOAuthRefreshFamily(env.DB, {
+				const created = await createOAuthRefreshFamily(env.DB, {
 					familyId: refreshFamilyId,
 					clientId: claims.client_id,
 					userId: user.id,
 				});
+				if (!created) {
+					return oauthErrorResponse('invalid_grant', 401, 'Identity is no longer active.');
+				}
 			}
 			const refreshToken = await createSignedToken(env.DB, {
 				sub: user.id,
@@ -1754,7 +1757,7 @@ async function handleCreateMcpSession(request: Request, env: Env): Promise<Respo
 	const tokenHash = await hashToken(rawToken);
 	const expiresAt = new Date(Date.now() + ttlSeconds * 1000).toISOString();
 
-	await createMcpSession(db, {
+	const created = await createMcpSession(db, {
 		id: sessionId,
 		user_id: payload.sub,
 		tenant_id: tenantId,
@@ -1767,6 +1770,9 @@ async function handleCreateMcpSession(request: Request, env: Env): Promise<Respo
 		token_hash: tokenHash,
 		expires_at: expiresAt,
 	});
+	if (!created) {
+		return json({ error: 'identity_inactive', message: 'Identity is no longer active', status: 409 }, 409);
+	}
 
 	await replaceMcpSessionScopes(
 		db,
@@ -1922,7 +1928,7 @@ async function handleAdminMintMcpSession(request: Request, env: Env): Promise<Re
 	const tokenHash = await hashToken(rawToken);
 	const expiresAt = new Date(Date.now() + ttlSeconds * 1000).toISOString();
 
-	await createMcpSession(db, {
+	const created = await createMcpSession(db, {
 		id: sessionId,
 		user_id: account.user_id,
 		tenant_id: account.tenant_id,
@@ -1935,6 +1941,9 @@ async function handleAdminMintMcpSession(request: Request, env: Env): Promise<Re
 		token_hash: tokenHash,
 		expires_at: expiresAt,
 	});
+	if (!created) {
+		return json({ error: 'identity_inactive', message: 'Identity is no longer active', status: 409 }, 409);
+	}
 
 	await replaceMcpSessionScopes(
 		db,
@@ -2278,7 +2287,7 @@ async function issueManagedBearerToken(
 	const tokenHash = await hashToken(rawToken);
 	const tokenPrefix = rawToken.slice(0, 14);
 
-	await upsertMcpLongLivedToken(db, {
+	const created = await upsertMcpLongLivedToken(db, {
 		id: tokenId,
 		auth_subject: input.authSubject,
 		auth_email: normalizeNullableString(input.authEmail) ?? existing?.auth_email ?? null,
@@ -2293,6 +2302,14 @@ async function issueManagedBearerToken(
 		issued_by: input.actor,
 		metadata_json: JSON.stringify(metadata),
 	});
+	if (!created) {
+		return {
+			ok: false,
+			status: 409,
+			error: 'identity_inactive',
+			message: 'Identity is no longer active',
+		};
+	}
 
 	await createMcpAuthEvent(db, {
 		id: generateUUID(),
@@ -2567,7 +2584,7 @@ async function handleIssueMcpLegacyKey(request: Request, env: Env): Promise<Resp
 	const keyHash = await hashToken(rawLegacyKey);
 	const keyPrefix = rawLegacyKey.slice(0, 14);
 
-	await createMcpLegacyKey(db, {
+	const created = await createMcpLegacyKey(db, {
 		id: legacyKeyId,
 		key_hash: keyHash,
 		key_prefix: keyPrefix,
@@ -2580,6 +2597,9 @@ async function handleIssueMcpLegacyKey(request: Request, env: Env): Promise<Resp
 		expires_at: expiresAt,
 		sunset_at: sunsetAt,
 	});
+	if (!created) {
+		return json({ error: 'identity_inactive', message: 'Identity is no longer active', status: 409 }, 409);
+	}
 
 	await createMcpAuthEvent(db, {
 		id: generateUUID(),
