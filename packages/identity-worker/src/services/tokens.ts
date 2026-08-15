@@ -14,8 +14,10 @@ import {
 	createSigningKey,
 	createRefreshToken,
 	findRefreshTokenByHash,
+	findUserById,
 	revokeRefreshToken,
 	revokeTokenFamily,
+	rotateRefreshTokenAtomically,
 } from '../db/queries';
 import {
 	IDENTITY_SESSION_VERSION,
@@ -99,17 +101,14 @@ export async function createSignedToken(
 export async function refreshTokens(
 	db: D1Database,
 	refreshToken: string,
-	user: User
 ): Promise<{ accessToken: string; refreshToken: string; expiresIn: number } | null> {
 	const tokenHash = await hashToken(refreshToken);
 	const storedToken = await findRefreshTokenByHash(db, tokenHash);
 
 	if (!storedToken) {
-		// Token not found or already revoked
-		// Could be token reuse attack - but we can't detect family without the token
 		return null;
 	}
-	if (!isIdentityApplicationAudience(storedToken.audience) || user.deleted_at || user.email_verified !== 1) return null;
+	if (!isIdentityApplicationAudience(storedToken.audience)) return null;
 	const audience = storedToken.audience;
 
 	// Check expiration
@@ -118,21 +117,33 @@ export async function refreshTokens(
 		return null;
 	}
 
-	// Check if token was revoked (reuse detection)
-	if (storedToken.revoked_at) {
-		// Token reuse detected! Revoke the entire family
+	const userBeforeRotation = await findUserById(db, storedToken.user_id);
+	if (!userBeforeRotation || userBeforeRotation.deleted_at || userBeforeRotation.email_verified !== 1) {
 		await revokeTokenFamily(db, storedToken.family_id);
 		return null;
 	}
 
-	// Revoke current token
-	await revokeRefreshToken(db, storedToken.id);
+	const newRefreshToken = generateSecureToken(48);
+	const newTokenHash = await hashToken(newRefreshToken);
+	const expiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL * 1000).toISOString();
+	const rotation = await rotateRefreshTokenAtomically(db, {
+		predecessorHash: tokenHash,
+		rotationId: generateUUID(),
+		replacementId: generateUUID(),
+		replacementHash: newTokenHash,
+		replacementExpiresAt: expiresAt,
+	});
+	if (rotation !== 'rotated') return null;
 
-	// Generate new token pair with same family
+	const user = await findUserById(db, storedToken.user_id);
+	if (!user || user.deleted_at || user.email_verified !== 1) {
+		await revokeTokenFamily(db, storedToken.family_id);
+		return null;
+	}
+
 	const signingKey = await getOrCreateSigningKey(db);
 	const now = Math.floor(Date.now() / 1000);
-
-	const payload: JWTPayload = {
+	const accessToken = await signJWT({
 		sub: user.id,
 		email: user.email,
 		tier: user.tier,
@@ -144,23 +155,7 @@ export async function refreshTokens(
 		kind: 'identity_access_token',
 		email_verified: true,
 		session_version: IDENTITY_SESSION_VERSION,
-	};
-
-	const accessToken = await signJWT(payload as unknown as Record<string, unknown>, signingKey);
-
-	// New refresh token in same family
-	const newRefreshToken = generateSecureToken(48);
-	const newTokenHash = await hashToken(newRefreshToken);
-	const expiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL * 1000).toISOString();
-
-	await createRefreshToken(db, {
-		id: generateUUID(),
-		user_id: user.id,
-		token_hash: newTokenHash,
-		family_id: storedToken.family_id,
-		expires_at: expiresAt,
-		audience,
-	});
+	} as unknown as Record<string, unknown>, signingKey);
 
 	return {
 		accessToken,

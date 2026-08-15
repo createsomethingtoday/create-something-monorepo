@@ -114,6 +114,7 @@ export interface CrossDomainRequest {
 
 export interface CrossDomainExchangeRequest {
 	token: string;
+	target: 'ltd' | 'io' | 'space' | 'agency';
 }
 
 export interface RefreshTokenRequest {

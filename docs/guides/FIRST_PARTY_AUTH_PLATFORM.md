@@ -39,6 +39,8 @@ For approved OAuth MCP resources, authorization-code plus PKCE exchange mints a 
 - Never trust client-supplied user, tenant, organization, or role headers.
 - A valid identity is not automatically an authorized application user. Configure at least one explicit allow rule or intentionally approve `allowAnyAuthenticated` for a private application.
 - Production cookies are `httpOnly`, `secure`, `sameSite=lax`, and scoped to the smallest useful domain.
+- Cross-domain session exchange runs only in the receiving property's server adapter. Identity requires the intermediary's exact target, rejects requests with a browser `Origin`, and omits CORS from every credential-bearing response. The adapter writes host-only `HttpOnly` cookies; it does not expose access or refresh credentials to page data or browser JavaScript.
+- Refresh rotation is a single D1 batch: claim one active predecessor, insert at most one successor, and revoke active descendants when the predecessor is replayed. Revoked predecessors remain stored until normal cleanup so replay detection cannot be bypassed.
 - Preview bypass is explicit, non-production only, and rejected when `ENVIRONMENT=production`.
 - Keep identity credentials, refresh tokens, signing keys, and application secrets out of browser data and repository files.
 
@@ -137,3 +139,14 @@ Preview access proves UI layout only and cannot replace the authenticated workfl
 6. Cut over application auth only after explicit production approval. Remove or rotate old provider credentials in a separate approved step after rollback confidence exists.
 
 Rollback keeps the last known-good deployment and prior identity configuration available until the owned path has passed production readback. Never remove the prior provider merely because local tests pass.
+
+For an intermediary-credential cutover, use this order:
+
+1. Deploy receiving-property server adapters that send the exact target and write host-only cookies. The additional target is backward-compatible with the prior Worker.
+2. Apply the additive Identity D1 migration. The migration must invalidate all active `refresh_tokens` and all unused `cross_domain_tokens`; future session-contract cutovers must do both again.
+3. Read back the new schema and confirm both intermediary tables have zero active pre-cutover credentials.
+4. Deploy the Identity Worker, then verify browser-origin exchange denial, no credential CORS, exact-target denial, anonymous property denial, and healthy discovery.
+
+Rollback restores the previous Worker and property deployments. Keep the
+additive column and index in place; do not reactivate invalidated refresh or
+cross-domain credentials. Affected users sign in again.

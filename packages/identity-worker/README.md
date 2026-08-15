@@ -22,8 +22,10 @@ Single identity across all properties: .space, .io, .agency, .ltd, and .learn.
 | GET | `/v1/auth/openapi.json` | Auth-focused OpenAPI 3.1 contract |
 | POST | `/v1/auth/signup` | Create account |
 | POST | `/v1/auth/login` | Authenticate |
-| POST | `/v1/auth/refresh` | Refresh tokens |
+| POST | `/v1/auth/refresh` | Atomically rotate one refresh predecessor; replay revokes its family |
 | POST | `/v1/auth/logout` | Invalidate session |
+| POST | `/v1/auth/cross-domain/generate` | Create a 60-second, exact-target intermediary from a valid session |
+| POST | `/v1/auth/cross-domain/exchange` | Server-only, no-CORS, exact-target single-use exchange |
 | GET | `/v1/users/me` | Get current user |
 | GET | `/.well-known/jwks.json` | Public keys |
 | POST | `/v1/validate` | Validate one exact first-party session audience with API key permission `validate_identity_session` and live user state |
@@ -66,13 +68,13 @@ customer role or access grant.
 ## Deployment
 
 ```bash
-pnpm --filter=identity-worker deploy
+pnpm --filter @create-something/identity-worker run deploy
 ```
 
 ## Database Migrations
 
 ```bash
-pnpm --filter=identity-worker db:migrate
+pnpm --filter @create-something/identity-worker run db:migrate
 ```
 
 Cloudflare D1 uses the package-local migrations directory configured in
@@ -95,6 +97,14 @@ verified user record rather than stale identity claims from the token.
 New SvelteKit applications should adopt `@create-something/canon/auth/access`, `@create-something/canon/auth/handlers`, `@create-something/canon/auth/cookies`, and `@create-something/canon/auth/components` rather than implementing a provider-specific verifier. The full integration and promotion contract is in [`docs/guides/FIRST_PARTY_AUTH_PLATFORM.md`](../../docs/guides/FIRST_PARTY_AUTH_PLATFORM.md).
 
 Production audience changes require an Identity Worker deployment. Application cutover, real-user migration, and removal of prior provider credentials remain separate approval-gated actions.
+
+First-party refresh rotation uses one D1 batch to claim the predecessor, insert
+at most one successor, and revoke every active descendant when a revoked
+predecessor is replayed. Revoked predecessors remain queryable for replay
+detection. Cross-domain exchange atomically claims its 60-second intermediary
+for one exact property target, rejects browser-origin requests, and never emits
+credential-bearing CORS headers. The receiving SvelteKit server exchanges the
+intermediary and writes host-only `HttpOnly` session cookies.
 
 ### Property and MCP integration
 

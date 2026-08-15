@@ -219,9 +219,68 @@ export async function findRefreshTokenByHash(
 	tokenHash: string
 ): Promise<RefreshToken | null> {
 	return db
-		.prepare('SELECT * FROM refresh_tokens WHERE token_hash = ? AND revoked_at IS NULL AND audience IS NOT NULL')
+		.prepare('SELECT * FROM refresh_tokens WHERE token_hash = ? AND audience IS NOT NULL')
 		.bind(tokenHash)
 		.first<RefreshToken>();
+}
+
+export type RefreshTokenRotationOutcome = 'rotated' | 'replayed' | 'invalid';
+
+export async function rotateRefreshTokenAtomically(
+	db: D1Database,
+	rotation: {
+		predecessorHash: string;
+		rotationId: string;
+		replacementId: string;
+		replacementHash: string;
+		replacementExpiresAt: string;
+	},
+): Promise<RefreshTokenRotationOutcome> {
+	const [, replacement, replay] = await db.batch([
+		db.prepare(
+			`UPDATE refresh_tokens
+			 SET revoked_at = datetime('now'), rotation_id = ?
+			 WHERE token_hash = ?
+			   AND revoked_at IS NULL
+			   AND expires_at > datetime('now')
+			   AND audience IS NOT NULL
+			   AND EXISTS (
+			     SELECT 1 FROM users
+			     WHERE users.id = refresh_tokens.user_id
+			       AND users.deleted_at IS NULL
+			       AND users.email_verified = 1
+			   )`,
+		).bind(rotation.rotationId, rotation.predecessorHash),
+		db.prepare(
+			`INSERT INTO refresh_tokens (id, user_id, token_hash, family_id, expires_at, audience)
+			 SELECT ?, user_id, ?, family_id, ?, audience
+			 FROM refresh_tokens
+			 WHERE token_hash = ?
+			   AND rotation_id = ?
+			   AND revoked_at IS NOT NULL`,
+		).bind(
+			rotation.replacementId,
+			rotation.replacementHash,
+			rotation.replacementExpiresAt,
+			rotation.predecessorHash,
+			rotation.rotationId,
+		),
+		db.prepare(
+			`UPDATE refresh_tokens
+			 SET revoked_at = datetime('now')
+			 WHERE revoked_at IS NULL
+			   AND family_id = (
+			     SELECT family_id FROM refresh_tokens AS predecessor
+			     WHERE predecessor.token_hash = ?
+			       AND predecessor.revoked_at IS NOT NULL
+			       AND (predecessor.rotation_id IS NULL OR predecessor.rotation_id <> ?)
+			   )`,
+		).bind(rotation.predecessorHash, rotation.rotationId),
+	]);
+
+	if (replacement.meta.changes === 1) return 'rotated';
+	if (replay.meta.changes > 0) return 'replayed';
+	return 'invalid';
 }
 
 export async function revokeRefreshToken(db: D1Database, id: string): Promise<void> {
@@ -468,26 +527,26 @@ export async function createCrossDomainToken(
 		.run();
 }
 
-export async function findCrossDomainTokenByHash(
+export async function claimCrossDomainToken(
 	db: D1Database,
-	tokenHash: string
+	tokenHash: string,
+	target: CrossDomainToken['target'],
 ): Promise<CrossDomainToken | null> {
-	return db
-		.prepare(
-			`SELECT * FROM cross_domain_tokens
-       WHERE token_hash = ?
-       AND expires_at > datetime('now')
-       AND used_at IS NULL`
-		)
-		.bind(tokenHash)
-		.first<CrossDomainToken>();
-}
-
-export async function markCrossDomainTokenUsed(db: D1Database, id: string): Promise<void> {
-	await db
-		.prepare("UPDATE cross_domain_tokens SET used_at = datetime('now') WHERE id = ?")
-		.bind(id)
-		.run();
+	return db.prepare(
+		`UPDATE cross_domain_tokens
+		 SET used_at = datetime('now')
+		 WHERE token_hash = ?
+		   AND target = ?
+		   AND expires_at > datetime('now')
+		   AND used_at IS NULL
+		   AND EXISTS (
+		     SELECT 1 FROM users
+		     WHERE users.id = cross_domain_tokens.user_id
+		       AND users.deleted_at IS NULL
+		       AND users.email_verified = 1
+		   )
+		 RETURNING *`,
+	).bind(tokenHash, target).first<CrossDomainToken>();
 }
 
 export async function countRecentCrossDomainTokens(

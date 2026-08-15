@@ -51,6 +51,7 @@ export interface RefreshToken {
 	family_id: string;
 	expires_at: string;
 	revoked_at: string | null;
+	rotation_id: string | null;
 	audience: string | null;
 	created_at: string;
 }
@@ -165,6 +166,7 @@ export interface CrossDomainGenerateResponse {
 
 export interface CrossDomainExchangeRequest {
 	token: string;
+	target: CrossDomainToken['target'];
 }
 
 export interface CrossDomainExchangeResponse extends TokenResponse {
