@@ -79,6 +79,7 @@ import type { RolloutConfig } from '@create-something/policy-os-engine';
 import {
 	createAuthOpenApi,
 	createAuthPlatformContract,
+	IDENTITY_APPLICATION_AUDIENCES,
 	IDENTITY_SESSION_VERSION,
 	isIdentityApplicationAudience,
 	type IdentityApplicationAudience,
@@ -1660,7 +1661,7 @@ async function handleOAuthUserInfo(request: Request, env: Env): Promise<Response
 
 async function handleCreateMcpSession(request: Request, env: Env): Promise<Response> {
 	const db = env.DB;
-	const payload = await authenticate(request, env);
+	const payload = await authenticate(request, env, IDENTITY_APPLICATION_AUDIENCES.mcpSession);
 	if (!payload) {
 		return json({ error: 'unauthorized', message: 'Invalid token', status: 401 }, 401);
 	}
@@ -1713,6 +1714,7 @@ async function handleCreateMcpSession(request: Request, env: Env): Promise<Respo
 			},
 		},
 		metadata: {
+			auth_audience: payload.aud[0],
 			host,
 			tenant_id: tenantId,
 			tool_mode: toolMode,
@@ -1767,6 +1769,7 @@ async function handleCreateMcpSession(request: Request, env: Env): Promise<Respo
 		user_id: payload.sub,
 		event_type: 'mcp_session_created',
 		event_data_json: JSON.stringify({
+			auth_audience: payload.aud[0],
 			host,
 			bound_host: host,
 			tenant_id: tenantId,
@@ -4936,7 +4939,11 @@ function escapeHtml(value: string): string {
 		.replace(/'/g, '&#39;');
 }
 
-async function authenticate(request: Request, env: Env): Promise<JWTPayload | null> {
+async function authenticate(
+	request: Request,
+	env: Env,
+	expectedAudience?: IdentityApplicationAudience,
+): Promise<JWTPayload | null> {
 	const auth = request.headers.get('Authorization');
 	if (!auth?.startsWith('Bearer ')) return null;
 
@@ -4946,7 +4953,7 @@ async function authenticate(request: Request, env: Env): Promise<JWTPayload | nu
 	for (const jwk of jwks.keys) {
 		const publicKey = await importPublicKey(jwk);
 		const payload = await validateJWT(token, publicKey);
-		if (!payload || !isIdentityAccessSession(payload)) continue;
+		if (!payload || !isIdentityAccessSession(payload, expectedAudience)) continue;
 		const user = await findUserById(env.DB, payload.sub);
 		if (isActiveVerifiedIdentity(user)) return payload;
 	}

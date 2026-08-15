@@ -10,6 +10,7 @@ export const IDENTITY_APPLICATION_AUDIENCES = {
   io: 'io',
   lms: 'lms',
   ltd: 'ltd',
+  mcpSession: 'mcp-session',
   onaAgents: 'ona-agents',
   space: 'space',
   templates: 'templates',

@@ -40,6 +40,8 @@ test('identity sessions require the access-token kind, one exact audience, and c
 test('legacy login requests retain one source-bound audience during the rollout', () => {
 	assert.equal(resolveIdentityLoginAudience(undefined, 'space'), 'space');
 	assert.equal(resolveIdentityLoginAudience('client-workspace', 'space'), 'client-workspace');
+	assert.equal(resolveIdentityLoginAudience('mcp-session', 'space'), 'mcp-session');
+	assert.notEqual(resolveIdentityLoginAudience(undefined, 'space'), 'mcp-session');
 });
 
 test('identity and entitlement state fail closed', () => {
