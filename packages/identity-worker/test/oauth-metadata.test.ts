@@ -4,10 +4,18 @@ import test from 'node:test';
 
 import identityWorker, { requiresS256PkceForOAuthResource } from '../src/index.ts';
 
-function makeEnv() {
+function makeEnv(tokenEndpointAuthMethod = 'none') {
   const clients = new Map<string, Record<string, unknown>>([
-    ['chatgpt', { client_id: 'chatgpt', redirect_uris_json: JSON.stringify(['https://chat.openai.com/a/callback']) }],
-    ['workflow-shadow-pilot', { client_id: 'workflow-shadow-pilot', redirect_uris_json: JSON.stringify(['http://127.0.0.1:65221/callback']) }],
+    ['chatgpt', {
+      client_id: 'chatgpt',
+      redirect_uris_json: JSON.stringify(['https://chat.openai.com/a/callback']),
+      token_endpoint_auth_method: tokenEndpointAuthMethod,
+    }],
+    ['workflow-shadow-pilot', {
+      client_id: 'workflow-shadow-pilot',
+      redirect_uris_json: JSON.stringify(['http://127.0.0.1:65221/callback']),
+      token_endpoint_auth_method: tokenEndpointAuthMethod,
+    }],
   ]);
   return {
     ENVIRONMENT: 'test',
@@ -95,6 +103,7 @@ test('identity worker serves oauth authorization server metadata', async () => {
   const body = await response.json() as Record<string, unknown>;
   assert.equal(body.authorization_endpoint, 'https://id.createsomething.space/oauth/authorize');
   assert.equal(body.token_endpoint, 'https://id.createsomething.space/oauth/token');
+  assert.deepEqual(body.token_endpoint_auth_methods_supported, ['none']);
   assert.deepEqual(body.scopes_supported, [
     'openid',
     'profile',
@@ -118,6 +127,64 @@ test('identity worker serves oauth authorization server metadata', async () => {
       claim_uri: 'https://id.createsomething.space/agent/claim',
     },
   });
+});
+
+test('identity worker advertises only public-client authentication in openid metadata', async () => {
+  const response = await identityWorker.fetch(
+    new Request('https://id.createsomething.space/.well-known/openid-configuration'),
+    makeEnv(),
+  );
+
+  assert.equal(response.status, 200);
+  const body = await response.json() as Record<string, unknown>;
+  assert.deepEqual(body.token_endpoint_auth_methods_supported, ['none']);
+});
+
+test('identity worker token endpoint rejects secret authentication for public clients', async () => {
+  for (const authorization of [undefined, 'Basic Y2hhdGdwdDp1bnN1cHBvcnRlZA==']) {
+    const headers = new Headers({ 'Content-Type': 'application/x-www-form-urlencoded' });
+    if (authorization) headers.set('Authorization', authorization);
+    const body = new URLSearchParams({
+      grant_type: 'authorization_code',
+      client_id: 'chatgpt',
+      code: 'invalid-code',
+      redirect_uri: 'https://chat.openai.com/a/callback',
+      code_verifier: 'invalid-verifier',
+    });
+    if (!authorization) body.set('client_secret', 'unsupported');
+
+    const response = await identityWorker.fetch(
+      new Request('https://id.createsomething.space/oauth/token', {
+        method: 'POST',
+        headers,
+        body,
+      }),
+      makeEnv(),
+    );
+
+    assert.equal(response.status, 400);
+    assert.deepEqual(await response.json(), {
+      error: 'invalid_client',
+      error_description: 'Only public clients using token_endpoint_auth_method none are supported.',
+    });
+  }
+
+  const unsupportedStoredMethod = await identityWorker.fetch(
+    new Request('https://id.createsomething.space/oauth/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        client_id: 'chatgpt',
+        code: 'invalid-code',
+        redirect_uri: 'https://chat.openai.com/a/callback',
+        code_verifier: 'invalid-verifier',
+      }),
+    }),
+    makeEnv('client_secret_post'),
+  );
+  assert.equal(unsupportedStoredMethod.status, 400);
+  assert.equal((await unsupportedStoredMethod.json() as Record<string, unknown>).error, 'invalid_client');
 });
 
 test('identity worker registers a short-lived anonymous credential only for .agency discovery', async () => {
@@ -230,6 +297,30 @@ test('identity worker creates dynamically registered ChatGPT OAuth clients', asy
   assert.deepEqual(body.grant_types, ['authorization_code', 'refresh_token']);
   assert.deepEqual(body.response_types, ['code']);
   assert.equal(body.scope, 'offer-savings:read offer-savings:write');
+});
+
+test('identity worker registration rejects confidential client authentication metadata', async () => {
+  const response = await identityWorker.fetch(
+    new Request('https://id.createsomething.space/oauth/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Origin: 'https://chatgpt.com',
+      },
+      body: JSON.stringify({
+        client_name: 'Unsupported confidential client',
+        redirect_uris: ['https://chatgpt.com/connector_platform_oauth_redirect'],
+        token_endpoint_auth_method: 'client_secret_post',
+      }),
+    }),
+    makeEnv(),
+  );
+
+  assert.equal(response.status, 400);
+  assert.deepEqual(await response.json(), {
+    error: 'invalid_client_metadata',
+    error_description: 'Only public PKCE clients are supported.',
+  });
 });
 
 test('identity worker uses an explicit issuer for preview metadata', async () => {

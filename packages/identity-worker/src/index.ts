@@ -895,6 +895,7 @@ const AGENT_AUTH_ACCESS_TOKEN_EXPIRES_IN = 15 * 60;
 const AGENCY_PUBLIC_DISCOVERY_RESOURCE = 'https://createsomething.agency';
 const OAUTH_ID_TOKEN_TTL_SECONDS = 3600;
 const OAUTH_REFRESH_TOKEN_TTL_SECONDS = 30 * 24 * 60 * 60;
+const OAUTH_PUBLIC_TOKEN_ENDPOINT_AUTH_METHOD = 'none' as const;
 const OAUTH_SUPPORTED_SCOPES = [
 	'openid',
 	'profile',
@@ -1150,7 +1151,7 @@ async function handleOAuthRegister(request: Request, env: Env): Promise<Response
 	if (redirectUris.length === 0 || redirectUris.some((value) => !isOAuthRedirectUriAllowed(value))) {
 		return oauthErrorResponse('invalid_redirect_uri', 400, 'At least one safe redirect_uri is required.');
 	}
-	if (body.token_endpoint_auth_method && body.token_endpoint_auth_method !== 'none') {
+	if (body.token_endpoint_auth_method && body.token_endpoint_auth_method !== OAUTH_PUBLIC_TOKEN_ENDPOINT_AUTH_METHOD) {
 		return oauthErrorResponse('invalid_client_metadata', 400, 'Only public PKCE clients are supported.');
 	}
 	const grantTypes = body.grant_types ?? ['authorization_code', 'refresh_token'];
@@ -1163,7 +1164,7 @@ async function handleOAuthRegister(request: Request, env: Env): Promise<Response
 		client_id: clientId,
 		client_name: clientName,
 		redirect_uris: redirectUris,
-		token_endpoint_auth_method: 'none',
+		token_endpoint_auth_method: OAUTH_PUBLIC_TOKEN_ENDPOINT_AUTH_METHOD,
 		grant_types: grantTypes,
 		response_types: responseTypes,
 		scope,
@@ -1172,7 +1173,7 @@ async function handleOAuthRegister(request: Request, env: Env): Promise<Response
 		client_id: clientId,
 		client_name: clientName,
 		redirect_uris: redirectUris,
-		token_endpoint_auth_method: body?.token_endpoint_auth_method ?? 'none',
+		token_endpoint_auth_method: body?.token_endpoint_auth_method ?? OAUTH_PUBLIC_TOKEN_ENDPOINT_AUTH_METHOD,
 		grant_types: grantTypes,
 		response_types: responseTypes,
 		scope,
@@ -1379,6 +1380,18 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 	}
 	const registeredClient = await findOAuthClientById(env.DB, body.client_id);
 	if (!registeredClient) return oauthErrorResponse('invalid_client', 400, 'OAuth client is not registered.');
+	const authorization = request.headers.get('authorization')?.trim() ?? '';
+	if (
+		registeredClient.token_endpoint_auth_method !== OAUTH_PUBLIC_TOKEN_ENDPOINT_AUTH_METHOD
+		|| Boolean(body.client_secret)
+		|| /^Basic\s/i.test(authorization)
+	) {
+		return oauthErrorResponse(
+			'invalid_client',
+			400,
+			'Only public clients using token_endpoint_auth_method none are supported.',
+		);
+	}
 
 	type OAuthExchangeClaims = Pick<
 		OAuthAuthorizationCodeClaims,
@@ -4445,7 +4458,7 @@ function buildOAuthAuthorizationServerMetadata(url: URL, env: Env) {
 		scopes_supported: OAUTH_SUPPORTED_SCOPES,
 		response_types_supported: ['code'],
 		grant_types_supported: ['authorization_code', 'refresh_token'],
-		token_endpoint_auth_methods_supported: ['none', 'client_secret_post'],
+		token_endpoint_auth_methods_supported: [OAUTH_PUBLIC_TOKEN_ENDPOINT_AUTH_METHOD],
 		code_challenge_methods_supported: ['S256'],
 		agent_auth: {
 			skill: 'https://createsomething.agency/auth.md',
@@ -4473,7 +4486,7 @@ function buildOpenIdConfigurationMetadata(url: URL, env: Env) {
 		subject_types_supported: ['public'],
 		id_token_signing_alg_values_supported: ['ES256'],
 		scopes_supported: OAUTH_SUPPORTED_SCOPES,
-		token_endpoint_auth_methods_supported: ['none', 'client_secret_post'],
+		token_endpoint_auth_methods_supported: [OAUTH_PUBLIC_TOKEN_ENDPOINT_AUTH_METHOD],
 		code_challenge_methods_supported: ['S256'],
 		claims_supported: ['sub', 'email', 'email_verified', 'name', 'nonce'],
 	};
