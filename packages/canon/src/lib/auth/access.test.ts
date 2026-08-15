@@ -32,6 +32,9 @@ async function createSignedIdentity(input: {
 				email: input.email,
 				tier: 'agency',
 				source: 'io',
+				kind: 'identity_access_token',
+				session_version: 2,
+				email_verified: true,
 				iss: input.issuer,
 				aud: [input.audience],
 				iat: input.now,
@@ -119,6 +122,7 @@ describe('resolveApplicationAccess', () => {
 	it('reports anonymous requests and fails closed when preview is enabled in production', async () => {
 		const verification = {
 			issuer: 'https://identity.example.test',
+			audience: 'ona-agents',
 			jwksUrl: 'https://identity.example.test/.well-known/jwks.json',
 		};
 		const anonymous = await resolveApplicationAccess({

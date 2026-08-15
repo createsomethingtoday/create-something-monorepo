@@ -51,7 +51,7 @@ test('identity routes exchange credentials server-side and set host-only secure 
   assert.deepEqual(requests, [
     {
       url: 'https://id.createsomething.space/v1/auth/login',
-      body: { email: 'micah@createsomething.io', password: 'private' }
+      body: { email: 'micah@createsomething.io', password: 'private', audience: 'client-workspace' }
     }
   ]);
   const cookies = response!.headers.get('set-cookie') ?? '';

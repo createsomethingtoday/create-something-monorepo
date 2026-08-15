@@ -83,6 +83,7 @@ export type IdentityResult<T> =
 export interface LoginRequest {
 	email: string;
 	password: string;
+	audience: string;
 }
 
 export interface SignupRequest {

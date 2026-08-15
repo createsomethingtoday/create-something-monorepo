@@ -1,6 +1,34 @@
 export const AUTH_PLATFORM_SCHEMA = 'https://createsomething.agency/schemas/auth-platform/v1';
 export const AUTH_PLATFORM_VERSION = '1.0.0';
 export const PRODUCTION_IDENTITY_ORIGIN = 'https://id.createsomething.space';
+export const IDENTITY_SESSION_VERSION = 2;
+export const IDENTITY_APPLICATION_AUDIENCES = {
+  agency: 'agency',
+  clearway: 'clearway',
+  clientWorkspace: 'client-workspace',
+  guardPerformanceLab: 'guard-performance-lab',
+  io: 'io',
+  lms: 'lms',
+  ltd: 'ltd',
+  onaAgents: 'ona-agents',
+  space: 'space',
+  templates: 'templates',
+  workway: 'workway',
+} as const;
+export type IdentityApplicationAudience =
+  (typeof IDENTITY_APPLICATION_AUDIENCES)[keyof typeof IDENTITY_APPLICATION_AUDIENCES];
+
+const IDENTITY_APPLICATION_AUDIENCE_SET = new Set<string>(Object.values(IDENTITY_APPLICATION_AUDIENCES));
+
+export function isIdentityApplicationAudience(value: unknown): value is IdentityApplicationAudience {
+  return typeof value === 'string' && IDENTITY_APPLICATION_AUDIENCE_SET.has(value);
+}
+
+export function isCurrentIdentitySession(payload: { session_version?: unknown; email_verified?: unknown; kind?: unknown }): boolean {
+  return payload.kind === 'identity_access_token'
+    && payload.session_version === IDENTITY_SESSION_VERSION
+    && payload.email_verified === true;
+}
 
 export type AuthIntegrationInput = {
   environment: 'development' | 'preview' | 'production';
@@ -53,7 +81,12 @@ export function createAuthPlatformContract(origin = PRODUCTION_IDENTITY_ORIGIN) 
       refresh: `${issuer}/v1/auth/refresh`, logout: `${issuer}/v1/auth/logout`,
       me: `${issuer}/v1/users/me`,
     },
-    jwt: { algorithms: ['ES256'], verification: ['signature', 'issuer', 'audience', 'expiration'] },
+    jwt: {
+      algorithms: ['ES256'],
+      verification: ['signature', 'issuer', 'audience', 'expiration', 'kind', 'session_version', 'email_verified'],
+      session_version: IDENTITY_SESSION_VERSION,
+      application_audiences: IDENTITY_APPLICATION_AUDIENCES,
+    },
     policy_dimensions: ['subject', 'email', 'email_domain', 'tenant', 'role', 'allow_any_authenticated'],
     mcp: {
       resources: ['auth://platform/contract', 'auth://platform/openapi'],

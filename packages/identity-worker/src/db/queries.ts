@@ -32,6 +32,91 @@ export async function findUserById(db: D1Database, id: string): Promise<User | n
 	return db.prepare('SELECT * FROM users WHERE id = ?').bind(id).first<User>();
 }
 
+export async function consumeOAuthGrant(
+	db: D1Database,
+	grant: {
+		grantId: string;
+		grantKind: 'oauth_authorization_code' | 'oauth_refresh_token';
+		clientId: string;
+		expiresAt: number;
+		nowSeconds: number;
+	}
+): Promise<boolean> {
+	await db.prepare('DELETE FROM oauth_grant_consumptions WHERE expires_at < ?').bind(grant.nowSeconds).run();
+	const result = await db.prepare(
+		`INSERT OR IGNORE INTO oauth_grant_consumptions
+		 (grant_id, grant_kind, client_id, expires_at) VALUES (?, ?, ?, ?)`
+	).bind(grant.grantId, grant.grantKind, grant.clientId, grant.expiresAt).run();
+	return result.meta.changes === 1;
+}
+
+export async function createOAuthRefreshFamily(
+	db: D1Database,
+	family: { familyId: string; clientId: string; userId: string },
+): Promise<void> {
+	await db.prepare(
+		'INSERT INTO oauth_refresh_families (family_id, client_id, user_id) VALUES (?, ?, ?)',
+	).bind(family.familyId, family.clientId, family.userId).run();
+}
+
+export async function isOAuthRefreshFamilyActive(
+	db: D1Database,
+	familyId: string,
+	clientId: string,
+	userId: string,
+): Promise<boolean> {
+	const family = await db.prepare(
+		`SELECT family_id FROM oauth_refresh_families
+		 WHERE family_id = ? AND client_id = ? AND user_id = ? AND revoked_at IS NULL`,
+	).bind(familyId, clientId, userId).first<{ family_id: string }>();
+	return Boolean(family);
+}
+
+export async function revokeOAuthRefreshFamily(db: D1Database, familyId: string): Promise<void> {
+	await db.prepare(
+		"UPDATE oauth_refresh_families SET revoked_at = datetime('now') WHERE family_id = ? AND revoked_at IS NULL",
+	).bind(familyId).run();
+}
+
+export interface OAuthClientRecord {
+	client_id: string;
+	client_name: string;
+	redirect_uris_json: string;
+	token_endpoint_auth_method: string;
+	grant_types_json: string;
+	response_types_json: string;
+	scope: string;
+}
+
+export async function createOAuthClient(db: D1Database, client: {
+	client_id: string;
+	client_name: string;
+	redirect_uris: string[];
+	token_endpoint_auth_method: 'none';
+	grant_types: string[];
+	response_types: string[];
+	scope: string;
+}): Promise<void> {
+	await db.prepare(
+		`INSERT INTO oauth_clients (
+		 client_id, client_name, redirect_uris_json, token_endpoint_auth_method,
+		 grant_types_json, response_types_json, scope
+		) VALUES (?, ?, ?, ?, ?, ?, ?)`
+	).bind(
+		client.client_id,
+		client.client_name,
+		JSON.stringify(client.redirect_uris),
+		client.token_endpoint_auth_method,
+		JSON.stringify(client.grant_types),
+		JSON.stringify(client.response_types),
+		client.scope,
+	).run();
+}
+
+export async function findOAuthClientById(db: D1Database, clientId: string): Promise<OAuthClientRecord | null> {
+	return db.prepare('SELECT * FROM oauth_clients WHERE client_id = ?').bind(clientId).first<OAuthClientRecord>();
+}
+
 export async function findUserByWorkwayId(db: D1Database, workwayId: string): Promise<User | null> {
 	return db.prepare('SELECT * FROM users WHERE workway_id = ?').bind(workwayId).first<User>();
 }
@@ -117,14 +202,15 @@ export async function createRefreshToken(
 		token_hash: string;
 		family_id: string;
 		expires_at: string;
+		audience: string;
 	}
 ): Promise<void> {
 	await db
 		.prepare(
-			`INSERT INTO refresh_tokens (id, user_id, token_hash, family_id, expires_at)
-       VALUES (?, ?, ?, ?, ?)`
+			`INSERT INTO refresh_tokens (id, user_id, token_hash, family_id, expires_at, audience)
+       VALUES (?, ?, ?, ?, ?, ?)`
 		)
-		.bind(token.id, token.user_id, token.token_hash, token.family_id, token.expires_at)
+		.bind(token.id, token.user_id, token.token_hash, token.family_id, token.expires_at, token.audience)
 		.run();
 }
 
@@ -133,7 +219,7 @@ export async function findRefreshTokenByHash(
 	tokenHash: string
 ): Promise<RefreshToken | null> {
 	return db
-		.prepare('SELECT * FROM refresh_tokens WHERE token_hash = ? AND revoked_at IS NULL')
+		.prepare('SELECT * FROM refresh_tokens WHERE token_hash = ? AND revoked_at IS NULL AND audience IS NOT NULL')
 		.bind(tokenHash)
 		.first<RefreshToken>();
 }

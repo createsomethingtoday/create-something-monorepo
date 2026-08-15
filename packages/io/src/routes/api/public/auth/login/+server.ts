@@ -15,7 +15,7 @@ export const POST: RequestHandler = catchApiError('Login', async ({ request, coo
 
 	logger.info('Login attempt', { email });
 
-	const result = await identityClient.login({ email, password });
+	const result = await identityClient.login({ email, password, audience: 'io' });
 
 	if (!result.success) {
 		logger.warn('Login failed', { email, error: result.error });

@@ -5,10 +5,36 @@ import test from 'node:test';
 import identityWorker, { requiresS256PkceForOAuthResource } from '../src/index.ts';
 
 function makeEnv() {
+  const clients = new Map<string, Record<string, unknown>>([
+    ['chatgpt', { client_id: 'chatgpt', redirect_uris_json: JSON.stringify(['https://chat.openai.com/a/callback']) }],
+    ['workflow-shadow-pilot', { client_id: 'workflow-shadow-pilot', redirect_uris_json: JSON.stringify(['http://127.0.0.1:65221/callback']) }],
+  ]);
   return {
     ENVIRONMENT: 'test',
     ALLOWED_ORIGINS: 'https://chatgpt.com',
     MCP_HUB_URL: 'https://mj.mcp.createsomething.agency/mcp',
+    DB: {
+      prepare(sql: string) {
+        let values: unknown[] = [];
+        return {
+          bind(...input: unknown[]) { values = input; return this; },
+          async first() {
+            if (sql.includes('FROM oauth_clients')) return clients.get(String(values[0])) ?? null;
+            return null;
+          },
+          async run() {
+            if (sql.includes('INSERT INTO oauth_clients')) {
+              clients.set(String(values[0]), {
+                client_id: values[0], client_name: values[1], redirect_uris_json: values[2],
+                token_endpoint_auth_method: values[3], grant_types_json: values[4],
+                response_types_json: values[5], scope: values[6],
+              });
+            }
+            return { success: true, meta: { changes: 1 } };
+          },
+        };
+      },
+    },
   } as any;
 }
 
@@ -171,7 +197,7 @@ test('anonymous agent registration rejects resources outside the public discover
 test('the .agency OAuth resource requires S256 PKCE before it can issue an access token', () => {
   assert.equal(requiresS256PkceForOAuthResource('https://createsomething.agency'), true);
   assert.equal(requiresS256PkceForOAuthResource('https://createsomething.agency/'), true);
-  assert.equal(requiresS256PkceForOAuthResource('https://webflow-template-review-mcp.createsomething.workers.dev/mcp'), false);
+	assert.equal(requiresS256PkceForOAuthResource('https://webflow-template-review-mcp.createsomething.workers.dev/mcp'), true);
 });
 
 test('identity worker creates dynamically registered ChatGPT OAuth clients', async () => {
@@ -219,7 +245,7 @@ test('identity worker uses an explicit issuer for preview metadata', async () =>
 test('identity worker renders oauth authorize page', async () => {
   const response = await identityWorker.fetch(
     new Request(
-      'https://id.createsomething.space/oauth/authorize?response_type=code&client_id=chatgpt&redirect_uri=https%3A%2F%2Fchat.openai.com%2Fa%2Fcallback&scope=openid%20mcp',
+      'https://id.createsomething.space/oauth/authorize?response_type=code&client_id=chatgpt&redirect_uri=https%3A%2F%2Fchat.openai.com%2Fa%2Fcallback&scope=openid%20mcp&code_challenge=test-challenge&code_challenge_method=S256',
     ),
     makeEnv(),
   );
@@ -242,7 +268,7 @@ test('Template Review authorize page describes the resource-bound application gr
   const resource = 'https://webflow-template-review-mcp.createsomething.workers.dev/mcp';
   const response = await identityWorker.fetch(
     new Request(
-      `https://id.createsomething.space/oauth/authorize?response_type=code&client_id=workflow-shadow-pilot&redirect_uri=${encodeURIComponent('http://127.0.0.1:65221/callback')}&scope=${encodeURIComponent('openid profile email mcp template-review:queue-read')}&resource=${encodeURIComponent(resource)}`,
+		`https://id.createsomething.space/oauth/authorize?response_type=code&client_id=workflow-shadow-pilot&redirect_uri=${encodeURIComponent('http://127.0.0.1:65221/callback')}&scope=${encodeURIComponent('openid profile email mcp template-review:queue-read')}&resource=${encodeURIComponent(resource)}&code_challenge=test-challenge&code_challenge_method=S256`,
     ),
     makeEnv(),
   );

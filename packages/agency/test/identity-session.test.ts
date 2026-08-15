@@ -33,6 +33,9 @@ async function createIdentityToken(input: { issuer: string; audience: string }) 
 				source: 'space',
 				iss: input.issuer,
 				aud: [input.audience],
+				kind: 'identity_access_token',
+				session_version: 2,
+				email_verified: true,
 				iat: now - 30,
 				exp: now + 300,
 			}),
@@ -85,4 +88,17 @@ test('agency accepts only a cryptographically valid Identity customer-workspace 
 		fetch: async () => Response.json(jwks),
 	});
 	assert.equal(wrongAudience, null);
+
+	const ambiguousAudience = await verifyAgencyIdentitySession({
+		cookies: { get: (name: string) => (name === 'cs_access_token' ? token : undefined) },
+		platform: {
+			env: {
+				CS_IDENTITY_ISSUER: issuer,
+				CS_IDENTITY_JWKS_URL: `${issuer}/.well-known/jwks.json`,
+				CS_IDENTITY_AUDIENCE: 'client-workspace,agency',
+			},
+		} as never,
+		fetch: async () => Response.json(jwks),
+	});
+	assert.equal(ambiguousAudience, null);
 });
