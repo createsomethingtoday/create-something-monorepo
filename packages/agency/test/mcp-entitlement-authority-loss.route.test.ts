@@ -6,6 +6,11 @@ import { join } from 'node:path';
 import test from 'node:test';
 
 import identityWorker from '../../identity-worker/src/index.ts';
+import { canonicalizeAgencyEntitlementIdentity } from '../src/lib/server/agency-identity.ts';
+import {
+  updateAgencyMcpEntitlement,
+  type AgencyMcpEntitlementRow
+} from '../src/lib/server/mcp-entitlements.ts';
 import { POST as checkEntitlement } from '../src/routes/api/internal/mcp-entitlements/check/+server.ts';
 
 const migrationRoot = new URL('../migrations/', import.meta.url);
@@ -242,9 +247,21 @@ test('internal entitlement check preserves an explicitly identified manual autho
 			) VALUES (
 				'user_manual', 'manual@example.com', 'acct_manual', 'tenant_manual', 'workspace_manual',
 				'policy_os_core', 1, 1, 1, 1, 1, 1,
-				'{"manual_override":true,"authority_source":"manual_override"}'
-			);`,
+					'{"manual_override":false,"source":"partner_auth_client"}'
+				);`,
       encoding: 'utf8'
+    });
+    const db = createSqliteD1(database);
+    const manual = await updateAgencyMcpEntitlement(db, {
+      authSubject: 'user_manual',
+      manualOverride: true,
+      metadata: { updated_via: 'agency_admin_api' }
+    });
+    assert.deepEqual(JSON.parse(manual?.metadata_json ?? '{}'), {
+      manual_override: true,
+      source: 'partner_auth_client',
+      updated_via: 'agency_admin_api',
+      authority_source: 'manual_override'
     });
 
     const response = await checkEntitlement({
@@ -259,7 +276,7 @@ test('internal entitlement check preserves an explicitly identified manual autho
         })
       }),
       platform: {
-        env: { DB: createSqliteD1(database), AGENCY_INTERNAL_API_KEY: 'test-internal-key' }
+        env: { DB: db, AGENCY_INTERNAL_API_KEY: 'test-internal-key' }
       }
     } as never);
     const body = (await response.json()) as { allowed: boolean; reason: string };
@@ -308,6 +325,61 @@ test('manual override flag without trusted manual authority provenance fails clo
     const body = (await response.json()) as { allowed: boolean; reason: string };
 
     assert.equal(response.status, 200);
+    assert.equal(body.allowed, false);
+    assert.equal(body.reason, 'entitlement_source_unavailable');
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test('identity canonicalization cannot create trusted manual authority', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'agency-entitlement-identity-maintenance-'));
+  const database = join(directory, 'test.sqlite');
+  try {
+    applyMigrations(database);
+    execFileSync('sqlite3', ['-bail', database], {
+      input: `INSERT INTO agency_mcp_entitlements (
+				auth_subject, auth_email, account_id, tenant_id, workspace_account_id, service_tier,
+				managed_bearer_allowed, org_membership_active, service_entitled, policy_accepted,
+				contract_active, billing_active, metadata_json
+			) VALUES (
+				'user_identity_maintenance', 'micah@createsomething.io', 'acct_stale', 'tenant_stale',
+				'workspace_stale', 'policy_os_core', 1, 1, 1, 1, 1, 1,
+				'{"manual_override":false,"source":"partner_auth_client"}'
+			);`,
+      encoding: 'utf8'
+    });
+    const db = createSqliteD1(database);
+    const existing = await db
+      .prepare('SELECT * FROM agency_mcp_entitlements WHERE auth_subject = ?')
+      .bind('user_identity_maintenance')
+      .first<AgencyMcpEntitlementRow>();
+    assert.ok(existing);
+
+    const canonicalized = await canonicalizeAgencyEntitlementIdentity(
+      db,
+      { id: 'user_identity_maintenance', email: 'micah@createsomething.io' },
+      existing
+    );
+    const metadata = JSON.parse(canonicalized.metadata_json) as Record<string, unknown>;
+    assert.equal(metadata.manual_override, false);
+    assert.notEqual(metadata.authority_source, 'manual_override');
+
+    const response = await checkEntitlement({
+      request: new Request('https://createsomething.agency/api/internal/mcp-entitlements/check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-API-Key': 'test-internal-key' },
+        body: JSON.stringify({
+          auth_subject: 'user_identity_maintenance',
+          auth_email: 'micah@createsomething.io',
+          account_id: 'acct_mj',
+          tenant_id: 'tenant_createsomething_io'
+        })
+      }),
+      platform: { env: { DB: db, AGENCY_INTERNAL_API_KEY: 'test-internal-key' } }
+    } as never);
+    const body = (await response.json()) as { allowed: boolean; reason: string };
+
     assert.equal(body.allowed, false);
     assert.equal(body.reason, 'entitlement_source_unavailable');
   } finally {

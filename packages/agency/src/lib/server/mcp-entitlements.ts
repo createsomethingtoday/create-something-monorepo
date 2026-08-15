@@ -66,6 +66,7 @@ export interface AgencyMcpEntitlementUpdateInput {
   billingActive?: boolean;
   denialReason?: string | null;
   metadata?: Record<string, unknown>;
+  manualOverride?: boolean;
 }
 
 interface AgencyPartnerEntitlementSource {
@@ -604,11 +605,17 @@ export async function updateAgencyMcpEntitlement(
     return null;
   }
 
+  const {
+    manual_override: _ignoredManualOverride,
+    authority_source: _ignoredAuthoritySource,
+    ...safeInputMetadata
+  } = input.metadata ?? {};
   const mergedMetadata = {
     ...safeParseMetadata(existing.metadata_json),
-    ...(input.metadata ?? {}),
-    manual_override: true,
-    authority_source: 'manual_override'
+    ...safeInputMetadata,
+    ...(input.manualOverride === true
+      ? { manual_override: true, authority_source: 'manual_override' }
+      : {})
   };
 
   await db
