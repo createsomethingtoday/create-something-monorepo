@@ -12,8 +12,63 @@ import {
   type AgencyMcpEntitlementRow
 } from '../src/lib/server/mcp-entitlements.ts';
 import { POST as checkEntitlement } from '../src/routes/api/internal/mcp-entitlements/check/+server.ts';
+import { POST as updateOauthPassword } from '../src/routes/api/me/mcp-oauth-password/+server.ts';
 
 const migrationRoot = new URL('../migrations/', import.meta.url);
+
+function encodeBase64Url(value: string | ArrayBuffer): string {
+  return Buffer.from(typeof value === 'string' ? value : new Uint8Array(value)).toString(
+    'base64url'
+  );
+}
+
+async function createIdentityToken(input: {
+  issuer: string;
+  audience: string;
+  subject: string;
+  email: string;
+}) {
+  const keyPair = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, [
+    'sign',
+    'verify'
+  ]);
+  const publicJwk = (await crypto.subtle.exportKey('jwk', keyPair.publicKey)) as JsonWebKey & {
+    kid: string;
+    alg: string;
+    use: string;
+  };
+  publicJwk.kid = 'agency-authority-loss-test-key';
+  publicJwk.alg = 'ES256';
+  publicJwk.use = 'sig';
+  const now = Math.floor(Date.now() / 1000);
+  const signingInput = [
+    encodeBase64Url(JSON.stringify({ alg: 'ES256', typ: 'JWT', kid: publicJwk.kid })),
+    encodeBase64Url(
+      JSON.stringify({
+        sub: input.subject,
+        email: input.email,
+        tier: 'agency',
+        source: 'space',
+        iss: input.issuer,
+        aud: [input.audience],
+        kind: 'identity_access_token',
+        session_version: 2,
+        email_verified: true,
+        iat: now - 30,
+        exp: now + 300
+      })
+    )
+  ].join('.');
+  const signature = await crypto.subtle.sign(
+    { name: 'ECDSA', hash: 'SHA-256' },
+    keyPair.privateKey,
+    new TextEncoder().encode(signingInput)
+  );
+  return {
+    token: `${signingInput}.${encodeBase64Url(signature)}`,
+    jwks: { keys: [publicJwk] }
+  };
+}
 
 function sqlLiteral(value: unknown): string {
   if (value === null || value === undefined) return 'NULL';
@@ -439,6 +494,79 @@ test('current contract authority cannot borrow a stale commercial allow flag', a
     assert.equal(body.checks.managed_bearer_allowed, false);
     assert.equal(body.checks.billing_active, false);
   } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test('OAuth password maintenance denies a cached allow after authority disappears', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'agency-entitlement-password-authority-loss-'));
+  const database = join(directory, 'test.sqlite');
+  const originalFetch = globalThis.fetch;
+  try {
+    applyMigrations(database);
+    execFileSync('sqlite3', ['-bail', database], {
+      input: `INSERT INTO agency_mcp_entitlements (
+				auth_subject, auth_email, account_id, tenant_id, workspace_account_id, service_tier,
+				managed_bearer_allowed, org_membership_active, service_entitled, policy_accepted,
+				contract_active, billing_active, metadata_json
+			) VALUES (
+				'user_password_stale', 'password-stale@example.com', 'acct_password_stale',
+				'tenant_password_stale', 'workspace_password_stale', 'policy_os_core',
+				1, 1, 1, 1, 1, 1, '{"manual_override":false,"source":"partner_auth_client"}'
+			);`,
+      encoding: 'utf8'
+    });
+
+    const issuer = 'https://identity.example.test';
+    const audience = 'client-workspace';
+    const { token, jwks } = await createIdentityToken({
+      issuer,
+      audience,
+      subject: 'user_password_stale',
+      email: 'password-stale@example.com'
+    });
+    let passwordUpsertCalled = false;
+    globalThis.fetch = async (input, init) => {
+      const request = new Request(input, init);
+      if (request.url === `${issuer}/.well-known/jwks.json`) return Response.json(jwks);
+      if (request.url === `${issuer}/v1/auth/password/admin-upsert`) {
+        passwordUpsertCalled = true;
+        return Response.json({ user: null, has_password: true });
+      }
+      return originalFetch(input, init);
+    };
+
+    const response = await updateOauthPassword({
+      request: new Request('https://createsomething.agency/api/me/mcp-oauth-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: 'safe-test-password' })
+      }),
+      cookies: {
+        get(name: string) {
+          return name === 'cs_access_token' ? token : undefined;
+        }
+      },
+      platform: {
+        env: {
+          DB: createSqliteD1(database),
+          ENVIRONMENT: 'test',
+          CS_IDENTITY_ISSUER: issuer,
+          CS_IDENTITY_JWKS_URL: `${issuer}/.well-known/jwks.json`,
+          CS_IDENTITY_AUDIENCE: audience,
+          IDENTITY_WORKER_URL: issuer,
+          IDENTITY_WORKER_ADMIN_API_KEY: 'test-admin-key'
+        }
+      }
+    } as never);
+    const body = (await response.json()) as { error: string; message: string };
+
+    assert.equal(response.status, 403);
+    assert.equal(body.error, 'entitlement_denied');
+    assert.equal(body.message, 'entitlement_source_unavailable');
+    assert.equal(passwordUpsertCalled, false);
+  } finally {
+    globalThis.fetch = originalFetch;
     rmSync(directory, { recursive: true, force: true });
   }
 });
