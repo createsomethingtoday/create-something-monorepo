@@ -19,10 +19,9 @@ import {
 	type CollectionVisibility
 } from '$lib/taste/collections';
 import {
-	getTokenFromRequest,
-	validateToken,
-	type AuthEnv
+	getTokenFromRequest
 } from '@create-something/canon/auth/server';
+import { verifyLtdIdentityToken } from '$lib/server/identity';
 import { createLogger, validateStringField } from '@create-something/canon/utils';
 
 const logger = createLogger('CollectionsAPI');
@@ -52,13 +51,13 @@ export const GET: RequestHandler = async ({ request, platform, url }) => {
 		throw error(401, 'Authentication required');
 	}
 
-	const user = await validateToken(token, platform?.env as AuthEnv | undefined);
+	const user = await verifyLtdIdentityToken(token);
 	if (!user) {
 		throw error(401, 'Invalid or expired token');
 	}
 
 	try {
-		const collections = await listUserCollections(db, user.id, {
+		const collections = await listUserCollections(db, user.subject, {
 			includePrivate: true,
 			limit,
 			offset
@@ -66,7 +65,7 @@ export const GET: RequestHandler = async ({ request, platform, url }) => {
 
 		return json({ collections });
 	} catch (err) {
-		logger.error('Failed to list collections', { userId: user.id, error: err });
+		logger.error('Failed to list collections', { userId: user.subject, error: err });
 		return json({ error: 'Failed to list collections' }, { status: 500 });
 	}
 };
@@ -84,7 +83,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		throw error(401, 'Authentication required');
 	}
 
-	const user = await validateToken(token, platform?.env as AuthEnv | undefined);
+	const user = await verifyLtdIdentityToken(token);
 	if (!user) {
 		throw error(401, 'Invalid or expired token');
 	}
@@ -121,7 +120,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
 	try {
 		const input: CreateCollectionInput = {
-			userId: user.id,
+			userId: user.subject,
 			name: nameValidation.value,
 			description: body.description ?? null,
 			visibility: body.visibility ?? 'private',
@@ -130,10 +129,10 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
 		const collection = await createCollection(db, input);
 
-		logger.info('Collection created', { userId: user.id, collectionId: collection.id });
+		logger.info('Collection created', { userId: user.subject, collectionId: collection.id });
 		return json({ collection }, { status: 201 });
 	} catch (err) {
-		logger.error('Failed to create collection', { userId: user.id, error: err });
+		logger.error('Failed to create collection', { userId: user.subject, error: err });
 		return json({ error: 'Failed to create collection' }, { status: 500 });
 	}
 };

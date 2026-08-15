@@ -11,7 +11,8 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { fetchTasteInsights } from '$lib/taste/insights';
-import { getTokenFromRequest, validateToken, type AuthEnv } from '@create-something/canon/auth/server';
+import { verifyLtdIdentityToken } from '$lib/server/identity';
+import { getTokenFromRequest } from '@create-something/canon/auth/server';
 
 export const GET: RequestHandler = async ({ request, platform, url }) => {
 	const db = platform?.env?.DB;
@@ -26,13 +27,13 @@ export const GET: RequestHandler = async ({ request, platform, url }) => {
 		throw error(401, 'Authentication required');
 	}
 
-	const user = await validateToken(token, platform?.env as AuthEnv | undefined);
+	const user = await verifyLtdIdentityToken(token);
 	if (!user) {
 		throw error(401, 'Invalid or expired token');
 	}
 
 	// Use authenticated user's ID - no IDOR via query params
-	const userId = user.id;
+	const userId = user.subject;
 
 	// Time range for daily activity (default: last 30 days)
 	const days = parseInt(url.searchParams.get('days') ?? '30', 10);

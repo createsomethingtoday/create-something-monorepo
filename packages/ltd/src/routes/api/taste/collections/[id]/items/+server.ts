@@ -18,9 +18,8 @@ import {
 } from '$lib/taste/collections';
 import {
 	getTokenFromRequest,
-	validateToken,
-	type AuthEnv,
 } from '@create-something/canon/auth/server';
+import { verifyLtdIdentityToken } from '$lib/server/identity';
 
 export const GET: RequestHandler = async ({ params, request, platform }) => {
 	const db = platform?.env?.DB;
@@ -33,10 +32,10 @@ export const GET: RequestHandler = async ({ params, request, platform }) => {
 
 	// Optional auth - needed for private collections
 	const token = getTokenFromRequest(request);
-	const user = token ? await validateToken(token, platform?.env as AuthEnv | undefined) : null;
+	const user = token ? await verifyLtdIdentityToken(token) : null;
 
 	try {
-		const items = await getCollectionItems(db, collectionId, user?.id);
+		const items = await getCollectionItems(db, collectionId, user?.subject);
 
 		return json({ items });
 	} catch (err) {
@@ -58,7 +57,7 @@ export const POST: RequestHandler = async ({ params, request, platform }) => {
 		throw error(401, 'Authentication required');
 	}
 
-	const user = await validateToken(token, platform?.env as AuthEnv | undefined);
+	const user = await verifyLtdIdentityToken(token);
 	if (!user) {
 		throw error(401, 'Invalid or expired token');
 	}
@@ -101,7 +100,7 @@ export const POST: RequestHandler = async ({ params, request, platform }) => {
 			position: body.position,
 		};
 
-		const item = await addItemToCollection(db, collectionId, user.id, input);
+		const item = await addItemToCollection(db, collectionId, user.subject, input);
 
 		if (!item) {
 			throw error(404, 'Collection not found or access denied');

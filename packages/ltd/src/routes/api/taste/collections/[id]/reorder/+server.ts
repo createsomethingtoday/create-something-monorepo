@@ -13,9 +13,8 @@ import type { RequestHandler } from './$types';
 import { reorderCollectionItems } from '$lib/taste/collections';
 import {
 	getTokenFromRequest,
-	validateToken,
-	type AuthEnv,
 } from '@create-something/canon/auth/server';
+import { verifyLtdIdentityToken } from '$lib/server/identity';
 
 export const POST: RequestHandler = async ({ params, request, platform }) => {
 	const db = platform?.env?.DB;
@@ -30,7 +29,7 @@ export const POST: RequestHandler = async ({ params, request, platform }) => {
 		throw error(401, 'Authentication required');
 	}
 
-	const user = await validateToken(token, platform?.env as AuthEnv | undefined);
+	const user = await verifyLtdIdentityToken(token);
 	if (!user) {
 		throw error(401, 'Invalid or expired token');
 	}
@@ -62,7 +61,7 @@ export const POST: RequestHandler = async ({ params, request, platform }) => {
 	}
 
 	try {
-		const success = await reorderCollectionItems(db, collectionId, user.id, body.itemIds);
+		const success = await reorderCollectionItems(db, collectionId, user.subject, body.itemIds);
 
 		if (!success) {
 			throw error(404, 'Collection not found or access denied');

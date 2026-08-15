@@ -3698,20 +3698,17 @@ async function handleUpdateAnalytics(request: Request, env: Env): Promise<Respon
 // Service-to-Service Handlers
 
 async function handleValidate(request: Request, env: Env): Promise<Response> {
-	const apiKey = request.headers.get('X-API-Key');
-	if (!apiKey) {
-		return json({ error: 'unauthorized', message: 'API key required', status: 401 }, 401);
+	const auth = await authenticateApiKeyForPermissions(request, env, ['validate_identity_session']);
+	if (!auth.ok) {
+		return json({ error: auth.error, message: auth.message, status: auth.status }, auth.status);
 	}
 
-	const keyHash = await hashToken(apiKey);
-	const storedKey = await findApiKeyByHash(env.DB, keyHash);
-	if (!storedKey) {
-		return json({ error: 'unauthorized', message: 'Invalid API key', status: 401 }, 401);
-	}
-
-	const body = await parseJSON<{ access_token?: string }>(request);
+	const body = await parseJSON<{ access_token?: string; audience?: string }>(request);
 	if (!body?.access_token) {
 		return json({ error: 'invalid_request', message: 'Access token required', status: 400 }, 400);
+	}
+	if (!isIdentityApplicationAudience(body.audience)) {
+		return json({ error: 'invalid_request', message: 'Recognized application audience required', status: 400 }, 400);
 	}
 
 	const jwks = await getJWKS(env.DB);
@@ -3723,13 +3720,17 @@ async function handleValidate(request: Request, env: Env): Promise<Response> {
 		if (payload) break;
 	}
 
-	if (!payload) {
+	if (!payload || !isIdentityAccessSession(payload, body.audience)) {
 		return json({ error: 'invalid_token', message: 'Invalid or expired token', status: 401 }, 401);
+	}
+	const user = await findUserById(env.DB, payload.sub);
+	if (!isActiveVerifiedIdentity(user)) {
+		return json({ error: 'invalid_token', message: 'Identity is no longer active', status: 401 }, 401);
 	}
 
 	return json({
 		valid: true,
-		user: { id: payload.sub, email: payload.email, tier: payload.tier, source: payload.source },
+		user: { id: user.id, email: user.email, tier: user.tier, source: user.source },
 		exp: payload.exp,
 	});
 }

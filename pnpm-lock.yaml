@@ -2763,6 +2763,9 @@ importers:
 
   packages/ltd:
     dependencies:
+      '@create-something/auth-platform':
+        specifier: workspace:*
+        version: link:../auth-platform
       '@create-something/canon':
         specifier: workspace:*
         version: link:../canon
