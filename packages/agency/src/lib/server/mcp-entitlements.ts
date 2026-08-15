@@ -607,7 +607,8 @@ export async function updateAgencyMcpEntitlement(
   const mergedMetadata = {
     ...safeParseMetadata(existing.metadata_json),
     ...(input.metadata ?? {}),
-    manual_override: true
+    manual_override: true,
+    authority_source: 'manual_override'
   };
 
   await db
@@ -768,11 +769,19 @@ export async function reconcileAgencyMcpEntitlement(
     return findAgencyMcpEntitlementByAuthSubject(db, input.authSubject);
   }
 
-  const source = await findAgencyPartnerEntitlementSource(
-    db,
-    input.authSubject,
-    input.authEmail ?? existing?.auth_email ?? null
-  );
+  let source: AgencyPartnerEntitlementSource | null = null;
+  try {
+    source = await findAgencyPartnerEntitlementSource(
+      db,
+      input.authSubject,
+      input.authEmail ?? existing?.auth_email ?? null
+    );
+  } catch (error) {
+    if (!isPartnerAuthorityTableUnavailable(error)) {
+      throw error;
+    }
+    console.warn('Partner entitlement authority tables are unavailable; failing closed');
+  }
   const contract = await findAgencyContractState(
     db,
     input.authSubject,
@@ -785,20 +794,39 @@ export async function reconcileAgencyMcpEntitlement(
     input.authEmail ?? existing?.auth_email ?? null
   );
   if (!source) {
+    if (!contract && !commercial && existing) {
+      const metadata = mergeMetadata(existingMetadata, input.metadata, {
+        source: 'authority_missing',
+        manual_override: false
+      });
+      await db
+        .prepare(
+          `UPDATE agency_mcp_entitlements
+           SET managed_bearer_allowed = 0,
+               org_membership_active = 0,
+               service_entitled = 0,
+               policy_accepted = 0,
+               contract_active = 0,
+               billing_active = 0,
+               denial_reason = 'entitlement_source_unavailable',
+               metadata_json = ?,
+               updated_at = datetime('now')
+           WHERE auth_subject = ?`
+        )
+        .bind(JSON.stringify(metadata), input.authSubject)
+        .run();
+      return findAgencyMcpEntitlementByAuthSubject(db, input.authSubject);
+    }
+
     const contractActive = contract
       ? contract.contract_active === 1
       : commercial
         ? commercial.contract_active === 1
-        : existing?.contract_active === 1;
-    const billingActive = commercial
-      ? commercial.billing_active === 1
-      : existing?.billing_active === 1;
-    const serviceEntitled = contract
-      ? contract.service_entitled === 1
-      : existing?.service_entitled === 1;
+        : false;
+    const billingActive = commercial ? commercial.billing_active === 1 : false;
+    const serviceEntitled = contract ? contract.service_entitled === 1 : false;
     const policyAccepted =
-      (contract ? contract.policy_accepted === 1 : existing?.policy_accepted === 1) ||
-      dashboardPolicyAccepted;
+      (contract ? contract.policy_accepted === 1 : false) || dashboardPolicyAccepted;
     const commerciallyAllowed = contractActive && billingActive;
 
     if (existing) {
@@ -821,6 +849,8 @@ export async function reconcileAgencyMcpEntitlement(
                workspace_account_id = COALESCE(?, workspace_account_id),
                service_tier = COALESCE(?, service_tier),
                metadata_json = ?,
+               managed_bearer_allowed = ?,
+               org_membership_active = ?,
                contract_active = ?,
                billing_active = ?,
                service_entitled = ?,
@@ -836,6 +866,8 @@ export async function reconcileAgencyMcpEntitlement(
           input.workspaceAccountId ?? existing.workspace_account_id,
           normalizeAgencyServiceTier(input.serviceTier ?? existing.service_tier),
           JSON.stringify(metadata),
+          commerciallyAllowed && serviceEntitled && policyAccepted ? 1 : 0,
+          commerciallyAllowed && serviceEntitled ? 1 : 0,
           contractActive ? 1 : 0,
           billingActive ? 1 : 0,
           serviceEntitled ? 1 : 0,
@@ -1415,6 +1447,12 @@ function isMissingD1TableError(error: unknown, tableName: string): boolean {
 
   return (
     error.message.includes('D1_ERROR') && error.message.includes(`no such table: ${tableName}`)
+  );
+}
+
+function isPartnerAuthorityTableUnavailable(error: unknown): boolean {
+  return ['partner_auth_access_lanes', 'partner_auth_clients', 'partner_auth_consents'].some(
+    (tableName) => isMissingD1TableError(error, tableName)
   );
 }
 
