@@ -19,7 +19,11 @@ Single identity across all properties: .space, .io, .agency, .ltd, and .learn.
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/.well-known/create-something-auth` | Versioned AI-readable platform discovery |
+| GET | `/.well-known/oauth-authorization-server` | OAuth server metadata; advertises public-client authentication with `none` only |
+| GET | `/.well-known/openid-configuration` | OIDC metadata aligned to the same public-client authentication contract |
 | GET | `/v1/auth/openapi.json` | Auth-focused OpenAPI 3.1 contract |
+| POST | `/oauth/register` | Register a public PKCE client; confidential-client methods are rejected |
+| POST | `/oauth/token` | Exchange authorization-code or refresh grants for registered public clients; client secrets are rejected |
 | POST | `/v1/auth/signup` | Create account |
 | POST | `/v1/auth/login` | Authenticate |
 | POST | `/v1/auth/refresh` | Atomically rotate one refresh predecessor; replay revokes its family |
