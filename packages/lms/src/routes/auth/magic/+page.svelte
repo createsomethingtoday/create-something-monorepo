@@ -18,8 +18,6 @@
 
 	interface MagicLinkVerifyResponse {
 		message?: string;
-		accessToken?: string;
-		refreshToken?: string;
 	}
 
 	const token = $derived($page.url.searchParams.get('token'));
@@ -57,17 +55,6 @@
 				status = 'error';
 					return;
 				}
-
-				if (!data.accessToken || !data.refreshToken) {
-					status = 'error';
-					errorType = 'invalid';
-					errorMessage = 'Authentication response was incomplete. Please request a new link.';
-					return;
-				}
-
-				// Set cookies with cross-subdomain scope for unified identity
-				document.cookie = `cs_access_token=${data.accessToken}; path=/; domain=.createsomething.space; max-age=900; secure; samesite=lax`;
-			document.cookie = `cs_refresh_token=${data.refreshToken}; path=/; domain=.createsomething.space; max-age=604800; secure; samesite=lax`;
 
 			status = 'success';
 

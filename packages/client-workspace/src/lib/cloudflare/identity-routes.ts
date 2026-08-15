@@ -209,7 +209,7 @@ export function createIdentityRoutes(options: IdentityRoutesOptions): IdentityRo
           response = await fetchIdentity(`${identityApiUrl}/v1/auth/login`, {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ email: body.email, password: body.password })
+            body: JSON.stringify({ email: body.email, password: body.password, audience: 'client-workspace' })
           });
         } catch {
           return authError(503, 'identity_unavailable');

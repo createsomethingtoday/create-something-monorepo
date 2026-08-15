@@ -17,28 +17,29 @@ import {
 	revokeRefreshToken,
 	revokeTokenFamily,
 } from '../db/queries';
+import {
+	IDENTITY_SESSION_VERSION,
+	IDENTITY_APPLICATION_AUDIENCES,
+	isIdentityApplicationAudience,
+	type IdentityApplicationAudience,
+} from '@create-something/auth-platform';
+export const IDENTITY_TOKEN_AUDIENCES = Object.values(IDENTITY_APPLICATION_AUDIENCES);
 
 // Token configuration
 const ACCESS_TOKEN_TTL = 15 * 60; // 15 minutes
 const REFRESH_TOKEN_TTL = 7 * 24 * 60 * 60; // 7 days
 const ISSUER = 'https://id.createsomething.space';
-export const IDENTITY_TOKEN_AUDIENCES = [
-	'workway',
-	'templates',
-	'io',
-	'space',
-	'ona-agents',
-	'guard-performance-lab',
-	'client-workspace',
-] as const;
-
 /**
  * Generate access and refresh tokens for a user
  */
 export async function generateTokens(
 	db: D1Database,
-	user: User
+	user: User,
+	audience: IdentityApplicationAudience
 ): Promise<{ accessToken: string; refreshToken: string; expiresIn: number }> {
+	if (!isIdentityApplicationAudience(audience) || user.deleted_at || user.email_verified !== 1) {
+		throw new Error('active_verified_identity_required');
+	}
 	const signingKey = await getOrCreateSigningKey(db);
 	const now = Math.floor(Date.now() / 1000);
 
@@ -49,9 +50,12 @@ export async function generateTokens(
 		tier: user.tier,
 		source: user.source,
 		iss: ISSUER,
-		aud: [...IDENTITY_TOKEN_AUDIENCES],
+		aud: [audience],
 		iat: now,
 		exp: now + ACCESS_TOKEN_TTL,
+		kind: 'identity_access_token',
+		email_verified: true,
+		session_version: IDENTITY_SESSION_VERSION,
 	};
 
 	const accessToken = await signJWT(payload as unknown as Record<string, unknown>, signingKey);
@@ -68,6 +72,7 @@ export async function generateTokens(
 		token_hash: tokenHash,
 		family_id: familyId,
 		expires_at: expiresAt,
+		audience,
 	});
 
 	return {
@@ -104,6 +109,8 @@ export async function refreshTokens(
 		// Could be token reuse attack - but we can't detect family without the token
 		return null;
 	}
+	if (!isIdentityApplicationAudience(storedToken.audience) || user.deleted_at || user.email_verified !== 1) return null;
+	const audience = storedToken.audience;
 
 	// Check expiration
 	if (new Date(storedToken.expires_at) < new Date()) {
@@ -131,9 +138,12 @@ export async function refreshTokens(
 		tier: user.tier,
 		source: user.source,
 		iss: ISSUER,
-		aud: [...IDENTITY_TOKEN_AUDIENCES],
+		aud: [audience],
 		iat: now,
 		exp: now + ACCESS_TOKEN_TTL,
+		kind: 'identity_access_token',
+		email_verified: true,
+		session_version: IDENTITY_SESSION_VERSION,
 	};
 
 	const accessToken = await signJWT(payload as unknown as Record<string, unknown>, signingKey);
@@ -149,6 +159,7 @@ export async function refreshTokens(
 		token_hash: newTokenHash,
 		family_id: storedToken.family_id,
 		expires_at: expiresAt,
+		audience,
 	});
 
 	return {

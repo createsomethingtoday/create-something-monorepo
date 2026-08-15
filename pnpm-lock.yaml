@@ -1112,6 +1112,9 @@ importers:
       '@codemirror/view':
         specifier: ^6.38.7
         version: 6.39.11
+      '@create-something/auth-platform':
+        specifier: workspace:*
+        version: link:../auth-platform
       '@create-something/tufte':
         specifier: workspace:^
         version: link:../tufte

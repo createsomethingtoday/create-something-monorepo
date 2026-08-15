@@ -22,6 +22,8 @@ export interface Env {
 	AGENCY_INTERNAL_API_KEY?: string;
 	OAUTH_ISSUER?: string;
 	CONTROL_RUNTIME_RESOURCES?: string;
+	LMS_DB?: D1Database;
+	LMS_MAGIC_EXCHANGE_TOKEN?: string;
 }
 
 // Database models
@@ -49,6 +51,7 @@ export interface RefreshToken {
 	family_id: string;
 	expires_at: string;
 	revoked_at: string | null;
+	audience: string | null;
 	created_at: string;
 }
 
@@ -120,6 +123,9 @@ export interface JWTPayload {
 	aud: string[]; // application audiences declared by the Identity Worker
 	iat: number; // issued at
 	exp: number; // expiration
+	kind?: string;
+	email_verified?: boolean;
+	session_version?: number;
 }
 
 // JWKS types

@@ -9,5 +9,6 @@
 import { createLoginHandler } from '@create-something/canon/auth';
 
 export const POST = createLoginHandler({
+	audience: 'lms',
 	cookieDomain: '.createsomething.space'
 });

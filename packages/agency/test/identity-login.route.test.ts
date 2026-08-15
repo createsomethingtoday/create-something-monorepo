@@ -51,6 +51,7 @@ test('agency signs customers in through CREATE SOMETHING Identity', async () => 
 	assert.deepEqual(await identityRequest.json(), {
 		email: 'owner@example.com',
 		password: 'correct horse battery staple',
+		audience: 'client-workspace',
 	});
 	assert.deepEqual(cookieWrites, [
 		{ name: 'cs_access_token', value: 'identity-access-token' },

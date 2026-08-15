@@ -201,6 +201,7 @@ export function createAuthHandler(config: AuthHandlerConfig) {
  * Pre-configured login handler
  */
 export function createLoginHandler(options?: {
+	audience?: string;
 	cookieDomain?: string;
 	identityBaseUrl?: string;
 	isProduction?: boolean;
@@ -211,6 +212,10 @@ export function createLoginHandler(options?: {
 		cookieDomain: options?.cookieDomain,
 		identityBaseUrl: options?.identityBaseUrl,
 		isProduction: options?.isProduction,
+		transformBody: (body) => ({
+			...(body as object),
+			...(options?.audience && { audience: options.audience }),
+		}),
 	});
 }
 
