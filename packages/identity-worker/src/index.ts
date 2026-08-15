@@ -39,8 +39,7 @@ import {
 	findEmailChangeRequestByToken,
 	deleteEmailChangeRequest,
 	createCrossDomainToken,
-	findCrossDomainTokenByHash,
-	markCrossDomainTokenUsed,
+	claimCrossDomainToken,
 	countRecentCrossDomainTokens,
 	ensureMcpAccountForUserTenant,
 	findMcpAccountById,
@@ -93,20 +92,20 @@ export default {
 
 		// CORS preflight
 		if (method === 'OPTIONS') {
+			if (path === '/v1/auth/cross-domain/exchange') {
+				return new Response(null, { status: 405, headers: { Allow: 'POST' } });
+			}
 			return cors(new Response(null, { status: 204 }), request, env);
 		}
 
 		try {
 			const response = await route(request, env, method, path);
-			if (path === '/v1/auth/magic-exchange') return response;
+			if (path === '/v1/auth/magic-exchange' || path === '/v1/auth/cross-domain/exchange') return response;
 			return cors(response, request, env);
 		} catch (err) {
 			console.error('Identity Worker Error:', err);
-			return cors(
-				json({ error: 'internal_error', message: 'An unexpected error occurred', status: 500 }, 500),
-				request,
-				env
-			);
+			const response = json({ error: 'internal_error', message: 'An unexpected error occurred', status: 500 }, 500);
+			return path === '/v1/auth/cross-domain/exchange' ? response : cors(response, request, env);
 		}
 	},
 };
@@ -369,18 +368,7 @@ async function handleRefresh(request: Request, env: Env): Promise<Response> {
 		return json({ error: 'invalid_request', message: 'Refresh token required', status: 400 }, 400);
 	}
 
-	const tokenHash = await hashToken(body.refresh_token);
-	const storedToken = await findRefreshTokenByHash(db, tokenHash);
-	if (!storedToken) {
-		return json({ error: 'invalid_token', message: 'Invalid refresh token', status: 401 }, 401);
-	}
-
-	const user = await findUserById(db, storedToken.user_id);
-	if (!user) {
-		return json({ error: 'user_not_found', message: 'User not found', status: 401 }, 401);
-	}
-
-	const tokens = await refreshTokens(db, body.refresh_token, user);
+	const tokens = await refreshTokens(db, body.refresh_token);
 	if (!tokens) {
 		return json({ error: 'invalid_token', message: 'Token expired or revoked', status: 401 }, 401);
 	}
@@ -576,23 +564,27 @@ async function handleCrossDomainGenerate(request: Request, env: Env): Promise<Re
 
 async function handleCrossDomainExchange(request: Request, env: Env): Promise<Response> {
 	const db = env.DB;
+	if (request.headers.has('Origin')) {
+		return json({ error: 'server_exchange_required', message: 'Cross-domain exchange is server-only', status: 403 }, 403);
+	}
 
 	// Parse request
-	const body = await parseJSON<{ token?: string }>(request);
+	const body = await parseJSON<{ token?: string; target?: string }>(request);
 	if (!body?.token) {
 		return json({ error: 'invalid_request', message: 'Token required', status: 400 }, 400);
 	}
+	if (!body.target || !VALID_TARGETS.includes(body.target as CrossDomainToken['target'])) {
+		return json({ error: 'invalid_target', message: 'Exact target required', status: 400 }, 400);
+	}
+	const target = body.target as CrossDomainToken['target'];
 
-	// Find token
+	// Atomically claim the single-use, host-bound intermediary.
 	const tokenHash = await hashToken(body.token);
-	const storedToken = await findCrossDomainTokenByHash(db, tokenHash);
+	const storedToken = await claimCrossDomainToken(db, tokenHash, target);
 
 	if (!storedToken) {
 		return json({ error: 'invalid_token', message: 'Invalid or expired token', status: 401 }, 401);
 	}
-
-	// Mark as used immediately (single-use)
-	await markCrossDomainTokenUsed(db, storedToken.id);
 
 	// Get user
 	const user = await findUserById(db, storedToken.user_id);
@@ -601,12 +593,12 @@ async function handleCrossDomainExchange(request: Request, env: Env): Promise<Re
 	}
 
 	// Check if user is deleted
-	if (user.deleted_at) {
+	if (user.deleted_at || user.email_verified !== 1) {
 		return json({ error: 'account_deleted', message: 'This account has been deleted', status: 401 }, 401);
 	}
 
 	// Generate new tokens for this domain
-	const { accessToken, refreshToken, expiresIn } = await generateTokens(db, user, storedToken.target);
+	const { accessToken, refreshToken, expiresIn } = await generateTokens(db, user, target);
 
 	return json({
 		access_token: accessToken,
@@ -4973,7 +4965,7 @@ export function isIdentityAccessSession(payload: {
 	return expectedAudience ? payload.aud[0] === expectedAudience : true;
 }
 
-export function isActiveVerifiedIdentity(user: Pick<User, 'deleted_at' | 'email_verified'> | null): boolean {
+export function isActiveVerifiedIdentity<T extends Pick<User, 'deleted_at' | 'email_verified'>>(user: T | null): user is T {
 	return Boolean(user && !user.deleted_at && user.email_verified === 1);
 }
 
