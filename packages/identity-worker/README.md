@@ -29,7 +29,7 @@ Single identity across all properties: .space, .io, .agency, .ltd, and .learn.
 | GET | `/v1/users/me` | Get current user |
 | GET | `/.well-known/jwks.json` | Public keys |
 | POST | `/v1/validate` | Validate one exact first-party session audience with API key permission `validate_identity_session` and live user state |
-| POST | `/v1/mcp/sessions` | Create MCP session token + policy claims |
+| POST | `/v1/mcp/sessions` | Create MCP session token + policy claims; requires the exact `mcp-session` v2 audience |
 | POST | `/v1/mcp/sessions/admin-mint` | Admin mint MCP session for mapped account (API key + policy gated) |
 | POST | `/v1/control/scheduler-tokens/admin-issue` | Issue a short-lived Control scheduler JWT after exact frozen-activation scope readback (API key permission gated) |
 | POST | `/v1/mcp/sessions/resolve` | Resolve MCP session token (hub-only) |
@@ -114,7 +114,9 @@ Properties verify tokens by:
 3. Checking expiration, issuer, access-token kind, session version, verified state, and one exact property audience
 
 MCP hub integration:
-1. Frontend/backend creates session via `POST /v1/mcp/sessions` with user JWT
+1. The MCP onboarding frontend/backend explicitly requests an Identity access token with audience `mcp-session`, then creates a session via `POST /v1/mcp/sessions`
+   - property, LMS, workspace, and other first-party application audiences are rejected before session policy or storage is reached
+   - legacy source fallback and cross-domain exchange do not mint `mcp-session`; the onboarding caller must request it explicitly
    - Session token (`ms_tok_*`) is ephemeral, while `account_id` is stable per `{user_id, tenant_id}`
 2. Host stores returned MCP token and calls hub endpoint
 3. Hub introspects token via `POST /v1/mcp/sessions/resolve` using `MCP_SESSION_RESOLVE_TOKEN`

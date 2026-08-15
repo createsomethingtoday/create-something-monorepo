@@ -33,6 +33,8 @@ MCP deliberately has no credential issuance, access-grant, secret-rotation, or p
 
 For approved OAuth MCP resources, authorization-code plus PKCE exchange mints a short-lived ES256 access token whose audience is the exact protected-resource URL. `/oauth/userinfo` validates signature, issuer, expiration, resource policy, and active user state before returning identity, resource, and granted scope. The adopting resource must require its own audience and intersect token scope with its application allow policy. These application tokens do not require or imply a commercial `.agency` entitlement. They expire after one hour; soft-deleting the Identity user revokes userinfo immediately, while ordinary token retirement relies on that bounded expiration rather than a long-lived credential record.
 
+First-party self-service MCP session creation is a separate application boundary. The onboarding caller must explicitly request the `mcp-session` v2 Identity audience before calling `POST /v1/mcp/sessions`; property, LMS, workspace, and other first-party audiences are rejected. Hub resolution remains separately authenticated and continues to fail closed against live Agency entitlement.
+
 ## Security invariants
 
 - Verify the JWT signature, exact issuer, accepted audience, and expiration before evaluating access policy.
