@@ -347,7 +347,12 @@ function base64UrlDecode(input: string): ArrayBuffer {
 // =============================================================================
 
 /**
- * Validate a JWT with cryptographic signature verification via JWKS
+ * Validate a third-party JWT with cryptographic signature verification via JWKS.
+ *
+ * First-party CREATE SOMETHING Identity tokens are intentionally rejected here
+ * because this compatibility API has no required application audience. Owned
+ * consumers must use `verifyIdentityToken` with explicit issuer, JWKS URL, and
+ * one exact audience.
  *
  * Uses KV caching when env.AUTH_CACHE is provided for robust
  * cross-instance caching in Cloudflare Workers.
@@ -402,6 +407,7 @@ export async function validateToken(token: string, env?: AuthEnv): Promise<User 
 
 		const payload = parseJwtPayload(token);
 		if (!payload) return null;
+		if (payload.iss?.replace(/\/+$/, '') === SESSION_CONFIG.IDENTITY_ENDPOINT) return null;
 		const provider = getJwtProvider(payload, env);
 		if (payload.iss !== provider.issuer) return null;
 

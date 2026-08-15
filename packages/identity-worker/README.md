@@ -26,6 +26,7 @@ Single identity across all properties: .space, .io, .agency, .ltd, and .learn.
 | POST | `/v1/auth/logout` | Invalidate session |
 | GET | `/v1/users/me` | Get current user |
 | GET | `/.well-known/jwks.json` | Public keys |
+| POST | `/v1/validate` | Validate one exact first-party session audience with API key permission `validate_identity_session` and live user state |
 | POST | `/v1/mcp/sessions` | Create MCP session token + policy claims |
 | POST | `/v1/mcp/sessions/admin-mint` | Admin mint MCP session for mapped account (API key + policy gated) |
 | POST | `/v1/control/scheduler-tokens/admin-issue` | Issue a short-lived Control scheduler JWT after exact frozen-activation scope readback (API key permission gated) |
@@ -83,7 +84,13 @@ Cloudflare D1 uses the package-local migrations directory configured in
 
 Identity Worker is the credential and token authority and the primary API surface for CREATE SOMETHING applications. Agents discover it through `/.well-known/create-something-auth`, `/v1/auth/openapi.json`, or the CREATE SOMETHING MCP resources `auth://platform/contract` and `auth://platform/openapi`. The read-only MCP tool `auth_config_validate` checks proposed non-secret integration configuration without network access or mutation.
 
-Access tokens are ES256 JWTs published through `/.well-known/jwks.json`; application-specific audiences include `ona-agents`. Canon consumers verify the exact issuer, audience, signature, and expiry before applying app-owned allow rules. Canon is the reference adapter, not the platform contract.
+Access tokens are ES256 JWTs published through `/.well-known/jwks.json`; application-specific audiences include `ona-agents`. Canon consumers verify the exact issuer, one exact audience, access-token kind, current session version, verified-email claim, signature, and expiry before applying app-owned allow rules. Canon is the reference adapter, not the platform contract.
+
+`POST /v1/validate` is the permission-gated online validation deputy for callers
+that require current account state. The caller must hold
+`validate_identity_session`, submit the expected application `audience`, and
+send only an Identity access token. The response uses the current active,
+verified user record rather than stale identity claims from the token.
 
 New SvelteKit applications should adopt `@create-something/canon/auth/access`, `@create-something/canon/auth/handlers`, `@create-something/canon/auth/cookies`, and `@create-something/canon/auth/components` rather than implementing a provider-specific verifier. The full integration and promotion contract is in [`docs/guides/FIRST_PARTY_AUTH_PLATFORM.md`](../../docs/guides/FIRST_PARTY_AUTH_PLATFORM.md).
 
@@ -94,7 +101,7 @@ Production audience changes require an Identity Worker deployment. Application c
 Properties verify tokens by:
 1. Fetching JWKS from `/.well-known/jwks.json`
 2. Validating JWT signature
-3. Checking expiration and issuer
+3. Checking expiration, issuer, access-token kind, session version, verified state, and one exact property audience
 
 MCP hub integration:
 1. Frontend/backend creates session via `POST /v1/mcp/sessions` with user JWT

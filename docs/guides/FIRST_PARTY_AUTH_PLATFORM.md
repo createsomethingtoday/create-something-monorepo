@@ -42,6 +42,14 @@ For approved OAuth MCP resources, authorization-code plus PKCE exchange mints a 
 - Preview bypass is explicit, non-production only, and rejected when `ENVIRONMENT=production`.
 - Keep identity credentials, refresh tokens, signing keys, and application secrets out of browser data and repository files.
 
+First-party access tokens expire after 15 minutes. Identity-owned endpoints and
+the permission-gated `/v1/validate` deputy re-read active, verified user state;
+offline application verification does not. A soft-deleted or newly unverified
+identity can therefore remain accepted by an offline consumer only until its
+current access token expires. Consumers that require immediate revocation must
+use the online deputy with one exact expected audience and account for its
+availability explicitly.
+
 ## Reference SvelteKit adapter
 
 Add Canon as a workspace dependency and expose the login handler:

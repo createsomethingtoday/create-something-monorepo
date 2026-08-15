@@ -18,9 +18,8 @@ import {
 } from '$lib/taste/collections';
 import {
 	getTokenFromRequest,
-	validateToken,
-	type AuthEnv,
 } from '@create-something/canon/auth/server';
+import { verifyLtdIdentityToken } from '$lib/server/identity';
 
 export const PATCH: RequestHandler = async ({ params, request, platform }) => {
 	const db = platform?.env?.DB;
@@ -35,7 +34,7 @@ export const PATCH: RequestHandler = async ({ params, request, platform }) => {
 		throw error(401, 'Authentication required');
 	}
 
-	const user = await validateToken(token, platform?.env as AuthEnv | undefined);
+	const user = await verifyLtdIdentityToken(token);
 	if (!user) {
 		throw error(401, 'Invalid or expired token');
 	}
@@ -64,7 +63,7 @@ export const PATCH: RequestHandler = async ({ params, request, platform }) => {
 		if (body.note !== undefined) input.note = body.note;
 		if (body.position !== undefined) input.position = body.position;
 
-		const item = await updateCollectionItem(db, itemId, user.id, input);
+		const item = await updateCollectionItem(db, itemId, user.subject, input);
 
 		if (!item) {
 			throw error(404, 'Item not found or access denied');
@@ -91,7 +90,7 @@ export const DELETE: RequestHandler = async ({ params, request, platform }) => {
 		throw error(401, 'Authentication required');
 	}
 
-	const user = await validateToken(token, platform?.env as AuthEnv | undefined);
+	const user = await verifyLtdIdentityToken(token);
 	if (!user) {
 		throw error(401, 'Invalid or expired token');
 	}
@@ -99,7 +98,7 @@ export const DELETE: RequestHandler = async ({ params, request, platform }) => {
 	const itemId = params.itemId;
 
 	try {
-		const deleted = await removeItemFromCollection(db, itemId, user.id);
+		const deleted = await removeItemFromCollection(db, itemId, user.subject);
 
 		if (!deleted) {
 			throw error(404, 'Item not found or access denied');

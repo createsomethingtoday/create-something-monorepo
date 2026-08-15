@@ -72,6 +72,11 @@ import { verifyIdentityToken } from '@create-something/canon/auth/server';
 
 Identity Worker owns users, credentials, tokens, and signing keys. Canon owns login/session adaptation, cryptographic verification, and normalized access evaluation. Each application still owns its explicit allow policy and promotion approval. See [`docs/guides/FIRST_PARTY_AUTH_PLATFORM.md`](../../docs/guides/FIRST_PARTY_AUTH_PLATFORM.md) for the complete contract.
 
+`validateToken` remains a third-party/Auth0 compatibility helper and refuses
+first-party Identity credentials because its call shape has no required
+application audience. First-party server consumers must use
+`verifyIdentityToken` and supply one exact audience.
+
 ### Domain-Specific Components
 
 ```typescript
