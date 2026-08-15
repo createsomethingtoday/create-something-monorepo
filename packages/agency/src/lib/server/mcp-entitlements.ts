@@ -705,7 +705,11 @@ export async function reconcileAgencyMcpEntitlement(
 ): Promise<AgencyMcpEntitlementRow | null> {
   const existing = await findAgencyMcpEntitlementByAuthSubject(db, input.authSubject);
   const existingMetadata = existing ? safeParseMetadata(existing.metadata_json) : {};
-  if (existingMetadata.manual_override === true && existing) {
+  if (
+    existingMetadata.manual_override === true &&
+    existingMetadata.authority_source === 'manual_override' &&
+    existing
+  ) {
     return existing;
   }
 
@@ -726,11 +730,11 @@ export async function reconcileAgencyMcpEntitlement(
       workspaceAccountId: seed.workspace_account_id ?? seed.account_id,
       serviceTier: seed.service_tier,
       metadata: {
+        ...safeParseMetadata(seed.metadata_json),
         manual_override: false,
         source: 'identity_seed',
         seed_status: seed.status,
-        seed_invited_at: seed.invited_at,
-        ...safeParseMetadata(seed.metadata_json)
+        seed_invited_at: seed.invited_at
       }
     });
 
@@ -770,6 +774,7 @@ export async function reconcileAgencyMcpEntitlement(
   }
 
   let source: AgencyPartnerEntitlementSource | null = null;
+  let partnerAuthorityUnavailable = false;
   try {
     source = await findAgencyPartnerEntitlementSource(
       db,
@@ -780,6 +785,7 @@ export async function reconcileAgencyMcpEntitlement(
     if (!isPartnerAuthorityTableUnavailable(error)) {
       throw error;
     }
+    partnerAuthorityUnavailable = true;
     console.warn('Partner entitlement authority tables are unavailable; failing closed');
   }
   const contract = await findAgencyContractState(
@@ -793,8 +799,33 @@ export async function reconcileAgencyMcpEntitlement(
     db,
     input.authEmail ?? existing?.auth_email ?? null
   );
+  if (partnerAuthorityUnavailable && !existing) {
+    const timestamp = new Date().toISOString();
+    return {
+      auth_subject: input.authSubject,
+      auth_email: input.authEmail ?? null,
+      account_id: input.accountId ?? null,
+      tenant_id: input.tenantId ?? null,
+      workspace_account_id: input.workspaceAccountId ?? input.accountId ?? null,
+      service_tier: normalizeAgencyServiceTier(input.serviceTier),
+      managed_bearer_allowed: 0,
+      org_membership_active: 0,
+      service_entitled: 0,
+      policy_accepted: 0,
+      contract_active: 0,
+      billing_active: 0,
+      denial_reason: 'entitlement_source_unavailable',
+      metadata_json: JSON.stringify({
+        ...input.metadata,
+        source: 'authority_missing',
+        manual_override: false
+      }),
+      created_at: timestamp,
+      updated_at: timestamp
+    };
+  }
   if (!source) {
-    if (!contract && !commercial && existing) {
+    if ((partnerAuthorityUnavailable || (!contract && !commercial)) && existing) {
       const metadata = mergeMetadata(existingMetadata, input.metadata, {
         source: 'authority_missing',
         manual_override: false

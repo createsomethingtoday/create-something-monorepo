@@ -165,6 +165,21 @@ test('internal entitlement check denies stale allow state when partner authority
 				'user_unavailable', 'unavailable@example.com', 'acct_unavailable', 'tenant_unavailable',
 				'workspace_unavailable', 'policy_os_core', 1, 1, 1, 1, 1, 1,
 				'{"manual_override":false,"source":"partner_auth_client"}'
+			);
+			INSERT INTO agency_contract_state (
+				id, auth_subject, normalized_email, account_id, tenant_id, contract_reference,
+				contract_status, contract_active, service_entitled, policy_accepted
+			) VALUES (
+				'contract_unavailable', 'user_unavailable', 'unavailable@example.com',
+				'acct_unavailable', 'tenant_unavailable', 'contract-unavailable-current',
+				'active', 1, 1, 1
+			);
+			INSERT INTO agency_commercial_accounts (
+				id, normalized_email, stripe_customer_id, stripe_subscription_id, product_id,
+				service_tier, subscription_status, contract_active, billing_active
+			) VALUES (
+				'commercial_unavailable', 'unavailable@example.com', 'cus_unavailable',
+				'sub_unavailable', 'prod_unavailable', 'policy_os_core', 'active', 1, 1
 			);`,
       encoding: 'utf8'
     });
@@ -252,6 +267,49 @@ test('internal entitlement check preserves an explicitly identified manual autho
     assert.equal(response.status, 200);
     assert.equal(body.allowed, true);
     assert.equal(body.reason, 'allowed');
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test('manual override flag without trusted manual authority provenance fails closed', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'agency-entitlement-untrusted-manual-'));
+  const database = join(directory, 'test.sqlite');
+  try {
+    applyMigrations(database);
+    execFileSync('sqlite3', ['-bail', database], {
+      input: `INSERT INTO agency_mcp_entitlements (
+				auth_subject, auth_email, account_id, tenant_id, workspace_account_id, service_tier,
+				managed_bearer_allowed, org_membership_active, service_entitled, policy_accepted,
+				contract_active, billing_active, metadata_json
+			) VALUES (
+				'user_untrusted_manual', 'untrusted-manual@example.com', 'acct_untrusted_manual',
+				'tenant_untrusted_manual', 'workspace_untrusted_manual', 'policy_os_core',
+				1, 1, 1, 1, 1, 1, '{"manual_override":true,"source":"identity_seed"}'
+			);`,
+      encoding: 'utf8'
+    });
+
+    const response = await checkEntitlement({
+      request: new Request('https://createsomething.agency/api/internal/mcp-entitlements/check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-API-Key': 'test-internal-key' },
+        body: JSON.stringify({
+          auth_subject: 'user_untrusted_manual',
+          auth_email: 'untrusted-manual@example.com',
+          account_id: 'acct_untrusted_manual',
+          tenant_id: 'tenant_untrusted_manual'
+        })
+      }),
+      platform: {
+        env: { DB: createSqliteD1(database), AGENCY_INTERNAL_API_KEY: 'test-internal-key' }
+      }
+    } as never);
+    const body = (await response.json()) as { allowed: boolean; reason: string };
+
+    assert.equal(response.status, 200);
+    assert.equal(body.allowed, false);
+    assert.equal(body.reason, 'entitlement_source_unavailable');
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }
