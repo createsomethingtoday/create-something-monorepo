@@ -54,28 +54,6 @@ pnpm --filter @create-something/guard-performance-lab film:bakeoff:tracking \
 
 To evaluate another local provider without changing the verifier, supply its `guard-film-player-detections-v1` JSON with `--candidate-predictions`. A source-backed court report may be supplied with `--court-report`; it must contain the source SHA plus held-out `medianErrorFeet` and `p95ErrorFeet` values.
 
-### Local V-JEPA play-state bake-off
-
-V-JEPA 2.1 is an isolated challenger for proposing `live-basketball` versus `stopped-basketball`; it is not a player tracker. The frozen ViT-B encoder receives one centered two-second, 16-frame clip from each reviewed non-unknown interval. A nearest-centroid cosine probe trains on complete earlier intervals and scores the last two independent intervals per label. No interval may appear in both splits.
-
-The runtime and all candidate artifacts stay under gitignored `.data`. Preparation pins and hashes Meta's repository and checkpoint, installs a Python 3.12 environment, and proves a finite MPS forward pass. The verifier adopts assistive proposals only with at least two held-out intervals per label, macro F1 >= 0.80, live recall >= 0.80, and stopped recall >= 0.90. Identity authority, position authority, and automatic ledger writes always remain disabled.
-
-This nearest-centroid pass is a device-and-signal baseline, not V-JEPA's full downstream adaptation recipe. If it retains manual review, the next valid step is to review substantially more independent live/stopped intervals across multiple games, hold out complete games, and train an attentive probe on the frozen features as the official V-JEPA evaluation path does. Do not add more windows from the same held-out intervals to make the score look larger; that increases sample count without increasing independence. Fine-tune the backbone only if the multi-game frozen-probe learning curve plateaus below the gates.
-
-```bash
-pnpm --filter @create-something/guard-performance-lab film:prepare:vjepa
-
-pnpm --filter @create-something/guard-performance-lab film:bakeoff:vjepa \
-  --source /private/path/game.mp4 \
-  --source-sha256 <canonical-reviewed-source-sha256>
-
-pnpm --filter @create-something/guard-performance-lab film:verify:vjepa \
-  --candidate /private/path/candidate.json \
-  --output /private/path/receipt.json
-```
-
-When an exact YouTube upload has been remuxed into a new MP4 container, pass `--youtube-video-id <11-character-id>`. The candidate then records both the canonical reviewed-source hash and the actual remux hash, dimensions, duration, and frame rate. It never silently replaces the ledger's canonical hash.
-
 With explicit approval to send bounded frames to Roboflow, generate that court report separately. Inject the private inference key from a secret manager; never pass it as an argument or commit it. This adapter sends only the comma-delimited timestamps (seven representative frames by default), records competing court-hypothesis ambiguity, and evaluates held-out canonical landmarks. Its output can then be passed to the provider-neutral verifier with `--court-report`.
 
 ```bash
