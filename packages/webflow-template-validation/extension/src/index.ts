@@ -16,6 +16,7 @@ import {
   type NormalizedSiteInfo,
 } from './utils';
 import { buildReportMarkdown as buildReportMarkdownPure, type ReportInput } from './report';
+import { collectPageSeoData } from './page-seo';
 
 // API Configuration
 const API_BASE = 'https://webflow-way-validator.vercel.app';
@@ -2449,40 +2450,19 @@ async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
               data.enhancedValidation!.pageStructure.pagesWithMismatchedSlugs.push(`${name} (/${actualSlug})`);
             }
 
-            // Collect SEO data for each page
+            // Collect SEO data for each page. collectPageSeoData reads the SEO
+            // Title Tag / Meta Description getters (not the site-search
+            // overrides) and returns null when the getters are unavailable so
+            // the worker reports the data as uncollected instead of missing.
             let seoData = null;
             try {
-              // Always try to collect SEO data for pages (not folders)
-              if (item.type === 'Page') {
-                console.log(`Collecting SEO data for page: ${name}`);
-
-                const title = item.getSearchTitle ? await item.getSearchTitle() : null;
-                const description = item.getSearchDescription ? await item.getSearchDescription() : null;
-                const openGraphTitle = item.getOpenGraphTitle ? await item.getOpenGraphTitle() : null;
-                const openGraphDescription = item.getOpenGraphDescription ? await item.getOpenGraphDescription() : null;
-                const openGraphImage = item.getOpenGraphImage ? await item.getOpenGraphImage() : null;
-                const usesTitleAsOG = item.usesTitleAsOpenGraphTitle ? await item.usesTitleAsOpenGraphTitle() : false;
-                const usesDescAsOG = item.usesDescriptionAsOpenGraphDescription ? await item.usesDescriptionAsOpenGraphDescription() : false;
-
-                seoData = {
-                  title: title,
-                  titleLength: title ? title.length : 0,
-                  description: description,
-                  descriptionLength: description ? description.length : 0,
-                  openGraphTitle: openGraphTitle,
-                  openGraphDescription: openGraphDescription,
-                  openGraphImage: openGraphImage,
-                  usesTitleAsOpenGraphTitle: usesTitleAsOG,
-                  usesDescriptionAsOpenGraphDescription: usesDescAsOG,
-                  hasCustomOpenGraphTitle: !usesTitleAsOG && !!openGraphTitle,
-                  hasCustomOpenGraphDescription: !usesDescAsOG && !!openGraphDescription
-                };
-
+              seoData = await collectPageSeoData(item);
+              if (seoData) {
                 console.log(`SEO data collected for ${name}:`, {
-                  hasTitle: !!title,
-                  hasDescription: !!description,
-                  titleLength: title?.length || 0,
-                  descriptionLength: description?.length || 0
+                  hasTitle: !!seoData.title,
+                  hasDescription: !!seoData.description,
+                  titleLength: seoData.titleLength,
+                  descriptionLength: seoData.descriptionLength
                 });
               }
             } catch (seoError) {
@@ -3230,39 +3210,32 @@ async function collectCurrentPageSEOData(webflow: WebflowApi): Promise<any> {
       hasCustomOpenGraphDescription: false
     };
     
-    // Get search description (meta description)
+    // Get meta description (page settings → SEO Settings). getSearchDescription
+    // is the site-search override — empty under the default toggle — so it must
+    // not be used to judge SEO metadata.
     try {
-      if (currentPage.getSearchDescription) {
-        const description = await currentPage.getSearchDescription();
+      if (currentPage.getDescription) {
+        const description = await currentPage.getDescription();
         if (description && description.trim()) {
           seoData.description = description;
           seoData.descriptionLength = description.length;
           seoData.hasValidDescription = description.length >= 150 && description.length <= 160;
-          console.log(`Search description found: ${description.length} characters`);
+          console.log(`Meta description found: ${description.length} characters`);
         }
       }
     } catch (descError) {
-      console.warn('Error getting search description:', descError);
+      console.warn('Error getting meta description:', descError);
     }
-    
-    // Try to get search title (meta title)
+
+    // Get SEO title tag (page settings → SEO Settings)
     try {
-      if (currentPage.getSearchTitle) {
-        const title = await currentPage.getSearchTitle();
-        if (title && title.trim()) {
-          seoData.title = title;
-          seoData.titleLength = title.length;
-          seoData.hasValidTitle = title.length > 0 && title.length <= 60;
-          console.log(`Search title found: ${title.length} characters - "${title}"`);
-        }
-      } else if (currentPage.getTitle) {
-        // Fallback to regular title
+      if (currentPage.getTitle) {
         const title = await currentPage.getTitle();
         if (title && title.trim()) {
           seoData.title = title;
           seoData.titleLength = title.length;
           seoData.hasValidTitle = title.length > 0 && title.length <= 60;
-          console.log(`Page title found: ${title.length} characters - "${title}"`);
+          console.log(`SEO title found: ${title.length} characters - "${title}"`);
         }
       }
     } catch (titleError) {
