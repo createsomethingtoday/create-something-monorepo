@@ -18,14 +18,14 @@
 </script>
 
 <SEO
-	title="Defensive Impact | NBA Live Analytics"
+	title="Defensive Impact | NBA Analytics"
 	description="How well is each defender limiting their matchup? See actual vs expected shooting percentages."
 	keywords="NBA defensive impact, defensive rating, expected shooting, shot zone analysis, basketball defense"
 	propertyName="space"
 	breadcrumbs={[
 		{ name: 'Home', url: 'https://createsomething.space' },
 		{ name: 'Data Studio', url: 'https://createsomething.space/data' },
-		{ name: 'NBA Live Analytics', url: 'https://createsomething.space/data/nba' },
+		{ name: 'NBA Analytics', url: 'https://createsomething.space/data/nba' },
 		{ name: 'Defensive Impact', url: 'https://createsomething.space/data/nba/defensive-impact' }
 	]}
 />
@@ -36,7 +36,7 @@
 		<nav class="nba-breadcrumb">
 			<a href="/data/nba" class="nba-breadcrumb-link">
 				<ArrowLeft size={14} />
-				NBA Live
+				NBA Analytics
 			</a>
 			<span class="nba-breadcrumb-sep">/</span>
 			<span class="nba-breadcrumb-current">Defensive Impact</span>

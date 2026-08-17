@@ -14,6 +14,7 @@
   import { DateNavigation } from '$lib/experiments/nba-live';
   import { RecentHistory } from '$lib/experiments/nba-live';
   import { selectGameOfTheNight } from '$lib/nba/calculations';
+  import { selectDefaultAnalyticsGame } from '$lib/nba/scoreboard-state';
   import {
     Zap,
     Shield,
@@ -81,6 +82,16 @@
 
   // Check if we're viewing today's games (used in labels and messaging)
   const isToday = $derived(data.currentDate === data.nbaToday);
+  const activeGame = $derived(
+    selectedGame ?? selectDefaultAnalyticsGame(data.games, data.dateRelation)
+  );
+  const archiveAvailable = $derived(
+    Boolean(
+      data.recentHistory?.slates.some((slate) =>
+        slate.games.some((game) => game.analyticsAvailable !== false)
+      )
+    )
+  );
 
   // Format date display for section headers
   const dateLabel = $derived.by(() => {
@@ -128,14 +139,14 @@
 </script>
 
 <SEO
-  title="NBA Live Analytics | CREATE SOMETHING"
-  description="Analyze live NBA games through duo synergy, defensive impact, and shot creation networks. Real data, real-time insights."
+  title="NBA Analytics | CREATE SOMETHING"
+  description="Explore current and archived NBA games through duo synergy, defensive impact, shot creation networks, and league-wide insights."
   keywords="NBA analytics, live basketball, duo synergy, defensive impact, shot network, real-time sports data"
   propertyName="space"
   breadcrumbs={[
     { name: 'Home', url: 'https://createsomething.space' },
     { name: 'Data Studio', url: 'https://createsomething.space/data' },
-    { name: 'NBA Live Analytics', url: 'https://createsomething.space/data/nba' }
+    { name: 'NBA Analytics', url: 'https://createsomething.space/data/nba' }
   ]}
 />
 
@@ -143,10 +154,10 @@
 <section class="page-header">
   <div class="container">
     <p class="category">Experiment</p>
-    <h1 class="title">NBA Live Analytics</h1>
+    <h1 class="title">NBA Analytics</h1>
     <p class="subtitle">
-      Watch how players work together, defend their matchups, and create scoring
-      opportunities—updated every 30 seconds during live games.
+      Explore how players work together, defend their matchups, and create scoring opportunities.
+      Browse completed games anytime; live slates update every 30 seconds.
     </p>
   </div>
 </section>
@@ -158,7 +169,9 @@
       <div class="status-indicator">
         {#if data.scoreboardState === 'unavailable'}
           <AlertCircle size={16} class="status-icon status-icon--error" />
-          <span class="status-label status-label--error">Feed unavailable</span>
+          <span class="status-label status-label--error">
+            {isToday ? 'Live feed unavailable' : 'Scoreboard unavailable'}
+          </span>
         {:else if data.scoreboardState === 'stale'}
           <Clock size={16} class="status-icon status-icon--cached" />
           <span class="status-label status-label--cached">Last known data</span>
@@ -182,16 +195,21 @@
           <span class="status-label">Updated</span>
         {/if}
       </div>
-      <span class="timestamp">
-        {#if data.timestamp}
-          Data from {new Date(data.timestamp).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
-        {:else}
-          Retrying automatically
+      <div class="status-meta">
+        <span class="timestamp">
+          {#if data.timestamp}
+            Data from {new Date(data.timestamp).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+          {:else}
+            Retrying automatically
+          {/if}
+        </span>
+        {#if data.provider === 'espn'}
+          <span class="source-label">Scoreboard fallback</span>
         {/if}
-      </span>
-      {#if data.provider === 'espn'}
-        <span class="source-label">Scoreboard fallback</span>
-      {/if}
+        {#if archiveAvailable}
+          <span class="archive-label">Archive ready</span>
+        {/if}
+      </div>
     </div>
   </div>
 </section>
@@ -222,6 +240,10 @@
   </div>
 </section>
 
+{#if data.games.length === 0 && data.recentHistory?.slates.length}
+  <RecentHistory history={data.recentHistory} />
+{/if}
+
 <!-- Game Selector -->
 <section class="games-section">
   <div class="container">
@@ -230,39 +252,47 @@
     {#if data.scoreboardState === 'unavailable'}
       <div class="error-state">
         <AlertCircle size={24} />
-        <p class="error-message">We couldn't load {isToday ? "today's" : 'these'} games.</p>
-        <p class="error-hint">
-          {#if isToday}
-            The primary and fallback scoreboards are unavailable. This page will retry automatically.
-          {:else}
-            The primary and fallback scoreboards are unavailable for this date. Reload or try another date.
+        <div>
+          <p class="error-message">We couldn't load {isToday ? "today's" : 'these'} games.</p>
+          <p class="error-hint">
+            {#if archiveAvailable}
+              Archived games remain available above while this page retries the scoreboard.
+            {:else if isToday}
+              The primary and fallback scoreboards are unavailable. This page will retry automatically.
+            {:else}
+              The primary and fallback scoreboards are unavailable for this date. Reload or try another date.
+            {/if}
+          </p>
+          {#if data.correlationId}
+            <p class="diagnostic-id">Reference: {data.correlationId}</p>
           {/if}
-        </p>
-        {#if data.correlationId}
-          <p class="diagnostic-id">Reference: {data.correlationId}</p>
-        {/if}
+        </div>
       </div>
     {:else if data.scoreboardState === 'off_day' || (data.scoreboardState === 'stale' && data.games.length === 0)}
       <div class="empty-state">
         <Clock size={24} />
-        <p class="empty-message">
-          {#if data.scoreboardState === 'stale'}
-            Last known scoreboard has no games
-          {:else}
-            {data.dateRelation === 'today' ? 'No NBA games today' : 'No games listed for this date'}
-          {/if}
-        </p>
-        <p class="empty-hint">
-          {#if data.scoreboardState === 'stale'}
-            Live sources are unavailable. Showing the last successful result while this page retries.
-          {:else if data.dateRelation === 'today'}
-            There are no games live or scheduled for the current slate.
-          {:else if data.dateRelation === 'future'}
-            The published schedule does not currently include a game on this date.
-          {:else}
-            The scoreboard has no games recorded for this date.
-          {/if}
-        </p>
+        <div>
+          <p class="empty-message">
+            {#if data.scoreboardState === 'stale'}
+              Last known scoreboard has no games
+            {:else}
+              {data.dateRelation === 'today' ? 'No NBA games today' : 'No games listed for this date'}
+            {/if}
+          </p>
+          <p class="empty-hint">
+            {#if data.scoreboardState === 'stale'}
+              Live sources are unavailable. Showing the last successful result while this page retries.
+            {:else if data.dateRelation === 'today'}
+              {archiveAvailable
+                ? 'There are no games live or scheduled. Browse completed games above.'
+                : 'There are no games live or scheduled for the current slate.'}
+            {:else if data.dateRelation === 'future'}
+              The published schedule does not currently include a game on this date.
+            {:else}
+              The scoreboard has no games recorded for this date.
+            {/if}
+          </p>
+        </div>
       </div>
     {:else}
       {#if data.scoreboardState === 'pregame'}
@@ -285,16 +315,12 @@
       {/if}
       <GameSelector
         games={data.games}
-        selectedGameId={selectedGame?.id}
+        selectedGameId={activeGame?.id}
         onselect={handleGameSelect}
       />
     {/if}
   </div>
 </section>
-
-{#if data.games.length === 0 && data.recentHistory?.slates.length}
-  <RecentHistory history={data.recentHistory} />
-{/if}
 
 <!-- Game of the Night -->
 {#if gameOfTheNight}
@@ -310,20 +336,20 @@
 {/if}
 
 <!-- Analysis Options -->
-{#if selectedGame && selectedGame.analyticsAvailable !== false}
+{#if activeGame && activeGame.analyticsAvailable !== false}
   <section id="game-details" class="analysis-section">
     <div class="container">
       <div class="selected-game">
         <h2 class="matchup">
-          {selectedGame.awayTeam.abbreviation}
-          <span class="score">{selectedGame.awayScore}</span>
+          {activeGame.awayTeam.abbreviation}
+          <span class="score">{activeGame.awayScore}</span>
           <span class="at">at</span>
-          <span class="score">{selectedGame.homeScore}</span>
-          {selectedGame.homeTeam.abbreviation}
+          <span class="score">{activeGame.homeScore}</span>
+          {activeGame.homeTeam.abbreviation}
         </h2>
-        {#if selectedGame.status === 'live'}
-          <p class="game-status">Q{selectedGame.quarter} · {selectedGame.gameClock}</p>
-        {:else if selectedGame.status === 'final'}
+        {#if activeGame.status === 'live'}
+          <p class="game-status">Q{activeGame.quarter} · {activeGame.gameClock}</p>
+        {:else if activeGame.status === 'final'}
           <p class="game-status game-status--final">Final</p>
         {/if}
       </div>
@@ -332,7 +358,7 @@
       <div class="analysis-grid">
         {#each analysisOptions as option}
           <a
-            href="/data/nba/{option.slug}?gameId={selectedGame.id}&date={data.currentDate}"
+            href="/data/nba/{option.slug}?gameId={activeGame.id}&date={data.currentDate}"
             class="analysis-card"
           >
             <div class="card-header">
@@ -490,8 +516,21 @@
     font-variant-numeric: tabular-nums;
   }
 
+  .status-meta {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: var(--space-performance-xs) var(--space-performance-sm);
+  }
+
   .source-label {
     color: var(--color-performance-fg-muted);
+    font-size: var(--text-performance-caption);
+  }
+
+  .archive-label {
+    color: var(--color-performance-success);
     font-size: var(--text-performance-caption);
   }
 
@@ -540,14 +579,17 @@
 
   /* Error State */
   .error-state {
-    text-align: center;
-    padding: var(--space-performance-xl);
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-performance-sm);
+    padding: var(--space-performance-md);
+    border-left: 2px solid var(--color-performance-error);
     color: var(--color-performance-fg-muted);
   }
 
   .error-state :global(svg) {
     color: var(--color-performance-error);
-    margin-bottom: var(--space-performance-sm);
+    flex: 0 0 auto;
   }
 
   .error-message {
@@ -568,15 +610,16 @@
 
   /* Empty State (No Games Scheduled) */
   .empty-state {
-    text-align: center;
-    padding: var(--space-performance-xl);
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-performance-sm);
+    padding: var(--space-performance-md);
+    border-left: 2px solid var(--color-performance-border-default);
     color: var(--color-performance-fg-muted);
   }
 
   .empty-state :global(svg) {
-    display: block;
-    margin-inline: auto;
-    margin-bottom: var(--space-performance-sm);
+    flex: 0 0 auto;
     color: var(--color-performance-fg-muted);
   }
 
