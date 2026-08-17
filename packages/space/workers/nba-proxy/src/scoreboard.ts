@@ -82,6 +82,10 @@ const SCOREBOARD_ONLY_CAPABILITIES: ScoreboardCapabilities = {
 	advancedAnalytics: false,
 };
 
+// ESPN's edge rejects the Workers/undici user agent. Keep a curl-compatible
+// prefix while retaining an explicit CREATE SOMETHING client identity.
+const ESPN_USER_AGENT = 'curl/8.7.1 CREATE-SOMETHING-NBA-Proxy/2.0';
+
 export const READINESS_CACHE_KEY = 'nba:scoreboard:v2:readiness';
 
 function scoreboardCacheKey(date: string): string {
@@ -125,13 +129,23 @@ async function storeReadiness(
 	await cache.put(READINESS_CACHE_KEY, JSON.stringify(readiness), { expirationTtl: 900 });
 }
 
-async function fetchJson(url: string, fetchImpl: typeof fetch): Promise<unknown> {
+async function fetchJson(
+	url: string,
+	fetchImpl: typeof fetch,
+	provider: ScoreboardSource
+): Promise<unknown> {
 	const response = await fetchImpl(url, {
-		headers: {
-			Accept: 'application/json',
-			'User-Agent': 'CREATE-SOMETHING-NBA-Proxy/2.0',
-			Referer: 'https://www.nba.com/',
-		},
+		headers:
+			provider === 'nba'
+				? {
+						Accept: 'application/json',
+						'User-Agent': 'CREATE-SOMETHING-NBA-Proxy/2.0',
+						Referer: 'https://www.nba.com/',
+					}
+				: {
+						Accept: 'application/json',
+						'User-Agent': ESPN_USER_AGENT,
+					},
 	});
 	if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText || 'Upstream error'}`);
 	return response.json();
@@ -276,7 +290,8 @@ export async function fetchScoreboardForDate(
 		try {
 			const nbaData = await fetchJson(
 				`${dependencies.nbaApiBaseUrl}/liveData/scoreboard/todaysScoreboard_00.json`,
-				dependencies.fetchImpl
+				dependencies.fetchImpl,
+				'nba'
 			);
 			const result = nbaScoreboardResult(nbaData, checkedAt);
 			await storeResult(dependencies.cache, cacheKey, result, 60);
@@ -297,7 +312,8 @@ export async function fetchScoreboardForDate(
 		const espnDate = date.replaceAll('-', '');
 		const espnData = await fetchJson(
 			`${dependencies.espnApiBaseUrl}/scoreboard?dates=${espnDate}&limit=100`,
-			dependencies.fetchImpl
+			dependencies.fetchImpl,
+			'espn'
 		);
 		const result: ScoreboardFetchResult = {
 			data: adaptEspnScoreboard(espnData, date),
