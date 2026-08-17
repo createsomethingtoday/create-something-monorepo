@@ -168,7 +168,9 @@
     }
 
     const result = (await response.json().catch(() => ({}))) as { versionWarning?: string };
-    await handleEditClose();
+    // The editor finishes its success bookkeeping before calling onClose. If
+    // the dashboard clears currentEditingAsset here, that bookkeeping can
+    // dereference a null asset after a successful save.
     await handleRefreshAssets();
     return { versionWarning: result.versionWarning };
   }
