@@ -197,7 +197,12 @@ export async function verifyTurnstile(
   const result = (await response.json()) as TurnstileResponse;
   if (!result.success) return { success: false, reason: 'Bot verification failed.' };
   if (result.action !== TURNSTILE_ACTION) return { success: false, reason: 'Bot verification action mismatch.' };
-  if (result.hostname !== env.TURNSTILE_EXPECTED_HOSTNAME) {
+  // Comma-separated list so staging (webflowtest.com) can verify alongside
+  // production without weakening the exact-hostname requirement per entry.
+  const expectedHostnames = env.TURNSTILE_EXPECTED_HOSTNAME.split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+  if (!result.hostname || !expectedHostnames.includes(result.hostname)) {
     return { success: false, reason: 'Bot verification hostname mismatch.' };
   }
   return { success: true };
