@@ -344,7 +344,7 @@ export const fileBasedExperiments: FileBasedExperiment[] = [
 	{
 		id: 'file-nba-live',
 		slug: 'nba-live',
-		title: 'NBA Live Analytics: Spec-Driven Development Meta-Experiment',
+		title: 'NBA Analytics: Spec-Driven Development Meta-Experiment',
 		description:
 			'Real-time NBA analytics dashboard testing whether spec-driven development produces both working software and methodology documentation.',
 		excerpt_short: 'Spec-driven development through live sports analytics',
