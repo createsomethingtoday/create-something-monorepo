@@ -2,7 +2,7 @@
   import type { PageData } from './$types';
   import type { Asset, AssetUpdateData } from '$lib/server/airtable';
   import { goto, invalidate, preloadData } from '$app/navigation';
-  import { onMount } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import {
     Button,
     Dialog,
@@ -144,8 +144,12 @@
     }
   }
 
-  function handleEditClose() {
+  async function handleEditClose() {
     isEditModalOpen = false;
+    // Let the dynamic editor unmount before releasing its asset prop. The
+    // Dialog's close handler still evaluates reactive modal state in this
+    // render turn; clearing the asset first can leave it dereferencing null.
+    await tick();
     currentEditingAsset = null;
   }
 
@@ -164,7 +168,7 @@
     }
 
     const result = (await response.json().catch(() => ({}))) as { versionWarning?: string };
-    handleEditClose();
+    await handleEditClose();
     await handleRefreshAssets();
     return { versionWarning: result.versionWarning };
   }
