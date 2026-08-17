@@ -33,10 +33,7 @@ import type { HalfDozenScenarioRunResult } from './halfdozenFleetWatchdog.js';
 import { runDeterministicFleetWatchdog } from './deterministicFleetWatchdog.js';
 import { runScheduledDeterministicFleetWatchdog } from './scheduledFleetWatchdog.js';
 import { inferredProxyToolCount, liveHubTotalServerCount } from './registrySweepTelemetry.js';
-import {
-  handleLangfuseAlertWebhook,
-  type LangfuseMonitorAlert
-} from './langfuseAlertWebhook.js';
+import { handleLangfuseAlertWebhook, type LangfuseMonitorAlert } from './langfuseAlertWebhook.js';
 
 // =============================================================================
 // Types
@@ -45,6 +42,7 @@ import {
 interface Env {
   MCP_OBJECT: DurableObjectNamespace;
   TELEMETRY_DB?: D1Database;
+  ALERT_STATE_KV?: KVNamespace;
   MCP_ACCOUNT_ID?: string;
   OPENAI_API_KEY?: string;
   LANGFUSE_PUBLIC_KEY?: string;
@@ -98,6 +96,7 @@ const DEFAULT_NOTIFY_EMAIL_TO = ['micah@createsomething.io'] as const;
 const DEFAULT_MCP_REGISTRY_SWEEP_HUB_HEALTH_URL =
   'https://cs-mcp-hub-remote.createsomething.workers.dev/health';
 const DEFAULT_MCP_REGISTRY_SWEEP_TIMEOUT_MS = 60_000;
+const LANGFUSE_ALERT_STATE_TTL_SECONDS = 30 * 24 * 60 * 60;
 
 const HALFDOZEN_PROTECTED_ROUTES = [
   HALFDOZEN_FLEET_WATCHDOG_ROUTE,
@@ -963,7 +962,9 @@ async function sendLangfuseAlertEmail(env: Env, alert: LangfuseMonitorAlert): Pr
   });
   if (!response.ok) {
     const responseText = await response.text();
-    throw new Error(`Resend Langfuse alert email failed (${response.status}): ${responseText.slice(0, 500)}`);
+    throw new Error(
+      `Resend Langfuse alert email failed (${response.status}): ${responseText.slice(0, 500)}`
+    );
   }
 }
 
@@ -1960,6 +1961,15 @@ export default {
     if (url.pathname === LANGFUSE_ALERT_WEBHOOK_ROUTE) {
       return handleLangfuseAlertWebhook(request, {
         signingSecret: env.LANGFUSE_ALERT_WEBHOOK_SECRET?.split(','),
+        notificationState: env.ALERT_STATE_KV
+          ? {
+              get: (key) => env.ALERT_STATE_KV!.get(key),
+              put: (key, value) =>
+                env.ALERT_STATE_KV!.put(key, value, {
+                  expirationTtl: LANGFUSE_ALERT_STATE_TTL_SECONDS
+                })
+            }
+          : undefined,
         deliver: (alert) => sendLangfuseAlertEmail(env, alert)
       });
     }
