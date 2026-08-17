@@ -1,0 +1,9 @@
+{
+  "name": "@create-something/exception-decisions-mcp",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Decision-scoped MCP for the app-review exceptions loop — the Judgment tier as its own surface. Per-person keys, approve/deny with identity stamping; transparency and feedback release stay with the Airtable automations.",
+  "scripts": {
+    "deploy": "wrangler deploy"
+  }
+}

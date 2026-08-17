@@ -1,0 +1,20 @@
+name = "exception-decisions-mcp"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+
+# Production URL: https://exceptions.mcp.createsomething.agency
+[[routes]]
+pattern = "exceptions.mcp.createsomething.agency"
+custom_domain = true
+
+[observability]
+enabled = true
+
+[vars]
+AIRTABLE_BASE_ID = "appMoIgXMTTTNIc3p"
+DECISIONS_VIEW_URL = "https://airtable.com/appMoIgXMTTTNIc3p/tblHxZ2hgSFLZxsZu/viwM48eXQT4Mxc4Ak/"
+
+# Secrets (wrangler secret put, survive deploys):
+#   AIRTABLE_API_KEY  — PAT with data.records:read+write on appMoIgXMTTTNIc3p
+#   DECIDERS_JSON     — {"<key>": {"email": "...", "name": "...", "role": "partner-lead"|"final"|"operator"}, ...}
