@@ -1,0 +1,7 @@
+.env
+.env.*
+!.env.example
+dist/
+workers.json
+*.state.json
+*.receipt.json

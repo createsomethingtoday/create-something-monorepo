@@ -1,0 +1,33 @@
+{
+  "$schema": "create-something/playbook@1",
+  "id": "playbook-operator-handoff",
+  "version": "1.0.0",
+  "title": "Operator Handoff",
+  "purpose": "Move one approved workflow into bounded operation with a named owner, rollback path, and evidence receipt.",
+  "tiers": {
+    "database": ["Runbook definition", "evidence artifacts", "receipts"],
+    "automation": ["readiness tool", "instantiation tool", "evidence sync", "signed webhook"],
+    "judgment": ["operator approval", "write gate", "rollback decision"]
+  },
+  "inputs": ["approved workflow map", "named operator", "rollback plan", "verification target"],
+  "steps": [
+    "Confirm the approved workflow version and ownership boundary.",
+    "Run the readiness tool and resolve every missing requirement.",
+    "Preview Runbook instantiation and review its deterministic receipt.",
+    "Execute only against the approved disposable or production target.",
+    "Attach verification evidence and record rollback disposition."
+  ],
+  "stopConditions": [
+    "No named operator",
+    "Approval is not approved",
+    "Rollback plan is empty",
+    "Write gate is disabled",
+    "Target is not the explicitly approved workspace or data source"
+  ],
+  "verification": [
+    "readiness status is ready",
+    "instantiation receipt is stable across previews",
+    "live retries return existing instead of creating duplicates",
+    "webhook signature is verified before evidence is accepted"
+  ]
+}
