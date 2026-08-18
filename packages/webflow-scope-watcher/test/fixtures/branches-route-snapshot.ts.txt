@@ -1,0 +1,262 @@
+import type {VhostRouter} from '../../../lib/vhost';
+import * as middleware from '../../../middleware';
+import type {ReqWithData} from '../../../middleware/oauth/types';
+import {resourceHelpers} from '../../../middleware/oauth/enforceUserPermissions';
+import {SCOPES} from '../../../lib/logic/oauth/scopes';
+import {ENTITLEMENT_KEYS} from '@packages/systems/billing/common';
+
+import {listBranchesHandler} from '../../../controllers/branches/listBranchesHandler';
+import {getBranchHandler} from '../../../controllers/branches/getBranchHandler';
+import {getBranchConflictsHandler} from '../../../controllers/branches/getBranchConflictsHandler';
+import {createBranchHandler} from '../../../controllers/branches/createBranchHandler';
+import {deleteBranchHandler} from '../../../controllers/branches/deleteBranchHandler';
+import {updateBranchHandler} from '../../../controllers/branches/updateBranchHandler';
+import {mergeBranchHandler} from '../../../controllers/branches/mergeBranchHandler';
+import {getBranchTaskHandler} from '../../../controllers/branches/getBranchTaskHandler';
+import {publishBranchHandler} from '../../../controllers/branches/publishBranchHandler';
+
+export default (app: VhostRouter) => {
+  /**
+   * List all branches for a site.
+   * Supports pagination via `limit` and `offset` query params.
+   */
+  app.get(
+    ['/beta/sites/:site_id/branches'],
+    middleware.validateQueryPublicAPI({
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        limit: {type: 'string', pattern: '^[1-9]\\d*$'},
+        offset: {type: 'string', pattern: '^\\d+$'},
+      },
+    }),
+    middleware.validateMongoIdParams(['site_id']),
+    middleware.oauth,
+    middleware.oauth.restrictScopes([SCOPES.BRANCHES_READ]),
+    middleware.oauth.loadSiteV2,
+    middleware.restrictBooleanEntitlement(
+      ENTITLEMENT_KEYS.ALLOW_PAGE_BRANCHING
+    ),
+    middleware.oauth.normalizePagination(),
+    middleware.asyncWrapNamedFunction(listBranchesHandler)
+  );
+
+  /**
+   * Get a single branch by ID for a site.
+   * Returns the branch with computed status and nextActions.
+   */
+  app.get(
+    ['/beta/sites/:site_id/branches/:branch_id'],
+    middleware.validateMongoIdParams(['site_id', 'branch_id']),
+    middleware.oauth,
+    middleware.oauth.restrictScopes([SCOPES.BRANCHES_READ]),
+    middleware.oauth.loadSiteV2,
+    middleware.restrictBooleanEntitlement(
+      ENTITLEMENT_KEYS.ALLOW_PAGE_BRANCHING
+    ),
+    middleware.asyncWrapNamedFunction(getBranchHandler)
+  );
+
+  /**
+   * List the unresolved style/component conflicts between a branch and main.
+   * An empty list means the branch can merge without resolutions. Entries
+   * match the merge endpoint's 409 `branch_merge_conflict` details, so
+   * callers can build `resolutions` for update/merge from either source.
+   */
+  app.get(
+    ['/beta/sites/:site_id/branches/:branch_id/conflicts'],
+    middleware.validateMongoIdParams(['site_id', 'branch_id']),
+    middleware.oauth,
+    middleware.oauth.restrictScopes([SCOPES.BRANCHES_READ]),
+    middleware.oauth.loadSiteV2,
+    middleware.oauth.loadUser,
+    middleware.restrictBooleanEntitlement(
+      ENTITLEMENT_KEYS.ALLOW_PAGE_BRANCHING
+    ),
+    // Layer 2 (DEVPL-4015): the token owner must be able to read the site.
+    // Scoped to Site, like the task-status route, since SiteBranch's polar
+    // policy has no plain `read` action.
+    middleware.oauth.enforceUserPermissions({
+      action: 'read',
+      getResource: resourceHelpers.site,
+    }),
+    middleware.asyncWrapNamedFunction(getBranchConflictsHandler)
+  );
+
+  /**
+   * Get the status of an async branch task by its task ID.
+   * Generic poll endpoint reused across branch task operations.
+   */
+  app.get(
+    ['/beta/sites/:site_id/branches/tasks/:task_id'],
+    middleware.validateMongoIdParams(['site_id']),
+    middleware.validateUUIDParams(['task_id']),
+    middleware.oauth,
+    middleware.oauth.restrictScopes([SCOPES.BRANCHES_READ]),
+    middleware.oauth.loadSiteV2,
+    middleware.oauth.loadUser,
+    middleware.restrictBooleanEntitlement(
+      ENTITLEMENT_KEYS.ALLOW_PAGE_BRANCHING
+    ),
+    // Layer 2 (DEVPL-4015): the token owner must be able to read the site.
+    // Scoped to Site, not SiteBranch, since the task is keyed by UUID here.
+    middleware.oauth.enforceUserPermissions({
+      action: 'read',
+      getResource: resourceHelpers.site,
+    }),
+    middleware.asyncWrapNamedFunction(getBranchTaskHandler)
+  );
+
+  /**
+   * Create a new branch for a page.
+   * Requires `branches:create` scope and ALLOW_PAGE_BRANCHING entitlement.
+   */
+  app.post(
+    ['/beta/sites/:site_id/branches'],
+    middleware.validateBodyPublicAPI({
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        pageId: {$ref: 'wf#/definitions/ObjectId'},
+      },
+      required: ['pageId'],
+    }),
+    middleware.validateMongoIdParams(['site_id']),
+    middleware.oauth,
+    middleware.oauth.restrictScopes([SCOPES.BRANCHES_CREATE]),
+    middleware.oauth.loadSiteV2,
+    middleware.oauth.loadUser,
+    middleware.restrictBooleanEntitlement(
+      ENTITLEMENT_KEYS.ALLOW_PAGE_BRANCHING
+    ),
+    middleware.asyncWrapNamedFunction(createBranchHandler)
+  );
+
+  /**
+   * Delete a branch by ID for a site.
+   * Returns 204 No Content on success.
+   */
+  app.delete(
+    ['/beta/sites/:site_id/branches/:branch_id'],
+    middleware.validateMongoIdParams(['site_id', 'branch_id']),
+    middleware.oauth,
+    middleware.oauth.restrictScopes([SCOPES.BRANCHES_DELETE]),
+    middleware.oauth.loadSiteV2,
+    middleware.oauth.loadUser,
+    middleware.restrictBooleanEntitlement(
+      ENTITLEMENT_KEYS.ALLOW_PAGE_BRANCHING
+    ),
+    middleware.asyncWrapNamedFunction(deleteBranchHandler)
+  );
+
+  /**
+   * Pull changes from main into a branch without merging.
+   * Async operation — returns 202 with a task ID the caller polls.
+   * `resolutions` are required when conflicts exist.
+   */
+  app.post(
+    ['/beta/sites/:site_id/branches/:branch_id/update'],
+    middleware.validateBodyPublicAPI({
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        resolutions: {
+          type: 'array',
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+              // Style/component conflict ids are style-block ids — not always
+              // ObjectIds (e.g. system defaults like `default-body`), so match
+              // the `Resolution` data-type which types `id` as a plain string.
+              id: {type: 'string', minLength: 1},
+              resolution: {type: 'string', enum: ['main', 'branch']},
+              type: {type: 'string', enum: ['style', 'component']},
+            },
+            required: ['id', 'resolution', 'type'],
+          },
+        },
+      },
+    }),
+    middleware.validateMongoIdParams(['site_id', 'branch_id']),
+    middleware.oauth,
+    middleware.oauth.restrictScopes([SCOPES.BRANCHES_UPDATE]),
+    middleware.oauth.loadSiteV2,
+    middleware.oauth.loadUser,
+    middleware.restrictBooleanEntitlement(
+      ENTITLEMENT_KEYS.ALLOW_PAGE_BRANCHING
+    ),
+    middleware.asyncWrapNamedFunction(updateBranchHandler)
+  );
+
+  /**
+   * Merge a branch into main. Async operation — returns 202 with a task ID the
+   * caller polls. When unresolved conflicts exist and no `resolutions` are
+   * supplied, returns 409 `branch_merge_conflict` with the conflict list inline
+   * so the caller can retry with `resolutions` to resolve-and-merge in one step.
+   */
+  app.post(
+    ['/beta/sites/:site_id/branches/:branch_id/merge'],
+    middleware.validateBodyPublicAPI({
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        resolutions: {
+          type: 'array',
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+              // Style/component conflict ids are style-block ids — not always
+              // ObjectIds (e.g. system defaults like `default-body`), so match
+              // the `Resolution` data-type which types `id` as a plain string.
+              id: {type: 'string', minLength: 1},
+              resolution: {type: 'string', enum: ['main', 'branch']},
+              type: {type: 'string', enum: ['style', 'component']},
+            },
+            required: ['id', 'resolution', 'type'],
+          },
+        },
+      },
+    }),
+    middleware.validateMongoIdParams(['site_id', 'branch_id']),
+    middleware.oauth,
+    middleware.oauth.restrictScopes([SCOPES.BRANCHES_MERGE]),
+    middleware.oauth.loadSiteV2,
+    middleware.oauth.loadUser,
+    middleware.restrictBooleanEntitlement(
+      ENTITLEMENT_KEYS.ALLOW_PAGE_BRANCHING
+    ),
+    middleware.asyncWrapNamedFunction(mergeBranchHandler)
+  );
+
+  /**
+   * Publish a branch to its staging domain for preview. Returns 202 with the
+   * queued publish task (`taskId`/`status`), the staging domain, the
+   * publish-trigger timestamp, and nextActions; the publish is dispatched to
+   * the site-publish queue, so callers poll `taskId` for completion.
+   */
+  app.post(
+    ['/beta/sites/:site_id/branches/:branch_id/publish'],
+    middleware.validateMongoIdParams(['site_id', 'branch_id']),
+    middleware.oauth,
+    middleware.oauth.restrictScopes([SCOPES.BRANCHES_PUBLISH]),
+    middleware.oauth.loadSiteV2,
+    middleware.oauth.loadUser,
+    middleware.restrictBooleanEntitlement(
+      ENTITLEMENT_KEYS.ALLOW_PAGE_BRANCHING
+    ),
+    // Layer 2 (DEVPL-4015): enforce the token owner's SiteBranch `publish`
+    // permission so a user-scoped token can't become a confused deputy for a
+    // user who lacks publish access. Flag-gated (default off) — wired now so a
+    // flag flip enforces without a follow-up PR.
+    middleware.oauth.enforceUserPermissions({
+      action: 'publish',
+      getResource: (req: ReqWithData) => ({
+        type: 'SiteBranch',
+        id: req.params?.branch_id,
+      }),
+    }),
+    middleware.asyncWrapNamedFunction(publishBranchHandler)
+  );
+};
