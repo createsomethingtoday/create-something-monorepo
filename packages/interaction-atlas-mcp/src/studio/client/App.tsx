@@ -2032,7 +2032,7 @@ function TranscriptEditorPanel({
           </span>
         </span>
         <span className="transcript-editor-header-actions">
-          {project ? (
+          {project && project.revisions.some((revision) => revision.captions.length > 0) ? (
             <a
               className="transcript-editor-caption-link"
               download
@@ -2077,6 +2077,13 @@ function TranscriptEditorPanel({
             <span>{snapshot.graph.edges} edges</span>
             <span>{snapshot.graph.clipNodes.length} clip nodes</span>
           </div>
+          {project?.transcriptSegments.length === 0 ? (
+            <div className="transcript-editor-empty" role="status">
+              <p>
+                No speech transcript is attached. The local source is preserved without invented captions or cuts; run local transcription before proposing transcript edits.
+              </p>
+            </div>
+          ) : null}
           <div className="transcript-editor-content">
             <section className="transcript-editor-section" aria-label="Derived timeline clips">
               <div className="transcript-editor-section-heading">

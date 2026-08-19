@@ -246,20 +246,25 @@ export function createTranscriptEditorProject(input: InitializeTranscriptEditorP
   const overlays: MediaOverlay[] = input.includeTitleOverlay
     ? [{ id: 'overlay:title', kind: 'text', text: 'Atlas transcript edit', startUs: 0, endUs: Math.min(2_000_000, sourceAsset.media.durationUs) }]
     : [];
+  const captions: CaptionTrack[] = transcriptSegments.length
+    ? [{ id: 'captions:main', segmentIds: transcriptSegments.map((segment) => segment.id) }]
+    : [];
   const graphNodes: MediaDependencyNode[] = [
     { id: 'source', kind: 'source-asset' },
     { id: 'transcript', kind: 'transcript' },
     { id: 'cut-list', kind: 'cut-list' },
     { id: 'timeline', kind: 'timeline' },
-    { id: 'captions:main', kind: 'caption-track' },
+    ...captions.map((caption) => ({ id: caption.id, kind: 'caption-track' as const })),
     ...overlays.map((overlay) => ({ id: overlay.id, kind: 'media-overlay' as const })),
     ...clips
   ];
   const graphEdges: MediaDependencyEdge[] = [
     { id: 'edge:source:transcript', source: 'source', target: 'transcript', port: 'produces' },
     { id: 'edge:transcript:cut-list', source: 'transcript', target: 'cut-list', port: 'produces' },
-    { id: 'edge:transcript:captions', source: 'transcript', target: 'captions:main', port: 'produces' },
-    { id: 'edge:captions:timeline', source: 'captions:main', target: 'timeline', port: 'uses' },
+    ...captions.flatMap((caption) => [
+      { id: `edge:transcript:${caption.id}`, source: 'transcript', target: caption.id, port: 'produces' as const },
+      { id: `edge:${caption.id}:timeline`, source: caption.id, target: 'timeline', port: 'uses' as const }
+    ]),
     ...overlays.map((overlay) => ({ id: `edge:${overlay.id}:timeline`, source: overlay.id, target: 'timeline', port: 'uses' as const })),
     ...clips.flatMap((clip) => [
       { id: `edge:cut-list:${clip.id}`, source: 'cut-list', target: clip.id, port: 'produces' as const },
@@ -277,7 +282,7 @@ export function createTranscriptEditorProject(input: InitializeTranscriptEditorP
       id: 'revision-1',
       parentRevisionId: null,
       cutList,
-      captions: [{ id: 'captions:main', segmentIds: transcriptSegments.map((segment) => segment.id) }],
+      captions,
       overlays,
       graph: { nodes: graphNodes, edges: graphEdges },
       createdAt: input.createdAt,

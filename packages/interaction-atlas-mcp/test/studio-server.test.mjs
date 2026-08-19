@@ -643,6 +643,50 @@ test('Atlas Studio imports local audio-only media through a loopback intake rout
   }
 });
 
+test('Atlas Studio imports a local silent video without fabricating a transcript or caption track', async (t) => {
+  if (spawnSync('ffmpeg', ['-version'], { stdio: 'ignore' }).status !== 0) {
+    t.skip('ffmpeg is unavailable in this runtime');
+    return;
+  }
+  const cwd = await mkdtemp(path.join(tmpdir(), 'atlas-studio-silent-intake-test-'));
+  const sourcePath = path.join(cwd, 'silent.mov');
+  const generated = spawnSync(
+    'ffmpeg',
+    ['-y', '-loglevel', 'error', '-f', 'lavfi', '-i', 'color=c=black:s=320x180:r=24', '-t', '1', '-an', '-c:v', 'libx264', sourcePath],
+    { encoding: 'utf8' }
+  );
+  assert.equal(generated.status, 0, generated.stderr);
+  const session = await createSession(
+    { client: 'Acme', workflow: 'Silent walkthrough', owner: 'Ops' },
+    cwd
+  );
+  const server = await startStudioServer({ host: '127.0.0.1', port: 0, sessionId: session.id, cwd });
+  const address = server.address();
+  assert.equal(typeof address, 'object');
+  const endpoint = `http://127.0.0.1:${address.port}/api/sessions/${session.id}/transcript-project/intake`;
+
+  try {
+    const imported = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        projectId: 'project-silent-intake',
+        assetId: 'asset-silent-intake',
+        filePath: sourcePath,
+        transcriptSegments: []
+      })
+    });
+    assert.equal(imported.status, 201);
+    const project = await imported.json();
+    assert.equal(project.sourceAssets[0].media.hasAudio, false);
+    assert.equal(project.transcriptSegments.length, 0);
+    assert.equal(project.revisions[0].captions.length, 0);
+    assert.equal(project.revisions[0].cutList.length, 0);
+  } finally {
+    await closeServer(server);
+  }
+});
+
 test('Atlas Studio renders only the accepted local transcript revision and records an FFprobe receipt', async (t) => {
   if (spawnSync('ffmpeg', ['-version'], { stdio: 'ignore' }).status !== 0) {
     t.skip('ffmpeg is unavailable in this runtime');
