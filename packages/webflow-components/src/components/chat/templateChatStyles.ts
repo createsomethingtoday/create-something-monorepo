@@ -237,7 +237,8 @@ export const CHAT_STYLES = `
   animation: tmchat-chip-in 200ms cubic-bezier(0.2, 0, 0, 1) both;
 }
 .tmchat-jump:hover { background: #f5f5f5; }
-.tmchat-inputrow { display: flex; align-items: flex-end; gap: 8px; padding: 12px; border-top: 1px solid #ececec; background: #fff; }
+.tmchat-inputrow { display: flex; flex-direction: column; padding: 12px; border-top: 1px solid #ececec; background: #fff; }
+.tmchat-composer { display: flex; align-items: flex-end; gap: 8px; }
 /* Immersive (and wide inline panels): one centered content column (max 960px).
    Header, conversation, and input share the same left/right rails so every
    surface aligns. */
@@ -250,11 +251,10 @@ export const CHAT_STYLES = `
 .tmchat-panel.immersive .tmchat-scroll { padding: 24px max(clamp(16px, 5vw, 56px), calc((100% - 960px) / 2)) 32px; gap: 14px; }
 .tmchat-panel.immersive .tmchat-preview-bar { padding: 10px max(clamp(16px, 5vw, 56px), calc((100% - 960px) / 2)); }
 .tmchat-input {
-  width: 100%; min-height: 40px; max-height: 120px; padding: 9px 12px;
+  flex: 1 1 auto; min-width: 0; min-height: 40px; max-height: 120px; padding: 9px 12px;
   box-sizing: border-box;
   border: 1px solid #e0e0e0; border-radius: 8px; font: inherit; resize: none; overflow-y: auto;
 }
-.tmchat-inputfield { flex: 1 1 auto; min-width: 0; }
 .tmchat-inputmeta { margin: 4px 2px 0; color: #757575; font-size: 11px; line-height: 1.25; }
 .tmchat-send {
   border: 0; border-radius: 8px; background: var(--tmchat-accent, #146ef5); color: #fff;

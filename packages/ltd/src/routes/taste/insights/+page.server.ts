@@ -12,7 +12,8 @@ import {
 	EMPTY_INSIGHTS,
 	type InsightsData,
 } from '$lib/taste/insights';
-import { getTokenFromRequest, validateToken, type AuthEnv } from '@create-something/canon/auth/server';
+import { verifyLtdIdentityToken } from '$lib/server/identity';
+import { getTokenFromRequest } from '@create-something/canon/auth/server';
 
 export const load: PageServerLoad = async ({ request, platform }) => {
 	const db = platform?.env?.DB;
@@ -33,7 +34,7 @@ export const load: PageServerLoad = async ({ request, platform }) => {
 		} satisfies InsightsData;
 	}
 
-	const user = await validateToken(token, platform?.env as AuthEnv | undefined);
+	const user = await verifyLtdIdentityToken(token);
 	if (!user) {
 		return {
 			...EMPTY_INSIGHTS,
@@ -41,7 +42,7 @@ export const load: PageServerLoad = async ({ request, platform }) => {
 		} satisfies InsightsData;
 	}
 
-	const userId = user.id;
+	const userId = user.subject;
 
 	try {
 		const insights = await fetchTasteInsights(db, {

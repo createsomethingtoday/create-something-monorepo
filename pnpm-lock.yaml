@@ -123,7 +123,7 @@ importers:
         version: 0.5.1
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       zod:
         specifier: ^3.23.0
         version: 3.25.76
@@ -207,7 +207,7 @@ importers:
         version: link:../../packages/canon
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       three:
         specifier: ^0.170.0
         version: 0.170.0
@@ -220,10 +220,10 @@ importers:
         version: 4.20260621.1
       '@sveltejs/adapter-cloudflare':
         specifier: ^7.2.4
-        version: 7.2.4(@sveltejs/kit@2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+        version: 7.2.4(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
       '@sveltejs/kit':
-        specifier: ^2.47.1
-        version: 2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+        specifier: ^2.70.2
+        version: 2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       '@sveltejs/vite-plugin-svelte':
         specifier: ^6.2.1
         version: 6.2.1(svelte@5.41.0)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
@@ -385,7 +385,7 @@ importers:
         version: link:../mcp-core
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       zod:
         specifier: ^3.23.0
         version: 3.25.76
@@ -413,10 +413,10 @@ importers:
         version: link:../../mcp-core
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       agents:
         specifier: ^0.3.10
-        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.12.30)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
+        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.13.3)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
       zod:
         specifier: ^3.23.0
         version: 3.25.76
@@ -436,6 +436,9 @@ importers:
       '@composio/core':
         specifier: ^0.6.4
         version: 0.6.4(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      '@create-something/arc':
+        specifier: workspace:*
+        version: link:../arc
       '@create-something/atlas-composition':
         specifier: workspace:*
         version: link:../atlas-composition
@@ -487,13 +490,13 @@ importers:
         version: 1.58.2
       '@sveltejs/adapter-auto':
         specifier: 7.0.0
-        version: 7.0.0(@sveltejs/kit@2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))
+        version: 7.0.0(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(typescript@5.9.3)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))
       '@sveltejs/adapter-cloudflare':
         specifier: 7.2.4
-        version: 7.2.4(@sveltejs/kit@2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+        version: 7.2.4(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(typescript@5.9.3)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
       '@sveltejs/kit':
-        specifier: 2.47.1
-        version: 2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+        specifier: 2.70.2
+        version: 2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(typescript@5.9.3)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       '@sveltejs/vite-plugin-svelte':
         specifier: 6.2.1
         version: 6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
@@ -556,6 +559,12 @@ importers:
 
   packages/agency/clients/jandjhomehealth:
     dependencies:
+      '@create-something/arc':
+        specifier: workspace:*
+        version: link:../../../arc
+      '@create-something/atlas-composition':
+        specifier: workspace:*
+        version: link:../../../atlas-composition
       '@openai/agents':
         specifier: ^0.13.5
         version: 0.13.5(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
@@ -571,10 +580,10 @@ importers:
         version: 4.20260621.1
       '@sveltejs/adapter-cloudflare':
         specifier: ^6.0.0
-        version: 6.0.1(@sveltejs/kit@2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.41.0)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+        version: 6.0.1(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.41.0)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
       '@sveltejs/kit':
-        specifier: ^2.15.1
-        version: 2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.41.0)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+        specifier: ^2.70.2
+        version: 2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.41.0)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       '@sveltejs/vite-plugin-svelte':
         specifier: ^5.0.3
         version: 5.1.1(svelte@5.41.0)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
@@ -629,10 +638,10 @@ importers:
         version: 4.20260621.1
       '@sveltejs/adapter-cloudflare':
         specifier: ^6.0.0
-        version: 6.0.1(@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+        version: 6.0.1(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
       '@sveltejs/kit':
-        specifier: ^2.15.1
-        version: 2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+        specifier: ^2.70.2
+        version: 2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       '@sveltejs/vite-plugin-svelte':
         specifier: ^5.0.3
         version: 5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
@@ -677,10 +686,10 @@ importers:
         version: 4.20260621.1
       '@sveltejs/adapter-cloudflare':
         specifier: ^6.0.0
-        version: 6.0.1(@sveltejs/kit@2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+        version: 6.0.1(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
       '@sveltejs/kit':
-        specifier: ^2.15.1
-        version: 2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+        specifier: ^2.70.2
+        version: 2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       '@sveltejs/vite-plugin-svelte':
         specifier: ^5.0.3
         version: 5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
@@ -786,10 +795,10 @@ importers:
     dependencies:
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       agents:
         specifier: ^0.3.10
-        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.12.30)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
+        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.13.3)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
       zod:
         specifier: ^3.23.0
         version: 3.25.76
@@ -815,10 +824,10 @@ importers:
         version: 4.20260621.1
       '@sveltejs/adapter-cloudflare':
         specifier: ^7.2.4
-        version: 7.2.4(@sveltejs/kit@2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+        version: 7.2.4(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(typescript@5.9.3)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
       '@sveltejs/kit':
-        specifier: ^2.47.1
-        version: 2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+        specifier: ^2.70.2
+        version: 2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(typescript@5.9.3)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       '@sveltejs/vite-plugin-svelte':
         specifier: ^6.2.1
         version: 6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
@@ -851,10 +860,10 @@ importers:
     dependencies:
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       agents:
         specifier: ^0.3.10
-        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.12.30)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
+        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.13.3)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
       zod:
         specifier: ^3.23.0
         version: 3.25.76
@@ -874,6 +883,46 @@ importers:
       '@tauri-apps/cli':
         specifier: ^2
         version: 2.11.2
+
+  packages/arc:
+    dependencies:
+      '@create-something/atlas-composition':
+        specifier: workspace:*
+        version: link:../atlas-composition
+      '@create-something/canon':
+        specifier: workspace:*
+        version: link:../canon
+    devDependencies:
+      '@sveltejs/adapter-auto':
+        specifier: ^7.0.0
+        version: 7.0.0(@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))
+      '@sveltejs/kit':
+        specifier: ^2.47.1
+        version: 2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+      '@sveltejs/package':
+        specifier: ^2.5.4
+        version: 2.5.7(svelte@5.48.5)(typescript@5.9.3)
+      '@sveltejs/vite-plugin-svelte':
+        specifier: ^6.2.1
+        version: 6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+      publint:
+        specifier: ^0.3.14
+        version: 0.3.17
+      svelte:
+        specifier: ^5.41.0
+        version: 5.48.5
+      svelte-check:
+        specifier: ^4.3.3
+        version: 4.3.5(picomatch@4.0.5)(svelte@5.48.5)(typescript@5.9.3)
+      tsx:
+        specifier: ^4.21.0
+        version: 4.21.0
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vite:
+        specifier: ^7.1.10
+        version: 7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)
 
   packages/ascii-renderer:
     devDependencies:
@@ -903,7 +952,7 @@ importers:
     dependencies:
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       zod:
         specifier: ^3.23.0
         version: 3.25.76
@@ -925,10 +974,10 @@ importers:
         version: link:../../mcp-core
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       agents:
         specifier: ^0.3.10
-        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.12.30)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
+        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.13.3)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
       zod:
         specifier: ^3.23.0
         version: 3.25.76
@@ -999,7 +1048,7 @@ importers:
     dependencies:
       '@google/genai':
         specifier: '>=0.1.0'
-        version: 1.38.0(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6))(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 1.38.0(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6))(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       jszip:
         specifier: ^3.10.1
         version: 3.10.1
@@ -1063,6 +1112,9 @@ importers:
       '@codemirror/view':
         specifier: ^6.38.7
         version: 6.39.11
+      '@create-something/auth-platform':
+        specifier: workspace:*
+        version: link:../auth-platform
       '@create-something/tufte':
         specifier: workspace:^
         version: link:../tufte
@@ -1132,10 +1184,10 @@ importers:
     devDependencies:
       '@sveltejs/adapter-auto':
         specifier: ^7.0.0
-        version: 7.0.0(@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))
+        version: 7.0.0(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))
       '@sveltejs/kit':
-        specifier: ^2.47.1
-        version: 2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+        specifier: ^2.70.2
+        version: 2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       '@sveltejs/package':
         specifier: ^2.5.4
         version: 2.5.7(svelte@5.48.5)(typescript@5.9.3)
@@ -1214,10 +1266,10 @@ importers:
         version: 4.20260621.1
       '@sveltejs/adapter-cloudflare':
         specifier: ^6.0.0
-        version: 6.0.1(@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+        version: 6.0.1(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
       '@sveltejs/kit':
-        specifier: ^2.15.1
-        version: 2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+        specifier: ^2.70.2
+        version: 2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       '@sveltejs/vite-plugin-svelte':
         specifier: ^5.0.3
         version: 5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
@@ -1301,13 +1353,13 @@ importers:
         version: link:../canon
       '@sveltejs/adapter-auto':
         specifier: 7.0.0
-        version: 7.0.0(@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))
+        version: 7.0.0(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))
       '@sveltejs/adapter-node':
         specifier: 5.5.7
-        version: 5.5.7(@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))
+        version: 5.5.7(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))
       '@sveltejs/kit':
-        specifier: 2.50.1
-        version: 2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+        specifier: 2.70.2
+        version: 2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       '@sveltejs/vite-plugin-svelte':
         specifier: 6.2.4
         version: 6.2.4(svelte@5.48.5)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
@@ -1335,10 +1387,10 @@ importers:
     devDependencies:
       '@sveltejs/adapter-auto':
         specifier: 7.0.0
-        version: 7.0.0(@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))
+        version: 7.0.0(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))
       '@sveltejs/kit':
-        specifier: 2.50.1
-        version: 2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+        specifier: 2.70.2
+        version: 2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       '@sveltejs/vite-plugin-svelte':
         specifier: 6.2.4
         version: 6.2.4(svelte@5.48.5)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
@@ -1406,7 +1458,7 @@ importers:
         version: link:../observability
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6)
     devDependencies:
       '@types/node':
         specifier: 24.10.9
@@ -1444,7 +1496,7 @@ importers:
         version: link:../composio-bridge
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6)
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^4.20260621.1
@@ -1482,10 +1534,10 @@ importers:
     devDependencies:
       '@sveltejs/adapter-cloudflare':
         specifier: ^7.2.4
-        version: 7.2.4(@sveltejs/kit@2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.110.0(@cloudflare/workers-types@5.20260712.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+        version: 7.2.4(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(typescript@5.9.3)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.110.0(@cloudflare/workers-types@5.20260712.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
       '@sveltejs/kit':
-        specifier: ^2.47.1
-        version: 2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+        specifier: ^2.70.2
+        version: 2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(typescript@5.9.3)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       '@sveltejs/vite-plugin-svelte':
         specifier: ^6.2.1
         version: 6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
@@ -1515,7 +1567,7 @@ importers:
         version: link:../playbook-mcp
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       zod:
         specifier: ^3.23.0
         version: 3.25.76
@@ -1537,10 +1589,10 @@ importers:
         version: link:../../mcp-core
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       agents:
         specifier: ^0.3.10
-        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.12.30)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
+        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.13.3)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
       zod:
         specifier: ^3.23.0
         version: 3.25.76
@@ -1562,7 +1614,7 @@ importers:
         version: 2.2.5
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6)
     devDependencies:
       '@types/node':
         specifier: 24.10.9
@@ -1583,7 +1635,7 @@ importers:
         version: link:../mcp-core
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6)
       langfuse:
         specifier: ^3.38.6
         version: 3.38.6
@@ -1605,10 +1657,10 @@ importers:
     dependencies:
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       agents:
         specifier: ^0.3.10
-        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@5.20260712.1)(ai@6.0.235(zod@3.25.76))(hono@4.12.30)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
+        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@5.20260712.1)(ai@6.0.235(zod@3.25.76))(hono@4.13.3)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
       zod:
         specifier: ^3.23.0
         version: 3.25.76
@@ -1722,10 +1774,10 @@ importers:
         version: link:../../mcp-core
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       agents:
         specifier: ^0.3.10
-        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.12.30)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
+        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.13.3)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
       zod:
         specifier: ^3.23.0
         version: 3.25.76
@@ -1744,7 +1796,7 @@ importers:
     devDependencies:
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6)
       '@types/node':
         specifier: 24.10.9
         version: 24.10.9
@@ -1770,7 +1822,7 @@ importers:
         version: link:../observability
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       '@notionhq/client':
         specifier: ^2.2.15
         version: 2.3.0
@@ -1804,10 +1856,10 @@ importers:
     dependencies:
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       agents:
         specifier: ^0.3.10
-        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.12.30)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
+        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.13.3)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
       zod:
         specifier: ^3.23.0
         version: 3.25.76
@@ -1826,10 +1878,10 @@ importers:
     dependencies:
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       agents:
         specifier: ^0.3.10
-        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@5.20260712.1)(ai@6.0.235(zod@3.25.76))(hono@4.12.30)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
+        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@5.20260712.1)(ai@6.0.235(zod@3.25.76))(hono@4.13.3)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
       langfuse:
         specifier: ^3.38.6
         version: 3.38.6
@@ -1845,10 +1897,10 @@ importers:
     dependencies:
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       agents:
         specifier: 0.3.10
-        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.12.30)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
+        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.13.3)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
       langfuse:
         specifier: ^3.0.0
         version: 3.38.6
@@ -1882,7 +1934,7 @@ importers:
         version: link:../mcp-core
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       '@notionhq/client':
         specifier: ^5.9.0
         version: 5.9.0
@@ -1907,13 +1959,13 @@ importers:
         version: link:../../mcp-core
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       '@notionhq/client':
         specifier: ^5.9.0
         version: 5.9.0
       agents:
         specifier: ^0.3.10
-        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.12.30)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
+        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.13.3)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
       zod:
         specifier: ^3.23.0
         version: 3.25.76
@@ -1935,7 +1987,7 @@ importers:
         version: link:../mcp-core
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       '@notionhq/client':
         specifier: ^2.2.15
         version: 2.3.0
@@ -1969,13 +2021,13 @@ importers:
         version: link:../../mcp-core
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       '@notionhq/client':
         specifier: ^2.2.15
         version: 2.3.0
       agents:
         specifier: ^0.3.10
-        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.12.30)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
+        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.13.3)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
       zod:
         specifier: ^3.23.0
         version: 3.25.76
@@ -2034,7 +2086,7 @@ importers:
         version: link:../mcp-core
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       '@notionhq/client':
         specifier: ^5.9.0
         version: 5.9.0
@@ -2056,13 +2108,13 @@ importers:
         version: link:../../mcp-core
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       '@notionhq/client':
         specifier: ^5.9.0
         version: 5.9.0
       agents:
         specifier: ^0.3.10
-        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.12.30)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
+        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.13.3)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
       zod:
         specifier: ^3.23.0
         version: 3.25.76
@@ -2090,13 +2142,13 @@ importers:
         version: link:../mcp-core
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       '@openai/agents':
         specifier: ^0.4.10
-        version: 0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(hono@4.12.30)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
+        version: 0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(hono@4.13.3)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
       agents:
         specifier: ^0.3.10
-        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.12.30)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
+        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.13.3)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
       zod:
         specifier: ^3.23.0
         version: 3.25.76
@@ -2121,13 +2173,13 @@ importers:
         version: link:../../mcp-core
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       '@openai/agents':
         specifier: ^0.4.10
-        version: 0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(hono@4.12.30)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
+        version: 0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(hono@4.13.3)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
       agents:
         specifier: ^0.3.10
-        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.12.30)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
+        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.13.3)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
       zod:
         specifier: ^3.23.0
         version: 3.25.76
@@ -2149,10 +2201,10 @@ importers:
         version: link:../../mcp-core
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       agents:
         specifier: ^0.3.10
-        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@5.20260712.1)(ai@6.0.235(zod@3.25.76))(hono@4.12.30)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
+        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@5.20260712.1)(ai@6.0.235(zod@3.25.76))(hono@4.13.3)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
       zod:
         specifier: ^3.23.0
         version: 3.25.76
@@ -2171,7 +2223,7 @@ importers:
         version: link:../mcp-core
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       zod:
         specifier: ^3.23.0
         version: 3.25.76
@@ -2205,10 +2257,10 @@ importers:
         version: link:../../mcp-core
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       agents:
         specifier: ^0.3.10
-        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.12.30)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
+        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.13.3)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
       zod:
         specifier: ^3.23.0
         version: 3.25.76
@@ -2267,7 +2319,7 @@ importers:
         version: link:../observability
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6)
     devDependencies:
       '@types/node':
         specifier: 24.10.9
@@ -2342,7 +2394,7 @@ importers:
         version: link:../mcp-core
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       zod:
         specifier: ^3.23.0
         version: 3.25.76
@@ -2367,10 +2419,10 @@ importers:
         version: link:../../mcp-core
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       agents:
         specifier: ^0.3.10
-        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.12.30)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
+        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.13.3)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
       zod:
         specifier: ^3.23.0
         version: 3.25.76
@@ -2438,7 +2490,7 @@ importers:
         version: link:../workflow-compiler
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       '@quietloudlab/ai-interaction-atlas':
         specifier: ^1.0.7
         version: 1.0.7
@@ -2512,13 +2564,13 @@ importers:
         version: link:../eslint-plugin-canon
       '@sveltejs/adapter-auto':
         specifier: ^7.0.0
-        version: 7.0.0(@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))
+        version: 7.0.0(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))
       '@sveltejs/adapter-cloudflare':
         specifier: ^7.2.4
-        version: 7.2.6(@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+        version: 7.2.6(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
       '@sveltejs/kit':
-        specifier: ^2.47.1
-        version: 2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+        specifier: ^2.70.2
+        version: 2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       '@sveltejs/vite-plugin-svelte':
         specifier: ^6.2.1
         version: 6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
@@ -2648,7 +2700,7 @@ importers:
     dependencies:
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6)
     devDependencies:
       '@types/node':
         specifier: 24.10.9
@@ -2680,10 +2732,10 @@ importers:
         version: 4.20260621.1
       '@sveltejs/adapter-cloudflare':
         specifier: ^7.2.4
-        version: 7.2.6(@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+        version: 7.2.6(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
       '@sveltejs/kit':
-        specifier: ^2.47.1
-        version: 2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+        specifier: ^2.70.2
+        version: 2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       '@sveltejs/vite-plugin-svelte':
         specifier: ^6.2.1
         version: 6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
@@ -2711,6 +2763,9 @@ importers:
 
   packages/ltd:
     dependencies:
+      '@create-something/auth-platform':
+        specifier: workspace:*
+        version: link:../auth-platform
       '@create-something/canon':
         specifier: workspace:*
         version: link:../canon
@@ -2726,13 +2781,13 @@ importers:
         version: 4.20260621.1
       '@sveltejs/adapter-auto':
         specifier: ^7.0.0
-        version: 7.0.0(@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))
+        version: 7.0.0(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))
       '@sveltejs/adapter-cloudflare':
         specifier: ^7.2.4
-        version: 7.2.6(@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+        version: 7.2.6(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
       '@sveltejs/kit':
-        specifier: ^2.47.1
-        version: 2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+        specifier: ^2.70.2
+        version: 2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       '@sveltejs/vite-plugin-svelte':
         specifier: ^6.2.1
         version: 6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
@@ -2802,10 +2857,10 @@ importers:
         version: 4.20260621.1
       '@sveltejs/adapter-cloudflare':
         specifier: ^7.2.4
-        version: 7.2.6(@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+        version: 7.2.6(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
       '@sveltejs/kit':
-        specifier: ^2.47.1
-        version: 2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+        specifier: ^2.70.2
+        version: 2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       '@sveltejs/vite-plugin-svelte':
         specifier: ^6.2.1
         version: 6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
@@ -2845,10 +2900,10 @@ importers:
     devDependencies:
       '@sveltejs/adapter-cloudflare':
         specifier: ^4.7.2
-        version: 4.9.0(@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@4.0.4(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+        version: 4.9.0(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@4.0.4(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
       '@sveltejs/kit':
-        specifier: ^2.5.0
-        version: 2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@4.0.4(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+        specifier: ^2.70.2
+        version: 2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@4.0.4(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       '@sveltejs/vite-plugin-svelte':
         specifier: ^4.0.0
         version: 4.0.4(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
@@ -2897,7 +2952,7 @@ importers:
     dependencies:
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       langfuse:
         specifier: ^3.0.0
         version: 3.38.6
@@ -2928,10 +2983,10 @@ importers:
     dependencies:
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       agents:
         specifier: ^0.3.10
-        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.12.30)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
+        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.13.3)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
       zod:
         specifier: ^3.23.0
         version: 3.25.76
@@ -3015,10 +3070,10 @@ importers:
         version: 4.20260621.1
       '@sveltejs/adapter-cloudflare':
         specifier: ^7.2.4
-        version: 7.2.6(@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+        version: 7.2.6(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
       '@sveltejs/kit':
-        specifier: ^2.47.1
-        version: 2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+        specifier: ^2.70.2
+        version: 2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       '@sveltejs/vite-plugin-svelte':
         specifier: ^6.2.1
         version: 6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
@@ -3128,7 +3183,7 @@ importers:
     devDependencies:
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6)
       '@types/node':
         specifier: 24.10.9
         version: 24.10.9
@@ -3162,10 +3217,10 @@ importers:
         version: link:../offer-resolution
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6)
       hono:
-        specifier: ^4.11.7
-        version: 4.12.30
+        specifier: ^4.12.34
+        version: 4.13.3
       zod:
         specifier: ^4.3.6
         version: 4.3.6
@@ -3190,13 +3245,13 @@ importers:
         version: link:..
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6)
       agents:
         specifier: ^0.3.10
-        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6))(ai@6.0.235(zod@4.3.6))(zod@4.3.6))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@4.3.6))(hono@4.12.30)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@4.3.6))(zod@4.3.6)
+        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6))(ai@6.0.235(zod@4.3.6))(zod@4.3.6))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@4.3.6))(hono@4.13.3)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@4.3.6))(zod@4.3.6)
       hono:
-        specifier: ^4.11.7
-        version: 4.12.30
+        specifier: ^4.12.34
+        version: 4.13.3
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^4.20260621.1
@@ -3225,10 +3280,10 @@ importers:
     devDependencies:
       '@sveltejs/adapter-cloudflare':
         specifier: ^7.2.4
-        version: 7.2.4(@sveltejs/kit@2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.110.0(@cloudflare/workers-types@5.20260712.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+        version: 7.2.4(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(typescript@5.9.3)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.110.0(@cloudflare/workers-types@5.20260712.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
       '@sveltejs/kit':
-        specifier: ^2.47.1
-        version: 2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+        specifier: ^2.70.2
+        version: 2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(typescript@5.9.3)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       '@sveltejs/vite-plugin-svelte':
         specifier: ^6.2.1
         version: 6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
@@ -3252,10 +3307,10 @@ importers:
         version: 4.35.0(ai@6.0.235(zod@4.3.6))(zod@4.3.6)
       '@cloudflare/think':
         specifier: ^0.8.7
-        version: 0.8.8(@chat-adapter/telegram@4.35.0(ai@6.0.235(zod@4.3.6))(zod@4.3.6))(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6))(agents@0.14.5(@babel/core@7.28.6)(@babel/runtime@7.28.6)(@cloudflare/workers-types@4.20260621.1)(@x402/core@2.22.0)(@x402/evm@2.22.0(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6))(ai@6.0.235(zod@4.3.6))(chat@4.35.0(ai@6.0.235(zod@4.3.6))(zod@4.3.6))(hono@4.12.30)(react@19.2.4)(rolldown@1.2.0)(zod@4.3.6))(ai@6.0.235(zod@4.3.6))(zod@4.3.6)
+        version: 0.8.8(@chat-adapter/telegram@4.35.0(ai@6.0.235(zod@4.3.6))(zod@4.3.6))(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6))(agents@0.14.5(@babel/core@7.28.6)(@babel/runtime@7.28.6)(@cloudflare/workers-types@4.20260621.1)(@x402/core@2.22.0)(@x402/evm@2.22.0(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6))(ai@6.0.235(zod@4.3.6))(chat@4.35.0(ai@6.0.235(zod@4.3.6))(zod@4.3.6))(hono@4.13.3)(react@19.2.4)(rolldown@1.2.0)(zod@4.3.6))(ai@6.0.235(zod@4.3.6))(zod@4.3.6)
       agents:
         specifier: ^0.14.5
-        version: 0.14.5(@babel/core@7.28.6)(@babel/runtime@7.28.6)(@cloudflare/workers-types@4.20260621.1)(@x402/core@2.22.0)(@x402/evm@2.22.0(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6))(ai@6.0.235(zod@4.3.6))(chat@4.35.0(ai@6.0.235(zod@4.3.6))(zod@4.3.6))(hono@4.12.30)(react@19.2.4)(rolldown@1.2.0)(zod@4.3.6)
+        version: 0.14.5(@babel/core@7.28.6)(@babel/runtime@7.28.6)(@cloudflare/workers-types@4.20260621.1)(@x402/core@2.22.0)(@x402/evm@2.22.0(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6))(ai@6.0.235(zod@4.3.6))(chat@4.35.0(ai@6.0.235(zod@4.3.6))(zod@4.3.6))(hono@4.13.3)(react@19.2.4)(rolldown@1.2.0)(zod@4.3.6)
       ai:
         specifier: ^6.0.197
         version: 6.0.235(zod@4.3.6)
@@ -3308,10 +3363,10 @@ importers:
     dependencies:
       '@openai/agents':
         specifier: ^0.4.10
-        version: 0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(hono@4.11.7)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+        version: 0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(hono@4.13.3)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
       hono:
-        specifier: ^4.11.7
-        version: 4.11.7
+        specifier: ^4.12.34
+        version: 4.13.3
       jose:
         specifier: ^6.1.3
         version: 6.1.3
@@ -3347,7 +3402,7 @@ importers:
         version: link:../atlas-composition
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       zod:
         specifier: ^3.23.0
         version: 3.25.76
@@ -3369,13 +3424,13 @@ importers:
         version: link:../../observability
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6)
       '@openai/agents':
         specifier: ^0.15.0
         version: 0.15.0(@aws-sdk/credential-provider-node@3.972.21)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
       agents:
         specifier: ^0.3.10
-        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6))(ai@6.0.235(zod@4.3.6))(zod@4.3.6))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@4.3.6))(hono@4.12.30)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@4.3.6))(zod@4.3.6)
+        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6))(ai@6.0.235(zod@4.3.6))(zod@4.3.6))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@4.3.6))(hono@4.13.3)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@4.3.6))(zod@4.3.6)
       zod:
         specifier: ^4.3.6
         version: 4.3.6
@@ -3407,7 +3462,7 @@ importers:
     dependencies:
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       dotenv:
         specifier: ^16.4.5
         version: 16.6.1
@@ -3428,8 +3483,8 @@ importers:
         specifier: ^1.0.5
         version: 1.0.5(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       hono:
-        specifier: ^4.11.6
-        version: 4.11.7
+        specifier: ^4.12.34
+        version: 4.13.3
       jose:
         specifier: ^6.0.0
         version: 6.1.3
@@ -3554,7 +3609,7 @@ importers:
     dependencies:
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       zod:
         specifier: ^3.23.0
         version: 3.25.76
@@ -3573,10 +3628,10 @@ importers:
         version: link:../../mcp-core
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       agents:
         specifier: ^0.3.10
-        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.12.30)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
+        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.13.3)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
       zod:
         specifier: ^3.23.0
         version: 3.25.76
@@ -3622,7 +3677,7 @@ importers:
     dependencies:
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6)
     devDependencies:
       '@types/node':
         specifier: 24.10.9
@@ -3638,7 +3693,7 @@ importers:
     dependencies:
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6)
     devDependencies:
       '@types/node':
         specifier: 24.10.9
@@ -3669,7 +3724,7 @@ importers:
         version: link:../observability
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6)
     devDependencies:
       '@types/node':
         specifier: 24.10.9
@@ -3734,13 +3789,13 @@ importers:
         version: 4.20260621.1
       '@sveltejs/adapter-auto':
         specifier: ^7.0.0
-        version: 7.0.0(@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))
+        version: 7.0.0(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))
       '@sveltejs/adapter-cloudflare':
         specifier: ^7.2.4
-        version: 7.2.6(@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+        version: 7.2.6(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
       '@sveltejs/kit':
-        specifier: ^2.47.1
-        version: 2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+        specifier: ^2.70.2
+        version: 2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       '@sveltejs/vite-plugin-svelte':
         specifier: ^6.2.1
         version: 6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
@@ -3856,7 +3911,7 @@ importers:
         version: link:../mcp-core
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       zod:
         specifier: ^3.23.0
         version: 3.25.76
@@ -3881,10 +3936,10 @@ importers:
         version: link:..
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       agents:
         specifier: ^0.3.10
-        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.12.30)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
+        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.13.3)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
       zod:
         specifier: ^3.23.0
         version: 3.25.76
@@ -3906,10 +3961,10 @@ importers:
         version: link:../canon
       '@sveltejs/adapter-auto':
         specifier: ^7.0.0
-        version: 7.0.0(@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))
+        version: 7.0.0(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))
       '@sveltejs/kit':
-        specifier: ^2.47.1
-        version: 2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+        specifier: ^2.70.2
+        version: 2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       '@sveltejs/package':
         specifier: ^2.5.4
         version: 2.5.7(svelte@5.48.5)(typescript@5.9.3)
@@ -3961,10 +4016,10 @@ importers:
         version: link:../../mcp-core
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       agents:
         specifier: ^0.3.10
-        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.12.30)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
+        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.13.3)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
       zod:
         specifier: ^3.23.0
         version: 3.25.76
@@ -4014,10 +4069,10 @@ importers:
         version: 4.20260621.1
       '@sveltejs/adapter-cloudflare':
         specifier: ^7.2.4
-        version: 7.2.6(@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+        version: 7.2.6(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
       '@sveltejs/kit':
-        specifier: ^2.47.1
-        version: 2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+        specifier: ^2.70.2
+        version: 2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       '@sveltejs/vite-plugin-svelte':
         specifier: ^6.2.1
         version: 6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
@@ -4059,7 +4114,7 @@ importers:
     dependencies:
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6)
     devDependencies:
       '@types/node':
         specifier: 24.10.9
@@ -4075,10 +4130,10 @@ importers:
         version: link:../../mcp-core
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       agents:
         specifier: ^0.3.10
-        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.12.30)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
+        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.13.3)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
       zod:
         specifier: ^3.23.0
         version: 3.25.76
@@ -4109,7 +4164,7 @@ importers:
         version: link:../canon
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6)
       fast-glob:
         specifier: ^3.3.2
         version: 3.3.3
@@ -4134,10 +4189,10 @@ importers:
     devDependencies:
       '@sveltejs/adapter-auto':
         specifier: ^7.0.0
-        version: 7.0.0(@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))
+        version: 7.0.0(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))
       '@sveltejs/kit':
-        specifier: ^2.47.1
-        version: 2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+        specifier: ^2.70.2
+        version: 2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       '@sveltejs/package':
         specifier: ^2.5.4
         version: 2.5.7(svelte@5.48.5)(typescript@5.9.3)
@@ -4167,7 +4222,7 @@ importers:
         version: link:../observability
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6)
     devDependencies:
       '@types/node':
         specifier: 24.10.9
@@ -4180,7 +4235,7 @@ importers:
     dependencies:
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       jose:
         specifier: 6.1.3
         version: 6.1.3
@@ -4205,10 +4260,10 @@ importers:
         version: link:../../mcp-core
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       agents:
         specifier: ^0.3.10
-        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.12.30)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
+        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.13.3)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
       zod:
         specifier: ^3.23.0
         version: 3.25.76
@@ -4246,10 +4301,10 @@ importers:
         version: 4.20260621.1
       '@sveltejs/adapter-cloudflare':
         specifier: ^7.2.4
-        version: 7.2.6(@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+        version: 7.2.6(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
       '@sveltejs/kit':
-        specifier: ^2.47.1
-        version: 2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+        specifier: ^2.70.2
+        version: 2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       '@sveltejs/vite-plugin-svelte':
         specifier: ^6.2.1
         version: 6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
@@ -4374,10 +4429,10 @@ importers:
         version: 4.20260621.1
       '@sveltejs/adapter-cloudflare':
         specifier: ^4.8.0
-        version: 4.9.0(@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+        version: 4.9.0(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
       '@sveltejs/kit':
-        specifier: ^2.8.0
-        version: 2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+        specifier: ^2.70.2
+        version: 2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       '@sveltejs/vite-plugin-svelte':
         specifier: ^5.0.0
         version: 5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
@@ -4449,7 +4504,7 @@ importers:
         version: link:../observability
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6)
     devDependencies:
       '@types/node':
         specifier: 24.10.9
@@ -4468,7 +4523,7 @@ importers:
         version: link:..
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6)
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^4.20260621.1
@@ -4504,8 +4559,8 @@ importers:
   packages/webflow-review/workers/orchestrator:
     dependencies:
       hono:
-        specifier: ^4.0.0
-        version: 4.11.7
+        specifier: ^4.12.34
+        version: 4.13.3
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^4.20260621.1
@@ -4527,7 +4582,7 @@ importers:
     dependencies:
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       zod:
         specifier: ^3.23.0
         version: 3.25.76
@@ -4549,10 +4604,10 @@ importers:
         version: link:../../mcp-core
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       agents:
         specifier: ^0.3.10
-        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260317.1)(ai@6.0.235(zod@3.25.76))(hono@4.12.30)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
+        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260317.1)(ai@6.0.235(zod@3.25.76))(hono@4.13.3)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
       zod:
         specifier: ^3.23.0
         version: 3.25.76
@@ -4567,6 +4622,24 @@ importers:
         specifier: ^4.0.0
         version: 4.75.0(@cloudflare/workers-types@4.20260317.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
+  packages/webflow-scope-watcher:
+    devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^4.20260621.1
+        version: 4.20260621.1
+      '@types/node':
+        specifier: 24.10.9
+        version: 24.10.9
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.18
+        version: 4.1.8(@opentelemetry/api@1.9.0)(@types/node@24.10.9)(jsdom@27.4.0(@noble/hashes@1.8.0)(bufferutil@4.1.0)(utf-8-validate@6.0.6))(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+      wrangler:
+        specifier: ^4.103.0
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+
   packages/webflow-site-analyzer-mcp:
     dependencies:
       '@create-something/observability':
@@ -4574,7 +4647,7 @@ importers:
         version: link:../observability
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6)
       '@temporalio/activity':
         specifier: ^1.14.1
         version: 1.14.1
@@ -4611,7 +4684,7 @@ importers:
         version: link:..
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6)
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^4.20260621.1
@@ -4669,7 +4742,7 @@ importers:
         version: 2.5.0
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       e2b:
         specifier: 2.24.0
         version: 2.24.0
@@ -4689,15 +4762,18 @@ importers:
 
   packages/webflow-template-review-mcp/worker:
     dependencies:
+      '@cloudflare/puppeteer':
+        specifier: ^1.3.0
+        version: 1.3.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       '@create-something/mcp-core':
         specifier: workspace:*
         version: link:../../mcp-core
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       agents:
         specifier: ^0.3.10
-        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.12.30)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
+        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.13.3)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
       zod:
         specifier: ^3.23.0
         version: 3.25.76
@@ -4933,7 +5009,7 @@ importers:
         version: link:../workflow-receipt-reconciler
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6)
     devDependencies:
       '@types/node':
         specifier: 24.10.9
@@ -4953,7 +5029,7 @@ importers:
         version: link:../mcp-core
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       zod:
         specifier: ^3.23.0
         version: 3.25.76
@@ -4972,10 +5048,10 @@ importers:
         version: link:../../mcp-core
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
-        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+        version: 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       agents:
         specifier: ^0.3.10
-        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.12.30)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
+        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.13.3)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
       zod:
         specifier: ^3.23.0
         version: 3.25.76
@@ -6150,6 +6226,10 @@ packages:
 
   '@cloudflare/puppeteer@1.0.5':
     resolution: {integrity: sha512-sKVtc9eTe+ulDqFGk1AcU1cgw3fuLvT75eqHDApvE1d/ZTesBD/r2Iey6elQ9uq/jBj0SjEOM1GVYi0Rojzeaw==}
+    engines: {node: '>=18'}
+
+  '@cloudflare/puppeteer@1.3.0':
+    resolution: {integrity: sha512-NBrJEUnqe082nopLh0eqnTXK4DjwsTsZGzoAcs71NFnBgzWU6Yb/ibUJHveCHV4AyAkM+mE/DChFev5gwaKZEg==}
     engines: {node: '>=18'}
 
   '@cloudflare/realtimekit-ui@2.0.0':
@@ -11008,6 +11088,11 @@ packages:
     peerDependencies:
       svelte: ^5.1.0
 
+  '@sveltejs/acorn-typescript@1.0.13':
+    resolution: {integrity: sha512-wgKggnhZVL9Bfx1OaKKTrYY9BFRk6C8UAkQNUcIv1+llzYrIqy+RZm5HPKzn0NpEBvTVhTqB4kQyllZywsRBRQ==}
+    peerDependencies:
+      acorn: ^8.9.0
+
   '@sveltejs/acorn-typescript@1.0.8':
     resolution: {integrity: sha512-esgN+54+q0NjB0Y/4BomT9samII7jGwNy/2a3wNZbT2A2RpmXsXwUt24LvLhx6jUq2gVk4cWEvcRO6MFQbOfNA==}
     peerDependencies:
@@ -11047,29 +11132,16 @@ packages:
     peerDependencies:
       '@sveltejs/kit': ^2.4.0
 
-  '@sveltejs/kit@2.47.1':
-    resolution: {integrity: sha512-1v+MbMHxTi6ctQyxmz3owLKqZGaBHyx4EQqTdq/PvDswPFzw3WlqhrOKOh2ZzH23+XpQGEF9G+KDIgYJE+byvg==}
+  '@sveltejs/kit@2.70.2':
+    resolution: {integrity: sha512-RzRoRpuR2KXqc5yMO0akQHDZeT4AslOlznGITURsqHaVbtyYP4Wn3eE3gxj9JcDyNYO0crkxhdwFHc+2vkVm6w==}
     engines: {node: '>=18.13'}
     hasBin: true
     peerDependencies:
       '@opentelemetry/api': ^1.0.0
-      '@sveltejs/vite-plugin-svelte': ^3.0.0 || ^4.0.0-next.1 || ^5.0.0 || ^6.0.0-next.0
+      '@sveltejs/vite-plugin-svelte': ^3.0.0 || ^4.0.0-next.1 || ^5.0.0 || ^6.0.0-next.0 || ^7.0.0
       svelte: ^4.0.0 || ^5.0.0-next.0
-      vite: ^5.0.3 || ^6.0.0 || ^7.0.0-beta.0
-    peerDependenciesMeta:
-      '@opentelemetry/api':
-        optional: true
-
-  '@sveltejs/kit@2.50.1':
-    resolution: {integrity: sha512-XRHD2i3zC4ukhz2iCQzO4mbsts081PAZnnMAQ7LNpWeYgeBmwMsalf0FGSwhFXBbtr2XViPKnFJBDCckWqrsLw==}
-    engines: {node: '>=18.13'}
-    hasBin: true
-    peerDependencies:
-      '@opentelemetry/api': ^1.0.0
-      '@sveltejs/vite-plugin-svelte': ^3.0.0 || ^4.0.0-next.1 || ^5.0.0 || ^6.0.0-next.0
-      svelte: ^4.0.0 || ^5.0.0-next.0
-      typescript: ^5.3.3
-      vite: ^5.0.3 || ^6.0.0 || ^7.0.0-beta.0
+      typescript: ^5.3.3 || ^6.0.0
+      vite: ^5.0.3 || ^6.0.0 || ^7.0.0-beta.0 || ^8.0.0
     peerDependenciesMeta:
       '@opentelemetry/api':
         optional: true
@@ -12349,8 +12421,8 @@ packages:
     engines: {node: '>=0.4.0'}
     hasBin: true
 
-  acorn@8.17.0:
-    resolution: {integrity: sha512-xRQbDb9BnwDafYNn6Vwl839DYVjqXYb1XVGtWAZ1kcDc6iwAL4hg3B1dZlRiuENFeO2H53gFG3in621AdERVAg==}
+  acorn@8.18.0:
+    resolution: {integrity: sha512-lGq+9yr1/GuAWaVYIHRjvvySG5/4VfKIvC8EWxStPdcDh/Ka7FG3twP6v4d5BkravUilhIAsG4Qj83t02LWUPQ==}
     engines: {node: '>=0.4.0'}
     hasBin: true
 
@@ -13870,6 +13942,9 @@ packages:
   devalue@5.6.2:
     resolution: {integrity: sha512-nPRkjWzzDQlsejL1WVifk5rvcFi/y1onBRxjaFMjZeR9mFpqu2gmAZ9xUB9/IEanEP/vBtGeGganC/GO1fmufg==}
 
+  devalue@5.9.0:
+    resolution: {integrity: sha512-RWrqdArjvPbsATEhOPUo6Wndc/iWnkWKlhIrdlF3zMMYo/c3CVtoaVAyLtWxz5h8nSlkHzxnzV2uLydPXmtF+A==}
+
   devlop@1.1.0:
     resolution: {integrity: sha512-RWmIqhcFf1lRYBvNmr7qTNuyCt/7/ns2jbpp1+PalgE/rDQcBT0fioSMUpJ93irlUhC5hrg4cYqe6U+0ImW0rA==}
 
@@ -15026,12 +15101,12 @@ packages:
     resolution: {integrity: sha512-eSmmWE5bZTK2Nou4g0AI3zZ9rswp7GRKoKXS1BLUkvPviOqs4YTN1djQIqrXy9k5gEtdLPy86JjRwsNM9tnDcA==}
     engines: {node: '>=0.10.0'}
 
-  hono@4.11.7:
-    resolution: {integrity: sha512-l7qMiNee7t82bH3SeyUCt9UF15EVmaBvsppY2zQtrbIhl/yzBTny+YUxsVjSjQ6gaqaeVtZmGocom8TzBlA4Yw==}
-    engines: {node: '>=16.9.0'}
-
   hono@4.12.30:
     resolution: {integrity: sha512-emn+JoJjrN9YTpRDS5it/UI2SO9BAE37T6I3d963RxcZ81G9A4pr2SZTEiiaiKbzx+NKRg5BZ89fCL7gCJCUog==}
+    engines: {node: '>=16.9.0'}
+
+  hono@4.13.3:
+    resolution: {integrity: sha512-r8AO2mYHoLxSHkgafNeC/BXyb2vWRxD3jem4Ts+ptav8oTG5FIRifAjuJEmZI4bSvvc2ns0GxmIYiZnHqN3mMw==}
     engines: {node: '>=16.9.0'}
 
   html-encoding-sniffer@4.0.0:
@@ -18042,8 +18117,8 @@ packages:
   set-blocking@2.0.0:
     resolution: {integrity: sha512-KiKBS8AnWGEyLzofFfmvKwpdPzqiy16LvQfK3yv/fVH7Bj13/wl3JSR1J+rfgRE9q7xUJK4qvgS8raSOeLUehw==}
 
-  set-cookie-parser@2.7.2:
-    resolution: {integrity: sha512-oeM1lpU/UvhTxw+g3cIfxXHyJRc/uidd3yK1P242gzHds0udQBYzs3y8j4gCCW+ZJ7ad0yctld8RYO+bdurlvw==}
+  set-cookie-parser@3.1.2:
+    resolution: {integrity: sha512-5/r/lTwbJ3zQ+qwdUFZYeRNqda7P5HD8zQKqlSjdGt1/S0cjLAphHusj4Y58ahDtWn/g32xrIS58/ikOvwl0Lw==}
 
   set-function-length@1.2.2:
     resolution: {integrity: sha512-pgRc4hJ4/sNjWCSS9AmnS40x3bNMDTknHgL5UaMBTMyJnU90EgWh1Rz+MC9eFu4BuN/UwZjKQuY/1v3rM7HMfg==}
@@ -22273,33 +22348,33 @@ snapshots:
 
   '@cloudflare/ai-chat@0.0.6(agents@0.3.10)(ai@6.0.235(zod@3.25.76))(react@19.2.4)(zod@3.25.76)':
     dependencies:
-      agents: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.12.30)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
+      agents: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.13.3)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
       ai: 6.0.235(zod@3.25.76)
       react: 19.2.4
       zod: 3.25.76
 
   '@cloudflare/ai-chat@0.0.6(agents@0.3.10)(ai@6.0.235(zod@4.3.6))(react@19.2.4)(zod@4.3.6)':
     dependencies:
-      agents: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6))(ai@6.0.235(zod@4.3.6))(zod@4.3.6))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@4.3.6))(hono@4.12.30)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@4.3.6))(zod@4.3.6)
+      agents: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6))(ai@6.0.235(zod@4.3.6))(zod@4.3.6))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@4.3.6))(hono@4.13.3)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@4.3.6))(zod@4.3.6)
       ai: 6.0.235(zod@4.3.6)
       react: 19.2.4
       zod: 4.3.6
 
-  '@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76)':
+  '@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76)':
     dependencies:
       '@types/json-schema': 7.0.15
-      acorn: 8.17.0
+      acorn: 8.18.0
     optionalDependencies:
-      '@modelcontextprotocol/sdk': 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+      '@modelcontextprotocol/sdk': 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       ai: 6.0.235(zod@3.25.76)
       zod: 3.25.76
 
-  '@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6))(ai@6.0.235(zod@4.3.6))(zod@4.3.6)':
+  '@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6))(ai@6.0.235(zod@4.3.6))(zod@4.3.6)':
     dependencies:
       '@types/json-schema': 7.0.15
-      acorn: 8.17.0
+      acorn: 8.18.0
     optionalDependencies:
-      '@modelcontextprotocol/sdk': 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6)
+      '@modelcontextprotocol/sdk': 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6)
       ai: 6.0.235(zod@4.3.6)
       zod: 4.3.6
 
@@ -22345,6 +22420,20 @@ snapshots:
       - supports-color
       - utf-8-validate
 
+  '@cloudflare/puppeteer@1.3.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)':
+    dependencies:
+      '@puppeteer/browsers': 2.2.4
+      debug: 4.4.3
+      devtools-protocol: 0.0.1299070
+      ws: 8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+    transitivePeerDependencies:
+      - bare-abort-controller
+      - bare-buffer
+      - bufferutil
+      - react-native-b4a
+      - supports-color
+      - utf-8-validate
+
   '@cloudflare/realtimekit-ui@2.0.0':
     dependencies:
       '@floating-ui/dom': 1.8.0
@@ -22376,9 +22465,9 @@ snapshots:
     dependencies:
       '@cloudflare/containers': 0.0.30
 
-  '@cloudflare/shell@0.3.9(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6))(ai@6.0.235(zod@4.3.6))(zod@4.3.6)':
+  '@cloudflare/shell@0.3.9(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6))(ai@6.0.235(zod@4.3.6))(zod@4.3.6)':
     dependencies:
-      '@cloudflare/codemode': 0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6))(ai@6.0.235(zod@4.3.6))(zod@4.3.6)
+      '@cloudflare/codemode': 0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6))(ai@6.0.235(zod@4.3.6))(zod@4.3.6)
       isomorphic-git: 1.40.0
     transitivePeerDependencies:
       - '@modelcontextprotocol/sdk'
@@ -22386,11 +22475,11 @@ snapshots:
       - ai
       - zod
 
-  '@cloudflare/think@0.8.8(@chat-adapter/telegram@4.35.0(ai@6.0.235(zod@4.3.6))(zod@4.3.6))(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6))(agents@0.14.5(@babel/core@7.28.6)(@babel/runtime@7.28.6)(@cloudflare/workers-types@4.20260621.1)(@x402/core@2.22.0)(@x402/evm@2.22.0(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6))(ai@6.0.235(zod@4.3.6))(chat@4.35.0(ai@6.0.235(zod@4.3.6))(zod@4.3.6))(hono@4.12.30)(react@19.2.4)(rolldown@1.2.0)(zod@4.3.6))(ai@6.0.235(zod@4.3.6))(zod@4.3.6)':
+  '@cloudflare/think@0.8.8(@chat-adapter/telegram@4.35.0(ai@6.0.235(zod@4.3.6))(zod@4.3.6))(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6))(agents@0.14.5(@babel/core@7.28.6)(@babel/runtime@7.28.6)(@cloudflare/workers-types@4.20260621.1)(@x402/core@2.22.0)(@x402/evm@2.22.0(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6))(ai@6.0.235(zod@4.3.6))(chat@4.35.0(ai@6.0.235(zod@4.3.6))(zod@4.3.6))(hono@4.13.3)(react@19.2.4)(rolldown@1.2.0)(zod@4.3.6))(ai@6.0.235(zod@4.3.6))(zod@4.3.6)':
     dependencies:
-      '@cloudflare/codemode': 0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6))(ai@6.0.235(zod@4.3.6))(zod@4.3.6)
-      '@cloudflare/shell': 0.3.9(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6))(ai@6.0.235(zod@4.3.6))(zod@4.3.6)
-      agents: 0.14.5(@babel/core@7.28.6)(@babel/runtime@7.28.6)(@cloudflare/workers-types@4.20260621.1)(@x402/core@2.22.0)(@x402/evm@2.22.0(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6))(ai@6.0.235(zod@4.3.6))(chat@4.35.0(ai@6.0.235(zod@4.3.6))(zod@4.3.6))(hono@4.12.30)(react@19.2.4)(rolldown@1.2.0)(zod@4.3.6)
+      '@cloudflare/codemode': 0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6))(ai@6.0.235(zod@4.3.6))(zod@4.3.6)
+      '@cloudflare/shell': 0.3.9(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6))(ai@6.0.235(zod@4.3.6))(zod@4.3.6)
+      agents: 0.14.5(@babel/core@7.28.6)(@babel/runtime@7.28.6)(@cloudflare/workers-types@4.20260621.1)(@x402/core@2.22.0)(@x402/evm@2.22.0(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6))(ai@6.0.235(zod@4.3.6))(chat@4.35.0(ai@6.0.235(zod@4.3.6))(zod@4.3.6))(hono@4.13.3)(react@19.2.4)(rolldown@1.2.0)(zod@4.3.6)
       ai: 6.0.235(zod@4.3.6)
       aywson: 0.0.16
       chat: 4.35.0(ai@6.0.235(zod@4.3.6))(zod@4.3.6)
@@ -23650,13 +23739,13 @@ snapshots:
       ndarray-lanczos: 0.3.0
       ndarray-pixels: 5.0.1
 
-  '@google/genai@1.38.0(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6))(bufferutil@4.1.0)(utf-8-validate@6.0.6)':
+  '@google/genai@1.38.0(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6))(bufferutil@4.1.0)(utf-8-validate@6.0.6)':
     dependencies:
       google-auth-library: 10.5.0
       protobufjs: 7.5.4
       ws: 8.19.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
     optionalDependencies:
-      '@modelcontextprotocol/sdk': 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6)
+      '@modelcontextprotocol/sdk': 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6)
     transitivePeerDependencies:
       - bufferutil
       - supports-color
@@ -23674,13 +23763,9 @@ snapshots:
       protobufjs: 7.5.4
       yargs: 17.7.2
 
-  '@hono/node-server@1.19.9(hono@4.11.7)':
+  '@hono/node-server@1.19.9(hono@4.13.3)':
     dependencies:
-      hono: 4.11.7
-
-  '@hono/node-server@1.19.9(hono@4.12.30)':
-    dependencies:
-      hono: 4.12.30
+      hono: 4.13.3
 
   '@humanfs/core@0.19.1': {}
 
@@ -24508,34 +24593,9 @@ snapshots:
       zod: 4.3.6
     optional: true
 
-  '@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.11.7)(zod@4.3.6)':
+  '@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)':
     dependencies:
-      '@hono/node-server': 1.19.9(hono@4.11.7)
-      ajv: 8.17.1
-      ajv-formats: 3.0.1(ajv@8.17.1)
-      content-type: 1.0.5
-      cors: 2.8.6
-      cross-spawn: 7.0.6
-      eventsource: 3.0.7
-      eventsource-parser: 3.0.6
-      express: 5.2.1
-      express-rate-limit: 7.5.1(express@5.2.1)
-      jose: 6.1.3
-      json-schema-typed: 8.0.2
-      pkce-challenge: 5.0.1
-      raw-body: 3.0.2
-      zod: 4.3.6
-      zod-to-json-schema: 3.25.1(zod@4.3.6)
-    optionalDependencies:
-      '@cfworker/json-schema': 4.1.1
-    transitivePeerDependencies:
-      - hono
-      - supports-color
-    optional: true
-
-  '@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)':
-    dependencies:
-      '@hono/node-server': 1.19.9(hono@4.12.30)
+      '@hono/node-server': 1.19.9(hono@4.13.3)
       ajv: 8.17.1
       ajv-formats: 3.0.1(ajv@8.17.1)
       content-type: 1.0.5
@@ -24557,9 +24617,9 @@ snapshots:
       - hono
       - supports-color
 
-  '@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6)':
+  '@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6)':
     dependencies:
-      '@hono/node-server': 1.19.9(hono@4.12.30)
+      '@hono/node-server': 1.19.9(hono@4.13.3)
       ajv: 8.17.1
       ajv-formats: 3.0.1(ajv@8.17.1)
       content-type: 1.0.5
@@ -24575,30 +24635,6 @@ snapshots:
       raw-body: 3.0.2
       zod: 4.3.6
       zod-to-json-schema: 3.25.1(zod@4.3.6)
-    optionalDependencies:
-      '@cfworker/json-schema': 4.1.1
-    transitivePeerDependencies:
-      - hono
-      - supports-color
-
-  '@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(zod@3.25.76)':
-    dependencies:
-      '@hono/node-server': 1.19.9(hono@4.11.7)
-      ajv: 8.17.1
-      ajv-formats: 3.0.1(ajv@8.17.1)
-      content-type: 1.0.5
-      cors: 2.8.6
-      cross-spawn: 7.0.6
-      eventsource: 3.0.7
-      eventsource-parser: 3.0.6
-      express: 5.2.1
-      express-rate-limit: 7.5.1(express@5.2.1)
-      jose: 6.1.3
-      json-schema-typed: 8.0.2
-      pkce-challenge: 5.0.1
-      raw-body: 3.0.2
-      zod: 3.25.76
-      zod-to-json-schema: 3.25.1(zod@3.25.76)
     optionalDependencies:
       '@cfworker/json-schema': 4.1.1
     transitivePeerDependencies:
@@ -24966,7 +25002,7 @@ snapshots:
       debug: 4.4.3
       openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.21)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
     optionalDependencies:
-      '@modelcontextprotocol/sdk': 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.11.7)(zod@4.3.6)
+      '@modelcontextprotocol/sdk': 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6)
       zod: 4.3.6
     transitivePeerDependencies:
       - '@aws-sdk/credential-provider-node'
@@ -24991,13 +25027,13 @@ snapshots:
       - supports-color
       - ws
 
-  '@openai/agents-core@0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(hono@4.11.7)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
+  '@openai/agents-core@0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)':
     dependencies:
       debug: 4.4.3
-      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.21)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.21)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
     optionalDependencies:
-      '@modelcontextprotocol/sdk': 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.11.7)(zod@4.3.6)
-      zod: 4.3.6
+      '@modelcontextprotocol/sdk': 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
+      zod: 3.25.76
     transitivePeerDependencies:
       - '@aws-sdk/credential-provider-node'
       - '@cfworker/json-schema'
@@ -25007,13 +25043,13 @@ snapshots:
       - supports-color
       - ws
 
-  '@openai/agents-core@0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)':
+  '@openai/agents-core@0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
     dependencies:
       debug: 4.4.3
-      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.21)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
+      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.21)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
     optionalDependencies:
-      '@modelcontextprotocol/sdk': 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
-      zod: 3.25.76
+      '@modelcontextprotocol/sdk': 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6)
+      zod: 4.3.6
     transitivePeerDependencies:
       - '@aws-sdk/credential-provider-node'
       - '@cfworker/json-schema'
@@ -25051,12 +25087,12 @@ snapshots:
       - supports-color
       - ws
 
-  '@openai/agents-openai@0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(hono@4.11.7)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
+  '@openai/agents-openai@0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)':
     dependencies:
-      '@openai/agents-core': 0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(hono@4.11.7)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      '@openai/agents-core': 0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
       debug: 4.4.3
-      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.21)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
-      zod: 4.3.6
+      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.21)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
+      zod: 3.25.76
     transitivePeerDependencies:
       - '@aws-sdk/credential-provider-node'
       - '@cfworker/json-schema'
@@ -25066,12 +25102,12 @@ snapshots:
       - supports-color
       - ws
 
-  '@openai/agents-openai@0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)':
+  '@openai/agents-openai@0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
     dependencies:
-      '@openai/agents-core': 0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
+      '@openai/agents-core': 0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
       debug: 4.4.3
-      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.21)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
-      zod: 3.25.76
+      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.21)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      zod: 4.3.6
     transitivePeerDependencies:
       - '@aws-sdk/credential-provider-node'
       - '@cfworker/json-schema'
@@ -25113,13 +25149,13 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@openai/agents-realtime@0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(hono@4.11.7)(utf-8-validate@6.0.6)(zod@4.3.6)':
+  '@openai/agents-realtime@0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(hono@4.13.3)(utf-8-validate@6.0.6)(zod@3.25.76)':
     dependencies:
-      '@openai/agents-core': 0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(hono@4.11.7)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      '@openai/agents-core': 0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
       '@types/ws': 8.18.1
       debug: 4.4.3
       ws: 8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
-      zod: 4.3.6
+      zod: 3.25.76
     transitivePeerDependencies:
       - '@aws-sdk/credential-provider-node'
       - '@cfworker/json-schema'
@@ -25130,13 +25166,13 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@openai/agents-realtime@0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(hono@4.12.30)(utf-8-validate@6.0.6)(zod@3.25.76)':
+  '@openai/agents-realtime@0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(hono@4.13.3)(utf-8-validate@6.0.6)(zod@4.3.6)':
     dependencies:
-      '@openai/agents-core': 0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
+      '@openai/agents-core': 0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
       '@types/ws': 8.18.1
       debug: 4.4.3
       ws: 8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
-      zod: 3.25.76
+      zod: 4.3.6
     transitivePeerDependencies:
       - '@aws-sdk/credential-provider-node'
       - '@cfworker/json-schema'
@@ -25183,14 +25219,14 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@openai/agents@0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(hono@4.11.7)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
+  '@openai/agents@0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(hono@4.13.3)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)':
     dependencies:
-      '@openai/agents-core': 0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(hono@4.11.7)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
-      '@openai/agents-openai': 0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(hono@4.11.7)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
-      '@openai/agents-realtime': 0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(hono@4.11.7)(utf-8-validate@6.0.6)(zod@4.3.6)
+      '@openai/agents-core': 0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
+      '@openai/agents-openai': 0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
+      '@openai/agents-realtime': 0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(hono@4.13.3)(utf-8-validate@6.0.6)(zod@3.25.76)
       debug: 4.4.3
-      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.21)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
-      zod: 4.3.6
+      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.21)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
+      zod: 3.25.76
     transitivePeerDependencies:
       - '@aws-sdk/credential-provider-node'
       - '@cfworker/json-schema'
@@ -25202,14 +25238,14 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@openai/agents@0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(hono@4.12.30)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)':
+  '@openai/agents@0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(hono@4.13.3)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
     dependencies:
-      '@openai/agents-core': 0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
-      '@openai/agents-openai': 0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
-      '@openai/agents-realtime': 0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(hono@4.12.30)(utf-8-validate@6.0.6)(zod@3.25.76)
+      '@openai/agents-core': 0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      '@openai/agents-openai': 0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      '@openai/agents-realtime': 0.4.10(@aws-sdk/credential-provider-node@3.972.21)(@cfworker/json-schema@4.1.1)(bufferutil@4.1.0)(hono@4.13.3)(utf-8-validate@6.0.6)(zod@4.3.6)
       debug: 4.4.3
-      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.21)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
-      zod: 3.25.76
+      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.21)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      zod: 4.3.6
     transitivePeerDependencies:
       - '@aws-sdk/credential-provider-node'
       - '@cfworker/json-schema'
@@ -27728,241 +27764,131 @@ snapshots:
     dependencies:
       svelte: 5.48.5
 
+  '@sveltejs/acorn-typescript@1.0.13(acorn@8.18.0)':
+    dependencies:
+      acorn: 8.18.0
+
   '@sveltejs/acorn-typescript@1.0.8(acorn@8.15.0)':
     dependencies:
       acorn: 8.15.0
 
-  '@sveltejs/adapter-auto@7.0.0(@sveltejs/kit@2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))':
+  '@sveltejs/adapter-auto@7.0.0(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(typescript@5.9.3)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))':
     dependencies:
-      '@sveltejs/kit': 2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+      '@sveltejs/kit': 2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(typescript@5.9.3)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
 
-  '@sveltejs/adapter-auto@7.0.0(@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))':
+  '@sveltejs/adapter-auto@7.0.0(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))':
     dependencies:
-      '@sveltejs/kit': 2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+      '@sveltejs/kit': 2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
 
-  '@sveltejs/adapter-auto@7.0.0(@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))':
+  '@sveltejs/adapter-auto@7.0.0(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))':
     dependencies:
-      '@sveltejs/kit': 2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+      '@sveltejs/kit': 2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
 
-  '@sveltejs/adapter-cloudflare@4.9.0(@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@4.0.4(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))':
+  '@sveltejs/adapter-cloudflare@4.9.0(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@4.0.4(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))':
     dependencies:
       '@cloudflare/workers-types': 4.20260621.1
-      '@sveltejs/kit': 2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@4.0.4(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+      '@sveltejs/kit': 2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@4.0.4(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       esbuild: 0.24.2
       worktop: 0.8.0-next.18
       wrangler: 4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
-  '@sveltejs/adapter-cloudflare@4.9.0(@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))':
+  '@sveltejs/adapter-cloudflare@4.9.0(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))':
     dependencies:
       '@cloudflare/workers-types': 4.20260621.1
-      '@sveltejs/kit': 2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+      '@sveltejs/kit': 2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       esbuild: 0.24.2
       worktop: 0.8.0-next.18
       wrangler: 4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
-  '@sveltejs/adapter-cloudflare@6.0.1(@sveltejs/kit@2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.41.0)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))':
+  '@sveltejs/adapter-cloudflare@6.0.1(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.41.0)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))':
     dependencies:
       '@cloudflare/workers-types': 4.20260621.1
-      '@sveltejs/kit': 2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.41.0)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+      '@sveltejs/kit': 2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.41.0)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       esbuild: 0.24.2
       worktop: 0.8.0-next.18
       wrangler: 4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
-  '@sveltejs/adapter-cloudflare@6.0.1(@sveltejs/kit@2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))':
+  '@sveltejs/adapter-cloudflare@6.0.1(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))':
     dependencies:
       '@cloudflare/workers-types': 4.20260621.1
-      '@sveltejs/kit': 2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+      '@sveltejs/kit': 2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       esbuild: 0.24.2
       worktop: 0.8.0-next.18
       wrangler: 4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
-  '@sveltejs/adapter-cloudflare@6.0.1(@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))':
+  '@sveltejs/adapter-cloudflare@6.0.1(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))':
     dependencies:
       '@cloudflare/workers-types': 4.20260621.1
-      '@sveltejs/kit': 2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+      '@sveltejs/kit': 2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       esbuild: 0.24.2
       worktop: 0.8.0-next.18
       wrangler: 4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
-  '@sveltejs/adapter-cloudflare@6.0.1(@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))':
+  '@sveltejs/adapter-cloudflare@7.2.4(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(typescript@5.9.3)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))':
     dependencies:
       '@cloudflare/workers-types': 4.20260621.1
-      '@sveltejs/kit': 2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
-      esbuild: 0.24.2
+      '@sveltejs/kit': 2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(typescript@5.9.3)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       worktop: 0.8.0-next.18
       wrangler: 4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
-  '@sveltejs/adapter-cloudflare@7.2.4(@sveltejs/kit@2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))':
+  '@sveltejs/adapter-cloudflare@7.2.4(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(typescript@5.9.3)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))':
     dependencies:
       '@cloudflare/workers-types': 4.20260621.1
-      '@sveltejs/kit': 2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+      '@sveltejs/kit': 2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(typescript@5.9.3)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       worktop: 0.8.0-next.18
       wrangler: 4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
-  '@sveltejs/adapter-cloudflare@7.2.4(@sveltejs/kit@2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))':
+  '@sveltejs/adapter-cloudflare@7.2.4(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(typescript@5.9.3)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.110.0(@cloudflare/workers-types@5.20260712.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))':
     dependencies:
       '@cloudflare/workers-types': 4.20260621.1
-      '@sveltejs/kit': 2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
-      worktop: 0.8.0-next.18
-      wrangler: 4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
-
-  '@sveltejs/adapter-cloudflare@7.2.4(@sveltejs/kit@2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.110.0(@cloudflare/workers-types@5.20260712.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))':
-    dependencies:
-      '@cloudflare/workers-types': 4.20260621.1
-      '@sveltejs/kit': 2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+      '@sveltejs/kit': 2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(typescript@5.9.3)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       worktop: 0.8.0-next.18
       wrangler: 4.110.0(@cloudflare/workers-types@5.20260712.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
-  '@sveltejs/adapter-cloudflare@7.2.4(@sveltejs/kit@2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))':
+  '@sveltejs/adapter-cloudflare@7.2.4(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))':
     dependencies:
       '@cloudflare/workers-types': 4.20260621.1
-      '@sveltejs/kit': 2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+      '@sveltejs/kit': 2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       worktop: 0.8.0-next.18
       wrangler: 4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
-  '@sveltejs/adapter-cloudflare@7.2.6(@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))':
+  '@sveltejs/adapter-cloudflare@7.2.6(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))':
     dependencies:
       '@cloudflare/workers-types': 4.20260621.1
-      '@sveltejs/kit': 2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+      '@sveltejs/kit': 2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       worktop: 0.8.0-next.18
       wrangler: 4.103.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
-  '@sveltejs/adapter-cloudflare@7.2.6(@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))':
+  '@sveltejs/adapter-cloudflare@7.2.6(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6))':
     dependencies:
       '@cloudflare/workers-types': 4.20260621.1
-      '@sveltejs/kit': 2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+      '@sveltejs/kit': 2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       worktop: 0.8.0-next.18
       wrangler: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
-  '@sveltejs/adapter-node@5.5.7(@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))':
+  '@sveltejs/adapter-node@5.5.7(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))':
     dependencies:
       '@rollup/plugin-commonjs': 29.0.3(rollup@4.62.2)
       '@rollup/plugin-json': 6.1.0(rollup@4.62.2)
       '@rollup/plugin-node-resolve': 16.0.3(rollup@4.62.2)
       '@rollup/plugin-replace': 6.0.3(rollup@4.62.2)
-      '@sveltejs/kit': 2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+      '@sveltejs/kit': 2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       rollup: 4.62.2
 
-  '@sveltejs/kit@2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.41.0)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))':
+  '@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@4.0.4(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))':
     dependencies:
       '@standard-schema/spec': 1.1.0
-      '@sveltejs/acorn-typescript': 1.0.8(acorn@8.15.0)
-      '@sveltejs/vite-plugin-svelte': 5.1.1(svelte@5.41.0)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
-      '@types/cookie': 0.6.0
-      acorn: 8.15.0
-      cookie: 0.6.0
-      devalue: 5.6.2
-      esm-env: 1.2.2
-      kleur: 4.1.5
-      magic-string: 0.30.21
-      mrmime: 2.0.1
-      sade: 1.8.1
-      set-cookie-parser: 2.7.2
-      sirv: 3.0.2
-      svelte: 5.41.0
-      vite: 6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)
-    optionalDependencies:
-      '@opentelemetry/api': 1.9.0
-
-  '@sveltejs/kit@2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))':
-    dependencies:
-      '@standard-schema/spec': 1.1.0
-      '@sveltejs/acorn-typescript': 1.0.8(acorn@8.15.0)
-      '@sveltejs/vite-plugin-svelte': 5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
-      '@types/cookie': 0.6.0
-      acorn: 8.15.0
-      cookie: 0.6.0
-      devalue: 5.6.2
-      esm-env: 1.2.2
-      kleur: 4.1.5
-      magic-string: 0.30.21
-      mrmime: 2.0.1
-      sade: 1.8.1
-      set-cookie-parser: 2.7.2
-      sirv: 3.0.2
-      svelte: 5.48.5
-      vite: 6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)
-    optionalDependencies:
-      '@opentelemetry/api': 1.9.0
-
-  '@sveltejs/kit@2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))':
-    dependencies:
-      '@standard-schema/spec': 1.1.0
-      '@sveltejs/acorn-typescript': 1.0.8(acorn@8.15.0)
-      '@sveltejs/vite-plugin-svelte': 6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
-      '@types/cookie': 0.6.0
-      acorn: 8.15.0
-      cookie: 0.6.0
-      devalue: 5.6.2
-      esm-env: 1.2.2
-      kleur: 4.1.5
-      magic-string: 0.30.21
-      mrmime: 2.0.1
-      sade: 1.8.1
-      set-cookie-parser: 2.7.2
-      sirv: 3.0.2
-      svelte: 5.41.0
-      vite: 7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)
-    optionalDependencies:
-      '@opentelemetry/api': 1.9.0
-
-  '@sveltejs/kit@2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))':
-    dependencies:
-      '@standard-schema/spec': 1.1.0
-      '@sveltejs/acorn-typescript': 1.0.8(acorn@8.15.0)
-      '@sveltejs/vite-plugin-svelte': 6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
-      '@types/cookie': 0.6.0
-      acorn: 8.15.0
-      cookie: 0.6.0
-      devalue: 5.6.2
-      esm-env: 1.2.2
-      kleur: 4.1.5
-      magic-string: 0.30.21
-      mrmime: 2.0.1
-      sade: 1.8.1
-      set-cookie-parser: 2.7.2
-      sirv: 3.0.2
-      svelte: 5.41.0
-      vite: 7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)
-    optionalDependencies:
-      '@opentelemetry/api': 1.9.0
-
-  '@sveltejs/kit@2.47.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))':
-    dependencies:
-      '@standard-schema/spec': 1.1.0
-      '@sveltejs/acorn-typescript': 1.0.8(acorn@8.15.0)
-      '@sveltejs/vite-plugin-svelte': 6.2.1(svelte@5.41.0)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
-      '@types/cookie': 0.6.0
-      acorn: 8.15.0
-      cookie: 0.6.0
-      devalue: 5.6.2
-      esm-env: 1.2.2
-      kleur: 4.1.5
-      magic-string: 0.30.21
-      mrmime: 2.0.1
-      sade: 1.8.1
-      set-cookie-parser: 2.7.2
-      sirv: 3.0.2
-      svelte: 5.41.0
-      vite: 7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)
-    optionalDependencies:
-      '@opentelemetry/api': 1.9.0
-
-  '@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@4.0.4(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))':
-    dependencies:
-      '@standard-schema/spec': 1.1.0
-      '@sveltejs/acorn-typescript': 1.0.8(acorn@8.15.0)
+      '@sveltejs/acorn-typescript': 1.0.13(acorn@8.18.0)
       '@sveltejs/vite-plugin-svelte': 4.0.4(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       '@types/cookie': 0.6.0
-      acorn: 8.15.0
+      acorn: 8.18.0
       cookie: 0.6.0
-      devalue: 5.6.2
+      devalue: 5.9.0
       esm-env: 1.2.2
       kleur: 4.1.5
       magic-string: 0.30.21
       mrmime: 2.0.1
-      sade: 1.8.1
-      set-cookie-parser: 2.7.2
+      set-cookie-parser: 3.1.2
       sirv: 3.0.2
       svelte: 5.48.5
       vite: 6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)
@@ -27970,21 +27896,41 @@ snapshots:
       '@opentelemetry/api': 1.9.0
       typescript: 5.9.3
 
-  '@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))':
+  '@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.41.0)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))':
     dependencies:
       '@standard-schema/spec': 1.1.0
-      '@sveltejs/acorn-typescript': 1.0.8(acorn@8.15.0)
-      '@sveltejs/vite-plugin-svelte': 5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+      '@sveltejs/acorn-typescript': 1.0.13(acorn@8.18.0)
+      '@sveltejs/vite-plugin-svelte': 5.1.1(svelte@5.41.0)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       '@types/cookie': 0.6.0
-      acorn: 8.15.0
+      acorn: 8.18.0
       cookie: 0.6.0
-      devalue: 5.6.2
+      devalue: 5.9.0
       esm-env: 1.2.2
       kleur: 4.1.5
       magic-string: 0.30.21
       mrmime: 2.0.1
-      sade: 1.8.1
-      set-cookie-parser: 2.7.2
+      set-cookie-parser: 3.1.2
+      sirv: 3.0.2
+      svelte: 5.41.0
+      vite: 6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)
+    optionalDependencies:
+      '@opentelemetry/api': 1.9.0
+      typescript: 5.9.3
+
+  '@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))':
+    dependencies:
+      '@standard-schema/spec': 1.1.0
+      '@sveltejs/acorn-typescript': 1.0.13(acorn@8.18.0)
+      '@sveltejs/vite-plugin-svelte': 5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+      '@types/cookie': 0.6.0
+      acorn: 8.18.0
+      cookie: 0.6.0
+      devalue: 5.9.0
+      esm-env: 1.2.2
+      kleur: 4.1.5
+      magic-string: 0.30.21
+      mrmime: 2.0.1
+      set-cookie-parser: 3.1.2
       sirv: 3.0.2
       svelte: 5.48.5
       vite: 6.4.1(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)
@@ -27992,21 +27938,20 @@ snapshots:
       '@opentelemetry/api': 1.9.0
       typescript: 5.9.3
 
-  '@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))':
+  '@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))':
     dependencies:
       '@standard-schema/spec': 1.1.0
-      '@sveltejs/acorn-typescript': 1.0.8(acorn@8.15.0)
+      '@sveltejs/acorn-typescript': 1.0.13(acorn@8.18.0)
       '@sveltejs/vite-plugin-svelte': 5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       '@types/cookie': 0.6.0
-      acorn: 8.15.0
+      acorn: 8.18.0
       cookie: 0.6.0
-      devalue: 5.6.2
+      devalue: 5.9.0
       esm-env: 1.2.2
       kleur: 4.1.5
       magic-string: 0.30.21
       mrmime: 2.0.1
-      sade: 1.8.1
-      set-cookie-parser: 2.7.2
+      set-cookie-parser: 3.1.2
       sirv: 3.0.2
       svelte: 5.48.5
       vite: 6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)
@@ -28014,21 +27959,83 @@ snapshots:
       '@opentelemetry/api': 1.9.0
       typescript: 5.9.3
 
-  '@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))':
+  '@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(typescript@5.9.3)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))':
     dependencies:
       '@standard-schema/spec': 1.1.0
-      '@sveltejs/acorn-typescript': 1.0.8(acorn@8.15.0)
-      '@sveltejs/vite-plugin-svelte': 6.2.4(svelte@5.48.5)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+      '@sveltejs/acorn-typescript': 1.0.13(acorn@8.18.0)
+      '@sveltejs/vite-plugin-svelte': 6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       '@types/cookie': 0.6.0
-      acorn: 8.15.0
+      acorn: 8.18.0
       cookie: 0.6.0
-      devalue: 5.6.2
+      devalue: 5.9.0
       esm-env: 1.2.2
       kleur: 4.1.5
       magic-string: 0.30.21
       mrmime: 2.0.1
-      sade: 1.8.1
-      set-cookie-parser: 2.7.2
+      set-cookie-parser: 3.1.2
+      sirv: 3.0.2
+      svelte: 5.41.0
+      vite: 7.1.10(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)
+    optionalDependencies:
+      '@opentelemetry/api': 1.9.0
+      typescript: 5.9.3
+
+  '@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(typescript@5.9.3)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))':
+    dependencies:
+      '@standard-schema/spec': 1.1.0
+      '@sveltejs/acorn-typescript': 1.0.13(acorn@8.18.0)
+      '@sveltejs/vite-plugin-svelte': 6.2.1(svelte@5.41.0)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+      '@types/cookie': 0.6.0
+      acorn: 8.18.0
+      cookie: 0.6.0
+      devalue: 5.9.0
+      esm-env: 1.2.2
+      kleur: 4.1.5
+      magic-string: 0.30.21
+      mrmime: 2.0.1
+      set-cookie-parser: 3.1.2
+      sirv: 3.0.2
+      svelte: 5.41.0
+      vite: 7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)
+    optionalDependencies:
+      '@opentelemetry/api': 1.9.0
+      typescript: 5.9.3
+
+  '@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.41.0)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.41.0)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))':
+    dependencies:
+      '@standard-schema/spec': 1.1.0
+      '@sveltejs/acorn-typescript': 1.0.13(acorn@8.18.0)
+      '@sveltejs/vite-plugin-svelte': 6.2.1(svelte@5.41.0)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+      '@types/cookie': 0.6.0
+      acorn: 8.18.0
+      cookie: 0.6.0
+      devalue: 5.9.0
+      esm-env: 1.2.2
+      kleur: 4.1.5
+      magic-string: 0.30.21
+      mrmime: 2.0.1
+      set-cookie-parser: 3.1.2
+      sirv: 3.0.2
+      svelte: 5.41.0
+      vite: 7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)
+    optionalDependencies:
+      '@opentelemetry/api': 1.9.0
+      typescript: 5.9.3
+
+  '@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))':
+    dependencies:
+      '@standard-schema/spec': 1.1.0
+      '@sveltejs/acorn-typescript': 1.0.13(acorn@8.18.0)
+      '@sveltejs/vite-plugin-svelte': 6.2.4(svelte@5.48.5)(vite@7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+      '@types/cookie': 0.6.0
+      acorn: 8.18.0
+      cookie: 0.6.0
+      devalue: 5.9.0
+      esm-env: 1.2.2
+      kleur: 4.1.5
+      magic-string: 0.30.21
+      mrmime: 2.0.1
+      set-cookie-parser: 3.1.2
       sirv: 3.0.2
       svelte: 5.48.5
       vite: 7.1.10(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)
@@ -28036,21 +28043,20 @@ snapshots:
       '@opentelemetry/api': 1.9.0
       typescript: 5.9.3
 
-  '@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))':
+  '@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.48.5)(typescript@5.9.3)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))':
     dependencies:
       '@standard-schema/spec': 1.1.0
-      '@sveltejs/acorn-typescript': 1.0.8(acorn@8.15.0)
+      '@sveltejs/acorn-typescript': 1.0.13(acorn@8.18.0)
       '@sveltejs/vite-plugin-svelte': 6.2.4(svelte@5.48.5)(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
       '@types/cookie': 0.6.0
-      acorn: 8.15.0
+      acorn: 8.18.0
       cookie: 0.6.0
-      devalue: 5.6.2
+      devalue: 5.9.0
       esm-env: 1.2.2
       kleur: 4.1.5
       magic-string: 0.30.21
       mrmime: 2.0.1
-      sade: 1.8.1
-      set-cookie-parser: 2.7.2
+      set-cookie-parser: 3.1.2
       sirv: 3.0.2
       svelte: 5.48.5
       vite: 7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)
@@ -30209,19 +30215,19 @@ snapshots:
       mime-types: 3.0.2
       negotiator: 1.0.0
 
-  acorn-import-phases@1.0.4(acorn@8.15.0):
+  acorn-import-phases@1.0.4(acorn@8.18.0):
     dependencies:
-      acorn: 8.15.0
+      acorn: 8.18.0
 
-  acorn-jsx@5.3.2(acorn@8.15.0):
+  acorn-jsx@5.3.2(acorn@8.18.0):
     dependencies:
-      acorn: 8.15.0
+      acorn: 8.18.0
 
   acorn-walk@8.3.2: {}
 
   acorn-walk@8.3.4:
     dependencies:
-      acorn: 8.15.0
+      acorn: 8.18.0
 
   acorn@7.4.1: {}
 
@@ -30229,7 +30235,7 @@ snapshots:
 
   acorn@8.15.0: {}
 
-  acorn@8.17.0: {}
+  acorn@8.18.0: {}
 
   adm-zip@0.5.16: {}
 
@@ -30247,7 +30253,7 @@ snapshots:
 
   agents@0.1.6(@cfworker/json-schema@4.1.1)(@cloudflare/workers-types@5.20260712.1)(@solana/sysvars@5.5.1(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3))(@tanstack/query-core@5.101.2)(@tanstack/react-query@5.91.0(react@19.2.4))(@types/react@19.2.14)(aws4fetch@1.0.20)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)(ws@8.18.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)):
     dependencies:
-      '@modelcontextprotocol/sdk': 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(zod@3.25.76)
+      '@modelcontextprotocol/sdk': 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       ai: 5.0.48(zod@3.25.76)
       cron-schedule: 5.0.4
       mimetext: 3.0.28
@@ -30299,12 +30305,12 @@ snapshots:
       - utf-8-validate
       - ws
 
-  agents@0.14.5(@babel/core@7.28.6)(@babel/runtime@7.28.6)(@cloudflare/workers-types@4.20260621.1)(@x402/core@2.22.0)(@x402/evm@2.22.0(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6))(ai@6.0.235(zod@4.3.6))(chat@4.35.0(ai@6.0.235(zod@4.3.6))(zod@4.3.6))(hono@4.12.30)(react@19.2.4)(rolldown@1.2.0)(zod@4.3.6):
+  agents@0.14.5(@babel/core@7.28.6)(@babel/runtime@7.28.6)(@cloudflare/workers-types@4.20260621.1)(@x402/core@2.22.0)(@x402/evm@2.22.0(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6))(ai@6.0.235(zod@4.3.6))(chat@4.35.0(ai@6.0.235(zod@4.3.6))(zod@4.3.6))(hono@4.13.3)(react@19.2.4)(rolldown@1.2.0)(zod@4.3.6):
     dependencies:
       '@babel/plugin-proposal-decorators': 7.29.7(@babel/core@7.28.6)
       '@cfworker/json-schema': 4.1.1
-      '@cloudflare/codemode': 0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6))(ai@6.0.235(zod@4.3.6))(zod@4.3.6)
-      '@modelcontextprotocol/sdk': 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6)
+      '@cloudflare/codemode': 0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6))(ai@6.0.235(zod@4.3.6))(zod@4.3.6)
+      '@modelcontextprotocol/sdk': 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6)
       '@rolldown/plugin-babel': 0.2.3(@babel/core@7.28.6)(@babel/runtime@7.28.6)(rolldown@1.2.0)
       ai: 6.0.235(zod@4.3.6)
       cron-schedule: 6.0.0
@@ -30331,12 +30337,12 @@ snapshots:
       - rolldown
       - supports-color
 
-  agents@0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260317.1)(ai@6.0.235(zod@3.25.76))(hono@4.12.30)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76):
+  agents@0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260317.1)(ai@6.0.235(zod@3.25.76))(hono@4.13.3)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76):
     dependencies:
       '@cfworker/json-schema': 4.1.1
       '@cloudflare/ai-chat': 0.0.6(agents@0.3.10)(ai@6.0.235(zod@3.25.76))(react@19.2.4)(zod@3.25.76)
-      '@cloudflare/codemode': 0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76)
-      '@modelcontextprotocol/sdk': 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+      '@cloudflare/codemode': 0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76)
+      '@modelcontextprotocol/sdk': 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       ai: 6.0.235(zod@3.25.76)
       cron-schedule: 6.0.0
       escape-html: 1.0.3
@@ -30356,12 +30362,12 @@ snapshots:
       - hono
       - supports-color
 
-  agents@0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.12.30)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76):
+  agents@0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(hono@4.13.3)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76):
     dependencies:
       '@cfworker/json-schema': 4.1.1
       '@cloudflare/ai-chat': 0.0.6(agents@0.3.10)(ai@6.0.235(zod@3.25.76))(react@19.2.4)(zod@3.25.76)
-      '@cloudflare/codemode': 0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76)
-      '@modelcontextprotocol/sdk': 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+      '@cloudflare/codemode': 0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76)
+      '@modelcontextprotocol/sdk': 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       ai: 6.0.235(zod@3.25.76)
       cron-schedule: 6.0.0
       escape-html: 1.0.3
@@ -30381,12 +30387,12 @@ snapshots:
       - hono
       - supports-color
 
-  agents@0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@5.20260712.1)(ai@6.0.235(zod@3.25.76))(hono@4.12.30)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76):
+  agents@0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@5.20260712.1)(ai@6.0.235(zod@3.25.76))(hono@4.13.3)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76):
     dependencies:
       '@cfworker/json-schema': 4.1.1
       '@cloudflare/ai-chat': 0.0.6(agents@0.3.10)(ai@6.0.235(zod@3.25.76))(react@19.2.4)(zod@3.25.76)
-      '@cloudflare/codemode': 0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76)
-      '@modelcontextprotocol/sdk': 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@3.25.76)
+      '@cloudflare/codemode': 0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76)
+      '@modelcontextprotocol/sdk': 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@3.25.76)
       ai: 6.0.235(zod@3.25.76)
       cron-schedule: 6.0.0
       escape-html: 1.0.3
@@ -30406,12 +30412,12 @@ snapshots:
       - hono
       - supports-color
 
-  agents@0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6))(ai@6.0.235(zod@4.3.6))(zod@4.3.6))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@4.3.6))(hono@4.12.30)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@4.3.6))(zod@4.3.6):
+  agents@0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6))(ai@6.0.235(zod@4.3.6))(zod@4.3.6))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@4.3.6))(hono@4.13.3)(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@4.3.6))(zod@4.3.6):
     dependencies:
       '@cfworker/json-schema': 4.1.1
       '@cloudflare/ai-chat': 0.0.6(agents@0.3.10)(ai@6.0.235(zod@4.3.6))(react@19.2.4)(zod@4.3.6)
-      '@cloudflare/codemode': 0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6))(ai@6.0.235(zod@4.3.6))(zod@4.3.6)
-      '@modelcontextprotocol/sdk': 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.12.30)(zod@4.3.6)
+      '@cloudflare/codemode': 0.3.8(@modelcontextprotocol/sdk@1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6))(ai@6.0.235(zod@4.3.6))(zod@4.3.6)
+      '@modelcontextprotocol/sdk': 1.25.3(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(hono@4.13.3)(zod@4.3.6)
       ai: 6.0.235(zod@4.3.6)
       cron-schedule: 6.0.0
       escape-html: 1.0.3
@@ -31330,7 +31336,7 @@ snapshots:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
       '@types/estree': 1.0.8
-      acorn: 8.15.0
+      acorn: 8.18.0
       estree-walker: 3.0.3
       periscopic: 3.1.0
 
@@ -31985,6 +31991,8 @@ snapshots:
       - supports-color
 
   devalue@5.6.2: {}
+
+  devalue@5.9.0: {}
 
   devlop@1.1.0:
     dependencies:
@@ -32740,14 +32748,14 @@ snapshots:
 
   espree@10.4.0:
     dependencies:
-      acorn: 8.15.0
-      acorn-jsx: 5.3.2(acorn@8.15.0)
+      acorn: 8.18.0
+      acorn-jsx: 5.3.2(acorn@8.18.0)
       eslint-visitor-keys: 4.2.1
 
   espree@9.6.1:
     dependencies:
-      acorn: 8.15.0
-      acorn-jsx: 5.3.2(acorn@8.15.0)
+      acorn: 8.18.0
+      acorn-jsx: 5.3.2(acorn@8.18.0)
       eslint-visitor-keys: 3.4.3
 
   esprima@4.0.1: {}
@@ -33708,9 +33716,9 @@ snapshots:
     dependencies:
       parse-passwd: 1.0.0
 
-  hono@4.11.7: {}
-
   hono@4.12.30: {}
+
+  hono@4.13.3: {}
 
   html-encoding-sniffer@4.0.0:
     dependencies:
@@ -35374,7 +35382,7 @@ snapshots:
 
   mlly@1.8.0:
     dependencies:
-      acorn: 8.15.0
+      acorn: 8.18.0
       pathe: 2.0.3
       pkg-types: 1.3.1
       ufo: 1.6.3
@@ -36203,7 +36211,7 @@ snapshots:
   porto@0.2.35(@tanstack/react-query@5.91.0(react@19.2.4))(@types/react@19.2.14)(@wagmi/core@2.22.1(@tanstack/query-core@5.101.2)(@types/react@19.2.14)(react@19.2.4)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.4))(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76)))(react@19.2.4)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.4))(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(wagmi@2.19.5(@tanstack/query-core@5.101.2)(@tanstack/react-query@5.91.0(react@19.2.4))(@types/react@19.2.14)(aws4fetch@1.0.20)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(react@19.2.4)(typescript@5.9.3)(utf-8-validate@6.0.6)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)):
     dependencies:
       '@wagmi/core': 2.22.1(@tanstack/query-core@5.101.2)(@types/react@19.2.14)(react@19.2.4)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.4))(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))
-      hono: 4.12.30
+      hono: 4.13.3
       idb-keyval: 6.2.2
       mipd: 0.0.7(typescript@5.9.3)
       ox: 0.9.17(typescript@5.9.3)(zod@4.3.6)
@@ -37298,7 +37306,7 @@ snapshots:
 
   set-blocking@2.0.0: {}
 
-  set-cookie-parser@2.7.2: {}
+  set-cookie-parser@3.1.2: {}
 
   set-function-length@1.2.2:
     dependencies:
@@ -38131,14 +38139,14 @@ snapshots:
   terser@5.16.9:
     dependencies:
       '@jridgewell/source-map': 0.3.11
-      acorn: 8.15.0
+      acorn: 8.18.0
       commander: 2.20.3
       source-map-support: 0.5.21
 
   terser@5.46.0:
     dependencies:
       '@jridgewell/source-map': 0.3.11
-      acorn: 8.15.0
+      acorn: 8.18.0
       commander: 2.20.3
       source-map-support: 0.5.21
 
@@ -39414,8 +39422,8 @@ snapshots:
       '@webassemblyjs/ast': 1.14.1
       '@webassemblyjs/wasm-edit': 1.14.1
       '@webassemblyjs/wasm-parser': 1.14.1
-      acorn: 8.15.0
-      acorn-import-phases: 1.0.4(acorn@8.15.0)
+      acorn: 8.18.0
+      acorn-import-phases: 1.0.4(acorn@8.18.0)
       browserslist: 4.28.1
       chrome-trace-event: 1.0.4
       enhanced-resolve: 5.18.4
@@ -39446,8 +39454,8 @@ snapshots:
       '@webassemblyjs/ast': 1.14.1
       '@webassemblyjs/wasm-edit': 1.14.1
       '@webassemblyjs/wasm-parser': 1.14.1
-      acorn: 8.15.0
-      acorn-import-phases: 1.0.4(acorn@8.15.0)
+      acorn: 8.18.0
+      acorn-import-phases: 1.0.4(acorn@8.18.0)
       browserslist: 4.28.1
       chrome-trace-event: 1.0.4
       enhanced-resolve: 5.18.4
@@ -39477,7 +39485,7 @@ snapshots:
       '@webassemblyjs/ast': 1.14.1
       '@webassemblyjs/wasm-edit': 1.14.1
       '@webassemblyjs/wasm-parser': 1.14.1
-      acorn: 8.15.0
+      acorn: 8.18.0
       browserslist: 4.28.1
       chrome-trace-event: 1.0.4
       enhanced-resolve: 5.18.4
@@ -39507,7 +39515,7 @@ snapshots:
       '@webassemblyjs/ast': 1.14.1
       '@webassemblyjs/wasm-edit': 1.14.1
       '@webassemblyjs/wasm-parser': 1.14.1
-      acorn: 8.15.0
+      acorn: 8.18.0
       browserslist: 4.28.1
       chrome-trace-event: 1.0.4
       enhanced-resolve: 5.18.4

@@ -294,6 +294,50 @@ printf '%s\\n' '{"changed_file_list":["packages/example/src/routes/+page.server.
   assert.equal(receipt.status, 'clear');
 });
 
+test('CLI preserves manual entry-point exclusions from native orphan coverage', (t) => {
+  const repo = mkdtempSync(join(tmpdir(), 'ground-review-manual-entry-point-'));
+  const binaryDir = mkdtempSync(join(tmpdir(), 'ground-review-manual-entry-point-binary-'));
+  t.after(() => {
+    rmSync(repo, { recursive: true, force: true });
+    rmSync(binaryDir, { recursive: true, force: true });
+  });
+
+  mustRun('git', ['init', '-b', 'main'], repo);
+  mustRun('git', ['config', 'core.hooksPath', '/dev/null'], repo);
+  writeFixtureFile(repo, 'packages/example/package.json', '{"name":"@example/pkg"}\n');
+  mustRun('git', ['add', '.'], repo);
+  mustRun('git', ['commit', '-m', 'baseline'], repo);
+  writeFixtureFile(repo, 'packages/example/scripts/install.mjs', 'console.log("install");\n');
+
+  const fakeGround = writeFixtureFile(
+    binaryDir,
+    'fake-ground',
+    `#!/bin/sh
+printf '%s\\n' '{"changed_file_list":["packages/example/scripts/install.mjs"],"excluded_changed_files":[],"check_coverage":{"duplicates":{"status":"PASS","analyzed_changed_files":["packages/example/scripts/install.mjs"],"excluded_changed_files":[]},"orphans":{"status":"NOT_APPLICABLE","analyzed_changed_files":[],"excluded_changed_files":[{"path":"packages/example/scripts/install.mjs","reason":"manual_entry_point"}]}},"new_issues":[]}'
+`
+  );
+  chmodSync(fakeGround, 0o755);
+
+  const result = run(process.execPath, [scriptPath, '--base', 'HEAD', '--format', 'json'], repo, {
+    GROUND_BINARY: fakeGround
+  });
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const receipt = JSON.parse(result.stdout);
+  assert.deepEqual(receipt.coverage.checks.orphans, {
+    status: 'completed',
+    analyzable_changed_files: 0,
+    analyzed_changed_files: [],
+    excluded_changed_files: [
+      {
+        path: 'packages/example/scripts/install.mjs',
+        reason: 'manual_entry_point'
+      }
+    ]
+  });
+  assert.deepEqual(receipt.findings, []);
+});
+
 test('CLI preserves mode-only source changes as explicit exclusions', (t) => {
   const repo = mkdtempSync(join(tmpdir(), 'ground-review-mode-only-'));
   t.after(() => rmSync(repo, { recursive: true, force: true }));

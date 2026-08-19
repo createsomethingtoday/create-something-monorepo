@@ -22,6 +22,7 @@ MCP_HUB_URL = "https://cs-mcp-hub-remote.createsomething.workers.dev/mcp"
 
 # Secrets (set via wrangler secret put)
 # MCP_SESSION_RESOLVE_TOKEN - shared secret used by hub for /v1/mcp/sessions/resolve
+# LMS_MAGIC_EXCHANGE_TOKEN - shared only with the LMS server-side proof exchange
 # OSO_API_KEY - optional policy primary evaluator credential (hybrid mode uses local fallback)
 # OSO_URL - optional Oso endpoint
 
@@ -30,6 +31,11 @@ MCP_HUB_URL = "https://cs-mcp-hub-remote.createsomething.workers.dev/mcp"
 binding = "DB"
 database_name = "identity-db"
 database_id = "f3c1ec56-0ca1-4f8c-89ef-881682ef391a"
+
+[[d1_databases]]
+binding = "LMS_DB"
+database_name = "lms-db"
+database_id = "2ec4ea2e-c25f-4832-b78f-a608ff9f8ad7"
 
 # R2 Bucket - User avatars
 [[r2_buckets]]

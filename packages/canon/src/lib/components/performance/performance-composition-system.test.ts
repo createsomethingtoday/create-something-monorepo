@@ -1005,4 +1005,39 @@ describe('PerformanceNarrativeStage', () => {
     expect(stage?.getAttribute('data-presenting')).toBe('false');
     expect(document.body.style.overflow).toBe('');
   });
+
+  it('advances and exits from presentation chrome on the first keypress', () => {
+    target = document.createElement('div');
+    document.body.appendChild(target);
+    instance = mount(PerformanceNarrativeStage, {
+      target,
+      props: {
+        id: 'workflow-story',
+        title: 'Map. Decide. Prove.',
+        enablePresentation: true,
+        scenes
+      }
+    }) as Record<string, unknown>;
+    flushSync();
+
+    const stage = target.querySelector<HTMLElement>('section.performance-narrative-stage');
+    const presentButton = target.querySelector<HTMLButtonElement>(
+      '.performance-narrative-stage__present'
+    );
+    presentButton?.click();
+    presentButton?.focus();
+    flushSync();
+
+    presentButton?.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })
+    );
+    flushSync();
+    expect(stage?.querySelector('[role="tab"][aria-selected="true"]')?.textContent).toContain(
+      'Decide'
+    );
+
+    presentButton?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    flushSync();
+    expect(stage?.getAttribute('data-presenting')).toBe('false');
+  });
 });

@@ -25,9 +25,26 @@ import {
   getReviewerProfileForEmail,
 } from '../src/reviewer-directory.js';
 import { registerTools } from '../src/tools.js';
+import { handleThumbnailProxyRequest, THUMBNAIL_PROXY_PATH } from '../src/thumbnail-proxy.js';
+import {
+  buildScreenshotViewUrl,
+  handleScreenshotViewRequest,
+  SCREENSHOT_VIEW_PATH,
+  SCREENSHOT_VIEW_TTL_SECONDS,
+} from '../src/screenshot-view.js';
+import {
+  buildScreenshotGalleryUrl,
+  handleScreenshotGalleryRequest,
+  SCREENSHOT_GALLERY_PATH,
+  type ScreenshotGalleryManifest,
+} from '../src/screenshot-gallery.js';
+import type { CapturedScreenshot, PublishedScreenshotRef } from '../src/published-site-screenshots.js';
+import { createBrowserRenderingScreenshotExecutor } from './screenshot-capture.js';
 
 interface Env {
   MCP_OBJECT: DurableObjectNamespace;
+  BROWSER?: Fetcher;
+  SCREENSHOTS_KV?: KVNamespace;
   TELEMETRY_DB?: D1Database;
   MCP_ACCOUNT_ID?: string;
   MCP_API_KEY?: string;
@@ -47,6 +64,8 @@ interface Env {
   E2B_BROWSER_TEMPLATE?: string;
   TEMPLATE_REVIEW_ENVIRONMENT?: string;
   TEMPLATE_REVIEW_FORCE_READ_ONLY?: string;
+  WORKER_PUBLIC_ORIGIN?: string;
+  MARKETPLACE_ADMIN_API_KEY?: string;
 }
 
 type RequestProps = {
@@ -115,6 +134,24 @@ export class WebflowTemplateReviewMCP extends McpAgent<Env, unknown, RequestProp
           apiKey: this.env.E2B_API_KEY,
           template: this.env.E2B_BROWSER_TEMPLATE,
         },
+        adminExecute: {
+          publicOrigin: this.env.WORKER_PUBLIC_ORIGIN,
+          thumbnailProxySecret: this.env.AIRTABLE_API_KEY,
+        },
+        marketplaceAdmin: {
+          apiKey: this.env.MARKETPLACE_ADMIN_API_KEY,
+        },
+        ...(this.env.BROWSER
+          ? {
+              screenshotCapture: {
+                executor: createBrowserRenderingScreenshotExecutor(
+                  this.env.BROWSER as unknown as Parameters<typeof createBrowserRenderingScreenshotExecutor>[0],
+                ),
+                publishScreenshot: createScreenshotPublisher(this.env),
+                publishGallery: createGalleryPublisher(this.env),
+              },
+            }
+          : {}),
       },
       {
         allowWrites: runtimePolicy.allowWrites,
@@ -155,6 +192,50 @@ function resolveReviewerDirectory(env: Pick<Env, 'REVIEWER_DIRECTORY_JSON' | 'RE
     parseReviewerDirectory(env.REVIEWER_DIRECTORY_JSON),
     env.REVIEWER_AUTH_EMAIL_ALIASES_JSON,
   );
+}
+
+/**
+ * Stores a capture in KV and mints the signed link a reviewer can open in a
+ * browser (claude.ai does not render MCP image content for the human).
+ * Returns null when storage or signing prerequisites are absent so the tool
+ * still works inline-only.
+ */
+function createScreenshotPublisher(
+  env: Pick<Env, 'SCREENSHOTS_KV' | 'WORKER_PUBLIC_ORIGIN' | 'AIRTABLE_API_KEY'>,
+): (screenshot: CapturedScreenshot) => Promise<PublishedScreenshotRef | null> {
+  return async (screenshot) => {
+    const kv = env.SCREENSHOTS_KV;
+    const origin = env.WORKER_PUBLIC_ORIGIN?.trim();
+    const secret = env.AIRTABLE_API_KEY;
+    if (!kv || !origin || !secret) return null;
+    const id = crypto.randomUUID();
+    const bytes = Uint8Array.from(atob(screenshot.data), (char) => char.charCodeAt(0));
+    await kv.put(`shot:${id}`, bytes.buffer as ArrayBuffer, {
+      expirationTtl: SCREENSHOT_VIEW_TTL_SECONDS,
+      metadata: { mimeType: screenshot.mime_type },
+    });
+    return { id, view_url: await buildScreenshotViewUrl({ origin, secret, id }) };
+  };
+}
+
+/**
+ * Stores the gallery manifest and mints the one signed link that renders
+ * every capture on a single page. Same TTL as the screenshot bytes.
+ */
+function createGalleryPublisher(
+  env: Pick<Env, 'SCREENSHOTS_KV' | 'WORKER_PUBLIC_ORIGIN' | 'AIRTABLE_API_KEY'>,
+): (manifest: ScreenshotGalleryManifest) => Promise<string | null> {
+  return async (manifest) => {
+    const kv = env.SCREENSHOTS_KV;
+    const origin = env.WORKER_PUBLIC_ORIGIN?.trim();
+    const secret = env.AIRTABLE_API_KEY;
+    if (!kv || !origin || !secret || manifest.screenshots.length === 0) return null;
+    const id = crypto.randomUUID();
+    await kv.put(`gallery:${id}`, JSON.stringify(manifest), {
+      expirationTtl: SCREENSHOT_VIEW_TTL_SECONDS,
+    });
+    return buildScreenshotGalleryUrl({ origin, secret, id });
+  };
 }
 
 function unauthorized(origin: string, message: string, resourcePath = '/mcp'): Response {
@@ -322,6 +403,72 @@ export default {
       const result = await authenticateWithIdentity(request, env, url.origin);
       if (result instanceof Response) return result;
       return serve.fetch(request, env, { ...ctx, props: result.props });
+    }
+
+    // Signed image proxy for Admin execute scripts: re-resolves Airtable
+    // attachment bytes fresh (Airtable URLs expire ~2h) with permissive CORS
+    // so scripts running on https://webflow.com can fetch them. HMAC-gated —
+    // only URLs minted by the prepare tools verify. See src/thumbnail-proxy.ts.
+    // Signed, short-lived screenshot links for human reviewers. HMAC-gated —
+    // only URLs minted by the capture tool verify. See src/screenshot-view.ts.
+    if (url.pathname === SCREENSHOT_VIEW_PATH) {
+      if (request.method !== 'GET') {
+        return new Response('Method not allowed', { status: 405, headers: CORS_HEADERS });
+      }
+      return handleScreenshotViewRequest(url, {
+        secret: env.AIRTABLE_API_KEY,
+        getScreenshot: async (id) => {
+          const kv = env.SCREENSHOTS_KV;
+          if (!kv) return null;
+          const stored = await kv.getWithMetadata<{ mimeType?: string }>(`shot:${id}`, 'arrayBuffer');
+          if (!stored.value) return null;
+          return { bytes: stored.value, mimeType: stored.metadata?.mimeType ?? 'image/jpeg' };
+        },
+      });
+    }
+
+    // Single-page gallery over a set of stored captures. HMAC-gated — only
+    // URLs minted by the capture tool verify. See src/screenshot-gallery.ts.
+    if (url.pathname === SCREENSHOT_GALLERY_PATH) {
+      if (request.method !== 'GET') {
+        return new Response('Method not allowed', { status: 405, headers: CORS_HEADERS });
+      }
+      const secret = env.AIRTABLE_API_KEY;
+      return handleScreenshotGalleryRequest(url, {
+        secret,
+        getManifest: async (id) => {
+          const kv = env.SCREENSHOTS_KV;
+          if (!kv) return null;
+          const raw = await kv.get(`gallery:${id}`);
+          if (!raw) return null;
+          try {
+            return JSON.parse(raw) as ScreenshotGalleryManifest;
+          } catch {
+            return null;
+          }
+        },
+        buildImageUrl: (screenshotId) =>
+          buildScreenshotViewUrl({
+            origin: env.WORKER_PUBLIC_ORIGIN?.trim() || url.origin,
+            secret: secret ?? '',
+            id: screenshotId,
+          }),
+      });
+    }
+
+    if (url.pathname === THUMBNAIL_PROXY_PATH) {
+      if (request.method !== 'GET') {
+        return new Response('Method not allowed', { status: 405, headers: CORS_HEADERS });
+      }
+      const airtableApiKey = env.AIRTABLE_API_KEY;
+      const client = airtableApiKey
+        ? new AirtableClient({ apiKey: airtableApiKey, baseId: env.AIRTABLE_BASE_ID ?? DEFAULT_AIRTABLE_BASE_ID })
+        : null;
+      return handleThumbnailProxyRequest(url, {
+        secret: airtableApiKey,
+        getThumbnails: (assetId) =>
+          client ? client.getAssetThumbnails(assetId) : Promise.resolve(null),
+      });
     }
 
     if (url.pathname === '/' || url.pathname === '/health') {

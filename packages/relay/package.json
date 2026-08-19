@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "@cloudflare/puppeteer": "^1.0.5",
-    "hono": "^4.11.6",
+    "hono": "^4.12.34",
     "jose": "^6.0.0",
     "lucide-react": "^0.563.0",
     "react": "^19.0.0",

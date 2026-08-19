@@ -103,8 +103,9 @@ export function summarizeLedger(ledger) {
   const receipts = { total: ledger.records.length, complete: 0, partial: 0, no_analyzable: 0 };
   const findings = {
     observed: 0,
+    classified: 0,
     adjudicated: 0,
-    unadjudicated: 0,
+    unclassified: 0,
     confirmed: 0,
     false_positive: 0,
     out_of_scope: 0
@@ -113,10 +114,13 @@ export function summarizeLedger(ledger) {
   for (const record of ledger.records) {
     receipts[record.receipt.completion] += 1;
     findings.observed += record.receipt.observed_findings;
-    findings.adjudicated += record.verdicts.length;
-    for (const verdict of record.verdicts) findings[verdict.verdict] += 1;
+    findings.classified += record.verdicts.length;
+    for (const verdict of record.verdicts) {
+      findings[verdict.verdict] += 1;
+      if (verdict.verdict !== 'out_of_scope') findings.adjudicated += 1;
+    }
   }
-  findings.unadjudicated = findings.observed - findings.adjudicated;
+  findings.unclassified = findings.observed - findings.classified;
 
   const decisionable = findings.confirmed + findings.false_positive;
   const precision = decisionable === 0 ? null : findings.confirmed / decisionable;
@@ -133,7 +137,7 @@ export function summarizeLedger(ledger) {
   } else if (findings.adjudicated < thresholds.minimum_adjudicated_findings) {
     reasons.push('insufficient_adjudicated_findings');
   }
-  if (findings.unadjudicated > 0) reasons.push('unadjudicated_findings');
+  if (findings.unclassified > 0) reasons.push('unclassified_findings');
   if (thresholds.minimum_precision === null) reasons.push('precision_threshold_not_configured');
   else if (precision === null) reasons.push('precision_unknown');
   else if (precision < thresholds.minimum_precision) reasons.push('precision_below_threshold');
@@ -165,7 +169,7 @@ export function formatMarkdown(summary) {
     '',
     `- Mode: ${summary.mode}`,
     `- Receipts: ${summary.receipts.total} total, ${summary.receipts.complete} complete, ${summary.receipts.partial} partial, ${summary.receipts.no_analyzable} no analyzable source`,
-    `- Findings: ${summary.findings.observed} observed, ${summary.findings.adjudicated} adjudicated, ${summary.findings.unadjudicated} unadjudicated`,
+    `- Findings: ${summary.findings.observed} observed, ${summary.findings.classified} classified, ${summary.findings.adjudicated} calibration adjudicated, ${summary.findings.unclassified} unclassified`,
     `- Verdicts: ${summary.findings.confirmed} confirmed, ${summary.findings.false_positive} false positive, ${summary.findings.out_of_scope} out of scope`,
     `- Precision: ${percent(summary.precision)}`,
     `- False-positive rate: ${percent(summary.false_positive_rate)}`,

@@ -5,6 +5,7 @@ import type { Game } from './types';
 import {
 	deriveScoreboardView,
 	formatNbaDate,
+	selectDefaultAnalyticsGame,
 	shiftNbaDate,
 } from './scoreboard-state';
 
@@ -23,6 +24,21 @@ function game(status: Game['status'], startTime = '2026-07-17T00:00:00Z'): Game 
 }
 
 describe('NBA scoreboard view state', () => {
+	it('opens the analysis choices for a sole archived game by default', () => {
+		const archivedGame = { ...game('final'), analyticsAvailable: true };
+
+		assert.equal(selectDefaultAnalyticsGame([archivedGame], 'past')?.id, archivedGame.id);
+		assert.equal(selectDefaultAnalyticsGame([archivedGame], 'today'), null);
+		assert.equal(
+			selectDefaultAnalyticsGame([archivedGame, { ...archivedGame, id: 'second' }], 'past'),
+			null
+		);
+		assert.equal(
+			selectDefaultAnalyticsGame([{ ...archivedGame, analyticsAvailable: false }], 'past'),
+			null
+		);
+	});
+
 	it('distinguishes every user-visible slate state', () => {
 		const base = { currentDate: '2026-07-16', nbaToday: '2026-07-16', stale: false };
 

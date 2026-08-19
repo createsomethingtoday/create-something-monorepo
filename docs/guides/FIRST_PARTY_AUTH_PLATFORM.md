@@ -33,14 +33,28 @@ MCP deliberately has no credential issuance, access-grant, secret-rotation, or p
 
 For approved OAuth MCP resources, authorization-code plus PKCE exchange mints a short-lived ES256 access token whose audience is the exact protected-resource URL. `/oauth/userinfo` validates signature, issuer, expiration, resource policy, and active user state before returning identity, resource, and granted scope. The adopting resource must require its own audience and intersect token scope with its application allow policy. These application tokens do not require or imply a commercial `.agency` entitlement. They expire after one hour; soft-deleting the Identity user revokes userinfo immediately, while ordinary token retirement relies on that bounded expiration rather than a long-lived credential record.
 
+Identity currently supports public OAuth clients only. Both OAuth and OIDC metadata advertise `token_endpoint_auth_methods_supported: ["none"]`; dynamic registration rejects confidential-client methods, and token exchange rejects client-secret authentication. Adding a confidential-client method requires a separate registration, hashed-secret persistence, constant-time verification, rotation, and test-backed promotion path before discovery may advertise it.
+
+First-party self-service MCP session creation is a separate application boundary. The onboarding caller must explicitly request the `mcp-session` v2 Identity audience before calling `POST /v1/mcp/sessions`; property, LMS, workspace, and other first-party audiences are rejected. Hub resolution remains separately authenticated and continues to fail closed against live Agency entitlement.
+
 ## Security invariants
 
 - Verify the JWT signature, exact issuer, accepted audience, and expiration before evaluating access policy.
 - Never trust client-supplied user, tenant, organization, or role headers.
 - A valid identity is not automatically an authorized application user. Configure at least one explicit allow rule or intentionally approve `allowAnyAuthenticated` for a private application.
 - Production cookies are `httpOnly`, `secure`, `sameSite=lax`, and scoped to the smallest useful domain.
+- Cross-domain session exchange runs only in the receiving property's server adapter. Identity requires the intermediary's exact target, rejects requests with a browser `Origin`, and omits CORS from every credential-bearing response. The adapter writes host-only `HttpOnly` cookies; it does not expose access or refresh credentials to page data or browser JavaScript.
+- Refresh rotation is a single D1 batch: claim one active predecessor, insert at most one successor, and revoke active descendants when the predecessor is replayed. Revoked predecessors remain stored until normal cleanup so replay detection cannot be bypassed.
 - Preview bypass is explicit, non-production only, and rejected when `ENVIRONMENT=production`.
 - Keep identity credentials, refresh tokens, signing keys, and application secrets out of browser data and repository files.
+
+First-party access tokens expire after 15 minutes. Identity-owned endpoints and
+the permission-gated `/v1/validate` deputy re-read active, verified user state;
+offline application verification does not. A soft-deleted or newly unverified
+identity can therefore remain accepted by an offline consumer only until its
+current access token expires. Consumers that require immediate revocation must
+use the online deputy with one exact expected audience and account for its
+availability explicitly.
 
 ## Reference SvelteKit adapter
 
@@ -129,3 +143,14 @@ Preview access proves UI layout only and cannot replace the authenticated workfl
 6. Cut over application auth only after explicit production approval. Remove or rotate old provider credentials in a separate approved step after rollback confidence exists.
 
 Rollback keeps the last known-good deployment and prior identity configuration available until the owned path has passed production readback. Never remove the prior provider merely because local tests pass.
+
+For an intermediary-credential cutover, use this order:
+
+1. Deploy receiving-property server adapters that send the exact target and write host-only cookies. The additional target is backward-compatible with the prior Worker.
+2. Apply the additive Identity D1 migration. The migration must invalidate all active `refresh_tokens` and all unused `cross_domain_tokens`; future session-contract cutovers must do both again.
+3. Read back the new schema and confirm both intermediary tables have zero active pre-cutover credentials.
+4. Deploy the Identity Worker, then verify browser-origin exchange denial, no credential CORS, exact-target denial, anonymous property denial, and healthy discovery.
+
+Rollback restores the previous Worker and property deployments. Keep the
+additive column and index in place; do not reactivate invalidated refresh or
+cross-domain credentials. Affected users sign in again.

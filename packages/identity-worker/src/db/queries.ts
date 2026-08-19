@@ -32,6 +32,94 @@ export async function findUserById(db: D1Database, id: string): Promise<User | n
 	return db.prepare('SELECT * FROM users WHERE id = ?').bind(id).first<User>();
 }
 
+export async function consumeOAuthGrant(
+	db: D1Database,
+	grant: {
+		grantId: string;
+		grantKind: 'oauth_authorization_code' | 'oauth_refresh_token';
+		clientId: string;
+		expiresAt: number;
+		nowSeconds: number;
+	}
+): Promise<boolean> {
+	await db.prepare('DELETE FROM oauth_grant_consumptions WHERE expires_at < ?').bind(grant.nowSeconds).run();
+	const result = await db.prepare(
+		`INSERT OR IGNORE INTO oauth_grant_consumptions
+		 (grant_id, grant_kind, client_id, expires_at) VALUES (?, ?, ?, ?)`
+	).bind(grant.grantId, grant.grantKind, grant.clientId, grant.expiresAt).run();
+	return result.meta.changes === 1;
+}
+
+export async function createOAuthRefreshFamily(
+	db: D1Database,
+	family: { familyId: string; clientId: string; userId: string },
+): Promise<boolean> {
+	const result = await db.prepare(
+		`INSERT INTO oauth_refresh_families (family_id, client_id, user_id)
+		 SELECT ?, ?, ? FROM users
+		 WHERE id = ? AND deleted_at IS NULL AND email_verified = 1`,
+	).bind(family.familyId, family.clientId, family.userId, family.userId).run();
+	return result.meta.changes === 1;
+}
+
+export async function isOAuthRefreshFamilyActive(
+	db: D1Database,
+	familyId: string,
+	clientId: string,
+	userId: string,
+): Promise<boolean> {
+	const family = await db.prepare(
+		`SELECT family_id FROM oauth_refresh_families
+		 WHERE family_id = ? AND client_id = ? AND user_id = ? AND revoked_at IS NULL`,
+	).bind(familyId, clientId, userId).first<{ family_id: string }>();
+	return Boolean(family);
+}
+
+export async function revokeOAuthRefreshFamily(db: D1Database, familyId: string): Promise<void> {
+	await db.prepare(
+		"UPDATE oauth_refresh_families SET revoked_at = datetime('now') WHERE family_id = ? AND revoked_at IS NULL",
+	).bind(familyId).run();
+}
+
+export interface OAuthClientRecord {
+	client_id: string;
+	client_name: string;
+	redirect_uris_json: string;
+	token_endpoint_auth_method: string;
+	grant_types_json: string;
+	response_types_json: string;
+	scope: string;
+}
+
+export async function createOAuthClient(db: D1Database, client: {
+	client_id: string;
+	client_name: string;
+	redirect_uris: string[];
+	token_endpoint_auth_method: 'none';
+	grant_types: string[];
+	response_types: string[];
+	scope: string;
+}): Promise<void> {
+	await db.prepare(
+		`INSERT INTO oauth_clients (
+		 client_id, client_name, redirect_uris_json, token_endpoint_auth_method,
+		 grant_types_json, response_types_json, scope
+		) VALUES (?, ?, ?, ?, ?, ?, ?)`
+	).bind(
+		client.client_id,
+		client.client_name,
+		JSON.stringify(client.redirect_uris),
+		client.token_endpoint_auth_method,
+		JSON.stringify(client.grant_types),
+		JSON.stringify(client.response_types),
+		client.scope,
+	).run();
+}
+
+export async function findOAuthClientById(db: D1Database, clientId: string): Promise<OAuthClientRecord | null> {
+	return db.prepare('SELECT * FROM oauth_clients WHERE client_id = ?').bind(clientId).first<OAuthClientRecord>();
+}
+
 export async function findUserByWorkwayId(db: D1Database, workwayId: string): Promise<User | null> {
 	return db.prepare('SELECT * FROM users WHERE workway_id = ?').bind(workwayId).first<User>();
 }
@@ -117,15 +205,26 @@ export async function createRefreshToken(
 		token_hash: string;
 		family_id: string;
 		expires_at: string;
+		audience: string;
 	}
-): Promise<void> {
-	await db
+): Promise<boolean> {
+	const result = await db
 		.prepare(
-			`INSERT INTO refresh_tokens (id, user_id, token_hash, family_id, expires_at)
-       VALUES (?, ?, ?, ?, ?)`
+			`INSERT INTO refresh_tokens (id, user_id, token_hash, family_id, expires_at, audience)
+	       SELECT ?, ?, ?, ?, ?, ? FROM users
+	       WHERE id = ? AND deleted_at IS NULL AND email_verified = 1`
 		)
-		.bind(token.id, token.user_id, token.token_hash, token.family_id, token.expires_at)
+		.bind(
+			token.id,
+			token.user_id,
+			token.token_hash,
+			token.family_id,
+			token.expires_at,
+			token.audience,
+			token.user_id,
+		)
 		.run();
+	return result.meta.changes === 1;
 }
 
 export async function findRefreshTokenByHash(
@@ -133,9 +232,68 @@ export async function findRefreshTokenByHash(
 	tokenHash: string
 ): Promise<RefreshToken | null> {
 	return db
-		.prepare('SELECT * FROM refresh_tokens WHERE token_hash = ? AND revoked_at IS NULL')
+		.prepare('SELECT * FROM refresh_tokens WHERE token_hash = ? AND audience IS NOT NULL')
 		.bind(tokenHash)
 		.first<RefreshToken>();
+}
+
+export type RefreshTokenRotationOutcome = 'rotated' | 'replayed' | 'invalid';
+
+export async function rotateRefreshTokenAtomically(
+	db: D1Database,
+	rotation: {
+		predecessorHash: string;
+		rotationId: string;
+		replacementId: string;
+		replacementHash: string;
+		replacementExpiresAt: string;
+	},
+): Promise<RefreshTokenRotationOutcome> {
+	const [, replacement, replay] = await db.batch([
+		db.prepare(
+			`UPDATE refresh_tokens
+			 SET revoked_at = datetime('now'), rotation_id = ?
+			 WHERE token_hash = ?
+			   AND revoked_at IS NULL
+			   AND expires_at > datetime('now')
+			   AND audience IS NOT NULL
+			   AND EXISTS (
+			     SELECT 1 FROM users
+			     WHERE users.id = refresh_tokens.user_id
+			       AND users.deleted_at IS NULL
+			       AND users.email_verified = 1
+			   )`,
+		).bind(rotation.rotationId, rotation.predecessorHash),
+		db.prepare(
+			`INSERT INTO refresh_tokens (id, user_id, token_hash, family_id, expires_at, audience)
+			 SELECT ?, user_id, ?, family_id, ?, audience
+			 FROM refresh_tokens
+			 WHERE token_hash = ?
+			   AND rotation_id = ?
+			   AND revoked_at IS NOT NULL`,
+		).bind(
+			rotation.replacementId,
+			rotation.replacementHash,
+			rotation.replacementExpiresAt,
+			rotation.predecessorHash,
+			rotation.rotationId,
+		),
+		db.prepare(
+			`UPDATE refresh_tokens
+			 SET revoked_at = datetime('now')
+			 WHERE revoked_at IS NULL
+			   AND family_id = (
+			     SELECT family_id FROM refresh_tokens AS predecessor
+			     WHERE predecessor.token_hash = ?
+			       AND predecessor.revoked_at IS NOT NULL
+			       AND (predecessor.rotation_id IS NULL OR predecessor.rotation_id <> ?)
+			   )`,
+		).bind(rotation.predecessorHash, rotation.rotationId),
+	]);
+
+	if (replacement.meta.changes === 1) return 'rotated';
+	if (replay.meta.changes > 0) return 'replayed';
+	return 'invalid';
 }
 
 export async function revokeRefreshToken(db: D1Database, id: string): Promise<void> {
@@ -332,13 +490,61 @@ export async function cleanExpiredEmailChangeRequests(db: D1Database): Promise<v
 	await db.prepare("DELETE FROM email_change_requests WHERE expires_at < datetime('now')").run();
 }
 
+// Identity lifecycle credential revocation
+function identityCredentialRevocationStatements(db: D1Database, userId: string): D1PreparedStatement[] {
+	return [
+		db
+			.prepare("UPDATE refresh_tokens SET revoked_at = datetime('now') WHERE user_id = ?")
+			.bind(userId),
+		db
+			.prepare(
+				`UPDATE oauth_refresh_families
+         SET revoked_at = datetime('now')
+         WHERE user_id = ? AND revoked_at IS NULL`,
+			)
+			.bind(userId),
+		db
+			.prepare(
+				`UPDATE mcp_sessions
+         SET revoked_at = datetime('now'), updated_at = datetime('now')
+         WHERE user_id = ? AND revoked_at IS NULL`,
+			)
+			.bind(userId),
+		db
+			.prepare(
+				`UPDATE mcp_long_lived_tokens
+         SET revoked_at = datetime('now'), updated_at = datetime('now')
+         WHERE auth_subject = ? AND revoked_at IS NULL`,
+			)
+			.bind(userId),
+		db
+			.prepare(
+				`UPDATE mcp_legacy_keys
+         SET revoked_at = datetime('now'), updated_at = datetime('now')
+         WHERE user_id = ? AND revoked_at IS NULL`,
+			)
+			.bind(userId),
+	];
+}
+
+export async function revokeAllIdentityLinkedCredentials(
+	db: D1Database,
+	userId: string,
+): Promise<void> {
+	await db.batch(identityCredentialRevocationStatements(db, userId));
+}
+
 // Soft delete queries
 export async function softDeleteUser(db: D1Database, id: string): Promise<boolean> {
-	const result = await db
-		.prepare("UPDATE users SET deleted_at = datetime('now'), updated_at = datetime('now') WHERE id = ? AND deleted_at IS NULL")
-		.bind(id)
-		.run();
-	return result.meta.changes > 0;
+	const [result] = await db.batch([
+		db
+			.prepare(
+				"UPDATE users SET deleted_at = datetime('now'), updated_at = datetime('now') WHERE id = ? AND deleted_at IS NULL",
+			)
+			.bind(id),
+		...identityCredentialRevocationStatements(db, id),
+	]);
+	return (result?.meta.changes ?? 0) > 0;
 }
 
 export async function restoreUser(db: D1Database, id: string): Promise<User | null> {
@@ -350,8 +556,11 @@ export async function restoreUser(db: D1Database, id: string): Promise<User | nu
 }
 
 export async function hardDeleteUser(db: D1Database, id: string): Promise<boolean> {
-	const result = await db.prepare('DELETE FROM users WHERE id = ?').bind(id).run();
-	return result.meta.changes > 0;
+	const results = await db.batch([
+		...identityCredentialRevocationStatements(db, id),
+		db.prepare('DELETE FROM users WHERE id = ?').bind(id),
+	]);
+	return (results.at(-1)?.meta.changes ?? 0) > 0;
 }
 
 export async function findDeletedUsersForCleanup(db: D1Database): Promise<User[]> {
@@ -382,26 +591,26 @@ export async function createCrossDomainToken(
 		.run();
 }
 
-export async function findCrossDomainTokenByHash(
+export async function claimCrossDomainToken(
 	db: D1Database,
-	tokenHash: string
+	tokenHash: string,
+	target: CrossDomainToken['target'],
 ): Promise<CrossDomainToken | null> {
-	return db
-		.prepare(
-			`SELECT * FROM cross_domain_tokens
-       WHERE token_hash = ?
-       AND expires_at > datetime('now')
-       AND used_at IS NULL`
-		)
-		.bind(tokenHash)
-		.first<CrossDomainToken>();
-}
-
-export async function markCrossDomainTokenUsed(db: D1Database, id: string): Promise<void> {
-	await db
-		.prepare("UPDATE cross_domain_tokens SET used_at = datetime('now') WHERE id = ?")
-		.bind(id)
-		.run();
+	return db.prepare(
+		`UPDATE cross_domain_tokens
+		 SET used_at = datetime('now')
+		 WHERE token_hash = ?
+		   AND target = ?
+		   AND expires_at > datetime('now')
+		   AND used_at IS NULL
+		   AND EXISTS (
+		     SELECT 1 FROM users
+		     WHERE users.id = cross_domain_tokens.user_id
+		       AND users.deleted_at IS NULL
+		       AND users.email_verified = 1
+		   )
+		 RETURNING *`,
+	).bind(tokenHash, target).first<CrossDomainToken>();
 }
 
 export async function countRecentCrossDomainTokens(
@@ -493,13 +702,14 @@ export async function createMcpSession(
 		token_hash: string;
 		expires_at: string;
 	}
-): Promise<void> {
-	await db
+): Promise<boolean> {
+	const result = await db
 		.prepare(
 			`INSERT INTO mcp_sessions (
-         id, user_id, tenant_id, account_id, host, bound_host, tool_mode,
-         toolkit_profile_json, allowed_tool_prefixes_json, token_hash, expires_at
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	         id, user_id, tenant_id, account_id, host, bound_host, tool_mode,
+	         toolkit_profile_json, allowed_tool_prefixes_json, token_hash, expires_at
+	       ) SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? FROM users
+	       WHERE id = ? AND deleted_at IS NULL AND email_verified = 1`
 		)
 		.bind(
 			session.id,
@@ -512,9 +722,11 @@ export async function createMcpSession(
 			session.toolkit_profile_json,
 			session.allowed_tool_prefixes_json,
 			session.token_hash,
-			session.expires_at
+			session.expires_at,
+			session.user_id,
 		)
 		.run();
+	return result.meta.changes === 1;
 }
 
 export async function findMcpSessionById(db: D1Database, id: string): Promise<McpSession | null> {
@@ -563,15 +775,16 @@ export async function upsertMcpLongLivedToken(
 		issued_by: string;
 		metadata_json: string;
 	}
-): Promise<void> {
-	await db
+): Promise<boolean> {
+	const result = await db
 		.prepare(
 			`INSERT INTO mcp_long_lived_tokens (
          id, auth_subject, auth_email, tenant_id, account_id, bound_host, tool_mode,
          toolkit_profile_json, allowed_tool_prefixes_json, token_hash, token_prefix,
          issued_by, metadata_json, revoked_at
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)
-       ON CONFLICT(auth_subject) DO UPDATE SET
+	       ) SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL FROM users
+	       WHERE id = ? AND deleted_at IS NULL AND email_verified = 1
+	       ON CONFLICT(auth_subject) DO UPDATE SET
          id = excluded.id,
          auth_email = excluded.auth_email,
          tenant_id = excluded.tenant_id,
@@ -602,8 +815,10 @@ export async function upsertMcpLongLivedToken(
 			token.token_prefix,
 			token.issued_by,
 			token.metadata_json,
+			token.auth_subject,
 		)
 		.run();
+	return result.meta.changes === 1;
 }
 
 export async function findMcpLongLivedTokenByAuthSubject(
@@ -754,9 +969,26 @@ export async function createMcpAuthEvent(
 	await db
 		.prepare(
 			`INSERT INTO mcp_auth_events (id, session_id, user_id, event_type, event_data_json)
-       VALUES (?, ?, ?, ?, ?)`
+       VALUES (
+         ?,
+         ?,
+         CASE
+           WHEN ? IS NULL OR EXISTS (SELECT 1 FROM users WHERE id = ?) THEN ?
+           ELSE NULL
+         END,
+         ?,
+         ?
+       )`
 		)
-		.bind(event.id, event.session_id, event.user_id, event.event_type, event.event_data_json)
+		.bind(
+			event.id,
+			event.session_id,
+			event.user_id,
+			event.user_id,
+			event.user_id,
+			event.event_type,
+			event.event_data_json,
+		)
 		.run();
 }
 
@@ -821,13 +1053,17 @@ export async function createMcpLegacyKey(
 		expires_at: string;
 		sunset_at: string;
 	}
-): Promise<void> {
-	await db
+): Promise<boolean> {
+	const result = await db
 		.prepare(
 			`INSERT INTO mcp_legacy_keys (
          id, key_hash, key_prefix, tenant_id, account_id, user_id,
          reason, exception_approved_by, issued_by, expires_at, sunset_at
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	       ) SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+	       WHERE ? IS NULL OR EXISTS (
+	         SELECT 1 FROM users
+	         WHERE id = ? AND deleted_at IS NULL AND email_verified = 1
+	       )`
 		)
 		.bind(
 			key.id,
@@ -840,9 +1076,12 @@ export async function createMcpLegacyKey(
 			key.exception_approved_by,
 			key.issued_by,
 			key.expires_at,
-			key.sunset_at
+			key.sunset_at,
+			key.user_id,
+			key.user_id,
 		)
 		.run();
+	return result.meta.changes === 1;
 }
 
 export async function findMcpLegacyKeyById(db: D1Database, id: string): Promise<McpLegacyKey | null> {

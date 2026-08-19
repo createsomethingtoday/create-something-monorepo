@@ -9,6 +9,7 @@
   },
   "notes": [
     "This ledger seeds the 2026-08-12 calibration receipts without inventing positive findings or precision.",
+    "PR #1403 records 14 pre-existing duplicate-function observations as out of scope; they remain auditable but do not count toward calibration precision or evidence thresholds.",
     "Numeric coverage and precision thresholds remain an operator decision; this ledger must remain advisory until they are configured."
   ],
   "records": [
@@ -191,6 +192,125 @@
         "observed_findings": 0
       },
       "verdicts": []
+    },
+    {
+      "receipt": {
+        "id": "ground-review-pr-1394-1d0b7db",
+        "source": "https://github.com/createsomethingtoday/create-something-monorepo/commit/1d0b7dbb8a5b4e6de771290a811f5178f468592f",
+        "completion": "partial",
+        "observed_findings": 1
+      },
+      "verdicts": [
+        {
+          "finding_id": "pr-1394-install-matraix-task-orphan-module",
+          "check": "orphans",
+          "verdict": "false_positive",
+          "rationale": "The new module is a documented operator CLI entry point in the PR README, so its lack of a code import does not make it unreachable."
+        }
+      ]
+    },
+    {
+      "receipt": {
+        "id": "ground-review-pr-1390-a245ee3",
+        "source": "https://github.com/createsomethingtoday/create-something-monorepo/commit/a245ee314b04081fafcbfbf4cbd426f2c8b23705",
+        "completion": "complete",
+        "observed_findings": 0
+      },
+      "verdicts": []
+    },
+    {
+      "receipt": {
+        "id": "ground-review-pr-1403-6c5b0a2",
+        "source": "https://github.com/createsomethingtoday/create-something-monorepo/commit/6c5b0a258bc5c128235e4a08dde1cf52fa45c43a",
+        "completion": "complete",
+        "observed_findings": 14
+      },
+      "verdicts": [
+        {
+          "finding_id": "pr-1403-formatCompactNumber-template-card-template-grid",
+          "check": "duplicates",
+          "verdict": "out_of_scope",
+          "rationale": "The helper definitions were unchanged from the PR base; Ground observed them because their files changed for unrelated fixes."
+        },
+        {
+          "finding_id": "pr-1403-proxyImageUrl-template-grid-popular-category-grid",
+          "check": "duplicates",
+          "verdict": "out_of_scope",
+          "rationale": "The helper definitions were unchanged from the PR base; Ground observed them because their files changed for unrelated fixes."
+        },
+        {
+          "finding_id": "pr-1403-proxyImageUrl-template-grid-template-carousel-section",
+          "check": "duplicates",
+          "verdict": "out_of_scope",
+          "rationale": "The helper definitions were unchanged from the PR base; Ground observed them because their files changed for unrelated fixes."
+        },
+        {
+          "finding_id": "pr-1403-normalizeScope-template-grid-template-search-sidebar",
+          "check": "duplicates",
+          "verdict": "out_of_scope",
+          "rationale": "The helper definitions were unchanged from the PR base; Ground observed them because their files changed for unrelated fixes."
+        },
+        {
+          "finding_id": "pr-1403-formatPrice-template-grid-template-carousel-section",
+          "check": "duplicates",
+          "verdict": "out_of_scope",
+          "rationale": "The helper definitions were unchanged from the PR base; Ground observed them because their files changed for unrelated fixes."
+        },
+        {
+          "finding_id": "pr-1403-resolveApiBase-landing-hero-popular-category-grid",
+          "check": "duplicates",
+          "verdict": "out_of_scope",
+          "rationale": "The helper definitions were unchanged from the PR base; Ground observed them because their files changed for unrelated fixes."
+        },
+        {
+          "finding_id": "pr-1403-resolveApiBase-landing-hero-template-carousel-section",
+          "check": "duplicates",
+          "verdict": "out_of_scope",
+          "rationale": "The helper definitions were unchanged from the PR base; Ground observed them because their files changed for unrelated fixes."
+        },
+        {
+          "finding_id": "pr-1403-resolveApiBase-landing-hero-template-search-sidebar",
+          "check": "duplicates",
+          "verdict": "out_of_scope",
+          "rationale": "The helper definitions were unchanged from the PR base; Ground observed them because their files changed for unrelated fixes."
+        },
+        {
+          "finding_id": "pr-1403-normalizeLimit-landing-hero-popular-category-grid",
+          "check": "duplicates",
+          "verdict": "out_of_scope",
+          "rationale": "The helper definitions were unchanged from the PR base; Ground observed them because their files changed for unrelated fixes."
+        },
+        {
+          "finding_id": "pr-1403-resolveApiBase-template-carousel-section-popular-category-grid",
+          "check": "duplicates",
+          "verdict": "out_of_scope",
+          "rationale": "The helper definitions were unchanged from the PR base; Ground observed them because their files changed for unrelated fixes."
+        },
+        {
+          "finding_id": "pr-1403-resolveApiBase-template-carousel-section-template-search-sidebar",
+          "check": "duplicates",
+          "verdict": "out_of_scope",
+          "rationale": "The helper definitions were unchanged from the PR base; Ground observed them because their files changed for unrelated fixes."
+        },
+        {
+          "finding_id": "pr-1403-proxyImageUrl-template-carousel-section-popular-category-grid",
+          "check": "duplicates",
+          "verdict": "out_of_scope",
+          "rationale": "The helper definitions were unchanged from the PR base; Ground observed them because their files changed for unrelated fixes."
+        },
+        {
+          "finding_id": "pr-1403-resolveApiBase-template-search-sidebar-popular-category-grid",
+          "check": "duplicates",
+          "verdict": "out_of_scope",
+          "rationale": "The helper definitions were unchanged from the PR base; Ground observed them because their files changed for unrelated fixes."
+        },
+        {
+          "finding_id": "pr-1403-resolveApiBase-template-search-sidebar-template-marketplace-heading",
+          "check": "duplicates",
+          "verdict": "out_of_scope",
+          "rationale": "The helper definitions were unchanged from the PR base; Ground observed them because their files changed for unrelated fixes."
+        }
+      ]
     }
   ]
 }

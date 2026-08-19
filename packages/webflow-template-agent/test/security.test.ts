@@ -101,5 +101,32 @@ describe('signed Template Finder security tokens', () => {
     );
     expect(await verifyTurnstile(env(), 'challenge', { origin: 'https://webflow.com' })).toEqual({ success: true });
   });
+
+  it('accepts any hostname from a comma-separated expected list', async () => {
+    const staging = env({ TURNSTILE_EXPECTED_HOSTNAME: 'webflow.com, webflowtest.com' });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        Response.json({ success: true, action: 'template-agent-session', hostname: 'webflowtest.com' }),
+      ),
+    );
+    expect(await verifyTurnstile(staging, 'challenge', { origin: 'https://webflowtest.com' })).toEqual({
+      success: true,
+    });
+  });
+
+  it('still rejects unlisted hostnames when a list is configured', async () => {
+    const staging = env({ TURNSTILE_EXPECTED_HOSTNAME: 'webflow.com,webflowtest.com' });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        Response.json({ success: true, action: 'template-agent-session', hostname: 'evil.example' }),
+      ),
+    );
+    expect(await verifyTurnstile(staging, 'challenge', { origin: 'https://webflowtest.com' })).toEqual({
+      success: false,
+      reason: 'Bot verification hostname mismatch.',
+    });
+  });
 });
 

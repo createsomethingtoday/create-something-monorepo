@@ -1,5 +1,6 @@
 const SIGNATURE_TOLERANCE_SECONDS = 300;
 const MAX_WEBHOOK_BODY_BYTES = 256_000;
+export const LANGFUSE_ALERT_REMINDER_INTERVAL_MS = 6 * 60 * 60 * 1000;
 
 export type LangfuseMonitorAlert = {
   id: string;
@@ -27,7 +28,18 @@ export type LangfuseMonitorAlert = {
 type HandlerOptions = {
   signingSecret?: string | string[];
   nowMs?: number;
+  notificationState?: AlertNotificationStateStore;
   deliver: (alert: LangfuseMonitorAlert) => Promise<void>;
+};
+
+export type AlertNotificationStateStore = {
+  get(key: string): Promise<string | null>;
+  put(key: string, value: string): Promise<void>;
+};
+
+type AlertNotificationState = {
+  active: boolean;
+  lastAlertAtMs: number;
 };
 
 function json(data: unknown, status: number): Response {
@@ -37,7 +49,9 @@ function json(data: unknown, status: number): Response {
   });
 }
 
-function parseSignatureHeader(header: string | null): { timestamp: string; signature: string } | null {
+function parseSignatureHeader(
+  header: string | null
+): { timestamp: string; signature: string } | null {
   if (!header) return null;
   const fields = Object.fromEntries(
     header.split(',').map((part) => {
@@ -123,6 +137,59 @@ function parseMonitorAlert(rawBody: string): LangfuseMonitorAlert | null {
   return value as LangfuseMonitorAlert;
 }
 
+function notificationStateKey(alert: LangfuseMonitorAlert): string {
+  return `langfuse-alert:${encodeURIComponent(alert.payload.projectId)}:${encodeURIComponent(alert.payload.monitorId)}`;
+}
+
+function parseNotificationState(value: string | null): AlertNotificationState | null {
+  if (!value) return null;
+  try {
+    const parsed = JSON.parse(value) as Partial<AlertNotificationState>;
+    if (
+      typeof parsed.active !== 'boolean' ||
+      typeof parsed.lastAlertAtMs !== 'number' ||
+      !Number.isFinite(parsed.lastAlertAtMs)
+    ) {
+      return null;
+    }
+    return { active: parsed.active, lastAlertAtMs: parsed.lastAlertAtMs };
+  } catch {
+    return null;
+  }
+}
+
+function isRecovery(alert: LangfuseMonitorAlert): boolean {
+  return alert.payload.severity.trim().toUpperCase() === 'OK';
+}
+
+async function nextNotificationState(
+  alert: LangfuseMonitorAlert,
+  store: AlertNotificationStateStore | undefined,
+  nowMs: number
+): Promise<{ shouldDeliver: boolean; key?: string; value?: AlertNotificationState }> {
+  if (!store) return { shouldDeliver: true };
+
+  const key = notificationStateKey(alert);
+  const previous = parseNotificationState(await store.get(key));
+  if (isRecovery(alert)) {
+    if (!previous?.active) return { shouldDeliver: false };
+    return {
+      shouldDeliver: true,
+      key,
+      value: { active: false, lastAlertAtMs: previous.lastAlertAtMs }
+    };
+  }
+
+  if (
+    previous?.active &&
+    Number.isFinite(previous.lastAlertAtMs) &&
+    nowMs - previous.lastAlertAtMs < LANGFUSE_ALERT_REMINDER_INTERVAL_MS
+  ) {
+    return { shouldDeliver: false };
+  }
+  return { shouldDeliver: true, key, value: { active: true, lastAlertAtMs: nowMs } };
+}
+
 export async function handleLangfuseAlertWebhook(
   request: Request,
   options: HandlerOptions
@@ -130,9 +197,8 @@ export async function handleLangfuseAlertWebhook(
   if (request.method !== 'POST') {
     return json({ accepted: false, error: 'Method not allowed' }, 405);
   }
-  const signingSecrets = (Array.isArray(options.signingSecret)
-    ? options.signingSecret
-    : [options.signingSecret]
+  const signingSecrets = (
+    Array.isArray(options.signingSecret) ? options.signingSecret : [options.signingSecret]
   ).filter((secret): secret is string => Boolean(secret?.trim()));
   if (signingSecrets.length === 0) {
     return json({ accepted: false, error: 'Webhook signing is not configured' }, 503);
@@ -157,8 +223,32 @@ export async function handleLangfuseAlertWebhook(
     return json({ accepted: false, error: 'Invalid monitor alert payload' }, 400);
   }
 
+  let notification: { shouldDeliver: boolean; key?: string; value?: AlertNotificationState };
   try {
-    await options.deliver(alert);
+    notification = await nextNotificationState(
+      alert,
+      options.notificationState,
+      options.nowMs ?? Date.now()
+    );
+  } catch (error) {
+    console.warn(
+      'Langfuse alert notification state unavailable; delivering without throttling',
+      error
+    );
+    notification = { shouldDeliver: true };
+  }
+
+  try {
+    if (notification.shouldDeliver) {
+      await options.deliver(alert);
+      if (notification.key && notification.value && options.notificationState) {
+        try {
+          await options.notificationState.put(notification.key, JSON.stringify(notification.value));
+        } catch (error) {
+          console.warn('Langfuse alert notification state write failed after delivery', error);
+        }
+      }
+    }
   } catch (error) {
     console.error('Langfuse monitor alert delivery failed', error);
     return json({ accepted: false, error: 'Alert delivery failed' }, 502);

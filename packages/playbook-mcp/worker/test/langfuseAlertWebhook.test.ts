@@ -29,7 +29,7 @@ const payload = JSON.stringify({
   }
 });
 
-async function signature(body: string): Promise<string> {
+async function signature(body: string, signingTimestamp = timestamp): Promise<string> {
   const key = await crypto.subtle.importKey(
     'raw',
     new TextEncoder().encode(secret),
@@ -40,7 +40,7 @@ async function signature(body: string): Promise<string> {
   const bytes = await crypto.subtle.sign(
     'HMAC',
     key,
-    new TextEncoder().encode(`${timestamp}.${body}`)
+    new TextEncoder().encode(`${signingTimestamp}.${body}`)
   );
   return Array.from(new Uint8Array(bytes), (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
@@ -68,6 +68,119 @@ test('accepts a current signed Langfuse monitor alert and delivers it once', asy
   assert.equal(response.status, 202);
   assert.equal(delivered.length, 1);
   assert.deepEqual(await response.json(), { accepted: true, eventId: 'alert-event-1' });
+});
+
+test('delivers an alert opening immediately, then waits six hours before a reminder', async () => {
+  const delivered: unknown[] = [];
+  const state = new Map<string, string>();
+  const stateStore = {
+    get: async (key: string) => state.get(key) ?? null,
+    put: async (key: string, value: string) => {
+      state.set(key, value);
+    }
+  };
+  const request = () =>
+    new Request('https://playbook.mcp.createsomething.ltd/webhooks/langfuse/alerts', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-langfuse-signature': `t=${timestamp},v1=${'0'.repeat(64)}`
+      },
+      body: payload
+    });
+  const signedRequest = async (now = nowMs) => {
+    const signedTimestamp = String(Math.floor(now / 1000));
+    const next = request();
+    next.headers.set(
+      'x-langfuse-signature',
+      `t=${signedTimestamp},v1=${await signature(payload, signedTimestamp)}`
+    );
+    return next;
+  };
+
+  for (const elapsedMs of [0, 60 * 60 * 1000, 6 * 60 * 60 * 1000]) {
+    const currentNowMs = nowMs + elapsedMs;
+    const response = await handleLangfuseAlertWebhook(await signedRequest(currentNowMs), {
+      signingSecret: secret,
+      nowMs: currentNowMs,
+      notificationState: stateStore,
+      deliver: async (alert) => {
+        delivered.push(alert);
+      }
+    });
+    assert.equal(response.status, 202);
+  }
+
+  assert.equal(delivered.length, 2);
+});
+
+test('delivers one recovery after an open alert and suppresses duplicate recoveries', async () => {
+  const delivered: unknown[] = [];
+  const state = new Map<string, string>();
+  const stateStore = {
+    get: async (key: string) => state.get(key) ?? null,
+    put: async (key: string, value: string) => {
+      state.set(key, value);
+    }
+  };
+  const recoveryPayload = payload.replace('"severity":"ALERT"', '"severity":"OK"');
+  const requestFor = async (body: string) =>
+    new Request('https://playbook.mcp.createsomething.ltd/webhooks/langfuse/alerts', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-langfuse-signature': `t=${timestamp},v1=${await signature(body)}`
+      },
+      body
+    });
+
+  for (const [body, elapsedMs] of [
+    [payload, 0],
+    [recoveryPayload, 60_000],
+    [recoveryPayload, 120_000]
+  ] as const) {
+    const response = await handleLangfuseAlertWebhook(await requestFor(body), {
+      signingSecret: secret,
+      nowMs: nowMs + elapsedMs,
+      notificationState: stateStore,
+      deliver: async (alert) => {
+        delivered.push(alert);
+      }
+    });
+    assert.equal(response.status, 202);
+  }
+
+  assert.equal(delivered.length, 2);
+});
+
+test('delivers an alert when notification state is temporarily unavailable', async () => {
+  const delivered: unknown[] = [];
+  const response = await handleLangfuseAlertWebhook(
+    new Request('https://playbook.mcp.createsomething.ltd/webhooks/langfuse/alerts', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-langfuse-signature': `t=${timestamp},v1=${await signature(payload)}`
+      },
+      body: payload
+    }),
+    {
+      signingSecret: secret,
+      nowMs,
+      notificationState: {
+        get: async () => {
+          throw new Error('KV temporarily unavailable');
+        },
+        put: async () => undefined
+      },
+      deliver: async (alert) => {
+        delivered.push(alert);
+      }
+    }
+  );
+
+  assert.equal(response.status, 202);
+  assert.equal(delivered.length, 1);
 });
 
 test('rejects a forged signature without delivering the alert', async () => {
