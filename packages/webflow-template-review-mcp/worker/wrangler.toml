@@ -27,6 +27,14 @@ GSAP_VALIDATION_WORKER_URL = "https://gsap-validation-worker.createsomething.wor
 E2B_BROWSER_TEMPLATE = "webflow-template-review-browser-v1"
 WORKER_PUBLIC_ORIGIN = "https://webflow-template-review-mcp.createsomething.workers.dev"
 
+[browser]
+binding = "BROWSER"
+
+# Short-lived storage for reviewer-viewable screenshot links (~1h TTL).
+[[kv_namespaces]]
+binding = "SCREENSHOTS_KV"
+id = "6ea925a2e2bd4bf4b7a3ef7c1335fb2e"
+
 [[d1_databases]]
 binding = "TELEMETRY_DB"
 database_name = "cs-telemetry"
@@ -59,6 +67,13 @@ WEBFLOW_TEMPLATE_VALIDATION_WORKER_URL = "https://validation-worker.createsometh
 GSAP_VALIDATION_WORKER_URL = "https://gsap-validation-worker.createsomething.workers.dev/validateGsap"
 E2B_BROWSER_TEMPLATE = "webflow-template-review-browser-v1"
 WORKER_PUBLIC_ORIGIN = "https://webflow-template-review-mcp-dev.createsomething.workers.dev"
+
+[env.dev.browser]
+binding = "BROWSER"
+
+[[env.dev.kv_namespaces]]
+binding = "SCREENSHOTS_KV"
+id = "b03b922fd96a4f5685695a1c7f2b993d"
 
 [[env.dev.d1_databases]]
 binding = "TELEMETRY_DB"

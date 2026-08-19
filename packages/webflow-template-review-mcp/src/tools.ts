@@ -30,6 +30,12 @@ import {
   runPublishedSiteSandbox,
   type PublishedSiteSandboxExecutionConfig,
 } from './published-site-sandbox-execution.js';
+import {
+  normalizePublishedSiteScreenshotInput,
+  PublishedSiteScreenshotError,
+  SCREENSHOT_VIEWPORT_NAMES,
+  type ScreenshotCaptureConfig,
+} from './published-site-screenshots.js';
 import { TEMPLATE_REVIEW_FIELD_MAP } from './schema.js';
 import { REVIEW_WORKFLOW } from './prompts.js';
 import type { ReviewerProfile } from './reviewer-directory.js';
@@ -197,6 +203,7 @@ export interface ToolRuntimeConfig extends ValidationToolConfig {
   sandboxExecution?: PublishedSiteSandboxExecutionConfig;
   adminExecute?: AdminExecuteConfig;
   marketplaceAdmin?: MarketplaceAdminConfig;
+  screenshotCapture?: ScreenshotCaptureConfig;
 }
 
 /**
@@ -305,6 +312,114 @@ export function registerTools(
         };
       } catch (error) {
         if (error instanceof PublishedSiteSandboxExecutionError) {
+          return jsonContent(
+            {
+              ok: false,
+              error: {
+                code: error.code,
+                message: error.message,
+                status: error.status,
+                details: error.details,
+              },
+            },
+            true,
+          );
+        }
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_capture_published_site_screenshots',
+    'Read-only: capture desktop/mobile screenshots of a published *.webflow.io template site with Cloudflare Browser Rendering (real Chromium) and return them inline as images. Waits for fonts and IX2 intro animations to settle. With full_page, scrolls through the page first (firing IX2 scroll reveals and lazy loads), then returns readable viewport-height segments top-to-bottom (up to max_segments per viewport; truncated=true when the page continues past the last segment). IMPORTANT: the human reviewer cannot see the inline images — the result includes a gallery_url (one page rendering every capture, valid ~1 hour); always share that link in your reply. Each screenshot entry also has a per-segment view_url; include those only when the reviewer wants individual frames. Performs no Airtable write and makes no review decision.',
+    {
+      published_url: z.string().url(),
+      viewports: z.array(z.enum(SCREENSHOT_VIEWPORT_NAMES)).min(1).max(3).optional(),
+      full_page: z.boolean().optional(),
+      settle_ms: z.number().int().min(0).max(10_000).optional(),
+      max_segments: z.number().int().min(1).max(8).optional(),
+    },
+    {
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: false,
+      openWorldHint: true,
+    },
+    async (input) => {
+      try {
+        const executor = runtimeConfig.screenshotCapture?.executor;
+        if (!executor) {
+          return jsonContent(
+            {
+              ok: false,
+              error: {
+                code: 'SCREENSHOTS_NOT_CONFIGURED',
+                message: 'Screenshot capture is not configured on this deployment (missing Browser Rendering binding).',
+              },
+            },
+            true,
+          );
+        }
+        const request = normalizePublishedSiteScreenshotInput(input);
+        const result = await executor(request);
+        const publish = runtimeConfig.screenshotCapture?.publishScreenshot;
+        const published = publish
+          ? await Promise.all(result.screenshots.map((screenshot) => publish(screenshot).catch(() => null)))
+          : result.screenshots.map(() => null);
+        const publishGallery = runtimeConfig.screenshotCapture?.publishGallery;
+        let galleryUrl: string | null = null;
+        if (publishGallery && published.some(Boolean)) {
+          galleryUrl = await publishGallery({
+            final_url: result.final_url,
+            page_title: result.page_title,
+            captured_at: new Date().toISOString(),
+            screenshots: result.screenshots.flatMap((screenshot, index) => {
+              const ref = published[index];
+              if (!ref) return [];
+              return [
+                {
+                  id: ref.id,
+                  viewport: screenshot.viewport,
+                  width: screenshot.width,
+                  height: screenshot.height,
+                  segment: screenshot.segment,
+                  scroll_y: screenshot.scroll_y,
+                  page_height_px: screenshot.page_height_px,
+                  truncated: screenshot.truncated,
+                },
+              ];
+            }),
+          }).catch(() => null);
+        }
+        const summary = {
+          ...result,
+          ...(galleryUrl ? { gallery_url: galleryUrl } : {}),
+          screenshots: result.screenshots.map(({ data: _data, ...screenshot }, index) => ({
+            ...screenshot,
+            ...(published[index] ? { view_url: published[index].view_url } : {}),
+          })),
+          ...(galleryUrl || published.some(Boolean)
+            ? {
+                view_note: galleryUrl
+                  ? 'The human reviewer cannot see the inline images. Share the gallery_url (one page with every capture, valid ~1 hour) in your reply; add per-segment view_url links only if the reviewer wants individual frames.'
+                  : 'The human reviewer cannot see the inline images. Share the view_url links (valid ~1 hour) in your reply so they can open the captures in a browser.',
+              }
+            : {}),
+        };
+        return {
+          structuredContent: { ok: true, data: summary },
+          content: [
+            { type: 'text' as const, text: JSON.stringify({ ok: true, data: summary }, null, 2) },
+            ...result.screenshots.map((screenshot) => ({
+              type: 'image' as const,
+              data: screenshot.data,
+              mimeType: screenshot.mime_type,
+            })),
+          ],
+        };
+      } catch (error) {
+        if (error instanceof PublishedSiteScreenshotError) {
           return jsonContent(
             {
               ok: false,

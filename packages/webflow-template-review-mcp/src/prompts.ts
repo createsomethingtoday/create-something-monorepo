@@ -18,7 +18,7 @@ Default review sequence:
 2. Load details (template_review_get_asset, template_review_get_version).
 3. Always call template_review_get_review_context before any decision, write, assignment, or official action — it returns capability flags (canAssign, canReview, canPublish).
 4. Run template_review_run_published_site_validation with publishedUrl only. Never pass Preview URLs or Designer data as automated-analysis input.
-5. When rendered-page or screenshot evidence is useful, run template_review_run_published_site_sandbox with publishedUrl. It executes a fixed, short-lived collector; it is not a general code sandbox.
+5. For visual/screenshot evidence, run template_review_capture_published_site_screenshots with published_url — real-Chromium full-page captures (desktop/tablet/mobile segments). The reviewer cannot see inline images: always share the returned gallery_url (one page rendering every capture, valid ~1 hour) in your reply, adding per-segment view_url links only when the reviewer wants individual frames. For rendered-DOM, network, or collector evidence, run template_review_run_published_site_sandbox with publishedUrl. It executes a fixed, short-lived collector; it is not a general code sandbox.
 6. For comprehensive reports, call template_review_get_comprehensive_review_contract and include its required sections; validate Agent Review Feedback drafts with template_review_format_agent_review_feedback before any save.
 
 Evidence rules:
@@ -85,7 +85,8 @@ Every review follows these phases:
 |------|-------------|------|
 | \`template_review_get_comprehensive_review_contract\` | Returns the canonical comprehensive evidence shape, coverage matrix, rubric dimensions, manual checks, and Agent Review Feedback format | Before comprehensive reports or Agent Review Feedback summaries |
 | \`template_review_run_published_site_validation\` | Runs the working published-site validators: content/assets/accessibility signals, legacy IX2 interactions, GSAP/custom-code policy signals | After \`get_review_context\`, using \`publishedUrl\` only |
-| \`template_review_run_published_site_sandbox\` | Runs the fixed, bounded E2B collector for rendered pages, network summaries, and screenshots | When direct rendered-page evidence is needed, using \`publishedUrl\` only |
+| \`template_review_capture_published_site_screenshots\` | Captures real-Chromium desktop/tablet/mobile screenshots of the published site (full-page segments, IX2-aware settling) and returns a gallery_url plus per-segment view_url links, valid ~1 hour | Preferred path for visual/screenshot evidence, using \`published_url\` only — always share the gallery_url with the reviewer, who cannot see inline images |
+| \`template_review_run_published_site_sandbox\` | Runs the fixed, bounded E2B collector for rendered pages, network summaries, and screenshots | When rendered-DOM or network evidence is needed, using \`publishedUrl\` only |
 
 These analysis paths are **read-only** and do not use Designer API data, Preview URLs, or Airtable writes. The E2B tool accepts only bounded collection options; it does not accept caller-provided code, commands, packages, secrets, or output destinations. Treat all automated output as supplemental published-site evidence for review triage, not as a final decision.
 
@@ -196,10 +197,11 @@ step genuinely was completed — the checklist is audit evidence, not a formalit
 2. \`template_review_list_queue\` — find work
 3. \`template_review_get_review_context\` — check capabilities
 4. \`template_review_run_published_site_validation\` — run published-site validators on \`publishedUrl\`
-5. \`template_review_run_published_site_sandbox\` — collect bounded rendered-page evidence when useful
-6. Review supplemental evidence and manual Designer checks separately
-7. \`template_review_assign_self\` — claim the version
-8. After the reviewer explicitly chooses, call the matching decision tool
+5. \`template_review_capture_published_site_screenshots\` — capture visual evidence when useful (share the gallery_url)
+6. \`template_review_run_published_site_sandbox\` — collect bounded rendered-DOM/network evidence when useful
+7. Review supplemental evidence and manual Designer checks separately
+8. \`template_review_assign_self\` — claim the version
+9. After the reviewer explicitly chooses, call the matching decision tool
 
 ## Rules
 
