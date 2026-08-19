@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "cheerio": "^1.0.0-rc.12",
-    "next": "15.5.12",
+    "next": "15.5.23",
     "postcss": "^8.4.49",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

@@ -62,7 +62,7 @@
     "pilot:verify": "pnpm run pilot:check && pnpm run pilot:test && pnpm run pilot:benchmark && pnpm run pilot:receipt:validate -- pilot/evidence/ground-native-benchmark-receipt.v1.json"
   },
   "devDependencies": {
-    "@modelcontextprotocol/sdk": "^1.25.3",
+    "@modelcontextprotocol/sdk": "^1.26.0",
     "@types/node": "^24.10.9",
     "ajv": "^8.17.1",
     "tsx": "^4.21.0",

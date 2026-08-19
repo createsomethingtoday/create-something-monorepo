@@ -23,16 +23,16 @@
   },
   "dependencies": {
     "@create-something/canon": "workspace:^",
+    "@gltf-transform/cli": "^4.0.0",
+    "@gltf-transform/core": "^4.0.0",
+    "@gltf-transform/extensions": "^4.0.0",
+    "@gltf-transform/functions": "^4.0.0",
     "@resvg/resvg-js": "^2.6.0",
     "@resvg/resvg-wasm": "^2.6.2",
     "archiver": "^7.0.0",
     "jsdom": "^25.0.0",
-    "sharp": "^0.33.0",
-    "three": "^0.170.0",
-    "@gltf-transform/cli": "^4.0.0",
-    "@gltf-transform/core": "^4.0.0",
-    "@gltf-transform/extensions": "^4.0.0",
-    "@gltf-transform/functions": "^4.0.0"
+    "sharp": "^0.33.5",
+    "three": "^0.170.0"
   },
   "devDependencies": {
     "@types/archiver": "^6.0.0",

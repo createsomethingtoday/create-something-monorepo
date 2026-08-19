@@ -60,7 +60,7 @@
   },
   "dependencies": {
     "@create-something/canon": "workspace:*",
-    "@modelcontextprotocol/sdk": "^1.25.3",
+    "@modelcontextprotocol/sdk": "^1.26.0",
     "three": "^0.170.0",
     "zod": "^3.23.0"
   },
@@ -70,11 +70,11 @@
     "@sveltejs/kit": "^2.70.2",
     "@sveltejs/vite-plugin-svelte": "^6.2.1",
     "@types/three": "^0.170.0",
-    "svelte": "^5.41.0",
+    "svelte": "^5.56.9",
     "svelte-check": "^4.3.3",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "vite": "^7.3.1",
+    "vite": "^7.3.6",
     "vitest": "^3.2.4",
     "wrangler": "^4.103.0"
   }
