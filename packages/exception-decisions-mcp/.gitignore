@@ -1,0 +1,5 @@
+# Local credential mirrors — never commit. The authoritative copies are worker
+# secrets (DECIDERS_JSON) and Infisical; see README.md § Secrets.
+.deciders.local.json
+.dify-console.token
+node_modules/
