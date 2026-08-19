@@ -4,23 +4,15 @@
  * POST /api/auth/magic-link/verify
  * Body: { token: string, sessionId: string }
  *
- * Verifies the magic link token and creates/authenticates the user.
- * Called when user clicks the email link.
- * Canon: One click, authenticated.
+ * Identity atomically consumes the LMS mailbox proof before issuing credentials.
+ * Credentials stay in host-only HttpOnly cookies and are never returned to JS.
  */
 
 import type { RequestHandler } from './$types';
 import { json, error } from '@sveltejs/kit';
-import { hashToken } from '$lib/email/magic-link';
+const DEFAULT_IDENTITY_WORKER = 'https://id.createsomething.space';
 
-const IDENTITY_WORKER = 'https://id.createsomething.space';
-
-export const POST: RequestHandler = async ({ request, platform }) => {
-	const db = platform?.env?.DB;
-
-	if (!db) {
-		throw error(500, 'Database not available');
-	}
+export const POST: RequestHandler = async ({ request, cookies, fetch: runtimeFetch, platform }) => {
 
 	let body: { token?: string; sessionId?: string };
 
@@ -36,108 +28,34 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		throw error(400, 'Missing required fields: token, sessionId');
 	}
 
-	// Hash the token to compare with stored hash
-	const tokenHash = await hashToken(token);
-	const now = Math.floor(Date.now() / 1000);
-
-	// Find and validate the session
-	const session = await db
-		.prepare(
-			`SELECT id, email, status, expires_at
-       FROM magic_link_sessions
-       WHERE session_id = ? AND token_hash = ?`
-		)
-		.bind(sessionId, tokenHash)
-		.first<{
-			id: string;
-			email: string;
-			status: string;
-			expires_at: number;
-		}>();
-
-	if (!session) {
-		throw error(400, 'Invalid or expired magic link');
-	}
-
-	if (session.status === 'verified') {
-		throw error(400, 'Magic link already used');
-	}
-
-	if (session.status === 'expired' || session.expires_at < now) {
-		// Mark as expired
-		await db
-			.prepare(`UPDATE magic_link_sessions SET status = 'expired' WHERE id = ?`)
-			.bind(session.id)
-			.run();
-		throw error(400, 'Magic link expired');
-	}
-
-	// Authenticate with identity-worker
-	// First, try to find user by email, or create new user
-	let tokens: { accessToken: string; refreshToken: string };
-
+	const exchangeToken = platform?.env?.LMS_MAGIC_EXCHANGE_TOKEN;
+	if (!exchangeToken) throw error(500, 'Authentication service not configured');
+	const identityWorker = platform?.env?.IDENTITY_WORKER_URL || DEFAULT_IDENTITY_WORKER;
+	let response: Response;
 	try {
-		// Try login first (existing user)
-		const loginResponse = await fetch(`${IDENTITY_WORKER}/v1/auth/magic-login`, {
+		response = await runtimeFetch(`${identityWorker}/v1/auth/magic-exchange`, {
 			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({
-				email: session.email,
-				source: 'lms'
-			})
+			headers: { 'Content-Type': 'application/json', 'X-LMS-Magic-Exchange-Token': exchangeToken },
+			body: JSON.stringify({ token, session_id: sessionId }),
 		});
-
-		if (loginResponse.ok) {
-			const loginData = (await loginResponse.json()) as {
-				accessToken: string;
-				refreshToken: string;
-			};
-			tokens = loginData;
-		} else if (loginResponse.status === 404) {
-			// User doesn't exist, create new account
-			const signupResponse = await fetch(`${IDENTITY_WORKER}/v1/auth/magic-signup`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					email: session.email,
-					source: 'lms'
-				})
-			});
-
-			if (!signupResponse.ok) {
-				const errData = (await signupResponse.json()) as { message?: string };
-				throw new Error(errData.message || 'Failed to create account');
-			}
-
-			const signupData = (await signupResponse.json()) as {
-				accessToken: string;
-				refreshToken: string;
-			};
-			tokens = signupData;
-		} else {
-			const errData = (await loginResponse.json()) as { message?: string };
-			throw new Error(errData.message || 'Authentication failed');
-		}
 	} catch (err) {
 		console.error('Identity worker error:', err);
-		throw error(500, 'Authentication service unavailable');
+		throw error(502, 'Authentication service unavailable');
 	}
-
-	// Update session with tokens and mark as verified
-	await db
-		.prepare(
-			`UPDATE magic_link_sessions
-       SET status = 'verified', verified_at = ?,
-           access_token = ?, refresh_token = ?
-       WHERE id = ?`
-		)
-		.bind(now, tokens.accessToken, tokens.refreshToken, session.id)
-		.run();
+	const result = await response.json().catch(() => null) as {
+		access_token?: string; refresh_token?: string; expires_in?: number; user?: { id: string; email: string }; message?: string;
+	} | null;
+	if (!response.ok || !result?.access_token || !result.refresh_token || typeof result.expires_in !== 'number' || !result.user) {
+		throw error(response.ok ? 502 : response.status, result?.message || 'Authentication failed');
+	}
+	const secure = platform?.env?.ENVIRONMENT !== 'development';
+	const cookieOptions = { path: '/', httpOnly: true, secure, sameSite: 'lax' as const };
+	cookies.set('cs_access_token', result.access_token, { ...cookieOptions, maxAge: result.expires_in });
+	cookies.set('cs_refresh_token', result.refresh_token, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 });
 
 	return json({
 		success: true,
 		message: 'Authentication successful',
-		accessToken: tokens.accessToken,
-		refreshToken: tokens.refreshToken
+		user: result.user,
 	});
 };

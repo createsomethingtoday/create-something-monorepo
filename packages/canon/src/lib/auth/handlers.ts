@@ -201,6 +201,7 @@ export function createAuthHandler(config: AuthHandlerConfig) {
  * Pre-configured login handler
  */
 export function createLoginHandler(options?: {
+	audience?: string;
 	cookieDomain?: string;
 	identityBaseUrl?: string;
 	isProduction?: boolean;
@@ -211,6 +212,10 @@ export function createLoginHandler(options?: {
 		cookieDomain: options?.cookieDomain,
 		identityBaseUrl: options?.identityBaseUrl,
 		isProduction: options?.isProduction,
+		transformBody: (body) => ({
+			...(body as object),
+			...(options?.audience && { audience: options.audience }),
+		}),
 	});
 }
 
@@ -332,8 +337,8 @@ export function createCrossDomainHandler(options: CrossDomainHandlerOptions) {
 }
 
 interface CrossDomainPageLoaderOptions {
-	/** Property identifier (ltd, io, agency, space, lms) */
-	property: 'ltd' | 'io' | 'agency' | 'space' | 'lms';
+	/** Property identifier bound into the one-time exchange */
+	property: 'ltd' | 'io' | 'agency' | 'space';
 }
 
 /**
@@ -348,7 +353,6 @@ interface CrossDomainPageLoaderOptions {
  */
 export function createCrossDomainPageLoader(options: CrossDomainPageLoaderOptions) {
 	const propertyLabel = `.${options.property}`;
-	const productionDomain = PROPERTY_DOMAINS[options.property];
 
 	return async ({ url, cookies, platform }: { 
 		url: URL; 
@@ -358,12 +362,11 @@ export function createCrossDomainPageLoader(options: CrossDomainPageLoaderOption
 		const token = url.searchParams.get('token');
 		const redirectTo = url.searchParams.get('redirect') || '/account';
 		const isProduction = platform?.env?.ENVIRONMENT === 'production';
-		const domain = isProduction ? productionDomain : undefined;
 
 		await exchangeCrossDomainToken({
 			token: token || '',
+			target: options.property,
 			cookies,
-			domain: domain || '',
 			isProduction: isProduction ?? true,
 			propertyLabel,
 			redirectTo,

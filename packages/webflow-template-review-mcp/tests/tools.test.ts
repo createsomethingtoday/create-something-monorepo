@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
+import { buildAdminTemplateFillConsoleScript } from '../src/admin-template-fill.js';
 import type { AirtableClient } from '../src/airtable.js';
 import { RUBRIC_DIMENSIONS } from '../src/comprehensive-review-contract.js';
 import { resolveOAuthAccess, SCOPE_WRITE } from '../src/oauth-access.js';
@@ -76,6 +77,12 @@ test('registerTools places reviewer-safe write tools before admin and broad muta
   assert.notEqual(names.indexOf('template_review_save_agent_feedback'), -1);
   assert.notEqual(names.indexOf('template_review_save_draft_feedback'), -1);
   assert.notEqual(names.indexOf('template_review_run_published_site_validation'), -1);
+  assert.notEqual(names.indexOf('template_review_prepare_admin_template_fill'), -1);
+  assert.notEqual(names.indexOf('template_review_prepare_admin_template_fill_batch'), -1);
+  assert.notEqual(names.indexOf('template_review_get_template_thumbnail'), -1);
+  assert.ok(names.indexOf('template_review_prepare_admin_template_fill') < names.indexOf('template_review_run_published_site_validation'));
+  assert.ok(names.indexOf('template_review_prepare_admin_template_fill_batch') < names.indexOf('template_review_run_published_site_validation'));
+  assert.ok(names.indexOf('template_review_get_template_thumbnail') < names.indexOf('template_review_run_published_site_validation'));
   assert.ok(names.indexOf('template_review_run_published_site_validation') < names.indexOf('template_review_assign_self'));
   assert.ok(names.indexOf('template_review_get_comprehensive_review_contract') < names.indexOf('template_review_run_published_site_validation'));
   assert.ok(names.indexOf('template_review_prepare_published_site_sandbox') < names.indexOf('template_review_run_published_site_validation'));
@@ -1382,4 +1389,521 @@ test('whole-field checklist overwrite is no longer reachable through update_vers
   assert.equal('publishing_checklist' in calls[0], false);
   assert.equal(TEMPLATE_REVIEW_FIELD_MAP.writeSupport.versionReview.includes('review_checklist' as never), false);
   assert.equal(TEMPLATE_REVIEW_FIELD_MAP.writeSupport.versionReview.includes('publishing_checklist' as never), false);
+});
+
+function adminFillContext(versionId = 'rec_version_komanica') {
+  return {
+    versionId,
+    assetId: 'rec_asset_komanica',
+    templateName: 'Komanica',
+    reviewStatus: '🔁Response to Review',
+    canAssign: false,
+    canReview: true,
+    canPublish: false,
+    isAssignedToCurrentReviewer: true,
+    version: { versionId, assetId: 'rec_asset_komanica', rawFields: {} },
+    asset: {
+      assetId: 'rec_asset_komanica',
+      templateName: 'Komanica',
+      uid: 'komanica',
+      descriptionShort: 'A bold editorial agency template.',
+      descriptionLongHtml: '<p>Long description</p>',
+      adminDetailPagePath: '/templates/html/komanica-website-template',
+      adminRecommendedType: 'CMS',
+      categoryNames: ['Design Portfolio', 'Creative Agency'],
+      categoryCmsSlugs: ['design-portfolio-websites', 'creative-agency-websites'],
+      categoryGroupDisplayNames: ['Portfolio & Agency'],
+      categoryGroupCmsSlugs: ['portfolio-and-agency-websites'],
+      templatePriceFilter: 99,
+      priceString: '$99 USD',
+      websiteUrl: 'https://komanica.webflow.io/',
+      previewSiteUrl: 'https://webflow.com/preview/komanica',
+      thumbnailImageUrl: 'https://example.com/thumb.png',
+      secondaryThumbnailUrls: ['https://example.com/secondary.png'],
+      carouselImageUrls: ['https://example.com/carousel-1.png'],
+    },
+  };
+}
+
+function runAdminFillScriptAgainstFakeForm(script: string) {
+  class FakeInput {
+    value = '';
+
+    constructor(readonly name: string) {}
+
+    dispatchEvent() {}
+  }
+
+  class FakeSelect extends FakeInput {
+    constructor(
+      name: string,
+      readonly options: Array<{ value: string; textContent: string }>,
+    ) {
+      super(name);
+    }
+  }
+
+  const fields: Record<string, FakeInput> = {
+    name: new FakeInput('name'),
+    shortName: new FakeInput('shortName'),
+    description: new FakeInput('description'),
+    extDetailPageUrl: new FakeInput('extDetailPageUrl'),
+    extCategory: new FakeSelect('extCategory', [
+      { value: '', textContent: '' },
+      { value: 'Design', textContent: 'Design' },
+      { value: 'Business', textContent: 'Business' },
+    ]),
+    extMainTag: new FakeInput('extMainTag'),
+    type: new FakeSelect('type', [
+      { value: 'basic', textContent: 'basic' },
+      { value: 'Ecommerce', textContent: 'Ecommerce' },
+      { value: 'CMS', textContent: 'CMS' },
+      { value: 'Memberships', textContent: 'Memberships' },
+    ]),
+    cost: new FakeInput('cost'),
+  };
+  const form = {
+    querySelector: (selector: string) => {
+      const name = selector.match(/\[name="([^"]+)"\]/)?.[1];
+      return name ? fields[name] : null;
+    },
+  };
+  const fakeDocument = {
+    querySelector: (selector: string) => {
+      if (selector === 'form[action="/admin/templates"]') return form;
+      if (selector.startsWith('form[action="/admin/templates"]')) return form.querySelector(selector);
+      return null;
+    },
+    querySelectorAll: (selector: string) => (selector === 'form' ? [form] : []),
+  };
+  const globalWithDom = globalThis as typeof globalThis & {
+    document?: unknown;
+    HTMLSelectElement?: unknown;
+    Event?: unknown;
+  };
+  const previousDocument = globalWithDom.document;
+  const previousSelect = globalWithDom.HTMLSelectElement;
+  const previousEvent = globalWithDom.Event;
+  const previousTable = console.table;
+  const previousWarn = console.warn;
+
+  try {
+    globalWithDom.document = fakeDocument;
+    globalWithDom.HTMLSelectElement = FakeSelect;
+    globalWithDom.Event = class {
+      constructor(readonly type: string) {}
+    };
+    console.table = () => undefined;
+    console.warn = () => undefined;
+    new Function(script)();
+  } finally {
+    globalWithDom.document = previousDocument;
+    globalWithDom.HTMLSelectElement = previousSelect;
+    globalWithDom.Event = previousEvent;
+    console.table = previousTable;
+    console.warn = previousWarn;
+  }
+
+  return Object.fromEntries(Object.entries(fields).map(([key, field]) => [key, field.value]));
+}
+
+test('prepare_admin_template_fill generates read-only admin form data and fill-only script', async () => {
+  const { server, handlers } = createServerHarness();
+  const calls: string[] = [];
+  const client = {
+    getReviewContext: async (versionId: string) => {
+      calls.push(versionId);
+      return adminFillContext(versionId);
+    },
+  } as unknown as AirtableClient;
+
+  registerTools(
+    server,
+    () => client,
+    () => reviewer,
+  );
+
+  const result = await handlers.get('template_review_prepare_admin_template_fill')?.({
+    version_id: 'rec_version_komanica',
+  });
+
+  assert.ok(result);
+  assert.deepEqual(calls, ['rec_version_komanica']);
+
+  const payload = parsePayload(result);
+  assert.equal(payload.ok, true);
+
+  const bundle = payload.data as {
+    schema_version: string;
+    readiness: { can_publish: boolean; warning?: string };
+    form_data: Record<string, unknown>;
+    missing_fields: string[];
+    manual_uploads: Record<string, unknown>;
+    safety_boundary: string[];
+    console_script: string;
+    bookmarklet: string;
+  };
+
+  assert.equal(bundle.schema_version, 'webflow_admin_template_fill.v0.1');
+  assert.equal(bundle.readiness.can_publish, false);
+  assert.match(bundle.readiness.warning ?? '', /Admin form preparation only/);
+  assert.equal(bundle.form_data.template_name, 'Komanica');
+  assert.equal(bundle.form_data.uid, 'komanica');
+  assert.equal(bundle.form_data.detail_page_path, '/templates/html/komanica-website-template');
+  assert.equal(bundle.form_data.recommended_type, 'CMS');
+  assert.equal(bundle.form_data.price_usd, 99);
+  assert.equal(bundle.form_data.price_cents, 9900);
+  assert.deepEqual(bundle.form_data.category_names, ['Design Portfolio', 'Creative Agency']);
+  assert.deepEqual(bundle.form_data.category_cms_slugs, ['design-portfolio-websites', 'creative-agency-websites']);
+  assert.equal(bundle.form_data.category_display_name, 'Portfolio & Agency');
+  assert.deepEqual(bundle.form_data.admin_form, {
+    name: 'Komanica',
+    shortName: 'komanica',
+    description: 'A bold editorial agency template.',
+    extDetailPageUrl: '/templates/html/komanica-website-template',
+    extCategory: 'Design',
+    extMainTag: 'Agency',
+    type: 'CMS',
+    cost: '9900',
+  });
+  assert.deepEqual(bundle.missing_fields, []);
+  assert.deepEqual(bundle.manual_uploads.secondary_thumbnail_urls, ['https://example.com/secondary.png']);
+  assert.ok(bundle.console_script.includes('form[action="/admin/templates"]'));
+  assert.match(bundle.console_script, /\['cost', data\.cost\]/);
+  assert.doesNotMatch(bundle.console_script, /long_description_html/);
+  assert.match(bundle.console_script, /fill-only script/i);
+  assert.match(bundle.console_script, /does not submit/i);
+  assert.match(bundle.bookmarklet, /^javascript:/);
+  assert.ok(bundle.safety_boundary.some((item) => item.includes('does not write Airtable')));
+});
+
+test('generated admin fill script targets the real Webflow Admin field names', () => {
+  const script = buildAdminTemplateFillConsoleScript({
+    template_name: 'Komanica',
+    uid: 'komanica',
+    detail_page_path: '/templates/html/komanica-website-template',
+    recommended_type: 'CMS',
+    price_usd: 99,
+    price_cents: 9900,
+    category_names: ['Design Portfolio', 'Creative Agency'],
+    category_cms_slugs: ['design-portfolio-websites', 'creative-agency-websites'],
+    category_display_name: 'Portfolio & Agency',
+    short_description: 'A bold editorial agency template.',
+    admin_form: {
+      name: 'Komanica',
+      shortName: 'komanica',
+      description: 'A bold editorial agency template.',
+      extDetailPageUrl: '/templates/html/komanica-website-template',
+      extCategory: 'Design',
+      extMainTag: 'Agency',
+      type: 'CMS',
+      cost: '9900',
+    },
+  });
+
+  assert.deepEqual(runAdminFillScriptAgainstFakeForm(script), {
+    name: 'Komanica',
+    shortName: 'komanica',
+    description: 'A bold editorial agency template.',
+    extDetailPageUrl: '/templates/html/komanica-website-template',
+    extCategory: 'Design',
+    extMainTag: 'Agency',
+    type: 'CMS',
+    cost: '9900',
+  });
+});
+
+test('prepare_admin_template_fill_batch omits scripts by default for compact handoffs', async () => {
+  const { server, handlers } = createServerHarness();
+  const calls: string[] = [];
+  const client = {
+    getReviewContext: async (versionId: string) => {
+      calls.push(versionId);
+      return adminFillContext(versionId);
+    },
+  } as unknown as AirtableClient;
+
+  registerTools(
+    server,
+    () => client,
+    () => reviewer,
+  );
+
+  const result = await handlers.get('template_review_prepare_admin_template_fill_batch')?.({
+    version_ids: ['rec_version_komanica', 'rec_version_komanica', 'rec_version_other'],
+  });
+
+  assert.ok(result);
+  assert.deepEqual(calls, ['rec_version_komanica', 'rec_version_other']);
+
+  const payload = parsePayload(result);
+  assert.equal(payload.ok, true);
+
+  const batch = payload.data as {
+    schema_version: string;
+    count: number;
+    include_scripts: boolean;
+    items: Array<{ console_script?: string; bookmarklet?: string; form_data: Record<string, unknown> }>;
+  };
+
+  assert.equal(batch.schema_version, 'webflow_admin_template_fill_batch.v0.1');
+  assert.equal(batch.count, 2);
+  assert.equal(batch.include_scripts, false);
+  assert.equal(batch.items[0]?.form_data.template_name, 'Komanica');
+  assert.equal(batch.items[0]?.console_script, undefined);
+  assert.equal(batch.items[0]?.bookmarklet, undefined);
+});
+
+test('get_template_thumbnail resolves a version to fresh asset attachment links', async () => {
+  const { server, handlers } = createServerHarness();
+  const calls: string[] = [];
+  const client = {
+    getVersionById: async (versionId: string) => {
+      calls.push(`version:${versionId}`);
+      return { versionId, assetId: 'rec_asset_komanica', rawFields: {} };
+    },
+    getAssetThumbnails: async (assetId: string) => {
+      calls.push(`thumbnails:${assetId}`);
+      return {
+        assetId,
+        templateName: 'Komanica',
+        thumbnail: {
+          url: 'https://airtable.example/fresh-thumb.png',
+          filename: 'komanica-thumbnail.png',
+          type: 'image/png',
+          sizeBytes: 245_000,
+          width: 1440,
+          height: 1080,
+        },
+        secondaryThumbnails: [{ url: 'https://airtable.example/fresh-secondary.png', filename: 'komanica-secondary.png' }],
+        carouselImages: [],
+      };
+    },
+  } as unknown as AirtableClient;
+
+  registerTools(
+    server,
+    () => client,
+    () => reviewer,
+  );
+
+  const result = await handlers.get('template_review_get_template_thumbnail')?.({
+    version_id: 'rec_version_komanica',
+  });
+
+  assert.ok(result);
+  assert.deepEqual(calls, ['version:rec_version_komanica', 'thumbnails:rec_asset_komanica']);
+
+  const payload = parsePayload(result);
+  assert.equal(payload.ok, true);
+
+  const data = payload.data as {
+    schema_version: string;
+    source: { asset_id: string; version_id?: string; template_name: string };
+    thumbnail: { url: string; filename?: string; width?: number } | null;
+    secondary_thumbnails: Array<{ url: string }>;
+    carousel_images: unknown[];
+    url_expiry_note: string;
+    next_steps: string[];
+  };
+
+  assert.equal(data.schema_version, 'webflow_admin_template_thumbnails.v0.1');
+  assert.equal(data.source.asset_id, 'rec_asset_komanica');
+  assert.equal(data.source.version_id, 'rec_version_komanica');
+  assert.equal(data.source.template_name, 'Komanica');
+  assert.equal(data.thumbnail?.url, 'https://airtable.example/fresh-thumb.png');
+  assert.equal(data.thumbnail?.filename, 'komanica-thumbnail.png');
+  assert.equal(data.thumbnail?.width, 1440);
+  assert.equal(data.secondary_thumbnails.length, 1);
+  assert.deepEqual(data.carousel_images, []);
+  assert.match(data.url_expiry_note, /time-limited/i);
+  assert.ok(data.next_steps.some((step) => step.includes('MRP ID (Override)')));
+});
+
+test('get_template_thumbnail accepts asset_id directly and rejects missing identifiers', async () => {
+  const { server, handlers } = createServerHarness();
+  const calls: string[] = [];
+  const client = {
+    getVersionById: async () => {
+      throw new Error('should not resolve a version when asset_id is provided');
+    },
+    getAssetThumbnails: async (assetId: string) => {
+      calls.push(`thumbnails:${assetId}`);
+      return {
+        assetId,
+        templateName: 'Komanica',
+        thumbnail: null,
+        secondaryThumbnails: [],
+        carouselImages: [],
+      };
+    },
+  } as unknown as AirtableClient;
+
+  registerTools(
+    server,
+    () => client,
+    () => reviewer,
+  );
+
+  const direct = await handlers.get('template_review_get_template_thumbnail')?.({
+    asset_id: 'rec_asset_komanica',
+  });
+  assert.ok(direct);
+  const directPayload = parsePayload(direct);
+  assert.equal(directPayload.ok, true);
+  assert.deepEqual(calls, ['thumbnails:rec_asset_komanica']);
+  assert.equal((directPayload.data as { thumbnail: unknown }).thumbnail, null);
+  assert.equal((directPayload.data as { source: { version_id?: string } }).source.version_id, undefined);
+
+  const missing = await handlers.get('template_review_get_template_thumbnail')?.({});
+  assert.ok(missing);
+  const missingPayload = parsePayload(missing);
+  assert.equal(missingPayload.ok, false);
+  assert.equal((missingPayload.error as { code?: string })?.code, 'MISSING_IDENTIFIER');
+});
+
+test('prepare_admin_template_verify builds a read-only compare script from the MRP override', async () => {
+  const { server, handlers } = createServerHarness();
+  const context = adminFillContext('rec_version_komanica') as Record<string, unknown>;
+  (context.asset as Record<string, unknown>).mrpIdOverride = 'abcdef012345abcdef012345';
+  const client = {
+    getReviewContext: async () => context,
+  } as unknown as AirtableClient;
+
+  registerTools(
+    server,
+    () => client,
+    () => reviewer,
+  );
+
+  const result = await handlers.get('template_review_prepare_admin_template_verify')?.({
+    version_id: 'rec_version_komanica',
+  });
+
+  assert.ok(result);
+  const payload = parsePayload(result);
+  assert.equal(payload.ok, true);
+
+  const data = payload.data as {
+    schema_version: string;
+    template_id: string;
+    template_id_source: string;
+    expected: Record<string, unknown>;
+    console_script: string;
+    safety_boundary: string[];
+  };
+
+  assert.equal(data.schema_version, 'webflow_admin_template_verify.v0.1');
+  assert.equal(data.template_id, 'abcdef012345abcdef012345');
+  assert.equal(data.template_id_source, 'mrp_id_override');
+  assert.deepEqual(data.expected, {
+    name: 'Komanica',
+    shortName: 'komanica',
+    description: 'A bold editorial agency template.',
+    extDetailPageUrl: '/templates/html/komanica-website-template',
+    extCategory: 'Design',
+    extMainTag: 'Agency',
+    type: 'CMS',
+    cost: 9900,
+  });
+  assert.ok(data.console_script.includes("fetch('/admin/api/templates/' + templateId"));
+  assert.doesNotMatch(data.console_script, /method:\s*'(PUT|POST|DELETE)'/);
+  assert.doesNotMatch(data.console_script, /confirm\(/);
+  assert.ok(data.safety_boundary.some((item) => /read-only/i.test(item)));
+});
+
+test('prepare_admin_template_verify fails cleanly when no MRP id is resolvable', async () => {
+  const { server, handlers } = createServerHarness();
+  const client = {
+    getReviewContext: async () => adminFillContext('rec_version_komanica'),
+  } as unknown as AirtableClient;
+
+  registerTools(
+    server,
+    () => client,
+    () => reviewer,
+  );
+
+  const result = await handlers.get('template_review_prepare_admin_template_verify')?.({
+    version_id: 'rec_version_komanica',
+  });
+
+  assert.ok(result);
+  const payload = parsePayload(result);
+  assert.equal(payload.ok, false);
+  assert.equal((payload.error as { code?: string })?.code, 'TEMPLATE_ID_UNRESOLVED');
+});
+
+test('set_mrp_visibility PUTs the airtable MRP route with bearer key and XHR header', async () => {
+  const { server, handlers } = createServerHarness();
+  const calls: Array<{ url: string; init: RequestInit }> = [];
+  const fetchStub = (async (url: string | URL | Request, init?: RequestInit) => {
+    calls.push({ url: String(url), init: init ?? {} });
+    return new Response(JSON.stringify({ _id: 'abcdef012345abcdef012345', visibility: 'PRIVATE' }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  }) as typeof fetch;
+
+  registerTools(
+    server,
+    () => ({}) as AirtableClient,
+    () => reviewer,
+    { marketplaceAdmin: { apiKey: 'k'.repeat(128), fetchFn: fetchStub } },
+  );
+
+  const result = await handlers.get('template_review_set_mrp_visibility')?.({
+    mrp_id: 'abcdef012345abcdef012345',
+    visibility: 'PRIVATE',
+  });
+
+  assert.ok(result);
+  const payload = parsePayload(result);
+  assert.equal(payload.ok, true);
+
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0]?.url, 'https://webflow.com/admin/api/mrp/airtable');
+  assert.equal(calls[0]?.init.method, 'PUT');
+  const headers = calls[0]?.init.headers as Record<string, string>;
+  assert.equal(headers['X-Requested-With'], 'XMLHttpRequest');
+  assert.match(headers.Authorization ?? '', /^Bearer k+$/);
+  assert.deepEqual(JSON.parse(String(calls[0]?.init.body)), { mrpId: 'abcdef012345abcdef012345', visibility: 'PRIVATE' });
+
+  const data = payload.data as { requestedVisibility: string; response: { visibility?: string } };
+  assert.equal(data.requestedVisibility, 'PRIVATE');
+  assert.equal(data.response.visibility, 'PRIVATE');
+});
+
+test('set_mrp_visibility fails closed without the marketplace admin key and stays write-gated', async () => {
+  const { server, handlers, names } = createServerHarness();
+
+  registerTools(
+    server,
+    () => ({}) as AirtableClient,
+    () => reviewer,
+    {},
+  );
+
+  const result = await handlers.get('template_review_set_mrp_visibility')?.({
+    mrp_id: 'abcdef012345abcdef012345',
+    visibility: 'PUBLIC',
+  });
+
+  assert.ok(result);
+  const payload = parsePayload(result);
+  assert.equal(payload.ok, false);
+  assert.equal((payload.error as { code?: string })?.code, 'MARKETPLACE_ADMIN_KEY_UNAVAILABLE');
+  assert.ok(WRITE_TOOL_NAMES.has('template_review_set_mrp_visibility'));
+  assert.notEqual(names.indexOf('template_review_prepare_admin_template_verify'), -1);
+
+  const readOnly = createServerHarness();
+  registerTools(
+    readOnly.server,
+    () => ({}) as AirtableClient,
+    () => reviewer,
+    {},
+    { allowWrites: false },
+  );
+  assert.equal(readOnly.names.indexOf('template_review_set_mrp_visibility'), -1);
+  assert.notEqual(readOnly.names.indexOf('template_review_prepare_admin_template_verify'), -1);
 });

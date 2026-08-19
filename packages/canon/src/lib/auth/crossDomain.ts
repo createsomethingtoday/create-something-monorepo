@@ -19,8 +19,8 @@ const logger = createLogger('CrossDomainExchange');
 
 export interface CrossDomainExchangeParams {
 	token: string;
+	target: 'ltd' | 'io' | 'space' | 'agency';
 	cookies: Cookies;
-	domain: string;
 	isProduction: boolean;
 	propertyLabel: string; // e.g., '.agency', '.io', '.ltd', '.space'
 	redirectTo?: string;
@@ -35,7 +35,7 @@ export interface CrossDomainExchangeParams {
 export async function exchangeCrossDomainToken(
 	params: CrossDomainExchangeParams
 ): Promise<never> {
-	const { token, cookies, domain, isProduction, propertyLabel, redirectTo = '/account' } = params;
+	const { token, target, cookies, isProduction, propertyLabel, redirectTo = '/account' } = params;
 
 	logger.info('Cross-domain exchange starting', {
 		propertyLabel,
@@ -48,7 +48,7 @@ export async function exchangeCrossDomainToken(
 		throw redirect(302, '/login?error=invalid_token');
 	}
 
-	const result = await identityClient.exchangeCrossDomainToken({ token });
+	const result = await identityClient.exchangeCrossDomainToken({ token, target });
 
 	if (!result.success) {
 		// Type assertion needed for TypeScript to recognize error property
@@ -68,7 +68,6 @@ export async function exchangeCrossDomainToken(
 		{
 			accessToken: result.data.access_token,
 			refreshToken: result.data.refresh_token,
-			domain
 		},
 		isProduction
 	);

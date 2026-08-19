@@ -51,6 +51,11 @@ export function compareNbaDates(date: string, nbaToday: string): DateRelation {
 	return date < nbaToday ? 'past' : 'future';
 }
 
+export function selectDefaultAnalyticsGame(games: Game[], dateRelation: DateRelation): Game | null {
+	if (dateRelation !== 'past' || games.length !== 1) return null;
+	return games[0].analyticsAvailable === false ? null : games[0];
+}
+
 export function deriveScoreboardView(input: ScoreboardViewInput): ScoreboardView {
 	const liveCount = input.games.filter((game) => game.status === 'live').length;
 	const scheduled = input.games

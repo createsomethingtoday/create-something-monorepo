@@ -29,6 +29,21 @@ test('the mobile homepage keeps its primary journey visible and defers supportin
   assert.match(home, /href="\/partners"[\s\S]*?Tool directory/);
 });
 
+test('the homepage evidence slider keeps all proof records, starting with the newest, with two cards visible', () => {
+  const evidence = home.match(/const operatorEvidence: MeridianEvidence\[\] = \[(.*?)\n  \];/s)?.[1];
+
+  assert.ok(evidence, 'the homepage keeps a declared evidence collection');
+  assert.deepEqual([...evidence.matchAll(/eyebrow: '([^']+)'/g)].map(([, eyebrow]) => eyebrow), [
+    'Upstream contribution',
+    'Field report',
+    'Control record',
+    'System boundary'
+  ]);
+  assert.match(evidence, /href: '\/field-reports\/upstream-contributions'/);
+  assert.match(evidence, /href: '\/proof\/marketplace-workflow'/);
+  assert.match(home, /<MeridianEvidenceCarousel[\s\S]*?itemsPerView=\{2\}[\s\S]*?items=\{operatorEvidence\}/);
+});
+
 test('mobile supporting detail is a native disclosure with touch-safe route handoffs', () => {
   assert.match(
     home,

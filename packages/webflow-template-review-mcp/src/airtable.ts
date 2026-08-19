@@ -48,6 +48,31 @@ export class AirtableClientError extends Error {
   }
 }
 
+// The Airtable → Zendesk email composer renders feedback as HTML without escaping,
+// so a literal tag like <script type="…"> is parsed as markup and Zendesk's sanitizer
+// drops it plus everything after it — the creator receives a silently truncated email
+// (observed: Onart, ZD 1170959, 2026-08-08). Matches tag-shaped sequences like
+// <script …>, </div>, <br/>; deliberately not <https://…> autolinks or "x < y".
+const RAW_HTML_TAG_PATTERN = /<\/?[A-Za-z][A-Za-z0-9-]*(?:\s[^<>]*)?\/?>/;
+
+export function findRawHtmlTag(text: string): string | null {
+  const match = RAW_HTML_TAG_PATTERN.exec(text);
+  return match ? match[0] : null;
+}
+
+function assertNoRawHtmlInCreatorFeedback(field: 'review_feedback' | 'rejection_feedback', value: string | undefined): void {
+  if (value === undefined) return;
+  const tag = findRawHtmlTag(value);
+  if (tag !== null) {
+    throw new AirtableClientError(
+      'RAW_HTML_IN_FEEDBACK',
+      `${field} contains a raw HTML tag (${tag}). The Zendesk email pipeline parses creator-facing feedback as HTML, and a raw tag truncates the delivered email — everything after it is silently dropped. Rewrite the reference without angle brackets, e.g. \`script type="application/ld+json"\` in backticks.`,
+      400,
+      { field, tag },
+    );
+  }
+}
+
 export interface TemplateReviewQueueItem {
   assetId: string;
   templateName: string;
@@ -76,9 +101,16 @@ export interface TemplateReviewQueueItem {
 export type TemplateReviewAssetSearchMode = 'contains' | 'exact';
 
 export interface TemplateReviewAsset extends TemplateReviewQueueItem {
+  uid?: string;
   description?: string;
   descriptionShort?: string;
   descriptionLongHtml?: string;
+  adminDetailPagePath?: string;
+  adminRecommendedType?: string;
+  categoryNames?: string[];
+  categoryCmsSlugs?: string[];
+  categoryGroupDisplayNames?: string[];
+  categoryGroupCmsSlugs?: string[];
   mrpId?: string;
   mrpIdOverride?: string;
   thumbnailImageUrl?: string;
@@ -90,7 +122,25 @@ export interface TemplateReviewAsset extends TemplateReviewQueueItem {
   rejectionFeedbackHtml?: string;
   publishedDate?: string;
   decisionDate?: string;
+  templatePriceFilter?: number;
   priceString?: string;
+}
+
+export interface TemplateReviewAttachment {
+  url: string;
+  filename?: string;
+  type?: string;
+  sizeBytes?: number;
+  width?: number;
+  height?: number;
+}
+
+export interface TemplateReviewAssetThumbnails {
+  assetId: string;
+  templateName: string;
+  thumbnail: TemplateReviewAttachment | null;
+  secondaryThumbnails: TemplateReviewAttachment[];
+  carouselImages: TemplateReviewAttachment[];
 }
 
 export interface TemplateReviewVersion {
@@ -443,6 +493,25 @@ function attachmentUrls(value: unknown): string[] {
     .filter((item): item is string => Boolean(item));
 }
 
+function attachmentDetails(value: unknown): TemplateReviewAttachment[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => {
+      if (!item || typeof item !== 'object') return undefined;
+      const raw = item as Record<string, unknown>;
+      if (typeof raw.url !== 'string') return undefined;
+      return {
+        url: raw.url,
+        ...(typeof raw.filename === 'string' ? { filename: raw.filename } : {}),
+        ...(typeof raw.type === 'string' ? { type: raw.type } : {}),
+        ...(typeof raw.size === 'number' && Number.isFinite(raw.size) ? { sizeBytes: raw.size } : {}),
+        ...(typeof raw.width === 'number' && Number.isFinite(raw.width) ? { width: raw.width } : {}),
+        ...(typeof raw.height === 'number' && Number.isFinite(raw.height) ? { height: raw.height } : {}),
+      };
+    })
+    .filter((item): item is TemplateReviewAttachment => Boolean(item));
+}
+
 function numberValue(value: unknown): number | undefined {
   if (typeof value === 'number' && Number.isFinite(value)) return value;
   return undefined;
@@ -522,10 +591,17 @@ function mapAsset(record: AirtableRecord): TemplateReviewAsset {
   return {
     assetId: record.id,
     templateName: firstString(fields[CONFIRMED_ASSET_FIELDS.name]) ?? '',
+    uid: firstString(fields[CONFIRMED_ASSET_FIELDS.uid]),
     // Keep legacy API shape stable even though Airtable no longer has a separate plain description field.
     description: firstString(fields[ASSET_COMPATIBILITY_ALIASES.description]),
     descriptionShort: firstString(fields[CONFIRMED_ASSET_FIELDS.descriptionShort]),
     descriptionLongHtml: firstString(fields[CONFIRMED_ASSET_FIELDS.descriptionLongHtml]),
+    adminDetailPagePath: firstString(fields[CONFIRMED_ASSET_FIELDS.adminDetailPagePath]),
+    adminRecommendedType: firstString(fields[CONFIRMED_ASSET_FIELDS.adminRecommendedType]),
+    categoryNames: stringArray(fields[CONFIRMED_ASSET_FIELDS.categoryNames]),
+    categoryCmsSlugs: stringArray(fields[CONFIRMED_ASSET_FIELDS.categoryCmsSlugs]),
+    categoryGroupDisplayNames: stringArray(fields[CONFIRMED_ASSET_FIELDS.categoryGroupDisplayName]),
+    categoryGroupCmsSlugs: stringArray(fields[CONFIRMED_ASSET_FIELDS.categoryGroupCmsSlug]),
     mrpId: firstString(fields[CONFIRMED_ASSET_FIELDS.mrpId]),
     mrpIdOverride: firstString(fields[CONFIRMED_ASSET_FIELDS.mrpIdOverride]),
     websiteUrl: firstString(fields[CONFIRMED_ASSET_FIELDS.websiteUrl]),
@@ -544,6 +620,7 @@ function mapAsset(record: AirtableRecord): TemplateReviewAsset {
     submittedDate: firstString(fields[CONFIRMED_ASSET_FIELDS.submittedDate]),
     publishedDate: firstString(fields[CONFIRMED_ASSET_FIELDS.publishedDate]),
     decisionDate: firstString(fields[CONFIRMED_ASSET_FIELDS.decisionDate]),
+    templatePriceFilter: numberValue(fields[CONFIRMED_ASSET_FIELDS.templatePriceFilter]),
     priceString: firstString(fields[CONFIRMED_ASSET_FIELDS.priceString]),
   };
 }
@@ -1309,6 +1386,23 @@ export class AirtableClient {
     return mapAsset(record);
   }
 
+  /**
+   * Fetch the asset's image attachments with fresh URLs. Airtable attachment
+   * URLs are time-limited, so callers must re-fetch rather than reuse a stale
+   * asset payload when they need a working download link.
+   */
+  async getAssetThumbnails(assetId: string): Promise<TemplateReviewAssetThumbnails | null> {
+    const record = await this.getRecord(TABLE_IDS.assets, assetId);
+    if (!record || !isTemplateLikeAsset(record.fields)) return null;
+    return {
+      assetId: record.id,
+      templateName: firstString(record.fields[CONFIRMED_ASSET_FIELDS.name]) ?? '',
+      thumbnail: attachmentDetails(record.fields[CONFIRMED_ASSET_FIELDS.thumbnailImage])[0] ?? null,
+      secondaryThumbnails: attachmentDetails(record.fields[CONFIRMED_ASSET_FIELDS.thumbnailImageSecondary]),
+      carouselImages: attachmentDetails(record.fields[CONFIRMED_ASSET_FIELDS.carouselImages]),
+    };
+  }
+
   async listVersionsForAsset(assetId: string, limit = 100): Promise<TemplateReviewVersion[]> {
     const formula = `{${CONFIRMED_VERSION_FIELDS.assetRecordId}} = '${escapeFormulaValue(assetId)}'`;
     const records = await this.listRecords({
@@ -1425,6 +1519,10 @@ export class AirtableClient {
   async updateVersionReview(versionId: string, input: VersionReviewUpdateInput): Promise<TemplateReviewVersion> {
     const fields: Record<string, unknown> = {};
     let requestedReviewOwner: NormalizedReviewOwner | undefined;
+
+    // Creator-facing feedback only; agent_review_feedback is internal and never emailed.
+    assertNoRawHtmlInCreatorFeedback('review_feedback', input.review_feedback);
+    assertNoRawHtmlInCreatorFeedback('rejection_feedback', input.rejection_feedback);
 
     if (input.release_date !== undefined) {
       throw new AirtableClientError('UNSUPPORTED_WRITE_FIELD', 'release_date is a read-only rollup on template versions. Use release_record_id to link a 🚀Release record instead.', 501, {

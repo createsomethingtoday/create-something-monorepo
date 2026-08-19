@@ -38,7 +38,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 	// Find the session
 	const session = await db
 		.prepare(
-			`SELECT status, expires_at, access_token, refresh_token
+			`SELECT status, expires_at
        FROM magic_link_sessions
        WHERE session_id = ?`
 		)
@@ -46,8 +46,6 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		.first<{
 			status: string;
 			expires_at: number;
-			access_token: string | null;
-			refresh_token: string | null;
 		}>();
 
 	if (!session) {
@@ -71,15 +69,10 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		});
 	}
 
-	if (session.status === 'verified' && session.access_token && session.refresh_token) {
-		// Clean up - delete the session after successful retrieval
-		await db.prepare(`DELETE FROM magic_link_sessions WHERE session_id = ?`).bind(sessionId).run();
-
+	if (session.status === 'verified') {
 		return json({
 			status: 'verified',
-			message: 'Authentication successful',
-			accessToken: session.access_token,
-			refreshToken: session.refresh_token
+			message: 'Mailbox verification completed in the browser'
 		});
 	}
 

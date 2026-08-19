@@ -13,3 +13,7 @@ test('identity tokens address the Guard Performance Lab application', () => {
 test('identity tokens address the governed client workspace application', () => {
 	assert.ok(IDENTITY_TOKEN_AUDIENCES.includes('client-workspace'));
 });
+
+test('identity tokens declare a dedicated MCP session creation audience', () => {
+	assert.ok(IDENTITY_TOKEN_AUDIENCES.includes('mcp-session'));
+});

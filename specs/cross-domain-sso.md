@@ -10,7 +10,7 @@ Each property sets cookies scoped to its own TLD. Browsers don't share cookies a
 
 ## Solution
 
-Cross-domain token exchange: when a logged-in user clicks a property link, we generate a short-lived token, redirect to the target property, exchange the token for a session, and set cookies on that domain.
+Cross-domain token exchange: when a logged-in user clicks a property link, the source server generates a short-lived exact-target intermediary and redirects to the target property. The target's server-only loader atomically exchanges it and sets host-only `HttpOnly` cookies. Access and refresh credentials are never returned through browser-readable data or CORS.
 
 ## Features
 
@@ -19,7 +19,7 @@ Cross-domain token exchange: when a logged-in user clicks a property link, we ge
 - [x] Migration for cross_domain_tokens table
 - [x] Token storage queries in db/queries.ts
 - [x] POST /v1/auth/cross-domain/generate - Generate token (requires auth)
-- [x] POST /v1/auth/cross-domain/exchange - Exchange token for session
+- [x] POST /v1/auth/cross-domain/exchange - Atomically exchange an exact-target intermediary from a server request; no credential CORS
 
 ### Property Routes
 
@@ -32,8 +32,8 @@ Each property needs these routes:
 
 #### /auth/cross-domain (Receive and Set Session)
 - Extract token from URL
-- Call identity-worker to exchange token
-- Set session cookies
+- Call identity-worker from `+page.server.ts` with the exact receiving property
+- Set host-only `HttpOnly` session cookies without returning credentials to page data
 - Redirect to final destination
 
 Properties to update:
@@ -50,9 +50,10 @@ Update property links on account pages to use cross-domain redirect when logged 
 ## Security
 
 - 60-second token TTL
-- Single-use tokens
+- Atomic single-use claims (`UPDATE ... RETURNING`)
 - Hashed storage
 - Target validation
+- Browser-origin exchange rejection and no credential-bearing CORS
 - Rate limiting (5 tokens/minute)
 
 ## Files to Create

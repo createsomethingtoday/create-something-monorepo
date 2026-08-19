@@ -1,4 +1,6 @@
 <script lang="ts">
+  import type { Snippet } from 'svelte';
+
   interface Props {
     eyebrow: string;
     title: string;
@@ -10,6 +12,7 @@
     tags?: string[];
     ariaLabel?: string;
     visualLabel?: string;
+    visual?: Snippet;
   }
 
   let {
@@ -22,21 +25,30 @@
     secondaryHref,
     tags = [],
     ariaLabel = title,
-    visualLabel = 'Operating artifact'
+    visualLabel = 'Operating artifact',
+    visual
   }: Props = $props();
 </script>
 
 <section class="meridian-split" aria-label={ariaLabel}>
   <div class="meridian-split__inner">
-    <div class="meridian-split__visual" aria-label={visualLabel}>
-      <div class="meridian-split__court" aria-hidden="true">
-        <span class="meridian-split__arc"></span>
-        <span class="meridian-split__lane"></span>
-        <span class="meridian-split__line meridian-split__line--one"></span>
-        <span class="meridian-split__line meridian-split__line--two"></span>
-        <span class="meridian-split__ball"></span>
-      </div>
-      <span>{visualLabel}</span>
+    <div
+      class:meridian-split__visual--custom={visual}
+      class="meridian-split__visual"
+      aria-label={visualLabel}
+    >
+      {#if visual}
+        {@render visual()}
+      {:else}
+        <div class="meridian-split__court" aria-hidden="true">
+          <span class="meridian-split__arc"></span>
+          <span class="meridian-split__lane"></span>
+          <span class="meridian-split__line meridian-split__line--one"></span>
+          <span class="meridian-split__line meridian-split__line--two"></span>
+          <span class="meridian-split__ball"></span>
+        </div>
+        <span>{visualLabel}</span>
+      {/if}
     </div>
     <div class="meridian-split__content">
       <p class="meridian-split__eyebrow">{eyebrow}</p>
@@ -92,6 +104,13 @@
     border: 1px solid
       color-mix(in srgb, var(--color-performance-editorial-light, #f3ebe4) 25%, transparent);
     content: '';
+  }
+  .meridian-split__visual--custom {
+    align-content: stretch;
+    padding: 0;
+  }
+  .meridian-split__visual--custom::before {
+    content: none;
   }
   .meridian-split__visual > span {
     position: relative;

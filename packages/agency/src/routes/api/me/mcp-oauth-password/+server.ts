@@ -4,7 +4,6 @@ import { PartnerAuthHttpError, postIdentityAdmin } from '$lib/server/partner-aut
 import { requireAgencySessionUser } from '$lib/server/mcp-token';
 import {
 	evaluateAgencyMcpEntitlement,
-	findAgencyMcpEntitlementByEmail,
 	reconcileAgencyMcpEntitlement,
 	updateAgencyMcpEntitlement,
 	type AgencyMcpEntitlementRow,
@@ -47,15 +46,13 @@ async function resolveEntitledContext(platform: App.Platform | undefined, authSu
 	const db = platform?.env?.DB;
 	if (!db) return null;
 
-	const row =
-		(await findAgencyMcpEntitlementByEmail(db, authEmail)) ??
-		(await reconcileAgencyMcpEntitlement(db, {
-			authSubject,
-			authEmail,
-			accountId: resolveCanonicalAgencyIdentity({ id: authSubject, email: authEmail }).accountId,
-			tenantId: resolveCanonicalAgencyIdentity({ id: authSubject, email: authEmail }).tenantId,
-			serviceTier: 'mcp_only',
-		}));
+	const row = await reconcileAgencyMcpEntitlement(db, {
+		authSubject,
+		authEmail,
+		accountId: resolveCanonicalAgencyIdentity({ id: authSubject, email: authEmail }).accountId,
+		tenantId: resolveCanonicalAgencyIdentity({ id: authSubject, email: authEmail }).tenantId,
+		serviceTier: 'mcp_only',
+	});
 
 	if (!row) return null;
 

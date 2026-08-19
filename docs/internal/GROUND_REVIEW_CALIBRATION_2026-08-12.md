@@ -141,3 +141,23 @@ adjudicated. Reconsider blocking only after all of these are true:
 3. measured precision and false-positive rate by check;
 4. stable one-path/one-exclusion accounting;
 5. no execution failures across a representative promotion sample.
+
+## Adjudication protocol
+
+Treat Ground output as observations, not automatic PR regressions. For each
+candidate, first compare the relevant function bodies against the PR base:
+
+1. Record `out_of_scope` when the observed duplicate was pre-existing or is
+   otherwise outside the changed behavior under review. Keep its immutable
+   receipt and rationale, but exclude it from precision, false-positive rate,
+   and the minimum calibration-evidence count.
+2. Record `confirmed` only when a reviewer finds an actionable duplicate in the
+   changed behavior. Record `false_positive` only when the analyzer's match is
+   materially wrong, rather than merely pre-existing.
+3. Review correlated pair observations as one helper family before counting a
+   calibration-positive result. Do not inflate evidence by treating one shared
+   helper emitted in several pairs as several independent positives.
+
+The ledger reports all classifications for auditability, while its calibration
+threshold counts only reviewer-adjudicated `confirmed` and `false_positive`
+findings. This keeps out-of-scope volume from looking like detector quality.

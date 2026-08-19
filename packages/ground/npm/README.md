@@ -398,7 +398,18 @@ Ground loads `.ground.yml` from your project root for:
 - Ignore patterns (functions, files, directories)
 - Known drift exceptions with documented reasons
 - Context declarations for intentional exclusions
+- Explicit manual CLI entry points for orphan review
 - Similarity thresholds
+
+Declare a documented operator CLI by exact path relative to the directory you
+pass to `ground diff`. Ground keeps it in duplicate coverage, excludes it only
+from orphan findings, and records `manual_entry_point` in check coverage:
+
+```yaml
+entry_points:
+  manual:
+    - "scripts/rebuild-search-index.mjs"
+```
 
 See [Full Documentation](https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/ground) for configuration reference.
 

@@ -44,6 +44,11 @@ function buildSignInUrl(context: IdentityAccessContext): string {
   }
 }
 
+function applicationAudience(context: IdentityAccessContext): string | null {
+  const value = readRuntimeEnv(context.platform, 'CS_IDENTITY_AUDIENCE')?.trim();
+  return value && !value.includes(',') ? value : null;
+}
+
 export async function getIdentityAccessState(
   context: IdentityAccessContext
 ): Promise<ApplicationAccessState> {
@@ -54,7 +59,7 @@ export async function getIdentityAccessState(
   const jwksUrl =
     readRuntimeEnv(context.platform, 'CS_IDENTITY_JWKS_URL')?.trim() ||
     (issuer ? `${issuer}/.well-known/jwks.json` : undefined);
-  const audiences = readRuntimeList(context.platform, 'CS_IDENTITY_AUDIENCE');
+  const audience = applicationAudience(context);
 
   if (previewEnabled) {
     return resolveApplicationAccess({
@@ -63,15 +68,15 @@ export async function getIdentityAccessState(
       verification: {
         issuer: issuer || 'https://preview.invalid',
         jwksUrl: jwksUrl || 'https://preview.invalid/.well-known/jwks.json',
-        audience: audiences
+        audience: audience || 'preview'
       },
       policy: {},
       preview: { enabled: true, environment }
     });
   }
 
-  if (!issuer || !jwksUrl || audiences.length === 0) {
-    return makeUnconfiguredState(signInUrl, 'First-party identity verification is not configured.');
+  if (!issuer || !jwksUrl || !audience) {
+    return makeUnconfiguredState(signInUrl, 'First-party identity verification requires exactly one application audience.');
   }
 
   return resolveApplicationAccess({
@@ -80,7 +85,7 @@ export async function getIdentityAccessState(
     verification: {
       issuer,
       jwksUrl,
-      audience: audiences,
+      audience,
       fetch: context.fetch
     },
     policy: {

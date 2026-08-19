@@ -35,6 +35,8 @@ export interface AuthState {
 export interface AuthStoreConfig {
 	/** Identity worker endpoint (defaults to SESSION_CONFIG.IDENTITY_ENDPOINT) */
 	identityEndpoint?: string;
+	/** Exact first-party audience for credentials minted by this store. */
+	audience?: 'io' | 'space' | 'agency' | 'ltd' | 'lms';
 	/** Analytics tracking options */
 	analytics?: {
 		property: 'io' | 'space' | 'agency' | 'ltd' | 'lms';
@@ -160,7 +162,7 @@ export function createAuthStore(config: AuthStoreConfig = {}) {
 			const response = await fetch(`${identityEndpoint}/v1/auth/login`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(credentials),
+				body: JSON.stringify({ ...credentials, audience: config.audience ?? analytics?.property ?? 'space' }),
 				credentials: 'include',
 			});
 

@@ -74,6 +74,9 @@ export interface JWTPayload {
 	aud: string[] | string;
 	iat: number;
 	exp: number;
+	kind?: string;
+	email_verified?: boolean;
+	session_version?: number;
 	name?: string;
 	[key: string]: unknown;
 }

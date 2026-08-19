@@ -4,11 +4,45 @@ import test from 'node:test';
 
 import identityWorker, { requiresS256PkceForOAuthResource } from '../src/index.ts';
 
-function makeEnv() {
+function makeEnv(tokenEndpointAuthMethod = 'none') {
+  const clients = new Map<string, Record<string, unknown>>([
+    ['chatgpt', {
+      client_id: 'chatgpt',
+      redirect_uris_json: JSON.stringify(['https://chat.openai.com/a/callback']),
+      token_endpoint_auth_method: tokenEndpointAuthMethod,
+    }],
+    ['workflow-shadow-pilot', {
+      client_id: 'workflow-shadow-pilot',
+      redirect_uris_json: JSON.stringify(['http://127.0.0.1:65221/callback']),
+      token_endpoint_auth_method: tokenEndpointAuthMethod,
+    }],
+  ]);
   return {
     ENVIRONMENT: 'test',
     ALLOWED_ORIGINS: 'https://chatgpt.com',
     MCP_HUB_URL: 'https://mj.mcp.createsomething.agency/mcp',
+    DB: {
+      prepare(sql: string) {
+        let values: unknown[] = [];
+        return {
+          bind(...input: unknown[]) { values = input; return this; },
+          async first() {
+            if (sql.includes('FROM oauth_clients')) return clients.get(String(values[0])) ?? null;
+            return null;
+          },
+          async run() {
+            if (sql.includes('INSERT INTO oauth_clients')) {
+              clients.set(String(values[0]), {
+                client_id: values[0], client_name: values[1], redirect_uris_json: values[2],
+                token_endpoint_auth_method: values[3], grant_types_json: values[4],
+                response_types_json: values[5], scope: values[6],
+              });
+            }
+            return { success: true, meta: { changes: 1 } };
+          },
+        };
+      },
+    },
   } as any;
 }
 
@@ -69,6 +103,7 @@ test('identity worker serves oauth authorization server metadata', async () => {
   const body = await response.json() as Record<string, unknown>;
   assert.equal(body.authorization_endpoint, 'https://id.createsomething.space/oauth/authorize');
   assert.equal(body.token_endpoint, 'https://id.createsomething.space/oauth/token');
+  assert.deepEqual(body.token_endpoint_auth_methods_supported, ['none']);
   assert.deepEqual(body.scopes_supported, [
     'openid',
     'profile',
@@ -92,6 +127,64 @@ test('identity worker serves oauth authorization server metadata', async () => {
       claim_uri: 'https://id.createsomething.space/agent/claim',
     },
   });
+});
+
+test('identity worker advertises only public-client authentication in openid metadata', async () => {
+  const response = await identityWorker.fetch(
+    new Request('https://id.createsomething.space/.well-known/openid-configuration'),
+    makeEnv(),
+  );
+
+  assert.equal(response.status, 200);
+  const body = await response.json() as Record<string, unknown>;
+  assert.deepEqual(body.token_endpoint_auth_methods_supported, ['none']);
+});
+
+test('identity worker token endpoint rejects secret authentication for public clients', async () => {
+  for (const authorization of [undefined, 'Basic Y2hhdGdwdDp1bnN1cHBvcnRlZA==']) {
+    const headers = new Headers({ 'Content-Type': 'application/x-www-form-urlencoded' });
+    if (authorization) headers.set('Authorization', authorization);
+    const body = new URLSearchParams({
+      grant_type: 'authorization_code',
+      client_id: 'chatgpt',
+      code: 'invalid-code',
+      redirect_uri: 'https://chat.openai.com/a/callback',
+      code_verifier: 'invalid-verifier',
+    });
+    if (!authorization) body.set('client_secret', 'unsupported');
+
+    const response = await identityWorker.fetch(
+      new Request('https://id.createsomething.space/oauth/token', {
+        method: 'POST',
+        headers,
+        body,
+      }),
+      makeEnv(),
+    );
+
+    assert.equal(response.status, 400);
+    assert.deepEqual(await response.json(), {
+      error: 'invalid_client',
+      error_description: 'Only public clients using token_endpoint_auth_method none are supported.',
+    });
+  }
+
+  const unsupportedStoredMethod = await identityWorker.fetch(
+    new Request('https://id.createsomething.space/oauth/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        client_id: 'chatgpt',
+        code: 'invalid-code',
+        redirect_uri: 'https://chat.openai.com/a/callback',
+        code_verifier: 'invalid-verifier',
+      }),
+    }),
+    makeEnv('client_secret_post'),
+  );
+  assert.equal(unsupportedStoredMethod.status, 400);
+  assert.equal((await unsupportedStoredMethod.json() as Record<string, unknown>).error, 'invalid_client');
 });
 
 test('identity worker registers a short-lived anonymous credential only for .agency discovery', async () => {
@@ -171,7 +264,7 @@ test('anonymous agent registration rejects resources outside the public discover
 test('the .agency OAuth resource requires S256 PKCE before it can issue an access token', () => {
   assert.equal(requiresS256PkceForOAuthResource('https://createsomething.agency'), true);
   assert.equal(requiresS256PkceForOAuthResource('https://createsomething.agency/'), true);
-  assert.equal(requiresS256PkceForOAuthResource('https://webflow-template-review-mcp.createsomething.workers.dev/mcp'), false);
+	assert.equal(requiresS256PkceForOAuthResource('https://webflow-template-review-mcp.createsomething.workers.dev/mcp'), true);
 });
 
 test('identity worker creates dynamically registered ChatGPT OAuth clients', async () => {
@@ -206,6 +299,30 @@ test('identity worker creates dynamically registered ChatGPT OAuth clients', asy
   assert.equal(body.scope, 'offer-savings:read offer-savings:write');
 });
 
+test('identity worker registration rejects confidential client authentication metadata', async () => {
+  const response = await identityWorker.fetch(
+    new Request('https://id.createsomething.space/oauth/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Origin: 'https://chatgpt.com',
+      },
+      body: JSON.stringify({
+        client_name: 'Unsupported confidential client',
+        redirect_uris: ['https://chatgpt.com/connector_platform_oauth_redirect'],
+        token_endpoint_auth_method: 'client_secret_post',
+      }),
+    }),
+    makeEnv(),
+  );
+
+  assert.equal(response.status, 400);
+  assert.deepEqual(await response.json(), {
+    error: 'invalid_client_metadata',
+    error_description: 'Only public PKCE clients are supported.',
+  });
+});
+
 test('identity worker uses an explicit issuer for preview metadata', async () => {
   const response = await identityWorker.fetch(
     new Request('https://identity-worker-preview.example/.well-known/oauth-authorization-server'),
@@ -219,7 +336,7 @@ test('identity worker uses an explicit issuer for preview metadata', async () =>
 test('identity worker renders oauth authorize page', async () => {
   const response = await identityWorker.fetch(
     new Request(
-      'https://id.createsomething.space/oauth/authorize?response_type=code&client_id=chatgpt&redirect_uri=https%3A%2F%2Fchat.openai.com%2Fa%2Fcallback&scope=openid%20mcp',
+      'https://id.createsomething.space/oauth/authorize?response_type=code&client_id=chatgpt&redirect_uri=https%3A%2F%2Fchat.openai.com%2Fa%2Fcallback&scope=openid%20mcp&code_challenge=test-challenge&code_challenge_method=S256',
     ),
     makeEnv(),
   );
@@ -242,7 +359,7 @@ test('Template Review authorize page describes the resource-bound application gr
   const resource = 'https://webflow-template-review-mcp.createsomething.workers.dev/mcp';
   const response = await identityWorker.fetch(
     new Request(
-      `https://id.createsomething.space/oauth/authorize?response_type=code&client_id=workflow-shadow-pilot&redirect_uri=${encodeURIComponent('http://127.0.0.1:65221/callback')}&scope=${encodeURIComponent('openid profile email mcp template-review:queue-read')}&resource=${encodeURIComponent(resource)}`,
+		`https://id.createsomething.space/oauth/authorize?response_type=code&client_id=workflow-shadow-pilot&redirect_uri=${encodeURIComponent('http://127.0.0.1:65221/callback')}&scope=${encodeURIComponent('openid profile email mcp template-review:queue-read')}&resource=${encodeURIComponent(resource)}&code_challenge=test-challenge&code_challenge_method=S256`,
     ),
     makeEnv(),
   );
