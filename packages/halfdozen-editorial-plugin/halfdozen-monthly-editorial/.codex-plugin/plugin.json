@@ -1,0 +1,30 @@
+{
+  "name": "halfdozen-monthly-editorial",
+  "version": "0.1.0",
+  "description": "Draft evidence-bound monthly Half Dozen technical-update articles.",
+  "author": {
+    "name": "CREATE SOMETHING",
+    "email": "hello@createsomething.agency",
+    "url": "https://createsomething.agency"
+  },
+  "homepage": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/halfdozen-editorial-plugin",
+  "repository": "https://github.com/createsomethingtoday/create-something-monorepo",
+  "license": "UNLICENSED",
+  "keywords": ["half-dozen", "editorial", "article", "evidence", "drafting"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Half Dozen Monthly Editorial",
+    "shortDescription": "Draft a verified monthly technical update.",
+    "longDescription": "Turn bounded, verified Half Dozen technical work into an approval-ready monthly article with plain-language, developer, and business-operations explanations. The plugin creates drafts and evidence ledgers only; it never publishes or sends content.",
+    "developerName": "CREATE SOMETHING",
+    "category": "Productivity",
+    "capabilities": ["Interactive", "Read"],
+    "websiteURL": "https://createsomething.agency",
+    "defaultPrompt": [
+      "Draft this month's Half Dozen technical update from verified work.",
+      "Build an evidence ledger for this Half Dozen article draft.",
+      "Review this draft for unsupported technical or partnership claims."
+    ],
+    "brandColor": "#111111"
+  }
+}
