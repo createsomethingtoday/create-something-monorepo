@@ -35,6 +35,9 @@ export * from './styles';
 // Orchestration - Timeline and sequencing utilities
 export * from './orchestration';
 
+// Atlas transcript-first editor renderer adapter
+export * from './atlas-transcript-editor';
+
 // Animation Specs - Shared definitions for Svelte and Remotion
 export * from './specs';
 

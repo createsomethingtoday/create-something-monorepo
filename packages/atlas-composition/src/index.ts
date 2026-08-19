@@ -6,7 +6,11 @@
  * human Arc, a reusable Playbook, and an operating Runbook.
  */
 
+export * from './transcript-editor.js';
+
 export const ATLAS_COMPOSITION_SCHEMA = 'create-something/atlas-composition@1' as const;
+
+export * from './transcript-editor.js';
 export const ATLAS_STORY_ADAPTER_SCHEMA = 'atlas-story-v1' as const;
 
 export type AtlasMotionCue =

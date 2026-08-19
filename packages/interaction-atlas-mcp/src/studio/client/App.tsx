@@ -5,12 +5,15 @@ import {
   Bot,
   Braces,
   Check,
+  Clapperboard,
   ChevronLeft,
   ChevronRight,
   Clipboard,
   Database,
+  Film,
   FileText,
   Gauge,
+  History,
   LockKeyhole,
   Map as MapIcon,
   MessagesSquare,
@@ -59,6 +62,7 @@ import type {
   AtlasWritebackActionStatus,
   AtlasWritebackProposal
 } from '../types.js';
+import type { CutOperation, TranscriptEditorProject } from '@create-something/atlas-composition';
 import {
   buildAtlasDatabaseHealth,
   type AtlasDatabaseHealthCard,
@@ -69,6 +73,8 @@ import {
   intersectNodeIdSets,
   storyPresenterNodeIds,
   topologyBoardSectionForNode,
+  buildTranscriptEditorSnapshot,
+  parseSrtTranscriptCues,
   type TopologyBoardSectionKey
 } from './layout.js';
 import { FastTopologyCanvas } from './FastTopologyCanvas.js';
@@ -97,6 +103,11 @@ type DatabaseRecordRow = {
   status: AtlasCanvasNodeStatus;
   syncStatus: string;
   updatedAt: string;
+};
+
+type LocalTranscriptImportInput = {
+  filePath: string;
+  transcript: string;
 };
 
 type DatabaseBindingRow = {
@@ -380,6 +391,13 @@ function readStoredStoryPanelOffset(sessionId: string): StoryPanelOffset {
 
 function writeStoredStoryPanelOffset(sessionId: string, offset: StoryPanelOffset): void {
   localStorage.setItem(`atlas-studio:${sessionId}:story-panel-offset`, JSON.stringify(offset));
+}
+
+function formatEditorTimestamp(microseconds: number): string {
+  const totalSeconds = Math.max(0, Math.floor(microseconds / 1_000_000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, '0')}`;
 }
 
 function isEditableTarget(target: EventTarget | null): boolean {
@@ -1529,6 +1547,147 @@ function Rail({
   );
 }
 
+function MediaEditorPanel({
+  onApplyProposal,
+  onClose,
+  onDecideProposal,
+  onInitialize,
+  onRender,
+  onRequestCodexProposal,
+  open,
+  project,
+  sessionId
+}: {
+  onApplyProposal: (proposalId: string) => void;
+  onClose: () => void;
+  onDecideProposal: (proposalId: string, decision: 'approved' | 'rejected') => void;
+  onInitialize: (sourcePath: string, timestampedTranscript: string, includeTitleOverlay: boolean) => void;
+  onRender: () => void;
+  onRequestCodexProposal: (instruction: string, privateContentConfirmed: boolean) => void;
+  open: boolean;
+  project: TranscriptEditorProject | null;
+  sessionId: string;
+}): React.ReactElement {
+  const [instruction, setInstruction] = useState('');
+  const [privateContentConfirmed, setPrivateContentConfirmed] = useState(false);
+  const [sourcePath, setSourcePath] = useState('');
+  const [timestampedTranscript, setTimestampedTranscript] = useState('');
+  const [includeTitleOverlay, setIncludeTitleOverlay] = useState(false);
+  const revision = project?.revisions.find((candidate) => candidate.id === project.currentRevisionId) ?? null;
+  const operationById = new Map(revision?.cutList.map((operation) => [operation.id, operation]) ?? []);
+  const clips = revision?.graph.nodes.filter((node) => node.kind === 'clip') ?? [];
+  const graphNodes = revision?.graph.nodes ?? [];
+  const graphEdges = revision?.graph.edges ?? [];
+  const latestCompletedReceipt = project?.receipts.slice().reverse().find((receipt) => receipt.status === 'completed');
+
+  return (
+    <aside className={`drawer media-editor ${open ? 'open' : ''}`} aria-label="Transcript editor">
+      <section className="drawer-section">
+        <div className="section-title">
+          <span className="title-lockup">
+            <span className="title-icon"><Clapperboard aria-hidden="true" /></span>
+            <span><strong>Transcript edit</strong><em>{project ? `${clips.length} durable clip nodes` : 'No media project attached'}</em></span>
+          </span>
+          <button aria-label="Close transcript editor" className="icon-only" onClick={onClose} title="Close transcript editor" type="button"><X aria-hidden="true" /></button>
+        </div>
+        {!project ? (
+          <div className="media-actions media-import">
+            <p className="empty">Start a local project from a source recording and timestamped transcript. The source stays on this Mac.</p>
+            <label>
+              <span>Local media file path</span>
+              <input onChange={(event) => setSourcePath(event.target.value)} placeholder="/Users/you/Movies/recording.mp4" value={sourcePath} />
+            </label>
+            <label>
+              <span>Timestamped transcript</span>
+              <textarea onChange={(event) => setTimestampedTranscript(event.target.value)} placeholder={'00:00.000 --> 00:03.500 | Opening statement.\n00:03.500 --> 00:08.000 | Main point.'} value={timestampedTranscript} />
+            </label>
+            <label className="media-confirmation">
+              <input checked={includeTitleOverlay} onChange={(event) => setIncludeTitleOverlay(event.target.checked)} type="checkbox" />
+              <span>Add a basic local title overlay to this initial composition.</span>
+            </label>
+            <button className="primary" disabled={!sourcePath.trim() || !timestampedTranscript.trim()} onClick={() => onInitialize(sourcePath, timestampedTranscript, includeTitleOverlay)} type="button">
+              <Clapperboard aria-hidden="true" /><span>Create local media project</span>
+            </button>
+          </div>
+        ) : !revision ? (
+          <p className="empty">The attached media project has no current revision.</p>
+        ) : (
+          <>
+            <div className="media-summary">
+              <span><strong>Revision</strong><em>{revision.id}</em></span>
+              <span><strong>Transcript</strong><em>{project.transcriptSegments.length} segments</em></span>
+              <span><strong>Render</strong><em>{project.receipts.at(-1)?.status ?? 'not requested'}</em></span>
+            </div>
+            <section className="media-graph" aria-label="Media dependency graph">
+              <div className="media-graph-heading">
+                <span><Waypoints aria-hidden="true" /><strong>Media dependency graph</strong></span>
+                <em>{graphNodes.length} nodes · {graphEdges.length} edges</em>
+              </div>
+              <div className="media-graph-flow">
+                <article className="media-graph-node"><strong>Source asset</strong><span>Immutable local recording</span></article>
+                <span aria-hidden="true" className="media-graph-edge">↓ produces</span>
+                <article className="media-graph-node"><strong>Transcript + cut list</strong><span>{project.transcriptSegments.length} timestamped segments</span></article>
+                <span aria-hidden="true" className="media-graph-edge">↓ produces</span>
+                <div className="media-graph-clips">
+                  {clips.map((clip) => <article className="media-graph-node clip" key={`graph:${clip.id}`}>
+                    <strong>{clip.id}</strong><span>{clip.diffs?.length ?? 0} durable decision diffs</span>
+                  </article>)}
+                </div>
+                <span aria-hidden="true" className="media-graph-edge">↓ projects</span>
+                <article className="media-graph-node"><strong>Timeline + render</strong><span>Temporal projection and receipt-bound output</span></article>
+              </div>
+              <p>Each clip is connected as <code>cut-list → clip → timeline</code>; a Codex run attaches to a proposal, never to an individual clip.</p>
+            </section>
+            <div className="media-timeline" aria-label="Timeline projection">
+              {clips.map((clip) => {
+                const operation = clip.cutOperationId ? operationById.get(clip.cutOperationId) : undefined;
+                return <article className="media-clip-node" key={clip.id}>
+                  <div className="media-clip-title"><span>Clip node</span><strong>{clip.id}</strong></div>
+                  <p>{operation ? `${operation.startUs}–${operation.endUs} µs · ${operation.reason}` : 'Missing cut operation'}</p>
+                  <span className="media-muted">Decision diffs are reviewable; hidden model thoughts are not recorded.</span>
+                  <div className="media-history"><History aria-hidden="true" />{clip.diffs?.map((entry) => <span key={entry.id}>{entry.event} · {entry.summary}</span>)}</div>
+                </article>;
+              })}
+            </div>
+            <div className="media-actions">
+              <label>
+                <span>Ask Codex for a diff</span>
+                <textarea onChange={(event) => setInstruction(event.target.value)} placeholder="e.g. Remove repeated filler while preserving the full argument." value={instruction} />
+              </label>
+              <label className="media-confirmation">
+                <input checked={privateContentConfirmed} onChange={(event) => setPrivateContentConfirmed(event.target.checked)} type="checkbox" />
+                <span>I approve sending this transcript context to my managed Codex session.</span>
+              </label>
+              <button className="primary" disabled={!instruction.trim() || !privateContentConfirmed} onClick={() => onRequestCodexProposal(instruction, privateContentConfirmed)} type="button">
+                <Bot aria-hidden="true" /><span>Propose diff</span>
+              </button>
+              <button className="subtle-button" onClick={onRender} type="button"><Clapperboard aria-hidden="true" /><span>Preview / render local MP4</span></button>
+            </div>
+            {project.proposals.length ? <div className="media-proposals">
+              {project.proposals.slice().reverse().map((proposal) => <article className="media-proposal" key={proposal.id}>
+                <strong>{proposal.status} · {proposal.id}</strong>
+                <p>{proposal.rationale}</p>
+                <em>{proposal.operations.length} proposed cut operations · managed usage: {proposal.agentRun?.usage ?? 'not agent-generated'}</em>
+                {proposal.status === 'proposed' ? <div><button className="primary" onClick={() => onDecideProposal(proposal.id, 'approved')} type="button">Approve</button><button className="subtle-button danger" onClick={() => onDecideProposal(proposal.id, 'rejected')} type="button">Reject</button></div> : null}
+                {proposal.status === 'approved' ? <button className="primary" onClick={() => onApplyProposal(proposal.id)} type="button">Apply approved diff</button> : null}
+              </article>)}
+            </div> : null}
+          </>
+        )}
+      </section>
+      {project?.receipts.length ? <section className="drawer-section">
+        <div className="section-title compact"><span className="title-lockup"><span className="title-icon"><Check aria-hidden="true" /></span><span><strong>Render receipts</strong><em>Local inspection proof</em></span></span></div>
+        {project.receipts.slice(-3).reverse().map((receipt) => <article className="media-receipt" key={receipt.id}>
+          <strong>{receipt.status} · {receipt.request.compositionId}</strong>
+          <em>{receipt.inspection ? `${receipt.inspection.videoCodec} · ${receipt.inspection.width}×${receipt.inspection.height} · ${receipt.inspection.audioStreams} audio` : 'Inspection unavailable'}</em>
+          <span>{receipt.cacheHit ? 'cache hit' : 'fresh render'} · {receipt.request.revisionId}</span>
+        </article>)}
+        {latestCompletedReceipt ? <video className="media-preview" controls src={`/api/sessions/${encodeURIComponent(sessionId)}/media-project/renders/${encodeURIComponent(latestCompletedReceipt.id)}.mp4`} /> : null}
+      </section> : null}
+    </aside>
+  );
+}
+
 function Inspector({
   draft,
   onAddNode,
@@ -1779,6 +1938,230 @@ function Inspector({
   );
 }
 
+function LocalTranscriptImportForm({
+  onImport
+}: {
+  onImport: (input: LocalTranscriptImportInput) => Promise<void>;
+}): React.ReactElement {
+  const [filePath, setFilePath] = useState('');
+  const [transcript, setTranscript] = useState('');
+  const [notice, setNotice] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setNotice(null);
+    try {
+      if (!filePath.trim()) throw new Error('Enter the absolute path to a local media file.');
+      parseSrtTranscriptCues(transcript);
+      setSubmitting(true);
+      await onImport({ filePath: filePath.trim(), transcript });
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Local import could not start.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <form className="transcript-editor-import" onSubmit={(event) => void submit(event)}>
+      <label>
+        <span>Local media path</span>
+        <input
+          onChange={(event) => setFilePath(event.target.value)}
+          placeholder="/Users/you/Movies/interview.mp4 or voiceover.m4a"
+          spellCheck={false}
+          value={filePath}
+        />
+      </label>
+      <label>
+        <span>Transcript SRT</span>
+        <textarea
+          onChange={(event) => setTranscript(event.target.value)}
+          placeholder={'1\n00:00:00,000 --> 00:00:01,250\nHello there.'}
+          spellCheck={false}
+          value={transcript}
+        />
+      </label>
+      <p>
+        Video or audio stays on this machine. Pasted SRT becomes visible timestamped clips; no model or provider is contacted. Audio-only sources support transcript review and proposals; local video export remains unavailable.
+      </p>
+      {notice ? <p className="transcript-editor-import-notice" role="alert">{notice}</p> : null}
+      <button className="primary" disabled={submitting} type="submit">
+        <Film aria-hidden="true" />
+        <span>{submitting ? 'Importing local source…' : 'Import local source'}</span>
+      </button>
+    </form>
+  );
+}
+
+function TranscriptEditorPanel({
+  onApplyProposal,
+  onClose,
+  onDecideProposal,
+  onImport,
+  onProposeRemoval,
+  project
+}: {
+  onApplyProposal: (proposalId: string) => void;
+  onClose: () => void;
+  onDecideProposal: (proposalId: string, decision: 'approved' | 'rejected') => void;
+  onImport: (input: LocalTranscriptImportInput) => Promise<void>;
+  onProposeRemoval: (operationId: string) => void;
+  project: TranscriptEditorProject | null;
+}): React.ReactElement {
+  const snapshot = useMemo(
+    () => (project ? buildTranscriptEditorSnapshot(project) : null),
+    [project]
+  );
+
+  return (
+    <aside className="transcript-editor-panel" aria-label="Transcript editor">
+      <div className="database-panel-header">
+        <span className="title-lockup">
+          <span className="title-icon">
+            <Film aria-hidden="true" />
+          </span>
+          <span>
+            <strong>Transcript editor</strong>
+            <em>
+              {snapshot
+                ? 'Accepted revision, derived timeline, dependency graph, and visible clip diffs'
+                : 'No local video project has been imported into this Atlas session.'}
+            </em>
+          </span>
+        </span>
+        <span className="transcript-editor-header-actions">
+          {project ? (
+            <a
+              className="transcript-editor-caption-link"
+              download
+              href={`/api/sessions/${encodeURIComponent(project.atlasSessionId)}/transcript-project/captions.srt`}
+            >
+              Download SRT
+            </a>
+          ) : null}
+          <button
+            aria-label="Close transcript editor"
+            className="icon-only"
+            onClick={onClose}
+            title="Close transcript editor"
+            type="button"
+          >
+            <X aria-hidden="true" />
+          </button>
+        </span>
+      </div>
+      {snapshot ? (
+        <>
+          <div className="database-summary" aria-label="Transcript project summary">
+            <span className="database-stat">
+              <strong>{snapshot.source.width} × {snapshot.source.height}</strong>
+              <span>{snapshot.source.hasAudio ? 'Local source with audio' : 'Local silent source'}</span>
+            </span>
+            <span className="database-stat">
+              <strong>{snapshot.revision.id}</strong>
+              <span>Accepted revision</span>
+            </span>
+            <span className="database-stat">
+              <strong>{snapshot.timeline.clips.length}</strong>
+              <span>{formatEditorTimestamp(snapshot.timeline.durationUs)} timeline</span>
+            </span>
+            <span className="database-stat">
+              <strong>{snapshot.diffs.length}</strong>
+              <span>Visible clip diffs</span>
+            </span>
+          </div>
+          <div className="transcript-editor-graph" aria-label="Transcript dependency graph summary">
+            <span>{snapshot.graph.nodes} graph nodes</span>
+            <span>{snapshot.graph.edges} edges</span>
+            <span>{snapshot.graph.clipNodes.length} clip nodes</span>
+          </div>
+          <div className="transcript-editor-content">
+            <section className="transcript-editor-section" aria-label="Derived timeline clips">
+              <div className="transcript-editor-section-heading">
+                <strong>Timeline clips</strong>
+                <span>{formatEditorTimestamp(snapshot.timeline.durationUs)} accepted</span>
+              </div>
+              <ol className="transcript-editor-list">
+                {snapshot.timeline.clips.map((clip) => (
+                  <li key={clip.id}>
+                    <time>{formatEditorTimestamp(clip.startUs)}–{formatEditorTimestamp(clip.endUs)}</time>
+                    <span>
+                      {clip.text || 'Untitled transcript clip'}
+                      <button
+                        className="transcript-editor-action"
+                        onClick={() => onProposeRemoval(clip.operationId)}
+                        type="button"
+                      >
+                        Propose removal
+                      </button>
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            </section>
+            <section className="transcript-editor-section" aria-label="Dependency graph clips">
+              <div className="transcript-editor-section-heading">
+                <strong>Clip nodes</strong>
+                <span>Graph-derived</span>
+              </div>
+              <ol className="transcript-editor-list compact">
+                {snapshot.graph.clipNodes.map((node) => (
+                  <li key={node.id}>
+                    <code>{node.id}</code>
+                    <span>{node.operationId ?? 'No operation reference'}</span>
+                  </li>
+                ))}
+              </ol>
+            </section>
+            <section className="transcript-editor-section" aria-label="Clip diff history">
+              <div className="transcript-editor-section-heading">
+                <strong>Diff history</strong>
+                <span>Immutable events</span>
+              </div>
+              <ol className="transcript-editor-list compact">
+                {snapshot.diffs.map((diff) => (
+                  <li key={`${diff.nodeId}:${diff.at}:${diff.event}`}>
+                    <time>{diff.event}</time>
+                    <span>{diff.summary}</span>
+                  </li>
+                ))}
+              </ol>
+              {project?.proposals.length ? (
+                <ol className="transcript-editor-proposals" aria-label="Transcript edit proposals">
+                  {project.proposals.map((proposal) => (
+                    <li key={proposal.id}>
+                      <strong>{proposal.status}</strong>
+                      <span>{proposal.rationale}</span>
+                      {proposal.status === 'proposed' ? (
+                        <span className="transcript-editor-actions">
+                          <button onClick={() => onDecideProposal(proposal.id, 'approved')} type="button">Approve</button>
+                          <button onClick={() => onDecideProposal(proposal.id, 'rejected')} type="button">Reject</button>
+                        </span>
+                      ) : null}
+                      {proposal.status === 'approved' ? (
+                        <button onClick={() => onApplyProposal(proposal.id)} type="button">Apply approved edit</button>
+                      ) : null}
+                    </li>
+                  ))}
+                </ol>
+              ) : null}
+            </section>
+          </div>
+        </>
+      ) : (
+        <div className="transcript-editor-empty">
+          <p>
+            Importing a local source creates an explicit source asset, transcript, clips, and revision.
+          </p>
+          <LocalTranscriptImportForm onImport={onImport} />
+        </div>
+      )}
+    </aside>
+  );
+}
+
 function AtlasStudio(): React.ReactElement {
   const sessionId = useMemo(getSessionId, []);
   const initialStoryPanelOffset = useMemo(() => readStoredStoryPanelOffset(sessionId), [sessionId]);
@@ -1788,6 +2171,10 @@ function AtlasStudio(): React.ReactElement {
   const [activeNodeIds, setActiveNodeIds] = useState<Set<string>>(() => new Set());
   const [railOpen, setRailOpen] = useState(false);
   const [inspectorOpen, setInspectorOpen] = useState(false);
+  const [mediaEditorOpen, setMediaEditorOpen] = useState(false);
+  const [mediaProject, setMediaProject] = useState<TranscriptEditorProject | null>(null);
+  const [transcriptEditorOpen, setTranscriptEditorOpen] = useState(false);
+  const [transcriptProject, setTranscriptProject] = useState<TranscriptEditorProject | null>(null);
   const [databaseOpen, setDatabaseOpen] = useState(false);
   const [databaseView, setDatabaseView] = useState<DatabasePanelView>('records');
   const [presenterMode, setPresenterMode] = useState(false);
@@ -1907,6 +2294,130 @@ function AtlasStudio(): React.ReactElement {
     setError(null);
   }, [applySession, sessionId]);
 
+  const loadMediaProject = useCallback(async () => {
+    try {
+      const project = await requestJson<TranscriptEditorProject>(
+        `/api/sessions/${encodeURIComponent(sessionId)}/media-project`
+      );
+      setMediaProject(project);
+    } catch {
+      setMediaProject(null);
+    }
+  }, [sessionId]);
+
+  const loadTranscriptProject = useCallback(async () => {
+    try {
+      const project = await requestJson<TranscriptEditorProject>(
+        `/api/sessions/${encodeURIComponent(sessionId)}/transcript-project`
+      );
+      setTranscriptProject(project);
+    } catch {
+      setTranscriptProject(null);
+    }
+  }, [sessionId]);
+
+  const importTranscriptProject = useCallback(async ({ filePath, transcript }: LocalTranscriptImportInput) => {
+    const result = await requestJson<TranscriptEditorProject>(
+      `/api/sessions/${encodeURIComponent(sessionId)}/transcript-project/intake`,
+      {
+        body: JSON.stringify({
+          assetId: `source:${Date.now().toString(36)}`,
+          filePath,
+          projectId: `transcript:${Date.now().toString(36)}`,
+          transcriptSegments: parseSrtTranscriptCues(transcript)
+        }),
+        method: 'POST'
+      }
+    );
+    setTranscriptProject(result);
+    setError(null);
+  }, [sessionId]);
+
+  const initializeMediaProject = useCallback(async (sourcePath: string, transcript: string, includeTitleOverlay: boolean) => {
+    try {
+      const result = await requestJson<{ project: TranscriptEditorProject; session: AtlasSession }>(
+        `/api/sessions/${encodeURIComponent(sessionId)}/media-project/import`,
+        {
+          body: JSON.stringify({
+            id: `media_${Date.now().toString(36)}`,
+            sourcePath,
+            transcript,
+            includeTitleOverlay
+          }),
+          method: 'POST'
+        }
+      );
+      setMediaProject(result.project);
+      applySession(result.session, 'local');
+      setError(null);
+    } catch {
+      setError('Could not create the local media project. Check the local video and timestamped transcript format.');
+    }
+  }, [applySession, sessionId]);
+
+  const requestCodexMediaProposal = useCallback(async (instruction: string, privateContentConfirmed: boolean) => {
+    try {
+      const result = await requestJson<{ project: TranscriptEditorProject; session: AtlasSession }>(
+        `/api/sessions/${encodeURIComponent(sessionId)}/media-project/codex-proposals`,
+        {
+          body: JSON.stringify({
+            id: `codex_${Date.now().toString(36)}`,
+            operatorPrompt: instruction,
+            operatorConfirmedPrivateContent: privateContentConfirmed
+          }),
+          method: 'POST'
+        }
+      );
+      setMediaProject(result.project);
+      applySession(result.session, 'local');
+      setError(null);
+    } catch {
+      setError('Could not request a managed Codex diff. Confirm the local project and try again.');
+    }
+  }, [applySession, sessionId]);
+
+  const decideMediaProposal = useCallback(async (proposalId: string, decision: 'approved' | 'rejected') => {
+    try {
+      const result = await requestJson<{ project: TranscriptEditorProject; session: AtlasSession }>(
+        `/api/sessions/${encodeURIComponent(sessionId)}/media-project/proposals/${encodeURIComponent(proposalId)}`,
+        { body: JSON.stringify({ decision, decidedBy: 'operator' }), method: 'PATCH' }
+      );
+      setMediaProject(result.project);
+      applySession(result.session, 'local');
+      setError(null);
+    } catch {
+      setError('Could not record that proposal decision. The diff has not been applied.');
+    }
+  }, [applySession, sessionId]);
+
+  const applyMediaProposal = useCallback(async (proposalId: string) => {
+    try {
+      const result = await requestJson<{ project: TranscriptEditorProject; session: AtlasSession }>(
+        `/api/sessions/${encodeURIComponent(sessionId)}/media-project/proposals/${encodeURIComponent(proposalId)}/apply`,
+        { body: JSON.stringify({ revisionId: `revision_${Date.now().toString(36)}` }), method: 'POST' }
+      );
+      setMediaProject(result.project);
+      applySession(result.session, 'local');
+      setError(null);
+    } catch {
+      setError('Could not apply that approved diff. The current revision is unchanged.');
+    }
+  }, [applySession, sessionId]);
+
+  const renderMediaProject = useCallback(async () => {
+    try {
+      const result = await requestJson<{ project: TranscriptEditorProject }>(
+        `/api/sessions/${encodeURIComponent(sessionId)}/media-project/render`,
+        { body: JSON.stringify({ requestId: `render_${Date.now().toString(36)}` }), method: 'POST' }
+      );
+      setMediaProject(result.project);
+      await loadSession();
+      setError(null);
+    } catch {
+      setError('Could not render the local MP4. No successful render receipt was added.');
+    }
+  }, [loadSession, sessionId]);
+
   const patchNode = useCallback(
     async (nodeId: string, payload: Partial<AtlasCanvasNode>) => {
       const next = await requestJson<AtlasSession>(
@@ -1980,6 +2491,11 @@ function AtlasStudio(): React.ReactElement {
         setError(err instanceof Error ? err.message : String(err));
       });
   }, [loadSession]);
+
+  useEffect(() => {
+    if (session?.mediaProject) void loadMediaProject();
+    else setMediaProject(null);
+  }, [loadMediaProject, session?.mediaProject?.updatedAt]);
 
   useEffect(() => {
     if (!session) return;
@@ -2415,6 +2931,82 @@ function AtlasStudio(): React.ReactElement {
     await navigator.clipboard?.writeText(command);
   }, [sessionId]);
 
+  const proposeTranscriptRemoval = useCallback(
+    async (operationId: string) => {
+      if (!transcriptProject) return;
+      const revision = transcriptProject.revisions.find(
+        (candidate) => candidate.id === transcriptProject.currentRevisionId
+      );
+      const selected = revision?.cutList.find((operation) => operation.id === operationId);
+      if (!revision || !selected || selected.kind !== 'keep') return;
+
+      const operations: CutOperation[] = revision.cutList.map((operation) =>
+        operation.id === operationId
+          ? { ...operation, kind: 'remove', reason: 'Manual transcript removal proposed by the operator.' }
+          : operation
+      );
+      const next = await requestJson<TranscriptEditorProject>(
+        `/api/sessions/${encodeURIComponent(sessionId)}/transcript-project/proposals`,
+        {
+          body: JSON.stringify({
+            id: `manual-remove:${operationId}:${Date.now()}`,
+            baseRevisionId: revision.id,
+            proposedBy: 'operator',
+            rationale: `Manual removal proposed for ${selected.transcriptSegmentIds.join(', ')}.`,
+            operations
+          }),
+          method: 'POST'
+        }
+      );
+      setTranscriptProject(next);
+      setError(null);
+    },
+    [sessionId, transcriptProject]
+  );
+
+  const decideTranscriptProposal = useCallback(
+    async (proposalId: string, decision: 'approved' | 'rejected') => {
+      const next = await requestJson<TranscriptEditorProject>(
+        `/api/sessions/${encodeURIComponent(sessionId)}/transcript-project/proposals/${encodeURIComponent(
+          proposalId
+        )}`,
+        {
+          body: JSON.stringify({
+            decidedAt: new Date().toISOString(),
+            decidedBy: 'operator',
+            decision
+          }),
+          method: 'PATCH'
+        }
+      );
+      setTranscriptProject(next);
+      setError(null);
+    },
+    [sessionId]
+  );
+
+  const applyTranscriptProposal = useCallback(
+    async (proposalId: string) => {
+      if (!transcriptProject) return;
+      const next = await requestJson<TranscriptEditorProject>(
+        `/api/sessions/${encodeURIComponent(sessionId)}/transcript-project/proposals/${encodeURIComponent(
+          proposalId
+        )}/apply`,
+        {
+          body: JSON.stringify({
+            appliedAt: new Date().toISOString(),
+            appliedBy: 'operator',
+            revisionId: `revision-${transcriptProject.revisions.length + 1}`
+          }),
+          method: 'POST'
+        }
+      );
+      setTranscriptProject(next);
+      setError(null);
+    },
+    [sessionId, transcriptProject]
+  );
+
   return (
     <div className="studio-shell">
       <header className="studio-header">
@@ -2428,6 +3020,14 @@ function AtlasStudio(): React.ReactElement {
           </span>
         </div>
         <div className="toolbar">
+          <IconButton
+            active={mediaEditorOpen}
+            icon={Clapperboard}
+            onClick={() => setMediaEditorOpen((value) => !value)}
+            title={mediaEditorOpen ? 'Hide transcript editor' : 'Show transcript editor'}
+          >
+            Edit
+          </IconButton>
           <IconButton
             active={railOpen}
             icon={railOpen ? PanelLeftClose : PanelLeftOpen}
@@ -2447,10 +3047,25 @@ function AtlasStudio(): React.ReactElement {
           <IconButton
             active={databaseOpen}
             icon={Database}
-            onClick={() => setDatabaseOpen((value) => !value)}
+            onClick={() => {
+              setDatabaseOpen((value) => !value);
+              setTranscriptEditorOpen(false);
+            }}
             title={databaseOpen ? 'Hide database layer' : 'Show database layer'}
           >
             Database
+          </IconButton>
+          <IconButton
+            active={transcriptEditorOpen}
+            icon={Film}
+            onClick={() => {
+              setTranscriptEditorOpen((value) => !value);
+              setDatabaseOpen(false);
+              void loadTranscriptProject();
+            }}
+            title={transcriptEditorOpen ? 'Hide transcript editor' : 'Show transcript editor'}
+          >
+            Edit
           </IconButton>
           <IconButton
             active={activePresenterStory}
@@ -2489,7 +3104,7 @@ function AtlasStudio(): React.ReactElement {
         </div>
       </header>
 
-      <main className={`studio-main ${databaseOpen ? 'database-open' : ''}`}>
+      <main className={`studio-main ${databaseOpen || transcriptEditorOpen ? 'database-open' : ''}`}>
         <div
           ref={canvasStageRef}
           className={`canvas-stage ${activePresenterStory ? 'presenter-mode' : ''} ${
@@ -2610,6 +3225,17 @@ function AtlasStudio(): React.ReactElement {
           selectedNode={selectedNode}
           sessionId={sessionId}
         />
+        <MediaEditorPanel
+          onApplyProposal={(proposalId) => void applyMediaProposal(proposalId)}
+          onClose={() => setMediaEditorOpen(false)}
+          onDecideProposal={(proposalId, decision) => void decideMediaProposal(proposalId, decision)}
+          onInitialize={(sourcePath, transcript, includeTitleOverlay) => void initializeMediaProject(sourcePath, transcript, includeTitleOverlay)}
+          onRender={() => void renderMediaProject()}
+          onRequestCodexProposal={(instruction, privateContentConfirmed) => void requestCodexMediaProposal(instruction, privateContentConfirmed)}
+          open={mediaEditorOpen}
+          project={mediaProject}
+          sessionId={sessionId}
+        />
         {databaseOpen ? (
           <DatabaseLayerPanel
             activeView={databaseView}
@@ -2625,6 +3251,18 @@ function AtlasStudio(): React.ReactElement {
             onSelectNode={selectDatabaseNode}
             session={session}
             visibleNodeIds={visibleNodeIds}
+          />
+        ) : null}
+        {transcriptEditorOpen ? (
+          <TranscriptEditorPanel
+            onApplyProposal={(proposalId) => void applyTranscriptProposal(proposalId)}
+            onClose={() => setTranscriptEditorOpen(false)}
+            onDecideProposal={(proposalId, decision) =>
+              void decideTranscriptProposal(proposalId, decision)
+            }
+            onImport={importTranscriptProject}
+            onProposeRemoval={(operationId) => void proposeTranscriptRemoval(operationId)}
+            project={transcriptProject}
           />
         ) : null}
       </main>
