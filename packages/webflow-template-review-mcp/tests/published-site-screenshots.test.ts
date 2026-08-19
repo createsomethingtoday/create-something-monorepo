@@ -4,6 +4,7 @@ import { test } from 'node:test';
 import {
   DEFAULT_MAX_SEGMENTS,
   DEFAULT_SCREENSHOT_SETTLE_MS,
+  MAX_CAPTURED_SEGMENTS,
   normalizePublishedSiteScreenshotInput,
   PublishedSiteScreenshotError,
 } from '../src/published-site-screenshots.js';
@@ -18,6 +19,17 @@ test('normalizes defaults: desktop + mobile, above-the-fold, settle delay', () =
   assert.equal(request.fullPage, false);
   assert.equal(request.settleMs, DEFAULT_SCREENSHOT_SETTLE_MS);
   assert.equal(request.maxSegments, DEFAULT_MAX_SEGMENTS);
+  assert.equal(request.captureSegments, 1);
+});
+
+test('full_page decouples capture coverage from the inline segment cap', () => {
+  const request = normalizePublishedSiteScreenshotInput({
+    published_url: 'https://blaxi.webflow.io/',
+    full_page: true,
+    max_segments: 3,
+  });
+  assert.equal(request.maxSegments, 3);
+  assert.equal(request.captureSegments, MAX_CAPTURED_SEGMENTS);
 });
 
 test('dedupes repeated viewports and keeps preset dimensions', () => {
@@ -59,18 +71,24 @@ test('rejects out-of-range settle_ms', () => {
 
 test('rejects out-of-range max_segments and accepts the cap', () => {
   assert.throws(
-    () => normalizePublishedSiteScreenshotInput({ published_url: 'https://blaxi.webflow.io/', max_segments: 9 }),
+    () =>
+      normalizePublishedSiteScreenshotInput({
+        published_url: 'https://blaxi.webflow.io/',
+        max_segments: MAX_CAPTURED_SEGMENTS + 1,
+      }),
     PublishedSiteScreenshotError,
   );
   assert.throws(
     () => normalizePublishedSiteScreenshotInput({ published_url: 'https://blaxi.webflow.io/', max_segments: 0 }),
     PublishedSiteScreenshotError,
   );
+  // The inline cap may be raised to the full capture bound for a deliberate
+  // model-side visual review of every segment.
   const request = normalizePublishedSiteScreenshotInput({
     published_url: 'https://blaxi.webflow.io/',
     full_page: true,
-    max_segments: 8,
+    max_segments: MAX_CAPTURED_SEGMENTS,
   });
-  assert.equal(request.maxSegments, 8);
+  assert.equal(request.maxSegments, MAX_CAPTURED_SEGMENTS);
   assert.equal(request.fullPage, true);
 });

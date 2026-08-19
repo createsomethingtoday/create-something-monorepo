@@ -11,13 +11,35 @@ import {
 } from '../src/published-site-screenshots.js';
 
 const JPEG_QUALITY = 80;
-const SCROLL_STEP_DELAY_MS = 300;
-const SEGMENT_SETTLE_MS = 350;
+/**
+ * Prime-sweep step delay: long enough for IntersectionObservers and lazy-load
+ * requests to fire; the reveals themselves finish during later steps and the
+ * post-sweep settle, so the sweep doesn't need to wait for them.
+ */
+const SCROLL_STEP_DELAY_MS = 150;
+/** Full settle after the prime sweep returns to top, before capture begins. */
+const POST_PRIME_SETTLE_MS = 350;
+/**
+ * Per-segment floor after scrolling to a capture position. Reveals already
+ * fired during the prime sweep, so two animation frames plus this floor is
+ * enough for scroll-linked paint to stabilize before the shot.
+ */
+const SEGMENT_SETTLE_FLOOR_MS = 150;
 /** Safety cap on the scroll-prime sweep for pathologically tall pages. */
 const MAX_PRIME_SCROLL_PX = 30_000;
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/** Adaptive per-segment settle: two animation frames plus a short floor. */
+async function settleAfterScroll(page: Page): Promise<void> {
+  await page
+    .evaluate(async (floorMs: number) => {
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve(undefined))));
+      await new Promise((resolve) => setTimeout(resolve, floorMs));
+    }, SEGMENT_SETTLE_FLOOR_MS)
+    .catch(() => undefined);
 }
 
 async function settlePage(page: Page, settleMs: number): Promise<void> {
@@ -62,11 +84,17 @@ async function primeScrollRevealsAndLazyLoads(page: Page, stepPx: number): Promi
   );
 }
 
+interface ViewportCapture {
+  screenshots: CapturedScreenshot[];
+  finalUrl: string;
+  pageTitle: string | null;
+}
+
 async function captureViewport(
   page: Page,
   request: PublishedSiteScreenshotRequest,
   viewport: PublishedSiteScreenshotRequest['viewports'][number],
-): Promise<CapturedScreenshot[]> {
+): Promise<ViewportCapture> {
   await page.setViewport({
     width: viewport.width,
     height: viewport.height,
@@ -91,12 +119,12 @@ async function captureViewport(
 
   if (request.fullPage) {
     await primeScrollRevealsAndLazyLoads(page, viewport.height);
-    await delay(SEGMENT_SETTLE_MS);
+    await delay(POST_PRIME_SETTLE_MS);
   }
 
   const pageHeight = await measurePageHeight(page);
   const segmentCount = request.fullPage
-    ? Math.min(Math.max(1, Math.ceil(pageHeight / viewport.height)), request.maxSegments)
+    ? Math.min(Math.max(1, Math.ceil(pageHeight / viewport.height)), request.captureSegments)
     : 1;
   const truncated = request.fullPage && pageHeight > segmentCount * viewport.height;
 
@@ -107,7 +135,7 @@ async function captureViewport(
     const scrollY = Math.min(segment * viewport.height, Math.max(0, pageHeight - viewport.height));
     if (request.fullPage && segmentCount > 1) {
       await page.evaluate((y: number) => window.scrollTo(0, y), scrollY);
-      await delay(SEGMENT_SETTLE_MS);
+      await settleAfterScroll(page);
     }
     const image = (await page.screenshot({ type: 'jpeg', quality: JPEG_QUALITY })) as Uint8Array;
     screenshots.push({
@@ -126,7 +154,11 @@ async function captureViewport(
       duration_ms: Date.now() - started,
     });
   }
-  return screenshots;
+  return {
+    screenshots,
+    finalUrl: page.url(),
+    pageTitle: await page.title().catch(() => null),
+  };
 }
 
 /**
@@ -147,17 +179,25 @@ export function createBrowserRenderingScreenshotExecutor(
     }
     let browser: Awaited<ReturnType<typeof puppeteer.launch>> | undefined;
     try {
-      browser = await puppeteer.launch(binding);
-      const page = await browser.newPage();
-      const screenshots: CapturedScreenshot[] = [];
-      for (const viewport of request.viewports) {
-        screenshots.push(...(await captureViewport(page, request, viewport)));
-      }
-      const pageTitle = await page.title().catch(() => null);
+      const launched = await puppeteer.launch(binding);
+      browser = launched;
+      // Each viewport gets its own page, so desktop and mobile navigate,
+      // settle, and capture concurrently — wall time is the slower viewport,
+      // not the sum of both.
+      const captures = await Promise.all(
+        request.viewports.map(async (viewport) => {
+          const page = await launched.newPage();
+          try {
+            return await captureViewport(page, request, viewport);
+          } finally {
+            await page.close().catch(() => undefined);
+          }
+        }),
+      );
       return {
-        final_url: page.url(),
-        page_title: pageTitle,
-        screenshots,
+        final_url: captures[0]?.finalUrl ?? request.url,
+        page_title: captures[0]?.pageTitle ?? null,
+        screenshots: captures.flatMap((capture) => capture.screenshots),
       };
     } catch (error) {
       if (error instanceof PublishedSiteScreenshotError) throw error;

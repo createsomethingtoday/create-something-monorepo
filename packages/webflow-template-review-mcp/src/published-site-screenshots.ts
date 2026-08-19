@@ -35,7 +35,20 @@ export const DEFAULT_SCREENSHOT_TIMEOUT_MS = 30_000;
  * scroll-less capture. Segment count is bounded to keep responses small.
  */
 export const DEFAULT_MAX_SEGMENTS = 5;
-export const MAX_SEGMENTS_LIMIT = 8;
+/**
+ * Per-viewport bound on how many segments a full-page sweep captures and
+ * stores. Coverage (what the gallery shows) is decoupled from max_segments,
+ * which only limits the images returned inline to the model — tall templates
+ * (10k+ px) were coming back with the bottom 25–40% unreviewed when one cap
+ * served both purposes. 24 × 900px ≈ 21,600px of desktop page.
+ */
+export const MAX_CAPTURED_SEGMENTS = 24;
+/**
+ * max_segments may go as high as the capture bound so a deliberate model-side
+ * visual review can see every captured segment inline; the low default keeps
+ * ordinary calls light.
+ */
+export const MAX_SEGMENTS_LIMIT = MAX_CAPTURED_SEGMENTS;
 
 export interface PublishedSiteScreenshotInput {
   published_url: string;
@@ -51,7 +64,10 @@ export interface PublishedSiteScreenshotRequest {
   fullPage: boolean;
   settleMs: number;
   timeoutMs: number;
+  /** Per-viewport cap on segments returned inline to the model. */
   maxSegments: number;
+  /** Per-viewport cap on segments captured and stored (gallery coverage). */
+  captureSegments: number;
 }
 
 export interface CapturedScreenshot {
@@ -176,12 +192,14 @@ export function normalizePublishedSiteScreenshotInput(
       { max_segments: maxSegments },
     );
   }
+  const fullPage = input.full_page ?? false;
   return {
     url: url.toString(),
     viewports,
-    fullPage: input.full_page ?? false,
+    fullPage,
     settleMs,
     timeoutMs: DEFAULT_SCREENSHOT_TIMEOUT_MS,
     maxSegments,
+    captureSegments: fullPage ? MAX_CAPTURED_SEGMENTS : 1,
   };
 }
