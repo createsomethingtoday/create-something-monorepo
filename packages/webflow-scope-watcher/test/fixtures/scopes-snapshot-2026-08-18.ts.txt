@@ -1,0 +1,611 @@
+import {deepFreeze} from '@packages/utilities/js/object';
+import {getFeatureFlag} from '@packages/systems/feature-config/server';
+import {
+  FEATURE_FLAGS,
+  type FeatureFlagName,
+} from '@packages/systems/feature-config/shared';
+import {
+  TokenAuthorizationResource,
+  TokenAuthorizationResourceType,
+} from './types';
+
+/**
+ * Metadata about a grouping of scopes
+ *
+ * Fields:
+ * key - A globally unique value for the category that is independent of UI concerns
+ * name - A human friendly display value for the category. Used to hydrate the UI
+ * description - A human friendly value for explaining the role the scopes in the category play.
+ *               Used to hydrate the UI
+ */
+export const SCOPE_CATEGORIES = deepFreeze({
+  AGENT_INSTRUCTIONS: {
+    key: 'AGENT_INSTRUCTIONS',
+    name: 'Agent Instructions',
+    description: 'View and manage Agent Instructions',
+  },
+  AI: {
+    key: 'AI',
+    name: 'AI',
+    description: 'Use AI-powered features through the API',
+  },
+  APP_SUBSCRIPTIONS: {
+    key: 'APP_SUBSCRIPTIONS',
+    name: 'App Subscriptions',
+    description: 'View App subscriptions',
+  },
+  ASSETS: {
+    key: 'ASSETS',
+    name: 'Assets',
+    description: 'View and manage assets and folders',
+  },
+  AUTHORIZED_USER: {
+    key: 'AUTHORIZED_USER',
+    name: 'Authorized user',
+    description: 'View information about the authorized user',
+  },
+  BRANCHES: {
+    key: 'BRANCHES',
+    name: 'Branches',
+    description: 'View and manage page branches',
+  },
+  CLOUD_APPS: {
+    key: 'CLOUD_APPS',
+    name: 'Cloud Apps',
+    description: 'Create and manage Webflow Cloud applications',
+  },
+  CMS: {
+    key: 'CMS',
+    name: 'CMS',
+    description: 'View and manage CMS Collections and Items',
+  },
+  CODE_COMPONENTS: {
+    key: 'CODE_COMPONENTS',
+    name: 'Code components',
+    description: 'Import React components from an external codebase.',
+    descriptionLink: {
+      text: 'DevLink docs',
+      url: 'https://developers.webflow.com/code-components/introduction',
+    },
+    excludeReadOnly: true,
+  },
+  COMMENTS: {
+    key: 'COMMENTS',
+    name: 'Comments',
+    description: 'View and manage comments',
+  },
+  COMPONENTS: {
+    key: 'COMPONENTS',
+    name: 'Components',
+    description: 'View and manage site components',
+  },
+  CUSTOM_CODE: {
+    key: 'CUSTOM_CODE',
+    name: 'Custom Code',
+    description: 'View and manage scripts for a site',
+  },
+  DEVLINK_EXPORT: {
+    key: 'DEVLINK_EXPORT',
+    name: 'DevLink Export',
+    description: 'Export components to an external React codebase.',
+    descriptionLink: {
+      text: 'DevLink docs',
+      url: 'https://developers.webflow.com/devlink/docs/component-export',
+    },
+  },
+  ECOMMERCE: {
+    key: 'ECOMMERCE',
+    name: 'Ecommerce',
+    description: 'View and manage an Ecommerce store',
+  },
+  FORMS: {
+    key: 'FORMS',
+    name: 'Forms',
+    description: 'View and manage site forms and submissions',
+  },
+  PAGE_CLIENT: {
+    key: 'PAGE_CLIENT',
+    name: 'Page Client',
+    description: 'Manage data through the Page Client',
+  },
+  PAGES: {
+    key: 'PAGES',
+    name: 'Pages',
+    description: 'View and manage page data',
+  },
+  SITE_ACCESS: {
+    key: 'SITE_ACCESS',
+    name: 'Site Access',
+    description: 'View and manage which team members can access a site',
+  },
+  SITE_ACTIVITY: {
+    key: 'SITE_ACTIVITY',
+    name: 'Site activity',
+    description: 'View historical site activity data',
+  },
+  SITE_CONFIG: {
+    key: 'SITE_CONFIG',
+    name: 'Site config',
+    description: 'View and manage site configuration',
+  },
+  SITES: {
+    key: 'SITES',
+    name: 'Sites',
+    description: 'View and manage site data and publishing',
+  },
+  USERS: {
+    key: 'USERS',
+    name: 'User Accounts',
+    description: 'View and manage site users and access groups',
+  },
+  WORKSPACE: {
+    key: 'WORKSPACE',
+    name: 'Workspace',
+    description: 'View and manage Workspace resources',
+  },
+  WORKSPACE_ACTIVITY: {
+    key: 'WORKSPACE_ACTIVITY',
+    name: 'Workspace activity',
+    description: "Review your team's activity across the Workspace.",
+    descriptionLink: {
+      text: 'Data API docs',
+      url: 'https://developers.webflow.com/data/v2.0.0/reference/enterprise/workspace-audit-logs/get',
+    },
+  },
+  WORKSPACE_MEMBERS: {
+    key: 'WORKSPACE_MEMBERS',
+    name: 'Workspace Members',
+    description:
+      "View and manage your Workspace's team members, invites, and roles",
+  },
+});
+
+/**
+ * Scope names/descriptions supported by the Webflow OAuth authorization server
+ */
+export type ScopeCategory =
+  (typeof SCOPE_CATEGORIES)[keyof typeof SCOPE_CATEGORIES];
+
+export type ScopeCategoryKey = keyof typeof SCOPE_CATEGORIES;
+
+/**
+ * The universe of scopes supported by the Webflow OAuth authorization server.
+ * Each value for 'key' must be globally unique
+ *
+ * Fields:
+ * category - A logical grouping the scope belongs to. Used for hydrating the UI
+ * authorizationResourceTypes - The type of resource the authorization associated with this scope can be assigned to (site/workspace)
+ * name - The actual value for the scope. This is what must be passed in on the OAuth authorization request
+ *        Must be globally unique
+ * description - A human-readable string to display on the OAuth consent screen
+ */
+export const SCOPES = deepFreeze({
+  AGENT_INSTRUCTIONS_READ: {
+    category: SCOPE_CATEGORIES.AGENT_INSTRUCTIONS.key,
+    authorizationResourceTypes: [TokenAuthorizationResource.Site],
+    key: 'agent_instructions:read',
+    description: 'Read Agent Instructions data',
+  },
+  AGENT_INSTRUCTIONS_WRITE: {
+    category: SCOPE_CATEGORIES.AGENT_INSTRUCTIONS.key,
+    authorizationResourceTypes: [TokenAuthorizationResource.Site],
+    key: 'agent_instructions:write',
+    description: 'Edit Agent Instructions data',
+  },
+  AI_WRITE: {
+    category: SCOPE_CATEGORIES.AI.key,
+    // Public LLM routes require a Workspace grant, resolve that workspace
+    // from the token, and run the configured owner-permission check. Site
+    // grants remain valid for other AI API consumers but cannot call LLM
+    // routes. Workspace AI entitlement/toggle enforcement remains a separate
+    // product policy decision before the flag is enabled for customers.
+    authorizationResourceTypes: [
+      TokenAuthorizationResource.Workspace,
+      TokenAuthorizationResource.Site,
+    ],
+    key: 'ai:write',
+    description:
+      'Use AI-powered features (LLM chat and generation) through the API',
+  },
+  APP_SUBSCRIPTIONS_READ: {
+    category: SCOPE_CATEGORIES.APP_SUBSCRIPTIONS.key,
+    authorizationResourceTypes: [TokenAuthorizationResource.Site],
+    key: 'app_subscriptions:read',
+    description: 'Read App Subscriptions data',
+  },
+  ASSETS_READ: {
+    category: SCOPE_CATEGORIES.ASSETS.key,
+    authorizationResourceTypes: [TokenAuthorizationResource.Site],
+    key: 'assets:read',
+    description: 'Read Asset data',
+  },
+  ASSETS_WRITE: {
+    category: SCOPE_CATEGORIES.ASSETS.key,
+    authorizationResourceTypes: [TokenAuthorizationResource.Site],
+    key: 'assets:write',
+    description: 'Edit Asset data',
+  },
+  AUTHORIZED_USER_READ: {
+    category: SCOPE_CATEGORIES.AUTHORIZED_USER.key,
+    authorizationResourceTypes: [TokenAuthorizationResource.Site],
+    key: 'authorized_user:read',
+    description: 'Read Authorized User data',
+  },
+  BRANCHES_READ: {
+    category: SCOPE_CATEGORIES.BRANCHES.key,
+    authorizationResourceTypes: [TokenAuthorizationResource.Site],
+    key: 'branches:read',
+    description: 'Read Branch data',
+  },
+  BRANCHES_CREATE: {
+    category: SCOPE_CATEGORIES.BRANCHES.key,
+    authorizationResourceTypes: [TokenAuthorizationResource.Site],
+    key: 'branches:create',
+    description: 'Create Branches',
+  },
+  BRANCHES_DELETE: {
+    category: SCOPE_CATEGORIES.BRANCHES.key,
+    authorizationResourceTypes: [TokenAuthorizationResource.Site],
+    key: 'branches:delete',
+    description: 'Delete Branches',
+  },
+  BRANCHES_UPDATE: {
+    category: SCOPE_CATEGORIES.BRANCHES.key,
+    authorizationResourceTypes: [TokenAuthorizationResource.Site],
+    key: 'branches:update',
+    description: 'Update Branches with changes from main',
+  },
+  BRANCHES_MERGE: {
+    category: SCOPE_CATEGORIES.BRANCHES.key,
+    authorizationResourceTypes: [TokenAuthorizationResource.Site],
+    key: 'branches:merge',
+    description: 'Merge Branches into main',
+  },
+  BRANCHES_PUBLISH: {
+    category: SCOPE_CATEGORIES.BRANCHES.key,
+    authorizationResourceTypes: [TokenAuthorizationResource.Site],
+    key: 'branches:publish',
+    description: 'Publish Branches to staging',
+  },
+  CLOUD_APPS_READ: {
+    category: SCOPE_CATEGORIES.CLOUD_APPS.key,
+    authorizationResourceTypes: [
+      TokenAuthorizationResource.Workspace,
+      TokenAuthorizationResource.Site,
+    ],
+    key: 'cloud_apps:read',
+    description: 'Read Cloud Apps data',
+  },
+  CLOUD_APPS_WRITE: {
+    category: SCOPE_CATEGORIES.CLOUD_APPS.key,
+    authorizationResourceTypes: [
+      TokenAuthorizationResource.Workspace,
+      TokenAuthorizationResource.Site,
+    ],
+    key: 'cloud_apps:write',
+    description: 'Create and manage Cloud Apps',
+  },
+  CMS_READ: {
+    category: SCOPE_CATEGORIES.CMS.key,
+    authorizationResourceTypes: [TokenAuthorizationResource.Site],
+    key: 'cms:read',
+    description: 'Read CMS data',
+  },
+  CMS_WRITE: {
+    category: SCOPE_CATEGORIES.CMS.key,
+    authorizationResourceTypes: [TokenAuthorizationResource.Site],
+    key: 'cms:write',
+    description: 'Edit CMS data',
+  },
+  CODE_COMPONENTS_READ: {
+    category: SCOPE_CATEGORIES.CODE_COMPONENTS.key,
+    authorizationResourceTypes: [TokenAuthorizationResource.Workspace],
+    key: 'code_components:read',
+    description: 'Read Code Components data',
+  },
+  CODE_COMPONENTS_WRITE: {
+    category: SCOPE_CATEGORIES.CODE_COMPONENTS.key,
+    authorizationResourceTypes: [TokenAuthorizationResource.Workspace],
+    key: 'code_components:write',
+    description: 'Update Code Components data',
+  },
+  COMMENTS_READ: {
+    category: SCOPE_CATEGORIES.COMMENTS.key,
+    authorizationResourceTypes: [TokenAuthorizationResource.Site],
+    key: 'comments:read',
+    description: 'Read Comment data',
+  },
+  COMMENTS_WRITE: {
+    category: SCOPE_CATEGORIES.COMMENTS.key,
+    authorizationResourceTypes: [TokenAuthorizationResource.Site],
+    key: 'comments:write',
+    description: 'Edit Comment data',
+  },
+  COMPONENTS_READ: {
+    category: SCOPE_CATEGORIES.COMPONENTS.key,
+    authorizationResourceTypes: [TokenAuthorizationResource.Site],
+    key: 'components:read',
+    description: 'Read Component data',
+  },
+  COMPONENTS_WRITE: {
+    category: SCOPE_CATEGORIES.COMPONENTS.key,
+    authorizationResourceTypes: [TokenAuthorizationResource.Site],
+    key: 'components:write',
+    description: 'Edit Component data',
+  },
+  CUSTOM_CODE_READ: {
+    category: SCOPE_CATEGORIES.CUSTOM_CODE.key,
+    authorizationResourceTypes: [TokenAuthorizationResource.Site],
+    key: 'custom_code:read',
+    description: 'Read Custom Code data',
+  },
+  CUSTOM_CODE_WRITE: {
+    category: SCOPE_CATEGORIES.CUSTOM_CODE.key,
+    authorizationResourceTypes: [TokenAuthorizationResource.Site],
+    key: 'custom_code:write',
+    description: 'Edit Custom Code data',
+  },
+  DEVLINK_EXPORT_READ: {
+    category: SCOPE_CATEGORIES.DEVLINK_EXPORT.key,
+    authorizationResourceTypes: [TokenAuthorizationResource.Site],
+    key: 'devlink_export:read',
+    description: 'Read DevLink Export data',
+  },
+  ECOMMERCE_READ: {
+    category: SCOPE_CATEGORIES.ECOMMERCE.key,
+    authorizationResourceTypes: [TokenAuthorizationResource.Site],
+    key: 'ecommerce:read',
+    description: 'Read Ecommerce data',
+  },
+  ECOMMERCE_WRITE: {
+    category: SCOPE_CATEGORIES.ECOMMERCE.key,
+    authorizationResourceTypes: [TokenAuthorizationResource.Site],
+    key: 'ecommerce:write',
+    description: 'Edit Ecommerce data',
+  },
+  FORMS_READ: {
+    category: SCOPE_CATEGORIES.FORMS.key,
+    authorizationResourceTypes: [TokenAuthorizationResource.Site],
+    key: 'forms:read',
+    description: 'Read Form data',
+  },
+  FORMS_WRITE: {
+    category: SCOPE_CATEGORIES.FORMS.key,
+    authorizationResourceTypes: [TokenAuthorizationResource.Site],
+    key: 'forms:write',
+    description: 'Edit Form data',
+  },
+  PAGE_CLIENT_WRITE: {
+    category: SCOPE_CATEGORIES.PAGE_CLIENT.key,
+    authorizationResourceTypes: [TokenAuthorizationResource.Site],
+    key: 'page_client:write',
+    description: 'Write data with Page Client',
+  },
+  PAGES_READ: {
+    category: SCOPE_CATEGORIES.PAGES.key,
+    authorizationResourceTypes: [TokenAuthorizationResource.Site],
+    key: 'pages:read',
+    description: 'Read Page data',
+  },
+  PAGES_WRITE: {
+    category: SCOPE_CATEGORIES.PAGES.key,
+    authorizationResourceTypes: [TokenAuthorizationResource.Site],
+    key: 'pages:write',
+    description: 'Edit Page data',
+  },
+  // Workspace-typed, not the site-typed WORKSPACE_READ/WORKSPACE_WRITE pair.
+  SITE_ACCESS_READ: {
+    category: SCOPE_CATEGORIES.SITE_ACCESS.key,
+    authorizationResourceTypes: [TokenAuthorizationResource.Workspace],
+    key: 'site_access:read',
+    description: 'Read Site Access data',
+    featureFlag: FEATURE_FLAGS.PUBLIC_MEMBERSHIP_APIS,
+  },
+  SITE_ACCESS_WRITE: {
+    category: SCOPE_CATEGORIES.SITE_ACCESS.key,
+    authorizationResourceTypes: [TokenAuthorizationResource.Workspace],
+    key: 'site_access:write',
+    description: 'Grant, change, and revoke Site Access',
+    featureFlag: FEATURE_FLAGS.PUBLIC_MEMBERSHIP_APIS,
+  },
+  SITES_ACTIVITY_READ: {
+    category: SCOPE_CATEGORIES.SITE_ACTIVITY.key,
+    authorizationResourceTypes: [TokenAuthorizationResource.Site],
+    key: 'site_activity:read',
+    description: 'Read Site Activity data',
+  },
+  SITE_CONFIG_READ: {
+    category: SCOPE_CATEGORIES.SITE_CONFIG.key,
+    authorizationResourceTypes: [TokenAuthorizationResource.Site],
+    key: 'site_config:read',
+    description: 'Read Config data',
+  },
+  SITE_CONFIG_WRITE: {
+    category: SCOPE_CATEGORIES.SITE_CONFIG.key,
+    authorizationResourceTypes: [TokenAuthorizationResource.Site],
+    key: 'site_config:write',
+    description: 'Edit Config data',
+  },
+  SITES_READ: {
+    category: SCOPE_CATEGORIES.SITES.key,
+    authorizationResourceTypes: [
+      TokenAuthorizationResource.Site,
+      TokenAuthorizationResource.OptimizeNonHostedSite,
+    ],
+    key: 'sites:read',
+    description: 'Read Site data',
+  },
+  SITES_WRITE: {
+    category: SCOPE_CATEGORIES.SITES.key,
+    authorizationResourceTypes: [
+      TokenAuthorizationResource.Site,
+      TokenAuthorizationResource.OptimizeNonHostedSite,
+    ],
+    key: 'sites:write',
+    description: 'Edit Site data',
+  },
+  USERS_READ: {
+    category: SCOPE_CATEGORIES.USERS.key,
+    authorizationResourceTypes: [TokenAuthorizationResource.Site],
+    key: 'users:read',
+    description: 'Read User data',
+  },
+  USERS_WRITE: {
+    category: SCOPE_CATEGORIES.USERS.key,
+    authorizationResourceTypes: [TokenAuthorizationResource.Site],
+    key: 'users:write',
+    description: 'Edit User data',
+  },
+  WORKSPACE_READ: {
+    category: SCOPE_CATEGORIES.WORKSPACE.key,
+    authorizationResourceTypes: [TokenAuthorizationResource.Site],
+    key: 'workspace:read',
+    description: 'Read Workspace data',
+  },
+  WORKSPACE_WRITE: {
+    category: SCOPE_CATEGORIES.WORKSPACE.key,
+    authorizationResourceTypes: [TokenAuthorizationResource.Site],
+    key: 'workspace:write',
+    description: 'Edit Workspace data',
+  },
+  WORKSPACE_ACTIVITY_READ: {
+    category: SCOPE_CATEGORIES.WORKSPACE_ACTIVITY.key,
+    authorizationResourceTypes: [TokenAuthorizationResource.Workspace],
+    key: 'workspace_activity:read',
+    description: 'Read Workspace Activity data',
+  },
+  WORKSPACE_MEMBERS_READ: {
+    category: SCOPE_CATEGORIES.WORKSPACE_MEMBERS.key,
+    authorizationResourceTypes: [TokenAuthorizationResource.Workspace],
+    key: 'workspace_members:read',
+    description: 'Read Workspace Members data',
+    featureFlag: FEATURE_FLAGS.PUBLIC_MEMBERSHIP_APIS,
+  },
+  WORKSPACE_MEMBERS_WRITE: {
+    category: SCOPE_CATEGORIES.WORKSPACE_MEMBERS.key,
+    authorizationResourceTypes: [TokenAuthorizationResource.Workspace],
+    key: 'workspace_members:write',
+    description: 'Invite, update, and remove Workspace Members',
+    featureFlag: FEATURE_FLAGS.PUBLIC_MEMBERSHIP_APIS,
+  },
+});
+
+/**
+ * Scope names/descriptions supported by the Webflow OAuth authorization server
+ */
+export type Scope = (typeof SCOPES)[keyof typeof SCOPES] & {
+  featureFlag?: FeatureFlagName;
+};
+
+/**
+ * Evaluates every distinct `featureFlag` referenced across `SCOPES` exactly
+ * once, so a single operation (one grantability check, one catalog fetch)
+ * makes one Statsig evaluation per flag instead of one per scope. Call this
+ * once at the top of an operation and pass its result to `isScopeEnabled`.
+ *
+ * Passes an explicit empty identity so the check resolves the flag's
+ * global default rather than inheriting whatever ambient request identity
+ * (UserContext, WorkspaceContext, etc.) happens to be set — the scope
+ * catalog and grantability checks run before a workspace is chosen, so
+ * there is nothing to target on, and a per-user Statsig rule would
+ * otherwise make the catalog caller-dependent instead of consistent.
+ */
+export function getEnabledFeatureFlagsForScopes(): Map<
+  FeatureFlagName,
+  boolean
+> {
+  const uniqueFlags = new Set(
+    (Object.values(SCOPES) as Scope[])
+      .map((scope) => scope.featureFlag)
+      .filter((flag): flag is FeatureFlagName => Boolean(flag))
+  );
+
+  return new Map(
+    Array.from(uniqueFlags, (flag) => [flag, getFeatureFlag(flag, {})])
+  );
+}
+
+/**
+ * Whether a scope is currently supported — visible in a catalog and
+ * grantable on an authorization request. Scopes without a `featureFlag`
+ * are always enabled; scopes with one are gated on the value already
+ * resolved for it in `flagResults` (see `getEnabledFeatureFlagsForScopes`).
+ */
+export function isScopeEnabled(
+  scope: Scope,
+  flagResults: Map<FeatureFlagName, boolean>
+): boolean {
+  return !scope.featureFlag || Boolean(flagResults.get(scope.featureFlag));
+}
+
+// Compute reverse lookup here once, so it's not done for each function call
+// e.g., 'sites:read' -> SCOPES.SITES_READ
+const valueToScopeLookup: {
+  [key: string]: Scope;
+} = Object.values(SCOPES).reduce<Record<string, any>>((lookup, scope) => {
+  lookup[scope.key] = scope;
+  return lookup;
+}, {});
+
+// Compute lookup here once, so it's not done for each function call
+// e.g., 'SITE' -> [SCOPES.SITES_READ, SCOPES.SITES_WRITE]
+const categoryKeyToScopeLookup: {
+  [categoryKey: string]: Scope[];
+} = Object.values(SCOPES).reduce<Record<string, any>>((lookup, scope) => {
+  const categoryKey = scope.category;
+  if (!lookup[categoryKey]) {
+    lookup[categoryKey] = [];
+  }
+
+  lookup[categoryKey].push(scope);
+
+  return lookup;
+}, {});
+
+// Compute lookup here once, so it's not done for each function call
+// e.g., 'SITE' => {'SITE' -> [SCOPES.SITES_READ, SCOPES.SITES_WRITE]}, etc.
+export const authorizationTypeToCategoryKeyToScopeLookup: {
+  [K in TokenAuthorizationResourceType]?: Partial<
+    Record<ScopeCategoryKey, Scope[]>
+  >;
+} = Object.values(SCOPES).reduce<
+  Partial<
+    Record<
+      TokenAuthorizationResourceType,
+      Partial<Record<ScopeCategoryKey, Scope[]>>
+    >
+  >
+>((lookup, scope) => {
+  scope.authorizationResourceTypes.forEach((authorizationResourceType) => {
+    // Ensure the resource type exists in the lookup
+    if (!lookup[authorizationResourceType]) {
+      lookup[authorizationResourceType] = {};
+    }
+
+    const categoryKey = scope.category as ScopeCategoryKey;
+
+    // Ensure the category exists for this resource type
+    if (!lookup[authorizationResourceType]![categoryKey]) {
+      lookup[authorizationResourceType]![categoryKey] = [];
+    }
+
+    // Add the scope to the correct resource type and category
+    lookup[authorizationResourceType]![categoryKey]!.push(scope);
+  });
+
+  return lookup;
+}, {});
+
+/**
+ * Returns the Scope object with the matching value. Otherwise, throws an exception
+ */
+export function getScopeFromKey(key: string): Scope | null | undefined {
+  return valueToScopeLookup[key];
+}
+
+/**
+ * Returns an array of scopes matching the category. Otherwise, throws an exception
+ */
+export function getScopesForCategory(category: ScopeCategory): Scope[] {
+  return categoryKeyToScopeLookup[category?.key] ?? [];
+}

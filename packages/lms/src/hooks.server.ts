@@ -43,6 +43,9 @@ interface JWTPayload {
 	aud: string[];
 	iat: number;
 	exp: number;
+	kind?: string;
+	email_verified?: boolean;
+	session_version?: number;
 }
 
 export const handle: Handle = async ({ event, resolve }) => {
@@ -231,6 +234,9 @@ async function validateJWT(token: string): Promise<JWTPayload | null> {
 
 		// Check issuer
 		if (payload.iss !== ISSUER) return null;
+		if (payload.kind !== 'identity_access_token') return null;
+		if (payload.session_version !== 2 || payload.email_verified !== true) return null;
+		if (payload.aud?.length !== 1 || payload.aud[0] !== 'lms') return null;
 
 		return payload;
 	} catch {

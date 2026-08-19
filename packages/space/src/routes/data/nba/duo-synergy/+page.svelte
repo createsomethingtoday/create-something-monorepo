@@ -18,14 +18,14 @@
 </script>
 
 <SEO
-	title="Duo Synergy | NBA Live Analytics"
+	title="Duo Synergy | NBA Analytics"
 	description="Which two-player combinations are most effective? Compare points per possession against the league average."
 	keywords="NBA duo synergy, player combinations, points per possession, two-man game, basketball chemistry"
 	propertyName="space"
 	breadcrumbs={[
 		{ name: 'Home', url: 'https://createsomething.space' },
 		{ name: 'Data Studio', url: 'https://createsomething.space/data' },
-		{ name: 'NBA Live Analytics', url: 'https://createsomething.space/data/nba' },
+		{ name: 'NBA Analytics', url: 'https://createsomething.space/data/nba' },
 		{ name: 'Duo Synergy', url: 'https://createsomething.space/data/nba/duo-synergy' }
 	]}
 />
@@ -36,7 +36,7 @@
 		<nav class="nba-breadcrumb">
 			<a href="/data/nba" class="nba-breadcrumb-link">
 				<ArrowLeft size={14} />
-				NBA Live
+				NBA Analytics
 			</a>
 			<span class="nba-breadcrumb-sep">/</span>
 			<span class="nba-breadcrumb-current">Duo Synergy</span>

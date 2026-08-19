@@ -6,6 +6,12 @@ import test from 'node:test';
 
 const agencyRoot = resolve(import.meta.dirname, '..');
 const properties = ['agency', 'space', 'io', 'ltd'] as const;
+const footerAssetByProperty = {
+  agency: 'create-something-agency-white.svg',
+  space: 'create-something-footer-white.svg',
+  io: 'create-something-footer-white.svg',
+  ltd: 'create-something-horizontal-black.svg'
+} as const;
 const requiredRasterAssets = [
   ['favicon.png', 512],
   ['apple-touch-icon.png', 180],
@@ -160,10 +166,7 @@ test('every public shell consumes its approved V3 header and footer assets', () 
         : resolve(agencyRoot, `../${property}/src/routes/+layout.svelte`),
       'utf8'
     );
-    const footerAsset =
-      property === 'agency'
-        ? 'create-something-agency-white.svg'
-        : 'create-something-footer-white.svg';
+    const footerAsset = footerAssetByProperty[property];
 
     assert.match(layout, /src: '\/brand\/create-something-horizontal-black\.svg'/);
     assert.match(layout, /mobileSrc: '\/brand\/create-something-mark-black\.svg'/);

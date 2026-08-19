@@ -34,7 +34,7 @@
 			const response = await fetch('https://id.createsomething.space/v1/auth/login', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ email, password }),
+				body: JSON.stringify({ email, password, audience: 'lms' }),
 			});
 
 				const data = (await response.json()) as LoginResponse;

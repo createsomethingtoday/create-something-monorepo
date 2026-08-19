@@ -1,7 +1,24 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 
-import type { AirtableClient, TemplateReviewQueueItem } from './airtable.js';
+import { prepareAdminTemplateFill, prepareAdminTemplateFillBatch } from './admin-template-fill.js';
+import { MRP_VISIBILITY_VALUES, setMrpVisibility, type MarketplaceAdminConfig } from './admin-mrp.js';
+import {
+  buildAdminExecuteBundle,
+  buildAdminTemplateCreateExecuteScript,
+  buildAdminTemplateUpdateExecuteScript,
+  buildAdminTemplateVerifyScript,
+  buildAdminThumbnailUploadExecuteScript,
+  type AdminTemplateExpectedFields,
+  type AdminThumbnailSource,
+} from './admin-template-execute.js';
+import {
+  buildThumbnailProxyUrl,
+  pickThumbnailAttachment,
+  THUMBNAIL_PROXY_KINDS,
+  type ThumbnailProxyKind,
+} from './thumbnail-proxy.js';
+import type { AirtableClient, TemplateReviewAssetThumbnails, TemplateReviewQueueItem } from './airtable.js';
 import { AirtableClientError } from './airtable.js';
 import { CHECKLIST_KIND_VALUES, parseChecklist } from './checklist.js';
 import { COMPREHENSIVE_REVIEW_LANE_IDS, EVIDENCE_LABELS, formatComprehensiveAgentReviewFeedback } from './comprehensive-review-feedback.js';
@@ -13,6 +30,13 @@ import {
   runPublishedSiteSandbox,
   type PublishedSiteSandboxExecutionConfig,
 } from './published-site-sandbox-execution.js';
+import {
+  MAX_SEGMENTS_LIMIT,
+  normalizePublishedSiteScreenshotInput,
+  PublishedSiteScreenshotError,
+  SCREENSHOT_VIEWPORT_NAMES,
+  type ScreenshotCaptureConfig,
+} from './published-site-screenshots.js';
 import { TEMPLATE_REVIEW_FIELD_MAP } from './schema.js';
 import { REVIEW_WORKFLOW } from './prompts.js';
 import type { ReviewerProfile } from './reviewer-directory.js';
@@ -169,8 +193,18 @@ export interface ToolAccess {
   allowedToolNames?: ReadonlySet<string>;
 }
 
+export interface AdminExecuteConfig {
+  /** Public origin of this worker, used to mint signed thumbnail-proxy URLs. */
+  publicOrigin?: string;
+  /** HMAC secret for thumbnail-proxy URL signing (worker-side only). */
+  thumbnailProxySecret?: string;
+}
+
 export interface ToolRuntimeConfig extends ValidationToolConfig {
   sandboxExecution?: PublishedSiteSandboxExecutionConfig;
+  adminExecute?: AdminExecuteConfig;
+  marketplaceAdmin?: MarketplaceAdminConfig;
+  screenshotCapture?: ScreenshotCaptureConfig;
 }
 
 /**
@@ -192,6 +226,14 @@ export const WRITE_TOOL_NAMES: ReadonlySet<string> = new Set([
   'template_review_update_version_review',
   'template_review_approve_version',
   'template_review_reject_version',
+  // Execute-script generators write nothing server-side, but the scripts they
+  // hand out submit to Webflow Admin when the reviewer runs them. Read-only
+  // sessions must not receive them.
+  'template_review_prepare_admin_template_create_execute',
+  'template_review_prepare_admin_template_update_execute',
+  'template_review_prepare_admin_template_thumbnail_execute',
+  // Server-side Webflow write: flips MarketplaceResourceProfile visibility.
+  'template_review_set_mrp_visibility',
 ]);
 
 export function registerTools(
@@ -271,6 +313,127 @@ export function registerTools(
         };
       } catch (error) {
         if (error instanceof PublishedSiteSandboxExecutionError) {
+          return jsonContent(
+            {
+              ok: false,
+              error: {
+                code: error.code,
+                message: error.message,
+                status: error.status,
+                details: error.details,
+              },
+            },
+            true,
+          );
+        }
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_capture_published_site_screenshots',
+    'Read-only: capture desktop/mobile screenshots of a published *.webflow.io template site with Cloudflare Browser Rendering (real Chromium). This is the sanctioned screenshot path — NEVER capture published sites with a code-execution/sandbox browser: sandbox egress proxies block cdn.prod.website-files.com, so pages render as unstyled bare HTML and are invalid review evidence. Waits for fonts and IX2 intro animations to settle. With full_page, scrolls through the page first (firing IX2 scroll reveals and lazy loads), then captures the ENTIRE page as viewport-height segments (up to 24 per viewport; truncated=true only when the page continues past that). max_segments (1-24, default 5) does NOT limit coverage — it only caps how many segments per viewport are returned inline to the model; every captured segment appears in the gallery. When YOU need to visually review the whole page yourself, request max_segments: 24 to receive every captured segment inline (heavy — use only for a deliberate visual review). IMPORTANT: the human reviewer cannot see the inline images — the result includes a gallery_url (one page rendering every captured segment, valid ~1 hour); always share that link in your reply. Each screenshot entry also has a per-segment view_url; include those only when the reviewer wants individual frames. Performs no Airtable write and makes no review decision.',
+    {
+      published_url: z.string().url(),
+      viewports: z.array(z.enum(SCREENSHOT_VIEWPORT_NAMES)).min(1).max(3).optional(),
+      full_page: z.boolean().optional(),
+      settle_ms: z.number().int().min(0).max(10_000).optional(),
+      max_segments: z.number().int().min(1).max(MAX_SEGMENTS_LIMIT).optional(),
+    },
+    {
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: false,
+      openWorldHint: true,
+    },
+    async (input) => {
+      try {
+        const executor = runtimeConfig.screenshotCapture?.executor;
+        if (!executor) {
+          return jsonContent(
+            {
+              ok: false,
+              error: {
+                code: 'SCREENSHOTS_NOT_CONFIGURED',
+                message: 'Screenshot capture is not configured on this deployment (missing Browser Rendering binding).',
+              },
+            },
+            true,
+          );
+        }
+        const request = normalizePublishedSiteScreenshotInput(input);
+        const result = await executor(request);
+        const publish = runtimeConfig.screenshotCapture?.publishScreenshot;
+        const published = publish
+          ? await Promise.all(result.screenshots.map((screenshot) => publish(screenshot).catch(() => null)))
+          : result.screenshots.map(() => null);
+        const publishGallery = runtimeConfig.screenshotCapture?.publishGallery;
+        let galleryUrl: string | null = null;
+        if (publishGallery && published.some(Boolean)) {
+          galleryUrl = await publishGallery({
+            final_url: result.final_url,
+            page_title: result.page_title,
+            captured_at: new Date().toISOString(),
+            screenshots: result.screenshots.flatMap((screenshot, index) => {
+              const ref = published[index];
+              if (!ref) return [];
+              return [
+                {
+                  id: ref.id,
+                  viewport: screenshot.viewport,
+                  width: screenshot.width,
+                  height: screenshot.height,
+                  segment: screenshot.segment,
+                  scroll_y: screenshot.scroll_y,
+                  page_height_px: screenshot.page_height_px,
+                  truncated: screenshot.truncated,
+                },
+              ];
+            }),
+          }).catch(() => null);
+        }
+        // Coverage is decoupled from context cost: every captured segment is
+        // stored and shown in the gallery, but only the first max_segments per
+        // viewport come back inline as images.
+        const inlineBudget = new Map<string, number>();
+        const inlineFlags = result.screenshots.map((screenshot) => {
+          const used = inlineBudget.get(screenshot.viewport) ?? 0;
+          if (used >= request.maxSegments) return false;
+          inlineBudget.set(screenshot.viewport, used + 1);
+          return true;
+        });
+        const summary = {
+          ...result,
+          ...(galleryUrl ? { gallery_url: galleryUrl } : {}),
+          screenshots: result.screenshots.map(({ data: _data, ...screenshot }, index) => ({
+            ...screenshot,
+            inline: inlineFlags[index],
+            ...(published[index] ? { view_url: published[index].view_url } : {}),
+          })),
+          ...(galleryUrl || published.some(Boolean)
+            ? {
+                view_note: galleryUrl
+                  ? 'The human reviewer cannot see the inline images. Share the gallery_url (one page with every captured segment, valid ~1 hour) in your reply; add per-segment view_url links only if the reviewer wants individual frames. Segments with inline=false were captured and appear in the gallery but were not returned as inline images.'
+                  : 'The human reviewer cannot see the inline images. Share the view_url links (valid ~1 hour) in your reply so they can open the captures in a browser.',
+              }
+            : {}),
+        };
+        return {
+          structuredContent: { ok: true, data: summary },
+          content: [
+            { type: 'text' as const, text: JSON.stringify({ ok: true, data: summary }, null, 2) },
+            ...result.screenshots
+              .filter((_, index) => inlineFlags[index])
+              .map((screenshot) => ({
+                type: 'image' as const,
+                data: screenshot.data,
+                mimeType: screenshot.mime_type,
+              })),
+          ],
+        };
+      } catch (error) {
+        if (error instanceof PublishedSiteScreenshotError) {
           return jsonContent(
             {
               ok: false,
@@ -473,6 +636,385 @@ export function registerTools(
       try {
         return asSuccess({
           context: await getClient().getReviewContext(version_id, currentReviewerAsCollaborator(getReviewer)),
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_prepare_admin_template_fill',
+    'Read-only: generate Webflow Admin template form data plus a fill-only console script/bookmarklet for https://webflow.com/admin/templates. Does not submit the form, create an MRP, or write Airtable.',
+    {
+      version_id: z.string().min(1),
+      include_script: z.boolean().optional(),
+      include_bookmarklet: z.boolean().optional(),
+    },
+    async ({ version_id, include_script, include_bookmarklet }) => {
+      try {
+        const context = await getClient().getReviewContext(version_id, currentReviewerAsCollaborator(getReviewer));
+        return asSuccess(
+          prepareAdminTemplateFill(context, {
+            includeScript: include_script ?? true,
+            includeBookmarklet: include_bookmarklet ?? true,
+          }),
+        );
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_prepare_admin_template_fill_batch',
+    'Read-only: generate compact Webflow Admin template form data for multiple template versions. Omits console scripts by default so bulk MRP handoffs stay readable.',
+    {
+      version_ids: z.array(z.string().min(1)).min(1).max(25),
+      include_scripts: z.boolean().optional(),
+      include_bookmarklets: z.boolean().optional(),
+    },
+    async ({ version_ids, include_scripts, include_bookmarklets }) => {
+      try {
+        const uniqueVersionIds = Array.from(new Set(version_ids));
+        const contexts = await Promise.all(uniqueVersionIds.map((versionId) => getClient().getReviewContext(versionId, currentReviewerAsCollaborator(getReviewer))));
+        return asSuccess(
+          prepareAdminTemplateFillBatch(contexts, {
+            includeScript: include_scripts ?? false,
+            includeBookmarklet: include_bookmarklets ?? false,
+          }),
+        );
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_get_template_thumbnail',
+    'Read-only: return fresh download links for the asset\'s 🖼️Thumbnail Image, secondary thumbnails, and carousel images. Use after creating the template in Webflow Admin to upload the thumbnail there. Airtable attachment URLs are time-limited — re-run this tool if a link has expired.',
+    {
+      asset_id: z.string().min(1).optional(),
+      version_id: z.string().min(1).optional(),
+    },
+    async ({ asset_id, version_id }) => {
+      try {
+        if (!asset_id && !version_id) {
+          throw new AirtableClientError('MISSING_IDENTIFIER', 'Provide asset_id or version_id.', 400);
+        }
+        const client = getClient();
+        let resolvedAssetId = asset_id;
+        if (!resolvedAssetId && version_id) {
+          const version = await client.getVersionById(version_id);
+          if (!version) {
+            throw new AirtableClientError('VERSION_NOT_FOUND', 'Template version not found.', 404, { version_id });
+          }
+          if (!version.assetId) {
+            throw new AirtableClientError('VERSION_ASSET_ID_MISSING', 'Template version is missing its asset linkage.', 500, { version_id });
+          }
+          resolvedAssetId = version.assetId;
+        }
+        const thumbnails = await client.getAssetThumbnails(resolvedAssetId!);
+        if (!thumbnails) {
+          throw new AirtableClientError('ASSET_NOT_FOUND_OR_OUT_OF_SCOPE', 'Template asset not found in template-review scope.', 404, {
+            asset_id: resolvedAssetId,
+          });
+        }
+        return asSuccess({
+          schema_version: 'webflow_admin_template_thumbnails.v0.1',
+          source: {
+            asset_id: thumbnails.assetId,
+            ...(version_id ? { version_id } : {}),
+            template_name: thumbnails.templateName,
+          },
+          thumbnail: thumbnails.thumbnail,
+          secondary_thumbnails: thumbnails.secondaryThumbnails,
+          carousel_images: thumbnails.carouselImages,
+          url_expiry_note: 'Airtable attachment URLs are time-limited (roughly 2 hours). Re-run this tool for fresh links instead of reusing saved URLs.',
+          next_steps: [
+            'Download the primary thumbnail and upload it on the template\'s Admin edit page after the initial create at https://webflow.com/admin/templates.',
+            'Copy the new Template ID into 👀ℹ️MRP ID (Override) (template_review_update_asset_publishing) before approving the version.',
+          ],
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  const resolveAssetIdForThumbnails = async (assetId?: string, versionId?: string): Promise<string> => {
+    if (assetId) return assetId;
+    if (!versionId) {
+      throw new AirtableClientError('MISSING_IDENTIFIER', 'Provide asset_id or version_id.', 400);
+    }
+    const version = await getClient().getVersionById(versionId);
+    if (!version) {
+      throw new AirtableClientError('VERSION_NOT_FOUND', 'Template version not found.', 404, { version_id: versionId });
+    }
+    if (!version.assetId) {
+      throw new AirtableClientError('VERSION_ASSET_ID_MISSING', 'Template version is missing its asset linkage.', 500, {
+        version_id: versionId,
+      });
+    }
+    return version.assetId;
+  };
+
+  const thumbnailSourceFor = async (
+    thumbnails: TemplateReviewAssetThumbnails,
+    kind: ThumbnailProxyKind,
+    index: number,
+  ): Promise<AdminThumbnailSource | null> => {
+    const attachment = pickThumbnailAttachment(thumbnails, kind, index);
+    if (!attachment?.url) return null;
+    const adminExecute = runtimeConfig.adminExecute;
+    const proxyUrl =
+      adminExecute?.publicOrigin && adminExecute.thumbnailProxySecret
+        ? await buildThumbnailProxyUrl({
+            origin: adminExecute.publicOrigin,
+            secret: adminExecute.thumbnailProxySecret,
+            assetId: thumbnails.assetId,
+            kind,
+            index,
+          })
+        : undefined;
+    return {
+      label: kind === 'thumbnail' ? 'primary thumbnail' : `${kind} image #${index + 1}`,
+      filename: attachment.filename ?? `${thumbnails.templateName || thumbnails.assetId}-tall-thumbnail.png`,
+      direct_url: attachment.url,
+      ...(proxyUrl ? { proxy_url: proxyUrl } : {}),
+      ...(attachment.width ? { width: attachment.width } : {}),
+      ...(attachment.height ? { height: attachment.height } : {}),
+      ...(attachment.sizeBytes ? { size_bytes: attachment.sizeBytes } : {}),
+    };
+  };
+
+  const MONGO_TEMPLATE_ID = z
+    .string()
+    .regex(/^[0-9a-f]{24}$/i, 'Expected a 24-character hex Webflow Template ID (from /admin/templates/<id>).');
+
+  server.tool(
+    'template_review_prepare_admin_template_create_execute',
+    'Execute-mode: generate a console script that CREATES the marketplace template on https://webflow.com/admin/templates when the reviewer runs it and confirms — POST create, follow-up field sync, and tall-thumbnail upload in one paste. The MCP performs no Webflow writes itself; auth, CSRF, and the final confirmation stay with the signed-in reviewer.',
+    {
+      version_id: z.string().min(1),
+      include_thumbnail_upload: z.boolean().optional(),
+      include_bookmarklet: z.boolean().optional(),
+    },
+    async ({ version_id, include_thumbnail_upload, include_bookmarklet }) => {
+      try {
+        const context = await getClient().getReviewContext(version_id, currentReviewerAsCollaborator(getReviewer));
+        const fillBundle = prepareAdminTemplateFill(context, { includeScript: false, includeBookmarklet: false });
+        if (fillBundle.missing_fields.length > 0) {
+          throw new AirtableClientError(
+            'ADMIN_FORM_INCOMPLETE',
+            'Cannot generate a create-execute script while required Admin form fields are missing.',
+            422,
+            { missing_fields: fillBundle.missing_fields },
+          );
+        }
+
+        const warnings: string[] = [...(fillBundle.form_data.admin_form_warnings ?? [])];
+        if (!fillBundle.readiness.can_publish) {
+          warnings.push(
+            'This version is not currently publish-ready according to MCP capability flags. Confirm approval state before running the script.',
+          );
+        }
+
+        let thumbnail: AdminThumbnailSource | undefined;
+        if (include_thumbnail_upload !== false && context.assetId) {
+          const thumbnails = await getClient().getAssetThumbnails(context.assetId);
+          const source = thumbnails ? await thumbnailSourceFor(thumbnails, 'thumbnail', 0) : null;
+          if (source) thumbnail = source;
+          else warnings.push('No primary thumbnail attachment found; the script will skip the thumbnail upload step.');
+        }
+
+        return asSuccess({
+          ...buildAdminExecuteBundle({
+            action: 'create',
+            consoleScript: buildAdminTemplateCreateExecuteScript({ formData: fillBundle.form_data, thumbnail }),
+            extraBoundary: [
+              'The script chains POST create → PUT field sync → tall-thumbnail upload, each visible in the console.',
+              'After it finishes, record the new Template ID in 👀ℹ️MRP ID (Override) via template_review_update_asset_publishing.',
+            ],
+            warnings,
+            includeBookmarklet: include_bookmarklet === true,
+          }),
+          source: fillBundle.source,
+          form_data: fillBundle.form_data,
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_prepare_admin_template_update_execute',
+    'Execute-mode: generate a console script that UPDATES an existing marketplace template via PUT /admin/api/templates/:id when the reviewer runs it and confirms. The script fetches current state first, shows a diff table, and preserves untouched checkbox booleans (starter/archived/tutorial/standard) — the Admin API silently flips omitted booleans to false. The MCP performs no Webflow writes itself.',
+    {
+      template_id: MONGO_TEMPLATE_ID,
+      changes: z
+        .object({
+          name: z.string().min(1).optional(),
+          description: z.string().min(1).optional(),
+          extDetailPageUrl: z.string().min(1).optional(),
+          extCategory: z.string().min(1).optional(),
+          extMainTag: z.string().min(1).optional(),
+          type: z.string().min(1).optional(),
+          cost: z.number().int().min(0).optional().describe('Price in cents (Admin stores cost in cents).'),
+          featured: z.number().int().optional(),
+          usedCount: z.number().int().min(0).optional(),
+          category: z.string().optional(),
+          features: z.array(z.string()).optional(),
+          starter: z.boolean().optional(),
+          archived: z.boolean().optional(),
+          tutorial: z.boolean().optional(),
+          standard: z.boolean().optional(),
+        })
+        .refine((value) => Object.keys(value).length > 0, { message: 'Provide at least one change.' }),
+      include_bookmarklet: z.boolean().optional(),
+    },
+    async ({ template_id, changes, include_bookmarklet }) => {
+      try {
+        return asSuccess(
+          buildAdminExecuteBundle({
+            action: 'update',
+            consoleScript: buildAdminTemplateUpdateExecuteScript(template_id, changes),
+            extraBoundary: [
+              'The script GETs current template state, prints a diff table, and only PUTs after the reviewer confirms.',
+              'Checkbox booleans not listed in the diff are preserved exactly as they are today.',
+            ],
+            includeBookmarklet: include_bookmarklet === true,
+          }),
+        );
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_prepare_admin_template_thumbnail_execute',
+    'Execute-mode: generate a console script that uploads the asset\'s Airtable thumbnail as the template\'s tall thumbnail via POST /admin/api/templates/:id/tall-thumbnail when the reviewer runs it and confirms. Bundles a direct Airtable link plus a signed worker proxy link (fresh bytes, CORS-safe) as fallback. The MCP performs no Webflow writes itself.',
+    {
+      template_id: MONGO_TEMPLATE_ID,
+      asset_id: z.string().min(1).optional(),
+      version_id: z.string().min(1).optional(),
+      image: z.enum(THUMBNAIL_PROXY_KINDS).optional().describe('Which Airtable image to upload (default: thumbnail).'),
+      image_index: z.number().int().min(0).optional().describe('Index within secondary/carousel images (default: 0).'),
+      include_bookmarklet: z.boolean().optional(),
+    },
+    async ({ template_id, asset_id, version_id, image, image_index, include_bookmarklet }) => {
+      try {
+        const resolvedAssetId = await resolveAssetIdForThumbnails(asset_id, version_id);
+        const thumbnails = await getClient().getAssetThumbnails(resolvedAssetId);
+        if (!thumbnails) {
+          throw new AirtableClientError('ASSET_NOT_FOUND_OR_OUT_OF_SCOPE', 'Template asset not found in template-review scope.', 404, {
+            asset_id: resolvedAssetId,
+          });
+        }
+        const kind: ThumbnailProxyKind = image ?? 'thumbnail';
+        const index = image_index ?? 0;
+        const source = await thumbnailSourceFor(thumbnails, kind, index);
+        if (!source) {
+          throw new AirtableClientError('IMAGE_NOT_FOUND', `No ${kind} image at index ${index} for this asset.`, 404, {
+            asset_id: resolvedAssetId,
+            image: kind,
+            image_index: index,
+          });
+        }
+        const warnings: string[] = [];
+        if (!source.proxy_url) {
+          warnings.push(
+            'No signed proxy URL available in this runtime; the script only has the direct Airtable link, which expires in roughly 2 hours and may be CORS-blocked. Prefer running this tool against the deployed worker.',
+          );
+        }
+        return asSuccess({
+          ...buildAdminExecuteBundle({
+            action: 'upload_thumbnail',
+            consoleScript: buildAdminThumbnailUploadExecuteScript(template_id, source),
+            extraBoundary: ['The script fetches image bytes, shows size, and only uploads after the reviewer confirms.'],
+            warnings,
+            includeBookmarklet: include_bookmarklet === true,
+          }),
+          source: { asset_id: thumbnails.assetId, template_name: thumbnails.templateName, image: kind, image_index: index },
+          image_details: source,
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_prepare_admin_template_verify',
+    'Read-only: generate a console script that GETs the Admin template record and compares it field-by-field against the Airtable-derived values (name, slug, description, detail path, category, tag, type, cost). Prints a match table; writes nothing. Resolves the Template ID from the asset\'s MRP ID override when template_id is omitted.',
+    {
+      version_id: z.string().min(1),
+      template_id: MONGO_TEMPLATE_ID.optional(),
+      include_bookmarklet: z.boolean().optional(),
+    },
+    async ({ version_id, template_id, include_bookmarklet }) => {
+      try {
+        const context = await getClient().getReviewContext(version_id, currentReviewerAsCollaborator(getReviewer));
+        const resolvedTemplateId = template_id ?? context.asset?.mrpIdOverride ?? context.asset?.mrpId;
+        if (!resolvedTemplateId || !/^[0-9a-f]{24}$/i.test(resolvedTemplateId)) {
+          throw new AirtableClientError(
+            'TEMPLATE_ID_UNRESOLVED',
+            'No template_id was provided and the asset has no 24-hex MRP ID (override) to verify against. Create the template in Admin first, or pass template_id.',
+            422,
+            { version_id, mrp_id_override: context.asset?.mrpIdOverride ?? null, mrp_id: context.asset?.mrpId ?? null },
+          );
+        }
+        const fillBundle = prepareAdminTemplateFill(context, { includeScript: false, includeBookmarklet: false });
+        const adminForm = fillBundle.form_data.admin_form;
+        const expected: AdminTemplateExpectedFields = {
+          ...(adminForm.name !== undefined ? { name: adminForm.name } : {}),
+          ...(adminForm.shortName !== undefined ? { shortName: adminForm.shortName } : {}),
+          ...(adminForm.description !== undefined ? { description: adminForm.description } : {}),
+          ...(adminForm.extDetailPageUrl !== undefined ? { extDetailPageUrl: adminForm.extDetailPageUrl } : {}),
+          ...(adminForm.extCategory !== undefined ? { extCategory: adminForm.extCategory } : {}),
+          ...(adminForm.extMainTag !== undefined ? { extMainTag: adminForm.extMainTag } : {}),
+          ...(adminForm.type !== undefined ? { type: adminForm.type } : {}),
+          ...(adminForm.cost !== undefined ? { cost: Number(adminForm.cost) } : {}),
+        };
+        const consoleScript = buildAdminTemplateVerifyScript(resolvedTemplateId, expected);
+        return asSuccess({
+          schema_version: 'webflow_admin_template_verify.v0.1',
+          source: fillBundle.source,
+          template_id: resolvedTemplateId,
+          template_id_source: template_id ? 'input' : context.asset?.mrpIdOverride ? 'mrp_id_override' : 'mrp_id',
+          expected,
+          ...(fillBundle.missing_fields.length ? { expected_gaps: fillBundle.missing_fields } : {}),
+          admin_url: `https://webflow.com/admin/templates/${resolvedTemplateId}`,
+          safety_boundary: [
+            'Read-only on both sides: this tool writes nothing, and the generated script only GETs Admin state and prints a comparison.',
+            'Derived category/tag/type values are heuristic — a MISMATCH row can mean the reviewer intentionally chose a different value in Admin.',
+          ],
+          console_script: consoleScript,
+          ...(include_bookmarklet === true ? { bookmarklet: `javascript:${encodeURIComponent(consoleScript.replace(/\s+/g, ' ').trim())}` } : {}),
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_set_mrp_visibility',
+    'Server-side Webflow write: set a MarketplaceResourceProfile\'s visibility to PUBLIC or PRIVATE via the key-authenticated PUT /admin/api/mrp/airtable route. For templates the mrp_id equals the Template ID from /admin/templates. Requires the marketplace admin key in this runtime and an explicit reviewer request; sends only the visibility field (partial update).',
+    {
+      mrp_id: MONGO_TEMPLATE_ID.describe('MarketplaceResourceProfile _id (equals the Template ID for templates).'),
+      visibility: z.enum(MRP_VISIBILITY_VALUES),
+    },
+    async ({ mrp_id, visibility }) => {
+      try {
+        const reviewer = requireResolvedReviewer(getReviewer);
+        const result = await setMrpVisibility(runtimeConfig.marketplaceAdmin ?? {}, mrp_id, visibility);
+        return asSuccess({
+          reviewer: reviewerPayload(reviewer),
+          ...result,
+          note: 'Partial update: only visibility was sent. Verify the listing state in Admin or on the marketplace before announcing the change.',
         });
       } catch (error) {
         return asError(error);

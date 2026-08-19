@@ -1,0 +1,52 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["kind", "summary", "patch", "model", "prompt"],
+  "properties": {
+    "kind": {
+      "enum": ["copy", "layout", "motion", "map-focus", "image", "speaker-notes"]
+    },
+    "summary": { "type": "string", "minLength": 1, "maxLength": 500 },
+    "patch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label", "heading", "explanation", "takeaway", "layout", "notes", "focusNodeIds", "motionCue", "callout", "code"],
+      "properties": {
+        "label": { "type": ["string", "null"] },
+        "heading": { "type": ["string", "null"] },
+        "explanation": { "type": ["string", "null"] },
+        "takeaway": { "type": ["string", "null"] },
+        "layout": {
+          "enum": ["statement", "split", "image", "code", "map", "capabilities", "branches", "decision", "demo", "proof", null]
+        },
+        "notes": { "type": ["string", "null"] },
+        "focusNodeIds": { "type": ["array", "null"], "items": { "type": "string" } },
+        "motionCue": {
+          "enum": ["signal-reveal", "module-focus", "handoff-trace", "decision-gate", "recovery-loop", "proof-stamp", null]
+        },
+        "callout": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["eyebrow", "title", "body"],
+          "properties": {
+            "eyebrow": { "type": "string" },
+            "title": { "type": "string" },
+            "body": { "type": "string" }
+          }
+        },
+        "code": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["language", "label", "source"],
+          "properties": {
+            "language": { "type": "string" },
+            "label": { "type": "string" },
+            "source": { "type": "string" }
+          }
+        }
+      }
+    },
+    "model": { "type": "string" },
+    "prompt": { "type": "string" }
+  }
+}

@@ -28,14 +28,14 @@
 </script>
 
 <SEO
-	title="Overtime Performance | NBA Live Analytics"
+	title="Overtime Performance | NBA Analytics"
 	description="REG vs OT performance comparison - fatigue patterns and performance decline in extended play."
 	keywords="NBA overtime, fatigue index, OT performance, basketball analytics, extended play analysis"
 	propertyName="space"
 	breadcrumbs={[
 		{ name: 'Home', url: 'https://createsomething.space' },
 		{ name: 'Data Studio', url: 'https://createsomething.space/data' },
-		{ name: 'NBA Live Analytics', url: 'https://createsomething.space/data/nba' },
+		{ name: 'NBA Analytics', url: 'https://createsomething.space/data/nba' },
 		{ name: 'Overtime Performance', url: 'https://createsomething.space/data/nba/overtime' }
 	]}
 />

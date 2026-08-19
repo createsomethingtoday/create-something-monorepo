@@ -28,6 +28,7 @@ declare global {
 				IDENTITY_WORKER_URL: string;
 				ANALYTICS_SERVICE_TOKEN?: string;
 				RESEND_API_KEY: string;
+				LMS_MAGIC_EXCHANGE_TOKEN?: string;
 			};
 			context: ExecutionContext;
 			caches: CacheStorage;

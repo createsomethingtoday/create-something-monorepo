@@ -8,10 +8,11 @@
     title: string;
     description?: string;
     items: MeridianEvidence[];
+    itemsPerView?: number;
     ariaLabel?: string;
   }
 
-  let { eyebrow, title, description, items, ariaLabel = title }: Props = $props();
+  let { eyebrow, title, description, items, itemsPerView, ariaLabel = title }: Props = $props();
   let rail = $state<HTMLDivElement>();
   let current = $state(1);
   let atStart = $state(true);
@@ -88,7 +89,13 @@
       >
     </div>
   </div>
-  <div class="meridian-evidence__rail" bind:this={rail} onscroll={handleScroll}>
+  <div
+    class:meridian-evidence__rail--fixed-columns={itemsPerView && itemsPerView > 0}
+    class="meridian-evidence__rail"
+    style:--meridian-evidence-items-per-view={itemsPerView}
+    bind:this={rail}
+    onscroll={handleScroll}
+  >
     {#each items as item}
       <article class="meridian-evidence__card" data-evidence-card>
         <p class="meridian-evidence__eyebrow">{item.eyebrow}</p>
@@ -193,6 +200,12 @@
     );
     scroll-snap-type: inline mandatory;
     scrollbar-width: thin;
+  }
+  .meridian-evidence__rail--fixed-columns {
+    grid-auto-columns: calc(
+      (100% - (var(--meridian-evidence-items-per-view) - 1) * 1px) /
+        var(--meridian-evidence-items-per-view)
+    );
   }
   .meridian-evidence__card {
     display: grid;

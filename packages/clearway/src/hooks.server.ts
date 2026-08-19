@@ -37,6 +37,9 @@ interface JWTPayload {
 	aud: string[];
 	iat: number;
 	exp: number;
+	kind?: string;
+	email_verified?: boolean;
+	session_version?: number;
 }
 
 export const handle: Handle = async ({ event, resolve }) => {
@@ -75,8 +78,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 					maxAge: 7 * 24 * 60 * 60 // 7 days
 				});
 
-				// Parse the new token to get user info
-				const newPayload = decodeJWT(newTokens.access_token);
+				const newPayload = await validateJWT(newTokens.access_token);
 				if (newPayload) {
 					event.locals.user = {
 						id: newPayload.sub,
@@ -84,6 +86,9 @@ export const handle: Handle = async ({ event, resolve }) => {
 						tier: newPayload.tier,
 						source: newPayload.source
 					};
+				} else {
+					event.cookies.delete('cs_access_token', { path: '/' });
+					event.cookies.delete('cs_refresh_token', { path: '/' });
 				}
 			} else {
 				// Refresh failed, clear cookies
@@ -186,6 +191,9 @@ async function validateJWT(token: string): Promise<JWTPayload | null> {
 
 		// Check issuer
 		if (payload.iss !== ISSUER) return null;
+		if (payload.kind !== 'identity_access_token') return null;
+		if (payload.session_version !== 2 || payload.email_verified !== true) return null;
+		if (payload.aud?.length !== 1 || payload.aud[0] !== 'clearway') return null;
 
 		return payload;
 	} catch {

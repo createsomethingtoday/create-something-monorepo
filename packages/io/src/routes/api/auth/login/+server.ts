@@ -21,7 +21,7 @@ export const POST: RequestHandler = catchApiError('AdminLogin', async ({ request
 	logger.info('Admin login attempt', { email });
 
 	// Authenticate via Identity Worker
-	const result = await identityClient.login({ email, password });
+	const result = await identityClient.login({ email, password, audience: 'io' });
 
 	if (!result.success) {
 		logger.warn('Login failed', { email, error: result.error });

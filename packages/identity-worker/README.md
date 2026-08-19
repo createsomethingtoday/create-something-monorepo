@@ -19,14 +19,21 @@ Single identity across all properties: .space, .io, .agency, .ltd, and .learn.
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/.well-known/create-something-auth` | Versioned AI-readable platform discovery |
+| GET | `/.well-known/oauth-authorization-server` | OAuth server metadata; advertises public-client authentication with `none` only |
+| GET | `/.well-known/openid-configuration` | OIDC metadata aligned to the same public-client authentication contract |
 | GET | `/v1/auth/openapi.json` | Auth-focused OpenAPI 3.1 contract |
+| POST | `/oauth/register` | Register a public PKCE client; confidential-client methods are rejected |
+| POST | `/oauth/token` | Exchange authorization-code or refresh grants for registered public clients; client secrets are rejected |
 | POST | `/v1/auth/signup` | Create account |
 | POST | `/v1/auth/login` | Authenticate |
-| POST | `/v1/auth/refresh` | Refresh tokens |
+| POST | `/v1/auth/refresh` | Atomically rotate one refresh predecessor; replay revokes its family |
 | POST | `/v1/auth/logout` | Invalidate session |
+| POST | `/v1/auth/cross-domain/generate` | Create a 60-second, exact-target intermediary from a valid session |
+| POST | `/v1/auth/cross-domain/exchange` | Server-only, no-CORS, exact-target single-use exchange |
 | GET | `/v1/users/me` | Get current user |
 | GET | `/.well-known/jwks.json` | Public keys |
-| POST | `/v1/mcp/sessions` | Create MCP session token + policy claims |
+| POST | `/v1/validate` | Validate one exact first-party session audience with API key permission `validate_identity_session` and live user state |
+| POST | `/v1/mcp/sessions` | Create MCP session token + policy claims; requires the exact `mcp-session` v2 audience |
 | POST | `/v1/mcp/sessions/admin-mint` | Admin mint MCP session for mapped account (API key + policy gated) |
 | POST | `/v1/control/scheduler-tokens/admin-issue` | Issue a short-lived Control scheduler JWT after exact frozen-activation scope readback (API key permission gated) |
 | POST | `/v1/mcp/sessions/resolve` | Resolve MCP session token (hub-only) |
@@ -65,13 +72,13 @@ customer role or access grant.
 ## Deployment
 
 ```bash
-pnpm --filter=identity-worker deploy
+pnpm --filter @create-something/identity-worker run deploy
 ```
 
 ## Database Migrations
 
 ```bash
-pnpm --filter=identity-worker db:migrate
+pnpm --filter @create-something/identity-worker run db:migrate
 ```
 
 Cloudflare D1 uses the package-local migrations directory configured in
@@ -83,21 +90,37 @@ Cloudflare D1 uses the package-local migrations directory configured in
 
 Identity Worker is the credential and token authority and the primary API surface for CREATE SOMETHING applications. Agents discover it through `/.well-known/create-something-auth`, `/v1/auth/openapi.json`, or the CREATE SOMETHING MCP resources `auth://platform/contract` and `auth://platform/openapi`. The read-only MCP tool `auth_config_validate` checks proposed non-secret integration configuration without network access or mutation.
 
-Access tokens are ES256 JWTs published through `/.well-known/jwks.json`; application-specific audiences include `ona-agents`. Canon consumers verify the exact issuer, audience, signature, and expiry before applying app-owned allow rules. Canon is the reference adapter, not the platform contract.
+Access tokens are ES256 JWTs published through `/.well-known/jwks.json`; application-specific audiences include `ona-agents`. Canon consumers verify the exact issuer, one exact audience, access-token kind, current session version, verified-email claim, signature, and expiry before applying app-owned allow rules. Canon is the reference adapter, not the platform contract.
+
+`POST /v1/validate` is the permission-gated online validation deputy for callers
+that require current account state. The caller must hold
+`validate_identity_session`, submit the expected application `audience`, and
+send only an Identity access token. The response uses the current active,
+verified user record rather than stale identity claims from the token.
 
 New SvelteKit applications should adopt `@create-something/canon/auth/access`, `@create-something/canon/auth/handlers`, `@create-something/canon/auth/cookies`, and `@create-something/canon/auth/components` rather than implementing a provider-specific verifier. The full integration and promotion contract is in [`docs/guides/FIRST_PARTY_AUTH_PLATFORM.md`](../../docs/guides/FIRST_PARTY_AUTH_PLATFORM.md).
 
 Production audience changes require an Identity Worker deployment. Application cutover, real-user migration, and removal of prior provider credentials remain separate approval-gated actions.
+
+First-party refresh rotation uses one D1 batch to claim the predecessor, insert
+at most one successor, and revoke every active descendant when a revoked
+predecessor is replayed. Revoked predecessors remain queryable for replay
+detection. Cross-domain exchange atomically claims its 60-second intermediary
+for one exact property target, rejects browser-origin requests, and never emits
+credential-bearing CORS headers. The receiving SvelteKit server exchanges the
+intermediary and writes host-only `HttpOnly` session cookies.
 
 ### Property and MCP integration
 
 Properties verify tokens by:
 1. Fetching JWKS from `/.well-known/jwks.json`
 2. Validating JWT signature
-3. Checking expiration and issuer
+3. Checking expiration, issuer, access-token kind, session version, verified state, and one exact property audience
 
 MCP hub integration:
-1. Frontend/backend creates session via `POST /v1/mcp/sessions` with user JWT
+1. The MCP onboarding frontend/backend explicitly requests an Identity access token with audience `mcp-session`, then creates a session via `POST /v1/mcp/sessions`
+   - property, LMS, workspace, and other first-party application audiences are rejected before session policy or storage is reached
+   - legacy source fallback and cross-domain exchange do not mint `mcp-session`; the onboarding caller must request it explicitly
    - Session token (`ms_tok_*`) is ephemeral, while `account_id` is stable per `{user_id, tenant_id}`
 2. Host stores returned MCP token and calls hub endpoint
 3. Hub introspects token via `POST /v1/mcp/sessions/resolve` using `MCP_SESSION_RESOLVE_TOKEN`

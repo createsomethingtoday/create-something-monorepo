@@ -39,8 +39,7 @@ import {
 	findEmailChangeRequestByToken,
 	deleteEmailChangeRequest,
 	createCrossDomainToken,
-	findCrossDomainTokenByHash,
-	markCrossDomainTokenUsed,
+	claimCrossDomainToken,
 	countRecentCrossDomainTokens,
 	ensureMcpAccountForUserTenant,
 	findMcpAccountById,
@@ -62,14 +61,30 @@ import {
 	findMcpLegacyKeyById,
 	revokeMcpLegacyKey,
 	revokeMcpLongLivedToken,
+	revokeAllIdentityLinkedCredentials,
 	upsertMcpLongLivedToken,
 	findMcpPolicyRollout,
 	createMcpPolicyEvent,
 	listRecentMcpPolicyEvents,
+	consumeOAuthGrant,
+	createOAuthClient,
+	findOAuthClientById,
+	type OAuthClientRecord,
+	createOAuthRefreshFamily,
+	isOAuthRefreshFamilyActive,
+	revokeOAuthRefreshFamily,
 } from './db/queries';
 import { sendVerificationEmail, sendDeletionConfirmationEmail } from './services/email';
+import { claimLmsMagicProof, hashMailboxMagicToken, verifyLmsMagicExchangeToken } from './services/magic-auth';
 import type { RolloutConfig } from '@create-something/policy-os-engine';
-import { createAuthOpenApi, createAuthPlatformContract } from '@create-something/auth-platform';
+import {
+	createAuthOpenApi,
+	createAuthPlatformContract,
+	IDENTITY_APPLICATION_AUDIENCES,
+	IDENTITY_SESSION_VERSION,
+	isIdentityApplicationAudience,
+	type IdentityApplicationAudience,
+} from '@create-something/auth-platform';
 
 export default {
 	async fetch(request: Request, env: Env): Promise<Response> {
@@ -79,19 +94,20 @@ export default {
 
 		// CORS preflight
 		if (method === 'OPTIONS') {
+			if (path === '/v1/auth/cross-domain/exchange') {
+				return new Response(null, { status: 405, headers: { Allow: 'POST' } });
+			}
 			return cors(new Response(null, { status: 204 }), request, env);
 		}
 
 		try {
 			const response = await route(request, env, method, path);
+			if (path === '/v1/auth/magic-exchange' || path === '/v1/auth/cross-domain/exchange') return response;
 			return cors(response, request, env);
 		} catch (err) {
 			console.error('Identity Worker Error:', err);
-			return cors(
-				json({ error: 'internal_error', message: 'An unexpected error occurred', status: 500 }, 500),
-				request,
-				env
-			);
+			const response = json({ error: 'internal_error', message: 'An unexpected error occurred', status: 500 }, 500);
+			return path === '/v1/auth/cross-domain/exchange' ? response : cors(response, request, env);
 		}
 	},
 };
@@ -144,8 +160,9 @@ async function route(request: Request, env: Env, method: string, path: string): 
 	// Auth endpoints
 	if (path === '/v1/auth/signup' && method === 'POST') return handleSignup(request, env);
 	if (path === '/v1/auth/login' && method === 'POST') return handleLogin(request, env);
-	if (path === '/v1/auth/magic-login' && method === 'POST') return handleMagicLogin(request, env);
-	if (path === '/v1/auth/magic-signup' && method === 'POST') return handleMagicSignup(request, env);
+	if (path === '/v1/auth/magic-login' && method === 'POST') return handleLegacyMagicAuth();
+	if (path === '/v1/auth/magic-signup' && method === 'POST') return handleLegacyMagicAuth();
+	if (path === '/v1/auth/magic-exchange' && method === 'POST') return handleMagicExchange(request, env);
 	if (path === '/v1/auth/refresh' && method === 'POST') return handleRefresh(request, env);
 	if (path === '/v1/auth/logout' && method === 'POST') return handleLogout(request, env);
 
@@ -215,71 +232,81 @@ async function route(request: Request, env: Env, method: string, path: string): 
 // Auth Handlers
 
 async function handleSignup(request: Request, env: Env): Promise<Response> {
-	const db = env.DB;
+	void request;
+	void env;
+	return json({
+		error: 'mailbox_verification_required',
+		message: 'Public password signup cannot issue credentials before mailbox verification.',
+		status: 403,
+	}, 403);
+}
 
-	// Rate limit
-	const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
-	const { allowed } = await checkRateLimit(db, `signup:${ip}`, 3, 300);
-	if (!allowed) {
-		return json({ error: 'rate_limited', message: 'Too many signup attempts', status: 429 }, 429);
+function handleLegacyMagicAuth(): Response {
+	return json({
+		error: 'magic_exchange_required',
+		message: 'Email-only magic authentication is disabled. Use a mailbox-verified exchange.',
+		status: 410,
+	}, 410);
+}
+
+async function handleMagicExchange(request: Request, env: Env): Promise<Response> {
+	if (!(await verifyLmsMagicExchangeToken(
+		request.headers.get('X-LMS-Magic-Exchange-Token'),
+		env.LMS_MAGIC_EXCHANGE_TOKEN,
+	))) {
+		return json({ error: 'service_auth_required', message: 'LMS service authentication required', status: 401 }, 401);
 	}
-
-	const body = await parseJSON<{ email?: string; password?: string; name?: string; source?: string }>(request);
-	if (!body) return json({ error: 'invalid_request', message: 'Invalid JSON', status: 400 }, 400);
-
-	const { email, password, name, source = 'templates' } = body;
-
-	if (!email || !password) {
-		return json({ error: 'invalid_request', message: 'Email and password required', status: 400 }, 400);
+	const body = await parseJSON<{ token?: string; session_id?: string }>(request);
+	if (!body?.token?.trim() || !body.session_id?.trim()) {
+		return json({ error: 'mailbox_proof_required', message: 'Magic token and session id are required', status: 400 }, 400);
 	}
-
-	if (!isValidEmail(email)) {
-		return json({ error: 'invalid_email', message: 'Invalid email format', status: 400 }, 400);
+	if (!env.LMS_DB) return json({ error: 'service_unavailable', message: 'Mailbox proof store unavailable', status: 503 }, 503);
+	const claimed = await claimLmsMagicProof(
+		env.LMS_DB,
+		body.session_id.trim(),
+		await hashMailboxMagicToken(body.token.trim()),
+		Math.floor(Date.now() / 1000),
+	);
+	if (!claimed.ok) {
+		const message = claimed.reason === 'expired' ? 'Magic link expired' : claimed.reason === 'used' ? 'Magic link already used' : 'Invalid magic link';
+		return json({ error: `magic_proof_${claimed.reason}`, message, status: 400 }, 400);
 	}
-
-	if (password.length < 8) {
-		return json({ error: 'weak_password', message: 'Password must be at least 8 characters', status: 400 }, 400);
+	let user = await findUserByEmail(env.DB, claimed.session.email);
+	if (user?.deleted_at) return json({ error: 'account_deleted', message: 'This account has been deleted', status: 401 }, 401);
+	if (!user) {
+		user = await createUser(env.DB, {
+			id: generateUUID(),
+			email: claimed.session.email,
+			password_hash: await hashPassword(generateSecureToken(32)),
+			// The durable identity schema predates the LMS source label. Keep the
+			// account in the shared space identity lane; credential scope is bound
+			// independently and exactly to the LMS audience below.
+			source: 'space',
+		});
 	}
-
-	const existing = await findUserByEmail(db, email);
-	if (existing) {
-		return json({ error: 'email_exists', message: 'Email already registered', status: 409 }, 409);
-	}
-
-	await incrementRateLimit(db, `signup:${ip}`);
-
-	const passwordHash = await hashPassword(password);
-	const user = await createUser(db, {
-		id: generateUUID(),
-		email,
-		password_hash: passwordHash,
-		name,
-		source: source as 'workway' | 'templates' | 'io' | 'space' | 'lms',
-	});
-
-	const { accessToken, refreshToken, expiresIn } = await generateTokens(db, user);
-
+	if (user.email_verified !== 1) user = (await updateUser(env.DB, user.id, { email_verified: 1 })) ?? user;
+	const { accessToken, refreshToken, expiresIn } = await generateTokens(env.DB, user, 'lms');
 	return json({
 		access_token: accessToken,
 		refresh_token: refreshToken,
 		token_type: 'Bearer',
 		expires_in: expiresIn,
-		user: {
-			id: user.id,
-			email: user.email,
-		},
-	});
+		user: { id: user.id, email: user.email },
+	}, 200, { 'Cache-Control': 'no-store' });
 }
 
 async function handleLogin(request: Request, env: Env): Promise<Response> {
 	const db = env.DB;
 
-	const body = await parseJSON<{ email?: string; password?: string }>(request);
+	const body = await parseJSON<{ email?: string; password?: string; audience?: string }>(request);
 	if (!body) return json({ error: 'invalid_request', message: 'Invalid JSON', status: 400 }, 400);
 
 	const { email, password } = body;
 	if (!email || !password) {
 		return json({ error: 'invalid_request', message: 'Email and password required', status: 400 }, 400);
+	}
+	if (body.audience !== undefined && !isIdentityApplicationAudience(body.audience)) {
+		return json({ error: 'invalid_audience', message: 'A recognized application audience is required', status: 400 }, 400);
 	}
 
 	// Rate limit
@@ -299,6 +326,13 @@ async function handleLogin(request: Request, env: Env): Promise<Response> {
 	if (user.deleted_at) {
 		return json({ error: 'account_deleted', message: 'This account has been deleted', status: 401 }, 401);
 	}
+	if (user.email_verified !== 1) {
+		return json({ error: 'email_not_verified', message: 'Verify your email before signing in', status: 403 }, 403);
+	}
+	const audience = resolveIdentityLoginAudience(body.audience, user.source);
+	if (!audience) {
+		return json({ error: 'invalid_audience', message: 'A recognized application audience is required', status: 400 }, 400);
+	}
 
 	const valid = await verifyPassword(password, user.password_hash);
 	if (!valid) {
@@ -306,7 +340,7 @@ async function handleLogin(request: Request, env: Env): Promise<Response> {
 		return json({ error: 'invalid_credentials', message: 'Invalid email or password', status: 401 }, 401);
 	}
 
-	const { accessToken, refreshToken, expiresIn } = await generateTokens(db, user);
+	const { accessToken, refreshToken, expiresIn } = await generateTokens(db, user, audience);
 
 	return json({
 		access_token: accessToken,
@@ -320,6 +354,14 @@ async function handleLogin(request: Request, env: Env): Promise<Response> {
 	});
 }
 
+export function resolveIdentityLoginAudience(
+	requestedAudience: unknown,
+	legacySource: User['source'],
+): IdentityApplicationAudience | null {
+	if (isIdentityApplicationAudience(requestedAudience)) return requestedAudience;
+	return isIdentityApplicationAudience(legacySource) ? legacySource : null;
+}
+
 async function handleRefresh(request: Request, env: Env): Promise<Response> {
 	const db = env.DB;
 
@@ -328,18 +370,7 @@ async function handleRefresh(request: Request, env: Env): Promise<Response> {
 		return json({ error: 'invalid_request', message: 'Refresh token required', status: 400 }, 400);
 	}
 
-	const tokenHash = await hashToken(body.refresh_token);
-	const storedToken = await findRefreshTokenByHash(db, tokenHash);
-	if (!storedToken) {
-		return json({ error: 'invalid_token', message: 'Invalid refresh token', status: 401 }, 401);
-	}
-
-	const user = await findUserById(db, storedToken.user_id);
-	if (!user) {
-		return json({ error: 'user_not_found', message: 'User not found', status: 401 }, 401);
-	}
-
-	const tokens = await refreshTokens(db, body.refresh_token, user);
+	const tokens = await refreshTokens(db, body.refresh_token);
 	if (!tokens) {
 		return json({ error: 'invalid_token', message: 'Token expired or revoked', status: 401 }, 401);
 	}
@@ -535,23 +566,27 @@ async function handleCrossDomainGenerate(request: Request, env: Env): Promise<Re
 
 async function handleCrossDomainExchange(request: Request, env: Env): Promise<Response> {
 	const db = env.DB;
+	if (request.headers.has('Origin')) {
+		return json({ error: 'server_exchange_required', message: 'Cross-domain exchange is server-only', status: 403 }, 403);
+	}
 
 	// Parse request
-	const body = await parseJSON<{ token?: string }>(request);
+	const body = await parseJSON<{ token?: string; target?: string }>(request);
 	if (!body?.token) {
 		return json({ error: 'invalid_request', message: 'Token required', status: 400 }, 400);
 	}
+	if (!body.target || !VALID_TARGETS.includes(body.target as CrossDomainToken['target'])) {
+		return json({ error: 'invalid_target', message: 'Exact target required', status: 400 }, 400);
+	}
+	const target = body.target as CrossDomainToken['target'];
 
-	// Find token
+	// Atomically claim the single-use, host-bound intermediary.
 	const tokenHash = await hashToken(body.token);
-	const storedToken = await findCrossDomainTokenByHash(db, tokenHash);
+	const storedToken = await claimCrossDomainToken(db, tokenHash, target);
 
 	if (!storedToken) {
 		return json({ error: 'invalid_token', message: 'Invalid or expired token', status: 401 }, 401);
 	}
-
-	// Mark as used immediately (single-use)
-	await markCrossDomainTokenUsed(db, storedToken.id);
 
 	// Get user
 	const user = await findUserById(db, storedToken.user_id);
@@ -560,12 +595,12 @@ async function handleCrossDomainExchange(request: Request, env: Env): Promise<Re
 	}
 
 	// Check if user is deleted
-	if (user.deleted_at) {
+	if (user.deleted_at || user.email_verified !== 1) {
 		return json({ error: 'account_deleted', message: 'This account has been deleted', status: 401 }, 401);
 	}
 
 	// Generate new tokens for this domain
-	const { accessToken, refreshToken, expiresIn } = await generateTokens(db, user);
+	const { accessToken, refreshToken, expiresIn } = await generateTokens(db, user, target);
 
 	return json({
 		access_token: accessToken,
@@ -593,11 +628,12 @@ const DEFAULT_MCP_SESSION_TTL_SECONDS = 86400;
 const MAX_MCP_SESSION_TTL_SECONDS = 604800;
 
 type McpToolMode = 'read_only' | 'read_write';
-type OauthCodeChallengeMethod = 'S256' | 'plain';
+type OauthCodeChallengeMethod = 'S256';
 type FormEntryValue = string | File;
 
 interface OAuthAuthorizationCodeClaims extends JWTPayload {
 	kind: 'oauth_authorization_code';
+	jti: string;
 	client_id: string;
 	redirect_uri: string;
 	scope: string;
@@ -613,6 +649,8 @@ interface OAuthAuthorizationCodeClaims extends JWTPayload {
 
 interface OAuthRefreshTokenClaims extends JWTPayload {
 	kind: 'oauth_refresh_token';
+	jti: string;
+	family_id: string;
 	client_id: string;
 	scope: string;
 	resource: string;
@@ -858,6 +896,7 @@ const AGENT_AUTH_ACCESS_TOKEN_EXPIRES_IN = 15 * 60;
 const AGENCY_PUBLIC_DISCOVERY_RESOURCE = 'https://createsomething.agency';
 const OAUTH_ID_TOKEN_TTL_SECONDS = 3600;
 const OAUTH_REFRESH_TOKEN_TTL_SECONDS = 30 * 24 * 60 * 60;
+const OAUTH_PUBLIC_TOKEN_ENDPOINT_AUTH_METHOD = 'none' as const;
 const OAUTH_SUPPORTED_SCOPES = [
 	'openid',
 	'profile',
@@ -1099,24 +1138,46 @@ export function isOAuthAccessTokenClaimsForApplication(
 }
 
 export function isOAuthUserInfoIdentityActive(user: User | null): user is User {
-	return Boolean(user && !user.deleted_at);
+	return isActiveVerifiedIdentity(user);
 }
 
-async function handleOAuthRegister(request: Request, _env: Env): Promise<Response> {
+async function handleOAuthRegister(request: Request, env: Env): Promise<Response> {
 	const body = await parseJSON<OAuthRegisterBody>(request);
+	if (!body) return oauthErrorResponse('invalid_client_metadata', 400, 'Invalid JSON body.');
 	const clientName = normalizeOptionalId(body?.client_name) ?? 'chatgpt-mcp-client';
 	const clientId = `oauth_${slugify(clientName)}_${generateUUID().replace(/-/g, '').slice(0, 12)}`;
 	const redirectUris = Array.isArray(body?.redirect_uris)
 		? body!.redirect_uris.filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
 		: [];
+	if (redirectUris.length === 0 || redirectUris.some((value) => !isOAuthRedirectUriAllowed(value))) {
+		return oauthErrorResponse('invalid_redirect_uri', 400, 'At least one safe redirect_uri is required.');
+	}
+	if (body.token_endpoint_auth_method && body.token_endpoint_auth_method !== OAUTH_PUBLIC_TOKEN_ENDPOINT_AUTH_METHOD) {
+		return oauthErrorResponse('invalid_client_metadata', 400, 'Only public PKCE clients are supported.');
+	}
+	const grantTypes = body.grant_types ?? ['authorization_code', 'refresh_token'];
+	const responseTypes = body.response_types ?? ['code'];
+	if (grantTypes.some((value) => value !== 'authorization_code' && value !== 'refresh_token') || responseTypes.some((value) => value !== 'code')) {
+		return oauthErrorResponse('invalid_client_metadata', 400, 'Unsupported OAuth response or grant type.');
+	}
+	const scope = normalizeScope(body.scope ?? 'openid profile email mcp offline_access');
+	await createOAuthClient(env.DB, {
+		client_id: clientId,
+		client_name: clientName,
+		redirect_uris: redirectUris,
+		token_endpoint_auth_method: OAUTH_PUBLIC_TOKEN_ENDPOINT_AUTH_METHOD,
+		grant_types: grantTypes,
+		response_types: responseTypes,
+		scope,
+	});
 	return json({
 		client_id: clientId,
 		client_name: clientName,
 		redirect_uris: redirectUris,
-		token_endpoint_auth_method: body?.token_endpoint_auth_method ?? 'none',
-		grant_types: body?.grant_types ?? ['authorization_code', 'refresh_token'],
-		response_types: body?.response_types ?? ['code'],
-		scope: body?.scope ?? 'openid profile email mcp offline_access',
+		token_endpoint_auth_method: body?.token_endpoint_auth_method ?? OAUTH_PUBLIC_TOKEN_ENDPOINT_AUTH_METHOD,
+		grant_types: grantTypes,
+		response_types: responseTypes,
+		scope,
 	}, 201);
 }
 
@@ -1215,7 +1276,7 @@ async function handleAgentAuthClaim(request: Request, env: Env): Promise<Respons
 
 async function handleOAuthAuthorizePage(request: Request, env: Env): Promise<Response> {
 	const params = new URL(request.url).searchParams;
-	const validationError = validateOAuthAuthorizeRequest(params);
+	const validationError = await validateRegisteredOAuthAuthorizeRequest(params, env.DB);
 	if (validationError) {
 		return oauthErrorResponse(validationError, 400);
 	}
@@ -1263,13 +1324,13 @@ async function handleOAuthAuthorize(request: Request, env: Env): Promise<Respons
 		...(toolMode ? { tool_mode: toolMode } : {}),
 		...(toolkitProfile.length > 0 ? { toolkit_profile: toolkitProfile.join(',') } : {}),
 	});
-	const validationError = validateOAuthAuthorizeRequest(params);
+	const validationError = await validateRegisteredOAuthAuthorizeRequest(params, env.DB);
 	if (validationError) {
 		return oauthErrorResponse(validationError, 400);
 	}
 
 	const user = await findUserByEmail(env.DB, email);
-	if (!user || user.deleted_at) {
+	if (!user || !isActiveVerifiedIdentity(user)) {
 		return renderOAuthAuthorizeError(params, env, 'Invalid email or password.');
 	}
 
@@ -1289,6 +1350,7 @@ async function handleOAuthAuthorize(request: Request, env: Env): Promise<Respons
 		iat: now,
 		exp: now + OAUTH_AUTHORIZATION_CODE_TTL_SECONDS,
 		kind: 'oauth_authorization_code',
+		jti: generateUUID(),
 		client_id: clientId,
 		redirect_uri: redirectUri,
 		scope,
@@ -1317,13 +1379,28 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 	if (!body.client_id) {
 		return oauthErrorResponse('invalid_request', 400, 'client_id is required.');
 	}
+	const registeredClient = await findOAuthClientById(env.DB, body.client_id);
+	if (!registeredClient) return oauthErrorResponse('invalid_client', 400, 'OAuth client is not registered.');
+	const authorization = request.headers.get('authorization')?.trim() ?? '';
+	if (
+		registeredClient.token_endpoint_auth_method !== OAUTH_PUBLIC_TOKEN_ENDPOINT_AUTH_METHOD
+		|| Boolean(body.client_secret)
+		|| /^Basic\s/i.test(authorization)
+	) {
+		return oauthErrorResponse(
+			'invalid_client',
+			400,
+			'Only public clients using token_endpoint_auth_method none are supported.',
+		);
+	}
 
 	type OAuthExchangeClaims = Pick<
 		OAuthAuthorizationCodeClaims,
-		'sub' | 'client_id' | 'scope' | 'resource' | 'account_id' | 'tenant_id' | 'tool_mode' | 'toolkit_profile' | 'nonce'
+		'sub' | 'client_id' | 'scope' | 'resource' | 'account_id' | 'tenant_id' | 'tool_mode' | 'toolkit_profile' | 'nonce' | 'jti' | 'exp'
 	>;
 
 	let claims: OAuthExchangeClaims | null = null;
+	let grantKind: 'oauth_authorization_code' | 'oauth_refresh_token' | null = null;
 	const oauthIssuer = getOauthIssuer(new URL(request.url), env);
 	if (body.grant_type === 'authorization_code') {
 		if (!body.code || !body.redirect_uri) {
@@ -1337,9 +1414,10 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 		if (authorizationCodeClaims.client_id !== body.client_id || authorizationCodeClaims.redirect_uri !== body.redirect_uri) {
 			return oauthErrorResponse('invalid_grant', 400, 'Authorization code does not match client_id or redirect_uri.');
 		}
-		const requiresS256 = requiresS256PkceForOAuthResource(authorizationCodeClaims.resource);
+		if (!isOAuthClientRedirectAllowed(registeredClient, body.redirect_uri)) {
+			return oauthErrorResponse('invalid_grant', 400, 'redirect_uri is not registered for this client.');
+		}
 		if (
-			requiresS256 &&
 			(!authorizationCodeClaims.code_challenge ||
 				authorizationCodeClaims.code_challenge_method !== 'S256' ||
 				!body.code_verifier ||
@@ -1347,14 +1425,8 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 		) {
 			return oauthErrorResponse('invalid_grant', 400, 'S256 code_verifier is required.');
 		}
-		if (
-			!requiresS256 &&
-			authorizationCodeClaims.code_challenge &&
-			!(await verifyPkce(body.code_verifier, authorizationCodeClaims.code_challenge, authorizationCodeClaims.code_challenge_method))
-		) {
-			return oauthErrorResponse('invalid_grant', 400, 'Invalid code_verifier.');
-		}
 		claims = authorizationCodeClaims;
+		grantKind = 'oauth_authorization_code';
 	} else if (body.grant_type === 'refresh_token') {
 		if (!body.refresh_token) {
 			return oauthErrorResponse('invalid_request', 400, 'refresh_token and client_id are required.');
@@ -1367,13 +1439,29 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 		if (refreshTokenClaims.client_id !== body.client_id) {
 			return oauthErrorResponse('invalid_grant', 400, 'Refresh token does not match client_id.');
 		}
+		if (!(await isOAuthRefreshFamilyActive(env.DB, refreshTokenClaims.family_id, refreshTokenClaims.client_id, refreshTokenClaims.sub))) {
+			return oauthErrorResponse('invalid_grant', 400, 'Refresh token family is revoked.');
+		}
 		claims = refreshTokenClaims;
+		grantKind = 'oauth_refresh_token';
 	} else {
 		return oauthErrorResponse('unsupported_grant_type', 400, 'Supported grant_types are authorization_code and refresh_token.');
 	}
+	if (!grantKind || !(await consumeOAuthGrant(env.DB, {
+		grantId: claims.jti,
+		grantKind,
+		clientId: claims.client_id,
+		expiresAt: claims.exp,
+		nowSeconds: Math.floor(Date.now() / 1000),
+	}))) {
+		if (grantKind === 'oauth_refresh_token' && 'family_id' in claims && typeof claims.family_id === 'string') {
+			await revokeOAuthRefreshFamily(env.DB, claims.family_id);
+		}
+		return oauthErrorResponse('invalid_grant', 400, 'Grant has already been used.');
+	}
 
 	const user = await findUserById(env.DB, claims.sub);
-	if (!user) {
+	if (!user || !isActiveVerifiedIdentity(user)) {
 		return oauthErrorResponse('invalid_grant', 400, 'User no longer exists.');
 	}
 
@@ -1493,6 +1581,19 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 		}
 		if (scopeIncludes(claims.scope, 'offline_access')) {
 			const now = Math.floor(Date.now() / 1000);
+			const refreshFamilyId = 'family_id' in claims && typeof claims.family_id === 'string'
+				? claims.family_id
+				: generateUUID();
+			if (!('family_id' in claims)) {
+				const created = await createOAuthRefreshFamily(env.DB, {
+					familyId: refreshFamilyId,
+					clientId: claims.client_id,
+					userId: user.id,
+				});
+				if (!created) {
+					return oauthErrorResponse('invalid_grant', 401, 'Identity is no longer active.');
+				}
+			}
 			const refreshToken = await createSignedToken(env.DB, {
 				sub: user.id,
 				iss: getOauthIssuer(new URL(request.url), env),
@@ -1500,6 +1601,8 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 				iat: now,
 				exp: now + OAUTH_REFRESH_TOKEN_TTL_SECONDS,
 				kind: 'oauth_refresh_token',
+				jti: generateUUID(),
+				family_id: refreshFamilyId,
 				email: user.email,
 				tier: user.tier,
 				source: user.source,
@@ -1575,7 +1678,7 @@ async function handleOAuthUserInfo(request: Request, env: Env): Promise<Response
 
 async function handleCreateMcpSession(request: Request, env: Env): Promise<Response> {
 	const db = env.DB;
-	const payload = await authenticate(request, env);
+	const payload = await authenticate(request, env, IDENTITY_APPLICATION_AUDIENCES.mcpSession);
 	if (!payload) {
 		return json({ error: 'unauthorized', message: 'Invalid token', status: 401 }, 401);
 	}
@@ -1628,6 +1731,7 @@ async function handleCreateMcpSession(request: Request, env: Env): Promise<Respo
 			},
 		},
 		metadata: {
+			auth_audience: payload.aud[0],
 			host,
 			tenant_id: tenantId,
 			tool_mode: toolMode,
@@ -1653,7 +1757,7 @@ async function handleCreateMcpSession(request: Request, env: Env): Promise<Respo
 	const tokenHash = await hashToken(rawToken);
 	const expiresAt = new Date(Date.now() + ttlSeconds * 1000).toISOString();
 
-	await createMcpSession(db, {
+	const created = await createMcpSession(db, {
 		id: sessionId,
 		user_id: payload.sub,
 		tenant_id: tenantId,
@@ -1666,6 +1770,9 @@ async function handleCreateMcpSession(request: Request, env: Env): Promise<Respo
 		token_hash: tokenHash,
 		expires_at: expiresAt,
 	});
+	if (!created) {
+		return json({ error: 'identity_inactive', message: 'Identity is no longer active', status: 409 }, 409);
+	}
 
 	await replaceMcpSessionScopes(
 		db,
@@ -1682,6 +1789,7 @@ async function handleCreateMcpSession(request: Request, env: Env): Promise<Respo
 		user_id: payload.sub,
 		event_type: 'mcp_session_created',
 		event_data_json: JSON.stringify({
+			auth_audience: payload.aud[0],
 			host,
 			bound_host: host,
 			tenant_id: tenantId,
@@ -1820,7 +1928,7 @@ async function handleAdminMintMcpSession(request: Request, env: Env): Promise<Re
 	const tokenHash = await hashToken(rawToken);
 	const expiresAt = new Date(Date.now() + ttlSeconds * 1000).toISOString();
 
-	await createMcpSession(db, {
+	const created = await createMcpSession(db, {
 		id: sessionId,
 		user_id: account.user_id,
 		tenant_id: account.tenant_id,
@@ -1833,6 +1941,9 @@ async function handleAdminMintMcpSession(request: Request, env: Env): Promise<Re
 		token_hash: tokenHash,
 		expires_at: expiresAt,
 	});
+	if (!created) {
+		return json({ error: 'identity_inactive', message: 'Identity is no longer active', status: 409 }, 409);
+	}
 
 	await replaceMcpSessionScopes(
 		db,
@@ -2176,7 +2287,7 @@ async function issueManagedBearerToken(
 	const tokenHash = await hashToken(rawToken);
 	const tokenPrefix = rawToken.slice(0, 14);
 
-	await upsertMcpLongLivedToken(db, {
+	const created = await upsertMcpLongLivedToken(db, {
 		id: tokenId,
 		auth_subject: input.authSubject,
 		auth_email: normalizeNullableString(input.authEmail) ?? existing?.auth_email ?? null,
@@ -2191,6 +2302,14 @@ async function issueManagedBearerToken(
 		issued_by: input.actor,
 		metadata_json: JSON.stringify(metadata),
 	});
+	if (!created) {
+		return {
+			ok: false,
+			status: 409,
+			error: 'identity_inactive',
+			message: 'Identity is no longer active',
+		};
+	}
 
 	await createMcpAuthEvent(db, {
 		id: generateUUID(),
@@ -2465,7 +2584,7 @@ async function handleIssueMcpLegacyKey(request: Request, env: Env): Promise<Resp
 	const keyHash = await hashToken(rawLegacyKey);
 	const keyPrefix = rawLegacyKey.slice(0, 14);
 
-	await createMcpLegacyKey(db, {
+	const created = await createMcpLegacyKey(db, {
 		id: legacyKeyId,
 		key_hash: keyHash,
 		key_prefix: keyPrefix,
@@ -2478,6 +2597,9 @@ async function handleIssueMcpLegacyKey(request: Request, env: Env): Promise<Resp
 		expires_at: expiresAt,
 		sunset_at: sunsetAt,
 	});
+	if (!created) {
+		return json({ error: 'identity_inactive', message: 'Identity is no longer active', status: 409 }, 409);
+	}
 
 	await createMcpAuthEvent(db, {
 		id: generateUUID(),
@@ -2675,6 +2797,17 @@ async function handleResolveMcpSession(request: Request, env: Env): Promise<Resp
 			accountId: session.account_id,
 			tenantId: session.tenant_id,
 		});
+
+		if (!isAgencyEntitlementAllowed(entitlement)) {
+			await createMcpAuthEvent(db, {
+				id: generateUUID(),
+				session_id: session.id,
+				user_id: session.user_id,
+				event_type: 'mcp_session_resolve_rejected',
+				event_data_json: JSON.stringify({ reason: entitlement.reason ?? 'entitlement_denied' }),
+			});
+			return json({ valid: false, reason: entitlement.reason ?? 'entitlement_denied', session_id: session.id });
+		}
 
 		await createMcpAuthEvent(db, {
 			id: generateUUID(),
@@ -3092,7 +3225,7 @@ async function handleMagicLogin(request: Request, env: Env): Promise<Response> {
 		return json({ error: 'account_deleted', message: 'This account has been deleted', status: 401 }, 401);
 	}
 
-	const { accessToken, refreshToken, expiresIn } = await generateTokens(db, user);
+	const { accessToken, refreshToken, expiresIn } = await generateTokens(db, user, 'lms');
 
 	return json({
 		access_token: accessToken,
@@ -3139,7 +3272,7 @@ async function handleMagicSignup(request: Request, env: Env): Promise<Response> 
 		source: source as 'workway' | 'templates' | 'io' | 'space' | 'lms',
 	});
 
-	const { accessToken, refreshToken, expiresIn } = await generateTokens(db, user);
+	const { accessToken, refreshToken, expiresIn } = await generateTokens(db, user, 'lms');
 
 	return json({
 		access_token: accessToken,
@@ -3379,8 +3512,7 @@ async function handleVerifyEmailChange(request: Request, env: Env): Promise<Resp
 	await deleteEmailChangeRequest(db, changeRequest.id);
 
 	// Revoke all tokens (security - force re-login with new email)
-	await revokeAllUserTokens(db, changeRequest.user_id);
-	await revokeAllMcpSessionsForUser(db, changeRequest.user_id);
+	await revokeAllIdentityLinkedCredentials(db, changeRequest.user_id);
 
 	return json({
 		success: true,
@@ -3421,10 +3553,6 @@ async function handleDeleteMe(request: Request, env: Env): Promise<Response> {
 	if (!deleted) {
 		return json({ error: 'delete_failed', message: 'Failed to delete account', status: 500 }, 500);
 	}
-
-	// Revoke all tokens immediately
-	await revokeAllUserTokens(db, user.id);
-	await revokeAllMcpSessionsForUser(db, user.id);
 
 	// Send confirmation email (if email service is configured)
 	if (env.RESEND_API_KEY) {
@@ -3594,20 +3722,17 @@ async function handleUpdateAnalytics(request: Request, env: Env): Promise<Respon
 // Service-to-Service Handlers
 
 async function handleValidate(request: Request, env: Env): Promise<Response> {
-	const apiKey = request.headers.get('X-API-Key');
-	if (!apiKey) {
-		return json({ error: 'unauthorized', message: 'API key required', status: 401 }, 401);
+	const auth = await authenticateApiKeyForPermissions(request, env, ['validate_identity_session']);
+	if (!auth.ok) {
+		return json({ error: auth.error, message: auth.message, status: auth.status }, auth.status);
 	}
 
-	const keyHash = await hashToken(apiKey);
-	const storedKey = await findApiKeyByHash(env.DB, keyHash);
-	if (!storedKey) {
-		return json({ error: 'unauthorized', message: 'Invalid API key', status: 401 }, 401);
-	}
-
-	const body = await parseJSON<{ access_token?: string }>(request);
+	const body = await parseJSON<{ access_token?: string; audience?: string }>(request);
 	if (!body?.access_token) {
 		return json({ error: 'invalid_request', message: 'Access token required', status: 400 }, 400);
+	}
+	if (!isIdentityApplicationAudience(body.audience)) {
+		return json({ error: 'invalid_request', message: 'Recognized application audience required', status: 400 }, 400);
 	}
 
 	const jwks = await getJWKS(env.DB);
@@ -3619,13 +3744,17 @@ async function handleValidate(request: Request, env: Env): Promise<Response> {
 		if (payload) break;
 	}
 
-	if (!payload) {
+	if (!payload || !isIdentityAccessSession(payload, body.audience)) {
 		return json({ error: 'invalid_token', message: 'Invalid or expired token', status: 401 }, 401);
+	}
+	const user = await findUserById(env.DB, payload.sub);
+	if (!isActiveVerifiedIdentity(user)) {
+		return json({ error: 'invalid_token', message: 'Identity is no longer active', status: 401 }, 401);
 	}
 
 	return json({
 		valid: true,
-		user: { id: payload.sub, email: payload.email, tier: payload.tier, source: payload.source },
+		user: { id: user.id, email: user.email, tier: user.tier, source: user.source },
 		exp: payload.exp,
 	});
 }
@@ -3707,11 +3836,7 @@ async function handleHardDelete(request: Request, env: Env, userId: string): Pro
 		}
 	}
 
-	// Revoke all tokens first (in case any are still valid)
-	await revokeAllUserTokens(db, userId);
-	await revokeAllMcpSessionsForUser(db, userId);
-
-	// Hard delete the user
+	// Atomically revoke every linked credential before removing the identity.
 	const deleted = await hardDeleteUser(db, userId);
 	if (!deleted) {
 		return json({ error: 'delete_failed', message: 'Failed to delete user', status: 500 }, 500);
@@ -3751,11 +3876,7 @@ async function handleCleanupDeletedUsers(request: Request, env: Env): Promise<Re
 	const results: { user_id: string; email: string; deleted: boolean }[] = [];
 
 	for (const user of usersToDelete) {
-		// Revoke any remaining tokens
-		await revokeAllUserTokens(db, user.id);
-		await revokeAllMcpSessionsForUser(db, user.id);
-
-		// Hard delete
+		// Atomically revoke every linked credential before removing the identity.
 		const deleted = await hardDeleteUser(db, user.id);
 		results.push({ user_id: user.id, email: user.email, deleted });
 	}
@@ -4345,8 +4466,8 @@ function buildOAuthAuthorizationServerMetadata(url: URL, env: Env) {
 		scopes_supported: OAUTH_SUPPORTED_SCOPES,
 		response_types_supported: ['code'],
 		grant_types_supported: ['authorization_code', 'refresh_token'],
-		token_endpoint_auth_methods_supported: ['none', 'client_secret_post'],
-		code_challenge_methods_supported: ['S256', 'plain'],
+		token_endpoint_auth_methods_supported: [OAUTH_PUBLIC_TOKEN_ENDPOINT_AUTH_METHOD],
+		code_challenge_methods_supported: ['S256'],
 		agent_auth: {
 			skill: 'https://createsomething.agency/auth.md',
 			register_uri: `${issuer}/agent/auth`,
@@ -4373,8 +4494,8 @@ function buildOpenIdConfigurationMetadata(url: URL, env: Env) {
 		subject_types_supported: ['public'],
 		id_token_signing_alg_values_supported: ['ES256'],
 		scopes_supported: OAUTH_SUPPORTED_SCOPES,
-		token_endpoint_auth_methods_supported: ['none', 'client_secret_post'],
-		code_challenge_methods_supported: ['S256', 'plain'],
+		token_endpoint_auth_methods_supported: [OAUTH_PUBLIC_TOKEN_ENDPOINT_AUTH_METHOD],
+		code_challenge_methods_supported: ['S256'],
 		claims_supported: ['sub', 'email', 'email_verified', 'name', 'nonce'],
 	};
 }
@@ -4388,24 +4509,50 @@ function normalizeUrlOrigin(origin: string): string {
 }
 
 export function requiresS256PkceForOAuthResource(resource: string): boolean {
-	return normalizeUrlOrigin(resource) === AGENCY_PUBLIC_DISCOVERY_RESOURCE;
+	void resource;
+	return true;
+}
+
+export function isOAuthRedirectUriAllowed(value: string): boolean {
+	try {
+		const url = new URL(value);
+		if (url.hash || url.username || url.password) return false;
+		if (url.protocol === 'https:') return true;
+		return url.protocol === 'http:' && (url.hostname === 'localhost' || url.hostname === '127.0.0.1' || url.hostname === '[::1]');
+	} catch {
+		return false;
+	}
 }
 
 function validateOAuthAuthorizeRequest(params: URLSearchParams): string | null {
 	if (params.get('response_type') !== 'code') return 'unsupported_response_type';
 	if (!params.get('client_id')) return 'invalid_client';
 	const redirectUri = params.get('redirect_uri');
-	if (!redirectUri || !isValidHttpUrl(redirectUri)) return 'invalid_redirect_uri';
+	if (!redirectUri || !isOAuthRedirectUriAllowed(redirectUri)) return 'invalid_redirect_uri';
 	const resource = params.get('resource');
 	if (resource && !isValidHttpUrl(resource)) return 'invalid_target';
-	if (
-		resource &&
-		requiresS256PkceForOAuthResource(resource) &&
-		(!params.get('code_challenge') || params.get('code_challenge_method') !== 'S256')
-	) {
+	if (!params.get('code_challenge') || params.get('code_challenge_method') !== 'S256') {
 		return 'invalid_request';
 	}
 	return null;
+}
+
+async function validateRegisteredOAuthAuthorizeRequest(params: URLSearchParams, db: D1Database): Promise<string | null> {
+	const structuralError = validateOAuthAuthorizeRequest(params);
+	if (structuralError) return structuralError;
+	const client = await findOAuthClientById(db, params.get('client_id')!);
+	if (!client) return 'invalid_client';
+	return isOAuthClientRedirectAllowed(client, params.get('redirect_uri')!) ? null : 'invalid_redirect_uri';
+}
+
+export function isOAuthClientRedirectAllowed(client: OAuthClientRecord, redirectUri: string): boolean {
+	if (!isOAuthRedirectUriAllowed(redirectUri)) return false;
+	try {
+		const registered = JSON.parse(client.redirect_uris_json) as unknown;
+		return Array.isArray(registered) && registered.every((value) => typeof value === 'string') && registered.includes(redirectUri);
+	} catch {
+		return false;
+	}
 }
 
 function renderOAuthAuthorizePage(params: URLSearchParams, env: Env, errorMessage?: string): string {
@@ -4758,7 +4905,7 @@ function normalizeToolModeNullable(raw: FormEntryValue | null): McpToolMode | un
 }
 
 function normalizeCodeChallengeMethod(raw: string): OauthCodeChallengeMethod | undefined {
-	if (raw === 'S256' || raw === 'plain') return raw;
+	if (raw === 'S256') return raw;
 	return undefined;
 }
 
@@ -4768,7 +4915,7 @@ async function verifyPkce(
 	method: OauthCodeChallengeMethod | undefined,
 ): Promise<boolean> {
 	if (!codeVerifier) return false;
-	if (!method || method === 'plain') return codeVerifier === codeChallenge;
+	if (method !== 'S256') return false;
 	return (await sha256Base64Url(codeVerifier)) === codeChallenge;
 }
 
@@ -4813,7 +4960,11 @@ function escapeHtml(value: string): string {
 		.replace(/'/g, '&#39;');
 }
 
-async function authenticate(request: Request, env: Env): Promise<JWTPayload | null> {
+async function authenticate(
+	request: Request,
+	env: Env,
+	expectedAudience?: IdentityApplicationAudience,
+): Promise<JWTPayload | null> {
 	const auth = request.headers.get('Authorization');
 	if (!auth?.startsWith('Bearer ')) return null;
 
@@ -4823,10 +4974,31 @@ async function authenticate(request: Request, env: Env): Promise<JWTPayload | nu
 	for (const jwk of jwks.keys) {
 		const publicKey = await importPublicKey(jwk);
 		const payload = await validateJWT(token, publicKey);
-		if (payload) return payload;
+		if (!payload || !isIdentityAccessSession(payload, expectedAudience)) continue;
+		const user = await findUserById(env.DB, payload.sub);
+		if (isActiveVerifiedIdentity(user)) return payload;
 	}
 
 	return null;
+}
+
+export function isIdentityAccessSession(payload: {
+	kind?: unknown;
+	session_version?: unknown;
+	email_verified?: unknown;
+	aud?: unknown;
+}, expectedAudience?: IdentityApplicationAudience): boolean {
+	if (payload.kind !== 'identity_access_token' || payload.session_version !== IDENTITY_SESSION_VERSION || payload.email_verified !== true) return false;
+	if (!Array.isArray(payload.aud) || payload.aud.length !== 1 || !isIdentityApplicationAudience(payload.aud[0])) return false;
+	return expectedAudience ? payload.aud[0] === expectedAudience : true;
+}
+
+export function isActiveVerifiedIdentity<T extends Pick<User, 'deleted_at' | 'email_verified'>>(user: T | null): user is T {
+	return Boolean(user && !user.deleted_at && user.email_verified === 1);
+}
+
+export function isAgencyEntitlementAllowed(entitlement: Pick<AgencyEntitlementDecision, 'allowed'> | null): boolean {
+	return entitlement?.allowed === true;
 }
 
 function cors(response: Response, request: Request, env: Env): Response {

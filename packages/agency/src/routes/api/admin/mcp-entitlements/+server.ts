@@ -76,6 +76,7 @@ export const POST: RequestHandler = async ({ request, cookies, platform }) => {
 			contractActive: body?.contract_active,
 			billingActive: body?.billing_active,
 			denialReason: body?.denial_reason,
+			manualOverride: true,
 			metadata: {
 				operator_email: operator.email,
 				updated_via: 'agency_admin_api',

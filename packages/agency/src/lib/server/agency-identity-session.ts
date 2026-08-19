@@ -37,10 +37,12 @@ export async function verifyAgencyIdentitySession(input: {
 		/\/+$/,
 		'',
 	);
+	const audiences = list(input.platform?.env?.CS_IDENTITY_AUDIENCE, DEFAULT_IDENTITY_AUDIENCE);
+	if (audiences.length !== 1) return null;
 	const identity = await verifyIdentityToken(token, {
 		issuer,
 		jwksUrl: input.platform?.env?.CS_IDENTITY_JWKS_URL || `${issuer}/.well-known/jwks.json`,
-		audience: list(input.platform?.env?.CS_IDENTITY_AUDIENCE, DEFAULT_IDENTITY_AUDIENCE),
+		audience: audiences[0],
 		fetch: input.fetch,
 	});
 	if (!identity?.email) return null;
