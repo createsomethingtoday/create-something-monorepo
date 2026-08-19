@@ -1390,7 +1390,7 @@ const TemplateChatSurface: React.FC<TemplateChatProps> = ({
 
         <div ref={turnstileRef} className="tmchat-turnstile" />
         <div className="tmchat-inputrow">
-          <div className="tmchat-inputfield">
+          <div className="tmchat-composer">
             <textarea
               ref={inputRef}
               className="tmchat-input"
@@ -1408,22 +1408,22 @@ const TemplateChatSurface: React.FC<TemplateChatProps> = ({
                 }
               }}
             />
-            <div id={inputLimitId} className="tmchat-inputmeta">
-              {strings.characterLimit(
-                input.length.toLocaleString(priceLocale),
-                MAX_REQUEST_MESSAGE_CHARS.toLocaleString(priceLocale),
-              )}
-            </div>
+            {streaming ? (
+              <button type="button" className="tmchat-send stop" onClick={stopStreaming}>
+                Stop
+              </button>
+            ) : (
+              <button type="button" className="tmchat-send" disabled={!input.trim()} onClick={() => void send(input)}>
+                Send
+              </button>
+            )}
           </div>
-          {streaming ? (
-            <button type="button" className="tmchat-send stop" onClick={stopStreaming}>
-              Stop
-            </button>
-          ) : (
-            <button type="button" className="tmchat-send" disabled={!input.trim()} onClick={() => void send(input)}>
-              Send
-            </button>
-          )}
+          <div id={inputLimitId} className="tmchat-inputmeta">
+            {strings.characterLimit(
+              input.length.toLocaleString(priceLocale),
+              MAX_REQUEST_MESSAGE_CHARS.toLocaleString(priceLocale),
+            )}
+          </div>
         </div>
 
         {preview ? (
