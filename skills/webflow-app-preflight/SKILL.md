@@ -21,8 +21,6 @@ Everything below reduces to three questions a reviewer asks:
 
 If you can answer yes to all three with evidence, the submission is ready for review.
 
-**What review gates, and what it recommends** (per the guidelines' Review scope section): review gates the surfaces Webflow is responsible for — code running in the Designer, your Webflow API and credential handling, what you disclose, what uninstall removes, and listing honesty. How your code behaves on your customer's published site is part of your relationship with your customer: the published-site practices below are strongly recommended, and your customers will hold you to them, but they are not rejection grounds.
-
 ## Phase 1 — Choose the App type
 
 Webflow Apps are built from two building blocks. An App can use one or both.
@@ -66,8 +64,7 @@ This is where reviews are won or lost. Follow these while writing code, not afte
 
 - **No dangerous patterns in Designer Extension code.** No `eval()`, no direct DOM manipulation of the Designer, no excessive global variables. Use the Designer APIs.
 - **Iframes for auth only.** Your extension already runs inside a sandboxed iframe, so the objection isn't the technology — it's that an externally hosted surface can change after approval, which puts your real behavior outside what was reviewed. Fine for an authentication flow; never as your primary App UI or runtime surface. This is the same requirement as pinning injected scripts: **behavior that reaches a user must be versioned and re-reviewable, whichever transport delivers it.**
-- **Ship production builds, not dev builds.** Development bundles embed `eval()` (webpack dev mode) and framework error-decoder URLs that security scanners flag as prohibited code execution or unexplained external connections. Bundle for production — and strip development residue: no debug routes, no onboarding/auth bypass flags, no dev or staging identity in `webflow.json`, no CLI state files.
-- **Never put a credential in a URL.** The Webflow ID token and any other credential travel in an Authorization header or a protected request body — never a GET query parameter, where they land in server logs, browser history, and analytics.
+- **Ship production builds, not dev builds.** Development bundles embed `eval()` (webpack dev mode) and framework error-decoder URLs that security scanners flag as prohibited code execution or unexplained external connections. Bundle for production.
 - **Never touch credential fields.** Do not read, collect, modify, transmit, or act on password/login/authentication inputs in a user's site. Apps that inspect forms or DOM must exclude those fields from collection and from any rule actions.
 - **Use official APIs for data, not DOM scraping.** If you need form structure, use the Forms API. Scraping the published DOM for data the API should provide is fragile and reads as an attempt to reach data you weren't granted.
 
@@ -91,7 +88,7 @@ Four exemplar controls set the tone. The authoritative item-by-item set is the *
 
   Either way, prompt the user to publish afterward — an API-managed change only reaches the published site once the site is published. What is never acceptable is leaving an orphaned runtime executing on a customer's site after they believe they've removed your App.
 
-- **Deliver code to customer sites through the Custom Code API** (this is a gate), not manual copy-paste snippets — manual paste can't be versioned or removed and can double-run. **Disclose** remotely loaded or externally controlled resources at submission, and say in your listing what your injected code does, where it runs, and why (also gates). Version-pinning what you serve — immutable URLs, SRI `integrityHash`, no undisclosed runtime loaders — is a strongly recommended practice for published-site code: it is how your customers can trust that the code serving their visitors is the code you shipped, but it is not a rejection ground.
+- **Deliver code to customer sites through the Custom Code API**, not manual copy-paste snippets (manual paste can't be versioned or removed and can double-run). Registered script versions are **immutable** — to change code running on sites, register a **new version and submit an App update**, never edit in place. Loaders that fetch remote code at runtime are only allowed if every remote resource is declared at submission and pinned (`hostedLocation` + SRI `integrityHash`). Silently swapping what a hosted script serves after approval is grounds for removal and a possible ban.
 
 ### Scopes
 
@@ -128,8 +125,8 @@ Run `checklists/pre-submission-quality-gate.md` end to end. Every item must pass
 The submission form validates these, so have them ready before you open it:
 
 1. **A published `.webflow.io` testing site** with your App installed. Reviewers test the full experience there — including anything your App adds to the published site, which is where most runtime failures show up. Required for every submission, new and update.
-2. **Source maps for review.** A single `.map` file or one ZIP of the version-3 maps produced by the exact build that produced your bundle. Required when your submission ships a new or changed Designer Extension bundle that is minified or generated. Upload them in the form's dedicated field — not in notes, not in the public bundle. They stay private to review. Include the package manifest and lockfile for that exact build too, so review can reconcile the artifact with its dependencies.
-3. **An App Review Preflight run and its submission receipt.** In the Designer, open **App Review Preflight** ([install it into your Workspace](https://webflow.com/oauth/authorize?response_type=code&client_id=0b5411e62233387925e082350666ef374377f81a9abba0dcc2542d6b5b1e4388&scope=authorized_user%3Aread) if you don't have it yet) and run it on the same bundle and source-map artifact you will attach to the form (Data Clients: declare your production JavaScript URLs instead). The run issues a receipt code (`wfpre_…`) — paste it into the form so the review team can reconcile your submission with the artifacts preflight validated. A passing preflight is not an approval; it removes the wasted round where a reviewer finds what the scanner would have told you first. Bundle findings are review gates. Production-runtime findings are recommended practices for published-site code — they inform review and matter to your customers, but they are not rejection grounds.
+2. **Source maps for review.** A single `.map` file or one ZIP of the version-3 maps produced by the exact build that produced your bundle. Required when your submission ships a new or changed Designer Extension bundle that is minified or generated. Upload them in the form's dedicated field — not in notes, not in the public bundle. They stay private to review.
+3. **An App Review Preflight run and its submission receipt.** In the Designer, open **App Review Preflight** ([install it into your Workspace](https://webflow.com/oauth/authorize?response_type=code&client_id=0b5411e62233387925e082350666ef374377f81a9abba0dcc2542d6b5b1e4388&scope=authorized_user%3Aread) if you don't have it yet) and run it on the same bundle and source-map artifact you will attach to the form (Data Clients: declare your production JavaScript URLs instead). The run issues a receipt code (`wfpre_…`) — paste it into the form so the review team can reconcile your submission with the artifacts preflight validated. A passing preflight is not an approval; it removes the wasted round where a reviewer finds what the scanner would have told you first. Production-runtime findings surfaced by preflight must be resolved — code your App delivers to customers' published sites is in review scope.
 
 Only submit when:
 
