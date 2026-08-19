@@ -56,7 +56,9 @@ Reviewers verify these by calling your endpoints and asking for evidence, not by
 - [ ] Install URL scopes are equal to or a subset of configured scopes.
 - [ ] App stops calling the Data API immediately on revoke/uninstall — a persistent 401 on a previously valid token is revocation, not an error to retry past.
 - [ ] Code on customer sites is delivered via the Custom Code API, not manual paste.
-- [ ] Injected scripts are version-pinned (hosted scripts use SRI `integrityHash`); no runtime loaders unless declared + pinned at submission.
+- [ ] Remotely loaded resources are disclosed at submission and the listing says what injected code does (gates). Version-pinning (SRI `integrityHash`, immutable URLs, no undisclosed loaders) is recommended practice for published-site code, not a rejection ground.
+- [ ] No credential travels in a URL query string — Webflow tokens go in an Authorization header or request body, never a GET parameter (gate).
+- [ ] Production bundle carries no debug routes, bypass flags, dev/staging identity in `webflow.json`, or CLI residue; the package manifest and lockfile for this exact build accompany the submission (gates per submission artifacts).
 - [ ] Any change to injected code ships as a new script version + App update — never edited in place.
 - [ ] App retains the scopes needed to clean up (`custom_code:write` + `sites:write`/`pages:write`) and removes scripts at both site and page level on uninstall.
 - [ ] If programmatic removal isn't possible, the App gives clear in-app instructions telling the user exactly what to remove and where — injected code is never simply left behind.
