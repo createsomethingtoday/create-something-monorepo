@@ -48,6 +48,31 @@ export class AirtableClientError extends Error {
   }
 }
 
+// The Airtable → Zendesk email composer renders feedback as HTML without escaping,
+// so a literal tag like <script type="…"> is parsed as markup and Zendesk's sanitizer
+// drops it plus everything after it — the creator receives a silently truncated email
+// (observed: Onart, ZD 1170959, 2026-08-08). Matches tag-shaped sequences like
+// <script …>, </div>, <br/>; deliberately not <https://…> autolinks or "x < y".
+const RAW_HTML_TAG_PATTERN = /<\/?[A-Za-z][A-Za-z0-9-]*(?:\s[^<>]*)?\/?>/;
+
+export function findRawHtmlTag(text: string): string | null {
+  const match = RAW_HTML_TAG_PATTERN.exec(text);
+  return match ? match[0] : null;
+}
+
+function assertNoRawHtmlInCreatorFeedback(field: 'review_feedback' | 'rejection_feedback', value: string | undefined): void {
+  if (value === undefined) return;
+  const tag = findRawHtmlTag(value);
+  if (tag !== null) {
+    throw new AirtableClientError(
+      'RAW_HTML_IN_FEEDBACK',
+      `${field} contains a raw HTML tag (${tag}). The Zendesk email pipeline parses creator-facing feedback as HTML, and a raw tag truncates the delivered email — everything after it is silently dropped. Rewrite the reference without angle brackets, e.g. \`script type="application/ld+json"\` in backticks.`,
+      400,
+      { field, tag },
+    );
+  }
+}
+
 export interface TemplateReviewQueueItem {
   assetId: string;
   templateName: string;
@@ -1494,6 +1519,10 @@ export class AirtableClient {
   async updateVersionReview(versionId: string, input: VersionReviewUpdateInput): Promise<TemplateReviewVersion> {
     const fields: Record<string, unknown> = {};
     let requestedReviewOwner: NormalizedReviewOwner | undefined;
+
+    // Creator-facing feedback only; agent_review_feedback is internal and never emailed.
+    assertNoRawHtmlInCreatorFeedback('review_feedback', input.review_feedback);
+    assertNoRawHtmlInCreatorFeedback('rejection_feedback', input.rejection_feedback);
 
     if (input.release_date !== undefined) {
       throw new AirtableClientError('UNSUPPORTED_WRITE_FIELD', 'release_date is a read-only rollup on template versions. Use release_record_id to link a 🚀Release record instead.', 501, {

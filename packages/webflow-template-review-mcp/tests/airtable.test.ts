@@ -1361,3 +1361,86 @@ test('getReviewContext exposes checklist progress for gating', async () => {
     publishing: { total: 2, checked: 0, unchecked: 2, complete: false },
   });
 });
+
+test('findRawHtmlTag detects tag-shaped sequences but not autolinks or comparisons', async () => {
+  const { findRawHtmlTag } = await import('../src/airtable.js');
+
+  // The Onart truncation case: backtick-wrapped raw tag still truncates today.
+  assert.equal(findRawHtmlTag('A `<script type="application/ld+json">` block now appears on every page'), '<script type="application/ld+json">');
+  assert.equal(findRawHtmlTag('close the </div> properly'), '</div>');
+  assert.equal(findRawHtmlTag('use <br/> sparingly'), '<br/>');
+
+  assert.equal(findRawHtmlTag('see <https://example.com/a?b=1> for details'), null);
+  assert.equal(findRawHtmlTag('when x < y the loop exits'), null);
+  assert.equal(findRawHtmlTag('rated <3 by users'), null);
+  assert.equal(findRawHtmlTag('plain feedback with `backticked code` and **bold**'), null);
+});
+
+test('updateVersionReview rejects raw HTML tags in creator-facing feedback before calling Airtable', async () => {
+  let called = false;
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async () => {
+      called = true;
+      throw new Error('should not run');
+    },
+  });
+
+  await assert.rejects(
+    client.updateVersionReview('rec_version_raw_html', {
+      review_feedback: 'Remove the `<script type="application/ld+json">` block from every page.',
+    }),
+    (error: unknown) => {
+      assert.equal((error as { code?: string }).code, 'RAW_HTML_IN_FEEDBACK');
+      assert.deepEqual((error as { details?: unknown }).details, {
+        field: 'review_feedback',
+        tag: '<script type="application/ld+json">',
+      });
+      return true;
+    },
+  );
+
+  await assert.rejects(
+    client.updateVersionReview('rec_version_raw_html_rejection', {
+      rejection_feedback: 'The <div> nesting is broken throughout.',
+    }),
+    (error: unknown) => {
+      assert.equal((error as { code?: string }).code, 'RAW_HTML_IN_FEEDBACK');
+      assert.deepEqual((error as { details?: unknown }).details, {
+        field: 'rejection_feedback',
+        tag: '<div>',
+      });
+      return true;
+    },
+  );
+
+  assert.equal(called, false);
+});
+
+test('updateVersionReview allows autolinks and internal agent feedback with raw tags', async () => {
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input, init) => {
+      const url = new URL(String(input));
+      if (!url.pathname.includes(`/${TABLE_IDS.assetVersions}/rec_version_safe_feedback`)) {
+        throw new Error(`Unexpected fetch: ${url.toString()}`);
+      }
+      const body = JSON.parse(String(init?.body));
+      return jsonResponse({
+        id: 'rec_version_safe_feedback',
+        createdTime: '2026-08-10T00:00:00.000Z',
+        fields: body.fields,
+      });
+    },
+  });
+
+  // Autolinks and backticked non-tag references pass.
+  await client.updateVersionReview('rec_version_safe_feedback', {
+    review_feedback: 'See <https://webflow.com/templates/submission-guidelines> and drop the `application/ld+json` block.',
+  });
+
+  // agent_review_feedback is internal-only (never emailed) — raw tags allowed.
+  await client.updateVersionReview('rec_version_safe_feedback', {
+    agent_review_feedback: 'Found <script type="application/ld+json"> on all 18 pages via sandbox crawl.',
+  });
+});
