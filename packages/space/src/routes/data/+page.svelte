@@ -10,7 +10,7 @@
     {
       eyebrow: 'Live data',
       icon: 'settings',
-      title: 'NBA Live',
+      title: 'NBA Analytics',
       href: '/data/nba',
       detail:
         'Inspect real-time NBA game data with play-by-play, box scores, shot networks, and pace analysis.',

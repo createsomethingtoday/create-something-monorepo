@@ -68,7 +68,7 @@ export async function generateTokens(
 	const familyId = generateUUID();
 	const expiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL * 1000).toISOString();
 
-	await createRefreshToken(db, {
+	const created = await createRefreshToken(db, {
 		id: generateUUID(),
 		user_id: user.id,
 		token_hash: tokenHash,
@@ -76,6 +76,7 @@ export async function generateTokens(
 		expires_at: expiresAt,
 		audience,
 	});
+	if (!created) throw new Error('active_verified_identity_required');
 
 	return {
 		accessToken,

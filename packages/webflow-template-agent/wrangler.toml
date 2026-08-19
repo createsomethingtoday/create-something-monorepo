@@ -14,9 +14,12 @@ ENVIRONMENT = "production"
 # worker origin is fine here. The *client* chat component must still reach
 # this agent through a *.webflow.com proxy path.
 SEARCH_API_BASE = "https://webflow-template-search.createsomething.workers.dev"
-ALLOWED_ORIGINS = "https://webflow.com,https://www.webflow.com,https://templates.webflow.com,https://template-marketplace.webflow.io,*.webflow.com"
+ALLOWED_ORIGINS = "https://webflow.com,https://www.webflow.com,https://templates.webflow.com,https://template-marketplace.webflow.io,*.webflow.com,https://webflowtest.com,*.webflowtest.com"
 ANTHROPIC_MODEL = "claude-opus-4-8"
-TURNSTILE_EXPECTED_HOSTNAME = "webflow.com"
+# Comma-separated exact hostnames. webflowtest.com = acceptance, for the MiW
+# Template Finder (webflow/webflow#115438) staging validation. The Turnstile
+# site key's domain allowlist must include these same hostnames.
+TURNSTILE_EXPECTED_HOSTNAME = "webflow.com,webflowtest.com"
 MAX_SESSION_TURNS = "20"
 MAX_CONCURRENT_TURNS = "8"
 # $40/day. Raised from $25 on 2026-08-02: weekday demand saturated the old cap

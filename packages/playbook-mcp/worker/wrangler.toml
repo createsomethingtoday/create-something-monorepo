@@ -27,6 +27,12 @@ binding = "TELEMETRY_DB"
 database_name = "cs-telemetry"
 database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"
 
+# Durable per-monitor alert state. This shared namespace also backs Hub watchdog cooldowns.
+[[kv_namespaces]]
+binding = "ALERT_STATE_KV"
+id = "f77e7c97087041d29fbf0d12e5a831ee"
+preview_id = "6356c7663c334a4195243971e117565c"
+
 [vars]
 # Optional MCP endpoint overrides for Half Dozen scenario routes.
 # HALFDOZEN_TELEMETRY_MCP_URL = "https://halfdozen-telemetry-mcp.half-dozen.workers.dev/mcp"

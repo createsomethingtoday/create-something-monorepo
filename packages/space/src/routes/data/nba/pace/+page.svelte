@@ -62,14 +62,14 @@
 </script>
 
 <SEO
-	title="Pace Analysis | NBA Live Analytics"
+	title="Pace Analysis | NBA Analytics"
 	description="Team pace, tempo, and offensive efficiency analysis. Possessions per game and points per possession metrics."
 	keywords="NBA pace, tempo analysis, offensive efficiency, possessions per game, points per possession"
 	propertyName="space"
 	breadcrumbs={[
 		{ name: 'Home', url: 'https://createsomething.space' },
 		{ name: 'Data Studio', url: 'https://createsomething.space/data' },
-		{ name: 'NBA Live Analytics', url: 'https://createsomething.space/data/nba' },
+		{ name: 'NBA Analytics', url: 'https://createsomething.space/data/nba' },
 		{ name: 'Pace Analysis', url: 'https://createsomething.space/data/nba/pace' }
 	]}
 />

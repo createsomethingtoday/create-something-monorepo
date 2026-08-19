@@ -18,14 +18,14 @@
 </script>
 
 <SEO
-	title="Shot Network | NBA Live Analytics"
+	title="Shot Network | NBA Analytics"
 	description="Who creates shots for whom? See the passing connections that lead to scoring opportunities."
 	keywords="NBA shot network, assist network, passing connections, shot creation, basketball visualization"
 	propertyName="space"
 	breadcrumbs={[
 		{ name: 'Home', url: 'https://createsomething.space' },
 		{ name: 'Data Studio', url: 'https://createsomething.space/data' },
-		{ name: 'NBA Live Analytics', url: 'https://createsomething.space/data/nba' },
+		{ name: 'NBA Analytics', url: 'https://createsomething.space/data/nba' },
 		{ name: 'Shot Network', url: 'https://createsomething.space/data/nba/shot-network' }
 	]}
 />
@@ -36,7 +36,7 @@
 		<nav class="nba-breadcrumb">
 			<a href="/data/nba" class="nba-breadcrumb-link">
 				<ArrowLeft size={14} />
-				NBA Live
+				NBA Analytics
 			</a>
 			<span class="nba-breadcrumb-sep">/</span>
 			<span class="nba-breadcrumb-current">Shot Network</span>

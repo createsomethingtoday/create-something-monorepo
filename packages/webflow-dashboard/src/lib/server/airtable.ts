@@ -1089,6 +1089,28 @@ export function mapAssetRecord(record: Airtable.Record<Airtable.FieldSet>): Asse
 	};
 }
 
+/**
+ * Airtable's update endpoint is expected to return the record it wrote. Do not
+ * trust that SDK response at the UI boundary: a null or empty batch response
+ * otherwise turns a failed cover update into `Cannot read properties of null
+ * (reading 'id')` while we log a successful update.
+ */
+export function firstUpdatedAirtableRecord(
+	records: unknown
+): Airtable.Record<Airtable.FieldSet> | null {
+	if (!Array.isArray(records)) return null;
+
+	const record = records[0];
+	if (!record || typeof record !== 'object') return null;
+
+	const candidate = record as Partial<Airtable.Record<Airtable.FieldSet>>;
+	if (typeof candidate.id !== 'string' || !candidate.fields || typeof candidate.fields !== 'object') {
+		return null;
+	}
+
+	return candidate as Airtable.Record<Airtable.FieldSet>;
+}
+
 function requiresCurrentSupportRecord(data: AssetUpdateData): boolean {
 	const isSupportUpdate = data.appSupportEmail !== undefined || data.appSupportUrl !== undefined;
 	return isSupportUpdate && (data.appSupportEmail === undefined || data.appSupportUrl === undefined);
@@ -1412,10 +1434,12 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 			}
 
 			try {
-				const records = (await base(TABLES.ASSETS).update([
+				const records = await base(TABLES.ASSETS).update([
 					{ id, fields: fields as Airtable.FieldSet }
-				])) as Airtable.Record<Airtable.FieldSet>[];
-				return mapAssetRecord(records[0]);
+				]);
+				const record = firstUpdatedAirtableRecord(records);
+				if (!record) return null;
+				return mapAssetRecord(record);
 			} catch {
 				return null;
 			}
@@ -1471,11 +1495,16 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 
 			try {
 				debugLog('[Airtable] Calling base.update with fields...');
-				const records = (await base(TABLES.ASSETS).update([
+				const records = await base(TABLES.ASSETS).update([
 					{ id, fields: fields as Airtable.FieldSet }
-				])) as Airtable.Record<Airtable.FieldSet>[];
-				debugLog('[Airtable] Update successful, record id:', records[0].id);
-				return mapAssetRecord(records[0]);
+				]);
+				const record = firstUpdatedAirtableRecord(records);
+				if (!record) {
+					console.error('[Airtable] Update returned no record');
+					return null;
+				}
+				debugLog('[Airtable] Update successful, record id:', record.id);
+				return mapAssetRecord(record);
 			} catch (err) {
 				console.error('[Airtable] Error updating asset with images:', err);
 				console.error('[Airtable] Error details:', JSON.stringify(err, Object.getOwnPropertyNames(err)));

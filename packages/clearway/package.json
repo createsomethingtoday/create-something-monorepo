@@ -19,7 +19,7 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260621.1",
     "@sveltejs/adapter-cloudflare": "^6.0.0",
-    "@sveltejs/kit": "^2.15.1",
+    "@sveltejs/kit": "^2.70.2",
     "@sveltejs/vite-plugin-svelte": "^5.0.3",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.49",

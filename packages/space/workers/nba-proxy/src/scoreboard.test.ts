@@ -55,6 +55,33 @@ function espnEvent() {
 }
 
 describe('scoreboard provider fallback', () => {
+	it('uses provider-specific headers when falling back to ESPN', async () => {
+		const requests: Array<{ url: string; headers: Headers }> = [];
+		const fetchImpl: typeof fetch = async (input, init) => {
+			requests.push({ url: input.toString(), headers: new Headers(init?.headers) });
+			if (input.toString().includes('cdn.nba.com')) {
+				return new Response('forbidden', { status: 403 });
+			}
+			return Response.json({ events: [] });
+		};
+
+		await fetchScoreboardForDate('2026-07-16', {
+			today: '2026-07-16',
+			cache: new MemoryCache(),
+			fetchImpl,
+			nbaApiBaseUrl: 'https://cdn.nba.com/static/json',
+			espnApiBaseUrl: 'https://site.api.espn.com/apis/site/v2/sports/basketball/nba',
+		});
+
+		assert.equal(requests[0]?.headers.get('user-agent'), 'CREATE-SOMETHING-NBA-Proxy/2.0');
+		assert.equal(requests[0]?.headers.get('referer'), 'https://www.nba.com/');
+		assert.equal(
+			requests[1]?.headers.get('user-agent'),
+			'curl/8.7.1 CREATE-SOMETHING-NBA-Proxy/2.0'
+		);
+		assert.equal(requests[1]?.headers.get('referer'), null);
+	});
+
 	it('returns a truthful empty slate when the NBA CDN fails and ESPN has no games', async () => {
 		const calls: string[] = [];
 		const fetchImpl: typeof fetch = async (input) => {
