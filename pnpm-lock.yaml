@@ -235,7 +235,7 @@ importers:
         version: 5.41.0
       svelte-check:
         specifier: ^4.3.3
-        version: 4.3.3(picomatch@4.0.3)(svelte@5.41.0)(typescript@5.9.3)
+        version: 4.3.3(picomatch@4.0.5)(svelte@5.41.0)(typescript@5.9.3)
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
@@ -592,7 +592,7 @@ importers:
         version: 5.41.0
       svelte-check:
         specifier: ^4.1.1
-        version: 4.3.3(picomatch@4.0.3)(svelte@5.41.0)(typescript@5.9.3)
+        version: 4.3.3(picomatch@4.0.5)(svelte@5.41.0)(typescript@5.9.3)
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
@@ -662,7 +662,7 @@ importers:
         version: 5.48.5
       svelte-check:
         specifier: ^4.1.1
-        version: 4.3.5(picomatch@4.0.5)(svelte@5.48.5)(typescript@5.9.3)
+        version: 4.3.5(picomatch@4.0.3)(svelte@5.48.5)(typescript@5.9.3)
       tailwindcss:
         specifier: ^3.4.17
         version: 3.4.19(tsx@4.21.0)(yaml@2.9.0)
@@ -4207,7 +4207,7 @@ importers:
         version: 5.48.5
       svelte-check:
         specifier: ^4.3.3
-        version: 4.3.5(picomatch@4.0.5)(svelte@5.48.5)(typescript@5.9.3)
+        version: 4.3.5(picomatch@4.0.3)(svelte@5.48.5)(typescript@5.9.3)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -4622,6 +4622,24 @@ importers:
         specifier: ^4.0.0
         version: 4.75.0(@cloudflare/workers-types@4.20260317.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
+  packages/webflow-scope-watcher:
+    devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^4.20260621.1
+        version: 4.20260621.1
+      '@types/node':
+        specifier: 24.10.9
+        version: 24.10.9
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.18
+        version: 4.1.8(@opentelemetry/api@1.9.0)(@types/node@24.10.9)(jsdom@27.4.0(@noble/hashes@1.8.0)(bufferutil@4.1.0)(utf-8-validate@6.0.6))(vite@7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+      wrangler:
+        specifier: ^4.103.0
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+
   packages/webflow-site-analyzer-mcp:
     dependencies:
       '@create-something/observability':
@@ -4998,6 +5016,8 @@ importers:
         version: 5.9.3
 
   packages/workway-core: {}
+
+  packages/workway-edge: {}
 
   packages/zendesk-mcp:
     dependencies:
@@ -37814,18 +37834,6 @@ snapshots:
 
   supports-preserve-symlinks-flag@1.0.0: {}
 
-  svelte-check@4.3.3(picomatch@4.0.3)(svelte@5.41.0)(typescript@5.9.3):
-    dependencies:
-      '@jridgewell/trace-mapping': 0.3.31
-      chokidar: 4.0.3
-      fdir: 6.5.0(picomatch@4.0.3)
-      picocolors: 1.1.1
-      sade: 1.8.1
-      svelte: 5.41.0
-      typescript: 5.9.3
-    transitivePeerDependencies:
-      - picomatch
-
   svelte-check@4.3.3(picomatch@4.0.5)(svelte@5.41.0)(typescript@5.9.3):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
@@ -37834,6 +37842,18 @@ snapshots:
       picocolors: 1.1.1
       sade: 1.8.1
       svelte: 5.41.0
+      typescript: 5.9.3
+    transitivePeerDependencies:
+      - picomatch
+
+  svelte-check@4.3.5(picomatch@4.0.3)(svelte@5.48.5)(typescript@5.9.3):
+    dependencies:
+      '@jridgewell/trace-mapping': 0.3.31
+      chokidar: 4.0.3
+      fdir: 6.5.0(picomatch@4.0.3)
+      picocolors: 1.1.1
+      sade: 1.8.1
+      svelte: 5.48.5
       typescript: 5.9.3
     transitivePeerDependencies:
       - picomatch

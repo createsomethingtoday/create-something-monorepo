@@ -42,14 +42,14 @@
 </script>
 
 <SEO
-	title="Clutch Performance | NBA Live Analytics"
+	title="Clutch Performance | NBA Analytics"
 	description="Track player and team performance in high-pressure situations. Ice in veins leaderboard with composite clutch ratings."
 	keywords="NBA clutch performance, clutch stats, high-pressure basketball, ice in veins rating, clutch gene"
 	propertyName="space"
 	breadcrumbs={[
 		{ name: 'Home', url: 'https://createsomething.space' },
 		{ name: 'Data Studio', url: 'https://createsomething.space/data' },
-		{ name: 'NBA Live Analytics', url: 'https://createsomething.space/data/nba' },
+		{ name: 'NBA Analytics', url: 'https://createsomething.space/data/nba' },
 		{ name: 'Clutch Performance', url: 'https://createsomething.space/data/nba/clutch' }
 	]}
 />

@@ -9,6 +9,7 @@ import {
 	buildCreatorRecordEmailMatchFormula,
 	cleanMarketplaceStatus,
 	cleanMarketplaceType,
+	firstUpdatedAirtableRecord,
 	mapAssetRecord,
 	recordMatchesCreatorEmail,
 	resolveAssetType,
@@ -81,6 +82,19 @@ describe('mapAssetRecord', () => {
 		} as unknown as Parameters<typeof mapAssetRecord>[0]);
 
 		expect(asset.cumulativePurchases).toBe(12);
+	});
+});
+
+describe('firstUpdatedAirtableRecord', () => {
+	it('returns null instead of dereferencing an empty or null Airtable update response', () => {
+		expect(firstUpdatedAirtableRecord(null)).toBeNull();
+		expect(firstUpdatedAirtableRecord([])).toBeNull();
+		expect(firstUpdatedAirtableRecord([null])).toBeNull();
+	});
+
+	it('returns the write result when Airtable includes a record', () => {
+		const record = { id: 'recTemplate', fields: { Name: 'Template' } };
+		expect(firstUpdatedAirtableRecord([record])).toBe(record);
 	});
 });
 

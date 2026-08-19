@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
-import { flushSync, mount, unmount } from 'svelte';
+import { createRawSnippet, flushSync, mount, unmount } from 'svelte';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import MeridianCardGrid from './MeridianCardGrid.svelte';
 import MeridianEvidenceCarousel from './MeridianEvidenceCarousel.svelte';
+import MeridianFeatureSplit from './MeridianFeatureSplit.svelte';
 
 let target: HTMLElement;
 let instance: Record<string, unknown> | undefined;
@@ -41,6 +42,36 @@ describe('MeridianCardGrid', () => {
     expect(card?.getAttribute('href')).toBe('/map');
     expect(card?.getAttribute('aria-label')).toBe('Start the map: Map one workflow');
     expect(card?.querySelector('a')).toBeNull();
+  });
+});
+
+describe('MeridianFeatureSplit', () => {
+  it('lets a property replace the fallback court with an authored visual artifact', () => {
+    const visual = createRawSnippet(() => ({
+      render: () => '<figure data-testid="research-route">Property-owned research route</figure>'
+    }));
+
+    target = document.createElement('div');
+    document.body.appendChild(target);
+    instance = mount(MeridianFeatureSplit, {
+      target,
+      props: {
+        eyebrow: 'Research field',
+        title: 'A claim earns its route through evidence.',
+        description: 'The research route remains property-owned.',
+        visualLabel: 'Research route',
+        visual
+      }
+    }) as Record<string, unknown>;
+    flushSync();
+
+    expect(target.querySelector('[data-testid="research-route"]')?.textContent).toContain(
+      'Property-owned research route'
+    );
+    expect(target.querySelector('.meridian-split__court')).toBeNull();
+    expect(target.querySelector('.meridian-split__visual')?.getAttribute('aria-label')).toBe(
+      'Research route'
+    );
   });
 });
 

@@ -2,7 +2,7 @@ const DEFAULT_HEALTH_URL = 'https://cs-mcp-hub-remote.createsomething.workers.de
 const DEFAULT_ALERT_EMAIL = 'micah@createsomething.io';
 const DEFAULT_EMAIL_FROM = 'CREATE SOMETHING Ops <notifications@createsomething.io>';
 const RESEND_EMAIL_API_URL = 'https://api.resend.com/emails';
-const ALERT_COOLDOWN_SECONDS = 60 * 60;
+export const PRODUCTION_WATCHDOG_ALERT_COOLDOWN_SECONDS = 6 * 60 * 60;
 // A cold Hub health request connects every enabled downstream and currently
 // takes about 26 seconds in production. Keep the synthetic above that measured
 // cold-start envelope while remaining bounded below the 15-minute cadence.
@@ -50,19 +50,20 @@ export function evaluateProductionWatchdog(input: WatchdogInput): WatchdogFindin
   if (!input.healthOk) {
     findings.push({
       rule: 'health_probe_failed',
-      message: `CREATE SOMETHING Hub health probe returned HTTP ${input.healthStatus}.`,
+      message: `CREATE SOMETHING Hub health probe returned HTTP ${input.healthStatus}.`
     });
   }
 
   if (input.failureCount > 0) {
-    const rate = input.invocationCount > 0 ? (input.failureCount / input.invocationCount) * 100 : 100;
+    const rate =
+      input.invocationCount > 0 ? (input.failureCount / input.invocationCount) * 100 : 100;
     const topError = input.topErrors[0];
     const suffix = topError ? ` Top error: ${topError.message} (${topError.count}).` : '';
     findings.push({
       rule: 'mcp_failures',
       message:
         `${input.failureCount} of ${input.invocationCount} MCP invocations failed in the last 15 minutes ` +
-        `(${rate.toFixed(1)}%).${suffix}`,
+        `(${rate.toFixed(1)}%).${suffix}`
     });
   }
 
@@ -82,7 +83,7 @@ export function buildWatchdogAlertEmail(input: WatchdogAlertEmailInput): {
     '',
     `Checked: ${input.checkedAt}`,
     `Correlation: ${input.correlationId}`,
-    'Telemetry: Langfuse project CREATE SOMETHING and Cloudflare cs-telemetry.',
+    'Telemetry: Langfuse project CREATE SOMETHING and Cloudflare cs-telemetry.'
   ].join('\n');
 
   return { subject, text };
@@ -90,14 +91,17 @@ export function buildWatchdogAlertEmail(input: WatchdogAlertEmailInput): {
 
 async function probeHealth(
   env: ProductionWatchdogEnv,
-  fetcher: typeof fetch,
+  fetcher: typeof fetch
 ): Promise<{ ok: boolean; status: number }> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), HEALTH_PROBE_TIMEOUT_MS);
   try {
     const response = await fetcher(env.WATCHDOG_HEALTH_URL ?? DEFAULT_HEALTH_URL, {
-      headers: { Accept: 'application/json', 'User-Agent': 'create-something-production-watchdog/1.0' },
-      signal: controller.signal,
+      headers: {
+        Accept: 'application/json',
+        'User-Agent': 'create-something-production-watchdog/1.0'
+      },
+      signal: controller.signal
     });
     let failedServers = 0;
     if (response.ok) {
@@ -131,7 +135,7 @@ async function queryRecentInvocations(env: ProductionWatchdogEnv): Promise<{
               SUM(CASE WHEN success = 0 THEN 1 ELSE 0 END) AS failure_count
          FROM mcp_tool_invocations
         WHERE created_at >= datetime('now', '-15 minutes')
-          AND tool_name != 'production_watchdog'`,
+          AND tool_name != 'production_watchdog'`
     ).first<{ invocation_count: number | string | null; failure_count: number | string | null }>(),
     env.TELEMETRY_DB.prepare(
       `SELECT COALESCE(error_message, 'Unknown MCP failure') AS message, COUNT(*) AS error_count
@@ -141,8 +145,8 @@ async function queryRecentInvocations(env: ProductionWatchdogEnv): Promise<{
           AND tool_name != 'production_watchdog'
         GROUP BY COALESCE(error_message, 'Unknown MCP failure')
         ORDER BY error_count DESC
-        LIMIT 3`,
-    ).all<{ message: string; error_count: number | string }>(),
+        LIMIT 3`
+    ).all<{ message: string; error_count: number | string }>()
   ]);
 
   return {
@@ -150,22 +154,25 @@ async function queryRecentInvocations(env: ProductionWatchdogEnv): Promise<{
     failureCount: Number(summary?.failure_count ?? 0),
     topErrors: (errors.results ?? []).map((row) => ({
       message: String(row.message).slice(0, 240),
-      count: Number(row.error_count ?? 0),
-    })),
+      count: Number(row.error_count ?? 0)
+    }))
   };
 }
 
 async function deliverAlert(
   env: ProductionWatchdogEnv,
   input: WatchdogAlertEmailInput,
-  fetcher: typeof fetch,
+  fetcher: typeof fetch
 ): Promise<boolean> {
   if (!env.RESEND_API_KEY) {
     console.warn(`[production-watchdog] alert delivery disabled: RESEND_API_KEY is missing.`);
     return false;
   }
 
-  const cooldownKey = `production-watchdog:alert:${input.findings.map((item) => item.rule).sort().join('+')}`;
+  const cooldownKey = `production-watchdog:alert:${input.findings
+    .map((item) => item.rule)
+    .sort()
+    .join('+')}`;
   if (await env.HUB_STATE_KV?.get(cooldownKey)) return false;
 
   const email = buildWatchdogAlertEmail(input);
@@ -174,15 +181,15 @@ async function deliverAlert(
     headers: {
       Authorization: `Bearer ${env.RESEND_API_KEY}`,
       'Content-Type': 'application/json',
-      'Idempotency-Key': `production-watchdog:${input.correlationId}`,
+      'Idempotency-Key': `production-watchdog:${input.correlationId}`
     },
     body: JSON.stringify({
       from: env.WATCHDOG_EMAIL_FROM ?? DEFAULT_EMAIL_FROM,
       to: [env.WATCHDOG_ALERT_EMAIL ?? DEFAULT_ALERT_EMAIL],
       subject: email.subject,
       text: email.text,
-      tags: [{ name: 'surface', value: 'cs-mcp-hub' }],
-    }),
+      tags: [{ name: 'surface', value: 'cs-mcp-hub' }]
+    })
   });
 
   if (!response.ok) {
@@ -190,14 +197,14 @@ async function deliverAlert(
   }
 
   await env.HUB_STATE_KV?.put(cooldownKey, input.checkedAt, {
-    expirationTtl: ALERT_COOLDOWN_SECONDS,
+    expirationTtl: PRODUCTION_WATCHDOG_ALERT_COOLDOWN_SECONDS
   });
   return true;
 }
 
 export async function runProductionWatchdog(
   env: ProductionWatchdogEnv,
-  options: { fetcher?: typeof fetch; now?: Date; correlationId?: string } = {},
+  options: { fetcher?: typeof fetch; now?: Date; correlationId?: string } = {}
 ): Promise<ProductionWatchdogResult> {
   const startedAt = Date.now();
   const fetcher = options.fetcher ?? fetch;
@@ -205,21 +212,25 @@ export async function runProductionWatchdog(
   const correlationId = options.correlationId ?? `watchdog-${crypto.randomUUID()}`;
   const health = await probeHealth(env, fetcher);
 
-  let recent = { invocationCount: 0, failureCount: 0, topErrors: [] as Array<{ message: string; count: number }> };
+  let recent = {
+    invocationCount: 0,
+    failureCount: 0,
+    topErrors: [] as Array<{ message: string; count: number }>
+  };
   let findings: WatchdogFinding[] = [];
   try {
     recent = await queryRecentInvocations(env);
   } catch (error) {
     findings.push({
       rule: 'telemetry_query_failed',
-      message: `Cloudflare telemetry query failed: ${error instanceof Error ? error.message : String(error)}`,
+      message: `Cloudflare telemetry query failed: ${error instanceof Error ? error.message : String(error)}`
     });
   }
 
   const input: WatchdogInput = {
     healthOk: health.ok,
     healthStatus: health.status,
-    ...recent,
+    ...recent
   };
   findings = [...findings, ...evaluateProductionWatchdog(input)];
 
@@ -229,7 +240,7 @@ export async function runProductionWatchdog(
       alertDelivered = await deliverAlert(env, { checkedAt, correlationId, findings }, fetcher);
     } catch (error) {
       console.error(
-        `[production-watchdog] alert delivery failed: ${error instanceof Error ? error.message : String(error)}`,
+        `[production-watchdog] alert delivery failed: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }
@@ -240,6 +251,6 @@ export async function runProductionWatchdog(
     correlationId,
     findings,
     alertDelivered,
-    durationMs: Date.now() - startedAt,
+    durationMs: Date.now() - startedAt
   };
 }

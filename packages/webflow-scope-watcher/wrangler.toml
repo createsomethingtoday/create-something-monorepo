@@ -1,0 +1,36 @@
+name = "webflow-scope-watcher"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+workers_dev = true
+
+[observability]
+enabled = true
+
+[[kv_namespaces]]
+binding = "STATE"
+id = "59d119675cd64efa8fec2b56f624f23e"
+
+[vars]
+GITHUB_REPO = "webflow/webflow"
+GITHUB_REF = "dev"
+SCOPES_PATH = "entrypoints/server/lib/logic/oauth/scopes.ts"
+# #wg-app-marketplace — Marketplace Asset Bot must be a channel member
+SLACK_CHANNEL_ID = "C0B9XS5SZ7X"
+# Cloudflare account hosting Browser Rendering (consent-screen captures)
+CF_ACCOUNT_ID = "9645bd52e640b8a4f40a3a55ff1dd75a"
+
+[triggers]
+# Hourly — scopes land via PR merges to dev, so hourly catches them same-day
+# without burning GitHub API quota.
+crons = ["7 * * * *"]
+
+# Secrets (wrangler secret put …):
+# - GITHUB_TOKEN       GitHub token with read access to webflow/webflow (micahwithwf)
+# - ADMIN_TOKEN        bearer token for /api/* endpoints (local copy: .admin-token, gitignored)
+# - SLACK_WEBHOOK_URL  optional; incoming webhook fallback — alerts are recorded in KV
+#                      history even when unset
+# - BROWSER_RENDERING_TOKEN  Cloudflare Browser Rendering API token (consent captures)
+# - PROBE_CLIENT_ID          client_id of the standing Scope Probe app (after setup)
+# - PROBE_SESSION_COOKIE     raw Cookie header of the probe account's webflow.com session

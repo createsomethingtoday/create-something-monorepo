@@ -15,6 +15,7 @@
     type PerformanceNarrativeScene
   } from '@create-something/canon';
   import type { Paper } from '@create-something/canon/types';
+  import ResearchRouteArtifact from '$lib/components/home/ResearchRouteArtifact.svelte';
 
   let { data }: { data: PageData } = $props();
 
@@ -167,8 +168,12 @@
   secondaryLabel="Browse experiments"
   secondaryHref="/experiments"
   tags={['Artifact first', 'Method named', 'Handoff visible']}
-  visualLabel="Research route"
-/>
+  visualLabel="Research route from operator question through a named method and linked evidence to a human promotion gate"
+>
+  {#snippet visual()}
+    <ResearchRouteArtifact />
+  {/snippet}
+</MeridianFeatureSplit>
 
 <PerformanceNarrativeStage
   id="research-operating-story"

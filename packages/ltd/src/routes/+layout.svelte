@@ -128,7 +128,7 @@
 			isAuthenticated={!!data.user}
 			visualStyle="performance"
 			brandAsset={{
-				src: '/brand/create-something-footer-white.svg',
+				src: '/brand/create-something-horizontal-black.svg',
 				label: 'CREATE SOMETHING .ltd'
 			}}
 		/>

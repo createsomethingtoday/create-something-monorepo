@@ -91,4 +91,12 @@ describe('PUT /api/assets/[id] image URL validation', () => {
     expect(response.status).toBe(200);
     expect(updateAssetWithImages).toHaveBeenCalled();
   });
+
+  it('returns a clean failed-update response when Airtable returns no record', async () => {
+    updateAssetWithImages.mockResolvedValue(null);
+
+    await expect(callPut({ thumbnailUrl: `${ORIGIN}/api/uploads/abc/thumb.webp` })).rejects.toMatchObject(
+      { status: 500 }
+    );
+  });
 });
