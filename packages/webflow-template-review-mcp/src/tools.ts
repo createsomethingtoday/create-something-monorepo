@@ -332,7 +332,7 @@ export function registerTools(
 
   server.tool(
     'template_review_capture_published_site_screenshots',
-    'Read-only: capture desktop/mobile screenshots of a published *.webflow.io template site with Cloudflare Browser Rendering (real Chromium) and return them inline as images. Waits for fonts and IX2 intro animations to settle. With full_page, scrolls through the page first (firing IX2 scroll reveals and lazy loads), then returns readable viewport-height segments top-to-bottom (up to max_segments per viewport; truncated=true when the page continues past the last segment). IMPORTANT: the human reviewer cannot see the inline images — the result includes a gallery_url (one page rendering every capture, valid ~1 hour); always share that link in your reply. Each screenshot entry also has a per-segment view_url; include those only when the reviewer wants individual frames. Performs no Airtable write and makes no review decision.',
+    'Read-only: capture desktop/mobile screenshots of a published *.webflow.io template site with Cloudflare Browser Rendering (real Chromium). This is the sanctioned screenshot path — NEVER capture published sites with a code-execution/sandbox browser: sandbox egress proxies block cdn.prod.website-files.com, so pages render as unstyled bare HTML and are invalid review evidence. Waits for fonts and IX2 intro animations to settle. With full_page, scrolls through the page first (firing IX2 scroll reveals and lazy loads), then captures the ENTIRE page as viewport-height segments (up to 24 per viewport; truncated=true only when the page continues past that). max_segments (1-8) does NOT limit coverage — it only caps how many segments per viewport are returned inline to the model; every captured segment appears in the gallery. IMPORTANT: the human reviewer cannot see the inline images — the result includes a gallery_url (one page rendering every captured segment, valid ~1 hour); always share that link in your reply. Each screenshot entry also has a per-segment view_url; include those only when the reviewer wants individual frames. Performs no Airtable write and makes no review decision.',
     {
       published_url: z.string().url(),
       viewports: z.array(z.enum(SCREENSHOT_VIEWPORT_NAMES)).min(1).max(3).optional(),
@@ -392,17 +392,28 @@ export function registerTools(
             }),
           }).catch(() => null);
         }
+        // Coverage is decoupled from context cost: every captured segment is
+        // stored and shown in the gallery, but only the first max_segments per
+        // viewport come back inline as images.
+        const inlineBudget = new Map<string, number>();
+        const inlineFlags = result.screenshots.map((screenshot) => {
+          const used = inlineBudget.get(screenshot.viewport) ?? 0;
+          if (used >= request.maxSegments) return false;
+          inlineBudget.set(screenshot.viewport, used + 1);
+          return true;
+        });
         const summary = {
           ...result,
           ...(galleryUrl ? { gallery_url: galleryUrl } : {}),
           screenshots: result.screenshots.map(({ data: _data, ...screenshot }, index) => ({
             ...screenshot,
+            inline: inlineFlags[index],
             ...(published[index] ? { view_url: published[index].view_url } : {}),
           })),
           ...(galleryUrl || published.some(Boolean)
             ? {
                 view_note: galleryUrl
-                  ? 'The human reviewer cannot see the inline images. Share the gallery_url (one page with every capture, valid ~1 hour) in your reply; add per-segment view_url links only if the reviewer wants individual frames.'
+                  ? 'The human reviewer cannot see the inline images. Share the gallery_url (one page with every captured segment, valid ~1 hour) in your reply; add per-segment view_url links only if the reviewer wants individual frames. Segments with inline=false were captured and appear in the gallery but were not returned as inline images.'
                   : 'The human reviewer cannot see the inline images. Share the view_url links (valid ~1 hour) in your reply so they can open the captures in a browser.',
               }
             : {}),
@@ -411,11 +422,13 @@ export function registerTools(
           structuredContent: { ok: true, data: summary },
           content: [
             { type: 'text' as const, text: JSON.stringify({ ok: true, data: summary }, null, 2) },
-            ...result.screenshots.map((screenshot) => ({
-              type: 'image' as const,
-              data: screenshot.data,
-              mimeType: screenshot.mime_type,
-            })),
+            ...result.screenshots
+              .filter((_, index) => inlineFlags[index])
+              .map((screenshot) => ({
+                type: 'image' as const,
+                data: screenshot.data,
+                mimeType: screenshot.mime_type,
+              })),
           ],
         };
       } catch (error) {
