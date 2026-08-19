@@ -71,18 +71,24 @@ test('rejects out-of-range settle_ms', () => {
 
 test('rejects out-of-range max_segments and accepts the cap', () => {
   assert.throws(
-    () => normalizePublishedSiteScreenshotInput({ published_url: 'https://blaxi.webflow.io/', max_segments: 9 }),
+    () =>
+      normalizePublishedSiteScreenshotInput({
+        published_url: 'https://blaxi.webflow.io/',
+        max_segments: MAX_CAPTURED_SEGMENTS + 1,
+      }),
     PublishedSiteScreenshotError,
   );
   assert.throws(
     () => normalizePublishedSiteScreenshotInput({ published_url: 'https://blaxi.webflow.io/', max_segments: 0 }),
     PublishedSiteScreenshotError,
   );
+  // The inline cap may be raised to the full capture bound for a deliberate
+  // model-side visual review of every segment.
   const request = normalizePublishedSiteScreenshotInput({
     published_url: 'https://blaxi.webflow.io/',
     full_page: true,
-    max_segments: 8,
+    max_segments: MAX_CAPTURED_SEGMENTS,
   });
-  assert.equal(request.maxSegments, 8);
+  assert.equal(request.maxSegments, MAX_CAPTURED_SEGMENTS);
   assert.equal(request.fullPage, true);
 });

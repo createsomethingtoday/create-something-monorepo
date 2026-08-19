@@ -31,6 +31,7 @@ import {
   type PublishedSiteSandboxExecutionConfig,
 } from './published-site-sandbox-execution.js';
 import {
+  MAX_SEGMENTS_LIMIT,
   normalizePublishedSiteScreenshotInput,
   PublishedSiteScreenshotError,
   SCREENSHOT_VIEWPORT_NAMES,
@@ -332,13 +333,13 @@ export function registerTools(
 
   server.tool(
     'template_review_capture_published_site_screenshots',
-    'Read-only: capture desktop/mobile screenshots of a published *.webflow.io template site with Cloudflare Browser Rendering (real Chromium). This is the sanctioned screenshot path — NEVER capture published sites with a code-execution/sandbox browser: sandbox egress proxies block cdn.prod.website-files.com, so pages render as unstyled bare HTML and are invalid review evidence. Waits for fonts and IX2 intro animations to settle. With full_page, scrolls through the page first (firing IX2 scroll reveals and lazy loads), then captures the ENTIRE page as viewport-height segments (up to 24 per viewport; truncated=true only when the page continues past that). max_segments (1-8) does NOT limit coverage — it only caps how many segments per viewport are returned inline to the model; every captured segment appears in the gallery. IMPORTANT: the human reviewer cannot see the inline images — the result includes a gallery_url (one page rendering every captured segment, valid ~1 hour); always share that link in your reply. Each screenshot entry also has a per-segment view_url; include those only when the reviewer wants individual frames. Performs no Airtable write and makes no review decision.',
+    'Read-only: capture desktop/mobile screenshots of a published *.webflow.io template site with Cloudflare Browser Rendering (real Chromium). This is the sanctioned screenshot path — NEVER capture published sites with a code-execution/sandbox browser: sandbox egress proxies block cdn.prod.website-files.com, so pages render as unstyled bare HTML and are invalid review evidence. Waits for fonts and IX2 intro animations to settle. With full_page, scrolls through the page first (firing IX2 scroll reveals and lazy loads), then captures the ENTIRE page as viewport-height segments (up to 24 per viewport; truncated=true only when the page continues past that). max_segments (1-24, default 5) does NOT limit coverage — it only caps how many segments per viewport are returned inline to the model; every captured segment appears in the gallery. When YOU need to visually review the whole page yourself, request max_segments: 24 to receive every captured segment inline (heavy — use only for a deliberate visual review). IMPORTANT: the human reviewer cannot see the inline images — the result includes a gallery_url (one page rendering every captured segment, valid ~1 hour); always share that link in your reply. Each screenshot entry also has a per-segment view_url; include those only when the reviewer wants individual frames. Performs no Airtable write and makes no review decision.',
     {
       published_url: z.string().url(),
       viewports: z.array(z.enum(SCREENSHOT_VIEWPORT_NAMES)).min(1).max(3).optional(),
       full_page: z.boolean().optional(),
       settle_ms: z.number().int().min(0).max(10_000).optional(),
-      max_segments: z.number().int().min(1).max(8).optional(),
+      max_segments: z.number().int().min(1).max(MAX_SEGMENTS_LIMIT).optional(),
     },
     {
       readOnlyHint: true,

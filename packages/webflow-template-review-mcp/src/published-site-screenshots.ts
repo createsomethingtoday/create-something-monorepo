@@ -35,7 +35,6 @@ export const DEFAULT_SCREENSHOT_TIMEOUT_MS = 30_000;
  * scroll-less capture. Segment count is bounded to keep responses small.
  */
 export const DEFAULT_MAX_SEGMENTS = 5;
-export const MAX_SEGMENTS_LIMIT = 8;
 /**
  * Per-viewport bound on how many segments a full-page sweep captures and
  * stores. Coverage (what the gallery shows) is decoupled from max_segments,
@@ -44,6 +43,12 @@ export const MAX_SEGMENTS_LIMIT = 8;
  * served both purposes. 24 × 900px ≈ 21,600px of desktop page.
  */
 export const MAX_CAPTURED_SEGMENTS = 24;
+/**
+ * max_segments may go as high as the capture bound so a deliberate model-side
+ * visual review can see every captured segment inline; the low default keeps
+ * ordinary calls light.
+ */
+export const MAX_SEGMENTS_LIMIT = MAX_CAPTURED_SEGMENTS;
 
 export interface PublishedSiteScreenshotInput {
   published_url: string;
