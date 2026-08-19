@@ -96,7 +96,7 @@ async function captureViewport(
 
   const pageHeight = await measurePageHeight(page);
   const segmentCount = request.fullPage
-    ? Math.min(Math.max(1, Math.ceil(pageHeight / viewport.height)), request.maxSegments)
+    ? Math.min(Math.max(1, Math.ceil(pageHeight / viewport.height)), request.captureSegments)
     : 1;
   const truncated = request.fullPage && pageHeight > segmentCount * viewport.height;
 
