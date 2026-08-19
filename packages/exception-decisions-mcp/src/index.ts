@@ -34,7 +34,7 @@ const VIEW_URL_DEFAULT = "https://airtable.com/appMoIgXMTTTNIc3p/tblHxZ2hgSFLZxs
 const VERSIONS_TABLE = "tblHxZ2hgSFLZxsZu";
 const ITEMS_TABLE = "tblnbaaIbIulWl0b7";
 const DECISIONS_VIEW = "viwM48eXQT4Mxc4Ak";
-const VERSION = "1.3.0";
+const VERSION = "1.3.1";
 
 const V = {
   name: "fldKA9eJja5uajlok",
@@ -277,7 +277,7 @@ const TOOLS = [
   {
     name: "decide_version_exception",
     description:
-      "Record the version-level (aggregate) exception decision. Approving requires every per-item row to be decided first. DENYING RELEASES THE REVIEW FEEDBACK TO THE DEVELOPER automatically (the version moves to ❌Rejected and the standard pipeline emails the partner) — pass confirm_release: true to acknowledge that. Automation-role keys are refused: decisions are made by people.",
+      "Record the version-level (aggregate) exception decision. Approving AND denying both require every per-item row to be decided first — a denial releases feedback and cannot land mid-decision. DENYING RELEASES THE REVIEW FEEDBACK TO THE DEVELOPER automatically (the version moves to ❌Rejected and the standard pipeline emails the partner) — pass confirm_release: true to acknowledge that. Automation-role keys are refused: decisions are made by people.",
     inputSchema: {
       type: "object",
       properties: {
@@ -452,6 +452,9 @@ async function toolDecideVersion(
   const undecided = num(record.fields[V.undecidedItems]);
   if (args.decision === "approved" && undecided > 0) {
     return `No write made: ${undecided} per-item row(s) are still undecided on ${text(record.fields[V.name])}. Decide every item first (list_pending_exceptions shows them) — the aggregate follows the items.`;
+  }
+  if (args.decision === "denied" && undecided > 0) {
+    return `No write made: ${undecided} per-item row(s) are still undecided on ${text(record.fields[V.name])}. A version-level denial releases the review feedback to the developer, so it cannot land mid-decision — decide every item first, then deny the aggregate.`;
   }
   if (args.decision === "denied" && args.confirm_release !== true) {
     return [
