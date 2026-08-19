@@ -7,7 +7,9 @@
     "agentLegibilityContract": true,
     "tier": "automation",
     "surface": "library",
-    "entrypoints": ["src/index.ts"],
+    "entrypoints": [
+      "src/index.ts"
+    ],
     "boot": "pnpm build",
     "smoke": "pnpm check && pnpm test"
   },
@@ -19,7 +21,10 @@
       "default": "./dist/index.js"
     }
   },
-  "files": ["dist", "README.md"],
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "build": "pnpm --filter @create-something/workflow-compiler build && pnpm --filter @create-something/workflow-receipt-reconciler build && pnpm --filter @create-something/workflow-historical-context-reconciler build && tsc",
     "check": "pnpm --filter @create-something/workflow-compiler build && pnpm --filter @create-something/workflow-receipt-reconciler build && pnpm --filter @create-something/workflow-historical-context-reconciler build && tsc --noEmit",
@@ -31,7 +36,7 @@
     "@create-something/workflow-compiler": "workspace:*",
     "@create-something/workflow-historical-context-reconciler": "workspace:*",
     "@create-something/workflow-receipt-reconciler": "workspace:*",
-    "@modelcontextprotocol/sdk": "^1.25.3"
+    "@modelcontextprotocol/sdk": "^1.26.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

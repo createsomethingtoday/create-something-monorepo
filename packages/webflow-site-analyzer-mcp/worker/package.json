@@ -9,8 +9,8 @@
     "tail": "node ../../../scripts/run-wrangler.mjs tail"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.25.3",
-    "@create-something/webflow-site-analyzer-mcp": "workspace:*"
+    "@create-something/webflow-site-analyzer-mcp": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.26.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260621.1",

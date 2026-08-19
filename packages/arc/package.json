@@ -11,8 +11,15 @@
     "test": "node --import tsx --test test/*.test.ts",
     "agent:local": "node scripts/local-agent.mjs"
   },
-  "files": ["dist", "scripts", "!dist/**/*.test.*", "!dist/**/*.spec.*"],
-  "sideEffects": ["**/*.css"],
+  "files": [
+    "dist",
+    "scripts",
+    "!dist/**/*.test.*",
+    "!dist/**/*.spec.*"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
   "svelte": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -42,10 +49,10 @@
     "@sveltejs/package": "^2.5.4",
     "@sveltejs/vite-plugin-svelte": "^6.2.1",
     "publint": "^0.3.14",
-    "svelte": "^5.41.0",
+    "svelte": "^5.56.9",
     "svelte-check": "^4.3.3",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "vite": "^7.1.10"
+    "vite": "^7.3.6"
   }
 }

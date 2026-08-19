@@ -17,8 +17,8 @@
     "types": "node ../../../../scripts/run-wrangler.mjs types"
   },
   "dependencies": {
-	"@create-something/arc": "workspace:*",
-	"@create-something/atlas-composition": "workspace:*",
+    "@create-something/arc": "workspace:*",
+    "@create-something/atlas-composition": "workspace:*",
     "@openai/agents": "^0.13.5",
     "lucide-svelte": "^0.562.0",
     "zod": "^4.3.6"
@@ -28,11 +28,11 @@
     "@sveltejs/adapter-cloudflare": "^6.0.0",
     "@sveltejs/kit": "^2.70.2",
     "@sveltejs/vite-plugin-svelte": "^5.0.3",
-    "svelte": "^5.16.0",
+    "svelte": "^5.56.9",
     "svelte-check": "^4.1.1",
     "tsx": "^4.21.0",
     "typescript": "^5.7.2",
-    "vite": "^6.0.6",
+    "vite": "^6.4.3",
     "wrangler": "^4.103.0"
   }
 }

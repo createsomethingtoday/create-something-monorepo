@@ -14,11 +14,15 @@
   },
   "dependencies": {
     "@create-something/observability": "workspace:*",
-    "@modelcontextprotocol/sdk": "^1.0.0"
+    "@modelcontextprotocol/sdk": "^1.26.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
     "typescript": "^5.9.3"
   },
-  "keywords": ["mcp", "sveltekit", "dev-server"]
+  "keywords": [
+    "mcp",
+    "sveltekit",
+    "dev-server"
+  ]
 }

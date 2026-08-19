@@ -45,7 +45,7 @@
   },
   "dependencies": {
     "@create-something/atlas-composition": "workspace:*",
-    "@modelcontextprotocol/sdk": "^1.25.3",
+    "@modelcontextprotocol/sdk": "^1.26.0",
     "zod": "^3.23.0"
   },
   "devDependencies": {

@@ -23,7 +23,7 @@
   "dependencies": {
     "@create-something/mcp-core": "workspace:*",
     "@create-something/observability": "workspace:*",
-    "@modelcontextprotocol/sdk": "^1.25.3",
+    "@modelcontextprotocol/sdk": "^1.26.0",
     "@notionhq/client": "^2.2.15",
     "dotenv": "^16.4.5",
     "puppeteer-core": "^23.0.0",

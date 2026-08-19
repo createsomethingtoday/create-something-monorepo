@@ -22,7 +22,7 @@
 		"build": "pnpm check:content && pnpm lint && vite build",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
-    "check:content": "pnpm check:research-artifacts && pnpm check:visuals && pnpm check:papers && pnpm check:experiments && pnpm test:threshold-dwelling",
+		"check:content": "pnpm check:research-artifacts && pnpm check:visuals && pnpm check:papers && pnpm check:experiments && pnpm test:threshold-dwelling",
 		"check:research-artifacts": "node scripts/check-research-artifact-templates.mjs",
 		"check:visuals": "node scripts/check-visual-communication.mjs",
 		"check:papers": "node scripts/check-paper-catalog.mjs",
@@ -70,12 +70,12 @@
 		"mdsvex": "^0.12.6",
 		"postcss": "^8.5.6",
 		"postcss-import": "^16.1.1",
-		"svelte": "^5.41.0",
+		"svelte": "^5.56.9",
 		"svelte-check": "^4.3.3",
 		"svelte-eslint-parser": "^0.43.0",
 		"tailwindcss": "^3.4.18",
 		"typescript": "^5.9.3",
-		"vite": "^7.1.10",
+		"vite": "^7.3.6",
 		"vitest": "^4.0.16",
 		"wrangler": "^4.103.0"
 	}

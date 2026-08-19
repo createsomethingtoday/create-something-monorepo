@@ -1,7 +1,7 @@
 {
   "name": "@create-something/app-governance-db",
   "version": "1.0.0",
-  "description": "App Governance & Transparency database layer \u2014 Cloudflare D1 canonical store with MCP boundary for agent-mediated Slack sync, categorization, and notifications",
+  "description": "App Governance & Transparency database layer — Cloudflare D1 canonical store with MCP boundary for agent-mediated Slack sync, categorization, and notifications",
   "type": "module",
   "scripts": {
     "atlas:import": "node scripts/import-atlas-session.mjs",
@@ -12,7 +12,7 @@
     "lint": "pnpm run typecheck"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.25.3",
+    "@modelcontextprotocol/sdk": "^1.26.0",
     "agents": "^0.3.10",
     "zod": "^3.23.0"
   },

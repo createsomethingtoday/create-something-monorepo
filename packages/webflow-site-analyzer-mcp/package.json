@@ -37,7 +37,7 @@
   },
   "dependencies": {
     "@create-something/observability": "workspace:*",
-    "@modelcontextprotocol/sdk": "^1.25.3",
+    "@modelcontextprotocol/sdk": "^1.26.0",
     "@temporalio/activity": "^1.14.1",
     "@temporalio/client": "^1.14.1",
     "@temporalio/worker": "^1.14.1",
