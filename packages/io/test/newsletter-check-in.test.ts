@@ -197,16 +197,17 @@ function createDatabase(
       return {
         bind(...nextValues) {
           values = nextValues;
-          return this;
+          return {
+            async first<T>() {
+              calls.push({ sql, values });
+              return record as T | null;
+            },
+            async run() {
+              calls.push({ sql, values });
+              return { success: true };
+            }
+          };
         },
-        async first() {
-          calls.push({ sql, values });
-          return record;
-        },
-        async run() {
-          calls.push({ sql, values });
-          return { success: true };
-        }
       };
     }
   };

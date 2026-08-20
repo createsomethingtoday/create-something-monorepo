@@ -1,0 +1,2521 @@
+{
+  "schema_version": "evidence-lint-inventory.v1",
+  "workspace_package_count": 209,
+  "summary": {
+    "packages_with_source": 202,
+    "packages_with_lint": 60,
+    "packages_with_check": 81,
+    "packages_with_eslint_config": 4,
+    "evidence_lint_opportunities": 202
+  },
+  "packages": [
+    {
+      "name": "@create-something/atlas-studio-desktop",
+      "path": "apps/atlas-studio-desktop",
+      "source_files": 8,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/bettermode-marketplace-creator-agent",
+      "path": "apps/bettermode-marketplace-creator-agent",
+      "source_files": 11,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/client-workspace-desktop",
+      "path": "apps/client-workspace-desktop",
+      "source_files": 3,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/create-something-scheduler",
+      "path": "apps/create-something-scheduler",
+      "source_files": 48,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/even-codex-presence",
+      "path": "apps/even-codex-presence",
+      "source_files": 6,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/even-operator-brief",
+      "path": "apps/even-operator-brief",
+      "source_files": 8,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/guard-performance-lab",
+      "path": "apps/guard-performance-lab",
+      "source_files": 88,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/marketplace-template-submission-cloud",
+      "path": "apps/marketplace-template-submission-cloud",
+      "source_files": 59,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/webflow-dashboard-cloud",
+      "path": "apps/webflow-dashboard-cloud",
+      "source_files": 66,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/webflow-marketplace-category-cloud",
+      "path": "apps/webflow-marketplace-category-cloud",
+      "source_files": 17,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/abundance-jobs-mcp",
+      "path": "packages/abundance-jobs-mcp",
+      "source_files": 3,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "abundance-jobs-mcp-worker",
+      "path": "packages/abundance-jobs-mcp/worker",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/agency",
+      "path": "packages/agency",
+      "source_files": 872,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/cato-supply-insights-cms",
+      "path": "packages/agency/clients/cato-supply-insights-cms",
+      "source_files": 2,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/cato-supply-insights-review",
+      "path": "packages/agency/clients/cato-supply-insights-review",
+      "source_files": 3,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/jandjhomehealth",
+      "path": "packages/agency/clients/jandjhomehealth",
+      "source_files": 56,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/outerfields",
+      "path": "packages/agency/clients/outerfields",
+      "source_files": 209,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/the-stack",
+      "path": "packages/agency/clients/the-stack",
+      "source_files": 35,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/dental-agent-router",
+      "path": "packages/agency/workers/dental-agent-router",
+      "source_files": 2,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "social-poster-worker",
+      "path": "packages/agency/workers/social-poster",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@createsomething/agent-kit",
+      "path": "packages/agent-kit",
+      "source_files": 6,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/agent-coordination",
+      "path": "packages/agents/coordination",
+      "source_files": 9,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/airtable-primary-tags-worker",
+      "path": "packages/airtable-primary-tags-worker",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/airtable-system-architect",
+      "path": "packages/airtable-system-architect",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/app-governance-db",
+      "path": "packages/app-governance-db",
+      "source_files": 52,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "app-governance-dashboard",
+      "path": "packages/app-governance-db/dashboard",
+      "source_files": 36,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "app-governance-db-worker",
+      "path": "packages/app-governance-db/worker",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "app-governance-desktop",
+      "path": "packages/app-governance-desktop",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/arc",
+      "path": "packages/arc",
+      "source_files": 8,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/ascii-renderer",
+      "path": "packages/ascii-renderer",
+      "source_files": 7,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/atlas-composition",
+      "path": "packages/atlas-composition",
+      "source_files": 2,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/auth-platform",
+      "path": "packages/auth-platform",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/bettermode-creator-mcp",
+      "path": "packages/bettermode-creator-mcp",
+      "source_files": 5,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "bettermode-creator-mcp-worker",
+      "path": "packages/bettermode-creator-mcp/worker",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/bundle-scanner",
+      "path": "packages/bundle-scanner",
+      "source_files": 33,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/bundle-scanner-core",
+      "path": "packages/bundle-scanner-core",
+      "source_files": 27,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/calm-operator-ink-bridge",
+      "path": "packages/calm-operator-ink-bridge",
+      "source_files": 39,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/calm-operator-stopwatch-firmware",
+      "path": "packages/calm-operator-stopwatch-firmware",
+      "source_files": 2,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/canon",
+      "path": "packages/canon",
+      "source_files": 569,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@createsomething/canon-tokens",
+      "path": "packages/canon-tokens",
+      "source_files": 0,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": false
+    },
+    {
+      "name": "@create-something/canvas-kernel",
+      "path": "packages/canvas-kernel",
+      "source_files": 5,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/check-asset-name-worker",
+      "path": "packages/check-asset-name-worker",
+      "source_files": 3,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/clearway",
+      "path": "packages/clearway",
+      "source_files": 103,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@court-reserve/notifier-worker",
+      "path": "packages/clearway/workers/notifier",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@court-reserve/realtime-worker",
+      "path": "packages/clearway/workers/realtime",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/court-reserve-router",
+      "path": "packages/clearway/workers/router",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/client-workspace",
+      "path": "packages/client-workspace",
+      "source_files": 78,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/client-workspace-demo",
+      "path": "packages/client-workspace/clients/demo-frontend",
+      "source_files": 5,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/cloudflare-sdk",
+      "path": "packages/cloudflare-sdk",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/codebase-vector-database",
+      "path": "packages/codebase-vector-database",
+      "source_files": 18,
+      "scripts": {
+        "lint": true,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/codex-presence",
+      "path": "packages/codex-presence",
+      "source_files": 8,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/community-mcp",
+      "path": "packages/community-mcp",
+      "source_files": 2,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/composio-bridge",
+      "path": "packages/composio-bridge",
+      "source_files": 11,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/composio-toolkit-mcp",
+      "path": "packages/composio-toolkit-mcp",
+      "source_files": 8,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/concierge-chat",
+      "path": "packages/concierge-chat",
+      "source_files": 148,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/mcp",
+      "path": "packages/create-something-mcp",
+      "source_files": 55,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "create-something-mcp-worker",
+      "path": "packages/create-something-mcp/worker",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/cs-mcp-hub",
+      "path": "packages/cs-mcp-hub",
+      "source_files": 19,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/cs-mcp-hub-notion-bridge",
+      "path": "packages/cs-mcp-hub-notion-bridge",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/cs-mcp-hub-remote",
+      "path": "packages/cs-mcp-hub-remote",
+      "source_files": 9,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "cs-telemetry-mcp",
+      "path": "packages/cs-telemetry-mcp/worker",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/database-layer",
+      "path": "packages/database-layer",
+      "source_files": 66,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/database-layer-worker",
+      "path": "packages/database-layer/worker",
+      "source_files": 4,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/delivery-schema",
+      "path": "packages/delivery-schema",
+      "source_files": 5,
+      "scripts": {
+        "lint": true,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/dotfiles",
+      "path": "packages/dotfiles",
+      "source_files": 2,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/eslint-plugin-canon",
+      "path": "packages/eslint-plugin-canon",
+      "source_files": 4,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/eslint-plugin-evidence",
+      "path": "packages/eslint-plugin-evidence",
+      "source_files": 3,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/github-actions-runner-broker",
+      "path": "packages/github-actions-runner-broker",
+      "source_files": 3,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/gmail-notion-mcp",
+      "path": "packages/gmail-notion-mcp",
+      "source_files": 4,
+      "scripts": {
+        "lint": true,
+        "check": true,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "gmail-notion-mcp-worker",
+      "path": "packages/gmail-notion-mcp/worker",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@createsomething/ground-mcp",
+      "path": "packages/ground/npm",
+      "source_files": 23,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/gsap-validation-worker",
+      "path": "packages/gsap-validation-worker",
+      "source_files": 5,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/half-dozen-youtube-sync",
+      "path": "packages/half-dozen-youtube-sync",
+      "source_files": 23,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "halfdozen-youtube-sync-worker",
+      "path": "packages/half-dozen-youtube-sync/worker",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "halfdozen-agent-analyzer-telemetry-mcp",
+      "path": "packages/halfdozen-agent-analyzer-telemetry-mcp/worker",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/halfdozen-blondish-sync-mcp",
+      "path": "packages/halfdozen-blondish-sync-mcp",
+      "source_files": 17,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/halfdozen-dm-mcp",
+      "path": "packages/halfdozen-dm-mcp",
+      "source_files": 13,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "halfdozen-dm-mcp-worker",
+      "path": "packages/halfdozen-dm-mcp/worker",
+      "source_files": 3,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/halfdozen-gmail-sync",
+      "path": "packages/halfdozen-gmail-sync",
+      "source_files": 8,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "halfdozen-gmail-sync-worker",
+      "path": "packages/halfdozen-gmail-sync/worker",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/halfdozen-landing",
+      "path": "packages/halfdozen-landing",
+      "source_files": 18,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/halfdozen-notion-mcp",
+      "path": "packages/halfdozen-notion-mcp",
+      "source_files": 12,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "halfdozen-notion-mcp-worker",
+      "path": "packages/halfdozen-notion-mcp/worker",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/halfdozen-operator-notion-mcp",
+      "path": "packages/halfdozen-operator-notion-mcp",
+      "source_files": 7,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "halfdozen-operator-notion-mcp-worker",
+      "path": "packages/halfdozen-operator-notion-mcp/worker",
+      "source_files": 2,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "halfdozen-telemetry-mcp",
+      "path": "packages/halfdozen-telemetry-mcp/worker",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/halfdozen-zoom-sync",
+      "path": "packages/halfdozen-zoom-sync",
+      "source_files": 19,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "halfdozen-zoom-sync-worker",
+      "path": "packages/halfdozen-zoom-sync/worker",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/halfdozen-zoom-transcript-sync",
+      "path": "packages/halfdozen-zoom-transcript-sync",
+      "source_files": 6,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/harness",
+      "path": "packages/harness",
+      "source_files": 50,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/harness-mcp",
+      "path": "packages/harness-mcp",
+      "source_files": 14,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@createsomething/motion-ontology-space",
+      "path": "packages/huggingface-spaces/motion-ontology",
+      "source_files": 4,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@createsomething/subtractive-triad-space",
+      "path": "packages/huggingface-spaces/subtractive-triad-ts",
+      "source_files": 2,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/hydra-db-recall-mcp",
+      "path": "packages/hydra-db-recall-mcp",
+      "source_files": 2,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "hydra-db-recall-mcp-worker",
+      "path": "packages/hydra-db-recall-mcp/worker",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/identity-worker",
+      "path": "packages/identity-worker",
+      "source_files": 23,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/interaction-atlas-mcp",
+      "path": "packages/interaction-atlas-mcp",
+      "source_files": 56,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/io",
+      "path": "packages/io",
+      "source_files": 313,
+      "scripts": {
+        "lint": true,
+        "check": true,
+        "test": false
+      },
+      "eslint_config": "eslint.config.js",
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/bundle-scanner-api",
+      "path": "packages/io/workers/bundle-scanner-api",
+      "source_files": 3,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/webflow-validation",
+      "path": "packages/io/workers/webflow-validation",
+      "source_files": 9,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/judgment-layer",
+      "path": "packages/judgment-layer",
+      "source_files": 14,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/landing-page-filter",
+      "path": "packages/landing-page-filter",
+      "source_files": 25,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@createsomething/learn",
+      "path": "packages/learn",
+      "source_files": 14,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/lms",
+      "path": "packages/lms",
+      "source_files": 63,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/ltd",
+      "path": "packages/ltd",
+      "source_files": 156,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "arena-curator",
+      "path": "packages/ltd/workers/arena-curator",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/arena-sync-worker",
+      "path": "packages/ltd/workers/arena-sync",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/maverick",
+      "path": "packages/maverick",
+      "source_files": 54,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/maverick-admin",
+      "path": "packages/maverick-admin",
+      "source_files": 18,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/mcp-authz",
+      "path": "packages/mcp-authz",
+      "source_files": 8,
+      "scripts": {
+        "lint": true,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": "eslint.evidence.config.mjs",
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/mcp-core",
+      "path": "packages/mcp-core",
+      "source_files": 19,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": "eslint.evidence.config.mjs",
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/meetings",
+      "path": "packages/meetings",
+      "source_files": 4,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "meetings-mcp",
+      "path": "packages/meetings-mcp/worker",
+      "source_files": 5,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/motion-studio",
+      "path": "packages/motion-studio",
+      "source_files": 177,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/notion-agent",
+      "path": "packages/notion-agent",
+      "source_files": 33,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/notion-agent-scheduler",
+      "path": "packages/notion-agent/workers/scheduler",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/notion-sync-mcp",
+      "path": "packages/notion-sync-mcp",
+      "source_files": 14,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/notion-tools",
+      "path": "packages/notion-tools",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/notion-worker-experiments",
+      "path": "packages/notion-worker-experiments",
+      "source_files": 7,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/observability",
+      "path": "packages/observability",
+      "source_files": 7,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/offer-resolution",
+      "path": "packages/offer-resolution",
+      "source_files": 22,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/offer-savings-app",
+      "path": "packages/offer-savings-app",
+      "source_files": 15,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/offer-savings-worker",
+      "path": "packages/offer-savings-app/worker",
+      "source_files": 5,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/ona-agents",
+      "path": "packages/ona-agents",
+      "source_files": 22,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/operator-chat-agent",
+      "path": "packages/operator-chat-agent",
+      "source_files": 21,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/orchestration",
+      "path": "packages/orchestration",
+      "source_files": 51,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/owned-agent-runtime",
+      "path": "packages/owned-agent-runtime",
+      "source_files": 22,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/pi-halfdozen",
+      "path": "packages/pi-halfdozen",
+      "source_files": 0,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": false
+    },
+    {
+      "name": "@create-something/pi-policy-os",
+      "path": "packages/pi-policy-os",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/pi-three-tier-framework",
+      "path": "packages/pi-three-tier-framework",
+      "source_files": 0,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": false
+    },
+    {
+      "name": "@create-something/pi-webflow",
+      "path": "packages/pi-webflow",
+      "source_files": 0,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": false
+    },
+    {
+      "name": "@create-something/playbook-mcp",
+      "path": "packages/playbook-mcp",
+      "source_files": 23,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "playbook-mcp-worker",
+      "path": "packages/playbook-mcp/worker",
+      "source_files": 9,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/policy-os-engine",
+      "path": "packages/policy-os-engine",
+      "source_files": 8,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/quickbooks-notion-mcp",
+      "path": "packages/quickbooks-notion-mcp",
+      "source_files": 19,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/relay",
+      "path": "packages/relay",
+      "source_files": 38,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/render-pipeline",
+      "path": "packages/render-pipeline",
+      "source_files": 56,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/scanner-worker",
+      "path": "packages/scanner-worker",
+      "source_files": 4,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/schedule-mcp",
+      "path": "packages/schedule-mcp",
+      "source_files": 14,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "schedule-mcp-worker",
+      "path": "packages/schedule-mcp/worker",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "schedule-notifier",
+      "path": "packages/schedule-mcp/workers/notifier",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/search",
+      "path": "packages/search",
+      "source_files": 5,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@createsomething/seeing",
+      "path": "packages/seeing",
+      "source_files": 5,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "my-task-tracker",
+      "path": "packages/seeing/scaffold",
+      "source_files": 2,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/simulation",
+      "path": "packages/simulation",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/social-agent",
+      "path": "packages/social-agent",
+      "source_files": 11,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/social-mcp",
+      "path": "packages/social-mcp",
+      "source_files": 2,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/space",
+      "path": "packages/space",
+      "source_files": 141,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/agentic-executor",
+      "path": "packages/space/workers/agentic-executor",
+      "source_files": 4,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/motion-extractor-worker",
+      "path": "packages/space/workers/motion-extractor",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/nba-proxy",
+      "path": "packages/space/workers/nba-proxy",
+      "source_files": 6,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/spotify-mcp",
+      "path": "packages/spotify-mcp",
+      "source_files": 2,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "spotify-mcp-worker",
+      "path": "packages/spotify-mcp/worker",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/spritz",
+      "path": "packages/spritz",
+      "source_files": 10,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/substrate-mcp",
+      "path": "packages/substrate-mcp",
+      "source_files": 13,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "substrate-mcp-worker",
+      "path": "packages/substrate-mcp/worker",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/symphony",
+      "path": "packages/symphony",
+      "source_files": 29,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/template-form-uploads-worker",
+      "path": "packages/template-form-uploads-worker",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/tend",
+      "path": "packages/tend",
+      "source_files": 29,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/three-tier-framework-mcp",
+      "path": "packages/three-tier-framework-mcp",
+      "source_files": 10,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "three-tier-framework-mcp-worker",
+      "path": "packages/three-tier-framework-mcp/worker",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/pencil-balance",
+      "path": "packages/tools/pencil-balance",
+      "source_files": 6,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@createsomething/triad-audit",
+      "path": "packages/triad-audit",
+      "source_files": 23,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/tufte",
+      "path": "packages/tufte",
+      "source_files": 17,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/ui-preview-mcp",
+      "path": "packages/ui-preview-mcp",
+      "source_files": 1,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/webflow-app-review-mcp",
+      "path": "packages/webflow-app-review-mcp",
+      "source_files": 16,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "webflow-app-review-mcp-worker",
+      "path": "packages/webflow-app-review-mcp/worker",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/webflow-apps-admin",
+      "path": "packages/webflow-apps-admin",
+      "source_files": 18,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/webflow-apps-audit-dashboard",
+      "path": "packages/webflow-apps-admin/dashboard",
+      "source_files": 8,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/webflow-apps-audit-agent",
+      "path": "packages/webflow-apps-admin/workers/audit-agent",
+      "source_files": 4,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/webflow-automation",
+      "path": "packages/webflow-automation",
+      "source_files": 10,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "webflow-onboarding-sync-worker",
+      "path": "packages/webflow-automation/worker",
+      "source_files": 8,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/webflow-components",
+      "path": "packages/webflow-components",
+      "source_files": 199,
+      "scripts": {
+        "lint": true,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/webflow-dashboard",
+      "path": "packages/webflow-dashboard",
+      "source_files": 167,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/webflow-dashboard-core",
+      "path": "packages/webflow-dashboard-core",
+      "source_files": 23,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/webflow-intake",
+      "path": "packages/webflow-intake",
+      "source_files": 0,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": false
+    },
+    {
+      "name": "@create-something/webflow-marketplace-sync",
+      "path": "packages/webflow-marketplace-sync",
+      "source_files": 14,
+      "scripts": {
+        "lint": true,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/webflow-mcp",
+      "path": "packages/webflow-mcp",
+      "source_files": 5,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "webflow-mcp-worker",
+      "path": "packages/webflow-mcp/worker",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/webflow-review",
+      "path": "packages/webflow-review",
+      "source_files": 24,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/webflow-review-extension",
+      "path": "packages/webflow-review/extension",
+      "source_files": 10,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/webflow-review-orchestrator",
+      "path": "packages/webflow-review/workers/orchestrator",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/webflow-review-queue-consumer",
+      "path": "packages/webflow-review/workers/queue-consumer",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/webflow-reviewer-exceptions-mcp",
+      "path": "packages/webflow-reviewer-exceptions-mcp",
+      "source_files": 8,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "webflow-reviewer-exceptions-mcp-worker",
+      "path": "packages/webflow-reviewer-exceptions-mcp/worker",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/webflow-scope-watcher",
+      "path": "packages/webflow-scope-watcher",
+      "source_files": 11,
+      "scripts": {
+        "lint": true,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/webflow-site-analyzer-mcp",
+      "path": "packages/webflow-site-analyzer-mcp",
+      "source_files": 67,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "webflow-site-analyzer-mcp-worker",
+      "path": "packages/webflow-site-analyzer-mcp/worker",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "webflow-site-analyzer-mcp-remote",
+      "path": "packages/webflow-site-analyzer-mcp/workers/remote",
+      "source_files": 3,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/webflow-template-agent",
+      "path": "packages/webflow-template-agent",
+      "source_files": 15,
+      "scripts": {
+        "lint": true,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/webflow-template-analyzer",
+      "path": "packages/webflow-template-analyzer",
+      "source_files": 2,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/webflow-template-review-mcp",
+      "path": "packages/webflow-template-review-mcp",
+      "source_files": 93,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "webflow-template-review-mcp-worker",
+      "path": "packages/webflow-template-review-mcp/worker",
+      "source_files": 3,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/webflow-template-search",
+      "path": "packages/webflow-template-search",
+      "source_files": 31,
+      "scripts": {
+        "lint": true,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/webflow-template-validation",
+      "path": "packages/webflow-template-validation",
+      "source_files": 38,
+      "scripts": {
+        "lint": true,
+        "check": true,
+        "test": false
+      },
+      "eslint_config": ".eslintrc.json",
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/webflow-template-validation-extension",
+      "path": "packages/webflow-template-validation/extension",
+      "source_files": 8,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/webflow-template-validation-worker",
+      "path": "packages/webflow-template-validation/worker",
+      "source_files": 21,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/webflow-template-views",
+      "path": "packages/webflow-template-views",
+      "source_files": 3,
+      "scripts": {
+        "lint": true,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/wf-search-category",
+      "path": "packages/wf-search-category",
+      "source_files": 7,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/workflow-compiler",
+      "path": "packages/workflow-compiler",
+      "source_files": 18,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/workflow-evidence-extractor",
+      "path": "packages/workflow-evidence-extractor",
+      "source_files": 12,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/workflow-historical-context-reconciler",
+      "path": "packages/workflow-historical-context-reconciler",
+      "source_files": 8,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/workflow-observation-reconciler",
+      "path": "packages/workflow-observation-reconciler",
+      "source_files": 7,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/workflow-receipt-reconciler",
+      "path": "packages/workflow-receipt-reconciler",
+      "source_files": 9,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/workflow-shadow-pilot",
+      "path": "packages/workflow-shadow-pilot",
+      "source_files": 17,
+      "scripts": {
+        "lint": false,
+        "check": true,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "@create-something/workway-core",
+      "path": "packages/workway-core",
+      "source_files": 0,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": false
+    },
+    {
+      "name": "@create-something/workway-edge",
+      "path": "packages/workway-edge",
+      "source_files": 0,
+      "scripts": {
+        "lint": true,
+        "check": false,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": false
+    },
+    {
+      "name": "@create-something/zendesk-mcp",
+      "path": "packages/zendesk-mcp",
+      "source_files": 10,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": true
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    },
+    {
+      "name": "zendesk-mcp-worker",
+      "path": "packages/zendesk-mcp/worker",
+      "source_files": 1,
+      "scripts": {
+        "lint": false,
+        "check": false,
+        "test": false
+      },
+      "eslint_config": null,
+      "evidence_lint_opportunity": true
+    }
+  ]
+}

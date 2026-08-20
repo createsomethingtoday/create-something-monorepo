@@ -8,11 +8,9 @@ import {
 
 test('selected public roles become the first bounded candidate intake context', () => {
   const message = buildSelectedRoleIntakeMessage({
-    id: 'job-icu-1',
     title: 'Travel RN - ICU',
     employer: 'Abundance Staffing',
-    display_location: 'Dallas, TX',
-    status: 'open'
+    display_location: 'Dallas, TX'
   });
 
   assert.equal(
@@ -23,7 +21,7 @@ test('selected public roles become the first bounded candidate intake context', 
 
 test('selected role context avoids empty employer and location fragments', () => {
   assert.equal(
-    buildSelectedRoleIntakeMessage({ id: 'job-2', title: 'RN - Med Surg', status: 'open' }),
+    buildSelectedRoleIntakeMessage({ title: 'RN - Med Surg' }),
     'I want to apply for RN - Med Surg. Keep this role in context and ask what preferences still need confirmation.'
   );
 });

@@ -1,0 +1,43 @@
+{
+  "name": "@create-something/eslint-plugin-evidence",
+  "version": "0.1.0",
+  "description": "ESLint rules for CREATE SOMETHING code-evidence policy.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "check": "tsc --noEmit",
+    "test": "tsx --test test/*.test.ts"
+  },
+  "keywords": [
+    "eslint",
+    "eslintplugin",
+    "code-quality",
+    "evidence",
+    "typescript"
+  ],
+  "peerDependencies": {
+    "eslint": "^9.0.0"
+  },
+  "dependencies": {
+    "@typescript-eslint/utils": "8.58.2"
+  },
+  "devDependencies": {
+    "@typescript-eslint/parser": "8.54.0",
+    "@types/node": "^24.10.1",
+    "eslint": "9.39.2",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  },
+  "license": "MIT"
+}
