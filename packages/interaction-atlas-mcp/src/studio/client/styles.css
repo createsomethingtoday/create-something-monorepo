@@ -1149,6 +1149,47 @@ input::placeholder {
   line-height: 1.35;
 }
 
+.media-clip-specs,
+.media-clip-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.36rem;
+}
+
+.media-clip-specs span {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted-strong);
+  font-size: 0.64rem;
+  line-height: 1.2;
+  padding: 0.14rem 0.34rem;
+}
+
+.media-clip-actions {
+  margin-top: 0.15rem;
+}
+
+.media-clip-actions .subtle-button {
+  font-size: 0.68rem;
+  padding: 0.32rem 0.48rem;
+}
+
+.media-clip-actions .subtle-button svg {
+  height: 0.76rem;
+  width: 0.76rem;
+}
+
+.media-clip-preview {
+  aspect-ratio: 16 / 9;
+  background: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  margin-top: 0.16rem;
+  max-width: 100%;
+  width: 100%;
+}
+
 .media-prompt-list span {
   border-left: 2px solid var(--green);
   padding-left: 0.45rem;

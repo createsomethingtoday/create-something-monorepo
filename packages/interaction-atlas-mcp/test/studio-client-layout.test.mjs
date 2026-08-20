@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import {
   agentActivityFromSessionChange,
+  buildMediaClipNodePresentations,
   buildTranscriptEditorSnapshot,
   cleanupRemovalOperations,
   detailModeForZoom,
@@ -138,6 +139,44 @@ test('transcript editor snapshot projects the accepted revision, graph, and visi
       event: 'created',
       nodeId: 'clip:segment-2',
       summary: 'Created from the local transcript source.'
+    }
+  ]);
+});
+
+test('clip-node presentation keeps source, time, transcript, revision, and approval context together', () => {
+  const project = createTranscriptEditorProject({
+    atlasSessionId: 'test-session',
+    createdAt: '2026-08-20T00:00:00.000Z',
+    id: 'video-project',
+    sourceAsset: {
+      id: 'source-a',
+      media: { durationUs: 5_000_000, hasAudio: true, height: 1080, width: 1920 },
+      sha256: 'a'.repeat(64),
+      uri: 'file:///private/tmp/source-a.mp4'
+    },
+    transcriptSegments: [
+      { assetId: 'source-a', endUs: 2_500_000, id: 'segment-1', startUs: 1_000_000, text: 'Keep this clear opening statement.' }
+    ]
+  });
+
+  assert.deepEqual(buildMediaClipNodePresentations(project), [
+    {
+      diffCount: 1,
+      id: 'clip:keep:segment-1',
+      operation: {
+        endUs: 2_500_000,
+        id: 'keep:segment-1',
+        reason: 'Initial transcript interval.',
+        startUs: 1_000_000
+      },
+      revisionId: 'revision-1',
+      source: {
+        hasAudio: true,
+        height: 1080,
+        id: 'source-a',
+        width: 1920
+      },
+      transcript: 'Keep this clear opening statement.'
     }
   ]);
 });

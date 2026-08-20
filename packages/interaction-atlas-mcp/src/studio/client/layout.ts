@@ -91,6 +91,25 @@ export type TranscriptEditorSnapshot = {
   }>;
 };
 
+export type MediaClipNodePresentation = {
+  diffCount: number;
+  id: string;
+  operation: {
+    endUs: number;
+    id: string;
+    reason: string;
+    startUs: number;
+  } | null;
+  revisionId: string;
+  source: {
+    hasAudio: boolean;
+    height: number;
+    id: string;
+    width: number;
+  } | null;
+  transcript: string;
+};
+
 export type SrtTranscriptCue = {
   endUs: number;
   startUs: number;
@@ -237,6 +256,55 @@ export function buildTranscriptEditorSnapshot(
     diffs,
     exports
   };
+}
+
+/**
+ * Projects durable clip nodes into the small, editorial card model used by the
+ * local transcript drawer. This remains read-only: source state, accepted
+ * revision, and approval state still belong to the persisted project.
+ */
+export function buildMediaClipNodePresentations(
+  project: TranscriptEditorProject
+): MediaClipNodePresentation[] {
+  const revision = project.revisions.find((candidate) => candidate.id === project.currentRevisionId);
+  if (!revision) throw new Error(`Transcript project is missing current revision ${project.currentRevisionId}.`);
+
+  const operationById = new Map(revision.cutList.map((operation) => [operation.id, operation]));
+  const segmentById = new Map(project.transcriptSegments.map((segment) => [segment.id, segment]));
+
+  return revision.graph.nodes
+    .filter((node) => node.kind === 'clip')
+    .map((node) => {
+      const cutOperation = node.cutOperationId ? operationById.get(node.cutOperationId) : undefined;
+      const segments = (cutOperation?.transcriptSegmentIds ?? [])
+        .map((segmentId) => segmentById.get(segmentId))
+        .filter((segment): segment is NonNullable<typeof segment> => Boolean(segment));
+      const sourceAssetId = segments[0]?.assetId;
+      const source = sourceAssetId ? project.sourceAssets.find((asset) => asset.id === sourceAssetId) : undefined;
+
+      return {
+        diffCount: node.diffs?.length ?? 0,
+        id: node.id,
+        operation: cutOperation
+          ? {
+              endUs: cutOperation.endUs,
+              id: cutOperation.id,
+              reason: cutOperation.reason,
+              startUs: cutOperation.startUs
+            }
+          : null,
+        revisionId: revision.id,
+        source: source
+          ? {
+              hasAudio: source.media.hasAudio,
+              height: source.media.height,
+              id: source.id,
+              width: source.media.width
+            }
+          : null,
+        transcript: segments.map((segment) => segment.text).join(' ').trim() || 'No timestamped transcript is available for this clip.'
+      };
+    });
 }
 
 function displayOwner(value: unknown): string {

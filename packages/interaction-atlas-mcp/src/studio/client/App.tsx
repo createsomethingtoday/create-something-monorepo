@@ -73,6 +73,7 @@ import {
   intersectNodeIdSets,
   storyPresenterNodeIds,
   topologyBoardSectionForNode,
+  buildMediaClipNodePresentations,
   buildTranscriptEditorSnapshot,
   parseSrtTranscriptCues,
   type TopologyBoardSectionKey
@@ -173,6 +174,18 @@ type DatabaseLensSummary = {
   totalNodes: number;
   visibleNodes: number;
 };
+
+function formatMediaTimecode(valueUs: number): string {
+  const totalMilliseconds = Math.max(0, Math.floor(valueUs / 1_000));
+  const hours = Math.floor(totalMilliseconds / 3_600_000);
+  const minutes = Math.floor((totalMilliseconds % 3_600_000) / 60_000);
+  const seconds = Math.floor((totalMilliseconds % 60_000) / 1_000);
+  const milliseconds = totalMilliseconds % 1_000;
+  return [hours, minutes, seconds]
+    .map((value) => String(value).padStart(2, '0'))
+    .join(':')
+    .concat(`.${String(milliseconds).padStart(3, '0')}`);
+}
 
 const KIND_ICONS: Record<AtlasCanvasNodeKind, LucideIcon> = {
   actor: UserRound,
@@ -1573,9 +1586,9 @@ function MediaEditorPanel({
   const [sourcePath, setSourcePath] = useState('');
   const [timestampedTranscript, setTimestampedTranscript] = useState('');
   const [includeTitleOverlay, setIncludeTitleOverlay] = useState(false);
+  const [sourcePreviewClipId, setSourcePreviewClipId] = useState<string | null>(null);
   const revision = project?.revisions.find((candidate) => candidate.id === project.currentRevisionId) ?? null;
-  const operationById = new Map(revision?.cutList.map((operation) => [operation.id, operation]) ?? []);
-  const clips = revision?.graph.nodes.filter((node) => node.kind === 'clip') ?? [];
+  const clips = project ? buildMediaClipNodePresentations(project) : [];
   const graphNodes = revision?.graph.nodes ?? [];
   const graphEdges = revision?.graph.edges ?? [];
   const latestCompletedReceipt = project?.receipts.slice().reverse().find((receipt) => receipt.status === 'completed');
@@ -1614,7 +1627,7 @@ function MediaEditorPanel({
         ) : (
           <>
             <div className="media-summary">
-              <span><strong>Revision</strong><em>{revision.id}</em></span>
+              <span><strong>Revision</strong><em>{revision.id} · accepted</em></span>
               <span><strong>Transcript</strong><em>{project.transcriptSegments.length} segments</em></span>
               <span><strong>Render</strong><em>{project.receipts.at(-1)?.status ?? 'not requested'}</em></span>
             </div>
@@ -1630,7 +1643,7 @@ function MediaEditorPanel({
                 <span aria-hidden="true" className="media-graph-edge">↓ produces</span>
                 <div className="media-graph-clips">
                   {clips.map((clip) => <article className="media-graph-node clip" key={`graph:${clip.id}`}>
-                    <strong>{clip.id}</strong><span>{clip.diffs?.length ?? 0} durable decision diffs</span>
+                    <strong>{clip.id}</strong><span>{clip.diffCount} durable decision diffs</span>
                   </article>)}
                 </div>
                 <span aria-hidden="true" className="media-graph-edge">↓ projects</span>
@@ -1640,12 +1653,27 @@ function MediaEditorPanel({
             </section>
             <div className="media-timeline" aria-label="Timeline projection">
               {clips.map((clip) => {
-                const operation = clip.cutOperationId ? operationById.get(clip.cutOperationId) : undefined;
+                const sourcePreviewOpen = sourcePreviewClipId === clip.id;
+                const sourcePreviewUrl = clip.source
+                  ? `/api/sessions/${encodeURIComponent(sessionId)}/media-project/source/${encodeURIComponent(clip.source.id)}`
+                  : null;
                 return <article className="media-clip-node" key={clip.id}>
-                  <div className="media-clip-title"><span>Clip node</span><strong>{clip.id}</strong></div>
-                  <p>{operation ? `${operation.startUs}–${operation.endUs} µs · ${operation.reason}` : 'Missing cut operation'}</p>
-                  <span className="media-muted">Decision diffs are reviewable; hidden model thoughts are not recorded.</span>
-                  <div className="media-history"><History aria-hidden="true" />{clip.diffs?.map((entry) => <span key={entry.id}>{entry.event} · {entry.summary}</span>)}</div>
+                  <div className="media-clip-title"><span>Clip node · {clip.revisionId}</span><strong>{clip.id}</strong></div>
+                  <div className="media-clip-specs">
+                    <span>{clip.operation ? `${formatMediaTimecode(clip.operation.startUs)} → ${formatMediaTimecode(clip.operation.endUs)}` : 'Cut range unavailable'}</span>
+                    <span>{clip.source ? `${clip.source.id} · ${clip.source.width}×${clip.source.height}${clip.source.hasAudio ? ' · audio' : ' · silent'}` : 'Local source unavailable'}</span>
+                  </div>
+                  <p>{clip.transcript}</p>
+                  <span className="media-muted">{clip.operation ? `Accepted cut · ${clip.operation.reason}` : 'Missing accepted cut operation.'}</span>
+                  <div className="media-clip-actions">
+                    <button className="subtle-button" disabled={!sourcePreviewUrl} onClick={() => setSourcePreviewClipId(sourcePreviewOpen ? null : clip.id)} type="button">
+                      <Film aria-hidden="true" /><span>{sourcePreviewOpen ? 'Hide source preview' : 'Preview local source'}</span>
+                    </button>
+                    <button className="subtle-button" onClick={onRender} type="button"><Clapperboard aria-hidden="true" /><span>Render accepted revision</span></button>
+                  </div>
+                  <span className="media-muted">A render uses the current accepted revision; proposed diffs require approval and application first.</span>
+                  {sourcePreviewOpen && sourcePreviewUrl ? <video aria-label={`Preview local source for ${clip.id}`} className="media-clip-preview" controls preload="metadata" src={`${sourcePreviewUrl}#t=${(clip.operation?.startUs ?? 0) / 1_000_000},${(clip.operation?.endUs ?? 0) / 1_000_000}`} /> : null}
+                  <div className="media-history"><History aria-hidden="true" /><span>{clip.diffCount} reviewable decision {clip.diffCount === 1 ? 'diff' : 'diffs'}</span></div>
                 </article>;
               })}
             </div>
