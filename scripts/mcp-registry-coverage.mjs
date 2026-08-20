@@ -101,6 +101,9 @@ const PACKAGE_COVERAGE = {
   'packages/cs-telemetry-mcp/worker': {
     registry: ['cs-telemetry']
   },
+  'packages/exception-decisions-mcp': {
+    note: 'standalone decision surface at exceptions.mcp.createsomething.agency with per-person bearer keys; deliberately not Hub-routed — decision rights are enforced per identity, not shared through Hub routing'
+  },
   'packages/gmail-notion-mcp': {
     registry: ['gmail-notion-mcp']
   },

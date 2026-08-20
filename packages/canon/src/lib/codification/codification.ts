@@ -97,6 +97,12 @@ export const CANON_CODIFICATION_EXEMPTIONS: CanonCodificationExemption[] = [
 			'Motion Studio is non-rendered Canon-adjacent render tooling in the overlay coverage model; it should remain product-local until promoted into a rendered property surface.'
 	},
 	{
+		path: 'packages/exception-flow-video',
+		reason: 'render-tooling-surface',
+		justification:
+			'Remotion composition for internal meeting videos; frames render to MP4, never to a Canon-consuming product surface. Its palette deliberately matches the internal governance-arc page rather than Canon tokens.'
+	},
+	{
 		path: 'packages/tufte',
 		reason: 'canon-support-library',
 		justification:
