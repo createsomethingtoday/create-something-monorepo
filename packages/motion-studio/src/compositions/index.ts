@@ -10,6 +10,17 @@ export { DataVisualization } from './DataVisualization';
 export { ConceptBreakdown } from './ConceptBreakdown';
 export { ComparisonScene } from './ComparisonScene';
 export { TimelineScene } from './TimelineScene';
+export {
+  AtlasTranscriptOverlay,
+  AtlasTranscriptOverlaySchema,
+  ATLAS_TRANSCRIPT_OVERLAY_COMPOSITION_ID,
+  ATLAS_TRANSCRIPT_OVERLAY_FPS,
+  createAtlasTranscriptOverlayProps,
+} from '../atlas-transcript-overlay';
+export type {
+  AcceptedTranscriptOverlayInput,
+  AtlasTranscriptOverlayProps,
+} from '../atlas-transcript-overlay';
 
 // Full video composition
 export { ExplainerVideo, calculateTotalDuration, createScene } from './ExplainerVideo';

@@ -1,15 +1,30 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 import {
   agentActivityFromSessionChange,
+  buildMediaClipNodePresentations,
+  buildTranscriptEditorSnapshot,
+  cleanupRemovalOperations,
   detailModeForZoom,
   focusedStoryNodeSummaries,
   intersectNodeIdSets,
+  parseSrtTranscriptCues,
   storyPresenterNodeIds,
   tidyNodeUpdates
 } from '../dist/studio/client/layout.js';
 import { fastTopologyGraph } from '../dist/studio/client/FastTopologyCanvas.js';
+import { createTranscriptEditorProject } from '@create-something/atlas-composition';
+
+test('Atlas client inherits Canon tokens and reserves the editorial brand signal for product ownership', async () => {
+  const styles = await readFile(new URL('../src/studio/client/styles.css', import.meta.url), 'utf8');
+
+  assert.match(styles, /@import '@create-something\/canon\/styles\/tokens\.css';/);
+  assert.match(styles, /--atlas-brand: var\(--color-performance-editorial-brand\);/);
+  assert.match(styles, /--green: var\(--color-performance-ready\);/);
+  assert.match(styles, /--blue: var\(--color-performance-signal\);/);
+});
 
 function makeNode(overrides) {
   return {
@@ -43,6 +58,192 @@ function makeSession(nodes) {
     workflow: 'Agent-assisted Atlas onboarding'
   };
 }
+
+test('transcript editor snapshot projects the accepted revision, graph, and visible clip diffs', () => {
+  const project = createTranscriptEditorProject({
+    atlasSessionId: 'test-session',
+    createdAt: '2026-08-16T00:00:00.000Z',
+    id: 'video-project',
+    sourceAsset: {
+      id: 'source-a',
+      media: { durationUs: 5_000_000, hasAudio: true, height: 1080, width: 1920 },
+      sha256: 'a'.repeat(64),
+      uri: 'file:///private/tmp/source-a.mp4'
+    },
+    transcriptSegments: [
+      { assetId: 'source-a', endUs: 1_100_000, id: 'segment-1', startUs: 0, text: 'Hello there.' },
+      { assetId: 'source-a', endUs: 3_200_000, id: 'segment-2', startUs: 2_000_000, text: 'This is Atlas.' }
+    ]
+  });
+  project.receipts.push({
+    cacheHit: false,
+    completedAt: '2026-08-17T00:00:01.000Z',
+    id: 'receipt:revision-1',
+    inspection: {
+      audioStreams: 1,
+      durationUs: 2_300_000,
+      height: 1080,
+      inspectedAt: '2026-08-17T00:00:01.000Z',
+      tool: 'ffprobe',
+      videoCodec: 'h264',
+      width: 1920
+    },
+    kind: 'render',
+    outputSha256: 'b'.repeat(64),
+    request: {
+      cacheKey: 'cache-1',
+      captionSha256: 'c'.repeat(64),
+      compositionId: 'AtlasTranscriptTimeline',
+      compositionVersion: '1',
+      id: 'render:revision-1',
+      output: { codec: 'h264', fps: 30, height: 1080, path: '/private/tmp/accepted.mp4', width: 1920 },
+      projectId: 'video-project',
+      rendererVersion: 'ffmpeg-local-v1',
+      requestedAt: '2026-08-17T00:00:00.000Z',
+      revisionId: 'revision-1',
+      timelineHash: 'timeline-1'
+    },
+    status: 'completed'
+  });
+
+  const snapshot = buildTranscriptEditorSnapshot(project);
+
+  assert.deepEqual(snapshot.source, {
+    durationUs: 5_000_000,
+    hasAudio: true,
+    height: 1080,
+    id: 'source-a',
+    width: 1920
+  });
+  assert.equal(snapshot.revision.id, 'revision-1');
+  assert.equal(snapshot.timeline.durationUs, 2_300_000);
+  assert.deepEqual(snapshot.overlays, []);
+  assert.deepEqual(
+    snapshot.timeline.clips.map((clip) => ({ id: clip.id, text: clip.text })),
+    [
+      { id: 'video:keep:segment-1', text: 'Hello there.' },
+      { id: 'video:keep:segment-2', text: 'This is Atlas.' }
+    ]
+  );
+  assert.equal(snapshot.graph.clipNodes.length, 2);
+  assert.equal(snapshot.graph.edges, 8);
+  assert.deepEqual(snapshot.exports, [
+    {
+      cacheHit: false,
+      captionSha256: 'c'.repeat(64),
+      completedAt: '2026-08-17T00:00:01.000Z',
+      durationUs: 2_300_000,
+      id: 'receipt:revision-1',
+      outputSha256: 'b'.repeat(64)
+    }
+  ]);
+  assert.deepEqual(snapshot.diffs, [
+    {
+      at: '2026-08-16T00:00:00.000Z',
+      event: 'created',
+      nodeId: 'clip:segment-1',
+      summary: 'Created from the local transcript source.'
+    },
+    {
+      at: '2026-08-16T00:00:00.000Z',
+      event: 'created',
+      nodeId: 'clip:segment-2',
+      summary: 'Created from the local transcript source.'
+    }
+  ]);
+});
+
+test('clip-node presentation keeps source, time, transcript, revision, and approval context together', () => {
+  const project = createTranscriptEditorProject({
+    atlasSessionId: 'test-session',
+    createdAt: '2026-08-20T00:00:00.000Z',
+    id: 'video-project',
+    sourceAsset: {
+      id: 'source-a',
+      media: { durationUs: 5_000_000, hasAudio: true, height: 1080, width: 1920 },
+      sha256: 'a'.repeat(64),
+      uri: 'file:///private/tmp/source-a.mp4'
+    },
+    transcriptSegments: [
+      { assetId: 'source-a', endUs: 2_500_000, id: 'segment-1', startUs: 1_000_000, text: 'Keep this clear opening statement.' }
+    ]
+  });
+
+  assert.deepEqual(buildMediaClipNodePresentations(project), [
+    {
+      diffCount: 1,
+      id: 'clip:keep:segment-1',
+      operation: {
+        endUs: 2_500_000,
+        id: 'keep:segment-1',
+        reason: 'Initial transcript interval.',
+        startUs: 1_000_000
+      },
+      revisionId: 'revision-1',
+      source: {
+        hasAudio: true,
+        height: 1080,
+        id: 'source-a',
+        width: 1920
+      },
+      transcript: 'Keep this clear opening statement.'
+    }
+  ]);
+});
+
+test('SRT import parsing preserves timestamped local transcript cues', () => {
+  assert.deepEqual(
+    parseSrtTranscriptCues(`1
+00:00:00,000 --> 00:00:01,250
+Hello there.
+
+2
+00:00:01,250 --> 00:00:02,000
+This remains local.`),
+    [
+      { endUs: 1_250_000, startUs: 0, text: 'Hello there.' },
+      { endUs: 2_000_000, startUs: 1_250_000, text: 'This remains local.' }
+    ]
+  );
+  assert.throws(
+    () => parseSrtTranscriptCues('1\ninvalid range\nNope'),
+    /valid timestamp range/
+  );
+});
+
+test('cleanup batch removal only changes whole accepted clips matched by explicit filler candidates', () => {
+  const project = createTranscriptEditorProject({
+    atlasSessionId: 'cleanup-batch-session',
+    createdAt: '2026-08-17T00:00:00.000Z',
+    id: 'cleanup-batch-project',
+    sourceAsset: {
+      id: 'cleanup-batch-source',
+      media: { durationUs: 3_000_000, hasAudio: true, height: 1080, width: 1920 },
+      sha256: 'd'.repeat(64),
+      uri: 'fixture://cleanup-batch-source.mp4'
+    },
+    transcriptSegments: [
+      { assetId: 'cleanup-batch-source', endUs: 500_000, id: 'segment-um', startUs: 0, text: 'um' },
+      { assetId: 'cleanup-batch-source', endUs: 1_000_000, id: 'segment-uh', startUs: 500_000, text: 'uh' },
+      { assetId: 'cleanup-batch-source', endUs: 3_000_000, id: 'segment-keep', startUs: 1_000_000, text: 'Keep this.' }
+    ]
+  });
+  const candidates = [
+    { id: 'filler:segment-um', kind: 'filler', startUs: 0, endUs: 500_000, transcriptSegmentIds: ['segment-um'], summary: 'Configured filler token: um.' },
+    { id: 'filler:segment-uh', kind: 'filler', startUs: 500_000, endUs: 1_000_000, transcriptSegmentIds: ['segment-uh'], summary: 'Configured filler token: uh.' },
+    { id: 'pause:ignored', kind: 'long-pause', startUs: 1_000_000, endUs: 1_200_000, transcriptSegmentIds: ['segment-uh', 'segment-keep'], summary: 'Long pause: 0.2 seconds.' },
+    { id: 'filler:partial', kind: 'filler', startUs: 1_200_000, endUs: 1_300_000, transcriptSegmentIds: ['segment-keep'], summary: 'Configured filler token: um.' }
+  ];
+
+  assert.deepEqual(
+    cleanupRemovalOperations(project, candidates).map((operation) => [operation.id, operation.kind]),
+    [
+      ['keep:segment-um', 'remove'],
+      ['keep:segment-uh', 'remove'],
+      ['keep:segment-keep', 'keep']
+    ]
+  );
+});
 
 test('card detail mode follows the current canvas zoom', () => {
   assert.equal(detailModeForZoom(0.4), 'compact');

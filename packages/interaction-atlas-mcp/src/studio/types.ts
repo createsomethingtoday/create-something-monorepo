@@ -221,6 +221,14 @@ export type AtlasSessionCanvas = {
   edges: AtlasCanvasEdge[];
 };
 
+/** A pointer only: the private media manifest is stored outside the canvas session. */
+export type AtlasMediaProjectRef = {
+  schema: 'create-something/atlas-transcript-editor@1';
+  projectId: string;
+  currentRevisionId: string;
+  updatedAt: string;
+};
+
 export type AtlasSession = {
   version: 1;
   id: string;
@@ -235,6 +243,7 @@ export type AtlasSession = {
   observations: AtlasObservation[];
   story?: AtlasStoryState;
   canvasState?: SharedCanvasState;
+  mediaProject?: AtlasMediaProjectRef;
   proposals?: AtlasWritebackProposal[];
   suggestions: AtlasSuggestion[];
 };
