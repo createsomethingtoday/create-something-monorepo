@@ -8,8 +8,8 @@ import {
   collectDifyStreamOutput,
   parseDifySseEvents,
   splitDifyToolNames
-} from '../src/lib/server/dify/client.ts';
-import { difyOperatorAgents } from '../src/lib/server/dify/agent-registry.ts';
+} from '../src/lib/server/dify/client';
+import { difyOperatorAgents } from '../src/lib/server/dify/agent-registry';
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const difyInventoryPath = path.join(repositoryRoot, 'config/dify/inventory.json');

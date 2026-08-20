@@ -194,20 +194,23 @@ function createDatabase(
   return {
     prepare(sql) {
       let values: unknown[] = [];
-      return {
-        bind(...nextValues) {
-          values = nextValues;
-          return this;
-        },
-        async first() {
+      const execute = {
+        async first<T = Record<string, unknown>>() {
           calls.push({ sql, values });
-          return record;
+          return record as T | null;
         },
         async run() {
           calls.push({ sql, values });
           return { success: true };
         }
-      };
+      } satisfies ReturnType<ReturnType<NewsletterCheckInDatabase['prepare']>['bind']>;
+
+      return {
+        bind(...nextValues) {
+          values = nextValues;
+          return execute;
+        }
+      } satisfies ReturnType<NewsletterCheckInDatabase['prepare']>;
     }
   };
 }
