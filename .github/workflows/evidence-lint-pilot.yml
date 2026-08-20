@@ -59,7 +59,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Verify evidence lint rule
-        run: pnpm --dir packages/eslint-plugin-evidence test && pnpm --dir packages/eslint-plugin-evidence check
+        run: pnpm --dir packages/eslint-plugin-evidence test && pnpm --dir packages/eslint-plugin-evidence check && pnpm --dir packages/eslint-plugin-evidence build
 
       - name: Verify approved consumer pilots
         run: node scripts/evidence-lint-pilot.mjs --package packages/mcp-authz && node scripts/evidence-lint-pilot.mjs --package packages/mcp-core
