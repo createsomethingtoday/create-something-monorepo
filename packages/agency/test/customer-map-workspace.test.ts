@@ -430,7 +430,10 @@ test('an Agency operator accepts a prepared handoff and the customer reads back 
 		CustomerMapConflictError
 	);
 	await workspace.save(accountA, created.map.id, {
-		canvas: { ...created.version.canvas, title: 'Revised after accepted handoff' },
+		canvas: {
+			...created.version.canvas,
+			nodes: [...created.version.canvas.nodes, createPublicAtlasNode('human', { label: 'Review owner' })]
+		},
 		expectedVersion: 1
 	});
 	assert.deepEqual(

@@ -24,7 +24,10 @@ test('agency session user can list claimable prospects from the API route handle
 	} as any);
 
 	assert.equal(response.status, 200);
-	const payload = await response.json();
+	const payload = (await response.json()) as {
+		user: { auth_subject: string };
+		prospects: Array<{ client: { slug: string } }>;
+	};
 	assert.equal(payload.user.auth_subject, 'auth0|claimant');
 	assert.equal(payload.prospects.length, 1);
 	assert.equal(payload.prospects[0]?.client.slug, 'acme');
@@ -46,6 +49,6 @@ test('prospect list route handler returns 503 when the database is unavailable',
 	} as any);
 
 	assert.equal(response.status, 503);
-	const payload = await response.json();
+	const payload = (await response.json()) as { error: string };
 	assert.equal(payload.error, 'unavailable');
 });

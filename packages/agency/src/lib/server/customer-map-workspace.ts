@@ -200,7 +200,7 @@ interface CustomerMapWorkspaceOptions {
 	id?: () => string;
 	shareToken?: () => string;
 	digest?: (value: string) => Promise<string>;
-	limits?: Partial<Pick<typeof CUSTOMER_MAP_POLICY, 'mapsPerWorkspace' | 'versionsPerMap'>>;
+	limits?: Partial<{ mapsPerWorkspace: number; versionsPerMap: number }>;
 }
 
 interface CreateCustomerMapInput {

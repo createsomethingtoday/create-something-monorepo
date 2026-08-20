@@ -3,6 +3,11 @@ import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from '
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+/**
+ * @typedef {{ id: string; pattern: RegExp; replacement: string; exempt?: readonly string[] }} PublicCopyRule
+ * @typedef {{ file: string; line: number; column: number; rule: string; text: string; replacement: string }} PublicCopyFinding
+ */
+
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 export const packageRoot = path.resolve(scriptDir, '..');
 export const monorepoRoot = path.resolve(packageRoot, '../..');
@@ -22,6 +27,7 @@ const PUBLIC_ROUTE_SKIP_SEGMENTS = new Set([
 const ROUTE_COPY_FILES = new Set(['+error.svelte', '+layout.svelte', '+page.svelte']);
 const REDIRECTED_PUBLIC_ROUTE_SEGMENTS = new Set(['dify', 'notion']);
 
+/** @type {readonly PublicCopyRule[]} */
 export const PUBLIC_COPY_RULES = [
   {
     id: 'workflow-trust-checklist-title',
@@ -283,6 +289,7 @@ export const PUBLIC_COPY_RULES = [
   }
 ];
 
+/** @param {string} dir @returns {string[]} */
 function walk(dir) {
   if (!existsSync(dir)) {
     return [];
@@ -307,6 +314,7 @@ function walk(dir) {
   return files;
 }
 
+/** @param {string} file @returns {boolean} */
 function isPublicRouteFile(file) {
   const relative = path.relative(path.join(packageRoot, 'src/routes'), file);
   const segments = relative.split(path.sep);
@@ -319,24 +327,28 @@ function isPublicRouteFile(file) {
   return routeSegments.every((segment) => !PUBLIC_ROUTE_SKIP_SEGMENTS.has(segment));
 }
 
+/** @param {string} file @returns {string} */
 function readableFile(file) {
   return path.relative(packageRoot, file).replaceAll(path.sep, '/');
 }
 
+/** @param {string} source @param {number} index @returns {{ line: number; column: number }} */
 function lineColumn(source, index) {
   const before = source.slice(0, index);
   const lines = before.split('\n');
 
   return {
     line: lines.length,
-    column: lines.at(-1).length + 1
+    column: (lines.at(-1) ?? '').length + 1
   };
 }
 
+/** @param {string[]} files @returns {string[]} */
 function uniqueSorted(files) {
   return [...new Set(files)].sort((a, b) => readableFile(a).localeCompare(readableFile(b)));
 }
 
+/** @returns {string[]} */
 export function discoverPublicCopyFiles() {
   const routeFiles = walk(path.join(packageRoot, 'src/routes')).filter(isPublicRouteFile);
   const componentFiles = walk(path.join(packageRoot, 'src/lib/components')).filter((file) =>
@@ -364,9 +376,16 @@ export function discoverPublicCopyFiles() {
     : [...canonicalAtlasFiles, ...canonicalAtlasDistFiles];
   if (existsSync(schedulerEmail)) extraFiles.push(schedulerEmail);
 
-  return uniqueSorted([...routeFiles, ...componentFiles, ...dataFiles, ...atlasFiles, ...extraFiles]);
+  return uniqueSorted([
+    ...routeFiles,
+    ...componentFiles,
+    ...dataFiles,
+    ...atlasFiles,
+    ...extraFiles
+  ]);
 }
 
+/** @returns {string[]} */
 export function discoverActivePublicCopyFiles() {
   const routesRoot = path.join(packageRoot, 'src/routes');
 
@@ -379,6 +398,7 @@ export function discoverActivePublicCopyFiles() {
   });
 }
 
+/** @param {PublicCopyRule} rule @param {string} file @returns {boolean} */
 function isRuleExempt(rule, file) {
   if (!rule.exempt) {
     return false;
@@ -388,7 +408,12 @@ function isRuleExempt(rule, file) {
   return rule.exempt.some((entry) => relative === entry || relative.endsWith(`/${entry}`));
 }
 
+/**
+ * @param {string[]} [files]
+ * @returns {PublicCopyFinding[]}
+ */
 export function auditPublicCopy(files = discoverPublicCopyFiles()) {
+  /** @type {PublicCopyFinding[]} */
   const findings = [];
 
   for (const file of files) {
@@ -399,7 +424,10 @@ export function auditPublicCopy(files = discoverPublicCopyFiles()) {
         continue;
       }
 
-      const pattern = new RegExp(rule.pattern.source, rule.pattern.flags.includes('g') ? rule.pattern.flags : `${rule.pattern.flags}g`);
+      const pattern = new RegExp(
+        rule.pattern.source,
+        rule.pattern.flags.includes('g') ? rule.pattern.flags : `${rule.pattern.flags}g`
+      );
       const matches = source.matchAll(pattern);
 
       for (const match of matches) {
@@ -419,7 +447,9 @@ export function auditPublicCopy(files = discoverPublicCopyFiles()) {
   return findings;
 }
 
+/** @param {string[]} [files] @returns {string[]} */
 export function healPublicCopy(files = discoverPublicCopyFiles()) {
+  /** @type {string[]} */
   const changed = [];
 
   for (const file of files) {
@@ -443,6 +473,7 @@ export function healPublicCopy(files = discoverPublicCopyFiles()) {
   return changed;
 }
 
+/** @param {PublicCopyFinding[]} findings @returns {string} */
 function formatFindings(findings) {
   return findings
     .map(
@@ -481,6 +512,10 @@ function main() {
   console.log(`Public copy check passed across ${files.length} file(s).`);
 }
 
-if (process.argv[1] && statSync(process.argv[1]).isFile() && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (
+  process.argv[1] &&
+  statSync(process.argv[1]).isFile() &&
+  path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+) {
   main();
 }

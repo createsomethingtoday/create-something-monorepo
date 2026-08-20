@@ -184,14 +184,14 @@ export async function validateJWT(
 			await crypto.subtle.verify(
 				{ name: 'ECDSA', hash: 'SHA-256' },
 				publicKey,
-				joseSignature,
-				data
+				new Uint8Array(joseSignature),
+				new Uint8Array(data)
 			)
 			|| await crypto.subtle.verify(
 				{ name: 'ECDSA', hash: 'SHA-256' },
 				publicKey,
-				joseToDerSignature(joseSignature),
-				data
+				new Uint8Array(joseToDerSignature(joseSignature)),
+				new Uint8Array(data)
 			);
 
 		if (!valid) return null;
