@@ -2497,6 +2497,9 @@ importers:
       '@create-something/atlas-composition':
         specifier: workspace:*
         version: link:../atlas-composition
+      '@create-something/canon':
+        specifier: workspace:*
+        version: link:../canon
       '@create-something/canvas-kernel':
         specifier: workspace:*
         version: link:../canvas-kernel

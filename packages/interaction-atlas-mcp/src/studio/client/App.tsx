@@ -3050,8 +3050,8 @@ function AtlasStudio(): React.ReactElement {
             <CubeMark />
           </span>
           <span className="brand-copy">
-            <strong>Atlas Studio</strong>
-            <span>{sessionTitle}</span>
+            <strong><span className="brand-eyebrow">CREATE SOMETHING</span>Atlas Studio</strong>
+            <span className="brand-session">{sessionTitle}</span>
           </span>
         </div>
         <div className="toolbar">

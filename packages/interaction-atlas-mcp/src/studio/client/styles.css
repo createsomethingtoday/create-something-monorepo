@@ -1,21 +1,31 @@
+@import '@create-something/canon/styles/tokens.css';
+
 :root {
   color-scheme: light;
-  --bg: #f9f9f6;
-  --panel: #ffffff;
-  --panel-soft: #f4f4ef;
-  --line: #e0e0da;
-  --line-strong: #c9c9c2;
-  --text: #0a0e19;
-  --muted: #7b7b75;
-  --muted-strong: #63635e;
-  --green: #1e3c2c;
-  --blue: #0048ff;
-  --red: #c41e3a;
-  --font-performance-interface: Arial, "Helvetica Neue", Helvetica, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-performance-topology-label: ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  /* Atlas is an operator surface inside the same Canon system as .agency.
+   * The warm Meridian casing marks product ownership; lifecycle colors stay
+   * semantically reserved for workflow state. */
+  --atlas-paper: var(--color-performance-editorial-light);
+  --atlas-panel: color-mix(in srgb, var(--color-performance-editorial-light) 86%, white);
+  --atlas-panel-soft: color-mix(in srgb, var(--color-performance-editorial-light-secondary) 44%, white);
+  --atlas-brand: var(--color-performance-editorial-brand);
+  --bg: var(--atlas-paper);
+  --panel: var(--atlas-panel);
+  --panel-soft: var(--atlas-panel-soft);
+  --line: color-mix(in srgb, var(--color-performance-editorial-dark) 18%, transparent);
+  --line-strong: color-mix(in srgb, var(--color-performance-editorial-dark) 38%, transparent);
+  --text: var(--color-performance-editorial-dark);
+  --ink: var(--color-performance-editorial-dark);
+  --muted: color-mix(in srgb, var(--color-performance-editorial-dark) 62%, transparent);
+  --muted-strong: color-mix(in srgb, var(--color-performance-editorial-dark) 78%, transparent);
+  --green: var(--color-performance-ready);
+  --blue: var(--color-performance-signal);
+  --red: var(--color-performance-stop);
+  --font-performance-interface: var(--font-performance-sans);
+  --font-performance-topology-label: var(--font-performance-mono);
   --database-panel-height: min(38vh, 360px);
-  --shadow-soft: 0 10px 26px rgba(10, 14, 25, 0.06);
-  --shadow-panel: 0 24px 70px rgba(10, 14, 25, 0.1);
+  --shadow-soft: var(--shadow-performance-panel);
+  --shadow-panel: var(--shadow-performance-panel);
 }
 
 * {
@@ -32,9 +42,17 @@ body,
 body {
   margin: 0;
   overflow: hidden;
-  background: var(--bg);
+  background:
+    repeating-linear-gradient(
+      7deg,
+      transparent 0 22px,
+      var(--color-performance-paper-fiber) 22px 23px,
+      transparent 23px 49px
+    ),
+    var(--bg);
   color: var(--text);
   font-family: var(--font-performance-interface);
+  font-synthesis: none;
   font-size: 16px;
   line-height: 1.18;
 }
@@ -53,12 +71,12 @@ button,
   justify-content: center;
   gap: 0.45rem;
   min-height: 2.18rem;
-  border: 1px solid rgba(201, 201, 194, 0.72);
-  border-radius: 6px;
-  background: linear-gradient(rgba(206, 206, 198, 0.16) 0 100%), rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-performance-md);
+  background: var(--panel);
   color: var(--text);
   cursor: pointer;
-  font-weight: 400;
+  font-weight: var(--font-performance-medium);
   text-decoration: none;
   transition:
     background 140ms ease,
@@ -70,11 +88,17 @@ button,
 button:hover,
 .toolbar-link:hover {
   border-color: var(--line-strong);
-  background: linear-gradient(rgba(206, 206, 198, 0.26) 0 100%), rgba(255, 255, 255, 0.92);
+  background: var(--panel-soft);
 }
 
 button:active {
   transform: scale(0.985);
+}
+
+button:focus-visible,
+.toolbar-link:focus-visible {
+  outline: 2px solid var(--color-performance-signal);
+  outline-offset: 2px;
 }
 
 svg {
@@ -132,8 +156,7 @@ input::placeholder {
   gap: 1rem;
   min-width: 0;
   border-bottom: 1px solid var(--line);
-  background: linear-gradient(rgba(206, 206, 198, 0.2) 0 100%), rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(14px);
+  background: var(--panel);
   padding: 0 1rem;
   z-index: 6;
 }
@@ -154,7 +177,7 @@ input::placeholder {
 
 .brand {
   flex: 1 1 20rem;
-  gap: 0.72rem;
+  gap: 0.66rem;
   max-width: 34rem;
 }
 
@@ -174,26 +197,48 @@ input::placeholder {
 }
 
 .brand-copy {
-  align-items: baseline;
-  gap: 0.52rem;
+  align-items: center;
+  gap: 0.72rem;
   min-width: 0;
 }
 
 .brand-copy strong {
+  display: grid;
+  gap: 0.05rem;
   flex: none;
-  font-size: 0.92rem;
-  line-height: 1.05;
+  font-family: var(--font-performance-editorial);
+  font-size: 1.08rem;
+  font-weight: var(--font-performance-editorial-weight);
+  letter-spacing: -0.035em;
+  line-height: 0.98;
   white-space: nowrap;
 }
 
-.brand-copy span,
+.brand-eyebrow {
+  color: var(--atlas-brand);
+  font-family: var(--font-performance-mono);
+  font-size: 0.54rem;
+  font-weight: var(--font-performance-semibold);
+  letter-spacing: 0.08em;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.brand-session,
 .output-summary span {
   min-width: 0;
   overflow: hidden;
   color: var(--muted);
-  font-size: 0.78rem;
+  font-family: var(--font-performance-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.02em;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.brand-session {
+  border-left: 1px solid var(--line);
+  padding-left: 0.72rem;
 }
 
 .toolbar {
@@ -222,8 +267,8 @@ input::placeholder {
 }
 
 .toolbar-button[aria-pressed='true'] {
-  border-color: rgba(10, 14, 25, 0.18);
-  background: linear-gradient(rgba(206, 206, 198, 0.28) 0 100%), rgba(255, 255, 255, 0.92);
+  border-color: var(--color-performance-signal);
+  background: var(--color-performance-signal-soft);
 }
 
 .count-chip,
@@ -239,12 +284,13 @@ input::placeholder {
   gap: 0.3rem;
   min-height: 1.48rem;
   border: 1px solid var(--line);
-  border-radius: 5px;
-  background: rgba(249, 249, 246, 0.82);
+  border-radius: 0;
+  background: var(--panel);
   color: var(--muted-strong);
-  font-size: 0.68rem;
-  font-weight: 400;
-  letter-spacing: 0.04em;
+  font-family: var(--font-performance-mono);
+  font-size: 0.64rem;
+  font-weight: var(--font-performance-semibold);
+  letter-spacing: 0.055em;
   line-height: 1;
   padding: 0 0.45rem;
   text-transform: uppercase;
@@ -626,7 +672,7 @@ input::placeholder {
   width: min(392px, calc(100% - 1.5rem));
   overflow: auto;
   border-color: var(--line);
-  background: rgba(255, 255, 255, 0.96);
+  background: var(--panel);
   box-shadow: var(--shadow-panel);
   transition: transform 180ms ease;
 }
@@ -649,6 +695,7 @@ input::placeholder {
 
 .drawer.media-editor {
   --media-editor-offset: 22rem;
+  border-top: 3px solid var(--atlas-brand);
   right: var(--media-editor-offset);
   z-index: 14;
   transform: translateX(calc(100% + var(--media-editor-offset) + 1px));
@@ -676,8 +723,8 @@ input::placeholder {
 .media-clip-node,
 .media-receipt {
   border: 1px solid var(--line);
-  border-radius: 7px;
-  background: rgba(255, 255, 255, 0.78);
+  border-radius: 0;
+  background: var(--panel);
 }
 
 .media-summary span,
@@ -696,6 +743,9 @@ input::placeholder {
 .media-receipt span {
   color: var(--muted);
   font-size: 0.67rem;
+  font-family: var(--font-performance-mono);
+  font-weight: var(--font-performance-semibold);
+  letter-spacing: 0.055em;
   font-style: normal;
   line-height: 1.25;
 }
@@ -1128,7 +1178,7 @@ input::placeholder {
 }
 
 .media-clip-node {
-  border-left: 3px solid var(--blue);
+  border-left: 3px solid var(--atlas-brand);
 }
 
 .media-clip-title,
@@ -1159,8 +1209,10 @@ input::placeholder {
 
 .media-clip-specs span {
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: 0;
+  background: var(--panel-soft);
   color: var(--muted-strong);
+  font-family: var(--font-performance-mono);
   font-size: 0.64rem;
   line-height: 1.2;
   padding: 0.14rem 0.34rem;

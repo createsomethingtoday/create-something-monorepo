@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 import {
@@ -15,6 +16,15 @@ import {
 } from '../dist/studio/client/layout.js';
 import { fastTopologyGraph } from '../dist/studio/client/FastTopologyCanvas.js';
 import { createTranscriptEditorProject } from '@create-something/atlas-composition';
+
+test('Atlas client inherits Canon tokens and reserves the editorial brand signal for product ownership', async () => {
+  const styles = await readFile(new URL('../src/studio/client/styles.css', import.meta.url), 'utf8');
+
+  assert.match(styles, /@import '@create-something\/canon\/styles\/tokens\.css';/);
+  assert.match(styles, /--atlas-brand: var\(--color-performance-editorial-brand\);/);
+  assert.match(styles, /--green: var\(--color-performance-ready\);/);
+  assert.match(styles, /--blue: var\(--color-performance-signal\);/);
+});
 
 function makeNode(overrides) {
   return {

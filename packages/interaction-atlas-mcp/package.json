@@ -22,6 +22,7 @@
   "dependencies": {
     "@create-something/atlas-composition": "workspace:*",
     "@create-something/canvas-kernel": "workspace:*",
+    "@create-something/canon": "workspace:*",
     "@create-something/mcp-authz": "workspace:*",
     "@create-something/mcp-core": "workspace:*",
     "@create-something/observability": "workspace:*",
