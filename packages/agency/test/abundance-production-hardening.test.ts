@@ -391,7 +391,9 @@ test('abundance match creation updates an existing suggestion instead of inserti
 
 	assert.equal(response.status, 201);
 
-	const payload = await response.json();
+	const payload = (await response.json()) as {
+		data: Array<{ match: { id: string; created_at: string } }>;
+	};
 	assert.equal(payload.data[0].match.id, 'match_existing');
 	assert.equal(payload.data[0].match.created_at, '2026-05-02T00:00:00.000Z');
 	assert.ok(statements.some((entry) => /SELECT id, created_at FROM matches/.test(entry.sql)));
@@ -416,7 +418,7 @@ test('abundance conversion preserves the source record by marking it inactive', 
 
 	assert.equal(response.status, 201);
 
-	const payload = await response.json();
+	const payload = (await response.json()) as { success: boolean; data: { skills: string[] } };
 	assert.equal(payload.success, true);
 	assert.deepEqual(payload.data.skills, ['iv', 'triage']);
 	assert.ok(statements.some((entry) => /INSERT INTO talent/.test(entry.sql)));
@@ -454,7 +456,15 @@ test('staff onboarding creates a matchable talent profile and stores the full on
 
 	assert.equal(response.status, 201);
 
-	const payload = await response.json();
+	const payload = (await response.json()) as {
+		success: boolean;
+		data: {
+			action: 'created' | 'updated';
+			talent: { skills: string[]; availability?: string; timezone?: string };
+			intake: { user_type: string; intake_type: string };
+			seeker_deactivated: boolean;
+		};
+	};
 	assert.equal(payload.success, true);
 	assert.equal(payload.data.action, 'created');
 	assert.deepEqual(payload.data.talent.skills, ['Triage', 'ICU', 'Telemetry']);
@@ -503,7 +513,13 @@ test('staff onboarding updates an existing talent profile instead of returning s
 
 	assert.equal(response.status, 200);
 
-	const payload = await response.json();
+	const payload = (await response.json()) as {
+		success: boolean;
+		data: {
+			action: 'created' | 'updated';
+			talent: { skills: string[]; availability?: string; timezone?: string };
+		};
+	};
 	assert.equal(payload.success, true);
 	assert.equal(payload.data.action, 'updated');
 	assert.deepEqual(payload.data.talent.skills, ['ER', 'Pediatrics']);

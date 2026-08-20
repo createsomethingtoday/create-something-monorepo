@@ -3,11 +3,17 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
+/**
+ * @typedef {{ id: string; pattern: RegExp; message: string }} CanonDebtRule
+ * @typedef {{ file: string; line: number; column: number; rule: string; text: string; message: string }} CanonDebtFinding
+ */
+
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 export const packageRoot = path.resolve(scriptDir, '..');
 
 export const CANON_DEBT_SCOPES = ['src/routes/admin/security'];
 
+/** @type {readonly CanonDebtRule[]} */
 const CANON_DEBT_RULES = [
   {
     id: 'hardcoded-rgba',
@@ -55,7 +61,12 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   }
 }
 
+/**
+ * @param {string[]} [files]
+ * @returns {CanonDebtFinding[]}
+ */
 export function auditCanonDebt(files = discoverCanonDebtFiles()) {
+  /** @type {CanonDebtFinding[]} */
   const findings = [];
 
   for (const file of files) {
@@ -87,12 +98,17 @@ export function auditCanonDebt(files = discoverCanonDebtFiles()) {
   });
 }
 
+/**
+ * @param {readonly string[]} [scopes]
+ * @returns {string[]}
+ */
 export function discoverCanonDebtFiles(scopes = CANON_DEBT_SCOPES) {
   return scopes
     .flatMap((scope) => walkSvelteFiles(path.join(packageRoot, scope)))
     .sort((a, b) => a.localeCompare(b));
 }
 
+/** @param {string} root @returns {string[]} */
 function walkSvelteFiles(root) {
   if (!existsSync(root)) return [];
 
@@ -111,16 +127,18 @@ function walkSvelteFiles(root) {
   return files;
 }
 
+/** @param {string} file @returns {string} */
 function packageRelative(file) {
   return path.relative(packageRoot, file).replaceAll(path.sep, '/');
 }
 
+/** @param {string} source @param {number} index @returns {{ line: number; column: number }} */
 function positionForIndex(source, index) {
   const before = source.slice(0, index);
   const lines = before.split('\n');
 
   return {
     line: lines.length,
-    column: lines.at(-1).length + 1
+    column: (lines.at(-1) ?? '').length + 1
   };
 }

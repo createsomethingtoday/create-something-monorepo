@@ -333,7 +333,7 @@ test('buildGovernanceSlackMonitorReadiness reports missing cursor table', async 
 
 test('governance Slack monitor route requires the internal credential', async () => {
 	const response = await postSlackMonitor(routeEvent(new FakeD1(), { providedKey: null }));
-	const payload = await response.json();
+	const payload = (await response.json()) as { error: string };
 
 	assert.equal(response.status, 401);
 	assert.match(payload.error, /governance write credential/i);
@@ -346,7 +346,7 @@ test('governance Slack monitor route reports missing config without throwing', a
 			slackBotToken: ''
 		})
 	);
-	const payload = await response.json();
+	const payload = (await response.json()) as { status: string };
 
 	assert.equal(response.status, 202);
 	assert.equal(payload.status, 'not_configured');
@@ -354,7 +354,7 @@ test('governance Slack monitor route reports missing config without throwing', a
 
 test('governance Slack monitor readiness route requires the internal credential', async () => {
 	const response = await getSlackMonitorReadiness(routeEvent(new FakeD1(), { providedKey: null }));
-	const payload = await response.json();
+	const payload = (await response.json()) as { error: string };
 
 	assert.equal(response.status, 401);
 	assert.match(payload.error, /governance write credential/i);
@@ -371,7 +371,7 @@ test('governance Slack monitor readiness route requires D1', async () => {
 			headers: { authorization: 'Bearer test-internal-key' }
 		})
 	} as never);
-	const payload = await response.json();
+	const payload = (await response.json()) as { error: string };
 
 	assert.equal(response.status, 503);
 	assert.match(payload.error, /D1 binding/i);
@@ -384,7 +384,9 @@ test('governance Slack monitor readiness route reports not_configured safely', a
 			slackBotToken: ''
 		})
 	);
-	const payload = await response.json();
+	const payload = (await response.json()) as {
+		readiness: { status: string; config: { slack_bot_token_configured: boolean; channel_count: number } };
+	};
 
 	assert.equal(response.status, 200);
 	assert.equal(payload.readiness.status, 'not_configured');
@@ -400,7 +402,16 @@ test('governance Slack monitor readiness route reports configured channels witho
 			slackBotToken: 'xoxb-real-token'
 		})
 	);
-	const payload = await response.json();
+	const payload = (await response.json()) as {
+		readiness: {
+			status: string;
+			config: {
+				slack_bot_token_configured: boolean;
+				channel_count: number;
+				channels: Array<{ channel_id: string; atlas_canvas_id: string }>;
+			};
+		};
+	};
 
 	assert.equal(response.status, 200);
 	assert.equal(payload.readiness.status, 'ready');

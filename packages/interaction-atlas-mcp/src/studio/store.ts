@@ -2,6 +2,12 @@ import { existsSync } from 'node:fs';
 import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import {
+  deserializeTranscriptEditorProject,
+  serializeTranscriptEditorProject,
+  type TranscriptEditorProject
+} from '@create-something/atlas-composition';
+
 import { defaultLabelForKind } from './atlas.js';
 import { buildAtlasDatabaseHealth, type AtlasDatabaseHealth } from './database-health.js';
 import type {
@@ -131,9 +137,14 @@ export function getSessionPath(sessionId: string, cwd = process.cwd()): string {
   return path.join(getStudioHome(cwd), 'sessions', `${sessionId}.json`);
 }
 
+export function getTranscriptEditorProjectPath(sessionId: string, cwd = process.cwd()): string {
+  return path.join(getStudioHome(cwd), 'transcript-projects', `${sessionId}.json`);
+}
+
 async function ensureSessionDir(cwd = process.cwd()): Promise<void> {
   await mkdir(path.join(getStudioHome(cwd), 'sessions'), { recursive: true });
   await mkdir(path.join(getStudioHome(cwd), 'exports'), { recursive: true });
+  await mkdir(path.join(getStudioHome(cwd), 'transcript-projects'), { recursive: true });
 }
 
 function defaultNode(input: {
@@ -373,6 +384,42 @@ export async function createSession(
 export async function readSession(sessionId: string, cwd = process.cwd()): Promise<AtlasSession> {
   const raw = await readFile(getSessionPath(sessionId, cwd), 'utf8');
   return JSON.parse(raw) as AtlasSession;
+}
+
+/**
+ * Stores the complete private transcript project beside—not inside—the compact
+ * Atlas session record. The composition package validates the payload before
+ * it reaches disk.
+ */
+export async function writeTranscriptEditorProject(
+  sessionId: string,
+  project: TranscriptEditorProject,
+  cwd = process.cwd()
+): Promise<TranscriptEditorProject> {
+  await readSession(sessionId, cwd);
+  if (project.atlasSessionId !== sessionId) {
+    throw new Error(`Transcript project ${project.id} belongs to Atlas session ${project.atlasSessionId}, not ${sessionId}.`);
+  }
+  await ensureSessionDir(cwd);
+  await writeFile(
+    getTranscriptEditorProjectPath(sessionId, cwd),
+    `${serializeTranscriptEditorProject(project)}\n`,
+    'utf8'
+  );
+  return project;
+}
+
+export async function readTranscriptEditorProject(
+  sessionId: string,
+  cwd = process.cwd()
+): Promise<TranscriptEditorProject> {
+  await readSession(sessionId, cwd);
+  const raw = await readFile(getTranscriptEditorProjectPath(sessionId, cwd), 'utf8');
+  const project = deserializeTranscriptEditorProject(raw);
+  if (project.atlasSessionId !== sessionId) {
+    throw new Error(`Stored transcript project ${project.id} does not belong to Atlas session ${sessionId}.`);
+  }
+  return project;
 }
 
 export async function writeSession(

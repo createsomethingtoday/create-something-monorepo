@@ -29,6 +29,7 @@
   "scripts": {
     "build": "tsc",
     "check": "tsc --noEmit",
+    "lint": "pnpm --filter @create-something/eslint-plugin-evidence build && node ../../scripts/evidence-lint-pilot.mjs --package packages/mcp-authz",
     "prepare": "pnpm build",
     "test": "pnpm --filter @create-something/policy-os-engine build && pnpm build && node --test test/*.test.mjs"
   },
@@ -36,7 +37,10 @@
     "@create-something/policy-os-engine": "workspace:*"
   },
   "devDependencies": {
+    "@create-something/eslint-plugin-evidence": "workspace:*",
+    "@typescript-eslint/parser": "8.54.0",
     "@types/node": "^22.0.0",
+    "eslint": "9.39.2",
     "typescript": "^5.7.0"
   },
   "author": "CREATE SOMETHING <hello@createsomething.agency>",

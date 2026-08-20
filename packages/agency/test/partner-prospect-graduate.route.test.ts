@@ -2,6 +2,16 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { createPartnerProspectGraduatePostHandler } from '../src/lib/server/partner-prospect-graduate-core.ts';
+import type { AgencyMcpEntitlementRow } from '../src/lib/server/mcp-entitlements.ts';
+
+function createEntitlementRow(overrides: Partial<AgencyMcpEntitlementRow> = {}): AgencyMcpEntitlementRow {
+	return {
+		auth_subject: 'auth0|abc', auth_email: 'owner@example.com', account_id: 'acct_identity', tenant_id: 'tenant_identity', workspace_account_id: 'acct_identity',
+		service_tier: 'mcp_only', managed_bearer_allowed: 0, org_membership_active: 0, service_entitled: 0, policy_accepted: 0, contract_active: 0, billing_active: 0,
+		denial_reason: 'service_not_entitled', metadata_json: '{}', created_at: '2026-03-18T00:00:00.000Z', updated_at: '2026-03-18T00:00:00.000Z',
+		...overrides
+	};
+}
 
 function createState() {
 	return {
@@ -11,11 +21,11 @@ function createState() {
 			slug: 'acme',
 			display_name: 'Acme',
 			workspace_account_id: 'acct_acme',
-			identity_account_id: null,
-			identity_user_id: null,
-			identity_tenant_id: null,
-			owner_email: 'owner@example.com',
-			status: 'initialized' as const,
+			identity_account_id: null as string | null,
+			identity_user_id: null as string | null,
+			identity_tenant_id: null as string | null,
+			owner_email: 'owner@example.com' as string | null,
+			status: 'initialized' as 'active' | 'initialized' | 'paused' | 'sunset' | 'disabled',
 			required_toolkits_json: '["gmail"]',
 			metadata_json: '{"onboarding_mode":"prospect","lifecycle_stage":"prospect","prospect_onboarding":{"stage":"prospect"}}',
 			created_at: '2026-03-18T00:00:00.000Z',
@@ -26,11 +36,11 @@ function createState() {
 			partner_client_id: 'pacli_acme',
 			slug: 'prospect-acme',
 			display_name: 'Prospect Workspace - Acme',
-			identity_user_id: null,
-			owner_email: 'owner@example.com',
+			identity_user_id: null as string | null,
+			owner_email: 'owner@example.com' as string | null,
 			hub_url: 'https://prospect-acme.mcp.createsomething.agency/mcp',
 			host_key: 'prospect-acme',
-			status: 'initialized' as const,
+			status: 'initialized' as 'active' | 'initialized' | 'paused' | 'sunset' | 'disabled',
 			toolkit_profile_json: '["gmail"]',
 			allowed_tool_prefixes_json: '["composio-toolkit-gmail__"]',
 			metadata_json: '{"onboarding_mode":"prospect","lifecycle_stage":"prospect","prospect_onboarding":{"stage":"prospect"}}',
@@ -124,7 +134,7 @@ test('partner prospect graduation stays blocked until entitlement is ready', asy
 		parseJsonStringArray: (raw) => (raw ? (JSON.parse(raw) as string[]) : []),
 		parseOptionalIsoTimestamp: (raw) => raw?.trim() ?? null,
 		randomId: (prefix) => `${prefix}_test`,
-		reconcileAgencyMcpEntitlement: async () => ({
+		reconcileAgencyMcpEntitlement: async () => createEntitlementRow({
 			account_id: 'acct_identity',
 			tenant_id: 'tenant_identity',
 			service_tier: 'mcp_only',
@@ -167,7 +177,12 @@ test('partner prospect graduation stays blocked until entitlement is ready', asy
 	} as any);
 
 	assert.equal(response.status, 409);
-	const payload = await response.json();
+	const payload = (await response.json()) as {
+		error: string;
+		issuance_state: { ready: boolean; blocked_reason: string };
+		client: { status: string };
+		lane: { status: string };
+	};
 	assert.equal(payload.error, 'graduation_blocked');
 	assert.equal(payload.issuance_state.ready, false);
 	assert.equal(payload.issuance_state.blocked_reason, 'service_not_entitled');
@@ -211,7 +226,7 @@ test('partner prospect graduation promotes the prospect once entitlement and con
 		parseJsonStringArray: (raw) => (raw ? (JSON.parse(raw) as string[]) : []),
 		parseOptionalIsoTimestamp: (raw) => raw?.trim() ?? null,
 		randomId: (prefix) => `${prefix}_test`,
-		reconcileAgencyMcpEntitlement: async () => ({
+		reconcileAgencyMcpEntitlement: async () => createEntitlementRow({
 			account_id: 'acct_identity',
 			tenant_id: 'tenant_identity',
 			service_tier: 'mcp_only',
@@ -261,7 +276,13 @@ test('partner prospect graduation promotes the prospect once entitlement and con
 	assert.equal(state.lane.status, 'active');
 	assert.equal(state.consentInserts.length, 1);
 
-	const payload = await response.json();
+	const payload = (await response.json()) as {
+		client: { status: string; metadata: { onboarding_mode: string } };
+		lane: { status: string };
+		issuance_state: { ready: boolean };
+		entitlement: { decision: { reason: string } };
+		consent_record_id: string;
+	};
 	assert.equal(payload.client.status, 'active');
 	assert.equal(payload.client.metadata.onboarding_mode, 'client');
 	assert.equal(payload.lane.status, 'active');

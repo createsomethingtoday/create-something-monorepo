@@ -86,7 +86,7 @@ test('claimed prospect user can issue a self-service toolkit connect link', asyn
 	assert.equal(writes[0]?.toolkit, 'gmail');
 	assert.equal(writes[0]?.accountSlug, 'primary');
 	assert.equal(events.length, 1);
-	const payload = await response.json();
+	const payload = (await response.json()) as { connect_link: string; composio_user_id: string };
 	assert.equal(payload.connect_link, 'https://composio.example/connect');
 	assert.equal(payload.composio_user_id, 'hd_gmail_primary');
 });
@@ -136,7 +136,7 @@ test('prospect toolkit connect link requires the prospect to already be claimed 
 	} as any);
 
 	assert.equal(response.status, 403);
-	const payload = await response.json();
+	const payload = (await response.json()) as { error: string };
 	assert.equal(payload.error, 'prospect_not_claimed');
 });
 
@@ -185,6 +185,6 @@ test('prospect toolkit connect link blocks toolkits that are not enabled for the
 	} as any);
 
 	assert.equal(response.status, 403);
-	const payload = await response.json();
+	const payload = (await response.json()) as { error: string };
 	assert.equal(payload.error, 'toolkit_not_enabled');
 });

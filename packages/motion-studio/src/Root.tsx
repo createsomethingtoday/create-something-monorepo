@@ -21,6 +21,12 @@ import { ExplainerVideo, calculateTotalDuration } from './compositions/Explainer
 import { ToolReceding } from './compositions/lessons/ToolReceding';
 import { IDEvsTerminal } from './compositions/lessons/IDEvsTerminal';
 import { TufteMorph, TUFTE_MORPH_CONFIG } from './compositions/TufteMorph';
+import {
+  AtlasTranscriptOverlay,
+  AtlasTranscriptOverlaySchema,
+  ATLAS_TRANSCRIPT_OVERLAY_COMPOSITION_ID,
+  ATLAS_TRANSCRIPT_OVERLAY_FPS,
+} from './atlas-transcript-overlay';
 
 // Commercials (v1 - slide deck style)
 import { SeeingCommercial as SeeingCommercialV1, SEEING_COMMERCIAL_DURATION } from './compositions/commercials/SeeingCommercial';
@@ -52,6 +58,11 @@ import {
 // Primitives
 import { KineticText } from './primitives/KineticText';
 import { voxPresets, typography, colors } from './styles';
+import {
+  AtlasTranscriptTimeline,
+  ATLAS_TRANSCRIPT_RENDER_DEFAULT_PROPS,
+  atlasTranscriptDurationInFrames
+} from './atlas-transcript-editor';
 
 // Example data
 const sampleChartData = [
@@ -323,6 +334,29 @@ const sampleScenes = [
 export const RemotionRoot: React.FC = () => {
   return (
     <>
+      {/* Atlas Studio: deterministic preview of accepted local text-overlay revisions. */}
+      <Composition
+        id={ATLAS_TRANSCRIPT_OVERLAY_COMPOSITION_ID}
+        component={AtlasTranscriptOverlay}
+        durationInFrames={75}
+        fps={ATLAS_TRANSCRIPT_OVERLAY_FPS}
+        width={1920}
+        height={1080}
+        schema={AtlasTranscriptOverlaySchema}
+        defaultProps={{
+          revisionId: 'revision-preview',
+          durationInFrames: 75,
+          overlays: [
+            {
+              id: 'accepted-title',
+              text: 'Local-first edit',
+              fromFrame: 0,
+              durationInFrames: 45,
+            },
+          ],
+        }}
+      />
+
       {/* CREATE SOMETHING workflow-performance reel — sound-off-first 9:16 story */}
       <Composition
         id="CreateSomethingWorkflowReel"
@@ -628,6 +662,20 @@ export const RemotionRoot: React.FC = () => {
         fps={TUFTE_MORPH_CONFIG.fps}
         width={TUFTE_MORPH_CONFIG.width}
         height={TUFTE_MORPH_CONFIG.height}
+      />
+
+      <Composition
+        id="AtlasTranscriptTimeline"
+        component={AtlasTranscriptTimeline}
+        fps={30}
+        width={1920}
+        height={1080}
+        defaultProps={ATLAS_TRANSCRIPT_RENDER_DEFAULT_PROPS}
+        calculateMetadata={({ props }) => ({
+          durationInFrames: atlasTranscriptDurationInFrames(props),
+          width: props.width,
+          height: props.height
+        })}
       />
     </>
   );
