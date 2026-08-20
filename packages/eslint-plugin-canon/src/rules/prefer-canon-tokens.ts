@@ -73,6 +73,14 @@ export default createRule({
       }
     }
 
+    function checkCSSDeclarations(node: any, css: string) {
+      const matches = css.matchAll(/([a-z-]+)\s*:\s*([^;{}]+)/gi);
+      for (const match of matches) {
+        const [, property, value] = match;
+        checkCSSValue(node, property, value);
+      }
+    }
+
     return {
       // Handle inline styles in Svelte
       SvelteAttribute(node: any) {
@@ -82,13 +90,7 @@ export default createRule({
           if (node.value && node.value.length > 0) {
             for (const val of node.value) {
               if (val.type === 'SvelteText') {
-                const styleStr = val.data;
-                // Simple regex to extract property: value pairs
-                const matches = styleStr.matchAll(/([a-z-]+)\s*:\s*([^;]+)/gi);
-                for (const match of matches) {
-                  const [, property, value] = match;
-                  checkCSSValue(node, property, value);
-                }
+                checkCSSDeclarations(node, val.data ?? val.value ?? '');
               }
             }
           }
@@ -109,6 +111,15 @@ export default createRule({
                 }
               }
             }
+          }
+        }
+      },
+
+      // Handle declarations in Svelte <style> blocks.
+      SvelteStyleElement(node: any) {
+        for (const child of node.children ?? []) {
+          if (child.type === 'SvelteText') {
+            checkCSSDeclarations(node, child.data ?? child.value ?? '');
           }
         }
       }
