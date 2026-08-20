@@ -6,12 +6,22 @@ import {
   createMcpPolicyAcceptancePostHandler
 } from '../src/lib/server/mcp-policy-acceptance-core.ts';
 import { recordAgencyMcpPolicyAcceptance } from '../src/lib/server/mcp-entitlements.ts';
+import type { AgencyMcpEntitlementRow } from '../src/lib/server/mcp-entitlements.ts';
+
+function createEntitlementRow(overrides: Partial<AgencyMcpEntitlementRow> = {}): AgencyMcpEntitlementRow {
+  return {
+    auth_subject: 'usr_micah', auth_email: 'micah@createsomething.io', account_id: 'acct_mj', tenant_id: 'tenant_createsomething_io', workspace_account_id: 'acct_mj',
+    service_tier: 'policy_os_trial', managed_bearer_allowed: 0, org_membership_active: 1, service_entitled: 0, policy_accepted: 0, contract_active: 0, billing_active: 0,
+    denial_reason: 'policy_acceptance_required', metadata_json: '{}', created_at: '2026-08-01T00:00:00.000Z', updated_at: '2026-08-01T00:00:00.000Z',
+    ...overrides
+  };
+}
 
 test('accepting the access policy records consent without changing commercial or credential gates', async () => {
   let recorded: Record<string, unknown> | null = null;
   const handler = createMcpPolicyAcceptancePostHandler({
     ensureAgencyMcpEntitlement: async () => ({
-      row: {
+      row: createEntitlementRow({
         auth_subject: 'usr_micah',
         service_tier: 'policy_os_trial',
         managed_bearer_allowed: 0,
@@ -20,11 +30,11 @@ test('accepting the access policy records consent without changing commercial or
         policy_accepted: 0,
         contract_active: 0,
         billing_active: 0
-      }
+      })
     }),
     recordAgencyMcpPolicyAcceptance: async (_db, input) => {
       recorded = input;
-      return { auth_subject: 'usr_micah', policy_accepted: 1 };
+      return createEntitlementRow({ policy_accepted: 1 });
     },
     requireAgencySessionUser: async () => ({
       id: 'usr_micah',
@@ -70,7 +80,7 @@ test('policy acceptance storage mutates only policy_accepted and acceptance meta
     policy_accepted: 0,
     contract_active: 0,
     billing_active: 0,
-    denial_reason: 'policy_acceptance_required',
+    denial_reason: 'policy_acceptance_required' as string | null,
     metadata_json: JSON.stringify({ existing: 'preserved' }),
     created_at: '2026-08-01T00:00:00.000Z',
     updated_at: '2026-08-01T00:00:00.000Z'

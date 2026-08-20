@@ -112,7 +112,7 @@ test('legacy shared-auth user can issue a self-serve toolkit connect link', asyn
 	assert.equal(writes[0]?.accountSlug, 'primary');
 	assert.equal(events.length, 1);
 
-	const payload = await response.json();
+	const payload = (await response.json()) as { lane_key: string; client_slug: string; connect_link: string };
 	assert.equal(payload.lane_key, 'danny');
 	assert.equal(payload.client_slug, 'legacy-danny-acct-danny');
 	assert.equal(payload.connect_link, 'https://composio.example/connect');
@@ -175,7 +175,7 @@ test('legacy self-serve connect remains blocked for partner-managed lanes', asyn
 	} as any);
 
 	assert.equal(response.status, 403);
-	const payload = await response.json();
+	const payload = (await response.json()) as { error: string };
 	assert.equal(payload.error, 'partner_admin_required');
 });
 
@@ -229,6 +229,6 @@ test('legacy self-serve connect rejects toolkits that are out of scope', async (
 	} as any);
 
 	assert.equal(response.status, 403);
-	const payload = await response.json();
+	const payload = (await response.json()) as { error: string };
 	assert.equal(payload.error, 'toolkit_not_enabled');
 });

@@ -123,7 +123,13 @@ test("partner toolkit connect-link route authorizes before issuing a link", asyn
   assert.equal(statements.length, 1);
   assert.match(statements[0]?.sql ?? "", /INSERT INTO partner_auth_connections/);
 
-  const payload = await response.json();
+  const payload = (await response.json()) as {
+    client_slug: string;
+    workspace_account_id: string;
+    auth_config_id: string;
+    connect_link: string;
+    policy?: { decision: string };
+  };
   assert.equal(payload.client_slug, "acme");
   assert.equal(payload.workspace_account_id, "wksp_acme");
   assert.equal(payload.auth_config_id, "ac_notion");
@@ -183,7 +189,7 @@ test("partner toolkit connect-link route surfaces policy failures", async () => 
   } as any);
 
   assert.equal(response.status, 403);
-  const payload = await response.json();
+  const payload = (await response.json()) as { error: string; message: string };
   assert.equal(payload.error, "policy_blocked");
   assert.equal(payload.message, "Consent required");
 });

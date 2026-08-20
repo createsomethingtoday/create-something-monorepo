@@ -27,7 +27,13 @@ function createFakeDb() {
 test('partner prospect bootstrap creates initialized client and restricted lane records', async () => {
 	const { db, statements } = createFakeDb();
 	let clientLookupCount = 0;
-	let upsertInput: Record<string, unknown> | null = null;
+	let upsertInput: {
+		status: string;
+		slug: string;
+		toolkitProfile: string[];
+		allowedToolPrefixes: string[];
+	} | null = null;
+	const capturedUpsertInput = () => upsertInput;
 
 	const handler = createPartnerProspectBootstrapPostHandler({
 		partnerKey: 'half-dozen',
@@ -86,7 +92,7 @@ test('partner prospect bootstrap creates initialized client and restricted lane 
 		resolveAllowedToolPrefixes: (toolkits, explicitPrefixes = []) =>
 			[...new Set([...explicitPrefixes, ...toolkits.map((toolkit) => `composio-toolkit-${toolkit}__`)])],
 		upsertPartnerAccessLane: async (_db, input) => {
-			upsertInput = input as Record<string, unknown>;
+			upsertInput = input;
 			return {
 				id: 'palane_test',
 				partner_client_id: 'pacli_acme',
@@ -132,16 +138,20 @@ test('partner prospect bootstrap creates initialized client and restricted lane 
 	assert.equal(response.status, 200);
 	assert.equal(statements.length, 1);
 	assert.match(statements[0]?.sql ?? '', /INSERT INTO partner_auth_clients/);
-	assert.equal(upsertInput?.status, 'initialized');
-	assert.equal(upsertInput?.slug, 'prospect-acme');
-	assert.deepEqual(upsertInput?.toolkitProfile, ['gmail', 'notion']);
-	assert.deepEqual(upsertInput?.allowedToolPrefixes, [
+	assert.equal(capturedUpsertInput()?.status, 'initialized');
+	assert.equal(capturedUpsertInput()?.slug, 'prospect-acme');
+	assert.deepEqual(capturedUpsertInput()?.toolkitProfile, ['gmail', 'notion']);
+	assert.deepEqual(capturedUpsertInput()?.allowedToolPrefixes, [
 		'composio-toolkit-notion__',
 		'hub-half-dozen-prospect__',
 		'composio-toolkit-gmail__',
 	]);
 
-	const payload = await response.json();
+	const payload = (await response.json()) as {
+		client: { slug: string; status: string };
+		lane: { slug: string; status: string };
+		issuance_state: { ready: boolean; blocked_reason: string; required_graduation_checks: string[] };
+	};
 	assert.equal(payload.client.slug, 'acme');
 	assert.equal(payload.client.status, 'initialized');
 	assert.equal(payload.lane.slug, 'prospect-acme');
@@ -218,6 +228,6 @@ test('partner prospect bootstrap refuses to overwrite non-prospect clients', asy
 	} as any);
 
 	assert.equal(response.status, 409);
-	const payload = await response.json();
+	const payload = (await response.json()) as { error: string };
 	assert.equal(payload.error, 'client_already_exists');
 });

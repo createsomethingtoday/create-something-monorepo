@@ -405,7 +405,7 @@ function edgeIdsForFocusedNodes(canvas: PublicAtlasCanvas, nodeIds: string[]): s
 
 function uniqueNodeIds(canvas: PublicAtlasCanvas, ids: Array<string | undefined>): string[] {
 	const available = new Set(canvas.nodes.map((node) => node.id));
-	return [...new Set(ids.filter((id): id is string => Boolean(id) && available.has(id)))];
+	return [...new Set(ids.filter((id): id is string => typeof id === 'string' && available.has(id)))];
 }
 
 export function createPublicAtlasNode(

@@ -47,8 +47,9 @@ test('agency signs customers in through CREATE SOMETHING Identity', async () => 
 
 	assert.equal(response.status, 200);
 	assert.ok(identityRequest);
-	assert.equal(identityRequest.url, 'https://id.createsomething.space/v1/auth/login');
-	assert.deepEqual(await identityRequest.json(), {
+	const capturedIdentityRequest = identityRequest as Request;
+	assert.equal(capturedIdentityRequest.url, 'https://id.createsomething.space/v1/auth/login');
+	assert.deepEqual(await capturedIdentityRequest.json(), {
 		email: 'owner@example.com',
 		password: 'correct horse battery staple',
 		audience: 'client-workspace',
@@ -102,7 +103,8 @@ test('agency signs customers up through an Identity-supported source', async () 
 
 	assert.equal(response.status, 200);
 	assert.ok(identityRequest);
-	assert.deepEqual(await identityRequest.json(), {
+	const capturedIdentityRequest = identityRequest as Request;
+	assert.deepEqual(await capturedIdentityRequest.json(), {
 		email: 'new-owner@example.com',
 		password: 'correct horse battery staple',
 		name: 'New Owner',

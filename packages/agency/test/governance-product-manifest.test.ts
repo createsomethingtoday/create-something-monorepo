@@ -101,7 +101,25 @@ test('governance product manifest exposes runtime APIs for record composition', 
 
 test('governance product manifest API returns the runtime-readable contract', async () => {
 	const response = await getGovernanceProductManifest({} as never);
-	const payload = await response.json();
+	const payload = (await response.json()) as {
+		apiPath: string;
+		attachmentGraphApi: { path: string };
+		attachmentRecordsApi: { path: string };
+		connectionRecordsApi: { path: string };
+		receiptRecordsApi: { path: string };
+		monitorReadinessApi: { path: string };
+		agentContract: {
+			primaryConsumer: string;
+			attachmentGraphApiPath: string;
+			attachmentRecordsApiPath: string;
+			connectionRecordsApiPath: string;
+			receiptRecordsApiPath: string;
+			monitorReadinessApiPath: string;
+			requiredLoop: string[];
+		};
+		products: unknown[];
+		runtimeApis: unknown[];
+	};
 
 	assert.equal(response.status, 200);
 	assert.equal(response.headers.get('cache-control'), 'max-age=300');

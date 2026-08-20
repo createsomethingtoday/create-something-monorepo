@@ -13,6 +13,24 @@ const REQUIRED_RUNTIME_APIS = {
 	proof: { path: '/api/governance/proofs', methods: ['GET', 'POST'] }
 };
 
+/** @typedef {{ id?: string, attachesTo?: string[] }} GovernanceProduct */
+/** @typedef {{ source?: string, target?: string }} GovernanceLink */
+/** @typedef {{ product?: string, path?: string, methods?: string[] }} GovernanceRuntimeApi */
+/** @typedef {{ source?: string, target?: string, canAttach?: boolean }} GovernanceAttachment */
+/**
+ * @typedef {{
+ *   products?: GovernanceProduct[], requiredLinks?: GovernanceLink[], runtimeApis?: GovernanceRuntimeApi[], attachmentMatrix?: GovernanceAttachment[],
+ *   attachmentGraphApi?: { path?: string, requiresCredential?: boolean, attaches?: string[] },
+ *   attachmentRecordsApi?: { path?: string, requiresCredential?: boolean, methods?: string[], attaches?: string[] },
+ *   connectionRecordsApi?: { path?: string, requiresCredential?: boolean, methods?: string[], records?: string },
+ *   receiptRecordsApi?: { path?: string, requiresCredential?: boolean, methods?: string[], records?: string },
+ *   monitorReadinessApi?: { path?: string, requiresCredential?: boolean, secretSafe?: boolean },
+ *   agentContract?: { attachmentRecordsApiPath?: string, connectionRecordsApiPath?: string, receiptRecordsApiPath?: string, monitorReadinessApiPath?: string },
+ *   productionReadiness?: { ready?: boolean }
+ * }} GovernanceManifest
+ */
+
+/** @param {GovernanceManifest} body */
 export function validateGovernanceProductManifest(body) {
 	const products = Array.isArray(body?.products) ? body.products : [];
 	const productIds = new Set(products.map((product) => product.id).filter(Boolean));
@@ -21,11 +39,11 @@ export function validateGovernanceProductManifest(body) {
 			.map((link) => `${link.source}->${link.target}`)
 			.filter(Boolean)
 	);
-	const runtimeApis = new Map(
-		(Array.isArray(body?.runtimeApis) ? body.runtimeApis : [])
-			.filter((api) => api?.product)
-			.map((api) => [api.product, api])
-	);
+	/** @type {Map<string, GovernanceRuntimeApi>} */
+	const runtimeApis = new Map();
+	for (const api of Array.isArray(body?.runtimeApis) ? body.runtimeApis : []) {
+		if (api.product) runtimeApis.set(api.product, api);
+	}
 	const attachmentMatrix = Array.isArray(body?.attachmentMatrix) ? body.attachmentMatrix : [];
 
 	const missingProducts = REQUIRED_GOVERNANCE_PRODUCTS.filter((productId) => !productIds.has(productId));
@@ -105,6 +123,7 @@ export function validateGovernanceProductManifest(body) {
 	};
 }
 
+/** @param {Map<string, GovernanceRuntimeApi>} runtimeApis */
 function missingRequiredRuntimeApis(runtimeApis) {
 	return Object.entries(REQUIRED_RUNTIME_APIS)
 		.filter(([productId, expected]) => {
@@ -118,6 +137,7 @@ function missingRequiredRuntimeApis(runtimeApis) {
 		.map(([productId]) => productId);
 }
 
+/** @param {GovernanceProduct[]} products @param {GovernanceAttachment[]} attachmentMatrix */
 function missingAttachmentMatrixEntries(products, attachmentMatrix) {
 	const matrix = new Set(
 		attachmentMatrix
