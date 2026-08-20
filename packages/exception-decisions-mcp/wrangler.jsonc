@@ -1,0 +1,16 @@
+{
+  "name": "exception-decisions-mcp",
+  "account_id": "9645bd52e640b8a4f40a3a55ff1dd75a",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-01",
+  "routes": [
+    {
+      "pattern": "exceptions.mcp.createsomething.agency",
+      "custom_domain": true
+    }
+  ]
+  // Secrets (set via `wrangler secret put`, never in this file):
+  //   AIRTABLE_API_KEY  — Airtable PAT scoped to appMoIgXMTTTNIc3p
+  //   DECIDERS_JSON     — key → {name, email, role, surface?} map; keep .deciders.local.json in sync
+  // Optional vars: AIRTABLE_BASE_ID, DECISIONS_VIEW_URL (defaults in src/index.ts)
+}

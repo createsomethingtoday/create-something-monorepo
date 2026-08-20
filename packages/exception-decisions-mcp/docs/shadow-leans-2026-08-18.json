@@ -1,0 +1,137 @@
+{
+  "source": "Ruleset v1 shadow run 2026-08-18 (see shadow-run-2026-08-18.md; calibration: wrop.wf.app/w/exception-recommendation-shadow-run-8-18-aigsn5)",
+  "leans": [
+    {
+      "item_id": "recNoySWOySFopUDw",
+      "recommendation": "deny",
+      "confidence": 0.95,
+      "notes": "A yes would mean listing a payments app whose authenticated API answers any website on the internet. Rule: credentialed CORS open to arbitrary origins is never exemptable — fix is an exact origin allowlist. [confidence 0.95 · Ruleset v1 · shadow run 8/18]"
+    },
+    {
+      "item_id": "reccZcU9kPsjqkQdO",
+      "recommendation": "deny",
+      "confidence": 0.95,
+      "notes": "A yes would mean who receives the money can be set by the browser — debug merchant-assignment endpoints shipped in the production bundle. Rule: unvalidated payment controls; no precedent could cover this. [confidence 0.95 · Ruleset v1 · shadow run 8/18]"
+    },
+    {
+      "item_id": "reci1kAiGC98pb6Is",
+      "recommendation": "deny",
+      "confidence": 0.95,
+      "notes": "A yes would mean what we approve today isn't what runs tomorrow: the reviewed script loads an unreviewed second stage that fingerprints shoppers undisclosed and rewrites native browser functions. Rule: mutable, undeclared executable code. [confidence 0.95 · Ruleset v1 · shadow run 8/18]"
+    },
+    {
+      "item_id": "recPhWhGTo8P1SGXl",
+      "recommendation": "deny",
+      "confidence": 0.9,
+      "notes": "A yes would mean charges, inventory, and totals hang off a number a shopper can garble — no server-side revalidation was reviewable. Rule: unvalidated payment/checkout controls. [confidence 0.90 · Ruleset v1 · shadow run 8/18]"
+    },
+    {
+      "item_id": "rectqoQ3P7GAYU28A",
+      "recommendation": "deny",
+      "confidence": 0.9,
+      "notes": "A yes would mean any script on the page could declare a payment successful — completion messages are accepted without checking their sender. Rule: unvalidated payment controls. [confidence 0.90 · Ruleset v1 · shadow run 8/18]"
+    },
+    {
+      "item_id": "recKrVkDwJPMTNtnk",
+      "recommendation": "deny",
+      "confidence": 0.9,
+      "notes": "A yes would mean unchecked redirects on a payment page — javascript:, data:, and arbitrary external hosts all pass, which is how buyers land on a fake card form. Rule: unvalidated payment controls. [confidence 0.90 · Ruleset v1 · shadow run 8/18]"
+    },
+    {
+      "item_id": "recNJ7wLVZcB2LluF",
+      "recommendation": "deny",
+      "confidence": 0.9,
+      "notes": "A yes would mean a Webflow login credential sitting in server logs, browser history, and analytics — the identity token travels in a GET URL. Rule: secrets in URLs; the fix is a routine POST change. [confidence 0.90 · Ruleset v1 · shadow run 8/18]"
+    },
+    {
+      "item_id": "recxkKY2UEiICGrZg",
+      "recommendation": "deny",
+      "confidence": 0.9,
+      "notes": "A yes would mean certifying payment protections nobody reviewed — no backend was provided, so pricing, ownership, and refund controls are unverifiable. The fix is simply providing the server code. [confidence 0.90 · Ruleset v1 · shadow run 8/18]"
+    },
+    {
+      "item_id": "rec6VGSHxgVd1ABWy",
+      "recommendation": "deny",
+      "confidence": 0.9,
+      "notes": "A yes would mean shipping a payments app on a dependency with published security advisories when the fix is a version bump and rebuild. Rule: unpatched published CVEs. [confidence 0.90 · Ruleset v1 · shadow run 8/18]"
+    },
+    {
+      "item_id": "rec4gzAHIXhgsEgPV",
+      "recommendation": "deny",
+      "confidence": 0.9,
+      "notes": "The core feature didn't work in review — the published checkout never loaded and the code logged success after failing. A launch blocker is not exemptable. [confidence 0.90 · precedent: Cloudinary ❌, Sparkfive ❌ · Ruleset v1 · shadow run 8/18]"
+    },
+    {
+      "item_id": "recJeNR9sGbTifDA0",
+      "recommendation": "deny",
+      "confidence": 0.85,
+      "notes": "A yes would mean customer sites run tampered code without noticing — none of the six injected scripts carry an integrity fingerprint. Rule: missing SRI on hosted injected scripts. [confidence 0.85 · Ruleset v1 · shadow run 8/18]"
+    },
+    {
+      "item_id": "recg5K7KelxvcI7i7",
+      "recommendation": "deny",
+      "confidence": 0.85,
+      "notes": "A yes would mean approving a payments app we cannot rebuild or inspect — the package is compiled output only, still identifying as the dev build. No review-completeness waiver has ever been granted. [confidence 0.85 · Ruleset v1 · shadow run 8/18]"
+    },
+    {
+      "item_id": "recTrM1tPuuoEHpFT",
+      "recommendation": "deny",
+      "confidence": 0.8,
+      "notes": "A yes would mean 'uninstalled' leaves third-party payment scripts running on live customer sites. Rule: complete install/remove lifecycle is required. [confidence 0.80 · Ruleset v1 · shadow run 8/18]"
+    },
+    {
+      "item_id": "recjSA9HJcIBxL06k",
+      "recommendation": "deny",
+      "confidence": 0.8,
+      "notes": "A yes would mean one click can charge a customer for three — double-initialization stacks listeners, and script updates on live sites routinely double-load. Money-adjacent malfunction with a routine fix. [confidence 0.80 · Ruleset v1 · shadow run 8/18]"
+    },
+    {
+      "item_id": "recUdU0OkaPCdklih",
+      "recommendation": "deny",
+      "confidence": 0.75,
+      "notes": "A yes would mean an app that edits the customer's site before they click anything — 70 styles and 9 variables on open, and it adopts (and may later delete) same-named customer-owned resources. [confidence 0.75 · Ruleset v1 · shadow run 8/18]"
+    },
+    {
+      "item_id": "recOs7SBBDyXhrgWn",
+      "recommendation": "deny",
+      "confidence": 0.75,
+      "notes": "A yes would mean checkout code running on every page of the site — style guide and 404 included — widening the blast radius of every other finding. Scope-minimization is a fix, not a waiver. [confidence 0.75 · Ruleset v1 · shadow run 8/18]"
+    },
+    {
+      "item_id": "recoPwJJUjhGvOPst",
+      "recommendation": "deny",
+      "confidence": 0.75,
+      "notes": "A yes would mean one malformed product ID silently disables purchasing for the rest of the page. The fix is a one-line CSS.escape() call. [confidence 0.75 · Ruleset v1 · shadow run 8/18]"
+    },
+    {
+      "item_id": "recc03xzF6Xvfl2DZ",
+      "recommendation": "deny",
+      "confidence": 0.7,
+      "notes": "A yes would mean the listing merchants trust with their revenue says 'North Staging App' and implies Webflow runs the product. Misleading affiliation on a payments listing is a trust issue, not a copy nit (contrast: the support-email item was a nit and was approved). [confidence 0.70 · Ruleset v1 · shadow run 8/18]"
+    },
+    {
+      "item_id": "recuGoOrhtLyPU5iL",
+      "recommendation": "deny",
+      "confidence": 0.7,
+      "notes": "A yes would mean the fallback state on security-strict sites is an exposed fake card form — the hide-guard style injection dies under an enforced CSP. Contrast CartGenie ✅, which degraded gracefully. [confidence 0.70 · Ruleset v1 · shadow run 8/18]"
+    },
+    {
+      "item_id": "recn90qdPk2XJMnO1",
+      "recommendation": "deny",
+      "confidence": 0.7,
+      "notes": "A yes would mean every merchant confused by underwriting becomes a Webflow support ticket — no onboarding, fees, or approval-state documentation exists. Docs are a fix, not a waiver. Closest lean to a business-tolerance call; flag on disagreement and this rule moves to human-only. [confidence 0.70 · Ruleset v1 · shadow run 8/18]"
+    }
+  ],
+  "needs_human": [
+    {
+      "item_id": "recG5BfFwXi8nZBLG",
+      "route": "Adam",
+      "reason": "Architecture/category call: whether embedded-checkout architectures may touch payment-form elements at all. Precedent-setting; automation must not lean."
+    },
+    {
+      "item_id": "recPvkf8awbcOSI3C",
+      "route": "split + Greg",
+      "reason": "Bundle row (10 findings). Split into per-item rows before any lean; partner re-engagement (unresponsive, Zendesk closed) is the partner-lead lane."
+    }
+  ]
+}
