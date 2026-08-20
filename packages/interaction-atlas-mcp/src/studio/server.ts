@@ -225,7 +225,7 @@ async function getStudioAssetVersion(): Promise<string> {
       return `${filename}:${info.size}:${Math.trunc(info.mtimeMs)}`;
     })
   );
-  return Buffer.from(assets.join('|')).toString('base64url').slice(0, 16);
+  return createHash('sha256').update(assets.join('|')).digest('base64url').slice(0, 16);
 }
 
 async function sendAsset(
