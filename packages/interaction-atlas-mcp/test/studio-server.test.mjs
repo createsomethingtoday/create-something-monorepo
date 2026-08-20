@@ -924,7 +924,11 @@ test('Atlas Studio stores selected transcript cuts as a proposal before changing
   }
 });
 
-test('Atlas Studio creates a private transcript project from a local MP4 and timestamped transcript', async () => {
+test('Atlas Studio creates a private transcript project from a local MP4 and timestamped transcript', async (t) => {
+  if (spawnSync('ffmpeg', ['-version'], { stdio: 'ignore' }).status !== 0) {
+    t.skip('ffmpeg is unavailable in this runtime');
+    return;
+  }
   const cwd = await mkdtemp(path.join(tmpdir(), 'atlas-studio-local-import-api-test-'));
   const sourcePath = path.join(cwd, 'synthetic-source.mp4');
   execFileSync('ffmpeg', [
@@ -1085,7 +1089,11 @@ test('Atlas Studio previews only receipt-owned local render outputs', async () =
   }
 });
 
-test('Atlas Studio previews only the project-owned local source asset with byte-range support', async () => {
+test('Atlas Studio previews only the project-owned local source asset with byte-range support', async (t) => {
+  if (spawnSync('ffmpeg', ['-version'], { stdio: 'ignore' }).status !== 0) {
+    t.skip('ffmpeg is unavailable in this runtime');
+    return;
+  }
   const cwd = await mkdtemp(path.join(tmpdir(), 'atlas-studio-source-preview-api-test-'));
   const sourcePath = path.join(cwd, 'source.mp4');
   execFileSync('ffmpeg', [
