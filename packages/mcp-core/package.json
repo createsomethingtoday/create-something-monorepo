@@ -42,7 +42,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "lint": "pnpm run typecheck",
+    "lint": "pnpm run typecheck && pnpm --filter @create-something/eslint-plugin-evidence build && node ../../scripts/evidence-lint-pilot.mjs --package packages/mcp-core",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -51,7 +51,10 @@
     "zod": "^3.25.34"
   },
   "devDependencies": {
+    "@create-something/eslint-plugin-evidence": "workspace:*",
+    "@typescript-eslint/parser": "8.54.0",
     "@types/node": "^22.0.0",
+    "eslint": "9.39.2",
     "typescript": "^5.7.0"
   },
   "keywords": [
