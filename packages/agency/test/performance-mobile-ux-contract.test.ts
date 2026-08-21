@@ -56,6 +56,10 @@ const campaignOpeningSource = readFileSync(
   ),
   'utf8'
 );
+const metricsSource = readFileSync(
+  new URL('../../canon/src/lib/components/meridian/MeridianMetrics.svelte', import.meta.url),
+  'utf8'
+);
 const footerSource = readFileSync(
   new URL('../../canon/src/lib/components/Footer.svelte', import.meta.url),
   'utf8'
@@ -185,6 +189,7 @@ test('the homepage boundary comparison is one compact proof object on desktop an
 test('homepage section components reset inherited shell padding before applying their own rhythm', () => {
   for (const [name, source, selector] of [
     ['campaign opening', campaignOpeningSource, '.performance-campaign-opening'],
+    ['scoreboard metrics', metricsSource, '.meridian-metrics'],
     ['adoption paths', adoptionPathSource, '.adoption-paths'],
     ['compatibility rail', compatibilityRailSource, '.compatibility-rail']
   ] as const) {
