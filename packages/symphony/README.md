@@ -83,14 +83,14 @@ provider boundary.
 
 ## Agent Legibility Contract
 
-| Field               | Value                                                                                                                                                                                                                       |
-| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Entry point         | `packages/symphony/src/cli.js`, `packages/symphony/src/orchestrator.js`, `packages/symphony/src/tracker/linear.js`, `packages/symphony/src/canonical-harness-gate.js`, `packages/symphony/src/executor-routing-contract.js` |
-| Boot command        | `node src/cli.js ../../automation/symphony/code-quality/WORKFLOW.md --once`                                                                                                                                                 |
-| Smoke command       | `pnpm check && pnpm test`                                                                                                                                                                                                   |
-| Validation surfaces | node syntax check output, node test output, executor routing decision/receipt schema, canonical receipt schema and persisted receipt, Linear tracker events, worker workspace metadata                                      |
-| UI validation path  | none                                                                                                                                                                                                                        |
-| Escalation rule     | stop if Linear issue state, workspace cleanup behavior, or Codex worker status cannot be reconciled with the workflow file and tracker evidence                                                                             |
+| Field | Value |
+|-------|-------|
+| Entry point | `packages/symphony/src/cli.js`, `packages/symphony/src/orchestrator.js`, `packages/symphony/src/tracker/linear.js`, `packages/symphony/src/canonical-harness-gate.js`, `packages/symphony/src/executor-routing-contract.js` |
+| Boot command | `node src/cli.js ../../automation/symphony/code-quality/WORKFLOW.md --once` |
+| Smoke command | `pnpm check && pnpm test` |
+| Validation surfaces | node syntax check output, node test output, executor routing decision/receipt schema, canonical receipt schema and persisted receipt, Linear tracker events, worker workspace metadata |
+| UI validation path | none |
+| Escalation rule | stop if Linear issue state, workspace cleanup behavior, or Codex worker status cannot be reconciled with the workflow file and tracker evidence |
 
 ## Development
 
