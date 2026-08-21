@@ -423,7 +423,7 @@ test('forks a settled desktop task through its last completed turn before prompt
     threadId: '01a-child',
     turnId: 'turn-child',
     status: 'completed',
-    summary: 'Codex completed the task.'
+    summary: 'Forked child 01a-child: Codex completed the task.'
   });
 });
 

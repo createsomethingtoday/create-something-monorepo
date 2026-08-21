@@ -176,7 +176,8 @@ export async function dispatchCodexDecision(
   const timeoutMs = Math.max(1_000, options.timeoutMs ?? 10 * 60_000);
   const completionPollMs = Math.max(25, options.completionPollMs ?? 2_000);
 
-  const threadResponse = decision.decision_id === 'fork'
+  const isForkedContinuation = decision.decision_id === 'fork';
+  const threadResponse = isForkedContinuation
     ? existingThreadId
       ? await forkSettledCodexThread(rpc, existingThreadId)
       : (() => {
@@ -299,13 +300,17 @@ export async function dispatchCodexDecision(
       if (timeoutHandle !== undefined) clearTimeout(timeoutHandle);
     }
 
+    const summary =
+      boundedText(lastAgentMessage, 220) ||
+      (turn.status === 'completed' ? 'Codex completed the task.' : `Codex turn ${turn.status}.`);
+
     return {
       threadId,
       turnId,
       status: turn.status as CodexDispatchResult['status'],
-      summary:
-        boundedText(lastAgentMessage, 220) ||
-        (turn.status === 'completed' ? 'Codex completed the task.' : `Codex turn ${turn.status}.`)
+      summary: isForkedContinuation
+        ? boundedText(`Forked child ${threadId}: ${summary}`, 220)
+        : summary
     };
   } finally {
     unsubscribe();
