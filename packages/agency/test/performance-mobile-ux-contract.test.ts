@@ -73,11 +73,13 @@ const publicAtlasFlowSource = readFileSync(
   'utf8'
 );
 
-test('mobile navigation exposes state so fixed privacy UI cannot compete with it', () => {
+test('mobile privacy stays at the header edge instead of covering opening proof', () => {
   assert.match(navigationSource, /onMobileMenuChange\?: \(open: boolean\) => void/);
   assert.match(navigationSource, /onMobileMenuChange\?\.\(mobileMenuOpen\)/);
   assert.match(agencyLayoutSource, /let mobileNavigationOpen = \$state\(false\)/);
   assert.match(agencyLayoutSource, /obscured=\{mobileNavigationOpen\}/);
+  assert.match(agencyLayoutSource, /mobilePlacement="header-edge"/);
+  assert.doesNotMatch(agencyLayoutSource, /mobilePlacement="safe-corner"/);
   assert.match(
     agencyLayoutSource,
     /onMobileMenuChange=\{\(open\) => \(mobileNavigationOpen = open\)\}/

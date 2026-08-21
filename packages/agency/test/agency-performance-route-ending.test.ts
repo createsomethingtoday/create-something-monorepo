@@ -30,6 +30,11 @@ test('route-owned Performance endings replace the generic handoff on primary dec
   assert.match(fieldReports, /<PerformanceConversionHandoff/);
   assert.match(layout, /usesRouteOwnedAgencyPerformanceEnding\(\$page\.url\.pathname\)/);
   assert.match(layout, /!routeOwnsPerformanceEnding/);
+  assert.match(
+    layout,
+    /footerCta=\{routeOwnsPerformanceEnding\s*\?\s*undefined\s*:\s*\{/,
+    'route-owned handoffs must suppress the duplicate shared footer conversion CTA'
+  );
 });
 
 test('every active marketing route receives exactly one route-owned or shared conversion ending', () => {
