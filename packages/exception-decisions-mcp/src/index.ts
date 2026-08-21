@@ -1,4 +1,7 @@
 // exception-decisions-mcp — decision-scoped MCP for the app-review exceptions loop.
+// v1.4.0: viewer role — read-only identities refused on every writing tool (decide item,
+//         decide version, recommend). Built for embeddable demo surfaces (wrop, Dify demo
+//         agent) so operators can browse the live queue without any path to a write.
 // v1.2.0: role-aware recommendation prefix + automation keys refused on decide tools.
 // v1.1.0 source was lost from disk; reconstructed 2026-08-18 from the deployed bundle
 // (docs/recovered-deploy-v1.1.0.js) — behavior is identical except the v1.2.0 changes.
@@ -34,7 +37,7 @@ const VIEW_URL_DEFAULT = "https://airtable.com/appMoIgXMTTTNIc3p/tblHxZ2hgSFLZxs
 const VERSIONS_TABLE = "tblHxZ2hgSFLZxsZu";
 const ITEMS_TABLE = "tblnbaaIbIulWl0b7";
 const DECISIONS_VIEW = "viwM48eXQT4Mxc4Ak";
-const VERSION = "1.3.1";
+const VERSION = "1.4.0";
 
 const V = {
   name: "fldKA9eJja5uajlok",
@@ -174,6 +177,18 @@ function isUndecided(status: string): boolean {
 function isAutomation(decider: Decider): boolean {
   return decider.role === "automation";
 }
+
+// v1.4.0: viewer identities exist for demo/embed surfaces. They may read everything
+// (list, get, whoami, draft composition) and write nothing — refused server-side on
+// every tool that touches Airtable, before any read that could mask the refusal.
+function isViewer(decider: Decider): boolean {
+  return decider.role === "viewer";
+}
+
+const VIEWER_REFUSAL = [
+  "No write made: this key is a read-only viewer identity (demo surface). It can browse the queue and",
+  "read items, but decisions and recommendations are made by people with their own keys.",
+].join(" ");
 
 function attribution(decider: Decider, verb = "Decision"): string {
   return `\n\n— ${verb} recorded by ${decider.name} (${decider.email}) via exception-decisions-mcp, ${new Date().toISOString()}`;
@@ -401,6 +416,9 @@ async function toolDecideItem(
   ctx: Ctx,
   args: { item_id: string; decision: (typeof DECISION_VALUES)[number]; notes?: string },
 ): Promise<string> {
+  if (isViewer(ctx.decider)) {
+    return VIEWER_REFUSAL;
+  }
   if (isAutomation(ctx.decider) && args.decision !== "denied") {
     return AUTOMATION_APPROVE_REFUSAL;
   }
@@ -441,6 +459,9 @@ async function toolDecideVersion(
   ctx: Ctx,
   args: { version_id: string; decision: (typeof DECISION_VALUES)[number]; notes?: string; confirm_release?: boolean },
 ): Promise<string> {
+  if (isViewer(ctx.decider)) {
+    return VIEWER_REFUSAL;
+  }
   if (isAutomation(ctx.decider)) {
     return AUTOMATION_VERSION_REFUSAL;
   }
@@ -497,6 +518,9 @@ async function toolRecommendItem(
   ctx: Ctx,
   args: { item_id: string; recommendation: (typeof RECOMMENDATION_VALUES)[number]; notes?: string },
 ): Promise<string> {
+  if (isViewer(ctx.decider)) {
+    return VIEWER_REFUSAL;
+  }
   const record = await ctx.airtable.getOne(ITEMS_TABLE, args.item_id);
   const current = selectName(record.fields[I.status]);
   if (!isUndecided(current)) {
@@ -569,9 +593,11 @@ async function toolDraftDeveloperUpdate(ctx: Ctx, args: { version_id: string }):
 function toolWhoami(ctx: Ctx): string {
   return [
     `You are deciding as ${ctx.decider.name} <${ctx.decider.email}>${ctx.decider.role ? ` (${ctx.decider.role})` : ""}.`,
-    isAutomation(ctx.decider)
-      ? "This is an AUTOMATION identity: it may record advisory recommendations and item-level DENY decisions (the guideline stands — nothing is waived). It can never grant an exception (approve) and is refused on all version-level tools, including the denial that releases feedback to the developer."
-      : "Every decision stamps ⚖️Decision By (best effort) and appends a signed attribution line to the decision notes.",
+    isViewer(ctx.decider)
+      ? "This is a read-only VIEWER identity (demo surface): it can browse the queue, read items, and compose drafts, but every writing tool refuses it. Decisions and recommendations are made by people with their own keys."
+      : isAutomation(ctx.decider)
+        ? "This is an AUTOMATION identity: it may record advisory recommendations and item-level DENY decisions (the guideline stands — nothing is waived). It can never grant an exception (approve) and is refused on all version-level tools, including the denial that releases feedback to the developer."
+        : "Every decision stamps ⚖️Decision By (best effort) and appends a signed attribution line to the decision notes.",
     "Decision rights: item DENY may be automated; exceptions (approve) and every version-level action are made by people. A person can grant an exception on a denied item at any time by correcting it in Airtable. Item decisions post to #app-review-exceptions as they land.",
   ].join("\n");
 }
