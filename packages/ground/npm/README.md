@@ -411,6 +411,15 @@ entry_points:
     - "scripts/rebuild-search-index.mjs"
 ```
 
+For `ground_find_orphans` and `ground_analyze`, orphan coverage includes
+`entry_point_evidence`: the exact path, entry-point type, and source Ground used
+to protect it. Alongside package, framework, test, and script entry points,
+Ground recognizes exact `entry_points.manual` declarations and local
+`providers[].id`, `prompts[].id`, and assertion-value `file://…` references in
+`promptfooconfig*.yaml`. The Promptfoo adapter accepts only existing source
+files beneath that configuration file; it does not scan arbitrary YAML or
+follow parent/absolute paths.
+
 See [Full Documentation](https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/ground) for configuration reference.
 
 ## Native service pilot
