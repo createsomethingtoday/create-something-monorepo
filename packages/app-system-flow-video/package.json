@@ -1,0 +1,22 @@
+{
+  "name": "@create-something/app-system-flow-video",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Remotion animation of the full Webflow app system — every branch an asset can take from preflight to marketplace. Data-driven: edit src/flow.ts, re-render.",
+  "scripts": {
+    "studio": "remotion studio",
+    "render": "remotion render AppSystemFlow out/app-system-flow.mp4",
+    "still": "remotion still AppSystemFlow",
+    "web": "node scripts/build-web.mjs"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.246",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "remotion": "4.0.246"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.12",
+    "typescript": "5.6.3"
+  }
+}
