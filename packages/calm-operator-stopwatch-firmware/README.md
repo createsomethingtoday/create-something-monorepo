@@ -53,8 +53,13 @@ versions or commits are pinned in `platformio.ini`.
 
 ## Flash
 
-The ordered unit is not yet available, so physical flashing and device-level
-touch/audio/power acceptance remain pending. When it arrives:
+The production unit was commissioned on August 17, 2026 with
+`0.3.0-stopwatch`; upload verification, the serial boot receipt, and the
+canonical `/operator/device-heartbeat` were proven. USB device names can move:
+the commissioned receipt used `/dev/cu.usbmodem2101`, while the reconnected unit
+enumerated as `/dev/cu.usbmodem1101` on August 20.
+
+For the next firmware flash:
 
 1. Connect Stopwatch over USB.
 2. Hold its reset button for about two seconds until the internal green LED
@@ -68,8 +73,10 @@ touch/audio/power acceptance remain pending. When it arrives:
 ## Controls
 
 - Dashboard: tap or either button opens Agents.
-- Agents: Button A/B moves between agents. Tap the action card to choose the
-  displayed action; tap outside the card to cycle that agent's other actions.
+- Agents: Button A/B moves between agents. The relay adds `New Codex task` plus
+  recent laptop tasks; unsupported or active history remains visible without an
+  action. Tap the action card to choose the displayed action; tap outside the
+  card to cycle that agent's other actions.
 - Button-only action: Button A cancels; Button B confirms.
 - Spoken action: hold Button B to record and release to upload.
 - Transcript review: Button A cancels; Button B confirms.
@@ -86,12 +93,15 @@ the M5Unified hardware contract.
 Voice leasing is disabled unless the relay has an explicit local transcriber:
 
 ```bash
-export OPERATOR_TRANSCRIBE_EXECUTABLE=/absolute/path/to/transcribe
-export OPERATOR_TRANSCRIBE_ARGS_JSON='["--language","en","{audio}"]'
+export OPERATOR_TRANSCRIBE_EXECUTABLE="$PWD/packages/calm-operator-ink-bridge/scripts/transcribe-local-whisper.mjs"
+unset OPERATOR_TRANSCRIBE_ARGS_JSON
 pnpm --dir packages/calm-operator-ink-bridge agent:relay
 ```
 
-The executable receives a temporary `.pcm` path and prints only the transcript
-to stdout. It is invoked with `shell: false`; the temporary audio file is mode
-`0600` and removed after the process exits. Until this executable is configured,
-button-only steering works and voice commands remain unleased.
+The included adapter requires local `whisper-cpp`, local `ffmpeg`, and the
+English `ggml-base.en.bin` model in the private Calm Operator application data
+directory documented in the bridge README. It receives a temporary `.pcm` path
+and prints only the transcript to stdout. It is invoked with `shell: false`;
+the temporary audio file is mode `0600` and removed after the process exits.
+Until this executable is configured, text-required agent actions cannot be
+completed and voice commands remain unleased.

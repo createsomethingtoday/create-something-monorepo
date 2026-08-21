@@ -19,7 +19,8 @@ The device should call this Worker directly over HTTPS. A Cloudflare Tunnel is o
 - Run a scheduled health review four times daily.
 - Fire daily local alarms for the operator at configured Central Time moments.
 - Accept Stopwatch device heartbeat.
-- Store versioned Codex and Claude progress snapshots.
+- Project recent laptop Codex tasks, including a synthetic new-task action, into
+  versioned provider-neutral progress snapshots.
 - Queue only agent-advertised, remote-safe operator decisions and retain their
   delivery receipts.
 - Accept bounded voice recordings for local transcription and on-device review.
@@ -197,6 +198,7 @@ Run the local delivery relay continuously, or run one deterministic cycle:
 ```bash
 INK_RELAY_TOKEN=... pnpm --dir packages/calm-operator-ink-bridge agent:relay
 INK_RELAY_TOKEN=... pnpm --dir packages/calm-operator-ink-bridge agent:relay:once
+INK_RELAY_TOKEN=... pnpm --dir packages/calm-operator-ink-bridge agent:relay:sync
 ```
 
 Optional relay configuration:
@@ -204,15 +206,33 @@ Optional relay configuration:
 - `INK_BRIDGE_ORIGIN` defaults to `https://ink.createsomething.agency`.
 - `INK_RELAY_ID` defaults to the local hostname.
 - `INK_RELAY_PROVIDERS` defaults to `claude,codex`.
-- `INK_CLAUDE_EXECUTABLE` and `INK_CODEX_EXECUTABLE` override CLI paths.
+- `INK_CLAUDE_EXECUTABLE` overrides the Claude CLI path.
+- `INK_CODEX_EXECUTABLE` overrides the Codex binary used to start app-server.
+  The relay prefers the Codex binary bundled with the ChatGPT desktop app, then
+  the package-local binary.
 - `INK_AGENT_WORKDIR` sets the trusted workspace for resumed sessions.
 
 Claude delivery uses `claude --resume ... --print`. Codex delivery uses the
-[documented non-interactive resume contract](https://developers.openai.com/codex/cli/reference),
-`codex exec --json resume ...`. Neither
-adapter bypasses the provider's existing sandbox, permissions, or approval
-policy. A `stop` or `pause` decision asks the agent to act at its next safe
-checkpoint; the relay does not kill an executing tool process.
+official [Codex app-server protocol](https://developers.openai.com/codex/app-server/)
+to list recent tasks, start a task, resume an eligible task, start its next
+turn, and stream progress back to the console. `agent:relay:sync` performs only
+the task-list projection and does not lease voice or decision work.
+
+The Stopwatch can prompt only a `legacy` Codex task that is idle and whose
+desktop state has been unchanged for at least two minutes. The relay re-reads
+the exact task version and advertised action immediately before dispatch. A
+recent, active, failed, or `paginated` task stays visible but read-only. Codex
+does not currently support resuming paginated task history through app-server;
+new tasks started by the Stopwatch use resumable legacy history.
+
+Codex turns run in the trusted `INK_AGENT_WORKDIR` with `workspace-write` and
+`approvalPolicy: never`. The JSONL client declines command, file, permission,
+user-input, and MCP-elicitation escalation requests. This grants bounded local
+agent authority without allowing the device to approve broader access or
+invent answers on the operator's behalf. Claude retains its own existing
+sandbox, permissions, and approval policy. A `stop` or `pause` decision asks an
+agent to act at its next safe checkpoint; the relay does not kill an executing
+tool process.
 
 Decision state is durable: `queued`, `leased`, `acknowledged`, then `completed`
 or `failed`. The console returns recent receipts so the device can distinguish
@@ -236,6 +256,36 @@ INK_RELAY_TOKEN=... pnpm --dir packages/calm-operator-ink-bridge agent:relay
 The executable is launched with `shell: false`, receives a mode-`0600`
 temporary PCM file, and must print only the transcript to stdout. A failed or
 empty transcription cannot be confirmed.
+
+For the supported local-only path on macOS, install `whisper-cpp`, place the
+English `ggml-base.en.bin` model at
+`~/Library/Application Support/CREATE SOMETHING/Calm Operator/models/ggml-base.en.bin`,
+and point the relay at the included raw-PCM adapter:
+
+```bash
+brew install whisper-cpp
+export OPERATOR_TRANSCRIBE_EXECUTABLE="$PWD/packages/calm-operator-ink-bridge/scripts/transcribe-local-whisper.mjs"
+unset OPERATOR_TRANSCRIBE_ARGS_JSON
+INK_RELAY_TOKEN=... pnpm --dir packages/calm-operator-ink-bridge agent:relay
+```
+
+The adapter converts the three-second 16 kHz mono PCM file with local `ffmpeg`,
+runs the local Whisper model, prints only the transcript, and deletes its WAV
+and text intermediates. `CALM_OPERATOR_WHISPER_MODEL` can override the private
+model path.
+
+Install the persistent, secret-free user LaunchAgent after configuring the
+model. The installer records only executable/workspace paths; Infisical injects
+the relay token when the service starts:
+
+```bash
+pnpm --dir packages/calm-operator-ink-bridge agent:relay:install
+pnpm --dir packages/calm-operator-ink-bridge agent:relay:status
+```
+
+Use `agent:relay:uninstall` to boot out the service and remove its plist. The
+service is intentionally pinned to the checkout from which it was installed;
+re-run `agent:relay:install` after moving or replacing that checkout.
 
 ## Producer helpers
 
