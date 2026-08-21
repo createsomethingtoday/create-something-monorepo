@@ -6,6 +6,8 @@ import { test } from 'node:test';
 
 import {
   auditCanonDebt,
+  CANON_DEBT_PILOT_RULES,
+  createCanonDebtPilotReport,
   discoverCanonDebtFiles,
   packageRoot
 } from '../scripts/check-canon-debt.mjs';
@@ -64,17 +66,55 @@ test('canon debt guard catches raw color and motion values', () => {
   }
 });
 
-test('canon debt guard accepts tokenized color and motion values', () => {
+test('canon debt pilot accepts tokenized color, shadow, and motion values', () => {
   const tempDir = mkdtempSync(path.join(tmpdir(), 'agency-canon-tokenized-'));
   const fixture = path.join(tempDir, '+page.svelte');
 
   try {
     writeFileSync(
       fixture,
-      '<style>p { color: var(--color-fg-primary); background: var(--color-hover); transition: color var(--duration-micro) var(--ease-standard); }</style>'
+      '<style>p { color: var(--color-fg-primary); background: var(--color-hover); box-shadow: var(--shadow-panel); transition: color var(--duration-micro) var(--ease-standard); }</style>'
     );
 
-    assert.deepEqual(auditCanonDebt([fixture]), []);
+    assert.deepEqual(auditCanonDebt([fixture], CANON_DEBT_PILOT_RULES), []);
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('canon debt pilot reports changed-file findings without enforcing them', () => {
+  const tempDir = mkdtempSync(path.join(tmpdir(), 'agency-canon-debt-pilot-'));
+  const fixture = path.join(tempDir, '+page.svelte');
+
+  try {
+    writeFileSync(
+      fixture,
+      '<style>p { color: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.2); transition: color 150ms ease; }</style>'
+    );
+
+    const report = createCanonDebtPilotReport([fixture], {
+      strategy: 'changed-files',
+      base: 'origin/main'
+    });
+
+    assert.equal(report.format, 'canon-debt-pilot/v1');
+    assert.equal(report.mode, 'warning');
+    assert.equal(report.blocking, false);
+    assert.deepEqual(report.selection, {
+      strategy: 'changed-files',
+      base: 'origin/main',
+      files: [path.relative(packageRoot, fixture).replaceAll(path.sep, '/')]
+    });
+    assert.deepEqual(report.summary, {
+      filesScanned: 1,
+      findings: 4,
+      findingsByRule: {
+        'hardcoded-hex': 1,
+        'hardcoded-rgba': 1,
+        'hardcoded-shadow': 1,
+        'hardcoded-transition-timing': 1
+      }
+    });
   } finally {
     rmSync(tempDir, { recursive: true, force: true });
   }
@@ -88,4 +128,6 @@ test('package check runs the canon debt guard', () => {
   const manifest = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 
   assert.match(manifest.scripts.check, /pnpm canon:check/);
+  assert.doesNotMatch(manifest.scripts.check, /canon:debt:pilot/);
+  assert.match(manifest.scripts['canon:debt:pilot'], /--pilot --base origin\/main/);
 });

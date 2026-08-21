@@ -30,6 +30,7 @@
     "integrations:generate": "node ./scripts/generate-integration-catalog.mjs",
     "integrations:check": "node ./scripts/generate-integration-catalog.mjs --check",
     "canon:check": "node ./scripts/check-canon-debt.mjs && node --import tsx --test test/canon-debt.test.ts test/paper-brand-cohesion.test.ts",
+    "canon:debt:pilot": "node ./scripts/check-canon-debt.mjs --pilot --base origin/main",
     "check": "pnpm prepare:build-dir && pnpm prepare:local-deps && pnpm integrations:check && pnpm search:campaign:check && node ./scripts/run-pinned-bin.mjs @sveltejs/kit svelte-kit sync && node ./scripts/run-pinned-bin.mjs svelte-check svelte-check --tsconfig ./tsconfig.json --fail-on-warnings && pnpm canon:check && pnpm copy:check && node --import tsx --test test/community-api-auth.test.ts test/identity-provider-retirement.test.ts test/public-html-cache.test.ts && pnpm test:mcp-entitlement-authority && pnpm test:map-commercial-lifecycle && pnpm test:control-activation",
     "seo:check": "node ./scripts/check-seo-aeo.mjs && pnpm marketing:check",
     "analytics:commercial-funnel": "node ./scripts/report-commercial-funnel.mjs",
