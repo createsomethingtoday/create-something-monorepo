@@ -96,6 +96,7 @@ Read in this order when you need broad repo context:
 - [policies/v1/policy.git-light-agent-delivery.v1.md](./policies/v1/policy.git-light-agent-delivery.v1.md)
 - [policies/v1/policy.prose-quality.v1.md](./policies/v1/policy.prose-quality.v1.md)
 - [policies/v1/policy.operator-agent-production-lab.v1.md](./policies/v1/policy.operator-agent-production-lab.v1.md)
+- [policies/v1/policy.executor-routing.v1.md](./policies/v1/policy.executor-routing.v1.md)
 
 ### Agent execution, observability, and UI legibility
 

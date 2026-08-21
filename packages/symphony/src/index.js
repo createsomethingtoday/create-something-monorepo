@@ -10,4 +10,5 @@ export * from './codex-client.js';
 export * from './agent-worker.js';
 export * from './orchestrator.js';
 export * from './canonical-harness-gate.js';
+export * from './executor-routing-contract.js';
 //# sourceMappingURL=index.js.map

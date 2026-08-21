@@ -4,7 +4,7 @@
 
 - Start with `README.md` for the runtime overview.
 - Read `UNDERSTANDING.md` for the package model.
-- Primary entrypoints: `src/cli.js`, `src/orchestrator.js`, `src/tracker/linear.js`.
+- Primary entrypoints: `src/cli.js`, `src/orchestrator.js`, `src/tracker/linear.js`, `src/canonical-harness-gate.js`, `src/executor-routing-contract.js`.
 
 ## Validation
 

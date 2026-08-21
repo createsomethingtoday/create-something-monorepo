@@ -1,0 +1,135 @@
+{
+  "policy_id": "policy.executor-routing.v1",
+  "version": 1,
+  "status": "draft",
+  "provider_evidence_checked_on": "2026-08-21",
+  "reverify_external_provider_facts_before_setup": true,
+  "artifact_classes": ["agent_loop", "executor_routing", "autonomy_gate", "receipt"],
+  "default_route": {
+    "provider": "openai",
+    "runtime": "native_codex",
+    "selection_rule": "cheapest_eligible_executor_not_cheapest_available_executor"
+  },
+  "autonomy_relationships": {
+    "A0": "research_or_shadow",
+    "A1": "bounded_local_execution",
+    "A2": "independently_reviewed_execution",
+    "A3": "promotion_with_live_and_rollback_proof",
+    "A4": "operator_required_escalation"
+  },
+  "provider_routes": {
+    "native_codex": {
+      "status": "production_default",
+      "allowed_levels": ["A0", "A1", "A2", "A3", "A4"],
+      "requires_new_account_key_or_budget": false
+    },
+    "openrouter": {
+      "status": "shadow_challenger",
+      "allowed_levels": ["A0"],
+      "required_execution_mode": "shadow",
+      "requires": [
+        "operator_approval_reference",
+        "responses_protocol",
+        "zero_data_retention",
+        "model_allowlist",
+        "inference_provider_allowlist",
+        "positive_usd_budget",
+        "receipt_bearing_comparison"
+      ]
+    },
+    "zai_coding_plan_direct": {
+      "status": "ineligible_for_codex",
+      "reason": "documented_coding_plan_endpoints_do_not_expose_responses_protocol"
+    },
+    "responses_adapter": {
+      "status": "not_approved",
+      "reason": "adds_runtime_maintenance_and_another_production_boundary"
+    },
+    "cloudflare_ai_gateway": {
+      "status": "eligible_for_native_openai_observability",
+      "reason": "does_not_by_itself_translate_zai_chat_completions_into_codex_responses"
+    }
+  },
+  "relationship_transitions": [
+    {
+      "when": "decision_valid_and_receipt_missing",
+      "then": "execute_selected"
+    },
+    {
+      "when": "passed_accepted_shadow_receipt",
+      "then": "evaluate_challenger"
+    },
+    {
+      "when": "passed_accepted_primary_receipt",
+      "then": "accept"
+    },
+    {
+      "when": "selected_failed_and_automatic_fallback_approved",
+      "then": "execute_fallback"
+    },
+    {
+      "when": "selected_failed_and_operator_fallback_approved",
+      "then": "request_operator_fallback"
+    },
+    {
+      "when": "fallback_failed_or_exhausted",
+      "then": "escalate"
+    },
+    {
+      "when": "A4_or_invalid_contract",
+      "then": "request_operator_or_block"
+    }
+  ],
+  "execution_envelope": {
+    "candidates_are_options_not_parallel_agents": true,
+    "fallback_is_sequential": true,
+    "shadow_comparison_is_sampled": true,
+    "lanes": {
+      "A0": {
+        "normal_model_passes": 1,
+        "maximum_model_passes_when_sampled": 2
+      },
+      "A1": {
+        "normal_model_passes": 1,
+        "maximum_model_passes": 2,
+        "second_pass_reason": "approved_fallback_only"
+      },
+      "A2": {
+        "normal_model_passes": 3,
+        "roles": ["worker", "reviewer", "integrator"]
+      },
+      "A3": {
+        "normal_model_passes": 3,
+        "roles": ["worker", "reviewer", "integrator"],
+        "additional_checks": ["promotion", "live", "rollback"]
+      },
+      "A4": {
+        "normal_model_passes": 0,
+        "next_action": "operator_decision"
+      }
+    },
+    "portfolio_cost_formula": "base_runs + sampled_shadow_runs + reviewed_role_runs + deterministic_verification_cost"
+  },
+  "evaluation": {
+    "primary_metric": "accepted_outcomes_per_landed_usd",
+    "requires": [
+      "predeclared_acceptance_criteria",
+      "provider_model_version_and_reasoning_effort",
+      "duration_retries_tokens_and_human_interventions",
+      "provider_api_cost_when_external_spend_occurs",
+      "landed_cost",
+      "fallback_evidence"
+    ],
+    "prohibits": [
+      "promotion_from_post_hoc_correlation",
+      "provider_selected_only_by_token_price",
+      "plural_agents_as_default_quality_floor",
+      "executor_expanding_its_own_authority"
+    ]
+  },
+  "implementation": {
+    "contract": "packages/symphony/src/executor-routing-contract.js",
+    "schema": "packages/symphony/schemas/executor-routing.v1.schema.json",
+    "tests": "packages/symphony/test/executor-routing-contract.test.mjs"
+  }
+}

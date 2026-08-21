@@ -10,23 +10,24 @@ Symphony turns Linear issues and workflow definitions into running Codex worker 
 
 ## Depends On
 
-| Dependency | Why It Matters |
-|------------|----------------|
-| Linear API | Source of truth for tracked work, assignment, and status |
-| `automation/symphony/**/WORKFLOW.md` | Dispatch policy and prompt template for each lane |
-| Codex app-server | Worker execution runtime |
-| Isolated workspaces | Keeps concurrent worker changes attributable |
-| Infisical | Expected source for `LINEAR_API_KEY` in operator runs |
+| Dependency                           | Why It Matters                                           |
+| ------------------------------------ | -------------------------------------------------------- |
+| Linear API                           | Source of truth for tracked work, assignment, and status |
+| `automation/symphony/**/WORKFLOW.md` | Dispatch policy and prompt template for each lane        |
+| Codex app-server                     | Worker execution runtime                                 |
+| Isolated workspaces                  | Keeps concurrent worker changes attributable             |
+| Infisical                            | Expected source for `LINEAR_API_KEY` in operator runs    |
 
 ## Enables Understanding Of
 
-| Consumer | What This Package Clarifies |
-|----------|----------------------------|
-| Code-quality lanes | How ready Linear issues become Codex worker sessions |
-| Policy lanes | How workflow definitions constrain automation |
-| Operators | Which workers are running, retrying, awaiting independent completion, or cleaned up |
-| Agent infrastructure | How orchestration differs from a single local Codex turn |
-| Canonical harness | How acceptance evidence becomes a fail-closed, persisted done decision |
+| Consumer             | What This Package Clarifies                                                                             |
+| -------------------- | ------------------------------------------------------------------------------------------------------- |
+| Code-quality lanes   | How ready Linear issues become Codex worker sessions                                                    |
+| Policy lanes         | How workflow definitions constrain automation                                                           |
+| Operators            | Which workers are running, retrying, awaiting independent completion, or cleaned up                     |
+| Agent infrastructure | How orchestration differs from a single local Codex turn                                                |
+| Canonical harness    | How acceptance evidence becomes a fail-closed, persisted done decision                                  |
+| Executor router      | How provider/model relationships trigger bounded execution, fallback, comparison, or escalation actions |
 
 ## Internal Structure
 
@@ -40,6 +41,8 @@ src/agent-worker.js   -> Codex worker process integration
 src/tracker/linear.js -> Linear tracker client
 src/canonical-harness-gate.js -> strict receipt evaluation, atomic persistence, and final done gate
 schemas/canonical-harness-receipt.v1.schema.json -> canonical evidence contract
+src/executor-routing-contract.js -> strict executor decisions, receipts, pair binding, and next-action algorithm
+schemas/executor-routing.v1.schema.json -> provider-neutral executor routing contract
 ```
 
 ## To Understand This Package, Read
@@ -50,17 +53,19 @@ schemas/canonical-harness-receipt.v1.schema.json -> canonical evidence contract
 4. **`src/workspace.js`** - Workspace creation and cleanup rules.
 5. **`src/tracker/linear.js`** - Linear issue querying, claiming, and completion behavior.
 6. **`src/canonical-harness-gate.js`** - How evidence is computed, persisted, revalidated, and allowed to reach the completion seam.
+7. **`src/executor-routing-contract.js`** - How executor decisions bind provider, authority, fallback, cost, and next actions.
 
 ## Common Tasks
 
-| Task | Start Here |
-|------|------------|
-| Run code-quality lane once | `pnpm symphony:code-quality:once` |
-| Run policy lane once | `pnpm symphony:policy:once` |
-| Validate syntax | `pnpm --filter @create-something/symphony check` |
-| Run tests | `pnpm --filter @create-something/symphony test` |
-| Evaluate canonical done evidence | `evaluate_canonical_harness_receipt(candidate)` |
-| Run with secrets | `infisical run --env=prod --path=/ --include-imports=true -- pnpm symphony:code-quality:once` |
+| Task                             | Start Here                                                                                                                                        |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Run code-quality lane once       | `pnpm symphony:code-quality:once`                                                                                                                 |
+| Run policy lane once             | `pnpm symphony:policy:once`                                                                                                                       |
+| Validate syntax                  | `pnpm --filter @create-something/symphony check`                                                                                                  |
+| Run tests                        | `pnpm --filter @create-something/symphony test`                                                                                                   |
+| Evaluate canonical done evidence | `evaluate_canonical_harness_receipt(candidate)`                                                                                                   |
+| Evaluate executor routing        | `validate_executor_routing_contract(value)`, `verify_executor_routing_pair(decision, receipt)`, `next_executor_routing_action(decision, receipt)` |
+| Run with secrets                 | `infisical run --env=prod --path=/ --include-imports=true -- pnpm symphony:code-quality:once`                                                     |
 
 ## Escalation Notes
 

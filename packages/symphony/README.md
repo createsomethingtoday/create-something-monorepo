@@ -52,14 +52,43 @@ and `@create-something/symphony/canonical-harness-receipt-schema`. Existing
 workflow routing remains evidence-only until the canonical router adopts this
 gate in its owning migration.
 
+## Executor Routing v0.1
+
+Symphony exports a strict, provider-neutral executor decision and receipt from
+`@create-something/symphony/executor-routing-contract`. The paired contracts
+bind one Linear issue and run to the selected candidate, approved fallbacks,
+authority, data boundary, budget, exact executor identity, acceptance evidence,
+and landed cost. `verify_executor_routing_pair` prevents a receipt from naming
+an executor that was not selected or approved as a fallback.
+
+`next_executor_routing_action` is the deterministic relationship algorithm. It
+turns a valid decision plus the latest bound receipt into one bounded action:
+execute the selected candidate, accept, evaluate a shadow challenger, execute
+or request an approved fallback, escalate, or block. The function cannot add a
+provider, widen authority, increase budget, or promote a challenger.
+
+Candidate lists are options, not parallel agent dispatch. A1 base work uses one
+selected executor; fallbacks run sequentially after failure. A0 duplicates a
+run only for sampled baseline-plus-shadow comparisons. A2/A3 use separate
+worker, reviewer, and integrator sessions because those lanes require
+independent evidence.
+
+The current policy keeps native Codex as the production default. OpenRouter is
+restricted to approved A0 shadow comparisons with Responses compatibility,
+zero-data retention, provider/model allowlists, and a positive spend cap.
+Direct Z.AI Coding Plan is ineligible while its documented coding endpoints do
+not expose the Responses protocol Codex custom providers require. See
+`docs/policies/v1/policy.executor-routing.v1.md` for the trigger table and
+provider boundary.
+
 ## Agent Legibility Contract
 
 | Field | Value |
 |-------|-------|
-| Entry point | `packages/symphony/src/cli.js`, `packages/symphony/src/orchestrator.js`, `packages/symphony/src/tracker/linear.js`, `packages/symphony/src/canonical-harness-gate.js` |
+| Entry point | `packages/symphony/src/cli.js`, `packages/symphony/src/orchestrator.js`, `packages/symphony/src/tracker/linear.js`, `packages/symphony/src/canonical-harness-gate.js`, `packages/symphony/src/executor-routing-contract.js` |
 | Boot command | `node src/cli.js ../../automation/symphony/code-quality/WORKFLOW.md --once` |
 | Smoke command | `pnpm check && pnpm test` |
-| Validation surfaces | node syntax check output, node test output, canonical receipt schema and persisted receipt, Linear tracker events, worker workspace metadata |
+| Validation surfaces | node syntax check output, node test output, executor routing decision/receipt schema, canonical receipt schema and persisted receipt, Linear tracker events, worker workspace metadata |
 | UI validation path | none |
 | Escalation rule | stop if Linear issue state, workspace cleanup behavior, or Codex worker status cannot be reconciled with the workflow file and tracker evidence |
 
