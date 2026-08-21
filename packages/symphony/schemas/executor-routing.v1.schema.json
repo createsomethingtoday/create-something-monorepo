@@ -1,0 +1,292 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://createsomething.agency/schemas/executor-routing.v1.schema.json",
+  "title": "CREATE SOMETHING executor routing v1",
+  "oneOf": [{ "$ref": "#/$defs/decision" }, { "$ref": "#/$defs/receipt" }],
+  "$defs": {
+    "nonEmptyString": { "type": "string", "minLength": 1 },
+    "issueIdentifier": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9]+-[0-9]+$"
+    },
+    "stringArray": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/nonEmptyString" },
+      "uniqueItems": true
+    },
+    "nonEmptyStringArray": {
+      "allOf": [{ "$ref": "#/$defs/stringArray" }, { "type": "array", "minItems": 1 }]
+    },
+    "linear": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["issue"],
+      "properties": {
+        "issue": { "$ref": "#/$defs/issueIdentifier" }
+      }
+    },
+    "candidateIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "provider",
+        "inference_provider",
+        "route",
+        "protocol",
+        "model",
+        "model_version",
+        "reasoning_effort",
+        "execution_mode"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/nonEmptyString" },
+        "provider": { "$ref": "#/$defs/nonEmptyString" },
+        "inference_provider": { "$ref": "#/$defs/nonEmptyString" },
+        "route": { "enum": ["direct", "gateway", "aggregator", "local"] },
+        "protocol": { "enum": ["responses", "chat-completions", "messages", "local"] },
+        "model": { "$ref": "#/$defs/nonEmptyString" },
+        "model_version": { "$ref": "#/$defs/nonEmptyString" },
+        "reasoning_effort": {
+          "enum": [
+            "none",
+            "minimal",
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max",
+            "ultra",
+            "unverified"
+          ]
+        },
+        "execution_mode": { "enum": ["primary", "shadow"] }
+      }
+    },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "provider",
+        "inference_provider",
+        "route",
+        "protocol",
+        "model",
+        "model_version",
+        "reasoning_effort",
+        "execution_mode",
+        "status",
+        "reasons"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/nonEmptyString" },
+        "provider": { "$ref": "#/$defs/nonEmptyString" },
+        "inference_provider": { "$ref": "#/$defs/nonEmptyString" },
+        "route": { "enum": ["direct", "gateway", "aggregator", "local"] },
+        "protocol": { "enum": ["responses", "chat-completions", "messages", "local"] },
+        "model": { "$ref": "#/$defs/nonEmptyString" },
+        "model_version": { "$ref": "#/$defs/nonEmptyString" },
+        "reasoning_effort": {
+          "enum": [
+            "none",
+            "minimal",
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max",
+            "ultra",
+            "unverified"
+          ]
+        },
+        "execution_mode": { "enum": ["primary", "shadow"] },
+        "status": { "enum": ["selected", "eligible", "ineligible"] },
+        "reasons": { "$ref": "#/$defs/nonEmptyStringArray" }
+      }
+    },
+    "fallbackDecision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "candidate_ids", "max_attempts", "stop_conditions"],
+      "properties": {
+        "mode": { "enum": ["none", "operator", "automatic"] },
+        "candidate_ids": { "$ref": "#/$defs/stringArray" },
+        "max_attempts": { "type": "integer", "minimum": 0 },
+        "stop_conditions": { "$ref": "#/$defs/stringArray" }
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "filesystem_write",
+        "shared_state_write",
+        "production_mutation",
+        "external_spend",
+        "approval_refs"
+      ],
+      "properties": {
+        "filesystem_write": { "type": "boolean" },
+        "shared_state_write": { "type": "boolean" },
+        "production_mutation": { "type": "boolean" },
+        "external_spend": { "type": "boolean" },
+        "approval_refs": { "$ref": "#/$defs/stringArray" }
+      }
+    },
+    "dataBoundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "classification",
+        "zero_data_retention_required",
+        "allowed_providers",
+        "allowed_inference_providers"
+      ],
+      "properties": {
+        "classification": { "enum": ["public", "internal", "confidential", "restricted"] },
+        "zero_data_retention_required": { "type": "boolean" },
+        "allowed_providers": { "$ref": "#/$defs/nonEmptyStringArray" },
+        "allowed_inference_providers": { "$ref": "#/$defs/nonEmptyStringArray" }
+      }
+    },
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["currency", "max_usd"],
+      "properties": {
+        "currency": { "const": "USD" },
+        "max_usd": { "type": "number", "minimum": 0 }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "decision_id",
+        "run_id",
+        "linear",
+        "autonomy_level",
+        "task_class",
+        "selected_candidate_id",
+        "candidates",
+        "fallback",
+        "authority",
+        "data_boundary",
+        "budget",
+        "rationale"
+      ],
+      "properties": {
+        "schema_version": { "const": "executor-routing-decision.v1" },
+        "decision_id": { "$ref": "#/$defs/nonEmptyString" },
+        "run_id": { "$ref": "#/$defs/nonEmptyString" },
+        "linear": { "$ref": "#/$defs/linear" },
+        "autonomy_level": { "enum": ["A0", "A1", "A2", "A3", "A4"] },
+        "task_class": { "enum": ["research", "bounded", "reviewed", "promotion", "escalation"] },
+        "selected_candidate_id": { "$ref": "#/$defs/nonEmptyString" },
+        "candidates": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/candidate" }
+        },
+        "fallback": { "$ref": "#/$defs/fallbackDecision" },
+        "authority": { "$ref": "#/$defs/authority" },
+        "data_boundary": { "$ref": "#/$defs/dataBoundary" },
+        "budget": { "$ref": "#/$defs/budget" },
+        "rationale": { "$ref": "#/$defs/nonEmptyStringArray" }
+      }
+    },
+    "nullableString": {
+      "anyOf": [{ "$ref": "#/$defs/nonEmptyString" }, { "type": "null" }]
+    },
+    "fallbackReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["used", "from_candidate_id", "reason", "attempt_count"],
+      "properties": {
+        "used": { "type": "boolean" },
+        "from_candidate_id": { "$ref": "#/$defs/nullableString" },
+        "reason": { "$ref": "#/$defs/nullableString" },
+        "attempt_count": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "tokens": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["input", "output", "total"],
+      "properties": {
+        "input": { "type": "number", "minimum": 0 },
+        "output": { "type": "number", "minimum": 0 },
+        "total": { "type": "number", "minimum": 0 }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["duration_ms", "retry_count", "human_intervention_count", "tokens"],
+      "properties": {
+        "duration_ms": { "type": "number", "minimum": 0 },
+        "retry_count": { "type": "integer", "minimum": 0 },
+        "human_intervention_count": { "type": "integer", "minimum": 0 },
+        "tokens": { "$ref": "#/$defs/tokens" }
+      }
+    },
+    "nullableCost": {
+      "anyOf": [{ "type": "number", "minimum": 0 }, { "type": "null" }]
+    },
+    "cost": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["currency", "provider_api_usd", "landed_cost_usd", "kind", "basis"],
+      "properties": {
+        "currency": { "const": "USD" },
+        "provider_api_usd": { "$ref": "#/$defs/nullableCost" },
+        "landed_cost_usd": { "type": "number", "minimum": 0 },
+        "kind": { "enum": ["observed", "estimated"] },
+        "basis": { "$ref": "#/$defs/nonEmptyStringArray" }
+      }
+    },
+    "acceptance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "criteria_passed", "criteria_total", "evidence"],
+      "properties": {
+        "status": { "enum": ["accepted", "rejected", "blocked"] },
+        "criteria_passed": { "type": "integer", "minimum": 0 },
+        "criteria_total": { "type": "integer", "minimum": 1 },
+        "evidence": { "$ref": "#/$defs/nonEmptyStringArray" }
+      }
+    },
+    "receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "decision_id",
+        "run_id",
+        "linear",
+        "executor",
+        "status",
+        "fallback",
+        "metrics",
+        "cost",
+        "acceptance",
+        "evidence"
+      ],
+      "properties": {
+        "schema_version": { "const": "executor-routing-receipt.v1" },
+        "decision_id": { "$ref": "#/$defs/nonEmptyString" },
+        "run_id": { "$ref": "#/$defs/nonEmptyString" },
+        "linear": { "$ref": "#/$defs/linear" },
+        "executor": { "$ref": "#/$defs/candidateIdentity" },
+        "status": { "enum": ["passed", "failed", "blocked"] },
+        "fallback": { "$ref": "#/$defs/fallbackReceipt" },
+        "metrics": { "$ref": "#/$defs/metrics" },
+        "cost": { "$ref": "#/$defs/cost" },
+        "acceptance": { "$ref": "#/$defs/acceptance" },
+        "evidence": { "$ref": "#/$defs/nonEmptyStringArray" }
+      }
+    }
+  }
+}

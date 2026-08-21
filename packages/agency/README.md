@@ -1,8 +1,8 @@
 # CREATE SOMETHING Agency
 
-**createsomething.agency** — operating systems for AI work
+**createsomething.agency** — Playbooks for AI-native operations
 
-We make one business workflow safe to delegate.
+We give operators and AI the same Playbook, then make its Runbooks executable.
 
 ---
 
@@ -12,7 +12,8 @@ We make one business workflow safe to delegate.
 
 | Name | Job |
 |------|-----|
-| **Operating systems for AI work** | Homepage outcome: one mapped workflow with a named decision boundary and inspectable proof. |
+| **CREATE SOMETHING Playbook** | Client-owned operating system: objectives, roles, systems, authority, Plays, Runbooks, evidence, recovery, and review. |
+| **Operating systems for AI work** | Plain-language category: one mapped workflow with a named decision boundary and inspectable proof. |
 | **AI workflow systems** | Public category: business workflows with connected tools, scoped AI tasks, approvals, stop conditions, and audit trails. |
 | **Delegated Work Control** | Internal thesis layer: what can run, what waits, what stops, who owns the decision, and what evidence proves the work. |
 | **Workflow Trust Layer** | Internal service-language layer for governed execution around a workflow. |
@@ -30,6 +31,33 @@ The clearest public operating loop is:
 Use this as the first explanation when describing the system. `Inbox`, `Map`,
 and `Proof` are the operator surfaces: the Inbox shows work needing judgment,
 the Map shows workflow context, and Proof shows the evidence and outcome.
+
+The public Playbook hierarchy is:
+
+1. **Playbook:** the client-owned operating system for the outcome.
+2. **Play:** one outcome-bearing workflow inside the Playbook.
+3. **Runbook:** the executable procedure for a known moment inside a Play.
+4. **Receipt:** the evidence of what ran, waited, stopped, recovered, or remains
+   unknown.
+
+The noindex Arc catalog at `/arcs` presents every canonical public Playbook and Runbook
+as a presentation-native route. Generated routes live at `/arc/{slug}` and expose the
+same read-only catalog through `/api/arcs` and `/api/arcs/{slug}`. The existing
+`/arc/app-review-governance` prototype remains the proven hand-authored composition.
+
+Offense creates operating advantage by advancing approved work. Defense protects
+authority, quality, evidence, and recovery. Map defines the Playbook, Build
+makes approved Runbooks executable, and Control runs and revises them.
+
+The opposing team is an operating condition, never a person or competitor:
+ambiguity, AI out of reach, and untrusted automation. The Playbook removes
+ambiguity. Defense makes automation trustworthy. Offense creates useful access
+for operators.
+
+The normative contract is
+[`CREATE_SOMETHING_PLAYBOOK_SPEC.md`](../../docs/CREATE_SOMETHING_PLAYBOOK_SPEC.md).
+The external draft `PLAYBOOK.md` prompt-workflow format is not the Agency brand
+contract and is not implemented or affiliated with this package.
 
 Do not reposition `.agency` as a generic AI agency, prompt shop, model reseller,
 or Webflow implementation shop. The durable claim is:
@@ -78,6 +106,10 @@ Prefer public words like:
 - audit trail
 - evidence
 - runbook
+- playbook
+- play
+- offense
+- defense
 
 Avoid public words and frames like:
 

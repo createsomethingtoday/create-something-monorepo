@@ -14,6 +14,11 @@ describe('ltd sitemap catalog', () => {
     expect(paths).toContain('/patterns/universal-utility');
     expect(paths).toContain('/masters/dieter-rams');
     expect(paths).toContain('/canon/concepts/conviction-without-dependence');
+    expect(paths).toContain('/playbooks');
+    expect(paths).toContain('/playbooks/inbound-triage');
+    expect(paths).toContain('/playbooks/decision-brief');
+    expect(paths).toContain('/playbooks/exception-handoff');
+    expect(paths).toContain('/readiness');
     expect(paths).not.toContain('/privacy');
     expect(paths).not.toContain('/terms');
   });

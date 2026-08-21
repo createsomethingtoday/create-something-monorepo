@@ -1,16 +1,20 @@
 <script lang="ts">
   import {
     Button,
+    MeridianAccordion,
+    MeridianEvidenceCarousel,
+    MeridianMetrics,
     PerformanceCampaignOpening,
     PerformanceConversionHandoff,
     PerformanceNarrativeStage,
     PerformanceWorkflowMiniArtifact,
     SEO,
+    type MeridianEvidence,
     type PerformanceCampaignProof,
     type PerformanceFieldStudyMetric,
-    type PerformanceFieldStudyProof,
     type PerformanceNarrativeScene
   } from '@create-something/canon';
+  import type { MotionIntent } from '@create-something/canon/motion';
   import HeroTrustArtifact from '$lib/components/HeroTrustArtifact.svelte';
   import AgencyPerformanceReadback from '$lib/components/AgencyPerformanceReadback.svelte';
   import AdoptionPathChooser from '$lib/components/AdoptionPathChooser.svelte';
@@ -18,7 +22,7 @@
   import PublicSubstrateCanvas from '$lib/components/PublicSubstrateCanvas.svelte';
   import { templateReviewFieldReport } from '$lib/data/fieldReports';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
-  import { paperOperatingRouteMedia } from '$lib/data/performanceMedia';
+  import { playbookHeroMedia, playbookHomeHeroMedia } from '$lib/data/playbookHeroMedia';
 
   const services = [
     {
@@ -78,6 +82,41 @@
     }
   ];
 
+  const operatorEvidence: MeridianEvidence[] = [
+    {
+      eyebrow: 'Upstream contribution',
+      title: 'We improve the infrastructure we rely on.',
+      detail:
+        'A reliability fix merged into CTX. Credited security work merged into OpenAI Codex Security and shipped in version 0.1.9.',
+      source: 'Inspect the contribution receipts',
+      href: '/field-reports/upstream-contributions'
+    },
+    {
+      eyebrow: 'Field report',
+      title: 'A workflow map makes the decision boundary visible before automation begins.',
+      detail:
+        'The field report keeps the working constraint, the approval path, and the evidence trail together so the next operator can understand what advanced and what stayed blocked.',
+      source: 'Read the Marketplace workflow',
+      href: '/proof/marketplace-workflow'
+    },
+    {
+      eyebrow: 'Control record',
+      title: 'One named owner is more useful than another implicit handoff.',
+      detail:
+        'A shared Playbook makes the route, decision gate, and recovery note explicit instead of asking an operator to reconstruct context from scattered tools.',
+      source: 'See the delivery path',
+      href: '/services'
+    },
+    {
+      eyebrow: 'System boundary',
+      title: 'The result is an operating artifact, not a dependency on our team.',
+      detail:
+        'The map, rules, runbook, history, and recovery plan remain with the client so an AI or infrastructure change does not erase the operating knowledge.',
+      source: 'Inspect the ownership model',
+      href: '/stack'
+    }
+  ];
+
   const heroProofItems: PerformanceCampaignProof[] = [
     {
       label: 'Signal',
@@ -100,113 +139,152 @@
   const serviceFlowSteps = [
     {
       id: 'signal',
-      eyebrow: '01 Notice',
-      title: 'Spot the change',
+      eyebrow: '01 Offense',
+      title: 'Advance approved work',
       detail:
-        'Choose the support, revenue, production, API, or access changes your team still has to notice by hand.',
-      proof: 'source · workflow · owner · system · risk'
+        'Known signals move through the route your team approved, so routine work does not wait for manual follow-up.',
+      proof: 'approved signal · allowed action · named route'
     },
     {
       id: 'decision',
-      eyebrow: '02 Decide',
-      title: 'Send it to the right owner',
+      eyebrow: '02 Defense',
+      title: 'Protect the decision',
       detail:
-        'Give the owner the context, allowed actions, approval options, and stop reason in one place.',
-      proof: 'decision queue · allowed actions · runbook · release record'
+        'Ambiguity, AI limits, and untrusted automation reach a named owner or stop with a reason.',
+      proof: 'owner · gate · stop reason · recovery path'
     },
     {
       id: 'proof',
-      eyebrow: '03 Record',
-      title: 'Keep the result',
+      eyebrow: '03 Proof',
+      title: 'Review the receipt',
       detail:
-        'Record what started the work, which rule applied, who decided, what happened next, and how to recover.',
+        'Every important run keeps its source, rule, decision, result, and recovery record together.',
       proof: 'source · rule · decision · result · recovery'
     }
   ] as const;
 
   const flowStudyMetrics: PerformanceFieldStudyMetric[] = [
     {
-      label: 'Starting scope',
-      value: '1 workflow',
-      detail: 'Start with one workflow before allowing more actions.'
+      label: 'Shared Playbook',
+      value: '1 owned system',
+      detail: 'Map one workflow first, then keep its rules and runbook together.'
     },
     {
-      label: 'Decision points',
-      value: 'Run / Wait / Stop',
-      detail: 'Every branch names who decides.'
+      label: 'Offense',
+      value: 'Approved work advances',
+      detail: 'Known signals use a route your team accepted.'
     },
     {
-      label: 'Required record',
-      value: 'Receipt required',
-      detail: 'Every action leaves a record your team can review.'
+      label: 'Defense',
+      value: 'Owner / gate / stop',
+      detail: 'Your team decides what can run, what needs approval, and what must stop.'
     }
   ];
 
-  const flowStudyProof: PerformanceFieldStudyProof = {
-    id: 'PL-METHOD-20260710',
-    owner: 'CREATE SOMETHING',
-    state: 'RECORD ATTACHED',
-    verified: '2026-07-10',
-    version: 'v1',
-    classification: 'Public method'
+  const flowStudyReceipt = {
+    id: 'PB-02 / HANDOFF',
+    owner: 'Client team',
+    state: 'CLIENT-OWNED',
+    evidence: 'Owner + gate + receipt'
   };
 
   const operatorOutcomes = [
     {
       state: 'Before',
-      title: 'The operator watches the handoff.',
-      detail: 'Routine work waits across tools, and exceptions arrive without enough context.'
+      title: 'Every AI handoff becomes a new exception.',
+      detail: 'Routine work waits across tools, and a person has to rebuild missing context.'
     },
     {
       state: 'After',
-      title: 'The operator returns when a decision matters.',
+      title: 'Your team runs a client-owned Playbook.',
       detail:
-        'Safe work moves, exceptions reach a named owner, and unsafe actions stop with a reason.'
+        'Approved work advances. Exceptions reach a named owner. Every action leaves a record your team can review.'
     }
   ] as const;
 
   const agencyScenes: PerformanceNarrativeScene[] = [
     {
-      id: 'boundary',
-      label: 'Boundary',
-      summary: 'Limits set',
-      title: 'Stop watching every handoff. Step in when a decision matters.',
+      id: 'map',
+      label: 'Map',
+      summary: 'The play is named',
+      title: 'Map the play before AI runs it.',
       detail:
-        'Your team decides what can run, what needs approval, and what must stop before the workflow starts.',
+        'Map shows where work starts, what the agent may do, and where a person must approve. It also names the owner, source, decision gate, and proof required before AI gets access.',
       tone: 'review',
       actions: [{ label: agencyCoreMessaging.selfMapLabel, href: agencyCoreMessaging.selfMapHref }]
     },
     {
-      id: 'map',
-      label: 'Map',
-      summary: 'Workflow mapped',
-      title: 'Map the handoff before AI runs it.',
+      id: 'build',
+      label: 'Build',
+      summary: 'The route is installed',
+      title: 'Build the operating path your team approves.',
       detail:
-        'CREATE SOMETHING Map shows where work starts, what the agent may do, and where a person must approve. It also shows when the workflow stops and what record proves the result.',
+        'We connect the tools, agent, and rules that serve the play. Unapproved access stays out of the route.',
       tone: 'allow',
       evidence: [
-        'One view shows systems, owners, and handoffs',
-        'Agent actions and human approvals have clear limits',
-        'Your team can inspect the first test before deciding to build'
+        'One view shows systems, owners, and allowed actions',
+        'Agent tasks and human approvals have clear limits',
+        'Your team inspects the first test before a live run'
       ],
-      receipts: ['workflow map', 'owner list', 'record plan'],
+      receipts: ['workflow map', 'approved route', 'runbook'],
       actions: [{ label: agencyCoreMessaging.selfMapLabel, href: agencyCoreMessaging.selfMapHref }]
     },
     {
-      id: 'operate',
-      label: 'Operate',
-      summary: 'Run → record',
-      title: 'Notice the change. Route the decision. Record the result.',
-      detail: 'Start with one workflow. Add rules only when real work shows where they are needed.',
+      id: 'control',
+      label: 'Control',
+      summary: 'Offense + defense',
+      title: 'Advance approved work. Protect every decision.',
+      detail:
+        'Offense moves known work. Defense routes ambiguity to a person, stops unsafe action, and keeps proof attached.',
       tone: 'neutral',
       evidence: [
-        'Each request stays connected to its decision and record',
-        'The system cannot make the final decision; the field report names what passed and remains blocked',
+        'Each request stays connected to its decision and receipt',
+        'The system cannot make the final decision; the field report names what passed and stayed blocked',
         'Your team keeps the data, rules, tests, history, and recovery path'
       ],
       receipts: ['workflow map', templateReviewFieldReport.id, 'recovery path']
     }
   ];
+
+  const agencyOperatingStoryMotion: MotionIntent = {
+    version: 1,
+    id: 'agency-operating-story-v1',
+    event: 'agency.operating-story.scene.selected',
+    interruption: 'replace',
+    reducedMotion: 'settle-immediately',
+    stages: [
+      {
+        id: 'map-boundary-visible',
+        label: 'Map',
+        intent: 'apply',
+        target: 'agency-operating-story.map',
+        durationMs: 220,
+        channels: ['opacity', 'transform'],
+        colorRole: 'performance.signal',
+        announce: 'Map boundary selected.'
+      },
+      {
+        id: 'build-route-installed',
+        label: 'Build',
+        intent: 'update',
+        target: 'agency-operating-story.build',
+        durationMs: 260,
+        channels: ['opacity', 'transform'],
+        colorRole: 'performance.growth',
+        announce: 'Build route selected.'
+      },
+      {
+        id: 'control-receipt-settled',
+        label: 'Control',
+        intent: 'settle',
+        target: 'agency-operating-story.control',
+        durationMs: 300,
+        channels: ['opacity', 'transform'],
+        colorRole: 'performance.gold',
+        announce: 'Control record selected.'
+      }
+    ]
+  };
 </script>
 
 <SEO
@@ -221,13 +299,15 @@
 
 <div class="home-pilot property-performance">
   <PerformanceCampaignOpening
-    eyebrow="Operating systems for AI work"
-    title="Put the work on paper before you put AI to work."
-    lede="We map one workflow, mark what can run, name where people decide, and attach proof to every important action. Then we build the system with OpenAI and Cloudflare."
-    media={paperOperatingRouteMedia}
+    eyebrow="CREATE SOMETHING .agency"
+    propertyRole="Embedded AI operating partner"
+    expression="editorial"
+    title="Your people and AI need the same playbook."
+    lede="We embed with operators to map one workflow, install its AI infrastructure, and hand back a client-owned Playbook. Offense advances approved work. Defense protects decisions, proof, and recovery. The opposition is ambiguity, AI out of reach, and untrusted automation."
+    media={playbookHomeHeroMedia}
     proof={heroProofItems}
-    mode="paper"
     density="compact"
+    mediaMobilePlacement="background"
   >
     {#snippet actions()}
       <Button href={agencyCoreMessaging.selfMapHref}>{agencyCoreMessaging.selfMapLabel}</Button>
@@ -235,52 +315,50 @@
         >See the Marketplace workflow</Button
       >
     {/snippet}
-    {#snippet ornament()}
-      <aside class="home-source-imprint" aria-label="Operating route paper imprint">
-        <header>
-          <span>CS / OS-01</span>
-          <strong>Operating route</strong>
-        </header>
-        <ol>
-          <li><i class="home-source-imprint__source"></i><span>Source sheet</span></li>
-          <li><i class="home-source-imprint__decision"></i><span>Decision boundary</span></li>
-          <li><i class="home-source-imprint__proof"></i><span>Proof attached</span></li>
-        </ol>
-        <small>Map one handoff. Keep the decision. Leave the receipt.</small>
-      </aside>
-    {/snippet}
   </PerformanceCampaignOpening>
 
   <AgencyPerformanceReadback />
 
+  <MeridianMetrics
+    eyebrow="Scoreboard"
+    title="A shared play is a control surface."
+    metrics={[
+      { value: '1', label: 'workflow first', detail: 'Start with the handoff that matters.' },
+      { value: '3', label: 'run states', detail: 'Every run, wait, or stop stays explicit.' },
+      { value: '1', label: 'owned Playbook', detail: 'Your team keeps the working system.' }
+    ]}
+  />
+
   <PerformanceNarrativeStage
     id="agency-operating-story"
-    eyebrow="One workflow, step by step"
-    title="Keep the judgment. Delegate the rest."
-    description="Your team sets the limits before work moves. We map the handoff, test one workflow, and keep a record of every run."
+    expression="editorial"
+    eyebrow="One shared Playbook"
+    title="Map the play. Build the system. Keep control."
+    description="We work beside an operator to map one workflow and install its AI infrastructure. Your team decides what can run, what needs approval, and what must stop. Your team keeps a Playbook it can inspect, run, stop, recover, and review with proof."
     scenes={agencyScenes}
-    ariaLabel="Agency operating story"
+    motionIntent={agencyOperatingStoryMotion}
+    ariaLabel="Shared Playbook delivery story"
     density="compact"
   >
     {#snippet artifact(scene: PerformanceNarrativeScene)}
-      {#if scene.id === 'boundary'}
-        <article class="boundary-study" aria-label="Boundary study: run, wait, stop">
-          <figure class="boundary-study__media">
-            <picture>
-              <source
-                media="(max-width: 640px)"
-                srcset="/images/performance-lab/paper-boundary-authority-mobile.webp?v=cre-1592"
-              />
+      {#if scene.id === 'map'}
+        <article class="boundary-study" aria-label="Shared Playbook: Map, Build, Control">
+          <div class="boundary-study__field boundary-study__field--media">
+            <picture class="boundary-study__media">
+              {#if playbookHeroMedia.map.mobileSrc}
+                <source media="(max-width: 47.99rem)" srcset={playbookHeroMedia.map.mobileSrc} />
+              {/if}
               <img
-                src="/images/performance-lab/paper-boundary-authority.webp?v=cre-1592"
-                alt="A porcelain paper decision path held at a black authority spine, where open, clamped, and stopped edges remain attached to a blank receipt."
+                src={playbookHeroMedia.map.src}
+                alt={playbookHeroMedia.map.alt}
+                width={playbookHeroMedia.map.width}
+                height={playbookHeroMedia.map.height}
                 loading="lazy"
-                width="1024"
-                height="1536"
+                decoding="async"
+                data-campaign-media="home-map-narrative"
               />
             </picture>
-            <figcaption>Paper pressure study · Run / Wait / Stop</figcaption>
-          </figure>
+          </div>
           <div class="boundary-study__body">
             <div
               class="boundary-study__outcomes"
@@ -305,25 +383,25 @@
             <dl class="boundary-study__receipt" aria-label="Boundary study receipt">
               <div>
                 <dt>Receipt</dt>
-                <dd>{flowStudyProof.id}</dd>
+                <dd>{flowStudyReceipt.id}</dd>
               </div>
               <div>
                 <dt>Owner</dt>
-                <dd>{flowStudyProof.owner}</dd>
+                <dd>{flowStudyReceipt.owner}</dd>
               </div>
               <div>
                 <dt>State</dt>
-                <dd>{flowStudyProof.state}</dd>
+                <dd>{flowStudyReceipt.state}</dd>
               </div>
               <div>
-                <dt>Verified</dt>
-                <dd>{flowStudyProof.verified}</dd>
+                <dt>Evidence</dt>
+                <dd>{flowStudyReceipt.evidence}</dd>
               </div>
             </dl>
           </div>
         </article>
-      {:else if scene.id === 'map'}
-        <div class="agency-stage-map" aria-label="Map workflow definition">
+      {:else if scene.id === 'build'}
+        <div class="agency-stage-map" aria-label="Build the workflow system">
           <PublicSubstrateCanvas />
         </div>
       {:else}
@@ -355,8 +433,8 @@
           <h3>Built with OpenAI and Cloudflare. Designed to remain yours.</h3>
           <p>
             CREATE SOMETHING owns the system. OpenAI provides intelligence. Cloudflare provides
-            infrastructure. We use OpenAI Codex to map, build, and maintain the workflow. Your
-            team keeps the map, rules, history, and recovery path. If the model or agent environment
+            infrastructure. We use OpenAI Codex to map, build, and maintain the workflow. Your team
+            keeps the map, rules, history, and recovery path. If the model or agent environment
             changes, the system does not have to start over.
           </p>
           <div>
@@ -370,11 +448,68 @@
     {/snippet}
   </PerformanceNarrativeStage>
 
+  <details class="home-mobile-supporting-record">
+    <summary>
+      <span>Supporting record</span>
+      <strong>Inspect the supporting record</strong>
+      <small>Delivery paths, proof, ownership, and tools</small>
+    </summary>
+    <div class="home-mobile-supporting-record__body">
+      <p>
+        The first choice does not need every detail. Use the record when you want to inspect the
+        delivery path, proof, or system boundary before you start a map.
+      </p>
+      <div class="home-mobile-supporting-record__links">
+        <a href="/proof/marketplace-workflow">
+          <span>Proof</span><strong>Marketplace field report</strong><small
+            >See the measured result</small
+          >
+        </a>
+        <a href="/services">
+          <span>Method</span><strong>Delivery path</strong><small
+            >See how Map, Build, and Control work</small
+          >
+        </a>
+        <a href="/stack">
+          <span>Boundary</span><strong>Ownership boundary</strong><small
+            >See what your team keeps</small
+          >
+        </a>
+        <a href="/partners">
+          <span>Tools</span><strong>Tool directory</strong><small
+            >Inspect the available connector paths</small
+          >
+        </a>
+      </div>
+    </div>
+  </details>
+
+  <div class="home-supporting-record__deferred home-supporting-record__deferred--early">
+    <MeridianEvidenceCarousel
+      eyebrow="Operator proof"
+      title="Evidence replaces borrowed testimonials."
+      description="The licensed testimonial treatment now carries inspectable operating evidence rather than made-up praise."
+      itemsPerView={2}
+      items={operatorEvidence}
+    />
+  </div>
+
   <AdoptionPathChooser />
 
-  <IntegrationCompatibilityRail surface="homepage" />
+  <div class="home-supporting-record__deferred home-supporting-record__deferred--late">
+    <IntegrationCompatibilityRail surface="homepage" />
+
+    <MeridianAccordion
+      eyebrow="Playbook questions"
+      title="What the first workflow changes."
+      description="A direct answer before a mapping session is more useful than a vague assurance."
+      items={faqItems}
+      openFirst={true}
+    />
+  </div>
 
   <PerformanceConversionHandoff
+    expression="editorial"
     eyebrow="Fixed-scope first step"
     title={agencyCoreMessaging.workflowCtaHeading}
     description="Start with a workflow map and proof plan. If the map does not show a useful controlled pilot, the work stops there; if it does, the first build has a clear delegation boundary."
@@ -405,47 +540,45 @@
     color: var(--color-performance-ink, #090909);
   }
 
+  .home-mobile-supporting-record {
+    display: none;
+  }
+
   .boundary-study {
     display: grid;
-    grid-template-columns: minmax(15rem, 0.68fr) minmax(0, 1.32fr);
+    grid-template-columns: minmax(18rem, 0.86fr) minmax(0, 1.14fr);
     border: 1px solid var(--color-performance-line, #d7d7d2);
     background: var(--color-performance-paper, #f3f3f0);
   }
 
-  .boundary-study__media {
-    position: relative;
+  .boundary-study__field {
+    display: grid;
+    align-content: center;
     margin: 0;
-    min-height: 31rem;
+    min-width: 0;
+    padding: 1rem;
     border-right: 1px solid var(--color-performance-line, #d7d7d2);
     background: var(--color-performance-ink, #090909);
+  }
+
+  .boundary-study__field--media {
+    display: flex;
+    padding: 0;
     overflow: hidden;
   }
 
-  .boundary-study__media picture {
+  .boundary-study__media {
     display: block;
-    width: 100%;
-    height: 100%;
+    flex: 1;
+    min-width: 0;
   }
 
   .boundary-study__media img {
+    display: block;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: center;
-  }
-
-  .boundary-study__media figcaption {
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    padding: 0.65rem 0.8rem;
-    border-top: 1px solid var(--color-performance-line-strong, #a9aaa5);
-    background: color-mix(in srgb, var(--color-performance-ink, #090909) 88%, transparent);
-    color: var(--color-performance-panel, #ffffff);
-    font-family: var(--font-performance-mono);
-    font-size: 0.68rem;
-    text-transform: uppercase;
+    object-position: 82% center;
   }
 
   .boundary-study__body {
@@ -695,104 +828,138 @@
     text-underline-offset: 0.18em;
   }
 
-  .home-source-imprint {
-    position: absolute;
-    top: clamp(14rem, 30vh, 20rem);
-    right: clamp(2rem, 12vw, 12rem);
-    display: grid;
-    gap: 0.68rem;
-    width: clamp(13.5rem, 21vw, 18rem);
-    padding: 0.72rem 0.78rem 0.8rem;
-    border: 1px solid rgba(9, 9, 9, 0.8);
-    background: rgba(255, 255, 255, 0.82);
-    box-shadow: 0 14px 30px rgba(9, 9, 9, 0.14);
-    color: var(--color-performance-ink, #090909);
-    font-family: var(--font-performance-mono);
-  }
-
-  .home-source-imprint header,
-  .home-source-imprint ol {
-    display: grid;
-    gap: 0.42rem;
-    margin: 0;
-  }
-
-  .home-source-imprint header {
-    padding-bottom: 0.62rem;
-    border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
-  }
-
-  .home-source-imprint header span,
-  .home-source-imprint small {
-    color: var(--color-performance-muted, #5e6268);
-    font-size: 0.62rem;
-    font-weight: var(--font-performance-semibold);
-    line-height: 1.3;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-  }
-
-  .home-source-imprint header strong {
-    font-size: 0.76rem;
-    font-weight: var(--font-performance-semibold);
-    letter-spacing: 0;
-    line-height: 1.2;
-    text-transform: uppercase;
-  }
-
-  .home-source-imprint li {
-    display: grid;
-    grid-template-columns: 0.62rem minmax(0, 1fr);
-    gap: 0.48rem;
-    align-items: center;
-    list-style: none;
-    color: var(--color-performance-ink, #090909);
-    font-size: 0.64rem;
-    font-weight: var(--font-performance-medium);
-    line-height: 1.2;
-    text-transform: uppercase;
-  }
-
-  .home-source-imprint i {
-    display: block;
-    width: 0.5rem;
-    height: 0.5rem;
-    border: 1px solid rgba(9, 9, 9, 0.68);
-  }
-
-  .home-source-imprint__source {
-    background: #2558c4;
-  }
-
-  .home-source-imprint__decision {
-    background: #b07408;
-  }
-
-  .home-source-imprint__proof {
-    background: #708426;
-  }
-
-  .home-source-imprint small {
-    display: block;
-    padding-top: 0.62rem;
-    border-top: 1px solid var(--color-performance-line, #d7d7d2);
-    line-height: 1.45;
-    text-transform: none;
+  @media (min-width: 640.01px) {
+    .home-supporting-record__deferred {
+      display: contents;
+    }
   }
 
   @media (max-width: 980px) {
     .boundary-study {
-      grid-template-columns: minmax(12rem, 0.58fr) minmax(0, 1.42fr);
+      grid-template-columns: minmax(16rem, 0.8fr) minmax(0, 1.2fr);
     }
 
-    .boundary-study__media {
-      min-height: 34rem;
+    .boundary-study__field {
+      padding: 0.8rem;
+    }
+
+    .boundary-study__field--media {
+      padding: 0;
+    }
+
+    .boundary-study__media img {
+      object-position: 60% center;
     }
   }
 
   @media (max-width: 640px) {
-    .home-source-imprint {
+    .home-supporting-record__deferred {
       display: none;
+    }
+
+    .home-mobile-supporting-record {
+      display: grid;
+      margin: 1.25rem var(--space-performance-page-gutter, 1rem);
+      border: 1px solid var(--color-performance-line, #d7d7d2);
+      background: var(--color-performance-paper, #f3f3f0);
+    }
+
+    .home-mobile-supporting-record summary {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 0.3rem 1rem;
+      align-items: center;
+      min-height: var(--height-performance-control-min, 2.75rem);
+      padding: 0.9rem;
+      color: var(--color-performance-ink, #090909);
+      cursor: pointer;
+      list-style: none;
+    }
+
+    .home-mobile-supporting-record summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .home-mobile-supporting-record summary::after {
+      grid-column: 2;
+      grid-row: 1 / span 3;
+      color: var(--color-performance-muted, #5e6268);
+      content: '+';
+      font-family: var(--font-performance-mono);
+      font-size: 1.2rem;
+    }
+
+    .home-mobile-supporting-record[open] summary::after {
+      content: '−';
+    }
+
+    .home-mobile-supporting-record summary > span,
+    .home-mobile-supporting-record__links span {
+      color: var(--color-performance-muted, #5e6268);
+      font-family: var(--font-performance-mono);
+      font-size: 0.68rem;
+      font-weight: var(--font-performance-semibold);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .home-mobile-supporting-record summary strong {
+      grid-column: 1;
+      font-size: 1.05rem;
+      font-weight: var(--font-performance-medium);
+      line-height: 1.15;
+    }
+
+    .home-mobile-supporting-record summary small {
+      grid-column: 1;
+      color: var(--color-performance-muted, #5e6268);
+      font-size: 0.8rem;
+      line-height: 1.35;
+    }
+
+    .home-mobile-supporting-record__body {
+      display: grid;
+      gap: 0.9rem;
+      padding: 0 0.9rem 0.9rem;
+      border-top: 1px solid var(--color-performance-line, #d7d7d2);
+    }
+
+    .home-mobile-supporting-record__body > p {
+      margin: 0;
+      color: var(--color-performance-muted, #5e6268);
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
+
+    .home-mobile-supporting-record__links {
+      display: grid;
+      border: 1px solid var(--color-performance-line, #d7d7d2);
+    }
+
+    .home-mobile-supporting-record__links a {
+      display: grid;
+      gap: 0.2rem;
+      min-height: var(--height-performance-control-min, 2.75rem);
+      padding: 0.75rem;
+      color: var(--color-performance-ink, #090909);
+      text-decoration: none;
+    }
+
+    .home-mobile-supporting-record__links a + a {
+      border-top: 1px solid var(--color-performance-line, #d7d7d2);
+    }
+
+    .home-mobile-supporting-record__links strong {
+      font-size: 0.98rem;
+      font-weight: var(--font-performance-medium);
+      line-height: 1.2;
+    }
+
+    .home-mobile-supporting-record__links small {
+      color: var(--color-performance-muted, #5e6268);
+      font-size: 0.78rem;
+      line-height: 1.35;
     }
 
     .boundary-study__outcomes {
@@ -812,18 +979,26 @@
       grid-template-columns: 1fr;
     }
 
-    .boundary-study__media {
+    .boundary-study__field {
       display: block;
       grid-row: auto;
-      height: 9.5rem;
-      min-height: 9.5rem;
+      min-height: 0;
+      padding: 0.65rem;
       border-right: 0;
       border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
-      overflow: hidden;
+    }
+
+    .boundary-study__field--media {
+      display: block;
+      padding: 0;
+    }
+
+    .boundary-study__media {
+      aspect-ratio: 3 / 2;
     }
 
     .boundary-study__media img {
-      object-position: center 54%;
+      object-position: center;
     }
 
     .boundary-study__metrics {

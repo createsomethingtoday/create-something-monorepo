@@ -16,7 +16,7 @@
   import AgencyPerformanceReadback from '$lib/components/AgencyPerformanceReadback.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
   import { PUBLIC_PRODUCT_SEQUENCE, getPublicProduct } from '$lib/data/productFamily';
-  import { paperProductSystemMedia } from '$lib/data/performanceMedia';
+  import { playbookHeroMedia } from '$lib/data/playbookHeroMedia';
 
   type ProductSurfaceKind = 'signal' | 'decision' | 'proof';
 
@@ -142,11 +142,12 @@
 
 <PerformanceCampaignOpening
   eyebrow="Product system"
-  title="Map the system. Control the work."
-  lede="CREATE SOMETHING Map stands alone as the living definition. CREATE SOMETHING Control stands alone as the governed operating product and includes Map. Build connects the approved system."
+  expression="editorial"
+  title="One playbook. Three operating paths."
+  lede="Map defines the client-owned Playbook. Build makes its approved Runbooks executable. Control operates and improves the system with visible authority and proof."
+  media={playbookHeroMedia.products}
+  mediaMobilePlacement="background"
   density="compact"
-  media={paperProductSystemMedia}
-  mode="paper"
   proof={[
     { label: 'Map', value: 'Define' },
     { label: 'Build', value: 'Connect' },
@@ -227,6 +228,7 @@
 </section>
 
 <PerformanceConversionHandoff
+  expression="editorial"
   eyebrow="Apply the system"
   title="Start with the workflow your team still protects by hand."
   description="Use Map to define it, Build to connect it, or Control to operate it with approvals and proof. Control includes Map."

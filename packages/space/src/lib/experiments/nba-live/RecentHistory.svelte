@@ -25,7 +25,9 @@
 				{history.source === 'archive' ? 'NBA archive' : 'Scoreboard history'}
 			</p>
 			<h2 id="recent-history-title">Recent games</h2>
-			<p class="history-description">Go back to the latest completed slates and explore the data.</p>
+			<p class="history-description">
+				Browse the latest completed slates and open their score, play-by-play, and analysis views.
+			</p>
 		</div>
 	</div>
 

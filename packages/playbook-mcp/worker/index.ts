@@ -33,6 +33,7 @@ import type { HalfDozenScenarioRunResult } from './halfdozenFleetWatchdog.js';
 import { runDeterministicFleetWatchdog } from './deterministicFleetWatchdog.js';
 import { runScheduledDeterministicFleetWatchdog } from './scheduledFleetWatchdog.js';
 import { inferredProxyToolCount, liveHubTotalServerCount } from './registrySweepTelemetry.js';
+import { handleLangfuseAlertWebhook, type LangfuseMonitorAlert } from './langfuseAlertWebhook.js';
 
 // =============================================================================
 // Types
@@ -41,6 +42,7 @@ import { inferredProxyToolCount, liveHubTotalServerCount } from './registrySweep
 interface Env {
   MCP_OBJECT: DurableObjectNamespace;
   TELEMETRY_DB?: D1Database;
+  ALERT_STATE_KV?: KVNamespace;
   MCP_ACCOUNT_ID?: string;
   OPENAI_API_KEY?: string;
   LANGFUSE_PUBLIC_KEY?: string;
@@ -50,6 +52,7 @@ interface Env {
   LANGFUSE_APP_URL?: string;
   LANGFUSE_HOST?: string;
   LANGFUSE_ENABLED?: string;
+  LANGFUSE_ALERT_WEBHOOK_SECRET?: string;
   HALFDOZEN_AGENT_ROUTE_TOKEN?: string;
   HALFDOZEN_TELEMETRY_MCP_URL?: string;
   HALFDOZEN_GMAIL_MCP_URL?: string;
@@ -84,6 +87,7 @@ const HALFDOZEN_NOTIFY_TEST_ROUTE = '/clients/halfdozen/agents/notifications/tes
 const HALFDOZEN_SLACK_COMMAND_ROUTE = '/clients/halfdozen/slack/commands';
 const HALFDOZEN_FLEET_WATCHDOG_CRON_ROUTE = 'cron:clients/halfdozen/agents/fleet-watchdog';
 const MCP_REGISTRY_SWEEP_ROUTE = '/create-something/agents/mcp-registry-sweep/run';
+const LANGFUSE_ALERT_WEBHOOK_ROUTE = '/webhooks/langfuse/alerts';
 const SLACK_TIMESTAMP_TOLERANCE_SECONDS = 300;
 const DEFAULT_LANGFUSE_PROJECT_NAME = 'CREATE SOMETHING';
 const RESEND_EMAIL_API_URL = 'https://api.resend.com/emails';
@@ -92,6 +96,7 @@ const DEFAULT_NOTIFY_EMAIL_TO = ['micah@createsomething.io'] as const;
 const DEFAULT_MCP_REGISTRY_SWEEP_HUB_HEALTH_URL =
   'https://cs-mcp-hub-remote.createsomething.workers.dev/health';
 const DEFAULT_MCP_REGISTRY_SWEEP_TIMEOUT_MS = 60_000;
+const LANGFUSE_ALERT_STATE_TTL_SECONDS = 30 * 24 * 60 * 60;
 
 const HALFDOZEN_PROTECTED_ROUTES = [
   HALFDOZEN_FLEET_WATCHDOG_ROUTE,
@@ -908,6 +913,59 @@ async function sendNotificationEmail(
   }
 
   return { sent: true, providerId };
+}
+
+async function sendLangfuseAlertEmail(env: Env, alert: LangfuseMonitorAlert): Promise<void> {
+  if (!env.RESEND_API_KEY) {
+    throw new Error('RESEND_API_KEY is not configured.');
+  }
+
+  const title = `${alert.payload.severity}: ${alert.payload.message.title}`;
+  const permalink = alert.payload.permalink ?? 'not provided';
+  const fields = [
+    ['Project ID', alert.payload.projectId],
+    ['Monitor ID', alert.payload.monitorId],
+    ['Window', alert.payload.window ?? 'unknown'],
+    ['Alert time', alert.payload.timestamp],
+    ['Langfuse', permalink]
+  ];
+  const text = `${title}\n\n${fields.map(([key, value]) => `${key}: ${value}`).join('\n')}\n\n${alert.payload.message.body}`;
+  const fieldRows = fields
+    .map(
+      ([key, value]) =>
+        `<tr><td style="padding:6px 0;color:#737373">${htmlEscape(key)}</td><td style="padding:6px 0;color:#e5e5e5;text-align:right">${htmlEscape(value)}</td></tr>`
+    )
+    .join('');
+
+  const body: Record<string, unknown> = {
+    from: env.HALFDOZEN_AGENT_NOTIFY_EMAIL_FROM?.trim() || DEFAULT_NOTIFY_EMAIL_FROM,
+    to: parseEmailList(env.HALFDOZEN_AGENT_NOTIFY_EMAIL_TO),
+    subject: title,
+    text,
+    html: `<!doctype html><html><body style="margin:0;padding:0;background:#050505;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#f5f5f5"><table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:40px 16px"><table width="640" cellpadding="0" cellspacing="0" style="max-width:640px;width:100%"><tr><td style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#737373;padding-bottom:20px">CREATE SOMETHING Ops</td></tr><tr><td style="border:1px solid #262626;background:#0a0a0a;padding:28px;border-radius:10px"><div style="font-size:13px;color:#f59e0b">${htmlEscape(alert.payload.severity)}</div><h1 style="font-size:22px;line-height:1.3;margin:10px 0 20px;color:#fff">${htmlEscape(alert.payload.message.title)}</h1><table width="100%" cellpadding="0" cellspacing="0">${fieldRows}</table><div style="border-top:1px solid #262626;margin:22px 0"></div><div style="font-size:14px;line-height:1.65;color:#d4d4d4;white-space:pre-wrap">${htmlEscape(truncateText(alert.payload.message.body, 1800))}</div></td></tr></table></td></tr></table></body></html>`,
+    tags: [
+      { name: 'surface', value: 'playbook-mcp' },
+      { name: 'scenario', value: 'langfuse-alert' }
+    ]
+  };
+  const replyTo = env.HALFDOZEN_AGENT_NOTIFY_EMAIL_REPLY_TO?.trim();
+  if (replyTo) body.replyTo = replyTo;
+
+  const response = await fetch(RESEND_EMAIL_API_URL, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${env.RESEND_API_KEY}`,
+      'Content-Type': 'application/json',
+      'Idempotency-Key': `playbook-mcp:langfuse-alert:${alert.id}`
+    },
+    body: JSON.stringify(body)
+  });
+  if (!response.ok) {
+    const responseText = await response.text();
+    throw new Error(
+      `Resend Langfuse alert email failed (${response.status}): ${responseText.slice(0, 500)}`
+    );
+  }
 }
 
 function queueEmailNotification(ctx: ExecutionContext, env: Env, event: NotificationEvent): void {
@@ -1900,6 +1958,22 @@ export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
     const url = new URL(request.url);
 
+    if (url.pathname === LANGFUSE_ALERT_WEBHOOK_ROUTE) {
+      return handleLangfuseAlertWebhook(request, {
+        signingSecret: env.LANGFUSE_ALERT_WEBHOOK_SECRET?.split(','),
+        notificationState: env.ALERT_STATE_KV
+          ? {
+              get: (key) => env.ALERT_STATE_KV!.get(key),
+              put: (key, value) =>
+                env.ALERT_STATE_KV!.put(key, value, {
+                  expirationTtl: LANGFUSE_ALERT_STATE_TTL_SECONDS
+                })
+            }
+          : undefined,
+        deliver: (alert) => sendLangfuseAlertEmail(env, alert)
+      });
+    }
+
     if (url.pathname === HALFDOZEN_SLACK_COMMAND_ROUTE) {
       if (request.method !== 'POST') {
         return jsonResponse(
@@ -2294,6 +2368,7 @@ export default {
           halfdozen_inbox_triage: HALFDOZEN_INBOX_TRIAGE_ROUTE,
           halfdozen_dedup: HALFDOZEN_DEDUP_ROUTE,
           halfdozen_notification_test: HALFDOZEN_NOTIFY_TEST_ROUTE,
+          langfuse_alert_webhook: LANGFUSE_ALERT_WEBHOOK_ROUTE,
           halfdozen_slack_commands: HALFDOZEN_SLACK_COMMAND_ROUTE,
           mcp_registry_sweep: MCP_REGISTRY_SWEEP_ROUTE
         },
@@ -2305,6 +2380,7 @@ export default {
             .length,
           halfdozenSlackCommandSigningConfigured: Boolean(env.HALFDOZEN_SLACK_SIGNING_SECRET),
           halfdozenSlackTeamRestricted: Boolean(env.HALFDOZEN_SLACK_TEAM_ID),
+          langfuseAlertWebhookSigningConfigured: Boolean(env.LANGFUSE_ALERT_WEBHOOK_SECRET),
           halfdozenFleetWatchdogCronEnabled: isFlagEnabled(
             env.HALFDOZEN_FLEET_WATCHDOG_CRON_ENABLED,
             true

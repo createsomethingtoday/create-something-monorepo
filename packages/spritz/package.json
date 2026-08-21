@@ -49,14 +49,14 @@
 	"devDependencies": {
 		"@create-something/canon": "workspace:^",
 		"@sveltejs/adapter-auto": "^7.0.0",
-		"@sveltejs/kit": "^2.47.1",
+		"@sveltejs/kit": "^2.70.2",
 		"@sveltejs/package": "^2.5.4",
 		"@sveltejs/vite-plugin-svelte": "^6.2.1",
 		"publint": "^0.3.14",
-		"svelte": "^5.41.0",
+		"svelte": "^5.56.9",
 		"svelte-check": "^4.3.3",
 		"typescript": "^5.9.3",
-		"vite": "^7.1.10"
+		"vite": "^7.3.6"
 	},
 	"keywords": [
 		"svelte",

@@ -33,7 +33,7 @@ const handoffBoundaryMetadata = read(
 test('every indexed public marketing route receives a route-owned or shared Performance ending', () => {
   const indexedRoutes = marketingPagePortfolio.filter((entry) => entry.decision === 'index');
 
-  assert.equal(indexedRoutes.length, 26);
+  assert.equal(indexedRoutes.length, 41);
   assert.ok(indexedRoutes.some((entry) => entry.path === '/'));
   assert.match(layout, /marketingPagePortfolio/);
   assert.match(layout, /entry\.decision !== 'archive'/);
@@ -80,33 +80,29 @@ test('the homepage moves from claim to proof to method before asking visitors to
   }
 });
 
-test('the homepage opening uses the property-owned paper-under-pressure artifact', () => {
-  assert.match(home, /const homepageHandoffBoundaryMedia: PerformanceCampaignMedia/);
+test('the homepage opening uses the property-owned Playbook court media candidate', () => {
   assert.match(
     home,
-    /src: '\/images\/performance-lab\/paper-under-pressure-field\.svg'/
+    /import \{ playbookHeroMedia, playbookHomeHeroMedia \} from '\$lib\/data\/playbookHeroMedia'/
   );
-  assert.match(home, /alt: 'A warm tactile paper field with one folded edge'/);
-  assert.match(home, /media=\{homepageHandoffBoundaryMedia\}/);
-  assert.match(home, /mode="paper"/);
-  assert.match(home, /\{#snippet artifact\(\)\}[\s\S]*?<PaperUnderPressureStage \/>/);
+  assert.match(home, /media=\{playbookHomeHeroMedia\}/);
+  assert.match(home, /mediaMobilePlacement="background"/);
+  assert.match(home, /data-campaign-media="home-map-narrative"/);
+  assert.match(home, /srcset=\{playbookHeroMedia\.map\.mobileSrc\}/);
+  assert.match(home, /src=\{playbookHeroMedia\.map\.src\}/);
+  assert.doesNotMatch(home, /PlaybookField/);
+  assert.doesNotMatch(home, /mode="paper"|paperOperatingRouteMedia/);
   assert.doesNotMatch(home, /agency-fluid-intelligence-loop-v4/);
   assert.doesNotMatch(home, /controlledFlowMedia/);
   assert.equal(
     existsSync(
-      new URL(
-        '../static/images/performance-lab/paper-under-pressure-field.svg',
-        import.meta.url
-      )
+      new URL('../static/images/performance-lab/paper-under-pressure-field.svg', import.meta.url)
     ),
     true
   );
   assert.equal(
     existsSync(
-      new URL(
-        '../static/images/performance-lab/paper-boundary-authority.webp',
-        import.meta.url
-      )
+      new URL('../static/images/performance-lab/paper-boundary-authority.webp', import.meta.url)
     ),
     true
   );
@@ -122,10 +118,7 @@ test('the homepage opening uses the property-owned paper-under-pressure artifact
 });
 
 test('the historical fluid study remains attributable while Canon retains optional motion support', () => {
-  assert.match(
-    campaign,
-    /<video[\s\S]*?autoplay[\s\S]*?muted[\s\S]*?loop[\s\S]*?playsinline/
-  );
+  assert.match(campaign, /<video[\s\S]*?autoplay[\s\S]*?muted[\s\S]*?loop[\s\S]*?playsinline/);
   assert.match(campaign, /\{#if media\.video && motionAllowed\}/);
   assert.match(campaign, /poster=\{media\.video\.poster \?\? media\.src\}/);
   assert.match(handoffBoundaryMetadata, /CRE-1562/);
@@ -151,21 +144,69 @@ test('the historical fluid study remains attributable while Canon retains option
 });
 
 test('the campaign can preserve property-owned color without changing its default', () => {
-  assert.match(home, /colorMode: 'natural'/);
   assert.match(campaign, /colorMode\?: 'monochrome' \| 'natural'/);
   assert.match(campaign, /data-color-mode=\{media\.colorMode \?\? 'monochrome'\}/);
   assert.match(campaign, /\[data-color-mode='monochrome'\][\s\S]*?grayscale\(1\)/);
   assert.match(campaign, /\[data-color-mode='natural'\][\s\S]*?filter: contrast\(1\.08\)/);
 });
 
-test('the homepage boundary artifact shows evidence without restating the scene introduction', () => {
-  assert.match(home, /<figure class="boundary-study__media">/);
-  assert.match(home, /<figcaption>Paper pressure study · Run \/ Wait \/ Stop<\/figcaption>/);
-  assert.match(home, /paper-boundary-study\.svg/);
+test('the homepage operating story uses the shared Playbook to show Map, Build, and Control', () => {
+  assert.match(home, /eyebrow="One shared Playbook"/);
+  assert.match(home, /title="Map the play\. Build the system\. Keep control\."/);
+  assert.match(home, /label: 'Map'/);
+  assert.match(home, /label: 'Build'/);
+  assert.match(home, /label: 'Control'/);
+  assert.match(home, /class="boundary-study__field boundary-study__field--media"/);
+  assert.match(home, /src=\{playbookHeroMedia\.map\.src\}/);
+  assert.doesNotMatch(home, /paper-boundary-authority\.webp/);
   assert.doesNotMatch(home, /class="boundary-study__copy"/);
   assert.match(home, /class="boundary-study__outcomes"/);
   assert.match(home, /class="boundary-study__metrics"/);
   assert.match(home, /class="boundary-study__receipt"/);
+  assert.match(home, /Approved work advances/);
+  assert.match(home, /Owner \/ gate \/ stop/);
+  assert.match(home, /client-owned Playbook/);
+});
+
+test('editorial narrative panels keep their scene rows intrinsically sized on desktop', () => {
+  assert.match(
+    narrative,
+    /data-expression='editorial'\]\s*\.performance-narrative-stage__panel\s*\{[\s\S]*?align-content:\s*start;[\s\S]*?min-height:\s*0;/
+  );
+});
+
+test('the Shared Playbook study stacks its court and proof legibly on mobile', () => {
+  assert.match(
+    home,
+    /@media \(max-width: 980px\)[\s\S]*?\.boundary-study__field--media\s*\{\s*padding:\s*0/
+  );
+  assert.match(
+    home,
+    /@media \(max-width: 640px\)[\s\S]*?\.boundary-study\s*\{\s*grid-template-columns:\s*1fr/
+  );
+  assert.match(
+    home,
+    /@media \(max-width: 640px\)[\s\S]*?\.boundary-study__field\s*\{[\s\S]*?display:\s*block[\s\S]*?border-bottom:/
+  );
+  assert.match(
+    home,
+    /@media \(max-width: 640px\)[\s\S]*?\.boundary-study__metrics\s*\{\s*grid-template-columns:\s*1fr/
+  );
+});
+
+test('the homepage Map study gives the operating junction room on desktop without disturbing its mobile crop', () => {
+  assert.match(
+    home,
+    /\.boundary-study\s*\{\s*display:\s*grid;\s*grid-template-columns:\s*minmax\(18rem,\s*0\.86fr\)\s*minmax\(0,\s*1\.14fr\);/
+  );
+  assert.match(
+    home,
+    /\.boundary-study__media img\s*\{[\s\S]*?object-position:\s*82%\s+center;/
+  );
+  assert.match(
+    home,
+    /@media \(max-width: 640px\)[\s\S]*?\.boundary-study__media img\s*\{\s*object-position:\s*center;/
+  );
 });
 
 test('the shared readback derives a measured example and its limits from field-report truth', () => {
@@ -213,10 +254,7 @@ test('the shared fallback keeps its action beside the claim and its proof in the
     handoff,
     /performance-handoff__intro[\s\S]*?performance-handoff__actions[\s\S]*?<AgencyPerformanceReadback compact=\{true\}/
   );
-  assert.match(
-    readback,
-    /selected cases produced usable evidence packets for human decision/i
-  );
+  assert.match(readback, /selected cases produced usable evidence packets for human decision/i);
 });
 
 test('homepage Performance surfaces share one responsive page gutter token', () => {

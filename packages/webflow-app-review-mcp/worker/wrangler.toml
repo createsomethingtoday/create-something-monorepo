@@ -15,9 +15,9 @@ AIRTABLE_GOVERNANCE_FINDINGS_TABLE_ID = "tblIH1LQ8H3b2piNi"
 OAUTH_ALLOWED_EMAIL_DOMAIN = "webflow.com"
 OAUTH_ALLOWED_EMAILS = "pablo.miranda@webflow.com,shea.sisco@webflow.com,micah@webflow.com,micah@createsomething.io"
 CF_ACCESS_TEAM_DOMAIN = "https://webflow.cloudflareaccess.com"
-# Set this to the dedicated App Review Access application audience only after
-# the Webflow Cloud hostname and Access application have been provisioned.
-CF_ACCESS_AUD = ""
+# Dedicated App Review Access application audience. Deploys replace vars, so
+# retain the provisioned value or the Access surface fails closed.
+CF_ACCESS_AUD = "3b4a38c7c99ec7127bcbb99d9c8aae7b0011a51370bff31b7085385e1a2807ba"
 
 [[d1_databases]]
 binding = "TELEMETRY_DB"

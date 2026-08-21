@@ -1,4 +1,5 @@
 import type { AtlasCanvasNode, AtlasCanvasNodeKind, AtlasSession } from '../types.js';
+import { compileTranscriptTimeline, type CutOperation, type TranscriptEditorProject } from '@create-something/atlas-composition';
 
 export type CanvasDetailMode = 'compact' | 'standard' | 'detail';
 
@@ -44,6 +45,267 @@ export type StoryFocusedNodeSummary = {
   callouts: Array<{ severity: 'decision' | 'info' | 'risk'; text: string }>;
   questions: Array<{ owner?: string; question: string; status: 'answered' | 'open' }>;
 };
+
+export type TranscriptEditorSnapshot = {
+  source: {
+    durationUs: number;
+    hasAudio: boolean;
+    height: number;
+    id: string;
+    width: number;
+  };
+  revision: {
+    createdAt: string;
+    id: string;
+    parentRevisionId: string | null;
+  };
+  timeline: {
+    clips: Array<{
+      endUs: number;
+      id: string;
+      operationId: string;
+      startUs: number;
+      text: string;
+    }>;
+    durationUs: number;
+  };
+  graph: {
+    clipNodes: Array<{ id: string; operationId: string | null }>;
+    edges: number;
+    nodes: number;
+  };
+  overlays: Array<{ id: string; kind: string; text?: string; startUs: number; endUs: number }>;
+  diffs: Array<{
+    at: string;
+    event: 'applied' | 'approved' | 'created' | 'proposed' | 'rejected' | 'rendered' | 'restored';
+    nodeId: string;
+    summary: string;
+  }>;
+  exports: Array<{
+    cacheHit: boolean;
+    captionSha256: string;
+    completedAt: string;
+    durationUs: number;
+    id: string;
+    outputSha256: string;
+  }>;
+};
+
+export type MediaClipNodePresentation = {
+  diffCount: number;
+  id: string;
+  operation: {
+    endUs: number;
+    id: string;
+    reason: string;
+    startUs: number;
+  } | null;
+  revisionId: string;
+  source: {
+    hasAudio: boolean;
+    height: number;
+    id: string;
+    width: number;
+  } | null;
+  transcript: string;
+};
+
+export type SrtTranscriptCue = {
+  endUs: number;
+  startUs: number;
+  text: string;
+};
+
+function parseSrtTimestamp(value: string): number | null {
+  const match = /^(\d{2,}):(\d{2}):(\d{2})[,.](\d{3})$/.exec(value.trim());
+  if (!match) return null;
+  const [, hours, minutes, seconds, milliseconds] = match;
+  if (Number(minutes) > 59 || Number(seconds) > 59) return null;
+  return (
+    (Number(hours) * 3_600_000 + Number(minutes) * 60_000 + Number(seconds) * 1_000 + Number(milliseconds)) *
+    1_000
+  );
+}
+
+/** Parses pasted SRT into plain local transcript cues before project creation. */
+export function parseSrtTranscriptCues(value: string): SrtTranscriptCue[] {
+  const blocks = value
+    .replace(/\r\n?/g, '\n')
+    .trim()
+    .split(/\n\s*\n/)
+    .filter(Boolean);
+  if (!blocks.length) throw new Error('Paste at least one SRT cue before importing.');
+  const cues = blocks.map((block) => {
+    const lines = block.split('\n').map((line) => line.trim()).filter(Boolean);
+    const rangeIndex = lines.findIndex((line) => line.includes('-->'));
+    const range = lines[rangeIndex] ?? '';
+    const match = /^(.+?)\s+-->\s+(.+?)(?:\s+.*)?$/.exec(range);
+    const startUs = match ? parseSrtTimestamp(match[1]) : null;
+    const endUs = match ? parseSrtTimestamp(match[2]) : null;
+    if (startUs === null || endUs === null || endUs <= startUs) {
+      throw new Error('Each SRT cue needs a valid timestamp range.');
+    }
+    const text = lines.slice(rangeIndex + 1).join(' ').trim();
+    if (!text) throw new Error('Each SRT cue needs transcript text.');
+    return { startUs, endUs, text };
+  });
+  return cues;
+}
+
+/** Converts only whole, explicitly selected filler clips into a reviewable removal diff. */
+export function cleanupRemovalOperations(
+  project: TranscriptEditorProject,
+  candidates: Array<{ kind: string; startUs: number; endUs: number; transcriptSegmentIds: string[] }>
+): CutOperation[] {
+  const revision = project.revisions.find((candidate) => candidate.id === project.currentRevisionId);
+  if (!revision) throw new Error(`Transcript project is missing current revision ${project.currentRevisionId}.`);
+  const removalCandidates =
+    candidates
+      .filter((candidate) => candidate.kind === 'filler')
+      .filter((candidate) => candidate.transcriptSegmentIds.length === 1);
+  return revision.cutList.map((operation) => {
+    const isWholeClip = operation.kind === 'keep' && operation.transcriptSegmentIds.length === 1 && removalCandidates.some(
+      (candidate) => candidate.transcriptSegmentIds[0] === operation.transcriptSegmentIds[0] && candidate.startUs === operation.startUs && candidate.endUs === operation.endUs
+    );
+    return isWholeClip
+      ? { ...operation, kind: 'remove' as const, reason: 'Configured cleanup candidate selected for operator review.' }
+      : operation;
+  });
+}
+
+/**
+ * Converts a durable transcript project into the small, read-only editor view.
+ * The helper only reads the accepted revision and its graph; proposed work is
+ * deliberately left for the later approval surface.
+ */
+export function buildTranscriptEditorSnapshot(
+  project: TranscriptEditorProject
+): TranscriptEditorSnapshot {
+  const revision = project.revisions.find((candidate) => candidate.id === project.currentRevisionId);
+  if (!revision) throw new Error(`Transcript project is missing current revision ${project.currentRevisionId}.`);
+  const source = project.sourceAssets[0];
+  if (!source) throw new Error('Transcript project is missing a source asset.');
+
+  const textBySegmentId = new Map(
+    project.transcriptSegments.map((segment) => [segment.id, segment.text])
+  );
+  const timeline = compileTranscriptTimeline(project, revision.id);
+  const clips = timeline.clips
+    .filter((clip) => clip.kind === 'video')
+    .map((clip) => ({
+      endUs: clip.endUs,
+      id: clip.id,
+      operationId: clip.id.replace(/^video:/, ''),
+      startUs: clip.startUs,
+      text: (clip.transcriptSegmentIds ?? [])
+        .map((segmentId) => textBySegmentId.get(segmentId) ?? segmentId)
+        .join(' ')
+    }));
+  const diffs = revision.graph.nodes
+    .flatMap((node) =>
+      (node.diffs ?? []).map((diff) => ({
+        at: diff.at,
+        event: diff.event,
+        nodeId: node.id.replace(/^clip:keep:/, 'clip:'),
+        summary:
+          diff.event === 'created' && diff.summary === 'Clip node created from the timestamped source transcript.'
+            ? 'Created from the local transcript source.'
+            : diff.summary
+      }))
+    )
+    .sort((left, right) => left.at.localeCompare(right.at) || left.nodeId.localeCompare(right.nodeId));
+  const exports = project.receipts
+    .filter(
+      (receipt) =>
+        receipt.status === 'completed' &&
+        receipt.request.revisionId === revision.id &&
+        Boolean(receipt.outputSha256 && receipt.inspection)
+    )
+    .map((receipt) => ({
+      cacheHit: receipt.cacheHit,
+      captionSha256: receipt.request.captionSha256,
+      completedAt: receipt.completedAt,
+      durationUs: receipt.inspection?.durationUs ?? 0,
+      id: receipt.id,
+      outputSha256: receipt.outputSha256 ?? ''
+    }))
+    .sort((left, right) => right.completedAt.localeCompare(left.completedAt) || left.id.localeCompare(right.id));
+
+  return {
+    source: {
+      durationUs: source.media.durationUs,
+      hasAudio: source.media.hasAudio,
+      height: source.media.height,
+      id: source.id,
+      width: source.media.width
+    },
+    revision: {
+      createdAt: revision.createdAt,
+      id: revision.id,
+      parentRevisionId: revision.parentRevisionId
+    },
+    timeline: { clips, durationUs: timeline.durationUs },
+    graph: {
+      clipNodes: revision.graph.nodes
+        .filter((node) => node.kind === 'clip')
+        .map((node) => ({ id: node.id, operationId: node.cutOperationId ?? null })),
+      edges: revision.graph.edges.length,
+      nodes: revision.graph.nodes.length
+    },
+    overlays: revision.overlays.map((overlay) => ({ ...overlay })),
+    diffs,
+    exports
+  };
+}
+
+/**
+ * Projects durable clip nodes into the small, editorial card model used by the
+ * local transcript drawer. This remains read-only: source state, accepted
+ * revision, and approval state still belong to the persisted project.
+ */
+export function buildMediaClipNodePresentations(
+  project: TranscriptEditorProject
+): MediaClipNodePresentation[] {
+  const revision = project.revisions.find((candidate) => candidate.id === project.currentRevisionId);
+  if (!revision) throw new Error(`Transcript project is missing current revision ${project.currentRevisionId}.`);
+
+  const operationById = new Map(revision.cutList.map((operation) => [operation.id, operation]));
+  const segmentById = new Map(project.transcriptSegments.map((segment) => [segment.id, segment]));
+
+  return revision.graph.nodes
+    .filter((node) => node.kind === 'clip')
+    .map((node) => {
+      const cutOperation = node.cutOperationId ? operationById.get(node.cutOperationId) : undefined;
+      const segments = (cutOperation?.transcriptSegmentIds ?? [])
+        .map((segmentId) => segmentById.get(segmentId))
+        .filter((segment): segment is NonNullable<typeof segment> => Boolean(segment));
+      const sourceAssetId = segments[0]?.assetId;
+      const source = sourceAssetId ? project.sourceAssets.find((asset) => asset.id === sourceAssetId) : undefined;
+
+      return {
+        diffCount: node.diffs?.length ?? 0,
+        id: node.id,
+        operation: cutOperation
+          ? {
+              endUs: cutOperation.endUs,
+              id: cutOperation.id,
+              reason: cutOperation.reason,
+              startUs: cutOperation.startUs
+            }
+          : null,
+        revisionId: revision.id,
+        source: source
+          ? {
+              hasAudio: source.media.hasAudio,
+              height: source.media.height,
+              id: source.id,
+              width: source.media.width
+            }
+          : null,
+        transcript: segments.map((segment) => segment.text).join(' ').trim() || 'No timestamped transcript is available for this clip.'
+      };
+    });
+}
 
 function displayOwner(value: unknown): string {
   if (typeof value === 'string' && value.trim()) return value.trim();

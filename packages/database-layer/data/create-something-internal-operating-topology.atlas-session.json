@@ -2044,18 +2044,18 @@
         "updatedAt": "2026-07-23T05:11:08.429Z"
       },
       {
-        "id": "atlas_create-something_package_create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
+        "id": "atlas_create-something_package_create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
         "kind": "system",
-        "label": "@create-something/calm-operator-ink-firmware",
-        "atlasId": "substrate:create-something:package:create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
+        "label": "@create-something/calm-operator-stopwatch-firmware",
+        "atlasId": "substrate:create-something:package:create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
         "x": 84,
         "y": 1204,
         "width": 232,
         "height": 142,
         "owner": "CREATE SOMETHING",
         "status": "unknown",
-        "notes": "packages/calm-operator-ink-firmware | package | Mixed",
-        "evidence": "Workspace package at packages/calm-operator-ink-firmware.",
+        "notes": "packages/calm-operator-stopwatch-firmware | package | Mixed",
+        "evidence": "Workspace package at packages/calm-operator-stopwatch-firmware.",
         "products": [
           {
             "productId": "signal",
@@ -2067,10 +2067,10 @@
         ],
         "governanceRecords": [
           {
-            "id": "receipt:substrate:create-something:package:create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
+            "id": "receipt:substrate:create-something:package:create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
             "productId": "proof",
-            "title": "@create-something/calm-operator-ink-firmware is part of the mapped root topology.",
-            "summary": "packages/calm-operator-ink-firmware was discovered during topology generation at 2026-07-23T05:11:08.429Z.",
+            "title": "@create-something/calm-operator-stopwatch-firmware is part of the mapped root topology.",
+            "summary": "packages/calm-operator-stopwatch-firmware was discovered during topology generation at 2026-07-23T05:11:08.429Z.",
             "status": "ready",
             "source": "Substrate topology projection",
             "attachedAt": "2026-07-23T05:11:08.429Z",
@@ -2079,11 +2079,11 @@
         ],
         "bindings": [
           {
-            "id": "binding:substrate:create-something:package:create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
+            "id": "binding:substrate:create-something:package:create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
             "kind": "script",
-            "label": "@create-something/calm-operator-ink-firmware",
+            "label": "@create-something/calm-operator-stopwatch-firmware",
             "source": "package",
-            "selector": "substrate:create-something:package:create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
+            "selector": "substrate:create-something:package:create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
             "required": true
           }
         ],
@@ -26020,11 +26020,11 @@
         "updatedAt": "2026-07-23T05:11:08.429Z"
       },
       {
-        "id": "atlas_create-something_edge_substrate-create-something-root-contains-substrate-create-something-package-create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
+        "id": "atlas_create-something_edge_substrate-create-something-root-contains-substrate-create-something-package-create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
         "source": "atlas_create-something_root",
-        "target": "atlas_create-something_package_create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
+        "target": "atlas_create-something_package_create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
         "label": "contains",
-        "evidence": "packages/calm-operator-ink-firmware is present in the repo scan.",
+        "evidence": "packages/calm-operator-stopwatch-firmware is present in the repo scan.",
         "createdBy": "system",
         "updatedAt": "2026-07-23T05:11:08.429Z"
       },

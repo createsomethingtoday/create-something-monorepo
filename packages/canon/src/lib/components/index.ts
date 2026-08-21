@@ -25,6 +25,9 @@ export { default as PrivacyPolicyContent } from './PrivacyPolicyContent.svelte';
 export { default as TermsOfServiceContent } from './TermsOfServiceContent.svelte';
 export { default as CookieConsent } from './CookieConsent.svelte';
 
+// Licensed Meridian system: native, owned component translations.
+export * from './meridian/index.js';
+
 // Clear communication primitives
 export {
   ClearPageSection,

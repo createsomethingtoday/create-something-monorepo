@@ -57,6 +57,9 @@ test('first-party access allows an owned identity matching the staff domain', as
     source: 'io',
     iss: 'https://id.createsomething.space',
     aud: ['ona-agents'],
+    kind: 'identity_access_token',
+    session_version: 2,
+    email_verified: true,
     iat: now,
     exp: now + 300
   });
@@ -85,6 +88,9 @@ test('first-party access blocks a valid identity outside staff allow rules', asy
     source: 'space',
     iss: 'https://id.createsomething.space',
     aud: ['ona-agents'],
+    kind: 'identity_access_token',
+    session_version: 2,
+    email_verified: true,
     iat: now,
     exp: now + 300
   });

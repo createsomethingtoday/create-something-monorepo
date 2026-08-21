@@ -11,7 +11,7 @@
     type PerformanceEvidenceItem,
     type PerformanceNarrativeScene
   } from '@create-something/canon';
-  import { paperAttachedReceiptMedia } from '$lib/data/performanceMedia';
+  import { playbookHeroMedia } from '$lib/data/playbookHeroMedia';
   import SystemContextArtifact from '$lib/components/SystemContextArtifact.svelte';
   import {
     getTemplateReviewPacketCompletion,
@@ -123,9 +123,11 @@
 <main class="field-report">
   <PerformanceCampaignOpening
     eyebrow="Field report 01 / Review operations"
+    expression="editorial"
     title={templateReviewFieldReport.title}
     lede={templateReviewFieldReport.dek}
-    media={paperAttachedReceiptMedia}
+    media={playbookHeroMedia.templateReview}
+    mediaMobilePlacement="background"
     proof={[
       { label: 'Packet completion', value: '49 / 50' },
       { label: 'Judgment', value: 'Blocked' },
@@ -307,6 +309,7 @@
   </section>
 
   <PerformanceConversionHandoff
+    expression="editorial"
     eyebrow="Business implication"
     title="Use automation to prepare evidence—not to assume judgment."
     description="Start with one repeated workflow, a named decision owner, and a measurable baseline. Expand authority only after the system proves both quality and business value."

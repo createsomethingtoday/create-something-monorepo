@@ -45,7 +45,8 @@ If you try to claim without checking first, Ground blocks you:
 npm install -g @createsomething/ground-mcp
 ```
 
-This downloads pre-built binaries for your platform.
+This installs thin command wrappers, then downloads the matching versioned
+release asset after verifying it against that release's `SHA256SUMS` manifest.
 
 ### Cargo (from source)
 
@@ -62,9 +63,57 @@ cargo build --release
 
 The binary is at `target/release/ground`.
 
+Record the exact artifact that produced a receipt:
+
+```bash
+ground build-info --json
+```
+
 ---
 
 ## Commands
+
+### Verified agent loop
+
+For an agent working on the current checkout, use the batch commands first:
+
+```bash
+# Return structured, computed findings for the current source tree
+ground analyze ./src --checks duplicates,dead_exports
+
+# Only examine changed files under ./src relative to the Git baseline
+ground diff ./src --base origin/main --checks duplicates
+```
+
+The MCP equivalents are `ground_analyze`, `ground_diff`, `ground_verify_fix`,
+and `ground_explain`. CTX remains complementary: it retrieves prior agent
+history, while Ground computes facts from the source currently on disk.
+
+Every batch, diff, and duplicate-function response has a
+`verification_status`; `ground diff` also returns the same status per requested
+check in `check_coverage.<check>.status`. The contract is explicit:
+
+- `PASS`: the check completed for the relevant supported files and found no issue.
+- `FAIL`: the check found an issue or could not complete because of a read/parse failure.
+- `NOT_APPLICABLE`: no changed file needs that check.
+- `UNSUPPORTED`: relevant source exists, but the requested check cannot analyze its language (including Svelte duplicate-function scans).
+- `TIMEOUT`: duplicate analysis reached its deadline before a complete result was available.
+
+`ground analyze` and `ground diff` accept `--timeout-ms` (120000 by default).
+The MCP equivalents accept `timeout_ms`; a deadline returns `TIMEOUT`, never a
+clean result. `ground diff` includes `.mjs` with JavaScript source analysis.
+Its `changed_files` and `changed_file_list` fields remain the analyzable-file
+view; read `discovered_changed_files`, `analyzable_changed_files`, and
+`excluded_changed_files` for the full Git scope. Per-check coverage also names
+`unsupported_changed_files` and `excluded_changed_files`, so a clean claim is
+valid only with `PASS`.
+
+Ground 0.3.5 extends source-bearing orphan evidence to nested Cloudflare Worker
+configurations: `wrangler.toml` and `wrangler.json` `main` entries are protected
+with their exact config source. The legacy `ground find orphans` command now
+returns the same verified canonical report as `ground analyze --checks orphans`.
+Promptfoo and manual Ground configurations remain recognized alongside package
+scripts, and broad duplicate scans retain their explicit safety bound.
 
 ### Check Commands (do these first)
 
@@ -90,6 +139,9 @@ ground find duplicate-functions ./packages --min-lines 5 --exclude-tests
 
 # Find orphaned modules (nothing imports them)
 ground find orphans ./packages/sdk/src
+
+# Return entry-point evidence with the orphan findings
+ground analyze ./packages/sdk/src --checks orphans
 
 # Find unused exports in a module
 ground find dead-exports ./utils.ts --scope ./src

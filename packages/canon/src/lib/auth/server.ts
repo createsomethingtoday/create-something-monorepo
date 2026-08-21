@@ -20,6 +20,7 @@ import {
 } from './types.js';
 import { COOKIE_CONFIG, parseCookieHeader } from './cookies.js';
 import { getAuth0Config } from './auth0.js';
+import { isCurrentIdentitySession } from '@create-something/auth-platform';
 
 // Re-export types for backwards compatibility
 export type { KVLike, AuthEnv };
@@ -197,7 +198,7 @@ function extractUserFromPayload(payload: JWTPayload, env?: AuthEnv): User | null
 export interface IdentityVerificationConfig {
 	issuer: string;
 	jwksUrl: string;
-	audience?: string | string[];
+	audience: string;
 	fetch?: typeof globalThis.fetch;
 	now?: () => number;
 	cache?: AuthEnv;
@@ -239,10 +240,11 @@ export const verifyIdentityToken = async (
 
 		const payload = parseJwtPayload(token);
 		if (!payload || payload.iss !== config.issuer || typeof payload.sub !== 'string') return null;
+		if (!isCurrentIdentitySession(payload)) return null;
 
 		const tokenAudience = normalizeAudience(payload.aud);
 		const expectedAudience = normalizeAudience(config.audience);
-		if (expectedAudience.length > 0 && !expectedAudience.some((value) => tokenAudience.includes(value))) {
+		if (expectedAudience.length !== 1 || tokenAudience.length !== 1 || tokenAudience[0] !== expectedAudience[0]) {
 			return null;
 		}
 
@@ -345,7 +347,12 @@ function base64UrlDecode(input: string): ArrayBuffer {
 // =============================================================================
 
 /**
- * Validate a JWT with cryptographic signature verification via JWKS
+ * Validate a third-party JWT with cryptographic signature verification via JWKS.
+ *
+ * First-party CREATE SOMETHING Identity tokens are intentionally rejected here
+ * because this compatibility API has no required application audience. Owned
+ * consumers must use `verifyIdentityToken` with explicit issuer, JWKS URL, and
+ * one exact audience.
  *
  * Uses KV caching when env.AUTH_CACHE is provided for robust
  * cross-instance caching in Cloudflare Workers.
@@ -400,6 +407,7 @@ export async function validateToken(token: string, env?: AuthEnv): Promise<User 
 
 		const payload = parseJwtPayload(token);
 		if (!payload) return null;
+		if (payload.iss?.replace(/\/+$/, '') === SESSION_CONFIG.IDENTITY_ENDPOINT) return null;
 		const provider = getJwtProvider(payload, env);
 		if (payload.iss !== provider.issuer) return null;
 

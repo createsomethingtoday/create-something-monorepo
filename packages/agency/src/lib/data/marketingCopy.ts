@@ -14,6 +14,9 @@ export const agencyCoreMessaging = {
     '/book?source=agency&intent=workflow-mapping&lane=workflow_infrastructure',
   servicesMappingSessionHref:
     '/book?source=services&intent=workflow-mapping&lane=workflow_infrastructure',
+  agentReadinessAuditHref: '/agent-readiness',
+  agentReadinessAuditBookingHref:
+    '/book?source=agent-readiness&intent=ai-readiness-audit&lane=workflow_infrastructure',
   engagementModelLabel: 'See the service path →',
   workflowCtaHeading: 'Bring one workflow your team is ready to delegate.',
   workflowCtaDetail:

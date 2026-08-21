@@ -10,6 +10,13 @@
 import { jsonContent, errorContent } from '@create-something/mcp-core';
 import type { ScopedMcpServer } from '@create-something/mcp-core';
 import type { D1Database } from '@create-something/mcp-core';
+import {
+  APP_REVIEW_GOVERNANCE_COMPOSITION,
+  proposeArcAction,
+  resolveMapModule,
+  toAtlasStoryAdapter
+} from '@create-something/atlas-composition';
+import { getArcBySlug, listArcSummaries } from '@create-something/playbook-mcp/arcs';
 
 import {
   getAtlasStats,
@@ -40,6 +47,10 @@ import {
 
 import {
   AtlasGetSchema,
+  AtlasCompositionActionProposeSchema,
+  AtlasCompositionGetSchema,
+  AtlasCompositionListSchema,
+  AtlasCompositionMapModuleResolveSchema,
   AtlasSearchSchema,
   AtlasStudioEdgeAddSchema,
   AtlasStudioEdgeUpdateSchema,
@@ -866,6 +877,83 @@ export function registerTools(server: ScopedMcpServer): void {
         return errorContent(`Pattern not found: ${input.id}`);
       }
       return jsonContent({ accountId: ctx.accountId, pattern });
+    },
+    { readOnly: true },
+  );
+
+  server.tool(
+    'atlas_composition_list',
+    'List all read-only Arc presentation routes generated from registered public Playbooks and Runbooks, plus the shipped App Review prototype.',
+    AtlasCompositionListSchema.shape,
+    async (params, ctx) => {
+      const input = AtlasCompositionListSchema.parse(params);
+      const arcs = listArcSummaries().filter(
+        (arc) => !input.source_kind || arc.source.kind === input.source_kind
+      );
+      return jsonContent({ accountId: ctx.accountId, arcs, total: arcs.length });
+    },
+    { readOnly: true },
+  );
+
+  server.tool(
+    'atlas_composition_get',
+    'Read one registered Arc composition and optionally adapt one route as a transient Atlas Story. Arc compositions are read-only views and own no customer state.',
+    AtlasCompositionGetSchema.shape,
+    async (params, ctx) => {
+      const input = AtlasCompositionGetSchema.parse(params);
+      const arc = getArcBySlug(input.composition_id ?? 'app-review-governance');
+      if (!arc) return errorContent(`Arc composition not found: ${input.composition_id}`);
+      const route = input.route_id
+        ? arc.composition.routes.find((candidate) => candidate.id === input.route_id)
+        : arc.composition.routes.find((candidate) => candidate.kind === 'arc');
+      if (!route) return errorContent(`Arc route not found: ${input.route_id ?? 'arc'}`);
+      return jsonContent({
+        accountId: ctx.accountId,
+        composition: arc.composition,
+        source: arc.source,
+        story: toAtlasStoryAdapter(arc.composition, route.id)
+      });
+    },
+    { readOnly: true },
+  );
+
+  server.tool(
+    'atlas_composition_resolve_map_module',
+    'Resolve an explicit pinned Arc map module without changing the map or its source registry.',
+    AtlasCompositionMapModuleResolveSchema.shape,
+    async (params, ctx) => {
+      const input = AtlasCompositionMapModuleResolveSchema.parse(params);
+      const arc = getArcBySlug(input.composition_id ?? 'app-review-governance');
+      if (!arc) return errorContent(`Arc composition not found: ${input.composition_id}`);
+      const module = arc.composition.mapModules.find((candidate) => candidate.id === input.module_id);
+      if (!module) return errorContent(`Arc map module not found: ${input.module_id}`);
+      const version = module.map.version.id ?? 'live';
+      const resolution = resolveMapModule(
+        arc.composition,
+        input.module_id,
+        (mapId) => ({
+          mapId,
+          latestVersion: version,
+          versions: [version]
+        })
+      );
+      return jsonContent({ accountId: ctx.accountId, resolution });
+    },
+    { readOnly: true },
+  );
+
+  server.tool(
+    'atlas_composition_propose_local_action',
+    'Draft the one bounded App Review Arc action for an operator. This creates no record and cannot approve, execute, or mutate an external system.',
+    AtlasCompositionActionProposeSchema.shape,
+    async (params, ctx) => {
+      AtlasCompositionActionProposeSchema.parse(params);
+      const proposedBy = ctx.userId ?? ctx.accountId;
+      return jsonContent({
+        accountId: ctx.accountId,
+        proposal: proposeArcAction(APP_REVIEW_GOVERNANCE_COMPOSITION, { proposedBy }),
+        nextRequiredActor: 'operator'
+      });
     },
     { readOnly: true },
   );

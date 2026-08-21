@@ -1,0 +1,65 @@
+name: Evidence Lint Pilot
+
+on:
+  pull_request:
+    paths:
+      - 'packages/eslint-plugin-evidence/**'
+      - 'packages/mcp-authz/src/**'
+      - 'packages/mcp-authz/eslint.evidence.config.mjs'
+      - 'packages/mcp-authz/package.json'
+      - 'packages/mcp-core/src/**'
+      - 'packages/mcp-core/eslint.evidence.config.mjs'
+      - 'packages/mcp-core/package.json'
+      - 'scripts/evidence-lint-pilot.mjs'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/evidence-lint-pilot.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/eslint-plugin-evidence/**'
+      - 'packages/mcp-authz/src/**'
+      - 'packages/mcp-authz/eslint.evidence.config.mjs'
+      - 'packages/mcp-authz/package.json'
+      - 'packages/mcp-core/src/**'
+      - 'packages/mcp-core/eslint.evidence.config.mjs'
+      - 'packages/mcp-core/package.json'
+      - 'scripts/evidence-lint-pilot.mjs'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/evidence-lint-pilot.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  evidence-lint-pilot:
+    name: Verify warning-only evidence lint pilot
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 9.15.0
+
+      - name: Setup Node
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify evidence lint rule
+        run: pnpm --dir packages/eslint-plugin-evidence test && pnpm --dir packages/eslint-plugin-evidence check && pnpm --dir packages/eslint-plugin-evidence build
+
+      - name: Verify approved consumer pilots
+        run: node scripts/evidence-lint-pilot.mjs --package packages/mcp-authz && node scripts/evidence-lint-pilot.mjs --package packages/mcp-core

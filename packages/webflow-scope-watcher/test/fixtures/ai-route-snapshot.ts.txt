@@ -1,0 +1,157 @@
+/**
+ * Public LLM proxy — POST /api/ai/v1/chat/completions (OpenAI-compatible).
+ *
+ * OAuth-bearer route that mirrors the OpenAI chat completions wire format so
+ * OpenAI-compatible clients (e.g. Studio via OpenRouter SDK) can route
+ * through Webflow's internal LLM proxy without code changes. Lives under
+ * `/api/ai/*` so webflow-proxy's existing `location /api/ai` prefix rule
+ * lands it on the `webflow-app-ai` shard.
+ *
+ * Design: docs/public-llm-proxy-design.md (PR #116484)
+ * Ticket: PION-768
+ */
+import type {Request, Response, NextFunction} from 'express';
+import type {VhostRouter} from '../../../lib/vhost';
+import * as middleware from '../../../middleware';
+import {resourceHelpers} from '../../../middleware/oauth/enforceUserPermissions';
+import {routers} from '../../vhost';
+import {SCOPES} from '../../../lib/logic/oauth/scopes';
+import {
+  requirePublicBearer,
+  resolvePublicOAuthIdentity,
+} from '../../../lib/logic/ai/mcp-server/page-automation/middleware';
+import {shapePublicChatCompletionsErrors} from '../../../lib/logic/ai/public-llm-proxy/shape-public-llm-errors';
+import {requirePublicLlmProxyFeatureFlag} from '../../../lib/logic/ai/public-llm-proxy/feature-flag';
+import {publicLlmChatCompletionsRateLimit} from '../../../lib/logic/ai/public-llm-proxy/rate-limits';
+import {restrictPublicChatScopes} from '../../../lib/logic/ai/public-llm-proxy/restrict-public-ai-scope';
+import {
+  enforceChatCompletionsModelAllowlist,
+  restrictPublicLlmOAuthApplications,
+  restrictPublicLlmWorkspaceAi,
+  resolvePublicLlmWorkspace,
+  resolvePublicKeyArea,
+} from '../../../lib/logic/ai/public-llm-proxy/middleware';
+import {forwardToLlmProxy} from '../../../lib/logic/ai/public-llm-proxy/forward-to-llm-proxy';
+import {openaiChatError} from '../../../lib/logic/ai/public-llm-proxy/error-response';
+import logger from '../../../lib/logger';
+// Type augmentations for req.publicLlmKeyArea and req.pageAutomationOAuthUserId
+import '../../../lib/logic/ai/public-llm-proxy/types';
+import '../../../lib/logic/ai/mcp-server/page-automation/types';
+
+export async function publicLlmChatCompletionsHandler(
+  req: Request,
+  res: Response
+): Promise<void> {
+  const userId = req.pageAutomationOAuthUserId;
+  const keyArea = req.publicLlmKeyArea;
+  const workspaceId = req.publicLlmWorkspaceId;
+  if (!userId || !keyArea || !workspaceId) {
+    logger.error(
+      '[public-llm-proxy] chat completions handler reached without OAuth userId, workspaceId, or keyArea — middleware order is wrong'
+    );
+    res.status(500).json(openaiChatError('Internal server error.'));
+    return;
+  }
+
+  logger.info('[public-llm-proxy] chat completions request received', {
+    keyArea,
+    model: (req.body as {model?: unknown} | undefined)?.model,
+  });
+
+  await forwardToLlmProxy({
+    req,
+    res,
+    targetPath: '/v1/chat/completions',
+    keyArea,
+    identity: {userId, workspaceId},
+    errorEnvelope: 'openai',
+  });
+}
+
+function rejectAccessTokenQueryParam(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void {
+  if (req.query.access_token) {
+    res
+      .status(401)
+      .json(
+        openaiChatError(
+          'Use the Authorization header instead of query parameters to authenticate.',
+          'authentication_error'
+        )
+      );
+    return;
+  }
+  next();
+}
+
+function publicLlmChatCompletionsErrorHandler(
+  err: unknown,
+  _req: Request,
+  res: Response,
+  _next: NextFunction
+): void {
+  if ((err as Error).name === 'OAuthUnauthorizedInsufficientPermissionsError') {
+    res
+      .status(403)
+      .json(
+        openaiChatError(
+          'You no longer have permission to use AI for this workspace.',
+          'permission_error'
+        )
+      );
+    return;
+  }
+  logger.errorWithStack(
+    '[public-llm-proxy] unhandled chat completions route error',
+    err instanceof Error ? err : new Error(String(err))
+  );
+  res.status(500).json(openaiChatError('Internal server error.'));
+}
+
+export default function (app: VhostRouter) {
+  app.post(
+    {
+      path: '/api/ai/v1/chat/completions',
+      routers: [routers.defaultApp, routers.oauthAppV2],
+    },
+    // 0. Reshape 401/403/429 from shared middleware to OpenAI error envelope.
+    shapePublicChatCompletionsErrors,
+    // 1. Reject ?access_token= query param — use Authorization header instead.
+    rejectAccessTokenQueryParam,
+    // 2. Extract Bearer, fail fast on missing token.
+    requirePublicBearer,
+    // 3. Validate token against Mongo, populate req.oauthAuth and req.pageAutomationOAuthUserId.
+    resolvePublicOAuthIdentity,
+    // 4. Only configured OAuth applications may use this API.
+    restrictPublicLlmOAuthApplications('openai'),
+    // 5. Statsig gate FIRST (before rate limit).
+    requirePublicLlmProxyFeatureFlag(),
+    // 6. Require a workspace-scoped grant and load its active workspace.
+    resolvePublicLlmWorkspace,
+    // 6a. Respect the workspace-level AI toggle before authorizing or using LLM capacity.
+    restrictPublicLlmWorkspaceAi('openai'),
+    // 7. Require active owner-permission enforcement for the granted workspace.
+    middleware.oauth.loadUser,
+    middleware.oauth.enforceUserPermissions({
+      action: 'read',
+      getResource: resourceHelpers.workspace,
+      failClosed: true,
+      requireEnforceMode: true,
+    }),
+    // 8. Rate limit per resolved workspace.
+    publicLlmChatCompletionsRateLimit,
+    // 9. OAuth scope enforcement — fails 403 if token doesn't have ai:write.
+    restrictPublicChatScopes([SCOPES.AI_WRITE]),
+    // 10. Derive internal keyArea from the OAuth application.
+    resolvePublicKeyArea,
+    // 11. Reject models not in the per-keyArea allowlist.
+    enforceChatCompletionsModelAllowlist,
+    // 12. Forward to internal llm-proxy.
+    middleware.asyncWrapNamedFunction(publicLlmChatCompletionsHandler),
+    // 13. Route-scoped error handler.
+    publicLlmChatCompletionsErrorHandler
+  );
+}

@@ -1,8 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+
+import { createTranscriptEditorProject } from '@create-something/atlas-composition';
 
 import { healSessionProductionBindings } from '../dist/studio/production-bindings.js';
 import {
@@ -25,12 +28,70 @@ import {
   exportSessionMarkdown,
   readSession,
   readSessionDatabaseHealth,
+  readTranscriptEditorProject,
   removeNode,
   setStoryFocus,
   updateEdge,
-  writeSession
+  writeSession,
+  writeTranscriptEditorProject
 } from '../dist/studio/store.js';
 import { focusStory, storySessionPayload } from '../dist/studio/story-api.js';
+import {
+  createAtlasMediaProject,
+  getAtlasMediaProjectPath,
+  parseTimestampedTranscript,
+  readAtlasMediaProject,
+  writeAtlasMediaProject
+} from '../dist/studio/media-project.js';
+import {
+  applyApprovedTranscriptEdit,
+  decideTranscriptEdit,
+  proposeTranscriptEdit
+} from '@create-something/atlas-composition';
+
+function transcriptProjectInput() {
+  return {
+    id: 'media-project-1',
+    currentRevisionId: 'revision-1',
+    sourceAssets: [{
+      id: 'source-1', uri: 'fixture://private/source.mp4', sha256: 'fixture-hash',
+      media: { durationUs: 5_000_000, width: 1920, height: 1080, hasAudio: true }
+    }],
+    transcriptSegments: [{
+      id: 'segment-1', assetId: 'source-1', startUs: 0, endUs: 5_000_000, text: 'Synthetic source.'
+    }],
+    revisions: [{
+      id: 'revision-1', parentRevisionId: null, createdAt: '2026-08-14T00:00:00.000Z', createdBy: 'operator',
+      cutList: [{ id: 'keep-1', kind: 'keep', transcriptSegmentIds: ['segment-1'], startUs: 0, endUs: 5_000_000, reason: 'Keep source.' }],
+      captions: [{ id: 'caption-1', segmentIds: ['segment-1'] }], overlays: [],
+      graph: {
+        nodes: [
+          { id: 'source', kind: 'source-asset' }, { id: 'transcript', kind: 'transcript' },
+          { id: 'cut-list', kind: 'cut-list' }, { id: 'timeline', kind: 'timeline' },
+          { id: 'clip:keep-1', kind: 'clip', cutOperationId: 'keep-1', diffs: [{ id: 'diff:keep-1:created', at: '2026-08-14T00:00:00.000Z', event: 'created', actor: 'operator', summary: 'Created source clip.', after: { cutOperationId: 'keep-1' } }] }
+        ],
+        edges: [
+          { id: 'source-to-transcript', source: 'source', target: 'transcript', port: 'produces' },
+          { id: 'transcript-to-cut-list', source: 'transcript', target: 'cut-list', port: 'produces' },
+          { id: 'cut-list-to-clip', source: 'cut-list', target: 'clip:keep-1', port: 'produces' },
+          { id: 'clip-to-timeline', source: 'clip:keep-1', target: 'timeline', port: 'produces' }
+        ]
+      }
+    }],
+    proposals: []
+  };
+}
+
+test('local timestamped transcript input parses without sending transcript content anywhere', () => {
+  assert.deepEqual(
+    parseTimestampedTranscript('00:00.000 --> 00:03.500 | Opening.\n00:03.500 --> 00:05.000 | Closing.'),
+    [
+      { startUs: 0, endUs: 3_500_000, text: 'Opening.' },
+      { startUs: 3_500_000, endUs: 5_000_000, text: 'Closing.' }
+    ]
+  );
+  assert.throws(() => parseTimestampedTranscript('not timestamped'), /must use/i);
+});
 
 test('local Atlas Studio sessions can be mutated by agent commands', async () => {
   const cwd = await mkdtemp(path.join(tmpdir(), 'atlas-studio-test-'));
@@ -126,6 +187,67 @@ test('local Atlas Studio sessions can be mutated by agent commands', async () =>
   assert.match(markdown, /Products: Atlas -> Signal -> Decision -> Proof/);
   assert.match(markdown, /Linear issue/);
   assert.match(markdown, /proof: Docs PR merged \(gov_proof_123\) - passed/);
+});
+
+test('Atlas persists a private transcript project beside the session and preserves approved revisions', async () => {
+  const cwd = await mkdtemp(path.join(tmpdir(), 'atlas-studio-media-project-test-'));
+  const session = await createSession({ client: 'Acme', workflow: 'Video edit', owner: 'Micah' }, cwd);
+  const created = await createAtlasMediaProject(session.id, transcriptProjectInput(), cwd);
+
+  assert.equal(created.session.mediaProject?.projectId, 'media-project-1');
+  assert.equal(created.session.mediaProject?.currentRevisionId, 'revision-1');
+  assert.equal(existsSync(getAtlasMediaProjectPath('media-project-1', cwd)), true);
+  const reopened = await readAtlasMediaProject(session.id, cwd);
+  assert.equal(reopened.atlasSessionId, session.id);
+  assert.equal(reopened.sourceAssets[0].sha256, 'fixture-hash');
+
+  const proposed = proposeTranscriptEdit(reopened, {
+    id: 'proposal-1',
+    baseRevisionId: 'revision-1',
+    proposedBy: 'codex-managed-session',
+    rationale: 'Keep the same synthetic interval as an approval-path test.',
+    operations: reopened.revisions[0].cutList
+  });
+  const approved = decideTranscriptEdit(proposed, 'proposal-1', {
+    decision: 'approved', decidedAt: '2026-08-14T00:01:00.000Z', decidedBy: 'Micah'
+  });
+  const applied = applyApprovedTranscriptEdit(approved, {
+    proposalId: 'proposal-1', revisionId: 'revision-2', appliedAt: '2026-08-14T00:02:00.000Z', appliedBy: 'operator'
+  });
+  await writeAtlasMediaProject(session.id, applied, cwd);
+
+  const recovered = await readAtlasMediaProject(session.id, cwd);
+  assert.equal(recovered.currentRevisionId, 'revision-2');
+  assert.equal(recovered.revisions.find((revision) => revision.id === 'revision-2')?.parentRevisionId, 'revision-1');
+  assert.equal(recovered.sourceAssets[0].sha256, 'fixture-hash');
+  const recoveredSession = await readSession(session.id, cwd);
+  assert.equal(recoveredSession.mediaProject?.currentRevisionId, 'revision-2');
+});
+
+test('a transcript project persists beside its Atlas session without entering the session manifest', async () => {
+  const cwd = await mkdtemp(path.join(tmpdir(), 'atlas-studio-transcript-project-test-'));
+  const session = await createSession(
+    { client: 'Acme', workflow: 'Transcript editing', owner: 'Ops' },
+    cwd
+  );
+  const project = createTranscriptEditorProject({
+    id: 'project-local-only',
+    atlasSessionId: session.id,
+    sourceAsset: {
+      id: 'asset-local-only',
+      uri: 'fixture://local-source.mp4',
+      sha256: 'local-source-hash',
+      media: { durationUs: 1_000_000, width: 1920, height: 1080, hasAudio: true }
+    },
+    transcriptSegments: [
+      { id: 'segment-local-only', assetId: 'asset-local-only', startUs: 0, endUs: 1_000_000, text: 'Keep this.' }
+    ],
+    createdAt: '2026-08-16T00:00:00.000Z'
+  });
+
+  await writeTranscriptEditorProject(session.id, project, cwd);
+  assert.deepEqual(await readTranscriptEditorProject(session.id, cwd), project);
+  assert.equal('transcriptProject' in (await readSession(session.id, cwd)), false);
 });
 
 test('client handoff projects internal Atlas truth into Map, Build, and Control without mutation', async () => {

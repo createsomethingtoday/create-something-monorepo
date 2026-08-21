@@ -16,11 +16,17 @@ const privacySource = readFileSync(
 );
 const homeSource = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
 const narrativeSource = readFileSync(
-  new URL('../../canon/src/lib/components/performance/PerformanceNarrativeStage.svelte', import.meta.url),
+  new URL(
+    '../../canon/src/lib/components/performance/PerformanceNarrativeStage.svelte',
+    import.meta.url
+  ),
   'utf8'
 );
 const handoffSource = readFileSync(
-  new URL('../../canon/src/lib/components/performance/PerformanceConversionHandoff.svelte', import.meta.url),
+  new URL(
+    '../../canon/src/lib/components/performance/PerformanceConversionHandoff.svelte',
+    import.meta.url
+  ),
   'utf8'
 );
 const trustArtifactSource = readFileSync(
@@ -50,6 +56,10 @@ const campaignOpeningSource = readFileSync(
   ),
   'utf8'
 );
+const metricsSource = readFileSync(
+  new URL('../../canon/src/lib/components/meridian/MeridianMetrics.svelte', import.meta.url),
+  'utf8'
+);
 const footerSource = readFileSync(
   new URL('../../canon/src/lib/components/Footer.svelte', import.meta.url),
   'utf8'
@@ -67,12 +77,17 @@ const publicAtlasFlowSource = readFileSync(
   'utf8'
 );
 
-test('mobile navigation exposes state so fixed privacy UI cannot compete with it', () => {
+test('mobile privacy stays at the header edge instead of covering opening proof', () => {
   assert.match(navigationSource, /onMobileMenuChange\?: \(open: boolean\) => void/);
   assert.match(navigationSource, /onMobileMenuChange\?\.\(mobileMenuOpen\)/);
   assert.match(agencyLayoutSource, /let mobileNavigationOpen = \$state\(false\)/);
   assert.match(agencyLayoutSource, /obscured=\{mobileNavigationOpen\}/);
-  assert.match(agencyLayoutSource, /onMobileMenuChange=\{\(open\) => \(mobileNavigationOpen = open\)\}/);
+  assert.match(agencyLayoutSource, /mobilePlacement="header-edge"/);
+  assert.doesNotMatch(agencyLayoutSource, /mobilePlacement="safe-corner"/);
+  assert.match(
+    agencyLayoutSource,
+    /onMobileMenuChange=\{\(open\) => \(mobileNavigationOpen = open\)\}/
+  );
   assert.match(privacySource, /obscured\?: boolean/);
   assert.match(privacySource, /class:privacy-choice--obscured=\{obscured\}/);
   assert.doesNotMatch(privacySource, /z-index:\s*80/);
@@ -87,22 +102,26 @@ test('Escape closes mobile navigation and returns focus to its trigger', () => {
 });
 
 test('the mobile operating story does not repeat proof already carried by its boundary artifact', () => {
-  const boundaryScene = homeSource.slice(
-    homeSource.indexOf("id: 'boundary'"),
-    homeSource.indexOf("id: 'map'")
+  const mapScene = homeSource.slice(
+    homeSource.indexOf("id: 'map'"),
+    homeSource.indexOf("id: 'build'")
   );
 
-  assert.doesNotMatch(boundaryScene, /\bevidence:/);
-  assert.doesNotMatch(boundaryScene, /\breceipts:/);
+  assert.doesNotMatch(mapScene, /\bevidence:/);
+  assert.doesNotMatch(mapScene, /\breceipts:/);
   assert.match(homeSource, /Every action leaves a record your team can review/);
   assert.match(homeSource, /aria-label="Boundary study receipt"/);
 
-  const operateScene = homeSource.slice(
-    homeSource.indexOf("id: 'operate'"),
-    homeSource.indexOf('];', homeSource.indexOf("id: 'operate'"))
+  const controlScene = homeSource.slice(
+    homeSource.indexOf("id: 'control'"),
+    homeSource.indexOf('];', homeSource.indexOf("id: 'control'"))
   );
-  assert.doesNotMatch(operateScene, /\bactions:/, 'operate destinations already live in its artifact');
-  assert.match(homeSource, /href=\{report\.href\}/);
+  assert.doesNotMatch(
+    controlScene,
+    /\bactions:/,
+    'Control destinations already live in its artifact'
+  );
+  assert.match(homeSource, /class="service-flow-action"/);
   assert.match(homeSource, /href="\/stack"/);
 });
 
@@ -119,13 +138,30 @@ test('compact mobile composition reduces spacing while retaining readable contro
     handoffSource,
     /data-artifact-placement='full-width'\]\[data-density='compact'\][\s\S]*?padding-block:\s*1\.5rem;/
   );
-  const handoffRootRule = handoffSource.match(/\.performance-conversion-handoff\s*\{([^}]*)\}/)?.[1];
-  assert.match(handoffRootRule ?? '', /\bpadding:\s*0;/, 'handoff must reset inherited section padding');
+  const handoffRootRule = handoffSource.match(
+    /\.performance-conversion-handoff\s*\{([^}]*)\}/
+  )?.[1];
+  assert.match(
+    handoffRootRule ?? '',
+    /\bpadding:\s*0;/,
+    'handoff must reset inherited section padding'
+  );
   assert.match(
     trustArtifactSource,
     /@media \(max-width: 640px\)[\s\S]*?\.hero-trust-artifact__path[\s\S]*?gap:\s*0\.4rem;[\s\S]*?padding:\s*0\.45rem;/
   );
   assert.match(narrativeSource, /min-height:\s*var\(--height-performance-control-min, 2\.75rem\)/);
+});
+
+test('the narrow narrative rail reveals every scene label instead of clipping the final stage', () => {
+  assert.match(
+    narrativeSource,
+    /@media \(max-width: 25rem\)[\s\S]*?\.performance-narrative-stage__index\s*\{[\s\S]*?grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);[\s\S]*?grid-auto-flow:\s*row;[\s\S]*?overflow-x:\s*visible;/
+  );
+  assert.match(
+    narrativeSource,
+    /@media \(max-width: 25rem\)[\s\S]*?\.performance-narrative-stage__index-copy small\s*\{[\s\S]*?display:\s*none;/
+  );
 });
 
 test('the concise conversion handoff keeps its proof beside the action without a full-width repeat', () => {
@@ -153,6 +189,7 @@ test('the homepage boundary comparison is one compact proof object on desktop an
 test('homepage section components reset inherited shell padding before applying their own rhythm', () => {
   for (const [name, source, selector] of [
     ['campaign opening', campaignOpeningSource, '.performance-campaign-opening'],
+    ['scoreboard metrics', metricsSource, '.meridian-metrics'],
     ['adoption paths', adoptionPathSource, '.adoption-paths'],
     ['compatibility rail', compatibilityRailSource, '.compatibility-rail']
   ] as const) {
@@ -163,7 +200,10 @@ test('homepage section components reset inherited shell padding before applying 
 });
 
 test('standalone calls to action and legal links expose explicit touch height', () => {
-  assert.match(readbackSource, /a\s*\{[\s\S]*?min-height:\s*var\(--height-performance-control-min, 2\.75rem\)/);
+  assert.match(
+    readbackSource,
+    /a\s*\{[\s\S]*?min-height:\s*var\(--height-performance-control-min, 2\.75rem\)/
+  );
   const sharedHandoffActionRule = sharedHandoffSource.match(
     /\.performance-handoff__actions a\s*\{([^}]*)\}/
   )?.[1];
@@ -176,9 +216,15 @@ test('standalone calls to action and legal links expose explicit touch height', 
     /\.compatibility-rail__catalog-link\s*\{[\s\S]*?min-height:\s*var\(--height-performance-control-min, 2\.75rem\)/
   );
   assert.match(footerSource, /\.legal-link\s*\{[\s\S]*?min-height:\s*1\.5rem;/);
-  assert.match(navigationSource, /\.nav-logo\s*\{[\s\S]*?min-height:\s*var\(--height-performance-control-min/);
+  assert.match(
+    navigationSource,
+    /\.nav-logo\s*\{[\s\S]*?min-height:\s*var\(--height-performance-control-min/
+  );
   assert.doesNotMatch(navigationSource, /\.nav-clear \.nav-logo\s*\{[^}]*min-width:\s*0;/);
-  assert.match(footerSource, /\.social-link\s*\{[\s\S]*?min-width:\s*var\(--height-performance-control-min/);
+  assert.match(
+    footerSource,
+    /\.social-link\s*\{[\s\S]*?min-width:\s*var\(--height-performance-control-min/
+  );
 });
 
 test('privacy, navigation, and public Map controls keep a 44px interaction target', () => {

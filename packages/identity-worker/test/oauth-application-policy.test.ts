@@ -74,6 +74,16 @@ test('Half Dozen onboarding OAuth uses an exact resource-bound application polic
 	);
 });
 
+test('Agency public-agent discovery OAuth is bound to the .agency origin only', () => {
+	const resource = 'https://createsomething.agency';
+	assert.deepEqual(resolveOAuthApplicationAccessPolicy(resource), {
+		applicationId: 'agency-public-agent-discovery',
+		resource,
+		expiresIn: 3600,
+	});
+	assert.equal(resolveOAuthApplicationAccessPolicy(`${resource}/api/agent-access`), null);
+});
+
 test('unknown OAuth resources do not bypass managed bearer governance', () => {
 	assert.equal(resolveOAuthApplicationAccessPolicy('https://unknown.example/mcp'), null);
 	assert.deepEqual(
@@ -275,8 +285,9 @@ test('application access claims require a matching resource audience', () => {
 	assert.equal(isOAuthAccessTokenClaimsForApplication({ ...base, aud: ['https://other.example/mcp'] }), false);
 });
 
-test('OAuth userinfo revokes access when the identity is soft-deleted', () => {
-	assert.equal(isOAuthUserInfoIdentityActive({ deleted_at: null }), true);
-	assert.equal(isOAuthUserInfoIdentityActive({ deleted_at: '2026-07-12T00:00:00.000Z' }), false);
+test('OAuth userinfo revokes access when the identity is soft-deleted or unverified', () => {
+	assert.equal(isOAuthUserInfoIdentityActive({ deleted_at: null, email_verified: 1 }), true);
+	assert.equal(isOAuthUserInfoIdentityActive({ deleted_at: '2026-07-12T00:00:00.000Z', email_verified: 1 }), false);
+	assert.equal(isOAuthUserInfoIdentityActive({ deleted_at: null, email_verified: 0 }), false);
 	assert.equal(isOAuthUserInfoIdentityActive(null), false);
 });

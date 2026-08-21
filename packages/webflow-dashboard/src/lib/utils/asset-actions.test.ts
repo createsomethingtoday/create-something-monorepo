@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  getActionableAssetWorkQueue,
   getAssetActionConfig,
   groupAssetsByTypeAndStatus,
   sortAssetStatuses,
@@ -102,5 +103,36 @@ describe('groupAssetsByTypeAndStatus', () => {
     expect(sortAssetTypes(Object.keys(grouped))).toEqual(['App', 'Template']);
     expect(sortAssetStatuses(Object.keys(grouped.Template))).toEqual(['Upcoming', 'Published']);
     expect(grouped.App.Rejected.map((asset) => asset.id)).toEqual(['2']);
+  });
+});
+
+describe('getActionableAssetWorkQueue', () => {
+  it('puts rejected feedback ahead of upcoming, scheduled, and draft editing work', () => {
+    const queue = getActionableAssetWorkQueue([
+      { id: 'published', name: 'Published Asset', status: 'Published' },
+      { id: 'draft', name: 'Zebra Draft', status: 'Draft' },
+      { id: 'draft-earlier', name: 'Alpha Draft', status: 'Draft' },
+      { id: 'scheduled', name: 'Scheduled Asset', status: 'Scheduled' },
+      { id: 'rejected', name: 'Rejected Asset', status: '❌Rejected' },
+      { id: 'upcoming', name: 'Upcoming Asset', status: '1️⃣🆕Upcoming' },
+      { id: 'delisted', name: 'Delisted Asset', status: 'Delisted' }
+    ] as Parameters<typeof getActionableAssetWorkQueue>[0]);
+
+    expect(queue.map((item) => [item.asset.id, item.action.label, item.reason])).toEqual([
+      ['rejected', 'Review feedback', 'Review the rejection feedback before changing this asset.'],
+      ['upcoming', 'Edit', 'Prepare this asset before its upcoming release.'],
+      ['scheduled', 'Edit', 'Confirm this asset is ready for its scheduled release.'],
+      ['draft-earlier', 'Edit', 'Finish the remaining marketplace fields for this draft.'],
+      ['draft', 'Edit', 'Finish the remaining marketplace fields for this draft.']
+    ]);
+  });
+
+  it('returns no work when the portfolio only contains browse-only asset states', () => {
+    const queue = getActionableAssetWorkQueue([
+      { id: 'published', name: 'Published Asset', status: 'Published' },
+      { id: 'delisted', name: 'Delisted Asset', status: 'Delisted' }
+    ] as Parameters<typeof getActionableAssetWorkQueue>[0]);
+
+    expect(queue).toEqual([]);
   });
 });

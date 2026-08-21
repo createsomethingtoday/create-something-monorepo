@@ -18,7 +18,7 @@ Default review sequence:
 2. Load details (template_review_get_asset, template_review_get_version).
 3. Always call template_review_get_review_context before any decision, write, assignment, or official action — it returns capability flags (canAssign, canReview, canPublish).
 4. Run template_review_run_published_site_validation with publishedUrl only. Never pass Preview URLs or Designer data as automated-analysis input.
-5. When rendered-page or screenshot evidence is useful, run template_review_run_published_site_sandbox with publishedUrl. It executes a fixed, short-lived collector; it is not a general code sandbox.
+5. For visual/screenshot evidence, run template_review_capture_published_site_screenshots with published_url — real-Chromium full-page captures (desktop/tablet/mobile segments; full_page covers the entire page in the gallery). Never screenshot published sites with a code-execution sandbox browser: sandbox egress proxies block cdn.prod.website-files.com, so pages render unstyled and are invalid evidence. The reviewer cannot see inline images: always share the returned gallery_url (one page rendering every captured segment, valid ~1 hour) in your reply, adding per-segment view_url links only when the reviewer wants individual frames. For rendered-DOM, network, or collector evidence, run template_review_run_published_site_sandbox with publishedUrl. It executes a fixed, short-lived collector; it is not a general code sandbox.
 6. For comprehensive reports, call template_review_get_comprehensive_review_contract and include its required sections; validate Agent Review Feedback drafts with template_review_format_agent_review_feedback before any save.
 
 Evidence rules:
@@ -85,7 +85,8 @@ Every review follows these phases:
 |------|-------------|------|
 | \`template_review_get_comprehensive_review_contract\` | Returns the canonical comprehensive evidence shape, coverage matrix, rubric dimensions, manual checks, and Agent Review Feedback format | Before comprehensive reports or Agent Review Feedback summaries |
 | \`template_review_run_published_site_validation\` | Runs the working published-site validators: content/assets/accessibility signals, legacy IX2 interactions, GSAP/custom-code policy signals | After \`get_review_context\`, using \`publishedUrl\` only |
-| \`template_review_run_published_site_sandbox\` | Runs the fixed, bounded E2B collector for rendered pages, network summaries, and screenshots | When direct rendered-page evidence is needed, using \`publishedUrl\` only |
+| \`template_review_capture_published_site_screenshots\` | Captures real-Chromium desktop/tablet/mobile screenshots of the published site (full-page segments, IX2-aware settling) and returns a gallery_url plus per-segment view_url links, valid ~1 hour | Preferred path for visual/screenshot evidence, using \`published_url\` only — always share the gallery_url with the reviewer, who cannot see inline images |
+| \`template_review_run_published_site_sandbox\` | Runs the fixed, bounded E2B collector for rendered pages, network summaries, and screenshots | When rendered-DOM or network evidence is needed, using \`publishedUrl\` only |
 
 These analysis paths are **read-only** and do not use Designer API data, Preview URLs, or Airtable writes. The E2B tool accepts only bounded collection options; it does not accept caller-provided code, commands, packages, secrets, or output destinations. Treat all automated output as supplemental published-site evidence for review triage, not as a final decision.
 
@@ -152,11 +153,39 @@ Automated validation and sandbox evidence do not approve, reject, request change
 
 | Tool | What it does |
 |------|-------------|
+| \`template_review_prepare_admin_template_fill\` | Read-only: Admin create-template form data + fill-only console script (never submits) |
+| \`template_review_get_template_thumbnail\` | Read-only: fresh thumbnail download links for the manual Admin upload after the initial create |
+| \`template_review_prepare_admin_template_create_execute\` | Execute-mode: console script that creates the template + syncs fields + uploads the tall thumbnail after the reviewer confirms in-browser |
+| \`template_review_prepare_admin_template_update_execute\` | Execute-mode: console script that PUTs metadata changes to an existing template (diff table + confirm; preserves untouched checkbox booleans) |
+| \`template_review_prepare_admin_template_thumbnail_execute\` | Execute-mode: console script that uploads the Airtable thumbnail as the template's tall thumbnail (confirm-gated) |
+| \`template_review_prepare_admin_template_verify\` | Read-only: console script that GETs the Admin template record and prints a field-by-field match table against Airtable (writes nothing) |
+| \`template_review_set_mrp_visibility\` | Server-side Webflow write: flip MRP visibility PUBLIC/PRIVATE via the key-authenticated Airtable write-back route — only on an explicit reviewer request |
 | \`template_review_list_releases\` | Available releases to attach |
 | \`template_review_update_asset_metadata\` | Update name, description, thumbnails |
 | \`template_review_update_asset_publishing\` | Update MRP ID override |
 | \`template_review_set_checklist_items\` | Check off 🚀Publishing Checklist items as you complete them |
 | \`template_review_complete_publishing\` | Attach the release (does not mark the checklist unless \`mark_all_publishing_items\` is set) |
+
+Manual Admin sequence for a new template: \`prepare_admin_template_fill\` → paste
+the fill-only script on https://webflow.com/admin/templates → click Create
+Template yourself → \`get_template_thumbnail\` and upload the image on the new
+template's Admin edit page → copy the new Template ID into the MRP ID override
+via \`update_asset_publishing\`.
+
+Script-assisted alternative: \`prepare_admin_template_create_execute\` returns a
+console script that performs the whole create sequence (POST create → PUT field
+sync → tall-thumbnail upload) once the reviewer pastes it on
+https://webflow.com/admin/templates and accepts the confirm() dialogs. The MCP
+never submits anything itself — Okta session, CSRF token, and the confirmation
+click all belong to the reviewer's browser. For metadata fixes on an existing
+template use \`prepare_admin_template_update_execute\` (shows a diff first and
+preserves untouched checkbox booleans); for thumbnail replacement use
+\`prepare_admin_template_thumbnail_execute\`. Always finish by recording the
+Template ID in the MRP ID override via \`update_asset_publishing\`, then run
+\`prepare_admin_template_verify\` to confirm the Admin record matches Airtable
+field-for-field before approving. \`set_mrp_visibility\` changes what buyers can
+see on the marketplace — never call it without the reviewer naming the MRP and
+the target visibility in the same request.
 
 Work the publishing checklist per item with \`set_checklist_items\`. Only pass
 \`mark_all_publishing_items: true\` to \`complete_publishing\` when every publishing
@@ -168,10 +197,11 @@ step genuinely was completed — the checklist is audit evidence, not a formalit
 2. \`template_review_list_queue\` — find work
 3. \`template_review_get_review_context\` — check capabilities
 4. \`template_review_run_published_site_validation\` — run published-site validators on \`publishedUrl\`
-5. \`template_review_run_published_site_sandbox\` — collect bounded rendered-page evidence when useful
-6. Review supplemental evidence and manual Designer checks separately
-7. \`template_review_assign_self\` — claim the version
-8. After the reviewer explicitly chooses, call the matching decision tool
+5. \`template_review_capture_published_site_screenshots\` — capture visual evidence when useful (share the gallery_url)
+6. \`template_review_run_published_site_sandbox\` — collect bounded rendered-DOM/network evidence when useful
+7. Review supplemental evidence and manual Designer checks separately
+8. \`template_review_assign_self\` — claim the version
+9. After the reviewer explicitly chooses, call the matching decision tool
 
 ## Rules
 

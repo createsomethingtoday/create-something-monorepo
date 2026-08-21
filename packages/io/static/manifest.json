@@ -1,18 +1,40 @@
 {
-  "short_name": "CREATE SOMETHING",
-  "name": "CREATE SOMETHING | AI-Native Development Research",
-  "description": "Systematic evaluation of AI-native development with tracked experiments and real data",
+  "short_name": "CS .io",
+  "name": "CREATE SOMETHING .io",
+  "description": "Research papers, experiments, and operator notes for AI-native development.",
   "icons": [
     {
       "src": "favicon.svg",
       "type": "image/svg+xml",
       "sizes": "any"
+    },
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512-maskable.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    },
+    {
+      "src": "favicon.png",
+      "type": "image/png",
+      "sizes": "512x512"
     }
   ],
   "start_url": "/",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#000000",
+  "theme_color": "#050505",
+  "background_color": "#F5F3ED",
   "orientation": "portrait-primary",
   "categories": ["development", "research", "technology"]
 }

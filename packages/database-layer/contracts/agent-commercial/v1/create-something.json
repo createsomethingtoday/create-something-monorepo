@@ -1,0 +1,291 @@
+{
+  "$schema": "./schema.json",
+  "contractId": "create-something.agent-commercial.v1",
+  "version": "1.0",
+  "contractType": "agent_commercial_contract",
+  "status": "active",
+  "owner": "CREATE SOMETHING",
+  "updatedAt": "2026-08-12",
+  "commercialInterfaceRef": "packages/agency/content/sales/control-commercial-interface-spec.yaml",
+  "defaultDecision": "deny",
+  "receiptPolicy": {
+    "required": true,
+    "sinkAdapterId": "cloudflare.d1.commercial-receipts",
+    "requiredFields": [
+      "decisionId",
+      "contractId",
+      "capabilityId",
+      "principalId",
+      "decision",
+      "reason",
+      "entitlementOrPaymentRef",
+      "approvalReceiptId",
+      "outcome",
+      "occurredAt"
+    ]
+  },
+  "productionControls": {
+    "charging": "disabled",
+    "maxPaidRequestsPerMinute": 0,
+    "maxPerRequestUsd": "0",
+    "maxDailySpendUsd": "0",
+    "automaticRetry": false,
+    "rollbackRunbookRef": "packages/database-layer/contracts/agent-commercial/v1/PRODUCTION_ROLLBACK.md"
+  },
+  "accessClasses": {
+    "free": {
+      "description": "Public, read-only discovery or education with no identity or payment requirement.",
+      "identityRequired": false,
+      "verifiedPaymentRequired": false,
+      "explicitGrantRequired": false
+    },
+    "entitled": {
+      "description": "Included in an active client or product entitlement; no per-call fee is implied.",
+      "identityRequired": true,
+      "verifiedPaymentRequired": false,
+      "explicitGrantRequired": false
+    },
+    "paid": {
+      "description": "A separately priced bounded result requiring verified machine payment before execution.",
+      "identityRequired": false,
+      "verifiedPaymentRequired": true,
+      "explicitGrantRequired": false
+    },
+    "private": {
+      "description": "Client, operator, or production capability requiring authenticated explicit authority; payment cannot grant access.",
+      "identityRequired": true,
+      "verifiedPaymentRequired": false,
+      "explicitGrantRequired": true
+    }
+  },
+  "providerAdapters": [
+    {
+      "id": "cloudflare.workers.runtime",
+      "provider": "Cloudflare Workers and Agents",
+      "role": "runtime",
+      "status": "active",
+      "implementationRefs": [
+        "packages/create-something-mcp/worker/index.ts",
+        "packages/create-something-mcp/worker/wrangler.jsonc"
+      ],
+      "activationApproval": "not_required"
+    },
+    {
+      "id": "create-something.identity",
+      "provider": "CREATE SOMETHING Identity on Cloudflare",
+      "role": "identity",
+      "status": "active",
+      "implementationRefs": [
+        "docs/guides/FIRST_PARTY_AUTH_PLATFORM.md",
+        "docs/REMOTE_MCP_IDENTITY_STANDARD.md"
+      ],
+      "activationApproval": "not_required"
+    },
+    {
+      "id": "cloudflare.d1.entitlements",
+      "provider": "Cloudflare D1",
+      "role": "entitlement",
+      "status": "active",
+      "implementationRefs": ["packages/agency/src/lib/server/mcp-entitlements.ts"],
+      "activationApproval": "not_required"
+    },
+    {
+      "id": "cloudflare.d1.commercial-receipts",
+      "provider": "Cloudflare D1",
+      "role": "receipt",
+      "status": "active",
+      "implementationRefs": [
+        "packages/database-layer/worker/wrangler.toml",
+        "packages/database-layer/worker/migrations/0001_agent_commercial_authorization_receipts.sql",
+        "packages/database-layer/worker/agent-commercial-readiness.mjs"
+      ],
+      "activationApproval": "required"
+    },
+    {
+      "id": "cloudflare.agents.x402",
+      "provider": "Cloudflare Agents SDK",
+      "role": "payment",
+      "status": "inactive",
+      "implementationRefs": [
+        "https://developers.cloudflare.com/agents/tools/payments/x402/charge-for-mcp-tools/"
+      ],
+      "activationApproval": "required"
+    }
+  ],
+  "paymentPolicies": [
+    {
+      "id": "x402.agent-readiness-audit.v1",
+      "status": "approval_required",
+      "protocol": "x402",
+      "providerAdapterId": "cloudflare.agents.x402",
+      "price": {
+        "state": "unset",
+        "amount": null,
+        "foundingCandidate": {
+          "amount": 49,
+          "denomination": "USD",
+          "billingUnit": "completed_report",
+          "approval": "separate_production_approval"
+        }
+      },
+      "settlement": {
+        "asset": "USDC",
+        "network": "base"
+      },
+      "activationRequirements": [
+        "approved_price_and_public_copy",
+        "test_wallet_and_facilitator_receipt",
+        "commercial_receipt_sink_promoted",
+        "rate_and_spend_caps",
+        "rollback_runbook",
+        "explicit_production_approval"
+      ]
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "agency.public.content-manifest",
+      "title": "Agency public content manifest",
+      "description": "Machine-readable service and case-study discovery metadata.",
+      "owner": "CREATE SOMETHING .agency",
+      "kind": "resource",
+      "accessClass": "free",
+      "sideEffect": "read",
+      "status": "active",
+      "approval": "never",
+      "surface": {
+        "protocol": "http",
+        "locator": "https://createsomething.agency/api/manifest"
+      },
+      "freshness": {
+        "mode": "request",
+        "maxAgeMinutes": 60
+      },
+      "provenanceRefs": ["packages/agency/src/routes/api/manifest/+server.ts"],
+      "outcomeMetric": "qualified_agent_discovery"
+    },
+    {
+      "id": "content.search",
+      "title": "CREATE SOMETHING cross-property search",
+      "description": "Read-only search across public CREATE SOMETHING content and documentation.",
+      "owner": "CREATE SOMETHING .ltd",
+      "kind": "tool",
+      "accessClass": "free",
+      "sideEffect": "read",
+      "status": "active",
+      "approval": "never",
+      "surface": {
+        "protocol": "mcp",
+        "locator": "https://mcp.createsomething.ltd/mcp#search"
+      },
+      "freshness": {
+        "mode": "build",
+        "maxAgeMinutes": null
+      },
+      "provenanceRefs": [
+        "packages/create-something-mcp/src/tools.ts",
+        "packages/create-something-mcp/src/search.ts"
+      ],
+      "outcomeMetric": "useful_search_result"
+    },
+    {
+      "id": "content.canon-registry-search",
+      "title": "Canon registry search",
+      "description": "Read-only discovery of governed components, tokens, templates, adapters, and policies.",
+      "owner": "CREATE SOMETHING .ltd",
+      "kind": "tool",
+      "accessClass": "free",
+      "sideEffect": "read",
+      "status": "active",
+      "approval": "never",
+      "surface": {
+        "protocol": "mcp",
+        "locator": "https://mcp.createsomething.ltd/mcp#canon_registry_search"
+      },
+      "freshness": {
+        "mode": "build",
+        "maxAgeMinutes": null
+      },
+      "provenanceRefs": [
+        "packages/create-something-mcp/src/tools.ts",
+        "packages/create-something-mcp/src/content/generated/canon-registry.ts"
+      ],
+      "outcomeMetric": "governed_reuse_selected"
+    },
+    {
+      "id": "agency.managed-workspace",
+      "title": "Managed client workspace resources",
+      "description": "Authenticated client resources included in an active Managed AI Operations entitlement.",
+      "owner": "CREATE SOMETHING .agency",
+      "kind": "resource",
+      "accessClass": "entitled",
+      "entitlementId": "managed-ai-operations",
+      "sideEffect": "read",
+      "status": "active",
+      "approval": "never",
+      "surface": {
+        "protocol": "internal",
+        "locator": "agency://managed-workspace"
+      },
+      "freshness": {
+        "mode": "event",
+        "maxAgeMinutes": 15
+      },
+      "provenanceRefs": [
+        "packages/agency/src/lib/server/mcp-entitlements.ts",
+        "packages/agency/content/sales/control-commercial-interface-spec.yaml"
+      ],
+      "outcomeMetric": "entitled_workflow_outcome"
+    },
+    {
+      "id": "agency.agent-readiness-audit",
+      "title": "Agent Buyer Readiness Snapshot",
+      "description": "Inactive candidate for a bounded machine-readable readiness snapshot; its founding price is not approved and no active payment path exists.",
+      "owner": "CREATE SOMETHING .agency",
+      "kind": "tool",
+      "accessClass": "paid",
+      "paymentPolicyId": "x402.agent-readiness-audit.v1",
+      "sideEffect": "read",
+      "status": "inactive",
+      "approval": "never",
+      "surface": {
+        "protocol": "mcp",
+        "locator": "candidate://agency/agent-buyer-readiness-snapshot"
+      },
+      "freshness": {
+        "mode": "request",
+        "maxAgeMinutes": 0
+      },
+      "provenanceRefs": [
+        "packages/agency/content/sales/ai-buyer-readiness-audit.yaml",
+        "packages/agency/src/routes/agent-readiness/+page.svelte"
+      ],
+      "outcomeMetric": "accepted_readiness_recommendation"
+    },
+    {
+      "id": "agency.production-execution",
+      "title": "Production workflow execution",
+      "description": "Write-capable production operation reserved for explicitly authorized client or operator workflows.",
+      "owner": "CREATE SOMETHING .agency",
+      "kind": "tool",
+      "accessClass": "private",
+      "grantId": "agency.production.execute",
+      "sideEffect": "write",
+      "status": "active",
+      "approval": "always",
+      "surface": {
+        "protocol": "internal",
+        "locator": "agency://production-execution"
+      },
+      "freshness": {
+        "mode": "request",
+        "maxAgeMinutes": 0
+      },
+      "provenanceRefs": [
+        "docs/HUB_EXECUTION_GOVERNANCE_PLAN.md",
+        "docs/AGENT_RUN_RECEIPT_CHARTER.md"
+      ],
+      "outcomeMetric": "approved_successful_outcome"
+    }
+  ]
+}

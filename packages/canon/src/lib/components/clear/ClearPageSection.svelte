@@ -5,6 +5,7 @@
 	type ClearSectionLayout = 'stack' | 'split';
 	type ClearHeadingLevel = 'h1' | 'h2' | 'h3';
 	type ClearSectionDensity = 'standard' | 'compact';
+	type ClearSectionExpression = 'field' | 'editorial';
 
 	interface Props {
 		id?: string;
@@ -15,6 +16,8 @@
 		variant?: ClearSectionVariant;
 		layout?: ClearSectionLayout;
 		density?: ClearSectionDensity;
+		/** Uses the owned editorial face for a public proposition, not interface copy. */
+		expression?: ClearSectionExpression;
 		ariaLabel?: string;
 		class?: string;
 		children?: Snippet;
@@ -32,6 +35,7 @@
 		variant = 'porcelain',
 		layout = 'stack',
 		density = 'standard',
+		expression = 'field',
 		ariaLabel,
 		class: className = '',
 		children,
@@ -45,7 +49,13 @@
 	);
 </script>
 
-<section {id} class={sectionClass} data-density={density} aria-label={ariaLabel}>
+<section
+	{id}
+	class={sectionClass}
+	data-density={density}
+	data-expression={expression}
+	aria-label={ariaLabel}
+>
 	<div class="clear-page-section__inner">
 		<div class="clear-page-section__layout">
 			<div class="clear-page-section__copy">
@@ -194,6 +204,20 @@
 		font-size: 5.45rem;
 		font-weight: var(--font-performance-display-weight, var(--font-performance-medium, 500));
 		line-height: var(--leading-performance-display, 0.94);
+	}
+
+	/* A commercial proposition may use the owned editorial face. Interface and
+	 * operational sections keep the field expression by default. */
+	.clear-page-section[data-expression='editorial'] .clear-page-section__title {
+		font-family: var(--font-performance-editorial);
+		font-weight: var(--font-performance-editorial-weight, 400);
+		letter-spacing: -0.04em;
+		line-height: var(--leading-performance-editorial, 1.1);
+	}
+
+	.clear-page-section[data-expression='editorial'].clear-page-section--hero
+		.clear-page-section__title {
+		line-height: var(--leading-performance-editorial, 1.1);
 	}
 
 	.clear-page-section__description {

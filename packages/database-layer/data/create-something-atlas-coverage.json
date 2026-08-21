@@ -9783,46 +9783,46 @@
       }
     },
     {
-      "recordId": "substrate:create-something:package:create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
-      "atlasNodeId": "atlas_create-something_package_create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
+      "recordId": "substrate:create-something:package:create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
+      "atlasNodeId": "atlas_create-something_package_create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
       "groupId": "substrate:create-something:atlas-coverage-group:package-surface-mixed-package",
-      "path": "packages/calm-operator-ink-firmware",
-      "title": "@create-something/calm-operator-ink-firmware",
+      "path": "packages/calm-operator-stopwatch-firmware",
+      "title": "@create-something/calm-operator-stopwatch-firmware",
       "tier": "Mixed",
       "surface": "package",
       "owner": "CREATE SOMETHING",
       "relationCount": 1,
       "sourceRecord": {
-        "id": "substrate:create-something:package:create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
+        "id": "substrate:create-something:package:create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
         "source": "CREATE SOMETHING Atlas coverage",
         "sourceType": "package",
-        "title": "@create-something/calm-operator-ink-firmware",
+        "title": "@create-something/calm-operator-stopwatch-firmware",
         "owner": "CREATE SOMETHING",
         "status": "ready",
         "bindingHealth": "bound",
         "atlasCanvasId": "create-something-internal-operating-topology",
-        "atlasNodeId": "atlas_create-something_package_create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
+        "atlasNodeId": "atlas_create-something_package_create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
         "relationCount": 1,
-        "receiptId": "receipt:substrate:create-something:package:create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
+        "receiptId": "receipt:substrate:create-something:package:create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
         "updatedAt": "2026-07-23T05:11:08.366Z",
-        "summary": "packages/calm-operator-ink-firmware is grouped into substrate:create-something:atlas-coverage-group:package-surface-mixed-package for Atlas operating coverage."
+        "summary": "packages/calm-operator-stopwatch-firmware is grouped into substrate:create-something:atlas-coverage-group:package-surface-mixed-package for Atlas operating coverage."
       },
       "receipt": {
-        "id": "receipt:substrate:create-something:package:create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
-        "recordId": "substrate:create-something:package:create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
+        "id": "receipt:substrate:create-something:package:create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
+        "recordId": "substrate:create-something:package:create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
         "type": "proof",
-        "summary": "@create-something/calm-operator-ink-firmware has first-class Atlas coverage grouping.",
-        "evidence": "packages/calm-operator-ink-firmware was grouped into substrate:create-something:atlas-coverage-group:package-surface-mixed-package at 2026-07-23T05:11:08.366Z.",
+        "summary": "@create-something/calm-operator-stopwatch-firmware has first-class Atlas coverage grouping.",
+        "evidence": "packages/calm-operator-stopwatch-firmware was grouped into substrate:create-something:atlas-coverage-group:package-surface-mixed-package at 2026-07-23T05:11:08.366Z.",
         "createdAt": "2026-07-23T05:11:08.366Z"
       },
       "reviewAction": {
-        "id": "action:atlas-coverage-review:substrate:create-something:package:create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
-        "recordId": "substrate:create-something:package:create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
+        "id": "action:atlas-coverage-review:substrate:create-something:package:create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
+        "recordId": "substrate:create-something:package:create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
         "state": "wait",
-        "title": "Review Atlas coverage for @create-something/calm-operator-ink-firmware",
+        "title": "Review Atlas coverage for @create-something/calm-operator-stopwatch-firmware",
         "owner": "CREATE SOMETHING",
         "policy": "Atlas coverage review before external writes",
-        "detail": "packages/calm-operator-ink-firmware is mapped into the Atlas coverage group Mixed package Atlas coverage. Review layout, ownership, workflow edges, and evidence before writing back to production Atlas or third-party systems."
+        "detail": "packages/calm-operator-stopwatch-firmware is mapped into the Atlas coverage group Mixed package Atlas coverage. Review layout, ownership, workflow edges, and evidence before writing back to production Atlas or third-party systems."
       }
     },
     {

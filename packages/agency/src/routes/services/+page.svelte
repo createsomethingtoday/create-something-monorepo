@@ -4,8 +4,8 @@
   import ServicesMapPreview from '$lib/components/ServicesMapPreview.svelte';
   import ServicesProductPath from '$lib/components/ServicesProductPath.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
-  import { paperClampedDecisionMedia } from '$lib/data/performanceMedia';
   import { getPublicProduct } from '$lib/data/productFamily';
+  import { playbookHeroMedia } from '$lib/data/playbookHeroMedia';
 
   const mapProduct = getPublicProduct('map');
   const buildProduct = getPublicProduct('build');
@@ -85,10 +85,12 @@
 <div class="services-performance property-performance">
   <PerformanceCampaignOpening
     eyebrow="How It Works"
-    title="Nothing gets built until the map says what it should do."
-    lede="Bring one handoff your team still checks manually. We name the decision owner and the stop condition first, then build only what that map requires — before anything touches customers, money, or production."
-    media={paperClampedDecisionMedia}
-    mode="paper"
+    expression="editorial"
+    title="Map the operation. Install the playbook."
+    lede="Bring one handoff your team still checks manually. We map its owners and limits, make approved Runbooks executable, and hand back the client-owned system."
+    media={playbookHeroMedia.services}
+    mediaMobilePlacement="background"
+    density="compact"
     proof={[
       { label: 'Owner', value: 'Named' },
       { label: 'Protected action', value: 'Held' },
@@ -115,5 +117,4 @@
   .services-performance {
     background: var(--color-performance-paper, #f3f3f0);
   }
-
 </style>

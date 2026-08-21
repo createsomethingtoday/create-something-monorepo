@@ -22,10 +22,14 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'agency',
     [
       'about',
+      'agent-readiness',
+      'ai-workflow-control',
+      'ai-workflow-recovery',
       'cloudflare',
       'contact',
       'control',
       'for-service-providers',
+      'marketplace-review-automation',
       'partners',
       'security',
       'services',
@@ -47,6 +51,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     [
       'bearer-token-policy',
       'field-reports/template-review',
+      'field-reports/upstream-contributions',
       'methodology',
       'practice',
       'proof/marketplace-workflow'
@@ -86,7 +91,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
   group(
     'agency-public-index',
     'agency',
-    ['experiments', 'field-reports', 'products', 'workflows'],
+    ['arcs', 'experiments', 'field-reports', 'products', 'workflows'],
     'migrated',
     contract(
       'index',
@@ -100,6 +105,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'agency',
     [
       'experiments/[slug]',
+      'arc/[slug]',
       'products/decision',
       'products/ground',
       'products/loom',
@@ -119,6 +125,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'agency-public-tools',
     'agency',
     [
+      'arc/app-review-governance',
       'basketball-systems-lab',
       'book',
       'dashboard',
@@ -170,6 +177,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
       'admin/security/contracts',
       'admin/security/partners',
       'admin/security/seeds',
+      'admin/subscriber-reengagement',
       'admin/social'
     ],
     'pending',
@@ -233,9 +241,45 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'migrated',
     contract(
       'landing',
-      'Choose the canon lens that should govern the work.',
-      'The indexed canon stage pairs each principle with its source and consequence.',
-      'Continue through the property sequence'
+      'Choose one recurring workflow and its first operating playbook.',
+      'The library makes the owner, boundary, approved work, and receipt visible before the work runs.',
+      'Open a playbook or assess workflow readiness'
+    )
+  ),
+  group(
+    'ltd-playbook-library',
+    'ltd',
+    ['playbooks'],
+    'migrated',
+    contract(
+      'index',
+      'Choose the playbook that matches the work moment.',
+      'Each card exposes the operating outcome, approved work, and receipt to keep.',
+      'Open one playbook in context'
+    )
+  ),
+  group(
+    'ltd-playbook-details',
+    'ltd',
+    ['playbooks/[slug]'],
+    'migrated',
+    contract(
+      'editorial',
+      'Understand the operating decision and run it without losing the boundary.',
+      'The owner, approved work, wait point, receipt, runbook, and opposition are inspectable.',
+      'Assess readiness or return to the library'
+    )
+  ),
+  group(
+    'ltd-readiness',
+    'ltd',
+    ['readiness'],
+    'migrated',
+    contract(
+      'tool',
+      'Assess whether one workflow is ready to run with trust.',
+      'The check identifies ambiguity, missing access, unnamed ownership, mistrust, and absent proof.',
+      'Open the recommended playbook'
     )
   ),
   group(
@@ -504,7 +548,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
   group(
     'io-subscription',
     'io',
-    ['confirm', 'subscribe', 'unsubscribe'],
+    ['check-in', 'confirm', 'subscribe', 'unsubscribe'],
     'pending',
     contract(
       'commercial',

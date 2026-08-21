@@ -1,7 +1,7 @@
-version: "2.0"
+version: "2.2"
 name: "CREATE SOMETHING Control Commercial Interface"
 owner: "CREATE SOMETHING .agency"
-updated_at: "2026-07-28"
+updated_at: "2026-08-12"
 
 message_taxonomy:
   public_category: "AI workflow systems"
@@ -19,6 +19,13 @@ product_path:
     purpose: "Turn an approved Map into an owned, connected implementation."
   - name: "CREATE SOMETHING Control"
     purpose: "Operate the approved workflow with monitoring, approvals, evidence, recovery, and recurring improvement."
+
+buyer_readiness_audit:
+  public_name: "AI Buyer Readiness Audit"
+  one_time_usd: 3000
+  role: "diagnostic_before_build_or_control"
+  contract_ref: "packages/agency/content/sales/ai-buyer-readiness-audit.yaml"
+  self_service_checkout: "inactive"
 
 managed_operations:
   starting_monthly_usd: 900
@@ -84,6 +91,22 @@ checkout_boundary:
   public_quote_allowed: true
   self_service_checkout: "inactive_until_approved_stripe_prices_exist"
   stripe_product_or_price_creation: "separate_approval_required"
+
+agent_commercial_boundary:
+  canonical_contract_ref: "packages/database-layer/contracts/agent-commercial/v1/create-something.json"
+  schema_ref: "packages/database-layer/contracts/agent-commercial/v1/schema.json"
+  access_classes:
+    - "free"
+    - "entitled"
+    - "paid"
+    - "private"
+  uncataloged_capability: "deny"
+  decision_receipt_required: true
+  machine_payment_adapter: "cloudflare.agents.x402"
+  machine_payment_status: "inactive_until_price_receipts_caps_rollback_and_production_approval"
+  paid_capability_activation: "separate_approval_required"
+  private_access_rule: "payment_never_grants_private_or_write_access"
+  managed_operations_rule: "entitled_access_does_not_create_a_per_call_or_per_agent_fee"
 
 one_pager_interface:
   input:

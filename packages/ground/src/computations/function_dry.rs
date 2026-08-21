@@ -53,8 +53,10 @@
 //! - Reduce propagated bugs (same-file clones have ~18% higher bug rate)
 //! - Apply the Subtractive Triad: DRY at implementation level
 
+use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::fs;
+use std::time::Instant;
 use serde::{Serialize, Deserialize};
 use uuid::Uuid;
 use chrono::{DateTime, Utc};
@@ -203,6 +205,11 @@ pub struct FunctionDryOptions {
     /// Defaults to 0.85 if not specified (higher than inter-file to reduce false positives)
     /// Since we're comparing different-named functions, we need higher confidence
     pub intra_file_threshold: Option<f64>,
+
+    /// Stop analysis once this deadline is reached. This is intentionally an
+    /// absolute deadline so a caller can apply one budget across discovery and
+    /// duplicate comparison work.
+    pub deadline: Option<Instant>,
 }
 
 /// Default threshold for intra-file detection (higher than inter-file)
@@ -239,6 +246,11 @@ impl FunctionDryOptions {
     /// Get the effective intra-file threshold
     pub fn effective_intra_file_threshold(&self) -> f64 {
         self.intra_file_threshold.unwrap_or(DEFAULT_INTRA_FILE_THRESHOLD)
+    }
+
+    /// Whether the caller's analysis budget has expired.
+    pub fn timed_out(&self) -> bool {
+        self.deadline.is_some_and(|deadline| Instant::now() >= deadline)
     }
     
     /// Check if a path should be excluded
@@ -638,12 +650,37 @@ pub fn analyze_function_dry_with_options(
     threshold: f64,
     options: &FunctionDryOptions,
 ) -> Result<FunctionDryReport, ComputationError> {
+    analyze_function_dry_internal(files, None, threshold, options)
+}
+
+/// Analyze a complete source corpus while only comparing pairs that involve a
+/// focus file. Diff mode uses this to preserve full duplicate evidence without
+/// paying the cost of unrelated all-pairs comparisons.
+pub fn analyze_function_dry_focused_with_options(
+    files: &[PathBuf],
+    focus_files: &HashSet<PathBuf>,
+    threshold: f64,
+    options: &FunctionDryOptions,
+) -> Result<FunctionDryReport, ComputationError> {
+    analyze_function_dry_internal(files, Some(focus_files), threshold, options)
+}
+
+fn analyze_function_dry_internal(
+    files: &[PathBuf],
+    focus_files: Option<&HashSet<PathBuf>>,
+    threshold: f64,
+    options: &FunctionDryOptions,
+) -> Result<FunctionDryReport, ComputationError> {
     let mut all_functions: Vec<(PathBuf, ExtractedFunction)> = Vec::new();
     let mut skipped_files = Vec::new();
     let mut analyzed_files = Vec::new();
     
     // Extract functions from all files
     for path in files {
+        if options.timed_out() {
+            return Err(ComputationError::Timeout);
+        }
+
         // Check if we should skip this file
         if options.should_exclude(path) {
             skipped_files.push(path.clone());
@@ -674,51 +711,71 @@ pub fn analyze_function_dry_with_options(
     // Get the effective intra-file threshold
     let intra_threshold = options.effective_intra_file_threshold();
     
-    // Compare all pairs
-    for i in 0..all_functions.len() {
-        for j in (i + 1)..all_functions.len() {
-            let (path_a, func_a) = &all_functions[i];
-            let (path_b, func_b) = &all_functions[j];
-            
-            let same_file = path_a == path_b;
-            let same_name = func_a.name == func_b.name;
-            
-            // Inter-file detection: same name, different files (original behavior)
-            if !same_file && same_name {
-                let similarity = compare_functions(func_a, func_b);
-                
-                if similarity >= threshold {
-                    duplicates.push(FunctionDryEvidence {
-                        id: Uuid::new_v4(),
-                        file_a: path_a.clone(),
-                        file_b: path_b.clone(),
-                        function_name: func_a.name.clone(),
-                        similarity,
-                        function_a: func_a.clone(),
-                        function_b: func_b.clone(),
-                        computed_at: Utc::now(),
-                    });
-                }
+    let mut compare_pair = |i: usize, j: usize| {
+        let (path_a, func_a) = &all_functions[i];
+        let (path_b, func_b) = &all_functions[j];
+        let same_file = path_a == path_b;
+        let same_name = func_a.name == func_b.name;
+
+        if !same_file && same_name {
+            let similarity = compare_functions(func_a, func_b);
+            if similarity >= threshold {
+                duplicates.push(FunctionDryEvidence {
+                    id: Uuid::new_v4(),
+                    file_a: path_a.clone(),
+                    file_b: path_b.clone(),
+                    function_name: func_a.name.clone(),
+                    similarity,
+                    function_a: func_a.clone(),
+                    function_b: func_b.clone(),
+                    computed_at: Utc::now(),
+                });
             }
-            
-            // Intra-file detection: same file, different names, similar implementation
-            // This catches duplicative logic that traditional same-name detection misses
-            if options.detect_intra_file && same_file && !same_name {
-                let similarity = compare_functions(func_a, func_b);
-                
-                if similarity >= intra_threshold {
-                    intra_file_duplicates.push(IntraFileDryEvidence {
-                        id: Uuid::new_v4(),
-                        file: path_a.clone(),
-                        function_a_name: func_a.name.clone(),
-                        function_b_name: func_b.name.clone(),
-                        similarity,
-                        function_a: func_a.clone(),
-                        function_b: func_b.clone(),
-                        suggested_extraction: suggest_extraction_name(&func_a.name, &func_b.name),
-                        computed_at: Utc::now(),
-                    });
+        }
+
+        if options.detect_intra_file && same_file && !same_name {
+            let similarity = compare_functions(func_a, func_b);
+            if similarity >= intra_threshold {
+                intra_file_duplicates.push(IntraFileDryEvidence {
+                    id: Uuid::new_v4(),
+                    file: path_a.clone(),
+                    function_a_name: func_a.name.clone(),
+                    function_b_name: func_b.name.clone(),
+                    similarity,
+                    function_a: func_a.clone(),
+                    function_b: func_b.clone(),
+                    suggested_extraction: suggest_extraction_name(&func_a.name, &func_b.name),
+                    computed_at: Utc::now(),
+                });
+            }
+        }
+    };
+
+    if let Some(focus) = focus_files {
+        for i in 0..all_functions.len() {
+            if options.timed_out() {
+                return Err(ComputationError::Timeout);
+            }
+            if !focus.contains(&all_functions[i].0) {
+                continue;
+            }
+            for j in 0..all_functions.len() {
+                if options.timed_out() {
+                    return Err(ComputationError::Timeout);
                 }
+                if i == j || (focus.contains(&all_functions[j].0) && j < i) {
+                    continue;
+                }
+                compare_pair(i, j);
+            }
+        }
+    } else {
+        for i in 0..all_functions.len() {
+            for j in (i + 1)..all_functions.len() {
+                if options.timed_out() {
+                    return Err(ComputationError::Timeout);
+                }
+                compare_pair(i, j);
             }
         }
     }

@@ -1,0 +1,87 @@
+openapi: 3.1.1
+info:
+  title: CREATE SOMETHING Public Agent API
+  version: 1.0.0
+  description: |
+    Read-only service discovery and bounded public workflow mapping.
+    This API does not create accounts, issue credentials, make purchases, or bypass approval controls.
+servers:
+  - url: https://createsomething.agency
+paths:
+  /api/manifest:
+    get:
+      operationId: getPublicServiceManifest
+      summary: List CREATE SOMETHING public products, services, and work.
+      responses:
+        '200':
+          description: Public content manifest.
+          content:
+            application/json:
+              schema:
+                type: object
+  /api/atlas/public-agent:
+    post:
+      operationId: mapPublicWorkflow
+      summary: Produce a bounded workflow-map response from a natural-language prompt.
+      description: |
+        Subject to per-map and daily rate limits. The endpoint rejects malformed input and cannot
+        perform external writes, purchases, or account changes.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message:
+                  type: string
+                  description: Workflow question or operating context.
+                canvas:
+                  type: object
+                  description: Optional existing public map canvas.
+                visitorEmail:
+                  type: string
+                  format: email
+                  description: Optional contact email; changes only the published rate-limit tier.
+      responses:
+        '200':
+          description: Bounded workflow-map response.
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Invalid public-agent request.
+        '429':
+          description: Published public-agent rate limit reached.
+  /api/map/health:
+    get:
+      operationId: getPublicMapHealth
+      summary: Check public map-agent availability without performing a map request.
+      responses:
+        '200':
+          description: Public map dependencies are ready.
+        '503':
+          description: One or more public map dependencies are degraded.
+  /api/agent-access:
+    get:
+      operationId: getAuthenticatedAgentDiscovery
+      summary: Confirm a user-authorized OAuth agent may read the discovery directory.
+      security:
+        - oauth2: [mcp]
+      responses:
+        '200':
+          description: Read-only agent discovery pointers.
+        '401':
+          description: Missing, invalid, or insufficient bearer token. Includes a resource_metadata challenge.
+components:
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://id.createsomething.space/oauth/authorize
+          tokenUrl: https://id.createsomething.space/oauth/token
+          scopes:
+            mcp: Read the authenticated agent discovery resource.

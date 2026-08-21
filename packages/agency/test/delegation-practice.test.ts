@@ -140,8 +140,8 @@ test('a Practice Receipt fails closed until every operator artifact and governan
 	});
 	const complete = buildPracticeReceipt(session, '2026-07-14T20:00:00.000Z');
 
-	assert.equal(complete.ok, true);
 	if (!complete.ok) assert.fail(`complete session was rejected: ${complete.missingFields.join(', ')}`);
+	assert.equal(complete.ok, true);
 	assert.deepEqual(complete.receipt.labels, ['Internal preview', 'Not certification']);
 	assert.equal(complete.receipt.workflowName, 'Marketplace review queue');
 	assert.equal(complete.receipt.authority.decision, 'preserve');

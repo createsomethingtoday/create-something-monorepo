@@ -1,13 +1,37 @@
 import http from 'node:http';
-import { watch, type FSWatcher } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { createReadStream, watch, type FSWatcher } from 'node:fs';
 import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { URL, fileURLToPath } from 'node:url';
 import { gzip } from 'node:zlib';
 import { promisify } from 'node:util';
 
+import {
+  compileTranscriptSrt,
+  createTranscriptEditorProject,
+  findTranscriptCleanupCandidates,
+  type ApplyTranscriptEditInput,
+  type DecideTranscriptEditInput,
+  type ProposeTranscriptEditInput,
+  type TranscriptSegment
+} from '@create-something/atlas-composition';
+
 import { getAtlasStudioPalette } from './atlas.js';
 import { renderStudioHtml } from './html.js';
+import { inspectLocalVideoSource } from './media-intake.js';
+import { createAcceptedOverlayPreviewPlan } from './media-overlay-preview.js';
+import { renderAcceptedTranscript } from './media-render.js';
+import { createCodexAppServerStdioRpc } from './codex-app-server-rpc.js';
+import {
+  dispatchManagedCodexProposal,
+  type CodexAppServerEventRpc
+} from './codex-app-server-proposal.js';
+import {
+  prepareManagedCodexProposal,
+  type ManagedCodexProposalPreparation,
+  type PrepareManagedCodexProposalInput
+} from './managed-codex-proposal.js';
 import {
   healSessionProductionBindings,
   type AtlasProductionBindingProfile
@@ -28,11 +52,33 @@ import {
   getSessionPath,
   listSessions,
   readSession,
+  readTranscriptEditorProject,
   removeNode,
   updateNode,
   updateEdge,
-  updateNodes
+  updateNodes,
+  writeTranscriptEditorProject
 } from './store.js';
+import {
+  createAtlasMediaProject,
+  getAtlasMediaProjectPath,
+  initializeAtlasMediaProject,
+  parseTimestampedTranscript,
+  readAtlasMediaProject,
+  writeAtlasMediaProject
+} from './media-project.js';
+import { inspectAtlasLocalSourceAsset, renderAndPersistAtlasMediaProject } from './media-render.js';
+import {
+  createCodexTranscriptProposalRunner,
+  getCodexManagedAccountStatus,
+  type CodexTranscriptProposalRunner
+} from './codex-transcript-proposal.js';
+import {
+  applyApprovedTranscriptEdit,
+  decideTranscriptEdit,
+  exportEditedTranscriptSrt,
+  proposeTranscriptEdit
+} from '@create-something/atlas-composition';
 import {
   activateStoryApiStep,
   addStoryApiQuestion,
@@ -55,6 +101,8 @@ export type StudioServerOptions = {
   sessionId?: string;
   cwd?: string;
   governedInteractionPath?: string;
+  codexAppServerRpcFactory?: () => CodexAppServerEventRpc;
+  codexTranscriptProposalRunner?: CodexTranscriptProposalRunner;
 };
 
 type SessionEventStream = {
@@ -78,6 +126,18 @@ const SECURITY_HEADERS = {
   'x-content-type-options': 'nosniff',
   'x-frame-options': 'DENY',
 } as const;
+
+type LocalTranscriptProjectIntake = {
+  assetId: string;
+  filePath: string;
+  projectId: string;
+  transcriptSegments: Array<Omit<TranscriptSegment, 'assetId'>>;
+};
+
+function isLoopbackHost(host: string): boolean {
+  const normalized = host.trim().toLowerCase();
+  return normalized === 'localhost' || normalized === '::1' || normalized.startsWith('127.');
+}
 
 async function readJson<T = Record<string, unknown>>(request: http.IncomingMessage): Promise<T> {
   const chunks: Buffer[] = [];
@@ -105,14 +165,52 @@ function sendText(
   response: http.ServerResponse,
   status: number,
   text: string,
-  contentType = 'text/plain'
+  contentType = 'text/plain',
+  headers: Record<string, string> = {}
 ): void {
   response.writeHead(status, {
     ...SECURITY_HEADERS,
+    ...headers,
     'content-type': `${contentType}; charset=utf-8`,
     'cache-control': 'no-store'
   });
   response.end(text);
+}
+
+async function sendLocalRenderOutput(
+  request: http.IncomingMessage,
+  response: http.ServerResponse,
+  outputPath: string
+): Promise<void> {
+  const details = await stat(outputPath);
+  const range = request.headers.range?.match(/bytes=(\d*)-(\d*)/);
+  const start = range?.[1] ? Number(range[1]) : 0;
+  const end = range?.[2] ? Number(range[2]) : details.size - 1;
+  if (start < 0 || end < start || end >= details.size) {
+    response.writeHead(416, { ...SECURITY_HEADERS, 'content-range': `bytes */${details.size}` }).end();
+    return;
+  }
+  const headers: http.OutgoingHttpHeaders = {
+    ...SECURITY_HEADERS,
+    'accept-ranges': 'bytes',
+    'cache-control': 'no-store',
+    'content-length': end - start + 1,
+    'content-type': localMediaContentType(outputPath)
+  };
+  if (range) headers['content-range'] = `bytes ${start}-${end}/${details.size}`;
+  response.writeHead(range ? 206 : 200, headers);
+  createReadStream(outputPath, { start, end }).pipe(response);
+}
+
+function localMediaContentType(mediaPath: string): string {
+  switch (path.extname(mediaPath).toLowerCase()) {
+    case '.m4a': return 'audio/mp4';
+    case '.mp3': return 'audio/mpeg';
+    case '.wav': return 'audio/wav';
+    case '.mov': return 'video/quicktime';
+    case '.webm': return 'video/webm';
+    default: return 'video/mp4';
+  }
 }
 
 function studioClientAssetPath(filename: string): string {
@@ -127,7 +225,7 @@ async function getStudioAssetVersion(): Promise<string> {
       return `${filename}:${info.size}:${Math.trunc(info.mtimeMs)}`;
     })
   );
-  return Buffer.from(assets.join('|')).toString('base64url').slice(0, 16);
+  return createHash('sha256').update(assets.join('|')).digest('base64url').slice(0, 16);
 }
 
 async function sendAsset(
@@ -181,6 +279,7 @@ function sendEvent(response: http.ServerResponse, event: string, payload: unknow
 
 export async function startStudioServer(options: StudioServerOptions): Promise<http.Server> {
   const cwd = options.cwd ?? process.cwd();
+  const codexTranscriptProposalRunner = options.codexTranscriptProposalRunner ?? createCodexTranscriptProposalRunner();
   let defaultSessionId = options.sessionId;
   const assetCache = new Map<string, CachedAsset>();
   const assetVersion = await getStudioAssetVersion().catch(() => 'dev');
@@ -358,6 +457,11 @@ export async function startStudioServer(options: StudioServerOptions): Promise<h
         return;
       }
 
+      if (method === 'GET' && url.pathname === '/api/codex-account') {
+        sendJson(response, 200, await getCodexManagedAccountStatus());
+        return;
+      }
+
       if (method === 'POST' && url.pathname === '/api/sessions') {
         const body = await readJson<{ client?: string; workflow?: string; owner?: string }>(
           request
@@ -396,9 +500,437 @@ export async function startStudioServer(options: StudioServerOptions): Promise<h
         return;
       }
 
+      const transcriptCaptionsMatch = url.pathname.match(
+        /^\/api\/sessions\/([^/]+)\/transcript-project\/captions\.srt$/
+      );
+      if (method === 'GET' && transcriptCaptionsMatch) {
+        const project = await readTranscriptEditorProject(
+          decodeURIComponent(transcriptCaptionsMatch[1] ?? ''),
+          cwd
+        );
+        const captions = compileTranscriptSrt(project);
+        sendText(response, 200, captions, 'application/x-subrip', {
+          'x-atlas-caption-sha256': createHash('sha256').update(captions).digest('hex')
+        });
+        return;
+      }
+
+      const managedCodexProposalPrepareMatch = url.pathname.match(
+        /^\/api\/sessions\/([^/]+)\/transcript-project\/codex-proposal\/prepare$/
+      );
+      if (method === 'POST' && managedCodexProposalPrepareMatch) {
+        if (!isLoopbackHost(options.host)) {
+          sendJson(response, 403, {
+            error: 'Managed Codex proposal preparation is available only when Atlas Studio is bound to a loopback host.'
+          });
+          return;
+        }
+        const sessionId = decodeURIComponent(managedCodexProposalPrepareMatch[1] ?? '');
+        const project = await readTranscriptEditorProject(sessionId, cwd);
+        const body = await readJson<PrepareManagedCodexProposalInput>(request);
+        sendJson(response, 200, prepareManagedCodexProposal(project, body));
+        return;
+      }
+
+      const managedCodexProposalDispatchMatch = url.pathname.match(
+        /^\/api\/sessions\/([^/]+)\/transcript-project\/codex-proposal\/dispatch$/
+      );
+      if (method === 'POST' && managedCodexProposalDispatchMatch) {
+        if (!isLoopbackHost(options.host)) {
+          sendJson(response, 403, { error: 'Managed Codex proposal dispatch is available only when Atlas Studio is bound to a loopback host.' });
+          return;
+        }
+        const sessionId = decodeURIComponent(managedCodexProposalDispatchMatch[1] ?? '');
+        const project = await readTranscriptEditorProject(sessionId, cwd);
+        const preparation = await readJson<ManagedCodexProposalPreparation>(request);
+        const rpc = options.codexAppServerRpcFactory?.() ?? createCodexAppServerStdioRpc();
+        const result = await dispatchManagedCodexProposal(project, preparation, rpc);
+        sendJson(response, 200, await writeTranscriptEditorProject(sessionId, result.project, cwd));
+        return;
+      }
+
+      const transcriptCleanupMatch = url.pathname.match(
+        /^\/api\/sessions\/([^/]+)\/transcript-project\/cleanup-candidates$/
+      );
+      if (method === 'GET' && transcriptCleanupMatch) {
+        const rawMinPauseUs = url.searchParams.get('minPauseUs');
+        const minPauseUs = rawMinPauseUs === null ? undefined : Number(rawMinPauseUs);
+        if (minPauseUs !== undefined && (!Number.isInteger(minPauseUs) || minPauseUs <= 0)) {
+          throw new Error('Cleanup discovery requires a positive integer minPauseUs query parameter.');
+        }
+        const project = await readTranscriptEditorProject(
+          decodeURIComponent(transcriptCleanupMatch[1] ?? ''),
+          cwd
+        );
+        sendJson(
+          response,
+          200,
+          findTranscriptCleanupCandidates(project, {
+            fillerTerms: url.searchParams.getAll('fillerTerm'),
+            minPauseUs
+          })
+        );
+        return;
+      }
+
+      const overlayPreviewPlanMatch = url.pathname.match(
+        /^\/api\/sessions\/([^/]+)\/transcript-project\/overlay-preview-plan$/
+      );
+      if (method === 'GET' && overlayPreviewPlanMatch) {
+        const sessionId = decodeURIComponent(overlayPreviewPlanMatch[1] ?? '');
+        const project = await readTranscriptEditorProject(sessionId, cwd);
+        sendJson(response, 200, createAcceptedOverlayPreviewPlan(project));
+        return;
+      }
+
+      const transcriptProjectMatch = url.pathname.match(
+        /^\/api\/sessions\/([^/]+)\/transcript-project$/
+      );
+      if (method === 'GET' && transcriptProjectMatch) {
+        try {
+          sendJson(
+            response,
+            200,
+            await readTranscriptEditorProject(decodeURIComponent(transcriptProjectMatch[1] ?? ''), cwd)
+          );
+        } catch (error) {
+          if (error && typeof error === 'object' && (error as { code?: unknown }).code === 'ENOENT') {
+            sendJson(response, 404, { error: 'No transcript project exists for this Atlas session.' });
+            return;
+          }
+          throw error;
+        }
+        return;
+      }
+
+      if (method === 'PUT' && transcriptProjectMatch) {
+        const sessionId = decodeURIComponent(transcriptProjectMatch[1] ?? '');
+        const body = await readJson<Parameters<typeof writeTranscriptEditorProject>[1]>(request);
+        sendJson(response, 200, await writeTranscriptEditorProject(sessionId, body, cwd));
+        return;
+      }
+
+      const transcriptRenderMatch = url.pathname.match(
+        /^\/api\/sessions\/([^/]+)\/transcript-project\/render$/
+      );
+      if (method === 'POST' && transcriptRenderMatch) {
+        if (!isLoopbackHost(options.host)) {
+          sendJson(response, 403, { error: 'Local rendering is available only when Atlas Studio is bound to a loopback host.' });
+          return;
+        }
+        const sessionId = decodeURIComponent(transcriptRenderMatch[1] ?? '');
+        const project = await readTranscriptEditorProject(sessionId, cwd);
+        const body = await readJson<{ fps?: number; outputPath: string }>(request);
+        const result = await renderAcceptedTranscript(project, {
+          outputPath: body.outputPath,
+          fps: body.fps,
+          requestedAt: new Date().toISOString()
+        });
+        await writeTranscriptEditorProject(sessionId, result.project, cwd);
+        sendJson(response, 200, result);
+        return;
+      }
+
+      const transcriptProposalMatch = url.pathname.match(
+        /^\/api\/sessions\/([^/]+)\/transcript-project\/proposals\/([^/]+)$/
+      );
+      if (method === 'PATCH' && transcriptProposalMatch) {
+        const sessionId = decodeURIComponent(transcriptProposalMatch[1] ?? '');
+        const proposalId = decodeURIComponent(transcriptProposalMatch[2] ?? '');
+        const project = await readTranscriptEditorProject(sessionId, cwd);
+        const body = await readJson<DecideTranscriptEditInput>(request);
+        const next = decideTranscriptEdit(project, proposalId, body);
+        sendJson(response, 200, await writeTranscriptEditorProject(sessionId, next, cwd));
+        return;
+      }
+
+      const transcriptProposalApplyMatch = url.pathname.match(
+        /^\/api\/sessions\/([^/]+)\/transcript-project\/proposals\/([^/]+)\/apply$/
+      );
+      if (method === 'POST' && transcriptProposalApplyMatch) {
+        const sessionId = decodeURIComponent(transcriptProposalApplyMatch[1] ?? '');
+        const proposalId = decodeURIComponent(transcriptProposalApplyMatch[2] ?? '');
+        const project = await readTranscriptEditorProject(sessionId, cwd);
+        const body = await readJson<Omit<ApplyTranscriptEditInput, 'proposalId'>>(request);
+        const next = applyApprovedTranscriptEdit(project, { ...body, proposalId });
+        sendJson(response, 200, await writeTranscriptEditorProject(sessionId, next, cwd));
+        return;
+      }
+
+      const transcriptProposalsMatch = url.pathname.match(
+        /^\/api\/sessions\/([^/]+)\/transcript-project\/proposals$/
+      );
+      if (method === 'POST' && transcriptProposalsMatch) {
+        const sessionId = decodeURIComponent(transcriptProposalsMatch[1] ?? '');
+        const project = await readTranscriptEditorProject(sessionId, cwd);
+        const body = await readJson<ProposeTranscriptEditInput>(request);
+        const next = proposeTranscriptEdit(project, body);
+        sendJson(response, 200, await writeTranscriptEditorProject(sessionId, next, cwd));
+        return;
+      }
+
+      const transcriptIntakeMatch = url.pathname.match(
+        /^\/api\/sessions\/([^/]+)\/transcript-project\/intake$/
+      );
+      if (method === 'POST' && transcriptIntakeMatch) {
+        if (!isLoopbackHost(options.host)) {
+          sendJson(response, 403, {
+            error: 'Local media intake is available only when Atlas Studio is bound to a loopback host.'
+          });
+          return;
+        }
+        const sessionId = decodeURIComponent(transcriptIntakeMatch[1] ?? '');
+        const body = await readJson<LocalTranscriptProjectIntake>(request);
+        if (!Array.isArray(body.transcriptSegments)) {
+          throw new Error('Local media intake requires timestamped transcript segments.');
+        }
+        const sourceAsset = await inspectLocalVideoSource({
+          id: body.assetId,
+          filePath: body.filePath
+        });
+        const project = createTranscriptEditorProject({
+          id: body.projectId,
+          atlasSessionId: sessionId,
+          sourceAsset,
+          transcriptSegments: body.transcriptSegments.map((segment) => ({
+            ...segment,
+            assetId: sourceAsset.id
+          })),
+          createdAt: new Date().toISOString()
+        });
+        sendJson(response, 201, await writeTranscriptEditorProject(sessionId, project, cwd));
+        return;
+      }
+
       const sessionMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)$/);
       if (method === 'GET' && sessionMatch) {
         sendJson(response, 200, await readSession(decodeURIComponent(sessionMatch[1] ?? ''), cwd));
+        return;
+      }
+
+      const mediaProjectMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)\/media-project$/);
+      const mediaProjectCaptionsMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)\/media-project\/captions\.srt$/);
+      if (method === 'GET' && mediaProjectCaptionsMatch) {
+        const project = await readAtlasMediaProject(decodeURIComponent(mediaProjectCaptionsMatch[1] ?? ''), cwd);
+        sendText(response, 200, exportEditedTranscriptSrt(project), 'application/x-subrip');
+        return;
+      }
+      if (method === 'GET' && mediaProjectMatch) {
+        sendJson(response, 200, await readAtlasMediaProject(decodeURIComponent(mediaProjectMatch[1] ?? ''), cwd));
+        return;
+      }
+      if (method === 'POST' && mediaProjectMatch) {
+        const body = await readJson<Parameters<typeof createAtlasMediaProject>[1]>(request);
+        sendJson(
+          response,
+          201,
+          await createAtlasMediaProject(decodeURIComponent(mediaProjectMatch[1] ?? ''), body, cwd)
+        );
+        return;
+      }
+      if (method === 'PUT' && mediaProjectMatch) {
+        const body = await readJson<Parameters<typeof writeAtlasMediaProject>[1]>(request);
+        sendJson(
+          response,
+          200,
+          await writeAtlasMediaProject(decodeURIComponent(mediaProjectMatch[1] ?? ''), body, cwd)
+        );
+        return;
+      }
+
+      const mediaProjectImportMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)\/media-project\/import$/);
+      if (method === 'POST' && mediaProjectImportMatch) {
+        const body = await readJson<{
+          id?: string;
+          sourcePath?: string;
+          transcript?: string;
+          includeTitleOverlay?: boolean;
+        }>(request);
+        const sourcePath = body.sourcePath?.trim();
+        if (!sourcePath) throw new Error('A local source path is required.');
+        const transcript = body.transcript?.trim();
+        if (!transcript) throw new Error('A timestamped transcript is required.');
+        const sessionId = decodeURIComponent(mediaProjectImportMatch[1] ?? '');
+        const sourceAsset = await inspectAtlasLocalSourceAsset(sourcePath);
+        sendJson(
+          response,
+          201,
+          await initializeAtlasMediaProject(
+            sessionId,
+            {
+              id: body.id?.trim() || `media_${Date.now().toString(36)}`,
+              createdAt: new Date().toISOString(),
+              sourceAsset,
+              transcriptSegments: parseTimestampedTranscript(transcript),
+              includeTitleOverlay: Boolean(body.includeTitleOverlay)
+            },
+            cwd
+          )
+        );
+        return;
+      }
+
+      const mediaRenderMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)\/media-project\/render$/);
+      if (method === 'POST' && mediaRenderMatch) {
+        const body = await readJson<{
+          requestId?: string;
+          requestedAt?: string;
+          width?: number;
+          height?: number;
+          fps?: number;
+        }>(request);
+        sendJson(
+          response,
+          201,
+          await renderAndPersistAtlasMediaProject(
+            decodeURIComponent(mediaRenderMatch[1] ?? ''),
+            {
+              requestId: body.requestId?.trim() || `render_${Date.now().toString(36)}`,
+              requestedAt: body.requestedAt?.trim() || new Date().toISOString(),
+              width: body.width,
+              height: body.height,
+              fps: body.fps
+            },
+            cwd
+          )
+        );
+        return;
+      }
+
+      const mediaSourceOutputMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)\/media-project\/source\/([^/]+)$/);
+      if (method === 'GET' && mediaSourceOutputMatch) {
+        const sessionId = decodeURIComponent(mediaSourceOutputMatch[1] ?? '');
+        const sourceAssetId = decodeURIComponent(mediaSourceOutputMatch[2] ?? '');
+        const project = await readAtlasMediaProject(sessionId, cwd);
+        const sourceAsset = project.sourceAssets.find((asset) => asset.id === sourceAssetId);
+        if (!sourceAsset?.uri.startsWith('file://')) {
+          sendJson(response, 404, { error: 'No local source asset exists for this project.' });
+          return;
+        }
+        await sendLocalRenderOutput(request, response, fileURLToPath(sourceAsset.uri));
+        return;
+      }
+
+      const mediaRenderOutputMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)\/media-project\/renders\/([^/]+)\.mp4$/);
+      if (method === 'GET' && mediaRenderOutputMatch) {
+        const sessionId = decodeURIComponent(mediaRenderOutputMatch[1] ?? '');
+        const receiptId = decodeURIComponent(mediaRenderOutputMatch[2] ?? '');
+        const project = await readAtlasMediaProject(sessionId, cwd);
+        const receipt = project.receipts.find((candidate) => candidate.id === receiptId && candidate.status === 'completed');
+        if (!receipt?.request.output.path) {
+          sendJson(response, 404, { error: 'No completed local render exists for this receipt.' });
+          return;
+        }
+        const allowedRoot = path.join(path.dirname(getAtlasMediaProjectPath(project.id, cwd)), 'renders');
+        const relativeOutput = path.relative(allowedRoot, receipt.request.output.path);
+        if (relativeOutput.startsWith('..') || path.isAbsolute(relativeOutput)) {
+          throw new Error('Render output is outside the private project render directory.');
+        }
+        await sendLocalRenderOutput(request, response, receipt.request.output.path);
+        return;
+      }
+
+      const mediaManualProposalMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)\/media-project\/manual-transcript-proposals$/);
+      if (method === 'POST' && mediaManualProposalMatch) {
+        const body = await readJson<{ id?: string; proposedAt?: string; transcriptSegmentIds?: string[] }>(request);
+        const selectedIds = new Set(body.transcriptSegmentIds ?? []);
+        if (!selectedIds.size) throw new Error('Select at least one complete transcript segment before proposing a removal.');
+        const sessionId = decodeURIComponent(mediaManualProposalMatch[1] ?? '');
+        const project = await readAtlasMediaProject(sessionId, cwd);
+        const revision = project.revisions.find((candidate) => candidate.id === project.currentRevisionId);
+        if (!revision) throw new Error('The local media project has no current revision.');
+        const operations = revision.cutList.map((operation) =>
+          operation.kind === 'keep' && operation.transcriptSegmentIds.length === 1 && selectedIds.has(operation.transcriptSegmentIds[0])
+            ? { ...operation, kind: 'remove' as const, reason: 'Operator selected this transcript clip for removal.' }
+            : operation
+        );
+        const next = proposeTranscriptEdit(project, {
+          id: body.id?.trim() || `manual_${Date.now().toString(36)}`,
+          baseRevisionId: revision.id,
+          proposedBy: 'operator-transcript-selection',
+          rationale: 'Operator-selected transcript removal awaiting review.',
+          operations
+        });
+        sendJson(response, 201, await writeAtlasMediaProject(sessionId, next, cwd));
+        return;
+      }
+
+      const mediaCodexProposalMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)\/media-project\/codex-proposals$/);
+      if (method === 'POST' && mediaCodexProposalMatch) {
+        const body = await readJson<{
+          id?: string;
+          operatorPrompt?: string;
+          requestedAt?: string;
+          operatorConfirmedPrivateContent?: boolean;
+        }>(request);
+        if (body.operatorConfirmedPrivateContent !== true) {
+          throw new Error('Operator confirmation is required before private transcript content is sent to managed Codex.');
+        }
+        const sessionId = decodeURIComponent(mediaCodexProposalMatch[1] ?? '');
+        const project = await readAtlasMediaProject(sessionId, cwd);
+        const proposal = await codexTranscriptProposalRunner.propose(project, {
+          id: body.id?.trim() || `codex_${Date.now().toString(36)}`,
+          operatorPrompt: body.operatorPrompt?.trim() || '',
+          requestedAt: body.requestedAt?.trim() || new Date().toISOString(),
+          operatorConfirmedPrivateContent: body.operatorConfirmedPrivateContent === true
+        });
+        sendJson(response, 201, await writeAtlasMediaProject(
+          sessionId,
+          proposeTranscriptEdit(project, proposal),
+          cwd
+        ));
+        return;
+      }
+
+      const mediaProposalDecisionMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)\/media-project\/proposals\/([^/]+)$/);
+      if (method === 'PATCH' && mediaProposalDecisionMatch) {
+        const body = await readJson<{ decision?: 'approved' | 'rejected'; decidedAt?: string; decidedBy?: string; note?: string }>(request);
+        if (body.decision !== 'approved' && body.decision !== 'rejected') throw new Error('Expected proposal decision approved or rejected.');
+        const sessionId = decodeURIComponent(mediaProposalDecisionMatch[1] ?? '');
+        const project = await readAtlasMediaProject(sessionId, cwd);
+        const decided = decideTranscriptEdit(project, decodeURIComponent(mediaProposalDecisionMatch[2] ?? ''), {
+            decision: body.decision,
+            decidedAt: body.decidedAt?.trim() || new Date().toISOString(),
+            decidedBy: body.decidedBy?.trim() || 'operator',
+            note: body.note
+          });
+        // A rejection is also a durable editorial decision: retain the accepted
+        // cut list in a new immutable revision, without applying the proposal.
+        const next = body.decision === 'rejected'
+          ? {
+              ...decided,
+              currentRevisionId: `revision-${decided.revisions.length + 1}`,
+              revisions: [
+                ...decided.revisions,
+                {
+                  ...decided.revisions.find((revision) => revision.id === decided.currentRevisionId)!,
+                  id: `revision-${decided.revisions.length + 1}`,
+                  parentRevisionId: decided.currentRevisionId,
+                  createdAt: body.decidedAt?.trim() || new Date().toISOString(),
+                  createdBy: 'operator' as const
+                }
+              ]
+            }
+          : decided;
+        sendJson(response, 200, await writeAtlasMediaProject(sessionId, next, cwd));
+        return;
+      }
+
+      const mediaProposalApplyMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)\/media-project\/proposals\/([^/]+)\/apply$/);
+      if (method === 'POST' && mediaProposalApplyMatch) {
+        const body = await readJson<{ revisionId?: string; appliedAt?: string }>(request);
+        const sessionId = decodeURIComponent(mediaProposalApplyMatch[1] ?? '');
+        const project = await readAtlasMediaProject(sessionId, cwd);
+        sendJson(response, 200, await writeAtlasMediaProject(
+          sessionId,
+          applyApprovedTranscriptEdit(project, {
+            proposalId: decodeURIComponent(mediaProposalApplyMatch[2] ?? ''),
+            revisionId: body.revisionId?.trim() || `revision_${Date.now().toString(36)}`,
+            appliedAt: body.appliedAt?.trim() || new Date().toISOString(),
+            appliedBy: 'operator'
+          }),
+          cwd
+        ));
         return;
       }
 

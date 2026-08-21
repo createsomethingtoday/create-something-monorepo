@@ -8,15 +8,91 @@
  * - browserless: Browserless.io - retained as an operational fallback
  */
 
-import type { AnalyzeOptions, BrowserProvider, BrowserSessionInit, ProviderHealthMetrics } from '../types.js';
+import type {
+  AnalyzeOptions,
+  BrowserProvider,
+  BrowserRequirement,
+  BrowserSessionInit,
+  ProviderHealthMetrics,
+} from '../types.js';
 import { createBrowserlessProvider } from './browserless.js';
+import {
+  createCloudflareBrowserRunProvider,
+  type BrowserRunConnect,
+} from './cloudflare-browser-run.js';
 import { createSteelBrowserProvider } from './steel.js';
 
+export type BrowserOperation =
+  | 'analyze'
+  | 'screenshot'
+  | 'extractDesignerMetadata'
+  | 'openSession';
+
+export type BrowserCapability =
+  | 'stateless-public'
+  | 'visual-public'
+  | 'pixel-sensitive'
+  | 'designer-authenticated'
+  | 'sessionful'
+  | BrowserRequirement;
+
+const DEFAULT_OPERATION_CAPABILITIES: Record<BrowserOperation, BrowserCapability> = {
+  analyze: 'stateless-public',
+  screenshot: 'visual-public',
+  extractDesignerMetadata: 'designer-authenticated',
+  openSession: 'sessionful',
+};
+
+const KITESURF_INCOMPATIBLE_CAPABILITIES = new Set<BrowserCapability>([
+  'pixel-sensitive',
+  'designer-authenticated',
+  'sessionful',
+  'webgl',
+  'video',
+  'real-tls',
+  'bot-challenge',
+]);
+
+export interface BrowserRouteAttempt {
+  provider: string;
+  outcome: 'success' | 'failure';
+  durationMs: number;
+  error?: string;
+}
+
+export interface BrowserRoutingReceipt {
+  operation: BrowserOperation;
+  capability: BrowserCapability;
+  selectedProvider: string | null;
+  attempts: BrowserRouteAttempt[];
+  fallbackReason?: string;
+}
+
+export interface BrowserOperationResult<T> {
+  data: T;
+  receipt: BrowserRoutingReceipt;
+}
+
 export interface ProviderManagerConfig {
-  primary: 'steel' | 'browserless';
+  primary: string;
   steelApiKey?: string;
   browserlessToken?: string;
+  providers?: BrowserProvider[];
+  routes?: Partial<Record<BrowserOperation, string[]>>;
+  capabilities?: Partial<Record<BrowserOperation, BrowserCapability>>;
+  onRouteReceipt?: (receipt: BrowserRoutingReceipt) => void | Promise<void>;
   healthCheckInterval?: number;
+}
+
+export interface BrowserProviderRuntimeConfig {
+  cloudflareBrowserRunEnabled?: boolean;
+  cloudflareAccountId?: string;
+  cloudflareBrowserRunApiToken?: string;
+  steelApiKey?: string;
+  browserlessToken?: string;
+  healthCheckIntervalMs?: number;
+  onRouteReceipt?: ProviderManagerConfig['onRouteReceipt'];
+  connectBrowserRun?: BrowserRunConnect;
 }
 
 function computePassiveHealth(metrics: ProviderHealthMetrics): boolean {
@@ -41,6 +117,13 @@ function createMetrics(provider: string): ProviderHealthMetrics {
   };
 }
 
+function sanitizeProviderError(error: unknown): string {
+  return (error instanceof Error ? error.message : String(error))
+    .replace(/Bearer\s+[^\s"']+/gi, 'Bearer [REDACTED]')
+    .replace(/([?&](?:api[_-]?key|token)=)[^&\s"']+/gi, '$1[REDACTED]')
+    .replace(/("Authorization"\s*:\s*")[^"]+/gi, '$1[REDACTED]');
+}
+
 export class ProviderManager {
   private readonly providers = new Map<string, BrowserProvider>();
   private readonly healthMetrics = new Map<string, ProviderHealthMetrics>();
@@ -49,8 +132,16 @@ export class ProviderManager {
   private activeProviderName: string;
   private healthCheckTimer?: NodeJS.Timeout;
   private readonly facade: BrowserProvider;
+  private readonly routes: Partial<Record<BrowserOperation, string[]>>;
+  private readonly capabilities: Record<BrowserOperation, BrowserCapability>;
+  private readonly onRouteReceipt?: ProviderManagerConfig['onRouteReceipt'];
 
   constructor(config: ProviderManagerConfig) {
+    for (const provider of config.providers ?? []) {
+      this.providers.set(provider.name, provider);
+      this.healthMetrics.set(provider.name, createMetrics(provider.name));
+    }
+
     if (config.steelApiKey) {
       const steel = createSteelBrowserProvider(config.steelApiKey);
       this.providers.set(steel.name, steel);
@@ -65,22 +156,29 @@ export class ProviderManager {
 
     const desiredPrimary = config.primary;
     const resolvedPrimary =
-      desiredPrimary === 'steel'
-        ? (this.providers.has('steel') ? 'steel' : 'browserless')
-        : (this.providers.has('browserless') ? 'browserless' : 'steel');
+      this.providers.has(desiredPrimary)
+        ? desiredPrimary
+        : desiredPrimary === 'steel'
+          ? (this.providers.has('steel') ? 'steel' : 'browserless')
+          : (this.providers.has('browserless') ? 'browserless' : 'steel');
 
     if (!resolvedPrimary || !this.providers.has(resolvedPrimary)) {
-      throw new Error('No browser provider configured. Set STEEL_API_KEY or BROWSERLESS_TOKEN.');
+      throw new Error(
+        'No browser provider configured. Configure Cloudflare Browser Run, Steel, or Browserless.',
+      );
     }
 
     this.primaryProviderName = resolvedPrimary;
-    this.fallbackProviderName =
-      resolvedPrimary === 'steel' && this.providers.has('browserless')
-        ? 'browserless'
-        : resolvedPrimary === 'browserless' && this.providers.has('steel')
-          ? 'steel'
-          : null;
+    this.fallbackProviderName = Array.from(this.providers.keys()).find(
+      (name) => name !== resolvedPrimary,
+    ) ?? null;
     this.activeProviderName = this.primaryProviderName;
+    this.routes = config.routes ?? {};
+    this.capabilities = {
+      ...DEFAULT_OPERATION_CAPABILITIES,
+      ...config.capabilities,
+    };
+    this.onRouteReceipt = config.onRouteReceipt;
     const resolvedManager = this;
 
     this.facade = {
@@ -88,23 +186,13 @@ export class ProviderManager {
         return resolvedManager.activeProviderName;
       },
       analyze: async <T>(url: string, script: string, options?: AnalyzeOptions) =>
-        resolvedManager.runWithFallback((provider) => provider.analyze<T>(url, script, options)),
+        (await resolvedManager.analyzeWithReceipt<T>(url, script, options)).data,
       screenshot: async (url: string, options?: AnalyzeOptions) =>
-        resolvedManager.runWithFallback((provider) => provider.screenshot(url, options)),
+        (await resolvedManager.screenshotWithReceipt(url, options)).data,
       extractDesignerMetadata: async (url: string, timeout?: number) =>
-        resolvedManager.runWithFallback((provider) => {
-          if (!provider.extractDesignerMetadata) {
-            throw new Error(`Provider ${provider.name} does not support extractDesignerMetadata`);
-          }
-          return provider.extractDesignerMetadata(url, timeout);
-        }),
+        (await resolvedManager.extractDesignerMetadataWithReceipt(url, timeout)).data,
       openSession: async (input?: BrowserSessionInit) =>
-        resolvedManager.runWithFallback((provider) => {
-          if (!provider.openSession) {
-            throw new Error(`Provider ${provider.name} does not support openSession`);
-          }
-          return provider.openSession(input);
-        }),
+        (await resolvedManager.openSessionWithReceipt(input)).data,
       healthCheck: async () => resolvedManager.checkHealthActive(),
       getSessionMetrics: () => resolvedManager.getAggregatedSessionMetrics()
     };
@@ -116,6 +204,52 @@ export class ProviderManager {
 
   getProvider(): BrowserProvider {
     return this.facade;
+  }
+
+  analyzeWithReceipt<T>(
+    url: string,
+    script: string,
+    options?: AnalyzeOptions,
+  ): Promise<BrowserOperationResult<T>> {
+    return this.runOperation(
+      'analyze',
+      (provider) => provider.analyze<T>(url, script, options),
+      this.classifyCapability('analyze', url, options),
+    );
+  }
+
+  screenshotWithReceipt(
+    url: string,
+    options?: AnalyzeOptions,
+  ): Promise<BrowserOperationResult<Buffer>> {
+    return this.runOperation(
+      'screenshot',
+      (provider) => provider.screenshot(url, options),
+      this.classifyCapability('screenshot', url, options),
+    );
+  }
+
+  extractDesignerMetadataWithReceipt(
+    url: string,
+    timeout?: number,
+  ): Promise<BrowserOperationResult<Awaited<ReturnType<NonNullable<BrowserProvider['extractDesignerMetadata']>>>>> {
+    return this.runOperation('extractDesignerMetadata', (provider) => {
+      if (!provider.extractDesignerMetadata) {
+        throw new Error(`Provider ${provider.name} does not support extractDesignerMetadata`);
+      }
+      return provider.extractDesignerMetadata(url, timeout);
+    });
+  }
+
+  openSessionWithReceipt(
+    input?: BrowserSessionInit,
+  ): Promise<BrowserOperationResult<Awaited<ReturnType<NonNullable<BrowserProvider['openSession']>>>>> {
+    return this.runOperation('openSession', (provider) => {
+      if (!provider.openSession) {
+        throw new Error(`Provider ${provider.name} does not support openSession`);
+      }
+      return provider.openSession(input);
+    });
   }
 
   getProviderName(): string {
@@ -243,37 +377,183 @@ export class ProviderManager {
     return aggregated;
   }
 
-  private async runWithFallback<T>(operation: (provider: BrowserProvider) => Promise<T>): Promise<T> {
-    const primary = this.getActiveProvider();
+  private getOperationRoute(
+    operationName: BrowserOperation,
+    capability: BrowserCapability,
+  ): string[] {
+    const configuredRoute = this.routes[operationName];
+    if (configuredRoute && configuredRoute.length > 0) {
+      return this.filterRouteForCapability(configuredRoute, capability);
+    }
 
-    try {
-      return await operation(primary);
-    } catch (error) {
-      this.recordAnalysis(false, 0);
-      const fallback = this.getFallbackProvider();
-      if (!fallback || fallback.name === primary.name) {
-        throw error;
+    const route = [this.activeProviderName];
+    if (this.fallbackProviderName && this.fallbackProviderName !== this.activeProviderName) {
+      route.push(this.fallbackProviderName);
+    }
+    return this.filterRouteForCapability(route, capability);
+  }
+
+  private filterRouteForCapability(
+    route: string[],
+    capability: BrowserCapability,
+  ): string[] {
+    if (KITESURF_INCOMPATIBLE_CAPABILITIES.has(capability)) {
+      return route.filter((provider) => provider !== 'cloudflare-kitesurf');
+    }
+    return [...route];
+  }
+
+  private classifyCapability(
+    operationName: BrowserOperation,
+    url?: string,
+    options?: AnalyzeOptions,
+  ): BrowserCapability {
+    if (operationName === 'openSession') return 'sessionful';
+    if (operationName === 'extractDesignerMetadata') return 'designer-authenticated';
+    if (options?.pixelSensitive) return 'pixel-sensitive';
+    if (options?.cookies?.length || url?.includes('preview.webflow.com/preview/')) {
+      return 'designer-authenticated';
+    }
+    if (options?.browserRequirement) return options.browserRequirement;
+    return this.capabilities[operationName];
+  }
+
+  private async runOperation<T>(
+    operationName: BrowserOperation,
+    operation: (provider: BrowserProvider) => Promise<T>,
+    capability: BrowserCapability = this.capabilities[operationName],
+  ): Promise<BrowserOperationResult<T>> {
+    const route = this.getOperationRoute(operationName, capability);
+
+    let firstError: unknown;
+    const attempts: BrowserRouteAttempt[] = [];
+    for (const providerName of route) {
+      const provider = this.providers.get(providerName);
+      if (!provider) continue;
+
+      const startedAt = Date.now();
+      let result: T;
+      try {
+        result = await operation(provider);
+      } catch (error) {
+        const safeError = sanitizeProviderError(error);
+        firstError ??= new Error(safeError);
+        attempts.push({
+          provider: providerName,
+          outcome: 'failure',
+          durationMs: Date.now() - startedAt,
+          error: safeError,
+        });
+        continue;
       }
 
-      this.activeProviderName = fallback.name;
-      return operation(fallback);
+      attempts.push({
+        provider: providerName,
+        outcome: 'success',
+        durationMs: Date.now() - startedAt,
+      });
+      const receipt: BrowserRoutingReceipt = {
+        operation: operationName,
+        capability,
+        selectedProvider: providerName,
+        attempts,
+        fallbackReason: attempts.find((attempt) => attempt.outcome === 'failure')?.error,
+      };
+      await this.emitRouteReceipt(receipt);
+      return { data: result, receipt };
     }
+
+    await this.emitRouteReceipt({
+      operation: operationName,
+      capability,
+      selectedProvider: null,
+      attempts,
+      fallbackReason: attempts[0]?.error,
+    });
+    if (firstError !== undefined) throw firstError;
+    throw new Error(`No configured browser provider can execute ${operationName}`);
+  }
+
+  private async emitRouteReceipt(receipt: BrowserRoutingReceipt): Promise<void> {
+    await this.onRouteReceipt?.(receipt);
   }
 }
 
 export { createBrowserlessProvider } from './browserless.js';
+export { createCloudflareBrowserRunProvider } from './cloudflare-browser-run.js';
 export { createSteelBrowserProvider } from './steel.js';
 
-export function createProviderManager(): ProviderManager {
-  const steelKey = process.env.STEEL_API_KEY;
-  const browserlessToken = process.env.BROWSERLESS_TOKEN || process.env.BROWSERLESS_API_KEY;
-  const healthCheckInterval = parsePositiveInt(process.env.WEBFLOW_SITE_ANALYZER_HEALTHCHECK_INTERVAL_MS);
-  const primary = steelKey ? 'steel' : (browserlessToken ? 'browserless' : 'steel');
+function runtimeConfigFromEnv(): BrowserProviderRuntimeConfig {
+  return {
+    cloudflareBrowserRunEnabled: process.env.BROWSER_RUN_ENABLED === 'true',
+    cloudflareAccountId: process.env.CLOUDFLARE_ACCOUNT_ID || process.env.CF_ACCOUNT_ID,
+    cloudflareBrowserRunApiToken:
+      process.env.CLOUDFLARE_BROWSER_RUN_API_TOKEN
+      || process.env.CLOUDFLARE_API_TOKEN
+      || process.env.CF_API_TOKEN,
+    steelApiKey: process.env.STEEL_API_KEY,
+    browserlessToken: process.env.BROWSERLESS_TOKEN || process.env.BROWSERLESS_API_KEY,
+    healthCheckIntervalMs: parsePositiveInt(
+      process.env.WEBFLOW_SITE_ANALYZER_HEALTHCHECK_INTERVAL_MS,
+    ),
+  };
+}
+
+function compactRoute(names: Array<string | false | undefined>): string[] {
+  return names.filter((name): name is string => typeof name === 'string');
+}
+
+export function createProviderManager(
+  runtimeConfig: BrowserProviderRuntimeConfig = runtimeConfigFromEnv(),
+): ProviderManager {
+  const cloudflareConfigured = Boolean(
+    runtimeConfig.cloudflareBrowserRunEnabled === true
+    && runtimeConfig.cloudflareAccountId
+    && runtimeConfig.cloudflareBrowserRunApiToken,
+  );
+  const cloudflareProviders = cloudflareConfigured
+    ? [
+      createCloudflareBrowserRunProvider({
+        accountId: runtimeConfig.cloudflareAccountId!,
+        apiToken: runtimeConfig.cloudflareBrowserRunApiToken!,
+        engine: 'kitesurf',
+        connect: runtimeConfig.connectBrowserRun,
+      }),
+      createCloudflareBrowserRunProvider({
+        accountId: runtimeConfig.cloudflareAccountId!,
+        apiToken: runtimeConfig.cloudflareBrowserRunApiToken!,
+        engine: 'chromium',
+        connect: runtimeConfig.connectBrowserRun,
+      }),
+    ]
+    : [];
+  const primary = cloudflareConfigured
+    ? 'cloudflare-kitesurf'
+    : runtimeConfig.steelApiKey
+      ? 'steel'
+      : runtimeConfig.browserlessToken
+        ? 'browserless'
+        : 'cloudflare-kitesurf';
+  const incumbentRoute = compactRoute([
+    runtimeConfig.steelApiKey && 'steel',
+    runtimeConfig.browserlessToken && 'browserless',
+  ]);
+  const routes = cloudflareConfigured
+    ? {
+      analyze: ['cloudflare-kitesurf', 'cloudflare-chromium', ...incumbentRoute],
+      screenshot: ['cloudflare-kitesurf', 'cloudflare-chromium', ...incumbentRoute],
+      extractDesignerMetadata: ['cloudflare-chromium', ...incumbentRoute],
+      openSession: ['cloudflare-chromium', ...incumbentRoute],
+    }
+    : undefined;
 
   return new ProviderManager({
     primary,
-    steelApiKey: steelKey,
-    browserlessToken,
-    healthCheckInterval
+    providers: cloudflareProviders,
+    steelApiKey: runtimeConfig.steelApiKey,
+    browserlessToken: runtimeConfig.browserlessToken,
+    healthCheckInterval: runtimeConfig.healthCheckIntervalMs,
+    routes,
+    onRouteReceipt: runtimeConfig.onRouteReceipt,
   });
 }

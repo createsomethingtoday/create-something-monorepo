@@ -14,16 +14,19 @@ ENVIRONMENT = "production"
 # worker origin is fine here. The *client* chat component must still reach
 # this agent through a *.webflow.com proxy path.
 SEARCH_API_BASE = "https://webflow-template-search.createsomething.workers.dev"
-ALLOWED_ORIGINS = "https://webflow.com,https://www.webflow.com,https://templates.webflow.com,https://template-marketplace.webflow.io,*.webflow.com"
+ALLOWED_ORIGINS = "https://webflow.com,https://www.webflow.com,https://templates.webflow.com,https://template-marketplace.webflow.io,*.webflow.com,https://webflowtest.com,*.webflowtest.com"
 ANTHROPIC_MODEL = "claude-opus-4-8"
-TURNSTILE_EXPECTED_HOSTNAME = "webflow.com"
+# Comma-separated exact hostnames. webflowtest.com = acceptance, for the MiW
+# Template Finder (webflow/webflow#115438) staging validation. The Turnstile
+# site key's domain allowlist must include these same hostnames.
+TURNSTILE_EXPECTED_HOSTNAME = "webflow.com,webflowtest.com"
 MAX_SESSION_TURNS = "20"
 MAX_CONCURRENT_TURNS = "8"
 # $40/day. Raised from $25 on 2026-08-02: weekday demand saturated the old cap
 # (spend pinned at ~$23 + $2 turn reservation), causing 63 daily_budget turn
 # denials the week of Jul 27 (51 on Jul 31 alone) at ~$0.25/turn.
 DAILY_BUDGET_MICRO_USD = "40000000"
-TURN_RESERVATION_MICRO_USD = "2000000"
+TURN_RESERVATION_MICRO_USD = "1000000"
 INPUT_USD_PER_MILLION_TOKENS = "15"
 OUTPUT_USD_PER_MILLION_TOKENS = "75"
 CACHE_WRITE_USD_PER_MILLION_TOKENS = "18.75"

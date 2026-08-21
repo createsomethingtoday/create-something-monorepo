@@ -13,14 +13,14 @@
   "dependencies": {
     "@create-something/mcp-core": "workspace:*",
     "@create-something/observability": "workspace:*",
-    "@modelcontextprotocol/sdk": "1.25.2",
-    "@openai/agents": "^0.4.10",
+    "@modelcontextprotocol/sdk": "^1.26.0",
+    "@openai/agents": "^0.15.0",
     "agents": "^0.3.10",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260621.1",
-    "wrangler": "^4.103.0",
-    "typescript": "^5.3.0"
+    "typescript": "^5.3.0",
+    "wrangler": "^4.103.0"
   }
 }

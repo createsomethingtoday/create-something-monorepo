@@ -1,0 +1,12 @@
+{
+  "name": "create-something-agent-commercial-preview",
+  "compatibility_date": "2026-08-12",
+  "d1_databases": [
+    {
+      "binding": "COMMERCIAL_RECEIPTS",
+      "database_name": "agent-commercial-preview-local",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "."
+    }
+  ]
+}

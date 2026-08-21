@@ -46,19 +46,10 @@ test('publishes responsive Paper campaign descriptors with immutable assets', ()
   }
 });
 
-test('assigns one distinct Paper study to each campaign route', () => {
-  const primaryCampaignAssignments = Object.fromEntries(
-    Object.entries(performancePaperRouteAssignments).filter(([route]) =>
-      ['/', '/services', '/products', '/field-reports'].includes(route)
-    )
-  );
-
-  assert.deepEqual(primaryCampaignAssignments, {
-    '/': 'paperOperatingRouteMedia',
-    '/services': 'paperClampedDecisionMedia',
-    '/products': 'paperProductSystemMedia',
-    '/field-reports': 'paperAttachedReceiptMedia'
-  });
+test('assigns preserved Paper studies only to historical and editorial routes', () => {
+  for (const retiredHeroRoute of ['/', '/services', '/products', '/field-reports', '/map', '/control']) {
+    assert.equal(retiredHeroRoute in performancePaperRouteAssignments, false);
+  }
 
   for (const [route, descriptor] of Object.entries(performancePaperRouteAssignments)) {
     const relativeRoute = route === '/' ? '' : route;

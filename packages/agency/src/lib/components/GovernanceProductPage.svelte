@@ -111,6 +111,7 @@
   variant="hero"
   layout="split"
   titleLevel="h1"
+  expression="editorial"
   eyebrow={product.name}
   {title}
   {description}
@@ -174,6 +175,7 @@
 </PerformanceNarrativeStage>
 
 <PerformanceConversionHandoff
+  expression="editorial"
   eyebrow={`${product.name} implementation`}
   title="Attach this surface to a real workflow."
   description="Start with one live workflow, connect the source signal, name the decision owner, and decide which proof record must survive the action."

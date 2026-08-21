@@ -8,7 +8,8 @@
     type PerformanceEvidenceItem
   } from '@create-something/canon';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
-  import { paperAttachedReceiptMedia } from '$lib/data/performanceMedia';
+  import { upstreamContributionFieldReport } from '$lib/data/fieldReports';
+  import { playbookHeroMedia } from '$lib/data/playbookHeroMedia';
 
   const reports: PerformanceEvidenceItem[] = [
     {
@@ -20,6 +21,15 @@
       state: 'verified',
       date: 'May–June 2026',
       href: '/field-reports/template-review'
+    },
+    {
+      id: upstreamContributionFieldReport.id,
+      kind: 'Infrastructure reliability',
+      title: upstreamContributionFieldReport.title,
+      detail: upstreamContributionFieldReport.dek,
+      state: 'verified',
+      date: upstreamContributionFieldReport.verifiedPeriod,
+      href: '/field-reports/upstream-contributions'
     }
   ];
 </script>
@@ -33,11 +43,12 @@
 
 <PerformanceCampaignOpening
   eyebrow="Performance Lab / Public evidence"
-  title="Field Reports"
-  lede="Each report separates what was measured, what was blocked, and what remains unknown—then names the authority the workflow did not earn."
+  expression="editorial"
+  title="Review the film. Improve the playbook."
+  lede="Each Field Report replays a run against its evidence. It separates what was measured, blocked, and unknown so operators can improve the next Play."
+  media={playbookHeroMedia.fieldReports}
+  mediaMobilePlacement="background"
   density="compact"
-  media={paperAttachedReceiptMedia}
-  mode="paper"
   proof={[
     { label: 'Measured', value: 'Sourced' },
     { label: 'Blocked', value: 'Visible' },
@@ -45,17 +56,10 @@
   ]}
 >
   {#snippet actions()}
-    <Button href="#reports">Read the first report</Button>
+    <Button href="#reports">Read the reports</Button>
     <Button href={agencyCoreMessaging.selfMapHref} variant="secondary">
       {agencyCoreMessaging.selfMapLabel}
     </Button>
-  {/snippet}
-  {#snippet ornament()}
-    <aside class="field-report-proof-marker" aria-label="Attached proof receipt">
-      <span>Proof</span>
-      <strong>Receipt attached</strong>
-      <small>FR / 01</small>
-    </aside>
   {/snippet}
 </PerformanceCampaignOpening>
 
@@ -69,6 +73,7 @@
 />
 
 <PerformanceConversionHandoff
+  expression="editorial"
   eyebrow="Bring the next field test"
   title="Measure one workflow before expanding authority."
   description="Name the repeated handoff, decision owner, objective work, and current baseline. The first map will show whether a controlled pilot is worth running."
@@ -89,47 +94,3 @@
     </Button>
   {/snippet}
 </PerformanceConversionHandoff>
-
-<style>
-  .field-report-proof-marker {
-    position: absolute;
-    top: 48%;
-    right: clamp(1.25rem, 9vw, 9rem);
-    display: grid;
-    gap: 0.32rem;
-    min-width: 9.5rem;
-    padding: 0.6rem 0.7rem 0.65rem;
-    border: 1px solid rgba(9, 9, 9, 0.8);
-    border-left: 0.45rem solid #708426;
-    background: rgba(255, 255, 255, 0.9);
-    box-shadow: 0 12px 28px rgba(9, 9, 9, 0.16);
-    color: var(--color-performance-ink, #090909);
-    font-family: var(--font-performance-mono);
-  }
-
-  .field-report-proof-marker span,
-  .field-report-proof-marker small {
-    color: var(--color-performance-muted, #5e6268);
-    font-size: 0.62rem;
-    font-weight: var(--font-performance-semibold);
-    letter-spacing: 0.03em;
-    line-height: 1.2;
-    text-transform: uppercase;
-  }
-
-  .field-report-proof-marker strong {
-    font-size: 0.72rem;
-    font-weight: var(--font-performance-semibold);
-    line-height: 1.2;
-    text-transform: uppercase;
-  }
-
-  @media (max-width: 640px) {
-    .field-report-proof-marker {
-      top: 47%;
-      right: 0.75rem;
-      min-width: 8.55rem;
-      padding: 0.52rem 0.58rem 0.56rem;
-    }
-  }
-</style>

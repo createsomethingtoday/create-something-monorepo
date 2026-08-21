@@ -9,7 +9,9 @@ const UNCACHED_PATH_PREFIXES = [
   '/dashboard',
   '/login',
   '/mcp-access',
-  '/prospects'
+  '/prospects',
+  // Release-sensitive guides must not retain a pre-deploy static response.
+  '/workflows'
 ];
 
 export type PublicHtmlCacheStatus = 'BYPASS' | 'HIT' | 'MISS';

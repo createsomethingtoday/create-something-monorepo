@@ -3,6 +3,7 @@
 
 	export type PerformanceHandoffState = 'draft' | 'review' | 'ready' | 'stop';
 	export type PerformanceHandoffArtifactPlacement = 'sidecar' | 'full-width';
+	export type PerformanceHandoffExpression = 'field' | 'editorial';
 	export interface PerformanceHandoff {
 		owner: string;
 		authority: string;
@@ -23,6 +24,8 @@
 		steps?: PerformanceHandoffStep[];
 		artifactPlacement?: PerformanceHandoffArtifactPlacement;
 		headingLevel?: 'h1' | 'h2';
+		/** Uses the owned editorial face for a public proposition, not an operating handoff. */
+		expression?: PerformanceHandoffExpression;
 		actions?: Snippet;
 		aside?: Snippet;
 		ariaLabel?: string;
@@ -37,6 +40,7 @@
 		steps = [],
 		artifactPlacement = 'sidecar',
 		headingLevel = 'h2',
+		expression = 'field',
 		actions,
 		aside,
 		ariaLabel = eyebrow,
@@ -49,6 +53,7 @@
 	data-state={handoff.state}
 	data-artifact-placement={artifactPlacement}
 	data-density={density}
+	data-expression={expression}
 	aria-label={ariaLabel}
 >
 	<div class="performance-conversion-handoff__copy">
@@ -118,6 +123,7 @@
 	.performance-conversion-handoff dt { font-family: var(--font-performance-mono); font-size: 0.72rem; font-weight: var(--font-performance-semibold, 600); text-transform: uppercase; }
 	.performance-conversion-handoff__eyebrow { padding: 0.42rem 0.62rem; border: 1px solid rgba(255,255,255,.44); }
 	.performance-conversion-handoff :is(h1, h2) { max-width: 13ch; margin: 0; font-family: var(--font-performance-display, var(--font-performance-sans)); font-size: clamp(3rem, 6vw, 6rem); font-weight: var(--font-performance-display-weight, var(--font-performance-medium, 500)); font-kerning: normal; font-feature-settings: "kern" 1, "liga" 1; letter-spacing: var(--tracking-performance-display, -0.03em); line-height: var(--leading-performance-display, 0.94); text-wrap: balance; }
+	.performance-conversion-handoff[data-expression='editorial'] :is(h1, h2) { font-family: var(--font-performance-editorial); font-weight: var(--font-performance-editorial-weight, 400); letter-spacing: -0.04em; line-height: var(--leading-performance-editorial, 1.1); }
 	.performance-conversion-handoff__copy p { max-width: 40rem; margin: 0; color: rgba(255,255,255,.7); font-size: 1.08rem; line-height: 1.5; }
 	.performance-conversion-handoff__actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 0.75rem; }
 	.performance-conversion-handoff__boundary { display: grid; align-content: space-between; gap: 3rem; border-left: 1px solid rgba(255,255,255,.32); background: color-mix(in srgb, var(--handoff-accent) 18%, #090909); }

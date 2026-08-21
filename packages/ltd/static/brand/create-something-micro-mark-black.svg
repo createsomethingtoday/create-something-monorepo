@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 128 128" width="128" height="128" role="img" aria-labelledby="title desc" style="color:#000000">
+  <title id="title">CREATE SOMETHING micro mark</title>
+  <desc id="desc">Simplified micro mark for 16 to 32 pixel applications.</desc>
+  <g id="cs-micro-mark-v3" fill="none" stroke="currentColor" stroke-linejoin="round">
+    <path d="M30.0797 42.0797 A31 31 0 1 1 30.0797 85.9203" stroke-width="9" stroke-linecap="butt"/>
+    <circle cx="64" cy="64" r="39" stroke-width="11"/>
+  </g>
+
+</svg>

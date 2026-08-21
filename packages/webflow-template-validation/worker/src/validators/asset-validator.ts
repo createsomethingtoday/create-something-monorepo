@@ -569,9 +569,9 @@ export function generateAssetIssues(assets: AnalyzedAsset[]): ValidationIssue[] 
 		issues.push({
 			id: 'assets-above-compression-target',
 			category: 'Performance & Assets',
-			severity: 'warning',
+			severity: 'error',
 			message: `${assetsAboveCompressionTarget.length} assets are above the 150KB compression target`,
-			description: 'Submission guidelines recommend compressing images to 150KB where possible. Larger visual assets may be acceptable when quality would be harmed, but they should be reviewed.',
+			description: 'Assets above the 150KB compression target are the most common reason reviewers request changes. Compress these before submitting; keep an asset larger only when compression would visibly harm quality.',
 			howToFix: 'For raster imagery, resize images to their rendered dimensions, use Webflow compression, and convert to WebP/AVIF where quality allows. Keep every asset under the 4MB maximum.',
 			details: {
 				target: '150KB where possible',

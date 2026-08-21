@@ -6872,7 +6872,7 @@
       ]
     },
     {
-      "path": "packages/calm-operator-ink-firmware/src/main.cpp",
+      "path": "packages/calm-operator-stopwatch-firmware/src/main.cpp",
       "term": "notion",
       "category": "client_compatibility",
       "rule": "operator-compatibility-code",

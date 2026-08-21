@@ -1,14 +1,28 @@
 <script lang="ts">
-  import { CubeMark } from '../brand/marks/index.js';
+  import { onDestroy } from 'svelte';
+  import { RingMark } from '../brand/marks/index.js';
   import { UserMenu } from '../auth/components/index.js';
   import type { User } from '../auth/types.js';
 
   interface NavLink {
     label: string;
     href: string;
+    children?: Array<{
+      label: string;
+      href: string;
+      description?: string;
+    }>;
   }
 
-  type NavigationVisualStyle = 'classic' | 'performance' | 'clear';
+  type NavigationVisualStyle = 'classic' | 'performance' | 'clear' | 'editorial';
+
+  interface NavigationLogoAsset {
+    src: string;
+    /** Used for the linked home destination; the decorative image itself remains hidden from assistive tech. */
+    label: string;
+    /** Optional narrow-screen source for a property-owned logo system. */
+    mobileSrc?: string;
+  }
 
   interface Props {
     logo: string;
@@ -17,6 +31,16 @@
     showMobileLogoText?: boolean;
     /** Show the full performance wordmark at desktop and tablet widths. */
     showDesktopLogoText?: boolean;
+    /**
+     * An optional property-owned vector lockup. Canon keeps the image seam generic
+     * so each property can opt in without changing another property's identity.
+     */
+    logoAsset?: NavigationLogoAsset;
+    /**
+     * Lets an owning property signal a deliberate internal-route transition through
+     * its supplied SVG lockup. It never autoplays or responds to hover.
+     */
+    enableRouteLogoMotion?: boolean;
     logoHref?: string;
     links: NavLink[];
     currentPath?: string;
@@ -44,6 +68,8 @@
     logoSuffix,
     showMobileLogoText = false,
     showDesktopLogoText = false,
+    logoAsset,
+    enableRouteLogoMotion = false,
     logoHref = '/',
     links,
     currentPath = $bindable('/'),
@@ -61,13 +87,25 @@
 
   let mobileMenuOpen = $state(false);
   let mobileMenuButton = $state<HTMLButtonElement>();
-  const usesPerformanceStyle = $derived(visualStyle === 'performance' || visualStyle === 'clear');
+  let navigationElement = $state<HTMLElement>();
+  let openDesktopMenu = $state<string | null>(null);
+  let logoRouteMotionDesktopElement = $state<SVGSVGElement>();
+  let logoRouteMotionMobileElement = $state<SVGSVGElement>();
+  let logoRouteMotionRequest = 0;
+  let logoRouteMotionTimeline: { kill: () => void } | undefined;
+  const usesPerformanceStyle = $derived(
+    visualStyle === 'performance' || visualStyle === 'clear' || visualStyle === 'editorial'
+  );
+  const usesEditorialStyle = $derived(visualStyle === 'editorial');
 
   function isActive(link: NavLink): boolean {
     if (link.href === '/') {
       return currentPath === '/';
     }
-    return currentPath.startsWith(link.href);
+    return (
+      currentPath.startsWith(link.href) ||
+      link.children?.some((child) => currentPath.startsWith(child.href)) === true
+    );
   }
 
   function setMobileMenuOpen(open: boolean) {
@@ -84,20 +122,94 @@
     if (restoreFocus) queueMicrotask(() => mobileMenuButton?.focus());
   }
 
+  function cancelLogoRouteMotion() {
+    logoRouteMotionRequest += 1;
+    logoRouteMotionTimeline?.kill();
+    logoRouteMotionTimeline = undefined;
+  }
+
+  async function animateRouteLogo() {
+    if (!enableRouteLogoMotion || !logoAsset || typeof window === 'undefined') return;
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+
+    const motionElements = [logoRouteMotionDesktopElement, logoRouteMotionMobileElement].filter(
+      (element): element is SVGSVGElement => Boolean(element)
+    );
+    if (!motionElements.length) return;
+
+    cancelLogoRouteMotion();
+    const request = logoRouteMotionRequest;
+
+    try {
+      // Load only after a person has selected an internal route. The static SVG is
+      // the complete SSR, no-JS, initial-paint, and reduced-motion experience.
+      const { gsap } = await import('gsap');
+      if (request !== logoRouteMotionRequest) return;
+
+      const rings = motionElements.flatMap((element) => [
+        ...element.querySelectorAll<SVGGeometryElement>('[data-logo-route-ring]')
+      ]);
+      const pulses = motionElements.flatMap((element) => [
+        ...element.querySelectorAll<SVGCircleElement>('[data-logo-route-pulse]')
+      ]);
+      if (!rings.length || !pulses.length) return;
+
+      gsap.set(motionElements, { autoAlpha: 1 });
+      gsap.set(rings, { strokeDasharray: '0.24 0.76', strokeDashoffset: 0 });
+      gsap.set(pulses, { autoAlpha: 0, scale: 0.55, transformOrigin: '50% 50%' });
+      logoRouteMotionTimeline = gsap
+        .timeline({
+          onComplete: () => {
+            if (request !== logoRouteMotionRequest) return;
+            gsap.set(motionElements, { autoAlpha: 0 });
+            logoRouteMotionTimeline = undefined;
+          }
+        })
+        .to(rings, { strokeDashoffset: -1, duration: 0.32, ease: 'none', stagger: 0.025 })
+        .to(pulses, { autoAlpha: 1, scale: 1, duration: 0.12, ease: 'power1.out' }, 0.06)
+        .to(pulses, { autoAlpha: 0, scale: 1.35, duration: 0.17, ease: 'power1.in' }, 0.18)
+        .to(motionElements, { autoAlpha: 0, duration: 0.08, ease: 'power1.out' }, 0.32);
+    } catch {
+      // The supplied SVG stays intact when the enhancement runtime is unavailable.
+    }
+  }
+
+  function handleRouteEngagement(event: MouseEvent) {
+    if (!enableRouteLogoMotion || event.defaultPrevented || event.button !== 0) return;
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    if (!(event.target instanceof Element)) return;
+    if (!navigationElement?.contains(event.target)) return;
+
+    const link = event.target.closest<HTMLAnchorElement>('a[href]');
+    const href = link?.getAttribute('href');
+    if (!href || !href.startsWith('/') || href.startsWith('//')) return;
+
+    void animateRouteLogo();
+  }
+
   function handleWindowKeydown(event: KeyboardEvent) {
-    if (event.key !== 'Escape' || !mobileMenuOpen) return;
+    if (event.key !== 'Escape') return;
+    if (openDesktopMenu) {
+      openDesktopMenu = null;
+      return;
+    }
+    if (!mobileMenuOpen) return;
     event.preventDefault();
     closeMobileMenu(true);
   }
+
+  onDestroy(cancelLogoRouteMotion);
 </script>
 
-<svelte:window onkeydown={handleWindowKeydown} />
+<svelte:window onkeydown={handleWindowKeydown} onclickcapture={handleRouteEngagement} />
 
 <nav
+  bind:this={navigationElement}
   class="nav-container"
   class:nav-fixed={fixed}
   class:nav-clear={usesPerformanceStyle}
   class:nav-performance={usesPerformanceStyle}
+  class:nav-editorial={usesEditorialStyle}
   class:nav-show-mobile-logo-text={showMobileLogoText}
   class:nav-show-desktop-logo-text={showDesktopLogoText}
   aria-label="Primary"
@@ -105,26 +217,139 @@
   <div class="nav-inner shell-inner">
     <div class="flex items-center justify-between">
       <!-- Logo / Home -->
-      <a href={logoHref} class="nav-logo">
-        {#if usesPerformanceStyle}
-          <span class="nav-logo-mark" aria-hidden="true">
-            <CubeMark size={28} variant="mono" />
+      <a
+        href={logoHref}
+        class="nav-logo"
+        aria-label={`${logoAsset?.label ?? `${logo}${logoSuffix ?? ''}`} home`}
+      >
+        {#if logoAsset}
+          <span class="nav-logo-asset-frame">
+            <picture class="nav-logo-asset-picture">
+              {#if logoAsset.mobileSrc}
+                <source media="(max-width: 640px)" srcset={logoAsset.mobileSrc} />
+              {/if}
+              <img class="nav-logo-asset" src={logoAsset.src} alt="" />
+            </picture>
+            {#if enableRouteLogoMotion}
+              <svg
+                bind:this={logoRouteMotionDesktopElement}
+                class="nav-logo-route-motion nav-logo-route-motion--desktop"
+                viewBox="0 0 480 80"
+                aria-hidden="true"
+              >
+                <g transform="translate(0 16.8) scale(0.385)">
+                  <path
+                    class="nav-logo-route-motion__ring"
+                    data-logo-route-ring
+                    d="M30.2261 41.7261 A31.5 31.5 0 1 1 30.2261 86.2739"
+                    pathLength="1"
+                  />
+                  <circle
+                    class="nav-logo-route-motion__ring"
+                    data-logo-route-ring
+                    cx="65.5"
+                    cy="64"
+                    r="41.5"
+                    pathLength="1"
+                  />
+                  <circle
+                    class="nav-logo-route-motion__pulse"
+                    data-logo-route-pulse
+                    cx="109"
+                    cy="64"
+                    r="5.5"
+                  />
+                </g>
+              </svg>
+              <svg
+                bind:this={logoRouteMotionMobileElement}
+                class="nav-logo-route-motion nav-logo-route-motion--mobile"
+                viewBox="0 0 128 128"
+                aria-hidden="true"
+              >
+                <path
+                  class="nav-logo-route-motion__ring"
+                  data-logo-route-ring
+                  d="M30.2261 41.7261 A31.5 31.5 0 1 1 30.2261 86.2739"
+                  pathLength="1"
+                />
+                <circle
+                  class="nav-logo-route-motion__ring"
+                  data-logo-route-ring
+                  cx="65.5"
+                  cy="64"
+                  r="41.5"
+                  pathLength="1"
+                />
+                <circle
+                  class="nav-logo-route-motion__pulse"
+                  data-logo-route-pulse
+                  cx="109"
+                  cy="64"
+                  r="5.5"
+                />
+              </svg>
+            {/if}
           </span>
-        {/if}
-        <span class="nav-logo-text">{logo}</span>
-        {#if logoSuffix}
-          <span class="nav-logo-suffix">{logoSuffix}</span>
+        {:else}
+          {#if usesPerformanceStyle || usesEditorialStyle}
+            <span class="nav-logo-mark" aria-hidden="true">
+              <RingMark size={28} />
+            </span>
+          {/if}
+          <span class="nav-logo-text">{logo}</span>
+          {#if logoSuffix}
+            <span class="nav-logo-suffix">{logoSuffix}</span>
+          {/if}
         {/if}
       </a>
 
       <!-- Desktop Navigation Links -->
       <div class="nav-desktop hidden xl:flex items-center gap-2 ml-8">
-        {#if usesPerformanceStyle}
+        {#if usesPerformanceStyle || usesEditorialStyle}
           <div class="nav-link-list">
             {#each links as link}
-              <a href={link.href} class="nav-link" class:active={isActive(link)}>
-                {link.label}
-              </a>
+              {#if link.children?.length}
+                <div class="nav-dropdown">
+                  <button
+                    type="button"
+                    class="nav-link nav-dropdown__trigger"
+                    class:active={isActive(link)}
+                    aria-expanded={openDesktopMenu === link.href}
+                    aria-controls={`nav-submenu-${link.href.replaceAll('/', '') || 'root'}`}
+                    onclick={() =>
+                      (openDesktopMenu = openDesktopMenu === link.href ? null : link.href)}
+                  >
+                    {link.label}
+                    <span class="nav-dropdown__chevron" aria-hidden="true">
+                      <svg viewBox="0 0 16 16" fill="none" focusable="false">
+                        <path d="m4 6 4 4 4-4" stroke="currentColor" stroke-linecap="round" />
+                      </svg>
+                    </span>
+                  </button>
+                  {#if openDesktopMenu === link.href}
+                    <div
+                      id={`nav-submenu-${link.href.replaceAll('/', '') || 'root'}`}
+                      class="nav-dropdown__menu"
+                    >
+                      {#each link.children as child}
+                        <a
+                          href={child.href}
+                          class="nav-dropdown__item"
+                          onclick={() => (openDesktopMenu = null)}
+                        >
+                          <span>{child.label}</span>
+                          {#if child.description}<small>{child.description}</small>{/if}
+                        </a>
+                      {/each}
+                    </div>
+                  {/if}
+                </div>
+              {:else}
+                <a href={link.href} class="nav-link" class:active={isActive(link)}>
+                  {link.label}
+                </a>
+              {/if}
             {/each}
           </div>
           <div class="nav-actions">
@@ -192,7 +417,7 @@
 
     <!-- Mobile Menu -->
     {#if mobileMenuOpen}
-      {#if usesPerformanceStyle}
+      {#if usesPerformanceStyle || usesEditorialStyle}
         <span class="nav-mobile-backdrop" aria-hidden="true"></span>
       {/if}
       <div class="nav-mobile-menu animate-slide-down xl:hidden pt-4 pb-2 flex flex-col gap-4 mt-4">
@@ -205,6 +430,15 @@
           >
             {link.label}
           </a>
+          {#if link.children?.length}
+            <div class="nav-mobile-submenu">
+              {#each link.children as child}
+                <a href={child.href} onclick={() => closeMobileMenu()} class="nav-link py-2">
+                  {child.label}
+                </a>
+              {/each}
+            </div>
+          {/if}
         {/each}
         {#if ctaLabel && ctaHref}
           <a href={ctaHref} onclick={() => closeMobileMenu()} class="nav-cta text-center">
@@ -214,7 +448,9 @@
         {#if user}
           <div class="nav-mobile-user">
             <span class="nav-mobile-user-email">{user.email}</span>
-            <a href={accountHref} onclick={() => closeMobileMenu()} class="nav-link py-2"> Account </a>
+            <a href={accountHref} onclick={() => closeMobileMenu()} class="nav-link py-2">
+              Account
+            </a>
             <button
               type="button"
               class="nav-mobile-logout"
@@ -282,6 +518,49 @@
     color: var(--color-performance-fg-muted);
   }
 
+  .nav-logo-asset {
+    display: block;
+    width: auto;
+    max-width: min(10.5rem, 48vw);
+    height: 1.5rem;
+  }
+
+  .nav-logo-asset-frame {
+    position: relative;
+    display: block;
+    flex: 0 0 auto;
+  }
+
+  .nav-logo-asset-picture {
+    display: block;
+  }
+
+  .nav-logo-route-motion {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+    color: var(--color-performance-editorial-brand, #fcaa2d);
+    opacity: 0;
+  }
+
+  .nav-logo-route-motion__ring {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 5.5;
+    stroke-linecap: round;
+  }
+
+  .nav-logo-route-motion__pulse {
+    fill: currentColor;
+  }
+
+  .nav-logo-route-motion--mobile {
+    display: none;
+  }
+
   /* Navigation Links */
   .nav-link {
     font-family: var(--font-performance-mono);
@@ -309,6 +588,78 @@
   .nav-link.active {
     color: var(--color-performance-fg-primary);
     background: var(--color-performance-shell-surface-tertiary);
+  }
+
+  .nav-dropdown {
+    position: relative;
+  }
+
+  .nav-dropdown__trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .nav-dropdown__chevron {
+    display: grid;
+    flex: 0 0 0.8rem;
+    width: 0.8rem;
+    height: 0.8rem;
+    place-items: center;
+  }
+
+  .nav-dropdown__chevron svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    stroke-width: 1.75;
+  }
+
+  .nav-dropdown__menu {
+    position: absolute;
+    z-index: 5;
+    top: calc(100% + 0.55rem);
+    left: 0;
+    display: grid;
+    width: min(20rem, 38vw);
+    padding: 0.45rem;
+    border: 1px solid var(--color-performance-shell-border-default);
+    border-radius: var(--radius-performance-scale-md);
+    background: var(--color-performance-shell-surface-secondary);
+    box-shadow: var(--color-performance-shell-shadow);
+  }
+
+  .nav-dropdown__item {
+    display: grid;
+    gap: 0.18rem;
+    padding: 0.72rem 0.78rem;
+    border-radius: calc(var(--radius-performance-scale-md) - 0.2rem);
+    color: var(--color-performance-fg-primary);
+    text-decoration: none;
+  }
+
+  .nav-dropdown__item:hover {
+    background: var(--color-performance-shell-surface-hover);
+  }
+
+  .nav-dropdown__item span {
+    font-size: 0.88rem;
+    font-weight: var(--font-performance-semibold);
+  }
+
+  .nav-dropdown__item small {
+    color: var(--color-performance-fg-muted);
+    font-size: 0.74rem;
+    line-height: 1.35;
+  }
+
+  .nav-dropdown__item:focus-visible,
+  .nav-dropdown__trigger:focus-visible {
+    outline: 2px solid var(--color-performance-focus);
+    outline-offset: 2px;
   }
 
   .nav-link:focus-visible {
@@ -351,7 +702,11 @@
   }
 
   .nav-desktop {
-    background: color-mix(in srgb, var(--color-performance-shell-surface-secondary) 86%, transparent);
+    background: color-mix(
+      in srgb,
+      var(--color-performance-shell-surface-secondary) 86%,
+      transparent
+    );
     border: 1px solid var(--color-performance-shell-border-subtle);
     border-radius: var(--radius-performance-scale-full);
     padding: 0.25rem;
@@ -392,6 +747,14 @@
     padding-left: var(--space-performance-sm);
     padding-right: var(--space-performance-sm);
     box-shadow: var(--color-performance-shell-shadow);
+  }
+
+  .nav-mobile-submenu {
+    display: grid;
+    gap: 0.1rem;
+    margin: -0.5rem 0 0.15rem 0.75rem;
+    padding-left: 0.75rem;
+    border-left: 1px solid var(--color-performance-shell-border-subtle);
   }
 
   /* Slide down animation for mobile menu */
@@ -523,6 +886,11 @@
     height: 2.35rem;
     color: var(--color-performance-ink, #090909);
     flex: 0 0 auto;
+  }
+
+  .nav-clear .nav-logo-asset {
+    max-width: min(11.5rem, 48vw);
+    height: 1.65rem;
   }
 
   .nav-clear .nav-logo-text,
@@ -714,6 +1082,13 @@
       width: min(100% - 1.5rem, var(--content-width-performance, 85rem));
     }
 
+    /* The property-owned V3 master mark has a 40px minimum. */
+    .nav-clear .nav-logo-asset {
+      width: 2.5rem;
+      max-width: 2.5rem;
+      height: 2.5rem;
+    }
+
     .nav-clear.nav-show-mobile-logo-text .nav-logo {
       gap: 0.4rem;
     }
@@ -730,5 +1105,109 @@
       letter-spacing: 0.03em;
       text-transform: uppercase;
     }
+
+    .nav-logo-route-motion--desktop {
+      display: none;
+    }
+
+    .nav-logo-route-motion--mobile {
+      display: block;
+    }
+  }
+
+  /* Owned editorial shell: one institutional navigation across licensed properties. */
+  .nav-editorial,
+  .nav-editorial.nav-fixed {
+    color: var(--color-performance-editorial-dark, #181312);
+    border-bottom: 1px solid
+      color-mix(in srgb, var(--color-performance-editorial-dark) 18%, transparent);
+    background: color-mix(
+      in srgb,
+      var(--color-performance-editorial-light, #f3ebe4) 94%,
+      transparent
+    );
+    box-shadow: none;
+  }
+
+  .nav-editorial .nav-inner {
+    width: min(var(--content-width-performance-editorial, 90rem), calc(100% - 2rem));
+    padding-block: 0.65rem;
+  }
+
+  .nav-editorial .nav-logo-mark {
+    --color-performance-fg-primary: var(--color-performance-editorial-dark, #181312);
+    color: var(--color-performance-editorial-dark, #181312);
+  }
+
+  .nav-editorial .nav-link-list {
+    border-color: color-mix(in srgb, var(--color-performance-editorial-dark) 16%, transparent);
+    border-radius: var(--radius-performance-editorial, 0.375rem);
+    background: color-mix(
+      in srgb,
+      var(--color-performance-editorial-light-secondary, #d8cdbc) 45%,
+      transparent
+    );
+  }
+
+  .nav-editorial .nav-link,
+  .nav-editorial .nav-mobile-menu .nav-link {
+    color: color-mix(in srgb, var(--color-performance-editorial-dark) 72%, transparent);
+    border-radius: calc(var(--radius-performance-editorial, 0.375rem) - 0.125rem);
+  }
+
+  .nav-editorial .nav-link:hover,
+  .nav-editorial .nav-link.active {
+    color: var(--color-performance-editorial-dark, #181312);
+    background: var(--color-performance-editorial-light, #f3ebe4);
+  }
+
+  .nav-editorial .nav-dropdown__menu {
+    border-color: color-mix(in srgb, var(--color-performance-editorial-dark) 22%, transparent);
+    border-radius: var(--radius-performance-editorial, 0.375rem);
+    background: var(--color-performance-editorial-light, #f3ebe4);
+    box-shadow: 0 1.1rem 2.5rem
+      color-mix(in srgb, var(--color-performance-editorial-dark) 18%, transparent);
+  }
+
+  .nav-editorial .nav-dropdown__item {
+    border-radius: calc(var(--radius-performance-editorial, 0.375rem) - 0.1rem);
+    color: var(--color-performance-editorial-dark, #181312);
+  }
+
+  .nav-editorial .nav-dropdown__item:hover {
+    background: var(--color-performance-editorial-light-secondary, #d8cdbc);
+  }
+
+  .nav-editorial .nav-dropdown__item small {
+    color: color-mix(in srgb, var(--color-performance-editorial-dark) 66%, transparent);
+  }
+
+  .nav-editorial .nav-mobile-submenu {
+    border-left-color: color-mix(in srgb, var(--color-performance-editorial-dark) 22%, transparent);
+  }
+
+  .nav-editorial .nav-cta {
+    border-color: var(--color-performance-editorial-brand, #fcaa2d);
+    border-radius: var(--radius-performance-editorial, 0.375rem);
+    background: var(--color-performance-editorial-brand, #fcaa2d);
+    color: var(--color-performance-editorial-dark, #181312);
+    box-shadow: none;
+  }
+
+  .nav-editorial .nav-cta:hover {
+    background: color-mix(in srgb, var(--color-performance-editorial-brand) 88%, white);
+    box-shadow: none;
+  }
+
+  .nav-editorial .nav-menu-button {
+    border-color: color-mix(in srgb, var(--color-performance-editorial-dark) 22%, transparent);
+    border-radius: var(--radius-performance-editorial, 0.375rem);
+    background: transparent;
+    color: var(--color-performance-editorial-dark, #181312);
+  }
+
+  .nav-editorial .nav-mobile-menu,
+  .nav-editorial .nav-mobile-backdrop {
+    background: var(--color-performance-editorial-light, #f3ebe4);
   }
 </style>

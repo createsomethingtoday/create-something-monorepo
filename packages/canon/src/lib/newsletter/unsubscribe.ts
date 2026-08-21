@@ -49,7 +49,7 @@ export async function processUnsubscribe(
 		return {
 			success: false,
 			error: 'Missing unsubscribe token',
-			email: null,
+			email: null
 		};
 	}
 
@@ -57,11 +57,11 @@ export async function processUnsubscribe(
 	let email: string;
 	try {
 		const decoded = atob(token);
-		const parts = decoded.split(':');
-		if (parts.length < 2) {
+		const separator = decoded.lastIndexOf(':');
+		if (separator < 1) {
 			throw new Error('Invalid token format');
 		}
-		email = parts[0];
+		email = decoded.slice(0, separator);
 
 		// Basic email validation
 		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -72,7 +72,7 @@ export async function processUnsubscribe(
 		return {
 			success: false,
 			error: 'Invalid unsubscribe token',
-			email: null,
+			email: null
 		};
 	}
 
@@ -81,7 +81,7 @@ export async function processUnsubscribe(
 		return {
 			success: false,
 			error: 'Service temporarily unavailable',
-			email: null,
+			email: null
 		};
 	}
 
@@ -93,23 +93,26 @@ export async function processUnsubscribe(
 			.prepare(
 				`UPDATE newsletter_subscribers
 			 SET unsubscribed_at = datetime('now'),
+			     active = 0,
 			     status = 'unsubscribed'
-			 WHERE email = ? AND (unsubscribed_at IS NULL OR status = 'active')`
+			 WHERE email = ?
+			   AND unsubscribe_token = ?
+			   AND (unsubscribed_at IS NULL OR status = 'active')`
 			)
-			.bind(email)
+			.bind(email, token)
 			.run();
 
 		return {
 			success: true,
 			error: null,
-			email,
+			email: null
 		};
 	} catch (dbError) {
 		console.error('Unsubscribe error:', dbError);
 		return {
 			success: false,
 			error: 'Failed to process unsubscribe request',
-			email: null,
+			email: null
 		};
 	}
 }

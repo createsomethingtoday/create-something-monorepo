@@ -21,7 +21,7 @@ export interface FloorPlanData {
 	bedrooms?: number;
 	bathrooms?: number;
 	features?: string;
-	zones: Array<Rect & { type: string }>;
+	zones: Array<Rect & { id?: string; type: string }>;
 	walls: Array<XYLine & { exterior?: boolean }>;
 	columns?: XY[];
 	doors?: Array<XY & { width: number; orientation: 'horizontal' | 'vertical' }>;

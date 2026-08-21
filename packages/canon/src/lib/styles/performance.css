@@ -1,4 +1,13 @@
 @import '@ibm/plex-mono/css/ibm-plex-mono-all.css';
+@import '@fontsource-variable/geist/wght.css';
+
+@font-face {
+  font-family: 'CS Editorial';
+  src: url('/fonts/create-something-editorial.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 
 /*
   Canon Performance Excellence Layer
@@ -108,7 +117,11 @@
   border: 1px solid var(--color-performance-line);
   border-inline-start: 4px solid var(--performance-control-color);
   border-radius: var(--radius-performance-sm);
-  background: color-mix(in srgb, var(--performance-control-surface) 24%, var(--color-performance-panel));
+  background: color-mix(
+    in srgb,
+    var(--performance-control-surface) 24%,
+    var(--color-performance-panel)
+  );
 }
 
 .performance-control-rail[data-control-state='ready'] {
@@ -146,6 +159,35 @@
 }
 
 .property-performance {
+  --color-performance-paper: var(--color-performance-editorial-light);
+  --color-performance-panel: color-mix(
+    in srgb,
+    var(--color-performance-editorial-light) 88%,
+    white
+  );
+  --color-performance-ink: var(--color-performance-editorial-dark);
+  --color-performance-ink-soft: var(--color-performance-editorial-dark-secondary);
+  --color-performance-muted: color-mix(
+    in srgb,
+    var(--color-performance-editorial-dark) 66%,
+    transparent
+  );
+  --color-performance-line: color-mix(
+    in srgb,
+    var(--color-performance-editorial-dark) 18%,
+    transparent
+  );
+  --color-performance-line-strong: color-mix(
+    in srgb,
+    var(--color-performance-editorial-dark) 38%,
+    transparent
+  );
+  --color-performance-court: var(--color-performance-editorial-light-secondary);
+  --color-performance-paper-fiber: color-mix(
+    in srgb,
+    var(--color-performance-editorial-dark) 3.5%,
+    transparent
+  );
   --property-performance-panel-shadow: var(--shadow-performance-panel);
   background:
     repeating-linear-gradient(
@@ -157,6 +199,12 @@
     var(--color-performance-paper);
   color: var(--color-performance-ink);
   font-family: var(--font-performance-display, var(--font-performance-sans));
+  font-synthesis: none;
+}
+
+.property-performance :where(h1, h2) {
+  font-family: var(--font-performance-editorial);
+  font-weight: var(--font-performance-editorial-weight, 400);
 }
 
 [data-performance-mode] {
@@ -199,48 +247,49 @@
   font-weight: 800;
 }
 
-.property-performance :where(
-  .clear-card-grid__card,
-  .clear-pillar,
-  .clear-proof-strip__item,
-  .clear-platform-hero__proof article,
-  .clear-use-case-band__item,
-  .product-surface
-) {
+.property-performance
+  :where(
+    .clear-card-grid__card,
+    .clear-pillar,
+    .clear-proof-strip__item,
+    .clear-platform-hero__proof article,
+    .clear-use-case-band__item,
+    .product-surface
+  ) {
   border-color: var(--color-performance-line);
   border-radius: var(--radius-performance-md);
   background: var(--color-performance-panel);
   box-shadow: none;
 }
 
-.property-performance :where(
-  .clear-card-grid__card,
-  .clear-pillar,
-  .clear-proof-strip__item,
-  .clear-platform-hero__proof article,
-  .clear-use-case-band__item
-)::before {
+.property-performance
+  :where(
+    .clear-card-grid__card,
+    .clear-pillar,
+    .clear-proof-strip__item,
+    .clear-platform-hero__proof article,
+    .clear-use-case-band__item
+  )::before {
   background: var(--color-performance-pressure);
 }
 
-.property-performance :where(
-  a.clear-card-grid__card,
-  a.clear-pillar,
-  a.clear-use-case-band__item
-):hover {
+.property-performance
+  :where(a.clear-card-grid__card, a.clear-pillar, a.clear-use-case-band__item):hover {
   border-color: var(--color-performance-line-strong);
   background: var(--color-performance-panel);
   transform: translateY(-1px);
 }
 
-.property-performance :where(.clear-card-grid__icon, .clear-proof-strip__icon, .clear-pillar__number) {
+.property-performance
+  :where(.clear-card-grid__icon, .clear-proof-strip__icon, .clear-pillar__number) {
   border-color: var(--color-performance-line);
   background: var(--color-performance-paper);
 }
 
 .property-performance :where(.clear-page-section .btn-primary, .btn-primary) {
-  background: var(--color-performance-ink);
-  border-color: var(--color-performance-ink);
+  background: var(--color-performance-editorial-brand);
+  border-color: var(--color-performance-editorial-brand);
+  color: var(--color-performance-editorial-dark);
 }
 
 @media (max-width: 640px) {

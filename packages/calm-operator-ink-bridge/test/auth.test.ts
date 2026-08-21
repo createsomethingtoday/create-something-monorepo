@@ -53,3 +53,22 @@ test('bridge token remains compatibility token for device, source, and relay rol
   assert.equal(await isAuthorized(requestWithToken('bridge-token'), env, 'source'), true);
   assert.equal(await isAuthorized(requestWithToken('bridge-token'), env, 'relay'), true);
 });
+
+test('generic operator token names coexist with legacy secrets during migration', async () => {
+  assert.equal(
+    await isAuthorized(
+      requestWithToken('operator-device'),
+      { OPERATOR_DEVICE_TOKEN: 'operator-device', INK_DEVICE_TOKEN: 'legacy-device' },
+      'device'
+    ),
+    true
+  );
+  assert.equal(
+    await isAuthorized(
+      requestWithToken('legacy-device'),
+      { OPERATOR_DEVICE_TOKEN: 'operator-device', INK_DEVICE_TOKEN: 'legacy-device' },
+      'device'
+    ),
+    true
+  );
+});

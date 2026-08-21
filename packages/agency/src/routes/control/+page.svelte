@@ -11,9 +11,9 @@
     type PerformanceCondition,
     type PerformanceNarrativeScene
   } from '@create-something/canon';
+  import PlaybookField from '$lib/components/PlaybookField.svelte';
   import SystemContextArtifact from '$lib/components/SystemContextArtifact.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
-  import { paperClampedDecisionMedia } from '$lib/data/performanceMedia';
   import { getPublicProduct } from '$lib/data/productFamily';
 
   const mapProduct = getPublicProduct('map');
@@ -142,9 +142,12 @@
 <main class="control-page">
   <PerformanceCampaignOpening
     eyebrow="CREATE SOMETHING Control"
-    title="Managed AI Operations, after launch."
-    lede="Control operates one standard-risk production environment from $900 per month after launch. No per-agent fees. You keep a legible workflow boundary, transparent AI usage, named approvals, and recovery context. Control includes Map."
-    media={paperClampedDecisionMedia}
+    expression="editorial"
+    title="Run offense and defense from one playbook."
+    lede="Control operates one standard-risk environment from $900 per month after launch. Offense advances approved work. Defense holds exceptions, protects authority, and preserves recovery proof."
+    density="compact"
+    artifactOwnsMedia
+    artifactMobilePlacement="flow"
     proof={[
       { label: 'Signal', value: 'Watch' },
       { label: 'Decision', value: 'Route' },
@@ -156,6 +159,9 @@
       <Button href={agencyCoreMessaging.workflowMappingSessionHref} variant="secondary">
         {agencyCoreMessaging.bookMappingSessionLabel}
       </Button>
+    {/snippet}
+    {#snippet artifact()}
+      <PlaybookField variant="control" />
     {/snippet}
   </PerformanceCampaignOpening>
 
@@ -211,6 +217,7 @@
   </PerformanceNarrativeStage>
 
   <PerformanceConversionHandoff
+    expression="editorial"
     eyebrow="Choose the next boundary"
     title="Define the workflow or bring the one already running."
     description="Use Map when the system still needs a shared definition. Use Build for new workflows and integrations. Bring a launched workflow to Control when it needs accountable operation, approvals, evidence, and recovery."

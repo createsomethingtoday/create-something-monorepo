@@ -226,6 +226,7 @@
   </PerformanceNarrativeStage>
 
   <PerformanceConversionHandoff
+    expression="editorial"
     eyebrow="Apply the method"
     title="Ready to make the workflow quieter?"
     description="Every project starts with this operating model. We remove what does not belong, then ship the smallest controlled path that lets the operator stop watching everything."
@@ -294,12 +295,13 @@
   }
 
   .hero-title {
+    font-family: var(--font-performance-editorial);
     font-size: var(--text-performance-display);
-    font-weight: var(--font-performance-semibold);
+    font-weight: var(--font-performance-editorial-weight, 400);
     color: var(--color-performance-fg-primary);
     margin-bottom: var(--space-5, 1.5rem);
-    line-height: 1.1;
-    letter-spacing: var(--tracking-performance-tighter, -0.025em);
+    line-height: 1.02;
+    letter-spacing: -0.04em;
   }
 
   .hero-subtitle {

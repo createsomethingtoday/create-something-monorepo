@@ -1,6 +1,11 @@
 <svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
   <rect width="1200" height="630" fill="#000000"/>
 
+  <g transform="translate(74 62) scale(1.15)" fill="none" stroke="#ffffff" stroke-width="8.5">
+    <circle cx="53" cy="50" r="41.5"/>
+    <circle cx="43.5" cy="50" r="31.5"/>
+  </g>
+
   <text x="600" y="150" font-family="JetBrains Mono, Courier, monospace" font-size="48" font-weight="700" fill="#ffffff" text-anchor="middle" letter-spacing="0.05em">
     CREATE SOMETHING
   </text>

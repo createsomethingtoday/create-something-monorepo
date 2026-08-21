@@ -10,7 +10,7 @@
  * 3. Delete static route in /routes/papers/{slug}/
  */
 
-import { error } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { isFileBasedPaper, getFileBasedPaper } from '$lib/config/fileBasedPapers';
 import { transformExperimentToPaper } from '@create-something/canon';
@@ -21,6 +21,14 @@ const contentFiles = import.meta.glob('/content/papers/*.md', {
 	query: '?raw',
 	import: 'default'
 }) as Record<string, string>;
+
+// These experiments were previously linked from the paper collection. Preserve
+// those public URLs while keeping the interactive experiment route canonical.
+const LEGACY_EXPERIMENT_REDIRECTS: Record<string, string> = {
+	'ascii-renderer': '/experiments/ascii-renderer',
+	'ai-native-filtering': '/experiments/ai-native-filtering',
+	'webflow-analyzer-lineage': '/experiments/webflow-analyzer-lineage'
+};
 
 /**
  * Strip YAML frontmatter from markdown content.
@@ -45,6 +53,10 @@ function getPaperContent(slug: string): string | null {
 
 export const load: PageServerLoad = async ({ params }) => {
 	const { slug } = params;
+	const experimentLocation = LEGACY_EXPERIMENT_REDIRECTS[slug];
+	if (experimentLocation) {
+		throw redirect(301, experimentLocation);
+	}
 
 	// Check if this is a file-based paper (markdown content)
 	if (isFileBasedPaper(slug)) {

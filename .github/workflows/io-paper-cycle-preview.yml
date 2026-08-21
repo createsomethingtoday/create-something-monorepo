@@ -62,6 +62,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Test paper-cycle context
+        run: pnpm paper-cycle:test
+
       - name: Collect paper-cycle context
         id: context
         run: |
@@ -79,16 +82,18 @@ jobs:
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Workspace check
-        run: pnpm check
+      - name: Check IO
+        run: pnpm --filter @create-something/io check
 
-      - name: Workspace lint
+      - name: Lint IO
         if: steps.context.outputs.publishable == 'true'
-        run: pnpm lint
+        run: pnpm --filter @create-something/io lint
 
-      - name: Workspace test
+      - name: Test IO routes and handoff
         if: steps.context.outputs.publishable == 'true'
-        run: pnpm test
+        run: |
+          pnpm --filter @create-something/io test:search
+          pnpm --filter @create-something/io test:footer-handoff
 
       - name: Build IO
         if: steps.context.outputs.publishable == 'true'

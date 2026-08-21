@@ -25,7 +25,8 @@
     "mcp": "tsx src/mcp/server.ts",
     "mcp:smoke": "tsx src/mcp/smoke.ts",
     "mcp:parity": "tsx src/mcp/parity.ts",
-    "auth:browser-fixture": "node scripts/browser-auth-fixture.mjs",
+    "auth:browser-fixture": "tsx scripts/browser-auth-fixture.ts",
+    "auth:hash-project-password": "tsx scripts/hash-project-password.ts",
     "film:analyze": "uv run --script scripts/analyze-film.py",
     "film:export": "tsx scripts/export-film-analysis.ts",
     "film:test:analyzer": "uv run --script scripts/test_analyze_film.py",
@@ -59,21 +60,21 @@
   },
   "dependencies": {
     "@create-something/canon": "workspace:*",
-    "@modelcontextprotocol/sdk": "^1.25.3",
+    "@modelcontextprotocol/sdk": "^1.26.0",
     "three": "^0.170.0",
     "zod": "^3.23.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260621.1",
     "@sveltejs/adapter-cloudflare": "^7.2.4",
-    "@sveltejs/kit": "^2.47.1",
+    "@sveltejs/kit": "^2.70.2",
     "@sveltejs/vite-plugin-svelte": "^6.2.1",
     "@types/three": "^0.170.0",
-    "svelte": "^5.41.0",
+    "svelte": "^5.56.9",
     "svelte-check": "^4.3.3",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "vite": "^7.3.1",
+    "vite": "^7.3.6",
     "vitest": "^3.2.4",
     "wrangler": "^4.103.0"
   }

@@ -38,14 +38,14 @@
 </script>
 
 <SEO
-	title="League Insights | NBA Live Analytics"
+	title="League Insights | NBA Analytics"
 	description="League-wide trends and patterns from today's NBA games. Ball movement, competitive balance, and scoring analysis."
 	keywords="NBA league insights, ball movement, competitive balance, scoring trends, basketball analytics"
 	propertyName="space"
 	breadcrumbs={[
 		{ name: 'Home', url: 'https://createsomething.space' },
 		{ name: 'Data Studio', url: 'https://createsomething.space/data' },
-		{ name: 'NBA Live Analytics', url: 'https://createsomething.space/data/nba' },
+		{ name: 'NBA Analytics', url: 'https://createsomething.space/data/nba' },
 		{ name: 'League Insights', url: 'https://createsomething.space/data/nba/league-insights' }
 	]}
 />
@@ -55,7 +55,7 @@
 	<div class="container max-w-7xl">
 		<a href="/data/nba" class="back-link">
 			<ArrowLeft size={16} />
-			Back to NBA Live
+			Back to NBA Analytics
 		</a>
 		<h1 class="title">League Insights</h1>
 		<p class="subtitle">

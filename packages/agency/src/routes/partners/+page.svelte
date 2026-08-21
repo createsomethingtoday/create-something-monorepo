@@ -116,6 +116,7 @@
   variant="hero"
   layout="stack"
   titleLevel="h1"
+  expression="editorial"
   eyebrow="Workflow Tool Stack"
   title="Choose the right tool path for one controlled workflow."
   description="Start with the workflow your team wants to delegate. CREATE SOMETHING maps the operating state you own first. Only then does an external tool get more authority."
@@ -159,6 +160,7 @@
 </PerformancePageSection>
 
 <PerformanceConversionHandoff
+  expression="editorial"
   eyebrow="Map the workflow"
   title="Bring the workflow before choosing the stack."
   description="Map the handoff and name its owner, then agree what the system may do on its own and where it has to stop. Deliver workflows for clients? Use the service-provider path to keep the client boundary attached."

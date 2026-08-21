@@ -42,32 +42,32 @@
 	});
 
 	const navLinks = [
+		{ label: 'Playbooks', href: '/playbooks' },
+		{ label: 'Readiness', href: '/readiness' },
 		{ label: 'Canon', href: '/canon' },
-		{ label: 'Masters', href: '/masters' },
 		{ label: 'Principles', href: '/principles' },
-		{ label: 'Patterns', href: '/patterns' },
-		{ label: 'Standards', href: '/standards' },
-		{ label: 'Voice', href: '/voice' },
-		{ label: 'Ethos', href: '/ethos' }
+		{ label: 'Standards', href: '/standards' }
 	];
 
 	const quickLinks = [
+		{ label: 'Playbooks', href: '/playbooks' },
+		{ label: 'Readiness', href: '/readiness' },
 		{ label: 'Canon', href: '/canon' },
-		{ label: 'Masters', href: '/masters' },
 		{ label: 'Principles', href: '/principles' },
-		{ label: 'Patterns', href: '/patterns' },
 		{ label: 'Standards', href: '/standards' },
-		{ label: 'Voice', href: '/voice' },
-		{ label: 'Ethos', href: '/ethos' }
+		{ label: 'Masters', href: '/masters' },
+		{ label: 'Patterns', href: '/patterns' }
 	];
 
 	// Quick access items for unified search
 	const quickAccessItems = [
-		{ id: 'nav-canon', label: 'Canon', description: 'Automation infrastructure philosophy', href: '/canon', icon: '📜', keywords: ['philosophy', 'foundation', 'truth'] },
-		{ id: 'nav-masters', label: 'Masters', description: 'Learn from the masters', href: '/masters', icon: '🎓', keywords: ['teachers', 'wisdom', 'dieter'] },
-		{ id: 'nav-principles', label: 'Principles', description: 'Core design principles', href: '/principles', icon: '⚖️', keywords: ['rules', 'guidelines', 'values'] },
-		{ id: 'nav-patterns', label: 'Patterns', description: 'Reusable patterns', href: '/patterns', icon: '🔷', keywords: ['components', 'templates', 'recipes'] },
-		{ id: 'nav-standards', label: 'Standards', description: 'Technical standards', href: '/standards', icon: '📏', keywords: ['specs', 'requirements'] },
+		{ id: 'nav-playbooks', label: 'Playbooks', description: 'Operating decisions and live runbooks', href: '/playbooks', icon: '▶️', keywords: ['workflow', 'runbook', 'operator', 'handoff'] },
+		{ id: 'nav-readiness', label: 'Readiness', description: 'Find the workflow boundary before work runs', href: '/readiness', icon: '✓', keywords: ['assessment', 'owner', 'proof', 'trust'] },
+		{ id: 'nav-canon', label: 'Canon', description: 'The standards behind the operating library', href: '/canon', icon: '📜', keywords: ['philosophy', 'foundation', 'truth'] },
+		{ id: 'nav-masters', label: 'Masters', description: 'Learn from the design lineage', href: '/masters', icon: '🎓', keywords: ['teachers', 'wisdom', 'dieter'] },
+		{ id: 'nav-principles', label: 'Principles', description: 'Core operating principles', href: '/principles', icon: '⚖️', keywords: ['rules', 'guidelines', 'values'] },
+		{ id: 'nav-patterns', label: 'Patterns', description: 'Canonical patterns and constraints', href: '/patterns', icon: '🔷', keywords: ['components', 'templates', 'recipes'] },
+		{ id: 'nav-standards', label: 'Standards', description: 'Concrete implementation standards', href: '/standards', icon: '📏', keywords: ['specs', 'requirements'] },
 		{ id: 'nav-space', label: 'Go to .space', description: 'Interactive experiments', href: 'https://createsomething.space', icon: '🧪', keywords: ['explore', 'try', 'interactive'] },
 		{ id: 'nav-io', label: 'Go to .io', description: 'Research papers and analysis', href: 'https://createsomething.io', icon: '📖', keywords: ['papers', 'research', 'learn'] },
 		{ id: 'nav-agency', label: 'Go to .agency', description: 'Professional services', href: 'https://createsomething.agency', icon: '🔨', keywords: ['services', 'hire', 'work'] },
@@ -97,6 +97,11 @@
 		<Navigation
 			logo="CREATE SOMETHING"
 			logoSuffix=".ltd"
+			logoAsset={{
+				src: '/brand/create-something-horizontal-black.svg',
+				mobileSrc: '/brand/create-something-mark-black.svg',
+				label: 'CREATE SOMETHING .ltd'
+			}}
 			links={navLinks}
 			currentPath={data?.pathname || '/'}
 			user={data.user}
@@ -122,6 +127,10 @@
 			showSocial={true}
 			isAuthenticated={!!data.user}
 			visualStyle="performance"
+			brandAsset={{
+				src: '/brand/create-something-horizontal-black.svg',
+				label: 'CREATE SOMETHING .ltd'
+			}}
 		/>
 
 		<ModeIndicator current="ltd" />

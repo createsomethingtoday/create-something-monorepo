@@ -90,6 +90,10 @@
 			"types": "./dist/performance/scheduler-email.d.ts",
 			"default": "./dist/performance/scheduler-email.js"
 		},
+		"./performance/email": {
+			"types": "./dist/performance/email.d.ts",
+			"default": "./dist/performance/email.js"
+		},
 		"./components": {
 			"types": "./dist/components/index.d.ts",
 			"svelte": "./dist/components/index.js"
@@ -149,6 +153,38 @@
 		"./experiments/threshold-dwelling": {
 			"types": "./dist/experiments/threshold-dwelling/index.d.ts",
 			"svelte": "./dist/experiments/threshold-dwelling/index.js"
+		},
+		"./experiments/threshold-dwelling/dimensioned-project": {
+			"types": "./dist/experiments/threshold-dwelling/dimensioned-project.d.ts",
+			"default": "./dist/experiments/threshold-dwelling/dimensioned-project.js"
+		},
+		"./experiments/threshold-dwelling/living-system-revision": {
+			"types": "./dist/experiments/threshold-dwelling/living-system-revision.d.ts",
+			"default": "./dist/experiments/threshold-dwelling/living-system-revision.js"
+		},
+		"./experiments/threshold-dwelling/interior-infill": {
+			"types": "./dist/experiments/threshold-dwelling/interior-infill.d.ts",
+			"default": "./dist/experiments/threshold-dwelling/interior-infill.js"
+		},
+		"./experiments/threshold-dwelling/outfitting-system": {
+			"types": "./dist/experiments/threshold-dwelling/outfitting-system.d.ts",
+			"default": "./dist/experiments/threshold-dwelling/outfitting-system.js"
+		},
+		"./experiments/threshold-dwelling/assembly-schedule": {
+			"types": "./dist/experiments/threshold-dwelling/assembly-schedule.d.ts",
+			"default": "./dist/experiments/threshold-dwelling/assembly-schedule.js"
+		},
+		"./experiments/threshold-dwelling/geometry-issuance": {
+			"types": "./dist/experiments/threshold-dwelling/geometry-issuance.d.ts",
+			"default": "./dist/experiments/threshold-dwelling/geometry-issuance.js"
+		},
+		"./experiments/threshold-dwelling/geometry-evidence-packet": {
+			"types": "./dist/experiments/threshold-dwelling/geometry-evidence-packet.d.ts",
+			"default": "./dist/experiments/threshold-dwelling/geometry-evidence-packet.js"
+		},
+		"./experiments/threshold-dwelling/professional-review": {
+			"types": "./dist/experiments/threshold-dwelling/professional-review.d.ts",
+			"default": "./dist/experiments/threshold-dwelling/professional-review.js"
 		},
 		"./experiments/kinetic-typography": {
 			"types": "./dist/experiments/kinetic-typography/index.d.ts",
@@ -245,6 +281,14 @@
 		"./newsletter": {
 			"types": "./dist/newsletter/index.d.ts",
 			"default": "./dist/newsletter/index.js"
+		},
+		"./newsletter/audience": {
+			"types": "./dist/newsletter/audience.d.ts",
+			"default": "./dist/newsletter/audience.js"
+		},
+		"./newsletter/reengagement-email": {
+			"types": "./dist/newsletter/reengagement-email.d.ts",
+			"default": "./dist/newsletter/reengagement-email.js"
 		},
 		"./platform": {
 			"types": "./dist/platform/index.d.ts",
@@ -410,7 +454,7 @@
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^7.0.0",
-		"@sveltejs/kit": "^2.47.1",
+		"@sveltejs/kit": "^2.70.2",
 		"@sveltejs/package": "^2.5.4",
 		"@sveltejs/vite-plugin-svelte": "^6.2.1",
 		"@types/better-sqlite3": "^7.6.12",
@@ -419,10 +463,10 @@
 		"jsdom": "^27.4.0",
 		"lucide-svelte": "^0.562.0",
 		"publint": "^0.3.14",
-		"svelte": "^5.41.0",
+		"svelte": "^5.56.9",
 		"svelte-check": "^4.3.3",
 		"typescript": "^5.9.3",
-		"vite": "^7.1.10",
+		"vite": "^7.3.6",
 		"vitest": "^4.0.16"
 	},
 	"keywords": [
@@ -442,7 +486,9 @@
 		"@codemirror/state": "^6.5.2",
 		"@codemirror/theme-one-dark": "^6.1.3",
 		"@codemirror/view": "^6.38.7",
+		"@create-something/auth-platform": "workspace:*",
 		"@create-something/tufte": "workspace:^",
+		"@fontsource-variable/geist": "^5.3.0",
 		"@ibm/plex-mono": "2.5.0",
 		"@threlte/core": "^8.0.0",
 		"@threlte/extras": "^9.0.0",
@@ -456,7 +502,7 @@
 		"d3-scale": "^4.0.2",
 		"d3-selection": "^3.0.0",
 		"d3-shape": "^3.2.0",
-		"gsap": "3.13.0",
+		"gsap": "3.15.0",
 		"highlight.js": "^11.11.1",
 		"marked": "^17.0.1",
 		"three": "^0.170.0",

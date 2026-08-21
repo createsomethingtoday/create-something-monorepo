@@ -17,6 +17,7 @@ metadata:
     policy_accepted: true
     contract_active: true
     billing_active: true
+    commercial_access_contract_ref: "@create-something/database-layer/agent-commercial/v1/create-something.json"
   owners:
     technical_owner: "<name>"
     client_owner: "<name>"
@@ -52,6 +53,8 @@ auth:
 
 resources:
   - id: "<resource-id>"
+    commercial_capability_id: "<catalog-capability-id>"
+    commercial_access_class: "entitled" # free | entitled | paid | private
     uri: "<resource-uri>"
     schema_ref: "<schema-url-or-path>"
     data_classification: "internal" # public | internal | confidential | restricted
@@ -59,6 +62,8 @@ resources:
 
 tools:
   - name: "<tool-name>"
+    commercial_capability_id: "<catalog-capability-id>"
+    commercial_access_class: "private" # free | entitled | paid | private
     description: "<what-it-does>"
     schema_ref: "<schema-url-or-path>"
     side_effect_level: "read" # read | write | destructive

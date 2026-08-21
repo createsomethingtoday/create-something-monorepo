@@ -2,7 +2,7 @@ import type { Cookies } from '@sveltejs/kit';
 import type { Db } from './db';
 import { addSeconds, nowIso } from './db';
 import type { RuntimeEnv } from './env';
-import { getBootstrapPassword, isAllowedAdminEmail, normalizeEmail } from './env';
+import { getSharedAdminPassword, normalizeEmail } from './env';
 import {
 	constantTimeEqual,
 	hashPassword,
@@ -13,6 +13,7 @@ import {
 
 export const ADMIN_SESSION_COOKIE = 'jj_admin_session';
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7;
+const SHARED_ADMIN_EMAIL = 'shared-admin@jandj.local';
 
 export interface AdminRecord {
 	email: string;
@@ -23,6 +24,11 @@ export interface AdminRecord {
 
 export interface AdminIdentity {
 	email: string;
+}
+
+export function verifySharedAdminPassword(env: RuntimeEnv, password: string): boolean {
+	const configuredPassword = getSharedAdminPassword(env);
+	return Boolean(configuredPassword && constantTimeEqual(password, configuredPassword));
 }
 
 export async function getAdmin(db: Db, email: string): Promise<AdminRecord | null> {
@@ -66,37 +72,16 @@ export async function upsertAdminPassword(
 export async function verifyAdminLogin(
 	db: Db,
 	env: RuntimeEnv,
-	email: string,
 	password: string
 ): Promise<AdminIdentity | null> {
-	const normalizedEmail = normalizeEmail(email);
-	if (!isAllowedAdminEmail(normalizedEmail, env)) return null;
+	if (!verifySharedAdminPassword(env, password)) return null;
 
-	const admin = await getAdmin(db, normalizedEmail);
-	if (admin) {
-		const valid = await verifyPassword(password, admin.password_hash);
-		return valid ? { email: normalizedEmail } : null;
+	const admin = await getAdmin(db, SHARED_ADMIN_EMAIL);
+	if (!admin || !(await verifyPassword(password, admin.password_hash))) {
+		await upsertAdminPassword(db, SHARED_ADMIN_EMAIL, password);
 	}
 
-	const bootstrapPassword = getBootstrapPassword(env);
-	if (!bootstrapPassword || !constantTimeEqual(password, bootstrapPassword)) return null;
-
-	await upsertAdminPassword(db, normalizedEmail, password);
-	return { email: normalizedEmail };
-}
-
-export async function verifyCurrentPassword(
-	db: Db,
-	env: RuntimeEnv,
-	email: string,
-	password: string
-): Promise<boolean> {
-	const normalizedEmail = normalizeEmail(email);
-	const admin = await getAdmin(db, normalizedEmail);
-	if (admin) return verifyPassword(password, admin.password_hash);
-
-	const bootstrapPassword = getBootstrapPassword(env);
-	return Boolean(bootstrapPassword && constantTimeEqual(password, bootstrapPassword));
+	return { email: SHARED_ADMIN_EMAIL };
 }
 
 export async function createAdminSession(
@@ -164,8 +149,4 @@ export async function deleteCurrentSession(db: Db, cookies: Cookies): Promise<vo
 	}
 
 	cookies.delete(ADMIN_SESSION_COOKIE, { path: '/' });
-}
-
-export async function deleteSessionsForAdmin(db: Db, email: string): Promise<void> {
-	await db.prepare('DELETE FROM admin_sessions WHERE email = ?').bind(normalizeEmail(email)).run();
 }

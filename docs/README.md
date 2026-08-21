@@ -72,6 +72,7 @@ Read in this order when you need broad repo context:
 - [internal/BUSINESS_DIGITAL_THREAD_LIFETIME_CONTROL_BASELINE_2026-07-23.md](./internal/BUSINESS_DIGITAL_THREAD_LIFETIME_CONTROL_BASELINE_2026-07-23.md)
 - [internal/ADR_BUSINESS_DIGITAL_THREAD_V1_BOUNDARY_2026-07-23.md](./internal/ADR_BUSINESS_DIGITAL_THREAD_V1_BOUNDARY_2026-07-23.md)
 - [Business Digital Thread v1 contract](../packages/database-layer/contracts/business-digital-thread/v1/README.md)
+- [Agent Commercial Contract v1](../packages/database-layer/contracts/agent-commercial/v1/README.md)
 - [CREATE_SOMETHING_DATABASE_LAYER.md](./CREATE_SOMETHING_DATABASE_LAYER.md)
 - [CANON_DATABASE_LAYER_DESIGN.md](./CANON_DATABASE_LAYER_DESIGN.md)
 - [guides/SUBSTRATE_TOPOLOGY_OPERATOR_CONTRACT.md](./guides/SUBSTRATE_TOPOLOGY_OPERATOR_CONTRACT.md)
@@ -95,6 +96,7 @@ Read in this order when you need broad repo context:
 - [policies/v1/policy.git-light-agent-delivery.v1.md](./policies/v1/policy.git-light-agent-delivery.v1.md)
 - [policies/v1/policy.prose-quality.v1.md](./policies/v1/policy.prose-quality.v1.md)
 - [policies/v1/policy.operator-agent-production-lab.v1.md](./policies/v1/policy.operator-agent-production-lab.v1.md)
+- [policies/v1/policy.executor-routing.v1.md](./policies/v1/policy.executor-routing.v1.md)
 
 ### Agent execution, observability, and UI legibility
 
@@ -108,6 +110,7 @@ Read in this order when you need broad repo context:
 - [guides/OPERATOR_AGENT_PUBLIC_ACCESS.md](./guides/OPERATOR_AGENT_PUBLIC_ACCESS.md)
 - [guides/GIT_LIGHT_AGENT_DELIVERY_WORKFLOW.md](./guides/GIT_LIGHT_AGENT_DELIVERY_WORKFLOW.md)
 - [guides/MONOREPO_DELIVERY_UPDATES.md](./guides/MONOREPO_DELIVERY_UPDATES.md)
+- [guides/PACKAGE_SOURCE_ARCHIVE_WORKFLOW.md](./guides/PACKAGE_SOURCE_ARCHIVE_WORKFLOW.md)
 - [guides/G2_CLOUDFLARE_CODEX_ACCESS.md](./guides/G2_CLOUDFLARE_CODEX_ACCESS.md)
 - [guides/CODEX_PRESENCE_EVEN_G2.md](./guides/CODEX_PRESENCE_EVEN_G2.md)
 - [guides/RECURRING_CLEANUP_LOOPS.md](./guides/RECURRING_CLEANUP_LOOPS.md)

@@ -29,8 +29,8 @@ Suite</text>
 <line x1="580" y1="184" x2="580" y2="76" stroke="black" stroke-width="0.5"/>
 <line x1="772" y1="184" x2="772" y2="76" stroke="black" stroke-width="0.5"/>
 <line x1="868" y1="184" x2="868" y2="76" stroke="black" stroke-width="0.5"/>
-<line x1="196" y1="184" x2="196" y2="76" stroke="black" stroke-width="3"/>
 <line x1="976" y1="184" x2="976" y2="76" stroke="black" stroke-width="3"/>
+<line x1="196" y1="184" x2="196" y2="76" stroke="black" stroke-width="3"/>
 <line x1="412" y1="184" x2="412" y2="76" stroke="black" stroke-width="2"/>
 <line x1="664" y1="184" x2="664" y2="76" stroke="black" stroke-width="2"/>
 <text x="40" y="25" font-family="Inter, system-ui, sans-serif" font-size="10" font-weight="bold" fill="black">SECTION C-C</text>

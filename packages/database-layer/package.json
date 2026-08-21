@@ -26,6 +26,9 @@
     "./business-digital-thread/v1/schema.json": "./contracts/business-digital-thread/v1/schema.json",
     "./business-digital-thread/v1/verifier-spec.json": "./contracts/business-digital-thread/v1/verifier-spec.json",
     "./business-digital-thread/v1/performance-baseline.json": "./contracts/business-digital-thread/v1/performance-baseline.json",
+    "./agent-commercial/v1/schema.json": "./contracts/agent-commercial/v1/schema.json",
+    "./agent-commercial/v1/authorization-receipt.schema.json": "./contracts/agent-commercial/v1/authorization-receipt.schema.json",
+    "./agent-commercial/v1/create-something.json": "./contracts/agent-commercial/v1/create-something.json",
     "./client-overlay-coverage.json": "./data/create-something-client-overlay-coverage.json",
     "./internal-topology.3d.json": "./data/create-something-internal-topology.3d.json",
     "./internal-topology.json": "./data/create-something-internal-topology.json",
@@ -52,6 +55,8 @@
     "business-thread:contract:check": "node scripts/verify-business-digital-thread-contract.mjs",
     "business-thread:contract:benchmark": "node scripts/verify-business-digital-thread-contract.mjs --benchmark",
     "business-thread:contract:write": "node scripts/verify-business-digital-thread-contract.mjs --write",
+    "agent-commercial:contract:check": "node scripts/verify-agent-commercial-contract.mjs",
+    "agent-commercial:x402:canary": "node scripts/agent-commercial-x402-canary.mjs",
     "client-overlays:generate": "node scripts/generate-client-overlay-coverage.mjs",
     "management-surface:generate": "node scripts/generate-management-surface.mjs",
     "operating-slice-readiness:generate": "node scripts/generate-operating-slice-readiness.mjs",
@@ -76,7 +81,10 @@
     "@create-something/canvas-kernel": "workspace:*"
   },
   "devDependencies": {
-    "typescript": "^5.7.0"
+    "@x402/core": "2.22.0",
+    "@x402/evm": "2.22.0",
+    "typescript": "^5.7.0",
+    "viem": "2.55.13"
   },
   "engines": {
     "node": ">=20.0.0"

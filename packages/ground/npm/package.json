@@ -1,6 +1,6 @@
 {
   "name": "@createsomething/ground-mcp",
-  "version": "0.2.4",
+  "version": "0.3.5",
   "description": "Grounded claims for code. MCP server that prevents AI hallucination in code analysis.",
   "author": "CREATE SOMETHING <hello@createsomething.io>",
   "license": "MIT",
@@ -48,11 +48,13 @@
     "css-analysis"
   ],
   "bin": {
-    "ground-mcp": "bin/ground-mcp"
+    "ground": "bin/ground.js",
+    "ground-mcp": "bin/ground-mcp.js"
   },
   "scripts": {
     "postinstall": "node install.js",
-    "pilot:build": "cargo build --release --manifest-path ../Cargo.toml --bin ground-mcp",
+    "prepublishOnly": "node release-verify.js",
+    "pilot:build": "cargo build --release --manifest-path ../Cargo.toml --bin ground --bin ground-mcp",
     "pilot:benchmark": "tsx pilot/benchmark.ts",
     "pilot:check": "tsc --noEmit -p pilot/tsconfig.json",
     "pilot:receipt:validate": "tsx pilot/validate-receipt.ts",
@@ -60,7 +62,7 @@
     "pilot:verify": "pnpm run pilot:check && pnpm run pilot:test && pnpm run pilot:benchmark && pnpm run pilot:receipt:validate -- pilot/evidence/ground-native-benchmark-receipt.v1.json"
   },
   "devDependencies": {
-    "@modelcontextprotocol/sdk": "^1.25.3",
+    "@modelcontextprotocol/sdk": "^1.26.0",
     "@types/node": "^24.10.9",
     "ajv": "^8.17.1",
     "tsx": "^4.21.0",

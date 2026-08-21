@@ -21,9 +21,8 @@ import {
 } from '$lib/taste/collections';
 import {
 	getTokenFromRequest,
-	validateToken,
-	type AuthEnv,
 } from '@create-something/canon/auth/server';
+import { verifyLtdIdentityToken } from '$lib/server/identity';
 
 export const GET: RequestHandler = async ({ params, request, platform }) => {
 	const db = platform?.env?.DB;
@@ -36,10 +35,10 @@ export const GET: RequestHandler = async ({ params, request, platform }) => {
 
 	// Optional auth - needed for private collections
 	const token = getTokenFromRequest(request);
-	const user = token ? await validateToken(token, platform?.env as AuthEnv | undefined) : null;
+	const user = token ? await verifyLtdIdentityToken(token) : null;
 
 	try {
-		const collection = await getCollection(db, collectionId, user?.id);
+		const collection = await getCollection(db, collectionId, user?.subject);
 
 		if (!collection) {
 			throw error(404, 'Collection not found');
@@ -66,7 +65,7 @@ export const PATCH: RequestHandler = async ({ params, request, platform }) => {
 		throw error(401, 'Authentication required');
 	}
 
-	const user = await validateToken(token, platform?.env as AuthEnv | undefined);
+	const user = await verifyLtdIdentityToken(token);
 	if (!user) {
 		throw error(401, 'Invalid or expired token');
 	}
@@ -110,7 +109,7 @@ export const PATCH: RequestHandler = async ({ params, request, platform }) => {
 		if (body.visibility !== undefined) input.visibility = body.visibility;
 		if (body.tags !== undefined) input.tags = body.tags;
 
-		const collection = await updateCollection(db, collectionId, user.id, input);
+		const collection = await updateCollection(db, collectionId, user.subject, input);
 
 		if (!collection) {
 			throw error(404, 'Collection not found or access denied');
@@ -137,7 +136,7 @@ export const DELETE: RequestHandler = async ({ params, request, platform }) => {
 		throw error(401, 'Authentication required');
 	}
 
-	const user = await validateToken(token, platform?.env as AuthEnv | undefined);
+	const user = await verifyLtdIdentityToken(token);
 	if (!user) {
 		throw error(401, 'Invalid or expired token');
 	}
@@ -145,7 +144,7 @@ export const DELETE: RequestHandler = async ({ params, request, platform }) => {
 	const collectionId = params.id;
 
 	try {
-		const deleted = await deleteCollection(db, collectionId, user.id);
+		const deleted = await deleteCollection(db, collectionId, user.subject);
 
 		if (!deleted) {
 			throw error(404, 'Collection not found or access denied');

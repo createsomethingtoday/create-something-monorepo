@@ -233,6 +233,7 @@
   variant="hero"
   layout="split"
   titleLevel="h1"
+  expression="editorial"
   eyebrow="For teams of 5-50"
   title="Your tools do not talk to each other. Your team fills the gap."
   description="Start with the workflow that wastes the most time. CREATE SOMETHING maps the manual bridge, builds the first controlled pilot, and leaves your operator with a control path they can understand."
@@ -290,6 +291,7 @@
 </PerformanceNarrativeStage>
 
 <PerformanceConversionHandoff
+  expression="editorial"
   eyebrow="Start with one workflow"
   title="Bring the workflow that wastes the most time."
   description="I will help map the first controlled pilot before expanding authority, scope, or spend."

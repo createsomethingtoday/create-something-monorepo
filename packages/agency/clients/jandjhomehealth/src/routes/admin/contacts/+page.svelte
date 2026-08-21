@@ -4,7 +4,6 @@
 	import {
 		Clipboard,
 		ExternalLink,
-		KeyRound,
 		LogOut,
 		Mail,
 		Phone,
@@ -106,6 +105,9 @@
 			<p>{contacts.length} total</p>
 		</div>
 		<nav class="admin-actions" aria-label="Admin navigation">
+			<a href="/admin/arcs" title="Open Arc library">
+				<span>Arcs</span>
+			</a>
 			<a href={data.formUrl} target="_blank" rel="noreferrer" title="Open public form">
 				<ExternalLink size={18} aria-hidden="true" />
 				<span>Form</span>
@@ -113,10 +115,6 @@
 			<a href="/admin/qr" title="Open QR code">
 				<QrCode size={18} aria-hidden="true" />
 				<span>QR</span>
-			</a>
-			<a href="/admin/settings" title="Manage password">
-				<KeyRound size={18} aria-hidden="true" />
-				<span>Password</span>
 			</a>
 			<button type="button" onclick={logout} title="Logout">
 				<LogOut size={18} aria-hidden="true" />

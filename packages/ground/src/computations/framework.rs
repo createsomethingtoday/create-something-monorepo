@@ -872,46 +872,6 @@ fn find_entries_recursive(dir: &Path, patterns: &FrameworkPatterns, entries: &mu
     }
 }
 
-// Simple regex implementation for no-std-like environments
-mod regex_lite {
-    pub struct Regex {
-        pattern: String,
-    }
-    
-    impl Regex {
-        pub fn new(pattern: &str) -> Result<Self, ()> {
-            Ok(Self { pattern: pattern.to_string() })
-        }
-        
-        pub fn is_match(&self, text: &str) -> bool {
-            // Very simple matching - just check if patterns match
-            // This is a simplified version; in production, use the regex crate
-            let pattern = self.pattern
-                .trim_start_matches('^')
-                .trim_end_matches('$');
-            
-            if pattern.contains(".*") {
-                // Wildcard matching
-                let parts: Vec<&str> = pattern.split(".*").collect();
-                let mut pos = 0;
-                for part in parts {
-                    if part.is_empty() {
-                        continue;
-                    }
-                    if let Some(found) = text[pos..].find(part) {
-                        pos += found + part.len();
-                    } else {
-                        return false;
-                    }
-                }
-                true
-            } else {
-                text == pattern
-            }
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

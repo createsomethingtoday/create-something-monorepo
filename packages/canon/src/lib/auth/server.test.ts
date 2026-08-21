@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { verifyIdentityToken } from './server.js';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { clearJWKSCache, validateToken, verifyIdentityToken } from './server.js';
 
 function encodeBase64Url(value: string | ArrayBuffer): string {
 	return Buffer.from(typeof value === 'string' ? value : new Uint8Array(value)).toString('base64url');
@@ -35,6 +35,9 @@ async function createIdentityToken(input: {
 				email: 'operator@createsomething.io',
 				tier: 'agency',
 				source: 'io',
+				kind: 'identity_access_token',
+				session_version: 2,
+				email_verified: true,
 				iss: input.issuer,
 				aud: [input.audience],
 				iat: input.expiresAt - 300,
@@ -107,5 +110,25 @@ describe('verifyIdentityToken', () => {
 		const tokenParts = token.split('.');
 		const tamperedToken = `${tokenParts[0]}.${tokenParts[1]}.${tokenParts[2]}A`;
 		expect(await verifyIdentityToken(tamperedToken, baseConfig)).toBeNull();
+	});
+});
+
+describe('validateToken', () => {
+	afterEach(async () => {
+		vi.unstubAllGlobals();
+		await clearJWKSCache();
+	});
+
+	it('refuses first-party Identity credentials without an explicit application audience', async () => {
+		const issuer = 'https://id.createsomething.space';
+		const nowSeconds = Math.floor(Date.now() / 1000);
+		const { token, jwks } = await createIdentityToken({
+			issuer,
+			audience: 'ltd',
+			expiresAt: nowSeconds + 300,
+		});
+		vi.stubGlobal('fetch', async () => Response.json(jwks));
+
+		expect(await validateToken(token)).toBeNull();
 	});
 });

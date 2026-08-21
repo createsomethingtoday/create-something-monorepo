@@ -48,6 +48,7 @@
 
 <PerformanceCampaignOpening
   eyebrow="Experiment index"
+  expression="editorial"
   title="Browse the work. Start with the result."
   lede="These are working experiments, not a generic portfolio. Sort the collection, inspect one result, and follow its evidence and limits."
   density="compact"

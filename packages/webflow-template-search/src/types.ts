@@ -24,6 +24,14 @@ export interface Env {
   ENVIRONMENT?: string;
   SYNC_ADMIN_TOKEN?: string;
   WEBFLOW_WEBHOOK_SECRET?: string;
+  /** Amplitude project API key for the telemetry fallback forwarder (secret). */
+  AMPLITUDE_API_KEY?: string;
+  /**
+   * Analytics Engine sink for marketplace component telemetry. Always written
+   * when bound, so beacons are measurable without any credential; Amplitude
+   * forwarding is additive on top.
+   */
+  TELEMETRY_AE?: AnalyticsEngineDataset;
 }
 
 export interface AirtableAttachment {

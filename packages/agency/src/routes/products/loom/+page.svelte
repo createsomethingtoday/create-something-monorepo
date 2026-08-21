@@ -122,6 +122,7 @@
 
 <PerformanceCampaignOpening
   eyebrow="Historical proof"
+  expression="editorial"
   title="The continuity problem that led to Linear-first coordination."
   lede="Loom proved that agents need task ownership, checkpoints, routing, and recovery. Current CREATE SOMETHING repo work now uses Linear as the source of truth for tracked ownership, status, and evidence."
   density="compact"
@@ -244,6 +245,7 @@ loom complete lm-abc --evidence "commit abc123"
 </PerformanceNarrativeStage>
 
 <PerformanceConversionHandoff
+  expression="editorial"
   eyebrow="Current coordination path"
   title="Route active work to its current source of truth."
   description="Use this page to understand the coordination lesson. Use Linear-backed workflows for current ownership and evidence, or inspect the archive directly when historical implementation detail matters."

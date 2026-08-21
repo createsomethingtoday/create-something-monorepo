@@ -2,36 +2,40 @@
   import { browser } from '$app/environment';
   import { SEO } from '@create-something/canon';
 
-  // Asset definitions
+  // V3 source assets are static, outlined files. The download links intentionally
+  // target the canonical files rather than rebuilding a mark or wordmark at request time.
   const icons = [
     {
-      name: 'Icon with Background',
-      file: 'icon-with-bg.svg',
-      description: '512×512 with black background'
+      name: 'Master Mark',
+      file: 'create-something-mark-black.svg',
+      description: 'Continuous double-ring master mark for light fields',
+      bg: 'light'
     },
     {
-      name: 'Icon Circular',
-      file: 'icon-circular.svg',
-      description: 'Circular variant for avatars'
+      name: 'Reversed Master Mark',
+      file: 'create-something-mark-white.svg',
+      description: 'Continuous double-ring master mark for dark fields',
+      bg: 'dark'
     },
     {
-      name: 'Icon Only',
-      file: 'icon-only.svg',
-      description: 'Transparent, scalable'
+      name: 'Site Icon',
+      file: 'create-something-site-icon.svg',
+      description: 'Prepared master ring mark on the owned black app field',
+      bg: 'dark'
     }
   ];
 
   const wordmarks = [
     {
       name: 'Wordmark White',
-      file: 'wordmark-white.svg',
-      description: 'For dark backgrounds',
+      file: 'create-something-wordmark-white.svg',
+      description: 'Outlined Arial Bold wordmark for dark backgrounds',
       bg: 'dark'
     },
     {
       name: 'Wordmark Black',
-      file: 'wordmark-black.svg',
-      description: 'For light backgrounds',
+      file: 'create-something-wordmark-black.svg',
+      description: 'Outlined Arial Bold wordmark for light backgrounds',
       bg: 'light'
     }
   ];
@@ -39,26 +43,26 @@
   const lockups = [
     {
       name: 'Horizontal Light',
-      file: 'lockup-horizontal-light.svg',
-      description: 'For dark backgrounds',
+      file: 'create-something-horizontal-white.svg',
+      description: 'Shared ring geometry for dark backgrounds',
       bg: 'dark'
     },
     {
       name: 'Horizontal Dark',
-      file: 'lockup-horizontal-dark.svg',
-      description: 'For light backgrounds',
+      file: 'create-something-horizontal-black.svg',
+      description: 'Shared ring geometry for light backgrounds',
       bg: 'light'
     },
     {
       name: 'Stacked Light',
-      file: 'lockup-stacked-light.svg',
-      description: 'For dark backgrounds',
+      file: 'create-something-stacked-white.svg',
+      description: 'Shared ring geometry for dark backgrounds',
       bg: 'dark'
     },
     {
       name: 'Stacked Dark',
-      file: 'lockup-stacked-dark.svg',
-      description: 'For light backgrounds',
+      file: 'create-something-stacked-black.svg',
+      description: 'Shared ring geometry for light backgrounds',
       bg: 'light'
     }
   ];
@@ -79,7 +83,7 @@
   function downloadSvg(filename: string) {
     if (browser) {
       const link = document.createElement('a');
-      link.href = `/brand/${filename}?download=1&v=${Date.now()}`;
+      link.href = `/brand/${filename}`;
       link.download = filename;
       link.rel = 'noopener';
       document.body.appendChild(link);
@@ -91,7 +95,7 @@
 
 <SEO
   title="Brand Assets"
-  description="Official brand assets for CREATE SOMETHING. Download logos, wordmarks, and lockups."
+  description="Official V3 brand assets for CREATE SOMETHING. Download outlined logos, wordmarks, and lockups."
   propertyName="ltd"
   breadcrumbs={[
     { name: 'Home', url: 'https://createsomething.ltd' },
@@ -102,7 +106,7 @@
 <main class="brand-page">
   <header class="brand-header">
     <h1 class="brand-title">Brand Assets</h1>
-    <p class="brand-subtitle">Official assets for CREATE SOMETHING. Use responsibly.</p>
+    <p class="brand-subtitle">Official V3 source assets for CREATE SOMETHING. Use responsibly.</p>
   </header>
 
   <!-- Icons Section -->
@@ -111,7 +115,7 @@
     <div class="asset-grid icons-grid">
       {#each icons as icon}
         <button class="asset-card" onclick={() => downloadSvg(icon.file)} type="button">
-          <div class="asset-preview dark">
+          <div class="asset-preview {icon.bg}">
             <img src="/brand/{icon.file}" alt={icon.name} class="preview-image" />
           </div>
           <div class="asset-info">
@@ -201,10 +205,14 @@
     <h2 class="section-title">Usage Guidelines</h2>
     <ul class="guidelines-list">
       <li>Match logo variant to background (light logo on dark, dark on light)</li>
-      <li>Maintain clear space around the logo equal to the cube height</li>
+      <li>Maintain clear space around the master mark equal to at least one ring band width</li>
       <li>Do not rotate, skew, or apply effects to the logo</li>
       <li>Do not change the logo colors or opacity values</li>
       <li>Do not place on busy or patterned backgrounds</li>
+      <li>
+        Use the prepared site icon for browser and web-clip surfaces; use the full master mark at 40
+        CSS px or larger in page layouts
+      </li>
     </ul>
   </section>
 </main>

@@ -23,6 +23,28 @@ export const AtlasGetSchema = z.object({
 
 export type AtlasGetInput = z.infer<typeof AtlasGetSchema>;
 
+export const AtlasCompositionListSchema = z.object({
+  source_kind: z
+    .enum(['host-playbook', 'outcome-playbook', 'operator-playbook', 'runbook', 'prototype'])
+    .optional()
+    .describe('Optional registered Arc source kind filter.')
+});
+
+export const AtlasCompositionGetSchema = z.object({
+  composition_id: z.string().min(1).optional().describe('Arc catalog slug. Defaults to app-review-governance.'),
+  route_id: z.string().min(1).optional()
+    .describe('Optional presentation route to adapt as a transient Atlas Story.')
+});
+
+export const AtlasCompositionMapModuleResolveSchema = z.object({
+  composition_id: z.string().min(1).optional().describe('Arc catalog slug. Defaults to app-review-governance.'),
+  module_id: z.string().min(1)
+});
+
+export const AtlasCompositionActionProposeSchema = z.object({
+  composition_id: z.literal('app-review-governance').optional()
+});
+
 export const WorkflowIdSchema = z.object({
   workflow_id: z.string().min(1).describe('Workflow id (e.g. fleet-watchdog)'),
   versionId: z.string().min(1).optional().describe('Optional explicit version id override'),

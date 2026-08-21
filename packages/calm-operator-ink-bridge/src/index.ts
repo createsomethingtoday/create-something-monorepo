@@ -27,7 +27,20 @@ import {
 } from './health-review-runs.js';
 import { collectRemoteHealthChecks, configuredRemoteHealthChecks } from './remote-health-checks.js';
 import { dueDailyAlarms, shouldRunHealthReviewAtUtcHour } from './scheduled-alarms.js';
-import { authRoleForInkRoute } from './route-auth.js';
+import { authRoleForOperatorRoute, canonicalOperatorPath } from './route-auth.js';
+import {
+  confirmVoiceCommand as prepareVoiceConfirmation,
+  leaseVoiceCommands,
+  normalizeVoiceCommand,
+  publicVoiceCommand,
+  recordVoiceTranscript as transitionVoiceTranscript
+} from './voice-command.js';
+import type {
+  StoredVoiceCommand,
+  VoiceCommandInput,
+  VoiceCommandLeaseInput,
+  VoiceTranscriptInput
+} from './voice-command.js';
 import type {
   DeviceHeartbeatInput,
   HealthReviewReport,
@@ -54,6 +67,10 @@ interface Env {
   HEALTH_REVIEW_UTC_HOURS?: string;
   DAILY_ALARMS_CT?: string;
   ALARM_TTL_MS?: string;
+  OPERATOR_BRIDGE_TOKEN?: string;
+  OPERATOR_DEVICE_TOKEN?: string;
+  OPERATOR_RELAY_TOKEN?: string;
+  OPERATOR_SOURCE_TOKEN?: string;
   INK_BRIDGE_TOKEN?: string;
   INK_DEVICE_TOKEN?: string;
   INK_RELAY_TOKEN?: string;
@@ -74,6 +91,7 @@ const CORS_HEADERS = {
 };
 
 const MAX_BODY_BYTES = 64 * 1024;
+const MAX_VOICE_BODY_BYTES = 280 * 1024;
 const REGISTRY_FALLBACK_MCP_COUNT = 1014;
 const REGISTRY_FALLBACK_FLEET_COUNT = 22;
 const REGISTRY_FALLBACK_AGENT_COUNT = 4;
@@ -125,11 +143,11 @@ function workspaceId(env: Env): string {
 }
 
 function defaultDeviceId(env: Env): string {
-  return env.DEFAULT_DEVICE_ID?.trim() || 'core-ink';
+  return env.DEFAULT_DEVICE_ID?.trim() || 'stopwatch';
 }
 
 function defaultSurface(env: Env): string {
-  return env.DEFAULT_SURFACE?.trim() || 'core-ink';
+  return env.DEFAULT_SURFACE?.trim() || 'stopwatch';
 }
 
 function healthStaleAfterMs(env: Env): number {
@@ -160,9 +178,9 @@ function healthReviewRunOptions(
   };
 }
 
-async function parseJsonBody<T>(request: Request): Promise<T> {
+async function parseJsonBody<T>(request: Request, maximumBytes = MAX_BODY_BYTES): Promise<T> {
   const contentLength = Number(request.headers.get('content-length') ?? '0');
-  if (Number.isFinite(contentLength) && contentLength > MAX_BODY_BYTES) {
+  if (Number.isFinite(contentLength) && contentLength > maximumBytes) {
     throw new Error('Request body is too large.');
   }
 
@@ -444,6 +462,32 @@ function rowAgentDecision(row: Record<string, SqlStorageValue>): StoredAgentDeci
   };
 }
 
+function rowVoiceCommand(row: Record<string, SqlStorageValue>): StoredVoiceCommand {
+  return {
+    id: String(row.id ?? ''),
+    idempotency_key: String(row.idempotency_key ?? ''),
+    agent_id: String(row.agent_id ?? ''),
+    progress_version: Number(row.progress_version ?? 0),
+    decision_id: String(row.decision_id ?? ''),
+    device_id: String(row.device_id ?? ''),
+    format: 'pcm_s16le',
+    sample_rate_hz: 16000,
+    duration_ms: Number(row.duration_ms ?? 0),
+    audio_base64: String(row.audio_base64 ?? ''),
+    transcript: String(row.transcript ?? ''),
+    state: String(row.state ?? 'queued') as StoredVoiceCommand['state'],
+    requires_confirmation: true,
+    created_at: Number(row.created_at ?? 0),
+    updated_at: Number(row.updated_at ?? 0),
+    expires_at: Number(row.expires_at ?? 0),
+    lease_owner: String(row.lease_owner ?? ''),
+    lease_expires_at: row.lease_expires_at === null ? null : Number(row.lease_expires_at ?? 0),
+    attempts: Number(row.attempts ?? 0),
+    error: String(row.error ?? ''),
+    payload: JSON.parse(String(row.payload_json ?? '{}')) as Record<string, unknown>
+  };
+}
+
 export class InkState extends DurableObject<Env> {
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
@@ -593,6 +637,35 @@ export class InkState extends DurableObject<Env> {
         CREATE INDEX IF NOT EXISTS idx_agent_decisions_delivery
         ON agent_decisions(state, provider, created_at);
       `);
+      this.ctx.storage.sql.exec(`
+        CREATE TABLE IF NOT EXISTS voice_commands (
+          id TEXT PRIMARY KEY,
+          idempotency_key TEXT NOT NULL UNIQUE,
+          agent_id TEXT NOT NULL,
+          progress_version INTEGER NOT NULL,
+          decision_id TEXT NOT NULL,
+          device_id TEXT NOT NULL,
+          format TEXT NOT NULL,
+          sample_rate_hz INTEGER NOT NULL,
+          duration_ms INTEGER NOT NULL,
+          audio_base64 TEXT NOT NULL,
+          transcript TEXT NOT NULL,
+          state TEXT NOT NULL,
+          requires_confirmation INTEGER NOT NULL,
+          created_at INTEGER NOT NULL,
+          updated_at INTEGER NOT NULL,
+          expires_at INTEGER NOT NULL,
+          lease_owner TEXT NOT NULL,
+          lease_expires_at INTEGER,
+          attempts INTEGER NOT NULL,
+          error TEXT NOT NULL,
+          payload_json TEXT NOT NULL
+        );
+      `);
+      this.ctx.storage.sql.exec(`
+        CREATE INDEX IF NOT EXISTS idx_voice_commands_delivery
+        ON voice_commands(state, created_at);
+      `);
     });
   }
 
@@ -644,7 +717,7 @@ export class InkState extends DurableObject<Env> {
       JSON.stringify(alert.payload)
     );
 
-    return { ok: true, alert, brief: this.brief('core-ink') };
+    return { ok: true, alert, brief: this.brief('stopwatch') };
   }
 
   setOperatorPriority(input: OperatorPriorityInput): {
@@ -728,7 +801,7 @@ export class InkState extends DurableObject<Env> {
       JSON.stringify(health.payload)
     );
 
-    return { ok: true, health, brief: this.brief('core-ink') };
+    return { ok: true, health, brief: this.brief('stopwatch') };
   }
 
   recordEvent(input: OperatorEventInput): { ok: true; event_id: string; alert?: StoredAlert } {
@@ -937,6 +1010,148 @@ export class InkState extends DurableObject<Env> {
     return { ok: true as const, decision };
   }
 
+  enqueueVoiceCommand(input: VoiceCommandInput) {
+    const existing = this.ctx.storage.sql
+      .exec<
+        Record<string, SqlStorageValue>
+      >(`SELECT * FROM voice_commands WHERE idempotency_key = ? LIMIT 1`, input.idempotency_key?.trim() ?? '')
+      .toArray()[0];
+    if (existing) {
+      return {
+        ok: true as const,
+        idempotent: true,
+        command: publicVoiceCommand(rowVoiceCommand(existing))
+      };
+    }
+
+    const normalized = normalizeVoiceCommand(input);
+    if (!normalized.ok) return normalized;
+    const command = normalized.command;
+    this.ctx.storage.sql.exec(
+      `INSERT INTO voice_commands
+        (id, idempotency_key, agent_id, progress_version, decision_id, device_id, format,
+         sample_rate_hz, duration_ms, audio_base64, transcript, state, requires_confirmation,
+         created_at, updated_at, expires_at, lease_owner, lease_expires_at, attempts, error, payload_json)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      command.id,
+      command.idempotency_key,
+      command.agent_id,
+      command.progress_version,
+      command.decision_id,
+      command.device_id,
+      command.format,
+      command.sample_rate_hz,
+      command.duration_ms,
+      command.audio_base64,
+      command.transcript,
+      command.state,
+      1,
+      command.created_at,
+      command.updated_at,
+      command.expires_at,
+      command.lease_owner,
+      command.lease_expires_at,
+      command.attempts,
+      command.error,
+      JSON.stringify(command.payload)
+    );
+    return { ok: true as const, idempotent: false, command: publicVoiceCommand(command) };
+  }
+
+  voiceCommand(id: string) {
+    const row = this.ctx.storage.sql
+      .exec<
+        Record<string, SqlStorageValue>
+      >(`SELECT * FROM voice_commands WHERE id = ? LIMIT 1`, id)
+      .toArray()[0];
+    if (!row) return { ok: false as const, status: 404, error: 'Voice command not found.' };
+    return { ok: true as const, command: publicVoiceCommand(rowVoiceCommand(row)) };
+  }
+
+  leaseVoiceCommandQueue(input: VoiceCommandLeaseInput) {
+    const now = Date.now();
+    const candidates = this.ctx.storage.sql
+      .exec<Record<string, SqlStorageValue>>(
+        `SELECT * FROM voice_commands
+         WHERE state = 'queued' OR (state = 'leased' AND lease_expires_at <= ?)
+         ORDER BY created_at ASC
+         LIMIT 20`,
+        now
+      )
+      .toArray()
+      .map(rowVoiceCommand);
+    const leased = leaseVoiceCommands({ commands: candidates, request: input, now });
+    if (!leased.ok) return leased;
+
+    for (const command of leased.commands) {
+      this.ctx.storage.sql.exec(
+        `UPDATE voice_commands
+         SET state = ?, updated_at = ?, lease_owner = ?, lease_expires_at = ?, attempts = ?
+         WHERE id = ?`,
+        command.state,
+        command.updated_at,
+        command.lease_owner,
+        command.lease_expires_at,
+        command.attempts,
+        command.id
+      );
+    }
+    return leased;
+  }
+
+  recordVoiceTranscript(id: string, input: VoiceTranscriptInput) {
+    const row = this.ctx.storage.sql
+      .exec<
+        Record<string, SqlStorageValue>
+      >(`SELECT * FROM voice_commands WHERE id = ? LIMIT 1`, id)
+      .toArray()[0];
+    const transitioned = transitionVoiceTranscript(row ? rowVoiceCommand(row) : null, input);
+    if (!transitioned.ok) return transitioned;
+    const command = transitioned.command;
+    this.ctx.storage.sql.exec(
+      `UPDATE voice_commands
+       SET transcript = ?, audio_base64 = ?, state = ?, updated_at = ?, lease_expires_at = ?,
+           error = ?, payload_json = ?
+       WHERE id = ?`,
+      command.transcript,
+      command.audio_base64,
+      command.state,
+      command.updated_at,
+      command.lease_expires_at,
+      command.error,
+      JSON.stringify(command.payload),
+      command.id
+    );
+    return { ok: true as const, command: publicVoiceCommand(command) };
+  }
+
+  confirmVoiceCommand(id: string, confirmed: boolean) {
+    const row = this.ctx.storage.sql
+      .exec<
+        Record<string, SqlStorageValue>
+      >(`SELECT * FROM voice_commands WHERE id = ? LIMIT 1`, id)
+      .toArray()[0];
+    const prepared = prepareVoiceConfirmation(row ? rowVoiceCommand(row) : null, confirmed);
+    if (!prepared.ok) return prepared;
+
+    const decisionResult = this.enqueueAgentDecision(prepared.decision);
+    if (!decisionResult.ok) return decisionResult;
+    const command = prepared.command;
+    this.ctx.storage.sql.exec(
+      `UPDATE voice_commands
+       SET state = ?, updated_at = ?, audio_base64 = ''
+       WHERE id = ?`,
+      command.state,
+      command.updated_at,
+      command.id
+    );
+    return {
+      ok: true as const,
+      command: publicVoiceCommand(command),
+      decision: decisionResult.decision
+    };
+  }
+
   heartbeat(
     input: DeviceHeartbeatInput,
     fallbackDeviceId: string
@@ -947,7 +1162,7 @@ export class InkState extends DurableObject<Env> {
     const now = Date.now();
     const device: StoredDeviceHeartbeat = {
       device_id: input.device_id?.trim() || fallbackDeviceId,
-      surface: input.surface?.trim() || 'core-ink',
+      surface: input.surface?.trim() || 'stopwatch',
       firmware_version: input.firmware_version?.trim() || '',
       battery_percent:
         typeof input.battery_percent === 'number' && Number.isFinite(input.battery_percent)
@@ -992,14 +1207,14 @@ export class InkState extends DurableObject<Env> {
       const result = this.ctx.storage.sql.exec<Record<string, SqlStorageValue>>(
         `DELETE FROM health_snapshots RETURNING 1 AS count`
       );
-      return { ok: true, cleared: result.toArray().length, brief: this.brief('core-ink') };
+      return { ok: true, cleared: result.toArray().length, brief: this.brief('stopwatch') };
     }
 
     const result = this.ctx.storage.sql.exec<Record<string, SqlStorageValue>>(
       `UPDATE alerts SET status = 'cleared', updated_at = ? WHERE status = 'active' RETURNING 1 AS count`,
       Date.now()
     );
-    return { ok: true, cleared: result.toArray().length, brief: this.brief('core-ink') };
+    return { ok: true, cleared: result.toArray().length, brief: this.brief('stopwatch') };
   }
 
   healthReview(staleAfterMs = DEFAULT_HEALTH_STALE_AFTER_MS): HealthReviewReport {
@@ -1124,7 +1339,7 @@ export class InkState extends DurableObject<Env> {
           )
           .toArray().length;
 
-        output = { ok: true, report, cleared, brief: this.brief('core-ink') };
+        output = { ok: true, report, cleared, brief: this.brief('stopwatch') };
       }
 
       const finishedAt = Date.now();
@@ -1167,7 +1382,7 @@ export class InkState extends DurableObject<Env> {
     return rowDevice(row ?? null);
   }
 
-  brief(surface: string, deviceId = 'core-ink'): ReturnType<typeof buildOperatorBrief> {
+  brief(surface: string, deviceId = 'stopwatch'): ReturnType<typeof buildOperatorBrief> {
     const alerts = this.ctx.storage.sql
       .exec<Record<string, SqlStorageValue>>(
         `SELECT * FROM alerts
@@ -1289,7 +1504,8 @@ async function runScheduledDailyAlarms(
 
 async function route(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
-  const path = url.pathname.replace(/\/+$/, '') || '/';
+  const requestedPath = url.pathname.replace(/\/+$/, '') || '/';
+  const path = canonicalOperatorPath(requestedPath);
   const method = request.method.toUpperCase();
 
   if (method === 'OPTIONS') return text('', { status: 204 });
@@ -1298,6 +1514,8 @@ async function route(request: Request, env: Env): Promise<Response> {
     return json({
       ok: true,
       service: 'calm-operator-ink-bridge',
+      product: 'calm-operator-bridge',
+      device: 'stopwatch',
       workspace: workspaceId(env),
       live_only: true
     });
@@ -1305,36 +1523,29 @@ async function route(request: Request, env: Env): Promise<Response> {
 
   if (method === 'GET' && path === '/') {
     return json({
-      service: 'calm-operator-ink-bridge',
-      description: 'Production bridge for Calm Operator Ink live operator briefs.',
+      service: 'calm-operator-bridge',
+      description: 'Production bridge for the Calm Operator device and local agent relay.',
       endpoints: [
         'GET /healthz',
-        'GET /ink/brief',
-        'GET /ink/surface-brief',
-        'GET /ink/clock',
-        'GET /ink/agent-console',
-        'POST /ink/agent-progress',
-        'POST /ink/agent-decision',
-        'POST /ink/agent-decisions/lease',
-        'POST /ink/agent-decisions/:id/receipt',
-        'POST /ink/alert',
-        'POST /ink/operator-priority',
-        'POST /ink/operator-event',
-        'POST /ink/health-snapshot',
-        'GET /ink/health-checks',
-        'POST /ink/health-checks/run',
-        'GET /ink/health-review',
-        'GET /ink/health-review/runs',
-        'POST /ink/health-review/request',
-        'POST /ink/health-review/run',
-        'POST /ink/alarms/run',
-        'POST /ink/device-heartbeat',
-        'POST /ink/clear'
-      ]
+        'GET /operator/brief',
+        'GET /operator/clock',
+        'GET /operator/agent-console',
+        'POST /operator/agent-progress',
+        'POST /operator/agent-decision',
+        'POST /operator/agent-decisions/lease',
+        'POST /operator/agent-decisions/:id/receipt',
+        'POST /operator/voice-command',
+        'GET /operator/voice-command/:id',
+        'POST /operator/voice-command/:id/confirm',
+        'POST /operator/voice-commands/lease',
+        'POST /operator/voice-command/:id/transcript',
+        'POST /operator/device-heartbeat'
+      ],
+      compatibility_alias: '/ink/*'
     });
   }
 
-  const authRole = authRoleForInkRoute(method, path);
+  const authRole = authRoleForOperatorRoute(method, requestedPath);
   if (authRole && !(await isAuthorized(request, env, authRole))) {
     return json(
       {
@@ -1369,6 +1580,40 @@ async function route(request: Request, env: Env): Promise<Response> {
   if (method === 'POST' && path === '/ink/agent-decisions/lease') {
     const body = await parseJsonBody<AgentDecisionLeaseInput>(request);
     return agentResult(await stub.leaseAgentDecisionQueue(body));
+  }
+
+  if (method === 'POST' && path === '/ink/voice-command') {
+    const body = await parseJsonBody<VoiceCommandInput>(request, MAX_VOICE_BODY_BYTES);
+    return agentResult(await stub.enqueueVoiceCommand(body));
+  }
+
+  if (method === 'POST' && path === '/ink/voice-commands/lease') {
+    const body = await parseJsonBody<VoiceCommandLeaseInput>(request);
+    return agentResult(await stub.leaseVoiceCommandQueue(body));
+  }
+
+  const voiceCommandMatch = path.match(/^\/ink\/voice-command\/([^/]+)$/);
+  if (method === 'GET' && voiceCommandMatch) {
+    return agentResult(await stub.voiceCommand(decodeURIComponent(voiceCommandMatch[1] ?? '')));
+  }
+
+  const voiceTranscriptMatch = path.match(/^\/ink\/voice-command\/([^/]+)\/transcript$/);
+  if (method === 'POST' && voiceTranscriptMatch) {
+    const body = await parseJsonBody<VoiceTranscriptInput>(request);
+    return agentResult(
+      await stub.recordVoiceTranscript(decodeURIComponent(voiceTranscriptMatch[1] ?? ''), body)
+    );
+  }
+
+  const voiceConfirmMatch = path.match(/^\/ink\/voice-command\/([^/]+)\/confirm$/);
+  if (method === 'POST' && voiceConfirmMatch) {
+    const body = await parseJsonBody<{ confirmed?: boolean }>(request);
+    return agentResult(
+      await stub.confirmVoiceCommand(
+        decodeURIComponent(voiceConfirmMatch[1] ?? ''),
+        body.confirmed === true
+      )
+    );
   }
 
   const agentReceiptMatch = path.match(/^\/ink\/agent-decisions\/([^/]+)\/receipt$/);

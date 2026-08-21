@@ -141,6 +141,33 @@
     return lines.filter((line) => line !== null).join("\n");
   }
 
+  // src/page-seo.ts
+  async function collectPageSeoData(page) {
+    if (!page.getTitle && !page.getDescription) {
+      return null;
+    }
+    const title = page.getTitle ? await page.getTitle() : null;
+    const description = page.getDescription ? await page.getDescription() : null;
+    const openGraphTitle = page.getOpenGraphTitle ? await page.getOpenGraphTitle() : null;
+    const openGraphDescription = page.getOpenGraphDescription ? await page.getOpenGraphDescription() : null;
+    const openGraphImage = page.getOpenGraphImage ? await page.getOpenGraphImage() : null;
+    const usesTitleAsOG = page.usesTitleAsOpenGraphTitle ? await page.usesTitleAsOpenGraphTitle() : false;
+    const usesDescAsOG = page.usesDescriptionAsOpenGraphDescription ? await page.usesDescriptionAsOpenGraphDescription() : false;
+    return {
+      title,
+      titleLength: title ? title.length : 0,
+      description,
+      descriptionLength: description ? description.length : 0,
+      openGraphTitle,
+      openGraphDescription,
+      openGraphImage,
+      usesTitleAsOpenGraphTitle: usesTitleAsOG,
+      usesDescriptionAsOpenGraphDescription: usesDescAsOG,
+      hasCustomOpenGraphTitle: !usesTitleAsOG && !!openGraphTitle,
+      hasCustomOpenGraphDescription: !usesDescAsOG && !!openGraphDescription
+    };
+  }
+
   // src/index.ts
   var API_BASE = "https://webflow-way-validator.vercel.app";
   var WORKER_API_BASE = "https://validation-worker.createsomething.workers.dev";
@@ -565,6 +592,8 @@
     throw lastError instanceof Error ? lastError : new Error("Request failed");
   }
   function buildValidationSubmitPayload(validationResults) {
+    const projectData = Array.isArray(validationResults.collectedData) ? validationResults.collectedData[0] : void 0;
+    const scope = projectData?.validationScope;
     return {
       url: validationResults.url,
       summary: validationResults.summary,
@@ -575,7 +604,15 @@
           severity: issue.severity,
           message: issue.message
         })) : []
-      })) : []
+      })) : [],
+      // The marketplace form uses this to reject partial runs (skipped checks or
+      // current-page scope) — a 100% pass only counts when the full suite ran.
+      scope: scope ? {
+        selectedChecks: scope.selectedChecks,
+        pageScope: scope.pageScope,
+        publishedChecks: scope.publishedChecks,
+        pageSlugsCount: scope.pageSlugsCount
+      } : void 0
     };
   }
   async function submitValidationResults({
@@ -1863,33 +1900,13 @@
               }
               let seoData = null;
               try {
-                if (item.type === "Page") {
-                  console.log(`Collecting SEO data for page: ${name}`);
-                  const title = item.getSearchTitle ? await item.getSearchTitle() : null;
-                  const description = item.getSearchDescription ? await item.getSearchDescription() : null;
-                  const openGraphTitle = item.getOpenGraphTitle ? await item.getOpenGraphTitle() : null;
-                  const openGraphDescription = item.getOpenGraphDescription ? await item.getOpenGraphDescription() : null;
-                  const openGraphImage = item.getOpenGraphImage ? await item.getOpenGraphImage() : null;
-                  const usesTitleAsOG = item.usesTitleAsOpenGraphTitle ? await item.usesTitleAsOpenGraphTitle() : false;
-                  const usesDescAsOG = item.usesDescriptionAsOpenGraphDescription ? await item.usesDescriptionAsOpenGraphDescription() : false;
-                  seoData = {
-                    title,
-                    titleLength: title ? title.length : 0,
-                    description,
-                    descriptionLength: description ? description.length : 0,
-                    openGraphTitle,
-                    openGraphDescription,
-                    openGraphImage,
-                    usesTitleAsOpenGraphTitle: usesTitleAsOG,
-                    usesDescriptionAsOpenGraphDescription: usesDescAsOG,
-                    hasCustomOpenGraphTitle: !usesTitleAsOG && !!openGraphTitle,
-                    hasCustomOpenGraphDescription: !usesDescAsOG && !!openGraphDescription
-                  };
+                seoData = await collectPageSeoData(item);
+                if (seoData) {
                   console.log(`SEO data collected for ${name}:`, {
-                    hasTitle: !!title,
-                    hasDescription: !!description,
-                    titleLength: title?.length || 0,
-                    descriptionLength: description?.length || 0
+                    hasTitle: !!seoData.title,
+                    hasDescription: !!seoData.description,
+                    titleLength: seoData.titleLength,
+                    descriptionLength: seoData.descriptionLength
                   });
                 }
               } catch (seoError) {
@@ -2275,34 +2292,26 @@
         hasCustomOpenGraphDescription: false
       };
       try {
-        if (currentPage.getSearchDescription) {
-          const description = await currentPage.getSearchDescription();
+        if (currentPage.getDescription) {
+          const description = await currentPage.getDescription();
           if (description && description.trim()) {
             seoData.description = description;
             seoData.descriptionLength = description.length;
             seoData.hasValidDescription = description.length >= 150 && description.length <= 160;
-            console.log(`Search description found: ${description.length} characters`);
+            console.log(`Meta description found: ${description.length} characters`);
           }
         }
       } catch (descError) {
-        console.warn("Error getting search description:", descError);
+        console.warn("Error getting meta description:", descError);
       }
       try {
-        if (currentPage.getSearchTitle) {
-          const title = await currentPage.getSearchTitle();
-          if (title && title.trim()) {
-            seoData.title = title;
-            seoData.titleLength = title.length;
-            seoData.hasValidTitle = title.length > 0 && title.length <= 60;
-            console.log(`Search title found: ${title.length} characters - "${title}"`);
-          }
-        } else if (currentPage.getTitle) {
+        if (currentPage.getTitle) {
           const title = await currentPage.getTitle();
           if (title && title.trim()) {
             seoData.title = title;
             seoData.titleLength = title.length;
             seoData.hasValidTitle = title.length > 0 && title.length <= 60;
-            console.log(`Page title found: ${title.length} characters - "${title}"`);
+            console.log(`SEO title found: ${title.length} characters - "${title}"`);
           }
         }
       } catch (titleError) {

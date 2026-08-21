@@ -1,0 +1,30 @@
+{
+  "name": "halfdozen-editorial",
+  "version": "0.2.0",
+  "description": "Draft evidence-bound Half Dozen audience articles every 14 days.",
+  "author": {
+    "name": "CREATE SOMETHING",
+    "email": "hello@createsomething.agency",
+    "url": "https://createsomething.agency"
+  },
+  "homepage": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/halfdozen-editorial-plugin",
+  "repository": "https://github.com/createsomethingtoday/create-something-monorepo",
+  "license": "UNLICENSED",
+  "keywords": ["half-dozen", "editorial", "audience", "article", "evidence"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Half Dozen Editorial",
+    "shortDescription": "Draft an audience-first article every 14 days.",
+    "longDescription": "Review approved Half Dozen context every 14 days and select the one evidence-bound operating idea most useful to the audience. Technical detail is optional. The plugin creates drafts and evidence ledgers only; it never schedules, publishes, or sends content.",
+    "developerName": "CREATE SOMETHING",
+    "category": "Productivity",
+    "capabilities": ["Interactive", "Read"],
+    "websiteURL": "https://createsomething.agency",
+    "defaultPrompt": [
+      "Draft the strongest Half Dozen audience article from the last 14 days of approved context.",
+      "Rank this approved context for Half Dozen audience relevance and recommend one article.",
+      "Audit this Half Dozen draft for unsupported claims, private detail, and reader fit."
+    ],
+    "brandColor": "#111111"
+  }
+}

@@ -790,13 +790,13 @@
       "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
     },
     {
-      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-package-create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-package-create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
       "kind": "topology_record",
-      "title": "@create-something/calm-operator-ink-firmware",
-      "recordId": "substrate:create-something:package:create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
+      "title": "@create-something/calm-operator-stopwatch-firmware",
+      "recordId": "substrate:create-something:package:create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
       "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
-      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-package-create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
-      "mcpUri": "substrate://topology/internal/records/substrate-create-something-package-create-something-calm-operator-ink-firmware-packages-calm-operator-ink-firmware",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-package-create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-package-create-something-calm-operator-stopwatch-firmware-packages-calm-operator-stopwatch-firmware",
       "agentCommand": "databaseLayer.topology.records.get",
       "access": [
         "read"

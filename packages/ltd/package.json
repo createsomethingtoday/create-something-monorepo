@@ -1,6 +1,6 @@
 {
 	"name": "@create-something/ltd",
-	"description": "The Philosophy of Automation Infrastructure — where we articulate why creation > consumption",
+	"description": "The operating library for AI work — practical playbooks, runbooks, readiness checks, and the Canon behind them",
 	"private": true,
 	"version": "1.0.0",
 	"type": "module",
@@ -17,15 +17,19 @@
 		"smoke": "pnpm check && pnpm smoke:canon-sidebar"
 	},
 	"scripts": {
-		"prebuild": "pnpm --filter @create-something/canon package && pnpm --filter @create-something/tufte package",
+		"prepare:local-deps": "pnpm --filter @create-something/playbook-mcp build",
+		"prebuild": "pnpm prepare:local-deps && pnpm --filter @create-something/canon package && pnpm --filter @create-something/tufte package",
+		"precheck": "pnpm prepare:local-deps",
 		"dev": "vite dev",
 		"build": "vite build",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
 		"smoke": "pnpm check && pnpm smoke:canon-sidebar",
 		"test:canon-language": "node --import tsx --test test/canon-conviction-language.test.ts",
+		"test:operator-library": "node --import tsx --test test/operator-library.test.ts",
+		"test:identity": "vitest run src/lib/server/identity.test.ts",
 		"test:search": "vitest run src/lib/search/sitemap.test.ts",
-		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings && pnpm test:canon-language && pnpm test:search",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings && pnpm test:canon-language && pnpm test:operator-library && pnpm test:identity && pnpm test:search",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings --watch",
 		"smoke:canon-sidebar": "tsx scripts/canon-sidebar-smoke.ts",
 		"deploy": "pnpm build && node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=createsomething-ltd",
@@ -33,25 +37,27 @@
 		"cf-typegen": "node ../../scripts/run-wrangler.mjs types"
 	},
 	"dependencies": {
+		"@create-something/auth-platform": "workspace:*",
 		"@create-something/canon": "workspace:*",
+		"@create-something/playbook-mcp": "workspace:*",
 		"@create-something/tufte": "workspace:*"
 	},
 	"devDependencies": {
 		"@cloudflare/workers-types": "^4.20260621.1",
 		"@sveltejs/adapter-auto": "^7.0.0",
 		"@sveltejs/adapter-cloudflare": "^7.2.4",
-		"@sveltejs/kit": "^2.47.1",
+		"@sveltejs/kit": "^2.70.2",
 		"@sveltejs/vite-plugin-svelte": "^6.2.1",
 		"@types/node": "^24.10.1",
 		"autoprefixer": "^10.4.22",
 		"mdsvex": "^0.12.6",
 		"postcss": "^8.5.6",
 		"postcss-import": "^16.1.1",
-		"svelte": "^5.41.0",
+		"svelte": "^5.56.9",
 		"svelte-check": "^4.3.3",
 		"tailwindcss": "^3.4.18",
 		"typescript": "^5.9.3",
-		"vite": "^7.1.10",
+		"vite": "^7.3.6",
 		"vitest": "^4.0.16",
 		"wrangler": "^4.103.0"
 	}

@@ -217,6 +217,7 @@
   variant="hero"
   layout="split"
   titleLevel="h1"
+  expression="editorial"
   eyebrow="Cloudflare Workflow Runtime"
   title="Cloudflare runtime with controlled workflows."
   description="Cloudflare is the deployable runtime for controlled workflow surfaces. It carries the routes, the state, and the queues, and every handoff stays rollback-ready."
@@ -266,6 +267,7 @@
 </PerformanceNarrativeStage>
 
 <PerformanceConversionHandoff
+  expression="editorial"
   eyebrow="Map the runtime"
   title="Bring the workflow that needs a controlled route."
   description="I’ll map the route, the permissions, and the evidence your team needs before a Cloudflare build becomes production work."

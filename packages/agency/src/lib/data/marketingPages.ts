@@ -208,6 +208,25 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     selfHealing: ['copy:heal', 'search-route:sync']
   },
   {
+    path: '/agent-readiness',
+    cluster: 'core-services',
+    role: 'support',
+    decision: 'index',
+    audience: 'Business owners who need evidence of what AI buyers understand before implementation.',
+    funnelStage: 'book',
+    intent: 'Diagnose AI buyer readiness with bounded questions, cited sources, and a prioritized plan.',
+    primaryAction: 'Book the audit',
+    requiredTerms: ['AI Buyer Readiness Audit', 'buyer questions', 'cited sources', 'Build', 'Control'],
+    requiredLinks: ['/services', '/control'],
+    schema: 'page',
+    search: {
+      changefreq: 'monthly',
+      priority: '0.9',
+      lastmod: '2026-08-12'
+    },
+    selfHealing: ['copy:heal', 'search-route:sync']
+  },
+  {
     path: '/book',
     cluster: 'conversion',
     role: 'pillar',
@@ -715,14 +734,14 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     funnelStage: 'evaluate',
     intent:
       'Index measured workflow results, failed gates, evidence sources, and remaining questions.',
-    primaryAction: 'Read the first report',
+    primaryAction: 'Read the reports',
     requiredTerms: ['Field Reports', 'measured', 'evidence', 'human', 'result'],
-    requiredLinks: ['/field-reports/template-review'],
+    requiredLinks: ['/field-reports/template-review', '/field-reports/upstream-contributions'],
     schema: 'page',
     search: {
       changefreq: 'monthly',
       priority: '0.82',
-      lastmod: '2026-07-10'
+      lastmod: '2026-08-12'
     },
     selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
   },
@@ -743,6 +762,31 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
       changefreq: 'monthly',
       priority: '0.86',
       lastmod: '2026-07-12'
+    },
+    selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
+  },
+  {
+    path: '/field-reports/upstream-contributions',
+    cluster: 'field-reports',
+    role: 'support',
+    decision: 'index',
+    audience: 'Teams evaluating whether CREATE SOMETHING contributes to its core infrastructure.',
+    funnelStage: 'evaluate',
+    intent: 'Show accepted upstream work with direct merge, release, and contributor receipts.',
+    primaryAction: 'Inspect the receipts',
+    requiredTerms: [
+      'CTX',
+      'OpenAI Codex Security',
+      'merged',
+      'released',
+      'independent open-source contributor'
+    ],
+    requiredLinks: ['/field-reports'],
+    schema: 'page',
+    search: {
+      changefreq: 'monthly',
+      priority: '0.84',
+      lastmod: '2026-08-12'
     },
     selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
   },
@@ -818,7 +862,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     search: {
       changefreq: 'weekly',
       priority: '0.88',
-      lastmod: '2026-08-02'
+      lastmod: '2026-08-09'
     },
     selfHealing: ['copy:heal', 'search-route:sync']
   },
@@ -839,7 +883,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
       search: {
         changefreq: 'monthly',
         priority: guide.priority,
-        lastmod: '2026-08-02'
+        lastmod: '2026-08-09'
       },
       selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
     })

@@ -68,6 +68,8 @@
     }
   };
 
+  const organizationId = 'https://createsomething.ltd/#organization';
+  const organizationLogoUrl = 'https://createsomething.ltd/icon-512.png';
   const config = propertyConfig[propertyName];
   const fullTitle = title ? title.includes('CREATE SOMETHING') ? title : `${title} | ${config.name}` : config.name;
   const fullDescription = description || config.tagline;
@@ -76,25 +78,41 @@
   const fullOgImage = ogImage.startsWith('http') ? ogImage : `${config.domain}${ogImage}`;
   const effectiveBreadcrumbs = breadcrumbs.length > 0 ? breadcrumbs : createBreadcrumbs(canonicalPath);
 
-  // Schema.org Organization
+  const websiteId = `${config.domain}/#website`;
+  const webPageId = `${canonicalUrl}#webpage`;
+  const socialImageId = `${fullOgImage}#image`;
+  const organizationReference = { '@id': organizationId };
+  const socialImage = {
+    '@type': 'ImageObject',
+    '@id': socialImageId,
+    url: fullOgImage,
+    contentUrl: fullOgImage,
+    width: 1200,
+    height: 630
+  };
+
+  // Schema.org Organization. This remains intentionally property-neutral so
+  // answer engines receive one entity graph across every public surface.
   const organizationSchema = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
+    '@id': organizationId,
     name: 'CREATE SOMETHING',
     alternateName: 'Create Something Agency',
-    url: config.domain,
-    logo: `${config.domain}/favicon.png`,
+    url: 'https://createsomething.ltd',
+    logo: {
+      '@type': 'ImageObject',
+      '@id': `${organizationLogoUrl}#image`,
+      url: organizationLogoUrl,
+      contentUrl: organizationLogoUrl,
+      width: 512,
+      height: 512
+    },
     sameAs: [
       'https://www.linkedin.com/in/micahryanjohnson/',
       'https://github.com/createsomethingtoday'
     ],
-    description: propertyName === 'agency'
-      ? 'CREATE SOMETHING builds calm, transparent AI workflow systems with MCP connectivity, operating boundaries, and evidence-backed delivery.'
-      : propertyName === 'io'
-      ? 'Research papers on AI-native development with tracked experiments and rigorous methodology'
-      : propertyName === 'space'
-      ? 'Interactive tutorials for learning AI-native development by doing'
-      : 'Design and technology practice',
+    description: 'CREATE SOMETHING makes delegated work trustworthy with practical playbooks, operating boundaries, and evidence-backed delivery.',
     founder: {
       '@type': 'Person',
       name: 'Micah Johnson',
@@ -125,26 +143,25 @@
   const websiteSchema = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
+    '@id': websiteId,
     name: config.name,
     url: config.domain,
     description: config.tagline,
-    publisher: organizationSchema,
+    publisher: organizationReference,
     inLanguage: 'en-US'
   };
 
   const webPageSchema = {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
+    '@id': webPageId,
     name: title,
     headline: title,
     description: fullDescription,
     url: canonicalUrl,
-    isPartOf: {
-      '@type': 'WebSite',
-      name: config.name,
-      url: config.domain
-    },
-    publisher: organizationSchema,
+    isPartOf: { '@id': websiteId },
+    publisher: organizationReference,
+    primaryImageOfPage: socialImage,
     inLanguage: 'en-US',
     about: propertyName === 'agency'
       ? [
@@ -162,18 +179,19 @@
     '@type': 'Article',
     headline: title,
     description: description,
-    image: fullOgImage,
+    image: socialImage,
     ...(publishedTime && { datePublished: publishedTime }),
     ...((modifiedTime || publishedTime) && { dateModified: modifiedTime || publishedTime }),
-    author: {
-      '@type': authorType,
-      name: author,
-      url: authorUrl || (authorType === 'Organization' ? config.domain : undefined)
-    },
-    publisher: organizationSchema,
+    author: authorType === 'Organization'
+      ? { '@id': organizationId, name: author }
+      : {
+          '@type': 'Person',
+          name: author,
+          ...(authorUrl && { url: authorUrl })
+        },
+    publisher: organizationReference,
     mainEntityOfPage: {
-      '@type': 'WebPage',
-      '@id': canonicalUrl
+      '@id': webPageId
     },
     ...(articleSection && { articleSection }),
     ...(articleTags.length > 0 && { keywords: articleTags.join(', ') })
@@ -185,7 +203,7 @@
     '@type': 'Service',
     name: service.name,
     description: service.description,
-    provider: organizationSchema,
+    provider: organizationReference,
     serviceType: service.type || 'Professional Service',
     areaServed: {
       '@type': 'Place',
@@ -276,11 +294,7 @@
     '@type': 'Course',
     name: course.name || title,
     description: course.description || description,
-    provider: {
-      '@type': 'Organization',
-      name: config.name,
-      url: config.domain
-    },
+    provider: organizationReference,
     ...(course.instructor && {
       instructor: {
         '@type': 'Person',
@@ -364,6 +378,11 @@
   <meta property="og:title" content={fullTitle} />
   <meta property="og:description" content={fullDescription} />
   <meta property="og:image" content={fullOgImage} />
+  <meta property="og:image:secure_url" content={fullOgImage} />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content={fullTitle} />
   <meta property="og:site_name" content={config.name} />
   {#if ogType === 'article'}
     {#if publishedTime}
@@ -381,11 +400,12 @@
   {/if}
 
   <!-- Twitter -->
-  <meta property="twitter:card" content={twitterCard} />
-  <meta property="twitter:url" content={canonicalUrl} />
-  <meta property="twitter:title" content={fullTitle} />
-  <meta property="twitter:description" content={fullDescription} />
-  <meta property="twitter:image" content={fullOgImage} />
+  <meta name="twitter:card" content={twitterCard} />
+  <meta name="twitter:url" content={canonicalUrl} />
+  <meta name="twitter:title" content={fullTitle} />
+  <meta name="twitter:description" content={fullDescription} />
+  <meta name="twitter:image" content={fullOgImage} />
+  <meta name="twitter:image:alt" content={fullTitle} />
 
   <!-- Schema.org JSON-LD -->
   {@html jsonLd(organizationSchema)}
@@ -426,8 +446,6 @@
   {/if}
 
   <!-- Additional SEO -->
-  <link rel="icon" href="/favicon.png" type="image/png" />
-  <link rel="apple-touch-icon" href="/favicon.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="format-detection" content="telephone=no" />
   <meta http-equiv="x-ua-compatible" content="IE=edge" />

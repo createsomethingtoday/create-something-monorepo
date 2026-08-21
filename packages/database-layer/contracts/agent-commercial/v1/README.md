@@ -1,0 +1,110 @@
+# Agent Commercial Contract v1
+
+Status: active contract; payment activation remains approval-gated.
+
+Schema identifier: `create-something.agent-commercial.v1`
+
+## Purpose
+
+This contract is the commercial policy layer over CREATE SOMETHING's agent-facing
+infrastructure. It gives MCP, HTTP, and internal callers one provider-neutral
+decision surface:
+
+`evaluate(capability, principal, entitlement, payment, approval) -> allow | deny | payment_required | approval_required`
+
+Runtime adapters use the receipt-bearing interface before execution:
+
+`authorize(contract, request, decision identity, receipt store) -> decision + committed receipt`
+
+Cloudflare Workers, Identity, D1, and x402 are adapters behind that interface.
+They do not own the commercial policy. PostgreSQL is not required by this
+contract.
+
+The evaluator accepts normalized facts from trusted adapters. Raw agent input
+must never be allowed to self-assert authentication, an entitlement, a verified
+payment, a private grant, or an approval receipt.
+
+The existing Managed AI Operations contract remains authoritative for service
+pricing, billing units, usage review, and checkout. This contract classifies
+individual machine-facing capabilities beneath that offer.
+
+## Access classes
+
+| Class      | Meaning                                                                                   |
+| ---------- | ----------------------------------------------------------------------------------------- |
+| `free`     | Public, read-only discovery or education.                                                 |
+| `entitled` | Included in an active client or product entitlement; no per-call charge is implied.       |
+| `paid`     | A separately priced bounded result requiring a verified payment receipt before execution. |
+| `private`  | Explicitly authorized client/operator access. Payment can never grant private access.     |
+
+Uncataloged capabilities fail closed. Every decision requires a receipt,
+including denials and payment requirements.
+
+## Tier ownership
+
+| Tier       | Ownership                                                                                |
+| ---------- | ---------------------------------------------------------------------------------------- |
+| Database   | Catalog, provenance, freshness, entitlements, payment and approval references, receipts. |
+| Automation | Pure evaluator plus runtime, identity, entitlement, payment, and receipt adapters.       |
+| Judgment   | Classification, price approval, production promotion, exceptions, and rollback.          |
+
+## Cloudflare boundary
+
+- Workers and Agents run the tool or resource.
+- CREATE SOMETHING Identity identifies the principal.
+- D1 supplies entitlements and stores governed receipts.
+- x402 may satisfy a `paid` policy only after its price and production activation are approved.
+- Payment never bypasses entitlement, private grant, side-effect approval, or status checks.
+
+The production D1 receipt schema and read-only readiness surface are active.
+The current x402 adapter and agent-readiness audit remain intentionally
+inactive. Activating them requires the requirements recorded in the payment
+policy plus a separate production promotion path.
+
+## Files
+
+- `schema.json` — closed JSON Schema for the contract.
+- `authorization-receipt.schema.json` — closed schema for committed allow and block receipts.
+- `d1-preview/` — local-only D1 migration and Wrangler configuration for receipt-store proof.
+- `PRODUCTION_ROLLBACK.md` — fail-closed controls, rollback triggers, and verification.
+- `canary-receipts/` — sanitized public testnet evidence; never wallet secrets or raw authorizations.
+- `create-something.json` — canonical CREATE SOMETHING capability catalog.
+- `scripts/verify-agent-commercial-contract.mjs` — schema and semantic verifier.
+- `src/agent-commercial-contract.ts` — provider-neutral decision and receipt-bearing authorization functions.
+
+`authorizeAgentCommercialAccess` requires a store adapter with an atomic `commit`
+operation. A retry with identical facts replays the existing receipt. Reusing a
+decision ID for different facts throws `AgentCommercialReceiptConflictError`.
+Provider execution starts only after an `allow` decision and a committed receipt.
+The contract does not activate x402. The production D1 sink is bound to the
+database-layer Worker, but that Worker exposes readiness only and no public
+receipt-write route.
+
+The D1 adapter uses prepared statements and one atomic `batch()` containing the
+idempotent insert and primary readback. The preview Wrangler configuration uses
+an all-zero local database ID and is not a deployable production binding.
+
+The x402 verifier accepts only v2 `exact` authorizations on Base Sepolia
+(`eip155:84532`). It calls a supplied facilitator's verification operation and
+records `settlement: not_attempted`; it contains no wallet and never calls a
+settlement operation.
+
+The separate CRE-1701 canary is the approval-gated testnet promotion harness.
+It uses a disposable mode-0600 key file, checks the official Base Sepolia test
+USDC balance, checks facilitator support before signing, verifies before one
+settlement attempt, and emits a sanitized receipt without the private key,
+signature, or raw authorization. It is fixed to one atomic unit of test USDC;
+mainnet, production activation, retries after an indeterminate settlement, and
+deployment are outside its contract.
+
+Run:
+
+```bash
+pnpm --filter @create-something/database-layer agent-commercial:contract:check
+```
+
+The canary CLI is intentionally not a production payment command:
+
+```bash
+pnpm --filter @create-something/database-layer agent-commercial:x402:canary -- preflight --key-file /absolute/path/to/disposable.key
+```

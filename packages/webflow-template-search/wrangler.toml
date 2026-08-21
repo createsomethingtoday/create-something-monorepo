@@ -13,6 +13,13 @@ binding = "DB"
 database_name = "webflow-template-search"
 database_id = "bffab674-a86b-456b-a72d-f620b2755396"
 
+# Marketplace code-component telemetry fallback (see src/telemetry.ts). Analytics
+# Engine, not D1: beacon volume during a page-SDK outage would add write load to
+# the production search index, and AE is built for high-rate event ingestion.
+[[analytics_engine_datasets]]
+binding = "TELEMETRY_AE"
+dataset = "marketplace_component_telemetry"
+
 [vars]
 ENVIRONMENT = "development"
 AIRTABLE_BASE_ID = "appMoIgXMTTTNIc3p"

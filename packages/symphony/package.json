@@ -11,7 +11,8 @@
       "src/cli.js",
       "src/orchestrator.js",
       "src/tracker/linear.js",
-      "src/canonical-harness-gate.js"
+      "src/canonical-harness-gate.js",
+      "src/executor-routing-contract.js"
     ],
     "boot": "node src/cli.js ../../automation/symphony/code-quality/WORKFLOW.md --once",
     "smoke": "pnpm check && pnpm test"
@@ -23,6 +24,8 @@
     "./config": "./src/config.js",
     "./canonical-harness-gate": "./src/canonical-harness-gate.js",
     "./canonical-harness-receipt-schema": "./schemas/canonical-harness-receipt.v1.schema.json",
+    "./executor-routing-contract": "./src/executor-routing-contract.js",
+    "./executor-routing-schema": "./schemas/executor-routing.v1.schema.json",
     "./orchestrator": "./src/orchestrator.js",
     "./tracker/linear": "./src/tracker/linear.js",
     "./work-unit-contract": "./src/work-unit-contract.js"
@@ -41,7 +44,7 @@
   },
   "dependencies": {
     "ajv": "^8.17.1",
-    "liquidjs": "^10.25.0",
+    "liquidjs": "^10.29.0",
     "yaml": "^2.8.2"
   },
   "author": "CREATE SOMETHING <hello@createsomething.agency>",

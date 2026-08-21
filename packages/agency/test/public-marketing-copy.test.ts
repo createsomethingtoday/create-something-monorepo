@@ -15,6 +15,12 @@ function packageRelative(file: string): string {
   return file.replace(`${packageRoot}/`, '');
 }
 
+function conversionHandoffOpenings(source: string): string[] {
+  return [...source.matchAll(/<PerformanceConversionHandoff\b[\s\S]*?>/g)].map(
+    ([opening]) => opening
+  );
+}
+
 test('public agency copy guard discovers every visitor-facing route', () => {
   const files = discoverPublicCopyFiles().map(packageRelative);
 
@@ -52,6 +58,27 @@ test('public agency copy guard catches phrases split across markup whitespace', 
         replacement: 'approval authority'
       }
     ]);
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('public agency copy guard permits the bounded AI Buyer Readiness category', () => {
+  const tempDir = mkdtempSync(path.join(tmpdir(), 'agency-copy-'));
+  const fixture = path.join(tempDir, '+page.svelte');
+
+  try {
+    writeFileSync(
+      fixture,
+      '<h1>AI Buyer Readiness Audit</h1><p>Test 25 buyer questions for AI buyers.</p>'
+    );
+    assert.deepEqual(auditPublicCopy([fixture]), []);
+
+    writeFileSync(fixture, '<p>The buyer needs a funnel.</p>');
+    assert.deepEqual(
+      auditPublicCopy([fixture]).map((finding) => finding.rule),
+      ['buyer-language']
+    );
   } finally {
     rmSync(tempDir, { recursive: true, force: true });
   }
@@ -155,15 +182,21 @@ test('public agency surfaces state the OpenAI conviction and owned-system bounda
     /If the model\s+or agent environment\s+changes, the system does not have to start over\./
   );
   assert.match(home, />Why we build this way</);
-  assert.doesNotMatch(home, /Current agent environment|Designed to outlast any model|MCP contracts, harnesses/);
-  assert.match(home, /https:\/\/createsomething\.ltd\/canon\/concepts\/conviction-without-dependence/);
+  assert.doesNotMatch(
+    home,
+    /Current agent environment|Designed to outlast any model|MCP contracts, harnesses/
+  );
+  assert.match(
+    home,
+    /https:\/\/createsomething\.ltd\/canon\/concepts\/conviction-without-dependence/
+  );
   assert.match(stack, /Model-opinionated in practice\. Model-portable by design\./);
   assert.match(stack, /data, MCP contracts, harnesses, skills, prompts, policy, evals, receipts/i);
   assert.match(partners, /OpenAI is the primary reasoning and agent environment/i);
   assert.match(partners, /open-weight and custom models/i);
 });
 
-test('the homepage leads with a Paper-led operating-system message before its provider stack', () => {
+test('the homepage leads with a Playbook-led operating-system message before its provider stack', () => {
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
   const opening = home.slice(
     home.indexOf('<PerformanceCampaignOpening'),
@@ -175,33 +208,46 @@ test('the homepage leads with a Paper-led operating-system message before its pr
   );
 
   assert.match(home, /title="AI Operating Systems \| CREATE SOMETHING \.agency"/);
-  assert.match(opening, /eyebrow="Operating systems for AI work"/);
-  assert.match(opening, /title="Put the work on paper before you put AI to work\."/);
+  assert.match(opening, /eyebrow="CREATE SOMETHING \.agency"/);
+  assert.match(opening, /propertyRole="Embedded AI operating partner"/);
+  assert.match(opening, /expression="editorial"/);
+  assert.match(opening, /title="Your people and AI need the same playbook\."/);
   assert.match(
     opening,
-    /We map one workflow, mark what can run, name where people decide, and attach proof to every important action\./
+    /We embed with operators to map one workflow, install its AI infrastructure, and hand back a client-owned Playbook\./
   );
-  assert.match(opening, /Then we build the system with OpenAI and Cloudflare\./);
-  assert.match(opening, /media=\{paperOperatingRouteMedia\}/);
-  assert.match(opening, /mode="paper"/);
+  assert.match(
+    opening,
+    /Offense advances approved work\. Defense protects decisions, proof, and recovery\./
+  );
+  assert.match(opening, /The opposition is ambiguity, AI out of reach, and untrusted automation\./);
+  assert.match(opening, /media=\{playbookHomeHeroMedia\}/);
+  assert.match(opening, /mediaMobilePlacement="background"/);
+  assert.doesNotMatch(opening, /mode="paper"|paperOperatingRouteMedia/);
   assert.match(ownership, /Built with OpenAI and Cloudflare\. Designed to remain yours\./);
   assert.match(
     ownership,
     /CREATE SOMETHING owns the system\. OpenAI provides intelligence\. Cloudflare provides\s+infrastructure\./
   );
-  assert.match(ownership, /Your\s+team keeps the map, rules, history, and recovery path\./);
+  assert.match(ownership, /Your\s+team\s+keeps the map, rules, history, and recovery path\./);
   assert.doesNotMatch(home, /Cloudflare OS/);
 });
 
 test('commercial decision routes lead with plain meaning before owned terminology', () => {
   const layout = readFileSync(new URL('../src/routes/+layout.svelte', import.meta.url), 'utf8');
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
-  const services = readFileSync(new URL('../src/routes/services/+page.svelte', import.meta.url), 'utf8');
+  const services = readFileSync(
+    new URL('../src/routes/services/+page.svelte', import.meta.url),
+    'utf8'
+  );
   const servicesMapPreview = readFileSync(
     new URL('../src/lib/components/ServicesMapPreview.svelte', import.meta.url),
     'utf8'
   );
-  const productsPage = readFileSync(new URL('../src/routes/products/+page.svelte', import.meta.url), 'utf8');
+  const productsPage = readFileSync(
+    new URL('../src/routes/products/+page.svelte', import.meta.url),
+    'utf8'
+  );
   const stack = readFileSync(new URL('../src/routes/stack/+page.svelte', import.meta.url), 'utf8');
   const proof = readFileSync(
     new URL('../src/routes/proof/marketplace-workflow/+page.svelte', import.meta.url),
@@ -213,11 +259,14 @@ test('commercial decision routes lead with plain meaning before owned terminolog
   assert.doesNotMatch(layout, /label: 'How I Work'/);
   assert.doesNotMatch(layout, /label: 'Stack Boundary'/);
 
-  assert.match(home, /title="Put the work on paper before you put AI to work\."/);
-  assert.match(home, /We map one workflow, mark what can run, name where people decide/);
+  assert.match(home, /title="Your people and AI need the same playbook\."/);
+  assert.match(home, /We embed with operators to map one workflow/);
   assert.match(home, />See the Marketplace workflow</);
   assert.match(home, /label: 'Control',[\s\S]*?value: 'Run \/ Wait \/ Stop'/);
-  const heroProof = home.slice(home.indexOf('const heroProofItems'), home.indexOf('const serviceFlowSteps'));
+  const heroProof = home.slice(
+    home.indexOf('const heroProofItems'),
+    home.indexOf('const serviceFlowSteps')
+  );
   const heroOpening = home.slice(
     home.indexOf('<PerformanceCampaignOpening'),
     home.indexOf('</PerformanceCampaignOpening>')
@@ -230,10 +279,10 @@ test('commercial decision routes lead with plain meaning before owned terminolog
   assert.match(servicesMapPreview, /See the operating path before deciding to build/);
   assert.doesNotMatch(services, /PerformanceFieldSequence|PerformanceThesisConditions/);
 
-  assert.match(productsPage, /title="Map the system\. Control the work\."/);
-  assert.match(productsPage, /CREATE SOMETHING Map stands alone/);
-  assert.match(productsPage, /CREATE SOMETHING Control stands alone/);
-  assert.match(productsPage, /Control includes Map/);
+  assert.match(productsPage, /title="One playbook\. Three operating paths\."/);
+  assert.match(productsPage, /Map defines the client-owned Playbook/);
+  assert.match(productsPage, /Build makes its approved Runbooks executable/);
+  assert.match(productsPage, /Control operates and improves the system/);
   assert.doesNotMatch(productsPage, /Product hierarchy|Product protocol|Operating sequence/);
 
   assert.match(stack, /You keep the accounts, data, approval rights, and operating history/);
@@ -243,19 +292,209 @@ test('commercial decision routes lead with plain meaning before owned terminolog
   assert.match(proof, /prototype measurements, not customer ROI claims/);
 });
 
+test('public Agency commercial propositions declare the shared editorial expression', () => {
+  const campaignRoutes = [
+    'services',
+    'practice',
+    'stack',
+    'map',
+    'control',
+    'products',
+    'products/ground',
+    'products/loom',
+    'field-reports',
+    'field-reports/template-review',
+    'field-reports/upstream-contributions',
+    'proof/marketplace-workflow',
+    'delivery',
+    'experiments'
+  ];
+  const sectionHeroRoutes = [
+    'about',
+    'cloudflare',
+    'contact',
+    'for-service-providers',
+    'partners',
+    'security',
+    'use-cases/business',
+    'use-cases/enterprise'
+  ];
+
+  for (const route of campaignRoutes) {
+    const source = readFileSync(
+      new URL(`../src/routes/${route}/+page.svelte`, import.meta.url),
+      'utf8'
+    );
+    const opening = source.slice(
+      source.indexOf('<PerformanceCampaignOpening'),
+      source.indexOf('</PerformanceCampaignOpening>')
+    );
+    assert.match(
+      opening,
+      /expression="editorial"/,
+      `${route} must opt into editorial campaign type`
+    );
+  }
+
+  for (const route of sectionHeroRoutes) {
+    const source = readFileSync(
+      new URL(`../src/routes/${route}/+page.svelte`, import.meta.url),
+      'utf8'
+    );
+    const hero = source.slice(
+      source.indexOf('<PerformancePageSection'),
+      source.indexOf('</PerformancePageSection>')
+    );
+    assert.match(
+      hero,
+      /expression="editorial"/,
+      `${route} must opt into editorial proposition type`
+    );
+  }
+
+  const governanceProduct = readFileSync(
+    new URL('../src/lib/components/GovernanceProductPage.svelte', import.meta.url),
+    'utf8'
+  );
+  const methodology = readFileSync(
+    new URL('../src/routes/methodology/+page.svelte', import.meta.url),
+    'utf8'
+  );
+  const workflows = readFileSync(
+    new URL('../src/routes/workflows/+page.svelte', import.meta.url),
+    'utf8'
+  );
+
+  assert.match(governanceProduct, /<PerformancePageSection[\s\S]*?expression="editorial"/);
+  assert.match(
+    methodology,
+    /\.hero-title\s*\{[\s\S]*?font-family:\s*var\(--font-performance-editorial\)/
+  );
+  assert.match(
+    workflows,
+    /<PerformanceCampaignOpening[\s\S]*?expression="editorial"/,
+    'the workflow library proposition must use the shared Agency editorial face'
+  );
+});
+
+test('commercial conversion handoffs use editorial propositions while task surfaces stay field-led', () => {
+  const commercialRoutes = [
+    '',
+    'about',
+    'cloudflare',
+    'control',
+    'delivery',
+    'field-reports',
+    'field-reports/template-review',
+    'field-reports/upstream-contributions',
+    'for-service-providers',
+    'map',
+    'methodology',
+    'partners',
+    'practice',
+    'products',
+    'products/ground',
+    'products/loom',
+    'proof/marketplace-workflow',
+    'security',
+    'stack',
+    'use-cases/business',
+    'use-cases/enterprise',
+    'workflows'
+  ];
+
+  for (const route of commercialRoutes) {
+    const routePath = route ? `${route}/+page.svelte` : '+page.svelte';
+    const source = readFileSync(new URL(`../src/routes/${routePath}`, import.meta.url), 'utf8');
+    const openings = conversionHandoffOpenings(source);
+
+    assert.ok(openings.length > 0, `${route || 'home'} must render a conversion handoff`);
+    for (const opening of openings) {
+      assert.match(
+        opening,
+        /expression="editorial"/,
+        `${route || 'home'} conversion propositions must use the editorial expression`
+      );
+    }
+  }
+
+  const governanceProduct = readFileSync(
+    new URL('../src/lib/components/GovernanceProductPage.svelte', import.meta.url),
+    'utf8'
+  );
+  for (const opening of conversionHandoffOpenings(governanceProduct)) {
+    assert.match(opening, /expression="editorial"/);
+  }
+
+  const taskRoutes = [
+    'book',
+    'dify',
+    'dify/agent-eval-gates',
+    'dify/mcp-control-plane',
+    'dify/ship-dify-app-with-mcp-tools',
+    'dify/template-marketplace-proof'
+  ];
+
+  for (const route of taskRoutes) {
+    const source = readFileSync(
+      new URL(`../src/routes/${route}/+page.svelte`, import.meta.url),
+      'utf8'
+    );
+    const openings = conversionHandoffOpenings(source);
+
+    assert.ok(openings.length > 0, `${route} must render a conversion handoff`);
+    for (const opening of openings) {
+      assert.doesNotMatch(
+        opening,
+        /expression="editorial"/,
+        `${route} remains an operational field surface`
+      );
+    }
+  }
+});
+
+test('the Practice argument is editorial while its operating artifacts stay field-led', () => {
+  const practice = readFileSync(
+    new URL('../src/routes/practice/+page.svelte', import.meta.url),
+    'utf8'
+  );
+  const argumentOpening = practice.match(/<PerformanceNarrativeStage\b[\s\S]*?>/)?.[0] ?? '';
+  const diagnosticArtifact = practice.slice(
+    practice.indexOf('<PerformanceThesisConditions'),
+    practice.indexOf('/>', practice.indexOf('<PerformanceThesisConditions')) + 2
+  );
+
+  assert.match(argumentOpening, /expression="editorial"/);
+  assert.doesNotMatch(
+    diagnosticArtifact,
+    /expression="editorial"/,
+    'the diagnostic artifact keeps the field typography hierarchy'
+  );
+});
+
 test('the homepage operating story preserves the boundary in reader-facing language', () => {
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
-  const description = home.match(
-    /id="agency-operating-story"[\s\S]*?description="([^"]+)"/
-  )?.[1];
+  const description = home.match(/id="agency-operating-story"[\s\S]*?description="([^"]+)"/)?.[1];
 
   assert(description, 'Agency operating-story description is missing');
   assert.doesNotMatch(description, /\b(?:the page|this page|this section|holds one argument)\b/i);
   assert.doesNotMatch(description, /\b(?:consequential judgment|first lane|proof attached)\b/i);
   assert.match(description, /\b(?:team|operator|you)\b/i, 'decision owner is not visible');
-  assert.match(description, /\b(?:limit|decide|approval|stop)\w*\b/i, 'authority boundary is missing');
-  assert.match(description, /\b(?:map|handoff|workflow|test|run)\w*\b/i, 'bounded workflow is missing');
-  assert.match(description, /\b(?:record|receipt|proof|evidence)\w*\b/i, 'inspectable proof is missing');
+  assert.match(
+    description,
+    /\b(?:limit|decide|approval|stop)\w*\b/i,
+    'authority boundary is missing'
+  );
+  assert.match(
+    description,
+    /\b(?:map|handoff|workflow|test|run)\w*\b/i,
+    'bounded workflow is missing'
+  );
+  assert.match(
+    description,
+    /\b(?:record|receipt|proof|evidence)\w*\b/i,
+    'inspectable proof is missing'
+  );
 });
 
 test('the complete operating story translates its method into people, actions, and records', () => {
@@ -267,7 +506,10 @@ test('the complete operating story translates its method into people, actions, a
     /Authority scoped|Signal → proof|consequential authority|first lane|inspectable wake|Governance directs flow|Proof Graph/i
   );
   assert.match(story, /team decides what can run, what needs approval, and what must stop/i);
-  assert.match(story, /where work starts[^.]*what the agent may do[^.]*where a person must approve/i);
+  assert.match(
+    story,
+    /where work starts[^.]*what the agent may do[^.]*where a person must approve/i
+  );
   assert.match(story, /every action leaves a record your team can review/i);
   assert.match(story, /system cannot make the final decision/i);
 });
@@ -282,7 +524,10 @@ test('the mobile operating story removes decorative mini artifacts from the read
 });
 
 test('commercial decision routes use one primary and one conversational action', () => {
-  const messaging = readFileSync(new URL('../src/lib/data/marketingCopy.ts', import.meta.url), 'utf8');
+  const messaging = readFileSync(
+    new URL('../src/lib/data/marketingCopy.ts', import.meta.url),
+    'utf8'
+  );
   const routes = [
     '../src/routes/+layout.svelte',
     '../src/routes/+page.svelte',
@@ -291,13 +536,18 @@ test('commercial decision routes use one primary and one conversational action',
     '../src/routes/book/+page.svelte',
     '../src/routes/stack/+page.svelte',
     '../src/routes/proof/marketplace-workflow/+page.svelte'
-  ].map((route) => readFileSync(new URL(route, import.meta.url), 'utf8')).join('\n');
+  ]
+    .map((route) => readFileSync(new URL(route, import.meta.url), 'utf8'))
+    .join('\n');
 
   assert.match(messaging, /startWithWorkflowLabel: 'Start a private workflow draft'/);
   assert.match(messaging, /selfMapLabel: 'Start a private workflow draft'/);
   assert.match(messaging, /bookMappingSessionLabel: 'Book a mapping session'/);
   assert.match(routes, />Start a private workflow draft</);
-  assert.doesNotMatch(routes, /Start Workflow Map|Talk Through a Workflow|Map the workflow first|Map your workflow/);
+  assert.doesNotMatch(
+    routes,
+    /Start Workflow Map|Talk Through a Workflow|Map the workflow first|Map your workflow/
+  );
 });
 
 test('public stack positioning names the owned Cloudflare and OpenAI boundary', () => {

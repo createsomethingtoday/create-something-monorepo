@@ -40,6 +40,16 @@ The practical rule:
 
 > Performance Lab is the identity. External references are inputs, not the operating center.
 
+The owned object inside that identity is the **CREATE SOMETHING Playbook**. The
+Playbook gives operators and approved AI the same picture of the operation. It
+contains outcome-bearing Plays and the Runbooks people or agents execute. Map
+defines it, Build makes approved Runbooks executable, Control runs and revises
+it, Performance Lab tests it, and Field Reports improve it.
+
+The opposing team is the operating condition, not another company: ambiguity,
+AI out of reach, and untrusted automation. The Playbook removes ambiguity.
+Defense makes automation trustworthy. Offense creates useful access for operators.
+
 ## Performance And Lab
 
 The name carries two different jobs that must remain visible together:
@@ -52,10 +62,16 @@ The name carries two different jobs that must remain visible together:
 - **The hybrid** pairs visceral campaign energy with rigorous operating proof.
   A surface fails when it becomes only a calm dashboard or only a sports image.
 
-The primary material is working paper: source sheets, folds, scored boundaries,
-evidence stacks, and attached receipts. Paper is useful because it makes
-provenance, transformation, control, and proof physical. It must never collapse
-into decorative stationery, random crumpling, or texture behind type.
+The primary campaign field is Playbook notation: an original court-like
+operating diagram with owners, constraints, delegated routes, human decision
+gates, zones, and receipts. Offense creates advantage by advancing approved
+work. Defense protects authority, quality, evidence, and recovery. The field
+must stay understandable without sports knowledge and must never collapse into
+basketball clip art, team branding, or generic X/O decoration.
+
+Paper remains available for editorial source material, research, receipts, and
+historical campaign studies. It is no longer the primary brand material for the
+Agency commercial hero path.
 
 Translate the private performance reference into owned workflow meaning:
 
@@ -85,8 +101,8 @@ Translate the private performance reference into owned workflow meaning:
    - Color appears as semantic signal, not decoration.
 
 4. **Artifacts are the brand**
-   - Atlas maps, proof receipts, policy cards, runbooks, source records, and
-     readiness checks should be recurring visual objects.
+   - Playbooks, Plays, Runbooks, maps, proof receipts, policy cards, source
+     records, and readiness checks should be recurring visual objects.
    - The system mark stays small; the operating artifact carries the identity.
 
 5. **Labs are useful, not theatrical**
@@ -139,6 +155,8 @@ Use public language like:
 
 - AI workflow systems
 - Performance Lab
+- Playbook, Play, and Runbook
+- offense and defense
 - mapped, tested, governed, proven
 - signal, decision, proof
 - workflow boundary
@@ -173,16 +191,17 @@ Every signature surface should express both qualities:
    intensity and decisive emphasis, not approval.
 4. **Redundancy:** never communicate safety with color alone. Include a state
    word, icon, decision reason, or receipt.
-5. **Material signature:** use near-black, white, working paper, precise lines,
-   mono record labels, and semantic rails. Avoid pill controls, soft candy
-   palettes, floating shadows, and ornamental gradients.
+5. **Field signature:** use near-black, white, precise court-like lines, X/O
+   operating marks, mono record labels, and semantic rails. Avoid literal sports
+   theming, pill controls, soft candy palettes, floating shadows, and ornamental
+   gradients.
 
 Canon exposes this through the Performance state tokens,
 `.performance-control-rail`, and `.performance-receipt-stamp`.
 
 | Surface | Direction |
 | --- | --- |
-| Homepage | Combine the plain offer with one property-specific working-paper state, decisive scale, technical annotation, and integrated proof. |
+| Homepage | Combine the plain offer with one property-specific Playbook field, decisive scale, technical annotation, and integrated proof. |
 | Services | Show the workflow as a training and pressure sequence, not only a list of steps. |
 | Products | Present Atlas, Signal, Decision, and Proof as a performance system for delegated work. |
 | Articles | Combine high-fidelity operating artifacts with an original editorial field or material study when it clarifies pressure, testing, or proof. |
@@ -220,10 +239,10 @@ Before broad rollout, complete:
 ## Hybrid Rollout
 
 The first implementation slice established the definition, tokens, readiness
-band, and representative property rollout. The active hybrid rollout adds:
+band, and representative property rollout. The active Playbook rollout adds:
 
-1. Original, non-branded human-motion and material imagery for campaign routes.
-2. Shared Canon compositions for media, annotation, measurement, and semantic motion.
+1. Original, non-branded Playbook fields for campaign routes.
+2. Shared Canon compositions for notation, annotation, measurement, and semantic motion.
 3. A campaign-versus-product boundary verified across homepage, services,
    editorial, products, Atlas, and booking.
 4. Desktop, mobile, keyboard, and reduced-motion Browser evidence.

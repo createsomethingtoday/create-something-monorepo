@@ -2,16 +2,20 @@
   import type { PageData } from './$types';
   import {
     Button,
+    MeridianCardGrid,
+    MeridianFeatureSplit,
     PerformanceCampaignOpening,
     PerformanceNarrativeStage,
     paperResearchTraceMedia,
     PapersGrid,
     PropertyFunnel,
     SEO,
+    type MeridianCard,
     type PerformanceDecisionItem,
     type PerformanceNarrativeScene
   } from '@create-something/canon';
   import type { Paper } from '@create-something/canon/types';
+  import ResearchRouteArtifact from '$lib/components/home/ResearchRouteArtifact.svelte';
 
   let { data }: { data: PageData } = $props();
 
@@ -44,6 +48,27 @@
     { value: `${featuredExperiments.length}`, label: 'featured artifacts to inspect first' },
     { value: '3', label: 'database / automation / judgment layers' }
   ]);
+
+  const meridianResearchCards = $derived(
+    featuredExperiments.slice(0, 3).map(
+      (paper): MeridianCard => ({
+        eyebrow: paper.category || 'Research artifact',
+        title: paper.title,
+        description:
+          paper.excerpt_short ||
+          paper.excerpt ||
+          paper.description ||
+          'Open the research artifact and its supporting notes.',
+        href: `/papers/${paper.slug}`,
+        ctaLabel: 'Read artifact',
+        meta: paper.published_at
+          ? new Date(paper.published_at).getFullYear().toString()
+          : undefined,
+        kind: 'article',
+        tone: 'court'
+      })
+    )
+  );
 
   const decisionStates: PerformanceDecisionItem[] = [
     {
@@ -112,13 +137,15 @@
   title="Research | CREATE SOMETHING .io"
   description="CREATE SOMETHING .io publishes experiments, papers, and operator notes for teams building automation they can explain, defend, and extend."
   keywords="AI-native development research, MCP patterns, workflow evidence, automation operations, technical papers, governed execution research"
-  ogImage="/og-image.svg"
+  ogImage="/og-image.png"
   propertyName="io"
 />
 
 <PerformanceCampaignOpening
   mobileSearchBoundary
   eyebrow="CREATE SOMETHING .io"
+  propertyRole="Research + field evidence"
+  expression="editorial"
   title="Research for automation you can defend."
   lede="CREATE SOMETHING .io turns experiments, papers, and field notes into a usable research layer for operators. The goal is evidence you can carry into the next build, review, or production decision."
   media={paperResearchTraceMedia}
@@ -132,8 +159,25 @@
   {/snippet}
 </PerformanceCampaignOpening>
 
+<MeridianFeatureSplit
+  eyebrow="Research field"
+  title="A claim earns its route through evidence."
+  description="The research layer collects the operator question, the working method, and the artifact trail before a pattern is allowed into delivery or policy."
+  primaryLabel="Read the methodology"
+  primaryHref="/methodology"
+  secondaryLabel="Browse experiments"
+  secondaryHref="/experiments"
+  tags={['Artifact first', 'Method named', 'Handoff visible']}
+  visualLabel="Research route from operator question through a named method and linked evidence to a human promotion gate"
+>
+  {#snippet visual()}
+    <ResearchRouteArtifact />
+  {/snippet}
+</MeridianFeatureSplit>
+
 <PerformanceNarrativeStage
   id="research-operating-story"
+  expression="editorial"
   eyebrow="Research decision path"
   title="Start from evidence. Decide whether to read, test, or scope."
   description="The research decision and its artifacts now share one surface: trace the claim, inspect the relevant work, and name the receiving lane before handoff."
@@ -150,6 +194,16 @@
     {/if}
   {/snippet}
 </PerformanceNarrativeStage>
+
+{#if meridianResearchCards.length > 0}
+  <MeridianCardGrid
+    eyebrow="Research index"
+    title="Recent artifacts, given a clear reading path."
+    description="The editorial card treatment gives each paper its category, context, and destination without turning the archive into a generic blog."
+    cards={meridianResearchCards}
+    ariaLabel="Featured research artifacts"
+  />
+{/if}
 
 <PropertyFunnel
   current="io"

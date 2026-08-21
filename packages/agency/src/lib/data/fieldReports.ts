@@ -1,5 +1,117 @@
 export type EvidenceStatus = 'measured' | 'derived' | 'unmeasured';
 
+export type UpstreamContributionFieldReport = {
+  id: '#FR-2026-02';
+  slug: 'upstream-contributions';
+  verifiedPeriod: 'August 2026';
+  title: string;
+  dek: string;
+  relationship: 'Independent open-source contributor';
+  contributions: Array<{
+    project: 'CTX' | 'OpenAI Codex Security';
+    contribution: string;
+    acceptedAt: string;
+    state: 'merged' | 'released';
+  }>;
+  sources: Array<{
+    id: string;
+    kind: 'Pull request' | 'Merge commit' | 'Release';
+    title: string;
+    detail: string;
+    state: 'verified' | 'review' | 'archived';
+    date: string;
+    href: string;
+  }>;
+  limits: string[];
+};
+
+export const upstreamContributionFieldReport: UpstreamContributionFieldReport = {
+  id: '#FR-2026-02',
+  slug: 'upstream-contributions',
+  verifiedPeriod: 'August 2026',
+  title: 'We improve the infrastructure we rely on.',
+  dek: 'A macOS reliability fix merged into CTX. Credited scoped-inventory security work merged into OpenAI Codex Security and shipped in version 0.1.9.',
+  relationship: 'Independent open-source contributor',
+  contributions: [
+    {
+      project: 'CTX',
+      contribution:
+        'Normalized macOS stat output so CTX could compile on ARM64. Maintainers strengthened the patch before merging it.',
+      acceptedAt: '2026-08-09',
+      state: 'merged'
+    },
+    {
+      project: 'OpenAI Codex Security',
+      contribution:
+        'Helped design scoped repository inventory handling. The accepted implementation retained contributor credit and shipped in version 0.1.9.',
+      acceptedAt: '2026-08-10',
+      state: 'released'
+    }
+  ],
+  sources: [
+    {
+      id: '#CTX-355',
+      kind: 'Pull request',
+      title: 'CTX pull request 355',
+      detail: 'The macOS ARM64 compilation fix was accepted after maintainer hardening.',
+      state: 'verified',
+      date: 'August 9, 2026',
+      href: 'https://github.com/ctxrs/ctx/pull/355'
+    },
+    {
+      id: '#CTX-437C8A1',
+      kind: 'Merge commit',
+      title: 'CTX merge commit',
+      detail: 'The repository records the final accepted patch and its maintainer changes.',
+      state: 'verified',
+      date: 'August 9, 2026',
+      href: 'https://github.com/ctxrs/ctx/commit/437c8a1728da35e8fc2135b461801741afe45d02'
+    },
+    {
+      id: '#OAI-71',
+      kind: 'Pull request',
+      title: 'Original Codex Security contribution',
+      detail:
+        'The original authored proposal was closed as superseded by #88; its design, validation evidence, and authored history remain public.',
+      state: 'archived',
+      date: 'August 12, 2026',
+      href: 'https://github.com/openai/codex-security/pull/71'
+    },
+    {
+      id: '#OAI-88',
+      kind: 'Pull request',
+      title: 'Accepted Codex Security pull request',
+      detail: 'Maintainers narrowed and merged the design while retaining contributor credit.',
+      state: 'verified',
+      date: 'August 10, 2026',
+      href: 'https://github.com/openai/codex-security/pull/88'
+    },
+    {
+      id: '#OAI-D7A2BFB',
+      kind: 'Merge commit',
+      title: 'Codex Security merge commit',
+      detail: 'The final commit records Create Something as a co-author.',
+      state: 'verified',
+      date: 'August 10, 2026',
+      href: 'https://github.com/openai/codex-security/commit/d7a2bfbbfb93ce5c3e72861f214d340cff5a2595'
+    },
+    {
+      id: '#OAI-0.1.9',
+      kind: 'Release',
+      title: 'Codex Security version 0.1.9',
+      detail: 'The release notes include the accepted scoped-inventory fix.',
+      state: 'verified',
+      date: 'August 11, 2026',
+      href: 'https://github.com/openai/codex-security/releases/tag/npm-v0.1.9'
+    }
+  ],
+  limits: [
+    'These are independent open-source contributions.',
+    'They do not establish a partnership, endorsement, customer relationship, or certification.',
+    'Maintainers controlled the final implementation, review, merge, and release decisions.'
+  ]
+};
+
 const TEMPLATE_REVIEW_AGENT_ELAPSED_MS = 99_537;
 const TEMPLATE_REVIEW_HUMAN_TEMPLATES_PER_HOUR = { low: 2, high: 4 } as const;
 const TEMPLATE_REVIEW_MODELED_AGENT_TEMPLATES_PER_HOUR =

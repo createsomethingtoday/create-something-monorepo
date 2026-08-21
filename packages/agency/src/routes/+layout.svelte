@@ -1,6 +1,6 @@
 <script lang="ts">
   import '../app.css';
-  import { Navigation, Footer, ModeIndicator } from '@create-something/canon';
+  import { Navigation, Footer, LayoutSEO, ModeIndicator } from '@create-something/canon';
   import { UnifiedSearch } from '@create-something/canon/navigation';
   import PrivacyAnalytics from '$lib/components/PrivacyAnalytics.svelte';
   import AgencyPerformanceHandoff from '$lib/components/AgencyPerformanceHandoff.svelte';
@@ -56,7 +56,32 @@
   // test/public-marketing-copy.test.ts.
   const navLinks = [
     { label: 'How It Works', href: '/services' },
-    { label: 'Practice', href: '/practice' },
+    {
+      label: 'Practice',
+      href: '/practice',
+      children: [
+        {
+          label: 'Practice overview',
+          href: '/practice',
+          description: 'See the embedded operating-partner model and delivery lanes.'
+        },
+        {
+          label: 'Map a workflow',
+          href: agencyCoreMessaging.selfMapHref,
+          description: 'Name the handoff, owner, and first controlled pilot.'
+        },
+        {
+          label: 'How it works',
+          href: '/services',
+          description: 'Map, build, and control one AI-native operating path.'
+        },
+        {
+          label: 'Marketplace field report',
+          href: '/field-reports/template-review',
+          description: 'Inspect a live workflow, evidence, and decision boundary.'
+        }
+      ]
+    },
     { label: 'What You Keep', href: '/stack' },
     { label: 'Products', href: '/products' },
     { label: 'Field Reports', href: '/field-reports' }
@@ -67,6 +92,10 @@
     return { label: product.shortName, href: product.route };
   });
   const primaryCtaHref = agencyCoreMessaging.startWithWorkflowHref;
+  const agencyFooterMacroMedia = {
+    src: '/images/performance-lab/playbook-footer-decision-gate-macro.webp',
+    alt: 'Macro-real Playbook decision gate: an ivory AI-agent marker held inside a black steel ring as amber and proof-green routes cross a physical court surface.'
+  };
   const globalAnalyticsMetadata = $derived(getAgencyGlobalAnalyticsMetadata($page.url.pathname));
   const isDifyArticleRoute = $derived(isAgencyDifyArticlePath($page.url.pathname));
   const routeOwnsPerformanceEnding = $derived(
@@ -84,6 +113,7 @@
       ariaLabel: 'Commercial paths',
       links: [
         { label: 'How It Works', href: '/services' },
+        { label: 'AI Buyer Readiness Audit', href: '/agent-readiness' },
         { label: 'What You Keep', href: '/stack' },
         { label: 'Products', href: '/products' },
         { label: 'Field Reports', href: '/field-reports' },
@@ -375,6 +405,8 @@
   }
 </script>
 
+<LayoutSEO property="agency" />
+
 <PrivacyAnalytics
   property="agency"
   userId={data.user?.id}
@@ -382,7 +414,7 @@
   globalMetadata={globalAnalyticsMetadata}
   compactPrompt={useCompactPrivacyPrompt}
   obscured={mobileNavigationOpen}
-  mobilePlacement="safe-corner"
+  mobilePlacement="header-edge"
 />
 
 <!-- Unified Search - Cmd/Ctrl+K to open -->
@@ -392,6 +424,12 @@
   <Navigation
     logo="CREATE SOMETHING"
     logoSuffix=".agency"
+    logoAsset={{
+      src: '/brand/create-something-horizontal-black.svg',
+      mobileSrc: '/brand/create-something-mark-black.svg',
+      label: 'CREATE SOMETHING .agency'
+    }}
+    enableRouteLogoMotion={true}
     links={navLinks}
     currentPath={$page.url.pathname}
     fixed={true}
@@ -400,9 +438,7 @@
     user={data.user}
     onLogout={handleLogout}
     accountHref="/account"
-    visualStyle="performance"
-    showMobileLogoText={true}
-    showDesktopLogoText={true}
+    visualStyle="editorial"
     onMobileMenuChange={(open) => (mobileNavigationOpen = open)}
   />
 
@@ -419,14 +455,22 @@
     showNewsletter={false}
     aboutText="Calm, transparent, reliable workflow systems for operator-owned outcomes: clear operating boundaries, evidence-backed delivery, and escalation only when judgment is required."
     quickLinkGroups={footerQuickLinkGroups}
-    footerCta={{
-      label: agencyCoreMessaging.startWithWorkflowLabel,
-      href: primaryCtaHref,
-      description: 'Start a lightweight workflow map before booking.'
-    }}
+    footerCta={routeOwnsPerformanceEnding
+      ? undefined
+      : {
+          title: 'Ready to make one workflow AI-native?',
+          label: agencyCoreMessaging.startWithWorkflowLabel,
+          href: primaryCtaHref,
+          description: 'Start a lightweight workflow map before booking.',
+          media: agencyFooterMacroMedia
+        }}
     showSocial={true}
     isAuthenticated={!!data.user}
-    visualStyle="performance"
+    visualStyle="editorial"
+    brandAsset={{
+      src: '/brand/create-something-agency-white.svg',
+      label: 'CREATE SOMETHING .agency'
+    }}
   />
 
   {#if !routeOwnsPerformanceEnding && $page.url.pathname !== '/basketball-systems-lab' && !isDifyArticleRoute}

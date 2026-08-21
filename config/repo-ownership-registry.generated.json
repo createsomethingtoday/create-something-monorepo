@@ -1694,8 +1694,8 @@
       "cautions": []
     },
     {
-      "path": "packages/calm-operator-ink-firmware",
-      "name": "@create-something/calm-operator-ink-firmware",
+      "path": "packages/calm-operator-stopwatch-firmware",
+      "name": "@create-something/calm-operator-stopwatch-firmware",
       "kind": "package",
       "lane": null,
       "private": true,

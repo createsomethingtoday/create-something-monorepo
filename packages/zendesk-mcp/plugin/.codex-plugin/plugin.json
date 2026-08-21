@@ -1,0 +1,31 @@
+{
+  "name": "webflow-zendesk-reviewer",
+  "version": "0.1.0",
+  "description": "Read, triage, and safely update Webflow Marketplace Zendesk tickets through the governed production MCP.",
+  "author": {
+    "name": "CREATE SOMETHING",
+    "email": "hello@createsomething.agency",
+    "url": "https://createsomething.agency"
+  },
+  "homepage": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/zendesk-mcp",
+  "repository": "https://github.com/createsomethingtoday/create-something-monorepo",
+  "license": "MIT",
+  "keywords": ["zendesk", "webflow", "marketplace", "reviewer", "support", "governance", "mcp"],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Webflow Zendesk Reviewer",
+    "shortDescription": "Review Webflow Marketplace Zendesk tickets safely.",
+    "longDescription": "Use the production Webflow Zendesk MCP to read current ticket evidence, reconcile review-state claims with the bounded App Review MCP, draft or perform explicitly approved ticket updates, and return receipt-grade readback.",
+    "developerName": "CREATE SOMETHING",
+    "category": "Productivity",
+    "capabilities": ["Interactive", "Read", "Write"],
+    "websiteURL": "https://createsomething.agency",
+    "defaultPrompt": [
+      "Read this Webflow Zendesk ticket and summarize the current requester need.",
+      "Triage this Marketplace support issue using current Zendesk and App Review evidence.",
+      "Draft a safe Zendesk reply for review without sending it."
+    ],
+    "brandColor": "#111111"
+  }
+}

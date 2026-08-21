@@ -283,6 +283,13 @@ const PACKAGE_EXPORT_PATH_POLICIES: CanonPublicExportClassificationRule[] = [
       'Inline-safe Performance email values are a narrow consumption artifact governed by Canon typography and token contracts.'
   },
   {
+    exportPath: './performance/email',
+    classification: 'style-artifact',
+    registryPolicy: 'classified-out',
+    rationale:
+      'Inline-safe Performance email rendering is a narrow consumption artifact governed by Canon typography and token contracts.'
+  },
+  {
     exportPath: './styles/glass.css',
     classification: 'style-artifact',
     registryPolicy: 'classified-out',
@@ -352,7 +359,8 @@ const PACKAGE_EXPORT_PATH_POLICIES: CanonPublicExportClassificationRule[] = [
     classification: 'token-artifact',
     registryPolicy: 'registry-covered',
     registryItemIds: ['token.performance-core'],
-    rationale: 'DTCG token export is an alternate machine-readable format for token.performance-core.'
+    rationale:
+      'DTCG token export is an alternate machine-readable format for token.performance-core.'
   },
   {
     exportPath: './styles/tokens.figma.json',
@@ -476,6 +484,20 @@ const PACKAGE_EXPORT_PATH_POLICIES: CanonPublicExportClassificationRule[] = [
       'Experiment root barrel is a staging area and should not become stable registry surface.'
   },
   {
+    exportPath: './experiments/threshold-dwelling/geometry-issuance',
+    classification: 'experiment',
+    registryPolicy: 'classified-out',
+    rationale:
+      'Threshold Dwelling physical-scene evidence gate is a project-specific experiment contract, not a reusable Canon primitive.'
+  },
+  {
+    exportPath: './experiments/threshold-dwelling/geometry-evidence-packet',
+    classification: 'experiment',
+    registryPolicy: 'classified-out',
+    rationale:
+      'Threshold Dwelling private-evidence packet is a project-specific intake boundary, not a reusable Canon primitive.'
+  },
+  {
     exportPath: './experiments/living-arena',
     classification: 'experiment',
     registryPolicy: 'classified-out',
@@ -586,6 +608,18 @@ const PACKAGE_EXPORT_PATH_POLICIES: CanonPublicExportClassificationRule[] = [
     classification: 'platform-surface',
     registryPolicy: 'classified-out',
     rationale: 'Newsletter helpers are product integration support, not foundation UI primitives.'
+  },
+  {
+    exportPath: './newsletter/audience',
+    classification: 'platform-surface',
+    registryPolicy: 'classified-out',
+    rationale: 'Newsletter audience policy is a governed platform contract, not a UI primitive.'
+  },
+  {
+    exportPath: './newsletter/reengagement-email',
+    classification: 'platform-surface',
+    registryPolicy: 'classified-out',
+    rationale: 'Newsletter campaign copy is a governed communication artifact, not a UI primitive.'
   },
   {
     exportPath: './platform',

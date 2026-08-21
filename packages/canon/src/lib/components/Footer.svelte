@@ -1,7 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { CubeMark } from '../brand/marks/index.js';
+  import { RingMark } from '../brand/marks/index.js';
   import { getAnalytics } from '../analytics/client.js';
+  import MeridianOfferPanel from './meridian/MeridianOfferPanel.svelte';
 
   interface QuickLink {
     label: string;
@@ -15,12 +16,23 @@
   }
 
   interface FooterCta {
+    title?: string;
     label: string;
     href: string;
     description?: string;
+    media?: {
+      src: string;
+      alt: string;
+    };
   }
 
-  type FooterVisualStyle = 'classic' | 'performance' | 'clear';
+  interface FooterBrandAsset {
+    src: string;
+    /** Used for the linked home destination; the image itself is decorative there. */
+    label: string;
+  }
+
+  type FooterVisualStyle = 'classic' | 'performance' | 'clear' | 'editorial';
 
   interface Props {
     mode?: 'ltd' | 'io' | 'space' | 'agency' | 'learn';
@@ -40,6 +52,8 @@
     isAuthenticated?: boolean;
     /** Visual treatment. Defaults preserve existing property footers. */
     visualStyle?: FooterVisualStyle;
+    /** Property-owned vector lockup for editorial footer treatments. */
+    brandAsset?: FooterBrandAsset;
   }
 
   interface NewsletterApiResponse {
@@ -63,7 +77,8 @@
     showSocial = false,
     turnstileSiteKey = '',
     isAuthenticated = false,
-    visualStyle = 'classic'
+    visualStyle = 'classic',
+    brandAsset
   }: Props = $props();
 
   // Map mode to target for cross-domain SSO
@@ -200,7 +215,10 @@
   }
 
   const currentYear = new Date().getFullYear();
-  const usesPerformanceStyle = $derived(visualStyle === 'performance' || visualStyle === 'clear');
+  const usesPerformanceStyle = $derived(
+    visualStyle === 'performance' || visualStyle === 'clear' || visualStyle === 'editorial'
+  );
+  const usesEditorialStyle = $derived(visualStyle === 'editorial');
   const defaultCopyright = `© ${currentYear} Create Something. The canon for "less, but better."`;
   const footerLinkGroups = $derived(
     quickLinkGroups.length > 0
@@ -255,6 +273,7 @@
   class="footer"
   class:footer-clear={usesPerformanceStyle}
   class:footer-performance={usesPerformanceStyle}
+  class:footer-editorial={usesEditorialStyle}
 >
   <!-- Newsletter Section (Optional) -->
   {#if showNewsletter}
@@ -338,20 +357,69 @@
     </section>
   {/if}
 
+  {#if usesEditorialStyle && footerCta}
+    <MeridianOfferPanel
+      eyebrow="Next possession"
+      title={footerCta.title ?? footerCta.label}
+      description={footerCta.description}
+      actionLabel={footerCta.label}
+      actionHref={footerCta.href}
+      media={footerCta.media}
+      {mode}
+      headingId="footer-editorial-callout-title"
+    />
+  {/if}
+
+  {#if usesEditorialStyle}
+    {#if brandAsset}
+      <a
+        href="/"
+        class="footer-editorial-identity footer-editorial-identity--link"
+        aria-label={`${brandAsset.label} home`}
+      >
+        <img class="footer-editorial-identity__asset" src={brandAsset.src} alt="" />
+        <p>Operating systems for work that has to hold up.</p>
+      </a>
+    {:else}
+      <a
+        href="/"
+        class="footer-editorial-identity footer-editorial-identity--link"
+        aria-label={`CREATE SOMETHING .${mode} home`}
+      >
+        <div>
+          <span>CREATE</span>
+          <span>SOMETHING</span>
+        </div>
+        <p>Operating systems for work that has to hold up.</p>
+      </a>
+    {/if}
+  {/if}
+
   <!-- Footer Links -->
   <div class="footer-links py-12 px-6" class:with-newsletter={showNewsletter}>
     <div class="footer-inner shell-inner">
       <div class="footer-links-grid">
         <!-- About / Brand Column -->
         <div class="footer-brand-column">
-          {#if usesPerformanceStyle}
-            <a href="/" class="footer-mark" aria-label="CREATE SOMETHING home">
-              <CubeMark size={44} variant="mono" />
+          {#if usesPerformanceStyle && !usesEditorialStyle}
+            <a
+              href="/"
+              class="footer-mark"
+              class:footer-mark--asset={!!brandAsset}
+              aria-label={`${brandAsset?.label ?? 'CREATE SOMETHING'} home`}
+            >
+              {#if brandAsset}
+                <img class="footer-mark__asset" src={brandAsset.src} alt="" />
+              {:else}
+                <RingMark size={44} />
+              {/if}
             </a>
           {/if}
 
           {#if aboutText}
-            <div class="brand-title mb-4">CREATE SOMETHING</div>
+            {#if !brandAsset && !usesEditorialStyle}
+              <div class="brand-title mb-4">CREATE SOMETHING</div>
+            {/if}
             <p class="brand-description max-w-md mb-6">
               {aboutText}
             </p>
@@ -363,7 +431,7 @@
             </p>
           {/if}
 
-          {#if footerCta}
+          {#if footerCta && !usesEditorialStyle}
             <a href={footerCta.href} class="footer-cta">
               <span class="footer-cta-label">{footerCta.label}</span>
               {#if footerCta.description}
@@ -917,6 +985,20 @@
     text-decoration: none;
   }
 
+  .footer-clear .footer-mark.footer-mark--asset {
+    display: block;
+    width: min(13.5rem, 100%);
+    height: auto;
+    min-height: 3rem;
+  }
+
+  .footer-mark__asset {
+    display: block;
+    width: min(13.5rem, 100%);
+    height: auto;
+    max-height: 3rem;
+  }
+
   .footer-clear .brand-title {
     color: var(--color-performance-ink, #090909);
     font-family: var(--font-performance-mono);
@@ -1084,6 +1166,197 @@
 
     .footer-clear .footer-mark {
       margin-bottom: 0.35rem;
+    }
+  }
+
+  /* Owned editorial ending: warm dark field, large brand gesture, quiet directory. */
+  .footer-editorial {
+    border-top: 0;
+    background: var(--color-performance-editorial-dark, #181312);
+    color: var(--color-performance-editorial-light, #f3ebe4);
+  }
+
+  .footer-editorial #newsletter {
+    border-bottom: 1px solid
+      color-mix(in srgb, var(--color-performance-editorial-dark) 18%, transparent);
+    background: var(--color-performance-editorial-light-secondary, #d8cdbc);
+    color: var(--color-performance-editorial-dark, #181312);
+  }
+
+  .footer-editorial .newsletter-title {
+    font-family: var(--font-performance-editorial);
+    font-size: clamp(2.6rem, 5vw, 5rem);
+    font-weight: 400;
+    letter-spacing: -0.05em;
+    line-height: 0.94;
+  }
+
+  .footer-editorial .newsletter-description {
+    color: color-mix(in srgb, var(--color-performance-editorial-dark) 76%, transparent);
+  }
+
+  .footer-editorial .newsletter-input {
+    border: 1px solid color-mix(in srgb, var(--color-performance-editorial-dark) 32%, transparent);
+    border-radius: 0;
+    background: var(--color-performance-editorial-light, #f3ebe4);
+    color: var(--color-performance-editorial-dark, #181312);
+  }
+
+  .footer-editorial .newsletter-button {
+    border: 1px solid var(--color-performance-editorial-brand, #fcaa2d);
+    border-radius: 0;
+    background: var(--color-performance-editorial-brand, #fcaa2d);
+    color: var(--color-performance-editorial-dark, #181312);
+  }
+
+  .footer-editorial-identity {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 2rem;
+    align-items: end;
+    width: min(var(--content-width-performance-editorial, 90rem), calc(100% - 2rem));
+    margin-inline: auto;
+    padding: clamp(4rem, 9vw, 8rem) 0 0;
+    color: var(--color-performance-editorial-light, #f3ebe4);
+  }
+
+  .footer-editorial-identity--link {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .footer-editorial-identity--link:focus-visible {
+    outline: 2px solid var(--color-performance-editorial-brand, #fcaa2d);
+    outline-offset: 0.5rem;
+  }
+
+  .footer-editorial-identity div {
+    display: grid;
+    font-family: var(--font-performance-editorial);
+    font-size: clamp(4.1rem, 12.1vw, 12.75rem);
+    font-weight: 400;
+    letter-spacing: -0.075em;
+    line-height: 0.7;
+  }
+
+  .footer-editorial-identity div span:last-child {
+    margin-left: clamp(1rem, 8vw, 9rem);
+    color: var(--color-performance-editorial-brand, #fcaa2d);
+  }
+
+  .footer-editorial-identity__asset {
+    display: block;
+    width: min(100%, 46rem);
+    height: auto;
+    max-height: 14rem;
+  }
+
+  .footer-editorial-identity p {
+    max-width: 15rem;
+    margin: 0 0 0.25rem;
+    color: color-mix(in srgb, var(--color-performance-editorial-light) 62%, transparent);
+    font-family: var(--font-performance-mono);
+    font-size: 0.68rem;
+    font-weight: var(--font-performance-semibold);
+    letter-spacing: 0.065em;
+    line-height: 1.45;
+    text-transform: uppercase;
+  }
+
+  .footer-editorial .footer-links {
+    padding-top: clamp(2.5rem, 5vw, 4rem);
+    background: var(--color-performance-editorial-dark, #181312);
+  }
+
+  .footer-editorial .footer-inner {
+    width: min(var(--content-width-performance-editorial, 90rem), calc(100% - 2rem));
+  }
+
+  .footer-editorial .footer-links-grid {
+    padding: clamp(1.5rem, 4vw, 3.5rem);
+    border-color: color-mix(in srgb, var(--color-performance-editorial-light) 22%, transparent);
+    border-radius: var(--radius-performance-editorial, 0.375rem);
+    background: var(--color-performance-editorial-dark-secondary, #2e2927);
+    box-shadow: none;
+  }
+
+  .footer-editorial .brand-title {
+    color: var(--color-performance-editorial-light, #f3ebe4);
+  }
+
+  .footer-editorial .brand-description {
+    max-width: 34rem;
+    color: color-mix(in srgb, var(--color-performance-editorial-light) 72%, transparent);
+    font-size: clamp(1rem, 1.5vw, 1.2rem);
+  }
+
+  .footer-editorial .footer-cta {
+    width: min(100%, 24rem);
+    border-color: var(--color-performance-editorial-brand, #fcaa2d);
+    border-radius: var(--radius-performance-editorial, 0.375rem);
+    background: var(--color-performance-editorial-brand, #fcaa2d);
+    color: var(--color-performance-editorial-dark, #181312);
+  }
+
+  .footer-editorial .footer-cta:hover {
+    border-color: color-mix(in srgb, var(--color-performance-editorial-brand) 88%, white);
+    background: color-mix(in srgb, var(--color-performance-editorial-brand) 88%, white);
+  }
+
+  .footer-editorial .footer-cta-description {
+    color: color-mix(in srgb, var(--color-performance-editorial-dark) 72%, transparent);
+  }
+
+  .footer-editorial .section-title,
+  .footer-editorial .footer-link,
+  .footer-editorial .footer-link:hover,
+  .footer-editorial .footer-link.active {
+    color: var(--color-performance-editorial-light, #f3ebe4);
+  }
+
+  .footer-editorial .link-label,
+  .footer-editorial .link-description,
+  .footer-editorial .copyright-text,
+  .footer-editorial .legal-link,
+  .footer-editorial .legal-separator {
+    color: color-mix(in srgb, var(--color-performance-editorial-light) 58%, transparent);
+  }
+
+  .footer-editorial .social-link {
+    border-color: color-mix(in srgb, var(--color-performance-editorial-light) 24%, transparent);
+    background: transparent;
+    color: var(--color-performance-editorial-light, #f3ebe4);
+  }
+
+  .footer-editorial .footer-copyright,
+  .footer-editorial .footer-quote {
+    background: var(--color-performance-editorial-dark, #181312);
+  }
+
+  @media (max-width: 640px) {
+    .footer-editorial-identity {
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+      width: min(100% - 1.5rem, var(--content-width-performance-editorial, 90rem));
+      padding-top: 4rem;
+    }
+
+    .footer-editorial-identity div {
+      font-size: clamp(3.55rem, 18vw, 6.5rem);
+      line-height: 0.75;
+    }
+
+    .footer-editorial-identity__asset {
+      width: min(100%, 24rem);
+      max-height: none;
+    }
+
+    .footer-editorial .footer-inner {
+      width: min(100% - 1rem, var(--content-width-performance-editorial, 90rem));
+    }
+
+    .footer-editorial .footer-brand-column {
+      border-color: color-mix(in srgb, var(--color-performance-editorial-light) 18%, transparent);
     }
   }
 </style>

@@ -41,16 +41,16 @@
     "@create-something/canon": "workspace:*",
     "@elevenlabs/client": "^1.15.0",
     "@openai/agents": "^0.13.5",
-    "svelte": "^5.41.0",
+    "svelte": "^5.56.9",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@sveltejs/adapter-cloudflare": "^7.2.4",
-    "@sveltejs/kit": "^2.47.1",
+    "@sveltejs/kit": "^2.70.2",
     "@sveltejs/vite-plugin-svelte": "^6.2.1",
     "svelte-check": "^4.3.3",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "vite": "^7.1.10"
+    "vite": "^7.3.6"
   }
 }

@@ -1,38 +1,31 @@
 # CREATE SOMETHING Ltd
 
-**createsomething.ltd** — The Philosophy of Automation Infrastructure
+**createsomething.ltd** — The Operating Library for AI Work
 
-The philosophical foundation for the CREATE SOMETHING ecosystem. Where we articulate *why* creation matters more than consumption.
+The user-facing operating library for people responsible for recurring work with AI. Start with one workflow; leave with a playbook that names the owner, allowed work, wait point, and proof. The Canon remains the deeper standard behind every artifact.
 
 ---
+
+## The Core Promise
+
+**Run AI work people can trust.**
+
+`.ltd` gives operators, functional leads, founders, and team members a shared operating picture before work runs:
+
+| Artifact | Job |
+|----------|-----|
+| **Playbook** | Names the outcome, owner, approved work, wait point, and receipt. |
+| **Runbook** | Gives the live steps, checks, exceptions, and recovery path. |
+| **Readiness check** | Finds ambiguity, missing access, unnamed ownership, mistrust, and absent proof. |
+| **Canon** | Explains the standards that make the operational artifacts worth keeping. |
 
 ## The Core Thesis
 
 **MCP consumption is commoditized. MCP creation is not.**
 
-Neither Claude Desktop, Claude Cowork, nor Codex can *create* MCP servers from within the app. Users can consume, install, and use—but building the connectivity layer between tools and AI still requires expertise.
+Installing and using AI tools keeps getting easier. The scarce work is deciding what should connect, what can run, when a person must decide, and how the result remains inspectable. A useful agent needs a chassis: data access, authority boundaries, approvals, blocked states, and proof that the work stayed inside its lane.
 
-This is the moat. This is where CREATE SOMETHING operates.
-
----
-
-## The Two-Layer Model
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                   INTELLIGENCE LAYER                        │
-│        Skills, Agents, Automations (the upsell)            │
-│   "Draft this RFI" · "Summarize daily logs" · "Flag risk"  │
-├─────────────────────────────────────────────────────────────┤
-│                    AUTOMATION LAYER                         │
-│              MCP Servers (the entry point)                  │
-│        Connect your tools to AI with trust boundaries       │
-└─────────────────────────────────────────────────────────────┘
-```
-
-**The entry point to automation is connectivity, not intelligence.**
-
----
+The entry point to automation is connectivity, not intelligence.
 
 ## The Subtractive Triad
 
@@ -46,45 +39,27 @@ Every creation exists simultaneously at three levels:
 
 **Meta-principle**: Creation is the discipline of removing what obscures.
 
----
+## Ecosystem Position
 
-## The Automotive Framework
-
-MCP is the **chassis**—the structural frame that holds everything together.
-
-| Vehicle Part | Technology | Function |
-|--------------|------------|----------|
-| **Chassis** | MCP Servers | The frame that connects everything |
-| **Engine** | Workers | Where execution happens |
-| **Transmission** | Durable Objects | State coordination |
-| **Fuel Tank** | D1 | Data persistence |
-| **Turbocharger** | Workers AI / LLMs | Intelligence boost |
-
-**The Chassis Principle**: Without the chassis, you have a pile of parts. Without MCP, you have disconnected tools.
-
----
-
-## Hermeneutic Position
-
-`.ltd` defines the philosophical foundation that all properties build upon:
+`.ltd` builds the shared language and useful artifacts that earn a returning user base. It remains grounded in Canon while sending people to the property that can answer their next question:
 
 ```
-.ltd (Philosophy) → articulates "creation > consumption" →
-.io (Research) → validates with real MCP server development →
-.space (Practice) → experiments with MCP patterns →
-.agency (Services) → delivers custom MCPs to clients →
-.ltd (Philosophy) → refined by what creation work reveals
+.ltd (Operating library) → playbooks, runbooks, readiness →
+.io (Research) → evidence, field notes, and validated patterns →
+.space (Practice) → rehearsal and live tools →
+.agency (Delivery) → a dedicated partner for a named workflow →
+.ltd (Canon) → retains the reusable judgment from the work
 ```
 
 ## Agent Legibility Contract
 
 | Field | Value |
 |-------|-------|
-| Entry point | `src/routes/+page.svelte`, `src/routes/principles/+page.svelte`, `src/routes/standards/+page.svelte` |
+| Entry point | `src/routes/+page.svelte`, `src/routes/playbooks/+page.svelte`, `src/routes/readiness/+page.svelte` |
 | Boot command | `pnpm dev` |
 | Smoke command | `pnpm check` |
 | Validation surfaces | Svelte check output, route preview, Cloudflare Pages build output |
-| UI validation path | `/`, `/principles`, `/standards` |
+| UI validation path | `/`, `/playbooks`, `/readiness` |
 | Escalation rule | stop if a change alters canon, voice, or standards semantics without an explicit judgment artifact or operator decision |
 
 ---

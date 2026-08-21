@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "canaryId": "CRE-1701",
+  "contractId": "create-something.agent-commercial.v1",
+  "policyId": "x402.agent-readiness-audit.v1",
+  "protocol": "x402",
+  "x402Version": 2,
+  "scheme": "exact",
+  "network": "eip155:84532",
+  "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+  "amount": "1",
+  "payer": "0xE81168c57428D3aCF22cA181733A3A90b7205c3f",
+  "payTo": "0xB2A72c75044bbc33697742E9585e48293eE5EbDB",
+  "facilitator": "https://x402.org/facilitator",
+  "occurredAt": "2026-08-12T12:45:17.374Z",
+  "verification": {
+    "status": "verified"
+  },
+  "settlement": {
+    "status": "settled",
+    "transaction": "0xee358f74b6e055db3219e9830d997b21da66fbc04ddbcdd5589eddbc4406d138",
+    "network": "eip155:84532"
+  },
+  "chainConfirmation": {
+    "status": "success",
+    "blockNumber": "45385216",
+    "payerAtomicBalance": "19999999",
+    "payeeAtomicBalance": "1"
+  },
+  "productionActivation": "approval_required"
+}

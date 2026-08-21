@@ -1,0 +1,27 @@
+version = "1.0"
+artifacts = ["/app/output"]
+
+[task]
+name = "application/local-buyer-readiness-intent"
+
+[metadata]
+difficulty = "easy"
+type = "web"
+domain = "b2b-services"
+tags = ["local-only", "buyer-readiness", "intent-only", "no-side-effects"]
+
+[verifier]
+timeout_sec = 300.0
+
+[agent]
+timeout_sec = 600.0
+network_mode = "public"
+
+[environment]
+definition = "application/local-buyer-readiness-bridge"
+build_timeout_sec = 900.0
+cpus = 1
+memory_mb = 2048
+storage_mb = 10240
+gpus = 0
+network_mode = "public"

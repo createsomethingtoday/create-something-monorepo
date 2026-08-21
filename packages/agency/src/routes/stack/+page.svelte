@@ -2,9 +2,9 @@
   import {
     Button,
     PerformanceCardGrid,
+    PerformanceCampaignOpening,
     PerformanceConversionHandoff,
     PerformanceNarrativeStage,
-    PerformancePageSection,
     SEO,
     type PerformanceCardItem,
     type PerformanceCtaItem,
@@ -12,29 +12,7 @@
   } from '@create-something/canon';
   import PublicAtlasStoryCanvas from '$lib/components/PublicAtlasStoryCanvas.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
-
-  const boundarySummary: PerformanceCardItem[] = [
-    {
-      eyebrow: 'Your team keeps',
-      icon: 'user',
-      title: 'Accounts, context, decisions',
-      detail:
-        'Business ownership, approval authority, source accounts, data rights, and final operating decisions.'
-    },
-    {
-      eyebrow: 'Substrate records',
-      icon: 'settings',
-      title: 'State, review, evidence',
-      detail:
-        'Source records, Atlas bindings, actions, approvals, runs, receipts, and operator views stay in the owned system.'
-    },
-    {
-      eyebrow: 'Vendors provide',
-      icon: 'refresh',
-      title: 'Replaceable infrastructure',
-      detail: 'Hosted services, APIs, uptime, product limits, and platform-specific capabilities.'
-    }
-  ];
+  import { playbookHeroMedia } from '$lib/data/playbookHeroMedia';
 
   const journey: PerformanceCardItem[] = [
     {
@@ -247,13 +225,19 @@
   {faqItems}
 />
 
-<PerformancePageSection
-  variant="hero"
-  layout="split"
-  titleLevel="h1"
+<PerformanceCampaignOpening
+  expression="editorial"
   eyebrow="What You Keep"
   title="Know what you own before any tool acts."
-  description="You keep the accounts, data, approval rights, and operating history. Vendors provide replaceable infrastructure, and the workflow makes every boundary visible."
+  lede="You keep the accounts, data, approval rights, and operating history. Vendors provide replaceable infrastructure, and the workflow makes every boundary visible."
+  media={playbookHeroMedia.stack}
+  mediaMobilePlacement="background"
+  density="compact"
+  proof={[
+    { label: 'Your team keeps', value: 'Accounts + decisions' },
+    { label: 'Substrate records', value: 'State + evidence' },
+    { label: 'Vendors provide', value: 'Replaceable infrastructure' }
+  ]}
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.selfMapHref}>
@@ -263,16 +247,7 @@
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
   {/snippet}
-
-  {#snippet aside()}
-    <PerformanceCardGrid
-      items={boundarySummary}
-      columns={1}
-      density="compact"
-      ariaLabel="Stack boundary summary"
-    />
-  {/snippet}
-</PerformancePageSection>
+</PerformanceCampaignOpening>
 
 <PerformanceNarrativeStage
   id="stack-ownership-story"
@@ -324,6 +299,7 @@
 </PerformanceNarrativeStage>
 
 <PerformanceConversionHandoff
+  expression="editorial"
   eyebrow="Start with the workflow"
   title="Bring the workflow, the accounts, and the decision owner."
   description="CREATE SOMETHING maps the stack boundary and defines the first controlled path. Before implementation starts, you can see what tools may do and what stays visible."

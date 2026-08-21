@@ -98,6 +98,36 @@ export {
   type HeightConfig
 } from './perspective-renderer.js';
 
+// Deterministic browser-rendering contract
+export {
+  createRenderReceipt,
+  hashRenderRecipe,
+  normalizeRenderRecipe,
+  serializeRenderRecipe,
+  type BrowserRenderMetrics,
+  type NormalizedRenderRecipe,
+  type RenderAssetManifest,
+  type RenderAssetProvenance,
+  type RenderBudgetReceipt,
+  type RenderBudgets,
+  type RenderFallbackState,
+  type RenderMotion,
+  type RenderOutputRequest,
+  type RenderReceipt,
+  type RenderRecipeInput,
+  type RenderShot,
+  type RenderStyle,
+  type Vector3Tuple
+} from './web-render/contract.js';
+
+export { inspectGlb, type GlbInspection } from './web-render/inspect-glb.js';
+
+export {
+  createThresholdDwellingMassingGlb,
+  type ThresholdDwellingMassingGlbReceipt,
+  type ThresholdDwellingMassingGlbResult
+} from './threshold-dwelling-massing-glb.js';
+
 import type { RenderFromSvgOptions, RenderResult, ControlNetModel } from './types.js';
 
 /**

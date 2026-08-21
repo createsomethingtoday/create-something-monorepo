@@ -12,6 +12,12 @@
     "lastmod": "2026-06-19"
   },
   {
+    "path": "/agent-readiness",
+    "changefreq": "monthly",
+    "priority": "0.9",
+    "lastmod": "2026-08-12"
+  },
+  {
     "path": "/book",
     "changefreq": "weekly",
     "priority": "0.9",
@@ -123,13 +129,19 @@
     "path": "/field-reports",
     "changefreq": "monthly",
     "priority": "0.82",
-    "lastmod": "2026-07-10"
+    "lastmod": "2026-08-12"
   },
   {
     "path": "/field-reports/template-review",
     "changefreq": "monthly",
     "priority": "0.86",
     "lastmod": "2026-07-12"
+  },
+  {
+    "path": "/field-reports/upstream-contributions",
+    "changefreq": "monthly",
+    "priority": "0.84",
+    "lastmod": "2026-08-12"
   },
   {
     "path": "/use-cases/business",
@@ -159,78 +171,78 @@
     "path": "/workflows",
     "changefreq": "weekly",
     "priority": "0.88",
-    "lastmod": "2026-08-02"
+    "lastmod": "2026-08-09"
   },
   {
     "path": "/workflows/mcp-server-development",
     "changefreq": "monthly",
     "priority": "0.78",
-    "lastmod": "2026-08-02"
+    "lastmod": "2026-08-09"
   },
   {
     "path": "/workflows/ai-workflow-automation",
     "changefreq": "monthly",
     "priority": "0.78",
-    "lastmod": "2026-08-02"
+    "lastmod": "2026-08-09"
   },
   {
     "path": "/workflows/ai-workflow-governance",
     "changefreq": "monthly",
     "priority": "0.78",
-    "lastmod": "2026-08-02"
+    "lastmod": "2026-08-09"
   },
   {
     "path": "/workflows/human-in-the-loop-ai",
     "changefreq": "monthly",
     "priority": "0.76",
-    "lastmod": "2026-08-02"
+    "lastmod": "2026-08-09"
   },
   {
     "path": "/workflows/ai-agent-evaluation",
     "changefreq": "monthly",
     "priority": "0.76",
-    "lastmod": "2026-08-02"
+    "lastmod": "2026-08-09"
   },
   {
     "path": "/workflows/mcp-security-oauth",
     "changefreq": "monthly",
     "priority": "0.76",
-    "lastmod": "2026-08-02"
+    "lastmod": "2026-08-09"
   },
   {
     "path": "/workflows/mcp-vs-api",
     "changefreq": "monthly",
     "priority": "0.74",
-    "lastmod": "2026-08-02"
+    "lastmod": "2026-08-09"
   },
   {
     "path": "/workflows/webflow-marketplace-operations",
     "changefreq": "monthly",
     "priority": "0.76",
-    "lastmod": "2026-08-02"
+    "lastmod": "2026-08-09"
   },
   {
     "path": "/workflows/webflow-app-review",
     "changefreq": "monthly",
     "priority": "0.74",
-    "lastmod": "2026-08-02"
+    "lastmod": "2026-08-09"
   },
   {
     "path": "/workflows/webflow-template-review",
     "changefreq": "monthly",
     "priority": "0.76",
-    "lastmod": "2026-08-02"
+    "lastmod": "2026-08-09"
   },
   {
     "path": "/workflows/workflow-mapping",
     "changefreq": "monthly",
     "priority": "0.78",
-    "lastmod": "2026-08-02"
+    "lastmod": "2026-08-09"
   },
   {
     "path": "/workflows/ai-workflow-observability",
     "changefreq": "monthly",
     "priority": "0.76",
-    "lastmod": "2026-08-02"
+    "lastmod": "2026-08-09"
   }
 ]

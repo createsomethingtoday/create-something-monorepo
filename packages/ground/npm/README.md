@@ -20,6 +20,92 @@ Works with Claude Code, Cursor, Windsurf, VS Code Copilot, Claude Desktop, and a
 
 **The difference**: Ground requires computation before claims. No hallucinated analysis.
 
+## Recommended agent path
+
+Use CTX and Ground for different evidence:
+
+- **CTX** retrieves the history of earlier agent work.
+- **Ground** computes facts about the code that is on disk now.
+
+For a current-source review, start with the compact verified loop:
+
+1. `ground_analyze` — get machine-readable findings for a directory.
+2. `ground_diff` — restrict the same checks to changes since a Git baseline.
+3. `ground_verify_fix` — confirm the specific reported issue is gone.
+4. `ground_explain` — inspect why Ground included, excluded, or scored a result.
+
+The MCP server also retains targeted and graph tools for deeper investigations.
+The installed CLI exposes the same batch and Git-aware entry points:
+
+```bash
+ground analyze ./src --checks duplicates,dead_exports
+ground diff ./src --base origin/main --checks duplicates
+```
+
+Both commands print JSON evidence. `ground diff` only returns files inside the
+requested directory and resolves Git paths from the repository root, so it is
+safe to run from a package inside a monorepo.
+
+### Diff coverage
+
+Every batch, diff, and duplicate-function response has a
+`verification_status`; `ground diff` also returns the same status per requested
+check in `check_coverage.<check>.status`. The contract is explicit:
+
+- `PASS`: the check completed for the relevant supported files and found no issue.
+- `FAIL`: the check found an issue or could not complete because of a read/parse failure.
+- `NOT_APPLICABLE`: no changed file needs that check.
+- `UNSUPPORTED`: relevant source exists, but the requested check cannot analyze its language (including Svelte duplicate-function scans).
+- `TIMEOUT`: duplicate analysis reached its deadline before a complete result was available.
+
+`ground analyze` and `ground diff` accept `--timeout-ms` (120000 by default).
+The MCP equivalents accept `timeout_ms`; a deadline returns `TIMEOUT`, never a
+clean result. `ground diff` includes `.mjs` with JavaScript source analysis.
+Its `changed_files` and `changed_file_list` fields remain the analyzable-file
+view; read `discovered_changed_files`, `analyzable_changed_files`, and
+`excluded_changed_files` for the full Git scope. Per-check coverage also names
+`unsupported_changed_files` and `excluded_changed_files`, so a clean claim is
+valid only with `PASS`.
+
+Ground 0.3.5 extends source-bearing orphan evidence to nested Cloudflare Worker
+configurations: `wrangler.toml` and `wrangler.json` `main` entries are protected
+with their exact config source. The legacy `ground find orphans` command now
+returns the same verified canonical report as `ground analyze --checks orphans`.
+Promptfoo and manual Ground configurations remain recognized alongside package
+scripts, and broad duplicate scans retain their explicit safety bound.
+
+The release package ships thin command wrappers for every platform. Install
+downloads the matching versioned release asset and verifies its SHA-256 against
+that release's `SHA256SUMS` manifest before extracting it. Record the artifact
+that produced a receipt with:
+
+```bash
+ground build-info --json
+```
+
+### Maintainers: trusted publishing
+
+Ground tags publish through npm Trusted Publishing rather than a local
+one-time-password or a long-lived write token. Configure the package's
+**Trusted Publisher** in npm with:
+
+- Provider: **GitHub Actions**
+- Organization or user: `createsomethingtoday`
+- Repository: `create-something-monorepo`
+- Workflow filename: `ground-release.yml`
+- Allowed action: **npm publish**
+
+Do not configure an environment unless the release workflow adds one. The
+workflow publishes only after its matching GitHub Release and `SHA256SUMS`
+manifest have completed successfully.
+
+If a release was built successfully but npm publication was blocked (for
+example, during Trusted Publishing setup), rerun **Ground Release** manually
+with its exact `ground-v<version>` tag and **publish only** enabled. That path
+checks out the tag, requires it to match `package.json`, and verifies the
+existing release checksum manifest before publishing; it does not rebuild or
+replace GitHub Release assets.
+
 ## The Problem
 
 AI agents are confident. Too confident.
@@ -167,7 +253,7 @@ The npm package downloads a platform-specific binary on install. If that failed:
 
 ```bash
 # Check if the binary exists
-ls node_modules/@createsomething/ground-mcp/bin/
+ls node_modules/@createsomething/ground-mcp/bin/native/
 
 # Re-install
 npm install @createsomething/ground-mcp
@@ -313,7 +399,29 @@ Ground loads `.ground.yml` from your project root for:
 - Ignore patterns (functions, files, directories)
 - Known drift exceptions with documented reasons
 - Context declarations for intentional exclusions
+- Explicit manual CLI entry points for orphan review
 - Similarity thresholds
+
+Declare a documented operator CLI by exact path relative to the directory you
+pass to `ground diff`. Ground keeps it in duplicate coverage, excludes it only
+from orphan findings, and records `manual_entry_point` in check coverage:
+
+```yaml
+entry_points:
+  manual:
+    - "scripts/rebuild-search-index.mjs"
+```
+
+For `ground_find_orphans` and `ground_analyze`, orphan coverage includes
+`entry_point_evidence`: the exact path, entry-point type, and source Ground used
+to protect it. Alongside package, framework, test, and script entry points,
+Ground recognizes exact `entry_points.manual` declarations, nested
+`wrangler.toml` and `wrangler.json` Worker `main` entries, and local
+`providers[].id`, `prompts[].id`, and assertion-value `file://…` references in
+`promptfooconfig*.yaml`. The config adapters accept only existing source files
+beneath their configuration file; they do not scan arbitrary YAML or follow
+parent/absolute paths. The legacy `ground find orphans` command returns this
+same canonical orphan evidence.
 
 See [Full Documentation](https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/ground) for configuration reference.
 

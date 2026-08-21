@@ -8,8 +8,9 @@ This package makes agent and MCP execution visible without making each caller ha
 
 - `initObservability` configures Langfuse tracing when `LANGFUSE_*` keys are present.
 - `createTrace`, `createSpan`, and `createGeneration` provide direct tracing handles.
-- `createInstrumentedMcpServer` wraps MCP tool handlers and emits tool-call traces.
+- `createInstrumentedMcpServer` wraps MCP tool handlers and emits tool-call traces. MCP results with `isError: true` are failures even when the handler promise resolves.
 - Langfuse helpers emit per-client MCP usage and governance metadata.
+- Each tool trace includes an `execution_success` Boolean score plus environment, release, duration, service, correlation, and actionable error fields for monitor filters.
 - Atlas helpers standardize metadata for AI tasks, human oversight, system tasks, data artifacts, constraints, and touchpoints.
 
 ## Agent Legibility Contract

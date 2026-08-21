@@ -19,9 +19,9 @@ const opening = read(
 );
 const studies = read('../../canon/src/lib/components/performance/media/paper-studies.ts');
 
-test('the homepage opening uses immutable paper campaign art while preserving authored proof', () => {
+test('the homepage retires Paper while the historical study remains inspectable', () => {
   assert.doesNotMatch(home, /import PaperUnderPressureStage/);
-  assert.match(home, /mode="paper"/);
+  assert.doesNotMatch(home, /mode="paper"/);
   assert.doesNotMatch(home, /\{#snippet artifact\(\)\}[\s\S]*?<PaperUnderPressureStage \/>/);
   assert.doesNotMatch(home, /agency-fluid-intelligence-loop-v4/);
 
@@ -29,7 +29,9 @@ test('the homepage opening uses immutable paper campaign art while preserving au
   assert.match(component, /aria-label="Choose a paper workflow stage"/);
   assert.match(component, /aria-pressed=\{activeStageId === stage\.id\}/);
   assert.match(component, /aria-live="polite"/);
-  assert.match(home, /media=\{paperOperatingRouteMedia\}/);
+  assert.doesNotMatch(home, /paperOperatingRouteMedia/);
+  assert.match(home, /media=\{playbookHomeHeroMedia\}/);
+  assert.match(home, /<PlaybookField variant="services" embedded/);
   assert.match(home, /Signal[\s\S]*?Decision[\s\S]*?Proof/);
   assert.match(studies, /alt: 'A tactile paper field/);
   assert.match(opening, /<picture class:performance-campaign-opening__fallback-suppressed/);
@@ -125,8 +127,8 @@ test('Three.js progressively enhances the same paper semantics within an inspect
   }
 });
 
-test('the paper workflow remains an original operating artifact rather than a game or logo cloud', () => {
-  const source = `${home}\n${component}\n${model}`.toLowerCase();
+test('the retired paper workflow remains an original operating artifact rather than a logo cloud', () => {
+  const source = `${component}\n${model}`.toLowerCase();
 
   for (const prohibited of [
     'rock paper scissors',

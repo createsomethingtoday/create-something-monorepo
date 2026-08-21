@@ -20,6 +20,7 @@ import { mcpToolMetadata, type AITaskType, type AtlasMetadata } from './atlas.js
 import {
   initLangfuse,
   emitToolInvocation,
+  resolveToolInvocationOutcome,
   shutdownLangfuse,
   type GovernanceTraceContext,
   type LangfuseConfig,
@@ -142,6 +143,8 @@ export function createInstrumentedMcpServer(config: McpServerConfig) {
         process.env.LANGFUSE_PROJECT_NAME ||
         process.env.LANGFUSE_PROJECT ||
         config.serverName,
+      environment: config.langfuse?.environment,
+      release: config.langfuse?.release,
       enabled: config.langfuse?.enabled ?? true,
     });
   }
@@ -214,10 +217,12 @@ export function createInstrumentedMcpServer(config: McpServerConfig) {
       });
 
       const durationMs = Date.now() - startTime;
+      const outcome = resolveToolInvocationOutcome(result);
 
-      // Langfuse — log success
+      // A resolved MCP response can still be a tool failure (`isError: true`).
       span.end({
-        success: true,
+        success: outcome.success,
+        error: outcome.error,
         duration_ms: durationMs,
         has_content: result.content?.length > 0
       });
@@ -243,7 +248,8 @@ export function createInstrumentedMcpServer(config: McpServerConfig) {
         input: safeArgs,
         output: { contentLength: result.content?.length || 0, isError: result.isError || false },
         durationMs,
-        success: true,
+        success: outcome.success,
+        error: outcome.error,
         aiTaskType,
         atlasMetadata: { ...mcpToolMetadata(serverName, name, aiTaskType), ...additionalMetadata },
       }).catch(() => {});

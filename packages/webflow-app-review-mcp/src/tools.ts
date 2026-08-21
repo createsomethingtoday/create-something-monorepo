@@ -6,9 +6,12 @@ import { AirtableClientError } from './airtable.js';
 import {
   APP_REVIEW_FIELD_MAP,
   CAPABILITIES_OPTIONS,
+  EXCEPTION_STATUS_OPTIONS,
+  EXCEPTION_TYPE_OPTIONS,
   GOVERNANCE_FINDING_CATEGORY_OPTIONS,
   GOVERNANCE_FINDING_PRIORITY_OPTIONS,
   GOVERNANCE_FINDING_STATUS_OPTIONS,
+  HOLD_REASON_OPTIONS,
   MARKETPLACE_STATUS_OPTIONS,
   REJECTION_REASON_OPTIONS,
   REVIEW_STATUS_OPTIONS,
@@ -634,7 +637,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory, _getR
 
   server.tool(
     'app_review_update_version_review',
-    'Update review fields on an Asset Version record.',
+    'Update review fields on an Asset Version record, including exception and hold fields. Exception sequencing rule: fill exception_type + exception_rationale first, then flip exception_status to 🆕Requested in a separate call — the status flip triggers the #app-review-exceptions Slack post.',
     {
       version_id: z.string().min(1),
       review_status: z.enum(REVIEW_STATUS_OPTIONS).optional(),
@@ -643,6 +646,12 @@ export function registerTools(server: McpServer, getClient: ClientFactory, _getR
       rejection_reason: z.enum(REJECTION_REASON_OPTIONS).optional(),
       review_feedback: z.string().optional(),
       submission_datetime_override: z.union([z.string().datetime(), z.null()]).optional(),
+      exception_status: z.enum(EXCEPTION_STATUS_OPTIONS).optional(),
+      exception_type: z.enum(EXCEPTION_TYPE_OPTIONS).optional(),
+      exception_rationale: z.string().optional(),
+      exception_decision_notes: z.string().optional(),
+      hold_reason: z.union([z.enum(HOLD_REASON_OPTIONS), z.null()]).optional(),
+      hold_notes: z.string().optional(),
     },
     async (params) => {
       try {
@@ -655,6 +664,12 @@ export function registerTools(server: McpServer, getClient: ClientFactory, _getR
           rejection_reason: params.rejection_reason,
           review_feedback: params.review_feedback,
           submission_datetime_override: params.submission_datetime_override,
+          exception_status: params.exception_status,
+          exception_type: params.exception_type,
+          exception_rationale: params.exception_rationale,
+          exception_decision_notes: params.exception_decision_notes,
+          hold_reason: params.hold_reason,
+          hold_notes: params.hold_notes,
         });
 
         if (Object.keys(mutation).length === 0) {
@@ -667,6 +682,78 @@ export function registerTools(server: McpServer, getClient: ClientFactory, _getR
 
         const updated = await client.updateVersionReview(params.version_id, mutation);
         return asSuccess({ updated_version: updated });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'app_review_list_exception_items',
+    'List per-item exception rows (⚖️Exceptions table) linked to an Asset Version. The version cannot be approved while any item is undecided.',
+    {
+      version_id: z.string().min(1),
+    },
+    async ({ version_id }) => {
+      try {
+        const client = getClient();
+        await requireAppVersion(client, version_id);
+        const items = await client.listExceptionItems(version_id);
+        return asSuccess({ version_id, exception_items: items });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'app_review_create_exception_item',
+    'Create a per-item exception row linked to an Asset Version — one row per guideline item, because an exemption for one item must not imply approval of the rest. Deliberately does NOT set ⚖️Status: fill item/type/rationale here first, then flip the status with app_review_update_exception_item (the status flip is the automation trigger).',
+    {
+      version_id: z.string().min(1),
+      item: z.string().min(1).describe('The specific guideline item / failure the exception covers'),
+      exception_type: z.enum(EXCEPTION_TYPE_OPTIONS).optional(),
+      rationale: z.string().optional().describe('Why this item deserves an exception — seeds the Slack post'),
+    },
+    async ({ version_id, item, exception_type, rationale }) => {
+      try {
+        const client = getClient();
+        await requireAppVersion(client, version_id);
+        const created = await client.createExceptionItem({
+          asset_version_id: version_id,
+          item,
+          exception_type,
+          rationale,
+        });
+        return asSuccess({ exception_item: created });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'app_review_update_exception_item',
+    'Update a per-item exception row (⚖️Exceptions table). Setting exception_status triggers the #app-review-exceptions automation and auto-stamps the request/decision datetime — fill text fields before or together with the status flip. Decisions (✅Approved / ❌Denied) belong to the decision-maker; include decision_notes with any decision.',
+    {
+      exception_item_id: z.string().min(1),
+      item: z.string().optional(),
+      exception_status: z.enum(EXCEPTION_STATUS_OPTIONS).optional(),
+      exception_type: z.enum(EXCEPTION_TYPE_OPTIONS).optional(),
+      rationale: z.string().optional(),
+      decision_notes: z.string().optional(),
+    },
+    async (params) => {
+      try {
+        const client = getClient();
+        const updated = await client.updateExceptionItem(params.exception_item_id, cleanObject({
+          item: params.item,
+          exception_status: params.exception_status,
+          exception_type: params.exception_type,
+          rationale: params.rationale,
+          decision_notes: params.decision_notes,
+        }));
+        return asSuccess({ exception_item: updated });
       } catch (error) {
         return asError(error);
       }

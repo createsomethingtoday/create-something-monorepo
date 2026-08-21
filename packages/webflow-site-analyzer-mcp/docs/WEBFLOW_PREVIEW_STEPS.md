@@ -1,6 +1,6 @@
 # Webflow Preview: Agent Steps (Codified)
 
-This document is the single reference for what the agent does when given a Webflow preview URL (`preview.webflow.com/preview/...`). Implementations live in `src/providers/steel.ts`, `src/providers/browserless.ts`, and `src/temporal/`.
+This document is the single reference for what the agent does when given a Webflow preview URL (`preview.webflow.com/preview/...`). The production route lives in `src/providers/cloudflare-browser-run.ts`; Steel/Browserless and `src/temporal/` remain temporary rollback/legacy paths during CRE-1645 burn-in.
 
 ---
 
@@ -11,7 +11,7 @@ Used by tools: `analyze_touchpoints`, `extract_seo`, `get_page_structure`, `anal
 **Steps:**
 
 1. **Detect Webflow preview** — `url.includes('preview.webflow.com/preview/')`.
-2. **Create browser session** (Steel or Browserless).
+2. **Create Browser Run Chromium session** (Steel or Browserless only on rollback).
 3. **New page** — viewport 1920×1080 (or from options).
 4. **Navigate** — `page.goto(url)` (domcontentloaded or networkidle2 per tool).
 5. **Optional** — wait for custom selector and/or 1s settle.
@@ -26,7 +26,7 @@ Used by tools: `analyze_touchpoints`, `extract_seo`, `get_page_structure`, `anal
 
 **Why iframe:** The Designer UI wraps the actual site in `#site-iframe-next`. All page-level extraction (touchpoints, SEO, structure, etc.) must run in that frame so results reflect the site, not the Designer chrome.
 
-**Implementation:** `SteelBrowserProvider.analyze()`, `BrowserlessProvider.analyze()` (same steps).
+**Implementation:** `CloudflareBrowserRunProvider.analyze()` with Chromium selection for previews; incumbent providers preserve the same steps for rollback.
 
 ---
 
@@ -55,7 +55,7 @@ Used by tool: `extract_designer_metadata`. Only works with Webflow preview URLs.
 **Where implemented:**
 
 - **Temporal path:** `src/temporal/workflows.ts` (orchestration) and `src/temporal/activities.ts` (one activity per step; resume-safe).
-- **Inline path:** `SteelBrowserProvider.extractDesignerMetadata()`, `BrowserlessProvider.extractDesignerMetadata()` (same sequence and shortcuts, in one method).
+- **Inline path:** `CloudflareBrowserRunProvider.extractDesignerMetadata()` with `extractWebflowDesignerMetadata()`; incumbent providers preserve their prior implementations for rollback.
 
 **Designer UI scope:** All DOM reads for metadata (pages, styles, components, etc.) exclude the iframe: `!el.closest('#site-iframe-next')` so we scrape the Designer chrome (panels, labels), not the site inside the iframe.
 

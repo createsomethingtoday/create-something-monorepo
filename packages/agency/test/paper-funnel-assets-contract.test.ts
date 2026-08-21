@@ -15,12 +15,6 @@ import {
 const agencyRoot = resolve(import.meta.dirname, '..');
 
 const expectedAssignments = {
-  '/': 'paperOperatingRouteMedia',
-  '/services': 'paperClampedDecisionMedia',
-  '/products': 'paperProductSystemMedia',
-  '/field-reports': 'paperAttachedReceiptMedia',
-  '/map': 'paperFoldedHandoffMedia',
-  '/control': 'paperClampedDecisionMedia',
   '/delivery': 'paperAttachedReceiptMedia',
   '/proof/marketplace-workflow': 'paperAttachedReceiptMedia',
   '/field-reports/template-review': 'paperAttachedReceiptMedia',
@@ -29,7 +23,7 @@ const expectedAssignments = {
 
 const retiredWaterLanguage = /trace-dye|turbulence|clarity-inspection|settlement-resolved|trace-wake|controlled-flow|\bwater\b|\bwake\b|\bchannel\b|\bdam\b|\bdye\b|\bsluice\b/i;
 
-test('keeps the public campaign policy on semantic Paper studies', () => {
+test('keeps historical and editorial route policy on semantic Paper studies', () => {
   assert.deepEqual(performancePaperRouteAssignments, expectedAssignments);
 
   for (const study of [

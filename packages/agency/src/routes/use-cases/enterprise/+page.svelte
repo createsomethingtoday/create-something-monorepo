@@ -260,6 +260,7 @@
   variant="hero"
   layout="split"
   titleLevel="h1"
+  expression="editorial"
   eyebrow="The Judgment Layer"
   title="Reliability is what turns automation into operations."
   description="For teams already running MCP-backed or cross-system workflows, CREATE SOMETHING Control adds the governed execution layer. Approvals, blocked states, and receipts keep working after launch."
@@ -334,6 +335,7 @@
 </PerformanceNarrativeStage>
 
 <PerformanceConversionHandoff
+  expression="editorial"
   eyebrow="Start with the workflow"
   title="Bring the workflow, owner, and first risk boundary."
   description="I will map the control states before expanding automation authority."

@@ -13,17 +13,26 @@ export type {
 	UnsubscribePageProps,
 	NewsletterRequest,
 	NewsletterResult,
-	TurnstileResponse,
+	TurnstileResponse
 } from './types.js';
 
 // Server-side logic
 export { processUnsubscribe } from './unsubscribe.js';
-export { 
+export {
 	createNewsletterHandler,
-	processSubscription, 
-	generateWelcomeEmailHtml, 
-	generateConfirmationEmailHtml 
+	processSubscription,
+	generateWelcomeEmailHtml,
+	generateWelcomeEmailText,
+	generateConfirmationEmailHtml,
+	generateConfirmationEmailText
 } from './subscribe.js';
+export { buildSubscriberReengagementEmail } from './reengagement-email.js';
+export type {
+	SubscriberReengagementEmail,
+	SubscriberReengagementEmailInput
+} from './reengagement-email.js';
+export { ELIGIBLE_SUBSCRIBERS_SQL, classifySubscriberEligibility } from './audience.js';
+export type { NewsletterAudienceRecord, NewsletterEligibilityReason } from './audience.js';
 
 // Components
 export { default as UnsubscribePage } from './UnsubscribePage.svelte';

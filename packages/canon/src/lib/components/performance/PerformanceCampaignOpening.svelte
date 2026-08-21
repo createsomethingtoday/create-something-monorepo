@@ -1,607 +1,958 @@
 <script lang="ts">
-	import { onMount, type Snippet } from 'svelte';
-	import PerformancePaperStudioCanvas from './PerformancePaperStudioCanvas.svelte';
-	import type { PerformanceMediaVideo } from './media/types';
-	import type { PerformancePaperProperty } from './media/paper-studio';
+  import { onMount, type Snippet } from 'svelte';
+  import PerformancePaperStudioCanvas from './PerformancePaperStudioCanvas.svelte';
+  import type { PerformanceMediaVideo } from './media/types';
+  import type { PerformancePaperProperty } from './media/paper-studio';
 
-	export type PerformanceCampaignOpeningMode = 'ink' | 'paper';
-	export type PerformanceCampaignOpeningDensity = 'standard' | 'compact';
+  export type PerformanceCampaignOpeningMode = 'ink' | 'paper';
+  export type PerformanceCampaignOpeningDensity = 'standard' | 'compact';
+  export type PerformanceCampaignOpeningExpression = 'field' | 'editorial';
 
-	export type PerformanceCampaignVideo = PerformanceMediaVideo;
+  export type PerformanceCampaignVideo = PerformanceMediaVideo;
 
-	export interface PerformanceCampaignMedia {
-		src: string;
-		mobileSrc?: string;
-		alt: string;
-		material?: 'paper' | 'water';
-		width?: number;
-		height?: number;
-		objectPosition?: string;
-		colorMode?: 'monochrome' | 'natural';
-		video?: PerformanceCampaignVideo;
-		studioShot?: PerformancePaperProperty;
-		paperObjectVisible?: boolean;
-	}
+  export interface PerformanceCampaignMedia {
+    src: string;
+    mobileSrc?: string;
+    alt: string;
+    material?: 'paper' | 'water';
+    width?: number;
+    height?: number;
+    objectPosition?: string;
+    colorMode?: 'monochrome' | 'natural';
+    video?: PerformanceCampaignVideo;
+    studioShot?: PerformancePaperProperty;
+    paperObjectVisible?: boolean;
+  }
 
-	export interface PerformanceCampaignProof {
-		label: string;
-		value: string;
-	}
+  export interface PerformanceCampaignProof {
+    label: string;
+    value: string;
+  }
 
-	interface Props {
-		eyebrow: string;
-		title: string;
-		lede?: string;
-		media: PerformanceCampaignMedia;
-		proof?: PerformanceCampaignProof[];
-		mode?: PerformanceCampaignOpeningMode;
-		density?: PerformanceCampaignOpeningDensity;
-		priority?: boolean;
-		/** Marks this opening as the point before which mobile search stays out of the way. */
-		mobileSearchBoundary?: boolean;
-		actions?: Snippet;
-		artifact?: Snippet;
-		/** A small, non-interactive annotation that should not change campaign layout. */
-		ornament?: Snippet;
-		artifactOwnsMedia?: boolean;
-	}
+  interface Props {
+    eyebrow: string;
+    title: string;
+    lede?: string;
+    /** Optional when a semantic artifact supplies the complete visual field. */
+    media?: PerformanceCampaignMedia;
+    proof?: PerformanceCampaignProof[];
+    mode?: PerformanceCampaignOpeningMode;
+    density?: PerformanceCampaignOpeningDensity;
+    expression?: PerformanceCampaignOpeningExpression;
+    /** Names the distinct job of a public property within the shared editorial system. */
+    propertyRole?: string;
+    priority?: boolean;
+    /** Marks this opening as the point before which mobile search stays out of the way. */
+    mobileSearchBoundary?: boolean;
+    actions?: Snippet;
+    artifact?: Snippet;
+    /** A small, non-interactive annotation that should not change campaign layout. */
+    ornament?: Snippet;
+    artifactOwnsMedia?: boolean;
+    /** Places a semantic artifact between the hero action and proof rail on small screens. */
+    artifactMobilePlacement?: 'overlay' | 'flow';
+    /** Keeps authored portrait media behind the editorial proposition instead of flowing below it. */
+    mediaMobilePlacement?: 'flow' | 'background';
+  }
 
-	let {
-		eyebrow,
-		title,
-		lede,
-		media,
-		proof = [],
-		mode = 'ink',
-		density = 'standard',
-		priority = true,
-		mobileSearchBoundary = false,
-		actions,
-		artifact,
-		ornament,
-		artifactOwnsMedia = false
-	}: Props = $props();
+  let {
+    eyebrow,
+    title,
+    lede,
+    media,
+    proof = [],
+    mode = 'ink',
+    density = 'standard',
+    expression = 'field',
+    propertyRole,
+    priority = true,
+    mobileSearchBoundary = false,
+    actions,
+    artifact,
+    ornament,
+    artifactOwnsMedia = false,
+    artifactMobilePlacement = 'overlay',
+    mediaMobilePlacement = 'flow'
+  }: Props = $props();
 
-	let motionAllowed = $state(false);
-	let studioReady = $state(false);
+  let motionAllowed = $state(false);
+  let studioReady = $state(false);
+  let titleParts = $derived(
+    title.split('.').map((part) => {
+      const match = part.match(/^(.*?)(\S+)$/s);
+      return match ? { prefix: match[1], word: match[2] } : { prefix: part, word: '' };
+    })
+  );
 
-	onMount(() => {
-		const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
-		if (!reducedMotion) {
-			motionAllowed = true;
-			return;
-		}
+  onMount(() => {
+    const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    if (!reducedMotion) {
+      motionAllowed = true;
+      return;
+    }
 
-		const syncMotionPreference = () => {
-			motionAllowed = !reducedMotion.matches;
-		};
+    const syncMotionPreference = () => {
+      motionAllowed = !reducedMotion.matches;
+    };
 
-		syncMotionPreference();
-		reducedMotion.addEventListener('change', syncMotionPreference);
+    syncMotionPreference();
+    reducedMotion.addEventListener('change', syncMotionPreference);
 
-		return () => reducedMotion.removeEventListener('change', syncMotionPreference);
-	});
+    return () => reducedMotion.removeEventListener('change', syncMotionPreference);
+  });
 </script>
 
 <section
-	class="performance-campaign-opening"
-	class:performance-campaign-opening--paper-studio={mode === 'paper' && Boolean(media.studioShot)}
-	data-mode={mode}
-	data-density={density}
-	data-has-artifact={artifact ? 'true' : 'false'}
-	data-mobile-search-boundary={mobileSearchBoundary ? 'true' : undefined}
-	aria-label={eyebrow}
+  class="performance-campaign-opening"
+  class:performance-campaign-opening--paper-studio={mode === 'paper' && Boolean(media?.studioShot)}
+  data-mode={mode}
+  data-density={density}
+  data-expression={expression}
+  data-has-artifact={artifact ? 'true' : 'false'}
+  data-artifact-owns-media={artifactOwnsMedia ? 'true' : undefined}
+  data-artifact-mobile-placement={artifact ? artifactMobilePlacement : undefined}
+  data-media-mobile-placement={media ? mediaMobilePlacement : undefined}
+  data-mobile-search-boundary={mobileSearchBoundary ? 'true' : undefined}
+  aria-label={eyebrow}
 >
-	<figure
-		class="performance-campaign-opening__media"
-		class:performance-campaign-opening__media--studio-ready={studioReady}
-		class:performance-campaign-opening__media--paper-object-visible={studioReady ||
-			artifactOwnsMedia ||
-			media.paperObjectVisible}
-		data-color-mode={media.colorMode ?? 'monochrome'}
-		data-material={media.material ?? 'unspecified'}
-	>
-		<picture class:performance-campaign-opening__fallback-suppressed={artifactOwnsMedia}>
-			{#if media.mobileSrc}
-				<source media="(max-width: 47.99rem)" srcset={media.mobileSrc} />
-			{/if}
-			<img
-				src={media.src}
-				alt={artifactOwnsMedia ? '' : media.alt}
-				width={media.width}
-				height={media.height}
-				loading={priority ? 'eager' : 'lazy'}
-				fetchpriority={priority ? 'high' : 'auto'}
-				decoding="async"
-				style:object-position={media.objectPosition ?? 'center'}
-			/>
-		</picture>
-		{#if media.studioShot && !artifact}
-			<PerformancePaperStudioCanvas
-				shot={media.studioShot}
-				onStateChange={(state) => (studioReady = state === 'ready')}
-			/>
-		{/if}
-		{#if media.video && motionAllowed}
-			<video
-				autoplay
-				muted
-				loop
-				playsinline
-				preload="metadata"
-				poster={media.video.poster ?? media.src}
-				aria-hidden="true"
-				style:object-position={media.objectPosition ?? 'center'}
-			>
-				{#if media.video.webm}
-					<source src={media.video.webm} type="video/webm" />
-				{/if}
-				<source src={media.video.mp4} type="video/mp4" />
-			</video>
-		{/if}
-		<div class="performance-campaign-opening__grid" aria-hidden="true"></div>
-	</figure>
+  {#if media}
+    <figure
+      class="performance-campaign-opening__media"
+      class:performance-campaign-opening__media--studio-ready={studioReady}
+      class:performance-campaign-opening__media--paper-object-visible={studioReady ||
+        artifactOwnsMedia ||
+        media.paperObjectVisible}
+      data-color-mode={media.colorMode ?? 'monochrome'}
+      data-material={media.material ?? 'unspecified'}
+    >
+      <picture class:performance-campaign-opening__fallback-suppressed={artifactOwnsMedia}>
+        {#if media.mobileSrc}
+          <source media="(max-width: 47.99rem)" srcset={media.mobileSrc} />
+        {/if}
+        <img
+          src={media.src}
+          alt={artifactOwnsMedia ? '' : media.alt}
+          width={media.width}
+          height={media.height}
+          loading={priority ? 'eager' : 'lazy'}
+          fetchpriority={priority ? 'high' : 'auto'}
+          decoding="async"
+          style:object-position={media.objectPosition ?? 'center'}
+        />
+      </picture>
+      {#if media.studioShot && !artifact}
+        <PerformancePaperStudioCanvas
+          shot={media.studioShot}
+          onStateChange={(state) => (studioReady = state === 'ready')}
+        />
+      {/if}
+      {#if media.video && motionAllowed}
+        <video
+          autoplay
+          muted
+          loop
+          playsinline
+          preload="metadata"
+          poster={media.video.poster ?? media.src}
+          aria-hidden="true"
+          style:object-position={media.objectPosition ?? 'center'}
+        >
+          {#if media.video.webm}
+            <source src={media.video.webm} type="video/webm" />
+          {/if}
+          <source src={media.video.mp4} type="video/mp4" />
+        </video>
+      {/if}
+      <div class="performance-campaign-opening__grid" aria-hidden="true"></div>
+    </figure>
+  {/if}
 
-	<div class="performance-campaign-opening__content">
-		<header>
-			<span class="performance-campaign-opening__eyebrow">{eyebrow}</span>
-			<h1>{title}</h1>
-			{#if lede}
-				<p class="performance-campaign-opening__lede">{lede}</p>
-			{/if}
-			{#if actions}
-				<div class="performance-campaign-opening__actions">
-					{@render actions()}
-				</div>
-			{/if}
-		</header>
+  <div class="performance-campaign-opening__content">
+    <header>
+      <div class="performance-campaign-opening__identity">
+        <span class="performance-campaign-opening__eyebrow">{eyebrow}</span>
+        {#if propertyRole}
+          <span class="performance-campaign-opening__property-role">{propertyRole}</span>
+        {/if}
+      </div>
+      <h1>
+        {#each titleParts as part, index}{part.prefix}{#if part.word}<span
+              class="performance-campaign-opening__punctuated-word"
+              >{part.word}{#if index < titleParts.length - 1}<span
+                  class="performance-campaign-opening__period">.</span
+                >{/if}</span
+            >{:else if index < titleParts.length - 1}<span
+              class="performance-campaign-opening__period">.</span
+            >{/if}{/each}
+      </h1>
+      {#if lede}
+        <p class="performance-campaign-opening__lede">{lede}</p>
+      {/if}
+      {#if actions}
+        <div class="performance-campaign-opening__actions">
+          {@render actions()}
+        </div>
+      {/if}
+    </header>
 
-		{#if proof.length > 0}
-			<ul class="performance-campaign-opening__proof" aria-label="Campaign proof">
-				{#each proof as item}
-					<li>
-						<span>{item.label}</span>
-						<strong>{item.value}</strong>
-					</li>
-				{/each}
-			</ul>
-		{/if}
-	</div>
+    {#if proof.length > 0}
+      <ul class="performance-campaign-opening__proof" aria-label="Campaign proof">
+        {#each proof as item}
+          <li>
+            <span>{item.label}</span>
+            <strong>{item.value}</strong>
+          </li>
+        {/each}
+      </ul>
+    {/if}
+  </div>
 
-	{#if artifact}
-		<div class="performance-campaign-opening__artifact">
-			{@render artifact()}
-		</div>
-	{/if}
+  {#if artifact}
+    <div class="performance-campaign-opening__artifact">
+      {@render artifact()}
+    </div>
+  {/if}
 
-	{#if ornament}
-		<div class="performance-campaign-opening__ornament">
-			{@render ornament()}
-		</div>
-	{/if}
+  {#if ornament}
+    <div class="performance-campaign-opening__ornament">
+      {@render ornament()}
+    </div>
+  {/if}
 </section>
 
 <style>
-	.performance-campaign-opening {
-		--performance-campaign-scrim-copy: rgba(9, 9, 9, 0.94);
-		--performance-campaign-scrim-mid: rgba(9, 9, 9, 0.24);
-		--performance-campaign-scrim-edge: rgba(9, 9, 9, 0);
-		--performance-campaign-scrim-bottom: rgba(9, 9, 9, 0.48);
-		position: relative;
-		display: grid;
-		min-height: clamp(38rem, 82svh, 58rem);
-		padding: 0;
-		overflow: hidden;
-		background: var(--color-performance-ink, #090909);
-		color: var(--color-performance-panel, #fff);
-		isolation: isolate;
-	}
+  .performance-campaign-opening {
+    --performance-campaign-scrim-copy: rgba(9, 9, 9, 0.94);
+    --performance-campaign-scrim-mid: rgba(9, 9, 9, 0.24);
+    --performance-campaign-scrim-edge: rgba(9, 9, 9, 0);
+    --performance-campaign-scrim-bottom: rgba(9, 9, 9, 0.48);
+    position: relative;
+    display: grid;
+    min-height: clamp(38rem, 82svh, 58rem);
+    padding: 0;
+    overflow: hidden;
+    background: var(--color-performance-ink, #090909);
+    color: var(--color-performance-panel, #fff);
+    isolation: isolate;
+  }
 
-	.performance-campaign-opening[data-mode='paper'] {
-		background: var(--color-performance-paper, #f3f3f0);
-		color: var(--color-performance-ink, #090909);
-	}
+  .performance-campaign-opening[data-mode='paper'] {
+    background: var(--color-performance-paper, #f3f3f0);
+    color: var(--color-performance-ink, #090909);
+  }
 
-	.performance-campaign-opening[data-density='compact'] {
-		min-height: clamp(34rem, 72svh, 48rem);
-	}
+  .performance-campaign-opening[data-density='compact'] {
+    min-height: clamp(34rem, 72svh, 48rem);
+  }
 
-	.performance-campaign-opening__media,
-	.performance-campaign-opening__media picture,
-	.performance-campaign-opening__media img,
-	.performance-campaign-opening__media video {
-		position: absolute;
-		inset: 0;
-		display: block;
-		width: 100%;
-		height: 100%;
-		margin: 0;
-	}
+  .performance-campaign-opening__media,
+  .performance-campaign-opening__media picture,
+  .performance-campaign-opening__media img,
+  .performance-campaign-opening__media video {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+  }
 
-	.performance-campaign-opening__media img,
-	.performance-campaign-opening__media video {
-		object-fit: cover;
-	}
+  .performance-campaign-opening__media img,
+  .performance-campaign-opening__media video {
+    object-fit: cover;
+  }
 
-	.performance-campaign-opening__media picture {
-		z-index: 0;
-		opacity: 1;
-		transition: opacity var(--duration-performance-standard, 400ms)
-			var(--ease-performance-standard, ease);
-	}
+  .performance-campaign-opening__media picture {
+    z-index: 0;
+    opacity: 1;
+    transition: opacity var(--duration-performance-standard, 400ms)
+      var(--ease-performance-standard, ease);
+  }
 
-	.performance-campaign-opening__media--studio-ready picture {
-		opacity: 0;
-	}
+  .performance-campaign-opening__media--studio-ready picture {
+    opacity: 0;
+  }
 
-	.performance-campaign-opening__media .performance-campaign-opening__fallback-suppressed {
-		opacity: 0;
-	}
+  .performance-campaign-opening__media .performance-campaign-opening__fallback-suppressed {
+    opacity: 0;
+  }
 
-	.performance-campaign-opening__media[data-color-mode='monochrome'] img,
-	.performance-campaign-opening__media[data-color-mode='monochrome'] video {
-		filter: grayscale(1) contrast(1.08);
-	}
+  .performance-campaign-opening__media[data-color-mode='monochrome'] img,
+  .performance-campaign-opening__media[data-color-mode='monochrome'] video {
+    filter: grayscale(1) contrast(1.08);
+  }
 
-	.performance-campaign-opening__media[data-color-mode='natural'] img,
-	.performance-campaign-opening__media[data-color-mode='natural'] video {
-		filter: contrast(1.08);
-	}
+  .performance-campaign-opening__media[data-color-mode='natural'] img,
+  .performance-campaign-opening__media[data-color-mode='natural'] video {
+    filter: contrast(1.08);
+  }
 
-	.performance-campaign-opening__media::after {
-		content: '';
-		position: absolute;
-		inset: 0;
-		background:
-			linear-gradient(
-				90deg,
-				rgba(9, 9, 9, 0.99) 0%,
-				var(--performance-campaign-scrim-copy) 36%,
-				var(--performance-campaign-scrim-mid) 58%,
-				rgba(9, 9, 9, 0.04) 76%,
-				var(--performance-campaign-scrim-edge) 100%
-			),
-			linear-gradient(
-				0deg,
-				var(--performance-campaign-scrim-bottom) 0%,
-				rgba(9, 9, 9, 0.08) 48%,
-				rgba(9, 9, 9, 0) 100%
-			);
-		z-index: 1;
-	}
+  .performance-campaign-opening__media::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(
+        90deg,
+        rgba(9, 9, 9, 0.99) 0%,
+        var(--performance-campaign-scrim-copy) 36%,
+        var(--performance-campaign-scrim-mid) 58%,
+        rgba(9, 9, 9, 0.04) 76%,
+        var(--performance-campaign-scrim-edge) 100%
+      ),
+      linear-gradient(
+        0deg,
+        var(--performance-campaign-scrim-bottom) 0%,
+        rgba(9, 9, 9, 0.08) 48%,
+        rgba(9, 9, 9, 0) 100%
+      );
+    z-index: 1;
+  }
 
-	.performance-campaign-opening[data-mode='paper'] .performance-campaign-opening__media {
-		opacity: 1;
-	}
+  .performance-campaign-opening[data-mode='paper'] .performance-campaign-opening__media {
+    opacity: 1;
+  }
 
-	.performance-campaign-opening[data-mode='paper'] .performance-campaign-opening__media::after {
-		background:
-			linear-gradient(
-				90deg,
-				var(--color-performance-paper, #f3f3f0) 0%,
-				rgba(243, 243, 240, 0.98) 38%,
-				rgba(243, 243, 240, 0.72) 53%,
-				rgba(243, 243, 240, 0.14) 72%,
-				rgba(243, 243, 240, 0) 100%
-			),
-			linear-gradient(0deg, rgba(243, 243, 240, 0.82) 0%, rgba(243, 243, 240, 0) 32%);
-	}
+  .performance-campaign-opening[data-mode='paper'] .performance-campaign-opening__media::after {
+    background:
+      linear-gradient(
+        90deg,
+        var(--color-performance-paper, #f3f3f0) 0%,
+        rgba(243, 243, 240, 0.98) 38%,
+        rgba(243, 243, 240, 0.72) 53%,
+        rgba(243, 243, 240, 0.14) 72%,
+        rgba(243, 243, 240, 0) 100%
+      ),
+      linear-gradient(0deg, rgba(243, 243, 240, 0.82) 0%, rgba(243, 243, 240, 0) 32%);
+  }
 
-	.performance-campaign-opening[data-mode='paper']
-		.performance-campaign-opening__media--paper-object-visible::after {
-		background:
-			linear-gradient(
-				90deg,
-				var(--color-performance-paper, #f3f3f0) 0%,
-				rgba(243, 243, 240, 0.98) 34%,
-				rgba(243, 243, 240, 0.38) 46%,
-				rgba(243, 243, 240, 0.04) 58%,
-				rgba(243, 243, 240, 0) 68%
-			),
-			linear-gradient(0deg, rgba(243, 243, 240, 0.34) 0%, rgba(243, 243, 240, 0) 30%);
-	}
+  .performance-campaign-opening[data-mode='paper']
+    .performance-campaign-opening__media--paper-object-visible::after {
+    background:
+      linear-gradient(
+        90deg,
+        var(--color-performance-paper, #f3f3f0) 0%,
+        rgba(243, 243, 240, 0.98) 34%,
+        rgba(243, 243, 240, 0.38) 46%,
+        rgba(243, 243, 240, 0.04) 58%,
+        rgba(243, 243, 240, 0) 68%
+      ),
+      linear-gradient(0deg, rgba(243, 243, 240, 0.34) 0%, rgba(243, 243, 240, 0) 30%);
+  }
 
-	.performance-campaign-opening[data-mode='paper'] .performance-campaign-opening__grid {
-		background:
-			linear-gradient(
-					90deg,
-					var(--color-performance-grid, rgba(9, 9, 9, 0.045)) 1px,
-					transparent 1px
-				)
-				0 0 / 25% 100%,
-			linear-gradient(var(--color-performance-grid, rgba(9, 9, 9, 0.045)) 1px, transparent 1px) 0
-				0 / 100% 25%;
-	}
+  .performance-campaign-opening[data-mode='paper'] .performance-campaign-opening__grid {
+    background:
+      linear-gradient(
+          90deg,
+          var(--color-performance-grid, rgba(9, 9, 9, 0.045)) 1px,
+          transparent 1px
+        )
+        0 0 / 25% 100%,
+      linear-gradient(var(--color-performance-grid, rgba(9, 9, 9, 0.045)) 1px, transparent 1px) 0
+        0 / 100% 25%;
+  }
 
-	.performance-campaign-opening__grid {
-		position: absolute;
-		inset: 0;
-		z-index: 1;
-		background:
-			linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px) 0 0 / 25% 100%,
-			linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px) 0 0 / 100% 25%;
-		pointer-events: none;
-	}
+  .performance-campaign-opening__grid {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background:
+      linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px) 0 0 / 25% 100%,
+      linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px) 0 0 / 100% 25%;
+    pointer-events: none;
+  }
 
-	.performance-campaign-opening__content {
-		position: relative;
-		z-index: 2;
-		display: grid;
-		grid-template-rows: 1fr auto;
-		gap: clamp(3rem, 8vw, 8rem);
-		width: min(
-			var(--content-width-performance, 85rem),
-			calc(
-				100% - var(--space-performance-page-gutter, 1.25rem) -
-					var(--space-performance-page-gutter, 1.25rem)
-			)
-		);
-		margin-inline: auto;
-		padding-block: clamp(8rem, 17vh, 12rem) 1.25rem;
-	}
+  .performance-campaign-opening__content {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-rows: 1fr auto;
+    gap: clamp(3rem, 8vw, 8rem);
+    width: min(
+      var(--content-width-performance, 85rem),
+      calc(
+        100% - var(--space-performance-page-gutter, 1.25rem) -
+          var(--space-performance-page-gutter, 1.25rem)
+      )
+    );
+    margin-inline: auto;
+    padding-block: clamp(8rem, 17vh, 12rem) 1.25rem;
+  }
 
-	.performance-campaign-opening__artifact,
-	.performance-campaign-opening__ornament {
-		position: absolute;
-		inset: 0;
-		z-index: 3;
-		pointer-events: none;
-	}
+  .performance-campaign-opening__artifact,
+  .performance-campaign-opening__ornament {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+  }
 
-	.performance-campaign-opening[data-density='compact'] .performance-campaign-opening__content {
-		gap: clamp(2rem, 5vw, 4rem);
-		padding-block: clamp(2.5rem, 6vh, 4rem) 1rem;
-	}
+  .performance-campaign-opening[data-density='compact'] .performance-campaign-opening__content {
+    gap: clamp(2rem, 5vw, 4rem);
+    padding-block: clamp(2.5rem, 6vh, 4rem) 1rem;
+  }
 
-	.performance-campaign-opening[data-density='compact'] h1 {
-		max-width: 15ch;
-		font-size: clamp(3rem, 5.4vw, 5.5rem);
-	}
+  .performance-campaign-opening[data-density='compact'] h1 {
+    max-width: 15ch;
+    font-size: clamp(3rem, 5.4vw, 5.5rem);
+  }
 
-	.performance-campaign-opening__content header {
-		display: grid;
-		align-content: center;
-		justify-items: start;
-		gap: 1rem;
-		max-width: 52rem;
-	}
+  .performance-campaign-opening__content header {
+    display: grid;
+    align-content: center;
+    justify-items: start;
+    gap: 1rem;
+    max-width: 52rem;
+  }
 
-	@media (min-width: 48rem) {
-		.performance-campaign-opening[data-has-artifact='true']
-			.performance-campaign-opening__content
-			header {
-			width: min(44%, 37rem);
-		}
-	}
+  .performance-campaign-opening__identity {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    align-items: center;
+  }
 
-	.performance-campaign-opening__eyebrow,
-	.performance-campaign-opening__proof span {
-		font-family: var(--font-performance-mono);
-		font-size: 0.72rem;
-		font-weight: var(--font-performance-semibold, 600);
-		line-height: 1.25;
-		text-transform: uppercase;
-	}
+  @media (min-width: 48rem) {
+    .performance-campaign-opening[data-has-artifact='true']
+      .performance-campaign-opening__content
+      header {
+      width: min(44%, 37rem);
+    }
+  }
 
-	.performance-campaign-opening__eyebrow {
-		padding: 0.42rem 0.62rem;
-		border: 1px solid currentColor;
-	}
+  .performance-campaign-opening__eyebrow,
+  .performance-campaign-opening__property-role,
+  .performance-campaign-opening__proof span {
+    font-family: var(--font-performance-mono);
+    font-size: 0.72rem;
+    font-weight: var(--font-performance-semibold, 600);
+    line-height: 1.25;
+    text-transform: uppercase;
+  }
 
-	.performance-campaign-opening h1 {
-		max-width: 13ch;
-		margin: 0;
-		font-family: var(
-			--font-performance-display,
-			var(--font-performance-display, var(--font-performance-sans))
-		);
-		font-size: clamp(3.25rem, 8vw, 7.5rem);
-		font-weight: var(--font-performance-display-weight, var(--font-performance-medium, 500));
-		font-kerning: normal;
-		font-feature-settings:
-			'kern' 1,
-			'liga' 1;
-		letter-spacing: var(--tracking-performance-display, -0.03em);
-		line-height: var(--leading-performance-display, 0.94);
-		text-wrap: balance;
-	}
+  .performance-campaign-opening__eyebrow {
+    padding: 0.42rem 0.62rem;
+    border: 1px solid currentColor;
+  }
 
-	.performance-campaign-opening__lede {
-		max-width: 40rem;
-		margin: 0;
-		color: rgba(255, 255, 255, 0.88);
-		font-size: clamp(1rem, 1.7vw, 1.3rem);
-		line-height: 1.45;
-	}
+  .performance-campaign-opening__property-role {
+    opacity: 0.72;
+  }
 
-	.performance-campaign-opening[data-mode='paper'] .performance-campaign-opening__lede {
-		color: var(--color-performance-muted, #5e6268);
-	}
+  .performance-campaign-opening h1 {
+    max-width: 13ch;
+    margin: 0;
+    font-family: var(
+      --font-performance-display,
+      var(--font-performance-display, var(--font-performance-sans))
+    );
+    font-size: clamp(3.25rem, 8vw, 7.5rem);
+    font-weight: var(--font-performance-display-weight, var(--font-performance-medium, 500));
+    font-kerning: normal;
+    font-feature-settings:
+      'kern' 1,
+      'liga' 1;
+    letter-spacing: var(--tracking-performance-display, -0.03em);
+    line-height: var(--leading-performance-display, 0.94);
+    text-wrap: balance;
+  }
 
-	.performance-campaign-opening__actions {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.75rem;
-		margin-top: 0.5rem;
-	}
+  .performance-campaign-opening__period {
+    display: inline;
+    margin-inline-start: 0.055em;
+    letter-spacing: normal;
+  }
 
-	/* prettier-ignore */
-	.performance-campaign-opening:not([data-mode='paper']) .performance-campaign-opening__actions :global(.btn-primary) {
+  .performance-campaign-opening__punctuated-word {
+    white-space: nowrap;
+  }
+
+  .performance-campaign-opening__lede {
+    max-width: 40rem;
+    margin: 0;
+    color: rgba(255, 255, 255, 0.88);
+    font-size: clamp(1rem, 1.7vw, 1.3rem);
+    line-height: 1.45;
+  }
+
+  .performance-campaign-opening[data-mode='paper'] .performance-campaign-opening__lede {
+    color: var(--color-performance-muted, #5e6268);
+  }
+
+  .performance-campaign-opening__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+  }
+
+  /* prettier-ignore */
+  .performance-campaign-opening:not([data-mode='paper']) .performance-campaign-opening__actions :global(.btn-primary) {
 		border-color: var(--color-performance-panel, #fff);
 		background: var(--color-performance-panel, #fff);
 		color: var(--color-performance-ink, #090909);
 	}
 
-	.performance-campaign-opening:not([data-mode='paper'])
-		.performance-campaign-opening__actions
-		:global(.btn-primary:hover) {
-		border-color: var(--color-performance-paper, #f3f3f0);
-		background: var(--color-performance-paper, #f3f3f0);
-		color: var(--color-performance-ink, #090909);
-	}
+  .performance-campaign-opening:not([data-mode='paper'])
+    .performance-campaign-opening__actions
+    :global(.btn-primary:hover) {
+    border-color: var(--color-performance-paper, #f3f3f0);
+    background: var(--color-performance-paper, #f3f3f0);
+    color: var(--color-performance-ink, #090909);
+  }
 
-	/* prettier-ignore */
-	.performance-campaign-opening:not([data-mode='paper']) .performance-campaign-opening__actions :global(.btn-secondary) {
+  /* prettier-ignore */
+  .performance-campaign-opening:not([data-mode='paper']) .performance-campaign-opening__actions :global(.btn-secondary) {
 		border-color: rgba(255, 255, 255, 0.72);
 		background: rgba(9, 9, 9, 0.44);
 		color: var(--color-performance-panel, #fff);
 		backdrop-filter: blur(8px);
 	}
 
-	.performance-campaign-opening:not([data-mode='paper'])
-		.performance-campaign-opening__actions
-		:global(.btn-secondary:hover) {
-		border-color: var(--color-performance-panel, #fff);
-		background: rgba(255, 255, 255, 0.12);
-		color: var(--color-performance-panel, #fff);
-	}
+  .performance-campaign-opening:not([data-mode='paper'])
+    .performance-campaign-opening__actions
+    :global(.btn-secondary:hover) {
+    border-color: var(--color-performance-panel, #fff);
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--color-performance-panel, #fff);
+  }
 
-	/* prettier-ignore */
-	.performance-campaign-opening[data-mode='paper'] .performance-campaign-opening__actions :global(.btn-primary) {
+  /* prettier-ignore */
+  .performance-campaign-opening[data-mode='paper'] .performance-campaign-opening__actions :global(.btn-primary) {
 		border-color: var(--color-performance-ink, #090909);
 		background: var(--color-performance-ink, #090909);
 		color: var(--color-performance-panel, #fff);
 	}
 
-	/* prettier-ignore */
-	.performance-campaign-opening[data-mode='paper'] .performance-campaign-opening__actions :global(.btn-secondary) {
+  /* prettier-ignore */
+  .performance-campaign-opening[data-mode='paper'] .performance-campaign-opening__actions :global(.btn-secondary) {
 		border-color: var(--color-performance-line, #c6c8cc);
 		background: rgba(255, 255, 255, 0.62);
 		color: var(--color-performance-ink, #090909);
 	}
 
-	.performance-campaign-opening__actions :global(.btn:focus-visible) {
-		outline: 3px solid var(--color-performance-signal-soft, #a7b8ff);
-		outline-offset: 3px;
-	}
+  .performance-campaign-opening__actions :global(.btn:focus-visible) {
+    outline: 3px solid var(--color-performance-signal-soft, #a7b8ff);
+    outline-offset: 3px;
+  }
 
-	.performance-campaign-opening__proof {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
-		margin: 0;
-		padding: 0;
-		border-top: 1px solid currentColor;
-		list-style: none;
-	}
+  .performance-campaign-opening__proof {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid currentColor;
+    list-style: none;
+  }
 
-	.performance-campaign-opening__proof li {
-		display: grid;
-		gap: 0.35rem;
-		padding: 1rem;
-		border-right: 1px solid currentColor;
-	}
+  .performance-campaign-opening__proof li {
+    display: grid;
+    gap: 0.35rem;
+    padding: 1rem;
+    border-right: 1px solid currentColor;
+  }
 
-	.performance-campaign-opening__proof span {
-		opacity: 0.74;
-	}
+  .performance-campaign-opening__proof span {
+    opacity: 0.74;
+  }
 
-	.performance-campaign-opening__proof strong {
-		font-size: 0.95rem;
-		font-weight: var(--font-performance-medium, 500);
-	}
+  .performance-campaign-opening__proof strong {
+    font-size: 0.95rem;
+    font-weight: var(--font-performance-medium, 500);
+  }
 
-	@media (max-width: 47.99rem) {
-		.performance-campaign-opening {
-			--performance-campaign-scrim-copy: rgba(9, 9, 9, 0.97);
-			--performance-campaign-scrim-mid: rgba(9, 9, 9, 0.88);
-			--performance-campaign-scrim-edge: rgba(9, 9, 9, 0.32);
-			min-height: 44rem;
-		}
+  @media (max-width: 47.99rem) {
+    .performance-campaign-opening {
+      --performance-campaign-scrim-copy: rgba(9, 9, 9, 0.97);
+      --performance-campaign-scrim-mid: rgba(9, 9, 9, 0.88);
+      --performance-campaign-scrim-edge: rgba(9, 9, 9, 0.32);
+      min-height: 44rem;
+    }
 
-		.performance-campaign-opening__media::after {
-			background:
-				linear-gradient(
-					0deg,
-					var(--performance-campaign-scrim-copy) 0%,
-					var(--performance-campaign-scrim-mid) 62%,
-					var(--performance-campaign-scrim-edge) 86%,
-					rgba(9, 9, 9, 0.14) 100%
-				),
-				linear-gradient(90deg, rgba(9, 9, 9, 0.72), rgba(9, 9, 9, 0.28));
-		}
+    .performance-campaign-opening__media::after {
+      background:
+        linear-gradient(
+          0deg,
+          var(--performance-campaign-scrim-copy) 0%,
+          var(--performance-campaign-scrim-mid) 62%,
+          var(--performance-campaign-scrim-edge) 86%,
+          rgba(9, 9, 9, 0.14) 100%
+        ),
+        linear-gradient(90deg, rgba(9, 9, 9, 0.72), rgba(9, 9, 9, 0.28));
+    }
 
-		.performance-campaign-opening[data-mode='paper'] .performance-campaign-opening__media::after {
-			background:
-				linear-gradient(
-					180deg,
-					var(--color-performance-paper, #f3f3f0) 0%,
-					rgba(243, 243, 240, 0.98) 48%,
-					rgba(243, 243, 240, 0.56) 68%,
-					rgba(243, 243, 240, 0.76) 100%
-				),
-				linear-gradient(90deg, rgba(243, 243, 240, 0.9), rgba(243, 243, 240, 0.28));
-		}
+    .performance-campaign-opening[data-mode='paper'] .performance-campaign-opening__media::after {
+      background:
+        linear-gradient(
+          180deg,
+          var(--color-performance-paper, #f3f3f0) 0%,
+          rgba(243, 243, 240, 0.98) 48%,
+          rgba(243, 243, 240, 0.56) 68%,
+          rgba(243, 243, 240, 0.76) 100%
+        ),
+        linear-gradient(90deg, rgba(243, 243, 240, 0.9), rgba(243, 243, 240, 0.28));
+    }
 
-		.performance-campaign-opening[data-mode='paper']
-			.performance-campaign-opening__media--paper-object-visible::after {
-			background:
-				linear-gradient(
-					180deg,
-					var(--color-performance-paper, #f3f3f0) 0%,
-					rgba(243, 243, 240, 0.98) 46%,
-					rgba(243, 243, 240, 0.72) 53%,
-					rgba(243, 243, 240, 0.14) 62%,
-					rgba(243, 243, 240, 0) 72%
-				),
-				linear-gradient(90deg, rgba(243, 243, 240, 0.36), rgba(243, 243, 240, 0));
-		}
+    .performance-campaign-opening[data-mode='paper']
+      .performance-campaign-opening__media--paper-object-visible::after {
+      background:
+        linear-gradient(
+          180deg,
+          var(--color-performance-paper, #f3f3f0) 0%,
+          rgba(243, 243, 240, 0.98) 46%,
+          rgba(243, 243, 240, 0.72) 53%,
+          rgba(243, 243, 240, 0.14) 62%,
+          rgba(243, 243, 240, 0) 72%
+        ),
+        linear-gradient(90deg, rgba(243, 243, 240, 0.36), rgba(243, 243, 240, 0));
+    }
 
-		.performance-campaign-opening__content {
-			width: min(
-				calc(
-					100% - var(--space-performance-page-gutter, 0.75rem) -
-						var(--space-performance-page-gutter, 0.75rem)
-				),
-				var(--content-width-performance, 85rem)
-			);
-			padding-block: 7rem 0.75rem;
-		}
+    .performance-campaign-opening__content {
+      width: min(
+        calc(
+          100% - var(--space-performance-page-gutter, 0.75rem) -
+            var(--space-performance-page-gutter, 0.75rem)
+        ),
+        var(--content-width-performance, 85rem)
+      );
+      padding-block: 7rem 0.75rem;
+    }
 
-		.performance-campaign-opening[data-density='compact'] {
-			min-height: 42rem;
-		}
+    .performance-campaign-opening[data-density='compact'] {
+      min-height: 42rem;
+    }
 
-		.performance-campaign-opening[data-has-artifact='true'][data-density='compact'] {
-			min-height: 64rem;
-		}
+    .performance-campaign-opening[data-has-artifact='true'][data-density='compact'] {
+      min-height: 64rem;
+    }
 
-		.performance-campaign-opening--paper-studio:not([data-has-artifact='true']) {
-			min-height: 60rem;
-		}
+    .performance-campaign-opening--paper-studio:not([data-has-artifact='true']) {
+      min-height: 60rem;
+    }
 
-		.performance-campaign-opening[data-density='compact'] .performance-campaign-opening__content {
-			padding-block: 5.5rem 0.75rem;
-		}
+    .performance-campaign-opening[data-density='compact'] .performance-campaign-opening__content {
+      padding-block: 5.5rem 0.75rem;
+    }
 
-		.performance-campaign-opening[data-has-artifact='true'] .performance-campaign-opening__content {
-			grid-template-rows: auto auto;
-			align-content: space-between;
-		}
+    .performance-campaign-opening[data-has-artifact='true'] .performance-campaign-opening__content {
+      grid-template-rows: auto auto;
+      align-content: space-between;
+    }
 
-		.performance-campaign-opening--paper-studio .performance-campaign-opening__content header {
-			align-content: start;
-			align-self: start;
-			padding-top: 1.5rem;
-		}
+    .performance-campaign-opening--paper-studio .performance-campaign-opening__content header {
+      align-content: start;
+      align-self: start;
+      padding-top: 1.5rem;
+    }
 
-		.performance-campaign-opening__proof {
-			grid-template-columns: repeat(2, minmax(0, 1fr));
-		}
-	}
+    .performance-campaign-opening__proof {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 
-	@media (prefers-reduced-motion: reduce) {
-		.performance-campaign-opening__media picture {
-			transition: none;
-		}
-	}
+    .performance-campaign-opening[data-artifact-mobile-placement='flow'] {
+      grid-template-rows: auto auto auto;
+      min-height: 0;
+    }
 
-	@media (prefers-reduced-motion: reduce) {
-		.performance-campaign-opening *,
-		.performance-campaign-opening *::before,
-		.performance-campaign-opening *::after {
-			animation-duration: 0.01ms !important;
-			animation-iteration-count: 1 !important;
-			scroll-behavior: auto !important;
-		}
-	}
+    .performance-campaign-opening[data-artifact-mobile-placement='flow'][data-density='compact'] {
+      min-height: 0;
+    }
+
+    .performance-campaign-opening[data-artifact-mobile-placement='flow']
+      .performance-campaign-opening__content {
+      display: contents;
+    }
+
+    .performance-campaign-opening[data-artifact-mobile-placement='flow']
+      .performance-campaign-opening__content
+      header {
+      position: relative;
+      z-index: 2;
+      grid-row: 1;
+      width: min(
+        calc(
+          100% - var(--space-performance-page-gutter, 0.75rem) -
+            var(--space-performance-page-gutter, 0.75rem)
+        ),
+        var(--content-width-performance, 85rem)
+      );
+      margin-inline: auto;
+      padding-block: 5.5rem 2rem;
+    }
+
+    .performance-campaign-opening[data-artifact-mobile-placement='flow']
+      .performance-campaign-opening__artifact {
+      position: relative;
+      inset: auto;
+      z-index: 3;
+      grid-row: 2;
+      width: min(
+        calc(
+          100% - var(--space-performance-page-gutter, 0.75rem) -
+            var(--space-performance-page-gutter, 0.75rem)
+        ),
+        var(--content-width-performance, 85rem)
+      );
+      margin-inline: auto;
+      padding-bottom: 0.75rem;
+    }
+
+    .performance-campaign-opening[data-artifact-mobile-placement='flow']
+      .performance-campaign-opening__proof {
+      position: relative;
+      z-index: 2;
+      grid-row: 3;
+      width: min(
+        calc(
+          100% - var(--space-performance-page-gutter, 0.75rem) -
+            var(--space-performance-page-gutter, 0.75rem)
+        ),
+        var(--content-width-performance, 85rem)
+      );
+      margin-inline: auto;
+      margin-bottom: 0.75rem;
+    }
+  }
+
+  .performance-campaign-opening[data-expression='editorial'] {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(max(44rem, 82svh), max-content);
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 44rem;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: var(--color-performance-editorial-dark, #181312);
+    color: var(--color-performance-editorial-light, #f3ebe4);
+  }
+
+  .performance-campaign-opening[data-expression='editorial']::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    background:
+      linear-gradient(
+        90deg,
+        rgba(24, 19, 18, 0.99) 0%,
+        rgba(24, 19, 18, 0.9) 43%,
+        rgba(24, 19, 18, 0.24) 74%,
+        rgba(24, 19, 18, 0.08) 100%
+      ),
+      linear-gradient(0deg, rgba(24, 19, 18, 0.74), transparent 46%);
+    pointer-events: none;
+  }
+
+  .performance-campaign-opening[data-expression='editorial']
+    .performance-campaign-opening__content {
+    z-index: 3;
+    grid-column: 1;
+    grid-row: 1;
+    grid-template-rows: 1fr auto;
+    box-sizing: border-box;
+    width: min(var(--content-width-performance-editorial, 90rem), calc(100% - 2rem));
+    min-width: 0;
+    margin: 0 auto;
+    padding: clamp(7rem, 14vh, 10rem) 0 clamp(1.25rem, 3vw, 2rem);
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--color-performance-editorial-light, #f3ebe4);
+  }
+
+  .performance-campaign-opening[data-expression='editorial']
+    .performance-campaign-opening__content
+    header {
+    width: min(48%, 42rem);
+    max-width: 42rem;
+  }
+
+  .performance-campaign-opening[data-expression='editorial'] h1,
+  .performance-campaign-opening[data-expression='editorial'][data-density='compact'] h1 {
+    max-width: 11ch;
+    font-family: var(--font-performance-editorial);
+    font-size: clamp(4rem, 7vw, 7.4rem);
+    font-weight: var(--font-performance-editorial-weight, 400);
+    letter-spacing: -0.045em;
+    line-height: var(--leading-performance-editorial, 1.1);
+  }
+
+  .performance-campaign-opening[data-expression='editorial']
+    .performance-campaign-opening__identity {
+    width: auto;
+    justify-content: flex-start;
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
+
+  .performance-campaign-opening[data-expression='editorial']
+    .performance-campaign-opening__eyebrow {
+    padding: 0.42rem 0.62rem;
+    border: 1px solid currentColor;
+  }
+
+  .performance-campaign-opening[data-expression='editorial']
+    .performance-campaign-opening__property-role {
+    text-align: right;
+  }
+
+  .performance-campaign-opening[data-expression='editorial'] .performance-campaign-opening__lede {
+    max-width: 38rem;
+    color: color-mix(in srgb, var(--color-performance-editorial-light) 84%, transparent);
+    font-size: clamp(1rem, 1.35vw, 1.2rem);
+  }
+
+  .performance-campaign-opening[data-expression='editorial'] .performance-campaign-opening__proof {
+    border-color: color-mix(in srgb, var(--color-performance-editorial-light) 46%, transparent);
+  }
+
+  .performance-campaign-opening[data-expression='editorial']
+    .performance-campaign-opening__proof
+    li {
+    border-color: color-mix(in srgb, var(--color-performance-editorial-light) 34%, transparent);
+  }
+
+  .performance-campaign-opening[data-expression='editorial']
+    .performance-campaign-opening__actions
+    :global(.btn-primary) {
+    border-color: var(--color-performance-editorial-brand, #fcaa2d);
+    background: var(--color-performance-editorial-brand, #fcaa2d);
+    color: var(--color-performance-editorial-dark, #181312);
+  }
+
+  .performance-campaign-opening[data-expression='editorial']
+    .performance-campaign-opening__actions
+    :global(.btn-secondary) {
+    border-color: color-mix(in srgb, var(--color-performance-editorial-light) 66%, transparent);
+    background: color-mix(in srgb, var(--color-performance-editorial-dark) 58%, transparent);
+    color: var(--color-performance-editorial-light, #f3ebe4);
+    backdrop-filter: none;
+  }
+
+  .performance-campaign-opening[data-expression='editorial'] .performance-campaign-opening__media,
+  .performance-campaign-opening[data-expression='editorial']
+    .performance-campaign-opening__artifact {
+    position: absolute;
+    inset: 0 0 0 auto;
+    z-index: 1;
+    grid-column: 1;
+    grid-row: 1;
+    box-sizing: border-box;
+    width: min(66%, 72rem);
+    min-width: 0;
+    min-height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    border-radius: 0;
+    background: var(--color-performance-editorial-dark, #181312);
+  }
+
+  .performance-campaign-opening[data-expression='editorial']
+    .performance-campaign-opening__media::after {
+    background: linear-gradient(180deg, transparent 58%, rgba(24, 19, 18, 0.32));
+  }
+
+  .performance-campaign-opening[data-expression='editorial'] .performance-campaign-opening__grid {
+    opacity: 0.42;
+  }
+
+  @media (max-width: 63.99rem) {
+    .performance-campaign-opening[data-expression='editorial'] {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: auto auto;
+      width: 100%;
+      min-height: 0;
+      padding: 0;
+    }
+
+    .performance-campaign-opening[data-expression='editorial']::before {
+      background: linear-gradient(
+        180deg,
+        rgba(24, 19, 18, 0.94) 0%,
+        rgba(24, 19, 18, 0.82) 48%,
+        rgba(24, 19, 18, 0.22) 72%,
+        rgba(24, 19, 18, 0.72) 100%
+      );
+    }
+
+    .performance-campaign-opening[data-expression='editorial']
+      .performance-campaign-opening__content {
+      display: grid;
+      grid-column: 1;
+      grid-row: 1;
+      gap: 2rem;
+      width: min(100% - 1.5rem, 46rem);
+      min-height: 42rem;
+      padding: 6.5rem 0 1rem;
+    }
+
+    .performance-campaign-opening[data-expression='editorial']
+      .performance-campaign-opening__content
+      header {
+      width: 100%;
+      max-width: 38rem;
+    }
+
+    .performance-campaign-opening[data-expression='editorial'] h1,
+    .performance-campaign-opening[data-expression='editorial'][data-density='compact'] h1 {
+      font-size: clamp(3.25rem, 15vw, 5.25rem);
+    }
+
+    .performance-campaign-opening[data-expression='editorial']
+      .performance-campaign-opening__property-role {
+      max-width: 12rem;
+    }
+
+    .performance-campaign-opening[data-expression='editorial'] .performance-campaign-opening__media,
+    .performance-campaign-opening[data-expression='editorial']
+      .performance-campaign-opening__artifact {
+      position: relative;
+      inset: auto;
+      z-index: 1;
+      grid-column: 1;
+      grid-row: 2;
+      width: 100%;
+      min-height: clamp(24rem, 90vw, 34rem);
+    }
+
+    .performance-campaign-opening[data-expression='editorial']
+      .performance-campaign-opening__proof {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      width: 100%;
+      margin: 0;
+    }
+
+    .performance-campaign-opening[data-expression='editorial'][data-media-mobile-placement='background'] {
+      grid-template-rows: auto;
+    }
+
+    .performance-campaign-opening[data-expression='editorial'][data-media-mobile-placement='background']
+      .performance-campaign-opening__media {
+      position: absolute;
+      inset: 0;
+      grid-column: 1;
+      grid-row: 1;
+      width: 100%;
+      min-height: 100%;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .performance-campaign-opening__media picture {
+      transition: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .performance-campaign-opening *,
+    .performance-campaign-opening *::before,
+    .performance-campaign-opening *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+    }
+  }
 </style>

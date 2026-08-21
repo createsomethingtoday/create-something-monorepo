@@ -88,6 +88,8 @@
     "open-weight:eval:local": "node scripts/open-weight-agent-local-eval.mjs --mode transformers",
     "ink:bridge:smoke": "pnpm --dir packages/calm-operator-ink-bridge smoke:production",
     "ink:priority": "pnpm --dir packages/calm-operator-ink-bridge post:priority",
+    "operator:bridge:smoke": "pnpm --dir packages/calm-operator-ink-bridge smoke:production",
+    "operator:priority": "pnpm --dir packages/calm-operator-ink-bridge post:priority",
     "codex:g2:access:check": "node scripts/codex-g2-cloudflare-access.mjs check",
     "codex:g2:access:config": "node scripts/codex-g2-cloudflare-access.mjs config",
     "codex:g2:access:start": "node scripts/codex-g2-cloudflare-access.mjs start",
@@ -196,6 +198,7 @@
     "thesis:evidence:validate": "node scripts/thesis-evidence.mjs validate",
     "policy:artifacts:check": "node scripts/policy-artifact-check.mjs",
     "paper-cycle:context": "node scripts/io-paper-cycle-context.mjs",
+    "paper-cycle:test": "node --test scripts/test/io-paper-cycle-context.test.mjs",
     "paper-cycle:labels:sync": "node scripts/io-paper-cycle-labels.mjs",
     "paper-cycle:verify": "node scripts/io-paper-cycle-verify.mjs",
     "harness": "pnpm --filter @create-something/harness harness",
@@ -240,6 +243,10 @@
     "ground:experiments:json": "tsx scripts/ground-experiments.ts --json",
     "ground:duplicates": "tsx scripts/ground-duplicates.ts",
     "ground:duplicates:json": "tsx scripts/ground-duplicates.ts --json",
+    "ground:review": "node scripts/ground-review.mjs",
+    "ground:review:json": "node scripts/ground-review.mjs --format json",
+    "ground:adjudication": "node scripts/ground-adjudication.mjs --ledger docs/internal/ground-adjudication-ledger.v1.json",
+    "ground:adjudication:json": "node scripts/ground-adjudication.mjs --ledger docs/internal/ground-adjudication-ledger.v1.json --format json",
     "ground": "pnpm ground:imports && pnpm ground:components && pnpm ground:experiments && pnpm ground:duplicates",
     "authz:compile": "tsx scripts/compile-authz-manifests.ts",
     "authz:publish": "tsx scripts/publish-authz-policy.ts",
@@ -343,6 +350,8 @@
     "webflow:governance:verify": "pnpm webflow:governance:check && pnpm webflow:components:verify",
     "agent:claim-worktree": "node scripts/agent-claim-worktree.mjs",
     "agent:claim-worktree:test": "node --test scripts/test/agent-claim-worktree.test.mjs",
+    "archive:package": "node scripts/package-source-archive.mjs",
+    "archive:package:test": "node --test scripts/test/package-source-archive.test.mjs",
     "linear": "node scripts/linear/remote.mjs",
     "linear:ready": "node scripts/linear/remote.mjs ready",
     "linear:list": "node scripts/linear/remote.mjs list",
@@ -402,13 +411,14 @@
     "langfuse:smoke": "tsx scripts/langfuse-openai-smoke.ts",
     "langfuse:mcp:telemetry-smoke": "tsx scripts/langfuse-mcp-telemetry-smoke.ts",
     "langfuse:playbook-smoke": "tsx scripts/langfuse-playbook-mcp-smoke.ts",
-    "ink:langfuse-quality": "pnpm --dir packages/calm-operator-ink-bridge post:langfuse-quality"
+    "ink:langfuse-quality": "pnpm --dir packages/calm-operator-ink-bridge post:langfuse-quality",
+    "operator:langfuse-quality": "pnpm --dir packages/calm-operator-ink-bridge post:langfuse-quality"
   },
   "devDependencies": {
     "@create-something/observability": "workspace:*",
     "@iarna/toml": "^2.2.5",
     "@mizchi/lsmcp": "^0.10.0",
-    "@openai/agents": "^0.4.10",
+    "@openai/agents": "^0.15.0",
     "@typescript-eslint/parser": "^8.50.1",
     "ajv": "^8.17.1",
     "esbuild": "^0.24.2",
@@ -432,12 +442,20 @@
       "esbuild"
     ],
     "overrides": {
-      "undici": ">=7.18.2",
+      "undici": ">=7.29.0 <8",
       "@types/node": "24.10.9",
-      "@modelcontextprotocol/sdk": "1.25.3"
+      "@modelcontextprotocol/sdk": "1.26.0",
+      "protobufjs": ">=7.5.5 <8",
+      "tar@>=7.0.0": ">=7.5.19 <8",
+      "basic-ftp": ">=5.3.1 <6",
+      "fast-uri": ">=3.1.5 <4",
+      "axios": ">=1.18.0 <2",
+      "ws@8": ">=8.21.0 <9",
+      "fast-xml-parser@4": ">=4.5.4 <5",
+      "fast-xml-parser@5": ">=5.10.1"
     },
     "patchedDependencies": {
-      "@modelcontextprotocol/sdk@1.25.3": "patches/@modelcontextprotocol__sdk@1.25.3.patch"
+      "@modelcontextprotocol/sdk@1.26.0": "patches/@modelcontextprotocol__sdk@1.26.0.patch"
     }
   },
   "dependencies": {

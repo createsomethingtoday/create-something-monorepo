@@ -15,7 +15,7 @@ function usage() {
     '',
     'Options:',
     '  --origin <url>          Defaults to https://ink.createsomething.agency',
-    '  --url <url>             Full POST /ink/health-snapshot URL',
+    '  --url <url>             Full POST /operator/health-snapshot URL',
     '  --token <token>         Defaults to INK_SOURCE_TOKEN or CALM_OPERATOR_BRIDGE_TOKEN',
     '  --type <agent|mcp|job>  Health subject type. Defaults to agent',
     '  --source <name>         Health source. Defaults to command-health-wrapper',
@@ -151,7 +151,7 @@ export async function runHealthCheckedCommand(args, options = {}) {
   const durationMs = Math.max(0, endedAt - startedAt);
   const snapshot = buildCommandHealthPayload(args, result, durationMs, endedAt);
   const commandExitCode = exitCodeFor(result);
-  const url = args.url ?? bridgeUrl(args.origin, '/ink/health-snapshot');
+  const url = args.url ?? bridgeUrl(args.origin, '/operator/health-snapshot');
 
   if (args.dryRun) {
     return { ok: true, dry_run: true, command_exit_code: commandExitCode, snapshot };
@@ -183,10 +183,12 @@ export async function main(argv = process.argv) {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  main().then((code) => {
-    process.exitCode = code;
-  }).catch((error) => {
-    console.error(error instanceof Error ? error.message : String(error));
-    process.exitCode = 1;
-  });
+  main()
+    .then((code) => {
+      process.exitCode = code;
+    })
+    .catch((error) => {
+      console.error(error instanceof Error ? error.message : String(error));
+      process.exitCode = 1;
+    });
 }

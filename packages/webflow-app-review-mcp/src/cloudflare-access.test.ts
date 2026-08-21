@@ -58,11 +58,13 @@ async function signer() {
 }
 
 describe('Cloudflare Access boundary', () => {
-  it('keeps the future Webflow Access audience empty until the Cloud app is provisioned', () => {
+  it('retains the provisioned Webflow Access audience across worker deploys', () => {
     const wranglerConfig = readFileSync(new URL('../worker/wrangler.toml', import.meta.url), 'utf8');
 
     expect(wranglerConfig).toMatch(/CF_ACCESS_TEAM_DOMAIN = "https:\/\/webflow\.cloudflareaccess\.com"/);
-    expect(wranglerConfig).toMatch(/CF_ACCESS_AUD = ""/);
+    expect(wranglerConfig).toMatch(
+      /CF_ACCESS_AUD = "3b4a38c7c99ec7127bcbb99d9c8aae7b0011a51370bff31b7085385e1a2807ba"/,
+    );
     expect(wranglerConfig).toMatch(/OAUTH_ALLOWED_EMAILS = "pablo\.miranda@webflow\.com,shea\.sisco@webflow\.com,micah@webflow\.com,micah@createsomething\.io"/);
   });
 

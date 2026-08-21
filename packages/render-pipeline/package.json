@@ -1,7 +1,7 @@
 {
   "name": "@create-something/render-pipeline",
   "version": "0.1.0",
-  "description": "SVG rendering pipeline (Replicate integration DISABLED - cost control)",
+  "description": "Deterministic local SVG and GLB rendering pipeline with provenance and receipts",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -15,20 +15,24 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "docs": "tsx src/bin/generate-docs.ts",
-    "generate-sections": "tsx scripts/generate-sections.ts"
+    "generate-sections": "tsx scripts/generate-sections.ts",
+    "generate:threshold-massing-glb": "tsx scripts/generate-threshold-dwelling-massing-glb.ts",
+    "render-lab": "node web-render/server.mjs",
+    "test:web-render": "tsx --test test/web-render-contract.test.ts",
+    "test:threshold-massing-glb": "tsx --test test/threshold-dwelling-massing-glb.test.ts"
   },
   "dependencies": {
     "@create-something/canon": "workspace:^",
+    "@gltf-transform/cli": "^4.0.0",
+    "@gltf-transform/core": "^4.0.0",
+    "@gltf-transform/extensions": "^4.0.0",
+    "@gltf-transform/functions": "^4.0.0",
     "@resvg/resvg-js": "^2.6.0",
     "@resvg/resvg-wasm": "^2.6.2",
     "archiver": "^7.0.0",
     "jsdom": "^25.0.0",
-    "sharp": "^0.33.0",
-    "three": "^0.170.0",
-    "@gltf-transform/cli": "^4.0.0",
-    "@gltf-transform/core": "^4.0.0",
-    "@gltf-transform/extensions": "^4.0.0",
-    "@gltf-transform/functions": "^4.0.0"
+    "sharp": "^0.33.5",
+    "three": "^0.170.0"
   },
   "devDependencies": {
     "@types/archiver": "^6.0.0",
@@ -41,6 +45,8 @@
   "keywords": [
     "svg",
     "render",
+    "gltf",
+    "webgl",
     "architecture",
     "visualization"
   ],

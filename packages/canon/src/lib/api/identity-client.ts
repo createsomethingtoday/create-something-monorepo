@@ -83,6 +83,7 @@ export type IdentityResult<T> =
 export interface LoginRequest {
 	email: string;
 	password: string;
+	audience: string;
 }
 
 export interface SignupRequest {
@@ -113,6 +114,7 @@ export interface CrossDomainRequest {
 
 export interface CrossDomainExchangeRequest {
 	token: string;
+	target: 'ltd' | 'io' | 'space' | 'agency';
 }
 
 export interface RefreshTokenRequest {

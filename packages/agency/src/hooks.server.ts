@@ -6,6 +6,7 @@ import { abundanceApiAuthHandle } from './lib/server/abundance-api-auth';
 import { deprecatedRedirects } from './lib/data/deprecatedRoutes';
 import { verifyAgencyIdentitySession } from './lib/server/agency-identity-session';
 import { AGENCY_PROTECTED_PATHS, isAgencyProtectedPath } from './lib/server/protected-routes';
+import { withAgentDiscoveryLinks } from './lib/server/agent-discovery';
 import {
   createPublicHtmlCacheKey,
   cacheSearchForRequest,
@@ -92,10 +93,16 @@ const publicHtmlCacheHandle: Handle = async ({ event, resolve }) => {
   return cacheableResponse;
 };
 
+// Keep discovery outside the HTML cache so cached and uncached homepage responses
+// expose the same registered Link relations.
+const agentDiscoveryHandle: Handle = async ({ event, resolve }) =>
+  withAgentDiscoveryLinks(await resolve(event));
+
 export const handle = sequence(
   redirectHandle,
   authHandle,
   identityVerificationHandle,
   abundanceApiAuthHandle,
+  agentDiscoveryHandle,
   publicHtmlCacheHandle
 );

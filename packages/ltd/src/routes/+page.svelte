@@ -1,269 +1,290 @@
 <script lang="ts">
-  import {
-    Button,
-    PerformanceCampaignOpening,
-    PerformanceCardGrid,
-    PerformanceNarrativeStage,
-    paperCanonSheetMedia,
-    SEO,
-    NewsletterSignup,
-    PropertyFunnel,
-    type PerformanceCardItem,
-    type PerformanceCampaignProof,
-    type PerformanceDecisionItem,
-    type PerformanceNarrativeScene
-  } from '@create-something/canon';
+	import {
+		Button,
+		PerformanceCampaignOpening,
+		PerformanceCardGrid,
+		SEO,
+		NewsletterSignup,
+		PropertyFunnel,
+		type PerformanceCardItem,
+		type PerformanceCampaignProof
+	} from '@create-something/canon';
+	import { ltdOperatingFieldMedia } from '$lib/operator-library/court-media';
+	import { playbooks } from '$lib/operator-library/playbooks';
 
-  const heroProofItems: PerformanceCampaignProof[] = [
-    {
-      label: 'Creation',
-      value: 'Governed connectivity'
-    },
-    {
-      label: 'Control',
-      value: 'Policy + owner'
-    },
-    {
-      label: 'Chassis',
-      value: 'MCP boundary'
-    },
-    {
-      label: 'Proof',
-      value: 'Inspectable receipt'
-    }
-  ];
+	const heroProofItems: PerformanceCampaignProof[] = [
+		{ label: 'Start', value: 'One workflow' },
+		{ label: 'Name', value: 'One owner' },
+		{ label: 'Set', value: 'One boundary' },
+		{ label: 'Keep', value: 'One receipt' }
+	];
 
-  const canonCards: PerformanceCardItem[] = [
-    {
-      eyebrow: 'Creation moat',
-      icon: 'check',
-      title: 'Consumption is not the work.',
-      detail:
-        'Installing and using AI tools keeps getting easier. The scarce work is deciding what should connect, what should run, and what must stay governed.',
-      points: [
-        'MCP consumption is commoditized',
-        'MCP creation still requires domain and protocol judgment',
-        'The canon keeps that judgment reusable'
-      ]
-    },
-    {
-      eyebrow: 'Controlled delegation',
-      icon: 'search',
-      title: 'Connectivity comes before intelligence.',
-      detail:
-        'A useful agent needs a chassis: data access, authority boundaries, approvals, blocked states, and proof that the work stayed inside its lane.',
-      points: [
-        'Signal names what changed',
-        'Decision routes what can happen next',
-        'Proof records what actually happened'
-      ]
-    },
-    {
-      eyebrow: 'Canon',
-      icon: 'arrow-right',
-      title: 'Less, but better is an operating rule.',
-      detail:
-        'The design lineage matters because automation gets dangerous when every feature, prompt, and permission is allowed to sprawl.',
-      points: [
-        'Remove the ornamental claim',
-        'Keep the useful constraint',
-        'Reconnect every artifact to the system'
-      ]
-    }
-  ];
+	const playbookCards: PerformanceCardItem[] = playbooks.map((playbook) => ({
+		eyebrow: playbook.label,
+		icon: 'check',
+		title: playbook.title,
+		detail: playbook.summary,
+		points: [
+			`Approved work: ${playbook.approvedWork}`,
+			`Receipt: ${playbook.proof}`
+		],
+		href: `/playbooks/${playbook.slug}`
+	}));
 
-  const patternCards: PerformanceCardItem[] = [
-    {
-      eyebrow: 'Featured pattern',
-      icon: 'settings',
-      title: 'Crystallization',
-      detail: 'Encode human expertise into configurable constraints that AI agents execute within.',
-      points: [
-        'Model routing, quality gates, and review pipelines become policy',
-        'Human judgment shapes every decision without requiring constant presence',
-        'The artifact is specific enough to run and clear enough to review'
-      ],
-      href: '/patterns/crystallization'
-    },
-    {
-      eyebrow: 'Artifact',
-      icon: 'document',
-      title: 'Policy before prompt',
-      detail:
-        'The useful output is a reusable operating document, not another one-off instruction.',
-      points: [
-        'Constraints should be versioned, inspectable, and explainable',
-        'Prompt language follows the policy instead of replacing it',
-        'Reviewers can see what judgment was encoded'
-      ]
-    }
-  ];
-
-  const masterCards: PerformanceCardItem[] = [
-    {
-      eyebrow: 'Industrial design',
-      icon: 'user',
-      title: 'Dieter Rams',
-      detail: 'Ten principles for reducing products to what serves the user and the work.',
-      href: '/masters/dieter-rams'
-    },
-    {
-      eyebrow: 'Architecture',
-      icon: 'user',
-      title: 'Ludwig Mies van der Rohe',
-      detail: 'Less is more, applied as spatial discipline and structural clarity.',
-      href: '/masters/mies-van-der-rohe'
-    }
-  ];
-
-  const canonEvidenceCards: PerformanceCardItem[] = [
-    ...canonCards,
-    ...patternCards,
-    ...masterCards
-  ];
-
-  const decisionStates: PerformanceDecisionItem[] = [
-    {
-      label: 'Connect',
-      summary: 'Chassis needed',
-      title: 'Name the missing connection.',
-      detail:
-        'Start where a tool, record, tenant, workflow, or owner is still unreachable from the agent lane.',
-      tone: 'allow',
-      evidence: [
-        'The system of record is clear',
-        'The action boundary is specific',
-        'The connection changes a real workflow'
-      ],
-      receipts: ['MCP contract', 'data shape', 'owner'],
-      actions: [
-        { label: 'Read Research', href: 'https://createsomething.io' },
-        { label: 'Open Workbench', href: 'https://createsomething.space' }
-      ]
-    },
-    {
-      label: 'Govern',
-      summary: 'Policy needed',
-      title: 'Turn judgment into policy.',
-      detail:
-        'If a decision still depends on tacit taste, preference, or risk tolerance, it is not ready to be delegated.',
-      tone: 'review',
-      evidence: [
-        'The allowed action is explicit',
-        'The approval pause is named',
-        'The stop condition is reviewable'
-      ],
-      receipts: ['policy artifact', 'standard', 'review gate'],
-      actions: [
-        { label: 'Open Standards', href: '/standards' },
-        { label: 'Browse Patterns', href: '/patterns' }
-      ]
-    },
-    {
-      label: 'Prove',
-      summary: 'Evidence needed',
-      title: 'Leave proof another operator can trust.',
-      detail:
-        'The work is not finished when an agent acts. It is finished when the evidence, owner, outcome, and recovery path are inspectable.',
-      tone: 'neutral',
-      evidence: [
-        'The receipt identifies source evidence',
-        'The outcome maps back to policy',
-        'The rollback or follow-up path is visible'
-      ],
-      receipts: ['proof record', 'handoff note', 'recovery path'],
-      actions: [
-        { label: 'Read Canon', href: '/canon' },
-        { label: 'View All Masters', href: '/masters' },
-        {
-          label: 'Open Practice',
-          href: 'https://createsomething.agency/practice?source=ltd&intent=policy-to-workflow&stage=qualify&lane=policy_os'
-        }
-      ]
-    }
-  ];
-
-  const evidenceByScene: Record<string, PerformanceCardItem[]> = {
-    connect: canonCards.slice(0, 2),
-    govern: patternCards,
-    prove: [canonCards[2], ...masterCards]
-  };
-
-  const ltdScenes: PerformanceNarrativeScene[] = decisionStates.map((item, index) => ({
-    id: ['connect', 'govern', 'prove'][index],
-    ...item
-  }));
+	const oppositionCards: PerformanceCardItem[] = [
+		{
+			eyebrow: '01 · Clarity',
+			icon: 'search',
+			title: 'Ambiguity',
+			detail: 'The outcome, next action, or decision is still too vague for a team or agent to move.'
+		},
+		{
+			eyebrow: '02 · Access',
+			icon: 'settings',
+			title: 'Unreachable work',
+			detail: 'The records or authority needed to help are unavailable, unclear, or outside the allowed boundary.'
+		},
+		{
+			eyebrow: '03 · Trust',
+			icon: 'document',
+			title: 'Untrusted automation',
+			detail: 'People cannot inspect the reason, source, owner, or recovery path behind an action.'
+		}
+	];
 </script>
 
 <SEO
-  title="The Philosophy of Automation Infrastructure"
-  description="CREATE SOMETHING .ltd explains the creation moat: why governed connectivity, policy, trust boundaries, and proof matter more than simply consuming AI tools."
-  keywords="automation infrastructure, delegated work control, MCP creation, policy artifacts, proof, AI governance, design canon"
-  ogImage="/og-image.png"
-  propertyName="ltd"
+	title="The Operating Library for AI Work"
+	description="CREATE SOMETHING .ltd gives operators practical playbooks for AI work: name the owner, set the boundary, and leave proof behind."
+	keywords="AI workflow playbooks, operator runbooks, AI readiness, workflow proof, controlled delegation"
+	ogImage="/og-image.png"
+	propertyName="ltd"
 />
 
 <PerformanceCampaignOpening
-  mobileSearchBoundary
-  eyebrow="CREATE SOMETHING .ltd"
-  title="The philosophy of automation infrastructure."
-  lede="CREATE SOMETHING .ltd explains the creation moat: consuming AI tools is easy; building governed connectivity, policy, trust boundaries, and proof is the work."
-  media={paperCanonSheetMedia}
-  proof={heroProofItems}
-  mode="paper"
-  density="compact"
+	mobileSearchBoundary
+	eyebrow="CREATE SOMETHING .ltd · The operator library"
+	title="Run AI work people can trust."
+	lede="Start with one recurring workflow. Leave with a playbook that tells your team and its AI what can run, what waits for a person, and what proves the work happened."
+	media={ltdOperatingFieldMedia}
+	proof={heroProofItems}
+	mode="ink"
+	density="compact"
 >
-  {#snippet actions()}
-    <Button
-      href="https://createsomething.agency/practice?source=ltd&intent=canon-to-practice&stage=qualify&lane=policy_os"
-      >See The Practice</Button
-    >
-    <Button href="/canon" variant="secondary">Read The Canon</Button>
-  {/snippet}
+	{#snippet actions()}
+		<Button href="/playbooks">Find your playbook</Button>
+		<Button href="/readiness" variant="secondary">Assess a workflow</Button>
+	{/snippet}
 </PerformanceCampaignOpening>
 
-<PerformanceNarrativeStage
-  id="canon-operating-story"
-  eyebrow="Delegation canon"
-  title="Build, govern, prove."
-  description="MCP consumption is commoditized. MCP creation is not. Each operating decision now carries its governing canon and evidence in the same focused surface."
-  scenes={ltdScenes}
-  ariaLabel="Delegated work control decision path"
->
-  {#snippet artifact(scene: PerformanceNarrativeScene)}
-    <PerformanceCardGrid
-      items={evidenceByScene[scene.id] ?? canonEvidenceCards}
-      columns={scene.id === 'prove' ? 3 : 2}
-      ariaLabel={`${scene.label} canon and evidence`}
-    />
-  {/snippet}
-</PerformanceNarrativeStage>
+<section class="operator-library" aria-labelledby="start-title">
+	<div class="operator-library__heading">
+		<p class="operator-library__eyebrow">Start where the work is real</p>
+		<h2 id="start-title">A useful system gives everyone the same picture.</h2>
+		<p>
+			A playbook gives the team the decision model: the outcome, owner, approved work, wait
+			point, and receipt. A runbook turns it into live steps, checks, exceptions, and recovery.
+		</p>
+	</div>
 
-<section class="ltd-continuation" aria-label="Canon continuation">
-  <PropertyFunnel
-    current="ltd"
-    heading="Turn the canon into the next operating decision."
-    description="The philosophy has to return to the work: .ltd names the standard, .io publishes research with receipts, .space tests runtime practice, and .agency turns a named workflow into governed delivery."
-    density="compact"
-  />
+	<PerformanceCardGrid items={playbookCards} columns={3} ariaLabel="Start with a playbook" />
+</section>
 
-  <NewsletterSignup
-    eyebrow="Canon letter"
-    headline="Keep the canon close to the work."
-    description="A quiet note when a new master, standard, or operating pattern is worth carrying into the next decision."
-    actionLabel="Get the next canon note."
-    submitLabel="Get the note"
-    note="No noise. Just the principles, language, and artifacts that make the work easier to defend."
-    source="ltd-homepage"
-  />
+<section class="opposition" aria-labelledby="opposition-title">
+	<div class="opposition__heading">
+		<p class="opposition__eyebrow">What the library is built against</p>
+		<h2 id="opposition-title">The opposition is unclear work.</h2>
+		<p>
+			Ambiguity, inaccessible context, and untrusted automation are why capable teams still
+			wait. Make the boundary visible before it becomes a failed handoff.
+		</p>
+		<a href="/readiness">Find the boundary in your workflow <span aria-hidden="true">→</span></a>
+	</div>
+	<PerformanceCardGrid items={oppositionCards} columns={3} ariaLabel="Workflow opposition" />
+</section>
+
+<section class="library-loop" aria-labelledby="library-loop-title">
+	<div>
+		<p class="library-loop__eyebrow">A library that earns a return visit</p>
+		<h2 id="library-loop-title">Keep the useful rules close to the work.</h2>
+	</div>
+	<div class="library-loop__steps">
+		<article>
+			<span>01</span>
+			<h3>Choose the play</h3>
+			<p>Find the recurring moment where a workflow needs a clearer decision.</p>
+		</article>
+		<article>
+			<span>02</span>
+			<h3>Run it with a boundary</h3>
+			<p>Make the owner, allowed action, wait point, and recovery path inspectable.</p>
+		</article>
+		<article>
+			<span>03</span>
+			<h3>Keep the proof</h3>
+			<p>Leave a record that another operator can review, trust, and improve.</p>
+		</article>
+	</div>
+</section>
+
+<section class="ltd-continuation" aria-label="Continue the operating loop">
+	<PropertyFunnel
+		current="ltd"
+		heading="Put the playbook to work when the boundary is clear."
+		description=".ltd gives you the operating language, .io carries the research and evidence, .space lets you rehearse the behavior, and .agency helps when a named workflow needs a dedicated build partner."
+		density="compact"
+	/>
+
+	<NewsletterSignup
+		eyebrow="Operator notes"
+		headline="A quiet note when a playbook earns its place."
+		description="New operating patterns, readiness checks, and source material for the people who own the work."
+		actionLabel="Get the next operator note."
+		submitLabel="Get the note"
+		note="No noise. Just the next useful rule, runbook, or receipt pattern."
+		source="ltd-operator-library"
+	/>
 </section>
 
 <style>
-  .ltd-continuation {
-    background: var(--color-performance-panel, #ffffff);
-  }
+	.operator-library,
+	.opposition,
+	.library-loop {
+		padding: clamp(3.5rem, 8vw, 7rem) clamp(1rem, 5vw, 5rem);
+	}
 
-  .ltd-continuation :global(.newsletter-section) {
-    padding-block: clamp(2.75rem, 5vw, 4rem);
-  }
+	.operator-library {
+		background: var(--color-performance-panel, #fff);
+	}
+
+	.operator-library__heading,
+	.opposition__heading {
+		max-width: 48rem;
+		margin-bottom: clamp(1.8rem, 4vw, 3.5rem);
+	}
+
+	.operator-library__eyebrow,
+	.opposition__eyebrow,
+	.library-loop__eyebrow {
+		margin: 0 0 0.8rem;
+		color: var(--color-performance-muted, #5e6268);
+		font-family: var(--font-performance-mono);
+		font-size: 0.75rem;
+		font-weight: var(--font-performance-semibold);
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+	}
+
+	.operator-library h2,
+	.opposition h2,
+	.library-loop h2 {
+		margin: 0;
+		font-size: clamp(2rem, 4.1vw, 4rem);
+		font-weight: var(--font-performance-medium);
+		letter-spacing: -0.055em;
+		line-height: 0.98;
+		text-wrap: balance;
+	}
+
+	.operator-library__heading > p:last-child,
+	.opposition__heading > p:not(.opposition__eyebrow) {
+		max-width: 41rem;
+		margin: 1.2rem 0 0;
+		color: var(--color-performance-muted, #5e6268);
+		font-size: clamp(1rem, 1.65vw, 1.2rem);
+		line-height: 1.55;
+	}
+
+	.opposition {
+		border-top: 1px solid var(--color-performance-line, #d7d7d2);
+		background: var(--color-performance-ink, #090909);
+		color: var(--color-performance-panel, #fff);
+	}
+
+	.opposition__eyebrow,
+	.opposition__heading > p:not(.opposition__eyebrow) {
+		color: rgba(255, 255, 255, 0.68);
+	}
+
+	.opposition__heading a {
+		display: inline-flex;
+		gap: 0.5rem;
+		margin-top: 1.75rem;
+		color: inherit;
+		font-weight: var(--font-performance-semibold);
+		text-decoration-thickness: 1px;
+		text-underline-offset: 0.25em;
+	}
+
+	.opposition :global(.clear-card-grid__card) {
+		border-color: rgba(255, 255, 255, 0.2);
+		background: rgba(255, 255, 255, 0.04);
+		color: var(--color-performance-panel, #fff);
+	}
+
+	.opposition :global(.clear-card-grid__card strong),
+	.opposition :global(.clear-card-grid__card p),
+	.opposition :global(.clear-card-grid__eyebrow) {
+		color: inherit;
+	}
+
+	.opposition :global(.clear-card-grid__icon) {
+		border-color: rgba(255, 255, 255, 0.24);
+		background: transparent;
+		color: inherit;
+	}
+
+	.library-loop {
+		display: grid;
+		grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+		gap: clamp(2rem, 7vw, 10rem);
+		border-top: 1px solid var(--color-performance-line, #d7d7d2);
+		background: var(--color-performance-paper, #f3f3f0);
+	}
+
+	.library-loop__steps {
+		border-top: 1px solid var(--color-performance-line, #d7d7d2);
+	}
+
+	.library-loop__steps article {
+		display: grid;
+		grid-template-columns: 3rem minmax(0, 1fr);
+		column-gap: 1rem;
+		padding: 1.25rem 0;
+		border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
+	}
+
+	.library-loop__steps span {
+		grid-row: span 2;
+		color: var(--color-performance-signal, #3267d6);
+		font-family: var(--font-performance-mono);
+		font-size: 0.8rem;
+	}
+
+	.library-loop h3 {
+		margin: 0;
+		font-size: 1.12rem;
+		font-weight: var(--font-performance-semibold);
+	}
+
+	.library-loop__steps p {
+		margin: 0.4rem 0 0;
+		color: var(--color-performance-muted, #5e6268);
+		line-height: 1.48;
+	}
+
+	.ltd-continuation {
+		background: var(--color-performance-panel, #fff);
+	}
+
+	.ltd-continuation :global(.newsletter-section) {
+		padding-block: clamp(2.75rem, 5vw, 4rem);
+	}
+
+	@media (max-width: 47.99rem) {
+		.library-loop,
+		:global(.clear-card-grid--3) {
+			grid-template-columns: 1fr;
+		}
+	}
 </style>

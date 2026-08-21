@@ -61,6 +61,7 @@ declare global {
 				OPENAI_API_KEY?: string;
 				ELEVENLABS_API_KEY?: string;
 				ELEVENLABS_AGENT_ID?: string;
+				DIFY_TEMPLATE_REVIEW_HUB_API_KEY?: string;
 			};
 			context?: unknown;
 			caches?: unknown;

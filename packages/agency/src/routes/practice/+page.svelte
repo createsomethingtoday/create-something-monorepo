@@ -1,6 +1,7 @@
 <script lang="ts">
   import {
     Button,
+    PerformanceCampaignOpening,
     PerformanceConversionHandoff,
     PerformanceEvidenceIndex,
     PerformanceNarrativeStage,
@@ -12,13 +13,7 @@
   } from '@create-something/canon';
   import DelegationPracticeWorkbench from '$lib/components/DelegationPracticeWorkbench.svelte';
   import PublicAtlasStoryCanvas from '$lib/components/PublicAtlasStoryCanvas.svelte';
-
-  const openingHandoff = {
-    owner: 'Accountable operator',
-    authority: 'Observe one workflow',
-    proof: 'No evidence attached yet',
-    state: 'draft' as const
-  };
+  import { playbookHeroMedia } from '$lib/data/playbookHeroMedia';
 
   const systemConditions: PerformanceCondition[] = [
     {
@@ -136,18 +131,25 @@
 />
 
 <main class="delegation-practice-page">
-  <PerformanceConversionHandoff
+  <PerformanceCampaignOpening
     eyebrow="The Delegation Practice"
     title="Make delegated work trustworthy."
-    description="Map the work. Bound the authority. Test the system. Prove what happened. Earn the right to do more."
-    handoff={openingHandoff}
-    headingLevel="h1"
+    lede="Map the work. Bound the authority. Test the system. Prove what happened. Earn the right to do more."
+    media={playbookHeroMedia.practice}
+    mediaMobilePlacement="background"
+    density="compact"
+    expression="editorial"
+    proof={[
+      { label: 'Owner', value: 'Accountable operator' },
+      { label: 'Authority', value: 'Observe one workflow' },
+      { label: 'Evidence', value: 'Draft' }
+    ]}
   >
     {#snippet actions()}
       <Button href="#practice-workbench">Map one workflow</Button>
       <Button href="#evidence" variant="secondary">Examine the evidence</Button>
     {/snippet}
-  </PerformanceConversionHandoff>
+  </PerformanceCampaignOpening>
 
   <PerformanceNarrativeStage
     id="delegation-practice-argument"
@@ -156,6 +158,7 @@
     description="The Practice is one learning spine: locate the failure, make authority visible, rehearse the operator journey, and attach every claim to a current evidence state."
     scenes={practiceScenes}
     ariaLabel="Delegation Practice argument"
+    expression="editorial"
   >
     {#snippet artifact(scene: PerformanceNarrativeScene)}
       {#if scene.id === 'diagnose'}
@@ -202,6 +205,7 @@
   </PerformanceNarrativeStage>
 
   <PerformanceConversionHandoff
+    expression="editorial"
     eyebrow="School + skeptical review"
     title="Finish with a Practice Receipt, not a certificate."
     description="Practice produces an inspectable workflow map, a tested authority envelope, and a review verdict you can act on. Skeptical review may support, revise, hold, or falsify the thesis. When you can name the workflow and accountable owner, the mapping-session path is ready."

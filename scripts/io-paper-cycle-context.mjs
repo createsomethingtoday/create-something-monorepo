@@ -30,6 +30,8 @@ const FILE_BASED_EXPERIMENTS_FILE = 'packages/io/src/lib/config/fileBasedExperim
 const PUBLIC_TRUST_DATA_PREFIX = 'config/public-trust/';
 const PUBLIC_TRUST_CONFIG_FILE = 'packages/io/src/lib/config/publicTrustCatalog.ts';
 const PUBLIC_TRUST_GENERATED_CONFIG_FILE = 'packages/io/src/lib/config/publicTrustCatalog.generated.ts';
+const SHARED_LAYOUT_FILE = 'packages/io/src/routes/+layout.svelte';
+const FOOTER_HANDOFF_CONFIG_FILE = 'packages/io/src/lib/config/footerHandoff.ts';
 const PUBLIC_TRUST_FALLBACK_MCP_ROUTES = [
   '/mcp',
   '/mcp/create-something',
@@ -149,6 +151,8 @@ function isPublishableIoFile(file) {
     file.startsWith(PUBLIC_TRUST_DATA_PREFIX) ||
     file === PUBLIC_TRUST_CONFIG_FILE ||
     file === PUBLIC_TRUST_GENERATED_CONFIG_FILE ||
+    file === SHARED_LAYOUT_FILE ||
+    file === FOOTER_HANDOFF_CONFIG_FILE ||
     file === 'packages/io/src/lib/config/paperContent.ts'
   );
 }
@@ -248,7 +252,29 @@ function catalogRoutes(kind) {
   ]);
 }
 
+function sharedSurfaceRoutes() {
+  const paperDetailRoute = catalogRoutes('paper')
+    .find((route) => route === '/papers/endpoint-construction-product') ?? '/papers';
+  const experimentDetailRoute = catalogRoutes('experiment')
+    .find((route) => route.startsWith('/experiments/')) ?? '/experiments';
+
+  return uniqueSorted([
+    '/',
+    '/about',
+    '/experiments',
+    '/methodology',
+    '/papers',
+    paperDetailRoute,
+    experimentDetailRoute,
+  ]);
+}
+
 function routesFromIoRouteFile(file) {
+
+  if (file === SHARED_LAYOUT_FILE || file === FOOTER_HANDOFF_CONFIG_FILE) {
+    return sharedSurfaceRoutes();
+  }
+
   if (file.startsWith(PAPER_ROUTE_PREFIX)) {
     if (!existsSync(file)) return ['/papers'];
 
