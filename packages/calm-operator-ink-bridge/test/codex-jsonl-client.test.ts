@@ -3,7 +3,33 @@ import readline from 'node:readline';
 import { PassThrough } from 'node:stream';
 import { test } from 'node:test';
 
-import { CodexJsonlRpcClient } from '../scripts/codex-app-server-client.mjs';
+import {
+  CodexJsonlRpcClient,
+  codexAppServerEnvironment
+} from '../scripts/codex-app-server-client.mjs';
+
+test('keeps bridge and production credentials out of the Codex child environment', () => {
+  assert.deepEqual(
+    codexAppServerEnvironment({
+      HOME: '/Users/operator',
+      PATH: '/tools:/usr/bin:/bin',
+      LANG: 'en_US.UTF-8',
+      CALM_OPERATOR_WHISPER_MODEL: '/private/models/base.en.bin',
+      SSH_AUTH_SOCK: '/private/tmp/ssh.sock',
+      INK_RELAY_TOKEN: 'relay-secret',
+      OPENAI_API_KEY: 'api-secret',
+      LINEAR_API_KEY: 'linear-secret',
+      DATABASE_URL: 'database-secret',
+      RANDOM_PASSWORD: 'password-secret'
+    }),
+    {
+      HOME: '/Users/operator',
+      PATH: '/tools:/usr/bin:/bin',
+      LANG: 'en_US.UTF-8',
+      CALM_OPERATOR_WHISPER_MODEL: '/private/models/base.en.bin'
+    }
+  );
+});
 
 test('initializes JSONL app-server and declines authority-escalation requests', async () => {
   const fromServer = new PassThrough();

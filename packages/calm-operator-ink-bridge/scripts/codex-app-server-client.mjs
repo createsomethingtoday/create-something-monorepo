@@ -5,6 +5,42 @@ import readline from 'node:readline';
 
 const CHATGPT_CODEX = '/Applications/ChatGPT.app/Contents/Resources/codex';
 const PACKAGE_CODEX = fileURLToPath(new URL('../node_modules/.bin/codex', import.meta.url));
+const SAFE_CHILD_ENVIRONMENT = new Set([
+  'HOME',
+  'PATH',
+  'USER',
+  'LOGNAME',
+  'SHELL',
+  'TMPDIR',
+  'LANG',
+  'TERM',
+  'COLORTERM',
+  'NO_COLOR',
+  'CODEX_HOME',
+  'XDG_CONFIG_HOME',
+  'XDG_CACHE_HOME',
+  'XDG_DATA_HOME',
+  'NVM_BIN',
+  'NVM_DIR',
+  'PNPM_HOME',
+  'CALM_OPERATOR_WHISPER_MODEL',
+  'CALM_OPERATOR_FFMPEG_EXECUTABLE',
+  'CALM_OPERATOR_WHISPER_EXECUTABLE'
+]);
+
+export function codexAppServerEnvironment(environment = {}) {
+  const safe = {};
+  for (const [key, value] of Object.entries(environment)) {
+    if (
+      typeof value === 'string' &&
+      value &&
+      (SAFE_CHILD_ENVIRONMENT.has(key) || key.startsWith('LC_'))
+    ) {
+      safe[key] = value;
+    }
+  }
+  return safe;
+}
 
 function serverRequestResponse(method) {
   if (
@@ -160,7 +196,7 @@ export async function startCodexAppServer({
 } = {}) {
   const child = spawn(resolveCodexExecutable(executable), ['app-server', '--stdio'], {
     cwd: cwd || process.cwd(),
-    env,
+    env: codexAppServerEnvironment(env),
     shell: false,
     stdio: ['pipe', 'pipe', 'pipe']
   });

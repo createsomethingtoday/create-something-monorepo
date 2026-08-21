@@ -10,7 +10,7 @@ import {
   listCodexTaskProgress
 } from '../src/codex-app-server.js';
 import { boundedTranscript, voiceTranscriberCommand } from '../src/voice-relay.js';
-import { startCodexAppServer } from './codex-app-server-client.mjs';
+import { codexAppServerEnvironment, startCodexAppServer } from './codex-app-server-client.mjs';
 
 const origin = (
   process.env.OPERATOR_BRIDGE_ORIGIN ||
@@ -71,7 +71,7 @@ function spawnCapture(command, timeoutMs) {
   return new Promise((resolve, reject) => {
     const child = spawn(command.executable, command.args, {
       cwd: agentWorkdir,
-      env: process.env,
+      env: codexAppServerEnvironment(process.env),
       shell: false,
       stdio: ['ignore', 'pipe', 'pipe']
     });

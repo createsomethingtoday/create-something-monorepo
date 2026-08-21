@@ -229,10 +229,12 @@ Codex turns run in the trusted `INK_AGENT_WORKDIR` with `workspace-write` and
 `approvalPolicy: never`. The JSONL client declines command, file, permission,
 user-input, and MCP-elicitation escalation requests. This grants bounded local
 agent authority without allowing the device to approve broader access or
-invent answers on the operator's behalf. Claude retains its own existing
-sandbox, permissions, and approval policy. A `stop` or `pause` decision asks an
-agent to act at its next safe checkpoint; the relay does not kill an executing
-tool process.
+invent answers on the operator's behalf. Codex and local transcription child
+processes receive a strict environment allowlist; Infisical relay tokens, API
+keys, database URLs, passwords, and unrelated production secrets are not
+inherited. Claude retains its own existing sandbox, permissions, and approval
+policy. A `stop` or `pause` decision asks an agent to act at its next safe
+checkpoint; the relay does not kill an executing tool process.
 
 Decision state is durable: `queued`, `leased`, `acknowledged`, then `completed`
 or `failed`. The console returns recent receipts so the device can distinguish
