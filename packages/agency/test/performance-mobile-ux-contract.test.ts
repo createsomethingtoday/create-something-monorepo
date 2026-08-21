@@ -149,6 +149,17 @@ test('compact mobile composition reduces spacing while retaining readable contro
   assert.match(narrativeSource, /min-height:\s*var\(--height-performance-control-min, 2\.75rem\)/);
 });
 
+test('the narrow narrative rail reveals every scene label instead of clipping the final stage', () => {
+  assert.match(
+    narrativeSource,
+    /@media \(max-width: 25rem\)[\s\S]*?\.performance-narrative-stage__index\s*\{[\s\S]*?grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);[\s\S]*?grid-auto-flow:\s*row;[\s\S]*?overflow-x:\s*visible;/
+  );
+  assert.match(
+    narrativeSource,
+    /@media \(max-width: 25rem\)[\s\S]*?\.performance-narrative-stage__index-copy small\s*\{[\s\S]*?display:\s*none;/
+  );
+});
+
 test('the concise conversion handoff keeps its proof beside the action without a full-width repeat', () => {
   assert.match(handoffSource, /density\?: 'standard' \| 'compact' \| 'concise'/);
   assert.match(

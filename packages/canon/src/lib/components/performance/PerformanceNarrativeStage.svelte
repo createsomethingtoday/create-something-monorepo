@@ -1129,18 +1129,18 @@
     }
   }
 
-  @media (max-width: 22.5rem) {
+  @media (max-width: 25rem) {
     .performance-narrative-stage__index {
-      grid-template-columns: none;
-      grid-auto-columns: minmax(7.75rem, 74vw);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-auto-flow: row;
+      grid-auto-columns: auto;
+      overflow-x: visible;
+      overscroll-behavior-inline: auto;
+      scroll-snap-type: none;
     }
 
-    .performance-narrative-stage__index button:nth-child(2n) {
-      border-right: 1px solid var(--color-performance-line, #d7d7d2);
-    }
-
-    .performance-narrative-stage__index button:nth-last-child(-n + 2) {
-      border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
+    .performance-narrative-stage__index-copy small {
+      display: none;
     }
   }
 
