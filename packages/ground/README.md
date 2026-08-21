@@ -108,13 +108,12 @@ view; read `discovered_changed_files`, `analyzable_changed_files`, and
 `unsupported_changed_files` and `excluded_changed_files`, so a clean claim is
 valid only with `PASS`.
 
-Ground 0.3.4 adds source-bearing entry-point evidence to orphan analysis, so
-declarative Promptfoo and manual Ground configurations are recognized alongside
-package scripts. It keeps `ground diff`'s complete changed-file coverage and
-deterministic, cycle-safe source traversal. Diff mode parses the complete corpus
-but only compares pairs involving changed files. Standalone broad duplicate scans
-retain their safety bound and report a non-pass status with `scan_complete: false`
-when the bound is hit.
+Ground 0.3.5 extends source-bearing orphan evidence to nested Cloudflare Worker
+configurations: `wrangler.toml` and `wrangler.json` `main` entries are protected
+with their exact config source. The legacy `ground find orphans` command now
+returns the same verified canonical report as `ground analyze --checks orphans`.
+Promptfoo and manual Ground configurations remain recognized alongside package
+scripts, and broad duplicate scans retain their explicit safety bound.
 
 ### Check Commands (do these first)
 

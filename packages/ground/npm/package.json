@@ -1,6 +1,6 @@
 {
   "name": "@createsomething/ground-mcp",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "description": "Grounded claims for code. MCP server that prevents AI hallucination in code analysis.",
   "author": "CREATE SOMETHING <hello@createsomething.io>",
   "license": "MIT",
