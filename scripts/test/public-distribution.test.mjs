@@ -115,7 +115,7 @@ test('public distribution fails closed on private keys and provider credential p
     () =>
       assertSafePublicContent(
         'packages/pi-policy-os/config.ts',
-        "export const key = 'AIza01234567890123456789012345678901234';\n"
+        `export const key = '${['AI', 'za', '01234567890123456789012345678901234'].join('')}';\n`
       ),
     /Google API key pattern/
   );

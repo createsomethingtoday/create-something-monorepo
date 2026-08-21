@@ -346,6 +346,339 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
       }
     },
     {
+      "id": "canon-overlay-candidate-promotion-approval-record:overlay.client-workspace-desktop.surface-brief",
+      "readinessReportId": "canon-overlay-candidate-promotion-readiness:overlay.client-workspace-desktop.surface-brief",
+      "planId": "canon-overlay-candidate-promotion-plan:overlay.client-workspace-desktop.surface-brief",
+      "candidateId": "overlay.client-workspace-desktop:overlay.client-workspace-desktop.surface-brief",
+      "intakeId": "overlay.client-workspace-desktop.surface-brief",
+      "title": "Surface Brief Template approval record",
+      "summary": "A reusable project-overlay brief for documenting workflow state, Canon reuse, local artifacts, evidence, and extension-intake needs. This readiness report compares the plan with current Canon registry and public export policy snapshots before implementation starts. Fill this record before implementation starts; every target remains unset until a maintainer records an explicit choice.",
+      "state": "approval-required",
+      "approvalUri": "canon://overlays/candidates/overlay.client-workspace-desktop.surface-brief/approval-record",
+      "readinessUri": "canon://overlays/candidates/overlay.client-workspace-desktop.surface-brief/readiness",
+      "planUri": "canon://overlays/candidates/overlay.client-workspace-desktop.surface-brief/promotion-plan",
+      "handoffUri": "canon://overlays/candidates/overlay.client-workspace-desktop.surface-brief/handoff",
+      "candidateUri": "canon://overlays/candidates/overlay.client-workspace-desktop.surface-brief",
+      "reviewUri": "canon://overlays/intake/overlay.client-workspace-desktop",
+      "target": {
+        "approvalOwner": null,
+        "approvalEvidence": null,
+        "approvedAt": null,
+        "registryAction": null,
+        "registryItemId": null,
+        "exportPath": null,
+        "exportName": null,
+        "docsPath": null,
+        "maturityTarget": null,
+        "implementationOwner": null
+      },
+      "requiredFields": [
+        {
+          "id": "approvalOwner",
+          "label": "Approval Owner",
+          "required": true,
+          "value": null,
+          "hints": [
+            "Name the maintainer, role, or decision authority who approved implementation."
+          ],
+          "instructions": "Record the human owner responsible for the approval decision."
+        },
+        {
+          "id": "approvalEvidence",
+          "label": "Approval Evidence",
+          "required": true,
+          "value": null,
+          "hints": [
+            "Use a stable PR comment, Linear comment, meeting note, or decision artifact reference."
+          ],
+          "instructions": "Record where the approval decision can be audited."
+        },
+        {
+          "id": "approvedAt",
+          "label": "Approved At",
+          "required": true,
+          "value": null,
+          "hints": [
+            "Use an ISO 8601 timestamp or exact calendar date."
+          ],
+          "instructions": "Record when the approval decision happened."
+        },
+        {
+          "id": "registryAction",
+          "label": "Registry Action",
+          "required": true,
+          "value": null,
+          "hints": [
+            "Allowed values: reuse-existing, update-existing, create-new."
+          ],
+          "instructions": "Choose how implementation should treat the Canon registry target."
+        },
+        {
+          "id": "registryItemId",
+          "label": "Registry Item Id",
+          "required": true,
+          "value": null,
+          "hints": [
+            "template.canon-project-overlay-manifest: Canon Project Overlay Manifest",
+            "template.canon-extension-intake: Canon Extension Intake Template",
+            "template.canon-project-overlay-template-pack: Canon Project Overlay Template Pack",
+            "template.atlas-development-handoff: Atlas Development Handoff Template",
+            "component.triad-health: TriadHealth"
+          ],
+          "instructions": "Record the selected Canon registry item id or the new id to create."
+        },
+        {
+          "id": "exportPath",
+          "label": "Export Path",
+          "required": true,
+          "value": null,
+          "hints": [
+            "./modality-readiness: registry-covered / registry-artifact",
+            "./codification: registry-covered / registry-artifact",
+            "./mcp-snapshot: registry-covered / registry-artifact",
+            "./overlays/intake: registry-covered / registry-artifact",
+            "./registry: registry-covered / registry-artifact"
+          ],
+          "instructions": "Record the package export path that implementation should add or update."
+        },
+        {
+          "id": "exportName",
+          "label": "Export Name",
+          "required": false,
+          "value": null,
+          "hints": [
+            "./modality-readiness: registry-covered / registry-artifact",
+            "./codification: registry-covered / registry-artifact",
+            "./mcp-snapshot: registry-covered / registry-artifact",
+            "./overlays/intake: registry-covered / registry-artifact",
+            "./registry: registry-covered / registry-artifact"
+          ],
+          "instructions": "Record the named export when the target is a symbol-level export."
+        },
+        {
+          "id": "docsPath",
+          "label": "Docs Path",
+          "required": true,
+          "value": null,
+          "hints": [
+            "/canon/components",
+            "/canon/resources/registry"
+          ],
+          "instructions": "Record the Canon docs path that implementation must update."
+        },
+        {
+          "id": "maturityTarget",
+          "label": "Maturity Target",
+          "required": true,
+          "value": null,
+          "hints": [
+            "Allowed values: experimental, candidate, stable. Stable requires export, docs, tests, compatibility, and registry routing."
+          ],
+          "instructions": "Record the intended Canon maturity after implementation."
+        },
+        {
+          "id": "implementationOwner",
+          "label": "Implementation Owner",
+          "required": true,
+          "value": null,
+          "hints": [
+            "Name the maintainer or agent lane responsible for the implementation slice."
+          ],
+          "instructions": "Record who owns the follow-up implementation work."
+        }
+      ],
+      "targetHints": {
+        "registryItems": [
+          {
+            "id": "template.canon-project-overlay-manifest",
+            "name": "Canon Project Overlay Manifest",
+            "kind": "template",
+            "maturity": "candidate",
+            "modalities": [
+              "web",
+              "chat",
+              "app",
+              "voice",
+              "glasses"
+            ],
+            "docsPath": "/canon/resources/registry",
+            "score": 34,
+            "reason": "Matches requested kind and overlaps 5 requested modalities."
+          },
+          {
+            "id": "template.canon-extension-intake",
+            "name": "Canon Extension Intake Template",
+            "kind": "template",
+            "maturity": "candidate",
+            "modalities": [
+              "web",
+              "chat",
+              "app",
+              "voice",
+              "glasses"
+            ],
+            "docsPath": "/canon/resources/registry",
+            "score": 33,
+            "reason": "Matches requested kind and overlaps 5 requested modalities."
+          },
+          {
+            "id": "template.canon-project-overlay-template-pack",
+            "name": "Canon Project Overlay Template Pack",
+            "kind": "template",
+            "maturity": "candidate",
+            "modalities": [
+              "web",
+              "chat",
+              "app",
+              "voice",
+              "glasses"
+            ],
+            "docsPath": "/canon/resources/registry",
+            "score": 32,
+            "reason": "Matches requested kind and overlaps 5 requested modalities."
+          },
+          {
+            "id": "template.atlas-development-handoff",
+            "name": "Atlas Development Handoff Template",
+            "kind": "template",
+            "maturity": "candidate",
+            "modalities": [
+              "web",
+              "chat",
+              "app",
+              "voice",
+              "glasses"
+            ],
+            "docsPath": "/canon/resources/registry",
+            "score": 29,
+            "reason": "Matches requested kind and overlaps 5 requested modalities."
+          },
+          {
+            "id": "component.triad-health",
+            "name": "TriadHealth",
+            "kind": "component",
+            "maturity": "stable",
+            "modalities": [
+              "web",
+              "app",
+              "chat",
+              "voice",
+              "glasses"
+            ],
+            "docsPath": "/canon/components",
+            "score": 21,
+            "reason": "Overlaps 5 requested modalities."
+          }
+        ],
+        "exportPolicies": [
+          {
+            "exportPath": "./modality-readiness",
+            "classification": "registry-artifact",
+            "registryPolicy": "registry-covered",
+            "score": 15,
+            "rationale": "Modality readiness report audits web, chat, app, voice, and glasses implementation evidence from registry and overlay inventory.",
+            "registryItemIds": [
+              "template.canon-project-overlay-manifest",
+              "template.canon-extension-intake"
+            ]
+          },
+          {
+            "exportPath": "./codification",
+            "classification": "registry-artifact",
+            "registryPolicy": "registry-covered",
+            "score": 12,
+            "rationale": "Codification audit classifies repo UI files by Canon ownership, direct import, overlay governance, or explicit local exemption.",
+            "registryItemIds": [
+              "template.canon-project-overlay-manifest",
+              "template.canon-extension-intake"
+            ]
+          },
+          {
+            "exportPath": "./mcp-snapshot",
+            "classification": "registry-artifact",
+            "registryPolicy": "registry-covered",
+            "score": 12,
+            "rationale": "MCP snapshot bundles Canon registry, overlays, candidate review, and readiness artifacts for agent-facing consumers.",
+            "registryItemIds": [
+              "template.canon-project-overlay-template-pack",
+              "template.canon-project-overlay-manifest",
+              "template.canon-extension-intake"
+            ]
+          },
+          {
+            "exportPath": "./overlays/intake",
+            "classification": "registry-artifact",
+            "registryPolicy": "registry-covered",
+            "score": 12,
+            "rationale": "Overlay intake inventory scans project overlay manifests and routes extension-intake evidence without promoting primitives automatically.",
+            "registryItemIds": [
+              "template.canon-extension-intake"
+            ]
+          },
+          {
+            "exportPath": "./registry",
+            "classification": "registry-artifact",
+            "registryPolicy": "registry-covered",
+            "score": 12,
+            "rationale": "Registry API is the Canon source of truth for discoverable artifacts and lifecycle rules.",
+            "registryItemIds": [
+              "template.canon-extension-intake",
+              "template.canon-project-overlay-manifest"
+            ]
+          }
+        ],
+        "docsPaths": [
+          "/canon/components",
+          "/canon/resources/registry"
+        ]
+      },
+      "checklist": [
+        "Record the human maintainer or role approving implementation.",
+        "Record the approval evidence location, such as PR comment, Linear comment, meeting note, or signed decision.",
+        "Select registry action and registry item id before editing Canon source.",
+        "Select export path and docs path before implementation starts.",
+        "Select maturity target and implementation owner before opening implementation work.",
+        "Carry validation and compatibility requirements from the readiness report into the implementation PR."
+      ],
+      "stopConditions": [
+        "Do not mark stable until Canon owns export path, docs, tests, and compatibility notes.",
+        "Stop if human approval is missing or ambiguous.",
+        "Stop if source paths, surface proofs, or required evidence are stale.",
+        "Stop if implementation would create a fork instead of a Canon-owned export and registry item.",
+        "Stop before creating Linear work automatically from this plan.",
+        "Stop if readiness output is used as approval instead of evidence for a maintainer decision.",
+        "Stop if no Canon registry id, export path, docs path, and validation scope have been selected.",
+        "Stop if any required approval-record field is still UNSET.",
+        "Stop if target fields were copied from hints without maintainer review.",
+        "Stop before using this record as permission to mutate Canon or project overlays."
+      ],
+      "approvalBoundary": [
+        "This approval record is a read-only template and does not itself approve implementation.",
+        "Only a maintainer-filled record with explicit owner, evidence, target, docs, maturity, and implementation owner fields can support opening implementation work.",
+        "The record does not create Linear issues, mutate Canon, mutate project overlays, or mark candidates stable."
+      ],
+      "agentContract": {
+        "purpose": "canon-overlay-candidate-promotion-approval-record",
+        "primaryConsumers": [
+          "codex",
+          "mcp",
+          "ltd-docs",
+          "project-overlays"
+        ],
+        "useFor": [
+          "recording the exact human approval and target choices required before implementation",
+          "keeping readiness hints separate from maintainer-selected targets",
+          "handing an approved candidate into a bounded implementation slice"
+        ],
+        "stopBefore": [
+          "automatically filling required approval fields",
+          "automatically creating Linear work",
+          "automatically editing Canon source, registry, exports, docs, or project overlays",
+          "treating an unfilled approval record as approval or stable promotion"
+        ]
+      }
+    },
+    {
       "id": "canon-overlay-candidate-promotion-approval-record:overlay.guard-performance-lab.surface-brief",
       "readinessReportId": "canon-overlay-candidate-promotion-readiness:overlay.guard-performance-lab.surface-brief",
       "planId": "canon-overlay-candidate-promotion-plan:overlay.guard-performance-lab.surface-brief",
@@ -9550,8 +9883,8 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_APPROVAL_RECORDS: CanonOverlayCan
     }
   ],
   "summary": {
-    "total": 29,
-    "approvalRequired": 29
+    "total": 30,
+    "approvalRequired": 30
   },
   "agentContract": {
     "purpose": "canon-overlay-candidate-promotion-approval-records",

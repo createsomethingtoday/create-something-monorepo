@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "policy": "Exceptions keep scanner findings visible and expire unless a named owner renews the evidence. They are not audit suppressions and do not make a vulnerable dependency safe.",
+  "exceptions": [
+    {
+      "advisoryId": "GHSA-jmr9-qjv8-65gv",
+      "alertNumber": 1586,
+      "package": "extract-zip",
+      "severity": "high",
+      "affectedRange": "<= 2.0.1",
+      "firstPatchedVersion": null,
+      "owner": "createsomethingtoday",
+      "trackingIssue": "CRE-1634",
+      "acceptedOn": "2026-08-21",
+      "reviewBy": "2026-09-21",
+      "state": "open-upstream-unpatched",
+      "suppressesScanner": false,
+      "runtimeExposure": "tooling-only",
+      "exploitPreconditions": [
+        "An attacker-controlled ZIP archive must reach extract-zip through Puppeteer browser installation or Remotion browser acquisition on a writable host."
+      ],
+      "compensatingControls": [
+        "No tracked application source imports extract-zip directly; the policy check fails if such an import is introduced.",
+        "Deployed Cloudflare browser workflows launch the platform Browser Rendering binding and do not download or extract user-provided browser archives.",
+        "Local and CI browser/video installation must use pinned package-manager dependencies and upstream browser distributions; untrusted ZIP input is prohibited."
+      ],
+      "evidence": [
+        "GitHub Dependabot alert 1586 reports no first patched version.",
+        "pnpm why extract-zip -r shows only Puppeteer, Cloudflare Puppeteer, and Remotion dependency chains.",
+        "scripts/security-advisory-exceptions.mjs verifies expiry, ownership, non-suppression, controls, and absence of direct source imports."
+      ],
+      "removalTrigger": "Replace or upgrade the affected dependency immediately when an upstream patched release is available, then delete this exception after the alert closes."
+    }
+  ]
+}

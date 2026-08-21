@@ -498,6 +498,48 @@ const PACKAGE_EXPORT_PATH_POLICIES: CanonPublicExportClassificationRule[] = [
       'Threshold Dwelling private-evidence packet is a project-specific intake boundary, not a reusable Canon primitive.'
   },
   {
+    exportPath: './experiments/threshold-dwelling/dimensioned-project',
+    classification: 'experiment',
+    registryPolicy: 'classified-out',
+    rationale:
+      'Threshold Dwelling dimensioned design intent is a project-specific experiment contract, not a reusable Canon primitive.'
+  },
+  {
+    exportPath: './experiments/threshold-dwelling/living-system-revision',
+    classification: 'experiment',
+    registryPolicy: 'classified-out',
+    rationale:
+      'Threshold Dwelling living-system revisions remain project-specific design intent outside the stable registry.'
+  },
+  {
+    exportPath: './experiments/threshold-dwelling/interior-infill',
+    classification: 'experiment',
+    registryPolicy: 'classified-out',
+    rationale:
+      'Threshold Dwelling interior infill is a project-specific concept-resolution artifact, not a reusable Canon primitive.'
+  },
+  {
+    exportPath: './experiments/threshold-dwelling/outfitting-system',
+    classification: 'experiment',
+    registryPolicy: 'classified-out',
+    rationale:
+      'Threshold Dwelling outfitting is a project-specific occupancy and systems study outside the stable registry.'
+  },
+  {
+    exportPath: './experiments/threshold-dwelling/assembly-schedule',
+    classification: 'experiment',
+    registryPolicy: 'classified-out',
+    rationale:
+      'Threshold Dwelling assembly scheduling is a project-specific material study, not a reusable Canon primitive.'
+  },
+  {
+    exportPath: './experiments/threshold-dwelling/professional-review',
+    classification: 'experiment',
+    registryPolicy: 'classified-out',
+    rationale:
+      'Threshold Dwelling professional-review intake is a project-specific evidence boundary outside the stable registry.'
+  },
+  {
     exportPath: './experiments/living-arena',
     classification: 'experiment',
     registryPolicy: 'classified-out',

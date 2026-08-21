@@ -38,7 +38,7 @@
   },
   "dependencies": {
     "@create-something/offer-resolution": "workspace:*",
-    "@modelcontextprotocol/sdk": "1.25.3",
+    "@modelcontextprotocol/sdk": "1.26.0",
     "hono": "^4.12.34",
     "zod": "^4.3.6"
   },

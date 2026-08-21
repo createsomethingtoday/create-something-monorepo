@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/createsomethingtoday/create-something-monorepo/security/policy
+    about: Report vulnerabilities privately through the repository security policy.
+  - name: CREATE SOMETHING services
+    url: https://createsomething.agency/contact
+    about: Discuss managed Map, Build, or Control work outside the public source issue tracker.
