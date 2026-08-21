@@ -242,19 +242,12 @@ pub fn find_entry_points_with_config(
         }
     }
     
-    // Check for wrangler.toml (Cloudflare Worker)
-    let wrangler_path = directory.join("wrangler.toml");
-    if wrangler_path.exists() {
-        if let Ok(entry) = find_wrangler_entry(&wrangler_path, directory) {
-            entry_points.push(entry);
-        }
-    }
-    
     // Recursively find SvelteKit routes and other entries
     find_entries_recursive(directory, directory, &mut entry_points)?;
 
     find_manual_ground_entries(directory, config, &mut entry_points)?;
     find_promptfoo_file_reference_entries(directory, directory, &mut entry_points)?;
+    find_wrangler_entry_points(directory, directory, &mut entry_points)?;
     
     Ok(entry_points)
 }
@@ -443,6 +436,36 @@ fn resolve_local_config_reference(config_path: &Path, reference: &str) -> Option
     Some(candidate)
 }
 
+fn find_wrangler_entry_points(
+    root: &Path,
+    directory: &Path,
+    entries: &mut Vec<EntryPoint>,
+) -> std::io::Result<()> {
+    let read_dir = match fs::read_dir(directory) {
+        Ok(entries) => entries,
+        Err(_) => return Ok(()),
+    };
+
+    for entry in read_dir.flatten() {
+        let path = entry.path();
+        let name = path.file_name().and_then(|name| name.to_str()).unwrap_or("");
+        if name.starts_with('.') ||
+           matches!(name, "node_modules" | "dist" | "build" | ".svelte-kit" | "target") {
+            continue;
+        }
+
+        if path.is_dir() {
+            find_wrangler_entry_points(root, &path, entries)?;
+        } else if path.is_file() && matches!(name, "wrangler.toml" | "wrangler.json") {
+            if let Ok(Some(entry)) = find_wrangler_entry(root, &path) {
+                entries.push(entry);
+            }
+        }
+    }
+
+    Ok(())
+}
+
 fn find_entries_recursive(
     root: &Path,
     dir: &Path,
@@ -626,22 +649,36 @@ fn collect_exports_entries(
     }
 }
 
-fn find_wrangler_entry(wrangler_path: &Path, directory: &Path) -> std::io::Result<EntryPoint> {
+fn find_wrangler_entry(root: &Path, wrangler_path: &Path) -> std::io::Result<Option<EntryPoint>> {
     let content = fs::read_to_string(wrangler_path)?;
-    let value: toml::Value = content.parse()
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
-    
-    let main = value.get("main")
-        .and_then(|v| v.as_str())
-        .unwrap_or("src/index.ts");
-    
-    let main_path = directory.join(main);
-    
-    Ok(EntryPoint {
+    let main = match wrangler_path.extension().and_then(|extension| extension.to_str()) {
+        Some("toml") => content.parse::<toml::Value>()
+            .map_err(|error| std::io::Error::new(std::io::ErrorKind::InvalidData, error))?
+            .get("main")
+            .and_then(toml::Value::as_str)
+            .map(str::to_owned),
+        Some("json") => serde_json::from_str::<serde_json::Value>(&content)
+            .map_err(|error| std::io::Error::new(std::io::ErrorKind::InvalidData, error))?
+            .get("main")
+            .and_then(serde_json::Value::as_str)
+            .map(str::to_owned),
+        _ => None,
+    };
+    let Some(main) = main else {
+        return Ok(None);
+    };
+    let Some(main_path) = resolve_local_config_reference(wrangler_path, &main) else {
+        return Ok(None);
+    };
+    let config_relative = wrangler_path.strip_prefix(root)
+        .map(|path| path.display().to_string())
+        .unwrap_or_else(|_| wrangler_path.display().to_string());
+
+    Ok(Some(EntryPoint {
         path: main_path,
         entry_type: EntryPointType::CloudflareWorker,
-        description: format!("Cloudflare Worker: {}", main),
-    })
+        description: format!("{} main: {}", config_relative.replace('\\', "/"), main),
+    }))
 }
 
 /// Collect all TypeScript/JavaScript modules in a directory
@@ -943,6 +980,35 @@ mod tests {
         let entries = find_entry_points(dir.path()).unwrap();
         
         assert!(entries.iter().any(|e| e.entry_type == EntryPointType::TestFile));
+    }
+
+    #[test]
+    fn nested_wrangler_json_main_is_a_cloudflare_entry_point() {
+        let dir = tempdir().unwrap();
+        let worker_directory = dir.path().join("apps/worker");
+        fs::create_dir_all(&worker_directory).unwrap();
+        fs::write(
+            worker_directory.join("wrangler.json"),
+            r#"{"main":"worker.mjs"}"#,
+        ).unwrap();
+        fs::write(worker_directory.join("worker.mjs"), "export default {}\n").unwrap();
+        fs::write(worker_directory.join("orphan.mjs"), "export default {}\n").unwrap();
+
+        let report = analyze_reachability(dir.path()).unwrap();
+        let worker = report.modules.iter()
+            .find(|module| module.path.ends_with("apps/worker/worker.mjs"))
+            .unwrap();
+        let orphan = report.modules.iter()
+            .find(|module| module.path.ends_with("apps/worker/orphan.mjs"))
+            .unwrap();
+
+        assert_eq!(worker.status, ReachabilityStatus::EntryPoint);
+        assert_eq!(orphan.status, ReachabilityStatus::Unreachable);
+        assert!(report.entry_points.iter().any(|entry| {
+            entry.path.ends_with("apps/worker/worker.mjs") &&
+                entry.entry_type == EntryPointType::CloudflareWorker &&
+                entry.description.contains("wrangler.json main")
+        }));
     }
 
     #[test]
