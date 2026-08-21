@@ -542,13 +542,13 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/agency:
     dependencies:
       '@composio/core':
         specifier: ^0.6.4
-        version: 0.6.4(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+        version: 0.6.4(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
       '@create-something/arc':
         specifier: workspace:*
         version: link:../arc
@@ -668,7 +668,7 @@ importers:
     devDependencies:
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@5.20260712.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@5.20260712.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/agency/clients/jandjhomehealth:
     dependencies:
@@ -680,7 +680,7 @@ importers:
         version: link:../../../atlas-composition
       '@openai/agents':
         specifier: ^0.13.5
-        version: 0.13.5(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+        version: 0.13.5(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
       lucide-svelte:
         specifier: ^0.562.0
         version: 0.562.0(svelte@5.56.9(@typescript-eslint/types@8.58.2))
@@ -838,7 +838,7 @@ importers:
         version: 4.20260621.1
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/agency/workers/social-poster:
     devDependencies:
@@ -850,7 +850,7 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/agent-kit:
     dependencies:
@@ -900,7 +900,7 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/airtable-system-architect: {}
 
@@ -989,7 +989,7 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/app-governance-desktop:
     devDependencies:
@@ -1103,7 +1103,7 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/bundle-scanner:
     dependencies:
@@ -1198,7 +1198,7 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/calm-operator-stopwatch-firmware: {}
 
@@ -1363,7 +1363,7 @@ importers:
         version: 4.21.0
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@5.20260712.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@5.20260712.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/clearway:
     dependencies:
@@ -1422,7 +1422,7 @@ importers:
     devDependencies:
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/clearway/workers/realtime:
     dependencies:
@@ -1432,7 +1432,7 @@ importers:
     devDependencies:
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/clearway/workers/router:
     devDependencies:
@@ -1444,7 +1444,7 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/client-workspace:
     dependencies:
@@ -1457,7 +1457,7 @@ importers:
     devDependencies:
       '@cloudflare/sandbox':
         specifier: 0.12.3
-        version: 0.12.3(@openai/agents@0.15.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6))
+        version: 0.12.3(@openai/agents@0.15.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6))
       '@cloudflare/workers-types':
         specifier: ^4.20260621.1
         version: 4.20260621.1
@@ -1584,7 +1584,7 @@ importers:
     dependencies:
       '@composio/core':
         specifier: ^0.6.4
-        version: 0.6.4(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
+        version: 0.6.4(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
       '@create-something/mcp-core':
         specifier: workspace:*
         version: link:../mcp-core
@@ -1637,7 +1637,7 @@ importers:
         version: 1.17.0(@types/dom-mediacapture-record@1.0.22)
       '@openai/agents':
         specifier: ^0.13.5
-        version: 0.13.5(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+        version: 0.13.5(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
       svelte:
         specifier: ^5.56.9
         version: 5.56.9(@typescript-eslint/types@8.58.2)
@@ -1718,7 +1718,7 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/cs-mcp-hub:
     dependencies:
@@ -1773,14 +1773,14 @@ importers:
         version: 1.26.0(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(zod@3.25.76)
       agents:
         specifier: ^0.3.10
-        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.26.0(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
+        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.26.0(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
       zod:
         specifier: ^3.23.0
         version: 3.25.76
     devDependencies:
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@5.20260712.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/database-layer:
     dependencies:
@@ -1812,7 +1812,7 @@ importers:
         version: 4.20260621.1
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/delivery-schema:
     devDependencies:
@@ -1885,7 +1885,7 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: ^4.0.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/exception-flow-video:
     dependencies:
@@ -1959,7 +1959,7 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/ground/npm:
     devDependencies:
@@ -2041,7 +2041,7 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/halfdozen-agent-analyzer-telemetry-mcp/worker:
     dependencies:
@@ -2050,7 +2050,7 @@ importers:
         version: 1.26.0(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(zod@3.25.76)
       agents:
         specifier: ^0.3.10
-        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.26.0(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
+        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.26.0(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
       langfuse:
         specifier: ^3.38.6
         version: 3.38.6
@@ -2060,7 +2060,7 @@ importers:
     devDependencies:
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@5.20260712.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/halfdozen-blondish-sync-mcp:
     dependencies:
@@ -2147,7 +2147,7 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/halfdozen-gmail-sync:
     dependencies:
@@ -2209,7 +2209,7 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/halfdozen-landing:
     dependencies:
@@ -2296,13 +2296,13 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/halfdozen-operator-notion-mcp:
     dependencies:
       '@composio/core':
         specifier: ^0.6.4
-        version: 0.6.4(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
+        version: 0.6.4(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
       '@create-something/composio-bridge':
         specifier: workspace:*
         version: link:../composio-bridge
@@ -2314,7 +2314,7 @@ importers:
         version: 1.26.0(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(zod@3.25.76)
       '@openai/agents':
         specifier: ^0.4.10
-        version: 0.4.10(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
+        version: 0.4.10(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
       agents:
         specifier: ^0.3.10
         version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.26.0(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
@@ -2345,7 +2345,7 @@ importers:
         version: 1.26.0(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(zod@3.25.76)
       '@openai/agents':
         specifier: ^0.4.10
-        version: 0.4.10(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
+        version: 0.4.10(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
       agents:
         specifier: ^0.3.10
         version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.26.0(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
@@ -2361,7 +2361,7 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/halfdozen-telemetry-mcp/worker:
     dependencies:
@@ -2373,14 +2373,14 @@ importers:
         version: 1.26.0(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(zod@3.25.76)
       agents:
         specifier: ^0.3.10
-        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.26.0(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
+        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.26.0(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
       zod:
         specifier: ^3.23.0
         version: 3.25.76
     devDependencies:
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@5.20260712.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/halfdozen-zoom-sync:
     dependencies:
@@ -2442,7 +2442,7 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/halfdozen-zoom-transcript-sync:
     devDependencies:
@@ -2454,7 +2454,7 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/harness:
     dependencies:
@@ -2604,7 +2604,7 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/identity-worker:
     dependencies:
@@ -2834,7 +2834,7 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/judgment-layer:
     dependencies:
@@ -2866,7 +2866,7 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/learn:
     dependencies:
@@ -3007,7 +3007,7 @@ importers:
         version: 4.20260621.1
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/ltd/workers/arena-sync:
     devDependencies:
@@ -3016,7 +3016,7 @@ importers:
         version: 4.20260621.1
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/maverick:
     dependencies:
@@ -3167,7 +3167,7 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/meetings-mcp/worker:
     dependencies:
@@ -3311,7 +3311,7 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/notion-sync-mcp:
     dependencies:
@@ -3553,7 +3553,7 @@ importers:
     dependencies:
       '@openai/agents':
         specifier: ^0.4.10
-        version: 0.4.10(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+        version: 0.4.10(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
       hono:
         specifier: ^4.12.34
         version: 4.13.3
@@ -3575,7 +3575,7 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/pi-halfdozen: {}
 
@@ -3630,7 +3630,7 @@ importers:
         version: 1.26.0(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(zod@4.3.6)
       '@openai/agents':
         specifier: ^0.15.0
-        version: 0.15.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+        version: 0.15.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
       agents:
         specifier: ^0.3.10
         version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.26.0(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(zod@4.3.6))(ai@6.0.235(zod@4.3.6))(zod@4.3.6))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@4.3.6))(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@4.3.6))(zod@4.3.6)
@@ -3646,7 +3646,7 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/policy-os-engine:
     dependencies:
@@ -3847,7 +3847,7 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/schedule-mcp/workers/notifier:
     devDependencies:
@@ -3859,7 +3859,7 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/search:
     devDependencies:
@@ -3874,7 +3874,7 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/seeing:
     dependencies:
@@ -4077,7 +4077,7 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/space/workers/motion-extractor:
     dependencies:
@@ -4093,7 +4093,7 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/space/workers/nba-proxy:
     devDependencies:
@@ -4105,7 +4105,7 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/spotify-mcp:
     dependencies:
@@ -4155,7 +4155,7 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/spritz:
     devDependencies:
@@ -4235,7 +4235,7 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/symphony:
     dependencies:
@@ -4253,7 +4253,7 @@ importers:
     devDependencies:
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@5.20260712.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@5.20260712.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/tend:
     dependencies:
@@ -4349,7 +4349,7 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/tools/pencil-balance:
     devDependencies:
@@ -4479,7 +4479,7 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/webflow-apps-admin:
     devDependencies:
@@ -4546,7 +4546,7 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/webflow-automation:
     devDependencies:
@@ -4736,7 +4736,7 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/webflow-review: {}
 
@@ -4770,7 +4770,7 @@ importers:
         version: 4.20260621.1
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/webflow-review/workers/queue-consumer:
     devDependencies:
@@ -4779,7 +4779,7 @@ importers:
         version: 4.20260621.1
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/webflow-reviewer-exceptions-mcp:
     dependencies:
@@ -4823,7 +4823,7 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: ^4.0.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/webflow-scope-watcher:
     devDependencies:
@@ -4897,7 +4897,7 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/webflow-site-analyzer-mcp/workers/remote:
     devDependencies:
@@ -4989,7 +4989,7 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/webflow-template-search:
     dependencies:
@@ -5124,7 +5124,7 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/workflow-compiler:
     devDependencies:
@@ -5267,7 +5267,7 @@ importers:
         version: 5.9.3
       wrangler:
         specifier: ^4.103.0
-        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
 packages:
 
@@ -5718,6 +5718,10 @@ packages:
 
   '@aws-sdk/util-endpoints@3.996.5':
     resolution: {integrity: sha512-Uh93L5sXFNbyR5sEPMzUU8tJ++Ku97EY4udmC01nB8Zu+xfBPwpIwJ6F7snqQeq8h2pf+8SGN5/NoytfKgYPIw==}
+    engines: {node: '>=20.0.0'}
+
+  '@aws-sdk/util-locate-window@3.965.10':
+    resolution: {integrity: sha512-ycwH6Zd2GhuSqdXX9ihbCjeGTB6xOJs+O3+Jb8/zDG9978XU80qs75dfkPJRMNKe5MvBZPuNeFpd4JZKPoUF4g==}
     engines: {node: '>=20.0.0'}
 
   '@aws-sdk/util-locate-window@3.965.5':
@@ -6376,6 +6380,10 @@ packages:
 
   '@babel/runtime@7.28.6':
     resolution: {integrity: sha512-05WQkdpL9COIMz4LjTxGpPNCdlpyimKppYNoJ5Di5EUObifl8t4tuLuUBBZEpoLYOmfvIWrsp9fCl0HoPRVTdA==}
+    engines: {node: '>=6.9.0'}
+
+  '@babel/runtime@7.29.7':
+    resolution: {integrity: sha512-Nq8OhGWiZIZGV6hLHoyAKLLcJihP/xFeBMGJoUrxTX2psI8dCifzLhZISFb+VWS3wFMRDmCGw5R+dOySCqPLhw==}
     engines: {node: '>=6.9.0'}
 
   '@babel/template@7.29.7':
@@ -7785,6 +7793,12 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@eslint-community/eslint-utils@4.10.1':
+    resolution: {integrity: sha512-cuadcxVFE8sDK6iWJbs8Sn0av2Nrh2QSGQhVlBW9AaAHqHwjWsZHT8LJ4hFGPh7ASBV2deFdM7H/DPjulmh8rg==}
+    engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
+    peerDependencies:
+      eslint: ^6.0.0 || ^7.0.0 || >=8.0.0
+
   '@eslint-community/eslint-utils@4.9.1':
     resolution: {integrity: sha512-phrYmNiYppR7znFEdqgfWHXR6NCkZEK7hwWDHZUjit/2/U0r6XvkDl0SYnoM51Hq7FhCGdLDT6zxCCOY1hexsQ==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
@@ -7795,8 +7809,8 @@ packages:
     resolution: {integrity: sha512-EriSTlt5OC9/7SXkRSCAhfSxxoSUgBm33OH+IkwbdpgoqsSsUg7y3uh+IICI/Qg4BBWr3U2i39RpmycbxMq4ew==}
     engines: {node: ^12.0.0 || ^14.0.0 || >=16.0.0}
 
-  '@eslint/config-array@0.21.1':
-    resolution: {integrity: sha512-aw1gNayWpdI/jSYVgzN5pL0cfzU02GT3NBpeT/DXbx1/1x7ZKxFPd9bwrzygx/qiwIQiJ1sw/zD8qY/kRvlGHA==}
+  '@eslint/config-array@0.21.2':
+    resolution: {integrity: sha512-nJl2KGTlrf9GjLimgIru+V/mzgSK0ABCDQRvxw5BjURL7WfH5uoWmizbH7QB6MmnMBd8cIC9uceWnezL1VZWWw==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
   '@eslint/config-helpers@0.4.2':
@@ -7807,8 +7821,8 @@ packages:
     resolution: {integrity: sha512-yL/sLrpmtDaFEiUj1osRP4TI2MDz1AddJL+jZ7KSqvBuliN4xqYY54IfdN8qD8Toa6g1iloph1fxQNkjOxrrpQ==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@eslint/eslintrc@3.3.3':
-    resolution: {integrity: sha512-Kr+LPIUVKz2qkx1HAMH8q1q6azbqBAsXJUxBl/ODDuVPX45Z9DfwB8tPjTi6nNZ8BuM3nbJxC5zCAg5elnBUTQ==}
+  '@eslint/eslintrc@3.3.6':
+    resolution: {integrity: sha512-l2Ul9PrHsPCKcEY/ac7VgFj9D80C7S68sOKc618SyHDPK36s1XcFebXY0iTzUVn4Yq+YbwvSnDmCz9yxjX+QrA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
   '@eslint/js@9.39.2':
@@ -7929,12 +7943,16 @@ packages:
     peerDependencies:
       hono: ^4
 
-  '@humanfs/core@0.19.1':
-    resolution: {integrity: sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA==}
+  '@humanfs/core@0.19.2':
+    resolution: {integrity: sha512-UhXNm+CFMWcbChXywFwkmhqjs3PRCmcSa/hfBgLIb7oQ5HNb1wS0icWsGtSAUNgefHeI+eBrA8I1fxmbHsGdvA==}
     engines: {node: '>=18.18.0'}
 
-  '@humanfs/node@0.16.7':
-    resolution: {integrity: sha512-/zUx+yOsIrG4Y43Eh2peDeKCxlRt/gET6aHfaKpuq267qXdYDFViVHfMaLyygZOnl0kGWxFIgsBy8QFuTLUXEQ==}
+  '@humanfs/node@0.16.8':
+    resolution: {integrity: sha512-gE1eQNZ3R++kTzFUpdGlpmy8kDZD/MLyHqDwqjkVQI0JMdI1D51sy1H958PNXYkM2rAac7e5/CnIKZrHtPh3BQ==}
+    engines: {node: '>=18.18.0'}
+
+  '@humanfs/types@0.15.0':
+    resolution: {integrity: sha512-ZZ1w0aoQkwuUuC7Yf+7sdeaNfqQiiLcSRbfI08oAxqLtpXQr9AIVX7Ay7HLDuiLYAaFPu8oBYNq/QIi9URHJ3Q==}
     engines: {node: '>=18.18.0'}
 
   '@humanwhocodes/module-importer@1.0.1':
@@ -11943,6 +11961,10 @@ packages:
     resolution: {integrity: sha512-oIXISMynqSqm241k6kcQ5UwttDILMK4BiurCfGEREw6+X9jkkpEe5T9FZaApyLGGOnFuyMWZpdolTXMtvEJ08Q==}
     engines: {node: '>=18'}
 
+  content-disposition@1.1.0:
+    resolution: {integrity: sha512-5jRCH9Z/+DRP7rkvY83B+yGIGX96OYdJmzngqnw2SBSxqCFPd0w2km3s5iawpGX8krnwSGmF0FW5Nhr0Hfai3g==}
+    engines: {node: '>=18'}
+
   content-type@1.0.5:
     resolution: {integrity: sha512-nTjqfcBFEipKdXCv4YDQWCfmcLZKm81ldF0pAopTvyrFGVbcR6P/VAAd5G7N+0tTr8QqiU0tFadD6FK4NtJwOA==}
     engines: {node: '>= 0.6'}
@@ -12438,6 +12460,9 @@ packages:
   devalue@5.9.0:
     resolution: {integrity: sha512-RWrqdArjvPbsATEhOPUo6Wndc/iWnkWKlhIrdlF3zMMYo/c3CVtoaVAyLtWxz5h8nSlkHzxnzV2uLydPXmtF+A==}
 
+  devalue@5.9.1:
+    resolution: {integrity: sha512-+17vil3EVQRzvtDJSFuTWEb8XJRvXqAiV3qZyQWD398QeXUa6CxsUyMdD1fxzEhUrd4FojitFz7lhIHBTlV4fw==}
+
   devlop@1.1.0:
     resolution: {integrity: sha512-RWmIqhcFf1lRYBvNmr7qTNuyCt/7/ns2jbpp1+PalgE/rDQcBT0fioSMUpJ93irlUhC5hrg4cYqe6U+0ImW0rA==}
 
@@ -12650,6 +12675,10 @@ packages:
     resolution: {integrity: sha512-FGgH2h8zKNim9ljj7dankFPcICIK9Cp5bm+c2gQSYePhpaG5+esrLODihIorn+Pe6FGJzWhXQotPv73jTaldXA==}
     engines: {node: '>= 0.4'}
 
+  es-object-atoms@1.1.2:
+    resolution: {integrity: sha512-HWcBoN6NileqtSydK2FqHbS/LoDd2pqrnQHLyJzBj4kOp/ky2MWMN694xOfkK8/SnUsW2DH7EfyVlydKCsm1Zw==}
+    engines: {node: '>= 0.4'}
+
   es-set-tostringtag@2.1.0:
     resolution: {integrity: sha512-j6vWzfrGVfyXxge+O0x5sh6cvxAog0a/4Rdd2K36zCMV5eJ+/+tOAngRO8cODMNWbVRdVlmGZQL2YS3yR8bIUA==}
     engines: {node: '>= 0.4'}
@@ -12841,8 +12870,8 @@ packages:
     resolution: {integrity: sha512-Ap6G0WQwcU/LHsvLwON1fAQX9Zp0A2Y6Y/cJBl9r/JbW90Zyg4/zbG6zzKa2OTALELarYHmKu0GhpM5EO+7T0g==}
     engines: {node: '>=0.10'}
 
-  esrap@2.3.5:
-    resolution: {integrity: sha512-KciPkeZZX8srrh6xELzLR2cBaWOzgBQ4CwggO6Dh/KMlrfOcIcfyXCVy/Vvc3/OlS5gvFOd5tcxUYuaGM8o45A==}
+  esrap@2.3.6:
+    resolution: {integrity: sha512-yc0OC12UjPqLoc+fe+v5GNs4TOjAigUw3sTikfC+xeBPGUw7gDRz3DtYaqEhxyMVJojcSWJw7jT0QWR+CbuE/A==}
     peerDependencies:
       '@typescript-eslint/types': ^8.2.0
     peerDependenciesMeta:
@@ -12897,6 +12926,10 @@ packages:
 
   eventsource-parser@3.1.0:
     resolution: {integrity: sha512-kJezFj9YFAMLeORyi7aCLxLbD5/qWMQnoMVlVPyHIll7lgRJCc3JVln9Vgl9nwQi0YkMnhdGTMNn7CkRRAptMg==}
+    engines: {node: '>=18.0.0'}
+
+  eventsource-parser@3.1.1:
+    resolution: {integrity: sha512-EKN1vKAMcZ8MlYMpaNuxN6R9yakzH6uajHcHVTqWJzvu5pWw9DyhbP35HH8MVBQ+dZjAfDxk+A8NiR9KWaXiyQ==}
     engines: {node: '>=18.0.0'}
 
   eventsource@3.0.7:
@@ -13594,6 +13627,10 @@ packages:
     resolution: {integrity: sha512-im9DjEDQ55s9fL4EYzOAv0yMqmMBSZp6G0VvFyTMPKWxiSBHUj9NW/qqLmXUwXrrM7AvqSlTCfvqRb0cM8yYqw==}
     engines: {node: '>=0.10.0'}
 
+  iconv-lite@0.7.3:
+    resolution: {integrity: sha512-IKXpvIzjnC9XTAUbVBcMfGS0EPaIXtW6v+zr+RRp+hqULEpo0owZax6wyRwPOJbWbzjYspQwusTsfVr0ifh4uQ==}
+    engines: {node: '>=0.10.0'}
+
   icss-utils@5.1.0:
     resolution: {integrity: sha512-soFhflCVWLfRNOPU3iv5Z9VUdT44xFRbzjLsEzSr5AQmgqPMTHdU3PMT1Cf1ssx8fLNJDA1juftYl+PUcv3MqA==}
     engines: {node: ^10 || ^12 || >= 14}
@@ -13609,10 +13646,6 @@ packages:
 
   ignore@7.0.5:
     resolution: {integrity: sha512-Hs59xBNfUIunMFgWAbGX5cq6893IbWg4KnrjbYwX3tx0ztorVgTDA6B2sxf8ejHJ4wz8BqGUMYlnzNBer5NvGg==}
-    engines: {node: '>= 4'}
-
-  ignore@7.0.6:
-    resolution: {integrity: sha512-BAg6QkE8W+TuQLrrw0Ugr7HegXduRuuj8/ti2kSOc+jz1dmx8/WNcjr6XGnq5YpDWxFwwaavqD0+jIUOKelTsw==}
     engines: {node: '>= 4'}
 
   immediate@3.0.6:
@@ -13986,6 +14019,9 @@ packages:
 
   jose@6.1.3:
     resolution: {integrity: sha512-0TpaTfihd4QMNwrz/ob2Bp7X04yuxJkjRGi4aKmOqwhov54i6u79oCv7T+C7lo70MKH6BesI3vscD1yb/yzKXQ==}
+
+  jose@6.2.10:
+    resolution: {integrity: sha512-iiW7J9qRFlGxvCOIBDBDxFePQSn7ZMAnrYGhrrOo6siO/MIqwfyilLR27pkfDgUk+raLuzADS8A3S/KLBisc0g==}
 
   joycon@3.1.1:
     resolution: {integrity: sha512-34wB/Y7MW7bzjKRjUKTa46I2Z7eV62Rkhva+KkopW7Qvv/OSWBqvkSY7vusOPrNuZcUG3tApvdVgNB8POj3SPw==}
@@ -14501,6 +14537,10 @@ packages:
     resolution: {integrity: sha512-aisnrDP4GNe06UcKFnV5bfMNPBUw4jsLGaWwWfnH3v02GnBuXX2MCVn5RbrWo0j3pczUilYblq7fQ7Nw2t5XKw==}
     engines: {node: '>= 0.8'}
 
+  media-typer@1.1.1:
+    resolution: {integrity: sha512-yz3xRaG20c6/BOzvYoDaGtPmGscs7YivItZEEqe6GbwNfHuxu9YNmvnEkMzKldAGY4/80pRcQRZSEnhquk9XuQ==}
+    engines: {node: '>= 0.8'}
+
   mediabunny@1.29.0:
     resolution: {integrity: sha512-18B8w/rhO/ph/AFsIXvzZg8RaSQZ+ZYfJ99MZlTjDmlgCT58jV3azrnWQ/OSquYDi8q0xmn64mnfTEHgww3+zw==}
 
@@ -14724,6 +14764,9 @@ packages:
     resolution: {integrity: sha512-vpLQEs+VLCr1nU0BXS07maYoFwlDAH0gngQuuttxIwutDFEMHq2blX+8vpgxDdK3J1PwjCJiep77OitTZ4Ll1A==}
     engines: {node: 18 || 20 || >=22}
 
+  minimatch@3.1.5:
+    resolution: {integrity: sha512-VgjWUsnnT6n+NUk6eZq77zeFdpW2LWDzP6zFGrCbHXiYNul5Dzqk2HHQ5uFH2DNW5Xbp8+jVzaeNt94ssEEl4w==}
+
   minimatch@8.0.7:
     resolution: {integrity: sha512-V+1uQNdzybxa14e/p00HZnQNNcTjnRJjDxg2V8wtkjFctq4M7hXFws4oekyTP0Jebeq7QYtpFyOeBAjc88zvYg==}
     engines: {node: '>=16 || 14 >=14.17'}
@@ -14861,9 +14904,9 @@ packages:
     resolution: {integrity: sha512-+EUsqGPLsM+j/zdChZjsnX51g4XrHFOIXwfnCVPGlQk/k5giakcKsuxCObBRu6DSm9opw/O6slWbJdghQM4bBg==}
     engines: {node: '>= 0.6'}
 
-  negotiator@1.0.0:
-    resolution: {integrity: sha512-8Ofs/AUQh8MaEcrlq5xOX0CQ9ypTF5dl78mjlMNfOK08fzpgTHQRQPBxcPlEtIw0yRpws+Zo/3r+5WRby7u3Gg==}
-    engines: {node: '>= 0.6'}
+  negotiator@1.1.0:
+    resolution: {integrity: sha512-NMPBRMJgiQHjbd8phG3Vebdx4kZ1H121rbl5IkMqeOsahptB9BKo/d7oJ3zTXqTgagn2bWlNSXkh0QUGM31RYg==}
+    engines: {node: '>=18'}
 
   neo-async@2.6.2:
     resolution: {integrity: sha512-Yd3UES5mWCSqR+qNT93S3UoYUkqAZ9lLg8a7g9rimsWmYGK8cVToA4/sF3RrshdyV3sAGMXVUmpMYOw+dLpOuw==}
@@ -15761,6 +15804,10 @@ packages:
 
   range-parser@1.2.1:
     resolution: {integrity: sha512-Hrgsx+orqoygnmhFbKaHE6c296J+HTAQXoxEF6gNupROmmGJRoyzfG3ccAveqCBrwr/2yxQ5BVd/GTl5agOwSg==}
+    engines: {node: '>= 0.6'}
+
+  range-parser@1.3.0:
+    resolution: {integrity: sha512-hek2mFQpPuI4E1BBKrSto+BU3e3x4xuarsbiwr3+lf7p44juvFMV0XFWQAP3xUyqXA4RrXLIoaSUGbSt056ZMw==}
     engines: {node: '>= 0.6'}
 
   raw-body@3.0.2:
@@ -17785,6 +17832,11 @@ packages:
     peerDependencies:
       zod: ^3.25 || ^4
 
+  zod-to-json-schema@3.25.2:
+    resolution: {integrity: sha512-O/PgfnpT1xKSDeQYSCfRI5Gy3hPf91mKVDuYLUHZJMiDFptvP41MSnWofm8dnCm0256ZNfZIM7DSzuSMAFnjHA==}
+    peerDependencies:
+      zod: ^3.25.28 || ^4
+
   zod@3.22.3:
     resolution: {integrity: sha512-EjIevzuJRiRPbVH4mGc8nApb/lVLKVpmUhAaR5R5doKGfAnGJ6Gr3CViAVjP+4FWSxCsybeWQdcgCtbX+7oZug==}
 
@@ -18001,8 +18053,8 @@ snapshots:
       '@aws-crypto/sha256-js': 5.2.0
       '@aws-crypto/supports-web-crypto': 5.2.0
       '@aws-crypto/util': 5.2.0
-      '@aws-sdk/types': 3.973.6
-      '@aws-sdk/util-locate-window': 3.965.5
+      '@aws-sdk/types': 3.974.5
+      '@aws-sdk/util-locate-window': 3.965.10
       '@smithy/util-utf8': 2.3.0
       tslib: 2.8.1
 
@@ -18015,7 +18067,7 @@ snapshots:
   '@aws-crypto/sha256-js@5.2.0':
     dependencies:
       '@aws-crypto/util': 5.2.0
-      '@aws-sdk/types': 3.973.6
+      '@aws-sdk/types': 3.974.5
       tslib: 2.8.1
 
   '@aws-crypto/supports-web-crypto@3.0.0':
@@ -18034,7 +18086,7 @@ snapshots:
 
   '@aws-crypto/util@5.2.0':
     dependencies:
-      '@aws-sdk/types': 3.973.6
+      '@aws-sdk/types': 3.974.5
       '@smithy/util-utf8': 2.3.0
       tslib: 2.8.1
 
@@ -19043,6 +19095,10 @@ snapshots:
       '@smithy/util-endpoints': 3.3.3
       tslib: 2.8.1
 
+  '@aws-sdk/util-locate-window@3.965.10':
+    dependencies:
+      tslib: 2.8.1
+
   '@aws-sdk/util-locate-window@3.965.5':
     dependencies:
       tslib: 2.8.1
@@ -19871,6 +19927,8 @@ snapshots:
 
   '@babel/runtime@7.28.6': {}
 
+  '@babel/runtime@7.29.7': {}
+
   '@babel/template@7.29.7':
     dependencies:
       '@babel/code-frame': 7.29.7
@@ -20035,14 +20093,14 @@ snapshots:
       uuid: 14.0.2
       worker-timers: 7.0.60
 
-  '@cloudflare/sandbox@0.12.3(@openai/agents@0.15.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6))':
+  '@cloudflare/sandbox@0.12.3(@openai/agents@0.15.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6))':
     dependencies:
       '@cloudflare/containers': 0.3.7
       aws4fetch: 1.0.20
       capnweb: 0.8.0
       hono: 4.13.3
     optionalDependencies:
-      '@openai/agents': 0.15.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      '@openai/agents': 0.15.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
 
   '@cloudflare/sandbox@0.4.18':
     dependencies:
@@ -20284,13 +20342,13 @@ snapshots:
 
   '@composio/client@0.1.0-alpha.60': {}
 
-  '@composio/core@0.6.4(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)':
+  '@composio/core@0.6.4(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)':
     dependencies:
       '@composio/client': 0.1.0-alpha.60
       '@composio/json-schema-to-zod': 0.1.20(zod@3.25.76)
       '@types/json-schema': 7.0.15
       chalk: 4.1.2
-      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
+      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
       pusher-js: 8.4.0
       semver: 7.8.5
       zod: 3.25.76
@@ -20301,13 +20359,13 @@ snapshots:
       - '@smithy/signature-v4'
       - ws
 
-  '@composio/core@0.6.4(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
+  '@composio/core@0.6.4(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
     dependencies:
       '@composio/client': 0.1.0-alpha.60
       '@composio/json-schema-to-zod': 0.1.20(zod@4.3.6)
       '@types/json-schema': 7.0.15
       chalk: 4.1.2
-      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
       pusher-js: 8.4.0
       semver: 7.8.5
       zod: 4.3.6
@@ -21003,6 +21061,11 @@ snapshots:
   '@esbuild/win32-x64@0.28.1':
     optional: true
 
+  '@eslint-community/eslint-utils@4.10.1(eslint@9.39.2(jiti@2.7.0))':
+    dependencies:
+      eslint: 9.39.2(jiti@2.7.0)
+      eslint-visitor-keys: 3.4.3
+
   '@eslint-community/eslint-utils@4.9.1(eslint@9.39.2(jiti@2.7.0))':
     dependencies:
       eslint: 9.39.2(jiti@2.7.0)
@@ -21010,11 +21073,11 @@ snapshots:
 
   '@eslint-community/regexpp@4.12.2': {}
 
-  '@eslint/config-array@0.21.1':
+  '@eslint/config-array@0.21.2':
     dependencies:
       '@eslint/object-schema': 2.1.7
       debug: 4.4.3
-      minimatch: 10.2.5
+      minimatch: 3.1.5
     transitivePeerDependencies:
       - supports-color
 
@@ -21026,7 +21089,7 @@ snapshots:
     dependencies:
       '@types/json-schema': 7.0.15
 
-  '@eslint/eslintrc@3.3.3':
+  '@eslint/eslintrc@3.3.6':
     dependencies:
       ajv: 6.15.0
       debug: 4.4.3
@@ -21035,7 +21098,7 @@ snapshots:
       ignore: 5.3.2
       import-fresh: 3.3.1
       js-yaml: 5.3.0
-      minimatch: 10.2.5
+      minimatch: 3.1.5
       strip-json-comments: 3.1.1
     transitivePeerDependencies:
       - supports-color
@@ -21193,12 +21256,17 @@ snapshots:
     dependencies:
       hono: 4.13.3
 
-  '@humanfs/core@0.19.1': {}
-
-  '@humanfs/node@0.16.7':
+  '@humanfs/core@0.19.2':
     dependencies:
-      '@humanfs/core': 0.19.1
+      '@humanfs/types': 0.15.0
+
+  '@humanfs/node@0.16.8':
+    dependencies:
+      '@humanfs/core': 0.19.2
+      '@humanfs/types': 0.15.0
       '@humanwhocodes/retry': 0.4.3
+
+  '@humanfs/types@0.15.0': {}
 
   '@humanwhocodes/module-importer@1.0.1': {}
 
@@ -21830,16 +21898,16 @@ snapshots:
       cors: 2.8.6
       cross-spawn: 7.0.6
       eventsource: 3.0.7
-      eventsource-parser: 3.1.0
+      eventsource-parser: 3.1.1
       express: 5.2.1
       express-rate-limit: 8.6.2(express@5.2.1)
       hono: 4.13.3
-      jose: 6.1.3
+      jose: 6.2.10
       json-schema-typed: 8.0.2
       pkce-challenge: 5.0.1
       raw-body: 3.0.2
       zod: 4.3.6
-      zod-to-json-schema: 3.25.1(zod@4.3.6)
+      zod-to-json-schema: 3.25.2(zod@4.3.6)
     optionalDependencies:
       '@cfworker/json-schema': 4.1.1
     transitivePeerDependencies:
@@ -22170,21 +22238,6 @@ snapshots:
       - supports-color
       - ws
 
-  '@openai/agents-core@0.13.5(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
-    dependencies:
-      debug: 4.4.3
-      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
-    optionalDependencies:
-      '@modelcontextprotocol/sdk': 1.26.0(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(zod@4.3.6)
-      zod: 4.3.6
-    transitivePeerDependencies:
-      - '@aws-sdk/credential-provider-node'
-      - '@cfworker/json-schema'
-      - '@smithy/hash-node'
-      - '@smithy/signature-v4'
-      - supports-color
-      - ws
-
   '@openai/agents-core@0.15.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
     dependencies:
       debug: 4.4.3
@@ -22243,27 +22296,11 @@ snapshots:
       - supports-color
       - ws
 
-  '@openai/agents-core@0.4.10(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)':
+  '@openai/agents-openai@0.13.5(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
     dependencies:
+      '@openai/agents-core': 0.13.5(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
       debug: 4.4.3
-      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
-    optionalDependencies:
-      '@modelcontextprotocol/sdk': 1.26.0(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(zod@3.25.76)
-      zod: 3.25.76
-    transitivePeerDependencies:
-      - '@aws-sdk/credential-provider-node'
-      - '@cfworker/json-schema'
-      - '@smithy/hash-node'
-      - '@smithy/signature-v4'
-      - supports-color
-      - ws
-
-  '@openai/agents-core@0.4.10(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
-    dependencies:
-      debug: 4.4.3
-      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
-    optionalDependencies:
-      '@modelcontextprotocol/sdk': 1.26.0(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(zod@4.3.6)
+      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
       zod: 4.3.6
     transitivePeerDependencies:
       - '@aws-sdk/credential-provider-node'
@@ -22273,15 +22310,14 @@ snapshots:
       - supports-color
       - ws
 
-  '@openai/agents-openai@0.13.5(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
+  '@openai/agents-openai@0.15.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
     dependencies:
-      '@openai/agents-core': 0.13.5(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      '@openai/agents-core': 0.15.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
       debug: 4.4.3
-      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      openai: 7.4.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
       zod: 4.3.6
     transitivePeerDependencies:
       - '@aws-sdk/credential-provider-node'
-      - '@cfworker/json-schema'
       - '@smithy/hash-node'
       - '@smithy/signature-v4'
       - supports-color
@@ -22300,11 +22336,11 @@ snapshots:
       - supports-color
       - ws
 
-  '@openai/agents-openai@0.4.10(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)':
+  '@openai/agents-openai@0.4.10(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)':
     dependencies:
-      '@openai/agents-core': 0.4.10(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
+      '@openai/agents-core': 0.4.10(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
       debug: 4.4.3
-      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
+      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
       zod: 3.25.76
     transitivePeerDependencies:
       - '@aws-sdk/credential-provider-node'
@@ -22314,11 +22350,11 @@ snapshots:
       - supports-color
       - ws
 
-  '@openai/agents-openai@0.4.10(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
+  '@openai/agents-openai@0.4.10(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
     dependencies:
-      '@openai/agents-core': 0.4.10(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      '@openai/agents-core': 0.4.10(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
       debug: 4.4.3
-      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
       zod: 4.3.6
     transitivePeerDependencies:
       - '@aws-sdk/credential-provider-node'
@@ -22391,17 +22427,34 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@openai/agents@0.13.5(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
+  '@openai/agents@0.13.5(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
     dependencies:
-      '@openai/agents-core': 0.13.5(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
-      '@openai/agents-openai': 0.13.5(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      '@openai/agents-core': 0.13.5(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      '@openai/agents-openai': 0.13.5(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
       '@openai/agents-realtime': 0.13.5(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(zod@4.3.6)
       debug: 4.4.3
-      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
       zod: 4.3.6
     transitivePeerDependencies:
       - '@aws-sdk/credential-provider-node'
       - '@cfworker/json-schema'
+      - '@smithy/hash-node'
+      - '@smithy/signature-v4'
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+      - ws
+
+  '@openai/agents@0.15.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
+    dependencies:
+      '@openai/agents-core': 0.15.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      '@openai/agents-openai': 0.15.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      '@openai/agents-realtime': 0.15.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(zod@4.3.6)
+      debug: 4.4.3
+      openai: 7.4.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      zod: 4.3.6
+    transitivePeerDependencies:
+      - '@aws-sdk/credential-provider-node'
       - '@smithy/hash-node'
       - '@smithy/signature-v4'
       - bufferutil
@@ -22426,13 +22479,13 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@openai/agents@0.4.10(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)':
+  '@openai/agents@0.4.10(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)':
     dependencies:
-      '@openai/agents-core': 0.4.10(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
-      '@openai/agents-openai': 0.4.10(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
+      '@openai/agents-core': 0.4.10(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
+      '@openai/agents-openai': 0.4.10(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
       '@openai/agents-realtime': 0.4.10(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(zod@3.25.76)
       debug: 4.4.3
-      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
+      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)
       zod: 3.25.76
     transitivePeerDependencies:
       - '@aws-sdk/credential-provider-node'
@@ -22444,13 +22497,13 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@openai/agents@0.4.10(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
+  '@openai/agents@0.4.10(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)':
     dependencies:
-      '@openai/agents-core': 0.4.10(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
-      '@openai/agents-openai': 0.4.10(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      '@openai/agents-core': 0.4.10(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      '@openai/agents-openai': 0.4.10(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
       '@openai/agents-realtime': 0.4.10(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(zod@4.3.6)
       debug: 4.4.3
-      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
+      openai: 6.49.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
       zod: 4.3.6
     transitivePeerDependencies:
       - '@aws-sdk/credential-provider-node'
@@ -24732,7 +24785,7 @@ snapshots:
       '@typescript-eslint/utils': 8.58.2(eslint@9.39.2(jiti@2.7.0))(typescript@5.9.3)
       '@typescript-eslint/visitor-keys': 8.58.2
       eslint: 9.39.2(jiti@2.7.0)
-      ignore: 7.0.6
+      ignore: 7.0.5
       natural-compare: 1.4.0
       ts-api-utils: 2.5.0(typescript@5.9.3)
       typescript: 5.9.3
@@ -25304,7 +25357,7 @@ snapshots:
   accepts@2.0.0:
     dependencies:
       mime-types: 3.0.2
-      negotiator: 1.0.0
+      negotiator: 1.1.0
 
   acorn-import-phases@1.0.4(acorn@8.18.0):
     dependencies:
@@ -25381,6 +25434,30 @@ snapshots:
       mimetext: 3.0.28
       nanoid: 5.1.16
       partyserver: 0.1.5(@cloudflare/workers-types@4.20260621.1)
+      partysocket: 1.1.11
+      react: 19.2.4
+      yargs: 18.0.0
+      zod: 3.25.76
+    optionalDependencies:
+      viem: 2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76)
+    transitivePeerDependencies:
+      - '@cloudflare/workers-types'
+      - supports-color
+
+  agents@0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.26.0(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76):
+    dependencies:
+      '@cfworker/json-schema': 4.1.1
+      '@cloudflare/ai-chat': 0.0.6(agents@0.3.10)(ai@6.0.235(zod@3.25.76))(react@19.2.4)(zod@3.25.76)
+      '@cloudflare/codemode': 0.3.8(@modelcontextprotocol/sdk@1.26.0(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76)
+      '@modelcontextprotocol/sdk': 1.26.0(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(zod@3.25.76)
+      ai: 6.0.235(zod@3.25.76)
+      cron-schedule: 6.0.0
+      escape-html: 1.0.3
+      json-schema: 0.4.0
+      json-schema-to-typescript: 15.0.4
+      mimetext: 3.0.28
+      nanoid: 5.1.16
+      partyserver: 0.1.5(@cloudflare/workers-types@5.20260712.1)
       partysocket: 1.1.11
       react: 19.2.4
       yargs: 18.0.0
@@ -25883,7 +25960,7 @@ snapshots:
       content-type: 2.1.0
       debug: 4.4.3
       http-errors: 2.0.1
-      iconv-lite: 0.7.2
+      iconv-lite: 0.7.3
       on-finished: 2.4.1
       qs: 6.15.3
       raw-body: 3.0.2
@@ -26329,6 +26406,8 @@ snapshots:
       safe-buffer: 5.2.1
 
   content-disposition@1.0.1: {}
+
+  content-disposition@1.1.0: {}
 
   content-type@1.0.5: {}
 
@@ -26826,6 +26905,8 @@ snapshots:
 
   devalue@5.9.0: {}
 
+  devalue@5.9.1: {}
+
   devlop@1.1.0:
     dependencies:
       dequal: 2.0.3
@@ -27090,6 +27171,10 @@ snapshots:
   es-module-lexer@2.0.0: {}
 
   es-object-atoms@1.1.1:
+    dependencies:
+      es-errors: 1.3.0
+
+  es-object-atoms@1.1.2:
     dependencies:
       es-errors: 1.3.0
 
@@ -27366,7 +27451,7 @@ snapshots:
       hasown: 2.0.2
       is-core-module: 2.16.1
       is-glob: 4.0.3
-      minimatch: 10.2.6
+      minimatch: 10.2.5
       object.fromentries: 2.0.8
       object.groupby: 1.0.3
       object.values: 1.2.1
@@ -27394,7 +27479,7 @@ snapshots:
       hasown: 2.0.2
       jsx-ast-utils: 3.3.5
       language-tags: 1.0.9
-      minimatch: 10.2.6
+      minimatch: 10.2.5
       object.fromentries: 2.0.8
       safe-regex-test: 1.1.0
       string.prototype.includes: 2.0.1
@@ -27415,7 +27500,7 @@ snapshots:
       estraverse: 5.3.0
       hasown: 2.0.2
       jsx-ast-utils: 3.3.5
-      minimatch: 10.2.6
+      minimatch: 10.2.5
       object.entries: 1.1.9
       object.fromentries: 2.0.8
       object.values: 1.2.1
@@ -27448,15 +27533,15 @@ snapshots:
 
   eslint@9.39.2(jiti@2.7.0):
     dependencies:
-      '@eslint-community/eslint-utils': 4.9.1(eslint@9.39.2(jiti@2.7.0))
+      '@eslint-community/eslint-utils': 4.10.1(eslint@9.39.2(jiti@2.7.0))
       '@eslint-community/regexpp': 4.12.2
-      '@eslint/config-array': 0.21.1
+      '@eslint/config-array': 0.21.2
       '@eslint/config-helpers': 0.4.2
       '@eslint/core': 0.17.0
-      '@eslint/eslintrc': 3.3.3
+      '@eslint/eslintrc': 3.3.6
       '@eslint/js': 9.39.2
       '@eslint/plugin-kit': 0.4.1
-      '@humanfs/node': 0.16.7
+      '@humanfs/node': 0.16.8
       '@humanwhocodes/module-importer': 1.0.1
       '@humanwhocodes/retry': 0.4.3
       '@types/estree': 1.0.9
@@ -27479,7 +27564,7 @@ snapshots:
       is-glob: 4.0.3
       json-stable-stringify-without-jsonify: 1.0.1
       lodash.merge: 4.6.2
-      minimatch: 10.2.5
+      minimatch: 10.2.6
       natural-compare: 1.4.0
       optionator: 0.9.4
     optionalDependencies:
@@ -27507,7 +27592,7 @@ snapshots:
     dependencies:
       estraverse: 5.3.0
 
-  esrap@2.3.5(@typescript-eslint/types@8.58.2):
+  esrap@2.3.6(@typescript-eslint/types@8.58.2):
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
     optionalDependencies:
@@ -27548,6 +27633,8 @@ snapshots:
   events@3.3.0: {}
 
   eventsource-parser@3.1.0: {}
+
+  eventsource-parser@3.1.1: {}
 
   eventsource@3.0.7:
     dependencies:
@@ -27692,7 +27779,7 @@ snapshots:
     dependencies:
       accepts: 2.0.0
       body-parser: 2.3.0
-      content-disposition: 1.0.1
+      content-disposition: 1.1.0
       content-type: 1.0.5
       cookie: 0.7.2
       cookie-signature: 1.2.2
@@ -27711,12 +27798,12 @@ snapshots:
       parseurl: 1.3.3
       proxy-addr: 2.0.7
       qs: 6.15.3
-      range-parser: 1.2.1
+      range-parser: 1.3.0
       router: 2.2.0
       send: 1.2.1
       serve-static: 2.2.1
       statuses: 2.0.2
-      type-is: 2.0.1
+      type-is: 2.1.0
       vary: 1.1.2
     transitivePeerDependencies:
       - supports-color
@@ -28069,7 +28156,7 @@ snapshots:
 
   gcp-metadata@8.1.2:
     dependencies:
-      gaxios: 7.1.3
+      gaxios: 7.3.1
       google-logging-utils: 1.1.3
       json-bigint: 1.0.0
     transitivePeerDependencies:
@@ -28095,7 +28182,7 @@ snapshots:
       call-bind-apply-helpers: 1.0.2
       es-define-property: 1.0.1
       es-errors: 1.3.0
-      es-object-atoms: 1.1.1
+      es-object-atoms: 1.1.2
       function-bind: 1.1.2
       get-proto: 1.0.1
       gopd: 1.2.0
@@ -28108,7 +28195,7 @@ snapshots:
   get-proto@1.0.1:
     dependencies:
       dunder-proto: 1.0.1
-      es-object-atoms: 1.1.1
+      es-object-atoms: 1.1.2
 
   get-stream@5.2.0:
     dependencies:
@@ -28192,7 +28279,7 @@ snapshots:
       fs.realpath: 1.0.0
       inflight: 1.0.6
       inherits: 2.0.4
-      minimatch: 10.2.6
+      minimatch: 10.2.5
       once: 1.4.0
       path-is-absolute: 1.0.1
 
@@ -28507,6 +28594,10 @@ snapshots:
     dependencies:
       safer-buffer: 2.1.2
 
+  iconv-lite@0.7.3:
+    dependencies:
+      safer-buffer: 2.1.2
+
   icss-utils@5.1.0(postcss@8.5.26):
     dependencies:
       postcss: 8.5.26
@@ -28516,8 +28607,6 @@ snapshots:
   ignore@5.3.2: {}
 
   ignore@7.0.5: {}
-
-  ignore@7.0.6: {}
 
   immediate@3.0.6: {}
 
@@ -28644,7 +28733,7 @@ snapshots:
 
   is-fullwidth-code-point@5.1.0:
     dependencies:
-      get-east-asian-width: 1.6.0
+      get-east-asian-width: 1.4.0
 
   is-generator-function@1.1.2:
     dependencies:
@@ -28859,6 +28948,8 @@ snapshots:
 
   jose@6.1.3: {}
 
+  jose@6.2.10: {}
+
   joycon@3.1.1: {}
 
   js-base64@3.7.7: {}
@@ -28964,7 +29055,7 @@ snapshots:
 
   json-schema-to-ts@3.1.1:
     dependencies:
-      '@babel/runtime': 7.28.6
+      '@babel/runtime': 7.29.7
       ts-algebra: 2.0.0
 
   json-schema-to-typescript@15.0.4:
@@ -29032,7 +29123,7 @@ snapshots:
       fast-xml-parser: 5.10.1
       file-type: 21.3.4
       ini: 6.0.0
-      minimatch: 10.2.6
+      minimatch: 10.2.5
       modern-tar: 0.7.7
       papaparse: 5.5.4
       quickjs-emscripten: 0.32.0
@@ -29514,6 +29605,8 @@ snapshots:
 
   media-typer@1.1.0: {}
 
+  media-typer@1.1.1: {}
+
   mediabunny@1.29.0:
     dependencies:
       '@types/dom-mediacapture-transform': 0.1.11
@@ -29862,6 +29955,10 @@ snapshots:
     dependencies:
       brace-expansion: 5.0.9
 
+  minimatch@3.1.5:
+    dependencies:
+      brace-expansion: 5.0.9
+
   minimatch@8.0.7:
     dependencies:
       brace-expansion: 5.0.5
@@ -29976,7 +30073,9 @@ snapshots:
 
   negotiator@0.6.3: {}
 
-  negotiator@1.0.0: {}
+  negotiator@1.1.0:
+    dependencies:
+      content-type: 2.1.0
 
   neo-async@2.6.2: {}
 
@@ -30195,13 +30294,6 @@ snapshots:
       '@smithy/signature-v4': 5.7.3
       ws: 8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
       zod: 4.3.6
-
-  openai@6.49.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76):
-    optionalDependencies:
-      '@aws-sdk/credential-provider-node': 3.972.81
-      '@smithy/signature-v4': 5.7.3
-      ws: 8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6)
-      zod: 3.25.76
 
   openai@6.49.0(@aws-sdk/credential-provider-node@3.972.81)(@smithy/signature-v4@5.7.3)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6):
     optionalDependencies:
@@ -31042,11 +31134,13 @@ snapshots:
 
   range-parser@1.2.1: {}
 
+  range-parser@1.3.0: {}
+
   raw-body@3.0.2:
     dependencies:
       bytes: 3.1.2
       http-errors: 2.0.1
-      iconv-lite: 0.7.2
+      iconv-lite: 0.7.3
       unpipe: 1.0.0
 
   rc@1.2.8:
@@ -31115,7 +31209,7 @@ snapshots:
 
   readdir-glob@1.1.3:
     dependencies:
-      minimatch: 10.2.6
+      minimatch: 10.2.5
 
   readdirp@3.6.0:
     dependencies:
@@ -31501,7 +31595,7 @@ snapshots:
       mime-types: 3.0.2
       ms: 2.1.3
       on-finished: 2.4.1
-      range-parser: 1.2.1
+      range-parser: 1.3.0
       statuses: 2.0.2
     transitivePeerDependencies:
       - supports-color
@@ -32059,9 +32153,9 @@ snapshots:
       aria-query: 5.3.1
       axobject-query: 4.1.0
       clsx: 2.1.1
-      devalue: 5.9.0
+      devalue: 5.9.1
       esm-env: 1.2.2
-      esrap: 2.3.5(@typescript-eslint/types@8.58.2)
+      esrap: 2.3.6(@typescript-eslint/types@8.58.2)
       is-reference: 3.0.3
       locate-character: 3.0.0
       magic-string: 0.30.21
@@ -32501,7 +32595,7 @@ snapshots:
   type-is@2.1.0:
     dependencies:
       content-type: 2.1.0
-      media-typer: 1.1.0
+      media-typer: 1.1.1
       mime-types: 3.0.2
 
   typebox@1.3.7: {}
@@ -33409,7 +33503,7 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  wrangler@4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6):
+  wrangler@4.110.0(@cloudflare/workers-types@5.20260712.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6):
     dependencies:
       '@cloudflare/kv-asset-handler': 0.5.0
       '@cloudflare/unenv-preset': 2.16.1(unenv@2.0.0-rc.24)(workerd@1.20260708.1)
@@ -33420,14 +33514,14 @@ snapshots:
       unenv: 2.0.0-rc.24
       workerd: 1.20260708.1
     optionalDependencies:
-      '@cloudflare/workers-types': 4.20260621.1
+      '@cloudflare/workers-types': 5.20260712.1
       fsevents: 2.3.3
     transitivePeerDependencies:
       - '@types/node'
       - bufferutil
       - utf-8-validate
 
-  wrangler@4.110.0(@cloudflare/workers-types@5.20260712.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6):
+  wrangler@4.110.0(@cloudflare/workers-types@5.20260712.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6):
     dependencies:
       '@cloudflare/kv-asset-handler': 0.5.0
       '@cloudflare/unenv-preset': 2.16.1(unenv@2.0.0-rc.24)(workerd@1.20260708.1)
@@ -33604,6 +33698,10 @@ snapshots:
       zod: 3.25.76
 
   zod-to-json-schema@3.25.1(zod@4.3.6):
+    dependencies:
+      zod: 4.3.6
+
+  zod-to-json-schema@3.25.2(zod@4.3.6):
     dependencies:
       zod: 4.3.6
 
