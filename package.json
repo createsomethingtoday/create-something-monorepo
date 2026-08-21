@@ -352,6 +352,8 @@
     "agent:claim-worktree:test": "node --test scripts/test/agent-claim-worktree.test.mjs",
     "archive:package": "node scripts/package-source-archive.mjs",
     "archive:package:test": "node --test scripts/test/package-source-archive.test.mjs",
+    "public:distribution": "node scripts/public-distribution.mjs",
+    "public:distribution:test": "node --test scripts/test/public-distribution.test.mjs",
     "linear": "node scripts/linear/remote.mjs",
     "linear:ready": "node scripts/linear/remote.mjs ready",
     "linear:list": "node scripts/linear/remote.mjs list",
