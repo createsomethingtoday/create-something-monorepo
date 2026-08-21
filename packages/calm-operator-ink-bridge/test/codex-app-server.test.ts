@@ -253,6 +253,51 @@ test('starts a new local Codex task and returns streamed completion to the Stopw
   });
 });
 
+test('reads back terminal turn state when the app-server completion notification is missed', async () => {
+  const rpc = new FakeRpc((method) => {
+    if (method === 'thread/start') return { thread: { id: '01a-polled', turns: [] } };
+    if (method === 'turn/start') {
+      return { turn: { id: 'turn-polled', status: 'inProgress', items: [] } };
+    }
+    if (method === 'thread/read') {
+      return {
+        thread: {
+          id: '01a-polled',
+          turns: [
+            {
+              id: 'turn-polled',
+              status: 'completed',
+              items: [{ type: 'agentMessage', text: 'Stopwatch Codex authority ready.' }]
+            }
+          ]
+        }
+      };
+    }
+    throw new Error(`Unexpected method: ${method}`);
+  });
+
+  const result = await dispatchCodexDecision(rpc, decision(), {
+    cwd: '/workspace/create-something-monorepo',
+    timeoutMs: 1_000,
+    completionPollMs: 25
+  });
+
+  assert.deepEqual(
+    rpc.calls.map((call) => call.method),
+    ['thread/start', 'turn/start', 'thread/read']
+  );
+  assert.deepEqual(rpc.calls[2]?.params, {
+    threadId: '01a-polled',
+    includeTurns: true
+  });
+  assert.deepEqual(result, {
+    threadId: '01a-polled',
+    turnId: 'turn-polled',
+    status: 'completed',
+    summary: 'Stopwatch Codex authority ready.'
+  });
+});
+
 test('resumes an idle legacy task and starts its next turn', async () => {
   const rpc = new FakeRpc((method, _params, client) => {
     if (method === 'thread/resume') {
