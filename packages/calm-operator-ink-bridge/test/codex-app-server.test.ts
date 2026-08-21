@@ -6,6 +6,8 @@ import {
   buildCodexTaskProgress,
   dispatchCodexDecision,
   listCodexTaskProgress,
+  parseCodexThreadUri,
+  resolveCodexThreadTarget,
   type CodexRpcClient,
   type CodexRpcNotification,
   type CodexThreadSummary
@@ -127,11 +129,21 @@ test('projects recent Codex threads and a new-task action into the existing Stop
   assert.equal(progress[1]?.phase, 'Ready for prompt');
   assert.equal(progress[1]?.progress_version, 1_787_278_000);
   assert.deepEqual(progress[1]?.decisions, [
-      {
-        id: 'fork',
-        kind: 'redirect',
-        label: 'Continue in new task',
-        description: 'Copy completed task history, then continue from a reviewed spoken prompt.',
+    {
+      id: 'takeover',
+      kind: 'continue',
+      label: 'Take over this task',
+      description:
+        'Continue this task directly from a reviewed spoken prompt. Desktop approvals stay on the laptop.',
+      requires_confirmation: true,
+      requires_text: true,
+      remote_safe: true
+    },
+    {
+      id: 'fork',
+      kind: 'redirect',
+      label: 'Continue in new task',
+      description: 'Copy completed task history, then continue from a reviewed spoken prompt.',
       requires_confirmation: true,
       requires_text: true,
       remote_safe: true
@@ -169,11 +181,11 @@ test('withholds device authority while a desktop task is active or recently chan
   assert.equal(progress[3]?.phase, 'Ready for prompt');
   assert.deepEqual(
     progress[3]?.decisions.map((item) => item.id),
-    ['fork']
+    ['takeover', 'fork']
   );
 });
 
-test('offers a settled desktop task a fork-and-continue action instead of direct prompting', () => {
+test('offers a settled desktop task direct takeover and fork fallback actions', () => {
   const progress = buildCodexTaskProgress([thread()], {
     cwd: '/workspace/create-something-monorepo',
     now: 1_787_278_300_000,
@@ -181,6 +193,16 @@ test('offers a settled desktop task a fork-and-continue action instead of direct
   });
 
   assert.deepEqual(progress[1]?.decisions, [
+    {
+      id: 'takeover',
+      kind: 'continue',
+      label: 'Take over this task',
+      description:
+        'Continue this task directly from a reviewed spoken prompt. Desktop approvals stay on the laptop.',
+      requires_confirmation: true,
+      requires_text: true,
+      remote_safe: true
+    },
     {
       id: 'fork',
       kind: 'redirect',
@@ -191,7 +213,8 @@ test('offers a settled desktop task a fork-and-continue action instead of direct
       remote_safe: true
     }
   ]);
-  assert.equal(progress[1]?.payload.authority, 'fork-and-continue');
+  assert.equal(progress[1]?.payload.authority, 'dual-surface');
+  assert.equal(progress[1]?.payload.thread_uri, 'codex://threads/01a-thread');
 });
 
 test('revalidates the exact task version and action before dispatch', () => {
@@ -202,7 +225,7 @@ test('revalidates the exact task version and action before dispatch', () => {
   const approved = decision({
     agent_id: 'codex:01a-thread',
     progress_version: 1_787_278_000,
-    decision_id: 'fork'
+    decision_id: 'takeover'
   });
 
   assert.doesNotThrow(() => assertCodexDecisionAuthorized(progress, approved));
@@ -319,7 +342,7 @@ test('reads back terminal turn state when the app-server completion notification
   });
 });
 
-test('resumes an idle legacy task and starts its next turn', async () => {
+test('takes over an idle legacy task and starts its next turn without overriding its policy', async () => {
   const rpc = new FakeRpc((method, _params, client) => {
     if (method === 'thread/resume') {
       return { thread: { id: '01a-existing', turns: [] } };
@@ -344,9 +367,9 @@ test('resumes an idle legacy task and starts its next turn', async () => {
     decision({
       agent_id: 'codex:01a-existing',
       progress_version: 7,
-      decision_id: 'prompt',
-      kind: 'redirect',
-      label: 'Prompt task',
+      decision_id: 'takeover',
+      kind: 'continue',
+      label: 'Take over this task',
       message: 'Run the focused test and continue.'
     }),
     { cwd: '/workspace/create-something-monorepo', timeoutMs: 1_000 }
@@ -357,8 +380,16 @@ test('resumes an idle legacy task and starts its next turn', async () => {
     ['thread/resume', 'turn/start']
   );
   assert.deepEqual(rpc.calls[0]?.params, {
+    threadId: '01a-existing'
+  });
+  assert.deepEqual(rpc.calls[1]?.params, {
     threadId: '01a-existing',
-    approvalPolicy: 'never'
+    input: [
+      {
+        type: 'text',
+        text: 'Operator prompt from stopwatch:\n\nRun the focused test and continue.\n\nWork within the current sandbox and approval policy. If broader authority or user input is required, stop with a clear handoff.'
+      }
+    ]
   });
   assert.equal(result.threadId, '01a-existing');
   assert.equal(result.status, 'completed');
@@ -491,7 +522,7 @@ test('steers a turn owned by the relay app-server when it is still active', asyn
     decision({
       agent_id: 'codex:01a-existing',
       progress_version: 7,
-      decision_id: 'prompt',
+      decision_id: 'takeover',
       message: 'Add the focused regression test.'
     }),
     { cwd: '/workspace/create-something-monorepo', timeoutMs: 1_000 }
@@ -502,6 +533,40 @@ test('steers a turn owned by the relay app-server when it is still active', asyn
     ['thread/resume', 'turn/steer']
   );
   assert.equal(result.status, 'completed');
+});
+
+test('strictly parses and read-only resolves a URI-selected Codex task', async () => {
+  const rpc = new FakeRpc((method, params) => {
+    assert.equal(method, 'thread/read');
+    assert.deepEqual(params, {
+      threadId: '01a024a8-1410-7510-a498-4c281048c7ac',
+      includeTurns: false
+    });
+    return {
+      thread: thread({
+        id: '01a024a8-1410-7510-a498-4c281048c7ac',
+        historyMode: 'paginated',
+        status: { type: 'notLoaded' }
+      })
+    };
+  });
+
+  assert.deepEqual(
+    parseCodexThreadUri('codex://threads/01a024a8-1410-7510-a498-4c281048c7ac'),
+    {
+      threadId: '01a024a8-1410-7510-a498-4c281048c7ac',
+      uri: 'codex://threads/01a024a8-1410-7510-a498-4c281048c7ac'
+    }
+  );
+  assert.throws(() => parseCodexThreadUri('codex://threads/01a/thread'), /must use/);
+  assert.throws(() => parseCodexThreadUri('https://threads/01a-thread'), /must use/);
+
+  const target = await resolveCodexThreadTarget(
+    rpc,
+    'codex://threads/01a024a8-1410-7510-a498-4c281048c7ac'
+  );
+  assert.equal(target.historyMode, 'paginated');
+  assert.equal(target.uri, 'codex://threads/01a024a8-1410-7510-a498-4c281048c7ac');
 });
 
 test('lists recent top-level task state without repairing or mutating rollout history', async () => {
