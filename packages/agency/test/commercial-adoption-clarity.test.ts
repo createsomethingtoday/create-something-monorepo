@@ -7,18 +7,18 @@ const read = (relativePath: string) => readFileSync(new URL(relativePath, import
 test('every public product carries an honest access state beside its commercial shape', async () => {
   const { getPublicProduct } = await import('../src/lib/data/productFamily.ts');
 
-  assert.equal(getPublicProduct('map').accessLabel, 'Request access after workflow scope');
+  assert.equal(getPublicProduct('map').accessLabel, 'Account workspace · pricing at launch');
   assert.equal(getPublicProduct('build').accessLabel, 'Scoped and quoted separately');
   assert.equal(getPublicProduct('control').accessLabel, 'From $900 per month after launch');
 });
 
-test('Products uses the registered Playbook system and keeps historical tools under technical proof', () => {
+test('Products uses the registered Playbook campaign media and keeps historical tools under technical proof', () => {
   const products = read('../src/routes/products/+page.svelte');
   const mediaPolicy = read('../src/lib/data/performanceMedia.ts');
 
-  assert.match(products, /import PlaybookField/);
-  assert.match(products, /<PlaybookField variant="products"/);
-  assert.match(products, /artifactOwnsMedia/);
+  assert.match(products, /import \{ playbookHeroMedia \}/);
+  assert.match(products, /media=\{playbookHeroMedia\.products\}/);
+  assert.match(products, /mediaMobilePlacement="background"/);
   assert.doesNotMatch(products, /paperProductSystemMedia|mode="paper"/);
   assert.doesNotMatch(products, /product-system-natural|Aerial black-and-white/);
   assert.match(products, /product\.accessLabel/);
@@ -36,10 +36,9 @@ test('mobile brand and privacy controls read as intentional interface elements',
   const layout = read('../src/routes/+layout.svelte');
   const privacy = read('../src/lib/components/PrivacyAnalytics.svelte');
 
-  assert.match(navigation, /showMobileLogoText\?: boolean/);
-  assert.match(navigation, /class:nav-show-mobile-logo-text=\{showMobileLogoText\}/);
-  assert.match(navigation, /\.nav-show-mobile-logo-text \.nav-logo-text/);
-  assert.match(layout, /showMobileLogoText=\{true\}/);
+  assert.match(navigation, /logoAsset\?: NavigationLogoAsset/);
+  assert.match(navigation, /logoAsset\.mobileSrc/);
+  assert.match(layout, /mobileSrc: '\/brand\/create-something-mark-black\.svg'/);
   assert.match(
     privacy,
     /@media \(max-width: 640px\)[\s\S]*?\.privacy-pill \{[\s\S]*?background: var\(--color-performance-panel/

@@ -23,7 +23,7 @@
     "build": "pnpm prepare:build-dir && pnpm prepare:local-deps && node ./scripts/run-pinned-bin.mjs @sveltejs/kit svelte-kit sync && node ./scripts/run-pinned-bin.mjs vite vite build",
     "preview": "node ./scripts/run-pinned-bin.mjs vite vite preview",
     "prepare": "pnpm prepare:build-dir && pnpm prepare:local-deps && node ./scripts/run-pinned-bin.mjs @sveltejs/kit svelte-kit sync || echo ''",
-    "copy:check": "node ./scripts/check-public-copy.mjs && node --import tsx --test test/public-marketing-copy.test.ts test/field-report-evidence.test.ts test/product-family-contract.test.ts test/integration-catalog.test.ts test/system-context-experience.test.ts test/playbook-hero-image-assets.test.ts",
+    "copy:check": "node ./scripts/check-public-copy.mjs && node --import tsx --test test/public-marketing-copy.test.ts test/field-report-evidence.test.ts test/product-family-contract.test.ts test/public-pricing-contract.test.ts test/integration-catalog.test.ts test/system-context-experience.test.ts test/playbook-hero-image-assets.test.ts",
     "copy:heal": "node ./scripts/check-public-copy.mjs --write",
     "marketing:check": "node --import tsx ./scripts/check-marketing-pages.mjs && node --import tsx --test test/marketing-pages.test.ts test/workflow-pages.test.ts",
     "marketing:heal": "node --import tsx ./scripts/check-marketing-pages.mjs --write",
