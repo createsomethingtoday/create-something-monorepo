@@ -45,6 +45,7 @@ export interface CodexDispatchProgress {
 export interface CodexDispatchOptions {
   cwd: string;
   timeoutMs?: number;
+  completionPollMs?: number;
   onProgress?: (progress: CodexDispatchProgress) => void | Promise<void>;
 }
 
@@ -136,6 +137,15 @@ function completedAgentMessage(notification: CodexRpcNotification): string {
   return value.type === 'agentMessage' && typeof value.text === 'string' ? value.text : '';
 }
 
+function turnAgentMessage(turn: CodexTurnSummary): string {
+  for (const item of [...(turn.items ?? [])].reverse()) {
+    if (!item || typeof item !== 'object') continue;
+    const value = item as Record<string, unknown>;
+    if (value.type === 'agentMessage' && typeof value.text === 'string') return value.text;
+  }
+  return '';
+}
+
 export async function dispatchCodexDecision(
   rpc: CodexRpcClient,
   decision: StoredAgentDecision,
@@ -145,6 +155,7 @@ export async function dispatchCodexDecision(
   const existingThreadId = codexThreadId(decision.agent_id);
   const prompt = operatorPrompt(decision);
   const timeoutMs = Math.max(1_000, options.timeoutMs ?? 10 * 60_000);
+  const completionPollMs = Math.max(25, options.completionPollMs ?? 2_000);
 
   const threadResponse = existingThreadId
     ? await rpc.request<CodexThreadResponse>('thread/resume', {
@@ -216,6 +227,35 @@ export async function dispatchCodexDecision(
 
     const bufferedCompletion = earlyCompletion as CodexTurnSummary | undefined;
     if (bufferedCompletion?.id === turnId) resolveCompletion(bufferedCompletion);
+    let stopPolling = false;
+    const polledCompletion = (async (): Promise<CodexTurnSummary> => {
+      while (!stopPolling) {
+        await new Promise((resolve) => {
+          const timer = setTimeout(resolve, completionPollMs);
+          (timer as unknown as { unref?: () => void }).unref?.();
+        });
+        if (stopPolling) break;
+        try {
+          const response = await rpc.request<CodexThreadResponse>('thread/read', {
+            threadId,
+            includeTurns: true
+          });
+          const turn = response.thread.turns?.find((candidate) => candidate.id === turnId);
+          if (
+            turn &&
+            (turn.status === 'completed' ||
+              turn.status === 'interrupted' ||
+              turn.status === 'failed')
+          ) {
+            lastAgentMessage = turnAgentMessage(turn) || lastAgentMessage;
+            return turn;
+          }
+        } catch {
+          // The terminal notification remains authoritative when read-back is transiently unavailable.
+        }
+      }
+      return await new Promise<CodexTurnSummary>(() => undefined);
+    })();
     let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
     const timeout = new Promise<never>((_resolve, reject) => {
       timeoutHandle = setTimeout(
@@ -225,11 +265,12 @@ export async function dispatchCodexDecision(
     });
     let turn: CodexTurnSummary;
     try {
-      turn = await Promise.race([completion, timeout]);
+      turn = await Promise.race([completion, polledCompletion, timeout]);
     } catch (error) {
       await rpc.request('turn/interrupt', { threadId, turnId }).catch(() => undefined);
       throw error;
     } finally {
+      stopPolling = true;
       if (timeoutHandle !== undefined) clearTimeout(timeoutHandle);
     }
 
