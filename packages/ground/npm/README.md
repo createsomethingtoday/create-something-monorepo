@@ -67,11 +67,13 @@ view; read `discovered_changed_files`, `analyzable_changed_files`, and
 `unsupported_changed_files` and `excluded_changed_files`, so a clean claim is
 valid only with `PASS`.
 
-Ground 0.3.3 keeps `ground diff`'s complete changed-file coverage and makes
-source traversal deterministic and cycle-safe. Diff mode parses the complete
-corpus but only compares pairs involving changed files. Standalone broad
-duplicate scans retain their safety bound and report their non-pass status with
-`scan_complete: false` when the bound is hit.
+Ground 0.3.4 adds source-bearing entry-point evidence to orphan analysis, so
+declarative Promptfoo and manual Ground configurations are recognized alongside
+package scripts. It keeps `ground diff`'s complete changed-file coverage and
+deterministic, cycle-safe source traversal. Diff mode parses the complete corpus
+but only compares pairs involving changed files. Standalone broad duplicate scans
+retain their safety bound and report a non-pass status with `scan_complete: false`
+when the bound is hit.
 
 The release package ships thin command wrappers for every platform. Install
 downloads the matching versioned release asset and verifies its SHA-256 against
