@@ -94,6 +94,17 @@ test('GA config keeps the public boundary, review gate, two packages, and seven 
   assert.equal(config.map.requiredConsecutiveDays, 7);
 });
 
+test('Pi discovery proofs explicitly approve only their isolated temporary project', async () => {
+  const [workflow, verifier] = await Promise.all([
+    readFile(new URL('../../.github/workflows/pi-public-release.yml', import.meta.url), 'utf8'),
+    readFile(new URL('../public-ga-verify.mjs', import.meta.url), 'utf8')
+  ]);
+  assert.match(workflow, /pi" install .* -l --approve/);
+  assert.match(workflow, /pi" list --approve/);
+  assert.match(verifier, /\['install', packageDirectory, '-l', '--approve'\]/);
+  assert.match(verifier, /command\(pi, \['list', '--approve'\]/);
+});
+
 test('CODEOWNERS requires two write-capable individual recovery owners', () => {
   assert.deepEqual(validateCodeowners('* @one @two\n', ['one', 'two'], 2), {
     issues: [],

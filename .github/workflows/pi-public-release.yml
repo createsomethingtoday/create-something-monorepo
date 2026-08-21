@@ -60,9 +60,9 @@ jobs:
           npm pack --ignore-scripts --pack-destination "$artifact_dir" ./packages/pi-policy-os
           npm install --prefix "$install_dir/npm" --ignore-scripts --no-package-lock --no-save "$artifact_dir"/*.tgz
           cd "$install_dir/project"
-          PI_CODING_AGENT_DIR="$install_dir/config" "$GITHUB_WORKSPACE/packages/pi-policy-os/node_modules/.bin/pi" install "$install_dir/npm/node_modules/@create-something/pi-three-tier-framework" -l
-          PI_CODING_AGENT_DIR="$install_dir/config" "$GITHUB_WORKSPACE/packages/pi-policy-os/node_modules/.bin/pi" install "$install_dir/npm/node_modules/@create-something/pi-policy-os" -l
-          PI_CODING_AGENT_DIR="$install_dir/config" "$GITHUB_WORKSPACE/packages/pi-policy-os/node_modules/.bin/pi" list | tee "$RUNNER_TEMP/pi-package-list.txt"
+          PI_CODING_AGENT_DIR="$install_dir/config" "$GITHUB_WORKSPACE/packages/pi-policy-os/node_modules/.bin/pi" install "$install_dir/npm/node_modules/@create-something/pi-three-tier-framework" -l --approve
+          PI_CODING_AGENT_DIR="$install_dir/config" "$GITHUB_WORKSPACE/packages/pi-policy-os/node_modules/.bin/pi" install "$install_dir/npm/node_modules/@create-something/pi-policy-os" -l --approve
+          PI_CODING_AGENT_DIR="$install_dir/config" "$GITHUB_WORKSPACE/packages/pi-policy-os/node_modules/.bin/pi" list --approve | tee "$RUNNER_TEMP/pi-package-list.txt"
           grep -F 'pi-three-tier-framework' "$RUNNER_TEMP/pi-package-list.txt"
           grep -F 'pi-policy-os' "$RUNNER_TEMP/pi-package-list.txt"
           sha256sum "$artifact_dir"/*.tgz

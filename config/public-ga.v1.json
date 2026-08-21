@@ -33,7 +33,7 @@
     "repository": "createsomethingtoday/create-something-monorepo",
     "workflowFile": "pi-public-release.yml",
     "environment": "npm-public",
-    "piPackage": "@earendil-works/pi-coding-agent@0.74.2"
+    "piPackage": "@earendil-works/pi-coding-agent@0.84.2"
   },
   "pricing": {
     "baseUrl": "https://createsomething.agency",

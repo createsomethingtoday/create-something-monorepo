@@ -205,9 +205,9 @@ async function cleanRegistryInstall(config, packed, root) {
   const env = { ...process.env, PI_CODING_AGENT_DIR: piConfig };
   for (const packagePolicy of config.packages) {
     const packageDirectory = path.join(npmPrefix, 'node_modules', ...packagePolicy.name.split('/'));
-    await command(pi, ['install', packageDirectory, '-l'], { cwd: project, env });
+    await command(pi, ['install', packageDirectory, '-l', '--approve'], { cwd: project, env });
   }
-  const { stdout: list } = await command(pi, ['list'], { cwd: project, env });
+  const { stdout: list } = await command(pi, ['list', '--approve'], { cwd: project, env });
   const status = new Map();
   for (const packagePolicy of config.packages) {
     status.set(packagePolicy.name, {
