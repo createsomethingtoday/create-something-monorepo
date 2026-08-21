@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "repository": {
+    "owner": "createsomethingtoday",
+    "name": "create-something-monorepo",
+    "mainBranch": "main",
+    "rulesetId": 17917451,
+    "requiredChecks": ["Philosophical Code Review", "Public Distribution GA"],
+    "minimumApprovingReviews": 1,
+    "requireCodeOwnerReview": true,
+    "requireReviewThreadResolution": true,
+    "requireLastPushApproval": true,
+    "minimumMaintainers": 2,
+    "minimumCodeOwners": 2,
+    "allowedRuntimeAdvisories": ["GHSA-jmr9-qjv8-65gv"]
+  },
+  "packages": [
+    {
+      "path": "packages/pi-three-tier-framework",
+      "name": "@create-something/pi-three-tier-framework",
+      "version": "1.0.0",
+      "expectedFileCount": 9
+    },
+    {
+      "path": "packages/pi-policy-os",
+      "name": "@create-something/pi-policy-os",
+      "version": "1.0.0",
+      "expectedFileCount": 11
+    }
+  ],
+  "npm": {
+    "registry": "https://registry.npmjs.org",
+    "repository": "createsomethingtoday/create-something-monorepo",
+    "workflowFile": "pi-public-release.yml",
+    "environment": "npm-public",
+    "piPackage": "@earendil-works/pi-coding-agent@0.74.2"
+  },
+  "pricing": {
+    "baseUrl": "https://createsomething.agency",
+    "routes": [
+      {
+        "path": "/products",
+        "requiredText": ["$0 / MIT", "From $900/month"]
+      },
+      {
+        "path": "/services",
+        "requiredText": ["$0 / MIT", "$0 browser-local starter", "From $900/month"]
+      },
+      {
+        "path": "/map",
+        "requiredText": ["$0 browser-local starter", "Account workspace · pricing at launch"]
+      },
+      {
+        "path": "/control",
+        "requiredText": ["$0 / MIT", "From $900 per month after launch"]
+      }
+    ],
+    "browserWidths": [1280, 390],
+    "browserEvidenceMaxAgeHours": 24
+  },
+  "map": {
+    "workflow": "agency-map-production-monitor.yml",
+    "requiredConsecutiveDays": 7,
+    "timeZone": "America/Chicago"
+  }
+}

@@ -21,6 +21,7 @@ jobs:
       - name: Verify public-distribution and security contracts
         run: |
           node --test scripts/test/public-distribution.test.mjs
+          node --test scripts/test/public-ga-policy.test.mjs
           node --test scripts/test/security-advisory-exceptions.test.mjs
           node scripts/security-advisory-exceptions.mjs
           node scripts/check-github-actions-pins.mjs

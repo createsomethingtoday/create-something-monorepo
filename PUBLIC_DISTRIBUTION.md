@@ -55,3 +55,21 @@ without a detected boundary violation. GA also requires reviewed promotion,
 public npm provenance and clean installs for both Pi packages, repository
 security and protected-review readbacks, deployed pricing verification, and the
 declared production-health burn-in.
+
+After promotion and the seven-day burn-in, run the live fail-closed verifier
+from a clean checkout of the current `main` commit:
+
+```bash
+pnpm public:ga -- \
+  --ref HEAD \
+  --browser-evidence /path/to/browser-evidence.json \
+  --output-dir /path/to/new-public-ga-receipt-directory
+```
+
+The GitHub CLI and npm CLI must be authenticated for readback. The verifier
+rebuilds the allowlisted artifact, checks the protected-review and maintainer
+path, reads open security findings, verifies both exact npm versions and their
+trusted-publisher provenance through clean Pi installs, checks canonical
+production pricing, validates fresh desktop/mobile browser evidence, and
+computes the Map streak from production workflow runs. It writes a final
+`public-ga-receipt.json` and exits nonzero unless every independent gate passes.
