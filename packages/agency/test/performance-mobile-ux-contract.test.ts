@@ -73,11 +73,13 @@ const publicAtlasFlowSource = readFileSync(
   'utf8'
 );
 
-test('mobile navigation exposes state so fixed privacy UI cannot compete with it', () => {
+test('mobile privacy stays at the header edge instead of covering opening proof', () => {
   assert.match(navigationSource, /onMobileMenuChange\?: \(open: boolean\) => void/);
   assert.match(navigationSource, /onMobileMenuChange\?\.\(mobileMenuOpen\)/);
   assert.match(agencyLayoutSource, /let mobileNavigationOpen = \$state\(false\)/);
   assert.match(agencyLayoutSource, /obscured=\{mobileNavigationOpen\}/);
+  assert.match(agencyLayoutSource, /mobilePlacement="header-edge"/);
+  assert.doesNotMatch(agencyLayoutSource, /mobilePlacement="safe-corner"/);
   assert.match(
     agencyLayoutSource,
     /onMobileMenuChange=\{\(open\) => \(mobileNavigationOpen = open\)\}/
@@ -145,6 +147,17 @@ test('compact mobile composition reduces spacing while retaining readable contro
     /@media \(max-width: 640px\)[\s\S]*?\.hero-trust-artifact__path[\s\S]*?gap:\s*0\.4rem;[\s\S]*?padding:\s*0\.45rem;/
   );
   assert.match(narrativeSource, /min-height:\s*var\(--height-performance-control-min, 2\.75rem\)/);
+});
+
+test('the narrow narrative rail reveals every scene label instead of clipping the final stage', () => {
+  assert.match(
+    narrativeSource,
+    /@media \(max-width: 25rem\)[\s\S]*?\.performance-narrative-stage__index\s*\{[\s\S]*?grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);[\s\S]*?grid-auto-flow:\s*row;[\s\S]*?overflow-x:\s*visible;/
+  );
+  assert.match(
+    narrativeSource,
+    /@media \(max-width: 25rem\)[\s\S]*?\.performance-narrative-stage__index-copy small\s*\{[\s\S]*?display:\s*none;/
+  );
 });
 
 test('the concise conversion handoff keeps its proof beside the action without a full-width repeat', () => {

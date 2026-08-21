@@ -42,6 +42,6 @@ test('starts mobile proof at the top and keeps narrow scene labels intact', () =
   );
   assert.match(
     narrativeStage,
-    /@media \(max-width: 22\.5rem\)[\s\S]*?\.performance-narrative-stage__index\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);/
+    /@media \(max-width: 25rem\)[\s\S]*?\.performance-narrative-stage__index\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);/
   );
 });
