@@ -265,7 +265,7 @@ test('starts a new local Codex task and returns streamed completion to the Stopw
     ],
     approvalPolicy: 'never'
   });
-  assert.deepEqual(progress, ['Checkout fixed.']);
+  assert.deepEqual(progress, ['Codex started.', 'Checkout fixed.']);
   assert.deepEqual(result, {
     threadId: '01a-new',
     turnId: 'turn-1',

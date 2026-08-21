@@ -234,6 +234,14 @@ export async function dispatchCodexDecision(
     if (turn.id === turnId) resolveCompletion(turn);
   });
 
+  const publish = options.onProgress?.({
+    threadId,
+    turnId,
+    phase: 'Codex working',
+    summary: isForkedContinuation ? `Forked child ${threadId}. Codex started.` : 'Codex started.'
+  });
+  if (publish) void Promise.resolve(publish).catch(() => undefined);
+
   try {
     if (activeTurn) {
       const response = await rpc.request<{ turnId: string }>('turn/steer', {
