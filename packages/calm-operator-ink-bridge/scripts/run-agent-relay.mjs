@@ -4,7 +4,13 @@ import { hostname, tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { adapterCommand } from '../src/agent-relay.js';
+import {
+  assertCodexDecisionAuthorized,
+  dispatchCodexDecision,
+  listCodexTaskProgress
+} from '../src/codex-app-server.js';
 import { boundedTranscript, voiceTranscriberCommand } from '../src/voice-relay.js';
+import { codexAppServerEnvironment, startCodexAppServer } from './codex-app-server-client.mjs';
 
 const origin = (
   process.env.OPERATOR_BRIDGE_ORIGIN ||
@@ -25,8 +31,20 @@ const commandTimeoutMs = Math.max(
   Number(process.env.INK_RELAY_COMMAND_TIMEOUT_MS || 10 * 60_000)
 );
 const once = process.argv.includes('--once');
+const syncOnly = process.argv.includes('--sync-only');
+const agentWorkdir = process.env.INK_AGENT_WORKDIR || process.cwd();
+const progressTtlMs = Math.max(30_000, pollMs * 3);
 
 if (!token) throw new Error('OPERATOR_RELAY_TOKEN or INK_RELAY_TOKEN is required.');
+
+const codexClient = providers.includes('codex')
+  ? await startCodexAppServer({
+      executable: process.env.INK_CODEX_EXECUTABLE,
+      cwd: agentWorkdir,
+      env: process.env,
+      requestTimeoutMs: Math.min(60_000, commandTimeoutMs)
+    })
+  : null;
 
 async function bridge(path, body) {
   const response = await fetch(`${origin}${path}`, {
@@ -52,8 +70,8 @@ async function receipt(decision, state, summary = '', error = '') {
 function spawnCapture(command, timeoutMs) {
   return new Promise((resolve, reject) => {
     const child = spawn(command.executable, command.args, {
-      cwd: process.env.INK_AGENT_WORKDIR || process.cwd(),
-      env: process.env,
+      cwd: agentWorkdir,
+      env: codexAppServerEnvironment(process.env),
       shell: false,
       stdio: ['ignore', 'pipe', 'pipe']
     });
@@ -85,15 +103,63 @@ function spawnCapture(command, timeoutMs) {
   });
 }
 
-function execute(decision) {
+async function publishCodexProgress(decision, update) {
+  const now = Date.now();
+  await bridge('/operator/agent-progress', {
+    agent_id: `codex:${update.threadId}`,
+    provider: 'codex',
+    label: decision.message.trim().replace(/\s+/g, ' ').slice(0, 72) || 'Codex task',
+    status: 'working',
+    phase: update.phase,
+    summary: update.summary,
+    detail: `Prompted from ${decision.device_id || 'stopwatch'}.`,
+    progress_version: Math.max(1, Math.floor(now / 1000)),
+    needs_input: false,
+    decisions: [],
+    expires_at: now + progressTtlMs,
+    payload: {
+      authority: 'local-codex-app-server',
+      thread_id: update.threadId,
+      turn_id: update.turnId
+    }
+  });
+}
+
+async function syncCodexTasks() {
+  if (!codexClient) return 0;
+  const progress = await listCodexTaskProgress(codexClient, {
+    cwd: agentWorkdir,
+    ttlMs: progressTtlMs,
+    limit: 7
+  });
+  for (const task of progress) await bridge('/operator/agent-progress', task);
+  return progress.length;
+}
+
+async function execute(decision) {
+  if (decision.provider === 'codex') {
+    if (!codexClient) throw new Error('Codex app-server is not enabled for this relay.');
+    const currentTasks = await listCodexTaskProgress(codexClient, {
+      cwd: agentWorkdir,
+      ttlMs: progressTtlMs,
+      limit: 7
+    });
+    assertCodexDecisionAuthorized(currentTasks, decision);
+    const result = await dispatchCodexDecision(codexClient, decision, {
+      cwd: agentWorkdir,
+      timeoutMs: commandTimeoutMs,
+      onProgress: (update) => publishCodexProgress(decision, update)
+    });
+    return result.summary;
+  }
+
   const command = adapterCommand(decision, {
-    claudeExecutable: process.env.INK_CLAUDE_EXECUTABLE,
-    codexExecutable: process.env.INK_CODEX_EXECUTABLE
+    claudeExecutable: process.env.INK_CLAUDE_EXECUTABLE
   });
 
   return new Promise((resolve, reject) => {
     const child = spawn(command.executable, command.args, {
-      cwd: process.env.INK_AGENT_WORKDIR || process.cwd(),
+      cwd: agentWorkdir,
       env: process.env,
       shell: false,
       stdio: ['ignore', 'pipe', 'pipe']
@@ -204,7 +270,12 @@ process.once('SIGTERM', () => {
 });
 
 do {
-  await voiceCycle();
-  await cycle();
+  await syncCodexTasks();
+  if (!syncOnly) {
+    await voiceCycle();
+    await cycle();
+  }
   if (!once && !stopping) await new Promise((resolve) => setTimeout(resolve, pollMs));
-} while (!once && !stopping);
+} while (!once && !syncOnly && !stopping);
+
+codexClient?.close();
