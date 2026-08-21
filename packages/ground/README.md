@@ -139,6 +139,9 @@ ground find duplicate-functions ./packages --min-lines 5 --exclude-tests
 # Find orphaned modules (nothing imports them)
 ground find orphans ./packages/sdk/src
 
+# Return entry-point evidence with the orphan findings
+ground analyze ./packages/sdk/src --checks orphans
+
 # Find unused exports in a module
 ground find dead-exports ./utils.ts --scope ./src
 

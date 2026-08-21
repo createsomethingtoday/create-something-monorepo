@@ -79,7 +79,8 @@ pub use lsh::{
 pub use reachability::{
     EntryPointType, EntryPoint, ReachabilityStatus, ModuleReachability,
     ReachabilityReport, ReachabilityStats,
-    analyze_reachability, find_entry_points,
+    analyze_reachability, analyze_reachability_with_config,
+    find_entry_points, find_entry_points_with_config,
 };
 pub use framework::{
     Framework, FrameworkPatterns, PathAlias, ImplicitEntry, FrameworkDetection,

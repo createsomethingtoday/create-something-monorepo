@@ -1709,7 +1709,9 @@ fn handle_check_environment(args: &Value) -> ToolResult {
 }
 
 fn handle_find_orphans(args: &Value) -> ToolResult {
-    use crate::computations::analyze_connectivity;
+    use crate::computations::{
+        analyze_connectivity, analyze_reachability_with_config, ReachabilityStatus,
+    };
     
     let directory = match args.get("directory").and_then(|v| v.as_str()) {
         Some(d) => PathBuf::from(d),
@@ -1725,7 +1727,7 @@ fn handle_find_orphans(args: &Value) -> ToolResult {
     
     // Collect files
     let mut files = Vec::new();
-    let _ = collect_ts_files(&directory, &mut files);
+    let discovery_complete = collect_ts_files(&directory, &mut files);
     let total_files_before_filter = files.len();
     
     // Filter using config path patterns first
@@ -1758,26 +1760,64 @@ fn handle_find_orphans(args: &Value) -> ToolResult {
             !name.starts_with("+")  // SvelteKit route files
         })
         .collect();
+
+    let reachability = match analyze_reachability_with_config(&directory, &config) {
+        Ok(report) => report,
+        Err(error) => return ToolResult::error(format!(
+            "Orphan reachability analysis failed: {}",
+            error
+        )),
+    };
+    let reachability_by_path: HashMap<_, _> = reachability.modules.iter()
+        .map(|module| (module.path.clone(), module))
+        .collect();
+    let mut entry_point_evidence: Vec<Value> = reachability.entry_points.iter()
+        .map(|entry| {
+            let relative_path = entry.path.strip_prefix(&directory)
+                .map(|path| path.display().to_string())
+                .unwrap_or_else(|_| entry.path.display().to_string());
+            json!({
+                "path": entry.path.display().to_string(),
+                "relative_path": relative_path,
+                "entry_point_type": entry.entry_type.as_str(),
+                "source": entry.description,
+            })
+        })
+        .collect();
+    entry_point_evidence.sort_by(|left, right| {
+        left["relative_path"].as_str().cmp(&right["relative_path"].as_str())
+            .then_with(|| left["entry_point_type"].as_str().cmp(&right["entry_point_type"].as_str()))
+            .then_with(|| left["source"].as_str().cmp(&right["source"].as_str()))
+    });
     
     let mut orphans = Vec::new();
     let mut connected = 0;
     let mut errors = 0;
     
     for file in &files {
-        match analyze_connectivity(file) {
-            Ok(evidence) => {
-                if evidence.total_connections() == 0 && evidence.architectural.is_none() {
-                    orphans.push(json!({
-                        "path": file.display().to_string(),
-                        "relative_path": file.strip_prefix(&directory)
-                            .map(|p| p.display().to_string())
-                            .unwrap_or_else(|_| file.display().to_string())
-                    }));
-                } else {
-                    connected += 1;
+        match reachability_by_path.get(file) {
+            Some(module) if module.status == ReachabilityStatus::Unreachable => {
+                match analyze_connectivity(file) {
+                    Ok(evidence) if evidence.total_connections() == 0 && evidence.architectural.is_none() => {
+                        orphans.push(json!({
+                            "path": file.display().to_string(),
+                            "relative_path": file.strip_prefix(&directory)
+                                .map(|p| p.display().to_string())
+                                .unwrap_or_else(|_| file.display().to_string())
+                        }));
+                    }
+                    Ok(_) => {
+                        connected += 1;
+                    }
+                    Err(_) => {
+                        errors += 1;
+                    }
                 }
             }
-            Err(_) => {
+            Some(_) => {
+                connected += 1;
+            }
+            None => {
                 errors += 1;
             }
         }
@@ -1796,6 +1836,8 @@ fn handle_find_orphans(args: &Value) -> ToolResult {
         "orphans": orphans,
         "connected_count": connected,
         "error_count": errors,
+        "scan_complete": discovery_complete && errors == 0,
+        "entry_point_evidence": entry_point_evidence,
         "message": message
     });
     
@@ -2727,7 +2769,11 @@ fn handle_batch_analyze(args: &Value) -> ToolResult {
                 results["findings"]["orphans"] = json!(structured_orphans);
             }
             results["coverage"]["orphans"] = json!({
-                "status": orphan_status
+                "status": orphan_status,
+                "files_scanned": content.get("files_scanned"),
+                "error_count": content.get("error_count"),
+                "scan_complete": content.get("scan_complete"),
+                "entry_point_evidence": content.get("entry_point_evidence")
             });
         } else {
             results["coverage"]["orphans"] = json!({
@@ -4201,6 +4247,78 @@ mod tests {
         assert!(result.success);
         assert_eq!(result.content["claimed"], false);
         assert_eq!(result.content["blocked"], true);
+    }
+
+    #[test]
+    fn batch_orphans_reuses_declarative_and_manual_entry_point_evidence() {
+        use std::fs;
+
+        let directory = tempdir().unwrap();
+        let root = directory.path();
+        fs::create_dir_all(root.join("src")).unwrap();
+        fs::create_dir_all(root.join("scripts")).unwrap();
+        fs::create_dir_all(root.join("ops")).unwrap();
+        fs::create_dir_all(root.join("benchmarks/providers")).unwrap();
+        fs::write(root.join("package.json"), r#"{"main":"src/main.js"}"#).unwrap();
+        fs::write(
+            root.join(".ground.yml"),
+            "entry_points:\n  manual:\n    - ops/manual.mjs\n",
+        ).unwrap();
+        fs::write(
+            root.join("manifest.json"),
+            r#"{"manifest_version":3,"background":{"service_worker":"src/background.js"}}"#,
+        ).unwrap();
+        fs::write(root.join("src/main.js"), "console.log('main');\n").unwrap();
+        fs::write(root.join("src/background.js"), "console.log('background');\n").unwrap();
+        fs::write(root.join("scripts/maintenance.mjs"), "console.log('script');\n").unwrap();
+        fs::write(root.join("ops/manual.mjs"), "console.log('manual');\n").unwrap();
+        fs::write(
+            root.join("benchmarks/promptfooconfig.yaml"),
+            "prompts:\n  - id: file://providers/fixture.js\n",
+        ).unwrap();
+        fs::write(
+            root.join("benchmarks/providers/fixture.js"),
+            "console.log('provider');\n",
+        ).unwrap();
+        fs::write(root.join("src/review-me.js"), "console.log('review');\n").unwrap();
+
+        let db_path = root.join("ground.db");
+        let mut g = VerifiedTriad::new(&db_path).unwrap();
+        let result = handle_tool_call(&mut g, "ground_analyze", &json!({
+            "directory": root,
+            "checks": ["orphans"]
+        }));
+
+        assert!(result.success, "{:?}", result.content);
+        let findings = result.content["findings"]["orphans"].as_array().unwrap();
+        assert_eq!(findings.len(), 1, "{:?}", findings);
+        assert!(findings[0]["path"].as_str().unwrap().ends_with("src/review-me.js"));
+        assert_eq!(findings[0]["recommended_action"], "investigate");
+        assert_eq!(findings[0]["safe_to_auto_fix"], false);
+
+        let entry_points = result.content["coverage"]["orphans"]["entry_point_evidence"]
+            .as_array()
+            .unwrap();
+        assert!(entry_points.iter().any(|entry| {
+            entry["relative_path"] == "src/main.js" &&
+                entry["entry_point_type"] == "package.json main"
+        }));
+        assert!(entry_points.iter().any(|entry| {
+            entry["relative_path"] == "scripts/maintenance.mjs" &&
+                entry["entry_point_type"] == "script"
+        }));
+        assert!(entry_points.iter().any(|entry| {
+            entry["relative_path"] == "ops/manual.mjs" &&
+                entry["entry_point_type"] == "Ground manual entry point" &&
+                entry["source"].as_str().unwrap().contains("ops/manual.mjs")
+        }));
+        assert!(entry_points.iter().any(|entry| {
+            entry["relative_path"] == "benchmarks/providers/fixture.js" &&
+                entry["entry_point_type"] == "Promptfoo file reference" &&
+                entry["source"].as_str().unwrap().contains("prompts[].id") &&
+                entry["source"].as_str().unwrap().contains("promptfooconfig.yaml")
+        }));
+        assert_eq!(result.content["coverage"]["orphans"]["scan_complete"], true);
     }
 
     #[test]
