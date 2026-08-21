@@ -67,13 +67,12 @@ view; read `discovered_changed_files`, `analyzable_changed_files`, and
 `unsupported_changed_files` and `excluded_changed_files`, so a clean claim is
 valid only with `PASS`.
 
-Ground 0.3.4 adds source-bearing entry-point evidence to orphan analysis, so
-declarative Promptfoo and manual Ground configurations are recognized alongside
-package scripts. It keeps `ground diff`'s complete changed-file coverage and
-deterministic, cycle-safe source traversal. Diff mode parses the complete corpus
-but only compares pairs involving changed files. Standalone broad duplicate scans
-retain their safety bound and report a non-pass status with `scan_complete: false`
-when the bound is hit.
+Ground 0.3.5 extends source-bearing orphan evidence to nested Cloudflare Worker
+configurations: `wrangler.toml` and `wrangler.json` `main` entries are protected
+with their exact config source. The legacy `ground find orphans` command now
+returns the same verified canonical report as `ground analyze --checks orphans`.
+Promptfoo and manual Ground configurations remain recognized alongside package
+scripts, and broad duplicate scans retain their explicit safety bound.
 
 The release package ships thin command wrappers for every platform. Install
 downloads the matching versioned release asset and verifies its SHA-256 against
@@ -416,11 +415,13 @@ entry_points:
 For `ground_find_orphans` and `ground_analyze`, orphan coverage includes
 `entry_point_evidence`: the exact path, entry-point type, and source Ground used
 to protect it. Alongside package, framework, test, and script entry points,
-Ground recognizes exact `entry_points.manual` declarations and local
+Ground recognizes exact `entry_points.manual` declarations, nested
+`wrangler.toml` and `wrangler.json` Worker `main` entries, and local
 `providers[].id`, `prompts[].id`, and assertion-value `file://…` references in
-`promptfooconfig*.yaml`. The Promptfoo adapter accepts only existing source
-files beneath that configuration file; it does not scan arbitrary YAML or
-follow parent/absolute paths.
+`promptfooconfig*.yaml`. The config adapters accept only existing source files
+beneath their configuration file; they do not scan arbitrary YAML or follow
+parent/absolute paths. The legacy `ground find orphans` command returns this
+same canonical orphan evidence.
 
 See [Full Documentation](https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/ground) for configuration reference.
 
