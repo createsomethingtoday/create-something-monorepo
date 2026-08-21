@@ -79,11 +79,11 @@ const NEW_TASK_DECISION = {
   remote_safe: true
 };
 
-const PROMPT_TASK_DECISION = {
-  id: 'prompt',
+const FORK_TASK_DECISION = {
+  id: 'fork',
   kind: 'redirect' as const,
-  label: 'Prompt task',
-  description: 'Review a spoken prompt, then continue this local Codex task.',
+  label: 'Continue in new task',
+  description: 'Copy completed task history, then continue from a reviewed spoken prompt.',
   requires_confirmation: true,
   requires_text: true,
   remote_safe: true
@@ -146,6 +146,25 @@ function turnAgentMessage(turn: CodexTurnSummary): string {
   return '';
 }
 
+async function forkSettledCodexThread(
+  rpc: CodexRpcClient,
+  threadId: string
+): Promise<CodexThreadResponse> {
+  const source = await rpc.request<CodexThreadResponse>('thread/read', {
+    threadId,
+    includeTurns: true
+  });
+  const turns = source.thread.turns ?? [];
+  if (turns.some((turn) => turn.status === 'inProgress')) {
+    throw new Error('Source task became active. Wait for it to settle before continuing.');
+  }
+  const lastCompletedTurn = [...turns].reverse().find((turn) => turn.status === 'completed');
+  return rpc.request<CodexThreadResponse>(
+    'thread/fork',
+    lastCompletedTurn ? { threadId, lastTurnId: lastCompletedTurn.id } : { threadId }
+  );
+}
+
 export async function dispatchCodexDecision(
   rpc: CodexRpcClient,
   decision: StoredAgentDecision,
@@ -157,11 +176,17 @@ export async function dispatchCodexDecision(
   const timeoutMs = Math.max(1_000, options.timeoutMs ?? 10 * 60_000);
   const completionPollMs = Math.max(25, options.completionPollMs ?? 2_000);
 
-  const threadResponse = existingThreadId
-    ? await rpc.request<CodexThreadResponse>('thread/resume', {
-        threadId: existingThreadId,
-        approvalPolicy: 'never'
-      })
+  const threadResponse = decision.decision_id === 'fork'
+    ? existingThreadId
+      ? await forkSettledCodexThread(rpc, existingThreadId)
+      : (() => {
+          throw new Error('A source task is required to continue in a new task.');
+        })()
+    : existingThreadId
+      ? await rpc.request<CodexThreadResponse>('thread/resume', {
+          threadId: existingThreadId,
+          approvalPolicy: 'never'
+        })
     : await rpc.request<CodexThreadResponse>('thread/start', {
         cwd: options.cwd,
         approvalPolicy: 'never',
@@ -345,7 +370,7 @@ export function buildCodexTaskProgress(
     const historyMode = thread.historyMode ?? 'legacy';
     const idleRuntime = thread.status.type === 'idle' || thread.status.type === 'notLoaded';
     const settled = now - thread.updatedAt * 1_000 >= minimumIdleMs;
-    const canPrompt = historyMode === 'legacy' && idleRuntime && settled;
+    const canFork = historyMode === 'legacy' && idleRuntime && settled;
     const recentlyChanged = historyMode === 'legacy' && idleRuntime && !settled;
     output.push({
       agent_id: `codex:${thread.id}`,
@@ -357,10 +382,10 @@ export function buildCodexTaskProgress(
       detail: boundedText(thread.cwd, 500),
       progress_version: Math.max(1, Math.round(thread.updatedAt)),
       needs_input: state.needsInput,
-      decisions: canPrompt ? [PROMPT_TASK_DECISION] : [],
+      decisions: canFork ? [FORK_TASK_DECISION] : [],
       expires_at: expiresAt,
       payload: {
-        authority: canPrompt ? 'local-codex-app-server' : 'read-only',
+        authority: canFork ? 'fork-and-continue' : 'read-only',
         history_mode: historyMode,
         thread_id: thread.id,
         cwd: thread.cwd,

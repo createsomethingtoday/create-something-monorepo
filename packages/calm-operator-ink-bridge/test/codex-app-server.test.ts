@@ -127,11 +127,11 @@ test('projects recent Codex threads and a new-task action into the existing Stop
   assert.equal(progress[1]?.phase, 'Ready for prompt');
   assert.equal(progress[1]?.progress_version, 1_787_278_000);
   assert.deepEqual(progress[1]?.decisions, [
-    {
-      id: 'prompt',
-      kind: 'redirect',
-      label: 'Prompt task',
-      description: 'Review a spoken prompt, then continue this local Codex task.',
+      {
+        id: 'fork',
+        kind: 'redirect',
+        label: 'Continue in new task',
+        description: 'Copy completed task history, then continue from a reviewed spoken prompt.',
       requires_confirmation: true,
       requires_text: true,
       remote_safe: true
@@ -169,8 +169,29 @@ test('withholds device authority while a desktop task is active or recently chan
   assert.equal(progress[3]?.phase, 'Ready for prompt');
   assert.deepEqual(
     progress[3]?.decisions.map((item) => item.id),
-    ['prompt']
+    ['fork']
   );
+});
+
+test('offers a settled desktop task a fork-and-continue action instead of direct prompting', () => {
+  const progress = buildCodexTaskProgress([thread()], {
+    cwd: '/workspace/create-something-monorepo',
+    now: 1_787_278_300_000,
+    minimumIdleMs: 60_000
+  });
+
+  assert.deepEqual(progress[1]?.decisions, [
+    {
+      id: 'fork',
+      kind: 'redirect',
+      label: 'Continue in new task',
+      description: 'Copy completed task history, then continue from a reviewed spoken prompt.',
+      requires_confirmation: true,
+      requires_text: true,
+      remote_safe: true
+    }
+  ]);
+  assert.equal(progress[1]?.payload.authority, 'fork-and-continue');
 });
 
 test('revalidates the exact task version and action before dispatch', () => {
@@ -181,7 +202,7 @@ test('revalidates the exact task version and action before dispatch', () => {
   const approved = decision({
     agent_id: 'codex:01a-thread',
     progress_version: 1_787_278_000,
-    decision_id: 'prompt'
+    decision_id: 'fork'
   });
 
   assert.doesNotThrow(() => assertCodexDecisionAuthorized(progress, approved));
@@ -341,6 +362,103 @@ test('resumes an idle legacy task and starts its next turn', async () => {
   });
   assert.equal(result.threadId, '01a-existing');
   assert.equal(result.status, 'completed');
+});
+
+test('forks a settled desktop task through its last completed turn before prompting the child', async () => {
+  const rpc = new FakeRpc((method, _params, client) => {
+    if (method === 'thread/read') {
+      return {
+        thread: {
+          id: '01a-desktop',
+          turns: [
+            { id: 'turn-earlier', status: 'completed', items: [] },
+            { id: 'turn-completed', status: 'completed', items: [] }
+          ]
+        }
+      };
+    }
+    if (method === 'thread/fork') return { thread: { id: '01a-child', turns: [] } };
+    if (method === 'turn/start') {
+      queueMicrotask(() => {
+        client.emit({
+          method: 'turn/completed',
+          params: {
+            threadId: '01a-child',
+            turn: { id: 'turn-child', status: 'completed', items: [] }
+          }
+        });
+      });
+      return { turn: { id: 'turn-child', status: 'inProgress', items: [] } };
+    }
+    throw new Error(`Unexpected method: ${method}`);
+  });
+
+  const result = await dispatchCodexDecision(
+    rpc,
+    decision({
+      agent_id: 'codex:01a-desktop',
+      progress_version: 7,
+      decision_id: 'fork',
+      kind: 'redirect',
+      label: 'Continue in new task',
+      message: 'Run the focused test and continue.'
+    }),
+    { cwd: '/workspace/create-something-monorepo', timeoutMs: 1_000 }
+  );
+
+  assert.deepEqual(
+    rpc.calls.map((call) => call.method),
+    ['thread/read', 'thread/fork', 'turn/start']
+  );
+  assert.deepEqual(rpc.calls[0]?.params, {
+    threadId: '01a-desktop',
+    includeTurns: true
+  });
+  assert.deepEqual(rpc.calls[1]?.params, {
+    threadId: '01a-desktop',
+    lastTurnId: 'turn-completed'
+  });
+  assert.equal(rpc.calls[2]?.params?.threadId, '01a-child');
+  assert.deepEqual(result, {
+    threadId: '01a-child',
+    turnId: 'turn-child',
+    status: 'completed',
+    summary: 'Codex completed the task.'
+  });
+});
+
+test('refuses a fork when source readback finds an active turn', async () => {
+  const rpc = new FakeRpc((method) => {
+    if (method === 'thread/read') {
+      return {
+        thread: {
+          id: '01a-desktop',
+          turns: [{ id: 'turn-active', status: 'inProgress', items: [] }]
+        }
+      };
+    }
+    throw new Error(`Unexpected method: ${method}`);
+  });
+
+  await assert.rejects(
+    dispatchCodexDecision(
+      rpc,
+      decision({
+        agent_id: 'codex:01a-desktop',
+        progress_version: 7,
+        decision_id: 'fork',
+        kind: 'redirect',
+        label: 'Continue in new task',
+        message: 'Run the focused test and continue.'
+      }),
+      { cwd: '/workspace/create-something-monorepo', timeoutMs: 1_000 }
+    ),
+    /Source task became active/
+  );
+  assert.deepEqual(
+    rpc.calls.map((call) => call.method),
+    ['thread/read']
+  );
 });
 
 test('steers a turn owned by the relay app-server when it is still active', async () => {
