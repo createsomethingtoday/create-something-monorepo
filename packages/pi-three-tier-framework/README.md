@@ -8,6 +8,8 @@ The **Three-Tier Framework** (Database, Automation, Judgment) for agent systems 
 pi install npm:@create-something/pi-three-tier-framework
 ```
 
+Source price: **$0 under the MIT License**. Managed CREATE SOMETHING Control is a separate service, available from $900/month.
+
 ## What You Get
 
 ### Skills

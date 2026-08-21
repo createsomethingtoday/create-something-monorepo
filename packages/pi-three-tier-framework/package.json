@@ -5,14 +5,20 @@
   "keywords": ["pi-package", "three-tier-framework", "agent-systems", "mcp", "architecture"],
   "author": "CREATE SOMETHING <hello@createsomething.agency>",
   "license": "MIT",
-  "files": ["skills", "prompts", "README.md"],
+  "type": "module",
+  "files": ["skills", "prompts", "README.md", "LICENSE", "CHANGELOG.md"],
   "scripts": {
-    "prepublishOnly": "echo 'Publishing @create-something/pi-three-tier-framework'"
+    "test": "node ../../scripts/pi-public-package-contract.mjs . --pack",
+    "prepublishOnly": "npm test"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+    "url": "git+https://github.com/createsomethingtoday/create-something-monorepo.git",
     "directory": "packages/pi-three-tier-framework"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   },
   "pi": {
     "skills": ["./skills"],
