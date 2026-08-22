@@ -29,10 +29,10 @@ function repositoryReadback() {
         {
           type: 'pull_request',
           parameters: {
-            required_approving_review_count: 1,
-            require_code_owner_review: true,
-            required_review_thread_resolution: true,
-            require_last_push_approval: true
+            required_approving_review_count: config.repository.minimumApprovingReviews,
+            require_code_owner_review: config.repository.requireCodeOwnerReview,
+            required_review_thread_resolution: config.repository.requireReviewThreadResolution,
+            require_last_push_approval: config.repository.requireLastPushApproval
           }
         },
         {
@@ -44,10 +44,7 @@ function repositoryReadback() {
         }
       ]
     },
-    collaborators: [
-      { login: 'one', permissions: { admin: true } },
-      { login: 'two', permissions: { push: true } }
-    ],
+    collaborators: [{ login: config.repository.soleOperator, permissions: { admin: true } }],
     secretAlerts: [],
     dependabotAlerts: [],
     workflowPermissions: {
@@ -82,14 +79,20 @@ function provenancePayload(packagePolicy, commit = gaCommit) {
   ).toString('base64');
 }
 
-test('GA config keeps the public boundary, review gate, two packages, and seven days explicit', () => {
+test('GA config keeps the public boundary, governed sole-operator gate, two packages, and seven days explicit', () => {
   assert.deepEqual(validateGaConfig(config), []);
   assert.deepEqual(config.repository.requiredChecks, [
     'Philosophical Code Review',
     'Public Distribution GA'
   ]);
-  assert.equal(config.repository.minimumMaintainers, 2);
-  assert.equal(config.repository.minimumCodeOwners, 2);
+  assert.equal(config.repository.governanceMode, 'sole-operator');
+  assert.equal(config.repository.soleOperator, 'createsomethingtoday');
+  assert.equal(config.repository.minimumApprovingReviews, 0);
+  assert.equal(config.repository.requireCodeOwnerReview, false);
+  assert.equal(config.repository.requireReviewThreadResolution, true);
+  assert.equal(config.repository.requireLastPushApproval, false);
+  assert.equal(config.repository.minimumMaintainers, 1);
+  assert.equal(config.repository.minimumCodeOwners, 1);
   assert.equal(config.packages.length, 2);
   assert.equal(config.npm.trustedPublisherMode, 'stage-only');
   assert.equal(config.map.requiredConsecutiveDays, 7);
@@ -115,24 +118,24 @@ test('Pi discovery proofs explicitly approve only their isolated temporary proje
   assert.match(verifier, /command\(pi, \['list', '--approve'\]/);
 });
 
-test('CODEOWNERS requires two write-capable individual recovery owners', () => {
-  assert.deepEqual(validateCodeowners('* @one @two\n', ['one', 'two'], 2), {
+test('sole-operator CODEOWNERS requires the named write-capable operator', () => {
+  assert.deepEqual(validateCodeowners('* @one\n', ['one'], 1), {
     issues: [],
-    owners: ['one', 'two']
+    owners: ['one']
   });
   assert.match(
-    validateCodeowners('* @one @unknown\n', ['one', 'two'], 2).issues[0],
-    /2 write-capable individual owners/
+    validateCodeowners('* @unknown\n', ['one'], 1).issues[0],
+    /1 write-capable individual owner/
   );
 });
 
-test('repository readback fails closed on missing review, maintainer, secret, and runtime ownership', () => {
+test('sole-operator repository readback fails closed on missing thread resolution, named operator, secret, and runtime ownership', () => {
   const passing = repositoryReadback();
   assert.deepEqual(validateRepositoryReadback(passing, config, gaCommit).issues, []);
 
   const failing = repositoryReadback();
-  failing.ruleset.rules[0].parameters.required_approving_review_count = 0;
-  failing.collaborators.pop();
+  failing.ruleset.rules[0].parameters.required_review_thread_resolution = false;
+  failing.collaborators[0].login = 'unapproved-operator';
   failing.secretAlerts.push({ number: 9 });
   failing.dependabotAlerts.push({
     number: 10,
@@ -141,10 +144,23 @@ test('repository readback fails closed on missing review, maintainer, secret, an
     security_advisory: { severity: 'critical', ghsa_id: 'GHSA-unowned' }
   });
   const issues = validateRepositoryReadback(failing, config, gaCommit).issues.join('\n');
-  assert.match(issues, /approving reviews/);
-  assert.match(issues, /2 write-capable maintainers/);
+  assert.match(issues, /review-thread resolution/);
+  assert.match(issues, /sole operator/);
   assert.match(issues, /secret-scanning/);
   assert.match(issues, /GHSA-unowned/);
+});
+
+test('sole-operator repository readback rejects reintroduced unavailable peer-review settings', () => {
+  const failing = repositoryReadback();
+  Object.assign(failing.ruleset.rules[0].parameters, {
+    required_approving_review_count: 1,
+    require_code_owner_review: true,
+    require_last_push_approval: true
+  });
+  const issues = validateRepositoryReadback(failing, config, gaCommit).issues.join('\n');
+  assert.match(issues, /sole-operator.*approving reviews/i);
+  assert.match(issues, /sole-operator.*code-owner review/i);
+  assert.match(issues, /sole-operator.*last-push approval/i);
 });
 
 test('npm readback requires exact metadata, trusted publisher, provenance commit, files, and Pi load', () => {

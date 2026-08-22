@@ -73,3 +73,19 @@ trusted-publisher provenance through clean Pi installs, checks canonical
 production pricing, validates fresh desktop/mobile browser evidence, and
 computes the Map streak from production workflow runs. It writes a final
 `public-ga-receipt.json` and exits nonzero unless every independent gate passes.
+
+## Sole-operator promotion
+
+CREATE SOMETHING currently uses a declared sole-operator governance mode. It
+does not claim an unavailable independent human approval. Instead, the named
+operator may promote only through an active `main` ruleset that requires a pull
+request, strict current-head universal checks, resolved review threads, and
+protected deletion/non-fast-forward behavior. The GA verifier fails if GitHub
+reintroduces an approval, CODEOWNERS, or last-push requirement that a sole
+operator cannot satisfy, or if the named operator loses write access.
+
+This is paired with read-only default Actions permissions, Actions being unable
+to approve pull-request reviews, explicit CODEOWNERS ownership, stage-only npm
+trusted publishing, and a separate npm 2FA approval for each public package
+release. The final receipt records this mode rather than representing it as
+two-person review.

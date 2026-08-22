@@ -32,9 +32,46 @@ export function validateGaConfig(config) {
     'GA config requires at least two universal status checks',
     issues
   );
-  issue(config?.repository?.minimumApprovingReviews >= 1, 'GA config requires review', issues);
-  issue(config?.repository?.minimumMaintainers >= 2, 'GA config requires two maintainers', issues);
-  issue(config?.repository?.minimumCodeOwners >= 2, 'GA config requires two code owners', issues);
+  issue(
+    config?.repository?.governanceMode === 'sole-operator',
+    'GA config requires sole-operator governance mode',
+    issues
+  );
+  issue(
+    typeof config?.repository?.soleOperator === 'string' && config.repository.soleOperator.length > 0,
+    'GA config requires a named sole operator',
+    issues
+  );
+  issue(
+    config?.repository?.minimumApprovingReviews === 0,
+    'sole-operator GA config must not require an unavailable peer approval',
+    issues
+  );
+  issue(
+    config?.repository?.requireCodeOwnerReview === false,
+    'sole-operator GA config must not require an unavailable code-owner approval',
+    issues
+  );
+  issue(
+    config?.repository?.requireReviewThreadResolution === true,
+    'sole-operator GA config must require review-thread resolution',
+    issues
+  );
+  issue(
+    config?.repository?.requireLastPushApproval === false,
+    'sole-operator GA config must not require an unavailable last-push approval',
+    issues
+  );
+  issue(
+    config?.repository?.minimumMaintainers === 1,
+    'sole-operator GA config requires exactly one write-capable maintainer',
+    issues
+  );
+  issue(
+    config?.repository?.minimumCodeOwners === 1,
+    'sole-operator GA config requires exactly one write-capable code owner',
+    issues
+  );
   issue(
     Array.isArray(config?.packages) && config.packages.length === 2,
     'GA config requires two packages',
@@ -103,23 +140,23 @@ export function validateRepositoryReadback(readback, config, gaCommit) {
   const pullRequestRule = readback.ruleset?.rules?.find((rule) => rule.type === 'pull_request');
   const pull = pullRequestRule?.parameters ?? {};
   issue(
-    pull.required_approving_review_count >= repository.minimumApprovingReviews,
-    'GitHub ruleset does not require the declared approving reviews',
+    pull.required_approving_review_count === repository.minimumApprovingReviews,
+    'GitHub sole-operator ruleset must exactly match declared approving reviews',
     issues
   );
   issue(
-    !repository.requireCodeOwnerReview || pull.require_code_owner_review === true,
-    'GitHub ruleset must require a code-owner review',
+    pull.require_code_owner_review === repository.requireCodeOwnerReview,
+    'GitHub sole-operator ruleset must exactly match declared code-owner review policy',
     issues
   );
   issue(
-    !repository.requireReviewThreadResolution || pull.required_review_thread_resolution === true,
-    'GitHub ruleset must require review-thread resolution',
+    pull.required_review_thread_resolution === repository.requireReviewThreadResolution,
+    'GitHub sole-operator ruleset must exactly match declared review-thread resolution policy',
     issues
   );
   issue(
-    !repository.requireLastPushApproval || pull.require_last_push_approval === true,
-    'GitHub ruleset must require approval after the last push',
+    pull.require_last_push_approval === repository.requireLastPushApproval,
+    'GitHub sole-operator ruleset must exactly match declared last-push approval policy',
     issues
   );
 
@@ -129,6 +166,11 @@ export function validateRepositoryReadback(readback, config, gaCommit) {
   issue(
     new Set(maintainers.map((entry) => entry.login)).size >= repository.minimumMaintainers,
     `GitHub requires at least ${repository.minimumMaintainers} write-capable maintainers`,
+    issues
+  );
+  issue(
+    maintainers.some((entry) => entry.login === repository.soleOperator),
+    `GitHub sole operator is missing write-capable access: ${repository.soleOperator}`,
     issues
   );
   issue(
