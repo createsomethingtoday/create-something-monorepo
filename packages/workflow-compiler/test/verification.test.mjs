@@ -25,6 +25,7 @@ import {
   WorkflowArtifactAttestationError,
   WorkflowArtifactVerificationError
 } from '../dist/index.js';
+import { verifyWorkflowArtifactBundleWithRootPinnedHook } from '../dist/artifacts.js';
 
 const packageRoot = new URL('..', import.meta.url);
 const fixturePath = new URL('../fixtures/marketplace/workflow.json', import.meta.url);
@@ -85,6 +86,39 @@ test('the public verifier returns a deterministic integrity receipt and rejects 
         error.code === 'ARTIFACT_HASH_MISMATCH' &&
         error.path === 'workflow-map.json'
     );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('missing bundle roots remain structured verification stops in the API and CLI', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'workflow-compiler-missing-bundle-'));
+  const missingDir = join(root, 'missing');
+  const brokenLink = join(root, 'broken');
+
+  try {
+    await symlink(missingDir, brokenLink, process.platform === 'win32' ? 'junction' : 'dir');
+    for (const bundlePath of [missingDir, brokenLink]) {
+      await assert.rejects(
+        verifyWorkflowArtifactBundle(bundlePath),
+        (error) =>
+          error instanceof WorkflowArtifactVerificationError &&
+          error.code === 'MISSING_ARTIFACT' &&
+          error.path === 'manifest.json'
+      );
+      const result = spawnSync(process.execPath, ['dist/cli.js', 'verify', '--dir', bundlePath], {
+        cwd: packageRoot,
+        encoding: 'utf8'
+      });
+      assert.equal(result.status, 3, result.stderr || result.stdout);
+      assert.deepEqual(JSON.parse(result.stderr), {
+        ok: false,
+        error: 'WorkflowArtifactVerificationError',
+        code: 'MISSING_ARTIFACT',
+        message: 'Workflow artifact manifest is missing.',
+        path: 'manifest.json'
+      });
+    }
   } finally {
     await rm(root, { recursive: true, force: true });
   }
@@ -424,8 +458,6 @@ test('verification pins one published revision while the managed output pointer 
     const firstRevision = join(revisionsDir, revisions[0]);
     const secondRevision = join(revisionsDir, revisions[1]);
 
-    await truncate(join(firstRevision, 'agent-contracts.json'), 25 * 1024 * 1024);
-    await rewriteManifestHash(firstRevision, 'agent-contracts.json');
     await writeFile(
       join(secondRevision, 'workflow-map.json'),
       `${await readFile(join(secondRevision, 'workflow-map.json'), 'utf8')} `,
@@ -438,12 +470,21 @@ test('verification pins one published revision while the managed output pointer 
 
     await pointDirectoryLink(outDir, firstRevision);
     assert.equal(await realpath(outDir), await realpath(firstRevision));
-    const verification = verifyWorkflowArtifactBundle(outDir);
-    await new Promise((resolveSwitch, rejectSwitch) => {
-      setImmediate(() => {
-        pointDirectoryLink(outDir, secondRevision).then(resolveSwitch, rejectSwitch);
-      });
+    let rootPinned;
+    const rootPinnedBarrier = new Promise((resolvePinned) => {
+      rootPinned = resolvePinned;
     });
+    let releaseVerification;
+    const verificationRelease = new Promise((resolveRelease) => {
+      releaseVerification = resolveRelease;
+    });
+    const verification = verifyWorkflowArtifactBundleWithRootPinnedHook(outDir, {}, async () => {
+      rootPinned();
+      await verificationRelease;
+    });
+    await rootPinnedBarrier;
+    await pointDirectoryLink(outDir, secondRevision);
+    releaseVerification();
 
     assert.deepEqual(await verification, firstReceipt);
     assert.equal(await realpath(outDir), await realpath(secondRevision));

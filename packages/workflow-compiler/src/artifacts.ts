@@ -493,11 +493,29 @@ async function verifyDeclaredBundleInventory(
   await walk(rootDir);
 }
 
-export async function verifyWorkflowArtifactBundle(
+async function resolveWorkflowArtifactBundleRoot(rootDir: string): Promise<string> {
+  try {
+    return await realpath(resolve(rootDir));
+  } catch (error) {
+    if (isMissing(error)) {
+      throw new WorkflowArtifactVerificationError(
+        'MISSING_ARTIFACT',
+        'Workflow artifact manifest is missing.',
+        'manifest.json'
+      );
+    }
+    throw error;
+  }
+}
+
+/** @internal Deterministic seam for exercising concurrent pointer publication. */
+export async function verifyWorkflowArtifactBundleWithRootPinnedHook(
   rootDir: string,
-  options: VerifyWorkflowArtifactBundleOptions = {}
+  options: VerifyWorkflowArtifactBundleOptions,
+  onRootPinned: (resolvedRootDir: string) => void | Promise<void>
 ): Promise<WorkflowArtifactVerificationReceipt> {
-  const resolvedRootDir = await realpath(resolve(rootDir));
+  const resolvedRootDir = await resolveWorkflowArtifactBundleRoot(rootDir);
+  await onRootPinned(resolvedRootDir);
   const manifest = await readValidatedArtifactManifest(resolvedRootDir);
   const attestationPath = join(resolvedRootDir, 'attestation.json');
   let attestationValue: unknown;
@@ -566,6 +584,13 @@ export async function verifyWorkflowArtifactBundle(
             publicKeyFingerprint: attestation.publicKeyFingerprint
           }
   };
+}
+
+export async function verifyWorkflowArtifactBundle(
+  rootDir: string,
+  options: VerifyWorkflowArtifactBundleOptions = {}
+): Promise<WorkflowArtifactVerificationReceipt> {
+  return verifyWorkflowArtifactBundleWithRootPinnedHook(rootDir, options, () => undefined);
 }
 
 interface ExistingOutput {
