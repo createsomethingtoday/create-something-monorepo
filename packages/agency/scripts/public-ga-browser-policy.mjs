@@ -12,3 +12,7 @@ export function classifyRequestFailure(failure, targetOrigin) {
     ? 'cloudflare-rum-aborted'
     : 'required';
 }
+
+export function matchesRequiredText(renderedText, requiredText) {
+  return renderedText.toLocaleLowerCase('en-US').includes(requiredText.toLocaleLowerCase('en-US'));
+}
