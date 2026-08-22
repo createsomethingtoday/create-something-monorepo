@@ -2,7 +2,7 @@
   "schemaVersion": "tool_contracts.v0.1",
   "workflowId": "webflow.marketplace.template-lifecycle",
   "workflowVersion": "0.1.0",
-  "definitionHash": "sha256:7081c11dd462018dc64696e0aac6ca656c2a61e8c337ecd1c051388eca996ac1",
+  "definitionHash": "sha256:a94edfce769f2d7f4b5ba27f898062d9d79b374c61107082610c549de8fbc9f0",
   "tools": [
     {
       "actionId": "approve_template",
@@ -73,8 +73,8 @@
     },
     {
       "actionId": "validate_submission",
-      "name": "template_validation_run",
-      "targetSystemId": "template-validation",
+      "name": "template_review_run_published_site_validation",
+      "targetSystemId": "template-review-mcp",
       "authority": "workflow-runtime",
       "autonomy": "auto_allow",
       "requiredEvidence": [
@@ -92,24 +92,9 @@
       ],
       "parameters": [
         {
-          "name": "asset_id",
-          "type": "string",
-          "description": "Marketplace asset identifier."
-        },
-        {
           "name": "published_url",
           "type": "string",
           "description": "Published template URL to validate."
-        },
-        {
-          "name": "validation_result",
-          "type": "string",
-          "description": "Recorded validation result."
-        },
-        {
-          "name": "version_id",
-          "type": "string",
-          "description": "Marketplace asset version identifier."
         }
       ]
     }

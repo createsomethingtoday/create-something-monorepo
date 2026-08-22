@@ -2,7 +2,7 @@
   "schemaVersion": "approval_surfaces.v0.1",
   "workflowId": "webflow.marketplace.template-lifecycle",
   "workflowVersion": "0.1.0",
-  "definitionHash": "sha256:7081c11dd462018dc64696e0aac6ca656c2a61e8c337ecd1c051388eca996ac1",
+  "definitionHash": "sha256:a94edfce769f2d7f4b5ba27f898062d9d79b374c61107082610c549de8fbc9f0",
   "actions": [
     {
       "actionId": "approve_template",

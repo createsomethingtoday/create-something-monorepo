@@ -132,7 +132,7 @@
       "kind": "decision",
       "authority": "workflow-runtime",
       "autonomy": "auto_allow",
-      "systemsTouched": ["template-validation", "airtable-marketplace"],
+      "systemsTouched": ["template-review-mcp", "template-validation", "airtable-marketplace"],
       "requiredEvidence": ["asset_id", "version_id", "published_url", "validation_result"],
       "approval": { "required": false },
       "receipt": {
@@ -144,24 +144,13 @@
         "path": "Keep the submission in submitted state and request manual validation."
       },
       "tool": {
-        "name": "template_validation_run",
-        "targetSystemId": "template-validation",
+        "name": "template_review_run_published_site_validation",
+        "targetSystemId": "template-review-mcp",
         "parameters": [
-          { "name": "asset_id", "type": "string", "description": "Marketplace asset identifier." },
           {
             "name": "published_url",
             "type": "string",
             "description": "Published template URL to validate."
-          },
-          {
-            "name": "validation_result",
-            "type": "string",
-            "description": "Recorded validation result."
-          },
-          {
-            "name": "version_id",
-            "type": "string",
-            "description": "Marketplace asset version identifier."
           }
         ]
       },

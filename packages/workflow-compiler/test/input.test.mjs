@@ -110,9 +110,9 @@ test('the public workflow parser accepts legacy tools and validates declared par
       assert.deepEqual(error.diagnostics, [
         {
           code: 'DUPLICATE_IDENTIFIER',
-          path: '$.actions[0].tool.parameters[4].name',
+          path: '$.actions[0].tool.parameters[1].name',
           message:
-            'Duplicate identifier asset_id; first declared at $.actions[0].tool.parameters[0].name.'
+            'Duplicate identifier published_url; first declared at $.actions[0].tool.parameters[0].name.'
         }
       ]);
       return true;

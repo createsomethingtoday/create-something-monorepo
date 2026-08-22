@@ -16,7 +16,7 @@ test('compiles a governed workflow map through the public interface', () => {
     owners: {
       workflow: 'marketplace-review-lead',
       policy: 'senior-systems-architect',
-      technical: 'senior-systems-architect',
+      technical: 'senior-systems-architect'
     },
     systems: [
       {
@@ -24,15 +24,15 @@ test('compiles a governed workflow map through the public interface', () => {
         title: 'Airtable Marketplace Assets',
         tier: 'database',
         owningSurface: 'Airtable Assets and Asset Versions',
-        sourceOfTruth: true,
-      },
+        sourceOfTruth: true
+      }
     ],
     objects: [],
     events: [],
     actors: [{ id: 'marketplace-reviewer', title: 'Marketplace reviewer' }],
     states: [
       { id: 'submitted', title: 'Submitted' },
-      { id: 'approved', title: 'Approved', terminal: true },
+      { id: 'approved', title: 'Approved', terminal: true }
     ],
     actions: [
       {
@@ -45,25 +45,25 @@ test('compiles a governed workflow map through the public interface', () => {
         requiredEvidence: ['reviewer_id', 'version_id', 'review_summary'],
         approval: { required: true, owner: 'marketplace-reviewer' },
         receipt: {
-          requiredFields: ['workflow_id', 'action_id', 'correlation_id', 'outcome'],
+          requiredFields: ['workflow_id', 'action_id', 'correlation_id', 'outcome']
         },
         recovery: {
           mode: 'manual_fallback',
           owner: 'marketplace-reviewer',
-          path: 'Keep the version in review and resolve the decision in Airtable.',
-        },
-      },
+          path: 'Keep the version in review and resolve the decision in Airtable.'
+        }
+      }
     ],
     transitions: [
       {
         id: 'submitted-to-approved',
         from: 'submitted',
         to: 'approved',
-        actionId: 'approve-template',
-      },
+        actionId: 'approve-template'
+      }
     ],
     agents: [],
-    evaluations: [],
+    evaluations: []
   };
 
   const compiled = compileWorkflowDefinition(definition);
@@ -76,27 +76,27 @@ test('compiles a governed workflow map through the public interface', () => {
     { id: 'action:approve-template', kind: 'action', title: 'Approve template' },
     { id: 'actor:marketplace-reviewer', kind: 'actor', title: 'Marketplace reviewer' },
     { id: 'state:approved', kind: 'state', title: 'Approved' },
-    { id: 'state:submitted', kind: 'state', title: 'Submitted' },
+    { id: 'state:submitted', kind: 'state', title: 'Submitted' }
   ]);
   assert.deepEqual(compiled.workflowMap.edges, [
     {
       id: 'authority:marketplace-reviewer:approve-template',
       kind: 'authorizes',
       from: 'actor:marketplace-reviewer',
-      to: 'action:approve-template',
+      to: 'action:approve-template'
     },
     {
       id: 'transition:submitted-to-approved:action',
       kind: 'transitions',
       from: 'state:submitted',
-      to: 'action:approve-template',
+      to: 'action:approve-template'
     },
     {
       id: 'transition:submitted-to-approved:state',
       kind: 'transitions',
       from: 'action:approve-template',
-      to: 'state:approved',
-    },
+      to: 'state:approved'
+    }
   ]);
 });
 
@@ -110,7 +110,7 @@ test('rejects a consequential action without evidence, receipt, and recovery con
     owners: {
       workflow: 'marketplace-review-lead',
       policy: 'senior-systems-architect',
-      technical: 'senior-systems-architect',
+      technical: 'senior-systems-architect'
     },
     systems: [],
     objects: [],
@@ -128,12 +128,12 @@ test('rejects a consequential action without evidence, receipt, and recovery con
         requiredEvidence: [],
         approval: { required: false },
         receipt: { requiredFields: [] },
-        recovery: { mode: 'manual_fallback', owner: '', path: '' },
-      },
+        recovery: { mode: 'manual_fallback', owner: '', path: '' }
+      }
     ],
     transitions: [],
     agents: [],
-    evaluations: [],
+    evaluations: []
   };
 
   assert.throws(
@@ -148,11 +148,11 @@ test('rejects a consequential action without evidence, receipt, and recovery con
           'APPROVAL_CONTRACT_REQUIRED',
           'RECEIPT_FIELDS_REQUIRED',
           'RECOVERY_OWNER_REQUIRED',
-          'RECOVERY_PATH_REQUIRED',
-        ],
+          'RECOVERY_PATH_REQUIRED'
+        ]
       );
       return true;
-    },
+    }
   );
 });
 
@@ -161,7 +161,7 @@ test('rejects a tool parameter that is not governed as required evidence', async
   definition.actions[0].tool.parameters.push({
     name: 'ambient_override',
     type: 'string',
-    description: 'An undeclared ambient override.',
+    description: 'An undeclared ambient override.'
   });
 
   assert.throws(
@@ -171,13 +171,13 @@ test('rejects a tool parameter that is not governed as required evidence', async
       assert.deepEqual(error.diagnostics, [
         {
           code: 'TOOL_PARAMETER_MISSING_EVIDENCE_CONTRACT',
-          path: 'actions[0].tool.parameters[4].name',
+          path: 'actions[0].tool.parameters[1].name',
           message:
-            'Tool parameter ambient_override must be backed by required evidence for action validate_submission.',
-        },
+            'Tool parameter ambient_override must be backed by required evidence for action validate_submission.'
+        }
       ]);
       return true;
-    },
+    }
   );
 });
 
@@ -194,10 +194,10 @@ test('rejects a tool target omitted from the action system boundary', async () =
           code: 'TOOL_TARGET_NOT_DECLARED_SYSTEM_TOUCH',
           path: 'actions[0].tool.targetSystemId',
           message:
-            'Tool template_validation_run target template-validation must be declared in systemsTouched for action validate_submission.',
-        },
+            'Tool template_review_run_published_site_validation target template-review-mcp must be declared in systemsTouched for action validate_submission.'
+        }
       ]);
       return true;
-    },
+    }
   );
 });

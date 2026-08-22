@@ -123,6 +123,13 @@ test('keeps marketplace write contracts aligned with the production review MCP',
       description: 'Marketplace asset version identifier.'
     }
   ]);
+  assert.deepEqual(contracts.template_review_run_published_site_validation, [
+    {
+      name: 'published_url',
+      type: 'string',
+      description: 'Published template URL to validate.'
+    }
+  ]);
 });
 
 test('fails closed when a transition references an unknown action', async () => {
