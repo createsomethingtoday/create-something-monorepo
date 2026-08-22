@@ -65,7 +65,7 @@ Additional controls:
 - `Space` pauses or resumes renderer execution.
 - `R` resets the selected fixture, stage, particles, and closed gate.
 - `E` exports proof after the case reaches Proof, the gate is closed, the
-  artifact tour is 15/15, and the renderer has a verified ten-second window.
+  artifact tour is 18/18, and the renderer has a verified ten-second window.
 
 The app follows the macOS Reduce Motion accessibility setting. Native verifier
 runs can exercise the same replay branch without changing the machine-wide
@@ -81,7 +81,7 @@ from the performance window.
 
 Switch the inspector from `WORKFLOW` to `ARTIFACT TOUR` to walk the complete
 compiler bundle. The atlas derives artifact identity and SHA-256 provenance from
-the verified manifest, then explains all 15 files inside six chapters:
+the verified manifest, then explains all 18 files inside six chapters:
 
 1. Topology
 2. Data contracts
@@ -94,7 +94,7 @@ Every artifact is individually addressable and includes its purpose, owner,
 inputs, outputs, downstream relationship, and water-physics teaching cue. `Back`,
 `Next`, direct artifact selection, chapter selection, and `Replay` support a
 self-guided walkthrough. Loading the bundle does not count as a visit: coverage
-reaches 15/15 only after every artifact has been explicitly visited. The active
+reaches 18/18 only after every artifact has been explicitly visited. The active
 teaching cue remains visible over the hydraulic field without gaining workflow
 authority.
 
@@ -131,7 +131,7 @@ Regenerate the bundled runtime package from those inputs:
 apps/metal-water-simulator/scripts/generate-workflow-artifacts.sh
 ```
 
-The generator builds `@create-something/workflow-compiler` and emits 15
+The generator builds `@create-something/workflow-compiler` and emits 18
 content-hashed files plus `manifest.json` into
 `Sources/WaterSimulationCore/WorkflowArtifacts`. At app load, every workflow,
 version, and definition header must agree, acceptance must be complete, and the
@@ -160,13 +160,13 @@ Each case directory contains:
 - `render-receipt.json`: timestamped local renderer state, gate state, device,
   particle count, substeps, FPS, and grid overflow.
 - `artifact-tour.json`: deterministic six-chapter metadata, ordered explicit
-  visits, 15/15 coverage, manifest hashes, and teaching cues.
+  visits, 18/18 coverage, manifest hashes, and teaching cues.
 - `capture-manifest.json`: workflow identity and the native-window captures
   required by a verification run. Capture hashes are finalized by the external
   native verifier because the app cannot truthfully attest to pixels it did not
   capture.
 
-Proof export fails closed before Proof, while the gate is open, before 15/15
+Proof export fails closed before Proof, while the gate is open, before 18/18
 artifact coverage, or without a verified ten-second renderer window. A valid
 render receipt therefore records a closed gate, at least 8,192 particles, two
 substeps, zero grid overflow, and at least 45 median FPS.
@@ -196,7 +196,7 @@ byte-identical across runs.
 ## Architecture
 
 1. The workflow catalog loads compiler artifacts, validates acceptance, checks
-   all 15 content hashes, and derives five typed replay scenarios.
+   all 18 content hashes, and derives five typed replay scenarios.
 2. The controller advances a deterministic Signal / Decision / Action / Proof
    playback. Run holds Action while the full reservoir drains, closes the gate,
    then advances to Proof; reset and case selection load the next reservoir
@@ -226,8 +226,8 @@ pnpm --filter @create-something/workflow-compiler test:acceptance
 ```
 
 The test suite covers all five decisions, deterministic proof encoding, exact
-six-chapter/15-artifact tour coverage, explicit visit accounting, capture hash
-drift, all 15 artifact hashes, the 8,192-particle projection, zero-leak containment and full
+six-chapter/18-artifact tour coverage, explicit visit accounting, capture hash
+drift, all 18 artifact hashes, the 8,192-particle projection, zero-leak containment and full
 reservoir release on the real Metal integration kernel, proof-time closure,
 reset, grid occupancy, stability, impulse, gravity, and Canon Performance token
 parity.

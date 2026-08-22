@@ -10,7 +10,7 @@
     "policy": "senior-systems-architect",
     "technical": "senior-systems-architect"
   },
-  "definitionHash": "sha256:96e880807497d7a417cbf7e7a009d9331996d55e249068767b2417131a91156f",
+  "definitionHash": "sha256:7081c11dd462018dc64696e0aac6ca656c2a61e8c337ecd1c051388eca996ac1",
   "workflowMap": {
     "schemaVersion": "workflow_map.v0.1",
     "workflowId": "webflow.marketplace.template-lifecycle",
@@ -195,7 +195,7 @@
     "schemaVersion": "runtime_targets.v0.1",
     "workflowId": "webflow.marketplace.template-lifecycle",
     "workflowVersion": "0.1.0",
-    "definitionHash": "sha256:96e880807497d7a417cbf7e7a009d9331996d55e249068767b2417131a91156f",
+    "definitionHash": "sha256:7081c11dd462018dc64696e0aac6ca656c2a61e8c337ecd1c051388eca996ac1",
     "systems": [
       {
         "id": "airtable-marketplace",
@@ -252,7 +252,7 @@
     "schemaVersion": "object_schemas.v0.1",
     "workflowId": "webflow.marketplace.template-lifecycle",
     "workflowVersion": "0.1.0",
-    "definitionHash": "sha256:96e880807497d7a417cbf7e7a009d9331996d55e249068767b2417131a91156f",
+    "definitionHash": "sha256:7081c11dd462018dc64696e0aac6ca656c2a61e8c337ecd1c051388eca996ac1",
     "objects": [
       {
         "id": "decision_receipt",
@@ -293,7 +293,7 @@
     "schemaVersion": "event_schemas.v0.1",
     "workflowId": "webflow.marketplace.template-lifecycle",
     "workflowVersion": "0.1.0",
-    "definitionHash": "sha256:96e880807497d7a417cbf7e7a009d9331996d55e249068767b2417131a91156f",
+    "definitionHash": "sha256:7081c11dd462018dc64696e0aac6ca656c2a61e8c337ecd1c051388eca996ac1",
     "events": [
       {
         "id": "monitoring_signal",
@@ -351,7 +351,7 @@
     "schemaVersion": "decision_inventory.v0.1",
     "workflowId": "webflow.marketplace.template-lifecycle",
     "workflowVersion": "0.1.0",
-    "definitionHash": "sha256:96e880807497d7a417cbf7e7a009d9331996d55e249068767b2417131a91156f",
+    "definitionHash": "sha256:7081c11dd462018dc64696e0aac6ca656c2a61e8c337ecd1c051388eca996ac1",
     "decisions": [
       {
         "actionId": "approve_template",
@@ -365,6 +365,7 @@
           "template-review-mcp"
         ],
         "requiredEvidence": [
+          "review_status",
           "review_summary",
           "reviewer_id",
           "validation_result",
@@ -539,7 +540,7 @@
     "schemaVersion": "tool_contracts.v0.1",
     "workflowId": "webflow.marketplace.template-lifecycle",
     "workflowVersion": "0.1.0",
-    "definitionHash": "sha256:96e880807497d7a417cbf7e7a009d9331996d55e249068767b2417131a91156f",
+    "definitionHash": "sha256:7081c11dd462018dc64696e0aac6ca656c2a61e8c337ecd1c051388eca996ac1",
     "tools": [
       {
         "actionId": "approve_template",
@@ -548,6 +549,7 @@
         "authority": "marketplace-reviewer",
         "autonomy": "approval_required",
         "requiredEvidence": [
+          "review_status",
           "review_summary",
           "reviewer_id",
           "validation_result",
@@ -560,6 +562,18 @@
           "outcome",
           "reviewer_id",
           "workflow_id"
+        ],
+        "parameters": [
+          {
+            "name": "review_status",
+            "type": "string",
+            "description": "Reviewer-controlled marketplace review status."
+          },
+          {
+            "name": "version_id",
+            "type": "string",
+            "description": "Marketplace asset version identifier."
+          }
         ]
       },
       {
@@ -581,6 +595,18 @@
           "outcome",
           "reviewer_id",
           "workflow_id"
+        ],
+        "parameters": [
+          {
+            "name": "review_feedback",
+            "type": "string",
+            "description": "Reviewer-authored change request."
+          },
+          {
+            "name": "version_id",
+            "type": "string",
+            "description": "Marketplace asset version identifier."
+          }
         ]
       },
       {
@@ -601,6 +627,28 @@
           "evidence_refs",
           "outcome",
           "workflow_id"
+        ],
+        "parameters": [
+          {
+            "name": "asset_id",
+            "type": "string",
+            "description": "Marketplace asset identifier."
+          },
+          {
+            "name": "published_url",
+            "type": "string",
+            "description": "Published template URL to validate."
+          },
+          {
+            "name": "validation_result",
+            "type": "string",
+            "description": "Recorded validation result."
+          },
+          {
+            "name": "version_id",
+            "type": "string",
+            "description": "Marketplace asset version identifier."
+          }
         ]
       }
     ]
@@ -609,7 +657,7 @@
     "schemaVersion": "agent_contracts.v0.1",
     "workflowId": "webflow.marketplace.template-lifecycle",
     "workflowVersion": "0.1.0",
-    "definitionHash": "sha256:96e880807497d7a417cbf7e7a009d9331996d55e249068767b2417131a91156f",
+    "definitionHash": "sha256:7081c11dd462018dc64696e0aac6ca656c2a61e8c337ecd1c051388eca996ac1",
     "agents": [
       {
         "id": "marketplace-workflow-operator",
@@ -637,7 +685,7 @@
     "schemaVersion": "approval_surfaces.v0.1",
     "workflowId": "webflow.marketplace.template-lifecycle",
     "workflowVersion": "0.1.0",
-    "definitionHash": "sha256:96e880807497d7a417cbf7e7a009d9331996d55e249068767b2417131a91156f",
+    "definitionHash": "sha256:7081c11dd462018dc64696e0aac6ca656c2a61e8c337ecd1c051388eca996ac1",
     "actions": [
       {
         "actionId": "approve_template",
@@ -645,6 +693,7 @@
         "mode": "approval_required",
         "owner": "marketplace-reviewer",
         "requiredEvidence": [
+          "review_status",
           "review_summary",
           "reviewer_id",
           "validation_result",
@@ -712,7 +761,7 @@
     "schemaVersion": "evaluation_manifest.v0.1",
     "workflowId": "webflow.marketplace.template-lifecycle",
     "workflowVersion": "0.1.0",
-    "definitionHash": "sha256:96e880807497d7a417cbf7e7a009d9331996d55e249068767b2417131a91156f",
+    "definitionHash": "sha256:7081c11dd462018dc64696e0aac6ca656c2a61e8c337ecd1c051388eca996ac1",
     "evaluations": [
       {
         "id": "approval-stays-human",
@@ -720,6 +769,7 @@
         "actionId": "approve_template",
         "expectedOutcome": "approval_required",
         "requiredEvidence": [
+          "review_status",
           "review_summary",
           "reviewer_id",
           "validation_result",
@@ -748,6 +798,216 @@
           "validation_result",
           "version_id"
         ]
+      }
+    ]
+  },
+  "governedInteraction": {
+    "schemaVersion": "governed_interaction_bundle.v0.1",
+    "language": "create-something/control",
+    "runtimeVersion": "0.1.0",
+    "workflowId": "webflow.marketplace.template-lifecycle",
+    "workflowVersion": "0.1.0",
+    "definitionHash": "sha256:7081c11dd462018dc64696e0aac6ca656c2a61e8c337ecd1c051388eca996ac1",
+    "entrySurfaceId": "operator-console",
+    "capabilities": [
+      "interaction.select",
+      "receipt.inspect",
+      "replay.inspect",
+      "workflow.inspect"
+    ],
+    "surfaces": [
+      {
+        "id": "operator-console",
+        "title": "Webflow Marketplace template lifecycle",
+        "kind": "workflow_overview",
+        "operations": [
+          {
+            "kind": "select_replay_case"
+          }
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "actionId": "approve_template",
+        "title": "Approve template",
+        "kind": "decision",
+        "authority": "marketplace-reviewer",
+        "autonomy": "approval_required",
+        "systemsTouched": [
+          "airtable-marketplace",
+          "policy-os",
+          "template-review-mcp"
+        ],
+        "requiredEvidence": [
+          "review_status",
+          "review_summary",
+          "reviewer_id",
+          "validation_result",
+          "version_id"
+        ],
+        "approvalOwner": "marketplace-reviewer",
+        "receiptFields": [
+          "action_id",
+          "correlation_id",
+          "evidence_refs",
+          "outcome",
+          "reviewer_id",
+          "workflow_id"
+        ],
+        "recovery": {
+          "mode": "manual_fallback",
+          "owner": "marketplace-reviewer",
+          "path": "Keep the version in review and resolve the approval manually in Airtable."
+        }
+      },
+      {
+        "actionId": "monitor_post_launch",
+        "title": "Monitor post-launch signals",
+        "kind": "read",
+        "authority": "workflow-runtime",
+        "autonomy": "auto_allow",
+        "systemsTouched": [
+          "airtable-marketplace",
+          "substrate"
+        ],
+        "requiredEvidence": [
+          "asset_id",
+          "observed_at",
+          "signal_type"
+        ],
+        "receiptFields": [
+          "action_id",
+          "correlation_id",
+          "evidence_refs",
+          "outcome",
+          "workflow_id"
+        ],
+        "recovery": {
+          "mode": "escalate",
+          "owner": "marketplace-operator",
+          "path": "Retain the last known signal state and request a manual health check."
+        }
+      },
+      {
+        "actionId": "publish_template",
+        "title": "Publish template",
+        "kind": "publish",
+        "authority": "marketplace-operator",
+        "autonomy": "manual_only",
+        "systemsTouched": [
+          "airtable-marketplace",
+          "policy-os"
+        ],
+        "requiredEvidence": [
+          "approval_receipt",
+          "operator_id",
+          "release_metadata",
+          "version_id"
+        ],
+        "approvalOwner": "marketplace-operator",
+        "receiptFields": [
+          "action_id",
+          "correlation_id",
+          "evidence_refs",
+          "operator_id",
+          "outcome",
+          "workflow_id"
+        ],
+        "recovery": {
+          "mode": "rollback",
+          "owner": "marketplace-operator",
+          "path": "Stop publication, preserve the approved version, and follow the marketplace release rollback runbook."
+        }
+      },
+      {
+        "actionId": "request_changes",
+        "title": "Request changes",
+        "kind": "decision",
+        "authority": "marketplace-reviewer",
+        "autonomy": "approval_required",
+        "systemsTouched": [
+          "airtable-marketplace",
+          "policy-os",
+          "template-review-mcp"
+        ],
+        "requiredEvidence": [
+          "review_feedback",
+          "review_summary",
+          "reviewer_id",
+          "version_id"
+        ],
+        "approvalOwner": "marketplace-reviewer",
+        "receiptFields": [
+          "action_id",
+          "correlation_id",
+          "evidence_refs",
+          "outcome",
+          "reviewer_id",
+          "workflow_id"
+        ],
+        "recovery": {
+          "mode": "manual_fallback",
+          "owner": "marketplace-reviewer",
+          "path": "Leave official state unchanged and record feedback manually in Airtable."
+        }
+      },
+      {
+        "actionId": "send_creator_decision",
+        "title": "Send creator-facing decision autonomously",
+        "kind": "write",
+        "authority": "marketplace-reviewer",
+        "autonomy": "blocked",
+        "systemsTouched": [
+          "policy-os",
+          "template-review-mcp"
+        ],
+        "requiredEvidence": [
+          "decision_receipt",
+          "human_send_confirmation",
+          "reviewer_id"
+        ],
+        "receiptFields": [
+          "action_id",
+          "correlation_id",
+          "evidence_refs",
+          "outcome",
+          "workflow_id"
+        ],
+        "recovery": {
+          "mode": "escalate",
+          "owner": "marketplace-reviewer",
+          "path": "Return a draft only and require the reviewer to send through the approved communication path."
+        }
+      },
+      {
+        "actionId": "validate_submission",
+        "title": "Validate submission",
+        "kind": "decision",
+        "authority": "workflow-runtime",
+        "autonomy": "auto_allow",
+        "systemsTouched": [
+          "airtable-marketplace",
+          "template-validation"
+        ],
+        "requiredEvidence": [
+          "asset_id",
+          "published_url",
+          "validation_result",
+          "version_id"
+        ],
+        "receiptFields": [
+          "action_id",
+          "correlation_id",
+          "evidence_refs",
+          "outcome",
+          "workflow_id"
+        ],
+        "recovery": {
+          "mode": "escalate",
+          "owner": "marketplace-reviewer",
+          "path": "Keep the submission in submitted state and request manual validation."
+        }
       }
     ]
   }

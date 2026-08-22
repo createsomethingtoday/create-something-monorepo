@@ -2,7 +2,7 @@
   "schemaVersion": "tool_contracts.v0.1",
   "workflowId": "webflow.marketplace.template-lifecycle",
   "workflowVersion": "0.1.0",
-  "definitionHash": "sha256:96e880807497d7a417cbf7e7a009d9331996d55e249068767b2417131a91156f",
+  "definitionHash": "sha256:7081c11dd462018dc64696e0aac6ca656c2a61e8c337ecd1c051388eca996ac1",
   "tools": [
     {
       "actionId": "approve_template",
@@ -11,6 +11,7 @@
       "authority": "marketplace-reviewer",
       "autonomy": "approval_required",
       "requiredEvidence": [
+        "review_status",
         "review_summary",
         "reviewer_id",
         "validation_result",
@@ -23,6 +24,18 @@
         "outcome",
         "reviewer_id",
         "workflow_id"
+      ],
+      "parameters": [
+        {
+          "name": "review_status",
+          "type": "string",
+          "description": "Reviewer-controlled marketplace review status."
+        },
+        {
+          "name": "version_id",
+          "type": "string",
+          "description": "Marketplace asset version identifier."
+        }
       ]
     },
     {
@@ -44,6 +57,18 @@
         "outcome",
         "reviewer_id",
         "workflow_id"
+      ],
+      "parameters": [
+        {
+          "name": "review_feedback",
+          "type": "string",
+          "description": "Reviewer-authored change request."
+        },
+        {
+          "name": "version_id",
+          "type": "string",
+          "description": "Marketplace asset version identifier."
+        }
       ]
     },
     {
@@ -64,6 +89,28 @@
         "evidence_refs",
         "outcome",
         "workflow_id"
+      ],
+      "parameters": [
+        {
+          "name": "asset_id",
+          "type": "string",
+          "description": "Marketplace asset identifier."
+        },
+        {
+          "name": "published_url",
+          "type": "string",
+          "description": "Published template URL to validate."
+        },
+        {
+          "name": "validation_result",
+          "type": "string",
+          "description": "Recorded validation result."
+        },
+        {
+          "name": "version_id",
+          "type": "string",
+          "description": "Marketplace asset version identifier."
+        }
       ]
     }
   ]

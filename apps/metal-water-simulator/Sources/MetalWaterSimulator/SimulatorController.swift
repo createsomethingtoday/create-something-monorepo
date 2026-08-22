@@ -140,7 +140,10 @@ final class SimulatorController: ObservableObject {
     var proofExportRequirement: String {
         if workflowStage != .proof { return "Advance the case to Proof" }
         if playback?.isGateOpen != false { return "Close the governed gate" }
-        if artifactTourProgress?.isComplete != true { return "Complete the 15-artifact tour" }
+        if artifactTourProgress?.isComplete != true {
+            let total = artifactTourProgress?.totalCount ?? 0
+            return "Complete the \(total)-artifact tour"
+        }
         if rendererTone != .ready { return "Verify the ten-second renderer window" }
         return "Semantic · artifact · renderer · capture manifest"
     }

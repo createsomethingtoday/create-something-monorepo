@@ -26,6 +26,7 @@
       "actorId": "marketplace-reviewer",
       "evidence": {
         "version_id": "version-fixture-002",
+        "review_status": "✅Approved",
         "reviewer_id": "reviewer-fixture-001",
         "review_summary": "All objective checks are complete; taste review remains human-owned.",
         "validation_result": "pass"

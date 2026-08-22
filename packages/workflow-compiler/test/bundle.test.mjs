@@ -27,21 +27,16 @@ test('compiles one marketplace definition into a complete governed runtime bundl
     workflowVersion: definition.version,
     definitionHash: compiled.definitionHash,
     entrySurfaceId: 'operator-console',
-    capabilities: [
-      'interaction.select',
-      'receipt.inspect',
-      'replay.inspect',
-      'workflow.inspect',
-    ],
+    capabilities: ['interaction.select', 'receipt.inspect', 'replay.inspect', 'workflow.inspect'],
     surfaces: [
       {
         id: 'operator-console',
         title: definition.title,
         kind: 'workflow_overview',
-        operations: [{ kind: 'select_replay_case' }],
-      },
+        operations: [{ kind: 'select_replay_case' }]
+      }
     ],
-    actions: compiled.decisionInventory.decisions,
+    actions: compiled.decisionInventory.decisions
   });
 
   const headers = [
@@ -52,7 +47,7 @@ test('compiles one marketplace definition into a complete governed runtime bundl
     compiled.toolContracts,
     compiled.agentContracts,
     compiled.approvalSurfaces,
-    compiled.evaluationManifest,
+    compiled.evaluationManifest
   ];
   for (const artifact of headers) {
     assert.equal(artifact.workflowId, definition.workflowId);
@@ -61,7 +56,7 @@ test('compiles one marketplace definition into a complete governed runtime bundl
   }
 
   const approval = compiled.decisionInventory.decisions.find(
-    (decision) => decision.actionId === 'approve_template',
+    (decision) => decision.actionId === 'approve_template'
   );
   assert.deepEqual(
     {
@@ -70,24 +65,64 @@ test('compiles one marketplace definition into a complete governed runtime bundl
       approvalOwner: approval.approvalOwner,
       requiredEvidence: approval.requiredEvidence,
       receiptFields: approval.receiptFields,
-      recoveryOwner: approval.recovery.owner,
+      recoveryOwner: approval.recovery.owner
     },
     {
       authority: 'marketplace-reviewer',
       autonomy: 'approval_required',
       approvalOwner: 'marketplace-reviewer',
-      requiredEvidence: ['review_summary', 'reviewer_id', 'validation_result', 'version_id'],
+      requiredEvidence: [
+        'review_status',
+        'review_summary',
+        'reviewer_id',
+        'validation_result',
+        'version_id'
+      ],
       receiptFields: [
         'action_id',
         'correlation_id',
         'evidence_refs',
         'outcome',
         'reviewer_id',
-        'workflow_id',
+        'workflow_id'
       ],
-      recoveryOwner: 'marketplace-reviewer',
-    },
+      recoveryOwner: 'marketplace-reviewer'
+    }
   );
+});
+
+test('keeps marketplace write contracts aligned with the production review MCP', async () => {
+  const definition = JSON.parse(await readFile(fixtureUrl, 'utf8'));
+  const compiled = compileWorkflowDefinition(definition);
+
+  const contracts = Object.fromEntries(
+    compiled.toolContracts.tools.map((contract) => [contract.name, contract.parameters])
+  );
+
+  assert.deepEqual(contracts.template_review_request_changes, [
+    {
+      name: 'review_feedback',
+      type: 'string',
+      description: 'Reviewer-authored change request.'
+    },
+    {
+      name: 'version_id',
+      type: 'string',
+      description: 'Marketplace asset version identifier.'
+    }
+  ]);
+  assert.deepEqual(contracts.template_review_set_review_status, [
+    {
+      name: 'review_status',
+      type: 'string',
+      description: 'Reviewer-controlled marketplace review status.'
+    },
+    {
+      name: 'version_id',
+      type: 'string',
+      description: 'Marketplace asset version identifier.'
+    }
+  ]);
 });
 
 test('fails closed when a transition references an unknown action', async () => {
@@ -98,10 +133,11 @@ test('fails closed when a transition references an unknown action', async () => 
     () => compileWorkflowDefinition(definition),
     (error) => {
       assert.equal(error.name, 'WorkflowCompilationError');
-      assert.deepEqual(error.diagnostics.map((diagnostic) => diagnostic.code), [
-        'UNKNOWN_TRANSITION_ACTION',
-      ]);
+      assert.deepEqual(
+        error.diagnostics.map((diagnostic) => diagnostic.code),
+        ['UNKNOWN_TRANSITION_ACTION']
+      );
       return true;
-    },
+    }
   );
 });

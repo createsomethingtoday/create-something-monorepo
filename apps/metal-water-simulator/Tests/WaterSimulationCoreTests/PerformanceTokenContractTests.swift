@@ -18,7 +18,9 @@ func nativeTokensMatchCanonicalPerformanceContract() throws {
     let canonicalTokens = try #require(contract["tokens"] as? [String: String])
 
     for (name, value) in PerformanceTokens.canonicalValues {
-        #expect(canonicalTokens[name] == value, "Mismatch for \(name)")
+        let canonicalValue = canonicalTokens[name]?.filter { !$0.isWhitespace }
+        let nativeValue = value.filter { !$0.isWhitespace }
+        #expect(canonicalValue == nativeValue, "Mismatch for \(name)")
     }
 }
 

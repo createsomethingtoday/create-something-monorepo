@@ -135,7 +135,9 @@
       "systemsTouched": ["template-validation", "airtable-marketplace"],
       "requiredEvidence": ["asset_id", "version_id", "published_url", "validation_result"],
       "approval": { "required": false },
-      "receipt": { "requiredFields": ["workflow_id", "action_id", "correlation_id", "outcome", "evidence_refs"] },
+      "receipt": {
+        "requiredFields": ["workflow_id", "action_id", "correlation_id", "outcome", "evidence_refs"]
+      },
       "recovery": {
         "mode": "escalate",
         "owner": "marketplace-reviewer",
@@ -174,7 +176,16 @@
       "systemsTouched": ["template-review-mcp", "airtable-marketplace", "policy-os"],
       "requiredEvidence": ["version_id", "reviewer_id", "review_feedback", "review_summary"],
       "approval": { "required": true, "owner": "marketplace-reviewer" },
-      "receipt": { "requiredFields": ["workflow_id", "action_id", "correlation_id", "outcome", "reviewer_id", "evidence_refs"] },
+      "receipt": {
+        "requiredFields": [
+          "workflow_id",
+          "action_id",
+          "correlation_id",
+          "outcome",
+          "reviewer_id",
+          "evidence_refs"
+        ]
+      },
       "recovery": {
         "mode": "manual_fallback",
         "owner": "marketplace-reviewer",
@@ -188,16 +199,6 @@
             "name": "review_feedback",
             "type": "string",
             "description": "Reviewer-authored change request."
-          },
-          {
-            "name": "review_summary",
-            "type": "string",
-            "description": "Evidence-backed review summary."
-          },
-          {
-            "name": "reviewer_id",
-            "type": "string",
-            "description": "Assigned marketplace reviewer identifier."
           },
           {
             "name": "version_id",
@@ -214,9 +215,24 @@
       "authority": "marketplace-reviewer",
       "autonomy": "approval_required",
       "systemsTouched": ["template-review-mcp", "airtable-marketplace", "policy-os"],
-      "requiredEvidence": ["version_id", "reviewer_id", "review_summary", "validation_result"],
+      "requiredEvidence": [
+        "version_id",
+        "review_status",
+        "reviewer_id",
+        "review_summary",
+        "validation_result"
+      ],
       "approval": { "required": true, "owner": "marketplace-reviewer" },
-      "receipt": { "requiredFields": ["workflow_id", "action_id", "correlation_id", "outcome", "reviewer_id", "evidence_refs"] },
+      "receipt": {
+        "requiredFields": [
+          "workflow_id",
+          "action_id",
+          "correlation_id",
+          "outcome",
+          "reviewer_id",
+          "evidence_refs"
+        ]
+      },
       "recovery": {
         "mode": "manual_fallback",
         "owner": "marketplace-reviewer",
@@ -227,19 +243,9 @@
         "targetSystemId": "template-review-mcp",
         "parameters": [
           {
-            "name": "review_summary",
+            "name": "review_status",
             "type": "string",
-            "description": "Evidence-backed review summary."
-          },
-          {
-            "name": "reviewer_id",
-            "type": "string",
-            "description": "Approving marketplace reviewer identifier."
-          },
-          {
-            "name": "validation_result",
-            "type": "string",
-            "description": "Recorded validation result."
+            "description": "Reviewer-controlled marketplace review status."
           },
           {
             "name": "version_id",
@@ -258,7 +264,16 @@
       "systemsTouched": ["airtable-marketplace", "policy-os"],
       "requiredEvidence": ["version_id", "approval_receipt", "release_metadata", "operator_id"],
       "approval": { "required": true, "owner": "marketplace-operator" },
-      "receipt": { "requiredFields": ["workflow_id", "action_id", "correlation_id", "outcome", "operator_id", "evidence_refs"] },
+      "receipt": {
+        "requiredFields": [
+          "workflow_id",
+          "action_id",
+          "correlation_id",
+          "outcome",
+          "operator_id",
+          "evidence_refs"
+        ]
+      },
       "recovery": {
         "mode": "rollback",
         "owner": "marketplace-operator",
@@ -274,7 +289,9 @@
       "systemsTouched": ["airtable-marketplace", "substrate"],
       "requiredEvidence": ["asset_id", "signal_type", "observed_at"],
       "approval": { "required": false },
-      "receipt": { "requiredFields": ["workflow_id", "action_id", "correlation_id", "outcome", "evidence_refs"] },
+      "receipt": {
+        "requiredFields": ["workflow_id", "action_id", "correlation_id", "outcome", "evidence_refs"]
+      },
       "recovery": {
         "mode": "escalate",
         "owner": "marketplace-operator",
@@ -291,7 +308,9 @@
       "systemsTouched": ["template-review-mcp", "policy-os"],
       "requiredEvidence": ["reviewer_id", "human_send_confirmation", "decision_receipt"],
       "approval": { "required": false },
-      "receipt": { "requiredFields": ["workflow_id", "action_id", "correlation_id", "outcome", "evidence_refs"] },
+      "receipt": {
+        "requiredFields": ["workflow_id", "action_id", "correlation_id", "outcome", "evidence_refs"]
+      },
       "recovery": {
         "mode": "escalate",
         "owner": "marketplace-reviewer",
@@ -353,7 +372,13 @@
       "title": "Template approval waits for the assigned reviewer",
       "actionId": "approve_template",
       "expectedOutcome": "approval_required",
-      "requiredEvidence": ["version_id", "reviewer_id", "review_summary", "validation_result"]
+      "requiredEvidence": [
+        "version_id",
+        "review_status",
+        "reviewer_id",
+        "review_summary",
+        "validation_result"
+      ]
     },
     {
       "id": "creator-message-blocked",
