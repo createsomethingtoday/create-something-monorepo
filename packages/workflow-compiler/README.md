@@ -22,6 +22,7 @@ import {
   evaluateGovernedInteractionCompatibility,
   parseGovernedInteractionBundle,
   replayWorkflow,
+  verifyWorkflowArtifactBundle,
   writeCompiledWorkflowArtifacts
 } from '@create-something/workflow-compiler';
 ```
@@ -78,6 +79,36 @@ The output includes:
 - content-hashed artifact manifest
 
 The output path is a compiler-managed symbolic link to an immutable sibling revision. Recompilation writes and validates a complete new revision before one atomic pointer rename, so concurrent readers see either the previous bundle or the new bundle and a terminated compiler cannot strand the public path between two directory renames. The compiler retains published revisions under `.<output-name>.workflow-compiler/` so one concurrent publisher can never garbage-collect another publisher's winning revision; remove that control directory together with the output pointer only when no compiler or reader is active. A versioned owner-only marker binds that control directory to the resolved output path, and an unmarked or differently bound directory is rejected. The sole migration exception is a pre-marker output whose existing public symlink, real revisions directory, direct immutable revision, complete manifest shape, required base artifacts, listed content hashes, and bundle identity already prove the prior compiler relationship; the compiler then creates the marker exclusively before continuing. Compiler control directories preserve required read/traversal access but never inherit group or world write authority. New artifact files and directories receive deterministic `0644` and `0755` modes; recompilation preserves explicit per-artifact mode adjustments from the published revision instead of inheriting the caller's current umask. The compiler rejects unrelated links, non-empty unowned directories, and legacy direct-directory outputs instead of migrating them through a non-atomic window.
+
+## Integrity and local attestation
+
+Compile an unsigned bundle when content integrity is sufficient:
+
+```bash
+workflow-compiler compile \
+  --workflow workflow.json \
+  --out .workflow-build
+
+workflow-compiler verify --dir .workflow-build
+```
+
+For signer attestation, supply your own Ed25519 private key and a stable key ID. The private key is read for the signing operation and is never copied into the output:
+
+```bash
+workflow-compiler compile \
+  --workflow workflow.json \
+  --out .workflow-build \
+  --signing-key ./private-ed25519.pem \
+  --key-id ci-release-2026
+
+workflow-compiler verify \
+  --dir .workflow-build \
+  --public-key ./trusted-public-ed25519.pem
+```
+
+The manifest is the deterministic integrity inventory. `attestation.json` is a non-circular sidecar whose signature binds the schema, algorithm, key ID, public-key fingerprint, and canonical manifest hash; the manifest in turn contains every artifact hash. Verification receipts are byte-identical for identical content and trust inputs and report one explicit attestation state: `unsigned`, `present_unverified`, or `verified`. Unsigned or untrusted-key checks report top-level `integrity_verified`; only a trusted-key signature reports top-level `verified`. A supplied public key makes the attestation mandatory; missing, malformed, wrong-key, manifest-mismatched, or invalid signatures stop with exit code 3. CLI usage or key-format errors exit 2, unexpected operational failures exit 1, and successful verification exits 0.
+
+A digest alone is never described as an attestation. See [THREAT_MODEL.md](./THREAT_MODEL.md) for trust assumptions, limits, and non-goals.
 
 Serve the generated read-only console:
 

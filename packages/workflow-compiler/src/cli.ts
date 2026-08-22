@@ -3,7 +3,13 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
-import { WorkflowArtifactOutputError, writeCompiledWorkflowArtifacts } from './artifacts.js';
+import {
+  verifyWorkflowArtifactBundle,
+  WorkflowArtifactOutputError,
+  WorkflowArtifactVerificationError,
+  writeCompiledWorkflowArtifacts
+} from './artifacts.js';
+import { WorkflowArtifactAttestationError } from './attestation.js';
 import { compileWorkflowDefinition, WorkflowCompilationError } from './compile.js';
 import { ReplayInputValidationError, WorkflowInputValidationError } from './input.js';
 import { replayWorkflow } from './replay.js';
@@ -40,12 +46,15 @@ interface CompileOptions {
   workflowPath: string;
   casesPath?: string;
   outDir: string;
+  signingKeyPath?: string;
+  keyId?: string;
 }
 
 function usage(): string {
   return [
     'Usage:',
-    '  workflow-compiler compile --workflow <definition.json> [--cases <cases.json>] --out <directory>',
+    '  workflow-compiler compile --workflow <definition.json> [--cases <cases.json>] --out <directory> [--signing-key <private.pem> --key-id <id>]',
+    '  workflow-compiler verify --dir <compiled-output> [--public-key <public.pem>]',
     '  workflow-compiler serve --dir <compiled-output> [--port <number>]'
   ].join('\n');
 }
@@ -65,15 +74,21 @@ function flagValues(args: string[], allowed: readonly string[]): Map<string, str
 
 function compileOptions(args: string[]): CompileOptions {
   if (args[0] !== 'compile') throw new WorkflowCliUsageError();
-  const values = flagValues(args, ['--workflow', '--cases', '--out']);
+  const values = flagValues(args, ['--workflow', '--cases', '--out', '--signing-key', '--key-id']);
   const workflowPath = values.get('--workflow');
   const outDir = values.get('--out');
   if (!workflowPath || !outDir) throw new WorkflowCliUsageError();
   const casesPath = values.get('--cases');
+  const signingKeyPath = values.get('--signing-key');
+  const keyId = values.get('--key-id');
+  if ((signingKeyPath === undefined) !== (keyId === undefined)) {
+    throw new WorkflowCliUsageError();
+  }
   return {
     workflowPath: resolve(workflowPath),
     ...(casesPath ? { casesPath: resolve(casesPath) } : {}),
-    outDir: resolve(outDir)
+    outDir: resolve(outDir),
+    ...(signingKeyPath ? { signingKeyPath: resolve(signingKeyPath), keyId } : {})
   };
 }
 
@@ -99,13 +114,29 @@ async function main(): Promise<void> {
     return;
   }
 
+  if (args[0] === 'verify') {
+    const values = flagValues(args, ['--dir', '--public-key']);
+    const rootDir = values.get('--dir');
+    const publicKeyPath = values.get('--public-key');
+    if (!rootDir) throw new WorkflowCliUsageError();
+    const receipt = await verifyWorkflowArtifactBundle(resolve(rootDir), {
+      ...(publicKeyPath ? { publicKey: await readFile(resolve(publicKeyPath), 'utf8') } : {})
+    });
+    process.stdout.write(`${JSON.stringify({ ok: true, receipt }, null, 2)}\n`);
+    return;
+  }
+
   const options = compileOptions(args);
   const definition = parseJsonInput(await readFile(options.workflowPath, 'utf8'), 'workflow');
   const bundle = compileWorkflowDefinition(definition);
   const replay = options.casesPath
     ? replayWorkflow(bundle, parseJsonInput(await readFile(options.casesPath, 'utf8'), 'replay'))
     : undefined;
-  const manifest = await writeCompiledWorkflowArtifacts(bundle, options.outDir, replay);
+  const signing =
+    options.signingKeyPath && options.keyId
+      ? { privateKey: await readFile(options.signingKeyPath, 'utf8'), keyId: options.keyId }
+      : undefined;
+  const manifest = await writeCompiledWorkflowArtifacts(bundle, options.outDir, replay, signing);
   process.stdout.write(
     `${JSON.stringify({ ok: true, outDir: options.outDir, manifest }, null, 2)}\n`
   );
@@ -145,6 +176,37 @@ main().catch((error: unknown) => {
       )}\n`
     );
     process.exitCode = 2;
+  } else if (error instanceof WorkflowArtifactVerificationError) {
+    process.stderr.write(
+      `${JSON.stringify(
+        {
+          ok: false,
+          error: error.name,
+          code: error.code,
+          message: error.message,
+          ...(error.path ? { path: error.path } : {})
+        },
+        null,
+        2
+      )}\n`
+    );
+    process.exitCode = 3;
+  } else if (error instanceof WorkflowArtifactAttestationError) {
+    process.stderr.write(
+      `${JSON.stringify(
+        { ok: false, error: error.name, code: error.code, message: error.message },
+        null,
+        2
+      )}\n`
+    );
+    process.exitCode = [
+      'INVALID_KEY_ID',
+      'INVALID_PRIVATE_KEY',
+      'INVALID_PUBLIC_KEY',
+      'UNSUPPORTED_KEY_TYPE'
+    ].includes(error.code)
+      ? 2
+      : 3;
   } else if (
     error instanceof WorkflowInputValidationError ||
     error instanceof ReplayInputValidationError

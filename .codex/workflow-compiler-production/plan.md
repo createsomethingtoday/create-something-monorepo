@@ -3,11 +3,11 @@
 ## Current state
 
 - Goal status: active
-- Active phase: 1
-- Active Linear issue: CRE-1834
-- Worktree: `/private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/cre-1834-agent-worktree`
-- Branch: `codex/CRE-1834-agent-worktree`
-- Base: `origin/main` at `54ecda947286773fb08d77fb60da3580d95fc548`
+- Active phase: 2
+- Active Linear issue: CRE-1832
+- Worktree: `/private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/cre-1832-agent-worktree`
+- Branch: `codex/CRE-1832-agent-worktree`
+- Base: `origin/main` at `a85ea46e2ebf31e100e346760a44e5eb79ac2098`
 
 ## Phases
 
@@ -21,7 +21,7 @@
 - [x] Activate the Ultragoal runtime.
 - [x] Record baseline package verification from the clean worktree.
 
-### 1. Stabilize schemas and CLI contract — in progress
+### 1. Stabilize schemas and CLI contract — complete
 
 - [x] Read and apply the test-first vertical-slice skill.
 - [x] Add failing public-boundary tests for malformed workflow and replay inputs.
@@ -30,14 +30,14 @@
 - [x] Harden output ownership and root-path checks; publish immutable revisions through one atomic managed-pointer rename.
 - [x] Define and test stable CLI exit semantics for success, invalid input, governance stop, and unexpected operational failure. Adapter-level pass, wait, and stop remains in phase 3.
 - [x] Run package, acceptance, exports, and direct downstream compatibility gates.
-- [ ] Commit, push, open the review boundary, and record CRE-1834 evidence.
+- [x] Commit, push, open the review boundary, and record CRE-1834 evidence.
 
-### 2. Add attestable bundles and security verification — pending
+### 2. Add attestable bundles and security verification — in progress
 
-- [ ] Claim CRE-1832 in an exact-main issue worktree.
-- [ ] Define the local attestation trust model and verification receipt.
-- [ ] Add independent tamper verification through public exports and CLI.
-- [ ] Add property or fuzz coverage, path/adversarial cases, performance bounds, dependency audit, and threat model.
+- [x] Claim CRE-1832 in an exact-main issue worktree.
+- [x] Define the local attestation trust model and verification receipt.
+- [x] Add independent tamper verification through public exports and CLI.
+- [x] Add property or fuzz coverage, path/adversarial cases, performance bounds, dependency audit, and threat model.
 - [ ] Promote through review and record CRE-1832 evidence.
 
 ### 3. Prove a second vertical and builder adapters — pending
@@ -103,3 +103,12 @@
 - 2026-08-22: Exact-commit review identified unmarked control-directory adoption and artifact mode drift across umasks or operator adjustments. The compiler now requires an owner-only versioned marker bound to the resolved output path, assigns deterministic `0644`/`0755` defaults, and carries deliberate per-path modes into the next immutable revision. The package suite passes 49 tests; deterministic acceptance, package typecheck, diff hygiene, and repository legibility all pass.
 - 2026-08-22: Review of the marker repair identified the immediate pre-marker upgrade boundary. One explicit migration now initializes the marker only when the existing public symlink, real revisions directory, direct revision target, and valid workflow artifact manifest prove prior compiler ownership; unrelated unmarked control directories remain fail-closed. The package suite passes 50 tests.
 - 2026-08-22: Exact review tightened pre-marker adoption from a schema-version check to complete evidence verification. Migration now requires the exact manifest shape, sorted unique canonical paths, every base artifact, every listed SHA-256 content hash, regular files, and agreement between manifest and compiled-bundle identity. Incomplete and hash-tampered migration tests fail before marker creation; the package suite passes 52 tests.
+- 2026-08-22: PR #1491 received a clean exact review on `9b680b6b716117b7aacc61114d4dff3443006581`; Public Distribution GA, Philosophical Code Review, MCP quality, package legibility, and both Socket checks passed. The PR merged to protected `main` as `a85ea46e2ebf31e100e346760a44e5eb79ac2098`.
+- 2026-08-22: CRE-1832 was claimed and bootstrapped in a new issue worktree based on exact `origin/main` merge `a85ea46e2ebf31e100e346760a44e5eb79ac2098`.
+- 2026-08-22: Phase-2 public verification now separates SHA-256 manifest integrity from optional Ed25519 signer attestation. Identical bundles and keys produce deterministic sidecars and receipts; receipt states distinguish unsigned, present-but-unverified, and trusted-key verified outcomes. Wrong keys, missing attestations under a trust requirement, and invalid signatures stop with structured diagnostics.
+- 2026-08-22: Adversarial verification covers normalized paths, NUL/backslash/absolute/dot-segment escapes, undeclared files and directories, internal symlinks, malformed attestation property families, 512-file and byte-size limits, zero runtime dependencies, and a 100-verification local CI performance bound. `THREAT_MODEL.md` records trust statements, residual risks, and non-goals.
+- 2026-08-22: Phase-2 validation passes 60/60 package tests, deterministic 18-artifact acceptance, package typecheck, 88-export discovery, diff hygiene, and direct downstream suites for evidence extraction (6), historical context (2), observation reconciliation (3), and receipt reconciliation (5). Attestation signatures bind key identity metadata as well as the canonical manifest hash; top-level receipts reserve `verified` for trusted-key success and report `integrity_verified` otherwise.
+- 2026-08-22: Exact PR review identified an allocation-before-limit check and runtime key-ID coercion. A permission-denied sparse oversized-artifact regression proves metadata limits stop before content reads, and public signing tests cover undefined, null, numeric, and boolean key IDs. The verifier now performs per-file and aggregate stat bounds before allocation while retaining post-read byte checks; the package suite passes 62 tests.
+- 2026-08-22: Exact-head review identified that the managed output symlink could retarget between metadata bounds and content reads. A two-revision race regression fails against the prior verifier with an artifact hash mismatch, then passes repeatedly after verification resolves the public output pointer once and pins every subsequent stat, read, inventory, and attestation check to that retained revision. The package suite passes 63 tests.
+- 2026-08-22: Follow-up review preserved the public failure contract and removed scheduler dependence from the race proof. Missing directories and broken root symlinks now remain structured `MISSING_ARTIFACT` API errors and CLI exit-3 JSON stops. An internal, non-package-exported post-resolution hook provides an explicit test barrier; the pointer switches only after canonical root capture, making the retained-revision assertion deterministic. The package suite passes 64 tests.
+- 2026-08-22: Rebased exact-head review identified unbounded directory materialization and non-directory root diagnostics. Inventory traversal now streams with `opendir`, holds at most 4,096 entries, and stops before materializing attacker-sized directories. Existing files and symlinks to files now return structured `INVALID_ARTIFACT_TYPE` API errors and CLI exit-3 JSON. Both red-to-green regressions pass three consecutive runs; the package suite passes 66 tests.
