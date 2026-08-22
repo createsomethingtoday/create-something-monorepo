@@ -47,4 +47,7 @@ test('canonical buyer surfaces render the shared pricing contract without the ol
   assert.match(products, /managedControl\.label/);
   assert.match(map, /map\.publicStarterLabel/);
   assert.match(map, /map\.workspaceLabel/);
+  assert.doesNotMatch(map, /map\.workspaceLabel\.toLowerCase\(\)/);
+  assert.match(control, /managedControl\.longLabel/);
+  assert.doesNotMatch(control, /managedControl\.longLabel\.toLowerCase\(\)/);
 });
