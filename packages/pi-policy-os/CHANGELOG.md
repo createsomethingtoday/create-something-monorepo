@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.5
+
+- Reissued the GA package after protected `main` advanced again, preserving the exact-final-SHA provenance requirement.
+
 ## 1.0.4
 
 - Reissued the GA package after protected `main` advanced, so npm provenance attests to the final GA source revision without approving the stale staged candidate.
