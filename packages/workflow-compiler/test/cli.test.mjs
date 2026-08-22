@@ -20,6 +20,20 @@ import test from 'node:test';
 
 const packageRoot = new URL('..', import.meta.url);
 const fixturePath = new URL('../fixtures/marketplace/workflow.json', import.meta.url);
+const casesPath = new URL('../fixtures/marketplace/cases.json', import.meta.url);
+const cliUrl = new URL('../dist/cli.js', import.meta.url);
+
+function compileWithUmask(mask, args) {
+  const source = [
+    `process.umask(${mask});`,
+    `process.argv = ${JSON.stringify([process.execPath, 'workflow-compiler', ...args])};`,
+    `await import(${JSON.stringify(cliUrl.href)});`
+  ].join('\n');
+  return spawnSync(process.execPath, ['--input-type=module', '--eval', source], {
+    cwd: packageRoot,
+    encoding: 'utf8'
+  });
+}
 
 test('the public CLI writes a deterministic linked artifact inventory', async () => {
   const firstRoot = await mkdtemp(join(tmpdir(), 'workflow-compiler-first-'));
@@ -275,6 +289,115 @@ test('the public CLI refuses to replace a non-empty directory it does not own', 
   }
 });
 
+test('the public CLI refuses to adopt an unmarked compiler control directory', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'workflow-compiler-unowned-control-'));
+  const outDir = join(root, 'output');
+  const controlDir = join(root, '.output.workflow-compiler');
+  const protectedPath = join(controlDir, 'keep.txt');
+
+  try {
+    await mkdir(controlDir);
+    await writeFile(protectedPath, 'operator data\n', 'utf8');
+    const result = spawnSync(
+      process.execPath,
+      ['dist/cli.js', 'compile', '--workflow', fixturePath.pathname, '--out', outDir],
+      { cwd: packageRoot, encoding: 'utf8' }
+    );
+
+    assert.equal(result.status, 2, result.stderr || result.stdout);
+    assert.equal(await readFile(protectedPath, 'utf8'), 'operator data\n');
+    assert.deepEqual(JSON.parse(result.stderr), {
+      ok: false,
+      error: 'WorkflowArtifactOutputError',
+      code: 'OUTPUT_NOT_OWNED',
+      message: 'Refusing to use an unmarked workflow compiler control directory.'
+    });
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('artifact modes are deterministic across caller umasks', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'workflow-compiler-artifact-modes-'));
+  const outDir = join(root, 'output');
+  const args = [
+    'compile',
+    '--workflow',
+    fixturePath.pathname,
+    '--cases',
+    casesPath.pathname,
+    '--out',
+    outDir
+  ];
+
+  try {
+    const permissive = compileWithUmask(0o002, args);
+    assert.equal(permissive.status, 0, permissive.stderr || permissive.stdout);
+    const firstModes = {
+      manifest: (await stat(join(outDir, 'manifest.json'))).mode & 0o777,
+      consoleDirectory: (await stat(join(outDir, 'operator-console'))).mode & 0o777,
+      consoleEntry: (await stat(join(outDir, 'operator-console', 'index.html'))).mode & 0o777
+    };
+    assert.deepEqual(firstModes, {
+      manifest: 0o644,
+      consoleDirectory: 0o755,
+      consoleEntry: 0o644
+    });
+
+    const restrictive = compileWithUmask(0o077, args);
+    assert.equal(restrictive.status, 0, restrictive.stderr || restrictive.stdout);
+    assert.deepEqual(
+      {
+        manifest: (await stat(join(outDir, 'manifest.json'))).mode & 0o777,
+        consoleDirectory: (await stat(join(outDir, 'operator-console'))).mode & 0o777,
+        consoleEntry: (await stat(join(outDir, 'operator-console', 'index.html'))).mode & 0o777
+      },
+      firstModes
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('recompilation preserves deliberate artifact mode adjustments', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'workflow-compiler-preserved-artifact-modes-'));
+  const outDir = join(root, 'output');
+  const args = [
+    'compile',
+    '--workflow',
+    fixturePath.pathname,
+    '--cases',
+    casesPath.pathname,
+    '--out',
+    outDir
+  ];
+
+  try {
+    const initial = compileWithUmask(0o002, args);
+    assert.equal(initial.status, 0, initial.stderr || initial.stdout);
+    await chmod(join(outDir, 'manifest.json'), 0o640);
+    await chmod(join(outDir, 'operator-console'), 0o750);
+    await chmod(join(outDir, 'operator-console', 'index.html'), 0o640);
+
+    const replacement = compileWithUmask(0o077, args);
+    assert.equal(replacement.status, 0, replacement.stderr || replacement.stdout);
+    assert.deepEqual(
+      {
+        manifest: (await stat(join(outDir, 'manifest.json'))).mode & 0o777,
+        consoleDirectory: (await stat(join(outDir, 'operator-console'))).mode & 0o777,
+        consoleEntry: (await stat(join(outDir, 'operator-console', 'index.html'))).mode & 0o777
+      },
+      {
+        manifest: 0o640,
+        consoleDirectory: 0o750,
+        consoleEntry: 0o640
+      }
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 for (const mode of [0o700, 0o500, 0o750, 0o770, 0o777]) {
   test(`atomic replacement preserves output directory mode ${mode.toString(8)}`, async () => {
     const root = await mkdtemp(join(tmpdir(), 'workflow-compiler-output-mode-'));
@@ -303,6 +426,10 @@ for (const mode of [0o700, 0o500, 0o750, 0o770, 0o777]) {
       );
     } finally {
       await chmod(outDir, 0o700).catch(() => undefined);
+      const revisionsDir = join(root, '.output.workflow-compiler', 'revisions');
+      for (const revision of await readdir(revisionsDir).catch(() => [])) {
+        await chmod(join(revisionsDir, revision), 0o700).catch(() => undefined);
+      }
       await rm(root, { recursive: true, force: true });
     }
   });

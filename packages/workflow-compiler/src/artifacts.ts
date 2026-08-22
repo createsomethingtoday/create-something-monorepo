@@ -108,8 +108,36 @@ function isDirectRevisionTarget(outDir: string, target: string): boolean {
 
 interface ExistingOutput {
   emptyDirectory: boolean;
+  artifactModes?: Map<string, ArtifactMode>;
   metadata?: ExistingOutputMetadata;
   revision?: string;
+}
+
+interface ArtifactMode {
+  kind: 'directory' | 'file';
+  mode: number;
+}
+
+async function collectArtifactModes(
+  rootDir: string,
+  currentDir = rootDir,
+  modes = new Map<string, ArtifactMode>()
+): Promise<Map<string, ArtifactMode>> {
+  const entries = await readdir(currentDir, { withFileTypes: true });
+  for (const entry of entries) {
+    const target = join(currentDir, entry.name);
+    const pathFromRoot = relative(rootDir, target);
+    if (entry.isDirectory()) {
+      modes.set(pathFromRoot, {
+        kind: 'directory',
+        mode: (await lstat(target)).mode & 0o7777
+      });
+      await collectArtifactModes(rootDir, target, modes);
+    } else if (entry.isFile()) {
+      modes.set(pathFromRoot, { kind: 'file', mode: (await lstat(target)).mode & 0o7777 });
+    }
+  }
+  return modes;
 }
 
 async function inspectExistingOutput(outDir: string): Promise<ExistingOutput> {
@@ -139,6 +167,7 @@ async function inspectExistingOutput(outDir: string): Promise<ExistingOutput> {
       if (manifest.schemaVersion !== 'workflow_artifact_manifest.v0.1') throw new Error();
       const metadata = await stat(target);
       return {
+        artifactModes: await collectArtifactModes(target),
         emptyDirectory: false,
         metadata: {
           mode: metadata.mode & 0o7777,
@@ -202,17 +231,43 @@ interface ExistingOutputMetadata {
   gid: number;
 }
 
-async function applyOwnershipRecursively(rootDir: string, uid: number, gid: number): Promise<void> {
-  const entries = await readdir(rootDir, { withFileTypes: true });
+async function applyArtifactMetadataRecursively(
+  rootDir: string,
+  metadata: ExistingOutputMetadata,
+  previousModes: Map<string, ArtifactMode> | undefined,
+  currentDir = rootDir
+): Promise<void> {
+  const entries = await readdir(currentDir, { withFileTypes: true });
   for (const entry of entries) {
-    const target = join(rootDir, entry.name);
-    if (entry.isDirectory()) await applyOwnershipRecursively(target, uid, gid);
-    await chown(target, uid, gid);
+    const target = join(currentDir, entry.name);
+    const pathFromRoot = relative(rootDir, target);
+    const kind = entry.isDirectory() ? 'directory' : entry.isFile() ? 'file' : undefined;
+    if (!kind) continue;
+    if (kind === 'directory') {
+      await applyArtifactMetadataRecursively(rootDir, metadata, previousModes, target);
+    }
+    if (process.platform !== 'win32') await chown(target, metadata.uid, metadata.gid);
+    const previous = previousModes?.get(pathFromRoot);
+    const mode = previous?.kind === kind ? previous.mode : kind === 'directory' ? 0o755 : 0o644;
+    await chmod(target, mode);
   }
 }
 
+function isAlreadyPresent(error: unknown): boolean {
+  return (
+    error !== null &&
+    typeof error === 'object' &&
+    'code' in error &&
+    (error as { code?: unknown }).code === 'EEXIST'
+  );
+}
+
 async function ensureManagedDirectory(path: string): Promise<void> {
-  await mkdir(path, { recursive: true, mode: 0o700 });
+  try {
+    await mkdir(path, { mode: 0o700 });
+  } catch (error) {
+    if (!isAlreadyPresent(error)) throw error;
+  }
   if (!(await lstat(path)).isDirectory()) {
     throw new WorkflowArtifactOutputError(
       'OUTPUT_NOT_OWNED',
@@ -221,14 +276,79 @@ async function ensureManagedDirectory(path: string): Promise<void> {
   }
 }
 
+const CONTROL_MARKER_SCHEMA_VERSION = 'workflow_compiler_control.v0.1';
+const CONTROL_MARKER_FILENAME = 'control.json';
+
+function unownedControlDirectoryError(): WorkflowArtifactOutputError {
+  return new WorkflowArtifactOutputError(
+    'OUTPUT_NOT_OWNED',
+    'Refusing to use an unmarked workflow compiler control directory.'
+  );
+}
+
+async function validateControlMarker(controlDir: string, outDir: string): Promise<void> {
+  try {
+    const markerPath = join(controlDir, CONTROL_MARKER_FILENAME);
+    if (!(await lstat(markerPath)).isFile()) throw new Error();
+    const marker = JSON.parse(await readFile(markerPath, 'utf8')) as {
+      schemaVersion?: unknown;
+      outputPath?: unknown;
+    };
+    if (marker.schemaVersion !== CONTROL_MARKER_SCHEMA_VERSION || marker.outputPath !== outDir) {
+      throw new Error();
+    }
+  } catch {
+    throw unownedControlDirectoryError();
+  }
+}
+
+async function ensureCompilerControlDirectory(controlDir: string, outDir: string): Promise<void> {
+  let created = false;
+  try {
+    await mkdir(controlDir, { mode: 0o700 });
+    created = true;
+  } catch (error) {
+    if (!isAlreadyPresent(error)) throw error;
+  }
+
+  let controlEntry;
+  try {
+    controlEntry = await lstat(controlDir);
+  } catch {
+    throw unownedControlDirectoryError();
+  }
+  if (!controlEntry.isDirectory()) throw unownedControlDirectoryError();
+
+  if (!created) {
+    await validateControlMarker(controlDir, outDir);
+    return;
+  }
+
+  const markerPath = join(controlDir, CONTROL_MARKER_FILENAME);
+  try {
+    await writeFile(
+      markerPath,
+      json({ schemaVersion: CONTROL_MARKER_SCHEMA_VERSION, outputPath: outDir }),
+      { encoding: 'utf8', flag: 'wx', mode: 0o600 }
+    );
+  } catch (error) {
+    await rm(markerPath, { force: true });
+    await rmdir(controlDir).catch(() => undefined);
+    throw error;
+  }
+}
+
 async function applyManagedDirectoryMetadata(
   paths: string[],
-  metadata: ExistingOutputMetadata
+  metadata: ExistingOutputMetadata,
+  markerPath: string
 ): Promise<void> {
   for (const path of paths) {
     if (process.platform !== 'win32') await chown(path, metadata.uid, metadata.gid);
     await chmod(path, (metadata.mode & ~0o022) | 0o700);
   }
+  if (process.platform !== 'win32') await chown(markerPath, metadata.uid, metadata.gid);
+  await chmod(markerPath, 0o600);
 }
 
 async function publishRevisionAtomically(
@@ -317,7 +437,8 @@ export async function writeCompiledWorkflowArtifacts(
   await mkdir(parentDir, { recursive: true });
   const controlDir = controlDirectory(resolvedOutDir);
   const revisionsDir = revisionsDirectory(resolvedOutDir);
-  await ensureManagedDirectory(controlDir);
+  const controlMarkerPath = join(controlDir, CONTROL_MARKER_FILENAME);
+  await ensureCompilerControlDirectory(controlDir, resolvedOutDir);
   await ensureManagedDirectory(revisionsDir);
   const revisionId = randomUUID();
   const stagingDir = join(revisionsDir, `.tmp-${revisionId}`);
@@ -338,18 +459,19 @@ export async function writeCompiledWorkflowArtifacts(
 
   try {
     const manifest = await writeArtifactSet(bundle, stagingDir, replay);
-    if (outputMetadata) {
-      if (process.platform !== 'win32') {
-        await applyOwnershipRecursively(stagingDir, outputMetadata.uid, outputMetadata.gid);
-      }
-      await chmod(stagingDir, outputMetadata.mode);
-    }
-    await applyManagedDirectoryMetadata([controlDir, revisionsDir], publicationMetadata);
+    await applyArtifactMetadataRecursively(
+      stagingDir,
+      publicationMetadata,
+      existingOutput.artifactModes
+    );
+    await chmod(stagingDir, publicationMetadata.mode);
+    await applyManagedDirectoryMetadata(
+      [controlDir, revisionsDir],
+      publicationMetadata,
+      controlMarkerPath
+    );
     await rename(stagingDir, revisionDir);
     await publishRevisionAtomically(revisionDir, resolvedOutDir, existingOutput.emptyDirectory);
-    if (existingOutput.revision && outputMetadata) {
-      await chmod(existingOutput.revision, outputMetadata.mode | 0o700).catch(() => undefined);
-    }
     return manifest;
   } catch (error) {
     await rm(stagingDir, { recursive: true, force: true });
