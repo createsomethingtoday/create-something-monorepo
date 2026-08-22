@@ -5,10 +5,13 @@ import {
   lstat,
   mkdir,
   readFile,
+  readlink,
   readdir,
   rename,
   rm,
+  rmdir,
   stat,
+  symlink,
   writeFile
 } from 'node:fs/promises';
 import { basename, dirname, isAbsolute, join, relative, resolve } from 'node:path';
@@ -90,38 +93,102 @@ function isMissing(error: unknown): boolean {
   );
 }
 
-async function assertOutputDirectoryIsReplaceable(outDir: string): Promise<void> {
+function controlDirectory(outDir: string): string {
+  return join(dirname(outDir), `.${basename(outDir)}.workflow-compiler`);
+}
+
+function revisionsDirectory(outDir: string): string {
+  return join(controlDirectory(outDir), 'revisions');
+}
+
+function isDirectRevisionTarget(outDir: string, target: string): boolean {
+  const revisionsDir = revisionsDirectory(outDir);
+  return dirname(target) === revisionsDir && basename(target).startsWith('revision-');
+}
+
+interface ExistingOutput {
+  emptyDirectory: boolean;
+  metadata?: ExistingOutputMetadata;
+  revision?: string;
+}
+
+async function inspectExistingOutput(outDir: string): Promise<ExistingOutput> {
+  let outputEntry;
   try {
-    if (!(await lstat(outDir)).isDirectory()) {
-      throw new WorkflowArtifactOutputError(
-        'OUTPUT_NOT_OWNED',
-        'Refusing to replace an output path that is not a workflow compiler directory.'
-      );
-    }
+    outputEntry = await lstat(outDir);
   } catch (error) {
-    if (isMissing(error)) return;
+    if (isMissing(error)) return { emptyDirectory: false };
     throw error;
   }
 
-  let entries: string[];
-  try {
-    entries = await readdir(outDir);
-  } catch (error) {
-    if (isMissing(error)) return;
+  if (outputEntry.isSymbolicLink()) {
+    const target = resolve(dirname(outDir), await readlink(outDir));
+    if (!isDirectRevisionTarget(outDir, target)) {
+      throw new WorkflowArtifactOutputError(
+        'OUTPUT_NOT_OWNED',
+        'Refusing to replace an output path that is not a managed workflow compiler revision.'
+      );
+    }
+    try {
+      if (!(await lstat(target)).isDirectory()) throw new Error();
+      const manifestPath = join(target, 'manifest.json');
+      if (!(await lstat(manifestPath)).isFile()) throw new Error();
+      const manifest = JSON.parse(await readFile(manifestPath, 'utf8')) as {
+        schemaVersion?: unknown;
+      };
+      if (manifest.schemaVersion !== 'workflow_artifact_manifest.v0.1') throw new Error();
+      const metadata = await stat(target);
+      return {
+        emptyDirectory: false,
+        metadata: {
+          mode: metadata.mode & 0o7777,
+          uid: metadata.uid,
+          gid: metadata.gid
+        },
+        revision: target
+      };
+    } catch {
+      throw new WorkflowArtifactOutputError(
+        'OUTPUT_NOT_OWNED',
+        'Refusing to replace an output path that is not a managed workflow compiler revision.'
+      );
+    }
+  }
+
+  if (!outputEntry.isDirectory()) {
     throw new WorkflowArtifactOutputError(
       'OUTPUT_NOT_OWNED',
       'Refusing to replace an output path that is not a workflow compiler directory.'
     );
   }
-  if (entries.length === 0) return;
 
+  const entries = await readdir(outDir);
+  const metadata = await stat(outDir);
+  if (entries.length === 0) {
+    return {
+      emptyDirectory: true,
+      metadata: {
+        mode: metadata.mode & 0o7777,
+        uid: metadata.uid,
+        gid: metadata.gid
+      }
+    };
+  }
+
+  let legacyCompilerOutput = false;
   try {
     const manifest = JSON.parse(await readFile(join(outDir, 'manifest.json'), 'utf8')) as {
       schemaVersion?: unknown;
     };
-    if (manifest.schemaVersion === 'workflow_artifact_manifest.v0.1') return;
+    legacyCompilerOutput = manifest.schemaVersion === 'workflow_artifact_manifest.v0.1';
   } catch {
     // Fall through to the stable ownership diagnostic.
+  }
+  if (legacyCompilerOutput) {
+    throw new WorkflowArtifactOutputError(
+      'OUTPUT_NOT_OWNED',
+      'Refusing to migrate a legacy workflow compiler directory in place; choose a new output path so publication can remain atomic.'
+    );
   }
   throw new WorkflowArtifactOutputError(
     'OUTPUT_NOT_OWNED',
@@ -135,20 +202,6 @@ interface ExistingOutputMetadata {
   gid: number;
 }
 
-async function existingOutputMetadata(outDir: string): Promise<ExistingOutputMetadata | undefined> {
-  try {
-    const existing = await stat(outDir);
-    return {
-      mode: existing.mode & 0o7777,
-      uid: existing.uid,
-      gid: existing.gid
-    };
-  } catch (error) {
-    if (isMissing(error)) return undefined;
-    throw error;
-  }
-}
-
 async function applyOwnershipRecursively(rootDir: string, uid: number, gid: number): Promise<void> {
   const entries = await readdir(rootDir, { withFileTypes: true });
   for (const entry of entries) {
@@ -158,29 +211,50 @@ async function applyOwnershipRecursively(rootDir: string, uid: number, gid: numb
   }
 }
 
-async function replaceDirectoryAtomically(stagingDir: string, outDir: string): Promise<void> {
-  const backupDir = join(dirname(outDir), `.${basename(outDir)}.backup-${randomUUID()}`);
-  let movedExistingOutput = false;
-
-  try {
-    await rename(outDir, backupDir);
-    movedExistingOutput = true;
-  } catch (error) {
-    if (!isMissing(error)) throw error;
+async function ensureManagedDirectory(path: string): Promise<void> {
+  await mkdir(path, { recursive: true, mode: 0o700 });
+  if (!(await lstat(path)).isDirectory()) {
+    throw new WorkflowArtifactOutputError(
+      'OUTPUT_NOT_OWNED',
+      'Refusing to use a workflow compiler control path that is not a directory.'
+    );
   }
+}
 
+async function publishRevisionAtomically(
+  revisionDir: string,
+  outDir: string,
+  removeEmptyDirectory: boolean
+): Promise<void> {
+  const parentDir = dirname(outDir);
+  const pointer = join(parentDir, `.${basename(outDir)}.pointer-${randomUUID()}`);
+  const target = process.platform === 'win32' ? revisionDir : relative(parentDir, revisionDir);
+  await symlink(target, pointer, process.platform === 'win32' ? 'junction' : 'dir');
   try {
-    await rename(stagingDir, outDir);
+    if (removeEmptyDirectory) await rmdir(outDir);
+    await rename(pointer, outDir);
   } catch (error) {
-    if (movedExistingOutput) await rename(backupDir, outDir);
+    await rm(pointer, { force: true });
     throw error;
   }
+}
 
-  if (movedExistingOutput) {
-    const backupMode = (await stat(backupDir)).mode & 0o7777;
-    await chmod(backupDir, backupMode | 0o700);
-    await rm(backupDir, { recursive: true, force: true });
-  }
+async function pruneManagedRevisions(
+  revisionsDir: string,
+  currentRevision: string,
+  previousRevision?: string
+): Promise<void> {
+  const retained = new Set([currentRevision, previousRevision].filter(Boolean));
+  const entries = await readdir(revisionsDir, { withFileTypes: true });
+  await Promise.all(
+    entries.map(async (entry) => {
+      const target = join(revisionsDir, entry.name);
+      if (retained.has(target)) return;
+      if (!entry.name.startsWith('revision-') && !entry.name.startsWith('.tmp-')) return;
+      await chmod(target, 0o700).catch(() => undefined);
+      await rm(target, { recursive: true, force: true }).catch(() => undefined);
+    })
+  );
 }
 
 async function writeArtifactSet(
@@ -246,10 +320,16 @@ export async function writeCompiledWorkflowArtifacts(
     );
   }
 
-  await assertOutputDirectoryIsReplaceable(resolvedOutDir);
-  const outputMetadata = await existingOutputMetadata(resolvedOutDir);
+  const existingOutput = await inspectExistingOutput(resolvedOutDir);
+  const outputMetadata = existingOutput.metadata;
   await mkdir(parentDir, { recursive: true });
-  const stagingDir = join(parentDir, `.${basename(resolvedOutDir)}.tmp-${randomUUID()}`);
+  const controlDir = controlDirectory(resolvedOutDir);
+  const revisionsDir = revisionsDirectory(resolvedOutDir);
+  await ensureManagedDirectory(controlDir);
+  await ensureManagedDirectory(revisionsDir);
+  const revisionId = randomUUID();
+  const stagingDir = join(revisionsDir, `.tmp-${revisionId}`);
+  const revisionDir = join(revisionsDir, `revision-${revisionId}`);
   await mkdir(stagingDir);
   if (outputMetadata && process.platform !== 'win32') {
     await chown(stagingDir, outputMetadata.uid, outputMetadata.gid);
@@ -264,10 +344,18 @@ export async function writeCompiledWorkflowArtifacts(
       }
       await chmod(stagingDir, outputMetadata.mode);
     }
-    await replaceDirectoryAtomically(stagingDir, resolvedOutDir);
+    await rename(stagingDir, revisionDir);
+    await publishRevisionAtomically(revisionDir, resolvedOutDir, existingOutput.emptyDirectory);
+    if (existingOutput.revision && outputMetadata) {
+      await chmod(existingOutput.revision, outputMetadata.mode | 0o700).catch(() => undefined);
+    }
+    await pruneManagedRevisions(revisionsDir, revisionDir, existingOutput.revision).catch(
+      () => undefined
+    );
     return manifest;
   } catch (error) {
     await rm(stagingDir, { recursive: true, force: true });
+    await rm(revisionDir, { recursive: true, force: true });
     throw error;
   }
 }

@@ -27,7 +27,7 @@
 - [x] Add failing public-boundary tests for malformed workflow and replay inputs.
 - [x] Implement explicit versioned runtime parsers and stable structured diagnostics.
 - [x] Fail closed on unknown schema versions until an explicit migration is introduced.
-- [x] Harden output ownership and root-path checks; replace complete artifact directories through a staged atomic rename.
+- [x] Harden output ownership and root-path checks; publish immutable revisions through one atomic managed-pointer rename.
 - [x] Define and test stable CLI exit semantics for success, invalid input, governance stop, and unexpected operational failure. Adapter-level pass, wait, and stop remains in phase 3.
 - [x] Run package, acceptance, exports, and direct downstream compatibility gates.
 - [ ] Commit, push, open the review boundary, and record CRE-1834 evidence.
@@ -96,3 +96,4 @@
 - 2026-08-22: Fresh review of the permission repair identified read-only mode timing and unstructured replay workflow-ID mismatches. Public CLI tests reproduced both; staging now applies the preserved mode only after writes and makes the old backup removable, while replay mismatches return `ReplayInputValidationError` with exit code 2.
 - 2026-08-22: Latest review identified output group ownership drift. A POSIX alternate-group test reproduced the change; atomic promotion now reapplies UID, GID, and mode before rename, fails before replacement when the OS denies ownership, and rejects symlink output paths rather than silently replacing the link.
 - 2026-08-22: Follow-up review identified descendant file group drift. The alternate-group test now checks the manifest and compiled artifact; staging applies the target GID and private setgid mode before writes, then recursively reapplies UID/GID before final mode and promotion.
+- 2026-08-22: Exact-commit review identified duplicate action and replay-case identifiers plus a crash window between two directory renames. Public parser tests now reject both duplicate classes. Artifact publication now stages an immutable sibling revision and atomically advances one compiler-owned symlink, retaining the previous revision and rejecting unsafe or legacy direct-directory migration.

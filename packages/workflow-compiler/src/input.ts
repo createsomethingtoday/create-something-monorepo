@@ -5,6 +5,7 @@ export interface WorkflowInputDiagnostic {
     | 'INVALID_TYPE'
     | 'INVALID_VALUE'
     | 'REQUIRED_FIELD'
+    | 'DUPLICATE_IDENTIFIER'
     | 'UNSUPPORTED_SCHEMA_VERSION'
     | 'WORKFLOW_ID_MISMATCH';
   path: string;
@@ -104,6 +105,25 @@ class Validator {
       const entryPath = `${path}[${index}]`;
       const record = this.record(entry, entryPath);
       if (record) visit(record, entryPath);
+    });
+  }
+
+  uniqueIdentifiers(value: unknown[], path: string, field = 'id'): void {
+    const firstPaths = new Map<string, string>();
+    value.forEach((entry, index) => {
+      if (!isRecord(entry) || typeof entry[field] !== 'string') return;
+      const identifier = entry[field];
+      const identifierPath = `${path}[${index}].${field}`;
+      const firstPath = firstPaths.get(identifier);
+      if (firstPath) {
+        this.diagnostics.push({
+          code: 'DUPLICATE_IDENTIFIER',
+          path: identifierPath,
+          message: `Duplicate identifier ${identifier}; first declared at ${firstPath}.`
+        });
+        return;
+      }
+      firstPaths.set(identifier, identifierPath);
     });
   }
 }
@@ -225,6 +245,7 @@ export function parseWorkflowDefinition(input: unknown): WorkflowDefinition {
     }
     validator.optionalString(action.agentId, `${path}.agentId`);
   });
+  validator.uniqueIdentifiers(collections.actions, '$.actions');
   validator.records(collections.transitions, '$.transitions', (transition, path) => {
     validator.string(transition.id, `${path}.id`);
     validator.string(transition.from, `${path}.from`);
@@ -290,6 +311,7 @@ export function parseWorkflowReplayManifest(input: unknown): WorkflowReplayManif
     );
     validator.string(replayCase.expectedState, `${path}.expectedState`);
   });
+  validator.uniqueIdentifiers(cases, '$.cases', 'caseId');
 
   if (validator.diagnostics.length > 0) {
     throw new ReplayInputValidationError(validator.diagnostics);

@@ -5,8 +5,10 @@ import {
   mkdir,
   mkdtemp,
   readFile,
+  readlink,
   readdir,
   rm,
+  lstat,
   stat,
   symlink,
   writeFile
@@ -20,8 +22,10 @@ const packageRoot = new URL('..', import.meta.url);
 const fixturePath = new URL('../fixtures/marketplace/workflow.json', import.meta.url);
 
 test('the public CLI writes a deterministic linked artifact inventory', async () => {
-  const first = await mkdtemp(join(tmpdir(), 'workflow-compiler-first-'));
-  const second = await mkdtemp(join(tmpdir(), 'workflow-compiler-second-'));
+  const firstRoot = await mkdtemp(join(tmpdir(), 'workflow-compiler-first-'));
+  const secondRoot = await mkdtemp(join(tmpdir(), 'workflow-compiler-second-'));
+  const first = join(firstRoot, 'output');
+  const second = join(secondRoot, 'output');
 
   try {
     for (const outDir of [first, second]) {
@@ -71,8 +75,47 @@ test('the public CLI writes a deterministic linked artifact inventory', async ()
     assert.equal(manifest.files.length, 11);
     assert.ok(manifest.files.every((entry) => /^sha256:[a-f0-9]{64}$/.test(entry.hash)));
   } finally {
-    await rm(first, { recursive: true, force: true });
-    await rm(second, { recursive: true, force: true });
+    await rm(firstRoot, { recursive: true, force: true });
+    await rm(secondRoot, { recursive: true, force: true });
+  }
+});
+
+test('recompilation atomically advances a managed revision pointer', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'workflow-compiler-revision-pointer-'));
+  const outDir = join(root, 'output');
+
+  try {
+    const initial = spawnSync(
+      process.execPath,
+      ['dist/cli.js', 'compile', '--workflow', fixturePath.pathname, '--out', outDir],
+      { cwd: packageRoot, encoding: 'utf8' }
+    );
+    assert.equal(initial.status, 0, initial.stderr || initial.stdout);
+    assert.equal((await lstat(outDir)).isSymbolicLink(), true);
+    const firstRevision = await readlink(outDir);
+    assert.equal(
+      JSON.parse(await readFile(join(outDir, 'manifest.json'), 'utf8')).workflowId,
+      'webflow.marketplace.template-lifecycle'
+    );
+
+    const replacement = spawnSync(
+      process.execPath,
+      ['dist/cli.js', 'compile', '--workflow', fixturePath.pathname, '--out', outDir],
+      { cwd: packageRoot, encoding: 'utf8' }
+    );
+    assert.equal(replacement.status, 0, replacement.stderr || replacement.stdout);
+    const secondRevision = await readlink(outDir);
+
+    assert.notEqual(secondRevision, firstRevision);
+    assert.equal((await lstat(outDir)).isSymbolicLink(), true);
+    assert.equal(
+      JSON.parse(await readFile(join(outDir, 'manifest.json'), 'utf8')).workflowId,
+      'webflow.marketplace.template-lifecycle'
+    );
+    assert.equal((await stat(join(root, firstRevision))).isDirectory(), true);
+    assert.equal((await stat(join(root, secondRevision))).isDirectory(), true);
+  } finally {
+    await rm(root, { recursive: true, force: true });
   }
 });
 
@@ -297,7 +340,8 @@ test('the public CLI refuses to replace an output directory through a symbolic l
       ok: false,
       error: 'WorkflowArtifactOutputError',
       code: 'OUTPUT_NOT_OWNED',
-      message: 'Refusing to replace an output path that is not a workflow compiler directory.'
+      message:
+        'Refusing to replace an output path that is not a managed workflow compiler revision.'
     });
     assert.equal((await stat(join(targetDir, 'manifest.json'))).isFile(), true);
   } finally {

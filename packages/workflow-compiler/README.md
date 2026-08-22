@@ -22,7 +22,7 @@ import {
   evaluateGovernedInteractionCompatibility,
   parseGovernedInteractionBundle,
   replayWorkflow,
-  writeCompiledWorkflowArtifacts,
+  writeCompiledWorkflowArtifacts
 } from '@create-something/workflow-compiler';
 ```
 
@@ -40,14 +40,14 @@ The compiler emits the same content-hashed `governed-interaction.json` for Atlas
 
 ## Agent Legibility Contract
 
-| Field | Value |
-| --- | --- |
-| Entry point | `src/index.ts`, `src/compile.ts`, `src/replay.ts`, `src/artifacts.ts`, `src/cli.ts` |
-| Boot command | `pnpm build` |
-| Smoke command | `pnpm check && pnpm test && pnpm test:acceptance` |
-| Validation surfaces | TypeScript output, node test output, workflow diagnostics, content-hashed manifest, replay report, evidence ledger, acceptance summary |
-| UI validation path | Serve the generated `operator-console/` and verify overview, approval-required, blocked, reload, and browser-console states with Playwright |
-| Escalation rule | Stop before live mutation or execution controls, and stop when authority, evidence, approval, receipt, recovery, or owning-system boundaries cannot be proven |
+| Field               | Value                                                                                                                                                         |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Entry point         | `src/index.ts`, `src/compile.ts`, `src/replay.ts`, `src/artifacts.ts`, `src/cli.ts`                                                                           |
+| Boot command        | `pnpm build`                                                                                                                                                  |
+| Smoke command       | `pnpm check && pnpm test && pnpm test:acceptance`                                                                                                             |
+| Validation surfaces | TypeScript output, node test output, workflow diagnostics, content-hashed manifest, replay report, evidence ledger, acceptance summary                        |
+| UI validation path  | Serve the generated `operator-console/` and verify overview, approval-required, blocked, reload, and browser-console states with Playwright                   |
+| Escalation rule     | Stop before live mutation or execution controls, and stop when authority, evidence, approval, receipt, recovery, or owning-system boundaries cannot be proven |
 
 ## Compile the marketplace fixture
 
@@ -75,6 +75,8 @@ The output includes:
 - generated operator console
 - governed-interaction bundle
 - content-hashed artifact manifest
+
+The output path is a compiler-managed symbolic link to an immutable sibling revision. Recompilation writes and validates a complete new revision before one atomic pointer rename, so concurrent readers see either the previous bundle or the new bundle and a terminated compiler cannot strand the public path between two directory renames. The compiler retains the current and immediately previous revisions under `.<output-name>.workflow-compiler/`; it rejects unrelated links, non-empty unowned directories, and legacy direct-directory outputs instead of migrating them through a non-atomic window.
 
 Serve the generated read-only console:
 

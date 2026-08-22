@@ -60,3 +60,43 @@ test('the public replay parser reports nested evidence and approval type errors'
     }
   );
 });
+
+test('the public workflow parser rejects duplicate action identifiers', async () => {
+  const workflow = JSON.parse(await readFile(workflowFixture, 'utf8'));
+  workflow.actions.push({ ...workflow.actions[0] });
+
+  assert.throws(
+    () => parseWorkflowDefinition(workflow),
+    (error) => {
+      assert.equal(error.name, 'WorkflowInputValidationError');
+      assert.deepEqual(error.diagnostics, [
+        {
+          code: 'DUPLICATE_IDENTIFIER',
+          path: `$.actions[${workflow.actions.length - 1}].id`,
+          message: `Duplicate identifier ${workflow.actions[0].id}; first declared at $.actions[0].id.`
+        }
+      ]);
+      return true;
+    }
+  );
+});
+
+test('the public replay parser rejects duplicate case identifiers', async () => {
+  const replay = JSON.parse(await readFile(replayFixture, 'utf8'));
+  replay.cases.push({ ...replay.cases[0] });
+
+  assert.throws(
+    () => parseWorkflowReplayManifest(replay),
+    (error) => {
+      assert.equal(error.name, 'ReplayInputValidationError');
+      assert.deepEqual(error.diagnostics, [
+        {
+          code: 'DUPLICATE_IDENTIFIER',
+          path: `$.cases[${replay.cases.length - 1}].caseId`,
+          message: `Duplicate identifier ${replay.cases[0].caseId}; first declared at $.cases[0].caseId.`
+        }
+      ]);
+      return true;
+    }
+  );
+});
