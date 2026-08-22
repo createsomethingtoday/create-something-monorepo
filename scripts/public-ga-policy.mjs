@@ -330,8 +330,8 @@ export function validatePackageReadback(readback, packagePolicy, config, gaCommi
     issues
   );
   issue(
-    trustText.includes('stage') && trustText.includes('publish'),
-    `${packagePolicy.name} trusted publisher lacks stage-publish authority`,
+    trustText.includes('create staged package'),
+    `${packagePolicy.name} trusted publisher must have restricted create staged package authority`,
     issues
   );
 

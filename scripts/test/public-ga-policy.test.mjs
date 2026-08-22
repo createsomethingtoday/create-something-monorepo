@@ -214,12 +214,19 @@ test('npm readback requires exact metadata, trusted publisher, provenance commit
       repository: config.npm.repository,
       workflowFile: config.npm.workflowFile,
       environment: config.npm.environment,
-      permissions: ['stage-publish']
+      permissions: ['create staged package']
     },
     packedFiles,
     cleanInstall: { installed: true, piLoaded: true }
   };
   assert.deepEqual(validatePackageReadback(readback, packagePolicy, config, gaCommit).issues, []);
+
+  const directPublish = structuredClone(readback);
+  directPublish.trust.permissions = ['publish package'];
+  assert.match(
+    validatePackageReadback(directPublish, packagePolicy, config, gaCommit).issues.join('\n'),
+    /restricted create staged package authority/
+  );
 
   readback.cleanInstall.piLoaded = false;
   readback.trust = {};
