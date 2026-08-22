@@ -81,6 +81,37 @@ test('the public workflow parser rejects duplicate action identifiers', async ()
   );
 });
 
+for (const collection of [
+  'systems',
+  'objects',
+  'events',
+  'actors',
+  'states',
+  'transitions',
+  'agents',
+  'evaluations'
+]) {
+  test(`the public workflow parser rejects duplicate ${collection} identifiers`, async () => {
+    const workflow = JSON.parse(await readFile(workflowFixture, 'utf8'));
+    workflow[collection].push({ ...workflow[collection][0] });
+
+    assert.throws(
+      () => parseWorkflowDefinition(workflow),
+      (error) => {
+        assert.equal(error.name, 'WorkflowInputValidationError');
+        assert.deepEqual(error.diagnostics, [
+          {
+            code: 'DUPLICATE_IDENTIFIER',
+            path: `$.${collection}[${workflow[collection].length - 1}].id`,
+            message: `Duplicate identifier ${workflow[collection][0].id}; first declared at $.${collection}[0].id.`
+          }
+        ]);
+        return true;
+      }
+    );
+  });
+}
+
 test('the public replay parser rejects duplicate case identifiers', async () => {
   const replay = JSON.parse(await readFile(replayFixture, 'utf8'));
   replay.cases.push({ ...replay.cases[0] });

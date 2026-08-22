@@ -119,6 +119,32 @@ test('recompilation atomically advances a managed revision pointer', async () =>
   }
 });
 
+test('published revisions are retained so a concurrent publisher cannot prune the winner', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'workflow-compiler-retained-revisions-'));
+  const outDir = join(root, 'output');
+
+  try {
+    for (let index = 0; index < 3; index += 1) {
+      const result = spawnSync(
+        process.execPath,
+        ['dist/cli.js', 'compile', '--workflow', fixturePath.pathname, '--out', outDir],
+        { cwd: packageRoot, encoding: 'utf8' }
+      );
+      assert.equal(result.status, 0, result.stderr || result.stdout);
+    }
+
+    const revisions = await readdir(join(root, '.output.workflow-compiler', 'revisions'));
+    assert.equal(revisions.filter((entry) => entry.startsWith('revision-')).length, 3);
+    assert.equal((await stat(outDir)).isDirectory(), true);
+    assert.equal(
+      JSON.parse(await readFile(join(outDir, 'manifest.json'), 'utf8')).workflowId,
+      'webflow.marketplace.template-lifecycle'
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test('the public CLI fails closed with structured diagnostics for a malformed workflow', async () => {
   const root = await mkdtemp(join(tmpdir(), 'workflow-compiler-invalid-'));
   const workflowPath = join(root, 'workflow.json');

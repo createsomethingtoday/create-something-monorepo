@@ -249,24 +249,6 @@ async function publishRevisionAtomically(
   }
 }
 
-async function pruneManagedRevisions(
-  revisionsDir: string,
-  currentRevision: string,
-  previousRevision?: string
-): Promise<void> {
-  const retained = new Set([currentRevision, previousRevision].filter(Boolean));
-  const entries = await readdir(revisionsDir, { withFileTypes: true });
-  await Promise.all(
-    entries.map(async (entry) => {
-      const target = join(revisionsDir, entry.name);
-      if (retained.has(target)) return;
-      if (!entry.name.startsWith('revision-') && !entry.name.startsWith('.tmp-')) return;
-      await chmod(target, 0o700).catch(() => undefined);
-      await rm(target, { recursive: true, force: true }).catch(() => undefined);
-    })
-  );
-}
-
 async function writeArtifactSet(
   bundle: CompiledWorkflowBundle,
   rootDir: string,
@@ -368,9 +350,6 @@ export async function writeCompiledWorkflowArtifacts(
     if (existingOutput.revision && outputMetadata) {
       await chmod(existingOutput.revision, outputMetadata.mode | 0o700).catch(() => undefined);
     }
-    await pruneManagedRevisions(revisionsDir, revisionDir, existingOutput.revision).catch(
-      () => undefined
-    );
     return manifest;
   } catch (error) {
     await rm(stagingDir, { recursive: true, force: true });

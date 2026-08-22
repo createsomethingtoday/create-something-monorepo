@@ -245,7 +245,6 @@ export function parseWorkflowDefinition(input: unknown): WorkflowDefinition {
     }
     validator.optionalString(action.agentId, `${path}.agentId`);
   });
-  validator.uniqueIdentifiers(collections.actions, '$.actions');
   validator.records(collections.transitions, '$.transitions', (transition, path) => {
     validator.string(transition.id, `${path}.id`);
     validator.string(transition.from, `${path}.from`);
@@ -270,6 +269,9 @@ export function parseWorkflowDefinition(input: unknown): WorkflowDefinition {
     );
     validator.stringArray(evaluation.requiredEvidence, `${path}.requiredEvidence`);
   });
+  for (const [collection, entries] of Object.entries(collections)) {
+    validator.uniqueIdentifiers(entries, `$.${collection}`);
+  }
 
   if (validator.diagnostics.length > 0) {
     throw new WorkflowInputValidationError(validator.diagnostics);
