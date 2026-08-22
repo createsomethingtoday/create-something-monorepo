@@ -249,7 +249,7 @@ test('the public CLI refuses to replace a non-empty directory it does not own', 
   }
 });
 
-for (const mode of [0o700, 0o500]) {
+for (const mode of [0o700, 0o500, 0o750]) {
   test(`atomic replacement preserves output directory mode ${mode.toString(8)}`, async () => {
     const root = await mkdtemp(join(tmpdir(), 'workflow-compiler-output-mode-'));
     const outDir = join(root, 'output');
@@ -271,6 +271,10 @@ for (const mode of [0o700, 0o500]) {
 
       assert.equal(replacement.status, 0, replacement.stderr || replacement.stdout);
       assert.equal((await stat(outDir)).mode & 0o777, mode);
+      assert.equal(
+        (await stat(join(root, '.output.workflow-compiler'))).mode & 0o077,
+        mode & 0o077
+      );
     } finally {
       await chmod(outDir, 0o700).catch(() => undefined);
       await rm(root, { recursive: true, force: true });
@@ -308,6 +312,11 @@ test(
       assert.equal((await stat(outDir)).gid, alternateGroupId);
       assert.equal((await stat(join(outDir, 'manifest.json'))).gid, alternateGroupId);
       assert.equal((await stat(join(outDir, 'compiled-workflow.json'))).gid, alternateGroupId);
+      assert.equal((await stat(join(root, '.output.workflow-compiler'))).gid, alternateGroupId);
+      assert.equal(
+        (await stat(join(root, '.output.workflow-compiler', 'revisions'))).gid,
+        alternateGroupId
+      );
     } finally {
       await chmod(outDir, 0o700).catch(() => undefined);
       await rm(root, { recursive: true, force: true });

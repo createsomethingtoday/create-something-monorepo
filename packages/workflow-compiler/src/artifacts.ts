@@ -221,6 +221,16 @@ async function ensureManagedDirectory(path: string): Promise<void> {
   }
 }
 
+async function applyManagedDirectoryMetadata(
+  paths: string[],
+  metadata: ExistingOutputMetadata
+): Promise<void> {
+  for (const path of paths) {
+    if (process.platform !== 'win32') await chown(path, metadata.uid, metadata.gid);
+    await chmod(path, metadata.mode | 0o700);
+  }
+}
+
 async function publishRevisionAtomically(
   revisionDir: string,
   outDir: string,
@@ -331,6 +341,14 @@ export async function writeCompiledWorkflowArtifacts(
   const stagingDir = join(revisionsDir, `.tmp-${revisionId}`);
   const revisionDir = join(revisionsDir, `revision-${revisionId}`);
   await mkdir(stagingDir);
+  const initialStagingMetadata = await stat(stagingDir);
+  const publicationMetadata =
+    outputMetadata ??
+    ({
+      mode: initialStagingMetadata.mode & 0o7777,
+      uid: initialStagingMetadata.uid,
+      gid: initialStagingMetadata.gid
+    } satisfies ExistingOutputMetadata);
   if (outputMetadata && process.platform !== 'win32') {
     await chown(stagingDir, outputMetadata.uid, outputMetadata.gid);
     await chmod(stagingDir, 0o2700);
@@ -344,6 +362,7 @@ export async function writeCompiledWorkflowArtifacts(
       }
       await chmod(stagingDir, outputMetadata.mode);
     }
+    await applyManagedDirectoryMetadata([controlDir, revisionsDir], publicationMetadata);
     await rename(stagingDir, revisionDir);
     await publishRevisionAtomically(revisionDir, resolvedOutDir, existingOutput.emptyDirectory);
     if (existingOutput.revision && outputMetadata) {
