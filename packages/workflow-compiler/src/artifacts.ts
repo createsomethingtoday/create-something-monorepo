@@ -1,9 +1,11 @@
 import { createHash, randomUUID } from 'node:crypto';
+import type { Dirent } from 'node:fs';
 import {
   chmod,
   chown,
   lstat,
   mkdir,
+  opendir,
   readFile,
   readlink,
   realpath,
@@ -124,6 +126,7 @@ const MAX_MANIFEST_BYTES = 1024 * 1024;
 const MAX_ARTIFACT_BYTES = 25 * 1024 * 1024;
 const MAX_TOTAL_ARTIFACT_BYTES = 100 * 1024 * 1024;
 const MAX_ATTESTATION_BYTES = 16 * 1024;
+const MAX_BUNDLE_INVENTORY_ENTRIES = 4096;
 
 function json(value: unknown): string {
   return `${JSON.stringify(value, null, 2)}\n`;
@@ -449,11 +452,22 @@ async function verifyDeclaredBundleInventory(
       declaredDirectories.add(parts.slice(0, index).join('/'));
     }
   }
+  let inventoryEntryCount = 0;
 
   async function walk(currentDir: string): Promise<void> {
-    const entries = (await readdir(currentDir, { withFileTypes: true })).sort((left, right) =>
-      left.name.localeCompare(right.name)
-    );
+    const entries: Dirent[] = [];
+    const directory = await opendir(currentDir);
+    for await (const entry of directory) {
+      inventoryEntryCount += 1;
+      if (inventoryEntryCount > MAX_BUNDLE_INVENTORY_ENTRIES) {
+        throw new WorkflowArtifactVerificationError(
+          'RESOURCE_LIMIT_EXCEEDED',
+          'Workflow artifact bundle exceeds the inventory-entry verification limit.'
+        );
+      }
+      entries.push(entry);
+    }
+    entries.sort((left, right) => left.name.localeCompare(right.name));
     for (const entry of entries) {
       const target = join(currentDir, entry.name);
       const path = relative(rootDir, target).replaceAll('\\', '/');
@@ -495,8 +509,16 @@ async function verifyDeclaredBundleInventory(
 
 async function resolveWorkflowArtifactBundleRoot(rootDir: string): Promise<string> {
   try {
-    return await realpath(resolve(rootDir));
+    const resolvedRootDir = await realpath(resolve(rootDir));
+    if (!(await lstat(resolvedRootDir)).isDirectory()) {
+      throw new WorkflowArtifactVerificationError(
+        'INVALID_ARTIFACT_TYPE',
+        'Workflow artifact bundle root must be a directory.'
+      );
+    }
+    return resolvedRootDir;
   } catch (error) {
+    if (error instanceof WorkflowArtifactVerificationError) throw error;
     if (isMissing(error)) {
       throw new WorkflowArtifactVerificationError(
         'MISSING_ARTIFACT',

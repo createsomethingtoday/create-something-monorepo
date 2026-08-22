@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { createHash, generateKeyPairSync } from 'node:crypto';
 import {
   chmod,
+  mkdir,
   mkdtemp,
   readFile,
   realpath,
@@ -117,6 +118,38 @@ test('missing bundle roots remain structured verification stops in the API and C
         code: 'MISSING_ARTIFACT',
         message: 'Workflow artifact manifest is missing.',
         path: 'manifest.json'
+      });
+    }
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('non-directory bundle roots remain structured verification stops in the API and CLI', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'workflow-compiler-invalid-bundle-root-'));
+  const filePath = join(root, 'bundle.json');
+  const fileLink = join(root, 'bundle-link');
+
+  try {
+    await writeFile(filePath, '{}\n', 'utf8');
+    await symlink(filePath, fileLink, process.platform === 'win32' ? 'file' : undefined);
+    for (const bundlePath of [filePath, fileLink]) {
+      await assert.rejects(
+        verifyWorkflowArtifactBundle(bundlePath),
+        (error) =>
+          error instanceof WorkflowArtifactVerificationError &&
+          error.code === 'INVALID_ARTIFACT_TYPE'
+      );
+      const result = spawnSync(process.execPath, ['dist/cli.js', 'verify', '--dir', bundlePath], {
+        cwd: packageRoot,
+        encoding: 'utf8'
+      });
+      assert.equal(result.status, 3, result.stderr || result.stdout);
+      assert.deepEqual(JSON.parse(result.stderr), {
+        ok: false,
+        error: 'WorkflowArtifactVerificationError',
+        code: 'INVALID_ARTIFACT_TYPE',
+        message: 'Workflow artifact bundle root must be a directory.'
       });
     }
   } finally {
@@ -352,6 +385,37 @@ test('bundle verification rejects undeclared files and internal symbolic links',
         error instanceof WorkflowArtifactVerificationError &&
         error.code === 'INVALID_ARTIFACT_TYPE' &&
         error.path === 'unexpected-link.json'
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('bundle inventory traversal stops at its independent entry limit', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'workflow-compiler-bundle-entry-limit-'));
+  const outDir = join(root, 'output');
+
+  try {
+    const compile = spawnSync(
+      process.execPath,
+      ['dist/cli.js', 'compile', '--workflow', fixturePath.pathname, '--out', outDir],
+      { cwd: packageRoot, encoding: 'utf8' }
+    );
+    assert.equal(compile.status, 0, compile.stderr || compile.stdout);
+    const batchSize = 128;
+    for (let offset = 0; offset < 4097; offset += batchSize) {
+      await Promise.all(
+        Array.from({ length: Math.min(batchSize, 4097 - offset) }, (_, index) =>
+          mkdir(join(outDir, `undeclared-${String(offset + index).padStart(4, '0')}`))
+        )
+      );
+    }
+
+    await assert.rejects(
+      verifyWorkflowArtifactBundle(outDir),
+      (error) =>
+        error instanceof WorkflowArtifactVerificationError &&
+        error.code === 'RESOURCE_LIMIT_EXCEEDED'
     );
   } finally {
     await rm(root, { recursive: true, force: true });
