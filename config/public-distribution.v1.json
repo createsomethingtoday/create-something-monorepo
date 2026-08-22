@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "id": "create-something-public-source",
+  "releaseStage": "general-availability",
+  "license": "MIT",
+  "sourcePrice": {
+    "currency": "USD",
+    "amount": 0
+  },
+  "managedService": {
+    "name": "CREATE SOMETHING Control",
+    "startsAt": {
+      "currency": "USD",
+      "amount": 900,
+      "interval": "month"
+    }
+  },
+  "includeRoots": [
+    "LICENSE",
+    "PUBLIC_DISTRIBUTION.md",
+    "config/public-distribution.v1.json",
+    "packages/pi-policy-os",
+    "packages/pi-three-tier-framework"
+  ],
+  "deniedSegments": [
+    ".codex",
+    ".git",
+    ".github",
+    ".svelte-kit",
+    "clients",
+    "coverage",
+    "dist",
+    "internal",
+    "node_modules",
+    "test-results"
+  ],
+  "deniedBasenames": [
+    ".dev.vars",
+    ".env",
+    ".env.local",
+    ".netrc",
+    ".npmrc",
+    ".pypirc",
+    "credentials.json",
+    "service-account.json"
+  ]
+}

@@ -1,0 +1,54 @@
+name: Bug report
+description: Report a reproducible defect in the supported public distribution.
+title: "bug: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve CREATE SOMETHING. Do not include credentials,
+        client data, private repository content, or unredacted logs. Report
+        security vulnerabilities through SECURITY.md instead of this form.
+  - type: input
+    id: package
+    attributes:
+      label: Package and exact version
+      description: Name the affected public package and installed version.
+      placeholder: "@createsomething/pi-policy-os 1.0.0"
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Include the shortest safe sequence that reproduces the defect.
+      placeholder: |
+        1. Install ...
+        2. Run ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual behavior
+      description: State the expected outcome and the observed failure.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include Pi, Node, operating-system, and package-manager versions when relevant.
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety check
+      options:
+        - label: I removed credentials, client data, and private content from this report.
+          required: true
+        - label: This is not a security vulnerability covered by SECURITY.md.
+          required: true

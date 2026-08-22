@@ -19,6 +19,7 @@
 	import type { PageData } from './$types';
 	import { onMount } from 'svelte';
 	import { fetchVideoPlayback } from '$lib/client/video-playback';
+	import { serializeJsonLd } from '$lib/content-security';
 
 	// In dev, when the CDN file is missing, use a public sample so the player still works
 	const FALLBACK_VIDEO_SRC = import.meta.env.DEV
@@ -188,7 +189,7 @@
 	<meta name="twitter:description" content={seo.description} />
 	<meta name="twitter:image" content={seo.image} />
 	{#if videoSchema}
-		{@html `<script type="application/ld+json">${JSON.stringify(videoSchema)}</script>`}
+		{@html `<script type="application/ld+json">${serializeJsonLd(videoSchema)}</script>`}
 	{/if}
 </svelte:head>
 

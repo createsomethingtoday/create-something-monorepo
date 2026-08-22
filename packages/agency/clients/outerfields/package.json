@@ -40,7 +40,7 @@
     "hls.js": "^1.6.15",
     "lucide-svelte": "^0.562.0",
     "pg": "^8.18.0",
-    "resend": "^6.7.0",
+    "resend": "^6.21.0",
     "stripe": "^20.1.2",
     "tus-js-client": "^4.3.1"
   }

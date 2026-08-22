@@ -2,9 +2,14 @@
 	import { SEO } from '@create-something/canon';
 
 	let { data, form } = $props();
-	let canvasJson = $state(JSON.stringify(data.version.canvas, null, 2));
-	let compareFrom = $state(Math.max(1, data.map.currentVersion - 1));
-	let compareTo = $state(data.map.currentVersion);
+
+	function initial<T>(read: () => T): T {
+		return read();
+	}
+
+	let canvasJson = $state(initial(() => JSON.stringify(data.version.canvas, null, 2)));
+	let compareFrom = $state(initial(() => Math.max(1, data.map.currentVersion - 1)));
+	let compareTo = $state(initial(() => data.map.currentVersion));
 </script>
 
 <SEO title={`${data.map.title} | Map Workspace`} description="Review and revise a durable workflow map." propertyName="agency" noindex={true} />

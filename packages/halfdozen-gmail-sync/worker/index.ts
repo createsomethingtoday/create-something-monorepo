@@ -9,6 +9,8 @@
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
+import { assertOAuthSubjectMatch } from './oauth-subject.js';
+import { dormantHealthPayload, isActiveLifecycle, retiredRouteResponse } from './lifecycle.js';
 import { z } from 'zod';
 import { registerFeedbackTool, D1FeedbackStore, enableTelemetry } from '@create-something/mcp-core';
 
@@ -29,6 +31,7 @@ interface Env {
   FEEDBACK_DB: any;  // D1Database — shared feedback across Half Dozen MCPs
   GMAIL_TOKENS: KVNamespace;
   MCP_OBJECT: DurableObjectNamespace;
+  LIFECYCLE?: string;
 }
 
 interface StoredToken {
@@ -739,10 +742,19 @@ async function handleOAuthCallback(request: Request, env: Env): Promise<Response
     headers: { Authorization: `Bearer ${tokens.access_token}` },
   });
   const userInfo = await userInfoResponse.json() as { email?: string };
-  const authorizedEmail = userInfo.email?.toLowerCase();
+  const googleEmail = userInfo.email?.toLowerCase();
 
-  if (!authorizedEmail) {
+  if (!googleEmail) {
     return new Response('Could not verify email from Google', { status: 500 });
+  }
+
+  let authorizedEmail: string;
+  try {
+    authorizedEmail = assertOAuthSubjectMatch(stateData.email, googleEmail);
+  } catch {
+    return new Response('The authenticated Google account does not match the requested mailbox.', {
+      status: 403,
+    });
   }
 
   const storedToken: StoredToken = {
@@ -752,10 +764,6 @@ async function handleOAuthCallback(request: Request, env: Env): Promise<Response
   };
 
   await env.GMAIL_TOKENS.put(authorizedEmail, JSON.stringify(storedToken));
-
-  if (stateData.email !== authorizedEmail) {
-    await env.GMAIL_TOKENS.put(stateData.email, JSON.stringify(storedToken));
-  }
 
   return new Response(`
 <!DOCTYPE html>
@@ -1900,6 +1908,10 @@ export default {
    * Each automation's frequency is checked against its last run time.
    */
   async scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext) {
+    if (!isActiveLifecycle(env)) {
+      console.log('Scheduled run skipped: service lifecycle is not active.');
+      return;
+    }
     const userEmail = getAuthorizedEmail(env);
     const automations = await listAutomationsByUser(env.GMAIL_TOKENS, userEmail);
     const now = Date.now();
@@ -1934,6 +1946,11 @@ export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
     const url = new URL(request.url);
 
+    if (!isActiveLifecycle(env)) {
+      const retired = retiredRouteResponse(url);
+      if (retired) return retired;
+    }
+
     if (url.pathname === '/auth') {
       return handleAuthStart(request, env);
     }
@@ -1960,10 +1977,15 @@ export default {
     }
 
     if (url.pathname === '/' || url.pathname === '/health') {
+      if (!isActiveLifecycle(env)) {
+        return Response.json(dormantHealthPayload());
+      }
+
       const authorizedEmail = env.AUTHORIZED_EMAIL?.trim() || '(not configured)';
       return new Response(JSON.stringify({
         name: 'halfdozen-gmail-sync-mcp',
         version: '4.0.0',
+        lifecycle: 'active',
         features: ['single-user-isolation', 'chatgpt-connector', 'background-automations'],
         authorized_email: authorizedEmail,
         endpoints: {

@@ -2013,7 +2013,7 @@ export const databaseLayerWorkerState =
       {
         "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-package-create-something-pi-policy-os-packages-pi-policy-os",
         "kind": "topology_record",
-        "title": "@create-something/pi-policy-os",
+        "title": "@createsomething/pi-policy-os",
         "recordId": "substrate:create-something:package:create-something-pi-policy-os-packages-pi-policy-os",
         "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
         "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-package-create-something-pi-policy-os-packages-pi-policy-os",
@@ -2027,7 +2027,7 @@ export const databaseLayerWorkerState =
       {
         "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-package-create-something-pi-three-tier-framework-packages-pi-three-tier-framework",
         "kind": "topology_record",
-        "title": "@create-something/pi-three-tier-framework",
+        "title": "@createsomething/pi-three-tier-framework",
         "recordId": "substrate:create-something:package:create-something-pi-three-tier-framework-packages-pi-three-tier-framework",
         "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
         "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-package-create-something-pi-three-tier-framework-packages-pi-three-tier-framework",
@@ -12957,7 +12957,7 @@ export const databaseLayerWorkerState =
       {
         "id": "substrate:create-something:package:create-something-pi-policy-os-packages-pi-policy-os",
         "atlasNodeId": "atlas_create-something_package_create-something-pi-policy-os-packages-pi-policy-os",
-        "title": "@create-something/pi-policy-os",
+        "title": "@createsomething/pi-policy-os",
         "path": "packages/pi-policy-os",
         "tier": "Judgment",
         "surface": "mcp",
@@ -12974,13 +12974,13 @@ export const databaseLayerWorkerState =
           "quality-gates",
           "agent-systems"
         ],
-        "packageName": "@create-something/pi-policy-os",
+        "packageName": "@createsomething/pi-policy-os",
         "runtime": "node"
       },
       {
         "id": "substrate:create-something:package:create-something-pi-three-tier-framework-packages-pi-three-tier-framework",
         "atlasNodeId": "atlas_create-something_package_create-something-pi-three-tier-framework-packages-pi-three-tier-framework",
-        "title": "@create-something/pi-three-tier-framework",
+        "title": "@createsomething/pi-three-tier-framework",
         "path": "packages/pi-three-tier-framework",
         "tier": "Judgment",
         "surface": "mcp",
@@ -12996,7 +12996,7 @@ export const databaseLayerWorkerState =
           "mcp",
           "architecture"
         ],
-        "packageName": "@create-something/pi-three-tier-framework",
+        "packageName": "@createsomething/pi-three-tier-framework",
         "runtime": "node"
       },
       {
@@ -32263,7 +32263,7 @@ export const databaseLayerWorkerState =
         {
           "id": "atlas_create-something_package_create-something-pi-policy-os-packages-pi-policy-os",
           "kind": "constraint",
-          "label": "@create-something/pi-policy-os",
+          "label": "@createsomething/pi-policy-os",
           "atlasId": "substrate:create-something:package:create-something-pi-policy-os-packages-pi-policy-os",
           "x": 2566,
           "y": 1056,
@@ -32286,7 +32286,7 @@ export const databaseLayerWorkerState =
             {
               "id": "receipt:substrate:create-something:package:create-something-pi-policy-os-packages-pi-policy-os",
               "productId": "proof",
-              "title": "@create-something/pi-policy-os is part of the mapped root topology.",
+              "title": "@createsomething/pi-policy-os is part of the mapped root topology.",
               "summary": "packages/pi-policy-os was discovered during topology generation at 2026-07-23T05:11:08.429Z.",
               "status": "ready",
               "source": "Substrate topology projection",
@@ -32298,7 +32298,7 @@ export const databaseLayerWorkerState =
             {
               "id": "binding:substrate:create-something:package:create-something-pi-policy-os-packages-pi-policy-os",
               "kind": "policy",
-              "label": "@create-something/pi-policy-os",
+              "label": "@createsomething/pi-policy-os",
               "source": "mcp",
               "selector": "substrate:create-something:package:create-something-pi-policy-os-packages-pi-policy-os",
               "required": true
@@ -32318,7 +32318,7 @@ export const databaseLayerWorkerState =
         {
           "id": "atlas_create-something_package_create-something-pi-three-tier-framework-packages-pi-three-tier-framework",
           "kind": "constraint",
-          "label": "@create-something/pi-three-tier-framework",
+          "label": "@createsomething/pi-three-tier-framework",
           "atlasId": "substrate:create-something:package:create-something-pi-three-tier-framework-packages-pi-three-tier-framework",
           "x": 2824,
           "y": 1056,
@@ -32341,7 +32341,7 @@ export const databaseLayerWorkerState =
             {
               "id": "receipt:substrate:create-something:package:create-something-pi-three-tier-framework-packages-pi-three-tier-framework",
               "productId": "proof",
-              "title": "@create-something/pi-three-tier-framework is part of the mapped root topology.",
+              "title": "@createsomething/pi-three-tier-framework is part of the mapped root topology.",
               "summary": "packages/pi-three-tier-framework was discovered during topology generation at 2026-07-23T05:11:08.429Z.",
               "status": "ready",
               "source": "Substrate topology projection",
@@ -32353,7 +32353,7 @@ export const databaseLayerWorkerState =
             {
               "id": "binding:substrate:create-something:package:create-something-pi-three-tier-framework-packages-pi-three-tier-framework",
               "kind": "policy",
-              "label": "@create-something/pi-three-tier-framework",
+              "label": "@createsomething/pi-three-tier-framework",
               "source": "mcp",
               "selector": "substrate:create-something:package:create-something-pi-three-tier-framework-packages-pi-three-tier-framework",
               "required": true

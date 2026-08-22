@@ -17,6 +17,7 @@
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
   import { PUBLIC_PRODUCT_SEQUENCE, getPublicProduct } from '$lib/data/productFamily';
   import { playbookHeroMedia } from '$lib/data/playbookHeroMedia';
+  import { PUBLIC_PRICING } from '$lib/data/publicPricing';
 
   type ProductSurfaceKind = 'signal' | 'decision' | 'proof';
 
@@ -45,15 +46,14 @@
       label: 'Map the workflow',
       summary: 'Define',
       title: 'Make the system legible before implementation.',
-      detail:
-        'Map is a standalone subscription for systems, owners, approvals, stops, proof requirements, versions, and handoff.',
+      detail: `Map starts with a ${PUBLIC_PRICING.map.publicStarterLabel}. Its account-scoped workspace adds versions, review, sharing, export, and Build handoff under a separate ${PUBLIC_PRICING.map.workspaceLabel.toLowerCase()} boundary.`,
       tone: 'neutral',
       evidence: [
         'Living typed definition',
         'Useful before or after implementation',
         'Included with Control'
       ],
-      receipts: ['Standalone', getPublicProduct('map').accessLabel],
+      receipts: [PUBLIC_PRICING.map.publicStarterLabel, getPublicProduct('map').accessLabel],
       actions: [{ label: 'Explore Map', href: getPublicProduct('map').route }]
     },
     {
@@ -125,7 +125,11 @@
 
   function familyPoints(index: number) {
     if (index === 0)
-      return ['Living workflow definition', 'Standalone subscription', 'Included with Control'];
+      return [
+        PUBLIC_PRICING.map.publicStarterLabel,
+        PUBLIC_PRICING.map.workspaceLabel,
+        'Included with Control'
+      ];
     if (index === 1) return ['Scoped implementation', 'Owned system', 'Verified handoff'];
     return ['Inbox / Map / Proof', 'Human approvals', 'Recurring review'];
   }
@@ -173,7 +177,9 @@
       <div class="product-choice__identity">
         <span
           >{product.kind === 'subscription'
-            ? 'Standalone subscription'
+            ? product.id === 'map'
+              ? 'Public starter + account workspace'
+              : 'Standalone subscription'
             : 'Implementation service'}</span
         >
         <strong>{product.name}</strong>
@@ -214,6 +220,18 @@
       Historical and open tools are evidence, not additional commercial products. Ground and the
       Loom archive show the discipline beneath Map, Build, and Control.
     </p>
+  </div>
+  <div class="public-pricing-contract" aria-label="Public source and managed Control pricing">
+    <a href={PUBLIC_PRICING.publicSource.contractUrl}>
+      <span>Supported public source</span>
+      <strong>{PUBLIC_PRICING.publicSource.label}</strong>
+      <small>Allowlisted source distribution and two Pi packages</small>
+    </a>
+    <a href="/control">
+      <span>Managed Control</span>
+      <strong>{PUBLIC_PRICING.managedControl.label}</strong>
+      <small>One standard-risk managed production environment after launch</small>
+    </a>
   </div>
   <div class="proof-chooser" aria-label="Public product proof">
     {#each featured.map(productCard) as item}
@@ -325,6 +343,7 @@
   }
 
   .product-proof-shelf__heading,
+  .product-proof-shelf > .public-pricing-contract,
   .product-proof-shelf > .proof-chooser {
     width: min(var(--content-width-performance, 85rem), 100%);
     margin-inline: auto;
@@ -362,6 +381,54 @@
     color: var(--color-performance-muted, #5e6268);
     font-size: clamp(1rem, 1.35vw, 1.2rem);
     line-height: 1.55;
+  }
+
+  .public-pricing-contract {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-bottom: 1px;
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    background: var(--color-performance-line, #d7d7d2);
+  }
+
+  .public-pricing-contract a {
+    display: grid;
+    gap: 0.55rem;
+    padding: clamp(1.25rem, 2.5vw, 2rem);
+    background: var(--color-performance-panel, #fff);
+    color: var(--color-performance-ink, #090909);
+    text-decoration: none;
+  }
+
+  .public-pricing-contract a + a {
+    border-left: 1px solid var(--color-performance-line, #d7d7d2);
+  }
+
+  .public-pricing-contract a:hover {
+    background: var(--color-performance-paper, #f3f3f0);
+  }
+
+  .public-pricing-contract a:focus-visible {
+    outline: 3px solid var(--color-performance-signal, #0057b8);
+    outline-offset: -3px;
+  }
+
+  .public-pricing-contract span,
+  .public-pricing-contract small {
+    font-family: var(--font-performance-mono);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+  }
+
+  .public-pricing-contract strong {
+    font-family: var(--font-performance-display);
+    font-size: clamp(1.75rem, 3vw, 3rem);
+    font-weight: var(--font-performance-display-weight);
+  }
+
+  .public-pricing-contract small {
+    color: var(--color-performance-muted, #5e6268);
+    line-height: 1.45;
   }
 
   .proof-chooser {
@@ -414,6 +481,15 @@
 
     .product-choice {
       grid-template-columns: 1fr;
+    }
+
+    .public-pricing-contract {
+      grid-template-columns: 1fr;
+    }
+
+    .public-pricing-contract a + a {
+      border-top: 1px solid var(--color-performance-line, #d7d7d2);
+      border-left: 0;
     }
 
     .control-surfaces,

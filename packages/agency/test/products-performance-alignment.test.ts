@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import test from 'node:test';
+import { usesRouteOwnedAgencyPerformanceEnding } from '../src/lib/atlas/surface-policy.ts';
 
 const read = (relativePath: string) => {
   const url = new URL(relativePath, import.meta.url);
@@ -28,9 +29,11 @@ test('products separates open proof from the product chooser', () => {
 
 test('products places truthful buyer proof beside the choice without a duplicate route handoff', () => {
   assert.match(products, /AgencyPerformanceReadback embedded=\{true\}/);
-  assert.match(layout, /\$page\.url\.pathname !== '\/products'/);
+  assert.match(layout, /!routeOwnsPerformanceEnding/);
+  assert.equal(usesRouteOwnedAgencyPerformanceEnding('/products'), true);
 });
 
 test('products removes the fixed mode control from the CTA-heavy route', () => {
-  assert.match(layout, /\$page\.url\.pathname !== '\/products'/);
+  assert.match(layout, /!routeOwnsPerformanceEnding/);
+  assert.equal(usesRouteOwnedAgencyPerformanceEnding('/products'), true);
 });

@@ -37,7 +37,7 @@ export const PUBLIC_PRODUCT_FAMILY: Record<PublicProductId, PublicProductDefinit
     includes: [],
     subscriptionCadences: [...SUBSCRIPTION_CADENCES],
     pricingState: 'configuration-required',
-    accessLabel: 'Request access after workflow scope',
+    accessLabel: PUBLIC_PRICING.map.workspaceLabel,
     internalCompatibilityNames: ['Atlas'],
     checkoutPlanIds: ['map-monthly', 'map-yearly']
   },
@@ -71,7 +71,7 @@ export const PUBLIC_PRODUCT_FAMILY: Record<PublicProductId, PublicProductDefinit
     includes: ['map'],
     subscriptionCadences: [...SUBSCRIPTION_CADENCES],
     pricingState: 'configuration-required',
-    accessLabel: 'From $900 per month after launch',
+    accessLabel: PUBLIC_PRICING.managedControl.longLabel,
     internalCompatibilityNames: ['Policy OS', 'policy_os_trial', 'policy_os_core'],
     checkoutPlanIds: ['control-monthly', 'control-yearly']
   }
@@ -80,3 +80,4 @@ export const PUBLIC_PRODUCT_FAMILY: Record<PublicProductId, PublicProductDefinit
 export function getPublicProduct(productId: PublicProductId): PublicProductDefinition {
   return PUBLIC_PRODUCT_FAMILY[productId];
 }
+import { PUBLIC_PRICING } from './publicPricing';

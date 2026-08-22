@@ -1,15 +1,16 @@
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 
 export function execCommand(
   command: string,
+  args: readonly string[] = [],
   cwd: string = process.cwd()
 ): { success: boolean; output: string; duration: number } {
   const start = Date.now();
 
   try {
-    const output = execSync(command, {
+    const output = execFileSync(command, args, {
       cwd,
       encoding: 'utf-8',
       stdio: ['pipe', 'pipe', 'pipe'],

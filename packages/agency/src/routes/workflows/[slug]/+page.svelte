@@ -4,13 +4,13 @@
 
   let { data }: { data: PageData } = $props();
 
-  const guide = data.guide;
-  const canonical = `https://createsomething.agency/workflows/${guide.slug}`;
-  const breadcrumbs = [
+  const guide = $derived(data.guide);
+  const canonical = $derived(`https://createsomething.agency/workflows/${guide.slug}`);
+  const breadcrumbs = $derived([
     { name: 'Home', url: 'https://createsomething.agency' },
     { name: 'Workflow Guides', url: 'https://createsomething.agency/workflows' },
     { name: guide.title, url: canonical }
-  ];
+  ]);
 </script>
 
 <SEO

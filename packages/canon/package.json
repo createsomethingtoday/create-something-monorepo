@@ -411,7 +411,8 @@
 		},
 		"./content": {
 			"types": "./dist/content/index.d.ts",
-			"svelte": "./dist/content/index.js"
+			"svelte": "./dist/content/index.js",
+			"default": "./dist/content/index.js"
 		},
 		"./typography": {
 			"types": "./dist/typography/index.d.ts",

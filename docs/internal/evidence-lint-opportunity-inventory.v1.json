@@ -1546,7 +1546,7 @@
       "evidence_lint_opportunity": false
     },
     {
-      "name": "@create-something/pi-policy-os",
+      "name": "@createsomething/pi-policy-os",
       "path": "packages/pi-policy-os",
       "source_files": 1,
       "scripts": {
@@ -1558,7 +1558,7 @@
       "evidence_lint_opportunity": true
     },
     {
-      "name": "@create-something/pi-three-tier-framework",
+      "name": "@createsomething/pi-three-tier-framework",
       "path": "packages/pi-three-tier-framework",
       "source_files": 0,
       "scripts": {

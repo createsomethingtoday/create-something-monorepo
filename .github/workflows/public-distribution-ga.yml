@@ -1,0 +1,27 @@
+name: Public Distribution GA
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Public Distribution GA
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Verify public-distribution and security contracts
+        run: |
+          node --test scripts/test/public-distribution.test.mjs
+          node --test scripts/test/public-ga-policy.test.mjs
+          node --test scripts/test/security-advisory-exceptions.test.mjs
+          node scripts/security-advisory-exceptions.mjs
+          node scripts/check-github-actions-pins.mjs

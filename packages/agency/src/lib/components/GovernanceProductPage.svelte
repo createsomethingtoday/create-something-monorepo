@@ -71,7 +71,7 @@
     return undefined;
   }
 
-  const productScenes: PerformanceNarrativeScene[] = [
+  const productScenes: PerformanceNarrativeScene[] = $derived([
     {
       id: 'surface',
       label: 'Surface and path',
@@ -104,7 +104,7 @@
       receipts: relatedLinks.map((link) => link.label),
       actions: relatedLinks
     }
-  ];
+  ]);
 </script>
 
 <PerformancePageSection

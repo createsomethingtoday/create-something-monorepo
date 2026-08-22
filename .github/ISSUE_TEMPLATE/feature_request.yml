@@ -1,0 +1,45 @@
+name: Feature request
+description: Propose a bounded improvement to the supported public distribution.
+title: "proposal: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+      description: Describe the user-visible result, not only an implementation.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Current limitation and evidence
+      description: Show the smallest safe example of the gap or repeated work.
+    validations:
+      required: true
+  - type: dropdown
+    id: tier
+    attributes:
+      label: Primary tier
+      options:
+        - Database
+        - Automation
+        - Judgment
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Proposed completion check
+      description: Name an observable test, workflow, or artifact that would prove the outcome.
+    validations:
+      required: true
+  - type: checkboxes
+    id: boundaries
+    attributes:
+      label: Distribution boundary
+      options:
+        - label: This request does not require publishing client, credential, or internal-only material.
+          required: true

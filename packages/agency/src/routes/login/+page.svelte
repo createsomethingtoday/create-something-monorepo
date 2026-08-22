@@ -4,7 +4,12 @@
 	import { LoginForm, SignupForm } from '@create-something/canon/auth/components';
 
 	let { data } = $props();
-	let error = $state<string | null>(data.error || null);
+
+	function initial<T>(read: () => T): T {
+		return read();
+	}
+
+	let error = $state<string | null>(initial(() => data.error || null));
 	let mode = $state<'login' | 'signup'>('login');
 
 	function switchMode(nextMode: 'login' | 'signup') {

@@ -107,7 +107,7 @@ Control's Policy OS artifacts ship to all major agent harnesses. They remain por
 | Target | Delivery Format | Distribution |
 |--------|----------------|-------------|
 | **Codex** | MCP servers + Codex tasks + policy artifacts | Primary demo vector |
-| **Pi** | Pi packages (extensions + skills + prompts + themes) | `pi install npm:@create-something/pi-policy-os` |
+| **Pi** | Pi packages (extensions + skills + prompts + themes) | `pi install npm:@createsomething/pi-policy-os` |
 | **Claude Code** | `.claude/` directory (rules + skills + commands + hooks) | Repository config |
 | **Cursor** | MCP servers + `.cursorrules` | Repository config |
 | **OpenAI Agents SDK** | SDK workflow service + MCP servers + traces/evals | Graduation lane for governed execution |
@@ -121,8 +121,8 @@ Pi packages (`npm:@create-something/pi-*`) provide the richest extensibility:
 - **Themes**: Visual identity (Glass Design System)
 
 Public packages serve as discovery wedges:
-- `@create-something/pi-three-tier-framework` — Framework as installable agent knowledge
-- `@create-something/pi-policy-os` — Governance starter with quality gates
+- `@createsomething/pi-three-tier-framework` — Framework as installable agent knowledge
+- `@createsomething/pi-policy-os` — Governance starter with quality gates
 
 Client-specific packages (`private: true`) deliver domain configuration:
 - `@create-something/pi-halfdozen` — Half Dozen fleet knowledge and client management

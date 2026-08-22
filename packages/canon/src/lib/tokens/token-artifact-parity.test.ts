@@ -33,6 +33,14 @@ function readRootToken(name: string): string {
   return match[1].trim();
 }
 
+function normalizeCssValue(value: string): string {
+  return value
+    .replace(/\s+/g, ' ')
+    .replace(/\(\s+/g, '(')
+    .replace(/\s+\)/g, ')')
+    .trim();
+}
+
 describe('Canon token artifact parity', () => {
 	it('emits the compatibility alias boundary exactly once', () => {
 		const marker = 'Legacy compatibility aliases. First-party consumers use Performance tokens.';
@@ -69,7 +77,7 @@ describe('Canon token artifact parity', () => {
     ] as const;
 
     for (const token of foregroundTokens) {
-      expect(colorVars[token]).toBe(readRootToken(token));
+      expect(normalizeCssValue(colorVars[token])).toBe(normalizeCssValue(readRootToken(token)));
     }
   });
 

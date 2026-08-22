@@ -34,12 +34,17 @@ test('credential-free Map production workflow remains coherent', async ({ page, 
 		const summary = await details.locator('pre').innerText();
 		const href = await details.getByRole('link', { name: 'Use this in booking' }).getAttribute('href');
 		if (!href) throw new Error('Booking URL is missing');
-		const session = summary.match(/^Session: (.+)$/m)?.[1];
+		const publicReference = summary.match(/^Map reference: (map_[a-zA-Z0-9]+)$/m)?.[1];
 		const readiness = summary.match(/^Readiness: (.+) \((\d+)\/100\)$/m);
-		if (!session || !readiness) throw new Error('Visible booking summary is incomplete');
+		if (!publicReference || !readiness) throw new Error('Visible booking summary is incomplete');
 		const url = new URL(href, page.url());
+		const session = url.searchParams.get('atlas_session_id');
+		if (!session) throw new Error('Booking URL session is missing');
+		const expectedPublicReference = `map_${
+			session.replace(/[^a-zA-Z0-9]/g, '').slice(-16) || 'anonymous'
+		}`;
 		const expectedSlug = readiness[1]!.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-		expect(url.searchParams.get('atlas_session_id')).toBe(session);
+		expect(publicReference).toBe(expectedPublicReference);
 		expect(url.searchParams.get('score')).toBe(readiness[2]);
 		expect(url.searchParams.get('readiness')).toBe(expectedSlug);
 		return { summary, session, score: readiness[2], href };

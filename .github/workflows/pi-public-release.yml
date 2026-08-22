@@ -1,0 +1,119 @@
+name: Pi Public Packages
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/pi-public-release.yml'
+      - 'packages/pi-policy-os/**'
+      - 'packages/pi-three-tier-framework/**'
+      - 'scripts/pi-public-package-contract.mjs'
+      - 'scripts/test/pi-public-package-contract.test.mjs'
+      - 'pnpm-lock.yaml'
+  workflow_dispatch:
+    inputs:
+      package:
+        description: Public Pi package to release
+        required: true
+        type: choice
+        options:
+          - pi-three-tier-framework
+          - pi-policy-os
+      version:
+        description: Exact package version expected on main
+        required: true
+        type: string
+
+jobs:
+  validate:
+    name: Validate public Pi packages
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Set up Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: '24'
+          package-manager-cache: false
+
+      - name: Install Policy OS test dependencies
+        run: npm install --prefix packages/pi-policy-os --ignore-scripts --no-package-lock
+
+      - name: Verify package contracts, types, runtime load, and tarballs
+        run: |
+          node --test scripts/test/pi-public-package-contract.test.mjs
+          npm --prefix packages/pi-three-tier-framework test
+          npm --prefix packages/pi-policy-os run check
+          npm --prefix packages/pi-policy-os test
+
+      - name: Prove exact tarballs install and Pi discovers both packages
+        run: |
+          artifact_dir="$RUNNER_TEMP/pi-public-artifacts"
+          install_dir="$RUNNER_TEMP/pi-public-install"
+          mkdir -p "$artifact_dir" "$install_dir/npm" "$install_dir/project" "$install_dir/config"
+          npm pack --ignore-scripts --pack-destination "$artifact_dir" ./packages/pi-three-tier-framework
+          npm pack --ignore-scripts --pack-destination "$artifact_dir" ./packages/pi-policy-os
+          npm install --prefix "$install_dir/npm" --ignore-scripts --no-package-lock --no-save "$artifact_dir"/*.tgz
+          cd "$install_dir/project"
+          PI_CODING_AGENT_DIR="$install_dir/config" "$GITHUB_WORKSPACE/packages/pi-policy-os/node_modules/.bin/pi" install "$install_dir/npm/node_modules/@createsomething/pi-three-tier-framework" -l --approve
+          PI_CODING_AGENT_DIR="$install_dir/config" "$GITHUB_WORKSPACE/packages/pi-policy-os/node_modules/.bin/pi" install "$install_dir/npm/node_modules/@createsomething/pi-policy-os" -l --approve
+          PI_CODING_AGENT_DIR="$install_dir/config" "$GITHUB_WORKSPACE/packages/pi-policy-os/node_modules/.bin/pi" list --approve | tee "$RUNNER_TEMP/pi-package-list.txt"
+          grep -F 'pi-three-tier-framework' "$RUNNER_TEMP/pi-package-list.txt"
+          grep -F 'pi-policy-os' "$RUNNER_TEMP/pi-package-list.txt"
+          sha256sum "$artifact_dir"/*.tgz
+
+  publish:
+    name: Stage selected Pi package through npm trusted publishing
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: npm-public
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Check out protected main
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: main
+
+      - name: Set up Node for npm trusted publishing
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false
+
+      - name: Pin a trusted-publishing-capable npm CLI
+        run: npm install --global npm@11.15.0
+
+      - name: Verify bounded release input and protected source
+        env:
+          PACKAGE_SLUG: ${{ inputs.package }}
+          EXPECTED_VERSION: ${{ inputs.version }}
+        run: |
+          package_dir="packages/$PACKAGE_SLUG"
+          test "$(node -p "require('./$package_dir/package.json').version")" = "$EXPECTED_VERSION"
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
+
+      - name: Install Policy OS test dependencies
+        if: ${{ inputs.package == 'pi-policy-os' }}
+        run: npm install --prefix packages/pi-policy-os --ignore-scripts --no-package-lock
+
+      - name: Verify selected release package
+        env:
+          PACKAGE_SLUG: ${{ inputs.package }}
+        run: npm --prefix "packages/$PACKAGE_SLUG" test
+
+      - name: Typecheck Policy OS extension
+        if: ${{ inputs.package == 'pi-policy-os' }}
+        run: npm --prefix packages/pi-policy-os run check
+
+      - name: Stage package with automatic provenance for 2FA approval
+        working-directory: packages/${{ inputs.package }}
+        run: npm stage publish --access public

@@ -1,0 +1,41 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      github-actions:
+        patterns:
+          - '*'
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    versioning-strategy: increase-if-necessary
+    groups:
+      npm-minor-and-patch:
+        update-types:
+          - minor
+          - patch
+    open-pull-requests-limit: 10
+
+  - package-ecosystem: cargo
+    directories:
+      - /apps/atlas-studio-desktop/src-tauri
+      - /apps/client-workspace-desktop/src-tauri
+      - /packages/app-governance-desktop/src-tauri
+      - /packages/ground
+      - /packages/loom
+      - /packages/notion-tools
+      - /packages/simulation
+    schedule:
+      interval: weekly
+    groups:
+      cargo-minor-and-patch:
+        update-types:
+          - minor
+          - patch
+    open-pull-requests-limit: 10

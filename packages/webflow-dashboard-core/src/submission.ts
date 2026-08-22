@@ -44,8 +44,8 @@ export function formatTimeUntil(ms: number | null): string {
   return `${seconds}s`;
 }
 
-function daysUntil(date: Date): number {
-  const diffMs = date.getTime() - Date.now();
+function daysUntil(date: Date, now: Date): number {
+  const diffMs = date.getTime() - now.getTime();
   return Math.max(0, Math.ceil(diffMs / (24 * 60 * 60 * 1000)));
 }
 
@@ -59,8 +59,10 @@ export function calculateWarningLevel(
   return 'none';
 }
 
-export function calculateLocalSubmissionData(assets: AssetSubmissionLike[]) {
-  const now = new Date();
+export function calculateLocalSubmissionData(
+  assets: AssetSubmissionLike[],
+  now: Date = new Date()
+) {
   const thirtyDaysAgo = new Date(now.getTime() - ROLLING_WINDOW_MS);
 
   const submissions: Submission[] = [];
@@ -90,7 +92,7 @@ export function calculateLocalSubmissionData(assets: AssetSubmissionLike[]) {
         submittedDate: submissionDateUTC,
         expiryDate,
         status: asset.status,
-        daysUntilExpiry: daysUntil(expiryDate)
+        daysUntilExpiry: daysUntil(expiryDate, now)
       });
     }
   }

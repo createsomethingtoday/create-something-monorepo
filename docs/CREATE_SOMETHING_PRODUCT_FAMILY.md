@@ -8,11 +8,11 @@
 CREATE SOMETHING has two standalone software products and one implementation
 service:
 
-| Offer | Type | Customer job | Commercial rule |
-| --- | --- | --- | --- |
-| **CREATE SOMETHING Map** | Subscription | Understand, design, version, and share a human-agent workflow. | Can be purchased independently with monthly and yearly billing. |
-| **CREATE SOMETHING Build** | Service | Turn an approved map into an owned, connected system. | Fixed-scope or custom implementation; it is not a second software license. |
-| **CREATE SOMETHING Control** | Subscription | Operate delegated work with explicit authority, approvals, evidence, and recovery. | Can be purchased independently with monthly and yearly billing. **Control includes Map.** |
+| Offer                        | Type                               | Customer job                                                                       | Commercial rule                                                                                                          |
+| ---------------------------- | ---------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| **CREATE SOMETHING Map**     | Public starter + account workspace | Understand, design, version, and share a human-agent workflow.                     | The browser-local starter is $0. The account workspace is a separate subscription with pricing activated only at launch. |
+| **CREATE SOMETHING Build**   | Service                            | Turn an approved map into an owned, connected system.                              | Fixed-scope or custom implementation; it is not a second software license.                                               |
+| **CREATE SOMETHING Control** | Subscription                       | Operate delegated work with explicit authority, approvals, evidence, and recovery. | Can be purchased independently with monthly and yearly billing. **Control includes Map.**                                |
 
 The public journey is:
 
@@ -27,7 +27,10 @@ a separate Map license for the workflows Control governs.
 ## Map
 
 Map turns conversations, documents, repositories, and connected tools into a
-living workflow definition. It owns the customer-facing experience for:
+living workflow definition. The browser-local public starter costs $0 and does
+not touch production. The account-scoped Map workspace is a distinct
+subscription for durable history, review, sharing, export, and Build handoff.
+It owns the customer-facing experience for:
 
 - actors, agents, systems, artifacts, owners, and relationships;
 - approval, run, wait, stop, and recovery boundaries;
@@ -75,10 +78,19 @@ such as `policy_os_trial` and `policy_os_core`. Public copy and navigation use
 
 ## Subscription shape
 
-Map and Control each support monthly and yearly subscription cadences. This
-document defines the product and inclusion model, not live pricing. Exact price
-amounts and Stripe price IDs must be configured and approved through the launch
-workflow before checkout can be represented as active.
+The account-scoped Map workspace and Control each support monthly and yearly
+subscription cadences. The Map workspace price remains a launch configuration;
+the public browser-local Map starter is $0. Control is Managed AI Operations
+from $900 per month after launch. Exact Stripe price IDs must be configured and
+approved through the launch workflow before checkout can be represented as active.
+
+## Public source distribution
+
+The supported source distribution is $0 under MIT. It is a separate, allowlisted
+artifact with two public Pi packages; it is not the entire monorepo and it is not
+the managed Control service. The machine-readable boundary lives in
+`config/public-distribution.v1.json`, and `PUBLIC_DISTRIBUTION.md` is the public
+contract.
 
 The safe pre-launch state is:
 
@@ -95,13 +107,13 @@ create a third runtime or a separate product foundation.
 
 The public products project one shared internal system:
 
-| Layer | Internal owner | Public use |
-| --- | --- | --- |
-| Database | **Substrate** | Workspaces, source records, workflow state, identity, files, actions, runs, and receipts. |
-| Derived graph | **Topology** | System discovery, repo relationships, readiness, and drift context. |
-| Mapping implementation | **Atlas** | Graph/session records, canvas state, story state, proposals, and handoffs behind Map. |
+| Layer                             | Internal owner                        | Public use                                                                                      |
+| --------------------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Database                          | **Substrate**                         | Workspaces, source records, workflow state, identity, files, actions, runs, and receipts.       |
+| Derived graph                     | **Topology**                          | System discovery, repo relationships, readiness, and drift context.                             |
+| Mapping implementation            | **Atlas**                             | Graph/session records, canvas state, story state, proposals, and handoffs behind Map.           |
 | Governed execution implementation | **Policy OS compatibility contracts** | Policy, entitlements, approval boundaries, runtime checks, and contract bundles behind Control. |
-| Operator surfaces | **Signal / Decision / Proof** | Inbox, judgment, and evidence inside Control. |
+| Operator surfaces                 | **Signal / Decision / Proof**         | Inbox, judgment, and evidence inside Control.                                                   |
 
 Map and Control must reuse the same database, canvas kernel, workflow definition,
 identity, and receipt contracts. A public rename does not authorize a schema,
@@ -126,4 +138,3 @@ activation, checkout testing, production deployment, public announcement,
 trademark claims, and customer migration each require their owning approval and
 verification path. Rollback restores the prior public routes and copy while
 leaving internal contracts unchanged.
-

@@ -45,14 +45,16 @@ describe('Atlas typography contract', () => {
 	it('keeps Atlas Studio and the desktop shell on the same role names', () => {
 		const studioCss = read('packages/interaction-atlas-mcp/src/studio/client/styles.css');
 		const desktopShell = read('apps/atlas-studio-desktop/web/index.html');
+		const desktopShellCss = read('apps/atlas-studio-desktop/web/start.css');
 
 		expect(studioCss).toContain('--font-performance-interface');
 		expect(studioCss).toContain('--font-performance-topology-label');
 		expect(studioCss).toContain('font-family: var(--font-performance-interface');
 		expect(studioCss).toContain('font-family: var(--font-performance-topology-label');
-		expect(desktopShell).toContain('--font-performance-interface');
-		expect(desktopShell).toContain('Arial, "Helvetica Neue", Helvetica');
-		expect(desktopShell).not.toContain('ona.com/fonts');
-		expect(desktopShell).not.toMatch(/font-family:\s*"ABCDiatype"/);
+		expect(desktopShell).toContain('<link rel="stylesheet" href="./start.css" />');
+		expect(desktopShellCss).toContain('--font-performance-interface');
+		expect(desktopShellCss).toContain('Arial, "Helvetica Neue", Helvetica');
+		expect(desktopShellCss).not.toContain('ona.com/fonts');
+		expect(desktopShellCss).not.toMatch(/font-family:\s*"ABCDiatype"/);
 	});
 });

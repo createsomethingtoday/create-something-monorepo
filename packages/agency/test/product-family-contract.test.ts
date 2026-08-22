@@ -9,6 +9,7 @@ import {
   getPublicProduct
 } from '../src/lib/data/productFamily.ts';
 import { getStripePrice, hasStripePricing } from '../src/lib/services/stripe.ts';
+import { PUBLIC_PRICING } from '../src/lib/data/publicPricing.ts';
 
 test('public product family separates Map, Build, and Control on one commercial path', () => {
   assert.deepEqual(PUBLIC_PRODUCT_SEQUENCE, ['map', 'build', 'control']);
@@ -94,19 +95,22 @@ test('canonical commercial interface sells managed Control operation instead of 
   assert.match(commercialInterface, /automatic_charge: false/);
   assert.match(commercialInterface, /new_workflows: "separately_scoped_build"/);
   assert.match(commercialInterface, /higher_risk_operation: "custom"/);
-  assert.match(commercialInterface, /canonical_contract_ref: .*agent-commercial\/v1\/create-something\.json/);
+  assert.match(
+    commercialInterface,
+    /canonical_contract_ref: .*agent-commercial\/v1\/create-something\.json/
+  );
   assert.match(commercialInterface, /uncataloged_capability: "deny"/);
   assert.match(commercialInterface, /decision_receipt_required: true/);
-  assert.match(commercialInterface, /machine_payment_status: "inactive_until_price_receipts_caps_rollback_and_production_approval"/);
+  assert.match(
+    commercialInterface,
+    /machine_payment_status: "inactive_until_price_receipts_caps_rollback_and_production_approval"/
+  );
   assert.match(commercialInterface, /payment_never_grants_private_or_write_access/);
   assert.doesNotMatch(commercialInterface, /name: "Policy OS Commercial Interface"/);
 });
 
 test('sales and delivery enablement preserve the managed operations commercial boundary', () => {
-  const salesReadme = readFileSync(
-    new URL('../content/sales/README.md', import.meta.url),
-    'utf8'
-  );
+  const salesReadme = readFileSync(new URL('../content/sales/README.md', import.meta.url), 'utf8');
   const buyerBrief = readFileSync(
     new URL('../content/sales/control-buyer-brief-ops-revops.md', import.meta.url),
     'utf8'
@@ -136,7 +140,13 @@ test('sales and delivery enablement preserve the managed operations commercial b
     'utf8'
   );
 
-  for (const source of [salesReadme, buyerBrief, discoveryScript, proposalInput, pricingFramework]) {
+  for (const source of [
+    salesReadme,
+    buyerBrief,
+    discoveryScript,
+    proposalInput,
+    pricingFramework
+  ]) {
     assert.match(source, /Managed AI Operations/);
     assert.match(source, /\$900(?: per month|\/month)/);
   }
@@ -162,10 +172,7 @@ test('sales and delivery enablement preserve the managed operations commercial b
 });
 
 test('Canon overlay projects Map publicly while keeping stable Atlas contracts', () => {
-  const manifest = readFileSync(
-    new URL('../canon-overlay/manifest.ts', import.meta.url),
-    'utf8'
-  );
+  const manifest = readFileSync(new URL('../canon-overlay/manifest.ts', import.meta.url), 'utf8');
   const surfacePolicy = readFileSync(
     new URL('../canon-overlay/surface-policy.md', import.meta.url),
     'utf8'
@@ -182,15 +189,12 @@ test('Canon overlay projects Map publicly while keeping stable Atlas contracts',
 });
 
 test('Map is the canonical public canvas route and Atlas redirects for compatibility', async () => {
-  const mapRoute = readFileSync(
-    new URL('../src/routes/map/+page.svelte', import.meta.url),
-    'utf8'
-  );
+  const mapRoute = readFileSync(new URL('../src/routes/map/+page.svelte', import.meta.url), 'utf8');
 
   assert.match(mapRoute, /CREATE SOMETHING Map/);
   assert.match(mapRoute, /<SystemContextRail/);
   assert.doesNotMatch(mapRoute, /<PublicAtlasStoryCanvas/);
-  assert.match(mapRoute, /<PublicAtlasCanvas bookingHref="\/book"/);
+  assert.match(mapRoute, /<PublicAtlasCanvas\s+bookingHref="\/book"/);
   assert.doesNotMatch(mapRoute, /Public Atlas Canvas|eyebrow="Atlas/);
 
   const { load } = await import('../src/routes/atlas/+page.server.ts');
@@ -278,7 +282,8 @@ test('Control and Services present the approved Managed AI Operations offer', ()
   );
 
   assert.match(controlRoute, /Managed AI Operations/);
-  assert.match(controlRoute, /from \$900 per month after launch/i);
+  assert.equal(PUBLIC_PRICING.managedControl.startingMonthlyUsd, 900);
+  assert.match(controlRoute, /PUBLIC_PRICING\.managedControl\.longLabel/);
   assert.match(controlRoute, /No per-agent fees/);
   assert.match(controlRoute, /AI usage.*(?:client|your) account/is);
   assert.match(controlRoute, /New workflows and integrations.*Build/is);
@@ -286,12 +291,12 @@ test('Control and Services present the approved Managed AI Operations offer', ()
   assert.doesNotMatch(controlRoute, /Launch pricing pending/);
 
   assert.match(servicesRoute, /Managed AI Operations/);
-  assert.match(servicesRoute, /From \$900\/month/);
+  assert.match(servicesRoute, /PUBLIC_PRICING\.managedControl\.label/);
   assert.match(servicesRoute, /AI usage.*separately metered/is);
   assert.doesNotMatch(servicesRoute, /Control includes Map; pricing configured at launch/);
 
   assert.match(servicesPath, /Managed AI Operations/);
-  assert.match(servicesPath, /from \$900\/month/);
+  assert.match(servicesPath, /PUBLIC_PRICING\.managedControl\.label/);
 });
 
 test('Map and Control checkout shapes stay inactive until approved Stripe prices exist', () => {
@@ -308,8 +313,14 @@ test('public manifest exposes Map, Build, and Control while retaining Policy OS 
     services: Array<{ slug: string; title: string; description: string }>;
   };
 
-  assert.equal(manifest.services.find((item) => item.slug === 'map')?.title, 'CREATE SOMETHING Map');
-  assert.equal(manifest.services.find((item) => item.slug === 'build')?.title, 'CREATE SOMETHING Build');
+  assert.equal(
+    manifest.services.find((item) => item.slug === 'map')?.title,
+    'CREATE SOMETHING Map'
+  );
+  assert.equal(
+    manifest.services.find((item) => item.slug === 'build')?.title,
+    'CREATE SOMETHING Build'
+  );
   assert.equal(
     manifest.services.find((item) => item.slug === 'control')?.title,
     'CREATE SOMETHING Control'

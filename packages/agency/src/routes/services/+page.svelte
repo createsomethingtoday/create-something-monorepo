@@ -6,6 +6,7 @@
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
   import { getPublicProduct } from '$lib/data/productFamily';
   import { playbookHeroMedia } from '$lib/data/playbookHeroMedia';
+  import { PUBLIC_PRICING } from '$lib/data/publicPricing';
 
   const mapProduct = getPublicProduct('map');
   const buildProduct = getPublicProduct('build');
@@ -16,8 +17,8 @@
       name: mapProduct.name,
       description: mapProduct.customerJob,
       type: 'Standalone product',
-      price: 'Monthly / yearly',
-      priceDescription: 'Pricing configured at launch'
+      price: PUBLIC_PRICING.map.publicStarterLabel,
+      priceDescription: PUBLIC_PRICING.map.workspaceLabel
     },
     {
       name: buildProduct.name,
@@ -30,7 +31,7 @@
       name: controlProduct.name,
       description: controlProduct.customerJob,
       type: 'Managed AI Operations',
-      price: 'From $900/month',
+      price: PUBLIC_PRICING.managedControl.label,
       priceDescription: 'After launch; Control includes Map'
     },
     {
