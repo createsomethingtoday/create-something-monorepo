@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.4
+
+- Reissued the GA package after protected `main` advanced, so npm provenance attests to the final GA source revision without approving the stale staged candidate.
+
 ## 1.0.3
 
 - Reissued the GA package after the restricted trusted-publisher verifier repair so npm provenance attests to the final GA source revision.
