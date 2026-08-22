@@ -1,7 +1,8 @@
 // Panel entry point
+import { mount } from 'svelte';
 import Panel from './Panel.svelte';
 
-const app = new Panel({
+const app = mount(Panel, {
   target: document.getElementById('app')!,
 });
 
