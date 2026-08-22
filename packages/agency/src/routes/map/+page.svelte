@@ -102,7 +102,7 @@
     expression="editorial"
     eyebrow="Continue the definition"
     title="Carry the starter sheet forward."
-    description={`The private draft is a starting sheet, not an account-scoped CREATE SOMETHING Map. The separate workspace is ${PUBLIC_PRICING.map.workspaceLabel.toLowerCase()} and adds version history, review gates, sharing, export, and Build handoff—or bring the summary into a mapping session first.`}
+    description={`The private draft is a starting sheet, not an account-scoped CREATE SOMETHING Map. The separate workspace is ${PUBLIC_PRICING.map.workspaceLabel}. It adds version history, review gates, sharing, export, and Build handoff—or bring the summary into a mapping session first.`}
     density="compact"
     handoff={{
       owner: 'Workflow owner',

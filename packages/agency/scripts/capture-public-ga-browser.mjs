@@ -7,6 +7,8 @@ import { fileURLToPath } from 'node:url';
 
 import { chromium } from '@playwright/test';
 
+import { classifyRequestFailure } from './public-ga-browser-policy.mjs';
+
 const AGENCY_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const REPOSITORY_ROOT = path.resolve(AGENCY_ROOT, '..', '..');
 
@@ -76,6 +78,7 @@ async function main() {
         const page = await context.newPage();
         const consoleErrors = [];
         const requestFailures = [];
+        const ignoredRequestFailures = [];
         const targetOrigin = new URL(config.pricing.baseUrl).origin;
         page.on('console', (message) => {
           if (message.type() === 'error') {
@@ -87,10 +90,15 @@ async function main() {
         );
         page.on('requestfailed', (request) => {
           if (new URL(request.url()).origin === targetOrigin) {
-            requestFailures.push({
+            const failure = {
               url: request.url(),
               error: request.failure()?.errorText ?? 'unknown'
-            });
+            };
+            if (classifyRequestFailure(failure, targetOrigin) === 'cloudflare-rum-aborted') {
+              ignoredRequestFailures.push({ ...failure, reason: 'cloudflare-rum-aborted' });
+            } else {
+              requestFailures.push(failure);
+            }
           }
         });
 
@@ -117,6 +125,7 @@ async function main() {
           horizontalOverflowPixels: overflow,
           consoleErrors,
           requestFailures,
+          ignoredRequestFailures,
           screenshotPath: screenshotName,
           screenshotSha256: sha256(screenshot)
         });

@@ -74,7 +74,7 @@
   const cadenceCards: PerformanceCardItem[] = [
     {
       eyebrow: 'Monthly',
-      title: `Managed AI Operations ${PUBLIC_PRICING.managedControl.longLabel.toLowerCase()}`,
+      title: `Managed AI Operations. ${PUBLIC_PRICING.managedControl.longLabel}`,
       detail:
         'For one standard-risk managed production environment. No per-agent fees. Control includes Map.',
       href: agencyCoreMessaging.workflowMappingSessionHref,
@@ -135,7 +135,7 @@
 
 <SEO
   title="CREATE SOMETHING Control | Managed AI Operations"
-  description={`Managed AI Operations ${PUBLIC_PRICING.managedControl.longLabel.toLowerCase()}, with no per-agent fees, transparent AI usage, approvals, evidence, and recovery. Supported public source stays ${PUBLIC_PRICING.publicSource.label}; Control includes Map.`}
+  description={`Managed AI Operations. ${PUBLIC_PRICING.managedControl.longLabel}, with no per-agent fees, transparent AI usage, approvals, evidence, and recovery. Supported public source stays ${PUBLIC_PRICING.publicSource.label}; Control includes Map.`}
   keywords="AI workflow control, governed execution, human approval workflow, agent audit trail, workflow recovery"
   propertyName="agency"
 />
@@ -145,7 +145,7 @@
     eyebrow="CREATE SOMETHING Control"
     expression="editorial"
     title="Run offense and defense from one playbook."
-    lede={`Control operates one standard-risk environment ${PUBLIC_PRICING.managedControl.longLabel.toLowerCase()}. Supported public source stays ${PUBLIC_PRICING.publicSource.label}. Offense advances approved work. Defense holds exceptions, protects authority, and preserves recovery proof.`}
+    lede={`Control operates one standard-risk environment. ${PUBLIC_PRICING.managedControl.longLabel}. Supported public source stays ${PUBLIC_PRICING.publicSource.label}. Offense advances approved work. Defense holds exceptions, protects authority, and preserves recovery proof.`}
     density="compact"
     artifactOwnsMedia
     artifactMobilePlacement="flow"
