@@ -17,13 +17,13 @@
   "packages": [
     {
       "path": "packages/pi-three-tier-framework",
-      "name": "@create-something/pi-three-tier-framework",
+      "name": "@createsomething/pi-three-tier-framework",
       "version": "1.0.0",
       "expectedFileCount": 9
     },
     {
       "path": "packages/pi-policy-os",
-      "name": "@create-something/pi-policy-os",
+      "name": "@createsomething/pi-policy-os",
       "version": "1.0.0",
       "expectedFileCount": 11
     }

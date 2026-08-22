@@ -15,7 +15,7 @@ body:
     attributes:
       label: Package and exact version
       description: Name the affected public package and installed version.
-      placeholder: "@create-something/pi-policy-os 1.0.0"
+      placeholder: "@createsomething/pi-policy-os 1.0.0"
     validations:
       required: true
   - type: textarea

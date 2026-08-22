@@ -1,11 +1,11 @@
-# @create-something/pi-three-tier-framework
+# @createsomething/pi-three-tier-framework
 
 The **Three-Tier Framework** (Database, Automation, Judgment) for agent systems — delivered as a [Pi](https://pi.dev) coding agent package.
 
 ## Install
 
 ```bash
-pi install npm:@create-something/pi-three-tier-framework
+pi install npm:@createsomething/pi-three-tier-framework
 ```
 
 Source price: **$0 under the MIT License**. Managed CREATE SOMETHING Control is a separate service, available from $900/month.

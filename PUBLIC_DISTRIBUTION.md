@@ -13,8 +13,8 @@ not an archive of the entire monorepo.
 
 The GA source artifact contains only:
 
-- `@create-something/pi-three-tier-framework`;
-- `@create-something/pi-policy-os`;
+- `@createsomething/pi-three-tier-framework`;
+- `@createsomething/pi-policy-os`;
 - the MIT license; and
 - this release contract and its machine-readable policy.
 

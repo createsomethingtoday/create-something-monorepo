@@ -26,7 +26,7 @@ async function fixture(overrides = {}) {
   );
 
   const packageJson = {
-    name: '@create-something/pi-fixture',
+    name: '@createsomething/pi-fixture',
     version: '1.0.0',
     description: 'Fixture package',
     license: 'MIT',
@@ -64,6 +64,7 @@ test('accepts a public MIT Pi package with explicit release and discovery metada
 
 test('rejects missing license material, unsafe publication metadata, and invalid Pi paths', async () => {
   const root = await fixture({
+    name: '@create-something/pi-fixture',
     license: 'UNLICENSED',
     publishConfig: { access: 'restricted', provenance: false },
     repository: { url: 'https://example.com/private.git' },
@@ -73,6 +74,7 @@ test('rejects missing license material, unsafe publication metadata, and invalid
   try {
     await rm(path.join(root, 'LICENSE'));
     const issues = await validatePiPackage(root);
+    assert.ok(issues.some((issue) => issue.includes('@createsomething/pi-*')));
     assert.ok(issues.some((issue) => issue.includes('MIT')));
     assert.ok(issues.some((issue) => issue.includes('LICENSE')));
     assert.ok(issues.some((issue) => issue.includes('public')));

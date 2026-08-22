@@ -1,11 +1,11 @@
-# @create-something/pi-policy-os
+# @createsomething/pi-policy-os
 
 **Policy OS starter** for [Pi](https://pi.dev) coding agents — governed AI execution with quality gates, policy auditing, and the Subtractive Triad review methodology.
 
 ## Install
 
 ```bash
-pi install npm:@create-something/pi-policy-os
+pi install npm:@createsomething/pi-policy-os
 ```
 
 Source price: **$0 under the MIT License**. Managed CREATE SOMETHING Control is a separate service, available from $900/month.
@@ -45,5 +45,5 @@ Policy OS is CREATE SOMETHING's governed execution platform:
 ## Go Further
 
 - [CREATE SOMETHING](https://createsomething.agency) — Custom MCP development and Policy OS delivery
-- [Three-Tier Framework](https://www.npmjs.com/package/@create-something/pi-three-tier-framework) — The architectural model
+- [Three-Tier Framework](https://www.npmjs.com/package/@createsomething/pi-three-tier-framework) — The architectural model
 - [Policy OS paper](https://createsomething.io/papers/policy-os-development-infrastructure)

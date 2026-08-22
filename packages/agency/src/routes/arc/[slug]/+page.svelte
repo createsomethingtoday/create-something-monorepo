@@ -8,13 +8,15 @@
 
   let { data }: { data: PageData } = $props();
 
-  const composition = data.arc.composition;
-  const arcRoute = composition.routes.find((route) => route.kind === 'arc');
-  if (!arcRoute) throw new Error(`Arc route missing for ${data.arc.slug}`);
-  const sourceScenes = arcRoute.sceneIds.map((sceneId) => {
-    const scene = composition.scenes.find((candidate) => candidate.id === sceneId);
-    if (!scene) throw new Error(`Unknown Arc scene: ${sceneId}`);
-    return scene;
+  const composition = $derived(data.arc.composition);
+  const arcRoute = $derived(composition.routes.find((route) => route.kind === 'arc'));
+  const sourceScenes = $derived.by(() => {
+    if (!arcRoute) throw new Error(`Arc route missing for ${data.arc.slug}`);
+    return arcRoute.sceneIds.map((sceneId) => {
+      const scene = composition.scenes.find((candidate) => candidate.id === sceneId);
+      if (!scene) throw new Error(`Unknown Arc scene: ${sceneId}`);
+      return scene;
+    });
   });
   const toneByKind: Record<AtlasCompositionScene['kind'], PerformanceNarrativeScene['tone']> = {
     signal: 'review',
@@ -24,7 +26,7 @@
     runbook: 'allow',
     receipt: 'allow'
   };
-  const scenes: PerformanceNarrativeScene[] = sourceScenes.map((scene) => ({
+  const scenes: PerformanceNarrativeScene[] = $derived(sourceScenes.map((scene) => ({
     id: scene.id,
     label: scene.label,
     summary: scene.presentation.reader.takeaway,
@@ -34,7 +36,7 @@
     tone: toneByKind[scene.kind],
     evidence: scene.evidence,
     receipts: scene.kind === 'receipt' ? ['Expected proof · no run claimed'] : undefined
-  }));
+  })));
 
   function nodeLabel(id: string): string {
     return id

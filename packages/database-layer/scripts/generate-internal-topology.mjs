@@ -386,7 +386,7 @@ const knowledgeFallbackPackageNames = {
   ],
   policy: [
     '@create-something/mcp-authz',
-    '@create-something/pi-policy-os',
+    '@createsomething/pi-policy-os',
     '@create-something/canon',
     '@create-something/database-layer',
     '@create-something/substrate-mcp'

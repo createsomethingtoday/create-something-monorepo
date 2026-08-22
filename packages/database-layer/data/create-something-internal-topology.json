@@ -2460,7 +2460,7 @@
     {
       "id": "substrate:create-something:package:create-something-pi-policy-os-packages-pi-policy-os",
       "atlasNodeId": "atlas_create-something_package_create-something-pi-policy-os-packages-pi-policy-os",
-      "title": "@create-something/pi-policy-os",
+      "title": "@createsomething/pi-policy-os",
       "path": "packages/pi-policy-os",
       "tier": "Judgment",
       "surface": "mcp",
@@ -2477,13 +2477,13 @@
         "quality-gates",
         "agent-systems"
       ],
-      "packageName": "@create-something/pi-policy-os",
+      "packageName": "@createsomething/pi-policy-os",
       "runtime": "node"
     },
     {
       "id": "substrate:create-something:package:create-something-pi-three-tier-framework-packages-pi-three-tier-framework",
       "atlasNodeId": "atlas_create-something_package_create-something-pi-three-tier-framework-packages-pi-three-tier-framework",
-      "title": "@create-something/pi-three-tier-framework",
+      "title": "@createsomething/pi-three-tier-framework",
       "path": "packages/pi-three-tier-framework",
       "tier": "Judgment",
       "surface": "mcp",
@@ -2499,7 +2499,7 @@
         "mcp",
         "architecture"
       ],
-      "packageName": "@create-something/pi-three-tier-framework",
+      "packageName": "@createsomething/pi-three-tier-framework",
       "runtime": "node"
     },
     {

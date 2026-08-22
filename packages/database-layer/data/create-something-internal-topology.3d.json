@@ -2099,7 +2099,7 @@
                 "sourceId": "substrate:create-something:doc:docs-mcp-first-thesis-md",
                 "sourceLabel": "MCP_FIRST_THESIS.md",
                 "targetId": "substrate:create-something:package:create-something-pi-policy-os-packages-pi-policy-os",
-                "targetLabel": "@create-something/pi-policy-os",
+                "targetLabel": "@createsomething/pi-policy-os",
                 "evidence": "docs/MCP_FIRST_THESIS.md documents packages/pi-policy-os through matching topology terms."
               },
               {
@@ -16051,7 +16051,7 @@
         "atlasNodeId": "atlas_create-something_package_create-something-pi-policy-os-packages-pi-policy-os"
       },
       "clientOverlay": null,
-      "label": "@create-something/pi-policy-os",
+      "label": "@createsomething/pi-policy-os",
       "path": "packages/pi-policy-os",
       "tier": "Judgment",
       "surface": "mcp",
@@ -16084,7 +16084,7 @@
         "atlasNodeId": "atlas_create-something_package_create-something-pi-three-tier-framework-packages-pi-three-tier-framework"
       },
       "clientOverlay": null,
-      "label": "@create-something/pi-three-tier-framework",
+      "label": "@createsomething/pi-three-tier-framework",
       "path": "packages/pi-three-tier-framework",
       "tier": "Judgment",
       "surface": "mcp",

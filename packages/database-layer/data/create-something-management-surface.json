@@ -2010,7 +2010,7 @@
     {
       "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-package-create-something-pi-policy-os-packages-pi-policy-os",
       "kind": "topology_record",
-      "title": "@create-something/pi-policy-os",
+      "title": "@createsomething/pi-policy-os",
       "recordId": "substrate:create-something:package:create-something-pi-policy-os-packages-pi-policy-os",
       "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
       "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-package-create-something-pi-policy-os-packages-pi-policy-os",
@@ -2024,7 +2024,7 @@
     {
       "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-package-create-something-pi-three-tier-framework-packages-pi-three-tier-framework",
       "kind": "topology_record",
-      "title": "@create-something/pi-three-tier-framework",
+      "title": "@createsomething/pi-three-tier-framework",
       "recordId": "substrate:create-something:package:create-something-pi-three-tier-framework-packages-pi-three-tier-framework",
       "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
       "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-package-create-something-pi-three-tier-framework-packages-pi-three-tier-framework",

@@ -73,8 +73,8 @@ export async function validatePiPackage(packageRoot) {
     return [`package.json must be readable JSON: ${error.message}`];
   }
 
-  if (!/^@create-something\/pi-[a-z0-9-]+$/.test(packageJson.name ?? '')) {
-    issues.push('Package name must use the @create-something/pi-* public scope.');
+  if (!/^@createsomething\/pi-[a-z0-9-]+$/.test(packageJson.name ?? '')) {
+    issues.push('Package name must use the @createsomething/pi-* public scope.');
   }
   if (!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(packageJson.version ?? '')) {
     issues.push('Package version must be an explicit semantic version.');

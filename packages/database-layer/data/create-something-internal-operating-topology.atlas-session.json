@@ -6831,7 +6831,7 @@
       {
         "id": "atlas_create-something_package_create-something-pi-policy-os-packages-pi-policy-os",
         "kind": "constraint",
-        "label": "@create-something/pi-policy-os",
+        "label": "@createsomething/pi-policy-os",
         "atlasId": "substrate:create-something:package:create-something-pi-policy-os-packages-pi-policy-os",
         "x": 2566,
         "y": 1056,
@@ -6854,7 +6854,7 @@
           {
             "id": "receipt:substrate:create-something:package:create-something-pi-policy-os-packages-pi-policy-os",
             "productId": "proof",
-            "title": "@create-something/pi-policy-os is part of the mapped root topology.",
+            "title": "@createsomething/pi-policy-os is part of the mapped root topology.",
             "summary": "packages/pi-policy-os was discovered during topology generation at 2026-07-23T05:11:08.429Z.",
             "status": "ready",
             "source": "Substrate topology projection",
@@ -6866,7 +6866,7 @@
           {
             "id": "binding:substrate:create-something:package:create-something-pi-policy-os-packages-pi-policy-os",
             "kind": "policy",
-            "label": "@create-something/pi-policy-os",
+            "label": "@createsomething/pi-policy-os",
             "source": "mcp",
             "selector": "substrate:create-something:package:create-something-pi-policy-os-packages-pi-policy-os",
             "required": true
@@ -6886,7 +6886,7 @@
       {
         "id": "atlas_create-something_package_create-something-pi-three-tier-framework-packages-pi-three-tier-framework",
         "kind": "constraint",
-        "label": "@create-something/pi-three-tier-framework",
+        "label": "@createsomething/pi-three-tier-framework",
         "atlasId": "substrate:create-something:package:create-something-pi-three-tier-framework-packages-pi-three-tier-framework",
         "x": 2824,
         "y": 1056,
@@ -6909,7 +6909,7 @@
           {
             "id": "receipt:substrate:create-something:package:create-something-pi-three-tier-framework-packages-pi-three-tier-framework",
             "productId": "proof",
-            "title": "@create-something/pi-three-tier-framework is part of the mapped root topology.",
+            "title": "@createsomething/pi-three-tier-framework is part of the mapped root topology.",
             "summary": "packages/pi-three-tier-framework was discovered during topology generation at 2026-07-23T05:11:08.429Z.",
             "status": "ready",
             "source": "Substrate topology projection",
@@ -6921,7 +6921,7 @@
           {
             "id": "binding:substrate:create-something:package:create-something-pi-three-tier-framework-packages-pi-three-tier-framework",
             "kind": "policy",
-            "label": "@create-something/pi-three-tier-framework",
+            "label": "@createsomething/pi-three-tier-framework",
             "source": "mcp",
             "selector": "substrate:create-something:package:create-something-pi-three-tier-framework-packages-pi-three-tier-framework",
             "required": true

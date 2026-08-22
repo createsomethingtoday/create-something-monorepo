@@ -102,9 +102,9 @@ What we built for the development workflow is structurally identical to what we 
 The Pi package ecosystem enables a new distribution channel:
 
 ```
-Developer installs @create-something/pi-three-tier-framework
+Developer installs @createsomething/pi-three-tier-framework
     → Learns to think in Database/Automation/Judgment
-    → Installs @create-something/pi-policy-os
+    → Installs @createsomething/pi-policy-os
     → Runs /policy-check on their own codebase
     → Sees governance gaps
     → Contacts CREATE SOMETHING for full Policy OS engagement
