@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto';
-import { mkdir, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { basename, dirname, isAbsolute, join, relative, resolve } from 'node:path';
 
 import type { CompiledWorkflowBundle } from './types.js';
@@ -106,6 +106,15 @@ async function assertOutputDirectoryIsReplaceable(outDir: string): Promise<void>
   );
 }
 
+async function existingOutputMode(outDir: string): Promise<number | undefined> {
+  try {
+    return (await stat(outDir)).mode & 0o7777;
+  } catch (error) {
+    if (isMissing(error)) return undefined;
+    throw error;
+  }
+}
+
 async function replaceDirectoryAtomically(stagingDir: string, outDir: string): Promise<void> {
   const backupDir = join(dirname(outDir), `.${basename(outDir)}.backup-${randomUUID()}`);
   let movedExistingOutput = false;
@@ -191,9 +200,11 @@ export async function writeCompiledWorkflowArtifacts(
   }
 
   await assertOutputDirectoryIsReplaceable(resolvedOutDir);
+  const outputMode = await existingOutputMode(resolvedOutDir);
   await mkdir(parentDir, { recursive: true });
   const stagingDir = join(parentDir, `.${basename(resolvedOutDir)}.tmp-${randomUUID()}`);
   await mkdir(stagingDir);
+  if (outputMode !== undefined) await chmod(stagingDir, outputMode);
 
   try {
     const manifest = await writeArtifactSet(bundle, stagingDir, replay);
