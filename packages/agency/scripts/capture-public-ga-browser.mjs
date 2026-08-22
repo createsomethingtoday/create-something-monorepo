@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 
 import { chromium } from '@playwright/test';
 
-import { classifyRequestFailure } from './public-ga-browser-policy.mjs';
+import { classifyRequestFailure, matchesRequiredText } from './public-ga-browser-policy.mjs';
 
 const AGENCY_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const REPOSITORY_ROOT = path.resolve(AGENCY_ROOT, '..', '..');
@@ -120,7 +120,7 @@ async function main() {
           url: page.url(),
           viewport,
           httpStatus: response?.status() ?? null,
-          requiredTextPass: route.requiredText.every((required) => text.includes(required)),
+          requiredTextPass: route.requiredText.every((required) => matchesRequiredText(text, required)),
           requiredText: route.requiredText,
           horizontalOverflowPixels: overflow,
           consoleErrors,
