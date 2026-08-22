@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
-import { generateKeyPairSync } from 'node:crypto';
+import { createHash, generateKeyPairSync } from 'node:crypto';
 import {
   chmod,
   mkdtemp,
   readFile,
+  realpath,
   readdir,
+  rename,
   rm,
   symlink,
   truncate,
@@ -26,6 +28,24 @@ import {
 
 const packageRoot = new URL('..', import.meta.url);
 const fixturePath = new URL('../fixtures/marketplace/workflow.json', import.meta.url);
+
+async function rewriteManifestHash(rootDir, artifactPath) {
+  const manifestPath = join(rootDir, 'manifest.json');
+  const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+  const artifact = manifest.files.find((file) => file.path === artifactPath);
+  assert.ok(artifact, `${artifactPath} must be declared`);
+  artifact.hash = `sha256:${createHash('sha256')
+    .update(await readFile(join(rootDir, artifactPath)))
+    .digest('hex')}`;
+  await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+}
+
+async function pointDirectoryLink(linkPath, target) {
+  const pointer = `${linkPath}.test-pointer`;
+  await rm(pointer, { force: true });
+  await symlink(target, pointer, process.platform === 'win32' ? 'junction' : 'dir');
+  await rename(pointer, linkPath);
+}
 
 test('the public verifier returns a deterministic integrity receipt and rejects tampering', async () => {
   const root = await mkdtemp(join(tmpdir(), 'workflow-compiler-verification-'));
@@ -378,6 +398,55 @@ test('oversized artifacts stop on metadata before content allocation', async () 
         error.code === 'RESOURCE_LIMIT_EXCEEDED' &&
         error.path === 'workflow-map.json'
     );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('verification pins one published revision while the managed output pointer retargets', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'workflow-compiler-pinned-revision-'));
+  const outDir = join(root, 'output');
+
+  try {
+    for (let index = 0; index < 2; index += 1) {
+      const compile = spawnSync(
+        process.execPath,
+        ['dist/cli.js', 'compile', '--workflow', fixturePath.pathname, '--out', outDir],
+        { cwd: packageRoot, encoding: 'utf8' }
+      );
+      assert.equal(compile.status, 0, compile.stderr || compile.stdout);
+    }
+    const revisionsDir = join(root, '.output.workflow-compiler', 'revisions');
+    const revisions = (await readdir(revisionsDir))
+      .filter((entry) => entry.startsWith('revision-'))
+      .sort();
+    assert.equal(revisions.length, 2);
+    const firstRevision = join(revisionsDir, revisions[0]);
+    const secondRevision = join(revisionsDir, revisions[1]);
+
+    await truncate(join(firstRevision, 'agent-contracts.json'), 25 * 1024 * 1024);
+    await rewriteManifestHash(firstRevision, 'agent-contracts.json');
+    await writeFile(
+      join(secondRevision, 'workflow-map.json'),
+      `${await readFile(join(secondRevision, 'workflow-map.json'), 'utf8')} `,
+      'utf8'
+    );
+    await rewriteManifestHash(secondRevision, 'workflow-map.json');
+    const firstReceipt = await verifyWorkflowArtifactBundle(firstRevision);
+    const secondReceipt = await verifyWorkflowArtifactBundle(secondRevision);
+    assert.notEqual(firstReceipt.manifestHash, secondReceipt.manifestHash);
+
+    await pointDirectoryLink(outDir, firstRevision);
+    assert.equal(await realpath(outDir), await realpath(firstRevision));
+    const verification = verifyWorkflowArtifactBundle(outDir);
+    await new Promise((resolveSwitch, rejectSwitch) => {
+      setImmediate(() => {
+        pointDirectoryLink(outDir, secondRevision).then(resolveSwitch, rejectSwitch);
+      });
+    });
+
+    assert.deepEqual(await verification, firstReceipt);
+    assert.equal(await realpath(outDir), await realpath(secondRevision));
   } finally {
     await rm(root, { recursive: true, force: true });
   }

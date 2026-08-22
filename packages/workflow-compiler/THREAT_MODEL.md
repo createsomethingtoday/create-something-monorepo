@@ -13,17 +13,17 @@ The production v1 boundary is one local or CI process compiling JSON inputs into
 
 ## Assets and controls
 
-| Asset or threat                   | Control                                                                                                                             | Residual boundary                                                                        |
-| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| Workflow and replay input         | Exact versioned parsers, unknown-field and unknown-version rejection, bounded reference validation                                  | A semantically harmful but schema-valid policy still requires operator review            |
-| Artifact integrity                | Sorted manifest, SHA-256 for every declared artifact, required base inventory, regular-file checks                                  | SHA-256 is integrity evidence, not signer identity                                       |
-| Signer identity                   | Ed25519 signature over the canonical manifest, pinned public key, SHA-256 SPKI fingerprint                                          | Key issuance, storage, rotation, and revocation remain caller-owned                      |
-| Path escape                       | Normalized relative paths only; absolute, drive, backslash, dot-segment, empty-segment, NUL, and overlong paths fail closed         | The caller must control the output parent against a privileged concurrent local attacker |
-| Link or special-file substitution | Internal symbolic links and non-regular artifact entries are rejected                                                               | Verification is a local point-in-time check, not an operating-system sandbox             |
-| Undeclared content                | Public verification rejects undeclared files and directories; `manifest.json` and optional `attestation.json` are the only sidecars | Compiler-owned hidden revision history is outside the public bundle root                 |
-| Resource exhaustion               | 1 MiB manifest, 16 KiB attestation, 512 files, 25 MiB per artifact, and 100 MiB aggregate verification limits                       | CPU and filesystem quotas remain the CI or host responsibility                           |
-| Partial or concurrent publication | Private staging revision plus one atomic managed-pointer rename; published revisions are retained                                   | Quiescent cleanup of retained revisions is an operator responsibility                    |
-| Key disclosure                    | No generated, embedded, default, or persisted private key; package has zero runtime dependencies                                    | A compromised caller process can read any key supplied to that process                   |
+| Asset or threat                   | Control                                                                                                                                       | Residual boundary                                                                        |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Workflow and replay input         | Exact versioned parsers, unknown-field and unknown-version rejection, bounded reference validation                                            | A semantically harmful but schema-valid policy still requires operator review            |
+| Artifact integrity                | Sorted manifest, SHA-256 for every declared artifact, required base inventory, regular-file checks                                            | SHA-256 is integrity evidence, not signer identity                                       |
+| Signer identity                   | Ed25519 signature over the canonical manifest, pinned public key, SHA-256 SPKI fingerprint                                                    | Key issuance, storage, rotation, and revocation remain caller-owned                      |
+| Path escape                       | Normalized relative paths only; absolute, drive, backslash, dot-segment, empty-segment, NUL, and overlong paths fail closed                   | The caller must control the output parent against a privileged concurrent local attacker |
+| Link or special-file substitution | The public bundle root is resolved once to pin one published revision; internal symbolic links and non-regular artifact entries are rejected  | Verification is a local point-in-time check, not an operating-system sandbox             |
+| Undeclared content                | Public verification rejects undeclared files and directories; `manifest.json` and optional `attestation.json` are the only sidecars           | Compiler-owned hidden revision history is outside the public bundle root                 |
+| Resource exhaustion               | 1 MiB manifest, 16 KiB attestation, 512 files, 25 MiB per artifact, and 100 MiB aggregate verification limits                                 | CPU and filesystem quotas remain the CI or host responsibility                           |
+| Partial or concurrent publication | Private staging revision plus one atomic managed-pointer rename; published revisions are retained and verification pins one resolved revision | Quiescent cleanup of retained revisions is an operator responsibility                    |
+| Key disclosure                    | No generated, embedded, default, or persisted private key; package has zero runtime dependencies                                              | A compromised caller process can read any key supplied to that process                   |
 
 ## Verification outcomes
 
@@ -39,4 +39,4 @@ Supplying a public key makes an attestation mandatory. Missing attestations, mal
 
 ## Non-goals
 
-The compiler does not provide a certificate authority, transparency log, timestamp authority, remote signing service, revocation server, secret manager, hosted execution plane, or defense against an administrator modifying files during the verification system calls. Those capabilities require separate trust and operating boundaries.
+The compiler does not provide a certificate authority, transparency log, timestamp authority, remote signing service, revocation server, secret manager, hosted execution plane, or defense against an administrator modifying files inside the pinned revision during the verification system calls. Those capabilities require separate trust and operating boundaries.

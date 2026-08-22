@@ -6,6 +6,7 @@ import {
   mkdir,
   readFile,
   readlink,
+  realpath,
   readdir,
   rename,
   rm,
@@ -496,7 +497,7 @@ export async function verifyWorkflowArtifactBundle(
   rootDir: string,
   options: VerifyWorkflowArtifactBundleOptions = {}
 ): Promise<WorkflowArtifactVerificationReceipt> {
-  const resolvedRootDir = resolve(rootDir);
+  const resolvedRootDir = await realpath(resolve(rootDir));
   const manifest = await readValidatedArtifactManifest(resolvedRootDir);
   const attestationPath = join(resolvedRootDir, 'attestation.json');
   let attestationValue: unknown;
