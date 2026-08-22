@@ -40,14 +40,15 @@ The compiler emits the same content-hashed `governed-interaction.json` for Atlas
 
 ## Agent Legibility Contract
 
-| Field               | Value                                                                                                                                                         |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Entry point         | `src/index.ts`, `src/compile.ts`, `src/replay.ts`, `src/artifacts.ts`, `src/cli.ts`                                                                           |
-| Boot command        | `pnpm build`                                                                                                                                                  |
-| Smoke command       | `pnpm check && pnpm test && pnpm test:acceptance`                                                                                                             |
-| Validation surfaces | TypeScript output, node test output, workflow diagnostics, content-hashed manifest, replay report, evidence ledger, acceptance summary                        |
-| UI validation path  | Serve the generated `operator-console/` and verify overview, approval-required, blocked, reload, and browser-console states with Playwright                   |
-| Escalation rule     | Stop before live mutation or execution controls, and stop when authority, evidence, approval, receipt, recovery, or owning-system boundaries cannot be proven |
+<!-- prettier-ignore -->
+| Field | Value |
+| --- | --- |
+| Entry point | `src/index.ts`, `src/compile.ts`, `src/replay.ts`, `src/artifacts.ts`, `src/cli.ts` |
+| Boot command | `pnpm build` |
+| Smoke command | `pnpm check && pnpm test && pnpm test:acceptance` |
+| Validation surfaces | TypeScript output, node test output, workflow diagnostics, content-hashed manifest, replay report, evidence ledger, acceptance summary |
+| UI validation path | Serve the generated `operator-console/` and verify overview, approval-required, blocked, reload, and browser-console states with Playwright |
+| Escalation rule | Stop before live mutation or execution controls, and stop when authority, evidence, approval, receipt, recovery, or owning-system boundaries cannot be proven |
 
 ## Compile the marketplace fixture
 
