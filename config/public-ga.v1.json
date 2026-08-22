@@ -20,13 +20,13 @@
     {
       "path": "packages/pi-three-tier-framework",
       "name": "@createsomething/pi-three-tier-framework",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "expectedFileCount": 9
     },
     {
       "path": "packages/pi-policy-os",
       "name": "@createsomething/pi-policy-os",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "expectedFileCount": 11
     }
   ],
