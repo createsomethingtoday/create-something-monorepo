@@ -133,7 +133,11 @@ async function replaceDirectoryAtomically(stagingDir: string, outDir: string): P
     throw error;
   }
 
-  if (movedExistingOutput) await rm(backupDir, { recursive: true, force: true });
+  if (movedExistingOutput) {
+    const backupMode = (await stat(backupDir)).mode & 0o7777;
+    await chmod(backupDir, backupMode | 0o700);
+    await rm(backupDir, { recursive: true, force: true });
+  }
 }
 
 async function writeArtifactSet(
@@ -204,10 +208,10 @@ export async function writeCompiledWorkflowArtifacts(
   await mkdir(parentDir, { recursive: true });
   const stagingDir = join(parentDir, `.${basename(resolvedOutDir)}.tmp-${randomUUID()}`);
   await mkdir(stagingDir);
-  if (outputMode !== undefined) await chmod(stagingDir, outputMode);
 
   try {
     const manifest = await writeArtifactSet(bundle, stagingDir, replay);
+    if (outputMode !== undefined) await chmod(stagingDir, outputMode);
     await replaceDirectoryAtomically(stagingDir, resolvedOutDir);
     return manifest;
   } catch (error) {

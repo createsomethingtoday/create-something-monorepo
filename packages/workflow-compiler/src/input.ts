@@ -1,7 +1,12 @@
 import type { WorkflowDefinition, WorkflowReplayManifest } from './types.js';
 
 export interface WorkflowInputDiagnostic {
-  code: 'INVALID_TYPE' | 'INVALID_VALUE' | 'REQUIRED_FIELD' | 'UNSUPPORTED_SCHEMA_VERSION';
+  code:
+    | 'INVALID_TYPE'
+    | 'INVALID_VALUE'
+    | 'REQUIRED_FIELD'
+    | 'UNSUPPORTED_SCHEMA_VERSION'
+    | 'WORKFLOW_ID_MISMATCH';
   path: string;
   message: string;
 }

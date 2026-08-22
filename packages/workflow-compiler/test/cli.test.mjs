@@ -195,29 +195,31 @@ test('the public CLI refuses to replace a non-empty directory it does not own', 
   }
 });
 
-test('atomic replacement preserves restricted output directory permissions', async () => {
-  const root = await mkdtemp(join(tmpdir(), 'workflow-compiler-output-mode-'));
-  const outDir = join(root, 'output');
+for (const mode of [0o700, 0o500]) {
+  test(`atomic replacement preserves output directory mode ${mode.toString(8)}`, async () => {
+    const root = await mkdtemp(join(tmpdir(), 'workflow-compiler-output-mode-'));
+    const outDir = join(root, 'output');
 
-  try {
-    const initial = spawnSync(
-      process.execPath,
-      ['dist/cli.js', 'compile', '--workflow', fixturePath.pathname, '--out', outDir],
-      { cwd: packageRoot, encoding: 'utf8' }
-    );
-    assert.equal(initial.status, 0, initial.stderr || initial.stdout);
-    await chmod(outDir, 0o700);
+    try {
+      const initial = spawnSync(
+        process.execPath,
+        ['dist/cli.js', 'compile', '--workflow', fixturePath.pathname, '--out', outDir],
+        { cwd: packageRoot, encoding: 'utf8' }
+      );
+      assert.equal(initial.status, 0, initial.stderr || initial.stdout);
+      await chmod(outDir, mode);
 
-    const replacement = spawnSync(
-      process.execPath,
-      ['dist/cli.js', 'compile', '--workflow', fixturePath.pathname, '--out', outDir],
-      { cwd: packageRoot, encoding: 'utf8' }
-    );
+      const replacement = spawnSync(
+        process.execPath,
+        ['dist/cli.js', 'compile', '--workflow', fixturePath.pathname, '--out', outDir],
+        { cwd: packageRoot, encoding: 'utf8' }
+      );
 
-    assert.equal(replacement.status, 0, replacement.stderr || replacement.stdout);
-    assert.equal((await stat(outDir)).mode & 0o777, 0o700);
-  } finally {
-    await chmod(outDir, 0o700).catch(() => undefined);
-    await rm(root, { recursive: true, force: true });
-  }
-});
+      assert.equal(replacement.status, 0, replacement.stderr || replacement.stdout);
+      assert.equal((await stat(outDir)).mode & 0o777, mode);
+    } finally {
+      await chmod(outDir, 0o700).catch(() => undefined);
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+}

@@ -1,4 +1,4 @@
-import { parseWorkflowReplayManifest } from './input.js';
+import { parseWorkflowReplayManifest, ReplayInputValidationError } from './input.js';
 import type {
   CompiledDecision,
   CompiledWorkflowBundle,
@@ -58,9 +58,13 @@ export function replayWorkflow(
 ): WorkflowReplayArtifacts {
   const manifest = parseWorkflowReplayManifest(input);
   if (manifest.workflowId !== bundle.workflowId) {
-    throw new Error(
-      `Replay manifest workflow ${manifest.workflowId} does not match bundle ${bundle.workflowId}.`,
-    );
+    throw new ReplayInputValidationError([
+      {
+        code: 'WORKFLOW_ID_MISMATCH',
+        path: '$.workflowId',
+        message: `Replay manifest workflow ${manifest.workflowId} does not match compiled workflow ${bundle.workflowId}.`,
+      },
+    ]);
   }
 
   const decisions = new Map(
