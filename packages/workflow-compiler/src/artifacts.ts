@@ -68,8 +68,17 @@ function json(value: unknown): string {
   return `${JSON.stringify(value, null, 2)}\n`;
 }
 
-function contentHash(content: string): string {
+function contentHash(content: string | Uint8Array): string {
   return `sha256:${createHash('sha256').update(content).digest('hex')}`;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function hasExactKeys(value: Record<string, unknown>, expected: string[]): boolean {
+  const actual = Object.keys(value).sort();
+  return actual.length === expected.length && actual.every((key, index) => key === expected[index]);
 }
 
 function artifactTarget(rootDir: string, artifactPath: string): string {
@@ -104,6 +113,85 @@ function revisionsDirectory(outDir: string): string {
 function isDirectRevisionTarget(outDir: string, target: string): boolean {
   const revisionsDir = revisionsDirectory(outDir);
   return dirname(target) === revisionsDir && basename(target).startsWith('revision-');
+}
+
+async function readValidatedArtifactManifest(rootDir: string): Promise<WorkflowArtifactManifest> {
+  const manifestPath = join(rootDir, 'manifest.json');
+  if (!(await lstat(manifestPath)).isFile()) throw new Error();
+  const manifest: unknown = JSON.parse(await readFile(manifestPath, 'utf8'));
+  if (
+    !isRecord(manifest) ||
+    !hasExactKeys(manifest, [
+      'compilerVersion',
+      'definitionHash',
+      'files',
+      'schemaVersion',
+      'workflowId',
+      'workflowVersion'
+    ]) ||
+    manifest.schemaVersion !== 'workflow_artifact_manifest.v0.1' ||
+    typeof manifest.workflowId !== 'string' ||
+    manifest.workflowId.length === 0 ||
+    typeof manifest.workflowVersion !== 'string' ||
+    manifest.workflowVersion.length === 0 ||
+    typeof manifest.definitionHash !== 'string' ||
+    !/^sha256:[a-f0-9]{64}$/.test(manifest.definitionHash) ||
+    typeof manifest.compilerVersion !== 'string' ||
+    manifest.compilerVersion.length === 0 ||
+    !Array.isArray(manifest.files)
+  ) {
+    throw new Error();
+  }
+
+  const requiredPaths = new Set(ARTIFACTS.map((artifact) => artifact.path));
+  const seenPaths = new Set<string>();
+  const files: WorkflowArtifactManifest['files'] = [];
+  let previousPath: string | undefined;
+  for (const value of manifest.files) {
+    if (
+      !isRecord(value) ||
+      !hasExactKeys(value, ['hash', 'path']) ||
+      typeof value.path !== 'string' ||
+      value.path.length === 0 ||
+      typeof value.hash !== 'string' ||
+      !/^sha256:[a-f0-9]{64}$/.test(value.hash) ||
+      seenPaths.has(value.path) ||
+      (previousPath !== undefined && value.path <= previousPath)
+    ) {
+      throw new Error();
+    }
+    const target = artifactTarget(rootDir, value.path);
+    const canonicalPath = relative(rootDir, target).replaceAll('\\', '/');
+    if (canonicalPath !== value.path || !(await lstat(target)).isFile()) throw new Error();
+    if (contentHash(await readFile(target)) !== value.hash) throw new Error();
+    seenPaths.add(value.path);
+    requiredPaths.delete(value.path);
+    previousPath = value.path;
+    files.push({ path: value.path, hash: value.hash });
+  }
+  if (requiredPaths.size > 0) throw new Error();
+
+  const compiledWorkflow: unknown = JSON.parse(
+    await readFile(artifactTarget(rootDir, 'compiled-workflow.json'), 'utf8')
+  );
+  if (
+    !isRecord(compiledWorkflow) ||
+    compiledWorkflow.workflowId !== manifest.workflowId ||
+    compiledWorkflow.workflowVersion !== manifest.workflowVersion ||
+    compiledWorkflow.definitionHash !== manifest.definitionHash ||
+    compiledWorkflow.compilerVersion !== manifest.compilerVersion
+  ) {
+    throw new Error();
+  }
+
+  return {
+    schemaVersion: 'workflow_artifact_manifest.v0.1',
+    workflowId: manifest.workflowId,
+    workflowVersion: manifest.workflowVersion,
+    definitionHash: manifest.definitionHash,
+    compilerVersion: manifest.compilerVersion,
+    files
+  };
 }
 
 interface ExistingOutput {
@@ -159,12 +247,7 @@ async function inspectExistingOutput(outDir: string): Promise<ExistingOutput> {
     }
     try {
       if (!(await lstat(target)).isDirectory()) throw new Error();
-      const manifestPath = join(target, 'manifest.json');
-      if (!(await lstat(manifestPath)).isFile()) throw new Error();
-      const manifest = JSON.parse(await readFile(manifestPath, 'utf8')) as {
-        schemaVersion?: unknown;
-      };
-      if (manifest.schemaVersion !== 'workflow_artifact_manifest.v0.1') throw new Error();
+      await readValidatedArtifactManifest(target);
       const metadata = await stat(target);
       return {
         artifactModes: await collectArtifactModes(target),
