@@ -22,7 +22,7 @@ import {
   evaluateGovernedInteractionCompatibility,
   parseGovernedInteractionBundle,
   replayWorkflow,
-  writeCompiledWorkflowArtifacts,
+  writeCompiledWorkflowArtifacts
 } from '@create-something/workflow-compiler';
 ```
 
@@ -40,6 +40,7 @@ The compiler emits the same content-hashed `governed-interaction.json` for Atlas
 
 ## Agent Legibility Contract
 
+<!-- prettier-ignore -->
 | Field | Value |
 | --- | --- |
 | Entry point | `src/index.ts`, `src/compile.ts`, `src/replay.ts`, `src/artifacts.ts`, `src/cli.ts` |
@@ -75,6 +76,8 @@ The output includes:
 - generated operator console
 - governed-interaction bundle
 - content-hashed artifact manifest
+
+The output path is a compiler-managed symbolic link to an immutable sibling revision. Recompilation writes and validates a complete new revision before one atomic pointer rename, so concurrent readers see either the previous bundle or the new bundle and a terminated compiler cannot strand the public path between two directory renames. The compiler retains published revisions under `.<output-name>.workflow-compiler/` so one concurrent publisher can never garbage-collect another publisher's winning revision; remove that control directory together with the output pointer only when no compiler or reader is active. A versioned owner-only marker binds that control directory to the resolved output path, and an unmarked or differently bound directory is rejected. The sole migration exception is a pre-marker output whose existing public symlink, real revisions directory, direct immutable revision, complete manifest shape, required base artifacts, listed content hashes, and bundle identity already prove the prior compiler relationship; the compiler then creates the marker exclusively before continuing. Compiler control directories preserve required read/traversal access but never inherit group or world write authority. New artifact files and directories receive deterministic `0644` and `0755` modes; recompilation preserves explicit per-artifact mode adjustments from the published revision instead of inheriting the caller's current umask. The compiler rejects unrelated links, non-empty unowned directories, and legacy direct-directory outputs instead of migrating them through a non-atomic window.
 
 Serve the generated read-only console:
 

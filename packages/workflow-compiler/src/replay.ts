@@ -1,3 +1,4 @@
+import { parseWorkflowReplayManifest, ReplayInputValidationError } from './input.js';
 import type {
   CompiledDecision,
   CompiledWorkflowBundle,
@@ -6,9 +7,8 @@ import type {
   WorkflowAction,
   WorkflowAcceptanceSummary,
   WorkflowReplayCase,
-  WorkflowReplayManifest,
   WorkflowReplayReport,
-  WorkflowReplayResult,
+  WorkflowReplayResult
 } from './types.js';
 
 export interface WorkflowReplayArtifacts {
@@ -18,7 +18,7 @@ export interface WorkflowReplayArtifacts {
 
 export function createAcceptanceSummary(
   bundle: CompiledWorkflowBundle,
-  report: WorkflowReplayReport,
+  report: WorkflowReplayReport
 ): WorkflowAcceptanceSummary {
   return {
     schemaVersion: 'workflow_acceptance_summary.v0.1',
@@ -36,47 +36,56 @@ export function createAcceptanceSummary(
           decision.systemsTouched.length > 0 &&
           decision.requiredEvidence.length > 0 &&
           decision.receiptFields.length > 0 &&
-          Boolean(decision.recovery.owner && decision.recovery.path),
+          Boolean(decision.recovery.owner && decision.recovery.path)
       ),
     requiredCoverage: {
       pass: report.cases.some((entry) => entry.observedOutcome === 'pass'),
-      approvalRequired: report.cases.some(
-        (entry) => entry.observedOutcome === 'approval_required',
-      ),
+      approvalRequired: report.cases.some((entry) => entry.observedOutcome === 'approval_required'),
       blocked: report.cases.some((entry) => entry.observedOutcome === 'blocked'),
       insufficientEvidence: report.cases.some(
-        (entry) => entry.reasonCode === 'INSUFFICIENT_EVIDENCE',
+        (entry) => entry.reasonCode === 'INSUFFICIENT_EVIDENCE'
       ),
-      unknownAction: report.cases.some((entry) => entry.reasonCode === 'UNKNOWN_ACTION'),
-    },
+      unknownAction: report.cases.some((entry) => entry.reasonCode === 'UNKNOWN_ACTION')
+    }
   };
 }
 
 export function replayWorkflow(
   bundle: CompiledWorkflowBundle,
-  manifest: WorkflowReplayManifest,
+  input: unknown
 ): WorkflowReplayArtifacts {
+  const manifest = parseWorkflowReplayManifest(input);
   if (manifest.workflowId !== bundle.workflowId) {
-    throw new Error(
-      `Replay manifest workflow ${manifest.workflowId} does not match bundle ${bundle.workflowId}.`,
-    );
+    throw new ReplayInputValidationError([
+      {
+        code: 'WORKFLOW_ID_MISMATCH',
+        path: '$.workflowId',
+        message: `Replay manifest workflow ${manifest.workflowId} does not match compiled workflow ${bundle.workflowId}.`
+      }
+    ]);
   }
 
   const decisions = new Map(
-    bundle.decisionInventory.decisions.map((decision) => [decision.actionId, decision]),
+    bundle.decisionInventory.decisions.map((decision) => [decision.actionId, decision])
+  );
+  const actors = new Set(
+    bundle.workflowMap.nodes
+      .filter((node) => node.kind === 'actor' && node.id.startsWith('actor:'))
+      .map((node) => node.id.slice('actor:'.length))
   );
   const cases = manifest.cases
-    .map((replayCase) => replayCaseAgainstBundle(bundle, decisions, replayCase))
+    .map((replayCase) => replayCaseAgainstBundle(bundle, decisions, actors, replayCase))
     .sort((left, right) => left.caseId.localeCompare(right.caseId));
   const counts: Record<ReplayOutcome, number> = {
     pass: cases.filter((entry) => entry.observedOutcome === 'pass').length,
-    approval_required: cases.filter((entry) => entry.observedOutcome === 'approval_required').length,
-    blocked: cases.filter((entry) => entry.observedOutcome === 'blocked').length,
+    approval_required: cases.filter((entry) => entry.observedOutcome === 'approval_required')
+      .length,
+    blocked: cases.filter((entry) => entry.observedOutcome === 'blocked').length
   };
   const header = {
     workflowId: bundle.workflowId,
     workflowVersion: bundle.workflowVersion,
-    definitionHash: bundle.definitionHash,
+    definitionHash: bundle.definitionHash
   };
 
   return {
@@ -85,13 +94,13 @@ export function replayWorkflow(
       ...header,
       cases,
       counts,
-      allExpectationsMatched: cases.every((entry) => entry.expectationMatched),
+      allExpectationsMatched: cases.every((entry) => entry.expectationMatched)
     },
     evidenceLedger: {
       schemaVersion: 'evidence_ledger.v0.1',
       ...header,
-      entries: cases.map((entry) => entry.receipt),
-    },
+      entries: cases.map((entry) => entry.receipt)
+    }
   };
 }
 
@@ -103,15 +112,17 @@ function hasEvidence(value: unknown): boolean {
 function transitionTarget(
   bundle: CompiledWorkflowBundle,
   initialState: string,
-  actionId: string,
+  actionId: string
 ): string | undefined {
   const actionNode = `action:${actionId}`;
   const entersAction = bundle.workflowMap.edges.some(
-    (edge) => edge.kind === 'transitions' && edge.from === `state:${initialState}` && edge.to === actionNode,
+    (edge) =>
+      edge.kind === 'transitions' && edge.from === `state:${initialState}` && edge.to === actionNode
   );
   if (!entersAction) return undefined;
   const exitsAction = bundle.workflowMap.edges.find(
-    (edge) => edge.kind === 'transitions' && edge.from === actionNode && edge.to.startsWith('state:'),
+    (edge) =>
+      edge.kind === 'transitions' && edge.from === actionNode && edge.to.startsWith('state:')
   );
   return exitsAction?.to.slice('state:'.length);
 }
@@ -120,7 +131,7 @@ function unknownRecovery(bundle: CompiledWorkflowBundle): WorkflowAction['recove
   return {
     mode: 'escalate',
     owner: bundle.owners.workflow,
-    path: 'Stop execution and add or correct the action in the versioned workflow definition.',
+    path: 'Stop execution and add or correct the action in the versioned workflow definition.'
   };
 }
 
@@ -128,7 +139,7 @@ function receiptFields(
   bundle: CompiledWorkflowBundle,
   replayCase: WorkflowReplayCase,
   outcome: ReplayOutcome,
-  decision?: CompiledDecision,
+  decision?: CompiledDecision
 ): Record<string, unknown> {
   const evidenceReferences = Object.keys(replayCase.evidence)
     .filter((key) => hasEvidence(replayCase.evidence[key]))
@@ -137,25 +148,27 @@ function receiptFields(
     'workflow_id',
     'action_id',
     'correlation_id',
-    'outcome',
+    'outcome'
   ];
 
   return Object.fromEntries(
     requiredFields.map((field) => {
       if (field === 'workflow_id') return [field, bundle.workflowId];
       if (field === 'action_id') return [field, replayCase.actionId];
+      if (field === 'actor_id') return [field, replayCase.actorId];
       if (field === 'correlation_id') return [field, replayCase.caseId];
       if (field === 'outcome') return [field, outcome];
       if (field === 'evidence_refs') return [field, evidenceReferences];
       return [field, replayCase.evidence[field] ?? null];
-    }),
+    })
   );
 }
 
 function replayCaseAgainstBundle(
   bundle: CompiledWorkflowBundle,
   decisions: Map<string, CompiledDecision>,
-  replayCase: WorkflowReplayCase,
+  actors: Set<string>,
+  replayCase: WorkflowReplayCase
 ): WorkflowReplayResult {
   const decision = decisions.get(replayCase.actionId);
   const evidenceReferences = Object.keys(replayCase.evidence)
@@ -175,6 +188,12 @@ function replayCaseAgainstBundle(
   if (!decision) {
     observedOutcome = 'blocked';
     reasonCode = 'UNKNOWN_ACTION';
+  } else if (!actors.has(replayCase.actorId)) {
+    observedOutcome = 'blocked';
+    reasonCode = 'UNKNOWN_ACTOR';
+  } else if (replayCase.actorId !== decision.authority) {
+    observedOutcome = 'blocked';
+    reasonCode = 'ACTOR_NOT_AUTHORIZED';
   } else if (decision.autonomy === 'blocked') {
     observedOutcome = 'blocked';
     reasonCode = 'POLICY_BLOCKED';
@@ -207,15 +226,17 @@ function replayCaseAgainstBundle(
     definitionHash: bundle.definitionHash,
     caseId: replayCase.caseId,
     actionId: replayCase.actionId,
+    actorId: replayCase.actorId,
     correlationId: replayCase.caseId,
     outcome: observedOutcome,
-    receiptFields: receiptFields(bundle, replayCase, observedOutcome, decision),
+    receiptFields: receiptFields(bundle, replayCase, observedOutcome, decision)
   };
 
   return {
     caseId: replayCase.caseId,
     title: replayCase.title,
     actionId: replayCase.actionId,
+    actorId: replayCase.actorId,
     stateBefore: replayCase.initialState,
     stateAfter,
     observedOutcome,
@@ -229,6 +250,6 @@ function replayCaseAgainstBundle(
     evidenceReferences,
     missingEvidence,
     recovery,
-    receipt,
+    receipt
   };
 }

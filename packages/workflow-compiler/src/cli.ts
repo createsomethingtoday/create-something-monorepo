@@ -3,11 +3,38 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
-import { writeCompiledWorkflowArtifacts } from './artifacts.js';
+import { WorkflowArtifactOutputError, writeCompiledWorkflowArtifacts } from './artifacts.js';
 import { compileWorkflowDefinition, WorkflowCompilationError } from './compile.js';
+import { ReplayInputValidationError, WorkflowInputValidationError } from './input.js';
 import { replayWorkflow } from './replay.js';
 import { serveOperatorConsole } from './server.js';
-import type { WorkflowDefinition, WorkflowReplayManifest } from './types.js';
+
+class WorkflowCliInputError extends Error {
+  readonly code = 'INVALID_JSON';
+  readonly input: 'workflow' | 'replay';
+
+  constructor(input: 'workflow' | 'replay') {
+    super(
+      input === 'workflow'
+        ? 'Workflow definition is not valid JSON.'
+        : 'Replay manifest is not valid JSON.'
+    );
+    this.name = 'WorkflowCliInputError';
+    this.input = input;
+  }
+}
+
+class WorkflowCliUsageError extends Error {
+  readonly code = 'INVALID_ARGUMENTS';
+  readonly usage: string;
+
+  constructor() {
+    const value = usage();
+    super(value);
+    this.name = 'WorkflowCliUsageError';
+    this.usage = value;
+  }
+}
 
 interface CompileOptions {
   workflowPath: string;
@@ -19,63 +46,129 @@ function usage(): string {
   return [
     'Usage:',
     '  workflow-compiler compile --workflow <definition.json> [--cases <cases.json>] --out <directory>',
-    '  workflow-compiler serve --dir <compiled-output> [--port <number>]',
+    '  workflow-compiler serve --dir <compiled-output> [--port <number>]'
   ].join('\n');
 }
 
+function flagValues(args: string[], allowed: readonly string[]): Map<string, string> {
+  const values = new Map<string, string>();
+  for (let index = 1; index < args.length; index += 2) {
+    const flag = args[index];
+    const value = args[index + 1];
+    if (!flag || !allowed.includes(flag) || values.has(flag) || !value || value.startsWith('--')) {
+      throw new WorkflowCliUsageError();
+    }
+    values.set(flag, value);
+  }
+  return values;
+}
+
 function compileOptions(args: string[]): CompileOptions {
-  if (args[0] !== 'compile') throw new Error(usage());
-
-  const workflowIndex = args.indexOf('--workflow');
-  const outIndex = args.indexOf('--out');
-  const casesIndex = args.indexOf('--cases');
-  const workflowPath = workflowIndex >= 0 ? args[workflowIndex + 1] : undefined;
-  const outDir = outIndex >= 0 ? args[outIndex + 1] : undefined;
-  if (!workflowPath || !outDir) throw new Error(usage());
-
-  const casesPath = casesIndex >= 0 ? args[casesIndex + 1] : undefined;
+  if (args[0] !== 'compile') throw new WorkflowCliUsageError();
+  const values = flagValues(args, ['--workflow', '--cases', '--out']);
+  const workflowPath = values.get('--workflow');
+  const outDir = values.get('--out');
+  if (!workflowPath || !outDir) throw new WorkflowCliUsageError();
+  const casesPath = values.get('--cases');
   return {
     workflowPath: resolve(workflowPath),
     ...(casesPath ? { casesPath: resolve(casesPath) } : {}),
-    outDir: resolve(outDir),
+    outDir: resolve(outDir)
   };
+}
+
+function parseJsonInput(content: string, input: 'workflow' | 'replay'): unknown {
+  try {
+    return JSON.parse(content) as unknown;
+  } catch {
+    throw new WorkflowCliInputError(input);
+  }
 }
 
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
   if (args[0] === 'serve') {
-    const dirIndex = args.indexOf('--dir');
-    const portIndex = args.indexOf('--port');
-    const rootDir = dirIndex >= 0 ? args[dirIndex + 1] : undefined;
-    const requestedPort = portIndex >= 0 ? Number(args[portIndex + 1]) : 4173;
-    if (!rootDir || !Number.isInteger(requestedPort) || requestedPort < 0) throw new Error(usage());
+    const values = flagValues(args, ['--dir', '--port']);
+    const rootDir = values.get('--dir');
+    const requestedPort = values.has('--port') ? Number(values.get('--port')) : 4173;
+    if (!rootDir || !Number.isInteger(requestedPort) || requestedPort < 0) {
+      throw new WorkflowCliUsageError();
+    }
     const { url } = await serveOperatorConsole(resolve(rootDir), { port: requestedPort });
     process.stdout.write(`${JSON.stringify({ ok: true, url, rootDir: resolve(rootDir) })}\n`);
     return;
   }
 
   const options = compileOptions(args);
-  const definition = JSON.parse(await readFile(options.workflowPath, 'utf8')) as WorkflowDefinition;
+  const definition = parseJsonInput(await readFile(options.workflowPath, 'utf8'), 'workflow');
   const bundle = compileWorkflowDefinition(definition);
   const replay = options.casesPath
-    ? replayWorkflow(
-        bundle,
-        JSON.parse(await readFile(options.casesPath, 'utf8')) as WorkflowReplayManifest,
-      )
+    ? replayWorkflow(bundle, parseJsonInput(await readFile(options.casesPath, 'utf8'), 'replay'))
     : undefined;
   const manifest = await writeCompiledWorkflowArtifacts(bundle, options.outDir, replay);
   process.stdout.write(
-    `${JSON.stringify({ ok: true, outDir: options.outDir, manifest }, null, 2)}\n`,
+    `${JSON.stringify({ ok: true, outDir: options.outDir, manifest }, null, 2)}\n`
   );
 }
 
 main().catch((error: unknown) => {
-  if (error instanceof WorkflowCompilationError) {
+  if (error instanceof WorkflowCliUsageError) {
     process.stderr.write(
-      `${JSON.stringify({ ok: false, error: error.name, diagnostics: error.diagnostics }, null, 2)}\n`,
+      `${JSON.stringify(
+        { ok: false, error: error.name, code: error.code, usage: error.usage },
+        null,
+        2
+      )}\n`
     );
+    process.exitCode = 2;
+  } else if (error instanceof WorkflowCliInputError) {
+    process.stderr.write(
+      `${JSON.stringify(
+        {
+          ok: false,
+          error: error.name,
+          code: error.code,
+          input: error.input,
+          message: error.message
+        },
+        null,
+        2
+      )}\n`
+    );
+    process.exitCode = 2;
+  } else if (error instanceof WorkflowArtifactOutputError) {
+    process.stderr.write(
+      `${JSON.stringify(
+        { ok: false, error: error.name, code: error.code, message: error.message },
+        null,
+        2
+      )}\n`
+    );
+    process.exitCode = 2;
+  } else if (
+    error instanceof WorkflowInputValidationError ||
+    error instanceof ReplayInputValidationError
+  ) {
+    process.stderr.write(
+      `${JSON.stringify(
+        {
+          ok: false,
+          error: error.name,
+          code: error.code,
+          diagnostics: error.diagnostics
+        },
+        null,
+        2
+      )}\n`
+    );
+    process.exitCode = 2;
+  } else if (error instanceof WorkflowCompilationError) {
+    process.stderr.write(
+      `${JSON.stringify({ ok: false, error: error.name, diagnostics: error.diagnostics }, null, 2)}\n`
+    );
+    process.exitCode = 3;
   } else {
     process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
+    process.exitCode = 1;
   }
-  process.exitCode = 1;
 });

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -23,9 +23,9 @@ test('the public CLI writes replay, ledger, and acceptance artifacts when cases 
         '--cases',
         casesPath.pathname,
         '--out',
-        outDir,
+        outDir
       ],
-      { cwd: packageRoot, encoding: 'utf8' },
+      { cwd: packageRoot, encoding: 'utf8' }
     );
     assert.equal(result.status, 0, result.stderr || result.stdout);
 
@@ -41,15 +41,15 @@ test('the public CLI writes replay, ledger, and acceptance artifacts when cases 
         counts: summary.counts,
         allExpectationsMatched: summary.allExpectationsMatched,
         insufficientEvidenceCovered: summary.requiredCoverage.insufficientEvidence,
-        unknownActionCovered: summary.requiredCoverage.unknownAction,
+        unknownActionCovered: summary.requiredCoverage.unknownAction
       },
       {
         caseCount: 5,
         counts: { pass: 1, approval_required: 1, blocked: 3 },
         allExpectationsMatched: true,
         insufficientEvidenceCovered: true,
-        unknownActionCovered: true,
-      },
+        unknownActionCovered: true
+      }
     );
 
     const manifest = JSON.parse(await readFile(join(outDir, 'manifest.json'), 'utf8'));
@@ -58,5 +58,93 @@ test('the public CLI writes replay, ledger, and acceptance artifacts when cases 
     assert.ok(manifest.files.some((entry) => entry.path === 'evidence-ledger.json'));
   } finally {
     await rm(outDir, { recursive: true, force: true });
+  }
+});
+
+test('the public CLI fails closed with structured diagnostics for malformed replay cases', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'workflow-compiler-invalid-replay-'));
+  const malformedCasesPath = join(root, 'cases.json');
+  const outDir = join(root, 'output');
+
+  try {
+    await writeFile(
+      malformedCasesPath,
+      `${JSON.stringify({ schemaVersion: 'workflow_replay_manifest.v0.1', workflowId: 'invalid' })}\n`,
+      'utf8'
+    );
+    const result = spawnSync(
+      process.execPath,
+      [
+        'dist/cli.js',
+        'compile',
+        '--workflow',
+        workflowPath.pathname,
+        '--cases',
+        malformedCasesPath,
+        '--out',
+        outDir
+      ],
+      { cwd: packageRoot, encoding: 'utf8' }
+    );
+
+    assert.equal(result.status, 2, result.stderr || result.stdout);
+    assert.equal(result.stdout, '');
+    assert.deepEqual(JSON.parse(result.stderr), {
+      ok: false,
+      error: 'ReplayInputValidationError',
+      code: 'INVALID_REPLAY_MANIFEST',
+      diagnostics: [
+        {
+          code: 'REQUIRED_FIELD',
+          path: '$.cases',
+          message: 'Expected an array.'
+        }
+      ]
+    });
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('the public CLI classifies a replay workflow mismatch as invalid input', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'workflow-compiler-replay-mismatch-'));
+  const mismatchPath = join(root, 'cases.json');
+
+  try {
+    const replay = JSON.parse(await readFile(casesPath, 'utf8'));
+    replay.workflowId = 'another.workflow';
+    await writeFile(mismatchPath, `${JSON.stringify(replay)}\n`, 'utf8');
+    const result = spawnSync(
+      process.execPath,
+      [
+        'dist/cli.js',
+        'compile',
+        '--workflow',
+        workflowPath.pathname,
+        '--cases',
+        mismatchPath,
+        '--out',
+        join(root, 'output')
+      ],
+      { cwd: packageRoot, encoding: 'utf8' }
+    );
+
+    assert.equal(result.status, 2, result.stderr || result.stdout);
+    assert.equal(result.stdout, '');
+    assert.deepEqual(JSON.parse(result.stderr), {
+      ok: false,
+      error: 'ReplayInputValidationError',
+      code: 'INVALID_REPLAY_MANIFEST',
+      diagnostics: [
+        {
+          code: 'WORKFLOW_ID_MISMATCH',
+          path: '$.workflowId',
+          message:
+            'Replay manifest workflow another.workflow does not match compiled workflow webflow.marketplace.template-lifecycle.'
+        }
+      ]
+    });
+  } finally {
+    await rm(root, { recursive: true, force: true });
   }
 });

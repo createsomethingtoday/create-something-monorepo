@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto';
 
+import { parseWorkflowDefinition } from './input.js';
+
 import type {
   AgentContractsArtifact,
   ApprovalSurfacesArtifact,
@@ -231,7 +233,8 @@ function validateReferences(definition: WorkflowDefinition): WorkflowCompilation
   return diagnostics;
 }
 
-export function compileWorkflowDefinition(definition: WorkflowDefinition): CompiledWorkflowBundle {
+export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundle {
+  const definition = parseWorkflowDefinition(input);
   const diagnostics = [...validateGovernance(definition), ...validateReferences(definition)];
   if (diagnostics.length > 0) throw new WorkflowCompilationError(diagnostics);
 

@@ -1,7 +1,20 @@
-import { createHash } from 'node:crypto';
-import { mkdir, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
-import { dirname } from 'node:path';
+import { createHash, randomUUID } from 'node:crypto';
+import {
+  chmod,
+  chown,
+  lstat,
+  mkdir,
+  readFile,
+  readlink,
+  readdir,
+  rename,
+  rm,
+  rmdir,
+  stat,
+  symlink,
+  writeFile
+} from 'node:fs/promises';
+import { basename, dirname, isAbsolute, join, relative, resolve } from 'node:path';
 
 import type { CompiledWorkflowBundle } from './types.js';
 import { createAcceptanceSummary, type WorkflowReplayArtifacts } from './replay.js';
@@ -9,7 +22,7 @@ import {
   createOperatorConsoleData,
   OPERATOR_CONSOLE_CSS,
   OPERATOR_CONSOLE_HTML,
-  OPERATOR_CONSOLE_JAVASCRIPT,
+  OPERATOR_CONSOLE_JAVASCRIPT
 } from './operator-console.js';
 
 export interface WorkflowArtifactManifest {
@@ -22,6 +35,16 @@ export interface WorkflowArtifactManifest {
     path: string;
     hash: string;
   }>;
+}
+
+export class WorkflowArtifactOutputError extends Error {
+  readonly code: 'OUTPUT_NOT_OWNED' | 'UNSAFE_OUTPUT_PATH';
+
+  constructor(code: 'OUTPUT_NOT_OWNED' | 'UNSAFE_OUTPUT_PATH', message: string) {
+    super(message);
+    this.name = 'WorkflowArtifactOutputError';
+    this.code = code;
+  }
 }
 
 const ARTIFACTS: Array<{
@@ -38,28 +61,442 @@ const ARTIFACTS: Array<{
   { path: 'object-schemas.json', select: (bundle) => bundle.objectSchemas },
   { path: 'runtime-targets.json', select: (bundle) => bundle.runtimeTargets },
   { path: 'tool-contracts.json', select: (bundle) => bundle.toolContracts },
-  { path: 'workflow-map.json', select: (bundle) => bundle.workflowMap },
+  { path: 'workflow-map.json', select: (bundle) => bundle.workflowMap }
 ];
 
 function json(value: unknown): string {
   return `${JSON.stringify(value, null, 2)}\n`;
 }
 
-function contentHash(content: string): string {
+function contentHash(content: string | Uint8Array): string {
   return `sha256:${createHash('sha256').update(content).digest('hex')}`;
 }
 
-export async function writeCompiledWorkflowArtifacts(
-  bundle: CompiledWorkflowBundle,
-  outDir: string,
-  replay?: WorkflowReplayArtifacts,
-): Promise<WorkflowArtifactManifest> {
-  await mkdir(outDir, { recursive: true });
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
 
+function hasExactKeys(value: Record<string, unknown>, expected: string[]): boolean {
+  const actual = Object.keys(value).sort();
+  return actual.length === expected.length && actual.every((key, index) => key === expected[index]);
+}
+
+function artifactTarget(rootDir: string, artifactPath: string): string {
+  const target = resolve(rootDir, artifactPath);
+  const pathFromRoot = relative(rootDir, target);
+  if (pathFromRoot.startsWith('..') || isAbsolute(pathFromRoot)) {
+    throw new WorkflowArtifactOutputError(
+      'UNSAFE_OUTPUT_PATH',
+      `Artifact path escapes the output directory: ${artifactPath}`
+    );
+  }
+  return target;
+}
+
+function isMissing(error: unknown): boolean {
+  return (
+    error !== null &&
+    typeof error === 'object' &&
+    'code' in error &&
+    (error as { code?: unknown }).code === 'ENOENT'
+  );
+}
+
+function controlDirectory(outDir: string): string {
+  return join(dirname(outDir), `.${basename(outDir)}.workflow-compiler`);
+}
+
+function revisionsDirectory(outDir: string): string {
+  return join(controlDirectory(outDir), 'revisions');
+}
+
+function isDirectRevisionTarget(outDir: string, target: string): boolean {
+  const revisionsDir = revisionsDirectory(outDir);
+  return dirname(target) === revisionsDir && basename(target).startsWith('revision-');
+}
+
+async function readValidatedArtifactManifest(rootDir: string): Promise<WorkflowArtifactManifest> {
+  const manifestPath = join(rootDir, 'manifest.json');
+  if (!(await lstat(manifestPath)).isFile()) throw new Error();
+  const manifest: unknown = JSON.parse(await readFile(manifestPath, 'utf8'));
+  if (
+    !isRecord(manifest) ||
+    !hasExactKeys(manifest, [
+      'compilerVersion',
+      'definitionHash',
+      'files',
+      'schemaVersion',
+      'workflowId',
+      'workflowVersion'
+    ]) ||
+    manifest.schemaVersion !== 'workflow_artifact_manifest.v0.1' ||
+    typeof manifest.workflowId !== 'string' ||
+    manifest.workflowId.length === 0 ||
+    typeof manifest.workflowVersion !== 'string' ||
+    manifest.workflowVersion.length === 0 ||
+    typeof manifest.definitionHash !== 'string' ||
+    !/^sha256:[a-f0-9]{64}$/.test(manifest.definitionHash) ||
+    typeof manifest.compilerVersion !== 'string' ||
+    manifest.compilerVersion.length === 0 ||
+    !Array.isArray(manifest.files)
+  ) {
+    throw new Error();
+  }
+
+  const requiredPaths = new Set(ARTIFACTS.map((artifact) => artifact.path));
+  const seenPaths = new Set<string>();
+  const files: WorkflowArtifactManifest['files'] = [];
+  let previousPath: string | undefined;
+  for (const value of manifest.files) {
+    if (
+      !isRecord(value) ||
+      !hasExactKeys(value, ['hash', 'path']) ||
+      typeof value.path !== 'string' ||
+      value.path.length === 0 ||
+      typeof value.hash !== 'string' ||
+      !/^sha256:[a-f0-9]{64}$/.test(value.hash) ||
+      seenPaths.has(value.path) ||
+      (previousPath !== undefined && value.path <= previousPath)
+    ) {
+      throw new Error();
+    }
+    const target = artifactTarget(rootDir, value.path);
+    const canonicalPath = relative(rootDir, target).replaceAll('\\', '/');
+    if (canonicalPath !== value.path || !(await lstat(target)).isFile()) throw new Error();
+    if (contentHash(await readFile(target)) !== value.hash) throw new Error();
+    seenPaths.add(value.path);
+    requiredPaths.delete(value.path);
+    previousPath = value.path;
+    files.push({ path: value.path, hash: value.hash });
+  }
+  if (requiredPaths.size > 0) throw new Error();
+
+  const compiledWorkflow: unknown = JSON.parse(
+    await readFile(artifactTarget(rootDir, 'compiled-workflow.json'), 'utf8')
+  );
+  if (
+    !isRecord(compiledWorkflow) ||
+    compiledWorkflow.workflowId !== manifest.workflowId ||
+    compiledWorkflow.workflowVersion !== manifest.workflowVersion ||
+    compiledWorkflow.definitionHash !== manifest.definitionHash ||
+    compiledWorkflow.compilerVersion !== manifest.compilerVersion
+  ) {
+    throw new Error();
+  }
+
+  return {
+    schemaVersion: 'workflow_artifact_manifest.v0.1',
+    workflowId: manifest.workflowId,
+    workflowVersion: manifest.workflowVersion,
+    definitionHash: manifest.definitionHash,
+    compilerVersion: manifest.compilerVersion,
+    files
+  };
+}
+
+interface ExistingOutput {
+  emptyDirectory: boolean;
+  artifactModes?: Map<string, ArtifactMode>;
+  metadata?: ExistingOutputMetadata;
+  revision?: string;
+}
+
+interface ArtifactMode {
+  kind: 'directory' | 'file';
+  mode: number;
+}
+
+async function collectArtifactModes(
+  rootDir: string,
+  currentDir = rootDir,
+  modes = new Map<string, ArtifactMode>()
+): Promise<Map<string, ArtifactMode>> {
+  const entries = await readdir(currentDir, { withFileTypes: true });
+  for (const entry of entries) {
+    const target = join(currentDir, entry.name);
+    const pathFromRoot = relative(rootDir, target);
+    if (entry.isDirectory()) {
+      modes.set(pathFromRoot, {
+        kind: 'directory',
+        mode: (await lstat(target)).mode & 0o7777
+      });
+      await collectArtifactModes(rootDir, target, modes);
+    } else if (entry.isFile()) {
+      modes.set(pathFromRoot, { kind: 'file', mode: (await lstat(target)).mode & 0o7777 });
+    }
+  }
+  return modes;
+}
+
+async function inspectExistingOutput(outDir: string): Promise<ExistingOutput> {
+  let outputEntry;
+  try {
+    outputEntry = await lstat(outDir);
+  } catch (error) {
+    if (isMissing(error)) return { emptyDirectory: false };
+    throw error;
+  }
+
+  if (outputEntry.isSymbolicLink()) {
+    const target = resolve(dirname(outDir), await readlink(outDir));
+    if (!isDirectRevisionTarget(outDir, target)) {
+      throw new WorkflowArtifactOutputError(
+        'OUTPUT_NOT_OWNED',
+        'Refusing to replace an output path that is not a managed workflow compiler revision.'
+      );
+    }
+    try {
+      if (!(await lstat(target)).isDirectory()) throw new Error();
+      await readValidatedArtifactManifest(target);
+      const metadata = await stat(target);
+      return {
+        artifactModes: await collectArtifactModes(target),
+        emptyDirectory: false,
+        metadata: {
+          mode: metadata.mode & 0o7777,
+          uid: metadata.uid,
+          gid: metadata.gid
+        },
+        revision: target
+      };
+    } catch {
+      throw new WorkflowArtifactOutputError(
+        'OUTPUT_NOT_OWNED',
+        'Refusing to replace an output path that is not a managed workflow compiler revision.'
+      );
+    }
+  }
+
+  if (!outputEntry.isDirectory()) {
+    throw new WorkflowArtifactOutputError(
+      'OUTPUT_NOT_OWNED',
+      'Refusing to replace an output path that is not a workflow compiler directory.'
+    );
+  }
+
+  const entries = await readdir(outDir);
+  const metadata = await stat(outDir);
+  if (entries.length === 0) {
+    return {
+      emptyDirectory: true,
+      metadata: {
+        mode: metadata.mode & 0o7777,
+        uid: metadata.uid,
+        gid: metadata.gid
+      }
+    };
+  }
+
+  let legacyCompilerOutput = false;
+  try {
+    const manifest = JSON.parse(await readFile(join(outDir, 'manifest.json'), 'utf8')) as {
+      schemaVersion?: unknown;
+    };
+    legacyCompilerOutput = manifest.schemaVersion === 'workflow_artifact_manifest.v0.1';
+  } catch {
+    // Fall through to the stable ownership diagnostic.
+  }
+  if (legacyCompilerOutput) {
+    throw new WorkflowArtifactOutputError(
+      'OUTPUT_NOT_OWNED',
+      'Refusing to migrate a legacy workflow compiler directory in place; choose a new output path so publication can remain atomic.'
+    );
+  }
+  throw new WorkflowArtifactOutputError(
+    'OUTPUT_NOT_OWNED',
+    'Refusing to replace a non-empty output directory without a workflow compiler manifest.'
+  );
+}
+
+interface ExistingOutputMetadata {
+  mode: number;
+  uid: number;
+  gid: number;
+}
+
+async function applyArtifactMetadataRecursively(
+  rootDir: string,
+  metadata: ExistingOutputMetadata,
+  previousModes: Map<string, ArtifactMode> | undefined,
+  currentDir = rootDir
+): Promise<void> {
+  const entries = await readdir(currentDir, { withFileTypes: true });
+  for (const entry of entries) {
+    const target = join(currentDir, entry.name);
+    const pathFromRoot = relative(rootDir, target);
+    const kind = entry.isDirectory() ? 'directory' : entry.isFile() ? 'file' : undefined;
+    if (!kind) continue;
+    if (kind === 'directory') {
+      await applyArtifactMetadataRecursively(rootDir, metadata, previousModes, target);
+    }
+    if (process.platform !== 'win32') await chown(target, metadata.uid, metadata.gid);
+    const previous = previousModes?.get(pathFromRoot);
+    const mode = previous?.kind === kind ? previous.mode : kind === 'directory' ? 0o755 : 0o644;
+    await chmod(target, mode);
+  }
+}
+
+function isAlreadyPresent(error: unknown): boolean {
+  return (
+    error !== null &&
+    typeof error === 'object' &&
+    'code' in error &&
+    (error as { code?: unknown }).code === 'EEXIST'
+  );
+}
+
+async function ensureManagedDirectory(path: string): Promise<void> {
+  try {
+    await mkdir(path, { mode: 0o700 });
+  } catch (error) {
+    if (!isAlreadyPresent(error)) throw error;
+  }
+  if (!(await lstat(path)).isDirectory()) {
+    throw new WorkflowArtifactOutputError(
+      'OUTPUT_NOT_OWNED',
+      'Refusing to use a workflow compiler control path that is not a directory.'
+    );
+  }
+}
+
+const CONTROL_MARKER_SCHEMA_VERSION = 'workflow_compiler_control.v0.1';
+const CONTROL_MARKER_FILENAME = 'control.json';
+
+function unownedControlDirectoryError(): WorkflowArtifactOutputError {
+  return new WorkflowArtifactOutputError(
+    'OUTPUT_NOT_OWNED',
+    'Refusing to use an unmarked workflow compiler control directory.'
+  );
+}
+
+async function validateControlMarker(controlDir: string, outDir: string): Promise<void> {
+  try {
+    const markerPath = join(controlDir, CONTROL_MARKER_FILENAME);
+    if (!(await lstat(markerPath)).isFile()) throw new Error();
+    const marker = JSON.parse(await readFile(markerPath, 'utf8')) as {
+      schemaVersion?: unknown;
+      outputPath?: unknown;
+    };
+    if (marker.schemaVersion !== CONTROL_MARKER_SCHEMA_VERSION || marker.outputPath !== outDir) {
+      throw new Error();
+    }
+  } catch {
+    throw unownedControlDirectoryError();
+  }
+}
+
+async function writeControlMarker(controlDir: string, outDir: string): Promise<void> {
+  const markerPath = join(controlDir, CONTROL_MARKER_FILENAME);
+  try {
+    await writeFile(
+      markerPath,
+      json({ schemaVersion: CONTROL_MARKER_SCHEMA_VERSION, outputPath: outDir }),
+      { encoding: 'utf8', flag: 'wx', mode: 0o600 }
+    );
+  } catch (error) {
+    if (isAlreadyPresent(error)) {
+      await validateControlMarker(controlDir, outDir);
+      return;
+    }
+    throw error;
+  }
+}
+
+async function ensureCompilerControlDirectory(
+  controlDir: string,
+  outDir: string,
+  migrationRevision: string | undefined
+): Promise<void> {
+  let created = false;
+  try {
+    await mkdir(controlDir, { mode: 0o700 });
+    created = true;
+  } catch (error) {
+    if (!isAlreadyPresent(error)) throw error;
+  }
+
+  let controlEntry;
+  try {
+    controlEntry = await lstat(controlDir);
+  } catch {
+    throw unownedControlDirectoryError();
+  }
+  if (!controlEntry.isDirectory()) throw unownedControlDirectoryError();
+
+  if (!created) {
+    const markerPath = join(controlDir, CONTROL_MARKER_FILENAME);
+    try {
+      await lstat(markerPath);
+      await validateControlMarker(controlDir, outDir);
+      return;
+    } catch (error) {
+      if (!isMissing(error)) throw error;
+    }
+
+    const revisionsDir = revisionsDirectory(outDir);
+    if (migrationRevision === undefined || dirname(migrationRevision) !== revisionsDir) {
+      throw unownedControlDirectoryError();
+    }
+    try {
+      if (!(await lstat(revisionsDir)).isDirectory()) throw new Error();
+      if (!(await lstat(migrationRevision)).isDirectory()) throw new Error();
+    } catch {
+      throw unownedControlDirectoryError();
+    }
+    await writeControlMarker(controlDir, outDir);
+    return;
+  }
+
+  const markerPath = join(controlDir, CONTROL_MARKER_FILENAME);
+  try {
+    await writeControlMarker(controlDir, outDir);
+  } catch (error) {
+    await rm(markerPath, { force: true });
+    await rmdir(controlDir).catch(() => undefined);
+    throw error;
+  }
+}
+
+async function applyManagedDirectoryMetadata(
+  paths: string[],
+  metadata: ExistingOutputMetadata,
+  markerPath: string
+): Promise<void> {
+  for (const path of paths) {
+    if (process.platform !== 'win32') await chown(path, metadata.uid, metadata.gid);
+    await chmod(path, (metadata.mode & ~0o022) | 0o700);
+  }
+  if (process.platform !== 'win32') await chown(markerPath, metadata.uid, metadata.gid);
+  await chmod(markerPath, 0o600);
+}
+
+async function publishRevisionAtomically(
+  revisionDir: string,
+  outDir: string,
+  removeEmptyDirectory: boolean
+): Promise<void> {
+  const parentDir = dirname(outDir);
+  const pointer = join(parentDir, `.${basename(outDir)}.pointer-${randomUUID()}`);
+  const target = process.platform === 'win32' ? revisionDir : relative(parentDir, revisionDir);
+  await symlink(target, pointer, process.platform === 'win32' ? 'junction' : 'dir');
+  try {
+    if (removeEmptyDirectory) await rmdir(outDir);
+    await rename(pointer, outDir);
+  } catch (error) {
+    await rm(pointer, { force: true });
+    throw error;
+  }
+}
+
+async function writeArtifactSet(
+  bundle: CompiledWorkflowBundle,
+  rootDir: string,
+  replay?: WorkflowReplayArtifacts
+): Promise<WorkflowArtifactManifest> {
   const files = [];
   for (const artifact of ARTIFACTS) {
     const content = json(artifact.select(bundle));
-    await writeFile(join(outDir, artifact.path), content, 'utf8');
+    await writeFile(artifactTarget(rootDir, artifact.path), content, 'utf8');
     files.push({ path: artifact.path, hash: contentHash(content) });
   }
 
@@ -67,20 +504,20 @@ export async function writeCompiledWorkflowArtifacts(
     const replayArtifacts: Array<{ path: string; content: string }> = [
       {
         path: 'acceptance-summary.json',
-        content: json(createAcceptanceSummary(bundle, replay.report)),
+        content: json(createAcceptanceSummary(bundle, replay.report))
       },
       { path: 'evidence-ledger.json', content: json(replay.evidenceLedger) },
       { path: 'replay-report.json', content: json(replay.report) },
       {
         path: 'operator-console/data.json',
-        content: json(createOperatorConsoleData(bundle, replay)),
+        content: json(createOperatorConsoleData(bundle, replay))
       },
       { path: 'operator-console/app.css', content: OPERATOR_CONSOLE_CSS },
       { path: 'operator-console/app.js', content: OPERATOR_CONSOLE_JAVASCRIPT },
-      { path: 'operator-console/index.html', content: OPERATOR_CONSOLE_HTML },
+      { path: 'operator-console/index.html', content: OPERATOR_CONSOLE_HTML }
     ];
     for (const artifact of replayArtifacts) {
-      const target = join(outDir, artifact.path);
+      const target = artifactTarget(rootDir, artifact.path);
       await mkdir(dirname(target), { recursive: true });
       await writeFile(target, artifact.content, 'utf8');
       files.push({ path: artifact.path, hash: contentHash(artifact.content) });
@@ -94,8 +531,70 @@ export async function writeCompiledWorkflowArtifacts(
     workflowVersion: bundle.workflowVersion,
     definitionHash: bundle.definitionHash,
     compilerVersion: bundle.compilerVersion,
-    files,
+    files
   };
-  await writeFile(join(outDir, 'manifest.json'), json(manifest), 'utf8');
+  await writeFile(artifactTarget(rootDir, 'manifest.json'), json(manifest), 'utf8');
   return manifest;
+}
+
+export async function writeCompiledWorkflowArtifacts(
+  bundle: CompiledWorkflowBundle,
+  outDir: string,
+  replay?: WorkflowReplayArtifacts
+): Promise<WorkflowArtifactManifest> {
+  const resolvedOutDir = resolve(outDir);
+  const parentDir = dirname(resolvedOutDir);
+  if (parentDir === resolvedOutDir) {
+    throw new WorkflowArtifactOutputError(
+      'UNSAFE_OUTPUT_PATH',
+      'The filesystem root cannot be used as a workflow artifact output directory.'
+    );
+  }
+
+  const existingOutput = await inspectExistingOutput(resolvedOutDir);
+  const outputMetadata = existingOutput.metadata;
+  await mkdir(parentDir, { recursive: true });
+  const controlDir = controlDirectory(resolvedOutDir);
+  const revisionsDir = revisionsDirectory(resolvedOutDir);
+  const controlMarkerPath = join(controlDir, CONTROL_MARKER_FILENAME);
+  await ensureCompilerControlDirectory(controlDir, resolvedOutDir, existingOutput.revision);
+  await ensureManagedDirectory(revisionsDir);
+  const revisionId = randomUUID();
+  const stagingDir = join(revisionsDir, `.tmp-${revisionId}`);
+  const revisionDir = join(revisionsDir, `revision-${revisionId}`);
+  await mkdir(stagingDir);
+  const initialStagingMetadata = await stat(stagingDir);
+  const publicationMetadata =
+    outputMetadata ??
+    ({
+      mode: initialStagingMetadata.mode & 0o7777,
+      uid: initialStagingMetadata.uid,
+      gid: initialStagingMetadata.gid
+    } satisfies ExistingOutputMetadata);
+  if (outputMetadata && process.platform !== 'win32') {
+    await chown(stagingDir, outputMetadata.uid, outputMetadata.gid);
+    await chmod(stagingDir, 0o2700);
+  }
+
+  try {
+    const manifest = await writeArtifactSet(bundle, stagingDir, replay);
+    await applyArtifactMetadataRecursively(
+      stagingDir,
+      publicationMetadata,
+      existingOutput.artifactModes
+    );
+    await chmod(stagingDir, publicationMetadata.mode);
+    await applyManagedDirectoryMetadata(
+      [controlDir, revisionsDir],
+      publicationMetadata,
+      controlMarkerPath
+    );
+    await rename(stagingDir, revisionDir);
+    await publishRevisionAtomically(revisionDir, resolvedOutDir, existingOutput.emptyDirectory);
+    return manifest;
+  } catch (error) {
+    await rm(stagingDir, { recursive: true, force: true });
+    await rm(revisionDir, { recursive: true, force: true });
+    throw error;
+  }
 }
