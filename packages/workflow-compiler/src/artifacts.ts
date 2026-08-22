@@ -149,6 +149,15 @@ async function existingOutputMetadata(outDir: string): Promise<ExistingOutputMet
   }
 }
 
+async function applyOwnershipRecursively(rootDir: string, uid: number, gid: number): Promise<void> {
+  const entries = await readdir(rootDir, { withFileTypes: true });
+  for (const entry of entries) {
+    const target = join(rootDir, entry.name);
+    if (entry.isDirectory()) await applyOwnershipRecursively(target, uid, gid);
+    await chown(target, uid, gid);
+  }
+}
+
 async function replaceDirectoryAtomically(stagingDir: string, outDir: string): Promise<void> {
   const backupDir = join(dirname(outDir), `.${basename(outDir)}.backup-${randomUUID()}`);
   let movedExistingOutput = false;
@@ -242,12 +251,16 @@ export async function writeCompiledWorkflowArtifacts(
   await mkdir(parentDir, { recursive: true });
   const stagingDir = join(parentDir, `.${basename(resolvedOutDir)}.tmp-${randomUUID()}`);
   await mkdir(stagingDir);
+  if (outputMetadata && process.platform !== 'win32') {
+    await chown(stagingDir, outputMetadata.uid, outputMetadata.gid);
+    await chmod(stagingDir, 0o2700);
+  }
 
   try {
     const manifest = await writeArtifactSet(bundle, stagingDir, replay);
     if (outputMetadata) {
       if (process.platform !== 'win32') {
-        await chown(stagingDir, outputMetadata.uid, outputMetadata.gid);
+        await applyOwnershipRecursively(stagingDir, outputMetadata.uid, outputMetadata.gid);
       }
       await chmod(stagingDir, outputMetadata.mode);
     }

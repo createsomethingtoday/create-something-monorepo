@@ -263,6 +263,8 @@ test(
 
       assert.equal(replacement.status, 0, replacement.stderr || replacement.stdout);
       assert.equal((await stat(outDir)).gid, alternateGroupId);
+      assert.equal((await stat(join(outDir, 'manifest.json'))).gid, alternateGroupId);
+      assert.equal((await stat(join(outDir, 'compiled-workflow.json'))).gid, alternateGroupId);
     } finally {
       await chmod(outDir, 0o700).catch(() => undefined);
       await rm(root, { recursive: true, force: true });
