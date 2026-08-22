@@ -1,6 +1,6 @@
 {
   "name": "@createsomething/pi-policy-os",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Policy OS starter for Pi coding agents — governed AI execution with quality gates, policy checks, and the MCP-First Thesis. The entry point to CREATE SOMETHING's governed automation platform.",
   "keywords": [
     "pi-package",
