@@ -24,6 +24,15 @@ import {
   OPERATOR_CONSOLE_HTML,
   OPERATOR_CONSOLE_JAVASCRIPT
 } from './operator-console.js';
+import {
+  createWorkflowArtifactAttestation,
+  parseWorkflowArtifactAttestation,
+  verifyWorkflowArtifactAttestation,
+  workflowArtifactManifestHash,
+  WorkflowArtifactAttestationError,
+  type WorkflowArtifactKey,
+  type WorkflowArtifactSigningOptions
+} from './attestation.js';
 
 export interface WorkflowArtifactManifest {
   schemaVersion: 'workflow_artifact_manifest.v0.1';
@@ -35,6 +44,50 @@ export interface WorkflowArtifactManifest {
     path: string;
     hash: string;
   }>;
+}
+
+export type WorkflowArtifactVerificationErrorCode =
+  | 'ARTIFACT_HASH_MISMATCH'
+  | 'INVALID_ARTIFACT_TYPE'
+  | 'INVALID_MANIFEST'
+  | 'MISSING_ARTIFACT'
+  | 'RESOURCE_LIMIT_EXCEEDED'
+  | 'UNDECLARED_ARTIFACT'
+  | 'UNSAFE_ARTIFACT_PATH';
+
+export class WorkflowArtifactVerificationError extends Error {
+  readonly code: WorkflowArtifactVerificationErrorCode;
+  readonly path?: string;
+
+  constructor(code: WorkflowArtifactVerificationErrorCode, message: string, path?: string) {
+    super(message);
+    this.name = 'WorkflowArtifactVerificationError';
+    this.code = code;
+    this.path = path;
+  }
+}
+
+export interface WorkflowArtifactVerificationReceipt {
+  schemaVersion: 'workflow_artifact_verification_receipt.v0.1';
+  status: 'integrity_verified' | 'verified';
+  workflowId: string;
+  workflowVersion: string;
+  definitionHash: string;
+  compilerVersion: string;
+  manifestHash: string;
+  fileCount: number;
+  attestation:
+    | { status: 'unsigned' }
+    | {
+        status: 'present_unverified' | 'verified';
+        algorithm: 'Ed25519';
+        keyId: string;
+        publicKeyFingerprint: string;
+      };
+}
+
+export interface VerifyWorkflowArtifactBundleOptions {
+  publicKey?: WorkflowArtifactKey;
 }
 
 export class WorkflowArtifactOutputError extends Error {
@@ -64,6 +117,13 @@ const ARTIFACTS: Array<{
   { path: 'workflow-map.json', select: (bundle) => bundle.workflowMap }
 ];
 
+const MAX_ARTIFACT_FILES = 512;
+const MAX_ARTIFACT_PATH_LENGTH = 512;
+const MAX_MANIFEST_BYTES = 1024 * 1024;
+const MAX_ARTIFACT_BYTES = 25 * 1024 * 1024;
+const MAX_TOTAL_ARTIFACT_BYTES = 100 * 1024 * 1024;
+const MAX_ATTESTATION_BYTES = 16 * 1024;
+
 function json(value: unknown): string {
   return `${JSON.stringify(value, null, 2)}\n`;
 }
@@ -78,7 +138,11 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function hasExactKeys(value: Record<string, unknown>, expected: string[]): boolean {
   const actual = Object.keys(value).sort();
-  return actual.length === expected.length && actual.every((key, index) => key === expected[index]);
+  const sortedExpected = [...expected].sort();
+  return (
+    actual.length === sortedExpected.length &&
+    actual.every((key, index) => key === sortedExpected[index])
+  );
 }
 
 function artifactTarget(rootDir: string, artifactPath: string): string {
@@ -91,6 +155,25 @@ function artifactTarget(rootDir: string, artifactPath: string): string {
     );
   }
   return target;
+}
+
+function assertSafeArtifactPath(path: string): void {
+  if (
+    path.length > MAX_ARTIFACT_PATH_LENGTH ||
+    path.startsWith('/') ||
+    path.startsWith('\\') ||
+    /^[A-Za-z]:[\\/]/.test(path) ||
+    path.includes('\\') ||
+    path
+      .split('/')
+      .some((part) => part === '' || part === '.' || part === '..' || part.includes('\0'))
+  ) {
+    throw new WorkflowArtifactVerificationError(
+      'UNSAFE_ARTIFACT_PATH',
+      'Workflow artifact paths must be normalized relative paths.',
+      path
+    );
+  }
 }
 
 function isMissing(error: unknown): boolean {
@@ -117,8 +200,50 @@ function isDirectRevisionTarget(outDir: string, target: string): boolean {
 
 async function readValidatedArtifactManifest(rootDir: string): Promise<WorkflowArtifactManifest> {
   const manifestPath = join(rootDir, 'manifest.json');
-  if (!(await lstat(manifestPath)).isFile()) throw new Error();
-  const manifest: unknown = JSON.parse(await readFile(manifestPath, 'utf8'));
+  let manifest: unknown;
+  try {
+    const manifestEntry = await lstat(manifestPath);
+    if (!manifestEntry.isFile()) {
+      throw new WorkflowArtifactVerificationError(
+        'INVALID_ARTIFACT_TYPE',
+        'Workflow artifact manifest must be a regular file.',
+        'manifest.json'
+      );
+    }
+    if (manifestEntry.size > MAX_MANIFEST_BYTES) {
+      throw new WorkflowArtifactVerificationError(
+        'RESOURCE_LIMIT_EXCEEDED',
+        'Workflow artifact manifest exceeds the verification size limit.',
+        'manifest.json'
+      );
+    }
+    const manifestBytes = await readFile(manifestPath);
+    if (manifestBytes.byteLength > MAX_MANIFEST_BYTES) {
+      throw new WorkflowArtifactVerificationError(
+        'RESOURCE_LIMIT_EXCEEDED',
+        'Workflow artifact manifest exceeds the verification size limit.',
+        'manifest.json'
+      );
+    }
+    manifest = JSON.parse(manifestBytes.toString('utf8'));
+  } catch (error) {
+    if (error instanceof WorkflowArtifactVerificationError) throw error;
+    if (isMissing(error)) {
+      throw new WorkflowArtifactVerificationError(
+        'MISSING_ARTIFACT',
+        'Workflow artifact manifest is missing.',
+        'manifest.json'
+      );
+    }
+    if (error instanceof SyntaxError) {
+      throw new WorkflowArtifactVerificationError(
+        'INVALID_MANIFEST',
+        'Workflow artifact manifest is not valid JSON.',
+        'manifest.json'
+      );
+    }
+    throw error;
+  }
   if (
     !isRecord(manifest) ||
     !hasExactKeys(manifest, [
@@ -140,13 +265,25 @@ async function readValidatedArtifactManifest(rootDir: string): Promise<WorkflowA
     manifest.compilerVersion.length === 0 ||
     !Array.isArray(manifest.files)
   ) {
-    throw new Error();
+    throw new WorkflowArtifactVerificationError(
+      'INVALID_MANIFEST',
+      'Workflow artifact manifest does not match workflow_artifact_manifest.v0.1.',
+      'manifest.json'
+    );
+  }
+  if (manifest.files.length > MAX_ARTIFACT_FILES) {
+    throw new WorkflowArtifactVerificationError(
+      'RESOURCE_LIMIT_EXCEEDED',
+      'Workflow artifact manifest exceeds the file-count limit.',
+      'manifest.json'
+    );
   }
 
   const requiredPaths = new Set(ARTIFACTS.map((artifact) => artifact.path));
   const seenPaths = new Set<string>();
   const files: WorkflowArtifactManifest['files'] = [];
   let previousPath: string | undefined;
+  let totalArtifactBytes = 0;
   for (const value of manifest.files) {
     if (
       !isRecord(value) ||
@@ -154,26 +291,108 @@ async function readValidatedArtifactManifest(rootDir: string): Promise<WorkflowA
       typeof value.path !== 'string' ||
       value.path.length === 0 ||
       typeof value.hash !== 'string' ||
-      !/^sha256:[a-f0-9]{64}$/.test(value.hash) ||
-      seenPaths.has(value.path) ||
-      (previousPath !== undefined && value.path <= previousPath)
+      !/^sha256:[a-f0-9]{64}$/.test(value.hash)
     ) {
-      throw new Error();
+      throw new WorkflowArtifactVerificationError(
+        'INVALID_MANIFEST',
+        'Workflow artifact manifest contains an invalid file entry.',
+        'manifest.json'
+      );
     }
-    const target = artifactTarget(rootDir, value.path);
+    assertSafeArtifactPath(value.path);
+    if (seenPaths.has(value.path) || (previousPath !== undefined && value.path <= previousPath)) {
+      throw new WorkflowArtifactVerificationError(
+        'INVALID_MANIFEST',
+        'Workflow artifact manifest paths must be sorted and unique.',
+        'manifest.json'
+      );
+    }
+    let target: string;
+    try {
+      target = artifactTarget(rootDir, value.path);
+    } catch {
+      throw new WorkflowArtifactVerificationError(
+        'UNSAFE_ARTIFACT_PATH',
+        'Workflow artifact path escapes the bundle root.',
+        value.path
+      );
+    }
     const canonicalPath = relative(rootDir, target).replaceAll('\\', '/');
-    if (canonicalPath !== value.path || !(await lstat(target)).isFile()) throw new Error();
-    if (contentHash(await readFile(target)) !== value.hash) throw new Error();
+    if (canonicalPath !== value.path) {
+      throw new WorkflowArtifactVerificationError(
+        'UNSAFE_ARTIFACT_PATH',
+        'Workflow artifact paths must be normalized relative paths.',
+        value.path
+      );
+    }
+    let artifactEntry;
+    try {
+      artifactEntry = await lstat(target);
+    } catch (error) {
+      if (isMissing(error)) {
+        throw new WorkflowArtifactVerificationError(
+          'MISSING_ARTIFACT',
+          'A declared workflow artifact is missing.',
+          value.path
+        );
+      }
+      throw error;
+    }
+    if (!artifactEntry.isFile()) {
+      throw new WorkflowArtifactVerificationError(
+        'INVALID_ARTIFACT_TYPE',
+        'Declared workflow artifacts must be regular files.',
+        value.path
+      );
+    }
+    const artifactBytes = await readFile(target);
+    if (artifactBytes.byteLength > MAX_ARTIFACT_BYTES) {
+      throw new WorkflowArtifactVerificationError(
+        'RESOURCE_LIMIT_EXCEEDED',
+        'A workflow artifact exceeds the per-file verification size limit.',
+        value.path
+      );
+    }
+    totalArtifactBytes += artifactBytes.byteLength;
+    if (totalArtifactBytes > MAX_TOTAL_ARTIFACT_BYTES) {
+      throw new WorkflowArtifactVerificationError(
+        'RESOURCE_LIMIT_EXCEEDED',
+        'Workflow artifact content exceeds the total verification size limit.',
+        value.path
+      );
+    }
+    if (contentHash(artifactBytes) !== value.hash) {
+      throw new WorkflowArtifactVerificationError(
+        'ARTIFACT_HASH_MISMATCH',
+        'Workflow artifact content does not match its manifest hash.',
+        value.path
+      );
+    }
     seenPaths.add(value.path);
     requiredPaths.delete(value.path);
     previousPath = value.path;
     files.push({ path: value.path, hash: value.hash });
   }
-  if (requiredPaths.size > 0) throw new Error();
+  if (requiredPaths.size > 0) {
+    throw new WorkflowArtifactVerificationError(
+      'INVALID_MANIFEST',
+      'Workflow artifact manifest omits required base artifacts.',
+      'manifest.json'
+    );
+  }
 
-  const compiledWorkflow: unknown = JSON.parse(
-    await readFile(artifactTarget(rootDir, 'compiled-workflow.json'), 'utf8')
-  );
+  let compiledWorkflow: unknown;
+  try {
+    compiledWorkflow = JSON.parse(
+      await readFile(artifactTarget(rootDir, 'compiled-workflow.json'), 'utf8')
+    );
+  } catch {
+    throw new WorkflowArtifactVerificationError(
+      'INVALID_MANIFEST',
+      'Compiled workflow identity cannot be read.',
+      'compiled-workflow.json'
+    );
+  }
   if (
     !isRecord(compiledWorkflow) ||
     compiledWorkflow.workflowId !== manifest.workflowId ||
@@ -181,7 +400,11 @@ async function readValidatedArtifactManifest(rootDir: string): Promise<WorkflowA
     compiledWorkflow.definitionHash !== manifest.definitionHash ||
     compiledWorkflow.compilerVersion !== manifest.compilerVersion
   ) {
-    throw new Error();
+    throw new WorkflowArtifactVerificationError(
+      'INVALID_MANIFEST',
+      'Compiled workflow identity does not match the artifact manifest.',
+      'compiled-workflow.json'
+    );
   }
 
   return {
@@ -191,6 +414,142 @@ async function readValidatedArtifactManifest(rootDir: string): Promise<WorkflowA
     definitionHash: manifest.definitionHash,
     compilerVersion: manifest.compilerVersion,
     files
+  };
+}
+
+async function verifyDeclaredBundleInventory(
+  rootDir: string,
+  manifest: WorkflowArtifactManifest,
+  hasAttestation: boolean
+): Promise<void> {
+  const declaredFiles = new Set([
+    'manifest.json',
+    ...manifest.files.map((file) => file.path),
+    ...(hasAttestation ? ['attestation.json'] : [])
+  ]);
+  const declaredDirectories = new Set<string>();
+  for (const path of declaredFiles) {
+    const parts = path.split('/');
+    for (let index = 1; index < parts.length; index += 1) {
+      declaredDirectories.add(parts.slice(0, index).join('/'));
+    }
+  }
+
+  async function walk(currentDir: string): Promise<void> {
+    const entries = (await readdir(currentDir, { withFileTypes: true })).sort((left, right) =>
+      left.name.localeCompare(right.name)
+    );
+    for (const entry of entries) {
+      const target = join(currentDir, entry.name);
+      const path = relative(rootDir, target).replaceAll('\\', '/');
+      if (entry.isSymbolicLink()) {
+        throw new WorkflowArtifactVerificationError(
+          'INVALID_ARTIFACT_TYPE',
+          'Workflow artifact bundles cannot contain internal symbolic links.',
+          path
+        );
+      }
+      if (entry.isDirectory()) {
+        if (!declaredDirectories.has(path)) {
+          throw new WorkflowArtifactVerificationError(
+            'UNDECLARED_ARTIFACT',
+            'Workflow artifact bundle contains an undeclared directory.',
+            path
+          );
+        }
+        await walk(target);
+      } else if (entry.isFile()) {
+        if (!declaredFiles.has(path)) {
+          throw new WorkflowArtifactVerificationError(
+            'UNDECLARED_ARTIFACT',
+            'Workflow artifact bundle contains an undeclared file.',
+            path
+          );
+        }
+      } else {
+        throw new WorkflowArtifactVerificationError(
+          'INVALID_ARTIFACT_TYPE',
+          'Workflow artifact bundles may contain only regular files and directories.',
+          path
+        );
+      }
+    }
+  }
+  await walk(rootDir);
+}
+
+export async function verifyWorkflowArtifactBundle(
+  rootDir: string,
+  options: VerifyWorkflowArtifactBundleOptions = {}
+): Promise<WorkflowArtifactVerificationReceipt> {
+  const resolvedRootDir = resolve(rootDir);
+  const manifest = await readValidatedArtifactManifest(resolvedRootDir);
+  const attestationPath = join(resolvedRootDir, 'attestation.json');
+  let attestationValue: unknown;
+  try {
+    const attestationEntry = await lstat(attestationPath);
+    if (!attestationEntry.isFile()) {
+      throw new WorkflowArtifactAttestationError(
+        'INVALID_ATTESTATION',
+        'Workflow artifact attestation must be a regular file.'
+      );
+    }
+    if (attestationEntry.size > MAX_ATTESTATION_BYTES) {
+      throw new WorkflowArtifactAttestationError(
+        'INVALID_ATTESTATION',
+        'Workflow artifact attestation exceeds the verification size limit.'
+      );
+    }
+    const attestationBytes = await readFile(attestationPath);
+    if (attestationBytes.byteLength > MAX_ATTESTATION_BYTES) {
+      throw new WorkflowArtifactAttestationError(
+        'INVALID_ATTESTATION',
+        'Workflow artifact attestation exceeds the verification size limit.'
+      );
+    }
+    attestationValue = JSON.parse(attestationBytes.toString('utf8')) as unknown;
+  } catch (error) {
+    if (error instanceof WorkflowArtifactAttestationError) throw error;
+    if (error instanceof SyntaxError) {
+      throw new WorkflowArtifactAttestationError(
+        'INVALID_ATTESTATION',
+        'Workflow artifact attestation is not valid JSON.'
+      );
+    }
+    if (!isMissing(error)) throw error;
+  }
+
+  if (attestationValue === undefined && options.publicKey !== undefined) {
+    throw new WorkflowArtifactAttestationError(
+      'ATTESTATION_MISSING',
+      'A trusted public key was supplied but the workflow artifact bundle is unsigned.'
+    );
+  }
+  const attestation =
+    attestationValue === undefined
+      ? undefined
+      : options.publicKey === undefined
+        ? parseWorkflowArtifactAttestation(attestationValue)
+        : verifyWorkflowArtifactAttestation(manifest, attestationValue, options.publicKey);
+  await verifyDeclaredBundleInventory(resolvedRootDir, manifest, attestationValue !== undefined);
+  return {
+    schemaVersion: 'workflow_artifact_verification_receipt.v0.1',
+    status: options.publicKey === undefined ? 'integrity_verified' : 'verified',
+    workflowId: manifest.workflowId,
+    workflowVersion: manifest.workflowVersion,
+    definitionHash: manifest.definitionHash,
+    compilerVersion: manifest.compilerVersion,
+    manifestHash: workflowArtifactManifestHash(manifest),
+    fileCount: manifest.files.length,
+    attestation:
+      attestation === undefined
+        ? { status: 'unsigned' }
+        : {
+            status: options.publicKey === undefined ? 'present_unverified' : 'verified',
+            algorithm: attestation.algorithm,
+            keyId: attestation.keyId,
+            publicKeyFingerprint: attestation.publicKeyFingerprint
+          }
   };
 }
 
@@ -491,7 +850,8 @@ async function publishRevisionAtomically(
 async function writeArtifactSet(
   bundle: CompiledWorkflowBundle,
   rootDir: string,
-  replay?: WorkflowReplayArtifacts
+  replay?: WorkflowReplayArtifacts,
+  signing?: WorkflowArtifactSigningOptions
 ): Promise<WorkflowArtifactManifest> {
   const files = [];
   for (const artifact of ARTIFACTS) {
@@ -534,13 +894,21 @@ async function writeArtifactSet(
     files
   };
   await writeFile(artifactTarget(rootDir, 'manifest.json'), json(manifest), 'utf8');
+  if (signing) {
+    await writeFile(
+      artifactTarget(rootDir, 'attestation.json'),
+      json(createWorkflowArtifactAttestation(manifest, signing)),
+      'utf8'
+    );
+  }
   return manifest;
 }
 
 export async function writeCompiledWorkflowArtifacts(
   bundle: CompiledWorkflowBundle,
   outDir: string,
-  replay?: WorkflowReplayArtifacts
+  replay?: WorkflowReplayArtifacts,
+  signing?: WorkflowArtifactSigningOptions
 ): Promise<WorkflowArtifactManifest> {
   const resolvedOutDir = resolve(outDir);
   const parentDir = dirname(resolvedOutDir);
@@ -577,7 +945,7 @@ export async function writeCompiledWorkflowArtifacts(
   }
 
   try {
-    const manifest = await writeArtifactSet(bundle, stagingDir, replay);
+    const manifest = await writeArtifactSet(bundle, stagingDir, replay, signing);
     await applyArtifactMetadataRecursively(
       stagingDir,
       publicationMetadata,
