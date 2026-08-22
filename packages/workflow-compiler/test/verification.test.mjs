@@ -1,6 +1,15 @@
 import assert from 'node:assert/strict';
 import { generateKeyPairSync } from 'node:crypto';
-import { mkdtemp, readFile, readdir, rm, symlink, writeFile } from 'node:fs/promises';
+import {
+  chmod,
+  mkdtemp,
+  readFile,
+  readdir,
+  rm,
+  symlink,
+  truncate,
+  writeFile
+} from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { performance } from 'node:perf_hooks';
@@ -8,6 +17,7 @@ import { spawnSync } from 'node:child_process';
 import test from 'node:test';
 
 import {
+  createWorkflowArtifactAttestation,
   parseWorkflowArtifactAttestation,
   verifyWorkflowArtifactBundle,
   WorkflowArtifactAttestationError,
@@ -91,6 +101,25 @@ test('the attestation parser fails closed across malformed property families', (
       () => parseWorkflowArtifactAttestation(value),
       (error) =>
         error instanceof WorkflowArtifactAttestationError && error.code === 'INVALID_ATTESTATION'
+    );
+  }
+});
+
+test('the public signing API rejects non-string key identifiers without coercion', () => {
+  const { privateKey } = generateKeyPairSync('ed25519');
+  const manifest = {
+    schemaVersion: 'workflow_artifact_manifest.v0.1',
+    workflowId: 'test.workflow',
+    workflowVersion: '0.1.0',
+    definitionHash: `sha256:${'0'.repeat(64)}`,
+    compilerVersion: 'workflow-compiler-v0.1',
+    files: []
+  };
+  for (const keyId of [undefined, null, 42, true]) {
+    assert.throws(
+      () => createWorkflowArtifactAttestation(manifest, { privateKey, keyId }),
+      (error) =>
+        error instanceof WorkflowArtifactAttestationError && error.code === 'INVALID_KEY_ID'
     );
   }
 });
@@ -321,6 +350,33 @@ test('manifest verification rejects adversarial paths and bounded-resource overf
       (error) =>
         error instanceof WorkflowArtifactVerificationError &&
         error.code === 'RESOURCE_LIMIT_EXCEEDED'
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('oversized artifacts stop on metadata before content allocation', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'workflow-compiler-oversized-artifact-'));
+  const outDir = join(root, 'output');
+
+  try {
+    const compile = spawnSync(
+      process.execPath,
+      ['dist/cli.js', 'compile', '--workflow', fixturePath.pathname, '--out', outDir],
+      { cwd: packageRoot, encoding: 'utf8' }
+    );
+    assert.equal(compile.status, 0, compile.stderr || compile.stdout);
+    const artifactPath = join(outDir, 'workflow-map.json');
+    await truncate(artifactPath, 25 * 1024 * 1024 + 1);
+    await chmod(artifactPath, 0o000);
+
+    await assert.rejects(
+      verifyWorkflowArtifactBundle(outDir),
+      (error) =>
+        error instanceof WorkflowArtifactVerificationError &&
+        error.code === 'RESOURCE_LIMIT_EXCEEDED' &&
+        error.path === 'workflow-map.json'
     );
   } finally {
     await rm(root, { recursive: true, force: true });

@@ -114,7 +114,10 @@ export function createWorkflowArtifactAttestation(
   manifest: WorkflowArtifactManifest,
   options: WorkflowArtifactSigningOptions
 ): WorkflowArtifactAttestation {
-  if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(options.keyId)) {
+  if (
+    typeof options.keyId !== 'string' ||
+    !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(options.keyId)
+  ) {
     throw new WorkflowArtifactAttestationError(
       'INVALID_KEY_ID',
       'Workflow artifact key IDs must use 1-128 letters, numbers, dots, underscores, or hyphens.'

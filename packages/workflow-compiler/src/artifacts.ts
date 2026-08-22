@@ -345,6 +345,20 @@ async function readValidatedArtifactManifest(rootDir: string): Promise<WorkflowA
         value.path
       );
     }
+    if (artifactEntry.size > MAX_ARTIFACT_BYTES) {
+      throw new WorkflowArtifactVerificationError(
+        'RESOURCE_LIMIT_EXCEEDED',
+        'A workflow artifact exceeds the per-file verification size limit.',
+        value.path
+      );
+    }
+    if (totalArtifactBytes + artifactEntry.size > MAX_TOTAL_ARTIFACT_BYTES) {
+      throw new WorkflowArtifactVerificationError(
+        'RESOURCE_LIMIT_EXCEEDED',
+        'Workflow artifact content exceeds the total verification size limit.',
+        value.path
+      );
+    }
     const artifactBytes = await readFile(target);
     if (artifactBytes.byteLength > MAX_ARTIFACT_BYTES) {
       throw new WorkflowArtifactVerificationError(
