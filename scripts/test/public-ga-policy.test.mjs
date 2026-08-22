@@ -98,6 +98,16 @@ test('GA config keeps the public boundary, governed sole-operator gate, two pack
   assert.equal(config.map.requiredConsecutiveDays, 7);
 });
 
+test('GA package policy versions stay synchronized with public package manifests', async () => {
+  for (const packagePolicy of config.packages) {
+    const manifest = JSON.parse(
+      await readFile(new URL(`../../${packagePolicy.path}/package.json`, import.meta.url), 'utf8')
+    );
+    assert.equal(manifest.name, packagePolicy.name);
+    assert.equal(manifest.version, packagePolicy.version);
+  }
+});
+
 test('Pi trusted publishing stages releases for explicit 2FA approval', async () => {
   const workflow = await readFile(
     new URL('../../.github/workflows/pi-public-release.yml', import.meta.url),
