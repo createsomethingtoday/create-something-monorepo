@@ -220,6 +220,39 @@ test('adapter replays the same input it maps and fails closed before invocation'
   );
 });
 
+test('adapter snapshots getter-backed evidence once before replay and mapping', async () => {
+  const { bundle, manifest } = await releaseFixture();
+  const replayCase = manifest.cases.find(
+    (entry) => entry.caseId === 'complete-verification-passes'
+  );
+  let reads = 0;
+  const getterBacked = {
+    ...replayCase,
+    evidence: {
+      get artifact_digest() {
+        reads += 1;
+        return reads === 1 ? 'sha256:governed' : 'sha256:substituted';
+      },
+      commit_sha: '0123456789abcdef0123456789abcdef01234567',
+      test_receipt: 'release-tests-fixture-001'
+    }
+  };
+
+  const plan = createMcpToolCallPlan(bundle, getterBacked);
+  assert.equal(reads, 1);
+  assert.equal(plan.disposition, 'pass');
+  assert.equal(plan.invocation.tool.arguments.artifact_digest, 'sha256:governed');
+
+  const proxied = {
+    ...replayCase,
+    evidence: new Proxy(replayCase.evidence, {})
+  };
+  assert.throws(
+    () => createMcpToolCallPlan(bundle, proxied),
+    (error) => error.name === 'WorkflowAdapterError' && error.code === 'INVALID_ADAPTER_INPUT'
+  );
+});
+
 test('adapter preserves legacy schema compatibility but requires an explicit parameter contract', async () => {
   const definition = JSON.parse(await readFile(workflowUrl, 'utf8'));
   const manifest = JSON.parse(await readFile(casesUrl, 'utf8'));

@@ -12,7 +12,7 @@ import type {
 import { parseWorkflowReplayManifest } from './input.js';
 import { replayWorkflow } from './replay.js';
 
-export type WorkflowAdapterErrorCode = 'INVALID_ADAPTER_CONFIGURATION';
+export type WorkflowAdapterErrorCode = 'INVALID_ADAPTER_CONFIGURATION' | 'INVALID_ADAPTER_INPUT';
 
 export class WorkflowAdapterError extends Error {
   readonly code: WorkflowAdapterErrorCode;
@@ -28,10 +28,19 @@ function evaluateReplayCase(
   bundle: CompiledWorkflowBundle,
   input: unknown
 ): { replayCase: WorkflowReplayCase; result: WorkflowReplayResult } {
+  let snapshot: unknown;
+  try {
+    snapshot = structuredClone(input);
+  } catch {
+    throw new WorkflowAdapterError(
+      'INVALID_ADAPTER_INPUT',
+      'Workflow adapter input must be detachable structured data.'
+    );
+  }
   const manifest = parseWorkflowReplayManifest({
     schemaVersion: 'workflow_replay_manifest.v0.1',
     workflowId: bundle.workflowId,
-    cases: [input]
+    cases: [snapshot]
   });
   const { report } = replayWorkflow(bundle, manifest);
   return { replayCase: manifest.cases[0], result: report.cases[0] };

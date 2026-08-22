@@ -61,7 +61,7 @@ Both adapters return the same explicit disposition:
 
 Tool parameters are versioned in the workflow definition, type checked, and required to map to governed evidence. A tool target must also appear in the action's `systemsTouched` boundary. The MCP plan names a provider-neutral `tools/call` operation, target system, tool, and arguments; it does not select a transport, endpoint, session, or credential. The OpenAI plan emits the caller-selected `model`, `instructions`, `input`, one strict function tool, forced `tool_choice`, disabled parallel tool calls, and `store: false`; every function parameter has a single allowed value matching the governed argument, and the same canonical map is exposed as `expectedArguments`. It does not call the API or read an API key. This shape follows the official [OpenAI Responses create API](https://developers.openai.com/api/reference/cli/resources/responses/methods/create). A Codex or other OpenAI execution host remains responsible for transport, current model policy, tool-result validation, and receipt persistence.
 
-The adapter never accepts a replay result and a second unbound evidence object. It replays the exact input it maps so evidence values cannot be substituted after the governance decision.
+The adapter never accepts a replay result and a second unbound evidence object. It first detaches one structured-data snapshot, then replays and maps only that copy so caller mutation, getters, proxies, or a second evidence object cannot substitute values during or after the governance decision.
 
 ## Agent Legibility Contract
 
