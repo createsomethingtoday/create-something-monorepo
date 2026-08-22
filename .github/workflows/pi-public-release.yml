@@ -68,7 +68,7 @@ jobs:
           sha256sum "$artifact_dir"/*.tgz
 
   publish:
-    name: Publish selected Pi package through npm trusted publishing
+    name: Stage selected Pi package through npm trusted publishing
     if: ${{ github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -114,6 +114,6 @@ jobs:
         if: ${{ inputs.package == 'pi-policy-os' }}
         run: npm --prefix packages/pi-policy-os run check
 
-      - name: Publish package with automatic provenance
+      - name: Stage package with automatic provenance for 2FA approval
         working-directory: packages/${{ inputs.package }}
-        run: npm publish --access public
+        run: npm stage publish --access public

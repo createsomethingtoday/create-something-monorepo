@@ -91,7 +91,17 @@ test('GA config keeps the public boundary, review gate, two packages, and seven 
   assert.equal(config.repository.minimumMaintainers, 2);
   assert.equal(config.repository.minimumCodeOwners, 2);
   assert.equal(config.packages.length, 2);
+  assert.equal(config.npm.trustedPublisherMode, 'stage-only');
   assert.equal(config.map.requiredConsecutiveDays, 7);
+});
+
+test('Pi trusted publishing stages releases for explicit 2FA approval', async () => {
+  const workflow = await readFile(
+    new URL('../../.github/workflows/pi-public-release.yml', import.meta.url),
+    'utf8'
+  );
+  assert.match(workflow, /npm stage publish --access public/);
+  assert.doesNotMatch(workflow, /run: npm publish --access public/);
 });
 
 test('Pi discovery proofs explicitly approve only their isolated temporary project', async () => {
@@ -178,7 +188,7 @@ test('npm readback requires exact metadata, trusted publisher, provenance commit
       repository: config.npm.repository,
       workflowFile: config.npm.workflowFile,
       environment: config.npm.environment,
-      permissions: ['publish']
+      permissions: ['stage-publish']
     },
     packedFiles,
     cleanInstall: { installed: true, piLoaded: true }

@@ -40,6 +40,11 @@ export function validateGaConfig(config) {
     'GA config requires two packages',
     issues
   );
+  issue(
+    config?.npm?.trustedPublisherMode === 'stage-only',
+    'GA config requires stage-only npm trusted publishing',
+    issues
+  );
   issue(config?.map?.requiredConsecutiveDays === 7, 'GA config requires seven Map days', issues);
   return issues;
 }
@@ -283,8 +288,8 @@ export function validatePackageReadback(readback, packagePolicy, config, gaCommi
     issues
   );
   issue(
-    trustText.includes('publish'),
-    `${packagePolicy.name} trusted publisher lacks publish authority`,
+    trustText.includes('stage') && trustText.includes('publish'),
+    `${packagePolicy.name} trusted publisher lacks stage-publish authority`,
     issues
   );
 
