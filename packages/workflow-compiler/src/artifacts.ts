@@ -1,5 +1,16 @@
 import { createHash, randomUUID } from 'node:crypto';
-import { chmod, mkdir, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises';
+import {
+  chmod,
+  chown,
+  lstat,
+  mkdir,
+  readFile,
+  readdir,
+  rename,
+  rm,
+  stat,
+  writeFile
+} from 'node:fs/promises';
 import { basename, dirname, isAbsolute, join, relative, resolve } from 'node:path';
 
 import type { CompiledWorkflowBundle } from './types.js';
@@ -80,6 +91,18 @@ function isMissing(error: unknown): boolean {
 }
 
 async function assertOutputDirectoryIsReplaceable(outDir: string): Promise<void> {
+  try {
+    if (!(await lstat(outDir)).isDirectory()) {
+      throw new WorkflowArtifactOutputError(
+        'OUTPUT_NOT_OWNED',
+        'Refusing to replace an output path that is not a workflow compiler directory.'
+      );
+    }
+  } catch (error) {
+    if (isMissing(error)) return;
+    throw error;
+  }
+
   let entries: string[];
   try {
     entries = await readdir(outDir);
@@ -106,9 +129,20 @@ async function assertOutputDirectoryIsReplaceable(outDir: string): Promise<void>
   );
 }
 
-async function existingOutputMode(outDir: string): Promise<number | undefined> {
+interface ExistingOutputMetadata {
+  mode: number;
+  uid: number;
+  gid: number;
+}
+
+async function existingOutputMetadata(outDir: string): Promise<ExistingOutputMetadata | undefined> {
   try {
-    return (await stat(outDir)).mode & 0o7777;
+    const existing = await stat(outDir);
+    return {
+      mode: existing.mode & 0o7777,
+      uid: existing.uid,
+      gid: existing.gid
+    };
   } catch (error) {
     if (isMissing(error)) return undefined;
     throw error;
@@ -204,14 +238,19 @@ export async function writeCompiledWorkflowArtifacts(
   }
 
   await assertOutputDirectoryIsReplaceable(resolvedOutDir);
-  const outputMode = await existingOutputMode(resolvedOutDir);
+  const outputMetadata = await existingOutputMetadata(resolvedOutDir);
   await mkdir(parentDir, { recursive: true });
   const stagingDir = join(parentDir, `.${basename(resolvedOutDir)}.tmp-${randomUUID()}`);
   await mkdir(stagingDir);
 
   try {
     const manifest = await writeArtifactSet(bundle, stagingDir, replay);
-    if (outputMode !== undefined) await chmod(stagingDir, outputMode);
+    if (outputMetadata) {
+      if (process.platform !== 'win32') {
+        await chown(stagingDir, outputMetadata.uid, outputMetadata.gid);
+      }
+      await chmod(stagingDir, outputMetadata.mode);
+    }
     await replaceDirectoryAtomically(stagingDir, resolvedOutDir);
     return manifest;
   } catch (error) {

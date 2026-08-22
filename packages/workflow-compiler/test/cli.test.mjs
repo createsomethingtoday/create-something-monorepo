@@ -1,5 +1,16 @@
 import assert from 'node:assert/strict';
-import { chmod, mkdir, mkdtemp, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
+import {
+  chmod,
+  chown,
+  mkdir,
+  mkdtemp,
+  readFile,
+  readdir,
+  rm,
+  stat,
+  symlink,
+  writeFile
+} from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, parse } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -223,3 +234,71 @@ for (const mode of [0o700, 0o500]) {
     }
   });
 }
+
+const alternateGroupId = (process.getgroups?.() ?? []).find(
+  (groupId) => groupId !== process.getgid?.()
+);
+
+test(
+  'atomic replacement preserves output directory group ownership',
+  { skip: alternateGroupId === undefined || process.getuid === undefined },
+  async () => {
+    const root = await mkdtemp(join(tmpdir(), 'workflow-compiler-output-owner-'));
+    const outDir = join(root, 'output');
+
+    try {
+      const initial = spawnSync(
+        process.execPath,
+        ['dist/cli.js', 'compile', '--workflow', fixturePath.pathname, '--out', outDir],
+        { cwd: packageRoot, encoding: 'utf8' }
+      );
+      assert.equal(initial.status, 0, initial.stderr || initial.stdout);
+      await chown(outDir, process.getuid(), alternateGroupId);
+
+      const replacement = spawnSync(
+        process.execPath,
+        ['dist/cli.js', 'compile', '--workflow', fixturePath.pathname, '--out', outDir],
+        { cwd: packageRoot, encoding: 'utf8' }
+      );
+
+      assert.equal(replacement.status, 0, replacement.stderr || replacement.stdout);
+      assert.equal((await stat(outDir)).gid, alternateGroupId);
+    } finally {
+      await chmod(outDir, 0o700).catch(() => undefined);
+      await rm(root, { recursive: true, force: true });
+    }
+  }
+);
+
+test('the public CLI refuses to replace an output directory through a symbolic link', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'workflow-compiler-output-link-'));
+  const targetDir = join(root, 'target');
+  const linkedDir = join(root, 'linked-output');
+
+  try {
+    const initial = spawnSync(
+      process.execPath,
+      ['dist/cli.js', 'compile', '--workflow', fixturePath.pathname, '--out', targetDir],
+      { cwd: packageRoot, encoding: 'utf8' }
+    );
+    assert.equal(initial.status, 0, initial.stderr || initial.stdout);
+    await symlink(targetDir, linkedDir, 'dir');
+
+    const replacement = spawnSync(
+      process.execPath,
+      ['dist/cli.js', 'compile', '--workflow', fixturePath.pathname, '--out', linkedDir],
+      { cwd: packageRoot, encoding: 'utf8' }
+    );
+
+    assert.equal(replacement.status, 2, replacement.stderr || replacement.stdout);
+    assert.deepEqual(JSON.parse(replacement.stderr), {
+      ok: false,
+      error: 'WorkflowArtifactOutputError',
+      code: 'OUTPUT_NOT_OWNED',
+      message: 'Refusing to replace an output path that is not a workflow compiler directory.'
+    });
+    assert.equal((await stat(join(targetDir, 'manifest.json'))).isFile(), true);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
