@@ -275,7 +275,7 @@ test('the public CLI refuses to replace a non-empty directory it does not own', 
   }
 });
 
-for (const mode of [0o700, 0o500, 0o750]) {
+for (const mode of [0o700, 0o500, 0o750, 0o770, 0o777]) {
   test(`atomic replacement preserves output directory mode ${mode.toString(8)}`, async () => {
     const root = await mkdtemp(join(tmpdir(), 'workflow-compiler-output-mode-'));
     const outDir = join(root, 'output');
@@ -299,7 +299,7 @@ for (const mode of [0o700, 0o500, 0o750]) {
       assert.equal((await stat(outDir)).mode & 0o777, mode);
       assert.equal(
         (await stat(join(root, '.output.workflow-compiler'))).mode & 0o077,
-        mode & 0o077
+        mode & 0o077 & ~0o022
       );
     } finally {
       await chmod(outDir, 0o700).catch(() => undefined);

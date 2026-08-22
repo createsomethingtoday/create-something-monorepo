@@ -227,7 +227,7 @@ async function applyManagedDirectoryMetadata(
 ): Promise<void> {
   for (const path of paths) {
     if (process.platform !== 'win32') await chown(path, metadata.uid, metadata.gid);
-    await chmod(path, metadata.mode | 0o700);
+    await chmod(path, (metadata.mode & ~0o022) | 0o700);
   }
 }
 

@@ -296,6 +296,7 @@ export interface WorkflowReplayReceipt {
   definitionHash: string;
   caseId: string;
   actionId: string;
+  actorId: string;
   correlationId: string;
   outcome: ReplayOutcome;
   receiptFields: Record<string, unknown>;
@@ -305,6 +306,7 @@ export interface WorkflowReplayResult {
   caseId: string;
   title: string;
   actionId: string;
+  actorId: string;
   stateBefore: string;
   stateAfter: string;
   observedOutcome: ReplayOutcome;
@@ -317,6 +319,8 @@ export interface WorkflowReplayResult {
     | 'POLICY_BLOCKED'
     | 'INSUFFICIENT_EVIDENCE'
     | 'UNKNOWN_ACTION'
+    | 'UNKNOWN_ACTOR'
+    | 'ACTOR_NOT_AUTHORIZED'
     | 'INVALID_TRANSITION';
   authority: string;
   owner: string;
