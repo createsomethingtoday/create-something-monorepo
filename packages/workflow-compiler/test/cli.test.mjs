@@ -133,6 +133,40 @@ test('recompilation atomically advances a managed revision pointer', async () =>
   }
 });
 
+test('recompilation migrates a validated pre-marker managed output', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'workflow-compiler-pre-marker-migration-'));
+  const outDir = join(root, 'output');
+  const markerPath = join(root, '.output.workflow-compiler', 'control.json');
+
+  try {
+    const initial = spawnSync(
+      process.execPath,
+      ['dist/cli.js', 'compile', '--workflow', fixturePath.pathname, '--out', outDir],
+      { cwd: packageRoot, encoding: 'utf8' }
+    );
+    assert.equal(initial.status, 0, initial.stderr || initial.stdout);
+    await rm(markerPath);
+
+    const replacement = spawnSync(
+      process.execPath,
+      ['dist/cli.js', 'compile', '--workflow', fixturePath.pathname, '--out', outDir],
+      { cwd: packageRoot, encoding: 'utf8' }
+    );
+
+    assert.equal(replacement.status, 0, replacement.stderr || replacement.stdout);
+    assert.deepEqual(JSON.parse(await readFile(markerPath, 'utf8')), {
+      schemaVersion: 'workflow_compiler_control.v0.1',
+      outputPath: outDir
+    });
+    assert.equal(
+      JSON.parse(await readFile(join(outDir, 'manifest.json'), 'utf8')).workflowId,
+      'webflow.marketplace.template-lifecycle'
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test('published revisions are retained so a concurrent publisher cannot prune the winner', async () => {
   const root = await mkdtemp(join(tmpdir(), 'workflow-compiler-retained-revisions-'));
   const outDir = join(root, 'output');

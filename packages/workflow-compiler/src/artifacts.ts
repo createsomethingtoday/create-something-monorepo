@@ -302,7 +302,28 @@ async function validateControlMarker(controlDir: string, outDir: string): Promis
   }
 }
 
-async function ensureCompilerControlDirectory(controlDir: string, outDir: string): Promise<void> {
+async function writeControlMarker(controlDir: string, outDir: string): Promise<void> {
+  const markerPath = join(controlDir, CONTROL_MARKER_FILENAME);
+  try {
+    await writeFile(
+      markerPath,
+      json({ schemaVersion: CONTROL_MARKER_SCHEMA_VERSION, outputPath: outDir }),
+      { encoding: 'utf8', flag: 'wx', mode: 0o600 }
+    );
+  } catch (error) {
+    if (isAlreadyPresent(error)) {
+      await validateControlMarker(controlDir, outDir);
+      return;
+    }
+    throw error;
+  }
+}
+
+async function ensureCompilerControlDirectory(
+  controlDir: string,
+  outDir: string,
+  migrationRevision: string | undefined
+): Promise<void> {
   let created = false;
   try {
     await mkdir(controlDir, { mode: 0o700 });
@@ -320,17 +341,32 @@ async function ensureCompilerControlDirectory(controlDir: string, outDir: string
   if (!controlEntry.isDirectory()) throw unownedControlDirectoryError();
 
   if (!created) {
-    await validateControlMarker(controlDir, outDir);
+    const markerPath = join(controlDir, CONTROL_MARKER_FILENAME);
+    try {
+      await lstat(markerPath);
+      await validateControlMarker(controlDir, outDir);
+      return;
+    } catch (error) {
+      if (!isMissing(error)) throw error;
+    }
+
+    const revisionsDir = revisionsDirectory(outDir);
+    if (migrationRevision === undefined || dirname(migrationRevision) !== revisionsDir) {
+      throw unownedControlDirectoryError();
+    }
+    try {
+      if (!(await lstat(revisionsDir)).isDirectory()) throw new Error();
+      if (!(await lstat(migrationRevision)).isDirectory()) throw new Error();
+    } catch {
+      throw unownedControlDirectoryError();
+    }
+    await writeControlMarker(controlDir, outDir);
     return;
   }
 
   const markerPath = join(controlDir, CONTROL_MARKER_FILENAME);
   try {
-    await writeFile(
-      markerPath,
-      json({ schemaVersion: CONTROL_MARKER_SCHEMA_VERSION, outputPath: outDir }),
-      { encoding: 'utf8', flag: 'wx', mode: 0o600 }
-    );
+    await writeControlMarker(controlDir, outDir);
   } catch (error) {
     await rm(markerPath, { force: true });
     await rmdir(controlDir).catch(() => undefined);
@@ -438,7 +474,7 @@ export async function writeCompiledWorkflowArtifacts(
   const controlDir = controlDirectory(resolvedOutDir);
   const revisionsDir = revisionsDirectory(resolvedOutDir);
   const controlMarkerPath = join(controlDir, CONTROL_MARKER_FILENAME);
-  await ensureCompilerControlDirectory(controlDir, resolvedOutDir);
+  await ensureCompilerControlDirectory(controlDir, resolvedOutDir, existingOutput.revision);
   await ensureManagedDirectory(revisionsDir);
   const revisionId = randomUUID();
   const stagingDir = join(revisionsDir, `.tmp-${revisionId}`);
