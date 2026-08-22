@@ -1,3 +1,4 @@
+import { parseWorkflowReplayManifest } from './input.js';
 import type {
   CompiledDecision,
   CompiledWorkflowBundle,
@@ -6,7 +7,6 @@ import type {
   WorkflowAction,
   WorkflowAcceptanceSummary,
   WorkflowReplayCase,
-  WorkflowReplayManifest,
   WorkflowReplayReport,
   WorkflowReplayResult,
 } from './types.js';
@@ -54,8 +54,9 @@ export function createAcceptanceSummary(
 
 export function replayWorkflow(
   bundle: CompiledWorkflowBundle,
-  manifest: WorkflowReplayManifest,
+  input: unknown,
 ): WorkflowReplayArtifacts {
+  const manifest = parseWorkflowReplayManifest(input);
   if (manifest.workflowId !== bundle.workflowId) {
     throw new Error(
       `Replay manifest workflow ${manifest.workflowId} does not match bundle ${bundle.workflowId}.`,

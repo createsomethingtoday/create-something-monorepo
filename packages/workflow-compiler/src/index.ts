@@ -3,7 +3,16 @@ export {
   WorkflowCompilationError,
   WORKFLOW_COMPILER_VERSION,
 } from './compile.js';
-export { writeCompiledWorkflowArtifacts } from './artifacts.js';
+export {
+  WorkflowArtifactOutputError,
+  writeCompiledWorkflowArtifacts,
+} from './artifacts.js';
+export {
+  parseWorkflowDefinition,
+  parseWorkflowReplayManifest,
+  ReplayInputValidationError,
+  WorkflowInputValidationError,
+} from './input.js';
 export { createAcceptanceSummary, replayWorkflow } from './replay.js';
 export {
   createOperatorConsoleData,
@@ -26,6 +35,7 @@ export type { OperatorConsoleServer } from './server.js';
 export type { ClientWorkspaceGovernedInteractionInspection } from './client-workspace-host.js';
 
 export type { WorkflowArtifactManifest } from './artifacts.js';
+export type { WorkflowInputDiagnostic } from './input.js';
 export type { WorkflowReplayArtifacts } from './replay.js';
 export type {
   GovernedInteractionCompatibilityDecision,
