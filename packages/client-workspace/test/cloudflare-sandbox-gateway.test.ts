@@ -21,6 +21,9 @@ test('sandbox gateway pins RPC, bounded lifecycle, one app process, and authenti
     async containerFetch(request: Request, port: number) {
       calls.push(['containerFetch', request.url, port]);
       return new Response('sandbox-app');
+    },
+    async destroy() {
+      // The normal request path must not destroy its sandbox.
     }
   };
   const gateway = new CloudflareSandboxGateway({
@@ -84,6 +87,9 @@ test('sandbox gateway reuses a running app process without reinjecting secrets',
         },
         async containerFetch() {
           return new Response('reused');
+        },
+        async destroy() {
+          // The normal request path must not destroy its sandbox.
         }
       };
     }
@@ -122,6 +128,9 @@ test('sandbox gateway replaces a stale starting app process after the SDK report
         },
         async containerFetch() {
           return new Response('restarted');
+        },
+        async destroy() {
+          // The normal request path must not destroy its sandbox.
         }
       };
     }
@@ -180,6 +189,9 @@ test('sandbox gateway restores before startup and checkpoints successful diff re
     },
     async writeFile() {
       throw new Error('snapshot fake owns write');
+    },
+    async destroy() {
+      // The diff route captures a snapshot but retains its sandbox.
     }
   };
   const gateway = new CloudflareSandboxGateway({
@@ -235,6 +247,9 @@ test('sandbox gateway reports a sanitized checkpoint failure without failing the
       },
       async containerFetch() {
         return Response.json({ diff: 'bounded' });
+      },
+      async destroy() {
+        // The diff route captures a snapshot but retains its sandbox.
       }
     }),
     snapshots: {
@@ -317,7 +332,7 @@ test('sandbox gateway checkpoints and destroys after an explicit successful clos
   const calls: string[] = [];
   const sandbox = {
     async getProcess() {
-      return { status: 'running' };
+      return { status: 'running' as const };
     },
     async startProcess() {
       throw new Error('should not start');
@@ -372,6 +387,9 @@ test('sandbox gateway schedules sanitized D1 activity capture for an app respons
       },
       async containerFetch() {
         return Response.json({ receipt: { sessionId: 'session-1' } }, { status: 201 });
+      },
+      async destroy() {
+        // The session route retains its sandbox.
       }
     }),
     activity: {
