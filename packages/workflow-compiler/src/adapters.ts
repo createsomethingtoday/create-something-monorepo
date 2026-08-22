@@ -129,6 +129,19 @@ function readyToolPlan(
   const plan = basePlan(adapter, bundle, result);
   if (plan.disposition !== 'pass') return { plan };
 
+  const decision = bundle.decisionInventory.decisions.find(
+    (entry) => entry.actionId === result.actionId
+  );
+  if (decision?.autonomy === 'approval_required' || decision?.autonomy === 'manual_only') {
+    return {
+      plan: {
+        ...plan,
+        disposition: 'wait',
+        reasonCode: 'AUTHENTICATED_APPROVAL_REQUIRED'
+      }
+    };
+  }
+
   const tool = toolContract(bundle, result);
   if (!tool) {
     return {
@@ -195,7 +208,8 @@ export function createMcpToolCallPlan(
 
 function openAIFunctionTool(
   bundle: CompiledWorkflowBundle,
-  contract: CompiledToolContract & { parameters: NonNullable<CompiledToolContract['parameters']> }
+  contract: CompiledToolContract & { parameters: NonNullable<CompiledToolContract['parameters']> },
+  arguments_: Record<string, string | number | boolean>
 ): OpenAIResponsesFunctionTool {
   const decision = bundle.decisionInventory.decisions.find(
     (entry) => entry.actionId === contract.actionId
@@ -203,7 +217,11 @@ function openAIFunctionTool(
   const properties = Object.fromEntries(
     contract.parameters.map((parameter) => [
       parameter.name,
-      { type: parameter.type, description: parameter.description }
+      {
+        type: parameter.type,
+        description: parameter.description,
+        enum: [arguments_[parameter.name]] as [string | number | boolean]
+      }
     ])
   );
   return {
@@ -256,10 +274,12 @@ export function createOpenAIResponsesRequestPlan(
     bundle,
     ready.tool as CompiledToolContract & {
       parameters: NonNullable<CompiledToolContract['parameters']>;
-    }
+    },
+    ready.arguments
   );
   return {
     ...plan,
+    expectedArguments: ready.arguments,
     request: {
       model,
       instructions: `Call exactly ${ready.tool.name} with the supplied governed arguments. Do not add, remove, or substitute an action. Return tool errors to the caller without retrying a side effect.`,

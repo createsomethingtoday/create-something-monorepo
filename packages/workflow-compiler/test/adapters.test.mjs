@@ -113,15 +113,18 @@ test('OpenAI Responses plan forces the same governed tool without transport or c
           properties: {
             artifact_digest: {
               type: 'string',
-              description: 'Immutable digest of the release artifact.'
+              description: 'Immutable digest of the release artifact.',
+              enum: ['sha256:fixture-release-artifact']
             },
             commit_sha: {
               type: 'string',
-              description: 'Protected source commit represented by the artifact.'
+              description: 'Protected source commit represented by the artifact.',
+              enum: ['0123456789abcdef0123456789abcdef01234567']
             },
             test_receipt: {
               type: 'string',
-              description: 'Identifier for the completed release test receipt.'
+              description: 'Identifier for the completed release test receipt.',
+              enum: ['release-tests-fixture-001']
             }
           },
           required: ['artifact_digest', 'commit_sha', 'test_receipt'],
@@ -136,6 +139,11 @@ test('OpenAI Responses plan forces the same governed tool without transport or c
   });
   assert.equal('apiKey' in first.request, false);
   assert.equal('url' in first.request, false);
+  assert.deepEqual(first.expectedArguments, {
+    artifact_digest: 'sha256:fixture-release-artifact',
+    commit_sha: '0123456789abcdef0123456789abcdef01234567',
+    test_receipt: 'release-tests-fixture-001'
+  });
 });
 
 test('OpenAI adapter preserves wait and stop without constructing a provider request', async () => {
@@ -155,8 +163,9 @@ test('OpenAI adapter preserves wait and stop without constructing a provider req
   }
 });
 
-test('an explicit owner approval advances the waiting promotion into a tool call', async () => {
-  const { bundle, manifest } = await releaseFixture();
+test('replay approvals cannot make a human-owned action executable', async () => {
+  const definition = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const manifest = JSON.parse(await readFile(casesUrl, 'utf8'));
   const waiting = manifest.cases.find((entry) => entry.caseId === 'production-promotion-waits');
   const approved = {
     ...waiting,
@@ -165,20 +174,15 @@ test('an explicit owner approval advances the waiting promotion into a tool call
     expectedState: 'production'
   };
 
-  const plan = createMcpToolCallPlan(bundle, approved);
-  assert.equal(plan.disposition, 'pass');
-  assert.equal(plan.canInvoke, true);
-  assert.deepEqual(plan.invocation, {
-    operation: 'tools/call',
-    targetSystemId: 'production-deployer',
-    tool: {
-      name: 'release_promote',
-      arguments: {
-        artifact_digest: 'sha256:fixture-release-artifact',
-        deployment_target: 'production'
-      }
-    }
-  });
+  for (const autonomy of ['approval_required', 'manual_only']) {
+    definition.actions[1].autonomy = autonomy;
+    const plan = createMcpToolCallPlan(compileWorkflowDefinition(definition), approved);
+    assert.equal(plan.governanceOutcome, 'pass');
+    assert.equal(plan.disposition, 'wait');
+    assert.equal(plan.reasonCode, 'AUTHENTICATED_APPROVAL_REQUIRED');
+    assert.equal(plan.canInvoke, false);
+    assert.equal('invocation' in plan, false);
+  }
 });
 
 test('adapter replays the same input it maps and fails closed before invocation', async () => {

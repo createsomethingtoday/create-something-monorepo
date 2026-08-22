@@ -55,11 +55,11 @@ const openAIPlan = createOpenAIResponsesRequestPlan(bundle, replayCase, {
 
 Both adapters return the same explicit disposition:
 
-- `pass` includes a request or invocation that the caller may execute.
-- `wait` means approval is still required and includes no executable request.
+- `pass` includes a request or invocation only for an `auto_allow` action with a complete declared tool contract.
+- `wait` means authenticated approval or manual execution is still required and includes no executable request. Replay `actorId` and `approvals` strings never make `approval_required` or `manual_only` actions invocable.
 - `stop` means policy, evidence, transition, tool-contract, or adapter validation blocked execution and includes no executable request.
 
-Tool parameters are versioned in the workflow definition, type checked, and required to map to governed evidence. The MCP plan names a provider-neutral `tools/call` operation, target system, tool, and arguments; it does not select a transport, endpoint, session, or credential. The OpenAI plan emits the caller-selected `model`, `instructions`, `input`, one strict function tool, forced `tool_choice`, disabled parallel tool calls, and `store: false`; it does not call the API or read an API key. This shape follows the official [OpenAI Responses create API](https://developers.openai.com/api/reference/cli/resources/responses/methods/create). A Codex or other OpenAI execution host remains responsible for transport, current model policy, tool-result handling, and receipt persistence.
+Tool parameters are versioned in the workflow definition, type checked, and required to map to governed evidence. A tool target must also appear in the action's `systemsTouched` boundary. The MCP plan names a provider-neutral `tools/call` operation, target system, tool, and arguments; it does not select a transport, endpoint, session, or credential. The OpenAI plan emits the caller-selected `model`, `instructions`, `input`, one strict function tool, forced `tool_choice`, disabled parallel tool calls, and `store: false`; every function parameter has a single allowed value matching the governed argument, and the same canonical map is exposed as `expectedArguments`. It does not call the API or read an API key. This shape follows the official [OpenAI Responses create API](https://developers.openai.com/api/reference/cli/resources/responses/methods/create). A Codex or other OpenAI execution host remains responsible for transport, current model policy, tool-result validation, and receipt persistence.
 
 The adapter never accepts a replay result and a second unbound evidence object. It replays the exact input it maps so evidence values cannot be substituted after the governance decision.
 

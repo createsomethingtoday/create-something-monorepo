@@ -345,6 +345,7 @@ export type WorkflowAdapterDisposition = 'pass' | 'wait' | 'stop';
 export type WorkflowAdapterReasonCode =
   | 'TOOL_CALL_READY'
   | 'APPROVAL_REQUIRED'
+  | 'AUTHENTICATED_APPROVAL_REQUIRED'
   | 'GOVERNANCE_BLOCKED'
   | 'MISSING_TOOL_CONTRACT'
   | 'MISSING_TOOL_PARAMETER_CONTRACT'
@@ -400,6 +401,7 @@ export interface OpenAIResponsesFunctionTool {
       {
         type: WorkflowToolParameterType;
         description: string;
+        enum: [string | number | boolean];
       }
     >;
     required: string[];
@@ -420,6 +422,7 @@ export interface OpenAIResponsesRequest {
 
 export interface OpenAIResponsesRequestPlan extends WorkflowAdapterPlan {
   adapter: 'openai.responses';
+  expectedArguments?: Record<string, string | number | boolean>;
   request?: OpenAIResponsesRequest;
 }
 

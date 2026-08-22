@@ -180,3 +180,24 @@ test('rejects a tool parameter that is not governed as required evidence', async
     },
   );
 });
+
+test('rejects a tool target omitted from the action system boundary', async () => {
+  const definition = JSON.parse(await readFile(workflowFixture, 'utf8'));
+  definition.actions[0].systemsTouched = ['airtable-marketplace'];
+
+  assert.throws(
+    () => compileWorkflowDefinition(definition),
+    (error) => {
+      assert.equal(error.name, 'WorkflowCompilationError');
+      assert.deepEqual(error.diagnostics, [
+        {
+          code: 'TOOL_TARGET_NOT_DECLARED_SYSTEM_TOUCH',
+          path: 'actions[0].tool.targetSystemId',
+          message:
+            'Tool template_validation_run target template-validation must be declared in systemsTouched for action validate_submission.',
+        },
+      ]);
+      return true;
+    },
+  );
+});

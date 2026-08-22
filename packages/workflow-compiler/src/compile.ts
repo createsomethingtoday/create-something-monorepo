@@ -182,6 +182,13 @@ function validateReferences(definition: WorkflowDefinition): WorkflowCompilation
         message: `Tool ${action.tool.name} references unknown system ${action.tool.targetSystemId}.`,
       });
     }
+    if (action.tool && !action.systemsTouched.includes(action.tool.targetSystemId)) {
+      diagnostics.push({
+        code: 'TOOL_TARGET_NOT_DECLARED_SYSTEM_TOUCH',
+        path: `actions[${index}].tool.targetSystemId`,
+        message: `Tool ${action.tool.name} target ${action.tool.targetSystemId} must be declared in systemsTouched for action ${action.id}.`,
+      });
+    }
     action.tool?.parameters?.forEach((parameter, parameterIndex) => {
       if (!action.requiredEvidence.includes(parameter.name)) {
         diagnostics.push({
@@ -399,12 +406,7 @@ export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundl
     runtimeVersion: '0.1.0',
     ...header,
     entrySurfaceId: 'operator-console',
-    capabilities: [
-      'interaction.select',
-      'receipt.inspect',
-      'replay.inspect',
-      'workflow.inspect',
-    ],
+    capabilities: ['interaction.select', 'receipt.inspect', 'replay.inspect', 'workflow.inspect'],
     surfaces: [
       {
         id: 'operator-console',
