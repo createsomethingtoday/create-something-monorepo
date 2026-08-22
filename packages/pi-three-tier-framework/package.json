@@ -1,6 +1,6 @@
 {
   "name": "@createsomething/pi-three-tier-framework",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "The Three-Tier Framework (Database, Automation, Judgment) for agent systems — as a Pi coding agent package. Classify components, debug systems, and design MCP servers using the structural model behind CREATE SOMETHING.",
   "keywords": ["pi-package", "three-tier-framework", "agent-systems", "mcp", "architecture"],
   "author": "CREATE SOMETHING <hello@createsomething.agency>",
