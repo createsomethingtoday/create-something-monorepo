@@ -241,6 +241,20 @@ export function parseWorkflowDefinition(input: unknown): WorkflowDefinition {
       if (tool) {
         validator.string(tool.name, `${path}.tool.name`);
         validator.string(tool.targetSystemId, `${path}.tool.targetSystemId`);
+        if (tool.parameters !== undefined) {
+          const parameters = validator.array(tool.parameters, `${path}.tool.parameters`);
+          if (!parameters) return;
+          validator.records(parameters, `${path}.tool.parameters`, (parameter, parameterPath) => {
+            validator.string(parameter.name, `${parameterPath}.name`);
+            validator.enumeration(
+              parameter.type,
+              ['string', 'number', 'boolean'],
+              `${parameterPath}.type`
+            );
+            validator.string(parameter.description, `${parameterPath}.description`);
+          });
+          validator.uniqueIdentifiers(parameters, `${path}.tool.parameters`, 'name');
+        }
       }
     }
     validator.optionalString(action.agentId, `${path}.agentId`);

@@ -19,6 +19,8 @@ The first vertical is the Webflow Marketplace template lifecycle: submission, va
 ```ts
 import {
   compileWorkflowDefinition,
+  createMcpToolCallPlan,
+  createOpenAIResponsesRequestPlan,
   evaluateGovernedInteractionCompatibility,
   parseGovernedInteractionBundle,
   replayWorkflow,
@@ -38,6 +40,28 @@ import {
 The `create-something/control` runtime currently permits only four read-only capabilities (`workflow.inspect`, `replay.inspect`, `receipt.inspect`, and `interaction.select`) and one local operation (`select_replay_case`). Parsing rejects unknown fields, versions, capabilities, references, duplicate identifiers, executable operations, and incomplete approval ownership. Hosts publish their supported runtime/capability/operation contract and receive one normalized compatibility decision; they do not reinterpret workflow authority.
 
 The compiler emits the same content-hashed `governed-interaction.json` for Atlas Studio and Client Workspace. The trusted desktop application contains the interpreter and renderer. A delivery may contain data governed by the IR, but it cannot introduce JavaScript, native plugins, commands, filesystem roots, origins, or ambient environment access.
+
+## Builder adapter plans
+
+The public adapter seam is pure and offline. It evaluates one replay case against the compiled workflow, then either emits a provider-ready plan or preserves the governance stop:
+
+```ts
+const mcpPlan = createMcpToolCallPlan(bundle, replayCase);
+
+const openAIPlan = createOpenAIResponsesRequestPlan(bundle, replayCase, {
+  model: 'caller-selected-model'
+});
+```
+
+Both adapters return the same explicit disposition:
+
+- `pass` includes a request or invocation that the caller may execute.
+- `wait` means approval is still required and includes no executable request.
+- `stop` means policy, evidence, transition, tool-contract, or adapter validation blocked execution and includes no executable request.
+
+Tool parameters are versioned in the workflow definition, type checked, and required to map to governed evidence. The MCP plan names a provider-neutral `tools/call` operation, target system, tool, and arguments; it does not select a transport, endpoint, session, or credential. The OpenAI plan emits the caller-selected `model`, `instructions`, `input`, one strict function tool, forced `tool_choice`, disabled parallel tool calls, and `store: false`; it does not call the API or read an API key. This shape follows the official [OpenAI Responses create API](https://developers.openai.com/api/reference/cli/resources/responses/methods/create). A Codex or other OpenAI execution host remains responsible for transport, current model policy, tool-result handling, and receipt persistence.
+
+The adapter never accepts a replay result and a second unbound evidence object. It replays the exact input it maps so evidence values cannot be substituted after the governance decision.
 
 ## Agent Legibility Contract
 
@@ -77,6 +101,15 @@ The output includes:
 - generated operator console
 - governed-interaction bundle
 - content-hashed artifact manifest
+
+The second fixture proves that the contract composes beyond Webflow. It models software release verification, human-owned production promotion, and a blocked policy bypass:
+
+```bash
+node packages/workflow-compiler/dist/cli.js compile \
+  --workflow packages/workflow-compiler/fixtures/release-promotion/workflow.json \
+  --cases packages/workflow-compiler/fixtures/release-promotion/cases.json \
+  --out /tmp/release-promotion-workflow-compiler
+```
 
 The output path is a compiler-managed symbolic link to an immutable sibling revision. Recompilation writes and validates a complete new revision before one atomic pointer rename, so concurrent readers see either the previous bundle or the new bundle and a terminated compiler cannot strand the public path between two directory renames. The compiler retains published revisions under `.<output-name>.workflow-compiler/` so one concurrent publisher can never garbage-collect another publisher's winning revision; remove that control directory together with the output pointer only when no compiler or reader is active. A versioned owner-only marker binds that control directory to the resolved output path, and an unmarked or differently bound directory is rejected. The sole migration exception is a pre-marker output whose existing public symlink, real revisions directory, direct immutable revision, complete manifest shape, required base artifacts, listed content hashes, and bundle identity already prove the prior compiler relationship; the compiler then creates the marker exclusively before continuing. Compiler control directories preserve required read/traversal access but never inherit group or world write authority. New artifact files and directories receive deterministic `0644` and `0755` modes; recompilation preserves explicit per-artifact mode adjustments from the published revision instead of inheriting the caller's current umask. The compiler rejects unrelated links, non-empty unowned directories, and legacy direct-directory outputs instead of migrating them through a non-atomic window.
 

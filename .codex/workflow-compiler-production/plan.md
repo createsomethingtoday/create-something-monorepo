@@ -3,11 +3,11 @@
 ## Current state
 
 - Goal status: active
-- Active phase: 2
-- Active Linear issue: CRE-1832
-- Worktree: `/private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/cre-1832-agent-worktree`
-- Branch: `codex/CRE-1832-agent-worktree`
-- Base: `origin/main` at `a85ea46e2ebf31e100e346760a44e5eb79ac2098`
+- Active phase: 3
+- Active Linear issue: CRE-1837
+- Worktree: `/private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/cre-1837-agent-worktree`
+- Branch: `codex/CRE-1837-agent-worktree`
+- Base: `origin/main` at `0966f6a6948b21d1d4b21ccdab9ce2811b24d3ce`
 
 ## Phases
 
@@ -32,21 +32,21 @@
 - [x] Run package, acceptance, exports, and direct downstream compatibility gates.
 - [x] Commit, push, open the review boundary, and record CRE-1834 evidence.
 
-### 2. Add attestable bundles and security verification — in progress
+### 2. Add attestable bundles and security verification — complete
 
 - [x] Claim CRE-1832 in an exact-main issue worktree.
 - [x] Define the local attestation trust model and verification receipt.
 - [x] Add independent tamper verification through public exports and CLI.
 - [x] Add property or fuzz coverage, path/adversarial cases, performance bounds, dependency audit, and threat model.
-- [ ] Promote through review and record CRE-1832 evidence.
+- [x] Promote through review and record CRE-1832 evidence.
 
-### 3. Prove a second vertical and builder adapters — pending
+### 3. Prove a second vertical and builder adapters — in progress
 
-- [ ] Claim CRE-1837 in an exact-main issue worktree.
-- [ ] Add a non-Webflow workflow example with a distinct evidence and approval shape.
-- [ ] Read official OpenAI guidance before implementing the OpenAI/Codex adapter.
-- [ ] Add provider-neutral MCP and primary OpenAI/Codex adapter contracts.
-- [ ] Prove pass, wait, and stop outcomes without network or external mutation.
+- [x] Claim CRE-1837 in an exact-main issue worktree.
+- [x] Add a non-Webflow workflow example with a distinct evidence and approval shape.
+- [x] Read official OpenAI guidance before implementing the OpenAI/Codex adapter.
+- [x] Add provider-neutral MCP and primary OpenAI/Codex adapter contracts.
+- [x] Prove pass, wait, and stop outcomes without network or external mutation.
 - [ ] Promote through review and record CRE-1837 evidence.
 
 ### 4. Ship CI, docs, and release gates — pending
@@ -112,3 +112,10 @@
 - 2026-08-22: Exact-head review identified that the managed output symlink could retarget between metadata bounds and content reads. A two-revision race regression fails against the prior verifier with an artifact hash mismatch, then passes repeatedly after verification resolves the public output pointer once and pins every subsequent stat, read, inventory, and attestation check to that retained revision. The package suite passes 63 tests.
 - 2026-08-22: Follow-up review preserved the public failure contract and removed scheduler dependence from the race proof. Missing directories and broken root symlinks now remain structured `MISSING_ARTIFACT` API errors and CLI exit-3 JSON stops. An internal, non-package-exported post-resolution hook provides an explicit test barrier; the pointer switches only after canonical root capture, making the retained-revision assertion deterministic. The package suite passes 64 tests.
 - 2026-08-22: Rebased exact-head review identified unbounded directory materialization and non-directory root diagnostics. Inventory traversal now streams with `opendir`, holds at most 4,096 entries, and stops before materializing attacker-sized directories. Existing files and symlinks to files now return structured `INVALID_ARTIFACT_TYPE` API errors and CLI exit-3 JSON. Both red-to-green regressions pass three consecutive runs; the package suite passes 66 tests.
+- 2026-08-22: PR #1492 received a clean exact-head review on `f8c1aff78c755c8043f8daebbcbb7af41bc64898`; all nine required checks passed and protected `main` advanced to merge `0966f6a6948b21d1d4b21ccdab9ce2811b24d3ce`.
+- 2026-08-22: CRE-1837 was claimed and bootstrapped in a new issue worktree based on exact `origin/main` merge `0966f6a6948b21d1d4b21ccdab9ce2811b24d3ce`.
+- 2026-08-22: The primary adapter reference is the official OpenAI Responses create API. It confirms provider requests carry caller-selected `model`, `instructions`, `input`, `tools`, and `tool_choice`, and that function tools expose `name`, `description`, JSON-schema `parameters`, and strictness. The adapter will compile this request shape offline and leave transport, credentials, and model selection to the caller.
+- 2026-08-22: The second vertical is `software.release.promotion`: objective release verification passes automatically, production promotion waits for the release manager, and an unreviewed policy bypass stops. A supplied owner approval deterministically advances the waiting promotion to a provider-neutral MCP invocation plan.
+- 2026-08-22: Public adapter seams now replay the exact case they map, eliminating post-governance evidence substitution. Tool parameters are optional for `workflow_definition.v0.1` compatibility but an explicit parameter list is required before any invocation can be emitted; declared parameters are typed, unique, sorted, and required to map to governed evidence.
+- 2026-08-22: The MCP adapter emits a transport- and credential-neutral `tools/call` plan. The OpenAI Responses adapter emits a caller-model request with one strict forced function tool, parallel calls disabled, and storage disabled; wait and stop outcomes contain no executable request.
+- 2026-08-22: Package checks passed with 75 tests, deterministic 18-artifact marketplace acceptance, 102 public exports, focused Prettier checks, and diff hygiene. The release-promotion fixture compiled twice byte-identically, independently verified 18 artifacts, and reported one pass, one approval-required, one blocked, matched expectations, and complete governance. Direct downstream suites passed for evidence extraction (6), historical context (2), observation reconciliation (3), and receipt reconciliation (5); repository legibility passed 35 targets.

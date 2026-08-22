@@ -1,0 +1,246 @@
+{
+  "schemaVersion": "workflow_definition.v0.1",
+  "workflowId": "software.release.promotion",
+  "version": "0.1.0",
+  "title": "Software release promotion",
+  "businessObjective": "Automate repeatable release verification while preserving human ownership of production promotion and emergency bypasses.",
+  "owners": {
+    "workflow": "release-engineering-lead",
+    "policy": "security-lead",
+    "technical": "platform-lead"
+  },
+  "systems": [
+    {
+      "id": "source-control",
+      "title": "Source control",
+      "tier": "database",
+      "owningSurface": "protected repository main branch",
+      "sourceOfTruth": true
+    },
+    {
+      "id": "release-ci",
+      "title": "Release CI",
+      "tier": "automation",
+      "owningSurface": "release verification pipeline",
+      "sourceOfTruth": false
+    },
+    {
+      "id": "production-deployer",
+      "title": "Production deployer",
+      "tier": "automation",
+      "owningSurface": "approved production promotion workflow",
+      "sourceOfTruth": false
+    },
+    {
+      "id": "release-policy",
+      "title": "Release policy",
+      "tier": "judgment",
+      "owningSurface": "versioned release policy artifact",
+      "sourceOfTruth": true
+    }
+  ],
+  "objects": [
+    {
+      "id": "release_candidate",
+      "title": "Release candidate",
+      "sourceSystemId": "source-control",
+      "requiredFields": ["commit_sha", "artifact_digest", "deployment_target"]
+    },
+    {
+      "id": "release_receipt",
+      "title": "Release receipt",
+      "sourceSystemId": "source-control",
+      "requiredFields": ["workflow_id", "action_id", "correlation_id", "outcome"]
+    }
+  ],
+  "events": [
+    {
+      "id": "candidate_built",
+      "title": "Candidate built",
+      "objectId": "release_candidate",
+      "requiredEvidence": ["commit_sha", "artifact_digest"]
+    },
+    {
+      "id": "promotion_requested",
+      "title": "Promotion requested",
+      "objectId": "release_candidate",
+      "requiredEvidence": ["artifact_digest", "deployment_target", "test_receipt"]
+    }
+  ],
+  "actors": [
+    { "id": "release-runtime", "title": "Release runtime" },
+    { "id": "release-manager", "title": "Release manager" }
+  ],
+  "states": [
+    { "id": "candidate", "title": "Candidate" },
+    { "id": "verified", "title": "Verified" },
+    { "id": "production", "title": "Production", "terminal": true }
+  ],
+  "actions": [
+    {
+      "id": "verify_release",
+      "title": "Verify release candidate",
+      "kind": "decision",
+      "authority": "release-runtime",
+      "autonomy": "auto_allow",
+      "systemsTouched": ["release-ci", "source-control"],
+      "requiredEvidence": ["commit_sha", "artifact_digest", "test_receipt"],
+      "approval": { "required": false },
+      "receipt": {
+        "requiredFields": ["workflow_id", "action_id", "correlation_id", "outcome", "evidence_refs"]
+      },
+      "recovery": {
+        "mode": "escalate",
+        "owner": "release-engineering-lead",
+        "path": "Keep the candidate unverified and rerun or inspect the failed release checks."
+      },
+      "tool": {
+        "name": "release_verify",
+        "targetSystemId": "release-ci",
+        "parameters": [
+          {
+            "name": "artifact_digest",
+            "type": "string",
+            "description": "Immutable digest of the release artifact."
+          },
+          {
+            "name": "commit_sha",
+            "type": "string",
+            "description": "Protected source commit represented by the artifact."
+          },
+          {
+            "name": "test_receipt",
+            "type": "string",
+            "description": "Identifier for the completed release test receipt."
+          }
+        ]
+      },
+      "agentId": "release-verifier"
+    },
+    {
+      "id": "promote_release",
+      "title": "Promote verified release",
+      "kind": "publish",
+      "authority": "release-manager",
+      "autonomy": "approval_required",
+      "systemsTouched": ["production-deployer", "release-policy"],
+      "requiredEvidence": ["artifact_digest", "deployment_target", "test_receipt"],
+      "approval": { "required": true, "owner": "release-manager" },
+      "receipt": {
+        "requiredFields": ["workflow_id", "action_id", "correlation_id", "outcome", "evidence_refs"]
+      },
+      "recovery": {
+        "mode": "rollback",
+        "owner": "release-manager",
+        "path": "Leave production unchanged and retain the verified candidate for a reviewed retry."
+      },
+      "tool": {
+        "name": "release_promote",
+        "targetSystemId": "production-deployer",
+        "parameters": [
+          {
+            "name": "artifact_digest",
+            "type": "string",
+            "description": "Verified artifact digest to promote."
+          },
+          {
+            "name": "deployment_target",
+            "type": "string",
+            "description": "Explicit production target approved by the release manager."
+          }
+        ]
+      }
+    },
+    {
+      "id": "bypass_release_policy",
+      "title": "Bypass release policy",
+      "kind": "publish",
+      "authority": "release-manager",
+      "autonomy": "blocked",
+      "systemsTouched": ["production-deployer", "release-policy"],
+      "requiredEvidence": ["artifact_digest", "deployment_target", "bypass_reason"],
+      "approval": { "required": false },
+      "receipt": {
+        "requiredFields": ["workflow_id", "action_id", "correlation_id", "outcome", "evidence_refs"]
+      },
+      "recovery": {
+        "mode": "manual_fallback",
+        "owner": "security-lead",
+        "path": "Stop the bypass and open the documented emergency release procedure."
+      },
+      "tool": {
+        "name": "release_policy_bypass",
+        "targetSystemId": "production-deployer",
+        "parameters": [
+          {
+            "name": "artifact_digest",
+            "type": "string",
+            "description": "Artifact digest requested for the emergency path."
+          },
+          {
+            "name": "bypass_reason",
+            "type": "string",
+            "description": "Operator-provided reason for requesting emergency handling."
+          },
+          {
+            "name": "deployment_target",
+            "type": "string",
+            "description": "Explicit target requested for emergency handling."
+          }
+        ]
+      }
+    }
+  ],
+  "transitions": [
+    {
+      "id": "candidate-to-verified",
+      "from": "candidate",
+      "to": "verified",
+      "actionId": "verify_release"
+    },
+    {
+      "id": "verified-to-production",
+      "from": "verified",
+      "to": "production",
+      "actionId": "promote_release"
+    },
+    {
+      "id": "bypass-to-production",
+      "from": "candidate",
+      "to": "production",
+      "actionId": "bypass_release_policy"
+    }
+  ],
+  "agents": [
+    {
+      "id": "release-verifier",
+      "title": "Release verifier",
+      "purpose": "Run objective release checks without owning production promotion.",
+      "allowedActionIds": ["verify_release"],
+      "escalationOwner": "release-engineering-lead"
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "complete-verification-passes",
+      "title": "Complete immutable verification evidence can advance the candidate",
+      "actionId": "verify_release",
+      "expectedOutcome": "pass",
+      "requiredEvidence": ["commit_sha", "artifact_digest", "test_receipt"]
+    },
+    {
+      "id": "production-promotion-waits",
+      "title": "Production promotion waits for the release manager",
+      "actionId": "promote_release",
+      "expectedOutcome": "approval_required",
+      "requiredEvidence": ["artifact_digest", "deployment_target", "test_receipt"]
+    },
+    {
+      "id": "policy-bypass-stops",
+      "title": "Unreviewed policy bypass remains blocked",
+      "actionId": "bypass_release_policy",
+      "expectedOutcome": "blocked",
+      "requiredEvidence": ["artifact_digest", "deployment_target", "bypass_reason"]
+    }
+  ]
+}

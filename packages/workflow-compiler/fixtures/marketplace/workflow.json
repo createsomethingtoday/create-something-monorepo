@@ -143,7 +143,25 @@
       },
       "tool": {
         "name": "template_validation_run",
-        "targetSystemId": "template-validation"
+        "targetSystemId": "template-validation",
+        "parameters": [
+          { "name": "asset_id", "type": "string", "description": "Marketplace asset identifier." },
+          {
+            "name": "published_url",
+            "type": "string",
+            "description": "Published template URL to validate."
+          },
+          {
+            "name": "validation_result",
+            "type": "string",
+            "description": "Recorded validation result."
+          },
+          {
+            "name": "version_id",
+            "type": "string",
+            "description": "Marketplace asset version identifier."
+          }
+        ]
       },
       "agentId": "marketplace-workflow-operator"
     },
@@ -164,7 +182,29 @@
       },
       "tool": {
         "name": "template_review_request_changes",
-        "targetSystemId": "template-review-mcp"
+        "targetSystemId": "template-review-mcp",
+        "parameters": [
+          {
+            "name": "review_feedback",
+            "type": "string",
+            "description": "Reviewer-authored change request."
+          },
+          {
+            "name": "review_summary",
+            "type": "string",
+            "description": "Evidence-backed review summary."
+          },
+          {
+            "name": "reviewer_id",
+            "type": "string",
+            "description": "Assigned marketplace reviewer identifier."
+          },
+          {
+            "name": "version_id",
+            "type": "string",
+            "description": "Marketplace asset version identifier."
+          }
+        ]
       }
     },
     {
@@ -184,7 +224,29 @@
       },
       "tool": {
         "name": "template_review_set_review_status",
-        "targetSystemId": "template-review-mcp"
+        "targetSystemId": "template-review-mcp",
+        "parameters": [
+          {
+            "name": "review_summary",
+            "type": "string",
+            "description": "Evidence-backed review summary."
+          },
+          {
+            "name": "reviewer_id",
+            "type": "string",
+            "description": "Approving marketplace reviewer identifier."
+          },
+          {
+            "name": "validation_result",
+            "type": "string",
+            "description": "Recorded validation result."
+          },
+          {
+            "name": "version_id",
+            "type": "string",
+            "description": "Marketplace asset version identifier."
+          }
+        ]
       }
     },
     {

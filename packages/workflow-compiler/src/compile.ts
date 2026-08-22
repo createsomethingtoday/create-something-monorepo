@@ -41,6 +41,10 @@ function byActionId<T extends { actionId: string }>(left: T, right: T): number {
   return left.actionId.localeCompare(right.actionId);
 }
 
+function byName<T extends { name: string }>(left: T, right: T): number {
+  return left.name.localeCompare(right.name);
+}
+
 function sorted(values: string[]): string[] {
   return [...values].sort((left, right) => left.localeCompare(right));
 }
@@ -178,6 +182,15 @@ function validateReferences(definition: WorkflowDefinition): WorkflowCompilation
         message: `Tool ${action.tool.name} references unknown system ${action.tool.targetSystemId}.`,
       });
     }
+    action.tool?.parameters?.forEach((parameter, parameterIndex) => {
+      if (!action.requiredEvidence.includes(parameter.name)) {
+        diagnostics.push({
+          code: 'TOOL_PARAMETER_MISSING_EVIDENCE_CONTRACT',
+          path: `actions[${index}].tool.parameters[${parameterIndex}].name`,
+          message: `Tool parameter ${parameter.name} must be backed by required evidence for action ${action.id}.`,
+        });
+      }
+    });
     if (action.agentId && !agentIds.has(action.agentId)) {
       diagnostics.push({
         code: 'UNKNOWN_ACTION_AGENT',
@@ -332,6 +345,9 @@ export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundl
         autonomy: action.autonomy,
         requiredEvidence: sorted(action.requiredEvidence),
         receiptFields: sorted(action.receipt.requiredFields),
+        ...(action.tool!.parameters
+          ? { parameters: [...action.tool!.parameters].sort(byName) }
+          : {}),
       }))
       .sort(byActionId),
   };

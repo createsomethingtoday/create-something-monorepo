@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 import { compileWorkflowDefinition, WORKFLOW_COMPILER_VERSION } from '../dist/index.js';
+
+const workflowFixture = new URL('../fixtures/marketplace/workflow.json', import.meta.url);
 
 test('compiles a governed workflow map through the public interface', () => {
   const definition = {
@@ -148,6 +151,31 @@ test('rejects a consequential action without evidence, receipt, and recovery con
           'RECOVERY_PATH_REQUIRED',
         ],
       );
+      return true;
+    },
+  );
+});
+
+test('rejects a tool parameter that is not governed as required evidence', async () => {
+  const definition = JSON.parse(await readFile(workflowFixture, 'utf8'));
+  definition.actions[0].tool.parameters.push({
+    name: 'ambient_override',
+    type: 'string',
+    description: 'An undeclared ambient override.',
+  });
+
+  assert.throws(
+    () => compileWorkflowDefinition(definition),
+    (error) => {
+      assert.equal(error.name, 'WorkflowCompilationError');
+      assert.deepEqual(error.diagnostics, [
+        {
+          code: 'TOOL_PARAMETER_MISSING_EVIDENCE_CONTRACT',
+          path: 'actions[0].tool.parameters[4].name',
+          message:
+            'Tool parameter ambient_override must be backed by required evidence for action validate_submission.',
+        },
+      ]);
       return true;
     },
   );
