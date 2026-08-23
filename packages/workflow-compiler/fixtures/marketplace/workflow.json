@@ -223,13 +223,7 @@
       "authority": "marketplace-reviewer",
       "autonomy": "approval_required",
       "systemsTouched": ["template-review-mcp", "airtable-marketplace", "policy-os"],
-      "requiredEvidence": [
-        "version_id",
-        "review_status",
-        "reviewer_id",
-        "review_summary",
-        "validation_result"
-      ],
+      "requiredEvidence": ["version_id", "reviewer_id", "review_summary", "validation_result"],
       "approval": { "required": true, "owner": "marketplace-reviewer" },
       "receipt": {
         "requiredFields": [
@@ -247,14 +241,9 @@
         "path": "Keep the version in review and resolve the approval manually in Airtable."
       },
       "tool": {
-        "name": "template_review_set_review_status",
+        "name": "template_review_approve_version",
         "targetSystemId": "template-review-mcp",
         "parameters": [
-          {
-            "name": "review_status",
-            "type": "string",
-            "description": "Reviewer-controlled marketplace review status."
-          },
           {
             "name": "version_id",
             "type": "string",
@@ -390,13 +379,7 @@
       "title": "Template approval waits for the assigned reviewer",
       "actionId": "approve_template",
       "expectedOutcome": "approval_required",
-      "requiredEvidence": [
-        "version_id",
-        "review_status",
-        "reviewer_id",
-        "review_summary",
-        "validation_result"
-      ]
+      "requiredEvidence": ["version_id", "reviewer_id", "review_summary", "validation_result"]
     },
     {
       "id": "creator-message-blocked",

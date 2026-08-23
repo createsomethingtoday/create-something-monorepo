@@ -10,7 +10,7 @@
     "policy": "senior-systems-architect",
     "technical": "senior-systems-architect"
   },
-  "definitionHash": "sha256:28426fd6c47422550a400b184fa036acac53b47b282a65b7ed8314d396d342a8",
+  "definitionHash": "sha256:c3d6a10501d0e0419881cb65ace3e70792719922d8e558877dd6189210f4848f",
   "workflowMap": {
     "schemaVersion": "workflow_map.v0.1",
     "workflowId": "webflow.marketplace.template-lifecycle",
@@ -218,7 +218,7 @@
     "schemaVersion": "runtime_targets.v0.1",
     "workflowId": "webflow.marketplace.template-lifecycle",
     "workflowVersion": "0.1.0",
-    "definitionHash": "sha256:28426fd6c47422550a400b184fa036acac53b47b282a65b7ed8314d396d342a8",
+    "definitionHash": "sha256:c3d6a10501d0e0419881cb65ace3e70792719922d8e558877dd6189210f4848f",
     "systems": [
       {
         "id": "airtable-marketplace",
@@ -275,7 +275,7 @@
     "schemaVersion": "object_schemas.v0.1",
     "workflowId": "webflow.marketplace.template-lifecycle",
     "workflowVersion": "0.1.0",
-    "definitionHash": "sha256:28426fd6c47422550a400b184fa036acac53b47b282a65b7ed8314d396d342a8",
+    "definitionHash": "sha256:c3d6a10501d0e0419881cb65ace3e70792719922d8e558877dd6189210f4848f",
     "objects": [
       {
         "id": "decision_receipt",
@@ -316,7 +316,7 @@
     "schemaVersion": "event_schemas.v0.1",
     "workflowId": "webflow.marketplace.template-lifecycle",
     "workflowVersion": "0.1.0",
-    "definitionHash": "sha256:28426fd6c47422550a400b184fa036acac53b47b282a65b7ed8314d396d342a8",
+    "definitionHash": "sha256:c3d6a10501d0e0419881cb65ace3e70792719922d8e558877dd6189210f4848f",
     "events": [
       {
         "id": "monitoring_signal",
@@ -374,7 +374,7 @@
     "schemaVersion": "decision_inventory.v0.1",
     "workflowId": "webflow.marketplace.template-lifecycle",
     "workflowVersion": "0.1.0",
-    "definitionHash": "sha256:28426fd6c47422550a400b184fa036acac53b47b282a65b7ed8314d396d342a8",
+    "definitionHash": "sha256:c3d6a10501d0e0419881cb65ace3e70792719922d8e558877dd6189210f4848f",
     "decisions": [
       {
         "actionId": "approve_template",
@@ -388,7 +388,6 @@
           "template-review-mcp"
         ],
         "requiredEvidence": [
-          "review_status",
           "review_summary",
           "reviewer_id",
           "validation_result",
@@ -590,16 +589,15 @@
     "schemaVersion": "tool_contracts.v0.1",
     "workflowId": "webflow.marketplace.template-lifecycle",
     "workflowVersion": "0.1.0",
-    "definitionHash": "sha256:28426fd6c47422550a400b184fa036acac53b47b282a65b7ed8314d396d342a8",
+    "definitionHash": "sha256:c3d6a10501d0e0419881cb65ace3e70792719922d8e558877dd6189210f4848f",
     "tools": [
       {
         "actionId": "approve_template",
-        "name": "template_review_set_review_status",
+        "name": "template_review_approve_version",
         "targetSystemId": "template-review-mcp",
         "authority": "marketplace-reviewer",
         "autonomy": "approval_required",
         "requiredEvidence": [
-          "review_status",
           "review_summary",
           "reviewer_id",
           "validation_result",
@@ -614,11 +612,6 @@
           "workflow_id"
         ],
         "parameters": [
-          {
-            "name": "review_status",
-            "type": "string",
-            "description": "Reviewer-controlled marketplace review status."
-          },
           {
             "name": "version_id",
             "type": "string",
@@ -689,7 +682,7 @@
     "schemaVersion": "agent_contracts.v0.1",
     "workflowId": "webflow.marketplace.template-lifecycle",
     "workflowVersion": "0.1.0",
-    "definitionHash": "sha256:28426fd6c47422550a400b184fa036acac53b47b282a65b7ed8314d396d342a8",
+    "definitionHash": "sha256:c3d6a10501d0e0419881cb65ace3e70792719922d8e558877dd6189210f4848f",
     "agents": [
       {
         "id": "marketplace-workflow-operator",
@@ -722,7 +715,7 @@
     "schemaVersion": "approval_surfaces.v0.1",
     "workflowId": "webflow.marketplace.template-lifecycle",
     "workflowVersion": "0.1.0",
-    "definitionHash": "sha256:28426fd6c47422550a400b184fa036acac53b47b282a65b7ed8314d396d342a8",
+    "definitionHash": "sha256:c3d6a10501d0e0419881cb65ace3e70792719922d8e558877dd6189210f4848f",
     "actions": [
       {
         "actionId": "approve_template",
@@ -730,7 +723,6 @@
         "mode": "approval_required",
         "owner": "marketplace-reviewer",
         "requiredEvidence": [
-          "review_status",
           "review_summary",
           "reviewer_id",
           "validation_result",
@@ -798,7 +790,7 @@
     "schemaVersion": "evaluation_manifest.v0.1",
     "workflowId": "webflow.marketplace.template-lifecycle",
     "workflowVersion": "0.1.0",
-    "definitionHash": "sha256:28426fd6c47422550a400b184fa036acac53b47b282a65b7ed8314d396d342a8",
+    "definitionHash": "sha256:c3d6a10501d0e0419881cb65ace3e70792719922d8e558877dd6189210f4848f",
     "evaluations": [
       {
         "id": "approval-stays-human",
@@ -806,7 +798,6 @@
         "actionId": "approve_template",
         "expectedOutcome": "approval_required",
         "requiredEvidence": [
-          "review_status",
           "review_summary",
           "reviewer_id",
           "validation_result",
@@ -844,7 +835,7 @@
     "runtimeVersion": "0.1.0",
     "workflowId": "webflow.marketplace.template-lifecycle",
     "workflowVersion": "0.1.0",
-    "definitionHash": "sha256:28426fd6c47422550a400b184fa036acac53b47b282a65b7ed8314d396d342a8",
+    "definitionHash": "sha256:c3d6a10501d0e0419881cb65ace3e70792719922d8e558877dd6189210f4848f",
     "entrySurfaceId": "operator-console",
     "capabilities": [
       "interaction.select",
@@ -877,7 +868,6 @@
           "template-review-mcp"
         ],
         "requiredEvidence": [
-          "review_status",
           "review_summary",
           "reviewer_id",
           "validation_result",

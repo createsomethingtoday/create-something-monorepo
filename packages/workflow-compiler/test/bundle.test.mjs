@@ -71,13 +71,7 @@ test('compiles one marketplace definition into a complete governed runtime bundl
       authority: 'marketplace-reviewer',
       autonomy: 'approval_required',
       approvalOwner: 'marketplace-reviewer',
-      requiredEvidence: [
-        'review_status',
-        'review_summary',
-        'reviewer_id',
-        'validation_result',
-        'version_id'
-      ],
+      requiredEvidence: ['review_summary', 'reviewer_id', 'validation_result', 'version_id'],
       receiptFields: [
         'action_id',
         'correlation_id',
@@ -111,12 +105,7 @@ test('keeps marketplace write contracts aligned with the production review MCP',
       description: 'Marketplace asset version identifier.'
     }
   ]);
-  assert.deepEqual(contracts.template_review_set_review_status.parameters, [
-    {
-      name: 'review_status',
-      type: 'string',
-      description: 'Reviewer-controlled marketplace review status.'
-    },
+  assert.deepEqual(contracts.template_review_approve_version.parameters, [
     {
       name: 'version_id',
       type: 'string',

@@ -4,7 +4,7 @@
   "runtimeVersion": "0.1.0",
   "workflowId": "webflow.marketplace.template-lifecycle",
   "workflowVersion": "0.1.0",
-  "definitionHash": "sha256:28426fd6c47422550a400b184fa036acac53b47b282a65b7ed8314d396d342a8",
+  "definitionHash": "sha256:c3d6a10501d0e0419881cb65ace3e70792719922d8e558877dd6189210f4848f",
   "entrySurfaceId": "operator-console",
   "capabilities": [
     "interaction.select",
@@ -37,7 +37,6 @@
         "template-review-mcp"
       ],
       "requiredEvidence": [
-        "review_status",
         "review_summary",
         "reviewer_id",
         "validation_result",
