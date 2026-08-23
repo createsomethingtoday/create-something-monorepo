@@ -106,6 +106,36 @@ test('npm auth status names an invalid saved credential without replaying regist
   assert.match(report.nextActions.join('\n'), /replace the saved npm credential/i);
 });
 
+test('npm auth status verifies from outside an ambient project npmrc', () => {
+  const fixture = mkdtempSync(path.join(tmpdir(), 'npm-auth-session-isolated-cwd-'));
+  const project = path.join(fixture, 'project');
+  const userconfig = path.join(fixture, 'saved.npmrc');
+  const npmBin = path.join(fixture, 'npm');
+  const secret = 'npm_isolated_cwd_secret_must_not_appear';
+
+  initializeGitRepository(project);
+  writeFileSync(
+    path.join(project, '.npmrc'),
+    '//registry.npmjs.org/:_authToken=ambient-project-token\n'
+  );
+  writeFileSync(userconfig, `//registry.npmjs.org/:_authToken=${secret}\n`);
+  writeExecutable(
+    npmBin,
+    "#!/bin/sh\nif [ -f \"$PWD/.npmrc\" ]; then\n  printf '%s\\n' 'npm error ambient project config loaded' >&2\n  exit 1\nfi\nprintf '%s\\n' '{\"username\":\"micah-createsomething\"}'\n"
+  );
+
+  const result = run(
+    ['status', '--json', '--verify', '--userconfig', userconfig, '--npm-bin', npmBin],
+    {},
+    project
+  );
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  assert.doesNotMatch(result.stdout, new RegExp(secret));
+  const report = JSON.parse(result.stdout);
+  assert.deepEqual(report.identity, { status: 'verified', username: 'micah-createsomething' });
+});
+
 test('npm auth status keeps a saved credential when npm verification cannot reach the registry', () => {
   const fixture = mkdtempSync(path.join(tmpdir(), 'npm-auth-session-verification-error-'));
   const userconfig = path.join(fixture, '.npmrc');
@@ -135,6 +165,38 @@ test('npm auth status keeps a saved credential when npm verification cannot reac
   assert.match(report.nextActions.join('\n'), /preserve.*credential/i);
   assert.doesNotMatch(report.nextActions.join('\n'), /replace the saved npm credential/i);
 });
+
+for (const failureCode of ['E503', 'CERT_HAS_EXPIRED']) {
+  test(`npm auth status preserves a saved credential on ${failureCode} verification failures`, () => {
+    const fixture = mkdtempSync(path.join(tmpdir(), 'npm-auth-session-transport-error-'));
+    const userconfig = path.join(fixture, '.npmrc');
+    const npmBin = path.join(fixture, 'npm');
+    const secret = `npm_${failureCode.toLowerCase()}_secret_must_not_appear`;
+
+    writeFileSync(userconfig, `//registry.npmjs.org/:_authToken=${secret}\n`);
+    writeExecutable(
+      npmBin,
+      `#!/bin/sh\nprintf '%s\\n' 'npm error code ${failureCode}' >&2\nexit 1\n`
+    );
+
+    const result = run([
+      'status',
+      '--json',
+      '--verify',
+      '--userconfig',
+      userconfig,
+      '--npm-bin',
+      npmBin
+    ]);
+
+    assert.equal(result.status, 1, result.stderr || result.stdout);
+    assert.doesNotMatch(result.stdout, new RegExp(secret));
+    const report = JSON.parse(result.stdout);
+    assert.equal(report.credential.status, 'saved');
+    assert.equal(report.identity.status, 'verification_error');
+    assert.match(report.nextActions.join('\n'), /preserve.*credential/i);
+  });
+}
 
 test('npm auth status keeps a saved credential when the configured npm binary cannot run', () => {
   const fixture = mkdtempSync(path.join(tmpdir(), 'npm-auth-session-npm-bin-error-'));

@@ -6,13 +6,15 @@ import {
   existsSync,
   lstatSync,
   mkdirSync,
+  mkdtempSync,
   readFileSync,
   realpathSync,
   renameSync,
+  rmSync,
   unlinkSync,
   writeFileSync
 } from 'node:fs';
-import { homedir } from 'node:os';
+import { homedir, tmpdir } from 'node:os';
 import { basename, dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -25,8 +27,8 @@ export const DEFAULTS = Object.freeze({
 
 const COMMANDS = new Set(['status', 'save']);
 const SCRIPT_CHECKOUT_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const VERIFICATION_ERROR_CODES =
-  /\b(EAI_AGAIN|ECONNABORTED|ECONNREFUSED|ECONNRESET|EHOSTUNREACH|ENETUNREACH|ENOTFOUND|EPIPE|EPROTO|ETIMEDOUT)\b/i;
+const AUTHENTICATION_FAILURE =
+  /\b(E401|E403|EAUTH|ENEEDAUTH)\b|\b(401|403)\b.*\b(unauthorized|forbidden)\b/i;
 
 function normalizeRegistry(value) {
   const registry = new URL(value);
@@ -113,27 +115,30 @@ function savedCredential(config, registry) {
 }
 
 function captureNpmIdentity(options) {
-  const result = spawnSync(
-    options.npmBin,
-    ['whoami', '--json', `--registry=${options.registry}`, `--userconfig=${options.userconfig}`],
-    { encoding: 'utf8', env: process.env }
-  );
-  if (result.error || result.signal) return { status: 'verification_error' };
-  if (result.status !== 0) {
-    const output = `${result.stdout || ''}\n${result.stderr || ''}`;
-    return {
-      status: VERIFICATION_ERROR_CODES.test(output) ? 'verification_error' : 'invalid'
-    };
-  }
-
+  const verificationDirectory = mkdtempSync(join(tmpdir(), 'npm-auth-session-verify-'));
   try {
-    const parsed = JSON.parse((result.stdout || '').trim());
-    const username = typeof parsed === 'string' ? parsed : parsed?.username;
-    return username
-      ? { status: 'verified', username }
-      : { status: 'verified', username: 'unknown' };
-  } catch {
-    return { status: 'verified', username: 'unknown' };
+    const result = spawnSync(
+      options.npmBin,
+      ['whoami', '--json', `--registry=${options.registry}`, `--userconfig=${options.userconfig}`],
+      { cwd: verificationDirectory, encoding: 'utf8', env: process.env }
+    );
+    if (result.error || result.signal) return { status: 'verification_error' };
+    if (result.status !== 0) {
+      const output = `${result.stdout || ''}\n${result.stderr || ''}`;
+      return { status: AUTHENTICATION_FAILURE.test(output) ? 'invalid' : 'verification_error' };
+    }
+
+    try {
+      const parsed = JSON.parse((result.stdout || '').trim());
+      const username = typeof parsed === 'string' ? parsed : parsed?.username;
+      return username
+        ? { status: 'verified', username }
+        : { status: 'verified', username: 'unknown' };
+    } catch {
+      return { status: 'verified', username: 'unknown' };
+    }
+  } finally {
+    rmSync(verificationDirectory, { force: true, recursive: true });
   }
 }
 
