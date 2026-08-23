@@ -181,6 +181,7 @@ test('rejects an evidence-value constraint outside required evidence for a read 
 test('rejects an exact evidence value that cannot satisfy its matcher', async () => {
   const definition = JSON.parse(await readFile(workflowFixture, 'utf8'));
   definition.schemaVersion = 'workflow_definition.v0.2';
+  delete definition.actions[0].tool;
   definition.actions[0].requiredEvidenceValues = { published_url: true };
   definition.actions[0].requiredEvidenceMatchers = {
     published_url: { kind: 'contains_case_insensitive', values: ['example.com'] },
@@ -196,6 +197,53 @@ test('rejects an exact evidence value that cannot satisfy its matcher', async ()
           path: 'actions[0].requiredEvidenceValues.published_url',
           message:
             'Exact evidence value for published_url must satisfy its matcher for action run_published_validation.'
+        }
+      ]);
+      return true;
+    },
+  );
+});
+
+test('rejects an exact evidence value that cannot satisfy its tool parameter type', async () => {
+  const definition = JSON.parse(await readFile(workflowFixture, 'utf8'));
+  definition.schemaVersion = 'workflow_definition.v0.2';
+  definition.actions[0].requiredEvidenceValues = { published_url: true };
+
+  assert.throws(
+    () => compileWorkflowDefinition(definition),
+    (error) => {
+      assert.equal(error.name, 'WorkflowCompilationError');
+      assert.deepEqual(error.diagnostics, [
+        {
+          code: 'EVIDENCE_VALUE_CONSTRAINT_TOOL_PARAMETER_TYPE_MISMATCH',
+          path: 'actions[0].requiredEvidenceValues.published_url',
+          message:
+            'Exact evidence value constraint published_url is boolean but tool parameter type is string for action run_published_validation.'
+        }
+      ]);
+      return true;
+    },
+  );
+});
+
+test('rejects an evidence matcher that cannot satisfy its tool parameter type', async () => {
+  const definition = JSON.parse(await readFile(workflowFixture, 'utf8'));
+  definition.schemaVersion = 'workflow_definition.v0.2';
+  definition.actions[0].tool.parameters[0].type = 'boolean';
+  definition.actions[0].requiredEvidenceMatchers = {
+    published_url: { kind: 'contains_case_insensitive', values: ['example.com'] },
+  };
+
+  assert.throws(
+    () => compileWorkflowDefinition(definition),
+    (error) => {
+      assert.equal(error.name, 'WorkflowCompilationError');
+      assert.deepEqual(error.diagnostics, [
+        {
+          code: 'EVIDENCE_MATCHER_TOOL_PARAMETER_TYPE_MISMATCH',
+          path: 'actions[0].requiredEvidenceMatchers.published_url',
+          message:
+            'Evidence matcher published_url requires a string tool parameter for action run_published_validation.'
         }
       ]);
       return true;

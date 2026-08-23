@@ -264,6 +264,21 @@ function validateReferences(definition: WorkflowDefinition): WorkflowCompilation
           message: `Tool parameter ${parameter.name} must be backed by required evidence for action ${action.id}.`
         });
       }
+      const constrainedValue = action.requiredEvidenceValues?.[parameter.name];
+      if (constrainedValue !== undefined && typeof constrainedValue !== parameter.type) {
+        diagnostics.push({
+          code: 'EVIDENCE_VALUE_CONSTRAINT_TOOL_PARAMETER_TYPE_MISMATCH',
+          path: `actions[${index}].requiredEvidenceValues.${parameter.name}`,
+          message: `Exact evidence value constraint ${parameter.name} is ${typeof constrainedValue} but tool parameter type is ${parameter.type} for action ${action.id}.`
+        });
+      }
+      if (action.requiredEvidenceMatchers?.[parameter.name] && parameter.type !== 'string') {
+        diagnostics.push({
+          code: 'EVIDENCE_MATCHER_TOOL_PARAMETER_TYPE_MISMATCH',
+          path: `actions[${index}].requiredEvidenceMatchers.${parameter.name}`,
+          message: `Evidence matcher ${parameter.name} requires a string tool parameter for action ${action.id}.`
+        });
+      }
     });
     if (action.agentId && !agentIds.has(action.agentId)) {
       diagnostics.push({

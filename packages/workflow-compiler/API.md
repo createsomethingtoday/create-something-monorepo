@@ -42,6 +42,13 @@ must itself satisfy that matcher. The compiler rejects a contradiction with
 externally supplied contradictory bundle, rather than permitting a workflow
 that no replay could satisfy.
 
+When constrained evidence supplies a declared tool parameter, an exact value
+must match that parameter's type and a matcher requires a string parameter.
+Compilation rejects incompatible contracts with
+`EVIDENCE_VALUE_CONSTRAINT_TOOL_PARAMETER_TYPE_MISMATCH` or
+`EVIDENCE_MATCHER_TOOL_PARAMETER_TYPE_MISMATCH`, rather than emitting an
+adapter plan that cannot be invoked.
+
 ### `parseWorkflowDefinition(input)`
 
 Validates and normalizes a workflow definition without compiling artifacts.

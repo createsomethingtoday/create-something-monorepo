@@ -66,6 +66,11 @@ definition with `EVIDENCE_VALUE_MATCHER_CONFLICT`, and the interaction parser
 also rejects a directly supplied contradictory bundle. Neither path permits a
 replay contract that is impossible to satisfy.
 
+If constrained evidence is also a declared tool parameter, an exact value must
+match that parameter type; the string matcher is valid only for a string
+parameter. Compilation rejects incompatible combinations before adapter-plan
+generation, so an accepted constrained workflow remains invokable.
+
 The current package reads both versions and exports explicit detached-copy
 migrations for each. A v0.1 parser rejects v0.2 input, so callers must retain
 the original artifact, migrate deliberately, and validate, compile, and replay

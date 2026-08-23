@@ -44,6 +44,9 @@ artifact schemas.
   conjunction cannot be satisfied in both compilation and direct interaction
   parsing, rather than emitting or accepting a permanently blocked replay
   contract.
+- Reject constrained evidence that conflicts with the type of its declared tool
+  parameter, including a string matcher on a number or boolean parameter,
+  before emitting an uninvokable adapter plan.
 - Version compatibility decisions as
   `governed_interaction_compatibility.v0.2` before emitting the expanded
   schema-support error vocabulary; historical v0.1 decisions remain readable
