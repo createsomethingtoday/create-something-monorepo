@@ -4,12 +4,38 @@
 
 It gives builders a composable governance layer below any hosted control plane. The package does not call providers, hold credentials, choose a model, or mutate the systems named by a workflow.
 
+## Codex paired terminal quickstart
+
+Install the builder artifact in the repository where the workflow will live:
+
+```bash
+npm install @create-something/workflow-compiler@0.2.0
+```
+
+Copy the shipped Codex skill into that repository, then ask Codex to turn a recurring operating task into a runbook. Codex can propose and revise the local files; the terminal commands below remain the deterministic proof surface:
+
+```bash
+mkdir -p .codex/skills
+cp -R node_modules/@create-something/workflow-compiler/skills/workflow-compiler \
+  .codex/skills/workflow-compiler
+
+npx workflow-compiler init --template local-runbook --dir ./ops-runbook
+cd ./ops-runbook
+npx workflow-compiler validate --workflow workflow.json
+npx workflow-compiler simulate --workflow workflow.json --cases cases.json
+npx workflow-compiler explain --workflow workflow.json --cases cases.json
+```
+
+`init` refuses an existing target directory. The starter gives Codex a local, versioned contract with one permitted step, one operator-approval boundary, and one explicit stop. `validate`, `simulate`, and `explain` make that contract inspectable before a builder connects any external system.
+
+This loop does not execute live actions, contact a provider, read credentials, or make an approval decision. A future execution host must supply its own authenticated transport, policy review, result validation, and receipt retention. The package is designed for Codex and OpenAI-compatible workflows, but it is not an official OpenAI partnership, endorsement, certification, or hosted service.
+
 ## Five-minute quickstart
 
 Install the package with a supported Node release:
 
 ```bash
-npm install @create-something/workflow-compiler@0.1.0
+npm install @create-something/workflow-compiler@0.2.0
 ```
 
 Create `workflow.json` and optionally `cases.json` using the versioned schemas documented in [API.md](./API.md). Compile and independently verify a local bundle:

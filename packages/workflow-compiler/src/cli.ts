@@ -14,6 +14,12 @@ import { compileWorkflowDefinition, WorkflowCompilationError } from './compile.j
 import { ReplayInputValidationError, WorkflowInputValidationError } from './input.js';
 import { replayWorkflow } from './replay.js';
 import { serveOperatorConsole } from './server.js';
+import {
+  WorkflowStarterError,
+  writeWorkflowStarter,
+  type WorkflowStarterTemplate
+} from './starter.js';
+import type { CompiledDecision, CompiledWorkflowBundle } from './types.js';
 
 class WorkflowCliInputError extends Error {
   readonly code = 'INVALID_JSON';
@@ -50,9 +56,23 @@ interface CompileOptions {
   keyId?: string;
 }
 
+interface WorkflowInputOptions {
+  workflowPath: string;
+  casesPath?: string;
+}
+
+interface StarterOptions {
+  template: WorkflowStarterTemplate;
+  dir: string;
+}
+
 function usage(): string {
   return [
     'Usage:',
+    '  workflow-compiler init --template local-runbook --dir <new-directory>',
+    '  workflow-compiler validate --workflow <definition.json>',
+    '  workflow-compiler simulate --workflow <definition.json> --cases <cases.json>',
+    '  workflow-compiler explain --workflow <definition.json> [--cases <cases.json>]',
     '  workflow-compiler compile --workflow <definition.json> [--cases <cases.json>] --out <directory> [--signing-key <private.pem> --key-id <id>]',
     '  workflow-compiler verify --dir <compiled-output> [--public-key <public.pem>]',
     '  workflow-compiler serve --dir <compiled-output> [--port <number>]'
@@ -92,6 +112,31 @@ function compileOptions(args: string[]): CompileOptions {
   };
 }
 
+function workflowInputOptions(
+  args: string[],
+  command: 'validate' | 'simulate' | 'explain',
+  requiresCases: boolean
+): WorkflowInputOptions {
+  if (args[0] !== command) throw new WorkflowCliUsageError();
+  const values = flagValues(args, ['--workflow', '--cases']);
+  const workflowPath = values.get('--workflow');
+  const casesPath = values.get('--cases');
+  if (!workflowPath || (requiresCases && !casesPath)) throw new WorkflowCliUsageError();
+  return {
+    workflowPath: resolve(workflowPath),
+    ...(casesPath ? { casesPath: resolve(casesPath) } : {})
+  };
+}
+
+function starterOptions(args: string[]): StarterOptions {
+  if (args[0] !== 'init') throw new WorkflowCliUsageError();
+  const values = flagValues(args, ['--template', '--dir']);
+  const template = values.get('--template');
+  const dir = values.get('--dir');
+  if (template !== 'local-runbook' || !dir) throw new WorkflowCliUsageError();
+  return { template, dir: resolve(dir) };
+}
+
 function parseJsonInput(content: string, input: 'workflow' | 'replay'): unknown {
   try {
     return JSON.parse(content) as unknown;
@@ -100,8 +145,144 @@ function parseJsonInput(content: string, input: 'workflow' | 'replay'): unknown 
   }
 }
 
+async function compileFromInput(options: WorkflowInputOptions): Promise<{
+  bundle: CompiledWorkflowBundle;
+  replay?: ReturnType<typeof replayWorkflow>;
+}> {
+  const definition = parseJsonInput(await readFile(options.workflowPath, 'utf8'), 'workflow');
+  const bundle = compileWorkflowDefinition(definition);
+  const replay = options.casesPath
+    ? replayWorkflow(bundle, parseJsonInput(await readFile(options.casesPath, 'utf8'), 'replay'))
+    : undefined;
+  return { bundle, ...(replay ? { replay } : {}) };
+}
+
+function describeDecision(decision: CompiledDecision): string {
+  const owner = decision.approvalOwner ?? decision.recovery.owner;
+  return '- ' + decision.title + ' (' + decision.actionId + '), owned by ' + owner + '.';
+}
+
+function explanation(
+  bundle: CompiledWorkflowBundle,
+  replay?: ReturnType<typeof replayWorkflow>
+): string {
+  const decisions = bundle.decisionInventory.decisions;
+  const run = decisions.filter((decision) => decision.autonomy === 'auto_allow');
+  const wait = decisions.filter(
+    (decision) => decision.autonomy === 'approval_required' || decision.autonomy === 'manual_only'
+  );
+  const stop = decisions.filter((decision) => decision.autonomy === 'blocked');
+  const replayLines = replay
+    ? [
+        '',
+        '## Simulation',
+        '',
+        'Cases: ' + String(replay.report.cases.length),
+        'Pass: ' + String(replay.report.counts.pass),
+        'Wait: ' + String(replay.report.counts.approval_required),
+        'Stop: ' + String(replay.report.counts.blocked)
+      ]
+    : [];
+
+  return [
+    '# ' + bundle.title,
+    '',
+    bundle.businessObjective,
+    '',
+    'Definition: ' + bundle.definitionHash,
+    '',
+    '## Run',
+    '',
+    ...(run.length > 0
+      ? run.map(describeDecision)
+      : ['- No action is eligible to run automatically.']),
+    '',
+    '## Wait',
+    '',
+    ...(wait.length > 0 ? wait.map(describeDecision) : ['- No action requires approval.']),
+    '',
+    '## Stop',
+    '',
+    ...(stop.length > 0 ? stop.map(describeDecision) : ['- No action is blocked by policy.']),
+    ...replayLines,
+    '',
+    'No live action is executed by this command. It only explains the compiled local contract.',
+    ''
+  ].join('\n');
+}
+
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
+  if (args[0] === 'init') {
+    const options = starterOptions(args);
+    const starter = await writeWorkflowStarter(options.template, options.dir);
+    process.stdout.write(
+      JSON.stringify(
+        {
+          ok: true,
+          command: 'init',
+          template: starter.template,
+          dir: starter.dir,
+          files: starter.files,
+          next: [
+            'workflow-compiler validate --workflow workflow.json',
+            'workflow-compiler simulate --workflow workflow.json --cases cases.json',
+            'workflow-compiler explain --workflow workflow.json --cases cases.json'
+          ]
+        },
+        null,
+        2
+      ) + '\n'
+    );
+    return;
+  }
+
+  if (args[0] === 'validate') {
+    const { bundle } = await compileFromInput(workflowInputOptions(args, 'validate', false));
+    process.stdout.write(
+      JSON.stringify(
+        {
+          ok: true,
+          command: 'validate',
+          workflowId: bundle.workflowId,
+          definitionHash: bundle.definitionHash,
+          decisionCount: bundle.decisionInventory.decisions.length,
+          externalMutations: false
+        },
+        null,
+        2
+      ) + '\n'
+    );
+    return;
+  }
+
+  if (args[0] === 'simulate') {
+    const { bundle, replay } = await compileFromInput(workflowInputOptions(args, 'simulate', true));
+    if (!replay) throw new WorkflowCliUsageError();
+    process.stdout.write(
+      JSON.stringify(
+        {
+          ok: true,
+          command: 'simulate',
+          workflowId: bundle.workflowId,
+          definitionHash: bundle.definitionHash,
+          outcomes: replay.report.counts,
+          allExpectationsMatched: replay.report.allExpectationsMatched,
+          externalMutations: false
+        },
+        null,
+        2
+      ) + '\n'
+    );
+    return;
+  }
+
+  if (args[0] === 'explain') {
+    const { bundle, replay } = await compileFromInput(workflowInputOptions(args, 'explain', false));
+    process.stdout.write(explanation(bundle, replay));
+    return;
+  }
+
   if (args[0] === 'serve') {
     const values = flagValues(args, ['--dir', '--port']);
     const rootDir = values.get('--dir');
@@ -127,11 +308,7 @@ async function main(): Promise<void> {
   }
 
   const options = compileOptions(args);
-  const definition = parseJsonInput(await readFile(options.workflowPath, 'utf8'), 'workflow');
-  const bundle = compileWorkflowDefinition(definition);
-  const replay = options.casesPath
-    ? replayWorkflow(bundle, parseJsonInput(await readFile(options.casesPath, 'utf8'), 'replay'))
-    : undefined;
+  const { bundle, replay } = await compileFromInput(options);
   const signing =
     options.signingKeyPath && options.keyId
       ? { privateKey: await readFile(options.signingKeyPath, 'utf8'), keyId: options.keyId }
@@ -165,6 +342,15 @@ main().catch((error: unknown) => {
         null,
         2
       )}\n`
+    );
+    process.exitCode = 2;
+  } else if (error instanceof WorkflowStarterError) {
+    process.stderr.write(
+      JSON.stringify(
+        { ok: false, error: error.name, code: error.code, message: error.message },
+        null,
+        2
+      ) + '\n'
     );
     process.exitCode = 2;
   } else if (error instanceof WorkflowArtifactOutputError) {
