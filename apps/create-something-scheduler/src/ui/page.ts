@@ -10,7 +10,44 @@ export function renderBookingManagementActions(status: string): string {
     : '<div class="actions"><button id="reschedule" type="button">Choose another time</button><button id="cancel" class="danger" type="button">Cancel meeting</button></div><div id="confirm-action"></div>';
 }
 
-export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string }): string {
+type SchedulerPageOffer = {
+  metaDescription: string;
+  title: string;
+  heading: string;
+  lede: string;
+  policy: string;
+};
+
+const workflowMappingOffer: SchedulerPageOffer = {
+  metaDescription:
+    'Schedule a verified 30- or 60-minute workflow mapping session with Micah Johnson.',
+  title: 'Workflow Mapping Session | CREATE SOMETHING',
+  heading: 'Map One Workflow',
+  lede:
+    'Choose an open time for a focused, 30- or 60-minute workflow mapping session with Micah Johnson. Bring one real handoff, its decision owner, and the proof your team needs next.',
+  policy: 'Workflow Mapping / V2'
+};
+
+const compilerIntegrationOffer: SchedulerPageOffer = {
+  metaDescription:
+    'Schedule a verified 30- or 60-minute Workflow Compiler Integration fit call with Micah Johnson.',
+  title: 'Workflow Compiler Integration Fit Call | CREATE SOMETHING',
+  heading: 'Fit One Integration',
+  lede:
+    'Choose an open time for a focused, 30- or 60-minute integration fit call with Micah Johnson. Bring one repository, one consequential workflow, and the required MCP or agent tool boundary.',
+  policy: 'Compiler Integration / V1'
+};
+
+export function resolveSchedulerPageOffer(intent: string | null | undefined): SchedulerPageOffer {
+  return intent === 'compiler-integration' ? compilerIntegrationOffer : workflowMappingOffer;
+}
+
+export function schedulerPage(input: {
+  nonce: string;
+  turnstileSiteKey?: string;
+  intent?: string | null;
+}): string {
+  const offer = resolveSchedulerPageOffer(input.intent);
   const configuration = JSON.stringify({
     turnstileSiteKey: input.turnstileSiteKey ?? null
   }).replaceAll('<', '\\u003c');
@@ -23,8 +60,8 @@ export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string 
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Schedule a verified 30- or 60-minute workflow mapping session with Micah Johnson.">
-  <title>Workflow Mapping Session | CREATE SOMETHING</title>
+  <meta name="description" content="${offer.metaDescription}">
+  <title>${offer.title}</title>
   ${performanceDocumentFontLinks}
   ${turnstileScript}
   <style nonce="${input.nonce}">
@@ -114,8 +151,8 @@ export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string 
     <div><span>Proof</span><strong>Receipt issued</strong></div>
   </section>
   <header>
-    <div><div class="eyebrow">CREATE SOMETHING · PERFORMANCE LAB · SCHEDULER</div><h1>Map One Workflow</h1></div>
-    <div class="hero-spec"><p class="lede">Choose an open time for a focused, 30- or 60-minute workflow mapping session with Micah Johnson. Bring one real handoff, its decision owner, and the proof your team needs next.</p><div class="spec-grid"><div class="spec-row"><span>Policy</span><strong>Workflow Mapping / V2</strong></div><div class="spec-row"><span>Window</span><strong>28 Days / Live Conflicts</strong></div><div class="spec-row"><span>Calendar</span><strong>Google Calendar</strong></div></div></div>
+    <div><div class="eyebrow">CREATE SOMETHING · PERFORMANCE LAB · SCHEDULER</div><h1>${offer.heading}</h1></div>
+    <div class="hero-spec"><p class="lede">${offer.lede}</p><div class="spec-grid"><div class="spec-row"><span>Policy</span><strong>${offer.policy}</strong></div><div class="spec-row"><span>Window</span><strong>28 Days / Live Conflicts</strong></div><div class="spec-row"><span>Calendar</span><strong>Google Calendar</strong></div></div></div>
   </header>
   <div class="layout">
     <section class="panel" aria-labelledby="booking-heading">

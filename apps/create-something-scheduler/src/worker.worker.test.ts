@@ -55,6 +55,16 @@ describe('scheduler Worker transport', () => {
     expect(pageHtml).toContain("notifyParent('booking_completed'");
     expect(pageHtml).not.toContain('must-not-cross@example.com');
 
+    const integrationPage = await SELF.fetch(
+      'https://scheduler.local/createsomething/together?intent=compiler-integration'
+    );
+    const integrationPageHtml = await integrationPage.text();
+    expect(integrationPageHtml).toContain(
+      'Workflow Compiler Integration Fit Call | CREATE SOMETHING'
+    );
+    expect(integrationPageHtml).toContain('Fit One Integration');
+    expect(integrationPageHtml).toContain('Compiler Integration / V1');
+
     const room = await SELF.fetch('https://scheduler.local/rooms/room_controlled');
     expect(room.status).toBe(200);
     expect(room.headers.get('cache-control')).toBe('no-store');

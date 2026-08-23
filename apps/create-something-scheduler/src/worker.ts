@@ -563,6 +563,7 @@ export default {
       const nonce = crypto.randomUUID().replaceAll('-', '');
       return new Response(schedulerPage({
         nonce,
+        intent: url.searchParams.get('intent'),
         ...(env.TURNSTILE_SITE_KEY ? { turnstileSiteKey: env.TURNSTILE_SITE_KEY } : {})
       }), {
         headers: {

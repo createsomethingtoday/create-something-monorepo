@@ -80,3 +80,19 @@ test('the integration route is registered for discovery, performance review, and
   assert.match(surfacePolicy, /'\/workflow-compiler-integration'/);
   assert.match(servicesProductPath, /agencyCoreMessaging\.workflowCompilerIntegrationHref/);
 });
+
+test('the integration CTA resolves to matching Agency and scheduler booking copy', () => {
+  const bookingRoute = read('../src/routes/book/+page.svelte');
+  const schedulerPage = read('../../../apps/create-something-scheduler/src/ui/page.ts');
+  const schedulerWorker = read('../../../apps/create-something-scheduler/src/worker.ts');
+
+  assert.match(bookingRoute, /intent === 'compiler-integration'/);
+  assert.match(bookingRoute, /Workflow Compiler Integration fit call/);
+  assert.match(bookingRoute, /one repository, one consequential workflow/);
+  assert.match(bookingRoute, /Review the integration offer/);
+  assert.match(schedulerPage, /resolveSchedulerPageOffer/);
+  assert.match(schedulerPage, /Workflow Compiler Integration Fit Call \| CREATE SOMETHING/);
+  assert.match(schedulerPage, /Fit One Integration/);
+  assert.match(schedulerPage, /Compiler Integration \/ V1/);
+  assert.match(schedulerWorker, /intent: url\.searchParams\.get\('intent'\)/);
+});

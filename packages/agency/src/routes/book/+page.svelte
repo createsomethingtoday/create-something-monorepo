@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
 	import { Button, PerformanceConversionHandoff, SEO } from '@create-something/canon';
 	import { getAnalytics } from '@create-something/canon/analytics';
@@ -15,11 +16,48 @@
 		type SchedulerHandoffSheet
 	} from '$lib/scheduling/first-party';
 
+	const mappingBookingOffer = {
+		seoTitle: 'Book a CREATE SOMETHING Mapping Session',
+		seoDescription: 'Choose a verified 30- or 60-minute opening for a scoped workflow mapping session.',
+		eyebrow: 'Workflow mapping session',
+		title: 'Review the handoff, then choose a time.',
+		description:
+			'Use this scheduler for one real workflow, its decision owner, and the record your team needs next. If you started a private draft, review its handoff before choosing an opening.',
+		secondaryHref: '/map',
+		secondaryLabel: 'Start a private workflow draft',
+		iframeTitle: 'Schedule a CREATE SOMETHING mapping session',
+		fallbackHref: '/services',
+		fallbackLabel: 'the workflow mapping service'
+	} as const;
+
+	const compilerIntegrationBookingOffer = {
+		seoTitle: 'Book a Workflow Compiler Integration Fit Call | CREATE SOMETHING',
+		seoDescription:
+			'Choose a verified 30- or 60-minute opening to assess one fixed-scope Workflow Compiler Integration.',
+		eyebrow: 'Workflow Compiler Integration fit call',
+		title: 'Confirm the integration boundary, then choose a time.',
+		description:
+			'Use this scheduler to assess one repository, one consequential workflow, the required MCP or agent tools, and fit for a fixed-scope Build.',
+		secondaryHref: '/workflow-compiler-integration',
+		secondaryLabel: 'Review the integration offer',
+		iframeTitle: 'Schedule a Workflow Compiler Integration fit call',
+		fallbackHref: '/workflow-compiler-integration',
+		fallbackLabel: 'the fixed-scope integration offer'
+	} as const;
+	type BookingOffer = typeof mappingBookingOffer | typeof compilerIntegrationBookingOffer;
+
 	let schedulerHref = buildFirstPartySchedulerUrl();
 	let schedulerFrame: HTMLIFrameElement;
 	let handoffContext = schedulerHandoffContext();
 	let handoffSheet: SchedulerHandoffSheet = schedulerHandoffSheet(handoffContext);
 	let schedulerAccess: SchedulerAccess | null = null;
+	let intent: string | null = null;
+	let bookingOffer: BookingOffer = mappingBookingOffer;
+
+	$: intent = $page.url.searchParams.get('intent');
+	$: bookingOffer = intent === 'compiler-integration'
+		? compilerIntegrationBookingOffer
+		: mappingBookingOffer;
 
 	function sendSchedulerContext() {
 		schedulerFrame?.contentWindow?.postMessage(
@@ -84,16 +122,16 @@
 </script>
 
 <SEO
-	title="Book a CREATE SOMETHING Mapping Session"
-	description="Choose a verified 30- or 60-minute opening for a scoped workflow mapping session."
+	title={bookingOffer.seoTitle}
+	description={bookingOffer.seoDescription}
 	propertyName="agency"
 />
 
 <main class="booking-page" data-performance-surface="booking">
 	<PerformanceConversionHandoff
-		eyebrow="Workflow mapping session"
-	title="Review the handoff, then choose a time."
-	description="Use this scheduler for one real workflow, its decision owner, and the record your team needs next. If you started a private draft, review its handoff before choosing an opening."
+		eyebrow={bookingOffer.eyebrow}
+		title={bookingOffer.title}
+		description={bookingOffer.description}
 		handoff={{
 			owner: 'Micah Johnson',
 			authority: 'Conflict-checked scheduling policy',
@@ -122,7 +160,9 @@
 	>
 		{#snippet actions()}
 			<Button href="#first-party-scheduler">Choose a time</Button>
-			<Button href="/map" variant="secondary">Start a private workflow draft</Button>
+			<Button href={bookingOffer.secondaryHref} variant="secondary">
+				{bookingOffer.secondaryLabel}
+			</Button>
 		{/snippet}
 		{#snippet aside()}
 			<section
@@ -163,7 +203,7 @@
 				<iframe
 					bind:this={schedulerFrame}
 					src={schedulerHref}
-					title="Schedule a CREATE SOMETHING mapping session"
+					title={bookingOffer.iframeTitle}
 					loading="eager"
 					referrerpolicy="no-referrer"
 					sandbox="allow-forms allow-popups allow-same-origin allow-scripts"
@@ -173,7 +213,7 @@
 				<p class="scheduler-shell__fallback">
 					If the embedded scheduler is unavailable,
 					<a href={schedulerHref} target="_blank" rel="noopener noreferrer">open the first-party scheduler</a>.
-					Review <a href="/services">the workflow mapping service</a> before choosing a time.
+					Review <a href={bookingOffer.fallbackHref}>{bookingOffer.fallbackLabel}</a> before choosing a time.
 				</p>
 			</section>
 		{/snippet}

@@ -83,6 +83,26 @@ describe('scheduler public page', () => {
     expect(html).toContain('\\u003cscript>unsafe()\\u003c/script>');
   });
 
+  it('renders an explicit Workflow Compiler Integration fit call for that intent only', () => {
+    const integration = schedulerPage({
+      nonce: 'controlled-nonce',
+      intent: 'compiler-integration'
+    });
+    const unknown = schedulerPage({ nonce: 'controlled-nonce', intent: 'unknown-offer' });
+
+    expect(integration).toContain(
+      '<title>Workflow Compiler Integration Fit Call | CREATE SOMETHING</title>'
+    );
+    expect(integration).toContain('<h1>Fit One Integration</h1>');
+    expect(integration).toContain('one repository, one consequential workflow');
+    expect(integration).toContain(
+      '<span>Policy</span><strong>Compiler Integration / V1</strong>'
+    );
+    expect(integration).not.toContain('<h1>Map One Workflow</h1>');
+    expect(unknown).toContain('<title>Workflow Mapping Session | CREATE SOMETHING</title>');
+    expect(unknown).toContain('<h1>Map One Workflow</h1>');
+  });
+
   it('does not offer booking management actions after cancellation', () => {
     const cancelledActions = renderBookingManagementActions('cancelled');
     const committedActions = renderBookingManagementActions('committed');
