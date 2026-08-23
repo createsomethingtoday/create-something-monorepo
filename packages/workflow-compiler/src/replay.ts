@@ -1,6 +1,7 @@
 import { parseWorkflowReplayManifest, ReplayInputValidationError } from './input.js';
 import type {
   CompiledDecision,
+  CompiledApprovalSurface,
   CompiledWorkflowBundle,
   EvidenceLedgerArtifact,
   GovernedInteractionDecision,
@@ -196,13 +197,14 @@ function rejectDivergentNestedGovernanceContracts(bundle: CompiledWorkflowBundle
           )
         : [missingCorrelatedActionDiagnostic(decision.actionId, '$.governedInteraction.actions')];
       const approval = approvalByActionId.get(decision.actionId);
-      const approvalDiagnostics =
-        governed?.action.autonomy === 'auto_allow'
+      const approvalDiagnostics = !governed
+        ? []
+        : governed.action.autonomy === 'auto_allow'
           ? []
           : approval
-            ? evidenceConstraintDiagnostics(
-                decision,
-                decisionPath,
+            ? approvalSurfaceContractDiagnostics(
+                governed.action,
+                `$.governedInteraction.actions[${governed.index}]`,
                 approval.action,
                 `$.approvalSurfaces.actions[${approval.index}]`
               )
@@ -310,6 +312,46 @@ function governanceContractDiagnostics(
         code: 'INVALID_VALUE' as const,
         path: `${targetPath}.${field}`,
         message: `Governance contract ${field} for action ${source.actionId} must match ${sourcePath}.`
+      }
+    ];
+  });
+}
+
+function approvalSurfaceContractDiagnostics(
+  source: GovernedInteractionDecision,
+  sourcePath: string,
+  target: CompiledApprovalSurface,
+  targetPath: string
+) {
+  const expected = {
+    actionId: source.actionId,
+    title: source.title,
+    mode: source.autonomy,
+    owner: source.approvalOwner ?? source.recovery.owner,
+    requiredEvidence: source.requiredEvidence,
+    requiredEvidenceValues: source.requiredEvidenceValues,
+    requiredEvidenceMatchers: source.requiredEvidenceMatchers,
+    recovery: source.recovery
+  };
+  const fields = [
+    'actionId',
+    'title',
+    'mode',
+    'owner',
+    'requiredEvidence',
+    'requiredEvidenceValues',
+    'requiredEvidenceMatchers',
+    'recovery'
+  ] as const;
+  return fields.flatMap((field) => {
+    if (canonicalizeContract(expected[field]) === canonicalizeContract(target[field])) {
+      return [];
+    }
+    return [
+      {
+        code: 'INVALID_VALUE' as const,
+        path: `${targetPath}.${field}`,
+        message: `Approval surface contract ${field} for action ${source.actionId} must match ${sourcePath}.`
       }
     ];
   });
