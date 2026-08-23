@@ -28,13 +28,20 @@ simulates, and explains the resulting contract.
 
    npx workflow-compiler init --template local-runbook --dir WORKFLOW_DIRECTORY
 
+   To map a Marketplace app form through Validator App preflight, an Airtable
+   Automation handoff receipt, and human review without calling any of those
+   systems, use:
+
+   npx workflow-compiler init --template marketplace-submission --dir WORKFLOW_DIRECTORY
+
 3. Enter the created directory before reading or running the follow-up commands:
 
    cd WORKFLOW_DIRECTORY
 
 4. Read PLAYBOOK.md, RUNBOOK.md, workflow.json, and cases.json before
    proposing changes. Keep the proposed change limited to the requested
-   workflow behavior.
+   workflow behavior. For `marketplace-submission`, also read SOURCES.md; it
+   contains read-only ownership pointers, not a live adapter or result.
 5. Validate the governed definition:
 
    npx workflow-compiler validate --workflow workflow.json

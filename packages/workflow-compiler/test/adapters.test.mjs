@@ -220,6 +220,49 @@ test('adapter replays the same input it maps and fails closed before invocation'
   );
 });
 
+test('adapter refuses a deserialized v0.2 bundle whose matching tool copies are altered', async () => {
+  const definition = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const manifest = JSON.parse(await readFile(casesUrl, 'utf8'));
+  definition.schemaVersion = 'workflow_definition.v0.2';
+  const bundle = JSON.parse(JSON.stringify(compileWorkflowDefinition(definition)));
+  const decision = bundle.decisionInventory.decisions.find(
+    (entry) => entry.actionId === 'verify_release',
+  );
+  const tool = bundle.toolContracts.tools.find((entry) => entry.actionId === 'verify_release');
+  const replayCase = manifest.cases.find(
+    (entry) => entry.caseId === 'complete-verification-passes',
+  );
+  assert.ok(decision?.toolContract);
+  assert.ok(tool);
+  assert.ok(replayCase);
+  decision.toolContract.name = 'untrusted_release_verify';
+  decision.toolContract.targetSystemId = 'untrusted-system';
+  tool.name = 'untrusted_release_verify';
+  tool.targetSystemId = 'untrusted-system';
+
+  const plan = createMcpToolCallPlan(bundle, replayCase);
+
+  assert.equal(plan.schemaVersion, 'workflow_adapter_plan.v0.3');
+  assert.equal(plan.disposition, 'stop');
+  assert.equal(plan.reasonCode, 'UNVERIFIED_COMPILED_BUNDLE');
+  assert.equal(plan.canInvoke, false);
+  assert.equal('invocation' in plan, false);
+});
+
+test('compiler-produced bundles freeze the source used for adapter invocation', async () => {
+  const definition = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const bundle = compileWorkflowDefinition(definition);
+  const tool = bundle.toolContracts.tools.find((entry) => entry.actionId === 'verify_release');
+  assert.ok(tool);
+
+  assert.equal(Object.isFrozen(bundle), true);
+  assert.equal(Object.isFrozen(bundle.toolContracts), true);
+  assert.equal(Object.isFrozen(tool), true);
+  assert.throws(() => {
+    tool.name = 'untrusted_release_verify';
+  }, TypeError);
+});
+
 test('adapter snapshots getter-backed evidence once before replay and mapping', async () => {
   const { bundle, manifest } = await releaseFixture();
   const replayCase = manifest.cases.find(
@@ -264,6 +307,61 @@ test('adapter preserves legacy schema compatibility but requires an explicit par
   assert.equal(plan.reasonCode, 'MISSING_TOOL_PARAMETER_CONTRACT');
   assert.equal(plan.canInvoke, false);
   assert.equal('invocation' in plan, false);
+});
+
+test('versions adapter plans when constrained replay emits mismatch reason codes', async () => {
+  const { bundle: legacyBundle, manifest } = await releaseFixture();
+  const legacyPlan = createMcpToolCallPlan(legacyBundle, manifest.cases[0]);
+  assert.equal(legacyPlan.schemaVersion, 'workflow_adapter_plan.v0.1');
+
+  const definition = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  definition.schemaVersion = 'workflow_definition.v0.2';
+  definition.actions[0].requiredEvidenceValues = {
+    test_receipt: 'release-tests-fixture-001'
+  };
+  const mismatchCase = {
+    ...manifest.cases[0],
+    evidence: { ...manifest.cases[0].evidence, test_receipt: 'not-the-receipt' },
+    expectedOutcome: 'blocked',
+    expectedState: manifest.cases[0].initialState
+  };
+  const constrainedBundle = compileWorkflowDefinition(definition);
+
+  for (const plan of [
+    createMcpToolCallPlan(constrainedBundle, mismatchCase),
+    createOpenAIResponsesRequestPlan(constrainedBundle, mismatchCase, {
+      model: 'caller-selected-model'
+    })
+  ]) {
+    assert.equal(plan.schemaVersion, 'workflow_adapter_plan.v0.2');
+    assert.equal(plan.governanceReasonCode, 'EVIDENCE_VALUE_MISMATCH');
+    assert.equal(plan.disposition, 'stop');
+    assert.equal(plan.canInvoke, false);
+  }
+});
+
+test('versions adapter plans for exact-enum v0.3 workflows', async () => {
+  const definition = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const manifest = JSON.parse(await readFile(casesUrl, 'utf8'));
+  definition.schemaVersion = 'workflow_definition.v0.3';
+  definition.actions[0].requiredEvidenceMatchers = {
+    test_receipt: { kind: 'equals_one_of', values: ['release-tests-fixture-001'] }
+  };
+  const bundle = compileWorkflowDefinition(definition);
+  const ready = createMcpToolCallPlan(bundle, manifest.cases[0]);
+  const mismatch = createMcpToolCallPlan(bundle, {
+    ...manifest.cases[0],
+    evidence: { ...manifest.cases[0].evidence, test_receipt: 'not-the-receipt' },
+    expectedOutcome: 'blocked',
+    expectedState: manifest.cases[0].initialState
+  });
+
+  assert.equal(ready.schemaVersion, 'workflow_adapter_plan.v0.3');
+  assert.equal(ready.canInvoke, true);
+  assert.equal(mismatch.schemaVersion, 'workflow_adapter_plan.v0.3');
+  assert.equal(mismatch.reasonCode, 'GOVERNANCE_BLOCKED');
+  assert.equal(mismatch.governanceReasonCode, 'EVIDENCE_MATCHER_MISMATCH');
+  assert.equal(mismatch.canInvoke, false);
 });
 
 test('OpenAI adapter requires and normalizes caller-owned model selection', async () => {

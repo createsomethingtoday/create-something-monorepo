@@ -85,6 +85,62 @@ test('compiles one marketplace definition into a complete governed runtime bundl
   );
 });
 
+test('versions approval surfaces when controlled actions carry evidence constraints', async () => {
+  const definition = JSON.parse(await readFile(fixtureUrl, 'utf8'));
+  definition.schemaVersion = 'workflow_definition.v0.2';
+  const requestChanges = definition.actions.find((action) => action.id === 'request_changes');
+  assert.ok(requestChanges);
+  requestChanges.requiredEvidenceValues = { version_id: 'version-fixture-001' };
+  requestChanges.requiredEvidenceMatchers = {
+    review_feedback: { kind: 'contains_case_insensitive', values: ['changes'] },
+  };
+
+  const compiled = compileWorkflowDefinition(definition);
+  const approvalSurface = compiled.approvalSurfaces.actions.find(
+    (action) => action.actionId === 'request_changes',
+  );
+
+  assert.equal(compiled.approvalSurfaces.schemaVersion, 'approval_surfaces.v0.2');
+  assert.deepEqual(approvalSurface?.requiredEvidenceValues, {
+    version_id: 'version-fixture-001',
+  });
+  assert.deepEqual(approvalSurface?.requiredEvidenceMatchers, {
+    review_feedback: { kind: 'contains_case_insensitive', values: ['changes'] },
+  });
+});
+
+test('versions tool contracts when tool actions carry evidence constraints', async () => {
+  const definition = JSON.parse(await readFile(fixtureUrl, 'utf8'));
+  definition.schemaVersion = 'workflow_definition.v0.2';
+  const runPublishedValidation = definition.actions.find(
+    (action) => action.id === 'run_published_validation',
+  );
+  assert.ok(runPublishedValidation);
+  runPublishedValidation.requiredEvidenceValues = {
+    published_url: 'https://fixture-template.webflow.io',
+  };
+  runPublishedValidation.requiredEvidenceMatchers = {
+    published_url: { kind: 'contains_case_insensitive', values: ['fixture-template'] },
+  };
+
+  const compiled = compileWorkflowDefinition(definition);
+  const toolContract = compiled.toolContracts.tools.find(
+    (tool) => tool.actionId === 'run_published_validation',
+  );
+  const decision = compiled.decisionInventory.decisions.find(
+    (entry) => entry.actionId === 'run_published_validation',
+  );
+
+  assert.equal(compiled.toolContracts.schemaVersion, 'tool_contracts.v0.2');
+  assert.deepEqual(toolContract?.requiredEvidenceValues, {
+    published_url: 'https://fixture-template.webflow.io',
+  });
+  assert.deepEqual(toolContract?.requiredEvidenceMatchers, {
+    published_url: { kind: 'contains_case_insensitive', values: ['fixture-template'] },
+  });
+  assert.deepEqual(decision?.toolContract, toolContract);
+});
+
 test('keeps marketplace write contracts aligned with the production review MCP', async () => {
   const definition = JSON.parse(await readFile(fixtureUrl, 'utf8'));
   const compiled = compileWorkflowDefinition(definition);

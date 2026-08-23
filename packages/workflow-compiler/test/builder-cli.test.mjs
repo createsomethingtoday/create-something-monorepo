@@ -111,6 +111,400 @@ test('the public CLI scaffolds and proves a local-only paired-agent runbook with
   }
 });
 
+test('the public CLI scaffolds a read-only Marketplace submission-to-review contract', async () => {
+  const scratch = await mkdtemp(join(tmpdir(), 'workflow-compiler-marketplace-submission-'));
+  const starterDir = join(scratch, 'marketplace-submission');
+
+  try {
+    const initialized = run('init', '--template', 'marketplace-submission', '--dir', starterDir);
+    assert.equal(initialized.status, 0, initialized.stderr || initialized.stdout);
+    assert.deepEqual(JSON.parse(initialized.stdout), {
+      ok: true,
+      command: 'init',
+      template: 'marketplace-submission',
+      dir: starterDir,
+      files: [
+        'PLAYBOOK.md',
+        'README.md',
+        'RUNBOOK.md',
+        'SOURCES.md',
+        'cases.json',
+        'workflow.json'
+      ],
+      next: {
+        workingDirectory: starterDir,
+        commands: [
+          'npx workflow-compiler validate --workflow workflow.json',
+          'npx workflow-compiler simulate --workflow workflow.json --cases cases.json',
+          'npx workflow-compiler explain --workflow workflow.json --cases cases.json'
+        ]
+      }
+    });
+
+    const [readme, runbook, sources, workflow] = await Promise.all([
+      readFile(join(starterDir, 'README.md'), 'utf8'),
+      readFile(join(starterDir, 'RUNBOOK.md'), 'utf8'),
+      readFile(join(starterDir, 'SOURCES.md'), 'utf8'),
+      readFile(join(starterDir, 'workflow.json'), 'utf8').then(JSON.parse)
+    ]);
+    assert.match(readme, /does not call Webflow, Airtable, or a review service/i);
+    assert.match(runbook, /Validator App preflight/i);
+    assert.match(runbook, /webhook receipt/i);
+    assert.match(
+      sources,
+      /marketplace-template-submission-cloud\/app\/api\/intake\/template\/route\.ts/i
+    );
+    assert.match(sources, /read-only pointers/i);
+    assert.equal(workflow.schemaVersion, 'workflow_definition.v0.3');
+    assert.deepEqual(
+      workflow.systems.map((system) => system.id),
+      [
+        'marketplace-submission-cloud',
+        'published-site-validation',
+        'validator-app-preflight',
+        'airtable-marketplace',
+        'marketplace-review-policy'
+      ]
+    );
+    assert.deepEqual(
+      workflow.evaluations.map((evaluation) => evaluation.id),
+      [
+        'form-validation-passes',
+        'validator-preflight-passes',
+        'automation-handoff-receipt-passes',
+        'failed-preflight-stops',
+        'missing-automation-receipt-stops',
+        'reviewer-decision-waits',
+        'creator-message-stops'
+      ]
+    );
+
+    const validated = run('validate', '--workflow', join(starterDir, 'workflow.json'));
+    assert.equal(validated.status, 0, validated.stderr || validated.stdout);
+    assert.deepEqual(
+      {
+        ok: JSON.parse(validated.stdout).ok,
+        command: JSON.parse(validated.stdout).command,
+        workflowId: JSON.parse(validated.stdout).workflowId,
+        decisionCount: JSON.parse(validated.stdout).decisionCount,
+        externalMutations: JSON.parse(validated.stdout).externalMutations
+      },
+      {
+        ok: true,
+        command: 'validate',
+        workflowId: 'webflow.marketplace.submission-to-review',
+        decisionCount: 6,
+        externalMutations: false
+      }
+    );
+
+    const simulated = run(
+      'simulate',
+      '--workflow',
+      join(starterDir, 'workflow.json'),
+      '--cases',
+      join(starterDir, 'cases.json')
+    );
+    assert.equal(simulated.status, 0, simulated.stderr || simulated.stdout);
+    assert.deepEqual(JSON.parse(simulated.stdout).outcomes, {
+      pass: 3,
+      approval_required: 1,
+      blocked: 3
+    });
+
+    const explained = run(
+      'explain',
+      '--workflow',
+      join(starterDir, 'workflow.json'),
+      '--cases',
+      join(starterDir, 'cases.json')
+    );
+    assert.equal(explained.status, 0, explained.stderr || explained.stdout);
+    assert.match(explained.stdout, /# Webflow Marketplace submission to review/);
+    assert.match(explained.stdout, /Cases: 7/);
+    assert.match(explained.stdout, /Pass: 3/);
+    assert.match(explained.stdout, /Wait: 1/);
+    assert.match(explained.stdout, /Stop: 3/);
+  } finally {
+    await rm(scratch, { recursive: true, force: true });
+  }
+});
+
+test('the Marketplace submission template fails closed when preflight is not genuinely passed', async () => {
+  const scratch = await mkdtemp(join(tmpdir(), 'workflow-compiler-marketplace-preflight-'));
+  const starterDir = join(scratch, 'marketplace-submission');
+
+  try {
+    const initialized = run('init', '--template', 'marketplace-submission', '--dir', starterDir);
+    assert.equal(initialized.status, 0, initialized.stderr || initialized.stdout);
+
+    const casesPath = join(starterDir, 'cases.json');
+    const cases = JSON.parse(await readFile(casesPath, 'utf8'));
+    const passingPreflight = cases.cases.find(
+      (replayCase) => replayCase.caseId === 'validator-preflight-passes'
+    );
+    assert.ok(passingPreflight);
+    passingPreflight.evidence.preflight_status = 'failed';
+    await writeFile(casesPath, JSON.stringify(cases, null, 2) + '\n', 'utf8');
+
+    const simulated = run(
+      'simulate',
+      '--workflow',
+      join(starterDir, 'workflow.json'),
+      '--cases',
+      casesPath
+    );
+    assert.equal(simulated.status, 3, simulated.stderr || simulated.stdout);
+    const failure = JSON.parse(simulated.stderr);
+    assert.deepEqual(
+      {
+        ok: failure.ok,
+        error: failure.error,
+        code: failure.code,
+        outcomes: failure.outcomes,
+        allExpectationsMatched: failure.allExpectationsMatched,
+        externalMutations: failure.externalMutations
+      },
+      {
+        ok: false,
+        error: 'WorkflowCliSimulationError',
+        code: 'SIMULATION_EXPECTATIONS_UNMET',
+        outcomes: { pass: 2, approval_required: 1, blocked: 4 },
+        allExpectationsMatched: false,
+        externalMutations: false
+      }
+    );
+
+    const explained = run(
+      'explain',
+      '--workflow',
+      join(starterDir, 'workflow.json'),
+      '--cases',
+      casesPath
+    );
+    assert.equal(explained.status, 0, explained.stderr || explained.stdout);
+    assert.match(explained.stdout, /Mismatched cases: validator-preflight-passes/);
+  } finally {
+    await rm(scratch, { recursive: true, force: true });
+  }
+});
+
+test('the Marketplace submission template fails closed when form validation is not genuinely passed', async () => {
+  const scratch = await mkdtemp(join(tmpdir(), 'workflow-compiler-marketplace-form-validation-'));
+  const starterDir = join(scratch, 'marketplace-submission');
+
+  try {
+    const initialized = run('init', '--template', 'marketplace-submission', '--dir', starterDir);
+    assert.equal(initialized.status, 0, initialized.stderr || initialized.stdout);
+
+    const casesPath = join(starterDir, 'cases.json');
+    const cases = JSON.parse(await readFile(casesPath, 'utf8'));
+    const passingFormValidation = cases.cases.find(
+      (replayCase) => replayCase.caseId === 'form-validation-passes'
+    );
+    assert.ok(passingFormValidation);
+    passingFormValidation.evidence.form_validation_passed = false;
+    await writeFile(casesPath, JSON.stringify(cases, null, 2) + '\n', 'utf8');
+
+    const simulated = run(
+      'simulate',
+      '--workflow',
+      join(starterDir, 'workflow.json'),
+      '--cases',
+      casesPath
+    );
+    assert.equal(simulated.status, 3, simulated.stderr || simulated.stdout);
+    const failure = JSON.parse(simulated.stderr);
+    assert.deepEqual(failure.outcomes, { pass: 2, approval_required: 1, blocked: 4 });
+    assert.equal(failure.allExpectationsMatched, false);
+    assert.equal(failure.externalMutations, false);
+
+    const explained = run(
+      'explain',
+      '--workflow',
+      join(starterDir, 'workflow.json'),
+      '--cases',
+      casesPath
+    );
+    assert.equal(explained.status, 0, explained.stderr || explained.stdout);
+    assert.match(explained.stdout, /Mismatched cases: form-validation-passes/);
+  } finally {
+    await rm(scratch, { recursive: true, force: true });
+  }
+});
+
+test('the Marketplace submission template waits for a confirmed Airtable handoff before review readiness', async () => {
+  const scratch = await mkdtemp(join(tmpdir(), 'workflow-compiler-marketplace-handoff-'));
+  const starterDir = join(scratch, 'marketplace-submission');
+
+  try {
+    const initialized = run('init', '--template', 'marketplace-submission', '--dir', starterDir);
+    assert.equal(initialized.status, 0, initialized.stderr || initialized.stdout);
+
+    const casesPath = join(starterDir, 'cases.json');
+    const cases = JSON.parse(await readFile(casesPath, 'utf8'));
+    const confirmedHandoff = cases.cases.find(
+      (replayCase) => replayCase.caseId === 'automation-handoff-receipt-passes'
+    );
+    assert.ok(confirmedHandoff);
+    confirmedHandoff.evidence.handoff_state = 'processing';
+    await writeFile(casesPath, JSON.stringify(cases, null, 2) + '\n', 'utf8');
+
+    const simulated = run(
+      'simulate',
+      '--workflow',
+      join(starterDir, 'workflow.json'),
+      '--cases',
+      casesPath
+    );
+    assert.equal(simulated.status, 3, simulated.stderr || simulated.stdout);
+    const failure = JSON.parse(simulated.stderr);
+    assert.deepEqual(
+      {
+        ok: failure.ok,
+        error: failure.error,
+        code: failure.code,
+        outcomes: failure.outcomes,
+        allExpectationsMatched: failure.allExpectationsMatched,
+        externalMutations: failure.externalMutations
+      },
+      {
+        ok: false,
+        error: 'WorkflowCliSimulationError',
+        code: 'SIMULATION_EXPECTATIONS_UNMET',
+        outcomes: { pass: 2, approval_required: 1, blocked: 4 },
+        allExpectationsMatched: false,
+        externalMutations: false
+      }
+    );
+
+    const explained = run(
+      'explain',
+      '--workflow',
+      join(starterDir, 'workflow.json'),
+      '--cases',
+      casesPath
+    );
+    assert.equal(explained.status, 0, explained.stderr || explained.stdout);
+    assert.match(explained.stdout, /Mismatched cases: automation-handoff-receipt-passes/);
+  } finally {
+    await rm(scratch, { recursive: true, force: true });
+  }
+});
+
+test('the Marketplace submission template requires a review-ready Airtable status', async () => {
+  const scratch = await mkdtemp(join(tmpdir(), 'workflow-compiler-marketplace-review-status-'));
+  const starterDir = join(scratch, 'marketplace-submission');
+
+  try {
+    const initialized = run('init', '--template', 'marketplace-submission', '--dir', starterDir);
+    assert.equal(initialized.status, 0, initialized.stderr || initialized.stdout);
+
+    const casesPath = join(starterDir, 'cases.json');
+    const cases = JSON.parse(await readFile(casesPath, 'utf8'));
+    const confirmedHandoff = cases.cases.find(
+      (replayCase) => replayCase.caseId === 'automation-handoff-receipt-passes'
+    );
+    assert.ok(confirmedHandoff);
+    confirmedHandoff.evidence.review_status = 'pending_review';
+    await writeFile(casesPath, JSON.stringify(cases, null, 2) + '\n', 'utf8');
+
+    const simulated = run(
+      'simulate',
+      '--workflow',
+      join(starterDir, 'workflow.json'),
+      '--cases',
+      casesPath
+    );
+    assert.equal(simulated.status, 3, simulated.stderr || simulated.stdout);
+    const failure = JSON.parse(simulated.stderr);
+    assert.deepEqual(failure.outcomes, { pass: 2, approval_required: 1, blocked: 4 });
+    assert.equal(failure.allExpectationsMatched, false);
+    assert.equal(failure.externalMutations, false);
+
+    const explained = run(
+      'explain',
+      '--workflow',
+      join(starterDir, 'workflow.json'),
+      '--cases',
+      casesPath
+    );
+    assert.equal(explained.status, 0, explained.stderr || explained.stdout);
+    assert.match(explained.stdout, /Mismatched cases: automation-handoff-receipt-passes/);
+  } finally {
+    await rm(scratch, { recursive: true, force: true });
+  }
+});
+
+test('the Marketplace submission template rejects a negative review-ready phrase', async () => {
+  const scratch = await mkdtemp(join(tmpdir(), 'workflow-compiler-marketplace-negative-review-status-'));
+  const starterDir = join(scratch, 'marketplace-submission');
+
+  try {
+    const initialized = run('init', '--template', 'marketplace-submission', '--dir', starterDir);
+    assert.equal(initialized.status, 0, initialized.stderr || initialized.stdout);
+
+    const casesPath = join(starterDir, 'cases.json');
+    const cases = JSON.parse(await readFile(casesPath, 'utf8'));
+    const confirmedHandoff = cases.cases.find(
+      (replayCase) => replayCase.caseId === 'automation-handoff-receipt-passes'
+    );
+    assert.ok(confirmedHandoff);
+    confirmedHandoff.evidence.review_status = 'Not Ready for Review';
+    await writeFile(casesPath, JSON.stringify(cases, null, 2) + '\n', 'utf8');
+
+    const simulated = run(
+      'simulate',
+      '--workflow',
+      join(starterDir, 'workflow.json'),
+      '--cases',
+      casesPath
+    );
+    assert.equal(simulated.status, 3, simulated.stderr || simulated.stdout);
+    const failure = JSON.parse(simulated.stderr);
+    assert.deepEqual(failure.outcomes, { pass: 2, approval_required: 1, blocked: 4 });
+    assert.equal(failure.allExpectationsMatched, false);
+    assert.equal(failure.externalMutations, false);
+  } finally {
+    await rm(scratch, { recursive: true, force: true });
+  }
+});
+
+test('the Marketplace submission template accepts a raw review-ready Airtable status', async () => {
+  const scratch = await mkdtemp(join(tmpdir(), 'workflow-compiler-marketplace-raw-review-status-'));
+  const starterDir = join(scratch, 'marketplace-submission');
+
+  try {
+    const initialized = run('init', '--template', 'marketplace-submission', '--dir', starterDir);
+    assert.equal(initialized.status, 0, initialized.stderr || initialized.stdout);
+
+    const casesPath = join(starterDir, 'cases.json');
+    const cases = JSON.parse(await readFile(casesPath, 'utf8'));
+    const confirmedHandoff = cases.cases.find(
+      (replayCase) => replayCase.caseId === 'automation-handoff-receipt-passes'
+    );
+    assert.ok(confirmedHandoff);
+    confirmedHandoff.evidence.review_status = '🆕Ready for Review';
+    await writeFile(casesPath, JSON.stringify(cases, null, 2) + '\n', 'utf8');
+
+    const simulated = run(
+      'simulate',
+      '--workflow',
+      join(starterDir, 'workflow.json'),
+      '--cases',
+      casesPath
+    );
+    assert.equal(simulated.status, 0, simulated.stderr || simulated.stdout);
+    assert.deepEqual(JSON.parse(simulated.stdout).outcomes, {
+      pass: 3,
+      approval_required: 1,
+      blocked: 3
+    });
+  } finally {
+    await rm(scratch, { recursive: true, force: true });
+  }
+});
+
 test('the public simulate command fails closed when a replay expectation is unmet', async () => {
   const scratch = await mkdtemp(join(tmpdir(), 'workflow-compiler-simulation-mismatch-'));
   const starterDir = join(scratch, 'daily-brief');

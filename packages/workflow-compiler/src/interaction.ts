@@ -1,8 +1,16 @@
 import type {
   ActionKind,
   AutonomyClass,
-  CompiledDecision,
+  WorkflowEvidenceMatcher,
+  WorkflowEvidenceValue,
   GovernedInteractionBundle,
+  GovernedInteractionBundleV0_1,
+  GovernedInteractionBundleV0_2,
+  GovernedInteractionBundleV0_3,
+  GovernedInteractionDecision,
+  GovernedInteractionDecisionV0_1,
+  GovernedInteractionDecisionV0_2,
+  GovernedInteractionDecisionV0_3,
   GovernedInteractionCapability,
   GovernedInteractionOperation,
   GovernedInteractionSurface,
@@ -33,24 +41,39 @@ export class GovernedInteractionValidationError extends Error {
 
 type JsonObject = Record<string, unknown>;
 
-export type GovernedInteractionCompatibilityErrorCode =
+export type GovernedInteractionCompatibilityErrorCodeV0_1 =
   | 'DEFINITION_HASH_MISMATCH'
   | 'UNSUPPORTED_CAPABILITY'
   | 'UNSUPPORTED_LANGUAGE'
   | 'UNSUPPORTED_OPERATION'
   | 'UNSUPPORTED_RUNTIME_VERSION';
 
+export type GovernedInteractionCompatibilityErrorCodeV0_2 =
+  | GovernedInteractionCompatibilityErrorCodeV0_1
+  | 'UNSUPPORTED_SCHEMA_VERSION';
+
+export type GovernedInteractionCompatibilityErrorCode =
+  GovernedInteractionCompatibilityErrorCodeV0_2;
+
 export interface GovernedInteractionHostContract {
   hostId: string;
   language: GovernedInteractionBundle['language'];
+  /**
+   * An omitted allowlist preserves the v0.1 public host contract. New hosts
+   * must explicitly list every schema they support.
+   */
+  schemaVersions?: Array<GovernedInteractionBundle['schemaVersion']>;
   runtimeVersions: Array<GovernedInteractionBundle['runtimeVersion']>;
   capabilities: GovernedInteractionCapability[];
   operations: Array<GovernedInteractionOperation['kind']>;
   definitionHashes?: Record<string, string>;
 }
 
-export interface GovernedInteractionCompatibilityDecision {
-  schemaVersion: 'governed_interaction_compatibility.v0.1';
+interface GovernedInteractionCompatibilityDecisionBase<
+  TSchemaVersion extends string,
+  TErrorCode extends GovernedInteractionCompatibilityErrorCode,
+> {
+  schemaVersion: TSchemaVersion;
   compatible: boolean;
   hostId: string;
   language: GovernedInteractionBundle['language'];
@@ -58,10 +81,26 @@ export interface GovernedInteractionCompatibilityDecision {
   requiredCapabilities: GovernedInteractionCapability[];
   requiredOperations: Array<GovernedInteractionOperation['kind']>;
   errors: Array<{
-    code: GovernedInteractionCompatibilityErrorCode;
+    code: TErrorCode;
     value: string;
   }>;
 }
+
+export interface GovernedInteractionCompatibilityDecisionV0_1
+  extends GovernedInteractionCompatibilityDecisionBase<
+    'governed_interaction_compatibility.v0.1',
+    GovernedInteractionCompatibilityErrorCodeV0_1
+  > {}
+
+export interface GovernedInteractionCompatibilityDecisionV0_2
+  extends GovernedInteractionCompatibilityDecisionBase<
+    'governed_interaction_compatibility.v0.2',
+    GovernedInteractionCompatibilityErrorCodeV0_2
+  > {}
+
+export type GovernedInteractionCompatibilityDecision =
+  | GovernedInteractionCompatibilityDecisionV0_1
+  | GovernedInteractionCompatibilityDecisionV0_2;
 
 const CAPABILITIES: readonly GovernedInteractionCapability[] = [
   'interaction.select',
@@ -84,6 +123,10 @@ function invalid(path: string, message: string): never {
 
 function object(value: unknown, path: string): JsonObject {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return invalid(path, `${path} must be an object.`);
+  }
+  const prototype = Object.getPrototypeOf(value);
+  if (prototype !== Object.prototype && prototype !== null) {
     return invalid(path, `${path} must be an object.`);
   }
   return value as JsonObject;
@@ -113,7 +156,86 @@ function string(value: unknown, path: string): string {
 
 function stringArray(value: unknown, path: string): string[] {
   if (!Array.isArray(value)) return invalid(path, `${path} must be an array.`);
-  return value.map((entry, index) => string(entry, `${path}[${index}]`));
+  return value.map((entry, index) => {
+    const entryPath = `${path}[${index}]`;
+    if (typeof entry !== 'string' || entry.trim() === '') {
+      return invalid(entryPath, `${entryPath} must be a non-empty string.`);
+    }
+    return entry;
+  });
+}
+
+function evidenceValue(value: unknown, path: string): WorkflowEvidenceValue {
+  if (
+    (typeof value === 'string' && value.trim() !== '') ||
+    typeof value === 'boolean' ||
+    (typeof value === 'number' && Number.isFinite(value))
+  ) {
+    return value;
+  }
+  return invalid(path, `${path} must be a non-empty string, finite number, or boolean.`);
+}
+
+function evidenceValues(value: unknown, path: string): Record<string, WorkflowEvidenceValue> {
+  const values = object(value, path);
+  return Object.fromEntries(
+    Object.entries(values).map(([field, expected]) => {
+      if (!field.trim()) return invalid(path, `${path} fields must not be empty.`);
+      return [field, evidenceValue(expected, `${path}.${field}`)];
+    }),
+  );
+}
+
+function evidenceMatcher(
+  value: unknown,
+  path: string,
+  supportsExactEnum: boolean,
+): WorkflowEvidenceMatcher {
+  const matcher = object(value, path);
+  exactFields(matcher, ['kind', 'values'], [], path);
+  if (
+    matcher.kind !== 'contains_case_insensitive' &&
+    (!supportsExactEnum || matcher.kind !== 'equals_one_of')
+  ) {
+    return invalid(`${path}.kind`, `${path}.kind is not supported.`);
+  }
+  const values = stringArray(matcher.values, `${path}.values`);
+  if (values.length === 0) {
+    return invalid(`${path}.values`, `${path}.values must contain at least one string.`);
+  }
+  unique(values, `${path}.values`);
+  return { kind: matcher.kind, values };
+}
+
+function evidenceMatchers(
+  value: unknown,
+  path: string,
+  supportsExactEnum: boolean,
+): Record<string, WorkflowEvidenceMatcher> {
+  const matchers = object(value, path);
+  return Object.fromEntries(
+    Object.entries(matchers).map(([field, matcher]) => {
+      if (!field.trim()) return invalid(path, `${path} fields must not be empty.`);
+      return [field, evidenceMatcher(matcher, `${path}.${field}`, supportsExactEnum)];
+    }),
+  );
+}
+
+function matchesEvidenceMatcher(
+  value: WorkflowEvidenceValue,
+  matcher: WorkflowEvidenceMatcher,
+): boolean {
+  switch (matcher.kind) {
+    case 'contains_case_insensitive':
+      return (
+        typeof value === 'string' &&
+        matcher.values.some((candidate) =>
+          value.toLowerCase().includes(candidate.toLowerCase()),
+        )
+      );
+    case 'equals_one_of':
+      return typeof value === 'string' && matcher.values.includes(value);
+  }
 }
 
 function unique(values: string[], path: string): void {
@@ -173,7 +295,11 @@ function parseSurface(value: unknown, path: string): GovernedInteractionSurface 
   };
 }
 
-function parseDecision(value: unknown, path: string): CompiledDecision {
+function parseDecision(
+  value: unknown,
+  path: string,
+  schemaVersion: GovernedInteractionBundle['schemaVersion'],
+): GovernedInteractionDecision {
   const decision = object(value, path);
   exactFields(
     decision,
@@ -188,7 +314,9 @@ function parseDecision(value: unknown, path: string): CompiledDecision {
       'receiptFields',
       'recovery',
     ],
-    ['approvalOwner'],
+    schemaVersion !== 'governed_interaction_bundle.v0.1'
+      ? ['approvalOwner', 'requiredEvidenceMatchers', 'requiredEvidenceValues']
+      : ['approvalOwner'],
     path,
   );
   const recovery = object(decision.recovery, `${path}.recovery`);
@@ -207,10 +335,50 @@ function parseDecision(value: unknown, path: string): CompiledDecision {
   }
   const systemsTouched = stringArray(decision.systemsTouched, `${path}.systemsTouched`);
   const requiredEvidence = stringArray(decision.requiredEvidence, `${path}.requiredEvidence`);
+  const requiredEvidenceValues =
+    decision.requiredEvidenceValues === undefined
+      ? undefined
+      : evidenceValues(decision.requiredEvidenceValues, `${path}.requiredEvidenceValues`);
+  const requiredEvidenceMatchers =
+    decision.requiredEvidenceMatchers === undefined
+      ? undefined
+      : evidenceMatchers(
+          decision.requiredEvidenceMatchers,
+          `${path}.requiredEvidenceMatchers`,
+          schemaVersion === 'governed_interaction_bundle.v0.3',
+        );
   const receiptFields = stringArray(decision.receiptFields, `${path}.receiptFields`);
   unique(systemsTouched, `${path}.systemsTouched`);
   unique(requiredEvidence, `${path}.requiredEvidence`);
   unique(receiptFields, `${path}.receiptFields`);
+  Object.keys(requiredEvidenceValues ?? {}).forEach((field) => {
+    if (!requiredEvidence.includes(field)) {
+      throw new GovernedInteractionValidationError(
+        'INVALID_ACTION_GOVERNANCE',
+        `${path}.requiredEvidenceValues.${field}`,
+        `Evidence-value constraint ${field} for action ${String(decision.actionId)} must also be required evidence.`,
+      );
+    }
+  });
+  Object.keys(requiredEvidenceMatchers ?? {}).forEach((field) => {
+    if (!requiredEvidence.includes(field)) {
+      throw new GovernedInteractionValidationError(
+        'INVALID_ACTION_GOVERNANCE',
+        `${path}.requiredEvidenceMatchers.${field}`,
+        `Evidence matcher ${field} for action ${String(decision.actionId)} must also be required evidence.`,
+      );
+    }
+  });
+  Object.entries(requiredEvidenceValues ?? {}).forEach(([field, value]) => {
+    const matcher = requiredEvidenceMatchers?.[field];
+    if (matcher && !matchesEvidenceMatcher(value, matcher)) {
+      throw new GovernedInteractionValidationError(
+        'INVALID_ACTION_GOVERNANCE',
+        `${path}.requiredEvidenceValues.${field}`,
+        `Exact evidence value for ${field} must satisfy its matcher for action ${String(decision.actionId)}.`,
+      );
+    }
+  });
   return {
     actionId: string(decision.actionId, `${path}.actionId`),
     title: string(decision.title, `${path}.title`),
@@ -219,6 +387,8 @@ function parseDecision(value: unknown, path: string): CompiledDecision {
     autonomy,
     systemsTouched,
     requiredEvidence,
+    ...(requiredEvidenceMatchers ? { requiredEvidenceMatchers } : {}),
+    ...(requiredEvidenceValues ? { requiredEvidenceValues } : {}),
     ...(approvalOwner ? { approvalOwner } : {}),
     receiptFields,
     recovery: {
@@ -252,13 +422,18 @@ export function parseGovernedInteractionBundle(input: unknown): GovernedInteract
     [],
     'bundle',
   );
-  if (bundle.schemaVersion !== 'governed_interaction_bundle.v0.1') {
+  if (
+    bundle.schemaVersion !== 'governed_interaction_bundle.v0.1' &&
+    bundle.schemaVersion !== 'governed_interaction_bundle.v0.2' &&
+    bundle.schemaVersion !== 'governed_interaction_bundle.v0.3'
+  ) {
     throw new GovernedInteractionValidationError(
       'UNKNOWN_SCHEMA_VERSION',
       'bundle.schemaVersion',
       `Unsupported governed interaction schema ${String(bundle.schemaVersion)}.`,
     );
   }
+  const schemaVersion = bundle.schemaVersion;
   if (bundle.language !== 'create-something/control') {
     throw new GovernedInteractionValidationError(
       'UNKNOWN_LANGUAGE',
@@ -297,7 +472,7 @@ export function parseGovernedInteractionBundle(input: unknown): GovernedInteract
     parseSurface(surface, `bundle.surfaces[${index}]`),
   );
   const actions = bundle.actions.map((action, index) =>
-    parseDecision(action, `bundle.actions[${index}]`),
+    parseDecision(action, `bundle.actions[${index}]`, schemaVersion),
   );
   unique(surfaces.map((surface) => surface.id), 'bundle.surfaces');
   unique(actions.map((action) => action.actionId), 'bundle.actions');
@@ -309,24 +484,70 @@ export function parseGovernedInteractionBundle(input: unknown): GovernedInteract
       `Entry surface ${entrySurfaceId} does not exist.`,
     );
   }
-  return {
-    schemaVersion: 'governed_interaction_bundle.v0.1',
-    language: 'create-something/control',
-    runtimeVersion: '0.1.0',
+  const common = {
+    language: 'create-something/control' as const,
+    runtimeVersion: '0.1.0' as const,
     workflowId: string(bundle.workflowId, 'bundle.workflowId'),
     workflowVersion: string(bundle.workflowVersion, 'bundle.workflowVersion'),
     definitionHash: string(bundle.definitionHash, 'bundle.definitionHash'),
     entrySurfaceId,
     capabilities,
     surfaces,
-    actions,
+  };
+  if (schemaVersion === 'governed_interaction_bundle.v0.2') {
+    return {
+      schemaVersion,
+      ...common,
+      actions: actions as GovernedInteractionDecisionV0_2[],
+    };
+  }
+  if (schemaVersion === 'governed_interaction_bundle.v0.3') {
+    return {
+      schemaVersion,
+      ...common,
+      actions: actions as GovernedInteractionDecisionV0_3[],
+    };
+  }
+  return {
+    schemaVersion,
+    ...common,
+    actions: actions as GovernedInteractionDecisionV0_1[],
+  };
+}
+
+export function migrateGovernedInteractionBundle(
+  input: unknown,
+): GovernedInteractionBundleV0_2 {
+  const bundle = parseGovernedInteractionBundle(input);
+  if (bundle.schemaVersion === 'governed_interaction_bundle.v0.3') {
+    throw new GovernedInteractionValidationError(
+      'INVALID_BUNDLE',
+      'bundle.schemaVersion',
+      'governed_interaction_bundle.v0.3 cannot be downgraded; use migrateGovernedInteractionBundleToV0_3 for a detached v0.3 copy.',
+    );
+  }
+  return {
+    ...structuredClone(bundle),
+    schemaVersion: 'governed_interaction_bundle.v0.2',
+    actions: bundle.actions as GovernedInteractionDecisionV0_2[]
+  };
+}
+
+export function migrateGovernedInteractionBundleToV0_3(
+  input: unknown,
+): GovernedInteractionBundleV0_3 {
+  const bundle = parseGovernedInteractionBundle(input);
+  return {
+    ...structuredClone(bundle),
+    schemaVersion: 'governed_interaction_bundle.v0.3',
+    actions: bundle.actions as GovernedInteractionDecisionV0_3[],
   };
 }
 
 export function evaluateGovernedInteractionCompatibility(
   input: unknown,
   host: GovernedInteractionHostContract,
-): GovernedInteractionCompatibilityDecision {
+): GovernedInteractionCompatibilityDecisionV0_2 {
   const bundle = parseGovernedInteractionBundle(input);
   const requiredCapabilities = [...bundle.capabilities].sort();
   const requiredOperations = [
@@ -336,10 +557,14 @@ export function evaluateGovernedInteractionCompatibility(
       ),
     ),
   ].sort();
-  const errors: GovernedInteractionCompatibilityDecision['errors'] = [];
+  const errors: GovernedInteractionCompatibilityDecisionV0_2['errors'] = [];
+  const supportedSchemaVersions = host.schemaVersions ?? ['governed_interaction_bundle.v0.1'];
 
   if (host.language !== bundle.language) {
     errors.push({ code: 'UNSUPPORTED_LANGUAGE', value: bundle.language });
+  }
+  if (!supportedSchemaVersions.includes(bundle.schemaVersion)) {
+    errors.push({ code: 'UNSUPPORTED_SCHEMA_VERSION', value: bundle.schemaVersion });
   }
   if (!host.runtimeVersions.includes(bundle.runtimeVersion)) {
     errors.push({ code: 'UNSUPPORTED_RUNTIME_VERSION', value: bundle.runtimeVersion });
@@ -360,7 +585,7 @@ export function evaluateGovernedInteractionCompatibility(
   }
 
   return {
-    schemaVersion: 'governed_interaction_compatibility.v0.1',
+    schemaVersion: 'governed_interaction_compatibility.v0.2',
     compatible: errors.length === 0,
     hostId: host.hostId,
     language: bundle.language,

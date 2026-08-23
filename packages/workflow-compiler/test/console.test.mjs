@@ -5,6 +5,12 @@ import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import test from 'node:test';
 
+import {
+  compileWorkflowDefinition,
+  createOperatorConsoleData,
+  replayWorkflow,
+} from '../dist/index.js';
+
 const packageRoot = new URL('..', import.meta.url);
 const workflowPath = new URL('../fixtures/marketplace/workflow.json', import.meta.url);
 const casesPath = new URL('../fixtures/marketplace/cases.json', import.meta.url);
@@ -59,9 +65,75 @@ test('generates an operator console from compiled bundle and replay artifacts', 
     const blockedCase = data.replayReport.cases.find(
       (entry) => entry.caseId === 'missing-validation-evidence-blocks',
     );
+    assert.equal(data.schemaVersion, 'workflow_operator_console.v0.1');
     assert.deepEqual(blockedCase.missingEvidence, ['published_url', 'validation_result']);
     assert.equal(blockedCase.canExecute, false);
   } finally {
     await rm(outDir, { recursive: true, force: true });
   }
+});
+
+test('versions operator console data with the v0.2 artifacts it embeds', async () => {
+  const definition = JSON.parse(await readFile(workflowPath, 'utf8'));
+  const cases = JSON.parse(await readFile(casesPath, 'utf8'));
+  definition.schemaVersion = 'workflow_definition.v0.2';
+  const requestChanges = definition.actions.find((action) => action.id === 'request_changes');
+  assert.ok(requestChanges);
+  requestChanges.requiredEvidenceValues = { version_id: 'version-fixture-001' };
+  requestChanges.requiredEvidenceMatchers = {
+    review_feedback: { kind: 'contains_case_insensitive', values: ['changes'] },
+  };
+
+  const bundle = compileWorkflowDefinition(definition);
+  const replay = replayWorkflow(bundle, cases);
+  const data = createOperatorConsoleData(bundle, replay);
+
+  assert.equal(data.schemaVersion, 'workflow_operator_console.v0.2');
+  assert.equal(data.decisionInventory.schemaVersion, 'decision_inventory.v0.2');
+  assert.equal(data.replayReport.schemaVersion, 'workflow_replay_report.v0.2');
+  assert.equal(data.approvalSurfaces.schemaVersion, 'approval_surfaces.v0.2');
+  const approvalSurface = data.approvalSurfaces.actions.find(
+    (action) => action.actionId === 'request_changes',
+  );
+  assert.deepEqual(approvalSurface?.requiredEvidenceValues, {
+    version_id: 'version-fixture-001',
+  });
+  assert.deepEqual(approvalSurface?.requiredEvidenceMatchers, {
+    review_feedback: { kind: 'contains_case_insensitive', values: ['changes'] },
+  });
+});
+
+test('rejects a console that would combine v0.2 bundle data with a v0.1 replay report', async () => {
+  const definition = JSON.parse(await readFile(workflowPath, 'utf8'));
+  const cases = JSON.parse(await readFile(casesPath, 'utf8'));
+  const legacyBundle = compileWorkflowDefinition(definition);
+  const legacyReplay = replayWorkflow(legacyBundle, cases);
+  definition.schemaVersion = 'workflow_definition.v0.2';
+  definition.actions[0].requiredEvidenceValues = { published_url: 'https://example.com' };
+  const constrainedBundle = compileWorkflowDefinition(definition);
+
+  assert.throws(
+    () => createOperatorConsoleData(constrainedBundle, legacyReplay),
+    /matching compiled bundle and replay report schema versions/,
+  );
+});
+
+test('rejects a console that would combine a bundle with another workflow replay report', async () => {
+  const definition = JSON.parse(await readFile(workflowPath, 'utf8'));
+  const cases = JSON.parse(await readFile(casesPath, 'utf8'));
+  const bundle = compileWorkflowDefinition(definition);
+  const alternateWorkflowId = 'webflow.marketplace.template-lifecycle.alternate';
+  const alternateBundle = compileWorkflowDefinition({
+    ...definition,
+    workflowId: alternateWorkflowId,
+  });
+  const alternateReplay = replayWorkflow(alternateBundle, {
+    ...cases,
+    workflowId: alternateWorkflowId,
+  });
+
+  assert.throws(
+    () => createOperatorConsoleData(bundle, alternateReplay),
+    /matching compiled bundle and replay report workflow identity/,
+  );
 });

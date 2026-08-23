@@ -1,4 +1,9 @@
-import type { WorkflowDefinition, WorkflowReplayManifest } from './types.js';
+import type {
+  WorkflowDefinition,
+  WorkflowDefinitionV0_2,
+  WorkflowDefinitionV0_3,
+  WorkflowReplayManifest
+} from './types.js';
 
 export interface WorkflowInputDiagnostic {
   code:
@@ -37,7 +42,9 @@ export class ReplayInputValidationError extends Error {
 type RecordValue = Record<string, unknown>;
 
 function isRecord(value: unknown): value is RecordValue {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
 }
 
 class Validator {
@@ -72,6 +79,15 @@ class Validator {
     });
   }
 
+  nonEmptyString(value: unknown, path: string): void {
+    if (typeof value === 'string' && value.trim()) return;
+    this.diagnostics.push({
+      code: value === undefined ? 'REQUIRED_FIELD' : 'INVALID_VALUE',
+      path,
+      message: 'Expected a non-empty string.'
+    });
+  }
+
   optionalString(value: unknown, path: string): void {
     if (value === undefined) return;
     this.string(value, path);
@@ -83,6 +99,26 @@ class Validator {
       code: value === undefined ? 'REQUIRED_FIELD' : 'INVALID_TYPE',
       path,
       message: 'Expected a boolean.'
+    });
+  }
+
+  evidenceValue(value: unknown, path: string): void {
+    if (
+      (typeof value === 'string' && value.trim()) ||
+      typeof value === 'boolean' ||
+      (typeof value === 'number' && Number.isFinite(value))
+    ) {
+      return;
+    }
+    this.diagnostics.push({
+      code:
+        value === undefined
+          ? 'REQUIRED_FIELD'
+          : typeof value === 'string'
+            ? 'INVALID_VALUE'
+            : 'INVALID_TYPE',
+      path,
+      message: 'Expected a non-empty string, finite number, or boolean.'
     });
   }
 
@@ -126,6 +162,38 @@ class Validator {
       firstPaths.set(identifier, identifierPath);
     });
   }
+
+  uniqueStrings(value: unknown[], path: string): void {
+    const firstPaths = new Map<string, string>();
+    value.forEach((entry, index) => {
+      if (typeof entry !== 'string') return;
+      const entryPath = `${path}[${index}]`;
+      const firstPath = firstPaths.get(entry);
+      if (firstPath) {
+        this.diagnostics.push({
+          code: 'DUPLICATE_IDENTIFIER',
+          path: entryPath,
+          message: `Duplicate identifier ${entry}; first declared at ${firstPath}.`
+        });
+        return;
+      }
+      firstPaths.set(entry, entryPath);
+    });
+  }
+
+  unknownFields(value: RecordValue, allowed: readonly string[], path: string, label: string): void {
+    const allowedFields = new Set(allowed);
+    Object.keys(value)
+      .filter((field) => !allowedFields.has(field))
+      .sort()
+      .forEach((field) => {
+        this.diagnostics.push({
+          code: 'INVALID_VALUE',
+          path: `${path}.${field}`,
+          message: `Unknown ${label} field ${field}.`
+        });
+      });
+  }
 }
 
 function requireTopLevelCollections(input: RecordValue): Record<string, unknown[]> {
@@ -159,11 +227,19 @@ export function parseWorkflowDefinition(input: unknown): WorkflowDefinition {
   const collections = requireTopLevelCollections(input);
   const validator = new Validator();
 
-  if (input.schemaVersion !== 'workflow_definition.v0.1') {
+  const supportsEvidenceConstraints =
+    input.schemaVersion === 'workflow_definition.v0.2' ||
+    input.schemaVersion === 'workflow_definition.v0.3';
+  const supportsExactEvidenceMatchers = input.schemaVersion === 'workflow_definition.v0.3';
+  if (
+    !['workflow_definition.v0.1', 'workflow_definition.v0.2', 'workflow_definition.v0.3'].includes(
+      String(input.schemaVersion)
+    )
+  ) {
     validator.diagnostics.push({
       code: input.schemaVersion === undefined ? 'REQUIRED_FIELD' : 'UNSUPPORTED_SCHEMA_VERSION',
       path: '$.schemaVersion',
-      message: 'Expected workflow_definition.v0.1.'
+      message: 'Expected workflow_definition.v0.1, workflow_definition.v0.2, or workflow_definition.v0.3.'
     });
   }
   validator.string(input.workflowId, '$.workflowId');
@@ -207,6 +283,27 @@ export function parseWorkflowDefinition(input: unknown): WorkflowDefinition {
     validator.boolean(state.terminal, `${path}.terminal`, true);
   });
   validator.records(collections.actions, '$.actions', (action, path) => {
+    validator.unknownFields(
+      action,
+      [
+        'id',
+        'title',
+        'kind',
+        'authority',
+        'autonomy',
+        'systemsTouched',
+        'requiredEvidence',
+        'requiredEvidenceValues',
+        'requiredEvidenceMatchers',
+        'approval',
+        'receipt',
+        'recovery',
+        'tool',
+        'agentId'
+      ],
+      path,
+      'action'
+    );
     validator.string(action.id, `${path}.id`);
     validator.string(action.title, `${path}.title`);
     validator.enumeration(action.kind, ['read', 'write', 'decision', 'publish'], `${path}.kind`);
@@ -218,6 +315,93 @@ export function parseWorkflowDefinition(input: unknown): WorkflowDefinition {
     );
     validator.stringArray(action.systemsTouched, `${path}.systemsTouched`);
     validator.stringArray(action.requiredEvidence, `${path}.requiredEvidence`);
+    if (action.requiredEvidenceValues !== undefined) {
+      if (!supportsEvidenceConstraints) {
+        validator.diagnostics.push({
+          code: 'INVALID_VALUE',
+          path: `${path}.requiredEvidenceValues`,
+          message: 'Evidence constraints require workflow_definition.v0.2 or workflow_definition.v0.3.'
+        });
+      }
+      const requiredEvidenceValues = validator.record(
+        action.requiredEvidenceValues,
+        `${path}.requiredEvidenceValues`
+      );
+      if (requiredEvidenceValues) {
+        Object.entries(requiredEvidenceValues).forEach(([field, value]) => {
+          if (!field.trim()) {
+            validator.diagnostics.push({
+              code: 'INVALID_VALUE',
+              path: `${path}.requiredEvidenceValues`,
+              message: 'Evidence-value constraint fields must not be empty.'
+            });
+          }
+          validator.evidenceValue(value, `${path}.requiredEvidenceValues.${field}`);
+        });
+      }
+    }
+    if (action.requiredEvidenceMatchers !== undefined) {
+      if (!supportsEvidenceConstraints) {
+        validator.diagnostics.push({
+          code: 'INVALID_VALUE',
+          path: `${path}.requiredEvidenceMatchers`,
+          message: 'Evidence constraints require workflow_definition.v0.2 or workflow_definition.v0.3.'
+        });
+      }
+      const requiredEvidenceMatchers = validator.record(
+        action.requiredEvidenceMatchers,
+        `${path}.requiredEvidenceMatchers`
+      );
+      if (requiredEvidenceMatchers) {
+        Object.entries(requiredEvidenceMatchers).forEach(([field, value]) => {
+          if (!field.trim()) {
+            validator.diagnostics.push({
+              code: 'INVALID_VALUE',
+              path: `${path}.requiredEvidenceMatchers`,
+              message: 'Evidence matcher fields must not be empty.'
+            });
+          }
+          const matcher = validator.record(value, `${path}.requiredEvidenceMatchers.${field}`);
+          if (!matcher) return;
+          const unknownMatcherFields = Object.keys(matcher)
+            .filter((matcherField) => !['kind', 'values'].includes(matcherField))
+            .sort();
+          if (unknownMatcherFields.length > 0) {
+            validator.diagnostics.push({
+              code: 'INVALID_VALUE',
+              path: `${path}.requiredEvidenceMatchers.${field}`,
+              message: `Evidence matcher fields must be kind and values only (unknown: ${unknownMatcherFields.join(', ')}).`
+            });
+          }
+          validator.enumeration(
+            matcher.kind,
+            supportsExactEvidenceMatchers
+              ? ['contains_case_insensitive', 'equals_one_of']
+              : ['contains_case_insensitive'],
+            `${path}.requiredEvidenceMatchers.${field}.kind`
+          );
+          const values = validator.array(
+            matcher.values,
+            `${path}.requiredEvidenceMatchers.${field}.values`
+          );
+          if (!values) return;
+          if (values.length === 0) {
+            validator.diagnostics.push({
+              code: 'INVALID_VALUE',
+              path: `${path}.requiredEvidenceMatchers.${field}.values`,
+              message: 'Evidence matcher values must contain at least one non-empty string.'
+            });
+          }
+          values.forEach((entry, valueIndex) =>
+            validator.nonEmptyString(
+              entry,
+              `${path}.requiredEvidenceMatchers.${field}.values[${valueIndex}]`
+            )
+          );
+          validator.uniqueStrings(values, `${path}.requiredEvidenceMatchers.${field}.values`);
+        });
+      }
+    }
 
     const approval = validator.record(action.approval, `${path}.approval`);
     if (approval) {
@@ -291,6 +475,32 @@ export function parseWorkflowDefinition(input: unknown): WorkflowDefinition {
     throw new WorkflowInputValidationError(validator.diagnostics);
   }
   return input as unknown as WorkflowDefinition;
+}
+
+export function migrateWorkflowDefinition(input: unknown): WorkflowDefinitionV0_2 {
+  const definition = parseWorkflowDefinition(input);
+  if (definition.schemaVersion === 'workflow_definition.v0.3') {
+    throw new WorkflowInputValidationError([
+      {
+        code: 'INVALID_VALUE',
+        path: '$.schemaVersion',
+        message:
+          'workflow_definition.v0.3 cannot be downgraded; use migrateWorkflowDefinitionToV0_3 for a detached v0.3 copy.'
+      }
+    ]);
+  }
+  return {
+    ...structuredClone(definition),
+    schemaVersion: 'workflow_definition.v0.2'
+  };
+}
+
+export function migrateWorkflowDefinitionToV0_3(input: unknown): WorkflowDefinitionV0_3 {
+  const definition = parseWorkflowDefinition(input);
+  return {
+    ...structuredClone(definition),
+    schemaVersion: 'workflow_definition.v0.3'
+  } as WorkflowDefinitionV0_3;
 }
 
 export function parseWorkflowReplayManifest(input: unknown): WorkflowReplayManifest {

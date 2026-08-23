@@ -1,6 +1,6 @@
 {
   "name": "@create-something/workflow-compiler",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Compile versioned operating workflows into deterministic, governed artifacts and provider-neutral execution plans.",
   "type": "module",
   "createSomething": {
@@ -39,7 +39,7 @@
   ],
   "scripts": {
     "build": "tsc",
-    "check": "tsc --noEmit",
+    "check": "tsc --noEmit && tsc -p tsconfig.type-tests.json",
     "compile": "node dist/cli.js compile",
     "serve": "node dist/cli.js serve",
     "test": "npm run build && node --test test/*.test.mjs",

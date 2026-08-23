@@ -19,6 +19,8 @@ export {
   WorkflowArtifactAttestationError
 } from './attestation.js';
 export {
+  migrateWorkflowDefinition,
+  migrateWorkflowDefinitionToV0_3,
   parseWorkflowDefinition,
   parseWorkflowReplayManifest,
   ReplayInputValidationError,
@@ -34,6 +36,8 @@ export {
 export {
   evaluateGovernedInteractionCompatibility,
   GovernedInteractionValidationError,
+  migrateGovernedInteractionBundle,
+  migrateGovernedInteractionBundleToV0_3,
   parseGovernedInteractionBundle
 } from './interaction.js';
 export { serveOperatorConsole } from './server.js';
@@ -48,7 +52,18 @@ export {
 } from './client-workspace-host.js';
 
 export type { OperatorConsoleServer } from './server.js';
-export type { ClientWorkspaceGovernedInteractionInspection } from './client-workspace-host.js';
+export type {
+  WorkflowOperatorConsoleData,
+  WorkflowOperatorConsoleDataV0_1,
+  WorkflowOperatorConsoleDataV0_2,
+  WorkflowOperatorConsoleDataV0_3
+} from './operator-console.js';
+export type {
+  ClientWorkspaceGovernedInteractionInspection,
+  ClientWorkspaceGovernedInteractionInspectionV0_1,
+  ClientWorkspaceGovernedInteractionInspectionV0_2,
+  ClientWorkspaceGovernedInteractionInspectionV0_3
+} from './client-workspace-host.js';
 
 export type {
   WorkflowArtifactManifest,
@@ -67,7 +82,11 @@ export type { WorkflowReplayArtifacts } from './replay.js';
 export type { WorkflowAdapterErrorCode } from './adapters.js';
 export type {
   GovernedInteractionCompatibilityDecision,
+  GovernedInteractionCompatibilityDecisionV0_1,
+  GovernedInteractionCompatibilityDecisionV0_2,
   GovernedInteractionCompatibilityErrorCode,
+  GovernedInteractionCompatibilityErrorCodeV0_1,
+  GovernedInteractionCompatibilityErrorCodeV0_2,
   GovernedInteractionHostContract,
   GovernedInteractionValidationCode
 } from './interaction.js';
@@ -76,19 +95,47 @@ export type {
   ActionKind,
   AgentContractsArtifact,
   ApprovalSurfacesArtifact,
+  ApprovalSurfacesArtifactV0_1,
+  ApprovalSurfacesArtifactV0_2,
+  ApprovalSurfacesArtifactV0_3,
   AutonomyClass,
   CompiledAgentContract,
   CompiledApprovalSurface,
+  CompiledApprovalSurfaceV0_1,
+  CompiledApprovalSurfaceV0_2,
+  CompiledApprovalSurfaceV0_3,
   CompiledArtifactHeader,
   CompiledDecision,
+  CompiledDecisionV0_1,
+  CompiledDecisionV0_2,
+  CompiledDecisionV0_3,
   CompiledToolContract,
+  CompiledToolContractV0_1,
+  CompiledToolContractV0_2,
+  CompiledToolContractV0_3,
   CompiledWorkflowBundle,
+  CompiledWorkflowBundleSchemaVersion,
+  CompiledWorkflowBundleV0_1,
+  CompiledWorkflowBundleV0_2,
+  CompiledWorkflowBundleV0_3,
+  DecisionInventorySchemaVersion,
   DecisionInventoryArtifact,
+  DecisionInventoryArtifactV0_1,
+  DecisionInventoryArtifactV0_2,
+  DecisionInventoryArtifactV0_3,
   EvaluationManifestArtifact,
   EventSchemasArtifact,
   EvidenceLedgerArtifact,
   GovernedInteractionBundle,
+  GovernedInteractionBundleSchemaVersion,
+  GovernedInteractionBundleV0_1,
+  GovernedInteractionBundleV0_2,
+  GovernedInteractionBundleV0_3,
   GovernedInteractionCapability,
+  GovernedInteractionDecision,
+  GovernedInteractionDecisionV0_1,
+  GovernedInteractionDecisionV0_2,
+  GovernedInteractionDecisionV0_3,
   GovernedInteractionOperation,
   GovernedInteractionSurface,
   ObjectSchemasArtifact,
@@ -99,16 +146,40 @@ export type {
   RuntimeTargetsArtifact,
   SystemTier,
   ToolContractsArtifact,
+  ToolContractsArtifactV0_1,
+  ToolContractsArtifactV0_2,
+  ToolContractsArtifactV0_3,
   WorkflowAction,
+  WorkflowActionV0_1,
+  WorkflowActionV0_2,
+  WorkflowActionV0_3,
   WorkflowAdapterDiagnostic,
   WorkflowAdapterDisposition,
   WorkflowAdapterPlan,
+  WorkflowAdapterPlanSchemaVersion,
+  WorkflowAdapterPlanV0_1,
+  WorkflowAdapterPlanV0_2,
+  WorkflowAdapterPlanV0_3,
   WorkflowAdapterReasonCode,
+  WorkflowAdapterReasonCodeV0_1,
+  WorkflowAdapterReasonCodeV0_3,
   WorkflowAcceptanceSummary,
   WorkflowActor,
   WorkflowAgent,
   WorkflowCompilationDiagnostic,
   WorkflowDefinition,
+  WorkflowDefinitionSchemaVersion,
+  WorkflowDefinitionV0_1,
+  WorkflowDefinitionV0_2,
+  WorkflowDefinitionV0_3,
+  WorkflowEvidenceMatcher,
+  WorkflowEvidenceMatcherV0_2,
+  WorkflowEvidenceMatcherV0_3,
+  WorkflowEvidenceMatcherMismatch,
+  WorkflowEvidenceMatcherMismatchV0_2,
+  WorkflowEvidenceMatcherMismatchV0_3,
+  WorkflowEvidenceMismatch,
+  WorkflowEvidenceValue,
   WorkflowEvaluation,
   WorkflowEvent,
   WorkflowMap,
@@ -119,7 +190,14 @@ export type {
   WorkflowReplayManifest,
   WorkflowReplayReceipt,
   WorkflowReplayReport,
+  WorkflowReplayReportSchemaVersion,
+  WorkflowReplayReportV0_1,
+  WorkflowReplayReportV0_2,
+  WorkflowReplayReportV0_3,
   WorkflowReplayResult,
+  WorkflowReplayResultV0_1,
+  WorkflowReplayResultV0_2,
+  WorkflowReplayResultV0_3,
   WorkflowState,
   WorkflowSystem,
   WorkflowToolParameter,

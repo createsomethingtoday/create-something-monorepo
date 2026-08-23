@@ -4,6 +4,42 @@ export type AutonomyClass = 'auto_allow' | 'approval_required' | 'manual_only' |
 
 export type SystemTier = 'database' | 'automation' | 'judgment';
 
+export type WorkflowEvidenceValue = string | number | boolean;
+
+export type WorkflowDefinitionSchemaVersion =
+  | 'workflow_definition.v0.1'
+  | 'workflow_definition.v0.2'
+  | 'workflow_definition.v0.3';
+
+export type GovernedInteractionBundleSchemaVersion =
+  | 'governed_interaction_bundle.v0.1'
+  | 'governed_interaction_bundle.v0.2'
+  | 'governed_interaction_bundle.v0.3';
+
+export type DecisionInventorySchemaVersion =
+  | 'decision_inventory.v0.1'
+  | 'decision_inventory.v0.2'
+  | 'decision_inventory.v0.3';
+
+export type CompiledWorkflowBundleSchemaVersion =
+  | 'compiled_workflow_bundle.v0.1'
+  | 'compiled_workflow_bundle.v0.2'
+  | 'compiled_workflow_bundle.v0.3';
+
+export interface WorkflowEvidenceMatcherV0_2 {
+  kind: 'contains_case_insensitive';
+  values: string[];
+}
+
+export type WorkflowEvidenceMatcherV0_3 =
+  | WorkflowEvidenceMatcherV0_2
+  | {
+      kind: 'equals_one_of';
+      values: string[];
+    };
+
+export type WorkflowEvidenceMatcher = WorkflowEvidenceMatcherV0_3;
+
 export interface WorkflowSystem {
   id: string;
   title: string;
@@ -37,7 +73,7 @@ export interface WorkflowState {
   terminal?: boolean;
 }
 
-export interface WorkflowAction {
+interface WorkflowActionBase {
   id: string;
   title: string;
   kind: ActionKind;
@@ -64,6 +100,23 @@ export interface WorkflowAction {
   };
   agentId?: string;
 }
+
+export interface WorkflowActionV0_1 extends WorkflowActionBase {
+  requiredEvidenceValues?: never;
+  requiredEvidenceMatchers?: never;
+}
+
+export interface WorkflowActionV0_2 extends WorkflowActionBase {
+  requiredEvidenceValues?: Record<string, WorkflowEvidenceValue>;
+  requiredEvidenceMatchers?: Record<string, WorkflowEvidenceMatcherV0_2>;
+}
+
+export interface WorkflowActionV0_3 extends WorkflowActionBase {
+  requiredEvidenceValues?: Record<string, WorkflowEvidenceValue>;
+  requiredEvidenceMatchers?: Record<string, WorkflowEvidenceMatcherV0_3>;
+}
+
+export type WorkflowAction = WorkflowActionV0_1 | WorkflowActionV0_2 | WorkflowActionV0_3;
 
 export type WorkflowToolParameterType = 'string' | 'number' | 'boolean';
 
@@ -96,8 +149,7 @@ export interface WorkflowTransition {
   actionId: string;
 }
 
-export interface WorkflowDefinition {
-  schemaVersion: 'workflow_definition.v0.1';
+interface WorkflowDefinitionBase {
   workflowId: string;
   version: string;
   title: string;
@@ -112,11 +164,30 @@ export interface WorkflowDefinition {
   events: WorkflowEvent[];
   actors: WorkflowActor[];
   states: WorkflowState[];
-  actions: WorkflowAction[];
   transitions: WorkflowTransition[];
   agents: WorkflowAgent[];
   evaluations: WorkflowEvaluation[];
 }
+
+export interface WorkflowDefinitionV0_1 extends WorkflowDefinitionBase {
+  schemaVersion: 'workflow_definition.v0.1';
+  actions: WorkflowActionV0_1[];
+}
+
+export interface WorkflowDefinitionV0_2 extends WorkflowDefinitionBase {
+  schemaVersion: 'workflow_definition.v0.2';
+  actions: WorkflowActionV0_2[];
+}
+
+export interface WorkflowDefinitionV0_3 extends WorkflowDefinitionBase {
+  schemaVersion: 'workflow_definition.v0.3';
+  actions: WorkflowActionV0_3[];
+}
+
+export type WorkflowDefinition =
+  | WorkflowDefinitionV0_1
+  | WorkflowDefinitionV0_2
+  | WorkflowDefinitionV0_3;
 
 export interface WorkflowMapNode {
   id: string;
@@ -160,7 +231,7 @@ export interface EventSchemasArtifact extends CompiledArtifactHeader {
   events: WorkflowEvent[];
 }
 
-export interface CompiledDecision {
+interface CompiledDecisionBase {
   actionId: string;
   title: string;
   kind: ActionKind;
@@ -173,12 +244,52 @@ export interface CompiledDecision {
   recovery: WorkflowAction['recovery'];
 }
 
-export interface DecisionInventoryArtifact extends CompiledArtifactHeader {
-  schemaVersion: 'decision_inventory.v0.1';
-  decisions: CompiledDecision[];
+export interface CompiledDecisionV0_1 extends CompiledDecisionBase {
+  requiredEvidenceValues?: never;
+  requiredEvidenceMatchers?: never;
+  toolContract?: never;
 }
 
-export interface CompiledToolContract {
+export interface CompiledDecisionV0_2 extends CompiledDecisionBase {
+  requiredEvidenceValues?: Record<string, WorkflowEvidenceValue>;
+  requiredEvidenceMatchers?: Record<string, WorkflowEvidenceMatcherV0_2>;
+  toolContract?: CompiledToolContractV0_2;
+}
+
+export interface CompiledDecisionV0_3 extends CompiledDecisionBase {
+  requiredEvidenceValues?: Record<string, WorkflowEvidenceValue>;
+  requiredEvidenceMatchers?: Record<string, WorkflowEvidenceMatcherV0_3>;
+  toolContract?: CompiledToolContractV0_3;
+}
+
+export type CompiledDecision =
+  | CompiledDecisionV0_1
+  | CompiledDecisionV0_2
+  | CompiledDecisionV0_3;
+
+interface DecisionInventoryArtifactBase extends CompiledArtifactHeader {}
+
+export interface DecisionInventoryArtifactV0_1 extends DecisionInventoryArtifactBase {
+  schemaVersion: 'decision_inventory.v0.1';
+  decisions: CompiledDecisionV0_1[];
+}
+
+export interface DecisionInventoryArtifactV0_2 extends DecisionInventoryArtifactBase {
+  schemaVersion: 'decision_inventory.v0.2';
+  decisions: CompiledDecisionV0_2[];
+}
+
+export interface DecisionInventoryArtifactV0_3 extends DecisionInventoryArtifactBase {
+  schemaVersion: 'decision_inventory.v0.3';
+  decisions: CompiledDecisionV0_3[];
+}
+
+export type DecisionInventoryArtifact =
+  | DecisionInventoryArtifactV0_1
+  | DecisionInventoryArtifactV0_2
+  | DecisionInventoryArtifactV0_3;
+
+interface CompiledToolContractBase {
   actionId: string;
   name: string;
   targetSystemId: string;
@@ -189,10 +300,47 @@ export interface CompiledToolContract {
   parameters?: WorkflowToolParameter[];
 }
 
-export interface ToolContractsArtifact extends CompiledArtifactHeader {
-  schemaVersion: 'tool_contracts.v0.1';
-  tools: CompiledToolContract[];
+export interface CompiledToolContractV0_1 extends CompiledToolContractBase {
+  requiredEvidenceValues?: never;
+  requiredEvidenceMatchers?: never;
 }
+
+export interface CompiledToolContractV0_2 extends CompiledToolContractBase {
+  requiredEvidenceValues?: Record<string, WorkflowEvidenceValue>;
+  requiredEvidenceMatchers?: Record<string, WorkflowEvidenceMatcherV0_2>;
+}
+
+export interface CompiledToolContractV0_3 extends CompiledToolContractBase {
+  requiredEvidenceValues?: Record<string, WorkflowEvidenceValue>;
+  requiredEvidenceMatchers?: Record<string, WorkflowEvidenceMatcherV0_3>;
+}
+
+export type CompiledToolContract =
+  | CompiledToolContractV0_1
+  | CompiledToolContractV0_2
+  | CompiledToolContractV0_3;
+
+interface ToolContractsArtifactBase extends CompiledArtifactHeader {}
+
+export interface ToolContractsArtifactV0_1 extends ToolContractsArtifactBase {
+  schemaVersion: 'tool_contracts.v0.1';
+  tools: CompiledToolContractV0_1[];
+}
+
+export interface ToolContractsArtifactV0_2 extends ToolContractsArtifactBase {
+  schemaVersion: 'tool_contracts.v0.2';
+  tools: CompiledToolContractV0_2[];
+}
+
+export interface ToolContractsArtifactV0_3 extends ToolContractsArtifactBase {
+  schemaVersion: 'tool_contracts.v0.3';
+  tools: CompiledToolContractV0_3[];
+}
+
+export type ToolContractsArtifact =
+  | ToolContractsArtifactV0_1
+  | ToolContractsArtifactV0_2
+  | ToolContractsArtifactV0_3;
 
 export interface CompiledAgentContract extends WorkflowAgent {
   actionAutonomy: Array<{
@@ -206,7 +354,7 @@ export interface AgentContractsArtifact extends CompiledArtifactHeader {
   agents: CompiledAgentContract[];
 }
 
-export interface CompiledApprovalSurface {
+interface CompiledApprovalSurfaceBase {
   actionId: string;
   title: string;
   mode: Exclude<AutonomyClass, 'auto_allow'>;
@@ -215,10 +363,47 @@ export interface CompiledApprovalSurface {
   recovery: WorkflowAction['recovery'];
 }
 
-export interface ApprovalSurfacesArtifact extends CompiledArtifactHeader {
-  schemaVersion: 'approval_surfaces.v0.1';
-  actions: CompiledApprovalSurface[];
+export interface CompiledApprovalSurfaceV0_1 extends CompiledApprovalSurfaceBase {
+  requiredEvidenceValues?: never;
+  requiredEvidenceMatchers?: never;
 }
+
+export interface CompiledApprovalSurfaceV0_2 extends CompiledApprovalSurfaceBase {
+  requiredEvidenceValues?: Record<string, WorkflowEvidenceValue>;
+  requiredEvidenceMatchers?: Record<string, WorkflowEvidenceMatcherV0_2>;
+}
+
+export interface CompiledApprovalSurfaceV0_3 extends CompiledApprovalSurfaceBase {
+  requiredEvidenceValues?: Record<string, WorkflowEvidenceValue>;
+  requiredEvidenceMatchers?: Record<string, WorkflowEvidenceMatcherV0_3>;
+}
+
+export type CompiledApprovalSurface =
+  | CompiledApprovalSurfaceV0_1
+  | CompiledApprovalSurfaceV0_2
+  | CompiledApprovalSurfaceV0_3;
+
+interface ApprovalSurfacesArtifactBase extends CompiledArtifactHeader {}
+
+export interface ApprovalSurfacesArtifactV0_1 extends ApprovalSurfacesArtifactBase {
+  schemaVersion: 'approval_surfaces.v0.1';
+  actions: CompiledApprovalSurfaceV0_1[];
+}
+
+export interface ApprovalSurfacesArtifactV0_2 extends ApprovalSurfacesArtifactBase {
+  schemaVersion: 'approval_surfaces.v0.2';
+  actions: CompiledApprovalSurfaceV0_2[];
+}
+
+export interface ApprovalSurfacesArtifactV0_3 extends ApprovalSurfacesArtifactBase {
+  schemaVersion: 'approval_surfaces.v0.3';
+  actions: CompiledApprovalSurfaceV0_3[];
+}
+
+export type ApprovalSurfacesArtifact =
+  | ApprovalSurfacesArtifactV0_1
+  | ApprovalSurfacesArtifactV0_2
+  | ApprovalSurfacesArtifactV0_3;
 
 export interface EvaluationManifestArtifact extends CompiledArtifactHeader {
   schemaVersion: 'evaluation_manifest.v0.1';
@@ -242,18 +427,46 @@ export interface GovernedInteractionSurface {
   operations: GovernedInteractionOperation[];
 }
 
-export interface GovernedInteractionBundle extends CompiledArtifactHeader {
-  schemaVersion: 'governed_interaction_bundle.v0.1';
+interface GovernedInteractionBundleBase extends CompiledArtifactHeader {
   language: 'create-something/control';
   runtimeVersion: '0.1.0';
   entrySurfaceId: string;
   capabilities: GovernedInteractionCapability[];
   surfaces: GovernedInteractionSurface[];
-  actions: CompiledDecision[];
 }
 
-export interface CompiledWorkflowBundle {
-  schemaVersion: 'compiled_workflow_bundle.v0.1';
+export type GovernedInteractionDecisionV0_1 = Omit<CompiledDecisionV0_1, 'toolContract'>;
+
+export type GovernedInteractionDecisionV0_2 = Omit<CompiledDecisionV0_2, 'toolContract'>;
+
+export type GovernedInteractionDecisionV0_3 = Omit<CompiledDecisionV0_3, 'toolContract'>;
+
+export type GovernedInteractionDecision =
+  | GovernedInteractionDecisionV0_1
+  | GovernedInteractionDecisionV0_2
+  | GovernedInteractionDecisionV0_3;
+
+export interface GovernedInteractionBundleV0_1 extends GovernedInteractionBundleBase {
+  schemaVersion: 'governed_interaction_bundle.v0.1';
+  actions: GovernedInteractionDecisionV0_1[];
+}
+
+export interface GovernedInteractionBundleV0_2 extends GovernedInteractionBundleBase {
+  schemaVersion: 'governed_interaction_bundle.v0.2';
+  actions: GovernedInteractionDecisionV0_2[];
+}
+
+export interface GovernedInteractionBundleV0_3 extends GovernedInteractionBundleBase {
+  schemaVersion: 'governed_interaction_bundle.v0.3';
+  actions: GovernedInteractionDecisionV0_3[];
+}
+
+export type GovernedInteractionBundle =
+  | GovernedInteractionBundleV0_1
+  | GovernedInteractionBundleV0_2
+  | GovernedInteractionBundleV0_3;
+
+interface CompiledWorkflowBundleBase {
   compilerVersion: string;
   workflowId: string;
   workflowVersion: string;
@@ -265,13 +478,38 @@ export interface CompiledWorkflowBundle {
   runtimeTargets: RuntimeTargetsArtifact;
   objectSchemas: ObjectSchemasArtifact;
   eventSchemas: EventSchemasArtifact;
-  decisionInventory: DecisionInventoryArtifact;
-  toolContracts: ToolContractsArtifact;
   agentContracts: AgentContractsArtifact;
-  approvalSurfaces: ApprovalSurfacesArtifact;
   evaluationManifest: EvaluationManifestArtifact;
-  governedInteraction: GovernedInteractionBundle;
 }
+
+export interface CompiledWorkflowBundleV0_1 extends CompiledWorkflowBundleBase {
+  schemaVersion: 'compiled_workflow_bundle.v0.1';
+  toolContracts: ToolContractsArtifactV0_1;
+  decisionInventory: DecisionInventoryArtifactV0_1;
+  governedInteraction: GovernedInteractionBundleV0_1;
+  approvalSurfaces: ApprovalSurfacesArtifactV0_1;
+}
+
+export interface CompiledWorkflowBundleV0_2 extends CompiledWorkflowBundleBase {
+  schemaVersion: 'compiled_workflow_bundle.v0.2';
+  toolContracts: ToolContractsArtifactV0_2;
+  decisionInventory: DecisionInventoryArtifactV0_2;
+  governedInteraction: GovernedInteractionBundleV0_2;
+  approvalSurfaces: ApprovalSurfacesArtifactV0_2;
+}
+
+export interface CompiledWorkflowBundleV0_3 extends CompiledWorkflowBundleBase {
+  schemaVersion: 'compiled_workflow_bundle.v0.3';
+  toolContracts: ToolContractsArtifactV0_3;
+  decisionInventory: DecisionInventoryArtifactV0_3;
+  governedInteraction: GovernedInteractionBundleV0_3;
+  approvalSurfaces: ApprovalSurfacesArtifactV0_3;
+}
+
+export type CompiledWorkflowBundle =
+  | CompiledWorkflowBundleV0_1
+  | CompiledWorkflowBundleV0_2
+  | CompiledWorkflowBundleV0_3;
 
 export interface WorkflowCompilationDiagnostic {
   code: string;
@@ -312,7 +550,37 @@ export interface WorkflowReplayReceipt {
   receiptFields: Record<string, unknown>;
 }
 
-export interface WorkflowReplayResult {
+export interface WorkflowEvidenceMismatch {
+  field: string;
+  expected: WorkflowEvidenceValue;
+  actual: unknown;
+}
+
+export interface WorkflowEvidenceMatcherMismatchV0_2 {
+  field: string;
+  matcher: WorkflowEvidenceMatcherV0_2;
+  actual: unknown;
+}
+
+export interface WorkflowEvidenceMatcherMismatchV0_3 {
+  field: string;
+  matcher: WorkflowEvidenceMatcherV0_3;
+  actual: unknown;
+}
+
+export type WorkflowEvidenceMatcherMismatch = WorkflowEvidenceMatcherMismatchV0_3;
+
+type WorkflowReplayReasonCodeV0_1 =
+  | 'ACTION_ALLOWED'
+  | 'APPROVAL_REQUIRED'
+  | 'POLICY_BLOCKED'
+  | 'INSUFFICIENT_EVIDENCE'
+  | 'UNKNOWN_ACTION'
+  | 'UNKNOWN_ACTOR'
+  | 'ACTOR_NOT_AUTHORIZED'
+  | 'INVALID_TRANSITION';
+
+interface WorkflowReplayResultBase {
   caseId: string;
   title: string;
   actionId: string;
@@ -323,15 +591,6 @@ export interface WorkflowReplayResult {
   expectedOutcome: ReplayOutcome;
   expectationMatched: boolean;
   canExecute: boolean;
-  reasonCode:
-    | 'ACTION_ALLOWED'
-    | 'APPROVAL_REQUIRED'
-    | 'POLICY_BLOCKED'
-    | 'INSUFFICIENT_EVIDENCE'
-    | 'UNKNOWN_ACTION'
-    | 'UNKNOWN_ACTOR'
-    | 'ACTOR_NOT_AUTHORIZED'
-    | 'INVALID_TRANSITION';
   authority: string;
   owner: string;
   evidenceReferences: string[];
@@ -340,9 +599,40 @@ export interface WorkflowReplayResult {
   receipt: WorkflowReplayReceipt;
 }
 
+export interface WorkflowReplayResultV0_1 extends WorkflowReplayResultBase {
+  reasonCode: WorkflowReplayReasonCodeV0_1;
+}
+
+export interface WorkflowReplayResultV0_2 extends WorkflowReplayResultBase {
+  reasonCode:
+    | 'ACTION_ALLOWED'
+    | 'APPROVAL_REQUIRED'
+    | 'POLICY_BLOCKED'
+    | 'INSUFFICIENT_EVIDENCE'
+    | 'EVIDENCE_VALUE_MISMATCH'
+    | 'EVIDENCE_MATCHER_MISMATCH'
+    | 'UNKNOWN_ACTION'
+    | 'UNKNOWN_ACTOR'
+    | 'ACTOR_NOT_AUTHORIZED'
+    | 'INVALID_TRANSITION';
+  evidenceMismatches: WorkflowEvidenceMismatch[];
+  evidenceMatcherMismatches: WorkflowEvidenceMatcherMismatchV0_2[];
+}
+
+export interface WorkflowReplayResultV0_3 extends WorkflowReplayResultBase {
+  reasonCode: WorkflowReplayResultV0_2['reasonCode'];
+  evidenceMismatches: WorkflowEvidenceMismatch[];
+  evidenceMatcherMismatches: WorkflowEvidenceMatcherMismatchV0_3[];
+}
+
+export type WorkflowReplayResult =
+  | WorkflowReplayResultV0_1
+  | WorkflowReplayResultV0_2
+  | WorkflowReplayResultV0_3;
+
 export type WorkflowAdapterDisposition = 'pass' | 'wait' | 'stop';
 
-export type WorkflowAdapterReasonCode =
+export type WorkflowAdapterReasonCodeV0_1 =
   | 'TOOL_CALL_READY'
   | 'APPROVAL_REQUIRED'
   | 'AUTHENTICATED_APPROVAL_REQUIRED'
@@ -352,14 +642,24 @@ export type WorkflowAdapterReasonCode =
   | 'INVALID_TOOL_ARGUMENTS'
   | 'INCOMPATIBLE_TOOL_NAME';
 
+export type WorkflowAdapterReasonCodeV0_3 =
+  | WorkflowAdapterReasonCodeV0_1
+  | 'UNVERIFIED_COMPILED_BUNDLE';
+
+export type WorkflowAdapterReasonCode = WorkflowAdapterReasonCodeV0_3;
+
 export interface WorkflowAdapterDiagnostic {
   code: 'MISSING_TOOL_ARGUMENT' | 'INVALID_TOOL_ARGUMENT_TYPE';
   path: string;
   message: string;
 }
 
-export interface WorkflowAdapterPlan {
-  schemaVersion: 'workflow_adapter_plan.v0.1';
+export type WorkflowAdapterPlanSchemaVersion =
+  | 'workflow_adapter_plan.v0.1'
+  | 'workflow_adapter_plan.v0.2'
+  | 'workflow_adapter_plan.v0.3';
+
+interface WorkflowAdapterPlanBase<TReasonCode extends WorkflowAdapterReasonCode> {
   adapter: 'mcp' | 'openai.responses';
   workflowId: string;
   workflowVersion: string;
@@ -367,9 +667,8 @@ export interface WorkflowAdapterPlan {
   caseId: string;
   actionId: string;
   disposition: WorkflowAdapterDisposition;
-  reasonCode: WorkflowAdapterReasonCode;
+  reasonCode: TReasonCode;
   governanceOutcome: ReplayOutcome;
-  governanceReasonCode: WorkflowReplayResult['reasonCode'];
   canInvoke: boolean;
   authority: string;
   owner: string;
@@ -378,7 +677,30 @@ export interface WorkflowAdapterPlan {
   diagnostics: WorkflowAdapterDiagnostic[];
 }
 
-export interface McpToolCallPlan extends WorkflowAdapterPlan {
+export interface WorkflowAdapterPlanV0_1
+  extends WorkflowAdapterPlanBase<WorkflowAdapterReasonCodeV0_1> {
+  schemaVersion: 'workflow_adapter_plan.v0.1';
+  governanceReasonCode: WorkflowReplayResultV0_1['reasonCode'];
+}
+
+export interface WorkflowAdapterPlanV0_2
+  extends WorkflowAdapterPlanBase<WorkflowAdapterReasonCodeV0_1> {
+  schemaVersion: 'workflow_adapter_plan.v0.2';
+  governanceReasonCode: WorkflowReplayResultV0_2['reasonCode'];
+}
+
+export interface WorkflowAdapterPlanV0_3
+  extends WorkflowAdapterPlanBase<WorkflowAdapterReasonCodeV0_3> {
+  schemaVersion: 'workflow_adapter_plan.v0.3';
+  governanceReasonCode: WorkflowReplayResult['reasonCode'];
+}
+
+export type WorkflowAdapterPlan =
+  | WorkflowAdapterPlanV0_1
+  | WorkflowAdapterPlanV0_2
+  | WorkflowAdapterPlanV0_3;
+
+export type McpToolCallPlan = WorkflowAdapterPlan & {
   adapter: 'mcp';
   invocation?: {
     operation: 'tools/call';
@@ -388,7 +710,7 @@ export interface McpToolCallPlan extends WorkflowAdapterPlan {
       arguments: Record<string, string | number | boolean>;
     };
   };
-}
+};
 
 export interface OpenAIResponsesFunctionTool {
   type: 'function';
@@ -420,18 +742,41 @@ export interface OpenAIResponsesRequest {
   store: false;
 }
 
-export interface OpenAIResponsesRequestPlan extends WorkflowAdapterPlan {
+export type OpenAIResponsesRequestPlan = WorkflowAdapterPlan & {
   adapter: 'openai.responses';
   expectedArguments?: Record<string, string | number | boolean>;
   request?: OpenAIResponsesRequest;
-}
+};
 
-export interface WorkflowReplayReport extends CompiledArtifactHeader {
-  schemaVersion: 'workflow_replay_report.v0.1';
-  cases: WorkflowReplayResult[];
+export type WorkflowReplayReportSchemaVersion =
+  | 'workflow_replay_report.v0.1'
+  | 'workflow_replay_report.v0.2'
+  | 'workflow_replay_report.v0.3';
+
+interface WorkflowReplayReportBase extends CompiledArtifactHeader {
   counts: Record<ReplayOutcome, number>;
   allExpectationsMatched: boolean;
 }
+
+export interface WorkflowReplayReportV0_1 extends WorkflowReplayReportBase {
+  schemaVersion: 'workflow_replay_report.v0.1';
+  cases: WorkflowReplayResultV0_1[];
+}
+
+export interface WorkflowReplayReportV0_2 extends WorkflowReplayReportBase {
+  schemaVersion: 'workflow_replay_report.v0.2';
+  cases: WorkflowReplayResultV0_2[];
+}
+
+export interface WorkflowReplayReportV0_3 extends WorkflowReplayReportBase {
+  schemaVersion: 'workflow_replay_report.v0.3';
+  cases: WorkflowReplayResultV0_3[];
+}
+
+export type WorkflowReplayReport =
+  | WorkflowReplayReportV0_1
+  | WorkflowReplayReportV0_2
+  | WorkflowReplayReportV0_3;
 
 export interface EvidenceLedgerArtifact extends CompiledArtifactHeader {
   schemaVersion: 'evidence_ledger.v0.1';

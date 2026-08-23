@@ -11,6 +11,8 @@ test('the shipped Codex skill keeps the paired terminal workflow local, inspecta
   assert.ok(manifest.files.includes('skills'));
   assert.match(skill, /^---\nname: workflow-compiler\n/m);
   assert.match(skill, /npx workflow-compiler init --template local-runbook --dir/i);
+  assert.match(skill, /npx workflow-compiler init --template marketplace-submission --dir/i);
+  assert.match(skill, /Airtable\s+Automation handoff/i);
   assert.match(skill, /cd WORKFLOW_DIRECTORY/i);
   assert.match(skill, /npx workflow-compiler validate --workflow workflow.json/i);
   assert.match(
@@ -27,6 +29,8 @@ test('the public quickstart documents the paired local builder loop without a ho
 
   assert.match(readme, /Codex paired terminal quickstart/i);
   assert.match(readme, /workflow-compiler init --template local-runbook --dir/i);
+  assert.match(readme, /workflow-compiler init --template marketplace-submission --dir/i);
+  assert.match(readme, /submission-to-review/i);
   assert.match(readme, /workflow-compiler validate --workflow workflow.json/i);
   assert.match(readme, /workflow-compiler simulate --workflow workflow.json --cases cases.json/i);
   assert.match(readme, /workflow-compiler explain --workflow workflow.json --cases cases.json/i);

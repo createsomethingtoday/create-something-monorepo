@@ -9,7 +9,7 @@ It gives builders a composable governance layer below any hosted control plane. 
 Install the builder artifact in the repository where the workflow will live:
 
 ```bash
-npm install @create-something/workflow-compiler@0.2.0
+npm install @create-something/workflow-compiler@0.3.0
 ```
 
 Copy the shipped Codex skill into that repository, then ask Codex to turn a recurring operating task into a runbook. Codex can propose and revise the local files; the terminal commands below remain the deterministic proof surface:
@@ -28,6 +28,28 @@ npx workflow-compiler explain --workflow workflow.json --cases cases.json
 
 `init` refuses an existing target directory. The starter gives Codex a local, versioned contract with one permitted step, one operator-approval boundary, and one explicit stop. `validate`, `simulate`, and `explain` make that contract inspectable before a builder connects any external system.
 
+### Marketplace submission-to-review template
+
+Use the second starter when a walkthrough needs to show the complete app-form
+and review path: form validation, published-site validation, Validator App
+preflight, confirmed Airtable Automation handoff, reviewer wait, and a blocked
+creator message.
+
+```bash
+npx workflow-compiler init --template marketplace-submission --dir ./marketplace-submission
+cd ./marketplace-submission
+npx workflow-compiler validate --workflow workflow.json
+npx workflow-compiler simulate --workflow workflow.json --cases cases.json
+npx workflow-compiler explain --workflow workflow.json --cases cases.json
+```
+
+The template generates a source-bound `SOURCES.md`, a runbook, a playbook, and
+sanitized replay fixtures. Its “Airtable Automation handoff” requires a
+confirmed state, asset, version, and an owning review-ready status receipt; a
+webhook receipt alone remains processing evidence. The compiler neither sends a webhook
+nor reads Airtable. The source pointers identify the owning repository surfaces;
+they are not proof of a live submission, validation, review, or delivery.
+
 This loop does not execute live actions, contact a provider, read credentials, or make an approval decision. A future execution host must supply its own authenticated transport, policy review, result validation, and receipt retention. The package is designed for Codex and OpenAI-compatible workflows, but it is not an official OpenAI partnership, endorsement, certification, or hosted service.
 
 ## Five-minute quickstart
@@ -35,7 +57,7 @@ This loop does not execute live actions, contact a provider, read credentials, o
 Install the package with a supported Node release:
 
 ```bash
-npm install @create-something/workflow-compiler@0.2.0
+npm install @create-something/workflow-compiler@0.3.0
 ```
 
 Create `workflow.json` and optionally `cases.json` using the versioned schemas documented in [API.md](./API.md). Compile and independently verify a local bundle:
@@ -97,11 +119,11 @@ import {
 
 ## Governed interaction IR
 
-`governed_interaction_bundle.v0.1` is a versioned JSON intermediate representation for portable, policy-bounded desktop interactions. It is deliberately not a general-purpose programming language. A bundle declares its exact language and runtime version, one or more semantic surfaces, a finite capability inventory, finite local operations, and the compiled authority/evidence/approval/receipt/recovery contract for each workflow action.
+`governed_interaction_bundle.v0.1`, `governed_interaction_bundle.v0.2`, and `governed_interaction_bundle.v0.3` are versioned JSON intermediate representations for portable, policy-bounded desktop interactions. They are deliberately not a general-purpose programming language. A bundle declares its exact language and runtime version, one or more semantic surfaces, a finite capability inventory, finite local operations, and the compiled authority/evidence/approval/receipt/recovery contract for each workflow action. Version `v0.2` carries exact-evidence and substring-matcher constraints from `workflow_definition.v0.2`; v0.3 adds exact enum matching from `workflow_definition.v0.3`; v0.1 rejects constrained fields rather than ignoring them.
 
-The `create-something/control` runtime currently permits only four read-only capabilities (`workflow.inspect`, `replay.inspect`, `receipt.inspect`, and `interaction.select`) and one local operation (`select_replay_case`). Parsing rejects unknown fields, versions, capabilities, references, duplicate identifiers, executable operations, and incomplete approval ownership. Hosts publish their supported runtime/capability/operation contract and receive one normalized compatibility decision; they do not reinterpret workflow authority.
+The `create-something/control` runtime currently permits only four read-only capabilities (`workflow.inspect`, `replay.inspect`, `receipt.inspect`, and `interaction.select`) and one local operation (`select_replay_case`). Parsing rejects unknown fields, versions, capabilities, references, duplicate identifiers, executable operations, and incomplete approval ownership. New hosts publish their supported interaction-schema, runtime, capability, and operation contract and receive one normalized compatibility decision; a bundle whose schema is not explicitly listed is incompatible. Existing hosts without an interaction-schema list preserve v0.1-only support. Hosts do not reinterpret workflow authority.
 
-The compiler emits the same content-hashed `governed-interaction.json` for Atlas Studio and Client Workspace. The trusted desktop application contains the interpreter and renderer. A delivery may contain data governed by the IR, but it cannot introduce JavaScript, native plugins, commands, filesystem roots, origins, or ambient environment access.
+The compiler emits the same content-hashed `governed-interaction.json` for Atlas Studio and Client Workspace. Historical v0.1 inspection envelopes can contain only a v0.1 interaction bundle; v0.2 envelopes report v0.1/v0.2 bundles, and v0.3 envelopes report v0.3 bundles with a v0.2 compatibility receipt. The trusted desktop application contains the interpreter and renderer. A delivery may contain data governed by the IR, but it cannot introduce JavaScript, native plugins, commands, filesystem roots, origins, or ambient environment access.
 
 ## Builder adapter plans
 

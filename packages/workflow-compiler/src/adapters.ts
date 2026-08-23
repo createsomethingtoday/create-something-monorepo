@@ -6,11 +6,17 @@ import type {
   OpenAIResponsesRequestPlan,
   WorkflowAdapterDiagnostic,
   WorkflowAdapterPlan,
+  WorkflowAdapterPlanV0_1,
+  WorkflowAdapterPlanV0_3,
   WorkflowReplayCase,
-  WorkflowReplayResult
+  WorkflowReplayResult,
+  WorkflowReplayResultV0_1,
+  WorkflowReplayResultV0_2,
+  WorkflowReplayResultV0_3
 } from './types.js';
+import { isCompilerOwnedBundle } from './compiled-bundle-provenance.js';
 import { parseWorkflowReplayManifest } from './input.js';
-import { replayWorkflow } from './replay.js';
+import { replayWorkflow, validateCompiledBundleForReplay } from './replay.js';
 
 export type WorkflowAdapterErrorCode = 'INVALID_ADAPTER_CONFIGURATION' | 'INVALID_ADAPTER_INPUT';
 
@@ -28,6 +34,16 @@ function evaluateReplayCase(
   bundle: CompiledWorkflowBundle,
   input: unknown
 ): { replayCase: WorkflowReplayCase; result: WorkflowReplayResult } {
+  const replayCase = parseReplayCase(bundle, input);
+  const { report } = replayWorkflow(bundle, {
+    schemaVersion: 'workflow_replay_manifest.v0.1',
+    workflowId: bundle.workflowId,
+    cases: [replayCase]
+  });
+  return { replayCase, result: report.cases[0] };
+}
+
+function parseReplayCase(bundle: CompiledWorkflowBundle, input: unknown): WorkflowReplayCase {
   let snapshot: unknown;
   try {
     snapshot = structuredClone(input);
@@ -42,13 +58,12 @@ function evaluateReplayCase(
     workflowId: bundle.workflowId,
     cases: [snapshot]
   });
-  const { report } = replayWorkflow(bundle, manifest);
-  return { replayCase: manifest.cases[0], result: report.cases[0] };
+  return manifest.cases[0];
 }
 
 function disposition(
   result: WorkflowReplayResult
-): Pick<WorkflowAdapterPlan, 'disposition' | 'reasonCode'> {
+): Pick<WorkflowAdapterPlanV0_1, 'disposition' | 'reasonCode'> {
   if (result.observedOutcome === 'pass') {
     return { disposition: 'pass', reasonCode: 'TOOL_CALL_READY' };
   }
@@ -64,8 +79,7 @@ function basePlan(
   result: WorkflowReplayResult
 ): WorkflowAdapterPlan {
   const mapped = disposition(result);
-  return {
-    schemaVersion: 'workflow_adapter_plan.v0.1',
+  const common = {
     adapter,
     workflowId: bundle.workflowId,
     workflowVersion: bundle.workflowVersion,
@@ -74,13 +88,31 @@ function basePlan(
     actionId: result.actionId,
     ...mapped,
     governanceOutcome: result.observedOutcome,
-    governanceReasonCode: result.reasonCode,
     canInvoke: false,
     authority: result.authority,
     owner: result.owner,
     recovery: result.recovery,
     receipt: result.receipt,
     diagnostics: []
+  };
+  if (bundle.schemaVersion === 'compiled_workflow_bundle.v0.3') {
+    return {
+      schemaVersion: 'workflow_adapter_plan.v0.3',
+      ...common,
+      governanceReasonCode: result.reasonCode as WorkflowReplayResultV0_3['reasonCode']
+    };
+  }
+  if (bundle.schemaVersion === 'compiled_workflow_bundle.v0.2') {
+    return {
+      schemaVersion: 'workflow_adapter_plan.v0.2',
+      ...common,
+      governanceReasonCode: result.reasonCode as WorkflowReplayResultV0_2['reasonCode']
+    };
+  }
+  return {
+    schemaVersion: 'workflow_adapter_plan.v0.1',
+    ...common,
+    governanceReasonCode: result.reasonCode as WorkflowReplayResultV0_1['reasonCode']
   };
 }
 
@@ -134,6 +166,10 @@ function readyToolPlan(
   tool?: CompiledToolContract;
   arguments?: Record<string, string | number | boolean>;
 } {
+  if (!isCompilerOwnedBundle(bundle)) {
+    validateCompiledBundleForReplay(bundle);
+    return { plan: unverifiedBundlePlan(adapter, bundle, input) };
+  }
   const { replayCase, result } = evaluateReplayCase(bundle, input);
   const plan = basePlan(adapter, bundle, result);
   if (plan.disposition !== 'pass') return { plan };
@@ -191,6 +227,55 @@ function readyToolPlan(
     plan: { ...plan, canInvoke: true },
     tool: declaredTool,
     arguments: compiledArguments.arguments
+  };
+}
+
+function unverifiedBundlePlan(
+  adapter: WorkflowAdapterPlan['adapter'],
+  bundle: CompiledWorkflowBundle,
+  input: unknown,
+): WorkflowAdapterPlanV0_3 {
+  const replayCase = parseReplayCase(bundle, input);
+  const recovery = {
+    mode: 'escalate' as const,
+    owner: bundle.owners.workflow,
+    path: 'Stop execution and recompile trusted source in the current process before planning an invocation.',
+  };
+  return {
+    schemaVersion: 'workflow_adapter_plan.v0.3',
+    adapter,
+    workflowId: bundle.workflowId,
+    workflowVersion: bundle.workflowVersion,
+    definitionHash: bundle.definitionHash,
+    caseId: replayCase.caseId,
+    actionId: replayCase.actionId,
+    disposition: 'stop',
+    reasonCode: 'UNVERIFIED_COMPILED_BUNDLE',
+    governanceOutcome: 'blocked',
+    governanceReasonCode: 'POLICY_BLOCKED',
+    canInvoke: false,
+    authority: bundle.owners.workflow,
+    owner: bundle.owners.workflow,
+    recovery,
+    receipt: {
+      schemaVersion: 'workflow_replay_receipt.v0.1',
+      workflowId: bundle.workflowId,
+      workflowVersion: bundle.workflowVersion,
+      definitionHash: bundle.definitionHash,
+      caseId: replayCase.caseId,
+      actionId: replayCase.actionId,
+      actorId: replayCase.actorId,
+      correlationId: replayCase.caseId,
+      outcome: 'blocked',
+      receiptFields: {
+        workflow_id: bundle.workflowId,
+        action_id: replayCase.actionId,
+        actor_id: replayCase.actorId,
+        correlation_id: replayCase.caseId,
+        outcome: 'blocked',
+      },
+    },
+    diagnostics: [],
   };
 }
 

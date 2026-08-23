@@ -2,7 +2,12 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-import { parseWorkflowDefinition, parseWorkflowReplayManifest } from '../dist/index.js';
+import {
+  migrateWorkflowDefinition,
+  migrateWorkflowDefinitionToV0_3,
+  parseWorkflowDefinition,
+  parseWorkflowReplayManifest
+} from '../dist/index.js';
 
 const workflowFixture = new URL('../fixtures/marketplace/workflow.json', import.meta.url);
 const replayFixture = new URL('../fixtures/marketplace/cases.json', import.meta.url);
@@ -27,7 +32,7 @@ test('the public workflow parser fails closed on an unknown schema version', asy
         {
           code: 'UNSUPPORTED_SCHEMA_VERSION',
           path: '$.schemaVersion',
-          message: 'Expected workflow_definition.v0.1.'
+          message: 'Expected workflow_definition.v0.1, workflow_definition.v0.2, or workflow_definition.v0.3.'
         }
       ]);
       return true;
@@ -118,6 +123,207 @@ test('the public workflow parser accepts legacy tools and validates declared par
       return true;
     }
   );
+});
+
+test('the public workflow parser rejects duplicate evidence matcher values', async () => {
+  const workflow = JSON.parse(await readFile(workflowFixture, 'utf8'));
+  workflow.schemaVersion = 'workflow_definition.v0.2';
+  workflow.actions[0].requiredEvidenceMatchers = {
+    published_url: {
+      kind: 'contains_case_insensitive',
+      values: ['example.com', 'example.com']
+    }
+  };
+
+  assert.throws(
+    () => parseWorkflowDefinition(workflow),
+    (error) => {
+      assert.equal(error.name, 'WorkflowInputValidationError');
+      assert.deepEqual(error.diagnostics, [
+        {
+          code: 'DUPLICATE_IDENTIFIER',
+          path: '$.actions[0].requiredEvidenceMatchers.published_url.values[1]',
+          message:
+            'Duplicate identifier example.com; first declared at $.actions[0].requiredEvidenceMatchers.published_url.values[0].'
+        }
+      ]);
+      return true;
+    }
+  );
+});
+
+test('the public workflow parser reserves exact-enum evidence matchers for v0.3', async () => {
+  const legacy = JSON.parse(await readFile(workflowFixture, 'utf8'));
+  legacy.schemaVersion = 'workflow_definition.v0.2';
+  legacy.actions[0].requiredEvidenceMatchers = {
+    published_url: { kind: 'equals_one_of', values: ['https://example.test'] }
+  };
+
+  assert.throws(
+    () => parseWorkflowDefinition(legacy),
+    (error) => {
+      assert.equal(error.name, 'WorkflowInputValidationError');
+      assert.deepEqual(error.diagnostics, [
+        {
+          code: 'INVALID_VALUE',
+          path: '$.actions[0].requiredEvidenceMatchers.published_url.kind',
+          message: 'Expected one of: contains_case_insensitive.'
+        }
+      ]);
+      return true;
+    }
+  );
+
+  const v03 = structuredClone(legacy);
+  v03.schemaVersion = 'workflow_definition.v0.3';
+  assert.equal(parseWorkflowDefinition(v03).schemaVersion, 'workflow_definition.v0.3');
+});
+
+test('the public workflow parser rejects unknown evidence matcher fields', async () => {
+  const workflow = JSON.parse(await readFile(workflowFixture, 'utf8'));
+  workflow.schemaVersion = 'workflow_definition.v0.2';
+  workflow.actions[0].requiredEvidenceMatchers = {
+    published_url: {
+      kind: 'contains_case_insensitive',
+      values: ['example.com'],
+      typo: true
+    }
+  };
+
+  assert.throws(
+    () => parseWorkflowDefinition(workflow),
+    (error) => {
+      assert.equal(error.name, 'WorkflowInputValidationError');
+      assert.deepEqual(error.diagnostics, [
+        {
+          code: 'INVALID_VALUE',
+          path: '$.actions[0].requiredEvidenceMatchers.published_url',
+          message: 'Evidence matcher fields must be kind and values only (unknown: typo).'
+        }
+      ]);
+      return true;
+    }
+  );
+});
+
+test('the public workflow parser rejects misspelled evidence-constraint fields', async () => {
+  const workflow = JSON.parse(await readFile(workflowFixture, 'utf8'));
+  workflow.schemaVersion = 'workflow_definition.v0.2';
+  workflow.actions[0].requiredEvidenceValue = { published_url: 'https://example.com' };
+  workflow.actions[0].requiredEvidenceMatcher = {
+    published_url: { kind: 'contains_case_insensitive', values: ['example.com'] }
+  };
+
+  assert.throws(
+    () => parseWorkflowDefinition(workflow),
+    (error) => {
+      assert.equal(error.name, 'WorkflowInputValidationError');
+      assert.deepEqual(error.diagnostics, [
+        {
+          code: 'INVALID_VALUE',
+          path: '$.actions[0].requiredEvidenceMatcher',
+          message: 'Unknown action field requiredEvidenceMatcher.'
+        },
+        {
+          code: 'INVALID_VALUE',
+          path: '$.actions[0].requiredEvidenceValue',
+          message: 'Unknown action field requiredEvidenceValue.'
+        }
+      ]);
+      return true;
+    }
+  );
+});
+
+test('the public workflow parser requires a constrained schema for evidence constraints', async () => {
+  const workflow = JSON.parse(await readFile(workflowFixture, 'utf8'));
+  workflow.actions[0].requiredEvidenceValues = { published_url: 'https://example.com' };
+
+  assert.throws(
+    () => parseWorkflowDefinition(workflow),
+    (error) => {
+      assert.equal(error.name, 'WorkflowInputValidationError');
+      assert.deepEqual(error.diagnostics, [
+        {
+          code: 'INVALID_VALUE',
+          path: '$.actions[0].requiredEvidenceValues',
+          message: 'Evidence constraints require workflow_definition.v0.2 or workflow_definition.v0.3.'
+        }
+      ]);
+      return true;
+    }
+  );
+});
+
+test('the public workflow parser rejects non-plain evidence-constraint maps', async () => {
+  const workflow = JSON.parse(await readFile(workflowFixture, 'utf8'));
+  workflow.schemaVersion = 'workflow_definition.v0.2';
+  workflow.actions[0].requiredEvidenceValues = new Map([['published_url', 'https://example.com']]);
+  workflow.actions[0].requiredEvidenceMatchers = new Map([
+    ['published_url', { kind: 'contains_case_insensitive', values: ['example.com'] }]
+  ]);
+
+  assert.throws(
+    () => parseWorkflowDefinition(workflow),
+    (error) => {
+      assert.equal(error.name, 'WorkflowInputValidationError');
+      assert.deepEqual(error.diagnostics, [
+        {
+          code: 'INVALID_TYPE',
+          path: '$.actions[0].requiredEvidenceValues',
+          message: 'Expected an object.'
+        },
+        {
+          code: 'INVALID_TYPE',
+          path: '$.actions[0].requiredEvidenceMatchers',
+          message: 'Expected an object.'
+        }
+      ]);
+      return true;
+    }
+  );
+});
+
+test('the public workflow parser rejects empty exact evidence values', async () => {
+  const workflow = JSON.parse(await readFile(workflowFixture, 'utf8'));
+  workflow.schemaVersion = 'workflow_definition.v0.2';
+  workflow.actions[0].requiredEvidenceValues = { published_url: '' };
+
+  assert.throws(
+    () => parseWorkflowDefinition(workflow),
+    (error) => {
+      assert.equal(error.name, 'WorkflowInputValidationError');
+      assert.deepEqual(error.diagnostics, [
+        {
+          code: 'INVALID_VALUE',
+          path: '$.actions[0].requiredEvidenceValues.published_url',
+          message: 'Expected a non-empty string, finite number, or boolean.'
+        }
+      ]);
+      return true;
+    }
+  );
+});
+
+test('the public workflow migration upgrades a detached v0.1 copy to v0.2', async () => {
+  const workflow = JSON.parse(await readFile(workflowFixture, 'utf8'));
+  const migrated = migrateWorkflowDefinition(workflow);
+
+  assert.equal(workflow.schemaVersion, 'workflow_definition.v0.1');
+  assert.equal(migrated.schemaVersion, 'workflow_definition.v0.2');
+  assert.notStrictEqual(migrated, workflow);
+  assert.deepEqual(migrated.actions, workflow.actions);
+});
+
+test('the public workflow migration upgrades a detached constrained copy to v0.3', async () => {
+  const workflow = JSON.parse(await readFile(workflowFixture, 'utf8'));
+  workflow.schemaVersion = 'workflow_definition.v0.2';
+  const migrated = migrateWorkflowDefinitionToV0_3(workflow);
+
+  assert.equal(workflow.schemaVersion, 'workflow_definition.v0.2');
+  assert.equal(migrated.schemaVersion, 'workflow_definition.v0.3');
+  assert.notStrictEqual(migrated, workflow);
+  assert.deepEqual(migrated.actions, workflow.actions);
 });
 
 for (const collection of [
