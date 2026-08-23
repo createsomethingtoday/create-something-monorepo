@@ -10,8 +10,8 @@ const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '
 
 test('Agency exposes every registered Arc through one read-only catalog', () => {
   const catalog = getAgencyArcCatalog();
-  assert.equal(catalog.length, 54);
-  assert.equal(new Set(catalog.map((arc) => arc.slug)).size, 54);
+  assert.equal(catalog.length, 55);
+  assert.equal(new Set(catalog.map((arc) => arc.slug)).size, 55);
   assert.ok(catalog.every((arc) => arc.visibility === 'public-noindex'));
   assert.ok(catalog.every((arc) => !('composition' in arc)));
 
@@ -27,7 +27,7 @@ test('catalog and dynamic Arc pages declare the noindex presentation boundary', 
     readFile(path.join(packageRoot, 'src/routes/arc/[slug]/+page.svelte'), 'utf8')
   ]);
 
-  assert.match(indexPage, /54 presentation routes/);
+  assert.match(indexPage, /55 presentation routes/);
   assert.match(indexPage, /href=\{arc\.href\}/);
   assert.match(indexPage, /name="robots" content="noindex, nofollow"/);
   assert.match(arcPage, /PerformanceNarrativeStage/);

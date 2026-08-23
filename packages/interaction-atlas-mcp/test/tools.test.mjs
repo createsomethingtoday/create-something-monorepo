@@ -33,9 +33,13 @@ test('Atlas composition tools expose the Arc catalog, generated routes, and the 
   const ctx = { accountId: 'acct_test', metadata: {}, policy: {}, userId: 'agent_test' };
   const listResult = await listCompositions.handler({}, ctx);
   const listPayload = JSON.parse(listResult.content[0].text);
-  assert.equal(listPayload.total, 54);
+  assert.equal(listPayload.total, 55);
   assert.equal(
     listPayload.arcs.some((arc) => arc.slug === 'runbook-codex-morning-briefing'),
+    true
+  );
+  assert.equal(
+    listPayload.arcs.some((arc) => arc.slug === 'operator-solo-control-tower'),
     true
   );
   assert.equal('composition' in listPayload.arcs[0], false);
