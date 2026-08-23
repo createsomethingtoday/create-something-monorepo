@@ -1,23 +1,33 @@
 #!/usr/bin/env node
 
 import { spawnSync } from 'node:child_process';
-import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import {
+  chmodSync,
+  existsSync,
+  lstatSync,
+  mkdirSync,
+  readFileSync,
+  realpathSync,
+  renameSync,
+  unlinkSync,
+  writeFileSync
+} from 'node:fs';
 import { homedir } from 'node:os';
-import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
+import { basename, dirname, isAbsolute, join, relative, resolve } from 'node:path';
 
 export const DEFAULTS = Object.freeze({
   command: 'status',
   registry: 'https://registry.npmjs.org/',
   npmBin: 'npm',
-  tokenEnv: 'NPM_TOKEN',
+  tokenEnv: 'NPM_TOKEN'
 });
 
 const COMMANDS = new Set(['status', 'save']);
 
 function normalizeRegistry(value) {
   const registry = new URL(value);
-  if (!['http:', 'https:'].includes(registry.protocol)) {
-    throw new Error('registry must use http or https');
+  if (registry.protocol !== 'https:') {
+    throw new Error('registry must use HTTPS');
   }
   registry.hash = '';
   registry.search = '';
@@ -79,7 +89,7 @@ function savedCredential(config, registry) {
   return {
     status: value ? 'saved' : 'missing',
     storage: value ? 'userconfig' : 'none',
-    valuePrinted: false,
+    valuePrinted: false
   };
 }
 
@@ -94,7 +104,9 @@ function captureNpmIdentity(options) {
   try {
     const parsed = JSON.parse((result.stdout || '').trim());
     const username = typeof parsed === 'string' ? parsed : parsed?.username;
-    return username ? { status: 'verified', username } : { status: 'verified', username: 'unknown' };
+    return username
+      ? { status: 'verified', username }
+      : { status: 'verified', username: 'unknown' };
   } catch {
     return { status: 'verified', username: 'unknown' };
   }
@@ -104,13 +116,13 @@ function statusNextActions(report, verify) {
   if (report.credential.status === 'missing') {
     return [
       'create a least-privilege granular npm token with publish bypass disabled',
-      'save it once with pnpm npm:auth:save, then run pnpm npm:auth:status -- --verify --json',
+      'save it once with pnpm npm:auth:save, then run pnpm npm:auth:status -- --verify --json'
     ];
   }
   if (verify && report.identity.status === 'invalid') {
     return [
       'replace the saved npm credential with a current least-privilege granular token',
-      'do not treat npm login, a browser success page, or a saved token line as a verified session',
+      'do not treat npm login, a browser success page, or a saved token line as a verified session'
     ];
   }
   if (!verify) {
@@ -118,13 +130,16 @@ function statusNextActions(report, verify) {
   }
   return [
     'routine npm CLI commands can reuse saved auth until the credential expires or is revoked',
-    'npm trust and other account-governance actions may still require interactive 2FA; keep their receipts separate',
+    'npm trust and other account-governance actions may still require interactive 2FA; keep their receipts separate'
   ];
 }
 
 export function npmAuthStatus(options) {
   const credential = savedCredential(readConfig(options.userconfig), options.registry);
-  const identity = options.verify && credential.status === 'saved' ? captureNpmIdentity(options) : { status: 'not_checked' };
+  const identity =
+    options.verify && credential.status === 'saved'
+      ? captureNpmIdentity(options)
+      : { status: 'not_checked' };
   const report = {
     schema: 'create-something.npm-auth-session.v1',
     mode: 'status',
@@ -132,10 +147,10 @@ export function npmAuthStatus(options) {
     registry: options.registry,
     userconfig: {
       path: options.userconfig,
-      status: existsSync(options.userconfig) ? 'present' : 'missing',
+      status: existsSync(options.userconfig) ? 'present' : 'missing'
     },
     credential,
-    identity,
+    identity
   };
   report.nextActions = statusNextActions(report, Boolean(options.verify));
   return report;
@@ -146,20 +161,64 @@ function isPathInside(path, candidateParent) {
   return relativePath === '' || (!relativePath.startsWith('..') && !isAbsolute(relativePath));
 }
 
-function writeSavedCredential(options, token) {
-  if (isPathInside(options.userconfig, process.cwd())) {
+function canonicalPathForWrite(path) {
+  let existingAncestor = resolve(path);
+  const missingSegments = [];
+
+  while (!existsSync(existingAncestor)) {
+    const parent = dirname(existingAncestor);
+    if (parent === existingAncestor) return resolve(path);
+    missingSegments.unshift(basename(existingAncestor));
+    existingAncestor = parent;
+  }
+
+  return resolve(realpathSync(existingAncestor), ...missingSegments);
+}
+
+function repositoryRoot() {
+  const result = spawnSync('git', ['rev-parse', '--show-toplevel'], {
+    cwd: process.cwd(),
+    encoding: 'utf8'
+  });
+  const root = result.status === 0 && result.stdout.trim() ? result.stdout.trim() : process.cwd();
+  return canonicalPathForWrite(root);
+}
+
+function safeUserconfigPath(userconfig) {
+  const configuredPath = resolve(userconfig);
+  const canonicalPath = canonicalPathForWrite(configuredPath);
+
+  if (existsSync(configuredPath) && lstatSync(configuredPath).isSymbolicLink()) {
+    throw new Error('refusing to save npm credentials through a symbolic-link config');
+  }
+  if (isPathInside(canonicalPath, repositoryRoot())) {
     throw new Error('refusing to save npm credentials inside the repository');
   }
 
+  return canonicalPath;
+}
+
+function writeSavedCredential(options, token) {
+  const userconfig = safeUserconfigPath(options.userconfig);
+
   const key = authKeyForRegistry(options.registry);
-  const existingLines = readConfig(options.userconfig).split(/\r?\n/);
+  const existingLines = readConfig(userconfig).split(/\r?\n/);
   const preserved = existingLines.filter((line) => !line.trimStart().startsWith(`${key}=`));
   while (preserved.at(-1) === '') preserved.pop();
   preserved.push(`${key}=${token}`);
 
-  mkdirSync(dirname(options.userconfig), { recursive: true, mode: 0o700 });
-  writeFileSync(options.userconfig, `${preserved.join('\n')}\n`, { mode: 0o600 });
-  chmodSync(options.userconfig, 0o600);
+  const directory = dirname(userconfig);
+  const temporary = join(directory, `.${basename(userconfig)}.${process.pid}.${Date.now()}.tmp`);
+  mkdirSync(directory, { recursive: true, mode: 0o700 });
+
+  try {
+    writeFileSync(temporary, `${preserved.join('\n')}\n`, { flag: 'wx', mode: 0o600 });
+    chmodSync(temporary, 0o600);
+    renameSync(temporary, userconfig);
+  } catch (error) {
+    if (existsSync(temporary)) unlinkSync(temporary);
+    throw error;
+  }
 }
 
 export function saveNpmAuth(options, env = process.env) {
@@ -176,7 +235,7 @@ export function saveNpmAuth(options, env = process.env) {
     registry: options.registry,
     userconfig: { path: options.userconfig, status: 'present' },
     credential: { status: 'saved', storage: 'userconfig', valuePrinted: false },
-    nextActions: ['run pnpm npm:auth:status -- --verify --json to verify the saved credential'],
+    nextActions: ['run pnpm npm:auth:status -- --verify --json to verify the saved credential']
   };
 }
 
@@ -187,7 +246,7 @@ function formatReport(report, json) {
     `registry: ${report.registry}`,
     `credential: ${report.credential?.status ?? 'unknown'}`,
     `identity: ${report.identity?.status ?? 'not_checked'}`,
-    ...report.nextActions.map((action) => `next: ${action}`),
+    ...report.nextActions.map((action) => `next: ${action}`)
   ].join('\n');
 }
 
@@ -198,7 +257,9 @@ function safeFailure(options, error) {
     ok: false,
     credential: { status: 'unknown', valuePrinted: false },
     error: error instanceof Error ? error.message : 'npm auth session failed',
-    nextActions: ['correct the saved-auth configuration without placing credentials in the repository'],
+    nextActions: [
+      'correct the saved-auth configuration without placing credentials in the repository'
+    ]
   };
 }
 
@@ -211,7 +272,9 @@ function main() {
     process.exitCode = report.ok ? 0 : 1;
   } catch (error) {
     const report = safeFailure(options, error);
-    process.stdout.write(`${formatReport(report, Boolean(options?.json || process.argv.includes('--json')))}\n`);
+    process.stdout.write(
+      `${formatReport(report, Boolean(options?.json || process.argv.includes('--json')))}\n`
+    );
     process.exitCode = 1;
   }
 }

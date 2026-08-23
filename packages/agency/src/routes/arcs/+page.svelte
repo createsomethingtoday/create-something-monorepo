@@ -29,7 +29,7 @@
       <p>Presentation registry · read only</p>
       <h1>Every registered route can tell its operating story.</h1>
       <p class="arc-catalog__lede">
-        54 presentation routes reuse the same typed Playbooks, Runbooks, maps, boundaries, and proof
+        55 presentation routes reuse the same typed Playbooks, Runbooks, maps, boundaries, and proof
         contracts that operators and agents already read.
       </p>
     </div>

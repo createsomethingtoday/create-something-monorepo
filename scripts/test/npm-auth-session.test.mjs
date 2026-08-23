@@ -1,6 +1,14 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { chmodSync, mkdtempSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import {
+  chmodSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  statSync,
+  symlinkSync,
+  writeFileSync
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
@@ -14,16 +22,22 @@ function writeExecutable(filePath, source) {
   chmodSync(filePath, 0o755);
 }
 
-function run(args, env = {}) {
+function run(args, env = {}, cwd = repoRoot) {
   return spawnSync(process.execPath, [scriptPath, ...args], {
-    cwd: repoRoot,
+    cwd,
     encoding: 'utf8',
     env: {
       HOME: tmpdir(),
       PATH: process.env.PATH,
-      ...env,
-    },
+      ...env
+    }
   });
+}
+
+function initializeGitRepository(pathname) {
+  mkdirSync(pathname, { recursive: true });
+  const result = spawnSync('git', ['init', '--quiet'], { cwd: pathname, encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr || result.stdout);
 }
 
 test('npm auth status verifies a saved credential without printing its value', () => {
@@ -37,12 +51,20 @@ test('npm auth status verifies a saved credential without printing its value', (
     [
       '@create-something:registry=https://registry.npmjs.org/',
       `//registry.npmjs.org/:_authToken=${secret}`,
-      '',
+      ''
     ].join('\n')
   );
-  writeExecutable(npmBin, "#!/bin/sh\nprintf '%s\\n' '{\"username\":\"micah-createsomething\"}'\n");
+  writeExecutable(npmBin, '#!/bin/sh\nprintf \'%s\\n\' \'{"username":"micah-createsomething"}\'\n');
 
-  const result = run(['status', '--json', '--verify', '--userconfig', userconfig, '--npm-bin', npmBin]);
+  const result = run([
+    'status',
+    '--json',
+    '--verify',
+    '--userconfig',
+    userconfig,
+    '--npm-bin',
+    npmBin
+  ]);
 
   assert.equal(result.status, 0, result.stderr || result.stdout);
   assert.doesNotMatch(result.stdout, new RegExp(secret));
@@ -63,7 +85,15 @@ test('npm auth status names an invalid saved credential without replaying regist
   writeFileSync(userconfig, `//registry.npmjs.org/:_authToken=${secret}\n`);
   writeExecutable(npmBin, "#!/bin/sh\nprintf '%s\\n' 'npm error 401 Unauthorized' >&2\nexit 1\n");
 
-  const result = run(['status', '--json', '--verify', '--userconfig', userconfig, '--npm-bin', npmBin]);
+  const result = run([
+    'status',
+    '--json',
+    '--verify',
+    '--userconfig',
+    userconfig,
+    '--npm-bin',
+    npmBin
+  ]);
 
   assert.equal(result.status, 1, result.stderr || result.stdout);
   assert.doesNotMatch(result.stdout, new RegExp(secret));
@@ -76,12 +106,22 @@ test('npm auth status names an invalid saved credential without replaying regist
   assert.match(report.nextActions.join('\n'), /replace the saved npm credential/i);
 });
 
-test('npm auth save writes a user config with restricted permissions and redacted output', () => {
+test('npm auth refuses plaintext HTTP registries before a credential can be used', () => {
+  const result = run(['status', '--json', '--registry', 'http://registry.example.test/']);
+
+  assert.equal(result.status, 1, result.stderr || result.stdout);
+  const report = JSON.parse(result.stdout);
+  assert.equal(report.ok, false);
+  assert.match(report.error, /HTTPS/i);
+});
+
+test('npm auth save atomically replaces a permissive user config with restricted permissions', () => {
   const fixture = mkdtempSync(path.join(tmpdir(), 'npm-auth-session-save-'));
   const userconfig = path.join(fixture, '.npmrc');
   const secret = 'npm_persisted_secret_must_not_appear';
 
   writeFileSync(userconfig, '@create-something:registry=https://registry.npmjs.org/\n');
+  chmodSync(userconfig, 0o644);
 
   const result = run(
     ['save', '--json', '--userconfig', userconfig, '--token-env', 'NPM_AUTH_SESSION_TEST_TOKEN'],
@@ -100,6 +140,56 @@ test('npm auth save writes a user config with restricted permissions and redacte
     readFileSync(userconfig, 'utf8'),
     '@create-something:registry=https://registry.npmjs.org/\n//registry.npmjs.org/:_authToken=npm_persisted_secret_must_not_appear\n'
   );
+});
+
+test('npm auth save rejects a config symlink whose target is inside the repository', () => {
+  const fixture = mkdtempSync(path.join(tmpdir(), 'npm-auth-session-symlink-'));
+  const repository = path.join(fixture, 'repository');
+  const workingDirectory = path.join(repository, 'scripts');
+  const userconfig = path.join(fixture, '.npmrc');
+  const target = path.join(repository, '.npmrc');
+  const secret = 'npm_symlink_secret_must_not_be_persisted';
+
+  initializeGitRepository(repository);
+  mkdirSync(workingDirectory);
+  writeFileSync(target, 'keep=this-config-unchanged\n');
+  symlinkSync(target, userconfig);
+
+  const result = run(
+    ['save', '--json', '--userconfig', userconfig, '--token-env', 'NPM_AUTH_SESSION_TEST_TOKEN'],
+    { NPM_AUTH_SESSION_TEST_TOKEN: secret },
+    workingDirectory
+  );
+
+  assert.equal(result.status, 1, result.stderr || result.stdout);
+  assert.doesNotMatch(result.stdout, new RegExp(secret));
+  assert.equal(readFileSync(target, 'utf8'), 'keep=this-config-unchanged\n');
+  const report = JSON.parse(result.stdout);
+  assert.match(report.error, /symbolic[- ]link|repository/i);
+});
+
+test('npm auth save rejects a config inside the repository when invoked from a subdirectory', () => {
+  const fixture = mkdtempSync(path.join(tmpdir(), 'npm-auth-session-repository-'));
+  const repository = path.join(fixture, 'repository');
+  const workingDirectory = path.join(repository, 'scripts');
+  const userconfig = path.join(repository, '.npmrc');
+  const secret = 'npm_repository_secret_must_not_be_persisted';
+
+  initializeGitRepository(repository);
+  mkdirSync(workingDirectory);
+  writeFileSync(userconfig, 'keep=this-config-unchanged\n');
+
+  const result = run(
+    ['save', '--json', '--userconfig', userconfig, '--token-env', 'NPM_AUTH_SESSION_TEST_TOKEN'],
+    { NPM_AUTH_SESSION_TEST_TOKEN: secret },
+    workingDirectory
+  );
+
+  assert.equal(result.status, 1, result.stderr || result.stdout);
+  assert.doesNotMatch(result.stdout, new RegExp(secret));
+  assert.equal(readFileSync(userconfig, 'utf8'), 'keep=this-config-unchanged\n');
+  const report = JSON.parse(result.stdout);
+  assert.match(report.error, /repository/i);
 });
 
 test('package scripts expose saved npm auth status and save commands', () => {
