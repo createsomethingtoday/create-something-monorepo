@@ -1,5 +1,5 @@
 export type OperatorPlaybook = {
-  slug: 'inbound-triage' | 'decision-brief' | 'exception-handoff';
+  slug: 'inbound-triage' | 'decision-brief' | 'exception-handoff' | 'solo-control-tower';
   label: string;
   title: string;
   summary: string;
@@ -101,6 +101,38 @@ export const OPERATOR_PLAYBOOKS: OperatorPlaybook[] = [
       'Attach the source evidence, attempted action, policy boundary, and stop reason.',
       'Route the exception to the person with decision authority.',
       'Record the resolution, recovery action, and any policy change before resuming.'
+    ]
+  },
+  {
+    slug: 'solo-control-tower',
+    label: 'Playbook 04 · Control',
+    title: 'Run parallel work lanes without losing the decision',
+    summary:
+      'Keep parallel work lanes legible while one named operator retains authority over protected actions, evidence, and the final done decision.',
+    whenToUse:
+      'Use when browser, agent, repository, and communication work must advance together without turning every status update into a new source of truth.',
+    owner: 'The named operator who owns the outcome and each protected decision.',
+    approvedWork:
+      'Route bounded work, preserve the source context, inspect receipts, and redirect or stop a lane before it drifts.',
+    waitPoint:
+      'Hold protected actions, missing source context, invalid credentials, and incomplete proof until the responsible human resolves them.',
+    proof: 'A lane record with source evidence, authority boundary, current state, required receipt, and explicit final disposition.',
+    opposition: [
+      {
+        title: 'Context drift',
+        detail: 'Parallel agents and browser work lose the original outcome, owner, or authority boundary.'
+      },
+      {
+        title: 'False closeout',
+        detail: 'A local patch, browser page, or authentication screen is mistaken for the required production proof.'
+      }
+    ],
+    runbook: [
+      'Open one lane record with the outcome, owning system, source evidence, authority boundary, stop condition, and required proof.',
+      'Give each executor only the bounded context and allowed actions it needs; preserve a link to the source of truth.',
+      'Treat human approvals, expired credentials, and missing evidence as wait states, not completion or permission.',
+      'Park research in a time-boxed interrupt record, then return to the active lane checkpoint before opening new implementation work.',
+      'Close a lane only after its required receipt names what changed, what remains unknown, and who owns the next decision.'
     ]
   }
 ];

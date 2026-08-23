@@ -12,15 +12,15 @@ contract without creating another workflow ledger:
 
 - 6 host Playbooks
 - 30 outcome Playbooks
-- 3 operator Playbooks
+- 4 operator Playbooks
 - 14 structured workflow Runbooks
 
-Those 53 generated Arcs sit beside the hand-authored App Review Governance prototype,
-for 54 public presentation routes in total. Each generated composition preserves one
+Those 54 generated Arcs sit beside the hand-authored App Review Governance prototype,
+for 55 public presentation routes in total. Each generated composition preserves one
 reusable map and three views: Arc, Playbook, and Runbook. Private client procedures and
 markdown-only templates are deliberately excluded.
 
-The three public operator Playbooks are exported from
+The four public operator Playbooks are exported from
 `@create-something/playbook-mcp/operator-playbooks`, making this package their canonical
 registry while allowing the `.ltd` operator library to consume the same definitions.
 
