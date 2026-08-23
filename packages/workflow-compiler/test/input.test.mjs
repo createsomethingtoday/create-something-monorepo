@@ -255,6 +255,35 @@ test('the public workflow parser requires a constrained schema for evidence cons
   );
 });
 
+test('the public workflow parser rejects non-plain evidence-constraint maps', async () => {
+  const workflow = JSON.parse(await readFile(workflowFixture, 'utf8'));
+  workflow.schemaVersion = 'workflow_definition.v0.2';
+  workflow.actions[0].requiredEvidenceValues = new Map([['published_url', 'https://example.com']]);
+  workflow.actions[0].requiredEvidenceMatchers = new Map([
+    ['published_url', { kind: 'contains_case_insensitive', values: ['example.com'] }]
+  ]);
+
+  assert.throws(
+    () => parseWorkflowDefinition(workflow),
+    (error) => {
+      assert.equal(error.name, 'WorkflowInputValidationError');
+      assert.deepEqual(error.diagnostics, [
+        {
+          code: 'INVALID_TYPE',
+          path: '$.actions[0].requiredEvidenceValues',
+          message: 'Expected an object.'
+        },
+        {
+          code: 'INVALID_TYPE',
+          path: '$.actions[0].requiredEvidenceMatchers',
+          message: 'Expected an object.'
+        }
+      ]);
+      return true;
+    }
+  );
+});
+
 test('the public workflow parser rejects empty exact evidence values', async () => {
   const workflow = JSON.parse(await readFile(workflowFixture, 'utf8'));
   workflow.schemaVersion = 'workflow_definition.v0.2';

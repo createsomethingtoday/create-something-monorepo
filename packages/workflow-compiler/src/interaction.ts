@@ -125,6 +125,10 @@ function object(value: unknown, path: string): JsonObject {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return invalid(path, `${path} must be an object.`);
   }
+  const prototype = Object.getPrototypeOf(value);
+  if (prototype !== Object.prototype && prototype !== null) {
+    return invalid(path, `${path} must be an object.`);
+  }
   return value as JsonObject;
 }
 

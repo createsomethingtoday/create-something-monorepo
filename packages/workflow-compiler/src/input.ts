@@ -42,7 +42,9 @@ export class ReplayInputValidationError extends Error {
 type RecordValue = Record<string, unknown>;
 
 function isRecord(value: unknown): value is RecordValue {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
 }
 
 class Validator {

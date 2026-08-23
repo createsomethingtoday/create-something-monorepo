@@ -158,6 +158,38 @@ test('the interaction parser rejects empty evidence matcher values', async () =>
   }
 });
 
+test('the interaction parser rejects non-plain evidence-constraint maps', async () => {
+  const definition = JSON.parse(await readFile(fixtureUrl, 'utf8'));
+  definition.schemaVersion = 'workflow_definition.v0.2';
+  definition.actions[0].requiredEvidenceValues = { published_url: 'https://example.com' };
+  definition.actions[0].requiredEvidenceMatchers = {
+    published_url: { kind: 'contains_case_insensitive', values: ['example.com'] },
+  };
+  const compiled = compileWorkflowDefinition(definition).governedInteraction;
+  const actionIndex = compiled.actions.findIndex(
+    (action) => action.actionId === 'run_published_validation',
+  );
+  assert.notEqual(actionIndex, -1);
+
+  const valuesMap = structuredClone(compiled);
+  valuesMap.actions[actionIndex].requiredEvidenceValues = new Map([
+    ['published_url', 'https://example.com'],
+  ]);
+  assert.throws(
+    () => parseGovernedInteractionBundle(valuesMap),
+    rejectsWith('INVALID_BUNDLE', `bundle.actions[${actionIndex}].requiredEvidenceValues`),
+  );
+
+  const matchersMap = structuredClone(compiled);
+  matchersMap.actions[actionIndex].requiredEvidenceMatchers = new Map([
+    ['published_url', { kind: 'contains_case_insensitive', values: ['example.com'] }],
+  ]);
+  assert.throws(
+    () => parseGovernedInteractionBundle(matchersMap),
+    rejectsWith('INVALID_BUNDLE', `bundle.actions[${actionIndex}].requiredEvidenceMatchers`),
+  );
+});
+
 test('the interaction parser rejects an exact evidence value that conflicts with its matcher', async () => {
   const definition = JSON.parse(await readFile(fixtureUrl, 'utf8'));
   definition.schemaVersion = 'workflow_definition.v0.2';
