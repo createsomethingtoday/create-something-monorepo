@@ -62,6 +62,12 @@ governed-interaction versions. Do not hand-edit an outer schema version or mix
 derived artifacts across revisions: migrate the source, then recompile and
 replay so all three contracts carry the same version and definition hash.
 
+When moving a delivery host to v0.2, update its
+`GovernedInteractionHostContract.schemaVersions` allowlist only after that
+host has validated the v0.2 parser and renderer. Compatibility intentionally
+reports `UNSUPPORTED_SCHEMA_VERSION` until the exact interaction schema is
+declared; do not treat matching runtime or capability lists as version support.
+
 Adapter plans are derived from that same replay. Recompile and replay a migrated
 definition before requesting a new plan: only v0.2 bundles emit
 `workflow_adapter_plan.v0.2`, which can include constrained-evidence mismatch

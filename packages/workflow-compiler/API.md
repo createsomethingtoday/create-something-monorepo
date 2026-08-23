@@ -131,6 +131,12 @@ authority or changing a decision. `createOperatorConsoleData` derives the
 read-only UI model. `serveOperatorConsole` serves an already compiled bundle;
 it does not add execution controls.
 
+`GovernedInteractionHostContract` requires an explicit `schemaVersions`
+allowlist alongside its runtime, capability, and operation allowlists. A host
+cannot report a bundle as compatible unless it lists that exact governed
+interaction schema version; the decision otherwise contains
+`UNSUPPORTED_SCHEMA_VERSION`.
+
 ## CLI
 
 ```text

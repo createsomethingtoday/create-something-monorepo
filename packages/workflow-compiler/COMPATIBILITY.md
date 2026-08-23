@@ -27,6 +27,11 @@ Unknown schema versions and unknown fields fail closed. A breaking TypeScript,
 CLI, semantic, or schema change requires either a new npm major version or a
 new explicitly versioned schema with a documented migration path.
 
+Interaction hosts must independently declare their supported
+`governed_interaction_bundle` schema versions. Compatibility rejects a bundle
+whose exact schema is absent from that host allowlist; matching language,
+runtime, capabilities, and operations alone is not sufficient.
+
 ### Workflow and interaction v0.2
 
 `workflow_definition.v0.1` remains readable but rejects

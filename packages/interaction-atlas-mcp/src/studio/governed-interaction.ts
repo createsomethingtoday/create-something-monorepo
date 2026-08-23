@@ -9,6 +9,10 @@ import {
 export const ATLAS_STUDIO_INTERACTION_HOST: GovernedInteractionHostContract = {
   hostId: 'atlas-studio',
   language: 'create-something/control',
+  schemaVersions: [
+    'governed_interaction_bundle.v0.1',
+    'governed_interaction_bundle.v0.2',
+  ],
   runtimeVersions: ['0.1.0'],
   capabilities: [
     'interaction.select',

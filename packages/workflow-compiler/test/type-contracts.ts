@@ -4,6 +4,7 @@ import type {
   CompiledWorkflowBundleV0_1,
   DecisionInventoryArtifactV0_2,
   GovernedInteractionBundleV0_2,
+  GovernedInteractionHostContract,
   WorkflowAdapterPlan,
   WorkflowAdapterPlanV0_1,
   WorkflowAdapterPlanV0_2,
@@ -107,3 +108,24 @@ const constrainedAdapterPlanAsPublic: WorkflowAdapterPlan = constrainedAdapterPl
 
 void invalidLegacyAdapterPlan;
 void constrainedAdapterPlanAsPublic;
+
+const interactionHost: GovernedInteractionHostContract = {
+  hostId: 'test-host',
+  language: 'create-something/control',
+  schemaVersions: ['governed_interaction_bundle.v0.1'],
+  runtimeVersions: ['0.1.0'],
+  capabilities: [],
+  operations: []
+};
+
+// @ts-expect-error Host contracts must explicitly declare supported interaction schemas.
+const hostWithoutSchemaVersions: GovernedInteractionHostContract = {
+  hostId: 'incomplete-host',
+  language: 'create-something/control',
+  runtimeVersions: ['0.1.0'],
+  capabilities: [],
+  operations: []
+};
+
+void interactionHost;
+void hostWithoutSchemaVersions;

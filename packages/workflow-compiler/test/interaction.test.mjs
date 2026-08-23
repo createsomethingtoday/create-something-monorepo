@@ -169,6 +169,7 @@ test('returns one normalized compatibility decision for a finite desktop host', 
     evaluateGovernedInteractionCompatibility(interaction, {
       hostId: 'atlas-studio',
       language: 'create-something/control',
+      schemaVersions: ['governed_interaction_bundle.v0.1'],
       runtimeVersions: ['0.1.0'],
       capabilities: [
         'interaction.select',
@@ -194,6 +195,32 @@ test('returns one normalized compatibility decision for a finite desktop host', 
       errors: [],
     },
   );
+});
+
+test('rejects a governed interaction schema the host did not explicitly support', async () => {
+  const definition = JSON.parse(await readFile(fixtureUrl, 'utf8'));
+  definition.schemaVersion = 'workflow_definition.v0.2';
+  definition.actions[0].requiredEvidenceValues = { published_url: 'https://example.com' };
+  const interaction = compileWorkflowDefinition(definition).governedInteraction;
+
+  const compatibility = evaluateGovernedInteractionCompatibility(interaction, {
+    hostId: 'v0.1-host',
+    language: 'create-something/control',
+    schemaVersions: ['governed_interaction_bundle.v0.1'],
+    runtimeVersions: ['0.1.0'],
+    capabilities: [
+      'interaction.select',
+      'receipt.inspect',
+      'replay.inspect',
+      'workflow.inspect',
+    ],
+    operations: ['select_replay_case'],
+  });
+
+  assert.equal(compatibility.compatible, false);
+  assert.deepEqual(compatibility.errors, [
+    { code: 'UNSUPPORTED_SCHEMA_VERSION', value: 'governed_interaction_bundle.v0.2' },
+  ]);
 });
 
 test('Client Workspace validates the same bundle and binds it to the signed definition hash', async () => {

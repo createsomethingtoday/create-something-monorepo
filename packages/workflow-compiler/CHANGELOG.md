@@ -36,6 +36,9 @@ artifact schemas.
   for legacy plans.
 - Serialize absent exact-value and matcher evidence as `actual: null` in v0.2
   mismatch details rather than dropping the required field from replay JSON.
+- Require interaction hosts to explicitly allowlist supported governed-
+  interaction schemas; compatibility rejects an undeclared schema version
+  rather than assuming matching runtime, capability, and operation support.
 
 ## 0.2.0
 

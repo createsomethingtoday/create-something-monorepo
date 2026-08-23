@@ -44,11 +44,13 @@ export type GovernedInteractionCompatibilityErrorCode =
   | 'UNSUPPORTED_CAPABILITY'
   | 'UNSUPPORTED_LANGUAGE'
   | 'UNSUPPORTED_OPERATION'
-  | 'UNSUPPORTED_RUNTIME_VERSION';
+  | 'UNSUPPORTED_RUNTIME_VERSION'
+  | 'UNSUPPORTED_SCHEMA_VERSION';
 
 export interface GovernedInteractionHostContract {
   hostId: string;
   language: GovernedInteractionBundle['language'];
+  schemaVersions: Array<GovernedInteractionBundle['schemaVersion']>;
   runtimeVersions: Array<GovernedInteractionBundle['runtimeVersion']>;
   capabilities: GovernedInteractionCapability[];
   operations: Array<GovernedInteractionOperation['kind']>;
@@ -450,6 +452,9 @@ export function evaluateGovernedInteractionCompatibility(
 
   if (host.language !== bundle.language) {
     errors.push({ code: 'UNSUPPORTED_LANGUAGE', value: bundle.language });
+  }
+  if (!host.schemaVersions.includes(bundle.schemaVersion)) {
+    errors.push({ code: 'UNSUPPORTED_SCHEMA_VERSION', value: bundle.schemaVersion });
   }
   if (!host.runtimeVersions.includes(bundle.runtimeVersion)) {
     errors.push({ code: 'UNSUPPORTED_RUNTIME_VERSION', value: bundle.runtimeVersion });
