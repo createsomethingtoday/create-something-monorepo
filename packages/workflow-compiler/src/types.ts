@@ -14,6 +14,14 @@ export type GovernedInteractionBundleSchemaVersion =
   | 'governed_interaction_bundle.v0.1'
   | 'governed_interaction_bundle.v0.2';
 
+export type DecisionInventorySchemaVersion =
+  | 'decision_inventory.v0.1'
+  | 'decision_inventory.v0.2';
+
+export type CompiledWorkflowBundleSchemaVersion =
+  | 'compiled_workflow_bundle.v0.1'
+  | 'compiled_workflow_bundle.v0.2';
+
 export interface WorkflowEvidenceMatcher {
   kind: 'contains_case_insensitive';
   values: string[];
@@ -193,7 +201,7 @@ export interface CompiledDecision {
 }
 
 export interface DecisionInventoryArtifact extends CompiledArtifactHeader {
-  schemaVersion: 'decision_inventory.v0.1';
+  schemaVersion: DecisionInventorySchemaVersion;
   decisions: CompiledDecision[];
 }
 
@@ -272,7 +280,7 @@ export interface GovernedInteractionBundle extends CompiledArtifactHeader {
 }
 
 export interface CompiledWorkflowBundle {
-  schemaVersion: 'compiled_workflow_bundle.v0.1';
+  schemaVersion: CompiledWorkflowBundleSchemaVersion;
   compilerVersion: string;
   workflowId: string;
   workflowVersion: string;

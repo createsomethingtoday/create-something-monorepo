@@ -173,6 +173,20 @@ class Validator {
       firstPaths.set(entry, entryPath);
     });
   }
+
+  unknownFields(value: RecordValue, allowed: readonly string[], path: string, label: string): void {
+    const allowedFields = new Set(allowed);
+    Object.keys(value)
+      .filter((field) => !allowedFields.has(field))
+      .sort()
+      .forEach((field) => {
+        this.diagnostics.push({
+          code: 'INVALID_VALUE',
+          path: `${path}.${field}`,
+          message: `Unknown ${label} field ${field}.`
+        });
+      });
+  }
 }
 
 function requireTopLevelCollections(input: RecordValue): Record<string, unknown[]> {
@@ -255,6 +269,27 @@ export function parseWorkflowDefinition(input: unknown): WorkflowDefinition {
     validator.boolean(state.terminal, `${path}.terminal`, true);
   });
   validator.records(collections.actions, '$.actions', (action, path) => {
+    validator.unknownFields(
+      action,
+      [
+        'id',
+        'title',
+        'kind',
+        'authority',
+        'autonomy',
+        'systemsTouched',
+        'requiredEvidence',
+        'requiredEvidenceValues',
+        'requiredEvidenceMatchers',
+        'approval',
+        'receipt',
+        'recovery',
+        'tool',
+        'agentId'
+      ],
+      path,
+      'action'
+    );
     validator.string(action.id, `${path}.id`);
     validator.string(action.title, `${path}.title`);
     validator.enumeration(action.kind, ['read', 'write', 'decision', 'publish'], `${path}.kind`);

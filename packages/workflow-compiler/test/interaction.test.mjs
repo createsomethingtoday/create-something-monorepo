@@ -40,6 +40,8 @@ test('parses serialized exact evidence constraints in the public interaction bun
     published_url: { kind: 'contains_case_insensitive', values: ['example.com'] }
   };
   const compiled = compileWorkflowDefinition(definition);
+  assert.equal(compiled.schemaVersion, 'compiled_workflow_bundle.v0.2');
+  assert.equal(compiled.decisionInventory.schemaVersion, 'decision_inventory.v0.2');
   assert.equal(compiled.governedInteraction.schemaVersion, 'governed_interaction_bundle.v0.2');
   const serialized = JSON.parse(JSON.stringify(compiled.governedInteraction));
 

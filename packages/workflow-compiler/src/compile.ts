@@ -389,7 +389,10 @@ export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundl
       .sort(byId)
   };
   const decisionInventory: DecisionInventoryArtifact = {
-    schemaVersion: 'decision_inventory.v0.1',
+    schemaVersion:
+      definition.schemaVersion === 'workflow_definition.v0.2'
+        ? 'decision_inventory.v0.2'
+        : 'decision_inventory.v0.1',
     ...header,
     decisions: definition.actions
       .map((action) => ({
@@ -495,7 +498,10 @@ export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundl
   };
 
   return {
-    schemaVersion: 'compiled_workflow_bundle.v0.1',
+    schemaVersion:
+      definition.schemaVersion === 'workflow_definition.v0.2'
+        ? 'compiled_workflow_bundle.v0.2'
+        : 'compiled_workflow_bundle.v0.1',
     compilerVersion: WORKFLOW_COMPILER_VERSION,
     workflowId: definition.workflowId,
     workflowVersion: definition.version,

@@ -32,9 +32,10 @@ new explicitly versioned schema with a documented migration path.
 `workflow_definition.v0.1` remains readable but rejects
 `requiredEvidenceValues` and `requiredEvidenceMatchers`. Those fields require
 `workflow_definition.v0.2`; its compiler emits
+`compiled_workflow_bundle.v0.2`, `decision_inventory.v0.2`, and
 `governed_interaction_bundle.v0.2` so the same constraints survive into the
-read-only interaction contract. `governed_interaction_bundle.v0.1` likewise
-rejects the fields instead of silently dropping them.
+replay and read-only interaction contracts. The corresponding v0.1 contracts
+reject the fields instead of silently dropping them.
 
 The current package reads both versions and exports explicit detached-copy
 migrations for each. A v0.1 parser rejects v0.2 input, so callers must retain

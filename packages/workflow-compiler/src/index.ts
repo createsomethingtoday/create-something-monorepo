@@ -85,6 +85,8 @@ export type {
   CompiledDecision,
   CompiledToolContract,
   CompiledWorkflowBundle,
+  CompiledWorkflowBundleSchemaVersion,
+  DecisionInventorySchemaVersion,
   DecisionInventoryArtifact,
   EvaluationManifestArtifact,
   EventSchemasArtifact,

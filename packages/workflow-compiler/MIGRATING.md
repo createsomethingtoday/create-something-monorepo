@@ -26,7 +26,9 @@ strings into live authority.
 
 Version `v0.2` introduces explicit evidence constraints. A v0.1 workflow
 cannot carry `requiredEvidenceValues` or `requiredEvidenceMatchers`; a v0.2
-workflow compiles to `governed_interaction_bundle.v0.2`, which retains them.
+workflow compiles to `compiled_workflow_bundle.v0.2`,
+`decision_inventory.v0.2`, and `governed_interaction_bundle.v0.2`, which retain
+them.
 Use the public helpers to create a detached v0.2 copy rather than editing a
 source artifact in place:
 
@@ -44,6 +46,10 @@ The helpers validate the source first and change only its schema version. They
 do not invent constraints, add authority, or approve a replay. Revalidate,
 compile, replay, and independently verify the migrated copy before promotion;
 preserve the v0.1 source and compiled revision for rollback.
+
+Compiled bundles and their decision inventories are derived artifacts, not
+in-place migration targets. Migrate the source definition and recompile so the
+new hashes and v0.2 artifact schemas describe one coherent contract.
 
 ## Artifact output upgrades
 

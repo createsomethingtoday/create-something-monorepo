@@ -178,6 +178,35 @@ test('the public workflow parser rejects unknown evidence matcher fields', async
   );
 });
 
+test('the public workflow parser rejects misspelled evidence-constraint fields', async () => {
+  const workflow = JSON.parse(await readFile(workflowFixture, 'utf8'));
+  workflow.schemaVersion = 'workflow_definition.v0.2';
+  workflow.actions[0].requiredEvidenceValue = { published_url: 'https://example.com' };
+  workflow.actions[0].requiredEvidenceMatcher = {
+    published_url: { kind: 'contains_case_insensitive', values: ['example.com'] }
+  };
+
+  assert.throws(
+    () => parseWorkflowDefinition(workflow),
+    (error) => {
+      assert.equal(error.name, 'WorkflowInputValidationError');
+      assert.deepEqual(error.diagnostics, [
+        {
+          code: 'INVALID_VALUE',
+          path: '$.actions[0].requiredEvidenceMatcher',
+          message: 'Unknown action field requiredEvidenceMatcher.'
+        },
+        {
+          code: 'INVALID_VALUE',
+          path: '$.actions[0].requiredEvidenceValue',
+          message: 'Unknown action field requiredEvidenceValue.'
+        }
+      ]);
+      return true;
+    }
+  );
+});
+
 test('the public workflow parser requires v0.2 for evidence constraints', async () => {
   const workflow = JSON.parse(await readFile(workflowFixture, 'utf8'));
   workflow.actions[0].requiredEvidenceValues = { published_url: 'https://example.com' };

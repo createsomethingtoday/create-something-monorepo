@@ -16,6 +16,7 @@ artifact schemas.
   can transition to form-validated, preflight-passed, or ready-for-review
   states.
 - Add explicit `workflow_definition.v0.2` and
+  `compiled_workflow_bundle.v0.2`, `decision_inventory.v0.2`, and
   `governed_interaction_bundle.v0.2` schemas for exact-evidence and
   evidence-matcher constraints, with detached public migration helpers from
   v0.1.

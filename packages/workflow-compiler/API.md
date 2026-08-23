@@ -17,9 +17,12 @@ Only `workflow_definition.v0.2` may declare `requiredEvidenceValues`, a map of
 required-evidence fields to an exact non-empty string, finite number, or boolean
 value. Each constrained field must also appear in `requiredEvidence`. The
 compiled `governed_interaction_bundle.v0.2` preserves and validates these
-constraints. Replay blocks a supplied value that differs from the versioned
-contract with `EVIDENCE_VALUE_MISMATCH`; a non-empty receipt alone cannot
-satisfy that condition.
+constraints. The compiled workflow bundle and its decision inventory are also
+emitted as `compiled_workflow_bundle.v0.2` and `decision_inventory.v0.2`, so a
+consumer cannot mistake a constrained decision for a v0.1 contract. Replay
+blocks a supplied value that differs from the versioned contract with
+`EVIDENCE_VALUE_MISMATCH`; a non-empty receipt alone cannot satisfy that
+condition.
 
 Only `workflow_definition.v0.2` may also declare
 `requiredEvidenceMatchers`. The current finite matcher is
