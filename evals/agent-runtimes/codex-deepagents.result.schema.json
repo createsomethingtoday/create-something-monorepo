@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["status", "evidence", "decision", "recovery", "noWriteConfirmation"],
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": ["ready", "blocked", "unknown"]
+    },
+    "evidence": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1
+    },
+    "decision": {
+      "type": "string",
+      "minLength": 1
+    },
+    "recovery": {
+      "type": "string",
+      "minLength": 1
+    },
+    "noWriteConfirmation": {
+      "type": "boolean",
+      "const": true
+    }
+  }
+}
