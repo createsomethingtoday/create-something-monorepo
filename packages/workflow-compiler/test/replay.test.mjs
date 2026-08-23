@@ -201,6 +201,55 @@ test('replay rejects cross-version nested artifacts before evaluating a v0.2 bun
   );
 });
 
+test('replay rejects an unsupported compiled bundle schema instead of treating it as v0.1', async () => {
+  const definition = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const manifest = JSON.parse(await readFile(casesUrl, 'utf8'));
+  const bundle = structuredClone(compileWorkflowDefinition(definition));
+  bundle.schemaVersion = 'compiled_workflow_bundle.v0.4';
+
+  assert.throws(
+    () => replayWorkflow(bundle, manifest),
+    (error) => {
+      assert.equal(error.name, 'ReplayInputValidationError');
+      assert.deepEqual(error.diagnostics, [
+        {
+          code: 'INVALID_VALUE',
+          path: '$.schemaVersion',
+          message: 'Unsupported compiled workflow bundle schema compiled_workflow_bundle.v0.4.',
+        },
+      ]);
+      return true;
+    },
+  );
+});
+
+test('replay rejects nested artifact headers that do not match the compiled bundle', async () => {
+  const definition = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const manifest = JSON.parse(await readFile(casesUrl, 'utf8'));
+  const bundle = structuredClone(compileWorkflowDefinition(definition));
+  bundle.workflowMap.workflowId = 'webflow.marketplace.other-workflow';
+  bundle.runtimeTargets.workflowVersion = '9.9.9';
+  bundle.decisionInventory.definitionHash = 'unrelated-definition-hash';
+  bundle.governedInteraction.workflowId = 'webflow.marketplace.other-workflow';
+
+  assert.throws(
+    () => replayWorkflow(bundle, manifest),
+    (error) => {
+      assert.equal(error.name, 'ReplayInputValidationError');
+      assert.deepEqual(
+        error.diagnostics.map(({ code, path }) => ({ code, path })),
+        [
+          { code: 'INVALID_VALUE', path: '$.workflowMap.workflowId' },
+          { code: 'INVALID_VALUE', path: '$.runtimeTargets.workflowVersion' },
+          { code: 'INVALID_VALUE', path: '$.decisionInventory.definitionHash' },
+          { code: 'INVALID_VALUE', path: '$.governedInteraction.workflowId' },
+        ],
+      );
+      return true;
+    },
+  );
+});
+
 test('replay rejects a v0.2 bundle with divergent nested evidence constraints', async () => {
   const definition = JSON.parse(await readFile(workflowUrl, 'utf8'));
   const manifest = JSON.parse(await readFile(casesUrl, 'utf8'));

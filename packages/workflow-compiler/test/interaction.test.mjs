@@ -130,6 +130,34 @@ test('the interaction parser rejects empty exact evidence values', async () => {
   );
 });
 
+test('the interaction parser rejects empty evidence matcher values', async () => {
+  const definition = JSON.parse(await readFile(fixtureUrl, 'utf8'));
+  definition.schemaVersion = 'workflow_definition.v0.2';
+  definition.actions[0].requiredEvidenceMatchers = {
+    published_url: { kind: 'contains_case_insensitive', values: ['example.com'] },
+  };
+  const interaction = JSON.parse(
+    JSON.stringify(compileWorkflowDefinition(definition).governedInteraction),
+  );
+  const actionIndex = interaction.actions.findIndex(
+    (action) => action.actionId === 'run_published_validation',
+  );
+  assert.notEqual(actionIndex, -1);
+  const action = interaction.actions[actionIndex];
+  assert.ok(action.requiredEvidenceMatchers);
+
+  for (const candidate of ['', '   ']) {
+    action.requiredEvidenceMatchers.published_url.values = [candidate];
+    assert.throws(
+      () => parseGovernedInteractionBundle(interaction),
+      rejectsWith(
+        'INVALID_BUNDLE',
+        `bundle.actions[${actionIndex}].requiredEvidenceMatchers.published_url.values[0]`,
+      ),
+    );
+  }
+});
+
 test('the interaction parser rejects an exact evidence value that conflicts with its matcher', async () => {
   const definition = JSON.parse(await readFile(fixtureUrl, 'utf8'));
   definition.schemaVersion = 'workflow_definition.v0.2';

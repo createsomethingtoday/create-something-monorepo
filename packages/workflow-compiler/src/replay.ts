@@ -139,27 +139,7 @@ export function replayWorkflow(
 }
 
 function rejectMismatchedNestedArtifactSchemas(bundle: CompiledWorkflowBundle): void {
-  const expectedSchemaVersions =
-    bundle.schemaVersion === 'compiled_workflow_bundle.v0.3'
-      ? {
-          decisionInventory: 'decision_inventory.v0.3',
-          governedInteraction: 'governed_interaction_bundle.v0.3',
-          approvalSurfaces: 'approval_surfaces.v0.3',
-          toolContracts: 'tool_contracts.v0.3'
-        }
-      : bundle.schemaVersion === 'compiled_workflow_bundle.v0.2'
-      ? {
-          decisionInventory: 'decision_inventory.v0.2',
-          governedInteraction: 'governed_interaction_bundle.v0.2',
-          approvalSurfaces: 'approval_surfaces.v0.2',
-          toolContracts: 'tool_contracts.v0.2'
-        }
-      : {
-          decisionInventory: 'decision_inventory.v0.1',
-          governedInteraction: 'governed_interaction_bundle.v0.1',
-          approvalSurfaces: 'approval_surfaces.v0.1',
-          toolContracts: 'tool_contracts.v0.1'
-        };
+  const expectedSchemaVersions = expectedNestedArtifactSchemaVersions(bundle);
   const artifacts = [
     ['decisionInventory', bundle.decisionInventory],
     ['governedInteraction', bundle.governedInteraction],
@@ -180,7 +160,89 @@ function rejectMismatchedNestedArtifactSchemas(bundle: CompiledWorkflowBundle): 
       }
     ];
   });
+  const expectedHeader = {
+    workflowId: bundle.workflowId,
+    workflowVersion: bundle.workflowVersion,
+    definitionHash: bundle.definitionHash,
+  };
+  const artifactHeaders = [
+    ['workflowMap', bundle.workflowMap, ['workflowId', 'workflowVersion']],
+    ['runtimeTargets', bundle.runtimeTargets, ['workflowId', 'workflowVersion', 'definitionHash']],
+    ['objectSchemas', bundle.objectSchemas, ['workflowId', 'workflowVersion', 'definitionHash']],
+    ['eventSchemas', bundle.eventSchemas, ['workflowId', 'workflowVersion', 'definitionHash']],
+    ['agentContracts', bundle.agentContracts, ['workflowId', 'workflowVersion', 'definitionHash']],
+    ['evaluationManifest', bundle.evaluationManifest, ['workflowId', 'workflowVersion', 'definitionHash']],
+    ['decisionInventory', bundle.decisionInventory, ['workflowId', 'workflowVersion', 'definitionHash']],
+    ['governedInteraction', bundle.governedInteraction, ['workflowId', 'workflowVersion', 'definitionHash']],
+    ['approvalSurfaces', bundle.approvalSurfaces, ['workflowId', 'workflowVersion', 'definitionHash']],
+    ['toolContracts', bundle.toolContracts, ['workflowId', 'workflowVersion', 'definitionHash']],
+  ] as const;
+  diagnostics.push(
+    ...artifactHeaders.flatMap(([artifactName, artifact, headerFields]) =>
+      headerFields.flatMap((field) => {
+        const actual = artifactHeaderValue(artifact, field);
+        if (actual === expectedHeader[field]) return [];
+        return [
+          {
+            code: 'INVALID_VALUE' as const,
+            path: `$.${artifactName}.${field}`,
+            message:
+              `Compiled artifact ${artifactName} ${field} must match compiled workflow bundle ` +
+              `${field}; received ${String(actual ?? 'missing')}.`,
+          },
+        ];
+      }),
+    ),
+  );
   if (diagnostics.length > 0) throw new ReplayInputValidationError(diagnostics);
+}
+
+function expectedNestedArtifactSchemaVersions(bundle: CompiledWorkflowBundle): {
+  decisionInventory: string;
+  governedInteraction: string;
+  approvalSurfaces: string;
+  toolContracts: string;
+} {
+  const schemaVersion = bundle.schemaVersion as string;
+  switch (schemaVersion) {
+    case 'compiled_workflow_bundle.v0.1':
+      return {
+        decisionInventory: 'decision_inventory.v0.1',
+        governedInteraction: 'governed_interaction_bundle.v0.1',
+        approvalSurfaces: 'approval_surfaces.v0.1',
+        toolContracts: 'tool_contracts.v0.1',
+      };
+    case 'compiled_workflow_bundle.v0.2':
+      return {
+        decisionInventory: 'decision_inventory.v0.2',
+        governedInteraction: 'governed_interaction_bundle.v0.2',
+        approvalSurfaces: 'approval_surfaces.v0.2',
+        toolContracts: 'tool_contracts.v0.2',
+      };
+    case 'compiled_workflow_bundle.v0.3':
+      return {
+        decisionInventory: 'decision_inventory.v0.3',
+        governedInteraction: 'governed_interaction_bundle.v0.3',
+        approvalSurfaces: 'approval_surfaces.v0.3',
+        toolContracts: 'tool_contracts.v0.3',
+      };
+    default:
+      throw new ReplayInputValidationError([
+        {
+          code: 'INVALID_VALUE',
+          path: '$.schemaVersion',
+          message: `Unsupported compiled workflow bundle schema ${schemaVersion}.`,
+        },
+      ]);
+  }
+}
+
+function artifactHeaderValue(
+  artifact: unknown,
+  field: 'workflowId' | 'workflowVersion' | 'definitionHash',
+): unknown {
+  if (!artifact || typeof artifact !== 'object' || Array.isArray(artifact)) return undefined;
+  return (artifact as Record<string, unknown>)[field];
 }
 
 function rejectDivergentNestedGovernanceContracts(bundle: CompiledWorkflowBundle): void {

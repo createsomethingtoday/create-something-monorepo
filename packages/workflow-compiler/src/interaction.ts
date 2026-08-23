@@ -152,7 +152,13 @@ function string(value: unknown, path: string): string {
 
 function stringArray(value: unknown, path: string): string[] {
   if (!Array.isArray(value)) return invalid(path, `${path} must be an array.`);
-  return value.map((entry, index) => string(entry, `${path}[${index}]`));
+  return value.map((entry, index) => {
+    const entryPath = `${path}[${index}]`;
+    if (typeof entry !== 'string' || entry.trim() === '') {
+      return invalid(entryPath, `${entryPath} must be a non-empty string.`);
+    }
+    return entry;
+  });
 }
 
 function evidenceValue(value: unknown, path: string): WorkflowEvidenceValue {
