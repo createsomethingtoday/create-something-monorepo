@@ -34,13 +34,14 @@ instead of leaving an invalid v0.1 document to fail only after it reaches
 production validation.
 
 Only `workflow_definition.v0.2` may also declare
-`requiredEvidenceMatchers`. The current finite matcher is
+`requiredEvidenceMatchers`. The finite matchers are
 `contains_case_insensitive`, which accepts a non-empty string that contains one
-of its declared non-empty values. Replay blocks a non-match with
-`EVIDENCE_MATCHER_MISMATCH`. This permits an owning system's documented receipt
-vocabulary without accepting arbitrary regular expressions. When an exact-value
-constraint and a matcher constrain the same evidence field, the exact value
-must itself satisfy that matcher. The compiler rejects a contradiction with
+of its declared non-empty values, and `equals_one_of`, which accepts only an
+exact member of its declared non-empty string allowlist. Replay blocks a
+non-match with `EVIDENCE_MATCHER_MISMATCH`. This permits an owning system's
+documented receipt vocabulary without accepting arbitrary regular expressions.
+When an exact-value constraint and a matcher constrain the same evidence field,
+the exact value must itself satisfy that matcher. The compiler rejects a contradiction with
 `EVIDENCE_VALUE_MATCHER_CONFLICT`, and the interaction parser rejects an
 externally supplied contradictory bundle, rather than permitting a workflow
 that no replay could satisfy.
@@ -116,6 +117,12 @@ Responses plans use the same versioned contract.
 Returns a provider-neutral MCP `tools/call` plan for an eligible `auto_allow`
 action. The function is pure and performs no transport call. Its disposition is
 `pass`, `wait`, or `stop`; only `pass` contains an invocation.
+
+Invocation requires the frozen bundle instance returned by
+`compileWorkflowDefinition`. A deserialized or copied bundle remains suitable
+for read-only replay and inspection, but adapter planning stops with
+`UNVERIFIED_COMPILED_BUNDLE`; recompile trusted source in the current process
+before producing a tool plan.
 
 ### `createOpenAIResponsesRequestPlan(bundle, replayCase, options)`
 

@@ -365,7 +365,7 @@ export function parseWorkflowDefinition(input: unknown): WorkflowDefinition {
           }
           validator.enumeration(
             matcher.kind,
-            ['contains_case_insensitive'],
+            ['contains_case_insensitive', 'equals_one_of'],
             `${path}.requiredEvidenceMatchers.${field}.kind`
           );
           const values = validator.array(

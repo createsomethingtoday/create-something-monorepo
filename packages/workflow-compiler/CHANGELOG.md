@@ -15,6 +15,9 @@ artifact schemas.
   handoff values, plus the owning review-ready receipt vocabulary before replay
   can transition to form-validated, preflight-passed, or ready-for-review
   states.
+- Add the `equals_one_of` evidence matcher for exact string allowlists, and use
+  the owning Marketplace review-status vocabulary so a negative phrase such as
+  `Not Ready for Review` cannot be treated as review-ready.
 - Add explicit `workflow_definition.v0.2` and
   `compiled_workflow_bundle.v0.2`, `decision_inventory.v0.2`, and
   `governed_interaction_bundle.v0.2` schemas for exact-evidence and
@@ -75,6 +78,10 @@ artifact schemas.
   governed-interaction, approval-surface, and source-derived tool artifacts;
   replay rejects unknown, duplicate, missing, or inappropriate approval records
   before they can influence replay or adapter planning.
+- Freeze compiler-produced bundles and require that in-process trusted source
+  for adapter invocation; deserialized or copied bundles now stop with
+  `UNVERIFIED_COMPILED_BUNDLE` rather than allowing co-mutated tool copies to
+  agree on an invocation target.
 
 ## 0.2.0
 

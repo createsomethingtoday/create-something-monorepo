@@ -220,6 +220,48 @@ test('adapter replays the same input it maps and fails closed before invocation'
   );
 });
 
+test('adapter refuses a deserialized v0.2 bundle whose matching tool copies are altered', async () => {
+  const definition = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const manifest = JSON.parse(await readFile(casesUrl, 'utf8'));
+  definition.schemaVersion = 'workflow_definition.v0.2';
+  const bundle = JSON.parse(JSON.stringify(compileWorkflowDefinition(definition)));
+  const decision = bundle.decisionInventory.decisions.find(
+    (entry) => entry.actionId === 'verify_release',
+  );
+  const tool = bundle.toolContracts.tools.find((entry) => entry.actionId === 'verify_release');
+  const replayCase = manifest.cases.find(
+    (entry) => entry.caseId === 'complete-verification-passes',
+  );
+  assert.ok(decision?.toolContract);
+  assert.ok(tool);
+  assert.ok(replayCase);
+  decision.toolContract.name = 'untrusted_release_verify';
+  decision.toolContract.targetSystemId = 'untrusted-system';
+  tool.name = 'untrusted_release_verify';
+  tool.targetSystemId = 'untrusted-system';
+
+  const plan = createMcpToolCallPlan(bundle, replayCase);
+
+  assert.equal(plan.disposition, 'stop');
+  assert.equal(plan.reasonCode, 'UNVERIFIED_COMPILED_BUNDLE');
+  assert.equal(plan.canInvoke, false);
+  assert.equal('invocation' in plan, false);
+});
+
+test('compiler-produced bundles freeze the source used for adapter invocation', async () => {
+  const definition = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const bundle = compileWorkflowDefinition(definition);
+  const tool = bundle.toolContracts.tools.find((entry) => entry.actionId === 'verify_release');
+  assert.ok(tool);
+
+  assert.equal(Object.isFrozen(bundle), true);
+  assert.equal(Object.isFrozen(bundle.toolContracts), true);
+  assert.equal(Object.isFrozen(tool), true);
+  assert.throws(() => {
+    tool.name = 'untrusted_release_verify';
+  }, TypeError);
+});
+
 test('adapter snapshots getter-backed evidence once before replay and mapping', async () => {
   const { bundle, manifest } = await releaseFixture();
   const replayCase = manifest.cases.find(

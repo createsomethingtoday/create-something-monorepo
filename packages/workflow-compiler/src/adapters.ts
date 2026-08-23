@@ -11,6 +11,7 @@ import type {
   WorkflowReplayResultV0_1,
   WorkflowReplayResultV0_2
 } from './types.js';
+import { isCompilerOwnedBundle } from './compiled-bundle-provenance.js';
 import { parseWorkflowReplayManifest } from './input.js';
 import { replayWorkflow } from './replay.js';
 
@@ -149,6 +150,16 @@ function readyToolPlan(
   const { replayCase, result } = evaluateReplayCase(bundle, input);
   const plan = basePlan(adapter, bundle, result);
   if (plan.disposition !== 'pass') return { plan };
+
+  if (!isCompilerOwnedBundle(bundle)) {
+    return {
+      plan: {
+        ...plan,
+        disposition: 'stop',
+        reasonCode: 'UNVERIFIED_COMPILED_BUNDLE'
+      }
+    };
+  }
 
   const decision = bundle.decisionInventory.decisions.find(
     (entry) => entry.actionId === result.actionId

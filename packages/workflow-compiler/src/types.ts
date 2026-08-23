@@ -22,10 +22,15 @@ export type CompiledWorkflowBundleSchemaVersion =
   | 'compiled_workflow_bundle.v0.1'
   | 'compiled_workflow_bundle.v0.2';
 
-export interface WorkflowEvidenceMatcher {
-  kind: 'contains_case_insensitive';
-  values: string[];
-}
+export type WorkflowEvidenceMatcher =
+  | {
+      kind: 'contains_case_insensitive';
+      values: string[];
+    }
+  | {
+      kind: 'equals_one_of';
+      values: string[];
+    };
 
 export interface WorkflowSystem {
   id: string;
@@ -533,6 +538,7 @@ export type WorkflowAdapterReasonCode =
   | 'APPROVAL_REQUIRED'
   | 'AUTHENTICATED_APPROVAL_REQUIRED'
   | 'GOVERNANCE_BLOCKED'
+  | 'UNVERIFIED_COMPILED_BUNDLE'
   | 'MISSING_TOOL_CONTRACT'
   | 'MISSING_TOOL_PARAMETER_CONTRACT'
   | 'INVALID_TOOL_ARGUMENTS'

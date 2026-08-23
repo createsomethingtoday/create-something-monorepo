@@ -177,7 +177,7 @@ function evidenceValues(value: unknown, path: string): Record<string, WorkflowEv
 function evidenceMatcher(value: unknown, path: string): WorkflowEvidenceMatcher {
   const matcher = object(value, path);
   exactFields(matcher, ['kind', 'values'], [], path);
-  if (matcher.kind !== 'contains_case_insensitive') {
+  if (matcher.kind !== 'contains_case_insensitive' && matcher.kind !== 'equals_one_of') {
     return invalid(`${path}.kind`, `${path}.kind is not supported.`);
   }
   const values = stringArray(matcher.values, `${path}.values`);
@@ -185,7 +185,7 @@ function evidenceMatcher(value: unknown, path: string): WorkflowEvidenceMatcher 
     return invalid(`${path}.values`, `${path}.values must contain at least one string.`);
   }
   unique(values, `${path}.values`);
-  return { kind: 'contains_case_insensitive', values };
+  return { kind: matcher.kind, values };
 }
 
 function evidenceMatchers(value: unknown, path: string): Record<string, WorkflowEvidenceMatcher> {
@@ -210,6 +210,8 @@ function matchesEvidenceMatcher(
           value.toLowerCase().includes(candidate.toLowerCase()),
         )
       );
+    case 'equals_one_of':
+      return typeof value === 'string' && matcher.values.includes(value);
   }
 }
 

@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 
+import { finalizeCompiledWorkflowBundle } from './compiled-bundle-provenance.js';
 import { parseWorkflowDefinition, WorkflowInputValidationError } from './input.js';
 
 import type {
@@ -85,6 +86,8 @@ function matchesEvidenceMatcher(
           value.toLowerCase().includes(candidate.toLowerCase())
         )
       );
+    case 'equals_one_of':
+      return typeof value === 'string' && matcher.values.includes(value);
   }
 }
 
@@ -599,14 +602,14 @@ export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundl
       ],
       actions: decisionInventory.decisions.map(({ toolContract: _toolContract, ...decision }) => decision)
     };
-    return {
+    return finalizeCompiledWorkflowBundle({
       schemaVersion: 'compiled_workflow_bundle.v0.2',
       ...common,
       toolContracts,
       approvalSurfaces,
       decisionInventory,
       governedInteraction
-    };
+    });
   }
 
   const decisionInventory: DecisionInventoryArtifactV0_1 = {
@@ -644,10 +647,10 @@ export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundl
     ],
     actions: decisionInventory.decisions
   };
-  return {
+  return finalizeCompiledWorkflowBundle({
     schemaVersion: 'compiled_workflow_bundle.v0.1',
     ...common,
     decisionInventory,
     governedInteraction
-  };
+  });
 }

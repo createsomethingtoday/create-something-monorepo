@@ -503,8 +503,8 @@ const MARKETPLACE_SUBMISSION_WORKFLOW: WorkflowDefinition = {
       requiredEvidenceValues: { handoff_state: 'confirmed' },
       requiredEvidenceMatchers: {
         review_status: {
-          kind: 'contains_case_insensitive',
-          values: ['ready for review', 'response to review', 'in review']
+          kind: 'equals_one_of',
+          values: ['🆕Ready for Review', '🏃🏾In Review', '🔁Response to Review']
         }
       },
       approval: { required: false },

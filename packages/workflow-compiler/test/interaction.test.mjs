@@ -59,6 +59,21 @@ test('parses serialized exact evidence constraints in the public interaction bun
   });
 });
 
+test('parses an exact-enum evidence matcher in the public interaction bundle', async () => {
+  const definition = JSON.parse(await readFile(fixtureUrl, 'utf8'));
+  definition.schemaVersion = 'workflow_definition.v0.2';
+  definition.actions[0].requiredEvidenceMatchers = {
+    published_url: {
+      kind: 'equals_one_of',
+      values: ['https://example.test/a', 'https://example.test/b'],
+    },
+  };
+  const compiled = compileWorkflowDefinition(definition);
+  const serialized = JSON.parse(JSON.stringify(compiled.governedInteraction));
+
+  assert.deepEqual(parseGovernedInteractionBundle(serialized), compiled.governedInteraction);
+});
+
 test('the legacy interaction schema rejects evidence constraints instead of ignoring them', async () => {
   const interaction = await compiledInteraction();
   interaction.actions[0].requiredEvidenceValues = { published_url: 'https://example.com' };

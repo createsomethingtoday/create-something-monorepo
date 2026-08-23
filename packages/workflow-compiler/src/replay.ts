@@ -588,7 +588,7 @@ function matchesEvidenceMatcher(actual: unknown, matcher: WorkflowEvidenceMatche
     const normalizedActual = actual.toLowerCase();
     return matcher.values.some((value) => normalizedActual.includes(value.toLowerCase()));
   }
-  return false;
+  return matcher.values.includes(actual);
 }
 
 function replayCaseAgainstBundle(
