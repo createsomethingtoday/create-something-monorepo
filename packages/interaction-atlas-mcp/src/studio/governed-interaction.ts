@@ -2,6 +2,7 @@ import {
   evaluateGovernedInteractionCompatibility,
   parseGovernedInteractionBundle,
   type GovernedInteractionBundle,
+  type GovernedInteractionBundleV0_1,
   type GovernedInteractionCompatibilityDecisionV0_1,
   type GovernedInteractionCompatibilityDecisionV0_2,
   type GovernedInteractionHostContract,
@@ -26,7 +27,7 @@ export const ATLAS_STUDIO_INTERACTION_HOST: GovernedInteractionHostContract = {
 
 export interface AtlasGovernedInteractionInspectionV0_1 {
   schemaVersion: 'atlas_governed_interaction_inspection.v0.1';
-  bundle: GovernedInteractionBundle;
+  bundle: GovernedInteractionBundleV0_1;
   compatibility: GovernedInteractionCompatibilityDecisionV0_1;
   authority: 'read_only';
 }

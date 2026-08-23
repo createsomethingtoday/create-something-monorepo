@@ -161,9 +161,15 @@ void invalidLegacyCompatibilityDecision;
 
 const legacyClientWorkspaceInspection: ClientWorkspaceGovernedInteractionInspectionV0_1 = {
   schemaVersion: 'client_workspace_governed_interaction_inspection.v0.1',
-  bundle: constrainedInteraction,
+  bundle: legacyBundle.governedInteraction,
   compatibility: legacyCompatibilityDecision,
   authority: 'signed_delivery_read_only'
+};
+
+const invalidLegacyClientWorkspaceBundle: ClientWorkspaceGovernedInteractionInspectionV0_1 = {
+  ...legacyClientWorkspaceInspection,
+  // @ts-expect-error A v0.1 Client Workspace envelope cannot contain a v0.2 interaction bundle.
+  bundle: constrainedInteraction
 };
 
 const invalidLegacyClientWorkspaceInspection: ClientWorkspaceGovernedInteractionInspectionV0_1 = {
@@ -176,6 +182,7 @@ const invalidLegacyClientWorkspaceInspection: ClientWorkspaceGovernedInteraction
 };
 
 void legacyClientWorkspaceInspection;
+void invalidLegacyClientWorkspaceBundle;
 void invalidLegacyClientWorkspaceInspection;
 
 declare const legacyConsoleData: WorkflowOperatorConsoleDataV0_1;

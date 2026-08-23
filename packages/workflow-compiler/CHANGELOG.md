@@ -45,7 +45,7 @@ artifact schemas.
   with their original errors.
 - Version the Client Workspace and Atlas Studio inspection envelopes to v0.2
   with their nested v0.2 compatibility receipts; historical v0.1 envelopes
-  retain the v0.1 nested contract.
+  retain the v0.1 nested contract and accept only v0.1 interaction bundles.
 - Version operator-console data with the decision-inventory and replay-report
   artifacts it embeds, and reject a mixed v0.1/v0.2 pair rather than emitting
   a misleading console schema.

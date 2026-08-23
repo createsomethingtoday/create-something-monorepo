@@ -144,7 +144,9 @@ Client Workspace inspection outputs follow the same nesting boundary:
 `client_workspace_governed_interaction_inspection.v0.1` contains a v0.1
 compatibility decision, while the current inspector emits
 `client_workspace_governed_interaction_inspection.v0.2` with a v0.2 decision.
-Do not relabel a retained inspection; branch on its outer `schemaVersion`.
+Historical v0.1 inspections can contain only a v0.1 interaction bundle; v0.2
+inspections can contain either supported bundle version. Do not relabel a
+retained inspection; branch on its outer `schemaVersion`.
 
 `createOperatorConsoleData` follows the same correlated-artifact rule. A
 v0.1 compiled bundle and replay report produce

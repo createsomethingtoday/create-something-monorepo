@@ -5,7 +5,10 @@ import {
   type GovernedInteractionCompatibilityDecisionV0_2,
   type GovernedInteractionHostContract,
 } from './interaction.js';
-import type { GovernedInteractionBundle } from './types.js';
+import type {
+  GovernedInteractionBundle,
+  GovernedInteractionBundleV0_1,
+} from './types.js';
 
 export const CLIENT_WORKSPACE_INTERACTION_HOST: GovernedInteractionHostContract = {
   hostId: 'client-workspace',
@@ -26,7 +29,7 @@ export const CLIENT_WORKSPACE_INTERACTION_HOST: GovernedInteractionHostContract 
 
 export interface ClientWorkspaceGovernedInteractionInspectionV0_1 {
   schemaVersion: 'client_workspace_governed_interaction_inspection.v0.1';
-  bundle: GovernedInteractionBundle;
+  bundle: GovernedInteractionBundleV0_1;
   compatibility: GovernedInteractionCompatibilityDecisionV0_1;
   authority: 'signed_delivery_read_only';
 }

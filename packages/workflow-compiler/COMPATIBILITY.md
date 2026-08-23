@@ -41,7 +41,9 @@ decision `schemaVersion` rather than apply v0.2 error codes to a v0.1 result.
 Inspection envelopes retain that compatibility boundary. Historical
 `client_workspace_governed_interaction_inspection.v0.1` values contain v0.1
 compatibility receipts; the current Client Workspace inspector emits v0.2 with
-a v0.2 receipt. Atlas Studio follows the same v0.1/v0.2 envelope pairing.
+a v0.2 receipt. A historical v0.1 envelope also contains only a v0.1
+interaction bundle; v0.2 envelopes can contain either supported interaction
+bundle version. Atlas Studio follows the same v0.1/v0.2 envelope pairing.
 
 Operator-console data has a separate correlated schema. Historical
 `workflow_operator_console.v0.1` embeds a v0.1 decision inventory and replay

@@ -123,7 +123,7 @@ import {
 
 The `create-something/control` runtime currently permits only four read-only capabilities (`workflow.inspect`, `replay.inspect`, `receipt.inspect`, and `interaction.select`) and one local operation (`select_replay_case`). Parsing rejects unknown fields, versions, capabilities, references, duplicate identifiers, executable operations, and incomplete approval ownership. Hosts publish their supported interaction-schema, runtime, capability, and operation contract and receive one normalized compatibility decision; a bundle whose schema is not explicitly listed is incompatible. Hosts do not reinterpret workflow authority.
 
-The compiler emits the same content-hashed `governed-interaction.json` for Atlas Studio and Client Workspace. The trusted desktop application contains the interpreter and renderer. A delivery may contain data governed by the IR, but it cannot introduce JavaScript, native plugins, commands, filesystem roots, origins, or ambient environment access.
+The compiler emits the same content-hashed `governed-interaction.json` for Atlas Studio and Client Workspace. Historical v0.1 inspection envelopes can contain only a v0.1 interaction bundle; current v0.2 envelopes can report either supported bundle version with a v0.2 compatibility receipt. The trusted desktop application contains the interpreter and renderer. A delivery may contain data governed by the IR, but it cannot introduce JavaScript, native plugins, commands, filesystem roots, origins, or ambient environment access.
 
 ## Builder adapter plans
 

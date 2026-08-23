@@ -72,7 +72,9 @@ The resulting compatibility receipt is
 and branch on the decision schema before interpreting its error vocabulary.
 The Client Workspace and Atlas Studio inspection envelopes that contain the
 receipt are likewise v0.2. Preserve historical v0.1 envelopes and branch on
-their outer schema before reading the nested compatibility result.
+their outer schema before reading the nested compatibility result. A retained
+v0.1 envelope can contain only a v0.1 interaction bundle; do not relabel a
+v0.2 bundle into it.
 
 Operator-console data is derived from both the compiled bundle and replay
 report. Recompile and replay a migrated definition before generating a v0.2
