@@ -97,7 +97,7 @@ interface StarterOptions {
 function usage(): string {
   return [
     'Usage:',
-    '  workflow-compiler init --template local-runbook --dir <new-directory>',
+    '  workflow-compiler init --template <local-runbook|marketplace-submission> --dir <new-directory>',
     '  workflow-compiler validate --workflow <definition.json>',
     '  workflow-compiler simulate --workflow <definition.json> --cases <cases.json>',
     '  workflow-compiler explain --workflow <definition.json> [--cases <cases.json>]',
@@ -161,7 +161,9 @@ function starterOptions(args: string[]): StarterOptions {
   const values = flagValues(args, ['--template', '--dir']);
   const template = values.get('--template');
   const dir = values.get('--dir');
-  if (template !== 'local-runbook' || !dir) throw new WorkflowCliUsageError();
+  if ((template !== 'local-runbook' && template !== 'marketplace-submission') || !dir) {
+    throw new WorkflowCliUsageError();
+  }
   return { template, dir: resolve(dir) };
 }
 

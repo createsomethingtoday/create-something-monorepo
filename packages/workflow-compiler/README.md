@@ -9,7 +9,7 @@ It gives builders a composable governance layer below any hosted control plane. 
 Install the builder artifact in the repository where the workflow will live:
 
 ```bash
-npm install @create-something/workflow-compiler@0.2.0
+npm install @create-something/workflow-compiler@0.3.0
 ```
 
 Copy the shipped Codex skill into that repository, then ask Codex to turn a recurring operating task into a runbook. Codex can propose and revise the local files; the terminal commands below remain the deterministic proof surface:
@@ -28,6 +28,27 @@ npx workflow-compiler explain --workflow workflow.json --cases cases.json
 
 `init` refuses an existing target directory. The starter gives Codex a local, versioned contract with one permitted step, one operator-approval boundary, and one explicit stop. `validate`, `simulate`, and `explain` make that contract inspectable before a builder connects any external system.
 
+### Marketplace submission-to-review template
+
+Use the second starter when a walkthrough needs to show the complete app-form
+and review path: form validation, published-site validation, Validator App
+preflight, Airtable Automation receipt, reviewer wait, and a blocked creator
+message.
+
+```bash
+npx workflow-compiler init --template marketplace-submission --dir ./marketplace-submission
+cd ./marketplace-submission
+npx workflow-compiler validate --workflow workflow.json
+npx workflow-compiler simulate --workflow workflow.json --cases cases.json
+npx workflow-compiler explain --workflow workflow.json --cases cases.json
+```
+
+The template generates a source-bound `SOURCES.md`, a runbook, a playbook, and
+sanitized replay fixtures. Its “Airtable Automation handoff” is receipt
+inspection only: the compiler neither sends a webhook nor reads Airtable. The
+source pointers identify the owning repository surfaces; they are not proof of
+a live submission, validation, review, or delivery.
+
 This loop does not execute live actions, contact a provider, read credentials, or make an approval decision. A future execution host must supply its own authenticated transport, policy review, result validation, and receipt retention. The package is designed for Codex and OpenAI-compatible workflows, but it is not an official OpenAI partnership, endorsement, certification, or hosted service.
 
 ## Five-minute quickstart
@@ -35,7 +56,7 @@ This loop does not execute live actions, contact a provider, read credentials, o
 Install the package with a supported Node release:
 
 ```bash
-npm install @create-something/workflow-compiler@0.2.0
+npm install @create-something/workflow-compiler@0.3.0
 ```
 
 Create `workflow.json` and optionally `cases.json` using the versioned schemas documented in [API.md](./API.md). Compile and independently verify a local bundle:

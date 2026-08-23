@@ -4,6 +4,14 @@ All notable changes to this package are documented here. This project follows
 Semantic Versioning for its npm API and separately versions its workflow and
 artifact schemas.
 
+## 0.3.0
+
+- Add the `marketplace-submission` terminal starter for a local, source-bound
+  submission-to-review walkthrough.
+- Replay form validation, Validator App preflight, Airtable Automation receipt
+  inspection, reviewer wait, failed preflight, missing receipt, and blocked
+  creator messaging using sanitized deterministic fixtures only.
+
 ## 0.2.0
 
 - Add the local-runbook terminal starter, validation, simulation, and Markdown

@@ -366,7 +366,10 @@ test('the public CLI returns a structured usage error for incomplete arguments',
   assert.equal(error.error, 'WorkflowCliUsageError');
   assert.equal(error.code, 'INVALID_ARGUMENTS');
   assert.match(error.usage, /^Usage:/);
-  assert.match(error.usage, /workflow-compiler init --template local-runbook/);
+  assert.match(
+    error.usage,
+    /workflow-compiler init --template <local-runbook\|marketplace-submission>/
+  );
   assert.match(error.usage, /workflow-compiler validate --workflow/);
   assert.match(error.usage, /workflow-compiler simulate --workflow/);
   assert.match(error.usage, /workflow-compiler explain --workflow/);
