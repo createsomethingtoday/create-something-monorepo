@@ -15,14 +15,22 @@ artifact schemas.
   handoff values, plus the owning review-ready receipt vocabulary before replay
   can transition to form-validated, preflight-passed, or ready-for-review
   states.
-- Add the `equals_one_of` evidence matcher for exact string allowlists, and use
-  the owning Marketplace review-status vocabulary so a negative phrase such as
-  `Not Ready for Review` cannot be treated as review-ready.
+- Add the `equals_one_of` evidence matcher only in the new v0.3 workflow and
+  correlated artifact schemas, preserving v0.2's published substring-only
+  matcher vocabulary. The Marketplace starter uses it with the owning
+  review-status vocabulary so a negative phrase such as `Not Ready for Review`
+  cannot be treated as review-ready.
+- Add detached `migrateWorkflowDefinitionToV0_3` and
+  `migrateGovernedInteractionBundleToV0_3` helpers; the v0.2 helpers refuse a
+  v0.3 downgrade.
 - Add explicit `workflow_definition.v0.2` and
   `compiled_workflow_bundle.v0.2`, `decision_inventory.v0.2`, and
   `governed_interaction_bundle.v0.2` schemas for exact-evidence and
   evidence-matcher constraints, with detached public migration helpers from
   v0.1.
+- Add the correlated v0.3 definition, compiled bundle, decision inventory,
+  governed interaction, approval surface, tool contract, replay report, and
+  operator-console schemas for exact-enum matcher contracts.
 - Reject empty or whitespace-only exact evidence values before a replay can be
   made permanently unsatisfiable.
 - Make `WorkflowDefinition` schema-discriminated in the public TypeScript
@@ -37,6 +45,9 @@ artifact schemas.
 - Add `workflow_adapter_plan.v0.2` for MCP and OpenAI Responses plans from
   constrained bundles, retaining the original v0.1 governance-reason vocabulary
   for legacy plans.
+- Add `workflow_adapter_plan.v0.3` for exact-enum workflows and for the new
+  `UNVERIFIED_COMPILED_BUNDLE` fail-closed stop, so v0.1/v0.2 plan consumers
+  never receive an expanded reason-code vocabulary under their prior schema.
 - Serialize absent exact-value and matcher evidence as `actual: null` in v0.2
   mismatch details rather than dropping the required field from replay JSON.
 - Preserve the legacy host contract when its schema allowlist is omitted:

@@ -8,36 +8,37 @@ are included in the npm tarball.
 
 ### `compileWorkflowDefinition(input)`
 
-Parses one `workflow_definition.v0.1` or `workflow_definition.v0.2` value, validates every reference and
+Parses one `workflow_definition.v0.1`, `workflow_definition.v0.2`, or
+`workflow_definition.v0.3` value, validates every reference and
 consequential governance boundary, and returns a deterministic
 `CompiledWorkflowBundle`. It throws `WorkflowInputValidationError` for input
 shape errors and `WorkflowCompilationError` for invalid workflow semantics.
 
-Only `workflow_definition.v0.2` may declare `requiredEvidenceValues`, a map of
-required-evidence fields to an exact non-empty string, finite number, or boolean
-value. Each constrained field must also appear in `requiredEvidence`. The
-compiled `governed_interaction_bundle.v0.2` preserves and validates these
-constraints. The compiled workflow bundle, decision inventory, tool contracts,
-and approval surfaces are emitted as `compiled_workflow_bundle.v0.2`,
-`decision_inventory.v0.2`, `tool_contracts.v0.2`, and
-`approval_surfaces.v0.2`. Tool contracts and controlled actions retain their
-exact-value and matcher constraints, so a consumer cannot mistake a constrained
-decision for a v0.1 contract. Replay blocks a supplied value that differs from
+`workflow_definition.v0.2` and `workflow_definition.v0.3` may declare
+`requiredEvidenceValues`, a map of required-evidence fields to an exact
+non-empty string, finite number, or boolean value. Each constrained field must
+also appear in `requiredEvidence`. The compiled governed-interaction, workflow,
+decision-inventory, tool-contract, and approval-surface schemas retain the same
+version family as the definition. Tool contracts and controlled actions retain
+their exact-value and matcher constraints, so a consumer cannot mistake a
+constrained decision for a v0.1 contract. Replay blocks a supplied value that differs from
 the versioned contract with
 `EVIDENCE_VALUE_MISMATCH`; a non-empty receipt alone cannot satisfy that
 condition.
 
 The generated TypeScript `WorkflowDefinition` is a schema-discriminated union:
 `workflow_definition.v0.1` actions cannot declare either evidence-constraint
-field, while v0.2 actions can. This mirrors the fail-closed runtime parser
+field, while v0.2 and v0.3 actions can. This mirrors the fail-closed runtime parser
 instead of leaving an invalid v0.1 document to fail only after it reaches
 production validation.
 
-Only `workflow_definition.v0.2` may also declare
-`requiredEvidenceMatchers`. The finite matchers are
+`workflow_definition.v0.2` limits `requiredEvidenceMatchers` to
 `contains_case_insensitive`, which accepts a non-empty string that contains one
-of its declared non-empty values, and `equals_one_of`, which accepts only an
-exact member of its declared non-empty string allowlist. Replay blocks a
+of its declared non-empty values. `workflow_definition.v0.3` adds
+`equals_one_of`, which accepts only an exact member of its declared non-empty
+string allowlist, and emits correlated v0.3 compiled, inventory, interaction,
+approval-surface, tool-contract, replay-report, console, and adapter-plan
+schemas. Replay blocks a
 non-match with `EVIDENCE_MATCHER_MISMATCH`. This permits an owning system's
 documented receipt vocabulary without accepting arbitrary regular expressions.
 When an exact-value constraint and a matcher constrain the same evidence field,
@@ -65,6 +66,8 @@ Validates a `workflow_definition.v0.1` or `workflow_definition.v0.2` value and
 returns a detached `workflow_definition.v0.2` copy. It does not infer new
 evidence constraints or change workflow semantics. Validate, compile, replay,
 and retain the prior source and compiled revision before promoting the copy.
+`migrateWorkflowDefinitionToV0_3(input)` is the corresponding detached upgrade
+path for v0.3; the v0.2 helper refuses to downgrade a v0.3 definition.
 
 ### `parseWorkflowReplayManifest(input)`
 
@@ -91,7 +94,8 @@ case, even if supplied evidence would happen to satisfy it.
 `CompiledWorkflowBundle` is also a schema-discriminated union. A v0.1 bundle
 can contain only v0.1 decision inventory, governed interaction, tool contracts,
 approval surfaces, and decisions without evidence constraints; a v0.2 bundle
-carries the corresponding v0.2 contracts. Replay also rejects a deserialized
+carries the corresponding v0.2 contracts; a v0.3 bundle carries the exact-enum
+matcher in corresponding v0.3 contracts. Replay also rejects a deserialized
 bundle whose nested artifact schema or governance contract (including autonomy,
 authority, approvals, and evidence constraints) does not match the correlated
 v0.2 decision before it evaluates a case. The decision embeds the
@@ -112,6 +116,11 @@ replay vocabulary. v0.2 bundles emit `workflow_adapter_plan.v0.2`, which may
 carry exact-value or matcher mismatch reasons. Both MCP and offline OpenAI
 Responses plans use the same versioned contract.
 
+A v0.3 bundle emits `workflow_adapter_plan.v0.3`. The immutable-bundle stop
+also uses that v0.3 plan envelope—even for a copied v0.1 or v0.2 bundle—so an
+exact consumer never receives the new `UNVERIFIED_COMPILED_BUNDLE` reason in a
+previously published plan schema.
+
 ### `createMcpToolCallPlan(bundle, replayCase)`
 
 Returns a provider-neutral MCP `tools/call` plan for an eligible `auto_allow`
@@ -121,7 +130,7 @@ action. The function is pure and performs no transport call. Its disposition is
 Invocation requires the frozen bundle instance returned by
 `compileWorkflowDefinition`. A deserialized or copied bundle remains suitable
 for read-only replay and inspection, but adapter planning stops with
-`UNVERIFIED_COMPILED_BUNDLE`; recompile trusted source in the current process
+`UNVERIFIED_COMPILED_BUNDLE` in `workflow_adapter_plan.v0.3`; recompile trusted source in the current process
 before producing a tool plan.
 
 ### `createOpenAIResponsesRequestPlan(bundle, replayCase, options)`
@@ -159,13 +168,17 @@ boundary for callers that manage their own keys.
 
 `parseGovernedInteractionBundle` and
 `evaluateGovernedInteractionCompatibility` validate the finite, read-only
-`governed_interaction_bundle.v0.1` and `governed_interaction_bundle.v0.2` IR.
-Version `v0.2` carries the exact-evidence and evidence-matcher fields emitted
-from a v0.2 workflow; v0.1 rejects them. `migrateGovernedInteractionBundle`
+`governed_interaction_bundle.v0.1`, `governed_interaction_bundle.v0.2`, and
+`governed_interaction_bundle.v0.3` IR. Version `v0.2` carries exact-evidence
+and substring-matcher fields; v0.3 adds exact-enum matchers from a v0.3
+workflow. v0.1 rejects constrained fields. `migrateGovernedInteractionBundle`
 validates an existing bundle and returns a detached v0.2 copy without adding
 authority or changing a decision. `createOperatorConsoleData` derives the
 read-only UI model. `serveOperatorConsole` serves an already compiled bundle;
 it does not add execution controls.
+
+`migrateGovernedInteractionBundleToV0_3(input)` makes a detached v0.3 copy;
+the v0.2 helper refuses a v0.3 downgrade.
 
 `GovernedInteractionHostContract` supports an optional `schemaVersions`
 allowlist alongside its runtime, capability, and operation allowlists. Omission
@@ -183,13 +196,15 @@ Client Workspace inspection outputs follow the same nesting boundary:
 compatibility decision, while the current inspector emits
 `client_workspace_governed_interaction_inspection.v0.2` with a v0.2 decision.
 Historical v0.1 inspections can contain only a v0.1 interaction bundle; v0.2
-inspections can contain either supported bundle version. Do not relabel a
-retained inspection; branch on its outer `schemaVersion`.
+inspections contain v0.1/v0.2 bundles, while v0.3 inspections contain a v0.3
+bundle. Do not relabel a retained inspection; branch on its outer
+`schemaVersion`.
 
 `createOperatorConsoleData` follows the same correlated-artifact rule. A
 v0.1 compiled bundle and replay report produce
 `workflow_operator_console.v0.1`; matching v0.2 artifacts produce
-`workflow_operator_console.v0.2`. The helper rejects a mismatched bundle and
+`workflow_operator_console.v0.2`; matching v0.3 artifacts produce
+`workflow_operator_console.v0.3`. The helper rejects a mismatched bundle and
 replay-report schema rather than emitting a misleading console envelope.
 
 ## CLI

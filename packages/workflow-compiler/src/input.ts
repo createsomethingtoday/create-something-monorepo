@@ -1,6 +1,7 @@
 import type {
   WorkflowDefinition,
   WorkflowDefinitionV0_2,
+  WorkflowDefinitionV0_3,
   WorkflowReplayManifest
 } from './types.js';
 
@@ -224,12 +225,19 @@ export function parseWorkflowDefinition(input: unknown): WorkflowDefinition {
   const collections = requireTopLevelCollections(input);
   const validator = new Validator();
 
-  const supportsEvidenceConstraints = input.schemaVersion === 'workflow_definition.v0.2';
-  if (!['workflow_definition.v0.1', 'workflow_definition.v0.2'].includes(String(input.schemaVersion))) {
+  const supportsEvidenceConstraints =
+    input.schemaVersion === 'workflow_definition.v0.2' ||
+    input.schemaVersion === 'workflow_definition.v0.3';
+  const supportsExactEvidenceMatchers = input.schemaVersion === 'workflow_definition.v0.3';
+  if (
+    !['workflow_definition.v0.1', 'workflow_definition.v0.2', 'workflow_definition.v0.3'].includes(
+      String(input.schemaVersion)
+    )
+  ) {
     validator.diagnostics.push({
       code: input.schemaVersion === undefined ? 'REQUIRED_FIELD' : 'UNSUPPORTED_SCHEMA_VERSION',
       path: '$.schemaVersion',
-      message: 'Expected workflow_definition.v0.1 or workflow_definition.v0.2.'
+      message: 'Expected workflow_definition.v0.1, workflow_definition.v0.2, or workflow_definition.v0.3.'
     });
   }
   validator.string(input.workflowId, '$.workflowId');
@@ -310,7 +318,7 @@ export function parseWorkflowDefinition(input: unknown): WorkflowDefinition {
         validator.diagnostics.push({
           code: 'INVALID_VALUE',
           path: `${path}.requiredEvidenceValues`,
-          message: 'Evidence constraints require workflow_definition.v0.2.'
+          message: 'Evidence constraints require workflow_definition.v0.2 or workflow_definition.v0.3.'
         });
       }
       const requiredEvidenceValues = validator.record(
@@ -335,7 +343,7 @@ export function parseWorkflowDefinition(input: unknown): WorkflowDefinition {
         validator.diagnostics.push({
           code: 'INVALID_VALUE',
           path: `${path}.requiredEvidenceMatchers`,
-          message: 'Evidence constraints require workflow_definition.v0.2.'
+          message: 'Evidence constraints require workflow_definition.v0.2 or workflow_definition.v0.3.'
         });
       }
       const requiredEvidenceMatchers = validator.record(
@@ -365,7 +373,9 @@ export function parseWorkflowDefinition(input: unknown): WorkflowDefinition {
           }
           validator.enumeration(
             matcher.kind,
-            ['contains_case_insensitive', 'equals_one_of'],
+            supportsExactEvidenceMatchers
+              ? ['contains_case_insensitive', 'equals_one_of']
+              : ['contains_case_insensitive'],
             `${path}.requiredEvidenceMatchers.${field}.kind`
           );
           const values = validator.array(
@@ -467,10 +477,28 @@ export function parseWorkflowDefinition(input: unknown): WorkflowDefinition {
 
 export function migrateWorkflowDefinition(input: unknown): WorkflowDefinitionV0_2 {
   const definition = parseWorkflowDefinition(input);
+  if (definition.schemaVersion === 'workflow_definition.v0.3') {
+    throw new WorkflowInputValidationError([
+      {
+        code: 'INVALID_VALUE',
+        path: '$.schemaVersion',
+        message:
+          'workflow_definition.v0.3 cannot be downgraded; use migrateWorkflowDefinitionToV0_3 for a detached v0.3 copy.'
+      }
+    ]);
+  }
   return {
     ...structuredClone(definition),
     schemaVersion: 'workflow_definition.v0.2'
   };
+}
+
+export function migrateWorkflowDefinitionToV0_3(input: unknown): WorkflowDefinitionV0_3 {
+  const definition = parseWorkflowDefinition(input);
+  return {
+    ...structuredClone(definition),
+    schemaVersion: 'workflow_definition.v0.3'
+  } as WorkflowDefinitionV0_3;
 }
 
 export function parseWorkflowReplayManifest(input: unknown): WorkflowReplayManifest {

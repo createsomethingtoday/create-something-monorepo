@@ -6,9 +6,11 @@ import type {
   GovernedInteractionBundle,
   GovernedInteractionBundleV0_1,
   GovernedInteractionBundleV0_2,
+  GovernedInteractionBundleV0_3,
   GovernedInteractionDecision,
   GovernedInteractionDecisionV0_1,
   GovernedInteractionDecisionV0_2,
+  GovernedInteractionDecisionV0_3,
   GovernedInteractionCapability,
   GovernedInteractionOperation,
   GovernedInteractionSurface,
@@ -174,10 +176,17 @@ function evidenceValues(value: unknown, path: string): Record<string, WorkflowEv
   );
 }
 
-function evidenceMatcher(value: unknown, path: string): WorkflowEvidenceMatcher {
+function evidenceMatcher(
+  value: unknown,
+  path: string,
+  supportsExactEnum: boolean,
+): WorkflowEvidenceMatcher {
   const matcher = object(value, path);
   exactFields(matcher, ['kind', 'values'], [], path);
-  if (matcher.kind !== 'contains_case_insensitive' && matcher.kind !== 'equals_one_of') {
+  if (
+    matcher.kind !== 'contains_case_insensitive' &&
+    (!supportsExactEnum || matcher.kind !== 'equals_one_of')
+  ) {
     return invalid(`${path}.kind`, `${path}.kind is not supported.`);
   }
   const values = stringArray(matcher.values, `${path}.values`);
@@ -188,12 +197,16 @@ function evidenceMatcher(value: unknown, path: string): WorkflowEvidenceMatcher 
   return { kind: matcher.kind, values };
 }
 
-function evidenceMatchers(value: unknown, path: string): Record<string, WorkflowEvidenceMatcher> {
+function evidenceMatchers(
+  value: unknown,
+  path: string,
+  supportsExactEnum: boolean,
+): Record<string, WorkflowEvidenceMatcher> {
   const matchers = object(value, path);
   return Object.fromEntries(
     Object.entries(matchers).map(([field, matcher]) => {
       if (!field.trim()) return invalid(path, `${path} fields must not be empty.`);
-      return [field, evidenceMatcher(matcher, `${path}.${field}`)];
+      return [field, evidenceMatcher(matcher, `${path}.${field}`, supportsExactEnum)];
     }),
   );
 }
@@ -291,7 +304,7 @@ function parseDecision(
       'receiptFields',
       'recovery',
     ],
-    schemaVersion === 'governed_interaction_bundle.v0.2'
+    schemaVersion !== 'governed_interaction_bundle.v0.1'
       ? ['approvalOwner', 'requiredEvidenceMatchers', 'requiredEvidenceValues']
       : ['approvalOwner'],
     path,
@@ -319,7 +332,11 @@ function parseDecision(
   const requiredEvidenceMatchers =
     decision.requiredEvidenceMatchers === undefined
       ? undefined
-      : evidenceMatchers(decision.requiredEvidenceMatchers, `${path}.requiredEvidenceMatchers`);
+      : evidenceMatchers(
+          decision.requiredEvidenceMatchers,
+          `${path}.requiredEvidenceMatchers`,
+          schemaVersion === 'governed_interaction_bundle.v0.3',
+        );
   const receiptFields = stringArray(decision.receiptFields, `${path}.receiptFields`);
   unique(systemsTouched, `${path}.systemsTouched`);
   unique(requiredEvidence, `${path}.requiredEvidence`);
@@ -397,7 +414,8 @@ export function parseGovernedInteractionBundle(input: unknown): GovernedInteract
   );
   if (
     bundle.schemaVersion !== 'governed_interaction_bundle.v0.1' &&
-    bundle.schemaVersion !== 'governed_interaction_bundle.v0.2'
+    bundle.schemaVersion !== 'governed_interaction_bundle.v0.2' &&
+    bundle.schemaVersion !== 'governed_interaction_bundle.v0.3'
   ) {
     throw new GovernedInteractionValidationError(
       'UNKNOWN_SCHEMA_VERSION',
@@ -473,6 +491,13 @@ export function parseGovernedInteractionBundle(input: unknown): GovernedInteract
       actions: actions as GovernedInteractionDecisionV0_2[],
     };
   }
+  if (schemaVersion === 'governed_interaction_bundle.v0.3') {
+    return {
+      schemaVersion,
+      ...common,
+      actions: actions as GovernedInteractionDecisionV0_3[],
+    };
+  }
   return {
     schemaVersion,
     ...common,
@@ -484,10 +509,28 @@ export function migrateGovernedInteractionBundle(
   input: unknown,
 ): GovernedInteractionBundleV0_2 {
   const bundle = parseGovernedInteractionBundle(input);
+  if (bundle.schemaVersion === 'governed_interaction_bundle.v0.3') {
+    throw new GovernedInteractionValidationError(
+      'INVALID_BUNDLE',
+      'bundle.schemaVersion',
+      'governed_interaction_bundle.v0.3 cannot be downgraded; use migrateGovernedInteractionBundleToV0_3 for a detached v0.3 copy.',
+    );
+  }
   return {
     ...structuredClone(bundle),
     schemaVersion: 'governed_interaction_bundle.v0.2',
     actions: bundle.actions as GovernedInteractionDecisionV0_2[]
+  };
+}
+
+export function migrateGovernedInteractionBundleToV0_3(
+  input: unknown,
+): GovernedInteractionBundleV0_3 {
+  const bundle = parseGovernedInteractionBundle(input);
+  return {
+    ...structuredClone(bundle),
+    schemaVersion: 'governed_interaction_bundle.v0.3',
+    actions: bundle.actions as GovernedInteractionDecisionV0_3[],
   };
 }
 

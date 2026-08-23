@@ -4,6 +4,7 @@ import test from 'node:test';
 
 import {
   migrateWorkflowDefinition,
+  migrateWorkflowDefinitionToV0_3,
   parseWorkflowDefinition,
   parseWorkflowReplayManifest
 } from '../dist/index.js';
@@ -31,7 +32,7 @@ test('the public workflow parser fails closed on an unknown schema version', asy
         {
           code: 'UNSUPPORTED_SCHEMA_VERSION',
           path: '$.schemaVersion',
-          message: 'Expected workflow_definition.v0.1 or workflow_definition.v0.2.'
+          message: 'Expected workflow_definition.v0.1, workflow_definition.v0.2, or workflow_definition.v0.3.'
         }
       ]);
       return true;
@@ -151,6 +152,33 @@ test('the public workflow parser rejects duplicate evidence matcher values', asy
   );
 });
 
+test('the public workflow parser reserves exact-enum evidence matchers for v0.3', async () => {
+  const legacy = JSON.parse(await readFile(workflowFixture, 'utf8'));
+  legacy.schemaVersion = 'workflow_definition.v0.2';
+  legacy.actions[0].requiredEvidenceMatchers = {
+    published_url: { kind: 'equals_one_of', values: ['https://example.test'] }
+  };
+
+  assert.throws(
+    () => parseWorkflowDefinition(legacy),
+    (error) => {
+      assert.equal(error.name, 'WorkflowInputValidationError');
+      assert.deepEqual(error.diagnostics, [
+        {
+          code: 'INVALID_VALUE',
+          path: '$.actions[0].requiredEvidenceMatchers.published_url.kind',
+          message: 'Expected one of: contains_case_insensitive.'
+        }
+      ]);
+      return true;
+    }
+  );
+
+  const v03 = structuredClone(legacy);
+  v03.schemaVersion = 'workflow_definition.v0.3';
+  assert.equal(parseWorkflowDefinition(v03).schemaVersion, 'workflow_definition.v0.3');
+});
+
 test('the public workflow parser rejects unknown evidence matcher fields', async () => {
   const workflow = JSON.parse(await readFile(workflowFixture, 'utf8'));
   workflow.schemaVersion = 'workflow_definition.v0.2';
@@ -207,7 +235,7 @@ test('the public workflow parser rejects misspelled evidence-constraint fields',
   );
 });
 
-test('the public workflow parser requires v0.2 for evidence constraints', async () => {
+test('the public workflow parser requires a constrained schema for evidence constraints', async () => {
   const workflow = JSON.parse(await readFile(workflowFixture, 'utf8'));
   workflow.actions[0].requiredEvidenceValues = { published_url: 'https://example.com' };
 
@@ -219,7 +247,7 @@ test('the public workflow parser requires v0.2 for evidence constraints', async 
         {
           code: 'INVALID_VALUE',
           path: '$.actions[0].requiredEvidenceValues',
-          message: 'Evidence constraints require workflow_definition.v0.2.'
+          message: 'Evidence constraints require workflow_definition.v0.2 or workflow_definition.v0.3.'
         }
       ]);
       return true;
@@ -254,6 +282,17 @@ test('the public workflow migration upgrades a detached v0.1 copy to v0.2', asyn
 
   assert.equal(workflow.schemaVersion, 'workflow_definition.v0.1');
   assert.equal(migrated.schemaVersion, 'workflow_definition.v0.2');
+  assert.notStrictEqual(migrated, workflow);
+  assert.deepEqual(migrated.actions, workflow.actions);
+});
+
+test('the public workflow migration upgrades a detached constrained copy to v0.3', async () => {
+  const workflow = JSON.parse(await readFile(workflowFixture, 'utf8'));
+  workflow.schemaVersion = 'workflow_definition.v0.2';
+  const migrated = migrateWorkflowDefinitionToV0_3(workflow);
+
+  assert.equal(workflow.schemaVersion, 'workflow_definition.v0.2');
+  assert.equal(migrated.schemaVersion, 'workflow_definition.v0.3');
   assert.notStrictEqual(migrated, workflow);
   assert.deepEqual(migrated.actions, workflow.actions);
 });

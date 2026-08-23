@@ -155,6 +155,7 @@ test('the public CLI scaffolds a read-only Marketplace submission-to-review cont
       /marketplace-template-submission-cloud\/app\/api\/intake\/template\/route\.ts/i
     );
     assert.match(sources, /read-only pointers/i);
+    assert.equal(workflow.schemaVersion, 'workflow_definition.v0.3');
     assert.deepEqual(
       workflow.systems.map((system) => system.id),
       [

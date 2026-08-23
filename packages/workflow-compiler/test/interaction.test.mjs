@@ -8,6 +8,7 @@ import {
   GovernedInteractionValidationError,
   inspectClientWorkspaceGovernedInteraction,
   migrateGovernedInteractionBundle,
+  migrateGovernedInteractionBundleToV0_3,
   parseGovernedInteractionBundle,
 } from '../dist/index.js';
 
@@ -28,6 +29,18 @@ test('the public interaction migration upgrades a detached v0.1 copy to v0.2', a
 
   assert.equal(compiled.governedInteraction.schemaVersion, 'governed_interaction_bundle.v0.1');
   assert.equal(migrated.schemaVersion, 'governed_interaction_bundle.v0.2');
+  assert.notStrictEqual(migrated, compiled.governedInteraction);
+  assert.deepEqual(migrated.actions, compiled.governedInteraction.actions);
+});
+
+test('the public interaction migration upgrades a detached constrained copy to v0.3', async () => {
+  const definition = JSON.parse(await readFile(fixtureUrl, 'utf8'));
+  definition.schemaVersion = 'workflow_definition.v0.2';
+  const compiled = compileWorkflowDefinition(definition);
+  const migrated = migrateGovernedInteractionBundleToV0_3(compiled.governedInteraction);
+
+  assert.equal(compiled.governedInteraction.schemaVersion, 'governed_interaction_bundle.v0.2');
+  assert.equal(migrated.schemaVersion, 'governed_interaction_bundle.v0.3');
   assert.notStrictEqual(migrated, compiled.governedInteraction);
   assert.deepEqual(migrated.actions, compiled.governedInteraction.actions);
 });
@@ -61,7 +74,7 @@ test('parses serialized exact evidence constraints in the public interaction bun
 
 test('parses an exact-enum evidence matcher in the public interaction bundle', async () => {
   const definition = JSON.parse(await readFile(fixtureUrl, 'utf8'));
-  definition.schemaVersion = 'workflow_definition.v0.2';
+  definition.schemaVersion = 'workflow_definition.v0.3';
   definition.actions[0].requiredEvidenceMatchers = {
     published_url: {
       kind: 'equals_one_of',
@@ -69,9 +82,18 @@ test('parses an exact-enum evidence matcher in the public interaction bundle', a
     },
   };
   const compiled = compileWorkflowDefinition(definition);
+  assert.equal(compiled.schemaVersion, 'compiled_workflow_bundle.v0.3');
+  assert.equal(compiled.decisionInventory.schemaVersion, 'decision_inventory.v0.3');
+  assert.equal(compiled.governedInteraction.schemaVersion, 'governed_interaction_bundle.v0.3');
+  assert.equal(compiled.approvalSurfaces.schemaVersion, 'approval_surfaces.v0.3');
+  assert.equal(compiled.toolContracts.schemaVersion, 'tool_contracts.v0.3');
   const serialized = JSON.parse(JSON.stringify(compiled.governedInteraction));
 
   assert.deepEqual(parseGovernedInteractionBundle(serialized), compiled.governedInteraction);
+  assert.equal(
+    inspectClientWorkspaceGovernedInteraction(serialized, serialized.definitionHash).schemaVersion,
+    'client_workspace_governed_interaction_inspection.v0.3',
+  );
 });
 
 test('the legacy interaction schema rejects evidence constraints instead of ignoring them', async () => {

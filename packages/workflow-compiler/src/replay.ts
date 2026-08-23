@@ -14,7 +14,8 @@ import type {
   WorkflowReplayReport,
   WorkflowReplayResult,
   WorkflowReplayResultV0_1,
-  WorkflowReplayResultV0_2
+  WorkflowReplayResultV0_2,
+  WorkflowReplayResultV0_3
 } from './types.js';
 
 export interface WorkflowReplayArtifacts {
@@ -103,7 +104,15 @@ export function replayWorkflow(
     definitionHash: bundle.definitionHash
   };
   const report =
-    bundle.schemaVersion === 'compiled_workflow_bundle.v0.2'
+    bundle.schemaVersion === 'compiled_workflow_bundle.v0.3'
+      ? {
+          schemaVersion: 'workflow_replay_report.v0.3' as const,
+          ...header,
+          cases: cases as WorkflowReplayResultV0_3[],
+          counts,
+          allExpectationsMatched: cases.every((entry) => entry.expectationMatched)
+        }
+      : bundle.schemaVersion === 'compiled_workflow_bundle.v0.2'
       ? {
           schemaVersion: 'workflow_replay_report.v0.2' as const,
           ...header,
@@ -131,7 +140,14 @@ export function replayWorkflow(
 
 function rejectMismatchedNestedArtifactSchemas(bundle: CompiledWorkflowBundle): void {
   const expectedSchemaVersions =
-    bundle.schemaVersion === 'compiled_workflow_bundle.v0.2'
+    bundle.schemaVersion === 'compiled_workflow_bundle.v0.3'
+      ? {
+          decisionInventory: 'decision_inventory.v0.3',
+          governedInteraction: 'governed_interaction_bundle.v0.3',
+          approvalSurfaces: 'approval_surfaces.v0.3',
+          toolContracts: 'tool_contracts.v0.3'
+        }
+      : bundle.schemaVersion === 'compiled_workflow_bundle.v0.2'
       ? {
           decisionInventory: 'decision_inventory.v0.2',
           governedInteraction: 'governed_interaction_bundle.v0.2',
@@ -168,7 +184,7 @@ function rejectMismatchedNestedArtifactSchemas(bundle: CompiledWorkflowBundle): 
 }
 
 function rejectDivergentNestedGovernanceContracts(bundle: CompiledWorkflowBundle): void {
-  if (bundle.schemaVersion !== 'compiled_workflow_bundle.v0.2') return;
+  if (bundle.schemaVersion === 'compiled_workflow_bundle.v0.1') return;
   const decisionEntriesByActionId = new Map<
     string,
     Array<{ index: number; action: typeof bundle.decisionInventory.decisions[number] }>
@@ -706,10 +722,18 @@ function replayCaseAgainstBundle(
   if (bundle.schemaVersion === 'compiled_workflow_bundle.v0.1') {
     return { ...common, reasonCode } as WorkflowReplayResultV0_1;
   }
+  if (bundle.schemaVersion === 'compiled_workflow_bundle.v0.2') {
+    return {
+      ...common,
+      reasonCode,
+      evidenceMismatches,
+      evidenceMatcherMismatches
+    } as WorkflowReplayResultV0_2;
+  }
   return {
     ...common,
     reasonCode,
     evidenceMismatches,
     evidenceMatcherMismatches
-  };
+  } as WorkflowReplayResultV0_3;
 }

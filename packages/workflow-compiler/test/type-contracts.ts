@@ -16,6 +16,7 @@ import type {
   WorkflowAdapterPlanV0_2,
   WorkflowDefinitionV0_1,
   WorkflowDefinitionV0_2,
+  WorkflowDefinitionV0_3,
   WorkflowOperatorConsoleDataV0_1,
   WorkflowReplayReportV0_2
 } from '../src/index.js';
@@ -71,9 +72,40 @@ const constrainedDefinition: WorkflowDefinitionV0_2 = {
   ]
 };
 
+const invalidV02ExactEnumDefinition: WorkflowDefinitionV0_2 = {
+  ...constrainedDefinition,
+  actions: [
+    {
+      ...constrainedDefinition.actions[0],
+      requiredEvidenceMatchers: {
+        status: {
+          // @ts-expect-error Exact-enum matchers require workflow_definition.v0.3.
+          kind: 'equals_one_of',
+          values: ['approved']
+        }
+      }
+    }
+  ]
+};
+
+const exactEnumDefinition: WorkflowDefinitionV0_3 = {
+  ...constrainedDefinition,
+  schemaVersion: 'workflow_definition.v0.3',
+  actions: [
+    {
+      ...constrainedDefinition.actions[0],
+      requiredEvidenceMatchers: {
+        status: { kind: 'equals_one_of', values: ['approved'] }
+      }
+    }
+  ]
+};
+
 void legacyDefinition;
 void invalidLegacyAction;
 void constrainedDefinition;
+void invalidV02ExactEnumDefinition;
+void exactEnumDefinition;
 
 declare const constrainedDecision: CompiledDecisionV0_2;
 declare const legacyDecision: CompiledDecisionV0_1;

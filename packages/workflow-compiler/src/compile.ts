@@ -7,17 +7,21 @@ import type {
   AgentContractsArtifact,
   ApprovalSurfacesArtifactV0_1,
   ApprovalSurfacesArtifactV0_2,
+  ApprovalSurfacesArtifactV0_3,
   CompiledWorkflowBundle,
   DecisionInventoryArtifactV0_1,
   DecisionInventoryArtifactV0_2,
+  DecisionInventoryArtifactV0_3,
   EvaluationManifestArtifact,
   EventSchemasArtifact,
   GovernedInteractionBundleV0_1,
   GovernedInteractionBundleV0_2,
+  GovernedInteractionBundleV0_3,
   ObjectSchemasArtifact,
   RuntimeTargetsArtifact,
   ToolContractsArtifactV0_1,
   ToolContractsArtifactV0_2,
+  ToolContractsArtifactV0_3,
   WorkflowDefinition,
   WorkflowCompilationDiagnostic,
   WorkflowEvidenceMatcher,
@@ -521,7 +525,8 @@ export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundl
     evaluationManifest
   };
 
-  if (definition.schemaVersion === 'workflow_definition.v0.2') {
+  if (definition.schemaVersion !== 'workflow_definition.v0.1') {
+    const schemaVersion = definition.schemaVersion === 'workflow_definition.v0.3' ? 'v0.3' : 'v0.2';
     const constrainedToolContract = (action: typeof definition.actions[number]) => ({
       ...toolContract(action),
       ...(action.requiredEvidenceValues
@@ -531,16 +536,16 @@ export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundl
         ? { requiredEvidenceMatchers: sortedEvidenceMatchers(action.requiredEvidenceMatchers) }
         : {})
     });
-    const toolContracts: ToolContractsArtifactV0_2 = {
-      schemaVersion: 'tool_contracts.v0.2',
+    const toolContracts = {
+      schemaVersion: `tool_contracts.${schemaVersion}` as const,
       ...header,
       tools: definition.actions
         .filter((action) => action.tool)
         .map(constrainedToolContract)
         .sort(byActionId)
     };
-    const approvalSurfaces: ApprovalSurfacesArtifactV0_2 = {
-      schemaVersion: 'approval_surfaces.v0.2',
+    const approvalSurfaces = {
+      schemaVersion: `approval_surfaces.${schemaVersion}` as const,
       ...header,
       actions: definition.actions
         .filter((action) => action.autonomy !== 'auto_allow')
@@ -560,8 +565,8 @@ export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundl
         }))
         .sort(byActionId)
     };
-    const decisionInventory: DecisionInventoryArtifactV0_2 = {
-      schemaVersion: 'decision_inventory.v0.2',
+    const decisionInventory = {
+      schemaVersion: `decision_inventory.${schemaVersion}` as const,
       ...header,
       decisions: definition.actions
         .map((action) => ({
@@ -585,8 +590,8 @@ export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundl
         }))
         .sort(byActionId)
     };
-    const governedInteraction: GovernedInteractionBundleV0_2 = {
-      schemaVersion: 'governed_interaction_bundle.v0.2',
+    const governedInteraction = {
+      schemaVersion: `governed_interaction_bundle.${schemaVersion}` as const,
       language: 'create-something/control',
       runtimeVersion: '0.1.0',
       ...header,
@@ -602,13 +607,24 @@ export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundl
       ],
       actions: decisionInventory.decisions.map(({ toolContract: _toolContract, ...decision }) => decision)
     };
+    if (definition.schemaVersion === 'workflow_definition.v0.3') {
+      return finalizeCompiledWorkflowBundle({
+        schemaVersion: 'compiled_workflow_bundle.v0.3',
+        ...common,
+        toolContracts: toolContracts as ToolContractsArtifactV0_3,
+        approvalSurfaces: approvalSurfaces as ApprovalSurfacesArtifactV0_3,
+        decisionInventory: decisionInventory as DecisionInventoryArtifactV0_3,
+        governedInteraction: governedInteraction as GovernedInteractionBundleV0_3
+      });
+    }
+
     return finalizeCompiledWorkflowBundle({
       schemaVersion: 'compiled_workflow_bundle.v0.2',
       ...common,
-      toolContracts,
-      approvalSurfaces,
-      decisionInventory,
-      governedInteraction
+      toolContracts: toolContracts as ToolContractsArtifactV0_2,
+      approvalSurfaces: approvalSurfaces as ApprovalSurfacesArtifactV0_2,
+      decisionInventory: decisionInventory as DecisionInventoryArtifactV0_2,
+      governedInteraction: governedInteraction as GovernedInteractionBundleV0_2
     });
   }
 

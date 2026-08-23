@@ -26,6 +26,22 @@ test('Atlas Studio validates the shared governed interaction contract without re
   assert.deepEqual(inspected.compatibility.errors, []);
 });
 
+test('Atlas Studio explicitly supports the v0.3 exact-enum interaction envelope', async () => {
+  const definition = JSON.parse(await readFile(fixtureUrl, 'utf8'));
+  definition.schemaVersion = 'workflow_definition.v0.3';
+  definition.actions[0].requiredEvidenceMatchers = {
+    published_url: { kind: 'equals_one_of', values: ['https://fixture-template.webflow.io'] },
+  };
+  const interaction = compileWorkflowDefinition(definition).governedInteraction;
+
+  const inspected = inspectAtlasGovernedInteraction(interaction);
+
+  assert.equal(interaction.schemaVersion, 'governed_interaction_bundle.v0.3');
+  assert.equal(inspected.schemaVersion, 'atlas_governed_interaction_inspection.v0.3');
+  assert.equal(inspected.compatibility.compatible, true);
+  assert.deepEqual(inspected.compatibility.errors, []);
+});
+
 test('Atlas Studio exposes the packaged interaction read-only and fails closed on incompatibility', async () => {
   const root = await mkdtemp(path.join(tmpdir(), 'atlas-governed-interaction-'));
   const definition = JSON.parse(await readFile(fixtureUrl, 'utf8'));

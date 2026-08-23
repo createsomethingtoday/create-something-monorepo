@@ -242,6 +242,7 @@ test('adapter refuses a deserialized v0.2 bundle whose matching tool copies are 
 
   const plan = createMcpToolCallPlan(bundle, replayCase);
 
+  assert.equal(plan.schemaVersion, 'workflow_adapter_plan.v0.3');
   assert.equal(plan.disposition, 'stop');
   assert.equal(plan.reasonCode, 'UNVERIFIED_COMPILED_BUNDLE');
   assert.equal(plan.canInvoke, false);
@@ -337,6 +338,30 @@ test('versions adapter plans when constrained replay emits mismatch reason codes
     assert.equal(plan.disposition, 'stop');
     assert.equal(plan.canInvoke, false);
   }
+});
+
+test('versions adapter plans for exact-enum v0.3 workflows', async () => {
+  const definition = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const manifest = JSON.parse(await readFile(casesUrl, 'utf8'));
+  definition.schemaVersion = 'workflow_definition.v0.3';
+  definition.actions[0].requiredEvidenceMatchers = {
+    test_receipt: { kind: 'equals_one_of', values: ['release-tests-fixture-001'] }
+  };
+  const bundle = compileWorkflowDefinition(definition);
+  const ready = createMcpToolCallPlan(bundle, manifest.cases[0]);
+  const mismatch = createMcpToolCallPlan(bundle, {
+    ...manifest.cases[0],
+    evidence: { ...manifest.cases[0].evidence, test_receipt: 'not-the-receipt' },
+    expectedOutcome: 'blocked',
+    expectedState: manifest.cases[0].initialState
+  });
+
+  assert.equal(ready.schemaVersion, 'workflow_adapter_plan.v0.3');
+  assert.equal(ready.canInvoke, true);
+  assert.equal(mismatch.schemaVersion, 'workflow_adapter_plan.v0.3');
+  assert.equal(mismatch.reasonCode, 'GOVERNANCE_BLOCKED');
+  assert.equal(mismatch.governanceReasonCode, 'EVIDENCE_MATCHER_MISMATCH');
+  assert.equal(mismatch.canInvoke, false);
 });
 
 test('OpenAI adapter requires and normalizes caller-owned model selection', async () => {

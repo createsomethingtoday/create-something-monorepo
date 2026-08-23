@@ -6,10 +6,12 @@ import type {
   OpenAIResponsesRequestPlan,
   WorkflowAdapterDiagnostic,
   WorkflowAdapterPlan,
+  WorkflowAdapterPlanV0_1,
   WorkflowReplayCase,
   WorkflowReplayResult,
   WorkflowReplayResultV0_1,
-  WorkflowReplayResultV0_2
+  WorkflowReplayResultV0_2,
+  WorkflowReplayResultV0_3
 } from './types.js';
 import { isCompilerOwnedBundle } from './compiled-bundle-provenance.js';
 import { parseWorkflowReplayManifest } from './input.js';
@@ -51,7 +53,7 @@ function evaluateReplayCase(
 
 function disposition(
   result: WorkflowReplayResult
-): Pick<WorkflowAdapterPlan, 'disposition' | 'reasonCode'> {
+): Pick<WorkflowAdapterPlanV0_1, 'disposition' | 'reasonCode'> {
   if (result.observedOutcome === 'pass') {
     return { disposition: 'pass', reasonCode: 'TOOL_CALL_READY' };
   }
@@ -83,6 +85,13 @@ function basePlan(
     receipt: result.receipt,
     diagnostics: []
   };
+  if (bundle.schemaVersion === 'compiled_workflow_bundle.v0.3') {
+    return {
+      schemaVersion: 'workflow_adapter_plan.v0.3',
+      ...common,
+      governanceReasonCode: result.reasonCode as WorkflowReplayResultV0_3['reasonCode']
+    };
+  }
   if (bundle.schemaVersion === 'compiled_workflow_bundle.v0.2') {
     return {
       schemaVersion: 'workflow_adapter_plan.v0.2',
@@ -155,6 +164,7 @@ function readyToolPlan(
     return {
       plan: {
         ...plan,
+        schemaVersion: 'workflow_adapter_plan.v0.3',
         disposition: 'stop',
         reasonCode: 'UNVERIFIED_COMPILED_BUNDLE'
       }

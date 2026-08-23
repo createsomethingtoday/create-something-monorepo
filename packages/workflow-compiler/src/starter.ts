@@ -276,7 +276,7 @@ const LOCAL_RUNBOOK_CASES: WorkflowReplayManifest = {
 };
 
 const MARKETPLACE_SUBMISSION_WORKFLOW: WorkflowDefinition = {
-  schemaVersion: 'workflow_definition.v0.2',
+  schemaVersion: 'workflow_definition.v0.3',
   workflowId: 'webflow.marketplace.submission-to-review',
   version: '0.1.0',
   title: 'Webflow Marketplace submission to review',

@@ -3,8 +3,10 @@ import type {
   CompiledWorkflowBundle,
   CompiledWorkflowBundleV0_1,
   CompiledWorkflowBundleV0_2,
+  CompiledWorkflowBundleV0_3,
   WorkflowReplayReportV0_1,
   WorkflowReplayReportV0_2,
+  WorkflowReplayReportV0_3,
 } from './types.js';
 
 interface WorkflowOperatorConsoleDataBase {
@@ -33,9 +35,17 @@ export interface WorkflowOperatorConsoleDataV0_2 extends WorkflowOperatorConsole
   replayReport: WorkflowReplayReportV0_2;
 }
 
+export interface WorkflowOperatorConsoleDataV0_3 extends WorkflowOperatorConsoleDataBase {
+  schemaVersion: 'workflow_operator_console.v0.3';
+  decisionInventory: CompiledWorkflowBundleV0_3['decisionInventory'];
+  approvalSurfaces: CompiledWorkflowBundleV0_3['approvalSurfaces'];
+  replayReport: WorkflowReplayReportV0_3;
+}
+
 export type WorkflowOperatorConsoleData =
   | WorkflowOperatorConsoleDataV0_1
-  | WorkflowOperatorConsoleDataV0_2;
+  | WorkflowOperatorConsoleDataV0_2
+  | WorkflowOperatorConsoleDataV0_3;
 
 export function createOperatorConsoleData(
   bundle: CompiledWorkflowBundle,
@@ -52,6 +62,19 @@ export function createOperatorConsoleData(
     workflowMap: bundle.workflowMap,
     acceptanceSummary: createAcceptanceSummary(bundle, replay.report),
   };
+
+  if (bundle.schemaVersion === 'compiled_workflow_bundle.v0.3') {
+    if (replay.report.schemaVersion !== 'workflow_replay_report.v0.3') {
+      throw new Error('Operator console requires matching compiled bundle and replay report schema versions.');
+    }
+    return {
+      schemaVersion: 'workflow_operator_console.v0.3',
+      ...common,
+      decisionInventory: bundle.decisionInventory,
+      approvalSurfaces: bundle.approvalSurfaces,
+      replayReport: replay.report,
+    };
+  }
 
   if (bundle.schemaVersion === 'compiled_workflow_bundle.v0.2') {
     if (replay.report.schemaVersion !== 'workflow_replay_report.v0.2') {
