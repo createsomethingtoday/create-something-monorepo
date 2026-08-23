@@ -3,11 +3,11 @@
 ## Current state
 
 - Goal status: active
-- Active phase: 3
-- Active Linear issue: CRE-1837
-- Worktree: `/private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/cre-1837-agent-worktree`
-- Branch: `codex/CRE-1837-agent-worktree`
-- Base: rebased onto `origin/main` at `6679e3c58b2de779cf3da3499202d068e30f7731`
+- Active phase: 4
+- Active Linear issue: CRE-1833
+- Worktree: `/private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/cre-1833-agent-worktree`
+- Branch: `codex/CRE-1833-agent-worktree`
+- Base: `origin/main` at `0ae97f62741f8a3302af3c22a7b59532a0f49a40`
 
 ## Phases
 
@@ -40,21 +40,21 @@
 - [x] Add property or fuzz coverage, path/adversarial cases, performance bounds, dependency audit, and threat model.
 - [x] Promote through review and record CRE-1832 evidence.
 
-### 3. Prove a second vertical and builder adapters — in progress
+### 3. Prove a second vertical and builder adapters — complete
 
 - [x] Claim CRE-1837 in an exact-main issue worktree.
 - [x] Add a non-Webflow workflow example with a distinct evidence and approval shape.
 - [x] Read official OpenAI guidance before implementing the OpenAI/Codex adapter.
 - [x] Add provider-neutral MCP and primary OpenAI/Codex adapter contracts.
 - [x] Prove pass, wait, and stop outcomes without network or external mutation.
-- [ ] Promote through review and record CRE-1837 evidence.
+- [x] Promote through review and record CRE-1837 evidence.
 
-### 4. Ship CI, docs, and release gates — pending
+### 4. Ship CI, docs, and release gates — in progress
 
-- [ ] Claim CRE-1833 in an exact-main issue worktree.
-- [ ] Add five-minute quickstart, API reference, examples, compatibility policy, and upgrade policy.
-- [ ] Add supported Node matrix, real CI entrypoint, npm metadata, package inventory, and clean-tarball consumers.
-- [ ] Add trusted-publication workflow using the established staged approval and provenance pattern.
+- [x] Claim CRE-1833 in an exact-main issue worktree.
+- [x] Add five-minute quickstart, API reference, examples, compatibility policy, and upgrade policy.
+- [x] Add supported Node matrix, real CI entrypoint, npm metadata, package inventory, and clean-tarball consumers.
+- [x] Add trusted-publication workflow using the established staged approval and provenance pattern.
 - [ ] Prove the release candidate and promote through review with CRE-1833 evidence.
 
 ### 5. Publish and independently verify npm — pending
@@ -135,3 +135,12 @@
 - 2026-08-22: Snapshot-boundary validation passes compiler typecheck and 82/82 tests, deterministic marketplace acceptance, 102 exports, downstream suites 6/2/3/5, all 35 legibility targets, 28 Swift tests, and the Swift release build. Two simulator generator runs reproduce the committed bundle without a diff. The release-promotion fixture remains byte-identical across two compilations and independently integrity-verifies 18 artifacts with matched expectations and complete governance.
 - 2026-08-22: Exact-head review on `74de1e50fce05230fcf689b1e230b9a021627cb2` found final approval incorrectly mapped to interim-status tool `template_review_set_review_status`, whose enum rejects `✅Approved`. A red production-contract regression now pins approval to the real authenticated `template_review_approve_version` handler with required argument `version_id` only. Reviewer identity, review summary, validation evidence, and the approval boundary remain governed; the synthetic desired status is no longer demanded before invocation.
 - 2026-08-22: The approval-handler repair regenerated and independently verified the complete simulator bundle at marketplace definition hash `sha256:c3d6a10501d0e0419881cb65ace3e70792719922d8e558877dd6189210f4848f`; two generator runs produced identical diff hash `a6cf5e2092a6dcf973a09f9a892fed45478a6558917362944533f1339bde58f7`. Exact local gates pass with compiler typecheck and 82/82 tests, deterministic marketplace acceptance, 102 exports, downstream suites 6/2/3/5, all 35 legibility targets, 28 Swift tests, and the Swift release build. Release-promotion remains byte-identical and independently integrity-verifies 18 artifacts with matched expectations and complete governance.
+- 2026-08-22: PR #1494 received a clean exact-head Codex review on `5ecede3925c8b9925dbdc4d1087b4faee58c330a`; Verify package legibility contracts, Typecheck/Lint/Test MCP Packages, Public Distribution GA, Philosophical Code Review, and both Socket checks all passed. Eleven remediated review threads were resolved only after the clean superseding review. The PR merged through protected `main` without override as `0ae97f62741f8a3302af3c22a7b59532a0f49a40`.
+- 2026-08-22: CRE-1833 was claimed and bootstrapped in a new issue worktree based on exact `origin/main` merge `0ae97f62741f8a3302af3c22a7b59532a0f49a40`.
+- 2026-08-22: The production candidate is `@create-something/workflow-compiler@0.1.0-beta.0` with zero runtime dependencies, explicit Node 22/24 production support, public npm metadata, MIT license, changelog, five-minute quickstart, API reference, compatibility and migration policies, threat model, release runbook, and the shipped software-release vertical. The npm install floor remains Node 20 for the existing monorepo downstream build lane, while the compatibility policy explicitly excludes end-of-life Node 20 from production support.
+- 2026-08-22: The release contract fails closed on metadata drift, runtime dependencies, unsafe or symlinked source paths, changelog/version drift, and any difference from the committed 63-file tarball inventory. An isolated consumer installs the exact tarball, imports the package root, executes the installed CLI, compiles and integrity-verifies 18 artifacts, and proves an MCP `pass` plan.
+- 2026-08-22: Local clean-consumer proof passes on Node `v22.23.1` with npm `10.9.8` and Node `v24.11.0` with npm `11.6.1`. The new PR workflow repeats check, 87 tests, deterministic acceptance, release contract, and clean-consumer proof across Node 22/24. Its protected-main dispatch lane pins npm `11.15.0`, has only read plus OIDC permissions, reproduces the candidate, and runs `npm stage publish --access public`; direct publish is prohibited.
+- 2026-08-22: First-publication bootstrap is explicit and bounded: the reviewed `0.1.0-beta.0` tarball uses the non-default `bootstrap` tag and a maintainer 2FA/passkey, then the package gains a stage-only GitHub trusted publisher. Stable `0.1.0` remains a separate reviewed exact-main release with staged inspection, human approval, provenance, registry readback, and clean registry consumers.
+- 2026-08-22: PR #1496's new Node 22 and Node 24 clean-consumer jobs passed, but the repository strict check exposed an engine-integration regression: pnpm 9 on the existing Node 20 workspace lane refuses to build any downstream package when one workspace package declares a Node 22-only engine. The install floor was restored to `>=20` without changing the declared or exercised production matrix; Node 20 remains explicitly unsupported for production.
+- 2026-08-22: The first engine-floor remediation CI run exposed a stale negative-test mutation that changed the engine to its new valid value, so both Node matrix jobs correctly reported 86/87. The regression now mutates the manifest to unsupported Node 18 and again proves the release validator fails closed.
+- 2026-08-22: Exact-head review on `2b856305f6679b9073381959195cefd7ec6a9489` identified a ranged-toolchain rebuild gap and a beta quickstart that targeted the absent `latest` tag. The package now commits an npm lock whose root metadata and registry integrity records are release-validated, both PR and stage lanes pin npm `11.15.0` and install only through `npm ci`, and the beta quickstart installs `@bootstrap`. A linked or non-registry toolchain lock fails closed. Local gates pass 89/89, deterministic acceptance, and clean 63-file consumers on Node 22/24.

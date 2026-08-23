@@ -1,0 +1,91 @@
+name: Workflow Compiler Public Release
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/workflow-compiler-public-release.yml'
+      - 'packages/workflow-compiler/**'
+      - 'pnpm-lock.yaml'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Exact workflow compiler version expected on protected main
+        required: true
+        type: string
+
+jobs:
+  validate:
+    name: Validate workflow compiler on Node ${{ matrix.node }}
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['22', '24']
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Set up supported Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: ${{ matrix.node }}
+          package-manager-cache: false
+
+      - name: Pin the release npm CLI
+        run: npm install --global npm@11.15.0
+
+      - name: Install the locked package toolchain
+        run: npm ci --prefix packages/workflow-compiler --ignore-scripts
+
+      - name: Verify types, tests, deterministic acceptance, tarball, and clean consumer
+        run: |
+          npm --prefix packages/workflow-compiler run check
+          npm --prefix packages/workflow-compiler test
+          npm --prefix packages/workflow-compiler run test:acceptance
+          npm --prefix packages/workflow-compiler run release:consumer
+
+  publish:
+    name: Stage workflow compiler through npm trusted publishing
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: npm-public
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Check out protected main
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: main
+
+      - name: Set up Node for npm trusted publishing
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false
+
+      - name: Pin a trusted-publishing-capable npm CLI
+        run: npm install --global npm@11.15.0
+
+      - name: Verify exact version and protected source
+        env:
+          EXPECTED_VERSION: ${{ inputs.version }}
+        run: |
+          test "$(node -p "require('./packages/workflow-compiler/package.json').version")" = "$EXPECTED_VERSION"
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
+
+      - name: Install the locked package toolchain
+        run: npm ci --prefix packages/workflow-compiler --ignore-scripts
+
+      - name: Reproduce the exact release candidate
+        run: npm --prefix packages/workflow-compiler run release:consumer
+
+      - name: Stage package with automatic provenance for 2FA approval
+        working-directory: packages/workflow-compiler
+        run: npm stage publish --access public

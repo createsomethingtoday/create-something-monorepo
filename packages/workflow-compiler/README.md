@@ -1,12 +1,48 @@
 # Workflow Compiler
 
-`@create-something/workflow-compiler` is a bounded prototype for compiling one versioned operating workflow into governed runtime contracts, replay evidence, and an operator-readable console.
+`@create-something/workflow-compiler` compiles versioned operating workflows into deterministic local/CI artifacts, replay evidence, provider-neutral MCP plans, offline OpenAI Responses request plans, and a read-only operator console.
 
-It answers the CRE-1191 experiment:
+It gives builders a composable governance layer below any hosted control plane. The package does not call providers, hold credentials, choose a model, or mutate the systems named by a workflow.
 
-> Can CREATE SOMETHING turn a workflow it already understands into a deterministic, governed system bundle without rebuilding or bypassing the systems that own live state and execution?
+## Five-minute quickstart
 
-The first vertical is the Webflow Marketplace template lifecycle: submission, validation, review, approval, publishing, and post-launch monitoring.
+Install the package with a supported Node release:
+
+```bash
+npm install @create-something/workflow-compiler@bootstrap
+```
+
+Create `workflow.json` and optionally `cases.json` using the versioned schemas documented in [API.md](./API.md). Compile and independently verify a local bundle:
+
+```bash
+npx workflow-compiler compile \
+  --workflow ./workflow.json \
+  --cases ./cases.json \
+  --out ./.workflow-build
+
+npx workflow-compiler verify --dir ./.workflow-build
+```
+
+The compiler writes through an atomic managed pointer to an immutable revision. Inspect `acceptance-summary.json`, `replay-report.json`, `tool-contracts.json`, and `operator-console/index.html` before connecting any execution host.
+
+Programmatic use is also offline:
+
+```js
+import {
+  compileWorkflowDefinition,
+  createMcpToolCallPlan,
+  replayWorkflow
+} from '@create-something/workflow-compiler';
+
+const bundle = compileWorkflowDefinition(workflowJson);
+const replay = replayWorkflow(bundle, casesJson);
+const plan = createMcpToolCallPlan(bundle, casesJson.cases[0]);
+
+console.log(replay.report.counts, plan.disposition);
+```
+
+Start with the shipped software-release fixture under
+`node_modules/@create-something/workflow-compiler/fixtures/release-promotion/` or the complete examples in this repository. See [API.md](./API.md), [COMPATIBILITY.md](./COMPATIBILITY.md), and [MIGRATING.md](./MIGRATING.md) before promoting a workflow.
 
 ## Module design
 
@@ -168,8 +204,8 @@ The verifier runs the public CLI twice from clean directories and rejects byte d
 
 The stable local acceptance output defaults to the operating system temporary directory at `cre-1191-workflow-compiler-acceptance`. Override it with `WORKFLOW_COMPILER_ACCEPTANCE_OUT` when needed.
 
-## Shadow-only boundary
+## Execution boundary
 
-This prototype performs no production deploy, external write, Airtable mutation, approval, rejection, publication, credential/access change, or public positioning migration. Historical cases are local representative fixtures. The operator console intentionally has no execution controls.
+The compiler performs no production deploy, external write, approval, rejection, publication, credential change, or provider request. Historical cases are local representative fixtures. The operator console intentionally has no execution controls.
 
-Promotion would require a separate decision about live evidence adapters, authenticated runtime boundaries, approval execution, rollback, data retention, and Atlas integration.
+An execution host may consume a `pass` plan only after it supplies its own authenticated transport, validates tool results, and persists receipts. `wait` and `stop` plans never contain an executable request. Live evidence adapters, approval execution, rollback, and data retention remain responsibilities of the owning runtime and policy artifacts.
