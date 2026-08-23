@@ -229,6 +229,7 @@ test('Client Workspace validates the same bundle and binds it to the signed defi
     interaction,
     interaction.definitionHash,
   );
+  assert.equal(valid.schemaVersion, 'client_workspace_governed_interaction_inspection.v0.2');
   assert.equal(valid.authority, 'signed_delivery_read_only');
   assert.equal(valid.compatibility.hostId, 'client-workspace');
   assert.equal(valid.compatibility.compatible, true);

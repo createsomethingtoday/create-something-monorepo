@@ -38,6 +38,11 @@ vocabulary. The evaluator emits `governed_interaction_compatibility.v0.2` when
 it can report `UNSUPPORTED_SCHEMA_VERSION`; consumers must branch on that
 decision `schemaVersion` rather than apply v0.2 error codes to a v0.1 result.
 
+Inspection envelopes retain that compatibility boundary. Historical
+`client_workspace_governed_interaction_inspection.v0.1` values contain v0.1
+compatibility receipts; the current Client Workspace inspector emits v0.2 with
+a v0.2 receipt. Atlas Studio follows the same v0.1/v0.2 envelope pairing.
+
 ### Workflow and interaction v0.2
 
 `workflow_definition.v0.1` remains readable but rejects

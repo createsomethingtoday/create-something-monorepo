@@ -50,7 +50,11 @@ export {
 } from './client-workspace-host.js';
 
 export type { OperatorConsoleServer } from './server.js';
-export type { ClientWorkspaceGovernedInteractionInspection } from './client-workspace-host.js';
+export type {
+  ClientWorkspaceGovernedInteractionInspection,
+  ClientWorkspaceGovernedInteractionInspectionV0_1,
+  ClientWorkspaceGovernedInteractionInspectionV0_2
+} from './client-workspace-host.js';
 
 export type {
   WorkflowArtifactManifest,

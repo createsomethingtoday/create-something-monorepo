@@ -1,7 +1,8 @@
 import {
   evaluateGovernedInteractionCompatibility,
   parseGovernedInteractionBundle,
-  type GovernedInteractionCompatibilityDecision,
+  type GovernedInteractionCompatibilityDecisionV0_1,
+  type GovernedInteractionCompatibilityDecisionV0_2,
   type GovernedInteractionHostContract,
 } from './interaction.js';
 import type { GovernedInteractionBundle } from './types.js';
@@ -23,12 +24,23 @@ export const CLIENT_WORKSPACE_INTERACTION_HOST: GovernedInteractionHostContract 
   operations: ['select_replay_case'],
 };
 
-export interface ClientWorkspaceGovernedInteractionInspection {
+export interface ClientWorkspaceGovernedInteractionInspectionV0_1 {
   schemaVersion: 'client_workspace_governed_interaction_inspection.v0.1';
   bundle: GovernedInteractionBundle;
-  compatibility: GovernedInteractionCompatibilityDecision;
+  compatibility: GovernedInteractionCompatibilityDecisionV0_1;
   authority: 'signed_delivery_read_only';
 }
+
+export interface ClientWorkspaceGovernedInteractionInspectionV0_2 {
+  schemaVersion: 'client_workspace_governed_interaction_inspection.v0.2';
+  bundle: GovernedInteractionBundle;
+  compatibility: GovernedInteractionCompatibilityDecisionV0_2;
+  authority: 'signed_delivery_read_only';
+}
+
+export type ClientWorkspaceGovernedInteractionInspection =
+  | ClientWorkspaceGovernedInteractionInspectionV0_1
+  | ClientWorkspaceGovernedInteractionInspectionV0_2;
 
 export function inspectClientWorkspaceGovernedInteraction(
   input: unknown,
@@ -36,7 +48,7 @@ export function inspectClientWorkspaceGovernedInteraction(
 ): ClientWorkspaceGovernedInteractionInspection {
   const bundle = parseGovernedInteractionBundle(input);
   return {
-    schemaVersion: 'client_workspace_governed_interaction_inspection.v0.1',
+    schemaVersion: 'client_workspace_governed_interaction_inspection.v0.2',
     bundle,
     compatibility: evaluateGovernedInteractionCompatibility(bundle, {
       ...CLIENT_WORKSPACE_INTERACTION_HOST,

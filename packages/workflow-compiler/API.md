@@ -140,6 +140,12 @@ interaction schema version; the evaluator emits
 their original error vocabulary, so consumers must discriminate decisions by
 `schemaVersion` before reading error codes.
 
+Client Workspace inspection outputs follow the same nesting boundary:
+`client_workspace_governed_interaction_inspection.v0.1` contains a v0.1
+compatibility decision, while the current inspector emits
+`client_workspace_governed_interaction_inspection.v0.2` with a v0.2 decision.
+Do not relabel a retained inspection; branch on its outer `schemaVersion`.
+
 ## CLI
 
 ```text

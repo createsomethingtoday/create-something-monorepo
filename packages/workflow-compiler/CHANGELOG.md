@@ -43,6 +43,9 @@ artifact schemas.
   `governed_interaction_compatibility.v0.2` before emitting the expanded
   schema-support error vocabulary; historical v0.1 decisions remain readable
   with their original errors.
+- Version the Client Workspace and Atlas Studio inspection envelopes to v0.2
+  with their nested v0.2 compatibility receipts; historical v0.1 envelopes
+  retain the v0.1 nested contract.
 
 ## 0.2.0
 

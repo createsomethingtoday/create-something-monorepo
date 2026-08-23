@@ -2,7 +2,8 @@ import {
   evaluateGovernedInteractionCompatibility,
   parseGovernedInteractionBundle,
   type GovernedInteractionBundle,
-  type GovernedInteractionCompatibilityDecision,
+  type GovernedInteractionCompatibilityDecisionV0_1,
+  type GovernedInteractionCompatibilityDecisionV0_2,
   type GovernedInteractionHostContract,
 } from '@create-something/workflow-compiler';
 
@@ -23,19 +24,30 @@ export const ATLAS_STUDIO_INTERACTION_HOST: GovernedInteractionHostContract = {
   operations: ['select_replay_case'],
 };
 
-export interface AtlasGovernedInteractionInspection {
+export interface AtlasGovernedInteractionInspectionV0_1 {
   schemaVersion: 'atlas_governed_interaction_inspection.v0.1';
   bundle: GovernedInteractionBundle;
-  compatibility: GovernedInteractionCompatibilityDecision;
+  compatibility: GovernedInteractionCompatibilityDecisionV0_1;
   authority: 'read_only';
 }
+
+export interface AtlasGovernedInteractionInspectionV0_2 {
+  schemaVersion: 'atlas_governed_interaction_inspection.v0.2';
+  bundle: GovernedInteractionBundle;
+  compatibility: GovernedInteractionCompatibilityDecisionV0_2;
+  authority: 'read_only';
+}
+
+export type AtlasGovernedInteractionInspection =
+  | AtlasGovernedInteractionInspectionV0_1
+  | AtlasGovernedInteractionInspectionV0_2;
 
 export function inspectAtlasGovernedInteraction(
   input: unknown,
 ): AtlasGovernedInteractionInspection {
   const bundle = parseGovernedInteractionBundle(input);
   return {
-    schemaVersion: 'atlas_governed_interaction_inspection.v0.1',
+    schemaVersion: 'atlas_governed_interaction_inspection.v0.2',
     bundle,
     compatibility: evaluateGovernedInteractionCompatibility(
       bundle,

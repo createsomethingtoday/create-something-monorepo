@@ -2,6 +2,7 @@ import type {
   CompiledDecisionV0_2,
   CompiledWorkflowBundle,
   CompiledWorkflowBundleV0_1,
+  ClientWorkspaceGovernedInteractionInspectionV0_1,
   DecisionInventoryArtifactV0_2,
   GovernedInteractionBundleV0_2,
   GovernedInteractionCompatibilityDecisionV0_1,
@@ -155,3 +156,22 @@ const invalidLegacyCompatibilityDecision: GovernedInteractionCompatibilityDecisi
 
 void legacyCompatibilityDecision;
 void invalidLegacyCompatibilityDecision;
+
+const legacyClientWorkspaceInspection: ClientWorkspaceGovernedInteractionInspectionV0_1 = {
+  schemaVersion: 'client_workspace_governed_interaction_inspection.v0.1',
+  bundle: constrainedInteraction,
+  compatibility: legacyCompatibilityDecision,
+  authority: 'signed_delivery_read_only'
+};
+
+const invalidLegacyClientWorkspaceInspection: ClientWorkspaceGovernedInteractionInspectionV0_1 = {
+  ...legacyClientWorkspaceInspection,
+  compatibility: {
+    ...legacyCompatibilityDecision,
+    // @ts-expect-error A v0.1 Client Workspace envelope cannot contain a v0.2 compatibility receipt.
+    schemaVersion: 'governed_interaction_compatibility.v0.2'
+  }
+};
+
+void legacyClientWorkspaceInspection;
+void invalidLegacyClientWorkspaceInspection;

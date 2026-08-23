@@ -19,6 +19,7 @@ test('Atlas Studio validates the shared governed interaction contract without re
 
   const inspected = inspectAtlasGovernedInteraction(interaction);
 
+  assert.equal(inspected.schemaVersion, 'atlas_governed_interaction_inspection.v0.2');
   assert.equal(inspected.bundle.workflowId, 'webflow.marketplace.template-lifecycle');
   assert.equal(inspected.compatibility.hostId, 'atlas-studio');
   assert.equal(inspected.compatibility.compatible, true);

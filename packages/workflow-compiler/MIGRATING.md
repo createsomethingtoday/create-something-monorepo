@@ -70,6 +70,9 @@ declared; do not treat matching runtime or capability lists as version support.
 The resulting compatibility receipt is
 `governed_interaction_compatibility.v0.2`; preserve historical v0.1 decisions
 and branch on the decision schema before interpreting its error vocabulary.
+The Client Workspace and Atlas Studio inspection envelopes that contain the
+receipt are likewise v0.2. Preserve historical v0.1 envelopes and branch on
+their outer schema before reading the nested compatibility result.
 
 Adapter plans are derived from that same replay. Recompile and replay a migrated
 definition before requesting a new plan: only v0.2 bundles emit
