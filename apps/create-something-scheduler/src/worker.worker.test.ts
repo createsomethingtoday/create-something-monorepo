@@ -477,7 +477,8 @@ describe('scheduler Worker transport', () => {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         slot: { start: '2037-07-14T16:00:00Z', end: '2037-07-14T16:30:00Z' },
-        scheduler: { name: 'Controlled Worker', email: 'controlled@example.com' }
+        scheduler: { name: 'Controlled Worker', email: 'controlled@example.com' },
+        context: { intent: 'compiler-integration' }
       })
     });
     expect(prepare.status).toBe(200);
@@ -603,12 +604,12 @@ describe('scheduler Worker transport', () => {
         to: ['controlled@example.com'],
         subject: 'Your CREATE SOMETHING meeting is booked',
         html: expect.stringContaining('background-color:#f3f3f0'),
-        text: expect.stringContaining('Manage this meeting:')
+        text: expect.stringContaining('intent=compiler-integration')
       }),
       expect.objectContaining({
         to: ['controlled@example.com'],
         subject: 'Your CREATE SOMETHING meeting has moved',
-        html: expect.stringContaining('#access='),
+        html: expect.stringContaining('intent=compiler-integration'),
         text: expect.stringContaining('Thursday, July 16, 2037')
       })
     ]);

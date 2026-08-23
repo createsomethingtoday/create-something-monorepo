@@ -85,6 +85,9 @@ test('the integration CTA resolves to matching Agency and scheduler booking copy
   const bookingRoute = read('../src/routes/book/+page.svelte');
   const schedulerPage = read('../../../apps/create-something-scheduler/src/ui/page.ts');
   const schedulerWorker = read('../../../apps/create-something-scheduler/src/worker.ts');
+  const schedulerManageLink = read(
+    '../../../apps/create-something-scheduler/src/notifications/manage-link.ts'
+  );
 
   assert.match(bookingRoute, /intent === 'compiler-integration'/);
   assert.match(bookingRoute, /Workflow Compiler Integration fit call/);
@@ -95,4 +98,6 @@ test('the integration CTA resolves to matching Agency and scheduler booking copy
   assert.match(schedulerPage, /Fit One Integration/);
   assert.match(schedulerPage, /Compiler Integration \/ V1/);
   assert.match(schedulerWorker, /intent: url\.searchParams\.get\('intent'\)/);
+  assert.match(schedulerWorker, /booking\.context\?\.intent/);
+  assert.match(schedulerManageLink, /input\.intent === 'compiler-integration'/);
 });

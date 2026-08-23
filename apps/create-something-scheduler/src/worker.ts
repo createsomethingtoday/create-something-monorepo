@@ -388,7 +388,8 @@ export class SchedulerDurableObject extends DurableObject<Env> {
         const manageUrl = buildBookingManageUrl({
           publicOrigin: bookingPublicOrigin,
           bookingId: booking.bookingId,
-          actionToken
+          actionToken,
+          ...(booking.context?.intent ? { intent: booking.context.intent } : {})
         });
         return resend.sendNotification(job, { booking, manageUrl });
       }
