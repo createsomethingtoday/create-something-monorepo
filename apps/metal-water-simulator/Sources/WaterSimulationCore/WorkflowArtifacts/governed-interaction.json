@@ -1,9 +1,30 @@
 {
-  "schemaVersion": "decision_inventory.v0.1",
+  "schemaVersion": "governed_interaction_bundle.v0.1",
+  "language": "create-something/control",
+  "runtimeVersion": "0.1.0",
   "workflowId": "webflow.marketplace.template-lifecycle",
   "workflowVersion": "0.1.0",
   "definitionHash": "sha256:c3d6a10501d0e0419881cb65ace3e70792719922d8e558877dd6189210f4848f",
-  "decisions": [
+  "entrySurfaceId": "operator-console",
+  "capabilities": [
+    "interaction.select",
+    "receipt.inspect",
+    "replay.inspect",
+    "workflow.inspect"
+  ],
+  "surfaces": [
+    {
+      "id": "operator-console",
+      "title": "Webflow Marketplace template lifecycle",
+      "kind": "workflow_overview",
+      "operations": [
+        {
+          "kind": "select_replay_case"
+        }
+      ]
+    }
+  ],
+  "actions": [
     {
       "actionId": "approve_template",
       "title": "Approve template",

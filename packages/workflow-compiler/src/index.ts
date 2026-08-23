@@ -38,6 +38,11 @@ export {
 } from './interaction.js';
 export { serveOperatorConsole } from './server.js';
 export {
+  createMcpToolCallPlan,
+  createOpenAIResponsesRequestPlan,
+  WorkflowAdapterError
+} from './adapters.js';
+export {
   CLIENT_WORKSPACE_INTERACTION_HOST,
   inspectClientWorkspaceGovernedInteraction
 } from './client-workspace-host.js';
@@ -59,6 +64,7 @@ export type {
 } from './attestation.js';
 export type { WorkflowInputDiagnostic } from './input.js';
 export type { WorkflowReplayArtifacts } from './replay.js';
+export type { WorkflowAdapterErrorCode } from './adapters.js';
 export type {
   GovernedInteractionCompatibilityDecision,
   GovernedInteractionCompatibilityErrorCode,
@@ -86,10 +92,18 @@ export type {
   GovernedInteractionOperation,
   GovernedInteractionSurface,
   ObjectSchemasArtifact,
+  McpToolCallPlan,
+  OpenAIResponsesFunctionTool,
+  OpenAIResponsesRequest,
+  OpenAIResponsesRequestPlan,
   RuntimeTargetsArtifact,
   SystemTier,
   ToolContractsArtifact,
   WorkflowAction,
+  WorkflowAdapterDiagnostic,
+  WorkflowAdapterDisposition,
+  WorkflowAdapterPlan,
+  WorkflowAdapterReasonCode,
   WorkflowAcceptanceSummary,
   WorkflowActor,
   WorkflowAgent,
@@ -108,5 +122,7 @@ export type {
   WorkflowReplayResult,
   WorkflowState,
   WorkflowSystem,
+  WorkflowToolParameter,
+  WorkflowToolParameterType,
   WorkflowTransition
 } from './types.js';

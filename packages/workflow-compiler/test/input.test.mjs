@@ -81,6 +81,45 @@ test('the public workflow parser rejects duplicate action identifiers', async ()
   );
 });
 
+test('the public workflow parser accepts legacy tools and validates declared parameters', async () => {
+  const legacy = JSON.parse(await readFile(workflowFixture, 'utf8'));
+  delete legacy.actions[0].tool.parameters;
+  assert.equal(parseWorkflowDefinition(legacy).actions[0].tool.parameters, undefined);
+
+  const invalid = JSON.parse(await readFile(workflowFixture, 'utf8'));
+  invalid.actions[0].tool.parameters = 'ambient';
+  assert.throws(
+    () => parseWorkflowDefinition(invalid),
+    (error) => {
+      assert.deepEqual(error.diagnostics, [
+        {
+          code: 'INVALID_TYPE',
+          path: '$.actions[0].tool.parameters',
+          message: 'Expected an array.'
+        }
+      ]);
+      return true;
+    }
+  );
+
+  const duplicate = JSON.parse(await readFile(workflowFixture, 'utf8'));
+  duplicate.actions[0].tool.parameters.push({ ...duplicate.actions[0].tool.parameters[0] });
+  assert.throws(
+    () => parseWorkflowDefinition(duplicate),
+    (error) => {
+      assert.deepEqual(error.diagnostics, [
+        {
+          code: 'DUPLICATE_IDENTIFIER',
+          path: '$.actions[0].tool.parameters[1].name',
+          message:
+            'Duplicate identifier published_url; first declared at $.actions[0].tool.parameters[0].name.'
+        }
+      ]);
+      return true;
+    }
+  );
+});
+
 for (const collection of [
   'systems',
   'objects',

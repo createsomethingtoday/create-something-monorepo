@@ -127,23 +127,51 @@
   ],
   "actions": [
     {
-      "id": "validate_submission",
-      "title": "Validate submission",
-      "kind": "decision",
+      "id": "run_published_validation",
+      "title": "Run published-site validation",
+      "kind": "read",
       "authority": "workflow-runtime",
       "autonomy": "auto_allow",
-      "systemsTouched": ["template-validation", "airtable-marketplace"],
-      "requiredEvidence": ["asset_id", "version_id", "published_url", "validation_result"],
+      "systemsTouched": ["template-review-mcp", "template-validation"],
+      "requiredEvidence": ["published_url"],
       "approval": { "required": false },
-      "receipt": { "requiredFields": ["workflow_id", "action_id", "correlation_id", "outcome", "evidence_refs"] },
+      "receipt": {
+        "requiredFields": ["workflow_id", "action_id", "correlation_id", "outcome", "evidence_refs"]
+      },
       "recovery": {
         "mode": "escalate",
         "owner": "marketplace-reviewer",
         "path": "Keep the submission in submitted state and request manual validation."
       },
       "tool": {
-        "name": "template_validation_run",
-        "targetSystemId": "template-validation"
+        "name": "template_review_run_published_site_validation",
+        "targetSystemId": "template-review-mcp",
+        "parameters": [
+          {
+            "name": "published_url",
+            "type": "string",
+            "description": "Published template URL to validate."
+          }
+        ]
+      },
+      "agentId": "marketplace-workflow-operator"
+    },
+    {
+      "id": "validate_submission",
+      "title": "Validate submission",
+      "kind": "decision",
+      "authority": "workflow-runtime",
+      "autonomy": "auto_allow",
+      "systemsTouched": ["template-review-mcp", "template-validation", "airtable-marketplace"],
+      "requiredEvidence": ["asset_id", "version_id", "published_url", "validation_result"],
+      "approval": { "required": false },
+      "receipt": {
+        "requiredFields": ["workflow_id", "action_id", "correlation_id", "outcome", "evidence_refs"]
+      },
+      "recovery": {
+        "mode": "escalate",
+        "owner": "marketplace-reviewer",
+        "path": "Keep the submission in submitted state and request manual validation."
       },
       "agentId": "marketplace-workflow-operator"
     },
@@ -156,7 +184,16 @@
       "systemsTouched": ["template-review-mcp", "airtable-marketplace", "policy-os"],
       "requiredEvidence": ["version_id", "reviewer_id", "review_feedback", "review_summary"],
       "approval": { "required": true, "owner": "marketplace-reviewer" },
-      "receipt": { "requiredFields": ["workflow_id", "action_id", "correlation_id", "outcome", "reviewer_id", "evidence_refs"] },
+      "receipt": {
+        "requiredFields": [
+          "workflow_id",
+          "action_id",
+          "correlation_id",
+          "outcome",
+          "reviewer_id",
+          "evidence_refs"
+        ]
+      },
       "recovery": {
         "mode": "manual_fallback",
         "owner": "marketplace-reviewer",
@@ -164,7 +201,19 @@
       },
       "tool": {
         "name": "template_review_request_changes",
-        "targetSystemId": "template-review-mcp"
+        "targetSystemId": "template-review-mcp",
+        "parameters": [
+          {
+            "name": "review_feedback",
+            "type": "string",
+            "description": "Reviewer-authored change request."
+          },
+          {
+            "name": "version_id",
+            "type": "string",
+            "description": "Marketplace asset version identifier."
+          }
+        ]
       }
     },
     {
@@ -176,15 +225,31 @@
       "systemsTouched": ["template-review-mcp", "airtable-marketplace", "policy-os"],
       "requiredEvidence": ["version_id", "reviewer_id", "review_summary", "validation_result"],
       "approval": { "required": true, "owner": "marketplace-reviewer" },
-      "receipt": { "requiredFields": ["workflow_id", "action_id", "correlation_id", "outcome", "reviewer_id", "evidence_refs"] },
+      "receipt": {
+        "requiredFields": [
+          "workflow_id",
+          "action_id",
+          "correlation_id",
+          "outcome",
+          "reviewer_id",
+          "evidence_refs"
+        ]
+      },
       "recovery": {
         "mode": "manual_fallback",
         "owner": "marketplace-reviewer",
         "path": "Keep the version in review and resolve the approval manually in Airtable."
       },
       "tool": {
-        "name": "template_review_set_review_status",
-        "targetSystemId": "template-review-mcp"
+        "name": "template_review_approve_version",
+        "targetSystemId": "template-review-mcp",
+        "parameters": [
+          {
+            "name": "version_id",
+            "type": "string",
+            "description": "Marketplace asset version identifier."
+          }
+        ]
       }
     },
     {
@@ -196,7 +261,16 @@
       "systemsTouched": ["airtable-marketplace", "policy-os"],
       "requiredEvidence": ["version_id", "approval_receipt", "release_metadata", "operator_id"],
       "approval": { "required": true, "owner": "marketplace-operator" },
-      "receipt": { "requiredFields": ["workflow_id", "action_id", "correlation_id", "outcome", "operator_id", "evidence_refs"] },
+      "receipt": {
+        "requiredFields": [
+          "workflow_id",
+          "action_id",
+          "correlation_id",
+          "outcome",
+          "operator_id",
+          "evidence_refs"
+        ]
+      },
       "recovery": {
         "mode": "rollback",
         "owner": "marketplace-operator",
@@ -212,7 +286,9 @@
       "systemsTouched": ["airtable-marketplace", "substrate"],
       "requiredEvidence": ["asset_id", "signal_type", "observed_at"],
       "approval": { "required": false },
-      "receipt": { "requiredFields": ["workflow_id", "action_id", "correlation_id", "outcome", "evidence_refs"] },
+      "receipt": {
+        "requiredFields": ["workflow_id", "action_id", "correlation_id", "outcome", "evidence_refs"]
+      },
       "recovery": {
         "mode": "escalate",
         "owner": "marketplace-operator",
@@ -229,7 +305,9 @@
       "systemsTouched": ["template-review-mcp", "policy-os"],
       "requiredEvidence": ["reviewer_id", "human_send_confirmation", "decision_receipt"],
       "approval": { "required": false },
-      "receipt": { "requiredFields": ["workflow_id", "action_id", "correlation_id", "outcome", "evidence_refs"] },
+      "receipt": {
+        "requiredFields": ["workflow_id", "action_id", "correlation_id", "outcome", "evidence_refs"]
+      },
       "recovery": {
         "mode": "escalate",
         "owner": "marketplace-reviewer",
@@ -238,6 +316,12 @@
     }
   ],
   "transitions": [
+    {
+      "id": "submitted-validation-requested",
+      "from": "submitted",
+      "to": "submitted",
+      "actionId": "run_published_validation"
+    },
     {
       "id": "submitted-to-ready",
       "from": "submitted",
@@ -274,7 +358,11 @@
       "id": "marketplace-workflow-operator",
       "title": "Marketplace workflow operator",
       "purpose": "Gather evidence, run deterministic validation, and monitor outcomes without taking human-owned decisions.",
-      "allowedActionIds": ["validate_submission", "monitor_post_launch"],
+      "allowedActionIds": [
+        "run_published_validation",
+        "validate_submission",
+        "monitor_post_launch"
+      ],
       "escalationOwner": "marketplace-review-lead"
     }
   ],

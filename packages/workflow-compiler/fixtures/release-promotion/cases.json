@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "workflow_replay_manifest.v0.1",
+  "workflowId": "software.release.promotion",
+  "cases": [
+    {
+      "caseId": "complete-verification-passes",
+      "title": "Complete release verification evidence advances the candidate",
+      "initialState": "candidate",
+      "actionId": "verify_release",
+      "actorId": "release-runtime",
+      "evidence": {
+        "commit_sha": "0123456789abcdef0123456789abcdef01234567",
+        "artifact_digest": "sha256:fixture-release-artifact",
+        "test_receipt": "release-tests-fixture-001"
+      },
+      "approvals": [],
+      "expectedOutcome": "pass",
+      "expectedState": "verified"
+    },
+    {
+      "caseId": "production-promotion-waits",
+      "title": "Production promotion waits for human approval",
+      "initialState": "verified",
+      "actionId": "promote_release",
+      "actorId": "release-manager",
+      "evidence": {
+        "artifact_digest": "sha256:fixture-release-artifact",
+        "deployment_target": "production",
+        "test_receipt": "release-tests-fixture-001"
+      },
+      "approvals": [],
+      "expectedOutcome": "approval_required",
+      "expectedState": "verified"
+    },
+    {
+      "caseId": "policy-bypass-stops",
+      "title": "An unreviewed production bypass stops",
+      "initialState": "candidate",
+      "actionId": "bypass_release_policy",
+      "actorId": "release-manager",
+      "evidence": {
+        "artifact_digest": "sha256:fixture-release-artifact",
+        "deployment_target": "production",
+        "bypass_reason": "Skip the failed verification gate"
+      },
+      "approvals": [],
+      "expectedOutcome": "blocked",
+      "expectedState": "candidate"
+    }
+  ]
+}

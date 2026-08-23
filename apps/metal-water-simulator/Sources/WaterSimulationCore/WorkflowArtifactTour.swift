@@ -364,6 +364,17 @@ private extension WorkflowArtifactTour {
             teachingCue: "The lock: pressure waits for explicit human authority."
         ),
         Blueprint(
+            path: "governed-interaction.json",
+            title: "Governed interaction",
+            chapterID: .governance,
+            purpose: "Limits the generated interface to declared inspection and replay operations.",
+            owner: "Policy owner",
+            inputs: ["decision inventory", "operator surface policy"],
+            outputs: ["bounded interaction capabilities"],
+            downstream: "Generated UI code can expose only the operations named by this contract.",
+            teachingCue: "The valve guard: interaction can point at the gate without owning it."
+        ),
+        Blueprint(
             path: "evaluation-manifest.json",
             title: "Evaluation manifest",
             chapterID: .evaluationEvidence,
@@ -417,6 +428,28 @@ private extension WorkflowArtifactTour {
             outputs: ["read-only console projection"],
             downstream: "People inspect one coherent view without gaining execution authority.",
             teachingCue: "The observation window: see the system without opening the gate."
+        ),
+        Blueprint(
+            path: "operator-console/app.css",
+            title: "Operator console styles",
+            chapterID: .presentationProvenance,
+            purpose: "Applies a deterministic visual contract to the generated operator surface.",
+            owner: "Operator experience",
+            inputs: ["generated interface structure"],
+            outputs: ["stable presentation rules"],
+            downstream: "The browser surface remains legible without changing workflow semantics.",
+            teachingCue: "The measurement markings: visual order without hydraulic authority."
+        ),
+        Blueprint(
+            path: "operator-console/app.js",
+            title: "Operator console behavior",
+            chapterID: .presentationProvenance,
+            purpose: "Renders generated data through the explicitly governed interaction contract.",
+            owner: "Operator experience",
+            inputs: ["operator console data", "governed interaction"],
+            outputs: ["read-only browser behavior"],
+            downstream: "Operators can inspect cases while production writes remain unavailable.",
+            teachingCue: "The instrument panel: selects a reading without moving the gate."
         ),
         Blueprint(
             path: "operator-console/index.html",

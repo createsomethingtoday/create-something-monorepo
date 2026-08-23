@@ -60,8 +60,17 @@ export interface WorkflowAction {
   tool?: {
     name: string;
     targetSystemId: string;
+    parameters?: WorkflowToolParameter[];
   };
   agentId?: string;
+}
+
+export type WorkflowToolParameterType = 'string' | 'number' | 'boolean';
+
+export interface WorkflowToolParameter {
+  name: string;
+  type: WorkflowToolParameterType;
+  description: string;
 }
 
 export interface WorkflowAgent {
@@ -177,6 +186,7 @@ export interface CompiledToolContract {
   autonomy: AutonomyClass;
   requiredEvidence: string[];
   receiptFields: string[];
+  parameters?: WorkflowToolParameter[];
 }
 
 export interface ToolContractsArtifact extends CompiledArtifactHeader {
@@ -328,6 +338,92 @@ export interface WorkflowReplayResult {
   missingEvidence: string[];
   recovery: WorkflowAction['recovery'];
   receipt: WorkflowReplayReceipt;
+}
+
+export type WorkflowAdapterDisposition = 'pass' | 'wait' | 'stop';
+
+export type WorkflowAdapterReasonCode =
+  | 'TOOL_CALL_READY'
+  | 'APPROVAL_REQUIRED'
+  | 'AUTHENTICATED_APPROVAL_REQUIRED'
+  | 'GOVERNANCE_BLOCKED'
+  | 'MISSING_TOOL_CONTRACT'
+  | 'MISSING_TOOL_PARAMETER_CONTRACT'
+  | 'INVALID_TOOL_ARGUMENTS'
+  | 'INCOMPATIBLE_TOOL_NAME';
+
+export interface WorkflowAdapterDiagnostic {
+  code: 'MISSING_TOOL_ARGUMENT' | 'INVALID_TOOL_ARGUMENT_TYPE';
+  path: string;
+  message: string;
+}
+
+export interface WorkflowAdapterPlan {
+  schemaVersion: 'workflow_adapter_plan.v0.1';
+  adapter: 'mcp' | 'openai.responses';
+  workflowId: string;
+  workflowVersion: string;
+  definitionHash: string;
+  caseId: string;
+  actionId: string;
+  disposition: WorkflowAdapterDisposition;
+  reasonCode: WorkflowAdapterReasonCode;
+  governanceOutcome: ReplayOutcome;
+  governanceReasonCode: WorkflowReplayResult['reasonCode'];
+  canInvoke: boolean;
+  authority: string;
+  owner: string;
+  recovery: WorkflowAction['recovery'];
+  receipt: WorkflowReplayReceipt;
+  diagnostics: WorkflowAdapterDiagnostic[];
+}
+
+export interface McpToolCallPlan extends WorkflowAdapterPlan {
+  adapter: 'mcp';
+  invocation?: {
+    operation: 'tools/call';
+    targetSystemId: string;
+    tool: {
+      name: string;
+      arguments: Record<string, string | number | boolean>;
+    };
+  };
+}
+
+export interface OpenAIResponsesFunctionTool {
+  type: 'function';
+  name: string;
+  description: string;
+  parameters: {
+    type: 'object';
+    properties: Record<
+      string,
+      {
+        type: WorkflowToolParameterType;
+        description: string;
+        enum: [string | number | boolean];
+      }
+    >;
+    required: string[];
+    additionalProperties: false;
+  };
+  strict: true;
+}
+
+export interface OpenAIResponsesRequest {
+  model: string;
+  instructions: string;
+  input: string;
+  tools: [OpenAIResponsesFunctionTool];
+  tool_choice: { type: 'function'; name: string };
+  parallel_tool_calls: false;
+  store: false;
+}
+
+export interface OpenAIResponsesRequestPlan extends WorkflowAdapterPlan {
+  adapter: 'openai.responses';
+  expectedArguments?: Record<string, string | number | boolean>;
+  request?: OpenAIResponsesRequest;
 }
 
 export interface WorkflowReplayReport extends CompiledArtifactHeader {

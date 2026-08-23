@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 
-import { parseWorkflowDefinition } from './input.js';
+import { parseWorkflowDefinition, WorkflowInputValidationError } from './input.js';
 
 import type {
   AgentContractsArtifact,
@@ -39,6 +39,10 @@ function byId<T extends { id: string }>(left: T, right: T): number {
 
 function byActionId<T extends { actionId: string }>(left: T, right: T): number {
   return left.actionId.localeCompare(right.actionId);
+}
+
+function byName<T extends { name: string }>(left: T, right: T): number {
+  return left.name.localeCompare(right.name);
 }
 
 function sorted(values: string[]): string[] {
@@ -135,6 +139,8 @@ function validateReferences(definition: WorkflowDefinition): WorkflowCompilation
   const stateIds = new Set(definition.states.map((state) => state.id));
   const actionIds = new Set(definition.actions.map((action) => action.id));
   const agentIds = new Set(definition.agents.map((agent) => agent.id));
+  const actionsById = new Map(definition.actions.map((action) => [action.id, action]));
+  const agentsById = new Map(definition.agents.map((agent) => [agent.id, agent]));
 
   definition.objects.forEach((object, index) => {
     if (!systemIds.has(object.sourceSystemId)) {
@@ -178,11 +184,36 @@ function validateReferences(definition: WorkflowDefinition): WorkflowCompilation
         message: `Tool ${action.tool.name} references unknown system ${action.tool.targetSystemId}.`,
       });
     }
+    if (action.tool && !action.systemsTouched.includes(action.tool.targetSystemId)) {
+      diagnostics.push({
+        code: 'TOOL_TARGET_NOT_DECLARED_SYSTEM_TOUCH',
+        path: `actions[${index}].tool.targetSystemId`,
+        message: `Tool ${action.tool.name} target ${action.tool.targetSystemId} must be declared in systemsTouched for action ${action.id}.`,
+      });
+    }
+    action.tool?.parameters?.forEach((parameter, parameterIndex) => {
+      if (!action.requiredEvidence.includes(parameter.name)) {
+        diagnostics.push({
+          code: 'TOOL_PARAMETER_MISSING_EVIDENCE_CONTRACT',
+          path: `actions[${index}].tool.parameters[${parameterIndex}].name`,
+          message: `Tool parameter ${parameter.name} must be backed by required evidence for action ${action.id}.`,
+        });
+      }
+    });
     if (action.agentId && !agentIds.has(action.agentId)) {
       diagnostics.push({
         code: 'UNKNOWN_ACTION_AGENT',
         path: `actions[${index}].agentId`,
         message: `Action ${action.id} references unknown agent ${action.agentId}.`,
+      });
+    } else if (
+      action.agentId &&
+      !agentsById.get(action.agentId)?.allowedActionIds.includes(action.id)
+    ) {
+      diagnostics.push({
+        code: 'ACTION_NOT_ALLOWED_FOR_AGENT',
+        path: `actions[${index}].agentId`,
+        message: `Action ${action.id} assigns agent ${action.agentId} but is absent from that agent allowlist.`,
       });
     }
   });
@@ -217,6 +248,12 @@ function validateReferences(definition: WorkflowDefinition): WorkflowCompilation
           path: `agents[${index}].allowedActionIds[${actionIndex}]`,
           message: `Agent ${agent.id} references unknown action ${actionId}.`,
         });
+      } else if (actionsById.get(actionId)?.agentId !== agent.id) {
+        diagnostics.push({
+          code: 'AGENT_ACTION_ASSIGNMENT_MISMATCH',
+          path: `agents[${index}].allowedActionIds[${actionIndex}]`,
+          message: `Agent ${agent.id} allowlists action ${actionId}, but that action is not assigned to the agent.`,
+        });
       }
     });
   });
@@ -234,7 +271,19 @@ function validateReferences(definition: WorkflowDefinition): WorkflowCompilation
 }
 
 export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundle {
-  const definition = parseWorkflowDefinition(input);
+  let snapshot: unknown;
+  try {
+    snapshot = structuredClone(input);
+  } catch {
+    throw new WorkflowInputValidationError([
+      {
+        code: 'INVALID_VALUE',
+        path: '$',
+        message: 'Workflow definition must be detachable structured data.',
+      },
+    ]);
+  }
+  const definition = parseWorkflowDefinition(snapshot);
   const diagnostics = [...validateGovernance(definition), ...validateReferences(definition)];
   if (diagnostics.length > 0) throw new WorkflowCompilationError(diagnostics);
 
@@ -332,6 +381,9 @@ export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundl
         autonomy: action.autonomy,
         requiredEvidence: sorted(action.requiredEvidence),
         receiptFields: sorted(action.receipt.requiredFields),
+        ...(action.tool!.parameters
+          ? { parameters: [...action.tool!.parameters].sort(byName) }
+          : {}),
       }))
       .sort(byActionId),
   };
@@ -383,12 +435,7 @@ export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundl
     runtimeVersion: '0.1.0',
     ...header,
     entrySurfaceId: 'operator-console',
-    capabilities: [
-      'interaction.select',
-      'receipt.inspect',
-      'replay.inspect',
-      'workflow.inspect',
-    ],
+    capabilities: ['interaction.select', 'receipt.inspect', 'replay.inspect', 'workflow.inspect'],
     surfaces: [
       {
         id: 'operator-console',
