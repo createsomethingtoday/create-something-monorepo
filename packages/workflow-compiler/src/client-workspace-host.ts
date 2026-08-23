@@ -8,6 +8,7 @@ import {
 import type {
   GovernedInteractionBundle,
   GovernedInteractionBundleV0_1,
+  GovernedInteractionBundleV0_2,
   GovernedInteractionBundleV0_3,
 } from './types.js';
 
@@ -38,7 +39,7 @@ export interface ClientWorkspaceGovernedInteractionInspectionV0_1 {
 
 export interface ClientWorkspaceGovernedInteractionInspectionV0_2 {
   schemaVersion: 'client_workspace_governed_interaction_inspection.v0.2';
-  bundle: GovernedInteractionBundle;
+  bundle: GovernedInteractionBundleV0_1 | GovernedInteractionBundleV0_2;
   compatibility: GovernedInteractionCompatibilityDecisionV0_2;
   authority: 'signed_delivery_read_only';
 }

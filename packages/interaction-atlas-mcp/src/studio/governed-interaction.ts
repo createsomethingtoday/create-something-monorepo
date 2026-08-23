@@ -3,6 +3,7 @@ import {
   parseGovernedInteractionBundle,
   type GovernedInteractionBundle,
   type GovernedInteractionBundleV0_1,
+  type GovernedInteractionBundleV0_2,
   type GovernedInteractionBundleV0_3,
   type GovernedInteractionCompatibilityDecisionV0_1,
   type GovernedInteractionCompatibilityDecisionV0_2,
@@ -36,7 +37,7 @@ export interface AtlasGovernedInteractionInspectionV0_1 {
 
 export interface AtlasGovernedInteractionInspectionV0_2 {
   schemaVersion: 'atlas_governed_interaction_inspection.v0.2';
-  bundle: GovernedInteractionBundle;
+  bundle: GovernedInteractionBundleV0_1 | GovernedInteractionBundleV0_2;
   compatibility: GovernedInteractionCompatibilityDecisionV0_2;
   authority: 'read_only';
 }

@@ -6,8 +6,10 @@ import type {
   CompiledWorkflowBundle,
   CompiledWorkflowBundleV0_1,
   ClientWorkspaceGovernedInteractionInspectionV0_1,
+  ClientWorkspaceGovernedInteractionInspectionV0_2,
   DecisionInventoryArtifactV0_2,
   GovernedInteractionBundleV0_2,
+  GovernedInteractionBundleV0_3,
   GovernedInteractionCompatibilityDecisionV0_1,
   GovernedInteractionHostContract,
   ToolContractsArtifactV0_2,
@@ -243,9 +245,19 @@ const invalidLegacyClientWorkspaceInspection: ClientWorkspaceGovernedInteraction
   }
 };
 
+declare const exactEnumInteraction: GovernedInteractionBundleV0_3;
+declare const constrainedClientWorkspaceInspection: ClientWorkspaceGovernedInteractionInspectionV0_2;
+
+const invalidV02ClientWorkspaceBundle: ClientWorkspaceGovernedInteractionInspectionV0_2 = {
+  ...constrainedClientWorkspaceInspection,
+  // @ts-expect-error A v0.2 Client Workspace envelope cannot contain a v0.3 interaction bundle.
+  bundle: exactEnumInteraction
+};
+
 void legacyClientWorkspaceInspection;
 void invalidLegacyClientWorkspaceBundle;
 void invalidLegacyClientWorkspaceInspection;
+void invalidV02ClientWorkspaceBundle;
 
 declare const legacyConsoleData: WorkflowOperatorConsoleDataV0_1;
 declare const constrainedReplayReport: WorkflowReplayReportV0_2;
