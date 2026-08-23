@@ -4,6 +4,13 @@ All notable changes to this package are documented here. This project follows
 Semantic Versioning for its npm API and separately versions its workflow and
 artifact schemas.
 
+## 0.2.0
+
+- Add the local-runbook terminal starter, validation, simulation, and Markdown
+  explanation commands for Codex-paired builders.
+- Ship a repository-local Codex skill with explicit approval, no-live-action,
+  and no-partnership-claim boundaries.
+
 ## 0.1.0
 
 - Promote the audited bootstrap candidate to the first stable builder release.

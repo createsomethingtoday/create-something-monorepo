@@ -80,13 +80,19 @@ it does not add execution controls.
 ## CLI
 
 ```text
-workflow-compiler compile --workflow <definition.json> [--cases <cases.json>] --out <directory> [--signing-key <private.pem> --key-id <id>]
-workflow-compiler verify --dir <compiled-output> [--public-key <public.pem>]
-workflow-compiler serve --dir <compiled-output> [--port <number>]
+npx workflow-compiler compile --workflow <definition.json> [--cases <cases.json>] --out <directory> [--signing-key <private.pem> --key-id <id>]
+npx workflow-compiler verify --dir <compiled-output> [--public-key <public.pem>]
+npx workflow-compiler serve --dir <compiled-output> [--port <number>]
+npx workflow-compiler init --template local-runbook --dir <new-directory>
+npx workflow-compiler validate --workflow <definition.json>
+npx workflow-compiler simulate --workflow <definition.json> --cases <cases.json>
+npx workflow-compiler explain --workflow <definition.json> [--cases <cases.json>]
 ```
 
+`init` writes the fixed local-runbook starter only into a new directory and fails before an overwrite. Its structured response identifies the working directory for the follow-up commands. `validate` compiles one input for inspection, `simulate` requires at least one replay case, coverage for every declared evaluation, and matching expectations; otherwise it exits non-zero. An evaluation is covered only when a matching replay case proves its action, expected outcome, and required evidence. `explain` renders the resulting decisions as Markdown and explicitly reports whether replay expectations match, including mismatched case IDs. They never call a provider, read credentials, execute a live action, or approve a consequential step. `compile` writes only compiler-managed local artifacts; `verify` and `serve` inspect those artifacts.
+
 Exit codes are stable: `0` success, `2` usage or versioned-input failure, `3`
-governance/integrity stop, and `1` unexpected operational failure.
+governance, integrity, or simulation stop, and `1` unexpected operational failure.
 
 ## Type inventory
 

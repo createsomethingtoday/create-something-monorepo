@@ -1,6 +1,6 @@
 {
   "schemaVersion": "workflow_compiler_package_inventory.v1",
-  "packageVersion": "0.1.0",
+  "packageVersion": "0.2.0",
   "files": [
     "API.md",
     "CHANGELOG.md",
@@ -58,12 +58,17 @@
     "dist/server.d.ts.map",
     "dist/server.js",
     "dist/server.js.map",
+    "dist/starter.d.ts",
+    "dist/starter.d.ts.map",
+    "dist/starter.js",
+    "dist/starter.js.map",
     "dist/types.d.ts",
     "dist/types.d.ts.map",
     "dist/types.js",
     "dist/types.js.map",
     "fixtures/release-promotion/cases.json",
     "fixtures/release-promotion/workflow.json",
-    "package.json"
+    "package.json",
+    "skills/workflow-compiler/SKILL.md"
   ]
 }

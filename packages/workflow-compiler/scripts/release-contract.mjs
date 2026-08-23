@@ -11,6 +11,7 @@ const REPOSITORY_DIRECTORY = 'packages/workflow-compiler';
 const REQUIRED_FILES = [
   'dist',
   'fixtures/release-promotion',
+  'skills',
   'API.md',
   'CHANGELOG.md',
   'COMPATIBILITY.md',
