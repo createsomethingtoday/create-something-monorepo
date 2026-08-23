@@ -81,7 +81,9 @@ Replay reports follow the same boundary. v0.1 compiled bundles produce
 evidence-matcher mismatch fields and reason codes. v0.2 compiled bundles
 produce `workflow_replay_report.v0.2`, which carries those fields. Consumers
 must discriminate replay reports by `schemaVersion`; a historical v0.1 report
-is not silently widened or relabeled.
+is not silently widened or relabeled. Replay rejects a v0.1 decision carrying
+either constraint field before evaluating cases, including a constraint that
+would otherwise happen to match supplied evidence.
 
 The public TypeScript definitions preserve this correlation: a v0.1 compiled
 bundle contains only `decision_inventory.v0.1`,

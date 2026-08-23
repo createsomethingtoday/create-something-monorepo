@@ -115,6 +115,44 @@ test('versions replay reports when constrained evidence adds mismatch detail', a
   assert.deepEqual(mismatch.evidenceMatcherMismatches, []);
 });
 
+test('replay rejects evidence constraints in a malformed v0.1 bundle before case evaluation', async () => {
+  const definition = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const manifest = JSON.parse(await readFile(casesUrl, 'utf8'));
+  const bundle = structuredClone(compileWorkflowDefinition(definition));
+  const matchingCase = manifest.cases.find(
+    (replayCase) => replayCase.caseId === 'complete-validation-passes',
+  );
+  assert.ok(matchingCase);
+  const decisionIndex = bundle.decisionInventory.decisions.findIndex(
+    (decision) => decision.actionId === matchingCase.actionId,
+  );
+  assert.notEqual(decisionIndex, -1);
+  bundle.decisionInventory.decisions[decisionIndex].requiredEvidenceValues = {
+    validation_result: matchingCase.evidence.validation_result,
+  };
+
+  assert.throws(
+    () =>
+      replayWorkflow(bundle, {
+        schemaVersion: manifest.schemaVersion,
+        workflowId: manifest.workflowId,
+        cases: [matchingCase],
+      }),
+    (error) => {
+      assert.equal(error.name, 'ReplayInputValidationError');
+      assert.deepEqual(error.diagnostics, [
+        {
+          code: 'INVALID_VALUE',
+          path: `$.decisionInventory.decisions[${decisionIndex}].requiredEvidenceValues`,
+          message:
+            'Compiled workflow bundle v0.1 cannot contain evidence constraints; recompile a workflow_definition.v0.2 bundle.',
+        },
+      ]);
+      return true;
+    },
+  );
+});
+
 test('serializes missing constrained evidence as an explicit null mismatch actual', async () => {
   const definition = JSON.parse(await readFile(workflowUrl, 'utf8'));
   const manifest = JSON.parse(await readFile(casesUrl, 'utf8'));

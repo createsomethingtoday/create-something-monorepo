@@ -80,7 +80,9 @@ A `compiled_workflow_bundle.v0.1` emits
 fields. A v0.2 bundle emits `workflow_replay_report.v0.2`, whose cases add
 exact-value and matcher mismatch detail plus their two reason codes. Consumers
 must select the report shape by `schemaVersion` and recompile/replay a migrated
-source definition rather than relabeling historical report data.
+source definition rather than relabeling historical report data. Replay rejects
+a v0.1 decision that merely carries either constraint field before evaluating a
+case, even if supplied evidence would happen to satisfy it.
 
 `CompiledWorkflowBundle` is also a schema-discriminated union. A v0.1 bundle
 can contain only a v0.1 decision inventory, governed interaction, and decisions

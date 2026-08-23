@@ -47,6 +47,8 @@ artifact schemas.
 - Reject constrained evidence that conflicts with the type of its declared tool
   parameter, including a string matcher on a number or boolean parameter,
   before emitting an uninvokable adapter plan.
+- Reject v0.1 compiled decisions that carry either v0.2-only evidence constraint
+  field before replay-case evaluation, even when supplied evidence would match.
 - Version compatibility decisions as
   `governed_interaction_compatibility.v0.2` before emitting the expanded
   schema-support error vocabulary; historical v0.1 decisions remain readable

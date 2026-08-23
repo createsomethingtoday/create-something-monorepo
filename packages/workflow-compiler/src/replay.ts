@@ -57,6 +57,7 @@ export function replayWorkflow(
   bundle: CompiledWorkflowBundle,
   input: unknown
 ): WorkflowReplayArtifacts {
+  rejectLegacyEvidenceConstraints(bundle);
   const manifest = parseWorkflowReplayManifest(input);
   if (manifest.workflowId !== bundle.workflowId) {
     throw new ReplayInputValidationError([
@@ -115,6 +116,31 @@ export function replayWorkflow(
       entries: cases.map((entry) => entry.receipt)
     }
   };
+}
+
+function rejectLegacyEvidenceConstraints(bundle: CompiledWorkflowBundle): void {
+  if (bundle.schemaVersion !== 'compiled_workflow_bundle.v0.1') return;
+  const decisionIndex = bundle.decisionInventory.decisions.findIndex(
+    (decision) =>
+      Object.prototype.hasOwnProperty.call(decision, 'requiredEvidenceValues') ||
+      Object.prototype.hasOwnProperty.call(decision, 'requiredEvidenceMatchers'),
+  );
+  if (decisionIndex === -1) return;
+  const decision = bundle.decisionInventory.decisions[decisionIndex];
+  const constraintField = Object.prototype.hasOwnProperty.call(
+    decision,
+    'requiredEvidenceValues',
+  )
+    ? 'requiredEvidenceValues'
+    : 'requiredEvidenceMatchers';
+  throw new ReplayInputValidationError([
+    {
+      code: 'INVALID_VALUE',
+      path: `$.decisionInventory.decisions[${decisionIndex}].${constraintField}`,
+      message:
+        'Compiled workflow bundle v0.1 cannot contain evidence constraints; recompile a workflow_definition.v0.2 bundle.'
+    }
+  ]);
 }
 
 function hasEvidence(value: unknown): boolean {
@@ -299,19 +325,6 @@ function replayCaseAgainstBundle(
     receipt
   };
   if (bundle.schemaVersion === 'compiled_workflow_bundle.v0.1') {
-    if (
-      reasonCode === 'EVIDENCE_VALUE_MISMATCH' ||
-      reasonCode === 'EVIDENCE_MATCHER_MISMATCH'
-    ) {
-      throw new ReplayInputValidationError([
-        {
-          code: 'INVALID_VALUE',
-          path: '$.schemaVersion',
-          message:
-            'Compiled workflow bundle v0.1 cannot contain evidence constraints; recompile a workflow_definition.v0.2 bundle.'
-        }
-      ]);
-    }
     return { ...common, reasonCode } as WorkflowReplayResultV0_1;
   }
   return {
