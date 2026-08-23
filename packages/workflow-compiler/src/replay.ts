@@ -3,6 +3,7 @@ import type {
   CompiledDecision,
   CompiledWorkflowBundle,
   EvidenceLedgerArtifact,
+  GovernedInteractionDecision,
   ReplayOutcome,
   WorkflowAction,
   WorkflowAcceptanceSummary,
@@ -65,7 +66,7 @@ export function replayWorkflow(
   input: unknown
 ): WorkflowReplayArtifacts {
   rejectMismatchedNestedArtifactSchemas(bundle);
-  rejectDivergentNestedEvidenceConstraints(bundle);
+  rejectDivergentNestedGovernanceContracts(bundle);
   rejectLegacyEvidenceConstraints(bundle);
   const manifest = parseWorkflowReplayManifest(input);
   if (manifest.workflowId !== bundle.workflowId) {
@@ -165,7 +166,7 @@ function rejectMismatchedNestedArtifactSchemas(bundle: CompiledWorkflowBundle): 
   if (diagnostics.length > 0) throw new ReplayInputValidationError(diagnostics);
 }
 
-function rejectDivergentNestedEvidenceConstraints(bundle: CompiledWorkflowBundle): void {
+function rejectDivergentNestedGovernanceContracts(bundle: CompiledWorkflowBundle): void {
   if (bundle.schemaVersion !== 'compiled_workflow_bundle.v0.2') return;
   const governedByActionId = new Map(
     bundle.governedInteraction.actions.map((action, index) => [action.actionId, { action, index }])
@@ -187,7 +188,7 @@ function rejectDivergentNestedEvidenceConstraints(bundle: CompiledWorkflowBundle
       const decisionPath = `$.decisionInventory.decisions[${decisionIndex}]`;
       const governed = governedByActionId.get(decision.actionId);
       const governedDiagnostics = governed
-        ? evidenceConstraintDiagnostics(
+        ? governanceContractDiagnostics(
             decision,
             decisionPath,
             governed.action,
@@ -196,7 +197,7 @@ function rejectDivergentNestedEvidenceConstraints(bundle: CompiledWorkflowBundle
         : [missingCorrelatedActionDiagnostic(decision.actionId, '$.governedInteraction.actions')];
       const approval = approvalByActionId.get(decision.actionId);
       const approvalDiagnostics =
-        decision.autonomy === 'auto_allow'
+        governed?.action.autonomy === 'auto_allow'
           ? []
           : approval
             ? evidenceConstraintDiagnostics(
@@ -278,6 +279,40 @@ function toolContractDiagnostics(
       message: `Tool contract must match the source-derived contract at ${sourcePath}.`
     }
   ];
+}
+
+function governanceContractDiagnostics(
+  source: CompiledDecision,
+  sourcePath: string,
+  target: GovernedInteractionDecision,
+  targetPath: string
+) {
+  const fields = [
+    'actionId',
+    'title',
+    'kind',
+    'authority',
+    'autonomy',
+    'systemsTouched',
+    'requiredEvidence',
+    'requiredEvidenceValues',
+    'requiredEvidenceMatchers',
+    'approvalOwner',
+    'receiptFields',
+    'recovery'
+  ] as const;
+  return fields.flatMap((field) => {
+    if (canonicalizeContract(source[field]) === canonicalizeContract(target[field])) {
+      return [];
+    }
+    return [
+      {
+        code: 'INVALID_VALUE' as const,
+        path: `${targetPath}.${field}`,
+        message: `Governance contract ${field} for action ${source.actionId} must match ${sourcePath}.`
+      }
+    ];
+  });
 }
 
 function evidenceConstraintDiagnostics(

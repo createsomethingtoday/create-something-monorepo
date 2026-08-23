@@ -91,8 +91,9 @@ case, even if supplied evidence would happen to satisfy it.
 can contain only v0.1 decision inventory, governed interaction, tool contracts,
 approval surfaces, and decisions without evidence constraints; a v0.2 bundle
 carries the corresponding v0.2 contracts. Replay also rejects a deserialized
-bundle whose nested artifact schema or evidence constraints do not match the
-correlated v0.2 decision before it evaluates a case. The decision embeds the
+bundle whose nested artifact schema or governance contract (including autonomy,
+authority, approvals, and evidence constraints) does not match the correlated
+v0.2 decision before it evaluates a case. The decision embeds the
 source-derived tool contract when one exists, so an added, removed, duplicated,
 or altered tool cannot become invokable after deserialization. TypeScript
 callers therefore cannot construct a cross-version bundle that would produce a

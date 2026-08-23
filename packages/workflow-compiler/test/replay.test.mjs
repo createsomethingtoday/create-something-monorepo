@@ -263,6 +263,39 @@ test('replay rejects a v0.2 bundle with divergent nested evidence constraints', 
   );
 });
 
+test('adapter rejects a v0.2 decision whose autonomy is weakened after compilation', async () => {
+  const definition = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const manifest = JSON.parse(await readFile(casesUrl, 'utf8'));
+  definition.schemaVersion = 'workflow_definition.v0.2';
+  const bundle = JSON.parse(JSON.stringify(compileWorkflowDefinition(definition)));
+  const decisionIndex = bundle.decisionInventory.decisions.findIndex(
+    (decision) => decision.actionId === 'approve_template',
+  );
+  assert.notEqual(decisionIndex, -1);
+  bundle.decisionInventory.decisions[decisionIndex].autonomy = 'auto_allow';
+  const approvalCase = manifest.cases.find(
+    (entry) => entry.caseId === 'approval-waits-for-reviewer',
+  );
+  assert.ok(approvalCase);
+
+  assert.throws(
+    () => createMcpToolCallPlan(bundle, approvalCase),
+    (error) => {
+      assert.equal(error.name, 'ReplayInputValidationError');
+      assert.deepEqual(
+        error.diagnostics.map(({ code, path }) => ({ code, path })),
+        [
+          {
+            code: 'INVALID_VALUE',
+            path: `$.governedInteraction.actions[${decisionIndex}].autonomy`,
+          },
+        ],
+      );
+      return true;
+    },
+  );
+});
+
 test('adapter rejects a tool contract added to a v0.2 tool-less action after compilation', async () => {
   const definition = JSON.parse(await readFile(workflowUrl, 'utf8'));
   const manifest = JSON.parse(await readFile(casesUrl, 'utf8'));
