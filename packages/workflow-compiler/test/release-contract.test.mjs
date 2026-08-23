@@ -27,7 +27,7 @@ test('the public manifest declares the complete release and support boundary', a
 test('release manifest validation fails closed on metadata and runtime dependency drift', async () => {
   const manifest = JSON.parse(await readFile(packageJsonUrl, 'utf8'));
   delete manifest.repository;
-  manifest.engines.node = '>=20';
+  manifest.engines.node = '>=18';
   manifest.publishConfig.provenance = false;
   manifest.dependencies = { ambient: '^1.0.0' };
 
