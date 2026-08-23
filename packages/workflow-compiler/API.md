@@ -100,7 +100,11 @@ bundle whose nested artifact schema or governance contract (including autonomy,
 authority, approvals, and evidence constraints) does not match the correlated
 v0.2 decision before it evaluates a case. The decision embeds the
 source-derived tool contract when one exists, so an added, removed, duplicated,
-or altered tool cannot become invokable after deserialization. TypeScript
+or altered tool cannot become invokable after deserialization. Replay itself
+requires the frozen, in-process bundle returned by `compileWorkflowDefinition`;
+it rejects copied or deserialized bundles before evaluation, including a bundle
+whose transition graph was altered while its header remained consistent.
+Recompile trusted source in the current process before replaying. TypeScript
 callers therefore cannot construct a cross-version bundle that would produce a
 legacy report while enforcing v0.2 constraints.
 

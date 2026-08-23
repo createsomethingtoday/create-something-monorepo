@@ -1,4 +1,5 @@
 import { parseWorkflowReplayManifest, ReplayInputValidationError } from './input.js';
+import { isCompilerOwnedBundle } from './compiled-bundle-provenance.js';
 import type {
   CompiledDecision,
   CompiledApprovalSurface,
@@ -67,9 +68,8 @@ export function replayWorkflow(
   bundle: CompiledWorkflowBundle,
   input: unknown
 ): WorkflowReplayArtifacts {
-  rejectMismatchedNestedArtifactSchemas(bundle);
-  rejectDivergentNestedGovernanceContracts(bundle);
-  rejectLegacyEvidenceConstraints(bundle);
+  validateCompiledBundleForReplay(bundle);
+  rejectUnverifiedCompiledBundle(bundle);
   const manifest = parseWorkflowReplayManifest(input);
   if (manifest.workflowId !== bundle.workflowId) {
     throw new ReplayInputValidationError([
@@ -136,6 +136,24 @@ export function replayWorkflow(
       entries: cases.map((entry) => entry.receipt)
     }
   };
+}
+
+export function validateCompiledBundleForReplay(bundle: CompiledWorkflowBundle): void {
+  rejectMismatchedNestedArtifactSchemas(bundle);
+  rejectDivergentNestedGovernanceContracts(bundle);
+  rejectLegacyEvidenceConstraints(bundle);
+}
+
+function rejectUnverifiedCompiledBundle(bundle: CompiledWorkflowBundle): void {
+  if (isCompilerOwnedBundle(bundle)) return;
+  throw new ReplayInputValidationError([
+    {
+      code: 'INVALID_VALUE',
+      path: '$.bundle',
+      message:
+        'Replay requires the frozen in-process bundle returned by compileWorkflowDefinition; recompile trusted source before replaying.',
+    },
+  ]);
 }
 
 function rejectMismatchedNestedArtifactSchemas(bundle: CompiledWorkflowBundle): void {

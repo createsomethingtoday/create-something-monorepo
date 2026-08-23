@@ -86,12 +86,13 @@ action appears once in approval surfaces, auto-allowed actions have no approval
 surface, and source-derived tool records remain one-to-one. Unknown or duplicate
 records are rejected before replay or adapter planning.
 
-Adapter invocations additionally require the frozen in-process bundle returned
-by `compileWorkflowDefinition`. Deserialized or copied bundles can still be
-replayed and inspected, but adapter planning stops with
-`UNVERIFIED_COMPILED_BUNDLE` in a `workflow_adapter_plan.v0.3` until the caller
-recompiles trusted source in the current process. This prevents a mutable serialized tool contract from becoming
-an invocation merely because its duplicate records agree.
+Replay and adapter invocations require the frozen in-process bundle returned by
+`compileWorkflowDefinition`. Deserialized or copied bundles stop before replay,
+and adapter planning returns `UNVERIFIED_COMPILED_BUNDLE` in a
+`workflow_adapter_plan.v0.3`, until the caller recompiles trusted source in the
+current process. This prevents a mutable serialized transition graph or tool
+contract from becoming an accepted replay or invocation merely because related
+records agree.
 
 When a v0.2 action supplies an exact evidence value and matcher for the same
 field, that value must satisfy the matcher. Compilation rejects a contradictory

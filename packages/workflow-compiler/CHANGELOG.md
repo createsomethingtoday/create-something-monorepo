@@ -6,6 +6,9 @@ artifact schemas.
 
 ## 0.3.0
 
+- Require compiler-owned in-process bundles for replay as well as adapter
+  invocation, so a copied or deserialized transition graph cannot alter an
+  accepted replay under a retained definition hash.
 - Add the `marketplace-submission` terminal starter for a local, source-bound
   submission-to-review walkthrough.
 - Replay form validation, Validator App preflight, Airtable Automation receipt

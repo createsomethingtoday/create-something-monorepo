@@ -250,6 +250,33 @@ test('replay rejects nested artifact headers that do not match the compiled bund
   );
 });
 
+test('replay requires compiler provenance before trusting a copied transition graph', async () => {
+  const definition = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const manifest = JSON.parse(await readFile(casesUrl, 'utf8'));
+  const bundle = structuredClone(compileWorkflowDefinition(definition));
+  const transition = bundle.workflowMap.edges.find(
+    (edge) => edge.from === 'action:validate_submission' && edge.to === 'state:ready_for_review',
+  );
+  assert.ok(transition);
+  transition.to = 'state:submitted';
+
+  assert.throws(
+    () => replayWorkflow(bundle, manifest),
+    (error) => {
+      assert.equal(error.name, 'ReplayInputValidationError');
+      assert.deepEqual(error.diagnostics, [
+        {
+          code: 'INVALID_VALUE',
+          path: '$.bundle',
+          message:
+            'Replay requires the frozen in-process bundle returned by compileWorkflowDefinition; recompile trusted source before replaying.',
+        },
+      ]);
+      return true;
+    },
+  );
+});
+
 test('replay rejects a v0.2 bundle with divergent nested evidence constraints', async () => {
   const definition = JSON.parse(await readFile(workflowUrl, 'utf8'));
   const manifest = JSON.parse(await readFile(casesUrl, 'utf8'));
