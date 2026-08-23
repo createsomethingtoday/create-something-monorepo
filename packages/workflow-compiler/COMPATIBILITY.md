@@ -61,9 +61,9 @@ generator rejects a mixed pair instead of reusing either envelope version.
 exact-value and matcher constraints in their read-only contracts, while replay
 and interaction artifacts retain the same constraints. Before it evaluates a
 case, replay rejects a deserialized bundle whose nested inventory, interaction,
-tool-contract, or approval-surface schema does not match the outer version.
-The corresponding v0.1 contracts reject the fields instead of silently
-dropping them.
+tool-contract, or approval-surface schema or evidence constraints do not match
+the correlated decision. The corresponding v0.1 contracts reject the fields
+instead of silently dropping them.
 
 When a v0.2 action supplies an exact evidence value and matcher for the same
 field, that value must satisfy the matcher. Compilation rejects a contradictory

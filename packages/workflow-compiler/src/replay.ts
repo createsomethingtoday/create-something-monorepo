@@ -7,6 +7,7 @@ import type {
   WorkflowAction,
   WorkflowAcceptanceSummary,
   WorkflowEvidenceMatcher,
+  WorkflowEvidenceValue,
   WorkflowReplayCase,
   WorkflowReplayReport,
   WorkflowReplayResult,
@@ -17,6 +18,12 @@ import type {
 export interface WorkflowReplayArtifacts {
   report: WorkflowReplayReport;
   evidenceLedger: EvidenceLedgerArtifact;
+}
+
+interface EvidenceConstraintCarrier {
+  actionId: string;
+  requiredEvidenceValues?: Record<string, WorkflowEvidenceValue>;
+  requiredEvidenceMatchers?: Record<string, WorkflowEvidenceMatcher>;
 }
 
 export function createAcceptanceSummary(
@@ -58,6 +65,7 @@ export function replayWorkflow(
   input: unknown
 ): WorkflowReplayArtifacts {
   rejectMismatchedNestedArtifactSchemas(bundle);
+  rejectDivergentNestedEvidenceConstraints(bundle);
   rejectLegacyEvidenceConstraints(bundle);
   const manifest = parseWorkflowReplayManifest(input);
   if (manifest.workflowId !== bundle.workflowId) {
@@ -155,6 +163,105 @@ function rejectMismatchedNestedArtifactSchemas(bundle: CompiledWorkflowBundle): 
     ];
   });
   if (diagnostics.length > 0) throw new ReplayInputValidationError(diagnostics);
+}
+
+function rejectDivergentNestedEvidenceConstraints(bundle: CompiledWorkflowBundle): void {
+  if (bundle.schemaVersion !== 'compiled_workflow_bundle.v0.2') return;
+  const governedByActionId = new Map(
+    bundle.governedInteraction.actions.map((action, index) => [action.actionId, { action, index }])
+  );
+  const approvalByActionId = new Map(
+    bundle.approvalSurfaces.actions.map((action, index) => [action.actionId, { action, index }])
+  );
+  const decisionByActionId = new Map(
+    bundle.decisionInventory.decisions.map((action, index) => [action.actionId, { action, index }])
+  );
+  const diagnostics = [
+    ...bundle.decisionInventory.decisions.flatMap((decision, decisionIndex) => {
+      const decisionPath = `$.decisionInventory.decisions[${decisionIndex}]`;
+      const governed = governedByActionId.get(decision.actionId);
+      const governedDiagnostics = governed
+        ? evidenceConstraintDiagnostics(
+            decision,
+            decisionPath,
+            governed.action,
+            `$.governedInteraction.actions[${governed.index}]`
+          )
+        : [missingCorrelatedActionDiagnostic(decision.actionId, '$.governedInteraction.actions')];
+      if (decision.autonomy === 'auto_allow') return governedDiagnostics;
+      const approval = approvalByActionId.get(decision.actionId);
+      const approvalDiagnostics = approval
+        ? evidenceConstraintDiagnostics(
+            decision,
+            decisionPath,
+            approval.action,
+            `$.approvalSurfaces.actions[${approval.index}]`
+          )
+        : [missingCorrelatedActionDiagnostic(decision.actionId, '$.approvalSurfaces.actions')];
+      return [...governedDiagnostics, ...approvalDiagnostics];
+    }),
+    ...bundle.toolContracts.tools.flatMap((tool, toolIndex) => {
+      const decision = decisionByActionId.get(tool.actionId);
+      if (!decision) {
+        return [missingCorrelatedActionDiagnostic(tool.actionId, '$.decisionInventory.decisions')];
+      }
+      return evidenceConstraintDiagnostics(
+        decision.action,
+        `$.decisionInventory.decisions[${decision.index}]`,
+        tool,
+        `$.toolContracts.tools[${toolIndex}]`
+      );
+    })
+  ];
+  if (diagnostics.length > 0) throw new ReplayInputValidationError(diagnostics);
+}
+
+function missingCorrelatedActionDiagnostic(actionId: string, path: string) {
+  return {
+    code: 'INVALID_VALUE' as const,
+    path,
+    message: `Compiled workflow bundle v0.2 requires a correlated action for ${actionId}.`
+  };
+}
+
+function evidenceConstraintDiagnostics(
+  source: EvidenceConstraintCarrier,
+  sourcePath: string,
+  target: EvidenceConstraintCarrier,
+  targetPath: string
+) {
+  return (['requiredEvidenceValues', 'requiredEvidenceMatchers'] as const).flatMap((field) => {
+    if (canonicalizeEvidenceConstraint(source[field]) === canonicalizeEvidenceConstraint(target[field])) {
+      return [];
+    }
+    return [
+      {
+        code: 'INVALID_VALUE' as const,
+        path: `${targetPath}.${field}`,
+        message: `Evidence constraint ${field} for action ${source.actionId} must match ${sourcePath}.`
+      }
+    ];
+  });
+}
+
+function canonicalizeEvidenceConstraint(value: unknown): string {
+  return JSON.stringify(canonicalizeEvidenceConstraintValue(value));
+}
+
+function canonicalizeEvidenceConstraintValue(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value
+      .map(canonicalizeEvidenceConstraintValue)
+      .sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)));
+  }
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value)
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([key, entry]) => [key, canonicalizeEvidenceConstraintValue(entry)])
+    );
+  }
+  return value ?? null;
 }
 
 function rejectLegacyEvidenceConstraints(bundle: CompiledWorkflowBundle): void {

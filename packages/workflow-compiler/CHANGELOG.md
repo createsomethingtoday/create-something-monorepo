@@ -65,8 +65,8 @@ artifact schemas.
 - Version tool contracts as v0.2 for constrained workflows, retaining the
   exact-value and matcher evidence accepted by each governed tool action.
 - Reject a deserialized bundle before replay when its nested inventory,
-  interaction, tool-contract, or approval-surface schema does not match the
-  outer compiled-bundle version.
+  interaction, tool-contract, or approval-surface schema or evidence
+  constraints do not match the correlated compiled decision.
 
 ## 0.2.0
 

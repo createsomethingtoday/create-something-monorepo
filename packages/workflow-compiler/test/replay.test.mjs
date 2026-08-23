@@ -197,6 +197,68 @@ test('replay rejects cross-version nested artifacts before evaluating a v0.2 bun
   );
 });
 
+test('replay rejects a v0.2 bundle with divergent nested evidence constraints', async () => {
+  const definition = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const manifest = JSON.parse(await readFile(casesUrl, 'utf8'));
+  definition.schemaVersion = 'workflow_definition.v0.2';
+  const requestChanges = definition.actions.find((action) => action.id === 'request_changes');
+  assert.ok(requestChanges);
+  requestChanges.requiredEvidenceValues = { version_id: 'version-fixture-001' };
+
+  const bundle = JSON.parse(JSON.stringify(compileWorkflowDefinition(definition)));
+  const decisionIndex = bundle.decisionInventory.decisions.findIndex(
+    (decision) => decision.actionId === 'request_changes',
+  );
+  const interactionIndex = bundle.governedInteraction.actions.findIndex(
+    (action) => action.actionId === 'request_changes',
+  );
+  const approvalIndex = bundle.approvalSurfaces.actions.findIndex(
+    (action) => action.actionId === 'request_changes',
+  );
+  const toolIndex = bundle.toolContracts.tools.findIndex(
+    (tool) => tool.actionId === 'request_changes',
+  );
+  assert.notEqual(decisionIndex, -1);
+  assert.notEqual(interactionIndex, -1);
+  assert.notEqual(approvalIndex, -1);
+  assert.notEqual(toolIndex, -1);
+  delete bundle.decisionInventory.decisions[decisionIndex].requiredEvidenceValues;
+
+  const approvalCase = manifest.cases.find(
+    (replayCase) => replayCase.caseId === 'approval-waits-for-reviewer',
+  );
+  assert.ok(approvalCase);
+  assert.throws(
+    () =>
+      replayWorkflow(bundle, {
+        schemaVersion: manifest.schemaVersion,
+        workflowId: manifest.workflowId,
+        cases: [approvalCase],
+      }),
+    (error) => {
+      assert.equal(error.name, 'ReplayInputValidationError');
+      assert.deepEqual(
+        error.diagnostics.map(({ code, path }) => ({ code, path })),
+        [
+          {
+            code: 'INVALID_VALUE',
+            path: `$.governedInteraction.actions[${interactionIndex}].requiredEvidenceValues`,
+          },
+          {
+            code: 'INVALID_VALUE',
+            path: `$.approvalSurfaces.actions[${approvalIndex}].requiredEvidenceValues`,
+          },
+          {
+            code: 'INVALID_VALUE',
+            path: `$.toolContracts.tools[${toolIndex}].requiredEvidenceValues`,
+          },
+        ],
+      );
+      return true;
+    },
+  );
+});
+
 test('serializes missing constrained evidence as an explicit null mismatch actual', async () => {
   const definition = JSON.parse(await readFile(workflowUrl, 'utf8'));
   const manifest = JSON.parse(await readFile(casesUrl, 'utf8'));
