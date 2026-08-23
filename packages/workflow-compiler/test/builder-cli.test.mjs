@@ -158,3 +158,52 @@ test('the public simulate command fails closed when a replay expectation is unme
     await rm(scratch, { recursive: true, force: true });
   }
 });
+
+test('the public simulate command rejects an empty replay manifest', async () => {
+  const scratch = await mkdtemp(join(tmpdir(), 'workflow-compiler-simulation-empty-'));
+  const starterDir = join(scratch, 'daily-brief');
+
+  try {
+    const initialized = run('init', '--template', 'local-runbook', '--dir', starterDir);
+    assert.equal(initialized.status, 0, initialized.stderr || initialized.stdout);
+
+    const casesPath = join(starterDir, 'cases.json');
+    const emptyCases = JSON.parse(await readFile(casesPath, 'utf8'));
+    emptyCases.cases = [];
+    await writeFile(casesPath, JSON.stringify(emptyCases, null, 2) + '\n', 'utf8');
+
+    const simulated = run(
+      'simulate',
+      '--workflow',
+      join(starterDir, 'workflow.json'),
+      '--cases',
+      casesPath
+    );
+    assert.equal(simulated.status, 3, simulated.stderr || simulated.stdout);
+    assert.equal(simulated.stdout, '');
+    const failure = JSON.parse(simulated.stderr);
+    assert.deepEqual(
+      {
+        ok: failure.ok,
+        error: failure.error,
+        code: failure.code,
+        workflowId: failure.workflowId,
+        outcomes: failure.outcomes,
+        allExpectationsMatched: failure.allExpectationsMatched,
+        externalMutations: failure.externalMutations
+      },
+      {
+        ok: false,
+        error: 'WorkflowCliSimulationError',
+        code: 'SIMULATION_NO_CASES',
+        workflowId: 'operations.local.runbook',
+        outcomes: { pass: 0, approval_required: 0, blocked: 0 },
+        allExpectationsMatched: false,
+        externalMutations: false
+      }
+    );
+    assert.match(failure.definitionHash, /^sha256:[a-f0-9]{64}$/);
+  } finally {
+    await rm(scratch, { recursive: true, force: true });
+  }
+});

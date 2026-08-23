@@ -49,14 +49,20 @@ class WorkflowCliUsageError extends Error {
 }
 
 class WorkflowCliSimulationError extends Error {
-  readonly code = 'SIMULATION_EXPECTATIONS_UNMET';
+  readonly code: 'SIMULATION_EXPECTATIONS_UNMET' | 'SIMULATION_NO_CASES';
 
   constructor(
+    code: 'SIMULATION_EXPECTATIONS_UNMET' | 'SIMULATION_NO_CASES',
     readonly bundle: CompiledWorkflowBundle,
     readonly replay: ReturnType<typeof replayWorkflow>
   ) {
-    super('One or more replay cases did not match their declared expectation.');
+    super(
+      code === 'SIMULATION_NO_CASES'
+        ? 'Simulation requires at least one replay case.'
+        : 'One or more replay cases did not match their declared expectation.'
+    );
     this.name = 'WorkflowCliSimulationError';
+    this.code = code;
   }
 }
 
@@ -274,8 +280,11 @@ async function main(): Promise<void> {
   if (args[0] === 'simulate') {
     const { bundle, replay } = await compileFromInput(workflowInputOptions(args, 'simulate', true));
     if (!replay) throw new WorkflowCliUsageError();
+    if (replay.report.cases.length === 0) {
+      throw new WorkflowCliSimulationError('SIMULATION_NO_CASES', bundle, replay);
+    }
     if (!replay.report.allExpectationsMatched) {
-      throw new WorkflowCliSimulationError(bundle, replay);
+      throw new WorkflowCliSimulationError('SIMULATION_EXPECTATIONS_UNMET', bundle, replay);
     }
     process.stdout.write(
       JSON.stringify(
@@ -382,7 +391,10 @@ main().catch((error: unknown) => {
           workflowId: error.bundle.workflowId,
           definitionHash: error.bundle.definitionHash,
           outcomes: error.replay.report.counts,
-          allExpectationsMatched: error.replay.report.allExpectationsMatched,
+          allExpectationsMatched:
+            error.code === 'SIMULATION_NO_CASES'
+              ? false
+              : error.replay.report.allExpectationsMatched,
           externalMutations: false
         },
         null,

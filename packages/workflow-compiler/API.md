@@ -89,7 +89,7 @@ workflow-compiler simulate --workflow <definition.json> --cases <cases.json>
 workflow-compiler explain --workflow <definition.json> [--cases <cases.json>]
 ```
 
-`init` writes the fixed local-runbook starter only into a new directory and fails before an overwrite. Its structured response identifies the working directory for the follow-up commands. `validate` compiles one input for inspection, `simulate` produces replay outcomes and exits non-zero when an expectation is unmet, and `explain` renders the resulting decisions as Markdown. They never call a provider, read credentials, execute a live action, or approve a consequential step. `compile` writes only compiler-managed local artifacts; `verify` and `serve` inspect those artifacts.
+`init` writes the fixed local-runbook starter only into a new directory and fails before an overwrite. Its structured response identifies the working directory for the follow-up commands. `validate` compiles one input for inspection, `simulate` requires at least one replay case and exits non-zero when an expectation is unmet, and `explain` renders the resulting decisions as Markdown. They never call a provider, read credentials, execute a live action, or approve a consequential step. `compile` writes only compiler-managed local artifacts; `verify` and `serve` inspect those artifacts.
 
 Exit codes are stable: `0` success, `2` usage or versioned-input failure, `3`
 governance, integrity, or simulation stop, and `1` unexpected operational failure.
