@@ -53,8 +53,9 @@ test('Atlas Studio exposes the packaged interaction read-only and fails closed o
     assert.equal(valid.authority, 'read_only');
     assert.equal(valid.compatibility.compatible, true);
 
-    interaction.runtimeVersion = '99.0.0';
-    await writeFile(interactionPath, JSON.stringify(interaction));
+    const incompatibleInteraction = JSON.parse(JSON.stringify(interaction));
+    incompatibleInteraction.runtimeVersion = '99.0.0';
+    await writeFile(interactionPath, JSON.stringify(incompatibleInteraction));
     const invalidResponse = await fetch(url);
     assert.equal(invalidResponse.status, 400);
     assert.deepEqual(await invalidResponse.json(), {
