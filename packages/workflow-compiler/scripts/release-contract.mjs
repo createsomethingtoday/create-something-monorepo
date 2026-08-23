@@ -77,6 +77,40 @@ export function validateReleaseManifest(manifest) {
   return issues;
 }
 
+export function validateReleaseLock(manifest, lock) {
+  const issues = [];
+  if (
+    lock.name !== manifest.name ||
+    lock.version !== manifest.version ||
+    lock.lockfileVersion !== 3
+  ) {
+    issues.push('package-lock.json must bind the exact package name, version, and lockfile v3.');
+  }
+  const root = lock.packages?.[''];
+  if (
+    root?.name !== manifest.name ||
+    root?.version !== manifest.version ||
+    JSON.stringify(root?.devDependencies) !== JSON.stringify(manifest.devDependencies)
+  ) {
+    issues.push('package-lock.json root metadata must match the release manifest.');
+  }
+  for (const dependency of Object.keys(manifest.devDependencies ?? {}).sort()) {
+    const locked = lock.packages?.[`node_modules/${dependency}`];
+    if (
+      !locked?.version ||
+      typeof locked.resolved !== 'string' ||
+      !locked.resolved.startsWith('https://registry.npmjs.org/') ||
+      typeof locked.integrity !== 'string' ||
+      locked.link === true
+    ) {
+      issues.push(
+        `package-lock.json must pin ${dependency} to a registry artifact with integrity.`
+      );
+    }
+  }
+  return issues;
+}
+
 export function assertExactPackageInventory(actual, expected) {
   const normalizedActual = [...actual].sort();
   const normalizedExpected = [...expected].sort();
@@ -131,8 +165,10 @@ function readPackFiles() {
 
 async function main() {
   const manifest = JSON.parse(await readFile(resolve(packageRoot, 'package.json'), 'utf8'));
+  const lock = JSON.parse(await readFile(resolve(packageRoot, 'package-lock.json'), 'utf8'));
   const inventory = JSON.parse(await readFile(resolve(packageRoot, 'package-files.json'), 'utf8'));
   const issues = validateReleaseManifest(manifest);
+  issues.push(...validateReleaseLock(manifest, lock));
   if (inventory.schemaVersion !== 'workflow_compiler_package_inventory.v1') {
     issues.push('package-files.json must use workflow_compiler_package_inventory.v1.');
   }

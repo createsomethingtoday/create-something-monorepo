@@ -8,7 +8,7 @@ a passkey before it becomes public.
 ## Candidate gates
 
 ```bash
-npm install --ignore-scripts --no-package-lock
+npm ci --ignore-scripts
 npm run check
 npm test
 npm run test:acceptance

@@ -40,8 +40,9 @@ git diff --check
 
 Public promotion additionally requires the Node 22/24 matrix in
 `.github/workflows/workflow-compiler-public-release.yml`, exact equality with
-`package-files.json`, protected `main`, and the staged npm approval path in
-`RELEASING.md`. Never replace staged publishing with direct CI publication.
+`package-files.json`, a committed package-local npm lock consumed only through
+`npm ci`, protected `main`, and the staged npm approval path in `RELEASING.md`.
+Never replace staged publishing with direct CI publication.
 
 Add behavior one public-interface slice at a time: failing check, minimal implementation, green check, then refactor.
 

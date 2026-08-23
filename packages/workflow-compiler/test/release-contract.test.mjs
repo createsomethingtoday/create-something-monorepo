@@ -7,6 +7,7 @@ import test from 'node:test';
 import {
   assertExactPackageInventory,
   assertSafePackageSourceInventory,
+  validateReleaseLock,
   validateReleaseManifest
 } from '../scripts/release-contract.mjs';
 
@@ -36,6 +37,21 @@ test('release manifest validation fails closed on metadata and runtime dependenc
     'engines.node must equal >=20.',
     'publishConfig.provenance must be true.',
     'The public package must have zero runtime dependencies.'
+  ]);
+});
+
+test('the committed npm lock binds registry artifacts instead of workspace links', async () => {
+  const manifest = JSON.parse(await readFile(packageJsonUrl, 'utf8'));
+  const lock = JSON.parse(await readFile(new URL('../package-lock.json', import.meta.url), 'utf8'));
+  assert.deepEqual(validateReleaseLock(manifest, lock), []);
+
+  lock.packages['node_modules/typescript'] = {
+    version: '5.9.3',
+    resolved: '../../node_modules/.pnpm/typescript@5.9.3/node_modules/typescript',
+    link: true
+  };
+  assert.deepEqual(validateReleaseLock(manifest, lock), [
+    'package-lock.json must pin typescript to a registry artifact with integrity.'
   ]);
 });
 
@@ -87,7 +103,14 @@ test('the trusted workflow validates supported LTS nodes and stages from protect
   assert.match(workflow, /environment: npm-public/);
   assert.match(workflow, /id-token: write/);
   assert.match(workflow, /npm@11\.15\.0/);
+  assert.match(workflow, /npm ci --prefix packages\/workflow-compiler --ignore-scripts/);
+  assert.doesNotMatch(workflow, /npm install --prefix packages\/workflow-compiler/);
   assert.match(workflow, /npm stage publish --access public/);
   assert.doesNotMatch(workflow, /run: npm publish --access public/);
   assert.match(workflow, /test "\$\(git rev-parse HEAD\)" = "\$\(git rev-parse origin\/main\)"/);
+});
+
+test('the beta quickstart installs the non-default bootstrap tag', async () => {
+  const readme = await readFile(new URL('../README.md', import.meta.url), 'utf8');
+  assert.match(readme, /npm install @create-something\/workflow-compiler@bootstrap/);
 });

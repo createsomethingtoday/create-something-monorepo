@@ -35,8 +35,11 @@ jobs:
           node-version: ${{ matrix.node }}
           package-manager-cache: false
 
-      - name: Install package development dependencies
-        run: npm install --prefix packages/workflow-compiler --ignore-scripts --no-package-lock
+      - name: Pin the release npm CLI
+        run: npm install --global npm@11.15.0
+
+      - name: Install the locked package toolchain
+        run: npm ci --prefix packages/workflow-compiler --ignore-scripts
 
       - name: Verify types, tests, deterministic acceptance, tarball, and clean consumer
         run: |
@@ -77,8 +80,8 @@ jobs:
           test "$(node -p "require('./packages/workflow-compiler/package.json').version")" = "$EXPECTED_VERSION"
           test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
 
-      - name: Install package development dependencies
-        run: npm install --prefix packages/workflow-compiler --ignore-scripts --no-package-lock
+      - name: Install the locked package toolchain
+        run: npm ci --prefix packages/workflow-compiler --ignore-scripts
 
       - name: Reproduce the exact release candidate
         run: npm --prefix packages/workflow-compiler run release:consumer
