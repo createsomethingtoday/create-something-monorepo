@@ -138,6 +138,31 @@ test('npm auth status rejects an environment-dependent credential entry', () => 
   assert.match(report.error, /environment|interpolated/i);
 });
 
+test('npm auth status removes inherited npm config overrides before verification', () => {
+  const fixture = mkdtempSync(path.join(tmpdir(), 'npm-auth-session-config-override-'));
+  const userconfig = path.join(fixture, '.npmrc');
+  const npmBin = path.join(fixture, 'npm');
+  const savedSecret = 'npm_saved_config_secret_must_not_appear';
+  const overrideSecret = 'npm_environment_override_secret_must_not_appear';
+
+  writePrivateConfig(userconfig, `//registry.npmjs.org/:_authToken=${savedSecret}\n`);
+  writeExecutable(
+    npmBin,
+    "#!/bin/sh\nif env | grep -q '^npm_config_//registry.npmjs.org/:_authToken='; then\n  printf '%s\\n' 'npm error environment auth override loaded' >&2\n  exit 1\nfi\nprintf '%s\\n' '{\"username\":\"micah-createsomething\"}'\n"
+  );
+
+  const result = run(
+    ['status', '--json', '--verify', '--userconfig', userconfig, '--npm-bin', npmBin],
+    { 'npm_config_//registry.npmjs.org/:_authToken': overrideSecret }
+  );
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  assert.doesNotMatch(result.stdout, new RegExp(savedSecret));
+  assert.doesNotMatch(result.stdout, new RegExp(overrideSecret));
+  const report = JSON.parse(result.stdout);
+  assert.deepEqual(report.identity, { status: 'verified', username: 'micah-createsomething' });
+});
+
 test('npm auth status names an invalid saved credential without replaying registry output', () => {
   const fixture = mkdtempSync(path.join(tmpdir(), 'npm-auth-session-invalid-'));
   const userconfig = path.join(fixture, '.npmrc');

@@ -115,13 +115,22 @@ function savedCredential(config, registry) {
   };
 }
 
+function npmVerificationEnvironment() {
+  const credentialNames = new Set(['NPM_TOKEN', 'NPM_AUTH_TOKEN', 'NODE_AUTH_TOKEN']);
+  return Object.fromEntries(
+    Object.entries(process.env).filter(
+      ([key]) => !/^npm_config_/i.test(key) && !credentialNames.has(key.toUpperCase())
+    )
+  );
+}
+
 function captureNpmIdentity(options) {
   const verificationDirectory = mkdtempSync(join(tmpdir(), 'npm-auth-session-verify-'));
   try {
     const result = spawnSync(
       options.npmBin,
       ['whoami', '--json', `--registry=${options.registry}`, `--userconfig=${options.userconfig}`],
-      { cwd: verificationDirectory, encoding: 'utf8', env: process.env }
+      { cwd: verificationDirectory, encoding: 'utf8', env: npmVerificationEnvironment() }
     );
     if (result.error || result.signal) return { status: 'verification_error' };
     if (result.status !== 0) {
