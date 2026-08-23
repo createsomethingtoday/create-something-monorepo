@@ -148,6 +148,23 @@ test('operator-agent patch applies one low-risk docs candidate and writes receip
   assert.ok(output.receiptPath);
 });
 
+test('operator-agent capabilities expose only the declared no-write local profile', () => {
+  const workspace = makeWorkspace();
+  const result = run('node', [scriptPath, 'capabilities', '--json'], workspace);
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const output = JSON.parse(result.stdout);
+  assert.equal(output.mode, 'capabilities');
+  assert.equal(output.passed, true);
+  assert.equal(output.profile.id, 'local-readonly');
+  assert.equal(output.profile.autonomyLevel, 'A0');
+  assert.ok(output.profile.skills.length > 0);
+  assert.ok(output.profile.mcpTools.length > 0);
+  assert.deepEqual(output.profile.plugins, []);
+  assert.equal(output.capabilityGate.ok, true);
+  assert.equal(output.mutation.writesPerformed, 0);
+});
+
 test('operator-agent model-probe passes when local endpoint returns the required JSON object', async () => {
   const workspace = makeWorkspace();
   const server = createServer((request, response) => {
@@ -205,6 +222,52 @@ test('operator-agent model-probe passes when local endpoint returns the required
     assert.equal(output.contractGate.ok, true);
     assert.equal(output.modelResult.parsed.task, 'model-probe');
     assert.ok(output.receiptPath);
+  } finally {
+    server.close();
+  }
+});
+
+test('operator-agent model-probe records a bounded contract-repair retry', async () => {
+  const workspace = makeWorkspace();
+  let requests = 0;
+  const server = createServer((request, response) => {
+    requests += 1;
+    request.resume();
+    response.writeHead(200, { 'content-type': 'application/json' });
+    response.end(
+      JSON.stringify({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                ready: true,
+                loop: 'operator-agent-system',
+                task: requests === 1 ? 'wrong-task' : 'model-probe',
+                canReturnJson: true,
+              }),
+            },
+          },
+        ],
+      })
+    );
+  });
+
+  try {
+    const port = await listen(server);
+    const result = await runAsync(
+      'node',
+      [scriptPath, 'model-probe', '--base-url', `http://127.0.0.1:${port}/v1`, '--model', 'fake-model', '--json'],
+      workspace
+    );
+
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    const output = JSON.parse(result.stdout);
+    assert.equal(requests, 2);
+    assert.equal(output.outcome, 'model-probe-repaired');
+    assert.equal(output.reliability.disposition, 'repaired');
+    assert.equal(output.reliability.attempts.length, 2);
+    assert.equal(output.reliability.attempts[0].passed, false);
+    assert.equal(output.reliability.attempts[1].passed, true);
   } finally {
     server.close();
   }

@@ -297,6 +297,12 @@ export function buildRunPlan(options, contextPacket = null) {
   const patternModelArgs = options.noModel || options.patternNoModel ? ['--no-model'] : [];
   const plan = [
     {
+      id: 'capabilities',
+      mode: 'capabilities',
+      required: true,
+      args: [options.systemScript, 'capabilities', '--json'],
+    },
+    {
       id: 'pattern-review',
       mode: 'pattern-review',
       required: true,
@@ -365,6 +371,18 @@ function extractJson(text) {
 
 function summarizeChildReport(report) {
   if (!report || typeof report !== 'object') return null;
+  if (report.mode === 'capabilities') {
+    return {
+      mode: report.mode,
+      passed: report.passed,
+      outcome: report.outcome,
+      receiptPath: report.receiptPath,
+      profileId: report.profile?.id ?? null,
+      capabilityGate: report.capabilityGate?.ok ?? false,
+      manifestSha256: report.capabilityManifest?.sha256 ?? null,
+      blockers: report.capabilityGate?.blockers ?? [],
+    };
+  }
   if (report.mode === 'pattern-review') {
     return {
       mode: report.mode,
@@ -400,6 +418,7 @@ function summarizeChildReport(report) {
       model: report.model,
       timeoutMs: report.timeoutMs,
       latencyMs: report.latencyMs,
+      reliability: report.reliability?.disposition ?? null,
       contractOk: report.contractGate?.ok ?? false,
       blockers: report.contractGate?.blockers ?? [],
     };
@@ -455,6 +474,9 @@ function modelHealthForSchedule(options, patternRun, modelProbeRun, batchRun, ba
   if (modelProbeRun?.report?.passed === false) {
     issues.push('model-probe failed before batch-eval');
   }
+  if (modelProbeRun?.report?.reliability === 'repaired') {
+    issues.push('model-probe required retry/repair before returning the strict contract');
+  }
   if (batchRun?.forcedNoModel) {
     issues.push('batch-eval forced deterministic after failed model-probe');
   }
@@ -468,6 +490,7 @@ function modelHealthForSchedule(options, patternRun, modelProbeRun, batchRun, ba
 }
 
 export function scheduleReport(options, runs, contextPacket = null) {
+  const capabilityRun = runs.find((run) => run.id === 'capabilities');
   const patternRun = runs.find((run) => run.id === 'pattern-review');
   const modelProbeRun = runs.find((run) => run.id === 'model-probe');
   const batchRun = runs.find((run) => run.id === 'batch-eval');
@@ -495,11 +518,15 @@ export function scheduleReport(options, runs, contextPacket = null) {
       : null,
     runs,
     scorecard: {
+      capabilityGatePassed: Boolean(capabilityRun?.ok && capabilityRun?.report?.capabilityGate !== false),
+      capabilityProfile: capabilityRun?.report?.profileId ?? null,
+      capabilityManifestSha256: capabilityRun?.report?.manifestSha256 ?? null,
       patternReviewPassed: Boolean(patternRun?.report?.passed),
       patternReviewSource: patternRun?.report?.patternReviewSource ?? null,
       modelProbePassed: modelProbeRun ? Boolean(modelProbeRun.report?.passed) : null,
       modelProbeLatencyMs: modelProbeRun?.report?.latencyMs ?? null,
       modelProbeOutcome: modelProbeRun?.report?.outcome ?? null,
+      modelProbeReliability: modelProbeRun?.report?.reliability ?? null,
       batchEvalPassed: Boolean(batchRun?.report?.passed),
       batchEvalForcedNoModel: Boolean(batchRun?.forcedNoModel),
       batchEvalCandidates: batchScorecard.candidatesProposed ?? 0,

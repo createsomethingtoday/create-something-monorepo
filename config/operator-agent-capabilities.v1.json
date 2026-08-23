@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "operator-agent-capabilities.v1",
+  "defaultProfile": "local-readonly",
+  "profiles": [
+    {
+      "id": "local-readonly",
+      "description": "Local observation and preparation profile. It may read named repo and receipt surfaces but cannot mutate protected state.",
+      "autonomyLevel": "A0",
+      "skills": [
+        {
+          "id": "operator-agent-runbook",
+          "source": "docs/guides/OPERATOR_AGENT_SYSTEM.md",
+          "access": "read"
+        },
+        {
+          "id": "open-weight-executor-eval",
+          "source": "docs/guides/OPEN_WEIGHT_AGENT_EXECUTOR_EVAL.md",
+          "access": "read"
+        }
+      ],
+      "mcpTools": [
+        "operator_agent_readiness",
+        "operator_agent_doctor",
+        "operator_agent_completion_audit",
+        "operator_agent_capabilities",
+        "operator_agent_runtime_status",
+        "operator_agent_latest_receipt",
+        "operator_agent_access_preflight"
+      ],
+      "plugins": [],
+      "policy": {
+        "protectedWrites": "deny",
+        "credentials": "deny",
+        "destructiveActions": "deny",
+        "clientProduction": "deny",
+        "externalPluginActivation": "deny"
+      }
+    }
+  ]
+}

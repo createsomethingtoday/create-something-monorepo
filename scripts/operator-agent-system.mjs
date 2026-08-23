@@ -8,6 +8,8 @@ import process from 'node:process';
 
 const DEFAULT_OUT_DIR = '.cache/operator-agent-system';
 const DEFAULT_SCHEDULE_OUT_DIR = '.cache/operator-agent-schedule';
+const REPO_ROOT = path.resolve(import.meta.dirname, '..');
+const DEFAULT_CAPABILITY_MANIFEST = path.join(REPO_ROOT, 'config/operator-agent-capabilities.v1.json');
 const DEFAULT_MODEL = process.env.OPERATOR_AGENT_MODEL || 'ornith:9b';
 const DEFAULT_BASE_URL = process.env.OPERATOR_AGENT_BASE_URL || 'http://localhost:11434/v1';
 const DEFAULT_PATTERN_REVIEW_LIMIT = 80;
@@ -24,6 +26,7 @@ const MODES = new Set([
   'policy',
   'handoff',
   'profiles',
+  'capabilities',
   'patch',
   'complete',
   'rollback-proof',
@@ -154,9 +157,12 @@ function parseArgs(argv) {
     patternReviewLimit: DEFAULT_PATTERN_REVIEW_LIMIT,
     benchmarkAttempts: 3,
     benchmarkMinPassRate: 0.8,
+    reliabilityAttempts: 2,
     benchmarkModels: [],
     memoryReceiptLimit: 12,
     memoryReceiptDirs: [],
+    capabilityManifest: DEFAULT_CAPABILITY_MANIFEST,
+    capabilityProfile: '',
     json: false,
     noModel: false,
   };
@@ -176,9 +182,12 @@ function parseArgs(argv) {
     else if (arg === '--pattern-limit' && next) options.patternReviewLimit = Number(argv[++index]);
     else if (arg === '--attempts' && next) options.benchmarkAttempts = Number(argv[++index]);
     else if (arg === '--min-pass-rate' && next) options.benchmarkMinPassRate = Number(argv[++index]);
+    else if (arg === '--reliability-attempts' && next) options.reliabilityAttempts = Number(argv[++index]);
     else if (arg === '--models' && next) options.benchmarkModels = argv[++index].split(',').map((model) => model.trim()).filter(Boolean);
     else if (arg === '--receipt-limit' && next) options.memoryReceiptLimit = Number(argv[++index]);
     else if (arg === '--receipt-dir' && next) options.memoryReceiptDirs.push(argv[++index]);
+    else if (arg === '--capability-manifest' && next) options.capabilityManifest = argv[++index];
+    else if (arg === '--capability-profile' && next) options.capabilityProfile = argv[++index];
     else if (arg === '--timeout-ms' && next) options.timeoutMs = Number(argv[++index]);
     else if (arg === '--target' && next) options.target = argv[++index];
     else if (arg === '--risk' && next) options.risk = argv[++index];
@@ -216,6 +225,9 @@ function parseArgs(argv) {
   if (Number.isNaN(options.benchmarkMinPassRate) || options.benchmarkMinPassRate < 0 || options.benchmarkMinPassRate > 1) {
     throw new Error('--min-pass-rate must be between 0 and 1');
   }
+  if (!Number.isInteger(options.reliabilityAttempts) || options.reliabilityAttempts < 1 || options.reliabilityAttempts > 2) {
+    throw new Error('--reliability-attempts must be an integer from 1 to 2');
+  }
   if (!Number.isInteger(options.memoryReceiptLimit) || options.memoryReceiptLimit < 1 || options.memoryReceiptLimit > 100) {
     throw new Error('--receipt-limit must be an integer between 1 and 100');
   }
@@ -226,6 +238,7 @@ function usage() {
   console.log(`Usage:
   pnpm operator-agent:readiness
   pnpm operator-agent:profiles
+  pnpm operator-agent:capabilities
   pnpm operator-agent:policy -- --target create-something-internal-production --risk medium --reversible --rollback "..."
   pnpm operator-agent:scout -- --surface docs/guides --limit 8
   pnpm operator-agent:patch -- --candidate-file .cache/operator-agent-system/<receipt>.json --candidate-id candidate-001
@@ -241,6 +254,7 @@ function usage() {
 Modes:
   readiness   Check local operator-agent system readiness.
   profiles    Print policy-bound sub-agent profiles.
+  capabilities  Validate and print the no-write capability profile.
   policy      Decide whether an autonomous action is allowed.
   scout       Generate or synthesize improvement candidates.
   handoff     Write a compact handoff receipt.
@@ -262,7 +276,10 @@ Options:
   --pattern-limit <n>    Max discovered pattern files in all scope. Default: ${DEFAULT_PATTERN_REVIEW_LIMIT}
   --attempts <n>         Model benchmark attempts per model. Default: 3
   --min-pass-rate <n>    Model benchmark pass-rate threshold from 0 to 1. Default: 0.8
+  --reliability-attempts <n> Strict JSON attempts per model call, from 1 to 2. Default: 2
   --models <csv>         Candidate model names. Default: --model
+  --capability-manifest <path> Capability manifest. Default: ${DEFAULT_CAPABILITY_MANIFEST}
+  --capability-profile <id> Capability profile. Default: manifest default
   --receipt-dir <path>   Receipt directory for memory-proposal. Repeatable
   --receipt-limit <n>    Max receipts for memory-proposal. Default: 12
   --timeout-ms <n>       Model scout timeout. Default: 180000
@@ -369,6 +386,68 @@ function policyDecision(options) {
     rollback: options.rollback,
     validation: options.validation,
     policyArtifact: 'docs/policies/v1/policy.operator-agent-production-lab.v1.md',
+  };
+}
+
+function hashFile(filePath) {
+  return createHash('sha256').update(fs.readFileSync(filePath)).digest('hex');
+}
+
+function capabilityAudit(options) {
+  const blockers = [];
+  let manifest = null;
+  let manifestSha256 = null;
+  try {
+    manifest = JSON.parse(fs.readFileSync(options.capabilityManifest, 'utf8'));
+    manifestSha256 = hashFile(options.capabilityManifest);
+  } catch (error) {
+    blockers.push(`could not load capability manifest: ${error instanceof Error ? error.message : String(error)}`);
+  }
+
+  if (manifest?.schemaVersion !== 'operator-agent-capabilities.v1') {
+    blockers.push('capability manifest must use schemaVersion operator-agent-capabilities.v1');
+  }
+  const profileId = options.capabilityProfile || manifest?.defaultProfile;
+  const profile = Array.isArray(manifest?.profiles) ? manifest.profiles.find((candidate) => candidate?.id === profileId) : null;
+  if (!profile) blockers.push(`capability profile not found: ${profileId || 'default profile missing'}`);
+  if (profile?.autonomyLevel !== 'A0') blockers.push('capability profile must be A0 local-readonly');
+  if (!Array.isArray(profile?.skills) || profile.skills.length === 0 || profile.skills.some((skill) => skill?.access !== 'read')) {
+    blockers.push('capability profile must declare one or more read-only skills');
+  }
+  if (!Array.isArray(profile?.mcpTools) || profile.mcpTools.length === 0) {
+    blockers.push('capability profile must declare one or more read-only MCP tools');
+  }
+  if (!Array.isArray(profile?.plugins) || profile.plugins.length !== 0) {
+    blockers.push('capability profile must not activate plugins');
+  }
+  for (const key of ['protectedWrites', 'credentials', 'destructiveActions', 'clientProduction', 'externalPluginActivation']) {
+    if (profile?.policy?.[key] !== 'deny') blockers.push(`capability profile policy.${key} must be deny`);
+  }
+
+  const passed = blockers.length === 0;
+  return {
+    generatedAt: new Date().toISOString(),
+    mode: 'capabilities',
+    loop: 'operator-agent-system',
+    autonomyLevel: profile?.autonomyLevel ?? 'A0',
+    target: 'local',
+    profile: profile ?? null,
+    capabilityManifest: {
+      path: options.capabilityManifest,
+      sha256: manifestSha256,
+      schemaVersion: manifest?.schemaVersion ?? null,
+    },
+    capabilityGate: { ok: passed, blockers },
+    mutation: {
+      writesPerformed: 0,
+      protectedStateMutated: false,
+      reason: 'capability inspection cannot activate plugins or grant write authority',
+    },
+    passed,
+    outcome: passed ? 'capabilities-ready' : 'capabilities-blocked',
+    nextDecision: passed
+      ? 'use this profile only for local observation and preparation; request a separate promotion packet before adding write authority'
+      : 'repair the capability manifest before any scheduled or model-backed run',
   };
 }
 
@@ -873,37 +952,15 @@ function patternReviewGate(patternReview, inspectedFiles = []) {
   };
 }
 
-async function modelProbe(options) {
-  if (options.noModel) {
-    return {
-      generatedAt: new Date().toISOString(),
-      mode: 'model-probe',
-      loop: 'operator-agent-system',
-      target: options.target,
-      model: null,
-      baseUrl: null,
-      timeoutMs: null,
-      passed: false,
-      outcome: 'model-disabled',
-      modelResult: { ok: false, error: 'model disabled' },
-      contractGate: {
-        ok: false,
-        blockers: ['model-probe requires model access; remove --no-model to probe the local executor'],
-      },
-      nextDecision: 'keep model-backed delegation disabled until the local executor can pass model-probe',
-    };
-  }
-
-  const expected = {
-    ready: true,
-    loop: 'operator-agent-system',
-    task: 'model-probe',
-    canReturnJson: true,
-  };
+async function modelProbeAttempt(options, expected, attempt) {
   const startedAt = Date.now();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), options.timeoutMs);
   try {
+    const repairInstruction =
+      attempt > 1
+        ? 'Your previous response did not meet the exact contract. Return only the required JSON object with matching values.'
+        : '';
     const response = await fetch(`${options.baseUrl.replace(/\/+$/, '')}/chat/completions`, {
       method: 'POST',
       headers: {
@@ -918,13 +975,11 @@ async function modelProbe(options) {
         messages: [
           {
             role: 'system',
-            content:
-              'You are a local CREATE SOMETHING executor readiness probe. Return only one JSON object, no Markdown.',
+            content: 'You are a local CREATE SOMETHING executor readiness probe. Return only one JSON object, no Markdown.',
           },
           {
             role: 'user',
-            content:
-              'Return exactly this JSON shape with matching values: {"ready":true,"loop":"operator-agent-system","task":"model-probe","canReturnJson":true}',
+            content: `${repairInstruction} Return exactly this JSON shape with matching values: {"ready":true,"loop":"operator-agent-system","task":"model-probe","canReturnJson":true}`.trim(),
           },
         ],
       }),
@@ -937,60 +992,105 @@ async function modelProbe(options) {
     const content = json?.choices?.[0]?.message?.content ?? '';
     const parsed = extractJsonObject(content);
     const blockers = [];
-    if (!parsed) {
-      blockers.push('model output did not contain a complete JSON object');
-    } else {
+    if (!parsed) blockers.push('model output did not contain a complete JSON object');
+    else {
       for (const [key, value] of Object.entries(expected)) {
         if (parsed[key] !== value) blockers.push(`model-probe expected ${key}=${JSON.stringify(value)}`);
       }
     }
     const passed = blockers.length === 0;
     return {
-      generatedAt: new Date().toISOString(),
-      mode: 'model-probe',
-      loop: 'operator-agent-system',
-      target: options.target,
-      model: options.model,
-      baseUrl: options.baseUrl,
-      timeoutMs: options.timeoutMs,
+      attempt,
       latencyMs,
       passed,
-      outcome: passed ? 'model-probed' : 'model-probe-blocked',
-      modelResult: {
-        ok: passed,
-        httpStatus: response.status,
-        raw: content.slice(0, 1000),
-        parsed,
-      },
+      modelResult: { ok: passed, httpStatus: response.status, raw: content.slice(0, 1000), parsed },
       contractGate: { ok: passed, blockers },
-      nextDecision: passed
-        ? 'allow bounded model-backed scout or batch-eval, but keep pattern-review deterministic until repeated receipts pass'
-        : 'keep model-backed delegation disabled until the local executor can pass model-probe',
     };
   } catch (error) {
+    return {
+      attempt,
+      latencyMs: Date.now() - startedAt,
+      passed: false,
+      modelResult: { ok: false, error: error instanceof Error ? error.message : String(error) },
+      contractGate: { ok: false, blockers: ['local model endpoint did not complete the strict JSON probe'] },
+    };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function capabilitySummary(report) {
+  return {
+    profileId: report.profile?.id ?? null,
+    manifest: report.capabilityManifest,
+    gate: report.capabilityGate,
+  };
+}
+
+async function modelProbe(options) {
+  const capabilities = capabilityAudit(options);
+  if (options.noModel || !capabilities.passed) {
+    const disabled = options.noModel;
+    const blockers = disabled
+      ? ['model-probe requires model access; remove --no-model to probe the local executor']
+      : capabilities.capabilityGate.blockers;
     return {
       generatedAt: new Date().toISOString(),
       mode: 'model-probe',
       loop: 'operator-agent-system',
       target: options.target,
-      model: options.model,
-      baseUrl: options.baseUrl,
-      timeoutMs: options.timeoutMs,
+      model: disabled ? null : options.model,
+      baseUrl: disabled ? null : options.baseUrl,
+      timeoutMs: disabled ? null : options.timeoutMs,
+      capabilities: capabilitySummary(capabilities),
+      reliability: { attemptLimit: options.reliabilityAttempts, attempts: [], disposition: 'unknown' },
       passed: false,
-      outcome: 'model-probe-blocked',
-      modelResult: {
-        ok: false,
-        error: error instanceof Error ? error.message : String(error),
-      },
-      contractGate: {
-        ok: false,
-        blockers: ['local model endpoint did not complete the strict JSON probe'],
-      },
-      nextDecision: 'keep model-backed delegation disabled until the local executor can pass model-probe',
+      outcome: disabled ? 'model-disabled' : 'model-probe-blocked',
+      modelResult: { ok: false, error: disabled ? 'model disabled' : 'capability manifest blocked the probe' },
+      contractGate: { ok: false, blockers },
+      nextDecision: 'keep model-backed delegation disabled until the local executor and capability profile can pass model-probe',
     };
-  } finally {
-    clearTimeout(timer);
   }
+
+  const expected = { ready: true, loop: 'operator-agent-system', task: 'model-probe', canReturnJson: true };
+  const attempts = [];
+  for (let attempt = 1; attempt <= options.reliabilityAttempts; attempt += 1) {
+    const result = await modelProbeAttempt(options, expected, attempt);
+    attempts.push(result);
+    if (result.passed) break;
+  }
+  const finalAttempt = attempts.at(-1);
+  const passed = Boolean(finalAttempt?.passed);
+  const disposition = passed ? (attempts.length === 1 ? 'strict' : 'repaired') : 'unknown';
+  const latencyMs = attempts.reduce((total, attempt) => total + (attempt.latencyMs ?? 0), 0);
+  return {
+    generatedAt: new Date().toISOString(),
+    mode: 'model-probe',
+    loop: 'operator-agent-system',
+    target: options.target,
+    model: options.model,
+    baseUrl: options.baseUrl,
+    timeoutMs: options.timeoutMs,
+    latencyMs,
+    capabilities: capabilitySummary(capabilities),
+    reliability: {
+      attemptLimit: options.reliabilityAttempts,
+      attempts: attempts.map((attempt) => ({
+        attempt: attempt.attempt,
+        latencyMs: attempt.latencyMs,
+        passed: attempt.passed,
+        blockers: attempt.contractGate.blockers,
+      })),
+      disposition,
+    },
+    passed,
+    outcome: passed ? (disposition === 'strict' ? 'model-probed' : 'model-probe-repaired') : 'model-probe-blocked',
+    modelResult: finalAttempt?.modelResult ?? { ok: false, error: 'no model probe attempt completed' },
+    contractGate: finalAttempt?.contractGate ?? { ok: false, blockers: ['model probe did not run'] },
+    nextDecision: passed
+      ? 'allow bounded model-backed scout or batch-eval, but keep pattern-review deterministic until repeated receipts pass'
+      : 'keep model-backed delegation disabled until the local executor can pass model-probe',
+  };
 }
 
 async function modelBenchmark(options) {
@@ -3216,6 +3316,8 @@ async function main() {
   if (options.mode === 'readiness') report = readiness(options);
   else if (options.mode === 'profiles') {
     report = { generatedAt: new Date().toISOString(), mode: 'profiles', subAgents: SUB_AGENTS };
+  } else if (options.mode === 'capabilities') {
+    report = capabilityAudit(options);
   } else if (options.mode === 'policy') {
     report = { generatedAt: new Date().toISOString(), mode: 'policy', decision: policyDecision(options) };
   } else if (options.mode === 'handoff') report = handoff(options);
