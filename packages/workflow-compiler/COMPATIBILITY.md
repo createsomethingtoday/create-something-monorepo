@@ -55,6 +55,12 @@ bundle contains only `decision_inventory.v0.1`,
 their v0.2 counterparts. This prevents callers from assembling an impossible
 cross-version contract before replay begins.
 
+MCP and OpenAI Responses adapter plans preserve it too. A v0.1 compiled bundle
+produces `workflow_adapter_plan.v0.1` with the legacy governance-reason
+vocabulary; v0.2 produces `workflow_adapter_plan.v0.2` when constrained replay
+can report exact-value or matcher mismatches. Consumers must branch on the
+adapter plan's `schemaVersion` rather than assume an expanded v0.1 envelope.
+
 ## Prereleases
 
 `0.1.0-beta.*` releases are public integration candidates. Their documented

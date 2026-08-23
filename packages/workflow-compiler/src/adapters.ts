@@ -7,7 +7,9 @@ import type {
   WorkflowAdapterDiagnostic,
   WorkflowAdapterPlan,
   WorkflowReplayCase,
-  WorkflowReplayResult
+  WorkflowReplayResult,
+  WorkflowReplayResultV0_1,
+  WorkflowReplayResultV0_2
 } from './types.js';
 import { parseWorkflowReplayManifest } from './input.js';
 import { replayWorkflow } from './replay.js';
@@ -64,8 +66,7 @@ function basePlan(
   result: WorkflowReplayResult
 ): WorkflowAdapterPlan {
   const mapped = disposition(result);
-  return {
-    schemaVersion: 'workflow_adapter_plan.v0.1',
+  const common = {
     adapter,
     workflowId: bundle.workflowId,
     workflowVersion: bundle.workflowVersion,
@@ -74,13 +75,24 @@ function basePlan(
     actionId: result.actionId,
     ...mapped,
     governanceOutcome: result.observedOutcome,
-    governanceReasonCode: result.reasonCode,
     canInvoke: false,
     authority: result.authority,
     owner: result.owner,
     recovery: result.recovery,
     receipt: result.receipt,
     diagnostics: []
+  };
+  if (bundle.schemaVersion === 'compiled_workflow_bundle.v0.2') {
+    return {
+      schemaVersion: 'workflow_adapter_plan.v0.2',
+      ...common,
+      governanceReasonCode: result.reasonCode as WorkflowReplayResultV0_2['reasonCode']
+    };
+  }
+  return {
+    schemaVersion: 'workflow_adapter_plan.v0.1',
+    ...common,
+    governanceReasonCode: result.reasonCode as WorkflowReplayResultV0_1['reasonCode']
   };
 }
 

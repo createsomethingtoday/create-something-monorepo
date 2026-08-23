@@ -4,6 +4,9 @@ import type {
   CompiledWorkflowBundleV0_1,
   DecisionInventoryArtifactV0_2,
   GovernedInteractionBundleV0_2,
+  WorkflowAdapterPlan,
+  WorkflowAdapterPlanV0_1,
+  WorkflowAdapterPlanV0_2,
   WorkflowDefinitionV0_1,
   WorkflowDefinitionV0_2
 } from '../src/index.js';
@@ -91,3 +94,16 @@ void constrainedDecision;
 void invalidLegacyInventoryBundle;
 void invalidLegacyInteractionBundle;
 void constrainedBundle;
+
+declare const constrainedAdapterPlan: WorkflowAdapterPlanV0_2;
+
+// @ts-expect-error A v0.1 adapter plan cannot carry a v0.2 replay reason code.
+const invalidLegacyAdapterPlan: WorkflowAdapterPlanV0_1 = {
+  ...constrainedAdapterPlan,
+  schemaVersion: 'workflow_adapter_plan.v0.1'
+};
+
+const constrainedAdapterPlanAsPublic: WorkflowAdapterPlan = constrainedAdapterPlan;
+
+void invalidLegacyAdapterPlan;
+void constrainedAdapterPlanAsPublic;

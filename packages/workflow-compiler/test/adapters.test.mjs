@@ -266,6 +266,37 @@ test('adapter preserves legacy schema compatibility but requires an explicit par
   assert.equal('invocation' in plan, false);
 });
 
+test('versions adapter plans when constrained replay emits mismatch reason codes', async () => {
+  const { bundle: legacyBundle, manifest } = await releaseFixture();
+  const legacyPlan = createMcpToolCallPlan(legacyBundle, manifest.cases[0]);
+  assert.equal(legacyPlan.schemaVersion, 'workflow_adapter_plan.v0.1');
+
+  const definition = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  definition.schemaVersion = 'workflow_definition.v0.2';
+  definition.actions[0].requiredEvidenceValues = {
+    test_receipt: 'release-tests-fixture-001'
+  };
+  const mismatchCase = {
+    ...manifest.cases[0],
+    evidence: { ...manifest.cases[0].evidence, test_receipt: 'not-the-receipt' },
+    expectedOutcome: 'blocked',
+    expectedState: manifest.cases[0].initialState
+  };
+  const constrainedBundle = compileWorkflowDefinition(definition);
+
+  for (const plan of [
+    createMcpToolCallPlan(constrainedBundle, mismatchCase),
+    createOpenAIResponsesRequestPlan(constrainedBundle, mismatchCase, {
+      model: 'caller-selected-model'
+    })
+  ]) {
+    assert.equal(plan.schemaVersion, 'workflow_adapter_plan.v0.2');
+    assert.equal(plan.governanceReasonCode, 'EVIDENCE_VALUE_MISMATCH');
+    assert.equal(plan.disposition, 'stop');
+    assert.equal(plan.canInvoke, false);
+  }
+});
+
 test('OpenAI adapter requires and normalizes caller-owned model selection', async () => {
   const { bundle, manifest } = await releaseFixture();
   const replayCase = manifest.cases.find(

@@ -486,8 +486,11 @@ export interface WorkflowAdapterDiagnostic {
   message: string;
 }
 
-export interface WorkflowAdapterPlan {
-  schemaVersion: 'workflow_adapter_plan.v0.1';
+export type WorkflowAdapterPlanSchemaVersion =
+  | 'workflow_adapter_plan.v0.1'
+  | 'workflow_adapter_plan.v0.2';
+
+interface WorkflowAdapterPlanBase {
   adapter: 'mcp' | 'openai.responses';
   workflowId: string;
   workflowVersion: string;
@@ -497,7 +500,6 @@ export interface WorkflowAdapterPlan {
   disposition: WorkflowAdapterDisposition;
   reasonCode: WorkflowAdapterReasonCode;
   governanceOutcome: ReplayOutcome;
-  governanceReasonCode: WorkflowReplayResult['reasonCode'];
   canInvoke: boolean;
   authority: string;
   owner: string;
@@ -506,7 +508,19 @@ export interface WorkflowAdapterPlan {
   diagnostics: WorkflowAdapterDiagnostic[];
 }
 
-export interface McpToolCallPlan extends WorkflowAdapterPlan {
+export interface WorkflowAdapterPlanV0_1 extends WorkflowAdapterPlanBase {
+  schemaVersion: 'workflow_adapter_plan.v0.1';
+  governanceReasonCode: WorkflowReplayResultV0_1['reasonCode'];
+}
+
+export interface WorkflowAdapterPlanV0_2 extends WorkflowAdapterPlanBase {
+  schemaVersion: 'workflow_adapter_plan.v0.2';
+  governanceReasonCode: WorkflowReplayResultV0_2['reasonCode'];
+}
+
+export type WorkflowAdapterPlan = WorkflowAdapterPlanV0_1 | WorkflowAdapterPlanV0_2;
+
+export type McpToolCallPlan = WorkflowAdapterPlan & {
   adapter: 'mcp';
   invocation?: {
     operation: 'tools/call';
@@ -516,7 +530,7 @@ export interface McpToolCallPlan extends WorkflowAdapterPlan {
       arguments: Record<string, string | number | boolean>;
     };
   };
-}
+};
 
 export interface OpenAIResponsesFunctionTool {
   type: 'function';
@@ -548,11 +562,11 @@ export interface OpenAIResponsesRequest {
   store: false;
 }
 
-export interface OpenAIResponsesRequestPlan extends WorkflowAdapterPlan {
+export type OpenAIResponsesRequestPlan = WorkflowAdapterPlan & {
   adapter: 'openai.responses';
   expectedArguments?: Record<string, string | number | boolean>;
   request?: OpenAIResponsesRequest;
-}
+};
 
 export type WorkflowReplayReportSchemaVersion =
   | 'workflow_replay_report.v0.1'

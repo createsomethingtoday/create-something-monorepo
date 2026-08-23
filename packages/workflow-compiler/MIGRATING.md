@@ -62,6 +62,11 @@ governed-interaction versions. Do not hand-edit an outer schema version or mix
 derived artifacts across revisions: migrate the source, then recompile and
 replay so all three contracts carry the same version and definition hash.
 
+Adapter plans are derived from that same replay. Recompile and replay a migrated
+definition before requesting a new plan: only v0.2 bundles emit
+`workflow_adapter_plan.v0.2`, which can include constrained-evidence mismatch
+reasons. Do not relabel a previously retained v0.1 adapter plan.
+
 ## Artifact output upgrades
 
 The compiler writes immutable revisions behind a managed pointer and retains

@@ -31,6 +31,9 @@ artifact schemas.
 - Correlate compiled-bundle, decision-inventory, governed-interaction, and
   decision TypeScript contracts by schema version so legacy bundles cannot be
   constructed with constrained v0.2 internals.
+- Add `workflow_adapter_plan.v0.2` for MCP and OpenAI Responses plans from
+  constrained bundles, retaining the original v0.1 governance-reason vocabulary
+  for legacy plans.
 
 ## 0.2.0
 
