@@ -18,7 +18,7 @@ test('the public manifest declares the complete release and support boundary', a
   const manifest = JSON.parse(await readFile(packageJsonUrl, 'utf8'));
 
   assert.deepEqual(validateReleaseManifest(manifest), []);
-  assert.equal(manifest.version, '0.1.0-beta.0');
+  assert.equal(manifest.version, '0.1.0');
   assert.deepEqual(manifest.engines, { node: '>=20' });
   assert.equal(manifest.publishConfig.access, 'public');
   assert.equal(manifest.publishConfig.provenance, true);
@@ -110,7 +110,18 @@ test('the trusted workflow validates supported LTS nodes and stages from protect
   assert.match(workflow, /test "\$\(git rev-parse HEAD\)" = "\$\(git rev-parse origin\/main\)"/);
 });
 
-test('the beta quickstart installs the non-default bootstrap tag', async () => {
+test('the stable quickstart installs the default package release', async () => {
   const readme = await readFile(new URL('../README.md', import.meta.url), 'utf8');
-  assert.match(readme, /npm install @create-something\/workflow-compiler@bootstrap/);
+  assert.match(readme, /npm install @create-something\/workflow-compiler(?:\r?\n|$)/);
+  assert.doesNotMatch(readme, /npm install @create-something\/workflow-compiler@bootstrap/);
+});
+
+test('the bootstrap runbook contains an implicit latest tag until stable replaces it', async () => {
+  const runbook = await readFile(new URL('../RELEASING.md', import.meta.url), 'utf8');
+  assert.match(runbook, /npm dist-tag rm @create-something\/workflow-compiler latest/);
+  assert.match(runbook, /If npm rejects removing its only `latest` tag/);
+  assert.match(
+    runbook,
+    /release remains incomplete until `latest` points at provenance-backed stable\s+`0\.1\.0`/
+  );
 });

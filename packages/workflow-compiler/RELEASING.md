@@ -41,6 +41,21 @@ npm publish ./create-something-workflow-compiler-0.1.0-beta.0.tgz \
   --provenance=false
 ```
 
+Read back the tags immediately. npm may assign `latest` to the first version of
+a new package even when the bootstrap publish names another tag. If `latest`
+points at `0.1.0-beta.0`, remove it before continuing; the beta must not remain
+the default install:
+
+```bash
+npm dist-tag rm @create-something/workflow-compiler latest
+```
+
+If npm rejects removing its only `latest` tag, do not retry blindly or
+unpublish the immutable bootstrap version. Keep public instructions pinned to
+`@bootstrap` and proceed immediately through the reviewed stable path. The
+release remains incomplete until `latest` points at provenance-backed stable
+`0.1.0`.
+
 ## Stable publication
 
 1. Change the version and changelog through a reviewed PR.
