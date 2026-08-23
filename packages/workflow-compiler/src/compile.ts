@@ -15,8 +15,9 @@ import type {
   ToolContractsArtifact,
   WorkflowDefinition,
   WorkflowCompilationDiagnostic,
+  WorkflowEvidenceValue,
   WorkflowMapEdge,
-  WorkflowMapNode,
+  WorkflowMapNode
 } from './types.js';
 
 export const WORKFLOW_COMPILER_VERSION = 'workflow-compiler-v0.1';
@@ -49,13 +50,21 @@ function sorted(values: string[]): string[] {
   return [...values].sort((left, right) => left.localeCompare(right));
 }
 
+function sortedEvidenceValues(
+  values: Record<string, WorkflowEvidenceValue>
+): Record<string, WorkflowEvidenceValue> {
+  return Object.fromEntries(
+    Object.entries(values).sort(([left], [right]) => left.localeCompare(right))
+  );
+}
+
 function canonicalize(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(canonicalize);
   if (value && typeof value === 'object') {
     return Object.fromEntries(
       Object.entries(value)
         .sort(([left], [right]) => left.localeCompare(right))
-        .map(([key, entry]) => [key, canonicalize(entry)]),
+        .map(([key, entry]) => [key, canonicalize(entry)])
     );
   }
   return value;
@@ -70,7 +79,7 @@ function artifactHeader(definition: WorkflowDefinition, hash: string) {
   return {
     workflowId: definition.workflowId,
     workflowVersion: definition.version,
-    definitionHash: hash,
+    definitionHash: hash
   };
 }
 
@@ -85,16 +94,25 @@ function validateGovernance(definition: WorkflowDefinition): WorkflowCompilation
       diagnostics.push({
         code: 'CONSEQUENTIAL_ACTION_MISSING_SYSTEM',
         path: `${path}.systemsTouched`,
-        message: `Consequential action ${action.id} must name at least one owning system.`,
+        message: `Consequential action ${action.id} must name at least one owning system.`
       });
     }
     if (action.requiredEvidence.length === 0) {
       diagnostics.push({
         code: 'CONSEQUENTIAL_ACTION_MISSING_EVIDENCE',
         path: `${path}.requiredEvidence`,
-        message: `Consequential action ${action.id} must declare required evidence.`,
+        message: `Consequential action ${action.id} must declare required evidence.`
       });
     }
+    Object.keys(action.requiredEvidenceValues ?? {}).forEach((field) => {
+      if (!action.requiredEvidence.includes(field)) {
+        diagnostics.push({
+          code: 'EVIDENCE_VALUE_CONSTRAINT_MISSING_REQUIRED_EVIDENCE',
+          path: `${path}.requiredEvidenceValues.${field}`,
+          message: `Evidence-value constraint ${field} for action ${action.id} must also be required evidence.`
+        });
+      }
+    });
     if (
       action.autonomy === 'approval_required' &&
       (!action.approval.required || !action.approval.owner?.trim())
@@ -102,28 +120,28 @@ function validateGovernance(definition: WorkflowDefinition): WorkflowCompilation
       diagnostics.push({
         code: 'APPROVAL_CONTRACT_REQUIRED',
         path: `${path}.approval`,
-        message: `Approval-required action ${action.id} must name an approval owner.`,
+        message: `Approval-required action ${action.id} must name an approval owner.`
       });
     }
     if (!REQUIRED_RECEIPT_FIELDS.every((field) => action.receipt.requiredFields.includes(field))) {
       diagnostics.push({
         code: 'RECEIPT_FIELDS_REQUIRED',
         path: `${path}.receipt.requiredFields`,
-        message: `Consequential action ${action.id} must emit the base receipt fields.`,
+        message: `Consequential action ${action.id} must emit the base receipt fields.`
       });
     }
     if (!action.recovery.owner.trim()) {
       diagnostics.push({
         code: 'RECOVERY_OWNER_REQUIRED',
         path: `${path}.recovery.owner`,
-        message: `Consequential action ${action.id} must name a recovery owner.`,
+        message: `Consequential action ${action.id} must name a recovery owner.`
       });
     }
     if (!action.recovery.path.trim()) {
       diagnostics.push({
         code: 'RECOVERY_PATH_REQUIRED',
         path: `${path}.recovery.path`,
-        message: `Consequential action ${action.id} must provide a recovery path.`,
+        message: `Consequential action ${action.id} must provide a recovery path.`
       });
     }
   });
@@ -147,7 +165,7 @@ function validateReferences(definition: WorkflowDefinition): WorkflowCompilation
       diagnostics.push({
         code: 'UNKNOWN_OBJECT_SOURCE_SYSTEM',
         path: `objects[${index}].sourceSystemId`,
-        message: `Object ${object.id} references unknown system ${object.sourceSystemId}.`,
+        message: `Object ${object.id} references unknown system ${object.sourceSystemId}.`
       });
     }
   });
@@ -156,7 +174,7 @@ function validateReferences(definition: WorkflowDefinition): WorkflowCompilation
       diagnostics.push({
         code: 'UNKNOWN_EVENT_OBJECT',
         path: `events[${index}].objectId`,
-        message: `Event ${event.id} references unknown object ${event.objectId}.`,
+        message: `Event ${event.id} references unknown object ${event.objectId}.`
       });
     }
   });
@@ -165,7 +183,7 @@ function validateReferences(definition: WorkflowDefinition): WorkflowCompilation
       diagnostics.push({
         code: 'UNKNOWN_ACTION_AUTHORITY',
         path: `actions[${index}].authority`,
-        message: `Action ${action.id} references unknown authority ${action.authority}.`,
+        message: `Action ${action.id} references unknown authority ${action.authority}.`
       });
     }
     action.systemsTouched.forEach((systemId, systemIndex) => {
@@ -173,7 +191,7 @@ function validateReferences(definition: WorkflowDefinition): WorkflowCompilation
         diagnostics.push({
           code: 'UNKNOWN_ACTION_SYSTEM',
           path: `actions[${index}].systemsTouched[${systemIndex}]`,
-          message: `Action ${action.id} references unknown system ${systemId}.`,
+          message: `Action ${action.id} references unknown system ${systemId}.`
         });
       }
     });
@@ -181,14 +199,14 @@ function validateReferences(definition: WorkflowDefinition): WorkflowCompilation
       diagnostics.push({
         code: 'UNKNOWN_TOOL_TARGET_SYSTEM',
         path: `actions[${index}].tool.targetSystemId`,
-        message: `Tool ${action.tool.name} references unknown system ${action.tool.targetSystemId}.`,
+        message: `Tool ${action.tool.name} references unknown system ${action.tool.targetSystemId}.`
       });
     }
     if (action.tool && !action.systemsTouched.includes(action.tool.targetSystemId)) {
       diagnostics.push({
         code: 'TOOL_TARGET_NOT_DECLARED_SYSTEM_TOUCH',
         path: `actions[${index}].tool.targetSystemId`,
-        message: `Tool ${action.tool.name} target ${action.tool.targetSystemId} must be declared in systemsTouched for action ${action.id}.`,
+        message: `Tool ${action.tool.name} target ${action.tool.targetSystemId} must be declared in systemsTouched for action ${action.id}.`
       });
     }
     action.tool?.parameters?.forEach((parameter, parameterIndex) => {
@@ -196,7 +214,7 @@ function validateReferences(definition: WorkflowDefinition): WorkflowCompilation
         diagnostics.push({
           code: 'TOOL_PARAMETER_MISSING_EVIDENCE_CONTRACT',
           path: `actions[${index}].tool.parameters[${parameterIndex}].name`,
-          message: `Tool parameter ${parameter.name} must be backed by required evidence for action ${action.id}.`,
+          message: `Tool parameter ${parameter.name} must be backed by required evidence for action ${action.id}.`
         });
       }
     });
@@ -204,7 +222,7 @@ function validateReferences(definition: WorkflowDefinition): WorkflowCompilation
       diagnostics.push({
         code: 'UNKNOWN_ACTION_AGENT',
         path: `actions[${index}].agentId`,
-        message: `Action ${action.id} references unknown agent ${action.agentId}.`,
+        message: `Action ${action.id} references unknown agent ${action.agentId}.`
       });
     } else if (
       action.agentId &&
@@ -213,7 +231,7 @@ function validateReferences(definition: WorkflowDefinition): WorkflowCompilation
       diagnostics.push({
         code: 'ACTION_NOT_ALLOWED_FOR_AGENT',
         path: `actions[${index}].agentId`,
-        message: `Action ${action.id} assigns agent ${action.agentId} but is absent from that agent allowlist.`,
+        message: `Action ${action.id} assigns agent ${action.agentId} but is absent from that agent allowlist.`
       });
     }
   });
@@ -222,21 +240,21 @@ function validateReferences(definition: WorkflowDefinition): WorkflowCompilation
       diagnostics.push({
         code: 'UNKNOWN_TRANSITION_FROM_STATE',
         path: `transitions[${index}].from`,
-        message: `Transition ${transition.id} references unknown state ${transition.from}.`,
+        message: `Transition ${transition.id} references unknown state ${transition.from}.`
       });
     }
     if (!stateIds.has(transition.to)) {
       diagnostics.push({
         code: 'UNKNOWN_TRANSITION_TO_STATE',
         path: `transitions[${index}].to`,
-        message: `Transition ${transition.id} references unknown state ${transition.to}.`,
+        message: `Transition ${transition.id} references unknown state ${transition.to}.`
       });
     }
     if (!actionIds.has(transition.actionId)) {
       diagnostics.push({
         code: 'UNKNOWN_TRANSITION_ACTION',
         path: `transitions[${index}].actionId`,
-        message: `Transition ${transition.id} references unknown action ${transition.actionId}.`,
+        message: `Transition ${transition.id} references unknown action ${transition.actionId}.`
       });
     }
   });
@@ -246,13 +264,13 @@ function validateReferences(definition: WorkflowDefinition): WorkflowCompilation
         diagnostics.push({
           code: 'UNKNOWN_AGENT_ACTION',
           path: `agents[${index}].allowedActionIds[${actionIndex}]`,
-          message: `Agent ${agent.id} references unknown action ${actionId}.`,
+          message: `Agent ${agent.id} references unknown action ${actionId}.`
         });
       } else if (actionsById.get(actionId)?.agentId !== agent.id) {
         diagnostics.push({
           code: 'AGENT_ACTION_ASSIGNMENT_MISMATCH',
           path: `agents[${index}].allowedActionIds[${actionIndex}]`,
-          message: `Agent ${agent.id} allowlists action ${actionId}, but that action is not assigned to the agent.`,
+          message: `Agent ${agent.id} allowlists action ${actionId}, but that action is not assigned to the agent.`
         });
       }
     });
@@ -262,7 +280,7 @@ function validateReferences(definition: WorkflowDefinition): WorkflowCompilation
       diagnostics.push({
         code: 'UNKNOWN_EVALUATION_ACTION',
         path: `evaluations[${index}].actionId`,
-        message: `Evaluation ${evaluation.id} references unknown action ${evaluation.actionId}.`,
+        message: `Evaluation ${evaluation.id} references unknown action ${evaluation.actionId}.`
       });
     }
   });
@@ -279,8 +297,8 @@ export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundl
       {
         code: 'INVALID_VALUE',
         path: '$',
-        message: 'Workflow definition must be detachable structured data.',
-      },
+        message: 'Workflow definition must be detachable structured data.'
+      }
     ]);
   }
   const definition = parseWorkflowDefinition(snapshot);
@@ -294,18 +312,18 @@ export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundl
     ...definition.actors.map((actor) => ({
       id: `actor:${actor.id}`,
       kind: 'actor' as const,
-      title: actor.title,
+      title: actor.title
     })),
     ...definition.states.map((state) => ({
       id: `state:${state.id}`,
       kind: 'state' as const,
-      title: state.title,
+      title: state.title
     })),
     ...definition.actions.map((action) => ({
       id: `action:${action.id}`,
       kind: 'action' as const,
-      title: action.title,
-    })),
+      title: action.title
+    }))
   ].sort(byId);
 
   const edges: WorkflowMapEdge[] = [
@@ -313,42 +331,42 @@ export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundl
       id: `authority:${action.authority}:${action.id}`,
       kind: 'authorizes' as const,
       from: `actor:${action.authority}`,
-      to: `action:${action.id}`,
+      to: `action:${action.id}`
     })),
     ...definition.transitions.flatMap((transition) => [
       {
         id: `transition:${transition.id}:action`,
         kind: 'transitions' as const,
         from: `state:${transition.from}`,
-        to: `action:${transition.actionId}`,
+        to: `action:${transition.actionId}`
       },
       {
         id: `transition:${transition.id}:state`,
         kind: 'transitions' as const,
         from: `action:${transition.actionId}`,
-        to: `state:${transition.to}`,
-      },
-    ]),
+        to: `state:${transition.to}`
+      }
+    ])
   ].sort(byId);
 
   const runtimeTargets: RuntimeTargetsArtifact = {
     schemaVersion: 'runtime_targets.v0.1',
     ...header,
-    systems: [...definition.systems].sort(byId),
+    systems: [...definition.systems].sort(byId)
   };
   const objectSchemas: ObjectSchemasArtifact = {
     schemaVersion: 'object_schemas.v0.1',
     ...header,
     objects: definition.objects
       .map((object) => ({ ...object, requiredFields: sorted(object.requiredFields) }))
-      .sort(byId),
+      .sort(byId)
   };
   const eventSchemas: EventSchemasArtifact = {
     schemaVersion: 'event_schemas.v0.1',
     ...header,
     events: definition.events
       .map((event) => ({ ...event, requiredEvidence: sorted(event.requiredEvidence) }))
-      .sort(byId),
+      .sort(byId)
   };
   const decisionInventory: DecisionInventoryArtifact = {
     schemaVersion: 'decision_inventory.v0.1',
@@ -362,11 +380,14 @@ export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundl
         autonomy: action.autonomy,
         systemsTouched: sorted(action.systemsTouched),
         requiredEvidence: sorted(action.requiredEvidence),
+        ...(action.requiredEvidenceValues
+          ? { requiredEvidenceValues: sortedEvidenceValues(action.requiredEvidenceValues) }
+          : {}),
         ...(action.approval.owner ? { approvalOwner: action.approval.owner } : {}),
         receiptFields: sorted(action.receipt.requiredFields),
-        recovery: { ...action.recovery },
+        recovery: { ...action.recovery }
       }))
-      .sort(byActionId),
+      .sort(byActionId)
   };
   const toolContracts: ToolContractsArtifact = {
     schemaVersion: 'tool_contracts.v0.1',
@@ -383,9 +404,9 @@ export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundl
         receiptFields: sorted(action.receipt.requiredFields),
         ...(action.tool!.parameters
           ? { parameters: [...action.tool!.parameters].sort(byName) }
-          : {}),
+          : {})
       }))
-      .sort(byActionId),
+      .sort(byActionId)
   };
   const actionsById = new Map(definition.actions.map((action) => [action.id, action]));
   const agentContracts: AgentContractsArtifact = {
@@ -398,11 +419,11 @@ export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundl
         actionAutonomy: agent.allowedActionIds
           .map((actionId) => ({
             actionId,
-            autonomy: actionsById.get(actionId)?.autonomy ?? 'blocked',
+            autonomy: actionsById.get(actionId)?.autonomy ?? 'blocked'
           }))
-          .sort(byActionId),
+          .sort(byActionId)
       }))
-      .sort(byId),
+      .sort(byId)
   };
   const approvalSurfaces: ApprovalSurfacesArtifact = {
     schemaVersion: 'approval_surfaces.v0.1',
@@ -415,9 +436,9 @@ export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundl
         mode: action.autonomy as Exclude<typeof action.autonomy, 'auto_allow'>,
         owner: action.approval.owner ?? action.recovery.owner,
         requiredEvidence: sorted(action.requiredEvidence),
-        recovery: { ...action.recovery },
+        recovery: { ...action.recovery }
       }))
-      .sort(byActionId),
+      .sort(byActionId)
   };
   const evaluationManifest: EvaluationManifestArtifact = {
     schemaVersion: 'evaluation_manifest.v0.1',
@@ -425,9 +446,9 @@ export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundl
     evaluations: definition.evaluations
       .map((evaluation) => ({
         ...evaluation,
-        requiredEvidence: sorted(evaluation.requiredEvidence),
+        requiredEvidence: sorted(evaluation.requiredEvidence)
       }))
-      .sort(byId),
+      .sort(byId)
   };
   const governedInteraction: GovernedInteractionBundle = {
     schemaVersion: 'governed_interaction_bundle.v0.1',
@@ -441,10 +462,10 @@ export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundl
         id: 'operator-console',
         title: definition.title,
         kind: 'workflow_overview',
-        operations: [{ kind: 'select_replay_case' }],
-      },
+        operations: [{ kind: 'select_replay_case' }]
+      }
     ],
-    actions: decisionInventory.decisions,
+    actions: decisionInventory.decisions
   };
 
   return {
@@ -461,7 +482,7 @@ export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundl
       workflowId: definition.workflowId,
       workflowVersion: definition.version,
       nodes,
-      edges,
+      edges
     },
     runtimeTargets,
     objectSchemas,
@@ -471,6 +492,6 @@ export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundl
     agentContracts,
     approvalSurfaces,
     evaluationManifest,
-    governedInteraction,
+    governedInteraction
   };
 }

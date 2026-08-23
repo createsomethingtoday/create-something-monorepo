@@ -177,6 +177,11 @@ function replayCaseAgainstBundle(
   const missingEvidence = decision
     ? decision.requiredEvidence.filter((field) => !hasEvidence(replayCase.evidence[field]))
     : [];
+  const evidenceMismatches = decision
+    ? Object.entries(decision.requiredEvidenceValues ?? {})
+        .filter(([field, expected]) => replayCase.evidence[field] !== expected)
+        .map(([field, expected]) => ({ field, expected, actual: replayCase.evidence[field] }))
+    : [];
   const recovery = decision?.recovery ?? unknownRecovery(bundle);
   const owner = decision?.approvalOwner ?? decision?.recovery.owner ?? bundle.owners.workflow;
 
@@ -200,6 +205,9 @@ function replayCaseAgainstBundle(
   } else if (missingEvidence.length > 0) {
     observedOutcome = 'blocked';
     reasonCode = 'INSUFFICIENT_EVIDENCE';
+  } else if (evidenceMismatches.length > 0) {
+    observedOutcome = 'blocked';
+    reasonCode = 'EVIDENCE_VALUE_MISMATCH';
   } else if (
     (decision.autonomy === 'approval_required' || decision.autonomy === 'manual_only') &&
     (!decision.approvalOwner || !replayCase.approvals.includes(decision.approvalOwner))
@@ -249,6 +257,7 @@ function replayCaseAgainstBundle(
     owner,
     evidenceReferences,
     missingEvidence,
+    evidenceMismatches,
     recovery,
     receipt
   };

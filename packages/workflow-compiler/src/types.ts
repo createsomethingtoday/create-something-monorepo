@@ -4,6 +4,8 @@ export type AutonomyClass = 'auto_allow' | 'approval_required' | 'manual_only' |
 
 export type SystemTier = 'database' | 'automation' | 'judgment';
 
+export type WorkflowEvidenceValue = string | number | boolean;
+
 export interface WorkflowSystem {
   id: string;
   title: string;
@@ -45,6 +47,7 @@ export interface WorkflowAction {
   autonomy: AutonomyClass;
   systemsTouched: string[];
   requiredEvidence: string[];
+  requiredEvidenceValues?: Record<string, WorkflowEvidenceValue>;
   approval: {
     required: boolean;
     owner?: string;
@@ -168,6 +171,7 @@ export interface CompiledDecision {
   autonomy: AutonomyClass;
   systemsTouched: string[];
   requiredEvidence: string[];
+  requiredEvidenceValues?: Record<string, WorkflowEvidenceValue>;
   approvalOwner?: string;
   receiptFields: string[];
   recovery: WorkflowAction['recovery'];
@@ -312,6 +316,12 @@ export interface WorkflowReplayReceipt {
   receiptFields: Record<string, unknown>;
 }
 
+export interface WorkflowEvidenceMismatch {
+  field: string;
+  expected: WorkflowEvidenceValue;
+  actual: unknown;
+}
+
 export interface WorkflowReplayResult {
   caseId: string;
   title: string;
@@ -328,6 +338,7 @@ export interface WorkflowReplayResult {
     | 'APPROVAL_REQUIRED'
     | 'POLICY_BLOCKED'
     | 'INSUFFICIENT_EVIDENCE'
+    | 'EVIDENCE_VALUE_MISMATCH'
     | 'UNKNOWN_ACTION'
     | 'UNKNOWN_ACTOR'
     | 'ACTOR_NOT_AUTHORIZED'
@@ -336,6 +347,7 @@ export interface WorkflowReplayResult {
   owner: string;
   evidenceReferences: string[];
   missingEvidence: string[];
+  evidenceMismatches: WorkflowEvidenceMismatch[];
   recovery: WorkflowAction['recovery'];
   receipt: WorkflowReplayReceipt;
 }

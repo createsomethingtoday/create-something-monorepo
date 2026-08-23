@@ -11,6 +11,8 @@ artifact schemas.
 - Replay form validation, Validator App preflight, Airtable Automation receipt
   inspection, reviewer wait, failed preflight, missing receipt, and blocked
   creator messaging using sanitized deterministic fixtures only.
+- Require exact passing preflight and confirmed handoff status values before
+  replay can transition to preflight-passed or ready-for-review states.
 
 ## 0.2.0
 

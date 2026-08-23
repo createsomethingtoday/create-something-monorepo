@@ -32,8 +32,8 @@ npx workflow-compiler explain --workflow workflow.json --cases cases.json
 
 Use the second starter when a walkthrough needs to show the complete app-form
 and review path: form validation, published-site validation, Validator App
-preflight, Airtable Automation receipt, reviewer wait, and a blocked creator
-message.
+preflight, confirmed Airtable Automation handoff, reviewer wait, and a blocked
+creator message.
 
 ```bash
 npx workflow-compiler init --template marketplace-submission --dir ./marketplace-submission
@@ -44,10 +44,11 @@ npx workflow-compiler explain --workflow workflow.json --cases cases.json
 ```
 
 The template generates a source-bound `SOURCES.md`, a runbook, a playbook, and
-sanitized replay fixtures. Its “Airtable Automation handoff” is receipt
-inspection only: the compiler neither sends a webhook nor reads Airtable. The
-source pointers identify the owning repository surfaces; they are not proof of
-a live submission, validation, review, or delivery.
+sanitized replay fixtures. Its “Airtable Automation handoff” requires a
+confirmed state plus asset, version, and review-status evidence; a webhook
+receipt alone remains processing evidence. The compiler neither sends a webhook
+nor reads Airtable. The source pointers identify the owning repository surfaces;
+they are not proof of a live submission, validation, review, or delivery.
 
 This loop does not execute live actions, contact a provider, read credentials, or make an approval decision. A future execution host must supply its own authenticated transport, policy review, result validation, and receipt retention. The package is designed for Codex and OpenAI-compatible workflows, but it is not an official OpenAI partnership, endorsement, certification, or hosted service.
 

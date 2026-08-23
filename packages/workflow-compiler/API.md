@@ -13,6 +13,12 @@ consequential governance boundary, and returns a deterministic
 `CompiledWorkflowBundle`. It throws `WorkflowInputValidationError` for input
 shape errors and `WorkflowCompilationError` for invalid workflow semantics.
 
+An action may declare `requiredEvidenceValues`, a map of required-evidence
+fields to an exact string, finite number, or boolean value. Each constrained
+field must also appear in `requiredEvidence`. Replay blocks a supplied value
+that differs from the versioned contract with `EVIDENCE_VALUE_MISMATCH`; a
+non-empty receipt alone cannot satisfy that condition.
+
 ### `parseWorkflowDefinition(input)`
 
 Validates and normalizes a workflow definition without compiling artifacts.
@@ -89,7 +95,7 @@ npx workflow-compiler simulate --workflow <definition.json> --cases <cases.json>
 npx workflow-compiler explain --workflow <definition.json> [--cases <cases.json>]
 ```
 
-`init` writes either the local-runbook or Marketplace submission-to-review starter only into a new directory and fails before an overwrite. The Marketplace template records source pointers plus sanitized fixtures for form validation, Validator App preflight, Airtable Automation receipt inspection, reviewer waiting, and blocked creator messaging; it never calls those systems. Its structured response identifies the working directory for the follow-up commands. `validate` compiles one input for inspection, `simulate` requires at least one replay case, coverage for every declared evaluation, and matching expectations; otherwise it exits non-zero. An evaluation is covered only when a matching replay case proves its action, expected outcome, and required evidence. `explain` renders the resulting decisions as Markdown and explicitly reports whether replay expectations match, including mismatched case IDs. They never call a provider, read credentials, execute a live action, or approve a consequential step. `compile` writes only compiler-managed local artifacts; `verify` and `serve` inspect those artifacts.
+`init` writes either the local-runbook or Marketplace submission-to-review starter only into a new directory and fails before an overwrite. The Marketplace template records source pointers plus sanitized fixtures for form validation, a passing Validator App preflight, a confirmed Airtable handoff with asset/version/review-status evidence, reviewer waiting, and blocked creator messaging; it never calls those systems. Its structured response identifies the working directory for the follow-up commands. `validate` compiles one input for inspection, `simulate` requires at least one replay case, coverage for every declared evaluation, and matching expectations; otherwise it exits non-zero. An evaluation is covered only when a matching replay case proves its action, expected outcome, and required evidence. `explain` renders the resulting decisions as Markdown and explicitly reports whether replay expectations match, including mismatched case IDs. They never call a provider, read credentials, execute a live action, or approve a consequential step. `compile` writes only compiler-managed local artifacts; `verify` and `serve` inspect those artifacts.
 
 Exit codes are stable: `0` success, `2` usage or versioned-input failure, `3`
 governance, integrity, or simulation stop, and `1` unexpected operational failure.

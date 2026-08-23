@@ -346,9 +346,17 @@ const MARKETPLACE_SUBMISSION_WORKFLOW: WorkflowDefinition = {
     },
     {
       id: 'automation_handoff',
-      title: 'Airtable Automation handoff receipt',
+      title: 'Confirmed Airtable Automation handoff receipt',
       sourceSystemId: 'airtable-marketplace',
-      requiredFields: ['submission_id', 'automation_version', 'webhook_receipt']
+      requiredFields: [
+        'submission_id',
+        'automation_version',
+        'webhook_receipt',
+        'handoff_state',
+        'asset_id',
+        'version_id',
+        'review_status'
+      ]
     },
     {
       id: 'review_request',
@@ -383,9 +391,17 @@ const MARKETPLACE_SUBMISSION_WORKFLOW: WorkflowDefinition = {
     },
     {
       id: 'automation_handoff_observed',
-      title: 'Airtable Automation handoff observed',
+      title: 'Confirmed Airtable Automation handoff observed',
       objectId: 'automation_handoff',
-      requiredEvidence: ['submission_id', 'automation_version', 'webhook_receipt']
+      requiredEvidence: [
+        'submission_id',
+        'automation_version',
+        'webhook_receipt',
+        'handoff_state',
+        'asset_id',
+        'version_id',
+        'review_status'
+      ]
     },
     {
       id: 'review_requested',
@@ -445,6 +461,7 @@ const MARKETPLACE_SUBMISSION_WORKFLOW: WorkflowDefinition = {
         'preflight_receipt',
         'preflight_status'
       ],
+      requiredEvidenceValues: { preflight_status: 'passed' },
       approval: { required: false },
       receipt: {
         requiredFields: ['workflow_id', 'action_id', 'correlation_id', 'outcome', 'evidence_refs']
@@ -457,12 +474,21 @@ const MARKETPLACE_SUBMISSION_WORKFLOW: WorkflowDefinition = {
     },
     {
       id: 'inspect_automation_handoff_receipt',
-      title: 'Inspect the Airtable Automation handoff receipt',
+      title: 'Inspect the confirmed Airtable Automation handoff receipt',
       kind: 'read',
       authority: 'codex-agent',
       autonomy: 'auto_allow',
       systemsTouched: ['airtable-marketplace'],
-      requiredEvidence: ['submission_id', 'automation_version', 'webhook_receipt'],
+      requiredEvidence: [
+        'submission_id',
+        'automation_version',
+        'webhook_receipt',
+        'handoff_state',
+        'asset_id',
+        'version_id',
+        'review_status'
+      ],
+      requiredEvidenceValues: { handoff_state: 'confirmed' },
       approval: { required: false },
       receipt: {
         requiredFields: ['workflow_id', 'action_id', 'correlation_id', 'outcome', 'evidence_refs']
@@ -598,10 +624,18 @@ const MARKETPLACE_SUBMISSION_WORKFLOW: WorkflowDefinition = {
     },
     {
       id: 'automation-handoff-receipt-passes',
-      title: 'A complete automation receipt permits local inspection',
+      title: 'A confirmed automation receipt permits local inspection',
       actionId: 'inspect_automation_handoff_receipt',
       expectedOutcome: 'pass',
-      requiredEvidence: ['submission_id', 'automation_version', 'webhook_receipt']
+      requiredEvidence: [
+        'submission_id',
+        'automation_version',
+        'webhook_receipt',
+        'handoff_state',
+        'asset_id',
+        'version_id',
+        'review_status'
+      ]
     },
     {
       id: 'failed-preflight-stops',
@@ -685,7 +719,11 @@ const MARKETPLACE_SUBMISSION_CASES: WorkflowReplayManifest = {
       evidence: {
         submission_id: 'submission-fixture-001',
         automation_version: 'marketplace-template-submission-fixture-v1',
-        webhook_receipt: 'webhook-fixture-001'
+        webhook_receipt: 'webhook-fixture-001',
+        handoff_state: 'confirmed',
+        asset_id: 'asset-fixture-001',
+        version_id: 'version-fixture-001',
+        review_status: 'pending_review'
       },
       approvals: [],
       expectedOutcome: 'pass',
@@ -821,7 +859,7 @@ const MARKETPLACE_SUBMISSION_FILES: Record<string, string> = {
     '',
     '1. Capture the required form fields and published URL as evidence.',
     '2. Require a Validator App preflight result before treating a handoff as eligible.',
-    '3. Require a webhook receipt before marking the submission ready for review.',
+    '3. Require a confirmed handoff state plus its asset, version, and review-status evidence before marking the submission ready for review.',
     '4. Keep reviewer approval and creator communication in the owning human workflow.',
     '5. Replay pass, wait, and stop cases locally before changing a production owner.',
     ''
@@ -855,13 +893,13 @@ const MARKETPLACE_SUBMISSION_FILES: Record<string, string> = {
     '1. Confirm the form includes a submission identifier, published URL, and schema revision.',
     '2. Require the form-validation receipt before continuing.',
     '3. Require a passing Validator App preflight policy, result, and receipt.',
-    '4. Treat the Airtable Automation webhook receipt as evidence of a handoff; this template does not send or retry a webhook.',
+    '4. Treat an Airtable Automation webhook receipt as processing evidence only. Require the confirmed handoff state plus asset, version, and review-status evidence before reviewer readiness; this template does not send or retry a webhook.',
     '5. Keep the reviewer decision waiting for the assigned reviewer.',
     '6. Keep creator messaging blocked until the owning reviewer communication process has independently verified its decision and delivery evidence.',
     '',
     '## Recovery',
     '',
-    'A failed preflight remains stopped. A missing webhook receipt is not a reason to retry blindly: inspect the owning runtime, then reconcile only with its idempotent, receipt-aware procedure.',
+    'A failed preflight remains stopped. A missing webhook receipt or processing handoff is not a reason to retry blindly: inspect the owning runtime, then reconcile only with its idempotent, receipt-aware procedure.',
     '',
     '## Boundary',
     '',

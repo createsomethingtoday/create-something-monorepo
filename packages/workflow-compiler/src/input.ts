@@ -86,6 +86,21 @@ class Validator {
     });
   }
 
+  evidenceValue(value: unknown, path: string): void {
+    if (
+      typeof value === 'string' ||
+      typeof value === 'boolean' ||
+      (typeof value === 'number' && Number.isFinite(value))
+    ) {
+      return;
+    }
+    this.diagnostics.push({
+      code: value === undefined ? 'REQUIRED_FIELD' : 'INVALID_TYPE',
+      path,
+      message: 'Expected a string, finite number, or boolean.'
+    });
+  }
+
   enumeration(value: unknown, allowed: readonly string[], path: string): void {
     if (typeof value === 'string' && allowed.includes(value)) return;
     this.diagnostics.push({
@@ -218,6 +233,24 @@ export function parseWorkflowDefinition(input: unknown): WorkflowDefinition {
     );
     validator.stringArray(action.systemsTouched, `${path}.systemsTouched`);
     validator.stringArray(action.requiredEvidence, `${path}.requiredEvidence`);
+    if (action.requiredEvidenceValues !== undefined) {
+      const requiredEvidenceValues = validator.record(
+        action.requiredEvidenceValues,
+        `${path}.requiredEvidenceValues`
+      );
+      if (requiredEvidenceValues) {
+        Object.entries(requiredEvidenceValues).forEach(([field, value]) => {
+          if (!field.trim()) {
+            validator.diagnostics.push({
+              code: 'INVALID_VALUE',
+              path: `${path}.requiredEvidenceValues`,
+              message: 'Evidence-value constraint fields must not be empty.'
+            });
+          }
+          validator.evidenceValue(value, `${path}.requiredEvidenceValues.${field}`);
+        });
+      }
+    }
 
     const approval = validator.record(action.approval, `${path}.approval`);
     if (approval) {
