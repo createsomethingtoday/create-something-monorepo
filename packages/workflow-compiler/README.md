@@ -9,7 +9,7 @@ It gives builders a composable governance layer below any hosted control plane. 
 Install the builder artifact in the repository where the workflow will live:
 
 ```bash
-npm install @create-something/workflow-compiler@0.3.0
+npm install @create-something/workflow-compiler@0.3.1
 ```
 
 Copy the shipped Codex skill into that repository, then ask Codex to turn a recurring operating task into a runbook. Codex can propose and revise the local files; the terminal commands below remain the deterministic proof surface:
@@ -52,12 +52,17 @@ they are not proof of a live submission, validation, review, or delivery.
 
 This loop does not execute live actions, contact a provider, read credentials, or make an approval decision. A future execution host must supply its own authenticated transport, policy review, result validation, and receipt retention. The package is designed for Codex and OpenAI-compatible workflows, but it is not an official OpenAI partnership, endorsement, certification, or hosted service.
 
+Read the [System Map](./SYSTEM.md) to explain the complete submission path:
+what the live Marketplace application owns, what the local terminal workflow
+proves, which evidence advances each stage, and where a future authenticated
+execution host begins.
+
 ## Five-minute quickstart
 
 Install the package with a supported Node release:
 
 ```bash
-npm install @create-something/workflow-compiler@0.3.0
+npm install @create-something/workflow-compiler@0.3.1
 ```
 
 Create `workflow.json` and optionally `cases.json` using the versioned schemas documented in [API.md](./API.md). Compile and independently verify a local bundle:

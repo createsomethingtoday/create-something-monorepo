@@ -37,3 +37,21 @@ test('the public quickstart documents the paired local builder loop without a ho
   assert.match(readme, /does not execute live actions/i);
   assert.doesNotMatch(readme, /bounded prototype/i);
 });
+
+test('the shipped System Map explains the Marketplace path without claiming live execution', async () => {
+  const [manifest, readme, systemMap] = await Promise.all([
+    readFile(new URL('../package.json', import.meta.url), 'utf8').then(JSON.parse),
+    readFile(new URL('../README.md', import.meta.url), 'utf8'),
+    readFile(new URL('../SYSTEM.md', import.meta.url), 'utf8')
+  ]);
+
+  assert.ok(manifest.files.includes('SYSTEM.md'));
+  assert.match(readme, /\[System Map\]\(\.\/SYSTEM\.md\)/i);
+  assert.match(systemMap, /Marketplace Submission Cloud/i);
+  assert.match(systemMap, /Validator App preflight/i);
+  assert.match(systemMap, /Airtable Automation handoff/i);
+  assert.match(systemMap, /webhook receipt alone.*not.*handoff/i);
+  assert.match(systemMap, /marketplace reviewer/i);
+  assert.match(systemMap, /does not execute live actions/i);
+  assert.match(systemMap, /authenticated execution host/i);
+});
