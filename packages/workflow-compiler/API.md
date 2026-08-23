@@ -99,6 +99,12 @@ or altered tool cannot become invokable after deserialization. TypeScript
 callers therefore cannot construct a cross-version bundle that would produce a
 legacy report while enforcing v0.2 constraints.
 
+Before v0.2 replay, every action must appear exactly once in the decision
+inventory and governed interaction; controlled actions must appear exactly once
+in approval surfaces, while auto-allowed actions must not. The source-derived
+tool inventory follows the same rule. Unknown and duplicate records are rejected
+before replay or adapter planning can rely on them.
+
 Adapter plans follow the compiled-bundle boundary. v0.1 bundles emit
 `workflow_adapter_plan.v0.1`, whose `governanceReasonCode` uses the legacy
 replay vocabulary. v0.2 bundles emit `workflow_adapter_plan.v0.2`, which may

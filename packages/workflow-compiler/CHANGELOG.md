@@ -71,6 +71,10 @@ artifact schemas.
 - Bind the complete v0.2 tool inventory to source-derived decision contracts so
   deserialized artifacts cannot add, remove, duplicate, or alter an invokable
   tool.
+- Require a complete one-to-one v0.2 action inventory across decision,
+  governed-interaction, approval-surface, and source-derived tool artifacts;
+  replay rejects unknown, duplicate, missing, or inappropriate approval records
+  before they can influence replay or adapter planning.
 
 ## 0.2.0
 

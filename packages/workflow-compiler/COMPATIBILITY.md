@@ -69,6 +69,12 @@ altered tool inventory before an adapter can plan an invocation. The
 corresponding v0.1 contracts reject the fields instead of silently dropping
 them.
 
+v0.2 replay also requires a complete one-to-one inventory: every action appears
+once in both the decision and governed-interaction artifacts, each controlled
+action appears once in approval surfaces, auto-allowed actions have no approval
+surface, and source-derived tool records remain one-to-one. Unknown or duplicate
+records are rejected before replay or adapter planning.
+
 When a v0.2 action supplies an exact evidence value and matcher for the same
 field, that value must satisfy the matcher. Compilation rejects a contradictory
 definition with `EVIDENCE_VALUE_MATCHER_CONFLICT`, and the interaction parser

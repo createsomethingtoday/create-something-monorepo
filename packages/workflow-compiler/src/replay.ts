@@ -169,12 +169,33 @@ function rejectMismatchedNestedArtifactSchemas(bundle: CompiledWorkflowBundle): 
 
 function rejectDivergentNestedGovernanceContracts(bundle: CompiledWorkflowBundle): void {
   if (bundle.schemaVersion !== 'compiled_workflow_bundle.v0.2') return;
-  const governedByActionId = new Map(
-    bundle.governedInteraction.actions.map((action, index) => [action.actionId, { action, index }])
-  );
-  const approvalByActionId = new Map(
-    bundle.approvalSurfaces.actions.map((action, index) => [action.actionId, { action, index }])
-  );
+  const decisionEntriesByActionId = new Map<
+    string,
+    Array<{ index: number; action: typeof bundle.decisionInventory.decisions[number] }>
+  >();
+  bundle.decisionInventory.decisions.forEach((action, index) => {
+    const entries = decisionEntriesByActionId.get(action.actionId) ?? [];
+    entries.push({ action, index });
+    decisionEntriesByActionId.set(action.actionId, entries);
+  });
+  const governedEntriesByActionId = new Map<
+    string,
+    Array<{ index: number; action: typeof bundle.governedInteraction.actions[number] }>
+  >();
+  bundle.governedInteraction.actions.forEach((action, index) => {
+    const entries = governedEntriesByActionId.get(action.actionId) ?? [];
+    entries.push({ action, index });
+    governedEntriesByActionId.set(action.actionId, entries);
+  });
+  const approvalEntriesByActionId = new Map<
+    string,
+    Array<{ index: number; action: typeof bundle.approvalSurfaces.actions[number] }>
+  >();
+  bundle.approvalSurfaces.actions.forEach((action, index) => {
+    const entries = approvalEntriesByActionId.get(action.actionId) ?? [];
+    entries.push({ action, index });
+    approvalEntriesByActionId.set(action.actionId, entries);
+  });
   const decisionByActionId = new Map(
     bundle.decisionInventory.decisions.map((action, index) => [action.actionId, { action, index }])
   );
@@ -185,9 +206,15 @@ function rejectDivergentNestedGovernanceContracts(bundle: CompiledWorkflowBundle
     toolEntriesByActionId.set(action.actionId, entries);
   });
   const diagnostics = [
+    ...[...decisionEntriesByActionId.entries()].flatMap(([actionId, entries]) =>
+      entries.length === 1
+        ? []
+        : [decisionInventoryDiagnostic(actionId, '$.decisionInventory.decisions')]
+    ),
     ...bundle.decisionInventory.decisions.flatMap((decision, decisionIndex) => {
       const decisionPath = `$.decisionInventory.decisions[${decisionIndex}]`;
-      const governed = governedByActionId.get(decision.actionId);
+      const governedEntries = governedEntriesByActionId.get(decision.actionId) ?? [];
+      const governed = governedEntries.length === 1 ? governedEntries[0] : undefined;
       const governedDiagnostics = governed
         ? governanceContractDiagnostics(
             decision,
@@ -195,20 +222,29 @@ function rejectDivergentNestedGovernanceContracts(bundle: CompiledWorkflowBundle
             governed.action,
             `$.governedInteraction.actions[${governed.index}]`
           )
-        : [missingCorrelatedActionDiagnostic(decision.actionId, '$.governedInteraction.actions')];
-      const approval = approvalByActionId.get(decision.actionId);
+        : governedEntries.length === 0
+          ? [missingCorrelatedActionDiagnostic(decision.actionId, '$.governedInteraction.actions')]
+          : [governedInteractionInventoryDiagnostic(decision.actionId, '$.governedInteraction.actions')];
+      const approvalEntries = approvalEntriesByActionId.get(decision.actionId) ?? [];
       const approvalDiagnostics = !governed
         ? []
         : governed.action.autonomy === 'auto_allow'
-          ? []
-          : approval
+          ? approvalEntries.map(({ index }) =>
+              unexpectedApprovalSurfaceDiagnostic(
+                decision.actionId,
+                `$.approvalSurfaces.actions[${index}]`
+              )
+            )
+          : approvalEntries.length === 1
             ? approvalSurfaceContractDiagnostics(
                 governed.action,
                 `$.governedInteraction.actions[${governed.index}]`,
-                approval.action,
-                `$.approvalSurfaces.actions[${approval.index}]`
+                approvalEntries[0].action,
+                `$.approvalSurfaces.actions[${approvalEntries[0].index}]`
               )
-            : [missingCorrelatedActionDiagnostic(decision.actionId, '$.approvalSurfaces.actions')];
+            : approvalEntries.length === 0
+              ? [missingCorrelatedActionDiagnostic(decision.actionId, '$.approvalSurfaces.actions')]
+              : [approvalSurfaceInventoryDiagnostic(decision.actionId, '$.approvalSurfaces.actions')];
       const toolEntries = toolEntriesByActionId.get(decision.actionId) ?? [];
       const toolDiagnostics = decision.toolContract
         ? toolEntries.length === 1
@@ -238,6 +274,30 @@ function rejectDivergentNestedGovernanceContracts(bundle: CompiledWorkflowBundle
         return [unexpectedToolContractDiagnostic(tool.actionId, `$.toolContracts.tools[${toolIndex}]`)];
       }
       return [];
+    }),
+    ...bundle.governedInteraction.actions.flatMap((action, actionIndex) => {
+      const decision = decisionByActionId.get(action.actionId);
+      if (!decision) {
+        return [
+          unexpectedGovernedInteractionDiagnostic(
+            action.actionId,
+            `$.governedInteraction.actions[${actionIndex}]`
+          )
+        ];
+      }
+      return [];
+    }),
+    ...bundle.approvalSurfaces.actions.flatMap((action, actionIndex) => {
+      const decision = decisionByActionId.get(action.actionId);
+      if (!decision) {
+        return [
+          unexpectedApprovalSurfaceDiagnostic(
+            action.actionId,
+            `$.approvalSurfaces.actions[${actionIndex}]`
+          )
+        ];
+      }
+      return [];
     })
   ];
   if (diagnostics.length > 0) throw new ReplayInputValidationError(diagnostics);
@@ -248,6 +308,46 @@ function missingCorrelatedActionDiagnostic(actionId: string, path: string) {
     code: 'INVALID_VALUE' as const,
     path,
     message: `Compiled workflow bundle v0.2 requires a correlated action for ${actionId}.`
+  };
+}
+
+function decisionInventoryDiagnostic(actionId: string, path: string) {
+  return {
+    code: 'INVALID_VALUE' as const,
+    path,
+    message: `Compiled workflow bundle v0.2 requires exactly one decision inventory action for ${actionId}.`
+  };
+}
+
+function governedInteractionInventoryDiagnostic(actionId: string, path: string) {
+  return {
+    code: 'INVALID_VALUE' as const,
+    path,
+    message: `Compiled workflow bundle v0.2 requires exactly one governed interaction action for ${actionId}.`
+  };
+}
+
+function unexpectedGovernedInteractionDiagnostic(actionId: string, path: string) {
+  return {
+    code: 'INVALID_VALUE' as const,
+    path,
+    message: `Compiled workflow bundle v0.2 does not declare a decision for governed interaction action ${actionId}.`
+  };
+}
+
+function approvalSurfaceInventoryDiagnostic(actionId: string, path: string) {
+  return {
+    code: 'INVALID_VALUE' as const,
+    path,
+    message: `Compiled workflow bundle v0.2 requires exactly one approval surface for ${actionId}.`
+  };
+}
+
+function unexpectedApprovalSurfaceDiagnostic(actionId: string, path: string) {
+  return {
+    code: 'INVALID_VALUE' as const,
+    path,
+    message: `Compiled workflow bundle v0.2 does not declare a controlled approval surface for ${actionId}.`
   };
 }
 

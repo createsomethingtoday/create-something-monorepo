@@ -326,6 +326,231 @@ test('replay rejects a v0.2 approval surface whose owner changes after compilati
   );
 });
 
+test('replay rejects an uncompiled action added to a v0.2 governed interaction', async () => {
+  const definition = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const manifest = JSON.parse(await readFile(casesUrl, 'utf8'));
+  definition.schemaVersion = 'workflow_definition.v0.2';
+  const bundle = JSON.parse(JSON.stringify(compileWorkflowDefinition(definition)));
+  const addedActionIndex = bundle.governedInteraction.actions.length;
+  const copiedAction = bundle.governedInteraction.actions.find(
+    (action) => action.actionId === 'approve_template',
+  );
+  assert.ok(copiedAction);
+  bundle.governedInteraction.actions.push({
+    ...copiedAction,
+    actionId: 'uncompiled_action',
+  });
+  const approvalCase = manifest.cases.find(
+    (entry) => entry.caseId === 'approval-waits-for-reviewer',
+  );
+  assert.ok(approvalCase);
+
+  assert.throws(
+    () =>
+      replayWorkflow(bundle, {
+        schemaVersion: manifest.schemaVersion,
+        workflowId: manifest.workflowId,
+        cases: [approvalCase],
+      }),
+    (error) => {
+      assert.equal(error.name, 'ReplayInputValidationError');
+      assert.deepEqual(
+        error.diagnostics.map(({ code, path }) => ({ code, path })),
+        [
+          {
+            code: 'INVALID_VALUE',
+            path: `$.governedInteraction.actions[${addedActionIndex}]`,
+          },
+        ],
+      );
+      return true;
+    },
+  );
+});
+
+test('replay rejects an uncompiled approval surface added to a v0.2 bundle', async () => {
+  const definition = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const manifest = JSON.parse(await readFile(casesUrl, 'utf8'));
+  definition.schemaVersion = 'workflow_definition.v0.2';
+  const bundle = JSON.parse(JSON.stringify(compileWorkflowDefinition(definition)));
+  const addedApprovalIndex = bundle.approvalSurfaces.actions.length;
+  const copiedApproval = bundle.approvalSurfaces.actions.find(
+    (action) => action.actionId === 'approve_template',
+  );
+  assert.ok(copiedApproval);
+  bundle.approvalSurfaces.actions.push({
+    ...copiedApproval,
+    actionId: 'uncompiled_action',
+  });
+  const approvalCase = manifest.cases.find(
+    (entry) => entry.caseId === 'approval-waits-for-reviewer',
+  );
+  assert.ok(approvalCase);
+
+  assert.throws(
+    () =>
+      replayWorkflow(bundle, {
+        schemaVersion: manifest.schemaVersion,
+        workflowId: manifest.workflowId,
+        cases: [approvalCase],
+      }),
+    (error) => {
+      assert.equal(error.name, 'ReplayInputValidationError');
+      assert.deepEqual(
+        error.diagnostics.map(({ code, path }) => ({ code, path })),
+        [
+          {
+            code: 'INVALID_VALUE',
+            path: `$.approvalSurfaces.actions[${addedApprovalIndex}]`,
+          },
+        ],
+      );
+      return true;
+    },
+  );
+});
+
+test('replay rejects a duplicate decision added to a v0.2 inventory', async () => {
+  const definition = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const manifest = JSON.parse(await readFile(casesUrl, 'utf8'));
+  definition.schemaVersion = 'workflow_definition.v0.2';
+  const bundle = JSON.parse(JSON.stringify(compileWorkflowDefinition(definition)));
+  const copiedDecision = bundle.decisionInventory.decisions.find(
+    (decision) => decision.actionId === 'approve_template',
+  );
+  assert.ok(copiedDecision);
+  bundle.decisionInventory.decisions.push(structuredClone(copiedDecision));
+  const approvalCase = manifest.cases.find(
+    (entry) => entry.caseId === 'approval-waits-for-reviewer',
+  );
+  assert.ok(approvalCase);
+
+  assert.throws(
+    () =>
+      replayWorkflow(bundle, {
+        schemaVersion: manifest.schemaVersion,
+        workflowId: manifest.workflowId,
+        cases: [approvalCase],
+      }),
+    (error) => {
+      assert.equal(error.name, 'ReplayInputValidationError');
+      assert.deepEqual(
+        error.diagnostics.map(({ code, path }) => ({ code, path })),
+        [
+          {
+            code: 'INVALID_VALUE',
+            path: '$.decisionInventory.decisions',
+          },
+        ],
+      );
+      return true;
+    },
+  );
+});
+
+test('replay rejects duplicate v0.2 governed, approval, and tool records', async () => {
+  const definition = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const manifest = JSON.parse(await readFile(casesUrl, 'utf8'));
+  definition.schemaVersion = 'workflow_definition.v0.2';
+  const approvalCase = manifest.cases.find(
+    (entry) => entry.caseId === 'approval-waits-for-reviewer',
+  );
+  assert.ok(approvalCase);
+
+  for (const { name, artifact, actionId, path } of [
+    {
+      name: 'governed interaction',
+      artifact: 'governedInteraction',
+      actionId: 'approve_template',
+      path: '$.governedInteraction.actions',
+    },
+    {
+      name: 'approval surface',
+      artifact: 'approvalSurfaces',
+      actionId: 'approve_template',
+      path: '$.approvalSurfaces.actions',
+    },
+    {
+      name: 'tool contract',
+      artifact: 'toolContracts',
+      actionId: 'approve_template',
+      path: '$.toolContracts.tools',
+    },
+  ]) {
+    const bundle = JSON.parse(JSON.stringify(compileWorkflowDefinition(definition)));
+    const records =
+      artifact === 'governedInteraction'
+        ? bundle.governedInteraction.actions
+        : artifact === 'approvalSurfaces'
+          ? bundle.approvalSurfaces.actions
+          : bundle.toolContracts.tools;
+    const copiedRecord = records.find((record) => record.actionId === actionId);
+    assert.ok(copiedRecord);
+    records.push(structuredClone(copiedRecord));
+
+    assert.throws(
+      () =>
+        replayWorkflow(bundle, {
+          schemaVersion: manifest.schemaVersion,
+          workflowId: manifest.workflowId,
+          cases: [approvalCase],
+        }),
+      (error) => {
+        assert.equal(error.name, 'ReplayInputValidationError', name);
+        assert.deepEqual(
+          error.diagnostics.map(({ code, path: diagnosticPath }) => ({ code, path: diagnosticPath })),
+          [{ code: 'INVALID_VALUE', path }],
+          name,
+        );
+        return true;
+      },
+      name,
+    );
+  }
+});
+
+test('replay rejects an approval surface added to an auto-allowed v0.2 action', async () => {
+  const definition = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const manifest = JSON.parse(await readFile(casesUrl, 'utf8'));
+  definition.schemaVersion = 'workflow_definition.v0.2';
+  const bundle = JSON.parse(JSON.stringify(compileWorkflowDefinition(definition)));
+  const addedApprovalIndex = bundle.approvalSurfaces.actions.length;
+  const copiedApproval = bundle.approvalSurfaces.actions.find(
+    (action) => action.actionId === 'approve_template',
+  );
+  assert.ok(copiedApproval);
+  bundle.approvalSurfaces.actions.push({
+    ...copiedApproval,
+    actionId: 'validate_submission',
+  });
+  const validationCase = manifest.cases.find(
+    (entry) => entry.caseId === 'complete-validation-passes',
+  );
+  assert.ok(validationCase);
+
+  assert.throws(
+    () =>
+      replayWorkflow(bundle, {
+        schemaVersion: manifest.schemaVersion,
+        workflowId: manifest.workflowId,
+        cases: [validationCase],
+      }),
+    (error) => {
+      assert.equal(error.name, 'ReplayInputValidationError');
+      assert.deepEqual(
+        error.diagnostics.map(({ code, path }) => ({ code, path })),
+        [
+          {
+            code: 'INVALID_VALUE',
+            path: `$.approvalSurfaces.actions[${addedApprovalIndex}]`,
+          },
+        ],
+      );
+      return true;
+    },
+  );
+});
+
 test('adapter rejects a tool contract added to a v0.2 tool-less action after compilation', async () => {
   const definition = JSON.parse(await readFile(workflowUrl, 'utf8'));
   const manifest = JSON.parse(await readFile(casesUrl, 'utf8'));
