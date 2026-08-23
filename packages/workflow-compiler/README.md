@@ -180,23 +180,23 @@ The output path is a compiler-managed symbolic link to an immutable sibling revi
 Compile an unsigned bundle when content integrity is sufficient:
 
 ```bash
-workflow-compiler compile \
+npx workflow-compiler compile \
   --workflow workflow.json \
   --out .workflow-build
 
-workflow-compiler verify --dir .workflow-build
+npx workflow-compiler verify --dir .workflow-build
 ```
 
 For signer attestation, supply your own Ed25519 private key and a stable key ID. The private key is read for the signing operation and is never copied into the output:
 
 ```bash
-workflow-compiler compile \
+npx workflow-compiler compile \
   --workflow workflow.json \
   --out .workflow-build \
   --signing-key ./private-ed25519.pem \
   --key-id ci-release-2026
 
-workflow-compiler verify \
+npx workflow-compiler verify \
   --dir .workflow-build \
   --public-key ./trusted-public-ed25519.pem
 ```

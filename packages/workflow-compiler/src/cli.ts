@@ -245,9 +245,9 @@ async function main(): Promise<void> {
           next: {
             workingDirectory: starter.dir,
             commands: [
-              'workflow-compiler validate --workflow workflow.json',
-              'workflow-compiler simulate --workflow workflow.json --cases cases.json',
-              'workflow-compiler explain --workflow workflow.json --cases cases.json'
+              'npx workflow-compiler validate --workflow workflow.json',
+              'npx workflow-compiler simulate --workflow workflow.json --cases cases.json',
+              'npx workflow-compiler explain --workflow workflow.json --cases cases.json'
             ]
           }
         },

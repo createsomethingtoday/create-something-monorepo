@@ -10,9 +10,12 @@ test('the shipped Codex skill keeps the paired terminal workflow local, inspecta
 
   assert.ok(manifest.files.includes('skills'));
   assert.match(skill, /^---\nname: workflow-compiler\n/m);
-  assert.match(skill, /workflow-compiler init --template local-runbook --dir/i);
-  assert.match(skill, /workflow-compiler validate --workflow workflow.json/i);
-  assert.match(skill, /workflow-compiler simulate --workflow workflow.json --cases cases.json/i);
+  assert.match(skill, /npx workflow-compiler init --template local-runbook --dir/i);
+  assert.match(skill, /npx workflow-compiler validate --workflow workflow.json/i);
+  assert.match(
+    skill,
+    /npx workflow-compiler simulate --workflow workflow.json --cases cases.json/i
+  );
   assert.match(skill, /does not execute live actions/i);
   assert.match(skill, /explicit approval/i);
   assert.match(skill, /not an official OpenAI partnership/i);

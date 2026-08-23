@@ -26,22 +26,22 @@ simulates, and explains the resulting contract.
    and the action that must stop.
 2. In the builder's chosen new directory, create the local starter:
 
-   workflow-compiler init --template local-runbook --dir WORKFLOW_DIRECTORY
+   npx workflow-compiler init --template local-runbook --dir WORKFLOW_DIRECTORY
 
 3. Read PLAYBOOK.md, RUNBOOK.md, workflow.json, and cases.json before
    proposing changes. Keep the proposed change limited to the requested
    workflow behavior.
 4. Validate the governed definition:
 
-   workflow-compiler validate --workflow workflow.json
+   npx workflow-compiler validate --workflow workflow.json
 
 5. Simulate the historical pass, wait, and stop cases:
 
-   workflow-compiler simulate --workflow workflow.json --cases cases.json
+   npx workflow-compiler simulate --workflow workflow.json --cases cases.json
 
 6. Explain the compiled contract in operator language:
 
-   workflow-compiler explain --workflow workflow.json --cases cases.json
+   npx workflow-compiler explain --workflow workflow.json --cases cases.json
 
 7. Show the changed source and simulation result. Do not add a connected
    runtime or execute a tool merely because the pass case is eligible.
@@ -64,7 +64,7 @@ At the end of a local builder session, leave:
 
 Only compile generated artifacts after the simulation matches expectations:
 
-workflow-compiler compile --workflow workflow.json --cases cases.json --out artifacts
+npx workflow-compiler compile --workflow workflow.json --cases cases.json --out artifacts
 
 The generated artifacts remain local and inspectable. Share only sanitized,
 non-secret examples unless the operator explicitly approves another boundary.

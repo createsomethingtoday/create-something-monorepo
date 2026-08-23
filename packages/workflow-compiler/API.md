@@ -80,13 +80,13 @@ it does not add execution controls.
 ## CLI
 
 ```text
-workflow-compiler compile --workflow <definition.json> [--cases <cases.json>] --out <directory> [--signing-key <private.pem> --key-id <id>]
-workflow-compiler verify --dir <compiled-output> [--public-key <public.pem>]
-workflow-compiler serve --dir <compiled-output> [--port <number>]
-workflow-compiler init --template local-runbook --dir <new-directory>
-workflow-compiler validate --workflow <definition.json>
-workflow-compiler simulate --workflow <definition.json> --cases <cases.json>
-workflow-compiler explain --workflow <definition.json> [--cases <cases.json>]
+npx workflow-compiler compile --workflow <definition.json> [--cases <cases.json>] --out <directory> [--signing-key <private.pem> --key-id <id>]
+npx workflow-compiler verify --dir <compiled-output> [--public-key <public.pem>]
+npx workflow-compiler serve --dir <compiled-output> [--port <number>]
+npx workflow-compiler init --template local-runbook --dir <new-directory>
+npx workflow-compiler validate --workflow <definition.json>
+npx workflow-compiler simulate --workflow <definition.json> --cases <cases.json>
+npx workflow-compiler explain --workflow <definition.json> [--cases <cases.json>]
 ```
 
 `init` writes the fixed local-runbook starter only into a new directory and fails before an overwrite. Its structured response identifies the working directory for the follow-up commands. `validate` compiles one input for inspection, `simulate` requires at least one replay case and exits non-zero when an expectation is unmet, and `explain` renders the resulting decisions as Markdown. They never call a provider, read credentials, execute a live action, or approve a consequential step. `compile` writes only compiler-managed local artifacts; `verify` and `serve` inspect those artifacts.

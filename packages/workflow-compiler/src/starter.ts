@@ -299,13 +299,13 @@ const LOCAL_RUNBOOK_FILES: Record<string, string> = {
     '',
     'Run from this directory:',
     '',
-    'workflow-compiler validate --workflow workflow.json',
-    'workflow-compiler simulate --workflow workflow.json --cases cases.json',
-    'workflow-compiler explain --workflow workflow.json --cases cases.json',
+    'npx workflow-compiler validate --workflow workflow.json',
+    'npx workflow-compiler simulate --workflow workflow.json --cases cases.json',
+    'npx workflow-compiler explain --workflow workflow.json --cases cases.json',
     '',
     'Compile inspectable artifacts only after the simulation matches expectations:',
     '',
-    'workflow-compiler compile --workflow workflow.json --cases cases.json --out artifacts',
+    'npx workflow-compiler compile --workflow workflow.json --cases cases.json --out artifacts',
     ''
   ].join('\n'),
   'RUNBOOK.md': [

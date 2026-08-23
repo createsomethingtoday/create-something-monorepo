@@ -30,9 +30,9 @@ test('the public CLI scaffolds and proves a local-only paired-agent runbook with
       next: {
         workingDirectory: starterDir,
         commands: [
-          'workflow-compiler validate --workflow workflow.json',
-          'workflow-compiler simulate --workflow workflow.json --cases cases.json',
-          'workflow-compiler explain --workflow workflow.json --cases cases.json'
+          'npx workflow-compiler validate --workflow workflow.json',
+          'npx workflow-compiler simulate --workflow workflow.json --cases cases.json',
+          'npx workflow-compiler explain --workflow workflow.json --cases cases.json'
         ]
       }
     });
@@ -52,6 +52,7 @@ test('the public CLI scaffolds and proves a local-only paired-agent runbook with
     assert.match(playbook, /paired Codex agent/i);
     assert.match(runbook, /does not execute live actions/i);
     assert.match(readme, /local-only/i);
+    assert.match(readme, /npx workflow-compiler validate --workflow workflow.json/i);
 
     const validated = run('validate', '--workflow', join(starterDir, 'workflow.json'));
     assert.equal(validated.status, 0, validated.stderr || validated.stdout);
