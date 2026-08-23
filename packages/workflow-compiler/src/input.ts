@@ -294,6 +294,16 @@ export function parseWorkflowDefinition(input: unknown): WorkflowDefinition {
           }
           const matcher = validator.record(value, `${path}.requiredEvidenceMatchers.${field}`);
           if (!matcher) return;
+          const unknownMatcherFields = Object.keys(matcher)
+            .filter((matcherField) => !['kind', 'values'].includes(matcherField))
+            .sort();
+          if (unknownMatcherFields.length > 0) {
+            validator.diagnostics.push({
+              code: 'INVALID_VALUE',
+              path: `${path}.requiredEvidenceMatchers.${field}`,
+              message: `Evidence matcher fields must be kind and values only (unknown: ${unknownMatcherFields.join(', ')}).`
+            });
+          }
           validator.enumeration(
             matcher.kind,
             ['contains_case_insensitive'],

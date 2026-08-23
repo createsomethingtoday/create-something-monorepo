@@ -146,6 +146,32 @@ test('the public workflow parser rejects duplicate evidence matcher values', asy
   );
 });
 
+test('the public workflow parser rejects unknown evidence matcher fields', async () => {
+  const workflow = JSON.parse(await readFile(workflowFixture, 'utf8'));
+  workflow.actions[0].requiredEvidenceMatchers = {
+    published_url: {
+      kind: 'contains_case_insensitive',
+      values: ['example.com'],
+      typo: true
+    }
+  };
+
+  assert.throws(
+    () => parseWorkflowDefinition(workflow),
+    (error) => {
+      assert.equal(error.name, 'WorkflowInputValidationError');
+      assert.deepEqual(error.diagnostics, [
+        {
+          code: 'INVALID_VALUE',
+          path: '$.actions[0].requiredEvidenceMatchers.published_url',
+          message: 'Evidence matcher fields must be kind and values only (unknown: typo).'
+        }
+      ]);
+      return true;
+    }
+  );
+});
+
 for (const collection of [
   'systems',
   'objects',
