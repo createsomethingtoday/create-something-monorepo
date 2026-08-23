@@ -27,8 +27,29 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--workspace", required=True)
     parser.add_argument("--model", required=True)
+    parser.add_argument("--provider", required=True, choices=["openai", "ollama"])
     parser.add_argument("--prompt", required=True)
     return parser.parse_args()
+
+
+def parse_final_json(result: dict) -> dict | None:
+    """Read a JSON-only final answer when a provider does not support structured output."""
+
+    for message in reversed(result.get("messages", [])):
+        content = getattr(message, "content", None)
+        if not isinstance(content, str):
+            continue
+        start = content.find("{")
+        end = content.rfind("}")
+        if start == -1 or end <= start:
+            continue
+        try:
+            parsed = json.loads(content[start : end + 1])
+        except json.JSONDecodeError:
+            continue
+        if isinstance(parsed, dict):
+            return parsed
+    return None
 
 
 def main() -> None:
@@ -37,15 +58,23 @@ def main() -> None:
     if not workspace.is_dir():
         raise ValueError(f"Workspace does not exist: {workspace}")
 
+    model = (
+        args.model
+        if args.model.startswith(f"{args.provider}:")
+        else f"{args.provider}:{args.model}"
+    )
+
     backend = FilesystemBackend(root_dir=workspace, virtual_mode=True)
     agent = create_deep_agent(
-        model=args.model
-        if args.model.startswith("openai:")
-        else f"openai:{args.model}",
+        model=model,
         system_prompt=(
             "You are evaluating a governed operation. Use the read-only filesystem tools to inspect "
             "the supplied evidence before answering. You have no authority to write, execute commands, "
-            "or approve protected work. Produce the required structured result from observed facts only."
+            "or approve protected work. Produce observed facts only. Your final answer must be JSON only, "
+            "with exactly these fields: status (ready, blocked, or unknown), evidence (a non-empty array of "
+            "strings containing source ids), decision (a string), recovery (a string), and "
+            "noWriteConfirmation (the boolean true). Do not rename these fields; do not use snake_case "
+            "aliases, wrap the JSON in Markdown, or add other fields."
         ),
         backend=backend,
         middleware=[
@@ -65,9 +94,12 @@ def main() -> None:
     if isinstance(structured, ComparisonResult):
         payload = structured.model_dump()
     elif isinstance(structured, dict):
-        payload = structured
+        payload = ComparisonResult.model_validate(structured).model_dump()
     else:
-        raise ValueError("Deep Agents returned no structured comparison response")
+        raw_response = parse_final_json(result)
+        if raw_response is None:
+            raise ValueError("Deep Agents returned no structured comparison response")
+        payload = ComparisonResult.model_validate(raw_response).model_dump()
 
     print(json.dumps({"ok": True, "result": payload}, sort_keys=True))
 

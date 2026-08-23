@@ -25,3 +25,28 @@ test('Codex and Deep Agents comparison dry-run exposes one shared, no-write task
     ['evidence-gathering', 'approval-boundary', 'unknown-state-recovery']
   );
 });
+
+test('Deep Agents plus Ornith is a separately labeled local challenger lane', () => {
+  const result = spawnSync(
+    'node',
+    [
+      'scripts/codex-deepagents-comparison.mjs',
+      '--dry-run',
+      '--runtime',
+      'deepagents-ornith',
+      '--json'
+    ],
+    {
+      cwd: ROOT,
+      encoding: 'utf8'
+    }
+  );
+
+  assert.equal(result.status, 0, result.stderr);
+  const report = JSON.parse(result.stdout);
+  assert.deepEqual(report.runtimes, ['deepagents-ornith']);
+  assert.equal(report.model, 'ornith:9b');
+  assert.equal(report.evaluationLane, 'supplementary-model-and-harness');
+  assert.equal(report.modelProvider, 'langchain-ollama==1.1.0');
+  assert.equal(report.noWrite, true);
+});

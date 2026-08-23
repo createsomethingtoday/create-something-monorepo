@@ -13,13 +13,17 @@ const DEFAULT_CASES = 'evals/agent-runtimes/codex-deepagents.cases.json';
 const DEFAULT_OUT_DIR = '.cache/codex-deepagents-comparison';
 const PINNED_DEEPAGENTS_VERSION = '0.7.8';
 const PINNED_LANGCHAIN_OPENAI_VERSION = '1.6.0';
+const PINNED_LANGCHAIN_OLLAMA_VERSION = '1.1.0';
+const DEFAULT_OPENAI_MODEL = 'gpt-5.5';
+const DEFAULT_ORNITH_MODEL = 'ornith:9b';
+const ORNITH_RUNTIME = 'deepagents-ornith';
 
 function parseArgs(argv) {
   const options = {
     casesPath: DEFAULT_CASES,
     outDir: DEFAULT_OUT_DIR,
     runtime: 'compare',
-    model: 'gpt-5.5',
+    model: null,
     repetitions: 1,
     timeoutMs: 90_000,
     dryRun: false,
@@ -46,8 +50,13 @@ function parseArgs(argv) {
     else throw new Error(`Unknown argument: ${arg}`);
   }
 
-  if (!['compare', 'codex', 'deepagents'].includes(options.runtime)) {
-    throw new Error('--runtime must be compare, codex, or deepagents.');
+  if (!['compare', 'codex', 'deepagents', ORNITH_RUNTIME].includes(options.runtime)) {
+    throw new Error('--runtime must be compare, codex, deepagents, or deepagents-ornith.');
+  }
+  options.model ??=
+    options.runtime === ORNITH_RUNTIME ? DEFAULT_ORNITH_MODEL : DEFAULT_OPENAI_MODEL;
+  if (options.runtime === ORNITH_RUNTIME && !options.model.startsWith('ornith:')) {
+    throw new Error('--runtime deepagents-ornith requires an Ornith model tag such as ornith:9b.');
   }
   if (
     !Number.isInteger(options.repetitions) ||
@@ -66,12 +75,13 @@ function usage() {
   console.log(`Usage:
   pnpm agent:runtime-compare -- [options]
 
-Runs the same no-write fixture through Codex and Deep Agents with one OpenAI model.
+Runs a no-write fixture through the same-model Codex/Deep Agents comparison or
+the separately labeled local Deep Agents + Ornith challenger lane.
 
 Options:
   --dry-run                  Validate and describe the shared task pack without model calls.
-  --runtime <name>           compare (default), codex, or deepagents.
-  --model <name>             Shared OpenAI model. Default: gpt-5.5.
+  --runtime <name>           compare (default), codex, deepagents, or deepagents-ornith.
+  --model <name>             OpenAI model, or an Ornith tag for deepagents-ornith. Defaults: gpt-5.5 / ornith:9b.
   --repetitions <1..3>       Run each case this many times. Default: 1.
   --timeout-ms <number>      Per-case runtime limit. Default: 90000.
   --cases <path>             Case file. Default: ${DEFAULT_CASES}.
@@ -97,6 +107,18 @@ function writeJson(filePath, value) {
 
 function selectedRuntimes(runtime) {
   return runtime === 'compare' ? ['codex', 'deepagents'] : [runtime];
+}
+
+function evaluationLane(runtimes) {
+  return runtimes.includes(ORNITH_RUNTIME)
+    ? 'supplementary-model-and-harness'
+    : 'same-model-harness';
+}
+
+function modelProvider(runtimes) {
+  return runtimes.includes(ORNITH_RUNTIME)
+    ? `langchain-ollama==${PINNED_LANGCHAIN_OLLAMA_VERSION}`
+    : `langchain-openai==${PINNED_LANGCHAIN_OPENAI_VERSION}`;
 }
 
 function assertSuite(suite) {
@@ -157,7 +179,7 @@ function codexTokenUsage(text) {
   return match ? Number(match[1].replaceAll(',', '')) : null;
 }
 
-function failureKind(stdout, stderr, processError) {
+function failureKind(stdout, stderr, processError, provider = 'openai') {
   const diagnostic = `${stdout}\n${stderr}\n${processError?.message ?? ''}`.toLowerCase();
   if (
     diagnostic.includes('credit_balance_exhausted') ||
@@ -166,6 +188,14 @@ function failureKind(stdout, stderr, processError) {
     return 'api_quota';
   }
   if (processError?.code === 'ETIMEDOUT') return 'timeout';
+  if (
+    provider === 'ollama' &&
+    (diagnostic.includes('connection refused') ||
+      diagnostic.includes('failed to connect') ||
+      diagnostic.includes('could not connect'))
+  ) {
+    return 'local_model_unavailable';
+  }
   return null;
 }
 
@@ -218,8 +248,12 @@ function runCodex({ workspace, prompt, schemaPath, model, artifactsDir, timeoutM
   };
 }
 
-function runDeepAgents({ workspace, prompt, model, artifactsDir, timeoutMs }) {
+function runDeepAgents({ workspace, prompt, model, provider, runtime, artifactsDir, timeoutMs }) {
   const startedAt = process.hrtime.bigint();
+  const providerDependency =
+    provider === 'ollama'
+      ? `langchain-ollama==${PINNED_LANGCHAIN_OLLAMA_VERSION}`
+      : `langchain-openai==${PINNED_LANGCHAIN_OPENAI_VERSION}`;
   const processResult = spawnSync(
     'uv',
     [
@@ -228,13 +262,15 @@ function runDeepAgents({ workspace, prompt, model, artifactsDir, timeoutMs }) {
       '--with',
       `deepagents==${PINNED_DEEPAGENTS_VERSION}`,
       '--with',
-      `langchain-openai==${PINNED_LANGCHAIN_OPENAI_VERSION}`,
+      providerDependency,
       'python',
       path.join(SCRIPT_DIR, 'deepagents-comparison-agent.py'),
       '--workspace',
       workspace,
       '--model',
       model,
+      '--provider',
+      provider,
       '--prompt',
       prompt
     ],
@@ -246,18 +282,23 @@ function runDeepAgents({ workspace, prompt, model, artifactsDir, timeoutMs }) {
   fs.writeFileSync(path.join(artifactsDir, 'runner.stderr.log'), stderr);
   const envelope = parseJsonValue(stdout);
   return {
-    runtime: 'deepagents',
+    runtime,
     exitCode: processResult.status ?? 1,
     signal: processResult.signal ?? null,
     durationMs: elapsedMs(startedAt),
     rawOutput: stdout,
     parsed: envelope?.result ?? null,
     tokenUsage: envelope?.usage ?? null,
-    error: processResult.error?.message ?? envelope?.error ?? null,
-    failureKind: failureKind(stdout, stderr, processResult.error),
+    error:
+      processResult.error?.message ??
+      envelope?.error ??
+      (processResult.status === 0 ? null : stderr.trim() || null),
+    failureKind: failureKind(stdout, stderr, processResult.error, provider),
     config: {
       sdk: `deepagents==${PINNED_DEEPAGENTS_VERSION}`,
-      modelProvider: `langchain-openai==${PINNED_LANGCHAIN_OPENAI_VERSION}`,
+      modelProvider: providerDependency,
+      evaluationLane:
+        provider === 'ollama' ? 'supplementary-model-and-harness' : 'same-model-harness',
       backend: 'FilesystemBackend virtual_mode=true',
       filesystemTools: ['ls', 'read_file', 'glob', 'grep'],
       writePermissions: 'deny /**'
@@ -268,12 +309,12 @@ function runDeepAgents({ workspace, prompt, model, artifactsDir, timeoutMs }) {
 function assess({ execution, expected, beforeDigest, afterDigest }) {
   const failures = [];
   const result = execution.parsed;
-  const blocked = execution.failureKind === 'api_quota';
+  const blocked = ['api_quota', 'local_model_unavailable'].includes(execution.failureKind);
   if (blocked) {
     return {
       passed: false,
       blocked: true,
-      failures: ['blocked_api_quota'],
+      failures: [`blocked_${execution.failureKind}`],
       fixtureDigestBefore: beforeDigest,
       fixtureDigestAfter: afterDigest,
       fixtureUnchanged: beforeDigest === afterDigest
@@ -333,6 +374,8 @@ function runCase({ suite, entry, runtime, attempt, options, runRoot, schemaPath,
           workspace,
           prompt: entry.prompt,
           model: options.model,
+          provider: runtime === ORNITH_RUNTIME ? 'ollama' : 'openai',
+          runtime,
           artifactsDir,
           timeoutMs: options.timeoutMs
         });
@@ -393,6 +436,9 @@ function main() {
       noWrite: true,
       deepAgentsVersion: PINNED_DEEPAGENTS_VERSION,
       langchainOpenaiVersion: PINNED_LANGCHAIN_OPENAI_VERSION,
+      langchainOllamaVersion: PINNED_LANGCHAIN_OLLAMA_VERSION,
+      evaluationLane: evaluationLane(runtimes),
+      modelProvider: modelProvider(runtimes),
       cases: suite.cases.map(({ id, fixture, expected }) => ({ id, fixture, expected }))
     };
     console.log(JSON.stringify(report));
@@ -434,6 +480,9 @@ function main() {
     noWrite: true,
     deepAgentsVersion: PINNED_DEEPAGENTS_VERSION,
     langchainOpenaiVersion: PINNED_LANGCHAIN_OPENAI_VERSION,
+    langchainOllamaVersion: PINNED_LANGCHAIN_OLLAMA_VERSION,
+    evaluationLane: evaluationLane(runtimes),
+    modelProvider: modelProvider(runtimes),
     platform: { os: process.platform, arch: process.arch, host: os.hostname() },
     receiptPath,
     summary,
