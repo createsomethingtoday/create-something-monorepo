@@ -106,6 +106,64 @@ test('npm auth status names an invalid saved credential without replaying regist
   assert.match(report.nextActions.join('\n'), /replace the saved npm credential/i);
 });
 
+test('npm auth status keeps a saved credential when npm verification cannot reach the registry', () => {
+  const fixture = mkdtempSync(path.join(tmpdir(), 'npm-auth-session-verification-error-'));
+  const userconfig = path.join(fixture, '.npmrc');
+  const npmBin = path.join(fixture, 'npm');
+  const secret = 'npm_verification_error_secret_must_not_appear';
+
+  writeFileSync(userconfig, `//registry.npmjs.org/:_authToken=${secret}\n`);
+  writeExecutable(npmBin, "#!/bin/sh\nprintf '%s\\n' 'npm error code ENOTFOUND' >&2\nexit 1\n");
+
+  const result = run([
+    'status',
+    '--json',
+    '--verify',
+    '--userconfig',
+    userconfig,
+    '--npm-bin',
+    npmBin
+  ]);
+
+  assert.equal(result.status, 1, result.stderr || result.stdout);
+  assert.doesNotMatch(result.stdout, new RegExp(secret));
+  assert.doesNotMatch(result.stderr, new RegExp(secret));
+  const report = JSON.parse(result.stdout);
+  assert.equal(report.ok, false);
+  assert.equal(report.credential.status, 'saved');
+  assert.equal(report.identity.status, 'verification_error');
+  assert.match(report.nextActions.join('\n'), /preserve.*credential/i);
+  assert.doesNotMatch(report.nextActions.join('\n'), /replace the saved npm credential/i);
+});
+
+test('npm auth status keeps a saved credential when the configured npm binary cannot run', () => {
+  const fixture = mkdtempSync(path.join(tmpdir(), 'npm-auth-session-npm-bin-error-'));
+  const userconfig = path.join(fixture, '.npmrc');
+  const missingNpmBin = path.join(fixture, 'missing-npm');
+  const secret = 'npm_missing_bin_secret_must_not_appear';
+
+  writeFileSync(userconfig, `//registry.npmjs.org/:_authToken=${secret}\n`);
+
+  const result = run([
+    'status',
+    '--json',
+    '--verify',
+    '--userconfig',
+    userconfig,
+    '--npm-bin',
+    missingNpmBin
+  ]);
+
+  assert.equal(result.status, 1, result.stderr || result.stdout);
+  assert.doesNotMatch(result.stdout, new RegExp(secret));
+  assert.doesNotMatch(result.stderr, new RegExp(secret));
+  const report = JSON.parse(result.stdout);
+  assert.equal(report.ok, false);
+  assert.equal(report.credential.status, 'saved');
+  assert.equal(report.identity.status, 'verification_error');
+  assert.match(report.nextActions.join('\n'), /preserve.*credential/i);
+});
+
 test('npm auth refuses plaintext HTTP registries before a credential can be used', () => {
   const result = run(['status', '--json', '--registry', 'http://registry.example.test/']);
 
@@ -113,6 +171,23 @@ test('npm auth refuses plaintext HTTP registries before a credential can be used
   const report = JSON.parse(result.stdout);
   assert.equal(report.ok, false);
   assert.match(report.error, /HTTPS/i);
+});
+
+test('npm auth refuses registry URLs that embed credentials without echoing them', () => {
+  const secret = 'registry_url_password_must_not_appear';
+  const result = run([
+    'status',
+    '--json',
+    '--registry',
+    `https://operator:${secret}@registry.example.test/`
+  ]);
+
+  assert.equal(result.status, 1, result.stderr || result.stdout);
+  assert.doesNotMatch(result.stdout, new RegExp(secret));
+  assert.doesNotMatch(result.stderr, new RegExp(secret));
+  const report = JSON.parse(result.stdout);
+  assert.equal(report.ok, false);
+  assert.match(report.error, /credential/i);
 });
 
 test('npm auth save atomically replaces a permissive user config with restricted permissions', () => {

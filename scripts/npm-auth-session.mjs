@@ -25,11 +25,16 @@ export const DEFAULTS = Object.freeze({
 
 const COMMANDS = new Set(['status', 'save']);
 const SCRIPT_CHECKOUT_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const VERIFICATION_ERROR_CODES =
+  /\b(EAI_AGAIN|ECONNABORTED|ECONNREFUSED|ECONNRESET|EHOSTUNREACH|ENETUNREACH|ENOTFOUND|EPIPE|EPROTO|ETIMEDOUT)\b/i;
 
 function normalizeRegistry(value) {
   const registry = new URL(value);
   if (registry.protocol !== 'https:') {
     throw new Error('registry must use HTTPS');
+  }
+  if (registry.username || registry.password) {
+    throw new Error('registry must not include embedded credentials');
   }
   registry.hash = '';
   registry.search = '';
@@ -113,7 +118,13 @@ function captureNpmIdentity(options) {
     ['whoami', '--json', `--registry=${options.registry}`, `--userconfig=${options.userconfig}`],
     { encoding: 'utf8', env: process.env }
   );
-  if (result.status !== 0) return { status: 'invalid' };
+  if (result.error || result.signal) return { status: 'verification_error' };
+  if (result.status !== 0) {
+    const output = `${result.stdout || ''}\n${result.stderr || ''}`;
+    return {
+      status: VERIFICATION_ERROR_CODES.test(output) ? 'verification_error' : 'invalid'
+    };
+  }
 
   try {
     const parsed = JSON.parse((result.stdout || '').trim());
@@ -137,6 +148,12 @@ function statusNextActions(report, verify) {
     return [
       'replace the saved npm credential with a current least-privilege granular token',
       'do not treat npm login, a browser success page, or a saved token line as a verified session'
+    ];
+  }
+  if (verify && report.identity.status === 'verification_error') {
+    return [
+      'retry npm auth verification after registry and network access recover',
+      'preserve the saved credential; do not rotate it solely because verification could not run'
     ];
   }
   if (!verify) {
