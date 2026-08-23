@@ -98,9 +98,14 @@ describe('scheduler public page', () => {
     expect(integration).toContain(
       '<span>Policy</span><strong>Compiler Integration / V1</strong>'
     );
+    expect(integration).toContain('const offerIntent="compiler-integration";');
+    expect(integration).toContain(
+      "history.replaceState({},'',canonicalBookingUrl(state.booking.bookingId));"
+    );
     expect(integration).not.toContain('<h1>Map One Workflow</h1>');
     expect(unknown).toContain('<title>Workflow Mapping Session | CREATE SOMETHING</title>');
     expect(unknown).toContain('<h1>Map One Workflow</h1>');
+    expect(unknown).toContain('const offerIntent=null;');
   });
 
   it('does not offer booking management actions after cancellation', () => {

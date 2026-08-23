@@ -97,6 +97,8 @@ test('the integration CTA resolves to matching Agency and scheduler booking copy
   assert.match(schedulerPage, /Workflow Compiler Integration Fit Call \| CREATE SOMETHING/);
   assert.match(schedulerPage, /Fit One Integration/);
   assert.match(schedulerPage, /Compiler Integration \/ V1/);
+  assert.match(schedulerPage, /canonicalBookingUrl/);
+  assert.match(schedulerPage, /if \(offerIntent\) params\.set\('intent',offerIntent\)/);
   assert.match(schedulerWorker, /intent: url\.searchParams\.get\('intent'\)/);
   assert.match(schedulerWorker, /booking\.context\?\.intent/);
   assert.match(schedulerManageLink, /input\.intent === 'compiler-integration'/);

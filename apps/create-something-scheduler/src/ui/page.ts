@@ -48,6 +48,7 @@ export function schedulerPage(input: {
   intent?: string | null;
 }): string {
   const offer = resolveSchedulerPageOffer(input.intent);
+  const offerIntent = input.intent === 'compiler-integration' ? input.intent : null;
   const configuration = JSON.stringify({
     turnstileSiteKey: input.turnstileSiteKey ?? null
   }).replaceAll('<', '\\u003c');
@@ -191,6 +192,7 @@ export function schedulerPage(input: {
 (() => {
   const renderBookingManagementActions=${renderBookingManagementActions.toString()};
   const config = ${configuration};
+  const offerIntent=${JSON.stringify(offerIntent)};
   const state = { slots: [], selected: null, selectedDay: null, durationMinutes: 30, browserProof: null, booking: null, actionToken: null, mode: 'book', context: null, schedulerSessionId: crypto.randomUUID(), formStarted: false };
   const status = document.querySelector('#status');
   const statusState = document.querySelector('#status-state');
@@ -287,6 +289,7 @@ export function schedulerPage(input: {
   function formatWeekday(value) { return new Intl.DateTimeFormat(undefined,{weekday:'short',timeZone:timezone}).format(new Date(value)); }
   function formatDate(value) { return new Intl.DateTimeFormat(undefined,{month:'short',day:'numeric',timeZone:timezone}).format(new Date(value)); }
   function tokenKey(bookingId) { return 'scheduler:action:' + bookingId; }
+  function canonicalBookingUrl(bookingId) { const params=new URLSearchParams({booking:bookingId}); if (offerIntent) params.set('intent',offerIntent); return location.pathname+'?'+params.toString(); }
   function slotDuration(slot) { return Math.round((new Date(slot.end).getTime()-new Date(slot.start).getTime())/60000); }
   function renderDuration() { durationSummary.textContent=state.durationMinutes+' minutes'; for (const button of durationButtons) { const active=Number(button.dataset.duration)===state.durationMinutes; button.setAttribute('aria-pressed',String(active)); button.disabled=state.mode==='reschedule'&&!active; } }
 
@@ -372,7 +375,7 @@ export function schedulerPage(input: {
       const committed = await api('/api/v1/bookings',{method:'POST',headers:{'x-browser-proof':state.browserProof || ''},body:JSON.stringify({proposalToken:prepared.proposalToken,idempotencyKey:idempotency('browser-book'),explicitIntent:true})});
       state.booking=committed.booking; state.actionToken=committed.actionToken;
       sessionStorage.setItem(tokenKey(state.booking.bookingId),state.actionToken);
-      history.replaceState({},'',location.pathname+'?booking='+encodeURIComponent(state.booking.bookingId));
+      history.replaceState({},'',canonicalBookingUrl(state.booking.bookingId));
       notifyParent('booking_completed',{bookingId:state.booking.bookingId,receiptId:committed.receiptId,durationMinutes:state.durationMinutes});
       showBooking(committed);
     } catch (error) { setStatus(error.message,'stop'); submit.disabled=false; }
