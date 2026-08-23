@@ -220,6 +220,45 @@ test('npm auth save rejects the script checkout when invoked from outside a Git 
   assert.match(report.error, /repository/i);
 });
 
+test('npm auth save allows the default home config when the caller is not in a Git repository', () => {
+  const home = mkdtempSync(path.join(tmpdir(), 'npm-auth-session-home-'));
+  const secret = 'npm_home_secret_must_not_be_printed';
+
+  const result = run(
+    ['save', '--json', '--token-env', 'NPM_AUTH_SESSION_TEST_TOKEN'],
+    { HOME: home, NPM_AUTH_SESSION_TEST_TOKEN: secret },
+    home
+  );
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  assert.doesNotMatch(result.stdout, new RegExp(secret));
+  assert.equal(statSync(path.join(home, '.npmrc')).mode & 0o777, 0o600);
+});
+
+test('npm auth save rejects a config inside the target path Git worktree', () => {
+  const fixture = mkdtempSync(path.join(tmpdir(), 'npm-auth-session-target-worktree-'));
+  const targetRepository = path.join(fixture, 'target-repository');
+  const externalDirectory = path.join(fixture, 'external');
+  const userconfig = path.join(targetRepository, '.npmrc');
+  const secret = 'npm_target_worktree_secret_must_not_be_persisted';
+
+  initializeGitRepository(targetRepository);
+  mkdirSync(externalDirectory);
+  writeFileSync(userconfig, 'keep=this-config-unchanged\n');
+
+  const result = run(
+    ['save', '--json', '--userconfig', userconfig, '--token-env', 'NPM_AUTH_SESSION_TEST_TOKEN'],
+    { NPM_AUTH_SESSION_TEST_TOKEN: secret },
+    externalDirectory
+  );
+
+  assert.equal(result.status, 1, result.stderr || result.stdout);
+  assert.doesNotMatch(result.stdout, new RegExp(secret));
+  assert.equal(readFileSync(userconfig, 'utf8'), 'keep=this-config-unchanged\n');
+  const report = JSON.parse(result.stdout);
+  assert.match(report.error, /repository/i);
+});
+
 test('package scripts expose saved npm auth status and save commands', () => {
   const packageJson = JSON.parse(readFileSync(path.join(repoRoot, 'package.json'), 'utf8'));
 

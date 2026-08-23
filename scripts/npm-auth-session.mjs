@@ -177,18 +177,34 @@ function canonicalPathForWrite(path) {
   return resolve(realpathSync(existingAncestor), ...missingSegments);
 }
 
-function repositoryRoots() {
-  const roots = new Set([
-    canonicalPathForWrite(SCRIPT_CHECKOUT_ROOT),
-    canonicalPathForWrite(process.cwd())
-  ]);
-  const result = spawnSync('git', ['rev-parse', '--show-toplevel'], {
-    cwd: process.cwd(),
+function existingParentDirectory(path) {
+  let directory = dirname(resolve(path));
+
+  while (!existsSync(directory)) {
+    const parent = dirname(directory);
+    if (parent === directory) return directory;
+    directory = parent;
+  }
+
+  return realpathSync(directory);
+}
+
+function gitRootAt(directory) {
+  const result = spawnSync('git', ['-C', directory, 'rev-parse', '--show-toplevel'], {
     encoding: 'utf8'
   });
   if (result.status === 0 && result.stdout.trim()) {
-    roots.add(canonicalPathForWrite(result.stdout.trim()));
+    return canonicalPathForWrite(result.stdout.trim());
   }
+  return null;
+}
+
+function repositoryRoots(userconfig) {
+  const roots = new Set([canonicalPathForWrite(SCRIPT_CHECKOUT_ROOT)]);
+  const callerRoot = gitRootAt(process.cwd());
+  const targetRoot = gitRootAt(existingParentDirectory(userconfig));
+  if (callerRoot) roots.add(callerRoot);
+  if (targetRoot) roots.add(targetRoot);
   return [...roots];
 }
 
@@ -199,7 +215,7 @@ function safeUserconfigPath(userconfig) {
   if (existsSync(configuredPath) && lstatSync(configuredPath).isSymbolicLink()) {
     throw new Error('refusing to save npm credentials through a symbolic-link config');
   }
-  if (repositoryRoots().some((root) => isPathInside(canonicalPath, root))) {
+  if (repositoryRoots(configuredPath).some((root) => isPathInside(canonicalPath, root))) {
     throw new Error('refusing to save npm credentials inside the repository');
   }
 
