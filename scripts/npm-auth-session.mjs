@@ -127,8 +127,17 @@ function npmVerificationEnvironment() {
   const credentialNames = new Set(['NPM_TOKEN', 'NPM_AUTH_TOKEN', 'NODE_AUTH_TOKEN']);
   return Object.fromEntries(
     Object.entries(process.env).filter(
-      ([key]) => !/^npm_config_/i.test(key) && !credentialNames.has(key.toUpperCase())
+      ([key]) => !isCredentialNpmConfig(key) && !credentialNames.has(key.toUpperCase())
     )
+  );
+}
+
+function isCredentialNpmConfig(environmentName) {
+  if (!/^npm_config_/i.test(environmentName)) return false;
+
+  const configName = environmentName.slice('npm_config_'.length).toLowerCase();
+  return ['_auth', '_authtoken', 'username', '_password', 'password', 'email', 'otp'].some(
+    (credentialName) => configName === credentialName || configName.endsWith(`:${credentialName}`)
   );
 }
 

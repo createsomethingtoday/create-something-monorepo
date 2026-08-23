@@ -209,22 +209,28 @@ test('npm auth status rejects an environment-dependent credential entry', () => 
   assert.match(report.error, /environment|interpolated/i);
 });
 
-test('npm auth status removes inherited npm config overrides before verification', () => {
+test('npm auth status removes inherited credential config without dropping private registry transport settings', () => {
   const fixture = mkdtempSync(path.join(tmpdir(), 'npm-auth-session-config-override-'));
   const userconfig = path.join(fixture, '.npmrc');
   const npmBin = path.join(fixture, 'npm');
   const savedSecret = 'npm_saved_config_secret_must_not_appear';
   const overrideSecret = 'npm_environment_override_secret_must_not_appear';
+  const transport = {
+    npm_config_cafile: '/private-ca.pem',
+    npm_config_certfile: '/client-cert.pem',
+    npm_config_keyfile: '/client-key.pem',
+    npm_config_https_proxy: 'https://proxy.example.test:8443'
+  };
 
   writePrivateConfig(userconfig, `//registry.npmjs.org/:_authToken=${savedSecret}\n`);
   writeExecutable(
     npmBin,
-    "#!/bin/sh\nif env | grep -q '^npm_config_//registry.npmjs.org/:_authToken='; then\n  printf '%s\\n' 'npm error environment auth override loaded' >&2\n  exit 1\nfi\nprintf '%s\\n' '{\"username\":\"micah-createsomething\"}'\n"
+    "#!/bin/sh\nif env | grep -q '^npm_config_//registry.npmjs.org/:_authToken='; then\n  printf '%s\\n' 'npm error environment auth override loaded' >&2\n  exit 1\nfi\nif [ \"$npm_config_cafile\" != '/private-ca.pem' ] || [ \"$npm_config_certfile\" != '/client-cert.pem' ] || [ \"$npm_config_keyfile\" != '/client-key.pem' ] || [ \"$npm_config_https_proxy\" != 'https://proxy.example.test:8443' ]; then\n  printf '%s\\n' 'npm error private registry transport settings missing' >&2\n  exit 1\nfi\nprintf '%s\\n' '{\"username\":\"micah-createsomething\"}'\n"
   );
 
   const result = run(
     ['status', '--json', '--verify', '--userconfig', userconfig, '--npm-bin', npmBin],
-    { 'npm_config_//registry.npmjs.org/:_authToken': overrideSecret }
+    { ...transport, 'npm_config_//registry.npmjs.org/:_authToken': overrideSecret }
   );
 
   assert.equal(result.status, 0, result.stderr || result.stdout);
