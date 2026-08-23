@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import {
   chmodSync,
+  linkSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -138,6 +139,35 @@ test('npm auth status rejects a credential file that is readable by other users'
   const report = JSON.parse(result.stdout);
   assert.equal(report.ok, false);
   assert.match(report.error, /permission|readable/i);
+});
+
+test('npm auth status rejects a credential config hard-linked into a Git worktree', () => {
+  const fixture = mkdtempSync(path.join(tmpdir(), 'npm-auth-session-hard-link-'));
+  const externalDirectory = path.join(fixture, 'external');
+  const repository = path.join(fixture, 'repository');
+  const userconfig = path.join(externalDirectory, '.npmrc');
+  const repositoryConfig = path.join(repository, '.npmrc');
+  const npmBin = path.join(fixture, 'npm');
+  const secret = 'npm_hard_link_secret_must_not_appear';
+
+  mkdirSync(externalDirectory);
+  initializeGitRepository(repository);
+  writePrivateConfig(userconfig, `//registry.npmjs.org/:_authToken=${secret}\n`);
+  linkSync(userconfig, repositoryConfig);
+  writeExecutable(npmBin, '#!/bin/sh\nprintf \'%s\\n\' \'{"username":"micah-createsomething"}\'\n');
+
+  const result = run(
+    ['status', '--verify', '--json', '--userconfig', userconfig, '--npm-bin', npmBin],
+    {},
+    externalDirectory
+  );
+
+  assert.equal(result.status, 1, result.stderr || result.stdout);
+  assert.doesNotMatch(result.stdout, new RegExp(secret));
+  assert.doesNotMatch(result.stderr, new RegExp(secret));
+  const report = JSON.parse(result.stdout);
+  assert.equal(report.ok, false);
+  assert.match(report.error, /multiply linked|link/i);
 });
 
 test('npm auth status reports a missing credential from a non-secret permissive config', () => {

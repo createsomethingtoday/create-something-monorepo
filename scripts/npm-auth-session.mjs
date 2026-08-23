@@ -289,8 +289,14 @@ function safeUserconfigPath(userconfig) {
 }
 
 function assertPrivateUserconfig(userconfig) {
-  if (existsSync(userconfig) && (lstatSync(userconfig).mode & 0o077) !== 0) {
+  if (!existsSync(userconfig)) return;
+
+  const configStats = lstatSync(userconfig);
+  if ((configStats.mode & 0o077) !== 0) {
     throw new Error('refusing to use npm credentials from a group- or world-readable config');
+  }
+  if (configStats.nlink > 1) {
+    throw new Error('refusing to use npm credentials from a multiply linked config');
   }
 }
 
