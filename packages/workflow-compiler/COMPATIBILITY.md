@@ -62,8 +62,11 @@ exact-value and matcher constraints in their read-only contracts, while replay
 and interaction artifacts retain the same constraints. Before it evaluates a
 case, replay rejects a deserialized bundle whose nested inventory, interaction,
 tool-contract, or approval-surface schema or evidence constraints do not match
-the correlated decision. The corresponding v0.1 contracts reject the fields
-instead of silently dropping them.
+the correlated decision. A v0.2 decision also embeds the source-derived tool
+contract when one exists, so replay rejects added, removed, duplicated, or
+altered tool inventory before an adapter can plan an invocation. The
+corresponding v0.1 contracts reject the fields instead of silently dropping
+them.
 
 When a v0.2 action supplies an exact evidence value and matcher for the same
 field, that value must satisfy the matcher. Compilation rejects a contradictory

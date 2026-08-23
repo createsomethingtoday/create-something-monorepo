@@ -1,6 +1,8 @@
 import type {
   ApprovalSurfacesArtifactV0_2,
+  CompiledDecisionV0_1,
   CompiledDecisionV0_2,
+  CompiledToolContractV0_2,
   CompiledWorkflowBundle,
   CompiledWorkflowBundleV0_1,
   ClientWorkspaceGovernedInteractionInspectionV0_1,
@@ -74,11 +76,19 @@ void invalidLegacyAction;
 void constrainedDefinition;
 
 declare const constrainedDecision: CompiledDecisionV0_2;
+declare const legacyDecision: CompiledDecisionV0_1;
+declare const constrainedToolContract: CompiledToolContractV0_2;
 declare const constrainedInventory: DecisionInventoryArtifactV0_2;
 declare const constrainedInteraction: GovernedInteractionBundleV0_2;
 declare const constrainedApprovalSurfaces: ApprovalSurfacesArtifactV0_2;
 declare const constrainedToolContracts: ToolContractsArtifactV0_2;
 declare const legacyBundle: CompiledWorkflowBundleV0_1;
+
+const invalidLegacyToolDecision: CompiledDecisionV0_1 = {
+  ...legacyDecision,
+  // @ts-expect-error A v0.1 decision cannot carry a v0.2 source-derived tool contract.
+  toolContract: constrainedToolContract
+};
 
 // @ts-expect-error A v0.1 bundle cannot contain a v0.2 decision inventory.
 const invalidLegacyInventoryBundle: CompiledWorkflowBundle = {
@@ -114,6 +124,7 @@ const constrainedBundle: CompiledWorkflowBundle = {
 };
 
 void constrainedDecision;
+void invalidLegacyToolDecision;
 void invalidLegacyInventoryBundle;
 void invalidLegacyInteractionBundle;
 void invalidLegacyApprovalSurfacesBundle;

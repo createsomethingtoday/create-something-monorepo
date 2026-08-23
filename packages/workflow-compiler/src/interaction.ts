@@ -1,14 +1,14 @@
 import type {
   ActionKind,
   AutonomyClass,
-  CompiledDecision,
-  CompiledDecisionV0_1,
-  CompiledDecisionV0_2,
   WorkflowEvidenceMatcher,
   WorkflowEvidenceValue,
   GovernedInteractionBundle,
   GovernedInteractionBundleV0_1,
   GovernedInteractionBundleV0_2,
+  GovernedInteractionDecision,
+  GovernedInteractionDecisionV0_1,
+  GovernedInteractionDecisionV0_2,
   GovernedInteractionCapability,
   GovernedInteractionOperation,
   GovernedInteractionSurface,
@@ -274,7 +274,7 @@ function parseDecision(
   value: unknown,
   path: string,
   schemaVersion: GovernedInteractionBundle['schemaVersion'],
-): CompiledDecision {
+): GovernedInteractionDecision {
   const decision = object(value, path);
   exactFields(
     decision,
@@ -468,13 +468,13 @@ export function parseGovernedInteractionBundle(input: unknown): GovernedInteract
     return {
       schemaVersion,
       ...common,
-      actions: actions as CompiledDecisionV0_2[],
+      actions: actions as GovernedInteractionDecisionV0_2[],
     };
   }
   return {
     schemaVersion,
     ...common,
-    actions: actions as CompiledDecisionV0_1[],
+    actions: actions as GovernedInteractionDecisionV0_1[],
   };
 }
 
@@ -485,7 +485,7 @@ export function migrateGovernedInteractionBundle(
   return {
     ...structuredClone(bundle),
     schemaVersion: 'governed_interaction_bundle.v0.2',
-    actions: bundle.actions as CompiledDecisionV0_2[]
+    actions: bundle.actions as GovernedInteractionDecisionV0_2[]
   };
 }
 

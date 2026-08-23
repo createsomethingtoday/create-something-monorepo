@@ -127,6 +127,9 @@ test('versions tool contracts when tool actions carry evidence constraints', asy
   const toolContract = compiled.toolContracts.tools.find(
     (tool) => tool.actionId === 'run_published_validation',
   );
+  const decision = compiled.decisionInventory.decisions.find(
+    (entry) => entry.actionId === 'run_published_validation',
+  );
 
   assert.equal(compiled.toolContracts.schemaVersion, 'tool_contracts.v0.2');
   assert.deepEqual(toolContract?.requiredEvidenceValues, {
@@ -135,6 +138,7 @@ test('versions tool contracts when tool actions carry evidence constraints', asy
   assert.deepEqual(toolContract?.requiredEvidenceMatchers, {
     published_url: { kind: 'contains_case_insensitive', values: ['fixture-template'] },
   });
+  assert.deepEqual(decision?.toolContract, toolContract);
 });
 
 test('keeps marketplace write contracts aligned with the production review MCP', async () => {

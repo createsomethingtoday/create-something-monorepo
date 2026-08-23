@@ -92,9 +92,11 @@ can contain only v0.1 decision inventory, governed interaction, tool contracts,
 approval surfaces, and decisions without evidence constraints; a v0.2 bundle
 carries the corresponding v0.2 contracts. Replay also rejects a deserialized
 bundle whose nested artifact schema or evidence constraints do not match the
-correlated v0.2 decision before it evaluates a case. TypeScript callers
-therefore cannot construct a cross-version bundle that would produce a legacy
-report while enforcing v0.2 constraints.
+correlated v0.2 decision before it evaluates a case. The decision embeds the
+source-derived tool contract when one exists, so an added, removed, duplicated,
+or altered tool cannot become invokable after deserialization. TypeScript
+callers therefore cannot construct a cross-version bundle that would produce a
+legacy report while enforcing v0.2 constraints.
 
 Adapter plans follow the compiled-bundle boundary. v0.1 bundles emit
 `workflow_adapter_plan.v0.1`, whose `governanceReasonCode` uses the legacy

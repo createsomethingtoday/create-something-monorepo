@@ -176,6 +176,12 @@ function rejectDivergentNestedEvidenceConstraints(bundle: CompiledWorkflowBundle
   const decisionByActionId = new Map(
     bundle.decisionInventory.decisions.map((action, index) => [action.actionId, { action, index }])
   );
+  const toolEntriesByActionId = new Map<string, Array<{ index: number; action: typeof bundle.toolContracts.tools[number] }>>();
+  bundle.toolContracts.tools.forEach((action, index) => {
+    const entries = toolEntriesByActionId.get(action.actionId) ?? [];
+    entries.push({ action, index });
+    toolEntriesByActionId.set(action.actionId, entries);
+  });
   const diagnostics = [
     ...bundle.decisionInventory.decisions.flatMap((decision, decisionIndex) => {
       const decisionPath = `$.decisionInventory.decisions[${decisionIndex}]`;
@@ -188,29 +194,47 @@ function rejectDivergentNestedEvidenceConstraints(bundle: CompiledWorkflowBundle
             `$.governedInteraction.actions[${governed.index}]`
           )
         : [missingCorrelatedActionDiagnostic(decision.actionId, '$.governedInteraction.actions')];
-      if (decision.autonomy === 'auto_allow') return governedDiagnostics;
       const approval = approvalByActionId.get(decision.actionId);
-      const approvalDiagnostics = approval
-        ? evidenceConstraintDiagnostics(
-            decision,
-            decisionPath,
-            approval.action,
-            `$.approvalSurfaces.actions[${approval.index}]`
-          )
-        : [missingCorrelatedActionDiagnostic(decision.actionId, '$.approvalSurfaces.actions')];
-      return [...governedDiagnostics, ...approvalDiagnostics];
+      const approvalDiagnostics =
+        decision.autonomy === 'auto_allow'
+          ? []
+          : approval
+            ? evidenceConstraintDiagnostics(
+                decision,
+                decisionPath,
+                approval.action,
+                `$.approvalSurfaces.actions[${approval.index}]`
+              )
+            : [missingCorrelatedActionDiagnostic(decision.actionId, '$.approvalSurfaces.actions')];
+      const toolEntries = toolEntriesByActionId.get(decision.actionId) ?? [];
+      const toolDiagnostics = decision.toolContract
+        ? toolEntries.length === 1
+          ? [
+              ...evidenceConstraintDiagnostics(
+                decision,
+                decisionPath,
+                toolEntries[0].action,
+                `$.toolContracts.tools[${toolEntries[0].index}]`
+              ),
+              ...toolContractDiagnostics(
+                decision.toolContract,
+                decisionPath,
+                toolEntries[0].action,
+                `$.toolContracts.tools[${toolEntries[0].index}]`
+              )
+            ]
+          : [toolInventoryDiagnostic(decision.actionId, '$.toolContracts.tools')]
+        : toolEntries.map(({ index }) =>
+            unexpectedToolContractDiagnostic(decision.actionId, `$.toolContracts.tools[${index}]`)
+          );
+      return [...governedDiagnostics, ...approvalDiagnostics, ...toolDiagnostics];
     }),
     ...bundle.toolContracts.tools.flatMap((tool, toolIndex) => {
       const decision = decisionByActionId.get(tool.actionId);
       if (!decision) {
-        return [missingCorrelatedActionDiagnostic(tool.actionId, '$.decisionInventory.decisions')];
+        return [unexpectedToolContractDiagnostic(tool.actionId, `$.toolContracts.tools[${toolIndex}]`)];
       }
-      return evidenceConstraintDiagnostics(
-        decision.action,
-        `$.decisionInventory.decisions[${decision.index}]`,
-        tool,
-        `$.toolContracts.tools[${toolIndex}]`
-      );
+      return [];
     })
   ];
   if (diagnostics.length > 0) throw new ReplayInputValidationError(diagnostics);
@@ -224,6 +248,38 @@ function missingCorrelatedActionDiagnostic(actionId: string, path: string) {
   };
 }
 
+function toolInventoryDiagnostic(actionId: string, path: string) {
+  return {
+    code: 'INVALID_VALUE' as const,
+    path,
+    message: `Compiled workflow bundle v0.2 requires exactly one source-derived tool contract for ${actionId}.`
+  };
+}
+
+function unexpectedToolContractDiagnostic(actionId: string, path: string) {
+  return {
+    code: 'INVALID_VALUE' as const,
+    path,
+    message: `Compiled workflow bundle v0.2 does not declare a tool contract for ${actionId}.`
+  };
+}
+
+function toolContractDiagnostics(
+  source: unknown,
+  sourcePath: string,
+  target: unknown,
+  targetPath: string
+) {
+  if (canonicalizeContract(source) === canonicalizeContract(target)) return [];
+  return [
+    {
+      code: 'INVALID_VALUE' as const,
+      path: targetPath,
+      message: `Tool contract must match the source-derived contract at ${sourcePath}.`
+    }
+  ];
+}
+
 function evidenceConstraintDiagnostics(
   source: EvidenceConstraintCarrier,
   sourcePath: string,
@@ -231,7 +287,7 @@ function evidenceConstraintDiagnostics(
   targetPath: string
 ) {
   return (['requiredEvidenceValues', 'requiredEvidenceMatchers'] as const).flatMap((field) => {
-    if (canonicalizeEvidenceConstraint(source[field]) === canonicalizeEvidenceConstraint(target[field])) {
+    if (canonicalizeContract(source[field]) === canonicalizeContract(target[field])) {
       return [];
     }
     return [
@@ -244,21 +300,21 @@ function evidenceConstraintDiagnostics(
   });
 }
 
-function canonicalizeEvidenceConstraint(value: unknown): string {
-  return JSON.stringify(canonicalizeEvidenceConstraintValue(value));
+function canonicalizeContract(value: unknown): string {
+  return JSON.stringify(canonicalizeContractValue(value));
 }
 
-function canonicalizeEvidenceConstraintValue(value: unknown): unknown {
+function canonicalizeContractValue(value: unknown): unknown {
   if (Array.isArray(value)) {
     return value
-      .map(canonicalizeEvidenceConstraintValue)
+      .map(canonicalizeContractValue)
       .sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)));
   }
   if (value && typeof value === 'object') {
     return Object.fromEntries(
       Object.entries(value)
         .sort(([left], [right]) => left.localeCompare(right))
-        .map(([key, entry]) => [key, canonicalizeEvidenceConstraintValue(entry)])
+        .map(([key, entry]) => [key, canonicalizeContractValue(entry)])
     );
   }
   return value ?? null;

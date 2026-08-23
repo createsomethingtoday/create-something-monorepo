@@ -67,6 +67,9 @@ artifact schemas.
 - Reject a deserialized bundle before replay when its nested inventory,
   interaction, tool-contract, or approval-surface schema or evidence
   constraints do not match the correlated compiled decision.
+- Bind the complete v0.2 tool inventory to source-derived decision contracts so
+  deserialized artifacts cannot add, remove, duplicate, or alter an invokable
+  tool.
 
 ## 0.2.0
 

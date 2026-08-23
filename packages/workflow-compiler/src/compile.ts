@@ -519,20 +519,21 @@ export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundl
   };
 
   if (definition.schemaVersion === 'workflow_definition.v0.2') {
+    const constrainedToolContract = (action: typeof definition.actions[number]) => ({
+      ...toolContract(action),
+      ...(action.requiredEvidenceValues
+        ? { requiredEvidenceValues: sortedEvidenceValues(action.requiredEvidenceValues) }
+        : {}),
+      ...(action.requiredEvidenceMatchers
+        ? { requiredEvidenceMatchers: sortedEvidenceMatchers(action.requiredEvidenceMatchers) }
+        : {})
+    });
     const toolContracts: ToolContractsArtifactV0_2 = {
       schemaVersion: 'tool_contracts.v0.2',
       ...header,
       tools: definition.actions
         .filter((action) => action.tool)
-        .map((action) => ({
-          ...toolContract(action),
-          ...(action.requiredEvidenceValues
-            ? { requiredEvidenceValues: sortedEvidenceValues(action.requiredEvidenceValues) }
-            : {}),
-          ...(action.requiredEvidenceMatchers
-            ? { requiredEvidenceMatchers: sortedEvidenceMatchers(action.requiredEvidenceMatchers) }
-            : {})
-        }))
+        .map(constrainedToolContract)
         .sort(byActionId)
     };
     const approvalSurfaces: ApprovalSurfacesArtifactV0_2 = {
@@ -574,6 +575,7 @@ export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundl
           ...(action.requiredEvidenceMatchers
             ? { requiredEvidenceMatchers: sortedEvidenceMatchers(action.requiredEvidenceMatchers) }
             : {}),
+          ...(action.tool ? { toolContract: constrainedToolContract(action) } : {}),
           ...(action.approval.owner ? { approvalOwner: action.approval.owner } : {}),
           receiptFields: sorted(action.receipt.requiredFields),
           recovery: { ...action.recovery }
@@ -595,7 +597,7 @@ export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundl
           operations: [{ kind: 'select_replay_case' }]
         }
       ],
-      actions: decisionInventory.decisions
+      actions: decisionInventory.decisions.map(({ toolContract: _toolContract, ...decision }) => decision)
     };
     return {
       schemaVersion: 'compiled_workflow_bundle.v0.2',

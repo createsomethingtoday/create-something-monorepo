@@ -221,11 +221,13 @@ interface CompiledDecisionBase {
 export interface CompiledDecisionV0_1 extends CompiledDecisionBase {
   requiredEvidenceValues?: never;
   requiredEvidenceMatchers?: never;
+  toolContract?: never;
 }
 
 export interface CompiledDecisionV0_2 extends CompiledDecisionBase {
   requiredEvidenceValues?: Record<string, WorkflowEvidenceValue>;
   requiredEvidenceMatchers?: Record<string, WorkflowEvidenceMatcher>;
+  toolContract?: CompiledToolContractV0_2;
 }
 
 export type CompiledDecision = CompiledDecisionV0_1 | CompiledDecisionV0_2;
@@ -364,14 +366,22 @@ interface GovernedInteractionBundleBase extends CompiledArtifactHeader {
   surfaces: GovernedInteractionSurface[];
 }
 
+export type GovernedInteractionDecisionV0_1 = Omit<CompiledDecisionV0_1, 'toolContract'>;
+
+export type GovernedInteractionDecisionV0_2 = Omit<CompiledDecisionV0_2, 'toolContract'>;
+
+export type GovernedInteractionDecision =
+  | GovernedInteractionDecisionV0_1
+  | GovernedInteractionDecisionV0_2;
+
 export interface GovernedInteractionBundleV0_1 extends GovernedInteractionBundleBase {
   schemaVersion: 'governed_interaction_bundle.v0.1';
-  actions: CompiledDecisionV0_1[];
+  actions: GovernedInteractionDecisionV0_1[];
 }
 
 export interface GovernedInteractionBundleV0_2 extends GovernedInteractionBundleBase {
   schemaVersion: 'governed_interaction_bundle.v0.2';
-  actions: CompiledDecisionV0_2[];
+  actions: GovernedInteractionDecisionV0_2[];
 }
 
 export type GovernedInteractionBundle =

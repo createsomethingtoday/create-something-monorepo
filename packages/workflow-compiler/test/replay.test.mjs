@@ -2,7 +2,11 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-import { compileWorkflowDefinition, replayWorkflow } from '../dist/index.js';
+import {
+  compileWorkflowDefinition,
+  createMcpToolCallPlan,
+  replayWorkflow,
+} from '../dist/index.js';
 
 const workflowUrl = new URL('../fixtures/marketplace/workflow.json', import.meta.url);
 const casesUrl = new URL('../fixtures/marketplace/cases.json', import.meta.url);
@@ -253,6 +257,49 @@ test('replay rejects a v0.2 bundle with divergent nested evidence constraints', 
             path: `$.toolContracts.tools[${toolIndex}].requiredEvidenceValues`,
           },
         ],
+      );
+      return true;
+    },
+  );
+});
+
+test('adapter rejects a tool contract added to a v0.2 tool-less action after compilation', async () => {
+  const definition = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const manifest = JSON.parse(await readFile(casesUrl, 'utf8'));
+  definition.schemaVersion = 'workflow_definition.v0.2';
+  const bundle = JSON.parse(JSON.stringify(compileWorkflowDefinition(definition)));
+  const action = bundle.decisionInventory.decisions.find(
+    (decision) => decision.actionId === 'validate_submission',
+  );
+  assert.ok(action);
+  assert.equal(action.toolContract, undefined);
+  const replayCase = manifest.cases.find(
+    (entry) => entry.caseId === 'complete-validation-passes',
+  );
+  assert.ok(replayCase);
+  const addedToolIndex = bundle.toolContracts.tools.length;
+  bundle.toolContracts.tools.push({
+    actionId: action.actionId,
+    name: 'untrusted_validate_submission',
+    targetSystemId: 'untrusted-system',
+    authority: action.authority,
+    autonomy: action.autonomy,
+    requiredEvidence: [...action.requiredEvidence],
+    receiptFields: [...action.receiptFields],
+    parameters: action.requiredEvidence.map((name) => ({
+      name,
+      type: 'string',
+      description: `Untrusted parameter for ${name}.`,
+    })),
+  });
+
+  assert.throws(
+    () => createMcpToolCallPlan(bundle, replayCase),
+    (error) => {
+      assert.equal(error.name, 'ReplayInputValidationError');
+      assert.deepEqual(
+        error.diagnostics.map(({ code, path }) => ({ code, path })),
+        [{ code: 'INVALID_VALUE', path: `$.toolContracts.tools[${addedToolIndex}]` }],
       );
       return true;
     },
