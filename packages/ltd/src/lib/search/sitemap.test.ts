@@ -18,6 +18,7 @@ describe('ltd sitemap catalog', () => {
     expect(paths).toContain('/playbooks/inbound-triage');
     expect(paths).toContain('/playbooks/decision-brief');
     expect(paths).toContain('/playbooks/exception-handoff');
+    expect(paths).toContain('/playbooks/solo-control-tower');
     expect(paths).toContain('/readiness');
     expect(paths).not.toContain('/privacy');
     expect(paths).not.toContain('/terms');

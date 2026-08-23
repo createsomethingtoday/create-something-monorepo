@@ -10,10 +10,10 @@ import {
 import { getPlaybook, playbooks } from '../src/lib/operator-library/playbooks.ts';
 import { assessWorkflowReadiness } from '../src/lib/operator-library/readiness.ts';
 
-test('publishes three concrete operator playbooks with an owned execution path', () => {
+test('publishes four concrete operator playbooks with an owned execution path', () => {
 	assert.deepEqual(
 		playbooks.map((playbook) => playbook.slug),
-		['inbound-triage', 'decision-brief', 'exception-handoff']
+		['inbound-triage', 'decision-brief', 'exception-handoff', 'solo-control-tower']
 	);
 
 	for (const playbook of playbooks) {
@@ -25,6 +25,10 @@ test('publishes three concrete operator playbooks with an owned execution path',
 	}
 
 	assert.equal(getPlaybook('decision-brief')?.title, 'Build a decision brief from scattered work');
+	assert.equal(
+		getPlaybook('solo-control-tower')?.title,
+		'Run parallel work lanes without losing the decision'
+	);
 	assert.equal(getPlaybook('not-a-playbook'), undefined);
 });
 

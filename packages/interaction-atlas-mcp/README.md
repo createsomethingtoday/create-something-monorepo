@@ -14,7 +14,7 @@ AI Interaction Atlas mapping server for MCPs and agents with:
 The Atlas composition tools expose the public, registry-backed Arc catalog while keeping
 write authority outside the presentation layer:
 
-- `atlas_composition_list` lists all 54 Arc summaries.
+- `atlas_composition_list` lists all 55 Arc summaries.
 - `atlas_composition_get` resolves a generated Arc or the App Review Governance prototype.
 - `atlas_composition_resolve_map_module` returns the pinned reusable map for any Arc.
 - `atlas_composition_propose_local_action` remains limited to the hand-authored App Review

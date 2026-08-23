@@ -14,9 +14,9 @@ test('every typed public Playbook and Runbook has one stable Arc', () => {
   assert.deepEqual(ARC_CATALOG_COUNTS, {
     hostPlaybooks: 6,
     outcomePlaybooks: 30,
-    operatorPlaybooks: 3,
+    operatorPlaybooks: 4,
     runbooks: 14,
-    generated: 53
+    generated: 54
   });
   assert.equal(ARC_CATALOG.length, ARC_CATALOG_COUNTS.generated);
   assert.equal(new Set(ARC_CATALOG.map((entry) => entry.slug)).size, ARC_CATALOG.length);
@@ -42,6 +42,10 @@ test('catalog lookup and summaries expose read-only presentation metadata', () =
   assert.equal(operator?.source.kind, 'operator-playbook');
   assert.match(operator?.composition.description ?? '', /incoming request/i);
 
+  const controlTower = getArcBySlug('operator-solo-control-tower');
+  assert.equal(controlTower?.source.kind, 'operator-playbook');
+  assert.match(controlTower?.composition.description ?? '', /parallel work lanes/i);
+
   const summaries = listArcSummaries();
   assert.equal(summaries.length, ALL_ARC_CATALOG.length);
   assert.equal('composition' in summaries[0], false);
@@ -49,7 +53,7 @@ test('catalog lookup and summaries expose read-only presentation metadata', () =
 });
 
 test('the public catalog preserves the shipped App Review Arc beside generated coverage', () => {
-  assert.equal(ALL_ARC_CATALOG.length, 54);
+  assert.equal(ALL_ARC_CATALOG.length, 55);
   const appReview = ALL_ARC_CATALOG.find((entry) => entry.slug === 'app-review-governance');
   assert.equal(appReview?.href, '/arc/app-review-governance');
   assert.equal(appReview?.source.kind, 'prototype');
