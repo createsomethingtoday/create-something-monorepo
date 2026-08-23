@@ -134,8 +134,11 @@ it does not add execution controls.
 `GovernedInteractionHostContract` requires an explicit `schemaVersions`
 allowlist alongside its runtime, capability, and operation allowlists. A host
 cannot report a bundle as compatible unless it lists that exact governed
-interaction schema version; the decision otherwise contains
-`UNSUPPORTED_SCHEMA_VERSION`.
+interaction schema version; the evaluator emits
+`governed_interaction_compatibility.v0.2` and otherwise contains
+`UNSUPPORTED_SCHEMA_VERSION`. Historical v0.1 compatibility decisions retain
+their original error vocabulary, so consumers must discriminate decisions by
+`schemaVersion` before reading error codes.
 
 ## CLI
 

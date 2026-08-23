@@ -4,6 +4,7 @@ import type {
   CompiledWorkflowBundleV0_1,
   DecisionInventoryArtifactV0_2,
   GovernedInteractionBundleV0_2,
+  GovernedInteractionCompatibilityDecisionV0_1,
   GovernedInteractionHostContract,
   WorkflowAdapterPlan,
   WorkflowAdapterPlanV0_1,
@@ -129,3 +130,28 @@ const hostWithoutSchemaVersions: GovernedInteractionHostContract = {
 
 void interactionHost;
 void hostWithoutSchemaVersions;
+
+const legacyCompatibilityDecision: GovernedInteractionCompatibilityDecisionV0_1 = {
+  schemaVersion: 'governed_interaction_compatibility.v0.1',
+  compatible: true,
+  hostId: 'legacy-host',
+  language: 'create-something/control',
+  runtimeVersion: '0.1.0',
+  requiredCapabilities: [],
+  requiredOperations: [],
+  errors: []
+};
+
+const invalidLegacyCompatibilityDecision: GovernedInteractionCompatibilityDecisionV0_1 = {
+  ...legacyCompatibilityDecision,
+  errors: [
+    {
+      // @ts-expect-error Schema-support errors require compatibility decision v0.2.
+      code: 'UNSUPPORTED_SCHEMA_VERSION',
+      value: 'governed_interaction_bundle.v0.2'
+    }
+  ]
+};
+
+void legacyCompatibilityDecision;
+void invalidLegacyCompatibilityDecision;

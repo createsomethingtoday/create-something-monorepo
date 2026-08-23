@@ -67,6 +67,9 @@ When moving a delivery host to v0.2, update its
 host has validated the v0.2 parser and renderer. Compatibility intentionally
 reports `UNSUPPORTED_SCHEMA_VERSION` until the exact interaction schema is
 declared; do not treat matching runtime or capability lists as version support.
+The resulting compatibility receipt is
+`governed_interaction_compatibility.v0.2`; preserve historical v0.1 decisions
+and branch on the decision schema before interpreting its error vocabulary.
 
 Adapter plans are derived from that same replay. Recompile and replay a migrated
 definition before requesting a new plan: only v0.2 bundles emit

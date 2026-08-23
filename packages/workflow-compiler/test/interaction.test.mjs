@@ -180,7 +180,7 @@ test('returns one normalized compatibility decision for a finite desktop host', 
       operations: ['select_replay_case'],
     }),
     {
-      schemaVersion: 'governed_interaction_compatibility.v0.1',
+      schemaVersion: 'governed_interaction_compatibility.v0.2',
       compatible: true,
       hostId: 'atlas-studio',
       language: 'create-something/control',

@@ -69,7 +69,11 @@ export type { WorkflowReplayArtifacts } from './replay.js';
 export type { WorkflowAdapterErrorCode } from './adapters.js';
 export type {
   GovernedInteractionCompatibilityDecision,
+  GovernedInteractionCompatibilityDecisionV0_1,
+  GovernedInteractionCompatibilityDecisionV0_2,
   GovernedInteractionCompatibilityErrorCode,
+  GovernedInteractionCompatibilityErrorCodeV0_1,
+  GovernedInteractionCompatibilityErrorCodeV0_2,
   GovernedInteractionHostContract,
   GovernedInteractionValidationCode
 } from './interaction.js';

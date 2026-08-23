@@ -39,6 +39,10 @@ artifact schemas.
 - Require interaction hosts to explicitly allowlist supported governed-
   interaction schemas; compatibility rejects an undeclared schema version
   rather than assuming matching runtime, capability, and operation support.
+- Version compatibility decisions as
+  `governed_interaction_compatibility.v0.2` before emitting the expanded
+  schema-support error vocabulary; historical v0.1 decisions remain readable
+  with their original errors.
 
 ## 0.2.0
 

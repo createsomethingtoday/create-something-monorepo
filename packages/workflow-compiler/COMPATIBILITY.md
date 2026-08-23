@@ -32,6 +32,12 @@ Interaction hosts must independently declare their supported
 whose exact schema is absent from that host allowlist; matching language,
 runtime, capabilities, and operations alone is not sufficient.
 
+Compatibility decisions have their own schema boundary. Historical
+`governed_interaction_compatibility.v0.1` decisions retain the original error
+vocabulary. The evaluator emits `governed_interaction_compatibility.v0.2` when
+it can report `UNSUPPORTED_SCHEMA_VERSION`; consumers must branch on that
+decision `schemaVersion` rather than apply v0.2 error codes to a v0.1 result.
+
 ### Workflow and interaction v0.2
 
 `workflow_definition.v0.1` remains readable but rejects

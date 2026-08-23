@@ -39,13 +39,19 @@ export class GovernedInteractionValidationError extends Error {
 
 type JsonObject = Record<string, unknown>;
 
-export type GovernedInteractionCompatibilityErrorCode =
+export type GovernedInteractionCompatibilityErrorCodeV0_1 =
   | 'DEFINITION_HASH_MISMATCH'
   | 'UNSUPPORTED_CAPABILITY'
   | 'UNSUPPORTED_LANGUAGE'
   | 'UNSUPPORTED_OPERATION'
-  | 'UNSUPPORTED_RUNTIME_VERSION'
+  | 'UNSUPPORTED_RUNTIME_VERSION';
+
+export type GovernedInteractionCompatibilityErrorCodeV0_2 =
+  | GovernedInteractionCompatibilityErrorCodeV0_1
   | 'UNSUPPORTED_SCHEMA_VERSION';
+
+export type GovernedInteractionCompatibilityErrorCode =
+  GovernedInteractionCompatibilityErrorCodeV0_2;
 
 export interface GovernedInteractionHostContract {
   hostId: string;
@@ -57,8 +63,11 @@ export interface GovernedInteractionHostContract {
   definitionHashes?: Record<string, string>;
 }
 
-export interface GovernedInteractionCompatibilityDecision {
-  schemaVersion: 'governed_interaction_compatibility.v0.1';
+interface GovernedInteractionCompatibilityDecisionBase<
+  TSchemaVersion extends string,
+  TErrorCode extends GovernedInteractionCompatibilityErrorCode,
+> {
+  schemaVersion: TSchemaVersion;
   compatible: boolean;
   hostId: string;
   language: GovernedInteractionBundle['language'];
@@ -66,10 +75,26 @@ export interface GovernedInteractionCompatibilityDecision {
   requiredCapabilities: GovernedInteractionCapability[];
   requiredOperations: Array<GovernedInteractionOperation['kind']>;
   errors: Array<{
-    code: GovernedInteractionCompatibilityErrorCode;
+    code: TErrorCode;
     value: string;
   }>;
 }
+
+export interface GovernedInteractionCompatibilityDecisionV0_1
+  extends GovernedInteractionCompatibilityDecisionBase<
+    'governed_interaction_compatibility.v0.1',
+    GovernedInteractionCompatibilityErrorCodeV0_1
+  > {}
+
+export interface GovernedInteractionCompatibilityDecisionV0_2
+  extends GovernedInteractionCompatibilityDecisionBase<
+    'governed_interaction_compatibility.v0.2',
+    GovernedInteractionCompatibilityErrorCodeV0_2
+  > {}
+
+export type GovernedInteractionCompatibilityDecision =
+  | GovernedInteractionCompatibilityDecisionV0_1
+  | GovernedInteractionCompatibilityDecisionV0_2;
 
 const CAPABILITIES: readonly GovernedInteractionCapability[] = [
   'interaction.select',
@@ -438,7 +463,7 @@ export function migrateGovernedInteractionBundle(
 export function evaluateGovernedInteractionCompatibility(
   input: unknown,
   host: GovernedInteractionHostContract,
-): GovernedInteractionCompatibilityDecision {
+): GovernedInteractionCompatibilityDecisionV0_2 {
   const bundle = parseGovernedInteractionBundle(input);
   const requiredCapabilities = [...bundle.capabilities].sort();
   const requiredOperations = [
@@ -448,7 +473,7 @@ export function evaluateGovernedInteractionCompatibility(
       ),
     ),
   ].sort();
-  const errors: GovernedInteractionCompatibilityDecision['errors'] = [];
+  const errors: GovernedInteractionCompatibilityDecisionV0_2['errors'] = [];
 
   if (host.language !== bundle.language) {
     errors.push({ code: 'UNSUPPORTED_LANGUAGE', value: bundle.language });
@@ -475,7 +500,7 @@ export function evaluateGovernedInteractionCompatibility(
   }
 
   return {
-    schemaVersion: 'governed_interaction_compatibility.v0.1',
+    schemaVersion: 'governed_interaction_compatibility.v0.2',
     compatible: errors.length === 0,
     hostId: host.hostId,
     language: bundle.language,
