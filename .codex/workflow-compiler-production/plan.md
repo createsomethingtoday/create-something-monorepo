@@ -3,11 +3,11 @@
 ## Current state
 
 - Goal status: active
-- Active phase: 4
-- Active Linear issue: CRE-1833
-- Worktree: `/private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/cre-1833-agent-worktree`
-- Branch: `codex/CRE-1833-agent-worktree`
-- Base: `origin/main` at `0ae97f62741f8a3302af3c22a7b59532a0f49a40`
+- Active phase: 5
+- Active Linear issue: CRE-1836
+- Worktree: `/private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/cre-1836-agent-worktree`
+- Branch: `codex/CRE-1836-agent-worktree`
+- Base: `origin/main` at `070e7bc48b05fe85643ee95e1866eb4280eb96b8`
 
 ## Phases
 
@@ -49,17 +49,17 @@
 - [x] Prove pass, wait, and stop outcomes without network or external mutation.
 - [x] Promote through review and record CRE-1837 evidence.
 
-### 4. Ship CI, docs, and release gates — in progress
+### 4. Ship CI, docs, and release gates — complete
 
 - [x] Claim CRE-1833 in an exact-main issue worktree.
 - [x] Add five-minute quickstart, API reference, examples, compatibility policy, and upgrade policy.
 - [x] Add supported Node matrix, real CI entrypoint, npm metadata, package inventory, and clean-tarball consumers.
 - [x] Add trusted-publication workflow using the established staged approval and provenance pattern.
-- [ ] Prove the release candidate and promote through review with CRE-1833 evidence.
+- [x] Prove the release candidate and promote through review with CRE-1833 evidence.
 
-### 5. Publish and independently verify npm — pending
+### 5. Publish and independently verify npm — in progress
 
-- [ ] Claim CRE-1836 and rebase release preparation on exact protected `main`.
+- [x] Claim CRE-1836 and rebase release preparation on exact protected `main`.
 - [ ] Verify staged artifact, version, tag, changelog, license, repository metadata, and rollback plan.
 - [ ] Run the approved trusted publication path; surface human passkey/security-key confirmation if npm requires it.
 - [ ] Independently read back registry metadata, dist-tag, provenance, and trusted-publisher state.
@@ -144,3 +144,13 @@
 - 2026-08-22: PR #1496's new Node 22 and Node 24 clean-consumer jobs passed, but the repository strict check exposed an engine-integration regression: pnpm 9 on the existing Node 20 workspace lane refuses to build any downstream package when one workspace package declares a Node 22-only engine. The install floor was restored to `>=20` without changing the declared or exercised production matrix; Node 20 remains explicitly unsupported for production.
 - 2026-08-22: The first engine-floor remediation CI run exposed a stale negative-test mutation that changed the engine to its new valid value, so both Node matrix jobs correctly reported 86/87. The regression now mutates the manifest to unsupported Node 18 and again proves the release validator fails closed.
 - 2026-08-22: Exact-head review on `2b856305f6679b9073381959195cefd7ec6a9489` identified a ranged-toolchain rebuild gap and a beta quickstart that targeted the absent `latest` tag. The package now commits an npm lock whose root metadata and registry integrity records are release-validated, both PR and stage lanes pin npm `11.15.0` and install only through `npm ci`, and the beta quickstart installs `@bootstrap`. A linked or non-registry toolchain lock fails closed. Local gates pass 89/89, deterministic acceptance, and clean 63-file consumers on Node 22/24.
+- 2026-08-22: PR #1496 received a clean exact-head Codex review on `30dc88153013d07cbb91f2e9223114ab8f6100c2`. The Node 22/24 release matrix, package legibility, dependency-vulnerability rejection, immutable-action review, MCP tests and registry, Public Distribution GA, Philosophical Code Review, strict workspace check, and both Socket checks passed; the dispatch-only publish job correctly skipped on the pull request. Protected `main` advanced to merge `070e7bc48b05fe85643ee95e1866eb4280eb96b8`.
+- 2026-08-22: CRE-1833 was closed with review, CI, merge, and worktree-disposition evidence; its issue worktree was removed.
+- 2026-08-22: CRE-1836 was claimed and bootstrapped in a new issue worktree based on exact protected `origin/main` merge `070e7bc48b05fe85643ee95e1866eb4280eb96b8`.
+- 2026-08-22: npm preflight proved registry `https://registry.npmjs.org/`, authenticated maintainer `micah-createsomething`, account 2FA mode `auth-and-writes`, verified email, `create-something` organization owner membership, and the package name absent before bootstrap. The reviewed beta tarball packs 63 files with zero runtime dependencies, npm integrity `sha512-8kDKk90/KXfhZndHjmLdCLDbTflovKD4YjAxBVAs4JdKp4F+0yj3Ya4BLIcg+b52Z7PAjNG42pZvAflJSinfSA==`, SHA-1 `0b54b65a48452f64a1a01701168009f606defd25`, and SHA-256 `1d6d10e02d588dbccefb9cd172e71b9c3459ea49b864a0edda7bc94b255d5267`; two packs were byte-identical.
+- 2026-08-22: The one-time bootstrap publish required and received the maintainer's npm passkey approval. The npm package page and fresh registry-origin readback prove public `0.1.0-beta.0`, MIT, correct monorepo directory, zero dependencies, exact tarball integrity, and `bootstrap` tag. npm also assigned `latest` to the first-ever package version despite the requested non-default tag; removal remains required before stable promotion so the beta is not the default install.
+- 2026-08-22: The GitHub trusted publisher was created for `createsomethingtoday/create-something-monorepo`, workflow `workflow-compiler-public-release.yml`, environment `npm-public`, and only `createStagedPackage`; no direct-publish permission was granted. Independent `npm trust list` readback is awaiting its separate passkey approval.
+- 2026-08-22: Stable `0.1.0` preparation began test-first: the release manifest and exact-version quickstart assertions failed against beta metadata, then passed after versioning package metadata and lock state, adding the stable changelog entry, and pinning the stable README to exact `@0.1.0`. A second red-to-green release-contract test records the implicit first-package `latest` tag, the attempted removal command, and the bounded fallback when npm rejects removing its only default tag. Exact stable gates pass on Node `v22.23.1` and `v24.11.0`: TypeScript, 90/90 tests, deterministic 18-artifact acceptance, and clean 63-file consumers with an MCP `pass` disposition. Two post-review stable packs were byte-identical at SHA-256 `222dd5ad539860b06960a0a3b2e2bcdc8898404ecf14de44c99a81c532e51128`.
+- 2026-08-22: A passkey-authorized `npm dist-tag rm @create-something/workflow-compiler latest` attempt reached the registry but returned HTTP 400, leaving the beta as npm's mandatory current default. The immutable beta was not unpublished and the command was not retried blindly. The release remains incomplete until the reviewed, provenance-backed stable `0.1.0` replaces `latest`; public beta instructions remain pinned to `@bootstrap` meanwhile.
+- 2026-08-22: Exact-commit Codex review on `6ad93363288945968f6a834efbdc9c748e5e00b7` identified that an unqualified stable README command on protected `main` would resolve the temporary beta `latest` during the interval before staged approval. A red public release-contract assertion reproduces the gap. The stable README now pins exact `@0.1.0`; it cannot install the beta, becomes resolvable only after stable approval, and leaves any later unqualified-install simplification to a post-registry-proof change.
+- 2026-08-22: Superseding exact-commit review on `3f3abd3186bbc490bf54184baed8fc352ddd3ca5` found that the stable quickstart assertion also accepted a prerelease suffix after `0.1.0`. The release contract now requires a line or file boundary immediately after the exact version, so `0.1.0-beta.0` cannot satisfy the stable publication gate; all eight focused release-contract tests pass.

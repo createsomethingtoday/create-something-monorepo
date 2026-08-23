@@ -4,6 +4,13 @@ All notable changes to this package are documented here. This project follows
 Semantic Versioning for its npm API and separately versions its workflow and
 artifact schemas.
 
+## 0.1.0
+
+- Promote the audited bootstrap candidate to the first stable builder release.
+- Preserve the exact local/CI compiler, independent verification, MCP and
+  OpenAI/Codex adapter, and stage-only trusted-publication contracts proven by
+  `0.1.0-beta.0`.
+
 ## 0.1.0-beta.0
 
 - Add versioned workflow and replay parsers with stable diagnostics.

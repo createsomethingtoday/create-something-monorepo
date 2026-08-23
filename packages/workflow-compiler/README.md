@@ -9,7 +9,7 @@ It gives builders a composable governance layer below any hosted control plane. 
 Install the package with a supported Node release:
 
 ```bash
-npm install @create-something/workflow-compiler@bootstrap
+npm install @create-something/workflow-compiler@0.1.0
 ```
 
 Create `workflow.json` and optionally `cases.json` using the versioned schemas documented in [API.md](./API.md). Compile and independently verify a local bundle:
