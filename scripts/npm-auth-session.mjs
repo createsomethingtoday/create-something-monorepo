@@ -49,8 +49,16 @@ function authKeyForRegistry(registryValue) {
   return `//${registry.host}${registry.pathname}:_authToken`;
 }
 
+function npmConfigEnvironmentValue(name) {
+  const expected = `npm_config_${name}`.toLowerCase();
+  for (const [key, value] of Object.entries(process.env)) {
+    if (key.toLowerCase() === expected && value) return value;
+  }
+  return undefined;
+}
+
 function defaultUserconfig() {
-  return process.env.NPM_CONFIG_USERCONFIG || join(homedir(), '.npmrc');
+  return npmConfigEnvironmentValue('userconfig') || join(homedir(), '.npmrc');
 }
 
 export function parseArgs(argv) {
@@ -180,7 +188,6 @@ function statusNextActions(report, verify) {
 
 export function npmAuthStatus(options) {
   const userconfig = safeUserconfigPath(options.userconfig);
-  assertPrivateUserconfig(userconfig);
   const verifiedOptions = { ...options, userconfig };
   const { environmentDependent, ...credential } = savedCredential(
     readConfig(userconfig),
@@ -189,6 +196,7 @@ export function npmAuthStatus(options) {
   if (environmentDependent) {
     throw new Error('refusing to use an environment-dependent npm credential');
   }
+  if (credential.status === 'saved') assertPrivateUserconfig(userconfig);
   const identity =
     options.verify && credential.status === 'saved'
       ? captureNpmIdentity(verifiedOptions)

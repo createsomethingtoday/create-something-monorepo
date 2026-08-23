@@ -5,6 +5,7 @@ import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  realpathSync,
   statSync,
   symlinkSync,
   writeFileSync
@@ -99,6 +100,29 @@ test('npm auth status does not report a saved credential ready until it is verif
   assert.match(report.nextActions.join('\n'), /--verify/);
 });
 
+test('npm auth status honors a lowercase npm config userconfig override', () => {
+  const fixture = mkdtempSync(path.join(tmpdir(), 'npm-auth-session-lowercase-userconfig-'));
+  const home = path.join(fixture, 'home');
+  const userconfig = path.join(fixture, 'custom.npmrc');
+  const npmBin = path.join(fixture, 'npm');
+  const secret = 'npm_lowercase_userconfig_secret_must_not_appear';
+
+  mkdirSync(home);
+  writePrivateConfig(userconfig, `//registry.npmjs.org/:_authToken=${secret}\n`);
+  writeExecutable(npmBin, '#!/bin/sh\nprintf \'%s\\n\' \'{"username":"micah-createsomething"}\'\n');
+
+  const result = run(['status', '--json', '--verify', '--npm-bin', npmBin], {
+    HOME: home,
+    npm_config_userconfig: userconfig
+  });
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  assert.doesNotMatch(result.stdout, new RegExp(secret));
+  const report = JSON.parse(result.stdout);
+  assert.equal(report.userconfig.path, realpathSync(userconfig));
+  assert.deepEqual(report.identity, { status: 'verified', username: 'micah-createsomething' });
+});
+
 test('npm auth status rejects a credential file that is readable by other users', () => {
   const fixture = mkdtempSync(path.join(tmpdir(), 'npm-auth-session-permissions-'));
   const userconfig = path.join(fixture, '.npmrc');
@@ -114,6 +138,23 @@ test('npm auth status rejects a credential file that is readable by other users'
   const report = JSON.parse(result.stdout);
   assert.equal(report.ok, false);
   assert.match(report.error, /permission|readable/i);
+});
+
+test('npm auth status reports a missing credential from a non-secret permissive config', () => {
+  const fixture = mkdtempSync(path.join(tmpdir(), 'npm-auth-session-permissive-missing-'));
+  const userconfig = path.join(fixture, '.npmrc');
+
+  writeFileSync(userconfig, '@create-something:registry=https://registry.npmjs.org/\n');
+  chmodSync(userconfig, 0o644);
+
+  const result = run(['status', '--json', '--userconfig', userconfig]);
+
+  assert.equal(result.status, 1, result.stderr || result.stdout);
+  const report = JSON.parse(result.stdout);
+  assert.equal(report.credential.status, 'missing');
+  assert.equal(report.userconfig.status, 'present');
+  assert.equal(report.error, undefined);
+  assert.match(report.nextActions.join('\n'), /save it once/i);
 });
 
 test('npm auth status rejects an environment-dependent credential entry', () => {
