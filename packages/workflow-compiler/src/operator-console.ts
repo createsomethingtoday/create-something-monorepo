@@ -51,7 +51,7 @@ export function createOperatorConsoleData(
   bundle: CompiledWorkflowBundle,
   replay: WorkflowReplayArtifacts,
 ): WorkflowOperatorConsoleData {
-  const common = {
+  const common = () => ({
     workflowId: bundle.workflowId,
     workflowVersion: bundle.workflowVersion,
     definitionHash: bundle.definitionHash,
@@ -61,15 +61,16 @@ export function createOperatorConsoleData(
     owners: bundle.owners,
     workflowMap: bundle.workflowMap,
     acceptanceSummary: createAcceptanceSummary(bundle, replay.report),
-  };
+  });
 
   if (bundle.schemaVersion === 'compiled_workflow_bundle.v0.3') {
     if (replay.report.schemaVersion !== 'workflow_replay_report.v0.3') {
       throw new Error('Operator console requires matching compiled bundle and replay report schema versions.');
     }
+    assertReplayReportMatchesBundle(bundle, replay.report);
     return {
       schemaVersion: 'workflow_operator_console.v0.3',
-      ...common,
+      ...common(),
       decisionInventory: bundle.decisionInventory,
       approvalSurfaces: bundle.approvalSurfaces,
       replayReport: replay.report,
@@ -80,9 +81,10 @@ export function createOperatorConsoleData(
     if (replay.report.schemaVersion !== 'workflow_replay_report.v0.2') {
       throw new Error('Operator console requires matching compiled bundle and replay report schema versions.');
     }
+    assertReplayReportMatchesBundle(bundle, replay.report);
     return {
       schemaVersion: 'workflow_operator_console.v0.2',
-      ...common,
+      ...common(),
       decisionInventory: bundle.decisionInventory,
       approvalSurfaces: bundle.approvalSurfaces,
       replayReport: replay.report,
@@ -92,13 +94,27 @@ export function createOperatorConsoleData(
   if (replay.report.schemaVersion !== 'workflow_replay_report.v0.1') {
     throw new Error('Operator console requires matching compiled bundle and replay report schema versions.');
   }
+  assertReplayReportMatchesBundle(bundle, replay.report);
   return {
     schemaVersion: 'workflow_operator_console.v0.1',
-    ...common,
+    ...common(),
     decisionInventory: bundle.decisionInventory,
     approvalSurfaces: bundle.approvalSurfaces,
     replayReport: replay.report,
   };
+}
+
+function assertReplayReportMatchesBundle(
+  bundle: CompiledWorkflowBundle,
+  report: WorkflowReplayArtifacts['report'],
+): void {
+  if (
+    report.workflowId !== bundle.workflowId ||
+    report.workflowVersion !== bundle.workflowVersion ||
+    report.definitionHash !== bundle.definitionHash
+  ) {
+    throw new Error('Operator console requires matching compiled bundle and replay report workflow identity.');
+  }
 }
 
 export const OPERATOR_CONSOLE_CSS = `:root { color-scheme: dark; --bg:#0a0b0d; --panel:#111318; --line:#272b33; --text:#f2f4f7; --muted:#9aa3b2; --pass:#63d297; --wait:#f0bb5b; --block:#ee7777; }

@@ -117,3 +117,23 @@ test('rejects a console that would combine v0.2 bundle data with a v0.1 replay r
     /matching compiled bundle and replay report schema versions/,
   );
 });
+
+test('rejects a console that would combine a bundle with another workflow replay report', async () => {
+  const definition = JSON.parse(await readFile(workflowPath, 'utf8'));
+  const cases = JSON.parse(await readFile(casesPath, 'utf8'));
+  const bundle = compileWorkflowDefinition(definition);
+  const alternateWorkflowId = 'webflow.marketplace.template-lifecycle.alternate';
+  const alternateBundle = compileWorkflowDefinition({
+    ...definition,
+    workflowId: alternateWorkflowId,
+  });
+  const alternateReplay = replayWorkflow(alternateBundle, {
+    ...cases,
+    workflowId: alternateWorkflowId,
+  });
+
+  assert.throws(
+    () => createOperatorConsoleData(bundle, alternateReplay),
+    /matching compiled bundle and replay report workflow identity/,
+  );
+});
