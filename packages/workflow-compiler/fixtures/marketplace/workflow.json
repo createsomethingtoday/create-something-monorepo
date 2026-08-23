@@ -127,13 +127,13 @@
   ],
   "actions": [
     {
-      "id": "validate_submission",
-      "title": "Validate submission",
-      "kind": "decision",
+      "id": "run_published_validation",
+      "title": "Run published-site validation",
+      "kind": "read",
       "authority": "workflow-runtime",
       "autonomy": "auto_allow",
-      "systemsTouched": ["template-review-mcp", "template-validation", "airtable-marketplace"],
-      "requiredEvidence": ["asset_id", "version_id", "published_url", "validation_result"],
+      "systemsTouched": ["template-review-mcp", "template-validation"],
+      "requiredEvidence": ["published_url"],
       "approval": { "required": false },
       "receipt": {
         "requiredFields": ["workflow_id", "action_id", "correlation_id", "outcome", "evidence_refs"]
@@ -153,6 +153,25 @@
             "description": "Published template URL to validate."
           }
         ]
+      },
+      "agentId": "marketplace-workflow-operator"
+    },
+    {
+      "id": "validate_submission",
+      "title": "Validate submission",
+      "kind": "decision",
+      "authority": "workflow-runtime",
+      "autonomy": "auto_allow",
+      "systemsTouched": ["template-review-mcp", "template-validation", "airtable-marketplace"],
+      "requiredEvidence": ["asset_id", "version_id", "published_url", "validation_result"],
+      "approval": { "required": false },
+      "receipt": {
+        "requiredFields": ["workflow_id", "action_id", "correlation_id", "outcome", "evidence_refs"]
+      },
+      "recovery": {
+        "mode": "escalate",
+        "owner": "marketplace-reviewer",
+        "path": "Keep the submission in submitted state and request manual validation."
       },
       "agentId": "marketplace-workflow-operator"
     },
@@ -308,6 +327,12 @@
     }
   ],
   "transitions": [
+    {
+      "id": "submitted-validation-requested",
+      "from": "submitted",
+      "to": "submitted",
+      "actionId": "run_published_validation"
+    },
     {
       "id": "submitted-to-ready",
       "from": "submitted",

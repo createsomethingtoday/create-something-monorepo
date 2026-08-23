@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-import { compileWorkflowDefinition } from '../dist/index.js';
+import { compileWorkflowDefinition, createMcpToolCallPlan } from '../dist/index.js';
 
 const fixtureUrl = new URL('../fixtures/marketplace/workflow.json', import.meta.url);
 
@@ -14,7 +14,7 @@ test('compiles one marketplace definition into a complete governed runtime bundl
   assert.equal(compiled.runtimeTargets.systems.length, 7);
   assert.equal(compiled.objectSchemas.objects.length, 3);
   assert.equal(compiled.eventSchemas.events.length, 5);
-  assert.equal(compiled.decisionInventory.decisions.length, 6);
+  assert.equal(compiled.decisionInventory.decisions.length, 7);
   assert.equal(compiled.toolContracts.tools.length, 3);
   assert.equal(compiled.agentContracts.agents.length, 1);
   assert.equal(compiled.approvalSurfaces.actions.length, 4);
@@ -96,10 +96,10 @@ test('keeps marketplace write contracts aligned with the production review MCP',
   const compiled = compileWorkflowDefinition(definition);
 
   const contracts = Object.fromEntries(
-    compiled.toolContracts.tools.map((contract) => [contract.name, contract.parameters])
+    compiled.toolContracts.tools.map((contract) => [contract.name, contract])
   );
 
-  assert.deepEqual(contracts.template_review_request_changes, [
+  assert.deepEqual(contracts.template_review_request_changes.parameters, [
     {
       name: 'review_feedback',
       type: 'string',
@@ -111,7 +111,7 @@ test('keeps marketplace write contracts aligned with the production review MCP',
       description: 'Marketplace asset version identifier.'
     }
   ]);
-  assert.deepEqual(contracts.template_review_set_review_status, [
+  assert.deepEqual(contracts.template_review_set_review_status.parameters, [
     {
       name: 'review_status',
       type: 'string',
@@ -123,13 +123,39 @@ test('keeps marketplace write contracts aligned with the production review MCP',
       description: 'Marketplace asset version identifier.'
     }
   ]);
-  assert.deepEqual(contracts.template_review_run_published_site_validation, [
+  assert.equal(
+    contracts.template_review_run_published_site_validation.actionId,
+    'run_published_validation'
+  );
+  assert.deepEqual(contracts.template_review_run_published_site_validation.parameters, [
     {
       name: 'published_url',
       type: 'string',
       description: 'Published template URL to validate.'
     }
   ]);
+
+  const validationPlan = createMcpToolCallPlan(compiled, {
+    caseId: 'published-validation-can-run',
+    title: 'Published validation runs before a result exists',
+    initialState: 'submitted',
+    actionId: 'run_published_validation',
+    actorId: 'workflow-runtime',
+    evidence: { published_url: 'https://fixture-template.webflow.io' },
+    approvals: [],
+    expectedOutcome: 'pass',
+    expectedState: 'submitted'
+  });
+  assert.equal(validationPlan.disposition, 'pass');
+  assert.equal(validationPlan.canInvoke, true);
+  assert.deepEqual(validationPlan.invocation, {
+    operation: 'tools/call',
+    targetSystemId: 'template-review-mcp',
+    tool: {
+      name: 'template_review_run_published_site_validation',
+      arguments: { published_url: 'https://fixture-template.webflow.io' }
+    }
+  });
 });
 
 test('fails closed when a transition references an unknown action', async () => {

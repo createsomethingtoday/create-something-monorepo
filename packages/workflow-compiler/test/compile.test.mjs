@@ -173,7 +173,7 @@ test('rejects a tool parameter that is not governed as required evidence', async
           code: 'TOOL_PARAMETER_MISSING_EVIDENCE_CONTRACT',
           path: 'actions[0].tool.parameters[1].name',
           message:
-            'Tool parameter ambient_override must be backed by required evidence for action validate_submission.'
+            'Tool parameter ambient_override must be backed by required evidence for action run_published_validation.'
         }
       ]);
       return true;
@@ -194,7 +194,7 @@ test('rejects a tool target omitted from the action system boundary', async () =
           code: 'TOOL_TARGET_NOT_DECLARED_SYSTEM_TOUCH',
           path: 'actions[0].tool.targetSystemId',
           message:
-            'Tool template_review_run_published_site_validation target template-review-mcp must be declared in systemsTouched for action validate_submission.'
+            'Tool template_review_run_published_site_validation target template-review-mcp must be declared in systemsTouched for action run_published_validation.'
         }
       ]);
       return true;

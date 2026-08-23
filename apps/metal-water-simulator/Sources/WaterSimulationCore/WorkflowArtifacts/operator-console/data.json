@@ -2,7 +2,7 @@
   "schemaVersion": "workflow_operator_console.v0.1",
   "workflowId": "webflow.marketplace.template-lifecycle",
   "workflowVersion": "0.1.0",
-  "definitionHash": "sha256:a94edfce769f2d7f4b5ba27f898062d9d79b374c61107082610c549de8fbc9f0",
+  "definitionHash": "sha256:667a4e3e40a9965fb69cb7ebb4d6b924a510c344c221549347be0d4d62f7d19a",
   "compilerVersion": "workflow-compiler-v0.1",
   "title": "Webflow Marketplace template lifecycle",
   "businessObjective": "Reduce objective submission and review work while preserving reviewer ownership of consequential decisions.",
@@ -35,6 +35,11 @@
         "id": "action:request_changes",
         "kind": "action",
         "title": "Request changes"
+      },
+      {
+        "id": "action:run_published_validation",
+        "kind": "action",
+        "title": "Run published-site validation"
       },
       {
         "id": "action:send_creator_decision",
@@ -124,6 +129,12 @@
         "to": "action:monitor_post_launch"
       },
       {
+        "id": "authority:workflow-runtime:run_published_validation",
+        "kind": "authorizes",
+        "from": "actor:workflow-runtime",
+        "to": "action:run_published_validation"
+      },
+      {
         "id": "authority:workflow-runtime:validate_submission",
         "kind": "authorizes",
         "from": "actor:workflow-runtime",
@@ -188,6 +199,18 @@
         "kind": "transitions",
         "from": "action:validate_submission",
         "to": "state:ready_for_review"
+      },
+      {
+        "id": "transition:submitted-validation-requested:action",
+        "kind": "transitions",
+        "from": "state:submitted",
+        "to": "action:run_published_validation"
+      },
+      {
+        "id": "transition:submitted-validation-requested:state",
+        "kind": "transitions",
+        "from": "action:run_published_validation",
+        "to": "state:submitted"
       }
     ]
   },
@@ -195,7 +218,7 @@
     "schemaVersion": "decision_inventory.v0.1",
     "workflowId": "webflow.marketplace.template-lifecycle",
     "workflowVersion": "0.1.0",
-    "definitionHash": "sha256:a94edfce769f2d7f4b5ba27f898062d9d79b374c61107082610c549de8fbc9f0",
+    "definitionHash": "sha256:667a4e3e40a9965fb69cb7ebb4d6b924a510c344c221549347be0d4d62f7d19a",
     "decisions": [
       {
         "actionId": "approve_template",
@@ -322,6 +345,32 @@
         }
       },
       {
+        "actionId": "run_published_validation",
+        "title": "Run published-site validation",
+        "kind": "read",
+        "authority": "workflow-runtime",
+        "autonomy": "auto_allow",
+        "systemsTouched": [
+          "template-review-mcp",
+          "template-validation"
+        ],
+        "requiredEvidence": [
+          "published_url"
+        ],
+        "receiptFields": [
+          "action_id",
+          "correlation_id",
+          "evidence_refs",
+          "outcome",
+          "workflow_id"
+        ],
+        "recovery": {
+          "mode": "escalate",
+          "owner": "marketplace-reviewer",
+          "path": "Keep the submission in submitted state and request manual validation."
+        }
+      },
+      {
         "actionId": "send_creator_decision",
         "title": "Send creator-facing decision autonomously",
         "kind": "write",
@@ -385,7 +434,7 @@
     "schemaVersion": "approval_surfaces.v0.1",
     "workflowId": "webflow.marketplace.template-lifecycle",
     "workflowVersion": "0.1.0",
-    "definitionHash": "sha256:a94edfce769f2d7f4b5ba27f898062d9d79b374c61107082610c549de8fbc9f0",
+    "definitionHash": "sha256:667a4e3e40a9965fb69cb7ebb4d6b924a510c344c221549347be0d4d62f7d19a",
     "actions": [
       {
         "actionId": "approve_template",
@@ -461,7 +510,7 @@
     "schemaVersion": "workflow_replay_report.v0.1",
     "workflowId": "webflow.marketplace.template-lifecycle",
     "workflowVersion": "0.1.0",
-    "definitionHash": "sha256:a94edfce769f2d7f4b5ba27f898062d9d79b374c61107082610c549de8fbc9f0",
+    "definitionHash": "sha256:667a4e3e40a9965fb69cb7ebb4d6b924a510c344c221549347be0d4d62f7d19a",
     "cases": [
       {
         "caseId": "approval-waits-for-reviewer",
@@ -494,7 +543,7 @@
           "schemaVersion": "workflow_replay_receipt.v0.1",
           "workflowId": "webflow.marketplace.template-lifecycle",
           "workflowVersion": "0.1.0",
-          "definitionHash": "sha256:a94edfce769f2d7f4b5ba27f898062d9d79b374c61107082610c549de8fbc9f0",
+          "definitionHash": "sha256:667a4e3e40a9965fb69cb7ebb4d6b924a510c344c221549347be0d4d62f7d19a",
           "caseId": "approval-waits-for-reviewer",
           "actionId": "approve_template",
           "actorId": "marketplace-reviewer",
@@ -546,7 +595,7 @@
           "schemaVersion": "workflow_replay_receipt.v0.1",
           "workflowId": "webflow.marketplace.template-lifecycle",
           "workflowVersion": "0.1.0",
-          "definitionHash": "sha256:a94edfce769f2d7f4b5ba27f898062d9d79b374c61107082610c549de8fbc9f0",
+          "definitionHash": "sha256:667a4e3e40a9965fb69cb7ebb4d6b924a510c344c221549347be0d4d62f7d19a",
           "caseId": "complete-validation-passes",
           "actionId": "validate_submission",
           "actorId": "workflow-runtime",
@@ -595,7 +644,7 @@
           "schemaVersion": "workflow_replay_receipt.v0.1",
           "workflowId": "webflow.marketplace.template-lifecycle",
           "workflowVersion": "0.1.0",
-          "definitionHash": "sha256:a94edfce769f2d7f4b5ba27f898062d9d79b374c61107082610c549de8fbc9f0",
+          "definitionHash": "sha256:667a4e3e40a9965fb69cb7ebb4d6b924a510c344c221549347be0d4d62f7d19a",
           "caseId": "creator-message-policy-block",
           "actionId": "send_creator_decision",
           "actorId": "marketplace-reviewer",
@@ -645,7 +694,7 @@
           "schemaVersion": "workflow_replay_receipt.v0.1",
           "workflowId": "webflow.marketplace.template-lifecycle",
           "workflowVersion": "0.1.0",
-          "definitionHash": "sha256:a94edfce769f2d7f4b5ba27f898062d9d79b374c61107082610c549de8fbc9f0",
+          "definitionHash": "sha256:667a4e3e40a9965fb69cb7ebb4d6b924a510c344c221549347be0d4d62f7d19a",
           "caseId": "missing-validation-evidence-blocks",
           "actionId": "validate_submission",
           "actorId": "workflow-runtime",
@@ -688,7 +737,7 @@
           "schemaVersion": "workflow_replay_receipt.v0.1",
           "workflowId": "webflow.marketplace.template-lifecycle",
           "workflowVersion": "0.1.0",
-          "definitionHash": "sha256:a94edfce769f2d7f4b5ba27f898062d9d79b374c61107082610c549de8fbc9f0",
+          "definitionHash": "sha256:667a4e3e40a9965fb69cb7ebb4d6b924a510c344c221549347be0d4d62f7d19a",
           "caseId": "unknown-action-blocks",
           "actionId": "invented_publish_shortcut",
           "actorId": "workflow-runtime",
@@ -714,7 +763,7 @@
     "schemaVersion": "workflow_acceptance_summary.v0.1",
     "workflowId": "webflow.marketplace.template-lifecycle",
     "workflowVersion": "0.1.0",
-    "definitionHash": "sha256:a94edfce769f2d7f4b5ba27f898062d9d79b374c61107082610c549de8fbc9f0",
+    "definitionHash": "sha256:667a4e3e40a9965fb69cb7ebb4d6b924a510c344c221549347be0d4d62f7d19a",
     "compilerVersion": "workflow-compiler-v0.1",
     "caseCount": 5,
     "counts": {

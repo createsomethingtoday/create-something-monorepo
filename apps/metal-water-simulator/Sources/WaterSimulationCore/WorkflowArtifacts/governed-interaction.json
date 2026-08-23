@@ -4,7 +4,7 @@
   "runtimeVersion": "0.1.0",
   "workflowId": "webflow.marketplace.template-lifecycle",
   "workflowVersion": "0.1.0",
-  "definitionHash": "sha256:a94edfce769f2d7f4b5ba27f898062d9d79b374c61107082610c549de8fbc9f0",
+  "definitionHash": "sha256:667a4e3e40a9965fb69cb7ebb4d6b924a510c344c221549347be0d4d62f7d19a",
   "entrySurfaceId": "operator-console",
   "capabilities": [
     "interaction.select",
@@ -147,6 +147,32 @@
         "mode": "manual_fallback",
         "owner": "marketplace-reviewer",
         "path": "Leave official state unchanged and record feedback manually in Airtable."
+      }
+    },
+    {
+      "actionId": "run_published_validation",
+      "title": "Run published-site validation",
+      "kind": "read",
+      "authority": "workflow-runtime",
+      "autonomy": "auto_allow",
+      "systemsTouched": [
+        "template-review-mcp",
+        "template-validation"
+      ],
+      "requiredEvidence": [
+        "published_url"
+      ],
+      "receiptFields": [
+        "action_id",
+        "correlation_id",
+        "evidence_refs",
+        "outcome",
+        "workflow_id"
+      ],
+      "recovery": {
+        "mode": "escalate",
+        "owner": "marketplace-reviewer",
+        "path": "Keep the submission in submitted state and request manual validation."
       }
     },
     {
