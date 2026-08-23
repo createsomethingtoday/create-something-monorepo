@@ -150,6 +150,24 @@ class Validator {
       firstPaths.set(identifier, identifierPath);
     });
   }
+
+  uniqueStrings(value: unknown[], path: string): void {
+    const firstPaths = new Map<string, string>();
+    value.forEach((entry, index) => {
+      if (typeof entry !== 'string') return;
+      const entryPath = `${path}[${index}]`;
+      const firstPath = firstPaths.get(entry);
+      if (firstPath) {
+        this.diagnostics.push({
+          code: 'DUPLICATE_IDENTIFIER',
+          path: entryPath,
+          message: `Duplicate identifier ${entry}; first declared at ${firstPath}.`
+        });
+        return;
+      }
+      firstPaths.set(entry, entryPath);
+    });
+  }
 }
 
 function requireTopLevelCollections(input: RecordValue): Record<string, unknown[]> {
@@ -299,6 +317,7 @@ export function parseWorkflowDefinition(input: unknown): WorkflowDefinition {
               `${path}.requiredEvidenceMatchers.${field}.values[${valueIndex}]`
             )
           );
+          validator.uniqueStrings(values, `${path}.requiredEvidenceMatchers.${field}.values`);
         });
       }
     }

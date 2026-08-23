@@ -120,6 +120,32 @@ test('the public workflow parser accepts legacy tools and validates declared par
   );
 });
 
+test('the public workflow parser rejects duplicate evidence matcher values', async () => {
+  const workflow = JSON.parse(await readFile(workflowFixture, 'utf8'));
+  workflow.actions[0].requiredEvidenceMatchers = {
+    published_url: {
+      kind: 'contains_case_insensitive',
+      values: ['example.com', 'example.com']
+    }
+  };
+
+  assert.throws(
+    () => parseWorkflowDefinition(workflow),
+    (error) => {
+      assert.equal(error.name, 'WorkflowInputValidationError');
+      assert.deepEqual(error.diagnostics, [
+        {
+          code: 'DUPLICATE_IDENTIFIER',
+          path: '$.actions[0].requiredEvidenceMatchers.published_url.values[1]',
+          message:
+            'Duplicate identifier example.com; first declared at $.actions[0].requiredEvidenceMatchers.published_url.values[0].'
+        }
+      ]);
+      return true;
+    }
+  );
+});
+
 for (const collection of [
   'systems',
   'objects',
