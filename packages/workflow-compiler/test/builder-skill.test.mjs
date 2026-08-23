@@ -54,4 +54,9 @@ test('the shipped System Map explains the Marketplace path without claiming live
   assert.match(systemMap, /marketplace reviewer/i);
   assert.match(systemMap, /does not execute live actions/i);
   assert.match(systemMap, /authenticated execution host/i);
+  assert.match(systemMap, /local marketplace starter.*enforced contract/i);
+  assert.match(systemMap, /enforce.*default/i);
+  assert.match(systemMap, /warn.*non-passing.*proceed/i);
+  assert.match(systemMap, /disabled.*not_required/i);
+  assert.match(systemMap, /cannot be reported as a passing\s+preflight/i);
 });

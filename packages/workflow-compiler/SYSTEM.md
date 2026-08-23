@@ -53,7 +53,7 @@ contract that governs it. They meet at evidence, not at shared credentials.
 | --- | --- | --- | --- |
 | Creator completes the form | Marketplace Submission Cloud | Submission ID, published URL, and form schema version | The creator supplies intent; no review routing follows from intent alone. |
 | Form and published site validate | Submission Cloud validation path | Form-validation receipt and an explicit passed result | The application can move from draft to form validated. A failure stays outside review. |
-| Validator App preflight passes | Validator App preflight called by Submission Cloud | Preflight policy, preflight receipt, and a passed status | The application can move from form validated to preflight passed. A failed preflight is a stop. |
+| Enforced Validator App preflight passes | Validator App preflight called by Submission Cloud | `enforce` policy, preflight receipt, and a passed status | The application can move from form validated to preflight passed. A failed required preflight is a stop. |
 | Airtable Automation handoff is confirmed | Airtable Automation and its source record | Submission ID, automation version, webhook receipt, confirmed handoff state, asset ID, version ID, and a review-ready status | Codex may inspect supplied evidence only after this complete receipt proves the handoff. |
 | Reviewer decides | Marketplace review policy and reviewer queue | Submission ID, asset ID, version ID, and review-request receipt | This is approval required. The assigned reviewer or policy owner decides; an agent does not promote itself. |
 | Creator receives a decision | Owning reviewer communication process | Decision receipt and creator-contact reference | The compiler keeps this write blocked. Delivery is independently verified by the owning process. |
@@ -61,6 +61,24 @@ contract that governs it. They meet at evidence, not at shared credentials.
 A webhook receipt alone is not a handoff. It means processing was observed; it
 does not prove an asset, version, confirmed state, and review-ready record
 exist together.
+
+### Preflight modes
+
+The local Marketplace starter is an enforced contract: it requires
+`preflight_status: passed` before its handoff path becomes eligible. That makes
+the local replay a clear demonstration of the protected route; it does not
+erase the live application's supported runtime modes.
+
+- `enforce` is the live default. A non-passing required result is rejected
+  before downstream webhook and Airtable routing.
+- `warn` records the attempted check, but a non-passing result can proceed
+  because the runtime does not require it. It cannot be reported as a passing
+  preflight.
+- `disabled` reports `not_required` and performs no required Validator gate, so
+  the submission can proceed without a Validator result.
+
+For a live claim, retain the policy value and its matching runtime receipt. Only
+an `enforce` result with a passing receipt proves the protected preflight path.
 
 ## Three tiers, one operating system
 
@@ -139,14 +157,17 @@ with its own authority, verification, and rollback path.
 
 ## A concise narration
 
-“A creator submits through the Marketplace app. The app validates the form and
-published site, then requires a passing Validator preflight. It hands the
-submission to Airtable only when the record is confirmed and review ready. A
-reviewer, not the agent, owns the decision. Alongside that live path, Codex
-uses the Workflow Compiler to show the exact evidence, ownership, approvals,
-and stops. The terminal does not fake the work; it makes the operating contract
-legible and replayable. When we connect another system, its credentials,
-results, receipts, and rollback stay with the owning execution host.”
+"A creator submits through the Marketplace app. The app validates the form and
+published site. Under its default enforced preflight policy, it requires a
+passing Validator result before downstream routing. The runtime can instead be
+configured to warn or disable that requirement, so the policy and receipt are
+part of every live claim. Airtable handoff is complete only when the record is
+confirmed and review ready. A reviewer, not the agent, owns the decision.
+Alongside that live path, Codex uses the Workflow Compiler to show the exact
+evidence, ownership, approvals, and stops. The terminal does not fake the work;
+it makes the operating contract legible and replayable. When we connect another
+system, its credentials, results, receipts, and rollback stay with the owning
+execution host."
 
 ## Source and proof boundaries
 
