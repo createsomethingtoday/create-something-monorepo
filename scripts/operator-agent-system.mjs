@@ -411,8 +411,13 @@ function capabilityAudit(options) {
   const profile = Array.isArray(manifest?.profiles) ? manifest.profiles.find((candidate) => candidate?.id === profileId) : null;
   if (!profile) blockers.push(`capability profile not found: ${profileId || 'default profile missing'}`);
   if (profile?.autonomyLevel !== 'A0') blockers.push('capability profile must be A0 local-readonly');
-  if (!Array.isArray(profile?.skills) || profile.skills.length === 0 || profile.skills.some((skill) => skill?.access !== 'read')) {
-    blockers.push('capability profile must declare one or more read-only skills');
+  const hasValidReadSkills = Array.isArray(profile?.skills) && profile.skills.length > 0 && profile.skills.every((skill) => {
+    if (skill?.access !== 'read' || !isSafeRelativePath(skill?.source)) return false;
+    const sourcePath = path.join(REPO_ROOT, skill.source);
+    return fs.existsSync(sourcePath) && fs.statSync(sourcePath).isFile();
+  });
+  if (!hasValidReadSkills) {
+    blockers.push('capability profile must declare source-backed read-only skills inside the repository');
   }
   if (!Array.isArray(profile?.mcpTools) || profile.mcpTools.length === 0) {
     blockers.push('capability profile must declare one or more read-only MCP tools');

@@ -514,6 +514,21 @@ export function scheduleReport(options, runs, contextPacket = null) {
           citations: contextPacket.citations,
           highlightCount: contextPacket.highlights.length,
           failure: contextPacket.failure ?? null,
+          searchScope: contextPacket.searchScope ?? 'unrecorded',
+          repository: contextPacket.repository
+            ? {
+                available: contextPacket.repository.available,
+                profileId: contextPacket.repository.profileId,
+                manifest: contextPacket.repository.manifest,
+                sourceCount: contextPacket.repository.sources.length,
+                sources: contextPacket.repository.sources.map((source) => ({
+                  id: source.id,
+                  path: source.path,
+                  sha256: source.sha256,
+                })),
+                failure: contextPacket.repository.failure ?? null,
+              }
+            : null,
         }
       : null,
     runs,

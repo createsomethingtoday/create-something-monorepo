@@ -8,6 +8,11 @@
       "autonomyLevel": "A0",
       "skills": [
         {
+          "id": "repository-agent-contract",
+          "source": "AGENTS.md",
+          "access": "read"
+        },
+        {
           "id": "operator-agent-runbook",
           "source": "docs/guides/OPERATOR_AGENT_SYSTEM.md",
           "access": "read"
@@ -15,6 +20,16 @@
         {
           "id": "open-weight-executor-eval",
           "source": "docs/guides/OPEN_WEIGHT_AGENT_EXECUTOR_EVAL.md",
+          "access": "read"
+        },
+        {
+          "id": "operator-agent-production-policy",
+          "source": "docs/policies/v1/policy.operator-agent-production-lab.v1.md",
+          "access": "read"
+        },
+        {
+          "id": "substrate-agent-wiki",
+          "source": "packages/database-layer/docs/agent-wiki/README.md",
           "access": "read"
         }
       ],

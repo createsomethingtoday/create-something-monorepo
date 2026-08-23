@@ -129,6 +129,28 @@ read-only MCP tools. It declares no plugins and denies protected writes,
 credentials, destructive actions, client production, and external plugin
 activation. The manifest is an auditable constraint, not an authority grant:
 adding a skill, MCP, or plugin requires review and a separate promotion path.
+Every declared skill must reference an existing, repository-relative read source
+before the profile can pass.
+
+## Context Adapter
+
+Before a scheduled model-backed evaluation, the context adapter builds a bounded
+packet from the declared read-only skill sources plus up to three cited CTX
+history results:
+
+```bash
+pnpm operator-agent:context -- --surface docs/guides --task "review local operator-agent receipts" --workspace "$PWD"
+```
+
+The current profile supplies the repository agent contract, operator runbook,
+open-weight evaluator, production-lab policy, and generated Substrate agent
+wiki. Each is recorded with a content hash and a short sanitized excerpt. CTX
+contributes only sanitized cited highlights from prior local agent sessions. It
+is useful cross-agent context, never authority or weight-training data.
+
+The adapter fails closed for missing or out-of-repository declared sources. The
+wiki remains orientation only; current repo files, Linear, receipts, tests, and
+live verification remain the sources of truth for claims and actions.
 
 Use `model-benchmark` when deciding whether an installed local model can be
 promoted into bounded model-backed work. It runs repeated strict-JSON probes per

@@ -126,6 +126,14 @@ test('operator-agent schedule carries a bounded CTX packet into batch eval and i
     citations: [{ provider: 'codex', ctxEventId: 'event-a', ctxSessionId: 'session-a' }],
     highlights: ['Prior no-write schedule receipt passed.'],
     modelContext: 'CTX history is advisory. Cited history: codex:event-a.',
+    searchScope: 'cross-worktree-fallback',
+    repository: {
+      available: true,
+      profileId: 'local-readonly',
+      manifest: { path: 'config/operator-agent-capabilities.v1.json', sha256: 'manifest-sha', schemaVersion: 'operator-agent-capabilities.v1' },
+      sources: [{ id: 'agent-wiki', path: 'packages/database-layer/docs/agent-wiki/README.md', sha256: 'wiki-sha' }],
+      failure: null,
+    },
   };
   const plan = buildRunPlan(options, contextPacket);
   const batch = plan.find((step) => step.id === 'batch-eval');
@@ -141,6 +149,15 @@ test('operator-agent schedule carries a bounded CTX packet into batch eval and i
     citations: contextPacket.citations,
     highlightCount: 1,
     failure: null,
+    searchScope: 'cross-worktree-fallback',
+    repository: {
+      available: true,
+      profileId: 'local-readonly',
+      manifest: { path: 'config/operator-agent-capabilities.v1.json', sha256: 'manifest-sha', schemaVersion: 'operator-agent-capabilities.v1' },
+      sourceCount: 1,
+      sources: [{ id: 'agent-wiki', path: 'packages/database-layer/docs/agent-wiki/README.md', sha256: 'wiki-sha' }],
+      failure: null,
+    },
   });
 });
 

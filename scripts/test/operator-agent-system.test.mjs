@@ -165,6 +165,41 @@ test('operator-agent capabilities expose only the declared no-write local profil
   assert.equal(output.mutation.writesPerformed, 0);
 });
 
+test('operator-agent capabilities block a declared source outside the repository', () => {
+  const workspace = makeWorkspace();
+  const manifestPath = path.join(workspace, 'unsafe-capabilities.json');
+  writeFileSync(
+    manifestPath,
+    JSON.stringify({
+      schemaVersion: 'operator-agent-capabilities.v1',
+      defaultProfile: 'local-readonly',
+      profiles: [
+        {
+          id: 'local-readonly',
+          autonomyLevel: 'A0',
+          skills: [{ id: 'unsafe-source', source: '../outside.md', access: 'read' }],
+          mcpTools: ['operator_agent_readiness'],
+          plugins: [],
+          policy: {
+            protectedWrites: 'deny',
+            credentials: 'deny',
+            destructiveActions: 'deny',
+            clientProduction: 'deny',
+            externalPluginActivation: 'deny',
+          },
+        },
+      ],
+    })
+  );
+
+  const result = run('node', [scriptPath, 'capabilities', '--capability-manifest', manifestPath, '--json'], workspace);
+
+  assert.equal(result.status, 1, result.stderr || result.stdout);
+  const output = JSON.parse(result.stdout);
+  assert.equal(output.passed, false);
+  assert.match(output.capabilityGate.blockers.join('\n'), /source-backed read-only skills/);
+});
+
 test('operator-agent model-probe passes when local endpoint returns the required JSON object', async () => {
   const workspace = makeWorkspace();
   const server = createServer((request, response) => {
