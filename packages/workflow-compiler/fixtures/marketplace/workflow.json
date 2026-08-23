@@ -369,7 +369,11 @@
       "id": "marketplace-workflow-operator",
       "title": "Marketplace workflow operator",
       "purpose": "Gather evidence, run deterministic validation, and monitor outcomes without taking human-owned decisions.",
-      "allowedActionIds": ["validate_submission", "monitor_post_launch"],
+      "allowedActionIds": [
+        "run_published_validation",
+        "validate_submission",
+        "monitor_post_launch"
+      ],
       "escalationOwner": "marketplace-review-lead"
     }
   ],

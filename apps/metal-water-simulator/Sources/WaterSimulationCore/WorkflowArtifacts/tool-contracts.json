@@ -2,7 +2,7 @@
   "schemaVersion": "tool_contracts.v0.1",
   "workflowId": "webflow.marketplace.template-lifecycle",
   "workflowVersion": "0.1.0",
-  "definitionHash": "sha256:667a4e3e40a9965fb69cb7ebb4d6b924a510c344c221549347be0d4d62f7d19a",
+  "definitionHash": "sha256:28426fd6c47422550a400b184fa036acac53b47b282a65b7ed8314d396d342a8",
   "tools": [
     {
       "actionId": "approve_template",

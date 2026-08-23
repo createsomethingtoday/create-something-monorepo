@@ -2,7 +2,7 @@
   "schemaVersion": "agent_contracts.v0.1",
   "workflowId": "webflow.marketplace.template-lifecycle",
   "workflowVersion": "0.1.0",
-  "definitionHash": "sha256:667a4e3e40a9965fb69cb7ebb4d6b924a510c344c221549347be0d4d62f7d19a",
+  "definitionHash": "sha256:28426fd6c47422550a400b184fa036acac53b47b282a65b7ed8314d396d342a8",
   "agents": [
     {
       "id": "marketplace-workflow-operator",
@@ -10,12 +10,17 @@
       "purpose": "Gather evidence, run deterministic validation, and monitor outcomes without taking human-owned decisions.",
       "allowedActionIds": [
         "monitor_post_launch",
+        "run_published_validation",
         "validate_submission"
       ],
       "escalationOwner": "marketplace-review-lead",
       "actionAutonomy": [
         {
           "actionId": "monitor_post_launch",
+          "autonomy": "auto_allow"
+        },
+        {
+          "actionId": "run_published_validation",
           "autonomy": "auto_allow"
         },
         {

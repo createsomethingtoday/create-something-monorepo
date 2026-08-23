@@ -201,3 +201,47 @@ test('rejects a tool target omitted from the action system boundary', async () =
     }
   );
 });
+
+test('rejects an agent-assigned action outside that agent allowlist', async () => {
+  const definition = JSON.parse(await readFile(workflowFixture, 'utf8'));
+  definition.agents[0].allowedActionIds = definition.agents[0].allowedActionIds.filter(
+    (actionId) => actionId !== 'run_published_validation'
+  );
+
+  assert.throws(
+    () => compileWorkflowDefinition(definition),
+    (error) => {
+      assert.equal(error.name, 'WorkflowCompilationError');
+      assert.deepEqual(error.diagnostics, [
+        {
+          code: 'ACTION_NOT_ALLOWED_FOR_AGENT',
+          path: 'actions[0].agentId',
+          message:
+            'Action run_published_validation assigns agent marketplace-workflow-operator but is absent from that agent allowlist.'
+        }
+      ]);
+      return true;
+    }
+  );
+});
+
+test('rejects an agent allowlist entry assigned to another execution boundary', async () => {
+  const definition = JSON.parse(await readFile(workflowFixture, 'utf8'));
+  definition.agents[0].allowedActionIds.push('request_changes');
+
+  assert.throws(
+    () => compileWorkflowDefinition(definition),
+    (error) => {
+      assert.equal(error.name, 'WorkflowCompilationError');
+      assert.deepEqual(error.diagnostics, [
+        {
+          code: 'AGENT_ACTION_ASSIGNMENT_MISMATCH',
+          path: 'agents[0].allowedActionIds[3]',
+          message:
+            'Agent marketplace-workflow-operator allowlists action request_changes, but that action is not assigned to the agent.'
+        }
+      ]);
+      return true;
+    }
+  );
+});

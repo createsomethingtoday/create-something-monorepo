@@ -139,6 +139,8 @@ function validateReferences(definition: WorkflowDefinition): WorkflowCompilation
   const stateIds = new Set(definition.states.map((state) => state.id));
   const actionIds = new Set(definition.actions.map((action) => action.id));
   const agentIds = new Set(definition.agents.map((agent) => agent.id));
+  const actionsById = new Map(definition.actions.map((action) => [action.id, action]));
+  const agentsById = new Map(definition.agents.map((agent) => [agent.id, agent]));
 
   definition.objects.forEach((object, index) => {
     if (!systemIds.has(object.sourceSystemId)) {
@@ -204,6 +206,15 @@ function validateReferences(definition: WorkflowDefinition): WorkflowCompilation
         path: `actions[${index}].agentId`,
         message: `Action ${action.id} references unknown agent ${action.agentId}.`,
       });
+    } else if (
+      action.agentId &&
+      !agentsById.get(action.agentId)?.allowedActionIds.includes(action.id)
+    ) {
+      diagnostics.push({
+        code: 'ACTION_NOT_ALLOWED_FOR_AGENT',
+        path: `actions[${index}].agentId`,
+        message: `Action ${action.id} assigns agent ${action.agentId} but is absent from that agent allowlist.`,
+      });
     }
   });
   definition.transitions.forEach((transition, index) => {
@@ -236,6 +247,12 @@ function validateReferences(definition: WorkflowDefinition): WorkflowCompilation
           code: 'UNKNOWN_AGENT_ACTION',
           path: `agents[${index}].allowedActionIds[${actionIndex}]`,
           message: `Agent ${agent.id} references unknown action ${actionId}.`,
+        });
+      } else if (actionsById.get(actionId)?.agentId !== agent.id) {
+        diagnostics.push({
+          code: 'AGENT_ACTION_ASSIGNMENT_MISMATCH',
+          path: `agents[${index}].allowedActionIds[${actionIndex}]`,
+          message: `Agent ${agent.id} allowlists action ${actionId}, but that action is not assigned to the agent.`,
         });
       }
     });
