@@ -16,19 +16,20 @@ interface WorkflowOperatorConsoleDataBase {
   businessObjective: string;
   owners: CompiledWorkflowBundle['owners'];
   workflowMap: CompiledWorkflowBundle['workflowMap'];
-  approvalSurfaces: CompiledWorkflowBundle['approvalSurfaces'];
   acceptanceSummary: ReturnType<typeof createAcceptanceSummary>;
 }
 
 export interface WorkflowOperatorConsoleDataV0_1 extends WorkflowOperatorConsoleDataBase {
   schemaVersion: 'workflow_operator_console.v0.1';
   decisionInventory: CompiledWorkflowBundleV0_1['decisionInventory'];
+  approvalSurfaces: CompiledWorkflowBundleV0_1['approvalSurfaces'];
   replayReport: WorkflowReplayReportV0_1;
 }
 
 export interface WorkflowOperatorConsoleDataV0_2 extends WorkflowOperatorConsoleDataBase {
   schemaVersion: 'workflow_operator_console.v0.2';
   decisionInventory: CompiledWorkflowBundleV0_2['decisionInventory'];
+  approvalSurfaces: CompiledWorkflowBundleV0_2['approvalSurfaces'];
   replayReport: WorkflowReplayReportV0_2;
 }
 
@@ -49,7 +50,6 @@ export function createOperatorConsoleData(
     businessObjective: bundle.businessObjective,
     owners: bundle.owners,
     workflowMap: bundle.workflowMap,
-    approvalSurfaces: bundle.approvalSurfaces,
     acceptanceSummary: createAcceptanceSummary(bundle, replay.report),
   };
 
@@ -61,6 +61,7 @@ export function createOperatorConsoleData(
       schemaVersion: 'workflow_operator_console.v0.2',
       ...common,
       decisionInventory: bundle.decisionInventory,
+      approvalSurfaces: bundle.approvalSurfaces,
       replayReport: replay.report,
     };
   }
@@ -72,6 +73,7 @@ export function createOperatorConsoleData(
     schemaVersion: 'workflow_operator_console.v0.1',
     ...common,
     decisionInventory: bundle.decisionInventory,
+    approvalSurfaces: bundle.approvalSurfaces,
     replayReport: replay.report,
   };
 }

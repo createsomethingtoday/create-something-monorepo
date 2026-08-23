@@ -17,10 +17,12 @@ Only `workflow_definition.v0.2` may declare `requiredEvidenceValues`, a map of
 required-evidence fields to an exact non-empty string, finite number, or boolean
 value. Each constrained field must also appear in `requiredEvidence`. The
 compiled `governed_interaction_bundle.v0.2` preserves and validates these
-constraints. The compiled workflow bundle and its decision inventory are also
-emitted as `compiled_workflow_bundle.v0.2` and `decision_inventory.v0.2`, so a
-consumer cannot mistake a constrained decision for a v0.1 contract. Replay
-blocks a supplied value that differs from the versioned contract with
+constraints. The compiled workflow bundle, decision inventory, and approval
+surfaces are emitted as `compiled_workflow_bundle.v0.2`,
+`decision_inventory.v0.2`, and `approval_surfaces.v0.2`. Its controlled
+actions retain their exact-value and matcher constraints, so a consumer cannot
+mistake a constrained decision for a v0.1 contract. Replay blocks a supplied
+value that differs from the versioned contract with
 `EVIDENCE_VALUE_MISMATCH`; a non-empty receipt alone cannot satisfy that
 condition.
 
@@ -85,10 +87,11 @@ a v0.1 decision that merely carries either constraint field before evaluating a
 case, even if supplied evidence would happen to satisfy it.
 
 `CompiledWorkflowBundle` is also a schema-discriminated union. A v0.1 bundle
-can contain only a v0.1 decision inventory, governed interaction, and decisions
-without evidence constraints; a v0.2 bundle carries the corresponding v0.2
-contracts. TypeScript callers therefore cannot construct a cross-version bundle
-that would produce a legacy report while enforcing v0.2 constraints.
+can contain only v0.1 decision inventory, governed interaction, approval
+surfaces, and decisions without evidence constraints; a v0.2 bundle carries the
+corresponding v0.2 contracts. TypeScript callers therefore cannot construct a
+cross-version bundle that would produce a legacy report while enforcing v0.2
+constraints.
 
 Adapter plans follow the compiled-bundle boundary. v0.1 bundles emit
 `workflow_adapter_plan.v0.1`, whose `governanceReasonCode` uses the legacy

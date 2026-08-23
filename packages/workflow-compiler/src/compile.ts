@@ -4,7 +4,8 @@ import { parseWorkflowDefinition, WorkflowInputValidationError } from './input.j
 
 import type {
   AgentContractsArtifact,
-  ApprovalSurfacesArtifact,
+  ApprovalSurfacesArtifactV0_1,
+  ApprovalSurfacesArtifactV0_2,
   CompiledWorkflowBundle,
   DecisionInventoryArtifactV0_1,
   DecisionInventoryArtifactV0_2,
@@ -466,7 +467,7 @@ export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundl
       }))
       .sort(byId)
   };
-  const approvalSurfaces: ApprovalSurfacesArtifact = {
+  const approvalSurfaces: ApprovalSurfacesArtifactV0_1 = {
     schemaVersion: 'approval_surfaces.v0.1',
     ...header,
     actions: definition.actions
@@ -516,6 +517,27 @@ export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundl
   };
 
   if (definition.schemaVersion === 'workflow_definition.v0.2') {
+    const approvalSurfaces: ApprovalSurfacesArtifactV0_2 = {
+      schemaVersion: 'approval_surfaces.v0.2',
+      ...header,
+      actions: definition.actions
+        .filter((action) => action.autonomy !== 'auto_allow')
+        .map((action) => ({
+          actionId: action.id,
+          title: action.title,
+          mode: action.autonomy as Exclude<typeof action.autonomy, 'auto_allow'>,
+          owner: action.approval.owner ?? action.recovery.owner,
+          requiredEvidence: sorted(action.requiredEvidence),
+          ...(action.requiredEvidenceValues
+            ? { requiredEvidenceValues: sortedEvidenceValues(action.requiredEvidenceValues) }
+            : {}),
+          ...(action.requiredEvidenceMatchers
+            ? { requiredEvidenceMatchers: sortedEvidenceMatchers(action.requiredEvidenceMatchers) }
+            : {}),
+          recovery: { ...action.recovery }
+        }))
+        .sort(byActionId)
+    };
     const decisionInventory: DecisionInventoryArtifactV0_2 = {
       schemaVersion: 'decision_inventory.v0.2',
       ...header,
@@ -560,6 +582,7 @@ export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundl
     return {
       schemaVersion: 'compiled_workflow_bundle.v0.2',
       ...common,
+      approvalSurfaces,
       decisionInventory,
       governedInteraction
     };

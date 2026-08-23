@@ -85,6 +85,30 @@ test('compiles one marketplace definition into a complete governed runtime bundl
   );
 });
 
+test('versions approval surfaces when controlled actions carry evidence constraints', async () => {
+  const definition = JSON.parse(await readFile(fixtureUrl, 'utf8'));
+  definition.schemaVersion = 'workflow_definition.v0.2';
+  const requestChanges = definition.actions.find((action) => action.id === 'request_changes');
+  assert.ok(requestChanges);
+  requestChanges.requiredEvidenceValues = { version_id: 'version-fixture-001' };
+  requestChanges.requiredEvidenceMatchers = {
+    review_feedback: { kind: 'contains_case_insensitive', values: ['changes'] },
+  };
+
+  const compiled = compileWorkflowDefinition(definition);
+  const approvalSurface = compiled.approvalSurfaces.actions.find(
+    (action) => action.actionId === 'request_changes',
+  );
+
+  assert.equal(compiled.approvalSurfaces.schemaVersion, 'approval_surfaces.v0.2');
+  assert.deepEqual(approvalSurface?.requiredEvidenceValues, {
+    version_id: 'version-fixture-001',
+  });
+  assert.deepEqual(approvalSurface?.requiredEvidenceMatchers, {
+    review_feedback: { kind: 'contains_case_insensitive', values: ['changes'] },
+  });
+});
+
 test('keeps marketplace write contracts aligned with the production review MCP', async () => {
   const definition = JSON.parse(await readFile(fixtureUrl, 'utf8'));
   const compiled = compileWorkflowDefinition(definition);

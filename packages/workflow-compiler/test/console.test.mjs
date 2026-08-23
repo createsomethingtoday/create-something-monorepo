@@ -77,7 +77,12 @@ test('versions operator console data with the v0.2 artifacts it embeds', async (
   const definition = JSON.parse(await readFile(workflowPath, 'utf8'));
   const cases = JSON.parse(await readFile(casesPath, 'utf8'));
   definition.schemaVersion = 'workflow_definition.v0.2';
-  definition.actions[0].requiredEvidenceValues = { published_url: 'https://example.com' };
+  const requestChanges = definition.actions.find((action) => action.id === 'request_changes');
+  assert.ok(requestChanges);
+  requestChanges.requiredEvidenceValues = { version_id: 'version-fixture-001' };
+  requestChanges.requiredEvidenceMatchers = {
+    review_feedback: { kind: 'contains_case_insensitive', values: ['changes'] },
+  };
 
   const bundle = compileWorkflowDefinition(definition);
   const replay = replayWorkflow(bundle, cases);
@@ -86,6 +91,16 @@ test('versions operator console data with the v0.2 artifacts it embeds', async (
   assert.equal(data.schemaVersion, 'workflow_operator_console.v0.2');
   assert.equal(data.decisionInventory.schemaVersion, 'decision_inventory.v0.2');
   assert.equal(data.replayReport.schemaVersion, 'workflow_replay_report.v0.2');
+  assert.equal(data.approvalSurfaces.schemaVersion, 'approval_surfaces.v0.2');
+  const approvalSurface = data.approvalSurfaces.actions.find(
+    (action) => action.actionId === 'request_changes',
+  );
+  assert.deepEqual(approvalSurface?.requiredEvidenceValues, {
+    version_id: 'version-fixture-001',
+  });
+  assert.deepEqual(approvalSurface?.requiredEvidenceMatchers, {
+    review_feedback: { kind: 'contains_case_insensitive', values: ['changes'] },
+  });
 });
 
 test('rejects a console that would combine v0.2 bundle data with a v0.1 replay report', async () => {

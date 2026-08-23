@@ -1,4 +1,5 @@
 import type {
+  ApprovalSurfacesArtifactV0_2,
   CompiledDecisionV0_2,
   CompiledWorkflowBundle,
   CompiledWorkflowBundleV0_1,
@@ -74,6 +75,7 @@ void constrainedDefinition;
 declare const constrainedDecision: CompiledDecisionV0_2;
 declare const constrainedInventory: DecisionInventoryArtifactV0_2;
 declare const constrainedInteraction: GovernedInteractionBundleV0_2;
+declare const constrainedApprovalSurfaces: ApprovalSurfacesArtifactV0_2;
 declare const legacyBundle: CompiledWorkflowBundleV0_1;
 
 // @ts-expect-error A v0.1 bundle cannot contain a v0.2 decision inventory.
@@ -88,16 +90,24 @@ const invalidLegacyInteractionBundle: CompiledWorkflowBundle = {
   governedInteraction: constrainedInteraction
 };
 
+// @ts-expect-error A v0.1 bundle cannot contain a v0.2 approval-surface artifact.
+const invalidLegacyApprovalSurfacesBundle: CompiledWorkflowBundle = {
+  ...legacyBundle,
+  approvalSurfaces: constrainedApprovalSurfaces
+};
+
 const constrainedBundle: CompiledWorkflowBundle = {
   ...legacyBundle,
   schemaVersion: 'compiled_workflow_bundle.v0.2',
   decisionInventory: constrainedInventory,
-  governedInteraction: constrainedInteraction
+  governedInteraction: constrainedInteraction,
+  approvalSurfaces: constrainedApprovalSurfaces
 };
 
 void constrainedDecision;
 void invalidLegacyInventoryBundle;
 void invalidLegacyInteractionBundle;
+void invalidLegacyApprovalSurfacesBundle;
 void constrainedBundle;
 
 declare const constrainedAdapterPlan: WorkflowAdapterPlanV0_2;

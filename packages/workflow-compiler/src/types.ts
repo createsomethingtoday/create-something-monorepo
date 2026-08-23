@@ -274,7 +274,7 @@ export interface AgentContractsArtifact extends CompiledArtifactHeader {
   agents: CompiledAgentContract[];
 }
 
-export interface CompiledApprovalSurface {
+interface CompiledApprovalSurfaceBase {
   actionId: string;
   title: string;
   mode: Exclude<AutonomyClass, 'auto_allow'>;
@@ -283,10 +283,35 @@ export interface CompiledApprovalSurface {
   recovery: WorkflowAction['recovery'];
 }
 
-export interface ApprovalSurfacesArtifact extends CompiledArtifactHeader {
-  schemaVersion: 'approval_surfaces.v0.1';
-  actions: CompiledApprovalSurface[];
+export interface CompiledApprovalSurfaceV0_1 extends CompiledApprovalSurfaceBase {
+  requiredEvidenceValues?: never;
+  requiredEvidenceMatchers?: never;
 }
+
+export interface CompiledApprovalSurfaceV0_2 extends CompiledApprovalSurfaceBase {
+  requiredEvidenceValues?: Record<string, WorkflowEvidenceValue>;
+  requiredEvidenceMatchers?: Record<string, WorkflowEvidenceMatcher>;
+}
+
+export type CompiledApprovalSurface =
+  | CompiledApprovalSurfaceV0_1
+  | CompiledApprovalSurfaceV0_2;
+
+interface ApprovalSurfacesArtifactBase extends CompiledArtifactHeader {}
+
+export interface ApprovalSurfacesArtifactV0_1 extends ApprovalSurfacesArtifactBase {
+  schemaVersion: 'approval_surfaces.v0.1';
+  actions: CompiledApprovalSurfaceV0_1[];
+}
+
+export interface ApprovalSurfacesArtifactV0_2 extends ApprovalSurfacesArtifactBase {
+  schemaVersion: 'approval_surfaces.v0.2';
+  actions: CompiledApprovalSurfaceV0_2[];
+}
+
+export type ApprovalSurfacesArtifact =
+  | ApprovalSurfacesArtifactV0_1
+  | ApprovalSurfacesArtifactV0_2;
 
 export interface EvaluationManifestArtifact extends CompiledArtifactHeader {
   schemaVersion: 'evaluation_manifest.v0.1';
@@ -346,7 +371,6 @@ interface CompiledWorkflowBundleBase {
   eventSchemas: EventSchemasArtifact;
   toolContracts: ToolContractsArtifact;
   agentContracts: AgentContractsArtifact;
-  approvalSurfaces: ApprovalSurfacesArtifact;
   evaluationManifest: EvaluationManifestArtifact;
 }
 
@@ -354,12 +378,14 @@ export interface CompiledWorkflowBundleV0_1 extends CompiledWorkflowBundleBase {
   schemaVersion: 'compiled_workflow_bundle.v0.1';
   decisionInventory: DecisionInventoryArtifactV0_1;
   governedInteraction: GovernedInteractionBundleV0_1;
+  approvalSurfaces: ApprovalSurfacesArtifactV0_1;
 }
 
 export interface CompiledWorkflowBundleV0_2 extends CompiledWorkflowBundleBase {
   schemaVersion: 'compiled_workflow_bundle.v0.2';
   decisionInventory: DecisionInventoryArtifactV0_2;
   governedInteraction: GovernedInteractionBundleV0_2;
+  approvalSurfaces: ApprovalSurfacesArtifactV0_2;
 }
 
 export type CompiledWorkflowBundle =

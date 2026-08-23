@@ -94,6 +94,47 @@ test('the public CLI writes a deterministic linked artifact inventory', async ()
   }
 });
 
+test('the public CLI preserves v0.2 evidence constraints in approval-surface artifacts', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'workflow-compiler-v0-2-approval-surfaces-'));
+  const workflow = join(root, 'workflow.json');
+  const outDir = join(root, 'output');
+
+  try {
+    const definition = JSON.parse(await readFile(fixturePath, 'utf8'));
+    definition.schemaVersion = 'workflow_definition.v0.2';
+    const requestChanges = definition.actions.find((action) => action.id === 'request_changes');
+    assert.ok(requestChanges);
+    requestChanges.requiredEvidenceValues = { version_id: 'version-fixture-001' };
+    requestChanges.requiredEvidenceMatchers = {
+      review_feedback: { kind: 'contains_case_insensitive', values: ['changes'] },
+    };
+    await writeFile(workflow, `${JSON.stringify(definition, null, 2)}\n`, 'utf8');
+
+    const result = spawnSync(
+      process.execPath,
+      ['dist/cli.js', 'compile', '--workflow', workflow, '--out', outDir],
+      { cwd: packageRoot, encoding: 'utf8' },
+    );
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+
+    const approvalSurfaces = JSON.parse(
+      await readFile(join(outDir, 'approval-surfaces.json'), 'utf8'),
+    );
+    assert.equal(approvalSurfaces.schemaVersion, 'approval_surfaces.v0.2');
+    const approvalSurface = approvalSurfaces.actions.find(
+      (action) => action.actionId === 'request_changes',
+    );
+    assert.deepEqual(approvalSurface.requiredEvidenceValues, {
+      version_id: 'version-fixture-001',
+    });
+    assert.deepEqual(approvalSurface.requiredEvidenceMatchers, {
+      review_feedback: { kind: 'contains_case_insensitive', values: ['changes'] },
+    });
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test('recompilation atomically advances a managed revision pointer', async () => {
   const root = await mkdtemp(join(tmpdir(), 'workflow-compiler-revision-pointer-'));
   const outDir = join(root, 'output');

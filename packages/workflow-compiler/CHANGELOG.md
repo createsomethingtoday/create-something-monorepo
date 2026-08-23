@@ -59,6 +59,9 @@ artifact schemas.
 - Version operator-console data with the decision-inventory and replay-report
   artifacts it embeds, and reject a mixed v0.1/v0.2 pair rather than emitting
   a misleading console schema.
+- Version approval surfaces as v0.2 for constrained workflows, retaining
+  exact-value and matcher constraints on controlled actions instead of reducing
+  them to evidence field names.
 
 ## 0.2.0
 
