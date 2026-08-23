@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 
-import { parseWorkflowDefinition } from './input.js';
+import { parseWorkflowDefinition, WorkflowInputValidationError } from './input.js';
 
 import type {
   AgentContractsArtifact,
@@ -271,7 +271,19 @@ function validateReferences(definition: WorkflowDefinition): WorkflowCompilation
 }
 
 export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundle {
-  const definition = parseWorkflowDefinition(input);
+  let snapshot: unknown;
+  try {
+    snapshot = structuredClone(input);
+  } catch {
+    throw new WorkflowInputValidationError([
+      {
+        code: 'INVALID_VALUE',
+        path: '$',
+        message: 'Workflow definition must be detachable structured data.',
+      },
+    ]);
+  }
+  const definition = parseWorkflowDefinition(snapshot);
   const diagnostics = [...validateGovernance(definition), ...validateReferences(definition)];
   if (diagnostics.length > 0) throw new WorkflowCompilationError(diagnostics);
 

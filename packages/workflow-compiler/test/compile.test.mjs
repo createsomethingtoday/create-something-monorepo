@@ -245,3 +245,46 @@ test('rejects an agent allowlist entry assigned to another execution boundary', 
     }
   );
 });
+
+test('snapshots definition getters once before authority validation and artifact generation', async () => {
+  const definition = JSON.parse(await readFile(workflowFixture, 'utf8'));
+  let observations = 0;
+  Object.defineProperty(definition.agents[0], 'allowedActionIds', {
+    enumerable: true,
+    get() {
+      observations += 1;
+      return observations === 1
+        ? ['run_published_validation', 'validate_submission', 'monitor_post_launch']
+        : ['request_changes'];
+    }
+  });
+
+  const compiled = compileWorkflowDefinition(definition);
+
+  assert.equal(observations, 1);
+  assert.deepEqual(compiled.agentContracts.agents[0].allowedActionIds, [
+    'monitor_post_launch',
+    'run_published_validation',
+    'validate_submission'
+  ]);
+});
+
+test('fails closed when a workflow definition cannot be detached into structured data', async () => {
+  const definition = JSON.parse(await readFile(workflowFixture, 'utf8'));
+
+  assert.throws(
+    () => compileWorkflowDefinition(new Proxy(definition, {})),
+    (error) => {
+      assert.equal(error.name, 'WorkflowInputValidationError');
+      assert.equal(error.code, 'INVALID_WORKFLOW_DEFINITION');
+      assert.deepEqual(error.diagnostics, [
+        {
+          code: 'INVALID_VALUE',
+          path: '$',
+          message: 'Workflow definition must be detachable structured data.'
+        }
+      ]);
+      return true;
+    }
+  );
+});
