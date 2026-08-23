@@ -110,9 +110,9 @@ test('the trusted workflow validates supported LTS nodes and stages from protect
   assert.match(workflow, /test "\$\(git rev-parse HEAD\)" = "\$\(git rev-parse origin\/main\)"/);
 });
 
-test('the stable quickstart installs the default package release', async () => {
+test('the stable quickstart pins the exact approved package release', async () => {
   const readme = await readFile(new URL('../README.md', import.meta.url), 'utf8');
-  assert.match(readme, /npm install @create-something\/workflow-compiler(?:\r?\n|$)/);
+  assert.match(readme, /npm install @create-something\/workflow-compiler@0\.1\.0/);
   assert.doesNotMatch(readme, /npm install @create-something\/workflow-compiler@bootstrap/);
 });
 
