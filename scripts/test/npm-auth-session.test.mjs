@@ -98,6 +98,28 @@ test('npm auth status rejects a credential file that is readable by other users'
   assert.match(report.error, /permission|readable/i);
 });
 
+test('npm auth status rejects an environment-dependent credential entry', () => {
+  const fixture = mkdtempSync(path.join(tmpdir(), 'npm-auth-session-interpolated-token-'));
+  const userconfig = path.join(fixture, '.npmrc');
+  const npmBin = path.join(fixture, 'npm');
+  const secret = 'npm_environment_token_must_not_appear';
+
+  writePrivateConfig(userconfig, '//registry.npmjs.org/:_authToken=${NPM_TOKEN}\n');
+  writeExecutable(npmBin, '#!/bin/sh\nprintf \'%s\\n\' \'{"username":"micah-createsomething"}\'\n');
+
+  const result = run(
+    ['status', '--json', '--verify', '--userconfig', userconfig, '--npm-bin', npmBin],
+    { NPM_TOKEN: secret }
+  );
+
+  assert.equal(result.status, 1, result.stderr || result.stdout);
+  assert.doesNotMatch(result.stdout, new RegExp(secret));
+  assert.doesNotMatch(result.stderr, new RegExp(secret));
+  const report = JSON.parse(result.stdout);
+  assert.equal(report.ok, false);
+  assert.match(report.error, /environment|interpolated/i);
+});
+
 test('npm auth status names an invalid saved credential without replaying registry output', () => {
   const fixture = mkdtempSync(path.join(tmpdir(), 'npm-auth-session-invalid-'));
   const userconfig = path.join(fixture, '.npmrc');

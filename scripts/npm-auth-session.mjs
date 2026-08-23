@@ -110,7 +110,8 @@ function savedCredential(config, registry) {
   return {
     status: value ? 'saved' : 'missing',
     storage: value ? 'userconfig' : 'none',
-    valuePrinted: false
+    valuePrinted: false,
+    environmentDependent: /\$\{[^}]+\}/.test(value)
   };
 }
 
@@ -172,7 +173,13 @@ export function npmAuthStatus(options) {
   const userconfig = safeUserconfigPath(options.userconfig);
   assertPrivateUserconfig(userconfig);
   const verifiedOptions = { ...options, userconfig };
-  const credential = savedCredential(readConfig(userconfig), options.registry);
+  const { environmentDependent, ...credential } = savedCredential(
+    readConfig(userconfig),
+    options.registry
+  );
+  if (environmentDependent) {
+    throw new Error('refusing to use an environment-dependent npm credential');
+  }
   const identity =
     options.verify && credential.status === 'saved'
       ? captureNpmIdentity(verifiedOptions)
