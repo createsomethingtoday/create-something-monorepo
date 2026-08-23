@@ -81,6 +81,24 @@ test('npm auth status verifies a saved credential without printing its value', (
   assert.deepEqual(report.identity, { status: 'verified', username: 'micah-createsomething' });
 });
 
+test('npm auth status does not report a saved credential ready until it is verified', () => {
+  const fixture = mkdtempSync(path.join(tmpdir(), 'npm-auth-session-unverified-'));
+  const userconfig = path.join(fixture, '.npmrc');
+  const secret = 'npm_unverified_status_secret_must_not_appear';
+
+  writePrivateConfig(userconfig, `//registry.npmjs.org/:_authToken=${secret}\n`);
+
+  const result = run(['status', '--json', '--userconfig', userconfig]);
+
+  assert.equal(result.status, 1, result.stderr || result.stdout);
+  assert.doesNotMatch(result.stdout, new RegExp(secret));
+  const report = JSON.parse(result.stdout);
+  assert.equal(report.ok, false);
+  assert.equal(report.credential.status, 'saved');
+  assert.equal(report.identity.status, 'not_checked');
+  assert.match(report.nextActions.join('\n'), /--verify/);
+});
+
 test('npm auth status rejects a credential file that is readable by other users', () => {
   const fixture = mkdtempSync(path.join(tmpdir(), 'npm-auth-session-permissions-'));
   const userconfig = path.join(fixture, '.npmrc');
@@ -499,6 +517,56 @@ test('npm auth save rejects a config inside the target path Git worktree', () =>
   assert.equal(readFileSync(userconfig, 'utf8'), 'keep=this-config-unchanged\n');
   const report = JSON.parse(result.stdout);
   assert.match(report.error, /repository/i);
+});
+
+test('npm auth save ignores inherited Git repository redirects when protecting a target worktree', () => {
+  const fixture = mkdtempSync(path.join(tmpdir(), 'npm-auth-session-git-redirect-'));
+  const targetRepository = path.join(fixture, 'target-repository');
+  const redirectRepository = path.join(fixture, 'redirect-repository');
+  const externalDirectory = path.join(fixture, 'external');
+  const userconfig = path.join(targetRepository, '.npmrc');
+  const secret = 'npm_git_redirect_secret_must_not_be_persisted';
+
+  initializeGitRepository(targetRepository);
+  initializeGitRepository(redirectRepository);
+  mkdirSync(externalDirectory);
+  writeFileSync(userconfig, 'keep=this-config-unchanged\n');
+
+  const result = run(
+    ['save', '--json', '--userconfig', userconfig, '--token-env', 'NPM_AUTH_SESSION_TEST_TOKEN'],
+    {
+      GIT_DIR: path.join(redirectRepository, '.git'),
+      GIT_WORK_TREE: redirectRepository,
+      NPM_AUTH_SESSION_TEST_TOKEN: secret
+    },
+    externalDirectory
+  );
+
+  assert.equal(result.status, 1, result.stderr || result.stdout);
+  assert.doesNotMatch(result.stdout, new RegExp(secret));
+  assert.equal(readFileSync(userconfig, 'utf8'), 'keep=this-config-unchanged\n');
+  const report = JSON.parse(result.stdout);
+  assert.match(report.error, /repository/i);
+});
+
+test('npm auth save fails closed when Git repository discovery is unavailable', () => {
+  const fixture = mkdtempSync(path.join(tmpdir(), 'npm-auth-session-no-git-'));
+  const userconfig = path.join(fixture, '.npmrc');
+  const secret = 'npm_no_git_secret_must_not_be_persisted';
+
+  writeFileSync(userconfig, 'keep=this-config-unchanged\n');
+
+  const result = run(
+    ['save', '--json', '--userconfig', userconfig, '--token-env', 'NPM_AUTH_SESSION_TEST_TOKEN'],
+    { NPM_AUTH_SESSION_TEST_TOKEN: secret, PATH: '' },
+    fixture
+  );
+
+  assert.equal(result.status, 1, result.stderr || result.stdout);
+  assert.doesNotMatch(result.stdout, new RegExp(secret));
+  assert.equal(readFileSync(userconfig, 'utf8'), 'keep=this-config-unchanged\n');
+  const report = JSON.parse(result.stdout);
+  assert.match(report.error, /Git|repository/i);
 });
 
 test('npm auth status rejects a credential config inside the target path Git worktree', () => {

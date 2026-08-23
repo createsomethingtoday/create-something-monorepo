@@ -187,7 +187,7 @@ export function npmAuthStatus(options) {
   const report = {
     schema: 'create-something.npm-auth-session.v1',
     mode: 'status',
-    ok: credential.status === 'saved' && (!options.verify || identity.status === 'verified'),
+    ok: credential.status === 'saved' && Boolean(options.verify) && identity.status === 'verified',
     registry: options.registry,
     userconfig: {
       path: userconfig,
@@ -233,12 +233,19 @@ function existingParentDirectory(path) {
 
 function gitRootAt(directory) {
   const result = spawnSync('git', ['-C', directory, 'rev-parse', '--show-toplevel'], {
-    encoding: 'utf8'
+    encoding: 'utf8',
+    env: Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('GIT_')))
   });
   if (result.status === 0 && result.stdout.trim()) {
     return canonicalPathForWrite(result.stdout.trim());
   }
-  return null;
+  if (
+    !result.error &&
+    /not a git repository/i.test(`${result.stdout || ''}\n${result.stderr || ''}`)
+  ) {
+    return null;
+  }
+  throw new Error('unable to inspect Git repository boundaries safely');
 }
 
 function repositoryRoots(userconfig) {
