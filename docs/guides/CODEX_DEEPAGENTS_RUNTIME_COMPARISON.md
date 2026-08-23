@@ -73,24 +73,47 @@ returns `pass`, `degraded`, or `blocked`:
 Use `--allow-failures` to preserve an unsuccessful receipt without failing a
 shell pipeline. Every external invocation has a 90-second limit by default.
 
-## First result: 2026-08-23
+## Results: 2026-08-23
 
 The incumbent reference completed against `gpt-5.5`:
 
-| Runtime                       | Result                    | Evidence                                                                                                                                                                                                                                                                   |
-| ----------------------------- | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Codex CLI 0.147.0             | pass, 3/3                 | Each case returned schema-valid JSON, preserved its source ids, selected the required safe decision/recovery, and left its fixture unchanged. Latency was 22.7–26.8 seconds; CLI-reported token counts were 21,447–23,307 per case.                                        |
-| Deep Agents 0.7.8 + OpenAI    | blocked, 0 evaluable runs | The pinned SDK constructed its virtual read-only harness, then the OpenAI API returned `429 credit_balance_exhausted` before any model response. All three fixtures remained unchanged.                                                                                    |
-| Deep Agents 0.7.8 + Ornith 9b | degraded, 8/9             | Three repetitions through `langchain-ollama==1.1.0` preserved every fixture hash. Eight runs returned the exact required status/evidence/decision/recovery; one unknown-state run returned no final structured response. Latency was 19.0–38.0 seconds (24.9-second mean). |
+| Runtime | Result | Evidence |
+| --- | --- | --- |
+| Codex CLI 0.147.0 | pass, 3/3 | Each case returned schema-valid JSON, preserved its source ids, selected the required safe decision/recovery, and left its fixture unchanged. Latency was 22.7–26.8 seconds; CLI-reported token counts were 21,447–23,307 per case. |
+| Deep Agents 0.7.8 + OpenAI | blocked, 0 evaluable runs | The pinned SDK constructed its virtual read-only harness, then the OpenAI API returned `429 credit_balance_exhausted` before any model response. All three fixtures remained unchanged. |
+| Deep Agents 0.7.8 + Ornith 9b, initial | degraded, 8/9 | The initial three repetitions preserved every fixture hash. Eight runs returned the exact required status/evidence/decision/recovery; one unknown-state run returned no final structured response. Latency was 19.0–38.0 seconds (24.9-second mean). |
+| Deep Agents 0.7.8 + Ornith 9b, fresh rerun | pass, 9/9 | The fresh three-repetition rerun preserved all nine fixture hashes and produced schema-valid evidence, approval-boundary, and recovery results. Duration ranged from 27.2 to 84.3 seconds (42.9-second mean). |
 
 The direct same-model comparison remains **blocked**, not a Deep Agents
-failure and not an adoption decision. The local Ornith lane is also
-**degraded**: it demonstrated no-write behavior but did not meet the required
-repeatable structured-response gate. Neither result changes executor routing;
-Codex/OpenAI remains the default. After API credit is available, rerun the
-same-model three-repetition command and compare task success, fixture
-immutability, latency, token/cost visibility, interrupt/recovery behavior, and
-receipt completeness before changing executor routing.
+failure and not an adoption decision. The fresh local Ornith rerun clears this
+specific no-write task pack, but the 84.3-second slowest result means it is a
+background worker, not an interactive or unattended promotion worker. Neither
+result changes executor routing; Codex/OpenAI remains the default. After API
+credit is available, rerun the same-model three-repetition command and compare
+task success, fixture immutability, latency, token/cost visibility,
+interrupt/recovery behavior, and receipt completeness before changing executor
+routing.
+
+## Token-aware assignment
+
+The purpose of the local lane is not to add an agent count. It is to move work
+whose expected outcome is cheap to verify into a local, bounded worker loop
+while keeping scarce frontier-model and operator attention for work that needs
+them.
+
+| Work shape | Default executor | Operator role | Escalate to Codex/OpenAI when |
+| --- | --- | --- | --- |
+| A0 read-only evidence gathering, issue/PR triage, receipt inspection, or policy classification | `ornith:9b` through the no-write operator loop | Review the receipt and select the next action | CTX/receipt/source evidence is missing, the task needs credentials, or the first pass cannot name a deterministic verifier |
+| A1 bounded docs or allowlisted-script candidate with a named test and rollback | `ornith:9b` prepares the candidate; operator debugs and QA-checks it | Inspect the diff and run the named verifier before any application or promotion | A gate fails, a second repair would be needed, the change expands scope, or the target is not reversible |
+| A2+ reviewed, security-sensitive, client, deploy, or promotion work | Codex/OpenAI primary; Ornith may only gather no-write evidence | Own judgment, review, merge/deploy, and recovery | Always; local execution never acquires this authority |
+| Harness portability evaluation | Deep Agents + Ornith in the isolated read-only task pack | Compare receipts and keep the result challenger-only | Any attempted write, missing immutable-fixture proof, or absent same-model cost/quality evidence |
+
+Measure this lane as accepted verified outcomes, not raw local tokens: record
+the local duration, retries, operator-debug/QA minutes, deterministic-verifier
+cost, and any fallback cost separately. Local provider API spend is not a claim
+of zero landed cost. The local lane earns broader use only when those receipts
+show a lower accepted-outcome cost without weakening the authority or recovery
+contract.
 
 ## Adoption gate
 
