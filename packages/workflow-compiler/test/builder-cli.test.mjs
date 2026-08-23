@@ -208,3 +208,54 @@ test('the public simulate command rejects an empty replay manifest', async () =>
     await rm(scratch, { recursive: true, force: true });
   }
 });
+
+test('the public simulate command rejects replay manifests that omit a declared evaluation', async () => {
+  const scratch = await mkdtemp(join(tmpdir(), 'workflow-compiler-simulation-coverage-'));
+  const starterDir = join(scratch, 'daily-brief');
+
+  try {
+    const initialized = run('init', '--template', 'local-runbook', '--dir', starterDir);
+    assert.equal(initialized.status, 0, initialized.stderr || initialized.stdout);
+
+    const casesPath = join(starterDir, 'cases.json');
+    const incompleteCases = JSON.parse(await readFile(casesPath, 'utf8'));
+    incompleteCases.cases = [incompleteCases.cases[0]];
+    await writeFile(casesPath, JSON.stringify(incompleteCases, null, 2) + '\n', 'utf8');
+
+    const simulated = run(
+      'simulate',
+      '--workflow',
+      join(starterDir, 'workflow.json'),
+      '--cases',
+      casesPath
+    );
+    assert.equal(simulated.status, 3, simulated.stderr || simulated.stdout);
+    assert.equal(simulated.stdout, '');
+    const failure = JSON.parse(simulated.stderr);
+    assert.deepEqual(
+      {
+        ok: failure.ok,
+        error: failure.error,
+        code: failure.code,
+        workflowId: failure.workflowId,
+        outcomes: failure.outcomes,
+        allExpectationsMatched: failure.allExpectationsMatched,
+        uncoveredEvaluationIds: failure.uncoveredEvaluationIds,
+        externalMutations: failure.externalMutations
+      },
+      {
+        ok: false,
+        error: 'WorkflowCliSimulationError',
+        code: 'SIMULATION_EVALUATION_COVERAGE_UNMET',
+        workflowId: 'operations.local.runbook',
+        outcomes: { pass: 1, approval_required: 0, blocked: 0 },
+        allExpectationsMatched: true,
+        uncoveredEvaluationIds: ['connected-step-waits', 'live-action-stops'],
+        externalMutations: false
+      }
+    );
+    assert.match(failure.definitionHash, /^sha256:[a-f0-9]{64}$/);
+  } finally {
+    await rm(scratch, { recursive: true, force: true });
+  }
+});

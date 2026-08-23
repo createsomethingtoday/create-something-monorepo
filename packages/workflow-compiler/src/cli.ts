@@ -49,20 +49,30 @@ class WorkflowCliUsageError extends Error {
 }
 
 class WorkflowCliSimulationError extends Error {
-  readonly code: 'SIMULATION_EXPECTATIONS_UNMET' | 'SIMULATION_NO_CASES';
+  readonly code:
+    | 'SIMULATION_EXPECTATIONS_UNMET'
+    | 'SIMULATION_NO_CASES'
+    | 'SIMULATION_EVALUATION_COVERAGE_UNMET';
+  readonly uncoveredEvaluationIds: string[];
 
   constructor(
-    code: 'SIMULATION_EXPECTATIONS_UNMET' | 'SIMULATION_NO_CASES',
+    code:
+      | 'SIMULATION_EXPECTATIONS_UNMET'
+      | 'SIMULATION_NO_CASES'
+      | 'SIMULATION_EVALUATION_COVERAGE_UNMET',
     readonly bundle: CompiledWorkflowBundle,
     readonly replay: ReturnType<typeof replayWorkflow>
   ) {
     super(
       code === 'SIMULATION_NO_CASES'
         ? 'Simulation requires at least one replay case.'
-        : 'One or more replay cases did not match their declared expectation.'
+        : code === 'SIMULATION_EVALUATION_COVERAGE_UNMET'
+          ? 'Simulation did not cover every declared evaluation.'
+          : 'One or more replay cases did not match their declared expectation.'
     );
     this.name = 'WorkflowCliSimulationError';
     this.code = code;
+    this.uncoveredEvaluationIds = uncoveredEvaluationIds(bundle, replay);
   }
 }
 
@@ -173,6 +183,26 @@ async function compileFromInput(options: WorkflowInputOptions): Promise<{
     ? replayWorkflow(bundle, parseJsonInput(await readFile(options.casesPath, 'utf8'), 'replay'))
     : undefined;
   return { bundle, ...(replay ? { replay } : {}) };
+}
+
+function uncoveredEvaluationIds(
+  bundle: CompiledWorkflowBundle,
+  replay: ReturnType<typeof replayWorkflow>
+): string[] {
+  return bundle.evaluationManifest.evaluations
+    .filter(
+      (evaluation) =>
+        !replay.report.cases.some(
+          (replayCase) =>
+            replayCase.expectationMatched &&
+            replayCase.actionId === evaluation.actionId &&
+            replayCase.expectedOutcome === evaluation.expectedOutcome &&
+            evaluation.requiredEvidence.every((field) =>
+              replayCase.evidenceReferences.includes(field)
+            )
+        )
+    )
+    .map((evaluation) => evaluation.id);
 }
 
 function describeDecision(decision: CompiledDecision): string {
@@ -286,6 +316,9 @@ async function main(): Promise<void> {
     if (!replay.report.allExpectationsMatched) {
       throw new WorkflowCliSimulationError('SIMULATION_EXPECTATIONS_UNMET', bundle, replay);
     }
+    if (uncoveredEvaluationIds(bundle, replay).length > 0) {
+      throw new WorkflowCliSimulationError('SIMULATION_EVALUATION_COVERAGE_UNMET', bundle, replay);
+    }
     process.stdout.write(
       JSON.stringify(
         {
@@ -395,6 +428,7 @@ main().catch((error: unknown) => {
             error.code === 'SIMULATION_NO_CASES'
               ? false
               : error.replay.report.allExpectationsMatched,
+          uncoveredEvaluationIds: error.uncoveredEvaluationIds,
           externalMutations: false
         },
         null,

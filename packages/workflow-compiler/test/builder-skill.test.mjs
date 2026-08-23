@@ -11,6 +11,7 @@ test('the shipped Codex skill keeps the paired terminal workflow local, inspecta
   assert.ok(manifest.files.includes('skills'));
   assert.match(skill, /^---\nname: workflow-compiler\n/m);
   assert.match(skill, /npx workflow-compiler init --template local-runbook --dir/i);
+  assert.match(skill, /cd WORKFLOW_DIRECTORY/i);
   assert.match(skill, /npx workflow-compiler validate --workflow workflow.json/i);
   assert.match(
     skill,

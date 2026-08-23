@@ -28,22 +28,26 @@ simulates, and explains the resulting contract.
 
    npx workflow-compiler init --template local-runbook --dir WORKFLOW_DIRECTORY
 
-3. Read PLAYBOOK.md, RUNBOOK.md, workflow.json, and cases.json before
+3. Enter the created directory before reading or running the follow-up commands:
+
+   cd WORKFLOW_DIRECTORY
+
+4. Read PLAYBOOK.md, RUNBOOK.md, workflow.json, and cases.json before
    proposing changes. Keep the proposed change limited to the requested
    workflow behavior.
-4. Validate the governed definition:
+5. Validate the governed definition:
 
    npx workflow-compiler validate --workflow workflow.json
 
-5. Simulate the historical pass, wait, and stop cases:
+6. Simulate the historical pass, wait, and stop cases:
 
    npx workflow-compiler simulate --workflow workflow.json --cases cases.json
 
-6. Explain the compiled contract in operator language:
+7. Explain the compiled contract in operator language:
 
    npx workflow-compiler explain --workflow workflow.json --cases cases.json
 
-7. Show the changed source and simulation result. Do not add a connected
+8. Show the changed source and simulation result. Do not add a connected
    runtime or execute a tool merely because the pass case is eligible.
 
 ## Approval rule
