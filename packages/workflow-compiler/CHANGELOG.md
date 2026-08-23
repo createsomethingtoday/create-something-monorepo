@@ -14,6 +14,12 @@ artifact schemas.
 - Require exact passing preflight and confirmed handoff values plus the owning
   review-ready receipt vocabulary before replay can transition to preflight-passed
   or ready-for-review states.
+- Add explicit `workflow_definition.v0.2` and
+  `governed_interaction_bundle.v0.2` schemas for exact-evidence and
+  evidence-matcher constraints, with detached public migration helpers from
+  v0.1.
+- Reject empty or whitespace-only exact evidence values before a replay can be
+  made permanently unsatisfiable.
 
 ## 0.2.0
 

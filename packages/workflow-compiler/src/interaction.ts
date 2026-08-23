@@ -120,13 +120,13 @@ function stringArray(value: unknown, path: string): string[] {
 
 function evidenceValue(value: unknown, path: string): WorkflowEvidenceValue {
   if (
-    typeof value === 'string' ||
+    (typeof value === 'string' && value.trim() !== '') ||
     typeof value === 'boolean' ||
     (typeof value === 'number' && Number.isFinite(value))
   ) {
     return value;
   }
-  return invalid(path, `${path} must be a string, finite number, or boolean.`);
+  return invalid(path, `${path} must be a non-empty string, finite number, or boolean.`);
 }
 
 function evidenceValues(value: unknown, path: string): Record<string, WorkflowEvidenceValue> {
@@ -220,7 +220,11 @@ function parseSurface(value: unknown, path: string): GovernedInteractionSurface 
   };
 }
 
-function parseDecision(value: unknown, path: string): CompiledDecision {
+function parseDecision(
+  value: unknown,
+  path: string,
+  schemaVersion: GovernedInteractionBundle['schemaVersion'],
+): CompiledDecision {
   const decision = object(value, path);
   exactFields(
     decision,
@@ -235,7 +239,9 @@ function parseDecision(value: unknown, path: string): CompiledDecision {
       'receiptFields',
       'recovery',
     ],
-    ['approvalOwner', 'requiredEvidenceMatchers', 'requiredEvidenceValues'],
+    schemaVersion === 'governed_interaction_bundle.v0.2'
+      ? ['approvalOwner', 'requiredEvidenceMatchers', 'requiredEvidenceValues']
+      : ['approvalOwner'],
     path,
   );
   const recovery = object(decision.recovery, `${path}.recovery`);
@@ -327,13 +333,17 @@ export function parseGovernedInteractionBundle(input: unknown): GovernedInteract
     [],
     'bundle',
   );
-  if (bundle.schemaVersion !== 'governed_interaction_bundle.v0.1') {
+  if (
+    bundle.schemaVersion !== 'governed_interaction_bundle.v0.1' &&
+    bundle.schemaVersion !== 'governed_interaction_bundle.v0.2'
+  ) {
     throw new GovernedInteractionValidationError(
       'UNKNOWN_SCHEMA_VERSION',
       'bundle.schemaVersion',
       `Unsupported governed interaction schema ${String(bundle.schemaVersion)}.`,
     );
   }
+  const schemaVersion = bundle.schemaVersion;
   if (bundle.language !== 'create-something/control') {
     throw new GovernedInteractionValidationError(
       'UNKNOWN_LANGUAGE',
@@ -372,7 +382,7 @@ export function parseGovernedInteractionBundle(input: unknown): GovernedInteract
     parseSurface(surface, `bundle.surfaces[${index}]`),
   );
   const actions = bundle.actions.map((action, index) =>
-    parseDecision(action, `bundle.actions[${index}]`),
+    parseDecision(action, `bundle.actions[${index}]`, schemaVersion),
   );
   unique(surfaces.map((surface) => surface.id), 'bundle.surfaces');
   unique(actions.map((action) => action.actionId), 'bundle.actions');
@@ -385,7 +395,7 @@ export function parseGovernedInteractionBundle(input: unknown): GovernedInteract
     );
   }
   return {
-    schemaVersion: 'governed_interaction_bundle.v0.1',
+    schemaVersion,
     language: 'create-something/control',
     runtimeVersion: '0.1.0',
     workflowId: string(bundle.workflowId, 'bundle.workflowId'),
@@ -395,6 +405,14 @@ export function parseGovernedInteractionBundle(input: unknown): GovernedInteract
     capabilities,
     surfaces,
     actions,
+  };
+}
+
+export function migrateGovernedInteractionBundle(input: unknown): GovernedInteractionBundle {
+  const bundle = parseGovernedInteractionBundle(input);
+  return {
+    ...structuredClone(bundle),
+    schemaVersion: 'governed_interaction_bundle.v0.2'
   };
 }
 

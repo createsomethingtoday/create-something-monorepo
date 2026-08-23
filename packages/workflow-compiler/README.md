@@ -119,7 +119,7 @@ import {
 
 ## Governed interaction IR
 
-`governed_interaction_bundle.v0.1` is a versioned JSON intermediate representation for portable, policy-bounded desktop interactions. It is deliberately not a general-purpose programming language. A bundle declares its exact language and runtime version, one or more semantic surfaces, a finite capability inventory, finite local operations, and the compiled authority/evidence/approval/receipt/recovery contract for each workflow action.
+`governed_interaction_bundle.v0.1` and `governed_interaction_bundle.v0.2` are versioned JSON intermediate representations for portable, policy-bounded desktop interactions. They are deliberately not a general-purpose programming language. A bundle declares its exact language and runtime version, one or more semantic surfaces, a finite capability inventory, finite local operations, and the compiled authority/evidence/approval/receipt/recovery contract for each workflow action. Version `v0.2` carries exact-evidence and evidence-matcher constraints from `workflow_definition.v0.2`; version `v0.1` rejects those fields rather than ignoring them.
 
 The `create-something/control` runtime currently permits only four read-only capabilities (`workflow.inspect`, `replay.inspect`, `receipt.inspect`, and `interaction.select`) and one local operation (`select_replay_case`). Parsing rejects unknown fields, versions, capabilities, references, duplicate identifiers, executable operations, and incomplete approval ownership. Hosts publish their supported runtime/capability/operation contract and receive one normalized compatibility decision; they do not reinterpret workflow authority.
 

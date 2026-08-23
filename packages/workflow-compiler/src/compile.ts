@@ -474,7 +474,10 @@ export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundl
       .sort(byId)
   };
   const governedInteraction: GovernedInteractionBundle = {
-    schemaVersion: 'governed_interaction_bundle.v0.1',
+    schemaVersion:
+      definition.schemaVersion === 'workflow_definition.v0.2'
+        ? 'governed_interaction_bundle.v0.2'
+        : 'governed_interaction_bundle.v0.1',
     language: 'create-something/control',
     runtimeVersion: '0.1.0',
     ...header,

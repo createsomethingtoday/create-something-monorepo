@@ -22,6 +22,29 @@ The compiler intentionally rejects unknown schema versions. It does not guess
 renamed fields, synthesize missing governance, or convert historical approval
 strings into live authority.
 
+### Workflow and interaction v0.2
+
+Version `v0.2` introduces explicit evidence constraints. A v0.1 workflow
+cannot carry `requiredEvidenceValues` or `requiredEvidenceMatchers`; a v0.2
+workflow compiles to `governed_interaction_bundle.v0.2`, which retains them.
+Use the public helpers to create a detached v0.2 copy rather than editing a
+source artifact in place:
+
+```ts
+import {
+  migrateGovernedInteractionBundle,
+  migrateWorkflowDefinition
+} from '@create-something/workflow-compiler';
+
+const workflowV0_2 = migrateWorkflowDefinition(workflowV0_1);
+const interactionV0_2 = migrateGovernedInteractionBundle(interactionV0_1);
+```
+
+The helpers validate the source first and change only its schema version. They
+do not invent constraints, add authority, or approve a replay. Revalidate,
+compile, replay, and independently verify the migrated copy before promotion;
+preserve the v0.1 source and compiled revision for rollback.
+
 ## Artifact output upgrades
 
 The compiler writes immutable revisions behind a managed pointer and retains

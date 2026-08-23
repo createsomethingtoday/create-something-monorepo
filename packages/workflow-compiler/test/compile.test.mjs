@@ -158,6 +158,7 @@ test('rejects a consequential action without evidence, receipt, and recovery con
 
 test('rejects an evidence-value constraint outside required evidence for a read action', async () => {
   const definition = JSON.parse(await readFile(workflowFixture, 'utf8'));
+  definition.schemaVersion = 'workflow_definition.v0.2';
   definition.actions[0].requiredEvidenceValues = { submission_id: 'submission-fixture-001' };
 
   assert.throws(

@@ -7,6 +7,7 @@ import {
   evaluateGovernedInteractionCompatibility,
   GovernedInteractionValidationError,
   inspectClientWorkspaceGovernedInteraction,
+  migrateGovernedInteractionBundle,
   parseGovernedInteractionBundle,
 } from '../dist/index.js';
 
@@ -20,13 +21,26 @@ test('parses a serialized compiled interaction bundle through the public interfa
   assert.deepEqual(parseGovernedInteractionBundle(serialized), compiled.governedInteraction);
 });
 
+test('the public interaction migration upgrades a detached v0.1 copy to v0.2', async () => {
+  const definition = JSON.parse(await readFile(fixtureUrl, 'utf8'));
+  const compiled = compileWorkflowDefinition(definition);
+  const migrated = migrateGovernedInteractionBundle(compiled.governedInteraction);
+
+  assert.equal(compiled.governedInteraction.schemaVersion, 'governed_interaction_bundle.v0.1');
+  assert.equal(migrated.schemaVersion, 'governed_interaction_bundle.v0.2');
+  assert.notStrictEqual(migrated, compiled.governedInteraction);
+  assert.deepEqual(migrated.actions, compiled.governedInteraction.actions);
+});
+
 test('parses serialized exact evidence constraints in the public interaction bundle', async () => {
   const definition = JSON.parse(await readFile(fixtureUrl, 'utf8'));
+  definition.schemaVersion = 'workflow_definition.v0.2';
   definition.actions[0].requiredEvidenceValues = { published_url: 'https://example.com' };
   definition.actions[0].requiredEvidenceMatchers = {
     published_url: { kind: 'contains_case_insensitive', values: ['example.com'] }
   };
   const compiled = compileWorkflowDefinition(definition);
+  assert.equal(compiled.governedInteraction.schemaVersion, 'governed_interaction_bundle.v0.2');
   const serialized = JSON.parse(JSON.stringify(compiled.governedInteraction));
 
   assert.deepEqual(parseGovernedInteractionBundle(serialized), compiled.governedInteraction);
@@ -41,6 +55,40 @@ test('parses serialized exact evidence constraints in the public interaction bun
   assert.deepEqual(constrainedAction?.requiredEvidenceMatchers, {
     published_url: { kind: 'contains_case_insensitive', values: ['example.com'] }
   });
+});
+
+test('the legacy interaction schema rejects evidence constraints instead of ignoring them', async () => {
+  const interaction = await compiledInteraction();
+  interaction.actions[0].requiredEvidenceValues = { published_url: 'https://example.com' };
+
+  assert.throws(
+    () => parseGovernedInteractionBundle(interaction),
+    rejectsWith('INVALID_BUNDLE', 'bundle.actions[0]'),
+  );
+});
+
+test('the interaction parser rejects empty exact evidence values', async () => {
+  const definition = JSON.parse(await readFile(fixtureUrl, 'utf8'));
+  definition.schemaVersion = 'workflow_definition.v0.2';
+  definition.actions[0].requiredEvidenceValues = { published_url: 'https://example.com' };
+  const interaction = JSON.parse(
+    JSON.stringify(compileWorkflowDefinition(definition).governedInteraction),
+  );
+  const actionIndex = interaction.actions.findIndex(
+    (action) => action.actionId === 'run_published_validation',
+  );
+  assert.notEqual(actionIndex, -1);
+  const action = interaction.actions[actionIndex];
+  assert.ok(action.requiredEvidenceValues);
+  action.requiredEvidenceValues.published_url = '   ';
+
+  assert.throws(
+    () => parseGovernedInteractionBundle(interaction),
+    rejectsWith(
+      'INVALID_BUNDLE',
+      `bundle.actions[${actionIndex}].requiredEvidenceValues.published_url`,
+    ),
+  );
 });
 
 async function compiledInteraction() {

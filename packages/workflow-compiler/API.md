@@ -8,21 +8,23 @@ are included in the npm tarball.
 
 ### `compileWorkflowDefinition(input)`
 
-Parses one `workflow_definition.v0.1` value, validates every reference and
+Parses one `workflow_definition.v0.1` or `workflow_definition.v0.2` value, validates every reference and
 consequential governance boundary, and returns a deterministic
 `CompiledWorkflowBundle`. It throws `WorkflowInputValidationError` for input
 shape errors and `WorkflowCompilationError` for invalid workflow semantics.
 
-An action may declare `requiredEvidenceValues`, a map of required-evidence
-fields to an exact string, finite number, or boolean value. Each constrained
-field must also appear in `requiredEvidence`. The compiled governed-interaction
-bundle preserves and validates these constraints. Replay blocks a supplied value
-that differs from the versioned contract with `EVIDENCE_VALUE_MISMATCH`; a
-non-empty receipt alone cannot satisfy that condition.
+Only `workflow_definition.v0.2` may declare `requiredEvidenceValues`, a map of
+required-evidence fields to an exact non-empty string, finite number, or boolean
+value. Each constrained field must also appear in `requiredEvidence`. The
+compiled `governed_interaction_bundle.v0.2` preserves and validates these
+constraints. Replay blocks a supplied value that differs from the versioned
+contract with `EVIDENCE_VALUE_MISMATCH`; a non-empty receipt alone cannot
+satisfy that condition.
 
-An action may also declare `requiredEvidenceMatchers`. The current finite
-matcher is `contains_case_insensitive`, which accepts a non-empty string that
-contains one of its declared non-empty values. Replay blocks a non-match with
+Only `workflow_definition.v0.2` may also declare
+`requiredEvidenceMatchers`. The current finite matcher is
+`contains_case_insensitive`, which accepts a non-empty string that contains one
+of its declared non-empty values. Replay blocks a non-match with
 `EVIDENCE_MATCHER_MISMATCH`. This permits an owning system's documented receipt
 vocabulary without accepting arbitrary regular expressions.
 
@@ -31,6 +33,13 @@ vocabulary without accepting arbitrary regular expressions.
 Validates and normalizes a workflow definition without compiling artifacts.
 Unknown properties, schema versions, duplicate IDs, unsafe references, and
 invalid authority assignments fail closed.
+
+### `migrateWorkflowDefinition(input)`
+
+Validates a `workflow_definition.v0.1` or `workflow_definition.v0.2` value and
+returns a detached `workflow_definition.v0.2` copy. It does not infer new
+evidence constraints or change workflow semantics. Validate, compile, replay,
+and retain the prior source and compiled revision before promoting the copy.
 
 ### `parseWorkflowReplayManifest(input)`
 
@@ -86,7 +95,11 @@ boundary for callers that manage their own keys.
 
 `parseGovernedInteractionBundle` and
 `evaluateGovernedInteractionCompatibility` validate the finite, read-only
-`governed_interaction_bundle.v0.1` IR. `createOperatorConsoleData` derives the
+`governed_interaction_bundle.v0.1` and `governed_interaction_bundle.v0.2` IR.
+Version `v0.2` carries the exact-evidence and evidence-matcher fields emitted
+from a v0.2 workflow; v0.1 rejects them. `migrateGovernedInteractionBundle`
+validates an existing bundle and returns a detached v0.2 copy without adding
+authority or changing a decision. `createOperatorConsoleData` derives the
 read-only UI model. `serveOperatorConsole` serves an already compiled bundle;
 it does not add execution controls.
 

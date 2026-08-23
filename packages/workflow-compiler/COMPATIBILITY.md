@@ -27,6 +27,20 @@ Unknown schema versions and unknown fields fail closed. A breaking TypeScript,
 CLI, semantic, or schema change requires either a new npm major version or a
 new explicitly versioned schema with a documented migration path.
 
+### Workflow and interaction v0.2
+
+`workflow_definition.v0.1` remains readable but rejects
+`requiredEvidenceValues` and `requiredEvidenceMatchers`. Those fields require
+`workflow_definition.v0.2`; its compiler emits
+`governed_interaction_bundle.v0.2` so the same constraints survive into the
+read-only interaction contract. `governed_interaction_bundle.v0.1` likewise
+rejects the fields instead of silently dropping them.
+
+The current package reads both versions and exports explicit detached-copy
+migrations for each. A v0.1 parser rejects v0.2 input, so callers must retain
+the original artifact, migrate deliberately, and validate, compile, and replay
+the result before promotion.
+
 ## Prereleases
 
 `0.1.0-beta.*` releases are public integration candidates. Their documented

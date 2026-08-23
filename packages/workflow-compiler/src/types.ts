@@ -6,6 +6,14 @@ export type SystemTier = 'database' | 'automation' | 'judgment';
 
 export type WorkflowEvidenceValue = string | number | boolean;
 
+export type WorkflowDefinitionSchemaVersion =
+  | 'workflow_definition.v0.1'
+  | 'workflow_definition.v0.2';
+
+export type GovernedInteractionBundleSchemaVersion =
+  | 'governed_interaction_bundle.v0.1'
+  | 'governed_interaction_bundle.v0.2';
+
 export interface WorkflowEvidenceMatcher {
   kind: 'contains_case_insensitive';
   values: string[];
@@ -106,7 +114,7 @@ export interface WorkflowTransition {
 }
 
 export interface WorkflowDefinition {
-  schemaVersion: 'workflow_definition.v0.1';
+  schemaVersion: WorkflowDefinitionSchemaVersion;
   workflowId: string;
   version: string;
   title: string;
@@ -254,7 +262,7 @@ export interface GovernedInteractionSurface {
 }
 
 export interface GovernedInteractionBundle extends CompiledArtifactHeader {
-  schemaVersion: 'governed_interaction_bundle.v0.1';
+  schemaVersion: GovernedInteractionBundleSchemaVersion;
   language: 'create-something/control';
   runtimeVersion: '0.1.0';
   entrySurfaceId: string;

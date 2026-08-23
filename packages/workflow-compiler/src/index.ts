@@ -19,6 +19,7 @@ export {
   WorkflowArtifactAttestationError
 } from './attestation.js';
 export {
+  migrateWorkflowDefinition,
   parseWorkflowDefinition,
   parseWorkflowReplayManifest,
   ReplayInputValidationError,
@@ -34,6 +35,7 @@ export {
 export {
   evaluateGovernedInteractionCompatibility,
   GovernedInteractionValidationError,
+  migrateGovernedInteractionBundle,
   parseGovernedInteractionBundle
 } from './interaction.js';
 export { serveOperatorConsole } from './server.js';
@@ -88,6 +90,7 @@ export type {
   EventSchemasArtifact,
   EvidenceLedgerArtifact,
   GovernedInteractionBundle,
+  GovernedInteractionBundleSchemaVersion,
   GovernedInteractionCapability,
   GovernedInteractionOperation,
   GovernedInteractionSurface,
@@ -109,6 +112,7 @@ export type {
   WorkflowAgent,
   WorkflowCompilationDiagnostic,
   WorkflowDefinition,
+  WorkflowDefinitionSchemaVersion,
   WorkflowEvidenceMatcher,
   WorkflowEvidenceMatcherMismatch,
   WorkflowEvidenceMismatch,
