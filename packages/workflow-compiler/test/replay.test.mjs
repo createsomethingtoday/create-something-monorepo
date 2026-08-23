@@ -115,6 +115,39 @@ test('versions replay reports when constrained evidence adds mismatch detail', a
   assert.deepEqual(mismatch.evidenceMatcherMismatches, []);
 });
 
+test('serializes missing constrained evidence as an explicit null mismatch actual', async () => {
+  const definition = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const manifest = JSON.parse(await readFile(casesUrl, 'utf8'));
+  definition.schemaVersion = 'workflow_definition.v0.2';
+  const action = definition.actions.find((entry) => entry.id === 'validate_submission');
+  action.requiredEvidenceValues = { published_url: 'https://fixture-template.webflow.io' };
+  action.requiredEvidenceMatchers = {
+    validation_result: { kind: 'contains_case_insensitive', values: ['pass'] }
+  };
+
+  const report = replayWorkflow(compileWorkflowDefinition(definition), manifest).report;
+  const missing = report.cases.find(
+    (replayCase) => replayCase.caseId === 'missing-validation-evidence-blocks'
+  );
+  const serialized = JSON.parse(JSON.stringify(missing));
+
+  assert.equal(missing.reasonCode, 'INSUFFICIENT_EVIDENCE');
+  assert.deepEqual(serialized.evidenceMismatches, [
+    {
+      field: 'published_url',
+      expected: 'https://fixture-template.webflow.io',
+      actual: null
+    }
+  ]);
+  assert.deepEqual(serialized.evidenceMatcherMismatches, [
+    {
+      field: 'validation_result',
+      matcher: { kind: 'contains_case_insensitive', values: ['pass'] },
+      actual: null
+    }
+  ]);
+});
+
 test('replay blocks unknown and unauthorized actors before action execution', async () => {
   const definition = JSON.parse(await readFile(workflowUrl, 'utf8'));
   const fixture = JSON.parse(await readFile(casesUrl, 'utf8'));

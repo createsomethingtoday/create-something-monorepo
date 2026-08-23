@@ -34,6 +34,8 @@ artifact schemas.
 - Add `workflow_adapter_plan.v0.2` for MCP and OpenAI Responses plans from
   constrained bundles, retaining the original v0.1 governance-reason vocabulary
   for legacy plans.
+- Serialize absent exact-value and matcher evidence as `actual: null` in v0.2
+  mismatch details rather than dropping the required field from replay JSON.
 
 ## 0.2.0
 

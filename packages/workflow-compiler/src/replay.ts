@@ -202,12 +202,20 @@ function replayCaseAgainstBundle(
   const evidenceMismatches = decision
     ? Object.entries(decision.requiredEvidenceValues ?? {})
         .filter(([field, expected]) => replayCase.evidence[field] !== expected)
-        .map(([field, expected]) => ({ field, expected, actual: replayCase.evidence[field] }))
+        .map(([field, expected]) => ({
+          field,
+          expected,
+          actual: replayCase.evidence[field] ?? null
+        }))
     : [];
   const evidenceMatcherMismatches = decision
     ? Object.entries(decision.requiredEvidenceMatchers ?? {})
         .filter(([field, matcher]) => !matchesEvidenceMatcher(replayCase.evidence[field], matcher))
-        .map(([field, matcher]) => ({ field, matcher, actual: replayCase.evidence[field] }))
+        .map(([field, matcher]) => ({
+          field,
+          matcher,
+          actual: replayCase.evidence[field] ?? null
+        }))
     : [];
   const recovery = decision?.recovery ?? unknownRecovery(bundle);
   const owner = decision?.approvalOwner ?? decision?.recovery.owner ?? bundle.owners.workflow;
