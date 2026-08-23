@@ -23,8 +23,8 @@
       product: buildProduct,
       role: 'Build the owned system',
       model: 'Scoped implementation',
-      href: agencyCoreMessaging.servicesMappingSessionHref,
-      linkLabel: 'Discuss a Build'
+      href: agencyCoreMessaging.workflowCompilerIntegrationHref,
+      linkLabel: 'View the fixed-scope Build'
     },
     {
       id: 'control',

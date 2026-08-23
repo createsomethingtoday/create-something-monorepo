@@ -47,6 +47,11 @@
    - Purpose: bind the public $3,000 one-time audit to one brand, one market, 25 buyer questions, up to three competitors, cited evidence, and a prioritized 30-day plan.
    - Boundary: the audit diagnoses only. Build is separately scoped, Control starts from $900 per month after launch, and self-service checkout is inactive.
 
+9. **Workflow Compiler Integration contract (fixed-scope builder offer)**
+   - `workflow-compiler-integration.yaml`
+   - Purpose: bind the paid Build engagement to one repository, one consequential workflow, required MCP or agent tools, governed artifacts, one CI gate, and a portable client-owned handoff.
+   - Boundary: commercial terms are quoted after fit. The engagement does not include a hosted control plane, live workflow execution, ongoing managed operation, or self-service checkout.
+
 ### Commercial boundary
 
 - Managed AI Operations starts at $900 per month after launch for one standard-risk managed production environment.
@@ -59,15 +64,15 @@
 - Machine payment is inactive until a price, receipt path, spend caps, rollback, and production promotion are separately approved.
 - Payment never grants private data access or permission to execute a write.
 
-9. **Discovery note (required after every call)**
+10. **Discovery note (required after every call)**
    - `../templates/sales/discovery-note-template.md`
    - Purpose: standardize proposal inputs in one pass.
 
-10. **Client-facing Workflow Mapping Session agenda**
+11. **Client-facing Workflow Mapping Session agenda**
    - `../templates/sales/workflow-mapping-session-agenda.md`
    - Purpose: align stakeholders on session inputs, structure, and outputs before the paid mapping session.
 
-11. **Delivery artifact templates**
+12. **Delivery artifact templates**
    - `../templates/delivery/README.md`
    - `../templates/delivery/mcp_contract.yaml`
    - `../templates/delivery/agent_contract.yaml`
@@ -78,11 +83,11 @@
    - `../templates/delivery/halfdozen-mcp-onboarding-checklist.md`
    - Purpose: convert workflow mapping outputs into implementation-ready artifact drafts.
 
-12. **Proposal input template (delivery handoff)**
+13. **Proposal input template (delivery handoff)**
    - `../templates/sales/policy-os-proposal-input-template.md`
    - Purpose: convert discovery output into proposal scope and contract artifact implications.
 
-13. **Follow-up sequence (post-call execution)**
+14. **Follow-up sequence (post-call execution)**
    - `../templates/sales/policy-os-follow-up-sequence.md`
    - Purpose: move high and medium fit deals to decision with clear owner and date.
 
