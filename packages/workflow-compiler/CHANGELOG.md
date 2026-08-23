@@ -41,8 +41,9 @@ artifact schemas.
   incompatibility decision rather than throwing. New hosts still explicitly
   allowlist supported governed-interaction schemas.
 - Reject an exact evidence value and matcher on the same field when their
-  conjunction cannot be satisfied, rather than emitting a permanently blocked
-  replay contract.
+  conjunction cannot be satisfied in both compilation and direct interaction
+  parsing, rather than emitting or accepting a permanently blocked replay
+  contract.
 - Version compatibility decisions as
   `governed_interaction_compatibility.v0.2` before emitting the expanded
   schema-support error vocabulary; historical v0.1 decisions remain readable

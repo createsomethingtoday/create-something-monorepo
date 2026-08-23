@@ -198,6 +198,21 @@ function evidenceMatchers(value: unknown, path: string): Record<string, Workflow
   );
 }
 
+function matchesEvidenceMatcher(
+  value: WorkflowEvidenceValue,
+  matcher: WorkflowEvidenceMatcher,
+): boolean {
+  switch (matcher.kind) {
+    case 'contains_case_insensitive':
+      return (
+        typeof value === 'string' &&
+        matcher.values.some((candidate) =>
+          value.toLowerCase().includes(candidate.toLowerCase()),
+        )
+      );
+  }
+}
+
 function unique(values: string[], path: string): void {
   const seen = new Set<string>();
   for (const value of values) {
@@ -322,6 +337,16 @@ function parseDecision(
         'INVALID_ACTION_GOVERNANCE',
         `${path}.requiredEvidenceMatchers.${field}`,
         `Evidence matcher ${field} for action ${String(decision.actionId)} must also be required evidence.`,
+      );
+    }
+  });
+  Object.entries(requiredEvidenceValues ?? {}).forEach(([field, value]) => {
+    const matcher = requiredEvidenceMatchers?.[field];
+    if (matcher && !matchesEvidenceMatcher(value, matcher)) {
+      throw new GovernedInteractionValidationError(
+        'INVALID_ACTION_GOVERNANCE',
+        `${path}.requiredEvidenceValues.${field}`,
+        `Exact evidence value for ${field} must satisfy its matcher for action ${String(decision.actionId)}.`,
       );
     }
   });

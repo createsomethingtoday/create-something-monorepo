@@ -38,8 +38,9 @@ of its declared non-empty values. Replay blocks a non-match with
 vocabulary without accepting arbitrary regular expressions. When an exact-value
 constraint and a matcher constrain the same evidence field, the exact value
 must itself satisfy that matcher. The compiler rejects a contradiction with
-`EVIDENCE_VALUE_MATCHER_CONFLICT` rather than emitting a workflow that no
-replay could satisfy.
+`EVIDENCE_VALUE_MATCHER_CONFLICT`, and the interaction parser rejects an
+externally supplied contradictory bundle, rather than permitting a workflow
+that no replay could satisfy.
 
 ### `parseWorkflowDefinition(input)`
 

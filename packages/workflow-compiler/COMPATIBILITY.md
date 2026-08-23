@@ -62,8 +62,9 @@ reject the fields instead of silently dropping them.
 
 When a v0.2 action supplies an exact evidence value and matcher for the same
 field, that value must satisfy the matcher. Compilation rejects a contradictory
-definition with `EVIDENCE_VALUE_MATCHER_CONFLICT`; it never emits a replay
-contract that is impossible to satisfy.
+definition with `EVIDENCE_VALUE_MATCHER_CONFLICT`, and the interaction parser
+also rejects a directly supplied contradictory bundle. Neither path permits a
+replay contract that is impossible to satisfy.
 
 The current package reads both versions and exports explicit detached-copy
 migrations for each. A v0.1 parser rejects v0.2 input, so callers must retain
