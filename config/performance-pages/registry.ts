@@ -34,6 +34,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
       'security',
       'services',
       'stack',
+      'workflow-compiler-integration',
       'use-cases/business',
       'use-cases/enterprise'
     ],

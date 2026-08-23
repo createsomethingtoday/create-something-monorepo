@@ -27,6 +27,7 @@ export const AGENCY_COMPACT_PRIVACY_PATHS = [
   '/field-reports/template-review',
   '/field-reports/upstream-contributions',
   '/marketplace-review-automation',
+  '/workflow-compiler-integration',
   '/workflows',
   ...AGENCY_ATLAS_PROOF_PATHS
 ] as const;
@@ -37,6 +38,7 @@ export const AGENCY_ROUTE_OWNED_PERFORMANCE_ENDING_PATHS = [
   '/ai-workflow-recovery',
   '/agent-readiness',
   '/services',
+  '/workflow-compiler-integration',
   '/book',
   '/contact',
   '/map',

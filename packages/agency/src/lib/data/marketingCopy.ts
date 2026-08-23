@@ -14,6 +14,9 @@ export const agencyCoreMessaging = {
     '/book?source=agency&intent=workflow-mapping&lane=workflow_infrastructure',
   servicesMappingSessionHref:
     '/book?source=services&intent=workflow-mapping&lane=workflow_infrastructure',
+  workflowCompilerIntegrationHref: '/workflow-compiler-integration',
+  workflowCompilerIntegrationBookingHref:
+    '/book?source=workflow-compiler-integration&intent=compiler-integration&lane=workflow_infrastructure',
   agentReadinessAuditHref: '/agent-readiness',
   agentReadinessAuditBookingHref:
     '/book?source=agent-readiness&intent=ai-readiness-audit&lane=workflow_infrastructure',

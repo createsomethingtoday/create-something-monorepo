@@ -55,6 +55,16 @@ describe('scheduler Worker transport', () => {
     expect(pageHtml).toContain("notifyParent('booking_completed'");
     expect(pageHtml).not.toContain('must-not-cross@example.com');
 
+    const integrationPage = await SELF.fetch(
+      'https://scheduler.local/createsomething/together?intent=compiler-integration'
+    );
+    const integrationPageHtml = await integrationPage.text();
+    expect(integrationPageHtml).toContain(
+      'Workflow Compiler Integration Fit Call | CREATE SOMETHING'
+    );
+    expect(integrationPageHtml).toContain('Fit One Integration');
+    expect(integrationPageHtml).toContain('Compiler Integration / V1');
+
     const room = await SELF.fetch('https://scheduler.local/rooms/room_controlled');
     expect(room.status).toBe(200);
     expect(room.headers.get('cache-control')).toBe('no-store');
@@ -467,7 +477,8 @@ describe('scheduler Worker transport', () => {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         slot: { start: '2037-07-14T16:00:00Z', end: '2037-07-14T16:30:00Z' },
-        scheduler: { name: 'Controlled Worker', email: 'controlled@example.com' }
+        scheduler: { name: 'Controlled Worker', email: 'controlled@example.com' },
+        context: { intent: 'compiler-integration' }
       })
     });
     expect(prepare.status).toBe(200);
@@ -593,12 +604,12 @@ describe('scheduler Worker transport', () => {
         to: ['controlled@example.com'],
         subject: 'Your CREATE SOMETHING meeting is booked',
         html: expect.stringContaining('background-color:#f3f3f0'),
-        text: expect.stringContaining('Manage this meeting:')
+        text: expect.stringContaining('intent=compiler-integration')
       }),
       expect.objectContaining({
         to: ['controlled@example.com'],
         subject: 'Your CREATE SOMETHING meeting has moved',
-        html: expect.stringContaining('#access='),
+        html: expect.stringContaining('intent=compiler-integration'),
         text: expect.stringContaining('Thursday, July 16, 2037')
       })
     ]);

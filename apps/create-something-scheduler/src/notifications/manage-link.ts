@@ -11,6 +11,7 @@ export function buildBookingManageUrl(input: {
   publicOrigin: string;
   bookingId: string;
   actionToken: string;
+  intent?: string;
 }): string {
   const origin = new URL(input.publicOrigin);
   if (origin.protocol !== 'https:' || origin.pathname !== '/' || origin.search || origin.hash) {
@@ -21,6 +22,9 @@ export function buildBookingManageUrl(input: {
 
   const url = new URL('/book', origin);
   url.searchParams.set('booking', input.bookingId);
+  if (input.intent === 'compiler-integration') {
+    url.searchParams.set('intent', input.intent);
+  }
   url.hash = `access=${input.actionToken}`;
   return url.toString();
 }

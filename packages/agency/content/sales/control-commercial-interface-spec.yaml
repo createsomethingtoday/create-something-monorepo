@@ -27,6 +27,14 @@ buyer_readiness_audit:
   contract_ref: "packages/agency/content/sales/ai-buyer-readiness-audit.yaml"
   self_service_checkout: "inactive"
 
+build_services:
+  control_compiler_integration:
+    public_name: "Control Compiler Integration"
+    role: "fixed_scope_builder_integration"
+    contract_ref: "packages/agency/content/sales/workflow-compiler-integration.yaml"
+    pricing_state: "quoted_after_fit"
+    self_service_checkout: "inactive"
+
 managed_operations:
   starting_monthly_usd: 900
   public_price_qualifier: "from"

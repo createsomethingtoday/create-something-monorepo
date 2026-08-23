@@ -208,6 +208,33 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     selfHealing: ['copy:heal', 'search-route:sync']
   },
   {
+    path: '/workflow-compiler-integration',
+    cluster: 'core-services',
+    role: 'implementation',
+    decision: 'index',
+    audience:
+      'Builders and technical teams with one repository and one consequential workflow to govern.',
+    funnelStage: 'book',
+    intent:
+      'Explain the paid fixed-scope Workflow Compiler Integration and qualify one client-owned implementation.',
+    primaryAction: 'Book an integration fit call',
+    requiredTerms: [
+      'Workflow Compiler Integration',
+      'governed AI workflow',
+      'MCP integration',
+      'CI gate',
+      'client-owned'
+    ],
+    requiredLinks: ['/services', '/map'],
+    schema: 'page',
+    search: {
+      changefreq: 'monthly',
+      priority: '0.9',
+      lastmod: '2026-08-22'
+    },
+    selfHealing: ['copy:heal', 'search-route:sync']
+  },
+  {
     path: '/agent-readiness',
     cluster: 'core-services',
     role: 'support',

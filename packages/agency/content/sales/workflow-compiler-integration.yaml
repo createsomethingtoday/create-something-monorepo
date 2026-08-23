@@ -1,0 +1,49 @@
+version: '1.0'
+public_name: 'Control Compiler Integration'
+route: '/workflow-compiler-integration'
+status: 'active'
+
+commercial_boundary:
+  engagement_model: 'paid_fixed_scope'
+  pricing_state: 'quoted_after_fit'
+  self_service_checkout: 'inactive'
+  repositories: 1
+  consequential_workflows: 1
+
+includes:
+  - 'install_workflow_compiler_in_one_repository'
+  - 'model_one_consequential_workflow'
+  - 'connect_required_mcp_or_agent_tools'
+  - 'generate_policies_approval_contracts_golden_cases_and_receipts'
+  - 'add_ci_gate'
+  - 'hand_back_portable_system'
+
+ownership:
+  client_owns:
+    - 'repository_and_code'
+    - 'workflow_definition'
+    - 'policies_and_golden_cases'
+    - 'verification_receipts'
+    - 'approval_authority'
+  create_something_owns_during_delivery:
+    - 'integration_architecture'
+    - 'compiler_configuration'
+    - 'quality_gates'
+    - 'handoff_documentation'
+
+service_capabilities:
+  hosted_control_plane: false
+  live_workflow_execution: false
+  ongoing_managed_operation: false
+  additional_workflows_or_repositories: false
+  new_billing_or_identity_systems: false
+  vendor_account_ownership: false
+
+expansion_path:
+  undefined_workflow: 'CREATE SOMETHING Map'
+  additional_implementation: 'separately_scoped_build'
+  ongoing_operation: 'CREATE SOMETHING Control'
+
+conversion:
+  cta: 'Book an integration fit call'
+  href: '/book?source=workflow-compiler-integration&intent=compiler-integration&lane=workflow_infrastructure'

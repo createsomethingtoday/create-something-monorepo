@@ -3,11 +3,11 @@
 ## Current state
 
 - Goal status: active
-- Active phase: 5
-- Active Linear issue: CRE-1836
-- Worktree: `/private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/cre-1836-agent-worktree`
-- Branch: `codex/CRE-1836-agent-worktree`
-- Base: `origin/main` at `070e7bc48b05fe85643ee95e1866eb4280eb96b8`
+- Active phase: 6
+- Active Linear issue: CRE-1835
+- Worktree: `/private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/cre-1835-agent-worktree`
+- Branch: `codex/CRE-1835-agent-worktree`
+- Base: `origin/main` at `e195d5393dadd828c664a1d9b6154018280e916c`
 
 ## Phases
 
@@ -57,21 +57,21 @@
 - [x] Add trusted-publication workflow using the established staged approval and provenance pattern.
 - [x] Prove the release candidate and promote through review with CRE-1833 evidence.
 
-### 5. Publish and independently verify npm — in progress
+### 5. Publish and independently verify npm — complete
 
 - [x] Claim CRE-1836 and rebase release preparation on exact protected `main`.
-- [ ] Verify staged artifact, version, tag, changelog, license, repository metadata, and rollback plan.
-- [ ] Run the approved trusted publication path; surface human passkey/security-key confirmation if npm requires it.
-- [ ] Independently read back registry metadata, dist-tag, provenance, and trusted-publisher state.
-- [ ] Install and execute the registry version in disposable supported-Node consumers.
-- [ ] Record each receipt separately and close CRE-1836 only after registry proof.
+- [x] Verify staged artifact, version, tag, changelog, license, repository metadata, and rollback plan.
+- [x] Run the approved trusted publication path; surface human passkey/security-key confirmation if npm requires it.
+- [x] Independently read back registry metadata, dist-tag, provenance, and trusted-publisher state.
+- [x] Install and execute the registry version in disposable supported-Node consumers.
+- [x] Record each receipt separately and close CRE-1836 only after registry proof.
 
-### 6. Publish the fixed-scope integration offer — pending
+### 6. Publish the fixed-scope integration offer — in progress
 
-- [ ] Claim CRE-1835 in an exact-main issue worktree.
-- [ ] Read and apply the public-surface and browser verification skills.
-- [ ] Fit the offer into the existing agency information architecture and conversion path.
-- [ ] Implement the narrow page or section with accurate local/CI positioning and no hosted-control-plane implication.
+- [x] Claim CRE-1835 in an exact-main issue worktree.
+- [x] Read and apply the public-surface and browser verification skills.
+- [x] Fit the offer into the existing agency information architecture and conversion path.
+- [x] Implement the narrow page or section with accurate local/CI positioning and no hosted-control-plane implication.
 - [ ] Run package checks, review, merge, deploy, and verify representative production desktop/mobile routes.
 - [ ] Record deployment, rollback, browser evidence, and worktree disposition in CRE-1835.
 
@@ -154,3 +154,17 @@
 - 2026-08-22: A passkey-authorized `npm dist-tag rm @create-something/workflow-compiler latest` attempt reached the registry but returned HTTP 400, leaving the beta as npm's mandatory current default. The immutable beta was not unpublished and the command was not retried blindly. The release remains incomplete until the reviewed, provenance-backed stable `0.1.0` replaces `latest`; public beta instructions remain pinned to `@bootstrap` meanwhile.
 - 2026-08-22: Exact-commit Codex review on `6ad93363288945968f6a834efbdc9c748e5e00b7` identified that an unqualified stable README command on protected `main` would resolve the temporary beta `latest` during the interval before staged approval. A red public release-contract assertion reproduces the gap. The stable README now pins exact `@0.1.0`; it cannot install the beta, becomes resolvable only after stable approval, and leaves any later unqualified-install simplification to a post-registry-proof change.
 - 2026-08-22: Superseding exact-commit review on `3f3abd3186bbc490bf54184baed8fc352ddd3ca5` found that the stable quickstart assertion also accepted a prerelease suffix after `0.1.0`. The release contract now requires a line or file boundary immediately after the exact version, so `0.1.0-beta.0` cannot satisfy the stable publication gate; all eight focused release-contract tests pass.
+- 2026-08-22: PR #1497 received a clean exact-head review on `f02699548f98d87aa91397a1ffddd3c09c0b6783`; all eleven required checks passed and protected `main` advanced to merge `e195d5393dadd828c664a1d9b6154018280e916c`.
+- 2026-08-22: Trusted staging run `32612910542` produced stage `c98c74f8-217a-4c0b-ba5e-2bc836eec30a`. Human passkey approval completed the staged publication, and provenance binds the workflow, protected `main`, workflow dispatch, merge `e195d5393dadd828c664a1d9b6154018280e916c`, and `npm-public` environment.
+- 2026-08-22: Public registry readback proves `@create-something/workflow-compiler@0.1.0`, `latest` and `bootstrap` tags, MIT license, zero runtime dependencies, exact 63-file SHA-1 `c156881ef5da1bd061e0fe5177f342a19a6ca83e`, SHA-256 `222dd5ad539860b06960a0a3b2e2bcdc8898404ecf14de44c99a81c532e51128`, and registry `gitHead` `e195d5393dadd828c664a1d9b6154018280e916c`. Independent passkey-authorized trusted-publisher readback proves stage-only GitHub trust for `workflow-compiler-public-release.yml` and `npm-public`.
+- 2026-08-22: Disposable Node 22.23.1 and Node 24.11.0 registry consumers verified the npm signature and attestation, installed without workspace links, compiled both public examples byte-identically through the real CLI and public API, independently verified all 18 governed artifacts, exercised MCP/OpenAI pass-wait-stop dispositions, and reproduced the documented fail-closed diagnostic and exit matrix. CRE-1836 was closed and its worktree removed.
+- 2026-08-22: CRE-1835 was claimed and bootstrapped in an issue worktree based on exact protected `origin/main` merge `e195d5393dadd828c664a1d9b6154018280e916c`.
+- 2026-08-22: The fixed-scope offer began red-to-green with a three-part public route contract. The implementation binds one repository and one consequential workflow to required MCP or agent tools, policy and approval artifacts, golden cases, receipts, one CI gate, client ownership, quoted-after-fit pricing, and explicit exclusions for hosted control plane and live execution. Services now routes its Build stage to the dedicated offer without adding a navigation item or a second core-services pillar.
+- 2026-08-22: Local Agency validation passes the focused route and commercial-contract tests, Svelte diagnostics with zero errors or warnings, the complete package check including Canon/copy/identity/entitlement/Map/Control gates, and the Cloudflare production build. The new marketing route scores 86/100; the broader marketing command retains the pre-existing unrelated `/agent-readiness` 72/100 baseline failure.
+- 2026-08-22: Playwright verified the local production build at 1440x1000 and 390x844 with no page console errors or warnings, no 390px horizontal overflow, readable route-owned desktop/mobile endings, the Services Build link, and the primary booking handoff with exact `source`, `intent`, and `lane` parameters. The external scheduler iframe is expectedly blocked on localhost by its production-only `frame-ancestors` policy; no booking was submitted.
+- 2026-08-22: Exact-head review on `e5dc90b17f1c3403fd23467bca8f450452d75c24` identified that the new CTA intent still handed visitors to generic Workflow Mapping copy on both the Agency booking route and first-party scheduler. Red-to-green route, scheduler-page, and Worker tests now require an allowlisted `compiler-integration` offer while unknown intents retain the mapping default. The Agency booking page, embedded scheduler title, direct scheduler page, policy label, and one-repository/one-workflow scope now remain aligned end to end.
+- 2026-08-22: Review remediation validation passes the complete Agency package check with zero Svelte diagnostics, focused public-copy and integration-route tests (24/24), scheduler unit tests (63/63), scheduler Worker tests (18/18), scheduler TypeScript check, and the Wrangler scheduler dry-run build. Production deployment and live browser evidence remain gated on the superseding exact-head review and protected merge.
+- 2026-08-22: Superseding exact-head review on `3f508a25bccc7af6e45f9a1e4014c5652a5bb1ae` identified that emailed confirmation and reschedule management links dropped the integration intent. The manage-link contract now carries only the allowlisted `compiler-integration` value from durable booking context, drops unknown offer values, preserves the access credential in the URL fragment, and keeps the Agency page plus scheduler iframe aligned on return visits.
+- 2026-08-22: The second remediation passes the full scheduler TypeScript check, 64/64 unit tests, 18/18 Worker tests, Wrangler dry-run build, focused Agency booking/copy/integration tests (39/39), and the complete Agency package check with zero Svelte diagnostics. Production remains unchanged pending a clean superseding exact-head review and protected merge.
+- 2026-08-22: Exact-head review on `7df515eb12a9b42d29962a668f3d5a11e610a53d` identified that the standalone scheduler's post-commit canonical URL removed the integration intent before a reload. The server-rendered page now injects either the exact allowlisted `compiler-integration` value or `null`, and the client rebuilds the canonical booking URL from the booking identifier plus only that bounded offer value. Unknown values remain mapping-default and are not retained.
+- 2026-08-22: The third remediation passes scheduler TypeScript, 64/64 unit tests, 18/18 Worker tests, the Wrangler dry-run build, and all 39 focused Agency booking/copy/integration tests. One strict-workspace run on the prior head failed only because three unchanged Webflow Template Search tests exceeded their 5- or 10-second CI timeouts; its immediately preceding run passed, and a bounded failed-job rerun was requested without changing unrelated source.
