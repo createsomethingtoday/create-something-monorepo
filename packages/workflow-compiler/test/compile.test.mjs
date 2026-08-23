@@ -156,6 +156,27 @@ test('rejects a consequential action without evidence, receipt, and recovery con
   );
 });
 
+test('rejects an evidence-value constraint outside required evidence for a read action', async () => {
+  const definition = JSON.parse(await readFile(workflowFixture, 'utf8'));
+  definition.actions[0].requiredEvidenceValues = { submission_id: 'submission-fixture-001' };
+
+  assert.throws(
+    () => compileWorkflowDefinition(definition),
+    (error) => {
+      assert.equal(error.name, 'WorkflowCompilationError');
+      assert.deepEqual(error.diagnostics, [
+        {
+          code: 'EVIDENCE_VALUE_CONSTRAINT_MISSING_REQUIRED_EVIDENCE',
+          path: 'actions[0].requiredEvidenceValues.submission_id',
+          message:
+            'Evidence-value constraint submission_id for action run_published_validation must also be required evidence.'
+        }
+      ]);
+      return true;
+    }
+  );
+});
+
 test('rejects a tool parameter that is not governed as required evidence', async () => {
   const definition = JSON.parse(await readFile(workflowFixture, 'utf8'));
   definition.actions[0].tool.parameters.push({

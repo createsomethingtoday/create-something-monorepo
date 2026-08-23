@@ -20,6 +20,23 @@ test('parses a serialized compiled interaction bundle through the public interfa
   assert.deepEqual(parseGovernedInteractionBundle(serialized), compiled.governedInteraction);
 });
 
+test('parses serialized exact evidence constraints in the public interaction bundle', async () => {
+  const definition = JSON.parse(await readFile(fixtureUrl, 'utf8'));
+  definition.actions[0].requiredEvidenceValues = { published_url: 'https://example.com' };
+  const compiled = compileWorkflowDefinition(definition);
+  const serialized = JSON.parse(JSON.stringify(compiled.governedInteraction));
+
+  assert.deepEqual(parseGovernedInteractionBundle(serialized), compiled.governedInteraction);
+  const constrainedAction = inspectClientWorkspaceGovernedInteraction(
+    serialized,
+    serialized.definitionHash,
+  ).bundle.actions.find((action) => action.actionId === 'run_published_validation');
+  assert.deepEqual(
+    constrainedAction?.requiredEvidenceValues,
+    { published_url: 'https://example.com' },
+  );
+});
+
 async function compiledInteraction() {
   const definition = JSON.parse(await readFile(fixtureUrl, 'utf8'));
   return JSON.parse(JSON.stringify(compileWorkflowDefinition(definition).governedInteraction));

@@ -2,6 +2,7 @@ import type {
   ActionKind,
   AutonomyClass,
   CompiledDecision,
+  WorkflowEvidenceValue,
   GovernedInteractionBundle,
   GovernedInteractionCapability,
   GovernedInteractionOperation,
@@ -116,6 +117,27 @@ function stringArray(value: unknown, path: string): string[] {
   return value.map((entry, index) => string(entry, `${path}[${index}]`));
 }
 
+function evidenceValue(value: unknown, path: string): WorkflowEvidenceValue {
+  if (
+    typeof value === 'string' ||
+    typeof value === 'boolean' ||
+    (typeof value === 'number' && Number.isFinite(value))
+  ) {
+    return value;
+  }
+  return invalid(path, `${path} must be a string, finite number, or boolean.`);
+}
+
+function evidenceValues(value: unknown, path: string): Record<string, WorkflowEvidenceValue> {
+  const values = object(value, path);
+  return Object.fromEntries(
+    Object.entries(values).map(([field, expected]) => {
+      if (!field.trim()) return invalid(path, `${path} fields must not be empty.`);
+      return [field, evidenceValue(expected, `${path}.${field}`)];
+    }),
+  );
+}
+
 function unique(values: string[], path: string): void {
   const seen = new Set<string>();
   for (const value of values) {
@@ -188,7 +210,7 @@ function parseDecision(value: unknown, path: string): CompiledDecision {
       'receiptFields',
       'recovery',
     ],
-    ['approvalOwner'],
+    ['approvalOwner', 'requiredEvidenceValues'],
     path,
   );
   const recovery = object(decision.recovery, `${path}.recovery`);
@@ -207,10 +229,23 @@ function parseDecision(value: unknown, path: string): CompiledDecision {
   }
   const systemsTouched = stringArray(decision.systemsTouched, `${path}.systemsTouched`);
   const requiredEvidence = stringArray(decision.requiredEvidence, `${path}.requiredEvidence`);
+  const requiredEvidenceValues =
+    decision.requiredEvidenceValues === undefined
+      ? undefined
+      : evidenceValues(decision.requiredEvidenceValues, `${path}.requiredEvidenceValues`);
   const receiptFields = stringArray(decision.receiptFields, `${path}.receiptFields`);
   unique(systemsTouched, `${path}.systemsTouched`);
   unique(requiredEvidence, `${path}.requiredEvidence`);
   unique(receiptFields, `${path}.receiptFields`);
+  Object.keys(requiredEvidenceValues ?? {}).forEach((field) => {
+    if (!requiredEvidence.includes(field)) {
+      throw new GovernedInteractionValidationError(
+        'INVALID_ACTION_GOVERNANCE',
+        `${path}.requiredEvidenceValues.${field}`,
+        `Evidence-value constraint ${field} for action ${String(decision.actionId)} must also be required evidence.`,
+      );
+    }
+  });
   return {
     actionId: string(decision.actionId, `${path}.actionId`),
     title: string(decision.title, `${path}.title`),
@@ -219,6 +254,7 @@ function parseDecision(value: unknown, path: string): CompiledDecision {
     autonomy,
     systemsTouched,
     requiredEvidence,
+    ...(requiredEvidenceValues ? { requiredEvidenceValues } : {}),
     ...(approvalOwner ? { approvalOwner } : {}),
     receiptFields,
     recovery: {

@@ -45,8 +45,8 @@ npx workflow-compiler explain --workflow workflow.json --cases cases.json
 
 The template generates a source-bound `SOURCES.md`, a runbook, a playbook, and
 sanitized replay fixtures. Its “Airtable Automation handoff” requires a
-confirmed state plus asset, version, and review-status evidence; a webhook
-receipt alone remains processing evidence. The compiler neither sends a webhook
+confirmed state, canonical ready-for-review status, asset, and version evidence;
+a webhook receipt alone remains processing evidence. The compiler neither sends a webhook
 nor reads Airtable. The source pointers identify the owning repository surfaces;
 they are not proof of a live submission, validation, review, or delivery.
 

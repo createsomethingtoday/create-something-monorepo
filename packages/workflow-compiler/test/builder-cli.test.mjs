@@ -347,6 +347,50 @@ test('the Marketplace submission template waits for a confirmed Airtable handoff
   }
 });
 
+test('the Marketplace submission template requires a review-ready Airtable status', async () => {
+  const scratch = await mkdtemp(join(tmpdir(), 'workflow-compiler-marketplace-review-status-'));
+  const starterDir = join(scratch, 'marketplace-submission');
+
+  try {
+    const initialized = run('init', '--template', 'marketplace-submission', '--dir', starterDir);
+    assert.equal(initialized.status, 0, initialized.stderr || initialized.stdout);
+
+    const casesPath = join(starterDir, 'cases.json');
+    const cases = JSON.parse(await readFile(casesPath, 'utf8'));
+    const confirmedHandoff = cases.cases.find(
+      (replayCase) => replayCase.caseId === 'automation-handoff-receipt-passes'
+    );
+    assert.ok(confirmedHandoff);
+    confirmedHandoff.evidence.review_status = 'pending_review';
+    await writeFile(casesPath, JSON.stringify(cases, null, 2) + '\n', 'utf8');
+
+    const simulated = run(
+      'simulate',
+      '--workflow',
+      join(starterDir, 'workflow.json'),
+      '--cases',
+      casesPath
+    );
+    assert.equal(simulated.status, 3, simulated.stderr || simulated.stdout);
+    const failure = JSON.parse(simulated.stderr);
+    assert.deepEqual(failure.outcomes, { pass: 2, approval_required: 1, blocked: 4 });
+    assert.equal(failure.allExpectationsMatched, false);
+    assert.equal(failure.externalMutations, false);
+
+    const explained = run(
+      'explain',
+      '--workflow',
+      join(starterDir, 'workflow.json'),
+      '--cases',
+      casesPath
+    );
+    assert.equal(explained.status, 0, explained.stderr || explained.stdout);
+    assert.match(explained.stdout, /Mismatched cases: automation-handoff-receipt-passes/);
+  } finally {
+    await rm(scratch, { recursive: true, force: true });
+  }
+});
+
 test('the public simulate command fails closed when a replay expectation is unmet', async () => {
   const scratch = await mkdtemp(join(tmpdir(), 'workflow-compiler-simulation-mismatch-'));
   const starterDir = join(scratch, 'daily-brief');

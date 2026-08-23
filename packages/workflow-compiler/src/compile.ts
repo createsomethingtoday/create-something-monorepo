@@ -87,9 +87,18 @@ function validateGovernance(definition: WorkflowDefinition): WorkflowCompilation
   const diagnostics: WorkflowCompilationDiagnostic[] = [];
 
   definition.actions.forEach((action, index) => {
+    const path = `actions[${index}]`;
+    Object.keys(action.requiredEvidenceValues ?? {}).forEach((field) => {
+      if (!action.requiredEvidence.includes(field)) {
+        diagnostics.push({
+          code: 'EVIDENCE_VALUE_CONSTRAINT_MISSING_REQUIRED_EVIDENCE',
+          path: `${path}.requiredEvidenceValues.${field}`,
+          message: `Evidence-value constraint ${field} for action ${action.id} must also be required evidence.`
+        });
+      }
+    });
     if (action.kind === 'read') return;
 
-    const path = `actions[${index}]`;
     if (action.systemsTouched.length === 0) {
       diagnostics.push({
         code: 'CONSEQUENTIAL_ACTION_MISSING_SYSTEM',
@@ -104,15 +113,6 @@ function validateGovernance(definition: WorkflowDefinition): WorkflowCompilation
         message: `Consequential action ${action.id} must declare required evidence.`
       });
     }
-    Object.keys(action.requiredEvidenceValues ?? {}).forEach((field) => {
-      if (!action.requiredEvidence.includes(field)) {
-        diagnostics.push({
-          code: 'EVIDENCE_VALUE_CONSTRAINT_MISSING_REQUIRED_EVIDENCE',
-          path: `${path}.requiredEvidenceValues.${field}`,
-          message: `Evidence-value constraint ${field} for action ${action.id} must also be required evidence.`
-        });
-      }
-    });
     if (
       action.autonomy === 'approval_required' &&
       (!action.approval.required || !action.approval.owner?.trim())

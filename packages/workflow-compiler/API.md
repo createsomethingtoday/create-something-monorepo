@@ -15,7 +15,8 @@ shape errors and `WorkflowCompilationError` for invalid workflow semantics.
 
 An action may declare `requiredEvidenceValues`, a map of required-evidence
 fields to an exact string, finite number, or boolean value. Each constrained
-field must also appear in `requiredEvidence`. Replay blocks a supplied value
+field must also appear in `requiredEvidence`. The compiled governed-interaction
+bundle preserves and validates these constraints. Replay blocks a supplied value
 that differs from the versioned contract with `EVIDENCE_VALUE_MISMATCH`; a
 non-empty receipt alone cannot satisfy that condition.
 
