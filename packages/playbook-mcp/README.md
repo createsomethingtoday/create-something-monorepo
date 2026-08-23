@@ -15,7 +15,7 @@ contract without creating another workflow ledger:
 - 4 operator Playbooks
 - 14 structured workflow Runbooks
 
-Those 55 generated Arcs sit beside the hand-authored App Review Governance prototype,
+Those 54 generated Arcs sit beside the hand-authored App Review Governance prototype,
 for 55 public presentation routes in total. Each generated composition preserves one
 reusable map and three views: Arc, Playbook, and Runbook. Private client procedures and
 markdown-only templates are deliberately excluded.

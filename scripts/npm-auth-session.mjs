@@ -14,6 +14,7 @@ import {
 } from 'node:fs';
 import { homedir } from 'node:os';
 import { basename, dirname, isAbsolute, join, relative, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 export const DEFAULTS = Object.freeze({
   command: 'status',
@@ -23,6 +24,7 @@ export const DEFAULTS = Object.freeze({
 });
 
 const COMMANDS = new Set(['status', 'save']);
+const SCRIPT_CHECKOUT_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 function normalizeRegistry(value) {
   const registry = new URL(value);
@@ -175,13 +177,19 @@ function canonicalPathForWrite(path) {
   return resolve(realpathSync(existingAncestor), ...missingSegments);
 }
 
-function repositoryRoot() {
+function repositoryRoots() {
+  const roots = new Set([
+    canonicalPathForWrite(SCRIPT_CHECKOUT_ROOT),
+    canonicalPathForWrite(process.cwd())
+  ]);
   const result = spawnSync('git', ['rev-parse', '--show-toplevel'], {
     cwd: process.cwd(),
     encoding: 'utf8'
   });
-  const root = result.status === 0 && result.stdout.trim() ? result.stdout.trim() : process.cwd();
-  return canonicalPathForWrite(root);
+  if (result.status === 0 && result.stdout.trim()) {
+    roots.add(canonicalPathForWrite(result.stdout.trim()));
+  }
+  return [...roots];
 }
 
 function safeUserconfigPath(userconfig) {
@@ -191,7 +199,7 @@ function safeUserconfigPath(userconfig) {
   if (existsSync(configuredPath) && lstatSync(configuredPath).isSymbolicLink()) {
     throw new Error('refusing to save npm credentials through a symbolic-link config');
   }
-  if (isPathInside(canonicalPath, repositoryRoot())) {
+  if (repositoryRoots().some((root) => isPathInside(canonicalPath, root))) {
     throw new Error('refusing to save npm credentials inside the repository');
   }
 

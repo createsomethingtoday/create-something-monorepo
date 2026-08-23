@@ -22,8 +22,8 @@ function writeExecutable(filePath, source) {
   chmodSync(filePath, 0o755);
 }
 
-function run(args, env = {}, cwd = repoRoot) {
-  return spawnSync(process.execPath, [scriptPath, ...args], {
+function run(args, env = {}, cwd = repoRoot, executable = scriptPath) {
+  return spawnSync(process.execPath, [executable, ...args], {
     cwd,
     encoding: 'utf8',
     env: {
@@ -183,6 +183,34 @@ test('npm auth save rejects a config inside the repository when invoked from a s
     ['save', '--json', '--userconfig', userconfig, '--token-env', 'NPM_AUTH_SESSION_TEST_TOKEN'],
     { NPM_AUTH_SESSION_TEST_TOKEN: secret },
     workingDirectory
+  );
+
+  assert.equal(result.status, 1, result.stderr || result.stdout);
+  assert.doesNotMatch(result.stdout, new RegExp(secret));
+  assert.equal(readFileSync(userconfig, 'utf8'), 'keep=this-config-unchanged\n');
+  const report = JSON.parse(result.stdout);
+  assert.match(report.error, /repository/i);
+});
+
+test('npm auth save rejects the script checkout when invoked from outside a Git repository', () => {
+  const fixture = mkdtempSync(path.join(tmpdir(), 'npm-auth-session-external-'));
+  const repository = path.join(fixture, 'repository');
+  const scriptsDirectory = path.join(repository, 'scripts');
+  const externalDirectory = path.join(fixture, 'external');
+  const executable = path.join(scriptsDirectory, 'npm-auth-session.mjs');
+  const userconfig = path.join(repository, '.npmrc');
+  const secret = 'npm_external_secret_must_not_be_persisted';
+
+  mkdirSync(scriptsDirectory, { recursive: true });
+  mkdirSync(externalDirectory);
+  writeFileSync(executable, readFileSync(scriptPath, 'utf8'));
+  writeFileSync(userconfig, 'keep=this-config-unchanged\n');
+
+  const result = run(
+    ['save', '--json', '--userconfig', userconfig, '--token-env', 'NPM_AUTH_SESSION_TEST_TOKEN'],
+    { NPM_AUTH_SESSION_TEST_TOKEN: secret },
+    externalDirectory,
+    executable
   );
 
   assert.equal(result.status, 1, result.stderr || result.stdout);
