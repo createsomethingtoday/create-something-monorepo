@@ -205,7 +205,7 @@ export interface EventSchemasArtifact extends CompiledArtifactHeader {
   events: WorkflowEvent[];
 }
 
-export interface CompiledDecision {
+interface CompiledDecisionBase {
   actionId: string;
   title: string;
   kind: ActionKind;
@@ -213,17 +213,38 @@ export interface CompiledDecision {
   autonomy: AutonomyClass;
   systemsTouched: string[];
   requiredEvidence: string[];
-  requiredEvidenceValues?: Record<string, WorkflowEvidenceValue>;
-  requiredEvidenceMatchers?: Record<string, WorkflowEvidenceMatcher>;
   approvalOwner?: string;
   receiptFields: string[];
   recovery: WorkflowAction['recovery'];
 }
 
-export interface DecisionInventoryArtifact extends CompiledArtifactHeader {
-  schemaVersion: DecisionInventorySchemaVersion;
-  decisions: CompiledDecision[];
+export interface CompiledDecisionV0_1 extends CompiledDecisionBase {
+  requiredEvidenceValues?: never;
+  requiredEvidenceMatchers?: never;
 }
+
+export interface CompiledDecisionV0_2 extends CompiledDecisionBase {
+  requiredEvidenceValues?: Record<string, WorkflowEvidenceValue>;
+  requiredEvidenceMatchers?: Record<string, WorkflowEvidenceMatcher>;
+}
+
+export type CompiledDecision = CompiledDecisionV0_1 | CompiledDecisionV0_2;
+
+interface DecisionInventoryArtifactBase extends CompiledArtifactHeader {}
+
+export interface DecisionInventoryArtifactV0_1 extends DecisionInventoryArtifactBase {
+  schemaVersion: 'decision_inventory.v0.1';
+  decisions: CompiledDecisionV0_1[];
+}
+
+export interface DecisionInventoryArtifactV0_2 extends DecisionInventoryArtifactBase {
+  schemaVersion: 'decision_inventory.v0.2';
+  decisions: CompiledDecisionV0_2[];
+}
+
+export type DecisionInventoryArtifact =
+  | DecisionInventoryArtifactV0_1
+  | DecisionInventoryArtifactV0_2;
 
 export interface CompiledToolContract {
   actionId: string;
@@ -289,18 +310,29 @@ export interface GovernedInteractionSurface {
   operations: GovernedInteractionOperation[];
 }
 
-export interface GovernedInteractionBundle extends CompiledArtifactHeader {
-  schemaVersion: GovernedInteractionBundleSchemaVersion;
+interface GovernedInteractionBundleBase extends CompiledArtifactHeader {
   language: 'create-something/control';
   runtimeVersion: '0.1.0';
   entrySurfaceId: string;
   capabilities: GovernedInteractionCapability[];
   surfaces: GovernedInteractionSurface[];
-  actions: CompiledDecision[];
 }
 
-export interface CompiledWorkflowBundle {
-  schemaVersion: CompiledWorkflowBundleSchemaVersion;
+export interface GovernedInteractionBundleV0_1 extends GovernedInteractionBundleBase {
+  schemaVersion: 'governed_interaction_bundle.v0.1';
+  actions: CompiledDecisionV0_1[];
+}
+
+export interface GovernedInteractionBundleV0_2 extends GovernedInteractionBundleBase {
+  schemaVersion: 'governed_interaction_bundle.v0.2';
+  actions: CompiledDecisionV0_2[];
+}
+
+export type GovernedInteractionBundle =
+  | GovernedInteractionBundleV0_1
+  | GovernedInteractionBundleV0_2;
+
+interface CompiledWorkflowBundleBase {
   compilerVersion: string;
   workflowId: string;
   workflowVersion: string;
@@ -312,13 +344,27 @@ export interface CompiledWorkflowBundle {
   runtimeTargets: RuntimeTargetsArtifact;
   objectSchemas: ObjectSchemasArtifact;
   eventSchemas: EventSchemasArtifact;
-  decisionInventory: DecisionInventoryArtifact;
   toolContracts: ToolContractsArtifact;
   agentContracts: AgentContractsArtifact;
   approvalSurfaces: ApprovalSurfacesArtifact;
   evaluationManifest: EvaluationManifestArtifact;
-  governedInteraction: GovernedInteractionBundle;
 }
+
+export interface CompiledWorkflowBundleV0_1 extends CompiledWorkflowBundleBase {
+  schemaVersion: 'compiled_workflow_bundle.v0.1';
+  decisionInventory: DecisionInventoryArtifactV0_1;
+  governedInteraction: GovernedInteractionBundleV0_1;
+}
+
+export interface CompiledWorkflowBundleV0_2 extends CompiledWorkflowBundleBase {
+  schemaVersion: 'compiled_workflow_bundle.v0.2';
+  decisionInventory: DecisionInventoryArtifactV0_2;
+  governedInteraction: GovernedInteractionBundleV0_2;
+}
+
+export type CompiledWorkflowBundle =
+  | CompiledWorkflowBundleV0_1
+  | CompiledWorkflowBundleV0_2;
 
 export interface WorkflowCompilationDiagnostic {
   code: string;

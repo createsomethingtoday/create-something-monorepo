@@ -70,6 +70,12 @@ exact-value and matcher mismatch detail plus their two reason codes. Consumers
 must select the report shape by `schemaVersion` and recompile/replay a migrated
 source definition rather than relabeling historical report data.
 
+`CompiledWorkflowBundle` is also a schema-discriminated union. A v0.1 bundle
+can contain only a v0.1 decision inventory, governed interaction, and decisions
+without evidence constraints; a v0.2 bundle carries the corresponding v0.2
+contracts. TypeScript callers therefore cannot construct a cross-version bundle
+that would produce a legacy report while enforcing v0.2 constraints.
+
 ### `createMcpToolCallPlan(bundle, replayCase)`
 
 Returns a provider-neutral MCP `tools/call` plan for an eligible `auto_allow`

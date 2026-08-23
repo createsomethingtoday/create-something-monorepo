@@ -49,6 +49,12 @@ produce `workflow_replay_report.v0.2`, which carries those fields. Consumers
 must discriminate replay reports by `schemaVersion`; a historical v0.1 report
 is not silently widened or relabeled.
 
+The public TypeScript definitions preserve this correlation: a v0.1 compiled
+bundle contains only `decision_inventory.v0.1`,
+`governed_interaction_bundle.v0.1`, and unconstrained decisions; v0.2 contains
+their v0.2 counterparts. This prevents callers from assembling an impossible
+cross-version contract before replay begins.
+
 ## Prereleases
 
 `0.1.0-beta.*` releases are public integration candidates. Their documented

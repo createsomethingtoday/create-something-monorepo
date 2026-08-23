@@ -57,6 +57,11 @@ receive v0.2's exact-value and matcher mismatch details, migrate the source,
 recompile it, and replay the retained cases; do not relabel or append fields to
 an existing report.
 
+The package types enforce matching compiled-bundle, decision-inventory, and
+governed-interaction versions. Do not hand-edit an outer schema version or mix
+derived artifacts across revisions: migrate the source, then recompile and
+replay so all three contracts carry the same version and definition hash.
+
 ## Artifact output upgrades
 
 The compiler writes immutable revisions behind a managed pointer and retains

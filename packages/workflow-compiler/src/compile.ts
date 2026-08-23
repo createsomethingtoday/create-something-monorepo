@@ -6,10 +6,12 @@ import type {
   AgentContractsArtifact,
   ApprovalSurfacesArtifact,
   CompiledWorkflowBundle,
-  DecisionInventoryArtifact,
+  DecisionInventoryArtifactV0_1,
+  DecisionInventoryArtifactV0_2,
   EvaluationManifestArtifact,
   EventSchemasArtifact,
-  GovernedInteractionBundle,
+  GovernedInteractionBundleV0_1,
+  GovernedInteractionBundleV0_2,
   ObjectSchemasArtifact,
   RuntimeTargetsArtifact,
   ToolContractsArtifact,
@@ -388,33 +390,6 @@ export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundl
       .map((event) => ({ ...event, requiredEvidence: sorted(event.requiredEvidence) }))
       .sort(byId)
   };
-  const decisionInventory: DecisionInventoryArtifact = {
-    schemaVersion:
-      definition.schemaVersion === 'workflow_definition.v0.2'
-        ? 'decision_inventory.v0.2'
-        : 'decision_inventory.v0.1',
-    ...header,
-    decisions: definition.actions
-      .map((action) => ({
-        actionId: action.id,
-        title: action.title,
-        kind: action.kind,
-        authority: action.authority,
-        autonomy: action.autonomy,
-        systemsTouched: sorted(action.systemsTouched),
-        requiredEvidence: sorted(action.requiredEvidence),
-        ...(action.requiredEvidenceValues
-          ? { requiredEvidenceValues: sortedEvidenceValues(action.requiredEvidenceValues) }
-          : {}),
-        ...(action.requiredEvidenceMatchers
-          ? { requiredEvidenceMatchers: sortedEvidenceMatchers(action.requiredEvidenceMatchers) }
-          : {}),
-        ...(action.approval.owner ? { approvalOwner: action.approval.owner } : {}),
-        receiptFields: sorted(action.receipt.requiredFields),
-        recovery: { ...action.recovery }
-      }))
-      .sort(byActionId)
-  };
   const toolContracts: ToolContractsArtifact = {
     schemaVersion: 'tool_contracts.v0.1',
     ...header,
@@ -476,11 +451,100 @@ export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundl
       }))
       .sort(byId)
   };
-  const governedInteraction: GovernedInteractionBundle = {
-    schemaVersion:
-      definition.schemaVersion === 'workflow_definition.v0.2'
-        ? 'governed_interaction_bundle.v0.2'
-        : 'governed_interaction_bundle.v0.1',
+  const common = {
+    compilerVersion: WORKFLOW_COMPILER_VERSION,
+    workflowId: definition.workflowId,
+    workflowVersion: definition.version,
+    title: definition.title,
+    businessObjective: definition.businessObjective,
+    owners: { ...definition.owners },
+    definitionHash: hash,
+    workflowMap: {
+      schemaVersion: 'workflow_map.v0.1' as const,
+      workflowId: definition.workflowId,
+      workflowVersion: definition.version,
+      nodes,
+      edges
+    },
+    runtimeTargets,
+    objectSchemas,
+    eventSchemas,
+    toolContracts,
+    agentContracts,
+    approvalSurfaces,
+    evaluationManifest
+  };
+
+  if (definition.schemaVersion === 'workflow_definition.v0.2') {
+    const decisionInventory: DecisionInventoryArtifactV0_2 = {
+      schemaVersion: 'decision_inventory.v0.2',
+      ...header,
+      decisions: definition.actions
+        .map((action) => ({
+          actionId: action.id,
+          title: action.title,
+          kind: action.kind,
+          authority: action.authority,
+          autonomy: action.autonomy,
+          systemsTouched: sorted(action.systemsTouched),
+          requiredEvidence: sorted(action.requiredEvidence),
+          ...(action.requiredEvidenceValues
+            ? { requiredEvidenceValues: sortedEvidenceValues(action.requiredEvidenceValues) }
+            : {}),
+          ...(action.requiredEvidenceMatchers
+            ? { requiredEvidenceMatchers: sortedEvidenceMatchers(action.requiredEvidenceMatchers) }
+            : {}),
+          ...(action.approval.owner ? { approvalOwner: action.approval.owner } : {}),
+          receiptFields: sorted(action.receipt.requiredFields),
+          recovery: { ...action.recovery }
+        }))
+        .sort(byActionId)
+    };
+    const governedInteraction: GovernedInteractionBundleV0_2 = {
+      schemaVersion: 'governed_interaction_bundle.v0.2',
+      language: 'create-something/control',
+      runtimeVersion: '0.1.0',
+      ...header,
+      entrySurfaceId: 'operator-console',
+      capabilities: ['interaction.select', 'receipt.inspect', 'replay.inspect', 'workflow.inspect'],
+      surfaces: [
+        {
+          id: 'operator-console',
+          title: definition.title,
+          kind: 'workflow_overview',
+          operations: [{ kind: 'select_replay_case' }]
+        }
+      ],
+      actions: decisionInventory.decisions
+    };
+    return {
+      schemaVersion: 'compiled_workflow_bundle.v0.2',
+      ...common,
+      decisionInventory,
+      governedInteraction
+    };
+  }
+
+  const decisionInventory: DecisionInventoryArtifactV0_1 = {
+    schemaVersion: 'decision_inventory.v0.1',
+    ...header,
+    decisions: definition.actions
+      .map((action) => ({
+        actionId: action.id,
+        title: action.title,
+        kind: action.kind,
+        authority: action.authority,
+        autonomy: action.autonomy,
+        systemsTouched: sorted(action.systemsTouched),
+        requiredEvidence: sorted(action.requiredEvidence),
+        ...(action.approval.owner ? { approvalOwner: action.approval.owner } : {}),
+        receiptFields: sorted(action.receipt.requiredFields),
+        recovery: { ...action.recovery }
+      }))
+      .sort(byActionId)
+  };
+  const governedInteraction: GovernedInteractionBundleV0_1 = {
+    schemaVersion: 'governed_interaction_bundle.v0.1',
     language: 'create-something/control',
     runtimeVersion: '0.1.0',
     ...header,
@@ -496,34 +560,10 @@ export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundl
     ],
     actions: decisionInventory.decisions
   };
-
   return {
-    schemaVersion:
-      definition.schemaVersion === 'workflow_definition.v0.2'
-        ? 'compiled_workflow_bundle.v0.2'
-        : 'compiled_workflow_bundle.v0.1',
-    compilerVersion: WORKFLOW_COMPILER_VERSION,
-    workflowId: definition.workflowId,
-    workflowVersion: definition.version,
-    title: definition.title,
-    businessObjective: definition.businessObjective,
-    owners: { ...definition.owners },
-    definitionHash: hash,
-    workflowMap: {
-      schemaVersion: 'workflow_map.v0.1',
-      workflowId: definition.workflowId,
-      workflowVersion: definition.version,
-      nodes,
-      edges
-    },
-    runtimeTargets,
-    objectSchemas,
-    eventSchemas,
+    schemaVersion: 'compiled_workflow_bundle.v0.1',
+    ...common,
     decisionInventory,
-    toolContracts,
-    agentContracts,
-    approvalSurfaces,
-    evaluationManifest,
     governedInteraction
   };
 }

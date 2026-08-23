@@ -28,6 +28,9 @@ artifact schemas.
 - Add `workflow_replay_report.v0.2` for constrained replay output; v0.1
   reports retain their historical case shape without mismatch fields or reason
   codes.
+- Correlate compiled-bundle, decision-inventory, governed-interaction, and
+  decision TypeScript contracts by schema version so legacy bundles cannot be
+  constructed with constrained v0.2 internals.
 
 ## 0.2.0
 

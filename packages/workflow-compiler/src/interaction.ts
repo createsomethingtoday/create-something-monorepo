@@ -2,9 +2,13 @@ import type {
   ActionKind,
   AutonomyClass,
   CompiledDecision,
+  CompiledDecisionV0_1,
+  CompiledDecisionV0_2,
   WorkflowEvidenceMatcher,
   WorkflowEvidenceValue,
   GovernedInteractionBundle,
+  GovernedInteractionBundleV0_1,
+  GovernedInteractionBundleV0_2,
   GovernedInteractionCapability,
   GovernedInteractionOperation,
   GovernedInteractionSurface,
@@ -394,25 +398,38 @@ export function parseGovernedInteractionBundle(input: unknown): GovernedInteract
       `Entry surface ${entrySurfaceId} does not exist.`,
     );
   }
-  return {
-    schemaVersion,
-    language: 'create-something/control',
-    runtimeVersion: '0.1.0',
+  const common = {
+    language: 'create-something/control' as const,
+    runtimeVersion: '0.1.0' as const,
     workflowId: string(bundle.workflowId, 'bundle.workflowId'),
     workflowVersion: string(bundle.workflowVersion, 'bundle.workflowVersion'),
     definitionHash: string(bundle.definitionHash, 'bundle.definitionHash'),
     entrySurfaceId,
     capabilities,
     surfaces,
-    actions,
+  };
+  if (schemaVersion === 'governed_interaction_bundle.v0.2') {
+    return {
+      schemaVersion,
+      ...common,
+      actions: actions as CompiledDecisionV0_2[],
+    };
+  }
+  return {
+    schemaVersion,
+    ...common,
+    actions: actions as CompiledDecisionV0_1[],
   };
 }
 
-export function migrateGovernedInteractionBundle(input: unknown): GovernedInteractionBundle {
+export function migrateGovernedInteractionBundle(
+  input: unknown,
+): GovernedInteractionBundleV0_2 {
   const bundle = parseGovernedInteractionBundle(input);
   return {
     ...structuredClone(bundle),
-    schemaVersion: 'governed_interaction_bundle.v0.2'
+    schemaVersion: 'governed_interaction_bundle.v0.2',
+    actions: bundle.actions as CompiledDecisionV0_2[]
   };
 }
 

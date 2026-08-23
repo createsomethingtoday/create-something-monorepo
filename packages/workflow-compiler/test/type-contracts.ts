@@ -1,4 +1,9 @@
 import type {
+  CompiledDecisionV0_2,
+  CompiledWorkflowBundle,
+  CompiledWorkflowBundleV0_1,
+  DecisionInventoryArtifactV0_2,
+  GovernedInteractionBundleV0_2,
   WorkflowDefinitionV0_1,
   WorkflowDefinitionV0_2
 } from '../src/index.js';
@@ -57,3 +62,32 @@ const constrainedDefinition: WorkflowDefinitionV0_2 = {
 void legacyDefinition;
 void invalidLegacyAction;
 void constrainedDefinition;
+
+declare const constrainedDecision: CompiledDecisionV0_2;
+declare const constrainedInventory: DecisionInventoryArtifactV0_2;
+declare const constrainedInteraction: GovernedInteractionBundleV0_2;
+declare const legacyBundle: CompiledWorkflowBundleV0_1;
+
+// @ts-expect-error A v0.1 bundle cannot contain a v0.2 decision inventory.
+const invalidLegacyInventoryBundle: CompiledWorkflowBundle = {
+  ...legacyBundle,
+  decisionInventory: constrainedInventory
+};
+
+// @ts-expect-error A v0.1 bundle cannot contain a v0.2 governed interaction.
+const invalidLegacyInteractionBundle: CompiledWorkflowBundle = {
+  ...legacyBundle,
+  governedInteraction: constrainedInteraction
+};
+
+const constrainedBundle: CompiledWorkflowBundle = {
+  ...legacyBundle,
+  schemaVersion: 'compiled_workflow_bundle.v0.2',
+  decisionInventory: constrainedInventory,
+  governedInteraction: constrainedInteraction
+};
+
+void constrainedDecision;
+void invalidLegacyInventoryBundle;
+void invalidLegacyInteractionBundle;
+void constrainedBundle;

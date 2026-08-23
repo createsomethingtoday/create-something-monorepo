@@ -1,4 +1,8 @@
-import type { WorkflowDefinition, WorkflowReplayManifest } from './types.js';
+import type {
+  WorkflowDefinition,
+  WorkflowDefinitionV0_2,
+  WorkflowReplayManifest
+} from './types.js';
 
 export interface WorkflowInputDiagnostic {
   code:
@@ -461,7 +465,7 @@ export function parseWorkflowDefinition(input: unknown): WorkflowDefinition {
   return input as unknown as WorkflowDefinition;
 }
 
-export function migrateWorkflowDefinition(input: unknown): WorkflowDefinition {
+export function migrateWorkflowDefinition(input: unknown): WorkflowDefinitionV0_2 {
   const definition = parseWorkflowDefinition(input);
   return {
     ...structuredClone(definition),
