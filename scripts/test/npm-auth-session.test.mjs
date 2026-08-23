@@ -466,6 +466,44 @@ test('npm auth save atomically replaces a permissive user config with restricted
   );
 });
 
+test('npm auth save rejects a config hard-linked into a Git worktree before rotating it', () => {
+  const fixture = mkdtempSync(path.join(tmpdir(), 'npm-auth-session-save-hard-link-'));
+  const externalDirectory = path.join(fixture, 'external');
+  const repository = path.join(fixture, 'repository');
+  const userconfig = path.join(externalDirectory, '.npmrc');
+  const repositoryConfig = path.join(repository, '.npmrc');
+  const priorSecret = 'npm_hard_linked_prior_secret_must_not_remain';
+  const replacement = 'npm_hard_linked_replacement_must_not_be_saved';
+
+  mkdirSync(externalDirectory);
+  initializeGitRepository(repository);
+  writePrivateConfig(userconfig, `//registry.npmjs.org/:_authToken=${priorSecret}\n`);
+  linkSync(userconfig, repositoryConfig);
+
+  const result = run(
+    ['save', '--json', '--userconfig', userconfig, '--token-env', 'NPM_AUTH_SESSION_TEST_TOKEN'],
+    { NPM_AUTH_SESSION_TEST_TOKEN: replacement },
+    externalDirectory
+  );
+
+  assert.equal(result.status, 1, result.stderr || result.stdout);
+  assert.doesNotMatch(result.stdout, new RegExp(priorSecret));
+  assert.doesNotMatch(result.stdout, new RegExp(replacement));
+  assert.doesNotMatch(result.stderr, new RegExp(priorSecret));
+  assert.doesNotMatch(result.stderr, new RegExp(replacement));
+  assert.equal(
+    readFileSync(userconfig, 'utf8'),
+    `//registry.npmjs.org/:_authToken=${priorSecret}\n`
+  );
+  assert.equal(
+    readFileSync(repositoryConfig, 'utf8'),
+    `//registry.npmjs.org/:_authToken=${priorSecret}\n`
+  );
+  const report = JSON.parse(result.stdout);
+  assert.equal(report.ok, false);
+  assert.match(report.error, /multiply linked|link/i);
+});
+
 test('npm auth save replaces every registry credential written with npmrc whitespace', () => {
   const fixture = mkdtempSync(path.join(tmpdir(), 'npm-auth-session-spaced-'));
   const userconfig = path.join(fixture, '.npmrc');

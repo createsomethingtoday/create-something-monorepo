@@ -295,13 +295,18 @@ function assertPrivateUserconfig(userconfig) {
   if ((configStats.mode & 0o077) !== 0) {
     throw new Error('refusing to use npm credentials from a group- or world-readable config');
   }
-  if (configStats.nlink > 1) {
+  assertUnlinkedUserconfig(userconfig, configStats);
+}
+
+function assertUnlinkedUserconfig(userconfig, configStats = undefined) {
+  if (existsSync(userconfig) && (configStats ?? lstatSync(userconfig)).nlink > 1) {
     throw new Error('refusing to use npm credentials from a multiply linked config');
   }
 }
 
 function writeSavedCredential(options, token) {
   const userconfig = safeUserconfigPath(options.userconfig);
+  assertUnlinkedUserconfig(userconfig);
 
   const key = authKeyForRegistry(options.registry);
   const existingLines = readConfig(userconfig).split(/\r?\n/);
