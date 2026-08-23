@@ -71,6 +71,21 @@ function sortedEvidenceMatchers(
   );
 }
 
+function matchesEvidenceMatcher(
+  value: WorkflowEvidenceValue,
+  matcher: WorkflowEvidenceMatcher
+): boolean {
+  switch (matcher.kind) {
+    case 'contains_case_insensitive':
+      return (
+        typeof value === 'string' &&
+        matcher.values.some((candidate) =>
+          value.toLowerCase().includes(candidate.toLowerCase())
+        )
+      );
+  }
+}
+
 function canonicalize(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(canonicalize);
   if (value && typeof value === 'object') {
@@ -116,6 +131,16 @@ function validateGovernance(definition: WorkflowDefinition): WorkflowCompilation
           code: 'EVIDENCE_MATCHER_MISSING_REQUIRED_EVIDENCE',
           path: `${path}.requiredEvidenceMatchers.${field}`,
           message: `Evidence matcher ${field} for action ${action.id} must also be required evidence.`
+        });
+      }
+    });
+    Object.entries(action.requiredEvidenceValues ?? {}).forEach(([field, value]) => {
+      const matcher = action.requiredEvidenceMatchers?.[field];
+      if (matcher && !matchesEvidenceMatcher(value, matcher)) {
+        diagnostics.push({
+          code: 'EVIDENCE_VALUE_MATCHER_CONFLICT',
+          path: `${path}.requiredEvidenceValues.${field}`,
+          message: `Exact evidence value for ${field} must satisfy its matcher for action ${action.id}.`
         });
       }
     });

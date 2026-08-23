@@ -56,7 +56,11 @@ export type GovernedInteractionCompatibilityErrorCode =
 export interface GovernedInteractionHostContract {
   hostId: string;
   language: GovernedInteractionBundle['language'];
-  schemaVersions: Array<GovernedInteractionBundle['schemaVersion']>;
+  /**
+   * An omitted allowlist preserves the v0.1 public host contract. New hosts
+   * must explicitly list every schema they support.
+   */
+  schemaVersions?: Array<GovernedInteractionBundle['schemaVersion']>;
   runtimeVersions: Array<GovernedInteractionBundle['runtimeVersion']>;
   capabilities: GovernedInteractionCapability[];
   operations: Array<GovernedInteractionOperation['kind']>;
@@ -474,11 +478,12 @@ export function evaluateGovernedInteractionCompatibility(
     ),
   ].sort();
   const errors: GovernedInteractionCompatibilityDecisionV0_2['errors'] = [];
+  const supportedSchemaVersions = host.schemaVersions ?? ['governed_interaction_bundle.v0.1'];
 
   if (host.language !== bundle.language) {
     errors.push({ code: 'UNSUPPORTED_LANGUAGE', value: bundle.language });
   }
-  if (!host.schemaVersions.includes(bundle.schemaVersion)) {
+  if (!supportedSchemaVersions.includes(bundle.schemaVersion)) {
     errors.push({ code: 'UNSUPPORTED_SCHEMA_VERSION', value: bundle.schemaVersion });
   }
   if (!host.runtimeVersions.includes(bundle.runtimeVersion)) {

@@ -122,7 +122,6 @@ const interactionHost: GovernedInteractionHostContract = {
   operations: []
 };
 
-// @ts-expect-error Host contracts must explicitly declare supported interaction schemas.
 const hostWithoutSchemaVersions: GovernedInteractionHostContract = {
   hostId: 'incomplete-host',
   language: 'create-something/control',

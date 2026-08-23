@@ -35,7 +35,11 @@ Only `workflow_definition.v0.2` may also declare
 `contains_case_insensitive`, which accepts a non-empty string that contains one
 of its declared non-empty values. Replay blocks a non-match with
 `EVIDENCE_MATCHER_MISMATCH`. This permits an owning system's documented receipt
-vocabulary without accepting arbitrary regular expressions.
+vocabulary without accepting arbitrary regular expressions. When an exact-value
+constraint and a matcher constrain the same evidence field, the exact value
+must itself satisfy that matcher. The compiler rejects a contradiction with
+`EVIDENCE_VALUE_MATCHER_CONFLICT` rather than emitting a workflow that no
+replay could satisfy.
 
 ### `parseWorkflowDefinition(input)`
 
@@ -131,10 +135,12 @@ authority or changing a decision. `createOperatorConsoleData` derives the
 read-only UI model. `serveOperatorConsole` serves an already compiled bundle;
 it does not add execution controls.
 
-`GovernedInteractionHostContract` requires an explicit `schemaVersions`
-allowlist alongside its runtime, capability, and operation allowlists. A host
-cannot report a bundle as compatible unless it lists that exact governed
-interaction schema version; the evaluator emits
+`GovernedInteractionHostContract` supports an optional `schemaVersions`
+allowlist alongside its runtime, capability, and operation allowlists. Omission
+preserves the legacy public contract and means v0.1-only support. New hosts
+must explicitly list every supported schema; a host cannot report another
+bundle as compatible unless it lists that exact governed interaction schema
+version. The evaluator emits
 `governed_interaction_compatibility.v0.2` and otherwise contains
 `UNSUPPORTED_SCHEMA_VERSION`. Historical v0.1 compatibility decisions retain
 their original error vocabulary, so consumers must discriminate decisions by

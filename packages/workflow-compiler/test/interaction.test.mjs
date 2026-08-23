@@ -223,6 +223,35 @@ test('rejects a governed interaction schema the host did not explicitly support'
   ]);
 });
 
+test('treats an omitted host schema allowlist as legacy v0.1-only support', async () => {
+  const legacyInteraction = await compiledInteraction();
+  const definition = JSON.parse(await readFile(fixtureUrl, 'utf8'));
+  definition.schemaVersion = 'workflow_definition.v0.2';
+  definition.actions[0].requiredEvidenceValues = { published_url: 'https://example.com' };
+  const constrainedInteraction = compileWorkflowDefinition(definition).governedInteraction;
+  const legacyHost = {
+    hostId: 'legacy-host',
+    language: 'create-something/control',
+    runtimeVersions: ['0.1.0'],
+    capabilities: [
+      'interaction.select',
+      'receipt.inspect',
+      'replay.inspect',
+      'workflow.inspect',
+    ],
+    operations: ['select_replay_case'],
+  };
+
+  assert.equal(
+    evaluateGovernedInteractionCompatibility(legacyInteraction, legacyHost).compatible,
+    true,
+  );
+  assert.deepEqual(
+    evaluateGovernedInteractionCompatibility(constrainedInteraction, legacyHost).errors,
+    [{ code: 'UNSUPPORTED_SCHEMA_VERSION', value: 'governed_interaction_bundle.v0.2' }],
+  );
+});
+
 test('Client Workspace validates the same bundle and binds it to the signed definition hash', async () => {
   const interaction = await compiledInteraction();
   const valid = inspectClientWorkspaceGovernedInteraction(

@@ -178,6 +178,31 @@ test('rejects an evidence-value constraint outside required evidence for a read 
   );
 });
 
+test('rejects an exact evidence value that cannot satisfy its matcher', async () => {
+  const definition = JSON.parse(await readFile(workflowFixture, 'utf8'));
+  definition.schemaVersion = 'workflow_definition.v0.2';
+  definition.actions[0].requiredEvidenceValues = { published_url: true };
+  definition.actions[0].requiredEvidenceMatchers = {
+    published_url: { kind: 'contains_case_insensitive', values: ['example.com'] },
+  };
+
+  assert.throws(
+    () => compileWorkflowDefinition(definition),
+    (error) => {
+      assert.equal(error.name, 'WorkflowCompilationError');
+      assert.deepEqual(error.diagnostics, [
+        {
+          code: 'EVIDENCE_VALUE_MATCHER_CONFLICT',
+          path: 'actions[0].requiredEvidenceValues.published_url',
+          message:
+            'Exact evidence value for published_url must satisfy its matcher for action run_published_validation.'
+        }
+      ]);
+      return true;
+    },
+  );
+});
+
 test('rejects a tool parameter that is not governed as required evidence', async () => {
   const definition = JSON.parse(await readFile(workflowFixture, 'utf8'));
   definition.actions[0].tool.parameters.push({

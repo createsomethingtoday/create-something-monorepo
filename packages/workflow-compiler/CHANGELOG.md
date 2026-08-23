@@ -36,9 +36,13 @@ artifact schemas.
   for legacy plans.
 - Serialize absent exact-value and matcher evidence as `actual: null` in v0.2
   mismatch details rather than dropping the required field from replay JSON.
-- Require interaction hosts to explicitly allowlist supported governed-
-  interaction schemas; compatibility rejects an undeclared schema version
-  rather than assuming matching runtime, capability, and operation support.
+- Preserve the legacy host contract when its schema allowlist is omitted:
+  omission now means v0.1-only support, so newer bundles receive a normalized
+  incompatibility decision rather than throwing. New hosts still explicitly
+  allowlist supported governed-interaction schemas.
+- Reject an exact evidence value and matcher on the same field when their
+  conjunction cannot be satisfied, rather than emitting a permanently blocked
+  replay contract.
 - Version compatibility decisions as
   `governed_interaction_compatibility.v0.2` before emitting the expanded
   schema-support error vocabulary; historical v0.1 decisions remain readable

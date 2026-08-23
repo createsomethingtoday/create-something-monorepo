@@ -67,6 +67,9 @@ When moving a delivery host to v0.2, update its
 host has validated the v0.2 parser and renderer. Compatibility intentionally
 reports `UNSUPPORTED_SCHEMA_VERSION` until the exact interaction schema is
 declared; do not treat matching runtime or capability lists as version support.
+For hosts built against the older public contract, a missing `schemaVersions`
+field remains valid and means v0.1-only support. Add an explicit allowlist
+before claiming support for v0.2 or a later schema.
 The resulting compatibility receipt is
 `governed_interaction_compatibility.v0.2`; preserve historical v0.1 decisions
 and branch on the decision schema before interpreting its error vocabulary.

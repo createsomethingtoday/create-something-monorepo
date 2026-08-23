@@ -60,6 +60,11 @@ generator rejects a mixed pair instead of reusing either envelope version.
 replay and read-only interaction contracts. The corresponding v0.1 contracts
 reject the fields instead of silently dropping them.
 
+When a v0.2 action supplies an exact evidence value and matcher for the same
+field, that value must satisfy the matcher. Compilation rejects a contradictory
+definition with `EVIDENCE_VALUE_MATCHER_CONFLICT`; it never emits a replay
+contract that is impossible to satisfy.
+
 The current package reads both versions and exports explicit detached-copy
 migrations for each. A v0.1 parser rejects v0.2 input, so callers must retain
 the original artifact, migrate deliberately, and validate, compile, and replay
