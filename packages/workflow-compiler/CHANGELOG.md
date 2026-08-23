@@ -11,9 +11,10 @@ artifact schemas.
 - Replay form validation, Validator App preflight, Airtable Automation receipt
   inspection, reviewer wait, failed preflight, missing receipt, and blocked
   creator messaging using sanitized deterministic fixtures only.
-- Require exact passing preflight and confirmed handoff values plus the owning
-  review-ready receipt vocabulary before replay can transition to preflight-passed
-  or ready-for-review states.
+- Require `form_validation_passed: true`, exact passing preflight and confirmed
+  handoff values, plus the owning review-ready receipt vocabulary before replay
+  can transition to form-validated, preflight-passed, or ready-for-review
+  states.
 - Add explicit `workflow_definition.v0.2` and
   `governed_interaction_bundle.v0.2` schemas for exact-evidence and
   evidence-matcher constraints, with detached public migration helpers from

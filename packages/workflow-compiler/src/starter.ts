@@ -336,7 +336,12 @@ const MARKETPLACE_SUBMISSION_WORKFLOW: WorkflowDefinition = {
       id: 'validation_result',
       title: 'Form and published-site validation result',
       sourceSystemId: 'published-site-validation',
-      requiredFields: ['submission_id', 'form_validation_receipt', 'published_url']
+      requiredFields: [
+        'submission_id',
+        'form_validation_receipt',
+        'form_validation_passed',
+        'published_url'
+      ]
     },
     {
       id: 'preflight_result',
@@ -376,7 +381,12 @@ const MARKETPLACE_SUBMISSION_WORKFLOW: WorkflowDefinition = {
       id: 'form_validated',
       title: 'Form and published site validated',
       objectId: 'validation_result',
-      requiredEvidence: ['submission_id', 'form_validation_receipt', 'published_url']
+      requiredEvidence: [
+        'submission_id',
+        'form_validation_receipt',
+        'form_validation_passed',
+        'published_url'
+      ]
     },
     {
       id: 'preflight_completed',
@@ -435,8 +445,10 @@ const MARKETPLACE_SUBMISSION_WORKFLOW: WorkflowDefinition = {
         'submission_id',
         'published_url',
         'form_schema_version',
-        'form_validation_receipt'
+        'form_validation_receipt',
+        'form_validation_passed'
       ],
+      requiredEvidenceValues: { form_validation_passed: true },
       approval: { required: false },
       receipt: {
         requiredFields: ['workflow_id', 'action_id', 'correlation_id', 'outcome', 'evidence_refs']
@@ -612,7 +624,8 @@ const MARKETPLACE_SUBMISSION_WORKFLOW: WorkflowDefinition = {
         'submission_id',
         'published_url',
         'form_schema_version',
-        'form_validation_receipt'
+        'form_validation_receipt',
+        'form_validation_passed'
       ]
     },
     {
@@ -693,7 +706,8 @@ const MARKETPLACE_SUBMISSION_CASES: WorkflowReplayManifest = {
         submission_id: 'submission-fixture-001',
         published_url: 'https://example.test/templates/fixture',
         form_schema_version: 'fixture-v1',
-        form_validation_receipt: 'form-validation-fixture-001'
+        form_validation_receipt: 'form-validation-fixture-001',
+        form_validation_passed: true
       },
       approvals: [],
       expectedOutcome: 'pass',
@@ -897,7 +911,7 @@ const MARKETPLACE_SUBMISSION_FILES: Record<string, string> = {
     '## Operator loop',
     '',
     '1. Confirm the form includes a submission identifier, published URL, and schema revision.',
-    '2. Require the form-validation receipt before continuing.',
+    '2. Require the form-validation receipt and an explicit passing result before continuing.',
     '3. Require a passing Validator App preflight policy, result, and receipt.',
     '4. Treat an Airtable Automation webhook receipt as processing evidence only. Require the confirmed handoff state plus asset, version, and an owning review-ready status receipt before reviewer readiness; this template does not send or retry a webhook.',
     '5. Keep the reviewer decision waiting for the assigned reviewer.',
