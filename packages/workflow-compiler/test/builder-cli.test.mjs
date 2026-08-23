@@ -155,6 +155,17 @@ test('the public simulate command fails closed when a replay expectation is unme
       }
     );
     assert.match(failure.definitionHash, /^sha256:[a-f0-9]{64}$/);
+
+    const explained = run(
+      'explain',
+      '--workflow',
+      join(starterDir, 'workflow.json'),
+      '--cases',
+      casesPath
+    );
+    assert.equal(explained.status, 0, explained.stderr || explained.stdout);
+    assert.match(explained.stdout, /Expectations matched: no/);
+    assert.match(explained.stdout, /Mismatched cases: local-validation-passes/);
   } finally {
     await rm(scratch, { recursive: true, force: true });
   }

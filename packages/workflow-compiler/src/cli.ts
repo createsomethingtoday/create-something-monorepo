@@ -228,7 +228,17 @@ function explanation(
         'Cases: ' + String(replay.report.cases.length),
         'Pass: ' + String(replay.report.counts.pass),
         'Wait: ' + String(replay.report.counts.approval_required),
-        'Stop: ' + String(replay.report.counts.blocked)
+        'Stop: ' + String(replay.report.counts.blocked),
+        'Expectations matched: ' + (replay.report.allExpectationsMatched ? 'yes' : 'no'),
+        ...(replay.report.allExpectationsMatched
+          ? []
+          : [
+              'Mismatched cases: ' +
+                replay.report.cases
+                  .filter((replayCase) => !replayCase.expectationMatched)
+                  .map((replayCase) => replayCase.caseId)
+                  .join(', ')
+            ])
       ]
     : [];
 
