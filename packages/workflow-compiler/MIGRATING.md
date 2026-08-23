@@ -74,6 +74,11 @@ The Client Workspace and Atlas Studio inspection envelopes that contain the
 receipt are likewise v0.2. Preserve historical v0.1 envelopes and branch on
 their outer schema before reading the nested compatibility result.
 
+Operator-console data is derived from both the compiled bundle and replay
+report. Recompile and replay a migrated definition before generating a v0.2
+console; do not combine a retained v0.1 replay report with a v0.2 bundle. The
+generator rejects this mixed pair and preserves the v0.1 console as history.
+
 Adapter plans are derived from that same replay. Recompile and replay a migrated
 definition before requesting a new plan: only v0.2 bundles emit
 `workflow_adapter_plan.v0.2`, which can include constrained-evidence mismatch

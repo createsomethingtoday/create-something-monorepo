@@ -51,6 +51,11 @@ export {
 
 export type { OperatorConsoleServer } from './server.js';
 export type {
+  WorkflowOperatorConsoleData,
+  WorkflowOperatorConsoleDataV0_1,
+  WorkflowOperatorConsoleDataV0_2
+} from './operator-console.js';
+export type {
   ClientWorkspaceGovernedInteractionInspection,
   ClientWorkspaceGovernedInteractionInspectionV0_1,
   ClientWorkspaceGovernedInteractionInspectionV0_2

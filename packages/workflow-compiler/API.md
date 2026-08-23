@@ -146,6 +146,12 @@ compatibility decision, while the current inspector emits
 `client_workspace_governed_interaction_inspection.v0.2` with a v0.2 decision.
 Do not relabel a retained inspection; branch on its outer `schemaVersion`.
 
+`createOperatorConsoleData` follows the same correlated-artifact rule. A
+v0.1 compiled bundle and replay report produce
+`workflow_operator_console.v0.1`; matching v0.2 artifacts produce
+`workflow_operator_console.v0.2`. The helper rejects a mismatched bundle and
+replay-report schema rather than emitting a misleading console envelope.
+
 ## CLI
 
 ```text

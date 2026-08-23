@@ -11,7 +11,9 @@ import type {
   WorkflowAdapterPlanV0_1,
   WorkflowAdapterPlanV0_2,
   WorkflowDefinitionV0_1,
-  WorkflowDefinitionV0_2
+  WorkflowDefinitionV0_2,
+  WorkflowOperatorConsoleDataV0_1,
+  WorkflowReplayReportV0_2
 } from '../src/index.js';
 
 const legacyDefinition: WorkflowDefinitionV0_1 = {
@@ -175,3 +177,21 @@ const invalidLegacyClientWorkspaceInspection: ClientWorkspaceGovernedInteraction
 
 void legacyClientWorkspaceInspection;
 void invalidLegacyClientWorkspaceInspection;
+
+declare const legacyConsoleData: WorkflowOperatorConsoleDataV0_1;
+declare const constrainedReplayReport: WorkflowReplayReportV0_2;
+
+const invalidLegacyConsoleInventory: WorkflowOperatorConsoleDataV0_1 = {
+  ...legacyConsoleData,
+  // @ts-expect-error A v0.1 console cannot embed a v0.2 decision inventory.
+  decisionInventory: constrainedInventory
+};
+
+const invalidLegacyConsoleReplay: WorkflowOperatorConsoleDataV0_1 = {
+  ...legacyConsoleData,
+  // @ts-expect-error A v0.1 console cannot embed a v0.2 replay report.
+  replayReport: constrainedReplayReport
+};
+
+void invalidLegacyConsoleInventory;
+void invalidLegacyConsoleReplay;

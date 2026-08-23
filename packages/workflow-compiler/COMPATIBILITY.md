@@ -43,6 +43,11 @@ Inspection envelopes retain that compatibility boundary. Historical
 compatibility receipts; the current Client Workspace inspector emits v0.2 with
 a v0.2 receipt. Atlas Studio follows the same v0.1/v0.2 envelope pairing.
 
+Operator-console data has a separate correlated schema. Historical
+`workflow_operator_console.v0.1` embeds a v0.1 decision inventory and replay
+report. The v0.2 console embeds the corresponding v0.2 artifacts. The console
+generator rejects a mixed pair instead of reusing either envelope version.
+
 ### Workflow and interaction v0.2
 
 `workflow_definition.v0.1` remains readable but rejects
