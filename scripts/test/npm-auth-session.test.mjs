@@ -22,6 +22,11 @@ function writeExecutable(filePath, source) {
   chmodSync(filePath, 0o755);
 }
 
+function writePrivateConfig(filePath, source) {
+  writeFileSync(filePath, source, { mode: 0o600 });
+  chmodSync(filePath, 0o600);
+}
+
 function run(args, env = {}, cwd = repoRoot, executable = scriptPath) {
   return spawnSync(process.execPath, [executable, ...args], {
     cwd,
@@ -46,7 +51,7 @@ test('npm auth status verifies a saved credential without printing its value', (
   const npmBin = path.join(fixture, 'npm');
   const secret = 'npm_secret_must_not_appear';
 
-  writeFileSync(
+  writePrivateConfig(
     userconfig,
     [
       '@create-something:registry=https://registry.npmjs.org/',
@@ -76,13 +81,30 @@ test('npm auth status verifies a saved credential without printing its value', (
   assert.deepEqual(report.identity, { status: 'verified', username: 'micah-createsomething' });
 });
 
+test('npm auth status rejects a credential file that is readable by other users', () => {
+  const fixture = mkdtempSync(path.join(tmpdir(), 'npm-auth-session-permissions-'));
+  const userconfig = path.join(fixture, '.npmrc');
+  const secret = 'npm_permissive_config_secret_must_not_appear';
+
+  writePrivateConfig(userconfig, `//registry.npmjs.org/:_authToken=${secret}\n`);
+  chmodSync(userconfig, 0o644);
+
+  const result = run(['status', '--json', '--userconfig', userconfig]);
+
+  assert.equal(result.status, 1, result.stderr || result.stdout);
+  assert.doesNotMatch(result.stdout, new RegExp(secret));
+  const report = JSON.parse(result.stdout);
+  assert.equal(report.ok, false);
+  assert.match(report.error, /permission|readable/i);
+});
+
 test('npm auth status names an invalid saved credential without replaying registry output', () => {
   const fixture = mkdtempSync(path.join(tmpdir(), 'npm-auth-session-invalid-'));
   const userconfig = path.join(fixture, '.npmrc');
   const npmBin = path.join(fixture, 'npm');
   const secret = 'npm_invalid_secret_must_not_appear';
 
-  writeFileSync(userconfig, `//registry.npmjs.org/:_authToken=${secret}\n`);
+  writePrivateConfig(userconfig, `//registry.npmjs.org/:_authToken=${secret}\n`);
   writeExecutable(npmBin, "#!/bin/sh\nprintf '%s\\n' 'npm error 401 Unauthorized' >&2\nexit 1\n");
 
   const result = run([
@@ -118,7 +140,7 @@ test('npm auth status verifies from outside an ambient project npmrc', () => {
     path.join(project, '.npmrc'),
     '//registry.npmjs.org/:_authToken=ambient-project-token\n'
   );
-  writeFileSync(userconfig, `//registry.npmjs.org/:_authToken=${secret}\n`);
+  writePrivateConfig(userconfig, `//registry.npmjs.org/:_authToken=${secret}\n`);
   writeExecutable(
     npmBin,
     "#!/bin/sh\nif [ -f \"$PWD/.npmrc\" ]; then\n  printf '%s\\n' 'npm error ambient project config loaded' >&2\n  exit 1\nfi\nprintf '%s\\n' '{\"username\":\"micah-createsomething\"}'\n"
@@ -142,7 +164,7 @@ test('npm auth status keeps a saved credential when npm verification cannot reac
   const npmBin = path.join(fixture, 'npm');
   const secret = 'npm_verification_error_secret_must_not_appear';
 
-  writeFileSync(userconfig, `//registry.npmjs.org/:_authToken=${secret}\n`);
+  writePrivateConfig(userconfig, `//registry.npmjs.org/:_authToken=${secret}\n`);
   writeExecutable(npmBin, "#!/bin/sh\nprintf '%s\\n' 'npm error code ENOTFOUND' >&2\nexit 1\n");
 
   const result = run([
@@ -173,7 +195,7 @@ for (const failureCode of ['E503', 'CERT_HAS_EXPIRED']) {
     const npmBin = path.join(fixture, 'npm');
     const secret = `npm_${failureCode.toLowerCase()}_secret_must_not_appear`;
 
-    writeFileSync(userconfig, `//registry.npmjs.org/:_authToken=${secret}\n`);
+    writePrivateConfig(userconfig, `//registry.npmjs.org/:_authToken=${secret}\n`);
     writeExecutable(
       npmBin,
       `#!/bin/sh\nprintf '%s\\n' 'npm error code ${failureCode}' >&2\nexit 1\n`
@@ -204,7 +226,7 @@ test('npm auth status keeps a saved credential when the configured npm binary ca
   const missingNpmBin = path.join(fixture, 'missing-npm');
   const secret = 'npm_missing_bin_secret_must_not_appear';
 
-  writeFileSync(userconfig, `//registry.npmjs.org/:_authToken=${secret}\n`);
+  writePrivateConfig(userconfig, `//registry.npmjs.org/:_authToken=${secret}\n`);
 
   const result = run([
     'status',
@@ -225,6 +247,35 @@ test('npm auth status keeps a saved credential when the configured npm binary ca
   assert.equal(report.identity.status, 'verification_error');
   assert.match(report.nextActions.join('\n'), /preserve.*credential/i);
 });
+
+for (const output of ['', 'not-json', '{}']) {
+  test(`npm auth status rejects an unusable whoami response: ${JSON.stringify(output)}`, () => {
+    const fixture = mkdtempSync(path.join(tmpdir(), 'npm-auth-session-whoami-output-'));
+    const userconfig = path.join(fixture, '.npmrc');
+    const npmBin = path.join(fixture, 'npm');
+    const secret = 'npm_unusable_whoami_secret_must_not_appear';
+
+    writePrivateConfig(userconfig, `//registry.npmjs.org/:_authToken=${secret}\n`);
+    writeExecutable(npmBin, `#!/bin/sh\nprintf '%s' '${output}'\n`);
+
+    const result = run([
+      'status',
+      '--json',
+      '--verify',
+      '--userconfig',
+      userconfig,
+      '--npm-bin',
+      npmBin
+    ]);
+
+    assert.equal(result.status, 1, result.stderr || result.stdout);
+    assert.doesNotMatch(result.stdout, new RegExp(secret));
+    const report = JSON.parse(result.stdout);
+    assert.equal(report.credential.status, 'saved');
+    assert.equal(report.identity.status, 'verification_error');
+    assert.match(report.nextActions.join('\n'), /preserve.*credential/i);
+  });
+}
 
 test('npm auth refuses plaintext HTTP registries before a credential can be used', () => {
   const result = run(['status', '--json', '--registry', 'http://registry.example.test/']);

@@ -130,12 +130,10 @@ function captureNpmIdentity(options) {
 
     try {
       const parsed = JSON.parse((result.stdout || '').trim());
-      const username = typeof parsed === 'string' ? parsed : parsed?.username;
-      return username
-        ? { status: 'verified', username }
-        : { status: 'verified', username: 'unknown' };
+      const username = typeof parsed === 'string' ? parsed.trim() : parsed?.username?.trim();
+      return username ? { status: 'verified', username } : { status: 'verification_error' };
     } catch {
-      return { status: 'verified', username: 'unknown' };
+      return { status: 'verification_error' };
     }
   } finally {
     rmSync(verificationDirectory, { force: true, recursive: true });
@@ -172,6 +170,7 @@ function statusNextActions(report, verify) {
 
 export function npmAuthStatus(options) {
   const userconfig = safeUserconfigPath(options.userconfig);
+  assertPrivateUserconfig(userconfig);
   const verifiedOptions = { ...options, userconfig };
   const credential = savedCredential(readConfig(userconfig), options.registry);
   const identity =
@@ -256,6 +255,12 @@ function safeUserconfigPath(userconfig) {
   }
 
   return canonicalPath;
+}
+
+function assertPrivateUserconfig(userconfig) {
+  if (existsSync(userconfig) && (lstatSync(userconfig).mode & 0o077) !== 0) {
+    throw new Error('refusing to use npm credentials from a group- or world-readable config');
+  }
 }
 
 function writeSavedCredential(options, token) {
