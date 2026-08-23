@@ -142,6 +142,38 @@ test('npm auth save atomically replaces a permissive user config with restricted
   );
 });
 
+test('npm auth save replaces every registry credential written with npmrc whitespace', () => {
+  const fixture = mkdtempSync(path.join(tmpdir(), 'npm-auth-session-spaced-'));
+  const userconfig = path.join(fixture, '.npmrc');
+  const priorSecret = 'npm_old_spaced_secret_must_be_removed';
+  const replacement = 'npm_replacement_secret_must_not_be_printed';
+
+  writeFileSync(
+    userconfig,
+    [
+      '@create-something:registry=https://registry.npmjs.org/',
+      `//registry.npmjs.org/:_authToken = ${priorSecret}`,
+      `  //registry.npmjs.org/:_authToken=${priorSecret}-duplicate`,
+      ''
+    ].join('\n')
+  );
+
+  const result = run(
+    ['save', '--json', '--userconfig', userconfig, '--token-env', 'NPM_AUTH_SESSION_TEST_TOKEN'],
+    { NPM_AUTH_SESSION_TEST_TOKEN: replacement }
+  );
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  assert.doesNotMatch(result.stdout, new RegExp(priorSecret));
+  assert.doesNotMatch(result.stdout, new RegExp(replacement));
+  const config = readFileSync(userconfig, 'utf8');
+  assert.doesNotMatch(config, new RegExp(priorSecret));
+  assert.equal(
+    config,
+    '@create-something:registry=https://registry.npmjs.org/\n//registry.npmjs.org/:_authToken=npm_replacement_secret_must_not_be_printed\n'
+  );
+});
+
 test('npm auth save rejects a config symlink whose target is inside the repository', () => {
   const fixture = mkdtempSync(path.join(tmpdir(), 'npm-auth-session-symlink-'));
   const repository = path.join(fixture, 'repository');
@@ -256,6 +288,26 @@ test('npm auth save rejects a config inside the target path Git worktree', () =>
   assert.doesNotMatch(result.stdout, new RegExp(secret));
   assert.equal(readFileSync(userconfig, 'utf8'), 'keep=this-config-unchanged\n');
   const report = JSON.parse(result.stdout);
+  assert.match(report.error, /repository/i);
+});
+
+test('npm auth status rejects a credential config inside the target path Git worktree', () => {
+  const fixture = mkdtempSync(path.join(tmpdir(), 'npm-auth-session-status-worktree-'));
+  const targetRepository = path.join(fixture, 'target-repository');
+  const externalDirectory = path.join(fixture, 'external');
+  const userconfig = path.join(targetRepository, '.npmrc');
+  const secret = 'npm_repository_status_secret_must_not_be_accepted';
+
+  initializeGitRepository(targetRepository);
+  mkdirSync(externalDirectory);
+  writeFileSync(userconfig, `//registry.npmjs.org/:_authToken=${secret}\n`);
+
+  const result = run(['status', '--json', '--userconfig', userconfig], {}, externalDirectory);
+
+  assert.equal(result.status, 1, result.stderr || result.stdout);
+  assert.doesNotMatch(result.stdout, new RegExp(secret));
+  const report = JSON.parse(result.stdout);
+  assert.equal(report.ok, false);
   assert.match(report.error, /repository/i);
 });
 

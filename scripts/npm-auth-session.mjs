@@ -83,10 +83,22 @@ function readConfig(path) {
   return existsSync(path) ? readFileSync(path, 'utf8') : '';
 }
 
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function npmrcAssignmentValue(line, key) {
+  const assignment = line.match(new RegExp(`^\\s*${escapeRegExp(key)}\\s*=\\s*(.*)$`));
+  return assignment ? assignment[1].trim() : null;
+}
+
 function savedCredential(config, registry) {
   const key = authKeyForRegistry(registry);
-  const line = config.split(/\r?\n/).find((entry) => entry.trimStart().startsWith(`${key}=`));
-  const value = line?.slice(line.indexOf('=') + 1).trim() ?? '';
+  const values = config
+    .split(/\r?\n/)
+    .map((line) => npmrcAssignmentValue(line, key))
+    .filter((value) => value !== null);
+  const value = values.at(-1) ?? '';
 
   return {
     status: value ? 'saved' : 'missing',
@@ -137,10 +149,12 @@ function statusNextActions(report, verify) {
 }
 
 export function npmAuthStatus(options) {
-  const credential = savedCredential(readConfig(options.userconfig), options.registry);
+  const userconfig = safeUserconfigPath(options.userconfig);
+  const verifiedOptions = { ...options, userconfig };
+  const credential = savedCredential(readConfig(userconfig), options.registry);
   const identity =
     options.verify && credential.status === 'saved'
-      ? captureNpmIdentity(options)
+      ? captureNpmIdentity(verifiedOptions)
       : { status: 'not_checked' };
   const report = {
     schema: 'create-something.npm-auth-session.v1',
@@ -148,8 +162,8 @@ export function npmAuthStatus(options) {
     ok: credential.status === 'saved' && (!options.verify || identity.status === 'verified'),
     registry: options.registry,
     userconfig: {
-      path: options.userconfig,
-      status: existsSync(options.userconfig) ? 'present' : 'missing'
+      path: userconfig,
+      status: existsSync(userconfig) ? 'present' : 'missing'
     },
     credential,
     identity
@@ -213,10 +227,10 @@ function safeUserconfigPath(userconfig) {
   const canonicalPath = canonicalPathForWrite(configuredPath);
 
   if (existsSync(configuredPath) && lstatSync(configuredPath).isSymbolicLink()) {
-    throw new Error('refusing to save npm credentials through a symbolic-link config');
+    throw new Error('refusing to use npm credentials through a symbolic-link config');
   }
   if (repositoryRoots(configuredPath).some((root) => isPathInside(canonicalPath, root))) {
-    throw new Error('refusing to save npm credentials inside the repository');
+    throw new Error('refusing to use npm credentials inside the repository');
   }
 
   return canonicalPath;
@@ -227,7 +241,7 @@ function writeSavedCredential(options, token) {
 
   const key = authKeyForRegistry(options.registry);
   const existingLines = readConfig(userconfig).split(/\r?\n/);
-  const preserved = existingLines.filter((line) => !line.trimStart().startsWith(`${key}=`));
+  const preserved = existingLines.filter((line) => npmrcAssignmentValue(line, key) === null);
   while (preserved.at(-1) === '') preserved.pop();
   preserved.push(`${key}=${token}`);
 
