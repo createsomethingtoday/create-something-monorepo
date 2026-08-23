@@ -488,9 +488,12 @@ const MARKETPLACE_SUBMISSION_WORKFLOW: WorkflowDefinition = {
         'version_id',
         'review_status'
       ],
-      requiredEvidenceValues: {
-        handoff_state: 'confirmed',
-        review_status: 'ready for review'
+      requiredEvidenceValues: { handoff_state: 'confirmed' },
+      requiredEvidenceMatchers: {
+        review_status: {
+          kind: 'contains_case_insensitive',
+          values: ['ready for review', 'response to review', 'in review']
+        }
       },
       approval: { required: false },
       receipt: {
@@ -726,7 +729,7 @@ const MARKETPLACE_SUBMISSION_CASES: WorkflowReplayManifest = {
         handoff_state: 'confirmed',
         asset_id: 'asset-fixture-001',
         version_id: 'version-fixture-001',
-        review_status: 'ready for review'
+        review_status: '🆕Ready for Review'
       },
       approvals: [],
       expectedOutcome: 'pass',
@@ -862,7 +865,7 @@ const MARKETPLACE_SUBMISSION_FILES: Record<string, string> = {
     '',
     '1. Capture the required form fields and published URL as evidence.',
     '2. Require a Validator App preflight result before treating a handoff as eligible.',
-    '3. Require a confirmed handoff state plus its asset, version, and canonical ready-for-review status evidence before marking the submission ready for review.',
+    '3. Require a confirmed handoff state plus its asset, version, and an owning review-ready status receipt before marking the submission ready for review.',
     '4. Keep reviewer approval and creator communication in the owning human workflow.',
     '5. Replay pass, wait, and stop cases locally before changing a production owner.',
     ''
@@ -896,7 +899,7 @@ const MARKETPLACE_SUBMISSION_FILES: Record<string, string> = {
     '1. Confirm the form includes a submission identifier, published URL, and schema revision.',
     '2. Require the form-validation receipt before continuing.',
     '3. Require a passing Validator App preflight policy, result, and receipt.',
-    '4. Treat an Airtable Automation webhook receipt as processing evidence only. Require the confirmed handoff state plus asset, version, and canonical ready-for-review status evidence before reviewer readiness; this template does not send or retry a webhook.',
+    '4. Treat an Airtable Automation webhook receipt as processing evidence only. Require the confirmed handoff state plus asset, version, and an owning review-ready status receipt before reviewer readiness; this template does not send or retry a webhook.',
     '5. Keep the reviewer decision waiting for the assigned reviewer.',
     '6. Keep creator messaging blocked until the owning reviewer communication process has independently verified its decision and delivery evidence.',
     '',

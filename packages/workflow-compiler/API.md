@@ -20,6 +20,12 @@ bundle preserves and validates these constraints. Replay blocks a supplied value
 that differs from the versioned contract with `EVIDENCE_VALUE_MISMATCH`; a
 non-empty receipt alone cannot satisfy that condition.
 
+An action may also declare `requiredEvidenceMatchers`. The current finite
+matcher is `contains_case_insensitive`, which accepts a non-empty string that
+contains one of its declared non-empty values. Replay blocks a non-match with
+`EVIDENCE_MATCHER_MISMATCH`. This permits an owning system's documented receipt
+vocabulary without accepting arbitrary regular expressions.
+
 ### `parseWorkflowDefinition(input)`
 
 Validates and normalizes a workflow definition without compiling artifacts.

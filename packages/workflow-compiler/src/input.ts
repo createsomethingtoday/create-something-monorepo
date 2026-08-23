@@ -72,6 +72,15 @@ class Validator {
     });
   }
 
+  nonEmptyString(value: unknown, path: string): void {
+    if (typeof value === 'string' && value.trim()) return;
+    this.diagnostics.push({
+      code: value === undefined ? 'REQUIRED_FIELD' : 'INVALID_VALUE',
+      path,
+      message: 'Expected a non-empty string.'
+    });
+  }
+
   optionalString(value: unknown, path: string): void {
     if (value === undefined) return;
     this.string(value, path);
@@ -248,6 +257,48 @@ export function parseWorkflowDefinition(input: unknown): WorkflowDefinition {
             });
           }
           validator.evidenceValue(value, `${path}.requiredEvidenceValues.${field}`);
+        });
+      }
+    }
+    if (action.requiredEvidenceMatchers !== undefined) {
+      const requiredEvidenceMatchers = validator.record(
+        action.requiredEvidenceMatchers,
+        `${path}.requiredEvidenceMatchers`
+      );
+      if (requiredEvidenceMatchers) {
+        Object.entries(requiredEvidenceMatchers).forEach(([field, value]) => {
+          if (!field.trim()) {
+            validator.diagnostics.push({
+              code: 'INVALID_VALUE',
+              path: `${path}.requiredEvidenceMatchers`,
+              message: 'Evidence matcher fields must not be empty.'
+            });
+          }
+          const matcher = validator.record(value, `${path}.requiredEvidenceMatchers.${field}`);
+          if (!matcher) return;
+          validator.enumeration(
+            matcher.kind,
+            ['contains_case_insensitive'],
+            `${path}.requiredEvidenceMatchers.${field}.kind`
+          );
+          const values = validator.array(
+            matcher.values,
+            `${path}.requiredEvidenceMatchers.${field}.values`
+          );
+          if (!values) return;
+          if (values.length === 0) {
+            validator.diagnostics.push({
+              code: 'INVALID_VALUE',
+              path: `${path}.requiredEvidenceMatchers.${field}.values`,
+              message: 'Evidence matcher values must contain at least one non-empty string.'
+            });
+          }
+          values.forEach((entry, valueIndex) =>
+            validator.nonEmptyString(
+              entry,
+              `${path}.requiredEvidenceMatchers.${field}.values[${valueIndex}]`
+            )
+          );
         });
       }
     }

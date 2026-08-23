@@ -6,6 +6,11 @@ export type SystemTier = 'database' | 'automation' | 'judgment';
 
 export type WorkflowEvidenceValue = string | number | boolean;
 
+export interface WorkflowEvidenceMatcher {
+  kind: 'contains_case_insensitive';
+  values: string[];
+}
+
 export interface WorkflowSystem {
   id: string;
   title: string;
@@ -48,6 +53,7 @@ export interface WorkflowAction {
   systemsTouched: string[];
   requiredEvidence: string[];
   requiredEvidenceValues?: Record<string, WorkflowEvidenceValue>;
+  requiredEvidenceMatchers?: Record<string, WorkflowEvidenceMatcher>;
   approval: {
     required: boolean;
     owner?: string;
@@ -172,6 +178,7 @@ export interface CompiledDecision {
   systemsTouched: string[];
   requiredEvidence: string[];
   requiredEvidenceValues?: Record<string, WorkflowEvidenceValue>;
+  requiredEvidenceMatchers?: Record<string, WorkflowEvidenceMatcher>;
   approvalOwner?: string;
   receiptFields: string[];
   recovery: WorkflowAction['recovery'];
@@ -322,6 +329,12 @@ export interface WorkflowEvidenceMismatch {
   actual: unknown;
 }
 
+export interface WorkflowEvidenceMatcherMismatch {
+  field: string;
+  matcher: WorkflowEvidenceMatcher;
+  actual: unknown;
+}
+
 export interface WorkflowReplayResult {
   caseId: string;
   title: string;
@@ -339,6 +352,7 @@ export interface WorkflowReplayResult {
     | 'POLICY_BLOCKED'
     | 'INSUFFICIENT_EVIDENCE'
     | 'EVIDENCE_VALUE_MISMATCH'
+    | 'EVIDENCE_MATCHER_MISMATCH'
     | 'UNKNOWN_ACTION'
     | 'UNKNOWN_ACTOR'
     | 'ACTOR_NOT_AUTHORIZED'
@@ -348,6 +362,7 @@ export interface WorkflowReplayResult {
   evidenceReferences: string[];
   missingEvidence: string[];
   evidenceMismatches: WorkflowEvidenceMismatch[];
+  evidenceMatcherMismatches: WorkflowEvidenceMatcherMismatch[];
   recovery: WorkflowAction['recovery'];
   receipt: WorkflowReplayReceipt;
 }

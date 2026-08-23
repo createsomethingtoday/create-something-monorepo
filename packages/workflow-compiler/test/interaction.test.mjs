@@ -23,6 +23,9 @@ test('parses a serialized compiled interaction bundle through the public interfa
 test('parses serialized exact evidence constraints in the public interaction bundle', async () => {
   const definition = JSON.parse(await readFile(fixtureUrl, 'utf8'));
   definition.actions[0].requiredEvidenceValues = { published_url: 'https://example.com' };
+  definition.actions[0].requiredEvidenceMatchers = {
+    published_url: { kind: 'contains_case_insensitive', values: ['example.com'] }
+  };
   const compiled = compileWorkflowDefinition(definition);
   const serialized = JSON.parse(JSON.stringify(compiled.governedInteraction));
 
@@ -35,6 +38,9 @@ test('parses serialized exact evidence constraints in the public interaction bun
     constrainedAction?.requiredEvidenceValues,
     { published_url: 'https://example.com' },
   );
+  assert.deepEqual(constrainedAction?.requiredEvidenceMatchers, {
+    published_url: { kind: 'contains_case_insensitive', values: ['example.com'] }
+  });
 });
 
 async function compiledInteraction() {

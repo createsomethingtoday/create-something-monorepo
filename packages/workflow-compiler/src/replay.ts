@@ -6,6 +6,7 @@ import type {
   ReplayOutcome,
   WorkflowAction,
   WorkflowAcceptanceSummary,
+  WorkflowEvidenceMatcher,
   WorkflowReplayCase,
   WorkflowReplayReport,
   WorkflowReplayResult
@@ -164,6 +165,15 @@ function receiptFields(
   );
 }
 
+function matchesEvidenceMatcher(actual: unknown, matcher: WorkflowEvidenceMatcher): boolean {
+  if (typeof actual !== 'string') return false;
+  if (matcher.kind === 'contains_case_insensitive') {
+    const normalizedActual = actual.toLowerCase();
+    return matcher.values.some((value) => normalizedActual.includes(value.toLowerCase()));
+  }
+  return false;
+}
+
 function replayCaseAgainstBundle(
   bundle: CompiledWorkflowBundle,
   decisions: Map<string, CompiledDecision>,
@@ -181,6 +191,11 @@ function replayCaseAgainstBundle(
     ? Object.entries(decision.requiredEvidenceValues ?? {})
         .filter(([field, expected]) => replayCase.evidence[field] !== expected)
         .map(([field, expected]) => ({ field, expected, actual: replayCase.evidence[field] }))
+    : [];
+  const evidenceMatcherMismatches = decision
+    ? Object.entries(decision.requiredEvidenceMatchers ?? {})
+        .filter(([field, matcher]) => !matchesEvidenceMatcher(replayCase.evidence[field], matcher))
+        .map(([field, matcher]) => ({ field, matcher, actual: replayCase.evidence[field] }))
     : [];
   const recovery = decision?.recovery ?? unknownRecovery(bundle);
   const owner = decision?.approvalOwner ?? decision?.recovery.owner ?? bundle.owners.workflow;
@@ -208,6 +223,9 @@ function replayCaseAgainstBundle(
   } else if (evidenceMismatches.length > 0) {
     observedOutcome = 'blocked';
     reasonCode = 'EVIDENCE_VALUE_MISMATCH';
+  } else if (evidenceMatcherMismatches.length > 0) {
+    observedOutcome = 'blocked';
+    reasonCode = 'EVIDENCE_MATCHER_MISMATCH';
   } else if (
     (decision.autonomy === 'approval_required' || decision.autonomy === 'manual_only') &&
     (!decision.approvalOwner || !replayCase.approvals.includes(decision.approvalOwner))
@@ -258,6 +276,7 @@ function replayCaseAgainstBundle(
     evidenceReferences,
     missingEvidence,
     evidenceMismatches,
+    evidenceMatcherMismatches,
     recovery,
     receipt
   };

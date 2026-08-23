@@ -15,6 +15,7 @@ import type {
   ToolContractsArtifact,
   WorkflowDefinition,
   WorkflowCompilationDiagnostic,
+  WorkflowEvidenceMatcher,
   WorkflowEvidenceValue,
   WorkflowMapEdge,
   WorkflowMapNode
@@ -58,6 +59,16 @@ function sortedEvidenceValues(
   );
 }
 
+function sortedEvidenceMatchers(
+  matchers: Record<string, WorkflowEvidenceMatcher>
+): Record<string, WorkflowEvidenceMatcher> {
+  return Object.fromEntries(
+    Object.entries(matchers)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([field, matcher]) => [field, { ...matcher, values: sorted(matcher.values) }])
+  );
+}
+
 function canonicalize(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(canonicalize);
   if (value && typeof value === 'object') {
@@ -94,6 +105,15 @@ function validateGovernance(definition: WorkflowDefinition): WorkflowCompilation
           code: 'EVIDENCE_VALUE_CONSTRAINT_MISSING_REQUIRED_EVIDENCE',
           path: `${path}.requiredEvidenceValues.${field}`,
           message: `Evidence-value constraint ${field} for action ${action.id} must also be required evidence.`
+        });
+      }
+    });
+    Object.keys(action.requiredEvidenceMatchers ?? {}).forEach((field) => {
+      if (!action.requiredEvidence.includes(field)) {
+        diagnostics.push({
+          code: 'EVIDENCE_MATCHER_MISSING_REQUIRED_EVIDENCE',
+          path: `${path}.requiredEvidenceMatchers.${field}`,
+          message: `Evidence matcher ${field} for action ${action.id} must also be required evidence.`
         });
       }
     });
@@ -382,6 +402,9 @@ export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundl
         requiredEvidence: sorted(action.requiredEvidence),
         ...(action.requiredEvidenceValues
           ? { requiredEvidenceValues: sortedEvidenceValues(action.requiredEvidenceValues) }
+          : {}),
+        ...(action.requiredEvidenceMatchers
+          ? { requiredEvidenceMatchers: sortedEvidenceMatchers(action.requiredEvidenceMatchers) }
           : {}),
         ...(action.approval.owner ? { approvalOwner: action.approval.owner } : {}),
         receiptFields: sorted(action.receipt.requiredFields),

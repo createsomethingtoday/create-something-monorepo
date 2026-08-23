@@ -2,6 +2,7 @@ import type {
   ActionKind,
   AutonomyClass,
   CompiledDecision,
+  WorkflowEvidenceMatcher,
   WorkflowEvidenceValue,
   GovernedInteractionBundle,
   GovernedInteractionCapability,
@@ -138,6 +139,30 @@ function evidenceValues(value: unknown, path: string): Record<string, WorkflowEv
   );
 }
 
+function evidenceMatcher(value: unknown, path: string): WorkflowEvidenceMatcher {
+  const matcher = object(value, path);
+  exactFields(matcher, ['kind', 'values'], [], path);
+  if (matcher.kind !== 'contains_case_insensitive') {
+    return invalid(`${path}.kind`, `${path}.kind is not supported.`);
+  }
+  const values = stringArray(matcher.values, `${path}.values`);
+  if (values.length === 0) {
+    return invalid(`${path}.values`, `${path}.values must contain at least one string.`);
+  }
+  unique(values, `${path}.values`);
+  return { kind: 'contains_case_insensitive', values };
+}
+
+function evidenceMatchers(value: unknown, path: string): Record<string, WorkflowEvidenceMatcher> {
+  const matchers = object(value, path);
+  return Object.fromEntries(
+    Object.entries(matchers).map(([field, matcher]) => {
+      if (!field.trim()) return invalid(path, `${path} fields must not be empty.`);
+      return [field, evidenceMatcher(matcher, `${path}.${field}`)];
+    }),
+  );
+}
+
 function unique(values: string[], path: string): void {
   const seen = new Set<string>();
   for (const value of values) {
@@ -210,7 +235,7 @@ function parseDecision(value: unknown, path: string): CompiledDecision {
       'receiptFields',
       'recovery',
     ],
-    ['approvalOwner', 'requiredEvidenceValues'],
+    ['approvalOwner', 'requiredEvidenceMatchers', 'requiredEvidenceValues'],
     path,
   );
   const recovery = object(decision.recovery, `${path}.recovery`);
@@ -233,6 +258,10 @@ function parseDecision(value: unknown, path: string): CompiledDecision {
     decision.requiredEvidenceValues === undefined
       ? undefined
       : evidenceValues(decision.requiredEvidenceValues, `${path}.requiredEvidenceValues`);
+  const requiredEvidenceMatchers =
+    decision.requiredEvidenceMatchers === undefined
+      ? undefined
+      : evidenceMatchers(decision.requiredEvidenceMatchers, `${path}.requiredEvidenceMatchers`);
   const receiptFields = stringArray(decision.receiptFields, `${path}.receiptFields`);
   unique(systemsTouched, `${path}.systemsTouched`);
   unique(requiredEvidence, `${path}.requiredEvidence`);
@@ -246,6 +275,15 @@ function parseDecision(value: unknown, path: string): CompiledDecision {
       );
     }
   });
+  Object.keys(requiredEvidenceMatchers ?? {}).forEach((field) => {
+    if (!requiredEvidence.includes(field)) {
+      throw new GovernedInteractionValidationError(
+        'INVALID_ACTION_GOVERNANCE',
+        `${path}.requiredEvidenceMatchers.${field}`,
+        `Evidence matcher ${field} for action ${String(decision.actionId)} must also be required evidence.`,
+      );
+    }
+  });
   return {
     actionId: string(decision.actionId, `${path}.actionId`),
     title: string(decision.title, `${path}.title`),
@@ -254,6 +292,7 @@ function parseDecision(value: unknown, path: string): CompiledDecision {
     autonomy,
     systemsTouched,
     requiredEvidence,
+    ...(requiredEvidenceMatchers ? { requiredEvidenceMatchers } : {}),
     ...(requiredEvidenceValues ? { requiredEvidenceValues } : {}),
     ...(approvalOwner ? { approvalOwner } : {}),
     receiptFields,
