@@ -2,12 +2,12 @@
 
 ## Current state
 
-- Goal status: active
-- Active phase: 6
-- Active Linear issue: CRE-1835
-- Worktree: `/private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/cre-1835-agent-worktree`
-- Branch: `codex/CRE-1835-agent-worktree`
-- Base: `origin/main` at `e195d5393dadd828c664a1d9b6154018280e916c`
+- Goal status: completion candidate; all observable proof is complete and only the receipt-PR closeout sequence remains
+- Active phase: 7
+- Active Linear issue: CRE-1831
+- Worktree: `/private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/cre-1831-agent-worktree`
+- Branch: `codex/CRE-1831-agent-worktree`
+- Base: `origin/main` at `a71e9cafa287c92dd041df9ce5c2eb03bce9bb16`
 
 ## Phases
 
@@ -66,21 +66,21 @@
 - [x] Install and execute the registry version in disposable supported-Node consumers.
 - [x] Record each receipt separately and close CRE-1836 only after registry proof.
 
-### 6. Publish the fixed-scope integration offer — in progress
+### 6. Publish the fixed-scope integration offer — complete
 
 - [x] Claim CRE-1835 in an exact-main issue worktree.
 - [x] Read and apply the public-surface and browser verification skills.
 - [x] Fit the offer into the existing agency information architecture and conversion path.
 - [x] Implement the narrow page or section with accurate local/CI positioning and no hosted-control-plane implication.
-- [ ] Run package checks, review, merge, deploy, and verify representative production desktop/mobile routes.
-- [ ] Record deployment, rollback, browser evidence, and worktree disposition in CRE-1835.
+- [x] Run package checks, review, merge, deploy, and verify representative production desktop/mobile routes.
+- [x] Record deployment, rollback, browser evidence, and worktree disposition in CRE-1835.
 
-### 7. Close the map and goal — pending
+### 7. Close the map and goal — in progress
 
-- [ ] Re-run the primary verifier from registry and production surfaces.
-- [ ] Confirm every child issue has evidence and an explicit worktree disposition.
-- [ ] Comment the consolidated receipt index on CRE-1831 and mark the map complete.
-- [ ] Mark the Ultragoal complete only when every completion-proof item in `goal.md` is satisfied.
+- [x] Re-run the primary verifier from registry and production surfaces.
+- [x] Confirm every child issue has evidence and an explicit worktree disposition.
+- [x] Prepare the consolidated receipt index for CRE-1831 closeout.
+- [ ] Merge this receipt-only PR, remove its clean worktree, close CRE-1831 with the consolidated index, and then mark the Ultragoal complete.
 
 ## Evidence log
 
@@ -168,3 +168,12 @@
 - 2026-08-22: The second remediation passes the full scheduler TypeScript check, 64/64 unit tests, 18/18 Worker tests, Wrangler dry-run build, focused Agency booking/copy/integration tests (39/39), and the complete Agency package check with zero Svelte diagnostics. Production remains unchanged pending a clean superseding exact-head review and protected merge.
 - 2026-08-22: Exact-head review on `7df515eb12a9b42d29962a668f3d5a11e610a53d` identified that the standalone scheduler's post-commit canonical URL removed the integration intent before a reload. The server-rendered page now injects either the exact allowlisted `compiler-integration` value or `null`, and the client rebuilds the canonical booking URL from the booking identifier plus only that bounded offer value. Unknown values remain mapping-default and are not retained.
 - 2026-08-22: The third remediation passes scheduler TypeScript, 64/64 unit tests, 18/18 Worker tests, the Wrangler dry-run build, and all 39 focused Agency booking/copy/integration tests. One strict-workspace run on the prior head failed only because three unchanged Webflow Template Search tests exceeded their 5- or 10-second CI timeouts; its immediately preceding run passed, and a bounded failed-job rerun was requested without changing unrelated source.
+- 2026-08-22: PR #1498 received a clean exact-head Codex review on `059d4e1bbf72129ba144bfe7dd90b4f1eb3252aa`. Agency Pages deploy, MCP package checks, Public Distribution GA, Philosophical Code Review, strict workspace checks, and both Socket checks passed on the final head. Protected `main` advanced to merge `a71e9cafa287c92dd041df9ce5c2eb03bce9bb16`.
+- 2026-08-22: The Agency deployment workflow run `32616766745` promoted merge `a71e9cafa287c92dd041df9ce5c2eb03bce9bb16`; Cloudflare Pages reported deployment `https://dc0e1a68.create-something-agency.pages.dev`, with the custom production surface live at `https://createsomething.agency/workflow-compiler-integration`. Rollback is the prior Pages deployment for the same project.
+- 2026-08-22: The authenticated scheduler deployment promoted Worker version `46c1720a-5490-4de8-94f5-f19fef43565b` to `https://create-something-scheduler.createsomething.workers.dev`. Rollback is prior Worker version `5856a691-00d1-4de4-a99c-24b148ccc210`; no OAuth, domain, DNS, Turnstile, secret, migration, conferencing-provider, or ownership configuration changed.
+- 2026-08-22: Live desktop and 390px mobile browser proof confirmed the fixed offer, no horizontal overflow, one-repository/one-consequential-workflow scope, Services Build entry, and both booking calls to action with exact `source=workflow-compiler-integration`, `intent=compiler-integration`, and `lane=workflow_infrastructure`. The Agency booking page and cross-origin scheduler iframe retain the integration-specific title, policy, and scope; no booking was submitted.
+- 2026-08-22: Direct scheduler proof reported 57 verified 30-minute America/Chicago openings, HTTP 200 availability, and `{"ready":true,"service":"create-something-scheduler"}` from `/ready`. Production screenshots are archived locally under `/tmp/cre-1835-production-evidence-20260823-0412/` with SHA-256 receipts `ab91cc7e57c3ab525d125f8c3734804ba7568206fb39525fbad6e0fa5c6189a4`, `c3abc91bfd5cc808b74bb9801ec1499353821615174a550910e03787c6563a46`, `ce116517964492351530351900c0130d936f2be56923920533026fc49982b616`, and `bdd3596111046566163242cc6030aac5e86b765f3b86bd75a49088dac883ea4`.
+- 2026-08-22: Live console inspection separated pre-existing or external noise from route behavior: the Agency hydration warning reproduces on `/services`, the WebMCP capability warning is expected, Turnstile challenge logs are external, and the scheduler favicon returns 404. The offer, query forwarding, embedded scheduler, availability API, and readiness path all passed despite that baseline noise.
+- 2026-08-22: CRE-1835 was closed with review, merge, deployment, rollback, browser, and HTTP evidence after its clean worktree was removed. Fresh Linear readback confirms CRE-1832, CRE-1833, CRE-1834, CRE-1835, CRE-1836, and CRE-1837 are all Done with explicit worktree disposition evidence.
+- 2026-08-22: The primary verifier is complete across both public boundaries: npm `@create-something/workflow-compiler@0.1.0` owns `latest`, carries trusted-publisher provenance for merge `e195d5393dadd828c664a1d9b6154018280e916c`, and passes disposable Node 22/24 registry consumers; the fixed-scope Agency offer and scheduler handoff pass production desktop/mobile and HTTP verification from merge `a71e9cafa287c92dd041df9ce5c2eb03bce9bb16`.
+- 2026-08-22: Final CRE-1831 sequencing is intentionally last: review and merge this receipt-only plan change, remove the clean CRE-1831 worktree, close the map with the consolidated PR/release/deployment index and `Worktree disposition: removed`, then mark the active Ultragoal complete. The unrelated dirty root remains unmodified.
