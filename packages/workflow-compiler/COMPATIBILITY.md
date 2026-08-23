@@ -42,6 +42,13 @@ migrations for each. A v0.1 parser rejects v0.2 input, so callers must retain
 the original artifact, migrate deliberately, and validate, compile, and replay
 the result before promotion.
 
+Replay reports follow the same boundary. v0.1 compiled bundles produce
+`workflow_replay_report.v0.1`, which omits evidence-value and
+evidence-matcher mismatch fields and reason codes. v0.2 compiled bundles
+produce `workflow_replay_report.v0.2`, which carries those fields. Consumers
+must discriminate replay reports by `schemaVersion`; a historical v0.1 report
+is not silently widened or relabeled.
+
 ## Prereleases
 
 `0.1.0-beta.*` releases are public integration candidates. Their documented

@@ -22,6 +22,12 @@ artifact schemas.
   v0.1.
 - Reject empty or whitespace-only exact evidence values before a replay can be
   made permanently unsatisfiable.
+- Make `WorkflowDefinition` schema-discriminated in the public TypeScript
+  declarations so v0.1 actions cannot type-check with v0.2-only evidence
+  constraints.
+- Add `workflow_replay_report.v0.2` for constrained replay output; v0.1
+  reports retain their historical case shape without mismatch fields or reason
+  codes.
 
 ## 0.2.0
 

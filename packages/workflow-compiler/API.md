@@ -24,6 +24,12 @@ blocks a supplied value that differs from the versioned contract with
 `EVIDENCE_VALUE_MISMATCH`; a non-empty receipt alone cannot satisfy that
 condition.
 
+The generated TypeScript `WorkflowDefinition` is a schema-discriminated union:
+`workflow_definition.v0.1` actions cannot declare either evidence-constraint
+field, while v0.2 actions can. This mirrors the fail-closed runtime parser
+instead of leaving an invalid v0.1 document to fail only after it reaches
+production validation.
+
 Only `workflow_definition.v0.2` may also declare
 `requiredEvidenceMatchers`. The current finite matcher is
 `contains_case_insensitive`, which accepts a non-empty string that contains one
@@ -56,6 +62,13 @@ match the compiled definition.
 Evaluates all replay cases against a compiled bundle and returns a replay
 report, evidence ledger, receipts, and acceptance summary. Historical actor and
 approval strings do not authenticate a live consequential action.
+
+A `compiled_workflow_bundle.v0.1` emits
+`workflow_replay_report.v0.1`; its cases do not contain evidence-mismatch
+fields. A v0.2 bundle emits `workflow_replay_report.v0.2`, whose cases add
+exact-value and matcher mismatch detail plus their two reason codes. Consumers
+must select the report shape by `schemaVersion` and recompile/replay a migrated
+source definition rather than relabeling historical report data.
 
 ### `createMcpToolCallPlan(bundle, replayCase)`
 

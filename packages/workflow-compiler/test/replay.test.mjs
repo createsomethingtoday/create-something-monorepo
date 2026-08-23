@@ -77,6 +77,44 @@ test('replays representative history through compiled transitions and fails clos
   assert.match(unknown.recovery.path, /workflow definition/i);
 });
 
+test('versions replay reports when constrained evidence adds mismatch detail', async () => {
+  const definition = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const manifest = JSON.parse(await readFile(casesUrl, 'utf8'));
+  const legacyReport = replayWorkflow(compileWorkflowDefinition(definition), manifest).report;
+
+  assert.equal(legacyReport.schemaVersion, 'workflow_replay_report.v0.1');
+  assert.equal(Object.hasOwn(legacyReport.cases[0], 'evidenceMismatches'), false);
+  assert.equal(Object.hasOwn(legacyReport.cases[0], 'evidenceMatcherMismatches'), false);
+
+  const constrainedDefinition = structuredClone(definition);
+  constrainedDefinition.schemaVersion = 'workflow_definition.v0.2';
+  constrainedDefinition.actions.find(
+    (action) => action.id === 'validate_submission'
+  ).requiredEvidenceValues = { validation_result: 'pass' };
+  const constrainedManifest = structuredClone(manifest);
+  const mismatchCase = constrainedManifest.cases.find(
+    (replayCase) => replayCase.caseId === 'complete-validation-passes'
+  );
+  mismatchCase.evidence.validation_result = 'failed';
+  mismatchCase.expectedOutcome = 'blocked';
+  mismatchCase.expectedState = mismatchCase.initialState;
+
+  const constrainedReport = replayWorkflow(
+    compileWorkflowDefinition(constrainedDefinition),
+    constrainedManifest
+  ).report;
+  const mismatch = constrainedReport.cases.find(
+    (replayCase) => replayCase.caseId === 'complete-validation-passes'
+  );
+
+  assert.equal(constrainedReport.schemaVersion, 'workflow_replay_report.v0.2');
+  assert.equal(mismatch.reasonCode, 'EVIDENCE_VALUE_MISMATCH');
+  assert.deepEqual(mismatch.evidenceMismatches, [
+    { field: 'validation_result', expected: 'pass', actual: 'failed' }
+  ]);
+  assert.deepEqual(mismatch.evidenceMatcherMismatches, []);
+});
+
 test('replay blocks unknown and unauthorized actors before action execution', async () => {
   const definition = JSON.parse(await readFile(workflowUrl, 'utf8'));
   const fixture = JSON.parse(await readFile(casesUrl, 'utf8'));

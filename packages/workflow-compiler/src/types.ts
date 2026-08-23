@@ -60,7 +60,7 @@ export interface WorkflowState {
   terminal?: boolean;
 }
 
-export interface WorkflowAction {
+interface WorkflowActionBase {
   id: string;
   title: string;
   kind: ActionKind;
@@ -68,8 +68,6 @@ export interface WorkflowAction {
   autonomy: AutonomyClass;
   systemsTouched: string[];
   requiredEvidence: string[];
-  requiredEvidenceValues?: Record<string, WorkflowEvidenceValue>;
-  requiredEvidenceMatchers?: Record<string, WorkflowEvidenceMatcher>;
   approval: {
     required: boolean;
     owner?: string;
@@ -89,6 +87,18 @@ export interface WorkflowAction {
   };
   agentId?: string;
 }
+
+export interface WorkflowActionV0_1 extends WorkflowActionBase {
+  requiredEvidenceValues?: never;
+  requiredEvidenceMatchers?: never;
+}
+
+export interface WorkflowActionV0_2 extends WorkflowActionBase {
+  requiredEvidenceValues?: Record<string, WorkflowEvidenceValue>;
+  requiredEvidenceMatchers?: Record<string, WorkflowEvidenceMatcher>;
+}
+
+export type WorkflowAction = WorkflowActionV0_1 | WorkflowActionV0_2;
 
 export type WorkflowToolParameterType = 'string' | 'number' | 'boolean';
 
@@ -121,8 +131,7 @@ export interface WorkflowTransition {
   actionId: string;
 }
 
-export interface WorkflowDefinition {
-  schemaVersion: WorkflowDefinitionSchemaVersion;
+interface WorkflowDefinitionBase {
   workflowId: string;
   version: string;
   title: string;
@@ -137,11 +146,22 @@ export interface WorkflowDefinition {
   events: WorkflowEvent[];
   actors: WorkflowActor[];
   states: WorkflowState[];
-  actions: WorkflowAction[];
   transitions: WorkflowTransition[];
   agents: WorkflowAgent[];
   evaluations: WorkflowEvaluation[];
 }
+
+export interface WorkflowDefinitionV0_1 extends WorkflowDefinitionBase {
+  schemaVersion: 'workflow_definition.v0.1';
+  actions: WorkflowActionV0_1[];
+}
+
+export interface WorkflowDefinitionV0_2 extends WorkflowDefinitionBase {
+  schemaVersion: 'workflow_definition.v0.2';
+  actions: WorkflowActionV0_2[];
+}
+
+export type WorkflowDefinition = WorkflowDefinitionV0_1 | WorkflowDefinitionV0_2;
 
 export interface WorkflowMapNode {
   id: string;
@@ -351,7 +371,17 @@ export interface WorkflowEvidenceMatcherMismatch {
   actual: unknown;
 }
 
-export interface WorkflowReplayResult {
+type WorkflowReplayReasonCodeV0_1 =
+  | 'ACTION_ALLOWED'
+  | 'APPROVAL_REQUIRED'
+  | 'POLICY_BLOCKED'
+  | 'INSUFFICIENT_EVIDENCE'
+  | 'UNKNOWN_ACTION'
+  | 'UNKNOWN_ACTOR'
+  | 'ACTOR_NOT_AUTHORIZED'
+  | 'INVALID_TRANSITION';
+
+interface WorkflowReplayResultBase {
   caseId: string;
   title: string;
   actionId: string;
@@ -362,6 +392,19 @@ export interface WorkflowReplayResult {
   expectedOutcome: ReplayOutcome;
   expectationMatched: boolean;
   canExecute: boolean;
+  authority: string;
+  owner: string;
+  evidenceReferences: string[];
+  missingEvidence: string[];
+  recovery: WorkflowAction['recovery'];
+  receipt: WorkflowReplayReceipt;
+}
+
+export interface WorkflowReplayResultV0_1 extends WorkflowReplayResultBase {
+  reasonCode: WorkflowReplayReasonCodeV0_1;
+}
+
+export interface WorkflowReplayResultV0_2 extends WorkflowReplayResultBase {
   reasonCode:
     | 'ACTION_ALLOWED'
     | 'APPROVAL_REQUIRED'
@@ -373,15 +416,11 @@ export interface WorkflowReplayResult {
     | 'UNKNOWN_ACTOR'
     | 'ACTOR_NOT_AUTHORIZED'
     | 'INVALID_TRANSITION';
-  authority: string;
-  owner: string;
-  evidenceReferences: string[];
-  missingEvidence: string[];
   evidenceMismatches: WorkflowEvidenceMismatch[];
   evidenceMatcherMismatches: WorkflowEvidenceMatcherMismatch[];
-  recovery: WorkflowAction['recovery'];
-  receipt: WorkflowReplayReceipt;
 }
+
+export type WorkflowReplayResult = WorkflowReplayResultV0_1 | WorkflowReplayResultV0_2;
 
 export type WorkflowAdapterDisposition = 'pass' | 'wait' | 'stop';
 
@@ -469,12 +508,26 @@ export interface OpenAIResponsesRequestPlan extends WorkflowAdapterPlan {
   request?: OpenAIResponsesRequest;
 }
 
-export interface WorkflowReplayReport extends CompiledArtifactHeader {
-  schemaVersion: 'workflow_replay_report.v0.1';
-  cases: WorkflowReplayResult[];
+export type WorkflowReplayReportSchemaVersion =
+  | 'workflow_replay_report.v0.1'
+  | 'workflow_replay_report.v0.2';
+
+interface WorkflowReplayReportBase extends CompiledArtifactHeader {
   counts: Record<ReplayOutcome, number>;
   allExpectationsMatched: boolean;
 }
+
+export interface WorkflowReplayReportV0_1 extends WorkflowReplayReportBase {
+  schemaVersion: 'workflow_replay_report.v0.1';
+  cases: WorkflowReplayResultV0_1[];
+}
+
+export interface WorkflowReplayReportV0_2 extends WorkflowReplayReportBase {
+  schemaVersion: 'workflow_replay_report.v0.2';
+  cases: WorkflowReplayResultV0_2[];
+}
+
+export type WorkflowReplayReport = WorkflowReplayReportV0_1 | WorkflowReplayReportV0_2;
 
 export interface EvidenceLedgerArtifact extends CompiledArtifactHeader {
   schemaVersion: 'evidence_ledger.v0.1';

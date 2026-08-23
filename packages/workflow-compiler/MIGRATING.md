@@ -51,6 +51,12 @@ Compiled bundles and their decision inventories are derived artifacts, not
 in-place migration targets. Migrate the source definition and recompile so the
 new hashes and v0.2 artifact schemas describe one coherent contract.
 
+Replay reports are also derived artifacts. A v0.1 bundle's
+`workflow_replay_report.v0.1` stays readable in its historical shape. To
+receive v0.2's exact-value and matcher mismatch details, migrate the source,
+recompile it, and replay the retained cases; do not relabel or append fields to
+an existing report.
+
 ## Artifact output upgrades
 
 The compiler writes immutable revisions behind a managed pointer and retains

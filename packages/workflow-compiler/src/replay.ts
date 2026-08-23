@@ -9,7 +9,9 @@ import type {
   WorkflowEvidenceMatcher,
   WorkflowReplayCase,
   WorkflowReplayReport,
-  WorkflowReplayResult
+  WorkflowReplayResult,
+  WorkflowReplayResultV0_1,
+  WorkflowReplayResultV0_2
 } from './types.js';
 
 export interface WorkflowReplayArtifacts {
@@ -88,15 +90,25 @@ export function replayWorkflow(
     workflowVersion: bundle.workflowVersion,
     definitionHash: bundle.definitionHash
   };
+  const report =
+    bundle.schemaVersion === 'compiled_workflow_bundle.v0.2'
+      ? {
+          schemaVersion: 'workflow_replay_report.v0.2' as const,
+          ...header,
+          cases: cases as WorkflowReplayResultV0_2[],
+          counts,
+          allExpectationsMatched: cases.every((entry) => entry.expectationMatched)
+        }
+      : {
+          schemaVersion: 'workflow_replay_report.v0.1' as const,
+          ...header,
+          cases: cases as WorkflowReplayResultV0_1[],
+          counts,
+          allExpectationsMatched: cases.every((entry) => entry.expectationMatched)
+        };
 
   return {
-    report: {
-      schemaVersion: 'workflow_replay_report.v0.1',
-      ...header,
-      cases,
-      counts,
-      allExpectationsMatched: cases.every((entry) => entry.expectationMatched)
-    },
+    report,
     evidenceLedger: {
       schemaVersion: 'evidence_ledger.v0.1',
       ...header,
@@ -201,7 +213,7 @@ function replayCaseAgainstBundle(
   const owner = decision?.approvalOwner ?? decision?.recovery.owner ?? bundle.owners.workflow;
 
   let observedOutcome: ReplayOutcome;
-  let reasonCode: WorkflowReplayResult['reasonCode'];
+  let reasonCode: WorkflowReplayResultV0_2['reasonCode'];
   let stateAfter = replayCase.initialState;
   let canExecute = false;
 
@@ -258,7 +270,7 @@ function replayCaseAgainstBundle(
     receiptFields: receiptFields(bundle, replayCase, observedOutcome, decision)
   };
 
-  return {
+  const common = {
     caseId: replayCase.caseId,
     title: replayCase.title,
     actionId: replayCase.actionId,
@@ -275,9 +287,29 @@ function replayCaseAgainstBundle(
     owner,
     evidenceReferences,
     missingEvidence,
-    evidenceMismatches,
-    evidenceMatcherMismatches,
     recovery,
     receipt
+  };
+  if (bundle.schemaVersion === 'compiled_workflow_bundle.v0.1') {
+    if (
+      reasonCode === 'EVIDENCE_VALUE_MISMATCH' ||
+      reasonCode === 'EVIDENCE_MATCHER_MISMATCH'
+    ) {
+      throw new ReplayInputValidationError([
+        {
+          code: 'INVALID_VALUE',
+          path: '$.schemaVersion',
+          message:
+            'Compiled workflow bundle v0.1 cannot contain evidence constraints; recompile a workflow_definition.v0.2 bundle.'
+        }
+      ]);
+    }
+    return { ...common, reasonCode } as WorkflowReplayResultV0_1;
+  }
+  return {
+    ...common,
+    reasonCode,
+    evidenceMismatches,
+    evidenceMatcherMismatches
   };
 }
