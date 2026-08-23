@@ -62,6 +62,11 @@ artifact schemas.
 - Version approval surfaces as v0.2 for constrained workflows, retaining
   exact-value and matcher constraints on controlled actions instead of reducing
   them to evidence field names.
+- Version tool contracts as v0.2 for constrained workflows, retaining the
+  exact-value and matcher evidence accepted by each governed tool action.
+- Reject a deserialized bundle before replay when its nested inventory,
+  interaction, tool-contract, or approval-surface schema does not match the
+  outer compiled-bundle version.
 
 ## 0.2.0
 

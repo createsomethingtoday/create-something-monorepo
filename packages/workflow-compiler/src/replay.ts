@@ -57,6 +57,7 @@ export function replayWorkflow(
   bundle: CompiledWorkflowBundle,
   input: unknown
 ): WorkflowReplayArtifacts {
+  rejectMismatchedNestedArtifactSchemas(bundle);
   rejectLegacyEvidenceConstraints(bundle);
   const manifest = parseWorkflowReplayManifest(input);
   if (manifest.workflowId !== bundle.workflowId) {
@@ -116,6 +117,44 @@ export function replayWorkflow(
       entries: cases.map((entry) => entry.receipt)
     }
   };
+}
+
+function rejectMismatchedNestedArtifactSchemas(bundle: CompiledWorkflowBundle): void {
+  const expectedSchemaVersions =
+    bundle.schemaVersion === 'compiled_workflow_bundle.v0.2'
+      ? {
+          decisionInventory: 'decision_inventory.v0.2',
+          governedInteraction: 'governed_interaction_bundle.v0.2',
+          approvalSurfaces: 'approval_surfaces.v0.2',
+          toolContracts: 'tool_contracts.v0.2'
+        }
+      : {
+          decisionInventory: 'decision_inventory.v0.1',
+          governedInteraction: 'governed_interaction_bundle.v0.1',
+          approvalSurfaces: 'approval_surfaces.v0.1',
+          toolContracts: 'tool_contracts.v0.1'
+        };
+  const artifacts = [
+    ['decisionInventory', bundle.decisionInventory],
+    ['governedInteraction', bundle.governedInteraction],
+    ['approvalSurfaces', bundle.approvalSurfaces],
+    ['toolContracts', bundle.toolContracts]
+  ] as const;
+  const diagnostics = artifacts.flatMap(([artifactName, artifact]) => {
+    const expectedSchemaVersion = expectedSchemaVersions[artifactName];
+    const actualSchemaVersion = artifact?.schemaVersion;
+    if (actualSchemaVersion === expectedSchemaVersion) return [];
+    return [
+      {
+        code: 'INVALID_VALUE' as const,
+        path: `$.${artifactName}.schemaVersion`,
+        message:
+          `Compiled workflow bundle ${bundle.schemaVersion} requires ${expectedSchemaVersion}; ` +
+          `received ${actualSchemaVersion ?? 'missing'}.`
+      }
+    ];
+  });
+  if (diagnostics.length > 0) throw new ReplayInputValidationError(diagnostics);
 }
 
 function rejectLegacyEvidenceConstraints(bundle: CompiledWorkflowBundle): void {

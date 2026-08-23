@@ -130,6 +130,18 @@ test('the public CLI preserves v0.2 evidence constraints in approval-surface art
     assert.deepEqual(approvalSurface.requiredEvidenceMatchers, {
       review_feedback: { kind: 'contains_case_insensitive', values: ['changes'] },
     });
+
+    const toolContracts = JSON.parse(await readFile(join(outDir, 'tool-contracts.json'), 'utf8'));
+    assert.equal(toolContracts.schemaVersion, 'tool_contracts.v0.2');
+    const toolContract = toolContracts.tools.find(
+      (tool) => tool.actionId === 'request_changes',
+    );
+    assert.deepEqual(toolContract.requiredEvidenceValues, {
+      version_id: 'version-fixture-001',
+    });
+    assert.deepEqual(toolContract.requiredEvidenceMatchers, {
+      review_feedback: { kind: 'contains_case_insensitive', values: ['changes'] },
+    });
   } finally {
     await rm(root, { recursive: true, force: true });
   }

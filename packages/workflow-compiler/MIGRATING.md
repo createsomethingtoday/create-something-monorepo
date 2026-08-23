@@ -27,9 +27,9 @@ strings into live authority.
 Version `v0.2` introduces explicit evidence constraints. A v0.1 workflow
 cannot carry `requiredEvidenceValues` or `requiredEvidenceMatchers`; a v0.2
 workflow compiles to `compiled_workflow_bundle.v0.2`,
-`decision_inventory.v0.2`, `governed_interaction_bundle.v0.2`, and
-`approval_surfaces.v0.2`. The v0.2 approval surface retains constraints for
-each controlled action.
+`decision_inventory.v0.2`, `governed_interaction_bundle.v0.2`,
+`tool_contracts.v0.2`, and `approval_surfaces.v0.2`. The v0.2 tool and approval
+contracts retain constraints for their governed actions.
 Use the public helpers to create a detached v0.2 copy rather than editing a
 source artifact in place:
 
@@ -59,10 +59,10 @@ recompile it, and replay the retained cases; do not relabel or append fields to
 an existing report.
 
 The package types enforce matching compiled-bundle, decision-inventory,
-governed-interaction, and approval-surface versions. Do not hand-edit an outer
-schema version or mix derived artifacts across revisions: migrate the source,
-then recompile and replay so all correlated contracts carry the same version
-and definition hash.
+governed-interaction, tool-contract, and approval-surface versions. Do not
+hand-edit an outer schema version or mix derived artifacts across revisions:
+migrate the source, then recompile and replay so all correlated contracts carry
+the same version and definition hash.
 
 When moving a delivery host to v0.2, update its
 `GovernedInteractionHostContract.schemaVersions` allowlist only after that

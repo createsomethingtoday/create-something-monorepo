@@ -153,6 +153,50 @@ test('replay rejects evidence constraints in a malformed v0.1 bundle before case
   );
 });
 
+test('replay rejects cross-version nested artifacts before evaluating a v0.2 bundle', async () => {
+  const definition = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const manifest = JSON.parse(await readFile(casesUrl, 'utf8'));
+  definition.schemaVersion = 'workflow_definition.v0.2';
+  const validationAction = definition.actions.find(
+    (action) => action.id === 'validate_submission',
+  );
+  assert.ok(validationAction);
+  validationAction.requiredEvidenceValues = { validation_result: 'pass' };
+
+  const bundle = structuredClone(compileWorkflowDefinition(definition));
+  bundle.decisionInventory.schemaVersion = 'decision_inventory.v0.1';
+  bundle.governedInteraction.schemaVersion = 'governed_interaction_bundle.v0.1';
+  bundle.approvalSurfaces.schemaVersion = 'approval_surfaces.v0.1';
+  bundle.toolContracts.schemaVersion = 'tool_contracts.v0.1';
+  const mismatchedCase = manifest.cases.find(
+    (replayCase) => replayCase.caseId === 'complete-validation-passes',
+  );
+  assert.ok(mismatchedCase);
+  mismatchedCase.evidence.validation_result = 'failed';
+
+  assert.throws(
+    () =>
+      replayWorkflow(bundle, {
+        schemaVersion: manifest.schemaVersion,
+        workflowId: manifest.workflowId,
+        cases: [mismatchedCase],
+      }),
+    (error) => {
+      assert.equal(error.name, 'ReplayInputValidationError');
+      assert.deepEqual(
+        error.diagnostics.map(({ code, path }) => ({ code, path })),
+        [
+          { code: 'INVALID_VALUE', path: '$.decisionInventory.schemaVersion' },
+          { code: 'INVALID_VALUE', path: '$.governedInteraction.schemaVersion' },
+          { code: 'INVALID_VALUE', path: '$.approvalSurfaces.schemaVersion' },
+          { code: 'INVALID_VALUE', path: '$.toolContracts.schemaVersion' },
+        ],
+      );
+      return true;
+    },
+  );
+});
+
 test('serializes missing constrained evidence as an explicit null mismatch actual', async () => {
   const definition = JSON.parse(await readFile(workflowUrl, 'utf8'));
   const manifest = JSON.parse(await readFile(casesUrl, 'utf8'));

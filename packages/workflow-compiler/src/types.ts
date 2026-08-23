@@ -246,7 +246,7 @@ export type DecisionInventoryArtifact =
   | DecisionInventoryArtifactV0_1
   | DecisionInventoryArtifactV0_2;
 
-export interface CompiledToolContract {
+interface CompiledToolContractBase {
   actionId: string;
   name: string;
   targetSystemId: string;
@@ -257,10 +257,31 @@ export interface CompiledToolContract {
   parameters?: WorkflowToolParameter[];
 }
 
-export interface ToolContractsArtifact extends CompiledArtifactHeader {
-  schemaVersion: 'tool_contracts.v0.1';
-  tools: CompiledToolContract[];
+export interface CompiledToolContractV0_1 extends CompiledToolContractBase {
+  requiredEvidenceValues?: never;
+  requiredEvidenceMatchers?: never;
 }
+
+export interface CompiledToolContractV0_2 extends CompiledToolContractBase {
+  requiredEvidenceValues?: Record<string, WorkflowEvidenceValue>;
+  requiredEvidenceMatchers?: Record<string, WorkflowEvidenceMatcher>;
+}
+
+export type CompiledToolContract = CompiledToolContractV0_1 | CompiledToolContractV0_2;
+
+interface ToolContractsArtifactBase extends CompiledArtifactHeader {}
+
+export interface ToolContractsArtifactV0_1 extends ToolContractsArtifactBase {
+  schemaVersion: 'tool_contracts.v0.1';
+  tools: CompiledToolContractV0_1[];
+}
+
+export interface ToolContractsArtifactV0_2 extends ToolContractsArtifactBase {
+  schemaVersion: 'tool_contracts.v0.2';
+  tools: CompiledToolContractV0_2[];
+}
+
+export type ToolContractsArtifact = ToolContractsArtifactV0_1 | ToolContractsArtifactV0_2;
 
 export interface CompiledAgentContract extends WorkflowAgent {
   actionAutonomy: Array<{
@@ -369,13 +390,13 @@ interface CompiledWorkflowBundleBase {
   runtimeTargets: RuntimeTargetsArtifact;
   objectSchemas: ObjectSchemasArtifact;
   eventSchemas: EventSchemasArtifact;
-  toolContracts: ToolContractsArtifact;
   agentContracts: AgentContractsArtifact;
   evaluationManifest: EvaluationManifestArtifact;
 }
 
 export interface CompiledWorkflowBundleV0_1 extends CompiledWorkflowBundleBase {
   schemaVersion: 'compiled_workflow_bundle.v0.1';
+  toolContracts: ToolContractsArtifactV0_1;
   decisionInventory: DecisionInventoryArtifactV0_1;
   governedInteraction: GovernedInteractionBundleV0_1;
   approvalSurfaces: ApprovalSurfacesArtifactV0_1;
@@ -383,6 +404,7 @@ export interface CompiledWorkflowBundleV0_1 extends CompiledWorkflowBundleBase {
 
 export interface CompiledWorkflowBundleV0_2 extends CompiledWorkflowBundleBase {
   schemaVersion: 'compiled_workflow_bundle.v0.2';
+  toolContracts: ToolContractsArtifactV0_2;
   decisionInventory: DecisionInventoryArtifactV0_2;
   governedInteraction: GovernedInteractionBundleV0_2;
   approvalSurfaces: ApprovalSurfacesArtifactV0_2;

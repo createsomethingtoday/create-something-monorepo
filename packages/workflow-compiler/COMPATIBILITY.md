@@ -56,11 +56,14 @@ generator rejects a mixed pair instead of reusing either envelope version.
 `requiredEvidenceValues` and `requiredEvidenceMatchers`. Those fields require
 `workflow_definition.v0.2`; its compiler emits
 `compiled_workflow_bundle.v0.2`, `decision_inventory.v0.2`, and
-`governed_interaction_bundle.v0.2`, plus `approval_surfaces.v0.2`. Its
-controlled actions preserve the exact-value and matcher constraints in the
-read-only approval contract, while the replay and interaction artifacts retain
-the same constraints. The corresponding v0.1 contracts reject the fields
-instead of silently dropping them.
+`governed_interaction_bundle.v0.2`, `tool_contracts.v0.2`, and
+`approval_surfaces.v0.2`. Tool contracts and controlled actions preserve the
+exact-value and matcher constraints in their read-only contracts, while replay
+and interaction artifacts retain the same constraints. Before it evaluates a
+case, replay rejects a deserialized bundle whose nested inventory, interaction,
+tool-contract, or approval-surface schema does not match the outer version.
+The corresponding v0.1 contracts reject the fields instead of silently
+dropping them.
 
 When a v0.2 action supplies an exact evidence value and matcher for the same
 field, that value must satisfy the matcher. Compilation rejects a contradictory

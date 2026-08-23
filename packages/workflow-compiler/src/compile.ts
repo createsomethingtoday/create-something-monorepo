@@ -15,7 +15,8 @@ import type {
   GovernedInteractionBundleV0_2,
   ObjectSchemasArtifact,
   RuntimeTargetsArtifact,
-  ToolContractsArtifact,
+  ToolContractsArtifactV0_1,
+  ToolContractsArtifactV0_2,
   WorkflowDefinition,
   WorkflowCompilationDiagnostic,
   WorkflowEvidenceMatcher,
@@ -431,23 +432,24 @@ export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundl
       .map((event) => ({ ...event, requiredEvidence: sorted(event.requiredEvidence) }))
       .sort(byId)
   };
-  const toolContracts: ToolContractsArtifact = {
+  const toolContract = (action: WorkflowDefinition['actions'][number]) => ({
+    actionId: action.id,
+    name: action.tool!.name,
+    targetSystemId: action.tool!.targetSystemId,
+    authority: action.authority,
+    autonomy: action.autonomy,
+    requiredEvidence: sorted(action.requiredEvidence),
+    receiptFields: sorted(action.receipt.requiredFields),
+    ...(action.tool!.parameters
+      ? { parameters: [...action.tool!.parameters].sort(byName) }
+      : {})
+  });
+  const toolContracts: ToolContractsArtifactV0_1 = {
     schemaVersion: 'tool_contracts.v0.1',
     ...header,
     tools: definition.actions
       .filter((action) => action.tool)
-      .map((action) => ({
-        actionId: action.id,
-        name: action.tool!.name,
-        targetSystemId: action.tool!.targetSystemId,
-        authority: action.authority,
-        autonomy: action.autonomy,
-        requiredEvidence: sorted(action.requiredEvidence),
-        receiptFields: sorted(action.receipt.requiredFields),
-        ...(action.tool!.parameters
-          ? { parameters: [...action.tool!.parameters].sort(byName) }
-          : {})
-      }))
+      .map(toolContract)
       .sort(byActionId)
   };
   const actionsById = new Map(definition.actions.map((action) => [action.id, action]));
@@ -517,6 +519,22 @@ export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundl
   };
 
   if (definition.schemaVersion === 'workflow_definition.v0.2') {
+    const toolContracts: ToolContractsArtifactV0_2 = {
+      schemaVersion: 'tool_contracts.v0.2',
+      ...header,
+      tools: definition.actions
+        .filter((action) => action.tool)
+        .map((action) => ({
+          ...toolContract(action),
+          ...(action.requiredEvidenceValues
+            ? { requiredEvidenceValues: sortedEvidenceValues(action.requiredEvidenceValues) }
+            : {}),
+          ...(action.requiredEvidenceMatchers
+            ? { requiredEvidenceMatchers: sortedEvidenceMatchers(action.requiredEvidenceMatchers) }
+            : {})
+        }))
+        .sort(byActionId)
+    };
     const approvalSurfaces: ApprovalSurfacesArtifactV0_2 = {
       schemaVersion: 'approval_surfaces.v0.2',
       ...header,
@@ -582,6 +600,7 @@ export function compileWorkflowDefinition(input: unknown): CompiledWorkflowBundl
     return {
       schemaVersion: 'compiled_workflow_bundle.v0.2',
       ...common,
+      toolContracts,
       approvalSurfaces,
       decisionInventory,
       governedInteraction
