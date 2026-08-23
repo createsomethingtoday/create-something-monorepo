@@ -46,8 +46,8 @@ export function validateReleaseManifest(manifest) {
   ) {
     issues.push('repository must target the workflow-compiler directory in the public monorepo.');
   }
-  if (manifest.engines?.node !== '^22.0.0 || ^24.0.0') {
-    issues.push('engines.node must equal ^22.0.0 || ^24.0.0.');
+  if (manifest.engines?.node !== '>=20') {
+    issues.push('engines.node must equal >=20.');
   }
   if (manifest.publishConfig?.access !== 'public') {
     issues.push('publishConfig.access must be public.');

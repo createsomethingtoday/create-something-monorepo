@@ -4,9 +4,11 @@
 
 The supported production matrix is Node.js 22 and Node.js 24 on Linux and
 macOS. Both lines are exercised as clean npm consumers in CI. The package is
-ESM-only and declares `^22.0.0 || ^24.0.0`; untested odd-numbered and newer
-Current releases are excluded until they enter the production matrix. Browser
-runtimes and CommonJS `require()` are not supported.
+ESM-only. Its npm install floor remains `node >=20` so the package can coexist
+with the monorepo's current downstream build lane, but Node 20 is end-of-life
+and is not a supported production runtime. Untested odd-numbered and newer
+Current releases are also outside the production matrix. Browser runtimes and
+CommonJS `require()` are not supported.
 
 Supporting a Node line means the package builds, imports, compiles the shipped
 release-promotion fixture, verifies its artifact bundle, and runs the public

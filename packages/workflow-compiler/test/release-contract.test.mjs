@@ -18,7 +18,7 @@ test('the public manifest declares the complete release and support boundary', a
 
   assert.deepEqual(validateReleaseManifest(manifest), []);
   assert.equal(manifest.version, '0.1.0-beta.0');
-  assert.deepEqual(manifest.engines, { node: '^22.0.0 || ^24.0.0' });
+  assert.deepEqual(manifest.engines, { node: '>=20' });
   assert.equal(manifest.publishConfig.access, 'public');
   assert.equal(manifest.publishConfig.provenance, true);
   assert.deepEqual(manifest.dependencies, undefined);
@@ -33,7 +33,7 @@ test('release manifest validation fails closed on metadata and runtime dependenc
 
   assert.deepEqual(validateReleaseManifest(manifest), [
     'repository must target the workflow-compiler directory in the public monorepo.',
-    'engines.node must equal ^22.0.0 || ^24.0.0.',
+    'engines.node must equal >=20.',
     'publishConfig.provenance must be true.',
     'The public package must have zero runtime dependencies.'
   ]);
