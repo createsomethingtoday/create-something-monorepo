@@ -70,7 +70,7 @@ export function parseArgs(argv) {
   while (args.length > 0) {
     const arg = args.shift();
     if (arg === '--') continue;
-    if (!arg?.startsWith('--')) throw new Error(`Unexpected argument: ${arg}`);
+    if (!arg?.startsWith('--')) throw new Error('unexpected positional argument');
     if (arg === '--json' || arg === '--verify') {
       options[arg.slice(2)] = true;
       continue;

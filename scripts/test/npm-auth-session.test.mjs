@@ -445,6 +445,18 @@ test('npm auth refuses registry URLs that embed credentials without echoing them
   assert.match(report.error, /credential/i);
 });
 
+test('npm auth rejects an unexpected positional argument without echoing it', () => {
+  const secret = 'npm_positional_secret_must_not_appear';
+  const result = run(['save', '--json', secret]);
+
+  assert.equal(result.status, 1, result.stderr || result.stdout);
+  assert.doesNotMatch(result.stdout, new RegExp(secret));
+  assert.doesNotMatch(result.stderr, new RegExp(secret));
+  const report = JSON.parse(result.stdout);
+  assert.equal(report.ok, false);
+  assert.match(report.error, /unexpected positional/i);
+});
+
 test('npm auth save atomically replaces a permissive user config with restricted permissions', () => {
   const fixture = mkdtempSync(path.join(tmpdir(), 'npm-auth-session-save-'));
   const userconfig = path.join(fixture, '.npmrc');
