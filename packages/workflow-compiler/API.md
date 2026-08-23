@@ -133,9 +133,9 @@ action. The function is pure and performs no transport call. Its disposition is
 
 Invocation requires the frozen bundle instance returned by
 `compileWorkflowDefinition`. A deserialized or copied bundle remains suitable
-for read-only replay and inspection, but adapter planning stops with
-`UNVERIFIED_COMPILED_BUNDLE` in `workflow_adapter_plan.v0.3`; recompile trusted source in the current process
-before producing a tool plan.
+only for governed-interaction inspection; replay rejects it and adapter planning
+stops with `UNVERIFIED_COMPILED_BUNDLE` in `workflow_adapter_plan.v0.3`.
+Recompile trusted source in the current process before producing a tool plan.
 
 ### `createOpenAIResponsesRequestPlan(bundle, replayCase, options)`
 
