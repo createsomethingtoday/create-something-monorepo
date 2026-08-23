@@ -48,6 +48,18 @@ class WorkflowCliUsageError extends Error {
   }
 }
 
+class WorkflowCliSimulationError extends Error {
+  readonly code = 'SIMULATION_EXPECTATIONS_UNMET';
+
+  constructor(
+    readonly bundle: CompiledWorkflowBundle,
+    readonly replay: ReturnType<typeof replayWorkflow>
+  ) {
+    super('One or more replay cases did not match their declared expectation.');
+    this.name = 'WorkflowCliSimulationError';
+  }
+}
+
 interface CompileOptions {
   workflowPath: string;
   casesPath?: string;
@@ -224,11 +236,14 @@ async function main(): Promise<void> {
           template: starter.template,
           dir: starter.dir,
           files: starter.files,
-          next: [
-            'workflow-compiler validate --workflow workflow.json',
-            'workflow-compiler simulate --workflow workflow.json --cases cases.json',
-            'workflow-compiler explain --workflow workflow.json --cases cases.json'
-          ]
+          next: {
+            workingDirectory: starter.dir,
+            commands: [
+              'workflow-compiler validate --workflow workflow.json',
+              'workflow-compiler simulate --workflow workflow.json --cases cases.json',
+              'workflow-compiler explain --workflow workflow.json --cases cases.json'
+            ]
+          }
         },
         null,
         2
@@ -259,6 +274,9 @@ async function main(): Promise<void> {
   if (args[0] === 'simulate') {
     const { bundle, replay } = await compileFromInput(workflowInputOptions(args, 'simulate', true));
     if (!replay) throw new WorkflowCliUsageError();
+    if (!replay.report.allExpectationsMatched) {
+      throw new WorkflowCliSimulationError(bundle, replay);
+    }
     process.stdout.write(
       JSON.stringify(
         {
@@ -353,6 +371,25 @@ main().catch((error: unknown) => {
       ) + '\n'
     );
     process.exitCode = 2;
+  } else if (error instanceof WorkflowCliSimulationError) {
+    process.stderr.write(
+      `${JSON.stringify(
+        {
+          ok: false,
+          error: error.name,
+          code: error.code,
+          message: error.message,
+          workflowId: error.bundle.workflowId,
+          definitionHash: error.bundle.definitionHash,
+          outcomes: error.replay.report.counts,
+          allExpectationsMatched: error.replay.report.allExpectationsMatched,
+          externalMutations: false
+        },
+        null,
+        2
+      )}\n`
+    );
+    process.exitCode = 3;
   } else if (error instanceof WorkflowArtifactOutputError) {
     process.stderr.write(
       `${JSON.stringify(

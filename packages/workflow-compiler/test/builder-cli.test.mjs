@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
@@ -27,11 +27,14 @@ test('the public CLI scaffolds and proves a local-only paired-agent runbook with
       template: 'local-runbook',
       dir: starterDir,
       files: ['PLAYBOOK.md', 'README.md', 'RUNBOOK.md', 'cases.json', 'workflow.json'],
-      next: [
-        'workflow-compiler validate --workflow workflow.json',
-        'workflow-compiler simulate --workflow workflow.json --cases cases.json',
-        'workflow-compiler explain --workflow workflow.json --cases cases.json'
-      ]
+      next: {
+        workingDirectory: starterDir,
+        commands: [
+          'workflow-compiler validate --workflow workflow.json',
+          'workflow-compiler simulate --workflow workflow.json --cases cases.json',
+          'workflow-compiler explain --workflow workflow.json --cases cases.json'
+        ]
+      }
     });
     assert.deepEqual((await readdir(starterDir)).sort(), [
       'PLAYBOOK.md',
@@ -102,6 +105,55 @@ test('the public CLI scaffolds and proves a local-only paired-agent runbook with
     const refused = run('init', '--template', 'local-runbook', '--dir', starterDir);
     assert.equal(refused.status, 2, refused.stderr || refused.stdout);
     assert.match(refused.stderr, /already exists/i);
+  } finally {
+    await rm(scratch, { recursive: true, force: true });
+  }
+});
+
+test('the public simulate command fails closed when a replay expectation is unmet', async () => {
+  const scratch = await mkdtemp(join(tmpdir(), 'workflow-compiler-simulation-mismatch-'));
+  const starterDir = join(scratch, 'daily-brief');
+
+  try {
+    const initialized = run('init', '--template', 'local-runbook', '--dir', starterDir);
+    assert.equal(initialized.status, 0, initialized.stderr || initialized.stdout);
+
+    const casesPath = join(starterDir, 'cases.json');
+    const mismatchedCases = JSON.parse(await readFile(casesPath, 'utf8'));
+    mismatchedCases.cases[0].expectedState = 'ready';
+    await writeFile(casesPath, JSON.stringify(mismatchedCases, null, 2) + '\n', 'utf8');
+
+    const simulated = run(
+      'simulate',
+      '--workflow',
+      join(starterDir, 'workflow.json'),
+      '--cases',
+      casesPath
+    );
+    assert.equal(simulated.status, 3, simulated.stderr || simulated.stdout);
+    assert.equal(simulated.stdout, '');
+    const failure = JSON.parse(simulated.stderr);
+    assert.deepEqual(
+      {
+        ok: failure.ok,
+        error: failure.error,
+        code: failure.code,
+        workflowId: failure.workflowId,
+        outcomes: failure.outcomes,
+        allExpectationsMatched: failure.allExpectationsMatched,
+        externalMutations: failure.externalMutations
+      },
+      {
+        ok: false,
+        error: 'WorkflowCliSimulationError',
+        code: 'SIMULATION_EXPECTATIONS_UNMET',
+        workflowId: 'operations.local.runbook',
+        outcomes: { pass: 1, approval_required: 1, blocked: 1 },
+        allExpectationsMatched: false,
+        externalMutations: false
+      }
+    );
+    assert.match(failure.definitionHash, /^sha256:[a-f0-9]{64}$/);
   } finally {
     await rm(scratch, { recursive: true, force: true });
   }
