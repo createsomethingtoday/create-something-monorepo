@@ -42,6 +42,8 @@ Matching rules — the flag follows the CREATOR, never a name lookalike:
 - Containment match: accept only when the shorter side is ≥6 normalized characters AND the relationship is clearly the same company (e.g. "Lokalise Inc." vs "Lokalise", "OÜ Crowdin" vs "Crowdin", "Cloudinary Ltd" vs "Cloudinary").
 - Known traps — NEVER flag these patterns: creators merely containing "make" (Content Maker Studio, Datamaker, Makeshift Digital Oy, PixelMakers are NOT the partner Make); Flowstar's apps named after partners ("Flowstar: PayPal Button", "Flowstar: Form Connectors", "Flowstar: FAQ & HelpDesk" — Flowstar is not a partner); third-party "Google …" apps by MakkPress, ZealousWeb, Ishan Makkar, Revukit and similar (only Webflow-created or Google-created Google apps qualify); "Social Intents Live Chat" by creator Social Intents — human-ruled NOT a partnership app (Shea Sisco, 2026-08-19) despite the LiveChat name overlap; do not flag it and do not re-report it as ambiguous.
 - Resolved ambiguity (Shea Sisco, 2026-08-19): creator "Knock AI" IS partner Knock's app — treat Knock AI vs Knock as a valid creator match, not ambiguous.
+- Contracted builds are NOT a trap: partners sometimes hire an agency to build their Webflow app, so the creator name will not resemble the partner at all. When an ASSET name exactly or near-exactly matches a partner account or pipeline org but the creator looks unrelated, do NOT resolve it as "not a match" on the creator rule alone. Unless it fits one of the documented trap patterns above, it goes in the ambiguous list. (The 8/22 and 8/23 runs silently excluded "Algolia Search and Sync" by creator, and that exclusion was wrong: see the next bullet. Reporting it costs one Slack line, missing it costs a wrong review.)
+- Resolved ambiguity (Greg Kelly, 2026-08-24): creator "Candid Leap" with asset "Algolia Search and Sync" (recLzXQhmMk15XBNc) IS the Algolia partnership app — Algolia and Webflow jointly hired Candid Leap to build the integration. Flag it, and treat any further Candid Leap asset named for Algolia the same way. Do not re-report it as ambiguous. (Stated in #marketplace-app-reviews p1787332049933699 on 8/21, restated to this sync in #app-review-exceptions p1787592611081209.)
 - Anything you cannot confidently resolve goes in the ambiguous list, unflagged.
 
 ## Step 4 — Write flags
@@ -54,6 +56,10 @@ Matching rules — the flag follows the CREATOR, never a name lookalike:
 
 Post ONE message via mcp__claude_ai_Slack__slack_send_message ONLY IF you flagged something, hit the safety valve, or found ambiguous candidates. If nothing changed, post NOTHING and end silently — a quiet channel is the success state.
 Message style: plain, factual, no em dashes, no bold-header listicles. Lead with the count, then per app: name, creator, and which rule matched (partner account vs pipeline org). List ambiguous candidates separately with one line on why. Sign-off not needed.
+
+Before reporting an ambiguous candidate, check whether the partnerships team already answered it. Load mcp__claude_ai_Slack__slack_search_public_and_private by exact-name select and search the asset name and creator in #marketplace-app-reviews (C04DDRJ5VGT) — the new-submission bot opens a thread per submission and Greg Kelly or Shea Sisco often states partner status right there. Cite what you find on the ambiguous line (permalink plus who said it) so the human can confirm in one reply. Never flag on a Slack mention alone: Slack is evidence for the reviewer, not authority to write. If the select fails, report the candidate without the citation rather than skipping it.
+
+Greg Kelly (U043K6QGJS3) owns tech-partnership context and is the resolver for these; Shea Sisco (U07FYSQ59FB) rules on review treatment. When either of them settles a candidate, encode the ruling in this file (Step 3) so the next run stops asking.
 
 ## Failure handling
 

@@ -6,7 +6,8 @@ Runs headless via `claude -p` (sonnet) with the claude.ai connectors (Zapier, Ai
 
 ## Files
 
-- `prompt.md` — the full runbook the headless run follows (matching rules, traps, safety valve, Slack rules). Keep rulings (e.g. Shea's Knock AI / Social Intents calls) in sync with the cloud routine's prompt if that one is ever revived.
+- `prompt.md` — the full runbook the headless run follows (matching rules, traps, safety valve, Slack rules). Keep rulings (Shea's Knock AI / Social Intents calls, Greg's Candid Leap / Algolia call) in sync with the cloud routine's prompt if that one is ever revived.
+  - Human rulings live in Step 3 and are the only way the sync learns. When Greg Kelly or Shea Sisco settles an ambiguous candidate in Slack, add it there or the run keeps asking (or worse, keeps excluding it).
 - `run.sh` — launchd entrypoint; logs to `runs/sync-YYYY-MM-DD.log`, greps on a final `RECEIPT:` line.
 - `~/Library/LaunchAgents/com.webflow.partner-flag-sync.plist` — daily 8:05 AM local time, plus `RunAtLoad` for catch-up.
 

@@ -50,6 +50,7 @@ trap 'rmdir "$LOCK" 2>/dev/null' EXIT
       "mcp__claude_ai_Airtable__list_records_for_table" \
       "mcp__claude_ai_Airtable__update_records_for_table" \
       "mcp__claude_ai_Slack__slack_send_message" \
+      "mcp__claude_ai_Slack__slack_search_public_and_private" \
     < "$DIR/prompt.md"
   echo ""
   echo "exit=$?"
