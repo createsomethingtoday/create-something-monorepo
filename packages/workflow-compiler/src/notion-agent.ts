@@ -602,6 +602,27 @@ export function evaluateNotionCustomAgentOperationalReceipts(
       reasonCode: 'OPERATIONAL_RECEIPT_MISMATCH'
     };
   }
+  if (!receipts.agentRef || installationEvaluation === undefined) {
+    return {
+      schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
+      blueprintId: blueprint.blueprintId,
+      disposition: 'wait',
+      reasonCode: 'MATCHED_INSTALLATION_EVALUATION_REQUIRED'
+    };
+  }
+  if (
+    !compilerOwnedMatchedInstallations.has(installationEvaluation) ||
+    compilerOwnedInstallationBlueprints.get(installationEvaluation) !== blueprint ||
+    installationEvaluation.blueprintId !== blueprint.blueprintId ||
+    installationEvaluation.agentRef !== receipts.agentRef
+  ) {
+    return {
+      schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
+      blueprintId: blueprint.blueprintId,
+      disposition: 'stop',
+      reasonCode: 'OPERATIONAL_RECEIPT_INSTALLATION_MISMATCH'
+    };
+  }
   const toolReceipts = new Map(receipts.toolReceipts.map((receipt) => [receipt.actionId, receipt]));
   const mutationReceipts = new Map(
     receipts.mutationReceipts.map((receipt) => [receipt.actionId, receipt])
@@ -712,27 +733,6 @@ export function evaluateNotionCustomAgentOperationalReceipts(
       disposition: 'wait',
       reasonCode: 'OPERATIONAL_RECEIPTS_REQUIRED',
       missingActionIds: readActionsMissingToolReceipt
-    };
-  }
-  if (!receipts.agentRef || installationEvaluation === undefined) {
-    return {
-      schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
-      blueprintId: blueprint.blueprintId,
-      disposition: 'wait',
-      reasonCode: 'MATCHED_INSTALLATION_EVALUATION_REQUIRED'
-    };
-  }
-  if (
-    !compilerOwnedMatchedInstallations.has(installationEvaluation) ||
-    compilerOwnedInstallationBlueprints.get(installationEvaluation) !== blueprint ||
-    installationEvaluation.blueprintId !== blueprint.blueprintId ||
-    installationEvaluation.agentRef !== receipts.agentRef
-  ) {
-    return {
-      schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
-      blueprintId: blueprint.blueprintId,
-      disposition: 'stop',
-      reasonCode: 'OPERATIONAL_RECEIPT_INSTALLATION_MISMATCH'
     };
   }
   return {

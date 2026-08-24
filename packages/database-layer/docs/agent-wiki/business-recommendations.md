@@ -15,7 +15,7 @@ writes remain approval-gated.
 | Artifact | substrate:create-something:business-operating-recommendations:internal |
 | Value state | operationalized_recommendations |
 | Operationalized lanes | 4 |
-| Client delivery packets | 4 |
+| Client delivery packets | 5 |
 | Policy/guide attachments | 23 |
 | Approval required for external writes | true |
 
@@ -23,15 +23,16 @@ writes remain approval-gated.
 
 | Lane | Tier | Status | Metric signal | Next action |
 | --- | --- | --- | --- | --- |
-| Promote Substrate as the CREATE SOMETHING database layer | Database | operationalized | databaseRecords: 25; automationRecords: 248; resourceCount: 536; operationCount: 29 | Use `/api/substrate/management`, `/api/substrate/capabilities`, and `/api/substrate/openapi.json` as the product entrypoints for agent-run CREATE SOMETHING operations. |
-| Review worker runtime slices before production claims | Automation | operationalized | workerSlices: 4; primaryWorkerSliceRecords: 126; runtimeConfigRecords: 103; bindingRefs: 516 | Review worker slices through runtime binding coverage before any Cloudflare mutation or production execution claim. |
-| Turn client overlays into repeatable delivery | Mixed | operationalized | clientOverlays: 4; clientPackages: 6; clientReceipts: 6; clientNextActions: 6 | Use client delivery packets as the repeatable proof path for mapping and operating client businesses with Atlas/Substrate receipts. |
-| Attach policy and guides to operating slices | Judgment | operationalized | operatingSlices: 23; attachedSlices: 23; policyRecords: 62; guideRecords: 57 | Treat missing policy/guide attachment as a review signal before promotion, and keep approval boundaries beside each operating slice. |
+| Promote Substrate as the CREATE SOMETHING database layer | Database | operationalized | databaseRecords: 27; automationRecords: 267; resourceCount: 575; operationCount: 29 | Use `/api/substrate/management`, `/api/substrate/capabilities`, and `/api/substrate/openapi.json` as the product entrypoints for agent-run CREATE SOMETHING operations. |
+| Review worker runtime slices before production claims | Automation | operationalized | workerSlices: 4; primaryWorkerSliceRecords: 138; runtimeConfigRecords: 113; bindingRefs: 575 | Review worker slices through runtime binding coverage before any Cloudflare mutation or production execution claim. |
+| Turn client overlays into repeatable delivery | Mixed | operationalized | clientOverlays: 5; clientPackages: 7; clientReceipts: 7; clientNextActions: 7 | Use client delivery packets as the repeatable proof path for mapping and operating client businesses with Atlas/Substrate receipts. |
+| Attach policy and guides to operating slices | Judgment | operationalized | operatingSlices: 23; attachedSlices: 23; policyRecords: 64; guideRecords: 64 | Treat missing policy/guide attachment as a review signal before promotion, and keep approval boundaries beside each operating slice. |
 
 ## Delivery Packets
 
 | Client | Packages | Receipts | Actions | API path |
 | --- | --- | --- | --- | --- |
+| cato-supply-insights-cms | 1 | 1 | 1 | /api/substrate/client-overlays/cato-supply-insights-cms |
 | cato-supply-insights-review | 1 | 1 | 1 | /api/substrate/client-overlays/cato-supply-insights-review |
 | jandjhomehealth | 1 | 1 | 1 | /api/substrate/client-overlays/jandjhomehealth |
 | outerfields | 3 | 3 | 3 | /api/substrate/client-overlays/outerfields |

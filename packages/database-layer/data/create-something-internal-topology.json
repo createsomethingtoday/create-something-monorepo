@@ -4,14 +4,14 @@
   "atlasCanvasId": "create-something-internal-operating-topology",
   "rootNodeId": "substrate:create-something:root",
   "coverage": {
-    "generatedAt": "2026-07-23T05:11:08.429Z",
+    "generatedAt": "2026-08-24T23:39:39.162Z",
     "rootPath": ".",
-    "packageCount": 199,
-    "appCount": 9,
-    "workerCount": 102,
-    "clientOverlayCount": 7,
-    "policyCount": 62,
-    "guideCount": 57,
+    "packageCount": 219,
+    "appCount": 11,
+    "workerCount": 111,
+    "clientOverlayCount": 8,
+    "policyCount": 64,
+    "guideCount": 64,
     "configCount": 40
   },
   "nodes": [
@@ -89,6 +89,23 @@
       "runtime": "cloudflare, node"
     },
     {
+      "id": "substrate:create-something:app:create-something-client-workspace-desktop-apps-client-workspace-desktop",
+      "atlasNodeId": "atlas_create-something_app_create-something-client-workspace-desktop-apps-client-workspace-desktop",
+      "title": "@create-something/client-workspace-desktop",
+      "path": "apps/client-workspace-desktop",
+      "tier": "Mixed",
+      "surface": "app",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Self-contained macOS delivery for client-owned Codex workspaces",
+      "tags": [
+        "package",
+        "app"
+      ],
+      "packageName": "@create-something/client-workspace-desktop",
+      "runtime": "tauri, node"
+    },
+    {
       "id": "substrate:create-something:app:create-something-create-something-scheduler-apps-create-something-scheduler",
       "atlasNodeId": "atlas_create-something_app_create-something-create-something-scheduler-apps-create-something-scheduler",
       "title": "@create-something/create-something-scheduler",
@@ -163,7 +180,7 @@
       "atlasNodeId": "atlas_create-something_app_create-something-marketplace-template-submission-cloud-apps-marketplace-template-submission-cloud",
       "title": "@create-something/marketplace-template-submission-cloud",
       "path": "apps/marketplace-template-submission-cloud",
-      "tier": "Mixed",
+      "tier": "Automation",
       "surface": "app",
       "owner": "CREATE SOMETHING",
       "status": "mapped",
@@ -174,6 +191,23 @@
       ],
       "packageName": "@create-something/marketplace-template-submission-cloud",
       "runtime": "cloudflare, node"
+    },
+    {
+      "id": "substrate:create-something:app:princess-pet-palace-apps-princess-pet-palace",
+      "atlasNodeId": "atlas_create-something_app_princess-pet-palace-apps-princess-pet-palace",
+      "title": "princess-pet-palace",
+      "path": "apps/princess-pet-palace",
+      "tier": "Mixed",
+      "surface": "app",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Workspace package at apps/princess-pet-palace.",
+      "tags": [
+        "package",
+        "app"
+      ],
+      "packageName": "princess-pet-palace",
+      "runtime": "node"
     },
     {
       "id": "substrate:create-something:app:create-something-webflow-dashboard-cloud-apps-webflow-dashboard-cloud",
@@ -266,6 +300,24 @@
       "runtime": "cloudflare, node"
     },
     {
+      "id": "substrate:create-something:package:create-something-cato-supply-insights-cms-packages-agency-clients-cato-supply-insights-cms",
+      "atlasNodeId": "atlas_create-something_package_create-something-cato-supply-insights-cms-packages-agency-clients-cato-supply-insights-cms",
+      "title": "@create-something/cato-supply-insights-cms",
+      "path": "packages/agency/clients/cato-supply-insights-cms",
+      "tier": "Mixed",
+      "surface": "client",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Workspace package at packages/agency/clients/cato-supply-insights-cms.",
+      "tags": [
+        "package",
+        "client"
+      ],
+      "packageName": "@create-something/cato-supply-insights-cms",
+      "runtime": "cloudflare, node",
+      "clientSlug": "cato-supply-insights-cms"
+    },
+    {
       "id": "substrate:create-something:package:create-something-cato-supply-insights-review-packages-agency-clients-cato-supply-insights-review",
       "atlasNodeId": "atlas_create-something_package_create-something-cato-supply-insights-review-packages-agency-clients-cato-supply-insights-review",
       "title": "@create-something/cato-supply-insights-review",
@@ -288,7 +340,7 @@
       "atlasNodeId": "atlas_create-something_package_create-something-jandjhomehealth-packages-agency-clients-jandjhomehealth",
       "title": "@create-something/jandjhomehealth",
       "path": "packages/agency/clients/jandjhomehealth",
-      "tier": "Mixed",
+      "tier": "Automation",
       "surface": "client",
       "owner": "CREATE SOMETHING",
       "status": "mapped",
@@ -500,6 +552,24 @@
       "runtime": "cloudflare, node"
     },
     {
+      "id": "substrate:create-something:package:create-something-airtable-system-architect-packages-airtable-system-architect",
+      "atlasNodeId": "atlas_create-something_package_create-something-airtable-system-architect-packages-airtable-system-architect",
+      "title": "@create-something/airtable-system-architect",
+      "path": "packages/airtable-system-architect",
+      "tier": "Judgment",
+      "surface": "package",
+      "owner": "CREATE SOMETHING <hello@createsomething.agency>",
+      "status": "mapped",
+      "summary": "Governed Codex plugin for Airtable base, schema, interface, and automation architecture.",
+      "tags": [
+        "package",
+        "package",
+        "judgment"
+      ],
+      "packageName": "@create-something/airtable-system-architect",
+      "runtime": "node"
+    },
+    {
       "id": "substrate:create-something:package:app-governance-dashboard-packages-app-governance-db-dashboard",
       "atlasNodeId": "atlas_create-something_package_app-governance-dashboard-packages-app-governance-db-dashboard",
       "title": "app-governance-dashboard",
@@ -574,6 +644,23 @@
       "runtime": "tauri, node"
     },
     {
+      "id": "substrate:create-something:package:create-something-arc-packages-arc",
+      "atlasNodeId": "atlas_create-something_package_create-something-arc-packages-arc",
+      "title": "@create-something/arc",
+      "path": "packages/arc",
+      "tier": "Judgment",
+      "surface": "package",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "AI-native, map-bound presentation and operating-story components for Arc, Playbook, and Runbook routes.",
+      "tags": [
+        "package",
+        "package"
+      ],
+      "packageName": "@create-something/arc",
+      "runtime": "node"
+    },
+    {
       "id": "substrate:create-something:package:create-something-ascii-renderer-packages-ascii-renderer",
       "atlasNodeId": "atlas_create-something_package_create-something-ascii-renderer-packages-ascii-renderer",
       "title": "@create-something/ascii-renderer",
@@ -595,6 +682,23 @@
         "canvas"
       ],
       "packageName": "@create-something/ascii-renderer",
+      "runtime": "node"
+    },
+    {
+      "id": "substrate:create-something:package:create-something-atlas-composition-packages-atlas-composition",
+      "atlasNodeId": "atlas_create-something_package_create-something-atlas-composition-packages-atlas-composition",
+      "title": "@create-something/atlas-composition",
+      "path": "packages/atlas-composition",
+      "tier": "Mixed",
+      "surface": "package",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Renderer-neutral, versioned composition contracts for Atlas Arcs, Playbooks, and Runbooks.",
+      "tags": [
+        "package",
+        "package"
+      ],
+      "packageName": "@create-something/atlas-composition",
       "runtime": "node"
     },
     {
@@ -1289,6 +1393,79 @@
       ],
       "packageName": "@create-something/eslint-plugin-canon",
       "runtime": "node"
+    },
+    {
+      "id": "substrate:create-something:package:create-something-eslint-plugin-evidence-packages-eslint-plugin-evidence",
+      "atlasNodeId": "atlas_create-something_package_create-something-eslint-plugin-evidence-packages-eslint-plugin-evidence",
+      "title": "@create-something/eslint-plugin-evidence",
+      "path": "packages/eslint-plugin-evidence",
+      "tier": "Judgment",
+      "surface": "package",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "ESLint rules for CREATE SOMETHING code-evidence policy.",
+      "tags": [
+        "package",
+        "package",
+        "eslint",
+        "eslintplugin",
+        "code-quality",
+        "evidence",
+        "typescript"
+      ],
+      "packageName": "@create-something/eslint-plugin-evidence",
+      "runtime": "node"
+    },
+    {
+      "id": "substrate:create-something:package:create-something-exception-decisions-mcp-packages-exception-decisions-mcp",
+      "atlasNodeId": "atlas_create-something_package_create-something-exception-decisions-mcp-packages-exception-decisions-mcp",
+      "title": "@create-something/exception-decisions-mcp",
+      "path": "packages/exception-decisions-mcp",
+      "tier": "Automation",
+      "surface": "mcp",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Decision-scoped MCP for the Webflow app-review exceptions loop — identity-stamped recommendations and decisions over the ⚖️Exceptions table.",
+      "tags": [
+        "package",
+        "mcp"
+      ],
+      "packageName": "@create-something/exception-decisions-mcp",
+      "runtime": "cloudflare, node"
+    },
+    {
+      "id": "substrate:create-something:package:create-something-exception-flow-video-packages-exception-flow-video",
+      "atlasNodeId": "atlas_create-something_package_create-something-exception-flow-video-packages-exception-flow-video",
+      "title": "@create-something/exception-flow-video",
+      "path": "packages/exception-flow-video",
+      "tier": "Database",
+      "surface": "package",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Remotion animation of the app-review exception loop — standalone video for team meetings. Data-driven: edit src/flow.ts, re-render.",
+      "tags": [
+        "package",
+        "package"
+      ],
+      "packageName": "@create-something/exception-flow-video",
+      "runtime": "node"
+    },
+    {
+      "id": "substrate:create-something:package:create-something-github-actions-runner-broker-packages-github-actions-runner-broker",
+      "atlasNodeId": "atlas_create-something_package_create-something-github-actions-runner-broker-packages-github-actions-runner-broker",
+      "title": "@create-something/github-actions-runner-broker",
+      "path": "packages/github-actions-runner-broker",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Workspace package at packages/github-actions-runner-broker.",
+      "tags": [
+        "package",
+        "worker"
+      ],
+      "packageName": "@create-something/github-actions-runner-broker",
+      "runtime": "cloudflare, node"
     },
     {
       "id": "substrate:create-something:package:create-something-gmail-notion-mcp-packages-gmail-notion-mcp",
@@ -2080,7 +2257,7 @@
       "surface": "worker",
       "owner": "CREATE SOMETHING",
       "status": "mapped",
-      "summary": "The Philosophy of Automation Infrastructure — where we articulate why creation > consumption",
+      "summary": "The operating library for AI work — practical playbooks, runbooks, readiness checks, and the Canon behind them",
       "tags": [
         "package",
         "worker",
@@ -2378,6 +2555,59 @@
       "runtime": "node"
     },
     {
+      "id": "substrate:create-something:package:create-something-offer-resolution-packages-offer-resolution",
+      "atlasNodeId": "atlas_create-something_package_create-something-offer-resolution-packages-offer-resolution",
+      "title": "@create-something/offer-resolution",
+      "path": "packages/offer-resolution",
+      "tier": "Automation",
+      "surface": "package",
+      "owner": "CREATE SOMETHING <hello@createsomething.agency>",
+      "status": "mapped",
+      "summary": "Resolve public offer evidence into deterministic, provenance-backed recommendations.",
+      "tags": [
+        "package",
+        "package",
+        "automation"
+      ],
+      "packageName": "@create-something/offer-resolution",
+      "runtime": "node"
+    },
+    {
+      "id": "substrate:create-something:package:create-something-offer-savings-app-packages-offer-savings-app",
+      "atlasNodeId": "atlas_create-something_package_create-something-offer-savings-app-packages-offer-savings-app",
+      "title": "@create-something/offer-savings-app",
+      "path": "packages/offer-savings-app",
+      "tier": "Automation",
+      "surface": "mcp",
+      "owner": "CREATE SOMETHING <hello@createsomething.agency>",
+      "status": "mapped",
+      "summary": "MCP and ChatGPT-compatible app adapter for the Offer Savings Agent.",
+      "tags": [
+        "package",
+        "mcp",
+        "automation"
+      ],
+      "packageName": "@create-something/offer-savings-app",
+      "runtime": "cloudflare-worker, node"
+    },
+    {
+      "id": "substrate:create-something:package:create-something-offer-savings-worker-packages-offer-savings-app-worker",
+      "atlasNodeId": "atlas_create-something_package_create-something-offer-savings-worker-packages-offer-savings-app-worker",
+      "title": "@create-something/offer-savings-worker",
+      "path": "packages/offer-savings-app/worker",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Workspace package at packages/offer-savings-app/worker.",
+      "tags": [
+        "package",
+        "worker"
+      ],
+      "packageName": "@create-something/offer-savings-worker",
+      "runtime": "cloudflare, node"
+    },
+    {
       "id": "substrate:create-something:package:create-something-ona-agents-packages-ona-agents",
       "atlasNodeId": "atlas_create-something_package_create-something-ona-agents-packages-ona-agents",
       "title": "@create-something/ona-agents",
@@ -2393,6 +2623,28 @@
         "judgment"
       ],
       "packageName": "@create-something/ona-agents",
+      "runtime": "cloudflare, node"
+    },
+    {
+      "id": "substrate:create-something:package:create-something-operator-chat-agent-packages-operator-chat-agent",
+      "atlasNodeId": "atlas_create-something_package_create-something-operator-chat-agent-packages-operator-chat-agent",
+      "title": "@create-something/operator-chat-agent",
+      "path": "packages/operator-chat-agent",
+      "tier": "Automation",
+      "surface": "agent",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Mobile operator chat agent POC for governed CREATE SOMETHING work.",
+      "tags": [
+        "package",
+        "agent",
+        "cloudflare",
+        "think",
+        "telegram",
+        "operator",
+        "policy-os"
+      ],
+      "packageName": "@create-something/operator-chat-agent",
       "runtime": "cloudflare, node"
     },
     {
@@ -2458,8 +2710,8 @@
       "runtime": "node"
     },
     {
-      "id": "substrate:create-something:package:create-something-pi-policy-os-packages-pi-policy-os",
-      "atlasNodeId": "atlas_create-something_package_create-something-pi-policy-os-packages-pi-policy-os",
+      "id": "substrate:create-something:package:createsomething-pi-policy-os-packages-pi-policy-os",
+      "atlasNodeId": "atlas_create-something_package_createsomething-pi-policy-os-packages-pi-policy-os",
       "title": "@createsomething/pi-policy-os",
       "path": "packages/pi-policy-os",
       "tier": "Judgment",
@@ -2481,8 +2733,8 @@
       "runtime": "node"
     },
     {
-      "id": "substrate:create-something:package:create-something-pi-three-tier-framework-packages-pi-three-tier-framework",
-      "atlasNodeId": "atlas_create-something_package_create-something-pi-three-tier-framework-packages-pi-three-tier-framework",
+      "id": "substrate:create-something:package:createsomething-pi-three-tier-framework-packages-pi-three-tier-framework",
+      "atlasNodeId": "atlas_create-something_package_createsomething-pi-three-tier-framework-packages-pi-three-tier-framework",
       "title": "@createsomething/pi-three-tier-framework",
       "path": "packages/pi-three-tier-framework",
       "tier": "Judgment",
@@ -2632,12 +2884,14 @@
       "surface": "package",
       "owner": "CREATE SOMETHING",
       "status": "mapped",
-      "summary": "SVG rendering pipeline (Replicate integration DISABLED - cost control)",
+      "summary": "Deterministic local SVG and GLB rendering pipeline with provenance and receipts",
       "tags": [
         "package",
         "package",
         "svg",
         "render",
+        "gltf",
+        "webgl",
         "architecture",
         "visualization"
       ],
@@ -3414,6 +3668,23 @@
       "runtime": "node"
     },
     {
+      "id": "substrate:create-something:package:create-something-webflow-marketplace-sync-packages-webflow-marketplace-sync",
+      "atlasNodeId": "atlas_create-something_package_create-something-webflow-marketplace-sync-packages-webflow-marketplace-sync",
+      "title": "@create-something/webflow-marketplace-sync",
+      "path": "packages/webflow-marketplace-sync",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Cloudflare Worker: Webflow Templates → Airtable WF CMS Records sync (webhook leg) + Airtable↔Webflow drift reconciler",
+      "tags": [
+        "package",
+        "worker"
+      ],
+      "packageName": "@create-something/webflow-marketplace-sync",
+      "runtime": "cloudflare, node"
+    },
+    {
       "id": "substrate:create-something:package:create-something-webflow-mcp-packages-webflow-mcp",
       "atlasNodeId": "atlas_create-something_package_create-something-webflow-mcp-packages-webflow-mcp",
       "title": "@create-something/webflow-mcp",
@@ -3567,6 +3838,23 @@
       "runtime": "cloudflare, node"
     },
     {
+      "id": "substrate:create-something:package:create-something-webflow-scope-watcher-packages-webflow-scope-watcher",
+      "atlasNodeId": "atlas_create-something_package_create-something-webflow-scope-watcher-packages-webflow-scope-watcher",
+      "title": "@create-something/webflow-scope-watcher",
+      "path": "packages/webflow-scope-watcher",
+      "tier": "Database",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Cloudflare Worker: watches the OAuth scope registry in webflow/webflow and alerts #wg-app-marketplace when scopes are added, removed, or un-gated",
+      "tags": [
+        "package",
+        "worker"
+      ],
+      "packageName": "@create-something/webflow-scope-watcher",
+      "runtime": "cloudflare, node"
+    },
+    {
       "id": "substrate:create-something:package:create-something-webflow-site-analyzer-mcp-packages-webflow-site-analyzer-mcp",
       "atlasNodeId": "atlas_create-something_package_create-something-webflow-site-analyzer-mcp-packages-webflow-site-analyzer-mcp",
       "title": "@create-something/webflow-site-analyzer-mcp",
@@ -3611,7 +3899,7 @@
       "atlasNodeId": "atlas_create-something_package_webflow-site-analyzer-mcp-remote-packages-webflow-site-analyzer-mcp-workers-remote",
       "title": "webflow-site-analyzer-mcp-remote",
       "path": "packages/webflow-site-analyzer-mcp/workers/remote",
-      "tier": "Database",
+      "tier": "Automation",
       "surface": "mcp",
       "owner": "CREATE SOMETHING",
       "status": "mapped",
@@ -3621,6 +3909,23 @@
         "mcp"
       ],
       "packageName": "webflow-site-analyzer-mcp-remote",
+      "runtime": "cloudflare, node"
+    },
+    {
+      "id": "substrate:create-something:package:create-something-webflow-template-agent-packages-webflow-template-agent",
+      "atlasNodeId": "atlas_create-something_package_create-something-webflow-template-agent-packages-webflow-template-agent",
+      "title": "@create-something/webflow-template-agent",
+      "path": "packages/webflow-template-agent",
+      "tier": "Database",
+      "surface": "agent",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Cloudflare Worker chat agent for Webflow template discovery — Claude tool loop over the template-search API with generative-UI display artifacts",
+      "tags": [
+        "package",
+        "agent"
+      ],
+      "packageName": "@create-something/webflow-template-agent",
       "runtime": "cloudflare, node"
     },
     {
@@ -3770,6 +4075,23 @@
       "runtime": "cloudflare, node"
     },
     {
+      "id": "substrate:create-something:package:create-something-webflow-template-views-packages-webflow-template-views",
+      "atlasNodeId": "atlas_create-something_package_create-something-webflow-template-views-packages-webflow-template-views",
+      "title": "@create-something/webflow-template-views",
+      "path": "packages/webflow-template-views",
+      "tier": "Mixed",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "First-party view beacon for the Webflow template marketplace (replaces the Segment view pipeline decommissioned 2026-07-21)",
+      "tags": [
+        "package",
+        "worker"
+      ],
+      "packageName": "@create-something/webflow-template-views",
+      "runtime": "cloudflare, node"
+    },
+    {
       "id": "substrate:create-something:package:create-something-wf-search-category-packages-wf-search-category",
       "atlasNodeId": "atlas_create-something_package_create-something-wf-search-category-packages-wf-search-category",
       "title": "@create-something/wf-search-category",
@@ -3787,21 +4109,27 @@
       "runtime": "cloudflare, node"
     },
     {
-      "id": "substrate:create-something:package:create-something-workflow-compiler-packages-workflow-compiler",
-      "atlasNodeId": "atlas_create-something_package_create-something-workflow-compiler-packages-workflow-compiler",
-      "title": "@create-something/workflow-compiler",
+      "id": "substrate:create-something:package:createsomething-workflow-compiler-packages-workflow-compiler",
+      "atlasNodeId": "atlas_create-something_package_createsomething-workflow-compiler-packages-workflow-compiler",
+      "title": "@createsomething/workflow-compiler",
       "path": "packages/workflow-compiler",
       "tier": "Automation",
       "surface": "package",
       "owner": "CREATE SOMETHING <hello@createsomething.agency>",
       "status": "mapped",
-      "summary": "Compile versioned operating workflows into governed runtime, replay, and operator-console artifacts.",
+      "summary": "Compile versioned operating workflows into deterministic, governed artifacts and provider-neutral execution plans.",
       "tags": [
         "package",
         "package",
+        "workflow",
+        "compiler",
+        "mcp",
+        "openai",
+        "governance",
+        "automation",
         "automation"
       ],
-      "packageName": "@create-something/workflow-compiler",
+      "packageName": "@createsomething/workflow-compiler",
       "runtime": "node"
     },
     {
@@ -3895,6 +4223,40 @@
       "runtime": "node"
     },
     {
+      "id": "substrate:create-something:package:create-something-workway-core-packages-workway-core",
+      "atlasNodeId": "atlas_create-something_package_create-something-workway-core-packages-workway-core",
+      "title": "@create-something/workway-core",
+      "path": "packages/workway-core",
+      "tier": "Mixed",
+      "surface": "package",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Deterministic Rust kernel for WorkWay project and evidence state",
+      "tags": [
+        "package",
+        "package"
+      ],
+      "packageName": "@create-something/workway-core",
+      "runtime": "rust, node"
+    },
+    {
+      "id": "substrate:create-something:package:create-something-workway-edge-packages-workway-edge",
+      "atlasNodeId": "atlas_create-something_package_create-something-workway-edge-packages-workway-edge",
+      "title": "@create-something/workway-edge",
+      "path": "packages/workway-edge",
+      "tier": "Mixed",
+      "surface": "package",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Local-only encrypted evidence intake boundary for WorkWay Edge",
+      "tags": [
+        "package",
+        "package"
+      ],
+      "packageName": "@create-something/workway-edge",
+      "runtime": "rust, node"
+    },
+    {
       "id": "substrate:create-something:package:create-something-zendesk-mcp-packages-zendesk-mcp",
       "atlasNodeId": "atlas_create-something_package_create-something-zendesk-mcp-packages-zendesk-mcp",
       "title": "@create-something/zendesk-mcp",
@@ -3910,6 +4272,8 @@
         "mcp",
         "model-context-protocol",
         "zendesk-mcp",
+        "codex-plugin",
+        "webflow-marketplace",
         "automation"
       ],
       "packageName": "@create-something/zendesk-mcp",
@@ -4044,6 +4408,23 @@
       "owner": "CREATE SOMETHING",
       "status": "mapped",
       "summary": "Cloudflare runtime configuration at packages/abundance-jobs-mcp/worker/wrangler.toml.",
+      "tags": [
+        "worker",
+        "cloudflare",
+        "runtime"
+      ],
+      "runtime": "cloudflare"
+    },
+    {
+      "id": "substrate:create-something:worker:packages-agency-clients-cato-supply-insights-cms-wrangler-toml",
+      "atlasNodeId": "atlas_create-something_worker_packages-agency-clients-cato-supply-insights-cms-wrangler-toml",
+      "title": "packages/agency/clients/cato-supply-insights-cms/wrangler.toml",
+      "path": "packages/agency/clients/cato-supply-insights-cms/wrangler.toml",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Cloudflare runtime configuration at packages/agency/clients/cato-supply-insights-cms/wrangler.toml.",
       "tags": [
         "worker",
         "cloudflare",
@@ -4503,6 +4884,40 @@
       "owner": "CREATE SOMETHING",
       "status": "mapped",
       "summary": "Cloudflare runtime configuration at packages/database-layer/worker/wrangler.toml.",
+      "tags": [
+        "worker",
+        "cloudflare",
+        "runtime"
+      ],
+      "runtime": "cloudflare"
+    },
+    {
+      "id": "substrate:create-something:worker:packages-exception-decisions-mcp-wrangler-jsonc",
+      "atlasNodeId": "atlas_create-something_worker_packages-exception-decisions-mcp-wrangler-jsonc",
+      "title": "packages/exception-decisions-mcp/wrangler.jsonc",
+      "path": "packages/exception-decisions-mcp/wrangler.jsonc",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Cloudflare runtime configuration at packages/exception-decisions-mcp/wrangler.jsonc.",
+      "tags": [
+        "worker",
+        "cloudflare",
+        "runtime"
+      ],
+      "runtime": "cloudflare"
+    },
+    {
+      "id": "substrate:create-something:worker:packages-github-actions-runner-broker-wrangler-jsonc",
+      "atlasNodeId": "atlas_create-something_worker_packages-github-actions-runner-broker-wrangler-jsonc",
+      "title": "packages/github-actions-runner-broker/wrangler.jsonc",
+      "path": "packages/github-actions-runner-broker/wrangler.jsonc",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Cloudflare runtime configuration at packages/github-actions-runner-broker/wrangler.jsonc.",
       "tags": [
         "worker",
         "cloudflare",
@@ -5038,6 +5453,23 @@
       "runtime": "cloudflare"
     },
     {
+      "id": "substrate:create-something:worker:packages-offer-savings-app-worker-wrangler-toml",
+      "atlasNodeId": "atlas_create-something_worker_packages-offer-savings-app-worker-wrangler-toml",
+      "title": "offer-savings-app worker",
+      "path": "packages/offer-savings-app/worker/wrangler.toml",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Cloudflare runtime configuration at packages/offer-savings-app/worker/wrangler.toml.",
+      "tags": [
+        "worker",
+        "cloudflare",
+        "runtime"
+      ],
+      "runtime": "cloudflare"
+    },
+    {
       "id": "substrate:create-something:worker:packages-ona-agents-wrangler-toml",
       "atlasNodeId": "atlas_create-something_worker_packages-ona-agents-wrangler-toml",
       "title": "packages/ona-agents/wrangler.toml",
@@ -5047,6 +5479,23 @@
       "owner": "CREATE SOMETHING",
       "status": "mapped",
       "summary": "Cloudflare runtime configuration at packages/ona-agents/wrangler.toml.",
+      "tags": [
+        "worker",
+        "cloudflare",
+        "runtime"
+      ],
+      "runtime": "cloudflare"
+    },
+    {
+      "id": "substrate:create-something:worker:packages-operator-chat-agent-wrangler-jsonc",
+      "atlasNodeId": "atlas_create-something_worker_packages-operator-chat-agent-wrangler-jsonc",
+      "title": "packages/operator-chat-agent/wrangler.jsonc",
+      "path": "packages/operator-chat-agent/wrangler.jsonc",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Cloudflare runtime configuration at packages/operator-chat-agent/wrangler.jsonc.",
       "tags": [
         "worker",
         "cloudflare",
@@ -5446,6 +5895,23 @@
       "runtime": "cloudflare"
     },
     {
+      "id": "substrate:create-something:worker:packages-webflow-marketplace-sync-wrangler-toml",
+      "atlasNodeId": "atlas_create-something_worker_packages-webflow-marketplace-sync-wrangler-toml",
+      "title": "packages/webflow-marketplace-sync/wrangler.toml",
+      "path": "packages/webflow-marketplace-sync/wrangler.toml",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Cloudflare runtime configuration at packages/webflow-marketplace-sync/wrangler.toml.",
+      "tags": [
+        "worker",
+        "cloudflare",
+        "runtime"
+      ],
+      "runtime": "cloudflare"
+    },
+    {
       "id": "substrate:create-something:worker:packages-webflow-mcp-worker-wrangler-toml",
       "atlasNodeId": "atlas_create-something_worker_packages-webflow-mcp-worker-wrangler-toml",
       "title": "webflow-mcp worker",
@@ -5514,6 +5980,23 @@
       "runtime": "cloudflare"
     },
     {
+      "id": "substrate:create-something:worker:packages-webflow-scope-watcher-wrangler-toml",
+      "atlasNodeId": "atlas_create-something_worker_packages-webflow-scope-watcher-wrangler-toml",
+      "title": "packages/webflow-scope-watcher/wrangler.toml",
+      "path": "packages/webflow-scope-watcher/wrangler.toml",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Cloudflare runtime configuration at packages/webflow-scope-watcher/wrangler.toml.",
+      "tags": [
+        "worker",
+        "cloudflare",
+        "runtime"
+      ],
+      "runtime": "cloudflare"
+    },
+    {
       "id": "substrate:create-something:worker:packages-webflow-site-analyzer-mcp-worker-wrangler-toml",
       "atlasNodeId": "atlas_create-something_worker_packages-webflow-site-analyzer-mcp-worker-wrangler-toml",
       "title": "webflow-site-analyzer-mcp worker",
@@ -5557,6 +6040,23 @@
       "owner": "CREATE SOMETHING",
       "status": "mapped",
       "summary": "Cloudflare runtime configuration at packages/webflow-site-analyzer-mcp/wrangler.toml.",
+      "tags": [
+        "worker",
+        "cloudflare",
+        "runtime"
+      ],
+      "runtime": "cloudflare"
+    },
+    {
+      "id": "substrate:create-something:worker:packages-webflow-template-agent-wrangler-toml",
+      "atlasNodeId": "atlas_create-something_worker_packages-webflow-template-agent-wrangler-toml",
+      "title": "packages/webflow-template-agent/wrangler.toml",
+      "path": "packages/webflow-template-agent/wrangler.toml",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Cloudflare runtime configuration at packages/webflow-template-agent/wrangler.toml.",
       "tags": [
         "worker",
         "cloudflare",
@@ -5625,6 +6125,23 @@
       "owner": "CREATE SOMETHING",
       "status": "mapped",
       "summary": "Cloudflare runtime configuration at packages/webflow-template-validation/worker/wrangler.jsonc.",
+      "tags": [
+        "worker",
+        "cloudflare",
+        "runtime"
+      ],
+      "runtime": "cloudflare"
+    },
+    {
+      "id": "substrate:create-something:worker:packages-webflow-template-views-wrangler-toml",
+      "atlasNodeId": "atlas_create-something_worker_packages-webflow-template-views-wrangler-toml",
+      "title": "packages/webflow-template-views/wrangler.toml",
+      "path": "packages/webflow-template-views/wrangler.toml",
+      "tier": "Automation",
+      "surface": "worker",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "Cloudflare runtime configuration at packages/webflow-template-views/wrangler.toml.",
       "tags": [
         "worker",
         "cloudflare",
@@ -6046,6 +6563,36 @@
       "atlasNodeId": "atlas_create-something_policy_docs-policies-v1-policy-engine-rollout-gates-v1-md",
       "title": "policy.engine-rollout-gates.v1.md",
       "path": "docs/policies/v1/policy.engine-rollout-gates.v1.md",
+      "tier": "Judgment",
+      "surface": "policy",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "policy artifact in the CREATE SOMETHING operating topology.",
+      "tags": [
+        "policy",
+        "documentation"
+      ]
+    },
+    {
+      "id": "substrate:create-something:policy:docs-policies-v1-policy-executor-routing-v1-json",
+      "atlasNodeId": "atlas_create-something_policy_docs-policies-v1-policy-executor-routing-v1-json",
+      "title": "policy.executor-routing.v1.json",
+      "path": "docs/policies/v1/policy.executor-routing.v1.json",
+      "tier": "Judgment",
+      "surface": "policy",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "policy artifact in the CREATE SOMETHING operating topology.",
+      "tags": [
+        "policy",
+        "documentation"
+      ]
+    },
+    {
+      "id": "substrate:create-something:policy:docs-policies-v1-policy-executor-routing-v1-md",
+      "atlasNodeId": "atlas_create-something_policy_docs-policies-v1-policy-executor-routing-v1-md",
+      "title": "policy.executor-routing.v1.md",
+      "path": "docs/policies/v1/policy.executor-routing.v1.md",
       "tier": "Judgment",
       "surface": "policy",
       "owner": "CREATE SOMETHING",
@@ -6837,6 +7384,36 @@
       ]
     },
     {
+      "id": "substrate:create-something:guide:docs-guides-bounded-research-interrupt-runbook-md",
+      "atlasNodeId": "atlas_create-something_guide_docs-guides-bounded-research-interrupt-runbook-md",
+      "title": "BOUNDED_RESEARCH_INTERRUPT_RUNBOOK.md",
+      "path": "docs/guides/BOUNDED_RESEARCH_INTERRUPT_RUNBOOK.md",
+      "tier": "Mixed",
+      "surface": "guide",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "guide artifact in the CREATE SOMETHING operating topology.",
+      "tags": [
+        "guide",
+        "documentation"
+      ]
+    },
+    {
+      "id": "substrate:create-something:guide:docs-guides-browser-proof-and-closeout-runbook-md",
+      "atlasNodeId": "atlas_create-something_guide_docs-guides-browser-proof-and-closeout-runbook-md",
+      "title": "BROWSER_PROOF_AND_CLOSEOUT_RUNBOOK.md",
+      "path": "docs/guides/BROWSER_PROOF_AND_CLOSEOUT_RUNBOOK.md",
+      "tier": "Mixed",
+      "surface": "guide",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "guide artifact in the CREATE SOMETHING operating topology.",
+      "tags": [
+        "guide",
+        "documentation"
+      ]
+    },
+    {
       "id": "substrate:create-something:guide:docs-guides-chatgpt-mcp-oauth-managed-bearer-md",
       "atlasNodeId": "atlas_create-something_guide_docs-guides-chatgpt-mcp-oauth-managed-bearer-md",
       "title": "CHATGPT_MCP_OAUTH_MANAGED_BEARER.md",
@@ -7062,6 +7639,21 @@
       ]
     },
     {
+      "id": "substrate:create-something:guide:docs-guides-harness-ablation-loop-md",
+      "atlasNodeId": "atlas_create-something_guide_docs-guides-harness-ablation-loop-md",
+      "title": "HARNESS_ABLATION_LOOP.md",
+      "path": "docs/guides/HARNESS_ABLATION_LOOP.md",
+      "tier": "Mixed",
+      "surface": "guide",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "guide artifact in the CREATE SOMETHING operating topology.",
+      "tags": [
+        "guide",
+        "documentation"
+      ]
+    },
+    {
       "id": "substrate:create-something:guide:docs-guides-hydra-db-governed-recall-md",
       "atlasNodeId": "atlas_create-something_guide_docs-guides-hydra-db-governed-recall-md",
       "title": "HYDRA_DB_GOVERNED_RECALL.md",
@@ -7111,6 +7703,21 @@
       "atlasNodeId": "atlas_create-something_guide_docs-guides-map-product-operations-md",
       "title": "MAP_PRODUCT_OPERATIONS.md",
       "path": "docs/guides/MAP_PRODUCT_OPERATIONS.md",
+      "tier": "Mixed",
+      "surface": "guide",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "guide artifact in the CREATE SOMETHING operating topology.",
+      "tags": [
+        "guide",
+        "documentation"
+      ]
+    },
+    {
+      "id": "substrate:create-something:guide:docs-guides-marketplace-submission-governance-playbook-md",
+      "atlasNodeId": "atlas_create-something_guide_docs-guides-marketplace-submission-governance-playbook-md",
+      "title": "MARKETPLACE_SUBMISSION_GOVERNANCE_PLAYBOOK.md",
+      "path": "docs/guides/MARKETPLACE_SUBMISSION_GOVERNANCE_PLAYBOOK.md",
       "tier": "Mixed",
       "surface": "guide",
       "owner": "CREATE SOMETHING",
@@ -7227,6 +7834,21 @@
       ]
     },
     {
+      "id": "substrate:create-something:guide:docs-guides-npm-saved-auth-and-release-promotion-runbook-md",
+      "atlasNodeId": "atlas_create-something_guide_docs-guides-npm-saved-auth-and-release-promotion-runbook-md",
+      "title": "NPM_SAVED_AUTH_AND_RELEASE_PROMOTION_RUNBOOK.md",
+      "path": "docs/guides/NPM_SAVED_AUTH_AND_RELEASE_PROMOTION_RUNBOOK.md",
+      "tier": "Mixed",
+      "surface": "guide",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "guide artifact in the CREATE SOMETHING operating topology.",
+      "tags": [
+        "guide",
+        "documentation"
+      ]
+    },
+    {
       "id": "substrate:create-something:guide:docs-guides-observability-setup-md",
       "atlasNodeId": "atlas_create-something_guide_docs-guides-observability-setup-md",
       "title": "OBSERVABILITY_SETUP.md",
@@ -7306,6 +7928,21 @@
       "atlasNodeId": "atlas_create-something_guide_docs-guides-operator-agent-system-md",
       "title": "OPERATOR_AGENT_SYSTEM.md",
       "path": "docs/guides/OPERATOR_AGENT_SYSTEM.md",
+      "tier": "Mixed",
+      "surface": "guide",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "guide artifact in the CREATE SOMETHING operating topology.",
+      "tags": [
+        "guide",
+        "documentation"
+      ]
+    },
+    {
+      "id": "substrate:create-something:guide:docs-guides-package-source-archive-workflow-md",
+      "atlasNodeId": "atlas_create-something_guide_docs-guides-package-source-archive-workflow-md",
+      "title": "PACKAGE_SOURCE_ARCHIVE_WORKFLOW.md",
+      "path": "docs/guides/PACKAGE_SOURCE_ARCHIVE_WORKFLOW.md",
       "tier": "Mixed",
       "surface": "guide",
       "owner": "CREATE SOMETHING",
@@ -7411,6 +8048,21 @@
       "atlasNodeId": "atlas_create-something_guide_docs-guides-solo-operator-agent-loop-md",
       "title": "SOLO_OPERATOR_AGENT_LOOP.md",
       "path": "docs/guides/SOLO_OPERATOR_AGENT_LOOP.md",
+      "tier": "Mixed",
+      "surface": "guide",
+      "owner": "CREATE SOMETHING",
+      "status": "mapped",
+      "summary": "guide artifact in the CREATE SOMETHING operating topology.",
+      "tags": [
+        "guide",
+        "documentation"
+      ]
+    },
+    {
+      "id": "substrate:create-something:guide:docs-guides-solo-operator-control-tower-playbook-md",
+      "atlasNodeId": "atlas_create-something_guide_docs-guides-solo-operator-control-tower-playbook-md",
+      "title": "SOLO_OPERATOR_CONTROL_TOWER_PLAYBOOK.md",
+      "path": "docs/guides/SOLO_OPERATOR_CONTROL_TOWER_PLAYBOOK.md",
       "tier": "Mixed",
       "surface": "guide",
       "owner": "CREATE SOMETHING",
@@ -8205,6 +8857,13 @@
       "evidence": "apps/bettermode-marketplace-creator-agent is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-app-create-something-client-workspace-desktop-apps-client-workspace-desktop",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:app:create-something-client-workspace-desktop-apps-client-workspace-desktop",
+      "relation": "contains",
+      "evidence": "apps/client-workspace-desktop is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-app-create-something-create-something-scheduler-apps-create-something-scheduler",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:app:create-something-create-something-scheduler-apps-create-something-scheduler",
@@ -8240,6 +8899,13 @@
       "evidence": "apps/marketplace-template-submission-cloud is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-app-princess-pet-palace-apps-princess-pet-palace",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:app:princess-pet-palace-apps-princess-pet-palace",
+      "relation": "contains",
+      "evidence": "apps/princess-pet-palace is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-app-create-something-webflow-dashboard-cloud-apps-webflow-dashboard-cloud",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:app:create-something-webflow-dashboard-cloud-apps-webflow-dashboard-cloud",
@@ -8273,6 +8939,13 @@
       "target": "substrate:create-something:package:abundance-jobs-mcp-worker-packages-abundance-jobs-mcp-worker",
       "relation": "contains",
       "evidence": "packages/abundance-jobs-mcp/worker is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-cato-supply-insights-cms-packages-agency-clients-cato-supply-insights-cms",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-cato-supply-insights-cms-packages-agency-clients-cato-supply-insights-cms",
+      "relation": "contains",
+      "evidence": "packages/agency/clients/cato-supply-insights-cms is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-cato-supply-insights-review-packages-agency-clients-cato-supply-insights-review",
@@ -8359,6 +9032,13 @@
       "evidence": "packages/airtable-primary-tags-worker is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-airtable-system-architect-packages-airtable-system-architect",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-airtable-system-architect-packages-airtable-system-architect",
+      "relation": "contains",
+      "evidence": "packages/airtable-system-architect is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-app-governance-dashboard-packages-app-governance-db-dashboard",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:package:app-governance-dashboard-packages-app-governance-db-dashboard",
@@ -8387,11 +9067,25 @@
       "evidence": "packages/app-governance-desktop is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-arc-packages-arc",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
+      "relation": "contains",
+      "evidence": "packages/arc is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-ascii-renderer-packages-ascii-renderer",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:package:create-something-ascii-renderer-packages-ascii-renderer",
       "relation": "contains",
       "evidence": "packages/ascii-renderer is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-atlas-composition-packages-atlas-composition",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-atlas-composition-packages-atlas-composition",
+      "relation": "contains",
+      "evidence": "packages/atlas-composition is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-auth-platform-packages-auth-platform",
@@ -8637,6 +9331,34 @@
       "target": "substrate:create-something:package:create-something-eslint-plugin-canon-packages-eslint-plugin-canon",
       "relation": "contains",
       "evidence": "packages/eslint-plugin-canon is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-eslint-plugin-evidence-packages-eslint-plugin-evidence",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-eslint-plugin-evidence-packages-eslint-plugin-evidence",
+      "relation": "contains",
+      "evidence": "packages/eslint-plugin-evidence is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-exception-decisions-mcp-packages-exception-decisions-mcp",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-exception-decisions-mcp-packages-exception-decisions-mcp",
+      "relation": "contains",
+      "evidence": "packages/exception-decisions-mcp is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-exception-flow-video-packages-exception-flow-video",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-exception-flow-video-packages-exception-flow-video",
+      "relation": "contains",
+      "evidence": "packages/exception-flow-video is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-github-actions-runner-broker-packages-github-actions-runner-broker",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-github-actions-runner-broker-packages-github-actions-runner-broker",
+      "relation": "contains",
+      "evidence": "packages/github-actions-runner-broker is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-gmail-notion-mcp-packages-gmail-notion-mcp",
@@ -9017,11 +9739,39 @@
       "evidence": "packages/observability is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-offer-resolution-packages-offer-resolution",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-offer-resolution-packages-offer-resolution",
+      "relation": "contains",
+      "evidence": "packages/offer-resolution is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-offer-savings-app-packages-offer-savings-app",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-offer-savings-app-packages-offer-savings-app",
+      "relation": "contains",
+      "evidence": "packages/offer-savings-app is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-offer-savings-worker-packages-offer-savings-app-worker",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-offer-savings-worker-packages-offer-savings-app-worker",
+      "relation": "contains",
+      "evidence": "packages/offer-savings-app/worker is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-ona-agents-packages-ona-agents",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:package:create-something-ona-agents-packages-ona-agents",
       "relation": "contains",
       "evidence": "packages/ona-agents is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-operator-chat-agent-packages-operator-chat-agent",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-operator-chat-agent-packages-operator-chat-agent",
+      "relation": "contains",
+      "evidence": "packages/operator-chat-agent is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-orchestration-packages-orchestration",
@@ -9045,16 +9795,16 @@
       "evidence": "packages/pi-halfdozen is present in the repo scan."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-pi-policy-os-packages-pi-policy-os",
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-createsomething-pi-policy-os-packages-pi-policy-os",
       "source": "substrate:create-something:root",
-      "target": "substrate:create-something:package:create-something-pi-policy-os-packages-pi-policy-os",
+      "target": "substrate:create-something:package:createsomething-pi-policy-os-packages-pi-policy-os",
       "relation": "contains",
       "evidence": "packages/pi-policy-os is present in the repo scan."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-pi-three-tier-framework-packages-pi-three-tier-framework",
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-createsomething-pi-three-tier-framework-packages-pi-three-tier-framework",
       "source": "substrate:create-something:root",
-      "target": "substrate:create-something:package:create-something-pi-three-tier-framework-packages-pi-three-tier-framework",
+      "target": "substrate:create-something:package:createsomething-pi-three-tier-framework-packages-pi-three-tier-framework",
       "relation": "contains",
       "evidence": "packages/pi-three-tier-framework is present in the repo scan."
     },
@@ -9381,6 +10131,13 @@
       "evidence": "packages/webflow-intake is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-webflow-marketplace-sync-packages-webflow-marketplace-sync",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-webflow-marketplace-sync-packages-webflow-marketplace-sync",
+      "relation": "contains",
+      "evidence": "packages/webflow-marketplace-sync is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-webflow-mcp-packages-webflow-mcp",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:package:create-something-webflow-mcp-packages-webflow-mcp",
@@ -9437,6 +10194,13 @@
       "evidence": "packages/webflow-reviewer-exceptions-mcp/worker is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-webflow-scope-watcher-packages-webflow-scope-watcher",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-webflow-scope-watcher-packages-webflow-scope-watcher",
+      "relation": "contains",
+      "evidence": "packages/webflow-scope-watcher is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-webflow-site-analyzer-mcp-packages-webflow-site-analyzer-mcp",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:package:create-something-webflow-site-analyzer-mcp-packages-webflow-site-analyzer-mcp",
@@ -9456,6 +10220,13 @@
       "target": "substrate:create-something:package:webflow-site-analyzer-mcp-remote-packages-webflow-site-analyzer-mcp-workers-remote",
       "relation": "contains",
       "evidence": "packages/webflow-site-analyzer-mcp/workers/remote is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-webflow-template-agent-packages-webflow-template-agent",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-webflow-template-agent-packages-webflow-template-agent",
+      "relation": "contains",
+      "evidence": "packages/webflow-template-agent is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-webflow-template-analyzer-cloudflare-packages-webflow-template-analyzer-cloudflare",
@@ -9514,6 +10285,13 @@
       "evidence": "packages/webflow-template-validation/worker is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-webflow-template-views-packages-webflow-template-views",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-webflow-template-views-packages-webflow-template-views",
+      "relation": "contains",
+      "evidence": "packages/webflow-template-views is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-wf-search-category-packages-wf-search-category",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:package:create-something-wf-search-category-packages-wf-search-category",
@@ -9521,9 +10299,9 @@
       "evidence": "packages/wf-search-category is present in the repo scan."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-workflow-compiler-packages-workflow-compiler",
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-createsomething-workflow-compiler-packages-workflow-compiler",
       "source": "substrate:create-something:root",
-      "target": "substrate:create-something:package:create-something-workflow-compiler-packages-workflow-compiler",
+      "target": "substrate:create-something:package:createsomething-workflow-compiler-packages-workflow-compiler",
       "relation": "contains",
       "evidence": "packages/workflow-compiler is present in the repo scan."
     },
@@ -9561,6 +10339,20 @@
       "target": "substrate:create-something:package:create-something-workflow-shadow-pilot-packages-workflow-shadow-pilot",
       "relation": "contains",
       "evidence": "packages/workflow-shadow-pilot is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-workway-core-packages-workway-core",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-workway-core-packages-workway-core",
+      "relation": "contains",
+      "evidence": "packages/workway-core is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-workway-edge-packages-workway-edge",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-workway-edge-packages-workway-edge",
+      "relation": "contains",
+      "evidence": "packages/workway-edge is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-zendesk-mcp-packages-zendesk-mcp",
@@ -9624,6 +10416,13 @@
       "target": "substrate:create-something:worker:packages-abundance-jobs-mcp-worker-wrangler-toml",
       "relation": "contains",
       "evidence": "packages/abundance-jobs-mcp/worker/wrangler.toml is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-agency-clients-cato-supply-insights-cms-wrangler-toml",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:worker:packages-agency-clients-cato-supply-insights-cms-wrangler-toml",
+      "relation": "contains",
+      "evidence": "packages/agency/clients/cato-supply-insights-cms/wrangler.toml is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-agency-clients-cato-supply-insights-review-wrangler-toml",
@@ -9813,6 +10612,20 @@
       "target": "substrate:create-something:worker:packages-database-layer-worker-wrangler-toml",
       "relation": "contains",
       "evidence": "packages/database-layer/worker/wrangler.toml is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-exception-decisions-mcp-wrangler-jsonc",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:worker:packages-exception-decisions-mcp-wrangler-jsonc",
+      "relation": "contains",
+      "evidence": "packages/exception-decisions-mcp/wrangler.jsonc is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-github-actions-runner-broker-wrangler-jsonc",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:worker:packages-github-actions-runner-broker-wrangler-jsonc",
+      "relation": "contains",
+      "evidence": "packages/github-actions-runner-broker/wrangler.jsonc is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-gmail-notion-mcp-worker-wrangler-toml",
@@ -10032,11 +10845,25 @@
       "evidence": "packages/notion-sync-mcp/worker/wrangler.toml is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-offer-savings-app-worker-wrangler-toml",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:worker:packages-offer-savings-app-worker-wrangler-toml",
+      "relation": "contains",
+      "evidence": "packages/offer-savings-app/worker/wrangler.toml is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-ona-agents-wrangler-toml",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:worker:packages-ona-agents-wrangler-toml",
       "relation": "contains",
       "evidence": "packages/ona-agents/wrangler.toml is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-operator-chat-agent-wrangler-jsonc",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:worker:packages-operator-chat-agent-wrangler-jsonc",
+      "relation": "contains",
+      "evidence": "packages/operator-chat-agent/wrangler.jsonc is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-owned-agent-runtime-wrangler-jsonc",
@@ -10200,6 +11027,13 @@
       "evidence": "packages/webflow-dashboard/wrangler.jsonc is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-webflow-marketplace-sync-wrangler-toml",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:worker:packages-webflow-marketplace-sync-wrangler-toml",
+      "relation": "contains",
+      "evidence": "packages/webflow-marketplace-sync/wrangler.toml is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-webflow-mcp-worker-wrangler-toml",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:worker:packages-webflow-mcp-worker-wrangler-toml",
@@ -10228,6 +11062,13 @@
       "evidence": "packages/webflow-reviewer-exceptions-mcp/worker/wrangler.toml is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-webflow-scope-watcher-wrangler-toml",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:worker:packages-webflow-scope-watcher-wrangler-toml",
+      "relation": "contains",
+      "evidence": "packages/webflow-scope-watcher/wrangler.toml is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-webflow-site-analyzer-mcp-worker-wrangler-toml",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:worker:packages-webflow-site-analyzer-mcp-worker-wrangler-toml",
@@ -10247,6 +11088,13 @@
       "target": "substrate:create-something:worker:packages-webflow-site-analyzer-mcp-wrangler-toml",
       "relation": "contains",
       "evidence": "packages/webflow-site-analyzer-mcp/wrangler.toml is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-webflow-template-agent-wrangler-toml",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:worker:packages-webflow-template-agent-wrangler-toml",
+      "relation": "contains",
+      "evidence": "packages/webflow-template-agent/wrangler.toml is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-webflow-template-analyzer-cloudflare-wrangler-jsonc",
@@ -10275,6 +11123,13 @@
       "target": "substrate:create-something:worker:packages-webflow-template-validation-worker-wrangler-jsonc",
       "relation": "contains",
       "evidence": "packages/webflow-template-validation/worker/wrangler.jsonc is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-webflow-template-views-wrangler-toml",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:worker:packages-webflow-template-views-wrangler-toml",
+      "relation": "contains",
+      "evidence": "packages/webflow-template-views/wrangler.toml is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-worker-packages-wf-search-category-wrangler-toml",
@@ -10471,6 +11326,20 @@
       "target": "substrate:create-something:policy:docs-policies-v1-policy-engine-rollout-gates-v1-md",
       "relation": "contains",
       "evidence": "docs/policies/v1/policy.engine-rollout-gates.v1.md is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-policy-docs-policies-v1-policy-executor-routing-v1-json",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:policy:docs-policies-v1-policy-executor-routing-v1-json",
+      "relation": "contains",
+      "evidence": "docs/policies/v1/policy.executor-routing.v1.json is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-policy-docs-policies-v1-policy-executor-routing-v1-md",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:policy:docs-policies-v1-policy-executor-routing-v1-md",
+      "relation": "contains",
+      "evidence": "docs/policies/v1/policy.executor-routing.v1.md is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-policy-docs-policies-v1-policy-git-light-agent-delivery-v1-json",
@@ -10837,6 +11706,20 @@
       "evidence": "docs/guides/ATLAS_LINEAR_INTEGRATION.md is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-bounded-research-interrupt-runbook-md",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:guide:docs-guides-bounded-research-interrupt-runbook-md",
+      "relation": "contains",
+      "evidence": "docs/guides/BOUNDED_RESEARCH_INTERRUPT_RUNBOOK.md is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-browser-proof-and-closeout-runbook-md",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:guide:docs-guides-browser-proof-and-closeout-runbook-md",
+      "relation": "contains",
+      "evidence": "docs/guides/BROWSER_PROOF_AND_CLOSEOUT_RUNBOOK.md is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-chatgpt-mcp-oauth-managed-bearer-md",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:guide:docs-guides-chatgpt-mcp-oauth-managed-bearer-md",
@@ -10942,6 +11825,13 @@
       "evidence": "docs/guides/GIT_LIGHT_AGENT_DELIVERY_WORKFLOW.md is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-harness-ablation-loop-md",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:guide:docs-guides-harness-ablation-loop-md",
+      "relation": "contains",
+      "evidence": "docs/guides/HARNESS_ABLATION_LOOP.md is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-hydra-db-governed-recall-md",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:guide:docs-guides-hydra-db-governed-recall-md",
@@ -10968,6 +11858,13 @@
       "target": "substrate:create-something:guide:docs-guides-map-product-operations-md",
       "relation": "contains",
       "evidence": "docs/guides/MAP_PRODUCT_OPERATIONS.md is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-marketplace-submission-governance-playbook-md",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:guide:docs-guides-marketplace-submission-governance-playbook-md",
+      "relation": "contains",
+      "evidence": "docs/guides/MARKETPLACE_SUBMISSION_GOVERNANCE_PLAYBOOK.md is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-mcp-apps-integration-md",
@@ -11019,6 +11916,13 @@
       "evidence": "docs/guides/NOTION_WORKERS_AND_CLI_2026.md is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-npm-saved-auth-and-release-promotion-runbook-md",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:guide:docs-guides-npm-saved-auth-and-release-promotion-runbook-md",
+      "relation": "contains",
+      "evidence": "docs/guides/NPM_SAVED_AUTH_AND_RELEASE_PROMOTION_RUNBOOK.md is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-observability-setup-md",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:guide:docs-guides-observability-setup-md",
@@ -11059,6 +11963,13 @@
       "target": "substrate:create-something:guide:docs-guides-operator-agent-system-md",
       "relation": "contains",
       "evidence": "docs/guides/OPERATOR_AGENT_SYSTEM.md is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-package-source-archive-workflow-md",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:guide:docs-guides-package-source-archive-workflow-md",
+      "relation": "contains",
+      "evidence": "docs/guides/PACKAGE_SOURCE_ARCHIVE_WORKFLOW.md is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-playbook-library-research-2026-02-18-md",
@@ -11108,6 +12019,13 @@
       "target": "substrate:create-something:guide:docs-guides-solo-operator-agent-loop-md",
       "relation": "contains",
       "evidence": "docs/guides/SOLO_OPERATOR_AGENT_LOOP.md is present in the repo scan."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-solo-operator-control-tower-playbook-md",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:guide:docs-guides-solo-operator-control-tower-playbook-md",
+      "relation": "contains",
+      "evidence": "docs/guides/SOLO_OPERATOR_CONTROL_TOWER_PLAYBOOK.md is present in the repo scan."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-guide-docs-guides-steel-cli-md",
@@ -11453,6 +12371,13 @@
       "evidence": "@create-something/components declares @create-something/tufte."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-app-create-something-client-workspace-desktop-apps-client-workspace-desktop-depends-on-substrate-create-something-package-create-something-delivery-schema-packages-delivery-schema",
+      "source": "substrate:create-something:app:create-something-client-workspace-desktop-apps-client-workspace-desktop",
+      "target": "substrate:create-something:package:create-something-delivery-schema-packages-delivery-schema",
+      "relation": "depends_on",
+      "evidence": "@create-something/client-workspace-desktop declares @create-something/delivery-schema."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-app-create-something-create-something-scheduler-apps-create-something-scheduler-depends-on-substrate-create-something-package-create-something-canon-packages-canon",
       "source": "substrate:create-something:app:create-something-create-something-scheduler-apps-create-something-scheduler",
       "target": "substrate:create-something:package:create-something-canon-packages-canon",
@@ -11479,6 +12404,13 @@
       "target": "substrate:create-something:worker:apps-guard-performance-lab-wrangler-toml",
       "relation": "runs",
       "evidence": "wrangler.toml configures runtime for apps/guard-performance-lab."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-app-create-something-marketplace-template-submission-cloud-apps-marketplace-template-submission-cloud-depends-on-substrate-create-something-package-create-something-gsap-validation-worker-packages-gsap-validation-worker",
+      "source": "substrate:create-something:app:create-something-marketplace-template-submission-cloud-apps-marketplace-template-submission-cloud",
+      "target": "substrate:create-something:package:create-something-gsap-validation-worker-packages-gsap-validation-worker",
+      "relation": "depends_on",
+      "evidence": "@create-something/marketplace-template-submission-cloud declares @create-something/gsap-validation-worker."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-app-create-something-marketplace-template-submission-cloud-apps-marketplace-template-submission-cloud-runs-substrate-create-something-worker-apps-marketplace-template-submission-cloud-wrangler-json",
@@ -11544,6 +12476,20 @@
       "evidence": "wrangler.toml configures runtime for packages/abundance-jobs-mcp/worker."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-client-overlay-substrate-create-something-package-create-something-cato-supply-insights-cms-packages-agency-clients-cato-supply-insights-cms",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:create-something-cato-supply-insights-cms-packages-agency-clients-cato-supply-insights-cms",
+      "relation": "client_overlay",
+      "evidence": "packages/agency/clients/cato-supply-insights-cms is a managed client overlay under packages/agency/clients."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-cato-supply-insights-cms-packages-agency-clients-cato-supply-insights-cms-runs-substrate-create-something-worker-packages-agency-clients-cato-supply-insights-cms-wrangler-toml",
+      "source": "substrate:create-something:package:create-something-cato-supply-insights-cms-packages-agency-clients-cato-supply-insights-cms",
+      "target": "substrate:create-something:worker:packages-agency-clients-cato-supply-insights-cms-wrangler-toml",
+      "relation": "runs",
+      "evidence": "wrangler.toml configures runtime for packages/agency/clients/cato-supply-insights-cms."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-client-overlay-substrate-create-something-package-create-something-cato-supply-insights-review-packages-agency-clients-cato-supply-insights-review",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:package:create-something-cato-supply-insights-review-packages-agency-clients-cato-supply-insights-review",
@@ -11556,6 +12502,20 @@
       "target": "substrate:create-something:worker:packages-agency-clients-cato-supply-insights-review-wrangler-toml",
       "relation": "runs",
       "evidence": "wrangler.toml configures runtime for packages/agency/clients/cato-supply-insights-review."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-jandjhomehealth-packages-agency-clients-jandjhomehealth-depends-on-substrate-create-something-package-create-something-arc-packages-arc",
+      "source": "substrate:create-something:package:create-something-jandjhomehealth-packages-agency-clients-jandjhomehealth",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
+      "relation": "depends_on",
+      "evidence": "@create-something/jandjhomehealth declares @create-something/arc."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-jandjhomehealth-packages-agency-clients-jandjhomehealth-depends-on-substrate-create-something-package-create-something-atlas-composition-packages-atlas-composition",
+      "source": "substrate:create-something:package:create-something-jandjhomehealth-packages-agency-clients-jandjhomehealth",
+      "target": "substrate:create-something:package:create-something-atlas-composition-packages-atlas-composition",
+      "relation": "depends_on",
+      "evidence": "@create-something/jandjhomehealth declares @create-something/atlas-composition."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-root-client-overlay-substrate-create-something-package-create-something-jandjhomehealth-packages-agency-clients-jandjhomehealth",
@@ -11614,6 +12574,20 @@
       "evidence": "packages/agency/clients/the-stack is a managed client overlay under packages/agency/clients."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-agency-packages-agency-depends-on-substrate-create-something-package-create-something-arc-packages-arc",
+      "source": "substrate:create-something:package:create-something-agency-packages-agency",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
+      "relation": "depends_on",
+      "evidence": "@create-something/agency declares @create-something/arc."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-agency-packages-agency-depends-on-substrate-create-something-package-create-something-atlas-composition-packages-atlas-composition",
+      "source": "substrate:create-something:package:create-something-agency-packages-agency",
+      "target": "substrate:create-something:package:create-something-atlas-composition-packages-atlas-composition",
+      "relation": "depends_on",
+      "evidence": "@create-something/agency declares @create-something/atlas-composition."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-agency-packages-agency-depends-on-substrate-create-something-package-create-something-canon-packages-canon",
       "source": "substrate:create-something:package:create-something-agency-packages-agency",
       "target": "substrate:create-something:package:create-something-canon-packages-canon",
@@ -11628,6 +12602,13 @@
       "evidence": "@create-something/agency declares @create-something/canvas-kernel."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-agency-packages-agency-depends-on-substrate-create-something-package-create-something-database-layer-packages-database-layer",
+      "source": "substrate:create-something:package:create-something-agency-packages-agency",
+      "target": "substrate:create-something:package:create-something-database-layer-packages-database-layer",
+      "relation": "depends_on",
+      "evidence": "@create-something/agency declares @create-something/database-layer."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-agency-packages-agency-depends-on-substrate-create-something-package-create-something-delivery-schema-packages-delivery-schema",
       "source": "substrate:create-something:package:create-something-agency-packages-agency",
       "target": "substrate:create-something:package:create-something-delivery-schema-packages-delivery-schema",
@@ -11640,6 +12621,13 @@
       "target": "substrate:create-something:package:create-something-mcp-authz-packages-mcp-authz",
       "relation": "depends_on",
       "evidence": "@create-something/agency declares @create-something/mcp-authz."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-agency-packages-agency-depends-on-substrate-create-something-package-create-something-playbook-mcp-packages-playbook-mcp",
+      "source": "substrate:create-something:package:create-something-agency-packages-agency",
+      "target": "substrate:create-something:package:create-something-playbook-mcp-packages-playbook-mcp",
+      "relation": "depends_on",
+      "evidence": "@create-something/agency declares @create-something/playbook-mcp."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-agency-packages-agency-depends-on-substrate-create-something-package-create-something-tufte-packages-tufte",
@@ -11698,6 +12686,20 @@
       "evidence": "wrangler.toml configures runtime for packages/app-governance-db/worker."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-arc-packages-arc-depends-on-substrate-create-something-package-create-something-atlas-composition-packages-atlas-composition",
+      "source": "substrate:create-something:package:create-something-arc-packages-arc",
+      "target": "substrate:create-something:package:create-something-atlas-composition-packages-atlas-composition",
+      "relation": "depends_on",
+      "evidence": "@create-something/arc declares @create-something/atlas-composition."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-arc-packages-arc-depends-on-substrate-create-something-package-create-something-canon-packages-canon",
+      "source": "substrate:create-something:package:create-something-arc-packages-arc",
+      "target": "substrate:create-something:package:create-something-canon-packages-canon",
+      "relation": "depends_on",
+      "evidence": "@create-something/arc declares @create-something/canon."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-bettermode-creator-mcp-packages-bettermode-creator-mcp-runs-substrate-create-something-worker-packages-bettermode-creator-mcp-worker-wrangler-toml",
       "source": "substrate:create-something:package:create-something-bettermode-creator-mcp-packages-bettermode-creator-mcp",
       "target": "substrate:create-something:worker:packages-bettermode-creator-mcp-worker-wrangler-toml",
@@ -11724,6 +12726,13 @@
       "target": "substrate:create-something:worker:packages-calm-operator-ink-bridge-wrangler-toml",
       "relation": "runs",
       "evidence": "wrangler.toml configures runtime for packages/calm-operator-ink-bridge."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-canon-packages-canon-depends-on-substrate-create-something-package-create-something-auth-platform-packages-auth-platform",
+      "source": "substrate:create-something:package:create-something-canon-packages-canon",
+      "target": "substrate:create-something:package:create-something-auth-platform-packages-auth-platform",
+      "relation": "depends_on",
+      "evidence": "@create-something/canon declares @create-something/auth-platform."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-canon-packages-canon-depends-on-substrate-create-something-package-create-something-tufte-packages-tufte",
@@ -11780,6 +12789,13 @@
       "target": "substrate:create-something:package:create-something-client-workspace-demo-packages-client-workspace-clients-demo-frontend",
       "relation": "client_overlay",
       "evidence": "packages/client-workspace/clients/demo-frontend is a managed client overlay under packages/agency/clients."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-client-workspace-packages-client-workspace-depends-on-substrate-create-something-package-create-something-delivery-schema-packages-delivery-schema",
+      "source": "substrate:create-something:package:create-something-client-workspace-packages-client-workspace",
+      "target": "substrate:create-something:package:create-something-delivery-schema-packages-delivery-schema",
+      "relation": "depends_on",
+      "evidence": "@create-something/client-workspace declares @create-something/delivery-schema."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-client-workspace-packages-client-workspace-depends-on-substrate-create-something-package-create-something-canon-packages-canon",
@@ -12314,11 +13330,25 @@
       "evidence": "wrangler.toml configures runtime for packages/identity-worker."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp-depends-on-substrate-create-something-package-create-something-atlas-composition-packages-atlas-composition",
+      "source": "substrate:create-something:package:create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
+      "target": "substrate:create-something:package:create-something-atlas-composition-packages-atlas-composition",
+      "relation": "depends_on",
+      "evidence": "@create-something/interaction-atlas-mcp declares @create-something/atlas-composition."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp-depends-on-substrate-create-something-package-create-something-canvas-kernel-packages-canvas-kernel",
       "source": "substrate:create-something:package:create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
       "target": "substrate:create-something:package:create-something-canvas-kernel-packages-canvas-kernel",
       "relation": "depends_on",
       "evidence": "@create-something/interaction-atlas-mcp declares @create-something/canvas-kernel."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp-depends-on-substrate-create-something-package-create-something-canon-packages-canon",
+      "source": "substrate:create-something:package:create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
+      "target": "substrate:create-something:package:create-something-canon-packages-canon",
+      "relation": "depends_on",
+      "evidence": "@create-something/interaction-atlas-mcp declares @create-something/canon."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp-depends-on-substrate-create-something-package-create-something-mcp-authz-packages-mcp-authz",
@@ -12354,6 +13384,13 @@
       "target": "substrate:create-something:package:create-something-policy-os-engine-packages-policy-os-engine",
       "relation": "depends_on",
       "evidence": "@create-something/interaction-atlas-mcp declares @create-something/policy-os-engine."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp-depends-on-substrate-create-something-package-createsomething-workflow-compiler-packages-workflow-compiler",
+      "source": "substrate:create-something:package:create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
+      "target": "substrate:create-something:package:createsomething-workflow-compiler-packages-workflow-compiler",
+      "relation": "depends_on",
+      "evidence": "@create-something/interaction-atlas-mcp declares @createsomething/workflow-compiler."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp-runs-substrate-create-something-worker-packages-interaction-atlas-mcp-worker-wrangler-toml",
@@ -12482,11 +13519,25 @@
       "evidence": "wrangler.toml configures runtime for packages/loom-mcp-remote."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-ltd-packages-ltd-depends-on-substrate-create-something-package-create-something-auth-platform-packages-auth-platform",
+      "source": "substrate:create-something:package:create-something-ltd-packages-ltd",
+      "target": "substrate:create-something:package:create-something-auth-platform-packages-auth-platform",
+      "relation": "depends_on",
+      "evidence": "@create-something/ltd declares @create-something/auth-platform."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-ltd-packages-ltd-depends-on-substrate-create-something-package-create-something-canon-packages-canon",
       "source": "substrate:create-something:package:create-something-ltd-packages-ltd",
       "target": "substrate:create-something:package:create-something-canon-packages-canon",
       "relation": "depends_on",
       "evidence": "@create-something/ltd declares @create-something/canon."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-ltd-packages-ltd-depends-on-substrate-create-something-package-create-something-playbook-mcp-packages-playbook-mcp",
+      "source": "substrate:create-something:package:create-something-ltd-packages-ltd",
+      "target": "substrate:create-something:package:create-something-playbook-mcp-packages-playbook-mcp",
+      "relation": "depends_on",
+      "evidence": "@create-something/ltd declares @create-something/playbook-mcp."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-ltd-packages-ltd-depends-on-substrate-create-something-package-create-something-tufte-packages-tufte",
@@ -12538,6 +13589,20 @@
       "evidence": "@create-something/mcp-authz declares @create-something/policy-os-engine."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-mcp-authz-packages-mcp-authz-depends-on-substrate-create-something-package-create-something-eslint-plugin-evidence-packages-eslint-plugin-evidence",
+      "source": "substrate:create-something:package:create-something-mcp-authz-packages-mcp-authz",
+      "target": "substrate:create-something:package:create-something-eslint-plugin-evidence-packages-eslint-plugin-evidence",
+      "relation": "depends_on",
+      "evidence": "@create-something/mcp-authz declares @create-something/eslint-plugin-evidence."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-mcp-core-packages-mcp-core-depends-on-substrate-create-something-package-create-something-eslint-plugin-evidence-packages-eslint-plugin-evidence",
+      "source": "substrate:create-something:package:create-something-mcp-core-packages-mcp-core",
+      "target": "substrate:create-something:package:create-something-eslint-plugin-evidence-packages-eslint-plugin-evidence",
+      "relation": "depends_on",
+      "evidence": "@create-something/mcp-core declares @create-something/eslint-plugin-evidence."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-package-meetings-mcp-packages-meetings-mcp-worker-runs-substrate-create-something-worker-packages-meetings-mcp-worker-wrangler-toml",
       "source": "substrate:create-something:package:meetings-mcp-packages-meetings-mcp-worker",
       "target": "substrate:create-something:worker:packages-meetings-mcp-worker-wrangler-toml",
@@ -12550,6 +13615,13 @@
       "target": "substrate:create-something:worker:packages-meetings-wrangler-toml",
       "relation": "runs",
       "evidence": "wrangler.toml configures runtime for packages/meetings."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-motion-studio-packages-motion-studio-depends-on-substrate-create-something-package-createsomething-canon-tokens-packages-canon-tokens",
+      "source": "substrate:create-something:package:create-something-motion-studio-packages-motion-studio",
+      "target": "substrate:create-something:package:createsomething-canon-tokens-packages-canon-tokens",
+      "relation": "depends_on",
+      "evidence": "@create-something/motion-studio declares @createsomething/canon-tokens."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-notion-agent-packages-notion-agent-depends-on-substrate-create-something-package-create-something-canon-packages-canon",
@@ -12594,6 +13666,41 @@
       "evidence": "worker/wrangler.toml configures runtime for packages/notion-sync-mcp."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-offer-savings-app-packages-offer-savings-app-depends-on-substrate-create-something-package-create-something-offer-resolution-packages-offer-resolution",
+      "source": "substrate:create-something:package:create-something-offer-savings-app-packages-offer-savings-app",
+      "target": "substrate:create-something:package:create-something-offer-resolution-packages-offer-resolution",
+      "relation": "depends_on",
+      "evidence": "@create-something/offer-savings-app declares @create-something/offer-resolution."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-offer-savings-app-packages-offer-savings-app-runs-substrate-create-something-worker-packages-offer-savings-app-worker-wrangler-toml",
+      "source": "substrate:create-something:package:create-something-offer-savings-app-packages-offer-savings-app",
+      "target": "substrate:create-something:worker:packages-offer-savings-app-worker-wrangler-toml",
+      "relation": "runs",
+      "evidence": "worker/wrangler.toml configures runtime for packages/offer-savings-app."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-offer-savings-worker-packages-offer-savings-app-worker-depends-on-substrate-create-something-package-create-something-offer-resolution-packages-offer-resolution",
+      "source": "substrate:create-something:package:create-something-offer-savings-worker-packages-offer-savings-app-worker",
+      "target": "substrate:create-something:package:create-something-offer-resolution-packages-offer-resolution",
+      "relation": "depends_on",
+      "evidence": "@create-something/offer-savings-worker declares @create-something/offer-resolution."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-offer-savings-worker-packages-offer-savings-app-worker-depends-on-substrate-create-something-package-create-something-offer-savings-app-packages-offer-savings-app",
+      "source": "substrate:create-something:package:create-something-offer-savings-worker-packages-offer-savings-app-worker",
+      "target": "substrate:create-something:package:create-something-offer-savings-app-packages-offer-savings-app",
+      "relation": "depends_on",
+      "evidence": "@create-something/offer-savings-worker declares @create-something/offer-savings-app."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-offer-savings-worker-packages-offer-savings-app-worker-runs-substrate-create-something-worker-packages-offer-savings-app-worker-wrangler-toml",
+      "source": "substrate:create-something:package:create-something-offer-savings-worker-packages-offer-savings-app-worker",
+      "target": "substrate:create-something:worker:packages-offer-savings-app-worker-wrangler-toml",
+      "relation": "runs",
+      "evidence": "wrangler.toml configures runtime for packages/offer-savings-app/worker."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-ona-agents-packages-ona-agents-depends-on-substrate-create-something-package-create-something-canon-packages-canon",
       "source": "substrate:create-something:package:create-something-ona-agents-packages-ona-agents",
       "target": "substrate:create-something:package:create-something-canon-packages-canon",
@@ -12613,6 +13720,13 @@
       "target": "substrate:create-something:package:create-something-harness-packages-harness",
       "relation": "depends_on",
       "evidence": "@create-something/orchestration declares @create-something/harness."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-playbook-mcp-packages-playbook-mcp-depends-on-substrate-create-something-package-create-something-atlas-composition-packages-atlas-composition",
+      "source": "substrate:create-something:package:create-something-playbook-mcp-packages-playbook-mcp",
+      "target": "substrate:create-something:package:create-something-atlas-composition-packages-atlas-composition",
+      "relation": "depends_on",
+      "evidence": "@create-something/playbook-mcp declares @create-something/atlas-composition."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-playbook-mcp-packages-playbook-mcp-runs-substrate-create-something-worker-packages-playbook-mcp-worker-wrangler-toml",
@@ -12972,6 +14086,13 @@
       "evidence": "@create-something/webflow-dashboard declares @create-something/webflow-dashboard-core."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-webflow-marketplace-sync-packages-webflow-marketplace-sync-runs-substrate-create-something-worker-packages-webflow-marketplace-sync-wrangler-toml",
+      "source": "substrate:create-something:package:create-something-webflow-marketplace-sync-packages-webflow-marketplace-sync",
+      "target": "substrate:create-something:worker:packages-webflow-marketplace-sync-wrangler-toml",
+      "relation": "runs",
+      "evidence": "wrangler.toml configures runtime for packages/webflow-marketplace-sync."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-webflow-mcp-packages-webflow-mcp-depends-on-substrate-create-something-package-create-something-observability-packages-observability",
       "source": "substrate:create-something:package:create-something-webflow-mcp-packages-webflow-mcp",
       "target": "substrate:create-something:package:create-something-observability-packages-observability",
@@ -13035,6 +14156,13 @@
       "evidence": "wrangler.toml configures runtime for packages/webflow-reviewer-exceptions-mcp/worker."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-webflow-scope-watcher-packages-webflow-scope-watcher-runs-substrate-create-something-worker-packages-webflow-scope-watcher-wrangler-toml",
+      "source": "substrate:create-something:package:create-something-webflow-scope-watcher-packages-webflow-scope-watcher",
+      "target": "substrate:create-something:worker:packages-webflow-scope-watcher-wrangler-toml",
+      "relation": "runs",
+      "evidence": "wrangler.toml configures runtime for packages/webflow-scope-watcher."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-webflow-site-analyzer-mcp-packages-webflow-site-analyzer-mcp-depends-on-substrate-create-something-package-create-something-observability-packages-observability",
       "source": "substrate:create-something:package:create-something-webflow-site-analyzer-mcp-packages-webflow-site-analyzer-mcp",
       "target": "substrate:create-something:package:create-something-observability-packages-observability",
@@ -13070,6 +14198,13 @@
       "evidence": "wrangler.toml configures runtime for packages/webflow-site-analyzer-mcp/worker."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-webflow-template-agent-packages-webflow-template-agent-runs-substrate-create-something-worker-packages-webflow-template-agent-wrangler-toml",
+      "source": "substrate:create-something:package:create-something-webflow-template-agent-packages-webflow-template-agent",
+      "target": "substrate:create-something:worker:packages-webflow-template-agent-wrangler-toml",
+      "relation": "runs",
+      "evidence": "wrangler.toml configures runtime for packages/webflow-template-agent."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-webflow-template-review-mcp-packages-webflow-template-review-mcp-runs-substrate-create-something-worker-packages-webflow-template-review-mcp-worker-wrangler-toml",
       "source": "substrate:create-something:package:create-something-webflow-template-review-mcp-packages-webflow-template-review-mcp",
       "target": "substrate:create-something:worker:packages-webflow-template-review-mcp-worker-wrangler-toml",
@@ -13098,6 +14233,20 @@
       "evidence": "wrangler.toml configures runtime for packages/webflow-template-search."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-webflow-template-validation-worker-packages-webflow-template-validation-worker-depends-on-substrate-create-something-package-create-something-gsap-validation-worker-packages-gsap-validation-worker",
+      "source": "substrate:create-something:package:create-something-webflow-template-validation-worker-packages-webflow-template-validation-worker",
+      "target": "substrate:create-something:package:create-something-gsap-validation-worker-packages-gsap-validation-worker",
+      "relation": "depends_on",
+      "evidence": "@create-something/webflow-template-validation-worker declares @create-something/gsap-validation-worker."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-webflow-template-views-packages-webflow-template-views-runs-substrate-create-something-worker-packages-webflow-template-views-wrangler-toml",
+      "source": "substrate:create-something:package:create-something-webflow-template-views-packages-webflow-template-views",
+      "target": "substrate:create-something:worker:packages-webflow-template-views-wrangler-toml",
+      "relation": "runs",
+      "evidence": "wrangler.toml configures runtime for packages/webflow-template-views."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-wf-search-category-packages-wf-search-category-runs-substrate-create-something-worker-packages-wf-search-category-wrangler-toml",
       "source": "substrate:create-something:package:create-something-wf-search-category-packages-wf-search-category",
       "target": "substrate:create-something:worker:packages-wf-search-category-wrangler-toml",
@@ -13105,18 +14254,18 @@
       "evidence": "wrangler.toml configures runtime for packages/wf-search-category."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-workflow-evidence-extractor-packages-workflow-evidence-extractor-depends-on-substrate-create-something-package-create-something-workflow-compiler-packages-workflow-compiler",
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-workflow-evidence-extractor-packages-workflow-evidence-extractor-depends-on-substrate-create-something-package-createsomething-workflow-compiler-packages-workflow-compiler",
       "source": "substrate:create-something:package:create-something-workflow-evidence-extractor-packages-workflow-evidence-extractor",
-      "target": "substrate:create-something:package:create-something-workflow-compiler-packages-workflow-compiler",
+      "target": "substrate:create-something:package:createsomething-workflow-compiler-packages-workflow-compiler",
       "relation": "depends_on",
-      "evidence": "@create-something/workflow-evidence-extractor declares @create-something/workflow-compiler."
+      "evidence": "@create-something/workflow-evidence-extractor declares @createsomething/workflow-compiler."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-workflow-historical-context-reconciler-packages-workflow-historical-context-reconciler-depends-on-substrate-create-something-package-create-something-workflow-compiler-packages-workflow-compiler",
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-workflow-historical-context-reconciler-packages-workflow-historical-context-reconciler-depends-on-substrate-create-something-package-createsomething-workflow-compiler-packages-workflow-compiler",
       "source": "substrate:create-something:package:create-something-workflow-historical-context-reconciler-packages-workflow-historical-context-reconciler",
-      "target": "substrate:create-something:package:create-something-workflow-compiler-packages-workflow-compiler",
+      "target": "substrate:create-something:package:createsomething-workflow-compiler-packages-workflow-compiler",
       "relation": "depends_on",
-      "evidence": "@create-something/workflow-historical-context-reconciler declares @create-something/workflow-compiler."
+      "evidence": "@create-something/workflow-historical-context-reconciler declares @createsomething/workflow-compiler."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-workflow-historical-context-reconciler-packages-workflow-historical-context-reconciler-depends-on-substrate-create-something-package-create-something-workflow-evidence-extractor-packages-workflow-evidence-extractor",
@@ -13126,11 +14275,11 @@
       "evidence": "@create-something/workflow-historical-context-reconciler declares @create-something/workflow-evidence-extractor."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-workflow-observation-reconciler-packages-workflow-observation-reconciler-depends-on-substrate-create-something-package-create-something-workflow-compiler-packages-workflow-compiler",
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-workflow-observation-reconciler-packages-workflow-observation-reconciler-depends-on-substrate-create-something-package-createsomething-workflow-compiler-packages-workflow-compiler",
       "source": "substrate:create-something:package:create-something-workflow-observation-reconciler-packages-workflow-observation-reconciler",
-      "target": "substrate:create-something:package:create-something-workflow-compiler-packages-workflow-compiler",
+      "target": "substrate:create-something:package:createsomething-workflow-compiler-packages-workflow-compiler",
       "relation": "depends_on",
-      "evidence": "@create-something/workflow-observation-reconciler declares @create-something/workflow-compiler."
+      "evidence": "@create-something/workflow-observation-reconciler declares @createsomething/workflow-compiler."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-workflow-observation-reconciler-packages-workflow-observation-reconciler-depends-on-substrate-create-something-package-create-something-workflow-evidence-extractor-packages-workflow-evidence-extractor",
@@ -13140,11 +14289,11 @@
       "evidence": "@create-something/workflow-observation-reconciler declares @create-something/workflow-evidence-extractor."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-workflow-receipt-reconciler-packages-workflow-receipt-reconciler-depends-on-substrate-create-something-package-create-something-workflow-compiler-packages-workflow-compiler",
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-workflow-receipt-reconciler-packages-workflow-receipt-reconciler-depends-on-substrate-create-something-package-createsomething-workflow-compiler-packages-workflow-compiler",
       "source": "substrate:create-something:package:create-something-workflow-receipt-reconciler-packages-workflow-receipt-reconciler",
-      "target": "substrate:create-something:package:create-something-workflow-compiler-packages-workflow-compiler",
+      "target": "substrate:create-something:package:createsomething-workflow-compiler-packages-workflow-compiler",
       "relation": "depends_on",
-      "evidence": "@create-something/workflow-receipt-reconciler declares @create-something/workflow-compiler."
+      "evidence": "@create-something/workflow-receipt-reconciler declares @createsomething/workflow-compiler."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-workflow-receipt-reconciler-packages-workflow-receipt-reconciler-depends-on-substrate-create-something-package-create-something-workflow-evidence-extractor-packages-workflow-evidence-extractor",
@@ -13154,11 +14303,11 @@
       "evidence": "@create-something/workflow-receipt-reconciler declares @create-something/workflow-evidence-extractor."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-workflow-shadow-pilot-packages-workflow-shadow-pilot-depends-on-substrate-create-something-package-create-something-workflow-compiler-packages-workflow-compiler",
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-workflow-shadow-pilot-packages-workflow-shadow-pilot-depends-on-substrate-create-something-package-createsomething-workflow-compiler-packages-workflow-compiler",
       "source": "substrate:create-something:package:create-something-workflow-shadow-pilot-packages-workflow-shadow-pilot",
-      "target": "substrate:create-something:package:create-something-workflow-compiler-packages-workflow-compiler",
+      "target": "substrate:create-something:package:createsomething-workflow-compiler-packages-workflow-compiler",
       "relation": "depends_on",
-      "evidence": "@create-something/workflow-shadow-pilot declares @create-something/workflow-compiler."
+      "evidence": "@create-something/workflow-shadow-pilot declares @createsomething/workflow-compiler."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-workflow-shadow-pilot-packages-workflow-shadow-pilot-depends-on-substrate-create-something-package-create-something-workflow-historical-context-reconciler-packages-workflow-historical-context-reconciler",
@@ -13341,6 +14490,20 @@
       "target": "substrate:create-something:root",
       "relation": "governs",
       "evidence": "docs/policies/v1/policy.engine-rollout-gates.v1.md is a policy artifact."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-executor-routing-v1-json-governs-substrate-create-something-root",
+      "source": "substrate:create-something:policy:docs-policies-v1-policy-executor-routing-v1-json",
+      "target": "substrate:create-something:root",
+      "relation": "governs",
+      "evidence": "docs/policies/v1/policy.executor-routing.v1.json is a policy artifact."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-executor-routing-v1-md-governs-substrate-create-something-root",
+      "source": "substrate:create-something:policy:docs-policies-v1-policy-executor-routing-v1-md",
+      "target": "substrate:create-something:root",
+      "relation": "governs",
+      "evidence": "docs/policies/v1/policy.executor-routing.v1.md is a policy artifact."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-git-light-agent-delivery-v1-json-governs-substrate-create-something-root",
@@ -13707,6 +14870,20 @@
       "evidence": "docs/guides/ATLAS_LINEAR_INTEGRATION.md is an operating guide."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-bounded-research-interrupt-runbook-md-documents-substrate-create-something-root",
+      "source": "substrate:create-something:guide:docs-guides-bounded-research-interrupt-runbook-md",
+      "target": "substrate:create-something:root",
+      "relation": "documents",
+      "evidence": "docs/guides/BOUNDED_RESEARCH_INTERRUPT_RUNBOOK.md is an operating guide."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-browser-proof-and-closeout-runbook-md-documents-substrate-create-something-root",
+      "source": "substrate:create-something:guide:docs-guides-browser-proof-and-closeout-runbook-md",
+      "target": "substrate:create-something:root",
+      "relation": "documents",
+      "evidence": "docs/guides/BROWSER_PROOF_AND_CLOSEOUT_RUNBOOK.md is an operating guide."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-chatgpt-mcp-oauth-managed-bearer-md-documents-substrate-create-something-root",
       "source": "substrate:create-something:guide:docs-guides-chatgpt-mcp-oauth-managed-bearer-md",
       "target": "substrate:create-something:root",
@@ -13812,6 +14989,13 @@
       "evidence": "docs/guides/GIT_LIGHT_AGENT_DELIVERY_WORKFLOW.md is an operating guide."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-harness-ablation-loop-md-documents-substrate-create-something-root",
+      "source": "substrate:create-something:guide:docs-guides-harness-ablation-loop-md",
+      "target": "substrate:create-something:root",
+      "relation": "documents",
+      "evidence": "docs/guides/HARNESS_ABLATION_LOOP.md is an operating guide."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-hydra-db-governed-recall-md-documents-substrate-create-something-root",
       "source": "substrate:create-something:guide:docs-guides-hydra-db-governed-recall-md",
       "target": "substrate:create-something:root",
@@ -13838,6 +15022,13 @@
       "target": "substrate:create-something:root",
       "relation": "documents",
       "evidence": "docs/guides/MAP_PRODUCT_OPERATIONS.md is an operating guide."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-marketplace-submission-governance-playbook-md-documents-substrate-create-something-root",
+      "source": "substrate:create-something:guide:docs-guides-marketplace-submission-governance-playbook-md",
+      "target": "substrate:create-something:root",
+      "relation": "documents",
+      "evidence": "docs/guides/MARKETPLACE_SUBMISSION_GOVERNANCE_PLAYBOOK.md is an operating guide."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-mcp-apps-integration-md-documents-substrate-create-something-root",
@@ -13889,6 +15080,13 @@
       "evidence": "docs/guides/NOTION_WORKERS_AND_CLI_2026.md is an operating guide."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-npm-saved-auth-and-release-promotion-runbook-md-documents-substrate-create-something-root",
+      "source": "substrate:create-something:guide:docs-guides-npm-saved-auth-and-release-promotion-runbook-md",
+      "target": "substrate:create-something:root",
+      "relation": "documents",
+      "evidence": "docs/guides/NPM_SAVED_AUTH_AND_RELEASE_PROMOTION_RUNBOOK.md is an operating guide."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-observability-setup-md-documents-substrate-create-something-root",
       "source": "substrate:create-something:guide:docs-guides-observability-setup-md",
       "target": "substrate:create-something:root",
@@ -13929,6 +15127,13 @@
       "target": "substrate:create-something:root",
       "relation": "documents",
       "evidence": "docs/guides/OPERATOR_AGENT_SYSTEM.md is an operating guide."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-package-source-archive-workflow-md-documents-substrate-create-something-root",
+      "source": "substrate:create-something:guide:docs-guides-package-source-archive-workflow-md",
+      "target": "substrate:create-something:root",
+      "relation": "documents",
+      "evidence": "docs/guides/PACKAGE_SOURCE_ARCHIVE_WORKFLOW.md is an operating guide."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-playbook-library-research-2026-02-18-md-documents-substrate-create-something-root",
@@ -13978,6 +15183,13 @@
       "target": "substrate:create-something:root",
       "relation": "documents",
       "evidence": "docs/guides/SOLO_OPERATOR_AGENT_LOOP.md is an operating guide."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-solo-operator-control-tower-playbook-md-documents-substrate-create-something-root",
+      "source": "substrate:create-something:guide:docs-guides-solo-operator-control-tower-playbook-md",
+      "target": "substrate:create-something:root",
+      "relation": "documents",
+      "evidence": "docs/guides/SOLO_OPERATOR_CONTROL_TOWER_PLAYBOOK.md is an operating guide."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-steel-cli-md-documents-substrate-create-something-root",
@@ -14064,9 +15276,9 @@
       "evidence": "docs/THREE_TIER_FRAMEWORK.md documents packages/substrate-mcp through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-doc-docs-mcp-first-thesis-md-documents-substrate-create-something-package-create-something-pi-policy-os-packages-pi-policy-os",
+      "id": "substrate:create-something:edge:substrate-create-something-doc-docs-mcp-first-thesis-md-documents-substrate-create-something-package-createsomething-pi-policy-os-packages-pi-policy-os",
       "source": "substrate:create-something:doc:docs-mcp-first-thesis-md",
-      "target": "substrate:create-something:package:create-something-pi-policy-os-packages-pi-policy-os",
+      "target": "substrate:create-something:package:createsomething-pi-policy-os-packages-pi-policy-os",
       "relation": "documents",
       "evidence": "docs/MCP_FIRST_THESIS.md documents packages/pi-policy-os through matching topology terms."
     },
@@ -14085,18 +15297,18 @@
       "evidence": "docs/policies/generated/fallback/policy.hub-route-authorization.v1.json governs config/dify-agents/aaron-hub.json through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-generated-fallback-policy-judgment-baseline-v1-json-governs-substrate-create-something-package-create-something-io-packages-io",
+      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-generated-fallback-policy-judgment-baseline-v1-json-governs-substrate-create-something-package-create-something-arc-packages-arc",
       "source": "substrate:create-something:policy:docs-policies-generated-fallback-policy-judgment-baseline-v1-json",
-      "target": "substrate:create-something:package:create-something-io-packages-io",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
       "relation": "governs",
-      "evidence": "docs/policies/generated/fallback/policy.judgment-baseline.v1.json governs packages/io through matching topology terms."
+      "evidence": "docs/policies/generated/fallback/policy.judgment-baseline.v1.json governs packages/arc through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-generated-fallback-policy-legacy-compat-sunset-v1-json-governs-substrate-create-something-package-create-something-io-packages-io",
+      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-generated-fallback-policy-legacy-compat-sunset-v1-json-governs-substrate-create-something-package-create-something-arc-packages-arc",
       "source": "substrate:create-something:policy:docs-policies-generated-fallback-policy-legacy-compat-sunset-v1-json",
-      "target": "substrate:create-something:package:create-something-io-packages-io",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
       "relation": "governs",
-      "evidence": "docs/policies/generated/fallback/policy.legacy-compat-sunset.v1.json governs packages/io through matching topology terms."
+      "evidence": "docs/policies/generated/fallback/policy.legacy-compat-sunset.v1.json governs packages/arc through matching topology terms."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-generated-fallback-policy-mcp-credential-delivery-v1-json-governs-substrate-create-something-package-create-something-io-packages-io",
@@ -14120,11 +15332,11 @@
       "evidence": "docs/policies/generated/fallback/policy.partner-auth-governance.v1.json governs packages/mcp-authz through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-generated-fallback-policy-service-tier-entitlement-v1-json-governs-substrate-create-something-package-create-something-halfdozen-zoom-sync-packages-halfdozen-zoom-sync",
+      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-generated-fallback-policy-service-tier-entitlement-v1-json-governs-substrate-create-something-package-create-something-arc-packages-arc",
       "source": "substrate:create-something:policy:docs-policies-generated-fallback-policy-service-tier-entitlement-v1-json",
-      "target": "substrate:create-something:package:create-something-halfdozen-zoom-sync-packages-halfdozen-zoom-sync",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
       "relation": "governs",
-      "evidence": "docs/policies/generated/fallback/policy.service-tier-entitlement.v1.json governs packages/halfdozen-zoom-sync through matching topology terms."
+      "evidence": "docs/policies/generated/fallback/policy.service-tier-entitlement.v1.json governs packages/arc through matching topology terms."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-generated-fallback-policy-user-bearer-token-governance-v1-json-governs-substrate-create-something-package-create-something-app-governance-db-packages-app-governance-db",
@@ -14141,25 +15353,25 @@
       "evidence": "docs/policies/generated/mcp-authz-manifests.v1.json governs packages/mcp-authz through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-readme-md-governs-substrate-create-something-package-create-something-io-packages-io",
+      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-readme-md-governs-substrate-create-something-package-create-something-arc-packages-arc",
       "source": "substrate:create-something:policy:docs-policies-readme-md",
-      "target": "substrate:create-something:package:create-something-io-packages-io",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
       "relation": "governs",
-      "evidence": "docs/policies/README.md governs packages/io through matching topology terms."
+      "evidence": "docs/policies/README.md governs packages/arc through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-account-role-boundaries-v1-json-governs-substrate-create-something-package-create-something-io-packages-io",
+      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-account-role-boundaries-v1-json-governs-substrate-create-something-package-create-something-arc-packages-arc",
       "source": "substrate:create-something:policy:docs-policies-v1-policy-account-role-boundaries-v1-json",
-      "target": "substrate:create-something:package:create-something-io-packages-io",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
       "relation": "governs",
-      "evidence": "docs/policies/v1/policy.account-role-boundaries.v1.json governs packages/io through matching topology terms."
+      "evidence": "docs/policies/v1/policy.account-role-boundaries.v1.json governs packages/arc through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-account-role-boundaries-v1-md-governs-substrate-create-something-package-create-something-io-packages-io",
+      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-account-role-boundaries-v1-md-governs-substrate-create-something-package-create-something-arc-packages-arc",
       "source": "substrate:create-something:policy:docs-policies-v1-policy-account-role-boundaries-v1-md",
-      "target": "substrate:create-something:package:create-something-io-packages-io",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
       "relation": "governs",
-      "evidence": "docs/policies/v1/policy.account-role-boundaries.v1.md governs packages/io through matching topology terms."
+      "evidence": "docs/policies/v1/policy.account-role-boundaries.v1.md governs packages/arc through matching topology terms."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-auth0-subject-rebind-governance-v1-json-governs-substrate-create-something-package-create-something-app-governance-db-packages-app-governance-db",
@@ -14204,18 +15416,32 @@
       "evidence": "docs/policies/v1/policy.cross-workspace-sync-governance.v1.md governs packages/app-governance-db through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-engine-rollout-gates-v1-json-governs-substrate-create-something-package-create-something-io-packages-io",
+      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-engine-rollout-gates-v1-json-governs-substrate-create-something-package-create-something-arc-packages-arc",
       "source": "substrate:create-something:policy:docs-policies-v1-policy-engine-rollout-gates-v1-json",
-      "target": "substrate:create-something:package:create-something-io-packages-io",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
       "relation": "governs",
-      "evidence": "docs/policies/v1/policy.engine-rollout-gates.v1.json governs packages/io through matching topology terms."
+      "evidence": "docs/policies/v1/policy.engine-rollout-gates.v1.json governs packages/arc through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-engine-rollout-gates-v1-md-governs-substrate-create-something-package-create-something-io-packages-io",
+      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-engine-rollout-gates-v1-md-governs-substrate-create-something-package-create-something-arc-packages-arc",
       "source": "substrate:create-something:policy:docs-policies-v1-policy-engine-rollout-gates-v1-md",
-      "target": "substrate:create-something:package:create-something-io-packages-io",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
       "relation": "governs",
-      "evidence": "docs/policies/v1/policy.engine-rollout-gates.v1.md governs packages/io through matching topology terms."
+      "evidence": "docs/policies/v1/policy.engine-rollout-gates.v1.md governs packages/arc through matching topology terms."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-executor-routing-v1-json-governs-substrate-create-something-package-create-something-arc-packages-arc",
+      "source": "substrate:create-something:policy:docs-policies-v1-policy-executor-routing-v1-json",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
+      "relation": "governs",
+      "evidence": "docs/policies/v1/policy.executor-routing.v1.json governs packages/arc through matching topology terms."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-executor-routing-v1-md-governs-substrate-create-something-package-create-something-arc-packages-arc",
+      "source": "substrate:create-something:policy:docs-policies-v1-policy-executor-routing-v1-md",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
+      "relation": "governs",
+      "evidence": "docs/policies/v1/policy.executor-routing.v1.md governs packages/arc through matching topology terms."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-git-light-agent-delivery-v1-json-governs-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
@@ -14232,18 +15458,18 @@
       "evidence": "docs/policies/v1/policy.git-light-agent-delivery.v1.md governs config/dify-agents/aaron-hub.json through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-global-access-kill-switch-v1-json-governs-substrate-create-something-package-create-something-io-packages-io",
+      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-global-access-kill-switch-v1-json-governs-substrate-create-something-package-create-something-arc-packages-arc",
       "source": "substrate:create-something:policy:docs-policies-v1-policy-global-access-kill-switch-v1-json",
-      "target": "substrate:create-something:package:create-something-io-packages-io",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
       "relation": "governs",
-      "evidence": "docs/policies/v1/policy.global-access-kill-switch.v1.json governs packages/io through matching topology terms."
+      "evidence": "docs/policies/v1/policy.global-access-kill-switch.v1.json governs packages/arc through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-global-access-kill-switch-v1-md-governs-substrate-create-something-package-create-something-io-packages-io",
+      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-global-access-kill-switch-v1-md-governs-substrate-create-something-package-create-something-arc-packages-arc",
       "source": "substrate:create-something:policy:docs-policies-v1-policy-global-access-kill-switch-v1-md",
-      "target": "substrate:create-something:package:create-something-io-packages-io",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
       "relation": "governs",
-      "evidence": "docs/policies/v1/policy.global-access-kill-switch.v1.md governs packages/io through matching topology terms."
+      "evidence": "docs/policies/v1/policy.global-access-kill-switch.v1.md governs packages/arc through matching topology terms."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-hub-route-authorization-v1-json-governs-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
@@ -14274,46 +15500,46 @@
       "evidence": "docs/policies/v1/policy.identity-subject-rebind-governance.v1.md governs packages/app-governance-db through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-integration-selection-v1-json-governs-substrate-create-something-package-create-something-io-packages-io",
+      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-integration-selection-v1-json-governs-substrate-create-something-package-create-something-arc-packages-arc",
       "source": "substrate:create-something:policy:docs-policies-v1-policy-integration-selection-v1-json",
-      "target": "substrate:create-something:package:create-something-io-packages-io",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
       "relation": "governs",
-      "evidence": "docs/policies/v1/policy.integration-selection.v1.json governs packages/io through matching topology terms."
+      "evidence": "docs/policies/v1/policy.integration-selection.v1.json governs packages/arc through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-integration-selection-v1-md-governs-substrate-create-something-package-create-something-io-packages-io",
+      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-integration-selection-v1-md-governs-substrate-create-something-package-create-something-arc-packages-arc",
       "source": "substrate:create-something:policy:docs-policies-v1-policy-integration-selection-v1-md",
-      "target": "substrate:create-something:package:create-something-io-packages-io",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
       "relation": "governs",
-      "evidence": "docs/policies/v1/policy.integration-selection.v1.md governs packages/io through matching topology terms."
+      "evidence": "docs/policies/v1/policy.integration-selection.v1.md governs packages/arc through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-judgment-baseline-v1-json-governs-substrate-create-something-package-create-something-io-packages-io",
+      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-judgment-baseline-v1-json-governs-substrate-create-something-package-create-something-arc-packages-arc",
       "source": "substrate:create-something:policy:docs-policies-v1-policy-judgment-baseline-v1-json",
-      "target": "substrate:create-something:package:create-something-io-packages-io",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
       "relation": "governs",
-      "evidence": "docs/policies/v1/policy.judgment-baseline.v1.json governs packages/io through matching topology terms."
+      "evidence": "docs/policies/v1/policy.judgment-baseline.v1.json governs packages/arc through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-judgment-baseline-v1-md-governs-substrate-create-something-package-create-something-io-packages-io",
+      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-judgment-baseline-v1-md-governs-substrate-create-something-package-create-something-arc-packages-arc",
       "source": "substrate:create-something:policy:docs-policies-v1-policy-judgment-baseline-v1-md",
-      "target": "substrate:create-something:package:create-something-io-packages-io",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
       "relation": "governs",
-      "evidence": "docs/policies/v1/policy.judgment-baseline.v1.md governs packages/io through matching topology terms."
+      "evidence": "docs/policies/v1/policy.judgment-baseline.v1.md governs packages/arc through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-legacy-compat-sunset-v1-json-governs-substrate-create-something-package-create-something-io-packages-io",
+      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-legacy-compat-sunset-v1-json-governs-substrate-create-something-package-create-something-arc-packages-arc",
       "source": "substrate:create-something:policy:docs-policies-v1-policy-legacy-compat-sunset-v1-json",
-      "target": "substrate:create-something:package:create-something-io-packages-io",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
       "relation": "governs",
-      "evidence": "docs/policies/v1/policy.legacy-compat-sunset.v1.json governs packages/io through matching topology terms."
+      "evidence": "docs/policies/v1/policy.legacy-compat-sunset.v1.json governs packages/arc through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-legacy-compat-sunset-v1-md-governs-substrate-create-something-package-create-something-io-packages-io",
+      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-legacy-compat-sunset-v1-md-governs-substrate-create-something-package-create-something-arc-packages-arc",
       "source": "substrate:create-something:policy:docs-policies-v1-policy-legacy-compat-sunset-v1-md",
-      "target": "substrate:create-something:package:create-something-io-packages-io",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
       "relation": "governs",
-      "evidence": "docs/policies/v1/policy.legacy-compat-sunset.v1.md governs packages/io through matching topology terms."
+      "evidence": "docs/policies/v1/policy.legacy-compat-sunset.v1.md governs packages/arc through matching topology terms."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-mcp-credential-delivery-v1-json-governs-substrate-create-something-package-create-something-io-packages-io",
@@ -14372,18 +15598,18 @@
       "evidence": "docs/policies/v1/policy.operator-agent-production-lab.v1.md governs packages/ona-agents through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-paper-experiment-release-gate-v1-json-governs-substrate-create-something-package-create-something-io-packages-io",
+      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-paper-experiment-release-gate-v1-json-governs-substrate-create-something-package-create-something-arc-packages-arc",
       "source": "substrate:create-something:policy:docs-policies-v1-policy-paper-experiment-release-gate-v1-json",
-      "target": "substrate:create-something:package:create-something-io-packages-io",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
       "relation": "governs",
-      "evidence": "docs/policies/v1/policy.paper-experiment-release-gate.v1.json governs packages/io through matching topology terms."
+      "evidence": "docs/policies/v1/policy.paper-experiment-release-gate.v1.json governs packages/arc through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-paper-experiment-release-gate-v1-md-governs-substrate-create-something-package-create-something-io-packages-io",
+      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-paper-experiment-release-gate-v1-md-governs-substrate-create-something-package-create-something-arc-packages-arc",
       "source": "substrate:create-something:policy:docs-policies-v1-policy-paper-experiment-release-gate-v1-md",
-      "target": "substrate:create-something:package:create-something-io-packages-io",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
       "relation": "governs",
-      "evidence": "docs/policies/v1/policy.paper-experiment-release-gate.v1.md governs packages/io through matching topology terms."
+      "evidence": "docs/policies/v1/policy.paper-experiment-release-gate.v1.md governs packages/arc through matching topology terms."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-partner-auth-governance-v1-json-governs-substrate-create-something-package-create-something-mcp-authz-packages-mcp-authz",
@@ -14428,18 +15654,18 @@
       "evidence": "docs/policies/v1/policy.progressive-profile-governance.v1.md governs packages/app-governance-db through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-prose-quality-v1-json-governs-substrate-create-something-package-create-something-io-packages-io",
+      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-prose-quality-v1-json-governs-substrate-create-something-package-create-something-arc-packages-arc",
       "source": "substrate:create-something:policy:docs-policies-v1-policy-prose-quality-v1-json",
-      "target": "substrate:create-something:package:create-something-io-packages-io",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
       "relation": "governs",
-      "evidence": "docs/policies/v1/policy.prose-quality.v1.json governs packages/io through matching topology terms."
+      "evidence": "docs/policies/v1/policy.prose-quality.v1.json governs packages/arc through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-prose-quality-v1-md-governs-substrate-create-something-package-create-something-io-packages-io",
+      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-prose-quality-v1-md-governs-substrate-create-something-package-create-something-arc-packages-arc",
       "source": "substrate:create-something:policy:docs-policies-v1-policy-prose-quality-v1-md",
-      "target": "substrate:create-something:package:create-something-io-packages-io",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
       "relation": "governs",
-      "evidence": "docs/policies/v1/policy.prose-quality.v1.md governs packages/io through matching topology terms."
+      "evidence": "docs/policies/v1/policy.prose-quality.v1.md governs packages/arc through matching topology terms."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-prospect-hub-onboarding-v1-json-governs-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
@@ -14456,46 +15682,46 @@
       "evidence": "docs/policies/v1/policy.prospect-hub-onboarding.v1.md governs config/dify-agents/aaron-hub.json through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-service-tier-entitlement-v1-json-governs-substrate-create-something-package-create-something-halfdozen-zoom-sync-packages-halfdozen-zoom-sync",
+      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-service-tier-entitlement-v1-json-governs-substrate-create-something-package-create-something-arc-packages-arc",
       "source": "substrate:create-something:policy:docs-policies-v1-policy-service-tier-entitlement-v1-json",
-      "target": "substrate:create-something:package:create-something-halfdozen-zoom-sync-packages-halfdozen-zoom-sync",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
       "relation": "governs",
-      "evidence": "docs/policies/v1/policy.service-tier-entitlement.v1.json governs packages/halfdozen-zoom-sync through matching topology terms."
+      "evidence": "docs/policies/v1/policy.service-tier-entitlement.v1.json governs packages/arc through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-service-tier-entitlement-v1-md-governs-substrate-create-something-package-create-something-halfdozen-zoom-sync-packages-halfdozen-zoom-sync",
+      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-service-tier-entitlement-v1-md-governs-substrate-create-something-package-create-something-arc-packages-arc",
       "source": "substrate:create-something:policy:docs-policies-v1-policy-service-tier-entitlement-v1-md",
-      "target": "substrate:create-something:package:create-something-halfdozen-zoom-sync-packages-halfdozen-zoom-sync",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
       "relation": "governs",
-      "evidence": "docs/policies/v1/policy.service-tier-entitlement.v1.md governs packages/halfdozen-zoom-sync through matching topology terms."
+      "evidence": "docs/policies/v1/policy.service-tier-entitlement.v1.md governs packages/arc through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-simplified-technical-english-v1-json-governs-substrate-create-something-package-create-something-io-packages-io",
+      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-simplified-technical-english-v1-json-governs-substrate-create-something-package-create-something-arc-packages-arc",
       "source": "substrate:create-something:policy:docs-policies-v1-policy-simplified-technical-english-v1-json",
-      "target": "substrate:create-something:package:create-something-io-packages-io",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
       "relation": "governs",
-      "evidence": "docs/policies/v1/policy.simplified-technical-english.v1.json governs packages/io through matching topology terms."
+      "evidence": "docs/policies/v1/policy.simplified-technical-english.v1.json governs packages/arc through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-simplified-technical-english-v1-md-governs-substrate-create-something-package-create-something-io-packages-io",
+      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-simplified-technical-english-v1-md-governs-substrate-create-something-package-create-something-arc-packages-arc",
       "source": "substrate:create-something:policy:docs-policies-v1-policy-simplified-technical-english-v1-md",
-      "target": "substrate:create-something:package:create-something-io-packages-io",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
       "relation": "governs",
-      "evidence": "docs/policies/v1/policy.simplified-technical-english.v1.md governs packages/io through matching topology terms."
+      "evidence": "docs/policies/v1/policy.simplified-technical-english.v1.md governs packages/arc through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-tenant-tool-exposure-v1-json-governs-substrate-create-something-package-create-something-concierge-chat-packages-concierge-chat",
+      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-tenant-tool-exposure-v1-json-governs-substrate-create-something-package-create-something-arc-packages-arc",
       "source": "substrate:create-something:policy:docs-policies-v1-policy-tenant-tool-exposure-v1-json",
-      "target": "substrate:create-something:package:create-something-concierge-chat-packages-concierge-chat",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
       "relation": "governs",
-      "evidence": "docs/policies/v1/policy.tenant-tool-exposure.v1.json governs packages/concierge-chat through matching topology terms."
+      "evidence": "docs/policies/v1/policy.tenant-tool-exposure.v1.json governs packages/arc through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-tenant-tool-exposure-v1-md-governs-substrate-create-something-package-create-something-concierge-chat-packages-concierge-chat",
+      "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-tenant-tool-exposure-v1-md-governs-substrate-create-something-package-create-something-arc-packages-arc",
       "source": "substrate:create-something:policy:docs-policies-v1-policy-tenant-tool-exposure-v1-md",
-      "target": "substrate:create-something:package:create-something-concierge-chat-packages-concierge-chat",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
       "relation": "governs",
-      "evidence": "docs/policies/v1/policy.tenant-tool-exposure.v1.md governs packages/concierge-chat through matching topology terms."
+      "evidence": "docs/policies/v1/policy.tenant-tool-exposure.v1.md governs packages/arc through matching topology terms."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-policy-docs-policies-v1-policy-user-bearer-token-governance-v1-json-governs-substrate-create-something-package-create-something-app-governance-db-packages-app-governance-db",
@@ -14512,18 +15738,18 @@
       "evidence": "docs/policies/v1/policy.user-bearer-token-governance.v1.md governs packages/app-governance-db through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-agency-article-image-workflow-md-documents-substrate-create-something-package-create-something-workflow-compiler-packages-workflow-compiler",
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-agency-article-image-workflow-md-documents-substrate-create-something-package-createsomething-workflow-compiler-packages-workflow-compiler",
       "source": "substrate:create-something:guide:docs-guides-agency-article-image-workflow-md",
-      "target": "substrate:create-something:package:create-something-workflow-compiler-packages-workflow-compiler",
+      "target": "substrate:create-something:package:createsomething-workflow-compiler-packages-workflow-compiler",
       "relation": "documents",
       "evidence": "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md documents packages/workflow-compiler through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-agency-governance-products-operations-runbook-md-documents-substrate-create-something-package-create-something-substrate-mcp-packages-substrate-mcp",
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-agency-governance-products-operations-runbook-md-documents-substrate-create-something-package-create-something-arc-packages-arc",
       "source": "substrate:create-something:guide:docs-guides-agency-governance-products-operations-runbook-md",
-      "target": "substrate:create-something:package:create-something-substrate-mcp-packages-substrate-mcp",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
       "relation": "documents",
-      "evidence": "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md documents packages/substrate-mcp through the stable guide platform anchor."
+      "evidence": "docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md documents packages/arc through matching topology terms."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-agency-marketing-page-portfolio-rdoc-md-documents-substrate-create-something-package-create-something-agency-packages-agency",
@@ -14540,16 +15766,16 @@
       "evidence": "docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md documents config/dify-agents/template-review-hub.json through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-agency-service-tier-migration-runbook-2026-03-09-md-documents-substrate-create-something-package-create-something-substrate-mcp-packages-substrate-mcp",
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-agency-service-tier-migration-runbook-2026-03-09-md-documents-substrate-create-something-package-create-something-arc-packages-arc",
       "source": "substrate:create-something:guide:docs-guides-agency-service-tier-migration-runbook-2026-03-09-md",
-      "target": "substrate:create-something:package:create-something-substrate-mcp-packages-substrate-mcp",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
       "relation": "documents",
-      "evidence": "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md documents packages/substrate-mcp through matching topology terms."
+      "evidence": "docs/guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md documents packages/arc through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-agency-workflow-intent-article-workflow-md-documents-substrate-create-something-package-create-something-workflow-compiler-packages-workflow-compiler",
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-agency-workflow-intent-article-workflow-md-documents-substrate-create-something-package-createsomething-workflow-compiler-packages-workflow-compiler",
       "source": "substrate:create-something:guide:docs-guides-agency-workflow-intent-article-workflow-md",
-      "target": "substrate:create-something:package:create-something-workflow-compiler-packages-workflow-compiler",
+      "target": "substrate:create-something:package:createsomething-workflow-compiler-packages-workflow-compiler",
       "relation": "documents",
       "evidence": "docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md documents packages/workflow-compiler through matching topology terms."
     },
@@ -14580,6 +15806,20 @@
       "target": "substrate:create-something:package:create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
       "relation": "documents",
       "evidence": "docs/guides/ATLAS_LINEAR_INTEGRATION.md documents packages/interaction-atlas-mcp through matching topology terms."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-bounded-research-interrupt-runbook-md-documents-substrate-create-something-package-create-something-arc-packages-arc",
+      "source": "substrate:create-something:guide:docs-guides-bounded-research-interrupt-runbook-md",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
+      "relation": "documents",
+      "evidence": "docs/guides/BOUNDED_RESEARCH_INTERRUPT_RUNBOOK.md documents packages/arc through matching topology terms."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-browser-proof-and-closeout-runbook-md-documents-substrate-create-something-package-create-something-arc-packages-arc",
+      "source": "substrate:create-something:guide:docs-guides-browser-proof-and-closeout-runbook-md",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
+      "relation": "documents",
+      "evidence": "docs/guides/BROWSER_PROOF_AND_CLOSEOUT_RUNBOOK.md documents packages/arc through matching topology terms."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-chatgpt-mcp-oauth-managed-bearer-md-documents-substrate-create-something-package-create-something-community-mcp-packages-community-mcp",
@@ -14687,6 +15927,13 @@
       "evidence": "docs/guides/GIT_LIGHT_AGENT_DELIVERY_WORKFLOW.md documents config/dify-agents/aaron-hub.json through matching topology terms."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-harness-ablation-loop-md-documents-substrate-create-something-package-create-something-substrate-mcp-packages-substrate-mcp",
+      "source": "substrate:create-something:guide:docs-guides-harness-ablation-loop-md",
+      "target": "substrate:create-something:package:create-something-substrate-mcp-packages-substrate-mcp",
+      "relation": "documents",
+      "evidence": "docs/guides/HARNESS_ABLATION_LOOP.md documents packages/substrate-mcp through the stable guide platform anchor."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-hydra-db-governed-recall-md-documents-substrate-create-something-package-create-something-hydra-db-recall-mcp-packages-hydra-db-recall-mcp",
       "source": "substrate:create-something:guide:docs-guides-hydra-db-governed-recall-md",
       "target": "substrate:create-something:package:create-something-hydra-db-recall-mcp-packages-hydra-db-recall-mcp",
@@ -14694,11 +15941,11 @@
       "evidence": "docs/guides/HYDRA_DB_GOVERNED_RECALL.md documents packages/hydra-db-recall-mcp through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-judgment-layer-dogfood-playbook-md-documents-substrate-create-something-package-create-something-app-governance-db-packages-app-governance-db",
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-judgment-layer-dogfood-playbook-md-documents-substrate-create-something-package-create-something-arc-packages-arc",
       "source": "substrate:create-something:guide:docs-guides-judgment-layer-dogfood-playbook-md",
-      "target": "substrate:create-something:package:create-something-app-governance-db-packages-app-governance-db",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
       "relation": "documents",
-      "evidence": "docs/guides/JUDGMENT_LAYER_DOGFOOD_PLAYBOOK.md documents packages/app-governance-db through matching topology terms."
+      "evidence": "docs/guides/JUDGMENT_LAYER_DOGFOOD_PLAYBOOK.md documents packages/arc through matching topology terms."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-loops-above-agents-md-documents-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
@@ -14708,11 +15955,18 @@
       "evidence": "docs/guides/LOOPS_ABOVE_AGENTS.md documents config/dify-agents/aaron-hub.json through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-map-product-operations-md-documents-substrate-create-something-package-create-something-io-packages-io",
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-map-product-operations-md-documents-substrate-create-something-package-create-something-arc-packages-arc",
       "source": "substrate:create-something:guide:docs-guides-map-product-operations-md",
-      "target": "substrate:create-something:package:create-something-io-packages-io",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
       "relation": "documents",
-      "evidence": "docs/guides/MAP_PRODUCT_OPERATIONS.md documents packages/io through the stable guide platform anchor."
+      "evidence": "docs/guides/MAP_PRODUCT_OPERATIONS.md documents packages/arc through matching topology terms."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-marketplace-submission-governance-playbook-md-documents-substrate-create-something-app-create-something-marketplace-template-submission-cloud-apps-marketplace-template-submission-cloud",
+      "source": "substrate:create-something:guide:docs-guides-marketplace-submission-governance-playbook-md",
+      "target": "substrate:create-something:app:create-something-marketplace-template-submission-cloud-apps-marketplace-template-submission-cloud",
+      "relation": "documents",
+      "evidence": "docs/guides/MARKETPLACE_SUBMISSION_GOVERNANCE_PLAYBOOK.md documents apps/marketplace-template-submission-cloud through matching topology terms."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-mcp-apps-integration-md-documents-substrate-create-something-package-create-something-io-packages-io",
@@ -14764,6 +16018,13 @@
       "evidence": "docs/guides/NOTION_WORKERS_AND_CLI_2026.md documents config/dify-agents/youtube-transcript-notion-agent.json through matching topology terms."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-npm-saved-auth-and-release-promotion-runbook-md-documents-substrate-create-something-package-create-something-mcp-authz-packages-mcp-authz",
+      "source": "substrate:create-something:guide:docs-guides-npm-saved-auth-and-release-promotion-runbook-md",
+      "target": "substrate:create-something:package:create-something-mcp-authz-packages-mcp-authz",
+      "relation": "documents",
+      "evidence": "docs/guides/NPM_SAVED_AUTH_AND_RELEASE_PROMOTION_RUNBOOK.md documents packages/mcp-authz through matching topology terms."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-observability-setup-md-documents-substrate-create-something-package-create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
       "source": "substrate:create-something:guide:docs-guides-observability-setup-md",
       "target": "substrate:create-something:package:create-something-interaction-atlas-mcp-packages-interaction-atlas-mcp",
@@ -14806,11 +16067,18 @@
       "evidence": "docs/guides/OPERATOR_AGENT_SYSTEM.md documents config/dify-agents/aaron-hub.json through matching topology terms."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-playbook-library-research-2026-02-18-md-documents-substrate-create-something-package-create-something-io-packages-io",
-      "source": "substrate:create-something:guide:docs-guides-playbook-library-research-2026-02-18-md",
-      "target": "substrate:create-something:package:create-something-io-packages-io",
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-package-source-archive-workflow-md-documents-substrate-create-something-agent-config-config-dify-agents-aaron-hub-json",
+      "source": "substrate:create-something:guide:docs-guides-package-source-archive-workflow-md",
+      "target": "substrate:create-something:agent-config:config-dify-agents-aaron-hub-json",
       "relation": "documents",
-      "evidence": "docs/guides/PLAYBOOK_LIBRARY_RESEARCH_2026-02-18.md documents packages/io through matching topology terms."
+      "evidence": "docs/guides/PACKAGE_SOURCE_ARCHIVE_WORKFLOW.md documents config/dify-agents/aaron-hub.json through matching topology terms."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-playbook-library-research-2026-02-18-md-documents-substrate-create-something-package-create-something-arc-packages-arc",
+      "source": "substrate:create-something:guide:docs-guides-playbook-library-research-2026-02-18-md",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
+      "relation": "documents",
+      "evidence": "docs/guides/PLAYBOOK_LIBRARY_RESEARCH_2026-02-18.md documents packages/arc through matching topology terms."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-policy-os-gating-deploy-checklist-2026-03-09-md-documents-substrate-create-something-package-create-something-io-packages-io",
@@ -14820,11 +16088,11 @@
       "evidence": "docs/guides/POLICY_OS_GATING_DEPLOY_CHECKLIST_2026-03-09.md documents packages/io through the stable guide platform anchor."
     },
     {
-      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-policy-os-live-verification-runbook-2026-03-09-md-documents-substrate-create-something-package-create-something-database-layer-packages-database-layer",
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-policy-os-live-verification-runbook-2026-03-09-md-documents-substrate-create-something-package-create-something-arc-packages-arc",
       "source": "substrate:create-something:guide:docs-guides-policy-os-live-verification-runbook-2026-03-09-md",
-      "target": "substrate:create-something:package:create-something-database-layer-packages-database-layer",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
       "relation": "documents",
-      "evidence": "docs/guides/POLICY_OS_LIVE_VERIFICATION_RUNBOOK_2026-03-09.md documents packages/database-layer through the stable guide platform anchor."
+      "evidence": "docs/guides/POLICY_OS_LIVE_VERIFICATION_RUNBOOK_2026-03-09.md documents packages/arc through matching topology terms."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-recurring-cleanup-loops-md-documents-substrate-create-something-package-create-something-io-packages-io",
@@ -14853,6 +16121,13 @@
       "target": "substrate:create-something:agent-config:config-dify-agents-aaron-hub-json",
       "relation": "documents",
       "evidence": "docs/guides/SOLO_OPERATOR_AGENT_LOOP.md documents config/dify-agents/aaron-hub.json through matching topology terms."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-solo-operator-control-tower-playbook-md-documents-substrate-create-something-package-create-something-arc-packages-arc",
+      "source": "substrate:create-something:guide:docs-guides-solo-operator-control-tower-playbook-md",
+      "target": "substrate:create-something:package:create-something-arc-packages-arc",
+      "relation": "documents",
+      "evidence": "docs/guides/SOLO_OPERATOR_CONTROL_TOWER_PLAYBOOK.md documents packages/arc through matching topology terms."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-guide-docs-guides-steel-cli-md-documents-substrate-create-something-package-create-something-agency-packages-agency",

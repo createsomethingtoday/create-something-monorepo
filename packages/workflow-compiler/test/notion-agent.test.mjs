@@ -300,11 +300,16 @@ test('stops a blocked decision before it accepts any operational receipt', async
   action.autonomy = 'blocked';
   const compiled = compileWorkflowDefinition(workflow);
   const blueprint = createNotionCustomAgentBlueprint(compiled, readOnlyBlueprintInput());
+  const installation = evaluateNotionCustomAgentInstallation(
+    blueprint,
+    matchingConfigurationReceipt(blueprint, 'notion-agent://blocked-decision')
+  );
 
   assert.deepEqual(
     evaluateNotionCustomAgentOperationalReceipts(blueprint, {
       schemaVersion: 'notion_custom_agent_operational_receipts.v0.1',
       blueprintId: 'agency-ops-evidence-triage.v0.1',
+      agentRef: 'notion-agent://blocked-decision',
       activationReceipt: {
         triggerId: 'manual-review',
         runRef: 'notion-run://blocked-decision',
@@ -315,7 +320,7 @@ test('stops a blocked decision before it accepts any operational receipt', async
       },
       toolReceipts: [],
       mutationReceipts: []
-    }),
+    }, installation),
     {
       schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
       blueprintId: 'agency-ops-evidence-triage.v0.1',
@@ -330,11 +335,16 @@ test('stops a mutation receipt attributed to a read-only binding', async () => {
   const workflow = JSON.parse(await readFile(workflowUrl, 'utf8'));
   const compiled = compileWorkflowDefinition(workflow);
   const blueprint = createNotionCustomAgentBlueprint(compiled, readOnlyBlueprintInput());
+  const installation = evaluateNotionCustomAgentInstallation(
+    blueprint,
+    matchingConfigurationReceipt(blueprint, 'notion-agent://read-binding-mutation')
+  );
 
   assert.deepEqual(
     evaluateNotionCustomAgentOperationalReceipts(blueprint, {
       schemaVersion: 'notion_custom_agent_operational_receipts.v0.1',
       blueprintId: 'agency-ops-evidence-triage.v0.1',
+      agentRef: 'notion-agent://read-binding-mutation',
       activationReceipt: {
         triggerId: 'manual-review',
         runRef: 'notion-run://read-binding-mutation',
@@ -358,7 +368,7 @@ test('stops a mutation receipt attributed to a read-only binding', async () => {
           mutationRef: 'notion-mutation://read-binding-mutation'
         }
       ]
-    }),
+    }, installation),
     {
       schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
       blueprintId: 'agency-ops-evidence-triage.v0.1',
@@ -593,9 +603,8 @@ test('stops a write binding without confirmation and mutation proof', async () =
     {
       schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
       blueprintId: 'agency-ops-review-suggestion.v0.1',
-      disposition: 'stop',
-      reasonCode: 'WRITE_CONFIRMATION_OR_MUTATION_RECEIPT_REQUIRED',
-      missingActionIds: ['create_review_suggestion']
+      disposition: 'wait',
+      reasonCode: 'MATCHED_INSTALLATION_EVALUATION_REQUIRED'
     }
   );
 
@@ -603,6 +612,7 @@ test('stops a write binding without confirmation and mutation proof', async () =
     evaluateNotionCustomAgentOperationalReceipts(blueprint, {
       schemaVersion: 'notion_custom_agent_operational_receipts.v0.1',
       blueprintId: 'agency-ops-review-suggestion.v0.1',
+      agentRef: 'notion-agent://review-suggestion-current',
       activationReceipt: {
         triggerId: 'manual-review-suggestion',
         runRef: 'notion-run://agency-ops-review-suggestion-current',
@@ -626,7 +636,7 @@ test('stops a write binding without confirmation and mutation proof', async () =
           mutationRef: 'notion-mutation://review-suggestion-previous'
         }
       ]
-    }),
+    }, installation),
     {
       schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
       blueprintId: 'agency-ops-review-suggestion.v0.1',
@@ -640,6 +650,7 @@ test('stops a write binding without confirmation and mutation proof', async () =
     evaluateNotionCustomAgentOperationalReceipts(blueprint, {
       schemaVersion: 'notion_custom_agent_operational_receipts.v0.1',
       blueprintId: 'agency-ops-review-suggestion.v0.1',
+      agentRef: 'notion-agent://review-suggestion-current',
       activationReceipt: {
         triggerId: 'manual-review-suggestion',
         runRef: 'notion-run://agency-ops-review-suggestion-current',
@@ -713,6 +724,7 @@ test('stops a write binding without confirmation and mutation proof', async () =
     evaluateNotionCustomAgentOperationalReceipts(blueprint, {
       schemaVersion: 'notion_custom_agent_operational_receipts.v0.1',
       blueprintId: 'agency-ops-review-suggestion.v0.1',
+      agentRef: 'notion-agent://review-suggestion-current',
       activationReceipt: {
         triggerId: 'manual-review-suggestion',
         runRef: 'notion-run://agency-ops-review-suggestion-current',
@@ -747,7 +759,7 @@ test('stops a write binding without confirmation and mutation proof', async () =
           mutationRef: 'notion-mutation://unapproved-mutation-current'
         }
       ]
-    }),
+    }, installation),
     {
       schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
       blueprintId: 'agency-ops-review-suggestion.v0.1',
@@ -795,11 +807,16 @@ test('stops a blocked write before it accepts matching operational receipts', as
       }
     ]
   });
+  const installation = evaluateNotionCustomAgentInstallation(
+    blueprint,
+    matchingConfigurationReceipt(blueprint, 'notion-agent://blocked-write')
+  );
 
   assert.deepEqual(
     evaluateNotionCustomAgentOperationalReceipts(blueprint, {
       schemaVersion: 'notion_custom_agent_operational_receipts.v0.1',
       blueprintId: 'agency-ops-review-suggestion.v0.1',
+      agentRef: 'notion-agent://blocked-write',
       activationReceipt: {
         triggerId: 'manual-review-suggestion',
         runRef: 'notion-run://blocked-write',
@@ -823,7 +840,7 @@ test('stops a blocked write before it accepts matching operational receipts', as
           mutationRef: 'notion-mutation://blocked-write'
         }
       ]
-    }),
+    }, installation),
     {
       schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
       blueprintId: 'agency-ops-review-suggestion.v0.1',
@@ -988,11 +1005,16 @@ test('waits for the missing operational receipt of a read-only binding', async (
       }
     ]
   });
+  const installation = evaluateNotionCustomAgentInstallation(
+    blueprint,
+    matchingConfigurationReceipt(blueprint, 'notion-agent://missing-read-receipt')
+  );
 
   assert.deepEqual(
     evaluateNotionCustomAgentOperationalReceipts(blueprint, {
       schemaVersion: 'notion_custom_agent_operational_receipts.v0.1',
       blueprintId: 'agency-ops-evidence-triage.v0.1',
+      agentRef: 'notion-agent://missing-read-receipt',
       activationReceipt: {
         triggerId: 'manual-review',
         runRef: 'notion-run://agency-ops-evidence-triage-fixture',
@@ -1003,7 +1025,7 @@ test('waits for the missing operational receipt of a read-only binding', async (
       },
       toolReceipts: [],
       mutationReceipts: []
-    }),
+    }, installation),
     {
       schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
       blueprintId: 'agency-ops-evidence-triage.v0.1',
