@@ -1,6 +1,6 @@
 {
   "schemaVersion": "workflow_compiler_package_inventory.v1",
-  "packageVersion": "0.3.0",
+  "packageVersion": "0.3.1",
   "files": [
     "API.md",
     "CHANGELOG.md",
@@ -9,6 +9,7 @@
     "MIGRATING.md",
     "README.md",
     "RELEASING.md",
+    "SYSTEM.md",
     "THREAT_MODEL.md",
     "dist/adapters.d.ts",
     "dist/adapters.d.ts.map",

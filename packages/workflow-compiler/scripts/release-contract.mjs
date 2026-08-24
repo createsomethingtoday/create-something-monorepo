@@ -19,6 +19,7 @@ const REQUIRED_FILES = [
   'MIGRATING.md',
   'README.md',
   'RELEASING.md',
+  'SYSTEM.md',
   'THREAT_MODEL.md'
 ];
 

@@ -18,7 +18,7 @@ test('the public manifest declares the complete release and support boundary', a
   const manifest = JSON.parse(await readFile(packageJsonUrl, 'utf8'));
 
   assert.deepEqual(validateReleaseManifest(manifest), []);
-  assert.equal(manifest.version, '0.3.0');
+  assert.equal(manifest.version, '0.3.1');
   assert.deepEqual(manifest.engines, { node: '>=20' });
   assert.equal(manifest.publishConfig.access, 'public');
   assert.equal(manifest.publishConfig.provenance, true);
@@ -112,7 +112,7 @@ test('the trusted workflow validates supported LTS nodes and stages from protect
 
 test('the stable quickstart pins the exact approved package release', async () => {
   const readme = await readFile(new URL('../README.md', import.meta.url), 'utf8');
-  assert.match(readme, /npm install @create-something\/workflow-compiler@0\.3\.0(?:\r?\n|$)/);
+  assert.match(readme, /npm install @create-something\/workflow-compiler@0\.3\.1(?:\r?\n|$)/);
   assert.doesNotMatch(readme, /npm install @create-something\/workflow-compiler@bootstrap/);
 });
 

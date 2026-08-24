@@ -4,6 +4,17 @@ All notable changes to this package are documented here. This project follows
 Semantic Versioning for its npm API and separately versions its workflow and
 artifact schemas.
 
+## 0.3.1
+
+- Add the shipped Marketplace Submission System Map. It provides one
+  source-linked buyer walkthrough and builder handoff for form validation,
+  Validator App preflight, confirmed Airtable Automation handoff, reviewer
+  authority, receipts, stops, and the authenticated execution-host boundary.
+- Keep credential declarations, local compiler receipts, and current
+  third-party operating receipts distinct so the documentation never treats a
+  configuration requirement, webhook, or agent message as proof of a live
+  submission or approval.
+
 ## 0.3.0
 
 - Require compiler-owned in-process bundles for replay as well as adapter
