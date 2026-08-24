@@ -230,7 +230,7 @@ test('the public CLI scaffolds a read-only Marketplace submission-to-review cont
   }
 });
 
-test('the Marketplace submission template fails closed when preflight is not genuinely passed', async () => {
+test('the Marketplace submission template fails closed when preflight status or policy is not enforced', async () => {
   const scratch = await mkdtemp(join(tmpdir(), 'workflow-compiler-marketplace-preflight-'));
   const starterDir = join(scratch, 'marketplace-submission');
 
@@ -284,6 +284,38 @@ test('the Marketplace submission template fails closed when preflight is not gen
     );
     assert.equal(explained.status, 0, explained.stderr || explained.stdout);
     assert.match(explained.stdout, /Mismatched cases: validator-preflight-passes/);
+
+    passingPreflight.evidence.preflight_status = 'passed';
+    passingPreflight.evidence.preflight_policy = 'warn';
+    await writeFile(casesPath, JSON.stringify(cases, null, 2) + '\n', 'utf8');
+
+    const policySimulated = run(
+      'simulate',
+      '--workflow',
+      join(starterDir, 'workflow.json'),
+      '--cases',
+      casesPath
+    );
+    assert.equal(policySimulated.status, 3, policySimulated.stderr || policySimulated.stdout);
+    const policyFailure = JSON.parse(policySimulated.stderr);
+    assert.deepEqual(
+      {
+        ok: policyFailure.ok,
+        error: policyFailure.error,
+        code: policyFailure.code,
+        outcomes: policyFailure.outcomes,
+        allExpectationsMatched: policyFailure.allExpectationsMatched,
+        externalMutations: policyFailure.externalMutations
+      },
+      {
+        ok: false,
+        error: 'WorkflowCliSimulationError',
+        code: 'SIMULATION_EXPECTATIONS_UNMET',
+        outcomes: { pass: 2, approval_required: 1, blocked: 4 },
+        allExpectationsMatched: false,
+        externalMutations: false
+      }
+    );
   } finally {
     await rm(scratch, { recursive: true, force: true });
   }

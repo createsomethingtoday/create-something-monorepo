@@ -473,7 +473,7 @@ const MARKETPLACE_SUBMISSION_WORKFLOW: WorkflowDefinition = {
         'preflight_receipt',
         'preflight_status'
       ],
-      requiredEvidenceValues: { preflight_status: 'passed' },
+      requiredEvidenceValues: { preflight_policy: 'enforce', preflight_status: 'passed' },
       approval: { required: false },
       receipt: {
         requiredFields: ['workflow_id', 'action_id', 'correlation_id', 'outcome', 'evidence_refs']
@@ -722,7 +722,7 @@ const MARKETPLACE_SUBMISSION_CASES: WorkflowReplayManifest = {
       evidence: {
         submission_id: 'submission-fixture-001',
         published_url: 'https://example.test/templates/fixture',
-        preflight_policy: 'validator-app-enforce-fixture-v1',
+        preflight_policy: 'enforce',
         preflight_receipt: 'preflight-fixture-001',
         preflight_status: 'passed'
       },
