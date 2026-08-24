@@ -13,11 +13,13 @@ import {
 
 const packageJsonUrl = new URL('../package.json', import.meta.url);
 const repositoryRoot = new URL('../../../', import.meta.url);
+const CANONICAL_PACKAGE_NAME = '@createsomething/workflow-compiler';
 
 test('the public manifest declares the complete release and support boundary', async () => {
   const manifest = JSON.parse(await readFile(packageJsonUrl, 'utf8'));
 
   assert.deepEqual(validateReleaseManifest(manifest), []);
+  assert.equal(manifest.name, CANONICAL_PACKAGE_NAME);
   assert.equal(manifest.version, '0.4.0');
   assert.deepEqual(manifest.engines, { node: '>=20' });
   assert.equal(manifest.publishConfig.access, 'public');
@@ -112,16 +114,17 @@ test('the trusted workflow validates supported LTS nodes and stages from protect
 
 test('the stable quickstart pins the exact approved package release', async () => {
   const readme = await readFile(new URL('../README.md', import.meta.url), 'utf8');
-  assert.match(readme, /npm install @create-something\/workflow-compiler@0\.4\.0(?:\r?\n|$)/);
-  assert.doesNotMatch(readme, /npm install @create-something\/workflow-compiler@bootstrap/);
+  assert.match(readme, /npm install @createsomething\/workflow-compiler@0\.4\.0(?:\r?\n|$)/);
+  assert.doesNotMatch(readme, /npm install @createsomething\/workflow-compiler@bootstrap/);
 });
 
-test('the bootstrap runbook contains an implicit latest tag until stable replaces it', async () => {
+test('the first-release runbook bootstraps the approved canonical package identity', async () => {
   const runbook = await readFile(new URL('../RELEASING.md', import.meta.url), 'utf8');
-  assert.match(runbook, /npm dist-tag rm @create-something\/workflow-compiler latest/);
-  assert.match(runbook, /If npm rejects removing its only `latest` tag/);
+  assert.match(runbook, /npm publish \.\/createsomething-workflow-compiler-0\.4\.0\.tgz/);
+  assert.match(runbook, /@createsomething\/workflow-compiler/);
+  assert.match(runbook, /@create-something\/workflow-compiler/);
   assert.match(
     runbook,
-    /release remains incomplete until `latest` points at provenance-backed stable\s+`0\.1\.0`/
+    /release remains incomplete until `latest` points at the\s+verified `0\.4\.0` migration release/
   );
 });

@@ -1,4 +1,4 @@
-import { compileWorkflowDefinition, type WorkflowDefinition } from '@create-something/workflow-compiler';
+import { compileWorkflowDefinition, type WorkflowDefinition } from '@createsomething/workflow-compiler';
 import {
   calculateWorkflowProposalHash,
   type WorkflowDefinitionProposal,

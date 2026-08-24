@@ -6,6 +6,11 @@ artifact schemas.
 
 ## 0.4.0
 
+- Publish `0.4.0` as `@createsomething/workflow-compiler`, the canonical
+  public CREATE SOMETHING scope. `@create-something/workflow-compiler@0.3.1`
+  remains available during the verified migration and is deprecated only after
+  registry integrity and clean-consumer receipts exist and a later staged
+  release verifies the replacement's OIDC provenance.
 - Add offline `notion_agent_blueprint.v0.1` planning for a workflow agent's
   explicit Custom Agent resources, triggers, and narrow Worker or CREATE
   SOMETHING MCP bindings.

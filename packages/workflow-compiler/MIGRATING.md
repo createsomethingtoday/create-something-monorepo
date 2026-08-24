@@ -11,6 +11,29 @@
    authenticated execution host.
 6. Promote through the owning approval and rollback process.
 
+## Package scope migration in 0.4.0
+
+The stable package moved from `@create-something/workflow-compiler` to
+`@createsomething/workflow-compiler` so it shares the public scope used by the
+other CREATE SOMETHING packages. Install the new package and update every
+source import, workspace dependency, and package-manager override together:
+
+```bash
+npm install @createsomething/workflow-compiler@0.4.0
+```
+
+```ts
+import { compileWorkflowDefinition } from '@createsomething/workflow-compiler';
+```
+
+The existing `@create-something/workflow-compiler@0.3.1` package remains
+available only as the migration source until the new package has independent
+registry-integrity and clean-consumer receipts and a configured stage-only
+trusted publisher. A later staged release verifies OIDC provenance before the
+old package is deprecated. Do not satisfy a new import by aliasing the old
+package or by changing only a lockfile: package metadata, source imports, and
+the resolved installation must all identify the new scope.
+
 ## Schema changes
 
 Never change `schemaVersion` just to make a newer parser accept an older
@@ -37,7 +60,7 @@ source artifact in place:
 import {
   migrateGovernedInteractionBundle,
   migrateWorkflowDefinition
-} from '@create-something/workflow-compiler';
+} from '@createsomething/workflow-compiler';
 
 const workflowV0_2 = migrateWorkflowDefinition(workflowV0_1);
 const interactionV0_2 = migrateGovernedInteractionBundle(interactionV0_1);

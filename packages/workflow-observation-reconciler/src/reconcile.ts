@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 
-import { compileWorkflowDefinition } from '@create-something/workflow-compiler';
+import { compileWorkflowDefinition } from '@createsomething/workflow-compiler';
 import {
   calculateWorkflowProposalHash,
   type WorkflowDefinitionProposal,

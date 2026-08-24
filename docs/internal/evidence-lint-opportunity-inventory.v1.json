@@ -2398,7 +2398,7 @@
       "evidence_lint_opportunity": true
     },
     {
-      "name": "@create-something/workflow-compiler",
+      "name": "@createsomething/workflow-compiler",
       "path": "packages/workflow-compiler",
       "source_files": 18,
       "scripts": {

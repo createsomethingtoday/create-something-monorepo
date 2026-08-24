@@ -1,6 +1,6 @@
 # Workflow Compiler
 
-`@create-something/workflow-compiler` compiles versioned operating workflows into deterministic local/CI artifacts, replay evidence, provider-neutral MCP plans, offline OpenAI Responses request plans, and a read-only operator console.
+`@createsomething/workflow-compiler` compiles versioned operating workflows into deterministic local/CI artifacts, replay evidence, provider-neutral MCP plans, offline OpenAI Responses request plans, and a read-only operator console.
 
 It gives builders a composable governance layer below any hosted control plane. The package does not call providers, hold credentials, choose a model, or mutate the systems named by a workflow.
 
@@ -9,14 +9,14 @@ It gives builders a composable governance layer below any hosted control plane. 
 Install the builder artifact in the repository where the workflow will live:
 
 ```bash
-npm install @create-something/workflow-compiler@0.4.0
+npm install @createsomething/workflow-compiler@0.4.0
 ```
 
 Copy the shipped Codex skill into that repository, then ask Codex to turn a recurring operating task into a runbook. Codex can propose and revise the local files; the terminal commands below remain the deterministic proof surface:
 
 ```bash
 mkdir -p .codex/skills
-cp -R node_modules/@create-something/workflow-compiler/skills/workflow-compiler \
+cp -R node_modules/@createsomething/workflow-compiler/skills/workflow-compiler \
   .codex/skills/workflow-compiler
 
 npx workflow-compiler init --template local-runbook --dir ./ops-runbook
@@ -62,7 +62,7 @@ execution host begins.
 Install the package with a supported Node release:
 
 ```bash
-npm install @create-something/workflow-compiler@0.4.0
+npm install @createsomething/workflow-compiler@0.4.0
 ```
 
 Create `workflow.json` and optionally `cases.json` using the versioned schemas documented in [API.md](./API.md). Compile and independently verify a local bundle:
@@ -85,7 +85,7 @@ import {
   compileWorkflowDefinition,
   createMcpToolCallPlan,
   replayWorkflow
-} from '@create-something/workflow-compiler';
+} from '@createsomething/workflow-compiler';
 
 const bundle = compileWorkflowDefinition(workflowJson);
 const replay = replayWorkflow(bundle, casesJson);
@@ -95,7 +95,7 @@ console.log(replay.report.counts, plan.disposition);
 ```
 
 Start with the shipped software-release fixture under
-`node_modules/@create-something/workflow-compiler/fixtures/release-promotion/` or the complete examples in this repository. See [API.md](./API.md), [COMPATIBILITY.md](./COMPATIBILITY.md), and [MIGRATING.md](./MIGRATING.md) before promoting a workflow.
+`node_modules/@createsomething/workflow-compiler/fixtures/release-promotion/` or the complete examples in this repository. See [API.md](./API.md), [COMPATIBILITY.md](./COMPATIBILITY.md), and [MIGRATING.md](./MIGRATING.md) before promoting a workflow.
 
 ## Module design
 
@@ -118,7 +118,7 @@ import {
   replayWorkflow,
   verifyWorkflowArtifactBundle,
   writeCompiledWorkflowArtifacts
-} from '@create-something/workflow-compiler';
+} from '@createsomething/workflow-compiler';
 ```
 
 **Depth:** the interface hides governance validation, reference validation, canonical hashing, artifact linkage, transition replay, fail-closed defaults, evidence receipts, acceptance coverage, console generation, and deterministic file output.
@@ -208,7 +208,7 @@ See [API.md](./API.md) for exact schemas and error behavior.
 ## Compile the marketplace fixture
 
 ```bash
-pnpm --filter @create-something/workflow-compiler build
+pnpm --filter @createsomething/workflow-compiler build
 
 node packages/workflow-compiler/dist/cli.js compile \
   --workflow packages/workflow-compiler/fixtures/marketplace/workflow.json \
@@ -284,7 +284,7 @@ node packages/workflow-compiler/dist/cli.js serve \
 ## Acceptance verifier
 
 ```bash
-pnpm --filter @create-something/workflow-compiler test:acceptance
+pnpm --filter @createsomething/workflow-compiler test:acceptance
 ```
 
 The verifier runs the public CLI twice from clean directories and rejects byte differences. It also requires:

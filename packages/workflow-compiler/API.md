@@ -1,6 +1,6 @@
 # API reference
 
-`@create-something/workflow-compiler` is an ESM-only package. All public
+`@createsomething/workflow-compiler` is an ESM-only package. All public
 functions are exported from the package root. Generated TypeScript declarations
 are included in the npm tarball.
 

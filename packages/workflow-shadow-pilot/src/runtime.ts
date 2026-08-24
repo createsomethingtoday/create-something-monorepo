@@ -6,7 +6,7 @@ import {
   compileWorkflowDefinition,
   writeCompiledWorkflowArtifacts,
   type WorkflowDefinition,
-} from '@create-something/workflow-compiler';
+} from '@createsomething/workflow-compiler';
 
 import type { WorkflowPilotCompiledRuntimeSummary } from './types.js';
 
