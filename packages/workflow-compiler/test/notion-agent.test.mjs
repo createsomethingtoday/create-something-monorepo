@@ -908,6 +908,51 @@ test('binds operational receipts to the exact matched Custom Agent installation'
   );
 });
 
+test('stops when a matching installation evaluation originated from another blueprint instance', async () => {
+  const workflow = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const compiled = compileWorkflowDefinition(workflow);
+  const blueprintA = createNotionCustomAgentBlueprint(compiled, readOnlyBlueprintInput());
+  const blueprintBInput = readOnlyBlueprintInput();
+  blueprintBInput.resourceAccess[0].resourceRef = 'notion-data-source://different-sanitized-evidence';
+  const blueprintB = createNotionCustomAgentBlueprint(compiled, blueprintBInput);
+  const installationA = evaluateNotionCustomAgentInstallation(
+    blueprintA,
+    matchingConfigurationReceipt(blueprintA, 'notion-agent://shared-agent-ref')
+  );
+  const receiptsForB = {
+    schemaVersion: 'notion_custom_agent_operational_receipts.v0.1',
+    blueprintId: blueprintB.blueprintId,
+    agentRef: 'notion-agent://shared-agent-ref',
+    activationReceipt: {
+      triggerId: 'manual-review',
+      runRef: 'notion-run://other-blueprint',
+      activationRef: 'notion-activation://other-blueprint'
+    },
+    runReceipt: {
+      runRef: 'notion-run://other-blueprint'
+    },
+    toolReceipts: [
+      {
+        actionId: 'inspect_evidence_readiness',
+        runRef: 'notion-run://other-blueprint',
+        toolInvocationRef: 'notion-worker-run://other-blueprint',
+        confirmationState: 'not_required'
+      }
+    ],
+    mutationReceipts: []
+  };
+
+  assert.deepEqual(
+    evaluateNotionCustomAgentOperationalReceipts(blueprintB, receiptsForB, installationA),
+    {
+      schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
+      blueprintId: 'agency-ops-evidence-triage.v0.1',
+      disposition: 'stop',
+      reasonCode: 'OPERATIONAL_RECEIPT_INSTALLATION_MISMATCH'
+    }
+  );
+});
+
 test('waits for the missing operational receipt of a read-only binding', async () => {
   const workflow = JSON.parse(await readFile(workflowUrl, 'utf8'));
   const compiled = compileWorkflowDefinition(workflow);

@@ -68,6 +68,10 @@ const OPERATIONAL_RECEIPT_KEYS = new Set([
 const TOOL_CONFIRMATION_STATES = new Set(['not_required', 'confirmed', 'not_confirmed']);
 const compilerOwnedBlueprints = new WeakSet<NotionCustomAgentBlueprint>();
 const compilerOwnedMatchedInstallations = new WeakSet<NotionCustomAgentInstallationEvaluation>();
+const compilerOwnedInstallationBlueprints = new WeakMap<
+  NotionCustomAgentInstallationEvaluation,
+  NotionCustomAgentBlueprint
+>();
 
 function deepFreeze<T>(value: T, seen = new WeakSet<object>()): T {
   if (!value || typeof value !== 'object') return value;
@@ -88,10 +92,14 @@ function requireCompilerOwnedBlueprint(blueprint: NotionCustomAgentBlueprint): v
 }
 
 function finalizeInstallationEvaluation(
+  blueprint: NotionCustomAgentBlueprint,
   evaluation: NotionCustomAgentInstallationEvaluation
 ): NotionCustomAgentInstallationEvaluation {
   const frozen = deepFreeze(evaluation);
-  if (frozen.disposition === 'pass') compilerOwnedMatchedInstallations.add(frozen);
+  if (frozen.disposition === 'pass') {
+    compilerOwnedMatchedInstallations.add(frozen);
+    compilerOwnedInstallationBlueprints.set(frozen, blueprint);
+  }
   return frozen;
 }
 
@@ -513,7 +521,7 @@ export function evaluateNotionCustomAgentInstallation(
 ): NotionCustomAgentInstallationEvaluation {
   requireCompilerOwnedBlueprint(blueprint);
   if (receiptInput === undefined) {
-    return finalizeInstallationEvaluation({
+    return finalizeInstallationEvaluation(blueprint, {
       schemaVersion: 'notion_custom_agent_installation_evaluation.v0.1',
       blueprintId: blueprint.blueprintId,
       disposition: 'wait',
@@ -547,7 +555,7 @@ export function evaluateNotionCustomAgentInstallation(
   if (canonical(actualBindings) !== canonical(expectedBindings)) mismatches.push('toolBindings');
 
   if (mismatches.length) {
-    return finalizeInstallationEvaluation({
+    return finalizeInstallationEvaluation(blueprint, {
       schemaVersion: 'notion_custom_agent_installation_evaluation.v0.1',
       blueprintId: blueprint.blueprintId,
       agentRef: receipt.agentRef,
@@ -557,7 +565,7 @@ export function evaluateNotionCustomAgentInstallation(
       requiredOperationalReceipts: requiredOperationalReceipts(blueprint.toolBindings)
     });
   }
-  return finalizeInstallationEvaluation({
+  return finalizeInstallationEvaluation(blueprint, {
     schemaVersion: 'notion_custom_agent_installation_evaluation.v0.1',
     blueprintId: blueprint.blueprintId,
     agentRef: receipt.agentRef,
@@ -716,6 +724,7 @@ export function evaluateNotionCustomAgentOperationalReceipts(
   }
   if (
     !compilerOwnedMatchedInstallations.has(installationEvaluation) ||
+    compilerOwnedInstallationBlueprints.get(installationEvaluation) !== blueprint ||
     installationEvaluation.blueprintId !== blueprint.blueprintId ||
     installationEvaluation.agentRef !== receipts.agentRef
   ) {
