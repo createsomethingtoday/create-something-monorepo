@@ -59,4 +59,10 @@ test('the shipped System Map explains the Marketplace path without claiming live
   assert.match(systemMap, /warn.*non-passing.*proceed/i);
   assert.match(systemMap, /disabled.*not_required/i);
   assert.match(systemMap, /cannot be reported as a passing\s+preflight/i);
+  assert.match(systemMap, /submission ID only after form and preflight\s+checks/i);
+  assert.match(
+    systemMap,
+    /does not return separate form-validation\s+or Validator preflight receipts/i
+  );
+  assert.match(systemMap, /local modeled evidence/i);
 });

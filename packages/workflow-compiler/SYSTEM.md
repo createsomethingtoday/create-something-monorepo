@@ -49,11 +49,11 @@ contract that governs it. They meet at evidence, not at shared credentials.
 
 ## The submission path
 
-| Stage | Owning surface | Required proof before the next state | Authority and outcome |
+| Stage | Owning surface | Evidence before the next state | Authority and outcome |
 | --- | --- | --- | --- |
-| Creator completes the form | Marketplace Submission Cloud | Submission ID, published URL, and form schema version | The creator supplies intent; no review routing follows from intent alone. |
-| Form and published site validate | Submission Cloud validation path | Form-validation receipt and an explicit passed result | The application can move from draft to form validated. A failure stays outside review. |
-| Enforced Validator App preflight passes | Validator App preflight called by Submission Cloud | `enforce` policy, preflight receipt, and a passed status | The application can move from form validated to preflight passed. A failed required preflight is a stop. |
+| Creator completes the form | Marketplace Submission Cloud | Form payload, published URL, and form schema version; no submission ID exists at this entry | The creator supplies intent; no review routing follows from intent alone. |
+| Form and published site validate | Submission Cloud validation path | Local modeled evidence: form-validation receipt and an explicit passed result | The compiler can move from draft to form validated. The live intake applies its check inside one request. |
+| Enforced Validator App preflight passes | Validator App preflight called by Submission Cloud | Local modeled evidence: `enforce` policy, preflight receipt, and a passed status | The compiler can move from form validated to preflight passed. A failed required preflight is a stop in the live request. |
 | Airtable Automation handoff is confirmed | Airtable Automation and its source record | Submission ID, automation version, webhook receipt, confirmed handoff state, asset ID, version ID, and a review-ready status | Codex may inspect supplied evidence only after this complete receipt proves the handoff. |
 | Reviewer decides | Marketplace review policy and reviewer queue | Submission ID, asset ID, version ID, and review-request receipt | This is approval required. The assigned reviewer or policy owner decides; an agent does not promote itself. |
 | Creator receives a decision | Owning reviewer communication process | Decision receipt and creator-contact reference | The compiler keeps this write blocked. Delivery is independently verified by the owning process. |
@@ -61,6 +61,20 @@ contract that governs it. They meet at evidence, not at shared credentials.
 A webhook receipt alone is not a handoff. It means processing was observed; it
 does not prove an asset, version, confirmed state, and review-ready record
 exist together.
+
+### Evidence available at the live intake boundary
+
+The Submission Cloud creates its submission ID only after form and preflight
+checks. Its successful intake response does not return separate form-validation
+or Validator preflight receipts. It returns a published-site validation summary
+and, after the webhook wait, either a processing receipt or a confirmed Airtable
+receipt with the submission, asset, version, and review-status fields.
+
+This is why the first two compiler transitions are labelled local modeled
+evidence: they demonstrate the contract that the intake enforces, but cannot by
+themselves be correlated to a live submission through the current response. A
+processing receipt proves receipt of the submission, not a confirmed handoff.
+Use a confirmed Airtable receipt to describe the live handoff as complete.
 
 ### Preflight modes
 
@@ -77,8 +91,10 @@ erase the live application's supported runtime modes.
 - `disabled` reports `not_required` and performs no required Validator gate, so
   the submission can proceed without a Validator result.
 
-For a live claim, retain the policy value and its matching runtime receipt. Only
-an `enforce` result with a passing receipt proves the protected preflight path.
+The current successful intake response does not emit a preflight receipt. Do not
+use a local compiler artifact as a substitute. A protected-path claim needs a
+retained application record correlated to the submission ID or a future emitted
+preflight receipt, together with the `enforce` policy and passing result.
 
 ## Three tiers, one operating system
 
