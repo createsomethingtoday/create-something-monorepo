@@ -172,6 +172,175 @@ test('rejects mutating Notion resource access without a governed write or publis
   );
 });
 
+test('freezes and provenance-checks compiled blueprints before either evaluator trusts them', async () => {
+  const workflow = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const compiled = compileWorkflowDefinition(workflow);
+  const blueprint = createNotionCustomAgentBlueprint(compiled, readOnlyBlueprintInput());
+
+  assert.throws(() => {
+    blueprint.toolBindings[0].kind = 'write';
+  }, TypeError);
+
+  const detachedBlueprint = structuredClone(blueprint);
+  detachedBlueprint.toolBindings[0].kind = 'write';
+
+  assert.throws(
+    () => evaluateNotionCustomAgentInstallation(detachedBlueprint),
+    (error) => error?.code === 'UNVERIFIED_NOTION_CUSTOM_AGENT_BLUEPRINT'
+  );
+  assert.throws(
+    () => evaluateNotionCustomAgentOperationalReceipts(detachedBlueprint),
+    (error) => error?.code === 'UNVERIFIED_NOTION_CUSTOM_AGENT_BLUEPRINT'
+  );
+});
+
+test('stops an unconfirmed approval-required decision tool receipt', async () => {
+  const workflow = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const action = workflow.actions.find((candidate) => candidate.id === 'inspect_evidence_readiness');
+  action.kind = 'decision';
+  action.autonomy = 'approval_required';
+  action.approval = { required: true, owner: 'agency-ops-lead' };
+  const compiled = compileWorkflowDefinition(workflow);
+  const blueprint = createNotionCustomAgentBlueprint(compiled, readOnlyBlueprintInput());
+
+  assert.deepEqual(
+    evaluateNotionCustomAgentOperationalReceipts(blueprint, {
+      schemaVersion: 'notion_custom_agent_operational_receipts.v0.1',
+      blueprintId: 'agency-ops-evidence-triage.v0.1',
+      activationReceipt: {
+        triggerId: 'manual-review',
+        runRef: 'notion-run://approval-required-decision',
+        activationRef: 'notion-activation://approval-required-decision'
+      },
+      runReceipt: {
+        runRef: 'notion-run://approval-required-decision'
+      },
+      toolReceipts: [
+        {
+          actionId: 'inspect_evidence_readiness',
+          runRef: 'notion-run://approval-required-decision',
+          toolInvocationRef: 'notion-worker-run://approval-required-decision',
+          confirmationState: 'not_confirmed'
+        }
+      ],
+      mutationReceipts: []
+    }),
+    {
+      schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
+      blueprintId: 'agency-ops-evidence-triage.v0.1',
+      disposition: 'stop',
+      reasonCode: 'CONSEQUENTIAL_TOOL_AUTONOMY_VIOLATION',
+      missingActionIds: ['inspect_evidence_readiness']
+    }
+  );
+
+  assert.deepEqual(
+    evaluateNotionCustomAgentOperationalReceipts(blueprint, {
+      schemaVersion: 'notion_custom_agent_operational_receipts.v0.1',
+      blueprintId: 'agency-ops-evidence-triage.v0.1',
+      activationReceipt: {
+        triggerId: 'manual-review',
+        runRef: 'notion-run://approval-required-decision-confirmed',
+        activationRef: 'notion-activation://approval-required-decision-confirmed'
+      },
+      runReceipt: {
+        runRef: 'notion-run://approval-required-decision-confirmed'
+      },
+      toolReceipts: [
+        {
+          actionId: 'inspect_evidence_readiness',
+          runRef: 'notion-run://approval-required-decision-confirmed',
+          toolInvocationRef: 'notion-worker-run://approval-required-decision-confirmed',
+          confirmationState: 'confirmed'
+        }
+      ],
+      mutationReceipts: []
+    }),
+    {
+      schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
+      blueprintId: 'agency-ops-evidence-triage.v0.1',
+      disposition: 'pass',
+      reasonCode: 'OPERATIONAL_RECEIPTS_MATCHED'
+    }
+  );
+});
+
+test('stops a blocked decision before it accepts any operational receipt', async () => {
+  const workflow = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const action = workflow.actions.find((candidate) => candidate.id === 'inspect_evidence_readiness');
+  action.kind = 'decision';
+  action.autonomy = 'blocked';
+  const compiled = compileWorkflowDefinition(workflow);
+  const blueprint = createNotionCustomAgentBlueprint(compiled, readOnlyBlueprintInput());
+
+  assert.deepEqual(
+    evaluateNotionCustomAgentOperationalReceipts(blueprint, {
+      schemaVersion: 'notion_custom_agent_operational_receipts.v0.1',
+      blueprintId: 'agency-ops-evidence-triage.v0.1',
+      activationReceipt: {
+        triggerId: 'manual-review',
+        runRef: 'notion-run://blocked-decision',
+        activationRef: 'notion-activation://blocked-decision'
+      },
+      runReceipt: {
+        runRef: 'notion-run://blocked-decision'
+      },
+      toolReceipts: [],
+      mutationReceipts: []
+    }),
+    {
+      schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
+      blueprintId: 'agency-ops-evidence-triage.v0.1',
+      disposition: 'stop',
+      reasonCode: 'CONSEQUENTIAL_TOOL_AUTONOMY_VIOLATION',
+      missingActionIds: ['inspect_evidence_readiness']
+    }
+  );
+});
+
+test('stops a mutation receipt attributed to a read-only binding', async () => {
+  const workflow = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const compiled = compileWorkflowDefinition(workflow);
+  const blueprint = createNotionCustomAgentBlueprint(compiled, readOnlyBlueprintInput());
+
+  assert.deepEqual(
+    evaluateNotionCustomAgentOperationalReceipts(blueprint, {
+      schemaVersion: 'notion_custom_agent_operational_receipts.v0.1',
+      blueprintId: 'agency-ops-evidence-triage.v0.1',
+      activationReceipt: {
+        triggerId: 'manual-review',
+        runRef: 'notion-run://read-binding-mutation',
+        activationRef: 'notion-activation://read-binding-mutation'
+      },
+      runReceipt: {
+        runRef: 'notion-run://read-binding-mutation'
+      },
+      toolReceipts: [
+        {
+          actionId: 'inspect_evidence_readiness',
+          runRef: 'notion-run://read-binding-mutation',
+          toolInvocationRef: 'notion-worker-run://read-binding-mutation',
+          confirmationState: 'not_required'
+        }
+      ],
+      mutationReceipts: [
+        {
+          actionId: 'inspect_evidence_readiness',
+          runRef: 'notion-run://read-binding-mutation',
+          mutationRef: 'notion-mutation://read-binding-mutation'
+        }
+      ]
+    }),
+    {
+      schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
+      blueprintId: 'agency-ops-evidence-triage.v0.1',
+      disposition: 'stop',
+      reasonCode: 'NON_MUTATING_ACTION_MUTATION_RECEIPT',
+      unexpectedMutationActionIds: ['inspect_evidence_readiness']
+    }
+  );
+});
+
 test('passes a supplied configuration receipt only when it matches the read-only blueprint', async () => {
   const workflow = JSON.parse(await readFile(workflowUrl, 'utf8'));
   const compiled = compileWorkflowDefinition(workflow);

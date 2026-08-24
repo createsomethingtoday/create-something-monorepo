@@ -154,7 +154,10 @@ in-process compiled workflow bundle and a strictly parsed
 workflow agent to explicitly named Notion resources, triggers, and narrow
 Worker or CREATE SOMETHING MCP tool contracts. Every tool binding retains its
 source action's authority, autonomy, evidence, receipt, recovery, target, and
-scalar parameters.
+scalar parameters. The returned blueprint is deeply frozen and retains
+in-process compiler provenance; both evaluators reject detached, copied, or
+reconstructed blueprint objects with
+`UNVERIFIED_NOTION_CUSTOM_AGENT_BLUEPRINT`.
 
 The result always begins with `installation.disposition = 'wait'` and
 `CONFIGURATION_RECEIPT_REQUIRED`. Read-only workflows require configuration,
@@ -194,9 +197,15 @@ carry the same `runRef` as the evaluated run. Receipt action IDs must be
 declared by the blueprint; undeclared IDs return `stop` with
 `UNDECLARED_RECEIPT_ACTION`. Missing read-only tool evidence returns `wait`.
 Every `write` or `publish` binding must have a confirmed tool receipt and a
-mutation receipt correlated to that run; otherwise the evaluator returns `stop` with
-`WRITE_CONFIRMATION_OR_MUTATION_RECEIPT_REQUIRED`. The helper never executes
-the action or verifies a provider-provided receipt cryptographically.
+mutation receipt correlated to that run; otherwise the evaluator returns
+`stop` with `WRITE_CONFIRMATION_OR_MUTATION_RECEIPT_REQUIRED`. Mutation
+receipts are valid only for those write or publish bindings; a mutation
+attributed to a read or decision binding stops with
+`NON_MUTATING_ACTION_MUTATION_RECEIPT`. An `approval_required` or
+`manual_only` non-write binding needs a current confirmed tool receipt, and a
+`blocked` binding never passes; either violation stops with
+`CONSEQUENTIAL_TOOL_AUTONOMY_VIOLATION`. The helper never executes the action
+or verifies a provider-provided receipt cryptographically.
 
 `parseNotionCustomAgentBlueprintInput`,
 `parseNotionCustomAgentConfigurationReceipt`, and

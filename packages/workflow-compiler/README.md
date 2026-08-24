@@ -175,7 +175,10 @@ for its operational receipt; a write or publish binding stops unless it has a
 confirmed tool receipt and mutation receipt for the same run. Read-only
 blueprints may only request `can_view` access. Activation, tool, and mutation
 receipts must all reference the evaluated run, and receipts for undeclared
-actions stop evaluation. These helpers make no
+actions stop evaluation. Only write or publish bindings may have mutation
+receipts; consequential non-write actions require a current confirmed tool
+receipt, while blocked actions never pass. The returned blueprint is frozen,
+and the evaluators accept only that compiler-created instance. These helpers make no
 Notion request and do not claim that a caller-supplied receipt is authentic or
 that an agent is installed. An authorized Notion runtime remains responsible
 for manual setup, live configuration readback, activation, execution,

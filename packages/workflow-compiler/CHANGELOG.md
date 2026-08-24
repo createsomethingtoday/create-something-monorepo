@@ -20,6 +20,9 @@ artifact schemas.
 - Reject `can_comment` and `can_edit` access without a governed write or
   publish action. Activation receipts must bind the same run as operational
   evidence, and undeclared receipt actions stop evaluation.
+- Deep-freeze and provenance-check compiled blueprints before either evaluator
+  trusts them. Reject non-mutating mutation receipts, and enforce confirmation
+  or blocking for consequential non-write tool bindings.
 
 ## 0.3.1
 

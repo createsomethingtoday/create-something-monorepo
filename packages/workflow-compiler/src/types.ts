@@ -654,6 +654,8 @@ export type NotionCustomAgentOperationalReasonCode =
   | 'OPERATIONAL_RECEIPTS_MATCHED'
   | 'OPERATIONAL_RECEIPTS_REQUIRED'
   | 'OPERATIONAL_RECEIPT_MISMATCH'
+  | 'CONSEQUENTIAL_TOOL_AUTONOMY_VIOLATION'
+  | 'NON_MUTATING_ACTION_MUTATION_RECEIPT'
   | 'UNDECLARED_RECEIPT_ACTION'
   | 'WRITE_CONFIRMATION_OR_MUTATION_RECEIPT_REQUIRED';
 
@@ -664,6 +666,7 @@ export interface NotionCustomAgentOperationalEvaluation {
   reasonCode: NotionCustomAgentOperationalReasonCode;
   missingActionIds?: string[];
   unexpectedActionIds?: string[];
+  unexpectedMutationActionIds?: string[];
 }
 
 export interface WorkflowCompilationDiagnostic {

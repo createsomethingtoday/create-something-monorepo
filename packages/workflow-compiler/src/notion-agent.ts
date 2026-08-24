@@ -21,7 +21,8 @@ export type NotionCustomAgentBlueprintErrorCode =
   | 'ACTION_NOT_ALLOWED_FOR_BLUEPRINT_AGENT'
   | 'UNKNOWN_BLUEPRINT_TOOL_ACTION'
   | 'BLUEPRINT_TOOL_KEY_MISMATCH'
-  | 'MUTATING_RESOURCE_ACCESS_REQUIRES_WRITE_ACTION';
+  | 'MUTATING_RESOURCE_ACCESS_REQUIRES_WRITE_ACTION'
+  | 'UNVERIFIED_NOTION_CUSTOM_AGENT_BLUEPRINT';
 
 export class NotionCustomAgentBlueprintError extends Error {
   readonly code: NotionCustomAgentBlueprintErrorCode;
@@ -65,6 +66,25 @@ const OPERATIONAL_RECEIPT_KEYS = new Set([
   'mutationReceipts'
 ]);
 const TOOL_CONFIRMATION_STATES = new Set(['not_required', 'confirmed', 'not_confirmed']);
+const compilerOwnedBlueprints = new WeakSet<NotionCustomAgentBlueprint>();
+
+function deepFreeze<T>(value: T, seen = new WeakSet<object>()): T {
+  if (!value || typeof value !== 'object') return value;
+  const object = value as object;
+  if (seen.has(object)) return value;
+  seen.add(object);
+  for (const nested of Object.values(object)) deepFreeze(nested, seen);
+  return Object.freeze(object) as T;
+}
+
+function requireCompilerOwnedBlueprint(blueprint: NotionCustomAgentBlueprint): void {
+  if (!compilerOwnedBlueprints.has(blueprint)) {
+    throw new NotionCustomAgentBlueprintError(
+      'UNVERIFIED_NOTION_CUSTOM_AGENT_BLUEPRINT',
+      'Notion Custom Agent evaluation requires the frozen blueprint returned by createNotionCustomAgentBlueprint.'
+    );
+  }
+}
 
 function invalidInput(message: string): never {
   throw new NotionCustomAgentBlueprintError('INVALID_BLUEPRINT_INPUT', message);
@@ -446,7 +466,7 @@ export function createNotionCustomAgentBlueprint(
     );
   }
 
-  return {
+  const compiledBlueprint: NotionCustomAgentBlueprint = {
     schemaVersion: 'notion_agent_blueprint.v0.1',
     workflowId: bundle.workflowId,
     workflowVersion: bundle.workflowVersion,
@@ -469,12 +489,15 @@ export function createNotionCustomAgentBlueprint(
       requiredReceipts: requiredInstallationReceipts(toolBindings)
     }
   };
+  compilerOwnedBlueprints.add(compiledBlueprint);
+  return deepFreeze(compiledBlueprint);
 }
 
 export function evaluateNotionCustomAgentInstallation(
   blueprint: NotionCustomAgentBlueprint,
   receiptInput?: unknown
 ): NotionCustomAgentInstallationEvaluation {
+  requireCompilerOwnedBlueprint(blueprint);
   if (receiptInput === undefined) {
     return {
       schemaVersion: 'notion_custom_agent_installation_evaluation.v0.1',
@@ -534,6 +557,7 @@ export function evaluateNotionCustomAgentOperationalReceipts(
   blueprint: NotionCustomAgentBlueprint,
   receiptInput?: unknown
 ): NotionCustomAgentOperationalEvaluation {
+  requireCompilerOwnedBlueprint(blueprint);
   if (receiptInput === undefined) {
     return {
       schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
@@ -572,6 +596,23 @@ export function evaluateNotionCustomAgentOperationalReceipts(
       unexpectedActionIds
     };
   }
+  const mutatingActionIds = new Set(
+    blueprint.toolBindings
+      .filter((binding) => binding.kind === 'write' || binding.kind === 'publish')
+      .map((binding) => binding.actionId)
+  );
+  const unexpectedMutationActionIds = [...mutationReceipts.keys()]
+    .filter((actionId) => !mutatingActionIds.has(actionId))
+    .sort((left, right) => left.localeCompare(right));
+  if (unexpectedMutationActionIds.length) {
+    return {
+      schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
+      blueprintId: blueprint.blueprintId,
+      disposition: 'stop',
+      reasonCode: 'NON_MUTATING_ACTION_MUTATION_RECEIPT',
+      unexpectedMutationActionIds
+    };
+  }
   const matchesRun = (receipt: { runRef: string } | undefined): boolean =>
     receipt?.runRef === receipts.runReceipt.runRef;
   const writeActionsMissingProof = blueprint.toolBindings
@@ -595,6 +636,28 @@ export function evaluateNotionCustomAgentOperationalReceipts(
       disposition: 'stop',
       reasonCode: 'WRITE_CONFIRMATION_OR_MUTATION_RECEIPT_REQUIRED',
       missingActionIds: writeActionsMissingProof
+    };
+  }
+  const consequentialToolAutonomyViolations = blueprint.toolBindings
+    .filter((binding) => {
+      if (binding.kind === 'write' || binding.kind === 'publish') return false;
+      if (binding.autonomy === 'blocked') return true;
+      if (binding.autonomy === 'auto_allow') return false;
+      const toolReceipt = toolReceipts.get(binding.actionId);
+      return Boolean(
+        toolReceipt &&
+          (toolReceipt.confirmationState !== 'confirmed' || !matchesRun(toolReceipt))
+      );
+    })
+    .map((binding) => binding.actionId)
+    .sort((left, right) => left.localeCompare(right));
+  if (consequentialToolAutonomyViolations.length) {
+    return {
+      schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
+      blueprintId: blueprint.blueprintId,
+      disposition: 'stop',
+      reasonCode: 'CONSEQUENTIAL_TOOL_AUTONOMY_VIOLATION',
+      missingActionIds: consequentialToolAutonomyViolations
     };
   }
   const readActionsMissingToolReceipt = blueprint.toolBindings
