@@ -54,7 +54,7 @@ contract that governs it. They meet at evidence, not at shared credentials.
 | Creator completes the form | Marketplace Submission Cloud | Form payload, published URL, and form schema version; no submission ID exists at this entry | The creator supplies intent; no review routing follows from intent alone. |
 | Form and published site validate | Submission Cloud validation path | Local modeled evidence: form-validation receipt and an explicit passed result | The compiler can move from draft to form validated. The live intake applies its check inside one request. |
 | Enforced Validator App preflight passes | Validator App preflight called by Submission Cloud | Local modeled evidence: `enforce` policy, preflight receipt, and a passed status | The compiler can move from form validated to preflight passed. A failed required preflight is a stop in the live request. |
-| Airtable Automation handoff is confirmed | Airtable Automation and its source record | Submission ID, automation version, webhook receipt, confirmed handoff state, asset ID, version ID, and a review-ready status | Codex may inspect supplied evidence only after this complete receipt proves the handoff. |
+| Airtable Automation handoff is confirmed | Airtable Automation and its source record | Live confirmed receipt: submission ID, confirmed handoff state, asset ID, version ID, and review status. Local modeled evidence additionally expects automation version and webhook receipt. | Codex may inspect supplied evidence only after the live confirmed receipt proves the handoff. |
 | Reviewer decides | Marketplace review policy and reviewer queue | Submission ID, asset ID, version ID, and review-request receipt | This is approval required. The assigned reviewer or policy owner decides; an agent does not promote itself. |
 | Creator receives a decision | Owning reviewer communication process | Decision receipt and creator-contact reference | The compiler keeps this write blocked. Delivery is independently verified by the owning process. |
 
@@ -68,13 +68,15 @@ The Submission Cloud creates its submission ID only after form and preflight
 checks. Its successful intake response does not return separate form-validation
 or Validator preflight receipts. It returns a published-site validation summary
 and, after the webhook wait, either a processing receipt or a confirmed Airtable
-receipt with the submission, asset, version, and review-status fields.
+receipt with the submission, asset, version, and review-status fields. It does
+not return an automation version or webhook receipt.
 
-This is why the first two compiler transitions are labelled local modeled
-evidence: they demonstrate the contract that the intake enforces, but cannot by
-themselves be correlated to a live submission through the current response. A
-processing receipt proves receipt of the submission, not a confirmed handoff.
-Use a confirmed Airtable receipt to describe the live handoff as complete.
+This is why the first two compiler transitions, and the extra handoff fields in
+the compiler, are labelled local modeled evidence: they demonstrate the contract
+that the intake enforces, but cannot by themselves be correlated to a live
+submission through the current response. A processing receipt proves receipt of
+the submission, not a confirmed handoff. Use a confirmed Airtable receipt to
+describe the live handoff as complete.
 
 ### Preflight modes
 

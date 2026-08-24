@@ -65,4 +65,6 @@ test('the shipped System Map explains the Marketplace path without claiming live
     /does not return separate form-validation\s+or Validator preflight receipts/i
   );
   assert.match(systemMap, /local modeled evidence/i);
+  assert.match(systemMap, /local modeled evidence additionally expects automation version and webhook receipt/i);
+  assert.match(systemMap, /does\s+not return an automation version or webhook receipt/i);
 });
