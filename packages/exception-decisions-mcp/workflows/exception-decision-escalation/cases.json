@@ -1,0 +1,95 @@
+{
+  "schemaVersion": "workflow_replay_manifest.v0.1",
+  "workflowId": "webflow.app-review.exception-decision-escalation",
+  "cases": [
+    {
+      "caseId": "north-advisory-deny-recorded",
+      "title": "North batch: automation records an advisory deny",
+      "initialState": "requested",
+      "actionId": "recommend_exception_item",
+      "actorId": "recommendation-automation",
+      "evidence": {
+        "item_id": "recG5BfFwXi8nZBLG",
+        "exception_type": "Security",
+        "recommendation_confidence": "0.82"
+      },
+      "approvals": [],
+      "expectedOutcome": "pass",
+      "expectedState": "under_review"
+    },
+    {
+      "caseId": "queue-digest-sent",
+      "title": "Scheduled digest reports the undecided queue to the final decider",
+      "initialState": "under_review",
+      "actionId": "notify_decider",
+      "actorId": "notification-automation",
+      "evidence": {
+        "decider_id": "adam.lehman@webflow.com",
+        "undecided_count": "33",
+        "oldest_requested_at": "2026-08-04T05:00:00.000Z"
+      },
+      "approvals": [],
+      "expectedOutcome": "pass",
+      "expectedState": "awaiting_decision"
+    },
+    {
+      "caseId": "wistia-session-token-waits",
+      "title": "Wistia session token item waits for the final decider",
+      "initialState": "awaiting_decision",
+      "actionId": "decide_exception_item",
+      "actorId": "final-decider",
+      "evidence": {
+        "item_id": "recHjEZpiYAceDeEG",
+        "decider_id": "final-decider",
+        "decision_notes": "Vendor credential, not a Webflow token."
+      },
+      "approvals": [],
+      "expectedOutcome": "approval_required",
+      "expectedState": "awaiting_decision"
+    },
+    {
+      "caseId": "wistia-dev-artifacts-release-waits",
+      "title": "Held item keeps developer contact from firing",
+      "initialState": "decided",
+      "actionId": "release_developer_contact",
+      "actorId": "operator",
+      "evidence": {
+        "asset_version_id": "reciu95rOkajz2ZRN",
+        "undecided_count": "1",
+        "suppression_state": "empty"
+      },
+      "approvals": [],
+      "expectedOutcome": "approval_required",
+      "expectedState": "decided"
+    },
+    {
+      "caseId": "automation-cannot-decide",
+      "title": "The recommendation automation may not record a decision",
+      "initialState": "awaiting_decision",
+      "actionId": "decide_exception_item",
+      "actorId": "recommendation-automation",
+      "evidence": {
+        "item_id": "recHjEZpiYAceDeEG",
+        "decider_id": "recommendation-automation",
+        "decision_notes": "Automated recommendation (advisory)"
+      },
+      "approvals": [],
+      "expectedOutcome": "blocked",
+      "expectedState": "awaiting_decision"
+    },
+    {
+      "caseId": "decision-without-rationale-blocked",
+      "title": "A decision without recorded rationale cannot proceed",
+      "initialState": "awaiting_decision",
+      "actionId": "decide_exception_item",
+      "actorId": "final-decider",
+      "evidence": {
+        "item_id": "recVuh5WPhl8RKiIn",
+        "decider_id": "final-decider"
+      },
+      "approvals": [],
+      "expectedOutcome": "blocked",
+      "expectedState": "awaiting_decision"
+    }
+  ]
+}

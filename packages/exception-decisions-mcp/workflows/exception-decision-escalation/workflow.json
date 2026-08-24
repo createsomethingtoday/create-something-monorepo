@@ -1,0 +1,483 @@
+{
+  "schemaVersion": "workflow_definition.v0.1",
+  "workflowId": "webflow.app-review.exception-decision-escalation",
+  "version": "0.1.0",
+  "title": "App review exception decision escalation",
+  "businessObjective": "Move undecided app-review exception items to a recorded human decision without letting automation decide, and without silently contacting the developer.",
+  "owners": {
+    "workflow": "operator",
+    "policy": "final-decider",
+    "technical": "operator"
+  },
+  "systems": [
+    {
+      "id": "airtable-exceptions",
+      "title": "Airtable Marketplace Assets exceptions",
+      "tier": "database",
+      "owningSurface": "Airtable base appMoIgXMTTTNIc3p, tables tblnbaaIbIulWl0b7 and tblHxZ2hgSFLZxsZu",
+      "sourceOfTruth": true
+    },
+    {
+      "id": "decision-rights",
+      "title": "Exception decision rights",
+      "tier": "judgment",
+      "owningSurface": "packages/exception-decisions-mcp DECIDERS_JSON and this versioned workflow definition",
+      "sourceOfTruth": true
+    },
+    {
+      "id": "exception-decisions-mcp",
+      "title": "Exception Decisions MCP",
+      "tier": "automation",
+      "owningSurface": "exceptions.mcp.createsomething.agency",
+      "sourceOfTruth": false
+    },
+    {
+      "id": "recommendation-runner",
+      "title": "Advisory recommendation runner",
+      "tier": "automation",
+      "owningSurface": "packages/exception-decisions-mcp/scripts/runner.mjs",
+      "sourceOfTruth": false
+    },
+    {
+      "id": "slack-notification",
+      "title": "Slack notification surface",
+      "tier": "automation",
+      "owningSurface": "Airtable automation to Slack, channel C0BN54FQU84 and decider direct messages",
+      "sourceOfTruth": false
+    },
+    {
+      "id": "creator-contact",
+      "title": "Developer contact pipeline",
+      "tier": "automation",
+      "owningSurface": "Airtable Review Status Trigger wflHI29nzYv35Wtd0 into Zendesk",
+      "sourceOfTruth": false
+    }
+  ],
+  "objects": [
+    {
+      "id": "exception_item",
+      "title": "Exception item",
+      "sourceSystemId": "airtable-exceptions",
+      "requiredFields": [
+        "item_id",
+        "asset_version_id",
+        "exception_type",
+        "exception_status"
+      ]
+    },
+    {
+      "id": "decider_queue",
+      "title": "Decider queue snapshot",
+      "sourceSystemId": "airtable-exceptions",
+      "requiredFields": [
+        "decider_id",
+        "undecided_count",
+        "oldest_requested_at"
+      ]
+    },
+    {
+      "id": "decision_receipt",
+      "title": "Decision receipt",
+      "sourceSystemId": "airtable-exceptions",
+      "requiredFields": [
+        "workflow_id",
+        "action_id",
+        "correlation_id",
+        "outcome"
+      ]
+    }
+  ],
+  "events": [
+    {
+      "id": "exception_item_requested",
+      "title": "Exception item requested",
+      "objectId": "exception_item",
+      "requiredEvidence": [
+        "item_id",
+        "asset_version_id",
+        "exception_type"
+      ]
+    },
+    {
+      "id": "queue_measured",
+      "title": "Undecided queue measured",
+      "objectId": "decider_queue",
+      "requiredEvidence": [
+        "decider_id",
+        "undecided_count",
+        "oldest_requested_at"
+      ]
+    },
+    {
+      "id": "item_decided",
+      "title": "Exception item decided",
+      "objectId": "decision_receipt",
+      "requiredEvidence": [
+        "item_id",
+        "decider_id",
+        "decision_notes"
+      ]
+    }
+  ],
+  "actors": [
+    {
+      "id": "final-decider",
+      "title": "Adam Lehman, final allow or deny"
+    },
+    {
+      "id": "partner-lead",
+      "title": "Greg Kelly, partner lead"
+    },
+    {
+      "id": "operator",
+      "title": "Marketplace operator"
+    },
+    {
+      "id": "recommendation-automation",
+      "title": "Advisory recommendation automation"
+    },
+    {
+      "id": "notification-automation",
+      "title": "Decider notification automation"
+    }
+  ],
+  "states": [
+    {
+      "id": "requested",
+      "title": "Requested"
+    },
+    {
+      "id": "under_review",
+      "title": "Under review with advisory recommendation"
+    },
+    {
+      "id": "awaiting_decision",
+      "title": "Awaiting the final decider"
+    },
+    {
+      "id": "decided",
+      "title": "Decided"
+    },
+    {
+      "id": "released",
+      "title": "Released to the developer",
+      "terminal": true
+    }
+  ],
+  "actions": [
+    {
+      "id": "recommend_exception_item",
+      "title": "Record an advisory recommendation",
+      "kind": "decision",
+      "authority": "recommendation-automation",
+      "autonomy": "auto_allow",
+      "systemsTouched": [
+        "recommendation-runner",
+        "exception-decisions-mcp",
+        "airtable-exceptions"
+      ],
+      "requiredEvidence": [
+        "item_id",
+        "exception_type",
+        "recommendation_confidence"
+      ],
+      "approval": {
+        "required": false
+      },
+      "receipt": {
+        "requiredFields": [
+          "workflow_id",
+          "action_id",
+          "correlation_id",
+          "outcome",
+          "evidence_refs"
+        ]
+      },
+      "recovery": {
+        "mode": "escalate",
+        "owner": "final-decider",
+        "path": "Leave the item undecided and route it to the final decider as a needs-human item."
+      },
+      "tool": {
+        "name": "recommend_exception_item",
+        "targetSystemId": "exception-decisions-mcp",
+        "parameters": [
+          {
+            "name": "item_id",
+            "type": "string",
+            "description": "Airtable exception item record id."
+          },
+          {
+            "name": "exception_type",
+            "type": "string",
+            "description": "Exception type driving the routing rule."
+          },
+          {
+            "name": "recommendation_confidence",
+            "type": "string",
+            "description": "Ruleset confidence for the advisory lean."
+          }
+        ]
+      },
+      "agentId": "exception-recommendation-automation"
+    },
+    {
+      "id": "notify_decider",
+      "title": "Notify the final decider of the undecided queue",
+      "kind": "decision",
+      "authority": "notification-automation",
+      "autonomy": "auto_allow",
+      "systemsTouched": [
+        "airtable-exceptions",
+        "slack-notification"
+      ],
+      "requiredEvidence": [
+        "decider_id",
+        "undecided_count",
+        "oldest_requested_at"
+      ],
+      "approval": {
+        "required": false
+      },
+      "receipt": {
+        "requiredFields": [
+          "workflow_id",
+          "action_id",
+          "correlation_id",
+          "outcome",
+          "evidence_refs"
+        ]
+      },
+      "recovery": {
+        "mode": "escalate",
+        "owner": "operator",
+        "path": "If the notification fails, the queue stays visible in the exception decisions interface and the operator raises it directly."
+      },
+      "tool": {
+        "name": "decider_queue_digest",
+        "targetSystemId": "slack-notification",
+        "parameters": [
+          {
+            "name": "decider_id",
+            "type": "string",
+            "description": "Slack recipient for the digest."
+          },
+          {
+            "name": "undecided_count",
+            "type": "string",
+            "description": "Count of undecided exception items."
+          },
+          {
+            "name": "oldest_requested_at",
+            "type": "string",
+            "description": "Requested timestamp of the oldest undecided item."
+          }
+        ]
+      },
+      "agentId": "decider-notification-automation"
+    },
+    {
+      "id": "decide_exception_item",
+      "title": "Decide an exception item",
+      "kind": "decision",
+      "authority": "final-decider",
+      "autonomy": "approval_required",
+      "systemsTouched": [
+        "exception-decisions-mcp",
+        "airtable-exceptions",
+        "decision-rights"
+      ],
+      "requiredEvidence": [
+        "item_id",
+        "decider_id",
+        "decision_notes"
+      ],
+      "approval": {
+        "required": true,
+        "owner": "final-decider"
+      },
+      "receipt": {
+        "requiredFields": [
+          "workflow_id",
+          "action_id",
+          "correlation_id",
+          "outcome",
+          "evidence_refs"
+        ]
+      },
+      "recovery": {
+        "mode": "escalate",
+        "owner": "operator",
+        "path": "Leave the item undecided; the version stays on hold and no developer contact is released."
+      },
+      "tool": {
+        "name": "decide_exception_item",
+        "targetSystemId": "exception-decisions-mcp",
+        "parameters": [
+          {
+            "name": "item_id",
+            "type": "string",
+            "description": "Airtable exception item record id."
+          },
+          {
+            "name": "decider_id",
+            "type": "string",
+            "description": "Identity key of the deciding person."
+          },
+          {
+            "name": "decision_notes",
+            "type": "string",
+            "description": "Written rationale recorded on the item."
+          }
+        ]
+      }
+    },
+    {
+      "id": "release_developer_contact",
+      "title": "Release the developer contact for the version",
+      "kind": "publish",
+      "authority": "operator",
+      "autonomy": "approval_required",
+      "systemsTouched": [
+        "airtable-exceptions",
+        "creator-contact"
+      ],
+      "requiredEvidence": [
+        "asset_version_id",
+        "undecided_count",
+        "suppression_state"
+      ],
+      "approval": {
+        "required": true,
+        "owner": "operator"
+      },
+      "receipt": {
+        "requiredFields": [
+          "workflow_id",
+          "action_id",
+          "correlation_id",
+          "outcome",
+          "evidence_refs"
+        ]
+      },
+      "recovery": {
+        "mode": "escalate",
+        "owner": "operator",
+        "path": "Known coupling: in the live Airtable base this release fires automatically when the last item is decided. Set version suppression before the final decision, or hold one item, until the guard moves behind explicit approval."
+      },
+      "tool": {
+        "name": "release_version_hold",
+        "targetSystemId": "creator-contact",
+        "parameters": [
+          {
+            "name": "asset_version_id",
+            "type": "string",
+            "description": "Airtable asset version record id."
+          },
+          {
+            "name": "undecided_count",
+            "type": "string",
+            "description": "Remaining undecided item count on the version."
+          },
+          {
+            "name": "suppression_state",
+            "type": "string",
+            "description": "Whether message suppression is set on the version."
+          }
+        ]
+      }
+    }
+  ],
+  "transitions": [
+    {
+      "id": "requested-to-under-review",
+      "from": "requested",
+      "to": "under_review",
+      "actionId": "recommend_exception_item"
+    },
+    {
+      "id": "under-review-to-awaiting",
+      "from": "under_review",
+      "to": "awaiting_decision",
+      "actionId": "notify_decider"
+    },
+    {
+      "id": "awaiting-to-decided",
+      "from": "awaiting_decision",
+      "to": "decided",
+      "actionId": "decide_exception_item"
+    },
+    {
+      "id": "decided-to-released",
+      "from": "decided",
+      "to": "released",
+      "actionId": "release_developer_contact"
+    }
+  ],
+  "agents": [
+    {
+      "id": "exception-recommendation-automation",
+      "title": "Advisory recommendation automation",
+      "purpose": "Apply the published ruleset to technical exception items and record advisory recommendations. It never records a decision.",
+      "allowedActionIds": [
+        "recommend_exception_item"
+      ],
+      "escalationOwner": "final-decider"
+    },
+    {
+      "id": "decider-notification-automation",
+      "title": "Decider notification automation",
+      "purpose": "Measure the undecided queue on a schedule and send one digest to the final decider. It reads only.",
+      "allowedActionIds": [
+        "notify_decider"
+      ],
+      "escalationOwner": "operator"
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "advisory-recommendation-allowed",
+      "title": "Automation may record an advisory recommendation",
+      "actionId": "recommend_exception_item",
+      "expectedOutcome": "pass",
+      "requiredEvidence": [
+        "item_id",
+        "exception_type",
+        "recommendation_confidence"
+      ]
+    },
+    {
+      "id": "notification-runs-unattended",
+      "title": "The queue digest runs without approval",
+      "actionId": "notify_decider",
+      "expectedOutcome": "pass",
+      "requiredEvidence": [
+        "decider_id",
+        "undecided_count",
+        "oldest_requested_at"
+      ]
+    },
+    {
+      "id": "decision-waits-for-final-decider",
+      "title": "An exception decision waits for the final decider",
+      "actionId": "decide_exception_item",
+      "expectedOutcome": "approval_required",
+      "requiredEvidence": [
+        "item_id",
+        "decider_id",
+        "decision_notes"
+      ]
+    },
+    {
+      "id": "release-waits-for-operator",
+      "title": "Developer contact waits for explicit operator approval",
+      "actionId": "release_developer_contact",
+      "expectedOutcome": "approval_required",
+      "requiredEvidence": [
+        "asset_version_id",
+        "undecided_count",
+        "suppression_state"
+      ]
+    }
+  ]
+}
