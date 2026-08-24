@@ -629,6 +629,7 @@ export type NotionCustomAgentToolConfirmationState = 'not_required' | 'confirmed
 export interface NotionCustomAgentOperationalReceipts {
   schemaVersion: 'notion_custom_agent_operational_receipts.v0.1';
   blueprintId: string;
+  agentRef?: string;
   activationReceipt: {
     triggerId: string;
     runRef: string;
@@ -654,6 +655,8 @@ export type NotionCustomAgentOperationalReasonCode =
   | 'OPERATIONAL_RECEIPTS_MATCHED'
   | 'OPERATIONAL_RECEIPTS_REQUIRED'
   | 'OPERATIONAL_RECEIPT_MISMATCH'
+  | 'MATCHED_INSTALLATION_EVALUATION_REQUIRED'
+  | 'OPERATIONAL_RECEIPT_INSTALLATION_MISMATCH'
   | 'CONSEQUENTIAL_TOOL_AUTONOMY_VIOLATION'
   | 'NON_MUTATING_ACTION_MUTATION_RECEIPT'
   | 'UNDECLARED_RECEIPT_ACTION'

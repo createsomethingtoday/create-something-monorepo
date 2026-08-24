@@ -67,6 +67,7 @@ const OPERATIONAL_RECEIPT_KEYS = new Set([
 ]);
 const TOOL_CONFIRMATION_STATES = new Set(['not_required', 'confirmed', 'not_confirmed']);
 const compilerOwnedBlueprints = new WeakSet<NotionCustomAgentBlueprint>();
+const compilerOwnedMatchedInstallations = new WeakSet<NotionCustomAgentInstallationEvaluation>();
 
 function deepFreeze<T>(value: T, seen = new WeakSet<object>()): T {
   if (!value || typeof value !== 'object') return value;
@@ -84,6 +85,14 @@ function requireCompilerOwnedBlueprint(blueprint: NotionCustomAgentBlueprint): v
       'Notion Custom Agent evaluation requires the frozen blueprint returned by createNotionCustomAgentBlueprint.'
     );
   }
+}
+
+function finalizeInstallationEvaluation(
+  evaluation: NotionCustomAgentInstallationEvaluation
+): NotionCustomAgentInstallationEvaluation {
+  const frozen = deepFreeze(evaluation);
+  if (frozen.disposition === 'pass') compilerOwnedMatchedInstallations.add(frozen);
+  return frozen;
 }
 
 function invalidInput(message: string): never {
@@ -313,7 +322,11 @@ export function parseNotionCustomAgentOperationalReceipts(
     invalidInput('Notion Custom Agent operational receipts must be detachable structured data.');
   }
   const source = record(snapshot, '$');
-  exactKeys(source, [...OPERATIONAL_RECEIPT_KEYS], '$');
+  exactKeys(
+    source,
+    [...OPERATIONAL_RECEIPT_KEYS, ...(source.agentRef === undefined ? [] : ['agentRef'])],
+    '$'
+  );
   if (source.schemaVersion !== 'notion_custom_agent_operational_receipts.v0.1') {
     invalidInput('$.schemaVersion must be notion_custom_agent_operational_receipts.v0.1.');
   }
@@ -328,6 +341,7 @@ export function parseNotionCustomAgentOperationalReceipts(
   return {
     schemaVersion: 'notion_custom_agent_operational_receipts.v0.1',
     blueprintId: text(source.blueprintId, '$.blueprintId'),
+    ...(source.agentRef === undefined ? {} : { agentRef: text(source.agentRef, '$.agentRef') }),
     activationReceipt: {
       triggerId: text(activation.triggerId, '$.activationReceipt.triggerId'),
       runRef: text(activation.runRef, '$.activationReceipt.runRef'),
@@ -499,13 +513,13 @@ export function evaluateNotionCustomAgentInstallation(
 ): NotionCustomAgentInstallationEvaluation {
   requireCompilerOwnedBlueprint(blueprint);
   if (receiptInput === undefined) {
-    return {
+    return finalizeInstallationEvaluation({
       schemaVersion: 'notion_custom_agent_installation_evaluation.v0.1',
       blueprintId: blueprint.blueprintId,
       disposition: 'wait',
       reasonCode: 'CONFIGURATION_RECEIPT_REQUIRED',
       requiredOperationalReceipts: requiredOperationalReceipts(blueprint.toolBindings)
-    };
+    });
   }
   const receipt = parseNotionCustomAgentConfigurationReceipt(receiptInput);
   const mismatches: string[] = [];
@@ -533,7 +547,7 @@ export function evaluateNotionCustomAgentInstallation(
   if (canonical(actualBindings) !== canonical(expectedBindings)) mismatches.push('toolBindings');
 
   if (mismatches.length) {
-    return {
+    return finalizeInstallationEvaluation({
       schemaVersion: 'notion_custom_agent_installation_evaluation.v0.1',
       blueprintId: blueprint.blueprintId,
       agentRef: receipt.agentRef,
@@ -541,21 +555,22 @@ export function evaluateNotionCustomAgentInstallation(
       reasonCode: 'CONFIGURATION_RECEIPT_MISMATCH',
       mismatchFields: mismatches,
       requiredOperationalReceipts: requiredOperationalReceipts(blueprint.toolBindings)
-    };
+    });
   }
-  return {
+  return finalizeInstallationEvaluation({
     schemaVersion: 'notion_custom_agent_installation_evaluation.v0.1',
     blueprintId: blueprint.blueprintId,
     agentRef: receipt.agentRef,
     disposition: 'pass',
     reasonCode: 'CONFIGURATION_RECEIPT_MATCHED',
     requiredOperationalReceipts: requiredOperationalReceipts(blueprint.toolBindings)
-  };
+  });
 }
 
 export function evaluateNotionCustomAgentOperationalReceipts(
   blueprint: NotionCustomAgentBlueprint,
-  receiptInput?: unknown
+  receiptInput?: unknown,
+  installationEvaluation?: NotionCustomAgentInstallationEvaluation
 ): NotionCustomAgentOperationalEvaluation {
   requireCompilerOwnedBlueprint(blueprint);
   if (receiptInput === undefined) {
@@ -615,6 +630,19 @@ export function evaluateNotionCustomAgentOperationalReceipts(
   }
   const matchesRun = (receipt: { runRef: string } | undefined): boolean =>
     receipt?.runRef === receipts.runReceipt.runRef;
+  const blockedToolActionIds = blueprint.toolBindings
+    .filter((binding) => binding.autonomy === 'blocked')
+    .map((binding) => binding.actionId)
+    .sort((left, right) => left.localeCompare(right));
+  if (blockedToolActionIds.length) {
+    return {
+      schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
+      blueprintId: blueprint.blueprintId,
+      disposition: 'stop',
+      reasonCode: 'CONSEQUENTIAL_TOOL_AUTONOMY_VIOLATION',
+      missingActionIds: blockedToolActionIds
+    };
+  }
   const writeActionsMissingProof = blueprint.toolBindings
     .filter((binding) => {
       const toolReceipt = toolReceipts.get(binding.actionId);
@@ -676,6 +704,26 @@ export function evaluateNotionCustomAgentOperationalReceipts(
       disposition: 'wait',
       reasonCode: 'OPERATIONAL_RECEIPTS_REQUIRED',
       missingActionIds: readActionsMissingToolReceipt
+    };
+  }
+  if (!receipts.agentRef || installationEvaluation === undefined) {
+    return {
+      schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
+      blueprintId: blueprint.blueprintId,
+      disposition: 'wait',
+      reasonCode: 'MATCHED_INSTALLATION_EVALUATION_REQUIRED'
+    };
+  }
+  if (
+    !compilerOwnedMatchedInstallations.has(installationEvaluation) ||
+    installationEvaluation.blueprintId !== blueprint.blueprintId ||
+    installationEvaluation.agentRef !== receipts.agentRef
+  ) {
+    return {
+      schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
+      blueprintId: blueprint.blueprintId,
+      disposition: 'stop',
+      reasonCode: 'OPERATIONAL_RECEIPT_INSTALLATION_MISMATCH'
     };
   }
   return {

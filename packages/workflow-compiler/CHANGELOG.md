@@ -23,6 +23,10 @@ artifact schemas.
 - Deep-freeze and provenance-check compiled blueprints before either evaluator
   trusts them. Reject non-mutating mutation receipts, and enforce confirmation
   or blocking for consequential non-write tool bindings.
+- Stop blocked write and publish bindings before matching receipts can be
+  accepted. Require a matching compiler-created installation evaluation and
+  `agentRef` before operational receipts can pass, preventing evidence from a
+  second installation or an unconfigured agent from satisfying the blueprint.
 
 ## 0.3.1
 

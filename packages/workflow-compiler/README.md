@@ -166,7 +166,11 @@ receipt, recovery, and scalar tool parameters.
 ```ts
 const blueprint = createNotionCustomAgentBlueprint(bundle, blueprintInput);
 const configuration = evaluateNotionCustomAgentInstallation(blueprint, receipt);
-const operation = evaluateNotionCustomAgentOperationalReceipts(blueprint, runReceipts);
+const operation = evaluateNotionCustomAgentOperationalReceipts(
+  blueprint,
+  runReceipts,
+  configuration
+);
 ```
 
 The artifact begins in `wait` until a configuration receipt is supplied.
@@ -177,12 +181,16 @@ blueprints may only request `can_view` access. Activation, tool, and mutation
 receipts must all reference the evaluated run, and receipts for undeclared
 actions stop evaluation. Only write or publish bindings may have mutation
 receipts; consequential non-write actions require a current confirmed tool
-receipt, while blocked actions never pass. The returned blueprint is frozen,
-and the evaluators accept only that compiler-created instance. These helpers make no
-Notion request and do not claim that a caller-supplied receipt is authentic or
-that an agent is installed. An authorized Notion runtime remains responsible
-for manual setup, live configuration readback, activation, execution,
-authentication, confirmation, receipt provenance, recovery, and any mutation.
+receipt, while every blocked action never passes. A passing operational
+evaluation also requires the receipt's `agentRef` and the exact matching
+configuration evaluation returned in the same process; an absent match waits
+and an identity mismatch stops. The returned blueprint and matching
+configuration evaluation are frozen, and the evaluators accept only those
+compiler-created values. These helpers make no Notion request and do not claim
+that a caller-supplied receipt is authentic or that an agent is installed. An
+authorized Notion runtime remains responsible for manual setup, live
+configuration readback, activation, execution, authentication, confirmation,
+receipt provenance, recovery, and any mutation.
 See [API.md](./API.md) for exact schemas and error behavior.
 
 ## Agent Legibility Contract

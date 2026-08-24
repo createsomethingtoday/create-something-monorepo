@@ -189,12 +189,18 @@ from Notion or that the agent is enabled. A future authorized execution host
 must obtain the live configuration, preserve source provenance, and retain its
 own readback evidence.
 
-### `evaluateNotionCustomAgentOperationalReceipts(blueprint, receipts?)`
+### `evaluateNotionCustomAgentOperationalReceipts(blueprint, receipts?, installation?)`
 
 Checks caller-supplied activation, run, tool, and mutation receipt references
-after configuration comparison. Activation, tool, and mutation receipts must
-carry the same `runRef` as the evaluated run. Receipt action IDs must be
-declared by the blueprint; undeclared IDs return `stop` with
+after configuration comparison. A passing operational evaluation also requires
+the operational receipt's `agentRef` and the exact `pass` value returned by
+`evaluateNotionCustomAgentInstallation` for that same agent in the current
+process. Missing matching configuration returns `wait` with
+`MATCHED_INSTALLATION_EVALUATION_REQUIRED`; a different, copied, or otherwise
+unverified configuration result returns `stop` with
+`OPERATIONAL_RECEIPT_INSTALLATION_MISMATCH`. Activation, tool, and mutation
+receipts must carry the same `runRef` as the evaluated run. Receipt action IDs
+must be declared by the blueprint; undeclared IDs return `stop` with
 `UNDECLARED_RECEIPT_ACTION`. Missing read-only tool evidence returns `wait`.
 Every `write` or `publish` binding must have a confirmed tool receipt and a
 mutation receipt correlated to that run; otherwise the evaluator returns
@@ -203,7 +209,8 @@ receipts are valid only for those write or publish bindings; a mutation
 attributed to a read or decision binding stops with
 `NON_MUTATING_ACTION_MUTATION_RECEIPT`. An `approval_required` or
 `manual_only` non-write binding needs a current confirmed tool receipt, and a
-`blocked` binding never passes; either violation stops with
+`blocked` binding never passes, including write and publish bindings; either
+violation stops with
 `CONSEQUENTIAL_TOOL_AUTONOMY_VIOLATION`. The helper never executes the action
 or verifies a provider-provided receipt cryptographically.
 
