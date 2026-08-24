@@ -4,6 +4,20 @@ All notable changes to this package are documented here. This project follows
 Semantic Versioning for its npm API and separately versions its workflow and
 artifact schemas.
 
+## Unreleased
+
+- Add offline `notion_agent_blueprint.v0.1` planning for a workflow agent's
+  explicit Custom Agent resources, triggers, and narrow Worker or CREATE
+  SOMETHING MCP bindings.
+- Add strict blueprint, configuration-receipt, and operational-receipt parsers
+  plus deterministic `pass`, `wait`, and `stop` evaluators. A matching supplied
+  receipt is a structural comparison only, never a claim of a live Notion
+  readback.
+- Require explicit configuration/activation/run/tool receipts for every
+  blueprint and a confirmed tool receipt plus mutation receipt for write or
+  publish bindings. Scope expansion, altered tool bindings, and missing write
+  proof fail closed.
+
 ## 0.3.1
 
 - Add the shipped Marketplace Submission System Map. It provides one

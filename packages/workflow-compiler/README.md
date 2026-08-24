@@ -110,6 +110,9 @@ import {
   compileWorkflowDefinition,
   createMcpToolCallPlan,
   createOpenAIResponsesRequestPlan,
+  createNotionCustomAgentBlueprint,
+  evaluateNotionCustomAgentInstallation,
+  evaluateNotionCustomAgentOperationalReceipts,
   evaluateGovernedInteractionCompatibility,
   parseGovernedInteractionBundle,
   replayWorkflow,
@@ -151,6 +154,30 @@ Both adapters return the same explicit disposition:
 Tool parameters are versioned in the workflow definition, type checked, and required to map to governed evidence. A tool target must also appear in the action's `systemsTouched` boundary. The MCP plan names a provider-neutral `tools/call` operation, target system, tool, and arguments; it does not select a transport, endpoint, session, or credential. The OpenAI plan emits the caller-selected `model`, `instructions`, `input`, one strict function tool, forced `tool_choice`, disabled parallel tool calls, and `store: false`; every function parameter has a single allowed value matching the governed argument, and the same canonical map is exposed as `expectedArguments`. It does not call the API or read an API key. This shape follows the official [OpenAI Responses create API](https://developers.openai.com/api/reference/cli/resources/responses/methods/create). A Codex or other OpenAI execution host remains responsible for transport, current model policy, tool-result validation, and receipt persistence.
 
 The adapter never accepts a replay result and a second unbound evidence object. It first detaches one structured-data snapshot, then replays and maps only that copy so caller mutation, getters, proxies, or a second evidence object cannot substitute values during or after the governance decision.
+
+## Notion Custom Agent blueprints
+
+`createNotionCustomAgentBlueprint` is a provider-specific, offline artifact
+for the documented Custom Agent delivery boundary. It compiles a workflow agent
+into explicit resource access, triggers, and narrow Worker or CREATE SOMETHING
+MCP bindings; it retains the compiled action's authority, autonomy, evidence,
+receipt, recovery, and scalar tool parameters.
+
+```ts
+const blueprint = createNotionCustomAgentBlueprint(bundle, blueprintInput);
+const configuration = evaluateNotionCustomAgentInstallation(blueprint, receipt);
+const operation = evaluateNotionCustomAgentOperationalReceipts(blueprint, runReceipts);
+```
+
+The artifact begins in `wait` until a configuration receipt is supplied.
+Configuration scope or tool-contract mismatches stop. A read-only binding waits
+for its operational receipt; a write or publish binding stops unless it has a
+confirmed tool receipt and correlated mutation receipt. These helpers make no
+Notion request and do not claim that a caller-supplied receipt is authentic or
+that an agent is installed. An authorized Notion runtime remains responsible
+for manual setup, live configuration readback, activation, execution,
+authentication, confirmation, receipt provenance, recovery, and any mutation.
+See [API.md](./API.md) for exact schemas and error behavior.
 
 ## Agent Legibility Contract
 
