@@ -9,7 +9,7 @@ It gives builders a composable governance layer below any hosted control plane. 
 Install the builder artifact in the repository where the workflow will live:
 
 ```bash
-npm install @create-something/workflow-compiler@0.3.1
+npm install @create-something/workflow-compiler@0.4.0
 ```
 
 Copy the shipped Codex skill into that repository, then ask Codex to turn a recurring operating task into a runbook. Codex can propose and revise the local files; the terminal commands below remain the deterministic proof surface:
@@ -62,7 +62,7 @@ execution host begins.
 Install the package with a supported Node release:
 
 ```bash
-npm install @create-something/workflow-compiler@0.3.1
+npm install @create-something/workflow-compiler@0.4.0
 ```
 
 Create `workflow.json` and optionally `cases.json` using the versioned schemas documented in [API.md](./API.md). Compile and independently verify a local bundle:
@@ -172,7 +172,10 @@ const operation = evaluateNotionCustomAgentOperationalReceipts(blueprint, runRec
 The artifact begins in `wait` until a configuration receipt is supplied.
 Configuration scope or tool-contract mismatches stop. A read-only binding waits
 for its operational receipt; a write or publish binding stops unless it has a
-confirmed tool receipt and mutation receipt for the same run. These helpers make no
+confirmed tool receipt and mutation receipt for the same run. Read-only
+blueprints may only request `can_view` access. Activation, tool, and mutation
+receipts must all reference the evaluated run, and receipts for undeclared
+actions stop evaluation. These helpers make no
 Notion request and do not claim that a caller-supplied receipt is authentic or
 that an agent is installed. An authorized Notion runtime remains responsible
 for manual setup, live configuration readback, activation, execution,

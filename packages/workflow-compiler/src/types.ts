@@ -631,6 +631,7 @@ export interface NotionCustomAgentOperationalReceipts {
   blueprintId: string;
   activationReceipt: {
     triggerId: string;
+    runRef: string;
     activationRef: string;
   };
   runReceipt: {
@@ -653,6 +654,7 @@ export type NotionCustomAgentOperationalReasonCode =
   | 'OPERATIONAL_RECEIPTS_MATCHED'
   | 'OPERATIONAL_RECEIPTS_REQUIRED'
   | 'OPERATIONAL_RECEIPT_MISMATCH'
+  | 'UNDECLARED_RECEIPT_ACTION'
   | 'WRITE_CONFIRMATION_OR_MUTATION_RECEIPT_REQUIRED';
 
 export interface NotionCustomAgentOperationalEvaluation {
@@ -661,6 +663,7 @@ export interface NotionCustomAgentOperationalEvaluation {
   disposition: NotionCustomAgentInstallationDisposition;
   reasonCode: NotionCustomAgentOperationalReasonCode;
   missingActionIds?: string[];
+  unexpectedActionIds?: string[];
 }
 
 export interface WorkflowCompilationDiagnostic {

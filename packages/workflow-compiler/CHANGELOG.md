@@ -4,7 +4,7 @@ All notable changes to this package are documented here. This project follows
 Semantic Versioning for its npm API and separately versions its workflow and
 artifact schemas.
 
-## Unreleased
+## 0.4.0
 
 - Add offline `notion_agent_blueprint.v0.1` planning for a workflow agent's
   explicit Custom Agent resources, triggers, and narrow Worker or CREATE
@@ -17,6 +17,9 @@ artifact schemas.
   blueprint and a confirmed tool receipt plus mutation receipt bound to the
   same run for write or publish bindings. Scope expansion, altered tool
   bindings, stale receipts, and missing write proof fail closed.
+- Reject `can_comment` and `can_edit` access without a governed write or
+  publish action. Activation receipts must bind the same run as operational
+  evidence, and undeclared receipt actions stop evaluation.
 
 ## 0.3.1
 

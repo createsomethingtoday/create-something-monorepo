@@ -159,7 +159,9 @@ scalar parameters.
 The result always begins with `installation.disposition = 'wait'` and
 `CONFIGURATION_RECEIPT_REQUIRED`. Read-only workflows require configuration,
 activation, run, and tool receipts; write or publish bindings also require a
-mutation receipt. The function does not authenticate to Notion, create an
+mutation receipt. `can_comment` and `can_edit` access require at least one
+compiled write or publish binding; otherwise blueprint creation fails. The
+function does not authenticate to Notion, create an
 agent, attach a tool, enable a trigger, read workspace state, or call a Worker
 or MCP.
 
@@ -187,11 +189,12 @@ own readback evidence.
 ### `evaluateNotionCustomAgentOperationalReceipts(blueprint, receipts?)`
 
 Checks caller-supplied activation, run, tool, and mutation receipt references
-after configuration comparison. Each tool and mutation receipt must carry the
-same `runRef` as the evaluated run. Missing read-only tool evidence returns
-`wait`. Every `write` or `publish` binding must have a confirmed tool receipt
-and a mutation receipt correlated to that run; otherwise the evaluator returns
-`stop` with
+after configuration comparison. Activation, tool, and mutation receipts must
+carry the same `runRef` as the evaluated run. Receipt action IDs must be
+declared by the blueprint; undeclared IDs return `stop` with
+`UNDECLARED_RECEIPT_ACTION`. Missing read-only tool evidence returns `wait`.
+Every `write` or `publish` binding must have a confirmed tool receipt and a
+mutation receipt correlated to that run; otherwise the evaluator returns `stop` with
 `WRITE_CONFIRMATION_OR_MUTATION_RECEIPT_REQUIRED`. The helper never executes
 the action or verifies a provider-provided receipt cryptographically.
 

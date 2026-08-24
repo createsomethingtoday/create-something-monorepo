@@ -20,7 +20,8 @@ export type NotionCustomAgentBlueprintErrorCode =
   | 'UNKNOWN_BLUEPRINT_AGENT'
   | 'ACTION_NOT_ALLOWED_FOR_BLUEPRINT_AGENT'
   | 'UNKNOWN_BLUEPRINT_TOOL_ACTION'
-  | 'BLUEPRINT_TOOL_KEY_MISMATCH';
+  | 'BLUEPRINT_TOOL_KEY_MISMATCH'
+  | 'MUTATING_RESOURCE_ACCESS_REQUIRES_WRITE_ACTION';
 
 export class NotionCustomAgentBlueprintError extends Error {
   readonly code: NotionCustomAgentBlueprintErrorCode;
@@ -297,7 +298,7 @@ export function parseNotionCustomAgentOperationalReceipts(
     invalidInput('$.schemaVersion must be notion_custom_agent_operational_receipts.v0.1.');
   }
   const activation = record(source.activationReceipt, '$.activationReceipt');
-  exactKeys(activation, ['triggerId', 'activationRef'], '$.activationReceipt');
+  exactKeys(activation, ['triggerId', 'runRef', 'activationRef'], '$.activationReceipt');
   const run = record(source.runReceipt, '$.runReceipt');
   exactKeys(run, ['runRef'], '$.runReceipt');
   const toolReceipts = array(source.toolReceipts, '$.toolReceipts').map(parseOperationalToolReceipt);
@@ -309,6 +310,7 @@ export function parseNotionCustomAgentOperationalReceipts(
     blueprintId: text(source.blueprintId, '$.blueprintId'),
     activationReceipt: {
       triggerId: text(activation.triggerId, '$.activationReceipt.triggerId'),
+      runRef: text(activation.runRef, '$.activationReceipt.runRef'),
       activationRef: text(activation.activationRef, '$.activationReceipt.activationRef')
     },
     runReceipt: {
@@ -434,6 +436,16 @@ export function createNotionCustomAgentBlueprint(
     })
     .sort(byActionId);
 
+  if (
+    blueprint.resourceAccess.some((resource) => resource.level !== 'can_view') &&
+    !toolBindings.some((binding) => binding.kind === 'write' || binding.kind === 'publish')
+  ) {
+    throw new NotionCustomAgentBlueprintError(
+      'MUTATING_RESOURCE_ACCESS_REQUIRES_WRITE_ACTION',
+      'Notion comment or edit access requires a compiled write or publish action.'
+    );
+  }
+
   return {
     schemaVersion: 'notion_agent_blueprint.v0.1',
     workflowId: bundle.workflowId,
@@ -533,6 +545,7 @@ export function evaluateNotionCustomAgentOperationalReceipts(
   const receipts = parseNotionCustomAgentOperationalReceipts(receiptInput);
   if (
     receipts.blueprintId !== blueprint.blueprintId ||
+    receipts.activationReceipt.runRef !== receipts.runReceipt.runRef ||
     !blueprint.triggers.some((trigger) => trigger.triggerId === receipts.activationReceipt.triggerId)
   ) {
     return {
@@ -546,6 +559,19 @@ export function evaluateNotionCustomAgentOperationalReceipts(
   const mutationReceipts = new Map(
     receipts.mutationReceipts.map((receipt) => [receipt.actionId, receipt])
   );
+  const declaredActionIds = new Set(blueprint.toolBindings.map((binding) => binding.actionId));
+  const unexpectedActionIds = [...new Set([...toolReceipts.keys(), ...mutationReceipts.keys()])]
+    .filter((actionId) => !declaredActionIds.has(actionId))
+    .sort((left, right) => left.localeCompare(right));
+  if (unexpectedActionIds.length) {
+    return {
+      schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
+      blueprintId: blueprint.blueprintId,
+      disposition: 'stop',
+      reasonCode: 'UNDECLARED_RECEIPT_ACTION',
+      unexpectedActionIds
+    };
+  }
   const matchesRun = (receipt: { runRef: string } | undefined): boolean =>
     receipt?.runRef === receipts.runReceipt.runRef;
   const writeActionsMissingProof = blueprint.toolBindings

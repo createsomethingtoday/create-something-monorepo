@@ -160,6 +160,18 @@ test('compiles a read-only Custom Agent blueprint that waits for installation re
   });
 });
 
+test('rejects mutating Notion resource access without a governed write or publish action', async () => {
+  const workflow = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const compiled = compileWorkflowDefinition(workflow);
+  const input = readOnlyBlueprintInput();
+  input.resourceAccess[0].level = 'can_edit';
+
+  assert.throws(
+    () => createNotionCustomAgentBlueprint(compiled, input),
+    (error) => error?.code === 'MUTATING_RESOURCE_ACCESS_REQUIRES_WRITE_ACTION'
+  );
+});
+
 test('passes a supplied configuration receipt only when it matches the read-only blueprint', async () => {
   const workflow = JSON.parse(await readFile(workflowUrl, 'utf8'));
   const compiled = compileWorkflowDefinition(workflow);
@@ -361,6 +373,7 @@ test('stops a write binding without confirmation and mutation proof', async () =
       blueprintId: 'agency-ops-review-suggestion.v0.1',
       activationReceipt: {
         triggerId: 'manual-review-suggestion',
+        runRef: 'notion-run://agency-ops-review-suggestion-fixture',
         activationRef: 'notion-activation://agency-ops-review-suggestion-fixture'
       },
       runReceipt: {
@@ -391,6 +404,7 @@ test('stops a write binding without confirmation and mutation proof', async () =
       blueprintId: 'agency-ops-review-suggestion.v0.1',
       activationReceipt: {
         triggerId: 'manual-review-suggestion',
+        runRef: 'notion-run://agency-ops-review-suggestion-current',
         activationRef: 'notion-activation://agency-ops-review-suggestion-fixture'
       },
       runReceipt: {
@@ -427,6 +441,7 @@ test('stops a write binding without confirmation and mutation proof', async () =
       blueprintId: 'agency-ops-review-suggestion.v0.1',
       activationReceipt: {
         triggerId: 'manual-review-suggestion',
+        runRef: 'notion-run://agency-ops-review-suggestion-current',
         activationRef: 'notion-activation://agency-ops-review-suggestion-fixture'
       },
       runReceipt: {
@@ -453,6 +468,90 @@ test('stops a write binding without confirmation and mutation proof', async () =
       blueprintId: 'agency-ops-review-suggestion.v0.1',
       disposition: 'pass',
       reasonCode: 'OPERATIONAL_RECEIPTS_MATCHED'
+    }
+  );
+
+  assert.deepEqual(
+    evaluateNotionCustomAgentOperationalReceipts(blueprint, {
+      schemaVersion: 'notion_custom_agent_operational_receipts.v0.1',
+      blueprintId: 'agency-ops-review-suggestion.v0.1',
+      activationReceipt: {
+        triggerId: 'manual-review-suggestion',
+        runRef: 'notion-run://agency-ops-review-suggestion-previous',
+        activationRef: 'notion-activation://agency-ops-review-suggestion-previous'
+      },
+      runReceipt: {
+        runRef: 'notion-run://agency-ops-review-suggestion-current'
+      },
+      toolReceipts: [
+        {
+          actionId: 'create_review_suggestion',
+          runRef: 'notion-run://agency-ops-review-suggestion-current',
+          toolInvocationRef: 'notion-worker-run://review-suggestion-current',
+          confirmationState: 'confirmed'
+        }
+      ],
+      mutationReceipts: [
+        {
+          actionId: 'create_review_suggestion',
+          runRef: 'notion-run://agency-ops-review-suggestion-current',
+          mutationRef: 'notion-mutation://review-suggestion-current'
+        }
+      ]
+    }),
+    {
+      schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
+      blueprintId: 'agency-ops-review-suggestion.v0.1',
+      disposition: 'stop',
+      reasonCode: 'OPERATIONAL_RECEIPT_MISMATCH'
+    }
+  );
+
+  assert.deepEqual(
+    evaluateNotionCustomAgentOperationalReceipts(blueprint, {
+      schemaVersion: 'notion_custom_agent_operational_receipts.v0.1',
+      blueprintId: 'agency-ops-review-suggestion.v0.1',
+      activationReceipt: {
+        triggerId: 'manual-review-suggestion',
+        runRef: 'notion-run://agency-ops-review-suggestion-current',
+        activationRef: 'notion-activation://agency-ops-review-suggestion-current'
+      },
+      runReceipt: {
+        runRef: 'notion-run://agency-ops-review-suggestion-current'
+      },
+      toolReceipts: [
+        {
+          actionId: 'create_review_suggestion',
+          runRef: 'notion-run://agency-ops-review-suggestion-current',
+          toolInvocationRef: 'notion-worker-run://review-suggestion-current',
+          confirmationState: 'confirmed'
+        },
+        {
+          actionId: 'unapproved_tool',
+          runRef: 'notion-run://agency-ops-review-suggestion-current',
+          toolInvocationRef: 'notion-worker-run://unapproved-tool-current',
+          confirmationState: 'confirmed'
+        }
+      ],
+      mutationReceipts: [
+        {
+          actionId: 'create_review_suggestion',
+          runRef: 'notion-run://agency-ops-review-suggestion-current',
+          mutationRef: 'notion-mutation://review-suggestion-current'
+        },
+        {
+          actionId: 'unapproved_mutation',
+          runRef: 'notion-run://agency-ops-review-suggestion-current',
+          mutationRef: 'notion-mutation://unapproved-mutation-current'
+        }
+      ]
+    }),
+    {
+      schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
+      blueprintId: 'agency-ops-review-suggestion.v0.1',
+      disposition: 'stop',
+      reasonCode: 'UNDECLARED_RECEIPT_ACTION',
+      unexpectedActionIds: ['unapproved_mutation', 'unapproved_tool']
     }
   );
 });
@@ -499,6 +598,7 @@ test('waits for the missing operational receipt of a read-only binding', async (
       blueprintId: 'agency-ops-evidence-triage.v0.1',
       activationReceipt: {
         triggerId: 'manual-review',
+        runRef: 'notion-run://agency-ops-evidence-triage-fixture',
         activationRef: 'notion-activation://agency-ops-evidence-triage-fixture'
       },
       runReceipt: {

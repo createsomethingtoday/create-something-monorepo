@@ -1,6 +1,6 @@
 {
   "schemaVersion": "workflow_compiler_package_inventory.v1",
-  "packageVersion": "0.3.1",
+  "packageVersion": "0.4.0",
   "files": [
     "API.md",
     "CHANGELOG.md",
