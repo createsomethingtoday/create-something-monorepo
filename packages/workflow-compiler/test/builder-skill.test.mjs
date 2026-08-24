@@ -73,4 +73,9 @@ test('the shipped System Map explains the Marketplace path without claiming live
     systemMap,
     /does not emit a review-request receipt, reviewer decision, or creator-contact record/i
   );
+  assert.match(
+    systemMap,
+    /workflow-compiler compile --workflow workflow\.json --cases cases\.json --out artifacts/i
+  );
+  assert.match(systemMap, /explicit compile step writes inspectable artifacts/i);
 });

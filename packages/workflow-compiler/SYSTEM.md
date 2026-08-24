@@ -142,15 +142,18 @@ shipped Codex skill, then create the Marketplace starter:
     cd ./marketplace-submission
     npx workflow-compiler validate --workflow workflow.json
     npx workflow-compiler simulate --workflow workflow.json --cases cases.json
+    npx workflow-compiler compile --workflow workflow.json --cases cases.json --out artifacts
     npx workflow-compiler explain --workflow workflow.json --cases cases.json
 
-The starter produces:
+The starter writes the source and local evidence files:
 
 - workflow.json, the versioned source of the local contract;
 - cases.json, sanitized representative evidence and expected outcomes;
 - RUNBOOK.md and PLAYBOOK.md, the operator and builder views;
-- SOURCES.md, pointers to the owning application and policy surfaces; and
-- compiled artifacts such as the acceptance summary, evidence ledger,
+- SOURCES.md, pointers to the owning application and policy surfaces.
+
+The explicit compile step writes inspectable artifacts under `artifacts/`,
+including the acceptance summary, evidence ledger,
   governed interaction bundle, and read-only operator console.
 
 Codex can propose changes, validate them, simulate representative outcomes, and
