@@ -369,6 +369,7 @@ test('stops a write binding without confirmation and mutation proof', async () =
       toolReceipts: [
         {
           actionId: 'create_review_suggestion',
+          runRef: 'notion-run://agency-ops-review-suggestion-fixture',
           toolInvocationRef: 'notion-worker-run://review-suggestion-fixture',
           confirmationState: 'not_confirmed'
         }
@@ -381,6 +382,77 @@ test('stops a write binding without confirmation and mutation proof', async () =
       disposition: 'stop',
       reasonCode: 'WRITE_CONFIRMATION_OR_MUTATION_RECEIPT_REQUIRED',
       missingActionIds: ['create_review_suggestion']
+    }
+  );
+
+  assert.deepEqual(
+    evaluateNotionCustomAgentOperationalReceipts(blueprint, {
+      schemaVersion: 'notion_custom_agent_operational_receipts.v0.1',
+      blueprintId: 'agency-ops-review-suggestion.v0.1',
+      activationReceipt: {
+        triggerId: 'manual-review-suggestion',
+        activationRef: 'notion-activation://agency-ops-review-suggestion-fixture'
+      },
+      runReceipt: {
+        runRef: 'notion-run://agency-ops-review-suggestion-current'
+      },
+      toolReceipts: [
+        {
+          actionId: 'create_review_suggestion',
+          runRef: 'notion-run://agency-ops-review-suggestion-previous',
+          toolInvocationRef: 'notion-worker-run://review-suggestion-previous',
+          confirmationState: 'confirmed'
+        }
+      ],
+      mutationReceipts: [
+        {
+          actionId: 'create_review_suggestion',
+          runRef: 'notion-run://agency-ops-review-suggestion-previous',
+          mutationRef: 'notion-mutation://review-suggestion-previous'
+        }
+      ]
+    }),
+    {
+      schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
+      blueprintId: 'agency-ops-review-suggestion.v0.1',
+      disposition: 'stop',
+      reasonCode: 'WRITE_CONFIRMATION_OR_MUTATION_RECEIPT_REQUIRED',
+      missingActionIds: ['create_review_suggestion']
+    }
+  );
+
+  assert.deepEqual(
+    evaluateNotionCustomAgentOperationalReceipts(blueprint, {
+      schemaVersion: 'notion_custom_agent_operational_receipts.v0.1',
+      blueprintId: 'agency-ops-review-suggestion.v0.1',
+      activationReceipt: {
+        triggerId: 'manual-review-suggestion',
+        activationRef: 'notion-activation://agency-ops-review-suggestion-fixture'
+      },
+      runReceipt: {
+        runRef: 'notion-run://agency-ops-review-suggestion-current'
+      },
+      toolReceipts: [
+        {
+          actionId: 'create_review_suggestion',
+          runRef: 'notion-run://agency-ops-review-suggestion-current',
+          toolInvocationRef: 'notion-worker-run://review-suggestion-current',
+          confirmationState: 'confirmed'
+        }
+      ],
+      mutationReceipts: [
+        {
+          actionId: 'create_review_suggestion',
+          runRef: 'notion-run://agency-ops-review-suggestion-current',
+          mutationRef: 'notion-mutation://review-suggestion-current'
+        }
+      ]
+    }),
+    {
+      schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
+      blueprintId: 'agency-ops-review-suggestion.v0.1',
+      disposition: 'pass',
+      reasonCode: 'OPERATIONAL_RECEIPTS_MATCHED'
     }
   );
 });

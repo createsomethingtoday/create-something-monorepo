@@ -14,9 +14,9 @@ artifact schemas.
   receipt is a structural comparison only, never a claim of a live Notion
   readback.
 - Require explicit configuration/activation/run/tool receipts for every
-  blueprint and a confirmed tool receipt plus mutation receipt for write or
-  publish bindings. Scope expansion, altered tool bindings, and missing write
-  proof fail closed.
+  blueprint and a confirmed tool receipt plus mutation receipt bound to the
+  same run for write or publish bindings. Scope expansion, altered tool
+  bindings, stale receipts, and missing write proof fail closed.
 
 ## 0.3.1
 

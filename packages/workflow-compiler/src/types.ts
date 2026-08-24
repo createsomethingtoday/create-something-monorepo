@@ -638,11 +638,13 @@ export interface NotionCustomAgentOperationalReceipts {
   };
   toolReceipts: Array<{
     actionId: string;
+    runRef: string;
     toolInvocationRef: string;
     confirmationState: NotionCustomAgentToolConfirmationState;
   }>;
   mutationReceipts: Array<{
     actionId: string;
+    runRef: string;
     mutationRef: string;
   }>;
 }

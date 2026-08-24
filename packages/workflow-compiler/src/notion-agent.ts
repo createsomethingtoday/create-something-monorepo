@@ -255,13 +255,14 @@ function parseOperationalToolReceipt(
 ): NotionCustomAgentOperationalReceipts['toolReceipts'][number] {
   const path = `toolReceipts[${index}]`;
   const entry = record(value, path);
-  exactKeys(entry, ['actionId', 'toolInvocationRef', 'confirmationState'], path);
+  exactKeys(entry, ['actionId', 'runRef', 'toolInvocationRef', 'confirmationState'], path);
   const confirmationState = text(entry.confirmationState, `${path}.confirmationState`);
   if (!TOOL_CONFIRMATION_STATES.has(confirmationState)) {
     invalidInput(`${path}.confirmationState must be a supported confirmation state.`);
   }
   return {
     actionId: text(entry.actionId, `${path}.actionId`),
+    runRef: text(entry.runRef, `${path}.runRef`),
     toolInvocationRef: text(entry.toolInvocationRef, `${path}.toolInvocationRef`),
     confirmationState: confirmationState as NotionCustomAgentOperationalReceipts['toolReceipts'][number]['confirmationState']
   };
@@ -273,9 +274,10 @@ function parseMutationReceipt(
 ): NotionCustomAgentOperationalReceipts['mutationReceipts'][number] {
   const path = `mutationReceipts[${index}]`;
   const entry = record(value, path);
-  exactKeys(entry, ['actionId', 'mutationRef'], path);
+  exactKeys(entry, ['actionId', 'runRef', 'mutationRef'], path);
   return {
     actionId: text(entry.actionId, `${path}.actionId`),
+    runRef: text(entry.runRef, `${path}.runRef`),
     mutationRef: text(entry.mutationRef, `${path}.mutationRef`)
   };
 }
@@ -541,13 +543,22 @@ export function evaluateNotionCustomAgentOperationalReceipts(
     };
   }
   const toolReceipts = new Map(receipts.toolReceipts.map((receipt) => [receipt.actionId, receipt]));
-  const mutationReceipts = new Set(receipts.mutationReceipts.map((receipt) => receipt.actionId));
+  const mutationReceipts = new Map(
+    receipts.mutationReceipts.map((receipt) => [receipt.actionId, receipt])
+  );
+  const matchesRun = (receipt: { runRef: string } | undefined): boolean =>
+    receipt?.runRef === receipts.runReceipt.runRef;
   const writeActionsMissingProof = blueprint.toolBindings
     .filter((binding) => {
       const toolReceipt = toolReceipts.get(binding.actionId);
+      const mutationReceipt = mutationReceipts.get(binding.actionId);
       if (binding.kind !== 'write' && binding.kind !== 'publish') return false;
       if (!toolReceipt) return true;
-      return toolReceipt.confirmationState !== 'confirmed' || !mutationReceipts.has(binding.actionId);
+      return (
+        toolReceipt.confirmationState !== 'confirmed' ||
+        !matchesRun(toolReceipt) ||
+        !matchesRun(mutationReceipt)
+      );
     })
     .map((binding) => binding.actionId)
     .sort((left, right) => left.localeCompare(right));
@@ -565,7 +576,7 @@ export function evaluateNotionCustomAgentOperationalReceipts(
       (binding) =>
         binding.kind !== 'write' &&
         binding.kind !== 'publish' &&
-        !toolReceipts.has(binding.actionId)
+        !matchesRun(toolReceipts.get(binding.actionId))
     )
     .map((binding) => binding.actionId)
     .sort((left, right) => left.localeCompare(right));

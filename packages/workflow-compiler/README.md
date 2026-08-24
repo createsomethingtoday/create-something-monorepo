@@ -172,7 +172,7 @@ const operation = evaluateNotionCustomAgentOperationalReceipts(blueprint, runRec
 The artifact begins in `wait` until a configuration receipt is supplied.
 Configuration scope or tool-contract mismatches stop. A read-only binding waits
 for its operational receipt; a write or publish binding stops unless it has a
-confirmed tool receipt and correlated mutation receipt. These helpers make no
+confirmed tool receipt and mutation receipt for the same run. These helpers make no
 Notion request and do not claim that a caller-supplied receipt is authentic or
 that an agent is installed. An authorized Notion runtime remains responsible
 for manual setup, live configuration readback, activation, execution,

@@ -187,9 +187,11 @@ own readback evidence.
 ### `evaluateNotionCustomAgentOperationalReceipts(blueprint, receipts?)`
 
 Checks caller-supplied activation, run, tool, and mutation receipt references
-after configuration comparison. Missing read-only tool evidence returns `wait`.
-Every `write` or `publish` binding must have a confirmed tool receipt and a
-correlated mutation receipt; otherwise the evaluator returns `stop` with
+after configuration comparison. Each tool and mutation receipt must carry the
+same `runRef` as the evaluated run. Missing read-only tool evidence returns
+`wait`. Every `write` or `publish` binding must have a confirmed tool receipt
+and a mutation receipt correlated to that run; otherwise the evaluator returns
+`stop` with
 `WRITE_CONFIRMATION_OR_MUTATION_RECEIPT_REQUIRED`. The helper never executes
 the action or verifies a provider-provided receipt cryptographically.
 
