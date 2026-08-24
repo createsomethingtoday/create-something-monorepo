@@ -55,8 +55,8 @@ contract that governs it. They meet at evidence, not at shared credentials.
 | Form and published site validate | Submission Cloud validation path | Local modeled evidence: form-validation receipt and an explicit passed result | The compiler can move from draft to form validated. The live intake applies its check inside one request. |
 | Enforced Validator App preflight passes | Validator App preflight called by Submission Cloud | Local modeled evidence: `enforce` policy, preflight receipt, and a passed status | The compiler can move from form validated to preflight passed. A failed required preflight is a stop in the live request. |
 | Airtable Automation handoff is confirmed | Airtable Automation and its source record | Live confirmed receipt: submission ID, confirmed handoff state, asset ID, version ID, and review status. Local modeled evidence additionally expects automation version and webhook receipt. | Codex may inspect supplied evidence only after the live confirmed receipt proves the handoff. |
-| Reviewer decides | Marketplace review policy and reviewer queue | Submission ID, asset ID, version ID, and review-request receipt | This is approval required. The assigned reviewer or policy owner decides; an agent does not promote itself. |
-| Creator receives a decision | Owning reviewer communication process | Decision receipt and creator-contact reference | The compiler keeps this write blocked. Delivery is independently verified by the owning process. |
+| Reviewer decides | Marketplace review policy and reviewer queue | Local modeled evidence: review-request receipt. The live intake receipt supplies IDs and review status, not a request event. | This is approval required. The assigned reviewer or policy owner decides; an agent does not promote itself. |
+| Creator receives a decision | Owning reviewer communication process | Local modeled evidence: decision receipt and creator-contact reference | The compiler keeps this write blocked. Delivery is independently verified by the owning process. |
 
 A webhook receipt alone is not a handoff. It means processing was observed; it
 does not prove an asset, version, confirmed state, and review-ready record
@@ -70,13 +70,14 @@ or Validator preflight receipts. It returns a published-site validation summary
 and, after the webhook wait, either a processing receipt or a confirmed Airtable
 receipt with the submission, asset, version, and review-status fields. It does
 not return an automation version or webhook receipt.
+It does not emit a review-request receipt, reviewer decision, or creator-contact record.
 
 This is why the first two compiler transitions, and the extra handoff fields in
-the compiler, are labelled local modeled evidence: they demonstrate the contract
-that the intake enforces, but cannot by themselves be correlated to a live
-submission through the current response. A processing receipt proves receipt of
-the submission, not a confirmed handoff. Use a confirmed Airtable receipt to
-describe the live handoff as complete.
+the compiler, are labelled local modeled evidence. The reviewer and creator
+stages use the same label: they are requirements in the local model, not
+evidence returned by the current intake response. A processing receipt proves
+receipt of the submission, not a confirmed handoff. Use a confirmed Airtable
+receipt to describe the live handoff as complete.
 
 ### Preflight modes
 
