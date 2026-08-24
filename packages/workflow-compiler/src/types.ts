@@ -621,7 +621,7 @@ export interface NotionCustomAgentInstallationEvaluation {
   disposition: NotionCustomAgentInstallationDisposition;
   reasonCode: NotionCustomAgentInstallationReasonCode;
   mismatchFields?: string[];
-  requiredOperationalReceipts: Array<'activation' | 'run' | 'tool'>;
+  requiredOperationalReceipts: Array<'activation' | 'run' | 'tool' | 'mutation'>;
 }
 
 export type NotionCustomAgentToolConfirmationState = 'not_required' | 'confirmed' | 'not_confirmed';

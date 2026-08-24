@@ -340,8 +340,17 @@ function canonical(value: unknown): string {
   return JSON.stringify(value);
 }
 
-function requiredOperationalReceipts(): Array<'activation' | 'run' | 'tool'> {
-  return ['activation', 'run', 'tool'];
+function requiredOperationalReceipts(
+  toolBindings: NotionCustomAgentBlueprint['toolBindings']
+): NotionCustomAgentInstallationEvaluation['requiredOperationalReceipts'] {
+  return [
+    'activation',
+    'run',
+    'tool',
+    ...(toolBindings.some((binding) => binding.kind === 'write' || binding.kind === 'publish')
+      ? ['mutation' as const]
+      : [])
+  ];
 }
 
 function requiredInstallationReceipts(
@@ -458,7 +467,7 @@ export function evaluateNotionCustomAgentInstallation(
       blueprintId: blueprint.blueprintId,
       disposition: 'wait',
       reasonCode: 'CONFIGURATION_RECEIPT_REQUIRED',
-      requiredOperationalReceipts: requiredOperationalReceipts()
+      requiredOperationalReceipts: requiredOperationalReceipts(blueprint.toolBindings)
     };
   }
   const receipt = parseNotionCustomAgentConfigurationReceipt(receiptInput);
@@ -494,7 +503,7 @@ export function evaluateNotionCustomAgentInstallation(
       disposition: 'stop',
       reasonCode: 'CONFIGURATION_RECEIPT_MISMATCH',
       mismatchFields: mismatches,
-      requiredOperationalReceipts: requiredOperationalReceipts()
+      requiredOperationalReceipts: requiredOperationalReceipts(blueprint.toolBindings)
     };
   }
   return {
@@ -503,7 +512,7 @@ export function evaluateNotionCustomAgentInstallation(
     agentRef: receipt.agentRef,
     disposition: 'pass',
     reasonCode: 'CONFIGURATION_RECEIPT_MATCHED',
-    requiredOperationalReceipts: requiredOperationalReceipts()
+    requiredOperationalReceipts: requiredOperationalReceipts(blueprint.toolBindings)
   };
 }
 

@@ -347,6 +347,14 @@ test('stops a write binding without confirmation and mutation proof', async () =
     'mutation'
   ]);
 
+  assert.deepEqual(evaluateNotionCustomAgentInstallation(blueprint), {
+    schemaVersion: 'notion_custom_agent_installation_evaluation.v0.1',
+    blueprintId: 'agency-ops-review-suggestion.v0.1',
+    disposition: 'wait',
+    reasonCode: 'CONFIGURATION_RECEIPT_REQUIRED',
+    requiredOperationalReceipts: ['activation', 'run', 'tool', 'mutation']
+  });
+
   assert.deepEqual(
     evaluateNotionCustomAgentOperationalReceipts(blueprint, {
       schemaVersion: 'notion_custom_agent_operational_receipts.v0.1',
