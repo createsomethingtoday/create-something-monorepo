@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import test from 'node:test';
 
 const migration = readFileSync(new URL('../migrations/0003_control_run_lifecycle.sql', import.meta.url), 'utf8');
+const workflowRuntimeMigration = readFileSync(new URL('../migrations/0004_control_workflow_runtime_zero_write.sql', import.meta.url), 'utf8');
 
 test('Control activation binding is the Agency-owned D1', () => {
   const runtimeConfig = readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8');
@@ -23,7 +24,7 @@ test('Control activation binding is the Agency-owned D1', () => {
 
 function database() {
   const path = join(mkdtempSync(join(tmpdir(), 'control-run-')), 'runtime.sqlite');
-  execFileSync('sqlite3', [path], { input: `PRAGMA foreign_keys=ON;\n${migration}` });
+  execFileSync('sqlite3', [path], { input: `PRAGMA foreign_keys=ON;\n${migration}\n${workflowRuntimeMigration}` });
   return path;
 }
 
@@ -52,9 +53,62 @@ test('migration creates an empty fail-closed Control run ledger', () => {
   assert.equal(sql(path, "SELECT COUNT(*) FROM control_runs;"), '0');
   assert.equal(sql(path, "SELECT COUNT(*) FROM control_run_commands;"), '0');
   assert.equal(sql(path, "SELECT COUNT(*) FROM control_run_receipts;"), '0');
+  assert.equal(sql(path, "SELECT COUNT(*) FROM control_workflow_runtime_runs;"), '0');
+  assert.equal(sql(path, "SELECT COUNT(*) FROM control_workflow_runtime_checkpoints;"), '0');
   assert.equal(
     sql(path, "SELECT COUNT(*) FROM sqlite_master WHERE type='trigger' AND name LIKE 'control_run_%';"),
     '8'
+  );
+});
+
+test('zero-write Workflow Runtime tables retain a Control-owned run, immutable checkpoints, and a valid receipt chain', () => {
+  const path = database();
+  sql(path, insertRun);
+  const hash = (value: string) => `sha256:${value.repeat(64).slice(0, 64)}`;
+  sql(path, `INSERT INTO control_workflow_runtime_runs (
+    run_id, admission_command_id, artifact_manifest_sha256, runtime_manifest_sha256, status, version,
+    run_json, created_at, updated_at
+  ) VALUES (
+    'run-a', 'runtime-admission-a', '${hash('a')}', '${hash('b')}', 'queued', 1, '{}',
+    '2026-07-19T00:00:00.000Z', '2026-07-19T00:00:00.000Z'
+  );
+  INSERT INTO control_workflow_runtime_steps (
+    run_id, step_id, status, version, step_json
+  ) VALUES ('run-a', 'step-a', 'ready', 1, '{}');
+  INSERT INTO control_workflow_runtime_receipts (
+    id, run_id, event_index, receipt_json, receipt_sha256,
+    previous_receipt_sha256, created_at
+  ) VALUES (
+    'runtime-receipt-1', 'run-a', 1, '{}', '${hash('c')}', NULL,
+    '2026-07-19T00:00:00.000Z'
+  );
+  INSERT INTO control_workflow_runtime_checkpoints (
+    id, run_id, run_version, run_sha256, receipt_sha256, checkpoint_json, created_at
+  ) VALUES (
+    'checkpoint-1', 'run-a', 1, '${hash('d')}', '${hash('c')}', '{}',
+    '2026-07-19T00:00:00.000Z'
+  );`);
+  assert.equal(sql(path, "SELECT COUNT(*) FROM control_workflow_runtime_steps WHERE run_id='run-a';"), '1');
+  expectSqlFailure(
+    path,
+    `INSERT INTO control_workflow_runtime_receipts (
+      id, run_id, event_index, receipt_json, receipt_sha256,
+      previous_receipt_sha256, created_at
+    ) VALUES (
+      'runtime-receipt-2', 'run-a', 2, '{}', '${hash('e')}', '${hash('x')}',
+      '2026-07-19T00:00:01.000Z'
+    );`,
+    /receipt chain is invalid/
+  );
+  expectSqlFailure(
+    path,
+    "UPDATE control_workflow_runtime_checkpoints SET checkpoint_json='{" + '"changed"' + ":true}' WHERE id='checkpoint-1';",
+    /checkpoints are immutable/
+  );
+  expectSqlFailure(
+    path,
+    "DELETE FROM control_workflow_runtime_receipts WHERE id='runtime-receipt-1';",
+    /receipts cannot be deleted/
   );
 });
 

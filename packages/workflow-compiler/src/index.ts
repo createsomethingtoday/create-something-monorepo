@@ -10,6 +10,11 @@ export {
   writeCompiledWorkflowArtifacts
 } from './artifacts.js';
 export {
+  createWorkflowRuntimeManifest,
+  validateWorkflowRuntimeManifestArtifact,
+  WorkflowRuntimeManifestError
+} from './runtime-manifest.js';
+export {
   canonicalWorkflowArtifactManifest,
   createWorkflowArtifactAttestation,
   parseWorkflowArtifactAttestation,
@@ -87,6 +92,10 @@ export type {
   WorkflowArtifactSigningOptions
 } from './attestation.js';
 export type { WorkflowInputDiagnostic } from './input.js';
+export type {
+  WorkflowRuntimeManifestArtifact,
+  WorkflowRuntimeManifestInput
+} from './runtime-manifest.js';
 export type { WorkflowReplayArtifacts } from './replay.js';
 export type { WorkflowAdapterErrorCode } from './adapters.js';
 export type { NotionCustomAgentBlueprintErrorCode } from './notion-agent.js';

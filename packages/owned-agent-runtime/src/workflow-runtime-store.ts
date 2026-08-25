@@ -1,0 +1,461 @@
+import {
+  RuntimeValidationError,
+  workflowRuntimeCheckpointHash,
+  type WorkflowRuntimeCheckpointStore,
+  type WorkflowRuntimeRun,
+  type WorkflowRuntimeScope
+} from '@createsomething/workflow-runtime';
+
+type RuntimeRow = { run_json: string };
+type CommandRow = {
+  id: string;
+  run_id: string;
+  command_sha256: string;
+  result_json: string | null;
+};
+
+const COMMAND_DIGEST = /^[a-f0-9]{64}$/;
+const LIVE_PARENT_STATUSES = "'queued', 'running', 'waiting_for_approval'";
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function parsedRun(value: string, label: string): WorkflowRuntimeRun {
+  const parsed: unknown = JSON.parse(value);
+  if (!isRecord(parsed) || parsed.schema !== 'workflow_runtime_run.v0.1') {
+    throw new RuntimeValidationError('INVALID_STATE', `${label} is not a Workflow Runtime run`);
+  }
+  return parsed as unknown as WorkflowRuntimeRun;
+}
+
+function commandDigest(value: string): string {
+  if (!COMMAND_DIGEST.test(value)) {
+    throw new RuntimeValidationError(
+      'INVALID_EVENT',
+      'Workflow Runtime command digest must be a sha256 hex digest'
+    );
+  }
+  return value;
+}
+
+/**
+ * The Control-owned durable port for the deliberately zero-write runtime.
+ * It has no executor dependency: it only persists the verified checkpoint,
+ * command replay result, and receipt chain supplied by the runtime core.
+ */
+export class D1WorkflowRuntimeCheckpointStore implements WorkflowRuntimeCheckpointStore {
+  constructor(private readonly database: D1Database) {}
+
+  async find(scope: WorkflowRuntimeScope, runId: string): Promise<WorkflowRuntimeRun | undefined> {
+    const row = await this.database
+      .prepare(
+        `SELECT runtime.run_json
+         FROM control_workflow_runtime_runs runtime
+         JOIN control_runs control ON control.id = runtime.run_id
+         WHERE runtime.run_id = ?1 AND control.account_id = ?2 AND control.tenant_id = ?3
+           AND control.workspace_account_id = ?4`
+      )
+      .bind(runId, scope.accountId, scope.tenantId, scope.workspaceAccountId)
+      .first<RuntimeRow>();
+    return row ? parsedRun(row.run_json, 'Stored workflow checkpoint') : undefined;
+  }
+
+  async replay(
+    scope: WorkflowRuntimeScope,
+    idempotencyKey: string,
+    commandSha256: string
+  ): Promise<WorkflowRuntimeRun | undefined> {
+    const row = await this.command(scope, idempotencyKey);
+    return row?.result_json ? this.replayResult(row, commandSha256) : undefined;
+  }
+
+  async apply(input: Parameters<WorkflowRuntimeCheckpointStore['apply']>[0]) {
+    const commandSha256 = commandDigest(input.commandDigest);
+    const existing = await this.command(input.scope, input.idempotencyKey);
+    if (existing?.result_json) {
+      return { run: this.replayResult(existing, input.commandDigest), applied: false };
+    }
+    if (existing && existing.command_sha256 !== commandSha256) {
+      throw new RuntimeValidationError(
+        'INVALID_EVENT',
+        'Idempotency key was already used for another command'
+      );
+    }
+    if (existing && existing.run_id !== input.run.id) {
+      throw new RuntimeValidationError(
+        'INVALID_EVENT',
+        'Idempotency key is pending for another Workflow Runtime run'
+      );
+    }
+    if (!(await this.parentAuthorizes(input.scope, input.run.id))) {
+      throw new RuntimeValidationError(
+        'INVALID_STATE',
+        'Runtime parent Control run no longer authorizes progress'
+      );
+    }
+
+    const serialized = JSON.stringify(input.run);
+    const issuedAt = input.run.receipts.at(-1)?.createdAt;
+    const lastReceipt = input.run.receipts.at(-1);
+    if (!issuedAt || !lastReceipt) {
+      throw new RuntimeValidationError(
+        'INVALID_STATE',
+        'Workflow Runtime checkpoint requires a receipt'
+      );
+    }
+    const commandId = existing?.id ?? crypto.randomUUID();
+    const statements: D1PreparedStatement[] = [];
+
+    if (input.expectedVersion === null) {
+      statements.push(
+        this.database
+          .prepare(
+            `INSERT INTO control_workflow_runtime_runs
+              (run_id, artifact_manifest_sha256, runtime_manifest_sha256, status, version,
+               run_json, created_at, updated_at, admission_command_id)
+             SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?7, ?14
+             WHERE EXISTS (
+               SELECT 1 FROM control_runs
+               WHERE id = ?1 AND account_id = ?8 AND tenant_id = ?9 AND workspace_account_id = ?10
+                 AND activation_id = ?11 AND activation_version = ?12
+                 AND json_extract(activation_json, '$.policySha256') = substr(?13, 8)
+                 AND json_extract(activation_json, '$.buildManifestSha256') = substr(?2, 8)
+                 AND status IN (${LIVE_PARENT_STATUSES})
+             )`
+          )
+          .bind(
+            input.run.id,
+            input.run.artifactManifestSha256,
+            input.run.runtimeManifestSha256,
+            input.run.status,
+            input.run.version,
+            serialized,
+            issuedAt,
+            input.scope.accountId,
+            input.scope.tenantId,
+            input.scope.workspaceAccountId,
+            input.run.activation.id,
+            input.run.activation.version,
+            input.run.activation.policySha256,
+            commandId
+          )
+      );
+    }
+
+    if (existing) {
+      statements.push(
+        this.database
+          .prepare(
+            `UPDATE control_workflow_runtime_commands
+             SET expected_version = ?1
+             WHERE id = ?2 AND command_sha256 = ?3 AND result_json IS NULL
+               AND EXISTS (
+                 SELECT 1 FROM control_runs control
+                 WHERE control.id = control_workflow_runtime_commands.run_id
+                   AND control.status IN (${LIVE_PARENT_STATUSES})
+               )`
+          )
+          .bind(input.expectedVersion, commandId, commandSha256)
+      );
+    } else {
+      statements.push(
+        this.database
+          .prepare(
+            `INSERT INTO control_workflow_runtime_commands
+            (id, run_id, account_id, tenant_id, workspace_account_id, idempotency_key,
+             command_sha256, expected_version, result_json, created_at)
+           SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, NULL, ?9
+           WHERE EXISTS (
+             SELECT 1 FROM control_workflow_runtime_runs runtime
+             JOIN control_runs control ON control.id = runtime.run_id
+             WHERE runtime.run_id = ?2 AND control.account_id = ?3
+               AND control.tenant_id = ?4 AND control.workspace_account_id = ?5
+               AND control.status IN (${LIVE_PARENT_STATUSES})
+               AND (?8 IS NOT NULL OR runtime.admission_command_id = ?10)
+           )`
+          )
+          .bind(
+            commandId,
+            input.run.id,
+            input.scope.accountId,
+            input.scope.tenantId,
+            input.scope.workspaceAccountId,
+            input.idempotencyKey,
+            commandSha256,
+            input.expectedVersion,
+            issuedAt,
+            commandId
+          )
+      );
+    }
+
+    if (input.expectedVersion !== null) {
+      statements.push(
+        this.database
+          .prepare(
+            `UPDATE control_workflow_runtime_runs SET
+               status = ?1, version = ?2, run_json = ?3, updated_at = ?4
+             WHERE run_id = ?5 AND version = ?6
+               AND EXISTS (SELECT 1 FROM control_workflow_runtime_commands WHERE id = ?7)
+               AND EXISTS (
+                 SELECT 1 FROM control_runs control
+                 WHERE control.id = control_workflow_runtime_runs.run_id
+                   AND control.status IN (${LIVE_PARENT_STATUSES})
+               )`
+          )
+          .bind(
+            input.run.status,
+            input.run.version,
+            serialized,
+            issuedAt,
+            input.run.id,
+            input.expectedVersion,
+            commandId
+          )
+      );
+    }
+
+    statements.push(
+      this.database
+        .prepare(
+          `UPDATE control_workflow_runtime_commands
+           SET result_json = CASE
+             WHEN changes() = 1 THEN ?1
+             ELSE NULL
+           END
+           WHERE id = ?2`
+        )
+        .bind(serialized, commandId)
+    );
+
+    for (const step of input.run.steps) {
+      statements.push(
+        this.database
+          .prepare(
+            `INSERT INTO control_workflow_runtime_steps (run_id, step_id, status, version, step_json)
+             SELECT ?1, ?2, ?3, ?4, ?5
+             WHERE EXISTS (
+               SELECT 1 FROM control_workflow_runtime_commands
+               WHERE id = ?6 AND result_json = ?7
+             )
+             ON CONFLICT(run_id, step_id) DO UPDATE SET
+               status = excluded.status, version = excluded.version, step_json = excluded.step_json
+             WHERE excluded.version > control_workflow_runtime_steps.version`
+          )
+          .bind(
+            input.run.id,
+            step.id,
+            step.status,
+            step.version,
+            JSON.stringify(step),
+            commandId,
+            serialized
+          )
+      );
+      for (const attempt of step.attempts) {
+        statements.push(
+          this.database
+            .prepare(
+              `INSERT INTO control_workflow_runtime_attempts
+                (run_id, step_id, attempt_id, status, attempt_json, created_at)
+               SELECT ?1, ?2, ?3, ?4, ?5, ?6
+               WHERE EXISTS (
+                 SELECT 1 FROM control_workflow_runtime_commands
+                 WHERE id = ?7 AND result_json = ?8
+               )
+               ON CONFLICT(run_id, step_id, attempt_id) DO UPDATE SET
+                 status = excluded.status, attempt_json = excluded.attempt_json
+               WHERE control_workflow_runtime_attempts.status = 'prepared'`
+            )
+            .bind(
+              input.run.id,
+              step.id,
+              attempt.id,
+              attempt.status,
+              JSON.stringify(attempt),
+              attempt.createdAt,
+              commandId,
+              serialized
+            )
+        );
+      }
+      if (step.approval) {
+        statements.push(
+          this.database
+            .prepare(
+              `INSERT INTO control_workflow_runtime_approvals
+                (approval_id, run_id, step_id, binding_sha256, decision, approval_json, created_at, decided_at)
+               SELECT ?1, ?2, ?3, ?4, NULL, ?5, ?6, NULL
+               WHERE EXISTS (
+                 SELECT 1 FROM control_workflow_runtime_commands
+                 WHERE id = ?7 AND result_json = ?8
+               )
+               ON CONFLICT(approval_id) DO NOTHING`
+            )
+            .bind(
+              step.approval.id,
+              input.run.id,
+              step.id,
+              step.approval.bindingSha256,
+              JSON.stringify(step.approval),
+              issuedAt,
+              commandId,
+              serialized
+            )
+        );
+      }
+    }
+
+    for (const receipt of input.run.receipts) {
+      statements.push(
+        this.database
+          .prepare(
+            `INSERT INTO control_workflow_runtime_receipts
+              (id, run_id, event_index, receipt_json, receipt_sha256, previous_receipt_sha256, created_at)
+             SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7
+             WHERE EXISTS (
+               SELECT 1 FROM control_workflow_runtime_commands
+               WHERE id = ?8 AND result_json = ?9
+             )
+             ON CONFLICT(run_id, event_index) DO NOTHING`
+          )
+          .bind(
+            receipt.id,
+            input.run.id,
+            receipt.eventIndex,
+            JSON.stringify(receipt),
+            receipt.receiptSha256,
+            receipt.previousReceiptSha256,
+            receipt.createdAt,
+            commandId,
+            serialized
+          )
+      );
+      if (receipt.eventType === 'approval_decided' && receipt.stepId) {
+        const decision =
+          receipt.outcome === 'exact approval accepted'
+            ? 'approved'
+            : receipt.outcome === 'exact approval rejected'
+              ? 'rejected'
+              : null;
+        if (decision) {
+          statements.push(
+            this.database
+              .prepare(
+                `UPDATE control_workflow_runtime_approvals SET decision = ?1, decided_at = ?2
+                 WHERE run_id = ?3 AND step_id = ?4 AND decision IS NULL
+                   AND EXISTS (
+                     SELECT 1 FROM control_workflow_runtime_commands
+                     WHERE id = ?5 AND result_json = ?6
+                   )`
+              )
+              .bind(
+                decision,
+                receipt.createdAt,
+                input.run.id,
+                receipt.stepId,
+                commandId,
+                serialized
+              )
+          );
+        }
+      }
+    }
+
+    const checkpointSha256 = await workflowRuntimeCheckpointHash(input.run);
+    statements.push(
+      this.database
+        .prepare(
+          `INSERT INTO control_workflow_runtime_checkpoints
+            (id, run_id, run_version, run_sha256, receipt_sha256, checkpoint_json, created_at)
+           SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7
+           WHERE EXISTS (
+             SELECT 1 FROM control_workflow_runtime_commands
+             WHERE id = ?8 AND result_json = ?9
+           )
+           ON CONFLICT(run_id, run_version) DO NOTHING`
+        )
+        .bind(
+          `checkpoint:${input.run.id}:v${input.run.version}`,
+          input.run.id,
+          input.run.version,
+          checkpointSha256,
+          lastReceipt.receiptSha256,
+          serialized,
+          issuedAt,
+          commandId,
+          serialized
+        )
+    );
+
+    try {
+      await this.database.batch(statements);
+    } catch (error) {
+      const replay = await this.command(input.scope, input.idempotencyKey);
+      if (replay) return { run: this.replayResult(replay, input.commandDigest), applied: false };
+      const message = error instanceof Error ? error.message : String(error);
+      if (/UNIQUE constraint|FOREIGN KEY|immutable|version/i.test(message)) {
+        throw new RuntimeValidationError('INVALID_STATE', 'Runtime run changed concurrently');
+      }
+      throw error;
+    }
+
+    const stored = await this.command(input.scope, input.idempotencyKey);
+    if (!stored)
+      throw new RuntimeValidationError('INVALID_STATE', 'Workflow Runtime command did not persist');
+    if (!stored.result_json) {
+      throw new RuntimeValidationError('INVALID_STATE', 'Runtime run changed concurrently');
+    }
+    return {
+      run: this.replayResult(stored, input.commandDigest),
+      applied: stored.id === commandId
+    };
+  }
+
+  private command(scope: WorkflowRuntimeScope, idempotencyKey: string): Promise<CommandRow | null> {
+    return this.database
+      .prepare(
+        `SELECT command.id, command.run_id, command.command_sha256, command.result_json
+         FROM control_workflow_runtime_commands command
+         JOIN control_runs control ON control.id = command.run_id
+         WHERE command.idempotency_key = ?1 AND command.account_id = ?2
+           AND command.tenant_id = ?3 AND command.workspace_account_id = ?4
+           AND control.account_id = command.account_id AND control.tenant_id = command.tenant_id
+           AND control.workspace_account_id = command.workspace_account_id`
+      )
+      .bind(idempotencyKey, scope.accountId, scope.tenantId, scope.workspaceAccountId)
+      .first<CommandRow>();
+  }
+
+  private async parentAuthorizes(scope: WorkflowRuntimeScope, runId: string): Promise<boolean> {
+    const row = await this.database
+      .prepare(
+        `SELECT id FROM control_runs
+         WHERE id = ?1 AND account_id = ?2 AND tenant_id = ?3 AND workspace_account_id = ?4
+           AND status IN (${LIVE_PARENT_STATUSES})`
+      )
+      .bind(runId, scope.accountId, scope.tenantId, scope.workspaceAccountId)
+      .first<{ id: string }>();
+    return Boolean(row);
+  }
+
+  private replayResult(row: CommandRow, digestValue: string): WorkflowRuntimeRun {
+    if (row.command_sha256 !== commandDigest(digestValue)) {
+      throw new RuntimeValidationError(
+        'INVALID_EVENT',
+        'Idempotency key was already used for another command'
+      );
+    }
+    if (!row.result_json)
+      throw new RuntimeValidationError(
+        'INVALID_STATE',
+        'Workflow Runtime command is still pending'
+      );
+    const parsed: unknown = JSON.parse(row.result_json);
+    if (isRecord(parsed) && parsed.error === 'concurrent_update') {
+      throw new RuntimeValidationError('INVALID_STATE', 'Runtime run changed concurrently');
+    }
+    return parsedRun(row.result_json, 'Workflow Runtime command result');
+  }
+}

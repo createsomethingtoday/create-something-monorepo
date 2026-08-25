@@ -36,6 +36,10 @@ import {
   type WorkflowArtifactKey,
   type WorkflowArtifactSigningOptions
 } from './attestation.js';
+import {
+  validateWorkflowRuntimeManifestArtifact,
+  type WorkflowRuntimeManifestArtifact
+} from './runtime-manifest.js';
 
 export interface WorkflowArtifactManifest {
   schemaVersion: 'workflow_artifact_manifest.v0.1';
@@ -913,13 +917,25 @@ async function writeArtifactSet(
   bundle: CompiledWorkflowBundle,
   rootDir: string,
   replay?: WorkflowReplayArtifacts,
-  signing?: WorkflowArtifactSigningOptions
+  signing?: WorkflowArtifactSigningOptions,
+  runtimeManifest?: WorkflowRuntimeManifestArtifact
 ): Promise<WorkflowArtifactManifest> {
   const files = [];
   for (const artifact of ARTIFACTS) {
     const content = json(artifact.select(bundle));
     await writeFile(artifactTarget(rootDir, artifact.path), content, 'utf8');
     files.push({ path: artifact.path, hash: contentHash(content) });
+  }
+
+  if (runtimeManifest) {
+    validateWorkflowRuntimeManifestArtifact(bundle, runtimeManifest);
+    const runtimeManifestContent = json(runtimeManifest);
+    await writeFile(
+      artifactTarget(rootDir, 'runtime-manifest.json'),
+      runtimeManifestContent,
+      'utf8'
+    );
+    files.push({ path: 'runtime-manifest.json', hash: contentHash(runtimeManifestContent) });
   }
 
   if (replay) {
@@ -944,8 +960,8 @@ async function writeArtifactSet(
       await writeFile(target, artifact.content, 'utf8');
       files.push({ path: artifact.path, hash: contentHash(artifact.content) });
     }
-    files.sort((left, right) => left.path.localeCompare(right.path));
   }
+  files.sort((left, right) => left.path.localeCompare(right.path));
 
   const manifest: WorkflowArtifactManifest = {
     schemaVersion: 'workflow_artifact_manifest.v0.1',
@@ -970,7 +986,8 @@ export async function writeCompiledWorkflowArtifacts(
   bundle: CompiledWorkflowBundle,
   outDir: string,
   replay?: WorkflowReplayArtifacts,
-  signing?: WorkflowArtifactSigningOptions
+  signing?: WorkflowArtifactSigningOptions,
+  runtimeManifest?: WorkflowRuntimeManifestArtifact
 ): Promise<WorkflowArtifactManifest> {
   const resolvedOutDir = resolve(outDir);
   const parentDir = dirname(resolvedOutDir);
@@ -1007,7 +1024,7 @@ export async function writeCompiledWorkflowArtifacts(
   }
 
   try {
-    const manifest = await writeArtifactSet(bundle, stagingDir, replay, signing);
+    const manifest = await writeArtifactSet(bundle, stagingDir, replay, signing, runtimeManifest);
     await applyArtifactMetadataRecursively(
       stagingDir,
       publicationMetadata,
