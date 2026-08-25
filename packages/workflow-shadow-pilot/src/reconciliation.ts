@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import type { WorkflowDefinition } from '@create-something/workflow-compiler';
+import type { WorkflowDefinition } from '@createsomething/workflow-compiler';
 import {
   reconcileWorkflowHistoricalContext,
   type WorkflowHistoricalContextBundle,

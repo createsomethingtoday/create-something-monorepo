@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 
-import { compileWorkflowDefinition } from '@create-something/workflow-compiler';
+import { compileWorkflowDefinition } from '@createsomething/workflow-compiler';
 import { inspectAtlasGovernedInteraction } from '../dist/studio/governed-interaction.js';
 import { startStudioServer } from '../dist/studio/server.js';
 

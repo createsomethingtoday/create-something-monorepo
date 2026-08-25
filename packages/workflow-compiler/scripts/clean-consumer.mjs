@@ -8,6 +8,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const PACKAGE_NAME = '@createsomething/workflow-compiler';
 
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, { encoding: 'utf8', ...options });
@@ -28,6 +29,7 @@ try {
     { cwd: packageRoot }
   );
   const packReport = JSON.parse(packed.stdout);
+  assert.equal(packReport[0].name, PACKAGE_NAME);
   const tarball = join(artifacts, packReport[0].filename);
   run('npm', [
     'install',
@@ -39,7 +41,7 @@ try {
     tarball
   ]);
 
-  const installedRoot = join(consumer, 'node_modules', '@create-something', 'workflow-compiler');
+  const installedRoot = join(consumer, 'node_modules', '@createsomething', 'workflow-compiler');
   const workflowPath = join(installedRoot, 'fixtures', 'release-promotion', 'workflow.json');
   const casesPath = join(installedRoot, 'fixtures', 'release-promotion', 'cases.json');
   run(join(consumer, 'node_modules', '.bin', 'workflow-compiler'), [
@@ -61,7 +63,7 @@ import {
   compileWorkflowDefinition,
   createMcpToolCallPlan,
   verifyWorkflowArtifactBundle
-} from '@create-something/workflow-compiler';
+} from '${PACKAGE_NAME}';
 
 const workflow = JSON.parse(await readFile(${JSON.stringify(workflowPath)}, 'utf8'));
 const cases = JSON.parse(await readFile(${JSON.stringify(casesPath)}, 'utf8'));

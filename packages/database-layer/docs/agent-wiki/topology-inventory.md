@@ -10,30 +10,30 @@ topology-affecting changes with `pnpm substrate:refresh`.
 
 | Status | Count |
 | --- | --- |
-| mapped | 467 |
+| mapped | 505 |
 
 ## Tiers
 
 | Tier | Count |
 | --- | --- |
-| Automation | 248 |
-| Judgment | 101 |
-| Mixed | 93 |
-| Database | 25 |
+| Automation | 267 |
+| Judgment | 106 |
+| Mixed | 105 |
+| Database | 27 |
 
 ## Surfaces
 
 | Surface | Count | Representative records |
 | --- | --- | --- |
-| worker | 149 | apps/bettermode-marketplace-creator-agent/wrangler.jsonc (Automation); apps/create-something-scheduler/wrangler.jsonc (Automation); apps/guard-performance-lab/wrangler.toml (Automation); apps/marketplace-template-submission-cloud/wrangler.json (Automation) |
-| mcp | 72 | packages/abundance-jobs-mcp (Automation); packages/abundance-jobs-mcp/worker (Automation); packages/agent-kit (Judgment); packages/app-governance-db (Judgment) |
-| policy | 62 | docs/policies/generated/fallback/policy.hub-route-authorization.v1.json (Judgment); docs/policies/generated/fallback/policy.judgment-baseline.v1.json (Judgment); docs/policies/generated/fallback/policy.legacy-compat-sunset.v1.json (Judgment); docs/policies/generated/fallback/policy.mcp-credential-delivery.v1.json (Judgment) |
-| guide | 57 | docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md (Mixed); docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md (Mixed); docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md (Mixed); docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md (Mixed) |
-| package | 51 | @create-something/monorepo (Database); .archive/components-deprecated (Judgment); packages/app-governance-desktop (Mixed); packages/ascii-renderer (Mixed) |
-| agent | 29 | config/dify-agents/aaron-hub.json (Automation); config/dify-agents/abundance-hub.json (Automation); config/dify-agents/bettermode-marketplace-creator-agent.json (Automation); config/dify-agents/blondish-hub.json (Automation) |
+| worker | 163 | apps/bettermode-marketplace-creator-agent/wrangler.jsonc (Automation); apps/create-something-scheduler/wrangler.jsonc (Automation); apps/guard-performance-lab/wrangler.toml (Automation); apps/marketplace-template-submission-cloud/wrangler.json (Automation) |
+| mcp | 74 | packages/abundance-jobs-mcp (Automation); packages/abundance-jobs-mcp/worker (Automation); packages/agent-kit (Judgment); packages/app-governance-db (Judgment) |
+| guide | 64 | docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md (Mixed); docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md (Mixed); docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md (Mixed); docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md (Mixed) |
+| policy | 64 | docs/policies/generated/fallback/policy.hub-route-authorization.v1.json (Judgment); docs/policies/generated/fallback/policy.judgment-baseline.v1.json (Judgment); docs/policies/generated/fallback/policy.legacy-compat-sunset.v1.json (Judgment); docs/policies/generated/fallback/policy.mcp-credential-delivery.v1.json (Judgment) |
+| package | 59 | @create-something/monorepo (Database); .archive/components-deprecated (Judgment); packages/airtable-system-architect (Judgment); packages/app-governance-desktop (Mixed) |
+| agent | 31 | config/dify-agents/aaron-hub.json (Automation); config/dify-agents/abundance-hub.json (Automation); config/dify-agents/bettermode-marketplace-creator-agent.json (Automation); config/dify-agents/blondish-hub.json (Automation) |
 | config | 24 | config/dify-mcp-intake/cs-telemetry.json (Automation); config/dify-mcp-intake/gmail-notion-mcp.json (Automation); config/dify-mcp-intake/gmail-sync.json (Automation); config/dify-mcp-intake/halfdozen-gmail-sync-fillip.json (Automation) |
-| app | 9 | apps/atlas-studio-desktop (Mixed); apps/bettermode-marketplace-creator-agent (Automation); apps/create-something-scheduler (Judgment); apps/even-codex-presence (Automation) |
-| client | 7 | packages/agency/clients/cato-supply-insights-review (Automation); packages/agency/clients/jandjhomehealth (Mixed); packages/agency/clients/outerfields (Mixed); packages/agency/clients/outerfields/mcp-remote (Automation) |
+| app | 11 | apps/atlas-studio-desktop (Mixed); apps/bettermode-marketplace-creator-agent (Automation); apps/client-workspace-desktop (Mixed); apps/create-something-scheduler (Judgment) |
+| client | 8 | packages/agency/clients/cato-supply-insights-cms (Mixed); packages/agency/clients/cato-supply-insights-review (Automation); packages/agency/clients/jandjhomehealth (Automation); packages/agency/clients/outerfields (Mixed) |
 | doc | 6 | docs/CANON_DATABASE_LAYER_DESIGN.md (Mixed); docs/CREATE_SOMETHING_DATABASE_LAYER.md (Mixed); docs/MCP_FIRST_THESIS.md (Mixed); docs/MCP_HUB_CONTROL_PLANE.md (Mixed) |
 | repo | 1 | . (Mixed) |
 
@@ -51,9 +51,9 @@ topology-affecting changes with `pnpm substrate:refresh`.
 
 - Exact duplicate paths: No exact duplicate paths are present in the topology.
 - Isolated topology records: No isolated nodes are present in the topology.
-- Automation and Database balance: Automation has 248 record(s); Database has 25 record(s). This is a business-shape review signal, not a hard gap.
-- Worker surface concentration: 149 worker record(s) carry runtime delivery context. This is where Substrate receipts and Cloudflare proof matter most.
-- worker surface review: 149 record(s) are classified as worker.
-- mcp surface review: 72 record(s) are classified as mcp.
-- policy surface review: 62 record(s) are classified as policy.
-- guide surface review: 57 record(s) are classified as guide.
+- Automation and Database balance: Automation has 267 record(s); Database has 27 record(s). This is a business-shape review signal, not a hard gap.
+- Worker surface concentration: 163 worker record(s) carry runtime delivery context. This is where Substrate receipts and Cloudflare proof matter most.
+- worker surface review: 163 record(s) are classified as worker.
+- mcp surface review: 74 record(s) are classified as mcp.
+- policy surface review: 64 record(s) are classified as policy.
+- guide surface review: 64 record(s) are classified as guide.

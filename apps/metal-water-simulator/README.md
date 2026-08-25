@@ -131,7 +131,7 @@ Regenerate the bundled runtime package from those inputs:
 apps/metal-water-simulator/scripts/generate-workflow-artifacts.sh
 ```
 
-The generator builds `@create-something/workflow-compiler` and emits 18
+The generator builds `@createsomething/workflow-compiler` and emits 18
 content-hashed files plus `manifest.json` into
 `Sources/WaterSimulationCore/WorkflowArtifacts`. At app load, every workflow,
 version, and definition header must agree, acceptance must be complete, and the
@@ -222,7 +222,7 @@ byte-identical across runs.
 ```bash
 swift test --package-path apps/metal-water-simulator
 swift build --package-path apps/metal-water-simulator -c release
-pnpm --filter @create-something/workflow-compiler test:acceptance
+pnpm --filter @createsomething/workflow-compiler test:acceptance
 ```
 
 The test suite covers all five decisions, deterministic proof encoding, exact

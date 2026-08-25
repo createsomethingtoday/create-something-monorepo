@@ -1,6 +1,6 @@
 {
-  "name": "@create-something/workflow-compiler",
-  "version": "0.3.1",
+  "name": "@createsomething/workflow-compiler",
+  "version": "0.4.0",
   "description": "Compile versioned operating workflows into deterministic, governed artifacts and provider-neutral execution plans.",
   "type": "module",
   "createSomething": {

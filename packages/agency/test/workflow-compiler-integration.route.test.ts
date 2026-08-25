@@ -17,7 +17,7 @@ test('Workflow Compiler Integration is a bounded, client-owned Build engagement'
   assert.match(route, /media=\{playbookHeroMedia\.services\}/);
   assert.match(route, /mediaMobilePlacement="background"/);
   assert.match(route, /agencyCoreMessaging\.workflowCompilerIntegrationBookingHref/);
-  assert.match(route, /https:\/\/www\.npmjs\.com\/package\/@create-something\/workflow-compiler/);
+  assert.match(route, /https:\/\/www\.npmjs\.com\/package\/@createsomething\/workflow-compiler/);
   assert.match(route, /href="\/services"/);
   assert.match(route, /href="\/map"/);
 

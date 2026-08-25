@@ -4,6 +4,35 @@ All notable changes to this package are documented here. This project follows
 Semantic Versioning for its npm API and separately versions its workflow and
 artifact schemas.
 
+## 0.4.0
+
+- Publish `0.4.0` as `@createsomething/workflow-compiler`, the canonical
+  public CREATE SOMETHING scope. `@create-something/workflow-compiler@0.3.1`
+  remains available during the verified migration and is deprecated only after
+  registry integrity and clean-consumer receipts exist and a later staged
+  release verifies the replacement's OIDC provenance.
+- Add offline `notion_agent_blueprint.v0.1` planning for a workflow agent's
+  explicit Custom Agent resources, triggers, and narrow Worker or CREATE
+  SOMETHING MCP bindings.
+- Add strict blueprint, configuration-receipt, and operational-receipt parsers
+  plus deterministic `pass`, `wait`, and `stop` evaluators. A matching supplied
+  receipt is a structural comparison only, never a claim of a live Notion
+  readback.
+- Require explicit configuration/activation/run/tool receipts for every
+  blueprint and a confirmed tool receipt plus mutation receipt bound to the
+  same run for write or publish bindings. Scope expansion, altered tool
+  bindings, stale receipts, and missing write proof fail closed.
+- Reject `can_comment` and `can_edit` access without a governed write or
+  publish action. Activation receipts must bind the same run as operational
+  evidence, and undeclared receipt actions stop evaluation.
+- Deep-freeze and provenance-check compiled blueprints before either evaluator
+  trusts them. Reject non-mutating mutation receipts, and enforce confirmation
+  or blocking for consequential non-write tool bindings.
+- Stop blocked write and publish bindings before matching receipts can be
+  accepted. Require a matching compiler-created installation evaluation and
+  `agentRef` before operational receipts can pass, preventing evidence from a
+  second installation or an unconfigured agent from satisfying the blueprint.
+
 ## 0.3.1
 
 - Add the shipped Marketplace Submission System Map. It provides one

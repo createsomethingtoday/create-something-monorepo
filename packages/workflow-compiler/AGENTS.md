@@ -1,4 +1,4 @@
-# Agents: @create-something/workflow-compiler
+# Agents: @createsomething/workflow-compiler
 
 This package is the public local/CI workflow-to-runtime compiler. CRE-1191 is
 the original prototype; the production and publication map is CRE-1831.
@@ -30,11 +30,11 @@ the original prototype; the production and publication map is CRE-1831.
 ## Validation
 
 ```bash
-pnpm --filter @create-something/workflow-compiler check
-pnpm --filter @create-something/workflow-compiler test
-pnpm --filter @create-something/workflow-compiler test:acceptance
+pnpm --filter @createsomething/workflow-compiler check
+pnpm --filter @createsomething/workflow-compiler test
+pnpm --filter @createsomething/workflow-compiler test:acceptance
 npm --prefix packages/workflow-compiler run release:consumer
-pnpm exports @create-something/workflow-compiler
+pnpm exports @createsomething/workflow-compiler
 git diff --check
 ```
 

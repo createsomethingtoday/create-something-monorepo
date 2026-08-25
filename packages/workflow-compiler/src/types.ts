@@ -511,6 +511,168 @@ export type CompiledWorkflowBundle =
   | CompiledWorkflowBundleV0_2
   | CompiledWorkflowBundleV0_3;
 
+export type NotionCustomAgentResourceKind =
+  | 'notion_page'
+  | 'notion_data_source'
+  | 'connected_app';
+
+export type NotionCustomAgentResourceAccessLevel = 'can_view' | 'can_comment' | 'can_edit';
+
+export interface NotionCustomAgentInstructions {
+  sourceRef: string;
+  sha256: string;
+}
+
+export interface NotionCustomAgentResourceAccess {
+  resourceRef: string;
+  kind: NotionCustomAgentResourceKind;
+  level: NotionCustomAgentResourceAccessLevel;
+  purpose: string;
+}
+
+export type NotionCustomAgentTriggerKind =
+  | 'manual'
+  | 'schedule'
+  | 'notion_event'
+  | 'connected_app_event';
+
+export interface NotionCustomAgentTrigger {
+  triggerId: string;
+  kind: NotionCustomAgentTriggerKind;
+  intent: string;
+}
+
+export type NotionCustomAgentToolRuntime = 'notion_worker' | 'create_something_mcp';
+
+export interface NotionCustomAgentToolBindingInput {
+  actionId: string;
+  key: string;
+  runtime: NotionCustomAgentToolRuntime;
+  contractRef: string;
+}
+
+export interface NotionCustomAgentBlueprintInput {
+  schemaVersion: 'notion_custom_agent_blueprint_input.v0.1';
+  blueprintId: string;
+  agentId: string;
+  instructions: NotionCustomAgentInstructions;
+  resourceAccess: NotionCustomAgentResourceAccess[];
+  triggers: NotionCustomAgentTrigger[];
+  toolBindings: NotionCustomAgentToolBindingInput[];
+}
+
+export interface NotionCustomAgentToolBinding extends NotionCustomAgentToolBindingInput {
+  targetSystemId: string;
+  kind: ActionKind;
+  authority: string;
+  autonomy: AutonomyClass;
+  parameters?: WorkflowToolParameter[];
+  requiredEvidence: string[];
+  receiptFields: string[];
+  recovery: WorkflowAction['recovery'];
+  readOnlyHint: boolean;
+}
+
+export interface NotionCustomAgentBlueprintInstallation {
+  disposition: 'wait';
+  reasonCode: 'CONFIGURATION_RECEIPT_REQUIRED';
+  requiredReceipts: Array<'configuration' | 'activation' | 'run' | 'tool' | 'mutation'>;
+}
+
+export interface NotionCustomAgentBlueprint extends CompiledArtifactHeader {
+  schemaVersion: 'notion_agent_blueprint.v0.1';
+  blueprintId: string;
+  host: 'notion_custom_agent';
+  agent: {
+    id: string;
+    title: string;
+    purpose: string;
+    instructions: NotionCustomAgentInstructions;
+    escalationOwner: string;
+  };
+  resourceAccess: NotionCustomAgentResourceAccess[];
+  triggers: NotionCustomAgentTrigger[];
+  toolBindings: NotionCustomAgentToolBinding[];
+  installation: NotionCustomAgentBlueprintInstallation;
+}
+
+export interface NotionCustomAgentConfigurationReceipt {
+  schemaVersion: 'notion_custom_agent_configuration_receipt.v0.1';
+  blueprintId: string;
+  agentRef: string;
+  workflowDefinitionHash: string;
+  instructionsSha256: string;
+  resourceAccess: Array<Pick<NotionCustomAgentResourceAccess, 'resourceRef' | 'kind' | 'level'>>;
+  triggers: Array<Pick<NotionCustomAgentTrigger, 'triggerId' | 'kind'>>;
+  toolBindings: NotionCustomAgentToolBindingInput[];
+}
+
+export type NotionCustomAgentInstallationDisposition = 'pass' | 'wait' | 'stop';
+
+export type NotionCustomAgentInstallationReasonCode =
+  | 'CONFIGURATION_RECEIPT_MATCHED'
+  | 'CONFIGURATION_RECEIPT_REQUIRED'
+  | 'CONFIGURATION_RECEIPT_MISMATCH';
+
+export interface NotionCustomAgentInstallationEvaluation {
+  schemaVersion: 'notion_custom_agent_installation_evaluation.v0.1';
+  blueprintId: string;
+  agentRef?: string;
+  disposition: NotionCustomAgentInstallationDisposition;
+  reasonCode: NotionCustomAgentInstallationReasonCode;
+  mismatchFields?: string[];
+  requiredOperationalReceipts: Array<'activation' | 'run' | 'tool' | 'mutation'>;
+}
+
+export type NotionCustomAgentToolConfirmationState = 'not_required' | 'confirmed' | 'not_confirmed';
+
+export interface NotionCustomAgentOperationalReceipts {
+  schemaVersion: 'notion_custom_agent_operational_receipts.v0.1';
+  blueprintId: string;
+  agentRef?: string;
+  activationReceipt: {
+    triggerId: string;
+    runRef: string;
+    activationRef: string;
+  };
+  runReceipt: {
+    runRef: string;
+  };
+  toolReceipts: Array<{
+    actionId: string;
+    runRef: string;
+    toolInvocationRef: string;
+    confirmationState: NotionCustomAgentToolConfirmationState;
+  }>;
+  mutationReceipts: Array<{
+    actionId: string;
+    runRef: string;
+    toolInvocationRef: string;
+    mutationRef: string;
+  }>;
+}
+
+export type NotionCustomAgentOperationalReasonCode =
+  | 'OPERATIONAL_RECEIPTS_MATCHED'
+  | 'OPERATIONAL_RECEIPTS_REQUIRED'
+  | 'OPERATIONAL_RECEIPT_MISMATCH'
+  | 'MATCHED_INSTALLATION_EVALUATION_REQUIRED'
+  | 'OPERATIONAL_RECEIPT_INSTALLATION_MISMATCH'
+  | 'CONSEQUENTIAL_TOOL_AUTONOMY_VIOLATION'
+  | 'NON_MUTATING_ACTION_MUTATION_RECEIPT'
+  | 'UNDECLARED_RECEIPT_ACTION'
+  | 'WRITE_CONFIRMATION_OR_MUTATION_RECEIPT_REQUIRED';
+
+export interface NotionCustomAgentOperationalEvaluation {
+  schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1';
+  blueprintId: string;
+  disposition: NotionCustomAgentInstallationDisposition;
+  reasonCode: NotionCustomAgentOperationalReasonCode;
+  missingActionIds?: string[];
+  unexpectedActionIds?: string[];
+  unexpectedMutationActionIds?: string[];
+}
+
 export interface WorkflowCompilationDiagnostic {
   code: string;
   path: string;

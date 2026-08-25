@@ -18,7 +18,7 @@ The command requires the four joined JSONL inputs, fails closed on discovery-sou
 Serve the generated read-only console with the compiler's static server:
 
 ```bash
-pnpm --filter @create-something/workflow-compiler serve -- \
+pnpm --filter @createsomething/workflow-compiler serve -- \
   --dir /path/reported/as/outputDir --port 4173
 ```
 

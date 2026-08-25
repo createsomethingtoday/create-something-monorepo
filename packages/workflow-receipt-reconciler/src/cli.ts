@@ -3,7 +3,7 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
-import type { WorkflowDefinition } from '@create-something/workflow-compiler';
+import type { WorkflowDefinition } from '@createsomething/workflow-compiler';
 
 import { writeWorkflowReceiptReconciliationArtifacts } from './artifacts.js';
 import { extractEmbeddedWorkflowReceiptCorpus } from './extract.js';

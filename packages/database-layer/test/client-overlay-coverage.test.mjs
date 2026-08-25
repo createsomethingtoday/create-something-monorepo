@@ -13,8 +13,9 @@ test('client overlay coverage covers every managed client package', () => {
 
   assert.equal(coverage.id, 'substrate:create-something:client-overlay-coverage');
   assert.equal(coverage.topologyId, 'substrate:create-something:topology:internal');
-  assert.equal(coverage.overlays.length, 4);
-  assert.equal(packages.length, 6);
+  assert.equal(coverage.overlays.length, 5);
+  assert.equal(packages.length, 7);
+  assert.ok(coverage.overlays.some((overlay) => overlay.clientSlug === 'cato-supply-insights-cms'));
   assert.ok(paths.has('packages/agency/clients/cato-supply-insights-review'));
   assert.ok(paths.has('packages/agency/clients/jandjhomehealth'));
   assert.ok(paths.has('packages/agency/clients/outerfields'));
