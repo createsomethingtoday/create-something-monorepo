@@ -22,6 +22,12 @@ export { createOwnedAgentWorker } from './worker.js';
 export { createControlRunService, MemoryControlRunRepository } from './control.js';
 export { createControlRunWorker } from './control-worker.js';
 export { D1WorkflowRuntimeCheckpointStore } from './workflow-runtime-store.js';
+export { D1WorkflowRuntimeProofReader } from './workflow-runtime-proof-projection.js';
+export type {
+  WorkflowRuntimeProofApproval,
+  WorkflowRuntimeProofCapabilityObservation,
+  WorkflowRuntimeProofProjection
+} from './workflow-runtime-proof-projection.js';
 export {
   D1TemplateReviewQueueObservationAdapter,
   TemplateReviewQueueObservationError,

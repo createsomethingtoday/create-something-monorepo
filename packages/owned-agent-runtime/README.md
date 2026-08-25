@@ -94,6 +94,18 @@ results retain the same bounded count and source digests for reconciliation,
 but failure codes and verifier labels are constrained to safe machine
 identifiers.
 
+`D1WorkflowRuntimeProofReader` is the paired read-only database reader.
+Control owns the ledger that it reads. Future Substrate and Atlas views may
+display its result, but cannot change a run. The reader verifies the exact
+compiler runtime manifest and persisted hash chain before deriving one
+`create-something/workflow-runtime-proof@1` value. That value contains exact
+run, step, attempt, approval, checkpoint, receipt, and redacted capability
+observation identities; it omits source routes, raw source records, operator
+subjects, free-text outcomes, and every execution or approval command. It is
+not yet an HTTP route, MCP tool, Atlas write-back, deployment, or live Proof
+surface. Approval rows are append-only: they begin pending, can receive one
+decision, and cannot be altered or deleted afterward.
+
 D1 owns conversation continuation and normalized run receipts. OpenAI Agents SDK owns the model/tool loop. Agent definitions own MCP allowlists and judgment policy.
 
 Each conversation is protected by a D1 run lease. Concurrent continuation returns `409 conversation_busy` before model execution. Completion and failure write the terminal receipt and release the lease in one D1 batch transaction; an abandoned lease can be reclaimed after ten minutes.
