@@ -104,7 +104,7 @@
 		<h2>Supported code</h2>
 		<ul>
 			<li><strong>TypeScript and JavaScript:</strong> duplicate functions, imports, uses, dead exports, entry points, orphans, environment boundaries, and git diffs.</li>
-			<li><strong>Svelte and SvelteKit:</strong> component-script duplicates, route conventions, <code>$lib</code> imports, actions, stores, hooks, and reachability.</li>
+			<li><strong>Svelte and SvelteKit:</strong> component-script duplicates, module-context dead exports, route conventions, <code>$lib</code> imports, actions, stores, hooks, and reachability. Instance-script exports such as legacy <code>export let</code> props are component API and are excluded from dead-export findings.</li>
 			<li><strong>Other languages:</strong> some direct checks can parse them, but they are outside the public agent-quality support contract.</li>
 		</ul>
 		<p>Ground returns <code>UNSUPPORTED</code>, <code>PARTIAL</code>, or <code>NOT_APPLICABLE</code> when a requested check cannot justify a clean result.</p>

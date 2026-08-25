@@ -44,6 +44,8 @@ test('Ground package README states the exact TS, JS, Svelte, and SvelteKit bound
   assert.match(readme, /JavaScript/);
   assert.match(readme, /Svelte component/);
   assert.match(readme, /SvelteKit configuration/);
+  assert.match(readme, /module-context/);
+  assert.match(readme, /instance-script exports/);
   assert.doesNotMatch(readme, /Svelte duplicate-function scans\)\./);
 });
 

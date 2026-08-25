@@ -181,3 +181,27 @@ fn ga_dead_svelte_module_export_is_confirmed() {
         "unusedLoader",
     );
 }
+
+#[test]
+fn ga_svelte_instance_prop_is_not_a_dead_module_export() {
+    let directory = tempdir().unwrap();
+    let source = directory.path().join("src");
+    fs::create_dir_all(&source).unwrap();
+    let component = source.join("Card.svelte");
+    fs::write(
+        &component,
+        "<script lang=\"ts\">\n  export let title: string;\n</script>\n<h2>{title}</h2>\n",
+    )
+    .unwrap();
+    let content = call(
+        directory.path(),
+        "ground_find_dead_exports",
+        json!({"module_path": component, "search_scope": directory.path()}),
+    );
+    assert_eq!(content["total_exports"], 0, "{content:#}");
+    assert_eq!(
+        content["dead_exports"].as_array().unwrap().len(),
+        0,
+        "{content:#}"
+    );
+}

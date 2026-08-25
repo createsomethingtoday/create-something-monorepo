@@ -71,8 +71,10 @@ Ground 0.3.6 supports TypeScript (`.ts`, `.tsx`), JavaScript (`.js`, `.jsx`,
 `.mjs`), and Svelte (`.svelte`) in the declared analysis lane. Svelte component
 scripts participate in duplicate analysis, while SvelteKit configuration,
 routes, aliases, actions, stores, and framework entry points inform reachability
-and dead-export evidence. Inputs outside that contract remain unsupported rather
-than being reported as clean.
+and dead-export evidence. Svelte dead-export checks analyze module-context
+scripts only; instance-script exports such as legacy `export let` props are
+component API and are excluded. Inputs outside that contract remain unsupported
+rather than being reported as clean.
 
 Ground 0.3.5 extended source-bearing orphan evidence to nested Cloudflare Worker
 configurations: `wrangler.toml` and `wrangler.json` `main` entries are protected
