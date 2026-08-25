@@ -190,21 +190,56 @@ async function persistReceipt(
 type FailureStreakRow = {
   receipt_id: string;
   scheduled_at: string;
+  checks_json: string;
 };
 
-function failedCheckCodes(receipt: MapMonitorReceipt): string[] {
+type PendingEscalationRow = {
+  alert_id: string;
+  failure_streak_started_at: string;
+  threshold_receipt_id: string;
+  source_sha: string;
+  severity: 'SEV-2' | 'SEV-3';
+  failed_check_codes_json: string;
+};
+
+function checksForFailure(row: FailureStreakRow): MapSyntheticCheck[] {
+  try {
+    const parsed = JSON.parse(row.checks_json);
+    if (!Array.isArray(parsed)) throw new Error('checks JSON must be an array');
+    return parsed.map((check) =>
+      sanitizeCheck({
+        id: typeof check?.id === 'string' ? check.id : 'invalid_check_id',
+        ok: check?.ok === true,
+        ...(typeof check?.code === 'string' ? { code: check.code } : {}),
+        durationMs: typeof check?.durationMs === 'number' ? check.durationMs : 0,
+      }),
+    );
+  } catch {
+    return [failureCheck('stored_receipt', 'STORED_RECEIPT_INVALID')];
+  }
+}
+
+function failedCheckCodesForFailures(failures: FailureStreakRow[]): string[] {
   return [
     ...new Set(
-      receipt.checks
-        .filter((check) => !check.ok)
-        .map((check) => check.code)
-        .filter((code): code is string => typeof code === 'string'),
+      failures.flatMap((failure) =>
+        checksForFailure(failure)
+          .filter((check) => !check.ok)
+          .map((check) => check.code)
+          .filter((code): code is string => typeof code === 'string'),
+      ),
     ),
   ];
 }
 
-function severityForReceipt(receipt: MapMonitorReceipt): 'SEV-2' | 'SEV-3' {
-  return receipt.checks.some((check) => !check.ok && check.id.includes('booking_context'))
+function severityForFailures(failures: FailureStreakRow[]): 'SEV-2' | 'SEV-3' {
+  return failures.some((failure) =>
+    checksForFailure(failure).some(
+      (check) =>
+        !check.ok &&
+        (check.id.includes('booking_context') || check.code === 'STORED_RECEIPT_INVALID'),
+    ),
+  )
     ? 'SEV-2'
     : 'SEV-3';
 }
@@ -221,15 +256,14 @@ async function findFailureStreak(
         ORDER BY scheduled_at DESC
         LIMIT 1
       )
-      SELECT receipt_id, scheduled_at
+      SELECT receipt_id, scheduled_at, checks_json
       FROM map_production_monitor_receipts
       WHERE trigger = 'scheduled'
         AND status = 'failed'
         AND scheduled_at > COALESCE((SELECT scheduled_at FROM latest_passing_receipt), '')
-      ORDER BY scheduled_at ASC
-      LIMIT ?`,
+      ORDER BY scheduled_at ASC`,
     )
-    .bind(OPERATOR_ESCALATION_THRESHOLD)
+    .bind()
     .all<FailureStreakRow>();
   const failures = result.results ?? [];
   return failures.length >= OPERATOR_ESCALATION_THRESHOLD ? failures : null;
@@ -247,8 +281,8 @@ function escalationFor(
     failureStreakStartedAt: first.scheduled_at,
     thresholdReceiptId: thresholdReceipt.receipt_id,
     sourceSha: receipt.sourceSha,
-    severity: severityForReceipt(receipt),
-    failedCheckCodes: failedCheckCodes(receipt),
+    severity: severityForFailures(failures),
+    failedCheckCodes: failedCheckCodesForFailures(failures),
   };
 }
 
@@ -308,7 +342,6 @@ async function dispatchOperatorEscalation(
   database: D1Database,
   receipt: MapMonitorReceipt,
   now: Date,
-  notifyOperator: (escalation: MapOperatorEscalation) => Promise<void>,
 ): Promise<void> {
   const failures = await findFailureStreak(database);
   if (!failures) return;
@@ -333,40 +366,85 @@ async function dispatchOperatorEscalation(
       now.toISOString(),
     )
     .run();
+}
 
-  const claim = await database
-    .prepare(
-      `UPDATE map_production_monitor_alerts
-      SET delivery_status = 'delivering', delivery_attempts = delivery_attempts + 1,
-          last_delivery_error_code = NULL
-      WHERE alert_id = ? AND delivery_status = 'pending'`,
-    )
-    .bind(escalation.alertId)
-    .run();
-  if (claim.meta.changes !== 1) return;
-
+function escalationFromPending(row: PendingEscalationRow): MapOperatorEscalation {
+  let failedCheckCodes: string[] = [];
   try {
-    await notifyOperator(escalation);
+    const parsed = JSON.parse(row.failed_check_codes_json);
+    if (Array.isArray(parsed)) {
+      failedCheckCodes = parsed.filter(
+        (code): code is string => typeof code === 'string' && /^[A-Z0-9_]{1,96}$/.test(code),
+      );
+    }
   } catch {
-    await database
+    failedCheckCodes = ['STORED_ALERT_INVALID'];
+  }
+  return {
+    alertId: row.alert_id,
+    consecutiveFailures: OPERATOR_ESCALATION_THRESHOLD,
+    failureStreakStartedAt: row.failure_streak_started_at,
+    thresholdReceiptId: row.threshold_receipt_id,
+    sourceSha: row.source_sha,
+    severity: row.severity,
+    failedCheckCodes,
+  };
+}
+
+async function deliverPendingOperatorEscalations(
+  database: D1Database,
+  now: Date,
+  notifyOperator: (escalation: MapOperatorEscalation) => Promise<void>,
+): Promise<void> {
+  const result = await database
+    .prepare(
+      `SELECT alert_id, failure_streak_started_at, threshold_receipt_id, source_sha,
+              severity, failed_check_codes_json
+       FROM map_production_monitor_alerts
+       WHERE delivery_status = 'pending'
+       ORDER BY created_at ASC`,
+    )
+    .bind()
+    .all<PendingEscalationRow>();
+  const pending = result.results ?? [];
+
+  for (const row of pending) {
+    const escalation = escalationFromPending(row);
+
+    const claim = await database
       .prepare(
         `UPDATE map_production_monitor_alerts
-        SET delivery_status = 'pending', last_delivery_error_code = 'EMAIL_DELIVERY_FAILED'
-        WHERE alert_id = ?`,
+        SET delivery_status = 'delivering', delivery_attempts = delivery_attempts + 1,
+            last_delivery_error_code = NULL
+        WHERE alert_id = ? AND delivery_status = 'pending'`,
       )
       .bind(escalation.alertId)
       .run();
-    throw new Error('Map operator escalation delivery failed');
-  }
+    if (claim.meta.changes !== 1) continue;
 
-  await database
-    .prepare(
-      `UPDATE map_production_monitor_alerts
-      SET delivery_status = 'delivered', delivered_at = ?, last_delivery_error_code = NULL
-      WHERE alert_id = ?`,
-    )
-    .bind(now.toISOString(), escalation.alertId)
-    .run();
+    try {
+      await notifyOperator(escalation);
+    } catch {
+      await database
+        .prepare(
+          `UPDATE map_production_monitor_alerts
+          SET delivery_status = 'pending', last_delivery_error_code = 'EMAIL_DELIVERY_FAILED'
+          WHERE alert_id = ?`,
+        )
+        .bind(escalation.alertId)
+        .run();
+      throw new Error('Map operator escalation delivery failed');
+    }
+
+    await database
+      .prepare(
+        `UPDATE map_production_monitor_alerts
+        SET delivery_status = 'delivered', delivered_at = ?, last_delivery_error_code = NULL
+        WHERE alert_id = ?`,
+      )
+      .bind(now.toISOString(), escalation.alertId)
+      .run();
+  }
 }
 
 function failureCheck(id: string, code: string): MapSyntheticCheck {
@@ -377,7 +455,6 @@ export async function runScheduledMapMonitor(
   input: ScheduledMapMonitorInput,
 ): Promise<MapMonitorReceipt> {
   const now = input.now ?? (() => new Date());
-  const checkedAt = now();
   const scheduled = new Date(input.scheduledAt);
   if (Number.isNaN(scheduled.valueOf())) {
     throw new Error('Map monitor requires a valid scheduled timestamp');
@@ -404,12 +481,14 @@ export async function runScheduledMapMonitor(
     }
   }
 
+  const completedAt = now();
+
   const receipt: MapMonitorReceipt = {
     schemaVersion: 1,
     receiptId: receiptId(iso(scheduled), provisionalSourceSha),
     trigger: 'scheduled',
     scheduledAt: iso(scheduled),
-    completedAt: iso(checkedAt),
+    completedAt: iso(completedAt),
     sourceSha: provisionalSourceSha,
     workerVersion: workerVersion ?? '',
     baseUrl: baseUrl ?? DEFAULT_BASE_URL,
@@ -421,14 +500,20 @@ export async function runScheduledMapMonitor(
     checks,
   };
 
-  await persistReceipt(input.env.DB, receipt, retentionDays ?? REQUIRED_RETENTION_DAYS, checkedAt);
+  await persistReceipt(input.env.DB, receipt, retentionDays ?? REQUIRED_RETENTION_DAYS, completedAt);
   if (receipt.status !== 'passed') {
     await dispatchOperatorEscalation(
       input.env.DB,
       receipt,
-      checkedAt,
-      input.notifyOperator ?? ((escalation) => deliverOperatorEscalation(input.env, escalation)),
+      completedAt,
     );
+  }
+  await deliverPendingOperatorEscalations(
+    input.env.DB,
+    completedAt,
+    input.notifyOperator ?? ((escalation) => deliverOperatorEscalation(input.env, escalation)),
+  );
+  if (receipt.status !== 'passed') {
     throw new Error(`Map production monitor failed: ${receipt.receiptId}`);
   }
   return receipt;

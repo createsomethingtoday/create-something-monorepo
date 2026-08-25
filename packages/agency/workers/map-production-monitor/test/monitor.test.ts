@@ -76,6 +76,27 @@ test('scheduled monitor writes a complete sanitized passing receipt', async () =
   assert.deepEqual(JSON.parse(String(insert.values[13])), receipt.checks);
 });
 
+test('scheduled monitor records completion only after browser work finishes', async () => {
+  const { database } = createDatabase();
+  let syntheticFinished = false;
+  const receipt = await runScheduledMapMonitor({
+    scheduledAt: '2026-08-25T18:14:00.000Z',
+    env: env(database),
+    executeSynthetic: async () => {
+      syntheticFinished = true;
+      return {
+        checks: REQUIRED_MAP_CHECK_IDS.map((id) => ({ id, ok: true, durationMs: 1 })),
+      };
+    },
+    now: () => {
+      assert.equal(syntheticFinished, true, 'completion time must be read after browser work');
+      return new Date('2026-08-25T18:14:20.000Z');
+    },
+  });
+
+  assert.equal(receipt.completedAt, '2026-08-25T18:14:20.000Z');
+});
+
 test('scheduled monitor records a red receipt and rejects when a required check fails', async () => {
   const { database, batches } = createDatabase();
   await assert.rejects(
@@ -110,8 +131,26 @@ test('two consecutive scheduled failures deliver one idempotent CRE-1289 operato
   const { database, runs } = createDatabase();
   let alert: unknown = null;
   const failureStreak = [
-    { receipt_id: 'map-20260825180700-aaaaaaaaaaaa', scheduled_at: '2026-08-25T18:07:00.000Z' },
-    { receipt_id: 'map-20260825182200-aaaaaaaaaaaa', scheduled_at: '2026-08-25T18:22:00.000Z' },
+    {
+      receipt_id: 'map-20260825180700-aaaaaaaaaaaa',
+      scheduled_at: '2026-08-25T18:07:00.000Z',
+      checks_json: JSON.stringify([
+        {
+          id: 'desktop_starter_booking_context',
+          ok: false,
+          code: 'BOOKING_CONTEXT_MISMATCH',
+          durationMs: 9,
+        },
+      ]),
+    },
+    {
+      receipt_id: 'map-20260825182200-aaaaaaaaaaaa',
+      scheduled_at: '2026-08-25T18:22:00.000Z',
+      checks_json: JSON.stringify([
+        { id: 'desktop_map_health', ok: false, code: 'HTTP_503', durationMs: 9 },
+        { id: 'synthetic_completeness', ok: false, code: 'REQUIRED_CHECK_MISSING', durationMs: 0 },
+      ]),
+    },
   ];
   const streakDatabase = {
     ...database,
@@ -122,6 +161,27 @@ test('two consecutive scheduled failures deliver one idempotent CRE-1289 operato
           const bound = statement.bind(...values);
           if (query.includes('latest_passing_receipt')) {
             return { ...bound, all: async () => ({ results: failureStreak }) };
+          }
+          if (query.includes('SELECT') && query.includes('map_production_monitor_alerts')) {
+            return {
+              ...bound,
+              all: async () => ({
+                results: [
+                  {
+                    alert_id: 'map-monitor-escalation-map-20260825180700-aaaaaaaaaaaa',
+                    failure_streak_started_at: '2026-08-25T18:07:00.000Z',
+                    threshold_receipt_id: 'map-20260825182200-aaaaaaaaaaaa',
+                    source_sha: SOURCE_SHA,
+                    severity: 'SEV-2',
+                    failed_check_codes_json: JSON.stringify([
+                      'BOOKING_CONTEXT_MISMATCH',
+                      'HTTP_503',
+                      'REQUIRED_CHECK_MISSING',
+                    ]),
+                  },
+                ],
+              }),
+            };
           }
           return bound;
         },
@@ -151,9 +211,17 @@ test('two consecutive scheduled failures deliver one idempotent CRE-1289 operato
     failureStreakStartedAt: '2026-08-25T18:07:00.000Z',
     thresholdReceiptId: 'map-20260825182200-aaaaaaaaaaaa',
     sourceSha: SOURCE_SHA,
-    severity: 'SEV-3',
-    failedCheckCodes: ['HTTP_503', 'REQUIRED_CHECK_MISSING'],
+    severity: 'SEV-2',
+    failedCheckCodes: ['BOOKING_CONTEXT_MISMATCH', 'HTTP_503', 'REQUIRED_CHECK_MISSING'],
   });
+  const alertInsert = runs.find((statement) => statement.query.includes('INSERT OR IGNORE INTO map_production_monitor_alerts'));
+  assert.ok(alertInsert);
+  assert.equal(alertInsert.values[5], 'SEV-2');
+  assert.deepEqual(JSON.parse(String(alertInsert.values[6])), [
+    'BOOKING_CONTEXT_MISMATCH',
+    'HTTP_503',
+    'REQUIRED_CHECK_MISSING',
+  ]);
   assert.ok(runs.some((statement) => statement.query.includes('INSERT OR IGNORE INTO map_production_monitor_alerts')));
   assert.ok(runs.some((statement) => statement.query.includes("delivery_status = 'delivered'")));
 });
@@ -200,6 +268,58 @@ test('already-delivered two-failure escalation is not sent again', async () => {
   );
 
   assert.equal(deliveryCount, 0);
+});
+
+test('retries a pending escalation on a later green scheduled receipt', async () => {
+  const { database, runs } = createDatabase();
+  let alert: unknown = null;
+  const pendingEscalation = {
+    alert_id: 'map-monitor-escalation-map-20260825180700-aaaaaaaaaaaa',
+    failure_streak_started_at: '2026-08-25T18:07:00.000Z',
+    threshold_receipt_id: 'map-20260825182200-aaaaaaaaaaaa',
+    source_sha: SOURCE_SHA,
+    severity: 'SEV-3',
+    failed_check_codes_json: JSON.stringify(['HTTP_503', 'REQUIRED_CHECK_MISSING']),
+  };
+  const retryDatabase = {
+    ...database,
+    prepare(query: string) {
+      const statement = database.prepare(query);
+      return {
+        bind(...values: unknown[]) {
+          const bound = statement.bind(...values);
+          if (query.includes('SELECT') && query.includes('map_production_monitor_alerts') && query.includes("delivery_status = 'pending'")) {
+            return { ...bound, all: async () => ({ results: [pendingEscalation] }) };
+          }
+          return bound;
+        },
+      };
+    },
+  };
+
+  const receipt = await runScheduledMapMonitor({
+    scheduledAt: '2026-08-25T18:37:00.000Z',
+    env: env(retryDatabase),
+    executeSynthetic: async () => ({
+      checks: REQUIRED_MAP_CHECK_IDS.map((id) => ({ id, ok: true, durationMs: 1 })),
+    }),
+    notifyOperator: async (input) => {
+      alert = input;
+    },
+    now: () => new Date('2026-08-25T18:37:20.000Z'),
+  });
+
+  assert.equal(receipt.status, 'passed');
+  assert.deepEqual(alert, {
+    alertId: pendingEscalation.alert_id,
+    consecutiveFailures: 2,
+    failureStreakStartedAt: pendingEscalation.failure_streak_started_at,
+    thresholdReceiptId: pendingEscalation.threshold_receipt_id,
+    sourceSha: SOURCE_SHA,
+    severity: 'SEV-3',
+    failedCheckCodes: ['HTTP_503', 'REQUIRED_CHECK_MISSING'],
+  });
+  assert.ok(runs.some((statement) => statement.query.includes("delivery_status = 'delivered'")));
 });
 
 test('invalid source provenance produces a persisted red receipt before browser work', async () => {
