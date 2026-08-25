@@ -233,6 +233,120 @@ describe('registerTools', () => {
     expect(fetchFn).toHaveBeenCalledTimes(2);
   });
 
+  it('lists the pending exception queue without requiring an asset or version id', async () => {
+    const { server, names, handlers } = createServerHarness();
+    const fetchFn = vi.fn(async (input: RequestInfo | URL) => {
+      const url = new URL(String(input));
+      if (url.pathname.endsWith(`/${TABLE_IDS.assetVersions}`)) {
+        return new Response(JSON.stringify({
+          records: [
+            {
+              id: 'recVersion',
+              fields: {
+                [FIELD_IDS.versions.assetLink]: ['recAsset'],
+                [FIELD_IDS.versions.versionNumber]: 12,
+                [FIELD_IDS.versions.exceptionStatus]: '🆕Requested',
+                [FIELD_IDS.versions.exceptionItemsLink]: ['recException'],
+                [FIELD_IDS.versions.undecidedExceptionItems]: 1,
+                [FIELD_IDS.versions.deniedExceptionItems]: 0,
+                [FIELD_IDS.versions.exceptionRequestedDatetime]: '2026-08-25T15:00:00.000Z',
+              },
+            },
+            {
+              id: 'recDecidedVersion',
+              fields: {
+                [FIELD_IDS.versions.assetLink]: ['recAsset'],
+                [FIELD_IDS.versions.versionNumber]: 11,
+                [FIELD_IDS.versions.exceptionStatus]: '✅Approved',
+              },
+            },
+          ],
+        }), { headers: { 'Content-Type': 'application/json' } });
+      }
+      if (url.pathname.endsWith(`/${TABLE_IDS.assets}/recAsset`)) {
+        return new Response(JSON.stringify({
+          id: 'recAsset',
+          fields: {
+            [FIELD_IDS.assets.name]: 'North Embedded Checkout',
+            [FIELD_IDS.assets.capabilities]: 'Data Client v2',
+          },
+        }), { headers: { 'Content-Type': 'application/json' } });
+      }
+      if (url.pathname.endsWith(`/${TABLE_IDS.exceptions}`)) {
+        return new Response(JSON.stringify({
+          records: [
+            {
+              id: 'recException',
+              fields: {
+                [FIELD_IDS.exceptions.item]: 'Remote-hosted mutable runtime',
+                [FIELD_IDS.exceptions.assetVersionLink]: ['recVersion'],
+                [FIELD_IDS.exceptions.status]: '👀Under Review',
+                [FIELD_IDS.exceptions.type]: 'Security',
+              },
+            },
+          ],
+        }), { headers: { 'Content-Type': 'application/json' } });
+      }
+      return new Response('Not found', { status: 404 });
+    });
+    const client = new AirtableClient({
+      apiKey: 'token',
+      fetchFn,
+      sleepFn: async () => {},
+    });
+
+    registerTools(server, () => client);
+
+    const result = await handlers.get('app_review_list_exception_queue')?.({});
+    expect(names).toContain('app_review_list_exception_queue');
+
+    const payload = parsePayload(result!);
+    expect(payload.ok).toBe(true);
+    expect(payload.data).toMatchObject({
+      count: 1,
+      pending_statuses: ['🆕Requested', '👀Under Review'],
+      queue: [
+        {
+          asset: { assetId: 'recAsset', appName: 'North Embedded Checkout' },
+          version: { versionId: 'recVersion', exceptionStatus: '🆕Requested' },
+          exceptionItems: [{ exceptionItemId: 'recException' }],
+        },
+      ],
+    });
+    expect(payload.data?.copy_block).toContain('North Embedded Checkout');
+    expect(payload.data?.copy_block).toContain('v12');
+    expect(payload.data?.copy_block).toContain('Remote-hosted mutable runtime');
+    expect(payload.data?.copy_block).toContain('\n## North Embedded Checkout');
+
+    const versionRequest = (fetchFn.mock.calls as Array<[RequestInfo | URL]>)
+      .map(([input]) => new URL(String(input)))
+      .find((url) => url.pathname.endsWith(`/${TABLE_IDS.assetVersions}`));
+    const formula = versionRequest?.searchParams.get('filterByFormula') ?? '';
+    expect(formula).toContain('🆕Requested');
+    expect(formula).toContain('👀Under Review');
+  });
+
+  it('returns an explicit successful result when the exception queue is empty', async () => {
+    const { server, handlers } = createServerHarness();
+    const client = {
+      listPendingExceptionQueue: vi.fn().mockResolvedValue([]),
+    } as unknown as AirtableClient;
+
+    registerTools(server, () => client);
+
+    const result = await handlers.get('app_review_list_exception_queue')?.({});
+    const payload = parsePayload(result!);
+    expect(payload).toMatchObject({
+      ok: true,
+      data: {
+        count: 0,
+        pending_statuses: ['🆕Requested', '👀Under Review'],
+        queue: [],
+      },
+    });
+    expect(payload.data?.copy_block).toContain('queue is empty');
+  });
+
   it('lists governance findings through policy-relevant filters', async () => {
     const { server, handlers } = createServerHarness();
     const client = {

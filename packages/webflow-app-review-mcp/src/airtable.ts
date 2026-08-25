@@ -11,6 +11,7 @@ import {
   type GovernanceFindingStatus,
   HOLD_REASON_OPTIONS,
   MARKETPLACE_STATUS_OPTIONS,
+  PENDING_EXCEPTION_STATUS_OPTIONS,
   REJECTION_REASON_OPTIONS,
   REVIEW_STATUS_OPTIONS,
   REVIEW_TYPE_OPTIONS,
@@ -296,6 +297,12 @@ export interface AppReviewExceptionItem {
   isUndecided?: boolean;
   isDenied?: boolean;
   createdTime?: string;
+}
+
+export interface AppReviewExceptionQueueEntry {
+  asset: AppReviewAsset;
+  version: AppReviewVersion;
+  exceptionItems: AppReviewExceptionItem[];
 }
 
 export type AppReviewQueueStatus =
@@ -1538,6 +1545,55 @@ export class AirtableClient {
     return records
       .map((record) => mapVersionRecord(record))
       .sort((a, b) => (b.versionNumber ?? 0) - (a.versionNumber ?? 0));
+  }
+
+  async listPendingExceptionQueue(): Promise<AppReviewExceptionQueueEntry[]> {
+    const pendingStatuses = [...PENDING_EXCEPTION_STATUS_OPTIONS];
+    const pendingStatusSet = new Set<string>(pendingStatuses);
+    const records = await this.listRecords({
+      tableId: TABLE_IDS.assetVersions,
+      fieldIds: VERSION_FIELD_IDS,
+      filterByFormula: buildOrFormula(FIELD_IDS.versions.exceptionStatus, pendingStatuses),
+      sortField: FIELD_IDS.versions.exceptionRequestedDatetime,
+      sortDirection: 'asc',
+    });
+    const versions = records
+      .map((record) => mapVersionRecord(record))
+      .filter((version) => Boolean(version.assetId) && pendingStatusSet.has(version.exceptionStatus ?? ''))
+      .sort((left, right) => {
+        const leftTime = left.exceptionRequestedDatetime ?? left.createdTime ?? '';
+        const rightTime = right.exceptionRequestedDatetime ?? right.createdTime ?? '';
+        return leftTime.localeCompare(rightTime);
+      });
+
+    const assetIds = [...new Set(versions.map((version) => version.assetId).filter((id): id is string => Boolean(id)))];
+    const assets = await Promise.all(assetIds.map((assetId) => this.getAssetById(assetId)));
+    const assetsById = new Map(
+      assets
+        .filter((asset): asset is AppReviewAsset => Boolean(asset))
+        .map((asset) => [asset.assetId, asset]),
+    );
+
+    const exceptionItems = await this.listExceptionItemsByIds(
+      versions.flatMap((version) => version.exceptionItemIds ?? []),
+    );
+    const itemsByVersionId = new Map<string, AppReviewExceptionItem[]>();
+    for (const item of exceptionItems) {
+      if (!item.assetVersionId) continue;
+      const items = itemsByVersionId.get(item.assetVersionId) ?? [];
+      items.push(item);
+      itemsByVersionId.set(item.assetVersionId, items);
+    }
+
+    return versions.flatMap((version) => {
+      const asset = version.assetId ? assetsById.get(version.assetId) : undefined;
+      if (!asset) return [];
+      return [{
+        asset,
+        version,
+        exceptionItems: itemsByVersionId.get(version.versionId) ?? [],
+      }];
+    });
   }
 
   private async listLatestVersionsForAssets(assetIds: string[]): Promise<Map<string, AppReviewVersion>> {

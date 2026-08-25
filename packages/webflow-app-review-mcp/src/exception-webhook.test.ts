@@ -212,6 +212,37 @@ describe('registerExceptionWebhooks', () => {
     });
     expect(created.every((b) => b.notificationUrl === 'https://worker.example/webhooks/airtable')).toBe(true);
   });
+
+  it('rolls back subscriptions created before a later registration fails', async () => {
+    const calls: Array<{ method: string; url: string }> = [];
+    let createCount = 0;
+    const fetchFn = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      const method = String(init?.method ?? 'GET');
+      calls.push({ method, url });
+      if (method === 'POST') {
+        createCount += 1;
+        if (createCount === 1) {
+          return jsonResponse({ id: 'achCreatedBeforeFailure', macSecretBase64: btoa('secret') });
+        }
+        return new Response('registration failed', { status: 500 });
+      }
+      if (method === 'DELETE') return jsonResponse({});
+      throw new Error(`Unexpected fetch: ${method} ${url}`);
+    });
+
+    await expect(
+      registerExceptionWebhooks(
+        { fetchFn: fetchFn as unknown as typeof fetch, apiKey: 'at', baseId: 'appMoIgXMTTTNIc3p' },
+        'https://worker.example/webhooks/airtable',
+      ),
+    ).rejects.toThrow('registration failed');
+
+    expect(calls).toContainEqual({
+      method: 'DELETE',
+      url: 'https://api.airtable.com/v0/bases/appMoIgXMTTTNIc3p/webhooks/achCreatedBeforeFailure',
+    });
+  });
 });
 
 describe('processExceptionWebhookPayloads', () => {
@@ -245,6 +276,75 @@ describe('processExceptionWebhookPayloads', () => {
 
     // Cursor advanced and persisted.
     expect(store.state?.webhooks.find((w) => w.id === 'achVersions')?.cursor).toBe(2);
+  });
+
+  it('keeps the cursor retryable when payload processing fails', async () => {
+    const payload: AirtableWebhookPayload = {
+      actionMetadata: { source: 'client' },
+      changedTablesById: {
+        [TABLE_IDS.assetVersions]: {
+          changedRecordsById: {
+            recVersion1: {
+              current: {
+                cellValuesByFieldId: {
+                  [V.exceptionStatus]: { id: 'sel', name: '🆕Requested' },
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+    const stub = buildFetchStub({ payloadsByWebhook: { achVersions: [payload] } });
+    const failingSlackFetch: typeof fetch = async (input, init) => {
+      if (String(input).startsWith('https://slack.com/api/chat.postMessage')) {
+        throw new Error('temporary Slack failure');
+      }
+      return (stub.fetchFn as unknown as typeof fetch)(input, init);
+    };
+    const store = memoryStore(baseState());
+
+    const result = await processExceptionWebhookPayloads(buildDeps(failingSlackFetch, store));
+
+    expect(result.errors.some((error) => error.includes('temporary Slack failure'))).toBe(true);
+    expect(store.state?.webhooks.find((w) => w.id === 'achVersions')?.cursor).toBe(1);
+  });
+
+  it('processes exception status and hold reason from the same version change', async () => {
+    const payload: AirtableWebhookPayload = {
+      actionMetadata: { source: 'client', sourceMetadata: { user: { id: 'usr1', name: 'Shea' } } },
+      changedTablesById: {
+        [TABLE_IDS.assetVersions]: {
+          changedRecordsById: {
+            recVersion1: {
+              current: {
+                cellValuesByFieldId: {
+                  [V.exceptionStatus]: { id: 'sel', name: '👀Under Review' },
+                  [V.holdReason]: { id: 'hold', name: 'Pending Exception Decision' },
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+    const { fetchFn, slackCalls } = buildFetchStub({
+      payloadsByWebhook: { achVersions: [payload] },
+      versionResponse: () => versionRecordResponse({
+        [V.exceptionStatus]: '👀Under Review',
+        [V.holdReason]: 'Pending Exception Decision',
+        [V.exceptionSlackTs]: '1785000000.000500',
+      }),
+    });
+    const store = memoryStore(baseState());
+
+    const result = await processExceptionWebhookPayloads(buildDeps(fetchFn as unknown as typeof fetch, store));
+
+    expect(result.errors).toEqual([]);
+    expect(result.actions).toContain('under-review recVersion1');
+    expect(result.actions).toContain('hold recVersion1');
+    expect(slackCalls.some((call) => String(call.text).includes('under review'))).toBe(true);
+    expect(slackCalls.some((call) => String(call.text).includes('Hold reason set'))).toBe(true);
   });
 
   it('replies with the decision, posts into the submission thread, and never stamps API-sourced payloads', async () => {

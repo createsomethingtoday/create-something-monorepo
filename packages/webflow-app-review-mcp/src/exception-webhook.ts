@@ -271,25 +271,37 @@ export async function registerExceptionWebhooks(
   notificationUrl: string,
 ): Promise<WebhookLegState> {
   const webhooks: RegisteredWebhook[] = [];
-  for (const spec of WEBHOOK_SPECS) {
-    const created = await webhookApiRequest<{ id: string; macSecretBase64: string }>(cfg, 'POST', '', {
-      notificationUrl,
-      specification: {
-        options: {
-          filters: {
-            dataTypes: ['tableData'],
-            recordChangeScope: spec.tableId,
-            watchDataInFieldIds: spec.watchDataInFieldIds,
+  try {
+    for (const spec of WEBHOOK_SPECS) {
+      const created = await webhookApiRequest<{ id: string; macSecretBase64: string }>(cfg, 'POST', '', {
+        notificationUrl,
+        specification: {
+          options: {
+            filters: {
+              dataTypes: ['tableData'],
+              recordChangeScope: spec.tableId,
+              watchDataInFieldIds: spec.watchDataInFieldIds,
+            },
           },
         },
-      },
-    });
-    webhooks.push({
-      id: created.id,
-      tableId: spec.tableId,
-      macSecretBase64: created.macSecretBase64,
-      cursor: 1,
-    });
+      });
+      webhooks.push({
+        id: created.id,
+        tableId: spec.tableId,
+        macSecretBase64: created.macSecretBase64,
+        cursor: 1,
+      });
+    }
+  } catch (error) {
+    for (const webhook of [...webhooks].reverse()) {
+      try {
+        await webhookApiRequest(cfg, 'DELETE', `/${webhook.id}`);
+      } catch {
+        // Preserve the registration failure; a later forced registration can
+        // still clean up any subscription Airtable refused to delete here.
+      }
+    }
+    throw error;
   }
   return {
     webhooks,
@@ -460,14 +472,19 @@ async function runProcessingPass(
         break;
       }
 
+      let pageFailed = false;
       for (const payload of page.payloads) {
         result.processedPayloads += 1;
         try {
           await handlePayload(deps, webhook.tableId, payload, result);
         } catch (error) {
           result.errors.push(`payload (${webhook.tableId}): ${String(error)}`);
+          pageFailed = true;
+          break;
         }
       }
+
+      if (pageFailed) break;
 
       mightHaveMore = page.mightHaveMore;
       cursor = page.cursor;
@@ -495,7 +512,8 @@ async function handlePayload(
       if (FIELD_IDS.versions.exceptionStatus in cells) {
         const status = selectName(cells[FIELD_IDS.versions.exceptionStatus]);
         await handleVersionExceptionStatus(deps, recordId, status, user, result);
-      } else if (FIELD_IDS.versions.holdReason in cells) {
+      }
+      if (FIELD_IDS.versions.holdReason in cells) {
         const holdReason = selectName(cells[FIELD_IDS.versions.holdReason]);
         await handleVersionHold(deps, recordId, holdReason, user, result);
       }
