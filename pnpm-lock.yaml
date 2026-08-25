@@ -4471,8 +4471,8 @@ importers:
         specifier: 1.26.0
         version: 1.26.0(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(zod@3.25.76)
       agents:
-        specifier: ^0.3.10
-        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.3.8(@modelcontextprotocol/sdk@1.26.0(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(zod@3.25.76))(ai@6.0.235(zod@3.25.76))(zod@3.25.76))(@cloudflare/workers-types@4.20260621.1)(ai@6.0.235(zod@3.25.76))(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
+        specifier: ^0.7.9
+        version: 0.7.9(@cloudflare/workers-types@4.20260621.1)(@x402/core@2.22.0)(@x402/evm@2.22.0(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6))(ai@6.0.235(zod@3.25.76))(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
       zod:
         specifier: ^3.23.0
         version: 3.25.76
@@ -10824,6 +10824,36 @@ packages:
       x402:
         optional: true
 
+  agents@0.7.9:
+    resolution: {integrity: sha512-NNzFkDLrsZQC9oJlDOcgktQxeNWUfZuftimhGmcin+7kULsmdks1AUPXTXQ4mHJZBilKpL0pQzCq5aQMQCYEKA==}
+    hasBin: true
+    peerDependencies:
+      '@ai-sdk/openai': ^3.0.0
+      '@ai-sdk/react': ^3.0.0
+      '@cloudflare/ai-chat': ^0.1.9
+      '@cloudflare/codemode': ^0.2.2
+      '@x402/core': ^2.0.0
+      '@x402/evm': ^2.0.0
+      ai: ^6.0.0
+      react: ^19.0.0
+      viem: '>=2.0.0'
+      zod: ^3.25.0 || ^4.0.0
+    peerDependenciesMeta:
+      '@ai-sdk/openai':
+        optional: true
+      '@ai-sdk/react':
+        optional: true
+      '@cloudflare/ai-chat':
+        optional: true
+      '@cloudflare/codemode':
+        optional: true
+      '@x402/core':
+        optional: true
+      '@x402/evm':
+        optional: true
+      viem:
+        optional: true
+
   ai@6.0.235:
     resolution: {integrity: sha512-Uyeuvowo20XChpFC0lUaQq8xf0Kg7OElA56fEjUYoeWMJIzqshDTz4S57KXobcJ4m+iDQxMeJoUj06CIxSLx7A==}
     engines: {node: '>=18'}
@@ -14895,6 +14925,11 @@ packages:
     peerDependencies:
       '@cloudflare/workers-types': ^4.20240729.0
 
+  partyserver@0.3.3:
+    resolution: {integrity: sha512-jSGWNZ5lJj9czq+97y9N02HyZZtQH8wmgJRkTQahfGnzgL5+R12dMX3E+p7BscB2cVj6LZLv1uHpKL057rjJmw==}
+    peerDependencies:
+      '@cloudflare/workers-types': ^4.20240729.0
+
   partyserver@0.5.8:
     resolution: {integrity: sha512-htgSwiBcBu9zIYLrsxBAOvdkjukHvncbTk0nDrJgfruvZ08rxtEN1Ab4T7j9osykP80Bq3zA2oWFd3ngc4Z9uw==}
     peerDependencies:
@@ -14902,6 +14937,14 @@ packages:
 
   partysocket@1.1.11:
     resolution: {integrity: sha512-P0EtOQiAwvLriqLgdThcSaREfz3bP77LkLSdmXq680BosPKvGSoGTh/d0g3S+UNmaqcw89Ad7JXHHKyRx3xU9Q==}
+
+  partysocket@1.1.16:
+    resolution: {integrity: sha512-d7xFv+ZC7x0p/DAHWJ5FhxQhimIx+ucyZY+kxL0cKddLBmK9c4p2tEA/L+dOOrWm6EYrRwrBjKQV0uSzOY9x1w==}
+    peerDependencies:
+      react: '>=17'
+    peerDependenciesMeta:
+      react:
+        optional: true
 
   partysocket@1.1.19:
     resolution: {integrity: sha512-hPwsXSdUc8PKNCinET6TD3JQOxzQ2JaP0bUZQXBVl6UM8UuLn1odgf1LcJXHy4UHSQwWL/RU3AnyhEsGM+W+sg==}
@@ -24227,6 +24270,30 @@ snapshots:
       - '@cloudflare/workers-types'
       - supports-color
 
+  agents@0.7.9(@cloudflare/workers-types@4.20260621.1)(@x402/core@2.22.0)(@x402/evm@2.22.0(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6))(ai@6.0.235(zod@3.25.76))(react@19.2.4)(viem@2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76):
+    dependencies:
+      '@cfworker/json-schema': 4.1.1
+      '@modelcontextprotocol/sdk': 1.26.0(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(zod@3.25.76)
+      ai: 6.0.235(zod@3.25.76)
+      cron-schedule: 6.0.0
+      json-schema: 0.4.0
+      json-schema-to-typescript: 15.0.4
+      mimetext: 3.0.28
+      nanoid: 5.1.16
+      partyserver: 0.3.3(@cloudflare/workers-types@4.20260621.1)
+      partysocket: 1.1.16(react@19.2.4)
+      picomatch: 4.0.5
+      react: 19.2.4
+      yargs: 18.0.0
+      zod: 3.25.76
+    optionalDependencies:
+      '@x402/core': 2.22.0
+      '@x402/evm': 2.22.0(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
+      viem: 2.55.13(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76)
+    transitivePeerDependencies:
+      - '@cloudflare/workers-types'
+      - supports-color
+
   ai@6.0.235(zod@3.25.76):
     dependencies:
       '@ai-sdk/gateway': 3.0.157(zod@3.25.76)
@@ -29152,6 +29219,11 @@ snapshots:
       '@cloudflare/workers-types': 5.20260712.1
       nanoid: 5.1.16
 
+  partyserver@0.3.3(@cloudflare/workers-types@4.20260621.1):
+    dependencies:
+      '@cloudflare/workers-types': 4.20260621.1
+      nanoid: 5.1.16
+
   partyserver@0.5.8(@cloudflare/workers-types@4.20260621.1):
     dependencies:
       '@cloudflare/workers-types': 4.20260621.1
@@ -29160,6 +29232,12 @@ snapshots:
   partysocket@1.1.11:
     dependencies:
       event-target-polyfill: 0.0.4
+
+  partysocket@1.1.16(react@19.2.4):
+    dependencies:
+      event-target-polyfill: 0.0.4
+    optionalDependencies:
+      react: 19.2.4
 
   partysocket@1.1.19(react@19.2.4):
     dependencies:

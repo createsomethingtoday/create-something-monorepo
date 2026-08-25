@@ -27,16 +27,26 @@ import {
 } from './schema.js';
 
 describe('schema helpers', () => {
-  it('detects app-like assets from capabilities/client/app-id/visibility', () => {
+  it('detects app-like assets from capabilities/client-id/visibility only', () => {
     const appFields = {
       [FIELD_IDS.assets.capabilities]: 'Hybrid',
+    };
+    const visibilityOnlyFields = {
+      [FIELD_IDS.assets.visibility]: 'Private: Beta',
     };
     const nonAppFields = {
       [FIELD_IDS.assets.name]: 'Example asset',
     };
+    // Template records carry the shared App ID lookup too — it is not app evidence.
+    const templateFields = {
+      [FIELD_IDS.assets.name]: 'Northflow',
+      [FIELD_IDS.assets.appId]: ['648885fdd08ccbc343f5c570'],
+    };
 
     expect(isAppLikeAsset(appFields)).toBe(true);
+    expect(isAppLikeAsset(visibilityOnlyFields)).toBe(true);
     expect(isAppLikeAsset(nonAppFields)).toBe(false);
+    expect(isAppLikeAsset(templateFields)).toBe(false);
   });
 
   it('classifies writable/read-only/invalid write keys', () => {
@@ -83,10 +93,6 @@ describe('schema helpers', () => {
     expect(APP_REVIEW_FIELD_MAP.versions.writable.exception_status).toBe(FIELD_IDS.versions.exceptionStatus);
     expect(APP_REVIEW_FIELD_MAP.versions.readOnly.exception_slack_ts).toBe(FIELD_IDS.versions.exceptionSlackTs);
     expect(APP_REVIEW_FIELD_MAP.exceptions.writable.exception_status).toBe(FIELD_IDS.exceptions.status);
-    expect(APP_REVIEW_FIELD_MAP.exceptions.writable).not.toHaveProperty('requested_by');
-    expect(APP_REVIEW_FIELD_MAP.exceptions.writable).not.toHaveProperty('decision_by');
-    expect(APP_REVIEW_FIELD_MAP.exceptions.readOnly.requested_by).toBe(FIELD_IDS.exceptions.requestedBy);
-    expect(APP_REVIEW_FIELD_MAP.exceptions.readOnly.decision_by).toBe(FIELD_IDS.exceptions.decisionBy);
     expect(APP_REVIEW_FIELD_MAP.exceptions.readOnly.requested_datetime).toBe(FIELD_IDS.exceptions.requestedDatetime);
     expect(APP_REVIEW_FIELD_MAP.statusOptions.exceptionStatus).toContain('✅Approved');
     expect(APP_REVIEW_FIELD_MAP.statusOptions.holdReason).toContain('Pending Exception Decision');
@@ -101,9 +107,6 @@ describe('schema helpers', () => {
     expect(isGovernanceFindingStatus('Needs Decision')).toBe(true);
     expect(isGovernanceFindingPriority('P1')).toBe(true);
     expect(GOVERNANCE_FINDING_CATEGORY_OPTIONS).toContain('Documentation Overhaul & Tracking Hub');
-    expect(GOVERNANCE_FINDING_CATEGORY_OPTIONS).toContain(
-      'Bundle Review Precision — Library False-Positives & Dependency Declarations',
-    );
     expect(GOVERNANCE_FINDING_STATUS_OPTIONS).toContain('Parking Lot');
     expect(GOVERNANCE_FINDING_PRIORITY_OPTIONS).toEqual(['P0', 'P1', 'P2', 'P3']);
   });

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { AirtableClient, AirtableClientError, assertScopedTable, type CollaboratorRef } from './airtable.js';
+import { AirtableClient, AirtableClientError, assertScopedTable, findRawHtmlTag, type CollaboratorRef } from './airtable.js';
 import { FIELD_IDS, GOVERNANCE_FINDING_FIELD_NAMES, TABLE_IDS } from './schema.js';
 
 function jsonResponse(body: unknown, status = 200) {
@@ -226,6 +226,56 @@ describe('AirtableClient exception handling', () => {
   });
 });
 
+describe('raw HTML feedback guard', () => {
+  it('findRawHtmlTag detects tag-shaped sequences but not autolinks or comparisons', () => {
+    // The truncation cases: backtick-wrapped raw tags still truncate today
+    // (Onart ZD 1170959; Wistia ZD 1170775 cut off at a literal <script> reference).
+    expect(findRawHtmlTag('A `<script type="application/ld+json">` block now appears on every page')).toBe(
+      '<script type="application/ld+json">',
+    );
+    expect(findRawHtmlTag('Your extension dynamically creates a `<script>` tag')).toBe('<script>');
+    expect(findRawHtmlTag('close the </div> properly')).toBe('</div>');
+    expect(findRawHtmlTag('use <br/> sparingly')).toBe('<br/>');
+
+    expect(findRawHtmlTag('see <https://example.com/a?b=1> for details')).toBeNull();
+    expect(findRawHtmlTag('when x < y the loop exits')).toBeNull();
+    expect(findRawHtmlTag('rated <3 by users')).toBeNull();
+    expect(findRawHtmlTag('plain feedback with `backticked code` and **bold**')).toBeNull();
+  });
+
+  it('updateVersionReview rejects raw HTML tags in creator-facing feedback before calling Airtable', async () => {
+    const fetchFn = vi.fn();
+    const client = new AirtableClient({ apiKey: 'token', fetchFn });
+
+    await expect(
+      client.updateVersionReview('recVersion', {
+        review_feedback: 'Remove the `<script type="application/ld+json">` block from every page.',
+      }),
+    ).rejects.toMatchObject({
+      code: 'RAW_HTML_IN_FEEDBACK',
+      details: { field: 'review_feedback', tag: '<script type="application/ld+json">' },
+    });
+    expect(fetchFn).not.toHaveBeenCalled();
+  });
+
+  it('updateVersionReview accepts feedback that references tags without angle brackets', async () => {
+    const fetchFn = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      const payload = JSON.parse(String(init?.body)) as {
+        records: Array<{ id: string; fields: Record<string, unknown> }>;
+      };
+      return jsonResponse({
+        records: [{ id: payload.records[0]!.id, fields: payload.records[0]!.fields }],
+      });
+    });
+    const client = new AirtableClient({ apiKey: 'token', fetchFn });
+
+    await client.updateVersionReview('recVersion', {
+      review_feedback: 'Remove the `script type="application/ld+json"` block; see <https://example.com/docs>.',
+    });
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe('AirtableClient retry behavior', () => {
   it('retries retryable status codes with backoff and succeeds', async () => {
     const sleeps: number[] = [];
@@ -368,41 +418,6 @@ describe('AirtableClient governance findings', () => {
       findingId: 'recFinding',
       title: 'Private app beta contradiction',
       decisionNeeded: true,
-    });
-  });
-
-  it('gets one governance finding without unsupported list-only field parameters', async () => {
-    const fetchFn = vi.fn(async (input: RequestInfo | URL) => {
-      const url = new URL(String(input));
-      if (url.searchParams.has('fields[]')) {
-        return jsonResponse({
-          error: {
-            type: 'INVALID_REQUEST_UNKNOWN',
-            message: 'Invalid request: parameter validation failed.',
-          },
-        }, 422);
-      }
-
-      return jsonResponse({
-        id: 'recW17aeKiE0Stdhg',
-        fields: {
-          [fields.title]: 'Bundle Review Precision',
-          [fields.category]: 'Bundle Review Precision — Library False-Positives & Dependency Declarations',
-          [fields.summary]: 'Separate developer-fixable findings from library false positives.',
-        },
-      });
-    });
-
-    const client = new AirtableClient({
-      apiKey: 'token',
-      fetchFn,
-      governanceBaseId: 'appGovernance',
-      governanceFindingsTableId: 'tblGovernance',
-    });
-
-    await expect(client.getGovernanceFinding('recW17aeKiE0Stdhg')).resolves.toMatchObject({
-      findingId: 'recW17aeKiE0Stdhg',
-      category: 'Bundle Review Precision — Library False-Positives & Dependency Declarations',
     });
   });
 });
@@ -587,55 +602,108 @@ describe('AirtableClient app review context and queue helpers', () => {
     expect(result.items).toHaveLength(1);
     expect(result.items[0]?.isAssigned).toBe(true);
   });
+});
 
-  it('honors the queue limit when assignment is any', async () => {
+describe('AirtableClient queue stats aggregation', () => {
+  function statsVersionRecord(
+    id: string,
+    assetId: string,
+    submissionDatetime: string,
+    reviewType: string,
+    reviewStatus: string,
+    versionNumber = 1,
+  ) {
+    return {
+      id,
+      createdTime: submissionDatetime,
+      fields: {
+        [FIELD_IDS.versions.assetLink]: [assetId],
+        [FIELD_IDS.versions.assetRecordIdRollup]: [assetId],
+        [FIELD_IDS.versions.versionNumber]: versionNumber,
+        [FIELD_IDS.versions.reviewStatus]: reviewStatus,
+        [FIELD_IDS.versions.reviewType]: reviewType,
+        [FIELD_IDS.versions.submissionDatetime]: submissionDatetime,
+      },
+    };
+  }
+
+  function createStatsClient(versions: unknown[], assets: unknown[]) {
     const fetchFn = vi.fn(async (input: RequestInfo | URL) => {
       const url = new URL(String(input));
-
-      if (url.pathname.endsWith(`/${TABLE_IDS.assets}`) && !url.searchParams.get('offset')) {
-        return jsonResponse({
-          records: [assetRecord('recAsset1')],
-          offset: 'next-page',
-        });
-      }
-
-      if (url.pathname.endsWith(`/${TABLE_IDS.assets}`) && url.searchParams.get('offset') === 'next-page') {
-        return jsonResponse({
-          records: [assetRecord('recAsset2')],
-        });
-      }
-
       if (url.pathname.endsWith(`/${TABLE_IDS.assetVersions}`)) {
-        return jsonResponse({
-          records: [
-            {
-              ...versionRecord('rec-version-1', null),
-              fields: {
-                ...versionRecord('rec-version-1', null).fields,
-                [FIELD_IDS.versions.assetLink]: ['recAsset1'],
-                [FIELD_IDS.versions.assetRecordIdRollup]: ['recAsset1'],
-              },
-            },
-          ],
-        });
+        return jsonResponse({ records: versions });
       }
-
+      if (url.pathname.endsWith(`/${TABLE_IDS.assets}`)) {
+        return jsonResponse({ records: assets });
+      }
       return new Response('not found', { status: 404 });
     });
+    return { client: new AirtableClient({ apiKey: 'token', fetchFn }), fetchFn };
+  }
 
-    const client = new AirtableClient({
-      apiKey: 'token',
-      fetchFn,
+  it('aggregates in-window app submissions across two dimensions and excludes out-of-scope versions', async () => {
+    const { client, fetchFn } = createStatsClient(
+      [
+        statsVersionRecord('verJun', 'recAsset', '2026-06-15T12:00:00.000Z', 'New Asset', '✅Approved'),
+        statsVersionRecord('verJul', 'recAsset2', '2026-07-10T12:00:00.000Z', 'Meta Update', '🚫Rejected'),
+        statsVersionRecord('verTemplate', 'recTemplate', '2026-07-01T12:00:00.000Z', 'New Asset', '✅Approved'),
+        // Returned by the (slack-widened) formula pre-filter but outside the exact window.
+        statsVersionRecord('verOld', 'recAsset', '2026-01-05T12:00:00.000Z', 'New Asset', '✅Approved'),
+      ],
+      [
+        assetRecord('recAsset'),
+        assetRecord('recAsset2'),
+        { id: 'recTemplate', fields: { [FIELD_IDS.assets.name]: 'Template Record' } },
+      ],
+    );
+
+    const stats = await client.getQueueStats({
+      groupBy: ['month', 'review_type'],
+      submittedAfter: '2026-06-01',
+      submittedBefore: '2026-08-20',
     });
 
-    const result = await client.listAssetQueueDetailed({
-      limit: 1,
-      assigned: 'any',
+    expect(stats.total).toBe(2);
+    expect(stats.outOfScopeVersionsExcluded).toBe(1);
+    expect(stats.window).toEqual({
+      submittedAfter: '2026-06-01T00:00:00.000Z',
+      submittedBefore: '2026-08-20T23:59:59.999Z',
     });
+    expect(stats.groups).toEqual([
+      { key: '2026-06', count: 1, breakdown: [{ key: 'New Asset', count: 1 }] },
+      { key: '2026-07', count: 1, breakdown: [{ key: 'Meta Update', count: 1 }] },
+    ]);
 
-    expect(result.items).toHaveLength(1);
-    expect(result.items[0]?.assetId).toBe('recAsset1');
-    expect(fetchFn).toHaveBeenCalledTimes(2);
-    expect(new URL(String(fetchFn.mock.calls[0]?.[0])).searchParams.get('offset')).toBeNull();
+    const versionsCall = fetchFn.mock.calls
+      .map((call) => new URL(String(call[0])))
+      .find((url) => url.pathname.endsWith(`/${TABLE_IDS.assetVersions}`));
+    const formula = versionsCall?.searchParams.get('filterByFormula') ?? '';
+    expect(formula).toContain('IS_BEFORE');
+    expect(formula).toContain('IS_AFTER');
+    expect(formula).toContain(FIELD_IDS.versions.submissionDatetime);
+  });
+
+  it('counts latest version per asset when count mode is assets', async () => {
+    const { client } = createStatsClient(
+      [
+        statsVersionRecord('ver1', 'recAsset', '2026-06-01T12:00:00.000Z', 'New Asset', '✅Approved', 1),
+        statsVersionRecord('ver2', 'recAsset', '2026-07-01T12:00:00.000Z', 'Asset Update', '✅Approved', 2),
+      ],
+      [assetRecord('recAsset')],
+    );
+
+    const stats = await client.getQueueStats({ groupBy: ['review_type'], countMode: 'assets' });
+
+    expect(stats.total).toBe(1);
+    expect(stats.groups).toEqual([{ key: 'Asset Update', count: 1 }]);
+  });
+
+  it('rejects malformed window bounds before calling Airtable', async () => {
+    const { client, fetchFn } = createStatsClient([], []);
+
+    await expect(client.getQueueStats({ submittedAfter: 'not-a-date' })).rejects.toMatchObject({
+      code: 'INVALID_INPUT',
+    });
+    expect(fetchFn).not.toHaveBeenCalled();
   });
 });

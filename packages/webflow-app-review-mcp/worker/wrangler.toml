@@ -7,6 +7,12 @@ account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
 [observability]
 enabled = true
 
+# Exception webhook leg: refresh the Airtable webhook subscriptions (they
+# expire after 7 days idle) and sweep payloads whose ping was missed.
+# No-ops until SLACK_BOT_TOKEN is provisioned and webhooks are registered.
+[triggers]
+crons = ["11 */6 * * *"]
+
 # Optional default; can also be set as Worker secret/var.
 [vars]
 AIRTABLE_BASE_ID = "appMoIgXMTTTNIc3p"
@@ -15,9 +21,23 @@ AIRTABLE_GOVERNANCE_FINDINGS_TABLE_ID = "tblIH1LQ8H3b2piNi"
 OAUTH_ALLOWED_EMAIL_DOMAIN = "webflow.com"
 OAUTH_ALLOWED_EMAILS = "pablo.miranda@webflow.com,shea.sisco@webflow.com,micah@webflow.com,micah@createsomething.io"
 CF_ACCESS_TEAM_DOMAIN = "https://webflow.cloudflareaccess.com"
-# Dedicated App Review Access application audience. Deploys replace vars, so
-# retain the provisioned value or the Access surface fails closed.
+# Dedicated App Review Access application audience (provisioned 2026-07;
+# app-review-mcp-access.wf.app -> /access/mcp). Deploys replace vars: keep the
+# real value here or /access/* fails closed with 503 MISCONFIGURED.
 CF_ACCESS_AUD = "3b4a38c7c99ec7127bcbb99d9c8aae7b0011a51370bff31b7085385e1a2807ba"
+# Exception webhook leg (docs/exception-transparency-loop.md). Secrets (set
+# via wrangler secret put, survive deploys): SLACK_BOT_TOKEN (required),
+# AIRTABLE_WEBHOOK_API_KEY (optional — PAT with webhook:manage; falls back to
+# AIRTABLE_API_KEY), EXCEPTIONS_KB_API_KEY (optional — enables auto-proposal).
+EXCEPTION_SLACK_CHANNEL_ID = "C0BN54FQU84"
+# Zendesk follow-up leg (app_review_send_ticket_followup). The API token is a
+# secret (wrangler secret put ZENDESK_API_TOKEN — value lives in Infisical at
+# /webflow/zendesk key `wfm`); the tool stays disabled until it is provisioned.
+ZENDESK_API_EMAIL = "micah@webflow.com"
+ZENDESK_SUBDOMAIN = "webflow2579"
+EXCEPTION_DECISIONS_VIEW_URL = "https://airtable.com/appMoIgXMTTTNIc3p/tblHxZ2hgSFLZxsZu/viwM48eXQT4Mxc4Ak/"
+EXCEPTIONS_KB_BASE_ID = "appXfYXnivsUT1kLg"
+EXCEPTIONS_KB_TABLE_ID = "tblqkbW0SptshgPiw"
 
 [[d1_databases]]
 binding = "TELEMETRY_DB"

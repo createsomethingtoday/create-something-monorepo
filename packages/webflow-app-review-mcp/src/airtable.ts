@@ -110,14 +110,35 @@ const VERSION_FIELD_IDS = [
   FIELD_IDS.versions.exceptionItemsLink,
   FIELD_IDS.versions.undecidedExceptionItems,
   FIELD_IDS.versions.deniedExceptionItems,
+  FIELD_IDS.versions.assetUndecidedExceptions,
+  FIELD_IDS.versions.assetApprovedExceptions,
+  FIELD_IDS.versions.assetExceptionHistory,
   FIELD_IDS.versions.holdReason,
   FIELD_IDS.versions.holdNotes,
   FIELD_IDS.versions.partnershipApp,
+  FIELD_IDS.versions.zendeskTicketId,
+  FIELD_IDS.versions.zendeskSubject,
+] as const;
+
+// Airtable-side twin of isAppLikeAsset: the Assets table is ~90% template records, so
+// filtering server-side keeps queue reads to ~1k app rows instead of ~14k. isAppLikeAsset
+// remains the in-memory authority on every record that comes back.
+const APP_SCOPE_FORMULA = `OR({${FIELD_IDS.assets.capabilities}} != '', {${FIELD_IDS.assets.clientId}} != '', {${FIELD_IDS.assets.visibility}} != '')`;
+
+const STATS_VERSION_FIELD_IDS = [
+  FIELD_IDS.versions.versionNumber,
+  FIELD_IDS.versions.reviewType,
+  FIELD_IDS.versions.reviewer,
+  FIELD_IDS.versions.reviewStatus,
+  FIELD_IDS.versions.submissionDatetime,
+  FIELD_IDS.versions.assetLink,
+  FIELD_IDS.versions.assetRecordIdRollup,
 ] as const;
 
 const EXCEPTION_ITEM_FIELD_IDS = [
   FIELD_IDS.exceptions.item,
   FIELD_IDS.exceptions.assetVersionLink,
+  FIELD_IDS.exceptions.assetLink,
   FIELD_IDS.exceptions.status,
   FIELD_IDS.exceptions.type,
   FIELD_IDS.exceptions.rationale,
@@ -141,6 +162,32 @@ export class AirtableClientError extends Error {
     this.code = code;
     this.status = status;
     this.details = details;
+  }
+}
+
+// The Airtable → Zendesk email composer renders feedback as HTML without escaping,
+// so a literal tag like <script type="…"> is parsed as markup and Zendesk's sanitizer
+// drops it plus everything after it — the creator receives a silently truncated email
+// (observed: Onart, ZD 1170959, 2026-08-08; Wistia, ZD 1170775, 2026-07-30). Matches
+// tag-shaped sequences like <script …>, </div>, <br/>; deliberately not <https://…>
+// autolinks or "x < y".
+const RAW_HTML_TAG_PATTERN = /<\/?[A-Za-z][A-Za-z0-9-]*(?:\s[^<>]*)?\/?>/;
+
+export function findRawHtmlTag(text: string): string | null {
+  const match = RAW_HTML_TAG_PATTERN.exec(text);
+  return match ? match[0] : null;
+}
+
+function assertNoRawHtmlInCreatorFeedback(field: 'review_feedback', value: string | undefined): void {
+  if (value === undefined) return;
+  const tag = findRawHtmlTag(value);
+  if (tag !== null) {
+    throw new AirtableClientError(
+      'RAW_HTML_IN_FEEDBACK',
+      `${field} contains a raw HTML tag (${tag}). The Zendesk email pipeline parses creator-facing feedback as HTML, and a raw tag truncates the delivered email — everything after it is silently dropped. Rewrite the reference without angle brackets, e.g. \`script type="application/ld+json"\` in backticks.`,
+      400,
+      { field, tag },
+    );
   }
 }
 
@@ -222,9 +269,14 @@ export interface AppReviewVersion {
   exceptionItemIds?: string[];
   undecidedExceptionItems?: number;
   deniedExceptionItems?: number;
+  assetUndecidedExceptions?: number;
+  assetApprovedExceptions?: number;
+  assetExceptionHistoryIds?: string[];
   holdReason?: string;
   holdNotes?: string;
   isPartnershipApp?: boolean;
+  zendeskTicketId?: string;
+  zendeskSubject?: string;
   createdTime?: string;
 }
 
@@ -232,6 +284,7 @@ export interface AppReviewExceptionItem {
   exceptionItemId: string;
   item?: string;
   assetVersionId?: string;
+  assetId?: string;
   exceptionStatus?: string;
   exceptionType?: string;
   rationale?: string;
@@ -262,6 +315,32 @@ export interface AppReviewQueueQuery {
   status?: AppReviewQueueStatus;
   assigned?: AppReviewQueueAssignmentFilter;
   sort?: AppReviewQueueSort;
+}
+
+export type AppReviewStatsGroupBy = 'status' | 'review_type' | 'capability' | 'month' | 'reviewer';
+export type AppReviewStatsCountMode = 'submissions' | 'assets';
+
+export interface AppReviewQueueStatsQuery {
+  groupBy?: AppReviewStatsGroupBy[];
+  submittedAfter?: string;
+  submittedBefore?: string;
+  status?: AppReviewQueueStatus;
+  countMode?: AppReviewStatsCountMode;
+}
+
+export interface AppReviewStatsBucket {
+  key: string;
+  count: number;
+  breakdown?: AppReviewStatsBucket[];
+}
+
+export interface AppReviewQueueStats {
+  total: number;
+  countMode: AppReviewStatsCountMode;
+  groupBy: AppReviewStatsGroupBy[];
+  window: { submittedAfter: string | null; submittedBefore: string | null };
+  groups: AppReviewStatsBucket[];
+  outOfScopeVersionsExcluded: number;
 }
 
 export interface AppReviewContext {
@@ -354,6 +433,8 @@ export interface VersionReviewUpdateInput {
 
 export interface ExceptionItemCreateInput {
   asset_version_id: string;
+  /** The version's parent asset — links exception history across versions. */
+  asset_id?: string;
   item: string;
   exception_type?: string;
   rationale?: string;
@@ -369,6 +450,48 @@ export interface ExceptionItemUpdateInput {
 
 export interface AssetMetadataUpdateInput {
   [key: string]: unknown;
+}
+
+export interface VersionExceptionWebhookContext {
+  id: string;
+  name: string | null;
+  creatorName: string | null;
+  reviewStatus: string | null;
+  exceptionStatus: string | null;
+  exceptionType: string | null;
+  exceptionRationale: string | null;
+  exceptionDecisionNotes: string | null;
+  exceptionRequestedBy: CollaboratorRef | null;
+  exceptionDecisionBy: CollaboratorRef | null;
+  exceptionSlackTs: string | null;
+  submissionSlackTs: string | null;
+  submissionSlackChannel: string | null;
+  reviewFeedback: string | null;
+  holdReason: string | null;
+  holdNotes: string | null;
+  partnershipApp: boolean;
+}
+
+export interface ExceptionItemWebhookContext {
+  id: string;
+  item: string | null;
+  status: string | null;
+  type: string | null;
+  rationale: string | null;
+  decisionNotes: string | null;
+  requestedBy: CollaboratorRef | null;
+  decisionBy: CollaboratorRef | null;
+  versionId: string | null;
+}
+
+export interface ReviewerGuidanceProposalInput {
+  apiKey: string;
+  baseId: string;
+  tableId: string;
+  title: string;
+  guidance: string;
+  sourceRecordId: string;
+  sourceUrl: string;
 }
 
 export interface AirtableClientOptions {
@@ -570,9 +693,14 @@ function mapVersionRecord(record: AirtableRecord): AppReviewVersion {
     exceptionItemIds: toStringArray(fields[FIELD_IDS.versions.exceptionItemsLink]),
     undecidedExceptionItems: toNumberValue(fields[FIELD_IDS.versions.undecidedExceptionItems]),
     deniedExceptionItems: toNumberValue(fields[FIELD_IDS.versions.deniedExceptionItems]),
+    assetUndecidedExceptions: toNumberValue(fields[FIELD_IDS.versions.assetUndecidedExceptions]),
+    assetApprovedExceptions: toNumberValue(fields[FIELD_IDS.versions.assetApprovedExceptions]),
+    assetExceptionHistoryIds: toStringArray(fields[FIELD_IDS.versions.assetExceptionHistory]),
     holdReason: firstString(fields[FIELD_IDS.versions.holdReason]),
     holdNotes: firstString(fields[FIELD_IDS.versions.holdNotes]),
     isPartnershipApp: toBooleanValue(fields[FIELD_IDS.versions.partnershipApp]),
+    zendeskTicketId: firstString(fields[FIELD_IDS.versions.zendeskTicketId]),
+    zendeskSubject: firstString(fields[FIELD_IDS.versions.zendeskSubject]),
     createdTime: record.createdTime,
   };
 }
@@ -585,6 +713,7 @@ function mapExceptionItemRecord(record: AirtableRecord): AppReviewExceptionItem 
     exceptionItemId: record.id,
     item: firstString(fields[FIELD_IDS.exceptions.item]),
     assetVersionId: toStringArray(fields[FIELD_IDS.exceptions.assetVersionLink])[0],
+    assetId: toStringArray(fields[FIELD_IDS.exceptions.assetLink])[0],
     exceptionStatus: firstString(fields[FIELD_IDS.exceptions.status]),
     exceptionType: firstString(fields[FIELD_IDS.exceptions.type]),
     rationale: firstString(fields[FIELD_IDS.exceptions.rationale]),
@@ -677,6 +806,19 @@ function buildGovernanceFindingFields(input: GovernanceFindingWriteInput): Recor
   return fields;
 }
 
+export function normalizeStatusValue(candidate: string): AppReviewQueueStatus | null {
+  if (/ready/i.test(candidate)) return 'ready_to_review';
+  if (/training check|in review|admin feedback review|managed feedback review|admin approval review|admin rejection review/i.test(candidate)) {
+    return 'in_review';
+  }
+  if (/changes requested|response to review/i.test(candidate)) return 'changes_requested';
+  if (/approved/i.test(candidate)) return 'approved';
+  if (/rejected/i.test(candidate)) return 'rejected';
+  if (/on hold/i.test(candidate)) return 'on_hold';
+  if (/archived/i.test(candidate)) return 'archived';
+  return null;
+}
+
 function normalizeQueueStatus(asset: AppReviewAsset, version?: AppReviewVersion | null): AppReviewQueueStatus | null {
   const candidates = [
     version?.reviewStatus,
@@ -686,15 +828,8 @@ function normalizeQueueStatus(asset: AppReviewAsset, version?: AppReviewVersion 
   ].filter((value): value is string => Boolean(value));
 
   for (const candidate of candidates) {
-    if (/ready/i.test(candidate)) return 'ready_to_review';
-    if (/training check|in review|admin feedback review|managed feedback review|admin approval review|admin rejection review/i.test(candidate)) {
-      return 'in_review';
-    }
-    if (/changes requested|response to review/i.test(candidate)) return 'changes_requested';
-    if (/approved/i.test(candidate)) return 'approved';
-    if (/rejected/i.test(candidate)) return 'rejected';
-    if (/on hold/i.test(candidate)) return 'on_hold';
-    if (/archived/i.test(candidate)) return 'archived';
+    const normalized = normalizeStatusValue(candidate);
+    if (normalized) return normalized;
   }
 
   return null;
@@ -759,6 +894,63 @@ function pickLatestVersion(current: AppReviewVersion | undefined, candidate: App
   }
 
   return current;
+}
+
+const STATS_UNSET_KEY = '(not set)';
+
+function parseWindowBound(value: string | undefined, bound: 'after' | 'before'): number | null {
+  if (value === undefined) return null;
+  const trimmed = value.trim();
+  // A bare date means the whole day: "2026-08-20" as an end bound includes that day's submissions.
+  const normalized = /^\d{4}-\d{2}-\d{2}$/.test(trimmed)
+    ? `${trimmed}${bound === 'before' ? 'T23:59:59.999Z' : 'T00:00:00.000Z'}`
+    : trimmed;
+  const parsed = Date.parse(normalized);
+  if (!Number.isFinite(parsed)) {
+    throw new AirtableClientError(
+      'INVALID_INPUT',
+      `submitted_${bound} must be an ISO date (YYYY-MM-DD) or datetime. Received: ${value}`,
+      400,
+    );
+  }
+  return parsed;
+}
+
+function effectiveSubmissionTime(version: AppReviewVersion): number {
+  return Date.parse(version.submissionDatetime ?? version.createdTime ?? '');
+}
+
+function statsKeyFor(
+  dimension: AppReviewStatsGroupBy,
+  version: AppReviewVersion,
+  assetsById: Map<string, AppReviewQueueItem>,
+): string {
+  switch (dimension) {
+    case 'status':
+      return (version.reviewStatus ? normalizeStatusValue(version.reviewStatus) : null) ?? STATS_UNSET_KEY;
+    case 'review_type':
+      return version.reviewType ?? STATS_UNSET_KEY;
+    case 'capability': {
+      const asset = version.assetId ? assetsById.get(version.assetId) : undefined;
+      return asset?.appCapabilities ?? STATS_UNSET_KEY;
+    }
+    case 'month': {
+      const time = effectiveSubmissionTime(version);
+      return Number.isFinite(time) ? new Date(time).toISOString().slice(0, 7) : STATS_UNSET_KEY;
+    }
+    case 'reviewer':
+      return version.reviewer?.name ?? version.reviewer?.email ?? version.reviewer?.id ?? '(unassigned)';
+  }
+}
+
+function sortStatsBuckets(buckets: AppReviewStatsBucket[], dimension: AppReviewStatsGroupBy): AppReviewStatsBucket[] {
+  const cloned = [...buckets];
+  if (dimension === 'month') {
+    cloned.sort((left, right) => left.key.localeCompare(right.key));
+  } else {
+    cloned.sort((left, right) => right.count - left.count || left.key.localeCompare(right.key));
+  }
+  return cloned;
 }
 
 export function assertScopedTable(tableId: string): asserts tableId is ScopedTableId {
@@ -917,12 +1109,13 @@ export class AirtableClient {
   private async getRecord(
     tableId: ScopedTableId,
     recordId: string,
-    fieldIds: readonly string[],
+    _fieldIds: readonly string[],
   ): Promise<AirtableRecord | null> {
     assertScopedTable(tableId);
     const query = new URLSearchParams();
     query.set('returnFieldsByFieldId', 'true');
-    fieldIds.forEach((fieldId) => query.append('fields[]', fieldId));
+    // Airtable's single-record GET rejects a fields[] parameter (422 INVALID_REQUEST_UNKNOWN);
+    // fetch all fields and let the record mappers pick the ones they need.
 
     try {
       return await this.requestJson<AirtableSingleResponse>(
@@ -1019,6 +1212,9 @@ export class AirtableClient {
 
   private async getGovernanceFindingRecord(recordId: string): Promise<AirtableRecord | null> {
     const params = new URLSearchParams();
+    for (const fieldName of Object.values(GOVERNANCE_FINDING_FIELD_NAMES)) {
+      params.append('fields[]', fieldName);
+    }
 
     try {
       return await this.requestJson<AirtableSingleResponse>(
@@ -1150,6 +1346,7 @@ export class AirtableClient {
       tableId: TABLE_IDS.assets,
       fieldIds: ASSET_QUEUE_FIELD_IDS,
       limit,
+      filterByFormula: APP_SCOPE_FORMULA,
     });
     return records
       .filter((record) => isAppLikeAsset(record.fields))
@@ -1162,9 +1359,7 @@ export class AirtableClient {
   }> {
     const limit = query.limit ?? 100;
     const sort = query.sort ?? 'submissionDatetime_desc';
-    const needsPostFilterCompleteness = Boolean(
-      query.status || query.assigned === 'assigned' || query.assigned === 'unassigned',
-    );
+    const needsPostFilterCompleteness = Boolean(query.status || query.assigned !== undefined);
     const queue = await this.listAssetQueue(needsPostFilterCompleteness ? undefined : limit);
     const latestVersions = await this.listLatestVersionsForAssets(queue.map((item) => item.assetId));
     const items = queue.map((item) => toQueueItem(item, latestVersions.get(item.assetId) ?? null));
@@ -1179,6 +1374,115 @@ export class AirtableClient {
     return {
       sortApplied: sort,
       items: sortQueueItems(filtered, sort).slice(0, limit),
+    };
+  }
+
+  async getQueueStats(query: AppReviewQueueStatsQuery = {}): Promise<AppReviewQueueStats> {
+    const groupBy: AppReviewStatsGroupBy[] =
+      query.groupBy && query.groupBy.length > 0 ? query.groupBy.slice(0, 2) : ['status'];
+    const countMode = query.countMode ?? 'submissions';
+    const afterMs = parseWindowBound(query.submittedAfter, 'after');
+    const beforeMs = parseWindowBound(query.submittedBefore, 'before');
+    if (afterMs !== null && beforeMs !== null && afterMs > beforeMs) {
+      throw new AirtableClientError('INVALID_INPUT', 'submitted_after must not be later than submitted_before.', 400);
+    }
+
+    // The formula pre-filter only trims what Airtable sends back; it runs with ±1 day
+    // slack because Airtable's date comparison semantics differ from Date.parse. The
+    // exact in-memory window below is authoritative.
+    const dayMs = 24 * 60 * 60 * 1000;
+    const effectiveDateFormula = `IF({${FIELD_IDS.versions.submissionDatetime}}, {${FIELD_IDS.versions.submissionDatetime}}, CREATED_TIME())`;
+    const windowClauses: string[] = [];
+    if (afterMs !== null) {
+      windowClauses.push(`NOT(IS_BEFORE(${effectiveDateFormula}, '${new Date(afterMs - dayMs).toISOString()}'))`);
+    }
+    if (beforeMs !== null) {
+      windowClauses.push(`NOT(IS_AFTER(${effectiveDateFormula}, '${new Date(beforeMs + dayMs).toISOString()}'))`);
+    }
+
+    const [versionRecords, assets] = await Promise.all([
+      this.listRecords({
+        tableId: TABLE_IDS.assetVersions,
+        fieldIds: STATS_VERSION_FIELD_IDS,
+        filterByFormula: buildAndFormula(windowClauses),
+      }),
+      this.listAssetQueue(),
+    ]);
+
+    const assetsById = new Map(assets.map((asset) => [asset.assetId, asset]));
+
+    const inWindow = versionRecords
+      .map((record) => mapVersionRecord(record))
+      .filter((version) => {
+        const time = effectiveSubmissionTime(version);
+        if (afterMs !== null && !(Number.isFinite(time) && time >= afterMs)) return false;
+        if (beforeMs !== null && !(Number.isFinite(time) && time <= beforeMs)) return false;
+        return true;
+      });
+
+    let outOfScopeVersionsExcluded = 0;
+    let versions = inWindow.filter((version) => {
+      if (!version.assetId || !assetsById.has(version.assetId)) {
+        outOfScopeVersionsExcluded += 1;
+        return false;
+      }
+      return true;
+    });
+
+    if (countMode === 'assets') {
+      const latestByAssetId = new Map<string, AppReviewVersion>();
+      for (const version of versions) {
+        const assetId = version.assetId as string;
+        latestByAssetId.set(assetId, pickLatestVersion(latestByAssetId.get(assetId), version));
+      }
+      versions = [...latestByAssetId.values()];
+    }
+
+    if (query.status) {
+      versions = versions.filter(
+        (version) => (version.reviewStatus ? normalizeStatusValue(version.reviewStatus) : null) === query.status,
+      );
+    }
+
+    const [primary, secondary] = groupBy;
+    const counters = new Map<string, { count: number; breakdown: Map<string, number> }>();
+    for (const version of versions) {
+      const key = statsKeyFor(primary, version, assetsById);
+      const bucket = counters.get(key) ?? { count: 0, breakdown: new Map<string, number>() };
+      bucket.count += 1;
+      if (secondary) {
+        const subKey = statsKeyFor(secondary, version, assetsById);
+        bucket.breakdown.set(subKey, (bucket.breakdown.get(subKey) ?? 0) + 1);
+      }
+      counters.set(key, bucket);
+    }
+
+    const groups = sortStatsBuckets(
+      [...counters.entries()].map(([key, bucket]) => ({
+        key,
+        count: bucket.count,
+        ...(secondary
+          ? {
+              breakdown: sortStatsBuckets(
+                [...bucket.breakdown.entries()].map(([subKey, count]) => ({ key: subKey, count })),
+                secondary,
+              ),
+            }
+          : {}),
+      })),
+      primary,
+    );
+
+    return {
+      total: versions.length,
+      countMode,
+      groupBy,
+      window: {
+        submittedAfter: afterMs !== null ? new Date(afterMs).toISOString() : null,
+        submittedBefore: beforeMs !== null ? new Date(beforeMs).toISOString() : null,
+      },
+      groups,
+      outOfScopeVersionsExcluded,
     };
   }
 
@@ -1198,6 +1502,7 @@ export class AirtableClient {
       const query = new URLSearchParams();
       query.set('returnFieldsByFieldId', 'true');
       query.set('pageSize', '100');
+      query.set('filterByFormula', APP_SCOPE_FORMULA);
       ASSET_DETAIL_FIELD_IDS.forEach((fieldId) => query.append('fields[]', fieldId));
       if (offset) query.set('offset', offset);
 
@@ -1308,6 +1613,8 @@ export class AirtableClient {
   }
 
   async updateVersionReview(versionId: string, input: VersionReviewUpdateInput): Promise<AppReviewVersion> {
+    assertNoRawHtmlInCreatorFeedback('review_feedback', input.review_feedback);
+
     const fields: Record<string, unknown> = {};
 
     if (input.review_status !== undefined) {
@@ -1409,15 +1716,26 @@ export class AirtableClient {
     if (!version) {
       throw new AirtableClientError('VERSION_NOT_FOUND', `Asset Version ${versionId} was not found.`, 404);
     }
-    const itemIds = version.exceptionItemIds ?? [];
-    if (itemIds.length === 0) return [];
+    return this.listExceptionItemsByIds(version.exceptionItemIds ?? []);
+  }
 
-    const records = await this.listRecords({
-      tableId: TABLE_IDS.exceptions,
-      fieldIds: [...EXCEPTION_ITEM_FIELD_IDS],
-      filterByFormula: `OR(${itemIds.map((id) => `RECORD_ID() = '${escapeFormulaValue(id)}'`).join(',')})`,
-    });
-    return records.map((record) => mapExceptionItemRecord(record));
+  async listExceptionItemsByIds(itemIds: string[]): Promise<AppReviewExceptionItem[]> {
+    const uniqueIds = [...new Set(itemIds.filter(Boolean))];
+    if (uniqueIds.length === 0) return [];
+
+    // Chunk the RECORD_ID() OR-formula to stay well under Airtable's URL/formula limits.
+    const chunkSize = 50;
+    const items: AppReviewExceptionItem[] = [];
+    for (let i = 0; i < uniqueIds.length; i += chunkSize) {
+      const chunk = uniqueIds.slice(i, i + chunkSize);
+      const records = await this.listRecords({
+        tableId: TABLE_IDS.exceptions,
+        fieldIds: [...EXCEPTION_ITEM_FIELD_IDS],
+        filterByFormula: `OR(${chunk.map((id) => `RECORD_ID() = '${escapeFormulaValue(id)}'`).join(',')})`,
+      });
+      items.push(...records.map((record) => mapExceptionItemRecord(record)));
+    }
+    return items;
   }
 
   async createExceptionItem(input: ExceptionItemCreateInput): Promise<AppReviewExceptionItem> {
@@ -1432,6 +1750,7 @@ export class AirtableClient {
       [FIELD_IDS.exceptions.item]: input.item,
       [FIELD_IDS.exceptions.assetVersionLink]: [input.asset_version_id],
     };
+    if (input.asset_id) fields[FIELD_IDS.exceptions.assetLink] = [input.asset_id];
     if (input.exception_type !== undefined) fields[FIELD_IDS.exceptions.type] = input.exception_type;
     if (input.rationale !== undefined) fields[FIELD_IDS.exceptions.rationale] = input.rationale;
 
@@ -1473,6 +1792,150 @@ export class AirtableClient {
 
     const updated = await this.updateRecord(TABLE_IDS.exceptions, exceptionItemId, fields);
     return mapExceptionItemRecord(updated);
+  }
+
+  // --- Exception webhook leg (Slack enrichment) -----------------------------
+  // Narrow reads/writes used by src/exception-webhook.ts. Writes are limited
+  // to the script-era fields (Slack TS + actor stamps) that native Airtable
+  // automation actions structurally cannot set.
+
+  async getVersionExceptionWebhookContext(versionId: string): Promise<VersionExceptionWebhookContext | null> {
+    const v = FIELD_IDS.versions;
+    const record = await this.getRecord(TABLE_IDS.assetVersions, versionId, [
+      v.name,
+      v.creatorName,
+      v.reviewStatus,
+      v.exceptionStatus,
+      v.exceptionType,
+      v.exceptionRationale,
+      v.exceptionDecisionNotes,
+      v.exceptionRequestedBy,
+      v.exceptionDecisionBy,
+      v.exceptionSlackTs,
+      v.submissionSlackTs,
+      v.submissionSlackChannel,
+      v.reviewFeedback,
+      v.holdReason,
+      v.holdNotes,
+      v.partnershipApp,
+    ]);
+    if (!record) return null;
+
+    const fields = record.fields;
+    return {
+      id: record.id,
+      name: firstString(fields[v.name]) ?? null,
+      creatorName: firstString(fields[v.creatorName]) ?? null,
+      reviewStatus: firstString(fields[v.reviewStatus]) ?? null,
+      exceptionStatus: firstString(fields[v.exceptionStatus]) ?? null,
+      exceptionType: firstString(fields[v.exceptionType]) ?? null,
+      exceptionRationale: firstString(fields[v.exceptionRationale]) ?? null,
+      exceptionDecisionNotes: firstString(fields[v.exceptionDecisionNotes]) ?? null,
+      exceptionRequestedBy: toCollaborator(fields[v.exceptionRequestedBy]),
+      exceptionDecisionBy: toCollaborator(fields[v.exceptionDecisionBy]),
+      exceptionSlackTs: firstString(fields[v.exceptionSlackTs]) ?? null,
+      submissionSlackTs: firstString(fields[v.submissionSlackTs]) ?? null,
+      submissionSlackChannel: firstString(fields[v.submissionSlackChannel]) ?? null,
+      reviewFeedback: firstString(fields[v.reviewFeedback]) ?? null,
+      holdReason: firstString(fields[v.holdReason]) ?? null,
+      holdNotes: firstString(fields[v.holdNotes]) ?? null,
+      partnershipApp: toBooleanValue(firstString(fields[v.partnershipApp])) ?? Boolean(firstString(fields[v.partnershipApp])),
+    };
+  }
+
+  async getExceptionItemWebhookContext(itemId: string): Promise<ExceptionItemWebhookContext | null> {
+    const e = FIELD_IDS.exceptions;
+    const record = await this.getRecord(TABLE_IDS.exceptions, itemId, [
+      e.item,
+      e.status,
+      e.type,
+      e.rationale,
+      e.decisionNotes,
+      e.requestedBy,
+      e.decisionBy,
+      e.assetVersionLink,
+    ]);
+    if (!record) return null;
+
+    const fields = record.fields;
+    const versionLink = fields[e.assetVersionLink];
+    return {
+      id: record.id,
+      item: firstString(fields[e.item]) ?? null,
+      status: firstString(fields[e.status]) ?? null,
+      type: firstString(fields[e.type]) ?? null,
+      rationale: firstString(fields[e.rationale]) ?? null,
+      decisionNotes: firstString(fields[e.decisionNotes]) ?? null,
+      requestedBy: toCollaborator(fields[e.requestedBy]),
+      decisionBy: toCollaborator(fields[e.decisionBy]),
+      versionId: Array.isArray(versionLink) && typeof versionLink[0] === 'string' ? versionLink[0] : null,
+    };
+  }
+
+  async writeVersionExceptionSlackTs(versionId: string, ts: string): Promise<void> {
+    await this.updateRecord(TABLE_IDS.assetVersions, versionId, {
+      [FIELD_IDS.versions.exceptionSlackTs]: ts,
+    });
+  }
+
+  async stampVersionExceptionActor(versionId: string, role: 'requested' | 'decision', email: string): Promise<void> {
+    const fieldId = role === 'requested'
+      ? FIELD_IDS.versions.exceptionRequestedBy
+      : FIELD_IDS.versions.exceptionDecisionBy;
+    await this.updateRecord(TABLE_IDS.assetVersions, versionId, {
+      [fieldId]: { email },
+    });
+  }
+
+  async stampExceptionItemActor(itemId: string, role: 'requested' | 'decision', email: string): Promise<void> {
+    const fieldId = role === 'requested'
+      ? FIELD_IDS.exceptions.requestedBy
+      : FIELD_IDS.exceptions.decisionBy;
+    await this.updateRecord(TABLE_IDS.exceptions, itemId, {
+      [fieldId]: { email },
+    });
+  }
+
+  /**
+   * Propose an approved exception into the reviewer-exceptions knowledge base
+   * (a third base — requires its own PAT). Mirrors the retired Script A
+   * promotion payload; the record lands as Knowledge Status = Proposed and
+   * needs curation before it becomes Active.
+   */
+  async proposeReviewerExceptionGuidance(input: ReviewerGuidanceProposalInput): Promise<{ id: string }> {
+    const query = new URLSearchParams();
+    query.set('typecast', 'true');
+    const data = await this.requestJson<AirtableListResponse>(
+      `/${encodeURIComponent(input.tableId)}`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          records: [
+            {
+              fields: {
+                Title: input.title,
+                Guidance: input.guidance,
+                'Knowledge Status': 'Proposed',
+                Scope: 'App Review',
+                'Source Type': 'Airtable Record',
+                'Source Record ID': input.sourceRecordId,
+                'Source URL': input.sourceUrl,
+                'Review Decision Impact': 'Temporary exception',
+                'Applies To': ['App'],
+              },
+            },
+          ],
+        }),
+      },
+      query,
+      input.baseId,
+      input.apiKey,
+    );
+    const created = data.records[0];
+    if (!created) {
+      throw new AirtableClientError('AIRTABLE_EMPTY_CREATE', 'Guidance proposal returned no record.');
+    }
+    return { id: created.id };
   }
 
   async updateAssetMetadata(assetId: string, input: AssetMetadataUpdateInput): Promise<AppReviewAsset> {
