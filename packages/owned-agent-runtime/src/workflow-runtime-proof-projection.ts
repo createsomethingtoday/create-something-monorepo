@@ -7,6 +7,7 @@ import {
   type WorkflowRuntimeRun,
   type WorkflowRuntimeScope
 } from '@createsomething/workflow-runtime';
+import type { WorkflowRuntimeManifestAuthority } from './workflow-runtime-manifest-authority.js';
 
 const DIGEST = /^sha256:[a-f0-9]{64}$/;
 const VERIFIER = /^[a-z][a-z0-9_-]{0,79}$/;
@@ -24,6 +25,7 @@ type ApprovalRow = {
   binding_sha256: string;
   decision: 'approved' | 'rejected' | null;
   approval_json: string;
+  approval_context_json: string | null;
   created_at: string;
   decided_at: string | null;
 };
@@ -45,6 +47,21 @@ type CapabilityObservationRow = {
   failure_code: string | null;
 };
 
+export interface WorkflowRuntimeProofApprovalContext {
+  schema: 'create-something/workflow-runtime-approval-context@1';
+  version: 1;
+  scope: WorkflowRuntimeScope;
+  runVersion: number;
+  stepVersion: number;
+  attempt: { type: 'no_capability_attempt' };
+  activation: WorkflowRuntimeRun['activation'];
+  artifactManifestSha256: RuntimeDigest;
+  runtimeManifestSha256: RuntimeDigest;
+  workflow: WorkflowRuntimeManifest['workflow'];
+  actionId: string;
+  evidenceDigest: RuntimeDigest;
+}
+
 export interface WorkflowRuntimeProofApproval {
   id: string;
   stepId: string;
@@ -54,6 +71,7 @@ export interface WorkflowRuntimeProofApproval {
   decision: 'approved' | 'rejected' | null;
   createdAt: string;
   decidedAt: string | null;
+  context: WorkflowRuntimeProofApprovalContext;
 }
 
 export interface WorkflowRuntimeProofCapabilityObservation {
@@ -131,17 +149,6 @@ export interface WorkflowRuntimeProofProjection {
   }>;
 }
 
-/**
- * Resolves manifests already verified against their serialized artifact digest.
- * A proof reader deliberately never accepts a caller-supplied manifest: that
- * would let an otherwise runtime-valid manifest misdescribe persisted proof.
- */
-export interface WorkflowRuntimeManifestAuthority {
-  findByRuntimeManifestSha256(
-    runtimeManifestSha256: RuntimeDigest
-  ): Promise<WorkflowRuntimeManifest | undefined>;
-}
-
 type WorkflowRuntimeProofInput = {
   manifest: WorkflowRuntimeManifest;
   run: WorkflowRuntimeRun;
@@ -185,6 +192,102 @@ function instant(value: unknown, label: string): string {
   return result;
 }
 
+function positiveVersion(value: unknown, label: string): number {
+  if (
+    typeof value !== 'number' ||
+    !Number.isSafeInteger(value) ||
+    value < 1 ||
+    value > 2_147_483_647
+  ) {
+    throw new RuntimeValidationError('INVALID_STATE', `${label} is invalid`);
+  }
+  return value;
+}
+
+function parseScope(value: unknown): WorkflowRuntimeScope {
+  if (!isRecord(value) || !exact(value, ['accountId', 'tenantId', 'workspaceAccountId'])) {
+    throw new RuntimeValidationError('INVALID_STATE', 'Workflow Runtime approval scope is invalid');
+  }
+  return {
+    accountId: boundedText(value.accountId, 'Workflow Runtime approval account ID'),
+    tenantId: boundedText(value.tenantId, 'Workflow Runtime approval tenant ID'),
+    workspaceAccountId: boundedText(
+      value.workspaceAccountId,
+      'Workflow Runtime approval workspace ID'
+    )
+  };
+}
+
+function parseActivation(value: unknown): WorkflowRuntimeRun['activation'] {
+  if (!isRecord(value) || !exact(value, ['id', 'policySha256', 'version'])) {
+    throw new RuntimeValidationError(
+      'INVALID_STATE',
+      'Workflow Runtime approval activation is invalid'
+    );
+  }
+  return {
+    id: boundedText(value.id, 'Workflow Runtime approval activation ID'),
+    version: positiveVersion(value.version, 'Workflow Runtime approval activation version'),
+    policySha256: digest(value.policySha256, 'Workflow Runtime approval activation policy')
+  };
+}
+
+function parseWorkflow(value: unknown): WorkflowRuntimeManifest['workflow'] {
+  if (
+    !isRecord(value) ||
+    !exact(value, ['compiledBundleSchema', 'compilerVersion', 'definitionHash', 'id', 'version']) ||
+    value.compiledBundleSchema !== 'compiled_workflow_bundle.v0.3'
+  ) {
+    throw new RuntimeValidationError(
+      'INVALID_STATE',
+      'Workflow Runtime approval workflow is invalid'
+    );
+  }
+  return {
+    id: boundedText(value.id, 'Workflow Runtime approval workflow ID', 160),
+    version: boundedText(value.version, 'Workflow Runtime approval workflow version', 160),
+    definitionHash: digest(value.definitionHash, 'Workflow Runtime approval workflow definition'),
+    compilerVersion: boundedText(
+      value.compilerVersion,
+      'Workflow Runtime approval compiler version',
+      160
+    ),
+    compiledBundleSchema: 'compiled_workflow_bundle.v0.3'
+  };
+}
+
+function sameScope(left: WorkflowRuntimeScope, right: WorkflowRuntimeScope): boolean {
+  return (
+    left.accountId === right.accountId &&
+    left.tenantId === right.tenantId &&
+    left.workspaceAccountId === right.workspaceAccountId
+  );
+}
+
+function sameActivation(
+  left: WorkflowRuntimeRun['activation'],
+  right: WorkflowRuntimeRun['activation']
+): boolean {
+  return (
+    left.id === right.id &&
+    left.version === right.version &&
+    left.policySha256 === right.policySha256
+  );
+}
+
+function sameWorkflow(
+  left: WorkflowRuntimeManifest['workflow'],
+  right: WorkflowRuntimeManifest['workflow']
+): boolean {
+  return (
+    left.id === right.id &&
+    left.version === right.version &&
+    left.definitionHash === right.definitionHash &&
+    left.compilerVersion === right.compilerVersion &&
+    left.compiledBundleSchema === right.compiledBundleSchema
+  );
+}
+
 function parseJson(value: string, label: string): unknown {
   try {
     return JSON.parse(value) as unknown;
@@ -193,11 +296,75 @@ function parseJson(value: string, label: string): unknown {
   }
 }
 
-function parseApproval(value: unknown): WorkflowRuntimeProofApproval {
+function parseApprovalContext(
+  value: unknown,
+  expectedScope: WorkflowRuntimeScope
+): WorkflowRuntimeProofApprovalContext {
+  if (
+    !isRecord(value) ||
+    !exact(value, [
+      'actionId',
+      'activation',
+      'artifactManifestSha256',
+      'attempt',
+      'evidenceDigest',
+      'runVersion',
+      'runtimeManifestSha256',
+      'schema',
+      'scope',
+      'stepVersion',
+      'version',
+      'workflow'
+    ]) ||
+    value.schema !== 'create-something/workflow-runtime-approval-context@1' ||
+    value.version !== 1 ||
+    !isRecord(value.attempt) ||
+    !exact(value.attempt, ['type']) ||
+    value.attempt.type !== 'no_capability_attempt'
+  ) {
+    throw new RuntimeValidationError(
+      'INVALID_STATE',
+      'Workflow Runtime approval context is invalid'
+    );
+  }
+  const scope = parseScope(value.scope);
+  if (!sameScope(scope, expectedScope)) {
+    throw new RuntimeValidationError(
+      'INVALID_STATE',
+      'Workflow Runtime approval context scope mismatches'
+    );
+  }
+  return {
+    schema: 'create-something/workflow-runtime-approval-context@1',
+    version: 1,
+    scope,
+    runVersion: positiveVersion(value.runVersion, 'Workflow Runtime approval run version'),
+    stepVersion: positiveVersion(value.stepVersion, 'Workflow Runtime approval step version'),
+    attempt: { type: 'no_capability_attempt' },
+    activation: parseActivation(value.activation),
+    artifactManifestSha256: digest(
+      value.artifactManifestSha256,
+      'Workflow Runtime approval artifact manifest'
+    ),
+    runtimeManifestSha256: digest(
+      value.runtimeManifestSha256,
+      'Workflow Runtime approval runtime manifest'
+    ),
+    workflow: parseWorkflow(value.workflow),
+    actionId: boundedText(value.actionId, 'Workflow Runtime approval action ID'),
+    evidenceDigest: digest(value.evidenceDigest, 'Workflow Runtime approval evidence')
+  };
+}
+
+function parseApproval(
+  value: unknown,
+  expectedScope: WorkflowRuntimeScope
+): WorkflowRuntimeProofApproval {
   if (
     !isRecord(value) ||
     !exact(value, [
       'approval_id',
+      'approval_context_json',
       'approval_json',
       'binding_sha256',
       'created_at',
@@ -214,6 +381,16 @@ function parseApproval(value: unknown): WorkflowRuntimeProofApproval {
   const approval = parseJson(
     String(value.approval_json),
     'Stored Workflow Runtime approval payload'
+  );
+  if (typeof value.approval_context_json !== 'string') {
+    throw new RuntimeValidationError(
+      'INVALID_STATE',
+      'Stored Workflow Runtime approval is missing its exact context'
+    );
+  }
+  const context = parseApprovalContext(
+    parseJson(value.approval_context_json, 'Stored Workflow Runtime approval context'),
+    expectedScope
   );
   if (
     !isRecord(approval) ||
@@ -249,7 +426,8 @@ function parseApproval(value: unknown): WorkflowRuntimeProofApproval {
     decidedAt:
       value.decided_at === null
         ? null
-        : instant(value.decided_at, 'Workflow Runtime approval decision')
+        : instant(value.decided_at, 'Workflow Runtime approval decision'),
+    context
   };
 }
 
@@ -380,6 +558,7 @@ function parseCapabilityObservation(value: unknown): WorkflowRuntimeProofCapabil
 }
 
 function validateRelations(
+  manifest: WorkflowRuntimeManifest,
   run: WorkflowRuntimeRun,
   approvals: WorkflowRuntimeProofApproval[],
   capabilityObservations: WorkflowRuntimeProofCapabilityObservation[]
@@ -409,6 +588,40 @@ function validateRelations(
       throw new RuntimeValidationError(
         'INVALID_STATE',
         'Workflow Runtime proof approval is not bound to a wait receipt'
+      );
+    }
+    const definition = manifest.steps.find((candidate) => candidate.id === approval.stepId);
+    if (!definition || definition.disposition !== 'wait') {
+      throw new RuntimeValidationError(
+        'INVALID_STATE',
+        'Workflow Runtime proof approval does not reference a wait definition'
+      );
+    }
+    if (
+      approval.policyId !== definition.approval.policyId ||
+      approval.expiresAt !== definition.approval.expiresAt ||
+      approval.context.runVersion !== waitReceipt.runVersion ||
+      approval.context.stepVersion !== waitReceipt.stepVersion ||
+      waitReceipt.attemptId !== null ||
+      !sameActivation(approval.context.activation, run.activation) ||
+      approval.context.artifactManifestSha256 !== run.artifactManifestSha256 ||
+      approval.context.runtimeManifestSha256 !== run.runtimeManifestSha256 ||
+      !sameWorkflow(approval.context.workflow, manifest.workflow) ||
+      approval.context.activation.id !== waitReceipt.activationId ||
+      approval.context.activation.version !== waitReceipt.activationVersion ||
+      approval.context.activation.policySha256 !== waitReceipt.activationPolicySha256 ||
+      approval.context.artifactManifestSha256 !== waitReceipt.artifactManifestSha256 ||
+      approval.context.runtimeManifestSha256 !== waitReceipt.runtimeManifestSha256 ||
+      approval.context.workflow.id !== waitReceipt.workflowId ||
+      approval.context.workflow.version !== waitReceipt.workflowVersion ||
+      approval.context.workflow.definitionHash !== waitReceipt.definitionHash ||
+      approval.context.evidenceDigest !== definition.evidenceDigest ||
+      approval.context.evidenceDigest !== waitReceipt.evidenceDigest ||
+      approval.context.actionId !== definition.actionId
+    ) {
+      throw new RuntimeValidationError(
+        'INVALID_STATE',
+        'Workflow Runtime proof approval context does not match its wait receipt'
       );
     }
     if (step.approval?.id === approval.id && approval.decision !== null) {
@@ -527,7 +740,7 @@ async function createWorkflowRuntimeProofProjection(
   await verifyWorkflowRuntimeRun(input.manifest, input.run);
   const approvals = input.approvals ?? [];
   const capabilityObservations = input.capabilityObservations ?? [];
-  validateRelations(input.run, approvals, capabilityObservations);
+  validateRelations(input.manifest, input.run, approvals, capabilityObservations);
   return {
     schema: 'create-something/workflow-runtime-proof@1',
     run: {
@@ -592,11 +805,13 @@ export class D1WorkflowRuntimeProofReader {
                     'binding_sha256', approval.binding_sha256,
                     'decision', approval.decision,
                     'approval_json', approval.approval_json,
+                    'approval_context_json', approval.approval_context_json,
                     'created_at', approval.created_at,
                     'decided_at', approval.decided_at
                   ))
                   FROM (
-                    SELECT approval_id, step_id, binding_sha256, decision, approval_json, created_at, decided_at
+                    SELECT approval_id, step_id, binding_sha256, decision, approval_json,
+                           approval_context_json, created_at, decided_at
                     FROM control_workflow_runtime_approvals
                     WHERE run_id = runtime.run_id
                     ORDER BY created_at ASC, approval_id ASC
@@ -664,7 +879,7 @@ export class D1WorkflowRuntimeProofReader {
     return createWorkflowRuntimeProofProjection({
       manifest,
       run,
-      approvals: approvalRows.map(parseApproval),
+      approvals: approvalRows.map((approval) => parseApproval(approval, input.scope)),
       capabilityObservations: observationRows.map(parseCapabilityObservation)
     });
   }

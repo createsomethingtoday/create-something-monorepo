@@ -23,9 +23,10 @@ export { createControlRunService, MemoryControlRunRepository } from './control.j
 export { createControlRunWorker } from './control-worker.js';
 export { D1WorkflowRuntimeCheckpointStore } from './workflow-runtime-store.js';
 export { D1WorkflowRuntimeProofReader } from './workflow-runtime-proof-projection.js';
+export type { WorkflowRuntimeManifestAuthority } from './workflow-runtime-manifest-authority.js';
 export type {
-  WorkflowRuntimeManifestAuthority,
   WorkflowRuntimeProofApproval,
+  WorkflowRuntimeProofApprovalContext,
   WorkflowRuntimeProofCapabilityObservation,
   WorkflowRuntimeProofProjection
 } from './workflow-runtime-proof-projection.js';

@@ -120,6 +120,10 @@ function fixture(executor?: ControlRunExecutor, runId?: () => string) {
     new URL('../migrations/0007_control_workflow_runtime_proof_projection.sql', import.meta.url),
     'utf8'
   );
+  const workflowRuntimeApprovalContextMigration = readFileSync(
+    new URL('../migrations/0008_control_workflow_runtime_approval_context.sql', import.meta.url),
+    'utf8'
+  );
   execFileSync('sqlite3', [path], {
     input: `PRAGMA foreign_keys=ON;
       ${migration}
@@ -127,6 +131,7 @@ function fixture(executor?: ControlRunExecutor, runId?: () => string) {
       ${workflowRuntimeEffectAmbiguityMigration}
       ${workflowRuntimeDispatchMigration}
       ${workflowRuntimeProofMigration}
+      ${workflowRuntimeApprovalContextMigration}
       CREATE TABLE customer_control_activations (
         id TEXT PRIMARY KEY, activation_version INTEGER, activation_kind TEXT, status TEXT,
         account_id TEXT, tenant_id TEXT, workspace_account_id TEXT,
@@ -866,7 +871,10 @@ test('D1 checkpoint store records the exact approval binding and decision withou
     runtimeManifestSha256: runtimeDigest('8'),
     clock: '2026-08-25T00:00:00.000Z'
   });
-  const store = new D1WorkflowRuntimeCheckpointStore(d1(path));
+  const store = new D1WorkflowRuntimeCheckpointStore(
+    d1(path),
+    trustedRuntimeManifestAuthority([{ digest: runtimeDigest('8'), manifest }])
+  );
   await store.apply({
     scope,
     run: initial,
@@ -913,6 +921,16 @@ test('D1 checkpoint store records the exact approval binding and decision withou
     approval: wait.approval,
     observedAt: '2026-08-25T00:00:03.000Z'
   });
+  await assert.rejects(
+    new D1WorkflowRuntimeCheckpointStore(d1(path)).apply({
+      scope,
+      run: waiting,
+      expectedVersion: collected.version,
+      idempotencyKey: 'approval-wait-without-trusted-manifest',
+      commandDigest: '0'.repeat(64)
+    }),
+    /requires a trusted manifest authority/
+  );
   await store.apply({
     scope,
     run: waiting,
@@ -953,6 +971,20 @@ test('D1 checkpoint store records the exact approval binding and decision withou
     runId: parent.id
   });
   assert.ok(proof);
+  const approvalContext = {
+    schema: 'create-something/workflow-runtime-approval-context@1' as const,
+    version: 1 as const,
+    scope,
+    runVersion: waiting.version,
+    stepVersion: waiting.steps[1]?.version,
+    attempt: { type: 'no_capability_attempt' as const },
+    activation: waiting.activation,
+    artifactManifestSha256: waiting.artifactManifestSha256,
+    runtimeManifestSha256: waiting.runtimeManifestSha256,
+    workflow: manifest.workflow,
+    actionId: 'review',
+    evidenceDigest: runtimeDigest('2')
+  };
   assert.deepEqual(proof.approvals, [
     {
       id: wait.approval.id,
@@ -962,13 +994,32 @@ test('D1 checkpoint store records the exact approval binding and decision withou
       expiresAt: '2026-08-26T00:00:00.000Z',
       decision: 'approved',
       createdAt: '2026-08-25T00:00:03.000Z',
-      decidedAt: '2026-08-25T00:00:04.000Z'
+      decidedAt: '2026-08-25T00:00:04.000Z',
+      context: approvalContext
     }
   ]);
   assert.equal(wait.approval.id.length, 238);
   assert.equal(proof.steps[1]?.pendingApproval, null);
   assert.equal(JSON.stringify(proof).includes(owner.subject), false);
   assert.equal(JSON.stringify(proof).includes('outcome'), false);
+  const crossScopeContext = JSON.stringify({
+    ...approvalContext,
+    scope: { ...scope, tenantId: 'other-tenant' }
+  }).replaceAll("'", "''");
+  execFileSync('sqlite3', [path], {
+    input: `DROP TRIGGER control_workflow_runtime_approval_identity_is_immutable;
+      DROP TRIGGER control_workflow_runtime_approval_context_is_immutable;
+      UPDATE control_workflow_runtime_approvals
+      SET approval_context_json = '${crossScopeContext}'
+      WHERE approval_id = '${wait.approval.id}';`
+  });
+  await assert.rejects(
+    new D1WorkflowRuntimeProofReader(
+      d1(path),
+      trustedRuntimeManifestAuthority([{ digest: runtimeDigest('8'), manifest }])
+    ).find({ scope, runId: parent.id }),
+    /approval context scope mismatches/
+  );
 });
 
 test('the A3 observation adapter records one prepared attempt before accepting only a verified count-only projection', async () => {

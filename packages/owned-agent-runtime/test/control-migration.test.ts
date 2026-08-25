@@ -25,6 +25,10 @@ const workflowRuntimeProofMigration = readFileSync(
   new URL('../migrations/0007_control_workflow_runtime_proof_projection.sql', import.meta.url),
   'utf8'
 );
+const workflowRuntimeApprovalContextMigration = readFileSync(
+  new URL('../migrations/0008_control_workflow_runtime_approval_context.sql', import.meta.url),
+  'utf8'
+);
 
 test('Control activation binding is the Agency-owned D1', () => {
   const runtimeConfig = readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8');
@@ -46,7 +50,7 @@ test('Control activation binding is the Agency-owned D1', () => {
 function database() {
   const path = join(mkdtempSync(join(tmpdir(), 'control-run-')), 'runtime.sqlite');
   execFileSync('sqlite3', [path], {
-    input: `PRAGMA foreign_keys=ON;\n${migration}\n${workflowRuntimeMigration}\n${workflowRuntimeEffectAmbiguityMigration}\n${workflowRuntimeDispatchMigration}\n${workflowRuntimeProofMigration}`
+    input: `PRAGMA foreign_keys=ON;\n${migration}\n${workflowRuntimeMigration}\n${workflowRuntimeEffectAmbiguityMigration}\n${workflowRuntimeDispatchMigration}\n${workflowRuntimeProofMigration}\n${workflowRuntimeApprovalContextMigration}`
   });
   return path;
 }
@@ -229,10 +233,12 @@ test('proof projection migration makes approval identity and decisions append-on
     INSERT INTO control_workflow_runtime_steps (run_id, step_id, status, version, step_json)
     VALUES ('run-a', 'review', 'waiting_for_approval', 2, '{}');
     INSERT INTO control_workflow_runtime_approvals (
-      approval_id, run_id, step_id, binding_sha256, decision, approval_json, created_at, decided_at
+      approval_id, run_id, step_id, binding_sha256, decision, approval_json, approval_context_json,
+      created_at, decided_at
     ) VALUES (
       'approval-a', 'run-a', 'review', '${hash('c')}', NULL,
       '{"id":"approval-a","bindingSha256":"${hash('c')}","policyId":"account-owner","expiresAt":"2026-07-20T00:00:00.000Z"}',
+      '{}',
       '2026-07-19T00:00:00.000Z', NULL
     );`
   );
@@ -243,10 +249,12 @@ test('proof projection migration makes approval identity and decisions append-on
   expectSqlFailure(
     path,
     `INSERT INTO control_workflow_runtime_approvals (
-      approval_id, run_id, step_id, binding_sha256, decision, approval_json, created_at, decided_at
+      approval_id, run_id, step_id, binding_sha256, decision, approval_json, approval_context_json,
+      created_at, decided_at
     ) VALUES (
       'approval-b', 'run-a', 'review', '${hash('d')}', 'approved',
       '{"id":"approval-b","bindingSha256":"${hash('d')}","policyId":"account-owner","expiresAt":"2026-07-20T00:00:00.000Z"}',
+      '{}',
       '2026-07-19T00:00:00.000Z', '2026-07-19T00:01:00.000Z'
     );`,
     /approval must begin pending/
@@ -255,6 +263,13 @@ test('proof projection migration makes approval identity and decisions append-on
     path,
     "UPDATE control_workflow_runtime_approvals SET decision='rejected', decided_at='2026-07-19T00:02:00.000Z' WHERE approval_id='approval-a';",
     /approval identity or decision is immutable/
+  );
+  expectSqlFailure(
+    path,
+    "UPDATE control_workflow_runtime_approvals SET approval_context_json='{" +
+      '"changed"' +
+      ":true}' WHERE approval_id='approval-a';",
+    /approval context is immutable/
   );
   expectSqlFailure(
     path,
@@ -269,13 +284,27 @@ test('proof projection migration makes approval identity and decisions append-on
   expectSqlFailure(
     path,
     `INSERT INTO control_workflow_runtime_approvals (
-      approval_id, run_id, step_id, binding_sha256, decision, approval_json, created_at, decided_at
+      approval_id, run_id, step_id, binding_sha256, decision, approval_json, approval_context_json,
+      created_at, decided_at
     ) VALUES (
       'approval-c', 'run-a', 'review', '${hash('e')}', NULL,
       '{"id":"approval-c","bindingSha256":"${hash('e')}","policyId":"account-owner","expiresAt":"2026-07-20T00:00:00.000Z"}',
+      '{}',
       '2026-07-19T00:02:00.000Z', NULL
     );`,
     /UNIQUE constraint failed/
+  );
+  expectSqlFailure(
+    path,
+    `INSERT INTO control_workflow_runtime_approvals (
+      approval_id, run_id, step_id, binding_sha256, decision, approval_json, approval_context_json,
+      created_at, decided_at
+    ) VALUES (
+      'approval-d', 'run-a', 'review', '${hash('f')}', NULL,
+      '{"id":"approval-d","bindingSha256":"${hash('f')}","policyId":"account-owner","expiresAt":"2026-07-20T00:00:00.000Z"}',
+      NULL, '2026-07-19T00:03:00.000Z', NULL
+    );`,
+    /approval context is required/
   );
 });
 
