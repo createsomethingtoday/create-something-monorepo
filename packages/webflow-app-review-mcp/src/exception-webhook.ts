@@ -486,7 +486,12 @@ export async function processExceptionWebhookPayloads(
   }
 
   const renewLease = async () => {
-    if (!(await deps.store.renewLock(token, PROCESS_LOCK_TTL_MS))) {
+    try {
+      if (!(await deps.store.renewLock(token, PROCESS_LOCK_TTL_MS))) {
+        throw new WebhookLeaseLostError();
+      }
+    } catch (error) {
+      if (error instanceof WebhookLeaseLostError) throw error;
       throw new WebhookLeaseLostError();
     }
   };
@@ -817,6 +822,7 @@ async function handleVersionExceptionStatus(
         );
         promotionNote = `\n\n:books: Proposed as reviewer-exception guidance (\`${proposal.id}\`) — needs curation before it becomes Active.`;
       } catch (error) {
+        if (error instanceof WebhookLeaseLostError) throw error;
         promotionNote = '\n\n:warning: Auto-proposal to the reviewer-exceptions base failed — propose manually.';
         result.errors.push(`kb-proposal ${versionId}: ${String(error)}`);
       }
@@ -865,6 +871,7 @@ async function handleVersionExceptionStatus(
         );
         result.actions.push(`submission-thread ${versionId}`);
       } catch (error) {
+        if (error instanceof WebhookLeaseLostError) throw error;
         result.errors.push(`submission-thread ${versionId}: ${String(error)}`);
       }
     }

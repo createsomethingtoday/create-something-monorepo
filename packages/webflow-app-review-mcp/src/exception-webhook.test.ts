@@ -379,6 +379,90 @@ describe('processExceptionWebhookPayloads', () => {
     expect(slackTsWrites).toHaveLength(1);
   });
 
+  it('aborts when a post-operation lease renewal query throws', async () => {
+    const payload: AirtableWebhookPayload = {
+      actionMetadata: { source: 'client' },
+      changedTablesById: {
+        [TABLE_IDS.assetVersions]: {
+          changedRecordsById: {
+            recVersion1: {
+              current: {
+                cellValuesByFieldId: {
+                  [V.exceptionStatus]: { id: 'sel', name: '🆕Requested' },
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+    const stub = buildFetchStub({ payloadsByWebhook: { achVersions: [payload] } });
+    let slackSucceeded = false;
+    const fetchFn: typeof fetch = async (input, init) => {
+      const response = await (stub.fetchFn as unknown as typeof fetch)(input, init);
+      if (String(input).startsWith('https://slack.com/api/chat.postMessage')) slackSucceeded = true;
+      return response;
+    };
+    const store = memoryStore(baseState());
+    const renew = store.renewLock.bind(store);
+    store.renewLock = async (token, ttlMs) => {
+      if (slackSucceeded) throw new Error('D1 renewal unavailable');
+      return renew(token, ttlMs);
+    };
+
+    await expect(
+      processExceptionWebhookPayloads(buildDeps(fetchFn, store)),
+    ).rejects.toThrow('Webhook processing lease was lost');
+    expect(stub.slackCalls).toHaveLength(1);
+    expect(store.state?.webhooks.find((webhook) => webhook.id === 'achVersions')?.cursor).toBe(1);
+  });
+
+  it('rethrows a lost lease from the optional submission-thread reply', async () => {
+    const payload: AirtableWebhookPayload = {
+      actionMetadata: { source: 'publicApi' },
+      changedTablesById: {
+        [TABLE_IDS.assetVersions]: {
+          changedRecordsById: {
+            recVersion1: {
+              current: {
+                cellValuesByFieldId: {
+                  [V.exceptionStatus]: { id: 'sel', name: '✅Approved' },
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+    const stub = buildFetchStub({
+      payloadsByWebhook: { achVersions: [payload] },
+      versionResponse: () => versionRecordResponse({
+        [V.exceptionStatus]: '✅Approved',
+        [V.exceptionSlackTs]: '1785000000.000200',
+      }),
+    });
+    let submissionReplyPosted = false;
+    const fetchFn: typeof fetch = async (input, init) => {
+      const response = await (stub.fetchFn as unknown as typeof fetch)(input, init);
+      if (String(input).startsWith('https://slack.com/api/chat.postMessage')) {
+        const body = JSON.parse(String(init?.body)) as { channel?: string };
+        if (body.channel === 'C04DDRJ5VGT') submissionReplyPosted = true;
+      }
+      return response;
+    };
+    const store = memoryStore(baseState());
+    const renew = store.renewLock.bind(store);
+    store.renewLock = async (token, ttlMs) => {
+      if (submissionReplyPosted) return false;
+      return renew(token, ttlMs);
+    };
+
+    await expect(
+      processExceptionWebhookPayloads(buildDeps(fetchFn, store)),
+    ).rejects.toThrow('Webhook processing lease was lost');
+    expect(store.state?.webhooks.find((webhook) => webhook.id === 'achVersions')?.cursor).toBe(1);
+  });
+
   it('checkpoints successful payloads before retrying a later payload', async () => {
     const underReviewPayload: AirtableWebhookPayload = {
       actionMetadata: { source: 'client' },
