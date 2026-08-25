@@ -84,6 +84,11 @@ export function validateGroundGaConfig(config) {
     'Ground representative calibration must allow zero execution failures',
     issues
   );
+  issue(
+    config?.calibration?.releaseReceipt === 'ground-calibration-receipt.json',
+    'Ground calibration release receipt is required',
+    issues
+  );
   return issues;
 }
 
@@ -111,7 +116,7 @@ function publishedConsumerSmokeIsValid(smoke, platform, config, sourceSha) {
   );
 }
 
-export function evaluateGroundGa(config, calibration, evidence, now = new Date()) {
+export function evaluateGroundCalibration(config, calibration) {
   const configIssues = validateGroundGaConfig(config);
   if (configIssues.length > 0) {
     throw new Error(`Invalid Ground GA config: ${configIssues.join('; ')}`);
@@ -159,6 +164,19 @@ export function evaluateGroundGa(config, calibration, evidence, now = new Date()
     );
   }
 
+  return {
+    schema_version: 'ground-calibration-receipt.v1',
+    mode: 'advisory',
+    version: config.package.version,
+    calibration,
+    promotion: { ready: reasons.length === 0, reasons: [...new Set(reasons)] }
+  };
+}
+
+export function evaluateGroundGa(config, calibration, evidence, now = new Date()) {
+  const calibrationReceipt = evaluateGroundCalibration(config, calibration);
+  const reasons = [...calibrationReceipt.promotion.reasons];
+
   record(reasons, evidence?.schema_version === 'ground-ga-evidence.v1', 'evidence_schema_invalid');
   const sourceSha = evidence?.source_sha;
   record(reasons, /^[0-9a-f]{40}$/.test(sourceSha ?? ''), 'source_sha_invalid');
@@ -183,6 +201,11 @@ export function evaluateGroundGa(config, calibration, evidence, now = new Date()
     reasons,
     releaseAssets.has('CONSUMER-SHA256SUMS'),
     'release_asset_missing:CONSUMER-SHA256SUMS'
+  );
+  record(
+    reasons,
+    releaseAssets.has(config.calibration.releaseReceipt),
+    `release_asset_missing:${config.calibration.releaseReceipt}`
   );
   for (const platform of config.platforms) {
     const assetPresent = releaseAssets.has(platform.asset);

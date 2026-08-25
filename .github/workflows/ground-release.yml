@@ -23,8 +23,35 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  verify-calibration:
+    name: Verify governed Ground calibration
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout release source
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - name: Verify exact-source calibration gate
+        shell: bash
+        run: |
+          source_sha=$(git rev-parse HEAD)
+          node scripts/ground-calibration-verify.mjs \
+            --config config/ground-ga.v1.json \
+            --source-sha "$source_sha" \
+            --release-tag "${{ github.event.inputs.tag || github.ref_name }}" \
+            --output ground-calibration-receipt.json
+
+      - name: Preserve calibration receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ground-calibration-receipt
+          path: ground-calibration-receipt.json
+
   build:
     name: Build ${{ matrix.target }}
+    needs: verify-calibration
     if: ${{ github.event_name != 'workflow_dispatch' || !inputs.publish_only }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -178,8 +205,8 @@ jobs:
 
   publish-npm:
     name: Publish npm through trusted publishing
-    needs: release
-    if: ${{ always() && (inputs.publish_only || needs.release.result == 'success') }}
+    needs: [release, verify-calibration]
+    if: ${{ always() && needs.verify-calibration.result == 'success' && (inputs.publish_only || needs.release.result == 'success') }}
     runs-on: ubuntu-latest
     permissions:
       contents: read

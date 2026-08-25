@@ -228,7 +228,10 @@ export function formatMarkdown(summary) {
     lines.push('', '## Evidence still needed', '');
     for (const reason of summary.promotion.reasons) lines.push(`- ${reason}`);
   }
-  lines.push('', '_Advisory only. This report never changes a CI gate or promotion decision._');
+  lines.push(
+    '',
+    '_Advisory evidence by itself. Governed release promotion is enforced separately by `ground-calibration-verify.mjs`._'
+  );
   return `${lines.join('\n')}\n`;
 }
 

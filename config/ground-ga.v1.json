@@ -10,6 +10,7 @@
   },
   "calibration": {
     "ledger": "docs/internal/ground-adjudication-ledger.v1.json",
+    "releaseReceipt": "ground-calibration-receipt.json",
     "minimumCompleteReceipts": 14,
     "minimumAdjudicatedFindings": 10,
     "minimumPrecision": 0.9,

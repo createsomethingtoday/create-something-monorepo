@@ -73,6 +73,7 @@ jobs:
         if: steps.deploy.outputs.eligible == 'true' && github.ref_name == 'main'
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         shell: bash
         run: |
           version=$(node -p "require('./packages/ground/npm/package.json').version")
@@ -84,6 +85,7 @@ jobs:
             packages/ground \
             config/ground-ga.v1.json \
             scripts/ground-adjudication.mjs \
+            scripts/ground-calibration-verify.mjs \
             scripts/ground-ga-policy.mjs \
             scripts/ground-ga-verify.mjs \
             docs/internal/ground-adjudication-ledger.v1.json; do
@@ -107,10 +109,24 @@ jobs:
             ground-linux-x64-consumer-smoke.json \
             ground-linux-arm64-consumer-smoke.json \
             ground-win32-x64-consumer-smoke.json \
+            ground-calibration-receipt.json \
             CONSUMER-SHA256SUMS \
             SHA256SUMS; do
             grep -Fx "$asset" <<< "$assets"
           done
+          receipt_dir=$(mktemp -d)
+          trap 'rm -rf "$receipt_dir"' EXIT
+          gh release download "$tag" \
+            --pattern ground-calibration-receipt.json \
+            --dir "$receipt_dir"
+          node -e '
+            const [file, sourceSha, version] = process.argv.slice(1);
+            const receipt = JSON.parse(require("node:fs").readFileSync(file, "utf8"));
+            if (receipt.schema_version !== "ground-calibration-release-receipt.v1" ||
+                receipt.source_sha !== sourceSha || receipt.version !== version ||
+                receipt.release_tag !== `ground-v${version}` ||
+                receipt.promotion?.ready !== true) process.exit(1);
+          ' "$receipt_dir/ground-calibration-receipt.json" "$release_sha" "$version"
           test "$(npm view "${package_name}@${version}" version)" = "$version"
 
       - name: Resolve Pages branch alias

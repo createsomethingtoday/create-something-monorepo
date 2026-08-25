@@ -92,7 +92,8 @@ test('summarizes adjudicated Ground findings and keeps insufficient evidence adv
     'false_positive_rate_above_threshold'
   ]);
   assert.match(formatMarkdown(summary), /Promotion readiness: not ready/);
-  assert.match(formatMarkdown(summary), /Advisory only/);
+  assert.match(formatMarkdown(summary), /Advisory evidence by itself/);
+  assert.match(formatMarkdown(summary), /ground-calibration-verify\.mjs/);
 });
 
 test('rejects missing rationale, unknown verdicts, duplicate receipt ids, and verdicts beyond observed findings', () => {
@@ -179,7 +180,11 @@ test('CLI can preserve the calibration summary as a new evidence artifact', (t) 
     [scriptPath, '--ledger', ledgerPath, '--format', 'json', '--output', outputPath],
     { encoding: 'utf8' }
   );
-  assert.notEqual(secondResult.status, 0, 'evidence output must fail closed instead of overwriting');
+  assert.notEqual(
+    secondResult.status,
+    0,
+    'evidence output must fail closed instead of overwriting'
+  );
 });
 
 test('out-of-scope classifications remain auditable but do not satisfy the calibration gate', () => {
