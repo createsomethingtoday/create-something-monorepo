@@ -770,6 +770,153 @@ test('stops a write binding without confirmation and mutation proof', async () =
   );
 });
 
+test('rejects reused write and publish operational receipt references', async () => {
+  const workflow = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const publishAction = structuredClone(
+    workflow.actions.find((candidate) => candidate.id === 'create_review_suggestion')
+  );
+  publishAction.id = 'publish_review_suggestion';
+  publishAction.title = 'Publish review suggestion';
+  publishAction.kind = 'publish';
+  publishAction.tool.name = 'publishReviewSuggestion';
+  workflow.actions.push(publishAction);
+  workflow.agents.find((candidate) => candidate.id === 'agency-ops-evidence-triage').allowedActionIds.push(
+    'publish_review_suggestion'
+  );
+  const compiled = compileWorkflowDefinition(workflow);
+  const blueprint = createNotionCustomAgentBlueprint(compiled, {
+    schemaVersion: 'notion_custom_agent_blueprint_input.v0.1',
+    blueprintId: 'agency-ops-multi-write.v0.1',
+    agentId: 'agency-ops-evidence-triage',
+    instructions: {
+      sourceRef: 'policy://agency-ops/multi-write/v0.1',
+      sha256: 'sha256:multi-write-instruction-fixture-v0.1'
+    },
+    resourceAccess: [
+      {
+        resourceRef: 'notion-data-source://sanitized-agency-ops-evidence',
+        kind: 'notion_data_source',
+        level: 'can_edit',
+        purpose: 'Create or publish review suggestions after explicit confirmation.'
+      }
+    ],
+    triggers: [
+      {
+        triggerId: 'manual-review-suggestion',
+        kind: 'manual',
+        intent: 'Run only after an operator asks to create or publish a review suggestion.'
+      }
+    ],
+    toolBindings: [
+      {
+        actionId: 'create_review_suggestion',
+        key: 'createReviewSuggestion',
+        runtime: 'notion_worker',
+        contractRef: 'notion-worker://agency-ops/createReviewSuggestion@v0.1'
+      },
+      {
+        actionId: 'publish_review_suggestion',
+        key: 'publishReviewSuggestion',
+        runtime: 'notion_worker',
+        contractRef: 'notion-worker://agency-ops/publishReviewSuggestion@v0.1'
+      }
+    ]
+  });
+  const installation = evaluateNotionCustomAgentInstallation(
+    blueprint,
+    matchingConfigurationReceipt(blueprint, 'notion-agent://multi-write')
+  );
+  const baseReceipts = {
+    schemaVersion: 'notion_custom_agent_operational_receipts.v0.1',
+    blueprintId: blueprint.blueprintId,
+    agentRef: 'notion-agent://multi-write',
+    activationReceipt: {
+      triggerId: 'manual-review-suggestion',
+      runRef: 'notion-run://multi-write',
+      activationRef: 'notion-activation://multi-write'
+    },
+    runReceipt: {
+      runRef: 'notion-run://multi-write'
+    }
+  };
+
+  assert.throws(
+    () =>
+      evaluateNotionCustomAgentOperationalReceipts(
+        blueprint,
+        {
+          ...baseReceipts,
+          toolReceipts: [
+            {
+              actionId: 'create_review_suggestion',
+              runRef: 'notion-run://multi-write',
+              toolInvocationRef: 'notion-worker-run://multi-write-create',
+              confirmationState: 'confirmed'
+            },
+            {
+              actionId: 'publish_review_suggestion',
+              runRef: 'notion-run://multi-write',
+              toolInvocationRef: 'notion-worker-run://multi-write-publish',
+              confirmationState: 'confirmed'
+            }
+          ],
+          mutationReceipts: [
+            {
+              actionId: 'create_review_suggestion',
+              runRef: 'notion-run://multi-write',
+              mutationRef: 'notion-mutation://multi-write-shared'
+            },
+            {
+              actionId: 'publish_review_suggestion',
+              runRef: 'notion-run://multi-write',
+              mutationRef: 'notion-mutation://multi-write-shared'
+            }
+          ]
+        },
+        installation
+      ),
+    /\$\.mutationReceipts\.mutationRef entries must be unique\./
+  );
+
+  assert.throws(
+    () =>
+      evaluateNotionCustomAgentOperationalReceipts(
+        blueprint,
+        {
+          ...baseReceipts,
+          toolReceipts: [
+            {
+              actionId: 'create_review_suggestion',
+              runRef: 'notion-run://multi-write',
+              toolInvocationRef: 'notion-worker-run://multi-write-shared',
+              confirmationState: 'confirmed'
+            },
+            {
+              actionId: 'publish_review_suggestion',
+              runRef: 'notion-run://multi-write',
+              toolInvocationRef: 'notion-worker-run://multi-write-shared',
+              confirmationState: 'confirmed'
+            }
+          ],
+          mutationReceipts: [
+            {
+              actionId: 'create_review_suggestion',
+              runRef: 'notion-run://multi-write',
+              mutationRef: 'notion-mutation://multi-write-create'
+            },
+            {
+              actionId: 'publish_review_suggestion',
+              runRef: 'notion-run://multi-write',
+              mutationRef: 'notion-mutation://multi-write-publish'
+            }
+          ]
+        },
+        installation
+      ),
+    /\$\.toolReceipts\.toolInvocationRef entries must be unique\./
+  );
+});
+
 test('stops a blocked write before it accepts matching operational receipts', async () => {
   const workflow = JSON.parse(await readFile(workflowUrl, 'utf8'));
   const action = workflow.actions.find((candidate) => candidate.id === 'create_review_suggestion');

@@ -345,7 +345,9 @@ export function parseNotionCustomAgentOperationalReceipts(
   const toolReceipts = array(source.toolReceipts, '$.toolReceipts').map(parseOperationalToolReceipt);
   const mutationReceipts = array(source.mutationReceipts, '$.mutationReceipts').map(parseMutationReceipt);
   unique(toolReceipts.map((entry) => entry.actionId), '$.toolReceipts');
+  unique(toolReceipts.map((entry) => entry.toolInvocationRef), '$.toolReceipts.toolInvocationRef');
   unique(mutationReceipts.map((entry) => entry.actionId), '$.mutationReceipts');
+  unique(mutationReceipts.map((entry) => entry.mutationRef), '$.mutationReceipts.mutationRef');
   return {
     schemaVersion: 'notion_custom_agent_operational_receipts.v0.1',
     blueprintId: text(source.blueprintId, '$.blueprintId'),
