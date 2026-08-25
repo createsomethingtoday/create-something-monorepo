@@ -659,8 +659,15 @@ export async function reduceWorkflowRuntimeRun(
 ): Promise<WorkflowRuntimeRun> {
   const manifest = parseWorkflowRuntimeManifest(manifestInput);
   await verifyWorkflowRuntimeRun(manifest, previous);
+  const observedAt = instant(event.observedAt, 'Runtime event time', 'INVALID_EVENT');
+  const latestReceipt = previous.receipts.at(-1);
+  if (event.type !== 'approval_decided' && latestReceipt && observedAt < latestReceipt.createdAt) {
+    throw new RuntimeValidationError(
+      'INVALID_EVENT',
+      'Runtime event time cannot predate the latest receipt'
+    );
+  }
   const run = structuredClone(previous);
-  instant(event.observedAt, 'Runtime event time', 'INVALID_EVENT');
   if (['blocked', 'failed', 'cancelled', 'completed'].includes(run.status))
     throw new RuntimeValidationError('INVALID_STATE', `Run is terminal in ${run.status}`);
   const current = record(run, event.stepId);

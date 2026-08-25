@@ -214,6 +214,30 @@ test('the public core advances a finite pass/wait/approval/pass fixture determin
   );
 });
 
+test('the public core rejects an event that predates its latest receipt', async () => {
+  const parsed = parseWorkflowRuntimeManifest(manifest);
+  const initial = await createWorkflowRuntimeRun(parsed, admission);
+  const first = await planWorkflowRuntimeStep(parsed, initial);
+  const prepared = await reduceWorkflowRuntimeRun(parsed, initial, {
+    type: 'effect_intent',
+    stepId: 'collect',
+    attemptId: 'out-of-order-attempt',
+    capability: first.capability,
+    observedAt: '2026-08-25T00:00:00.500Z'
+  });
+  await assert.rejects(
+    () =>
+      reduceWorkflowRuntimeRun(parsed, prepared, {
+        type: 'step_succeeded',
+        stepId: 'collect',
+        attemptId: 'out-of-order-attempt',
+        verifier: 'fixture-verifier',
+        observedAt: '2026-08-25T00:00:00.250Z'
+      }),
+    (error) => error instanceof RuntimeValidationError && error.code === 'INVALID_EVENT'
+  );
+});
+
 test('wait and stop never expose a capability invocation', async () => {
   const parsed = parseWorkflowRuntimeManifest({
     ...manifest,

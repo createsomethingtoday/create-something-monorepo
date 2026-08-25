@@ -15,7 +15,7 @@ type CommandRow = {
 };
 
 const COMMAND_DIGEST = /^[a-f0-9]{64}$/;
-const LIVE_PARENT_STATUSES = "'queued', 'running', 'waiting_for_approval', 'recovering'";
+const LIVE_PARENT_STATUSES = "'queued', 'running', 'waiting_for_approval'";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -120,6 +120,7 @@ export class D1WorkflowRuntimeCheckpointStore implements WorkflowRuntimeCheckpoi
                WHERE id = ?1 AND account_id = ?8 AND tenant_id = ?9 AND workspace_account_id = ?10
                  AND activation_id = ?11 AND activation_version = ?12
                  AND json_extract(activation_json, '$.policySha256') = substr(?13, 8)
+                 AND json_extract(activation_json, '$.buildManifestSha256') = substr(?2, 8)
                  AND status IN (${LIVE_PARENT_STATUSES})
              )`
           )

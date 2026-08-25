@@ -81,7 +81,7 @@ function fixture(executor?: ControlRunExecutor) {
       INSERT INTO customer_control_activations VALUES (
         'activation-a', 1, 'initial', 'active', 'account-a', 'tenant-a', 'workspace-a',
         'map-a', 'map-version-a', 2, '${'1'.repeat(64)}', 'handoff-a', '${'2'.repeat(64)}',
-        'release-a', '${'3'.repeat(64)}', '${'4'.repeat(64)}', 'acceptance-a', '${'5'.repeat(64)}',
+        'release-a', '${'7'.repeat(64)}', '${'4'.repeat(64)}', 'acceptance-a', '${'5'.repeat(64)}',
         'policy-v1', '${'6'.repeat(64)}', '${'7'.repeat(64)}', '${'8'.repeat(64)}',
         '["mcp:read"]', '["resource:public"]'
       );`,
@@ -250,7 +250,7 @@ test('D1 checkpoint store survives a process restart, replays exactly, and retai
   );
 });
 
-test('D1 refuses a child transition after its parent Control run is stopped', async () => {
+test('D1 refuses a child transition while its parent Control run is stopped or recovering', async () => {
   const { path, service } = fixture();
   const parent = await service.start(scope, owner, {
     activationId: 'activation-a', idempotencyKey: 'parent-runtime-stopped',
@@ -279,6 +279,23 @@ test('D1 refuses a child transition after its parent Control run is stopped', as
     store.apply({
       scope, run: intent, expectedVersion: initial.version,
       idempotencyKey: 'stopped-parent-intent', commandDigest: 'b'.repeat(64)
+    }),
+    /parent Control run no longer authorizes progress/
+  );
+  await service.beginRecovery(
+    scope,
+    owner,
+    parent.id,
+    'begin-runtime-parent-recovery',
+    'operator reconciliation'
+  );
+  await assert.rejects(
+    store.apply({
+      scope,
+      run: intent,
+      expectedVersion: initial.version,
+      idempotencyKey: 'recovering-parent-intent',
+      commandDigest: 'c'.repeat(64)
     }),
     /parent Control run no longer authorizes progress/
   );
@@ -397,6 +414,36 @@ test('D1 refuses a runtime admission whose frozen parent activation does not mat
     new D1WorkflowRuntimeCheckpointStore(d1(path)).apply({
       scope, run, expectedVersion: null,
       idempotencyKey: 'forged-activation-admission', commandDigest: 'a'.repeat(64)
+    }),
+    /Workflow Runtime command did not persist/
+  );
+  assert.equal(
+    execFileSync('sqlite3', ['-noheader', path], {
+      input: 'SELECT COUNT(*) FROM control_workflow_runtime_runs;'
+    }).toString().trim(),
+    '0'
+  );
+});
+
+test('D1 refuses a runtime admission whose artifact manifest is not frozen into its parent activation', async () => {
+  const { path, service } = fixture();
+  const parent = await service.start(scope, owner, {
+    activationId: 'activation-a', idempotencyKey: 'parent-artifact-match',
+    requestedTools: [], requestedResources: [], concurrencyKey: 'runtime-artifact-match'
+  });
+  const run = await createWorkflowRuntimeRun(runtimeManifest, {
+    runId: parent.id,
+    activation: { id: 'activation-a', version: 1, policySha256: runtimeDigest('6') },
+    artifactManifestSha256: runtimeDigest('3'), runtimeManifestSha256: runtimeDigest('8'),
+    clock: '2026-08-25T00:00:00.000Z'
+  });
+  await assert.rejects(
+    new D1WorkflowRuntimeCheckpointStore(d1(path)).apply({
+      scope,
+      run,
+      expectedVersion: null,
+      idempotencyKey: 'forged-artifact-admission',
+      commandDigest: 'a'.repeat(64)
     }),
     /Workflow Runtime command did not persist/
   );
