@@ -49,7 +49,7 @@ anyhow = "1"
 chrono = { version = "0.4", features = ["serde"] }
 
 # Similarity computation
-similar = "2"  # Text diff algorithm
+similar = "3"  # Text diff algorithm
 sha2 = "0.10"  # Hashing (more compatible than blake3)
 regex-lite = "0.1"  # Lightweight regex for CSS parsing
 
