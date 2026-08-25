@@ -306,6 +306,90 @@ test('a conflicting concurrent result honors the stored canonical outcome and gu
   assert.equal(alertInsert.values.at(-3), 'failed');
 });
 
+test('a passing receipt resolves only failure streaks that began before its scheduled timestamp', async () => {
+  const { database, batches } = createDatabase();
+  const scheduledAt = '2026-08-25T18:22:00.000Z';
+
+  await runScheduledMapMonitor({
+    scheduledAt,
+    env: env(database),
+    executeSynthetic: async () => ({
+      checks: REQUIRED_MAP_CHECK_IDS.map((id) => ({ id, ok: true, durationMs: 1 })),
+    }),
+    now: () => new Date('2026-08-25T18:22:20.000Z'),
+  });
+
+  const resolution = batches[0].find((statement) =>
+    statement.query.includes('SET streak_resolved_at = ?'),
+  );
+  if (!resolution) throw new Error('expected a guarded alert resolution');
+  assert.match(resolution.query, /failure_streak_started_at < \?/);
+  assert.equal(resolution.values.at(-1), scheduledAt);
+});
+
+test('a concurrent booking-context failure merges its SEV-2 evidence into a created alert', async () => {
+  const { database, batches } = createDatabase();
+  const scheduledAt = '2026-08-25T18:22:00.000Z';
+  const priorFailure = {
+    receipt_id: 'map-20260825180700-aaaaaaaaaaaa',
+    scheduled_at: '2026-08-25T18:07:00.000Z',
+    checks_json: JSON.stringify([
+      { id: 'desktop_map_health', ok: false, code: 'HTTP_503', durationMs: 9 },
+    ]),
+  };
+  const concurrentDatabase = {
+    ...database,
+    prepare(query: string) {
+      const statement = database.prepare(query);
+      return {
+        bind(...values: unknown[]) {
+          const bound = statement.bind(...values);
+          if (query.includes('latest_passing_receipt')) {
+            return { ...bound, all: async () => ({ results: [priorFailure] }) };
+          }
+          if (query.includes('streak_resolved_at IS NULL')) {
+            return { ...bound, all: async () => ({ results: [] }) };
+          }
+          return bound;
+        },
+      };
+    },
+  };
+
+  await assert.rejects(
+    () =>
+      runScheduledMapMonitor({
+        scheduledAt,
+        env: env(concurrentDatabase),
+        executeSynthetic: async () => ({
+          checks: [
+            {
+              id: 'desktop_starter_booking_context',
+              ok: false,
+              code: 'BOOKING_CONTEXT_MISMATCH',
+              durationMs: 9,
+            },
+          ],
+        }),
+        now: () => new Date('2026-08-25T18:22:20.000Z'),
+      }),
+    /failed/,
+  );
+
+  const merge = batches[0].find((statement) =>
+    statement.query.includes('json_valid(failed_check_codes_json)'),
+  );
+  if (!merge) throw new Error('expected a conflict-aware alert merge');
+  assert.match(merge.query, /severity = 'SEV-2' OR \? = 'SEV-2'/);
+  assert.match(merge.query, /json_each\(\?\)/);
+  assert.equal(merge.values[1], 'SEV-2');
+  assert.deepEqual(JSON.parse(String(merge.values[2])), [
+    'HTTP_503',
+    'BOOKING_CONTEXT_MISMATCH',
+    'REQUIRED_CHECK_MISSING',
+  ]);
+});
+
 test('two consecutive scheduled failures deliver one idempotent CRE-1289 operator escalation', async () => {
   const { database, batches, runs } = createDatabase();
   let alert: unknown = null;
