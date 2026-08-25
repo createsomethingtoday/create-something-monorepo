@@ -492,6 +492,42 @@ test('v0.1 retains manual recovery only while v0.2 owns non-manual recovery', ()
   assert.equal(expanded.steps[0].recovery, 'escalate');
 });
 
+test('a historical v0.1 receipt chain remains verifiable without current approval fields', async () => {
+  const parsed = parseWorkflowRuntimeManifest(manifest);
+  const current = await createWorkflowRuntimeRun(parsed, admission);
+  const legacy = structuredClone(current);
+  legacy.schema = 'workflow_runtime_run.v0.1';
+  delete legacy.registration;
+  delete legacy.runtimeManifestSchema;
+
+  const receipt = legacy.receipts[0];
+  const {
+    actionId: _actionId,
+    actorRole: _actorRole,
+    approvalSurfaceSha256: _approvalSurfaceSha256,
+    buildReleaseId: _buildReleaseId,
+    contractSha256: _contractSha256,
+    runtimeManifestSchema: _runtimeManifestSchema,
+    runtimePolicySha256: _runtimePolicySha256,
+    workflowCompilerVersion: _workflowCompilerVersion,
+    receiptSha256: _receiptSha256,
+    ...historicalReceipt
+  } = receipt;
+  historicalReceipt.schema = 'create-something/control-run-receipt@2';
+  historicalReceipt.checkpointSha256 = await workflowRuntimeCheckpointHash(legacy);
+  legacy.receipts = [
+    {
+      ...historicalReceipt,
+      receiptSha256: await workflowRuntimeReceiptHash(historicalReceipt)
+    }
+  ];
+
+  assert.equal('actorRole' in legacy.receipts[0], false);
+  assert.equal('approvalSurfaceSha256' in legacy.receipts[0], false);
+  await verifyWorkflowRuntimeRun(parsed, legacy);
+  assert.equal((await planWorkflowRuntimeStep(parsed, legacy)).type, 'pass');
+});
+
 test('a non-manual recovery mode stops instead of requeueing a retryable effect', async () => {
   const escalate = parseWorkflowRuntimeManifest({
     ...manifest,

@@ -592,8 +592,12 @@ function parseApproval(
   if (
     (value.decision === null && value.decision_actor_role !== null) ||
     (value.decision !== null &&
+      context.schema === 'create-something/workflow-runtime-approval-context@2' &&
       (typeof value.decision_actor_role !== 'string' ||
-        !ACTOR_ROLES.includes(value.decision_actor_role as WorkflowRuntimeActorRole)))
+        !ACTOR_ROLES.includes(value.decision_actor_role as WorkflowRuntimeActorRole))) ||
+    (value.decision !== null &&
+      context.schema === 'create-something/workflow-runtime-approval-context@1' &&
+      value.decision_actor_role !== null)
   ) {
     throw new RuntimeValidationError(
       'INVALID_STATE',
@@ -852,7 +856,11 @@ function validateRelations(
           receipt.createdAt === approval.decidedAt &&
           receipt.outcome === expectedOutcome
       );
-      if (!decisionReceipt || decisionReceipt.actorRole !== approval.decidedByRole) {
+      if (
+        !decisionReceipt ||
+        (run.schema === 'workflow_runtime_run.v0.2' &&
+          decisionReceipt.actorRole !== approval.decidedByRole)
+      ) {
         throw new RuntimeValidationError(
           'INVALID_STATE',
           'Workflow Runtime proof approval is not bound to a decision receipt'

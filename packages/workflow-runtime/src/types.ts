@@ -189,10 +189,10 @@ export interface WorkflowRuntimeReceipt {
   definitionHash: RuntimeDigest;
   evidenceDigest: RuntimeDigest | null;
   actorSubject: string | null;
-  /** The Control Identity role for an operator-originated receipt; never a subject identifier. */
-  actorRole: WorkflowRuntimeActorRole | null;
-  /** The exact compiled approval-surface artifact for wait and decision receipts. */
-  approvalSurfaceSha256: RuntimeDigest | null;
+  /** Present only on registration-bound `@3` receipts; never a subject identifier. */
+  actorRole?: WorkflowRuntimeActorRole | null;
+  /** Present only on registration-bound `@3` wait and decision receipts. */
+  approvalSurfaceSha256?: RuntimeDigest | null;
   verifier: string | null;
   outcome: string;
   previousReceiptSha256: RuntimeDigest | null;

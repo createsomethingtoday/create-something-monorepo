@@ -628,8 +628,6 @@ async function receipt(
     definitionHash: manifest.workflow.definitionHash,
     evidenceDigest: input.evidenceDigest,
     actorSubject: input.actorSubject,
-    actorRole: input.actorRole ?? null,
-    approvalSurfaceSha256: input.approvalSurfaceSha256 ?? null,
     verifier: input.verifier,
     outcome: input.outcome,
     previousReceiptSha256: run.receipts.at(-1)?.receiptSha256 ?? null,
@@ -648,6 +646,8 @@ async function receipt(
   const base = {
     schema: 'create-something/control-run-receipt@3' as const,
     ...common,
+    actorRole: input.actorRole ?? null,
+    approvalSurfaceSha256: input.approvalSurfaceSha256 ?? null,
     buildReleaseId: run.registration.buildReleaseId,
     contractSha256: run.registration.contractSha256,
     runtimeManifestSchema: run.runtimeManifestSchema,
@@ -1468,9 +1468,7 @@ async function assertRunSemantics(
     'activationId',
     'activationPolicySha256',
     'activationVersion',
-    'actorRole',
     'actorSubject',
-    'approvalSurfaceSha256',
     'artifactManifestSha256',
     'attemptId',
     'checkpointSha256',
@@ -1504,7 +1502,9 @@ async function assertRunSemantics(
           'runtimeManifestSchema',
           'runtimePolicySha256',
           'workflowCompilerVersion',
-          'actionId'
+          'actionId',
+          'actorRole',
+          'approvalSurfaceSha256'
         ]
       : receiptFields;
     if (
@@ -1524,11 +1524,17 @@ async function assertRunSemantics(
       (receipt.stepVersion !== null &&
         (!Number.isInteger(receipt.stepVersion) || receipt.stepVersion < 1)) ||
       (receipt.actorSubject !== null && !validText(receipt.actorSubject)) ||
-      (receipt.actorRole !== null && !ACTOR_ROLES.includes(receipt.actorRole)) ||
-      (receipt.approvalSurfaceSha256 !== null && !DIGEST.test(receipt.approvalSurfaceSha256)) ||
-      ((receipt.eventType === 'wait_created' || receipt.eventType === 'approval_decided')
-        ? receipt.approvalSurfaceSha256 !== manifest.artifacts.approvalSurfacesSha256
-        : receipt.approvalSurfaceSha256 !== null) ||
+      (registrationReceipt &&
+        (receipt.actorRole === undefined ||
+          (receipt.actorRole !== null && !ACTOR_ROLES.includes(receipt.actorRole)))) ||
+      (registrationReceipt &&
+        (receipt.approvalSurfaceSha256 === undefined ||
+          (receipt.approvalSurfaceSha256 !== null &&
+            !DIGEST.test(receipt.approvalSurfaceSha256)))) ||
+      (registrationReceipt &&
+        ((receipt.eventType === 'wait_created' || receipt.eventType === 'approval_decided')
+          ? receipt.approvalSurfaceSha256 !== manifest.artifacts.approvalSurfacesSha256
+          : receipt.approvalSurfaceSha256 !== null)) ||
       (receipt.verifier !== null && !validText(receipt.verifier)) ||
       !validText(receipt.outcome) ||
       !DIGEST.test(receipt.checkpointSha256) ||
