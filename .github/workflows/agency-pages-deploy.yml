@@ -79,7 +79,17 @@ jobs:
           package_name=$(node -p "require('./packages/ground/npm/package.json').name")
           tag="ground-v${version}"
           release_sha=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${tag}" --jq '.sha')
-          test "$release_sha" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$release_sha" "$GITHUB_SHA"
+          for release_path in \
+            packages/ground \
+            config/ground-ga.v1.json \
+            scripts/ground-adjudication.mjs \
+            scripts/ground-ga-policy.mjs \
+            scripts/ground-ga-verify.mjs \
+            docs/internal/ground-adjudication-ledger.v1.json; do
+            test "$(git rev-parse "${release_sha}:${release_path}")" = \
+              "$(git rev-parse "${GITHUB_SHA}:${release_path}")"
+          done
           assets=$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${tag}" --jq '.assets[].name')
           for asset in \
             ground-darwin-arm64.tar.gz \

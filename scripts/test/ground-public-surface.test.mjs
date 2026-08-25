@@ -78,10 +78,14 @@ test('Ground public routes remain registered in the Performance page system', as
   assert.match(registry, /'docs\/ground'/);
 });
 
-test('Agency production deployment waits for the exact Ground release', async () => {
+test('Agency production deployment waits for the released Ground source tree', async () => {
   const workflow = await readFile(agencyDeployWorkflow, 'utf8');
   assert.match(workflow, /Require matching Ground release before production deploy/);
-  assert.match(workflow, /test "\$release_sha" = "\$GITHUB_SHA"/);
+  assert.match(workflow, /git merge-base --is-ancestor "\$release_sha" "\$GITHUB_SHA"/);
+  assert.match(workflow, /git rev-parse "\$\{release_sha\}:\$\{release_path\}"/);
+  assert.match(workflow, /git rev-parse "\$\{GITHUB_SHA\}:\$\{release_path\}"/);
+  assert.match(workflow, /packages\/ground/);
+  assert.match(workflow, /config\/ground-ga\.v1\.json/);
   assert.match(workflow, /ground-darwin-x64\.tar\.gz/);
   assert.match(workflow, /ground-linux-arm64-smoke\.json/);
   assert.match(workflow, /ground-linux-arm64-consumer-smoke\.json/);
