@@ -89,6 +89,18 @@ test('preserves the route-owned evidence and destinations', () => {
   }
 });
 
+test('grounds the Ground opening in its compare, stop, and receipt workflow', () => {
+  const source = readRoute('products/ground');
+
+  assert.match(source, /ground-verification-instrument\.webp/);
+  assert.match(source, /ground-verification-instrument-mobile\.webp/);
+  assert.match(
+    source,
+    /Two code artifacts feed a comparison ring while an unverified claim is stopped and a proof receipt exits/
+  );
+  assert.doesNotMatch(source, /pressure-boundary-natural/);
+});
+
 function componentCount(source: string, component: string) {
   return (source.match(new RegExp(`<${component}\\b`, 'g')) ?? []).length;
 }

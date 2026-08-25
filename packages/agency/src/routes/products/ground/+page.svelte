@@ -141,9 +141,9 @@
   lede="Ground computes evidence for TypeScript and JavaScript code claims. It also understands SvelteKit routes, aliases, component scripts, actions, stores, and entry points."
   density="compact"
   media={{
-    src: '/images/performance-lab/pressure-boundary-natural.webp',
-    mobileSrc: '/images/performance-lab/pressure-boundary-natural-mobile.webp',
-    alt: 'Black-and-white view of a controlled pressure boundary holding a precise line'
+    src: '/images/performance-lab/ground-verification-instrument.webp',
+    mobileSrc: '/images/performance-lab/ground-verification-instrument-mobile.webp',
+    alt: 'Two code artifacts feed a comparison ring while an unverified claim is stopped and a proof receipt exits'
   }}
   proof={[
     { label: 'Languages', value: 'TS + JS' },
