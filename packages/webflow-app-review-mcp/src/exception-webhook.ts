@@ -42,8 +42,9 @@ export interface RegisteredWebhook {
   retry?: {
     cursor: number;
     attempts: number;
-    lastError: string;
+    lastError?: string;
     updatedAt: string;
+    completedSteps?: Record<string, unknown>;
   };
 }
 
@@ -391,6 +392,10 @@ interface PayloadListResponse {
   mightHaveMore: boolean;
 }
 
+interface PayloadStepCheckpoint {
+  run<T>(key: string, operation: () => Promise<T>): Promise<T>;
+}
+
 export interface ExceptionWebhookProcessorDeps {
   airtable: AirtableClient;
   slack: SlackClient;
@@ -493,9 +498,29 @@ async function runProcessingPass(
 
       const payload = page.payloads[0];
       if (payload) {
+        const previousRetry = webhook.retry?.cursor === cursor ? webhook.retry : undefined;
+        const completedSteps = previousRetry?.completedSteps ?? {};
+        const checkpoint: PayloadStepCheckpoint = {
+          async run<T>(key: string, operation: () => Promise<T>): Promise<T> {
+            if (Object.prototype.hasOwnProperty.call(completedSteps, key)) {
+              return completedSteps[key] as T;
+            }
+            const value = await operation();
+            completedSteps[key] = value === undefined ? true : value;
+            webhook.retry = {
+              cursor,
+              attempts: webhook.retry?.cursor === cursor ? webhook.retry.attempts : 0,
+              lastError: webhook.retry?.cursor === cursor ? webhook.retry.lastError : undefined,
+              updatedAt: new Date().toISOString(),
+              completedSteps,
+            };
+            await deps.store.put(state);
+            return value;
+          },
+        };
         result.processedPayloads += 1;
         try {
-          await handlePayload(deps, webhook.tableId, payload, result);
+          await handlePayload(deps, webhook.tableId, payload, result, checkpoint);
         } catch (error) {
           const errorMessage = String(error);
           result.errors.push(`payload (${webhook.tableId}): ${errorMessage}`);
@@ -509,6 +534,7 @@ async function runProcessingPass(
               attempts,
               lastError: errorMessage,
               updatedAt: new Date().toISOString(),
+              completedSteps,
             };
             await deps.store.put(state);
             break;
@@ -554,6 +580,7 @@ async function handlePayload(
   tableId: string,
   payload: AirtableWebhookPayload,
   result: ProcessResult,
+  checkpoint: PayloadStepCheckpoint,
 ): Promise<void> {
   const table = payload.changedTablesById?.[tableId];
   if (!table?.changedRecordsById) return;
@@ -565,16 +592,40 @@ async function handlePayload(
     if (tableId === TABLE_IDS.assetVersions) {
       if (FIELD_IDS.versions.exceptionStatus in cells) {
         const status = selectName(cells[FIELD_IDS.versions.exceptionStatus]);
-        await handleVersionExceptionStatus(deps, recordId, status, user, result);
+        await handleVersionExceptionStatus(
+          deps,
+          recordId,
+          status,
+          user,
+          result,
+          checkpoint,
+          `${recordId}:${FIELD_IDS.versions.exceptionStatus}`,
+        );
       }
       if (FIELD_IDS.versions.holdReason in cells) {
         const holdReason = selectName(cells[FIELD_IDS.versions.holdReason]);
-        await handleVersionHold(deps, recordId, holdReason, user, result);
+        await handleVersionHold(
+          deps,
+          recordId,
+          holdReason,
+          user,
+          result,
+          checkpoint,
+          `${recordId}:${FIELD_IDS.versions.holdReason}`,
+        );
       }
     } else if (tableId === TABLE_IDS.exceptions) {
       if (FIELD_IDS.exceptions.status in cells) {
         const status = selectName(cells[FIELD_IDS.exceptions.status]);
-        await handleExceptionItemStatus(deps, recordId, status, user, result);
+        await handleExceptionItemStatus(
+          deps,
+          recordId,
+          status,
+          user,
+          result,
+          checkpoint,
+          `${recordId}:${FIELD_IDS.exceptions.status}`,
+        );
       }
     }
   }
@@ -594,6 +645,8 @@ async function ensureThreadRoot(
   ctx: VersionExceptionWebhookContext,
   rootText: string | null,
   result: ProcessResult,
+  checkpoint: PayloadStepCheckpoint,
+  stepPrefix: string,
 ): Promise<string> {
   if (ctx.exceptionSlackTs) return ctx.exceptionSlackTs;
   const text =
@@ -602,8 +655,12 @@ async function ensureThreadRoot(
       `:scales: *Exception thread* — ${versionHeader(ctx)}`,
       `Decisions live on the Asset Version: ${versionLink(deps, ctx.id)}`,
     ].join('\n');
-  const posted = await deps.slack.postMessage({ channel: deps.exceptionChannelId, text });
-  await deps.airtable.writeVersionExceptionSlackTs(ctx.id, posted.ts);
+  const posted = await checkpoint.run(`${stepPrefix}:thread-root-post`, () =>
+    deps.slack.postMessage({ channel: deps.exceptionChannelId, text }),
+  );
+  await checkpoint.run(`${stepPrefix}:thread-root-write`, () =>
+    deps.airtable.writeVersionExceptionSlackTs(ctx.id, posted.ts),
+  );
   ctx.exceptionSlackTs = posted.ts;
   result.actions.push(`thread-root ${ctx.id}`);
   return posted.ts;
@@ -613,8 +670,12 @@ async function replyInThread(
   deps: ExceptionWebhookProcessorDeps,
   threadTs: string,
   text: string,
+  checkpoint: PayloadStepCheckpoint,
+  stepKey: string,
 ): Promise<void> {
-  await deps.slack.postMessage({ channel: deps.exceptionChannelId, text, threadTs });
+  await checkpoint.run(stepKey, () =>
+    deps.slack.postMessage({ channel: deps.exceptionChannelId, text, threadTs }),
+  );
 }
 
 async function handleVersionExceptionStatus(
@@ -623,6 +684,8 @@ async function handleVersionExceptionStatus(
   status: string | null,
   user: WebhookPayloadUser | null,
   result: ProcessResult,
+  checkpoint: PayloadStepCheckpoint,
+  stepPrefix: string,
 ): Promise<void> {
   if (!status) return; // status cleared — nothing to narrate
   const ctx = await deps.airtable.getVersionExceptionWebhookContext(versionId);
@@ -645,25 +708,45 @@ async function handleVersionExceptionStatus(
       .join('\n');
 
     if (ctx.exceptionSlackTs) {
-      await replyInThread(deps, ctx.exceptionSlackTs, `:scales: Exception *re-requested* — ${header}${ctx.exceptionRationale ? `\n*Rationale:*\n${clip(ctx.exceptionRationale)}` : ''}`);
+      await replyInThread(
+        deps,
+        ctx.exceptionSlackTs,
+        `:scales: Exception *re-requested* — ${header}${ctx.exceptionRationale ? `\n*Rationale:*\n${clip(ctx.exceptionRationale)}` : ''}`,
+        checkpoint,
+        `${stepPrefix}:rerequest-reply`,
+      );
     } else {
-      const ts = await ensureThreadRoot(deps, ctx, rootText, result);
+      const ts = await ensureThreadRoot(deps, ctx, rootText, result, checkpoint, stepPrefix);
       if (ctx.reviewFeedback?.trim()) {
-        await replyInThread(deps, ts, `:memo: *Latest review feedback* (from 📝Review Feedback):\n${clip(ctx.reviewFeedback.trim(), 3500)}`);
+        await replyInThread(
+          deps,
+          ts,
+          `:memo: *Latest review feedback* (from 📝Review Feedback):\n${clip(ctx.reviewFeedback.trim(), 3500)}`,
+          checkpoint,
+          `${stepPrefix}:feedback-reply`,
+        );
       }
     }
     result.actions.push(`requested ${versionId}`);
 
     if (user?.email && !ctx.exceptionRequestedBy) {
-      await deps.airtable.stampVersionExceptionActor(versionId, 'requested', user.email);
+      await checkpoint.run(`${stepPrefix}:stamp-requested-by`, () =>
+        deps.airtable.stampVersionExceptionActor(versionId, 'requested', user.email!),
+      );
       result.actions.push(`stamp-requested-by ${versionId}`);
     }
     return;
   }
 
   if (status === '👀Under Review') {
-    const ts = await ensureThreadRoot(deps, ctx, null, result);
-    await replyInThread(deps, ts, `:eyes: Exception now *under review*${user?.name ? ` (${user.name})` : ''}.`);
+    const ts = await ensureThreadRoot(deps, ctx, null, result, checkpoint, stepPrefix);
+    await replyInThread(
+      deps,
+      ts,
+      `:eyes: Exception now *under review*${user?.name ? ` (${user.name})` : ''}.`,
+      checkpoint,
+      `${stepPrefix}:under-review-reply`,
+    );
     result.actions.push(`under-review ${versionId}`);
     return;
   }
@@ -674,15 +757,17 @@ async function handleVersionExceptionStatus(
 
     if (approved && deps.kb) {
       try {
-        const proposal = await deps.airtable.proposeReviewerExceptionGuidance({
-          apiKey: deps.kb.apiKey,
-          baseId: deps.kb.baseId,
-          tableId: deps.kb.tableId,
-          title: `App exception: ${ctx.name ?? versionId}${ctx.exceptionType ? ` — ${ctx.exceptionType}` : ''}`,
-          guidance: ctx.exceptionDecisionNotes || ctx.exceptionRationale || '',
-          sourceRecordId: versionId,
-          sourceUrl: `${deps.versionViewUrlBase}${versionId}`,
-        });
+        const proposal = await checkpoint.run(`${stepPrefix}:kb-proposal`, () =>
+          deps.airtable.proposeReviewerExceptionGuidance({
+            apiKey: deps.kb!.apiKey,
+            baseId: deps.kb!.baseId,
+            tableId: deps.kb!.tableId,
+            title: `App exception: ${ctx.name ?? versionId}${ctx.exceptionType ? ` — ${ctx.exceptionType}` : ''}`,
+            guidance: ctx.exceptionDecisionNotes || ctx.exceptionRationale || '',
+            sourceRecordId: versionId,
+            sourceUrl: `${deps.versionViewUrlBase}${versionId}`,
+          }),
+        );
         promotionNote = `\n\n:books: Proposed as reviewer-exception guidance (\`${proposal.id}\`) — needs curation before it becomes Active.`;
       } catch (error) {
         promotionNote = '\n\n:warning: Auto-proposal to the reviewer-exceptions base failed — propose manually.';
@@ -702,8 +787,14 @@ async function handleVersionExceptionStatus(
         .filter(Boolean)
         .join('\n') + promotionNote;
 
-    const ts = await ensureThreadRoot(deps, ctx, null, result);
-    await replyInThread(deps, ts, decisionText);
+    const ts = await ensureThreadRoot(deps, ctx, null, result, checkpoint, stepPrefix);
+    await replyInThread(
+      deps,
+      ts,
+      decisionText,
+      checkpoint,
+      `${stepPrefix}:decision-reply`,
+    );
     result.actions.push(`${approved ? 'approved' : 'denied'} ${versionId}`);
 
     if (ctx.submissionSlackTs && ctx.submissionSlackChannel) {
@@ -718,11 +809,13 @@ async function handleVersionExceptionStatus(
         .filter(Boolean)
         .join('\n');
       try {
-        await deps.slack.postMessage({
-          channel: ctx.submissionSlackChannel,
-          text: submissionText,
-          threadTs: ctx.submissionSlackTs,
-        });
+        await checkpoint.run(`${stepPrefix}:submission-thread-reply`, () =>
+          deps.slack.postMessage({
+            channel: ctx.submissionSlackChannel!,
+            text: submissionText,
+            threadTs: ctx.submissionSlackTs!,
+          }),
+        );
         result.actions.push(`submission-thread ${versionId}`);
       } catch (error) {
         result.errors.push(`submission-thread ${versionId}: ${String(error)}`);
@@ -730,7 +823,9 @@ async function handleVersionExceptionStatus(
     }
 
     if (user?.email && !ctx.exceptionDecisionBy) {
-      await deps.airtable.stampVersionExceptionActor(versionId, 'decision', user.email);
+      await checkpoint.run(`${stepPrefix}:stamp-decision-by`, () =>
+        deps.airtable.stampVersionExceptionActor(versionId, 'decision', user.email!),
+      );
       result.actions.push(`stamp-decision-by ${versionId}`);
     }
     return;
@@ -742,6 +837,8 @@ async function handleVersionExceptionStatus(
         deps,
         ctx.exceptionSlackTs,
         `:leftwards_arrow_with_hook: Exception request *withdrawn*${user?.name ? ` (${user.name})` : ''}.`,
+        checkpoint,
+        `${stepPrefix}:withdrawn-reply`,
       );
       result.actions.push(`withdrawn ${versionId}`);
     }
@@ -754,6 +851,8 @@ async function handleVersionHold(
   holdReason: string | null,
   user: WebhookPayloadUser | null,
   result: ProcessResult,
+  checkpoint: PayloadStepCheckpoint,
+  stepPrefix: string,
 ): Promise<void> {
   if (!holdReason) return;
   const ctx = await deps.airtable.getVersionExceptionWebhookContext(versionId);
@@ -767,7 +866,13 @@ async function handleVersionHold(
   ]
     .filter(Boolean)
     .join('\n');
-  await replyInThread(deps, ctx.exceptionSlackTs, text);
+  await replyInThread(
+    deps,
+    ctx.exceptionSlackTs,
+    text,
+    checkpoint,
+    `${stepPrefix}:hold-reply`,
+  );
   result.actions.push(`hold ${versionId}`);
 }
 
@@ -777,6 +882,8 @@ async function handleExceptionItemStatus(
   status: string | null,
   user: WebhookPayloadUser | null,
   result: ProcessResult,
+  checkpoint: PayloadStepCheckpoint,
+  stepPrefix: string,
 ): Promise<void> {
   if (!status) return;
   const item = await deps.airtable.getExceptionItemWebhookContext(itemId);
@@ -787,10 +894,14 @@ async function handleExceptionItemStatus(
 
   if (user?.email) {
     if (status === '🆕Requested' && !item.requestedBy) {
-      await deps.airtable.stampExceptionItemActor(itemId, 'requested', user.email);
+      await checkpoint.run(`${stepPrefix}:stamp-requested-by`, () =>
+        deps.airtable.stampExceptionItemActor(itemId, 'requested', user.email!),
+      );
       result.actions.push(`stamp-item-requested-by ${itemId}`);
     } else if ((status === '✅Approved' || status === '❌Denied') && !item.decisionBy) {
-      await deps.airtable.stampExceptionItemActor(itemId, 'decision', user.email);
+      await checkpoint.run(`${stepPrefix}:stamp-decision-by`, () =>
+        deps.airtable.stampExceptionItemActor(itemId, 'decision', user.email!),
+      );
       result.actions.push(`stamp-item-decision-by ${itemId}`);
     }
   }
@@ -827,7 +938,13 @@ async function handleExceptionItemStatus(
   }
 
   if (!text) return;
-  const ts = await ensureThreadRoot(deps, ctx, null, result);
-  await replyInThread(deps, ts, text);
+  const ts = await ensureThreadRoot(deps, ctx, null, result, checkpoint, stepPrefix);
+  await replyInThread(
+    deps,
+    ts,
+    text,
+    checkpoint,
+    `${stepPrefix}:status-reply`,
+  );
   result.actions.push(`item ${status} ${itemId}`);
 }

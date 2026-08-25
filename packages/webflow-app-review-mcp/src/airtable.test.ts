@@ -98,6 +98,10 @@ describe('AirtableClient exception handling', () => {
                 [FIELD_IDS.versions.assetLink]: ['recAssetA'],
                 [FIELD_IDS.versions.assetRecordIdRollup]: ['recAssetA'],
                 [FIELD_IDS.versions.exceptionStatus]: '🆕Requested',
+                [FIELD_IDS.versions.exceptionItemsLink]: Array.from(
+                  { length: 101 },
+                  (_, index) => `recException${index}`,
+                ),
               },
             },
             {
@@ -122,6 +126,10 @@ describe('AirtableClient exception handling', () => {
         return jsonResponse(assetRecord(assetMatch[1]!));
       }
 
+      if (url.pathname.endsWith(`/${TABLE_IDS.exceptions}`)) {
+        return jsonResponse({ records: [] });
+      }
+
       return new Response('not found', { status: 404 });
     });
     const client = new AirtableClient({
@@ -136,7 +144,11 @@ describe('AirtableClient exception handling', () => {
 
     expect(queue).toHaveLength(2);
     expect(maxActiveAssetRequests).toBe(1);
-    expect(sleeps).toEqual([250, 250]);
+    expect(sleeps).toEqual([250, 250, 250, 250, 250]);
+    const exceptionReads = fetchFn.mock.calls
+      .map(([input]) => new URL(String(input)))
+      .filter((url) => url.pathname.endsWith(`/${TABLE_IDS.exceptions}`));
+    expect(exceptionReads).toHaveLength(3);
   });
 
   it('writes exception and hold fields via updateVersionReview', async () => {

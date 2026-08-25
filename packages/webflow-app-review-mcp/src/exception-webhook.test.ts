@@ -318,6 +318,51 @@ describe('processExceptionWebhookPayloads', () => {
     expect(store.state?.webhooks.find((w) => w.id === 'achVersions')?.cursor).toBe(1);
   });
 
+  it('does not repeat successful side effects within a retried payload', async () => {
+    const payload: AirtableWebhookPayload = {
+      actionMetadata: { source: 'client' },
+      changedTablesById: {
+        [TABLE_IDS.assetVersions]: {
+          changedRecordsById: {
+            recVersion1: {
+              current: {
+                cellValuesByFieldId: {
+                  [V.exceptionStatus]: { id: 'sel', name: '🆕Requested' },
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+    const stub = buildFetchStub({ payloadsByWebhook: { achVersions: [payload] } });
+    let slackAttempts = 0;
+    let successfulSlackCalls = 0;
+    const failFeedbackOnce: typeof fetch = async (input, init) => {
+      if (String(input).startsWith('https://slack.com/api/chat.postMessage')) {
+        slackAttempts += 1;
+        if (slackAttempts === 2) throw new Error('feedback reply failed');
+        successfulSlackCalls += 1;
+      }
+      return (stub.fetchFn as unknown as typeof fetch)(input, init);
+    };
+    const store = memoryStore(baseState());
+    const deps = buildDeps(failFeedbackOnce, store);
+
+    const first = await processExceptionWebhookPayloads(deps);
+    expect(first.errors.some((error) => error.includes('feedback reply failed'))).toBe(true);
+    expect(store.state?.webhooks.find((webhook) => webhook.id === 'achVersions')?.cursor).toBe(1);
+
+    const second = await processExceptionWebhookPayloads(deps);
+    expect(second.errors).toEqual([]);
+    expect(store.state?.webhooks.find((webhook) => webhook.id === 'achVersions')?.cursor).toBe(2);
+    expect(successfulSlackCalls).toBe(2);
+    const slackTsWrites = stub.airtableWrites.filter((write) =>
+      JSON.stringify(write.body).includes(V.exceptionSlackTs),
+    );
+    expect(slackTsWrites).toHaveLength(1);
+  });
+
   it('checkpoints successful payloads before retrying a later payload', async () => {
     const underReviewPayload: AirtableWebhookPayload = {
       actionMetadata: { source: 'client' },

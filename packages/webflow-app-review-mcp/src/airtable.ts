@@ -1582,10 +1582,10 @@ export class AirtableClient {
     );
 
     const exceptionItemIds = versions.flatMap((version) => version.exceptionItemIds ?? []);
-    if (exceptionItemIds.length > 0) {
-      await this.sleepFn(EXCEPTION_QUEUE_REQUEST_INTERVAL_MS);
-    }
-    const exceptionItems = await this.listExceptionItemsByIds(exceptionItemIds);
+    const exceptionItems = await this.listExceptionItemsByIds(
+      exceptionItemIds,
+      EXCEPTION_QUEUE_REQUEST_INTERVAL_MS,
+    );
     const itemsByVersionId = new Map<string, AppReviewExceptionItem[]>();
     for (const item of exceptionItems) {
       if (!item.assetVersionId) continue;
@@ -1792,7 +1792,10 @@ export class AirtableClient {
     return records.map((record) => mapExceptionItemRecord(record));
   }
 
-  async listExceptionItemsByIds(itemIds: string[]): Promise<AppReviewExceptionItem[]> {
+  async listExceptionItemsByIds(
+    itemIds: string[],
+    requestIntervalMs = 0,
+  ): Promise<AppReviewExceptionItem[]> {
     const uniqueIds = [...new Set(itemIds.filter(Boolean))];
     if (uniqueIds.length === 0) return [];
 
@@ -1800,6 +1803,7 @@ export class AirtableClient {
     const chunkSize = 50;
     const items: AppReviewExceptionItem[] = [];
     for (let i = 0; i < uniqueIds.length; i += chunkSize) {
+      if (requestIntervalMs > 0) await this.sleepFn(requestIntervalMs);
       const chunk = uniqueIds.slice(i, i + chunkSize);
       const records = await this.listRecords({
         tableId: TABLE_IDS.exceptions,
