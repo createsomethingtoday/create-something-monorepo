@@ -111,7 +111,23 @@ CREATE TRIGGER control_workflow_runtime_registration_matches_activation_on_updat
 BEFORE UPDATE OF run_json, status, version ON control_workflow_runtime_runs
 WHEN json_extract(NEW.run_json, '$.schema') = 'workflow_runtime_run.v0.2'
   AND (
-    json_extract(NEW.run_json, '$.registration.buildReleaseId') IS NULL
+    EXISTS (
+      SELECT 1 FROM control_workflow_runtime_receipts ledger_receipt
+      WHERE ledger_receipt.run_id = NEW.run_id
+        AND NOT EXISTS (
+          SELECT 1 FROM json_each(NEW.run_json, '$.receipts') checkpoint_receipt
+          WHERE json_extract(checkpoint_receipt.value, '$.id') IS ledger_receipt.id
+            AND json_extract(checkpoint_receipt.value, '$.runId') IS ledger_receipt.run_id
+            AND json_extract(checkpoint_receipt.value, '$.eventIndex') IS ledger_receipt.event_index
+            AND json_extract(checkpoint_receipt.value, '$.receiptSha256')
+              IS ledger_receipt.receipt_sha256
+            AND json_extract(checkpoint_receipt.value, '$.previousReceiptSha256')
+              IS ledger_receipt.previous_receipt_sha256
+            AND json_extract(checkpoint_receipt.value, '$.createdAt') IS ledger_receipt.created_at
+            AND json(checkpoint_receipt.value) IS json(ledger_receipt.receipt_json)
+        )
+    )
+    OR json_extract(NEW.run_json, '$.registration.buildReleaseId') IS NULL
     OR json_extract(NEW.run_json, '$.registration.contractSha256') IS NULL
     OR json_extract(NEW.run_json, '$.registration.runtimePolicySha256') IS NULL
     OR json_extract(NEW.run_json, '$.id') IS NOT NEW.run_id

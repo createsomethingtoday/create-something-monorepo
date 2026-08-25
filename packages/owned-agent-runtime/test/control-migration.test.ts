@@ -714,6 +714,18 @@ test('registration-binding migration binds an approval context to its parent, wa
   );
   expectSqlFailure(
     path,
+    `UPDATE control_workflow_runtime_runs
+     SET version = 3,
+         run_json = '${JSON.stringify({
+           ...run,
+           version: 3,
+           receipts: [{ ...receipt, actionId: 'forged-action', receiptSha256: hash('0') }]
+         })}'
+     WHERE run_id = 'run-a';`,
+    /registration does not match its frozen activation/
+  );
+  expectSqlFailure(
+    path,
     approvalSql('approval-malformed', context, {}),
     /approval context schema must match its checkpoint/
   );

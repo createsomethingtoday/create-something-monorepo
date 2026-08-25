@@ -284,8 +284,10 @@ and registration field sets as the runtime verifier. A persisted `@3` side-ledge
 receipt must match its checkpoint receipt by row identity, event sequence,
 complete JSON payload, embedded receipt hash, chain predecessor, and timestamp;
 the ledger cannot accept a forged compiler/action/evidence receipt beside an
-otherwise valid checkpoint. It also requires every registration-era field,
-including an explicit text or `null` action ID.
+otherwise valid checkpoint. Every later checkpoint update must retain each
+already-persisted side-ledger receipt under that same exact relation, so history
+cannot be rewritten after its immutable row exists. The ledger also requires
+every registration-era field, including an explicit text or `null` action ID.
 
 Every v2 receipt carries the existing receipt identity and chain pointers plus:
 
