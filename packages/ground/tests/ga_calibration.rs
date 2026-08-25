@@ -205,3 +205,32 @@ fn ga_svelte_instance_prop_is_not_a_dead_module_export() {
         "{content:#}"
     );
 }
+
+#[test]
+fn ga_used_typescript_export_is_not_dead() {
+    let directory = tempdir().unwrap();
+    let source = directory.path().join("src");
+    fs::create_dir_all(&source).unwrap();
+    let library = source.join("library.ts");
+    fs::write(
+        &library,
+        "export function normalize(value: string) { return value.trim(); }\n",
+    )
+    .unwrap();
+    fs::write(
+        source.join("consumer.ts"),
+        "import { normalize } from './library';\nconsole.log(normalize(' ground '));\n",
+    )
+    .unwrap();
+    let content = call(
+        directory.path(),
+        "ground_find_dead_exports",
+        json!({"module_path": library, "search_scope": directory.path()}),
+    );
+    assert_eq!(content["total_exports"], 1, "{content:#}");
+    assert_eq!(
+        content["dead_exports"].as_array().unwrap().len(),
+        0,
+        "{content:#}"
+    );
+}

@@ -93,6 +93,9 @@ export function validateLedger(ledger) {
       receipt.observed_findings,
       `records[${index}].receipt.observed_findings`
     );
+    if (receipt.completion === 'complete' && receipt.execution_failures === undefined) {
+      fail(`records[${index}].receipt complete receipt requires execution_failures`);
+    }
     if (receipt.execution_failures !== undefined) {
       requireCount(receipt.execution_failures, `records[${index}].receipt.execution_failures`);
     }

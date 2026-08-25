@@ -3,13 +3,13 @@
   "captured_at": "2026-08-24",
   "command": "cargo test --manifest-path packages/ground/Cargo.toml --test ga_calibration -- --nocapture",
   "result": {
-    "passed": 10,
+    "passed": 12,
     "failed": 0,
     "execution_failures": 0
   },
   "method": [
     "Each case creates an isolated deterministic fixture and invokes Ground through its public MCP tool-call boundary.",
-    "Each case contains one independently authored positive condition and asserts exactly one expected finding.",
+    "Ten positive cases contain one independently authored condition and assert exactly one expected finding; two negative cases assert that supported component API and a consumed export remain clean.",
     "Correlated duplicate pairs count as one finding, and no out-of-scope observation is counted as calibration evidence."
   ],
   "cases": [
@@ -72,6 +72,18 @@
       "check": "dead_exports",
       "language": "svelte",
       "expected_findings": 1
+    },
+    {
+      "id": "ga_svelte_instance_prop_is_not_a_dead_module_export",
+      "check": "dead_exports",
+      "language": "svelte",
+      "expected_findings": 0
+    },
+    {
+      "id": "ga_used_typescript_export_is_not_dead",
+      "check": "dead_exports",
+      "language": "typescript",
+      "expected_findings": 0
     }
   ]
 }

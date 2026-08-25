@@ -30,7 +30,8 @@ function fixture(overrides = {}) {
           id: 'pr-1',
           source: 'https://example.test/pr/1',
           completion: 'complete',
-          observed_findings: 2
+          observed_findings: 2,
+          execution_failures: 0
         },
         verdicts: [
           {
@@ -98,13 +99,25 @@ test('rejects missing rationale, unknown verdicts, duplicate receipt ids, and ve
   const invalid = fixture({
     records: [
       {
-        receipt: { id: 'same', source: 'one', completion: 'complete', observed_findings: 0 },
+        receipt: {
+          id: 'same',
+          source: 'one',
+          completion: 'complete',
+          observed_findings: 0,
+          execution_failures: 0
+        },
         verdicts: [
           { finding_id: 'finding', check: 'duplicates', verdict: 'unknown', rationale: '' }
         ]
       },
       {
-        receipt: { id: 'same', source: 'two', completion: 'complete', observed_findings: 0 },
+        receipt: {
+          id: 'same',
+          source: 'two',
+          completion: 'complete',
+          observed_findings: 0,
+          execution_failures: 0
+        },
         verdicts: []
       }
     ]
@@ -113,6 +126,15 @@ test('rejects missing rationale, unknown verdicts, duplicate receipt ids, and ve
   assert.throws(
     () => validateLedger(invalid),
     /duplicate receipt id|unknown verdict|rationale|more verdicts/i
+  );
+});
+
+test('complete receipts require explicit execution-failure evidence', () => {
+  const ledger = fixture();
+  delete ledger.records[0].receipt.execution_failures;
+  assert.throws(
+    () => validateLedger(ledger),
+    /complete receipt.*execution_failures|execution_failures.*complete receipt/i
   );
 });
 
@@ -168,7 +190,8 @@ test('out-of-scope classifications remain auditable but do not satisfy the calib
           id: 'preexisting-pairs',
           source: 'https://example.test/pr/preexisting',
           completion: 'complete',
-          observed_findings: 2
+          observed_findings: 2,
+          execution_failures: 0
         },
         verdicts: [
           {
@@ -234,7 +257,7 @@ test('the repository ledger meets the advisory calibration policy without counti
   const ledger = JSON.parse(readFileSync(repositoryLedgerPath, 'utf8'));
   const summary = summarizeLedger(ledger);
 
-  assert.deepEqual(summary.receipts, { total: 33, complete: 14, partial: 12, no_analyzable: 7 });
+  assert.deepEqual(summary.receipts, { total: 35, complete: 14, partial: 14, no_analyzable: 7 });
   assert.deepEqual(summary.findings, {
     observed: 25,
     classified: 25,
