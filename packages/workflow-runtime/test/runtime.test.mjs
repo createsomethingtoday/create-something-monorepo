@@ -400,6 +400,46 @@ test('the zero-write core records retryable failure, recovery, terminal failure,
   await verifyWorkflowRuntimeRun(parsed, cancelled);
 });
 
+test('a retryable pass cannot be requeued with a recovery receipt for another step version', async () => {
+  const onePass = parseWorkflowRuntimeManifest({ ...manifest, steps: [manifest.steps[0]] });
+  const initial = await createWorkflowRuntimeRun(onePass, admission);
+  const pass = await planWorkflowRuntimeStep(onePass, initial);
+  assert.equal(pass.type, 'pass');
+  const prepared = await reduceWorkflowRuntimeRun(onePass, initial, {
+    type: 'effect_intent',
+    stepId: 'collect',
+    attemptId: 'recovery-receipt-attempt',
+    capability: pass.capability,
+    observedAt: '2026-08-25T00:00:00.500Z'
+  });
+  const retryable = await reduceWorkflowRuntimeRun(onePass, prepared, {
+    type: 'attempt_failed',
+    stepId: 'collect',
+    attemptId: 'recovery-receipt-attempt',
+    class: 'retryable',
+    verifier: 'fixture-verifier',
+    failureDigest: digest('a'),
+    observedAt: '2026-08-25T00:00:01.000Z'
+  });
+  const recovered = await reduceWorkflowRuntimeRun(onePass, retryable, {
+    type: 'recovery_requested',
+    stepId: 'collect',
+    actorSubject: 'owner-1',
+    observedAt: '2026-08-25T00:00:01.500Z'
+  });
+  const forged = structuredClone(recovered);
+  forged.receipts.at(-1).stepVersion -= 1;
+  forged.receipts.at(-1).checkpointSha256 = await workflowRuntimeCheckpointHash(forged);
+  {
+    const { receiptSha256, ...unsigned } = forged.receipts.at(-1);
+    forged.receipts.at(-1).receiptSha256 = await workflowRuntimeReceiptHash(unsigned);
+  }
+  await assert.rejects(
+    () => verifyWorkflowRuntimeRun(onePass, forged),
+    (error) => error instanceof RuntimeValidationError && error.code === 'INVALID_STATE'
+  );
+});
+
 test('unknown manifest fields and a corrupt receipt chain fail closed before resume', async () => {
   assert.throws(
     () => parseWorkflowRuntimeManifest({ ...manifest, unexpected: true }),

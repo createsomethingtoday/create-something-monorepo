@@ -147,6 +147,44 @@ function decisionEvidenceDigest(decision: CompiledDecisionV0_3): string {
   });
 }
 
+function actionTransition(bundle: CompiledWorkflowBundleV0_3, actionId: string) {
+  const action = `action:${actionId}`;
+  const entering = bundle.workflowMap.edges.filter(
+    (edge) => edge.kind === 'transitions' && edge.to === action && edge.from.startsWith('state:')
+  );
+  const leaving = bundle.workflowMap.edges.filter(
+    (edge) => edge.kind === 'transitions' && edge.from === action && edge.to.startsWith('state:')
+  );
+  if (entering.length !== 1 || leaving.length !== 1) {
+    throw new WorkflowRuntimeManifestError(
+      'INVALID_RUNTIME_MANIFEST_INPUT',
+      `Runtime action ${actionId} must have one exact compiled workflow transition.`
+    );
+  }
+  return { from: entering[0].from, to: leaving[0].to };
+}
+
+function requireCompiledDependencies(
+  bundle: CompiledWorkflowBundleV0_3,
+  steps: Array<{ id: string; actionId: string; dependsOn: string[] }>
+): void {
+  const byId = new Map(steps.map((step) => [step.id, step]));
+  for (const step of steps) {
+    if (step.dependsOn.length === 0) continue;
+    const dependency = byId.get(step.dependsOn[0]);
+    if (!dependency) continue;
+    if (
+      actionTransition(bundle, dependency.actionId).to !==
+      actionTransition(bundle, step.actionId).from
+    ) {
+      throw new WorkflowRuntimeManifestError(
+        'INVALID_RUNTIME_MANIFEST_INPUT',
+        'Runtime step dependency does not follow the compiled workflow transition.'
+      );
+    }
+  }
+}
+
 function stepFromDecision(
   decision: CompiledDecisionV0_3,
   input: { id: string; dependsOn: string[] },
@@ -292,6 +330,7 @@ export function createWorkflowRuntimeManifest(
   const decisions = new Map(
     bundle.decisionInventory.decisions.map((decision) => [decision.actionId, decision])
   );
+  requireCompiledDependencies(bundle, steps);
   return {
     schemaVersion: 'workflow_runtime_manifest.v0.1',
     runtimeCompatibility: 'workflow-runtime.v0.1',

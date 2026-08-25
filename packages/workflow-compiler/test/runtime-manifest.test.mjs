@@ -23,13 +23,13 @@ test('emits an explicit runtime manifest inside a signed compiler artifact inven
     target: 'create-something/control-runtime.v1',
     approvalExpiresAt: '2026-08-26T00:00:00.000Z',
     steps: [
-      { id: 'validate', actionId: 'run_published_validation', dependsOn: [] },
+      { id: 'validate', actionId: 'validate_submission', dependsOn: [] },
       { id: 'approve', actionId: 'approve_template', dependsOn: ['validate'] }
     ]
   });
   assert.equal(runtimeManifest.schemaVersion, 'workflow_runtime_manifest.v0.1');
   assert.equal(runtimeManifest.steps[0].disposition, 'pass');
-  assert.equal(runtimeManifest.steps[0].actionId, 'run_published_validation');
+  assert.equal(runtimeManifest.steps[0].actionId, 'validate_submission');
   assert.equal(runtimeManifest.steps[1].disposition, 'wait');
 
   const root = await mkdtemp(join(tmpdir(), 'workflow-runtime-artifact-'));
@@ -64,7 +64,7 @@ test('rejects a tampered runtime manifest and a graph that could create concurre
     target: 'create-something/control-runtime.v1',
     approvalExpiresAt: '2026-08-26T00:00:00.000Z',
     steps: [
-      { id: 'validate', actionId: 'run_published_validation', dependsOn: [] },
+      { id: 'validate', actionId: 'validate_submission', dependsOn: [] },
       { id: 'approve', actionId: 'approve_template', dependsOn: ['validate'] }
     ]
   };
@@ -82,7 +82,14 @@ test('rejects a tampered runtime manifest and a graph that could create concurre
   const root = await mkdtemp(join(tmpdir(), 'workflow-runtime-tamper-'));
   try {
     await assert.rejects(
-      () => writeCompiledWorkflowArtifacts(bundle, join(root, 'artifact'), undefined, undefined, tampered),
+      () =>
+        writeCompiledWorkflowArtifacts(
+          bundle,
+          join(root, 'artifact'),
+          undefined,
+          undefined,
+          tampered
+        ),
       /exact compiled workflow artifact family/
     );
   } finally {
@@ -95,9 +102,20 @@ test('rejects a tampered runtime manifest and a graph that could create concurre
         steps: [
           input.steps[0],
           input.steps[1],
-          { id: 'duplicate-ready', actionId: 'validate_submission', dependsOn: ['validate'] }
+          { id: 'duplicate-ready', actionId: 'request_changes', dependsOn: ['validate'] }
         ]
       }),
     /one deterministic successor/
+  );
+  assert.throws(
+    () =>
+      createWorkflowRuntimeManifest(bundle, {
+        ...input,
+        steps: [
+          { id: 'validation-request', actionId: 'run_published_validation', dependsOn: [] },
+          { id: 'approve', actionId: 'approve_template', dependsOn: ['validation-request'] }
+        ]
+      }),
+    /compiled workflow transition/
   );
 });

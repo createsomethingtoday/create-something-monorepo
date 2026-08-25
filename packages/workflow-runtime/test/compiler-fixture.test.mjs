@@ -32,7 +32,7 @@ test('the runtime admits a serialized manifest only after the compiler inventory
     target: 'create-something/control-runtime.v1',
     approvalExpiresAt: '2026-08-26T00:00:00.000Z',
     steps: [
-      { id: 'validate', actionId: 'run_published_validation', dependsOn: [] },
+      { id: 'validate', actionId: 'validate_submission', dependsOn: [] },
       { id: 'approve', actionId: 'approve_template', dependsOn: ['validate'] }
     ]
   });

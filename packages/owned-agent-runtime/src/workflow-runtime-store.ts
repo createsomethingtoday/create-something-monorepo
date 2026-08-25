@@ -7,9 +7,15 @@ import {
 } from '@createsomething/workflow-runtime';
 
 type RuntimeRow = { run_json: string };
-type CommandRow = { id: string; run_id: string; command_sha256: string; result_json: string | null };
+type CommandRow = {
+  id: string;
+  run_id: string;
+  command_sha256: string;
+  result_json: string | null;
+};
 
 const COMMAND_DIGEST = /^[a-f0-9]{64}$/;
+const LIVE_PARENT_STATUSES = "'queued', 'running', 'waiting_for_approval', 'recovering'";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -82,6 +88,12 @@ export class D1WorkflowRuntimeCheckpointStore implements WorkflowRuntimeCheckpoi
         'Idempotency key is pending for another Workflow Runtime run'
       );
     }
+    if (!(await this.parentAuthorizes(input.scope, input.run.id))) {
+      throw new RuntimeValidationError(
+        'INVALID_STATE',
+        'Runtime parent Control run no longer authorizes progress'
+      );
+    }
 
     const serialized = JSON.stringify(input.run);
     const issuedAt = input.run.receipts.at(-1)?.createdAt;
@@ -108,6 +120,7 @@ export class D1WorkflowRuntimeCheckpointStore implements WorkflowRuntimeCheckpoi
                WHERE id = ?1 AND account_id = ?8 AND tenant_id = ?9 AND workspace_account_id = ?10
                  AND activation_id = ?11 AND activation_version = ?12
                  AND json_extract(activation_json, '$.policySha256') = substr(?13, 8)
+                 AND status IN (${LIVE_PARENT_STATUSES})
              )`
           )
           .bind(
@@ -135,7 +148,12 @@ export class D1WorkflowRuntimeCheckpointStore implements WorkflowRuntimeCheckpoi
           .prepare(
             `UPDATE control_workflow_runtime_commands
              SET expected_version = ?1
-             WHERE id = ?2 AND command_sha256 = ?3 AND result_json IS NULL`
+             WHERE id = ?2 AND command_sha256 = ?3 AND result_json IS NULL
+               AND EXISTS (
+                 SELECT 1 FROM control_runs control
+                 WHERE control.id = control_workflow_runtime_commands.run_id
+                   AND control.status IN (${LIVE_PARENT_STATUSES})
+               )`
           )
           .bind(input.expectedVersion, commandId, commandSha256)
       );
@@ -143,7 +161,7 @@ export class D1WorkflowRuntimeCheckpointStore implements WorkflowRuntimeCheckpoi
       statements.push(
         this.database
           .prepare(
-          `INSERT INTO control_workflow_runtime_commands
+            `INSERT INTO control_workflow_runtime_commands
             (id, run_id, account_id, tenant_id, workspace_account_id, idempotency_key,
              command_sha256, expected_version, result_json, created_at)
            SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, NULL, ?9
@@ -152,20 +170,21 @@ export class D1WorkflowRuntimeCheckpointStore implements WorkflowRuntimeCheckpoi
              JOIN control_runs control ON control.id = runtime.run_id
              WHERE runtime.run_id = ?2 AND control.account_id = ?3
                AND control.tenant_id = ?4 AND control.workspace_account_id = ?5
+               AND control.status IN (${LIVE_PARENT_STATUSES})
                AND (?8 IS NOT NULL OR runtime.admission_command_id = ?10)
            )`
-        )
-        .bind(
-          commandId,
-          input.run.id,
-          input.scope.accountId,
-          input.scope.tenantId,
-          input.scope.workspaceAccountId,
-          input.idempotencyKey,
-          commandSha256,
-          input.expectedVersion,
-          issuedAt,
-          commandId
+          )
+          .bind(
+            commandId,
+            input.run.id,
+            input.scope.accountId,
+            input.scope.tenantId,
+            input.scope.workspaceAccountId,
+            input.idempotencyKey,
+            commandSha256,
+            input.expectedVersion,
+            issuedAt,
+            commandId
           )
       );
     }
@@ -177,7 +196,12 @@ export class D1WorkflowRuntimeCheckpointStore implements WorkflowRuntimeCheckpoi
             `UPDATE control_workflow_runtime_runs SET
                status = ?1, version = ?2, run_json = ?3, updated_at = ?4
              WHERE run_id = ?5 AND version = ?6
-               AND EXISTS (SELECT 1 FROM control_workflow_runtime_commands WHERE id = ?7)`
+               AND EXISTS (SELECT 1 FROM control_workflow_runtime_commands WHERE id = ?7)
+               AND EXISTS (
+                 SELECT 1 FROM control_runs control
+                 WHERE control.id = control_workflow_runtime_runs.run_id
+                   AND control.status IN (${LIVE_PARENT_STATUSES})
+               )`
           )
           .bind(
             input.run.status,
@@ -401,6 +425,18 @@ export class D1WorkflowRuntimeCheckpointStore implements WorkflowRuntimeCheckpoi
       )
       .bind(idempotencyKey, scope.accountId, scope.tenantId, scope.workspaceAccountId)
       .first<CommandRow>();
+  }
+
+  private async parentAuthorizes(scope: WorkflowRuntimeScope, runId: string): Promise<boolean> {
+    const row = await this.database
+      .prepare(
+        `SELECT id FROM control_runs
+         WHERE id = ?1 AND account_id = ?2 AND tenant_id = ?3 AND workspace_account_id = ?4
+           AND status IN (${LIVE_PARENT_STATUSES})`
+      )
+      .bind(runId, scope.accountId, scope.tenantId, scope.workspaceAccountId)
+      .first<{ id: string }>();
+    return Boolean(row);
   }
 
   private replayResult(row: CommandRow, digestValue: string): WorkflowRuntimeRun {

@@ -236,9 +236,10 @@ step map, then emits an integrity-bound `workflow_runtime_manifest.v0.1`.
 Callers may pass that artifact as the runtime-manifest option to
 `writeCompiledWorkflowArtifacts` to include it in the signed artifact
 inventory. The runtime manifest carries each compiler action ID and permits a
-single reachable serial step chain, so a caller cannot substitute a different
-autonomy, capability, approval binding, dependency graph, or evidence digest
-before the compiler signs it. It creates no execution request, credential, deployment, or
+single reachable serial step chain whose dependencies must follow exact compiled
+workflow transitions, so a caller cannot substitute a different autonomy,
+capability, approval binding, dependency graph, or evidence digest before the
+compiler signs it. It creates no execution request, credential, deployment, or
 approval decision; an execution host must separately verify, persist, and
 apply it.
 

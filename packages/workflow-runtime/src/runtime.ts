@@ -1150,6 +1150,27 @@ async function assertRunSemantics(
     if (attempts.some((attempt) => attempt.status === 'failed') && typedState.status !== 'failed') {
       stateFailure('Runtime checkpoint cannot requeue a terminally failed pass attempt');
     }
+    if (
+      typedState.status === 'ready' &&
+      attempts.some((attempt) => attempt.status === 'retryable_failure')
+    ) {
+      const recovered = receipts.at(-1);
+      if (
+        !recovered ||
+        recovered.eventType !== 'recovered' ||
+        recovered.status !== 'queued' ||
+        recovered.runVersion !== run.version ||
+        recovered.stepId !== typedState.id ||
+        recovered.stepVersion !== typedState.version ||
+        recovered.attemptId !== null ||
+        recovered.evidenceDigest !== definition.evidenceDigest ||
+        recovered.actorSubject === null ||
+        recovered.verifier !== 'manual-fallback' ||
+        recovered.outcome !== 'manual fallback requeued the failed step'
+      ) {
+        stateFailure('Runtime checkpoint retry recovery is not bound to its requeued step');
+      }
+    }
     const abandoned = attempts.filter((attempt) => attempt.status === 'abandoned');
     const terminalEvent =
       run.status === 'blocked' ? 'blocked' : run.status === 'cancelled' ? 'cancelled' : null;

@@ -250,6 +250,41 @@ test('D1 checkpoint store survives a process restart, replays exactly, and retai
   );
 });
 
+test('D1 refuses a child transition after its parent Control run is stopped', async () => {
+  const { path, service } = fixture();
+  const parent = await service.start(scope, owner, {
+    activationId: 'activation-a', idempotencyKey: 'parent-runtime-stopped',
+    requestedTools: [], requestedResources: [], concurrencyKey: 'runtime-stopped'
+  });
+  const initial = await createWorkflowRuntimeRun(runtimeManifest, {
+    runId: parent.id,
+    activation: { id: 'activation-a', version: 1, policySha256: runtimeDigest('6') },
+    artifactManifestSha256: runtimeDigest('7'), runtimeManifestSha256: runtimeDigest('8'),
+    clock: '2026-08-25T00:00:00.000Z'
+  });
+  const store = new D1WorkflowRuntimeCheckpointStore(d1(path));
+  await store.apply({
+    scope, run: initial, expectedVersion: null,
+    idempotencyKey: 'stopped-parent-admission', commandDigest: 'a'.repeat(64)
+  });
+  await service.stop(scope, owner, parent.id, 'stop-runtime-parent', 'operator stopped parent run');
+  const definition = runtimeManifest.steps[0];
+  assert.equal(definition.disposition, 'pass');
+  const intent = await reduceWorkflowRuntimeRun(runtimeManifest, initial, {
+    type: 'effect_intent', stepId: 'collect', attemptId: 'parent-stopped-attempt',
+    capability: definition.capability,
+    observedAt: '2026-08-25T00:00:01.000Z'
+  });
+  await assert.rejects(
+    store.apply({
+      scope, run: intent, expectedVersion: initial.version,
+      idempotencyKey: 'stopped-parent-intent', commandDigest: 'b'.repeat(64)
+    }),
+    /parent Control run no longer authorizes progress/
+  );
+  assert.deepEqual(await store.find(scope, parent.id), initial);
+});
+
 test('D1 leaves a stale operator-stop command retryable until it commits the latest checkpoint', async () => {
   const { path, service } = fixture();
   const parent = await service.start(scope, owner, {
