@@ -81,9 +81,10 @@ describe('AirtableClient scope and validation', () => {
 });
 
 describe('AirtableClient exception handling', () => {
-  it('hydrates pending exception queue assets sequentially', async () => {
+  it('paces pending exception queue asset hydration sequentially', async () => {
     let activeAssetRequests = 0;
     let maxActiveAssetRequests = 0;
+    const sleeps: number[] = [];
     const fetchFn = vi.fn(async (input: RequestInfo | URL) => {
       const url = new URL(String(input));
 
@@ -123,12 +124,19 @@ describe('AirtableClient exception handling', () => {
 
       return new Response('not found', { status: 404 });
     });
-    const client = new AirtableClient({ apiKey: 'token', fetchFn });
+    const client = new AirtableClient({
+      apiKey: 'token',
+      fetchFn,
+      sleepFn: async (ms) => {
+        sleeps.push(ms);
+      },
+    });
 
     const queue = await client.listPendingExceptionQueue();
 
     expect(queue).toHaveLength(2);
     expect(maxActiveAssetRequests).toBe(1);
+    expect(sleeps).toEqual([250, 250]);
   });
 
   it('writes exception and hold fields via updateVersionReview', async () => {
@@ -353,7 +361,7 @@ describe('AirtableClient retry behavior', () => {
     expect(health.ok).toBe(true);
     expect(callCount).toBe(3);
     expect(sleeps.length).toBe(2);
-    expect(sleeps[0]).toBeGreaterThan(0);
+    expect(sleeps).toEqual([30_000, 400]);
   });
 });
 

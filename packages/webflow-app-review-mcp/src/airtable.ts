@@ -47,6 +47,8 @@ export type ScopedTableId = (typeof TABLE_IDS)[keyof typeof TABLE_IDS];
 
 const SCOPED_TABLE_IDS = new Set<string>(Object.values(TABLE_IDS));
 const RETRYABLE_STATUS = new Set<number>([429, 500, 502, 503, 504]);
+const AIRTABLE_RATE_LIMIT_COOLDOWN_MS = 30_000;
+const EXCEPTION_QUEUE_REQUEST_INTERVAL_MS = 250;
 
 const ASSET_QUEUE_FIELD_IDS = [
   FIELD_IDS.assets.name,
@@ -1042,7 +1044,9 @@ export class AirtableClient {
 
         const body = await response.text();
         if (RETRYABLE_STATUS.has(response.status) && attempt < this.maxRetries) {
-          const waitMs = Math.min(200 * 2 ** attempt, 2000);
+          const waitMs = response.status === 429
+            ? AIRTABLE_RATE_LIMIT_COOLDOWN_MS
+            : Math.min(200 * 2 ** attempt, 2000);
           await this.sleepFn(waitMs);
           continue;
         }
@@ -1569,6 +1573,7 @@ export class AirtableClient {
     const assetIds = [...new Set(versions.map((version) => version.assetId).filter((id): id is string => Boolean(id)))];
     const assets: AppReviewAsset[] = [];
     for (const assetId of assetIds) {
+      await this.sleepFn(EXCEPTION_QUEUE_REQUEST_INTERVAL_MS);
       const asset = await this.getAssetById(assetId);
       if (asset) assets.push(asset);
     }
@@ -1576,9 +1581,11 @@ export class AirtableClient {
       assets.map((asset) => [asset.assetId, asset]),
     );
 
-    const exceptionItems = await this.listExceptionItemsByIds(
-      versions.flatMap((version) => version.exceptionItemIds ?? []),
-    );
+    const exceptionItemIds = versions.flatMap((version) => version.exceptionItemIds ?? []);
+    if (exceptionItemIds.length > 0) {
+      await this.sleepFn(EXCEPTION_QUEUE_REQUEST_INTERVAL_MS);
+    }
+    const exceptionItems = await this.listExceptionItemsByIds(exceptionItemIds);
     const itemsByVersionId = new Map<string, AppReviewExceptionItem[]>();
     for (const item of exceptionItems) {
       if (!item.assetVersionId) continue;
