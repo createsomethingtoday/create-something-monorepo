@@ -988,7 +988,7 @@ function buildGovernanceFindingFilter(query: GovernanceFindingQuery): string | u
 export class AirtableClient {
   private readonly apiKey: string;
   private readonly governanceApiKey: string;
-  private readonly baseId: string;
+  readonly baseId: string;
   private readonly governanceBaseId: string;
   private readonly governanceFindingsTableId: string;
   private readonly fetchFn: FetchFn;
@@ -1717,6 +1717,14 @@ export class AirtableClient {
       throw new AirtableClientError('VERSION_NOT_FOUND', `Asset Version ${versionId} was not found.`, 404);
     }
     return this.listExceptionItemsByIds(version.exceptionItemIds ?? []);
+  }
+
+  async listAllExceptionItems(): Promise<AppReviewExceptionItem[]> {
+    const records = await this.listRecords({
+      tableId: TABLE_IDS.exceptions,
+      fieldIds: [...EXCEPTION_ITEM_FIELD_IDS],
+    });
+    return records.map((record) => mapExceptionItemRecord(record));
   }
 
   async listExceptionItemsByIds(itemIds: string[]): Promise<AppReviewExceptionItem[]> {

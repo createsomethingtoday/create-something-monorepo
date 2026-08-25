@@ -9,7 +9,7 @@ Brokered, local, dormant, and non-HTTP servers are summarized but excluded from 
 ## Summary
 
 - MCP registry servers: 1041
-- Dify-direct candidates: 46
+- Dify-direct candidates: 43
 - Dify inventory status: `partial`
 - Dify MCP server cards in inventory: 17
 - Dify agents in inventory: 15
@@ -22,7 +22,7 @@ Brokered, local, dormant, and non-HTTP servers are summarized but excluded from 
 | `ready` | 5 | Mapped to a Dify server and published agent with smoke/eval gates. |
 | `agent-needs-gates` | 0 | Published agent exists but smoke/eval evidence is incomplete. |
 | `agent-draft` | 0 | Agent exists but is not published yet. |
-| `intake-ready` | 24 | Repo has a Dify Studio intake artifact, but the server card and discovered tools are not codified yet. |
+| `intake-ready` | 21 | Repo has a Dify Studio intake artifact, but the server card and discovered tools are not codified yet. |
 | `server-only` | 0 | Dify MCP server exists but no Dify agent uses it yet. |
 | `missing-dify-server` | 17 | No Dify MCP server card is codified for this registry server. |
 
@@ -30,8 +30,8 @@ Brokered, local, dormant, and non-HTTP servers are summarized but excluded from 
 
 | Reason | Count |
 | --- | ---: |
-| `brokered` | 987 |
-| `dormant` | 2 |
+| `brokered` | 986 |
+| `dormant` | 6 |
 | `local` | 0 |
 | `non-http` | 6 |
 
@@ -59,9 +59,6 @@ Brokered, local, dormant, and non-HTTP servers are summarized but excluded from 
 | `cs-telemetry` | `intake-ready` | - | `config/dify-mcp-intake/cs-telemetry.json` | - | - | 10 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
 | `gmail-notion-mcp` | `intake-ready` | - | `config/dify-mcp-intake/gmail-notion-mcp.json` | - | - | 0 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
 | `half-dozen-youtube-sync` | `intake-ready` | - | `config/dify-mcp-intake/youtube-sync.json` | - | - | 0 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
-| `halfdozen-gmail-sync-danny` | `intake-ready` | - | `config/dify-mcp-intake/gmail-sync.json` | - | - | 0 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
-| `halfdozen-gmail-sync-fillip` | `intake-ready` | - | `config/dify-mcp-intake/halfdozen-gmail-sync-fillip.json` | - | - | 0 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
-| `halfdozen-gmail-sync-leah` | `intake-ready` | - | `config/dify-mcp-intake/halfdozen-gmail-sync-leah.json` | - | - | 0 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
 | `halfdozen-telemetry` | `intake-ready` | - | `config/dify-mcp-intake/halfdozen-telemetry.json` | - | - | 0 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
 | `halfdozen-zoom-sync` | `intake-ready` | - | `config/dify-mcp-intake/zoom-sync.json` | - | - | 0 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
 | `meetings` | `intake-ready` | - | `config/dify-mcp-intake/meetings.json` | - | - | 0 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
@@ -75,7 +72,7 @@ Brokered, local, dormant, and non-HTTP servers are summarized but excluded from 
 | `slack-create-something` | `intake-ready` | - | `config/dify-mcp-intake/slack-create-something.json` | - | - | 0 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
 | `spotify-mcp` | `intake-ready` | - | `config/dify-mcp-intake/spotify.json` | - | - | 29 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
 | `substrate-mcp` | `intake-ready` | - | `config/dify-mcp-intake/substrate.json` | - | - | 0 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
-| `webflow-app-review-mcp` | `intake-ready` | - | `config/dify-mcp-intake/webflow-app-review.json` | - | - | 24 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
+| `webflow-app-review-mcp` | `intake-ready` | - | `config/dify-mcp-intake/webflow-app-review.json` | - | - | 31 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
 | `webflow-local` | `intake-ready` | - | `config/dify-mcp-intake/webflow-local.json` | - | - | 10 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
 | `webflow-reviewer-exceptions-mcp` | `intake-ready` | - | `config/dify-mcp-intake/webflow-reviewer-exceptions.json` | - | - | 7 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
 | `webflow-template-review-mcp` | `intake-ready` | - | `config/dify-mcp-intake/webflow-template-review.json` | - | - | 0 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
@@ -93,9 +90,6 @@ Brokered, local, dormant, and non-HTTP servers are summarized but excluded from 
 | `cs-telemetry` | `config/dify-mcp-intake/cs-telemetry.json` | `https://cs-telemetry-mcp.createsomething.workers.dev/mcp` | Fleet telemetry MCP for CREATE SOMETHING account |
 | `gmail-notion-mcp` | `config/dify-mcp-intake/gmail-notion-mcp.json` | `https://gmail-notion-mcp.createsomething.workers.dev/mcp` | Dormant Gmail to Notion MCP prototype |
 | `half-dozen-youtube-sync` | `config/dify-mcp-intake/youtube-sync.json` | `https://youtube.mcp.workway.co/mcp` | Half Dozen YouTube sync MCP |
-| `halfdozen-gmail-sync-danny` | `config/dify-mcp-intake/gmail-sync.json` | `https://gmail.mcp.workway.co/mcp` | Half Dozen Gmail sync MCP (Danny) |
-| `halfdozen-gmail-sync-fillip` | `config/dify-mcp-intake/halfdozen-gmail-sync-fillip.json` | `https://fillip-gmail.mcp.workway.co/mcp` | Half Dozen Gmail sync MCP (Fillip) |
-| `halfdozen-gmail-sync-leah` | `config/dify-mcp-intake/halfdozen-gmail-sync-leah.json` | `https://leah-gmail.mcp.workway.co/mcp` | Half Dozen Gmail sync MCP (Leah) |
 | `halfdozen-telemetry` | `config/dify-mcp-intake/halfdozen-telemetry.json` | `https://halfdozen-telemetry-mcp.half-dozen.workers.dev/mcp` | Fleet telemetry MCP for WORKWAY account |
 | `halfdozen-zoom-sync` | `config/dify-mcp-intake/zoom-sync.json` | `https://zoom.mcp.workway.co/mcp` | Half Dozen Zoom sync MCP |
 | `meetings` | `config/dify-mcp-intake/meetings.json` | `https://meetings-mcp.createsomething.workers.dev/mcp` | Meetings MCP (requires API key via bearer_token_env_var or header auth) |

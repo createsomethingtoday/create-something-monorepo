@@ -6,9 +6,10 @@ fields are out of scope (those live in `webflow-app-review-mcp`).
 
 - **Production:** `https://exceptions.mcp.createsomething.agency` (worker `exception-decisions-mcp`,
   CREATE SOMETHING Cloudflare account)
-- **Version:** 1.3.0 (deployed 2026-08-18)
+- **Version:** 1.4.0 candidate
 - **Data:** Airtable base `appMoIgXMTTTNIc3p` — `🖌️Asset Versions` (`tblHxZ2hgSFLZxsZu`) and
-  `⚖️Exceptions` (`tblnbaaIbIulWl0b7`), via the `⚖️ Exception Decisions` view (`viwM48eXQT4Mxc4Ak`)
+  `⚖️Exceptions` (`tblnbaaIbIulWl0b7`), via the `⚖️ Exception Decisions` version view
+  (`viwM48eXQT4Mxc4Ak`) and the complete Exceptions grid (`viwGawHG68xIIIDaQ`)
 
 ## The contract (MCP, not OpenAPI)
 
@@ -38,7 +39,7 @@ recommendation runner).
 
 | Action | Person keys | `role: automation` keys |
 |---|---|---|
-| `list_pending_exceptions`, `get_exception_item`, `whoami` | yes | yes |
+| `list_all_exceptions`, `list_pending_exceptions`, `get_exception_item`, `whoami` | yes | yes |
 | `recommend_exception_item` (advisory, sets 👀Under Review) | yes, notes prefixed "Partner-lead recommendation:" | yes, notes prefixed "Automated recommendation (advisory):" |
 | `decide_exception_item` → denied | yes | yes (deny-only) |
 | `decide_exception_item` → approved / under_review | yes | **refused server-side** |
@@ -54,6 +55,7 @@ Airtable.
 
 | Tool | What it does |
 |---|---|
+| `list_all_exceptions` | The complete global `⚖️Exceptions` list across every app, version, and status; optional exact-status filter |
 | `list_pending_exceptions` | The decision queue: versions awaiting a decision with their per-item rows |
 | `get_exception_item` | One item in full: technical finding, plain-English translation, decision trail |
 | `recommend_exception_item` | Record an advisory approve/deny lean without deciding |

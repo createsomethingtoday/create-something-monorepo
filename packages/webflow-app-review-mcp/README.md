@@ -82,6 +82,11 @@ Optional:
 - `app_review_approve_version`
 - `app_review_reject_version`
 - `app_review_update_version_review`
+- `app_review_list_exceptions`
+- `app_review_list_asset_exceptions`
+- `app_review_list_exception_items`
+- `app_review_create_exception_item`
+- `app_review_update_exception_item`
 - `app_review_update_asset_metadata`
 - `app_review_set_marketplace_status`
 
@@ -92,6 +97,10 @@ Write posture:
 - draft feedback and controlled status changes write explicit Airtable fields only
 - narrow decision verbs are available for request-changes, approve, and reject
 - broad metadata and marketplace-status updates should stay operator-gated
+- `app_review_list_exceptions` reads every row in the complete Exceptions table
+  across all apps, versions, and statuses. Its `reference_view_id`
+  (`viwGawHG68xIIIDaQ`) identifies the operator's grid; the query itself is
+  deliberately scoped to the entire table and follows every Airtable page.
 - `app_review_send_ticket_followup` posts directly on the creator's Zendesk
   ticket (resolved from the version record, never an arbitrary ticket ID),
   rendering Markdown with HTML escaping so literal tags can't truncate the

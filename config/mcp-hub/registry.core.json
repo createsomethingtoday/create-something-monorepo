@@ -1034,7 +1034,9 @@
         ]
       },
       "catalog_exposure_mode": "direct",
-      "estimated_tool_count": 24
+      "estimated_tool_count": 31,
+      "exposure_exception_reason": "Existing Webflow reviewer clients depend on direct MCP tool names; this surface is limited to one governed Airtable review domain and protected by bearer and Cloudflare Access boundaries.",
+      "exposure_review_owner": "CRE-1867"
     },
     "zendesk-mcp": {
       "transport": "http",

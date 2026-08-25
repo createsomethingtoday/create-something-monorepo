@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:operating-slice-review:internal",
-  "generatedAt": "2026-08-24T23:39:39.345Z",
+  "generatedAt": "2026-08-25T18:50:37.249Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceCoverageId": "substrate:create-something:atlas-coverage:internal",
@@ -663,12 +663,13 @@
         "substrate:create-something:package:create-something-workflow-evidence-extractor-packages-workflow-evidence-extractor",
         "substrate:create-something:package:create-something-workflow-observation-reconciler-packages-workflow-observation-reconciler",
         "substrate:create-something:package:create-something-workflow-receipt-reconciler-packages-workflow-receipt-reconciler",
+        "substrate:create-something:package:createsomething-workflow-runtime-packages-workflow-runtime",
         "substrate:create-something:package:create-something-workflow-shadow-pilot-packages-workflow-shadow-pilot"
       ],
       "owner": "CREATE SOMETHING",
       "tier": "Automation",
       "surface": "package",
-      "nodeCount": 16,
+      "nodeCount": 17,
       "evidence": [
         "packages/auth-platform",
         "packages/half-dozen-youtube-sync",

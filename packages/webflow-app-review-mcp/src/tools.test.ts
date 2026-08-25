@@ -1,7 +1,8 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { describe, expect, it, vi } from 'vitest';
 
-import { AirtableClientError, type AirtableClient } from './airtable.js';
+import { AirtableClient, AirtableClientError } from './airtable.js';
+import { FIELD_IDS, TABLE_IDS } from './schema.js';
 import { registerTools } from './tools.js';
 import type { ZendeskClient } from './zendesk.js';
 
@@ -135,6 +136,101 @@ describe('registerTools', () => {
     expect(payload.ok).toBe(false);
     expect(payload.error?.code).toBe('INVALID_INPUT');
     expect(payload.error?.status).toBe(400);
+  });
+
+  it('lists every exception row across all statuses and Airtable pages', async () => {
+    const { server, names, handlers } = createServerHarness();
+    const fetchFn = vi.fn(async (input: RequestInfo | URL) => {
+      const url = new URL(String(input));
+      if (!url.pathname.endsWith(`/${TABLE_IDS.exceptions}`)) {
+        return new Response('Not found', { status: 404 });
+      }
+
+      const offset = url.searchParams.get('offset');
+      const records = offset
+        ? [
+            {
+              id: 'recRequested',
+              fields: {
+                [FIELD_IDS.exceptions.item]: 'Requested item',
+                [FIELD_IDS.exceptions.assetVersionLink]: ['recVersionC'],
+                [FIELD_IDS.exceptions.assetLink]: ['recAssetC'],
+                [FIELD_IDS.exceptions.status]: '🆕Requested',
+                [FIELD_IDS.exceptions.type]: 'Guideline',
+              },
+            },
+            {
+              id: 'recUnderReview',
+              fields: {
+                [FIELD_IDS.exceptions.item]: 'Under-review item',
+                [FIELD_IDS.exceptions.assetVersionLink]: ['recVersionD'],
+                [FIELD_IDS.exceptions.assetLink]: ['recAssetD'],
+                [FIELD_IDS.exceptions.status]: '👀Under Review',
+                [FIELD_IDS.exceptions.type]: 'Security',
+              },
+            },
+          ]
+        : [
+            {
+              id: 'recApproved',
+              fields: {
+                [FIELD_IDS.exceptions.item]: 'Approved item',
+                [FIELD_IDS.exceptions.assetVersionLink]: ['recVersionA'],
+                [FIELD_IDS.exceptions.assetLink]: ['recAssetA'],
+                [FIELD_IDS.exceptions.status]: '✅Approved',
+                [FIELD_IDS.exceptions.type]: 'Category Constraint',
+              },
+            },
+            {
+              id: 'recDenied',
+              fields: {
+                [FIELD_IDS.exceptions.item]: 'Denied item',
+                [FIELD_IDS.exceptions.assetVersionLink]: ['recVersionB'],
+                [FIELD_IDS.exceptions.assetLink]: ['recAssetB'],
+                [FIELD_IDS.exceptions.status]: '❌Denied',
+                [FIELD_IDS.exceptions.type]: 'Custom Code / Scopes',
+              },
+            },
+          ];
+      return new Response(JSON.stringify({ records, ...(offset ? {} : { offset: 'next-page' }) }), {
+        headers: { 'Content-Type': 'application/json' },
+      });
+    });
+    const client = new AirtableClient({ apiKey: 'token', baseId: 'appConfiguredBase', fetchFn });
+
+    registerTools(server, () => client);
+
+    const result = await handlers.get('app_review_list_exceptions')?.({});
+    expect(names).toContain('app_review_list_exceptions');
+
+    const payload = parsePayload(result!);
+    expect(payload).toMatchObject({
+      ok: true,
+      data: {
+        count: 4,
+        total_count: 4,
+        source: {
+          base_id: 'appConfiguredBase',
+          table_id: TABLE_IDS.exceptions,
+          reference_view_id: 'viwGawHG68xIIIDaQ',
+          query_scope: 'entire_table',
+        },
+        counts_all_statuses: {
+          '🆕Requested': 1,
+          '👀Under Review': 1,
+          '✅Approved': 1,
+          '❌Denied': 1,
+        },
+        exception_items: [
+          { exceptionItemId: 'recRequested', assetId: 'recAssetC' },
+          { exceptionItemId: 'recUnderReview', assetId: 'recAssetD' },
+          { exceptionItemId: 'recApproved', assetId: 'recAssetA' },
+          { exceptionItemId: 'recDenied', assetId: 'recAssetB' },
+        ],
+      },
+    });
+    expect(payload.data?.copy_block).toContain('All exceptions — 4 items');
+    expect(fetchFn).toHaveBeenCalledTimes(2);
   });
 
   it('lists governance findings through policy-relevant filters', async () => {
