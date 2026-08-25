@@ -958,7 +958,16 @@ export class D1WorkflowRuntimeProofReader {
          FROM control_workflow_runtime_runs runtime
          JOIN control_runs control ON control.id = runtime.run_id
          WHERE runtime.run_id = ?1 AND control.account_id = ?2 AND control.tenant_id = ?3
-           AND control.workspace_account_id = ?4`
+           AND control.workspace_account_id = ?4
+           AND (
+             json_extract(runtime.run_json, '$.schema') IS NOT 'workflow_runtime_run.v0.2'
+             OR EXISTS (
+               SELECT 1 FROM control_workflow_runtime_checkpoints checkpoint
+               WHERE checkpoint.run_id = runtime.run_id
+                 AND checkpoint.run_version = runtime.version
+                 AND json(checkpoint.checkpoint_json) IS json(runtime.run_json)
+             )
+           )`
       )
       .bind(
         boundedText(input.runId, 'Workflow Runtime proof run ID'),

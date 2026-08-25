@@ -270,6 +270,59 @@ BEGIN
   SELECT RAISE(ABORT, 'Workflow Runtime registration receipt schema must match its checkpoint');
 END;
 
+CREATE TRIGGER control_workflow_runtime_registration_checkpoint_matches_ledger
+BEFORE INSERT ON control_workflow_runtime_checkpoints
+WHEN EXISTS (
+  SELECT 1 FROM control_workflow_runtime_runs runtime
+  WHERE runtime.run_id = NEW.run_id
+    AND json_extract(runtime.run_json, '$.schema') = 'workflow_runtime_run.v0.2'
+)
+  AND (
+    NOT EXISTS (
+      SELECT 1 FROM control_workflow_runtime_runs runtime
+      WHERE runtime.run_id = NEW.run_id
+        AND runtime.version = NEW.run_version
+        AND json(runtime.run_json) IS json(NEW.checkpoint_json)
+    )
+    OR EXISTS (
+      SELECT 1 FROM control_workflow_runtime_runs runtime
+      JOIN json_each(runtime.run_json, '$.receipts') checkpoint_receipt
+      WHERE runtime.run_id = NEW.run_id
+        AND NOT EXISTS (
+          SELECT 1 FROM control_workflow_runtime_receipts ledger_receipt
+          WHERE ledger_receipt.run_id = runtime.run_id
+            AND ledger_receipt.id = json_extract(checkpoint_receipt.value, '$.id')
+            AND ledger_receipt.event_index = json_extract(checkpoint_receipt.value, '$.eventIndex')
+            AND ledger_receipt.receipt_sha256 =
+              json_extract(checkpoint_receipt.value, '$.receiptSha256')
+            AND ledger_receipt.previous_receipt_sha256
+              IS json_extract(checkpoint_receipt.value, '$.previousReceiptSha256')
+            AND ledger_receipt.created_at IS json_extract(checkpoint_receipt.value, '$.createdAt')
+            AND json(ledger_receipt.receipt_json) IS json(checkpoint_receipt.value)
+        )
+    )
+    OR EXISTS (
+      SELECT 1 FROM control_workflow_runtime_receipts ledger_receipt
+      WHERE ledger_receipt.run_id = NEW.run_id
+        AND NOT EXISTS (
+          SELECT 1 FROM control_workflow_runtime_runs runtime
+          JOIN json_each(runtime.run_json, '$.receipts') checkpoint_receipt
+          WHERE runtime.run_id = ledger_receipt.run_id
+            AND json_extract(checkpoint_receipt.value, '$.id') IS ledger_receipt.id
+            AND json_extract(checkpoint_receipt.value, '$.eventIndex') IS ledger_receipt.event_index
+            AND json_extract(checkpoint_receipt.value, '$.receiptSha256')
+              IS ledger_receipt.receipt_sha256
+            AND json_extract(checkpoint_receipt.value, '$.previousReceiptSha256')
+              IS ledger_receipt.previous_receipt_sha256
+            AND json_extract(checkpoint_receipt.value, '$.createdAt') IS ledger_receipt.created_at
+            AND json(checkpoint_receipt.value) IS json(ledger_receipt.receipt_json)
+        )
+    )
+  )
+BEGIN
+  SELECT RAISE(ABORT, 'Workflow Runtime checkpoint receipts must match its immutable ledger');
+END;
+
 CREATE TRIGGER control_workflow_runtime_registration_approval_matches_run
 BEFORE INSERT ON control_workflow_runtime_approvals
 WHEN EXISTS (

@@ -799,6 +799,34 @@ test('registration-binding migration binds an approval context to its parent, wa
       /approval context schema must match its checkpoint/
     );
   }
+  const unledgeredReceipt = {
+    ...receipt,
+    id: 'unledgered-receipt',
+    eventIndex: 2,
+    previousReceiptSha256: receipt.receiptSha256,
+    receiptSha256: hash('0')
+  };
+  const unledgeredRun = {
+    ...run,
+    version: 3,
+    receipts: [...run.receipts, unledgeredReceipt]
+  };
+  sql(
+    path,
+    `UPDATE control_workflow_runtime_runs
+     SET version = 3, run_json = '${JSON.stringify(unledgeredRun)}'
+     WHERE run_id = 'run-a';`
+  );
+  expectSqlFailure(
+    path,
+    `INSERT INTO control_workflow_runtime_checkpoints (
+      id, run_id, run_version, run_sha256, receipt_sha256, checkpoint_json, created_at
+    ) VALUES (
+      'checkpoint:run-a:v3', 'run-a', 3, '${hash('1')}', '${hash('0')}',
+      '${JSON.stringify(unledgeredRun)}', '${createdAt}'
+    );`,
+    /checkpoint receipts must match its immutable ledger/
+  );
 });
 
 test('effect-ambiguity migration preserves attempts and permits an uncertain effect state', () => {
