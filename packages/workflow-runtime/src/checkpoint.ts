@@ -343,7 +343,7 @@ export class ZeroWriteWorkflowRuntimeHost {
     const replay = await this.ports.storage.replay(scope, idempotencyKey, derivedCommandDigest);
     if (replay) return replay;
     const approvalIdentity =
-      event.type === 'approval_decided'
+      event.type === 'approval_decided' && approvalRun?.schema === 'workflow_runtime_run.v0.2'
         ? verifiedApprovalIdentity(authenticatedIdentity)
         : undefined;
     const observedEvent = {

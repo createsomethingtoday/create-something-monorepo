@@ -4,7 +4,10 @@ import test from 'node:test';
 import {
   MemoryWorkflowRuntimeCheckpointStore,
   ZeroWriteWorkflowRuntimeHost,
-  parseWorkflowRuntimeManifest
+  createWorkflowRuntimeRun,
+  parseWorkflowRuntimeManifest,
+  workflowRuntimeCheckpointHash,
+  workflowRuntimeReceiptHash
 } from '../dist/index.js';
 
 const digest = (value) => `sha256:${value.repeat(64).slice(0, 64)}`;
@@ -93,6 +96,47 @@ function fixture(
     ports,
     host: new ZeroWriteWorkflowRuntimeHost(manifest, ports)
   };
+}
+
+async function historicalV01Run() {
+  const current = await createWorkflowRuntimeRun(manifest, {
+    runId: 'historical-v01-approval',
+    activation: { id: 'activation-a', version: 1, policySha256: digest('3') },
+    registration: {
+      buildReleaseId: 'build-release-a',
+      contractSha256: digest('6'),
+      runtimePolicySha256: digest('3')
+    },
+    artifactManifestSha256: digest('4'),
+    runtimeManifestSha256: digest('5'),
+    clock: '2026-08-25T00:00:00.000Z'
+  });
+  const historical = structuredClone(current);
+  historical.schema = 'workflow_runtime_run.v0.1';
+  delete historical.registration;
+  delete historical.runtimeManifestSchema;
+  const receipt = historical.receipts[0];
+  const {
+    actionId: _actionId,
+    actorRole: _actorRole,
+    approvalSurfaceSha256: _approvalSurfaceSha256,
+    buildReleaseId: _buildReleaseId,
+    contractSha256: _contractSha256,
+    runtimeManifestSchema: _runtimeManifestSchema,
+    runtimePolicySha256: _runtimePolicySha256,
+    workflowCompilerVersion: _workflowCompilerVersion,
+    receiptSha256: _receiptSha256,
+    ...historicalReceipt
+  } = receipt;
+  historicalReceipt.schema = 'create-something/control-run-receipt@2';
+  historicalReceipt.checkpointSha256 = await workflowRuntimeCheckpointHash(historical);
+  historical.receipts = [
+    {
+      ...historicalReceipt,
+      receiptSha256: await workflowRuntimeReceiptHash(historicalReceipt)
+    }
+  ];
+  return historical;
 }
 
 test('the zero-write host persists, replays, restarts, and lets a concurrent stop win without a capability call', async () => {
@@ -460,6 +504,88 @@ test('the host authorizes an approval against its bound policy before it advance
     approved.receipts.find((receipt) => receipt.eventType === 'approval_decided')?.actorRole,
     'account_owner'
   );
+});
+
+test('the host completes a historical v0.1 approval with a legacy subject assertion', async () => {
+  const { host, storage } = fixture({
+    async assert(_scope, actorSubject) {
+      return actorSubject;
+    }
+  });
+  const admitted = await historicalV01Run();
+  await storage.apply({
+    scope,
+    run: admitted,
+    expectedVersion: null,
+    idempotencyKey: 'historical-v01-admit',
+    commandDigest: commandDigest('a')
+  });
+  const collect = await host.plan(scope, admitted.id);
+  assert.equal(collect.type, 'pass');
+  const collecting = await host.transition(
+    scope,
+    admitted.id,
+    admitted.version,
+    {
+      type: 'effect_intent',
+      stepId: 'collect',
+      attemptId: 'historical-v01-attempt',
+      capability: collect.capability,
+      observedAt: 'ignored-by-host'
+    },
+    'historical-v01-intent',
+    commandDigest('b')
+  );
+  const collected = await host.transition(
+    scope,
+    admitted.id,
+    collecting.version,
+    {
+      type: 'step_succeeded',
+      stepId: 'collect',
+      attemptId: 'historical-v01-attempt',
+      verifier: 'fixture-verifier',
+      observedAt: 'ignored-by-host'
+    },
+    'historical-v01-succeeded',
+    commandDigest('c')
+  );
+  const wait = await host.plan(scope, admitted.id);
+  assert.equal(wait.type, 'wait');
+  const waiting = await host.transition(
+    scope,
+    admitted.id,
+    collected.version,
+    {
+      type: 'wait_created',
+      stepId: 'review',
+      approval: wait.approval,
+      observedAt: 'ignored-by-host'
+    },
+    'historical-v01-wait',
+    commandDigest('d')
+  );
+  const approved = await host.transition(
+    scope,
+    admitted.id,
+    waiting.version,
+    {
+      type: 'approval_decided',
+      stepId: 'review',
+      approvalId: wait.approval.id,
+      approvalBindingSha256: wait.approval.bindingSha256,
+      decision: 'approved',
+      actorSubject: 'owner-a',
+      observedAt: 'ignored-by-host'
+    },
+    'historical-v01-approval',
+    commandDigest('e')
+  );
+  const receipt = approved.receipts.find((entry) => entry.eventType === 'approval_decided');
+  assert.equal(approved.status, 'queued');
+  assert.equal(receipt?.schema, 'create-something/control-run-receipt@2');
+  assert.ok(receipt);
+  assert.equal('actorRole' in receipt, false);
 });
 
 test('the host derives idempotency identity from the semantic command rather than caller input', async () => {
