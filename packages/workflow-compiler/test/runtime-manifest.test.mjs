@@ -8,6 +8,7 @@ import test from 'node:test';
 import {
   compileWorkflowDefinition,
   createWorkflowRuntimeManifest,
+  validateWorkflowRuntimeManifestArtifact,
   verifyWorkflowArtifactBundle,
   writeCompiledWorkflowArtifacts
 } from '../dist/index.js';
@@ -27,9 +28,11 @@ test('emits an explicit runtime manifest inside a signed compiler artifact inven
       { id: 'approve', actionId: 'approve_template', dependsOn: ['validate'] }
     ]
   });
-  assert.equal(runtimeManifest.schemaVersion, 'workflow_runtime_manifest.v0.1');
+  assert.equal(runtimeManifest.schemaVersion, 'workflow_runtime_manifest.v0.2');
+  assert.equal(runtimeManifest.runtimeCompatibility, 'workflow-runtime.v0.2');
   assert.equal(runtimeManifest.steps[0].disposition, 'pass');
   assert.equal(runtimeManifest.steps[0].actionId, 'validate_submission');
+  assert.equal(runtimeManifest.steps[0].recovery, 'escalate');
   assert.equal(runtimeManifest.steps[1].disposition, 'wait');
 
   const root = await mkdtemp(join(tmpdir(), 'workflow-runtime-artifact-'));
@@ -53,6 +56,28 @@ test('emits an explicit runtime manifest inside a signed compiler artifact inven
   } finally {
     await rm(root, { recursive: true, force: true });
   }
+});
+
+test('validates historical v0.1 runtime manifests without reinterpreting their recovery', async () => {
+  const definition = JSON.parse(await readFile(fixtureUrl, 'utf8'));
+  definition.schemaVersion = 'workflow_definition.v0.3';
+  const bundle = compileWorkflowDefinition(definition);
+  const current = createWorkflowRuntimeManifest(bundle, {
+    schemaVersion: 'workflow_runtime_manifest_input.v0.1',
+    target: 'create-something/control-runtime.v1',
+    approvalExpiresAt: '2026-08-26T00:00:00.000Z',
+    steps: [
+      { id: 'validate', actionId: 'validate_submission', dependsOn: [] },
+      { id: 'approve', actionId: 'approve_template', dependsOn: ['validate'] }
+    ]
+  });
+  const legacy = {
+    ...current,
+    schemaVersion: 'workflow_runtime_manifest.v0.1',
+    runtimeCompatibility: 'workflow-runtime.v0.1',
+    steps: current.steps.map((step) => ({ ...step, recovery: 'manual_fallback' }))
+  };
+  assert.doesNotThrow(() => validateWorkflowRuntimeManifestArtifact(bundle, legacy));
 });
 
 test('rejects a tampered runtime manifest and a graph that could create concurrent ready steps', async () => {

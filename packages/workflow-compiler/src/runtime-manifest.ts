@@ -6,9 +6,38 @@ import type {
   CompiledWorkflowBundleV0_3
 } from './types.js';
 
-export interface WorkflowRuntimeManifestArtifact {
-  schemaVersion: 'workflow_runtime_manifest.v0.1';
-  runtimeCompatibility: 'workflow-runtime.v0.1';
+export type WorkflowRuntimeRecoveryMode = 'rollback' | 'escalate' | 'manual_fallback';
+
+type WorkflowRuntimeManifestStep<Recovery extends WorkflowRuntimeRecoveryMode> =
+  | {
+      id: string;
+      actionId: string;
+      dependsOn: string[];
+      disposition: 'pass';
+      capability: { id: string; parameterDigest: string };
+      evidenceDigest: string;
+      recovery: Recovery;
+    }
+  | {
+      id: string;
+      actionId: string;
+      dependsOn: string[];
+      disposition: 'wait';
+      approval: { policyId: string; expiresAt: string };
+      evidenceDigest: string;
+      recovery: Recovery;
+    }
+  | {
+      id: string;
+      actionId: string;
+      dependsOn: string[];
+      disposition: 'stop';
+      reason: string;
+      evidenceDigest: string;
+      recovery: Recovery;
+    };
+
+interface WorkflowRuntimeManifestArtifactBase<Recovery extends WorkflowRuntimeRecoveryMode> {
   target: 'create-something/control-runtime.v1';
   workflow: {
     id: string;
@@ -23,36 +52,22 @@ export interface WorkflowRuntimeManifestArtifact {
     approvalSurfacesSha256: string;
     toolContractsSha256: string;
   };
-  steps: Array<
-    | {
-        id: string;
-        actionId: string;
-        dependsOn: string[];
-        disposition: 'pass';
-        capability: { id: string; parameterDigest: string };
-        evidenceDigest: string;
-        recovery: 'manual_fallback';
-      }
-    | {
-        id: string;
-        actionId: string;
-        dependsOn: string[];
-        disposition: 'wait';
-        approval: { policyId: string; expiresAt: string };
-        evidenceDigest: string;
-        recovery: 'manual_fallback';
-      }
-    | {
-        id: string;
-        actionId: string;
-        dependsOn: string[];
-        disposition: 'stop';
-        reason: string;
-        evidenceDigest: string;
-        recovery: 'manual_fallback';
-      }
-  >;
+  steps: WorkflowRuntimeManifestStep<Recovery>[];
 }
+
+export interface WorkflowRuntimeManifestArtifactV0_1 extends WorkflowRuntimeManifestArtifactBase<'manual_fallback'> {
+  schemaVersion: 'workflow_runtime_manifest.v0.1';
+  runtimeCompatibility: 'workflow-runtime.v0.1';
+}
+
+export interface WorkflowRuntimeManifestArtifactV0_2 extends WorkflowRuntimeManifestArtifactBase<WorkflowRuntimeRecoveryMode> {
+  schemaVersion: 'workflow_runtime_manifest.v0.2';
+  runtimeCompatibility: 'workflow-runtime.v0.2';
+}
+
+export type WorkflowRuntimeManifestArtifact =
+  | WorkflowRuntimeManifestArtifactV0_1
+  | WorkflowRuntimeManifestArtifactV0_2;
 
 export interface WorkflowRuntimeManifestInput {
   schemaVersion: 'workflow_runtime_manifest_input.v0.1';
@@ -196,7 +211,7 @@ function stepFromDecision(
     actionId: decision.actionId,
     dependsOn: input.dependsOn,
     evidenceDigest: decisionEvidenceDigest(decision),
-    recovery: 'manual_fallback' as const
+    recovery: decision.recovery.mode
   };
   if (decision.autonomy === 'auto_allow') {
     const tool = decision.toolContract;
@@ -227,9 +242,26 @@ function stepFromDecision(
   return { ...shared, disposition: 'stop', reason: `autonomy_${decision.autonomy}` };
 }
 
-export function createWorkflowRuntimeManifest(
+function legacyStep(
+  value: WorkflowRuntimeManifestArtifact['steps'][number]
+): WorkflowRuntimeManifestArtifactV0_1['steps'][number] {
+  return { ...value, recovery: 'manual_fallback' };
+}
+
+function createWorkflowRuntimeManifestForVersion(
   source: CompiledWorkflowBundle,
-  input: WorkflowRuntimeManifestInput
+  input: WorkflowRuntimeManifestInput,
+  outputVersion: 'v0.1'
+): WorkflowRuntimeManifestArtifactV0_1;
+function createWorkflowRuntimeManifestForVersion(
+  source: CompiledWorkflowBundle,
+  input: WorkflowRuntimeManifestInput,
+  outputVersion: 'v0.2'
+): WorkflowRuntimeManifestArtifactV0_2;
+function createWorkflowRuntimeManifestForVersion(
+  source: CompiledWorkflowBundle,
+  input: WorkflowRuntimeManifestInput,
+  outputVersion: 'v0.1' | 'v0.2'
 ): WorkflowRuntimeManifestArtifact {
   const bundle = runtimeBundle(source);
   if (
@@ -331,9 +363,7 @@ export function createWorkflowRuntimeManifest(
     bundle.decisionInventory.decisions.map((decision) => [decision.actionId, decision])
   );
   requireCompiledDependencies(bundle, steps);
-  return {
-    schemaVersion: 'workflow_runtime_manifest.v0.1',
-    runtimeCompatibility: 'workflow-runtime.v0.1',
+  const shared = {
     target: 'create-something/control-runtime.v1',
     workflow: {
       id: bundle.workflowId,
@@ -347,17 +377,57 @@ export function createWorkflowRuntimeManifest(
       decisionInventorySha256: sha256(bundle.decisionInventory),
       approvalSurfacesSha256: sha256(bundle.approvalSurfaces),
       toolContractsSha256: sha256(bundle.toolContracts)
-    },
-    steps: steps.map((entry) => {
-      const decision = decisions.get(entry.actionId);
-      if (!decision)
-        throw new WorkflowRuntimeManifestError(
-          'INVALID_RUNTIME_MANIFEST_INPUT',
-          `Runtime step references unknown compiled action ${entry.actionId}.`
-        );
-      return stepFromDecision(decision, entry, input.approvalExpiresAt, bundle.workflowId);
-    })
+    }
+  } as const;
+  const runtimeSteps = steps.map((entry) => {
+    const decision = decisions.get(entry.actionId);
+    if (!decision)
+      throw new WorkflowRuntimeManifestError(
+        'INVALID_RUNTIME_MANIFEST_INPUT',
+        `Runtime step references unknown compiled action ${entry.actionId}.`
+      );
+    return stepFromDecision(decision, entry, input.approvalExpiresAt, bundle.workflowId);
+  });
+  if (outputVersion === 'v0.1') {
+    return {
+      schemaVersion: 'workflow_runtime_manifest.v0.1',
+      runtimeCompatibility: 'workflow-runtime.v0.1',
+      ...shared,
+      steps: runtimeSteps.map(legacyStep)
+    };
+  }
+  return {
+    schemaVersion: 'workflow_runtime_manifest.v0.2',
+    runtimeCompatibility: 'workflow-runtime.v0.2',
+    ...shared,
+    steps: runtimeSteps
   };
+}
+
+export function createWorkflowRuntimeManifest(
+  source: CompiledWorkflowBundle,
+  input: WorkflowRuntimeManifestInput
+): WorkflowRuntimeManifestArtifactV0_2 {
+  return createWorkflowRuntimeManifestForVersion(source, input, 'v0.2');
+}
+
+function artifactVersion(manifest: WorkflowRuntimeManifestArtifact): 'v0.1' | 'v0.2' {
+  if (
+    manifest.schemaVersion === 'workflow_runtime_manifest.v0.1' &&
+    manifest.runtimeCompatibility === 'workflow-runtime.v0.1'
+  ) {
+    return 'v0.1';
+  }
+  if (
+    manifest.schemaVersion === 'workflow_runtime_manifest.v0.2' &&
+    manifest.runtimeCompatibility === 'workflow-runtime.v0.2'
+  ) {
+    return 'v0.2';
+  }
+  throw new WorkflowRuntimeManifestError(
+    'INVALID_RUNTIME_MANIFEST_INPUT',
+    'Runtime manifest schema and compatibility must be an exact supported pair.'
+  );
 }
 
 export function validateWorkflowRuntimeManifestArtifact(
@@ -369,12 +439,19 @@ export function validateWorkflowRuntimeManifestArtifact(
     if (!manifest || !Array.isArray(manifest.steps) || manifest.steps.length === 0) {
       throw new Error('runtime manifest has no steps');
     }
-    const waiting = manifest.steps.filter((step) => step.disposition === 'wait');
-    const approvalExpiresAt = waiting[0]?.approval.expiresAt ?? '1970-01-01T00:00:00.000Z';
-    if (waiting.some((step) => step.approval.expiresAt !== approvalExpiresAt)) {
+    const firstWaiting = manifest.steps.find((step) => step.disposition === 'wait');
+    const approvalExpiresAt =
+      firstWaiting?.disposition === 'wait'
+        ? firstWaiting.approval.expiresAt
+        : '1970-01-01T00:00:00.000Z';
+    if (
+      manifest.steps.some(
+        (step) => step.disposition === 'wait' && step.approval.expiresAt !== approvalExpiresAt
+      )
+    ) {
       throw new Error('runtime manifest does not use one exact approval expiry');
     }
-    const expected = createWorkflowRuntimeManifest(bundle, {
+    const input = {
       schemaVersion: 'workflow_runtime_manifest_input.v0.1',
       target: 'create-something/control-runtime.v1',
       approvalExpiresAt,
@@ -383,7 +460,12 @@ export function validateWorkflowRuntimeManifestArtifact(
         actionId: step.actionId,
         dependsOn: step.dependsOn
       }))
-    });
+    } as const;
+    const version = artifactVersion(manifest);
+    const expected =
+      version === 'v0.1'
+        ? createWorkflowRuntimeManifestForVersion(bundle, input, 'v0.1')
+        : createWorkflowRuntimeManifestForVersion(bundle, input, 'v0.2');
     if (JSON.stringify(canonicalize(expected)) !== JSON.stringify(canonicalize(manifest))) {
       throw new Error('runtime manifest differs from re-derived compiler output');
     }

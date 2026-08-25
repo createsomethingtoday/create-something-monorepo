@@ -23,15 +23,18 @@ minor npm release may add an explicitly optional field or export while keeping
 existing schema versions readable. It does not silently reinterpret an
 existing versioned field.
 
-The optional `workflow_runtime_manifest.v0.1` is a separate, explicitly
+The optional `workflow_runtime_manifest.v0.2` is the current, explicitly
 selected projection for `create-something/control-runtime.v1`. It derives only
 from an in-process `compiled_workflow_bundle.v0.3`; older compiled-bundle
 families cannot acquire runtime authority by being re-labelled. A caller must
 provide the versioned runtime-manifest input, and a runtime must validate the
-artifact and retain its own checkpoint and execution evidence. Runtime v0.1
-steps retain their compiler action IDs and form one reachable serial chain;
-the compiler rejects fan-out, joins, cycles, unreachable steps, and a changed
-source-derived step before it can enter a signed inventory.
+artifact and retain its own checkpoint and execution evidence. v0.2 steps
+preserve their source-derived recovery modes while historical
+`workflow_runtime_manifest.v0.1` artifacts retain their original
+`manual_fallback` behavior. Both versions retain compiler action IDs and form
+one reachable serial chain; the compiler rejects fan-out, joins, cycles,
+unreachable steps, and a changed source-derived step before it can enter a
+signed inventory.
 
 Unknown schema versions and unknown fields fail closed. A breaking TypeScript,
 CLI, semantic, or schema change requires either a new npm major version or a

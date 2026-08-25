@@ -140,7 +140,9 @@ function activeStopStep(run: WorkflowRuntimeRun): string {
         ? 'running'
         : run.status === 'waiting_for_approval'
           ? 'waiting_for_approval'
-          : null;
+          : run.status === 'retryable_failure'
+            ? 'retryable_failure'
+            : null;
   const active = expected ? run.steps.filter((step) => step.status === expected) : [];
   if (active.length !== 1) {
     throw new RuntimeValidationError('INVALID_STATE', 'Runtime stop requires one live step');

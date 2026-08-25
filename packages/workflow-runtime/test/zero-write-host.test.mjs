@@ -235,6 +235,84 @@ test('the zero-write host persists, replays, restarts, and lets a concurrent sto
   assert.equal((await storage.find(scope, admitted.id)).receipts.at(-1).eventType, 'blocked');
 });
 
+test('the zero-write host persists a planned non-manual retryable stop', async () => {
+  const nonManualManifest = parseWorkflowRuntimeManifest({
+    ...manifest,
+    schemaVersion: 'workflow_runtime_manifest.v0.2',
+    runtimeCompatibility: 'workflow-runtime.v0.2',
+    steps: [{ ...manifest.steps[0], recovery: 'escalate' }]
+  });
+  const { ports, storage, receipts } = fixture();
+  const host = new ZeroWriteWorkflowRuntimeHost(nonManualManifest, ports);
+  const admitted = await host.admit(
+    scope,
+    {
+      runId: 'retryable-stop',
+      activation: { id: 'activation-a', version: 1, policySha256: digest('3') },
+      artifactManifestSha256: digest('4'),
+      runtimeManifestSha256: digest('5'),
+      clock: 'ignored-by-host'
+    },
+    'retryable-stop-admit',
+    commandDigest('a')
+  );
+  const pass = await host.plan(scope, admitted.id);
+  assert.equal(pass.type, 'pass');
+  const prepared = await host.transition(
+    scope,
+    admitted.id,
+    admitted.version,
+    {
+      type: 'effect_intent',
+      stepId: 'collect',
+      attemptId: 'retryable-stop-attempt',
+      capability: pass.capability,
+      observedAt: 'ignored-by-host'
+    },
+    'retryable-stop-intent',
+    commandDigest('b')
+  );
+  const retryable = await host.transition(
+    scope,
+    admitted.id,
+    prepared.version,
+    {
+      type: 'attempt_failed',
+      stepId: 'collect',
+      attemptId: 'retryable-stop-attempt',
+      class: 'retryable',
+      verifier: 'fixture-verifier',
+      failureDigest: digest('f'),
+      observedAt: 'ignored-by-host'
+    },
+    'retryable-stop-failure',
+    commandDigest('c')
+  );
+  assert.deepEqual(await host.plan(scope, admitted.id), {
+    type: 'stop',
+    stepId: 'collect',
+    reason: 'recovery_escalate'
+  });
+  const stopped = await host.transition(
+    scope,
+    admitted.id,
+    retryable.version,
+    {
+      type: 'stop_requested',
+      stepId: 'wrong-step-is-replaced-by-the-host',
+      reason: 'recovery escalation requires an operator',
+      actorSubject: 'owner-a',
+      observedAt: 'ignored-by-host'
+    },
+    'retryable-stop-block',
+    commandDigest('d')
+  );
+  assert.equal(stopped.status, 'blocked');
+  assert.equal(stopped.steps[0].status, 'blocked');
+  assert.equal((await storage.find(scope, admitted.id))?.status, 'blocked');
+  assert.equal(receipts.at(-1).status, 'blocked');
+});
+
 test('the host rejects an actor claim that the identity port cannot authenticate', async () => {
   const { host } = fixture({
     async assert(_scope, actorSubject) {

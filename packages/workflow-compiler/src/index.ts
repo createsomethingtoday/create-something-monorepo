@@ -94,7 +94,10 @@ export type {
 export type { WorkflowInputDiagnostic } from './input.js';
 export type {
   WorkflowRuntimeManifestArtifact,
-  WorkflowRuntimeManifestInput
+  WorkflowRuntimeManifestArtifactV0_1,
+  WorkflowRuntimeManifestArtifactV0_2,
+  WorkflowRuntimeManifestInput,
+  WorkflowRuntimeRecoveryMode
 } from './runtime-manifest.js';
 export type { WorkflowReplayArtifacts } from './replay.js';
 export type { WorkflowAdapterErrorCode } from './adapters.js';

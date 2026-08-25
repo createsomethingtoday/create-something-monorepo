@@ -424,6 +424,180 @@ test('the zero-write core records retryable failure, recovery, terminal failure,
   await verifyWorkflowRuntimeRun(parsed, cancelled);
 });
 
+test('v0.1 retains manual recovery only while v0.2 owns non-manual recovery', () => {
+  assert.equal(
+    parseWorkflowRuntimeManifest(manifest).schemaVersion,
+    'workflow_runtime_manifest.v0.1'
+  );
+  const widenedLegacy = {
+    ...manifest,
+    steps: [{ ...manifest.steps[0], recovery: 'escalate' }]
+  };
+  assert.throws(
+    () => parseWorkflowRuntimeManifest(widenedLegacy),
+    /v0\.1 runtime manifests require manual_fallback recovery/
+  );
+  const expanded = parseWorkflowRuntimeManifest({
+    ...widenedLegacy,
+    schemaVersion: 'workflow_runtime_manifest.v0.2',
+    runtimeCompatibility: 'workflow-runtime.v0.2'
+  });
+  assert.equal(expanded.schemaVersion, 'workflow_runtime_manifest.v0.2');
+  assert.equal(expanded.steps[0].recovery, 'escalate');
+});
+
+test('a non-manual recovery mode stops instead of requeueing a retryable effect', async () => {
+  const escalate = parseWorkflowRuntimeManifest({
+    ...manifest,
+    schemaVersion: 'workflow_runtime_manifest.v0.2',
+    runtimeCompatibility: 'workflow-runtime.v0.2',
+    steps: [{ ...manifest.steps[0], recovery: 'escalate' }]
+  });
+  const initial = await createWorkflowRuntimeRun(escalate, admission);
+  const pass = await planWorkflowRuntimeStep(escalate, initial);
+  assert.equal(pass.type, 'pass');
+  const prepared = await reduceWorkflowRuntimeRun(escalate, initial, {
+    type: 'effect_intent',
+    stepId: 'collect',
+    attemptId: 'escalated-recovery-attempt',
+    capability: pass.capability,
+    observedAt: '2026-08-25T00:00:00.500Z'
+  });
+  const retryable = await reduceWorkflowRuntimeRun(escalate, prepared, {
+    type: 'attempt_failed',
+    stepId: 'collect',
+    attemptId: 'escalated-recovery-attempt',
+    class: 'retryable',
+    verifier: 'fixture-verifier',
+    failureDigest: digest('a'),
+    observedAt: '2026-08-25T00:00:01.000Z'
+  });
+  assert.deepEqual(await planWorkflowRuntimeStep(escalate, retryable), {
+    type: 'stop',
+    stepId: 'collect',
+    reason: 'recovery_escalate'
+  });
+  await assert.rejects(
+    () =>
+      reduceWorkflowRuntimeRun(escalate, retryable, {
+        type: 'recovery_requested',
+        stepId: 'collect',
+        actorSubject: 'owner-1',
+        observedAt: '2026-08-25T00:00:01.500Z'
+      }),
+    (error) => error instanceof RuntimeValidationError && error.code === 'INVALID_EVENT'
+  );
+  const stopped = await reduceWorkflowRuntimeRun(escalate, retryable, {
+    type: 'stop_requested',
+    stepId: 'collect',
+    reason: 'recovery escalation requires an operator',
+    actorSubject: 'owner-1',
+    observedAt: '2026-08-25T00:00:01.500Z'
+  });
+  assert.equal(stopped.status, 'blocked');
+  assert.equal(stopped.steps[0].status, 'blocked');
+  await verifyWorkflowRuntimeRun(escalate, stopped);
+});
+
+test('stop and cancellation preserve a prepared effect as effect-ambiguous', async () => {
+  const onePass = parseWorkflowRuntimeManifest({
+    ...manifest,
+    schemaVersion: 'workflow_runtime_manifest.v0.2',
+    runtimeCompatibility: 'workflow-runtime.v0.2',
+    steps: [manifest.steps[0]]
+  });
+  const initial = await createWorkflowRuntimeRun(onePass, admission);
+  const pass = await planWorkflowRuntimeStep(onePass, initial);
+  assert.equal(pass.type, 'pass');
+  const preparedForStop = await reduceWorkflowRuntimeRun(onePass, initial, {
+    type: 'effect_intent',
+    stepId: 'collect',
+    attemptId: 'ambiguous-stop-attempt',
+    capability: pass.capability,
+    observedAt: '2026-08-25T00:00:00.500Z'
+  });
+  const stopped = await reduceWorkflowRuntimeRun(onePass, preparedForStop, {
+    type: 'stop_requested',
+    stepId: 'collect',
+    reason: 'operator stop',
+    actorSubject: 'owner-1',
+    observedAt: '2026-08-25T00:00:01.000Z'
+  });
+  assert.equal(stopped.steps[0].attempts[0].status, 'effect_ambiguous');
+  await verifyWorkflowRuntimeRun(onePass, stopped);
+
+  const preparedForCancellation = await reduceWorkflowRuntimeRun(onePass, initial, {
+    type: 'effect_intent',
+    stepId: 'collect',
+    attemptId: 'ambiguous-cancellation-attempt',
+    capability: pass.capability,
+    observedAt: '2026-08-25T00:00:00.500Z'
+  });
+  const cancelled = await reduceWorkflowRuntimeRun(onePass, preparedForCancellation, {
+    type: 'cancellation_requested',
+    stepId: 'collect',
+    reason: 'operator cancellation',
+    actorSubject: 'owner-1',
+    observedAt: '2026-08-25T00:00:01.000Z'
+  });
+  assert.equal(cancelled.steps[0].attempts[0].status, 'effect_ambiguous');
+  await verifyWorkflowRuntimeRun(onePass, cancelled);
+});
+
+test('v0.1 stop and cancellation retain the legacy unresolved-attempt vocabulary', async () => {
+  const onePass = parseWorkflowRuntimeManifest({ ...manifest, steps: [manifest.steps[0]] });
+  const initial = await createWorkflowRuntimeRun(onePass, admission);
+  const pass = await planWorkflowRuntimeStep(onePass, initial);
+  assert.equal(pass.type, 'pass');
+
+  const preparedForStop = await reduceWorkflowRuntimeRun(onePass, initial, {
+    type: 'effect_intent',
+    stepId: 'collect',
+    attemptId: 'legacy-stop-attempt',
+    capability: pass.capability,
+    observedAt: '2026-08-25T00:00:00.500Z'
+  });
+  const stopped = await reduceWorkflowRuntimeRun(onePass, preparedForStop, {
+    type: 'stop_requested',
+    stepId: 'collect',
+    reason: 'operator stop',
+    actorSubject: 'owner-1',
+    observedAt: '2026-08-25T00:00:01.000Z'
+  });
+  assert.equal(stopped.steps[0].attempts[0].status, 'abandoned');
+  await verifyWorkflowRuntimeRun(onePass, stopped);
+
+  const incompatibleCheckpoint = structuredClone(stopped);
+  incompatibleCheckpoint.steps[0].attempts[0].status = 'effect_ambiguous';
+  incompatibleCheckpoint.receipts.at(-1).checkpointSha256 =
+    await workflowRuntimeCheckpointHash(incompatibleCheckpoint);
+  {
+    const { receiptSha256, ...unsigned } = incompatibleCheckpoint.receipts.at(-1);
+    incompatibleCheckpoint.receipts.at(-1).receiptSha256 = await workflowRuntimeReceiptHash(unsigned);
+  }
+  await assert.rejects(
+    () => verifyWorkflowRuntimeRun(onePass, incompatibleCheckpoint),
+    (error) => error instanceof RuntimeValidationError && error.code === 'INVALID_STATE'
+  );
+
+  const preparedForCancellation = await reduceWorkflowRuntimeRun(onePass, initial, {
+    type: 'effect_intent',
+    stepId: 'collect',
+    attemptId: 'legacy-cancellation-attempt',
+    capability: pass.capability,
+    observedAt: '2026-08-25T00:00:00.500Z'
+  });
+  const cancelled = await reduceWorkflowRuntimeRun(onePass, preparedForCancellation, {
+    type: 'cancellation_requested',
+    stepId: 'collect',
+    reason: 'operator cancellation',
+    actorSubject: 'owner-1',
+    observedAt: '2026-08-25T00:00:01.000Z'
+  });
+  assert.equal(cancelled.steps[0].attempts[0].status, 'abandoned');
+  await verifyWorkflowRuntimeRun(onePass, cancelled);
+});
+
 test('a retryable pass cannot be requeued with a recovery receipt for another step version', async () => {
   const onePass = parseWorkflowRuntimeManifest({ ...manifest, steps: [manifest.steps[0]] });
   const initial = await createWorkflowRuntimeRun(onePass, admission);
