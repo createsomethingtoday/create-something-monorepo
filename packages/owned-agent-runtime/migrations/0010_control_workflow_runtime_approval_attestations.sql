@@ -117,6 +117,20 @@ WHEN EXISTS (
   WHERE runtime.run_id = NEW.run_id
     AND json_extract(runtime.run_json, '$.schema') = 'workflow_runtime_run.v0.2'
 )
+  -- The attestation table is additive. A v0.2 wait written before this
+  -- migration has no approvalSurfaceSha256 in its immutable wait receipt and
+  -- therefore cannot truthfully be backfilled with a compiler authority.
+  -- Continue to require an attestation for every receipt that carries the
+  -- current attested envelope.
+  AND EXISTS (
+    SELECT 1
+    FROM control_workflow_runtime_receipts wait_receipt
+    WHERE wait_receipt.run_id = NEW.run_id
+      AND wait_receipt.created_at = NEW.created_at
+      AND json_extract(wait_receipt.receipt_json, '$.eventType') = 'wait_created'
+      AND json_extract(wait_receipt.receipt_json, '$.stepId') = NEW.step_id
+      AND json_type(wait_receipt.receipt_json, '$.approvalSurfaceSha256') IS NOT NULL
+  )
   AND (
     NEW.decision IS NULL
     OR NEW.decided_at IS NULL
