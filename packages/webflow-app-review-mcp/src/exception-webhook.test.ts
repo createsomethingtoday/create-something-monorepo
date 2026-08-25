@@ -23,11 +23,18 @@ function jsonResponse(body: unknown, status = 200) {
 
 function memoryStore(
   initial: WebhookLegState | null = null,
-): WebhookLegStateStore & { state: WebhookLegState | null; lockHolder: string | null; pending: boolean } {
-  const box: { state: WebhookLegState | null; lockHolder: string | null; pending: boolean } = {
+): WebhookLegStateStore & {
+  state: WebhookLegState | null;
+  lockHolder: string | null;
+  pending: boolean;
+  renewals: number;
+  renewLock(token: string, ttlMs: number): Promise<boolean>;
+} {
+  const box: { state: WebhookLegState | null; lockHolder: string | null; pending: boolean; renewals: number } = {
     state: initial,
     lockHolder: null,
     pending: false,
+    renewals: 0,
   };
   return {
     get state() {
@@ -45,6 +52,9 @@ function memoryStore(
     set pending(value: boolean) {
       box.pending = value;
     },
+    get renewals() {
+      return box.renewals;
+    },
     async get() {
       return box.state ? (JSON.parse(JSON.stringify(box.state)) as WebhookLegState) : null;
     },
@@ -57,6 +67,11 @@ function memoryStore(
     async acquireLock(token) {
       if (box.lockHolder !== null) return false;
       box.lockHolder = token;
+      return true;
+    },
+    async renewLock(token) {
+      if (box.lockHolder !== token) return false;
+      box.renewals += 1;
       return true;
     },
     async releaseLock(token) {
@@ -284,6 +299,7 @@ describe('processExceptionWebhookPayloads', () => {
 
     // Cursor advanced and persisted.
     expect(store.state?.webhooks.find((w) => w.id === 'achVersions')?.cursor).toBe(2);
+    expect(store.renewals).toBeGreaterThan(0);
   });
 
   it('keeps the cursor retryable when payload processing fails', async () => {
@@ -664,6 +680,9 @@ describe('createD1WebhookStateStore', () => {
                 if (query.includes('DO NOTHING')) {
                   const key = String(values[0]);
                   if (!rows.has(key)) rows.set(key, String(values[1]));
+                } else if (query.startsWith('UPDATE')) {
+                  const key = String(values[2]);
+                  if (rows.get(key) === String(values[3])) rows.set(key, String(values[0]));
                 } else if (query.startsWith('INSERT')) {
                   rows.set(String(values[0]), String(values[1]));
                 } else if (query.startsWith('DELETE') && query.includes('value <')) {
@@ -700,6 +719,8 @@ describe('createD1WebhookStateStore', () => {
 
     expect(await store.acquireLock('token-a', 60_000)).toBe(true);
     expect(await store.acquireLock('token-b', 60_000)).toBe(false);
+    expect(await store.renewLock('token-b', 60_000)).toBe(false);
+    expect(await store.renewLock('token-a', 60_000)).toBe(true);
 
     // Releasing with the wrong token is a no-op; the right token frees it.
     await store.releaseLock('token-b');

@@ -1083,6 +1083,7 @@ export class AirtableClient {
     filterByFormula?: string;
     sortField?: string;
     sortDirection?: 'asc' | 'desc';
+    pageIntervalMs?: number;
   }): Promise<AirtableRecord[]> {
     assertScopedTable(args.tableId);
 
@@ -1090,6 +1091,9 @@ export class AirtableClient {
     let offset: string | undefined;
 
     while (true) {
+      if (offset && args.pageIntervalMs && args.pageIntervalMs > 0) {
+        await this.sleepFn(args.pageIntervalMs);
+      }
       const query = new URLSearchParams();
       query.set('returnFieldsByFieldId', 'true');
       query.set('pageSize', '100');
@@ -1560,6 +1564,7 @@ export class AirtableClient {
       filterByFormula: buildOrFormula(FIELD_IDS.versions.exceptionStatus, pendingStatuses),
       sortField: FIELD_IDS.versions.exceptionRequestedDatetime,
       sortDirection: 'asc',
+      pageIntervalMs: EXCEPTION_QUEUE_REQUEST_INTERVAL_MS,
     });
     const versions = records
       .map((record) => mapVersionRecord(record))

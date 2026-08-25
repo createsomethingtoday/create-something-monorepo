@@ -74,8 +74,10 @@ export interface WebhookLegStateStore {
    * writes lands as near-simultaneous pings, each of which used to run its own
    * payload sweep from the same cursor and double-post every thread reply.
    * Only the lock holder processes; losers mark a pending sweep instead.
-   */
+  */
   acquireLock(token: string, ttlMs: number): Promise<boolean>;
+  /** Extend the current holder's lease without releasing the single-flight guard. */
+  renewLock(token: string, ttlMs: number): Promise<boolean>;
   releaseLock(token: string): Promise<void>;
   markPending(): Promise<void>;
   /** Returns true (and clears the marker) if a sweep was requested. */
@@ -166,6 +168,27 @@ export function createD1WebhookStateStore(db: D1Like): WebhookLegStateStore {
         .bind(LOCK_KEY)
         .first<{ value: string }>();
       return row?.value?.endsWith(`|${token}`) ?? false;
+    },
+    async renewLock(token, ttlMs) {
+      await ensureTable();
+      const row = await db
+        .prepare(`SELECT value FROM ${STATE_TABLE} WHERE key = ?`)
+        .bind(LOCK_KEY)
+        .first<{ value: string }>();
+      if (!row?.value?.endsWith(`|${token}`)) return false;
+
+      const now = new Date();
+      const nowIso = now.toISOString();
+      const value = `${new Date(now.getTime() + ttlMs).toISOString()}|${token}`;
+      await db
+        .prepare(`UPDATE ${STATE_TABLE} SET value = ?, updated_at = ? WHERE key = ? AND value = ?`)
+        .bind(value, nowIso, LOCK_KEY, row.value)
+        .run();
+      const renewed = await db
+        .prepare(`SELECT value FROM ${STATE_TABLE} WHERE key = ?`)
+        .bind(LOCK_KEY)
+        .first<{ value: string }>();
+      return renewed?.value === value;
     },
     async releaseLock(token) {
       await ensureTable();
@@ -393,6 +416,7 @@ interface PayloadListResponse {
 }
 
 interface PayloadStepCheckpoint {
+  renew(): Promise<void>;
   run<T>(key: string, operation: () => Promise<T>): Promise<T>;
 }
 
@@ -439,6 +463,13 @@ const MAX_PENDING_ROUNDS = 5;
 const MAX_PAYLOAD_ATTEMPTS = 3;
 const MAX_FAILED_PAYLOADS = 50;
 
+class WebhookLeaseLostError extends Error {
+  constructor() {
+    super('Webhook processing lease was lost.');
+    this.name = 'WebhookLeaseLostError';
+  }
+}
+
 export async function processExceptionWebhookPayloads(
   deps: ExceptionWebhookProcessorDeps,
 ): Promise<ProcessResult> {
@@ -454,10 +485,16 @@ export async function processExceptionWebhookPayloads(
     return result;
   }
 
+  const renewLease = async () => {
+    if (!(await deps.store.renewLock(token, PROCESS_LOCK_TTL_MS))) {
+      throw new WebhookLeaseLostError();
+    }
+  };
+
   try {
     let rounds = 0;
     do {
-      await runProcessingPass(deps, result);
+      await runProcessingPass(deps, result, renewLease);
       rounds += 1;
     } while (rounds < MAX_PENDING_ROUNDS && (await deps.store.consumePending()));
   } finally {
@@ -472,6 +509,7 @@ export async function processExceptionWebhookPayloads(
 async function runProcessingPass(
   deps: ExceptionWebhookProcessorDeps,
   result: ProcessResult,
+  renewLease: () => Promise<void>,
 ): Promise<void> {
   const state = await deps.store.get();
   if (!state) {
@@ -486,12 +524,15 @@ async function runProcessingPass(
     while (mightHaveMore) {
       let page: PayloadListResponse;
       try {
+        await renewLease();
         page = await webhookApiRequest<PayloadListResponse>(
           deps.webhookApi,
           'GET',
           `/${webhook.id}/payloads?cursor=${cursor}&limit=1`,
         );
+        await renewLease();
       } catch (error) {
+        if (error instanceof WebhookLeaseLostError) throw error;
         result.errors.push(`payloads ${webhook.id}: ${String(error)}`);
         break;
       }
@@ -501,11 +542,14 @@ async function runProcessingPass(
         const previousRetry = webhook.retry?.cursor === cursor ? webhook.retry : undefined;
         const completedSteps = previousRetry?.completedSteps ?? {};
         const checkpoint: PayloadStepCheckpoint = {
+          renew: renewLease,
           async run<T>(key: string, operation: () => Promise<T>): Promise<T> {
+            await renewLease();
             if (Object.prototype.hasOwnProperty.call(completedSteps, key)) {
               return completedSteps[key] as T;
             }
             const value = await operation();
+            await renewLease();
             completedSteps[key] = value === undefined ? true : value;
             webhook.retry = {
               cursor,
@@ -522,6 +566,7 @@ async function runProcessingPass(
         try {
           await handlePayload(deps, webhook.tableId, payload, result, checkpoint);
         } catch (error) {
+          if (error instanceof WebhookLeaseLostError) throw error;
           const errorMessage = String(error);
           result.errors.push(`payload (${webhook.tableId}): ${errorMessage}`);
           const attempts = webhook.retry?.cursor === cursor
@@ -688,7 +733,9 @@ async function handleVersionExceptionStatus(
   stepPrefix: string,
 ): Promise<void> {
   if (!status) return; // status cleared — nothing to narrate
-  const ctx = await deps.airtable.getVersionExceptionWebhookContext(versionId);
+  const ctx = await checkpoint.run(`${stepPrefix}:version-context`, () =>
+    deps.airtable.getVersionExceptionWebhookContext(versionId),
+  );
   if (!ctx) {
     result.errors.push(`version ${versionId} not found`);
     return;
@@ -855,7 +902,9 @@ async function handleVersionHold(
   stepPrefix: string,
 ): Promise<void> {
   if (!holdReason) return;
-  const ctx = await deps.airtable.getVersionExceptionWebhookContext(versionId);
+  const ctx = await checkpoint.run(`${stepPrefix}:version-context`, () =>
+    deps.airtable.getVersionExceptionWebhookContext(versionId),
+  );
   if (!ctx) return;
   // The native hold automation already posts the loud channel message. Only
   // add to the thread when one exists — the thread roots on the exception.
@@ -886,7 +935,9 @@ async function handleExceptionItemStatus(
   stepPrefix: string,
 ): Promise<void> {
   if (!status) return;
-  const item = await deps.airtable.getExceptionItemWebhookContext(itemId);
+  const item = await checkpoint.run(`${stepPrefix}:item-context`, () =>
+    deps.airtable.getExceptionItemWebhookContext(itemId),
+  );
   if (!item) {
     result.errors.push(`exception item ${itemId} not found`);
     return;
@@ -907,7 +958,9 @@ async function handleExceptionItemStatus(
   }
 
   if (!item.versionId) return;
-  const ctx = await deps.airtable.getVersionExceptionWebhookContext(item.versionId);
+  const ctx = await checkpoint.run(`${stepPrefix}:version-context`, () =>
+    deps.airtable.getVersionExceptionWebhookContext(item.versionId!),
+  );
   if (!ctx) return;
 
   const itemLabel = item.item ? `“${item.item}”` : `\`${itemId}\``;

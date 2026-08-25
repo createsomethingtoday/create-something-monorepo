@@ -81,6 +81,32 @@ describe('AirtableClient scope and validation', () => {
 });
 
 describe('AirtableClient exception handling', () => {
+  it('paces every pending-version page after the first', async () => {
+    const sleeps: number[] = [];
+    let page = 0;
+    const fetchFn = vi.fn(async (input: RequestInfo | URL) => {
+      const url = new URL(String(input));
+      expect(url.pathname.endsWith(`/${TABLE_IDS.assetVersions}`)).toBe(true);
+      page += 1;
+      return jsonResponse({
+        records: [],
+        ...(page < 6 ? { offset: `page-${page + 1}` } : {}),
+      });
+    });
+    const client = new AirtableClient({
+      apiKey: 'token',
+      fetchFn,
+      sleepFn: async (ms) => {
+        sleeps.push(ms);
+      },
+    });
+
+    await expect(client.listPendingExceptionQueue()).resolves.toEqual([]);
+
+    expect(fetchFn).toHaveBeenCalledTimes(6);
+    expect(sleeps).toEqual([250, 250, 250, 250, 250]);
+  });
+
   it('paces pending exception queue asset hydration sequentially', async () => {
     let activeAssetRequests = 0;
     let maxActiveAssetRequests = 0;
