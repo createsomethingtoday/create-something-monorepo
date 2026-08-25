@@ -69,9 +69,22 @@ export interface WorkflowRuntimeManifestV0_2 extends WorkflowRuntimeManifestBase
 
 export type WorkflowRuntimeManifest = WorkflowRuntimeManifestV0_1 | WorkflowRuntimeManifestV0_2;
 
+/**
+ * The subset of the accepted compiler registration that the current Agency
+ * activation ledger can freeze and the zero-write runtime can independently
+ * compare. Artifact, runtime-manifest, and workflow identity remain separate
+ * closed fields on the admission, run, and receipt.
+ */
+export interface WorkflowRuntimeRegistration {
+  buildReleaseId: string;
+  contractSha256: RuntimeDigest;
+  runtimePolicySha256: RuntimeDigest;
+}
+
 export interface WorkflowRuntimeAdmission {
   runId: string;
   activation: { id: string; version: number; policySha256: RuntimeDigest };
+  registration: WorkflowRuntimeRegistration;
   artifactManifestSha256: RuntimeDigest;
   runtimeManifestSha256: RuntimeDigest;
   clock: string;
@@ -139,7 +152,7 @@ export type WorkflowRuntimeReceiptEventType =
   | 'run_completed';
 
 export interface WorkflowRuntimeReceipt {
-  schema: 'create-something/control-run-receipt@2';
+  schema: 'create-something/control-run-receipt@2' | 'create-something/control-run-receipt@3';
   id: string;
   runId: string;
   eventIndex: number;
@@ -152,8 +165,20 @@ export interface WorkflowRuntimeReceipt {
   activationId: string;
   activationVersion: number;
   activationPolicySha256: RuntimeDigest;
+  /** Present and required for registration-bound `@3` receipts. */
+  buildReleaseId?: string;
+  /** Present and required for registration-bound `@3` receipts. */
+  contractSha256?: RuntimeDigest;
   artifactManifestSha256: RuntimeDigest;
   runtimeManifestSha256: RuntimeDigest;
+  /** Present and required for registration-bound `@3` receipts. */
+  runtimeManifestSchema?: WorkflowRuntimeManifest['schemaVersion'];
+  /** Present and required for registration-bound `@3` receipts. */
+  runtimePolicySha256?: RuntimeDigest;
+  /** Present and required for registration-bound `@3` receipts. */
+  workflowCompilerVersion?: string;
+  /** Present and required for registration-bound `@3` receipts. */
+  actionId?: string | null;
   workflowId: string;
   workflowVersion: string;
   definitionHash: RuntimeDigest;
@@ -168,13 +193,17 @@ export interface WorkflowRuntimeReceipt {
 }
 
 export interface WorkflowRuntimeRun {
-  schema: 'workflow_runtime_run.v0.1';
+  schema: 'workflow_runtime_run.v0.1' | 'workflow_runtime_run.v0.2';
   id: string;
   status: WorkflowRuntimeRunStatus;
   version: number;
   activation: WorkflowRuntimeAdmission['activation'];
+  /** Present and required for `workflow_runtime_run.v0.2`. */
+  registration?: WorkflowRuntimeRegistration;
   artifactManifestSha256: RuntimeDigest;
   runtimeManifestSha256: RuntimeDigest;
+  /** Present and required for `workflow_runtime_run.v0.2`. */
+  runtimeManifestSchema?: WorkflowRuntimeManifest['schemaVersion'];
   steps: WorkflowRuntimeStepRecord[];
   receipts: WorkflowRuntimeReceipt[];
 }

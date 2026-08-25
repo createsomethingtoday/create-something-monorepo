@@ -56,6 +56,11 @@ test('the runtime admits a serialized manifest only after the compiler inventory
     const run = await createWorkflowRuntimeRun(parsed, {
       runId: 'compiler-fixture-run',
       activation: { id: 'fixture-activation', version: 1, policySha256: sha256('policy') },
+      registration: {
+        buildReleaseId: 'fixture-build-release',
+        contractSha256: sha256('contract'),
+        runtimePolicySha256: sha256('policy')
+      },
       artifactManifestSha256: inventory.manifestHash,
       runtimeManifestSha256: sha256(serializedRuntimeManifest),
       clock: '2026-08-25T00:00:00.000Z'

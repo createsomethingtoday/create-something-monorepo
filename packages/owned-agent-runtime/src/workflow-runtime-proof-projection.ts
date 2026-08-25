@@ -47,7 +47,7 @@ type CapabilityObservationRow = {
   failure_code: string | null;
 };
 
-export interface WorkflowRuntimeProofApprovalContext {
+export interface WorkflowRuntimeProofApprovalContextV1 {
   schema: 'create-something/workflow-runtime-approval-context@1';
   version: 1;
   scope: WorkflowRuntimeScope;
@@ -61,6 +61,20 @@ export interface WorkflowRuntimeProofApprovalContext {
   actionId: string;
   evidenceDigest: RuntimeDigest;
 }
+
+export interface WorkflowRuntimeProofApprovalContextV2 extends Omit<
+  WorkflowRuntimeProofApprovalContextV1,
+  'schema' | 'version'
+> {
+  schema: 'create-something/workflow-runtime-approval-context@2';
+  version: 2;
+  registration: NonNullable<WorkflowRuntimeRun['registration']>;
+  runtimeManifestSchema: WorkflowRuntimeManifest['schemaVersion'];
+}
+
+export type WorkflowRuntimeProofApprovalContext =
+  | WorkflowRuntimeProofApprovalContextV1
+  | WorkflowRuntimeProofApprovalContextV2;
 
 export interface WorkflowRuntimeProofApproval {
   id: string;
@@ -98,8 +112,10 @@ export interface WorkflowRuntimeProofProjection {
     status: WorkflowRuntimeRun['status'];
     version: number;
     activation: WorkflowRuntimeRun['activation'];
+    registration?: WorkflowRuntimeRun['registration'];
     artifactManifestSha256: RuntimeDigest;
     runtimeManifestSha256: RuntimeDigest;
+    runtimeManifestSchema?: WorkflowRuntimeRun['runtimeManifestSchema'];
     workflow: WorkflowRuntimeManifest['workflow'];
   };
   steps: Array<{
@@ -135,8 +151,15 @@ export interface WorkflowRuntimeProofProjection {
     activationId: string;
     activationVersion: number;
     activationPolicySha256: RuntimeDigest;
+    schema: WorkflowRuntimeReceipt['schema'];
+    buildReleaseId?: string;
+    contractSha256?: RuntimeDigest;
     artifactManifestSha256: RuntimeDigest;
     runtimeManifestSha256: RuntimeDigest;
+    runtimeManifestSchema?: WorkflowRuntimeManifest['schemaVersion'];
+    runtimePolicySha256?: RuntimeDigest;
+    workflowCompilerVersion?: string;
+    actionId?: string | null;
     workflowId: string;
     workflowVersion: string;
     definitionHash: RuntimeDigest;
@@ -232,6 +255,23 @@ function parseActivation(value: unknown): WorkflowRuntimeRun['activation'] {
   };
 }
 
+function parseRegistration(value: unknown): NonNullable<WorkflowRuntimeRun['registration']> {
+  if (
+    !isRecord(value) ||
+    !exact(value, ['buildReleaseId', 'contractSha256', 'runtimePolicySha256'])
+  ) {
+    throw new RuntimeValidationError(
+      'INVALID_STATE',
+      'Workflow Runtime approval registration is invalid'
+    );
+  }
+  return {
+    buildReleaseId: boundedText(value.buildReleaseId, 'Workflow Runtime approval Build release ID'),
+    contractSha256: digest(value.contractSha256, 'Workflow Runtime approval contract'),
+    runtimePolicySha256: digest(value.runtimePolicySha256, 'Workflow Runtime approval policy')
+  };
+}
+
 function parseWorkflow(value: unknown): WorkflowRuntimeManifest['workflow'] {
   if (
     !isRecord(value) ||
@@ -275,6 +315,17 @@ function sameActivation(
   );
 }
 
+function sameRegistration(
+  left: NonNullable<WorkflowRuntimeRun['registration']>,
+  right: NonNullable<WorkflowRuntimeRun['registration']>
+): boolean {
+  return (
+    left.buildReleaseId === right.buildReleaseId &&
+    left.contractSha256 === right.contractSha256 &&
+    left.runtimePolicySha256 === right.runtimePolicySha256
+  );
+}
+
 function sameWorkflow(
   left: WorkflowRuntimeManifest['workflow'],
   right: WorkflowRuntimeManifest['workflow']
@@ -300,24 +351,34 @@ function parseApprovalContext(
   value: unknown,
   expectedScope: WorkflowRuntimeScope
 ): WorkflowRuntimeProofApprovalContext {
+  const v1Fields = [
+    'actionId',
+    'activation',
+    'artifactManifestSha256',
+    'attempt',
+    'evidenceDigest',
+    'runVersion',
+    'runtimeManifestSha256',
+    'schema',
+    'scope',
+    'stepVersion',
+    'version',
+    'workflow'
+  ];
+  const v2Fields = [...v1Fields, 'registration', 'runtimeManifestSchema'];
+  const v1 =
+    isRecord(value) &&
+    exact(value, v1Fields) &&
+    value.schema === 'create-something/workflow-runtime-approval-context@1' &&
+    value.version === 1;
+  const v2 =
+    isRecord(value) &&
+    exact(value, v2Fields) &&
+    value.schema === 'create-something/workflow-runtime-approval-context@2' &&
+    value.version === 2;
   if (
+    (!v1 && !v2) ||
     !isRecord(value) ||
-    !exact(value, [
-      'actionId',
-      'activation',
-      'artifactManifestSha256',
-      'attempt',
-      'evidenceDigest',
-      'runVersion',
-      'runtimeManifestSha256',
-      'schema',
-      'scope',
-      'stepVersion',
-      'version',
-      'workflow'
-    ]) ||
-    value.schema !== 'create-something/workflow-runtime-approval-context@1' ||
-    value.version !== 1 ||
     !isRecord(value.attempt) ||
     !exact(value.attempt, ['type']) ||
     value.attempt.type !== 'no_capability_attempt'
@@ -334,13 +395,11 @@ function parseApprovalContext(
       'Workflow Runtime approval context scope mismatches'
     );
   }
-  return {
-    schema: 'create-something/workflow-runtime-approval-context@1',
-    version: 1,
+  const context = {
     scope,
     runVersion: positiveVersion(value.runVersion, 'Workflow Runtime approval run version'),
     stepVersion: positiveVersion(value.stepVersion, 'Workflow Runtime approval step version'),
-    attempt: { type: 'no_capability_attempt' },
+    attempt: { type: 'no_capability_attempt' as const },
     activation: parseActivation(value.activation),
     artifactManifestSha256: digest(
       value.artifactManifestSha256,
@@ -353,6 +412,29 @@ function parseApprovalContext(
     workflow: parseWorkflow(value.workflow),
     actionId: boundedText(value.actionId, 'Workflow Runtime approval action ID'),
     evidenceDigest: digest(value.evidenceDigest, 'Workflow Runtime approval evidence')
+  };
+  if (v1) {
+    return {
+      schema: 'create-something/workflow-runtime-approval-context@1',
+      version: 1,
+      ...context
+    };
+  }
+  if (
+    value.runtimeManifestSchema !== 'workflow_runtime_manifest.v0.1' &&
+    value.runtimeManifestSchema !== 'workflow_runtime_manifest.v0.2'
+  ) {
+    throw new RuntimeValidationError(
+      'INVALID_STATE',
+      'Workflow Runtime approval manifest schema is invalid'
+    );
+  }
+  return {
+    schema: 'create-something/workflow-runtime-approval-context@2',
+    version: 2,
+    ...context,
+    registration: parseRegistration(value.registration),
+    runtimeManifestSchema: value.runtimeManifestSchema
   };
 }
 
@@ -617,7 +699,19 @@ function validateRelations(
       approval.context.workflow.definitionHash !== waitReceipt.definitionHash ||
       approval.context.evidenceDigest !== definition.evidenceDigest ||
       approval.context.evidenceDigest !== waitReceipt.evidenceDigest ||
-      approval.context.actionId !== definition.actionId
+      approval.context.actionId !== definition.actionId ||
+      (run.schema === 'workflow_runtime_run.v0.1'
+        ? approval.context.schema !== 'create-something/workflow-runtime-approval-context@1'
+        : !run.registration ||
+          !run.runtimeManifestSchema ||
+          approval.context.schema !== 'create-something/workflow-runtime-approval-context@2' ||
+          !sameRegistration(approval.context.registration, run.registration) ||
+          approval.context.runtimeManifestSchema !== run.runtimeManifestSchema ||
+          waitReceipt.schema !== 'create-something/control-run-receipt@3' ||
+          approval.context.registration.buildReleaseId !== waitReceipt.buildReleaseId ||
+          approval.context.registration.contractSha256 !== waitReceipt.contractSha256 ||
+          approval.context.registration.runtimePolicySha256 !== waitReceipt.runtimePolicySha256 ||
+          approval.context.runtimeManifestSchema !== waitReceipt.runtimeManifestSchema)
     ) {
       throw new RuntimeValidationError(
         'INVALID_STATE',
@@ -700,6 +794,7 @@ function validateRelations(
 
 function proofReceipt(receipt: WorkflowRuntimeReceipt) {
   return {
+    schema: receipt.schema,
     id: receipt.id,
     runId: receipt.runId,
     eventIndex: receipt.eventIndex,
@@ -712,6 +807,16 @@ function proofReceipt(receipt: WorkflowRuntimeReceipt) {
     activationId: receipt.activationId,
     activationVersion: receipt.activationVersion,
     activationPolicySha256: receipt.activationPolicySha256,
+    ...(receipt.schema === 'create-something/control-run-receipt@3'
+      ? {
+          buildReleaseId: receipt.buildReleaseId,
+          contractSha256: receipt.contractSha256,
+          runtimeManifestSchema: receipt.runtimeManifestSchema,
+          runtimePolicySha256: receipt.runtimePolicySha256,
+          workflowCompilerVersion: receipt.workflowCompilerVersion,
+          actionId: receipt.actionId
+        }
+      : {}),
     artifactManifestSha256: receipt.artifactManifestSha256,
     runtimeManifestSha256: receipt.runtimeManifestSha256,
     workflowId: receipt.workflowId,
@@ -748,6 +853,12 @@ async function createWorkflowRuntimeProofProjection(
       status: input.run.status,
       version: input.run.version,
       activation: structuredClone(input.run.activation),
+      ...(input.run.schema === 'workflow_runtime_run.v0.2'
+        ? {
+            registration: structuredClone(input.run.registration),
+            runtimeManifestSchema: input.run.runtimeManifestSchema
+          }
+        : {}),
       artifactManifestSha256: input.run.artifactManifestSha256,
       runtimeManifestSha256: input.run.runtimeManifestSha256,
       workflow: structuredClone(input.manifest.workflow)
@@ -847,7 +958,16 @@ export class D1WorkflowRuntimeProofReader {
          FROM control_workflow_runtime_runs runtime
          JOIN control_runs control ON control.id = runtime.run_id
          WHERE runtime.run_id = ?1 AND control.account_id = ?2 AND control.tenant_id = ?3
-           AND control.workspace_account_id = ?4`
+           AND control.workspace_account_id = ?4
+           AND (
+             json_extract(runtime.run_json, '$.schema') IS NOT 'workflow_runtime_run.v0.2'
+             OR EXISTS (
+               SELECT 1 FROM control_workflow_runtime_checkpoints checkpoint
+               WHERE checkpoint.run_id = runtime.run_id
+                 AND checkpoint.run_version = runtime.version
+                 AND json(checkpoint.checkpoint_json) IS json(runtime.run_json)
+             )
+           )`
       )
       .bind(
         boundedText(input.runId, 'Workflow Runtime proof run ID'),

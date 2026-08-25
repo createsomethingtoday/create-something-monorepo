@@ -18,7 +18,7 @@ type CommandRow = {
   result_json: string | null;
 };
 
-type WorkflowRuntimeApprovalContext = {
+type WorkflowRuntimeApprovalContextV1 = {
   schema: 'create-something/workflow-runtime-approval-context@1';
   version: 1;
   scope: WorkflowRuntimeScope;
@@ -33,6 +33,20 @@ type WorkflowRuntimeApprovalContext = {
   evidenceDigest: RuntimeDigest;
 };
 
+type WorkflowRuntimeApprovalContextV2 = Omit<
+  WorkflowRuntimeApprovalContextV1,
+  'schema' | 'version'
+> & {
+  schema: 'create-something/workflow-runtime-approval-context@2';
+  version: 2;
+  registration: NonNullable<WorkflowRuntimeRun['registration']>;
+  runtimeManifestSchema: WorkflowRuntimeManifest['schemaVersion'];
+};
+
+type WorkflowRuntimeApprovalContext =
+  | WorkflowRuntimeApprovalContextV1
+  | WorkflowRuntimeApprovalContextV2;
+
 const COMMAND_DIGEST = /^[a-f0-9]{64}$/;
 const LIVE_PARENT_STATUSES = "'queued', 'running', 'waiting_for_approval'";
 
@@ -42,7 +56,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function parsedRun(value: string, label: string): WorkflowRuntimeRun {
   const parsed: unknown = JSON.parse(value);
-  if (!isRecord(parsed) || parsed.schema !== 'workflow_runtime_run.v0.1') {
+  if (
+    !isRecord(parsed) ||
+    (parsed.schema !== 'workflow_runtime_run.v0.1' && parsed.schema !== 'workflow_runtime_run.v0.2')
+  ) {
     throw new RuntimeValidationError('INVALID_STATE', `${label} is not a Workflow Runtime run`);
   }
   return parsed as unknown as WorkflowRuntimeRun;
@@ -117,7 +134,18 @@ export class D1WorkflowRuntimeCheckpointStore implements WorkflowRuntimeCheckpoi
       );
     }
 
-    const approvalContexts = await this.approvalContexts(input);
+    const manifest = await this.trustedManifest(input);
+    const approvalContexts = await this.approvalContexts(input, manifest);
+    const registration = input.run.registration;
+    if (
+      input.run.schema === 'workflow_runtime_run.v0.2' &&
+      (!registration || !input.run.runtimeManifestSchema)
+    ) {
+      throw new RuntimeValidationError(
+        'INVALID_STATE',
+        'Registration-bound Workflow Runtime checkpoint is missing registration or manifest schema'
+      );
+    }
 
     const serialized = JSON.stringify(input.run);
     const issuedAt = input.run.receipts.at(-1)?.createdAt;
@@ -136,15 +164,25 @@ export class D1WorkflowRuntimeCheckpointStore implements WorkflowRuntimeCheckpoi
         this.database
           .prepare(
             `INSERT INTO control_workflow_runtime_runs
-              (run_id, artifact_manifest_sha256, runtime_manifest_sha256, status, version,
+             (run_id, artifact_manifest_sha256, runtime_manifest_sha256, status, version,
                run_json, created_at, updated_at, admission_command_id)
-             SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?7, ?14
+             SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?7, ?17
              WHERE EXISTS (
                SELECT 1 FROM control_runs
                WHERE id = ?1 AND account_id = ?8 AND tenant_id = ?9 AND workspace_account_id = ?10
                  AND activation_id = ?11 AND activation_version = ?12
                  AND json_extract(activation_json, '$.policySha256') = substr(?13, 8)
                  AND json_extract(activation_json, '$.buildManifestSha256') = substr(?2, 8)
+                 AND (
+                   (?14 IS NULL AND json_extract(?6, '$.schema') = 'workflow_runtime_run.v0.1')
+                   OR (
+                     ?14 IS NOT NULL
+                     AND json_extract(?6, '$.schema') = 'workflow_runtime_run.v0.2'
+                     AND json_extract(activation_json, '$.buildReleaseId') = ?14
+                     AND json_extract(activation_json, '$.contractSha256') = substr(?15, 8)
+                     AND json_extract(activation_json, '$.policySha256') = substr(?16, 8)
+                   )
+                 )
                  AND status IN (${LIVE_PARENT_STATUSES})
              )`
           )
@@ -162,6 +200,9 @@ export class D1WorkflowRuntimeCheckpointStore implements WorkflowRuntimeCheckpoi
             input.run.activation.id,
             input.run.activation.version,
             input.run.activation.policySha256,
+            registration?.buildReleaseId ?? null,
+            registration?.contractSha256 ?? null,
+            registration?.runtimePolicySha256 ?? null,
             commandId
           )
       );
@@ -253,6 +294,7 @@ export class D1WorkflowRuntimeCheckpointStore implements WorkflowRuntimeCheckpoi
         .bind(serialized, commandId)
     );
 
+    const approvalStatements: D1PreparedStatement[] = [];
     for (const step of input.run.steps) {
       statements.push(
         this.database
@@ -312,7 +354,7 @@ export class D1WorkflowRuntimeCheckpointStore implements WorkflowRuntimeCheckpoi
             'Workflow Runtime approval context is missing'
           );
         }
-        statements.push(
+        approvalStatements.push(
           this.database
             .prepare(
               `INSERT INTO control_workflow_runtime_approvals
@@ -395,6 +437,9 @@ export class D1WorkflowRuntimeCheckpointStore implements WorkflowRuntimeCheckpoi
         }
       }
     }
+    // The immutable wait receipt is the D1-side authority for the approval
+    // context. Persist it before a new context can reference it.
+    statements.push(...approvalStatements);
 
     const checkpointSha256 = await workflowRuntimeCheckpointHash(input.run);
     statements.push(
@@ -461,16 +506,18 @@ export class D1WorkflowRuntimeCheckpointStore implements WorkflowRuntimeCheckpoi
       .first<CommandRow>();
   }
 
-  private async approvalContexts(
+  private async trustedManifest(
     input: Parameters<WorkflowRuntimeCheckpointStore['apply']>[0]
-  ): Promise<Map<string, WorkflowRuntimeApprovalContext>> {
+  ): Promise<WorkflowRuntimeManifest | undefined> {
     const approvalSteps = input.run.steps.filter((step) => step.approval !== null);
-    if (approvalSteps.length === 0) return new Map();
+    if (input.run.schema === 'workflow_runtime_run.v0.1' && approvalSteps.length === 0) {
+      return undefined;
+    }
     const manifestAuthority = this.manifests;
     if (!manifestAuthority) {
       throw new RuntimeValidationError(
         'INVALID_STATE',
-        'Workflow Runtime approval requires a trusted manifest authority'
+        'Workflow Runtime registration-bound checkpoint requires a trusted manifest authority'
       );
     }
     const manifest = await manifestAuthority.findByRuntimeManifestSha256(
@@ -479,10 +526,25 @@ export class D1WorkflowRuntimeCheckpointStore implements WorkflowRuntimeCheckpoi
     if (!manifest) {
       throw new RuntimeValidationError(
         'INVALID_STATE',
-        'Workflow Runtime approval manifest is unavailable from the trusted authority'
+        'Workflow Runtime checkpoint manifest is unavailable from the trusted authority'
       );
     }
     await verifyWorkflowRuntimeRun(manifest, input.run);
+    return manifest;
+  }
+
+  private async approvalContexts(
+    input: Parameters<WorkflowRuntimeCheckpointStore['apply']>[0],
+    manifest: WorkflowRuntimeManifest | undefined
+  ): Promise<Map<string, WorkflowRuntimeApprovalContext>> {
+    const approvalSteps = input.run.steps.filter((step) => step.approval !== null);
+    if (approvalSteps.length === 0) return new Map();
+    if (!manifest) {
+      throw new RuntimeValidationError(
+        'INVALID_STATE',
+        'Workflow Runtime approval requires a trusted manifest authority'
+      );
+    }
     const contexts = new Map<string, WorkflowRuntimeApprovalContext>();
     for (const step of approvalSteps) {
       const definition = manifest.steps.find((candidate) => candidate.id === step.id);
@@ -492,19 +554,38 @@ export class D1WorkflowRuntimeCheckpointStore implements WorkflowRuntimeCheckpoi
           'Workflow Runtime approval does not match a wait definition'
         );
       }
-      contexts.set(step.approval.id, {
-        schema: 'create-something/workflow-runtime-approval-context@1',
-        version: 1,
+      const context = {
         scope: structuredClone(input.scope),
         runVersion: input.run.version,
         stepVersion: step.version,
-        attempt: { type: 'no_capability_attempt' },
+        attempt: { type: 'no_capability_attempt' as const },
         activation: structuredClone(input.run.activation),
         artifactManifestSha256: input.run.artifactManifestSha256,
         runtimeManifestSha256: input.run.runtimeManifestSha256,
         workflow: structuredClone(manifest.workflow),
         actionId: definition.actionId,
         evidenceDigest: definition.evidenceDigest
+      };
+      if (input.run.schema === 'workflow_runtime_run.v0.1') {
+        contexts.set(step.approval.id, {
+          schema: 'create-something/workflow-runtime-approval-context@1',
+          version: 1,
+          ...context
+        });
+        continue;
+      }
+      if (!input.run.registration || !input.run.runtimeManifestSchema) {
+        throw new RuntimeValidationError(
+          'INVALID_STATE',
+          'Registration-bound Workflow Runtime approval is missing registration or manifest schema'
+        );
+      }
+      contexts.set(step.approval.id, {
+        schema: 'create-something/workflow-runtime-approval-context@2',
+        version: 2,
+        ...context,
+        registration: structuredClone(input.run.registration),
+        runtimeManifestSchema: input.run.runtimeManifestSchema
       });
     }
     return contexts;

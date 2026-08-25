@@ -27,6 +27,8 @@ export type { WorkflowRuntimeManifestAuthority } from './workflow-runtime-manife
 export type {
   WorkflowRuntimeProofApproval,
   WorkflowRuntimeProofApprovalContext,
+  WorkflowRuntimeProofApprovalContextV1,
+  WorkflowRuntimeProofApprovalContextV2,
   WorkflowRuntimeProofCapabilityObservation,
   WorkflowRuntimeProofProjection
 } from './workflow-runtime-proof-projection.js';

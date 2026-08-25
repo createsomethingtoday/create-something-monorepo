@@ -234,11 +234,66 @@ receipt and may require recovery, but does not resume or complete the run.
 ### Receipt contract
 
 The existing `create-something/control-run-receipt@1` remains readable for
-legacy run records. The compiled-workflow ledger introduces additive
-`create-something/control-run-receipt@2` records, selected by schema rather
-than reinterpretation. Each v2 receipt is canonicalized and hash chained to
-the prior receipt for the run; receipt insertion, hash continuity, and
+legacy Control run records. The zero-write Workflow Runtime prototype's closed
+`create-something/control-run-receipt@2` records also remain readable under
+their original hash semantics. Because that shipped `@2` shape did not carry
+the full activation registration identity, registration-bound
+`workflow_runtime_run.v0.2` checkpoints introduce additive
+`create-something/control-run-receipt@3` records rather than reinterpreting
+historical receipts. Each `@3` receipt is canonicalized and hash chained to
+the prior receipt for its run; receipt insertion, hash continuity, and
 immutability remain Control D1 invariants.
+
+Every new admission freezes the Agency activation's Build release ID, contract
+hash, runtime-policy hash, and the parsed runtime-manifest schema in the run.
+Each `@3` receipt repeats those values and the exact run-frozen manifest schema.
+The Control D1 admission query
+and registration-binding triggers independently compare that tuple against the
+frozen parent activation; a Build, contract, policy, or artifact mismatch
+persists no checkpoint. Approval contexts use an additive
+`create-something/workflow-runtime-approval-context@2` shape with the same
+tuple. Context `@1` remains readable only for a historical
+`workflow_runtime_run.v0.1` receipt chain.
+
+The owned checkpoint store resolves every `workflow_runtime_run.v0.2`
+`runtimeManifestSha256` through its trusted manifest authority before it writes
+the admission or any later checkpoint. It re-verifies the complete run against
+that exact artifact, including its parsed manifest schema. Control D1 also
+rejects v0.2 schema downgrades and incomplete `@2` approval-context envelopes;
+neither a malformed side ledger nor a manifest-schema substitution can make a
+persisted proof available.
+
+For a registration-bound approval, Control D1 admits the complete context only
+after it matches the immutable parent scope and activation, the checkpoint
+tuple, the referenced step, and its contemporaneous `wait_created` receipt,
+including the workflow identity/compiler version, action, and evidence. The
+owned store persists that wait receipt before the context in the one
+transaction. A raw import that changes any of those durable relations is
+rejected rather than leaving a later proof read to discover an unavailable
+ledger fact. Every checkpoint JSON payload rejects duplicate object keys before
+selecting its schema or checking relations; registration-bound receipt and
+approval JSON use the same rule. D1 and the runtime parser therefore cannot
+bind different values from the same payload. The
+registration-bound checkpoint envelope must also agree with its immutable row
+ID, status, and version; a v2 approval payload is a closed canonical envelope
+whose ID and binding digest match its immutable columns and whose full
+identity matches the exact pending approval on its persisted step.
+
+The registration-bound checkpoint uses the same closed top-level, activation,
+and registration field sets as the runtime verifier. A persisted `@3` side-ledger
+receipt must match its checkpoint receipt by row identity, event sequence,
+complete JSON payload, embedded receipt hash, chain predecessor, and timestamp;
+the ledger cannot accept a forged compiler/action/evidence receipt beside an
+otherwise valid checkpoint. Every later checkpoint update must retain each
+already-persisted side-ledger receipt under that same exact relation, so history
+cannot be rewritten after its immutable row exists. Before accepting an
+approval, the mutable side-ledger step must exactly match the corresponding
+checkpoint step; its pending approval cannot become an alternate authority.
+Final checkpoint persistence requires both directions of the receipt relation:
+every embedded receipt must have its immutable ledger row and every ledger row
+must remain embedded. The proof reader refuses a v0.2 run that lacks that
+matching immutable checkpoint. The ledger also requires every registration-era
+field, including an explicit text or `null` action ID.
 
 Every v2 receipt carries the existing receipt identity and chain pointers plus:
 

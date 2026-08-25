@@ -37,7 +37,7 @@ step can become ready.
 Callers must independently verify the compiler artifact inventory and trusted
 Ed25519 signer before parsing the runtime manifest. Then the core can:
 
-1. admit the immutable activation and artifact hashes;
+1. admit the immutable activation, Build registration, and artifact hashes;
 2. persist an idempotent state transition and hash-chained receipt;
 3. plan a `pass`, `wait`, `stop`, or manual recovery action; and
 4. fail closed when a checkpoint, receipt chain, approval binding, schema, or
@@ -45,7 +45,20 @@ Ed25519 signer before parsing the runtime manifest. Then the core can:
 
 `D1WorkflowRuntimeCheckpointStore`, in the owned Control runtime, is the
 durable zero-write storage port. It scopes state through the parent
-Control run; it is not a network route or activation path.
+Control run; it is not a network route or activation path. New admissions
+freeze the exact Build release ID, contract hash, runtime-policy hash, and
+parsed runtime-manifest schema in `workflow_runtime_run.v0.2`; the Control
+parent activation must carry the same registration values before that checkpoint
+can persist.
+Registration-bound `@3` receipts additionally freeze the compiler version and
+the resolved step action (or `null` for a run-level event), allowing Control to
+bind an approval context to its exact wait receipt without treating a queue or
+projection as authority.
+An owned host must additionally resolve every v0.2 checkpoint's
+`runtimeManifestSha256` from a trusted manifest authority and re-verify that
+exact artifact before Control D1 can persist it. The runtime hash and parsed
+manifest schema are one frozen admission fact; a missing or mismatched authority
+result fails closed.
 
 ## Non-goals in 0.1
 
