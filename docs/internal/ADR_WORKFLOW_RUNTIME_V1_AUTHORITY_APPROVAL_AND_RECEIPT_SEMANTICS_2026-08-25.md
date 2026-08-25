@@ -286,8 +286,11 @@ complete JSON payload, embedded receipt hash, chain predecessor, and timestamp;
 the ledger cannot accept a forged compiler/action/evidence receipt beside an
 otherwise valid checkpoint. Every later checkpoint update must retain each
 already-persisted side-ledger receipt under that same exact relation, so history
-cannot be rewritten after its immutable row exists. The ledger also requires
-every registration-era field, including an explicit text or `null` action ID.
+cannot be rewritten after its immutable row exists. Before accepting an
+approval, the mutable side-ledger step must exactly match the corresponding
+checkpoint step; its pending approval cannot become an alternate authority.
+The ledger also requires every registration-era field, including an explicit
+text or `null` action ID.
 
 Every v2 receipt carries the existing receipt identity and chain pointers plus:
 

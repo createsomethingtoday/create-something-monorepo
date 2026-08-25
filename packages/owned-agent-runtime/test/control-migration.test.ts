@@ -575,6 +575,12 @@ test('registration-binding migration binds an approval context to its parent, wa
     contractSha256: hash('b'),
     runtimePolicySha256: hash('c')
   };
+  const pendingApproval = {
+    id: 'approval-valid',
+    bindingSha256: hash('9'),
+    policyId: 'account-owner',
+    expiresAt: '2026-07-20T00:00:00.000Z'
+  };
   const run = {
     schema: 'workflow_runtime_run.v0.2',
     id: 'run-a',
@@ -585,7 +591,7 @@ test('registration-binding migration binds an approval context to its parent, wa
     runtimeManifestSha256: hash('d'),
     runtimeManifestSchema: 'workflow_runtime_manifest.v0.1',
     registration,
-    steps: [],
+    steps: [] as object[],
     receipts: [] as object[]
   };
   const receipt = {
@@ -622,6 +628,14 @@ test('registration-binding migration binds an approval context to its parent, wa
     createdAt,
     receiptSha256: hash('8')
   };
+  const step = {
+    id: 'review',
+    status: 'waiting_for_approval',
+    version: 1,
+    attempts: [],
+    approval: pendingApproval
+  };
+  run.steps.push(step);
   run.receipts.push(receipt);
   const context = {
     schema: 'create-something/workflow-runtime-approval-context@2',
@@ -644,12 +658,6 @@ test('registration-binding migration binds an approval context to its parent, wa
     evidenceDigest: hash('f'),
     registration,
     runtimeManifestSchema: run.runtimeManifestSchema
-  };
-  const pendingApproval = {
-    id: 'approval-valid',
-    bindingSha256: hash('9'),
-    policyId: 'account-owner',
-    expiresAt: '2026-07-20T00:00:00.000Z'
   };
   const approvalSql = (
     id: string,
@@ -688,13 +696,7 @@ test('registration-binding migration binds an approval context to its parent, wa
     INSERT INTO control_workflow_runtime_steps (run_id, step_id, status, version, step_json)
     VALUES (
       'run-a', 'review', 'waiting_for_approval', 1,
-      '${JSON.stringify({
-        id: 'review',
-        status: 'waiting_for_approval',
-        version: 1,
-        attempts: [],
-        approval: pendingApproval
-      })}'
+      '${JSON.stringify(step)}'
     );
     INSERT INTO control_workflow_runtime_receipts (
       id, run_id, event_index, receipt_json, receipt_sha256, previous_receipt_sha256, created_at
@@ -723,6 +725,23 @@ test('registration-binding migration binds an approval context to its parent, wa
          })}'
      WHERE run_id = 'run-a';`,
     /registration does not match its frozen activation/
+  );
+  sql(
+    path,
+    `UPDATE control_workflow_runtime_steps
+     SET step_json = '${JSON.stringify({ ...step, approval: { ...pendingApproval, id: 'forged-id' } })}'
+     WHERE run_id = 'run-a' AND step_id = 'review';`
+  );
+  expectSqlFailure(
+    path,
+    approvalSql('approval-valid', context),
+    /approval context schema must match its checkpoint/
+  );
+  sql(
+    path,
+    `UPDATE control_workflow_runtime_steps
+     SET step_json = '${JSON.stringify(step)}'
+     WHERE run_id = 'run-a' AND step_id = 'review';`
   );
   expectSqlFailure(
     path,

@@ -420,6 +420,8 @@ WHEN EXISTS (
       JOIN control_workflow_runtime_steps step
         ON step.run_id = runtime.run_id
        AND step.step_id = NEW.step_id
+      JOIN json_each(runtime.run_json, '$.steps') checkpoint_step
+        ON json_extract(checkpoint_step.value, '$.id') IS step.step_id
       JOIN control_workflow_runtime_receipts receipt
         ON receipt.run_id = runtime.run_id
       WHERE runtime.run_id = NEW.run_id
@@ -455,6 +457,9 @@ WHEN EXISTS (
         AND json_extract(receipt.receipt_json, '$.stepVersion') =
           json_extract(NEW.approval_context_json, '$.stepVersion')
         AND step.version = json_extract(NEW.approval_context_json, '$.stepVersion')
+        AND json_extract(checkpoint_step.value, '$.status') IS step.status
+        AND json_extract(checkpoint_step.value, '$.version') IS step.version
+        AND json(checkpoint_step.value) IS json(step.step_json)
         AND json_extract(step.step_json, '$.approval.id') = NEW.approval_id
         AND json_extract(step.step_json, '$.approval.bindingSha256') = NEW.binding_sha256
         AND json_extract(step.step_json, '$.approval.policyId') =
