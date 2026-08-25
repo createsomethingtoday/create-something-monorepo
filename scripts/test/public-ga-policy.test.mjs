@@ -117,6 +117,16 @@ test('Pi trusted publishing stages releases for explicit 2FA approval', async ()
   assert.doesNotMatch(workflow, /run: npm publish --access public/);
 });
 
+test('the legacy GitHub Map synthetic remains a manual diagnostic, not the scheduled receipt lane', async () => {
+  const workflow = await readFile(
+    new URL('../../.github/workflows/agency-map-production-monitor.yml', import.meta.url),
+    'utf8'
+  );
+  assert.match(workflow, /manual diagnostic/);
+  assert.match(workflow, /workflow_dispatch:/);
+  assert.doesNotMatch(workflow, /\n  schedule:/);
+});
+
 test('Pi discovery proofs explicitly approve only their isolated temporary project', async () => {
   const [workflow, verifier] = await Promise.all([
     readFile(new URL('../../.github/workflows/pi-public-release.yml', import.meta.url), 'utf8'),
@@ -281,37 +291,90 @@ test('pricing and browser evidence require every declared route and viewport', (
   );
 });
 
-test('Map burn-in resets on red and accepts only seven distinct consecutive calendar days', () => {
-  const run = (day, conclusion = 'success', event = 'schedule') => ({
-    id: day,
-    status: 'completed',
-    conclusion,
-    event,
-    created_at: `2026-08-${String(day).padStart(2, '0')}T18:00:00Z`,
-    html_url: `https://github.com/example/actions/runs/${day}`,
-    head_sha: gaCommit
+test('Map burn-in accepts only Cloudflare D1 scheduled receipts and never revives a red day', () => {
+  assert.deepEqual(config.map.receiptSource, {
+    kind: 'cloudflare-d1',
+    workerName: 'map-production-monitor',
+    workerHealthUrl: 'https://map-production-monitor.createsomething.workers.dev/health',
+    databaseName: 'create-something-db',
+    wranglerConfig: 'packages/agency/wrangler.jsonc',
+    table: 'map_production_monitor_receipts',
+    receiptRetentionDays: 30
   });
-  const runs = [
-    run(20),
-    run(21),
-    run(22, 'failure'),
-    ...[22, 23, 24, 25, 26, 27, 28].map((day) => run(day))
+
+  const receipt = (day, status = 'passed', overrides = {}) => ({
+    receiptId: `receipt-${day}-${status}`,
+    schemaVersion: 1,
+    trigger: 'scheduled',
+    scheduledAt: `2026-08-${String(day).padStart(2, '0')}T18:00:00Z`,
+    completedAt: `2026-08-${String(day).padStart(2, '0')}T18:01:00Z`,
+    status,
+    complete: true,
+    sourceSha: gaCommit,
+    workerVersion: `version-${day}`,
+    baseUrl: 'https://createsomething.agency',
+    customerDataUsed: false,
+    agentMutationUsed: false,
+    bookingSubmitted: false,
+    ...overrides
+  });
+  const receipts = [
+    receipt(20),
+    receipt(21),
+    receipt(22, 'failed'),
+    receipt(22),
+    ...[23, 24, 25, 26, 27, 28].map((day) => receipt(day))
   ];
-  const result = selectMapBurnIn(runs, config.map, '2026-08-20T00:00:00Z');
-  assert.deepEqual(result.issues, []);
+  const short = selectMapBurnIn(
+    receipts,
+    config.map,
+    '2026-08-20T00:00:00Z',
+    gaCommit,
+    new Date('2026-08-28T18:30:00.000Z')
+  );
+  assert.match(short.issues.join('\n'), /current streak is 6/);
   assert.deepEqual(
-    result.days.map((entry) => entry.date),
-    [
-      '2026-08-22',
-      '2026-08-23',
-      '2026-08-24',
-      '2026-08-25',
-      '2026-08-26',
-      '2026-08-27',
-      '2026-08-28'
-    ]
+    short.days.map((entry) => entry.date),
+    ['2026-08-23', '2026-08-24', '2026-08-25', '2026-08-26', '2026-08-27', '2026-08-28']
   );
 
-  const short = selectMapBurnIn(runs.slice(0, -1), config.map, '2026-08-20T00:00:00Z');
-  assert.match(short.issues[0], /current streak is 6/);
+  const complete = selectMapBurnIn(
+    [...receipts, receipt(29)],
+    config.map,
+    '2026-08-20T00:00:00Z',
+    gaCommit,
+    new Date('2026-08-29T18:30:00.000Z')
+  );
+  assert.deepEqual(complete.issues, []);
+  assert.deepEqual(
+    complete.days.map((entry) => entry.date),
+    ['2026-08-23', '2026-08-24', '2026-08-25', '2026-08-26', '2026-08-27', '2026-08-28', '2026-08-29']
+  );
+
+  const invalid = selectMapBurnIn(
+    [receipt(30, 'passed', { sourceSha: 'b'.repeat(40) })],
+    config.map,
+    '2026-08-20T00:00:00Z',
+    gaCommit,
+    new Date('2026-08-30T18:30:00.000Z')
+  );
+  assert.match(invalid.issues.join('\n'), /source SHA does not match/);
+
+  const unsafe = selectMapBurnIn(
+    [receipt(30, 'passed', { customerDataUsed: true })],
+    config.map,
+    '2026-08-20T00:00:00Z',
+    gaCommit,
+    new Date('2026-08-30T18:30:00.000Z')
+  );
+  assert.match(unsafe.issues.join('\n'), /not a complete passing scheduled receipt/);
+
+  const stale = selectMapBurnIn(
+    [...receipts, receipt(29)],
+    config.map,
+    '2026-08-20T00:00:00Z',
+    gaCommit,
+    new Date('2026-08-31T18:30:00.000Z')
+  );
+  assert.match(stale.issues.join('\n'), /must end on the current America\/Chicago calendar day/);
 });

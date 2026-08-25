@@ -49,7 +49,8 @@ function usage() {
 
 Runs the live, fail-closed CREATE SOMETHING public-distribution GA verifier.
 The GitHub CLI must be authenticated, npm must be authenticated for \`npm trust list\`,
-and the browser-evidence manifest must contain fresh desktop/mobile production captures.
+Cloudflare Wrangler must have remote D1 read access, and the browser-evidence manifest
+must contain fresh desktop/mobile production captures.
 
 Options:
   --ref <git-ref>              Committed GA source ref (default: HEAD)
@@ -332,6 +333,96 @@ async function browserReadback(filePath, config, gaCommit, committedAt) {
   };
 }
 
+export function parseMapMonitorD1Result(payload) {
+  if (!Array.isArray(payload) || payload.length !== 1) {
+    throw new Error('Cloudflare D1 Map receipt readback must contain exactly one result set');
+  }
+  const result = payload[0];
+  if (result?.success !== true || !Array.isArray(result.results)) {
+    throw new Error('Cloudflare D1 Map receipt readback was not successful');
+  }
+  return result.results.map((row) => {
+    if (!row || typeof row !== 'object') {
+      throw new Error('Cloudflare D1 Map receipt row is malformed');
+    }
+    let checks;
+    try {
+      checks = JSON.parse(row.checks_json);
+    } catch {
+      throw new Error(`Cloudflare D1 Map receipt ${row.receipt_id ?? 'unknown'} has invalid checks JSON`);
+    }
+    if (!Array.isArray(checks)) {
+      throw new Error(`Cloudflare D1 Map receipt ${row.receipt_id ?? 'unknown'} checks must be an array`);
+    }
+    return {
+      receiptId: row.receipt_id,
+      schemaVersion: row.schema_version,
+      trigger: row.trigger,
+      scheduledAt: row.scheduled_at,
+      completedAt: row.completed_at,
+      sourceSha: row.source_sha,
+      workerVersion: row.worker_version,
+      baseUrl: row.base_url,
+      status: row.status,
+      complete: row.complete === 1,
+      customerDataUsed: row.customer_data_used === 1,
+      agentMutationUsed: row.agent_mutation_used === 1,
+      bookingSubmitted: row.booking_submitted === 1,
+      checks
+    };
+  });
+}
+
+export function validateMapMonitorHealth(body, receiptSource) {
+  const issues = [];
+  if (body?.schemaVersion !== 1) issues.push('Map monitor health schema version is invalid');
+  if (body?.status !== 'ready') issues.push('Map monitor health is not ready');
+  if (body?.worker !== receiptSource.workerName) issues.push('Map monitor health worker identity is invalid');
+  if (body?.receiptStore !== receiptSource.kind) issues.push('Map monitor health receipt store is invalid');
+  if (body?.scheduledOnly !== true) issues.push('Map monitor health exposes a non-scheduled execution mode');
+  return issues;
+}
+
+async function mapReceiptReadback(config, root) {
+  const receiptSource = config.map.receiptSource;
+  const query = `SELECT receipt_id, schema_version, trigger, scheduled_at, completed_at, source_sha, worker_version, base_url, status, complete, customer_data_used, agent_mutation_used, booking_submitted, checks_json FROM ${receiptSource.table} ORDER BY scheduled_at ASC`;
+  const { stdout } = await command(
+    'pnpm',
+    [
+      'exec',
+      'wrangler',
+      'd1',
+      'execute',
+      receiptSource.databaseName,
+      '--remote',
+      '--config',
+      receiptSource.wranglerConfig,
+      '--command',
+      query,
+      '--json'
+    ],
+    { cwd: root }
+  );
+  return parseMapMonitorD1Result(JSON.parse(stdout));
+}
+
+async function mapMonitorHealthReadback(config) {
+  const receiptSource = config.map.receiptSource;
+  const body = await fetchJson(receiptSource.workerHealthUrl, {
+    headers: { 'User-Agent': 'CREATE-SOMETHING-public-GA-verifier/1.0' }
+  });
+  const issues = validateMapMonitorHealth(body, receiptSource);
+  if (issues.length > 0) throw new Error(issues.join('\n'));
+  return {
+    url: receiptSource.workerHealthUrl,
+    schemaVersion: body.schemaVersion,
+    status: body.status,
+    worker: body.worker,
+    receiptStore: body.receiptStore,
+    scheduledOnly: body.scheduledOnly
+  };
+}
+
 async function localSecurityReadback(config, root) {
   await command(process.execPath, ['scripts/security-advisory-exceptions.mjs'], { cwd: root });
   const policy = JSON.parse(
@@ -482,16 +573,18 @@ export async function verifyPublicGa(options) {
     browserReadback(options.browserEvidence, config, gaCommit, committedAt)
   );
   await run('map_burn_in', async () => {
-    if (!github) throw new Error('GitHub readback is unavailable');
-    const token = await githubToken(root);
-    const runs = await fetchGitHubPages(
-      `${github.base}/actions/workflows/${config.map.workflow}/runs?per_page=100`,
-      token,
-      'workflow_runs'
-    );
-    const result = selectMapBurnIn(runs, config.map, committedAt);
+    const [receipts, health] = await Promise.all([
+      mapReceiptReadback(config, root),
+      mapMonitorHealthReadback(config)
+    ]);
+    const result = selectMapBurnIn(receipts, config.map, committedAt, gaCommit);
     if (result.issues.length > 0) throw new Error(result.issues.join('\n'));
-    return { requiredDays: config.map.requiredConsecutiveDays, days: result.days };
+    return {
+      receiptSource: config.map.receiptSource,
+      health,
+      requiredDays: config.map.requiredConsecutiveDays,
+      days: result.days
+    };
   });
 
   const receipt = {
