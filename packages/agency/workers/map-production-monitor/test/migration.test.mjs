@@ -50,3 +50,13 @@ test('Map monitor migration fences delivery updates to their active claim', asyn
 
   assert.match(migration, /delivery_claim_token TEXT/);
 });
+
+test('Map monitor migration retains one alert identity across a resolved streak and notification revisions', async () => {
+  const migration = await readFile(
+    new URL('../../../migrations/0044_map_production_monitor_receipts.sql', import.meta.url),
+    'utf8'
+  );
+
+  assert.match(migration, /notification_revision INTEGER NOT NULL CHECK \(notification_revision >= 1\)/);
+  assert.match(migration, /streak_resolved_at TEXT/);
+});

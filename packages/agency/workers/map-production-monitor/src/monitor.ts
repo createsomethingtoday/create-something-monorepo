@@ -53,6 +53,7 @@ export type MapOperatorEscalation = {
   sourceSha: string;
   severity: 'SEV-2' | 'SEV-3';
   failedCheckCodes: string[];
+  notificationRevision: number;
 };
 
 export const REQUIRED_MAP_CHECK_IDS = Object.freeze(
@@ -155,6 +156,7 @@ async function persistReceipt(
   receipt: MapMonitorReceipt,
   retentionDays: number,
   now: Date,
+  plan: EscalationPlan,
 ): Promise<void> {
   const cutoff = new Date(now.valueOf() - retentionDays * 24 * 60 * 60 * 1000).toISOString();
   const statements = [
@@ -162,7 +164,8 @@ async function persistReceipt(
     database
       .prepare(
         `DELETE FROM map_production_monitor_alerts
-         WHERE delivery_status = 'delivered' AND COALESCE(delivered_at, created_at) < ?`,
+         WHERE delivery_status = 'delivered' AND streak_resolved_at IS NOT NULL
+           AND streak_resolved_at < ?`,
       )
       .bind(cutoff),
     database
@@ -190,6 +193,67 @@ async function persistReceipt(
         JSON.stringify(receipt.checks),
       ),
   ];
+  if (receipt.status === 'passed') {
+    statements.push(
+      database
+        .prepare(
+          `UPDATE map_production_monitor_alerts
+           SET streak_resolved_at = ?
+           WHERE streak_resolved_at IS NULL`,
+        )
+        .bind(receipt.completedAt),
+    );
+  }
+  if (plan?.kind === 'create') {
+    const { escalation } = plan;
+    statements.push(
+      database
+        .prepare(
+          `INSERT OR IGNORE INTO map_production_monitor_alerts (
+            alert_id, schema_version, failure_streak_started_at, threshold_receipt_id, source_sha,
+            severity, failed_check_codes_json, created_at, delivery_status, delivery_attempts,
+            delivery_lease_expires_at, delivery_claim_token, notification_revision, streak_resolved_at,
+            delivered_at, last_delivery_error_code
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', 0, NULL, NULL, ?, NULL, NULL, NULL)`,
+        )
+        .bind(
+          escalation.alertId,
+          1,
+          escalation.failureStreakStartedAt,
+          escalation.thresholdReceiptId,
+          escalation.sourceSha,
+          escalation.severity,
+          JSON.stringify(escalation.failedCheckCodes),
+          now.toISOString(),
+          escalation.notificationRevision,
+        ),
+    );
+  }
+  if (plan?.kind === 'update') {
+    const { escalation, resetDelivery } = plan;
+    statements.push(
+      database
+        .prepare(
+          resetDelivery
+            ? `UPDATE map_production_monitor_alerts
+               SET source_sha = ?, severity = ?, failed_check_codes_json = ?, notification_revision = ?,
+                   delivery_status = 'pending', delivery_lease_expires_at = NULL,
+                   delivery_claim_token = NULL, delivered_at = NULL, last_delivery_error_code = NULL
+               WHERE alert_id = ? AND streak_resolved_at IS NULL`
+            : `UPDATE map_production_monitor_alerts
+               SET source_sha = ?, severity = ?, failed_check_codes_json = ?
+               WHERE alert_id = ? AND streak_resolved_at IS NULL`,
+        )
+        .bind(
+          escalation.sourceSha,
+          escalation.severity,
+          JSON.stringify(escalation.failedCheckCodes),
+          ...(resetDelivery
+            ? [escalation.notificationRevision, escalation.alertId]
+            : [escalation.alertId]),
+        ),
+    );
+  }
   await database.batch(statements);
 }
 
@@ -206,7 +270,17 @@ type PendingEscalationRow = {
   source_sha: string;
   severity: 'SEV-2' | 'SEV-3';
   failed_check_codes_json: string;
+  notification_revision: number;
 };
+
+type ActiveEscalationRow = PendingEscalationRow & {
+  delivery_status: 'pending' | 'delivering' | 'delivered';
+};
+
+type EscalationPlan =
+  | { kind: 'create'; escalation: MapOperatorEscalation }
+  | { kind: 'update'; escalation: MapOperatorEscalation; resetDelivery: boolean }
+  | null;
 
 function checksForFailure(row: FailureStreakRow): MapSyntheticCheck[] {
   try {
@@ -252,7 +326,7 @@ function severityForFailures(failures: FailureStreakRow[]): 'SEV-2' | 'SEV-3' {
 
 async function findFailureStreak(
   database: D1Database,
-): Promise<FailureStreakRow[] | null> {
+): Promise<FailureStreakRow[]> {
   const result = await database
     .prepare(
       `WITH latest_passing_receipt AS (
@@ -272,7 +346,7 @@ async function findFailureStreak(
     .bind()
     .all<FailureStreakRow>();
   const failures = result.results ?? [];
-  return failures.length >= OPERATOR_ESCALATION_THRESHOLD ? failures : null;
+  return failures;
 }
 
 function escalationFor(
@@ -289,6 +363,7 @@ function escalationFor(
     sourceSha: receipt.sourceSha,
     severity: severityForFailures(failures),
     failedCheckCodes: failedCheckCodesForFailures(failures),
+    notificationRevision: 1,
   };
 }
 
@@ -325,7 +400,7 @@ async function deliverOperatorEscalation(
     headers: {
       Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
-      'Idempotency-Key': escalation.alertId,
+      'Idempotency-Key': `${escalation.alertId}-r${escalation.notificationRevision}`,
     },
     body: JSON.stringify({
       from: OPERATOR_ALERT_FROM,
@@ -344,40 +419,74 @@ async function deliverOperatorEscalation(
   }
 }
 
-async function dispatchOperatorEscalation(
-  database: D1Database,
-  receipt: MapMonitorReceipt,
-  now: Date,
-): Promise<void> {
-  const failures = await findFailureStreak(database);
-  if (!failures) return;
-
-  const escalation = escalationFor(receipt, failures);
-  await database
-    .prepare(
-      `INSERT OR IGNORE INTO map_production_monitor_alerts (
-        alert_id, schema_version, failure_streak_started_at, threshold_receipt_id, source_sha,
-        severity, failed_check_codes_json, created_at, delivery_status, delivery_attempts,
-        delivered_at, last_delivery_error_code
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', 0, NULL, NULL)`,
-    )
-    .bind(
-      escalation.alertId,
-      1,
-      escalation.failureStreakStartedAt,
-      escalation.thresholdReceiptId,
-      escalation.sourceSha,
-      escalation.severity,
-      JSON.stringify(escalation.failedCheckCodes),
-      now.toISOString(),
-    )
-    .run();
+function failureRowForReceipt(receipt: MapMonitorReceipt): FailureStreakRow {
+  return {
+    receipt_id: receipt.receiptId,
+    scheduled_at: receipt.scheduledAt,
+    checks_json: JSON.stringify(receipt.checks),
+  };
 }
 
-function escalationFromPending(row: PendingEscalationRow): MapOperatorEscalation {
+async function prepareOperatorEscalation(
+  database: D1Database,
+  receipt: MapMonitorReceipt,
+): Promise<EscalationPlan> {
+  const failures = [...(await findFailureStreak(database)), failureRowForReceipt(receipt)];
+  const active = await findActiveEscalation(database);
+  if (!active) {
+    return failures.length >= OPERATOR_ESCALATION_THRESHOLD
+      ? { kind: 'create', escalation: escalationFor(receipt, failures) }
+      : null;
+  }
+
+  const existingCodes = failedCheckCodesFromJson(active.failed_check_codes_json);
+  const failedCheckCodes = [...new Set([...existingCodes, ...failedCheckCodesForFailures(failures)])];
+  const severity = active.severity === 'SEV-2' || severityForFailures(failures) === 'SEV-2'
+    ? 'SEV-2'
+    : 'SEV-3';
+  const resetDelivery = severity === 'SEV-2' && active.severity !== 'SEV-2';
+  const notificationRevision = active.notification_revision + (resetDelivery ? 1 : 0);
+  const changed =
+    active.source_sha !== receipt.sourceSha ||
+    active.severity !== severity ||
+    active.failed_check_codes_json !== JSON.stringify(failedCheckCodes) ||
+    resetDelivery;
+  if (!changed) return null;
+  return {
+    kind: 'update',
+    resetDelivery,
+    escalation: {
+      alertId: active.alert_id,
+      consecutiveFailures: OPERATOR_ESCALATION_THRESHOLD,
+      failureStreakStartedAt: active.failure_streak_started_at,
+      thresholdReceiptId: active.threshold_receipt_id,
+      sourceSha: receipt.sourceSha,
+      severity,
+      failedCheckCodes,
+      notificationRevision,
+    },
+  };
+}
+
+async function findActiveEscalation(database: D1Database): Promise<ActiveEscalationRow | null> {
+  const result = await database
+    .prepare(
+      `SELECT alert_id, failure_streak_started_at, threshold_receipt_id, source_sha, severity,
+              failed_check_codes_json, delivery_status, notification_revision
+       FROM map_production_monitor_alerts
+       WHERE streak_resolved_at IS NULL
+       ORDER BY created_at ASC
+       LIMIT 1`,
+    )
+    .bind()
+    .all<ActiveEscalationRow>();
+  return result.results?.[0] ?? null;
+}
+
+function failedCheckCodesFromJson(value: string): string[] {
   let failedCheckCodes: string[] = [];
   try {
-    const parsed = JSON.parse(row.failed_check_codes_json);
+    const parsed = JSON.parse(value);
     if (Array.isArray(parsed)) {
       failedCheckCodes = parsed.filter(
         (code): code is string => typeof code === 'string' && /^[A-Z0-9_]{1,96}$/.test(code),
@@ -386,6 +495,10 @@ function escalationFromPending(row: PendingEscalationRow): MapOperatorEscalation
   } catch {
     failedCheckCodes = ['STORED_ALERT_INVALID'];
   }
+  return failedCheckCodes;
+}
+
+function escalationFromPending(row: PendingEscalationRow): MapOperatorEscalation {
   return {
     alertId: row.alert_id,
     consecutiveFailures: OPERATOR_ESCALATION_THRESHOLD,
@@ -393,7 +506,8 @@ function escalationFromPending(row: PendingEscalationRow): MapOperatorEscalation
     thresholdReceiptId: row.threshold_receipt_id,
     sourceSha: row.source_sha,
     severity: row.severity,
-    failedCheckCodes,
+    failedCheckCodes: failedCheckCodesFromJson(row.failed_check_codes_json),
+    notificationRevision: row.notification_revision,
   };
 }
 
@@ -406,7 +520,7 @@ async function deliverPendingOperatorEscalations(
   const result = await database
     .prepare(
       `SELECT alert_id, failure_streak_started_at, threshold_receipt_id, source_sha,
-              severity, failed_check_codes_json
+              severity, failed_check_codes_json, notification_revision
        FROM map_production_monitor_alerts
        WHERE delivery_status = 'pending'
           OR (
@@ -524,14 +638,10 @@ export async function runScheduledMapMonitor(
     checks,
   };
 
-  await persistReceipt(input.env.DB, receipt, retentionDays ?? REQUIRED_RETENTION_DAYS, completedAt);
-  if (receipt.status !== 'passed') {
-    await dispatchOperatorEscalation(
-      input.env.DB,
-      receipt,
-      completedAt,
-    );
-  }
+  const escalation = receipt.status === 'failed'
+    ? await prepareOperatorEscalation(input.env.DB, receipt)
+    : null;
+  await persistReceipt(input.env.DB, receipt, retentionDays ?? REQUIRED_RETENTION_DAYS, completedAt, escalation);
   await deliverPendingOperatorEscalations(
     input.env.DB,
     completedAt,

@@ -69,7 +69,7 @@ test('scheduled monitor writes a complete sanitized passing receipt', async () =
   assert.equal(receipt.agentMutationUsed, false);
   assert.equal(receipt.bookingSubmitted, false);
   assert.equal(batches.length, 1);
-  assert.equal(batches[0].length, 3, 'receipt and alert retention plus insert are one D1 batch');
+  assert.equal(batches[0].length, 4, 'receipt, alert retention, and streak resolution are one D1 batch');
   const insert = batches[0][2];
   assert.match(insert.query, /INSERT OR IGNORE INTO map_production_monitor_receipts/);
   assert.equal(insert.values[8], 'passed');
@@ -89,7 +89,7 @@ test('receipt retention keeps undelivered operator escalations until they are de
 
   const alertCleanup = batches[0][1];
   assert.match(alertCleanup.query, /delivery_status = 'delivered'/);
-  assert.match(alertCleanup.query, /COALESCE\(delivered_at, created_at\)/);
+  assert.match(alertCleanup.query, /streak_resolved_at IS NOT NULL/);
 });
 
 test('scheduled monitor records completion only after browser work finishes', async () => {
@@ -144,7 +144,7 @@ test('scheduled monitor records a red receipt and rejects when a required check 
 });
 
 test('two consecutive scheduled failures deliver one idempotent CRE-1289 operator escalation', async () => {
-  const { database, runs } = createDatabase();
+  const { database, batches, runs } = createDatabase();
   let alert: unknown = null;
   const failureStreak = [
     {
@@ -159,14 +159,6 @@ test('two consecutive scheduled failures deliver one idempotent CRE-1289 operato
         },
       ]),
     },
-    {
-      receipt_id: 'map-20260825182200-aaaaaaaaaaaa',
-      scheduled_at: '2026-08-25T18:22:00.000Z',
-      checks_json: JSON.stringify([
-        { id: 'desktop_map_health', ok: false, code: 'HTTP_503', durationMs: 9 },
-        { id: 'synthetic_completeness', ok: false, code: 'REQUIRED_CHECK_MISSING', durationMs: 0 },
-      ]),
-    },
   ];
   const streakDatabase = {
     ...database,
@@ -178,7 +170,10 @@ test('two consecutive scheduled failures deliver one idempotent CRE-1289 operato
           if (query.includes('latest_passing_receipt')) {
             return { ...bound, all: async () => ({ results: failureStreak }) };
           }
-          if (query.includes('SELECT') && query.includes('map_production_monitor_alerts')) {
+          if (query.includes('streak_resolved_at IS NULL')) {
+            return { ...bound, all: async () => ({ results: [] }) };
+          }
+          if (query.includes("delivery_status = 'pending'")) {
             return {
               ...bound,
               all: async () => ({
@@ -189,6 +184,7 @@ test('two consecutive scheduled failures deliver one idempotent CRE-1289 operato
                     threshold_receipt_id: 'map-20260825182200-aaaaaaaaaaaa',
                     source_sha: SOURCE_SHA,
                     severity: 'SEV-2',
+                    notification_revision: 1,
                     failed_check_codes_json: JSON.stringify([
                       'BOOKING_CONTEXT_MISMATCH',
                       'HTTP_503',
@@ -229,8 +225,14 @@ test('two consecutive scheduled failures deliver one idempotent CRE-1289 operato
     sourceSha: SOURCE_SHA,
     severity: 'SEV-2',
     failedCheckCodes: ['BOOKING_CONTEXT_MISMATCH', 'HTTP_503', 'REQUIRED_CHECK_MISSING'],
+    notificationRevision: 1,
   });
-  const alertInsert = runs.find((statement) => statement.query.includes('INSERT OR IGNORE INTO map_production_monitor_alerts'));
+  assert.ok(
+    batches[0].some((statement) => statement.query.includes('map_production_monitor_receipts')) &&
+      batches[0].some((statement) => statement.query.includes('INSERT OR IGNORE INTO map_production_monitor_alerts')),
+    'the threshold receipt and its alert marker must be one D1 batch',
+  );
+  const alertInsert = batches[0].find((statement) => statement.query.includes('INSERT OR IGNORE INTO map_production_monitor_alerts'));
   assert.ok(alertInsert);
   assert.equal(alertInsert.values[5], 'SEV-2');
   assert.deepEqual(JSON.parse(String(alertInsert.values[6])), [
@@ -238,8 +240,175 @@ test('two consecutive scheduled failures deliver one idempotent CRE-1289 operato
     'HTTP_503',
     'REQUIRED_CHECK_MISSING',
   ]);
-  assert.ok(runs.some((statement) => statement.query.includes('INSERT OR IGNORE INTO map_production_monitor_alerts')));
   assert.ok(runs.some((statement) => statement.query.includes("delivery_status = 'delivered'")));
+});
+
+test('an unresolved alert retains its identity after older receipt retention expires', async () => {
+  const { database, batches } = createDatabase();
+  const retainedFailure = {
+    receipt_id: 'map-20260716180700-aaaaaaaaaaaa',
+    scheduled_at: '2026-07-16T18:07:00.000Z',
+    checks_json: JSON.stringify([
+      { id: 'desktop_map_health', ok: false, code: 'HTTP_503', durationMs: 9 },
+    ]),
+  };
+  const activeAlert = {
+    alert_id: 'map-monitor-escalation-map-20260716180700-aaaaaaaaaaaa',
+    failure_streak_started_at: retainedFailure.scheduled_at,
+    threshold_receipt_id: 'map-20260716182200-aaaaaaaaaaaa',
+    source_sha: SOURCE_SHA,
+    severity: 'SEV-3',
+    failed_check_codes_json: JSON.stringify(['HTTP_503', 'REQUIRED_CHECK_MISSING']),
+    delivery_status: 'delivered',
+    notification_revision: 1,
+  };
+  const activeDatabase = {
+    ...database,
+    prepare(query: string) {
+      const statement = database.prepare(query);
+      return {
+        bind(...values: unknown[]) {
+          const bound = statement.bind(...values);
+          if (query.includes('latest_passing_receipt')) {
+            return { ...bound, all: async () => ({ results: [retainedFailure] }) };
+          }
+          if (query.includes('streak_resolved_at IS NULL')) {
+            return { ...bound, all: async () => ({ results: [activeAlert] }) };
+          }
+          if (query.includes("delivery_status = 'pending'")) {
+            return { ...bound, all: async () => ({ results: [] }) };
+          }
+          return bound;
+        },
+      };
+    },
+  };
+
+  await assert.rejects(
+    () =>
+      runScheduledMapMonitor({
+        scheduledAt: '2026-08-25T18:22:00.000Z',
+        env: env(activeDatabase),
+        executeSynthetic: async () => ({
+          checks: [{ id: 'desktop_map_health', ok: false, code: 'HTTP_503', durationMs: 9 }],
+        }),
+        now: () => new Date('2026-08-25T18:22:20.000Z'),
+      }),
+    /failed/,
+  );
+
+  assert.equal(
+    batches[0].filter((statement) => statement.query.includes('INSERT OR IGNORE INTO map_production_monitor_alerts')).length,
+    0,
+    'a retained unresolved alert is the durable streak identity, even when prior receipt rows expire',
+  );
+});
+
+test('raises a delivered active streak to SEV-2 in an atomically staged alert revision', async () => {
+  const { database, batches } = createDatabase();
+  let notification: unknown = null;
+  const priorFailure = {
+    receipt_id: 'map-20260825180700-aaaaaaaaaaaa',
+    scheduled_at: '2026-08-25T18:07:00.000Z',
+    checks_json: JSON.stringify([
+      { id: 'desktop_map_health', ok: false, code: 'HTTP_503', durationMs: 9 },
+    ]),
+  };
+  const activeDatabase = {
+    ...database,
+    prepare(query: string) {
+      const statement = database.prepare(query);
+      return {
+        bind(...values: unknown[]) {
+          const bound = statement.bind(...values);
+          if (query.includes('latest_passing_receipt')) {
+            return { ...bound, all: async () => ({ results: [priorFailure] }) };
+          }
+          if (query.includes('streak_resolved_at IS NULL')) {
+            return {
+              ...bound,
+              all: async () => ({
+                results: [
+                  {
+                    alert_id: 'map-monitor-escalation-map-20260825180700-aaaaaaaaaaaa',
+                    failure_streak_started_at: priorFailure.scheduled_at,
+                    threshold_receipt_id: 'map-20260825182200-aaaaaaaaaaaa',
+                    source_sha: SOURCE_SHA,
+                    severity: 'SEV-3',
+                    failed_check_codes_json: JSON.stringify(['HTTP_503']),
+                    delivery_status: 'delivered',
+                    notification_revision: 1,
+                  },
+                ],
+              }),
+            };
+          }
+          if (query.includes("delivery_status = 'pending'")) {
+            return {
+              ...bound,
+              all: async () => ({
+                results: [
+                  {
+                    alert_id: 'map-monitor-escalation-map-20260825180700-aaaaaaaaaaaa',
+                    failure_streak_started_at: priorFailure.scheduled_at,
+                    threshold_receipt_id: 'map-20260825182200-aaaaaaaaaaaa',
+                    source_sha: SOURCE_SHA,
+                    severity: 'SEV-2',
+                    failed_check_codes_json: JSON.stringify([
+                      'HTTP_503',
+                      'BOOKING_CONTEXT_MISMATCH',
+                      'REQUIRED_CHECK_MISSING',
+                    ]),
+                    notification_revision: 2,
+                  },
+                ],
+              }),
+            };
+          }
+          return bound;
+        },
+      };
+    },
+  };
+
+  await assert.rejects(
+    () =>
+      runScheduledMapMonitor({
+        scheduledAt: '2026-08-25T18:22:00.000Z',
+        env: env(activeDatabase),
+        executeSynthetic: async () => ({
+          checks: [
+            {
+              id: 'desktop_starter_booking_context',
+              ok: false,
+              code: 'BOOKING_CONTEXT_MISMATCH',
+              durationMs: 9,
+            },
+          ],
+        }),
+        notifyOperator: async (escalation) => {
+          notification = escalation;
+        },
+      }),
+    /failed/,
+  );
+
+  const update = batches[0].find((statement) => statement.query.includes('UPDATE map_production_monitor_alerts'));
+  if (!update) throw new Error('expected an active alert update');
+  assert.ok(update.query.includes("delivery_status = 'pending'"));
+  assert.ok(update.query.includes('notification_revision'));
+  assert.equal(update.values[0], SOURCE_SHA);
+  assert.equal(update.values[1], 'SEV-2');
+  assert.deepEqual(notification, {
+    alertId: 'map-monitor-escalation-map-20260825180700-aaaaaaaaaaaa',
+    consecutiveFailures: 2,
+    failureStreakStartedAt: priorFailure.scheduled_at,
+    thresholdReceiptId: 'map-20260825182200-aaaaaaaaaaaa',
+    sourceSha: SOURCE_SHA,
+    severity: 'SEV-2',
+    failedCheckCodes: ['HTTP_503', 'BOOKING_CONTEXT_MISMATCH', 'REQUIRED_CHECK_MISSING'],
+    notificationRevision: 2,
+  });
 });
 
 test('already-delivered two-failure escalation is not sent again', async () => {
@@ -295,6 +464,7 @@ test('retries a pending escalation on a later green scheduled receipt', async ()
     threshold_receipt_id: 'map-20260825182200-aaaaaaaaaaaa',
     source_sha: SOURCE_SHA,
     severity: 'SEV-3',
+    notification_revision: 1,
     failed_check_codes_json: JSON.stringify(['HTTP_503', 'REQUIRED_CHECK_MISSING']),
   };
   const retryDatabase = {
@@ -334,6 +504,7 @@ test('retries a pending escalation on a later green scheduled receipt', async ()
     sourceSha: SOURCE_SHA,
     severity: 'SEV-3',
     failedCheckCodes: ['HTTP_503', 'REQUIRED_CHECK_MISSING'],
+    notificationRevision: 1,
   });
   assert.ok(runs.some((statement) => statement.query.includes("delivery_status = 'delivered'")));
 });
