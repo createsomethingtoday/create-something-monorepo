@@ -456,12 +456,6 @@ export class D1WorkflowRuntimeCheckpointStore implements WorkflowRuntimeCheckpoi
           )
       );
       if (receipt.eventType === 'approval_decided' && receipt.stepId) {
-        if (!receipt.actorRole) {
-          throw new RuntimeValidationError(
-            'INVALID_STATE',
-            'Workflow Runtime approval decision is missing its verified Identity role'
-          );
-        }
         const decision =
           receipt.outcome === 'exact approval accepted'
             ? 'approved'
@@ -488,34 +482,43 @@ export class D1WorkflowRuntimeCheckpointStore implements WorkflowRuntimeCheckpoi
                 serialized
               )
           );
-          statements.push(
-            this.database
-              .prepare(
-                `UPDATE control_workflow_runtime_approval_attestations
-                 SET decision_actor_role = ?1
-                 WHERE run_id = ?2 AND step_id = ?3 AND decision_actor_role IS NULL
-                   AND EXISTS (
-                     SELECT 1 FROM control_workflow_runtime_approvals
-                     WHERE run_id = ?2 AND step_id = ?3 AND decision = ?4 AND decided_at = ?5
-                   )
-                   AND EXISTS (
-                     SELECT 1 FROM control_workflow_runtime_receipts
-                     WHERE run_id = ?2 AND event_index = ?6
-                       AND json_extract(receipt_json, '$.eventType') = 'approval_decided'
-                       AND json_extract(receipt_json, '$.stepId') = ?3
-                       AND json_extract(receipt_json, '$.actorRole') = ?1
-                       AND created_at = ?5
-                   )`
-              )
-              .bind(
-                receipt.actorRole,
-                input.run.id,
-                receipt.stepId,
-                decision,
-                receipt.createdAt,
-                receipt.eventIndex
-              )
-          );
+          if (input.run.schema === 'workflow_runtime_run.v0.2') {
+            const actorRole = receipt.actorRole;
+            if (!actorRole) {
+              throw new RuntimeValidationError(
+                'INVALID_STATE',
+                'Workflow Runtime approval decision is missing its verified Identity role'
+              );
+            }
+            statements.push(
+              this.database
+                .prepare(
+                  `UPDATE control_workflow_runtime_approval_attestations
+                   SET decision_actor_role = ?1
+                   WHERE run_id = ?2 AND step_id = ?3 AND decision_actor_role IS NULL
+                     AND EXISTS (
+                       SELECT 1 FROM control_workflow_runtime_approvals
+                       WHERE run_id = ?2 AND step_id = ?3 AND decision = ?4 AND decided_at = ?5
+                     )
+                     AND EXISTS (
+                       SELECT 1 FROM control_workflow_runtime_receipts
+                       WHERE run_id = ?2 AND event_index = ?6
+                         AND json_extract(receipt_json, '$.eventType') = 'approval_decided'
+                         AND json_extract(receipt_json, '$.stepId') = ?3
+                         AND json_extract(receipt_json, '$.actorRole') = ?1
+                         AND created_at = ?5
+                     )`
+                )
+                .bind(
+                  actorRole,
+                  input.run.id,
+                  receipt.stepId,
+                  decision,
+                  receipt.createdAt,
+                  receipt.eventIndex
+                )
+            );
+          }
         }
       }
     }
