@@ -46,6 +46,10 @@ export const FIELD_IDS = {
     promoVideoUrl: 'fldXlxAN7Afc8vUYS',
   },
   versions: {
+    name: 'fldKA9eJja5uajlok',
+    creatorName: 'fldVW2Xx0PoLIfw3D',
+    submissionSlackTs: 'fld1DNori0GcNmCsO',
+    submissionSlackChannel: 'fldAk2TeUduss0gx7',
     reviewStatus: 'flde8Huk5NRIdm2wZ',
     reviewType: 'fldjYFJMGTerFYlol',
     versionNumber: 'fldn2ImbgwKfCdWWA',
@@ -69,13 +73,19 @@ export const FIELD_IDS = {
     exceptionItemsLink: 'fld8hWsxsAssmFi6u',
     undecidedExceptionItems: 'fldiVQqWSw5shDkZS',
     deniedExceptionItems: 'fldzwlnjdAapVFkzp',
+    assetUndecidedExceptions: 'flddDkn2eWtplyvXd',
+    assetApprovedExceptions: 'fldlmMh3U9keUyCwS',
+    assetExceptionHistory: 'fldNpzS3Ghqn2iNbJ',
     holdReason: 'fldwoVrvt27LaEWIA',
     holdNotes: 'fldmcikFo6r5GyLuf',
     partnershipApp: 'fldczL9zgq44MjxQE',
+    zendeskTicketId: 'fldHKvyh55jJ0VK1u',
+    zendeskSubject: 'fldit9ZTSm7non29Z',
   },
   exceptions: {
     item: 'fldmJcVJCytD1VY1r',
     assetVersionLink: 'fldqVk39RERL1tVPP',
+    assetLink: 'fldFCAzKDAqw58BF4',
     status: 'fld0D5PoJAWhYeHiI',
     type: 'fldUqjcnkOUO7RRKS',
     rationale: 'fldHNABt611HJ6JxI',
@@ -195,7 +205,6 @@ export const GOVERNANCE_FINDING_CATEGORY_OPTIONS = [
   'Documentation Overhaul & Tracking Hub',
   'Tooling: App Review MCP & Security Scanning',
   'Ecosystem & Competitive Watch',
-  'Bundle Review Precision — Library False-Positives & Dependency Declarations',
   'Parking Lot',
 ] as const;
 
@@ -417,11 +426,14 @@ function hasValue(value: unknown): boolean {
   return true;
 }
 
+// The App ID field is a lookup through a record link shared by BOTH apps and templates
+// (template records carry their own Mongo id there — ~11.7k of them as of 2026-08), so it
+// cannot serve as app evidence. Only capabilities, OAuth client ID, and visibility are
+// app-exclusive fields on the Assets table.
 export function isAppLikeAsset(fields: Record<string, unknown>): boolean {
   return (
     hasValue(fields[FIELD_IDS.assets.capabilities]) ||
     hasValue(fields[FIELD_IDS.assets.clientId]) ||
-    hasValue(fields[FIELD_IDS.assets.appId]) ||
     hasValue(fields[FIELD_IDS.assets.visibility])
   );
 }
@@ -510,6 +522,9 @@ export const APP_REVIEW_FIELD_MAP = {
       exception_item_ids: FIELD_IDS.versions.exceptionItemsLink,
       undecided_exception_items: FIELD_IDS.versions.undecidedExceptionItems,
       denied_exception_items: FIELD_IDS.versions.deniedExceptionItems,
+      asset_undecided_exceptions: FIELD_IDS.versions.assetUndecidedExceptions,
+      asset_approved_exceptions: FIELD_IDS.versions.assetApprovedExceptions,
+      asset_exception_history: FIELD_IDS.versions.assetExceptionHistory,
       is_partnership_app: FIELD_IDS.versions.partnershipApp,
     },
   },
@@ -517,14 +532,15 @@ export const APP_REVIEW_FIELD_MAP = {
     writable: {
       item: FIELD_IDS.exceptions.item,
       asset_version_id: FIELD_IDS.exceptions.assetVersionLink,
+      asset_id: FIELD_IDS.exceptions.assetLink,
       exception_status: FIELD_IDS.exceptions.status,
       exception_type: FIELD_IDS.exceptions.type,
       rationale: FIELD_IDS.exceptions.rationale,
       decision_notes: FIELD_IDS.exceptions.decisionNotes,
-    },
-    readOnly: {
       requested_by: FIELD_IDS.exceptions.requestedBy,
       decision_by: FIELD_IDS.exceptions.decisionBy,
+    },
+    readOnly: {
       requested_datetime: FIELD_IDS.exceptions.requestedDatetime,
       decision_datetime: FIELD_IDS.exceptions.decisionDatetime,
       undecided: FIELD_IDS.exceptions.undecided,

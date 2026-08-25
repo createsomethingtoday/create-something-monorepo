@@ -8,6 +8,7 @@ import { DEFAULT_AIRTABLE_BASE_ID } from './schema.js';
 import { registerPrompts } from './prompts.js';
 import { registerResources } from './resources.js';
 import { registerTools } from './tools.js';
+import { ZendeskClient } from './zendesk.js';
 
 function requireEnv(name: string): string {
   const value = process.env[name];
@@ -34,8 +35,17 @@ async function main() {
     version: '1.0.0',
   });
 
+  const zendesk =
+    process.env.ZENDESK_API_TOKEN && process.env.ZENDESK_API_EMAIL
+      ? new ZendeskClient({
+          subdomain: process.env.ZENDESK_SUBDOMAIN ?? 'webflow2579',
+          email: process.env.ZENDESK_API_EMAIL,
+          apiToken: process.env.ZENDESK_API_TOKEN,
+        })
+      : null;
+
   registerResources(server, () => client);
-  registerTools(server, () => client);
+  registerTools(server, () => client, () => null, () => zendesk);
   registerPrompts(server);
 
   const transport = new StdioServerTransport();

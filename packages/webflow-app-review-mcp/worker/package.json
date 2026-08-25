@@ -13,7 +13,7 @@
   "dependencies": {
     "@create-something/mcp-core": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.26.0",
-    "agents": "^0.3.10",
+    "agents": "^0.7.9",
     "zod": "^3.23.0"
   },
   "devDependencies": {
