@@ -2,15 +2,22 @@
   "schema_version": "ground-adjudication-ledger.v1",
   "mode": "advisory",
   "thresholds": {
-    "minimum_complete_receipts": null,
+    "minimum_complete_receipts": 14,
     "minimum_adjudicated_findings": 10,
-    "minimum_precision": null,
-    "maximum_false_positive_rate": null
+    "minimum_precision": 0.9,
+    "maximum_false_positive_rate": 0.1,
+    "minimum_adjudicated_by_check": {
+      "duplicates": 4,
+      "orphans": 3,
+      "dead_exports": 3
+    },
+    "maximum_execution_failures": 0
   },
   "notes": [
-    "This ledger seeds the 2026-08-12 calibration receipts without inventing positive findings or precision.",
+    "This ledger combines the 2026-08-12 repository observations with 10 checked-in deterministic positive fixtures and 2 negative fixtures exercised through Ground's public MCP tool-call boundary.",
     "PR #1403 records 14 pre-existing duplicate-function observations as out of scope; they remain auditable but do not count toward calibration precision or evidence thresholds.",
-    "Numeric coverage and precision thresholds remain an operator decision; this ledger must remain advisory until they are configured."
+    "A complete receipt must carry explicit execution-failure evidence. Historical PR #1390 and #1403 records are partial because their saved sources do not preserve that field; PR #1346 and #1348 inherit the explicit zero-failure aggregate in their linked calibration artifact.",
+    "Correlated duplicate pairs count as one finding. Advisory readiness means the declared evidence threshold is met; it does not make Ground a blocking CI gate."
   ],
   "records": [
     {
@@ -117,7 +124,8 @@
         "id": "ground-review-pr-1346",
         "source": "docs/internal/ground-review-calibration-2026-08-12.json#1346",
         "completion": "complete",
-        "observed_findings": 0
+        "observed_findings": 0,
+        "execution_failures": 0
       },
       "verdicts": []
     },
@@ -135,7 +143,8 @@
         "id": "ground-review-pr-1348",
         "source": "docs/internal/ground-review-calibration-2026-08-12.json#1348",
         "completion": "complete",
-        "observed_findings": 0
+        "observed_findings": 0,
+        "execution_failures": 0
       },
       "verdicts": []
     },
@@ -213,7 +222,7 @@
       "receipt": {
         "id": "ground-review-pr-1390-a245ee3",
         "source": "https://github.com/createsomethingtoday/create-something-monorepo/commit/a245ee314b04081fafcbfbf4cbd426f2c8b23705",
-        "completion": "complete",
+        "completion": "partial",
         "observed_findings": 0
       },
       "verdicts": []
@@ -222,7 +231,7 @@
       "receipt": {
         "id": "ground-review-pr-1403-6c5b0a2",
         "source": "https://github.com/createsomethingtoday/create-something-monorepo/commit/6c5b0a258bc5c128235e4a08dde1cf52fa45c43a",
-        "completion": "complete",
+        "completion": "partial",
         "observed_findings": 14
       },
       "verdicts": [
@@ -311,6 +320,196 @@
           "rationale": "The helper definitions were unchanged from the PR base; Ground observed them because their files changed for unrelated fixes."
         }
       ]
+    },
+    {
+      "receipt": {
+        "id": "ground-ga-fixture-duplicate-typescript",
+        "source": "docs/internal/ground-ga-calibration-fixtures-2026-08-24.json#ga_duplicate_typescript_function_is_confirmed",
+        "completion": "complete",
+        "observed_findings": 1,
+        "execution_failures": 0
+      },
+      "verdicts": [
+        {
+          "finding_id": "fixture-duplicate-typescript",
+          "check": "duplicates",
+          "verdict": "confirmed",
+          "rationale": "The isolated TypeScript fixture contains one intentional duplicate function pair and the public Ground analysis path reports exactly one finding."
+        }
+      ]
+    },
+    {
+      "receipt": {
+        "id": "ground-ga-fixture-duplicate-tsx",
+        "source": "docs/internal/ground-ga-calibration-fixtures-2026-08-24.json#ga_duplicate_tsx_function_is_confirmed",
+        "completion": "complete",
+        "observed_findings": 1,
+        "execution_failures": 0
+      },
+      "verdicts": [
+        {
+          "finding_id": "fixture-duplicate-tsx",
+          "check": "duplicates",
+          "verdict": "confirmed",
+          "rationale": "The isolated TSX fixture contains one intentional duplicate function pair and the public Ground analysis path reports exactly one finding."
+        }
+      ]
+    },
+    {
+      "receipt": {
+        "id": "ground-ga-fixture-duplicate-javascript",
+        "source": "docs/internal/ground-ga-calibration-fixtures-2026-08-24.json#ga_duplicate_javascript_function_is_confirmed",
+        "completion": "complete",
+        "observed_findings": 1,
+        "execution_failures": 0
+      },
+      "verdicts": [
+        {
+          "finding_id": "fixture-duplicate-javascript",
+          "check": "duplicates",
+          "verdict": "confirmed",
+          "rationale": "The isolated JavaScript fixture contains one intentional duplicate function pair and the public Ground analysis path reports exactly one finding."
+        }
+      ]
+    },
+    {
+      "receipt": {
+        "id": "ground-ga-fixture-duplicate-svelte",
+        "source": "docs/internal/ground-ga-calibration-fixtures-2026-08-24.json#ga_duplicate_svelte_component_script_is_confirmed",
+        "completion": "complete",
+        "observed_findings": 1,
+        "execution_failures": 0
+      },
+      "verdicts": [
+        {
+          "finding_id": "fixture-duplicate-svelte",
+          "check": "duplicates",
+          "verdict": "confirmed",
+          "rationale": "The isolated Svelte component fixture contains one intentional duplicate script function pair and the public Ground analysis path reports exactly one finding."
+        }
+      ]
+    },
+    {
+      "receipt": {
+        "id": "ground-ga-fixture-orphan-typescript",
+        "source": "docs/internal/ground-ga-calibration-fixtures-2026-08-24.json#ga_orphan_typescript_module_is_confirmed",
+        "completion": "complete",
+        "observed_findings": 1,
+        "execution_failures": 0
+      },
+      "verdicts": [
+        {
+          "finding_id": "fixture-orphan-typescript",
+          "check": "orphans",
+          "verdict": "confirmed",
+          "rationale": "The isolated TypeScript package has one deliberately unreachable module and the public Ground orphan path reports exactly that module."
+        }
+      ]
+    },
+    {
+      "receipt": {
+        "id": "ground-ga-fixture-orphan-javascript",
+        "source": "docs/internal/ground-ga-calibration-fixtures-2026-08-24.json#ga_orphan_javascript_module_is_confirmed",
+        "completion": "complete",
+        "observed_findings": 1,
+        "execution_failures": 0
+      },
+      "verdicts": [
+        {
+          "finding_id": "fixture-orphan-javascript",
+          "check": "orphans",
+          "verdict": "confirmed",
+          "rationale": "The isolated JavaScript package has one deliberately unreachable module and the public Ground orphan path reports exactly that module."
+        }
+      ]
+    },
+    {
+      "receipt": {
+        "id": "ground-ga-fixture-orphan-sveltekit",
+        "source": "docs/internal/ground-ga-calibration-fixtures-2026-08-24.json#ga_orphan_svelte_component_is_confirmed",
+        "completion": "complete",
+        "observed_findings": 1,
+        "execution_failures": 0
+      },
+      "verdicts": [
+        {
+          "finding_id": "fixture-orphan-sveltekit",
+          "check": "orphans",
+          "verdict": "confirmed",
+          "rationale": "The isolated SvelteKit fixture has one unreachable component beside a valid route and the public Ground orphan path reports exactly that component."
+        }
+      ]
+    },
+    {
+      "receipt": {
+        "id": "ground-ga-fixture-dead-export-typescript",
+        "source": "docs/internal/ground-ga-calibration-fixtures-2026-08-24.json#ga_dead_typescript_export_is_confirmed",
+        "completion": "complete",
+        "observed_findings": 1,
+        "execution_failures": 0
+      },
+      "verdicts": [
+        {
+          "finding_id": "fixture-dead-export-typescript",
+          "check": "dead_exports",
+          "verdict": "confirmed",
+          "rationale": "The isolated TypeScript module exports one intentionally unused symbol and the public Ground dead-export path reports exactly that symbol."
+        }
+      ]
+    },
+    {
+      "receipt": {
+        "id": "ground-ga-fixture-dead-export-javascript",
+        "source": "docs/internal/ground-ga-calibration-fixtures-2026-08-24.json#ga_dead_javascript_export_is_confirmed",
+        "completion": "complete",
+        "observed_findings": 1,
+        "execution_failures": 0
+      },
+      "verdicts": [
+        {
+          "finding_id": "fixture-dead-export-javascript",
+          "check": "dead_exports",
+          "verdict": "confirmed",
+          "rationale": "The isolated JavaScript module exports one intentionally unused symbol and the public Ground dead-export path reports exactly that symbol."
+        }
+      ]
+    },
+    {
+      "receipt": {
+        "id": "ground-ga-fixture-dead-export-svelte",
+        "source": "docs/internal/ground-ga-calibration-fixtures-2026-08-24.json#ga_dead_svelte_module_export_is_confirmed",
+        "completion": "complete",
+        "observed_findings": 1,
+        "execution_failures": 0
+      },
+      "verdicts": [
+        {
+          "finding_id": "fixture-dead-export-svelte",
+          "check": "dead_exports",
+          "verdict": "confirmed",
+          "rationale": "The isolated Svelte module script exports one intentionally unused symbol and the public Ground dead-export path reports exactly that symbol."
+        }
+      ]
+    },
+    {
+      "receipt": {
+        "id": "ground-ga-fixture-dead-export-svelte-instance-api",
+        "source": "docs/internal/ground-ga-calibration-fixtures-2026-08-24.json#ga_svelte_instance_prop_is_not_a_dead_module_export",
+        "completion": "complete",
+        "observed_findings": 0,
+        "execution_failures": 0
+      },
+      "verdicts": []
+    },
+    {
+      "receipt": {
+        "id": "ground-ga-fixture-dead-export-typescript-used",
+        "source": "docs/internal/ground-ga-calibration-fixtures-2026-08-24.json#ga_used_typescript_export_is_not_dead",
+        "completion": "complete",
+        "observed_findings": 0,
+        "execution_failures": 0
+      },
+      "verdicts": []
     }
   ]
 }

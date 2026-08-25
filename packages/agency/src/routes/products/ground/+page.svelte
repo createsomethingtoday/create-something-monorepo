@@ -11,20 +11,22 @@
   const installs = [
     {
       id: 'claude',
-      label: 'Claude Desktop',
-      command: 'npx --yes -p @createsomething/ground-mcp ground-mcp',
-      note: 'Add to claude_desktop_config.json'
+      label: 'Claude Code',
+      command:
+        'claude mcp add --scope user --transport stdio ground -- npx --yes -p @createsomething/ground-mcp ground-mcp',
+      note: 'Register Ground for the current user'
     },
     {
       id: 'windsurf',
-      label: 'Windsurf',
-      command: '{"mcpServers":{"ground":{"command":"npx","args":["@createsomething/ground-mcp"]}}}',
-      note: 'Settings -> MCP -> View raw config'
+      label: 'Cursor or Windsurf',
+      command:
+        '{"mcpServers":{"ground":{"command":"npx","args":["--yes","-p","@createsomething/ground-mcp","ground-mcp"]}}}',
+      note: 'Paste into the client MCP configuration'
     },
     {
       id: 'codex',
       label: 'Codex CLI',
-      command: 'codex mcp add ground --command "npx @createsomething/ground-mcp"',
+      command: 'codex mcp add ground -- npx --yes -p @createsomething/ground-mcp ground-mcp',
       note: 'Register Ground as a local MCP server'
     },
     {
@@ -87,9 +89,9 @@
       id: 'guardrail',
       label: 'Run the guardrail',
       summary: 'Verify',
-      title: 'Check first. Then claim. Block otherwise.',
+      title: 'Check first. Then record. Ground blocks an unverified claim.',
       detail:
-        'Ground turns verification from a suggestion into a required sequence before an agent reports a code finding.',
+        'Ground turns verification from a suggestion into a required sequence before its claim tools record a code finding.',
       tone: 'review',
       evidence: ['Check first', 'Then claim', 'Blocked otherwise'],
       receipts: ['Compared inputs', 'Evidence-bound claim']
@@ -100,10 +102,10 @@
       summary: 'Trust',
       title: 'A smaller tool surface produces stronger claims.',
       detail:
-        'The tool inventory supports one operating rule, and the Kickstand audit shows the rule applied to production code.',
+        'The tool inventory supports one operating rule across TypeScript, JavaScript, and SvelteKit codebases.',
       tone: 'neutral',
-      evidence: ['20+ evidence tools', '155 scripts became 13', 'Zero reported false positives'],
-      receipts: ['92% script reduction', 'Published case study'],
+      evidence: ['21 MCP tools', 'Five native release targets', 'Public calibration policy'],
+      receipts: ['Checksums + provenance', 'Adjudicated findings ledger'],
       actions: [
         {
           label: 'Read the Kickstand audit',
@@ -126,8 +128,8 @@
 
 <SEO
   title="Ground MCP | Grounded AI Code Analysis"
-  description="Stop AI agent hallucinations in code analysis. Ground requires verification before claims and reports evidence for duplicates, dead code, and orphans."
-  keywords="MCP, Model Context Protocol, agent code analysis, AI agents, duplicate detection, dead code, evidence"
+  description="Evidence-first TypeScript and JavaScript code analysis for agents, with SvelteKit-aware verification for duplicates, dead code, orphans, and environment boundaries."
+  keywords="MCP, Model Context Protocol, TypeScript, JavaScript, SvelteKit, agent code analysis, duplicate detection, dead code, evidence"
   ogImage="/og-image.png"
   propertyName="agency"
 />
@@ -135,8 +137,8 @@
 <PerformanceCampaignOpening
   eyebrow="Free and open source"
   expression="editorial"
-  title="Code analysis that checks before it claims."
-  lede="Agents can report confident similarities without comparing the files. Ground makes verification a prerequisite, so every duplicate, dead-code, or orphan claim starts with evidence."
+  title="Give the agent evidence before it changes your codebase."
+  lede="Ground computes evidence for TypeScript and JavaScript code claims. It also understands SvelteKit routes, aliases, component scripts, actions, stores, and entry points."
   density="compact"
   media={{
     src: '/images/performance-lab/pressure-boundary-natural.webp',
@@ -144,8 +146,8 @@
     alt: 'Black-and-white view of a controlled pressure boundary holding a precise line'
   }}
   proof={[
-    { label: 'Rule', value: 'Verify first' },
-    { label: 'Package', value: 'Ground MCP' },
+    { label: 'Languages', value: 'TS + JS' },
+    { label: 'Framework', value: 'SvelteKit' },
     { label: 'Cost', value: 'Free' }
   ]}
 >
@@ -157,7 +159,7 @@
 <PerformanceNarrativeStage
   id="ground-operating-path"
   eyebrow="Ground operating path"
-  title="Verification happens before the answer, not after."
+  title="Verification belongs before the answer."
   description="One indexed surface keeps installation, enforcement, and production evidence together."
   {scenes}
   ariaLabel="Ground operating path"
@@ -216,23 +218,28 @@ ground claim duplicate utils.ts helpers.ts "same validation logic"
           {/each}
         </div>
         <aside class="case-proof">
-          <span>Published case study</span>
-          <h3>Kickstand: 155 scripts became 13</h3>
+          <span>Calibration policy</span>
+          <h3>Accuracy is a release gate, not a slogan.</h3>
           <p>
-            Verified findings supported a 92% script reduction with zero reported false positives.
+            The exact-tag fixture suite and checked-in ledger block promotion when analyzer
+            execution, precision, completion, or coverage evidence is missing.
+          </p>
+          <p>
+            The release calibration combines ten controlled positive fixtures with one preserved
+            real-repository false positive. It is not a population-wide accuracy estimate.
           </p>
           <dl>
             <div>
-              <dt>Reduction</dt>
-              <dd>92%</dd>
+              <dt>Adjudicated findings</dt>
+              <dd>10 minimum</dd>
             </div>
             <div>
-              <dt>False positives</dt>
-              <dd>0</dd>
+              <dt>Precision gate</dt>
+              <dd>90%+</dd>
             </div>
             <div>
-              <dt>Scripts</dt>
-              <dd>155 -> 13</dd>
+              <dt>False-positive cap</dt>
+              <dd>10%</dd>
             </div>
           </dl>
         </aside>
@@ -255,14 +262,13 @@ ground claim duplicate utils.ts helpers.ts "same validation logic"
   }}
 >
   {#snippet actions()}
+    <Button href="https://www.npmjs.com/package/@createsomething/ground-mcp"
+      >Install Ground from npm</Button
+    >
     <Button
       href="https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/ground"
-      >Inspect Ground on GitHub</Button
+      variant="secondary">Inspect the source</Button
     >
-    <Button href="https://www.npmjs.com/package/@createsomething/ground-mcp" variant="secondary"
-      >Open the npm package</Button
-    >
-    <Button href="/products" variant="secondary">Return to products</Button>
   {/snippet}
 </PerformanceConversionHandoff>
 

@@ -51,7 +51,7 @@ export const products: Product[] = [
 		title: 'Ground',
 		tagline: 'Code analysis that checks before it claims',
 		description:
-			'Stop hallucinated duplicates. Ground requires verification before claims — no more false positives.',
+			'Check TypeScript, JavaScript, and SvelteKit evidence before an agent reports duplicates, dead code, or orphans.',
 		badge: 'Free & Open Source',
 		category: 'featured',
 		href: '/products/ground',

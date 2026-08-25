@@ -251,6 +251,8 @@
     "ground:review:json": "node scripts/ground-review.mjs --format json",
     "ground:adjudication": "node scripts/ground-adjudication.mjs --ledger docs/internal/ground-adjudication-ledger.v1.json",
     "ground:adjudication:json": "node scripts/ground-adjudication.mjs --ledger docs/internal/ground-adjudication-ledger.v1.json --format json",
+    "ground:ga": "node scripts/ground-ga-verify.mjs",
+    "ground:ga:test": "node --test scripts/test/ground-adjudication.test.mjs scripts/test/ground-ga-policy.test.mjs scripts/test/ground-public-surface.test.mjs",
     "ground": "pnpm ground:imports && pnpm ground:components && pnpm ground:experiments && pnpm ground:duplicates",
     "authz:compile": "tsx scripts/compile-authz-manifests.ts",
     "authz:publish": "tsx scripts/publish-authz-policy.ts",

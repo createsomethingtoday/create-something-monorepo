@@ -96,7 +96,7 @@ check in `check_coverage.<check>.status`. The contract is explicit:
 - `PASS`: the check completed for the relevant supported files and found no issue.
 - `FAIL`: the check found an issue or could not complete because of a read/parse failure.
 - `NOT_APPLICABLE`: no changed file needs that check.
-- `UNSUPPORTED`: relevant source exists, but the requested check cannot analyze its language (including Svelte duplicate-function scans).
+- `UNSUPPORTED`: relevant source exists, but the requested check cannot analyze its language.
 - `TIMEOUT`: duplicate analysis reached its deadline before a complete result was available.
 
 `ground analyze` and `ground diff` accept `--timeout-ms` (120000 by default).
@@ -108,7 +108,14 @@ view; read `discovered_changed_files`, `analyzable_changed_files`, and
 `unsupported_changed_files` and `excluded_changed_files`, so a clean claim is
 valid only with `PASS`.
 
-Ground 0.3.5 extends source-bearing orphan evidence to nested Cloudflare Worker
+Ground 0.3.6 supports TypeScript (`.ts`, `.tsx`), JavaScript (`.js`, `.jsx`,
+`.mjs`), and Svelte (`.svelte`) in the declared analysis lane. Svelte component
+scripts participate in duplicate analysis, while SvelteKit configuration,
+routes, aliases, actions, stores, and framework entry points inform reachability
+and dead-export evidence. Inputs outside that contract remain unsupported rather
+than being reported as clean.
+
+Ground 0.3.5 extended source-bearing orphan evidence to nested Cloudflare Worker
 configurations: `wrangler.toml` and `wrangler.json` `main` entries are protected
 with their exact config source. The legacy `ground find orphans` command now
 returns the same verified canonical report as `ground analyze --checks orphans`.
@@ -251,7 +258,7 @@ If installed via npm globally, just use `"command": "ground-mcp"`. For local pro
   "mcpServers": {
     "ground": {
       "command": "npx",
-      "args": ["@createsomething/ground-mcp"]
+      "args": ["--yes", "-p", "@createsomething/ground-mcp", "ground-mcp"]
     }
   }
 }
@@ -311,7 +318,7 @@ Applied to code analysis: **no claim without evidence**.
 - **Dead code** → You have to count the uses first
 - **Orphans** → You have to check the connections first
 
-This prevents AI hallucination by requiring computation before synthesis.
+This keeps Ground's recorded claims tied to prerequisite computation.
 
 ---
 

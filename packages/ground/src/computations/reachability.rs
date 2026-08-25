@@ -39,6 +39,8 @@ pub enum EntryPointType {
     SvelteKitHooks,
     /// SvelteKit layout
     SvelteKitLayout,
+    /// Framework-owned configuration loaded by the build/runtime
+    FrameworkConfig,
     /// Cloudflare Worker
     CloudflareWorker,
     /// Test file
@@ -65,6 +67,7 @@ impl EntryPointType {
             EntryPointType::SvelteKitServer => "SvelteKit server",
             EntryPointType::SvelteKitHooks => "SvelteKit hooks",
             EntryPointType::SvelteKitLayout => "SvelteKit layout",
+            EntryPointType::FrameworkConfig => "framework config",
             EntryPointType::CloudflareWorker => "Cloudflare Worker",
             EntryPointType::TestFile => "test file",
             EntryPointType::Script => "script",
@@ -506,7 +509,21 @@ fn find_entries_recursive(
 fn detect_entry_point(path: &Path) -> Option<EntryPoint> {
     let name = path.file_name()?.to_str()?;
     let parent = path.parent()?.file_name().and_then(|n| n.to_str()).unwrap_or("");
-    
+
+    if matches!(
+        name,
+        "svelte.config.js" | "svelte.config.ts" |
+        "vite.config.js" | "vite.config.ts" | "vite.config.mjs" |
+        "next.config.js" | "next.config.ts" | "next.config.mjs" |
+        "remix.config.js"
+    ) {
+        return Some(EntryPoint {
+            path: path.to_path_buf(),
+            entry_type: EntryPointType::FrameworkConfig,
+            description: format!("Framework config: {}", path.display()),
+        });
+    }
+
     // SvelteKit routes
     if name == "+page.svelte" || name == "+page.ts" {
         return Some(EntryPoint {

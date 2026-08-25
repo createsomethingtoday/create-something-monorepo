@@ -12,15 +12,39 @@ use tree_sitter::{Parser, Node};
 /// Svelte files contain `<script>` or `<script lang="ts">` tags with TypeScript/JavaScript.
 /// This extracts the content for parsing with tree-sitter.
 /// 
-/// Handles both regular `<script>` and `<script context="module">` tags.
+/// Handles both regular `<script>` and `<script context="module">` tags while
+/// preserving source line positions.
 fn extract_svelte_script(source: &str) -> Option<String> {
-    // Find <script> or <script lang="ts"> tag (not context="module" which is for module-level exports)
-    let mut scripts = Vec::new();
+    extract_svelte_scripts(source, false)
+}
+
+/// Extract only module-context scripts from a Svelte component.
+///
+/// Instance-script exports are component API (`export let` props and exported
+/// component methods), not JavaScript module exports. Dead-export analysis must
+/// therefore ignore the entire instance script.
+fn extract_svelte_module_script(source: &str) -> Option<String> {
+    extract_svelte_scripts(source, true)
+}
+
+fn extract_svelte_scripts(source: &str, module_only: bool) -> Option<String> {
+    let source_bytes = source.as_bytes();
+    let mut extracted = source_bytes
+        .iter()
+        .map(|byte| {
+            if matches!(byte, b'\n' | b'\r') {
+                *byte
+            } else {
+                b' '
+            }
+        })
+        .collect::<Vec<_>>();
+    let mut found = false;
     let mut search_start = 0;
-    
+
     while let Some(tag_start) = source[search_start..].find("<script") {
         let abs_tag_start = search_start + tag_start;
-        
+
         // Find the end of the opening tag
         let tag_content_start = match source[abs_tag_start..].find('>') {
             Some(pos) => abs_tag_start + pos + 1,
@@ -29,7 +53,7 @@ fn extract_svelte_script(source: &str) -> Option<String> {
                 continue;
             }
         };
-        
+
         // Find the closing </script> tag
         let tag_content_end = match source[tag_content_start..].find("</script>") {
             Some(pos) => tag_content_start + pos,
@@ -38,19 +62,34 @@ fn extract_svelte_script(source: &str) -> Option<String> {
                 continue;
             }
         };
-        
-        let script_content = &source[tag_content_start..tag_content_end];
-        scripts.push(script_content.to_string());
-        
+
+        let opening_tag = &source[abs_tag_start..tag_content_start];
+        let normalized_tag = opening_tag
+            .to_ascii_lowercase()
+            .chars()
+            .filter(|character| !character.is_ascii_whitespace())
+            .collect::<String>();
+        let has_context_module = normalized_tag.contains("context=\"module\"")
+            || normalized_tag.contains("context='module'");
+        let has_module_attribute = opening_tag
+            .trim_end_matches('>')
+            .split_ascii_whitespace()
+            .any(|attribute| attribute.eq_ignore_ascii_case("module"));
+
+        if !module_only || has_context_module || has_module_attribute {
+            extracted[tag_content_start..tag_content_end]
+                .copy_from_slice(&source_bytes[tag_content_start..tag_content_end]);
+            found = true;
+        }
+
         search_start = tag_content_end + 9; // skip "</script>"
     }
-    
-    if scripts.is_empty() {
+
+    if !found {
         return None;
     }
-    
-    // Combine all script contents (some Svelte files have multiple script tags)
-    Some(scripts.join("\n"))
+
+    String::from_utf8(extracted).ok()
 }
 
 /// An import statement extracted from source
@@ -119,10 +158,12 @@ pub fn extract_exports(path: &Path) -> Result<Vec<ExtractedExport>, String> {
     
     let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
     
-    // Handle Svelte files by extracting script content
+    // Svelte module exports exist only in module-context scripts. Instance
+    // exports describe the component API and must not enter dead-export checks.
     let (parse_source, language) = if ext == "svelte" {
-        let script = extract_svelte_script(&source)
-            .ok_or_else(|| "No script tag found in Svelte file".to_string())?;
+        let Some(script) = extract_svelte_module_script(&source) else {
+            return Ok(Vec::new());
+        };
         (script, tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into())
     } else if ext == "ts" || ext == "tsx" {
         (source.clone(), tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into())
@@ -787,6 +828,53 @@ let ready = false;
         let script = super::extract_svelte_script(source).unwrap();
         assert!(script.contains("export const prerender"));
         assert!(script.contains("import { onMount }"));
+    }
+
+    #[test]
+    fn test_extract_svelte_exports_excludes_instance_api() {
+        let dir = tempdir().unwrap();
+        let file = dir.path().join("Component.svelte");
+
+        File::create(&file)
+            .unwrap()
+            .write_all(br#"<script context="module" lang="ts">
+export const moduleValue = 'ground';
+</script>
+
+<script lang="ts">
+export let title: string;
+export function focus() {}
+</script>
+
+<h1>{title}</h1>
+"#)
+            .unwrap();
+
+        let exports = extract_exports(&file).unwrap();
+        let names: Vec<&str> = exports.iter().map(|export| export.name.as_str()).collect();
+        assert_eq!(names, vec!["moduleValue"]);
+        assert_eq!(exports[0].line, 2);
+    }
+
+    #[test]
+    fn test_extract_svelte_five_module_attribute_export() {
+        let dir = tempdir().unwrap();
+        let file = dir.path().join("Component.svelte");
+
+        File::create(&file)
+            .unwrap()
+            .write_all(br#"<script module>
+export const moduleValue = 'ground';
+</script>
+
+<p>Ground</p>
+"#)
+            .unwrap();
+
+        let exports = extract_exports(&file).unwrap();
+        assert_eq!(exports.len(), 1);
+        assert_eq!(exports[0].name, "moduleValue");
+        assert_eq!(exports[0].line, 2);
     }
     
     #[test]
