@@ -3,7 +3,7 @@ import test from 'node:test';
 
 import {
   deploymentArgs,
-  hasReceiptTable,
+  hasRequiredMonitorTables,
   parseArgs,
   serializeAlertSecrets
 } from '../scripts/deploy.mjs';
@@ -38,11 +38,20 @@ test('deployment accepts only a non-empty single-line alert credential without r
   assert.throws(() => serializeAlertSecrets('one\ntwo'), /single line/);
 });
 
-test('deployment refuses to proceed without the remote D1 receipt table', () => {
+test('deployment refuses to proceed unless both remote Map D1 tables exist', () => {
   assert.equal(
-    hasReceiptTable([{ success: true, results: [{ name: 'map_production_monitor_receipts' }] }]),
+    hasRequiredMonitorTables([
+      {
+        success: true,
+        results: [
+          { name: 'map_production_monitor_receipts' },
+          { name: 'map_production_monitor_alerts' },
+        ],
+      },
+    ]),
     true
   );
-  assert.equal(hasReceiptTable([{ success: true, results: [] }]), false);
-  assert.equal(hasReceiptTable([{ success: false, results: [{ name: 'map_production_monitor_receipts' }] }]), false);
+  assert.equal(hasRequiredMonitorTables([{ success: true, results: [{ name: 'map_production_monitor_receipts' }] }]), false);
+  assert.equal(hasRequiredMonitorTables([{ success: true, results: [{ name: 'map_production_monitor_alerts' }] }]), false);
+  assert.equal(hasRequiredMonitorTables([{ success: false, results: [{ name: 'map_production_monitor_receipts' }] }]), false);
 });

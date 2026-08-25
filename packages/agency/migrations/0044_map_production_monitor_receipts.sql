@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS map_production_monitor_alerts (
   created_at TEXT NOT NULL,
   delivery_status TEXT NOT NULL CHECK (delivery_status IN ('pending', 'delivering', 'delivered')),
   delivery_attempts INTEGER NOT NULL CHECK (delivery_attempts >= 0),
+  delivery_lease_expires_at TEXT,
   delivered_at TEXT,
   last_delivery_error_code TEXT
 );

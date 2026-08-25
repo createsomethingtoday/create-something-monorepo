@@ -32,3 +32,12 @@ test('Map monitor migration persists idempotent two-failure operator-alert deliv
   assert.match(migration, /failure_streak_started_at TEXT NOT NULL/);
   assert.match(migration, /CREATE INDEX IF NOT EXISTS map_production_monitor_alerts_delivery_status/);
 });
+
+test('Map monitor migration gives interrupted operator-alert delivery a reclaimable lease', async () => {
+  const migration = await readFile(
+    new URL('../../../migrations/0044_map_production_monitor_receipts.sql', import.meta.url),
+    'utf8'
+  );
+
+  assert.match(migration, /delivery_lease_expires_at TEXT/);
+});

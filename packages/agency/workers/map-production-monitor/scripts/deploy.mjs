@@ -12,6 +12,8 @@ const scriptRoot = path.dirname(fileURLToPath(import.meta.url));
 const workerRoot = path.resolve(scriptRoot, '..');
 const repositoryRoot = path.resolve(workerRoot, '../../../..');
 const REQUIRED_RECEIPT_TABLE = 'map_production_monitor_receipts';
+const REQUIRED_ALERT_TABLE = 'map_production_monitor_alerts';
+const REQUIRED_MONITOR_TABLES = Object.freeze([REQUIRED_RECEIPT_TABLE, REQUIRED_ALERT_TABLE]);
 const REQUIRED_ALERT_SECRET = 'RESEND_API_KEY';
 const SHA_PATTERN = /^[0-9a-f]{40}$/i;
 
@@ -54,12 +56,14 @@ export function serializeAlertSecrets(value) {
   return `${REQUIRED_ALERT_SECRET}=${value}\n`;
 }
 
-export function hasReceiptTable(payload) {
+export function hasRequiredMonitorTables(payload) {
   return (
     Array.isArray(payload) &&
     payload.length === 1 &&
     payload[0]?.success === true &&
-    payload[0]?.results?.some((row) => row?.name === REQUIRED_RECEIPT_TABLE) === true
+    REQUIRED_MONITOR_TABLES.every((table) =>
+      payload[0]?.results?.some((row) => row?.name === table) === true,
+    )
   );
 }
 
@@ -89,7 +93,7 @@ async function assertHomeBase() {
   return stdout.trim();
 }
 
-async function assertReceiptTable() {
+async function assertMonitorTables() {
   const { stdout } = await command(
     process.execPath,
     [
@@ -101,14 +105,14 @@ async function assertReceiptTable() {
       '--config',
       '../../wrangler.jsonc',
       '--command',
-      `SELECT name FROM sqlite_master WHERE type = 'table' AND name = '${REQUIRED_RECEIPT_TABLE}'`,
+      `SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('${REQUIRED_RECEIPT_TABLE}', '${REQUIRED_ALERT_TABLE}')`,
       '--json'
     ],
     { cwd: workerRoot }
   );
-  if (!hasReceiptTable(JSON.parse(stdout))) {
+  if (!hasRequiredMonitorTables(JSON.parse(stdout))) {
     throw new Error(
-      'Remote D1 Map receipt table is absent; apply the reviewed db:migrate step before deployment'
+      'Remote D1 Map monitor tables are absent; apply the reviewed db:migrate step before deployment'
     );
   }
 }
@@ -148,7 +152,7 @@ async function main() {
     return;
   }
   const sourceSha = await assertHomeBase();
-  await assertReceiptTable();
+  await assertMonitorTables();
   const { directory, secretsFile } = await createAlertSecretsFile();
   try {
     const args = deploymentArgs(sourceSha, options.dryRun, secretsFile);

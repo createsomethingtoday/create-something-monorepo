@@ -322,6 +322,56 @@ test('retries a pending escalation on a later green scheduled receipt', async ()
   assert.ok(runs.some((statement) => statement.query.includes("delivery_status = 'delivered'")));
 });
 
+test('reclaims an expired delivering escalation on a later scheduled receipt', async () => {
+  const { database, runs } = createDatabase();
+  let alert: unknown = null;
+  const interruptedEscalation = {
+    alert_id: 'map-monitor-escalation-map-20260825180700-aaaaaaaaaaaa',
+    failure_streak_started_at: '2026-08-25T18:07:00.000Z',
+    threshold_receipt_id: 'map-20260825182200-aaaaaaaaaaaa',
+    source_sha: SOURCE_SHA,
+    severity: 'SEV-3',
+    failed_check_codes_json: JSON.stringify(['HTTP_503', 'REQUIRED_CHECK_MISSING']),
+  };
+  const retryDatabase = {
+    ...database,
+    prepare(query: string) {
+      const statement = database.prepare(query);
+      return {
+        bind(...values: unknown[]) {
+          const bound = statement.bind(...values);
+          if (query.includes('SELECT') && query.includes('map_production_monitor_alerts')) {
+            return { ...bound, all: async () => ({ results: [interruptedEscalation] }) };
+          }
+          if (query.includes("SET delivery_status = 'delivering'")) {
+            return query.includes('delivery_lease_expires_at')
+              ? bound
+              : { ...bound, run: async () => ({ meta: { changes: 0 } }) };
+          }
+          return bound;
+        },
+      };
+    },
+  };
+
+  const receipt = await runScheduledMapMonitor({
+    scheduledAt: '2026-08-25T18:52:00.000Z',
+    env: env(retryDatabase),
+    executeSynthetic: async () => ({
+      checks: REQUIRED_MAP_CHECK_IDS.map((id) => ({ id, ok: true, durationMs: 1 })),
+    }),
+    notifyOperator: async (input) => {
+      alert = input;
+    },
+    now: () => new Date('2026-08-25T18:52:20.000Z'),
+  });
+
+  assert.equal(receipt.status, 'passed');
+  assert.equal((alert as { alertId: string } | null)?.alertId, interruptedEscalation.alert_id);
+  const claim = runs.find((statement) => statement.query.includes("SET delivery_status = 'delivering'"));
+  assert.ok(claim?.query.includes('delivery_lease_expires_at'));
+});
+
 test('invalid source provenance produces a persisted red receipt before browser work', async () => {
   const { database, batches } = createDatabase();
   let ranSynthetic = false;

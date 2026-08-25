@@ -72,6 +72,7 @@ const SOURCE_SHA_PATTERN = /^[0-9a-f]{40}$/i;
 const DEFAULT_BASE_URL = 'https://createsomething.agency';
 const REQUIRED_RETENTION_DAYS = 30;
 const OPERATOR_ESCALATION_THRESHOLD = 2;
+const OPERATOR_ESCALATION_LEASE_MS = 10 * 60 * 1000;
 const OPERATOR_ALERT_EMAIL = 'micah@createsomething.io';
 const OPERATOR_ALERT_FROM = 'CREATE SOMETHING Ops <notifications@createsomething.io>';
 const RESEND_EMAIL_API_URL = 'https://api.resend.com/emails';
@@ -396,29 +397,42 @@ async function deliverPendingOperatorEscalations(
   now: Date,
   notifyOperator: (escalation: MapOperatorEscalation) => Promise<void>,
 ): Promise<void> {
+  const reclaimAt = now.toISOString();
   const result = await database
     .prepare(
       `SELECT alert_id, failure_streak_started_at, threshold_receipt_id, source_sha,
               severity, failed_check_codes_json
        FROM map_production_monitor_alerts
        WHERE delivery_status = 'pending'
+          OR (
+            delivery_status = 'delivering'
+            AND (delivery_lease_expires_at IS NULL OR delivery_lease_expires_at <= ?)
+          )
        ORDER BY created_at ASC`,
     )
-    .bind()
+    .bind(reclaimAt)
     .all<PendingEscalationRow>();
   const pending = result.results ?? [];
 
   for (const row of pending) {
     const escalation = escalationFromPending(row);
+    const leaseExpiresAt = new Date(now.valueOf() + OPERATOR_ESCALATION_LEASE_MS).toISOString();
 
     const claim = await database
       .prepare(
         `UPDATE map_production_monitor_alerts
         SET delivery_status = 'delivering', delivery_attempts = delivery_attempts + 1,
-            last_delivery_error_code = NULL
-        WHERE alert_id = ? AND delivery_status = 'pending'`,
+            delivery_lease_expires_at = ?, last_delivery_error_code = NULL
+        WHERE alert_id = ?
+          AND (
+            delivery_status = 'pending'
+            OR (
+              delivery_status = 'delivering'
+              AND (delivery_lease_expires_at IS NULL OR delivery_lease_expires_at <= ?)
+            )
+          )`,
       )
-      .bind(escalation.alertId)
+      .bind(leaseExpiresAt, escalation.alertId, reclaimAt)
       .run();
     if (claim.meta.changes !== 1) continue;
 
@@ -428,7 +442,8 @@ async function deliverPendingOperatorEscalations(
       await database
         .prepare(
           `UPDATE map_production_monitor_alerts
-          SET delivery_status = 'pending', last_delivery_error_code = 'EMAIL_DELIVERY_FAILED'
+          SET delivery_status = 'pending', delivery_lease_expires_at = NULL,
+              last_delivery_error_code = 'EMAIL_DELIVERY_FAILED'
           WHERE alert_id = ?`,
         )
         .bind(escalation.alertId)
@@ -439,7 +454,8 @@ async function deliverPendingOperatorEscalations(
     await database
       .prepare(
         `UPDATE map_production_monitor_alerts
-        SET delivery_status = 'delivered', delivered_at = ?, last_delivery_error_code = NULL
+        SET delivery_status = 'delivered', delivered_at = ?, delivery_lease_expires_at = NULL,
+            last_delivery_error_code = NULL
         WHERE alert_id = ?`,
       )
       .bind(now.toISOString(), escalation.alertId)
