@@ -232,12 +232,14 @@ The output includes:
 - governed-interaction bundle
 - content-hashed artifact manifest
 
-The optional `workflow_runtime_manifest.v0.1` is emitted only when a caller
+The optional `workflow_runtime_manifest.v0.2` is emitted only when a caller
 supplies an explicit Control-targeted runtime-manifest input to the library.
 It is derived solely from a `compiled_workflow_bundle.v0.3`, enters the same
 signed artifact inventory, and remains a declarative checkpoint plan. The
 compiler does not add a runtime manifest to ordinary compile output and never
-turns the plan into an execution request.
+turns the plan into an execution request. Historical
+`workflow_runtime_manifest.v0.1` artifacts remain valid only under their
+original `manual_fallback` recovery semantics.
 
 The second fixture proves that the contract composes beyond Webflow. It models software release verification, human-owned production promotion, and a blocked policy bypass:
 

@@ -8,11 +8,17 @@ provider client, credential, queue consumer, or external-effect adapter.
 
 ## Boundary
 
-The public core accepts a closed `workflow_runtime_manifest.v0.1` and an
-immutable admission tuple. Its only executable-looking plan is `pass`, which
-contains a declared capability identifier and a parameter digest; calling that
-capability is deliberately outside this package. `wait`, `stop`, and
-`recovery` plans do not expose a capability.
+The public core accepts a closed `workflow_runtime_manifest.v0.1` legacy
+contract and the current `workflow_runtime_manifest.v0.2` contract, each with
+its exact runtime compatibility marker and an immutable admission tuple. v0.1
+retains its original `manual_fallback`-only recovery semantics; v0.2 preserves
+the compiler's declared recovery mode. A prepared effect stopped under v0.1
+retains its legacy `abandoned` checkpoint label, while v0.2 records
+`effect_ambiguous`; both labels require a terminal receipt and never permit a
+requeue. Its only executable-looking plan is
+`pass`, which contains a declared capability identifier and a parameter digest;
+calling that capability is deliberately outside this package. `wait`, `stop`,
+and `recovery` plans do not expose a capability.
 
 The host ports are storage, clock, identity, queue, and receipt sink. The
 executor port is `never`. `ZeroWriteWorkflowRuntimeHost` therefore cannot turn
@@ -22,8 +28,9 @@ call.
 Every runtime step carries the compiler action ID that produced it. Before a
 transition with an actor can enter the receipt chain, the identity port must
 return that same authenticated subject; a claimed subject that differs from the
-trusted identity stops before state is read or changed. Runtime v0.1 accepts a
-single reachable serial chain only, so exactly one step can become ready.
+trusted identity stops before state is read or changed. Both accepted runtime
+manifest versions allow a single reachable serial chain only, so exactly one
+step can become ready.
 
 ## Admission order
 

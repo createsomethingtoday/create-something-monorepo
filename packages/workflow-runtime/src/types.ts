@@ -1,8 +1,43 @@
 export type RuntimeDigest = `sha256:${string}`;
+export type WorkflowRuntimeRecoveryMode = 'rollback' | 'escalate' | 'manual_fallback';
 
-export interface WorkflowRuntimeManifest {
-  schemaVersion: 'workflow_runtime_manifest.v0.1';
-  runtimeCompatibility: 'workflow-runtime.v0.1';
+interface WorkflowRuntimeStepBase<Recovery extends WorkflowRuntimeRecoveryMode> {
+  id: string;
+  actionId: string;
+  dependsOn: string[];
+  evidenceDigest: RuntimeDigest;
+  recovery: Recovery;
+}
+
+export interface WorkflowRuntimePassStep<
+  Recovery extends WorkflowRuntimeRecoveryMode = WorkflowRuntimeRecoveryMode
+> extends WorkflowRuntimeStepBase<Recovery> {
+  disposition: 'pass';
+  capability: { id: string; parameterDigest: RuntimeDigest };
+}
+
+export interface WorkflowRuntimeWaitStep<
+  Recovery extends WorkflowRuntimeRecoveryMode = WorkflowRuntimeRecoveryMode
+> extends WorkflowRuntimeStepBase<Recovery> {
+  disposition: 'wait';
+  approval: { policyId: string; expiresAt: string };
+}
+
+export interface WorkflowRuntimeStopStep<
+  Recovery extends WorkflowRuntimeRecoveryMode = WorkflowRuntimeRecoveryMode
+> extends WorkflowRuntimeStepBase<Recovery> {
+  disposition: 'stop';
+  reason: string;
+}
+
+export type WorkflowRuntimeStepDefinition<
+  Recovery extends WorkflowRuntimeRecoveryMode = WorkflowRuntimeRecoveryMode
+> =
+  | WorkflowRuntimePassStep<Recovery>
+  | WorkflowRuntimeWaitStep<Recovery>
+  | WorkflowRuntimeStopStep<Recovery>;
+
+interface WorkflowRuntimeManifestBase<Step extends WorkflowRuntimeStepDefinition> {
   target: 'create-something/control-runtime.v1';
   workflow: {
     id: string;
@@ -17,36 +52,22 @@ export interface WorkflowRuntimeManifest {
     approvalSurfacesSha256: RuntimeDigest;
     toolContractsSha256: RuntimeDigest;
   };
-  steps: WorkflowRuntimeStepDefinition[];
+  steps: Step[];
 }
 
-interface WorkflowRuntimeStepBase {
-  id: string;
-  actionId: string;
-  dependsOn: string[];
-  evidenceDigest: RuntimeDigest;
-  recovery: 'manual_fallback';
+export interface WorkflowRuntimeManifestV0_1 extends WorkflowRuntimeManifestBase<
+  WorkflowRuntimeStepDefinition<'manual_fallback'>
+> {
+  schemaVersion: 'workflow_runtime_manifest.v0.1';
+  runtimeCompatibility: 'workflow-runtime.v0.1';
 }
 
-export interface WorkflowRuntimePassStep extends WorkflowRuntimeStepBase {
-  disposition: 'pass';
-  capability: { id: string; parameterDigest: RuntimeDigest };
+export interface WorkflowRuntimeManifestV0_2 extends WorkflowRuntimeManifestBase<WorkflowRuntimeStepDefinition> {
+  schemaVersion: 'workflow_runtime_manifest.v0.2';
+  runtimeCompatibility: 'workflow-runtime.v0.2';
 }
 
-export interface WorkflowRuntimeWaitStep extends WorkflowRuntimeStepBase {
-  disposition: 'wait';
-  approval: { policyId: string; expiresAt: string };
-}
-
-export interface WorkflowRuntimeStopStep extends WorkflowRuntimeStepBase {
-  disposition: 'stop';
-  reason: string;
-}
-
-export type WorkflowRuntimeStepDefinition =
-  | WorkflowRuntimePassStep
-  | WorkflowRuntimeWaitStep
-  | WorkflowRuntimeStopStep;
+export type WorkflowRuntimeManifest = WorkflowRuntimeManifestV0_1 | WorkflowRuntimeManifestV0_2;
 
 export interface WorkflowRuntimeAdmission {
   runId: string;
@@ -78,7 +99,13 @@ export type WorkflowRuntimeStepStatus =
 
 export interface WorkflowRuntimeAttempt {
   id: string;
-  status: 'prepared' | 'succeeded' | 'retryable_failure' | 'failed' | 'abandoned';
+  status:
+    | 'prepared'
+    | 'succeeded'
+    | 'retryable_failure'
+    | 'failed'
+    | 'abandoned'
+    | 'effect_ambiguous';
   capability: WorkflowRuntimePassStep['capability'];
   createdAt: string;
 }
@@ -228,3 +255,11 @@ export class RuntimeValidationError extends Error {
     super(message);
   }
 }
+
+type Equal<Left, Right> =
+  (<Value>() => Value extends Left ? 1 : 2) extends <Value>() => Value extends Right ? 1 : 2
+    ? true
+    : false;
+type Assert<Value extends true> = Value;
+type LegacyRecovery = WorkflowRuntimeManifestV0_1['steps'][number]['recovery'];
+type _LegacyManifestStepsStayManual = Assert<Equal<LegacyRecovery, 'manual_fallback'>>;

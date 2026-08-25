@@ -230,9 +230,9 @@ key ID. The output contract rejects unowned directories, unsafe links, and
 partial legacy layouts.
 
 `createWorkflowRuntimeManifest(bundle, input)` is an explicit, opt-in
-translation for the `workflow-runtime.v0.1` Control target. It accepts only a
+translation for the `workflow-runtime.v0.2` Control target. It accepts only a
 trusted in-process `compiled_workflow_bundle.v0.3` and a bounded, caller-owned
-step map, then emits an integrity-bound `workflow_runtime_manifest.v0.1`.
+step map, then emits an integrity-bound `workflow_runtime_manifest.v0.2`.
 Callers may pass that artifact as the runtime-manifest option to
 `writeCompiledWorkflowArtifacts` to include it in the signed artifact
 inventory. The runtime manifest carries each compiler action ID and permits a
@@ -241,7 +241,9 @@ workflow transitions, so a caller cannot substitute a different autonomy,
 capability, approval binding, dependency graph, or evidence digest before the
 compiler signs it. It creates no execution request, credential, deployment, or
 approval decision; an execution host must separately verify, persist, and
-apply it.
+apply it. The compiler can still validate a historical
+`workflow_runtime_manifest.v0.1` against that version's original
+`manual_fallback` recovery semantics; it does not reinterpret it as v0.2.
 
 ### `verifyWorkflowArtifactBundle(directory, options?)`
 

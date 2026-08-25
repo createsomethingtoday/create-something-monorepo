@@ -8,6 +8,7 @@ import {
   type WorkflowRuntimePlan,
   type WorkflowRuntimeReceipt,
   type WorkflowRuntimeReceiptEventType,
+  type WorkflowRuntimeRecoveryMode,
   type WorkflowRuntimeRun,
   type WorkflowRuntimeStepDefinition,
   type WorkflowRuntimeStepRecord
@@ -36,7 +37,14 @@ const STEP_STATUSES = [
   'failed',
   'cancelled'
 ];
-const ATTEMPT_STATUSES = ['prepared', 'succeeded', 'retryable_failure', 'failed', 'abandoned'];
+const ATTEMPT_STATUSES = [
+  'prepared',
+  'succeeded',
+  'retryable_failure',
+  'failed',
+  'abandoned',
+  'effect_ambiguous'
+];
 const RECEIPT_EVENTS = [
   'run_admitted',
   'effect_intent',
@@ -109,21 +117,25 @@ function ids(value: unknown, label: string): string[] {
   return result;
 }
 
+function recovery(value: unknown): WorkflowRuntimeRecoveryMode {
+  if (value !== 'rollback' && value !== 'escalate' && value !== 'manual_fallback') {
+    throw new RuntimeValidationError(
+      'INVALID_MANIFEST',
+      'Runtime step recovery must be rollback, escalate, or manual_fallback'
+    );
+  }
+  return value;
+}
+
 function step(value: unknown): WorkflowRuntimeStepDefinition {
   if (!isRecord(value))
     throw new RuntimeValidationError('INVALID_MANIFEST', 'Runtime step must be an object');
-  if (value.recovery !== 'manual_fallback') {
-    throw new RuntimeValidationError(
-      'INVALID_MANIFEST',
-      'Runtime step recovery must be manual_fallback'
-    );
-  }
   const base = {
     id: text(value.id, 'Runtime step ID', 160),
     actionId: text(value.actionId, 'Runtime action ID', 160),
     dependsOn: ids(value.dependsOn, 'Runtime step dependencies'),
     evidenceDigest: digest(value.evidenceDigest, 'Runtime step evidence digest'),
-    recovery: 'manual_fallback' as const
+    recovery: recovery(value.recovery)
   };
   if (value.disposition === 'pass') {
     if (
@@ -235,6 +247,14 @@ function stateFailure(message: string): never {
   throw new RuntimeValidationError('INVALID_STATE', message);
 }
 
+function unresolvedAttemptStatus(
+  manifest: WorkflowRuntimeManifest
+): 'abandoned' | 'effect_ambiguous' {
+  return manifest.schemaVersion === 'workflow_runtime_manifest.v0.2'
+    ? 'effect_ambiguous'
+    : 'abandoned';
+}
+
 function validText(value: unknown, maximum = 240): value is string {
   return typeof value === 'string' && Boolean(value.trim()) && value.trim().length <= maximum;
 }
@@ -291,7 +311,7 @@ function serial(steps: WorkflowRuntimeStepDefinition[]): void {
   if (initial.length !== 1 || steps.some((candidate) => candidate.dependsOn.length > 1)) {
     throw new RuntimeValidationError(
       'INVALID_MANIFEST',
-      'Runtime v0.1 requires one initial step and one predecessor per successor'
+      'Runtime manifest requires one initial step and one predecessor per successor'
     );
   }
   const successors = new Map(steps.map((candidate) => [candidate.id, [] as string[]]));
@@ -301,7 +321,7 @@ function serial(steps: WorkflowRuntimeStepDefinition[]): void {
   if ([...successors.values()].some((candidate) => candidate.length > 1)) {
     throw new RuntimeValidationError(
       'INVALID_MANIFEST',
-      'Runtime v0.1 requires one deterministic successor per step'
+      'Runtime manifest requires one deterministic successor per step'
     );
   }
   const visited = new Set<string>();
@@ -310,7 +330,7 @@ function serial(steps: WorkflowRuntimeStepDefinition[]): void {
     if (visited.has(current)) {
       throw new RuntimeValidationError(
         'INVALID_MANIFEST',
-        'Runtime v0.1 step chain contains a cycle'
+        'Runtime manifest step chain contains a cycle'
       );
     }
     visited.add(current);
@@ -319,7 +339,7 @@ function serial(steps: WorkflowRuntimeStepDefinition[]): void {
   if (visited.size !== steps.length) {
     throw new RuntimeValidationError(
       'INVALID_MANIFEST',
-      'Runtime v0.1 requires every step to be reachable from its initial step'
+      'Runtime manifest requires every step to be reachable from its initial step'
     );
   }
 }
@@ -341,11 +361,15 @@ export function parseWorkflowRuntimeManifest(value: unknown): WorkflowRuntimeMan
       'Runtime manifest has unknown or missing fields'
     );
   }
-  if (
-    value.schemaVersion !== 'workflow_runtime_manifest.v0.1' ||
-    value.runtimeCompatibility !== 'workflow-runtime.v0.1' ||
-    value.target !== 'create-something/control-runtime.v1'
-  ) {
+  const version =
+    value.schemaVersion === 'workflow_runtime_manifest.v0.1' &&
+    value.runtimeCompatibility === 'workflow-runtime.v0.1'
+      ? 'v0.1'
+      : value.schemaVersion === 'workflow_runtime_manifest.v0.2' &&
+          value.runtimeCompatibility === 'workflow-runtime.v0.2'
+        ? 'v0.2'
+        : null;
+  if (version === null || value.target !== 'create-something/control-runtime.v1') {
     throw new RuntimeValidationError(
       'INVALID_MANIFEST',
       'Runtime manifest schema, compatibility, or target is unsupported'
@@ -388,6 +412,12 @@ export function parseWorkflowRuntimeManifest(value: unknown): WorkflowRuntimeMan
     );
   }
   const steps = value.steps.map(step);
+  if (version === 'v0.1' && steps.some((candidate) => candidate.recovery !== 'manual_fallback')) {
+    throw new RuntimeValidationError(
+      'INVALID_MANIFEST',
+      'v0.1 runtime manifests require manual_fallback recovery'
+    );
+  }
   if (new Set(steps.map((candidate) => candidate.id)).size !== steps.length)
     throw new RuntimeValidationError(
       'INVALID_MANIFEST',
@@ -395,16 +425,14 @@ export function parseWorkflowRuntimeManifest(value: unknown): WorkflowRuntimeMan
     );
   graph(steps);
   serial(steps);
-  return {
-    schemaVersion: 'workflow_runtime_manifest.v0.1',
-    runtimeCompatibility: 'workflow-runtime.v0.1',
-    target: 'create-something/control-runtime.v1',
+  const shared = {
+    target: 'create-something/control-runtime.v1' as const,
     workflow: {
       id: text(value.workflow.id, 'Workflow ID', 160),
       version: text(value.workflow.version, 'Workflow version', 160),
       definitionHash: digest(value.workflow.definitionHash, 'Workflow definition hash'),
       compilerVersion: text(value.workflow.compilerVersion, 'Compiler version', 160),
-      compiledBundleSchema: 'compiled_workflow_bundle.v0.3'
+      compiledBundleSchema: 'compiled_workflow_bundle.v0.3' as const
     },
     artifacts: {
       governedInteractionSha256: digest(
@@ -424,6 +452,20 @@ export function parseWorkflowRuntimeManifest(value: unknown): WorkflowRuntimeMan
         'Tool contracts artifact hash'
       )
     },
+    steps
+  };
+  if (version === 'v0.1') {
+    return {
+      schemaVersion: 'workflow_runtime_manifest.v0.1',
+      runtimeCompatibility: 'workflow-runtime.v0.1',
+      ...shared,
+      steps: steps as WorkflowRuntimeStepDefinition<'manual_fallback'>[]
+    };
+  }
+  return {
+    schemaVersion: 'workflow_runtime_manifest.v0.2',
+    runtimeCompatibility: 'workflow-runtime.v0.2',
+    ...shared,
     steps
   };
 }
@@ -592,7 +634,7 @@ export async function createWorkflowRuntimeRun(
   if (steps.filter((candidate) => candidate.status === 'ready').length !== 1)
     throw new RuntimeValidationError(
       'INVALID_MANIFEST',
-      'Runtime v0.1 requires exactly one initial ready step'
+      'Runtime manifest requires exactly one initial ready step'
     );
   const run: WorkflowRuntimeRun = {
     schema: 'workflow_runtime_run.v0.1',
@@ -632,6 +674,14 @@ export async function planWorkflowRuntimeStep(
         'INVALID_STATE',
         'Retryable failure must identify exactly one recovery step'
       );
+    const current = definition(manifest, retryable[0].id);
+    if (current.recovery !== 'manual_fallback') {
+      return {
+        type: 'stop',
+        stepId: current.id,
+        reason: `recovery_${current.recovery}`
+      };
+    }
     return { type: 'recovery', stepId: retryable[0].id, reason: 'retryable_failure' };
   }
   if (run.status !== 'queued')
@@ -827,7 +877,8 @@ export async function reduceWorkflowRuntimeRun(
     if (
       run.status !== 'retryable_failure' ||
       current.status !== 'retryable_failure' ||
-      currentDefinition.disposition !== 'pass'
+      currentDefinition.disposition !== 'pass' ||
+      currentDefinition.recovery !== 'manual_fallback'
     ) {
       throw new RuntimeValidationError(
         'INVALID_EVENT',
@@ -972,12 +1023,12 @@ export async function reduceWorkflowRuntimeRun(
   }
   if (event.type === 'stop_requested') {
     if (
-      !['queued', 'running', 'waiting_for_approval'].includes(run.status) ||
-      !['ready', 'running', 'waiting_for_approval'].includes(current.status)
+      !['queued', 'running', 'waiting_for_approval', 'retryable_failure'].includes(run.status) ||
+      !['ready', 'running', 'waiting_for_approval', 'retryable_failure'].includes(current.status)
     )
       throw new RuntimeValidationError('INVALID_EVENT', 'Stop requires an active runtime run');
     const prepared = current.attempts.find((candidate) => candidate.status === 'prepared');
-    if (prepared) prepared.status = 'abandoned';
+    if (prepared) prepared.status = unresolvedAttemptStatus(manifest);
     current.status = 'blocked';
     current.version += 1;
     current.approval = null;
@@ -1006,7 +1057,7 @@ export async function reduceWorkflowRuntimeRun(
       );
     }
     const prepared = current.attempts.find((candidate) => candidate.status === 'prepared');
-    if (prepared) prepared.status = 'abandoned';
+    if (prepared) prepared.status = unresolvedAttemptStatus(manifest);
     current.status = 'cancelled';
     current.version += 1;
     current.approval = null;
@@ -1126,6 +1177,12 @@ async function assertRunSemantics(
         stateFailure('Runtime checkpoint attempt is invalid');
       }
     }
+    if (
+      manifest.schemaVersion === 'workflow_runtime_manifest.v0.1' &&
+      attempts.some((attempt) => attempt.status === 'effect_ambiguous')
+    ) {
+      stateFailure('v0.1 runtime checkpoints cannot contain effect-ambiguous attempts');
+    }
     const prepared = attempts.filter((attempt) => attempt.status === 'prepared');
     if (
       (typedState.status === 'running') !== (prepared.length === 1) ||
@@ -1163,6 +1220,7 @@ async function assertRunSemantics(
     ) {
       const recovered = receipts.at(-1);
       if (
+        definition.recovery !== 'manual_fallback' ||
         !recovered ||
         recovered.eventType !== 'recovered' ||
         recovered.status !== 'queued' ||
@@ -1178,16 +1236,20 @@ async function assertRunSemantics(
         stateFailure('Runtime checkpoint retry recovery is not bound to its requeued step');
       }
     }
-    const abandoned = attempts.filter((attempt) => attempt.status === 'abandoned');
+    const unresolvedEffect = attempts.filter(
+      (attempt) => attempt.status === 'abandoned' || attempt.status === 'effect_ambiguous'
+    );
     const terminalEvent =
       run.status === 'blocked' ? 'blocked' : run.status === 'cancelled' ? 'cancelled' : null;
     if (
-      abandoned.length > 0 &&
+      unresolvedEffect.length > 0 &&
       (terminalEvent === null ||
         typedState.status !== run.status ||
         !receiptFor(terminalEvent, typedState.id, null, definition.evidenceDigest))
     ) {
-      stateFailure('Runtime checkpoint abandoned attempt is not bound to its terminal state');
+      stateFailure(
+        'Runtime checkpoint unresolved effect attempt is not bound to its terminal state'
+      );
     }
     if (typedState.status === 'succeeded') {
       if (

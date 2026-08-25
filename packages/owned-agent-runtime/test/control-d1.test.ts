@@ -64,10 +64,15 @@ function fixture(executor?: ControlRunExecutor) {
   const path = join(mkdtempSync(join(tmpdir(), 'control-run-d1-')), 'runtime.sqlite');
   const migration = readFileSync(new URL('../migrations/0003_control_run_lifecycle.sql', import.meta.url), 'utf8');
   const workflowRuntimeMigration = readFileSync(new URL('../migrations/0004_control_workflow_runtime_zero_write.sql', import.meta.url), 'utf8');
+  const workflowRuntimeEffectAmbiguityMigration = readFileSync(
+    new URL('../migrations/0005_control_workflow_runtime_effect_ambiguity.sql', import.meta.url),
+    'utf8'
+  );
   execFileSync('sqlite3', [path], {
     input: `PRAGMA foreign_keys=ON;
       ${migration}
       ${workflowRuntimeMigration}
+      ${workflowRuntimeEffectAmbiguityMigration}
       CREATE TABLE customer_control_activations (
         id TEXT PRIMARY KEY, activation_version INTEGER, activation_kind TEXT, status TEXT,
         account_id TEXT, tenant_id TEXT, workspace_account_id TEXT,

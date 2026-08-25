@@ -7,6 +7,10 @@ import test from 'node:test';
 
 const migration = readFileSync(new URL('../migrations/0003_control_run_lifecycle.sql', import.meta.url), 'utf8');
 const workflowRuntimeMigration = readFileSync(new URL('../migrations/0004_control_workflow_runtime_zero_write.sql', import.meta.url), 'utf8');
+const workflowRuntimeEffectAmbiguityMigration = readFileSync(
+  new URL('../migrations/0005_control_workflow_runtime_effect_ambiguity.sql', import.meta.url),
+  'utf8'
+);
 
 test('Control activation binding is the Agency-owned D1', () => {
   const runtimeConfig = readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8');
@@ -24,7 +28,17 @@ test('Control activation binding is the Agency-owned D1', () => {
 
 function database() {
   const path = join(mkdtempSync(join(tmpdir(), 'control-run-')), 'runtime.sqlite');
-  execFileSync('sqlite3', [path], { input: `PRAGMA foreign_keys=ON;\n${migration}\n${workflowRuntimeMigration}` });
+  execFileSync('sqlite3', [path], {
+    input: `PRAGMA foreign_keys=ON;\n${migration}\n${workflowRuntimeMigration}\n${workflowRuntimeEffectAmbiguityMigration}`
+  });
+  return path;
+}
+
+function databaseBeforeEffectAmbiguityMigration() {
+  const path = join(mkdtempSync(join(tmpdir(), 'control-run-')), 'runtime.sqlite');
+  execFileSync('sqlite3', [path], {
+    input: `PRAGMA foreign_keys=ON;\n${migration}\n${workflowRuntimeMigration}`
+  });
   return path;
 }
 
@@ -58,6 +72,38 @@ test('migration creates an empty fail-closed Control run ledger', () => {
   assert.equal(
     sql(path, "SELECT COUNT(*) FROM sqlite_master WHERE type='trigger' AND name LIKE 'control_run_%';"),
     '8'
+  );
+});
+
+test('effect-ambiguity migration preserves attempts and permits an uncertain effect state', () => {
+  const path = databaseBeforeEffectAmbiguityMigration();
+  const hash = (value: string) => `sha256:${value.repeat(64).slice(0, 64)}`;
+  sql(path, insertRun);
+  sql(path, `INSERT INTO control_workflow_runtime_runs (
+    run_id, admission_command_id, artifact_manifest_sha256, runtime_manifest_sha256, status, version,
+    run_json, created_at, updated_at
+  ) VALUES (
+    'run-a', 'runtime-admission-a', '${hash('a')}', '${hash('b')}', 'queued', 1, '{}',
+    '2026-07-19T00:00:00.000Z', '2026-07-19T00:00:00.000Z'
+  );
+  INSERT INTO control_workflow_runtime_steps (
+    run_id, step_id, status, version, step_json
+  ) VALUES ('run-a', 'step-a', 'running', 1, '{}');
+  INSERT INTO control_workflow_runtime_attempts (
+    run_id, step_id, attempt_id, status, attempt_json, created_at
+  ) VALUES ('run-a', 'step-a', 'attempt-a', 'prepared', '{}', '2026-07-19T00:00:00.000Z');`);
+  sql(path, workflowRuntimeEffectAmbiguityMigration);
+  assert.equal(
+    sql(path, "SELECT status FROM control_workflow_runtime_attempts WHERE attempt_id='attempt-a';"),
+    'prepared'
+  );
+  sql(
+    path,
+    "UPDATE control_workflow_runtime_attempts SET status='effect_ambiguous' WHERE attempt_id='attempt-a';"
+  );
+  assert.equal(
+    sql(path, "SELECT status FROM control_workflow_runtime_attempts WHERE attempt_id='attempt-a';"),
+    'effect_ambiguous'
   );
 });
 
