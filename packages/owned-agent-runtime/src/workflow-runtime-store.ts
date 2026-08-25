@@ -1,10 +1,14 @@
 import {
   RuntimeValidationError,
+  verifyWorkflowRuntimeRun,
   workflowRuntimeCheckpointHash,
   type WorkflowRuntimeCheckpointStore,
+  type RuntimeDigest,
+  type WorkflowRuntimeManifest,
   type WorkflowRuntimeRun,
   type WorkflowRuntimeScope
 } from '@createsomething/workflow-runtime';
+import type { WorkflowRuntimeManifestAuthority } from './workflow-runtime-manifest-authority.js';
 
 type RuntimeRow = { run_json: string };
 type CommandRow = {
@@ -12,6 +16,21 @@ type CommandRow = {
   run_id: string;
   command_sha256: string;
   result_json: string | null;
+};
+
+type WorkflowRuntimeApprovalContext = {
+  schema: 'create-something/workflow-runtime-approval-context@1';
+  version: 1;
+  scope: WorkflowRuntimeScope;
+  runVersion: number;
+  stepVersion: number;
+  attempt: { type: 'no_capability_attempt' };
+  activation: WorkflowRuntimeRun['activation'];
+  artifactManifestSha256: WorkflowRuntimeRun['artifactManifestSha256'];
+  runtimeManifestSha256: WorkflowRuntimeRun['runtimeManifestSha256'];
+  workflow: WorkflowRuntimeManifest['workflow'];
+  actionId: string;
+  evidenceDigest: RuntimeDigest;
 };
 
 const COMMAND_DIGEST = /^[a-f0-9]{64}$/;
@@ -45,7 +64,10 @@ function commandDigest(value: string): string {
  * command replay result, and receipt chain supplied by the runtime core.
  */
 export class D1WorkflowRuntimeCheckpointStore implements WorkflowRuntimeCheckpointStore {
-  constructor(private readonly database: D1Database) {}
+  constructor(
+    private readonly database: D1Database,
+    private readonly manifests?: WorkflowRuntimeManifestAuthority
+  ) {}
 
   async find(scope: WorkflowRuntimeScope, runId: string): Promise<WorkflowRuntimeRun | undefined> {
     const row = await this.database
@@ -94,6 +116,8 @@ export class D1WorkflowRuntimeCheckpointStore implements WorkflowRuntimeCheckpoi
         'Runtime parent Control run no longer authorizes progress'
       );
     }
+
+    const approvalContexts = await this.approvalContexts(input);
 
     const serialized = JSON.stringify(input.run);
     const issuedAt = input.run.receipts.at(-1)?.createdAt;
@@ -281,15 +305,23 @@ export class D1WorkflowRuntimeCheckpointStore implements WorkflowRuntimeCheckpoi
         );
       }
       if (step.approval) {
+        const approvalContext = approvalContexts.get(step.approval.id);
+        if (!approvalContext) {
+          throw new RuntimeValidationError(
+            'INVALID_STATE',
+            'Workflow Runtime approval context is missing'
+          );
+        }
         statements.push(
           this.database
             .prepare(
               `INSERT INTO control_workflow_runtime_approvals
-                (approval_id, run_id, step_id, binding_sha256, decision, approval_json, created_at, decided_at)
-               SELECT ?1, ?2, ?3, ?4, NULL, ?5, ?6, NULL
+                (approval_id, run_id, step_id, binding_sha256, decision, approval_json,
+                 approval_context_json, created_at, decided_at)
+               SELECT ?1, ?2, ?3, ?4, NULL, ?5, ?6, ?7, NULL
                WHERE EXISTS (
                  SELECT 1 FROM control_workflow_runtime_commands
-                 WHERE id = ?7 AND result_json = ?8
+                 WHERE id = ?8 AND result_json = ?9
                )
                ON CONFLICT(approval_id) DO NOTHING`
             )
@@ -299,6 +331,7 @@ export class D1WorkflowRuntimeCheckpointStore implements WorkflowRuntimeCheckpoi
               step.id,
               step.approval.bindingSha256,
               JSON.stringify(step.approval),
+              JSON.stringify(approvalContext),
               issuedAt,
               commandId,
               serialized
@@ -426,6 +459,55 @@ export class D1WorkflowRuntimeCheckpointStore implements WorkflowRuntimeCheckpoi
       )
       .bind(idempotencyKey, scope.accountId, scope.tenantId, scope.workspaceAccountId)
       .first<CommandRow>();
+  }
+
+  private async approvalContexts(
+    input: Parameters<WorkflowRuntimeCheckpointStore['apply']>[0]
+  ): Promise<Map<string, WorkflowRuntimeApprovalContext>> {
+    const approvalSteps = input.run.steps.filter((step) => step.approval !== null);
+    if (approvalSteps.length === 0) return new Map();
+    const manifestAuthority = this.manifests;
+    if (!manifestAuthority) {
+      throw new RuntimeValidationError(
+        'INVALID_STATE',
+        'Workflow Runtime approval requires a trusted manifest authority'
+      );
+    }
+    const manifest = await manifestAuthority.findByRuntimeManifestSha256(
+      input.run.runtimeManifestSha256
+    );
+    if (!manifest) {
+      throw new RuntimeValidationError(
+        'INVALID_STATE',
+        'Workflow Runtime approval manifest is unavailable from the trusted authority'
+      );
+    }
+    await verifyWorkflowRuntimeRun(manifest, input.run);
+    const contexts = new Map<string, WorkflowRuntimeApprovalContext>();
+    for (const step of approvalSteps) {
+      const definition = manifest.steps.find((candidate) => candidate.id === step.id);
+      if (!definition || definition.disposition !== 'wait' || !step.approval) {
+        throw new RuntimeValidationError(
+          'INVALID_STATE',
+          'Workflow Runtime approval does not match a wait definition'
+        );
+      }
+      contexts.set(step.approval.id, {
+        schema: 'create-something/workflow-runtime-approval-context@1',
+        version: 1,
+        scope: structuredClone(input.scope),
+        runVersion: input.run.version,
+        stepVersion: step.version,
+        attempt: { type: 'no_capability_attempt' },
+        activation: structuredClone(input.run.activation),
+        artifactManifestSha256: input.run.artifactManifestSha256,
+        runtimeManifestSha256: input.run.runtimeManifestSha256,
+        workflow: structuredClone(manifest.workflow),
+        actionId: definition.actionId,
+        evidenceDigest: definition.evidenceDigest
+      });
+    }
+    return contexts;
   }
 
   private async parentAuthorizes(scope: WorkflowRuntimeScope, runId: string): Promise<boolean> {
