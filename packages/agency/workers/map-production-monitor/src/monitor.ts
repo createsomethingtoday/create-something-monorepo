@@ -199,9 +199,22 @@ async function persistReceipt(
         .prepare(
           `UPDATE map_production_monitor_alerts
            SET streak_resolved_at = ?
-           WHERE streak_resolved_at IS NULL`,
+           WHERE streak_resolved_at IS NULL
+             AND EXISTS (
+               SELECT 1 FROM map_production_monitor_receipts
+               WHERE receipt_id = ? AND trigger = ? AND scheduled_at = ?
+                 AND status = ? AND source_sha = ? AND checks_json = ?
+             )`,
         )
-        .bind(receipt.completedAt),
+        .bind(
+          receipt.completedAt,
+          receipt.receiptId,
+          receipt.trigger,
+          receipt.scheduledAt,
+          receipt.status,
+          receipt.sourceSha,
+          JSON.stringify(receipt.checks),
+        ),
     );
   }
   if (plan?.kind === 'create') {
@@ -214,7 +227,12 @@ async function persistReceipt(
             severity, failed_check_codes_json, created_at, delivery_status, delivery_attempts,
             delivery_lease_expires_at, delivery_claim_token, notification_revision, streak_resolved_at,
             delivered_at, last_delivery_error_code
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', 0, NULL, NULL, ?, NULL, NULL, NULL)`,
+          ) SELECT ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 0, NULL, NULL, ?, NULL, NULL, NULL
+            WHERE EXISTS (
+              SELECT 1 FROM map_production_monitor_receipts
+              WHERE receipt_id = ? AND trigger = ? AND scheduled_at = ?
+                AND status = ? AND source_sha = ? AND checks_json = ?
+            )`,
         )
         .bind(
           escalation.alertId,
@@ -226,6 +244,12 @@ async function persistReceipt(
           JSON.stringify(escalation.failedCheckCodes),
           now.toISOString(),
           escalation.notificationRevision,
+          receipt.receiptId,
+          receipt.trigger,
+          receipt.scheduledAt,
+          receipt.status,
+          receipt.sourceSha,
+          JSON.stringify(receipt.checks),
         ),
     );
   }
@@ -239,10 +263,20 @@ async function persistReceipt(
                SET source_sha = ?, severity = ?, failed_check_codes_json = ?, notification_revision = ?,
                    delivery_status = 'pending', delivery_lease_expires_at = NULL,
                    delivery_claim_token = NULL, delivered_at = NULL, last_delivery_error_code = NULL
-               WHERE alert_id = ? AND streak_resolved_at IS NULL`
+               WHERE alert_id = ? AND streak_resolved_at IS NULL
+                 AND EXISTS (
+                   SELECT 1 FROM map_production_monitor_receipts
+                   WHERE receipt_id = ? AND trigger = ? AND scheduled_at = ?
+                     AND status = ? AND source_sha = ? AND checks_json = ?
+                 )`
             : `UPDATE map_production_monitor_alerts
                SET source_sha = ?, severity = ?, failed_check_codes_json = ?
-               WHERE alert_id = ? AND streak_resolved_at IS NULL`,
+               WHERE alert_id = ? AND streak_resolved_at IS NULL
+                 AND EXISTS (
+                   SELECT 1 FROM map_production_monitor_receipts
+                   WHERE receipt_id = ? AND trigger = ? AND scheduled_at = ?
+                     AND status = ? AND source_sha = ? AND checks_json = ?
+                 )`,
         )
         .bind(
           escalation.sourceSha,
@@ -251,6 +285,12 @@ async function persistReceipt(
           ...(resetDelivery
             ? [escalation.notificationRevision, escalation.alertId]
             : [escalation.alertId]),
+          receipt.receiptId,
+          receipt.trigger,
+          receipt.scheduledAt,
+          receipt.status,
+          receipt.sourceSha,
+          JSON.stringify(receipt.checks),
         ),
     );
   }
@@ -260,6 +300,23 @@ async function persistReceipt(
 type FailureStreakRow = {
   receipt_id: string;
   scheduled_at: string;
+  checks_json: string;
+};
+
+type StoredReceiptRow = {
+  schema_version: number;
+  receipt_id: string;
+  trigger: string;
+  scheduled_at: string;
+  completed_at: string;
+  source_sha: string;
+  worker_version: string;
+  base_url: string;
+  status: 'passed' | 'failed';
+  complete: number;
+  customer_data_used: number;
+  agent_mutation_used: number;
+  booking_submitted: number;
   checks_json: string;
 };
 
@@ -322,6 +379,79 @@ function severityForFailures(failures: FailureStreakRow[]): 'SEV-2' | 'SEV-3' {
   )
     ? 'SEV-2'
     : 'SEV-3';
+}
+
+function receiptFromStoredRow(row: StoredReceiptRow): MapMonitorReceipt {
+  const sourceSha = normalizedSourceSha(row.source_sha);
+  const baseUrl = normalizedBaseUrl(row.base_url);
+  const workerVersion = normalizedWorkerVersion(row.worker_version);
+  let checks: MapSyntheticCheck[];
+  try {
+    const parsed = JSON.parse(row.checks_json);
+    if (!Array.isArray(parsed)) throw new Error('checks JSON must be an array');
+    checks = parsed.map((check) =>
+      sanitizeCheck({
+        id: typeof check?.id === 'string' ? check.id : 'invalid_check_id',
+        ok: check?.ok === true,
+        ...(typeof check?.code === 'string' ? { code: check.code } : {}),
+        durationMs: typeof check?.durationMs === 'number' ? check.durationMs : 0,
+      }),
+    );
+  } catch {
+    throw new Error('Map monitor stored receipt is invalid');
+  }
+  if (
+    row.schema_version !== 1 ||
+    row.trigger !== 'scheduled' ||
+    !sourceSha ||
+    !baseUrl ||
+    !workerVersion ||
+    (row.status !== 'passed' && row.status !== 'failed') ||
+    row.complete !== 1 ||
+    row.customer_data_used !== 0 ||
+    row.agent_mutation_used !== 0 ||
+    row.booking_submitted !== 0 ||
+    Number.isNaN(new Date(row.scheduled_at).valueOf()) ||
+    Number.isNaN(new Date(row.completed_at).valueOf()) ||
+    (row.status === 'passed' && !checks.every((check) => check.ok))
+  ) {
+    throw new Error('Map monitor stored receipt is invalid');
+  }
+  return {
+    schemaVersion: 1,
+    receiptId: row.receipt_id,
+    trigger: 'scheduled',
+    scheduledAt: row.scheduled_at,
+    completedAt: row.completed_at,
+    sourceSha,
+    workerVersion,
+    baseUrl,
+    status: row.status,
+    complete: true,
+    customerDataUsed: false,
+    agentMutationUsed: false,
+    bookingSubmitted: false,
+    checks,
+  };
+}
+
+async function findStoredReceipt(
+  database: D1Database,
+  scheduledAt: string,
+): Promise<MapMonitorReceipt | null> {
+  const result = await database
+    .prepare(
+      `SELECT schema_version, receipt_id, trigger, scheduled_at, completed_at, source_sha,
+              worker_version, base_url, status, complete, customer_data_used,
+              agent_mutation_used, booking_submitted, checks_json
+       FROM map_production_monitor_receipts
+       WHERE trigger = 'scheduled' AND scheduled_at = ?
+       LIMIT 1`,
+    )
+    .bind(scheduledAt)
+    .all<StoredReceiptRow>();
+  const row = result.results?.[0];
+  return row ? receiptFromStoredRow(row) : null;
 }
 
 async function findFailureStreak(
@@ -597,6 +727,20 @@ export async function runScheduledMapMonitor(
   if (Number.isNaN(scheduled.valueOf())) {
     throw new Error('Map monitor requires a valid scheduled timestamp');
   }
+  const scheduledAt = iso(scheduled);
+  const existingReceipt = await findStoredReceipt(input.env.DB, scheduledAt);
+  if (existingReceipt) {
+    const observedAt = now();
+    await deliverPendingOperatorEscalations(
+      input.env.DB,
+      observedAt,
+      input.notifyOperator ?? ((escalation) => deliverOperatorEscalation(input.env, escalation)),
+    );
+    if (existingReceipt.status !== 'passed') {
+      throw new Error(`Map production monitor failed: ${existingReceipt.receiptId}`);
+    }
+    return existingReceipt;
+  }
 
   const sourceSha = normalizedSourceSha(input.env.MAP_MONITOR_SOURCE_SHA);
   const baseUrl = normalizedBaseUrl(input.env.MAP_MONITOR_BASE_URL);
@@ -623,9 +767,9 @@ export async function runScheduledMapMonitor(
 
   const receipt: MapMonitorReceipt = {
     schemaVersion: 1,
-    receiptId: receiptId(iso(scheduled), provisionalSourceSha),
+    receiptId: receiptId(scheduledAt, provisionalSourceSha),
     trigger: 'scheduled',
-    scheduledAt: iso(scheduled),
+    scheduledAt,
     completedAt: iso(completedAt),
     sourceSha: provisionalSourceSha,
     workerVersion: workerVersion ?? '',
@@ -642,13 +786,17 @@ export async function runScheduledMapMonitor(
     ? await prepareOperatorEscalation(input.env.DB, receipt)
     : null;
   await persistReceipt(input.env.DB, receipt, retentionDays ?? REQUIRED_RETENTION_DAYS, completedAt, escalation);
+  const canonicalReceipt = await findStoredReceipt(input.env.DB, scheduledAt);
+  if (!canonicalReceipt) {
+    throw new Error('Map monitor receipt was not persisted');
+  }
   await deliverPendingOperatorEscalations(
     input.env.DB,
     completedAt,
     input.notifyOperator ?? ((escalation) => deliverOperatorEscalation(input.env, escalation)),
   );
-  if (receipt.status !== 'passed') {
-    throw new Error(`Map production monitor failed: ${receipt.receiptId}`);
+  if (canonicalReceipt.status !== 'passed') {
+    throw new Error(`Map production monitor failed: ${canonicalReceipt.receiptId}`);
   }
-  return receipt;
+  return canonicalReceipt;
 }

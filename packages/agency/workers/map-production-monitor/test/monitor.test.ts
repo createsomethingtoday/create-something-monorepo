@@ -13,6 +13,7 @@ const SOURCE_SHA = 'a'.repeat(40);
 function createDatabase({ fail = false }: { fail?: boolean } = {}) {
   const batches: PersistedStatement[][] = [];
   const runs: PersistedStatement[] = [];
+  const storedReceipts = new Map<string, Record<string, unknown>>();
   const database = {
     prepare(query: string) {
       return {
@@ -21,6 +22,13 @@ function createDatabase({ fail = false }: { fail?: boolean } = {}) {
             query,
             values,
             async all() {
+              if (
+                query.includes('FROM map_production_monitor_receipts') &&
+                query.includes("WHERE trigger = 'scheduled' AND scheduled_at = ?")
+              ) {
+                const receipt = storedReceipts.get(String(values[0]));
+                return { results: receipt ? [receipt] : [] };
+              }
               return { results: [] };
             },
             async run() {
@@ -33,6 +41,27 @@ function createDatabase({ fail = false }: { fail?: boolean } = {}) {
     },
     async batch(statements: PersistedStatement[]) {
       if (fail) throw new Error('D1 unavailable');
+      const receiptInsert = statements.find((statement) =>
+        statement.query.includes('INSERT OR IGNORE INTO map_production_monitor_receipts'),
+      );
+      if (receiptInsert && !storedReceipts.has(String(receiptInsert.values[3]))) {
+        storedReceipts.set(String(receiptInsert.values[3]), {
+          receipt_id: receiptInsert.values[0],
+          schema_version: receiptInsert.values[1],
+          trigger: receiptInsert.values[2],
+          scheduled_at: receiptInsert.values[3],
+          completed_at: receiptInsert.values[4],
+          source_sha: receiptInsert.values[5],
+          worker_version: receiptInsert.values[6],
+          base_url: receiptInsert.values[7],
+          status: receiptInsert.values[8],
+          complete: receiptInsert.values[9],
+          customer_data_used: receiptInsert.values[10],
+          agent_mutation_used: receiptInsert.values[11],
+          booking_submitted: receiptInsert.values[12],
+          checks_json: receiptInsert.values[13],
+        });
+      }
       batches.push(statements);
       return [];
     },
@@ -141,6 +170,140 @@ test('scheduled monitor records a red receipt and rejects when a required check 
     { id: 'desktop_map_health', ok: false, code: 'HTTP_503', durationMs: 9 },
     { id: 'synthetic_completeness', ok: false, code: 'REQUIRED_CHECK_MISSING', durationMs: 0 },
   ]);
+});
+
+test('a duplicate scheduled invocation honors its canonical stored failure without new side effects', async () => {
+  const { database, batches } = createDatabase();
+  const storedReceipt = {
+    schema_version: 1,
+    receipt_id: 'map-20260825182200-aaaaaaaaaaaa',
+    trigger: 'scheduled',
+    scheduled_at: '2026-08-25T18:22:00.000Z',
+    completed_at: '2026-08-25T18:22:20.000Z',
+    source_sha: SOURCE_SHA,
+    worker_version: 'worker-version',
+    base_url: 'https://createsomething.agency',
+    status: 'failed',
+    complete: 1,
+    customer_data_used: 0,
+    agent_mutation_used: 0,
+    booking_submitted: 0,
+    checks_json: JSON.stringify([
+      { id: 'desktop_map_health', ok: false, code: 'HTTP_503', durationMs: 9 },
+    ]),
+  };
+  const duplicateDatabase = {
+    ...database,
+    prepare(query: string) {
+      const statement = database.prepare(query);
+      return {
+        bind(...values: unknown[]) {
+          const bound = statement.bind(...values);
+          if (query.includes("WHERE trigger = 'scheduled' AND scheduled_at = ?")) {
+            return { ...bound, all: async () => ({ results: [storedReceipt] }) };
+          }
+          return bound;
+        },
+      };
+    },
+  };
+  let ranSynthetic = false;
+
+  await assert.rejects(
+    () =>
+      runScheduledMapMonitor({
+        scheduledAt: storedReceipt.scheduled_at,
+        env: env(duplicateDatabase),
+        executeSynthetic: async () => {
+          ranSynthetic = true;
+          return {
+            checks: REQUIRED_MAP_CHECK_IDS.map((id) => ({ id, ok: true, durationMs: 1 })),
+          };
+        },
+      }),
+    new RegExp(storedReceipt.receipt_id),
+  );
+
+  assert.equal(ranSynthetic, false);
+  assert.equal(batches.length, 0);
+});
+
+test('a conflicting concurrent result honors the stored canonical outcome and guards alert mutation', async () => {
+  const { database, batches } = createDatabase();
+  const scheduledAt = '2026-08-25T18:22:00.000Z';
+  const canonicalReceipt = {
+    schema_version: 1,
+    receipt_id: 'map-20260825182200-aaaaaaaaaaaa',
+    trigger: 'scheduled',
+    scheduled_at: scheduledAt,
+    completed_at: '2026-08-25T18:22:20.000Z',
+    source_sha: SOURCE_SHA,
+    worker_version: 'worker-version',
+    base_url: 'https://createsomething.agency',
+    status: 'passed',
+    complete: 1,
+    customer_data_used: 0,
+    agent_mutation_used: 0,
+    booking_submitted: 0,
+    checks_json: JSON.stringify(
+      REQUIRED_MAP_CHECK_IDS.map((id) => ({ id, ok: true, durationMs: 1 })),
+    ),
+  };
+  const priorFailure = {
+    receipt_id: 'map-20260825180700-aaaaaaaaaaaa',
+    scheduled_at: '2026-08-25T18:07:00.000Z',
+    checks_json: JSON.stringify([
+      { id: 'desktop_map_health', ok: false, code: 'HTTP_503', durationMs: 9 },
+    ]),
+  };
+  let receiptReads = 0;
+  const concurrentDatabase = {
+    ...database,
+    prepare(query: string) {
+      const statement = database.prepare(query);
+      return {
+        bind(...values: unknown[]) {
+          const bound = statement.bind(...values);
+          if (query.includes("WHERE trigger = 'scheduled' AND scheduled_at = ?")) {
+            receiptReads += 1;
+            return {
+              ...bound,
+              all: async () => ({ results: receiptReads === 1 ? [] : [canonicalReceipt] }),
+            };
+          }
+          if (query.includes('latest_passing_receipt')) {
+            return { ...bound, all: async () => ({ results: [priorFailure] }) };
+          }
+          if (query.includes('streak_resolved_at IS NULL')) {
+            return { ...bound, all: async () => ({ results: [] }) };
+          }
+          return bound;
+        },
+      };
+    },
+  };
+
+  const receipt = await runScheduledMapMonitor({
+    scheduledAt,
+    env: env(concurrentDatabase),
+    executeSynthetic: async () => ({
+      checks: [{ id: 'desktop_map_health', ok: false, code: 'HTTP_503', durationMs: 9 }],
+    }),
+    now: () => new Date('2026-08-25T18:22:20.000Z'),
+  });
+
+  assert.equal(receipt.status, 'passed');
+  const alertInsert = batches[0].find((statement) =>
+    statement.query.includes('INSERT OR IGNORE INTO map_production_monitor_alerts'),
+  );
+  if (!alertInsert) throw new Error('expected a guarded alert insert');
+  assert.match(alertInsert.query, /WHERE EXISTS \(\s*SELECT 1 FROM map_production_monitor_receipts/s);
+  assert.deepEqual(alertInsert.values.slice(-6, -3), [
+    'map-20260825182200-aaaaaaaaaaaa',
+    'scheduled',
+    scheduledAt,
+  ]);
+  assert.equal(alertInsert.values.at(-3), 'failed');
 });
 
 test('two consecutive scheduled failures deliver one idempotent CRE-1289 operator escalation', async () => {
