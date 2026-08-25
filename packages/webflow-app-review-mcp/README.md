@@ -83,6 +83,7 @@ Optional:
 - `app_review_reject_version`
 - `app_review_update_version_review`
 - `app_review_list_exceptions`
+- `app_review_list_exception_queue`
 - `app_review_list_asset_exceptions`
 - `app_review_list_exception_items`
 - `app_review_create_exception_item`
@@ -108,6 +109,20 @@ Write posture:
   own greeting/sign-off. Requires `ZENDESK_API_TOKEN` (secret) +
   `ZENDESK_API_EMAIL`; the tool fails closed when unconfigured. Use only on
   explicit reviewer request.
+
+Exception read paths:
+
+- `app_review_list_exception_queue` is the no-input starting point for “what
+  exceptions are currently in queue?” It returns only app versions whose
+  version-level exception status is `🆕Requested` or `👀Under Review`, grouped
+  with every linked per-item row and a copy-ready summary.
+- `app_review_list_exception_items` reads rows linked to one known Asset
+  Version.
+- `app_review_list_asset_exceptions` reads exception history across all known
+  versions of one app. Supply `status: "✅Approved"` for previously approved
+  exemptions.
+- These reads do not decide, recommend, or update an exception. Decision
+  authority remains on the dedicated Exception Decisions MCP.
 
 ## Resources
 

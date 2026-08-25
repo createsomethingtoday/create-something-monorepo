@@ -15,6 +15,7 @@ import {
   GOVERNANCE_FINDING_STATUS_OPTIONS,
   HOLD_REASON_OPTIONS,
   MARKETPLACE_STATUS_OPTIONS,
+  PENDING_EXCEPTION_STATUS_OPTIONS,
   REJECTION_REASON_OPTIONS,
   REVIEW_STATUS_OPTIONS,
   REVIEW_TYPE_OPTIONS,
@@ -925,8 +926,64 @@ export function registerTools(
   );
 
   server.tool(
+    'app_review_list_exception_queue',
+    'List the current global exception decision queue without an asset or version ID. Returns only app versions whose exception status is 🆕Requested or 👀Under Review, grouped with their per-item ⚖️Exceptions rows. Start here when asked what exceptions are currently in queue. This tool is read-only.',
+    {},
+    async () => {
+      try {
+        const queue = await getClient().listPendingExceptionQueue();
+        const lines = [
+          `# Exception decision queue — ${queue.length} version${queue.length === 1 ? '' : 's'} awaiting decisions`,
+        ];
+
+        if (queue.length === 0) {
+          lines.push('', 'The decision queue is empty — no exception requests are awaiting a decision.');
+        }
+
+        for (const entry of queue) {
+          const versionLabel = entry.version.versionNumber === undefined
+            ? entry.version.versionId
+            : `v${entry.version.versionNumber}`;
+          lines.push(
+            '',
+            `## ${entry.asset.appName} — ${versionLabel}`,
+            `Status: ${entry.version.exceptionStatus ?? '(no status)'}`,
+            `Version record: ${entry.version.versionId}`,
+            `Undecided items: ${entry.version.undecidedExceptionItems ?? 0} · Denied items: ${entry.version.deniedExceptionItems ?? 0}`,
+          );
+          if (entry.version.exceptionRequestedDatetime) {
+            lines.push(`Requested: ${entry.version.exceptionRequestedDatetime}`);
+          }
+          if (entry.version.holdNotes) lines.push(`Context: ${entry.version.holdNotes}`);
+
+          if (entry.exceptionItems.length === 0) {
+            lines.push('- (no linked per-item exception rows)');
+          }
+          for (const item of entry.exceptionItems) {
+            const pending = (PENDING_EXCEPTION_STATUS_OPTIONS as readonly string[])
+              .includes(item.exceptionStatus ?? '');
+            const type = item.exceptionType ? ` [${item.exceptionType}]` : '';
+            lines.push(
+              `- ${pending ? '☐' : '☑'} ${item.exceptionItemId}${type} ${item.item ?? '(untitled item)'} — ${item.exceptionStatus ?? '(no status)'}`,
+            );
+          }
+        }
+
+        return asSuccess({
+          count: queue.length,
+          pending_statuses: [...PENDING_EXCEPTION_STATUS_OPTIONS],
+          queue,
+          copy_block: lines.join('\n'),
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
     'app_review_list_exception_items',
-    'List per-item exception rows (⚖️Exceptions table) linked to ONE Asset Version. The version cannot be approved while any item is undecided. For the full cross-version history of an app (e.g. all previously ✅Approved flags), use app_review_list_asset_exceptions instead.',
+    'List per-item exception rows (⚖️Exceptions table) linked to one Asset Version. The version cannot be approved while any item is undecided. For global pending work use app_review_list_exception_queue; for the full cross-version history of one app use app_review_list_asset_exceptions.',
     {
       version_id: z.string().min(1),
     },

@@ -23,11 +23,18 @@ function jsonResponse(body: unknown, status = 200) {
 
 function memoryStore(
   initial: WebhookLegState | null = null,
-): WebhookLegStateStore & { state: WebhookLegState | null; lockHolder: string | null; pending: boolean } {
-  const box: { state: WebhookLegState | null; lockHolder: string | null; pending: boolean } = {
+): WebhookLegStateStore & {
+  state: WebhookLegState | null;
+  lockHolder: string | null;
+  pending: boolean;
+  renewals: number;
+  renewLock(token: string, ttlMs: number): Promise<boolean>;
+} {
+  const box: { state: WebhookLegState | null; lockHolder: string | null; pending: boolean; renewals: number } = {
     state: initial,
     lockHolder: null,
     pending: false,
+    renewals: 0,
   };
   return {
     get state() {
@@ -45,6 +52,9 @@ function memoryStore(
     set pending(value: boolean) {
       box.pending = value;
     },
+    get renewals() {
+      return box.renewals;
+    },
     async get() {
       return box.state ? (JSON.parse(JSON.stringify(box.state)) as WebhookLegState) : null;
     },
@@ -57,6 +67,11 @@ function memoryStore(
     async acquireLock(token) {
       if (box.lockHolder !== null) return false;
       box.lockHolder = token;
+      return true;
+    },
+    async renewLock(token) {
+      if (box.lockHolder !== token) return false;
+      box.renewals += 1;
       return true;
     },
     async releaseLock(token) {
@@ -130,8 +145,16 @@ function buildFetchStub(options: {
     const payloadsMatch = url.match(/webhooks\/(ach\w+)\/payloads\?cursor=(\d+)/);
     if (payloadsMatch) {
       const [, webhookId, cursor] = payloadsMatch;
-      const payloads = Number(cursor) === 1 ? (options.payloadsByWebhook[webhookId] ?? []) : [];
-      return jsonResponse({ payloads, cursor: Number(cursor) + payloads.length, mightHaveMore: false });
+      const start = Math.max(0, Number(cursor) - 1);
+      const limit = Number(new URL(url).searchParams.get('limit') ?? 50);
+      const available = options.payloadsByWebhook[webhookId] ?? [];
+      const payloads = available.slice(start, start + limit);
+      const nextCursor = Number(cursor) + payloads.length;
+      return jsonResponse({
+        payloads,
+        cursor: nextCursor,
+        mightHaveMore: start + payloads.length < available.length,
+      });
     }
 
     if (url.includes(`/${encodeURIComponent(TABLE_IDS.assetVersions)}/recVersion1`)) {
@@ -212,6 +235,37 @@ describe('registerExceptionWebhooks', () => {
     });
     expect(created.every((b) => b.notificationUrl === 'https://worker.example/webhooks/airtable')).toBe(true);
   });
+
+  it('rolls back subscriptions created before a later registration fails', async () => {
+    const calls: Array<{ method: string; url: string }> = [];
+    let createCount = 0;
+    const fetchFn = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      const method = String(init?.method ?? 'GET');
+      calls.push({ method, url });
+      if (method === 'POST') {
+        createCount += 1;
+        if (createCount === 1) {
+          return jsonResponse({ id: 'achCreatedBeforeFailure', macSecretBase64: btoa('secret') });
+        }
+        return new Response('registration failed', { status: 500 });
+      }
+      if (method === 'DELETE') return jsonResponse({});
+      throw new Error(`Unexpected fetch: ${method} ${url}`);
+    });
+
+    await expect(
+      registerExceptionWebhooks(
+        { fetchFn: fetchFn as unknown as typeof fetch, apiKey: 'at', baseId: 'appMoIgXMTTTNIc3p' },
+        'https://worker.example/webhooks/airtable',
+      ),
+    ).rejects.toThrow('registration failed');
+
+    expect(calls).toContainEqual({
+      method: 'DELETE',
+      url: 'https://api.airtable.com/v0/bases/appMoIgXMTTTNIc3p/webhooks/achCreatedBeforeFailure',
+    });
+  });
 });
 
 describe('processExceptionWebhookPayloads', () => {
@@ -245,6 +299,345 @@ describe('processExceptionWebhookPayloads', () => {
 
     // Cursor advanced and persisted.
     expect(store.state?.webhooks.find((w) => w.id === 'achVersions')?.cursor).toBe(2);
+    expect(store.renewals).toBeGreaterThan(0);
+  });
+
+  it('keeps the cursor retryable when payload processing fails', async () => {
+    const payload: AirtableWebhookPayload = {
+      actionMetadata: { source: 'client' },
+      changedTablesById: {
+        [TABLE_IDS.assetVersions]: {
+          changedRecordsById: {
+            recVersion1: {
+              current: {
+                cellValuesByFieldId: {
+                  [V.exceptionStatus]: { id: 'sel', name: '🆕Requested' },
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+    const stub = buildFetchStub({ payloadsByWebhook: { achVersions: [payload] } });
+    const failingSlackFetch: typeof fetch = async (input, init) => {
+      if (String(input).startsWith('https://slack.com/api/chat.postMessage')) {
+        throw new Error('temporary Slack failure');
+      }
+      return (stub.fetchFn as unknown as typeof fetch)(input, init);
+    };
+    const store = memoryStore(baseState());
+
+    const result = await processExceptionWebhookPayloads(buildDeps(failingSlackFetch, store));
+
+    expect(result.errors.some((error) => error.includes('temporary Slack failure'))).toBe(true);
+    expect(store.state?.webhooks.find((w) => w.id === 'achVersions')?.cursor).toBe(1);
+  });
+
+  it('does not repeat successful side effects within a retried payload', async () => {
+    const payload: AirtableWebhookPayload = {
+      actionMetadata: { source: 'client' },
+      changedTablesById: {
+        [TABLE_IDS.assetVersions]: {
+          changedRecordsById: {
+            recVersion1: {
+              current: {
+                cellValuesByFieldId: {
+                  [V.exceptionStatus]: { id: 'sel', name: '🆕Requested' },
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+    const stub = buildFetchStub({ payloadsByWebhook: { achVersions: [payload] } });
+    let slackAttempts = 0;
+    let successfulSlackCalls = 0;
+    const failFeedbackOnce: typeof fetch = async (input, init) => {
+      if (String(input).startsWith('https://slack.com/api/chat.postMessage')) {
+        slackAttempts += 1;
+        if (slackAttempts === 2) throw new Error('feedback reply failed');
+        successfulSlackCalls += 1;
+      }
+      return (stub.fetchFn as unknown as typeof fetch)(input, init);
+    };
+    const store = memoryStore(baseState());
+    const deps = buildDeps(failFeedbackOnce, store);
+
+    const first = await processExceptionWebhookPayloads(deps);
+    expect(first.errors.some((error) => error.includes('feedback reply failed'))).toBe(true);
+    expect(store.state?.webhooks.find((webhook) => webhook.id === 'achVersions')?.cursor).toBe(1);
+
+    const second = await processExceptionWebhookPayloads(deps);
+    expect(second.errors).toEqual([]);
+    expect(store.state?.webhooks.find((webhook) => webhook.id === 'achVersions')?.cursor).toBe(2);
+    expect(successfulSlackCalls).toBe(2);
+    const slackTsWrites = stub.airtableWrites.filter((write) =>
+      JSON.stringify(write.body).includes(V.exceptionSlackTs),
+    );
+    expect(slackTsWrites).toHaveLength(1);
+  });
+
+  it('aborts when a post-operation lease renewal query throws', async () => {
+    const payload: AirtableWebhookPayload = {
+      actionMetadata: { source: 'client' },
+      changedTablesById: {
+        [TABLE_IDS.assetVersions]: {
+          changedRecordsById: {
+            recVersion1: {
+              current: {
+                cellValuesByFieldId: {
+                  [V.exceptionStatus]: { id: 'sel', name: '🆕Requested' },
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+    const stub = buildFetchStub({ payloadsByWebhook: { achVersions: [payload] } });
+    let slackSucceeded = false;
+    const fetchFn: typeof fetch = async (input, init) => {
+      const response = await (stub.fetchFn as unknown as typeof fetch)(input, init);
+      if (String(input).startsWith('https://slack.com/api/chat.postMessage')) slackSucceeded = true;
+      return response;
+    };
+    const store = memoryStore(baseState());
+    const renew = store.renewLock.bind(store);
+    store.renewLock = async (token, ttlMs) => {
+      if (slackSucceeded) throw new Error('D1 renewal unavailable');
+      return renew(token, ttlMs);
+    };
+
+    await expect(
+      processExceptionWebhookPayloads(buildDeps(fetchFn, store)),
+    ).rejects.toThrow('Webhook processing lease was lost');
+    expect(stub.slackCalls).toHaveLength(1);
+    expect(store.state?.webhooks.find((webhook) => webhook.id === 'achVersions')?.cursor).toBe(1);
+  });
+
+  it('rethrows a lost lease from the optional submission-thread reply', async () => {
+    const payload: AirtableWebhookPayload = {
+      actionMetadata: { source: 'publicApi' },
+      changedTablesById: {
+        [TABLE_IDS.assetVersions]: {
+          changedRecordsById: {
+            recVersion1: {
+              current: {
+                cellValuesByFieldId: {
+                  [V.exceptionStatus]: { id: 'sel', name: '✅Approved' },
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+    const stub = buildFetchStub({
+      payloadsByWebhook: { achVersions: [payload] },
+      versionResponse: () => versionRecordResponse({
+        [V.exceptionStatus]: '✅Approved',
+        [V.exceptionSlackTs]: '1785000000.000200',
+      }),
+    });
+    let submissionReplyPosted = false;
+    const fetchFn: typeof fetch = async (input, init) => {
+      const response = await (stub.fetchFn as unknown as typeof fetch)(input, init);
+      if (String(input).startsWith('https://slack.com/api/chat.postMessage')) {
+        const body = JSON.parse(String(init?.body)) as { channel?: string };
+        if (body.channel === 'C04DDRJ5VGT') submissionReplyPosted = true;
+      }
+      return response;
+    };
+    const store = memoryStore(baseState());
+    const renew = store.renewLock.bind(store);
+    store.renewLock = async (token, ttlMs) => {
+      if (submissionReplyPosted) return false;
+      return renew(token, ttlMs);
+    };
+
+    await expect(
+      processExceptionWebhookPayloads(buildDeps(fetchFn, store)),
+    ).rejects.toThrow('Webhook processing lease was lost');
+    expect(store.state?.webhooks.find((webhook) => webhook.id === 'achVersions')?.cursor).toBe(1);
+  });
+
+  it('revalidates the lease when an optional submission-thread reply rejects', async () => {
+    const payload: AirtableWebhookPayload = {
+      actionMetadata: { source: 'publicApi' },
+      changedTablesById: {
+        [TABLE_IDS.assetVersions]: {
+          changedRecordsById: {
+            recVersion1: {
+              current: {
+                cellValuesByFieldId: {
+                  [V.exceptionStatus]: { id: 'sel', name: '✅Approved' },
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+    const stub = buildFetchStub({
+      payloadsByWebhook: { achVersions: [payload] },
+      versionResponse: () => versionRecordResponse({
+        [V.exceptionStatus]: '✅Approved',
+        [V.exceptionSlackTs]: '1785000000.000200',
+      }),
+    });
+    let submissionReplyRejected = false;
+    const fetchFn: typeof fetch = async (input, init) => {
+      if (String(input).startsWith('https://slack.com/api/chat.postMessage')) {
+        const body = JSON.parse(String(init?.body)) as { channel?: string };
+        if (body.channel === 'C04DDRJ5VGT') {
+          submissionReplyRejected = true;
+          throw new Error('late Slack failure');
+        }
+      }
+      return (stub.fetchFn as unknown as typeof fetch)(input, init);
+    };
+    const store = memoryStore(baseState());
+    const renew = store.renewLock.bind(store);
+    store.renewLock = async (token, ttlMs) => {
+      if (submissionReplyRejected) return false;
+      return renew(token, ttlMs);
+    };
+
+    await expect(
+      processExceptionWebhookPayloads(buildDeps(fetchFn, store)),
+    ).rejects.toThrow('Webhook processing lease was lost');
+    expect(store.state?.webhooks.find((webhook) => webhook.id === 'achVersions')?.cursor).toBe(1);
+  });
+
+  it('checkpoints successful payloads before retrying a later payload', async () => {
+    const underReviewPayload: AirtableWebhookPayload = {
+      actionMetadata: { source: 'client' },
+      changedTablesById: {
+        [TABLE_IDS.assetVersions]: {
+          changedRecordsById: {
+            recVersion1: {
+              current: {
+                cellValuesByFieldId: {
+                  [V.exceptionStatus]: { id: 'sel', name: '👀Under Review' },
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+    const stub = buildFetchStub({
+      payloadsByWebhook: { achVersions: [underReviewPayload, underReviewPayload] },
+      versionResponse: () => versionRecordResponse({
+        [V.exceptionStatus]: '👀Under Review',
+        [V.exceptionSlackTs]: '1785000000.000500',
+      }),
+    });
+    let slackAttempts = 0;
+    let successfulSlackCalls = 0;
+    const failSecondSlackCallOnce: typeof fetch = async (input, init) => {
+      if (String(input).startsWith('https://slack.com/api/chat.postMessage')) {
+        slackAttempts += 1;
+        if (slackAttempts === 2) throw new Error('second payload failed');
+        successfulSlackCalls += 1;
+      }
+      return (stub.fetchFn as unknown as typeof fetch)(input, init);
+    };
+    const store = memoryStore(baseState());
+    const deps = buildDeps(failSecondSlackCallOnce, store);
+
+    const first = await processExceptionWebhookPayloads(deps);
+    expect(first.errors.some((error) => error.includes('second payload failed'))).toBe(true);
+    expect(store.state?.webhooks.find((webhook) => webhook.id === 'achVersions')?.cursor).toBe(2);
+
+    const second = await processExceptionWebhookPayloads(deps);
+    expect(second.errors).toEqual([]);
+    expect(store.state?.webhooks.find((webhook) => webhook.id === 'achVersions')?.cursor).toBe(3);
+    expect(successfulSlackCalls).toBe(2);
+  });
+
+  it('dead-letters a deterministic payload failure after bounded retries', async () => {
+    const payload: AirtableWebhookPayload = {
+      actionMetadata: { source: 'client' },
+      changedTablesById: {
+        [TABLE_IDS.assetVersions]: {
+          changedRecordsById: {
+            recVersion1: {
+              current: {
+                cellValuesByFieldId: {
+                  [V.exceptionStatus]: { id: 'sel', name: '🆕Requested' },
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+    const laterPayload: AirtableWebhookPayload = {
+      actionMetadata: { source: 'client' },
+      changedTablesById: {},
+    };
+    const stub = buildFetchStub({ payloadsByWebhook: { achVersions: [payload, laterPayload] } });
+    const alwaysFailingSlack: typeof fetch = async (input, init) => {
+      if (String(input).startsWith('https://slack.com/api/chat.postMessage')) {
+        throw new Error('deterministic Slack failure');
+      }
+      return (stub.fetchFn as unknown as typeof fetch)(input, init);
+    };
+    const store = memoryStore(baseState());
+    const deps = buildDeps(alwaysFailingSlack, store);
+
+    await processExceptionWebhookPayloads(deps);
+    await processExceptionWebhookPayloads(deps);
+    const third = await processExceptionWebhookPayloads(deps);
+
+    const state = store.state as WebhookLegState & {
+      failedPayloads?: Array<{ webhookId: string; cursor: number; attempts: number }>;
+    };
+    expect(third.actions).toContain('dead-lettered achVersions cursor 1 after 3 attempts');
+    expect(state.webhooks.find((webhook) => webhook.id === 'achVersions')?.cursor).toBe(3);
+    expect(state.failedPayloads).toMatchObject([
+      { webhookId: 'achVersions', cursor: 1, attempts: 3 },
+    ]);
+  });
+
+  it('processes exception status and hold reason from the same version change', async () => {
+    const payload: AirtableWebhookPayload = {
+      actionMetadata: { source: 'client', sourceMetadata: { user: { id: 'usr1', name: 'Shea' } } },
+      changedTablesById: {
+        [TABLE_IDS.assetVersions]: {
+          changedRecordsById: {
+            recVersion1: {
+              current: {
+                cellValuesByFieldId: {
+                  [V.exceptionStatus]: { id: 'sel', name: '👀Under Review' },
+                  [V.holdReason]: { id: 'hold', name: 'Pending Exception Decision' },
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+    const { fetchFn, slackCalls } = buildFetchStub({
+      payloadsByWebhook: { achVersions: [payload] },
+      versionResponse: () => versionRecordResponse({
+        [V.exceptionStatus]: '👀Under Review',
+        [V.holdReason]: 'Pending Exception Decision',
+        [V.exceptionSlackTs]: '1785000000.000500',
+      }),
+    });
+    const store = memoryStore(baseState());
+
+    const result = await processExceptionWebhookPayloads(buildDeps(fetchFn as unknown as typeof fetch, store));
+
+    expect(result.errors).toEqual([]);
+    expect(result.actions).toContain('under-review recVersion1');
+    expect(result.actions).toContain('hold recVersion1');
+    expect(slackCalls.some((call) => String(call.text).includes('under review'))).toBe(true);
+    expect(slackCalls.some((call) => String(call.text).includes('Hold reason set'))).toBe(true);
   });
 
   it('replies with the decision, posts into the submission thread, and never stamps API-sourced payloads', async () => {
@@ -419,6 +812,9 @@ describe('createD1WebhookStateStore', () => {
                 if (query.includes('DO NOTHING')) {
                   const key = String(values[0]);
                   if (!rows.has(key)) rows.set(key, String(values[1]));
+                } else if (query.startsWith('UPDATE')) {
+                  const key = String(values[2]);
+                  if (rows.get(key) === String(values[3])) rows.set(key, String(values[0]));
                 } else if (query.startsWith('INSERT')) {
                   rows.set(String(values[0]), String(values[1]));
                 } else if (query.startsWith('DELETE') && query.includes('value <')) {
@@ -455,6 +851,8 @@ describe('createD1WebhookStateStore', () => {
 
     expect(await store.acquireLock('token-a', 60_000)).toBe(true);
     expect(await store.acquireLock('token-b', 60_000)).toBe(false);
+    expect(await store.renewLock('token-b', 60_000)).toBe(false);
+    expect(await store.renewLock('token-a', 60_000)).toBe(true);
 
     // Releasing with the wrong token is a no-op; the right token frees it.
     await store.releaseLock('token-b');

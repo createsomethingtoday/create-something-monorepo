@@ -81,6 +81,102 @@ describe('AirtableClient scope and validation', () => {
 });
 
 describe('AirtableClient exception handling', () => {
+  it('paces every pending-version page after the first', async () => {
+    const sleeps: number[] = [];
+    let page = 0;
+    const fetchFn = vi.fn(async (input: RequestInfo | URL) => {
+      const url = new URL(String(input));
+      expect(url.pathname.endsWith(`/${TABLE_IDS.assetVersions}`)).toBe(true);
+      page += 1;
+      return jsonResponse({
+        records: [],
+        ...(page < 6 ? { offset: `page-${page + 1}` } : {}),
+      });
+    });
+    const client = new AirtableClient({
+      apiKey: 'token',
+      fetchFn,
+      sleepFn: async (ms) => {
+        sleeps.push(ms);
+      },
+    });
+
+    await expect(client.listPendingExceptionQueue()).resolves.toEqual([]);
+
+    expect(fetchFn).toHaveBeenCalledTimes(6);
+    expect(sleeps).toEqual([250, 250, 250, 250, 250]);
+  });
+
+  it('paces pending exception queue asset hydration sequentially', async () => {
+    let activeAssetRequests = 0;
+    let maxActiveAssetRequests = 0;
+    const sleeps: number[] = [];
+    const fetchFn = vi.fn(async (input: RequestInfo | URL) => {
+      const url = new URL(String(input));
+
+      if (url.pathname.endsWith(`/${TABLE_IDS.assetVersions}`)) {
+        return jsonResponse({
+          records: [
+            {
+              ...versionRecord('recVersionA'),
+              fields: {
+                ...versionRecord('recVersionA').fields,
+                [FIELD_IDS.versions.assetLink]: ['recAssetA'],
+                [FIELD_IDS.versions.assetRecordIdRollup]: ['recAssetA'],
+                [FIELD_IDS.versions.exceptionStatus]: '🆕Requested',
+                [FIELD_IDS.versions.exceptionItemsLink]: Array.from(
+                  { length: 101 },
+                  (_, index) => `recException${index}`,
+                ),
+              },
+            },
+            {
+              ...versionRecord('recVersionB'),
+              fields: {
+                ...versionRecord('recVersionB').fields,
+                [FIELD_IDS.versions.assetLink]: ['recAssetB'],
+                [FIELD_IDS.versions.assetRecordIdRollup]: ['recAssetB'],
+                [FIELD_IDS.versions.exceptionStatus]: '👀Under Review',
+              },
+            },
+          ],
+        });
+      }
+
+      const assetMatch = url.pathname.match(new RegExp(`/${TABLE_IDS.assets}/(recAsset[AB])$`));
+      if (assetMatch) {
+        activeAssetRequests += 1;
+        maxActiveAssetRequests = Math.max(maxActiveAssetRequests, activeAssetRequests);
+        await Promise.resolve();
+        activeAssetRequests -= 1;
+        return jsonResponse(assetRecord(assetMatch[1]!));
+      }
+
+      if (url.pathname.endsWith(`/${TABLE_IDS.exceptions}`)) {
+        return jsonResponse({ records: [] });
+      }
+
+      return new Response('not found', { status: 404 });
+    });
+    const client = new AirtableClient({
+      apiKey: 'token',
+      fetchFn,
+      sleepFn: async (ms) => {
+        sleeps.push(ms);
+      },
+    });
+
+    const queue = await client.listPendingExceptionQueue();
+
+    expect(queue).toHaveLength(2);
+    expect(maxActiveAssetRequests).toBe(1);
+    expect(sleeps).toEqual([250, 250, 250, 250, 250]);
+    const exceptionReads = fetchFn.mock.calls
+      .map(([input]) => new URL(String(input)))
+      .filter((url) => url.pathname.endsWith(`/${TABLE_IDS.exceptions}`));
+    expect(exceptionReads).toHaveLength(3);
+  });
+
   it('writes exception and hold fields via updateVersionReview', async () => {
     const fetchFn = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
       const payload = JSON.parse(String(init?.body)) as {
@@ -303,7 +399,7 @@ describe('AirtableClient retry behavior', () => {
     expect(health.ok).toBe(true);
     expect(callCount).toBe(3);
     expect(sleeps.length).toBe(2);
-    expect(sleeps[0]).toBeGreaterThan(0);
+    expect(sleeps).toEqual([30_000, 400]);
   });
 });
 

@@ -39,12 +39,30 @@ export interface RegisteredWebhook {
   tableId: string;
   macSecretBase64: string;
   cursor: number;
+  retry?: {
+    cursor: number;
+    attempts: number;
+    lastError?: string;
+    updatedAt: string;
+    completedSteps?: Record<string, unknown>;
+  };
+}
+
+export interface FailedWebhookPayload {
+  webhookId: string;
+  tableId: string;
+  cursor: number;
+  attempts: number;
+  error: string;
+  failedAt: string;
+  payload: AirtableWebhookPayload;
 }
 
 export interface WebhookLegState {
   webhooks: RegisteredWebhook[];
   notificationUrl: string;
   registeredAt: string;
+  failedPayloads?: FailedWebhookPayload[];
 }
 
 export interface WebhookLegStateStore {
@@ -56,8 +74,10 @@ export interface WebhookLegStateStore {
    * writes lands as near-simultaneous pings, each of which used to run its own
    * payload sweep from the same cursor and double-post every thread reply.
    * Only the lock holder processes; losers mark a pending sweep instead.
-   */
+  */
   acquireLock(token: string, ttlMs: number): Promise<boolean>;
+  /** Extend the current holder's lease without releasing the single-flight guard. */
+  renewLock(token: string, ttlMs: number): Promise<boolean>;
   releaseLock(token: string): Promise<void>;
   markPending(): Promise<void>;
   /** Returns true (and clears the marker) if a sweep was requested. */
@@ -148,6 +168,27 @@ export function createD1WebhookStateStore(db: D1Like): WebhookLegStateStore {
         .bind(LOCK_KEY)
         .first<{ value: string }>();
       return row?.value?.endsWith(`|${token}`) ?? false;
+    },
+    async renewLock(token, ttlMs) {
+      await ensureTable();
+      const row = await db
+        .prepare(`SELECT value FROM ${STATE_TABLE} WHERE key = ?`)
+        .bind(LOCK_KEY)
+        .first<{ value: string }>();
+      if (!row?.value?.endsWith(`|${token}`)) return false;
+
+      const now = new Date();
+      const nowIso = now.toISOString();
+      const value = `${new Date(now.getTime() + ttlMs).toISOString()}|${token}`;
+      await db
+        .prepare(`UPDATE ${STATE_TABLE} SET value = ?, updated_at = ? WHERE key = ? AND value = ?`)
+        .bind(value, nowIso, LOCK_KEY, row.value)
+        .run();
+      const renewed = await db
+        .prepare(`SELECT value FROM ${STATE_TABLE} WHERE key = ?`)
+        .bind(LOCK_KEY)
+        .first<{ value: string }>();
+      return renewed?.value === value;
     },
     async releaseLock(token) {
       await ensureTable();
@@ -271,25 +312,37 @@ export async function registerExceptionWebhooks(
   notificationUrl: string,
 ): Promise<WebhookLegState> {
   const webhooks: RegisteredWebhook[] = [];
-  for (const spec of WEBHOOK_SPECS) {
-    const created = await webhookApiRequest<{ id: string; macSecretBase64: string }>(cfg, 'POST', '', {
-      notificationUrl,
-      specification: {
-        options: {
-          filters: {
-            dataTypes: ['tableData'],
-            recordChangeScope: spec.tableId,
-            watchDataInFieldIds: spec.watchDataInFieldIds,
+  try {
+    for (const spec of WEBHOOK_SPECS) {
+      const created = await webhookApiRequest<{ id: string; macSecretBase64: string }>(cfg, 'POST', '', {
+        notificationUrl,
+        specification: {
+          options: {
+            filters: {
+              dataTypes: ['tableData'],
+              recordChangeScope: spec.tableId,
+              watchDataInFieldIds: spec.watchDataInFieldIds,
+            },
           },
         },
-      },
-    });
-    webhooks.push({
-      id: created.id,
-      tableId: spec.tableId,
-      macSecretBase64: created.macSecretBase64,
-      cursor: 1,
-    });
+      });
+      webhooks.push({
+        id: created.id,
+        tableId: spec.tableId,
+        macSecretBase64: created.macSecretBase64,
+        cursor: 1,
+      });
+    }
+  } catch (error) {
+    for (const webhook of [...webhooks].reverse()) {
+      try {
+        await webhookApiRequest(cfg, 'DELETE', `/${webhook.id}`);
+      } catch {
+        // Preserve the registration failure; a later forced registration can
+        // still clean up any subscription Airtable refused to delete here.
+      }
+    }
+    throw error;
   }
   return {
     webhooks,
@@ -362,6 +415,11 @@ interface PayloadListResponse {
   mightHaveMore: boolean;
 }
 
+interface PayloadStepCheckpoint {
+  renew(): Promise<void>;
+  run<T>(key: string, operation: () => Promise<T>): Promise<T>;
+}
+
 export interface ExceptionWebhookProcessorDeps {
   airtable: AirtableClient;
   slack: SlackClient;
@@ -402,6 +460,15 @@ function actingUser(payload: AirtableWebhookPayload): WebhookPayloadUser | null 
 
 const PROCESS_LOCK_TTL_MS = 120_000;
 const MAX_PENDING_ROUNDS = 5;
+const MAX_PAYLOAD_ATTEMPTS = 3;
+const MAX_FAILED_PAYLOADS = 50;
+
+class WebhookLeaseLostError extends Error {
+  constructor() {
+    super('Webhook processing lease was lost.');
+    this.name = 'WebhookLeaseLostError';
+  }
+}
 
 export async function processExceptionWebhookPayloads(
   deps: ExceptionWebhookProcessorDeps,
@@ -418,10 +485,21 @@ export async function processExceptionWebhookPayloads(
     return result;
   }
 
+  const renewLease = async () => {
+    try {
+      if (!(await deps.store.renewLock(token, PROCESS_LOCK_TTL_MS))) {
+        throw new WebhookLeaseLostError();
+      }
+    } catch (error) {
+      if (error instanceof WebhookLeaseLostError) throw error;
+      throw new WebhookLeaseLostError();
+    }
+  };
+
   try {
     let rounds = 0;
     do {
-      await runProcessingPass(deps, result);
+      await runProcessingPass(deps, result, renewLease);
       rounds += 1;
     } while (rounds < MAX_PENDING_ROUNDS && (await deps.store.consumePending()));
   } finally {
@@ -436,6 +514,7 @@ export async function processExceptionWebhookPayloads(
 async function runProcessingPass(
   deps: ExceptionWebhookProcessorDeps,
   result: ProcessResult,
+  renewLease: () => Promise<void>,
 ): Promise<void> {
   const state = await deps.store.get();
   if (!state) {
@@ -450,25 +529,99 @@ async function runProcessingPass(
     while (mightHaveMore) {
       let page: PayloadListResponse;
       try {
+        await renewLease();
         page = await webhookApiRequest<PayloadListResponse>(
           deps.webhookApi,
           'GET',
-          `/${webhook.id}/payloads?cursor=${cursor}&limit=50`,
+          `/${webhook.id}/payloads?cursor=${cursor}&limit=1`,
         );
+        await renewLease();
       } catch (error) {
+        if (error instanceof WebhookLeaseLostError) throw error;
         result.errors.push(`payloads ${webhook.id}: ${String(error)}`);
         break;
       }
 
-      for (const payload of page.payloads) {
+      const payload = page.payloads[0];
+      if (payload) {
+        const previousRetry = webhook.retry?.cursor === cursor ? webhook.retry : undefined;
+        const completedSteps = previousRetry?.completedSteps ?? {};
+        const checkpoint: PayloadStepCheckpoint = {
+          renew: renewLease,
+          async run<T>(key: string, operation: () => Promise<T>): Promise<T> {
+            await renewLease();
+            if (Object.prototype.hasOwnProperty.call(completedSteps, key)) {
+              return completedSteps[key] as T;
+            }
+            let value: T;
+            try {
+              value = await operation();
+            } catch (error) {
+              await renewLease();
+              throw error;
+            }
+            await renewLease();
+            completedSteps[key] = value === undefined ? true : value;
+            webhook.retry = {
+              cursor,
+              attempts: webhook.retry?.cursor === cursor ? webhook.retry.attempts : 0,
+              lastError: webhook.retry?.cursor === cursor ? webhook.retry.lastError : undefined,
+              updatedAt: new Date().toISOString(),
+              completedSteps,
+            };
+            await deps.store.put(state);
+            return value;
+          },
+        };
         result.processedPayloads += 1;
         try {
-          await handlePayload(deps, webhook.tableId, payload, result);
+          await handlePayload(deps, webhook.tableId, payload, result, checkpoint);
         } catch (error) {
-          result.errors.push(`payload (${webhook.tableId}): ${String(error)}`);
+          if (error instanceof WebhookLeaseLostError) throw error;
+          const errorMessage = String(error);
+          result.errors.push(`payload (${webhook.tableId}): ${errorMessage}`);
+          const attempts = webhook.retry?.cursor === cursor
+            ? webhook.retry.attempts + 1
+            : 1;
+
+          if (attempts < MAX_PAYLOAD_ATTEMPTS) {
+            webhook.retry = {
+              cursor,
+              attempts,
+              lastError: errorMessage,
+              updatedAt: new Date().toISOString(),
+              completedSteps,
+            };
+            await deps.store.put(state);
+            break;
+          }
+
+          const failedPayload: FailedWebhookPayload = {
+            webhookId: webhook.id,
+            tableId: webhook.tableId,
+            cursor,
+            attempts,
+            error: errorMessage,
+            failedAt: new Date().toISOString(),
+            payload,
+          };
+          state.failedPayloads = [
+            ...(state.failedPayloads ?? []).filter(
+              (failed) => !(failed.webhookId === webhook.id && failed.cursor === cursor),
+            ),
+            failedPayload,
+          ].slice(-MAX_FAILED_PAYLOADS);
+          webhook.retry = undefined;
+          cursor = page.cursor;
+          webhook.cursor = cursor;
+          mightHaveMore = page.mightHaveMore;
+          await deps.store.put(state);
+          result.actions.push(`dead-lettered ${webhook.id} cursor ${failedPayload.cursor} after ${attempts} attempts`);
+          continue;
         }
       }
 
+      webhook.retry = undefined;
       mightHaveMore = page.mightHaveMore;
       cursor = page.cursor;
       webhook.cursor = cursor;
@@ -483,6 +636,7 @@ async function handlePayload(
   tableId: string,
   payload: AirtableWebhookPayload,
   result: ProcessResult,
+  checkpoint: PayloadStepCheckpoint,
 ): Promise<void> {
   const table = payload.changedTablesById?.[tableId];
   if (!table?.changedRecordsById) return;
@@ -494,15 +648,40 @@ async function handlePayload(
     if (tableId === TABLE_IDS.assetVersions) {
       if (FIELD_IDS.versions.exceptionStatus in cells) {
         const status = selectName(cells[FIELD_IDS.versions.exceptionStatus]);
-        await handleVersionExceptionStatus(deps, recordId, status, user, result);
-      } else if (FIELD_IDS.versions.holdReason in cells) {
+        await handleVersionExceptionStatus(
+          deps,
+          recordId,
+          status,
+          user,
+          result,
+          checkpoint,
+          `${recordId}:${FIELD_IDS.versions.exceptionStatus}`,
+        );
+      }
+      if (FIELD_IDS.versions.holdReason in cells) {
         const holdReason = selectName(cells[FIELD_IDS.versions.holdReason]);
-        await handleVersionHold(deps, recordId, holdReason, user, result);
+        await handleVersionHold(
+          deps,
+          recordId,
+          holdReason,
+          user,
+          result,
+          checkpoint,
+          `${recordId}:${FIELD_IDS.versions.holdReason}`,
+        );
       }
     } else if (tableId === TABLE_IDS.exceptions) {
       if (FIELD_IDS.exceptions.status in cells) {
         const status = selectName(cells[FIELD_IDS.exceptions.status]);
-        await handleExceptionItemStatus(deps, recordId, status, user, result);
+        await handleExceptionItemStatus(
+          deps,
+          recordId,
+          status,
+          user,
+          result,
+          checkpoint,
+          `${recordId}:${FIELD_IDS.exceptions.status}`,
+        );
       }
     }
   }
@@ -522,6 +701,8 @@ async function ensureThreadRoot(
   ctx: VersionExceptionWebhookContext,
   rootText: string | null,
   result: ProcessResult,
+  checkpoint: PayloadStepCheckpoint,
+  stepPrefix: string,
 ): Promise<string> {
   if (ctx.exceptionSlackTs) return ctx.exceptionSlackTs;
   const text =
@@ -530,8 +711,12 @@ async function ensureThreadRoot(
       `:scales: *Exception thread* — ${versionHeader(ctx)}`,
       `Decisions live on the Asset Version: ${versionLink(deps, ctx.id)}`,
     ].join('\n');
-  const posted = await deps.slack.postMessage({ channel: deps.exceptionChannelId, text });
-  await deps.airtable.writeVersionExceptionSlackTs(ctx.id, posted.ts);
+  const posted = await checkpoint.run(`${stepPrefix}:thread-root-post`, () =>
+    deps.slack.postMessage({ channel: deps.exceptionChannelId, text }),
+  );
+  await checkpoint.run(`${stepPrefix}:thread-root-write`, () =>
+    deps.airtable.writeVersionExceptionSlackTs(ctx.id, posted.ts),
+  );
   ctx.exceptionSlackTs = posted.ts;
   result.actions.push(`thread-root ${ctx.id}`);
   return posted.ts;
@@ -541,8 +726,12 @@ async function replyInThread(
   deps: ExceptionWebhookProcessorDeps,
   threadTs: string,
   text: string,
+  checkpoint: PayloadStepCheckpoint,
+  stepKey: string,
 ): Promise<void> {
-  await deps.slack.postMessage({ channel: deps.exceptionChannelId, text, threadTs });
+  await checkpoint.run(stepKey, () =>
+    deps.slack.postMessage({ channel: deps.exceptionChannelId, text, threadTs }),
+  );
 }
 
 async function handleVersionExceptionStatus(
@@ -551,9 +740,13 @@ async function handleVersionExceptionStatus(
   status: string | null,
   user: WebhookPayloadUser | null,
   result: ProcessResult,
+  checkpoint: PayloadStepCheckpoint,
+  stepPrefix: string,
 ): Promise<void> {
   if (!status) return; // status cleared — nothing to narrate
-  const ctx = await deps.airtable.getVersionExceptionWebhookContext(versionId);
+  const ctx = await checkpoint.run(`${stepPrefix}:version-context`, () =>
+    deps.airtable.getVersionExceptionWebhookContext(versionId),
+  );
   if (!ctx) {
     result.errors.push(`version ${versionId} not found`);
     return;
@@ -573,25 +766,45 @@ async function handleVersionExceptionStatus(
       .join('\n');
 
     if (ctx.exceptionSlackTs) {
-      await replyInThread(deps, ctx.exceptionSlackTs, `:scales: Exception *re-requested* — ${header}${ctx.exceptionRationale ? `\n*Rationale:*\n${clip(ctx.exceptionRationale)}` : ''}`);
+      await replyInThread(
+        deps,
+        ctx.exceptionSlackTs,
+        `:scales: Exception *re-requested* — ${header}${ctx.exceptionRationale ? `\n*Rationale:*\n${clip(ctx.exceptionRationale)}` : ''}`,
+        checkpoint,
+        `${stepPrefix}:rerequest-reply`,
+      );
     } else {
-      const ts = await ensureThreadRoot(deps, ctx, rootText, result);
+      const ts = await ensureThreadRoot(deps, ctx, rootText, result, checkpoint, stepPrefix);
       if (ctx.reviewFeedback?.trim()) {
-        await replyInThread(deps, ts, `:memo: *Latest review feedback* (from 📝Review Feedback):\n${clip(ctx.reviewFeedback.trim(), 3500)}`);
+        await replyInThread(
+          deps,
+          ts,
+          `:memo: *Latest review feedback* (from 📝Review Feedback):\n${clip(ctx.reviewFeedback.trim(), 3500)}`,
+          checkpoint,
+          `${stepPrefix}:feedback-reply`,
+        );
       }
     }
     result.actions.push(`requested ${versionId}`);
 
     if (user?.email && !ctx.exceptionRequestedBy) {
-      await deps.airtable.stampVersionExceptionActor(versionId, 'requested', user.email);
+      await checkpoint.run(`${stepPrefix}:stamp-requested-by`, () =>
+        deps.airtable.stampVersionExceptionActor(versionId, 'requested', user.email!),
+      );
       result.actions.push(`stamp-requested-by ${versionId}`);
     }
     return;
   }
 
   if (status === '👀Under Review') {
-    const ts = await ensureThreadRoot(deps, ctx, null, result);
-    await replyInThread(deps, ts, `:eyes: Exception now *under review*${user?.name ? ` (${user.name})` : ''}.`);
+    const ts = await ensureThreadRoot(deps, ctx, null, result, checkpoint, stepPrefix);
+    await replyInThread(
+      deps,
+      ts,
+      `:eyes: Exception now *under review*${user?.name ? ` (${user.name})` : ''}.`,
+      checkpoint,
+      `${stepPrefix}:under-review-reply`,
+    );
     result.actions.push(`under-review ${versionId}`);
     return;
   }
@@ -602,17 +815,20 @@ async function handleVersionExceptionStatus(
 
     if (approved && deps.kb) {
       try {
-        const proposal = await deps.airtable.proposeReviewerExceptionGuidance({
-          apiKey: deps.kb.apiKey,
-          baseId: deps.kb.baseId,
-          tableId: deps.kb.tableId,
-          title: `App exception: ${ctx.name ?? versionId}${ctx.exceptionType ? ` — ${ctx.exceptionType}` : ''}`,
-          guidance: ctx.exceptionDecisionNotes || ctx.exceptionRationale || '',
-          sourceRecordId: versionId,
-          sourceUrl: `${deps.versionViewUrlBase}${versionId}`,
-        });
+        const proposal = await checkpoint.run(`${stepPrefix}:kb-proposal`, () =>
+          deps.airtable.proposeReviewerExceptionGuidance({
+            apiKey: deps.kb!.apiKey,
+            baseId: deps.kb!.baseId,
+            tableId: deps.kb!.tableId,
+            title: `App exception: ${ctx.name ?? versionId}${ctx.exceptionType ? ` — ${ctx.exceptionType}` : ''}`,
+            guidance: ctx.exceptionDecisionNotes || ctx.exceptionRationale || '',
+            sourceRecordId: versionId,
+            sourceUrl: `${deps.versionViewUrlBase}${versionId}`,
+          }),
+        );
         promotionNote = `\n\n:books: Proposed as reviewer-exception guidance (\`${proposal.id}\`) — needs curation before it becomes Active.`;
       } catch (error) {
+        if (error instanceof WebhookLeaseLostError) throw error;
         promotionNote = '\n\n:warning: Auto-proposal to the reviewer-exceptions base failed — propose manually.';
         result.errors.push(`kb-proposal ${versionId}: ${String(error)}`);
       }
@@ -630,8 +846,14 @@ async function handleVersionExceptionStatus(
         .filter(Boolean)
         .join('\n') + promotionNote;
 
-    const ts = await ensureThreadRoot(deps, ctx, null, result);
-    await replyInThread(deps, ts, decisionText);
+    const ts = await ensureThreadRoot(deps, ctx, null, result, checkpoint, stepPrefix);
+    await replyInThread(
+      deps,
+      ts,
+      decisionText,
+      checkpoint,
+      `${stepPrefix}:decision-reply`,
+    );
     result.actions.push(`${approved ? 'approved' : 'denied'} ${versionId}`);
 
     if (ctx.submissionSlackTs && ctx.submissionSlackChannel) {
@@ -646,19 +868,24 @@ async function handleVersionExceptionStatus(
         .filter(Boolean)
         .join('\n');
       try {
-        await deps.slack.postMessage({
-          channel: ctx.submissionSlackChannel,
-          text: submissionText,
-          threadTs: ctx.submissionSlackTs,
-        });
+        await checkpoint.run(`${stepPrefix}:submission-thread-reply`, () =>
+          deps.slack.postMessage({
+            channel: ctx.submissionSlackChannel!,
+            text: submissionText,
+            threadTs: ctx.submissionSlackTs!,
+          }),
+        );
         result.actions.push(`submission-thread ${versionId}`);
       } catch (error) {
+        if (error instanceof WebhookLeaseLostError) throw error;
         result.errors.push(`submission-thread ${versionId}: ${String(error)}`);
       }
     }
 
     if (user?.email && !ctx.exceptionDecisionBy) {
-      await deps.airtable.stampVersionExceptionActor(versionId, 'decision', user.email);
+      await checkpoint.run(`${stepPrefix}:stamp-decision-by`, () =>
+        deps.airtable.stampVersionExceptionActor(versionId, 'decision', user.email!),
+      );
       result.actions.push(`stamp-decision-by ${versionId}`);
     }
     return;
@@ -670,6 +897,8 @@ async function handleVersionExceptionStatus(
         deps,
         ctx.exceptionSlackTs,
         `:leftwards_arrow_with_hook: Exception request *withdrawn*${user?.name ? ` (${user.name})` : ''}.`,
+        checkpoint,
+        `${stepPrefix}:withdrawn-reply`,
       );
       result.actions.push(`withdrawn ${versionId}`);
     }
@@ -682,9 +911,13 @@ async function handleVersionHold(
   holdReason: string | null,
   user: WebhookPayloadUser | null,
   result: ProcessResult,
+  checkpoint: PayloadStepCheckpoint,
+  stepPrefix: string,
 ): Promise<void> {
   if (!holdReason) return;
-  const ctx = await deps.airtable.getVersionExceptionWebhookContext(versionId);
+  const ctx = await checkpoint.run(`${stepPrefix}:version-context`, () =>
+    deps.airtable.getVersionExceptionWebhookContext(versionId),
+  );
   if (!ctx) return;
   // The native hold automation already posts the loud channel message. Only
   // add to the thread when one exists — the thread roots on the exception.
@@ -695,7 +928,13 @@ async function handleVersionHold(
   ]
     .filter(Boolean)
     .join('\n');
-  await replyInThread(deps, ctx.exceptionSlackTs, text);
+  await replyInThread(
+    deps,
+    ctx.exceptionSlackTs,
+    text,
+    checkpoint,
+    `${stepPrefix}:hold-reply`,
+  );
   result.actions.push(`hold ${versionId}`);
 }
 
@@ -705,9 +944,13 @@ async function handleExceptionItemStatus(
   status: string | null,
   user: WebhookPayloadUser | null,
   result: ProcessResult,
+  checkpoint: PayloadStepCheckpoint,
+  stepPrefix: string,
 ): Promise<void> {
   if (!status) return;
-  const item = await deps.airtable.getExceptionItemWebhookContext(itemId);
+  const item = await checkpoint.run(`${stepPrefix}:item-context`, () =>
+    deps.airtable.getExceptionItemWebhookContext(itemId),
+  );
   if (!item) {
     result.errors.push(`exception item ${itemId} not found`);
     return;
@@ -715,16 +958,22 @@ async function handleExceptionItemStatus(
 
   if (user?.email) {
     if (status === '🆕Requested' && !item.requestedBy) {
-      await deps.airtable.stampExceptionItemActor(itemId, 'requested', user.email);
+      await checkpoint.run(`${stepPrefix}:stamp-requested-by`, () =>
+        deps.airtable.stampExceptionItemActor(itemId, 'requested', user.email!),
+      );
       result.actions.push(`stamp-item-requested-by ${itemId}`);
     } else if ((status === '✅Approved' || status === '❌Denied') && !item.decisionBy) {
-      await deps.airtable.stampExceptionItemActor(itemId, 'decision', user.email);
+      await checkpoint.run(`${stepPrefix}:stamp-decision-by`, () =>
+        deps.airtable.stampExceptionItemActor(itemId, 'decision', user.email!),
+      );
       result.actions.push(`stamp-item-decision-by ${itemId}`);
     }
   }
 
   if (!item.versionId) return;
-  const ctx = await deps.airtable.getVersionExceptionWebhookContext(item.versionId);
+  const ctx = await checkpoint.run(`${stepPrefix}:version-context`, () =>
+    deps.airtable.getVersionExceptionWebhookContext(item.versionId!),
+  );
   if (!ctx) return;
 
   const itemLabel = item.item ? `“${item.item}”` : `\`${itemId}\``;
@@ -755,7 +1004,13 @@ async function handleExceptionItemStatus(
   }
 
   if (!text) return;
-  const ts = await ensureThreadRoot(deps, ctx, null, result);
-  await replyInThread(deps, ts, text);
+  const ts = await ensureThreadRoot(deps, ctx, null, result, checkpoint, stepPrefix);
+  await replyInThread(
+    deps,
+    ts,
+    text,
+    checkpoint,
+    `${stepPrefix}:status-reply`,
+  );
   result.actions.push(`item ${status} ${itemId}`);
 }

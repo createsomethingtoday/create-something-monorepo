@@ -155,6 +155,11 @@ export const EXCEPTION_STATUS_OPTIONS = [
   '🔙Withdrawn',
 ] as const;
 
+export const PENDING_EXCEPTION_STATUS_OPTIONS = [
+  '🆕Requested',
+  '👀Under Review',
+] as const;
+
 export const EXCEPTION_TYPE_OPTIONS = [
   'Guideline',
   'Category Constraint',

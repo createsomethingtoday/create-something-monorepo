@@ -11,6 +11,7 @@ import {
   type GovernanceFindingStatus,
   HOLD_REASON_OPTIONS,
   MARKETPLACE_STATUS_OPTIONS,
+  PENDING_EXCEPTION_STATUS_OPTIONS,
   REJECTION_REASON_OPTIONS,
   REVIEW_STATUS_OPTIONS,
   REVIEW_TYPE_OPTIONS,
@@ -46,6 +47,8 @@ export type ScopedTableId = (typeof TABLE_IDS)[keyof typeof TABLE_IDS];
 
 const SCOPED_TABLE_IDS = new Set<string>(Object.values(TABLE_IDS));
 const RETRYABLE_STATUS = new Set<number>([429, 500, 502, 503, 504]);
+const AIRTABLE_RATE_LIMIT_COOLDOWN_MS = 30_000;
+const EXCEPTION_QUEUE_REQUEST_INTERVAL_MS = 250;
 
 const ASSET_QUEUE_FIELD_IDS = [
   FIELD_IDS.assets.name,
@@ -296,6 +299,12 @@ export interface AppReviewExceptionItem {
   isUndecided?: boolean;
   isDenied?: boolean;
   createdTime?: string;
+}
+
+export interface AppReviewExceptionQueueEntry {
+  asset: AppReviewAsset;
+  version: AppReviewVersion;
+  exceptionItems: AppReviewExceptionItem[];
 }
 
 export type AppReviewQueueStatus =
@@ -1035,7 +1044,9 @@ export class AirtableClient {
 
         const body = await response.text();
         if (RETRYABLE_STATUS.has(response.status) && attempt < this.maxRetries) {
-          const waitMs = Math.min(200 * 2 ** attempt, 2000);
+          const waitMs = response.status === 429
+            ? AIRTABLE_RATE_LIMIT_COOLDOWN_MS
+            : Math.min(200 * 2 ** attempt, 2000);
           await this.sleepFn(waitMs);
           continue;
         }
@@ -1072,6 +1083,7 @@ export class AirtableClient {
     filterByFormula?: string;
     sortField?: string;
     sortDirection?: 'asc' | 'desc';
+    pageIntervalMs?: number;
   }): Promise<AirtableRecord[]> {
     assertScopedTable(args.tableId);
 
@@ -1079,6 +1091,9 @@ export class AirtableClient {
     let offset: string | undefined;
 
     while (true) {
+      if (offset && args.pageIntervalMs && args.pageIntervalMs > 0) {
+        await this.sleepFn(args.pageIntervalMs);
+      }
       const query = new URLSearchParams();
       query.set('returnFieldsByFieldId', 'true');
       query.set('pageSize', '100');
@@ -1540,6 +1555,61 @@ export class AirtableClient {
       .sort((a, b) => (b.versionNumber ?? 0) - (a.versionNumber ?? 0));
   }
 
+  async listPendingExceptionQueue(): Promise<AppReviewExceptionQueueEntry[]> {
+    const pendingStatuses = [...PENDING_EXCEPTION_STATUS_OPTIONS];
+    const pendingStatusSet = new Set<string>(pendingStatuses);
+    const records = await this.listRecords({
+      tableId: TABLE_IDS.assetVersions,
+      fieldIds: VERSION_FIELD_IDS,
+      filterByFormula: buildOrFormula(FIELD_IDS.versions.exceptionStatus, pendingStatuses),
+      sortField: FIELD_IDS.versions.exceptionRequestedDatetime,
+      sortDirection: 'asc',
+      pageIntervalMs: EXCEPTION_QUEUE_REQUEST_INTERVAL_MS,
+    });
+    const versions = records
+      .map((record) => mapVersionRecord(record))
+      .filter((version) => Boolean(version.assetId) && pendingStatusSet.has(version.exceptionStatus ?? ''))
+      .sort((left, right) => {
+        const leftTime = left.exceptionRequestedDatetime ?? left.createdTime ?? '';
+        const rightTime = right.exceptionRequestedDatetime ?? right.createdTime ?? '';
+        return leftTime.localeCompare(rightTime);
+      });
+
+    const assetIds = [...new Set(versions.map((version) => version.assetId).filter((id): id is string => Boolean(id)))];
+    const assets: AppReviewAsset[] = [];
+    for (const assetId of assetIds) {
+      await this.sleepFn(EXCEPTION_QUEUE_REQUEST_INTERVAL_MS);
+      const asset = await this.getAssetById(assetId);
+      if (asset) assets.push(asset);
+    }
+    const assetsById = new Map(
+      assets.map((asset) => [asset.assetId, asset]),
+    );
+
+    const exceptionItemIds = versions.flatMap((version) => version.exceptionItemIds ?? []);
+    const exceptionItems = await this.listExceptionItemsByIds(
+      exceptionItemIds,
+      EXCEPTION_QUEUE_REQUEST_INTERVAL_MS,
+    );
+    const itemsByVersionId = new Map<string, AppReviewExceptionItem[]>();
+    for (const item of exceptionItems) {
+      if (!item.assetVersionId) continue;
+      const items = itemsByVersionId.get(item.assetVersionId) ?? [];
+      items.push(item);
+      itemsByVersionId.set(item.assetVersionId, items);
+    }
+
+    return versions.flatMap((version) => {
+      const asset = version.assetId ? assetsById.get(version.assetId) : undefined;
+      if (!asset) return [];
+      return [{
+        asset,
+        version,
+        exceptionItems: itemsByVersionId.get(version.versionId) ?? [],
+      }];
+    });
+  }
+
   private async listLatestVersionsForAssets(assetIds: string[]): Promise<Map<string, AppReviewVersion>> {
     const uniqueAssetIds = [...new Set(assetIds.filter(Boolean))];
     const latestByAssetId = new Map<string, AppReviewVersion>();
@@ -1727,7 +1797,10 @@ export class AirtableClient {
     return records.map((record) => mapExceptionItemRecord(record));
   }
 
-  async listExceptionItemsByIds(itemIds: string[]): Promise<AppReviewExceptionItem[]> {
+  async listExceptionItemsByIds(
+    itemIds: string[],
+    requestIntervalMs = 0,
+  ): Promise<AppReviewExceptionItem[]> {
     const uniqueIds = [...new Set(itemIds.filter(Boolean))];
     if (uniqueIds.length === 0) return [];
 
@@ -1735,6 +1808,7 @@ export class AirtableClient {
     const chunkSize = 50;
     const items: AppReviewExceptionItem[] = [];
     for (let i = 0; i < uniqueIds.length; i += chunkSize) {
+      if (requestIntervalMs > 0) await this.sleepFn(requestIntervalMs);
       const chunk = uniqueIds.slice(i, i + chunkSize);
       const records = await this.listRecords({
         tableId: TABLE_IDS.exceptions,
