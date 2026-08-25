@@ -5,7 +5,7 @@ import { lstat, readFile } from 'node:fs/promises';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const PACKAGE_NAME = '@create-something/workflow-compiler';
+const PACKAGE_NAME = '@createsomething/workflow-compiler';
 const REPOSITORY_URL = 'git+https://github.com/createsomethingtoday/create-something-monorepo.git';
 const REPOSITORY_DIRECTORY = 'packages/workflow-compiler';
 const REQUIRED_FILES = [

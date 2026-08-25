@@ -49,7 +49,7 @@ test('worker operating slice joins topology records to Cloudflare runtime covera
   assert.equal(worker?.missingRecordIds.length, 0);
   assert.equal(worker?.workerRuntime?.runtime, 'cloudflare');
   assert.equal(worker?.workerRuntime?.runtimeConfigRecords, expectedRuntimeRecords.length);
-  assert.equal(worker?.workerRuntime?.workerPackageRecords, 24);
+  assert.equal(worker?.workerRuntime?.workerPackageRecords, 27);
   assert.equal(worker?.workerRuntime?.bindingRefs, expectedBindingRefs);
   assert.equal(worker?.workerRuntime?.routeRefs, expectedRouteRefs);
   assert.ok(worker?.workerRuntime?.workersWithD1 >= 60);

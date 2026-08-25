@@ -24,15 +24,15 @@
   },
   "files": ["dist", "README.md"],
   "scripts": {
-    "build": "pnpm --filter @create-something/workflow-compiler build && tsc",
-    "check": "pnpm --filter @create-something/workflow-compiler build && tsc --noEmit",
+    "build": "pnpm --filter @createsomething/workflow-compiler build && tsc",
+    "check": "pnpm --filter @createsomething/workflow-compiler build && tsc --noEmit",
     "propose": "node dist/cli.js propose",
     "apply": "node dist/cli.js apply",
     "test": "pnpm build && node --test test/*.test.mjs",
     "test:acceptance": "pnpm build && node scripts/acceptance.mjs"
   },
   "dependencies": {
-    "@create-something/workflow-compiler": "workspace:*",
+    "@createsomething/workflow-compiler": "workspace:*",
     "yaml": "^2.8.2"
   },
   "devDependencies": {

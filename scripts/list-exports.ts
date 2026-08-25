@@ -2,7 +2,7 @@
 /**
  * List Exports
  *
- * A minimal tool for verifying what symbols are exported from @create-something packages.
+ * A minimal tool for verifying what symbols are exported from CREATE SOMETHING packages.
  * Use this BEFORE writing import statements to prevent hallucination.
  *
  * Usage:
@@ -21,6 +21,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const ROOT = resolve(__dirname, '..');
 const PACKAGES_DIR = resolve(ROOT, 'packages');
+const SUPPORTED_PACKAGE_SCOPES = ['@create-something/', '@createsomething/'] as const;
 
 interface ExportInfo {
   name: string;
@@ -39,6 +40,10 @@ type PackageJson = {
   name?: string;
   exports?: Record<string, unknown>;
 };
+
+function isSupportedPackageName(value: string | undefined): value is string {
+  return Boolean(value && SUPPORTED_PACKAGE_SCOPES.some((scope) => value.startsWith(scope)));
+}
 
 function stripComments(value: string): string {
   return value.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|\n)\s*\/\/.*(?=\n|$)/g, '\n');
@@ -231,18 +236,19 @@ function findPackageDirByName(packageName: string): string | null {
 
 function resolvePackage(input: string): PackageResolution | null {
   const { packageName, subpath } = extractPackageSpec(input);
-  const packageDir = packageName.startsWith('@create-something/')
+  const isScopedPackage = isSupportedPackageName(packageName);
+  const packageDir = isScopedPackage
     ? findPackageDirByName(packageName)
     : resolve(PACKAGES_DIR, packageName);
 
   if (!packageDir || !existsSync(packageDir)) return null;
 
   const pkgJson = readPackageJson(packageDir);
-  if (!pkgJson?.name?.startsWith('@create-something/')) return null;
+  if (!isSupportedPackageName(pkgJson?.name)) return null;
 
   return {
     packageDir,
-    packageName: packageName.startsWith('@create-something/') ? packageName : pkgJson.name,
+    packageName: isScopedPackage ? packageName : pkgJson.name,
     displayName: subpath ? `${pkgJson.name}/${subpath}` : pkgJson.name,
     subpath
   };
@@ -294,7 +300,7 @@ function findEntryPointForResolution(resolution: PackageResolution): string | nu
 }
 
 /**
- * Get all @create-something packages
+ * Get all supported CREATE SOMETHING packages.
  */
 function getPackages(): PackageResolution[] {
   const packages: PackageResolution[] = [];
@@ -305,7 +311,7 @@ function getPackages(): PackageResolution[] {
       const pkgJsonPath = resolve(PACKAGES_DIR, entry.name, 'package.json');
       if (existsSync(pkgJsonPath)) {
         const pkgJson = readPackageJson(resolve(PACKAGES_DIR, entry.name));
-        if (pkgJson?.name?.startsWith('@create-something/')) {
+        if (isSupportedPackageName(pkgJson?.name)) {
           packages.push({
             packageDir: resolve(PACKAGES_DIR, entry.name),
             packageName: pkgJson.name,
@@ -328,7 +334,7 @@ function main() {
 
   if (args.length === 0) {
     // List all packages with export counts
-    console.log('Available @create-something packages:\n');
+    console.log('Available CREATE SOMETHING packages:\n');
     const packages = getPackages();
 
     for (const pkg of packages) {

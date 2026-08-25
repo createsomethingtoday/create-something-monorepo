@@ -20,41 +20,41 @@ The same clean-consumer proof runs on Node 22 and Node 24 in
 requires exact equality with `package-files.json`; unexpected additions and
 missing files both stop the release.
 
-## First package bootstrap
+## First publication at the canonical scope
 
-npm cannot configure a trusted publisher or staged publishing for a package
-that does not exist yet. The initial `0.1.0-beta.0` package is therefore a
-one-time interactive bootstrap publication under the non-default `bootstrap`
-dist-tag. It must use the exact reviewed protected-main tarball and the
-maintainer's 2FA/passkey. Because npm provenance is not available from the local
-interactive bootstrap, explicitly override the manifest setting with
-`--provenance=false`; this exception applies only to `0.1.0-beta.0`. After
-registry readback, configure the GitHub trusted publisher for this repository,
-this workflow file, and the `npm-public` environment with permission limited to
-creating staged packages. Every stable release must then carry trusted
-provenance.
+`@createsomething/workflow-compiler` is a new npm package identity. npm cannot
+configure a trusted publisher for a package that does not exist, and it cannot
+stage a brand-new package. The approved `0.4.0` scope migration therefore has
+one tightly bounded bootstrap exception: after protected-main and exact-head
+review/CI receipts, a maintainer must publish the exact reviewed tarball with
+their npm 2FA/passkey. Do not use a long-lived local token, publish from a
+different commit, or substitute the old-scope tarball.
 
 ```bash
-npm publish ./create-something-workflow-compiler-0.1.0-beta.0.tgz \
+npm publish ./createsomething-workflow-compiler-0.4.0.tgz \
   --access public \
-  --tag bootstrap \
   --provenance=false
 ```
 
-Read back the tags immediately. npm may assign `latest` to the first version of
-a new package even when the bootstrap publish names another tag. If `latest`
-points at `0.1.0-beta.0`, remove it before continuing; the beta must not remain
-the default install:
+Immediately read back the public `latest` tag, integrity, packed files, and a
+clean consumer installation. The bootstrap cannot carry GitHub OIDC provenance:
+after that readback, configure the GitHub trusted publisher for this repository,
+this workflow file, and the `npm-public` environment with permission limited to
+`npm stage publish`. The release remains incomplete until `latest` points at the
+verified `0.4.0` migration release.
+
+Only after the new package has registry-integrity and clean-consumer receipts,
+a configured stage-only trusted publisher, and a later staged OIDC provenance
+receipt may a maintainer deprecate the prior package through the governed npm
+approval route:
 
 ```bash
-npm dist-tag rm @create-something/workflow-compiler latest
+npm deprecate @create-something/workflow-compiler@0.3.1 \
+  "Moved to @createsomething/workflow-compiler. Install @createsomething/workflow-compiler@0.4.0."
 ```
 
-If npm rejects removing its only `latest` tag, do not retry blindly or
-unpublish the immutable bootstrap version. Keep public instructions pinned to
-`@bootstrap` and proceed immediately through the reviewed stable path. The
-release remains incomplete until `latest` points at provenance-backed stable
-`0.1.0`.
+The deprecation is a compatibility notice, not an unpublish or alias. Preserve
+the old package and do not run the command before the replacement is verified.
 
 ## Stable publication
 

@@ -27,7 +27,7 @@ handle_signal() {
 trap cleanup EXIT
 trap handle_signal HUP INT TERM
 
-pnpm --dir "$repository_root" --filter @create-something/workflow-compiler build
+pnpm --dir "$repository_root" --filter @createsomething/workflow-compiler build
 
 if [ -e "$output_directory/governed-interaction.json" ]; then
   node "$repository_root/packages/workflow-compiler/dist/cli.js" verify \

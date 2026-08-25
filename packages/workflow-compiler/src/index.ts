@@ -47,6 +47,15 @@ export {
   WorkflowAdapterError
 } from './adapters.js';
 export {
+  createNotionCustomAgentBlueprint,
+  evaluateNotionCustomAgentInstallation,
+  evaluateNotionCustomAgentOperationalReceipts,
+  parseNotionCustomAgentBlueprintInput,
+  parseNotionCustomAgentConfigurationReceipt,
+  parseNotionCustomAgentOperationalReceipts,
+  NotionCustomAgentBlueprintError
+} from './notion-agent.js';
+export {
   CLIENT_WORKSPACE_INTERACTION_HOST,
   inspectClientWorkspaceGovernedInteraction
 } from './client-workspace-host.js';
@@ -80,6 +89,7 @@ export type {
 export type { WorkflowInputDiagnostic } from './input.js';
 export type { WorkflowReplayArtifacts } from './replay.js';
 export type { WorkflowAdapterErrorCode } from './adapters.js';
+export type { NotionCustomAgentBlueprintErrorCode } from './notion-agent.js';
 export type {
   GovernedInteractionCompatibilityDecision,
   GovernedInteractionCompatibilityDecisionV0_1,
@@ -140,6 +150,26 @@ export type {
   GovernedInteractionSurface,
   ObjectSchemasArtifact,
   McpToolCallPlan,
+  NotionCustomAgentBlueprint,
+  NotionCustomAgentBlueprintInput,
+  NotionCustomAgentConfigurationReceipt,
+  NotionCustomAgentInstallationDisposition,
+  NotionCustomAgentInstallationEvaluation,
+  NotionCustomAgentBlueprintInstallation,
+  NotionCustomAgentInstallationReasonCode,
+  NotionCustomAgentOperationalEvaluation,
+  NotionCustomAgentOperationalReasonCode,
+  NotionCustomAgentOperationalReceipts,
+  NotionCustomAgentInstructions,
+  NotionCustomAgentResourceAccess,
+  NotionCustomAgentResourceAccessLevel,
+  NotionCustomAgentResourceKind,
+  NotionCustomAgentToolBinding,
+  NotionCustomAgentToolBindingInput,
+  NotionCustomAgentToolConfirmationState,
+  NotionCustomAgentToolRuntime,
+  NotionCustomAgentTrigger,
+  NotionCustomAgentTriggerKind,
   OpenAIResponsesFunctionTool,
   OpenAIResponsesRequest,
   OpenAIResponsesRequestPlan,

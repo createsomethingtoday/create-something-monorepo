@@ -1,4 +1,4 @@
-import type { WorkflowDefinition } from '@create-something/workflow-compiler';
+import type { WorkflowDefinition } from '@createsomething/workflow-compiler';
 
 export type WorkflowEvidenceSourceKind =
   | 'agent_contract'

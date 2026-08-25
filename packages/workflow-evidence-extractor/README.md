@@ -8,7 +8,7 @@ The package deliberately separates three moments:
 2. **Proposal:** emit additive operations and unresolved conflicts with confidence and field-level provenance.
 3. **Approval:** apply only operations explicitly approved by an operator against the exact baseline and proposal hashes.
 
-The resulting definition is then passed to `@create-something/workflow-compiler`, which remains the owner of structural and governance validation.
+The resulting definition is then passed to `@createsomething/workflow-compiler`, which remains the owner of structural and governance validation.
 
 ## Public interface
 

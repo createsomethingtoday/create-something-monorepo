@@ -2676,7 +2676,7 @@ importers:
       '@create-something/policy-os-engine':
         specifier: workspace:*
         version: link:../policy-os-engine
-      '@create-something/workflow-compiler':
+      '@createsomething/workflow-compiler':
         specifier: workspace:*
         version: link:../workflow-compiler
       '@modelcontextprotocol/sdk':
@@ -5156,7 +5156,7 @@ importers:
 
   packages/workflow-evidence-extractor:
     dependencies:
-      '@create-something/workflow-compiler':
+      '@createsomething/workflow-compiler':
         specifier: workspace:*
         version: link:../workflow-compiler
       yaml:
@@ -5172,12 +5172,12 @@ importers:
 
   packages/workflow-historical-context-reconciler:
     dependencies:
-      '@create-something/workflow-compiler':
-        specifier: workspace:*
-        version: link:../workflow-compiler
       '@create-something/workflow-evidence-extractor':
         specifier: workspace:*
         version: link:../workflow-evidence-extractor
+      '@createsomething/workflow-compiler':
+        specifier: workspace:*
+        version: link:../workflow-compiler
     devDependencies:
       '@types/node':
         specifier: 24.10.9
@@ -5188,12 +5188,12 @@ importers:
 
   packages/workflow-observation-reconciler:
     dependencies:
-      '@create-something/workflow-compiler':
-        specifier: workspace:*
-        version: link:../workflow-compiler
       '@create-something/workflow-evidence-extractor':
         specifier: workspace:*
         version: link:../workflow-evidence-extractor
+      '@createsomething/workflow-compiler':
+        specifier: workspace:*
+        version: link:../workflow-compiler
     devDependencies:
       '@types/node':
         specifier: 24.10.9
@@ -5204,12 +5204,12 @@ importers:
 
   packages/workflow-receipt-reconciler:
     dependencies:
-      '@create-something/workflow-compiler':
-        specifier: workspace:*
-        version: link:../workflow-compiler
       '@create-something/workflow-evidence-extractor':
         specifier: workspace:*
         version: link:../workflow-evidence-extractor
+      '@createsomething/workflow-compiler':
+        specifier: workspace:*
+        version: link:../workflow-compiler
     devDependencies:
       '@types/node':
         specifier: 24.10.9
@@ -5220,15 +5220,15 @@ importers:
 
   packages/workflow-shadow-pilot:
     dependencies:
-      '@create-something/workflow-compiler':
-        specifier: workspace:*
-        version: link:../workflow-compiler
       '@create-something/workflow-historical-context-reconciler':
         specifier: workspace:*
         version: link:../workflow-historical-context-reconciler
       '@create-something/workflow-receipt-reconciler':
         specifier: workspace:*
         version: link:../workflow-receipt-reconciler
+      '@createsomething/workflow-compiler':
+        specifier: workspace:*
+        version: link:../workflow-compiler
       '@modelcontextprotocol/sdk':
         specifier: 1.26.0
         version: 1.26.0(patch_hash=22lrrz44ijo2k64j4pex7onqp4)(@cfworker/json-schema@4.1.1)(zod@4.3.6)

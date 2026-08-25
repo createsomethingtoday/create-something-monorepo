@@ -41,7 +41,7 @@
         Book an integration fit call
       </Button>
       <Button
-        href="https://www.npmjs.com/package/@create-something/workflow-compiler"
+        href="https://www.npmjs.com/package/@createsomething/workflow-compiler"
         variant="secondary"
       >
         Inspect the open-source compiler

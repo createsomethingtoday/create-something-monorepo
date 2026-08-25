@@ -83,5 +83,5 @@ export interface WorkflowHistoricalContextReconciliation {
   };
   proposal: WorkflowDefinitionProposal;
 }
-import type { WorkflowEvaluation } from '@create-something/workflow-compiler';
+import type { WorkflowEvaluation } from '@createsomething/workflow-compiler';
 import type { WorkflowDefinitionProposal } from '@create-something/workflow-evidence-extractor';

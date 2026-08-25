@@ -1,6 +1,6 @@
 # Workflow Compiler
 
-`@create-something/workflow-compiler` compiles versioned operating workflows into deterministic local/CI artifacts, replay evidence, provider-neutral MCP plans, offline OpenAI Responses request plans, and a read-only operator console.
+`@createsomething/workflow-compiler` compiles versioned operating workflows into deterministic local/CI artifacts, replay evidence, provider-neutral MCP plans, offline OpenAI Responses request plans, and a read-only operator console.
 
 It gives builders a composable governance layer below any hosted control plane. The package does not call providers, hold credentials, choose a model, or mutate the systems named by a workflow.
 
@@ -9,14 +9,14 @@ It gives builders a composable governance layer below any hosted control plane. 
 Install the builder artifact in the repository where the workflow will live:
 
 ```bash
-npm install @create-something/workflow-compiler@0.3.1
+npm install @createsomething/workflow-compiler@0.4.0
 ```
 
 Copy the shipped Codex skill into that repository, then ask Codex to turn a recurring operating task into a runbook. Codex can propose and revise the local files; the terminal commands below remain the deterministic proof surface:
 
 ```bash
 mkdir -p .codex/skills
-cp -R node_modules/@create-something/workflow-compiler/skills/workflow-compiler \
+cp -R node_modules/@createsomething/workflow-compiler/skills/workflow-compiler \
   .codex/skills/workflow-compiler
 
 npx workflow-compiler init --template local-runbook --dir ./ops-runbook
@@ -62,7 +62,7 @@ execution host begins.
 Install the package with a supported Node release:
 
 ```bash
-npm install @create-something/workflow-compiler@0.3.1
+npm install @createsomething/workflow-compiler@0.4.0
 ```
 
 Create `workflow.json` and optionally `cases.json` using the versioned schemas documented in [API.md](./API.md). Compile and independently verify a local bundle:
@@ -85,7 +85,7 @@ import {
   compileWorkflowDefinition,
   createMcpToolCallPlan,
   replayWorkflow
-} from '@create-something/workflow-compiler';
+} from '@createsomething/workflow-compiler';
 
 const bundle = compileWorkflowDefinition(workflowJson);
 const replay = replayWorkflow(bundle, casesJson);
@@ -95,7 +95,7 @@ console.log(replay.report.counts, plan.disposition);
 ```
 
 Start with the shipped software-release fixture under
-`node_modules/@create-something/workflow-compiler/fixtures/release-promotion/` or the complete examples in this repository. See [API.md](./API.md), [COMPATIBILITY.md](./COMPATIBILITY.md), and [MIGRATING.md](./MIGRATING.md) before promoting a workflow.
+`node_modules/@createsomething/workflow-compiler/fixtures/release-promotion/` or the complete examples in this repository. See [API.md](./API.md), [COMPATIBILITY.md](./COMPATIBILITY.md), and [MIGRATING.md](./MIGRATING.md) before promoting a workflow.
 
 ## Module design
 
@@ -110,12 +110,15 @@ import {
   compileWorkflowDefinition,
   createMcpToolCallPlan,
   createOpenAIResponsesRequestPlan,
+  createNotionCustomAgentBlueprint,
+  evaluateNotionCustomAgentInstallation,
+  evaluateNotionCustomAgentOperationalReceipts,
   evaluateGovernedInteractionCompatibility,
   parseGovernedInteractionBundle,
   replayWorkflow,
   verifyWorkflowArtifactBundle,
   writeCompiledWorkflowArtifacts
-} from '@create-something/workflow-compiler';
+} from '@createsomething/workflow-compiler';
 ```
 
 **Depth:** the interface hides governance validation, reference validation, canonical hashing, artifact linkage, transition replay, fail-closed defaults, evidence receipts, acceptance coverage, console generation, and deterministic file output.
@@ -152,6 +155,44 @@ Tool parameters are versioned in the workflow definition, type checked, and requ
 
 The adapter never accepts a replay result and a second unbound evidence object. It first detaches one structured-data snapshot, then replays and maps only that copy so caller mutation, getters, proxies, or a second evidence object cannot substitute values during or after the governance decision.
 
+## Notion Custom Agent blueprints
+
+`createNotionCustomAgentBlueprint` is a provider-specific, offline artifact
+for the documented Custom Agent delivery boundary. It compiles a workflow agent
+into explicit resource access, triggers, and narrow Worker or CREATE SOMETHING
+MCP bindings; it retains the compiled action's authority, autonomy, evidence,
+receipt, recovery, and scalar tool parameters.
+
+```ts
+const blueprint = createNotionCustomAgentBlueprint(bundle, blueprintInput);
+const configuration = evaluateNotionCustomAgentInstallation(blueprint, receipt);
+const operation = evaluateNotionCustomAgentOperationalReceipts(
+  blueprint,
+  runReceipts,
+  configuration
+);
+```
+
+The artifact begins in `wait` until a configuration receipt is supplied.
+Configuration scope or tool-contract mismatches stop. A read-only binding waits
+for its operational receipt; a write or publish binding stops unless it has a
+confirmed tool receipt and mutation receipt for the same run. Read-only
+blueprints may only request `can_view` access. Activation, tool, and mutation
+receipts must all reference the evaluated run, and receipts for undeclared
+actions stop evaluation. Only write or publish bindings may have mutation
+receipts; consequential non-write actions require a current confirmed tool
+receipt, while every blocked action never passes. A passing operational
+evaluation also requires the receipt's `agentRef` and the exact matching
+configuration evaluation returned in the same process; an absent match waits
+and an identity mismatch stops. The returned blueprint and matching
+configuration evaluation are frozen, and the evaluators accept only those
+compiler-created values. These helpers make no Notion request and do not claim
+that a caller-supplied receipt is authentic or that an agent is installed. An
+authorized Notion runtime remains responsible for manual setup, live
+configuration readback, activation, execution, authentication, confirmation,
+receipt provenance, recovery, and any mutation.
+See [API.md](./API.md) for exact schemas and error behavior.
+
 ## Agent Legibility Contract
 
 <!-- prettier-ignore -->
@@ -167,7 +208,7 @@ The adapter never accepts a replay result and a second unbound evidence object. 
 ## Compile the marketplace fixture
 
 ```bash
-pnpm --filter @create-something/workflow-compiler build
+pnpm --filter @createsomething/workflow-compiler build
 
 node packages/workflow-compiler/dist/cli.js compile \
   --workflow packages/workflow-compiler/fixtures/marketplace/workflow.json \
@@ -243,7 +284,7 @@ node packages/workflow-compiler/dist/cli.js serve \
 ## Acceptance verifier
 
 ```bash
-pnpm --filter @create-something/workflow-compiler test:acceptance
+pnpm --filter @createsomething/workflow-compiler test:acceptance
 ```
 
 The verifier runs the public CLI twice from clean directories and rejects byte differences. It also requires:

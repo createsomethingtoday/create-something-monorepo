@@ -1,4 +1,4 @@
-import type { WorkflowDefinition, WorkflowEvaluation } from '@create-something/workflow-compiler';
+import type { WorkflowDefinition, WorkflowEvaluation } from '@createsomething/workflow-compiler';
 import type { WorkflowDefinitionProposal } from '@create-something/workflow-evidence-extractor';
 
 export interface WorkflowObservationReport {

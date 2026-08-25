@@ -1,6 +1,6 @@
 # API reference
 
-`@create-something/workflow-compiler` is an ESM-only package. All public
+`@createsomething/workflow-compiler` is an ESM-only package. All public
 functions are exported from the package root. Generated TypeScript declarations
 are included in the npm tarball.
 
@@ -144,6 +144,81 @@ Returns an offline OpenAI Responses request plan using the caller-supplied
 for an eligible action. It does not read an API key or call OpenAI. Only a
 `pass` result contains a request.
 
+## Notion Custom Agent blueprint planning
+
+### `createNotionCustomAgentBlueprint(bundle, input)`
+
+Returns a deterministic `notion_agent_blueprint.v0.1` from a frozen,
+in-process compiled workflow bundle and a strictly parsed
+`notion_custom_agent_blueprint_input.v0.1`. The blueprint binds a declared
+workflow agent to explicitly named Notion resources, triggers, and narrow
+Worker or CREATE SOMETHING MCP tool contracts. Every tool binding retains its
+source action's authority, autonomy, evidence, receipt, recovery, target, and
+scalar parameters. The returned blueprint is deeply frozen and retains
+in-process compiler provenance; both evaluators reject detached, copied, or
+reconstructed blueprint objects with
+`UNVERIFIED_NOTION_CUSTOM_AGENT_BLUEPRINT`.
+
+The result always begins with `installation.disposition = 'wait'` and
+`CONFIGURATION_RECEIPT_REQUIRED`. Read-only workflows require configuration,
+activation, run, and tool receipts; write or publish bindings also require a
+mutation receipt. `can_comment` and `can_edit` access require at least one
+compiled write or publish binding; otherwise blueprint creation fails. The
+function does not authenticate to Notion, create an
+agent, attach a tool, enable a trigger, read workspace state, or call a Worker
+or MCP.
+
+The function rejects unverified copied bundles, unknown agents/actions, action
+bindings outside the agent allowlist, and a binding key that differs from the
+compiled tool key. Input parsing rejects unknown fields, duplicate resources,
+triggers, or action bindings, and unsupported resource, trigger, or runtime
+values.
+
+### `evaluateNotionCustomAgentInstallation(blueprint, receipt?)`
+
+Compares an optional caller-supplied
+`notion_custom_agent_configuration_receipt.v0.1` to the desired blueprint.
+Without a receipt it returns `wait`; a matching receipt returns `pass`; a
+different blueprint ID, workflow hash, instructions hash, resource scope,
+trigger, or tool binding returns `stop` with
+`CONFIGURATION_RECEIPT_MISMATCH`.
+
+This is an offline structural comparison. A `pass` means only that the supplied
+receipt matches the versioned blueprint; it is not proof that the receipt came
+from Notion or that the agent is enabled. A future authorized execution host
+must obtain the live configuration, preserve source provenance, and retain its
+own readback evidence.
+
+### `evaluateNotionCustomAgentOperationalReceipts(blueprint, receipts?, installation?)`
+
+Checks caller-supplied activation, run, tool, and mutation receipt references
+after configuration comparison. A passing operational evaluation also requires
+the operational receipt's `agentRef` and the exact `pass` value returned by
+`evaluateNotionCustomAgentInstallation` for that same agent in the current
+process. Missing matching configuration returns `wait` with
+`MATCHED_INSTALLATION_EVALUATION_REQUIRED`; a different, copied, or otherwise
+unverified configuration result returns `stop` with
+`OPERATIONAL_RECEIPT_INSTALLATION_MISMATCH`. Activation, tool, and mutation
+receipts must carry the same `runRef` as the evaluated run. Receipt action IDs
+must be declared by the blueprint; undeclared IDs return `stop` with
+`UNDECLARED_RECEIPT_ACTION`. Missing read-only tool evidence returns `wait`.
+Every `write` or `publish` binding must have a confirmed tool receipt and a
+mutation receipt correlated to that run; otherwise the evaluator returns
+`stop` with `WRITE_CONFIRMATION_OR_MUTATION_RECEIPT_REQUIRED`. Mutation
+receipts are valid only for those write or publish bindings; a mutation
+attributed to a read or decision binding stops with
+`NON_MUTATING_ACTION_MUTATION_RECEIPT`. An `approval_required` or
+`manual_only` non-write binding needs a current confirmed tool receipt, and a
+`blocked` binding never passes, including write and publish bindings; either
+violation stops with
+`CONSEQUENTIAL_TOOL_AUTONOMY_VIOLATION`. The helper never executes the action
+or verifies a provider-provided receipt cryptographically.
+
+`parseNotionCustomAgentBlueprintInput`,
+`parseNotionCustomAgentConfigurationReceipt`, and
+`parseNotionCustomAgentOperationalReceipts` expose the strict input parsers
+when a caller needs to validate these values before compilation or comparison.
+
 ## Artifact publication and verification
 
 ### `writeCompiledWorkflowArtifacts(bundle, outDir, replay?, signing?)`
@@ -232,7 +307,8 @@ governance, integrity, or simulation stop, and `1` unexpected operational failur
 
 The root export includes definitions for workflow systems, objects, events,
 actors, states, actions, transitions, tool parameters, compiled artifacts,
-replay cases and receipts, adapter plans, attestation receipts, and governed
-interaction host contracts. Treat the generated `.d.ts` files as the exact
-type source; this document describes the supported seams rather than
-duplicating every structural field.
+replay cases and receipts, adapter plans, Notion Custom Agent blueprints and
+receipt evaluators, attestation receipts, and governed interaction host
+contracts. Treat the generated `.d.ts` files as the exact type source; this
+document describes the supported seams rather than duplicating every structural
+field.

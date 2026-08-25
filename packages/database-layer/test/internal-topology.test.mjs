@@ -50,6 +50,15 @@ test('internal topology includes the key Atlas and Substrate packages', () => {
   assert.equal(atlas?.status, 'mapped');
 });
 
+test('internal topology records the canonical workflow compiler package scope', () => {
+  const compiler = nodeByPackageName('@createsomething/workflow-compiler');
+  const retiredCompiler = nodeByPackageName('@create-something/workflow-compiler');
+
+  assert.equal(compiler?.path, 'packages/workflow-compiler');
+  assert.equal(compiler?.status, 'mapped');
+  assert.equal(retiredCompiler, undefined);
+});
+
 test('internal topology maps managed client overlays when coverage exists', () => {
   const clientNodes = topology.nodes.filter((node) => node.surface === 'client');
 

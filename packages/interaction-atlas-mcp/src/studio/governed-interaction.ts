@@ -8,7 +8,7 @@ import {
   type GovernedInteractionCompatibilityDecisionV0_1,
   type GovernedInteractionCompatibilityDecisionV0_2,
   type GovernedInteractionHostContract,
-} from '@create-something/workflow-compiler';
+} from '@createsomething/workflow-compiler';
 
 export const ATLAS_STUDIO_INTERACTION_HOST: GovernedInteractionHostContract = {
   hostId: 'atlas-studio',

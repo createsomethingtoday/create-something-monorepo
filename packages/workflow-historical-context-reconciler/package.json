@@ -24,13 +24,13 @@
   },
   "files": ["dist", "README.md"],
   "scripts": {
-    "build": "pnpm --filter @create-something/workflow-compiler build && pnpm --filter @create-something/workflow-evidence-extractor build && tsc",
-    "check": "pnpm --filter @create-something/workflow-compiler build && pnpm --filter @create-something/workflow-evidence-extractor build && tsc --noEmit",
+    "build": "pnpm --filter @createsomething/workflow-compiler build && pnpm --filter @create-something/workflow-evidence-extractor build && tsc",
+    "check": "pnpm --filter @createsomething/workflow-compiler build && pnpm --filter @create-something/workflow-evidence-extractor build && tsc --noEmit",
     "reconcile": "node dist/cli.js reconcile",
     "test": "pnpm build && node --test test/*.test.mjs"
   },
   "dependencies": {
-    "@create-something/workflow-compiler": "workspace:*",
+    "@createsomething/workflow-compiler": "workspace:*",
     "@create-something/workflow-evidence-extractor": "workspace:*"
   },
   "devDependencies": {
