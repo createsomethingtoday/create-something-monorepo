@@ -10,9 +10,15 @@ const verifier = require('../release-verify.js') as {
 const digest = 'a'.repeat(64);
 const completeManifest = [
   `${digest}  ground-darwin-arm64.tar.gz`,
+  `${digest}  ground-darwin-x64.tar.gz`,
   `${digest}  ground-linux-arm64.tar.gz`,
   `${digest}  ground-linux-x64.tar.gz`,
-  `${digest}  ground-win32-x64.zip`
+  `${digest}  ground-win32-x64.zip`,
+  `${digest}  ground-darwin-arm64-smoke.json`,
+  `${digest}  ground-darwin-x64-smoke.json`,
+  `${digest}  ground-linux-arm64-smoke.json`,
+  `${digest}  ground-linux-x64-smoke.json`,
+  `${digest}  ground-win32-x64-smoke.json`
 ].join('\n');
 
 test('npm publication requires checksums for every supported Ground release asset', () => {

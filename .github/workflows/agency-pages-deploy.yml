@@ -69,6 +69,40 @@ jobs:
       - name: Build Agency
         run: pnpm --filter @create-something/agency build
 
+      - name: Require matching Ground release before production deploy
+        if: steps.deploy.outputs.eligible == 'true' && github.ref_name == 'main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          version=$(node -p "require('./packages/ground/npm/package.json').version")
+          package_name=$(node -p "require('./packages/ground/npm/package.json').name")
+          tag="ground-v${version}"
+          release_sha=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${tag}" --jq '.sha')
+          test "$release_sha" = "$GITHUB_SHA"
+          assets=$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${tag}" --jq '.assets[].name')
+          for asset in \
+            ground-darwin-arm64.tar.gz \
+            ground-darwin-x64.tar.gz \
+            ground-linux-x64.tar.gz \
+            ground-linux-arm64.tar.gz \
+            ground-win32-x64.zip \
+            ground-darwin-arm64-smoke.json \
+            ground-darwin-x64-smoke.json \
+            ground-linux-x64-smoke.json \
+            ground-linux-arm64-smoke.json \
+            ground-win32-x64-smoke.json \
+            ground-darwin-arm64-consumer-smoke.json \
+            ground-darwin-x64-consumer-smoke.json \
+            ground-linux-x64-consumer-smoke.json \
+            ground-linux-arm64-consumer-smoke.json \
+            ground-win32-x64-consumer-smoke.json \
+            CONSUMER-SHA256SUMS \
+            SHA256SUMS; do
+            grep -Fx "$asset" <<< "$assets"
+          done
+          test "$(npm view "${package_name}@${version}" version)" = "$version"
+
       - name: Resolve Pages branch alias
         id: branch
         shell: bash

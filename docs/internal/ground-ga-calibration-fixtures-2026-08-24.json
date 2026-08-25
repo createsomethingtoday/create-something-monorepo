@@ -1,0 +1,77 @@
+{
+  "schema_version": "ground-ga-calibration-fixtures.v1",
+  "captured_at": "2026-08-24",
+  "command": "cargo test --manifest-path packages/ground/Cargo.toml --test ga_calibration -- --nocapture",
+  "result": {
+    "passed": 10,
+    "failed": 0,
+    "execution_failures": 0
+  },
+  "method": [
+    "Each case creates an isolated deterministic fixture and invokes Ground through its public MCP tool-call boundary.",
+    "Each case contains one independently authored positive condition and asserts exactly one expected finding.",
+    "Correlated duplicate pairs count as one finding, and no out-of-scope observation is counted as calibration evidence."
+  ],
+  "cases": [
+    {
+      "id": "ga_duplicate_typescript_function_is_confirmed",
+      "check": "duplicates",
+      "language": "typescript",
+      "expected_findings": 1
+    },
+    {
+      "id": "ga_duplicate_tsx_function_is_confirmed",
+      "check": "duplicates",
+      "language": "typescript-tsx",
+      "expected_findings": 1
+    },
+    {
+      "id": "ga_duplicate_javascript_function_is_confirmed",
+      "check": "duplicates",
+      "language": "javascript",
+      "expected_findings": 1
+    },
+    {
+      "id": "ga_duplicate_svelte_component_script_is_confirmed",
+      "check": "duplicates",
+      "language": "svelte",
+      "expected_findings": 1
+    },
+    {
+      "id": "ga_orphan_typescript_module_is_confirmed",
+      "check": "orphans",
+      "language": "typescript",
+      "expected_findings": 1
+    },
+    {
+      "id": "ga_orphan_javascript_module_is_confirmed",
+      "check": "orphans",
+      "language": "javascript",
+      "expected_findings": 1
+    },
+    {
+      "id": "ga_orphan_svelte_component_is_confirmed",
+      "check": "orphans",
+      "language": "sveltekit",
+      "expected_findings": 1
+    },
+    {
+      "id": "ga_dead_typescript_export_is_confirmed",
+      "check": "dead_exports",
+      "language": "typescript",
+      "expected_findings": 1
+    },
+    {
+      "id": "ga_dead_javascript_export_is_confirmed",
+      "check": "dead_exports",
+      "language": "javascript",
+      "expected_findings": 1
+    },
+    {
+      "id": "ga_dead_svelte_module_export_is_confirmed",
+      "check": "dead_exports",
+      "language": "svelte",
+      "expected_findings": 1
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import process from 'node:process';
 import { pathToFileURL } from 'node:url';
 
@@ -45,6 +45,16 @@ function requireOptionalRate(value, label, options) {
   return value === null ? value : requireRate(value, label, options);
 }
 
+function requireOptionalCheckCounts(value, label) {
+  if (value === undefined || value === null) return value;
+  requireObject(value, label);
+  for (const [check, count] of Object.entries(value)) {
+    requireString(check, `${label} check`);
+    requireCount(count, `${label}.${check}`);
+  }
+  return value;
+}
+
 export function validateLedger(ledger) {
   requireObject(ledger, 'ledger');
   if (ledger.schema_version !== LEDGER_SCHEMA_VERSION) {
@@ -57,6 +67,13 @@ export function validateLedger(ledger) {
   requireOptionalCount(thresholds.minimum_adjudicated_findings, 'minimum_adjudicated_findings');
   requireOptionalRate(thresholds.minimum_precision, 'minimum_precision', { positive: true });
   requireOptionalRate(thresholds.maximum_false_positive_rate, 'maximum_false_positive_rate');
+  requireOptionalCheckCounts(
+    thresholds.minimum_adjudicated_by_check,
+    'minimum_adjudicated_by_check'
+  );
+  if (thresholds.maximum_execution_failures !== undefined) {
+    requireOptionalCount(thresholds.maximum_execution_failures, 'maximum_execution_failures');
+  }
 
   if (!Array.isArray(ledger.records)) fail('records must be an array');
   const receiptIds = new Set();
@@ -76,6 +93,9 @@ export function validateLedger(ledger) {
       receipt.observed_findings,
       `records[${index}].receipt.observed_findings`
     );
+    if (receipt.execution_failures !== undefined) {
+      requireCount(receipt.execution_failures, `records[${index}].receipt.execution_failures`);
+    }
     if (!Array.isArray(record.verdicts)) fail(`records[${index}].verdicts must be an array`);
     if (record.verdicts.length > observedFindings) {
       fail(`records[${index}] has more verdicts than observed findings`);
@@ -110,14 +130,25 @@ export function summarizeLedger(ledger) {
     false_positive: 0,
     out_of_scope: 0
   };
+  const checks = {};
+  const execution = { failures: 0 };
 
   for (const record of ledger.records) {
     receipts[record.receipt.completion] += 1;
+    execution.failures += record.receipt.execution_failures ?? 0;
     findings.observed += record.receipt.observed_findings;
     findings.classified += record.verdicts.length;
     for (const verdict of record.verdicts) {
       findings[verdict.verdict] += 1;
       if (verdict.verdict !== 'out_of_scope') findings.adjudicated += 1;
+      const check = (checks[verdict.check] ??= {
+        adjudicated: 0,
+        confirmed: 0,
+        false_positive: 0,
+        out_of_scope: 0
+      });
+      check[verdict.verdict] += 1;
+      if (verdict.verdict !== 'out_of_scope') check.adjudicated += 1;
     }
   }
   findings.unclassified = findings.observed - findings.classified;
@@ -149,6 +180,18 @@ export function summarizeLedger(ledger) {
   ) {
     reasons.push('false_positive_rate_above_threshold');
   }
+  for (const [check, minimum] of Object.entries(thresholds.minimum_adjudicated_by_check ?? {})) {
+    if ((checks[check]?.adjudicated ?? 0) < minimum) {
+      reasons.push(`insufficient_adjudicated_findings:${check}`);
+    }
+  }
+  if (
+    thresholds.maximum_execution_failures !== undefined &&
+    thresholds.maximum_execution_failures !== null &&
+    execution.failures > thresholds.maximum_execution_failures
+  ) {
+    reasons.push('execution_failures_above_threshold');
+  }
 
   return {
     schema_version: SUMMARY_SCHEMA_VERSION,
@@ -156,6 +199,8 @@ export function summarizeLedger(ledger) {
     thresholds,
     receipts,
     findings,
+    checks,
+    execution,
     precision,
     false_positive_rate: falsePositiveRate,
     promotion: { ready: reasons.length === 0, reasons }
@@ -171,6 +216,7 @@ export function formatMarkdown(summary) {
     `- Receipts: ${summary.receipts.total} total, ${summary.receipts.complete} complete, ${summary.receipts.partial} partial, ${summary.receipts.no_analyzable} no analyzable source`,
     `- Findings: ${summary.findings.observed} observed, ${summary.findings.classified} classified, ${summary.findings.adjudicated} calibration adjudicated, ${summary.findings.unclassified} unclassified`,
     `- Verdicts: ${summary.findings.confirmed} confirmed, ${summary.findings.false_positive} false positive, ${summary.findings.out_of_scope} out of scope`,
+    `- Execution failures: ${summary.execution.failures}`,
     `- Precision: ${percent(summary.precision)}`,
     `- False-positive rate: ${percent(summary.false_positive_rate)}`,
     `- Promotion readiness: ${summary.promotion.ready ? 'ready' : 'not ready'}`
@@ -187,10 +233,13 @@ function parseArgs(argv) {
   const options = { format: 'markdown' };
   for (let index = 2; index < argv.length; index += 1) {
     const arg = argv[index];
-    if (arg === '--ledger') options.ledger = argv[++index];
+    if (arg === '--') continue;
+    else if (arg === '--ledger') options.ledger = argv[++index];
     else if (arg.startsWith('--ledger=')) options.ledger = arg.slice('--ledger='.length);
     else if (arg === '--format') options.format = argv[++index];
     else if (arg.startsWith('--format=')) options.format = arg.slice('--format='.length);
+    else if (arg === '--output') options.output = argv[++index];
+    else if (arg.startsWith('--output=')) options.output = arg.slice('--output='.length);
     else if (arg === '--json') options.format = 'json';
     else if (arg === '--help' || arg === '-h') options.help = true;
     else throw new Error(`Unknown argument: ${arg}`);
@@ -209,15 +258,16 @@ function main() {
     const options = parseArgs(process.argv);
     if (options.help) {
       console.log(
-        'Usage: node scripts/ground-adjudication.mjs --ledger <path> [--format json|markdown]'
+        'Usage: node scripts/ground-adjudication.mjs --ledger <path> [--format json|markdown] [--output <path>]'
       );
       return;
     }
     const ledger = JSON.parse(readFileSync(options.ledger, 'utf8'));
     const summary = summarizeLedger(ledger);
-    console.log(
-      options.format === 'json' ? JSON.stringify(summary, null, 2) : formatMarkdown(summary)
-    );
+    const rendered =
+      options.format === 'json' ? `${JSON.stringify(summary, null, 2)}\n` : formatMarkdown(summary);
+    if (options.output) writeFileSync(options.output, rendered, { flag: 'wx' });
+    process.stdout.write(rendered);
   } catch (error) {
     console.error(
       `Ground adjudication failed: ${error instanceof Error ? error.message : String(error)}`

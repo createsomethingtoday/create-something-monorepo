@@ -40,8 +40,8 @@
 
 <svelte:head>
 	<title>Ground Documentation | CREATE SOMETHING</title>
-	<meta name="description" content="Ground MCP server documentation. Prevents AI hallucination in code analysis with verification-first patterns. Works with Claude Code, Cursor, Windsurf." />
-	<meta name="keywords" content="Ground, MCP server, code analysis, duplicate detection, dead code, orphan detection, AI hallucination prevention, Claude Code, Cursor, Windsurf" />
+	<meta name="description" content="Ground MCP server documentation for evidence-first TypeScript, JavaScript, and SvelteKit code analysis." />
+	<meta name="keywords" content="Ground, MCP server, TypeScript, JavaScript, SvelteKit, code analysis, duplicate detection, dead code, orphan detection, Claude Code, Cursor, Windsurf, Codex" />
 </svelte:head>
 
 <main class="docs-page">
@@ -53,8 +53,8 @@
 		<h1>Ground</h1>
 		<p class="tagline">Grounded claims for code</p>
 		<p class="description">
-			An MCP server that prevents AI hallucination in code analysis. 
-			You can't claim something until you've checked it.
+			An MCP server that requires code analysis before an agent can record a claim.
+			Ground focuses its public support contract on TypeScript, JavaScript, and SvelteKit.
 		</p>
 		<code class="npm-package">npm install @createsomething/ground-mcp</code>
 	</header>
@@ -76,29 +76,45 @@
 			<li><strong>Dead code</strong> → You have to count the uses first</li>
 			<li><strong>Orphans</strong> → You have to check the connections first</li>
 		</ul>
-		<p>This prevents AI hallucination by requiring computation before synthesis.</p>
+		<p>This makes the checked inputs and the finding inspectable before synthesis.</p>
 	</section>
 
 	<section class="section">
 		<h2>Installation</h2>
 		
 		<h3>Claude Code (CLI)</h3>
-		<pre><code>npm install @createsomething/ground-mcp
-claude mcp add --scope user --transport stdio ground -- npx @createsomething/ground-mcp</code></pre>
+		<pre><code>claude mcp add --scope user --transport stdio ground -- npx --yes -p @createsomething/ground-mcp ground-mcp</code></pre>
 
-		<h3>Cursor (One-Click)</h3>
-		<p><a href="cursor://anysphere.cursor-deeplink/mcp/install?name=ground&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyJAY3JlYXRlc29tZXRoaW5nL2dyb3VuZC1tY3AiXX0%3D" class="install-button">Install in Cursor →</a></p>
+		<h3>Codex CLI</h3>
+		<pre><code>codex mcp add ground -- npx --yes -p @createsomething/ground-mcp ground-mcp</code></pre>
 
-		<h3>Other Tools</h3>
-		<p>Add to your MCP config (<code>.mcp.json</code>, <code>claude_desktop_config.json</code>, etc.):</p>
+		<h3>Cursor, Windsurf, and JSON-based clients</h3>
+		<p>Add this server to the client MCP configuration:</p>
 		<pre><code>{`{
   "mcpServers": {
     "ground": {
       "command": "npx",
-      "args": ["@createsomething/ground-mcp"]
+      "args": ["--yes", "-p", "@createsomething/ground-mcp", "ground-mcp"]
     }
   }
 }`}</code></pre>
+	</section>
+
+	<section class="section">
+		<h2>Supported code</h2>
+		<ul>
+			<li><strong>TypeScript and JavaScript:</strong> duplicate functions, imports, uses, dead exports, entry points, orphans, environment boundaries, and git diffs.</li>
+			<li><strong>Svelte and SvelteKit:</strong> component-script duplicates, route conventions, <code>$lib</code> imports, actions, stores, hooks, and reachability.</li>
+			<li><strong>Other languages:</strong> some direct checks can parse them, but they are outside the public agent-quality support contract.</li>
+		</ul>
+		<p>Ground returns <code>UNSUPPORTED</code>, <code>PARTIAL</code>, or <code>NOT_APPLICABLE</code> when a requested check cannot justify a clean result.</p>
+	</section>
+
+	<section class="section">
+		<h2>Calibration</h2>
+		<p>Ground remains advisory until the checked-in calibration policy passes. Promotion requires at least 10 independently adjudicated findings, 90% precision, no more than a 10% false-positive rate, stable exclusion accounting, and no execution failures in the representative sample.</p>
+		<p>Each finding stays classified as confirmed, false positive, or out of scope. Out-of-scope observations never inflate detector accuracy.</p>
+		<p>The current release calibration combines 10 controlled positive fixtures with one preserved real-repository false positive. That qualifies the declared advisory release gate; it is not a population-wide accuracy estimate.</p>
 	</section>
 
 	<section class="section">
@@ -183,6 +199,9 @@ claude mcp add --scope user --transport stdio ground -- npx @createsomething/gro
 			<li>Context declarations for intentional exclusions</li>
 			<li>Similarity thresholds</li>
 		</ul>
+		<p>The MCP server stores its registry at <code>.ground/registry.db</code> by default and writes its desire-path log beside that database.</p>
+		<p>For a disposable evaluation, pass an explicit database outside the repository:</p>
+		<pre><code>ground-mcp --db /tmp/ground-eval/registry.db --workspace /absolute/path/to/project</code></pre>
 	</section>
 
 	<section class="section links">
@@ -191,7 +210,7 @@ claude mcp add --scope user --transport stdio ground -- npx @createsomething/gro
 			<li><a href="https://www.npmjs.com/package/@createsomething/ground-mcp">npm Package</a></li>
 			<li><a href="https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/ground">GitHub Repository</a></li>
 			<li><a href="/papers/ground-evidence-based-claims">Research Paper: Evidence-Based Claims</a></li>
-			<li><a href="/docs/loom">Related: Loom (Agent Coordination)</a></li>
+			<li><a href="https://github.com/createsomethingtoday/create-something-monorepo/blob/main/AGENTS.md">Coordination policy: Linear-first tracked work</a></li>
 		</ul>
 	</section>
 </main>
@@ -295,22 +314,6 @@ claude mcp add --scope user --transport stdio ground -- npx @createsomething/gro
 	pre code {
 		font-size: var(--text-performance-body-sm);
 		color: var(--color-performance-fg-primary);
-	}
-
-	.install-button {
-		display: inline-block;
-		background: var(--color-performance-bg-surface);
-		padding: var(--space-performance-sm) var(--space-performance-md);
-		border-radius: var(--radius-performance-scale-md);
-		color: var(--color-performance-fg-primary);
-		text-decoration: none;
-		font-size: var(--text-performance-body);
-		transition: all var(--duration-performance-micro) var(--ease-performance-standard);
-	}
-
-	.install-button:hover {
-		border-color: var(--color-border-hover);
-		background: var(--color-performance-bg-subtle);
 	}
 
 	.tools-table {

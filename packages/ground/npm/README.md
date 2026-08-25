@@ -3,9 +3,9 @@
 [![npm version](https://img.shields.io/npm/v/@createsomething/ground-mcp.svg)](https://www.npmjs.com/package/@createsomething/ground-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**Grounded claims for code.** An MCP server that prevents AI hallucination in code analysis.
+**Grounded claims for code.** An MCP server that computes evidence before code-analysis claims.
 
-Works with Claude Code, Cursor, Windsurf, VS Code Copilot, Claude Desktop, and any MCP-compatible AI coding assistant.
+The verified setup contract covers Claude Code, Codex, Cursor, and Windsurf.
 
 **[View Landing Page →](https://createsomething.agency/products/ground)**
 
@@ -13,12 +13,12 @@ Works with Claude Code, Cursor, Windsurf, VS Code Copilot, Claude Desktop, and a
 
 | Capability | Without Ground | With Ground |
 |------------|---------------|-------------|
-| Duplicate detection | "These look 95% similar" | Computed 87.3% similarity via AST + token analysis |
+| Duplicate detection | "These look similar" | Computed AST + token similarity evidence |
 | Dead code claims | "This appears unused" | Verified: 0 imports, 0 type references |
 | Orphan detection | "Nothing imports this" | Checked: not a Worker entry point, not framework-implicit |
-| Design drift | "Colors look hardcoded" | Adoption ratio: 73% tokens, 27% violations |
+| Design drift | "Colors look hardcoded" | Token usage and violation counts |
 
-**The difference**: Ground requires computation before claims. No hallucinated analysis.
+**The difference**: Ground requires computation before its claim tools accept a claim.
 
 ## Recommended agent path
 
@@ -55,7 +55,7 @@ check in `check_coverage.<check>.status`. The contract is explicit:
 - `PASS`: the check completed for the relevant supported files and found no issue.
 - `FAIL`: the check found an issue or could not complete because of a read/parse failure.
 - `NOT_APPLICABLE`: no changed file needs that check.
-- `UNSUPPORTED`: relevant source exists, but the requested check cannot analyze its language (including Svelte duplicate-function scans).
+- `UNSUPPORTED`: relevant source exists, but the requested check cannot analyze its language.
 - `TIMEOUT`: duplicate analysis reached its deadline before a complete result was available.
 
 `ground analyze` and `ground diff` accept `--timeout-ms` (120000 by default).
@@ -67,7 +67,14 @@ view; read `discovered_changed_files`, `analyzable_changed_files`, and
 `unsupported_changed_files` and `excluded_changed_files`, so a clean claim is
 valid only with `PASS`.
 
-Ground 0.3.5 extends source-bearing orphan evidence to nested Cloudflare Worker
+Ground 0.3.6 supports TypeScript (`.ts`, `.tsx`), JavaScript (`.js`, `.jsx`,
+`.mjs`), and Svelte (`.svelte`) in the declared analysis lane. Svelte component
+scripts participate in duplicate analysis, while SvelteKit configuration,
+routes, aliases, actions, stores, and framework entry points inform reachability
+and dead-export evidence. Inputs outside that contract remain unsupported rather
+than being reported as clean.
+
+Ground 0.3.5 extended source-bearing orphan evidence to nested Cloudflare Worker
 configurations: `wrangler.toml` and `wrangler.json` `main` entries are protected
 with their exact config source. The legacy `ground find orphans` command now
 returns the same verified canonical report as `ground analyze --checks orphans`.
@@ -120,8 +127,8 @@ This is hallucination dressed up as analysis.
 
 Ground is an MCP server that:
 - Finds duplicates, dead code, and orphaned modules
-- Requires verification before claims
-- Blocks hallucinated analysis
+- Requires verification before its claim tools record a finding
+- Keeps checked inputs with the recorded claim
 - Provides confidence scores with evidence
 
 ---
@@ -137,8 +144,7 @@ This is the one everyone gets wrong. Claude Code doesn't read `.claude/mcp.json`
 **Option A: User scope (available everywhere)**
 
 ```bash
-npm install @createsomething/ground-mcp
-claude mcp add --scope user --transport stdio ground -- npx @createsomething/ground-mcp
+claude mcp add --scope user --transport stdio ground -- npx --yes -p @createsomething/ground-mcp ground-mcp
 ```
 
 Restart Claude Code, run `/mcp`, and you should see "ground" connected.
@@ -152,7 +158,7 @@ Create `.mcp.json` in your project root:
   "mcpServers": {
     "ground": {
       "command": "npx",
-      "args": ["@createsomething/ground-mcp"]
+      "args": ["--yes", "-p", "@createsomething/ground-mcp", "ground-mcp"]
     }
   }
 }
@@ -160,37 +166,16 @@ Create `.mcp.json` in your project root:
 
 Claude Code will prompt you to approve it on first use.
 
-### Cursor (One-Click)
+### Cursor
 
-[**Install in Cursor →**](cursor://anysphere.cursor-deeplink/mcp/install?name=ground&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyJAY3JlYXRlc29tZXRoaW5nL2dyb3VuZC1tY3AiXX0%3D)
-
-Or add to `.mcp.json` at your project root:
+Add to `.mcp.json` at your project root:
 
 ```json
 {
   "mcpServers": {
     "ground": {
       "command": "npx",
-      "args": ["@createsomething/ground-mcp"]
-    }
-  }
-}
-```
-
-### Claude Desktop
-
-Add to `claude_desktop_config.json`:
-
-- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
-- **Linux**: `~/.config/Claude/claude_desktop_config.json`
-
-```json
-{
-  "mcpServers": {
-    "ground": {
-      "command": "npx",
-      "args": ["@createsomething/ground-mcp"]
+      "args": ["--yes", "-p", "@createsomething/ground-mcp", "ground-mcp"]
     }
   }
 }
@@ -205,22 +190,16 @@ Settings → MCP → View raw config, add:
   "mcpServers": {
     "ground": {
       "command": "npx",
-      "args": ["@createsomething/ground-mcp"]
+      "args": ["--yes", "-p", "@createsomething/ground-mcp", "ground-mcp"]
     }
   }
 }
 ```
 
-### VS Code + Copilot
-
-1. Open Extensions panel
-2. Filter by "MCP Server"
-3. Search "ground"
-
 ### Codex CLI
 
 ```bash
-codex mcp add ground --command "npx @createsomething/ground-mcp"
+codex mcp add ground -- npx --yes -p @createsomething/ground-mcp ground-mcp
 ```
 
 ### Global Install (When npx Isn't Your Thing)
@@ -268,7 +247,7 @@ Ground needs to know where your code is. For project-specific analysis, run it f
   "mcpServers": {
     "ground": {
       "command": "npx",
-      "args": ["@createsomething/ground-mcp", "--workspace", "/path/to/your/project"]
+      "args": ["--yes", "-p", "@createsomething/ground-mcp", "ground-mcp", "--workspace", "/path/to/your/project"]
     }
   }
 }
@@ -391,7 +370,7 @@ Ground is based on a simple principle: **no claim without evidence**.
 - **Dead code** → You have to count the uses first  
 - **Orphans** → You have to check the connections first
 
-This prevents AI hallucination by requiring computation before synthesis.
+This keeps Ground's recorded claims tied to prerequisite computation.
 
 ## Configuration
 

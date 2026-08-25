@@ -17,11 +17,10 @@ const VERSION = require('./package.json').version;
 const SKIP_INSTALL = process.env.GROUND_MCP_SKIP_BINARY_INSTALL === '1';
 const IS_SOURCE_TREE_INSTALL = fs.existsSync(path.resolve(__dirname, '../Cargo.toml'));
 
-// Platform mapping
-// Note: macOS Intel uses arm64 binary via Rosetta 2
+// Platform mapping. Every supported host receives a native archive.
 const PLATFORMS = {
   'darwin-arm64': 'darwin-arm64',
-  'darwin-x64': 'darwin-arm64',  // Rosetta 2 compatibility
+  'darwin-x64': 'darwin-x64',
   'linux-arm64': 'linux-arm64',
   'linux-x64': 'linux-x64',
   'win32-x64': 'win32-x64',
@@ -33,8 +32,8 @@ function getPlatformKey() {
   return `${platform}-${arch}`;
 }
 
-function getBinaryName() {
-  const key = getPlatformKey();
+function getBinaryName(platform = process.platform, arch = process.arch) {
+  const key = `${platform}-${arch}`;
   const name = PLATFORMS[key];
   
   if (!name) {
@@ -205,6 +204,7 @@ if (require.main === module) {
 
 module.exports = {
   download,
+  getBinaryName,
   getDownloadUrl,
   getChecksumsUrl,
   verifyArchiveIntegrity,
