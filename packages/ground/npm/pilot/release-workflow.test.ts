@@ -37,6 +37,9 @@ test('Ground release assets publish checksums, provenance, and through npm trust
   assert.match(workflow, /Verify release tag matches package version/);
   assert.match(workflow, /expected_tag="ground-v\$\(node -p \"require\('\.\/package\.json'\)\.version\"\)"/);
   assert.match(workflow, /npm publish --access public/);
+  assert.match(workflow, /id:\s*package/);
+  assert.match(workflow, /already_published=true/);
+  assert.match(workflow, /steps\.package\.outputs\.already_published != 'true'/);
   assert.match(workflow, /target:\s*x86_64-apple-darwin/);
   assert.match(workflow, /os:\s*macos-15-intel/);
   assert.match(workflow, /os:\s*macos-15(?:\s|$)/);
@@ -51,6 +54,7 @@ test('Ground release assets publish checksums, provenance, and through npm trust
   assert.match(workflow, /smoke-published-consumer\.mjs/);
   assert.match(workflow, /ground-\$\{\{ matrix\.name \}\}-consumer-smoke\.json/);
   assert.match(workflow, /publish-consumer-receipts:/);
+  assert.match(workflow, /GH_REPO:\s*\$\{\{ github\.repository \}\}/);
   assert.match(workflow, /CONSUMER-SHA256SUMS/);
   assert.match(workflow, /pattern:\s*ground-\*-consumer-smoke/);
   assert.match(workflow, /macOS Intel \| `ground-darwin-x64\.tar\.gz`/);

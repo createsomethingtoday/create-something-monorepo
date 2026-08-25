@@ -14,6 +14,10 @@ const agencyDeployWorkflow = new URL(
   '../../.github/workflows/agency-pages-deploy.yml',
   import.meta.url
 );
+const generatedKnowledgeGraph = new URL(
+  '../../packages/create-something-mcp/src/content/generated/graph.ts',
+  import.meta.url
+);
 
 test('Ground public surfaces use executable agent-client commands', async () => {
   const [agency, docs, readme] = await Promise.all([
@@ -93,4 +97,10 @@ test('Agency production deployment waits for the released Ground source tree', a
   assert.match(workflow, /ground-linux-arm64-consumer-smoke\.json/);
   assert.match(workflow, /CONSUMER-SHA256SUMS/);
   assert.match(workflow, /npm view "\$\{package_name\}@\$\{version\}" version/);
+});
+
+test('Ground public discovery omits retired distribution paths', async () => {
+  const graph = await readFile(generatedKnowledgeGraph, 'utf8');
+  assert.doesNotMatch(graph, /packages\/ground\/mcpb\/README\.md/);
+  assert.doesNotMatch(graph, /Ground MCP - Claude Desktop Extension/);
 });

@@ -209,7 +209,22 @@ jobs:
         working-directory: packages/ground/npm
         run: node release-verify.js
 
+      - name: Check whether exact package version already exists
+        id: package
+        working-directory: packages/ground/npm
+        shell: bash
+        run: |
+          package_name=$(node -p "require('./package.json').name")
+          version=$(node -p "require('./package.json').version")
+          published_version=$(npm view "${package_name}@${version}" version 2>/dev/null || true)
+          if test "$published_version" = "$version"; then
+            echo "already_published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "already_published=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Publish package through npm trusted publishing
+        if: steps.package.outputs.already_published != 'true'
         working-directory: packages/ground/npm
         run: npm publish --access public
 
@@ -278,6 +293,7 @@ jobs:
       - name: Verify, checksum, and attach consumer receipts
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
           RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
         shell: bash
         run: |

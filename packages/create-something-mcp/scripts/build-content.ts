@@ -14,6 +14,7 @@
  */
 
 import { readdir, readFile, mkdir, writeFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import { basename, join, relative } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -543,11 +544,22 @@ async function buildGraph(): Promise<string> {
     }
   }
 
-  const rawNodes = JSON.parse(nodesRaw);
-  const rawEdges = JSON.parse(edgesRaw);
+  const rawNodes = JSON.parse(nodesRaw) as Record<string, unknown>[];
+  const rawEdges = JSON.parse(edgesRaw) as Record<string, unknown>[];
+
+  // Graph snapshots can outlive documents removed from the repository. Keep the
+  // generated MCP projection truthful even when the source graph has not yet
+  // been rebuilt, and drop edges that would point at a filtered node.
+  const activeNodes = rawNodes.filter(
+    (node) => typeof node.id === 'string' && existsSync(join(ROOT, node.id)),
+  );
+  const activeNodeIds = new Set(activeNodes.map((node) => node.id));
+  const activeEdges = rawEdges.filter(
+    (edge) => activeNodeIds.has(edge.source) && activeNodeIds.has(edge.target),
+  );
 
   // Simplify nodes — strip absolutePath, keep essential fields
-  const nodes = rawNodes.map((n: Record<string, unknown>) => ({
+  const nodes = activeNodes.map((n: Record<string, unknown>) => ({
     id: n.id,
     title: n.title,
     package: n.package,
@@ -557,7 +569,7 @@ async function buildGraph(): Promise<string> {
   }));
 
   // Simplify edges — flatten metadata
-  const edges = rawEdges.map((e: Record<string, unknown>) => ({
+  const edges = activeEdges.map((e: Record<string, unknown>) => ({
     source: e.source,
     target: e.target,
     type: e.type,

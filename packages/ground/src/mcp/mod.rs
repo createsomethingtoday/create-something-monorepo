@@ -2477,7 +2477,13 @@ fn generate_structured_fix(
 ) -> StructuredFix {
     let same_package = pkg_a == pkg_b;
     let confidence = calculate_duplicate_confidence(similarity, 20, 20, same_package);
-    let review_only = is_test_file(file_a) || is_test_file(file_b);
+    let svelte_component = [file_a, file_b].iter().any(|path| {
+        path.extension()
+            .and_then(|extension| extension.to_str())
+            .is_some_and(|extension| extension.eq_ignore_ascii_case("svelte"))
+    });
+    let test_or_fixture = is_test_file(file_a) || is_test_file(file_b);
+    let review_only = test_or_fixture || svelte_component;
     
     // Determine target module
     let target = if review_only {
@@ -2527,7 +2533,12 @@ fn generate_structured_fix(
         imports_to_update: imports,
         confidence,
         safe_to_auto_fix: !review_only && confidence > 0.9 && same_package,
-        rationale: if review_only {
+        rationale: if svelte_component {
+            format!(
+                "{:.1}% similar. Svelte component scripts require review because extracted helpers may close over component state or runes; no automatic consolidation target or import rewrite is proposed.",
+                similarity * 100.0
+            )
+        } else if test_or_fixture {
             format!(
                 "{:.1}% similar. Test and fixture duplicates require review because intentional isolation is common; no automatic consolidation target is proposed.",
                 similarity * 100.0
@@ -4710,7 +4721,12 @@ mod tests {
         let findings = result.content["findings"]["duplicates"].as_array().unwrap();
         assert_eq!(findings.len(), 1, "{:?}", result.content);
         assert_eq!(findings[0]["function"], "normalizeLabel");
-        assert_eq!(findings[0]["safe_to_auto_fix"], true);
+        assert_eq!(findings[0]["safe_to_auto_fix"], false);
+        assert_eq!(findings[0]["fix"]["target"], Value::Null);
+        assert!(findings[0]["fix"]["rationale"]
+            .as_str()
+            .unwrap()
+            .contains("Svelte component scripts require review"));
     }
 
     #[test]
