@@ -143,7 +143,9 @@
   media={{
     src: '/images/performance-lab/ground-verification-instrument.webp',
     mobileSrc: '/images/performance-lab/ground-verification-instrument-mobile.webp',
-    alt: 'Two code artifacts feed a comparison ring while an unverified claim is stopped and a proof receipt exits'
+    alt: 'Two code artifacts feed a comparison ring while an unverified claim is stopped and a proof receipt exits',
+    objectPosition: 'center 62%',
+    colorMode: 'natural'
   }}
   proof={[
     { label: 'Languages', value: 'TS + JS' },

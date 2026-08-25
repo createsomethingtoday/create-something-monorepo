@@ -64,8 +64,10 @@ Retain this study only while all of these remain true:
    tactile verification instrument without relying on baked text.
 2. The headline, lede, install action, and proof rail remain legible and
    keyboard-operable.
-3. Desktop (1440 x 1000) and mobile (390 x 844) retain every semantic object
-   with no overflow, clipped media, or failed asset request.
+3. Desktop (1440 x 1000), tablet (700 x 1000), and mobile (390 x 844) retain
+   every semantic object with no overflow, clipped media, or failed asset
+   request. The route preserves the natural semantic colors and uses a 62%
+   vertical focal position so the stopped claim remains inside the tablet crop.
 4. Ground's operating sequence and calibration evidence remain inspectable live
    DOM below the campaign opening.
 

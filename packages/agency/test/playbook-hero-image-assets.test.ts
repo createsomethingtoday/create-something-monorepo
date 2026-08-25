@@ -113,6 +113,8 @@ test('the Ground hero keeps its verification instrument and provenance intact', 
 
   assert.match(route, /ground-verification-instrument\.webp/);
   assert.match(route, /ground-verification-instrument-mobile\.webp/);
+  assert.match(route, /objectPosition: 'center 62%'/);
+  assert.match(route, /colorMode: 'natural'/);
   assert.doesNotMatch(route, /pressure-boundary-natural/);
   assert.match(metadata, /compare code inputs, stop the unverified claim/i);
   assert.match(metadata, /No third-party brand/);
