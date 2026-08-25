@@ -553,7 +553,13 @@ async function runProcessingPass(
             if (Object.prototype.hasOwnProperty.call(completedSteps, key)) {
               return completedSteps[key] as T;
             }
-            const value = await operation();
+            let value: T;
+            try {
+              value = await operation();
+            } catch (error) {
+              await renewLease();
+              throw error;
+            }
             await renewLease();
             completedSteps[key] = value === undefined ? true : value;
             webhook.retry = {
