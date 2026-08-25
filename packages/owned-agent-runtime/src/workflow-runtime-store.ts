@@ -482,7 +482,10 @@ export class D1WorkflowRuntimeCheckpointStore implements WorkflowRuntimeCheckpoi
                 serialized
               )
           );
-          if (input.run.schema === 'workflow_runtime_run.v0.2') {
+          const attestedApprovalDecision =
+            input.run.schema === 'workflow_runtime_run.v0.2' &&
+            ('actorRole' in receipt || 'approvalSurfaceSha256' in receipt);
+          if (attestedApprovalDecision) {
             const actorRole = receipt.actorRole;
             if (!actorRole) {
               throw new RuntimeValidationError(
