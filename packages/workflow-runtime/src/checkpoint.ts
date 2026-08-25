@@ -8,6 +8,7 @@ import {
   RuntimeValidationError,
   type WorkflowRuntimeAdmission,
   type WorkflowRuntimeEvent,
+  type WorkflowRuntimeActorRole,
   type WorkflowRuntimeManifest,
   type WorkflowRuntimePlan,
   type WorkflowRuntimeRun
@@ -43,7 +44,7 @@ export interface WorkflowRuntimeHostPorts {
       scope: WorkflowRuntimeScope,
       actorSubject: string | null,
       requiredApprovalPolicy: string | null
-    ): Promise<string | null>;
+    ): Promise<string | WorkflowRuntimeVerifiedIdentity | null>;
   };
   queue: {
     enqueue(input: { runId: string; expectedVersion: number }): Promise<void>;
@@ -52,6 +53,12 @@ export interface WorkflowRuntimeHostPorts {
     write(run: WorkflowRuntimeRun): Promise<void>;
   };
   executor: never;
+}
+
+/** A Control Identity result that can attest an approval decision role. */
+export interface WorkflowRuntimeVerifiedIdentity {
+  subject: string;
+  role: WorkflowRuntimeActorRole;
 }
 
 function scopeKey(scope: WorkflowRuntimeScope): string {
@@ -130,6 +137,22 @@ async function semanticCommandDigest(value: unknown): Promise<string> {
 
 function actorSubject(event: WorkflowRuntimeEvent): string | null {
   return 'actorSubject' in event ? bounded(event.actorSubject, 'Runtime actor subject') : null;
+}
+
+function authenticatedSubject(value: string | WorkflowRuntimeVerifiedIdentity | null): string | null {
+  return typeof value === 'string' ? value : value?.subject ?? null;
+}
+
+function verifiedApprovalIdentity(
+  value: string | WorkflowRuntimeVerifiedIdentity | null
+): WorkflowRuntimeVerifiedIdentity {
+  if (typeof value === 'string' || value === null) {
+    throw new RuntimeValidationError(
+      'INVALID_EVENT',
+      'Runtime approval requires a verified Control Identity role attestation'
+    );
+  }
+  return value;
 }
 
 function activeStopStep(run: WorkflowRuntimeRun): string {
@@ -287,20 +310,26 @@ export class ZeroWriteWorkflowRuntimeHost {
       event.type === 'approval_decided' ? await this.required(scope, runId) : undefined;
     const requiredApprovalPolicy =
       approvalRun?.steps.find((step) => step.id === event.stepId)?.approval?.policyId ?? null;
-    const authenticatedActorSubject = await this.ports.identity.assert(
+    const authenticatedIdentity = await this.ports.identity.assert(
       scope,
       claimedActorSubject,
       requiredApprovalPolicy
     );
+    const authenticatedActorSubject = authenticatedSubject(authenticatedIdentity);
     if (authenticatedActorSubject !== claimedActorSubject) {
       throw new RuntimeValidationError(
         'INVALID_EVENT',
         'Runtime event actor subject does not match the authenticated identity'
       );
     }
+    const approvalIdentity =
+      event.type === 'approval_decided'
+        ? verifiedApprovalIdentity(authenticatedIdentity)
+        : undefined;
     const observedEvent = {
       ...event,
       ...(claimedActorSubject === null ? {} : { actorSubject: authenticatedActorSubject }),
+      ...(approvalIdentity === undefined ? {} : { actorRole: approvalIdentity.role }),
       observedAt: this.ports.clock()
     } as WorkflowRuntimeEvent;
     const { observedAt: _observedAt, ...payload } = observedEvent;

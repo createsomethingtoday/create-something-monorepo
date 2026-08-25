@@ -131,6 +131,13 @@ function fixture(executor?: ControlRunExecutor, runId?: () => string) {
     ),
     'utf8'
   );
+  const workflowRuntimeApprovalAttestationMigration = readFileSync(
+    new URL(
+      '../migrations/0010_control_workflow_runtime_approval_attestations.sql',
+      import.meta.url
+    ),
+    'utf8'
+  );
   execFileSync('sqlite3', [path], {
     input: `PRAGMA foreign_keys=ON;
       ${migration}
@@ -140,6 +147,7 @@ function fixture(executor?: ControlRunExecutor, runId?: () => string) {
       ${workflowRuntimeProofMigration}
       ${workflowRuntimeApprovalContextMigration}
       ${workflowRuntimeRegistrationBindingMigration}
+      ${workflowRuntimeApprovalAttestationMigration}
       CREATE TABLE customer_control_activations (
         id TEXT PRIMARY KEY, activation_version INTEGER, activation_kind TEXT, status TEXT,
         account_id TEXT, tenant_id TEXT, workspace_account_id TEXT,
@@ -300,6 +308,19 @@ function trustedRuntimeManifestAuthority(
   };
 }
 
+function trustedApprovalSurfaceAuthority(
+  entries: ReadonlyArray<{
+    digest: RuntimeDigest;
+    surface: { schemaVersion: 'approval_surfaces.v0.3'; sha256: RuntimeDigest };
+  }>
+) {
+  return {
+    async findByRuntimeManifestSha256(digest: RuntimeDigest) {
+      return entries.find((entry) => entry.digest === digest)?.surface;
+    }
+  };
+}
+
 const runtimeManifest = parseWorkflowRuntimeManifest({
   schemaVersion: 'workflow_runtime_manifest.v0.1',
   runtimeCompatibility: 'workflow-runtime.v0.1',
@@ -363,7 +384,13 @@ const templateReviewRuntimeManifest = parseWorkflowRuntimeManifest({
 function checkpointStore(path: string, manifest = runtimeManifest) {
   return new D1WorkflowRuntimeCheckpointStore(
     d1(path),
-    trustedRuntimeManifestAuthority([{ digest: runtimeDigest('8'), manifest }])
+    trustedRuntimeManifestAuthority([{ digest: runtimeDigest('8'), manifest }]),
+    trustedApprovalSurfaceAuthority([
+      {
+        digest: runtimeDigest('8'),
+        surface: { schemaVersion: 'approval_surfaces.v0.3', sha256: manifest.artifacts.approvalSurfacesSha256 }
+      }
+    ])
   );
 }
 
@@ -998,7 +1025,7 @@ test('D1 rolls back a losing same-key admission without leaving an orphaned runt
   );
 });
 
-test('D1 checkpoint store records the exact approval binding and decision without an executable request', async () => {
+test('D1 checkpoint store records the exact approval binding and authenticated decision contract without an executable request', async () => {
   const longRunId = 'r'.repeat(65);
   const longReviewStepId = 'review-'.padEnd(160, 'r');
   const { path, service } = fixture(undefined, () => longRunId);
@@ -1039,7 +1066,13 @@ test('D1 checkpoint store records the exact approval binding and decision withou
   });
   const store = new D1WorkflowRuntimeCheckpointStore(
     d1(path),
-    trustedRuntimeManifestAuthority([{ digest: runtimeDigest('8'), manifest }])
+    trustedRuntimeManifestAuthority([{ digest: runtimeDigest('8'), manifest }]),
+    trustedApprovalSurfaceAuthority([
+      {
+        digest: runtimeDigest('8'),
+        surface: { schemaVersion: 'approval_surfaces.v0.3', sha256: manifest.artifacts.approvalSurfacesSha256 }
+      }
+    ])
   );
   await store.apply({
     scope,
@@ -1097,6 +1130,38 @@ test('D1 checkpoint store records the exact approval binding and decision withou
     }),
     /requires a trusted manifest authority/
   );
+  await assert.rejects(
+    new D1WorkflowRuntimeCheckpointStore(
+      d1(path),
+      trustedRuntimeManifestAuthority([{ digest: runtimeDigest('8'), manifest }])
+    ).apply({
+      scope,
+      run: waiting,
+      expectedVersion: collected.version,
+      idempotencyKey: 'approval-wait-without-surface-authority',
+      commandDigest: '9'.repeat(64)
+    }),
+    /requires a trusted approval-surface authority/
+  );
+  await assert.rejects(
+    new D1WorkflowRuntimeCheckpointStore(
+      d1(path),
+      trustedRuntimeManifestAuthority([{ digest: runtimeDigest('8'), manifest }]),
+      trustedApprovalSurfaceAuthority([
+        {
+          digest: runtimeDigest('8'),
+          surface: { schemaVersion: 'approval_surfaces.v0.3', sha256: runtimeDigest('e') }
+        }
+      ])
+    ).apply({
+      scope,
+      run: waiting,
+      expectedVersion: collected.version,
+      idempotencyKey: 'approval-wait-mismatched-surface',
+      commandDigest: '8'.repeat(64)
+    }),
+    /approval surface does not match the trusted compiler manifest/
+  );
   await store.apply({
     scope,
     run: waiting,
@@ -1111,6 +1176,7 @@ test('D1 checkpoint store records the exact approval binding and decision withou
     approvalBindingSha256: wait.approval.bindingSha256,
     decision: 'approved',
     actorSubject: owner.subject,
+    actorRole: owner.role,
     observedAt: '2026-08-25T00:00:04.000Z'
   });
   await store.apply({
@@ -1161,6 +1227,15 @@ test('D1 checkpoint store records the exact approval binding and decision withou
       policyId: 'account-owner',
       expiresAt: '2026-08-26T00:00:00.000Z',
       decision: 'approved',
+      decidedByRole: 'account_owner',
+      approvalSurface: {
+        schemaVersion: 'approval_surfaces.v0.3',
+        sha256: runtimeDigest('d')
+      },
+      approvalCommand: {
+        schema: 'create-something/control-workflow-runtime-approval-command@1',
+        version: 1
+      },
       createdAt: '2026-08-25T00:00:03.000Z',
       decidedAt: '2026-08-25T00:00:04.000Z',
       context: approvalContext
@@ -1170,6 +1245,24 @@ test('D1 checkpoint store records the exact approval binding and decision withou
   assert.equal(proof.steps[1]?.pendingApproval, null);
   assert.equal(JSON.stringify(proof).includes(owner.subject), false);
   assert.equal(JSON.stringify(proof).includes('outcome'), false);
+  assert.throws(
+    () =>
+      execFileSync('sqlite3', [path], {
+        input: `UPDATE control_workflow_runtime_approval_attestations
+                SET approval_surface_sha256 = '${runtimeDigest('e')}'
+                WHERE approval_id = '${wait.approval.id}';`
+      }),
+    /approval attestation identity is immutable/
+  );
+  assert.throws(
+    () =>
+      execFileSync('sqlite3', [path], {
+        input: `UPDATE control_workflow_runtime_approval_attestations
+                SET decision_actor_role = 'agency_operator'
+                WHERE approval_id = '${wait.approval.id}';`
+      }),
+    /approval role requires its decision receipt/
+  );
   const crossScopeContext = JSON.stringify({
     ...approvalContext,
     scope: { ...scope, tenantId: 'other-tenant' }

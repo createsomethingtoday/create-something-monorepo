@@ -2,6 +2,7 @@ import {
   RuntimeValidationError,
   verifyWorkflowRuntimeRun,
   type RuntimeDigest,
+  type WorkflowRuntimeActorRole,
   type WorkflowRuntimeManifest,
   type WorkflowRuntimeReceipt,
   type WorkflowRuntimeRun,
@@ -12,6 +13,17 @@ import type { WorkflowRuntimeManifestAuthority } from './workflow-runtime-manife
 const DIGEST = /^sha256:[a-f0-9]{64}$/;
 const VERIFIER = /^[a-z][a-z0-9_-]{0,79}$/;
 const FAILURE_CODE = /^[a-z][a-z0-9_]{0,79}$/;
+const ACTOR_ROLES: readonly WorkflowRuntimeActorRole[] = [
+  'account_owner',
+  'agency_operator',
+  'account_reader',
+  'control_scheduler'
+];
+const APPROVAL_SURFACE_SCHEMAS = [
+  'approval_surfaces.v0.1',
+  'approval_surfaces.v0.2',
+  'approval_surfaces.v0.3'
+] as const;
 
 type ProofRow = {
   run_json: string;
@@ -26,6 +38,11 @@ type ApprovalRow = {
   decision: 'approved' | 'rejected' | null;
   approval_json: string;
   approval_context_json: string | null;
+  approval_surface_schema: string | null;
+  approval_surface_sha256: string | null;
+  approval_command_schema: string | null;
+  approval_command_version: number | null;
+  decision_actor_role: string | null;
   created_at: string;
   decided_at: string | null;
 };
@@ -76,6 +93,16 @@ export type WorkflowRuntimeProofApprovalContext =
   | WorkflowRuntimeProofApprovalContextV1
   | WorkflowRuntimeProofApprovalContextV2;
 
+export interface WorkflowRuntimeProofApprovalSurface {
+  schemaVersion: (typeof APPROVAL_SURFACE_SCHEMAS)[number];
+  sha256: RuntimeDigest;
+}
+
+export interface WorkflowRuntimeProofApprovalCommand {
+  schema: 'create-something/control-workflow-runtime-approval-command@1';
+  version: 1;
+}
+
 export interface WorkflowRuntimeProofApproval {
   id: string;
   stepId: string;
@@ -83,6 +110,11 @@ export interface WorkflowRuntimeProofApproval {
   policyId: string;
   expiresAt: string;
   decision: 'approved' | 'rejected' | null;
+  /** Role only; proof intentionally omits the decision subject. */
+  decidedByRole: WorkflowRuntimeActorRole | null;
+  /** Present for registration-bound approvals; legacy v0.1 rows have no attestation. */
+  approvalSurface: WorkflowRuntimeProofApprovalSurface | null;
+  approvalCommand: WorkflowRuntimeProofApprovalCommand | null;
   createdAt: string;
   decidedAt: string | null;
   context: WorkflowRuntimeProofApprovalContext;
@@ -446,12 +478,17 @@ function parseApproval(
     !isRecord(value) ||
     !exact(value, [
       'approval_id',
+      'approval_command_schema',
+      'approval_command_version',
       'approval_context_json',
       'approval_json',
+      'approval_surface_schema',
+      'approval_surface_sha256',
       'binding_sha256',
       'created_at',
       'decided_at',
       'decision',
+      'decision_actor_role',
       'step_id'
     ])
   ) {
@@ -497,6 +534,72 @@ function parseApproval(
       'Stored Workflow Runtime approval decision is incomplete'
     );
   }
+  const attestationValues = [
+    value.approval_surface_schema,
+    value.approval_surface_sha256,
+    value.approval_command_schema,
+    value.approval_command_version
+  ];
+  const hasAttestation = attestationValues.some((entry) => entry !== null);
+  if (hasAttestation && attestationValues.some((entry) => entry === null)) {
+    throw new RuntimeValidationError(
+      'INVALID_STATE',
+      'Stored Workflow Runtime approval attestation is incomplete'
+    );
+  }
+  if (!hasAttestation && context.schema === 'create-something/workflow-runtime-approval-context@2') {
+    throw new RuntimeValidationError(
+      'INVALID_STATE',
+      'Registration-bound Workflow Runtime approval is missing its attestation'
+    );
+  }
+  const approvalSurface = hasAttestation
+    ? {
+        schemaVersion: (() => {
+          if (
+            !APPROVAL_SURFACE_SCHEMAS.includes(
+              value.approval_surface_schema as (typeof APPROVAL_SURFACE_SCHEMAS)[number]
+            )
+          ) {
+            throw new RuntimeValidationError(
+              'INVALID_STATE',
+              'Stored Workflow Runtime approval surface schema is invalid'
+            );
+          }
+          return value.approval_surface_schema as WorkflowRuntimeProofApprovalSurface['schemaVersion'];
+        })(),
+        sha256: digest(value.approval_surface_sha256, 'Workflow Runtime approval surface')
+      }
+    : null;
+  const approvalCommand = hasAttestation
+    ? (() => {
+        if (
+          value.approval_command_schema !==
+            'create-something/control-workflow-runtime-approval-command@1' ||
+          value.approval_command_version !== 1
+        ) {
+          throw new RuntimeValidationError(
+            'INVALID_STATE',
+            'Stored Workflow Runtime approval command is invalid'
+          );
+        }
+        return {
+          schema: 'create-something/control-workflow-runtime-approval-command@1' as const,
+          version: 1 as const
+        };
+      })()
+    : null;
+  if (
+    (value.decision === null && value.decision_actor_role !== null) ||
+    (value.decision !== null &&
+      (typeof value.decision_actor_role !== 'string' ||
+        !ACTOR_ROLES.includes(value.decision_actor_role as WorkflowRuntimeActorRole)))
+  ) {
+    throw new RuntimeValidationError(
+      'INVALID_STATE',
+      'Stored Workflow Runtime approval decision role is invalid'
+    );
+  }
   return {
     id: boundedText(approval.id, 'Workflow Runtime approval ID', 240),
     stepId: boundedText(value.step_id, 'Workflow Runtime approval step ID'),
@@ -504,6 +607,9 @@ function parseApproval(
     policyId: boundedText(approval.policyId, 'Workflow Runtime approval policy ID'),
     expiresAt: instant(approval.expiresAt, 'Workflow Runtime approval expiry'),
     decision: value.decision,
+    decidedByRole: value.decision_actor_role as WorkflowRuntimeActorRole | null,
+    approvalSurface,
+    approvalCommand,
     createdAt: instant(value.created_at, 'Workflow Runtime approval creation'),
     decidedAt:
       value.decided_at === null
@@ -718,6 +824,18 @@ function validateRelations(
         'Workflow Runtime proof approval context does not match its wait receipt'
       );
     }
+    if (
+      run.schema === 'workflow_runtime_run.v0.2' &&
+      (!approval.approvalSurface ||
+        !approval.approvalCommand ||
+        approval.approvalSurface.sha256 !== manifest.artifacts.approvalSurfacesSha256 ||
+        waitReceipt.approvalSurfaceSha256 !== approval.approvalSurface.sha256)
+    ) {
+      throw new RuntimeValidationError(
+        'INVALID_STATE',
+        'Workflow Runtime proof approval attestation does not match its compiler receipt'
+      );
+    }
     if (step.approval?.id === approval.id && approval.decision !== null) {
       throw new RuntimeValidationError(
         'INVALID_STATE',
@@ -734,7 +852,7 @@ function validateRelations(
           receipt.createdAt === approval.decidedAt &&
           receipt.outcome === expectedOutcome
       );
-      if (!decisionReceipt) {
+      if (!decisionReceipt || decisionReceipt.actorRole !== approval.decidedByRole) {
         throw new RuntimeValidationError(
           'INVALID_STATE',
           'Workflow Runtime proof approval is not bound to a decision receipt'
@@ -917,15 +1035,28 @@ export class D1WorkflowRuntimeProofReader {
                     'decision', approval.decision,
                     'approval_json', approval.approval_json,
                     'approval_context_json', approval.approval_context_json,
+                    'approval_surface_schema', approval.approval_surface_schema,
+                    'approval_surface_sha256', approval.approval_surface_sha256,
+                    'approval_command_schema', approval.approval_command_schema,
+                    'approval_command_version', approval.approval_command_version,
+                    'decision_actor_role', approval.decision_actor_role,
                     'created_at', approval.created_at,
                     'decided_at', approval.decided_at
                   ))
                   FROM (
-                    SELECT approval_id, step_id, binding_sha256, decision, approval_json,
-                           approval_context_json, created_at, decided_at
-                    FROM control_workflow_runtime_approvals
-                    WHERE run_id = runtime.run_id
-                    ORDER BY created_at ASC, approval_id ASC
+                    SELECT approval.approval_id, approval.step_id, approval.binding_sha256,
+                           approval.decision, approval.approval_json, approval.approval_context_json,
+                           approval.created_at, approval.decided_at,
+                           attestation.approval_surface_schema,
+                           attestation.approval_surface_sha256,
+                           attestation.approval_command_schema,
+                           attestation.approval_command_version,
+                           attestation.decision_actor_role
+                    FROM control_workflow_runtime_approvals approval
+                    LEFT JOIN control_workflow_runtime_approval_attestations attestation
+                      ON attestation.approval_id = approval.approval_id
+                    WHERE approval.run_id = runtime.run_id
+                    ORDER BY approval.created_at ASC, approval.approval_id ASC
                   ) approval
                 ), '[]') AS approvals_json,
                 COALESCE((

@@ -99,6 +99,11 @@ export type WorkflowRuntimeRunStatus =
   | 'failed'
   | 'cancelled'
   | 'completed';
+export type WorkflowRuntimeActorRole =
+  | 'account_owner'
+  | 'agency_operator'
+  | 'account_reader'
+  | 'control_scheduler';
 export type WorkflowRuntimeStepStatus =
   | 'pending'
   | 'ready'
@@ -184,6 +189,10 @@ export interface WorkflowRuntimeReceipt {
   definitionHash: RuntimeDigest;
   evidenceDigest: RuntimeDigest | null;
   actorSubject: string | null;
+  /** The Control Identity role for an operator-originated receipt; never a subject identifier. */
+  actorRole: WorkflowRuntimeActorRole | null;
+  /** The exact compiled approval-surface artifact for wait and decision receipts. */
+  approvalSurfaceSha256: RuntimeDigest | null;
   verifier: string | null;
   outcome: string;
   previousReceiptSha256: RuntimeDigest | null;
@@ -242,6 +251,8 @@ export type WorkflowRuntimeEvent =
       approvalBindingSha256: RuntimeDigest;
       decision: 'approved' | 'rejected';
       actorSubject: string;
+      /** Trusted Control hosts overwrite this with the verified Identity role. */
+      actorRole?: WorkflowRuntimeActorRole;
       observedAt: string;
     }
   | {

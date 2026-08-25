@@ -2,6 +2,7 @@ import {
   RuntimeValidationError,
   type RuntimeDigest,
   type WorkflowRuntimeAdmission,
+  type WorkflowRuntimeActorRole,
   type WorkflowRuntimeApproval,
   type WorkflowRuntimeEvent,
   type WorkflowRuntimeManifest,
@@ -58,6 +59,12 @@ const RECEIPT_EVENTS = [
   'run_failed',
   'run_completed'
 ];
+const ACTOR_ROLES: readonly WorkflowRuntimeActorRole[] = [
+  'account_owner',
+  'agency_operator',
+  'account_reader',
+  'control_scheduler'
+];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -77,6 +84,13 @@ function text(value: unknown, label: string, maximum = 240): string {
     );
   }
   return value.trim();
+}
+
+function actorRole(value: unknown, label: string): WorkflowRuntimeActorRole {
+  if (typeof value !== 'string' || !ACTOR_ROLES.includes(value as WorkflowRuntimeActorRole)) {
+    throw new RuntimeValidationError('INVALID_EVENT', `${label} must be an accepted Control role`);
+  }
+  return value as WorkflowRuntimeActorRole;
 }
 
 function digest(value: unknown, label: string): RuntimeDigest {
@@ -581,6 +595,8 @@ type ReceiptInput = {
   attemptId: string | null;
   evidenceDigest: RuntimeDigest | null;
   actorSubject: string | null;
+  actorRole?: WorkflowRuntimeActorRole | null;
+  approvalSurfaceSha256?: RuntimeDigest | null;
   verifier: string | null;
   outcome: string;
   createdAt: string;
@@ -612,6 +628,8 @@ async function receipt(
     definitionHash: manifest.workflow.definitionHash,
     evidenceDigest: input.evidenceDigest,
     actorSubject: input.actorSubject,
+    actorRole: input.actorRole ?? null,
+    approvalSurfaceSha256: input.approvalSurfaceSha256 ?? null,
     verifier: input.verifier,
     outcome: input.outcome,
     previousReceiptSha256: run.receipts.at(-1)?.receiptSha256 ?? null,
@@ -997,6 +1015,7 @@ export async function reduceWorkflowRuntimeRun(
       attemptId: null,
       evidenceDigest: currentDefinition.evidenceDigest,
       actorSubject: null,
+      approvalSurfaceSha256: manifest.artifacts.approvalSurfacesSha256,
       verifier: 'runtime-policy',
       outcome: 'bound approval request persisted',
       createdAt: event.observedAt
@@ -1030,6 +1049,8 @@ export async function reduceWorkflowRuntimeRun(
       throw new RuntimeValidationError('INVALID_EVENT', 'Approval decision is unsupported');
     }
     const actorSubject = eventText(event.actorSubject, 'Approval actor subject');
+    const approvalActorRole =
+      event.actorRole === undefined ? null : actorRole(event.actorRole, 'Approval actor role');
     current.version += 1;
     if (event.decision === 'approved') {
       current.status = 'succeeded';
@@ -1044,6 +1065,8 @@ export async function reduceWorkflowRuntimeRun(
         attemptId: null,
         evidenceDigest: currentDefinition.evidenceDigest,
         actorSubject,
+        actorRole: approvalActorRole,
+        approvalSurfaceSha256: manifest.artifacts.approvalSurfacesSha256,
         verifier: 'approval-policy',
         outcome: 'exact approval accepted',
         createdAt: event.observedAt
@@ -1056,6 +1079,7 @@ export async function reduceWorkflowRuntimeRun(
           attemptId: null,
           evidenceDigest: currentDefinition.evidenceDigest,
           actorSubject,
+          actorRole: approvalActorRole,
           verifier: 'approval-policy',
           outcome: 'all runtime steps reached a verified terminal state',
           createdAt: event.observedAt
@@ -1073,6 +1097,8 @@ export async function reduceWorkflowRuntimeRun(
       attemptId: null,
       evidenceDigest: currentDefinition.evidenceDigest,
       actorSubject,
+      actorRole: approvalActorRole,
+      approvalSurfaceSha256: manifest.artifacts.approvalSurfacesSha256,
       verifier: 'approval-policy',
       outcome: 'exact approval rejected',
       createdAt: event.observedAt
@@ -1084,6 +1110,7 @@ export async function reduceWorkflowRuntimeRun(
       attemptId: null,
       evidenceDigest: currentDefinition.evidenceDigest,
       actorSubject,
+      actorRole: approvalActorRole,
       verifier: 'approval-policy',
       outcome: 'approval rejection blocks automatic continuation',
       createdAt: event.observedAt
@@ -1441,7 +1468,9 @@ async function assertRunSemantics(
     'activationId',
     'activationPolicySha256',
     'activationVersion',
+    'actorRole',
     'actorSubject',
+    'approvalSurfaceSha256',
     'artifactManifestSha256',
     'attemptId',
     'checkpointSha256',
@@ -1495,6 +1524,11 @@ async function assertRunSemantics(
       (receipt.stepVersion !== null &&
         (!Number.isInteger(receipt.stepVersion) || receipt.stepVersion < 1)) ||
       (receipt.actorSubject !== null && !validText(receipt.actorSubject)) ||
+      (receipt.actorRole !== null && !ACTOR_ROLES.includes(receipt.actorRole)) ||
+      (receipt.approvalSurfaceSha256 !== null && !DIGEST.test(receipt.approvalSurfaceSha256)) ||
+      ((receipt.eventType === 'wait_created' || receipt.eventType === 'approval_decided')
+        ? receipt.approvalSurfaceSha256 !== manifest.artifacts.approvalSurfacesSha256
+        : receipt.approvalSurfaceSha256 !== null) ||
       (receipt.verifier !== null && !validText(receipt.verifier)) ||
       !validText(receipt.outcome) ||
       !DIGEST.test(receipt.checkpointSha256) ||

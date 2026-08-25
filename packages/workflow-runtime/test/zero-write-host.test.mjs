@@ -60,8 +60,10 @@ const manifest = parseWorkflowRuntimeManifest({
 
 function fixture(
   identity = {
-    async assert(_scope, actorSubject) {
-      return actorSubject;
+    async assert(_scope, actorSubject, requiredApprovalPolicy) {
+      return requiredApprovalPolicy === null || actorSubject === null
+        ? actorSubject
+        : { subject: actorSubject, role: 'account_owner' };
     }
   }
 ) {
@@ -355,7 +357,9 @@ test('the host authorizes an approval against its bound policy before it advance
     async assert(_scope, actorSubject, requiredApprovalPolicy) {
       if (actorSubject === 'owner-a') {
         assertedApprovalPolicies.push(requiredApprovalPolicy ?? null);
-        return requiredApprovalPolicy === 'account-owner' ? actorSubject : null;
+        return requiredApprovalPolicy === 'account-owner'
+          ? { subject: actorSubject, role: 'account_owner' }
+          : null;
       }
       return actorSubject;
     }
@@ -440,6 +444,10 @@ test('the host authorizes an approval against its bound policy before it advance
   );
   assert.equal(approved.status, 'queued');
   assert.deepEqual(assertedApprovalPolicies, ['account-owner']);
+  assert.equal(
+    approved.receipts.find((receipt) => receipt.eventType === 'approval_decided')?.actorRole,
+    'account_owner'
+  );
 });
 
 test('the host derives idempotency identity from the semantic command rather than caller input', async () => {

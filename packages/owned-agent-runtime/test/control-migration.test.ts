@@ -33,6 +33,10 @@ const workflowRuntimeRegistrationBindingMigration = readFileSync(
   new URL('../migrations/0009_control_workflow_runtime_registration_binding.sql', import.meta.url),
   'utf8'
 );
+const workflowRuntimeApprovalAttestationMigration = readFileSync(
+  new URL('../migrations/0010_control_workflow_runtime_approval_attestations.sql', import.meta.url),
+  'utf8'
+);
 
 test('Control activation binding is the Agency-owned D1', () => {
   const runtimeConfig = readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8');
@@ -54,7 +58,7 @@ test('Control activation binding is the Agency-owned D1', () => {
 function database() {
   const path = join(mkdtempSync(join(tmpdir(), 'control-run-')), 'runtime.sqlite');
   execFileSync('sqlite3', [path], {
-    input: `PRAGMA foreign_keys=ON;\n${migration}\n${workflowRuntimeMigration}\n${workflowRuntimeEffectAmbiguityMigration}\n${workflowRuntimeDispatchMigration}\n${workflowRuntimeProofMigration}\n${workflowRuntimeApprovalContextMigration}\n${workflowRuntimeRegistrationBindingMigration}`
+    input: `PRAGMA foreign_keys=ON;\n${migration}\n${workflowRuntimeMigration}\n${workflowRuntimeEffectAmbiguityMigration}\n${workflowRuntimeDispatchMigration}\n${workflowRuntimeProofMigration}\n${workflowRuntimeApprovalContextMigration}\n${workflowRuntimeRegistrationBindingMigration}\n${workflowRuntimeApprovalAttestationMigration}`
   });
   return path;
 }
