@@ -14,12 +14,15 @@ import {
 } from '../src/control.js';
 import { D1ControlActivationAuthority, D1ControlRunRepository } from '../src/control-store.js';
 import { D1TemplateReviewQueueObservationAdapter } from '../src/template-review-queue-observation.js';
+import { D1WorkflowRuntimeProofReader } from '../src/workflow-runtime-proof-projection.js';
 import { D1WorkflowRuntimeCheckpointStore } from '../src/workflow-runtime-store.js';
 import {
   createWorkflowRuntimeRun,
   planWorkflowRuntimeStep,
   parseWorkflowRuntimeManifest,
-  reduceWorkflowRuntimeRun
+  reduceWorkflowRuntimeRun,
+  type RuntimeDigest,
+  type WorkflowRuntimeManifest
 } from '../../workflow-runtime/src/index.js';
 
 function literal(value: unknown): string {
@@ -95,7 +98,7 @@ const scope: ControlScope = {
 const owner: ControlActor = { subject: 'owner-a', role: 'account_owner' };
 const scheduler: ControlActor = { subject: 'scheduler-a', role: 'control_scheduler' };
 
-function fixture(executor?: ControlRunExecutor) {
+function fixture(executor?: ControlRunExecutor, runId?: () => string) {
   const path = join(mkdtempSync(join(tmpdir(), 'control-run-d1-')), 'runtime.sqlite');
   const migration = readFileSync(
     new URL('../migrations/0003_control_run_lifecycle.sql', import.meta.url),
@@ -113,12 +116,17 @@ function fixture(executor?: ControlRunExecutor) {
     new URL('../migrations/0006_control_workflow_runtime_dispatches.sql', import.meta.url),
     'utf8'
   );
+  const workflowRuntimeProofMigration = readFileSync(
+    new URL('../migrations/0007_control_workflow_runtime_proof_projection.sql', import.meta.url),
+    'utf8'
+  );
   execFileSync('sqlite3', [path], {
     input: `PRAGMA foreign_keys=ON;
       ${migration}
       ${workflowRuntimeMigration}
       ${workflowRuntimeEffectAmbiguityMigration}
       ${workflowRuntimeDispatchMigration}
+      ${workflowRuntimeProofMigration}
       CREATE TABLE customer_control_activations (
         id TEXT PRIMARY KEY, activation_version INTEGER, activation_kind TEXT, status TEXT,
         account_id TEXT, tenant_id TEXT, workspace_account_id TEXT,
@@ -149,7 +157,7 @@ function fixture(executor?: ControlRunExecutor) {
         return { type: 'completed', outcome: 'verified', verifier: 'golden-task' };
       }
     },
-    id: () => `id-${++id}`,
+    id: runId ?? (() => `id-${++id}`),
     clock: () => new Date(`2026-07-19T01:00:${String(id).padStart(2, '0')}.000Z`)
   });
   return { path, service };
@@ -268,6 +276,17 @@ test('D1 command replay records a conflict when stop wins an in-flight process r
 
 const runtimeDigest = (value: string): `sha256:${string}` =>
   `sha256:${value.repeat(64).slice(0, 64)}`;
+
+function trustedRuntimeManifestAuthority(
+  entries: ReadonlyArray<{ digest: RuntimeDigest; manifest: WorkflowRuntimeManifest }>
+) {
+  return {
+    async findByRuntimeManifestSha256(digest: RuntimeDigest) {
+      return entries.find((entry) => entry.digest === digest)?.manifest;
+    }
+  };
+}
+
 const runtimeManifest = parseWorkflowRuntimeManifest({
   schemaVersion: 'workflow_runtime_manifest.v0.1',
   runtimeCompatibility: 'workflow-runtime.v0.1',
@@ -814,7 +833,9 @@ test('D1 rolls back a losing same-key admission without leaving an orphaned runt
 });
 
 test('D1 checkpoint store records the exact approval binding and decision without an executable request', async () => {
-  const { path, service } = fixture();
+  const longRunId = 'r'.repeat(65);
+  const longReviewStepId = 'review-'.padEnd(160, 'r');
+  const { path, service } = fixture(undefined, () => longRunId);
   const parent = await service.start(scope, owner, {
     activationId: 'activation-a',
     idempotencyKey: 'parent-approval',
@@ -828,7 +849,7 @@ test('D1 checkpoint store records the exact approval binding and decision withou
     steps: [
       runtimeManifest.steps[0],
       {
-        id: 'review',
+        id: longReviewStepId,
         actionId: 'review',
         dependsOn: ['collect'],
         disposition: 'wait',
@@ -888,7 +909,7 @@ test('D1 checkpoint store records the exact approval binding and decision withou
   assert.equal('capability' in wait, false);
   const waiting = await reduceWorkflowRuntimeRun(manifest, collected, {
     type: 'wait_created',
-    stepId: 'review',
+    stepId: longReviewStepId,
     approval: wait.approval,
     observedAt: '2026-08-25T00:00:03.000Z'
   });
@@ -901,7 +922,7 @@ test('D1 checkpoint store records the exact approval binding and decision withou
   });
   const decided = await reduceWorkflowRuntimeRun(manifest, waiting, {
     type: 'approval_decided',
-    stepId: 'review',
+    stepId: longReviewStepId,
     approvalId: wait.approval.id,
     approvalBindingSha256: wait.approval.bindingSha256,
     decision: 'approved',
@@ -924,6 +945,30 @@ test('D1 checkpoint store records the exact approval binding and decision withou
       .trim(),
     `approved:${wait.approval.bindingSha256}`
   );
+  const proof = await new D1WorkflowRuntimeProofReader(
+    d1(path),
+    trustedRuntimeManifestAuthority([{ digest: runtimeDigest('8'), manifest }])
+  ).find({
+    scope,
+    runId: parent.id
+  });
+  assert.ok(proof);
+  assert.deepEqual(proof.approvals, [
+    {
+      id: wait.approval.id,
+      stepId: longReviewStepId,
+      bindingSha256: wait.approval.bindingSha256,
+      policyId: 'account-owner',
+      expiresAt: '2026-08-26T00:00:00.000Z',
+      decision: 'approved',
+      createdAt: '2026-08-25T00:00:03.000Z',
+      decidedAt: '2026-08-25T00:00:04.000Z'
+    }
+  ]);
+  assert.equal(wait.approval.id.length, 238);
+  assert.equal(proof.steps[1]?.pendingApproval, null);
+  assert.equal(JSON.stringify(proof).includes(owner.subject), false);
+  assert.equal(JSON.stringify(proof).includes('outcome'), false);
 });
 
 test('the A3 observation adapter records one prepared attempt before accepting only a verified count-only projection', async () => {
@@ -1519,5 +1564,98 @@ test('the A3 observation adapter persists a verifier result when stop races veri
       .toString()
       .trim(),
     'verified:1'
+  );
+});
+
+test('the Proof reader exposes one redacted count-only A3 observation with exact Control identities', async () => {
+  const input = fixture();
+  const { parent, plan, prepared } = await persistedTemplateReviewAttempt(input);
+  const adapter = new D1TemplateReviewQueueObservationAdapter(
+    d1(input.path),
+    {
+      async verify() {
+        return { type: 'unverified', failureCode: 'source_projection_unavailable' } as const;
+      }
+    },
+    { capabilityParameterDigest: runtimeDigest('f') },
+    activeControlActivationAuthority(input.path)
+  );
+  const preparation = await adapter.prepare({
+    scope,
+    manifest: templateReviewRuntimeManifest,
+    run: prepared,
+    plan,
+    attemptId: 'template-review-attempt-1'
+  });
+  assert.equal(preparation.type, 'preflight');
+  const intent = preparation.intent;
+  await adapter.recordProjection({
+    scope,
+    dispatch: intent,
+    projection: {
+      schema: 'create-something/template-review-queue-projection@1',
+      dataClassification: 'count_only_redacted',
+      attemptId: intent.attemptId,
+      requestSha256: intent.requestSha256,
+      source: {
+        service: 'webflow-template-review-mcp',
+        resource: 'template-review-queue',
+        tool: 'template_review_list_queue',
+        invocationSha256: runtimeDigest('5')
+      },
+      parameters: intent.parameters,
+      observedItemCount: 2,
+      responseSha256: runtimeDigest('3'),
+      sourceInvocationEvidenceSha256: runtimeDigest('4')
+    }
+  });
+
+  const manifestAuthority = trustedRuntimeManifestAuthority([
+    { digest: runtimeDigest('8'), manifest: templateReviewRuntimeManifest }
+  ]);
+  const proof = await new D1WorkflowRuntimeProofReader(d1(input.path), manifestAuthority).find({
+    scope,
+    runId: parent.id
+  });
+  assert.ok(proof);
+  assert.equal(proof.schema, 'create-something/workflow-runtime-proof@1');
+  assert.equal(proof.run.id, parent.id);
+  assert.equal(proof.steps[0]?.attempts[0]?.id, 'template-review-attempt-1');
+  assert.deepEqual(proof.capabilityObservations, [
+    {
+      runId: parent.id,
+      stepId: 'observe',
+      attemptId: 'template-review-attempt-1',
+      capabilityId: 'template-review.queue.observe.v1',
+      capabilityParameterSha256: runtimeDigest('f'),
+      requestSha256: intent.requestSha256,
+      status: 'effect_unknown',
+      sourceInvocationSha256: runtimeDigest('5'),
+      sourceInvocationEvidenceSha256: runtimeDigest('4'),
+      responseSha256: runtimeDigest('3'),
+      observedItemCount: 2,
+      verifier: null,
+      verifierEvidenceSha256: null,
+      failureCode: 'source_projection_unavailable'
+    }
+  ]);
+  const serialized = JSON.stringify(proof);
+  assert.equal(serialized.includes('webflow-template-review-mcp'), false);
+  assert.equal(serialized.includes('template_review_list_queue'), false);
+  assert.equal(serialized.includes('actorSubject'), false);
+  assert.equal(serialized.includes('outcome'), false);
+  assert.equal(
+    await new D1WorkflowRuntimeProofReader(d1(input.path), manifestAuthority).find({
+      scope: { ...scope, tenantId: 'tenant-b' },
+      runId: parent.id
+    }),
+    undefined
+  );
+  await assert.rejects(
+    new D1WorkflowRuntimeProofReader(d1(input.path), trustedRuntimeManifestAuthority([])).find({
+      scope,
+      runId: parent.id
+    }),
+    /manifest is unavailable from the trusted authority/
   );
 });
