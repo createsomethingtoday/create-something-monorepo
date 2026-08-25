@@ -155,6 +155,15 @@ function verifiedApprovalIdentity(
   return value;
 }
 
+function transitionPayload(event: WorkflowRuntimeEvent): Record<string, unknown> {
+  if (event.type === 'approval_decided') {
+    const { actorRole: _actorRole, observedAt: _observedAt, ...payload } = event;
+    return payload;
+  }
+  const { observedAt: _observedAt, ...payload } = event;
+  return payload;
+}
+
 function activeStopStep(run: WorkflowRuntimeRun): string {
   const expected =
     run.status === 'queued'
@@ -322,6 +331,17 @@ export class ZeroWriteWorkflowRuntimeHost {
         'Runtime event actor subject does not match the authenticated identity'
       );
     }
+    const derivedCommandDigest = await semanticCommandDigest({
+      operation: 'transition',
+      scope,
+      idempotencyKey: bounded(idempotencyKey, 'Idempotency key'),
+      target: { runId },
+      expectedVersion,
+      actorSubject: authenticatedActorSubject,
+      payload: transitionPayload(event)
+    });
+    const replay = await this.ports.storage.replay(scope, idempotencyKey, derivedCommandDigest);
+    if (replay) return replay;
     const approvalIdentity =
       event.type === 'approval_decided'
         ? verifiedApprovalIdentity(authenticatedIdentity)
@@ -332,18 +352,6 @@ export class ZeroWriteWorkflowRuntimeHost {
       ...(approvalIdentity === undefined ? {} : { actorRole: approvalIdentity.role }),
       observedAt: this.ports.clock()
     } as WorkflowRuntimeEvent;
-    const { observedAt: _observedAt, ...payload } = observedEvent;
-    const derivedCommandDigest = await semanticCommandDigest({
-      operation: 'transition',
-      scope,
-      idempotencyKey: bounded(idempotencyKey, 'Idempotency key'),
-      target: { runId },
-      expectedVersion,
-      actorSubject: authenticatedActorSubject,
-      payload
-    });
-    const replay = await this.ports.storage.replay(scope, idempotencyKey, derivedCommandDigest);
-    if (replay) return replay;
     const isOperatorStop = observedEvent.type === 'stop_requested';
     for (let attempt = 0; attempt < (isOperatorStop ? 3 : 1); attempt += 1) {
       const current = await this.required(scope, runId);

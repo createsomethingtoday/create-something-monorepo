@@ -528,6 +528,30 @@ test('a historical v0.1 receipt chain remains verifiable without current approva
   assert.equal((await planWorkflowRuntimeStep(parsed, legacy)).type, 'pass');
 });
 
+test('a historical registration-bound @3 receipt remains verifiable without attestation fields', async () => {
+  const parsed = parseWorkflowRuntimeManifest(manifest);
+  const historical = await createWorkflowRuntimeRun(parsed, admission);
+  const receipt = historical.receipts[0];
+  const {
+    actorRole: _actorRole,
+    approvalSurfaceSha256: _approvalSurfaceSha256,
+    receiptSha256: _receiptSha256,
+    ...historicalReceipt
+  } = receipt;
+  historicalReceipt.checkpointSha256 = await workflowRuntimeCheckpointHash(historical);
+  historical.receipts = [
+    {
+      ...historicalReceipt,
+      receiptSha256: await workflowRuntimeReceiptHash(historicalReceipt)
+    }
+  ];
+
+  assert.equal('actorRole' in historical.receipts[0], false);
+  assert.equal('approvalSurfaceSha256' in historical.receipts[0], false);
+  await verifyWorkflowRuntimeRun(parsed, historical);
+  assert.equal((await planWorkflowRuntimeStep(parsed, historical)).type, 'pass');
+});
+
 test('a non-manual recovery mode stops instead of requeueing a retryable effect', async () => {
   const escalate = parseWorkflowRuntimeManifest({
     ...manifest,

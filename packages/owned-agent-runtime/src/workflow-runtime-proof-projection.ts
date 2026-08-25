@@ -547,12 +547,6 @@ function parseApproval(
       'Stored Workflow Runtime approval attestation is incomplete'
     );
   }
-  if (!hasAttestation && context.schema === 'create-something/workflow-runtime-approval-context@2') {
-    throw new RuntimeValidationError(
-      'INVALID_STATE',
-      'Registration-bound Workflow Runtime approval is missing its attestation'
-    );
-  }
   const approvalSurface = hasAttestation
     ? {
         schemaVersion: (() => {
@@ -593,8 +587,10 @@ function parseApproval(
     (value.decision === null && value.decision_actor_role !== null) ||
     (value.decision !== null &&
       context.schema === 'create-something/workflow-runtime-approval-context@2' &&
+      hasAttestation &&
       (typeof value.decision_actor_role !== 'string' ||
         !ACTOR_ROLES.includes(value.decision_actor_role as WorkflowRuntimeActorRole))) ||
+    (value.decision !== null && !hasAttestation && value.decision_actor_role !== null) ||
     (value.decision !== null &&
       context.schema === 'create-something/workflow-runtime-approval-context@1' &&
       value.decision_actor_role !== null)
@@ -830,10 +826,10 @@ function validateRelations(
     }
     if (
       run.schema === 'workflow_runtime_run.v0.2' &&
-      (!approval.approvalSurface ||
-        !approval.approvalCommand ||
-        approval.approvalSurface.sha256 !== manifest.artifacts.approvalSurfacesSha256 ||
-        waitReceipt.approvalSurfaceSha256 !== approval.approvalSurface.sha256)
+      ((approval.approvalSurface === null) !== (approval.approvalCommand === null) ||
+        (approval.approvalSurface !== null &&
+          (approval.approvalSurface.sha256 !== manifest.artifacts.approvalSurfacesSha256 ||
+            waitReceipt.approvalSurfaceSha256 !== approval.approvalSurface.sha256)))
     ) {
       throw new RuntimeValidationError(
         'INVALID_STATE',
@@ -859,6 +855,7 @@ function validateRelations(
       if (
         !decisionReceipt ||
         (run.schema === 'workflow_runtime_run.v0.2' &&
+          approval.approvalSurface !== null &&
           decisionReceipt.actorRole !== approval.decidedByRole)
       ) {
         throw new RuntimeValidationError(

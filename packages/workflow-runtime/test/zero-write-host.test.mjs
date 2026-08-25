@@ -359,7 +359,7 @@ test('the host authorizes an approval against its bound policy before it advance
         assertedApprovalPolicies.push(requiredApprovalPolicy ?? null);
         return requiredApprovalPolicy === 'account-owner'
           ? { subject: actorSubject, role: 'account_owner' }
-          : null;
+          : actorSubject;
       }
       return actorSubject;
     }
@@ -426,24 +426,36 @@ test('the host authorizes an approval against its bound policy before it advance
     'policy-wait',
     commandDigest('d')
   );
+  const approvalEvent = {
+    type: 'approval_decided',
+    stepId: 'review',
+    approvalId: wait.approval.id,
+    approvalBindingSha256: wait.approval.bindingSha256,
+    decision: 'approved',
+    actorSubject: 'owner-a',
+    observedAt: 'ignored-by-host'
+  };
   const approved = await host.transition(
     scope,
     admitted.id,
     waiting.version,
-    {
-      type: 'approval_decided',
-      stepId: 'review',
-      approvalId: wait.approval.id,
-      approvalBindingSha256: wait.approval.bindingSha256,
-      decision: 'approved',
-      actorSubject: 'owner-a',
-      observedAt: 'ignored-by-host'
-    },
+    approvalEvent,
     'policy-approval',
     commandDigest('e')
   );
   assert.equal(approved.status, 'queued');
-  assert.deepEqual(assertedApprovalPolicies, ['account-owner']);
+  assert.deepEqual(
+    await host.transition(
+      scope,
+      admitted.id,
+      waiting.version,
+      approvalEvent,
+      'policy-approval',
+      commandDigest('e')
+    ),
+    approved
+  );
+  assert.deepEqual(assertedApprovalPolicies, ['account-owner', null]);
   assert.equal(
     approved.receipts.find((receipt) => receipt.eventType === 'approval_decided')?.actorRole,
     'account_owner'

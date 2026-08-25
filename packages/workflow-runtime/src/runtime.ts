@@ -1494,6 +1494,9 @@ async function assertRunSemantics(
   ];
   for (const receipt of receipts) {
     const registrationReceipt = receipt.schema === 'create-something/control-run-receipt@3';
+    const attestedRegistrationReceipt =
+      registrationReceipt &&
+      ('actorRole' in receipt || 'approvalSurfaceSha256' in receipt);
     const fields = registrationReceipt
       ? [
           ...receiptFields,
@@ -1503,8 +1506,7 @@ async function assertRunSemantics(
           'runtimePolicySha256',
           'workflowCompilerVersion',
           'actionId',
-          'actorRole',
-          'approvalSurfaceSha256'
+          ...(attestedRegistrationReceipt ? ['actorRole', 'approvalSurfaceSha256'] : [])
         ]
       : receiptFields;
     if (
@@ -1524,14 +1526,14 @@ async function assertRunSemantics(
       (receipt.stepVersion !== null &&
         (!Number.isInteger(receipt.stepVersion) || receipt.stepVersion < 1)) ||
       (receipt.actorSubject !== null && !validText(receipt.actorSubject)) ||
-      (registrationReceipt &&
+      (attestedRegistrationReceipt &&
         (receipt.actorRole === undefined ||
           (receipt.actorRole !== null && !ACTOR_ROLES.includes(receipt.actorRole)))) ||
-      (registrationReceipt &&
+      (attestedRegistrationReceipt &&
         (receipt.approvalSurfaceSha256 === undefined ||
           (receipt.approvalSurfaceSha256 !== null &&
             !DIGEST.test(receipt.approvalSurfaceSha256)))) ||
-      (registrationReceipt &&
+      (attestedRegistrationReceipt &&
         ((receipt.eventType === 'wait_created' || receipt.eventType === 'approval_decided')
           ? receipt.approvalSurfaceSha256 !== manifest.artifacts.approvalSurfacesSha256
           : receipt.approvalSurfaceSha256 !== null)) ||
