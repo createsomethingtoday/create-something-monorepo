@@ -78,6 +78,14 @@ test('Ground docs use Linear-first coordination and disclose local state', async
   assert.match(docs, /--db/);
 });
 
+test('Ground docs advertise only executable verification statuses', async () => {
+  const docs = await readFile(ioDocs, 'utf8');
+  for (const status of ['PASS', 'FAIL', 'NOT_APPLICABLE', 'UNSUPPORTED', 'TIMEOUT']) {
+    assert.match(docs, new RegExp(`<code>${status}</code>`));
+  }
+  assert.doesNotMatch(docs, /<code>PARTIAL<\/code>/);
+});
+
 test('Ground public routes remain registered in the Performance page system', async () => {
   const registry = await readFile(performanceRegistry, 'utf8');
   assert.match(registry, /'products\/ground'/);

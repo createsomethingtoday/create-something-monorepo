@@ -107,7 +107,7 @@
 			<li><strong>Svelte and SvelteKit:</strong> component-script duplicates, module-context dead exports, route conventions, <code>$lib</code> imports, actions, stores, hooks, and reachability. Instance-script exports such as legacy <code>export let</code> props are component API and are excluded from dead-export findings.</li>
 			<li><strong>Other languages:</strong> some direct checks can parse them, but they are outside the public agent-quality support contract.</li>
 		</ul>
-		<p>Ground returns <code>UNSUPPORTED</code>, <code>PARTIAL</code>, or <code>NOT_APPLICABLE</code> when a requested check cannot justify a clean result.</p>
+		<p>Only <code>PASS</code> means a requested check completed cleanly. Ground returns <code>FAIL</code> for findings or incomplete requested checks, <code>UNSUPPORTED</code> when relevant source is outside that analyzer, <code>NOT_APPLICABLE</code> when no requested check applies, and <code>TIMEOUT</code> when duplicate analysis reaches its deadline.</p>
 	</section>
 
 	<section class="section">
