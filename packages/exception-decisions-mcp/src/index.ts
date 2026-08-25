@@ -19,6 +19,7 @@ interface Decider {
 
 interface Ctx {
   airtable: Airtable;
+  baseId: string;
   decider: Decider;
   viewUrl: string;
 }
@@ -34,7 +35,8 @@ const VIEW_URL_DEFAULT = "https://airtable.com/appMoIgXMTTTNIc3p/tblHxZ2hgSFLZxs
 const VERSIONS_TABLE = "tblHxZ2hgSFLZxsZu";
 const ITEMS_TABLE = "tblnbaaIbIulWl0b7";
 const DECISIONS_VIEW = "viwM48eXQT4Mxc4Ak";
-const VERSION = "1.3.1";
+const ITEMS_VIEW = "viwGawHG68xIIIDaQ";
+const VERSION = "1.4.0";
 
 const V = {
   name: "fldKA9eJja5uajlok",
@@ -53,12 +55,15 @@ const V = {
 const I = {
   item: "fldmJcVJCytD1VY1r",
   versionLink: "fldqVk39RERL1tVPP",
+  assetLink: "fldFCAzKDAqw58BF4",
   status: "fld0D5PoJAWhYeHiI",
   type: "fldUqjcnkOUO7RRKS",
   rationale: "fldHNABt611HJ6JxI",
   decisionNotes: "fldZvSg7gpbBw89Hz",
   decisionBy: "fldcPJTTphd9MGnjT",
   requestedBy: "fldg17LtSEg66IkxJ",
+  requestedDatetime: "fldSP7etbvaMdEAYm",
+  decisionDatetime: "fldhqW4RSpazA6421",
 };
 
 const VERSION_STATUS = {
@@ -73,7 +78,16 @@ const ITEM_STATUS = {
   underReview: "👀Under Review",
   approved: "✅Approved",
   denied: "❌Denied",
+  withdrawn: "🔙Withdrawn",
 };
+
+const ITEM_STATUS_VALUES = [
+  ITEM_STATUS.requested,
+  ITEM_STATUS.underReview,
+  ITEM_STATUS.approved,
+  ITEM_STATUS.denied,
+  ITEM_STATUS.withdrawn,
+] as const;
 
 class AirtableError extends Error {
   status: number;
@@ -243,6 +257,22 @@ function fixOf(rationale: string): string {
 
 const TOOLS = [
   {
+    name: "list_all_exceptions",
+    description:
+      "Read the complete global ⚖️Exceptions table across every app, version, and status. Omit status for the full Airtable list; optionally filter the returned rows to one status. This tool never writes.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        status: {
+          type: "string",
+          enum: [...ITEM_STATUS_VALUES],
+          description: "Optional exact Airtable status; omit for the complete exception list.",
+        },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
     name: "list_pending_exceptions",
     description:
       "The decision queue: every app version whose ⚖️exception request is awaiting a decision, with its per-item ⚖️Exceptions rows. Each item is decided individually — an exemption for one item never implies the rest are fine. Start here.",
@@ -327,6 +357,84 @@ const TOOLS = [
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
   },
 ];
+
+function collaborator(value: unknown): { id?: string; email?: string; name?: string } | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const candidate = value as { id?: unknown; email?: unknown; name?: unknown };
+  const result = {
+    ...(typeof candidate.id === "string" ? { id: candidate.id } : {}),
+    ...(typeof candidate.email === "string" ? { email: candidate.email } : {}),
+    ...(typeof candidate.name === "string" ? { name: candidate.name } : {}),
+  };
+  return Object.keys(result).length > 0 ? result : undefined;
+}
+
+async function toolListAllExceptions(ctx: Ctx, args: { status?: string }): Promise<string> {
+  const records = await ctx.airtable.list(ITEMS_TABLE, {
+    fields: [
+      I.item,
+      I.versionLink,
+      I.assetLink,
+      I.status,
+      I.type,
+      I.rationale,
+      I.decisionNotes,
+      I.requestedBy,
+      I.decisionBy,
+      I.requestedDatetime,
+      I.decisionDatetime,
+    ],
+  });
+  const counts: Record<string, number> = {};
+  for (const record of records) {
+    const status = selectName(record.fields[I.status]) || "(no status)";
+    counts[status] = (counts[status] ?? 0) + 1;
+  }
+
+  const statusOrder = new Map<string, number>(ITEM_STATUS_VALUES.map((status, index) => [status, index]));
+  const filtered = records
+    .filter((record) => !args.status || selectName(record.fields[I.status]) === args.status)
+    .map((record) => ({
+      item_id: record.id,
+      item: text(record.fields[I.item]) || undefined,
+      asset_id: linkIds(record.fields[I.assetLink])[0],
+      version_id: linkIds(record.fields[I.versionLink])[0],
+      status: selectName(record.fields[I.status]) || undefined,
+      type: selectName(record.fields[I.type]) || undefined,
+      rationale: text(record.fields[I.rationale]) || undefined,
+      decision_notes: text(record.fields[I.decisionNotes]) || undefined,
+      requested_by: collaborator(record.fields[I.requestedBy]),
+      decision_by: collaborator(record.fields[I.decisionBy]),
+      requested_datetime: text(record.fields[I.requestedDatetime]) || undefined,
+      decision_datetime: text(record.fields[I.decisionDatetime]) || undefined,
+    }))
+    .sort((left, right) => {
+      const leftOrder = statusOrder.get(left.status ?? "") ?? 99;
+      const rightOrder = statusOrder.get(right.status ?? "") ?? 99;
+      if (leftOrder !== rightOrder) return leftOrder - rightOrder;
+      const leftTime = left.decision_datetime ?? left.requested_datetime ?? left.item_id;
+      const rightTime = right.decision_datetime ?? right.requested_datetime ?? right.item_id;
+      return leftTime.localeCompare(rightTime);
+    });
+
+  return JSON.stringify(
+    {
+      source: {
+        base_id: ctx.baseId,
+        table_id: ITEMS_TABLE,
+        reference_view_id: ITEMS_VIEW,
+        query_scope: "entire_table",
+      },
+      status_filter: args.status ?? null,
+      count: filtered.length,
+      total_count: records.length,
+      counts_all_statuses: counts,
+      exception_items: filtered,
+    },
+    null,
+    2,
+  );
+}
 
 async function toolListPending(ctx: Ctx): Promise<string> {
   const versions = (
@@ -638,7 +746,7 @@ async function handleMcp(request: Request, env: Env, decider: Decider): Promise<
       capabilities: { tools: { listChanged: false } },
       serverInfo: { name: "exception-decisions-mcp", version: VERSION },
       instructions:
-        "App-review exception decisions only. Start with list_pending_exceptions; read items with get_exception_item. Recommendation stage: recommend_exception_item (advisory — labeled by role) + draft_developer_update (developer comms drafts). Decision stage: decide_exception_item / decide_version_exception. Decision rights: automation keys may record item-level DENY only (the guideline stands); granting an exception (approve) and all version-level actions are person-only. Approving an exception never approves the version — reviews still run their testing round. Denying a version-level exception emails the review feedback to the developer automatically.",
+        "App-review exception decisions only. Use list_all_exceptions for the complete all-status Airtable list or list_pending_exceptions for active decision work; read items with get_exception_item. Recommendation stage: recommend_exception_item (advisory — labeled by role) + draft_developer_update (developer comms drafts). Decision stage: decide_exception_item / decide_version_exception. Decision rights: automation keys may record item-level DENY only (the guideline stands); granting an exception (approve) and all version-level actions are person-only. Approving an exception never approves the version — reviews still run their testing round. Denying a version-level exception emails the review feedback to the developer automatically.",
     });
   }
   if (message.method === "ping") {
@@ -654,13 +762,22 @@ async function handleMcp(request: Request, env: Env, decider: Decider): Promise<
     if (!env.AIRTABLE_API_KEY) {
       return rpcResult(id, toolText("Server misconfigured: AIRTABLE_API_KEY is not provisioned.", true));
     }
+    const baseId = env.AIRTABLE_BASE_ID ?? BASE_ID_DEFAULT;
     const ctx: Ctx = {
-      airtable: new Airtable(env.AIRTABLE_API_KEY, env.AIRTABLE_BASE_ID ?? BASE_ID_DEFAULT),
+      airtable: new Airtable(env.AIRTABLE_API_KEY, baseId),
+      baseId,
       decider,
       viewUrl: env.DECISIONS_VIEW_URL ?? VIEW_URL_DEFAULT,
     };
     try {
       switch (name) {
+        case "list_all_exceptions": {
+          const status = typeof args.status === "string" ? args.status : undefined;
+          if (status && !(ITEM_STATUS_VALUES as readonly string[]).includes(status)) {
+            return rpcResult(id, toolText(`status must be one of: ${ITEM_STATUS_VALUES.join(", ")}.`, true));
+          }
+          return rpcResult(id, toolText(await toolListAllExceptions(ctx, { status })));
+        }
         case "list_pending_exceptions":
           return rpcResult(id, toolText(await toolListPending(ctx)));
         case "get_exception_item":
@@ -756,7 +873,7 @@ export default {
             name: "exception-decisions-mcp",
             version: VERSION,
             description:
-              "Decision-scoped MCP for the app-review exceptions loop: list the pending queue, read dual-register items, record approve/deny with identity stamping. Reviewer-side fields are out of scope.",
+              "Decision-scoped MCP for the app-review exceptions loop: read the complete exception register, list the pending queue, read dual-register items, and record approve/deny with identity stamping. Reviewer-side fields are out of scope.",
             auth: "Per-person key — Authorization: Bearer <key>, or path form /mcp/<key> for clients without header support.",
             endpoints: { mcp: "/mcp (bearer) or /mcp/<key>" },
             configured: {

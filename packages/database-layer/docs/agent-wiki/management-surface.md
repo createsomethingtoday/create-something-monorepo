@@ -22,7 +22,7 @@ API/MCP/agent contract.
 
 | Kind | Count | Sample API path | Sample MCP URI | Sample agent command |
 | --- | --- | --- | --- | --- |
-| topology_record | 505 | /api/substrate/topology/internal/records/substrate-create-something-root | substrate://topology/internal/records/substrate-create-something-root | databaseLayer.topology.records.get |
+| topology_record | 506 | /api/substrate/topology/internal/records/substrate-create-something-root | substrate://topology/internal/records/substrate-create-something-root | databaseLayer.topology.records.get |
 | readiness | 23 | /api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-automation-surface-automation-worker/readiness | substrate://operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-automation-surface-automation-worker/readiness | databaseLayer.operatingSlices.readiness |
 | slice | 23 | /api/substrate/operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-automation-surface-automation-worker | substrate://operating-slices/substrate-create-something-operating-slice-substrate-create-something-atlas-coverage-group-automation-surface-automation-worker | databaseLayer.operatingSlices.get |
 | client_overlay | 6 | /api/substrate/client-overlays | substrate://client-overlays | databaseLayer.clientOverlays.list |

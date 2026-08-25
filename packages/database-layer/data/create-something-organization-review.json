@@ -1,19 +1,19 @@
 {
   "id": "substrate:create-something:organization-review:internal",
-  "generatedAt": "2026-08-24T23:39:40.109Z",
+  "generatedAt": "2026-08-25T18:50:38.115Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "valueState": "valuable_with_review_signals",
   "answer": "Atlas is showing value for CREATE SOMETHING: the business is mapped enough to reveal review signals, especially automation/database imbalance and worker/MCP concentration.",
   "summary": {
-    "nodes": 505,
-    "edges": 1053,
-    "mapped": 505,
+    "nodes": 506,
+    "edges": 1055,
+    "mapped": 506,
     "hardGaps": 0,
     "reviewSignals": 6,
     "operatingSlices": 23,
     "clientOverlays": 5,
-    "automationRecords": 267,
+    "automationRecords": 268,
     "databaseRecords": 27,
     "workerRecords": 163,
     "mcpRecords": 74,
@@ -28,7 +28,7 @@
       "title": "Atlas is showing operating value",
       "summary": "CREATE SOMETHING now has a connected internal map with all current topology records mapped and no hard gaps.",
       "evidence": [
-        "505/505 topology records mapped",
+        "506/506 topology records mapped",
         "0 local Atlas/Substrate gaps",
         "0 exact duplicate paths",
         "0 isolated nodes"
@@ -42,7 +42,7 @@
       "title": "Automation is heavier than Database",
       "summary": "Automation records substantially outnumber Database records. This is the clearest business-shape disconnect: execution has outrun the shared substrate.",
       "evidence": [
-        "Automation=267",
+        "Automation=268",
         "Database=27",
         "Review signal count=6"
       ],
@@ -96,7 +96,7 @@
       "tier": "Database",
       "summary": "The healthiest next move is to make the database layer a first-class product surface rather than a hidden app-governance implementation detail.",
       "evidence": [
-        "27 Database records currently support 267 Automation records",
+        "27 Database records currently support 268 Automation records",
         "Management surface exposes stable API/MCP/agent access",
         "Atlas UI projects the same records instead of becoming a separate source of truth"
       ],

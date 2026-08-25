@@ -4,9 +4,9 @@
   "atlasCanvasId": "create-something-internal-operating-topology",
   "rootNodeId": "substrate:create-something:root",
   "coverage": {
-    "generatedAt": "2026-08-24T23:39:39.162Z",
+    "generatedAt": "2026-08-25T18:50:37.046Z",
     "rootPath": ".",
-    "packageCount": 219,
+    "packageCount": 220,
     "appCount": 11,
     "workerCount": 111,
     "clientOverlayCount": 8,
@@ -1515,7 +1515,7 @@
       "surface": "mcp",
       "owner": "CREATE SOMETHING <hello@createsomething.io>",
       "status": "mapped",
-      "summary": "Grounded claims for code. MCP server that prevents AI hallucination in code analysis.",
+      "summary": "Evidence-first code analysis for agents in TypeScript, JavaScript, and Svelte codebases.",
       "tags": [
         "package",
         "mcp",
@@ -4202,6 +4202,24 @@
         "automation"
       ],
       "packageName": "@create-something/workflow-receipt-reconciler",
+      "runtime": "node"
+    },
+    {
+      "id": "substrate:create-something:package:createsomething-workflow-runtime-packages-workflow-runtime",
+      "atlasNodeId": "atlas_create-something_package_createsomething-workflow-runtime-packages-workflow-runtime",
+      "title": "@createsomething/workflow-runtime",
+      "path": "packages/workflow-runtime",
+      "tier": "Automation",
+      "surface": "package",
+      "owner": "CREATE SOMETHING <hello@createsomething.agency>",
+      "status": "mapped",
+      "summary": "Deterministic, provider-neutral runtime core for verified governed workflow artifacts.",
+      "tags": [
+        "package",
+        "package",
+        "automation"
+      ],
+      "packageName": "@createsomething/workflow-runtime",
       "runtime": "node"
     },
     {
@@ -10334,6 +10352,13 @@
       "evidence": "packages/workflow-receipt-reconciler is present in the repo scan."
     },
     {
+      "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-createsomething-workflow-runtime-packages-workflow-runtime",
+      "source": "substrate:create-something:root",
+      "target": "substrate:create-something:package:createsomething-workflow-runtime-packages-workflow-runtime",
+      "relation": "contains",
+      "evidence": "packages/workflow-runtime is present in the repo scan."
+    },
+    {
       "id": "substrate:create-something:edge:substrate-create-something-root-contains-substrate-create-something-package-create-something-workflow-shadow-pilot-packages-workflow-shadow-pilot",
       "source": "substrate:create-something:root",
       "target": "substrate:create-something:package:create-something-workflow-shadow-pilot-packages-workflow-shadow-pilot",
@@ -13720,6 +13745,13 @@
       "target": "substrate:create-something:package:create-something-harness-packages-harness",
       "relation": "depends_on",
       "evidence": "@create-something/orchestration declares @create-something/harness."
+    },
+    {
+      "id": "substrate:create-something:edge:substrate-create-something-package-create-something-owned-agent-runtime-packages-owned-agent-runtime-depends-on-substrate-create-something-package-createsomething-workflow-runtime-packages-workflow-runtime",
+      "source": "substrate:create-something:package:create-something-owned-agent-runtime-packages-owned-agent-runtime",
+      "target": "substrate:create-something:package:createsomething-workflow-runtime-packages-workflow-runtime",
+      "relation": "depends_on",
+      "evidence": "@create-something/owned-agent-runtime declares @createsomething/workflow-runtime."
     },
     {
       "id": "substrate:create-something:edge:substrate-create-something-package-create-something-playbook-mcp-packages-playbook-mcp-depends-on-substrate-create-something-package-create-something-atlas-composition-packages-atlas-composition",

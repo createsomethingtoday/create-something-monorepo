@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:client-overlay-coverage",
-  "generatedAt": "2026-08-24T23:39:38.511Z",
+  "generatedAt": "2026-08-25T18:50:36.462Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "overlays": [
@@ -54,7 +54,7 @@
           "atlasNodeId": "atlas_create-something_package_create-something-cato-supply-insights-cms-packages-agency-clients-cato-supply-insights-cms",
           "relationCount": 3,
           "receiptId": "receipt:substrate:create-something:package:create-something-cato-supply-insights-cms-packages-agency-clients-cato-supply-insights-cms",
-          "updatedAt": "2026-08-24T23:39:38.511Z",
+          "updatedAt": "2026-08-25T18:50:36.462Z",
           "summary": "# Cato Supply Insights CMS"
         }
       ],
@@ -64,8 +64,8 @@
           "recordId": "substrate:create-something:package:create-something-cato-supply-insights-cms-packages-agency-clients-cato-supply-insights-cms",
           "type": "proof",
           "summary": "@create-something/cato-supply-insights-cms has first-class client overlay coverage.",
-          "evidence": "packages/agency/clients/cato-supply-insights-cms was bound into create-something-internal-operating-topology:cato-supply-insights-cms at 2026-08-24T23:39:38.511Z.",
-          "createdAt": "2026-08-24T23:39:38.511Z"
+          "evidence": "packages/agency/clients/cato-supply-insights-cms was bound into create-something-internal-operating-topology:cato-supply-insights-cms at 2026-08-25T18:50:36.462Z.",
+          "createdAt": "2026-08-25T18:50:36.462Z"
         }
       ],
       "nextActions": [
@@ -138,7 +138,7 @@
           "atlasNodeId": "atlas_create-something_package_create-something-cato-supply-insights-review-packages-agency-clients-cato-supply-insights-review",
           "relationCount": 9,
           "receiptId": "receipt:substrate:create-something:package:create-something-cato-supply-insights-review-packages-agency-clients-cato-supply-insights-review",
-          "updatedAt": "2026-08-24T23:39:38.511Z",
+          "updatedAt": "2026-08-25T18:50:36.462Z",
           "summary": "# Cato Supply Insights Review"
         }
       ],
@@ -148,8 +148,8 @@
           "recordId": "substrate:create-something:package:create-something-cato-supply-insights-review-packages-agency-clients-cato-supply-insights-review",
           "type": "proof",
           "summary": "@create-something/cato-supply-insights-review has first-class client overlay coverage.",
-          "evidence": "packages/agency/clients/cato-supply-insights-review was bound into create-something-internal-operating-topology:cato-supply-insights-review at 2026-08-24T23:39:38.511Z.",
-          "createdAt": "2026-08-24T23:39:38.511Z"
+          "evidence": "packages/agency/clients/cato-supply-insights-review was bound into create-something-internal-operating-topology:cato-supply-insights-review at 2026-08-25T18:50:36.462Z.",
+          "createdAt": "2026-08-25T18:50:36.462Z"
         }
       ],
       "nextActions": [
@@ -228,7 +228,7 @@
           "atlasNodeId": "atlas_create-something_package_create-something-jandjhomehealth-packages-agency-clients-jandjhomehealth",
           "relationCount": 8,
           "receiptId": "receipt:substrate:create-something:package:create-something-jandjhomehealth-packages-agency-clients-jandjhomehealth",
-          "updatedAt": "2026-08-24T23:39:38.511Z",
+          "updatedAt": "2026-08-25T18:50:36.462Z",
           "summary": "# J&J Home Health Client Overlay Templates"
         }
       ],
@@ -238,8 +238,8 @@
           "recordId": "substrate:create-something:package:create-something-jandjhomehealth-packages-agency-clients-jandjhomehealth",
           "type": "proof",
           "summary": "@create-something/jandjhomehealth has first-class client overlay coverage.",
-          "evidence": "packages/agency/clients/jandjhomehealth was bound into create-something-internal-operating-topology:jandjhomehealth at 2026-08-24T23:39:38.511Z.",
-          "createdAt": "2026-08-24T23:39:38.511Z"
+          "evidence": "packages/agency/clients/jandjhomehealth was bound into create-something-internal-operating-topology:jandjhomehealth at 2026-08-25T18:50:36.462Z.",
+          "createdAt": "2026-08-25T18:50:36.462Z"
         }
       ],
       "nextActions": [
@@ -384,7 +384,7 @@
           "atlasNodeId": "atlas_create-something_package_outerfields-pcn-mcp-remote-packages-agency-clients-outerfields-mcp-remote",
           "relationCount": 4,
           "receiptId": "receipt:substrate:create-something:package:outerfields-pcn-mcp-remote-packages-agency-clients-outerfields-mcp-remote",
-          "updatedAt": "2026-08-24T23:39:38.511Z",
+          "updatedAt": "2026-08-25T18:50:36.462Z",
           "summary": "Remote MCP server for OUTERFIELDS Premium Content Network - stateless Streamable HTTP on Cloudflare Workers"
         },
         {
@@ -399,7 +399,7 @@
           "atlasNodeId": "atlas_create-something_package_outerfields-pcn-tools-packages-agency-clients-outerfields-mcp-server",
           "relationCount": 4,
           "receiptId": "receipt:substrate:create-something:package:outerfields-pcn-tools-packages-agency-clients-outerfields-mcp-server",
-          "updatedAt": "2026-08-24T23:39:38.511Z",
+          "updatedAt": "2026-08-25T18:50:36.462Z",
           "summary": "MCP server for OUTERFIELDS Premium Content Network - AI-native platform exploration and guidance"
         },
         {
@@ -414,7 +414,7 @@
           "atlasNodeId": "atlas_create-something_package_create-something-outerfields-packages-agency-clients-outerfields",
           "relationCount": 19,
           "receiptId": "receipt:substrate:create-something:package:create-something-outerfields-packages-agency-clients-outerfields",
-          "updatedAt": "2026-08-24T23:39:38.511Z",
+          "updatedAt": "2026-08-25T18:50:36.462Z",
           "summary": "# Outerfields Client Overlay Templates"
         }
       ],
@@ -424,24 +424,24 @@
           "recordId": "substrate:create-something:package:outerfields-pcn-mcp-remote-packages-agency-clients-outerfields-mcp-remote",
           "type": "proof",
           "summary": "@outerfields/pcn-mcp-remote has first-class client overlay coverage.",
-          "evidence": "packages/agency/clients/outerfields/mcp-remote was bound into create-something-internal-operating-topology:outerfields at 2026-08-24T23:39:38.511Z.",
-          "createdAt": "2026-08-24T23:39:38.511Z"
+          "evidence": "packages/agency/clients/outerfields/mcp-remote was bound into create-something-internal-operating-topology:outerfields at 2026-08-25T18:50:36.462Z.",
+          "createdAt": "2026-08-25T18:50:36.462Z"
         },
         {
           "id": "receipt:substrate:create-something:package:outerfields-pcn-tools-packages-agency-clients-outerfields-mcp-server",
           "recordId": "substrate:create-something:package:outerfields-pcn-tools-packages-agency-clients-outerfields-mcp-server",
           "type": "proof",
           "summary": "@outerfields/pcn-tools has first-class client overlay coverage.",
-          "evidence": "packages/agency/clients/outerfields/mcp-server was bound into create-something-internal-operating-topology:outerfields at 2026-08-24T23:39:38.511Z.",
-          "createdAt": "2026-08-24T23:39:38.511Z"
+          "evidence": "packages/agency/clients/outerfields/mcp-server was bound into create-something-internal-operating-topology:outerfields at 2026-08-25T18:50:36.462Z.",
+          "createdAt": "2026-08-25T18:50:36.462Z"
         },
         {
           "id": "receipt:substrate:create-something:package:create-something-outerfields-packages-agency-clients-outerfields",
           "recordId": "substrate:create-something:package:create-something-outerfields-packages-agency-clients-outerfields",
           "type": "proof",
           "summary": "@create-something/outerfields has first-class client overlay coverage.",
-          "evidence": "packages/agency/clients/outerfields was bound into create-something-internal-operating-topology:outerfields at 2026-08-24T23:39:38.511Z.",
-          "createdAt": "2026-08-24T23:39:38.511Z"
+          "evidence": "packages/agency/clients/outerfields was bound into create-something-internal-operating-topology:outerfields at 2026-08-25T18:50:36.462Z.",
+          "createdAt": "2026-08-25T18:50:36.462Z"
         }
       ],
       "nextActions": [
@@ -530,7 +530,7 @@
           "atlasNodeId": "atlas_create-something_package_create-something-the-stack-packages-agency-clients-the-stack",
           "relationCount": 6,
           "receiptId": "receipt:substrate:create-something:package:create-something-the-stack-packages-agency-clients-the-stack",
-          "updatedAt": "2026-08-24T23:39:38.511Z",
+          "updatedAt": "2026-08-25T18:50:36.462Z",
           "summary": "# The Stack Client Overlay Templates"
         }
       ],
@@ -540,8 +540,8 @@
           "recordId": "substrate:create-something:package:create-something-the-stack-packages-agency-clients-the-stack",
           "type": "proof",
           "summary": "@create-something/the-stack has first-class client overlay coverage.",
-          "evidence": "packages/agency/clients/the-stack was bound into create-something-internal-operating-topology:the-stack at 2026-08-24T23:39:38.511Z.",
-          "createdAt": "2026-08-24T23:39:38.511Z"
+          "evidence": "packages/agency/clients/the-stack was bound into create-something-internal-operating-topology:the-stack at 2026-08-25T18:50:36.462Z.",
+          "createdAt": "2026-08-25T18:50:36.462Z"
         }
       ],
       "nextActions": [

@@ -18,6 +18,7 @@ import {
   REJECTION_REASON_OPTIONS,
   REVIEW_STATUS_OPTIONS,
   REVIEW_TYPE_OPTIONS,
+  TABLE_IDS,
   VISIBILITY_OPTIONS,
   getReadOnlyAssetWriteHint,
 } from './schema.js';
@@ -48,6 +49,8 @@ const APP_REVIEW_QUEUE_SORT_OPTIONS = [
   'versionNumber_desc',
   'versionNumber_asc',
 ] as const;
+
+const EXCEPTIONS_GRID_VIEW_ID = 'viwGawHG68xIIIDaQ';
 
 const REVIEWER_CONTROLLED_STATUS_OPTIONS = [
   '🏃🏾In Review',
@@ -844,6 +847,77 @@ export function registerTools(
 
         const updated = await client.updateVersionReview(params.version_id, mutation);
         return asSuccess({ updated_version: updated });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'app_review_list_exceptions',
+    'List the complete global ⚖️Exceptions table across every app, version, and status. Omit status to return the full Airtable list; optionally filter the returned rows to one status. This tool is read-only.',
+    {
+      status: z.enum(EXCEPTION_STATUS_OPTIONS).optional().describe('Optional status filter; omit for the full exception list'),
+    },
+    async ({ status }) => {
+      try {
+        const client = getClient();
+        const allItems = await client.listAllExceptionItems();
+        const counts: Record<string, number> = {};
+        for (const item of allItems) {
+          const itemStatus = item.exceptionStatus ?? '(no status)';
+          counts[itemStatus] = (counts[itemStatus] ?? 0) + 1;
+        }
+
+        const items = status
+          ? allItems.filter((item) => item.exceptionStatus === status)
+          : [...allItems];
+        const statusOrder = new Map<string, number>(
+          (EXCEPTION_STATUS_OPTIONS as readonly string[]).map((value, index) => [value, index]),
+        );
+        const sortKey = (item: (typeof items)[number]) =>
+          item.decisionDatetime ?? item.requestedDatetime ?? item.createdTime ?? item.exceptionItemId;
+        items.sort((left, right) => {
+          const leftOrder = statusOrder.get(left.exceptionStatus ?? '') ?? 99;
+          const rightOrder = statusOrder.get(right.exceptionStatus ?? '') ?? 99;
+          if (leftOrder !== rightOrder) return leftOrder - rightOrder;
+          return sortKey(left).localeCompare(sortKey(right));
+        });
+
+        const lines = [
+          `${status ? `${status} exceptions` : 'All exceptions'} — ${items.length} item${items.length === 1 ? '' : 's'}`,
+        ];
+        let currentStatus: string | undefined;
+        for (const item of items) {
+          const itemStatus = item.exceptionStatus ?? '(no status)';
+          if (itemStatus !== currentStatus) {
+            currentStatus = itemStatus;
+            lines.push('', `${itemStatus}:`);
+          }
+          const links = [
+            item.assetId ? `asset ${item.assetId}` : undefined,
+            item.assetVersionId ? `version ${item.assetVersionId}` : undefined,
+            item.exceptionType,
+          ].filter(Boolean).join(' · ');
+          lines.push(`- ${item.exceptionItemId} — ${item.item ?? '(untitled item)'}${links ? ` [${links}]` : ''}`);
+          if (item.rationale) lines.push(`  Rationale: ${item.rationale}`);
+          if (item.decisionNotes) lines.push(`  Decision: ${item.decisionNotes}`);
+        }
+
+        return asSuccess({
+          source: {
+            base_id: client.baseId,
+            table_id: TABLE_IDS.exceptions,
+            reference_view_id: EXCEPTIONS_GRID_VIEW_ID,
+            query_scope: 'entire_table',
+          },
+          status_filter: status ?? null,
+          count: items.length,
+          total_count: allItems.length,
+          counts_all_statuses: counts,
+          exception_items: items,
+          copy_block: lines.join('\n'),
+        });
       } catch (error) {
         return asError(error);
       }

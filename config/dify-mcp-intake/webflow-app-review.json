@@ -10,7 +10,7 @@
     "description": "Webflow App Review MCP for app asset, version, and governance database workflows",
     "tags": ["webflow", "review", "airtable", "apps", "cs"],
     "catalog_exposure_mode": "direct",
-    "estimated_tool_count": 24
+    "estimated_tool_count": 31
   },
   "dify_mcp_server": {
     "server_id": "webflow-app-review",

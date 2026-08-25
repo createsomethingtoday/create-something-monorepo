@@ -10,13 +10,13 @@ topology-affecting changes with `pnpm substrate:refresh`.
 
 | Status | Count |
 | --- | --- |
-| mapped | 505 |
+| mapped | 506 |
 
 ## Tiers
 
 | Tier | Count |
 | --- | --- |
-| Automation | 267 |
+| Automation | 268 |
 | Judgment | 106 |
 | Mixed | 105 |
 | Database | 27 |
@@ -29,7 +29,7 @@ topology-affecting changes with `pnpm substrate:refresh`.
 | mcp | 74 | packages/abundance-jobs-mcp (Automation); packages/abundance-jobs-mcp/worker (Automation); packages/agent-kit (Judgment); packages/app-governance-db (Judgment) |
 | guide | 64 | docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md (Mixed); docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md (Mixed); docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md (Mixed); docs/guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md (Mixed) |
 | policy | 64 | docs/policies/generated/fallback/policy.hub-route-authorization.v1.json (Judgment); docs/policies/generated/fallback/policy.judgment-baseline.v1.json (Judgment); docs/policies/generated/fallback/policy.legacy-compat-sunset.v1.json (Judgment); docs/policies/generated/fallback/policy.mcp-credential-delivery.v1.json (Judgment) |
-| package | 59 | @create-something/monorepo (Database); .archive/components-deprecated (Judgment); packages/airtable-system-architect (Judgment); packages/app-governance-desktop (Mixed) |
+| package | 60 | @create-something/monorepo (Database); .archive/components-deprecated (Judgment); packages/airtable-system-architect (Judgment); packages/app-governance-desktop (Mixed) |
 | agent | 31 | config/dify-agents/aaron-hub.json (Automation); config/dify-agents/abundance-hub.json (Automation); config/dify-agents/bettermode-marketplace-creator-agent.json (Automation); config/dify-agents/blondish-hub.json (Automation) |
 | config | 24 | config/dify-mcp-intake/cs-telemetry.json (Automation); config/dify-mcp-intake/gmail-notion-mcp.json (Automation); config/dify-mcp-intake/gmail-sync.json (Automation); config/dify-mcp-intake/halfdozen-gmail-sync-fillip.json (Automation) |
 | app | 11 | apps/atlas-studio-desktop (Mixed); apps/bettermode-marketplace-creator-agent (Automation); apps/client-workspace-desktop (Mixed); apps/create-something-scheduler (Judgment) |
@@ -51,7 +51,7 @@ topology-affecting changes with `pnpm substrate:refresh`.
 
 - Exact duplicate paths: No exact duplicate paths are present in the topology.
 - Isolated topology records: No isolated nodes are present in the topology.
-- Automation and Database balance: Automation has 267 record(s); Database has 27 record(s). This is a business-shape review signal, not a hard gap.
+- Automation and Database balance: Automation has 268 record(s); Database has 27 record(s). This is a business-shape review signal, not a hard gap.
 - Worker surface concentration: 163 worker record(s) carry runtime delivery context. This is where Substrate receipts and Cloudflare proof matter most.
 - worker surface review: 163 record(s) are classified as worker.
 - mcp surface review: 74 record(s) are classified as mcp.

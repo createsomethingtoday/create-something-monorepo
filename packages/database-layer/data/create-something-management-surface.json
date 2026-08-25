@@ -1,6 +1,6 @@
 {
   "id": "substrate:create-something:management-surface:internal",
-  "generatedAt": "2026-08-24T23:39:40.232Z",
+  "generatedAt": "2026-08-25T18:50:38.249Z",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
   "sourceReadinessId": "substrate:create-something:operating-slice-readiness:internal",
@@ -3275,6 +3275,20 @@
       "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
       "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-package-create-something-workflow-receipt-reconciler-packages-workflow-receipt-reconciler",
       "mcpUri": "substrate://topology/internal/records/substrate-create-something-package-create-something-workflow-receipt-reconciler-packages-workflow-receipt-reconciler",
+      "agentCommand": "databaseLayer.topology.records.get",
+      "access": [
+        "read"
+      ],
+      "policy": "Read-only management resource; safe for API, MCP, and agent inspection."
+    },
+    {
+      "id": "substrate:create-something:management-resource:topology_record:substrate-create-something-package-createsomething-workflow-runtime-packages-workflow-runtime",
+      "kind": "topology_record",
+      "title": "@createsomething/workflow-runtime",
+      "recordId": "substrate:create-something:package:createsomething-workflow-runtime-packages-workflow-runtime",
+      "sourcePath": "packages/database-layer/data/create-something-internal-topology.json",
+      "apiPath": "/api/substrate/topology/internal/records/substrate-create-something-package-createsomething-workflow-runtime-packages-workflow-runtime",
+      "mcpUri": "substrate://topology/internal/records/substrate-create-something-package-createsomething-workflow-runtime-packages-workflow-runtime",
       "agentCommand": "databaseLayer.topology.records.get",
       "access": [
         "read"
