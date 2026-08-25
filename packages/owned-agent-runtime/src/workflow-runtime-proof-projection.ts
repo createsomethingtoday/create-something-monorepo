@@ -131,6 +131,17 @@ export interface WorkflowRuntimeProofProjection {
   }>;
 }
 
+/**
+ * Resolves manifests already verified against their serialized artifact digest.
+ * A proof reader deliberately never accepts a caller-supplied manifest: that
+ * would let an otherwise runtime-valid manifest misdescribe persisted proof.
+ */
+export interface WorkflowRuntimeManifestAuthority {
+  findByRuntimeManifestSha256(
+    runtimeManifestSha256: RuntimeDigest
+  ): Promise<WorkflowRuntimeManifest | undefined>;
+}
+
 type WorkflowRuntimeProofInput = {
   manifest: WorkflowRuntimeManifest;
   run: WorkflowRuntimeRun;
@@ -228,7 +239,7 @@ function parseApproval(value: unknown): WorkflowRuntimeProofApproval {
     );
   }
   return {
-    id: boundedText(approval.id, 'Workflow Runtime approval ID'),
+    id: boundedText(approval.id, 'Workflow Runtime approval ID', 240),
     stepId: boundedText(value.step_id, 'Workflow Runtime approval step ID'),
     bindingSha256: digest(approval.bindingSha256, 'Workflow Runtime approval binding'),
     policyId: boundedText(approval.policyId, 'Workflow Runtime approval policy ID'),
@@ -562,11 +573,13 @@ async function createWorkflowRuntimeProofProjection(
  * only after their existing identity and scope checks succeed.
  */
 export class D1WorkflowRuntimeProofReader {
-  constructor(private readonly database: D1Database) {}
+  constructor(
+    private readonly database: D1Database,
+    private readonly manifests: WorkflowRuntimeManifestAuthority
+  ) {}
 
   async find(input: {
     scope: WorkflowRuntimeScope;
-    manifest: WorkflowRuntimeManifest;
     runId: string;
   }): Promise<WorkflowRuntimeProofProjection | undefined> {
     const row = await this.database
@@ -630,6 +643,13 @@ export class D1WorkflowRuntimeProofReader {
       .first<ProofRow>();
     if (!row) return undefined;
     const run = parseJson(row.run_json, 'Stored Workflow Runtime checkpoint') as WorkflowRuntimeRun;
+    const manifest = await this.manifests.findByRuntimeManifestSha256(run.runtimeManifestSha256);
+    if (!manifest) {
+      throw new RuntimeValidationError(
+        'INVALID_STATE',
+        'Workflow Runtime proof manifest is unavailable from the trusted authority'
+      );
+    }
     const approvalRows = parseJson(row.approvals_json, 'Stored Workflow Runtime approvals');
     const observationRows = parseJson(
       row.capability_observations_json,
@@ -642,7 +662,7 @@ export class D1WorkflowRuntimeProofReader {
       );
     }
     return createWorkflowRuntimeProofProjection({
-      manifest: input.manifest,
+      manifest,
       run,
       approvals: approvalRows.map(parseApproval),
       capabilityObservations: observationRows.map(parseCapabilityObservation)

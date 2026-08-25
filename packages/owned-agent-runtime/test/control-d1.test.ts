@@ -20,7 +20,9 @@ import {
   createWorkflowRuntimeRun,
   planWorkflowRuntimeStep,
   parseWorkflowRuntimeManifest,
-  reduceWorkflowRuntimeRun
+  reduceWorkflowRuntimeRun,
+  type RuntimeDigest,
+  type WorkflowRuntimeManifest
 } from '../../workflow-runtime/src/index.js';
 
 function literal(value: unknown): string {
@@ -96,7 +98,7 @@ const scope: ControlScope = {
 const owner: ControlActor = { subject: 'owner-a', role: 'account_owner' };
 const scheduler: ControlActor = { subject: 'scheduler-a', role: 'control_scheduler' };
 
-function fixture(executor?: ControlRunExecutor) {
+function fixture(executor?: ControlRunExecutor, runId?: () => string) {
   const path = join(mkdtempSync(join(tmpdir(), 'control-run-d1-')), 'runtime.sqlite');
   const migration = readFileSync(
     new URL('../migrations/0003_control_run_lifecycle.sql', import.meta.url),
@@ -155,7 +157,7 @@ function fixture(executor?: ControlRunExecutor) {
         return { type: 'completed', outcome: 'verified', verifier: 'golden-task' };
       }
     },
-    id: () => `id-${++id}`,
+    id: runId ?? (() => `id-${++id}`),
     clock: () => new Date(`2026-07-19T01:00:${String(id).padStart(2, '0')}.000Z`)
   });
   return { path, service };
@@ -274,6 +276,17 @@ test('D1 command replay records a conflict when stop wins an in-flight process r
 
 const runtimeDigest = (value: string): `sha256:${string}` =>
   `sha256:${value.repeat(64).slice(0, 64)}`;
+
+function trustedRuntimeManifestAuthority(
+  entries: ReadonlyArray<{ digest: RuntimeDigest; manifest: WorkflowRuntimeManifest }>
+) {
+  return {
+    async findByRuntimeManifestSha256(digest: RuntimeDigest) {
+      return entries.find((entry) => entry.digest === digest)?.manifest;
+    }
+  };
+}
+
 const runtimeManifest = parseWorkflowRuntimeManifest({
   schemaVersion: 'workflow_runtime_manifest.v0.1',
   runtimeCompatibility: 'workflow-runtime.v0.1',
@@ -820,7 +833,9 @@ test('D1 rolls back a losing same-key admission without leaving an orphaned runt
 });
 
 test('D1 checkpoint store records the exact approval binding and decision without an executable request', async () => {
-  const { path, service } = fixture();
+  const longRunId = 'r'.repeat(65);
+  const longReviewStepId = 'review-'.padEnd(160, 'r');
+  const { path, service } = fixture(undefined, () => longRunId);
   const parent = await service.start(scope, owner, {
     activationId: 'activation-a',
     idempotencyKey: 'parent-approval',
@@ -834,7 +849,7 @@ test('D1 checkpoint store records the exact approval binding and decision withou
     steps: [
       runtimeManifest.steps[0],
       {
-        id: 'review',
+        id: longReviewStepId,
         actionId: 'review',
         dependsOn: ['collect'],
         disposition: 'wait',
@@ -894,7 +909,7 @@ test('D1 checkpoint store records the exact approval binding and decision withou
   assert.equal('capability' in wait, false);
   const waiting = await reduceWorkflowRuntimeRun(manifest, collected, {
     type: 'wait_created',
-    stepId: 'review',
+    stepId: longReviewStepId,
     approval: wait.approval,
     observedAt: '2026-08-25T00:00:03.000Z'
   });
@@ -907,7 +922,7 @@ test('D1 checkpoint store records the exact approval binding and decision withou
   });
   const decided = await reduceWorkflowRuntimeRun(manifest, waiting, {
     type: 'approval_decided',
-    stepId: 'review',
+    stepId: longReviewStepId,
     approvalId: wait.approval.id,
     approvalBindingSha256: wait.approval.bindingSha256,
     decision: 'approved',
@@ -930,16 +945,18 @@ test('D1 checkpoint store records the exact approval binding and decision withou
       .trim(),
     `approved:${wait.approval.bindingSha256}`
   );
-  const proof = await new D1WorkflowRuntimeProofReader(d1(path)).find({
+  const proof = await new D1WorkflowRuntimeProofReader(
+    d1(path),
+    trustedRuntimeManifestAuthority([{ digest: runtimeDigest('8'), manifest }])
+  ).find({
     scope,
-    manifest,
     runId: parent.id
   });
   assert.ok(proof);
   assert.deepEqual(proof.approvals, [
     {
       id: wait.approval.id,
-      stepId: 'review',
+      stepId: longReviewStepId,
       bindingSha256: wait.approval.bindingSha256,
       policyId: 'account-owner',
       expiresAt: '2026-08-26T00:00:00.000Z',
@@ -948,6 +965,7 @@ test('D1 checkpoint store records the exact approval binding and decision withou
       decidedAt: '2026-08-25T00:00:04.000Z'
     }
   ]);
+  assert.equal(wait.approval.id.length, 238);
   assert.equal(proof.steps[1]?.pendingApproval, null);
   assert.equal(JSON.stringify(proof).includes(owner.subject), false);
   assert.equal(JSON.stringify(proof).includes('outcome'), false);
@@ -1592,9 +1610,11 @@ test('the Proof reader exposes one redacted count-only A3 observation with exact
     }
   });
 
-  const proof = await new D1WorkflowRuntimeProofReader(d1(input.path)).find({
+  const manifestAuthority = trustedRuntimeManifestAuthority([
+    { digest: runtimeDigest('8'), manifest: templateReviewRuntimeManifest }
+  ]);
+  const proof = await new D1WorkflowRuntimeProofReader(d1(input.path), manifestAuthority).find({
     scope,
-    manifest: templateReviewRuntimeManifest,
     runId: parent.id
   });
   assert.ok(proof);
@@ -1625,11 +1645,17 @@ test('the Proof reader exposes one redacted count-only A3 observation with exact
   assert.equal(serialized.includes('actorSubject'), false);
   assert.equal(serialized.includes('outcome'), false);
   assert.equal(
-    await new D1WorkflowRuntimeProofReader(d1(input.path)).find({
+    await new D1WorkflowRuntimeProofReader(d1(input.path), manifestAuthority).find({
       scope: { ...scope, tenantId: 'tenant-b' },
-      manifest: templateReviewRuntimeManifest,
       runId: parent.id
     }),
     undefined
+  );
+  await assert.rejects(
+    new D1WorkflowRuntimeProofReader(d1(input.path), trustedRuntimeManifestAuthority([])).find({
+      scope,
+      runId: parent.id
+    }),
+    /manifest is unavailable from the trusted authority/
   );
 });

@@ -96,8 +96,9 @@ identifiers.
 
 `D1WorkflowRuntimeProofReader` is the paired read-only database reader.
 Control owns the ledger that it reads. Future Substrate and Atlas views may
-display its result, but cannot change a run. The reader verifies the exact
-compiler runtime manifest and persisted hash chain before deriving one
+display its result, but cannot change a run. The reader resolves the manifest
+by persisted digest through a trusted artifact authority, then verifies it and
+the persisted hash chain before deriving one
 `create-something/workflow-runtime-proof@1` value. That value contains exact
 run, step, attempt, approval, checkpoint, receipt, and redacted capability
 observation identities; it omits source routes, raw source records, operator
