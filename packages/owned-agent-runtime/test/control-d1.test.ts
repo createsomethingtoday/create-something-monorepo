@@ -13,6 +13,8 @@ import {
   type ControlScope
 } from '../src/control.js';
 import { D1ControlActivationAuthority, D1ControlRunRepository } from '../src/control-store.js';
+import { D1WorkflowRuntimeCheckpointStore } from '../src/workflow-runtime-store.js';
+import { createWorkflowRuntimeRun, planWorkflowRuntimeStep, parseWorkflowRuntimeManifest, reduceWorkflowRuntimeRun } from '../../workflow-runtime/src/index.js';
 
 function literal(value: unknown): string {
   if (value === null || value === undefined) return 'NULL';
@@ -61,9 +63,11 @@ const scheduler: ControlActor = { subject: 'scheduler-a', role: 'control_schedul
 function fixture(executor?: ControlRunExecutor) {
   const path = join(mkdtempSync(join(tmpdir(), 'control-run-d1-')), 'runtime.sqlite');
   const migration = readFileSync(new URL('../migrations/0003_control_run_lifecycle.sql', import.meta.url), 'utf8');
+  const workflowRuntimeMigration = readFileSync(new URL('../migrations/0004_control_workflow_runtime_zero_write.sql', import.meta.url), 'utf8');
   execFileSync('sqlite3', [path], {
     input: `PRAGMA foreign_keys=ON;
       ${migration}
+      ${workflowRuntimeMigration}
       CREATE TABLE customer_control_activations (
         id TEXT PRIMARY KEY, activation_version INTEGER, activation_kind TEXT, status TEXT,
         account_id TEXT, tenant_id TEXT, workspace_account_id TEXT,
@@ -175,5 +179,331 @@ test('D1 command replay records a conflict when stop wins an in-flight process r
       input: "SELECT result_json FROM control_run_commands WHERE idempotency_key='process-race';"
     }).toString().trim(),
     '{"error":"concurrent_update"}'
+  );
+});
+
+const runtimeDigest = (value: string): `sha256:${string}` => `sha256:${value.repeat(64).slice(0, 64)}`;
+const runtimeManifest = parseWorkflowRuntimeManifest({
+  schemaVersion: 'workflow_runtime_manifest.v0.1',
+  runtimeCompatibility: 'workflow-runtime.v0.1',
+  target: 'create-something/control-runtime.v1',
+  workflow: {
+    id: 'control.d1.fixture', version: '0.1.0', definitionHash: runtimeDigest('a'),
+    compilerVersion: 'workflow-compiler-v0.1', compiledBundleSchema: 'compiled_workflow_bundle.v0.3'
+  },
+  artifacts: {
+    governedInteractionSha256: runtimeDigest('b'), decisionInventorySha256: runtimeDigest('c'),
+    approvalSurfacesSha256: runtimeDigest('d'), toolContractsSha256: runtimeDigest('e')
+  },
+  steps: [{
+    id: 'collect', actionId: 'collect', dependsOn: [], disposition: 'pass',
+    capability: { id: 'fixture:collect', parameterDigest: runtimeDigest('f') },
+    evidenceDigest: runtimeDigest('1'), recovery: 'manual_fallback'
+  }]
+});
+
+test('D1 checkpoint store survives a process restart, replays exactly, and retains the core receipt chain', async () => {
+  const { path, service } = fixture();
+  const parent = await service.start(scope, owner, {
+    activationId: 'activation-a', idempotencyKey: 'parent-runtime',
+    requestedTools: [], requestedResources: [], concurrencyKey: 'runtime'
+  });
+  const initial = await createWorkflowRuntimeRun(runtimeManifest, {
+    runId: parent.id,
+    activation: { id: 'activation-a', version: 1, policySha256: runtimeDigest('6') },
+    artifactManifestSha256: runtimeDigest('7'), runtimeManifestSha256: runtimeDigest('8'),
+    clock: '2026-08-25T00:00:00.000Z'
+  });
+  const store = new D1WorkflowRuntimeCheckpointStore(d1(path));
+  const admitted = await store.apply({
+    scope, run: initial, expectedVersion: null, idempotencyKey: 'runtime-admit', commandDigest: 'a'.repeat(64)
+  });
+  assert.equal(admitted.applied, true);
+  assert.deepEqual(await new D1WorkflowRuntimeCheckpointStore(d1(path)).find(scope, parent.id), initial);
+  assert.deepEqual(await store.replay(scope, 'runtime-admit', 'a'.repeat(64)), initial);
+
+  const planned = await reduceWorkflowRuntimeRun(runtimeManifest, initial, {
+    type: 'effect_intent', stepId: 'collect', attemptId: 'attempt-1',
+    capability: { id: 'fixture:collect', parameterDigest: runtimeDigest('f') },
+    observedAt: '2026-08-25T00:00:01.000Z'
+  });
+  const committed = await store.apply({
+    scope, run: planned, expectedVersion: initial.version,
+    idempotencyKey: 'runtime-intent', commandDigest: 'b'.repeat(64)
+  });
+  assert.equal(committed.run.version, 2);
+  assert.equal(
+    execFileSync('sqlite3', ['-noheader', path], {
+      input: "SELECT COUNT(*) FROM control_workflow_runtime_checkpoints;"
+    }).toString().trim(),
+    '2'
+  );
+  assert.equal(
+    execFileSync('sqlite3', ['-noheader', path], {
+      input: "SELECT COUNT(*) FROM control_workflow_runtime_receipts;"
+    }).toString().trim(),
+    '2'
+  );
+  await assert.rejects(
+    store.replay(scope, 'runtime-admit', 'c'.repeat(64)),
+    /Idempotency key was already used/
+  );
+});
+
+test('D1 leaves a stale operator-stop command retryable until it commits the latest checkpoint', async () => {
+  const { path, service } = fixture();
+  const parent = await service.start(scope, owner, {
+    activationId: 'activation-a', idempotencyKey: 'parent-runtime-stop',
+    requestedTools: [], requestedResources: [], concurrencyKey: 'runtime-stop'
+  });
+  const initial = await createWorkflowRuntimeRun(runtimeManifest, {
+    runId: parent.id,
+    activation: { id: 'activation-a', version: 1, policySha256: runtimeDigest('6') },
+    artifactManifestSha256: runtimeDigest('7'), runtimeManifestSha256: runtimeDigest('8'),
+    clock: '2026-08-25T00:00:00.000Z'
+  });
+  const store = new D1WorkflowRuntimeCheckpointStore(d1(path));
+  await store.apply({
+    scope, run: initial, expectedVersion: null, idempotencyKey: 'stop-admit', commandDigest: 'a'.repeat(64)
+  });
+  const initialDefinition = runtimeManifest.steps[0];
+  assert.equal(initialDefinition.disposition, 'pass');
+  const advanced = await reduceWorkflowRuntimeRun(runtimeManifest, initial, {
+    type: 'effect_intent', stepId: 'collect', attemptId: 'stop-advance',
+    capability: initialDefinition.capability,
+    observedAt: '2026-08-25T00:00:01.000Z'
+  });
+  await store.apply({
+    scope, run: advanced, expectedVersion: initial.version,
+    idempotencyKey: 'stop-advance', commandDigest: 'b'.repeat(64)
+  });
+  const staleStop = await reduceWorkflowRuntimeRun(runtimeManifest, initial, {
+    type: 'stop_requested', stepId: 'collect', reason: 'operator stop', actorSubject: owner.subject,
+    observedAt: '2026-08-25T00:00:02.000Z'
+  });
+  await assert.rejects(
+    store.apply({
+      scope, run: staleStop, expectedVersion: initial.version,
+      idempotencyKey: 'operator-stop', commandDigest: 'c'.repeat(64)
+    }),
+    /Runtime run changed concurrently/
+  );
+  await assert.rejects(
+    store.apply({
+      scope, run: staleStop, expectedVersion: initial.version,
+      idempotencyKey: 'operator-stop', commandDigest: 'd'.repeat(64)
+    }),
+    /Idempotency key was already used for another command/
+  );
+  const current = await store.find(scope, parent.id);
+  assert.equal(current?.version, advanced.version);
+  const stopped = await reduceWorkflowRuntimeRun(runtimeManifest, current!, {
+    type: 'stop_requested', stepId: 'collect', reason: 'operator stop', actorSubject: owner.subject,
+    observedAt: '2026-08-25T00:00:03.000Z'
+  });
+  const committed = await store.apply({
+    scope, run: stopped, expectedVersion: current!.version,
+    idempotencyKey: 'operator-stop', commandDigest: 'c'.repeat(64)
+  });
+  assert.equal(committed.applied, true);
+  assert.equal(committed.run.status, 'blocked');
+  assert.deepEqual(await store.replay(scope, 'operator-stop', 'c'.repeat(64)), committed.run);
+});
+
+test('D1 checkpoint idempotency is unique across the complete Control scope', async () => {
+  const { path, service } = fixture();
+  const firstParent = await service.start(scope, owner, {
+    activationId: 'activation-a', idempotencyKey: 'parent-runtime-first',
+    requestedTools: [], requestedResources: [], concurrencyKey: 'runtime-first'
+  });
+  const secondParent = await service.start(scope, owner, {
+    activationId: 'activation-a', idempotencyKey: 'parent-runtime-second',
+    requestedTools: [], requestedResources: [], concurrencyKey: 'runtime-second'
+  });
+  const store = new D1WorkflowRuntimeCheckpointStore(d1(path));
+  for (const [runId, key, digest] of [
+    [firstParent.id, 'scope-first', 'a'],
+    [secondParent.id, 'scope-second', 'b']
+  ] as const) {
+    const run = await createWorkflowRuntimeRun(runtimeManifest, {
+      runId,
+      activation: { id: 'activation-a', version: 1, policySha256: runtimeDigest('6') },
+      artifactManifestSha256: runtimeDigest('7'), runtimeManifestSha256: runtimeDigest('8'),
+      clock: '2026-08-25T00:00:00.000Z'
+    });
+    await store.apply({ scope, run, expectedVersion: null, idempotencyKey: key, commandDigest: digest.repeat(64) });
+  }
+  assert.throws(
+    () => execFileSync('sqlite3', ['-bail', path], {
+      input: `INSERT INTO control_workflow_runtime_commands
+        (id, run_id, account_id, tenant_id, workspace_account_id, idempotency_key,
+         command_sha256, expected_version, result_json, created_at)
+        VALUES ('duplicate-scope-key', '${secondParent.id}', 'account-a', 'tenant-a', 'workspace-a',
+          'scope-first', '${'c'.repeat(64)}', 1, NULL, '2026-08-25T00:00:00.000Z');`,
+      encoding: 'utf8'
+    }),
+    /UNIQUE constraint failed/
+  );
+});
+
+test('D1 refuses a runtime admission whose frozen parent activation does not match', async () => {
+  const { path, service } = fixture();
+  const parent = await service.start(scope, owner, {
+    activationId: 'activation-a', idempotencyKey: 'parent-activation-match',
+    requestedTools: [], requestedResources: [], concurrencyKey: 'runtime-activation-match'
+  });
+  const run = await createWorkflowRuntimeRun(runtimeManifest, {
+    runId: parent.id,
+    activation: { id: 'forged-activation', version: 1, policySha256: runtimeDigest('6') },
+    artifactManifestSha256: runtimeDigest('7'), runtimeManifestSha256: runtimeDigest('8'),
+    clock: '2026-08-25T00:00:00.000Z'
+  });
+  await assert.rejects(
+    new D1WorkflowRuntimeCheckpointStore(d1(path)).apply({
+      scope, run, expectedVersion: null,
+      idempotencyKey: 'forged-activation-admission', commandDigest: 'a'.repeat(64)
+    }),
+    /Workflow Runtime command did not persist/
+  );
+  assert.equal(
+    execFileSync('sqlite3', ['-noheader', path], {
+      input: 'SELECT COUNT(*) FROM control_workflow_runtime_runs;'
+    }).toString().trim(),
+    '0'
+  );
+});
+
+test('D1 does not accept a second admission command for an existing runtime checkpoint', async () => {
+  const { path, service } = fixture();
+  const parent = await service.start(scope, owner, {
+    activationId: 'activation-a', idempotencyKey: 'parent-existing-runtime',
+    requestedTools: [], requestedResources: [], concurrencyKey: 'runtime-existing'
+  });
+  const initial = await createWorkflowRuntimeRun(runtimeManifest, {
+    runId: parent.id,
+    activation: { id: 'activation-a', version: 1, policySha256: runtimeDigest('6') },
+    artifactManifestSha256: runtimeDigest('7'), runtimeManifestSha256: runtimeDigest('8'),
+    clock: '2026-08-25T00:00:00.000Z'
+  });
+  const store = new D1WorkflowRuntimeCheckpointStore(d1(path));
+  await store.apply({
+    scope, run: initial, expectedVersion: null,
+    idempotencyKey: 'existing-runtime-admission', commandDigest: 'a'.repeat(64)
+  });
+  const forged = await createWorkflowRuntimeRun(runtimeManifest, {
+    runId: parent.id,
+    activation: { id: 'forged-activation', version: 1, policySha256: runtimeDigest('6') },
+    artifactManifestSha256: runtimeDigest('7'), runtimeManifestSha256: runtimeDigest('8'),
+    clock: '2026-08-25T00:00:00.000Z'
+  });
+  await assert.rejects(
+    store.apply({
+      scope, run: forged, expectedVersion: null,
+      idempotencyKey: 'forged-existing-runtime-admission', commandDigest: 'b'.repeat(64)
+    }),
+    /Workflow Runtime command did not persist/
+  );
+  assert.deepEqual(await store.find(scope, parent.id), initial);
+  assert.equal(
+    execFileSync('sqlite3', ['-noheader', path], {
+      input: 'SELECT COUNT(*) FROM control_workflow_runtime_commands;'
+    }).toString().trim(),
+    '1'
+  );
+});
+
+test('D1 rolls back a losing same-key admission without leaving an orphaned runtime row', async () => {
+  const { path, service } = fixture();
+  const [firstParent, secondParent] = await Promise.all([
+    service.start(scope, owner, {
+      activationId: 'activation-a', idempotencyKey: 'parent-race-first',
+      requestedTools: [], requestedResources: [], concurrencyKey: 'runtime-race-first'
+    }),
+    service.start(scope, owner, {
+      activationId: 'activation-a', idempotencyKey: 'parent-race-second',
+      requestedTools: [], requestedResources: [], concurrencyKey: 'runtime-race-second'
+    })
+  ]);
+  const store = new D1WorkflowRuntimeCheckpointStore(d1(path));
+  const create = (runId: string) =>
+    createWorkflowRuntimeRun(runtimeManifest, {
+      runId,
+      activation: { id: 'activation-a', version: 1, policySha256: runtimeDigest('6') },
+      artifactManifestSha256: runtimeDigest('7'), runtimeManifestSha256: runtimeDigest('8'),
+      clock: '2026-08-25T00:00:00.000Z'
+    });
+  const [first, second] = await Promise.all([firstParent.id, secondParent.id].map(async (runId) =>
+    store.apply({
+      scope, run: await create(runId), expectedVersion: null,
+      idempotencyKey: 'shared-admission', commandDigest: 'a'.repeat(64)
+    })
+  ));
+  assert.equal(first.run.id, second.run.id);
+  assert.equal(
+    execFileSync('sqlite3', ['-noheader', path], {
+      input: 'SELECT COUNT(*) FROM control_workflow_runtime_runs;'
+    }).toString().trim(),
+    '1'
+  );
+});
+
+test('D1 checkpoint store records the exact approval binding and decision without an executable request', async () => {
+  const { path, service } = fixture();
+  const parent = await service.start(scope, owner, {
+    activationId: 'activation-a', idempotencyKey: 'parent-approval',
+    requestedTools: [], requestedResources: [], concurrencyKey: 'runtime-approval'
+  });
+  const manifest = parseWorkflowRuntimeManifest({
+    ...runtimeManifest,
+    workflow: { ...runtimeManifest.workflow, id: 'control.d1.approval' },
+    steps: [
+      runtimeManifest.steps[0],
+      {
+        id: 'review', actionId: 'review', dependsOn: ['collect'], disposition: 'wait',
+        approval: { policyId: 'account-owner', expiresAt: '2026-08-26T00:00:00.000Z' },
+        evidenceDigest: runtimeDigest('2'), recovery: 'manual_fallback'
+      }
+    ]
+  });
+  const initial = await createWorkflowRuntimeRun(manifest, {
+    runId: parent.id,
+    activation: { id: 'activation-a', version: 1, policySha256: runtimeDigest('6') },
+    artifactManifestSha256: runtimeDigest('7'), runtimeManifestSha256: runtimeDigest('8'),
+    clock: '2026-08-25T00:00:00.000Z'
+  });
+  const store = new D1WorkflowRuntimeCheckpointStore(d1(path));
+  await store.apply({ scope, run: initial, expectedVersion: null, idempotencyKey: 'approval-admit', commandDigest: 'c'.repeat(64) });
+  const pass = await planWorkflowRuntimeStep(manifest, initial);
+  assert.equal(pass.type, 'pass');
+  const prepared = await reduceWorkflowRuntimeRun(manifest, initial, {
+    type: 'effect_intent', stepId: 'collect', attemptId: 'approval-attempt', capability: pass.capability,
+    observedAt: '2026-08-25T00:00:01.000Z'
+  });
+  await store.apply({ scope, run: prepared, expectedVersion: initial.version, idempotencyKey: 'approval-intent', commandDigest: 'd'.repeat(64) });
+  const collected = await reduceWorkflowRuntimeRun(manifest, prepared, {
+    type: 'step_succeeded', stepId: 'collect', attemptId: 'approval-attempt', verifier: 'fixture-verifier',
+    observedAt: '2026-08-25T00:00:02.000Z'
+  });
+  await store.apply({ scope, run: collected, expectedVersion: prepared.version, idempotencyKey: 'approval-collected', commandDigest: 'e'.repeat(64) });
+  const wait = await planWorkflowRuntimeStep(manifest, collected);
+  assert.equal(wait.type, 'wait');
+  assert.equal('capability' in wait, false);
+  const waiting = await reduceWorkflowRuntimeRun(manifest, collected, {
+    type: 'wait_created', stepId: 'review', approval: wait.approval,
+    observedAt: '2026-08-25T00:00:03.000Z'
+  });
+  await store.apply({ scope, run: waiting, expectedVersion: collected.version, idempotencyKey: 'approval-wait', commandDigest: 'f'.repeat(64) });
+  const decided = await reduceWorkflowRuntimeRun(manifest, waiting, {
+    type: 'approval_decided', stepId: 'review', approvalId: wait.approval.id,
+    approvalBindingSha256: wait.approval.bindingSha256, decision: 'approved', actorSubject: owner.subject,
+    observedAt: '2026-08-25T00:00:04.000Z'
+  });
+  await store.apply({ scope, run: decided, expectedVersion: waiting.version, idempotencyKey: 'approval-decide', commandDigest: '1'.repeat(64) });
+  assert.equal(decided.status, 'completed');
+  assert.equal(
+    execFileSync('sqlite3', ['-noheader', path], {
+      input: "SELECT decision || ':' || binding_sha256 FROM control_workflow_runtime_approvals;"
+    }).toString().trim(),
+    `approved:${wait.approval.bindingSha256}`
   );
 });

@@ -3554,6 +3554,9 @@ importers:
 
   packages/owned-agent-runtime:
     dependencies:
+      '@createsomething/workflow-runtime':
+        specifier: workspace:*
+        version: link:../workflow-runtime
       '@openai/agents':
         specifier: ^0.4.10
         version: 0.4.10(@aws-sdk/credential-provider-node@3.972.81)(@cfworker/json-schema@4.1.1)(@smithy/signature-v4@5.7.3)(bufferutil@4.1.0)(utf-8-validate@6.0.6)(ws@8.21.3(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@4.3.6)
@@ -5130,6 +5133,15 @@ importers:
         version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
   packages/workflow-compiler:
+    devDependencies:
+      '@types/node':
+        specifier: 24.10.9
+        version: 24.10.9
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
+  packages/workflow-runtime:
     devDependencies:
       '@types/node':
         specifier: 24.10.9

@@ -18,6 +18,7 @@ export type {
 export { createOwnedAgentWorker } from './worker.js';
 export { createControlRunService, MemoryControlRunRepository } from './control.js';
 export { createControlRunWorker } from './control-worker.js';
+export { D1WorkflowRuntimeCheckpointStore } from './workflow-runtime-store.js';
 export type {
   ControlActivationAuthority,
   ControlActor,
