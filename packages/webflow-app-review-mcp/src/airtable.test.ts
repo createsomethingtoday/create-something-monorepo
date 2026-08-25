@@ -81,6 +81,56 @@ describe('AirtableClient scope and validation', () => {
 });
 
 describe('AirtableClient exception handling', () => {
+  it('hydrates pending exception queue assets sequentially', async () => {
+    let activeAssetRequests = 0;
+    let maxActiveAssetRequests = 0;
+    const fetchFn = vi.fn(async (input: RequestInfo | URL) => {
+      const url = new URL(String(input));
+
+      if (url.pathname.endsWith(`/${TABLE_IDS.assetVersions}`)) {
+        return jsonResponse({
+          records: [
+            {
+              ...versionRecord('recVersionA'),
+              fields: {
+                ...versionRecord('recVersionA').fields,
+                [FIELD_IDS.versions.assetLink]: ['recAssetA'],
+                [FIELD_IDS.versions.assetRecordIdRollup]: ['recAssetA'],
+                [FIELD_IDS.versions.exceptionStatus]: '🆕Requested',
+              },
+            },
+            {
+              ...versionRecord('recVersionB'),
+              fields: {
+                ...versionRecord('recVersionB').fields,
+                [FIELD_IDS.versions.assetLink]: ['recAssetB'],
+                [FIELD_IDS.versions.assetRecordIdRollup]: ['recAssetB'],
+                [FIELD_IDS.versions.exceptionStatus]: '👀Under Review',
+              },
+            },
+          ],
+        });
+      }
+
+      const assetMatch = url.pathname.match(new RegExp(`/${TABLE_IDS.assets}/(recAsset[AB])$`));
+      if (assetMatch) {
+        activeAssetRequests += 1;
+        maxActiveAssetRequests = Math.max(maxActiveAssetRequests, activeAssetRequests);
+        await Promise.resolve();
+        activeAssetRequests -= 1;
+        return jsonResponse(assetRecord(assetMatch[1]!));
+      }
+
+      return new Response('not found', { status: 404 });
+    });
+    const client = new AirtableClient({ apiKey: 'token', fetchFn });
+
+    const queue = await client.listPendingExceptionQueue();
+
+    expect(queue).toHaveLength(2);
+    expect(maxActiveAssetRequests).toBe(1);
+  });
+
   it('writes exception and hold fields via updateVersionReview', async () => {
     const fetchFn = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
       const payload = JSON.parse(String(init?.body)) as {

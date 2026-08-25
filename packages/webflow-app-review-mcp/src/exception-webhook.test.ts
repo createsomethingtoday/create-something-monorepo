@@ -130,8 +130,16 @@ function buildFetchStub(options: {
     const payloadsMatch = url.match(/webhooks\/(ach\w+)\/payloads\?cursor=(\d+)/);
     if (payloadsMatch) {
       const [, webhookId, cursor] = payloadsMatch;
-      const payloads = Number(cursor) === 1 ? (options.payloadsByWebhook[webhookId] ?? []) : [];
-      return jsonResponse({ payloads, cursor: Number(cursor) + payloads.length, mightHaveMore: false });
+      const start = Math.max(0, Number(cursor) - 1);
+      const limit = Number(new URL(url).searchParams.get('limit') ?? 50);
+      const available = options.payloadsByWebhook[webhookId] ?? [];
+      const payloads = available.slice(start, start + limit);
+      const nextCursor = Number(cursor) + payloads.length;
+      return jsonResponse({
+        payloads,
+        cursor: nextCursor,
+        mightHaveMore: start + payloads.length < available.length,
+      });
     }
 
     if (url.includes(`/${encodeURIComponent(TABLE_IDS.assetVersions)}/recVersion1`)) {
@@ -308,6 +316,98 @@ describe('processExceptionWebhookPayloads', () => {
 
     expect(result.errors.some((error) => error.includes('temporary Slack failure'))).toBe(true);
     expect(store.state?.webhooks.find((w) => w.id === 'achVersions')?.cursor).toBe(1);
+  });
+
+  it('checkpoints successful payloads before retrying a later payload', async () => {
+    const underReviewPayload: AirtableWebhookPayload = {
+      actionMetadata: { source: 'client' },
+      changedTablesById: {
+        [TABLE_IDS.assetVersions]: {
+          changedRecordsById: {
+            recVersion1: {
+              current: {
+                cellValuesByFieldId: {
+                  [V.exceptionStatus]: { id: 'sel', name: '👀Under Review' },
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+    const stub = buildFetchStub({
+      payloadsByWebhook: { achVersions: [underReviewPayload, underReviewPayload] },
+      versionResponse: () => versionRecordResponse({
+        [V.exceptionStatus]: '👀Under Review',
+        [V.exceptionSlackTs]: '1785000000.000500',
+      }),
+    });
+    let slackAttempts = 0;
+    let successfulSlackCalls = 0;
+    const failSecondSlackCallOnce: typeof fetch = async (input, init) => {
+      if (String(input).startsWith('https://slack.com/api/chat.postMessage')) {
+        slackAttempts += 1;
+        if (slackAttempts === 2) throw new Error('second payload failed');
+        successfulSlackCalls += 1;
+      }
+      return (stub.fetchFn as unknown as typeof fetch)(input, init);
+    };
+    const store = memoryStore(baseState());
+    const deps = buildDeps(failSecondSlackCallOnce, store);
+
+    const first = await processExceptionWebhookPayloads(deps);
+    expect(first.errors.some((error) => error.includes('second payload failed'))).toBe(true);
+    expect(store.state?.webhooks.find((webhook) => webhook.id === 'achVersions')?.cursor).toBe(2);
+
+    const second = await processExceptionWebhookPayloads(deps);
+    expect(second.errors).toEqual([]);
+    expect(store.state?.webhooks.find((webhook) => webhook.id === 'achVersions')?.cursor).toBe(3);
+    expect(successfulSlackCalls).toBe(2);
+  });
+
+  it('dead-letters a deterministic payload failure after bounded retries', async () => {
+    const payload: AirtableWebhookPayload = {
+      actionMetadata: { source: 'client' },
+      changedTablesById: {
+        [TABLE_IDS.assetVersions]: {
+          changedRecordsById: {
+            recVersion1: {
+              current: {
+                cellValuesByFieldId: {
+                  [V.exceptionStatus]: { id: 'sel', name: '🆕Requested' },
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+    const laterPayload: AirtableWebhookPayload = {
+      actionMetadata: { source: 'client' },
+      changedTablesById: {},
+    };
+    const stub = buildFetchStub({ payloadsByWebhook: { achVersions: [payload, laterPayload] } });
+    const alwaysFailingSlack: typeof fetch = async (input, init) => {
+      if (String(input).startsWith('https://slack.com/api/chat.postMessage')) {
+        throw new Error('deterministic Slack failure');
+      }
+      return (stub.fetchFn as unknown as typeof fetch)(input, init);
+    };
+    const store = memoryStore(baseState());
+    const deps = buildDeps(alwaysFailingSlack, store);
+
+    await processExceptionWebhookPayloads(deps);
+    await processExceptionWebhookPayloads(deps);
+    const third = await processExceptionWebhookPayloads(deps);
+
+    const state = store.state as WebhookLegState & {
+      failedPayloads?: Array<{ webhookId: string; cursor: number; attempts: number }>;
+    };
+    expect(third.actions).toContain('dead-lettered achVersions cursor 1 after 3 attempts');
+    expect(state.webhooks.find((webhook) => webhook.id === 'achVersions')?.cursor).toBe(3);
+    expect(state.failedPayloads).toMatchObject([
+      { webhookId: 'achVersions', cursor: 1, attempts: 3 },
+    ]);
   });
 
   it('processes exception status and hold reason from the same version change', async () => {

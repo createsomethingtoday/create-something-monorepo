@@ -39,12 +39,29 @@ export interface RegisteredWebhook {
   tableId: string;
   macSecretBase64: string;
   cursor: number;
+  retry?: {
+    cursor: number;
+    attempts: number;
+    lastError: string;
+    updatedAt: string;
+  };
+}
+
+export interface FailedWebhookPayload {
+  webhookId: string;
+  tableId: string;
+  cursor: number;
+  attempts: number;
+  error: string;
+  failedAt: string;
+  payload: AirtableWebhookPayload;
 }
 
 export interface WebhookLegState {
   webhooks: RegisteredWebhook[];
   notificationUrl: string;
   registeredAt: string;
+  failedPayloads?: FailedWebhookPayload[];
 }
 
 export interface WebhookLegStateStore {
@@ -414,6 +431,8 @@ function actingUser(payload: AirtableWebhookPayload): WebhookPayloadUser | null 
 
 const PROCESS_LOCK_TTL_MS = 120_000;
 const MAX_PENDING_ROUNDS = 5;
+const MAX_PAYLOAD_ATTEMPTS = 3;
+const MAX_FAILED_PAYLOADS = 50;
 
 export async function processExceptionWebhookPayloads(
   deps: ExceptionWebhookProcessorDeps,
@@ -465,27 +484,62 @@ async function runProcessingPass(
         page = await webhookApiRequest<PayloadListResponse>(
           deps.webhookApi,
           'GET',
-          `/${webhook.id}/payloads?cursor=${cursor}&limit=50`,
+          `/${webhook.id}/payloads?cursor=${cursor}&limit=1`,
         );
       } catch (error) {
         result.errors.push(`payloads ${webhook.id}: ${String(error)}`);
         break;
       }
 
-      let pageFailed = false;
-      for (const payload of page.payloads) {
+      const payload = page.payloads[0];
+      if (payload) {
         result.processedPayloads += 1;
         try {
           await handlePayload(deps, webhook.tableId, payload, result);
         } catch (error) {
-          result.errors.push(`payload (${webhook.tableId}): ${String(error)}`);
-          pageFailed = true;
-          break;
+          const errorMessage = String(error);
+          result.errors.push(`payload (${webhook.tableId}): ${errorMessage}`);
+          const attempts = webhook.retry?.cursor === cursor
+            ? webhook.retry.attempts + 1
+            : 1;
+
+          if (attempts < MAX_PAYLOAD_ATTEMPTS) {
+            webhook.retry = {
+              cursor,
+              attempts,
+              lastError: errorMessage,
+              updatedAt: new Date().toISOString(),
+            };
+            await deps.store.put(state);
+            break;
+          }
+
+          const failedPayload: FailedWebhookPayload = {
+            webhookId: webhook.id,
+            tableId: webhook.tableId,
+            cursor,
+            attempts,
+            error: errorMessage,
+            failedAt: new Date().toISOString(),
+            payload,
+          };
+          state.failedPayloads = [
+            ...(state.failedPayloads ?? []).filter(
+              (failed) => !(failed.webhookId === webhook.id && failed.cursor === cursor),
+            ),
+            failedPayload,
+          ].slice(-MAX_FAILED_PAYLOADS);
+          webhook.retry = undefined;
+          cursor = page.cursor;
+          webhook.cursor = cursor;
+          mightHaveMore = page.mightHaveMore;
+          await deps.store.put(state);
+          result.actions.push(`dead-lettered ${webhook.id} cursor ${failedPayload.cursor} after ${attempts} attempts`);
+          continue;
         }
       }
 
-      if (pageFailed) break;
-
+      webhook.retry = undefined;
       mightHaveMore = page.mightHaveMore;
       cursor = page.cursor;
       webhook.cursor = cursor;

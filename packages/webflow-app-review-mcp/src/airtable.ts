@@ -1567,11 +1567,13 @@ export class AirtableClient {
       });
 
     const assetIds = [...new Set(versions.map((version) => version.assetId).filter((id): id is string => Boolean(id)))];
-    const assets = await Promise.all(assetIds.map((assetId) => this.getAssetById(assetId)));
+    const assets: AppReviewAsset[] = [];
+    for (const assetId of assetIds) {
+      const asset = await this.getAssetById(assetId);
+      if (asset) assets.push(asset);
+    }
     const assetsById = new Map(
-      assets
-        .filter((asset): asset is AppReviewAsset => Boolean(asset))
-        .map((asset) => [asset.assetId, asset]),
+      assets.map((asset) => [asset.assetId, asset]),
     );
 
     const exceptionItems = await this.listExceptionItemsByIds(
