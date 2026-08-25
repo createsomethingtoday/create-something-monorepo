@@ -50,6 +50,30 @@ function calibration(overrides = {}) {
   };
 }
 
+function fixtureExecution(sourceSha, overrides = {}) {
+  return {
+    schema_version: config.calibration.fixtureExecution.receiptSchema,
+    source_sha: sourceSha,
+    manifest: config.calibration.fixtureExecution.manifest,
+    test_target: config.calibration.fixtureExecution.testTarget,
+    command:
+      'cargo test --manifest-path packages/ground/Cargo.toml --test ga_calibration -- --nocapture',
+    result: {
+      completed: true,
+      exit_code: 0,
+      signal: null,
+      summary_seen: true,
+      passed: 12,
+      failed: 0,
+      ignored: 0,
+      measured: 0,
+      filtered_out: 0
+    },
+    ready: true,
+    ...overrides
+  };
+}
+
 function evidence(overrides = {}) {
   const sourceSha = 'a'.repeat(40);
   const version = config.package.version;
@@ -160,7 +184,20 @@ test('the protected public-distribution check runs Ground policy and Rust suites
 
 test('the exact-tag release fails closed on calibration and preserves its receipt', () => {
   assert.match(groundReleaseWorkflow, /verify-calibration:/);
+  assert.match(groundReleaseWorkflow, /name:\s*Execute governed Ground calibration fixtures/);
+  assert.match(groundReleaseWorkflow, /ground-calibration-execution-receipt\.mjs/);
+  assert.match(
+    groundReleaseWorkflow,
+    /cargo test --manifest-path packages\/ground\/Cargo\.toml --test ga_calibration/
+  );
+  assert.match(groundReleaseWorkflow, /ground-calibration-execution-receipt\.json/);
+  assert.match(groundReleaseWorkflow, /continue-on-error:\s*true/);
   assert.match(groundReleaseWorkflow, /ground-calibration-verify\.mjs/);
+  assert.match(groundReleaseWorkflow, /--execution ground-calibration-execution-receipt\.json/);
+  assert.match(
+    groundReleaseWorkflow,
+    /name:\s*Verify exact-source calibration gate\s*\n\s*if:\s*always\(\)/
+  );
   assert.match(groundReleaseWorkflow, /needs:\s*verify-calibration/);
   assert.match(groundReleaseWorkflow, /needs\.verify-calibration\.result == 'success'/);
   assert.match(groundReleaseWorkflow, /ground-calibration-receipt\.json/);
@@ -182,7 +219,9 @@ test('the calibration CLI emits an exact-source release receipt', async (t) => {
   const directory = await mkdtemp(join(tmpdir(), 'ground-calibration-release-'));
   t.after(() => rm(directory, { recursive: true, force: true }));
   const receiptPath = join(directory, 'ground-calibration-receipt.json');
+  const executionPath = join(directory, 'ground-calibration-execution-receipt.json');
   const sourceSha = 'c'.repeat(40);
+  await writeFile(executionPath, `${JSON.stringify(fixtureExecution(sourceSha))}\n`);
   const result = spawnSync(
     process.execPath,
     [
@@ -193,6 +232,8 @@ test('the calibration CLI emits an exact-source release receipt', async (t) => {
       sourceSha,
       '--release-tag',
       `ground-v${config.package.version}`,
+      '--execution',
+      executionPath,
       '--output',
       receiptPath
     ],
@@ -204,6 +245,7 @@ test('the calibration CLI emits an exact-source release receipt', async (t) => {
   assert.equal(receipt.schema_version, 'ground-calibration-release-receipt.v1');
   assert.equal(receipt.source_sha, sourceSha);
   assert.equal(receipt.release_tag, `ground-v${config.package.version}`);
+  assert.deepEqual(receipt.fixture_execution, fixtureExecution(sourceSha));
   assert.equal(receipt.promotion.ready, true);
 });
 
@@ -219,12 +261,14 @@ test('the calibration CLI preserves a receipt and exits nonzero below policy', a
   const configPath = join(configDirectory, 'ground-ga.v1.json');
   const ledgerPath = join(ledgerDirectory, 'ground-adjudication-ledger.v1.json');
   const receiptPath = join(directory, 'ground-calibration-receipt.json');
+  const executionPath = join(directory, 'ground-calibration-execution-receipt.json');
   const weakConfig = {
     ...config,
     calibration: { ...config.calibration, minimumCompleteReceipts: 99 }
   };
   await Promise.all([
     writeFile(configPath, `${JSON.stringify(weakConfig)}\n`),
+    writeFile(executionPath, `${JSON.stringify(fixtureExecution('d'.repeat(40)))}\n`),
     writeFile(
       ledgerPath,
       await readFile(
@@ -244,6 +288,8 @@ test('the calibration CLI preserves a receipt and exits nonzero below policy', a
       'd'.repeat(40),
       '--release-tag',
       `ground-v${config.package.version}`,
+      '--execution',
+      executionPath,
       '--output',
       receiptPath
     ],
@@ -254,6 +300,61 @@ test('the calibration CLI preserves a receipt and exits nonzero below policy', a
   const receipt = JSON.parse(await readFile(receiptPath, 'utf8'));
   assert.equal(receipt.promotion.ready, false);
   assert.deepEqual(receipt.promotion.reasons, ['calibration:insufficient_complete_receipts']);
+});
+
+test('the calibration CLI rejects a failed exact-source fixture execution even when the ledger is ready', async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), 'ground-calibration-execution-fail-'));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const sourceSha = 'e'.repeat(40);
+  const executionPath = join(directory, 'ground-calibration-execution-receipt.json');
+  const receiptPath = join(directory, 'ground-calibration-receipt.json');
+  await writeFile(
+    executionPath,
+    `${JSON.stringify(
+      fixtureExecution(sourceSha, {
+        result: {
+          completed: true,
+          exit_code: 101,
+          signal: null,
+          summary_seen: true,
+          passed: 11,
+          failed: 1,
+          ignored: 0,
+          measured: 0,
+          filtered_out: 0
+        },
+        ready: false
+      })
+    )}\n`
+  );
+
+  const result = spawnSync(
+    process.execPath,
+    [
+      fileURLToPath(new URL('../ground-calibration-verify.mjs', import.meta.url)),
+      '--config',
+      fileURLToPath(new URL('../../config/ground-ga.v1.json', import.meta.url)),
+      '--source-sha',
+      sourceSha,
+      '--release-tag',
+      `ground-v${config.package.version}`,
+      '--execution',
+      executionPath,
+      '--output',
+      receiptPath
+    ],
+    { encoding: 'utf8' }
+  );
+
+  assert.equal(result.status, 1, result.stderr || result.stdout);
+  const receipt = JSON.parse(await readFile(receiptPath, 'utf8'));
+  assert.equal(receipt.promotion.ready, false);
+  assert.deepEqual(receipt.promotion.reasons, [
+    'calibration:fixture_execution_exit_nonzero',
+    'calibration:fixture_execution_insufficient_passed_tests',
+    'calibration:fixture_execution_failed_tests',
+    'calibration:fixture_execution_not_ready'
+  ]);
 });
 
 test('Ground GA is ready only when every independent receipt agrees', () => {

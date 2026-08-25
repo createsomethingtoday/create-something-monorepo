@@ -11,6 +11,12 @@
   "calibration": {
     "ledger": "docs/internal/ground-adjudication-ledger.v1.json",
     "releaseReceipt": "ground-calibration-receipt.json",
+    "fixtureExecution": {
+      "receiptSchema": "ground-calibration-execution-receipt.v1",
+      "manifest": "packages/ground/Cargo.toml",
+      "testTarget": "ga_calibration",
+      "minimumPassedTests": 12
+    },
     "minimumCompleteReceipts": 14,
     "minimumAdjudicatedFindings": 10,
     "minimumPrecision": 0.9,

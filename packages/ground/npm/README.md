@@ -111,8 +111,9 @@ manifest have completed successfully.
 If a release was built successfully but npm publication was blocked (for
 example, during Trusted Publishing setup), rerun **Ground Release** manually
 with its exact `ground-v<version>` tag and **publish only** enabled. That path
-checks out the tag, recomputes the governed calibration gate, requires it to
-match `package.json`, and verifies the existing release checksum manifest
+checks out the tag, executes the governed calibration fixture suite, binds its
+result to the exact source, recomputes the ledger thresholds, requires the tag
+to match `package.json`, and verifies the existing release checksum manifest
 before publishing; it does not rebuild or replace GitHub Release assets.
 
 ## The Problem

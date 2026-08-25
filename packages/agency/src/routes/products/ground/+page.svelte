@@ -221,8 +221,8 @@ ground claim duplicate utils.ts helpers.ts "same validation logic"
           <span>Calibration policy</span>
           <h3>Accuracy is a release gate, not a slogan.</h3>
           <p>
-            The checked-in ledger classifies each finding and blocks promotion when precision,
-            completion, or coverage evidence is missing.
+            The exact-tag fixture suite and checked-in ledger block promotion when analyzer
+            execution, precision, completion, or coverage evidence is missing.
           </p>
           <p>
             The release calibration combines ten controlled positive fixtures with one preserved

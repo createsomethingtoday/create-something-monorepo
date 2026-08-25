@@ -21,7 +21,13 @@ test('Ground release assets publish checksums, provenance, and through npm trust
 
   assert.match(workflow, /verify-calibration:/);
   assert.match(workflow, /name:\s*Verify governed Ground calibration/);
+  assert.match(workflow, /name:\s*Execute governed Ground calibration fixtures/);
+  assert.match(workflow, /ground-calibration-execution-receipt\.mjs/);
+  assert.match(workflow, /ground-calibration-execution-receipt\.json/);
+  assert.match(workflow, /--test ga_calibration/);
+  assert.match(workflow, /continue-on-error:\s*true/);
   assert.match(workflow, /ground-calibration-verify\.mjs/);
+  assert.match(workflow, /--execution ground-calibration-execution-receipt\.json/);
   assert.match(workflow, /ground-calibration-receipt\.json/);
   assert.match(workflow, /--release-tag/);
   assert.match(workflow, /name:\s*Preserve calibration receipt\s*\n\s*if:\s*always\(\)/);

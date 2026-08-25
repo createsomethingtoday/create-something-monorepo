@@ -93,12 +93,14 @@ test('Agency production deployment waits for the released Ground source tree', a
   assert.match(workflow, /packages\/ground/);
   assert.match(workflow, /config\/ground-ga\.v1\.json/);
   assert.match(workflow, /scripts\/ground-calibration-verify\.mjs/);
+  assert.match(workflow, /scripts\/ground-calibration-execution-receipt\.mjs/);
   assert.match(workflow, /ground-darwin-x64\.tar\.gz/);
   assert.match(workflow, /ground-linux-arm64-smoke\.json/);
   assert.match(workflow, /ground-linux-arm64-consumer-smoke\.json/);
   assert.match(workflow, /CONSUMER-SHA256SUMS/);
   assert.match(workflow, /ground-calibration-receipt\.json/);
   assert.match(workflow, /promotion\?\.ready/);
+  assert.match(workflow, /fixture_execution\?\.ready/);
   assert.match(workflow, /npm view "\$\{package_name\}@\$\{version\}" version/);
 });
 

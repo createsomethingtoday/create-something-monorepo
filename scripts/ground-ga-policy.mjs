@@ -89,6 +89,27 @@ export function validateGroundGaConfig(config) {
     'Ground calibration release receipt is required',
     issues
   );
+  issue(
+    config?.calibration?.fixtureExecution?.receiptSchema ===
+      'ground-calibration-execution-receipt.v1',
+    'Ground calibration fixture receipt schema is required',
+    issues
+  );
+  issue(
+    config?.calibration?.fixtureExecution?.manifest === 'packages/ground/Cargo.toml',
+    'Ground calibration fixture manifest is required',
+    issues
+  );
+  issue(
+    config?.calibration?.fixtureExecution?.testTarget === 'ga_calibration',
+    'Ground calibration fixture target is required',
+    issues
+  );
+  issue(
+    config?.calibration?.fixtureExecution?.minimumPassedTests >= 12,
+    'Ground calibration fixture test-count floor must be at least 12',
+    issues
+  );
   return issues;
 }
 
@@ -171,6 +192,56 @@ export function evaluateGroundCalibration(config, calibration) {
     calibration,
     promotion: { ready: reasons.length === 0, reasons: [...new Set(reasons)] }
   };
+}
+
+export function evaluateGroundCalibrationExecution(config, execution, sourceSha) {
+  const fixture = config.calibration.fixtureExecution;
+  const expectedCommand = `cargo test --manifest-path ${fixture.manifest} --test ${fixture.testTarget} -- --nocapture`;
+  const reasons = [];
+  record(
+    reasons,
+    execution?.schema_version === fixture.receiptSchema,
+    'calibration:fixture_execution_schema_invalid'
+  );
+  record(
+    reasons,
+    execution?.source_sha === sourceSha,
+    'calibration:fixture_execution_source_mismatch'
+  );
+  record(
+    reasons,
+    execution?.manifest === fixture.manifest,
+    'calibration:fixture_execution_manifest_mismatch'
+  );
+  record(
+    reasons,
+    execution?.test_target === fixture.testTarget,
+    'calibration:fixture_execution_target_mismatch'
+  );
+  record(
+    reasons,
+    execution?.command === expectedCommand,
+    'calibration:fixture_execution_command_mismatch'
+  );
+  record(
+    reasons,
+    execution?.result?.completed === true,
+    'calibration:fixture_execution_incomplete'
+  );
+  record(reasons, execution?.result?.exit_code === 0, 'calibration:fixture_execution_exit_nonzero');
+  record(
+    reasons,
+    execution?.result?.summary_seen === true,
+    'calibration:fixture_execution_summary_missing'
+  );
+  record(
+    reasons,
+    execution?.result?.passed >= fixture.minimumPassedTests,
+    'calibration:fixture_execution_insufficient_passed_tests'
+  );
+  record(reasons, execution?.result?.failed === 0, 'calibration:fixture_execution_failed_tests');
+  record(reasons, execution?.ready === true, 'calibration:fixture_execution_not_ready');
+  return [...new Set(reasons)];
 }
 
 export function evaluateGroundGa(config, calibration, evidence, now = new Date()) {
