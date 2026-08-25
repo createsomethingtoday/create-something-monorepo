@@ -320,37 +320,63 @@ async function persistReceipt(
     );
   }
   if (plan?.kind === 'update') {
-    const { escalation, resetDelivery } = plan;
+    const { escalation } = plan;
     statements.push(
       database
         .prepare(
-          resetDelivery
-            ? `UPDATE map_production_monitor_alerts
-               SET source_sha = ?, severity = ?, failed_check_codes_json = ?, notification_revision = ?,
-                   delivery_status = 'pending', delivery_lease_expires_at = NULL,
-                   delivery_claim_token = NULL, delivered_at = NULL, last_delivery_error_code = NULL
-               WHERE alert_id = ? AND streak_resolved_at IS NULL
-                 AND EXISTS (
-                   SELECT 1 FROM map_production_monitor_receipts
-                   WHERE receipt_id = ? AND trigger = ? AND scheduled_at = ?
-                     AND status = ? AND source_sha = ? AND checks_json = ?
-                 )`
-            : `UPDATE map_production_monitor_alerts
-               SET source_sha = ?, severity = ?, failed_check_codes_json = ?
-               WHERE alert_id = ? AND streak_resolved_at IS NULL
-                 AND EXISTS (
-                   SELECT 1 FROM map_production_monitor_receipts
-                   WHERE receipt_id = ? AND trigger = ? AND scheduled_at = ?
-                     AND status = ? AND source_sha = ? AND checks_json = ?
-                 )`,
+          `UPDATE map_production_monitor_alerts
+           SET notification_revision = notification_revision + 1,
+               delivery_status = 'pending', delivery_lease_expires_at = NULL,
+               delivery_claim_token = NULL, delivered_at = NULL, last_delivery_error_code = NULL
+           WHERE alert_id = ? AND severity = 'SEV-3' AND ? = 'SEV-2'
+             AND delivery_status IN ('delivering', 'delivered')
+             AND streak_resolved_at IS NULL
+             AND EXISTS (
+               SELECT 1 FROM map_production_monitor_receipts
+               WHERE receipt_id = ? AND trigger = ? AND scheduled_at = ?
+                 AND status = ? AND source_sha = ? AND checks_json = ?
+             )`,
+        )
+        .bind(
+          escalation.alertId,
+          escalation.severity,
+          receipt.receiptId,
+          receipt.trigger,
+          receipt.scheduledAt,
+          receipt.status,
+          receipt.sourceSha,
+          JSON.stringify(receipt.checks),
+        ),
+      database
+        .prepare(
+          `UPDATE map_production_monitor_alerts
+           SET source_sha = ?,
+               severity = CASE WHEN severity = 'SEV-2' OR ? = 'SEV-2' THEN 'SEV-2' ELSE 'SEV-3' END,
+               failed_check_codes_json = (
+                 SELECT json_group_array(code)
+                 FROM (
+                   SELECT value AS code
+                   FROM json_each(
+                     CASE WHEN json_valid(failed_check_codes_json)
+                       THEN failed_check_codes_json ELSE '["STORED_ALERT_INVALID"]' END
+                   )
+                   UNION
+                   SELECT value AS code FROM json_each(?)
+                   ORDER BY code
+                 )
+               )
+           WHERE alert_id = ? AND streak_resolved_at IS NULL
+             AND EXISTS (
+               SELECT 1 FROM map_production_monitor_receipts
+               WHERE receipt_id = ? AND trigger = ? AND scheduled_at = ?
+                 AND status = ? AND source_sha = ? AND checks_json = ?
+             )`,
         )
         .bind(
           escalation.sourceSha,
           escalation.severity,
           JSON.stringify(escalation.failedCheckCodes),
-          ...(resetDelivery
-            ? [escalation.notificationRevision, escalation.alertId]
-            : [escalation.alertId]),
+          escalation.alertId,
           receipt.receiptId,
           receipt.trigger,
           receipt.scheduledAt,

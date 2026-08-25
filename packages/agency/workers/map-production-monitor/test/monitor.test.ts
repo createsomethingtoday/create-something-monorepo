@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { DatabaseSync } from 'node:sqlite';
 import test from 'node:test';
 
 import {
@@ -640,12 +641,18 @@ test('raises a delivered active streak to SEV-2 in an atomically staged alert re
     /failed/,
   );
 
-  const update = batches[0].find((statement) => statement.query.includes('UPDATE map_production_monitor_alerts'));
-  if (!update) throw new Error('expected an active alert update');
-  assert.ok(update.query.includes("delivery_status = 'pending'"));
-  assert.ok(update.query.includes('notification_revision'));
-  assert.equal(update.values[0], SOURCE_SHA);
-  assert.equal(update.values[1], 'SEV-2');
+  const requeue = batches[0].find((statement) =>
+    statement.query.includes('notification_revision = notification_revision + 1'),
+  );
+  if (!requeue) throw new Error('expected a current-state-fenced alert requeue');
+  assert.ok(requeue.query.includes("delivery_status = 'pending'"));
+  assert.match(requeue.query, /severity = 'SEV-3' AND \? = 'SEV-2'/);
+  const merge = batches[0].find((statement) =>
+    statement.query.includes('json_valid(failed_check_codes_json)'),
+  );
+  if (!merge) throw new Error('expected an active alert conflict-aware merge');
+  assert.equal(merge.values[0], SOURCE_SHA);
+  assert.equal(merge.values[1], 'SEV-2');
   assert.deepEqual(notification, {
     alertId: 'map-monitor-escalation-map-20260825180700-aaaaaaaaaaaa',
     consecutiveFailures: 2,
@@ -656,6 +663,110 @@ test('raises a delivered active streak to SEV-2 in an atomically staged alert re
     failedCheckCodes: ['HTTP_503', 'BOOKING_CONTEXT_MISMATCH', 'REQUIRED_CHECK_MISSING'],
     notificationRevision: 2,
   });
+});
+
+test('an availability-only stale update cannot downgrade a concurrently promoted alert', async () => {
+  const { database, batches } = createDatabase();
+  const scheduledAt = '2026-08-25T18:22:00.000Z';
+  const priorFailure = {
+    receipt_id: 'map-20260825180700-aaaaaaaaaaaa',
+    scheduled_at: '2026-08-25T18:07:00.000Z',
+    checks_json: JSON.stringify([
+      { id: 'desktop_map_health', ok: false, code: 'HTTP_503', durationMs: 9 },
+    ]),
+  };
+  const staleSnapshot = {
+    alert_id: 'map-monitor-escalation-map-20260825180700-aaaaaaaaaaaa',
+    failure_streak_started_at: priorFailure.scheduled_at,
+    threshold_receipt_id: 'map-20260825182200-aaaaaaaaaaaa',
+    source_sha: SOURCE_SHA,
+    severity: 'SEV-3',
+    failed_check_codes_json: JSON.stringify(['HTTP_503']),
+    delivery_status: 'delivered',
+    notification_revision: 1,
+  };
+  const concurrentDatabase = {
+    ...database,
+    prepare(query: string) {
+      const statement = database.prepare(query);
+      return {
+        bind(...values: unknown[]) {
+          const bound = statement.bind(...values);
+          if (query.includes('latest_passing_receipt')) {
+            return { ...bound, all: async () => ({ results: [priorFailure] }) };
+          }
+          if (query.includes('streak_resolved_at IS NULL')) {
+            return { ...bound, all: async () => ({ results: [staleSnapshot] }) };
+          }
+          if (query.includes("delivery_status = 'pending'")) {
+            return { ...bound, all: async () => ({ results: [] }) };
+          }
+          return bound;
+        },
+      };
+    },
+  };
+
+  await assert.rejects(
+    () =>
+      runScheduledMapMonitor({
+        scheduledAt,
+        env: env(concurrentDatabase),
+        executeSynthetic: async () => ({
+          checks: [{ id: 'desktop_map_health', ok: false, code: 'HTTP_503', durationMs: 9 }],
+        }),
+        now: () => new Date('2026-08-25T18:22:20.000Z'),
+      }),
+    /failed/,
+  );
+
+  const merge = batches[0].find((statement) =>
+    statement.query.includes('json_valid(failed_check_codes_json)'),
+  );
+  if (!merge) throw new Error('expected an active alert conflict-aware merge');
+  const mergeValues = merge.values.map((value) => String(value));
+  const sqlite = new DatabaseSync(':memory:');
+  try {
+    sqlite.exec(`
+      CREATE TABLE map_production_monitor_receipts (
+        receipt_id TEXT, trigger TEXT, scheduled_at TEXT, status TEXT, source_sha TEXT, checks_json TEXT
+      );
+      CREATE TABLE map_production_monitor_alerts (
+        alert_id TEXT, source_sha TEXT, severity TEXT, failed_check_codes_json TEXT,
+        streak_resolved_at TEXT
+      );
+    `);
+    sqlite
+      .prepare('INSERT INTO map_production_monitor_receipts VALUES (?, ?, ?, ?, ?, ?)')
+      .run(
+        mergeValues[4],
+        mergeValues[5],
+        mergeValues[6],
+        mergeValues[7],
+        mergeValues[8],
+        mergeValues[9],
+      );
+    sqlite
+      .prepare('INSERT INTO map_production_monitor_alerts VALUES (?, ?, ?, ?, NULL)')
+      .run(
+        staleSnapshot.alert_id,
+        SOURCE_SHA,
+        'SEV-2',
+        JSON.stringify(['BOOKING_CONTEXT_MISMATCH']),
+      );
+    sqlite.prepare(merge.query).run(...mergeValues);
+    const current = sqlite
+      .prepare('SELECT severity, failed_check_codes_json FROM map_production_monitor_alerts')
+      .get() as { severity: string; failed_check_codes_json: string };
+    assert.equal(current.severity, 'SEV-2');
+    assert.deepEqual(JSON.parse(current.failed_check_codes_json), [
+      'BOOKING_CONTEXT_MISMATCH',
+      'HTTP_503',
+      'REQUIRED_CHECK_MISSING',
+    ]);
+  } finally {
+    sqlite.close();
+  }
 });
 
 test('already-delivered two-failure escalation is not sent again', async () => {
