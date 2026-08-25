@@ -29,6 +29,7 @@ export type {
   WorkflowRuntimeManifestV0_2,
   WorkflowRuntimePassStep,
   WorkflowRuntimePlan,
+  WorkflowRuntimeRegistration,
   WorkflowRuntimeReceipt,
   WorkflowRuntimeReceiptEventType,
   WorkflowRuntimeRecoveryMode,

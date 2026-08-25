@@ -241,6 +241,7 @@ export class ZeroWriteWorkflowRuntimeHost {
       actorSubject: null,
       payload: {
         activation: admission.activation,
+        registration: admission.registration,
         artifactManifestSha256: admission.artifactManifestSha256,
         runtimeManifestSha256: admission.runtimeManifestSha256
       }

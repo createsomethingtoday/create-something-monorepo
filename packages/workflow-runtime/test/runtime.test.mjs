@@ -65,10 +65,56 @@ const manifest = {
 const admission = {
   runId: 'run-001',
   activation: { id: 'activation-001', version: 3, policySha256: digest('5') },
+  registration: {
+    buildReleaseId: 'build-release-001',
+    contractSha256: digest('8'),
+    runtimePolicySha256: digest('5')
+  },
   artifactManifestSha256: digest('6'),
   runtimeManifestSha256: digest('7'),
   clock: '2026-08-25T00:00:00.000Z'
 };
+
+test('the public core freezes the accepted Build, contract, and runtime-policy registration', async () => {
+  const parsed = parseWorkflowRuntimeManifest(manifest);
+  const registration = {
+    buildReleaseId: admission.registration.buildReleaseId,
+    contractSha256: admission.registration.contractSha256,
+    runtimePolicySha256: admission.activation.policySha256
+  };
+  const run = await createWorkflowRuntimeRun(parsed, { ...admission, registration });
+
+  assert.equal(run.schema, 'workflow_runtime_run.v0.2');
+  assert.deepEqual(run.registration, registration);
+  assert.equal(run.runtimeManifestSchema, parsed.schemaVersion);
+  assert.equal(run.receipts[0].schema, 'create-something/control-run-receipt@3');
+  assert.equal(run.receipts[0].buildReleaseId, registration.buildReleaseId);
+  assert.equal(run.receipts[0].contractSha256, registration.contractSha256);
+  assert.equal(run.receipts[0].runtimePolicySha256, registration.runtimePolicySha256);
+  assert.equal(run.receipts[0].runtimeManifestSchema, parsed.schemaVersion);
+  assert.equal(run.receipts[0].workflowCompilerVersion, parsed.workflow.compilerVersion);
+  assert.equal(run.receipts[0].actionId, null);
+
+  const { registration: _registration, ...missingRegistration } = admission;
+  await assert.rejects(
+    () => createWorkflowRuntimeRun(parsed, missingRegistration),
+    (error) => error instanceof RuntimeValidationError && error.code === 'INVALID_ADMISSION'
+  );
+
+  const forged = structuredClone(run);
+  forged.registration.buildReleaseId = 'forged-build-release';
+  await assert.rejects(
+    () => verifyWorkflowRuntimeRun(parsed, forged),
+    (error) => error instanceof RuntimeValidationError && error.code === 'INVALID_STATE'
+  );
+
+  const schemaForged = structuredClone(run);
+  schemaForged.runtimeManifestSchema = 'workflow_runtime_manifest.v0.2';
+  await assert.rejects(
+    () => verifyWorkflowRuntimeRun(parsed, schemaForged),
+    (error) => error instanceof RuntimeValidationError && error.code === 'INVALID_STATE'
+  );
+});
 
 test('the public core advances a finite pass/wait/approval/pass fixture deterministically', async () => {
   const parsed = parseWorkflowRuntimeManifest(manifest);
@@ -573,7 +619,8 @@ test('v0.1 stop and cancellation retain the legacy unresolved-attempt vocabulary
     await workflowRuntimeCheckpointHash(incompatibleCheckpoint);
   {
     const { receiptSha256, ...unsigned } = incompatibleCheckpoint.receipts.at(-1);
-    incompatibleCheckpoint.receipts.at(-1).receiptSha256 = await workflowRuntimeReceiptHash(unsigned);
+    incompatibleCheckpoint.receipts.at(-1).receiptSha256 =
+      await workflowRuntimeReceiptHash(unsigned);
   }
   await assert.rejects(
     () => verifyWorkflowRuntimeRun(onePass, incompatibleCheckpoint),

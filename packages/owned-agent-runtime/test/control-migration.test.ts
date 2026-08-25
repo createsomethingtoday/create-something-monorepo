@@ -29,6 +29,10 @@ const workflowRuntimeApprovalContextMigration = readFileSync(
   new URL('../migrations/0008_control_workflow_runtime_approval_context.sql', import.meta.url),
   'utf8'
 );
+const workflowRuntimeRegistrationBindingMigration = readFileSync(
+  new URL('../migrations/0009_control_workflow_runtime_registration_binding.sql', import.meta.url),
+  'utf8'
+);
 
 test('Control activation binding is the Agency-owned D1', () => {
   const runtimeConfig = readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8');
@@ -50,7 +54,7 @@ test('Control activation binding is the Agency-owned D1', () => {
 function database() {
   const path = join(mkdtempSync(join(tmpdir(), 'control-run-')), 'runtime.sqlite');
   execFileSync('sqlite3', [path], {
-    input: `PRAGMA foreign_keys=ON;\n${migration}\n${workflowRuntimeMigration}\n${workflowRuntimeEffectAmbiguityMigration}\n${workflowRuntimeDispatchMigration}\n${workflowRuntimeProofMigration}\n${workflowRuntimeApprovalContextMigration}`
+    input: `PRAGMA foreign_keys=ON;\n${migration}\n${workflowRuntimeMigration}\n${workflowRuntimeEffectAmbiguityMigration}\n${workflowRuntimeDispatchMigration}\n${workflowRuntimeProofMigration}\n${workflowRuntimeApprovalContextMigration}\n${workflowRuntimeRegistrationBindingMigration}`
   });
   return path;
 }
@@ -105,6 +109,643 @@ test('migration creates an empty fail-closed Control run ledger', () => {
     ),
     '8'
   );
+});
+
+test('registration-binding migration rejects a raw v0.2 checkpoint with a forged Build release', () => {
+  const path = database();
+  const hash = (value: string) => `sha256:${value.repeat(64).slice(0, 64)}`;
+  sql(
+    path,
+    `INSERT INTO control_runs (
+      id, account_id, tenant_id, workspace_account_id, activation_id, activation_version,
+      activation_json, status, version, attempt, concurrency_key, requested_tools_json,
+      requested_resources_json, created_by, created_at, updated_at
+    ) VALUES (
+      'run-a', 'account-a', 'tenant-a', 'workspace-a', 'activation-a', 1,
+      '{"buildReleaseId":"release-a","buildManifestSha256":"${'a'.repeat(64)}","contractSha256":"${'b'.repeat(64)}","policySha256":"${'c'.repeat(64)}"}',
+      'queued', 1, 1, 'exclusive', '[]', '[]',
+      'owner-a', '2026-07-19T00:00:00.000Z', '2026-07-19T00:00:00.000Z'
+    );`
+  );
+  expectSqlFailure(
+    path,
+    `INSERT INTO control_workflow_runtime_runs (
+      run_id, admission_command_id, artifact_manifest_sha256, runtime_manifest_sha256, status, version,
+      run_json, created_at, updated_at
+    ) VALUES (
+      'run-a', 'runtime-admission-registration', '${hash('a')}', '${hash('d')}', 'queued', 1,
+      '{"schema":"workflow_runtime_run.v0.2","registration":{"buildReleaseId":"forged-release","contractSha256":"${hash('b')}","runtimePolicySha256":"${hash('c')}"}}',
+      '2026-07-19T00:00:00.000Z', '2026-07-19T00:00:00.000Z'
+    );`,
+    /registration does not match its frozen activation/
+  );
+});
+
+test('registration-binding migration rejects malformed registration digest prefixes', () => {
+  const path = database();
+  const hash = (value: string) => `sha256:${value.repeat(64).slice(0, 64)}`;
+  sql(
+    path,
+    `INSERT INTO control_runs (
+      id, account_id, tenant_id, workspace_account_id, activation_id, activation_version,
+      activation_json, status, version, attempt, concurrency_key, requested_tools_json,
+      requested_resources_json, created_by, created_at, updated_at
+    ) VALUES (
+      'run-a', 'account-a', 'tenant-a', 'workspace-a', 'activation-a', 1,
+      '{"buildReleaseId":"release-a","buildManifestSha256":"${'a'.repeat(64)}","contractSha256":"${'b'.repeat(64)}","policySha256":"${'c'.repeat(64)}"}',
+      'queued', 1, 1, 'exclusive', '[]', '[]',
+      'owner-a', '2026-07-19T00:00:00.000Z', '2026-07-19T00:00:00.000Z'
+    );`
+  );
+  expectSqlFailure(
+    path,
+    `INSERT INTO control_workflow_runtime_runs (
+      run_id, admission_command_id, artifact_manifest_sha256, runtime_manifest_sha256, status, version,
+      run_json, created_at, updated_at
+    ) VALUES (
+      'run-a', 'runtime-admission-registration', '${hash('a')}', '${hash('d')}', 'queued', 1,
+      '{"schema":"workflow_runtime_run.v0.2","runtimeManifestSchema":"workflow_runtime_manifest.v0.1","registration":{"buildReleaseId":"release-a","contractSha256":"xxxxxxx${'b'.repeat(64)}","runtimePolicySha256":"${hash('c')}"}}',
+      '2026-07-19T00:00:00.000Z', '2026-07-19T00:00:00.000Z'
+    );`,
+    /registration does not match its frozen activation/
+  );
+});
+
+test('registration-binding migration rejects duplicate registration keys before binding', () => {
+  const path = database();
+  const hash = (value: string) => `sha256:${value.repeat(64).slice(0, 64)}`;
+  sql(
+    path,
+    `INSERT INTO control_runs (
+      id, account_id, tenant_id, workspace_account_id, activation_id, activation_version,
+      activation_json, status, version, attempt, concurrency_key, requested_tools_json,
+      requested_resources_json, created_by, created_at, updated_at
+    ) VALUES (
+      'run-a', 'account-a', 'tenant-a', 'workspace-a', 'activation-a', 1,
+      '{"buildReleaseId":"release-a","buildManifestSha256":"${'a'.repeat(64)}","contractSha256":"${'b'.repeat(64)}","policySha256":"${'c'.repeat(64)}"}',
+      'queued', 1, 1, 'exclusive', '[]', '[]',
+      'owner-a', '2026-07-19T00:00:00.000Z', '2026-07-19T00:00:00.000Z'
+    );`
+  );
+  expectSqlFailure(
+    path,
+    `INSERT INTO control_workflow_runtime_runs (
+      run_id, admission_command_id, artifact_manifest_sha256, runtime_manifest_sha256, status, version,
+      run_json, created_at, updated_at
+    ) VALUES (
+      'run-a', 'runtime-admission-duplicate-registration', '${hash('a')}', '${hash('d')}', 'queued', 1,
+      '{"schema":"workflow_runtime_run.v0.2","activation":{"id":"activation-a","version":1,"policySha256":"${hash('c')}"},"artifactManifestSha256":"${hash('a')}","runtimeManifestSha256":"${hash('d')}","runtimeManifestSchema":"workflow_runtime_manifest.v0.1","registration":{"buildReleaseId":"release-a","buildReleaseId":"forged-release","contractSha256":"${hash('b')}","runtimePolicySha256":"${hash('c')}"}}',
+      '2026-07-19T00:00:00.000Z', '2026-07-19T00:00:00.000Z'
+    );`,
+    /registration does not match its frozen activation/
+  );
+});
+
+test('registration-binding migration rejects duplicate checkpoint schemas before selecting a schema version', () => {
+  const path = database();
+  const hash = (value: string) => `sha256:${value.repeat(64).slice(0, 64)}`;
+  const duplicatedSchema = `{"schema":"workflow_runtime_run.v0.1","schema":"workflow_runtime_run.v0.2","id":"run-a","status":"queued","version":1,"activation":{"id":"activation-a","version":1,"policySha256":"${hash('c')}"},"artifactManifestSha256":"${hash('a')}","runtimeManifestSha256":"${hash('d')}","runtimeManifestSchema":"workflow_runtime_manifest.v0.1","registration":{"buildReleaseId":"release-a","contractSha256":"${hash('b')}","runtimePolicySha256":"${hash('c')}"}}`;
+  sql(
+    path,
+    `INSERT INTO control_runs (
+      id, account_id, tenant_id, workspace_account_id, activation_id, activation_version,
+      activation_json, status, version, attempt, concurrency_key, requested_tools_json,
+      requested_resources_json, created_by, created_at, updated_at
+    ) VALUES (
+      'run-a', 'account-a', 'tenant-a', 'workspace-a', 'activation-a', 1,
+      '{"buildReleaseId":"release-a","buildManifestSha256":"${'a'.repeat(64)}","contractSha256":"${'b'.repeat(64)}","policySha256":"${'c'.repeat(64)}"}',
+      'queued', 1, 1, 'exclusive', '[]', '[]',
+      'owner-a', '2026-07-19T00:00:00.000Z', '2026-07-19T00:00:00.000Z'
+    );`
+  );
+  expectSqlFailure(
+    path,
+    `INSERT INTO control_workflow_runtime_runs (
+      run_id, admission_command_id, artifact_manifest_sha256, runtime_manifest_sha256, status, version,
+      run_json, created_at, updated_at
+    ) VALUES (
+      'run-a', 'runtime-admission-duplicate-schema', '${hash('a')}', '${hash('d')}', 'queued', 1,
+      '${duplicatedSchema}',
+      '2026-07-19T00:00:00.000Z', '2026-07-19T00:00:00.000Z'
+    );`,
+    /checkpoint JSON must not contain duplicate object keys/
+  );
+  sql(
+    path,
+    `INSERT INTO control_workflow_runtime_runs (
+      run_id, admission_command_id, artifact_manifest_sha256, runtime_manifest_sha256, status, version,
+      run_json, created_at, updated_at
+    ) VALUES (
+      'run-a', 'runtime-admission-legacy', '${hash('a')}', '${hash('d')}', 'queued', 1,
+      '{"schema":"workflow_runtime_run.v0.1"}',
+      '2026-07-19T00:00:00.000Z', '2026-07-19T00:00:00.000Z'
+    );`
+  );
+  expectSqlFailure(
+    path,
+    `UPDATE control_workflow_runtime_runs
+     SET run_json = '${duplicatedSchema}', version = 2
+     WHERE run_id = 'run-a';`,
+    /checkpoint JSON must not contain duplicate object keys/
+  );
+});
+
+test('registration-binding migration binds the checkpoint envelope to its row identity, status, and version', () => {
+  const path = database();
+  const hash = (value: string) => `sha256:${value.repeat(64).slice(0, 64)}`;
+  const checkpoint = (overrides: Record<string, unknown> = {}) =>
+    JSON.stringify({
+      schema: 'workflow_runtime_run.v0.2',
+      id: 'run-a',
+      status: 'queued',
+      version: 1,
+      activation: { id: 'activation-a', version: 1, policySha256: hash('c') },
+      artifactManifestSha256: hash('a'),
+      runtimeManifestSha256: hash('d'),
+      runtimeManifestSchema: 'workflow_runtime_manifest.v0.1',
+      registration: {
+        buildReleaseId: 'release-a',
+        contractSha256: hash('b'),
+        runtimePolicySha256: hash('c')
+      },
+      steps: [],
+      receipts: [],
+      ...overrides
+    });
+  sql(
+    path,
+    `INSERT INTO control_runs (
+      id, account_id, tenant_id, workspace_account_id, activation_id, activation_version,
+      activation_json, status, version, attempt, concurrency_key, requested_tools_json,
+      requested_resources_json, created_by, created_at, updated_at
+    ) VALUES (
+      'run-a', 'account-a', 'tenant-a', 'workspace-a', 'activation-a', 1,
+      '{"buildReleaseId":"release-a","buildManifestSha256":"${'a'.repeat(64)}","contractSha256":"${'b'.repeat(64)}","policySha256":"${'c'.repeat(64)}"}',
+      'queued', 1, 1, 'exclusive', '[]', '[]',
+      'owner-a', '2026-07-19T00:00:00.000Z', '2026-07-19T00:00:00.000Z'
+    );`
+  );
+  for (const [field, value] of [
+    ['id', 'forged-run'],
+    ['status', 'running'],
+    ['version', 2]
+  ] as const) {
+    expectSqlFailure(
+      path,
+      `INSERT INTO control_workflow_runtime_runs (
+        run_id, admission_command_id, artifact_manifest_sha256, runtime_manifest_sha256, status, version,
+        run_json, created_at, updated_at
+      ) VALUES (
+        'run-a', 'runtime-admission-envelope-${field}', '${hash('a')}', '${hash('d')}', 'queued', 1,
+        '${checkpoint({ [field]: value })}',
+        '2026-07-19T00:00:00.000Z', '2026-07-19T00:00:00.000Z'
+      );`,
+      /registration does not match its frozen activation/
+    );
+  }
+  for (const [field, value] of [
+    ['top-level', checkpoint({ unexpected: true })],
+    [
+      'activation',
+      checkpoint({
+        activation: { id: 'activation-a', version: 1, policySha256: hash('c'), unexpected: true }
+      })
+    ],
+    [
+      'registration',
+      checkpoint({
+        registration: {
+          buildReleaseId: 'release-a',
+          contractSha256: hash('b'),
+          runtimePolicySha256: hash('c'),
+          unexpected: true
+        }
+      })
+    ]
+  ] as const) {
+    expectSqlFailure(
+      path,
+      `INSERT INTO control_workflow_runtime_runs (
+        run_id, admission_command_id, artifact_manifest_sha256, runtime_manifest_sha256, status, version,
+        run_json, created_at, updated_at
+      ) VALUES (
+        'run-a', 'runtime-admission-unknown-${field}', '${hash('a')}', '${hash('d')}', 'queued', 1,
+        '${value}',
+        '2026-07-19T00:00:00.000Z', '2026-07-19T00:00:00.000Z'
+      );`,
+      /registration does not match its frozen activation/
+    );
+  }
+  sql(
+    path,
+    `INSERT INTO control_workflow_runtime_runs (
+      run_id, admission_command_id, artifact_manifest_sha256, runtime_manifest_sha256, status, version,
+      run_json, created_at, updated_at
+    ) VALUES (
+      'run-a', 'runtime-admission-envelope-valid', '${hash('a')}', '${hash('d')}', 'queued', 1,
+      '${checkpoint()}',
+      '2026-07-19T00:00:00.000Z', '2026-07-19T00:00:00.000Z'
+    );`
+  );
+  expectSqlFailure(
+    path,
+    `UPDATE control_workflow_runtime_runs
+     SET status = 'running', version = 2, updated_at = '2026-07-19T00:01:00.000Z'
+     WHERE run_id = 'run-a';`,
+    /registration does not match its frozen activation/
+  );
+});
+
+test('registration-binding migration binds the embedded artifact manifests to their checkpoint columns', () => {
+  const path = database();
+  const hash = (value: string) => `sha256:${value.repeat(64).slice(0, 64)}`;
+  sql(
+    path,
+    `INSERT INTO control_runs (
+      id, account_id, tenant_id, workspace_account_id, activation_id, activation_version,
+      activation_json, status, version, attempt, concurrency_key, requested_tools_json,
+      requested_resources_json, created_by, created_at, updated_at
+    ) VALUES (
+      'run-a', 'account-a', 'tenant-a', 'workspace-a', 'activation-a', 1,
+      '{"buildReleaseId":"release-a","buildManifestSha256":"${'a'.repeat(64)}","contractSha256":"${'b'.repeat(64)}","policySha256":"${'c'.repeat(64)}"}',
+      'queued', 1, 1, 'exclusive', '[]', '[]',
+      'owner-a', '2026-07-19T00:00:00.000Z', '2026-07-19T00:00:00.000Z'
+    );`
+  );
+  expectSqlFailure(
+    path,
+    `INSERT INTO control_workflow_runtime_runs (
+      run_id, admission_command_id, artifact_manifest_sha256, runtime_manifest_sha256, status, version,
+      run_json, created_at, updated_at
+    ) VALUES (
+      'run-a', 'runtime-admission-registration', '${hash('a')}', '${hash('d')}', 'queued', 1,
+      '{"schema":"workflow_runtime_run.v0.2","artifactManifestSha256":"${hash('e')}","runtimeManifestSha256":"${hash('f')}","runtimeManifestSchema":"workflow_runtime_manifest.v0.1","registration":{"buildReleaseId":"release-a","contractSha256":"${hash('b')}","runtimePolicySha256":"${hash('c')}"}}',
+      '2026-07-19T00:00:00.000Z', '2026-07-19T00:00:00.000Z'
+    );`,
+    /registration does not match its frozen activation/
+  );
+});
+
+test('registration-binding migration rejects legacy child schemas for a v0.2 checkpoint', () => {
+  const path = database();
+  const hash = (value: string) => `sha256:${value.repeat(64).slice(0, 64)}`;
+  sql(
+    path,
+    `INSERT INTO control_runs (
+      id, account_id, tenant_id, workspace_account_id, activation_id, activation_version,
+      activation_json, status, version, attempt, concurrency_key, requested_tools_json,
+      requested_resources_json, created_by, created_at, updated_at
+    ) VALUES (
+      'run-a', 'account-a', 'tenant-a', 'workspace-a', 'activation-a', 1,
+      '{"buildReleaseId":"release-a","buildManifestSha256":"${'a'.repeat(64)}","contractSha256":"${'b'.repeat(64)}","policySha256":"${'c'.repeat(64)}"}',
+      'queued', 1, 1, 'exclusive', '[]', '[]',
+      'owner-a', '2026-07-19T00:00:00.000Z', '2026-07-19T00:00:00.000Z'
+    );
+    INSERT INTO control_workflow_runtime_runs (
+      run_id, admission_command_id, artifact_manifest_sha256, runtime_manifest_sha256, status, version,
+      run_json, created_at, updated_at
+    ) VALUES (
+      'run-a', 'runtime-admission-registration', '${hash('a')}', '${hash('d')}',
+      'waiting_for_approval', 2,
+      '{"schema":"workflow_runtime_run.v0.2","id":"run-a","status":"waiting_for_approval","version":2,"activation":{"id":"activation-a","version":1,"policySha256":"${hash('c')}"},"artifactManifestSha256":"${hash('a')}","runtimeManifestSha256":"${hash('d')}","runtimeManifestSchema":"workflow_runtime_manifest.v0.1","registration":{"buildReleaseId":"release-a","contractSha256":"${hash('b')}","runtimePolicySha256":"${hash('c')}"},"steps":[],"receipts":[]}',
+      '2026-07-19T00:00:00.000Z', '2026-07-19T00:00:00.000Z'
+    );
+    INSERT INTO control_workflow_runtime_steps (run_id, step_id, status, version, step_json)
+    VALUES ('run-a', 'review', 'waiting_for_approval', 1, '{}');`
+  );
+  expectSqlFailure(
+    path,
+    `INSERT INTO control_workflow_runtime_receipts (
+      id, run_id, event_index, receipt_json, receipt_sha256, previous_receipt_sha256, created_at
+    ) VALUES (
+      'legacy-receipt', 'run-a', 1, '{"schema":"create-something/control-run-receipt@2"}',
+      '${hash('e')}', NULL, '2026-07-19T00:00:00.000Z'
+    );`,
+    /receipt schema must match its checkpoint/
+  );
+  expectSqlFailure(
+    path,
+    `INSERT INTO control_workflow_runtime_receipts (
+      id, run_id, event_index, receipt_json, receipt_sha256, previous_receipt_sha256, created_at
+    ) VALUES (
+      'missing-action-id', 'run-a', 1,
+      '{"schema":"create-something/control-run-receipt@3","buildReleaseId":"release-a","contractSha256":"${hash('b')}","runtimePolicySha256":"${hash('c')}","runtimeManifestSchema":"workflow_runtime_manifest.v0.1","workflowCompilerVersion":"0.4.0"}',
+      '${hash('e')}', NULL, '2026-07-19T00:00:00.000Z'
+    );`,
+    /receipt schema must match its checkpoint/
+  );
+  expectSqlFailure(
+    path,
+    `INSERT INTO control_workflow_runtime_receipts (
+      id, run_id, event_index, receipt_json, receipt_sha256, previous_receipt_sha256, created_at
+    ) VALUES (
+      'wrong-manifest-schema', 'run-a', 1,
+      '{"schema":"create-something/control-run-receipt@3","buildReleaseId":"release-a","contractSha256":"${hash('b')}","runtimePolicySha256":"${hash('c')}","runtimeManifestSchema":"workflow_runtime_manifest.v0.2"}',
+      '${hash('e')}', NULL, '2026-07-19T00:00:00.000Z'
+    );`,
+    /receipt schema must match its checkpoint/
+  );
+  expectSqlFailure(
+    path,
+    `INSERT INTO control_workflow_runtime_approvals (
+      approval_id, run_id, step_id, binding_sha256, decision, approval_json, approval_context_json,
+      created_at, decided_at
+    ) VALUES (
+      'legacy-approval', 'run-a', 'review', '${hash('f')}', NULL, '{}',
+      '{"schema":"create-something/workflow-runtime-approval-context@1","version":1}',
+      '2026-07-19T00:00:00.000Z', NULL
+    );`,
+    /approval context schema must match its checkpoint/
+  );
+  expectSqlFailure(
+    path,
+    `INSERT INTO control_workflow_runtime_approvals (
+      approval_id, run_id, step_id, binding_sha256, decision, approval_json, approval_context_json,
+      created_at, decided_at
+    ) VALUES (
+      'wrong-approval-manifest-schema', 'run-a', 'review', '${hash('f')}', NULL, '{}',
+      '{"schema":"create-something/workflow-runtime-approval-context@2","version":2,"runtimeManifestSchema":"workflow_runtime_manifest.v0.2","registration":{"buildReleaseId":"release-a","contractSha256":"${hash('b')}","runtimePolicySha256":"${hash('c')}"}}',
+      '2026-07-19T00:00:00.000Z', NULL
+    );`,
+    /approval context schema must match its checkpoint/
+  );
+  expectSqlFailure(
+    path,
+    `INSERT INTO control_workflow_runtime_approvals (
+      approval_id, run_id, step_id, binding_sha256, decision, approval_json, approval_context_json,
+      created_at, decided_at
+    ) VALUES (
+      'wrong-approval-context-version', 'run-a', 'review', '${hash('f')}', NULL, '{}',
+      '{"schema":"create-something/workflow-runtime-approval-context@2","version":1,"runtimeManifestSchema":"workflow_runtime_manifest.v0.1","registration":{"buildReleaseId":"release-a","contractSha256":"${hash('b')}","runtimePolicySha256":"${hash('c')}"}}',
+      '2026-07-19T00:00:00.000Z', NULL
+    );`,
+    /approval context schema must match its checkpoint/
+  );
+  expectSqlFailure(
+    path,
+    `INSERT INTO control_workflow_runtime_approvals (
+      approval_id, run_id, step_id, binding_sha256, decision, approval_json, approval_context_json,
+      created_at, decided_at
+    ) VALUES (
+      'incomplete-approval-context', 'run-a', 'review', '${hash('f')}', NULL, '{}',
+      '{"schema":"create-something/workflow-runtime-approval-context@2","version":2,"runtimeManifestSchema":"workflow_runtime_manifest.v0.1","registration":{"buildReleaseId":"release-a","contractSha256":"${hash('b')}","runtimePolicySha256":"${hash('c')}"}}',
+      '2026-07-19T00:00:00.000Z', NULL
+    );`,
+    /approval context schema must match its checkpoint/
+  );
+  expectSqlFailure(
+    path,
+    `UPDATE control_workflow_runtime_runs
+     SET run_json = '{"schema":"workflow_runtime_run.v0.1"}', version = 3
+     WHERE run_id = 'run-a';`,
+    /checkpoint schema is immutable/
+  );
+});
+
+test('registration-binding migration binds a raw v0.2 checkpoint to its parent activation identity', () => {
+  const path = database();
+  const hash = (value: string) => `sha256:${value.repeat(64).slice(0, 64)}`;
+  sql(
+    path,
+    `INSERT INTO control_runs (
+      id, account_id, tenant_id, workspace_account_id, activation_id, activation_version,
+      activation_json, status, version, attempt, concurrency_key, requested_tools_json,
+      requested_resources_json, created_by, created_at, updated_at
+    ) VALUES (
+      'run-a', 'account-a', 'tenant-a', 'workspace-a', 'activation-a', 1,
+      '{"buildReleaseId":"release-a","buildManifestSha256":"${'a'.repeat(64)}","contractSha256":"${'b'.repeat(64)}","policySha256":"${'c'.repeat(64)}"}',
+      'queued', 1, 1, 'exclusive', '[]', '[]',
+      'owner-a', '2026-07-19T00:00:00.000Z', '2026-07-19T00:00:00.000Z'
+    );`
+  );
+  expectSqlFailure(
+    path,
+    `INSERT INTO control_workflow_runtime_runs (
+      run_id, admission_command_id, artifact_manifest_sha256, runtime_manifest_sha256, status, version,
+      run_json, created_at, updated_at
+    ) VALUES (
+      'run-a', 'runtime-admission-forged-activation', '${hash('a')}', '${hash('d')}', 'queued', 1,
+      '{"schema":"workflow_runtime_run.v0.2","activation":{"id":"forged-activation","version":1,"policySha256":"${hash('c')}"},"artifactManifestSha256":"${hash('a')}","runtimeManifestSha256":"${hash('d')}","runtimeManifestSchema":"workflow_runtime_manifest.v0.1","registration":{"buildReleaseId":"release-a","contractSha256":"${hash('b')}","runtimePolicySha256":"${hash('c')}"}}',
+      '2026-07-19T00:00:00.000Z', '2026-07-19T00:00:00.000Z'
+    );`,
+    /registration does not match its frozen activation/
+  );
+});
+
+test('registration-binding migration keeps the workflow checkpoint schema immutable in both directions', () => {
+  const path = database();
+  const hash = (value: string) => `sha256:${value.repeat(64).slice(0, 64)}`;
+  sql(
+    path,
+    `INSERT INTO control_runs (
+      id, account_id, tenant_id, workspace_account_id, activation_id, activation_version,
+      activation_json, status, version, attempt, concurrency_key, requested_tools_json,
+      requested_resources_json, created_by, created_at, updated_at
+    ) VALUES (
+      'run-a', 'account-a', 'tenant-a', 'workspace-a', 'activation-a', 1,
+      '{"buildReleaseId":"release-a","buildManifestSha256":"${'a'.repeat(64)}","contractSha256":"${'b'.repeat(64)}","policySha256":"${'c'.repeat(64)}"}',
+      'queued', 1, 1, 'exclusive', '[]', '[]',
+      'owner-a', '2026-07-19T00:00:00.000Z', '2026-07-19T00:00:00.000Z'
+    );
+    INSERT INTO control_workflow_runtime_runs (
+      run_id, admission_command_id, artifact_manifest_sha256, runtime_manifest_sha256, status, version,
+      run_json, created_at, updated_at
+    ) VALUES (
+      'run-a', 'runtime-admission-legacy', '${hash('a')}', '${hash('d')}', 'queued', 1,
+      '{"schema":"workflow_runtime_run.v0.1"}',
+      '2026-07-19T00:00:00.000Z', '2026-07-19T00:00:00.000Z'
+    );`
+  );
+  expectSqlFailure(
+    path,
+    `UPDATE control_workflow_runtime_runs
+     SET run_json = '{"schema":"workflow_runtime_run.v0.2","activation":{"id":"activation-a","version":1,"policySha256":"${hash('c')}"},"artifactManifestSha256":"${hash('a')}","runtimeManifestSha256":"${hash('d')}","runtimeManifestSchema":"workflow_runtime_manifest.v0.1","registration":{"buildReleaseId":"release-a","contractSha256":"${hash('b')}","runtimePolicySha256":"${hash('c')}"}}',
+         version = 2
+     WHERE run_id = 'run-a';`,
+    /checkpoint schema is immutable/
+  );
+});
+
+test('registration-binding migration binds an approval context to its parent, wait receipt, and step', () => {
+  const path = database();
+  const hash = (value: string) => `sha256:${value.repeat(64).slice(0, 64)}`;
+  const createdAt = '2026-07-19T00:00:00.000Z';
+  const registration = {
+    buildReleaseId: 'release-a',
+    contractSha256: hash('b'),
+    runtimePolicySha256: hash('c')
+  };
+  const run = {
+    schema: 'workflow_runtime_run.v0.2',
+    id: 'run-a',
+    status: 'waiting_for_approval',
+    version: 2,
+    activation: { id: 'activation-a', version: 1, policySha256: hash('c') },
+    artifactManifestSha256: hash('a'),
+    runtimeManifestSha256: hash('d'),
+    runtimeManifestSchema: 'workflow_runtime_manifest.v0.1',
+    registration,
+    steps: [],
+    receipts: []
+  };
+  const receipt = {
+    schema: 'create-something/control-run-receipt@3',
+    eventType: 'wait_created',
+    stepId: 'review',
+    attemptId: null,
+    runVersion: 2,
+    stepVersion: 1,
+    activationId: 'activation-a',
+    activationVersion: 1,
+    activationPolicySha256: hash('c'),
+    buildReleaseId: registration.buildReleaseId,
+    contractSha256: registration.contractSha256,
+    runtimePolicySha256: registration.runtimePolicySha256,
+    artifactManifestSha256: run.artifactManifestSha256,
+    runtimeManifestSha256: run.runtimeManifestSha256,
+    runtimeManifestSchema: run.runtimeManifestSchema,
+    workflowId: 'workflow-a',
+    workflowVersion: '1.0.0',
+    workflowCompilerVersion: '0.4.0',
+    actionId: 'review',
+    definitionHash: hash('e'),
+    evidenceDigest: hash('f')
+  };
+  const context = {
+    schema: 'create-something/workflow-runtime-approval-context@2',
+    version: 2,
+    scope: { accountId: 'account-a', tenantId: 'tenant-a', workspaceAccountId: 'workspace-a' },
+    runVersion: 2,
+    stepVersion: 1,
+    attempt: { type: 'no_capability_attempt' },
+    activation: run.activation,
+    artifactManifestSha256: run.artifactManifestSha256,
+    runtimeManifestSha256: run.runtimeManifestSha256,
+    workflow: {
+      compiledBundleSchema: 'compiled_workflow_bundle.v0.3',
+      compilerVersion: '0.4.0',
+      id: 'workflow-a',
+      version: '1.0.0',
+      definitionHash: hash('e')
+    },
+    actionId: 'review',
+    evidenceDigest: hash('f'),
+    registration,
+    runtimeManifestSchema: run.runtimeManifestSchema
+  };
+  const pendingApproval = {
+    id: 'approval-valid',
+    bindingSha256: hash('9'),
+    policyId: 'account-owner',
+    expiresAt: '2026-07-20T00:00:00.000Z'
+  };
+  const approvalSql = (
+    id: string,
+    value: object,
+    approval: object = {
+      id,
+      bindingSha256: pendingApproval.bindingSha256,
+      policyId: pendingApproval.policyId,
+      expiresAt: pendingApproval.expiresAt
+    }
+  ) => `INSERT INTO control_workflow_runtime_approvals (
+    approval_id, run_id, step_id, binding_sha256, decision, approval_json, approval_context_json,
+    created_at, decided_at
+  ) VALUES (
+    '${id}', 'run-a', 'review', '${hash('9')}', NULL, '${JSON.stringify(approval)}', '${JSON.stringify(value)}',
+    '${createdAt}', NULL
+  );`;
+  sql(
+    path,
+    `INSERT INTO control_runs (
+      id, account_id, tenant_id, workspace_account_id, activation_id, activation_version,
+      activation_json, status, version, attempt, concurrency_key, requested_tools_json,
+      requested_resources_json, created_by, created_at, updated_at
+    ) VALUES (
+      'run-a', 'account-a', 'tenant-a', 'workspace-a', 'activation-a', 1,
+      '{"buildReleaseId":"release-a","buildManifestSha256":"${'a'.repeat(64)}","contractSha256":"${'b'.repeat(64)}","policySha256":"${'c'.repeat(64)}"}',
+      'queued', 1, 1, 'exclusive', '[]', '[]', 'owner-a', '${createdAt}', '${createdAt}'
+    );
+    INSERT INTO control_workflow_runtime_runs (
+      run_id, admission_command_id, artifact_manifest_sha256, runtime_manifest_sha256, status, version,
+      run_json, created_at, updated_at
+    ) VALUES (
+      'run-a', 'runtime-admission-approval-context', '${hash('a')}', '${hash('d')}',
+      'waiting_for_approval', 2, '${JSON.stringify(run)}', '${createdAt}', '${createdAt}'
+    );
+    INSERT INTO control_workflow_runtime_steps (run_id, step_id, status, version, step_json)
+    VALUES (
+      'run-a', 'review', 'waiting_for_approval', 1,
+      '${JSON.stringify({
+        id: 'review',
+        status: 'waiting_for_approval',
+        version: 1,
+        attempts: [],
+        approval: pendingApproval
+      })}'
+    );
+    INSERT INTO control_workflow_runtime_receipts (
+      id, run_id, event_index, receipt_json, receipt_sha256, previous_receipt_sha256, created_at
+    ) VALUES (
+      'wait-receipt', 'run-a', 1, '${JSON.stringify(receipt)}', '${hash('8')}', NULL, '${createdAt}'
+    );`
+  );
+  expectSqlFailure(
+    path,
+    approvalSql('approval-malformed', context, {}),
+    /approval context schema must match its checkpoint/
+  );
+  expectSqlFailure(
+    path,
+    approvalSql('approval-mismatched-id', context, {
+      id: 'forged-approval',
+      bindingSha256: hash('9'),
+      policyId: 'account-owner',
+      expiresAt: '2026-07-20T00:00:00.000Z'
+    }),
+    /approval context schema must match its checkpoint/
+  );
+  expectSqlFailure(
+    path,
+    approvalSql('approval-mismatched-binding', context, {
+      id: 'approval-mismatched-binding',
+      bindingSha256: hash('0'),
+      policyId: 'account-owner',
+      expiresAt: '2026-07-20T00:00:00.000Z'
+    }),
+    /approval context schema must match its checkpoint/
+  );
+  for (const [field, value] of [
+    ['policyId', 'forged-policy'],
+    ['expiresAt', '2026-07-21T00:00:00.000Z']
+  ] as const) {
+    expectSqlFailure(
+      path,
+      approvalSql('approval-valid', context, { ...pendingApproval, [field]: value }),
+      /approval context schema must match its checkpoint/
+    );
+  }
+  sql(path, approvalSql('approval-valid', context));
+  const forgedContexts: Array<[string, object]> = [
+    ['scope', { ...context, scope: { ...context.scope, accountId: 'forged-account' } }],
+    ['activation', { ...context, activation: { ...context.activation, id: 'forged-activation' } }],
+    ['artifact', { ...context, artifactManifestSha256: hash('0') }],
+    ['runtime', { ...context, runtimeManifestSha256: hash('0') }],
+    ['workflow', { ...context, workflow: { ...context.workflow, id: 'forged-workflow' } }],
+    [
+      'compiler',
+      { ...context, workflow: { ...context.workflow, compilerVersion: 'forged-compiler' } }
+    ],
+    ['action', { ...context, actionId: 'forged-action' }],
+    ['evidence', { ...context, evidenceDigest: hash('0') }]
+  ];
+  for (const [id, forged] of forgedContexts) {
+    expectSqlFailure(
+      path,
+      approvalSql(`approval-forged-${id}`, forged),
+      /approval context schema must match its checkpoint/
+    );
+  }
 });
 
 test('effect-ambiguity migration preserves attempts and permits an uncertain effect state', () => {

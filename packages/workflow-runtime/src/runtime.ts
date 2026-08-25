@@ -270,7 +270,7 @@ function validInstant(value: unknown): value is string {
 export async function workflowRuntimeCheckpointHash(
   run: WorkflowRuntimeRun
 ): Promise<RuntimeDigest> {
-  return hash({
+  const checkpoint = {
     schema: run.schema,
     id: run.id,
     status: run.status,
@@ -279,7 +279,16 @@ export async function workflowRuntimeCheckpointHash(
     artifactManifestSha256: run.artifactManifestSha256,
     runtimeManifestSha256: run.runtimeManifestSha256,
     steps: run.steps
-  });
+  };
+  return hash(
+    run.schema === 'workflow_runtime_run.v0.2'
+      ? {
+          ...checkpoint,
+          registration: run.registration,
+          runtimeManifestSchema: run.runtimeManifestSchema
+        }
+      : checkpoint
+  );
 }
 
 function graph(steps: WorkflowRuntimeStepDefinition[]): void {
@@ -477,6 +486,7 @@ function admission(value: WorkflowRuntimeAdmission): WorkflowRuntimeAdmission {
       'activation',
       'artifactManifestSha256',
       'clock',
+      'registration',
       'runId',
       'runtimeManifestSha256'
     ]) ||
@@ -490,13 +500,35 @@ function admission(value: WorkflowRuntimeAdmission): WorkflowRuntimeAdmission {
       'Runtime admission has unknown or invalid fields'
     );
   }
+  if (
+    !isRecord(value.registration) ||
+    !exact(value.registration, ['buildReleaseId', 'contractSha256', 'runtimePolicySha256'])
+  ) {
+    throw new RuntimeValidationError(
+      'INVALID_ADMISSION',
+      'Runtime registration has unknown or invalid fields'
+    );
+  }
+  const activation = {
+    id: text(value.activation.id, 'Activation ID', 160),
+    version: value.activation.version,
+    policySha256: digest(value.activation.policySha256, 'Activation policy hash')
+  };
+  const registration = {
+    buildReleaseId: text(value.registration.buildReleaseId, 'Build release ID', 160),
+    contractSha256: digest(value.registration.contractSha256, 'Build contract hash'),
+    runtimePolicySha256: digest(value.registration.runtimePolicySha256, 'Runtime policy hash')
+  };
+  if (registration.runtimePolicySha256 !== activation.policySha256) {
+    throw new RuntimeValidationError(
+      'INVALID_ADMISSION',
+      'Runtime registration policy must equal the frozen activation policy'
+    );
+  }
   return {
     runId: text(value.runId, 'Run ID', 160),
-    activation: {
-      id: text(value.activation.id, 'Activation ID', 160),
-      version: value.activation.version,
-      policySha256: digest(value.activation.policySha256, 'Activation policy hash')
-    },
+    activation,
+    registration,
     artifactManifestSha256: digest(value.artifactManifestSha256, 'Artifact manifest hash'),
     runtimeManifestSha256: digest(value.runtimeManifestSha256, 'Runtime manifest hash'),
     clock: instant(value.clock, 'Admission clock')
@@ -560,8 +592,7 @@ async function receipt(
   input: ReceiptInput
 ): Promise<void> {
   const checkpointSha256 = await workflowRuntimeCheckpointHash(run);
-  const base = {
-    schema: 'create-something/control-run-receipt@2' as const,
+  const common = {
     id: `receipt:${run.id}:${run.receipts.length + 1}`,
     runId: run.id,
     eventIndex: run.receipts.length + 1,
@@ -587,6 +618,25 @@ async function receipt(
     checkpointSha256,
     createdAt: input.createdAt
   };
+  if (run.schema === 'workflow_runtime_run.v0.1') {
+    const base = { schema: 'create-something/control-run-receipt@2' as const, ...common };
+    run.receipts.push({ ...base, receiptSha256: await hash(base) });
+    return;
+  }
+  if (!run.registration || !run.runtimeManifestSchema)
+    stateFailure(
+      'Registration-bound runtime checkpoint is missing registration or manifest schema'
+    );
+  const base = {
+    schema: 'create-something/control-run-receipt@3' as const,
+    ...common,
+    buildReleaseId: run.registration.buildReleaseId,
+    contractSha256: run.registration.contractSha256,
+    runtimeManifestSchema: run.runtimeManifestSchema,
+    runtimePolicySha256: run.registration.runtimePolicySha256,
+    workflowCompilerVersion: manifest.workflow.compilerVersion,
+    actionId: input.stepId === null ? null : definition(manifest, input.stepId).actionId
+  };
   run.receipts.push({ ...base, receiptSha256: await hash(base) });
 }
 
@@ -598,21 +648,38 @@ async function approval(
   const currentDefinition = definition(manifest, current.id);
   if (currentDefinition.disposition !== 'wait')
     throw new RuntimeValidationError('INVALID_STATE', 'Only a wait step can request approval');
+  const binding = {
+    runId: run.id,
+    runVersion: run.version,
+    stepId: current.id,
+    stepVersion: current.version,
+    activation: run.activation,
+    artifactManifestSha256: run.artifactManifestSha256,
+    runtimeManifestSha256: run.runtimeManifestSha256,
+    workflow: manifest.workflow,
+    policyId: currentDefinition.approval.policyId,
+    expiresAt: currentDefinition.approval.expiresAt,
+    evidenceDigest: currentDefinition.evidenceDigest
+  };
+  if (
+    run.schema === 'workflow_runtime_run.v0.2' &&
+    (!run.registration || !run.runtimeManifestSchema)
+  ) {
+    stateFailure(
+      'Registration-bound runtime checkpoint is missing registration or manifest schema'
+    );
+  }
   return {
     id: `approval:${run.id}:${current.id}:v${current.version}`,
-    bindingSha256: await hash({
-      runId: run.id,
-      runVersion: run.version,
-      stepId: current.id,
-      stepVersion: current.version,
-      activation: run.activation,
-      artifactManifestSha256: run.artifactManifestSha256,
-      runtimeManifestSha256: run.runtimeManifestSha256,
-      workflow: manifest.workflow,
-      policyId: currentDefinition.approval.policyId,
-      expiresAt: currentDefinition.approval.expiresAt,
-      evidenceDigest: currentDefinition.evidenceDigest
-    }),
+    bindingSha256: await hash(
+      run.schema === 'workflow_runtime_run.v0.2'
+        ? {
+            ...binding,
+            registration: run.registration,
+            runtimeManifestSchema: run.runtimeManifestSchema
+          }
+        : binding
+    ),
     policyId: currentDefinition.approval.policyId,
     expiresAt: currentDefinition.approval.expiresAt
   };
@@ -637,13 +704,15 @@ export async function createWorkflowRuntimeRun(
       'Runtime manifest requires exactly one initial ready step'
     );
   const run: WorkflowRuntimeRun = {
-    schema: 'workflow_runtime_run.v0.1',
+    schema: 'workflow_runtime_run.v0.2',
     id: input.runId,
     status: 'queued',
     version: 1,
     activation: input.activation,
+    registration: input.registration,
     artifactManifestSha256: input.artifactManifestSha256,
     runtimeManifestSha256: input.runtimeManifestSha256,
+    runtimeManifestSchema: manifest.schemaVersion,
     steps,
     receipts: []
   };
@@ -1088,20 +1157,36 @@ async function assertRunSemantics(
   manifest: WorkflowRuntimeManifest,
   run: WorkflowRuntimeRun
 ): Promise<void> {
+  const registrationBound = run.schema === 'workflow_runtime_run.v0.2';
+  const runFields = registrationBound
+    ? [
+        'activation',
+        'artifactManifestSha256',
+        'id',
+        'receipts',
+        'registration',
+        'runtimeManifestSha256',
+        'runtimeManifestSchema',
+        'schema',
+        'status',
+        'steps',
+        'version'
+      ]
+    : [
+        'activation',
+        'artifactManifestSha256',
+        'id',
+        'receipts',
+        'runtimeManifestSha256',
+        'schema',
+        'status',
+        'steps',
+        'version'
+      ];
   if (
     !isRecord(run) ||
-    !exact(run, [
-      'activation',
-      'artifactManifestSha256',
-      'id',
-      'receipts',
-      'runtimeManifestSha256',
-      'schema',
-      'status',
-      'steps',
-      'version'
-    ]) ||
-    run.schema !== 'workflow_runtime_run.v0.1' ||
+    !exact(run, runFields) ||
+    (run.schema !== 'workflow_runtime_run.v0.1' && run.schema !== 'workflow_runtime_run.v0.2') ||
     !validText(run.id, 160) ||
     !RUN_STATUSES.includes(run.status) ||
     !Number.isInteger(run.version) ||
@@ -1120,6 +1205,21 @@ async function assertRunSemantics(
     run.receipts.length === 0
   ) {
     stateFailure('Runtime checkpoint has an invalid envelope');
+  }
+  if (registrationBound) {
+    if (
+      !isRecord(run.registration) ||
+      !exact(run.registration, ['buildReleaseId', 'contractSha256', 'runtimePolicySha256']) ||
+      !validText(run.registration.buildReleaseId, 160) ||
+      !DIGEST.test(run.registration.contractSha256) ||
+      !DIGEST.test(run.registration.runtimePolicySha256) ||
+      run.registration.runtimePolicySha256 !== run.activation.policySha256 ||
+      (run.runtimeManifestSchema !== 'workflow_runtime_manifest.v0.1' &&
+        run.runtimeManifestSchema !== 'workflow_runtime_manifest.v0.2') ||
+      run.runtimeManifestSchema !== manifest.schemaVersion
+    ) {
+      stateFailure('Registration-bound runtime checkpoint has an invalid registration');
+    }
   }
 
   const states = run.steps as unknown as WorkflowRuntimeStepRecord[];
@@ -1366,10 +1466,26 @@ async function assertRunSemantics(
     'workflowVersion'
   ];
   for (const receipt of receipts) {
+    const registrationReceipt = receipt.schema === 'create-something/control-run-receipt@3';
+    const fields = registrationReceipt
+      ? [
+          ...receiptFields,
+          'buildReleaseId',
+          'contractSha256',
+          'runtimeManifestSchema',
+          'runtimePolicySha256',
+          'workflowCompilerVersion',
+          'actionId'
+        ]
+      : receiptFields;
     if (
       !isRecord(receipt) ||
-      !exact(receipt, receiptFields) ||
-      receipt.schema !== 'create-something/control-run-receipt@2' ||
+      !exact(receipt, fields) ||
+      (receipt.schema !== 'create-something/control-run-receipt@2' &&
+        receipt.schema !== 'create-something/control-run-receipt@3') ||
+      (registrationBound
+        ? receipt.schema !== 'create-something/control-run-receipt@3'
+        : receipt.schema !== 'create-something/control-run-receipt@2') ||
       !RECEIPT_EVENTS.includes(receipt.eventType as string) ||
       !RUN_STATUSES.includes(receipt.status as string) ||
       !Number.isInteger(receipt.runVersion) ||
@@ -1385,6 +1501,20 @@ async function assertRunSemantics(
       !DIGEST.test(receipt.receiptSha256)
     ) {
       stateFailure('Runtime checkpoint receipt envelope is invalid');
+    }
+    if (
+      registrationBound &&
+      (!run.registration ||
+        receipt.buildReleaseId !== run.registration.buildReleaseId ||
+        receipt.contractSha256 !== run.registration.contractSha256 ||
+        receipt.runtimePolicySha256 !== run.registration.runtimePolicySha256 ||
+        receipt.runtimeManifestSchema !== run.runtimeManifestSchema ||
+        !validText(receipt.workflowCompilerVersion, 160) ||
+        (receipt.stepId === null
+          ? receipt.actionId !== null
+          : receipt.actionId !== definition(manifest, receipt.stepId).actionId))
+    ) {
+      stateFailure('Registration-bound runtime receipt does not match its checkpoint');
     }
   }
   const first = receipts[0];
@@ -1429,6 +1559,19 @@ export async function verifyWorkflowRuntimeRun(
       current.activationId !== run.activation.id ||
       current.activationVersion !== run.activation.version ||
       current.activationPolicySha256 !== run.activation.policySha256 ||
+      (run.schema === 'workflow_runtime_run.v0.2' &&
+        (!run.registration ||
+          current.schema !== 'create-something/control-run-receipt@3' ||
+          current.buildReleaseId !== run.registration.buildReleaseId ||
+          current.contractSha256 !== run.registration.contractSha256 ||
+          current.runtimePolicySha256 !== run.registration.runtimePolicySha256 ||
+          current.runtimeManifestSchema !== run.runtimeManifestSchema ||
+          current.workflowCompilerVersion !== manifest.workflow.compilerVersion ||
+          (current.stepId === null
+            ? current.actionId !== null
+            : current.actionId !== definition(manifest, current.stepId).actionId))) ||
+      (run.schema === 'workflow_runtime_run.v0.1' &&
+        current.schema !== 'create-something/control-run-receipt@2') ||
       current.previousReceiptSha256 !==
         (index === 0 ? null : run.receipts[index - 1].receiptSha256) ||
       !DIGEST.test(current.checkpointSha256) ||

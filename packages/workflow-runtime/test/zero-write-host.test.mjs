@@ -100,6 +100,11 @@ test('the zero-write host persists, replays, restarts, and lets a concurrent sto
     {
       runId: 'host-run',
       activation: { id: 'activation-a', version: 1, policySha256: digest('3') },
+      registration: {
+        buildReleaseId: 'build-release-a',
+        contractSha256: digest('6'),
+        runtimePolicySha256: digest('3')
+      },
       artifactManifestSha256: digest('4'),
       runtimeManifestSha256: digest('5'),
       clock: 'ignored-by-host'
@@ -249,6 +254,11 @@ test('the zero-write host persists a planned non-manual retryable stop', async (
     {
       runId: 'retryable-stop',
       activation: { id: 'activation-a', version: 1, policySha256: digest('3') },
+      registration: {
+        buildReleaseId: 'build-release-a',
+        contractSha256: digest('6'),
+        runtimePolicySha256: digest('3')
+      },
       artifactManifestSha256: digest('4'),
       runtimeManifestSha256: digest('5'),
       clock: 'ignored-by-host'
@@ -355,6 +365,11 @@ test('the host authorizes an approval against its bound policy before it advance
     {
       runId: 'policy-bound-approval',
       activation: { id: 'activation-a', version: 1, policySha256: digest('3') },
+      registration: {
+        buildReleaseId: 'build-release-a',
+        contractSha256: digest('6'),
+        runtimePolicySha256: digest('3')
+      },
       artifactManifestSha256: digest('4'),
       runtimeManifestSha256: digest('5'),
       clock: 'ignored-by-host'
@@ -432,6 +447,11 @@ test('the host derives idempotency identity from the semantic command rather tha
   const admission = {
     runId: 'derived-command',
     activation: { id: 'activation-a', version: 1, policySha256: digest('3') },
+    registration: {
+      buildReleaseId: 'build-release-a',
+      contractSha256: digest('6'),
+      runtimePolicySha256: digest('3')
+    },
     artifactManifestSha256: digest('4'),
     runtimeManifestSha256: digest('5'),
     clock: 'ignored-by-host'
@@ -448,6 +468,19 @@ test('the host derives idempotency identity from the semantic command rather tha
         { ...admission, runtimeManifestSha256: digest('6') },
         'derived-admit',
         commandDigest('c')
+      ),
+    /already used for another command/
+  );
+  await assert.rejects(
+    () =>
+      host.admit(
+        scope,
+        {
+          ...admission,
+          registration: { ...admission.registration, buildReleaseId: 'other-build-release' }
+        },
+        'derived-admit',
+        commandDigest('d')
       ),
     /already used for another command/
   );
