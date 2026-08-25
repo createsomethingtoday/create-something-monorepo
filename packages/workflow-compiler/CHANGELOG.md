@@ -4,6 +4,12 @@ All notable changes to this package are documented here. This project follows
 Semantic Versioning for its npm API and separately versions its workflow and
 artifact schemas.
 
+## 0.4.1
+
+- Prepare the first post-bootstrap release candidate for stage-only GitHub
+  Actions OIDC verification. This patch contains no workflow-compiler behavior
+  changes.
+
 ## 0.4.0
 
 - Publish `0.4.0` as `@createsomething/workflow-compiler`, the canonical
