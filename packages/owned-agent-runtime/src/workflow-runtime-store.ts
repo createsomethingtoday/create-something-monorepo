@@ -8,7 +8,12 @@ import {
   type WorkflowRuntimeRun,
   type WorkflowRuntimeScope
 } from '@createsomething/workflow-runtime';
-import type { WorkflowRuntimeManifestAuthority } from './workflow-runtime-manifest-authority.js';
+import {
+  WORKFLOW_RUNTIME_APPROVAL_COMMAND,
+  type WorkflowRuntimeApprovalSurface,
+  type WorkflowRuntimeApprovalSurfaceAuthority,
+  type WorkflowRuntimeManifestAuthority
+} from './workflow-runtime-manifest-authority.js';
 
 type RuntimeRow = { run_json: string };
 type CommandRow = {
@@ -48,6 +53,7 @@ type WorkflowRuntimeApprovalContext =
   | WorkflowRuntimeApprovalContextV2;
 
 const COMMAND_DIGEST = /^[a-f0-9]{64}$/;
+const RUNTIME_DIGEST = /^sha256:[a-f0-9]{64}$/;
 const LIVE_PARENT_STATUSES = "'queued', 'running', 'waiting_for_approval'";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -83,7 +89,8 @@ function commandDigest(value: string): string {
 export class D1WorkflowRuntimeCheckpointStore implements WorkflowRuntimeCheckpointStore {
   constructor(
     private readonly database: D1Database,
-    private readonly manifests?: WorkflowRuntimeManifestAuthority
+    private readonly manifests?: WorkflowRuntimeManifestAuthority,
+    private readonly approvalSurfaces?: WorkflowRuntimeApprovalSurfaceAuthority
   ) {}
 
   async find(scope: WorkflowRuntimeScope, runId: string): Promise<WorkflowRuntimeRun | undefined> {
@@ -136,6 +143,7 @@ export class D1WorkflowRuntimeCheckpointStore implements WorkflowRuntimeCheckpoi
 
     const manifest = await this.trustedManifest(input);
     const approvalContexts = await this.approvalContexts(input, manifest);
+    const approvalAttestations = await this.approvalAttestations(input, manifest);
     const registration = input.run.registration;
     if (
       input.run.schema === 'workflow_runtime_run.v0.2' &&
@@ -295,6 +303,7 @@ export class D1WorkflowRuntimeCheckpointStore implements WorkflowRuntimeCheckpoi
     );
 
     const approvalStatements: D1PreparedStatement[] = [];
+    const approvalAttestationStatements: D1PreparedStatement[] = [];
     for (const step of input.run.steps) {
       statements.push(
         this.database
@@ -354,6 +363,13 @@ export class D1WorkflowRuntimeCheckpointStore implements WorkflowRuntimeCheckpoi
             'Workflow Runtime approval context is missing'
           );
         }
+        const approvalAttestation = approvalAttestations.get(step.approval.id);
+        if (input.run.schema === 'workflow_runtime_run.v0.2' && !approvalAttestation) {
+          throw new RuntimeValidationError(
+            'INVALID_STATE',
+            'Workflow Runtime approval is missing a trusted approval-surface attestation'
+          );
+        }
         approvalStatements.push(
           this.database
             .prepare(
@@ -379,6 +395,38 @@ export class D1WorkflowRuntimeCheckpointStore implements WorkflowRuntimeCheckpoi
               serialized
             )
         );
+        if (approvalAttestation) {
+          approvalAttestationStatements.push(
+            this.database
+              .prepare(
+                `INSERT INTO control_workflow_runtime_approval_attestations
+                  (approval_id, run_id, step_id, approval_surface_schema, approval_surface_sha256,
+                   approval_command_schema, approval_command_version, decision_actor_role, created_at)
+                 SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, NULL, ?8
+                 WHERE EXISTS (
+                   SELECT 1 FROM control_workflow_runtime_commands
+                   WHERE id = ?9 AND result_json = ?10
+                 )
+                   AND EXISTS (
+                     SELECT 1 FROM control_workflow_runtime_approvals
+                     WHERE approval_id = ?1 AND run_id = ?2 AND step_id = ?3
+                   )
+                 ON CONFLICT(approval_id) DO NOTHING`
+              )
+              .bind(
+                step.approval.id,
+                input.run.id,
+                step.id,
+                approvalAttestation.approvalSurface.schemaVersion,
+                approvalAttestation.approvalSurface.sha256,
+                WORKFLOW_RUNTIME_APPROVAL_COMMAND.schema,
+                WORKFLOW_RUNTIME_APPROVAL_COMMAND.version,
+                issuedAt,
+                commandId,
+                serialized
+              )
+          );
+        }
       }
     }
 
@@ -434,12 +482,53 @@ export class D1WorkflowRuntimeCheckpointStore implements WorkflowRuntimeCheckpoi
                 serialized
               )
           );
+          const attestedApprovalDecision =
+            input.run.schema === 'workflow_runtime_run.v0.2' &&
+            ('actorRole' in receipt || 'approvalSurfaceSha256' in receipt);
+          if (attestedApprovalDecision) {
+            const actorRole = receipt.actorRole;
+            if (!actorRole) {
+              throw new RuntimeValidationError(
+                'INVALID_STATE',
+                'Workflow Runtime approval decision is missing its verified Identity role'
+              );
+            }
+            statements.push(
+              this.database
+                .prepare(
+                  `UPDATE control_workflow_runtime_approval_attestations
+                   SET decision_actor_role = ?1
+                   WHERE run_id = ?2 AND step_id = ?3 AND decision_actor_role IS NULL
+                     AND EXISTS (
+                       SELECT 1 FROM control_workflow_runtime_approvals
+                       WHERE run_id = ?2 AND step_id = ?3 AND decision = ?4 AND decided_at = ?5
+                     )
+                     AND EXISTS (
+                       SELECT 1 FROM control_workflow_runtime_receipts
+                       WHERE run_id = ?2 AND event_index = ?6
+                         AND json_extract(receipt_json, '$.eventType') = 'approval_decided'
+                         AND json_extract(receipt_json, '$.stepId') = ?3
+                         AND json_extract(receipt_json, '$.actorRole') = ?1
+                         AND created_at = ?5
+                     )`
+                )
+                .bind(
+                  actorRole,
+                  input.run.id,
+                  receipt.stepId,
+                  decision,
+                  receipt.createdAt,
+                  receipt.eventIndex
+                )
+            );
+          }
         }
       }
     }
     // The immutable wait receipt is the D1-side authority for the approval
     // context. Persist it before a new context can reference it.
     statements.push(...approvalStatements);
+    statements.push(...approvalAttestationStatements);
 
     const checkpointSha256 = await workflowRuntimeCheckpointHash(input.run);
     statements.push(
@@ -589,6 +678,58 @@ export class D1WorkflowRuntimeCheckpointStore implements WorkflowRuntimeCheckpoi
       });
     }
     return contexts;
+  }
+
+  private async approvalAttestations(
+    input: Parameters<WorkflowRuntimeCheckpointStore['apply']>[0],
+    manifest: WorkflowRuntimeManifest | undefined
+  ): Promise<
+    Map<
+      string,
+      {
+        approvalSurface: WorkflowRuntimeApprovalSurface;
+        approvalCommand: typeof WORKFLOW_RUNTIME_APPROVAL_COMMAND;
+      }
+    >
+  > {
+    const approvalSteps = input.run.steps.filter((step) => step.approval !== null);
+    if (approvalSteps.length === 0 || input.run.schema !== 'workflow_runtime_run.v0.2') {
+      return new Map();
+    }
+    if (!manifest || !this.approvalSurfaces) {
+      throw new RuntimeValidationError(
+        'INVALID_STATE',
+        'Registration-bound Workflow Runtime approval requires a trusted approval-surface authority'
+      );
+    }
+    const approvalSurface = await this.approvalSurfaces.findByRuntimeManifestSha256(
+      input.run.runtimeManifestSha256
+    );
+    if (
+      !approvalSurface ||
+      !RUNTIME_DIGEST.test(approvalSurface.sha256) ||
+      approvalSurface.sha256 !== manifest.artifacts.approvalSurfacesSha256
+    ) {
+      throw new RuntimeValidationError(
+        'INVALID_STATE',
+        'Workflow Runtime approval surface does not match the trusted compiler manifest'
+      );
+    }
+    return new Map(
+      approvalSteps.flatMap((step) =>
+        step.approval
+          ? [
+              [
+                step.approval.id,
+                {
+                  approvalSurface: structuredClone(approvalSurface),
+                  approvalCommand: WORKFLOW_RUNTIME_APPROVAL_COMMAND
+                }
+              ] as const
+            ]
+          : []
+      )
+    );
   }
 
   private async parentAuthorizes(scope: WorkflowRuntimeScope, runId: string): Promise<boolean> {

@@ -33,6 +33,10 @@ const workflowRuntimeRegistrationBindingMigration = readFileSync(
   new URL('../migrations/0009_control_workflow_runtime_registration_binding.sql', import.meta.url),
   'utf8'
 );
+const workflowRuntimeApprovalAttestationMigration = readFileSync(
+  new URL('../migrations/0010_control_workflow_runtime_approval_attestations.sql', import.meta.url),
+  'utf8'
+);
 
 test('Control activation binding is the Agency-owned D1', () => {
   const runtimeConfig = readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8');
@@ -51,10 +55,14 @@ test('Control activation binding is the Agency-owned D1', () => {
   assert.deepEqual(controlBinding.slice(1), agencyBinding.slice(1));
 });
 
-function database() {
+function database(includeApprovalAttestationMigration = true) {
   const path = join(mkdtempSync(join(tmpdir(), 'control-run-')), 'runtime.sqlite');
   execFileSync('sqlite3', [path], {
-    input: `PRAGMA foreign_keys=ON;\n${migration}\n${workflowRuntimeMigration}\n${workflowRuntimeEffectAmbiguityMigration}\n${workflowRuntimeDispatchMigration}\n${workflowRuntimeProofMigration}\n${workflowRuntimeApprovalContextMigration}\n${workflowRuntimeRegistrationBindingMigration}`
+    input: `PRAGMA foreign_keys=ON;\n${migration}\n${workflowRuntimeMigration}\n${workflowRuntimeEffectAmbiguityMigration}\n${workflowRuntimeDispatchMigration}\n${workflowRuntimeProofMigration}\n${workflowRuntimeApprovalContextMigration}\n${workflowRuntimeRegistrationBindingMigration}${
+      includeApprovalAttestationMigration
+        ? `\n${workflowRuntimeApprovalAttestationMigration}`
+        : ''
+    }`
   });
   return path;
 }
@@ -567,7 +575,7 @@ test('registration-binding migration keeps the workflow checkpoint schema immuta
 });
 
 test('registration-binding migration binds an approval context to its parent, wait receipt, and step', () => {
-  const path = database();
+  const path = database(false);
   const hash = (value: string) => `sha256:${value.repeat(64).slice(0, 64)}`;
   const createdAt = '2026-07-19T00:00:00.000Z';
   const registration = {
@@ -779,6 +787,18 @@ test('registration-binding migration binds an approval context to its parent, wa
     );
   }
   sql(path, approvalSql('approval-valid', context));
+  sql(path, workflowRuntimeApprovalAttestationMigration);
+  assert.equal(sql(path, 'SELECT COUNT(*) FROM control_workflow_runtime_approval_attestations;'), '0');
+  sql(
+    path,
+    `UPDATE control_workflow_runtime_approvals
+     SET decision = 'approved', decided_at = '2026-07-19T00:01:00.000Z'
+     WHERE approval_id = 'approval-valid';`
+  );
+  assert.equal(
+    sql(path, "SELECT decision || ':' || decided_at FROM control_workflow_runtime_approvals WHERE approval_id = 'approval-valid';"),
+    'approved:2026-07-19T00:01:00.000Z'
+  );
   const forgedContexts: Array<[string, object]> = [
     ['scope', { ...context, scope: { ...context.scope, accountId: 'forged-account' } }],
     ['activation', { ...context, activation: { ...context.activation, id: 'forged-activation' } }],

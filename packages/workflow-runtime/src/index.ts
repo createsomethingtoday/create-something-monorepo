@@ -15,6 +15,7 @@ export {
 export type {
   WorkflowRuntimeCheckpointStore,
   WorkflowRuntimeHostPorts,
+  WorkflowRuntimeVerifiedIdentity,
   WorkflowRuntimeScope
 } from './checkpoint.js';
 export type {
@@ -23,6 +24,7 @@ export type {
   WorkflowRuntimeAdmission,
   WorkflowRuntimeApproval,
   WorkflowRuntimeAttempt,
+  WorkflowRuntimeActorRole,
   WorkflowRuntimeEvent,
   WorkflowRuntimeManifest,
   WorkflowRuntimeManifestV0_1,
