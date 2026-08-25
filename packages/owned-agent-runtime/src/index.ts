@@ -2,7 +2,10 @@ import { OpenAIAgentExecutor } from './openai.js';
 import { CloudflareAgentAdmission, CloudflareControlRunAdmission } from './admission.js';
 import { createControlRunService } from './control.js';
 import { RegisteredControlWorkflowExecutor } from './control-executor.js';
-import { ControlIdentityConfigurationError, FirstPartyControlIdentity } from './control-identity.js';
+import {
+  ControlIdentityConfigurationError,
+  FirstPartyControlIdentity
+} from './control-identity.js';
 import { D1ControlActivationAuthority, D1ControlRunRepository } from './control-store.js';
 import { createControlRunWorker } from './control-worker.js';
 import { D1AgentStore } from './store.js';
@@ -19,6 +22,24 @@ export { createOwnedAgentWorker } from './worker.js';
 export { createControlRunService, MemoryControlRunRepository } from './control.js';
 export { createControlRunWorker } from './control-worker.js';
 export { D1WorkflowRuntimeCheckpointStore } from './workflow-runtime-store.js';
+export {
+  D1TemplateReviewQueueObservationAdapter,
+  TemplateReviewQueueObservationError,
+  TEMPLATE_REVIEW_QUEUE_OBSERVATION_CAPABILITY,
+  TEMPLATE_REVIEW_QUEUE_OBSERVATION_PARAMETERS,
+  TEMPLATE_REVIEW_QUEUE_OBSERVATION_SOURCE,
+  assertTemplateReviewQueueObservationIntent,
+  assertTemplateReviewQueueObservationProjection
+} from './template-review-queue-observation.js';
+export type {
+  TemplateReviewQueueObservationIntent,
+  TemplateReviewQueueObservationPreparation,
+  TemplateReviewQueueObservationProjection,
+  TemplateReviewQueueObservationRegistration,
+  TemplateReviewQueueObservationResult,
+  TemplateReviewQueueObservationVerifier,
+  TemplateReviewQueueObservationVerifierResult
+} from './template-review-queue-observation.js';
 export type {
   ControlActivationAuthority,
   ControlActor,
@@ -52,9 +73,7 @@ function serviceFetch(binding: Fetcher): typeof fetch {
     binding.fetch(input, init)) as typeof fetch;
 }
 
-let cachedControlIdentity:
-  | { key: string; resolver: FirstPartyControlIdentity }
-  | undefined;
+let cachedControlIdentity: { key: string; resolver: FirstPartyControlIdentity } | undefined;
 
 function controlIdentity(env: Env): FirstPartyControlIdentity {
   if (
@@ -108,9 +127,16 @@ export default {
     if (pathname.startsWith('/v1/control/') || pathname === '/mcp') {
       let mcpRequestId: string | number | null = null;
       if (pathname === '/mcp') {
-        const payload = await request.clone().json().catch(() => null) as Record<string, unknown> | null;
+        const payload = (await request
+          .clone()
+          .json()
+          .catch(() => null)) as Record<string, unknown> | null;
         const candidateId = payload?.id;
-        if (typeof candidateId === 'string' || typeof candidateId === 'number' || candidateId === null) {
+        if (
+          typeof candidateId === 'string' ||
+          typeof candidateId === 'number' ||
+          candidateId === null
+        ) {
           mcpRequestId = candidateId;
         }
       }
@@ -127,7 +153,9 @@ export default {
             env.CONTROL_BUDGET_RATE_LIMITER
           )
         });
-        return (await control.fetch(request)) ?? Response.json({ error: 'not_found' }, { status: 404 });
+        return (
+          (await control.fetch(request)) ?? Response.json({ error: 'not_found' }, { status: 404 })
+        );
       } catch (error) {
         if (error instanceof ControlIdentityConfigurationError) {
           return controlTransportFailure(pathname, mcpRequestId, 'control_identity_unconfigured');

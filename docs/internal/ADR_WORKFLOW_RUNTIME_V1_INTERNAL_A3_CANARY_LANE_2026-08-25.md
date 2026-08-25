@@ -83,6 +83,11 @@ Proposed interface: A Control-owned capability adapter accepts exactly one
   verified pass plan for template-review.queue.observe.v1, persists an attempt
   and effect-intent receipt, invokes the fixed queue-read contract once, obtains
   source evidence, and commits a typed checkpoint only after verification.
+  New and replayed dispatches recheck the exact active Agency activation and
+  the durable running runtime/step/prepared-attempt state.
+  Terminal evidence replays as a result rather than another dispatch; a stop
+  during verification preserves the observed evidence without advancing a
+  runtime checkpoint.
 Tier ownership: Database=Agency activation and Control attempt/checkpoint/
   receipt ledger; Automation=Control adapter and bounded MCP invocation;
   Judgment=artifact capability, approval, retention, retry, and recovery rules.
@@ -123,6 +128,29 @@ path. A duplicate delivery must return the same durable attempt result rather
 than issue another source call. Although the source read has no business write,
 the Control command still requires idempotency so the receipt chain can prove
 one authorised observation attempt.
+
+### Current local implementation boundary
+
+`packages/owned-agent-runtime` now exposes an unregistered Control-host
+adapter and additive dispatch ledger for this proposed candidate. Its only
+input is the exact prepared runtime `pass` attempt, and its only source-shaped
+input is the strict count-only projection contract. A host must explicitly
+bind the accepted capability parameter digest. The adapter derives and persists
+the fixed parameter/request digest plus source idempotency identity before a
+source boundary, records only invocation/response/verifier digests and a
+bounded count, and retains the same redacted projection evidence with a
+lower_snake_case machine failure code as `effect_unknown` without a resend.
+Its public preflight returns only a prepared intent and fixed selection digest,
+not a source tool or an authorization to invoke it. A future promoted source
+gateway must atomically redeem an active Agency activation permit immediately
+before source invocation; that gateway and permit are not implemented here.
+
+This code is a local contract and test fixture, not a source adapter
+activation: it has no OAuth client, service binding, Worker registration,
+source transport, remote migration, or automatic checkpoint completion. A
+future host must call the runtime's `step_succeeded` transition only after this
+adapter returns `verified`; a stopped, cancelled, or otherwise non-authorizing
+parent refuses both a new dispatch and a late projection.
 
 ## Verifier and recovery requirements
 

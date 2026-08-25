@@ -72,6 +72,28 @@ a workflow from a prompt. This repository currently registers no customer
 workflow, so the start route fails closed and deploying the lane creates no
 activation or run authority.
 
+The proposed Template Review A3 adapter is a separately exported, unregistered
+Control-host seam. It accepts only a runtime attempt that already has a
+durable `effect_intent` checkpoint, creates one fixed-parameter dispatch
+identity, requires an explicit exact parameter-digest registration plus an
+active matching Agency activation, and rechecks the durable running
+runtime/step/prepared-attempt state before a new or replayed dispatch. It
+accepts only a source-owned count-only projection plus verifier digest. Its
+additive dispatch ledger has no raw queue-record, credential, or
+user-identifier column. It contains no OAuth client, service binding, source
+transport, Worker registration, or automatic checkpoint transition; each of
+those remains an independent promotion gate. Its public preflight returns a
+prepared intent without a source tool or transport parameters, so it cannot
+authorize a source call. A future promoted source gateway must atomically
+redeem an active Agency activation permit immediately before source invocation.
+Replays return the recorded
+terminal verifier result rather than a dispatch after verification or ambiguity;
+if a stop races a verifier already in progress, the adapter retains that
+observed terminal evidence without advancing a runtime checkpoint. Ambiguous
+results retain the same bounded count and source digests for reconciliation,
+but failure codes and verifier labels are constrained to safe machine
+identifiers.
+
 D1 owns conversation continuation and normalized run receipts. OpenAI Agents SDK owns the model/tool loop. Agent definitions own MCP allowlists and judgment policy.
 
 Each conversation is protected by a D1 run lease. Concurrent continuation returns `409 conversation_busy` before model execution. Completion and failure write the terminal receipt and release the lease in one D1 batch transaction; an abandoned lease can be reclaimed after ten minutes.
