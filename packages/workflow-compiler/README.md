@@ -9,7 +9,7 @@ It gives builders a composable governance layer below any hosted control plane. 
 Install the builder artifact in the repository where the workflow will live:
 
 ```bash
-npm install @createsomething/workflow-compiler@0.4.0
+npm install @createsomething/workflow-compiler@0.4.1
 ```
 
 Copy the shipped Codex skill into that repository, then ask Codex to turn a recurring operating task into a runbook. Codex can propose and revise the local files; the terminal commands below remain the deterministic proof surface:
@@ -62,7 +62,7 @@ execution host begins.
 Install the package with a supported Node release:
 
 ```bash
-npm install @createsomething/workflow-compiler@0.4.0
+npm install @createsomething/workflow-compiler@0.4.1
 ```
 
 Create `workflow.json` and optionally `cases.json` using the versioned schemas documented in [API.md](./API.md). Compile and independently verify a local bundle:

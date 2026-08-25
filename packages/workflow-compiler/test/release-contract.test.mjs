@@ -20,7 +20,7 @@ test('the public manifest declares the complete release and support boundary', a
 
   assert.deepEqual(validateReleaseManifest(manifest), []);
   assert.equal(manifest.name, CANONICAL_PACKAGE_NAME);
-  assert.equal(manifest.version, '0.4.0');
+  assert.equal(manifest.version, '0.4.1');
   assert.deepEqual(manifest.engines, { node: '>=20' });
   assert.equal(manifest.publishConfig.access, 'public');
   assert.equal(manifest.publishConfig.provenance, true);
@@ -114,7 +114,7 @@ test('the trusted workflow validates supported LTS nodes and stages from protect
 
 test('the stable quickstart pins the exact approved package release', async () => {
   const readme = await readFile(new URL('../README.md', import.meta.url), 'utf8');
-  assert.match(readme, /npm install @createsomething\/workflow-compiler@0\.4\.0(?:\r?\n|$)/);
+  assert.match(readme, /npm install @createsomething\/workflow-compiler@0\.4\.1(?:\r?\n|$)/);
   assert.doesNotMatch(readme, /npm install @createsomething\/workflow-compiler@bootstrap/);
 });
 
