@@ -236,6 +236,19 @@ WHEN EXISTS (
         AND json_extract(runtime.run_json, '$.runtimeManifestSchema') =
           json_extract(NEW.receipt_json, '$.runtimeManifestSchema')
     )
+    OR NOT EXISTS (
+      SELECT 1 FROM control_workflow_runtime_runs runtime
+      JOIN json_each(runtime.run_json, '$.receipts') checkpoint_receipt
+      WHERE runtime.run_id = NEW.run_id
+        AND json_extract(checkpoint_receipt.value, '$.id') IS NEW.id
+        AND json_extract(checkpoint_receipt.value, '$.runId') IS NEW.run_id
+        AND json_extract(checkpoint_receipt.value, '$.eventIndex') IS NEW.event_index
+        AND json_extract(checkpoint_receipt.value, '$.receiptSha256') IS NEW.receipt_sha256
+        AND json_extract(checkpoint_receipt.value, '$.previousReceiptSha256')
+          IS NEW.previous_receipt_sha256
+        AND json_extract(checkpoint_receipt.value, '$.createdAt') IS NEW.created_at
+        AND json(checkpoint_receipt.value) IS json(NEW.receipt_json)
+    )
   )
 BEGIN
   SELECT RAISE(ABORT, 'Workflow Runtime registration receipt schema must match its checkpoint');

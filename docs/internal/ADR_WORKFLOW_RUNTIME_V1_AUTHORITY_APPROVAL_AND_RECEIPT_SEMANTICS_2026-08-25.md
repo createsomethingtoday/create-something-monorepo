@@ -280,9 +280,12 @@ whose ID and binding digest match its immutable columns and whose full
 identity matches the exact pending approval on its persisted step.
 
 The registration-bound checkpoint uses the same closed top-level, activation,
-and registration field sets as the runtime verifier. Its persisted receipts
-require every registration-era field, including an explicit text or `null`
-action ID, before the ledger can accept them.
+and registration field sets as the runtime verifier. A persisted `@3` side-ledger
+receipt must match its checkpoint receipt by row identity, event sequence,
+complete JSON payload, embedded receipt hash, chain predecessor, and timestamp;
+the ledger cannot accept a forged compiler/action/evidence receipt beside an
+otherwise valid checkpoint. It also requires every registration-era field,
+including an explicit text or `null` action ID.
 
 Every v2 receipt carries the existing receipt identity and chain pointers plus:
 

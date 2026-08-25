@@ -586,11 +586,15 @@ test('registration-binding migration binds an approval context to its parent, wa
     runtimeManifestSchema: 'workflow_runtime_manifest.v0.1',
     registration,
     steps: [],
-    receipts: []
+    receipts: [] as object[]
   };
   const receipt = {
     schema: 'create-something/control-run-receipt@3',
+    id: 'wait-receipt',
+    runId: 'run-a',
+    eventIndex: 1,
     eventType: 'wait_created',
+    status: 'waiting_for_approval',
     stepId: 'review',
     attemptId: null,
     runVersion: 2,
@@ -609,8 +613,16 @@ test('registration-binding migration binds an approval context to its parent, wa
     workflowCompilerVersion: '0.4.0',
     actionId: 'review',
     definitionHash: hash('e'),
-    evidenceDigest: hash('f')
+    evidenceDigest: hash('f'),
+    actorSubject: null,
+    verifier: null,
+    outcome: 'approval required',
+    previousReceiptSha256: null,
+    checkpointSha256: hash('7'),
+    createdAt,
+    receiptSha256: hash('8')
   };
+  run.receipts.push(receipt);
   const context = {
     schema: 'create-something/workflow-runtime-approval-context@2',
     version: 2,
@@ -689,6 +701,16 @@ test('registration-binding migration binds an approval context to its parent, wa
     ) VALUES (
       'wait-receipt', 'run-a', 1, '${JSON.stringify(receipt)}', '${hash('8')}', NULL, '${createdAt}'
     );`
+  );
+  expectSqlFailure(
+    path,
+    `INSERT INTO control_workflow_runtime_receipts (
+      id, run_id, event_index, receipt_json, receipt_sha256, previous_receipt_sha256, created_at
+    ) VALUES (
+      'wait-receipt', 'run-a', 1,
+      '${JSON.stringify({ ...receipt, actionId: 'forged-action' })}', '${hash('0')}', NULL, '${createdAt}'
+    );`,
+    /receipt schema must match its checkpoint/
   );
   expectSqlFailure(
     path,
