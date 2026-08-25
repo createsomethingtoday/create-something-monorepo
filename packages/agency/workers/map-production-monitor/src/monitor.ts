@@ -653,7 +653,10 @@ async function prepareOperatorEscalation(
   database: D1Database,
   receipt: MapMonitorReceipt,
 ): Promise<EscalationPlan> {
-  const failures = [...(await findFailureStreak(database)), failureRowForReceipt(receipt)];
+  const storedFailures = await findFailureStreak(database);
+  const failures = storedFailures.some((failure) => failure.scheduled_at === receipt.scheduledAt)
+    ? storedFailures
+    : [...storedFailures, failureRowForReceipt(receipt)];
   const active = await findActiveEscalation(database);
   if (!active) {
     return failures.length >= OPERATOR_ESCALATION_THRESHOLD

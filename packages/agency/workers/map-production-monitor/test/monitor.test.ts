@@ -391,6 +391,58 @@ test('a concurrent booking-context failure merges its SEV-2 evidence into a crea
   ]);
 });
 
+test('an overlapping identical scheduled failure is not counted twice toward escalation', async () => {
+  const { database, batches } = createDatabase();
+  const scheduledAt = '2026-08-25T18:22:00.000Z';
+  const canonicalFailure = {
+    receipt_id: 'map-20260825182200-aaaaaaaaaaaa',
+    scheduled_at: scheduledAt,
+    checks_json: JSON.stringify([
+      { id: 'desktop_map_health', ok: false, code: 'HTTP_503', durationMs: 9 },
+      { id: 'synthetic_completeness', ok: false, code: 'REQUIRED_CHECK_MISSING', durationMs: 0 },
+    ]),
+  };
+  const concurrentDatabase = {
+    ...database,
+    prepare(query: string) {
+      const statement = database.prepare(query);
+      return {
+        bind(...values: unknown[]) {
+          const bound = statement.bind(...values);
+          if (query.includes('latest_passing_receipt')) {
+            return { ...bound, all: async () => ({ results: [canonicalFailure] }) };
+          }
+          if (query.includes('streak_resolved_at IS NULL')) {
+            return { ...bound, all: async () => ({ results: [] }) };
+          }
+          return bound;
+        },
+      };
+    },
+  };
+
+  await assert.rejects(
+    () =>
+      runScheduledMapMonitor({
+        scheduledAt,
+        env: env(concurrentDatabase),
+        executeSynthetic: async () => ({
+          checks: [{ id: 'desktop_map_health', ok: false, code: 'HTTP_503', durationMs: 9 }],
+        }),
+        now: () => new Date('2026-08-25T18:22:20.000Z'),
+      }),
+    /failed/,
+  );
+
+  assert.equal(
+    batches[0].filter((statement) =>
+      statement.query.includes('INSERT OR IGNORE INTO map_production_monitor_alerts'),
+    ).length,
+    0,
+    'the canonical stored failure is the only eligible receipt for its scheduled timestamp',
+  );
+});
+
 test('two consecutive scheduled failures deliver one idempotent CRE-1289 operator escalation', async () => {
   const { database, batches, runs } = createDatabase();
   let alert: unknown = null;
