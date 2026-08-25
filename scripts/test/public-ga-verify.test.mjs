@@ -10,6 +10,7 @@ const receiptSource = {
   kind: 'cloudflare-d1',
   workerName: 'map-production-monitor'
 };
+const expectedSourceSha = 'a'.repeat(40);
 
 test('parses only a successful Cloudflare D1 Map receipt result', () => {
   const receipts = parseMapMonitorD1Result([
@@ -77,9 +78,11 @@ test('requires a ready scheduled-only Cloudflare Map receipt lane', () => {
         status: 'ready',
         worker: 'map-production-monitor',
         receiptStore: 'cloudflare-d1',
-        scheduledOnly: true
+        scheduledOnly: true,
+        sourceSha: expectedSourceSha
       },
-      receiptSource
+      receiptSource,
+      expectedSourceSha
     ),
     []
   );
@@ -92,8 +95,24 @@ test('requires a ready scheduled-only Cloudflare Map receipt lane', () => {
         receiptStore: 'cloudflare-d1',
         scheduledOnly: false
       },
-      receiptSource
+      receiptSource,
+      expectedSourceSha
     ).join('\n'),
     /non-scheduled execution mode/
+  );
+  assert.match(
+    validateMapMonitorHealth(
+      {
+        schemaVersion: 1,
+        status: 'ready',
+        worker: 'map-production-monitor',
+        receiptStore: 'cloudflare-d1',
+        scheduledOnly: true,
+        sourceSha: 'b'.repeat(40)
+      },
+      receiptSource,
+      expectedSourceSha
+    ).join('\n'),
+    /source SHA does not match the GA commit/
   );
 });

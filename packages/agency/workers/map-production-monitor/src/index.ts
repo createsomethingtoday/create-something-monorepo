@@ -2,8 +2,9 @@ import { runScheduledMapMonitor, type MapMonitorEnv } from './monitor.ts';
 import { executeMapProductionSynthetic } from './synthetic.ts';
 
 function health(env: MapMonitorEnv): Response {
+  const sourceSha = env.MAP_MONITOR_SOURCE_SHA?.trim().toLowerCase() ?? '';
   const ready =
-    /^[0-9a-f]{40}$/i.test(env.MAP_MONITOR_SOURCE_SHA?.trim() ?? '') &&
+    /^[0-9a-f]{40}$/.test(sourceSha) &&
     env.MAP_MONITOR_BASE_URL === 'https://createsomething.agency' &&
     env.MAP_MONITOR_RECEIPT_RETENTION_DAYS === '30' &&
     Boolean(env.CF_VERSION_METADATA?.id);
@@ -14,6 +15,7 @@ function health(env: MapMonitorEnv): Response {
       worker: 'map-production-monitor',
       receiptStore: 'cloudflare-d1',
       scheduledOnly: true,
+      sourceSha: /^[0-9a-f]{40}$/.test(sourceSha) ? sourceSha : null,
     },
     {
       status: ready ? 200 : 503,

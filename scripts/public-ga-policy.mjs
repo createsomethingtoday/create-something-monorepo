@@ -4,6 +4,39 @@ function issue(condition, message, issues) {
   if (!condition) issues.push(message);
 }
 
+const REQUIRED_MAP_CHECK_IDS = new Set(
+  ['desktop', 'mobile'].flatMap((viewport) => [
+    `${viewport}_route_and_responsive_render`,
+    `${viewport}_starter_booking_context`,
+    `${viewport}_edit_booking_context`,
+    `${viewport}_restore_booking_context`,
+    `${viewport}_reset_booking_context`,
+    `${viewport}_mapping_agent_non_mutating_boundary`,
+    `${viewport}_map_health`,
+    `${viewport}_console_health`
+  ])
+);
+
+function hasCompletePassingMapChecks(checks) {
+  if (!Array.isArray(checks) || checks.length !== REQUIRED_MAP_CHECK_IDS.size) return false;
+  const seen = new Set();
+  for (const check of checks) {
+    if (
+      !check ||
+      typeof check.id !== 'string' ||
+      !REQUIRED_MAP_CHECK_IDS.has(check.id) ||
+      seen.has(check.id) ||
+      check.ok !== true ||
+      !Number.isFinite(check.durationMs) ||
+      check.durationMs < 0
+    ) {
+      return false;
+    }
+    seen.add(check.id);
+  }
+  return seen.size === REQUIRED_MAP_CHECK_IDS.size;
+}
+
 function stringValues(value, output = []) {
   if (typeof value === 'string') output.push(value);
   else if (Array.isArray(value)) value.forEach((entry) => stringValues(entry, output));
@@ -536,6 +569,7 @@ export function selectMapBurnIn(receipts, mapPolicy, minimumCreatedAt, expectedS
         receipt?.bookingSubmitted !== false ||
         typeof receipt?.workerVersion !== 'string' ||
         receipt.workerVersion.length === 0 ||
+        !hasCompletePassingMapChecks(receipt?.checks) ||
         Number.isNaN(completedAt.valueOf()) ||
         completedAt < scheduledAt
       );
@@ -544,6 +578,10 @@ export function selectMapBurnIn(receipts, mapPolicy, minimumCreatedAt, expectedS
       const receiptId = invalid.receipt?.receiptId ?? 'unknown';
       if (invalid.receipt?.sourceSha !== expectedSourceSha) {
         currentStreakIssues = [`Map receipt ${receiptId} source SHA does not match the GA commit`];
+      } else if (!hasCompletePassingMapChecks(invalid.receipt?.checks)) {
+        currentStreakIssues = [
+          `Map receipt ${receiptId} does not contain complete passing synthetic checks`
+        ];
       } else {
         currentStreakIssues = [`Map receipt ${receiptId} is not a complete passing scheduled receipt`];
       }

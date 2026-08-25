@@ -373,13 +373,16 @@ export function parseMapMonitorD1Result(payload) {
   });
 }
 
-export function validateMapMonitorHealth(body, receiptSource) {
+export function validateMapMonitorHealth(body, receiptSource, expectedSourceSha) {
   const issues = [];
   if (body?.schemaVersion !== 1) issues.push('Map monitor health schema version is invalid');
   if (body?.status !== 'ready') issues.push('Map monitor health is not ready');
   if (body?.worker !== receiptSource.workerName) issues.push('Map monitor health worker identity is invalid');
   if (body?.receiptStore !== receiptSource.kind) issues.push('Map monitor health receipt store is invalid');
   if (body?.scheduledOnly !== true) issues.push('Map monitor health exposes a non-scheduled execution mode');
+  if (body?.sourceSha !== expectedSourceSha?.toLowerCase()) {
+    issues.push('Map monitor health source SHA does not match the GA commit');
+  }
   return issues;
 }
 
@@ -406,12 +409,12 @@ async function mapReceiptReadback(config, root) {
   return parseMapMonitorD1Result(JSON.parse(stdout));
 }
 
-async function mapMonitorHealthReadback(config) {
+async function mapMonitorHealthReadback(config, expectedSourceSha) {
   const receiptSource = config.map.receiptSource;
   const body = await fetchJson(receiptSource.workerHealthUrl, {
     headers: { 'User-Agent': 'CREATE-SOMETHING-public-GA-verifier/1.0' }
   });
-  const issues = validateMapMonitorHealth(body, receiptSource);
+  const issues = validateMapMonitorHealth(body, receiptSource, expectedSourceSha);
   if (issues.length > 0) throw new Error(issues.join('\n'));
   return {
     url: receiptSource.workerHealthUrl,
@@ -419,7 +422,8 @@ async function mapMonitorHealthReadback(config) {
     status: body.status,
     worker: body.worker,
     receiptStore: body.receiptStore,
-    scheduledOnly: body.scheduledOnly
+    scheduledOnly: body.scheduledOnly,
+    sourceSha: body.sourceSha
   };
 }
 
@@ -575,7 +579,7 @@ export async function verifyPublicGa(options) {
   await run('map_burn_in', async () => {
     const [receipts, health] = await Promise.all([
       mapReceiptReadback(config, root),
-      mapMonitorHealthReadback(config)
+      mapMonitorHealthReadback(config, gaCommit)
     ]);
     const result = selectMapBurnIn(receipts, config.map, committedAt, gaCommit);
     if (result.issues.length > 0) throw new Error(result.issues.join('\n'));

@@ -36,6 +36,7 @@ test('health reports a non-cacheable ready receipt lane only with required prove
     worker: 'map-production-monitor',
     receiptStore: 'cloudflare-d1',
     scheduledOnly: true,
+    sourceSha: SOURCE_SHA,
   });
 });
 

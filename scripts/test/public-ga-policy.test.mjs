@@ -302,6 +302,21 @@ test('Map burn-in accepts only Cloudflare D1 scheduled receipts and never revive
     receiptRetentionDays: 30
   });
 
+  const requiredCheckIds = ['desktop', 'mobile'].flatMap((viewport) => [
+    `${viewport}_route_and_responsive_render`,
+    `${viewport}_starter_booking_context`,
+    `${viewport}_edit_booking_context`,
+    `${viewport}_restore_booking_context`,
+    `${viewport}_reset_booking_context`,
+    `${viewport}_mapping_agent_non_mutating_boundary`,
+    `${viewport}_map_health`,
+    `${viewport}_console_health`
+  ]);
+  const passingChecks = requiredCheckIds.map((id, index) => ({
+    id,
+    ok: true,
+    durationMs: index + 1
+  }));
   const receipt = (day, status = 'passed', overrides = {}) => ({
     receiptId: `receipt-${day}-${status}`,
     schemaVersion: 1,
@@ -316,6 +331,7 @@ test('Map burn-in accepts only Cloudflare D1 scheduled receipts and never revive
     customerDataUsed: false,
     agentMutationUsed: false,
     bookingSubmitted: false,
+    checks: passingChecks,
     ...overrides
   });
   const receipts = [
@@ -368,6 +384,24 @@ test('Map burn-in accepts only Cloudflare D1 scheduled receipts and never revive
     new Date('2026-08-30T18:30:00.000Z')
   );
   assert.match(unsafe.issues.join('\n'), /not a complete passing scheduled receipt/);
+
+  const missingChecks = selectMapBurnIn(
+    [receipt(30, 'passed', { checks: [] })],
+    config.map,
+    '2026-08-20T00:00:00Z',
+    gaCommit,
+    new Date('2026-08-30T18:30:00.000Z')
+  );
+  assert.match(missingChecks.issues.join('\n'), /complete passing synthetic checks/);
+
+  const duplicateCheck = selectMapBurnIn(
+    [receipt(30, 'passed', { checks: [...passingChecks, passingChecks[0]] })],
+    config.map,
+    '2026-08-20T00:00:00Z',
+    gaCommit,
+    new Date('2026-08-30T18:30:00.000Z')
+  );
+  assert.match(duplicateCheck.issues.join('\n'), /complete passing synthetic checks/);
 
   const stale = selectMapBurnIn(
     [...receipts, receipt(29)],
