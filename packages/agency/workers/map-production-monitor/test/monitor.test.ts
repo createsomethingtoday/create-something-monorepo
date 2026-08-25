@@ -76,6 +76,22 @@ test('scheduled monitor writes a complete sanitized passing receipt', async () =
   assert.deepEqual(JSON.parse(String(insert.values[13])), receipt.checks);
 });
 
+test('receipt retention keeps undelivered operator escalations until they are delivered', async () => {
+  const { database, batches } = createDatabase();
+  await runScheduledMapMonitor({
+    scheduledAt: '2026-08-25T18:10:00.000Z',
+    env: env(database),
+    executeSynthetic: async () => ({
+      checks: REQUIRED_MAP_CHECK_IDS.map((id) => ({ id, ok: true, durationMs: 1 })),
+    }),
+    now: () => new Date('2026-08-25T18:10:20.000Z'),
+  });
+
+  const alertCleanup = batches[0][1];
+  assert.match(alertCleanup.query, /delivery_status = 'delivered'/);
+  assert.match(alertCleanup.query, /COALESCE\(delivered_at, created_at\)/);
+});
+
 test('scheduled monitor records completion only after browser work finishes', async () => {
   const { database } = createDatabase();
   let syntheticFinished = false;
@@ -370,6 +386,57 @@ test('reclaims an expired delivering escalation on a later scheduled receipt', a
   assert.equal((alert as { alertId: string } | null)?.alertId, interruptedEscalation.alert_id);
   const claim = runs.find((statement) => statement.query.includes("SET delivery_status = 'delivering'"));
   assert.ok(claim?.query.includes('delivery_lease_expires_at'));
+});
+
+test('stale delivery claimant cannot reset a reclaimed escalation after its notifier fails', async () => {
+  const { database, runs } = createDatabase();
+  const queries: string[] = [];
+  const interruptedEscalation = {
+    alert_id: 'map-monitor-escalation-map-20260825180700-aaaaaaaaaaaa',
+    failure_streak_started_at: '2026-08-25T18:07:00.000Z',
+    threshold_receipt_id: 'map-20260825182200-aaaaaaaaaaaa',
+    source_sha: SOURCE_SHA,
+    severity: 'SEV-3',
+    failed_check_codes_json: JSON.stringify(['HTTP_503', 'REQUIRED_CHECK_MISSING']),
+  };
+  const racedDatabase = {
+    ...database,
+    prepare(query: string) {
+      queries.push(query);
+      const statement = database.prepare(query);
+      return {
+        bind(...values: unknown[]) {
+          const bound = statement.bind(...values);
+          if (query.includes('SELECT') && query.includes('map_production_monitor_alerts')) {
+            return { ...bound, all: async () => ({ results: [interruptedEscalation] }) };
+          }
+          if (query.includes("SET delivery_status = 'pending'")) {
+            return query.includes('delivery_claim_token')
+              ? { ...bound, run: async () => ({ meta: { changes: 0 } }) }
+              : bound;
+          }
+          return bound;
+        },
+      };
+    },
+  };
+
+  const receipt = await runScheduledMapMonitor({
+    scheduledAt: '2026-08-25T19:07:00.000Z',
+    env: env(racedDatabase),
+    executeSynthetic: async () => ({
+      checks: REQUIRED_MAP_CHECK_IDS.map((id) => ({ id, ok: true, durationMs: 1 })),
+    }),
+    notifyOperator: async () => {
+      throw new Error('stale claimant lost the lease');
+    },
+    now: () => new Date('2026-08-25T19:07:20.000Z'),
+  });
+
+  assert.equal(receipt.status, 'passed');
+  assert.ok(runs.some((statement) => statement.query.includes("SET delivery_status = 'delivering'")));
+  const reset = queries.find((query) => query.includes("SET delivery_status = 'pending'"));
+  assert.ok(reset?.includes('delivery_claim_token'));
 });
 
 test('invalid source provenance produces a persisted red receipt before browser work', async () => {

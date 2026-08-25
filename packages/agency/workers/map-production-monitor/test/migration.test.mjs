@@ -41,3 +41,12 @@ test('Map monitor migration gives interrupted operator-alert delivery a reclaima
 
   assert.match(migration, /delivery_lease_expires_at TEXT/);
 });
+
+test('Map monitor migration fences delivery updates to their active claim', async () => {
+  const migration = await readFile(
+    new URL('../../../migrations/0044_map_production_monitor_receipts.sql', import.meta.url),
+    'utf8'
+  );
+
+  assert.match(migration, /delivery_claim_token TEXT/);
+});

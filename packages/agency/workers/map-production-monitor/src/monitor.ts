@@ -159,7 +159,12 @@ async function persistReceipt(
   const cutoff = new Date(now.valueOf() - retentionDays * 24 * 60 * 60 * 1000).toISOString();
   const statements = [
     database.prepare('DELETE FROM map_production_monitor_receipts WHERE completed_at < ?').bind(cutoff),
-    database.prepare('DELETE FROM map_production_monitor_alerts WHERE created_at < ?').bind(cutoff),
+    database
+      .prepare(
+        `DELETE FROM map_production_monitor_alerts
+         WHERE delivery_status = 'delivered' AND COALESCE(delivered_at, created_at) < ?`,
+      )
+      .bind(cutoff),
     database
       .prepare(
         `INSERT OR IGNORE INTO map_production_monitor_receipts (
@@ -416,13 +421,14 @@ async function deliverPendingOperatorEscalations(
 
   for (const row of pending) {
     const escalation = escalationFromPending(row);
+    const claimToken = crypto.randomUUID();
     const leaseExpiresAt = new Date(now.valueOf() + OPERATOR_ESCALATION_LEASE_MS).toISOString();
 
     const claim = await database
       .prepare(
         `UPDATE map_production_monitor_alerts
         SET delivery_status = 'delivering', delivery_attempts = delivery_attempts + 1,
-            delivery_lease_expires_at = ?, last_delivery_error_code = NULL
+            delivery_claim_token = ?, delivery_lease_expires_at = ?, last_delivery_error_code = NULL
         WHERE alert_id = ?
           AND (
             delivery_status = 'pending'
@@ -432,34 +438,36 @@ async function deliverPendingOperatorEscalations(
             )
           )`,
       )
-      .bind(leaseExpiresAt, escalation.alertId, reclaimAt)
+      .bind(claimToken, leaseExpiresAt, escalation.alertId, reclaimAt)
       .run();
     if (claim.meta.changes !== 1) continue;
 
     try {
       await notifyOperator(escalation);
     } catch {
-      await database
+      const released = await database
         .prepare(
           `UPDATE map_production_monitor_alerts
           SET delivery_status = 'pending', delivery_lease_expires_at = NULL,
-              last_delivery_error_code = 'EMAIL_DELIVERY_FAILED'
-          WHERE alert_id = ?`,
+              delivery_claim_token = NULL, last_delivery_error_code = 'EMAIL_DELIVERY_FAILED'
+          WHERE alert_id = ? AND delivery_status = 'delivering' AND delivery_claim_token = ?`,
         )
-        .bind(escalation.alertId)
+        .bind(escalation.alertId, claimToken)
         .run();
+      if (released.meta.changes !== 1) return;
       throw new Error('Map operator escalation delivery failed');
     }
 
-    await database
+    const delivered = await database
       .prepare(
         `UPDATE map_production_monitor_alerts
         SET delivery_status = 'delivered', delivered_at = ?, delivery_lease_expires_at = NULL,
-            last_delivery_error_code = NULL
-        WHERE alert_id = ?`,
+            delivery_claim_token = NULL, last_delivery_error_code = NULL
+        WHERE alert_id = ? AND delivery_status = 'delivering' AND delivery_claim_token = ?`,
       )
-      .bind(now.toISOString(), escalation.alertId)
+      .bind(now.toISOString(), escalation.alertId, claimToken)
       .run();
+    if (delivered.meta.changes !== 1) return;
   }
 }
 
