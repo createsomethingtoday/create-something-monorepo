@@ -144,6 +144,11 @@ export function validateGaConfig(config) {
     issues
   );
   issue(
+    receiptSource?.alertTable === 'map_production_monitor_alerts',
+    'GA config requires the Map operator-alert table',
+    issues
+  );
+  issue(
     receiptSource?.receiptRetentionDays === 30,
     'GA config requires thirty-day Map receipt retention',
     issues

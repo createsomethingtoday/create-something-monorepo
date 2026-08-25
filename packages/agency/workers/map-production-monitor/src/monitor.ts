@@ -17,6 +17,7 @@ export type MapSyntheticResult = {
 export type MapMonitorEnv = {
   DB: D1Database;
   BROWSER: Fetcher;
+  RESEND_API_KEY?: string;
   MAP_MONITOR_SOURCE_SHA?: string;
   MAP_MONITOR_BASE_URL?: string;
   MAP_MONITOR_RECEIPT_RETENTION_DAYS?: string;
@@ -44,6 +45,16 @@ export type MapMonitorReceipt = {
   checks: MapSyntheticCheck[];
 };
 
+export type MapOperatorEscalation = {
+  alertId: string;
+  consecutiveFailures: number;
+  failureStreakStartedAt: string;
+  thresholdReceiptId: string;
+  sourceSha: string;
+  severity: 'SEV-2' | 'SEV-3';
+  failedCheckCodes: string[];
+};
+
 export const REQUIRED_MAP_CHECK_IDS = Object.freeze(
   ['desktop', 'mobile'].flatMap((viewport) => [
     `${viewport}_route_and_responsive_render`,
@@ -60,6 +71,10 @@ export const REQUIRED_MAP_CHECK_IDS = Object.freeze(
 const SOURCE_SHA_PATTERN = /^[0-9a-f]{40}$/i;
 const DEFAULT_BASE_URL = 'https://createsomething.agency';
 const REQUIRED_RETENTION_DAYS = 30;
+const OPERATOR_ESCALATION_THRESHOLD = 2;
+const OPERATOR_ALERT_EMAIL = 'micah@createsomething.io';
+const OPERATOR_ALERT_FROM = 'CREATE SOMETHING Ops <notifications@createsomething.io>';
+const RESEND_EMAIL_API_URL = 'https://api.resend.com/emails';
 
 export type ScheduledMapMonitorInput = {
   scheduledAt: string;
@@ -68,6 +83,7 @@ export type ScheduledMapMonitorInput = {
     browser: Fetcher;
     baseUrl: string;
   }) => Promise<MapSyntheticResult>;
+  notifyOperator?: (escalation: MapOperatorEscalation) => Promise<void>;
   now?: () => Date;
 };
 
@@ -142,6 +158,7 @@ async function persistReceipt(
   const cutoff = new Date(now.valueOf() - retentionDays * 24 * 60 * 60 * 1000).toISOString();
   const statements = [
     database.prepare('DELETE FROM map_production_monitor_receipts WHERE completed_at < ?').bind(cutoff),
+    database.prepare('DELETE FROM map_production_monitor_alerts WHERE created_at < ?').bind(cutoff),
     database
       .prepare(
         `INSERT OR IGNORE INTO map_production_monitor_receipts (
@@ -168,6 +185,188 @@ async function persistReceipt(
       ),
   ];
   await database.batch(statements);
+}
+
+type FailureStreakRow = {
+  receipt_id: string;
+  scheduled_at: string;
+};
+
+function failedCheckCodes(receipt: MapMonitorReceipt): string[] {
+  return [
+    ...new Set(
+      receipt.checks
+        .filter((check) => !check.ok)
+        .map((check) => check.code)
+        .filter((code): code is string => typeof code === 'string'),
+    ),
+  ];
+}
+
+function severityForReceipt(receipt: MapMonitorReceipt): 'SEV-2' | 'SEV-3' {
+  return receipt.checks.some((check) => !check.ok && check.id.includes('booking_context'))
+    ? 'SEV-2'
+    : 'SEV-3';
+}
+
+async function findFailureStreak(
+  database: D1Database,
+): Promise<FailureStreakRow[] | null> {
+  const result = await database
+    .prepare(
+      `WITH latest_passing_receipt AS (
+        SELECT scheduled_at
+        FROM map_production_monitor_receipts
+        WHERE trigger = 'scheduled' AND status = 'passed'
+        ORDER BY scheduled_at DESC
+        LIMIT 1
+      )
+      SELECT receipt_id, scheduled_at
+      FROM map_production_monitor_receipts
+      WHERE trigger = 'scheduled'
+        AND status = 'failed'
+        AND scheduled_at > COALESCE((SELECT scheduled_at FROM latest_passing_receipt), '')
+      ORDER BY scheduled_at ASC
+      LIMIT ?`,
+    )
+    .bind(OPERATOR_ESCALATION_THRESHOLD)
+    .all<FailureStreakRow>();
+  const failures = result.results ?? [];
+  return failures.length >= OPERATOR_ESCALATION_THRESHOLD ? failures : null;
+}
+
+function escalationFor(
+  receipt: MapMonitorReceipt,
+  failures: FailureStreakRow[],
+): MapOperatorEscalation {
+  const first = failures[0];
+  const thresholdReceipt = failures[OPERATOR_ESCALATION_THRESHOLD - 1];
+  return {
+    alertId: `map-monitor-escalation-${first.receipt_id}`,
+    consecutiveFailures: OPERATOR_ESCALATION_THRESHOLD,
+    failureStreakStartedAt: first.scheduled_at,
+    thresholdReceiptId: thresholdReceipt.receipt_id,
+    sourceSha: receipt.sourceSha,
+    severity: severityForReceipt(receipt),
+    failedCheckCodes: failedCheckCodes(receipt),
+  };
+}
+
+export function buildOperatorEscalationEmail(escalation: MapOperatorEscalation): {
+  subject: string;
+  text: string;
+} {
+  const subject = `[CREATE SOMETHING] ${escalation.severity} Map monitor escalation`;
+  const text = [
+    subject,
+    '',
+    `CRE-1289 requires operator escalation after ${escalation.consecutiveFailures} consecutive scheduled failures.`,
+    `Failure streak began: ${escalation.failureStreakStartedAt}`,
+    `Threshold receipt: ${escalation.thresholdReceiptId}`,
+    `Source SHA: ${escalation.sourceSha}`,
+    `Sanitized failed check codes: ${escalation.failedCheckCodes.join(', ') || 'none'}`,
+    '',
+    'Read the sanitized D1 receipt before beginning incident response.'
+  ].join('\n');
+  return { subject, text };
+}
+
+async function deliverOperatorEscalation(
+  env: MapMonitorEnv,
+  escalation: MapOperatorEscalation,
+): Promise<void> {
+  const apiKey = env.RESEND_API_KEY?.trim();
+  if (!apiKey) {
+    throw new Error('Map operator alert delivery is unavailable: RESEND_API_KEY is missing');
+  }
+  const email = buildOperatorEscalationEmail(escalation);
+  const response = await fetch(RESEND_EMAIL_API_URL, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+      'Idempotency-Key': escalation.alertId,
+    },
+    body: JSON.stringify({
+      from: OPERATOR_ALERT_FROM,
+      to: [OPERATOR_ALERT_EMAIL],
+      subject: email.subject,
+      text: email.text,
+      tags: [
+        { name: 'surface', value: 'map-production-monitor' },
+        { name: 'linear_issue', value: 'CRE-1289' },
+        { name: 'severity', value: escalation.severity },
+      ],
+    }),
+  });
+  if (!response.ok) {
+    throw new Error(`Map operator alert delivery failed with HTTP ${response.status}`);
+  }
+}
+
+async function dispatchOperatorEscalation(
+  database: D1Database,
+  receipt: MapMonitorReceipt,
+  now: Date,
+  notifyOperator: (escalation: MapOperatorEscalation) => Promise<void>,
+): Promise<void> {
+  const failures = await findFailureStreak(database);
+  if (!failures) return;
+
+  const escalation = escalationFor(receipt, failures);
+  await database
+    .prepare(
+      `INSERT OR IGNORE INTO map_production_monitor_alerts (
+        alert_id, schema_version, failure_streak_started_at, threshold_receipt_id, source_sha,
+        severity, failed_check_codes_json, created_at, delivery_status, delivery_attempts,
+        delivered_at, last_delivery_error_code
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', 0, NULL, NULL)`,
+    )
+    .bind(
+      escalation.alertId,
+      1,
+      escalation.failureStreakStartedAt,
+      escalation.thresholdReceiptId,
+      escalation.sourceSha,
+      escalation.severity,
+      JSON.stringify(escalation.failedCheckCodes),
+      now.toISOString(),
+    )
+    .run();
+
+  const claim = await database
+    .prepare(
+      `UPDATE map_production_monitor_alerts
+      SET delivery_status = 'delivering', delivery_attempts = delivery_attempts + 1,
+          last_delivery_error_code = NULL
+      WHERE alert_id = ? AND delivery_status = 'pending'`,
+    )
+    .bind(escalation.alertId)
+    .run();
+  if (claim.meta.changes !== 1) return;
+
+  try {
+    await notifyOperator(escalation);
+  } catch {
+    await database
+      .prepare(
+        `UPDATE map_production_monitor_alerts
+        SET delivery_status = 'pending', last_delivery_error_code = 'EMAIL_DELIVERY_FAILED'
+        WHERE alert_id = ?`,
+      )
+      .bind(escalation.alertId)
+      .run();
+    throw new Error('Map operator escalation delivery failed');
+  }
+
+  await database
+    .prepare(
+      `UPDATE map_production_monitor_alerts
+      SET delivery_status = 'delivered', delivered_at = ?, last_delivery_error_code = NULL
+      WHERE alert_id = ?`,
+    )
+    .bind(now.toISOString(), escalation.alertId)
+    .run();
 }
 
 function failureCheck(id: string, code: string): MapSyntheticCheck {
@@ -224,6 +423,12 @@ export async function runScheduledMapMonitor(
 
   await persistReceipt(input.env.DB, receipt, retentionDays ?? REQUIRED_RETENTION_DAYS, checkedAt);
   if (receipt.status !== 'passed') {
+    await dispatchOperatorEscalation(
+      input.env.DB,
+      receipt,
+      checkedAt,
+      input.notifyOperator ?? ((escalation) => deliverOperatorEscalation(input.env, escalation)),
+    );
     throw new Error(`Map production monitor failed: ${receipt.receiptId}`);
   }
   return receipt;

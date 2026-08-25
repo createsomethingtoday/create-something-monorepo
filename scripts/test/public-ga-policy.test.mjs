@@ -96,6 +96,7 @@ test('GA config keeps the public boundary, governed sole-operator gate, two pack
   assert.equal(config.packages.length, 2);
   assert.equal(config.npm.trustedPublisherMode, 'stage-only');
   assert.equal(config.map.requiredConsecutiveDays, 7);
+  assert.equal(config.map.receiptSource.alertTable, 'map_production_monitor_alerts');
 });
 
 test('GA package policy versions stay synchronized with public package manifests', async () => {
@@ -299,6 +300,7 @@ test('Map burn-in accepts only Cloudflare D1 scheduled receipts and never revive
     databaseName: 'create-something-db',
     wranglerConfig: 'packages/agency/wrangler.jsonc',
     table: 'map_production_monitor_receipts',
+    alertTable: 'map_production_monitor_alerts',
     receiptRetentionDays: 30
   });
 

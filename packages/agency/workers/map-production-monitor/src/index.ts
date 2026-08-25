@@ -3,11 +3,13 @@ import { executeMapProductionSynthetic } from './synthetic.ts';
 
 function health(env: MapMonitorEnv): Response {
   const sourceSha = env.MAP_MONITOR_SOURCE_SHA?.trim().toLowerCase() ?? '';
+  const operatorAlerting = Boolean(env.RESEND_API_KEY?.trim());
   const ready =
     /^[0-9a-f]{40}$/.test(sourceSha) &&
     env.MAP_MONITOR_BASE_URL === 'https://createsomething.agency' &&
     env.MAP_MONITOR_RECEIPT_RETENTION_DAYS === '30' &&
-    Boolean(env.CF_VERSION_METADATA?.id);
+    Boolean(env.CF_VERSION_METADATA?.id) &&
+    operatorAlerting;
   return Response.json(
     {
       schemaVersion: 1,
@@ -15,6 +17,7 @@ function health(env: MapMonitorEnv): Response {
       worker: 'map-production-monitor',
       receiptStore: 'cloudflare-d1',
       scheduledOnly: true,
+      operatorAlerting,
       sourceSha: /^[0-9a-f]{40}$/.test(sourceSha) ? sourceSha : null,
     },
     {

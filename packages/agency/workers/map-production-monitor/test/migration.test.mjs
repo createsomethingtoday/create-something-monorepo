@@ -19,3 +19,16 @@ test('Map monitor migration keeps scheduled receipts immutable and retained by t
   );
   assert.doesNotMatch(migration, /DELETE FROM/);
 });
+
+test('Map monitor migration persists idempotent two-failure operator-alert delivery state', async () => {
+  const migration = await readFile(
+    new URL('../../../migrations/0044_map_production_monitor_receipts.sql', import.meta.url),
+    'utf8'
+  );
+
+  assert.match(migration, /CREATE TABLE IF NOT EXISTS map_production_monitor_alerts/);
+  assert.match(migration, /alert_id TEXT PRIMARY KEY/);
+  assert.match(migration, /delivery_status TEXT NOT NULL CHECK \(delivery_status IN \('pending', 'delivering', 'delivered'\)\)/);
+  assert.match(migration, /failure_streak_started_at TEXT NOT NULL/);
+  assert.match(migration, /CREATE INDEX IF NOT EXISTS map_production_monitor_alerts_delivery_status/);
+});

@@ -20,3 +20,21 @@ CREATE UNIQUE INDEX IF NOT EXISTS map_production_monitor_receipts_scheduled_uniq
 
 CREATE INDEX IF NOT EXISTS map_production_monitor_receipts_scheduled_at
   ON map_production_monitor_receipts(scheduled_at);
+
+CREATE TABLE IF NOT EXISTS map_production_monitor_alerts (
+  alert_id TEXT PRIMARY KEY,
+  schema_version INTEGER NOT NULL CHECK (schema_version = 1),
+  failure_streak_started_at TEXT NOT NULL,
+  threshold_receipt_id TEXT NOT NULL,
+  source_sha TEXT NOT NULL,
+  severity TEXT NOT NULL CHECK (severity IN ('SEV-2', 'SEV-3')),
+  failed_check_codes_json TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  delivery_status TEXT NOT NULL CHECK (delivery_status IN ('pending', 'delivering', 'delivered')),
+  delivery_attempts INTEGER NOT NULL CHECK (delivery_attempts >= 0),
+  delivered_at TEXT,
+  last_delivery_error_code TEXT
+);
+
+CREATE INDEX IF NOT EXISTS map_production_monitor_alerts_delivery_status
+  ON map_production_monitor_alerts(delivery_status, created_at);

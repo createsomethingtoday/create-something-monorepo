@@ -69,6 +69,7 @@
       "databaseName": "create-something-db",
       "wranglerConfig": "packages/agency/wrangler.jsonc",
       "table": "map_production_monitor_receipts",
+      "alertTable": "map_production_monitor_alerts",
       "receiptRetentionDays": 30
     },
     "requiredConsecutiveDays": 7,

@@ -2,13 +2,15 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  parseMapMonitorAlertD1Result,
   parseMapMonitorD1Result,
   validateMapMonitorHealth
 } from '../public-ga-verify.mjs';
 
 const receiptSource = {
   kind: 'cloudflare-d1',
-  workerName: 'map-production-monitor'
+  workerName: 'map-production-monitor',
+  alertTable: 'map_production_monitor_alerts'
 };
 const expectedSourceSha = 'a'.repeat(40);
 
@@ -70,6 +72,39 @@ test('rejects malformed Cloudflare D1 receipt result sets', () => {
   );
 });
 
+test('rejects a terminal Map receipt when an operator escalation is still pending', () => {
+  const alerts = parseMapMonitorAlertD1Result([
+    {
+      success: true,
+      results: [
+        {
+          alert_id: 'map-monitor-escalation-map-20260825180700-aaaaaaaaaaaa',
+          failure_streak_started_at: '2026-08-25T18:07:00.000Z',
+          threshold_receipt_id: 'map-20260825182200-aaaaaaaaaaaa',
+          source_sha: 'a'.repeat(40),
+          severity: 'SEV-3',
+          delivery_status: 'pending',
+          delivery_attempts: 1,
+          last_delivery_error_code: 'EMAIL_DELIVERY_FAILED'
+        }
+      ]
+    }
+  ]);
+
+  assert.deepEqual(alerts, [
+    {
+      alertId: 'map-monitor-escalation-map-20260825180700-aaaaaaaaaaaa',
+      failureStreakStartedAt: '2026-08-25T18:07:00.000Z',
+      thresholdReceiptId: 'map-20260825182200-aaaaaaaaaaaa',
+      sourceSha: 'a'.repeat(40),
+      severity: 'SEV-3',
+      deliveryStatus: 'pending',
+      deliveryAttempts: 1,
+      lastDeliveryErrorCode: 'EMAIL_DELIVERY_FAILED'
+    }
+  ]);
+});
+
 test('requires a ready scheduled-only Cloudflare Map receipt lane', () => {
   assert.deepEqual(
     validateMapMonitorHealth(
@@ -79,6 +114,7 @@ test('requires a ready scheduled-only Cloudflare Map receipt lane', () => {
         worker: 'map-production-monitor',
         receiptStore: 'cloudflare-d1',
         scheduledOnly: true,
+        operatorAlerting: true,
         sourceSha: expectedSourceSha
       },
       receiptSource,
@@ -114,5 +150,21 @@ test('requires a ready scheduled-only Cloudflare Map receipt lane', () => {
       expectedSourceSha
     ).join('\n'),
     /source SHA does not match the GA commit/
+  );
+  assert.match(
+    validateMapMonitorHealth(
+      {
+        schemaVersion: 1,
+        status: 'ready',
+        worker: 'map-production-monitor',
+        receiptStore: 'cloudflare-d1',
+        scheduledOnly: true,
+        operatorAlerting: false,
+        sourceSha: expectedSourceSha
+      },
+      receiptSource,
+      expectedSourceSha
+    ).join('\n'),
+    /operator alerting is not configured/
   );
 });

@@ -59,9 +59,9 @@ After the normal PR review and merge, deploy only from a clean `main` exactly eq
 4. Read `https://map-production-monitor.createsomething.workers.dev/health`; it must return a non-cacheable `ready` receipt lane. Do not add a manual execution route.
 5. Record the D1 receipt and Worker version in CRE-1289; only one complete green scheduled receipt per America/Chicago calendar day counts toward the seven-day GA streak.
 
-The deploy command refuses a dirty or stale checkout, refuses an absent receipt table, and injects the exact final main SHA as `MAP_MONITOR_SOURCE_SHA`. It does not apply D1 migrations, use `--commit-dirty`, or spend money by changing a Cloudflare plan.
+Run the guarded deploy through Infisical so the existing production `RESEND_API_KEY` is attached only to that Worker version; the command creates a mode-0600 temporary secrets file, passes it with Wrangler's version-scoped secret mechanism, verifies the installed secret name without reading its value, and removes the file. The deploy command refuses a dirty or stale checkout, an absent receipt table, or a missing alert credential, and injects the exact final main SHA as `MAP_MONITOR_SOURCE_SHA`. It does not apply D1 migrations, use `--commit-dirty`, or spend money by changing a Cloudflare plan.
 
-Two consecutive scheduled failures require CRE-1289 operator escalation. Booking-context mismatch is SEV-2; one isolated availability failure is SEV-3.
+Two consecutive scheduled failures create one D1-idempotent CRE-1289 operator escalation and send it through the Cloudflare Worker to the existing operator email destination. The record has `pending`, `delivering`, or `delivered` state and never contains browser exception text, booking context, or customer data. Booking-context mismatch is SEV-2; one isolated availability failure is SEV-3.
 
 Incident response:
 

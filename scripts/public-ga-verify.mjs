@@ -373,6 +373,43 @@ export function parseMapMonitorD1Result(payload) {
   });
 }
 
+export function parseMapMonitorAlertD1Result(payload) {
+  if (!Array.isArray(payload) || payload.length !== 1) {
+    throw new Error('Cloudflare D1 Map operator-alert readback must contain exactly one result set');
+  }
+  const result = payload[0];
+  if (result?.success !== true || !Array.isArray(result.results)) {
+    throw new Error('Cloudflare D1 Map operator-alert readback was not successful');
+  }
+  return result.results.map((row) => {
+    if (!row || typeof row !== 'object') {
+      throw new Error('Cloudflare D1 Map operator-alert row is malformed');
+    }
+    if (
+      typeof row.alert_id !== 'string' ||
+      typeof row.failure_streak_started_at !== 'string' ||
+      typeof row.threshold_receipt_id !== 'string' ||
+      typeof row.source_sha !== 'string' ||
+      !['SEV-2', 'SEV-3'].includes(row.severity) ||
+      !['pending', 'delivering'].includes(row.delivery_status) ||
+      !Number.isInteger(row.delivery_attempts)
+    ) {
+      throw new Error('Cloudflare D1 Map operator-alert row is invalid');
+    }
+    return {
+      alertId: row.alert_id,
+      failureStreakStartedAt: row.failure_streak_started_at,
+      thresholdReceiptId: row.threshold_receipt_id,
+      sourceSha: row.source_sha,
+      severity: row.severity,
+      deliveryStatus: row.delivery_status,
+      deliveryAttempts: row.delivery_attempts,
+      lastDeliveryErrorCode:
+        typeof row.last_delivery_error_code === 'string' ? row.last_delivery_error_code : null
+    };
+  });
+}
+
 export function validateMapMonitorHealth(body, receiptSource, expectedSourceSha) {
   const issues = [];
   if (body?.schemaVersion !== 1) issues.push('Map monitor health schema version is invalid');
@@ -380,6 +417,7 @@ export function validateMapMonitorHealth(body, receiptSource, expectedSourceSha)
   if (body?.worker !== receiptSource.workerName) issues.push('Map monitor health worker identity is invalid');
   if (body?.receiptStore !== receiptSource.kind) issues.push('Map monitor health receipt store is invalid');
   if (body?.scheduledOnly !== true) issues.push('Map monitor health exposes a non-scheduled execution mode');
+  if (body?.operatorAlerting !== true) issues.push('Map monitor operator alerting is not configured');
   if (body?.sourceSha !== expectedSourceSha?.toLowerCase()) {
     issues.push('Map monitor health source SHA does not match the GA commit');
   }
@@ -409,6 +447,29 @@ async function mapReceiptReadback(config, root) {
   return parseMapMonitorD1Result(JSON.parse(stdout));
 }
 
+async function mapOperatorAlertReadback(config, root) {
+  const receiptSource = config.map.receiptSource;
+  const query = `SELECT alert_id, failure_streak_started_at, threshold_receipt_id, source_sha, severity, delivery_status, delivery_attempts, last_delivery_error_code FROM ${receiptSource.alertTable} WHERE delivery_status != 'delivered' ORDER BY created_at ASC`;
+  const { stdout } = await command(
+    'pnpm',
+    [
+      'exec',
+      'wrangler',
+      'd1',
+      'execute',
+      receiptSource.databaseName,
+      '--remote',
+      '--config',
+      receiptSource.wranglerConfig,
+      '--command',
+      query,
+      '--json'
+    ],
+    { cwd: root }
+  );
+  return parseMapMonitorAlertD1Result(JSON.parse(stdout));
+}
+
 async function mapMonitorHealthReadback(config, expectedSourceSha) {
   const receiptSource = config.map.receiptSource;
   const body = await fetchJson(receiptSource.workerHealthUrl, {
@@ -423,6 +484,7 @@ async function mapMonitorHealthReadback(config, expectedSourceSha) {
     worker: body.worker,
     receiptStore: body.receiptStore,
     scheduledOnly: body.scheduledOnly,
+    operatorAlerting: body.operatorAlerting,
     sourceSha: body.sourceSha
   };
 }
@@ -577,15 +639,20 @@ export async function verifyPublicGa(options) {
     browserReadback(options.browserEvidence, config, gaCommit, committedAt)
   );
   await run('map_burn_in', async () => {
-    const [receipts, health] = await Promise.all([
+    const [receipts, pendingAlerts, health] = await Promise.all([
       mapReceiptReadback(config, root),
+      mapOperatorAlertReadback(config, root),
       mapMonitorHealthReadback(config, gaCommit)
     ]);
+    if (pendingAlerts.length > 0) {
+      throw new Error(`Map monitor has ${pendingAlerts.length} undelivered operator escalation(s)`);
+    }
     const result = selectMapBurnIn(receipts, config.map, committedAt, gaCommit);
     if (result.issues.length > 0) throw new Error(result.issues.join('\n'));
     return {
       receiptSource: config.map.receiptSource,
       health,
+      pendingAlerts,
       requiredDays: config.map.requiredConsecutiveDays,
       days: result.days
     };

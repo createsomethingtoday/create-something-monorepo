@@ -18,6 +18,7 @@ function env(sourceSha = SOURCE_SHA): MapMonitorEnv {
     MAP_MONITOR_SOURCE_SHA: sourceSha,
     MAP_MONITOR_BASE_URL: 'https://createsomething.agency',
     MAP_MONITOR_RECEIPT_RETENTION_DAYS: '30',
+    RESEND_API_KEY: 're_test',
     CF_VERSION_METADATA: { id: 'worker-version' },
   };
 }
@@ -36,6 +37,7 @@ test('health reports a non-cacheable ready receipt lane only with required prove
     worker: 'map-production-monitor',
     receiptStore: 'cloudflare-d1',
     scheduledOnly: true,
+    operatorAlerting: true,
     sourceSha: SOURCE_SHA,
   });
 });
@@ -47,6 +49,12 @@ test('health fails closed and exposes no manual execution route', async () => {
   );
   assert.equal(degraded.status, 503);
   assert.equal((await degraded.json() as { status: string }).status, 'degraded');
+
+  const missingAlertSecret = await worker.fetch(
+    workerRequest('https://map-production-monitor.createsomething.workers.dev/health'),
+    { ...env(), RESEND_API_KEY: '' },
+  );
+  assert.equal(missingAlertSecret.status, 503);
 
   for (const request of [
     workerRequest('https://map-production-monitor.createsomething.workers.dev/__scheduled'),
