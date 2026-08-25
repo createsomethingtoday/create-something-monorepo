@@ -647,6 +647,7 @@ export interface NotionCustomAgentOperationalReceipts {
   mutationReceipts: Array<{
     actionId: string;
     runRef: string;
+    toolInvocationRef: string;
     mutationRef: string;
   }>;
 }

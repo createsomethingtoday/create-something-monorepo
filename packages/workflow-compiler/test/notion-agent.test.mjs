@@ -365,6 +365,7 @@ test('stops a mutation receipt attributed to a read-only binding', async () => {
         {
           actionId: 'inspect_evidence_readiness',
           runRef: 'notion-run://read-binding-mutation',
+          toolInvocationRef: 'notion-worker-run://read-binding-mutation',
           mutationRef: 'notion-mutation://read-binding-mutation'
         }
       ]
@@ -633,6 +634,7 @@ test('stops a write binding without confirmation and mutation proof', async () =
         {
           actionId: 'create_review_suggestion',
           runRef: 'notion-run://agency-ops-review-suggestion-previous',
+          toolInvocationRef: 'notion-worker-run://review-suggestion-previous',
           mutationRef: 'notion-mutation://review-suggestion-previous'
         }
       ]
@@ -672,6 +674,7 @@ test('stops a write binding without confirmation and mutation proof', async () =
         {
           actionId: 'create_review_suggestion',
           runRef: 'notion-run://agency-ops-review-suggestion-current',
+          toolInvocationRef: 'notion-worker-run://review-suggestion-current',
           mutationRef: 'notion-mutation://review-suggestion-current'
         }
       ]
@@ -708,6 +711,7 @@ test('stops a write binding without confirmation and mutation proof', async () =
         {
           actionId: 'create_review_suggestion',
           runRef: 'notion-run://agency-ops-review-suggestion-current',
+          toolInvocationRef: 'notion-worker-run://review-suggestion-current',
           mutationRef: 'notion-mutation://review-suggestion-current'
         }
       ]
@@ -751,11 +755,13 @@ test('stops a write binding without confirmation and mutation proof', async () =
         {
           actionId: 'create_review_suggestion',
           runRef: 'notion-run://agency-ops-review-suggestion-current',
+          toolInvocationRef: 'notion-worker-run://review-suggestion-current',
           mutationRef: 'notion-mutation://review-suggestion-current'
         },
         {
           actionId: 'unapproved_mutation',
           runRef: 'notion-run://agency-ops-review-suggestion-current',
+          toolInvocationRef: 'notion-worker-run://unapproved-tool-current',
           mutationRef: 'notion-mutation://unapproved-mutation-current'
         }
       ]
@@ -864,11 +870,13 @@ test('rejects reused write and publish operational receipt references', async ()
             {
               actionId: 'create_review_suggestion',
               runRef: 'notion-run://multi-write',
+              toolInvocationRef: 'notion-worker-run://multi-write-create',
               mutationRef: 'notion-mutation://multi-write-shared'
             },
             {
               actionId: 'publish_review_suggestion',
               runRef: 'notion-run://multi-write',
+              toolInvocationRef: 'notion-worker-run://multi-write-publish',
               mutationRef: 'notion-mutation://multi-write-shared'
             }
           ]
@@ -902,11 +910,13 @@ test('rejects reused write and publish operational receipt references', async ()
             {
               actionId: 'create_review_suggestion',
               runRef: 'notion-run://multi-write',
+              toolInvocationRef: 'notion-worker-run://multi-write-shared',
               mutationRef: 'notion-mutation://multi-write-create'
             },
             {
               actionId: 'publish_review_suggestion',
               runRef: 'notion-run://multi-write',
+              toolInvocationRef: 'notion-worker-run://multi-write-shared',
               mutationRef: 'notion-mutation://multi-write-publish'
             }
           ]
@@ -914,6 +924,51 @@ test('rejects reused write and publish operational receipt references', async ()
         installation
       ),
     /\$\.toolReceipts\.toolInvocationRef entries must be unique\./
+  );
+
+  assert.deepEqual(
+    evaluateNotionCustomAgentOperationalReceipts(
+      blueprint,
+      {
+        ...baseReceipts,
+        toolReceipts: [
+          {
+            actionId: 'create_review_suggestion',
+            runRef: 'notion-run://multi-write',
+            toolInvocationRef: 'notion-worker-run://multi-write-create',
+            confirmationState: 'confirmed'
+          },
+          {
+            actionId: 'publish_review_suggestion',
+            runRef: 'notion-run://multi-write',
+            toolInvocationRef: 'notion-worker-run://multi-write-publish',
+            confirmationState: 'confirmed'
+          }
+        ],
+        mutationReceipts: [
+          {
+            actionId: 'create_review_suggestion',
+            runRef: 'notion-run://multi-write',
+            toolInvocationRef: 'notion-worker-run://multi-write-publish',
+            mutationRef: 'notion-mutation://multi-write-create'
+          },
+          {
+            actionId: 'publish_review_suggestion',
+            runRef: 'notion-run://multi-write',
+            toolInvocationRef: 'notion-worker-run://multi-write-create',
+            mutationRef: 'notion-mutation://multi-write-publish'
+          }
+        ]
+      },
+      installation
+    ),
+    {
+      schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
+      blueprintId: 'agency-ops-multi-write.v0.1',
+      disposition: 'stop',
+      reasonCode: 'WRITE_CONFIRMATION_OR_MUTATION_RECEIPT_REQUIRED',
+      missingActionIds: ['create_review_suggestion', 'publish_review_suggestion']
+    }
   );
 });
 
@@ -984,6 +1039,7 @@ test('stops a blocked write before it accepts matching operational receipts', as
         {
           actionId: 'create_review_suggestion',
           runRef: 'notion-run://blocked-write',
+          toolInvocationRef: 'notion-worker-run://blocked-write',
           mutationRef: 'notion-mutation://blocked-write'
         }
       ]

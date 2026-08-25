@@ -312,10 +312,11 @@ function parseMutationReceipt(
 ): NotionCustomAgentOperationalReceipts['mutationReceipts'][number] {
   const path = `mutationReceipts[${index}]`;
   const entry = record(value, path);
-  exactKeys(entry, ['actionId', 'runRef', 'mutationRef'], path);
+  exactKeys(entry, ['actionId', 'runRef', 'toolInvocationRef', 'mutationRef'], path);
   return {
     actionId: text(entry.actionId, `${path}.actionId`),
     runRef: text(entry.runRef, `${path}.runRef`),
+    toolInvocationRef: text(entry.toolInvocationRef, `${path}.toolInvocationRef`),
     mutationRef: text(entry.mutationRef, `${path}.mutationRef`)
   };
 }
@@ -683,7 +684,8 @@ export function evaluateNotionCustomAgentOperationalReceipts(
       return (
         toolReceipt.confirmationState !== 'confirmed' ||
         !matchesRun(toolReceipt) ||
-        !matchesRun(mutationReceipt)
+        !matchesRun(mutationReceipt) ||
+        mutationReceipt?.toolInvocationRef !== toolReceipt.toolInvocationRef
       );
     })
     .map((binding) => binding.actionId)
