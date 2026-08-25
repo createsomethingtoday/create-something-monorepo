@@ -1,6 +1,6 @@
 # Ground GitHub Action
 
-Prevent AI hallucination in code analysis. Find duplicates, dead code, orphans, and design drift with verification-first patterns.
+Compute evidence for code analysis. Find duplicates, dead code, orphans, and design drift with verification-first patterns.
 
 ## Features
 
@@ -151,7 +151,7 @@ Ground is based on a simple principle: **no claim without evidence**.
 - Dead code is verified, not assumed
 - Orphans are checked against framework conventions
 
-This prevents AI hallucination by requiring computation before synthesis.
+This keeps Ground's recorded claims tied to prerequisite computation.
 
 ## Links
 

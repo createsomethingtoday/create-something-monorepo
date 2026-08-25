@@ -1,7 +1,7 @@
 {
   "name": "@createsomething/ground-mcp",
-  "version": "0.3.5",
-  "description": "Grounded claims for code. MCP server that prevents AI hallucination in code analysis.",
+  "version": "0.3.6",
+  "description": "Evidence-first code analysis for agents in TypeScript, JavaScript, and Svelte codebases.",
   "author": "CREATE SOMETHING <hello@createsomething.io>",
   "license": "MIT",
   "repository": {
