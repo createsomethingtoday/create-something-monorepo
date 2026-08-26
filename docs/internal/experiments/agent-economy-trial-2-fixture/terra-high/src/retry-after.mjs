@@ -27,9 +27,21 @@ function parseHttpDate(text, nowMs) {
       Number(minute),
       Number(second)
     );
-    const fiftyYearsAhead = new Date(nowMs);
-    fiftyYearsAhead.setUTCFullYear(currentYear + 50);
-    if (parsed > fiftyYearsAhead.getTime()) {
+    const boundaryYear = currentYear + 50;
+    const boundaryDay = Math.min(
+      now.getUTCDate(),
+      new Date(Date.UTC(boundaryYear, now.getUTCMonth() + 1, 0)).getUTCDate()
+    );
+    const fiftyYearsAhead = Date.UTC(
+      boundaryYear,
+      now.getUTCMonth(),
+      boundaryDay,
+      now.getUTCHours(),
+      now.getUTCMinutes(),
+      now.getUTCSeconds(),
+      now.getUTCMilliseconds()
+    );
+    if (parsed > fiftyYearsAhead) {
       year -= 100;
       parsed = Date.UTC(
         year,
