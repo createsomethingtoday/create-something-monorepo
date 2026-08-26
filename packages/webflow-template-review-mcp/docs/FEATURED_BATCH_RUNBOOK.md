@@ -53,10 +53,14 @@ review interface, verified live 2026-08-26 (39 templates / 33 creators):
   rolling months earlier (default 1 — current + past month)
 
 Prioritize `monthsSinceSubmission: 0`; the past month is the fallback pool.
-Each candidate carries pick/reason/draft state, creator name,
-creator-times-featured, templates the creator already has in the upcoming
-batch, and read-only `voteTallies` (up/down/net/`inQualifiedPool`) — enough to
-judge batch readiness without writing anything.
+Each candidate carries pick/reason/draft state, template `categories`,
+creator name, creator-times-featured, templates the creator already has in
+the upcoming batch, and read-only `voteTallies`
+(up/down/net/`inQualifiedPool`) — enough to judge batch readiness without
+writing anything. The summary's `categoryCounts` shows the pool's category
+distribution: the team deliberately spotlights a range of categories per
+batch and avoids over-featuring the same creators, so weigh both when
+picking.
 
 ## Reviewer playbook (the async "Featured Template meeting")
 

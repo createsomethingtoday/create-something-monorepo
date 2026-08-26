@@ -633,7 +633,7 @@ export function registerTools(
 
   server.tool(
     'template_review_featured_candidates',
-    'List templates eligible for the upcoming monthly Featured batch: Exceptional quality, not already featured, submitted within the current month (months_back=0) or up to months_back months earlier (default 1). Mirrors the "Remaining templates eligible" definition on the ⭐Featured templates review Airtable interface. Companion writes: template_review_set_featured_pick (star + reason), template_review_cast_featured_vote, template_review_set_featured_flag (batch finalization).',
+    'List templates eligible for the upcoming monthly Featured batch: Exceptional quality, not already featured, submitted within the current month (months_back=0) or up to months_back months earlier (default 1). Mirrors the "Remaining templates eligible" definition on the ⭐Featured templates review Airtable interface. Each candidate includes template categories and creator featured-counts, and the summary includes per-category counts — reviewers balance the batch across category trends and creator repetition. Companion writes: template_review_set_featured_pick (star + reason), template_review_cast_featured_vote, template_review_set_featured_flag (batch finalization).',
     {
       months_back: z.number().int().min(0).max(3).optional(),
       include_already_featured: z.boolean().optional(),
