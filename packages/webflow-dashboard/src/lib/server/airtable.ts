@@ -1742,33 +1742,37 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 
 				// Each item is gated by ITS OWN version's review status, so the
 				// version fetch is mandatory — if it fails, nothing is shown.
+				// Chunk the RECORD_ID() OR-formula to stay under Airtable's
+				// URL/formula limits; never truncate the ledger.
 				const versionIds = [
 					...new Set(items.map((entry) => entry.versionRecordId).filter(Boolean))
-				].slice(0, 50) as string[];
+				] as string[];
 				if (versionIds.length === 0) return [];
 
-				const versionRows = await base(TABLES.ASSET_VERSIONS)
-					.select({
-						filterByFormula: `OR(${versionIds
-							.map((id) => `RECORD_ID() = ${airtableFormulaValue(id)}`)
-							.join(', ')})`,
-						fields: [
-							ASSET_VERSIONS_VERSION_NUMBER_FIELD_ID,
-							ASSET_VERSIONS_REVIEW_STATUS_FIELD_ID
-						],
-						returnFieldsByFieldId: true
-					})
-					.all();
+				const versions = new Map<string, RequiredFixVersionInfo>();
+				const chunkSize = 50;
+				for (let i = 0; i < versionIds.length; i += chunkSize) {
+					const chunk = versionIds.slice(i, i + chunkSize);
+					const versionRows = await base(TABLES.ASSET_VERSIONS)
+						.select({
+							filterByFormula: `OR(${chunk
+								.map((id) => `RECORD_ID() = ${airtableFormulaValue(id)}`)
+								.join(', ')})`,
+							fields: [
+								ASSET_VERSIONS_VERSION_NUMBER_FIELD_ID,
+								ASSET_VERSIONS_REVIEW_STATUS_FIELD_ID
+							],
+							returnFieldsByFieldId: true
+						})
+						.all();
 
-				const versions = new Map<string, RequiredFixVersionInfo>(
-					versionRows.map((row) => [
-						row.id,
-						{
+					for (const row of versionRows) {
+						versions.set(row.id, {
 							versionNumber: Number(row.fields[ASSET_VERSIONS_VERSION_NUMBER_FIELD_ID]),
 							reviewStatus: firstString(row.fields[ASSET_VERSIONS_REVIEW_STATUS_FIELD_ID])
-						}
-					])
-				);
+						});
+					}
+				}
 
 				return gateRequiredFixesByVersion(items, versions);
 			} catch (err) {
