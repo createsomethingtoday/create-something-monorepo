@@ -15,6 +15,8 @@ test('retry parser handles hidden boundary cases', () => {
   assert.equal(parseRetryAfter(' 15 ', 0), 15_000);
   assert.equal(parseRetryAfter('1.5', 0), null);
   assert.equal(parseRetryAfter('.5', 0), null);
+  assert.equal(parseRetryAfter('2026-08-26', 0), null);
+  assert.equal(parseRetryAfter('08/26/2026', 0), null);
   assert.equal(parseRetryAfter('+2', 0), null);
   assert.equal(parseRetryAfter(null, 0), null);
   assert.equal(parseRetryAfter('not-a-date', 0), null);

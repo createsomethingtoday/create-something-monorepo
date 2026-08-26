@@ -156,11 +156,12 @@ and 23.52% faster than Sol/High.
 
 ### Trial 1: telemetry-only evidence
 
-Trial 1 preserves portable redacted timing and token receipts, but not the exact
-prompt, subject outputs, rubric, or judge receipt. Its operator classifications
-cannot be independently reconciled and are excluded from the supported quality
-conclusions. The Terra effort and Sol serving-tier comparisons remain hypotheses
-for a replication with immutable prompts, subject artifacts, and judges.
+Trial 1 preserves portable redacted token receipts, but not timing evidence, the
+exact prompt, subject outputs, rubric, or judge receipt. Its elapsed values and
+operator classifications cannot be independently reconciled and are excluded
+from the supported conclusions. The Terra effort and Sol serving-tier
+comparisons remain hypotheses for a replication with immutable prompts, subject
+artifacts, timing receipts, and judges.
 
 ## Honest assessment
 

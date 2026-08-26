@@ -52,7 +52,7 @@ In this sample, Luna fan-out used **73.34% fewer** credit-equivalent units than 
 
 ### Trial 1 is telemetry-only evidence
 
-Trial 1 preserves portable redacted timing and token receipts, but not the exact prompt, subject outputs, rubric, or judge receipt. Its operator classifications therefore cannot be independently reconciled and are excluded from the supported quality conclusions in this publication. The observed Terra effort and Sol serving-tier comparisons remain hypotheses for the prospective replication batch, where immutable prompts, subject artifacts, and judges are required.
+Trial 1 preserves portable redacted token receipts, but not timing evidence, the exact prompt, subject outputs, rubric, or judge receipt. Its elapsed values and operator classifications therefore cannot be independently reconciled and are excluded from the supported conclusions in this publication. The Terra effort and Sol serving-tier comparisons remain hypotheses for the prospective replication batch, where immutable prompts, subject artifacts, timing receipts, and judges are required.
 
 ## Interpretation
 

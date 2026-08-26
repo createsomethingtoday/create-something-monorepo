@@ -13,6 +13,13 @@ export function parseRetryAfter(value, nowMs = Date.now()) {
   }
   if (Number.isFinite(Number(text))) return null;
 
+  if (
+    !/^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun), \d{2} (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{4} \d{2}:\d{2}:\d{2} GMT$/.test(
+      text
+    )
+  )
+    return null;
+
   const parsedDate = Date.parse(text);
   if (Number.isNaN(parsedDate)) return null;
   return Math.max(0, parsedDate - nowMs);
