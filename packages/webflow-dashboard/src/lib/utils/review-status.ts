@@ -32,9 +32,16 @@ const EXACT_LABELS: Record<string, string> = {
 
 /**
  * Statuses that imply this round's release has already happened.
- * "🔁Response to Review" is reachable only from "📤Changes Requested" (the
- * creator replied to the sent email), so it proves a past release even
- * though the CURRENT feedback field may since have been redrafted.
+ *
+ * "🔁Response to Review" is included on a trust assumption: in the normal
+ * flow it is only reached from "📤Changes Requested" (the creator replied
+ * to the sent email). A direct status write via the review tooling CAN
+ * bypass that path; no durable release-proof field exists on versions
+ * today, so this is an accepted trade-off — the alternative hides released
+ * item history every time a creator replies, and the exposure on the bypass
+ * path is limited to item titles of decided findings on the developer's own
+ * app. The durable fix is a release timestamp stamped by the notification
+ * automation in the review base, which this predicate should adopt if added.
  */
 const ROUND_RELEASED_REVIEW_STATUSES = new Set([
 	'📤Changes Requested',
