@@ -50,31 +50,17 @@ Terra grouped some public assertions, so public assertion counts are not directl
 
 In this sample, Luna fan-out used **73.34% fewer** credit-equivalent units than Terra/High and **90.57% fewer** than Sol/High. It was **25.66% slower** than Terra/High and **23.52% faster** than Sol/High.
 
-### More Terra effort did not repair judgment
+### Trial 1 is telemetry-only evidence
 
-| Terra effort        | Retrieval and judgment                                          |   Elapsed |    Tokens | Credit-equivalent |
-| ------------------- | --------------------------------------------------------------- | --------: | --------: | ----------------: |
-| High                | Core facts correct; incomplete export list; two judgment errors |  83.546 s |   501,373 |          6.248520 |
-| Ultra, exact prompt | Complete export list; same two judgment errors                  | 307.422 s | 1,158,457 |         15.430340 |
-
-Ultra used **2.47×** the credits and **3.68×** the elapsed time. It improved exhaustive retrieval without repairing either material judgment error. A separate clarified Ultra run was fully correct, but its prompt changed, so it is excluded from the effort-only comparison. That counter-signal suggests acceptance language may matter more than additional effort.
-
-### Sol/Low retained judgment
-
-| Serving tier | Quality       | Elapsed |   Input | Cached input | Output | Reasoning output |
-| ------------ | ------------- | ------: | ------: | -----------: | -----: | ---------------: |
-| Default      | Fully correct |   140 s | 739,952 |      665,856 |  9,619 |            1,936 |
-| Fast         | Fully correct |    59 s | 517,259 |      457,728 |  6,824 |            1,223 |
-
-Both Sol/Low runs completed the inventory and handled both judgment traps correctly. Fast finished **57.86% sooner** in this pair. Its lower token count is observational: the agents followed different investigation paths, so serving tier is not established as the cause. The displayed credit equivalence also excludes any separate Fast-tier adjustment.
+Trial 1 preserves portable redacted timing and token receipts, but not the exact prompt, subject outputs, rubric, or judge receipt. Its operator classifications therefore cannot be independently reconciled and are excluded from the supported quality conclusions in this publication. The observed Terra effort and Sol serving-tier comparisons remain hypotheses for the prospective replication batch, where immutable prompts, subject artifacts, and judges are required.
 
 ## Interpretation
 
 The evidence supports three bounded conclusions:
 
 1. Independent work with strong deterministic judges can be assigned to cheaper agents without lowering observed correctness in this suite.
-2. More reasoning effort is not a reliable substitute for a precise acceptance contract or stronger operational judgment.
-3. Sol/Low is a credible governor candidate because it retained the classification and causal diagnosis Terra missed.
+2. Trial 1 is insufficient to establish whether reasoning effort or serving tier retained operational judgment.
+3. Sol/Low remains a governor hypothesis, not a supported conclusion, until the portable replication gate is run.
 
 It does **not** prove that Luna fan-out is universally cheaper or faster, that Sol/Low is sufficient for high-risk production work, that Fast causally reduces tokens, or that the architecture is statistically validated.
 
@@ -117,10 +103,10 @@ next_review: after_randomized_replication
 supporting_evidence:
   - seven exploratory trial subjects
   - shared hidden behavior checks and five mutation gates in Trial 2
-  - exact-prompt Terra effort comparison
+  - portable Trial 2 subject artifacts and deterministic judges
 counter_signals:
   - one run per model and effort cohort
-  - clarified Terra Ultra succeeded after acceptance language changed
+  - Trial 1 quality classifications are not portable
   - token differences in the Sol Fast pair are not causal evidence
 open_questions:
   - does the result replicate across ten randomized runs per task family?

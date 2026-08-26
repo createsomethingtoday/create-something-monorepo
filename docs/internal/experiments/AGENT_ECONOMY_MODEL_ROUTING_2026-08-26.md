@@ -154,33 +154,13 @@ In this sample, Luna fan-out used 73.34% fewer credit-equivalent units than
 Terra/High and 90.57% fewer than Sol/High. It was 25.66% slower than Terra/High
 and 23.52% faster than Sol/High.
 
-### Trial 1: reasoning effort did not repair judgment
+### Trial 1: telemetry-only evidence
 
-| Terra effort        | Retrieval and judgment                                          |   Elapsed |    Tokens | Credit-equivalent |
-| ------------------- | --------------------------------------------------------------- | --------: | --------: | ----------------: |
-| High                | Core facts correct; incomplete export list; two judgment errors |  83.546 s |   501,373 |          6.248520 |
-| Ultra, exact prompt | Complete export list; same two judgment errors                  | 307.422 s | 1,158,457 |         15.430340 |
-
-Ultra used 2.47× the credits and 3.68× the elapsed time. It improved exhaustive
-retrieval but did not repair either material judgment error.
-
-A separate clarified Ultra run was fully correct, but the prompt changed. It is
-excluded from the effort-only comparison and suggests that precise acceptance
-language can matter more than increased effort.
-
-### Trial 1: Sol/Low retained judgment
-
-| Serving tier | Quality       | Elapsed |   Input | Cached input | Output | Reasoning output |
-| ------------ | ------------- | ------: | ------: | -----------: | -----: | ---------------: |
-| Default      | Fully correct |   140 s | 739,952 |      665,856 |  9,619 |            1,936 |
-| Fast         | Fully correct |    59 s | 517,259 |      457,728 |  6,824 |            1,223 |
-
-Both Sol/Low runs completed the full export inventory and correctly handled the
-two operational judgment traps.
-
-Fast finished 57.86% sooner in this pair. It also used fewer tokens, but that
-token difference is observational: the agents followed different investigation
-paths, so serving tier is not established as the cause.
+Trial 1 preserves portable redacted timing and token receipts, but not the exact
+prompt, subject outputs, rubric, or judge receipt. Its operator classifications
+cannot be independently reconciled and are excluded from the supported quality
+conclusions. The Terra effort and Sol serving-tier comparisons remain hypotheses
+for a replication with immutable prompts, subject artifacts, and judges.
 
 ## Honest assessment
 
@@ -188,10 +168,9 @@ paths, so serving tier is not established as the cause.
 
 - Independent work with strong deterministic judges can be assigned to cheaper
   agents without lowering observed correctness in this suite.
-- More reasoning effort is not a reliable substitute for a precise acceptance
-  contract or stronger operational judgment.
-- Sol/Low is a credible governor candidate for CREATE SOMETHING because it
-  retained the classification and causal diagnosis Terra missed.
+- Trial 1 is insufficient to establish the effect of reasoning effort or
+  serving tier on operational judgment.
+- Sol/Low remains a governor hypothesis pending portable replication.
 - Model, effort, and serving tier should be measured as separate decisions.
 
 ### What this does not prove
@@ -320,16 +299,16 @@ still performs the selected work, and receipts prove what actually happened.
 | Review owner    | CREATE SOMETHING                                                                  |
 
 Current best read: task-shaped routing is promising enough to replicate. The
-evidence supports Sol/Low as a governor candidate and Luna/High fan-out as an
-executor candidate, but it does not yet authorize a default production routing
-policy.
+evidence supports Luna/High fan-out as an executor candidate. Sol/Low remains a
+governor hypothesis, and the evidence does not authorize a default production
+routing policy.
 
 Counter-signals:
 
 - Terra/High was the fastest Trial 2 control.
 - Sol/Low remained materially more expensive at base-equivalent rates than the
   cheaper model cohorts.
-- Higher Terra effort improved retrieval but not judgment.
+- Trial 1 quality classifications cannot be independently reconciled.
 - Fast and default Sol/Low runs were not identical trajectories.
 
 Open questions:

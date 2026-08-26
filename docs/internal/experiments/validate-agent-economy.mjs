@@ -214,14 +214,14 @@ for (const judged of judgeReceipt.subjects) {
     assert.equal(await sha256(`${directory}/${path}`), judged.artifactSha256[index]);
   }
   const subjectRoot = resolve(fixtureRoot, directory);
-  const publicOutput = execFileSync(process.execPath, ['--test'], {
+  const publicOutput = execFileSync(process.execPath, ['--test', '--test-reporter=tap'], {
     cwd: subjectRoot,
     encoding: 'utf8'
   });
   assert.match(publicOutput, new RegExp(`# tests ${judged.public.total}\\b`, 'u'));
   const hiddenOutput = execFileSync(
     process.execPath,
-    [resolve(fixtureRoot, 'judge/hidden.test.mjs')],
+    ['--test-reporter=tap', resolve(fixtureRoot, 'judge/hidden.test.mjs')],
     {
       cwd: subjectRoot,
       env: { ...process.env, SUBJECT_ROOT: subjectRoot },
@@ -266,8 +266,6 @@ assert.equal(
 assert.equal(percentageReduction(luna.criticalPathSeconds, sol.criticalPathSeconds), 23.52);
 
 assert.equal(terraUltra.promptChanged, false);
-assert.equal(solLowDefault.quality.startsWith('Fully correct'), true);
-assert.equal(solLowFast.quality.startsWith('Fully correct'), true);
 assert.equal(percentageReduction(solLowFast.elapsedSeconds, solLowDefault.elapsedSeconds), 57.86);
 assert.equal(results.prospectiveReplicationGate.minimumRunsPerTaskFamilyPerCohort, 10);
 assert.equal(results.prospectiveReplicationGate.randomizeCohortOrder, true);
@@ -285,25 +283,8 @@ const publicFacts = [
   `${luna.criticalPathSeconds.toFixed(3)} s`,
   `${terra.criticalPathSeconds.toFixed(3)} s`,
   `${sol.criticalPathSeconds.toFixed(3)} s`,
-  `${terraHigh.elapsedSeconds.toFixed(3)} s`,
-  terraHigh.totalTokens.toLocaleString('en-US'),
-  terraHigh.creditEquivalent.toFixed(6),
-  `${terraUltra.elapsedSeconds.toFixed(3)} s`,
-  terraUltra.totalTokens.toLocaleString('en-US'),
-  terraUltra.creditEquivalent.toFixed(6),
-  `${solLowDefault.elapsedSeconds} s`,
-  solLowDefault.inputTokens.toLocaleString('en-US'),
-  solLowDefault.cachedInputTokens.toLocaleString('en-US'),
-  solLowDefault.outputTokens.toLocaleString('en-US'),
-  solLowDefault.reasoningOutputTokens.toLocaleString('en-US'),
-  `${solLowFast.elapsedSeconds} s`,
-  solLowFast.inputTokens.toLocaleString('en-US'),
-  solLowFast.cachedInputTokens.toLocaleString('en-US'),
-  solLowFast.outputTokens.toLocaleString('en-US'),
-  solLowFast.reasoningOutputTokens.toLocaleString('en-US'),
   `${percentageReduction(luna.creditEquivalent, terra.creditEquivalent)}% fewer`,
   `${percentageReduction(luna.creditEquivalent, sol.creditEquivalent)}% fewer`,
-  `${percentageReduction(solLowFast.elapsedSeconds, solLowDefault.elapsedSeconds)}% sooner`,
   'Every reported model/effort cohort has one run.',
   'at least **10 trials per task family per cohort**',
   '[Dual-Agent Routing Experiment](/papers/dual-agent-routing-experiment)',
@@ -314,11 +295,7 @@ const publicFacts = [
 const publicRows = [
   `| 3× Luna / High | 17/17 | 3/3 | 5/5 | yes | ${luna.criticalPathSeconds.toFixed(3)} s | ${luna.totalTokens.toLocaleString('en-US')} | ${luna.creditEquivalent.toFixed(6)} |`,
   `| 1× Terra / High | 14/14 | 3/3 | 5/5 | yes | ${terra.criticalPathSeconds.toFixed(3)} s | ${terra.totalTokens.toLocaleString('en-US')} | ${terra.creditEquivalent.toFixed(6)} |`,
-  `| 1× Sol / High | 17/17 | 3/3 | 5/5 | yes | ${sol.criticalPathSeconds.toFixed(3)} s | ${sol.totalTokens.toLocaleString('en-US')} | ${sol.creditEquivalent.toFixed(6)} |`,
-  `| High | Core facts correct; incomplete export list; two judgment errors | ${terraHigh.elapsedSeconds.toFixed(3)} s | ${terraHigh.totalTokens.toLocaleString('en-US')} | ${terraHigh.creditEquivalent.toFixed(6)} |`,
-  `| Ultra, exact prompt | Complete export list; same two judgment errors | ${terraUltra.elapsedSeconds.toFixed(3)} s | ${terraUltra.totalTokens.toLocaleString('en-US')} | ${terraUltra.creditEquivalent.toFixed(6)} |`,
-  `| Default | Fully correct | ${solLowDefault.elapsedSeconds} s | ${solLowDefault.inputTokens.toLocaleString('en-US')} | ${solLowDefault.cachedInputTokens.toLocaleString('en-US')} | ${solLowDefault.outputTokens.toLocaleString('en-US')} | ${solLowDefault.reasoningOutputTokens.toLocaleString('en-US')} |`,
-  `| Fast | Fully correct | ${solLowFast.elapsedSeconds} s | ${solLowFast.inputTokens.toLocaleString('en-US')} | ${solLowFast.cachedInputTokens.toLocaleString('en-US')} | ${solLowFast.outputTokens.toLocaleString('en-US')} | ${solLowFast.reasoningOutputTokens.toLocaleString('en-US')} |`
+  `| 1× Sol / High | 17/17 | 3/3 | 5/5 | yes | ${sol.criticalPathSeconds.toFixed(3)} s | ${sol.totalTokens.toLocaleString('en-US')} | ${sol.creditEquivalent.toFixed(6)} |`
 ];
 
 for (const fact of publicFacts) {

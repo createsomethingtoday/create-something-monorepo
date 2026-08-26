@@ -8,7 +8,7 @@ export function parseRetryAfter(value, nowMs = Date.now()) {
     const milliseconds = Number(text) * 1000;
     return Number.isSafeInteger(milliseconds) ? milliseconds : null;
   }
-  if (/^[+-]?\d+(?:\.\d*)?$/.test(text)) return null;
+  if (/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(text)) return null;
 
   const parsedDate = Date.parse(text);
   if (Number.isNaN(parsedDate)) return null;

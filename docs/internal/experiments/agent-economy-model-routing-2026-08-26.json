@@ -8,7 +8,7 @@
   "startedAt": "2026-08-26",
   "lastReviewedAt": "2026-08-26",
   "reviewOwner": "CREATE SOMETHING",
-  "primaryClaim": "Model selection should follow task shape: a stronger low-effort model is a promising judgment governor, while lower-cost high-effort agents are promising executors for independent work with deterministic quality gates.",
+  "primaryClaim": "Lower-cost high-effort agents are promising executors for independent work with deterministic quality gates; a stronger low-effort judgment governor remains an unverified hypothesis.",
   "evidenceGrade": "benchmark",
   "trials": [
     {
