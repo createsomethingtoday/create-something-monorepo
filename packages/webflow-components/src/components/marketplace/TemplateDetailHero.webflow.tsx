@@ -23,6 +23,11 @@ export default declareComponent(TemplateDetailHero, {
       defaultValue: '',
       tooltip: 'Optional comma- or newline-separated category labels. Use for multi-category breadcrumbs.',
     }),
+    titleCategoryName: props.Text({
+      name: 'Title Category Name',
+      defaultValue: '',
+      tooltip: 'Optional category used in the title. Defaults to the first Category Names value.',
+    }),
     categoryLink: props.Link({ name: 'Category URL' }),
     categoryLinks: props.Text({
       name: 'Category URLs',

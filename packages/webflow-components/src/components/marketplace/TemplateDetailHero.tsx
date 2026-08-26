@@ -21,6 +21,7 @@ export interface TemplateDetailHeroProps {
   templateSlug?: string;
   categoryName?: string;
   categoryNames?: string;
+  titleCategoryName?: string;
   categoryLink?: TemplateDetailLink;
   categoryLinks?: string;
   categoryBaseUrl?: string;
@@ -127,9 +128,16 @@ function targetForHref(href: string, target?: string): string | undefined {
   return isExternalUrl(href) ? '_blank' : undefined;
 }
 
-function formatTemplateTitle(name: string): string {
+function formatTemplateTitle(name: string, category?: string): string {
   const label = name.trim() || 'Template name';
-  return /\bwebsite\s+template$/i.test(label) ? label : `${label} - Website Template`;
+  const categoryLabel = category?.trim();
+
+  if (!categoryLabel) {
+    return /\bwebsite\s+template$/i.test(label) ? label : `${label} - Website Template`;
+  }
+
+  const baseLabel = label.replace(/\s*-\s*website\s+template$/i, '').trim() || 'Template name';
+  return `${baseLabel} - ${categoryLabel} Website Template`;
 }
 
 function cleanCategoryListItem(value: string): string {
@@ -289,6 +297,7 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
   templateSlug = '',
   categoryName = 'Templates',
   categoryNames = '',
+  titleCategoryName = '',
   categoryLink,
   categoryLinks = '',
   categoryBaseUrl = 'https://webflow.com/templates/category',
@@ -363,7 +372,14 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
     height: `${previewDimensions.height}px`,
     transform: `translateX(-50%) scale(${previewScale})`,
   };
-  const titleLabel = useMemo(() => formatTemplateTitle(templateName), [templateName]);
+  const titleCategory = useMemo(
+    () => displayCategoryLabel(titleCategoryName.trim() || splitCategoryList(categoryNames)[0] || ''),
+    [categoryNames, titleCategoryName],
+  );
+  const titleLabel = useMemo(
+    () => formatTemplateTitle(templateName, titleCategory),
+    [templateName, titleCategory],
+  );
   const offer = useMemo(
     () =>
       resolveTemplateDetailOffer({

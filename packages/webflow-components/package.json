@@ -26,6 +26,7 @@
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
+    "@babel/core": "7.29.7",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "@webflow/webflow-cli": "^1.0.0",

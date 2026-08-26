@@ -27,3 +27,36 @@ test('normalizes quoted comma-containing category names to the canonical categor
   assert.doesNotMatch(html, /performance-and-entertainment-websites/);
   assert.doesNotMatch(html, /culture-websites/);
 });
+
+test('uses the first category name in the template title', () => {
+  const html = renderToStaticMarkup(
+    <TemplateDetailHero
+      templateName="Fleet"
+      categoryNames="Transportation & Automotive, Technology"
+      enableAnalytics={false}
+    />,
+  );
+
+  assert.match(html, /<h1 class="wfdt-title">Fleet - Transportation &amp; Automotive Website Template<\/h1>/);
+});
+
+test('uses an explicit title category name instead of the breadcrumb categories', () => {
+  const html = renderToStaticMarkup(
+    <TemplateDetailHero
+      templateName="Fleet"
+      titleCategoryName="Logistics"
+      categoryNames="Transportation & Automotive, Technology"
+      enableAnalytics={false}
+    />,
+  );
+
+  assert.match(html, /<h1 class="wfdt-title">Fleet - Logistics Website Template<\/h1>/);
+});
+
+test('keeps the generic title when no category is available', () => {
+  const html = renderToStaticMarkup(
+    <TemplateDetailHero templateName="Fleet" enableAnalytics={false} />,
+  );
+
+  assert.match(html, /<h1 class="wfdt-title">Fleet - Website Template<\/h1>/);
+});
