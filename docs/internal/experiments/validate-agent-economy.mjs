@@ -4,6 +4,14 @@ import { readFile } from 'node:fs/promises';
 const results = JSON.parse(
   await readFile(new URL('./agent-economy-model-routing-2026-08-26.json', import.meta.url), 'utf8'),
 );
+const publicExperiment = await readFile(
+  new URL('../../../packages/io/content/experiments/governed-codex-model-routing.md', import.meta.url),
+  'utf8',
+);
+const publicMetadata = await readFile(
+  new URL('../../../packages/io/src/lib/config/fileBasedExperiments.ts', import.meta.url),
+  'utf8',
+);
 
 assert.equal(results.schemaVersion, 'create_something_internal_experiment.v0.1');
 assert.equal(results.status, 'supported_not_validated');
@@ -49,6 +57,35 @@ assert.equal(
 );
 assert.equal(results.prospectiveReplicationGate.randomizeCohortOrder, true);
 
+const publicFacts = [
+  'SUPPORTED — NOT VALIDATED',
+  `${luna.public.passed}/${luna.public.total}`,
+  `${terra.public.passed}/${terra.public.total}`,
+  `${sol.public.passed}/${sol.public.total}`,
+  `${luna.hidden.passed}/${luna.hidden.total}`,
+  `${luna.mutants.killed}/${luna.mutants.total}`,
+  luna.creditEquivalent.toFixed(6),
+  terra.creditEquivalent.toFixed(6),
+  sol.creditEquivalent.toFixed(6),
+  `${percentageReduction(luna.creditEquivalent, terra.creditEquivalent)}% fewer`,
+  `${percentageReduction(luna.creditEquivalent, sol.creditEquivalent)}% fewer`,
+  `${percentageReduction(solLowFast.elapsedSeconds, solLowDefault.elapsedSeconds)}% sooner`,
+  'Every reported model/effort cohort has one run.',
+  'at least **10 trials per task family per cohort**',
+  '[Dual-Agent Routing Experiment](/papers/dual-agent-routing-experiment)',
+];
+
+for (const fact of publicFacts) {
+  assert.ok(publicExperiment.includes(fact), `public experiment is missing reconciled fact: ${fact}`);
+}
+
+assert.ok(publicMetadata.includes("slug: 'governed-codex-model-routing'"));
+assert.ok(publicMetadata.includes("'file-governed-codex-model-routing': defineArtifactVisuals"));
+assert.equal(publicExperiment.includes('/Users/'), false, 'public experiment leaks a private local path');
+for (const overclaim of ['the result is validated', 'the result is statistically significant']) {
+  assert.equal(publicExperiment.toLowerCase().includes(overclaim), false, `public overclaim: ${overclaim}`);
+}
+
 console.log(
-  `Agent economy experiment OK: ${results.trials.length} trials, status ${results.status}.`,
+  `Agent economy experiment OK: ${results.trials.length} trials, status ${results.status}, public projection reconciled.`,
 );
