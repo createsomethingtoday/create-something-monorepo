@@ -130,7 +130,7 @@ open_questions:
 
 ## Evidence and reproducibility
 
-The source repository preserves a machine-readable ledger, redacted telemetry receipt, rate-card version and formula, integrity validator, prompt and fixture requirements, and the prospective decision rule under CRE-1877. Private session paths and raw transcripts are intentionally excluded from this public route; the numeric projection is recomputed from the durable receipt during release.
+The source repository preserves a machine-readable ledger, a redacted Trial 2 telemetry receipt, rate-card version and formula, integrity validator, prompt and fixture requirements, and the prospective decision rule under CRE-1877. Private session paths and raw transcripts are intentionally excluded from this public route. Trial 2 token and credit economics are recomputed from the durable receipt; latency and Trial 1 observations are reconciled exactly against the durable ledger during release.
 
 Relevant public references:
 

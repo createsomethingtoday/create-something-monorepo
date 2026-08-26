@@ -35,6 +35,7 @@ const trial = (id) => {
 const luna = trial('trial-2-luna-high-fanout');
 const terra = trial('trial-2-terra-high');
 const sol = trial('trial-2-sol-high');
+const terraHigh = trial('trial-1-terra-high');
 const terraUltra = trial('trial-1-terra-ultra-exact');
 const solLowDefault = trial('trial-1-sol-low-default');
 const solLowFast = trial('trial-1-sol-low-fast');
@@ -104,12 +105,33 @@ const publicFacts = [
   luna.creditEquivalent.toFixed(6),
   terra.creditEquivalent.toFixed(6),
   sol.creditEquivalent.toFixed(6),
+  `${luna.criticalPathSeconds.toFixed(3)} s`,
+  `${terra.criticalPathSeconds.toFixed(3)} s`,
+  `${sol.criticalPathSeconds.toFixed(3)} s`,
+  `${terraHigh.elapsedSeconds.toFixed(3)} s`,
+  terraHigh.totalTokens.toLocaleString('en-US'),
+  terraHigh.creditEquivalent.toFixed(6),
+  `${terraUltra.elapsedSeconds.toFixed(3)} s`,
+  terraUltra.totalTokens.toLocaleString('en-US'),
+  terraUltra.creditEquivalent.toFixed(6),
+  `${solLowDefault.elapsedSeconds} s`,
+  solLowDefault.inputTokens.toLocaleString('en-US'),
+  solLowDefault.cachedInputTokens.toLocaleString('en-US'),
+  solLowDefault.outputTokens.toLocaleString('en-US'),
+  solLowDefault.reasoningOutputTokens.toLocaleString('en-US'),
+  `${solLowFast.elapsedSeconds} s`,
+  solLowFast.inputTokens.toLocaleString('en-US'),
+  solLowFast.cachedInputTokens.toLocaleString('en-US'),
+  solLowFast.outputTokens.toLocaleString('en-US'),
+  solLowFast.reasoningOutputTokens.toLocaleString('en-US'),
   `${percentageReduction(luna.creditEquivalent, terra.creditEquivalent)}% fewer`,
   `${percentageReduction(luna.creditEquivalent, sol.creditEquivalent)}% fewer`,
   `${percentageReduction(solLowFast.elapsedSeconds, solLowDefault.elapsedSeconds)}% sooner`,
   'Every reported model/effort cohort has one run.',
   'at least **10 trials per task family per cohort**',
-  '[Dual-Agent Routing Experiment](/papers/dual-agent-routing-experiment)'
+  '[Dual-Agent Routing Experiment](/papers/dual-agent-routing-experiment)',
+  'Trial 2 token and credit economics are recomputed from the durable receipt',
+  'latency and Trial 1 observations are reconciled exactly against the durable ledger'
 ];
 
 for (const fact of publicFacts) {
