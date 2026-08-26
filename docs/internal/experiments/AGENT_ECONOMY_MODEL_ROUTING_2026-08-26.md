@@ -3,7 +3,7 @@
 - Experiment ID: `EXP-AGENT-ECONOMY-2026-08-26`
 - Linear: `CRE-1877`
 - Artifact class: internal experiment
-- Status: **SUPPORTED — NOT VALIDATED**
+- Status: **INCONCLUSIVE — QUALITY GATE FAILED**
 - Evidence grade: benchmark
 - Started: 2026-08-26
 - Last reviewed: 2026-08-26
@@ -15,9 +15,9 @@
 ║  EXPERIMENT: GOVERNED CODEX MODEL ROUTING                        ║
 ║                                                                  ║
 ║  3x Luna / High: 1.14 credit-equivalent                          ║
-║  Equal judged result to single-agent controls in Trial 2         ║
+║  Every session-time Trial 2 cohort failed the hidden gate        ║
 ║                                                                  ║
-║  OUTCOME: SUPPORTED — REPLICATION REQUIRED                       ║
+║  OUTCOME: INCONCLUSIVE — QUALITY GATE FAILED                     ║
 ╚══════════════════════════════════════════════════════════════════╝
 ```
 
@@ -110,7 +110,7 @@ The judge was separate from the subject agents:
 - public tests measured declared behavior;
 - hidden tests measured withheld behavior;
 - five mutants tested whether the authored tests rejected plausible defects;
-- repository status checked that only three authorized files changed.
+- authorized-file status was not durably receipted and is excluded from the result.
 
 ### Cost and latency
 
@@ -140,19 +140,20 @@ Machine-readable results are preserved in
 
 ### Trial 2: independently verifiable execution
 
-| Strategy        | Public | Hidden | Mutants | Authorized files only | Critical path |  Tokens | Credit-equivalent |
-| --------------- | -----: | -----: | ------: | --------------------- | ------------: | ------: | ----------------: |
-| 3× Luna / High  |  17/17 |    3/3 |     5/5 | yes                   |      98.865 s | 859,682 |          1.137818 |
-| 1× Terra / High |  14/14 |    3/3 |     5/5 | yes                   |      78.676 s | 391,791 |          4.267320 |
-| 1× Sol / High   |  17/17 |    3/3 |     5/5 | yes                   |     129.263 s | 586,459 |         12.071900 |
+| Strategy        | Public | Hidden | Mutants | Critical path |  Tokens | Credit-equivalent |
+| --------------- | -----: | -----: | ------: | ------------: | ------: | ----------------: |
+| 3× Luna / High  |  17/17 |    2/3 |     5/5 |      98.865 s | 859,682 |          1.137818 |
+| 1× Terra / High |  14/14 |    2/3 |     5/5 |      78.676 s | 391,791 |          4.267320 |
+| 1× Sol / High   |  17/17 |    2/3 |     5/5 |     129.263 s | 586,459 |         12.071900 |
 
 The public assertion count differs because the Terra subject grouped some
-assertions. All three subjects passed the same hidden behaviors and killed the
-same five mutants.
+assertions. All three session-time subjects failed the expanded retry-parser
+hidden group, passed the other two hidden groups, and killed the same five mutants.
 
-In this sample, Luna fan-out used 73.34% fewer credit-equivalent units than
+Descriptively, Luna fan-out used 73.34% fewer credit-equivalent units than
 Terra/High and 90.57% fewer than Sol/High. It was 25.66% slower than Terra/High
-and 23.52% faster than Sol/High.
+and 23.52% faster than Sol/High. Because every cohort failed the quality gate,
+these differences do not establish an economic routing advantage.
 
 ### Trial 1: telemetry-only evidence
 
@@ -167,8 +168,8 @@ artifacts, timing receipts, and judges.
 
 ### What this supports
 
-- Independent work with strong deterministic judges can be assigned to cheaper
-  agents without lowering observed correctness in this suite.
+- The expanded deterministic judge found a shared retry-parser failure in every
+  session-time Trial 2 cohort; this trial does not establish retained correctness.
 - Trial 1 is insufficient to establish the effect of reasoning effort or
   serving tier on operational judgment.
 - Sol/Low remains a governor hypothesis pending portable replication.
@@ -292,17 +293,16 @@ still performs the selected work, and receipts prove what actually happened.
 
 | Field           | Current value                                                                     |
 | --------------- | --------------------------------------------------------------------------------- |
-| Claim status    | supported                                                                         |
+| Claim status    | inconclusive_quality_gate_failed                                                  |
 | Confidence      | medium-low                                                                        |
 | Evidence grade  | benchmark                                                                         |
 | Last reviewed   | 2026-08-26                                                                        |
 | Next review due | after the first randomized replication batch or 2026-09-26, whichever comes first |
 | Review owner    | CREATE SOMETHING                                                                  |
 
-Current best read: task-shaped routing is promising enough to replicate. The
-evidence supports Luna/High fan-out as an executor candidate. Sol/Low remains a
-governor hypothesis, and the evidence does not authorize a default production
-routing policy.
+Current best read: task-shaped routing remains a hypothesis worth testing, but
+this run failed its expanded quality gate. Sol/Low remains a governor hypothesis,
+and the evidence does not authorize a default production routing policy.
 
 Counter-signals:
 
@@ -323,11 +323,11 @@ Open questions:
 
 ## Outcome declaration
 
-**SUPPORTED — NOT VALIDATED**
+**INCONCLUSIVE — QUALITY GATE FAILED**
 
-The completed trials justify a replicated experiment and a provisional routing
-hypothesis. They do not justify a public universal claim or production-default
-change.
+The completed trials preserve a useful failure and justify a corrected replication.
+They do not establish an economic advantage, a universal claim, or a
+production-default change.
 
 ## Paper promotion gate
 
@@ -348,4 +348,5 @@ Promote this experiment toward a paper only after:
 
 - 2026-08-26: Initial internal experiment created from Trial 1, Trial 2, the
   Terra effort control, and the Sol/Low serving-tier control. Outcome declared
-  supported but not validated. Randomized replication protocol preregistered.
+  inconclusive after the expanded session-time quality gate failed. Randomized
+  replication protocol preregistered.

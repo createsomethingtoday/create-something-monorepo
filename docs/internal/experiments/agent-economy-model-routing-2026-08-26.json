@@ -19,7 +19,6 @@
       "public": { "passed": 17, "total": 17 },
       "hidden": { "passed": 2, "total": 3 },
       "mutants": { "killed": 5, "total": 5 },
-      "authorizedFilesOnly": true,
       "criticalPathSeconds": 98.865,
       "totalTokens": 859682,
       "creditEquivalent": 1.137818
@@ -36,7 +35,6 @@
       },
       "hidden": { "passed": 2, "total": 3 },
       "mutants": { "killed": 5, "total": 5 },
-      "authorizedFilesOnly": true,
       "criticalPathSeconds": 78.676,
       "totalTokens": 391791,
       "creditEquivalent": 4.26732
@@ -49,7 +47,6 @@
       "public": { "passed": 17, "total": 17 },
       "hidden": { "passed": 2, "total": 3 },
       "mutants": { "killed": 5, "total": 5 },
-      "authorizedFilesOnly": true,
       "criticalPathSeconds": 129.263,
       "totalTokens": 586459,
       "creditEquivalent": 12.0719

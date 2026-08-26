@@ -43,7 +43,7 @@
       "public": { "passed": 17, "total": 17 },
       "hidden": { "passed": 2, "total": 3 },
       "mutants": { "killed": 5, "total": 5 },
-      "authorizedFilesOnly": true
+      "statusReceipt": "not_captured"
     },
     {
       "cohort": "trial-2-terra-high",
@@ -58,7 +58,7 @@
       "public": { "passed": 14, "total": 14 },
       "hidden": { "passed": 2, "total": 3 },
       "mutants": { "killed": 5, "total": 5 },
-      "authorizedFilesOnly": true
+      "statusReceipt": "not_captured"
     },
     {
       "cohort": "trial-2-sol-high",
@@ -73,7 +73,7 @@
       "public": { "passed": 17, "total": 17 },
       "hidden": { "passed": 2, "total": 3 },
       "mutants": { "killed": 5, "total": 5 },
-      "authorizedFilesOnly": true
+      "statusReceipt": "not_captured"
     }
   ]
 }

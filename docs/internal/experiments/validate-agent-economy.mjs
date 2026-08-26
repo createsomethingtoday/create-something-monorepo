@@ -42,6 +42,10 @@ const publicMetadata = await readFile(
   new URL('../../../packages/io/src/lib/config/fileBasedExperiments.ts', import.meta.url),
   'utf8'
 );
+const internalReport = await readFile(
+  new URL('./AGENT_ECONOMY_MODEL_ROUTING_2026-08-26.md', import.meta.url),
+  'utf8'
+);
 
 assert.equal(results.schemaVersion, 'create_something_internal_experiment.v0.1');
 assert.equal(results.status, 'inconclusive_quality_gate_failed');
@@ -64,7 +68,7 @@ const solLowFast = trial('trial-1-sol-low-fast');
 for (const subject of [luna, terra, sol]) {
   assert.deepEqual(subject.hidden, { passed: 2, total: 3 });
   assert.deepEqual(subject.mutants, { killed: 5, total: 5 });
-  assert.equal(subject.authorizedFilesOnly, true);
+  assert.equal('authorizedFilesOnly' in subject, false);
 }
 
 const percentageReduction = (candidate, baseline) =>
@@ -209,7 +213,7 @@ for (const judged of judgeReceipt.subjects) {
   assert.equal(judged.public.total, subject.public.total);
   assert.deepEqual(judged.hidden, subject.hidden);
   assert.deepEqual(judged.mutants, subject.mutants);
-  assert.equal(judged.authorizedFilesOnly, subject.authorizedFilesOnly);
+  assert.equal(judged.statusReceipt, 'not_captured');
   for (const [index, path] of artifactPaths.entries()) {
     const receiptPath =
       path === 'src/retry-after.mjs'
@@ -303,9 +307,9 @@ const publicFacts = [
 ];
 
 const publicRows = [
-  `| 3× Luna / High | 17/17 | 2/3 | 5/5 | yes | ${luna.criticalPathSeconds.toFixed(3)} s | ${luna.totalTokens.toLocaleString('en-US')} | ${luna.creditEquivalent.toFixed(6)} |`,
-  `| 1× Terra / High | 14/14 | 2/3 | 5/5 | yes | ${terra.criticalPathSeconds.toFixed(3)} s | ${terra.totalTokens.toLocaleString('en-US')} | ${terra.creditEquivalent.toFixed(6)} |`,
-  `| 1× Sol / High | 17/17 | 2/3 | 5/5 | yes | ${sol.criticalPathSeconds.toFixed(3)} s | ${sol.totalTokens.toLocaleString('en-US')} | ${sol.creditEquivalent.toFixed(6)} |`
+  `| 3× Luna / High | 17/17 | 2/3 | 5/5 | ${luna.criticalPathSeconds.toFixed(3)} s | ${luna.totalTokens.toLocaleString('en-US')} | ${luna.creditEquivalent.toFixed(6)} |`,
+  `| 1× Terra / High | 14/14 | 2/3 | 5/5 | ${terra.criticalPathSeconds.toFixed(3)} s | ${terra.totalTokens.toLocaleString('en-US')} | ${terra.creditEquivalent.toFixed(6)} |`,
+  `| 1× Sol / High | 17/17 | 2/3 | 5/5 | ${sol.criticalPathSeconds.toFixed(3)} s | ${sol.totalTokens.toLocaleString('en-US')} | ${sol.creditEquivalent.toFixed(6)} |`
 ];
 
 for (const fact of publicFacts) {
@@ -334,6 +338,11 @@ assert.ok(publicMetadata.includes("'file-governed-codex-model-routing': defineAr
 assert.ok(publicMetadata.includes('Session-time hidden: 2/3'));
 assert.ok(publicMetadata.includes('INCONCLUSIVE — QUALITY GATE FAILED'));
 assert.equal(publicMetadata.includes('Same hidden gates: 3/3'), false);
+assert.equal(publicExperiment.includes('Authorized files only'), false);
+assert.ok(internalReport.includes('INCONCLUSIVE — QUALITY GATE FAILED'));
+assert.equal(internalReport.includes('SUPPORTED — NOT VALIDATED'), false);
+assert.equal(internalReport.includes('Authorized files only'), false);
+assert.equal(internalReport.includes('|    3/3 |'), false);
 assert.equal(
   publicExperiment.includes('/Users/'),
   false,

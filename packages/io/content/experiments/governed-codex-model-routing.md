@@ -40,11 +40,11 @@ Credit-equivalent values use redacted session telemetry and the Codex rate card 
 
 ### Independently verifiable execution
 
-| Strategy        | Public | Hidden | Mutants | Authorized files only | Critical path |  Tokens | Credit-equivalent |
-| --------------- | -----: | -----: | ------: | --------------------- | ------------: | ------: | ----------------: |
-| 3× Luna / High  |  17/17 |    2/3 |     5/5 | yes                   |      98.865 s | 859,682 |          1.137818 |
-| 1× Terra / High |  14/14 |    2/3 |     5/5 | yes                   |      78.676 s | 391,791 |          4.267320 |
-| 1× Sol / High   |  17/17 |    2/3 |     5/5 | yes                   |     129.263 s | 586,459 |         12.071900 |
+| Strategy        | Public | Hidden | Mutants | Critical path |  Tokens | Credit-equivalent |
+| --------------- | -----: | -----: | ------: | ------------: | ------: | ----------------: |
+| 3× Luna / High  |  17/17 |    2/3 |     5/5 |      98.865 s | 859,682 |          1.137818 |
+| 1× Terra / High |  14/14 |    2/3 |     5/5 |      78.676 s | 391,791 |          4.267320 |
+| 1× Sol / High   |  17/17 |    2/3 |     5/5 |     129.263 s | 586,459 |         12.071900 |
 
 Terra grouped some public assertions, so public assertion counts are not directly comparable. All three session-time subjects failed the expanded retry-parser hidden group and passed the other two hidden groups. They also killed the same five mutants.
 
