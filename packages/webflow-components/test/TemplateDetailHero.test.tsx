@@ -53,6 +53,27 @@ test('replaces an unhyphenated generic title suffix when adding the category', (
   assert.doesNotMatch(html, /Fleet Website Template - Transportation/);
 });
 
+test('replaces an existing category-qualified title suffix when rebuilding the title', () => {
+  const html = renderToStaticMarkup(
+    <TemplateDetailHero
+      templateName="Fleet - Transportation Website Template"
+      categoryNames="Transportation, Technology"
+      enableAnalytics={false}
+    />,
+  );
+
+  assert.match(html, /<h1 class="wfdt-title">Fleet - Transportation Website Template<\/h1>/);
+  assert.doesNotMatch(html, /Fleet - Transportation - Transportation/);
+});
+
+test('uses the singular category name in the template title when no category list is available', () => {
+  const html = renderToStaticMarkup(
+    <TemplateDetailHero templateName="Fleet" categoryName="Transportation" enableAnalytics={false} />,
+  );
+
+  assert.match(html, /<h1 class="wfdt-title">Fleet - Transportation Website Template<\/h1>/);
+});
+
 test('uses an explicit title category name instead of the breadcrumb categories', () => {
   const html = renderToStaticMarkup(
     <TemplateDetailHero

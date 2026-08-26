@@ -128,6 +128,10 @@ function targetForHref(href: string, target?: string): string | undefined {
   return isExternalUrl(href) ? '_blank' : undefined;
 }
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function formatTemplateTitle(name: string, category?: string): string {
   const label = name.trim() || 'Template name';
   const categoryLabel = category?.trim();
@@ -137,7 +141,13 @@ function formatTemplateTitle(name: string, category?: string): string {
   }
 
   const baseLabel =
-    label.replace(/(?:\s+-\s+|\s+)website\s+template$/i, '').trim() || 'Template name';
+    label
+      .replace(
+        new RegExp(`\\s*-\\s*${escapeRegExp(categoryLabel)}\\s+website\\s+template$`, 'i'),
+        '',
+      )
+      .replace(/(?:\s+-\s+|\s+)website\s+template$/i, '')
+      .trim() || 'Template name';
   return `${baseLabel} - ${categoryLabel} Website Template`;
 }
 
@@ -147,6 +157,11 @@ function cleanCategoryListItem(value: string): string {
     return trimmed.slice(1, -1).replace(/""/g, '"').trim();
   }
   return trimmed;
+}
+
+function titleCategoryFromSingleCategoryName(value: string): string {
+  const label = value.trim();
+  return label.toLowerCase() === 'templates' ? '' : label;
 }
 
 function splitCommaSeparatedCategoryList(value: string): string[] {
@@ -374,8 +389,13 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
     transform: `translateX(-50%) scale(${previewScale})`,
   };
   const titleCategory = useMemo(
-    () => displayCategoryLabel(titleCategoryName.trim() || splitCategoryList(categoryNames)[0] || ''),
-    [categoryNames, titleCategoryName],
+    () =>
+      displayCategoryLabel(
+        titleCategoryName.trim() ||
+          splitCategoryList(categoryNames)[0] ||
+          titleCategoryFromSingleCategoryName(categoryName),
+      ),
+    [categoryName, categoryNames, titleCategoryName],
   );
   const titleLabel = useMemo(
     () => formatTemplateTitle(templateName, titleCategory),
