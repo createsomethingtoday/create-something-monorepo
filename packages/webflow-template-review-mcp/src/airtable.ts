@@ -1419,6 +1419,43 @@ export class AirtableClient {
   }
 
   /**
+   * Resolve the single voting-state record for an asset, creating it when
+   * missing. Two reviewers casting an asset's first votes concurrently can
+   * both observe no linked state and create one each, splitting the rollups —
+   * so after any create (and whenever duplicates are linked) all writers
+   * deterministically keep the lowest-record-id state, re-link duplicate
+   * states' votes onto it, and delete the empties BEFORE the vote is written.
+   */
+  private async resolveVotingStateId(assetId: string, templateName: string, linkedStateIds: string[]): Promise<string> {
+    let stateIds = [...linkedStateIds];
+    if (stateIds.length === 0) {
+      const createdState = await this.createRecord(TABLE_IDS.assetVotingState, {
+        [FEATURED_VOTING_STATE_FIELDS.name]: templateName,
+        [FEATURED_VOTING_STATE_FIELDS.assetLink]: [assetId],
+      });
+      const refreshedAsset = await this.getRecord(TABLE_IDS.assets, assetId);
+      stateIds = stringArray(refreshedAsset?.fields[FEATURED_ASSET_FIELDS.votingStateLink]);
+      if (!stateIds.includes(createdState.id)) stateIds.push(createdState.id);
+    }
+
+    const sorted = [...stateIds].sort();
+    const keeperId = sorted[0];
+    if (!keeperId) {
+      throw new AirtableClientError('VOTING_STATE_UNRESOLVED', 'Could not resolve a voting-state record for this asset.', 500, { asset_id: assetId });
+    }
+
+    for (const duplicateId of sorted.slice(1)) {
+      const duplicate = await this.getRecord(TABLE_IDS.assetVotingState, duplicateId);
+      for (const voteId of stringArray(duplicate?.fields[FEATURED_VOTING_STATE_FIELDS.votesLink])) {
+        await this.updateRecord(TABLE_IDS.reviewerVotes, voteId, { [FEATURED_VOTE_FIELDS.votingStateLink]: [keeperId] });
+      }
+      await this.deleteRecord(TABLE_IDS.assetVotingState, duplicateId);
+    }
+
+    return keeperId;
+  }
+
+  /**
    * Cast or update the current reviewer's vote on a featured candidate.
    * One vote per reviewer per asset: an existing vote is updated in place so
    * the 👍/👎 rollups never double-count. Vote notes are internal-only.
@@ -1431,14 +1468,11 @@ export class AirtableClient {
     const asset = await this.getScopedAssetRecord(assetId);
     const templateName = firstString(asset.fields[CONFIRMED_ASSET_FIELDS.name]) ?? assetId;
 
-    let votingStateId = stringArray(asset.fields[FEATURED_ASSET_FIELDS.votingStateLink])[0];
-    if (!votingStateId) {
-      const createdState = await this.createRecord(TABLE_IDS.assetVotingState, {
-        [FEATURED_VOTING_STATE_FIELDS.name]: templateName,
-        [FEATURED_VOTING_STATE_FIELDS.assetLink]: [assetId],
-      });
-      votingStateId = createdState.id;
-    }
+    const votingStateId = await this.resolveVotingStateId(
+      assetId,
+      templateName,
+      stringArray(asset.fields[FEATURED_ASSET_FIELDS.votingStateLink]),
+    );
 
     const stateRecord = await this.getRecord(TABLE_IDS.assetVotingState, votingStateId);
     const voteIds = stringArray(stateRecord?.fields[FEATURED_VOTING_STATE_FIELDS.votesLink]);

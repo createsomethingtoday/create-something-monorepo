@@ -1813,3 +1813,61 @@ test('castFeaturedVote self-heals duplicate votes onto a deterministic keeper', 
   assert.equal(result.voteId, 'rec_vote_aa');
   assert.equal(result.action, 'updated');
 });
+
+test('castFeaturedVote merges duplicate voting states into a deterministic keeper before voting', async () => {
+  const deleted: string[] = [];
+  const relinked: Array<{ id: string; body: Record<string, unknown> }> = [];
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input, init) => {
+      const url = new URL(String(input));
+      const recordId = url.pathname.split('/').pop() ?? '';
+      if (init?.method === 'DELETE') {
+        deleted.push(recordId);
+        return jsonResponse({ deleted: true });
+      }
+      if (init?.method === 'PATCH') {
+        const body = JSON.parse(String(init.body)) as Record<string, unknown>;
+        if (recordId === 'rec_vote_stray') {
+          relinked.push({ id: recordId, body });
+          return jsonResponse({ id: recordId, fields: {} });
+        }
+        return jsonResponse({ id: recordId, fields: { Vote: '👍 Up' } });
+      }
+      if (init?.method === 'POST') {
+        return jsonResponse({ id: 'rec_vote_mine', fields: { Vote: '👍 Up' } });
+      }
+      if (recordId === 'rec_asset_split') {
+        return jsonResponse({
+          id: 'rec_asset_split',
+          fields: {
+            [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+            [CONFIRMED_ASSET_FIELDS.name]: 'Fluexa',
+            ['🏗️Voting State']: ['rec_state_b', 'rec_state_a'],
+          },
+        });
+      }
+      if (recordId === 'rec_state_b') {
+        return jsonResponse({ id: 'rec_state_b', fields: { '🗳️Votes': ['rec_vote_stray'] } });
+      }
+      if (recordId === 'rec_state_a') {
+        return jsonResponse({
+          id: 'rec_state_a',
+          fields: { '🗳️Votes': [], '👍 count': 2, '👎 count': 0, 'Net votes': 2, 'In qualified pool?': 1 },
+        });
+      }
+      if (url.pathname.endsWith(`/${TABLE_IDS.reviewerVotes}`)) {
+        return jsonResponse({ records: [] });
+      }
+      throw new Error(`Unexpected fetch: ${url.toString()}`);
+    },
+  });
+
+  const result = await client.castFeaturedVote('rec_asset_split', { vote: 'up' }, ericReviewer);
+
+  // Keeper is the lexicographically lowest state id; the duplicate's stray
+  // vote is re-linked onto it before the duplicate state is deleted.
+  assert.equal(result.votingStateId, 'rec_state_a');
+  assert.deepEqual(relinked, [{ id: 'rec_vote_stray', body: { fields: { 'Asset Voting State': ['rec_state_a'] } } }]);
+  assert.deepEqual(deleted, ['rec_state_b']);
+});
