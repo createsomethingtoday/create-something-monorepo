@@ -49,11 +49,11 @@ function parseHttpDate(text, nowMs) {
       Number(minute),
       Number(second)
     );
-    if (nextCentury <= fiftyYearsAhead) {
+    if (nextCentury + leapSecond <= fiftyYearsAhead) {
       year += 100;
       parsed = nextCentury;
     }
-    if (parsed > fiftyYearsAhead) {
+    if (parsed + leapSecond > fiftyYearsAhead) {
       year -= 100;
       parsed = Date.UTC(
         year,
@@ -79,7 +79,11 @@ function parseHttpDate(text, nowMs) {
     `${longWeekdays[date.getUTCDay()]}, ${day}-${month}-${String(year).slice(-2)} ${time} GMT`,
     `${shortWeekdays[date.getUTCDay()]} ${month} ${asctimeDay} ${time} ${year}`
   ];
-  return accepted.includes(comparableText) ? parsed + leapSecond : null;
+  const acceptedRfc850 = `${day}-${month}-${String(year).slice(-2)} ${time} GMT`;
+  const valid = rfc850
+    ? comparableText.slice(comparableText.indexOf(',') + 2) === acceptedRfc850
+    : accepted.includes(comparableText);
+  return valid ? parsed + leapSecond : null;
 }
 
 export function parseRetryAfter(value, nowMs = Date.now()) {
