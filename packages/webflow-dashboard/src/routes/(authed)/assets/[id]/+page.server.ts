@@ -36,12 +36,13 @@ export const load: PageServerLoad = async ({ params, locals, platform }) => {
 		requiredFixes = fixes && fixes.length > 0 ? fixes : null;
 	}
 
-	// When the feedback body will render, prefer the release-time snapshot —
-	// the exact text sent to the creator — over the live lookup, which a
-	// reviewer could redraft after release. Null (unstamped rounds predating
-	// the release-evidence automation) falls back to the live field in the UI.
+	// When the round is released, prefer the release-time snapshot — the exact
+	// text sent to the creator — over the live lookup, which a reviewer could
+	// redraft OR CLEAR after release (so this must not require the live field
+	// to still be populated). Null (unstamped rounds predating the
+	// release-evidence automation) falls back to the live field in the UI.
 	let releasedFeedbackSnapshot: string | null = null;
-	if (isReviewFeedbackReleased(asset.latestReviewStatus) && asset.latestReviewFeedback) {
+	if (isReviewFeedbackReleased(asset.latestReviewStatus)) {
 		releasedFeedbackSnapshot = await airtable.getReleasedFeedbackSnapshot(params.id);
 	}
 

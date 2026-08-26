@@ -1813,14 +1813,16 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		},
 
 		/**
-		 * The released-feedback snapshot from the asset's latest released round.
+		 * The released-feedback snapshot for the asset's CURRENT review round.
 		 *
-		 * Returns the 🌐Released Feedback (Snapshot) of the highest-numbered
-		 * version carrying a 📅Feedback Released At stamp — the exact text that
-		 * was sent to the creator, immune to post-release redrafts of the live
-		 * feedback field. Returns null when no stamped round exists (rounds
-		 * released before the release-evidence automation); callers fall back
-		 * to the live latest-review-feedback lookup under the status gate.
+		 * Looks at the highest-numbered version that has a review status (the
+		 * round that supplies the asset-level latest-review lookups; rows
+		 * without one are dashboard Meta Updates) and returns its 🌐Released
+		 * Feedback (Snapshot) only when THAT version carries a 📅Feedback
+		 * Released At stamp — never an older round's snapshot, which would
+		 * replace the current feedback with the wrong round's text. Null when
+		 * the current round is unstamped (pre-automation history) or has no
+		 * snapshot; callers fall back to the live lookup under the status gate.
 		 */
 		async getReleasedFeedbackSnapshot(assetId: string): Promise<string | null> {
 			if (!/^rec[A-Za-z0-9]{14}$/.test(assetId)) return null;
@@ -1830,8 +1832,9 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					.select({
 						filterByFormula: `AND({${ASSET_VERSIONS_ASSET_RECORD_ID_FIELD_ID}} = ${airtableFormulaValue(
 							assetId
-						)}, {${ASSET_VERSIONS_RELEASED_AT_FIELD_ID}} != '')`,
+						)}, {${ASSET_VERSIONS_REVIEW_STATUS_FIELD_ID}} != '')`,
 						fields: [
+							ASSET_VERSIONS_RELEASED_AT_FIELD_ID,
 							ASSET_VERSIONS_RELEASED_FEEDBACK_FIELD_ID,
 							ASSET_VERSIONS_VERSION_NUMBER_FIELD_ID
 						],
@@ -1841,7 +1844,11 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					})
 					.firstPage();
 
-				return firstString(rows[0]?.fields[ASSET_VERSIONS_RELEASED_FEEDBACK_FIELD_ID]) ?? null;
+				const currentRound = rows[0];
+				if (!currentRound) return null;
+				if (!firstString(currentRound.fields[ASSET_VERSIONS_RELEASED_AT_FIELD_ID])) return null;
+
+				return firstString(currentRound.fields[ASSET_VERSIONS_RELEASED_FEEDBACK_FIELD_ID]) ?? null;
 			} catch (err) {
 				console.error('[Airtable] getReleasedFeedbackSnapshot failed:', {
 					assetId,

@@ -115,12 +115,13 @@
 	// Creator-safe review presentation. Raw statuses include internal pipeline
 	// states; feedback renders only once the review team has released it.
 	const reviewStatusLabel = $derived(creatorReviewStatusLabel(asset.latestReviewStatus));
-	const showReviewFeedback = $derived(
-		isReviewFeedbackReleased(asset.latestReviewStatus) && Boolean(asset.latestReviewFeedback)
-	);
-
-	// Prefer the release-time snapshot over the live (redraftable) lookup.
+	// Prefer the release-time snapshot over the live (redraftable) lookup —
+	// the snapshot also survives the live field being cleared after release.
 	const feedbackText = $derived(releasedFeedback || asset.latestReviewFeedback);
+
+	const showReviewFeedback = $derived(
+		isReviewFeedbackReleased(asset.latestReviewStatus) && Boolean(feedbackText)
+	);
 
 	// App-review rejections write the version's review feedback, not the legacy
 	// rejection fields. When those are empty, fall back to the released
