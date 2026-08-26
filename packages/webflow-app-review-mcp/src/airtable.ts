@@ -1558,17 +1558,24 @@ export class AirtableClient {
   async listPendingExceptionQueue(): Promise<AppReviewExceptionQueueEntry[]> {
     const pendingStatuses = [...PENDING_EXCEPTION_STATUS_OPTIONS];
     const pendingStatusSet = new Set<string>(pendingStatuses);
+    // A version belongs in the queue when its aggregate ⚖️Exception Status is pending
+    // OR it still carries undecided ⚖️Exceptions items — the aggregate can be stale,
+    // decided early (partner-lead recommendation), or unset after items are re-linked
+    // to a resubmission, while the per-item rows remain the source of truth.
+    const pendingFormula = `OR(${buildOrFormula(FIELD_IDS.versions.exceptionStatus, pendingStatuses)},{${FIELD_IDS.versions.undecidedExceptionItems}} > 0)`;
     const records = await this.listRecords({
       tableId: TABLE_IDS.assetVersions,
       fieldIds: VERSION_FIELD_IDS,
-      filterByFormula: buildOrFormula(FIELD_IDS.versions.exceptionStatus, pendingStatuses),
+      filterByFormula: pendingFormula,
       sortField: FIELD_IDS.versions.exceptionRequestedDatetime,
       sortDirection: 'asc',
       pageIntervalMs: EXCEPTION_QUEUE_REQUEST_INTERVAL_MS,
     });
     const versions = records
       .map((record) => mapVersionRecord(record))
-      .filter((version) => Boolean(version.assetId) && pendingStatusSet.has(version.exceptionStatus ?? ''))
+      .filter((version) =>
+        Boolean(version.assetId)
+        && (pendingStatusSet.has(version.exceptionStatus ?? '') || (version.undecidedExceptionItems ?? 0) > 0))
       .sort((left, right) => {
         const leftTime = left.exceptionRequestedDatetime ?? left.createdTime ?? '';
         const rightTime = right.exceptionRequestedDatetime ?? right.createdTime ?? '';

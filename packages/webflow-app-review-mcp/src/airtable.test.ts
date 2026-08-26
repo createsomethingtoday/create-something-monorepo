@@ -177,6 +177,74 @@ describe('AirtableClient exception handling', () => {
     expect(exceptionReads).toHaveLength(3);
   });
 
+  it('queues versions with undecided items even when the aggregate status is decided or unset', async () => {
+    let capturedFormula: string | undefined;
+    const fetchFn = vi.fn(async (input: RequestInfo | URL) => {
+      const url = new URL(String(input));
+
+      if (url.pathname.endsWith(`/${TABLE_IDS.assetVersions}`)) {
+        capturedFormula = url.searchParams.get('filterByFormula') ?? undefined;
+        return jsonResponse({
+          records: [
+            {
+              ...versionRecord('recVersionDeniedAggregate'),
+              fields: {
+                ...versionRecord('recVersionDeniedAggregate').fields,
+                [FIELD_IDS.versions.assetLink]: ['recAssetA'],
+                [FIELD_IDS.versions.assetRecordIdRollup]: ['recAssetA'],
+                [FIELD_IDS.versions.exceptionStatus]: '❌Denied',
+                [FIELD_IDS.versions.undecidedExceptionItems]: 9,
+              },
+            },
+            {
+              ...versionRecord('recVersionNoAggregate'),
+              fields: {
+                ...versionRecord('recVersionNoAggregate').fields,
+                [FIELD_IDS.versions.assetLink]: ['recAssetB'],
+                [FIELD_IDS.versions.assetRecordIdRollup]: ['recAssetB'],
+                [FIELD_IDS.versions.undecidedExceptionItems]: 3,
+              },
+            },
+            {
+              ...versionRecord('recVersionSettled'),
+              fields: {
+                ...versionRecord('recVersionSettled').fields,
+                [FIELD_IDS.versions.assetLink]: ['recAssetA'],
+                [FIELD_IDS.versions.assetRecordIdRollup]: ['recAssetA'],
+                [FIELD_IDS.versions.exceptionStatus]: '❌Denied',
+                [FIELD_IDS.versions.undecidedExceptionItems]: 0,
+              },
+            },
+          ],
+        });
+      }
+
+      const assetMatch = url.pathname.match(new RegExp(`/${TABLE_IDS.assets}/(recAsset[AB])$`));
+      if (assetMatch) {
+        return jsonResponse(assetRecord(assetMatch[1]!));
+      }
+
+      if (url.pathname.endsWith(`/${TABLE_IDS.exceptions}`)) {
+        return jsonResponse({ records: [] });
+      }
+
+      return new Response('not found', { status: 404 });
+    });
+    const client = new AirtableClient({
+      apiKey: 'token',
+      fetchFn,
+      sleepFn: async () => {},
+    });
+
+    const queue = await client.listPendingExceptionQueue();
+
+    expect(capturedFormula).toContain(`{${FIELD_IDS.versions.undecidedExceptionItems}} > 0`);
+    expect(queue.map((entry) => entry.version.versionId)).toEqual([
+      'recVersionDeniedAggregate',
+      'recVersionNoAggregate',
+    ]);
+  });
+
   it('writes exception and hold fields via updateVersionReview', async () => {
     const fetchFn = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
       const payload = JSON.parse(String(init?.body)) as {
