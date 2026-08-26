@@ -143,7 +143,11 @@ for (const receipt of telemetryReceipts) {
     assert.equal(session.inputTokens + session.outputTokens, session.totalTokens);
     assert.ok(session.cachedInputTokens <= session.inputTokens);
     assert.match(session.receiptId, /^[0-9a-f-]{36}$/u);
-    if (session.startedAt) {
+    if ('elapsedSeconds' in session) {
+      assert.equal(typeof session.startedAt, 'string');
+      assert.equal(typeof session.completedAt, 'string');
+      assert.ok(Number.isFinite(Date.parse(session.startedAt)));
+      assert.ok(Number.isFinite(Date.parse(session.completedAt)));
       assert.equal(
         Number(
           ((Date.parse(session.completedAt) - Date.parse(session.startedAt)) / 1000).toFixed(3)
