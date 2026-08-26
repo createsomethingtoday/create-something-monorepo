@@ -82,6 +82,18 @@ export function hasReviewRoundBeenReleased(rawStatus: string | undefined | null)
 }
 
 /**
+ * True for the deliberately silent "(No Notification)" status variants —
+ * the partnership shield and silent paths. A round currently in one of
+ * these must never surface anything to the creator, even if it carries a
+ * release stamp (e.g. stamped while briefly in a plain status before a
+ * shield conversion): the silence is the operative intent.
+ */
+export function isSilencedReviewStatus(rawStatus: string | undefined | null): boolean {
+	if (!rawStatus) return false;
+	return rawStatus.trim().endsWith('(No Notification)');
+}
+
+/**
  * True when the round is over with no changes outstanding: approved (silent
  * or not) or archived. Required-fix items from a closed round are resolved
  * history, not open asks — the ledger hides them (⚖️ rows never flip to a

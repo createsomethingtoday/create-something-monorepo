@@ -3,7 +3,8 @@ import { randomBytes, createHash } from 'node:crypto';
 import { isLongDescriptionOnlyAssetVersionChange } from '../utils/asset-version-changes';
 import {
 	hasReviewRoundBeenReleased,
-	isReviewRoundClosed
+	isReviewRoundClosed,
+	isSilencedReviewStatus
 } from '../utils/review-status';
 
 // Airtable table IDs
@@ -972,6 +973,10 @@ export function gateRequiredFixesByVersion(
 		const version = versions.get(item.versionRecordId);
 		if (!version) continue;
 		if (isReviewRoundClosed(version.reviewStatus)) continue;
+		// A currently-silenced round shows nothing even when stamped: the
+		// silence (partnership shield) is the operative intent, and a stamp
+		// could have landed moments before a shield conversion.
+		if (isSilencedReviewStatus(version.reviewStatus)) continue;
 
 		const released =
 			Boolean(version.releasedAt) || hasReviewRoundBeenReleased(version.reviewStatus);

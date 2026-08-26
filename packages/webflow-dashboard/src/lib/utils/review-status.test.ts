@@ -3,7 +3,8 @@ import {
 	creatorReviewStatusLabel,
 	hasReviewRoundBeenReleased,
 	isReviewFeedbackReleased,
-	isReviewRoundClosed
+	isReviewRoundClosed,
+	isSilencedReviewStatus
 } from './review-status';
 
 describe('isReviewFeedbackReleased', () => {
@@ -102,5 +103,19 @@ describe('isReviewRoundClosed', () => {
 		expect(isReviewRoundClosed('❌Rejected')).toBe(false);
 		expect(isReviewRoundClosed('⏸️On Hold')).toBe(false);
 		expect(isReviewRoundClosed(undefined)).toBe(false);
+	});
+});
+
+describe('isSilencedReviewStatus', () => {
+	it('matches every No-Notification variant', () => {
+		expect(isSilencedReviewStatus('📤Changes Requested (No Notification)')).toBe(true);
+		expect(isSilencedReviewStatus('❌Rejected (No Notification)')).toBe(true);
+		expect(isSilencedReviewStatus('✅Approved (No Notification)')).toBe(true);
+	});
+
+	it('leaves plain statuses alone', () => {
+		expect(isSilencedReviewStatus('📤Changes Requested')).toBe(false);
+		expect(isSilencedReviewStatus('❌Rejected')).toBe(false);
+		expect(isSilencedReviewStatus(undefined)).toBe(false);
 	});
 });
