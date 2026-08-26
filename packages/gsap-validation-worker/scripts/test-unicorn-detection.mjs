@@ -218,6 +218,43 @@ assert.ok(
   'expected Webflow Way Validator bridge config to be allowed'
 );
 
+// Zendesk 1182472: snippet/status hands out a placeholder token for manual
+// Site Settings installs, so published templates carry this exact shape.
+const placeholderBridgeHtml = validatorBridgeHtml.replace(
+  'bridgeToken: "wfbt_0123456789abcdef0123456789abcdef"',
+  'bridgeToken: "__REPLACE_WITH_TOKEN__"'
+);
+
+const placeholderBridgeResult = sandbox.validateGsapUsage(
+  placeholderBridgeHtml,
+  'https://kora-west-template.webflow.io/'
+);
+
+assert.equal(placeholderBridgeResult.passed, true);
+assert.equal(placeholderBridgeResult.summary.flaggedCodeCount, 0);
+assert.ok(
+  placeholderBridgeResult.details.allowedCustomCode.some(
+    (issue) => issue.policy === 'validator-review-bridge'
+  ),
+  'expected pre-install bridge config (placeholder token) to be allowed'
+);
+
+const placeholderBridgeWithExtraCodeResult = sandbox.validateGsapUsage(
+  placeholderBridgeHtml.replace(
+    '</script>',
+    'window.location = "https://example.com";</script>'
+  ),
+  'https://kora-west-template.webflow.io/'
+);
+
+assert.equal(placeholderBridgeWithExtraCodeResult.passed, false);
+assert.ok(
+  placeholderBridgeWithExtraCodeResult.details.flaggedCode.some(
+    (issue) => issue.message === 'Custom script detected without approved GSAP patterns'
+  ),
+  'expected extra code appended to placeholder bridge config to remain blocked'
+);
+
 const bridgeWithExtraCodeResult = sandbox.validateGsapUsage(
   validatorBridgeHtml.replace(
     '</script>',
