@@ -28,6 +28,11 @@ export default declareComponent(TemplateDetailHero, {
       defaultValue: '',
       tooltip: 'Optional category used in the title. Defaults to the first Category Names value.',
     }),
+    legacyTitleCategoryNames: props.Text({
+      name: 'Legacy Title Category Names',
+      defaultValue: '',
+      tooltip: 'Optional old title categories to replace safely when a template category was renamed.',
+    }),
     categoryLink: props.Link({ name: 'Category URL' }),
     categoryLinks: props.Text({
       name: 'Category URLs',

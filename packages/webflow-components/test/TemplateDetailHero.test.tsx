@@ -53,6 +53,19 @@ test('replaces an unhyphenated generic title suffix when adding the category', (
   assert.doesNotMatch(html, /Fleet Website Template - Transportation/);
 });
 
+test('preserves every segment of a generic preformatted hyphenated name', () => {
+  const html = renderToStaticMarkup(
+    <TemplateDetailHero
+      templateName="Studio - Three Website Template"
+      categoryNames="Technology"
+      enableAnalytics={false}
+    />,
+  );
+
+  assert.match(html, /<h1 class="wfdt-title">Studio - Three - Technology Website Template<\/h1>/);
+  assert.doesNotMatch(html, /Studio - Technology Website Template/);
+});
+
 test('replaces an existing category-qualified title suffix when rebuilding the title', () => {
   const html = renderToStaticMarkup(
     <TemplateDetailHero
@@ -99,6 +112,7 @@ test('replaces a stale hyphenated category suffix when the title category change
       templateName="Shop - Retail & E-Commerce Website Template"
       titleCategoryName="Technology"
       categoryNames="Technology"
+      legacyTitleCategoryNames="Retail & E-Commerce"
       enableAnalytics={false}
     />,
   );
@@ -113,6 +127,7 @@ test('replaces a stale custom category suffix when the title category changes', 
       templateName="Fleet - Logistics Website Template"
       titleCategoryName="Technology"
       categoryNames="Technology"
+      legacyTitleCategoryNames="Logistics"
       enableAnalytics={false}
     />,
   );
@@ -127,6 +142,7 @@ test('preserves a hyphenated base name when replacing a stale category suffix', 
       templateName="Studio - Three - Logistics Website Template"
       titleCategoryName="Technology"
       categoryNames="Technology"
+      legacyTitleCategoryNames="Logistics"
       enableAnalytics={false}
     />,
   );
@@ -145,6 +161,20 @@ test('preserves a raw hyphenated template name', () => {
   );
 
   assert.match(html, /<h1 class="wfdt-title">Studio - Three - Technology Website Template<\/h1>/);
+});
+
+test('preserves a generic preformatted hyphenated name with an explicit title category', () => {
+  const html = renderToStaticMarkup(
+    <TemplateDetailHero
+      templateName="Studio - Three Website Template"
+      titleCategoryName="Technology"
+      categoryNames="Technology"
+      enableAnalytics={false}
+    />,
+  );
+
+  assert.match(html, /<h1 class="wfdt-title">Studio - Three - Technology Website Template<\/h1>/);
+  assert.doesNotMatch(html, /Studio - Technology Website Template/);
 });
 
 test('uses the singular category name in the template title when no category list is available', () => {

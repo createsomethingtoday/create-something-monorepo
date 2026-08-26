@@ -22,6 +22,7 @@ export interface TemplateDetailHeroProps {
   categoryName?: string;
   categoryNames?: string;
   titleCategoryName?: string;
+  legacyTitleCategoryNames?: string;
   categoryLink?: TemplateDetailLink;
   categoryLinks?: string;
   categoryBaseUrl?: string;
@@ -128,7 +129,11 @@ function targetForHref(href: string, target?: string): string | undefined {
   return isExternalUrl(href) ? '_blank' : undefined;
 }
 
-function formatTemplateTitle(name: string, category?: string, knownCategories: string[] = []): string {
+function formatTemplateTitle(
+  name: string,
+  category?: string,
+  knownCategories: string[] = [],
+): string {
   const label = name.trim() || 'Template name';
   const categoryLabel = category?.trim();
 
@@ -161,9 +166,7 @@ function stripGeneratedTemplateTitleSuffix(value: string): string {
   const suffixMatch = value.match(/\s+website\s+template$/i);
   if (!suffixMatch) return value;
 
-  const labelWithoutSuffix = value.slice(0, -suffixMatch[0].length);
-  const separatorIndex = labelWithoutSuffix.lastIndexOf(' - ');
-  return separatorIndex >= 0 ? labelWithoutSuffix.slice(0, separatorIndex) : value;
+  return value.slice(0, -suffixMatch[0].length);
 }
 
 function cleanCategoryListItem(value: string): string {
@@ -329,6 +332,7 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
   categoryName = 'Templates',
   categoryNames = '',
   titleCategoryName = '',
+  legacyTitleCategoryNames = '',
   categoryLink,
   categoryLinks = '',
   categoryBaseUrl = 'https://webflow.com/templates/category',
@@ -414,10 +418,15 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
   );
   const titleCategoryCandidates = useMemo(
     () =>
-      [titleCategory, ...splitCategoryList(categoryNames), titleCategoryFromSingleCategoryName(categoryName)]
+      [
+        titleCategory,
+        ...splitCategoryList(categoryNames),
+        ...splitCategoryList(legacyTitleCategoryNames),
+        titleCategoryFromSingleCategoryName(categoryName),
+      ]
         .map(displayCategoryLabel)
         .filter(Boolean),
-    [categoryName, categoryNames, titleCategory],
+    [categoryName, categoryNames, legacyTitleCategoryNames, titleCategory],
   );
   const titleLabel = useMemo(
     () => formatTemplateTitle(templateName, titleCategory, titleCategoryCandidates),
