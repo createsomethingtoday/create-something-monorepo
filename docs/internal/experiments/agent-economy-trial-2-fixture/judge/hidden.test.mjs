@@ -18,6 +18,7 @@ test('retry parser handles hidden boundary cases', () => {
   assert.equal(parseRetryAfter('2026-08-26', 0), null);
   assert.equal(parseRetryAfter('08/26/2026', 0), null);
   assert.equal(parseRetryAfter('Sunday, 06-Nov-94 08:49:37 GMT', 0), 784_111_777_000);
+  assert.equal(parseRetryAfter('Monday, 06-Nov-94 08:49:37 GMT', 0), null);
   const startOf2026 = Date.UTC(2026, 0, 1);
   assert.equal(
     parseRetryAfter('Wednesday, 06-Nov-75 08:49:37 GMT', startOf2026),
