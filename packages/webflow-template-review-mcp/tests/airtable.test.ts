@@ -1871,3 +1871,60 @@ test('castFeaturedVote merges duplicate voting states into a deterministic keepe
   assert.deepEqual(relinked, [{ id: 'rec_vote_stray', body: { fields: { 'Asset Voting State': ['rec_state_a'] } } }]);
   assert.deepEqual(deleted, ['rec_state_b']);
 });
+
+test('castFeaturedVote collapses same-reviewer duplicates on the update branch too', async () => {
+  const deleted: string[] = [];
+  const patchedIds: string[] = [];
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input, init) => {
+      const url = new URL(String(input));
+      const recordId = url.pathname.split('/').pop() ?? '';
+      if (init?.method === 'DELETE') {
+        deleted.push(recordId);
+        return jsonResponse({ deleted: true });
+      }
+      if (init?.method === 'PATCH') {
+        patchedIds.push(recordId);
+        return jsonResponse({ id: recordId, fields: { Vote: '👎 Down' } });
+      }
+      if (init?.method === 'POST') {
+        throw new Error('No create expected — the reviewer already has votes.');
+      }
+      if (recordId === 'rec_asset_merged') {
+        return jsonResponse({
+          id: 'rec_asset_merged',
+          fields: {
+            [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+            [CONFIRMED_ASSET_FIELDS.name]: 'Ardor',
+            ['🏗️Voting State']: ['rec_state_m'],
+          },
+        });
+      }
+      if (recordId === 'rec_state_m') {
+        return jsonResponse({
+          id: 'rec_state_m',
+          fields: { '🗳️Votes': ['rec_vote_aa', 'rec_vote_zz'], '👍 count': 0, '👎 count': 1, 'Net votes': -1, 'In qualified pool?': 0 },
+        });
+      }
+      if (url.pathname.endsWith(`/${TABLE_IDS.reviewerVotes}`)) {
+        return jsonResponse({
+          records: [
+            { id: 'rec_vote_aa', fields: { Reviewer: { id: ericReviewer.id }, Vote: '👍 Up' } },
+            { id: 'rec_vote_zz', fields: { Reviewer: { id: ericReviewer.id }, Vote: '👍 Up' } },
+          ],
+        });
+      }
+      throw new Error(`Unexpected fetch: ${url.toString()}`);
+    },
+  });
+
+  const result = await client.castFeaturedVote('rec_asset_merged', { vote: 'down' }, ericReviewer);
+
+  // ownVote (rec_vote_aa) is updated, then reconciliation deletes the merged
+  // duplicate — no double count survives even though no create happened.
+  assert.deepEqual(patchedIds, ['rec_vote_aa']);
+  assert.deepEqual(deleted, ['rec_vote_zz']);
+  assert.equal(result.voteId, 'rec_vote_aa');
+  assert.equal(result.action, 'updated');
+});

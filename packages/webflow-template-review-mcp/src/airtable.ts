@@ -1498,28 +1498,29 @@ export class AirtableClient {
         ...voteFields,
       });
       action = 'created';
+    }
 
-      // Airtable has no unique constraint, so two overlapping requests (or a
-      // retry racing the voting-state backlink) can both miss ownVote and
-      // create duplicate votes that double-count the rollups. Self-heal: all
-      // writers deterministically keep the reviewer's lowest-record-id vote
-      // (re-applying this request's fields to it) and delete the rest, so
-      // concurrent duplicates converge to exactly one record.
-      const reconciledState = await this.getRecord(TABLE_IDS.assetVotingState, votingStateId);
-      const reconciledVoteIds = stringArray(reconciledState?.fields[FEATURED_VOTING_STATE_FIELDS.votesLink]);
-      const reconciledVotes = reconciledVoteIds.length
-        ? await this.listRecords({ tableId: TABLE_IDS.reviewerVotes, filterByFormula: recordIdsFormula(reconciledVoteIds) })
-        : [];
-      const ownVotes = reconciledVotes.filter((record) => collaboratorValue(record.fields[FEATURED_VOTE_FIELDS.reviewer])?.id === currentReviewer.id);
-      if (ownVotes.length > 1) {
-        const keeper = ownVotes.reduce((lowest, candidate) => (candidate.id < lowest.id ? candidate : lowest));
-        if (keeper.id !== voteRecord.id) {
-          voteRecord = await this.updateRecord(TABLE_IDS.reviewerVotes, keeper.id, voteFields);
-          action = 'updated';
-        }
-        for (const duplicate of ownVotes.filter((record) => record.id !== keeper.id)) {
-          await this.deleteRecord(TABLE_IDS.reviewerVotes, duplicate.id);
-        }
+    // Airtable has no unique constraint, so duplicate same-reviewer votes can
+    // exist: overlapping create requests racing the voting-state backlink, or
+    // the state-merge above re-linking a duplicate state's votes into the
+    // keeper. Reconcile on EVERY cast (the update branch can encounter merged
+    // duplicates too): all writers deterministically keep the reviewer's
+    // lowest-record-id vote (re-applying this request's fields to it) and
+    // delete the rest, so duplicates converge to exactly one record.
+    const reconciledState = await this.getRecord(TABLE_IDS.assetVotingState, votingStateId);
+    const reconciledVoteIds = stringArray(reconciledState?.fields[FEATURED_VOTING_STATE_FIELDS.votesLink]);
+    const reconciledVotes = reconciledVoteIds.length
+      ? await this.listRecords({ tableId: TABLE_IDS.reviewerVotes, filterByFormula: recordIdsFormula(reconciledVoteIds) })
+      : [];
+    const ownVotes = reconciledVotes.filter((record) => collaboratorValue(record.fields[FEATURED_VOTE_FIELDS.reviewer])?.id === currentReviewer.id);
+    if (ownVotes.length > 1) {
+      const keeper = ownVotes.reduce((lowest, candidate) => (candidate.id < lowest.id ? candidate : lowest));
+      if (keeper.id !== voteRecord.id) {
+        voteRecord = await this.updateRecord(TABLE_IDS.reviewerVotes, keeper.id, voteFields);
+        action = 'updated';
+      }
+      for (const duplicate of ownVotes.filter((record) => record.id !== keeper.id)) {
+        await this.deleteRecord(TABLE_IDS.reviewerVotes, duplicate.id);
       }
     }
 
