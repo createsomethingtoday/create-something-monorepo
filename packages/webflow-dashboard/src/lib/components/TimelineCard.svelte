@@ -23,9 +23,16 @@
 
 	interface Props {
 		asset: Asset;
+		/**
+		 * Release-time snapshot of the feedback (🌐Released Feedback) — the
+		 * exact text sent to the creator. Preferred over the live lookup,
+		 * which can be redrafted after release. Null for rounds released
+		 * before the release-evidence automation existed.
+		 */
+		releasedFeedback?: string | null;
 	}
 
-	let { asset }: Props = $props();
+	let { asset, releasedFeedback = null }: Props = $props();
 
 	// Format date for display
 	function formatDate(dateStr?: string): string {
@@ -112,6 +119,9 @@
 		isReviewFeedbackReleased(asset.latestReviewStatus) && Boolean(asset.latestReviewFeedback)
 	);
 
+	// Prefer the release-time snapshot over the live (redraftable) lookup.
+	const feedbackText = $derived(releasedFeedback || asset.latestReviewFeedback);
+
 	// App-review rejections write the version's review feedback, not the legacy
 	// rejection fields. When those are empty, fall back to the released
 	// latest-review feedback so a rejected asset never shows no feedback at all.
@@ -120,7 +130,7 @@
 		!asset.rejectionFeedback &&
 		!asset.rejectionFeedbackHtml &&
 		showReviewFeedback
-			? asset.latestReviewFeedback
+			? feedbackText
 			: undefined
 	);
 
@@ -265,7 +275,7 @@
 					{#if showReviewFeedback}
 						<div class="review-feedback">
 							<span class="review-label">Feedback:</span>
-							<p class="review-feedback-text">{asset.latestReviewFeedback}</p>
+							<p class="review-feedback-text">{feedbackText}</p>
 						</div>
 					{/if}
 				</div>

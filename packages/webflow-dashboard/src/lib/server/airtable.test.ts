@@ -529,3 +529,47 @@ describe('gateRequiredFixesByVersion — released history survives response tran
 		expect(gated.map((g) => g.id)).toEqual(['a']);
 	});
 });
+
+describe('gateRequiredFixesByVersion — durable release stamps (CRE-1874)', () => {
+	const item = (id: string, versionRecordId?: string) => ({
+		id,
+		item: `Finding ${id}`,
+		versionRecordId
+	});
+
+	it('keeps stamped items through any later non-closed status transition', () => {
+		const gated = gateRequiredFixesByVersion(
+			[item('reviewing', 'recV1'), item('held', 'recV2')],
+			new Map([
+				['recV1', { versionNumber: 1, reviewStatus: '🏃🏾In Review', releasedAt: '2026-08-26T04:05:27.000Z' }],
+				['recV2', { versionNumber: 2, reviewStatus: '⏸️On Hold', releasedAt: '2026-08-26T04:05:27.000Z' }]
+			])
+		);
+
+		expect(gated.map((g) => g.id)).toEqual(['reviewing', 'held']);
+	});
+
+	it('hides stamped items once the round closes (approved or archived)', () => {
+		const gated = gateRequiredFixesByVersion(
+			[item('approved', 'recV1'), item('archived', 'recV2')],
+			new Map([
+				['recV1', { versionNumber: 1, reviewStatus: '✅Approved', releasedAt: '2026-08-26T04:05:27.000Z' }],
+				['recV2', { versionNumber: 2, reviewStatus: '☠️Archived', releasedAt: '2026-08-26T04:05:27.000Z' }]
+			])
+		);
+
+		expect(gated).toEqual([]);
+	});
+
+	it('still applies the status fallback to unstamped pre-automation rounds', () => {
+		const gated = gateRequiredFixesByVersion(
+			[item('legacyReleased', 'recV1'), item('legacyOpen', 'recV2')],
+			new Map([
+				['recV1', { versionNumber: 1, reviewStatus: '❌Rejected' }],
+				['recV2', { versionNumber: 2, reviewStatus: '🏃🏾In Review' }]
+			])
+		);
+
+		expect(gated.map((g) => g.id)).toEqual(['legacyReleased']);
+	});
+});

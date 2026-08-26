@@ -1,6 +1,7 @@
 import type { PageServerLoad } from './$types';
 import { error } from '@sveltejs/kit';
 import { getAirtableClient, type RequiredFixExceptionItem } from '$lib/server/airtable';
+import { isReviewFeedbackReleased } from '$lib/utils/review-status';
 
 export const load: PageServerLoad = async ({ params, locals, platform }) => {
 	// Check authentication
@@ -35,9 +36,19 @@ export const load: PageServerLoad = async ({ params, locals, platform }) => {
 		requiredFixes = fixes && fixes.length > 0 ? fixes : null;
 	}
 
+	// When the feedback body will render, prefer the release-time snapshot —
+	// the exact text sent to the creator — over the live lookup, which a
+	// reviewer could redraft after release. Null (unstamped rounds predating
+	// the release-evidence automation) falls back to the live field in the UI.
+	let releasedFeedbackSnapshot: string | null = null;
+	if (isReviewFeedbackReleased(asset.latestReviewStatus) && asset.latestReviewFeedback) {
+		releasedFeedbackSnapshot = await airtable.getReleasedFeedbackSnapshot(params.id);
+	}
+
 	return {
 		asset,
 		requiredFixes,
+		releasedFeedbackSnapshot,
 		user: locals.user
 	};
 };

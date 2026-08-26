@@ -70,10 +70,27 @@ export function isReviewFeedbackReleased(rawStatus: string | undefined | null): 
  * True when the round's release act has occurred, regardless of whether the
  * creator has since responded. Gates immutable release history — the
  * exception-item ledger — which must survive later status transitions.
+ *
+ * Used as the FALLBACK for versions without a 📅Feedback Released At stamp
+ * (rounds released before the release-evidence automation existed). Stamped
+ * versions are gated on the stamp itself, which is durable across all later
+ * transitions.
  */
 export function hasReviewRoundBeenReleased(rawStatus: string | undefined | null): boolean {
 	if (!rawStatus) return false;
 	return ROUND_RELEASED_REVIEW_STATUSES.has(rawStatus.trim());
+}
+
+/**
+ * True when the round is over with no changes outstanding: approved (silent
+ * or not) or archived. Required-fix items from a closed round are resolved
+ * history, not open asks — the ledger hides them (⚖️ rows never flip to a
+ * resolved state, so showing them would present fixed findings as open).
+ */
+export function isReviewRoundClosed(rawStatus: string | undefined | null): boolean {
+	if (!rawStatus) return false;
+	const status = rawStatus.trim();
+	return status.startsWith('✅Approved') || status.startsWith('☠️Archived');
 }
 
 /**
