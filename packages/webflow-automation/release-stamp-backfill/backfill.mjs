@@ -173,6 +173,64 @@ async function main() {
 	console.log(
 		`RECEIPT: stamped ${written} versions (${snapshots} with snapshots, ${skippedStale} skipped as stale) at ${stampedAt}.`
 	);
+
+	await sweepSilencedStamps(stampedAt);
+}
+
+/**
+ * Compensating sweep for the irreducible write race: Airtable's REST API has
+ * no conditional writes, so a row can shield-convert to a "(No Notification)"
+ * status in the instant between revalidation and its PATCH. After all writes,
+ * find rows stamped BY THIS RUN that now sit in a silenced status and clear
+ * their evidence. Clearing is conservative-safe: the dashboard hides silenced
+ * rounds regardless, unstamped rows fall back to status gating, and a genuine
+ * re-release re-stamps via the automation. Stamps from other runs or the
+ * automation are never touched.
+ */
+async function sweepSilencedStamps(stampedAt) {
+	const silencedStatuses = [
+		'📤Changes Requested (No Notification)',
+		'❌Rejected (No Notification)',
+		'✅Approved (No Notification)'
+	];
+	const statusClauses = silencedStatuses
+		.map((status) => `{${FIELD.reviewStatus}} = '${status}'`)
+		.join(', ');
+
+	const params = new URLSearchParams({
+		filterByFormula: `AND({${FIELD.releasedAt}} != BLANK(), OR(${statusClauses}))`,
+		returnFieldsByFieldId: 'true',
+		pageSize: '100'
+	});
+	params.append('fields[]', FIELD.releasedAt);
+
+	const page = await airtableRequest(`/${BASE_ID}/${VERSIONS_TABLE_ID}?${params}`);
+	const raceVictims = page.records.filter(
+		(row) => row.fields[FIELD.releasedAt] === stampedAt
+	);
+
+	if (raceVictims.length === 0) {
+		console.log('SWEEP: no silenced rows carry this run’s stamp — clean.');
+		return;
+	}
+
+	for (let i = 0; i < raceVictims.length; i += WRITE_BATCH) {
+		const batch = raceVictims.slice(i, i + WRITE_BATCH).map((row) => ({
+			id: row.id,
+			fields: { [FIELD.releasedAt]: null, [FIELD.releasedFeedbackSnapshot]: null }
+		}));
+		await airtableRequest(`/${BASE_ID}/${VERSIONS_TABLE_ID}`, {
+			method: 'PATCH',
+			body: JSON.stringify({ records: batch })
+		});
+		await sleep(PACE_MS);
+	}
+
+	console.log(
+		`SWEEP: cleared ${raceVictims.length} race-stamped silenced rows (ids: ${raceVictims
+			.map((row) => row.id)
+			.join(', ')}).`
+	);
 }
 
 main().catch((error) => {
