@@ -2,15 +2,9 @@ name: GitHub Actions Policy
 
 on:
   pull_request:
-    paths:
-      - '.github/workflows/**'
-      - 'scripts/check-github-actions-pins.mjs'
   push:
     branches:
       - main
-    paths:
-      - '.github/workflows/**'
-      - 'scripts/check-github-actions-pins.mjs'
 
 permissions:
   contents: read

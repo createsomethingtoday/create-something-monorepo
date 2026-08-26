@@ -82,7 +82,7 @@ function provenancePayload(packagePolicy, commit = gaCommit) {
 test('GA config keeps the public boundary, governed sole-operator gate, two packages, and seven days explicit', () => {
   assert.deepEqual(validateGaConfig(config), []);
   assert.deepEqual(config.repository.requiredChecks, [
-    'Philosophical Code Review',
+    'Require immutable action references',
     'Public Distribution GA'
   ]);
   assert.equal(config.repository.governanceMode, 'sole-operator');
@@ -96,6 +96,15 @@ test('GA config keeps the public boundary, governed sole-operator gate, two pack
   assert.equal(config.packages.length, 2);
   assert.equal(config.npm.trustedPublisherMode, 'stage-only');
   assert.equal(config.map.requiredConsecutiveDays, 7);
+});
+
+test('required repository policy checks run on every pull request', async () => {
+  const workflow = await readFile(
+    new URL('../../.github/workflows/github-actions-policy.yml', import.meta.url),
+    'utf8'
+  );
+
+  assert.match(workflow, /on:\n  pull_request:\n  push:/);
 });
 
 test('GA package policy versions stay synchronized with public package manifests', async () => {
