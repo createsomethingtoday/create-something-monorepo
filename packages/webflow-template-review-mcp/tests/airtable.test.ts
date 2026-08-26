@@ -1477,6 +1477,7 @@ test('listFeaturedCandidates filters to the remaining-eligible pool and summariz
               [CONFIRMED_ASSET_FIELDS.websiteUrl]: 'https://alderas.webflow.io',
               [CONFIRMED_ASSET_FIELDS.submittedDate]: pastMonthDate,
               [CONFIRMED_ASSET_FIELDS.qualityScore]: ['🥇Exceptional'],
+              [CONFIRMED_ASSET_FIELDS.categoryNames]: ['Business', 'Agency'],
               [FEATURED_ASSET_FIELDS.creatorLink]: ['rec_creator_radiant'],
               [FEATURED_ASSET_FIELDS.creatorName]: 'Radiant Templates',
               [FEATURED_ASSET_FIELDS.creatorTimesFeatured]: [22],
@@ -1492,6 +1493,7 @@ test('listFeaturedCandidates filters to the remaining-eligible pool and summariz
               [CONFIRMED_ASSET_FIELDS.name]: 'Brokerwise',
               [CONFIRMED_ASSET_FIELDS.submittedDate]: now.toISOString(),
               [CONFIRMED_ASSET_FIELDS.qualityScore]: ['🥇Exceptional'],
+              [CONFIRMED_ASSET_FIELDS.categoryNames]: ['Business'],
               [FEATURED_ASSET_FIELDS.creatorLink]: ['rec_creator_grabui'],
               [FEATURED_ASSET_FIELDS.creatorName]: 'Grabui Library',
               [FEATURED_ASSET_FIELDS.creatorTimesFeatured]: [4],
@@ -1517,6 +1519,7 @@ test('listFeaturedCandidates filters to the remaining-eligible pool and summariz
   assert.equal(result.summary.pastMonthsCount, 1);
   assert.equal(result.summary.reviewerPicksMade, 1);
   assert.equal(result.summary.pickReasonsWritten, 1);
+  assert.deepEqual(result.summary.categoryCounts, { Business: 2, Agency: 1 });
 
   // Current-month submissions sort ahead of past-month fallback candidates.
   assert.equal(result.candidates[0]?.templateName, 'Brokerwise');
@@ -1524,6 +1527,7 @@ test('listFeaturedCandidates filters to the remaining-eligible pool and summariz
   assert.equal(result.candidates[1]?.templateName, 'Alderas');
   assert.equal(result.candidates[1]?.monthsSinceSubmission, 1);
   assert.equal(result.candidates[1]?.creatorTimesFeatured, 22);
+  assert.deepEqual(result.candidates[1]?.categories, ['Business', 'Agency']);
   assert.equal(result.candidates[1]?.reviewerPick, true);
   assert.equal(result.candidates[0]?.reviewerPick, false);
 

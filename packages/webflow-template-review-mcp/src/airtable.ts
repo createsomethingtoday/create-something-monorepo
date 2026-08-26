@@ -112,6 +112,7 @@ export interface TemplateReviewFeaturedCandidate {
   submittedDate?: string;
   monthsSinceSubmission: number | null;
   qualityScore?: string;
+  categories: string[];
   creatorId?: string;
   creatorName?: string;
   creatorTimesFeatured?: number;
@@ -146,6 +147,8 @@ export interface TemplateReviewFeaturedCandidatesResult {
     pastMonthsCount: number;
     reviewerPicksMade: number;
     pickReasonsWritten: number;
+    /** Candidate count per template category, for balancing the batch across category trends. */
+    categoryCounts: Record<string, number>;
   };
   candidates: TemplateReviewFeaturedCandidate[];
 }
@@ -646,6 +649,7 @@ function mapFeaturedCandidate(record: AirtableRecord, now: Date): TemplateReview
     submittedDate,
     monthsSinceSubmission: monthsSinceSubmission(submittedDate, now),
     qualityScore: firstString(fields[CONFIRMED_ASSET_FIELDS.qualityScore]),
+    categories: stringArray(fields[CONFIRMED_ASSET_FIELDS.categoryNames]),
     creatorId: stringArray(fields[FEATURED_ASSET_FIELDS.creatorLink])[0],
     creatorName: firstString(fields[FEATURED_ASSET_FIELDS.creatorName]),
     creatorTimesFeatured: firstNumber(fields[FEATURED_ASSET_FIELDS.creatorTimesFeatured]),
@@ -1342,6 +1346,7 @@ export class AirtableClient {
         CONFIRMED_ASSET_FIELDS.websiteUrl,
         CONFIRMED_ASSET_FIELDS.submittedDate,
         CONFIRMED_ASSET_FIELDS.qualityScore,
+        CONFIRMED_ASSET_FIELDS.categoryNames,
         ...Object.values(FEATURED_ASSET_FIELDS),
       ],
       filterByFormula: andFormula([
@@ -1395,6 +1400,12 @@ export class AirtableClient {
     }
 
     const creatorIds = new Set(candidates.map((candidate) => candidate.creatorId).filter((id): id is string => Boolean(id)));
+    const categoryCounts: Record<string, number> = {};
+    for (const candidate of candidates) {
+      for (const category of candidate.categories) {
+        categoryCounts[category] = (categoryCounts[category] ?? 0) + 1;
+      }
+    }
 
     return {
       monthsBackApplied: monthsBack,
@@ -1406,6 +1417,7 @@ export class AirtableClient {
         pastMonthsCount: candidates.filter((candidate) => (candidate.monthsSinceSubmission ?? 0) > 0).length,
         reviewerPicksMade: candidates.filter((candidate) => candidate.reviewerPick).length,
         pickReasonsWritten: candidates.filter((candidate) => Boolean(candidate.reviewerPickReason)).length,
+        categoryCounts,
       },
       candidates,
     };
