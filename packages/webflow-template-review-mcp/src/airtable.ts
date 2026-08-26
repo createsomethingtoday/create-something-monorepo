@@ -121,6 +121,13 @@ export interface TemplateReviewFeaturedCandidate {
   reviewerPickReasonAiDraft?: string;
   isFeatured: boolean;
   featuredPeriod?: string;
+  votingStateId?: string;
+  voteTallies?: {
+    up: number;
+    down: number;
+    net: number;
+    inQualifiedPool: boolean;
+  };
 }
 
 export interface TemplateReviewFeaturedCandidatesQuery {
@@ -643,6 +650,7 @@ function mapFeaturedCandidate(record: AirtableRecord, now: Date): TemplateReview
     reviewerPickReasonAiDraft: firstString(fields[FEATURED_ASSET_FIELDS.reviewerPickReasonAiDraft]),
     isFeatured: fields[FEATURED_ASSET_FIELDS.isFeatured] === true,
     featuredPeriod: firstString(fields[FEATURED_ASSET_FIELDS.isFeaturedPeriod]),
+    votingStateId: stringArray(fields[FEATURED_ASSET_FIELDS.votingStateLink])[0],
   };
 }
 
@@ -1351,6 +1359,36 @@ export class AirtableClient {
         if (monthsA !== monthsB) return monthsA - monthsB;
         return (b.submittedDate ?? '').localeCompare(a.submittedDate ?? '');
       });
+
+    // Join read-only vote state so the coordinator can see whether votes have
+    // settled and which candidates qualify WITHOUT mutating anything first.
+    const stateIds = [...new Set(candidates.map((candidate) => candidate.votingStateId).filter((id): id is string => Boolean(id)))];
+    const statesById = new Map<string, AirtableRecord>();
+    for (let index = 0; index < stateIds.length; index += 40) {
+      const chunk = stateIds.slice(index, index + 40);
+      const stateRecords = await this.listRecords({
+        tableId: TABLE_IDS.assetVotingState,
+        fieldNames: [
+          FEATURED_VOTING_STATE_FIELDS.upCount,
+          FEATURED_VOTING_STATE_FIELDS.downCount,
+          FEATURED_VOTING_STATE_FIELDS.netVotes,
+          FEATURED_VOTING_STATE_FIELDS.inQualifiedPool,
+        ],
+        filterByFormula: recordIdsFormula(chunk),
+      });
+      for (const record of stateRecords) statesById.set(record.id, record);
+    }
+    for (const candidate of candidates) {
+      const state = candidate.votingStateId ? statesById.get(candidate.votingStateId) : undefined;
+      if (!state) continue;
+      candidate.voteTallies = {
+        up: firstNumber(state.fields[FEATURED_VOTING_STATE_FIELDS.upCount]) ?? 0,
+        down: firstNumber(state.fields[FEATURED_VOTING_STATE_FIELDS.downCount]) ?? 0,
+        net: firstNumber(state.fields[FEATURED_VOTING_STATE_FIELDS.netVotes]) ?? 0,
+        inQualifiedPool: firstNumber(state.fields[FEATURED_VOTING_STATE_FIELDS.inQualifiedPool]) === 1,
+      };
+    }
+
     const creatorIds = new Set(candidates.map((candidate) => candidate.creatorId).filter((id): id is string => Boolean(id)));
 
     return {

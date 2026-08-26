@@ -1453,6 +1453,16 @@ test('listFeaturedCandidates filters to the remaining-eligible pool and summariz
     apiKey: 'test',
     fetchFn: async (input) => {
       const url = new URL(String(input));
+      if (url.pathname.includes(`/${TABLE_IDS.assetVotingState}`)) {
+        return jsonResponse({
+          records: [
+            {
+              id: 'rec_state_ald',
+              fields: { '👍 count': 3, '👎 count': 1, 'Net votes': 2, 'In qualified pool?': 1 },
+            },
+          ],
+        });
+      }
       if (!url.pathname.includes(`/${TABLE_IDS.assets}`)) {
         throw new Error(`Unexpected fetch: ${url.toString()}`);
       }
@@ -1472,6 +1482,7 @@ test('listFeaturedCandidates filters to the remaining-eligible pool and summariz
               [FEATURED_ASSET_FIELDS.creatorTimesFeatured]: [22],
               [FEATURED_ASSET_FIELDS.reviewerPick]: true,
               [FEATURED_ASSET_FIELDS.reviewerPickReason]: 'Strong layout system for agency sites.',
+              [FEATURED_ASSET_FIELDS.votingStateLink]: ['rec_state_ald'],
             },
           },
           {
@@ -1515,6 +1526,12 @@ test('listFeaturedCandidates filters to the remaining-eligible pool and summariz
   assert.equal(result.candidates[1]?.creatorTimesFeatured, 22);
   assert.equal(result.candidates[1]?.reviewerPick, true);
   assert.equal(result.candidates[0]?.reviewerPick, false);
+
+  // Read-only vote state joins onto candidates so the coordinator can judge
+  // batch readiness without mutating anything.
+  assert.equal(result.candidates[1]?.votingStateId, 'rec_state_ald');
+  assert.deepEqual(result.candidates[1]?.voteTallies, { up: 3, down: 1, net: 2, inQualifiedPool: true });
+  assert.equal(result.candidates[0]?.voteTallies, undefined);
 });
 
 test('listFeaturedCandidates keeps already-featured templates only when asked', async () => {
