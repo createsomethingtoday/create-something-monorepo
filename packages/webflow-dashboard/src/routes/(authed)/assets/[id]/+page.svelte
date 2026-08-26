@@ -24,6 +24,7 @@
     TableCell,
     StatusBadge,
     TimelineCard,
+    RequiredFixesCard,
     AnalyticsCard,
     TemplateHealthCard,
     DataFreshnessIndicator,
@@ -70,7 +71,7 @@
   // Smart default tab based on asset status
   // - Pending/Review assets: Show Timeline (most actionable)
   // - Published assets: Show Overview (quick summary)
-  // - Rejected assets: Show Timeline (shows feedback)
+  // - Rejected assets: Show Overview (its rejection feedback card leads)
   function getDefaultTab(status: string): string {
     if (['Draft', 'Upcoming', 'Scheduled'].includes(status)) return 'timeline';
     if (status === 'Rejected') return 'overview';
@@ -678,7 +679,12 @@
           tabindex={0}
           class="tab-content"
         >
-          <TimelineCard {asset} />
+          <div class="timeline-tab-stack">
+            <TimelineCard {asset} />
+            {#if data.requiredFixes && data.requiredFixes.length > 0}
+              <RequiredFixesCard items={data.requiredFixes} />
+            {/if}
+          </div>
         </TabsContent>
         {#if canShowHealth}
           <TabsContent
@@ -876,7 +882,8 @@
     gap: var(--space-md);
   }
 
-  .health-tab-stack {
+  .health-tab-stack,
+  .timeline-tab-stack {
     display: flex;
     flex-direction: column;
     gap: var(--space-md);

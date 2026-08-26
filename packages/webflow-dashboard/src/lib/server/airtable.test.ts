@@ -3,6 +3,8 @@ import {
 	airtableFormulaValue,
 	buildAssetListFormula,
 	buildAssetVersionCreateFields,
+	buildRequiredFixExceptionsFormula,
+	mapRequiredFixExceptionRecord,
 	buildAssetUpdateFields,
 	buildAssetVersionSnapshot,
 	buildCreatorEmailMatchFormula,
@@ -383,5 +385,77 @@ describe('buildAssetUpdateFields', () => {
 		expect(fields['Name']).toBe('Template');
 		expect(fields['ℹ️Description (Short)']).toBe('Short');
 		expect(fields['🔗Website URL']).toBe('https://example.com');
+	});
+});
+
+describe('buildRequiredFixExceptionsFormula', () => {
+	it('filters on the denied flag and the asset-record-id lookup by field ID', () => {
+		const formula = buildRequiredFixExceptionsFormula('recAAAABBBBCCCC12');
+
+		expect(formula).toContain('{fldJXVOBAeKLACZtc} = 1');
+		expect(formula).toContain("FIND('recAAAABBBBCCCC12', ARRAYJOIN({fld2v3CWkknayjbjA}))");
+	});
+
+	it('escapes hostile input through airtableFormulaValue', () => {
+		expect(() => buildRequiredFixExceptionsFormula("rec') , OR(1=1")).not.toThrow();
+		const formula = buildRequiredFixExceptionsFormula("rec'quote");
+		// The quote must arrive escaped inside a string literal, not close it.
+		expect(formula).toContain(airtableFormulaValue("rec'quote"));
+	});
+});
+
+describe('mapRequiredFixExceptionRecord', () => {
+	const record = (fields: Record<string, unknown>) =>
+		({ id: 'recEXCEPTION00001', fields }) as unknown as Parameters<
+			typeof mapRequiredFixExceptionRecord
+		>[0];
+
+	it('maps a denied exception row fetched by field ID', () => {
+		const mapped = mapRequiredFixExceptionRecord(
+			record({
+				fldmJcVJCytD1VY1r: 'Unpinned runtime chooser script in the extension panel',
+				fldUqjcnkOUO7RRKS: 'Security',
+				fldhqW4RSpazA6421: '2026-08-24T18:56:17.000Z',
+				fldqVk39RERL1tVPP: ['recVERSION0000001']
+			})
+		);
+
+		expect(mapped).toEqual({
+			id: 'recEXCEPTION00001',
+			item: 'Unpinned runtime chooser script in the extension panel',
+			type: 'Security',
+			decidedAt: '2026-08-24T18:56:17.000Z',
+			versionRecordId: 'recVERSION0000001'
+		});
+	});
+
+	it('returns null when the item name is missing', () => {
+		expect(mapRequiredFixExceptionRecord(record({ fldUqjcnkOUO7RRKS: 'Security' }))).toBeNull();
+	});
+
+	it('tolerates select-object values and missing version links', () => {
+		const mapped = mapRequiredFixExceptionRecord(
+			record({
+				fldmJcVJCytD1VY1r: 'Support email improperly uses the Webflow name',
+				fldUqjcnkOUO7RRKS: { name: 'Guideline' }
+			})
+		);
+
+		expect(mapped?.type).toBe('Guideline');
+		expect(mapped?.versionRecordId).toBeUndefined();
+		expect(mapped?.decidedAt).toBeUndefined();
+	});
+
+	it('never exposes rationale or decision notes even when present on the record', () => {
+		const mapped = mapRequiredFixExceptionRecord(
+			record({
+				fldmJcVJCytD1VY1r: 'Item',
+				fldHNABt611HJ6JxI: 'internal rationale',
+				fldZvSg7gpbBw89Hz: 'internal decision notes'
+			})
+		);
+
+		expect(JSON.stringify(mapped)).not.toContain('internal rationale');
+		expect(JSON.stringify(mapped)).not.toContain('internal decision notes');
 	});
 });

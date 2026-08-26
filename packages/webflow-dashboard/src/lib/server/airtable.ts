@@ -11,8 +11,31 @@ const TABLES = {
 	TAGS: '🏷️Tags (Free Form)',
 	CATEGORY_PERFORMANCE: 'tblDU1oUiobNfMQP9',
 	LEADERBOARD: 'tblcXLVLYobhNmrg6',
-	ASSET_VERSIONS: 'tblHxZ2hgSFLZxsZu'
+	ASSET_VERSIONS: 'tblHxZ2hgSFLZxsZu',
+	// ⚖️Exceptions — per-item app-review exception ledger. Queried by field ID
+	// (returnFieldsByFieldId) because display names in this table are volatile.
+	EXCEPTIONS: 'tblnbaaIbIulWl0b7'
 } as const;
+
+// ⚖️Exceptions field IDs (see webflow-app-review-mcp schema — the canonical map).
+const EXCEPTIONS_FIELD_IDS = {
+	item: 'fldmJcVJCytD1VY1r',
+	type: 'fldUqjcnkOUO7RRKS',
+	decisionDatetime: 'fldhqW4RSpazA6421',
+	// Formula: 1 only when ⚖️Status = ❌Denied. Denied = "fix required" —
+	// a denied exception waives nothing, the finding must be fixed.
+	denied: 'fldJXVOBAeKLACZtc',
+	versionLink: 'fldqVk39RERL1tVPP',
+	// Lookup of the linked version's asset-record-ID rollup — lets us filter
+	// exception rows by asset without knowing display names.
+	assetRecordIdLookup: 'fld2v3CWkknayjbjA'
+} as const;
+
+// 🤝Partnership App checkbox on Assets (CRM-synced daily by partner-flag-sync).
+const ASSETS_PARTNERSHIP_APP_FIELD_ID = 'fldzZ2Zo8a7vtIMT3';
+
+// Version Number on 🖌️Asset Versions.
+const ASSET_VERSIONS_VERSION_NUMBER_FIELD_ID = 'fldn2ImbgwKfCdWWA';
 
 // Airtable field IDs for authentication
 const FIELDS = {
@@ -851,6 +874,58 @@ function mapAssetVersionRecord(record: Airtable.Record<Airtable.FieldSet>): Asse
 	};
 }
 
+/**
+ * A ❌Denied app-review exception item — a finding that was evaluated for an
+ * exception and ruled "fix required". Shown to partnership-app creators only,
+ * and only after the review round's feedback has been released to them.
+ *
+ * Deliberately excludes rationale and decision notes: those fields carry
+ * internal deliberation and must never reach a creator surface.
+ */
+export interface RequiredFixExceptionItem {
+	id: string;
+	item: string;
+	type?: string;
+	decidedAt?: string;
+	versionRecordId?: string;
+	versionNumber?: number;
+}
+
+/**
+ * Formula for ❌Denied exception rows belonging to one asset. Uses `{fldXxx}`
+ * field-ID references so it is immune to display-name changes.
+ */
+export function buildRequiredFixExceptionsFormula(assetRecordId: string): string {
+	return `AND({${EXCEPTIONS_FIELD_IDS.denied}} = 1, FIND(${airtableFormulaValue(
+		assetRecordId
+	)}, ARRAYJOIN({${EXCEPTIONS_FIELD_IDS.assetRecordIdLookup}})) > 0)`;
+}
+
+/**
+ * Map an ⚖️Exceptions record fetched with returnFieldsByFieldId. Returns null
+ * for rows without an item name (nothing meaningful to show).
+ */
+export function mapRequiredFixExceptionRecord(
+	record: Airtable.Record<Airtable.FieldSet>
+): RequiredFixExceptionItem | null {
+	const item = firstString(record.fields[EXCEPTIONS_FIELD_IDS.item]);
+	if (!item) return null;
+
+	const versionLinks = record.fields[EXCEPTIONS_FIELD_IDS.versionLink];
+	const versionRecordId =
+		Array.isArray(versionLinks) && typeof versionLinks[0] === 'string'
+			? versionLinks[0]
+			: undefined;
+
+	return {
+		id: record.id,
+		item,
+		type: firstString(record.fields[EXCEPTIONS_FIELD_IDS.type]),
+		decidedAt: firstString(record.fields[EXCEPTIONS_FIELD_IDS.decisionDatetime]),
+		versionRecordId
+	};
+}
+
 function firstString(value: unknown): string | undefined {
 	if (typeof value === 'string') {
 		const trimmed = value.trim();
@@ -1581,6 +1656,93 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 			}
 
 			return { asset: mapAssetRecord(record), isOwner };
+		},
+
+		/**
+		 * ❌Denied (fix-required) exception items for a partnership app.
+		 *
+		 * Returns null unless the asset carries the 🤝Partnership App flag —
+		 * fail-closed: any error also returns null. Caller is responsible for
+		 * ownership and release gating (isReviewFeedbackReleased).
+		 */
+		async getPartnerRequiredFixes(assetId: string): Promise<RequiredFixExceptionItem[] | null> {
+			if (!/^rec[A-Za-z0-9]{14}$/.test(assetId)) return null;
+
+			try {
+				// Gate: the CRM-synced 🤝Partnership App checkbox, read by field ID.
+				const assetRows = await base(TABLES.ASSETS)
+					.select({
+						filterByFormula: `RECORD_ID() = ${airtableFormulaValue(assetId)}`,
+						fields: [ASSETS_PARTNERSHIP_APP_FIELD_ID],
+						returnFieldsByFieldId: true,
+						maxRecords: 1
+					})
+					.firstPage();
+
+				if (assetRows[0]?.fields?.[ASSETS_PARTNERSHIP_APP_FIELD_ID] !== true) {
+					return null;
+				}
+
+				const rows = await base(TABLES.EXCEPTIONS)
+					.select({
+						filterByFormula: buildRequiredFixExceptionsFormula(assetId),
+						fields: [
+							EXCEPTIONS_FIELD_IDS.item,
+							EXCEPTIONS_FIELD_IDS.type,
+							EXCEPTIONS_FIELD_IDS.decisionDatetime,
+							EXCEPTIONS_FIELD_IDS.versionLink
+						],
+						returnFieldsByFieldId: true,
+						sort: [{ field: EXCEPTIONS_FIELD_IDS.decisionDatetime, direction: 'desc' }]
+					})
+					.all();
+
+				const items = rows
+					.map(mapRequiredFixExceptionRecord)
+					.filter((entry): entry is RequiredFixExceptionItem => entry !== null);
+
+				// Best effort: resolve version numbers for "from the vN review" labels.
+				const versionIds = [
+					...new Set(items.map((entry) => entry.versionRecordId).filter(Boolean))
+				].slice(0, 50) as string[];
+
+				if (versionIds.length > 0) {
+					try {
+						const versionRows = await base(TABLES.ASSET_VERSIONS)
+							.select({
+								filterByFormula: `OR(${versionIds
+									.map((id) => `RECORD_ID() = ${airtableFormulaValue(id)}`)
+									.join(', ')})`,
+								fields: [ASSET_VERSIONS_VERSION_NUMBER_FIELD_ID],
+								returnFieldsByFieldId: true
+							})
+							.all();
+
+						const numbers = new Map(
+							versionRows.map((row) => [
+								row.id,
+								Number(row.fields[ASSET_VERSIONS_VERSION_NUMBER_FIELD_ID])
+							])
+						);
+
+						for (const entry of items) {
+							if (!entry.versionRecordId) continue;
+							const versionNumber = numbers.get(entry.versionRecordId);
+							if (Number.isFinite(versionNumber)) entry.versionNumber = versionNumber;
+						}
+					} catch {
+						// Version labels are decorative; the ledger stands without them.
+					}
+				}
+
+				return items;
+			} catch (err) {
+				console.error('[Airtable] getPartnerRequiredFixes failed:', {
+					assetId,
+					statusCode: (err as { statusCode?: number })?.statusCode
+				});
+				return null;
+			}
 		},
 
 		/**
