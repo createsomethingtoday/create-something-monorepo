@@ -573,3 +573,27 @@ describe('gateRequiredFixesByVersion — durable release stamps (CRE-1874)', () 
 		expect(gated.map((g) => g.id)).toEqual(['legacyReleased']);
 	});
 });
+
+describe('gateRequiredFixesByVersion — silenced rounds never surface, even stamped', () => {
+	it('drops items whose version is in a No-Notification status despite a release stamp', () => {
+		const gated = gateRequiredFixesByVersion(
+			[
+				{ id: 'silentStamped', item: 'Finding', versionRecordId: 'recV1' },
+				{ id: 'released', item: 'Finding', versionRecordId: 'recV2' }
+			],
+			new Map([
+				[
+					'recV1',
+					{
+						versionNumber: 1,
+						reviewStatus: '❌Rejected (No Notification)',
+						releasedAt: '2026-08-26T04:38:16.743Z'
+					}
+				],
+				['recV2', { versionNumber: 2, reviewStatus: '❌Rejected', releasedAt: '2026-08-26T04:38:16.743Z' }]
+			])
+		);
+
+		expect(gated.map((g) => g.id)).toEqual(['released']);
+	});
+});

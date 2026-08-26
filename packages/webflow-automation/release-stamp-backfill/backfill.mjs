@@ -101,6 +101,30 @@ async function collectUnstampedReleasedVersions() {
 	return rows;
 }
 
+/**
+ * Re-fetch a batch immediately before writing it. Live records change during
+ * the multi-minute run — e.g. the partnership shield converting a transient
+ * ❌Rejected into ❌Rejected (No Notification) — and a stale row must not be
+ * stamped. Returns only rows STILL unstamped and STILL in a released status,
+ * with fresh feedback for the snapshot.
+ */
+async function revalidateBatch(ids) {
+	const idClauses = ids.map((id) => `RECORD_ID() = '${id}'`).join(', ');
+	const statusClauses = RELEASED_STATUSES.map(
+		(status) => `{${FIELD.reviewStatus}} = '${status}'`
+	).join(', ');
+
+	const params = new URLSearchParams({
+		filterByFormula: `AND(OR(${idClauses}), OR(${statusClauses}), {${FIELD.releasedAt}} = BLANK())`,
+		returnFieldsByFieldId: 'true',
+		pageSize: '100'
+	});
+	params.append('fields[]', FIELD.reviewFeedback);
+
+	const page = await airtableRequest(`/${BASE_ID}/${VERSIONS_TABLE_ID}?${params}`);
+	return page.records;
+}
+
 async function main() {
 	console.log(`Collecting unstamped released versions${DRY_RUN ? ' (dry run)' : ''}…`);
 	const rows = await collectUnstampedReleasedVersions();
@@ -114,9 +138,19 @@ async function main() {
 	const stampedAt = new Date().toISOString();
 	let written = 0;
 	let snapshots = 0;
+	let skippedStale = 0;
 
 	for (let i = 0; i < rows.length; i += WRITE_BATCH) {
-		const batch = rows.slice(i, i + WRITE_BATCH).map((row) => {
+		const chunkIds = rows.slice(i, i + WRITE_BATCH).map((row) => row.id);
+
+		// Time-of-check/time-of-use guard: only stamp rows that are still
+		// eligible RIGHT NOW, using their fresh feedback for the snapshot.
+		const fresh = await revalidateBatch(chunkIds);
+		skippedStale += chunkIds.length - fresh.length;
+		await sleep(PACE_MS);
+		if (fresh.length === 0) continue;
+
+		const batch = fresh.map((row) => {
 			const feedback = row.fields[FIELD.reviewFeedback];
 			const fields = { [FIELD.releasedAt]: stampedAt };
 			if (typeof feedback === 'string' && feedback.trim()) {
@@ -136,7 +170,9 @@ async function main() {
 		await sleep(PACE_MS);
 	}
 
-	console.log(`RECEIPT: stamped ${written} versions (${snapshots} with snapshots) at ${stampedAt}.`);
+	console.log(
+		`RECEIPT: stamped ${written} versions (${snapshots} with snapshots, ${skippedStale} skipped as stale) at ${stampedAt}.`
+	);
 }
 
 main().catch((error) => {
