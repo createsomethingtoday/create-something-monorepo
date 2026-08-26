@@ -3,11 +3,13 @@ const longWeekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'F
 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 function parseHttpDate(text) {
+  const leapSecond = /:60(?: GMT)?$/u.test(text) ? 1_000 : 0;
+  const comparableText = leapSecond ? text.replace(':60', ':59') : text;
   const isAsctime =
     /^(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) {1,2}\d{1,2} \d{2}:\d{2}:\d{2} \d{4}$/.test(
-      text
+      comparableText
     );
-  const parsed = Date.parse(isAsctime ? `${text} GMT` : text);
+  const parsed = Date.parse(isAsctime ? `${comparableText} GMT` : comparableText);
   if (Number.isNaN(parsed)) return null;
   const date = new Date(parsed);
   const day = String(date.getUTCDate()).padStart(2, '0');
@@ -20,7 +22,7 @@ function parseHttpDate(text) {
     `${longWeekdays[date.getUTCDay()]}, ${day}-${month}-${String(year).slice(-2)} ${time} GMT`,
     `${shortWeekdays[date.getUTCDay()]} ${month} ${asctimeDay} ${time} ${year}`
   ];
-  return accepted.includes(text) ? parsed : null;
+  return accepted.includes(comparableText) ? parsed + leapSecond : null;
 }
 
 export function parseRetryAfter(value, nowMs = Date.now()) {

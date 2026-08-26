@@ -116,7 +116,7 @@ open_questions:
 
 ## Evidence and reproducibility
 
-The source repository preserves a machine-readable ledger, redacted telemetry and timing receipts for both trials, the immutable Trial 2 task, subjects, public tests, hidden judge, and five mutants, plus the rate-card version, formula, integrity validator, and prospective decision rule under CRE-1877. Private session paths and raw transcripts are intentionally excluded from this public route. Token and credit economics and Trial 2 latency are recomputed from durable receipts; the release gate reruns the checked-in public, hidden, and mutation judges.
+The source repository preserves a machine-readable ledger, redacted token telemetry for both trials, Trial 2 timing receipts, the immutable Trial 2 task, subjects, public tests, hidden judge, and five mutants, plus the rate-card version, formula, integrity validator, and prospective decision rule under CRE-1877. Private session paths and raw transcripts are intentionally excluded from this public route. Token and credit economics and Trial 2 latency are recomputed from durable receipts; the release gate reruns the checked-in public, hidden, and mutation judges.
 
 Relevant public references:
 
