@@ -197,15 +197,26 @@ async function sweepSilencedStamps(stampedAt) {
 		.map((status) => `{${FIELD.reviewStatus}} = '${status}'`)
 		.join(', ');
 
-	const params = new URLSearchParams({
-		filterByFormula: `AND({${FIELD.releasedAt}} != BLANK(), OR(${statusClauses}))`,
-		returnFieldsByFieldId: 'true',
-		pageSize: '100'
-	});
-	params.append('fields[]', FIELD.releasedAt);
+	// Paginate: older/organic stamps can legitimately sit in silenced
+	// statuses, and a race victim must be found even beyond the first page.
+	const silencedStamped = [];
+	let offset;
+	do {
+		const params = new URLSearchParams({
+			filterByFormula: `AND({${FIELD.releasedAt}} != BLANK(), OR(${statusClauses}))`,
+			returnFieldsByFieldId: 'true',
+			pageSize: '100'
+		});
+		params.append('fields[]', FIELD.releasedAt);
+		if (offset) params.set('offset', offset);
 
-	const page = await airtableRequest(`/${BASE_ID}/${VERSIONS_TABLE_ID}?${params}`);
-	const raceVictims = page.records.filter(
+		const page = await airtableRequest(`/${BASE_ID}/${VERSIONS_TABLE_ID}?${params}`);
+		silencedStamped.push(...page.records);
+		offset = page.offset;
+		await sleep(PACE_MS);
+	} while (offset);
+
+	const raceVictims = silencedStamped.filter(
 		(row) => row.fields[FIELD.releasedAt] === stampedAt
 	);
 
@@ -214,8 +225,29 @@ async function sweepSilencedStamps(stampedAt) {
 		return;
 	}
 
+	let cleared = 0;
 	for (let i = 0; i < raceVictims.length; i += WRITE_BATCH) {
-		const batch = raceVictims.slice(i, i + WRITE_BATCH).map((row) => ({
+		const chunkIds = raceVictims.slice(i, i + WRITE_BATCH).map((row) => row.id);
+
+		// Re-check right before clearing: a victim that flipped back to a
+		// released status and was re-stamped by the automation carries a NEWER
+		// timestamp — its legitimate evidence must not be erased.
+		const idClauses = chunkIds.map((id) => `RECORD_ID() = '${id}'`).join(', ');
+		const recheckParams = new URLSearchParams({
+			filterByFormula: `AND(OR(${idClauses}), OR(${statusClauses}))`,
+			returnFieldsByFieldId: 'true',
+			pageSize: '100'
+		});
+		recheckParams.append('fields[]', FIELD.releasedAt);
+		const recheck = await airtableRequest(`/${BASE_ID}/${VERSIONS_TABLE_ID}?${recheckParams}`);
+		await sleep(PACE_MS);
+
+		const stillVictims = recheck.records.filter(
+			(row) => row.fields[FIELD.releasedAt] === stampedAt
+		);
+		if (stillVictims.length === 0) continue;
+
+		const batch = stillVictims.map((row) => ({
 			id: row.id,
 			fields: { [FIELD.releasedAt]: null, [FIELD.releasedFeedbackSnapshot]: null }
 		}));
@@ -223,14 +255,12 @@ async function sweepSilencedStamps(stampedAt) {
 			method: 'PATCH',
 			body: JSON.stringify({ records: batch })
 		});
+		cleared += batch.length;
+		console.log(`SWEEP: cleared ${batch.map((row) => row.id).join(', ')}`);
 		await sleep(PACE_MS);
 	}
 
-	console.log(
-		`SWEEP: cleared ${raceVictims.length} race-stamped silenced rows (ids: ${raceVictims
-			.map((row) => row.id)
-			.join(', ')}).`
-	);
+	console.log(`SWEEP: cleared ${cleared} race-stamped silenced rows.`);
 }
 
 main().catch((error) => {
