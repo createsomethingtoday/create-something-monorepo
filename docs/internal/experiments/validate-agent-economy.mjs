@@ -4,12 +4,19 @@ import { readFile } from 'node:fs/promises';
 const results = JSON.parse(
   await readFile(new URL('./agent-economy-model-routing-2026-08-26.json', import.meta.url), 'utf8')
 );
-const telemetry = JSON.parse(
+const trial2Telemetry = JSON.parse(
   await readFile(
     new URL('./agent-economy-trial-2-telemetry-2026-08-26.json', import.meta.url),
     'utf8'
   )
 );
+const trial1Telemetry = JSON.parse(
+  await readFile(
+    new URL('./agent-economy-trial-1-telemetry-2026-08-26.json', import.meta.url),
+    'utf8'
+  )
+);
+const telemetryReceipts = [trial1Telemetry, trial2Telemetry];
 const publicExperiment = await readFile(
   new URL(
     '../../../packages/io/content/experiments/governed-codex-model-routing.md',
@@ -49,8 +56,8 @@ for (const subject of [luna, terra, sol]) {
 const percentageReduction = (candidate, baseline) =>
   Number((100 * (1 - candidate / baseline)).toFixed(2));
 
-const calculateCredits = (session) => {
-  const rates = telemetry.rateCard.models[session.model];
+const calculateCredits = (receipt, session) => {
+  const rates = receipt.rateCard.models[session.model];
   assert.ok(rates, `missing rate card for ${session.model}`);
   const uncachedInputTokens = session.inputTokens - session.cachedInputTokens;
   return (
@@ -61,22 +68,96 @@ const calculateCredits = (session) => {
   );
 };
 
-for (const session of telemetry.sessions) {
-  assert.equal(session.inputTokens + session.outputTokens, session.totalTokens);
-  assert.ok(session.cachedInputTokens <= session.inputTokens);
-  assert.match(session.receiptId, /^[0-9a-f-]{36}$/u);
+const allowedReceiptKeys = new Set([
+  'schemaVersion',
+  'experimentId',
+  'trial',
+  'capturedAt',
+  'rateCard',
+  'version',
+  'source',
+  'unit',
+  'formula',
+  'models',
+  'luna',
+  'terra',
+  'sol',
+  'uncachedInput',
+  'cachedInput',
+  'output',
+  'sessions',
+  'receiptId',
+  'cohort',
+  'model',
+  'effort',
+  'role',
+  'servingTier',
+  'inputTokens',
+  'cachedInputTokens',
+  'outputTokens',
+  'reasoningOutputTokens',
+  'totalTokens'
+]);
+
+const validateReceiptShape = (value) => {
+  if (Array.isArray(value)) {
+    for (const entry of value) validateReceiptShape(entry);
+    return;
+  }
+  if (!value || typeof value !== 'object') return;
+  for (const [key, entry] of Object.entries(value)) {
+    assert.ok(allowedReceiptKeys.has(key), `disallowed telemetry receipt field: ${key}`);
+    validateReceiptShape(entry);
+  }
+};
+
+for (const receipt of telemetryReceipts) {
+  validateReceiptShape(receipt);
+  assert.equal(receipt.schemaVersion, 'create_something_agent_telemetry_receipt.v0.1');
+  const serialized = JSON.stringify(receipt);
+  assert.equal(serialized.includes('/Users/'), false);
+  assert.equal(
+    /(?:api[_-]?key|authorization|bearer|password|private[_-]?key|transcript|prompt)/iu.test(
+      serialized
+    ),
+    false
+  );
+  for (const session of receipt.sessions) {
+    assert.equal(session.inputTokens + session.outputTokens, session.totalTokens);
+    assert.ok(session.cachedInputTokens <= session.inputTokens);
+    assert.match(session.receiptId, /^[0-9a-f-]{36}$/u);
+  }
 }
 
 for (const subject of [luna, terra, sol]) {
-  const sessions = telemetry.sessions.filter((session) => session.cohort === subject.id);
+  const sessions = trial2Telemetry.sessions.filter((session) => session.cohort === subject.id);
   assert.equal(sessions.length, subject.agentCount);
   assert.equal(
     sessions.reduce((total, session) => total + session.totalTokens, 0),
     subject.totalTokens
   );
   assert.equal(
-    Number(sessions.reduce((total, session) => total + calculateCredits(session), 0).toFixed(6)),
+    Number(
+      sessions
+        .reduce((total, session) => total + calculateCredits(trial2Telemetry, session), 0)
+        .toFixed(6)
+    ),
     Number(subject.creditEquivalent.toFixed(6))
+  );
+}
+
+for (const subject of [terraHigh, terraUltra, solLowDefault, solLowFast]) {
+  const sessions = trial1Telemetry.sessions.filter((session) => session.cohort === subject.id);
+  assert.equal(sessions.length, 1);
+  const [session] = sessions;
+  if ('totalTokens' in subject) assert.equal(session.totalTokens, subject.totalTokens);
+  if ('inputTokens' in subject) assert.equal(session.inputTokens, subject.inputTokens);
+  if ('cachedInputTokens' in subject)
+    assert.equal(session.cachedInputTokens, subject.cachedInputTokens);
+  if ('outputTokens' in subject) assert.equal(session.outputTokens, subject.outputTokens);
+  assert.equal(
+    Number(calculateCredits(trial1Telemetry, session).toFixed(6)),
+    Number((subject.creditEquivalent ?? subject.baseRateCreditEquivalent).toFixed(6))
   );
 }
 
@@ -130,14 +211,37 @@ const publicFacts = [
   'Every reported model/effort cohort has one run.',
   'at least **10 trials per task family per cohort**',
   '[Dual-Agent Routing Experiment](/papers/dual-agent-routing-experiment)',
-  'Trial 2 token and credit economics are recomputed from the durable receipt',
-  'latency and Trial 1 observations are reconciled exactly against the durable ledger'
+  'Token and credit economics are recomputed from the durable receipts',
+  'latency observations are reconciled exactly against the durable ledger'
+];
+
+const publicRows = [
+  `| 3× Luna / High | 17/17 | 3/3 | 5/5 | yes | ${luna.criticalPathSeconds.toFixed(3)} s | ${luna.totalTokens.toLocaleString('en-US')} | ${luna.creditEquivalent.toFixed(6)} |`,
+  `| 1× Terra / High | 14/14 | 3/3 | 5/5 | yes | ${terra.criticalPathSeconds.toFixed(3)} s | ${terra.totalTokens.toLocaleString('en-US')} | ${terra.creditEquivalent.toFixed(6)} |`,
+  `| 1× Sol / High | 17/17 | 3/3 | 5/5 | yes | ${sol.criticalPathSeconds.toFixed(3)} s | ${sol.totalTokens.toLocaleString('en-US')} | ${sol.creditEquivalent.toFixed(6)} |`,
+  `| High | Core facts correct; incomplete export list; two judgment errors | ${terraHigh.elapsedSeconds.toFixed(3)} s | ${terraHigh.totalTokens.toLocaleString('en-US')} | ${terraHigh.creditEquivalent.toFixed(6)} |`,
+  `| Ultra, exact prompt | Complete export list; same two judgment errors | ${terraUltra.elapsedSeconds.toFixed(3)} s | ${terraUltra.totalTokens.toLocaleString('en-US')} | ${terraUltra.creditEquivalent.toFixed(6)} |`,
+  `| Default | Fully correct | ${solLowDefault.elapsedSeconds} s | ${solLowDefault.inputTokens.toLocaleString('en-US')} | ${solLowDefault.cachedInputTokens.toLocaleString('en-US')} | ${solLowDefault.outputTokens.toLocaleString('en-US')} | ${solLowDefault.reasoningOutputTokens.toLocaleString('en-US')} |`,
+  `| Fast | Fully correct | ${solLowFast.elapsedSeconds} s | ${solLowFast.inputTokens.toLocaleString('en-US')} | ${solLowFast.cachedInputTokens.toLocaleString('en-US')} | ${solLowFast.outputTokens.toLocaleString('en-US')} | ${solLowFast.reasoningOutputTokens.toLocaleString('en-US')} |`
 ];
 
 for (const fact of publicFacts) {
   assert.ok(
     publicExperiment.includes(fact),
     `public experiment is missing reconciled fact: ${fact}`
+  );
+}
+const normalizeTableRow = (row) =>
+  row
+    .split('|')
+    .map((cell) => cell.trim())
+    .join('|');
+const normalizedPublicLines = new Set(publicExperiment.split('\n').map(normalizeTableRow));
+
+for (const row of publicRows) {
+  assert.ok(
+    normalizedPublicLines.has(normalizeTableRow(row)),
+    `public experiment has a mismatched row: ${row}`
   );
 }
 

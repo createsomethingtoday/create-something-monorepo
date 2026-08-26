@@ -117,8 +117,9 @@ The judge was separate from the subject agents:
 Credit-equivalent values were calculated from redacted session telemetry using
 the Codex rate card observed on 2026-08-26 for uncached input, cached input, and
 output. The exact token categories, receipt identifiers, rate-card version,
-source, and formula are preserved in
-[agent-economy-trial-2-telemetry-2026-08-26.json](./agent-economy-trial-2-telemetry-2026-08-26.json).
+source, and formula are preserved in the
+[Trial 1 receipt](./agent-economy-trial-1-telemetry-2026-08-26.json) and
+[Trial 2 receipt](./agent-economy-trial-2-telemetry-2026-08-26.json).
 They are not invoice dollars. Session critical path, not summed subagent time,
 is the fan-out latency measure.
 

@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "create_something_agent_telemetry_receipt.v0.1",
+  "experimentId": "EXP-AGENT-ECONOMY-2026-08-26",
+  "trial": "read-only-operational-audit",
+  "capturedAt": "2026-08-26",
+  "rateCard": {
+    "version": "codex-credit-rates-observed-2026-08-26",
+    "source": "https://learn.chatgpt.com/docs/pricing",
+    "unit": "credit-equivalent per 1000000 tokens",
+    "formula": "((inputTokens - cachedInputTokens) * uncachedInput + cachedInputTokens * cachedInput + outputTokens * output) / 1000000",
+    "models": {
+      "terra": { "uncachedInput": 50, "cachedInput": 5, "output": 300 },
+      "sol": { "uncachedInput": 100, "cachedInput": 10, "output": 500 }
+    }
+  },
+  "sessions": [
+    {
+      "receiptId": "01a03e92-30b0-7f72-8490-1f8b5eb16b86",
+      "cohort": "trial-1-terra-high",
+      "model": "terra",
+      "effort": "high",
+      "servingTier": "default",
+      "inputTokens": 496290,
+      "cachedInputTokens": 446464,
+      "outputTokens": 5083,
+      "reasoningOutputTokens": 1490,
+      "totalTokens": 501373
+    },
+    {
+      "receiptId": "01a03e9e-cadd-71c3-8d2f-df344bed18e8",
+      "cohort": "trial-1-terra-ultra-exact",
+      "model": "terra",
+      "effort": "ultra",
+      "servingTier": "default",
+      "inputTokens": 1136596,
+      "cachedInputTokens": 1065728,
+      "outputTokens": 21861,
+      "reasoningOutputTokens": 12349,
+      "totalTokens": 1158457
+    },
+    {
+      "receiptId": "01a03eb9-081d-7150-bc21-663d172c432b",
+      "cohort": "trial-1-sol-low-default",
+      "model": "sol",
+      "effort": "low",
+      "servingTier": "default",
+      "inputTokens": 739952,
+      "cachedInputTokens": 665856,
+      "outputTokens": 9619,
+      "reasoningOutputTokens": 1936,
+      "totalTokens": 749571
+    },
+    {
+      "receiptId": "01a03eb6-c904-7623-b69a-cfa3ecee40eb",
+      "cohort": "trial-1-sol-low-fast",
+      "model": "sol",
+      "effort": "low",
+      "servingTier": "fast",
+      "inputTokens": 517259,
+      "cachedInputTokens": 457728,
+      "outputTokens": 6824,
+      "reasoningOutputTokens": 1223,
+      "totalTokens": 524083
+    }
+  ]
+}

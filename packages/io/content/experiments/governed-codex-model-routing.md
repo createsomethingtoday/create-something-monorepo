@@ -34,7 +34,7 @@ Subjects had to enumerate a public package surface, run an acceptance command, i
 
 The suite combined debugging, test authoring, and bounded implementation. Three Luna agents received independent slices; Terra and Sol each received the complete suite as single-agent controls. A separate judge checked public tests, three hidden behaviors, five withheld mutants, and the authorized-file boundary.
 
-Credit-equivalent values use redacted session telemetry and the Codex rate card observed on 2026-08-26. The source ledger preserves the receipt identifiers, token categories, versioned rates, and exact computation. These are comparative units, not invoice dollars. Fan-out latency is the session critical path rather than summed agent time.
+Credit-equivalent values use redacted session telemetry and the Codex rate card observed on 2026-08-26. The source receipts preserve the receipt identifiers, token categories, versioned rates, and exact computation for both trials. These are comparative units, not invoice dollars. Fan-out latency is the session critical path rather than summed agent time.
 
 ## Results
 
@@ -130,7 +130,7 @@ open_questions:
 
 ## Evidence and reproducibility
 
-The source repository preserves a machine-readable ledger, a redacted Trial 2 telemetry receipt, rate-card version and formula, integrity validator, prompt and fixture requirements, and the prospective decision rule under CRE-1877. Private session paths and raw transcripts are intentionally excluded from this public route. Trial 2 token and credit economics are recomputed from the durable receipt; latency and Trial 1 observations are reconciled exactly against the durable ledger during release.
+The source repository preserves a machine-readable ledger, redacted telemetry receipts for both trials, rate-card version and formula, integrity validator, prompt and fixture requirements, and the prospective decision rule under CRE-1877. Private session paths and raw transcripts are intentionally excluded from this public route. Token and credit economics are recomputed from the durable receipts; latency observations are reconciled exactly against the durable ledger during release.
 
 Relevant public references:
 

@@ -130,6 +130,10 @@
   "sourceEvidence": [
     {
       "type": "portable_redacted_telemetry_receipt",
+      "path": "docs/internal/experiments/agent-economy-trial-1-telemetry-2026-08-26.json"
+    },
+    {
+      "type": "portable_redacted_telemetry_receipt",
       "path": "docs/internal/experiments/agent-economy-trial-2-telemetry-2026-08-26.json"
     },
     {

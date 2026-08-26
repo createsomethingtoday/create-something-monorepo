@@ -15,6 +15,7 @@ on:
       - 'packages/io/src/lib/config/**'
       - 'packages/io/content/papers/**'
       - 'packages/io/content/experiments/**'
+      - 'docs/internal/experiments/**'
       - 'docs/policies/**'
       - 'STANDARDS.md'
       - 'scripts/io-paper-cycle-*.mjs'
