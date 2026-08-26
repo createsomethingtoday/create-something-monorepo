@@ -107,10 +107,24 @@ test('replaces a stale hyphenated category suffix when the title category change
   assert.doesNotMatch(html, /Shop - Retail &amp; E-Commerce - Technology/);
 });
 
-test('preserves a hyphenated template name when no known category suffix is present', () => {
+test('replaces a stale custom category suffix when the title category changes', () => {
   const html = renderToStaticMarkup(
     <TemplateDetailHero
-      templateName="Studio - Three Website Template"
+      templateName="Fleet - Logistics Website Template"
+      titleCategoryName="Technology"
+      categoryNames="Technology"
+      enableAnalytics={false}
+    />,
+  );
+
+  assert.match(html, /<h1 class="wfdt-title">Fleet - Technology Website Template<\/h1>/);
+  assert.doesNotMatch(html, /Fleet - Logistics - Technology/);
+});
+
+test('preserves a raw hyphenated template name', () => {
+  const html = renderToStaticMarkup(
+    <TemplateDetailHero
+      templateName="Studio - Three"
       categoryNames="Technology"
       enableAnalytics={false}
     />,
