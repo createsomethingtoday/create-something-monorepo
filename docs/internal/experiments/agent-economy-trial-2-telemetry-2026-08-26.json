@@ -1,0 +1,94 @@
+{
+  "schemaVersion": "create_something_agent_telemetry_receipt.v0.1",
+  "experimentId": "EXP-AGENT-ECONOMY-2026-08-26",
+  "trial": "three-slice-write-enabled",
+  "capturedAt": "2026-08-26",
+  "rateCard": {
+    "version": "codex-credit-rates-observed-2026-08-26",
+    "source": "https://learn.chatgpt.com/docs/pricing",
+    "unit": "credit-equivalent per 1000000 tokens",
+    "formula": "((inputTokens - cachedInputTokens) * uncachedInput + cachedInputTokens * cachedInput + outputTokens * output) / 1000000",
+    "models": {
+      "luna": { "uncachedInput": 5, "cachedInput": 0.5, "output": 30 },
+      "terra": { "uncachedInput": 50, "cachedInput": 5, "output": 300 },
+      "sol": { "uncachedInput": 100, "cachedInput": 10, "output": 500 }
+    }
+  },
+  "sessions": [
+    {
+      "receiptId": "01a03e98-8982-7c92-8d9b-5cf34d4d3ee0",
+      "cohort": "trial-2-luna-high-fanout",
+      "model": "luna",
+      "effort": "high",
+      "role": "debug",
+      "startedAt": "2026-08-26T15:02:59.556Z",
+      "completedAt": "2026-08-26T15:04:38.421Z",
+      "elapsedSeconds": 98.865,
+      "inputTokens": 384864,
+      "cachedInputTokens": 348160,
+      "outputTokens": 5762,
+      "reasoningOutputTokens": 2562,
+      "totalTokens": 390626
+    },
+    {
+      "receiptId": "01a03e98-a126-7fc2-96d2-1ab4b091c522",
+      "cohort": "trial-2-luna-high-fanout",
+      "model": "luna",
+      "effort": "high",
+      "role": "tests",
+      "startedAt": "2026-08-26T15:03:05.415Z",
+      "completedAt": "2026-08-26T15:04:12.505Z",
+      "elapsedSeconds": 67.09,
+      "inputTokens": 211564,
+      "cachedInputTokens": 196864,
+      "outputTokens": 3682,
+      "reasoningOutputTokens": 1414,
+      "totalTokens": 215246
+    },
+    {
+      "receiptId": "01a03e98-b590-7cb3-be57-519807076286",
+      "cohort": "trial-2-luna-high-fanout",
+      "model": "luna",
+      "effort": "high",
+      "role": "implementation",
+      "startedAt": "2026-08-26T15:03:10.641Z",
+      "completedAt": "2026-08-26T15:04:10.481Z",
+      "elapsedSeconds": 59.84,
+      "inputTokens": 250470,
+      "cachedInputTokens": 228352,
+      "outputTokens": 3340,
+      "reasoningOutputTokens": 1030,
+      "totalTokens": 253810
+    },
+    {
+      "receiptId": "01a03e9a-5b90-7f71-aa0f-754597d070b4",
+      "cohort": "trial-2-terra-high",
+      "model": "terra",
+      "effort": "high",
+      "role": "complete-suite",
+      "startedAt": "2026-08-26T15:04:58.725Z",
+      "completedAt": "2026-08-26T15:06:17.401Z",
+      "elapsedSeconds": 78.676,
+      "inputTokens": 387462,
+      "cachedInputTokens": 364544,
+      "outputTokens": 4329,
+      "reasoningOutputTokens": 1011,
+      "totalTokens": 391791
+    },
+    {
+      "receiptId": "01a03e9a-77c2-7b33-8e56-87efbd25e48a",
+      "cohort": "trial-2-sol-high",
+      "model": "sol",
+      "effort": "high",
+      "role": "complete-suite",
+      "startedAt": "2026-08-26T15:05:05.919Z",
+      "completedAt": "2026-08-26T15:07:15.182Z",
+      "elapsedSeconds": 129.263,
+      "inputTokens": 579630,
+      "cachedInputTokens": 547840,
+      "outputTokens": 6829,
+      "reasoningOutputTokens": 2849,
+      "totalTokens": 586459
+    }
+  ]
+}
