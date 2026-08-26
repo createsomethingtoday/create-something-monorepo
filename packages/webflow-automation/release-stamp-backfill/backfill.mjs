@@ -7,7 +7,9 @@
  * 📝Review Status sits in a notification-released state (📤Changes Requested
  * or ❌Rejected — never the "(No Notification)" variants, which are
  * deliberately silent) and which the release-evidence automation
- * (wflnGkIDBgGGpKru9) predates.
+ * (wflnGkIDBgGGpKru9) predates. Rounds the creator has already responded to
+ * (🔁Response to Review) get the releasedAt stamp only — see RESPONDED_STATUSES
+ * (CRE-1876).
  *
  * Idempotent: only unstamped rows match the filter, so reruns are safe and a
  * crash mid-run resumes by rerunning. Writes touch ONLY the two new fields —
@@ -31,6 +33,21 @@ const FIELD = {
 // Exact released statuses. "(No Notification)" variants are excluded on
 // purpose — the partnership shield and silent paths must stay unstamped.
 const RELEASED_STATUSES = ['📤Changes Requested', '❌Rejected'];
+
+// Responded rounds (CRE-1876): in the normal flow 🔁Response to Review is only
+// reached from a sent 📤Changes Requested email, so the round's release
+// provably happened — but the live feedback field may already hold an
+// unreleased redraft (save_draft_feedback writes it without a status change).
+// These rows get releasedAt ONLY, never a snapshot. Rows that passed through
+// 🔁 and were then moved on (🏃🏾In Review, ⏸️On Hold) leave no API-visible
+// release evidence and stay fail-closed until their next release flip stamps
+// them organically.
+const RESPONDED_STATUSES = ['🔁Response to Review'];
+
+const ELIGIBLE_STATUSES = [...RELEASED_STATUSES, ...RESPONDED_STATUSES];
+
+const statusClauses = (statuses) =>
+	statuses.map((status) => `{${FIELD.reviewStatus}} = '${status}'`).join(', ');
 
 const API = 'https://api.airtable.com/v0';
 const TOKEN = process.env.AIRTABLE_API_TOKEN;
@@ -73,10 +90,7 @@ async function airtableRequest(path, options = {}, attempt = 1) {
 }
 
 async function collectUnstampedReleasedVersions() {
-	const statusClauses = RELEASED_STATUSES.map(
-		(status) => `{${FIELD.reviewStatus}} = '${status}'`
-	).join(', ');
-	const formula = `AND(OR(${statusClauses}), {${FIELD.releasedAt}} = BLANK())`;
+	const formula = `AND(OR(${statusClauses(ELIGIBLE_STATUSES)}), {${FIELD.releasedAt}} = BLANK())`;
 
 	const rows = [];
 	let offset;
@@ -88,6 +102,7 @@ async function collectUnstampedReleasedVersions() {
 			pageSize: '100'
 		});
 		params.append('fields[]', FIELD.reviewFeedback);
+		params.append('fields[]', FIELD.reviewStatus);
 		if (offset) params.set('offset', offset);
 
 		const page = await airtableRequest(`/${BASE_ID}/${VERSIONS_TABLE_ID}?${params}`);
@@ -105,21 +120,20 @@ async function collectUnstampedReleasedVersions() {
  * Re-fetch a batch immediately before writing it. Live records change during
  * the multi-minute run — e.g. the partnership shield converting a transient
  * ❌Rejected into ❌Rejected (No Notification) — and a stale row must not be
- * stamped. Returns only rows STILL unstamped and STILL in a released status,
- * with fresh feedback for the snapshot.
+ * stamped. Returns only rows STILL unstamped and STILL in an eligible status,
+ * with fresh status + feedback so the write step can decide per-class whether
+ * a snapshot is trustworthy.
  */
 async function revalidateBatch(ids) {
 	const idClauses = ids.map((id) => `RECORD_ID() = '${id}'`).join(', ');
-	const statusClauses = RELEASED_STATUSES.map(
-		(status) => `{${FIELD.reviewStatus}} = '${status}'`
-	).join(', ');
 
 	const params = new URLSearchParams({
-		filterByFormula: `AND(OR(${idClauses}), OR(${statusClauses}), {${FIELD.releasedAt}} = BLANK())`,
+		filterByFormula: `AND(OR(${idClauses}), OR(${statusClauses(ELIGIBLE_STATUSES)}), {${FIELD.releasedAt}} = BLANK())`,
 		returnFieldsByFieldId: 'true',
 		pageSize: '100'
 	});
 	params.append('fields[]', FIELD.reviewFeedback);
+	params.append('fields[]', FIELD.reviewStatus);
 
 	const page = await airtableRequest(`/${BASE_ID}/${VERSIONS_TABLE_ID}?${params}`);
 	return page.records;
@@ -138,24 +152,33 @@ async function main() {
 	const stampedAt = new Date().toISOString();
 	let written = 0;
 	let snapshots = 0;
+	let respondedOnly = 0;
 	let skippedStale = 0;
 
 	for (let i = 0; i < rows.length; i += WRITE_BATCH) {
 		const chunkIds = rows.slice(i, i + WRITE_BATCH).map((row) => row.id);
 
 		// Time-of-check/time-of-use guard: only stamp rows that are still
-		// eligible RIGHT NOW, using their fresh feedback for the snapshot.
+		// eligible RIGHT NOW, classed by their fresh status.
 		const fresh = await revalidateBatch(chunkIds);
 		skippedStale += chunkIds.length - fresh.length;
 		await sleep(PACE_MS);
 		if (fresh.length === 0) continue;
 
 		const batch = fresh.map((row) => {
-			const feedback = row.fields[FIELD.reviewFeedback];
 			const fields = { [FIELD.releasedAt]: stampedAt };
-			if (typeof feedback === 'string' && feedback.trim()) {
-				fields[FIELD.releasedFeedbackSnapshot] = feedback;
-				snapshots += 1;
+			// Snapshot only rows whose CURRENT status guarantees the feedback
+			// field holds released text. Responded rounds (🔁) get the stamp
+			// alone — their feedback may be a redraft (CRE-1876).
+			const status = row.fields[FIELD.reviewStatus];
+			if (RELEASED_STATUSES.includes(status)) {
+				const feedback = row.fields[FIELD.reviewFeedback];
+				if (typeof feedback === 'string' && feedback.trim()) {
+					fields[FIELD.releasedFeedbackSnapshot] = feedback;
+					snapshots += 1;
+				}
+			} else {
+				respondedOnly += 1;
 			}
 			return { id: row.id, fields };
 		});
@@ -171,7 +194,7 @@ async function main() {
 	}
 
 	console.log(
-		`RECEIPT: stamped ${written} versions (${snapshots} with snapshots, ${skippedStale} skipped as stale) at ${stampedAt}.`
+		`RECEIPT: stamped ${written} versions (${snapshots} with snapshots, ${respondedOnly} responded-only, ${skippedStale} skipped as stale) at ${stampedAt}.`
 	);
 
 	await sweepSilencedStamps(stampedAt);
