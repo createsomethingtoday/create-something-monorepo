@@ -136,7 +136,8 @@ function formatTemplateTitle(name: string, category?: string): string {
     return /\bwebsite\s+template$/i.test(label) ? label : `${label} - Website Template`;
   }
 
-  const baseLabel = label.replace(/\s*-\s*website\s+template$/i, '').trim() || 'Template name';
+  const baseLabel =
+    label.replace(/(?:\s+-\s+|\s+)website\s+template$/i, '').trim() || 'Template name';
   return `${baseLabel} - ${categoryLabel} Website Template`;
 }
 

@@ -40,6 +40,19 @@ test('uses the first category name in the template title', () => {
   assert.match(html, /<h1 class="wfdt-title">Fleet - Transportation &amp; Automotive Website Template<\/h1>/);
 });
 
+test('replaces an unhyphenated generic title suffix when adding the category', () => {
+  const html = renderToStaticMarkup(
+    <TemplateDetailHero
+      templateName="Fleet Website Template"
+      categoryNames="Transportation & Automotive, Technology"
+      enableAnalytics={false}
+    />,
+  );
+
+  assert.match(html, /<h1 class="wfdt-title">Fleet - Transportation &amp; Automotive Website Template<\/h1>/);
+  assert.doesNotMatch(html, /Fleet Website Template - Transportation/);
+});
+
 test('uses an explicit title category name instead of the breadcrumb categories', () => {
   const html = renderToStaticMarkup(
     <TemplateDetailHero
