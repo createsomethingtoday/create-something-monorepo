@@ -122,7 +122,7 @@
     !asset.rejectionFeedback &&
     !asset.rejectionFeedbackHtml &&
     isReviewFeedbackReleased(asset.latestReviewStatus)
-      ? asset.latestReviewFeedback
+      ? data.releasedFeedbackSnapshot || asset.latestReviewFeedback
       : undefined
   );
 
@@ -694,7 +694,7 @@
           class="tab-content"
         >
           <div class="timeline-tab-stack">
-            <TimelineCard {asset} />
+            <TimelineCard {asset} releasedFeedback={data.releasedFeedbackSnapshot} />
             {#if data.requiredFixes && data.requiredFixes.length > 0}
               <RequiredFixesCard items={data.requiredFixes} />
             {/if}

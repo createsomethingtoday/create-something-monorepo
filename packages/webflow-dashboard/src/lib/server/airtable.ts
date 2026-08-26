@@ -1,7 +1,10 @@
 import Airtable from 'airtable';
 import { randomBytes, createHash } from 'node:crypto';
 import { isLongDescriptionOnlyAssetVersionChange } from '../utils/asset-version-changes';
-import { hasReviewRoundBeenReleased } from '../utils/review-status';
+import {
+	hasReviewRoundBeenReleased,
+	isReviewRoundClosed
+} from '../utils/review-status';
 
 // Airtable table IDs
 const TABLES = {
@@ -38,6 +41,15 @@ const ASSETS_PARTNERSHIP_APP_FIELD_ID = 'fldzZ2Zo8a7vtIMT3';
 // Version Number and 📝Review Status on 🖌️Asset Versions.
 const ASSET_VERSIONS_VERSION_NUMBER_FIELD_ID = 'fldn2ImbgwKfCdWWA';
 const ASSET_VERSIONS_REVIEW_STATUS_FIELD_ID = 'flde8Huk5NRIdm2wZ';
+
+// Durable release evidence on 🖌️Asset Versions, written by the
+// "🌐Release evidence — stamp released feedback" automation (CRE-1874):
+// 📅Feedback Released At + 🌐Released Feedback (Snapshot).
+const ASSET_VERSIONS_RELEASED_AT_FIELD_ID = 'flddzMIDaAO9TSbKT';
+const ASSET_VERSIONS_RELEASED_FEEDBACK_FIELD_ID = 'fldd1FbAW3sVFw0UU';
+
+// Asset-record-ID rollup on 🖌️Asset Versions (filterable by {fldId} formula).
+const ASSET_VERSIONS_ASSET_RECORD_ID_FIELD_ID = 'fldknoYakli2sqznT';
 
 // Airtable field IDs for authentication
 const FIELDS = {
@@ -931,6 +943,7 @@ export function mapRequiredFixExceptionRecord(
 export interface RequiredFixVersionInfo {
 	versionNumber?: number;
 	reviewStatus?: string;
+	releasedAt?: string;
 }
 
 /**
@@ -939,6 +952,14 @@ export interface RequiredFixVersionInfo {
  * been released to the creator — an item from a round still on hold or in a
  * silent state must not ride a later round's release. Fail-closed: items
  * without a resolvable, released version are dropped.
+ *
+ * Release evidence, in preference order:
+ * 1. 📅Feedback Released At stamp — durable, survives every later status
+ *    transition (written by the release-evidence automation, CRE-1874).
+ * 2. Current-status fallback (hasReviewRoundBeenReleased) — for rounds
+ *    released before the automation existed.
+ * A closed round (approved/archived) always hides its items: they are
+ * resolved history, not open required fixes.
  */
 export function gateRequiredFixesByVersion(
 	items: RequiredFixExceptionItem[],
@@ -949,7 +970,12 @@ export function gateRequiredFixesByVersion(
 	for (const item of items) {
 		if (!item.versionRecordId) continue;
 		const version = versions.get(item.versionRecordId);
-		if (!version || !hasReviewRoundBeenReleased(version.reviewStatus)) continue;
+		if (!version) continue;
+		if (isReviewRoundClosed(version.reviewStatus)) continue;
+
+		const released =
+			Boolean(version.releasedAt) || hasReviewRoundBeenReleased(version.reviewStatus);
+		if (!released) continue;
 
 		gated.push(
 			Number.isFinite(version.versionNumber)
@@ -1760,7 +1786,8 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 								.join(', ')})`,
 							fields: [
 								ASSET_VERSIONS_VERSION_NUMBER_FIELD_ID,
-								ASSET_VERSIONS_REVIEW_STATUS_FIELD_ID
+								ASSET_VERSIONS_REVIEW_STATUS_FIELD_ID,
+								ASSET_VERSIONS_RELEASED_AT_FIELD_ID
 							],
 							returnFieldsByFieldId: true
 						})
@@ -1769,7 +1796,8 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					for (const row of versionRows) {
 						versions.set(row.id, {
 							versionNumber: Number(row.fields[ASSET_VERSIONS_VERSION_NUMBER_FIELD_ID]),
-							reviewStatus: firstString(row.fields[ASSET_VERSIONS_REVIEW_STATUS_FIELD_ID])
+							reviewStatus: firstString(row.fields[ASSET_VERSIONS_REVIEW_STATUS_FIELD_ID]),
+							releasedAt: firstString(row.fields[ASSET_VERSIONS_RELEASED_AT_FIELD_ID])
 						});
 					}
 				}
@@ -1777,6 +1805,52 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				return gateRequiredFixesByVersion(items, versions);
 			} catch (err) {
 				console.error('[Airtable] getPartnerRequiredFixes failed:', {
+					assetId,
+					statusCode: (err as { statusCode?: number })?.statusCode
+				});
+				return null;
+			}
+		},
+
+		/**
+		 * The released-feedback snapshot for the asset's CURRENT review round.
+		 *
+		 * Looks at the highest-numbered version that has a review status (the
+		 * round that supplies the asset-level latest-review lookups; rows
+		 * without one are dashboard Meta Updates) and returns its 🌐Released
+		 * Feedback (Snapshot) only when THAT version carries a 📅Feedback
+		 * Released At stamp — never an older round's snapshot, which would
+		 * replace the current feedback with the wrong round's text. Null when
+		 * the current round is unstamped (pre-automation history) or has no
+		 * snapshot; callers fall back to the live lookup under the status gate.
+		 */
+		async getReleasedFeedbackSnapshot(assetId: string): Promise<string | null> {
+			if (!/^rec[A-Za-z0-9]{14}$/.test(assetId)) return null;
+
+			try {
+				const rows = await base(TABLES.ASSET_VERSIONS)
+					.select({
+						filterByFormula: `AND({${ASSET_VERSIONS_ASSET_RECORD_ID_FIELD_ID}} = ${airtableFormulaValue(
+							assetId
+						)}, {${ASSET_VERSIONS_REVIEW_STATUS_FIELD_ID}} != '')`,
+						fields: [
+							ASSET_VERSIONS_RELEASED_AT_FIELD_ID,
+							ASSET_VERSIONS_RELEASED_FEEDBACK_FIELD_ID,
+							ASSET_VERSIONS_VERSION_NUMBER_FIELD_ID
+						],
+						returnFieldsByFieldId: true,
+						sort: [{ field: ASSET_VERSIONS_VERSION_NUMBER_FIELD_ID, direction: 'desc' }],
+						maxRecords: 1
+					})
+					.firstPage();
+
+				const currentRound = rows[0];
+				if (!currentRound) return null;
+				if (!firstString(currentRound.fields[ASSET_VERSIONS_RELEASED_AT_FIELD_ID])) return null;
+
+				return firstString(currentRound.fields[ASSET_VERSIONS_RELEASED_FEEDBACK_FIELD_ID]) ?? null;
+			} catch (err) {
+				console.error('[Airtable] getReleasedFeedbackSnapshot failed:', {
 					assetId,
 					statusCode: (err as { statusCode?: number })?.statusCode
 				});

@@ -23,9 +23,16 @@
 
 	interface Props {
 		asset: Asset;
+		/**
+		 * Release-time snapshot of the feedback (🌐Released Feedback) — the
+		 * exact text sent to the creator. Preferred over the live lookup,
+		 * which can be redrafted after release. Null for rounds released
+		 * before the release-evidence automation existed.
+		 */
+		releasedFeedback?: string | null;
 	}
 
-	let { asset }: Props = $props();
+	let { asset, releasedFeedback = null }: Props = $props();
 
 	// Format date for display
 	function formatDate(dateStr?: string): string {
@@ -108,8 +115,12 @@
 	// Creator-safe review presentation. Raw statuses include internal pipeline
 	// states; feedback renders only once the review team has released it.
 	const reviewStatusLabel = $derived(creatorReviewStatusLabel(asset.latestReviewStatus));
+	// Prefer the release-time snapshot over the live (redraftable) lookup —
+	// the snapshot also survives the live field being cleared after release.
+	const feedbackText = $derived(releasedFeedback || asset.latestReviewFeedback);
+
 	const showReviewFeedback = $derived(
-		isReviewFeedbackReleased(asset.latestReviewStatus) && Boolean(asset.latestReviewFeedback)
+		isReviewFeedbackReleased(asset.latestReviewStatus) && Boolean(feedbackText)
 	);
 
 	// App-review rejections write the version's review feedback, not the legacy
@@ -120,7 +131,7 @@
 		!asset.rejectionFeedback &&
 		!asset.rejectionFeedbackHtml &&
 		showReviewFeedback
-			? asset.latestReviewFeedback
+			? feedbackText
 			: undefined
 	);
 
@@ -265,7 +276,7 @@
 					{#if showReviewFeedback}
 						<div class="review-feedback">
 							<span class="review-label">Feedback:</span>
-							<p class="review-feedback-text">{asset.latestReviewFeedback}</p>
+							<p class="review-feedback-text">{feedbackText}</p>
 						</div>
 					{/if}
 				</div>
