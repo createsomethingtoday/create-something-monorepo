@@ -136,8 +136,10 @@ function formatTemplateTitle(name: string, category?: string): string {
     return /\bwebsite\s+template$/i.test(label) ? label : `${label} - Website Template`;
   }
 
+  const escapedCategoryLabel = categoryLabel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const baseLabel =
     label
+      .replace(new RegExp(`\\s+-\\s+${escapedCategoryLabel}\\s+website\\s+template$`, 'i'), '')
       .replace(/\s+-\s+[^-]+?\s+website\s+template$/i, '')
       .replace(/(?:\s+-\s+|\s+)website\s+template$/i, '')
       .trim() || 'Template name';

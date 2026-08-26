@@ -66,6 +66,19 @@ test('replaces an existing category-qualified title suffix when rebuilding the t
   assert.doesNotMatch(html, /Fleet - Transportation - Transportation/);
 });
 
+test('replaces a hyphenated category-qualified title suffix when rebuilding the title', () => {
+  const html = renderToStaticMarkup(
+    <TemplateDetailHero
+      templateName="Shop - Retail & E-Commerce Website Template"
+      categoryNames="Retail & E-Commerce, Technology"
+      enableAnalytics={false}
+    />,
+  );
+
+  assert.match(html, /<h1 class="wfdt-title">Shop - Retail &amp; E-Commerce Website Template<\/h1>/);
+  assert.doesNotMatch(html, /Shop - Retail &amp; E-Commerce - Retail/);
+});
+
 test('replaces a stale category-qualified title suffix when the title category changes', () => {
   const html = renderToStaticMarkup(
     <TemplateDetailHero
