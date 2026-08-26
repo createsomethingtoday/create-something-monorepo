@@ -4,6 +4,8 @@ export const TABLE_IDS = {
   assets: 'tblRwzpWoLgE9MrUm',
   assetVersions: 'tblHxZ2hgSFLZxsZu',
   assetReleases: 'tblhLAXcJiXrkZxUL',
+  assetVotingState: 'tblsH0xbgwU0Befs5',
+  reviewerVotes: 'tbl8RqpvYksAls2I6',
 } as const;
 
 export const CONFIRMED_RELEASE_FIELDS = {
@@ -58,6 +60,79 @@ export const METRICS_ASSET_FIELD_IDS = {
   submittedDate: 'fldeE2tArgyRpGuqs',
   publishedDate: 'fld4anS2bYjmdbKEG',
   decisionDate: 'fldcmd1g1TwHXkHla',
+} as const;
+
+/**
+ * Featured-batch curation fields on 👛Assets. Names verified against the live
+ * base 2026-08-26; the candidate definition mirrors the ⭐Featured templates
+ * review interface's "Remaining templates eligible" stat (verified live:
+ * monthsBack=1 → 39 templates / 33 creators).
+ *
+ * Write safety: '⭐Reviewer Pick Reason (featured templates)' is quoted
+ * VERBATIM in the creator's featured email and rendered publicly on the
+ * marketplace listing. Agent-authored copy stages into the (AI draft) field;
+ * promotion into the live field requires an explicit creator-safe
+ * confirmation. 'ℹ️Is Featured?' arms the creator-notification worker for the
+ * upcoming period — it is behind its own confirmation.
+ */
+export const FEATURED_ASSET_FIELDS = {
+  isEligibleForUpcomingFeatured: 'Is eligible for upcoming featured templates?',
+  isFeatured: 'ℹ️Is Featured? (🖥️, 🏗️only)',
+  isFeaturedPeriod: '📅Is Featured Period',
+  featuredNotifiedForPeriod: '🔔Featured Notified For Period',
+  reviewerPick: 'Reviewer pick (featured templates)',
+  reviewerPickReason: '⭐Reviewer Pick Reason (featured templates)',
+  reviewerPickReasonAiDraft: '⭐Reviewer Pick Reason (AI draft)',
+  creatorLink: '🎨Creator',
+  creatorName: '🎨Creator Name',
+  creatorTimesFeatured: 'How many times the creator has been featured',
+  creatorTemplatesInUpcomingBatch: 'Templates featured in upcoming batch (from 🎨Creator)',
+  votingStateLink: '🏗️Voting State',
+} as const;
+
+/** Field IDs matching FEATURED_ASSET_FIELDS, kept so display-name drift is detectable. Writes use these IDs. */
+export const FEATURED_ASSET_FIELD_IDS = {
+  isEligibleForUpcomingFeatured: 'fldvndrApFcmYPQds',
+  isFeatured: 'fldtkCY5ZQxiEzJcv',
+  isFeaturedPeriod: 'fldeDgWr09HIqDFcX',
+  featuredNotifiedForPeriod: 'fld9qASBS2pcnXadA',
+  reviewerPick: 'fldTgII7p9ZSSK5uW',
+  reviewerPickReason: 'fld3w4yqQPzqah0LE',
+  reviewerPickReasonAiDraft: 'fldfrWEBPP8DEU1n5',
+  creatorLink: 'fldGDWo2VfnTbSUiL',
+  creatorName: 'fldbkU8CKmDPtf83d',
+  creatorTimesFeatured: 'fld2XFywmXYpSY1Le',
+  creatorTemplatesInUpcomingBatch: 'fld4ZEgSBDzuLMvZf',
+  votingStateLink: 'flderXfksiA19t4l4',
+} as const;
+
+/** 🏗️Asset Voting State — per-asset vote tallies for featured curation. */
+export const FEATURED_VOTING_STATE_FIELDS = {
+  name: 'Name',
+  assetLink: 'Asset',
+  votesLink: '🗳️Votes',
+  upCount: '👍 count',
+  downCount: '👎 count',
+  netVotes: 'Net votes',
+  inQualifiedPool: 'In qualified pool?',
+} as const;
+
+/**
+ * 🗳️Reviewer Votes — one record per reviewer per asset. 'Note' is candid
+ * internal rationale (explicitly encouraged for 👎/contested picks) and must
+ * NEVER reach creators or public copy.
+ */
+export const FEATURED_VOTE_FIELDS = {
+  votingStateLink: 'Asset Voting State',
+  reviewer: 'Reviewer',
+  vote: 'Vote',
+  note: 'Note',
+} as const;
+
+export const FEATURED_VOTE_OPTIONS = {
+  up: '👍 Up',
+  down: '👎 Down',
+  comment: '💬 Comment only',
 } as const;
 
 export const CONFIRMED_VERSION_FIELDS = {
@@ -212,6 +287,13 @@ export const TEMPLATE_REVIEW_FIELD_MAP = {
   metricsFieldIds: {
     assets: METRICS_ASSET_FIELD_IDS,
   },
+  featured: {
+    assets: FEATURED_ASSET_FIELDS,
+    assetFieldIds: FEATURED_ASSET_FIELD_IDS,
+    votingState: FEATURED_VOTING_STATE_FIELDS,
+    votes: FEATURED_VOTE_FIELDS,
+    voteOptions: FEATURED_VOTE_OPTIONS,
+  },
   hotspotGroups: HOTSPOT_GROUPS,
   statusOptions: {
     reviewStatus: REVIEW_STATUS_OPTIONS,
@@ -261,6 +343,20 @@ export const TEMPLATE_REVIEW_FIELD_MAP = {
       'release_record_id',
       'reject_reason',
       'rejection_feedback',
+    ],
+    featuredPick: [
+      'reviewer_pick',
+      'pick_reason_draft',
+      'pick_reason',
+      'confirm_creator_safe',
+    ],
+    featuredVote: [
+      'vote',
+      'note',
+    ],
+    featuredFlag: [
+      'is_featured',
+      'confirm_creator_notification',
     ],
   },
 } as const;

@@ -67,6 +67,7 @@ Every review follows these phases:
 | \`template_review_list_queue\` | Templates ready for review, sorted by date | Find new work |
 | \`template_review_my_queue\` | Your assigned active reviews, compact by default | Resume work |
 | \`template_review_search_versions\` | Find specific version cycles by name | Track re-submissions |
+| \`template_review_featured_candidates\` | Eligible pool for the upcoming Featured batch (Exceptional, not yet featured, current + past month) | Monthly featured selection |
 
 ## Phase 3 — Inspect the Submission
 
@@ -191,6 +192,32 @@ Work the publishing checklist per item with \`set_checklist_items\`. Only pass
 \`mark_all_publishing_items: true\` to \`complete_publishing\` when every publishing
 step genuinely was completed — the checklist is audit evidence, not a formality.
 
+## Featured Batch (monthly selection)
+
+Separate from per-submission review: each month the team picks the upcoming
+Featured batch from Exceptional templates. Full loop, all from the MCP:
+
+| Tool | What it does |
+|------|-------------|
+| \`template_review_featured_candidates\` | Eligible pool (Exceptional, not yet featured, current + past month), with pick/reason/draft state and per-creator counts |
+| \`template_review_set_featured_pick\` | Star ⭐Reviewer pick; stage reason text in \`pick_reason_draft\`; publish live via \`pick_reason\` + \`confirm_creator_safe: true\` |
+| \`template_review_cast_featured_vote\` | Up/down/comment vote per reviewer (upserts — no double counting); \`note\` is internal-only |
+| \`template_review_set_featured_flag\` | Batch finalization: checks ℹ️Is Featured? — arms the creator email for next month (\`confirm_creator_notification: true\` required) |
+
+Sequence for a reviewer: \`featured_candidates\` → open each \`websiteUrl\` to judge
+the live design → \`set_featured_pick\` with \`reviewer_pick: true\` and a drafted
+reason in \`pick_reason_draft\` → the reviewer reads the exact draft text → resend
+with \`pick_reason\` + \`confirm_creator_safe: true\` → \`cast_featured_vote\` on other
+reviewers' picks. Batch finalization (\`set_featured_flag\`) is the coordinator's
+step, per asset, after votes settle.
+
+Hard rules for featured copy: the live Pick Reason is quoted VERBATIM in the
+creator's email and rendered publicly on the listing — third-person marketplace
+prose, ~350–450 chars, no internal shorthand ("Main quality signal: …", "made by
+a newer creator"). Vote notes are the place for candid internal rationale and
+must never be quoted to creators. Whalesync does not sync featured fields to the
+marketplace CMS — the CMS backfill after finalization is a separate manual step.
+
 ## Quick Reference Checklist
 
 1. \`template_review_health\` — confirm connected
@@ -205,7 +232,7 @@ step genuinely was completed — the checklist is audit evidence, not a formalit
 
 ## Rules
 
-1. You must call \`assign_self\` before any write action
+1. You must call \`assign_self\` before any write action on a version under review (featured-batch writes are asset-level curation with their own confirmation gates and do not require version assignment)
 2. You cannot assign yourself if another reviewer is already assigned
 3. \`canPublish\` is only true after approval
 4. The analyzer is a tool, not a judge — use human judgment for design quality

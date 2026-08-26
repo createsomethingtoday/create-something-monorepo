@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { AirtableClient } from '../src/airtable.js';
-import { CONFIRMED_ASSET_FIELDS, CONFIRMED_VERSION_FIELDS, CONFIRMED_WRITE_FIELD_IDS, METRICS_ASSET_FIELD_IDS, TABLE_IDS } from '../src/schema.js';
+import { CONFIRMED_ASSET_FIELDS, CONFIRMED_VERSION_FIELDS, CONFIRMED_WRITE_FIELD_IDS, FEATURED_ASSET_FIELDS, FEATURED_ASSET_FIELD_IDS, METRICS_ASSET_FIELD_IDS, TABLE_IDS } from '../src/schema.js';
 
 const ericReviewer = {
   id: 'usr_eric',
@@ -1443,4 +1443,264 @@ test('updateVersionReview allows autolinks and internal agent feedback with raw 
   await client.updateVersionReview('rec_version_safe_feedback', {
     agent_review_feedback: 'Found <script type="application/ld+json"> on all 18 pages via sandbox crawl.',
   });
+});
+
+test('listFeaturedCandidates filters to the remaining-eligible pool and summarizes it', async () => {
+  const capturedFormulas: string[] = [];
+  const now = new Date();
+  const pastMonthDate = new Date(now.getTime() - 40 * 24 * 60 * 60 * 1000).toISOString();
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input) => {
+      const url = new URL(String(input));
+      if (!url.pathname.includes(`/${TABLE_IDS.assets}`)) {
+        throw new Error(`Unexpected fetch: ${url.toString()}`);
+      }
+      capturedFormulas.push(url.searchParams.get('filterByFormula') ?? '');
+      return jsonResponse({
+        records: [
+          {
+            id: 'rec_candidate_past',
+            createdTime: pastMonthDate,
+            fields: {
+              [CONFIRMED_ASSET_FIELDS.name]: 'Alderas',
+              [CONFIRMED_ASSET_FIELDS.websiteUrl]: 'https://alderas.webflow.io',
+              [CONFIRMED_ASSET_FIELDS.submittedDate]: pastMonthDate,
+              [CONFIRMED_ASSET_FIELDS.qualityScore]: ['🥇Exceptional'],
+              [FEATURED_ASSET_FIELDS.creatorLink]: ['rec_creator_radiant'],
+              [FEATURED_ASSET_FIELDS.creatorName]: 'Radiant Templates',
+              [FEATURED_ASSET_FIELDS.creatorTimesFeatured]: [22],
+              [FEATURED_ASSET_FIELDS.reviewerPick]: true,
+              [FEATURED_ASSET_FIELDS.reviewerPickReason]: 'Strong layout system for agency sites.',
+            },
+          },
+          {
+            id: 'rec_candidate_current',
+            createdTime: now.toISOString(),
+            fields: {
+              [CONFIRMED_ASSET_FIELDS.name]: 'Brokerwise',
+              [CONFIRMED_ASSET_FIELDS.submittedDate]: now.toISOString(),
+              [CONFIRMED_ASSET_FIELDS.qualityScore]: ['🥇Exceptional'],
+              [FEATURED_ASSET_FIELDS.creatorLink]: ['rec_creator_grabui'],
+              [FEATURED_ASSET_FIELDS.creatorName]: 'Grabui Library',
+              [FEATURED_ASSET_FIELDS.creatorTimesFeatured]: [4],
+            },
+          },
+        ],
+      });
+    },
+  });
+
+  const result = await client.listFeaturedCandidates();
+
+  const formula = capturedFormulas[0] ?? '';
+  assert.ok(formula.includes(`{${FEATURED_ASSET_FIELDS.isEligibleForUpcomingFeatured}} = 1`));
+  assert.ok(formula.includes(`DATETIME_DIFF(TODAY(), {${CONFIRMED_ASSET_FIELDS.submittedDate}}, 'months') <= 1`));
+  assert.ok(formula.includes(`NOT({${FEATURED_ASSET_FIELDS.isFeatured}})`));
+
+  assert.equal(result.monthsBackApplied, 1);
+  assert.equal(result.includeAlreadyFeaturedApplied, false);
+  assert.equal(result.summary.templatesAvailable, 2);
+  assert.equal(result.summary.creatorsAvailable, 2);
+  assert.equal(result.summary.currentMonthCount, 1);
+  assert.equal(result.summary.pastMonthsCount, 1);
+  assert.equal(result.summary.reviewerPicksMade, 1);
+  assert.equal(result.summary.pickReasonsWritten, 1);
+
+  // Current-month submissions sort ahead of past-month fallback candidates.
+  assert.equal(result.candidates[0]?.templateName, 'Brokerwise');
+  assert.equal(result.candidates[0]?.monthsSinceSubmission, 0);
+  assert.equal(result.candidates[1]?.templateName, 'Alderas');
+  assert.equal(result.candidates[1]?.monthsSinceSubmission, 1);
+  assert.equal(result.candidates[1]?.creatorTimesFeatured, 22);
+  assert.equal(result.candidates[1]?.reviewerPick, true);
+  assert.equal(result.candidates[0]?.reviewerPick, false);
+});
+
+test('listFeaturedCandidates keeps already-featured templates only when asked', async () => {
+  const capturedFormulas: string[] = [];
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input) => {
+      const url = new URL(String(input));
+      capturedFormulas.push(url.searchParams.get('filterByFormula') ?? '');
+      return jsonResponse({ records: [] });
+    },
+  });
+
+  await client.listFeaturedCandidates({ includeAlreadyFeatured: true, monthsBack: 0 });
+
+  const formula = capturedFormulas[0] ?? '';
+  assert.ok(!formula.includes(`NOT({${FEATURED_ASSET_FIELDS.isFeatured}})`));
+  assert.ok(formula.includes(`DATETIME_DIFF(TODAY(), {${CONFIRMED_ASSET_FIELDS.submittedDate}}, 'months') <= 0`));
+});
+
+test('setFeaturedPick stages drafts by field ID and surfaces style warnings', async () => {
+  const patches: Array<{ path: string; body: Record<string, unknown> }> = [];
+  const assetFields = {
+    [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+    [CONFIRMED_ASSET_FIELDS.name]: 'Brokerwise',
+    [FEATURED_ASSET_FIELDS.isEligibleForUpcomingFeatured]: 1,
+  };
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input, init) => {
+      const url = new URL(String(input));
+      if (init?.method === 'PATCH') {
+        patches.push({ path: url.pathname, body: JSON.parse(String(init.body)) as Record<string, unknown> });
+        return jsonResponse({
+          id: 'rec_asset_pick',
+          fields: { ...assetFields, [FEATURED_ASSET_FIELDS.reviewerPick]: true, [FEATURED_ASSET_FIELDS.reviewerPickReasonAiDraft]: 'Short draft.' },
+        });
+      }
+      return jsonResponse({ id: 'rec_asset_pick', fields: assetFields });
+    },
+  });
+
+  const result = await client.setFeaturedPick('rec_asset_pick', {
+    reviewer_pick: true,
+    pick_reason_draft: 'Short draft.',
+  });
+
+  assert.equal(patches.length, 1);
+  const patchedFields = (patches[0]?.body as { fields: Record<string, unknown> }).fields;
+  assert.deepEqual(Object.keys(patchedFields).sort(), [FEATURED_ASSET_FIELD_IDS.reviewerPick, FEATURED_ASSET_FIELD_IDS.reviewerPickReasonAiDraft].sort());
+  assert.equal(result.candidate.reviewerPick, true);
+  assert.ok(result.warnings.some((warning) => warning.startsWith('pick_reason_short')));
+  assert.ok(result.warnings.some((warning) => warning.startsWith('pick_without_live_reason')));
+});
+
+test('setFeaturedPick rejects raw HTML in the live creator-facing reason', async () => {
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async () => {
+      throw new Error('No fetch expected — validation happens before any request.');
+    },
+  });
+
+  await assert.rejects(
+    client.setFeaturedPick('rec_asset', { pick_reason: 'Uses <script type="application/ld+json"> markup nicely.' }),
+    (error: Error & { code?: string }) => error.code === 'RAW_HTML_IN_PICK_REASON',
+  );
+});
+
+test('castFeaturedVote creates voting state when missing and upserts the reviewer vote', async () => {
+  const creates: Array<{ path: string; body: Record<string, unknown> }> = [];
+  const assetFields = {
+    [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+    [CONFIRMED_ASSET_FIELDS.name]: 'Alderas',
+  };
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input, init) => {
+      const url = new URL(String(input));
+      if (init?.method === 'POST') {
+        const body = JSON.parse(String(init.body)) as Record<string, unknown>;
+        creates.push({ path: url.pathname, body });
+        if (url.pathname.endsWith(`/${TABLE_IDS.assetVotingState}`)) {
+          return jsonResponse({ id: 'rec_state_new', fields: body.fields as Record<string, unknown> });
+        }
+        return jsonResponse({ id: 'rec_vote_new', fields: body.fields as Record<string, unknown> });
+      }
+      if (url.pathname.endsWith('/rec_asset_vote')) {
+        return jsonResponse({ id: 'rec_asset_vote', fields: assetFields });
+      }
+      if (url.pathname.endsWith('/rec_state_new')) {
+        return jsonResponse({
+          id: 'rec_state_new',
+          fields: { '👍 count': 1, '👎 count': 0, 'Net votes': 1, 'In qualified pool?': 1 },
+        });
+      }
+      throw new Error(`Unexpected fetch: ${url.toString()}`);
+    },
+  });
+
+  const result = await client.castFeaturedVote('rec_asset_vote', { vote: 'up', note: 'Strong pick.' }, ericReviewer);
+
+  assert.equal(creates.length, 2);
+  const voteFields = (creates[1]?.body as { fields: Record<string, unknown> }).fields;
+  assert.deepEqual(voteFields['Reviewer'], { id: ericReviewer.id });
+  assert.equal(voteFields['Vote'], '👍 Up');
+  assert.equal(result.action, 'created');
+  assert.equal(result.votingStateId, 'rec_state_new');
+  assert.deepEqual(result.tallies, { up: 1, down: 0, net: 1, inQualifiedPool: true });
+});
+
+test('castFeaturedVote updates an existing vote instead of double-counting', async () => {
+  const patches: string[] = [];
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input, init) => {
+      const url = new URL(String(input));
+      if (init?.method === 'PATCH') {
+        patches.push(url.pathname);
+        return jsonResponse({ id: 'rec_vote_existing', fields: { Vote: '👎 Down', Note: 'Changed my mind.' } });
+      }
+      if (init?.method === 'POST') {
+        throw new Error('No create expected when the reviewer already voted.');
+      }
+      if (url.pathname.endsWith('/rec_asset_vote2')) {
+        return jsonResponse({
+          id: 'rec_asset_vote2',
+          fields: {
+            [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+            [CONFIRMED_ASSET_FIELDS.name]: 'Nevio',
+            ['🏗️Voting State']: ['rec_state_existing'],
+          },
+        });
+      }
+      if (url.pathname.endsWith('/rec_state_existing')) {
+        return jsonResponse({
+          id: 'rec_state_existing',
+          fields: { '🗳️Votes': ['rec_vote_existing'], '👍 count': 0, '👎 count': 1, 'Net votes': -1, 'In qualified pool?': 0 },
+        });
+      }
+      if (url.pathname.endsWith(`/${TABLE_IDS.reviewerVotes}`)) {
+        return jsonResponse({
+          records: [{ id: 'rec_vote_existing', fields: { Reviewer: { id: ericReviewer.id }, Vote: '👍 Up' } }],
+        });
+      }
+      throw new Error(`Unexpected fetch: ${url.toString()}`);
+    },
+  });
+
+  const result = await client.castFeaturedVote('rec_asset_vote2', { vote: 'down', note: 'Changed my mind.' }, ericReviewer);
+
+  assert.deepEqual(patches, [`/v0/appMoIgXMTTTNIc3p/${TABLE_IDS.reviewerVotes}/rec_vote_existing`]);
+  assert.equal(result.action, 'updated');
+  assert.equal(result.vote, '👎 Down');
+});
+
+test('setFeaturedFlag writes the checkbox by field ID and reports the armed period', async () => {
+  const patches: Array<Record<string, unknown>> = [];
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input, init) => {
+      const url = new URL(String(input));
+      if (init?.method === 'PATCH') {
+        patches.push(JSON.parse(String(init.body)) as Record<string, unknown>);
+        return jsonResponse({
+          id: 'rec_asset_flag',
+          fields: {
+            [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+            [CONFIRMED_ASSET_FIELDS.name]: 'Brokerwise',
+            [FEATURED_ASSET_FIELDS.isFeatured]: true,
+            [FEATURED_ASSET_FIELDS.isFeaturedPeriod]: '2026-09-01',
+            [FEATURED_ASSET_FIELDS.isEligibleForUpcomingFeatured]: 1,
+          },
+        });
+      }
+      return jsonResponse({
+        id: 'rec_asset_flag',
+        fields: { [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️', [CONFIRMED_ASSET_FIELDS.name]: 'Brokerwise' },
+      });
+    },
+  });
+
+  const result = await client.setFeaturedFlag('rec_asset_flag', true);
+
+  assert.deepEqual((patches[0] as { fields: Record<string, unknown> }).fields, { [FEATURED_ASSET_FIELD_IDS.isFeatured]: true });
+  assert.equal(result.isFeatured, true);
+  assert.equal(result.featuredPeriod, '2026-09-01');
+  assert.ok(result.warnings.some((warning) => warning.startsWith('missing_pick_reason')));
 });

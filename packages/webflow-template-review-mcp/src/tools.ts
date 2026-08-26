@@ -226,6 +226,11 @@ export const WRITE_TOOL_NAMES: ReadonlySet<string> = new Set([
   'template_review_update_version_review',
   'template_review_approve_version',
   'template_review_reject_version',
+  // Featured-batch curation writes: pick star + reason, votes, and the batch
+  // finalization flag that arms the creator-notification worker.
+  'template_review_set_featured_pick',
+  'template_review_cast_featured_vote',
+  'template_review_set_featured_flag',
   // Execute-script generators write nothing server-side, but the scripts they
   // hand out submit to Webflow Admin when the reviewer runs them. Read-only
   // sessions must not receive them.
@@ -619,6 +624,114 @@ export function registerTools(
           limitApplied: effectiveLimit,
           feedbackApplied: includeFeedback ? 'preview_truncated' : 'omitted',
           items: queue.items.map((item) => compactQueueItem(item, includeFeedback)),
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_featured_candidates',
+    'List templates eligible for the upcoming monthly Featured batch: Exceptional quality, not already featured, submitted within the current month (months_back=0) or up to months_back months earlier (default 1). Mirrors the "Remaining templates eligible" definition on the ⭐Featured templates review Airtable interface. Companion writes: template_review_set_featured_pick (star + reason), template_review_cast_featured_vote, template_review_set_featured_flag (batch finalization).',
+    {
+      months_back: z.number().int().min(0).max(3).optional(),
+      include_already_featured: z.boolean().optional(),
+      limit: z.number().int().min(1).max(500).optional(),
+    },
+    async ({ months_back, include_already_featured, limit }) => {
+      try {
+        const result = await getClient().listFeaturedCandidates({
+          monthsBack: months_back,
+          includeAlreadyFeatured: include_already_featured,
+          limit,
+        });
+        return asSuccess(result);
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_set_featured_pick',
+    'Star/unstar a template as a ⭐Reviewer pick for the upcoming Featured batch and write its Pick Reason. Agent-authored copy MUST go to pick_reason_draft (the AI-draft staging field). pick_reason writes the LIVE field — quoted verbatim in the creator\'s featured email and rendered publicly on the listing — and requires confirm_creator_safe: true after a human has read the exact text.',
+    {
+      asset_id: z.string().min(1),
+      reviewer_pick: z.boolean().optional(),
+      pick_reason_draft: z.string().optional(),
+      pick_reason: z.string().optional(),
+      confirm_creator_safe: z.boolean().optional(),
+    },
+    async ({ asset_id, reviewer_pick, pick_reason_draft, pick_reason, confirm_creator_safe }) => {
+      try {
+        if (pick_reason !== undefined && confirm_creator_safe !== true) {
+          throw new AirtableClientError(
+            'CREATOR_SAFE_CONFIRMATION_REQUIRED',
+            'pick_reason writes the live ⭐Reviewer Pick Reason, which is quoted verbatim in the creator\'s featured email and rendered publicly on the marketplace listing. Stage the text via pick_reason_draft, have the reviewer read it, then resubmit with confirm_creator_safe: true.',
+            400,
+            { asset_id },
+          );
+        }
+        const result = await getClient().setFeaturedPick(asset_id, {
+          reviewer_pick,
+          pick_reason_draft,
+          pick_reason,
+        });
+        return asSuccess({
+          ...result,
+          support: TEMPLATE_REVIEW_FIELD_MAP.writeSupport.featuredPick,
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_cast_featured_vote',
+    'Cast or update the authenticated reviewer\'s vote (up/down/comment) on a featured-batch candidate. One vote per reviewer per asset — recasting updates the existing vote so tallies never double-count. The note is candid INTERNAL rationale (encouraged for down/contested votes) and must never be shown to creators or reused in public copy.',
+    {
+      asset_id: z.string().min(1),
+      vote: z.enum(['up', 'down', 'comment']),
+      note: z.string().optional(),
+    },
+    async ({ asset_id, vote, note }) => {
+      try {
+        const currentReviewer = currentReviewerAsCollaborator(getReviewer);
+        const result = await getClient().castFeaturedVote(asset_id, { vote, note }, currentReviewer);
+        return asSuccess({
+          ...result,
+          support: TEMPLATE_REVIEW_FIELD_MAP.writeSupport.featuredVote,
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_set_featured_flag',
+    'Finalize (or revert) one template\'s membership in the upcoming Featured batch by setting ℹ️Is Featured?. CONSEQUENTIAL: checking it resolves the featured period to the first of next month and arms the creator-notification worker (hourly cron) for that period — the creator receives a congratulations email quoting the live Pick Reason. Requires confirm_creator_notification: true. Unchecking before the worker fires is the abort path. The marketplace-CMS backfill remains a separate manual step.',
+    {
+      asset_id: z.string().min(1),
+      is_featured: z.boolean(),
+      confirm_creator_notification: z.boolean(),
+    },
+    async ({ asset_id, is_featured, confirm_creator_notification }) => {
+      try {
+        if (is_featured && confirm_creator_notification !== true) {
+          throw new AirtableClientError(
+            'CREATOR_NOTIFICATION_CONFIRMATION_REQUIRED',
+            'Checking ℹ️Is Featured? arms the creator-notification worker for the upcoming period. Confirm with the reviewer that this asset is a finalized batch member, then resubmit with confirm_creator_notification: true.',
+            400,
+            { asset_id },
+          );
+        }
+        const result = await getClient().setFeaturedFlag(asset_id, is_featured);
+        return asSuccess({
+          ...result,
+          support: TEMPLATE_REVIEW_FIELD_MAP.writeSupport.featuredFlag,
         });
       } catch (error) {
         return asError(error);

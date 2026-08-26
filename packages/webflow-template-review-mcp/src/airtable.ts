@@ -16,6 +16,11 @@ import {
   CONFIRMED_WRITE_FIELD_IDS,
   CONFIRMED_VERSION_FIELDS,
   DEFAULT_AIRTABLE_BASE_ID,
+  FEATURED_ASSET_FIELDS,
+  FEATURED_ASSET_FIELD_IDS,
+  FEATURED_VOTE_FIELDS,
+  FEATURED_VOTE_OPTIONS,
+  FEATURED_VOTING_STATE_FIELDS,
   IMPROVEMENT_AREA_OPTIONS,
   METRICS_ASSET_FIELD_IDS,
   QUALITY_RATING_OPTIONS,
@@ -99,6 +104,88 @@ export interface TemplateReviewQueueItem {
 }
 
 export type TemplateReviewAssetSearchMode = 'contains' | 'exact';
+
+export interface TemplateReviewFeaturedCandidate {
+  assetId: string;
+  templateName: string;
+  websiteUrl?: string;
+  submittedDate?: string;
+  monthsSinceSubmission: number | null;
+  qualityScore?: string;
+  creatorId?: string;
+  creatorName?: string;
+  creatorTimesFeatured?: number;
+  creatorTemplatesInUpcomingBatch?: number;
+  reviewerPick: boolean;
+  reviewerPickReason?: string;
+  reviewerPickReasonAiDraft?: string;
+  isFeatured: boolean;
+  featuredPeriod?: string;
+}
+
+export interface TemplateReviewFeaturedCandidatesQuery {
+  monthsBack?: number;
+  includeAlreadyFeatured?: boolean;
+  limit?: number;
+}
+
+export interface TemplateReviewFeaturedCandidatesResult {
+  monthsBackApplied: number;
+  includeAlreadyFeaturedApplied: boolean;
+  summary: {
+    templatesAvailable: number;
+    creatorsAvailable: number;
+    currentMonthCount: number;
+    pastMonthsCount: number;
+    reviewerPicksMade: number;
+    pickReasonsWritten: number;
+  };
+  candidates: TemplateReviewFeaturedCandidate[];
+}
+
+export interface TemplateFeaturedPickInput {
+  reviewer_pick?: boolean;
+  pick_reason_draft?: string;
+  pick_reason?: string;
+}
+
+export interface TemplateFeaturedPickResult {
+  candidate: TemplateReviewFeaturedCandidate;
+  warnings: string[];
+}
+
+export type TemplateFeaturedVoteChoice = keyof typeof FEATURED_VOTE_OPTIONS;
+
+export interface TemplateFeaturedVoteInput {
+  vote: TemplateFeaturedVoteChoice;
+  note?: string;
+}
+
+export interface TemplateFeaturedVoteResult {
+  assetId: string;
+  templateName: string;
+  votingStateId: string;
+  voteId: string;
+  action: 'created' | 'updated';
+  vote: string;
+  note?: string;
+  tallies: {
+    up: number;
+    down: number;
+    net: number;
+    inQualifiedPool: boolean;
+  };
+}
+
+export interface TemplateFeaturedFlagResult {
+  assetId: string;
+  templateName: string;
+  isFeatured: boolean;
+  featuredPeriod?: string;
+  notifiedForPeriod?: string;
+  reviewerPickReason?: string;
+  warnings: string[];
+}
 
 export interface TemplateReviewAsset extends TemplateReviewQueueItem {
   uid?: string;
@@ -515,6 +602,88 @@ function attachmentDetails(value: unknown): TemplateReviewAttachment[] {
 function numberValue(value: unknown): number | undefined {
   if (typeof value === 'number' && Number.isFinite(value)) return value;
   return undefined;
+}
+
+function firstNumber(value: unknown): number | undefined {
+  if (Array.isArray(value)) return firstNumber(value[0]);
+  return numberValue(value);
+}
+
+/**
+ * Complete months elapsed since submission, matching Airtable's
+ * DATETIME_DIFF(TODAY(), date, 'months') semantics that the featured-batch
+ * interface uses for its "Months since submission" prioritization (0 = current
+ * month first, 1 = past-month fallback).
+ */
+function monthsSinceSubmission(submittedIso: string | undefined, now: Date): number | null {
+  if (!submittedIso) return null;
+  const submitted = new Date(submittedIso);
+  if (Number.isNaN(submitted.getTime())) return null;
+  let months = (now.getUTCFullYear() - submitted.getUTCFullYear()) * 12 + (now.getUTCMonth() - submitted.getUTCMonth());
+  if (now.getUTCDate() < submitted.getUTCDate()) months -= 1;
+  return Math.max(0, months);
+}
+
+function mapFeaturedCandidate(record: AirtableRecord, now: Date): TemplateReviewFeaturedCandidate {
+  const fields = record.fields;
+  const submittedDate = firstString(fields[CONFIRMED_ASSET_FIELDS.submittedDate]);
+  return {
+    assetId: record.id,
+    templateName: firstString(fields[CONFIRMED_ASSET_FIELDS.name]) ?? '',
+    websiteUrl: firstString(fields[CONFIRMED_ASSET_FIELDS.websiteUrl]),
+    submittedDate,
+    monthsSinceSubmission: monthsSinceSubmission(submittedDate, now),
+    qualityScore: firstString(fields[CONFIRMED_ASSET_FIELDS.qualityScore]),
+    creatorId: stringArray(fields[FEATURED_ASSET_FIELDS.creatorLink])[0],
+    creatorName: firstString(fields[FEATURED_ASSET_FIELDS.creatorName]),
+    creatorTimesFeatured: firstNumber(fields[FEATURED_ASSET_FIELDS.creatorTimesFeatured]),
+    creatorTemplatesInUpcomingBatch: firstNumber(fields[FEATURED_ASSET_FIELDS.creatorTemplatesInUpcomingBatch]),
+    reviewerPick: fields[FEATURED_ASSET_FIELDS.reviewerPick] === true,
+    reviewerPickReason: firstString(fields[FEATURED_ASSET_FIELDS.reviewerPickReason]),
+    reviewerPickReasonAiDraft: firstString(fields[FEATURED_ASSET_FIELDS.reviewerPickReasonAiDraft]),
+    isFeatured: fields[FEATURED_ASSET_FIELDS.isFeatured] === true,
+    featuredPeriod: firstString(fields[FEATURED_ASSET_FIELDS.isFeaturedPeriod]),
+  };
+}
+
+/**
+ * The live Pick Reason is quoted VERBATIM in the creator's featured email
+ * ("This is how we'll describe your template to buyers") and rendered publicly
+ * on the marketplace listing. A raw HTML tag would truncate the Zendesk-parsed
+ * email; internal curation shorthand would leak to a creator as-is.
+ */
+function assertCreatorSafePickReason(value: string): void {
+  if (!value.trim()) {
+    throw new AirtableClientError(
+      'EMPTY_PICK_REASON',
+      'pick_reason must be non-empty buyer-facing prose. To clear a reason, edit it in the Airtable interface instead.',
+      400,
+    );
+  }
+  const tag = findRawHtmlTag(value);
+  if (tag !== null) {
+    throw new AirtableClientError(
+      'RAW_HTML_IN_PICK_REASON',
+      `pick_reason contains a raw HTML tag (${tag}). The reason is quoted verbatim in the creator's featured email and rendered publicly on the marketplace listing — rewrite the reference without angle brackets.`,
+      400,
+      { tag },
+    );
+  }
+}
+
+function pickReasonStyleWarnings(value: string): string[] {
+  const warnings: string[] = [];
+  const length = value.trim().length;
+  if (length < 250) {
+    warnings.push(`pick_reason_short: ${length} chars — house style for buyer-facing reasons runs ~350–450 chars of third-person marketplace prose.`);
+  }
+  if (length > 600) {
+    warnings.push(`pick_reason_long: ${length} chars — house style for buyer-facing reasons runs ~350–450 chars.`);
+  }
+  if (/main quality signal\s*:/i.test(value)) {
+    warnings.push('pick_reason_internal_shorthand: "Main quality signal:" reads as internal curation shorthand and has previously leaked verbatim into creator emails and public listings — rewrite as buyer-facing prose.');
+  }
+  return warnings;
 }
 
 function collaboratorValue(value: unknown): CollaboratorRef | null {
@@ -1002,6 +1171,21 @@ export class AirtableClient {
     return (await response.json()) as AirtableRecord;
   }
 
+  private async createRecord(tableId: string, fields: Record<string, unknown>): Promise<AirtableRecord> {
+    const response = await this.request(`/${tableId}`, {
+      method: 'POST',
+      body: JSON.stringify({ fields }),
+    });
+    if (!response.ok) {
+      const airtable = await this.readErrorDetails(response);
+      throw new AirtableClientError('AIRTABLE_CREATE_FAILED', 'Failed to create Airtable record.', response.status, {
+        tableId,
+        ...(airtable === undefined ? {} : { airtable }),
+      });
+    }
+    return (await response.json()) as AirtableRecord;
+  }
+
   private async updateRecord(tableId: string, recordId: string, fields: Record<string, unknown>): Promise<AirtableRecord> {
     const response = await this.request(`/${tableId}/${recordId}`, {
       method: 'PATCH',
@@ -1111,6 +1295,214 @@ export class AirtableClient {
     return {
       sortApplied: sort,
       items: sortQueueItems(filtered, sort),
+    };
+  }
+
+  /**
+   * Templates eligible for the upcoming Featured batch. Mirrors the
+   * "Remaining templates eligible" definition on the ⭐Featured templates
+   * review interface: Exceptional quality (via the Airtable eligibility
+   * formula, which also caps how often an asset can be re-featured), not
+   * already featured, and submitted within the current month or up to
+   * `monthsBack` months earlier. Verified against the live interface
+   * 2026-08-26 (monthsBack=1 → 39 templates / 33 creators).
+   */
+  async listFeaturedCandidates(query: TemplateReviewFeaturedCandidatesQuery = {}): Promise<TemplateReviewFeaturedCandidatesResult> {
+    const monthsBack = query.monthsBack ?? 1;
+    const includeAlreadyFeatured = query.includeAlreadyFeatured ?? false;
+    const records = await this.listRecords({
+      tableId: TABLE_IDS.assets,
+      fieldNames: [
+        CONFIRMED_ASSET_FIELDS.name,
+        CONFIRMED_ASSET_FIELDS.websiteUrl,
+        CONFIRMED_ASSET_FIELDS.submittedDate,
+        CONFIRMED_ASSET_FIELDS.qualityScore,
+        ...Object.values(FEATURED_ASSET_FIELDS),
+      ],
+      filterByFormula: andFormula([
+        `{${CONFIRMED_ASSET_FIELDS.type}} = 'Template🏗️'`,
+        `{${FEATURED_ASSET_FIELDS.isEligibleForUpcomingFeatured}} = 1`,
+        `DATETIME_DIFF(TODAY(), {${CONFIRMED_ASSET_FIELDS.submittedDate}}, 'months') <= ${monthsBack}`,
+        includeAlreadyFeatured ? null : `NOT({${FEATURED_ASSET_FIELDS.isFeatured}})`,
+      ]),
+      sortField: CONFIRMED_ASSET_FIELDS.submittedDate,
+      sortDirection: 'desc',
+      limit: query.limit ?? 200,
+    });
+
+    const now = new Date();
+    const candidates = records
+      .map((record) => mapFeaturedCandidate(record, now))
+      .sort((a, b) => {
+        const monthsA = a.monthsSinceSubmission ?? Number.MAX_SAFE_INTEGER;
+        const monthsB = b.monthsSinceSubmission ?? Number.MAX_SAFE_INTEGER;
+        if (monthsA !== monthsB) return monthsA - monthsB;
+        return (b.submittedDate ?? '').localeCompare(a.submittedDate ?? '');
+      });
+    const creatorIds = new Set(candidates.map((candidate) => candidate.creatorId).filter((id): id is string => Boolean(id)));
+
+    return {
+      monthsBackApplied: monthsBack,
+      includeAlreadyFeaturedApplied: includeAlreadyFeatured,
+      summary: {
+        templatesAvailable: candidates.length,
+        creatorsAvailable: creatorIds.size,
+        currentMonthCount: candidates.filter((candidate) => candidate.monthsSinceSubmission === 0).length,
+        pastMonthsCount: candidates.filter((candidate) => (candidate.monthsSinceSubmission ?? 0) > 0).length,
+        reviewerPicksMade: candidates.filter((candidate) => candidate.reviewerPick).length,
+        pickReasonsWritten: candidates.filter((candidate) => Boolean(candidate.reviewerPickReason)).length,
+      },
+      candidates,
+    };
+  }
+
+  private async getScopedAssetRecord(assetId: string): Promise<AirtableRecord> {
+    const record = await this.getRecord(TABLE_IDS.assets, assetId);
+    if (!record || !isTemplateLikeAsset(record.fields)) {
+      throw new AirtableClientError('ASSET_NOT_FOUND_OR_OUT_OF_SCOPE', 'Template asset not found in template-review scope.', 404, {
+        asset_id: assetId,
+      });
+    }
+    return record;
+  }
+
+  /**
+   * Star/unstar a template as a Reviewer pick for the upcoming Featured batch
+   * and stage or publish its Pick Reason. Agent-authored copy should land in
+   * pick_reason_draft; pick_reason writes the LIVE field that is quoted
+   * verbatim to the creator and rendered publicly (guarded upstream by an
+   * explicit creator-safe confirmation in the tool layer).
+   */
+  async setFeaturedPick(assetId: string, input: TemplateFeaturedPickInput): Promise<TemplateFeaturedPickResult> {
+    const fields: Record<string, unknown> = {};
+    if (input.reviewer_pick !== undefined) fields[FEATURED_ASSET_FIELD_IDS.reviewerPick] = input.reviewer_pick;
+    if (input.pick_reason_draft !== undefined) fields[FEATURED_ASSET_FIELD_IDS.reviewerPickReasonAiDraft] = input.pick_reason_draft;
+    if (input.pick_reason !== undefined) {
+      assertCreatorSafePickReason(input.pick_reason);
+      fields[FEATURED_ASSET_FIELD_IDS.reviewerPickReason] = input.pick_reason;
+    }
+    if (Object.keys(fields).length === 0) {
+      throw new AirtableClientError('NO_MUTATION_FIELDS', 'No featured pick fields were provided.', 400);
+    }
+
+    await this.getScopedAssetRecord(assetId);
+    const updated = await this.updateRecord(TABLE_IDS.assets, assetId, fields);
+    const candidate = mapFeaturedCandidate(updated, new Date());
+
+    const warnings: string[] = [];
+    if (firstNumber(updated.fields[FEATURED_ASSET_FIELDS.isEligibleForUpcomingFeatured]) !== 1) {
+      warnings.push('not_currently_eligible: this asset does not satisfy the upcoming-featured eligibility formula (Exceptional quality + re-feature cap).');
+    }
+    if (candidate.isFeatured) {
+      warnings.push('already_featured: ℹ️Is Featured? is checked on this asset — it belongs to a current/previous batch.');
+    }
+    for (const reason of [input.pick_reason, input.pick_reason_draft]) {
+      if (reason !== undefined) warnings.push(...pickReasonStyleWarnings(reason));
+    }
+    if (input.reviewer_pick === true && !candidate.reviewerPickReason) {
+      warnings.push('pick_without_live_reason: the pick is starred but ⭐Reviewer Pick Reason is still empty — every pick needs a buyer-safe reason before the batch is finalized.');
+    }
+
+    return { candidate, warnings };
+  }
+
+  /**
+   * Cast or update the current reviewer's vote on a featured candidate.
+   * One vote per reviewer per asset: an existing vote is updated in place so
+   * the 👍/👎 rollups never double-count. Vote notes are internal-only.
+   */
+  async castFeaturedVote(assetId: string, input: TemplateFeaturedVoteInput, currentReviewer?: CollaboratorRef | null): Promise<TemplateFeaturedVoteResult> {
+    if (!currentReviewer?.id) {
+      throw new AirtableClientError('REVIEWER_IDENTITY_UNAVAILABLE', 'Current reviewer identity is not configured for this MCP runtime.', 503);
+    }
+
+    const asset = await this.getScopedAssetRecord(assetId);
+    const templateName = firstString(asset.fields[CONFIRMED_ASSET_FIELDS.name]) ?? assetId;
+
+    let votingStateId = stringArray(asset.fields[FEATURED_ASSET_FIELDS.votingStateLink])[0];
+    if (!votingStateId) {
+      const createdState = await this.createRecord(TABLE_IDS.assetVotingState, {
+        [FEATURED_VOTING_STATE_FIELDS.name]: templateName,
+        [FEATURED_VOTING_STATE_FIELDS.assetLink]: [assetId],
+      });
+      votingStateId = createdState.id;
+    }
+
+    const stateRecord = await this.getRecord(TABLE_IDS.assetVotingState, votingStateId);
+    const voteIds = stringArray(stateRecord?.fields[FEATURED_VOTING_STATE_FIELDS.votesLink]);
+    const existingVotes = voteIds.length
+      ? await this.listRecords({ tableId: TABLE_IDS.reviewerVotes, filterByFormula: recordIdsFormula(voteIds) })
+      : [];
+    const ownVote = existingVotes.find((record) => collaboratorValue(record.fields[FEATURED_VOTE_FIELDS.reviewer])?.id === currentReviewer.id);
+
+    const voteFields: Record<string, unknown> = {
+      [FEATURED_VOTE_FIELDS.vote]: FEATURED_VOTE_OPTIONS[input.vote],
+      ...(input.note !== undefined ? { [FEATURED_VOTE_FIELDS.note]: input.note } : {}),
+    };
+
+    let voteRecord: AirtableRecord;
+    let action: 'created' | 'updated';
+    if (ownVote) {
+      voteRecord = await this.updateRecord(TABLE_IDS.reviewerVotes, ownVote.id, voteFields);
+      action = 'updated';
+    } else {
+      voteRecord = await this.createRecord(TABLE_IDS.reviewerVotes, {
+        [FEATURED_VOTE_FIELDS.votingStateLink]: [votingStateId],
+        [FEATURED_VOTE_FIELDS.reviewer]: { id: currentReviewer.id },
+        ...voteFields,
+      });
+      action = 'created';
+    }
+
+    const refreshedState = await this.getRecord(TABLE_IDS.assetVotingState, votingStateId);
+    return {
+      assetId,
+      templateName,
+      votingStateId,
+      voteId: voteRecord.id,
+      action,
+      vote: FEATURED_VOTE_OPTIONS[input.vote],
+      note: firstString(voteRecord.fields[FEATURED_VOTE_FIELDS.note]),
+      tallies: {
+        up: firstNumber(refreshedState?.fields[FEATURED_VOTING_STATE_FIELDS.upCount]) ?? 0,
+        down: firstNumber(refreshedState?.fields[FEATURED_VOTING_STATE_FIELDS.downCount]) ?? 0,
+        net: firstNumber(refreshedState?.fields[FEATURED_VOTING_STATE_FIELDS.netVotes]) ?? 0,
+        inQualifiedPool: firstNumber(refreshedState?.fields[FEATURED_VOTING_STATE_FIELDS.inQualifiedPool]) === 1,
+      },
+    };
+  }
+
+  /**
+   * Finalize (or revert) one asset's membership in the upcoming Featured
+   * batch by setting ℹ️Is Featured?. Checking it makes 📅Is Featured Period
+   * resolve to the first of NEXT month, which arms the creator-notification
+   * worker for that period; unchecking before the worker's hourly run is the
+   * abort path. Whalesync does not carry featured fields to the marketplace
+   * CMS — the CMS backfill stays manual.
+   */
+  async setFeaturedFlag(assetId: string, isFeatured: boolean): Promise<TemplateFeaturedFlagResult> {
+    await this.getScopedAssetRecord(assetId);
+    const updated = await this.updateRecord(TABLE_IDS.assets, assetId, {
+      [FEATURED_ASSET_FIELD_IDS.isFeatured]: isFeatured,
+    });
+
+    const reviewerPickReason = firstString(updated.fields[FEATURED_ASSET_FIELDS.reviewerPickReason]);
+    const warnings: string[] = [];
+    if (isFeatured && !reviewerPickReason) {
+      warnings.push('missing_pick_reason: ⭐Reviewer Pick Reason is empty — the creator email degrades to a plain congratulations and the listing shows no reason. Write the buyer-safe reason before the notification period arrives.');
+    }
+    if (isFeatured && firstNumber(updated.fields[FEATURED_ASSET_FIELDS.isEligibleForUpcomingFeatured]) !== 1) {
+      warnings.push('not_currently_eligible: this asset does not satisfy the upcoming-featured eligibility formula (Exceptional quality + re-feature cap).');
+    }
+
+    return {
+      assetId,
+      templateName: firstString(updated.fields[CONFIRMED_ASSET_FIELDS.name]) ?? assetId,
+      isFeatured: updated.fields[FEATURED_ASSET_FIELDS.isFeatured] === true,
+      featuredPeriod: firstString(updated.fields[FEATURED_ASSET_FIELDS.isFeaturedPeriod]),
+      notifiedForPeriod: firstString(updated.fields[FEATURED_ASSET_FIELDS.featuredNotifiedForPeriod]),
+      reviewerPickReason,
+      warnings,
     };
   }
 
