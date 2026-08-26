@@ -1,7 +1,7 @@
 ---
-slug: "governed-codex-model-routing"
-title: "Governed Codex Model Routing Economics"
-publishedAt: "2026-08-26"
+slug: 'governed-codex-model-routing'
+title: 'Governed Codex Model Routing Economics'
+publishedAt: '2026-08-26'
 published: true
 ---
 
@@ -34,17 +34,17 @@ Subjects had to enumerate a public package surface, run an acceptance command, i
 
 The suite combined debugging, test authoring, and bounded implementation. Three Luna agents received independent slices; Terra and Sol each received the complete suite as single-agent controls. A separate judge checked public tests, three hidden behaviors, five withheld mutants, and the authorized-file boundary.
 
-Credit-equivalent values use local session telemetry and the rate card visible during the experiment. They are comparative units, not invoice dollars. Fan-out latency is the session critical path rather than summed agent time.
+Credit-equivalent values use redacted session telemetry and the Codex rate card observed on 2026-08-26. The source ledger preserves the receipt identifiers, token categories, versioned rates, and exact computation. These are comparative units, not invoice dollars. Fan-out latency is the session critical path rather than summed agent time.
 
 ## Results
 
 ### Independently verifiable execution
 
-| Strategy | Public | Hidden | Mutants | Authorized files only | Critical path | Tokens | Credit-equivalent |
-| --- | ---: | ---: | ---: | --- | ---: | ---: | ---: |
-| 3× Luna / High | 17/17 | 3/3 | 5/5 | yes | 98.865 s | 859,682 | 1.137818 |
-| 1× Terra / High | 14/14 | 3/3 | 5/5 | yes | 78.676 s | 391,791 | 4.267320 |
-| 1× Sol / High | 17/17 | 3/3 | 5/5 | yes | 129.263 s | 586,459 | 12.071900 |
+| Strategy        | Public | Hidden | Mutants | Authorized files only | Critical path |  Tokens | Credit-equivalent |
+| --------------- | -----: | -----: | ------: | --------------------- | ------------: | ------: | ----------------: |
+| 3× Luna / High  |  17/17 |    3/3 |     5/5 | yes                   |      98.865 s | 859,682 |          1.137818 |
+| 1× Terra / High |  14/14 |    3/3 |     5/5 | yes                   |      78.676 s | 391,791 |          4.267320 |
+| 1× Sol / High   |  17/17 |    3/3 |     5/5 | yes                   |     129.263 s | 586,459 |         12.071900 |
 
 Terra grouped some public assertions, so public assertion counts are not directly comparable. All three subjects passed the same hidden behaviors and killed the same five mutants.
 
@@ -52,19 +52,19 @@ In this sample, Luna fan-out used **73.34% fewer** credit-equivalent units than 
 
 ### More Terra effort did not repair judgment
 
-| Terra effort | Retrieval and judgment | Elapsed | Tokens | Credit-equivalent |
-| --- | --- | ---: | ---: | ---: |
-| High | Core facts correct; incomplete export list; two judgment errors | 83.546 s | 501,373 | 6.248520 |
-| Ultra, exact prompt | Complete export list; same two judgment errors | 307.422 s | 1,158,457 | 15.430340 |
+| Terra effort        | Retrieval and judgment                                          |   Elapsed |    Tokens | Credit-equivalent |
+| ------------------- | --------------------------------------------------------------- | --------: | --------: | ----------------: |
+| High                | Core facts correct; incomplete export list; two judgment errors |  83.546 s |   501,373 |          6.248520 |
+| Ultra, exact prompt | Complete export list; same two judgment errors                  | 307.422 s | 1,158,457 |         15.430340 |
 
 Ultra used **2.47×** the credits and **3.68×** the elapsed time. It improved exhaustive retrieval without repairing either material judgment error. A separate clarified Ultra run was fully correct, but its prompt changed, so it is excluded from the effort-only comparison. That counter-signal suggests acceptance language may matter more than additional effort.
 
 ### Sol/Low retained judgment
 
-| Serving tier | Quality | Elapsed | Input | Cached input | Output | Reasoning output |
-| --- | --- | ---: | ---: | ---: | ---: | ---: |
-| Default | Fully correct | 140 s | 739,952 | 665,856 | 9,619 | 1,936 |
-| Fast | Fully correct | 59 s | 517,259 | 457,728 | 6,824 | 1,223 |
+| Serving tier | Quality       | Elapsed |   Input | Cached input | Output | Reasoning output |
+| ------------ | ------------- | ------: | ------: | -----------: | -----: | ---------------: |
+| Default      | Fully correct |   140 s | 739,952 |      665,856 |  9,619 |            1,936 |
+| Fast         | Fully correct |    59 s | 517,259 |      457,728 |  6,824 |            1,223 |
 
 Both Sol/Low runs completed the inventory and handled both judgment traps correctly. Fast finished **57.86% sooner** in this pair. Its lower token count is observational: the agents followed different investigation paths, so serving tier is not established as the cause. The displayed credit equivalence also excludes any separate Fast-tier adjustment.
 
@@ -88,19 +88,19 @@ It does **not** prove that Luna fan-out is universally cheaper or faster, that S
 6. Aggregation cost remained implicit in the parent session.
 7. The benchmark author designed the decomposition and hidden judge.
 8. Both Sol/Low runners initially launched one acceptance build from the repository root before completing the authoritative isolated run; ignored build output may have been refreshed.
-9. Local session receipts are not yet a portable public evidence bundle.
+9. The source repository includes a portable redacted numeric receipt; raw local transcripts remain private and are not independently published.
 
 ## Prospective replication gate
 
 The next batch must run at least **10 trials per task family per cohort**, randomize cohort order, use immutable fixtures and prompt hashes, reset subjects identically, and keep judges hidden.
 
-| Gate | Threshold |
-| --- | ---: |
-| Deterministic judge pass rate | 100% |
-| Unauthorized mutations | 0 |
-| Material judgment error rate | ≤5% |
-| Luna fan-out credits / Sol/High credits | ≤25% |
-| Luna fan-out latency / fastest single agent | ≤130% |
+| Gate                                        | Threshold |
+| ------------------------------------------- | --------: |
+| Deterministic judge pass rate               |      100% |
+| Unauthorized mutations                      |         0 |
+| Material judgment error rate                |       ≤5% |
+| Luna fan-out credits / Sol/High credits     |      ≤25% |
+| Luna fan-out latency / fastest single agent |     ≤130% |
 
 The task families are read-only operational audit, debugging, test authoring, bounded implementation, and coupled architecture/governance review. A Sol/Low governor plus Luna/High executors must also be tested end to end.
 
@@ -130,7 +130,7 @@ open_questions:
 
 ## Evidence and reproducibility
 
-The source repository preserves a machine-readable ledger, integrity validator, prompt and fixture requirements, and the prospective decision rule under CRE-1877. Private session paths and raw transcripts are intentionally excluded from this public route; the numeric projection is checked against the durable ledger during release.
+The source repository preserves a machine-readable ledger, redacted telemetry receipt, rate-card version and formula, integrity validator, prompt and fixture requirements, and the prospective decision rule under CRE-1877. Private session paths and raw transcripts are intentionally excluded from this public route; the numeric projection is recomputed from the durable receipt during release.
 
 Relevant public references:
 

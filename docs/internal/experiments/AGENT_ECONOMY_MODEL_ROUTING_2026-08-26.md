@@ -114,10 +114,13 @@ The judge was separate from the subject agents:
 
 ### Cost and latency
 
-Credit-equivalent values were calculated from local session telemetry using the
-then-current Codex rate card for uncached input, cached input, and output. They
-are not invoice dollars. Session critical path, not summed subagent time, is the
-fan-out latency measure.
+Credit-equivalent values were calculated from redacted session telemetry using
+the Codex rate card observed on 2026-08-26 for uncached input, cached input, and
+output. The exact token categories, receipt identifiers, rate-card version,
+source, and formula are preserved in
+[agent-economy-trial-2-telemetry-2026-08-26.json](./agent-economy-trial-2-telemetry-2026-08-26.json).
+They are not invoice dollars. Session critical path, not summed subagent time,
+is the fan-out latency measure.
 
 For the Sol/Low serving-tier pair, token categories and elapsed time were
 captured directly from the local Codex runner. Fast's displayed base-rate credit
@@ -130,11 +133,11 @@ Machine-readable results are preserved in
 
 ### Trial 2: independently verifiable execution
 
-| Strategy | Public | Hidden | Mutants | Authorized files only | Critical path | Tokens | Credit-equivalent |
-| --- | ---: | ---: | ---: | --- | ---: | ---: | ---: |
-| 3× Luna / High | 17/17 | 3/3 | 5/5 | yes | 98.865 s | 859,682 | 1.137818 |
-| 1× Terra / High | 14/14 | 3/3 | 5/5 | yes | 78.676 s | 391,791 | 4.267320 |
-| 1× Sol / High | 17/17 | 3/3 | 5/5 | yes | 129.263 s | 586,459 | 12.071900 |
+| Strategy        | Public | Hidden | Mutants | Authorized files only | Critical path |  Tokens | Credit-equivalent |
+| --------------- | -----: | -----: | ------: | --------------------- | ------------: | ------: | ----------------: |
+| 3× Luna / High  |  17/17 |    3/3 |     5/5 | yes                   |      98.865 s | 859,682 |          1.137818 |
+| 1× Terra / High |  14/14 |    3/3 |     5/5 | yes                   |      78.676 s | 391,791 |          4.267320 |
+| 1× Sol / High   |  17/17 |    3/3 |     5/5 | yes                   |     129.263 s | 586,459 |         12.071900 |
 
 The public assertion count differs because the Terra subject grouped some
 assertions. All three subjects passed the same hidden behaviors and killed the
@@ -146,10 +149,10 @@ and 23.52% faster than Sol/High.
 
 ### Trial 1: reasoning effort did not repair judgment
 
-| Terra effort | Retrieval and judgment | Elapsed | Tokens | Credit-equivalent |
-| --- | --- | ---: | ---: | ---: |
-| High | Core facts correct; incomplete export list; two judgment errors | 83.546 s | 501,373 | 6.248520 |
-| Ultra, exact prompt | Complete export list; same two judgment errors | 307.422 s | 1,158,457 | 15.430340 |
+| Terra effort        | Retrieval and judgment                                          |   Elapsed |    Tokens | Credit-equivalent |
+| ------------------- | --------------------------------------------------------------- | --------: | --------: | ----------------: |
+| High                | Core facts correct; incomplete export list; two judgment errors |  83.546 s |   501,373 |          6.248520 |
+| Ultra, exact prompt | Complete export list; same two judgment errors                  | 307.422 s | 1,158,457 |         15.430340 |
 
 Ultra used 2.47× the credits and 3.68× the elapsed time. It improved exhaustive
 retrieval but did not repair either material judgment error.
@@ -160,10 +163,10 @@ language can matter more than increased effort.
 
 ### Trial 1: Sol/Low retained judgment
 
-| Serving tier | Quality | Elapsed | Input | Cached input | Output | Reasoning output |
-| --- | --- | ---: | ---: | ---: | ---: | ---: |
-| Default | Fully correct | 140 s | 739,952 | 665,856 | 9,619 | 1,936 |
-| Fast | Fully correct | 59 s | 517,259 | 457,728 | 6,824 | 1,223 |
+| Serving tier | Quality       | Elapsed |   Input | Cached input | Output | Reasoning output |
+| ------------ | ------------- | ------: | ------: | -----------: | -----: | ---------------: |
+| Default      | Fully correct |   140 s | 739,952 |      665,856 |  9,619 |            1,936 |
+| Fast         | Fully correct |    59 s | 517,259 |      457,728 |  6,824 |            1,223 |
 
 Both Sol/Low runs completed the full export inventory and correctly handled the
 two operational judgment traps.
@@ -213,7 +216,8 @@ paths, so serving tier is not established as the cause.
    hidden judge was identical.
 6. Aggregation cost was implicit in the parent session rather than isolated as
    its own governor metric.
-7. Local session receipts are not yet a portable public evidence bundle.
+7. The checked-in receipt is a portable redacted numeric projection; raw local
+   transcripts remain private and are not independently published.
 
 ## Prospective replication protocol
 
@@ -247,13 +251,13 @@ replication batch without recording a new experiment version.
 
 ### Validation gates
 
-| Gate | Prospective threshold |
-| --- | ---: |
-| Deterministic judge pass rate | 100% |
-| Unauthorized mutations | 0 |
-| Material judgment error rate | ≤5% |
-| Luna fan-out credits / Sol/High credits | ≤25% |
-| Luna fan-out latency / fastest single-agent latency | ≤130% |
+| Gate                                                | Prospective threshold |
+| --------------------------------------------------- | --------------------: |
+| Deterministic judge pass rate                       |                  100% |
+| Unauthorized mutations                              |                     0 |
+| Material judgment error rate                        |                   ≤5% |
+| Luna fan-out credits / Sol/High credits             |                  ≤25% |
+| Luna fan-out latency / fastest single-agent latency |                 ≤130% |
 
 Track uncached input, cached input, cache writes, output, reasoning output,
 elapsed time, retries, tool failures, aggregation tokens, and serving tier. Use
@@ -288,25 +292,25 @@ A replication receipt must include:
 
 ## Database / Automation / Judgment
 
-| Tier | Experiment ownership |
-| --- | --- |
-| Database | Immutable fixtures, prompt hashes, session telemetry, judge receipts, and rate-card version |
-| Automation | Subject runners, fan-out orchestration, hidden judge, mutation scorer, and receipt generator |
-| Judgment | Task-family classifier, routing policy, material-error rubric, promotion gate, and human review |
+| Tier       | Experiment ownership                                                                            |
+| ---------- | ----------------------------------------------------------------------------------------------- |
+| Database   | Immutable fixtures, prompt hashes, session telemetry, judge receipts, and rate-card version     |
+| Automation | Subject runners, fan-out orchestration, hidden judge, mutation scorer, and receipt generator    |
+| Judgment   | Task-family classifier, routing policy, material-error rubric, promotion gate, and human review |
 
 The compiler or routing policy can make selection exact and testable. A runtime
 still performs the selected work, and receipts prove what actually happened.
 
 ## Living research transparency
 
-| Field | Current value |
-| --- | --- |
-| Claim status | supported |
-| Confidence | medium-low |
-| Evidence grade | benchmark |
-| Last reviewed | 2026-08-26 |
+| Field           | Current value                                                                     |
+| --------------- | --------------------------------------------------------------------------------- |
+| Claim status    | supported                                                                         |
+| Confidence      | medium-low                                                                        |
+| Evidence grade  | benchmark                                                                         |
+| Last reviewed   | 2026-08-26                                                                        |
 | Next review due | after the first randomized replication batch or 2026-09-26, whichever comes first |
-| Review owner | CREATE SOMETHING |
+| Review owner    | CREATE SOMETHING                                                                  |
 
 Current best read: task-shaped routing is promising enough to replicate. The
 evidence supports Sol/Low as a governor candidate and Luna/High fan-out as an

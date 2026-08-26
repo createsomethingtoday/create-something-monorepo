@@ -29,7 +29,11 @@
       "taskSuite": "three-slice-write-enabled",
       "strategy": "1x Terra / High",
       "agentCount": 1,
-      "public": { "passed": 14, "total": 14, "note": "Grouped assertions differ from the other subjects." },
+      "public": {
+        "passed": 14,
+        "total": 14,
+        "note": "Grouped assertions differ from the other subjects."
+      },
       "hidden": { "passed": 3, "total": 3 },
       "mutants": { "killed": 5, "total": 5 },
       "authorizedFilesOnly": true,
@@ -125,8 +129,8 @@
   },
   "sourceEvidence": [
     {
-      "type": "local_benchmark_artifact",
-      "path": "/Users/micahjohnson/.codex/visualizations/2026/08/26/01a03e8c-9d04-74d1-a1ca-4a0b6767eab8/agent-economy-trial-2/RESULTS.md"
+      "type": "portable_redacted_telemetry_receipt",
+      "path": "docs/internal/experiments/agent-economy-trial-2-telemetry-2026-08-26.json"
     },
     {
       "type": "repository_prior_art",
