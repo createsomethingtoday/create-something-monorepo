@@ -1,7 +1,7 @@
 import Airtable from 'airtable';
 import { randomBytes, createHash } from 'node:crypto';
 import { isLongDescriptionOnlyAssetVersionChange } from '../utils/asset-version-changes';
-import { isReviewFeedbackReleased } from '../utils/review-status';
+import { hasReviewRoundBeenReleased } from '../utils/review-status';
 
 // Airtable table IDs
 const TABLES = {
@@ -949,7 +949,7 @@ export function gateRequiredFixesByVersion(
 	for (const item of items) {
 		if (!item.versionRecordId) continue;
 		const version = versions.get(item.versionRecordId);
-		if (!version || !isReviewFeedbackReleased(version.reviewStatus)) continue;
+		if (!version || !hasReviewRoundBeenReleased(version.reviewStatus)) continue;
 
 		gated.push(
 			Number.isFinite(version.versionNumber)

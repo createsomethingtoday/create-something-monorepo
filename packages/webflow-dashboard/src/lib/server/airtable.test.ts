@@ -518,3 +518,14 @@ describe('gateRequiredFixesByVersion', () => {
 		expect(gated.map((g) => g.id)).toEqual(['v3item']);
 	});
 });
+
+describe('gateRequiredFixesByVersion — released history survives response transitions', () => {
+	it('keeps items whose version moved to Response to Review after release', () => {
+		const gated = gateRequiredFixesByVersion(
+			[{ id: 'a', item: 'Finding a', versionRecordId: 'recV1' }],
+			new Map([['recV1', { versionNumber: 1, reviewStatus: '🔁Response to Review' }]])
+		);
+
+		expect(gated.map((g) => g.id)).toEqual(['a']);
+	});
+});

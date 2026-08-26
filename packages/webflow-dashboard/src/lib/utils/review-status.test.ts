@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { creatorReviewStatusLabel, isReviewFeedbackReleased } from './review-status';
+import { creatorReviewStatusLabel, hasReviewRoundBeenReleased, isReviewFeedbackReleased } from './review-status';
 
 describe('isReviewFeedbackReleased', () => {
 	it('treats only notification-triggering statuses as released', () => {
@@ -59,5 +59,26 @@ describe('creatorReviewStatusLabel', () => {
 		expect(creatorReviewStatusLabel('☠️Archived (Auto)')).toBe('Archived');
 		expect(creatorReviewStatusLabel(undefined)).toBeUndefined();
 		expect(creatorReviewStatusLabel('  ')).toBeUndefined();
+	});
+});
+
+describe('hasReviewRoundBeenReleased', () => {
+	it('treats notification-triggering statuses as released rounds', () => {
+		expect(hasReviewRoundBeenReleased('📤Changes Requested')).toBe(true);
+		expect(hasReviewRoundBeenReleased('❌Rejected')).toBe(true);
+	});
+
+	it('treats Response to Review as a released round — it is only reachable from Changes Requested', () => {
+		expect(hasReviewRoundBeenReleased('🔁Response to Review')).toBe(true);
+	});
+
+	it('keeps unreleased, silent, and internal statuses out', () => {
+		expect(hasReviewRoundBeenReleased('🆕Ready for Review')).toBe(false);
+		expect(hasReviewRoundBeenReleased('🏃🏾In Review')).toBe(false);
+		expect(hasReviewRoundBeenReleased('⏸️On Hold')).toBe(false);
+		expect(hasReviewRoundBeenReleased('📤Changes Requested (No Notification)')).toBe(false);
+		expect(hasReviewRoundBeenReleased('❌Rejected (No Notification)')).toBe(false);
+		expect(hasReviewRoundBeenReleased('✅Approved')).toBe(false);
+		expect(hasReviewRoundBeenReleased(undefined)).toBe(false);
 	});
 });

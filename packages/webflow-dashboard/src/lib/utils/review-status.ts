@@ -31,12 +31,35 @@ const EXACT_LABELS: Record<string, string> = {
 };
 
 /**
- * True when the review round's feedback has been released to the creator.
- * Gates both the feedback body and the partner exceptions ledger.
+ * Statuses that imply this round's release has already happened.
+ * "🔁Response to Review" is reachable only from "📤Changes Requested" (the
+ * creator replied to the sent email), so it proves a past release even
+ * though the CURRENT feedback field may since have been redrafted.
+ */
+const ROUND_RELEASED_REVIEW_STATUSES = new Set([
+	'📤Changes Requested',
+	'🔁Response to Review',
+	'❌Rejected'
+]);
+
+/**
+ * True when the review round's feedback has been released to the creator AND
+ * the feedback field still holds exactly what was released. Gates the
+ * mutable feedback body.
  */
 export function isReviewFeedbackReleased(rawStatus: string | undefined | null): boolean {
 	if (!rawStatus) return false;
 	return RELEASED_REVIEW_STATUSES.has(rawStatus.trim());
+}
+
+/**
+ * True when the round's release act has occurred, regardless of whether the
+ * creator has since responded. Gates immutable release history — the
+ * exception-item ledger — which must survive later status transitions.
+ */
+export function hasReviewRoundBeenReleased(rawStatus: string | undefined | null): boolean {
+	if (!rawStatus) return false;
+	return ROUND_RELEASED_REVIEW_STATUSES.has(rawStatus.trim());
 }
 
 /**
