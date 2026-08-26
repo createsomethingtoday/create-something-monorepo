@@ -155,6 +155,8 @@ for (const subject of [terraHigh, terraUltra, solLowDefault, solLowFast]) {
   if ('cachedInputTokens' in subject)
     assert.equal(session.cachedInputTokens, subject.cachedInputTokens);
   if ('outputTokens' in subject) assert.equal(session.outputTokens, subject.outputTokens);
+  if ('reasoningOutputTokens' in subject)
+    assert.equal(session.reasoningOutputTokens, subject.reasoningOutputTokens);
   assert.equal(
     Number(calculateCredits(trial1Telemetry, session).toFixed(6)),
     Number((subject.creditEquivalent ?? subject.baseRateCreditEquivalent).toFixed(6))
