@@ -4,7 +4,7 @@
   "trial": "three-slice-write-enabled",
   "taskContractSha256": "02296d3ca9d666bd058335410193eac1d4925eeddcc8df9d5355fd60bae6b9b1",
   "judgeArtifacts": {
-    "hiddenTestSha256": "6a2216a5f9aab6f503e2714146c3d98fef51640716c211a64fc6f6068c045131",
+    "hiddenTestSha256": "3574ea9c3ce3fd2a745e1a17a16972fa72ebbd7d0f971f9b0f072a2696cbf3d5",
     "mutationRunnerSha256": "83c2236544c9f208d7925aeb5adabb83b1016123e09719ad831c9ee5d5606dd2",
     "mutants": [
       {
@@ -35,13 +35,13 @@
       "artifactSha256": [
         "468e921cdd75a8a729fdf521bbdb181e6918c0a9f7b1a707719789e8da10ab07",
         "8e872ca3a6ea92fc2b2cfac1f3e6ff7ba3814d802ec02486de235de58772cfa0",
-        "0416f84e247f5dbebb3acb36c8f37b5031084e19521e64fecc9e70a068649354",
+        "35b80c35bdc7cd01d5c8a843b9ec157bc5ef3b29633cd5e50dd85a014c1c774b",
         "999095d7da689c0697dd4f3838d6da723be73f401aebc6b36bc893e76e2e3a5c",
         "74b6bc8c18bb4bc4cbc217c62b8d947e2cd350613ded0a019bcb095afab74d9d",
         "bee9b682f968cac7c12eefd10f943a94eb7c4dc5333605522444e3a841a09221"
       ],
       "public": { "passed": 17, "total": 17 },
-      "hidden": { "passed": 3, "total": 3 },
+      "hidden": { "passed": 2, "total": 3 },
       "mutants": { "killed": 5, "total": 5 },
       "authorizedFilesOnly": true
     },
@@ -50,13 +50,13 @@
       "artifactSha256": [
         "c2330801bd6a90e3fcf06e08eb30a3964f194f6bd243e9e48be6133b704c0151",
         "8e872ca3a6ea92fc2b2cfac1f3e6ff7ba3814d802ec02486de235de58772cfa0",
-        "7cb941e26f55b1341db613fc1269c8faf76e1a7fbfcdbebfab767440a624ac8b",
+        "fbe727b1702f8a83d56cf69bd5d42c6dfac9cce8534be13fe8224b1ec9a206e9",
         "999095d7da689c0697dd4f3838d6da723be73f401aebc6b36bc893e76e2e3a5c",
         "1f95cba7e9b03ae2debf8f40b9ad9133ddd9042e146bde85ba110575acbd998c",
         "bee9b682f968cac7c12eefd10f943a94eb7c4dc5333605522444e3a841a09221"
       ],
       "public": { "passed": 14, "total": 14 },
-      "hidden": { "passed": 3, "total": 3 },
+      "hidden": { "passed": 2, "total": 3 },
       "mutants": { "killed": 5, "total": 5 },
       "authorizedFilesOnly": true
     },
@@ -65,13 +65,13 @@
       "artifactSha256": [
         "744e9949bc0b5521d1734709ccb0d46194dd5b0f29a06bb98f8b6ad697c4bc9d",
         "8e872ca3a6ea92fc2b2cfac1f3e6ff7ba3814d802ec02486de235de58772cfa0",
-        "a4ee173f980688467310335ba2db32dca7465f674106d7710bae2765f350cb87",
+        "c381d14cf37c5d47db58038120a4675c9e5189d0ab6df9c4c614d8fa3e44f946",
         "999095d7da689c0697dd4f3838d6da723be73f401aebc6b36bc893e76e2e3a5c",
         "8d55791b5575a976f4848f6442468d6448d29f10605905f5a08479df8cd92e61",
         "bee9b682f968cac7c12eefd10f943a94eb7c4dc5333605522444e3a841a09221"
       ],
       "public": { "passed": 17, "total": 17 },
-      "hidden": { "passed": 3, "total": 3 },
+      "hidden": { "passed": 2, "total": 3 },
       "mutants": { "killed": 5, "total": 5 },
       "authorizedFilesOnly": true
     }

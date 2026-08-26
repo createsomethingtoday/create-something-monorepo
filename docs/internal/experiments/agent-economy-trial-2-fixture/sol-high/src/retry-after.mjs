@@ -14,7 +14,6 @@ function parseHttpDate(text, nowMs) {
       comparableText
     );
   let parsed;
-  let rfc850InitialWeekday = null;
   if (rfc850) {
     const [, day, month, shortYear, hour, minute, second] = rfc850;
     const now = new Date(nowMs);
@@ -28,7 +27,6 @@ function parseHttpDate(text, nowMs) {
       Number(minute),
       Number(second)
     );
-    rfc850InitialWeekday = new Date(parsed).getUTCDay();
     const boundaryYear = currentYear + 50;
     const boundaryDay = Math.min(
       now.getUTCDate(),
@@ -85,8 +83,7 @@ function parseHttpDate(text, nowMs) {
   const suppliedRfc850Weekday = longWeekdays.indexOf(
     comparableText.slice(0, comparableText.indexOf(','))
   );
-  const validRfc850Weekday =
-    suppliedRfc850Weekday === rfc850InitialWeekday || suppliedRfc850Weekday === date.getUTCDay();
+  const validRfc850Weekday = suppliedRfc850Weekday === date.getUTCDay();
   const valid = rfc850
     ? comparableText.slice(comparableText.indexOf(',') + 2) === acceptedRfc850 && validRfc850Weekday
     : accepted.includes(comparableText);

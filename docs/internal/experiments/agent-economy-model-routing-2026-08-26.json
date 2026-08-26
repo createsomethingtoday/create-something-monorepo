@@ -4,11 +4,11 @@
   "linearIssue": "CRE-1877",
   "title": "Governed Codex Model Routing Economics",
   "artifactClass": "internal_experiment",
-  "status": "supported_not_validated",
+  "status": "inconclusive_quality_gate_failed",
   "startedAt": "2026-08-26",
   "lastReviewedAt": "2026-08-26",
   "reviewOwner": "CREATE SOMETHING",
-  "primaryClaim": "Lower-cost high-effort agents are promising executors for independent work with deterministic quality gates; a stronger low-effort judgment governor remains an unverified hypothesis.",
+  "primaryClaim": "The session-time Trial 2 outputs did not pass the expanded hidden quality gate, so their matched cost and timing observations cannot establish an economic routing advantage; a stronger low-effort judgment governor remains an unverified hypothesis.",
   "evidenceGrade": "benchmark",
   "trials": [
     {
@@ -17,7 +17,7 @@
       "strategy": "3x Luna / High",
       "agentCount": 3,
       "public": { "passed": 17, "total": 17 },
-      "hidden": { "passed": 3, "total": 3 },
+      "hidden": { "passed": 2, "total": 3 },
       "mutants": { "killed": 5, "total": 5 },
       "authorizedFilesOnly": true,
       "criticalPathSeconds": 98.865,
@@ -34,7 +34,7 @@
         "total": 14,
         "note": "Grouped assertions differ from the other subjects."
       },
-      "hidden": { "passed": 3, "total": 3 },
+      "hidden": { "passed": 2, "total": 3 },
       "mutants": { "killed": 5, "total": 5 },
       "authorizedFilesOnly": true,
       "criticalPathSeconds": 78.676,
@@ -47,7 +47,7 @@
       "strategy": "1x Sol / High",
       "agentCount": 1,
       "public": { "passed": 17, "total": 17 },
-      "hidden": { "passed": 3, "total": 3 },
+      "hidden": { "passed": 2, "total": 3 },
       "mutants": { "killed": 5, "total": 5 },
       "authorizedFilesOnly": true,
       "criticalPathSeconds": 129.263,
@@ -105,7 +105,8 @@
     "Trial 2 is synthetic and cleanly decomposable by construction.",
     "The Sol Low serving-tier pair followed different stochastic investigation paths, so token differences cannot be attributed causally to Fast.",
     "Both local Sol Low runs initially launched one acceptance build from the repository root before completing the authoritative isolated run; ignored dist output may have been refreshed.",
-    "A clarified Terra Ultra run changed the prompt and is excluded from effort-only comparison."
+    "A clarified Terra Ultra run changed the prompt and is excluded from effort-only comparison.",
+    "All three session-time Trial 2 subjects failed the expanded retry-parser hidden test; later human-remediated copies are reference artifacts, not model outputs."
   ],
   "prospectiveReplicationGate": {
     "minimumRunsPerTaskFamilyPerCohort": 10,

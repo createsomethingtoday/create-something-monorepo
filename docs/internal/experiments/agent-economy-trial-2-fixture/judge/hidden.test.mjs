@@ -6,7 +6,9 @@ import { resolve } from 'node:path';
 const subjectRoot = process.env.SUBJECT_ROOT;
 if (!subjectRoot) throw new Error('SUBJECT_ROOT is required');
 
-const retryUrl = pathToFileURL(resolve(subjectRoot, 'src/retry-after.mjs')).href;
+const retryUrl = pathToFileURL(
+  process.env.RETRY_AFTER_PATH ?? resolve(subjectRoot, 'src/retry-after.mjs')
+).href;
 const gateUrl = pathToFileURL(resolve(subjectRoot, 'src/approval-gate.mjs')).href;
 const { parseRetryAfter } = await import(`${retryUrl}?hidden=1`);
 const { evaluateApprovalGate } = await import(`${gateUrl}?hidden=1`);
@@ -38,7 +40,7 @@ test('retry parser handles hidden boundary cases', () => {
   assert.equal(parseRetryAfter('Sat, 31 Dec 2016 23:59:60 GMT', 0), 1_483_228_800_000);
   assert.equal(parseRetryAfter('Sat Dec 31 23:59:60 2016', 0), 1_483_228_800_000);
   const endOf2026 = Date.UTC(2026, 11, 31, 23, 59, 59);
-  assert.equal(parseRetryAfter('Thursday, 31-Dec-76 23:59:60 GMT', endOf2026), 0);
+  assert.equal(parseRetryAfter('Friday, 31-Dec-76 23:59:60 GMT', endOf2026), 0);
   assert.equal(parseRetryAfter('+2', 0), null);
   assert.equal(parseRetryAfter(null, 0), null);
   assert.equal(parseRetryAfter('not-a-date', 0), null);

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
@@ -44,7 +44,7 @@ const publicMetadata = await readFile(
 );
 
 assert.equal(results.schemaVersion, 'create_something_internal_experiment.v0.1');
-assert.equal(results.status, 'supported_not_validated');
+assert.equal(results.status, 'inconclusive_quality_gate_failed');
 assert.equal(results.trials.length, 7);
 
 const trial = (id) => {
@@ -62,7 +62,7 @@ const solLowDefault = trial('trial-1-sol-low-default');
 const solLowFast = trial('trial-1-sol-low-fast');
 
 for (const subject of [luna, terra, sol]) {
-  assert.deepEqual(subject.hidden, { passed: 3, total: 3 });
+  assert.deepEqual(subject.hidden, { passed: 2, total: 3 });
   assert.deepEqual(subject.mutants, { killed: 5, total: 5 });
   assert.equal(subject.authorizedFilesOnly, true);
 }
@@ -211,7 +211,11 @@ for (const judged of judgeReceipt.subjects) {
   assert.deepEqual(judged.mutants, subject.mutants);
   assert.equal(judged.authorizedFilesOnly, subject.authorizedFilesOnly);
   for (const [index, path] of artifactPaths.entries()) {
-    assert.equal(await sha256(`${directory}/${path}`), judged.artifactSha256[index]);
+    const receiptPath =
+      path === 'src/retry-after.mjs'
+        ? `session-time/${directory}/retry-after.mjs`
+        : `${directory}/${path}`;
+    assert.equal(await sha256(receiptPath), judged.artifactSha256[index]);
   }
   const subjectRoot = resolve(fixtureRoot, directory);
   const publicOutput = execFileSync(process.execPath, ['--test', '--test-reporter=tap'], {
@@ -219,16 +223,22 @@ for (const judged of judgeReceipt.subjects) {
     encoding: 'utf8'
   });
   assert.match(publicOutput, new RegExp(`# tests ${judged.public.total}\\b`, 'u'));
-  const hiddenOutput = execFileSync(
+  const hiddenRun = spawnSync(
     process.execPath,
     ['--test-reporter=tap', resolve(fixtureRoot, 'judge/hidden.test.mjs')],
     {
       cwd: subjectRoot,
-      env: { ...process.env, SUBJECT_ROOT: subjectRoot },
+      env: {
+        ...process.env,
+        SUBJECT_ROOT: subjectRoot,
+        RETRY_AFTER_PATH: resolve(fixtureRoot, `session-time/${directory}/retry-after.mjs`)
+      },
       encoding: 'utf8'
     }
   );
-  assert.match(hiddenOutput, new RegExp(`# tests ${judged.hidden.total}\\b`, 'u'));
+  assert.equal(hiddenRun.status, 1);
+  assert.match(hiddenRun.stdout, new RegExp(`# tests ${judged.hidden.total}\\b`, 'u'));
+  assert.match(hiddenRun.stdout, new RegExp(`# pass ${judged.hidden.passed}\\b`, 'u'));
   const mutation = JSON.parse(
     execFileSync(
       process.execPath,
@@ -271,7 +281,7 @@ assert.equal(results.prospectiveReplicationGate.minimumRunsPerTaskFamilyPerCohor
 assert.equal(results.prospectiveReplicationGate.randomizeCohortOrder, true);
 
 const publicFacts = [
-  'SUPPORTED — NOT VALIDATED',
+  'INCONCLUSIVE — QUALITY GATE FAILED',
   `${luna.public.passed}/${luna.public.total}`,
   `${terra.public.passed}/${terra.public.total}`,
   `${sol.public.passed}/${sol.public.total}`,
@@ -289,13 +299,13 @@ const publicFacts = [
   'at least **10 trials per task family per cohort**',
   '[Dual-Agent Routing Experiment](/papers/dual-agent-routing-experiment)',
   'Token and credit economics and Trial 2 latency are recomputed from durable receipts',
-  'the release gate reruns the checked-in public, hidden, and mutation judges'
+  'the release gate reruns the session-time outputs against the checked-in public, hidden, and mutation judges'
 ];
 
 const publicRows = [
-  `| 3× Luna / High | 17/17 | 3/3 | 5/5 | yes | ${luna.criticalPathSeconds.toFixed(3)} s | ${luna.totalTokens.toLocaleString('en-US')} | ${luna.creditEquivalent.toFixed(6)} |`,
-  `| 1× Terra / High | 14/14 | 3/3 | 5/5 | yes | ${terra.criticalPathSeconds.toFixed(3)} s | ${terra.totalTokens.toLocaleString('en-US')} | ${terra.creditEquivalent.toFixed(6)} |`,
-  `| 1× Sol / High | 17/17 | 3/3 | 5/5 | yes | ${sol.criticalPathSeconds.toFixed(3)} s | ${sol.totalTokens.toLocaleString('en-US')} | ${sol.creditEquivalent.toFixed(6)} |`
+  `| 3× Luna / High | 17/17 | 2/3 | 5/5 | yes | ${luna.criticalPathSeconds.toFixed(3)} s | ${luna.totalTokens.toLocaleString('en-US')} | ${luna.creditEquivalent.toFixed(6)} |`,
+  `| 1× Terra / High | 14/14 | 2/3 | 5/5 | yes | ${terra.criticalPathSeconds.toFixed(3)} s | ${terra.totalTokens.toLocaleString('en-US')} | ${terra.creditEquivalent.toFixed(6)} |`,
+  `| 1× Sol / High | 17/17 | 2/3 | 5/5 | yes | ${sol.criticalPathSeconds.toFixed(3)} s | ${sol.totalTokens.toLocaleString('en-US')} | ${sol.creditEquivalent.toFixed(6)} |`
 ];
 
 for (const fact of publicFacts) {
