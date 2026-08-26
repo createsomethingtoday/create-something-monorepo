@@ -712,7 +712,7 @@ export function registerTools(
 
   server.tool(
     'template_review_set_featured_flag',
-    'Finalize (or revert) one template\'s membership in the upcoming Featured batch by setting ℹ️Is Featured?. CONSEQUENTIAL: checking it resolves the featured period to the first of next month and arms the creator-notification worker (hourly cron) for that period — the creator receives a congratulations email quoting the live Pick Reason. Requires confirm_creator_notification: true AND a non-empty live ⭐Reviewer Pick Reason (featuring is rejected before any write otherwise). Unchecking before the worker fires is the abort path. The marketplace-CMS backfill remains a separate manual step.',
+    'Finalize (or revert) one template\'s membership in the upcoming Featured batch by setting ℹ️Is Featured?. CONSEQUENTIAL: checking it resolves the featured period to the first of next month and arms the creator-notification worker (hourly cron) for that period — the creator receives a congratulations email quoting the live Pick Reason. Restricted to reviewers whose directory entry grants featuredCoordinator (403 otherwise). Requires confirm_creator_notification: true AND a non-empty live ⭐Reviewer Pick Reason (featuring is rejected before any write otherwise). Unchecking before the worker fires is the abort path. The marketplace-CMS backfill remains a separate manual step.',
     {
       asset_id: z.string().min(1),
       is_featured: z.boolean(),
@@ -720,6 +720,15 @@ export function registerTools(
     },
     async ({ asset_id, is_featured, confirm_creator_notification }) => {
       try {
+        const reviewer = getReviewer();
+        if (!reviewer?.featuredCoordinator) {
+          throw new AirtableClientError(
+            'FEATURED_COORDINATOR_REQUIRED',
+            'Batch finalization is restricted to featured-batch coordinators: this write arms the external creator-notification path. Reviewers star picks (template_review_set_featured_pick) and vote (template_review_cast_featured_vote); ask the coordinator to finalize, or have your reviewer-directory entry granted featuredCoordinator.',
+            403,
+            { asset_id },
+          );
+        }
         if (is_featured && confirm_creator_notification !== true) {
           throw new AirtableClientError(
             'CREATOR_NOTIFICATION_CONFIRMATION_REQUIRED',

@@ -1907,3 +1907,47 @@ test('set_mrp_visibility fails closed without the marketplace admin key and stay
   assert.equal(readOnly.names.indexOf('template_review_set_mrp_visibility'), -1);
   assert.notEqual(readOnly.names.indexOf('template_review_prepare_admin_template_verify'), -1);
 });
+
+test('set_featured_flag is restricted to featured-batch coordinators', async () => {
+  const { server, handlers } = createServerHarness();
+  let clientCalled = false;
+  const client = {
+    setFeaturedFlag: async () => {
+      clientCalled = true;
+      return { assetId: 'rec_x', templateName: 'X', isFeatured: true, warnings: [] };
+    },
+  } as unknown as AirtableClient;
+
+  registerTools(
+    server,
+    () => client,
+    () => reviewer, // ordinary reviewer: no featuredCoordinator grant
+  );
+
+  const denied = await handlers.get('template_review_set_featured_flag')?.({
+    asset_id: 'rec_x',
+    is_featured: true,
+    confirm_creator_notification: true,
+  });
+  assert.ok(denied);
+  const deniedPayload = parsePayload(denied);
+  assert.equal(deniedPayload.ok, false);
+  assert.equal((deniedPayload.error as { code?: string }).code, 'FEATURED_COORDINATOR_REQUIRED');
+  assert.equal(clientCalled, false);
+
+  const coordinatorHarness = createServerHarness();
+  registerTools(
+    coordinatorHarness.server,
+    () => client,
+    () => ({ ...reviewer, featuredCoordinator: true }),
+  );
+  const allowed = await coordinatorHarness.handlers.get('template_review_set_featured_flag')?.({
+    asset_id: 'rec_x',
+    is_featured: true,
+    confirm_creator_notification: true,
+  });
+  assert.ok(allowed);
+  const allowedPayload = parsePayload(allowed);
+  assert.equal(allowedPayload.ok, true);
+  assert.equal(clientCalled, true);
+});

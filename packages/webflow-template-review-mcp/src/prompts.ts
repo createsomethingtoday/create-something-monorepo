@@ -209,7 +209,9 @@ the live design → \`set_featured_pick\` with \`reviewer_pick: true\` and a dra
 reason in \`pick_reason_draft\` → the reviewer reads the exact draft text → resend
 with \`pick_reason\` + \`confirm_creator_safe: true\` → \`cast_featured_vote\` on other
 reviewers' picks. Batch finalization (\`set_featured_flag\`) is the coordinator's
-step, per asset, after votes settle.
+step, per asset, after votes settle — enforced in authorization, not just
+convention: only reviewers whose directory entry grants \`featuredCoordinator\`
+can call it (everyone else gets a 403).
 
 Hard rules for featured copy: the live Pick Reason is quoted VERBATIM in the
 creator's email and rendered publicly on the listing — third-person marketplace
