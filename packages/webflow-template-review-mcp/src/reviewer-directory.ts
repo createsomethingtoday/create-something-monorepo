@@ -5,6 +5,12 @@ export interface ReviewerProfile {
   authEmailAliases?: string[];
   name?: string;
   lane?: string;
+  /**
+   * Grants featured-batch finalization (template_review_set_featured_flag).
+   * Ordinary reviewers pick and vote; only directory entries with this flag
+   * may arm the creator-notification path.
+   */
+  featuredCoordinator?: boolean;
 }
 
 export type ReviewerDirectory = Map<string, ReviewerProfile>;
@@ -38,6 +44,7 @@ function parseReviewerProfile(accountId: string, value: unknown): ReviewerProfil
     ...(authEmailAliases.length > 0 ? { authEmailAliases } : {}),
     ...(typeof value.name === 'string' && value.name.trim() ? { name: value.name.trim() } : {}),
     ...(typeof value.lane === 'string' && value.lane.trim() ? { lane: value.lane.trim() } : {}),
+    ...(value.featuredCoordinator === true ? { featuredCoordinator: true } : {}),
   };
 }
 

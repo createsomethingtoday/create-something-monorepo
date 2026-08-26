@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { AirtableClient } from '../src/airtable.js';
-import { CONFIRMED_ASSET_FIELDS, CONFIRMED_VERSION_FIELDS, CONFIRMED_WRITE_FIELD_IDS, METRICS_ASSET_FIELD_IDS, TABLE_IDS } from '../src/schema.js';
+import { CONFIRMED_ASSET_FIELDS, CONFIRMED_VERSION_FIELDS, CONFIRMED_WRITE_FIELD_IDS, FEATURED_ASSET_FIELDS, FEATURED_ASSET_FIELD_IDS, METRICS_ASSET_FIELD_IDS, TABLE_IDS } from '../src/schema.js';
 
 const ericReviewer = {
   id: 'usr_eric',
@@ -1443,4 +1443,556 @@ test('updateVersionReview allows autolinks and internal agent feedback with raw 
   await client.updateVersionReview('rec_version_safe_feedback', {
     agent_review_feedback: 'Found <script type="application/ld+json"> on all 18 pages via sandbox crawl.',
   });
+});
+
+test('listFeaturedCandidates filters to the remaining-eligible pool and summarizes it', async () => {
+  const capturedFormulas: string[] = [];
+  const now = new Date();
+  const pastMonthDate = new Date(now.getTime() - 40 * 24 * 60 * 60 * 1000).toISOString();
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input) => {
+      const url = new URL(String(input));
+      if (url.pathname.includes(`/${TABLE_IDS.assetVotingState}`)) {
+        return jsonResponse({
+          records: [
+            {
+              id: 'rec_state_ald',
+              fields: { '👍 count': 3, '👎 count': 1, 'Net votes': 2, 'In qualified pool?': 1 },
+            },
+          ],
+        });
+      }
+      if (!url.pathname.includes(`/${TABLE_IDS.assets}`)) {
+        throw new Error(`Unexpected fetch: ${url.toString()}`);
+      }
+      capturedFormulas.push(url.searchParams.get('filterByFormula') ?? '');
+      return jsonResponse({
+        records: [
+          {
+            id: 'rec_candidate_past',
+            createdTime: pastMonthDate,
+            fields: {
+              [CONFIRMED_ASSET_FIELDS.name]: 'Alderas',
+              [CONFIRMED_ASSET_FIELDS.websiteUrl]: 'https://alderas.webflow.io',
+              [CONFIRMED_ASSET_FIELDS.submittedDate]: pastMonthDate,
+              [CONFIRMED_ASSET_FIELDS.qualityScore]: ['🥇Exceptional'],
+              [FEATURED_ASSET_FIELDS.creatorLink]: ['rec_creator_radiant'],
+              [FEATURED_ASSET_FIELDS.creatorName]: 'Radiant Templates',
+              [FEATURED_ASSET_FIELDS.creatorTimesFeatured]: [22],
+              [FEATURED_ASSET_FIELDS.reviewerPick]: true,
+              [FEATURED_ASSET_FIELDS.reviewerPickReason]: 'Strong layout system for agency sites.',
+              [FEATURED_ASSET_FIELDS.votingStateLink]: ['rec_state_ald'],
+            },
+          },
+          {
+            id: 'rec_candidate_current',
+            createdTime: now.toISOString(),
+            fields: {
+              [CONFIRMED_ASSET_FIELDS.name]: 'Brokerwise',
+              [CONFIRMED_ASSET_FIELDS.submittedDate]: now.toISOString(),
+              [CONFIRMED_ASSET_FIELDS.qualityScore]: ['🥇Exceptional'],
+              [FEATURED_ASSET_FIELDS.creatorLink]: ['rec_creator_grabui'],
+              [FEATURED_ASSET_FIELDS.creatorName]: 'Grabui Library',
+              [FEATURED_ASSET_FIELDS.creatorTimesFeatured]: [4],
+            },
+          },
+        ],
+      });
+    },
+  });
+
+  const result = await client.listFeaturedCandidates();
+
+  const formula = capturedFormulas[0] ?? '';
+  assert.ok(formula.includes(`{${FEATURED_ASSET_FIELDS.isEligibleForUpcomingFeatured}} = 1`));
+  assert.ok(formula.includes(`DATETIME_DIFF(TODAY(), {${CONFIRMED_ASSET_FIELDS.submittedDate}}, 'months') <= 1`));
+  assert.ok(formula.includes(`NOT({${FEATURED_ASSET_FIELDS.isFeatured}})`));
+
+  assert.equal(result.monthsBackApplied, 1);
+  assert.equal(result.includeAlreadyFeaturedApplied, false);
+  assert.equal(result.summary.templatesAvailable, 2);
+  assert.equal(result.summary.creatorsAvailable, 2);
+  assert.equal(result.summary.currentMonthCount, 1);
+  assert.equal(result.summary.pastMonthsCount, 1);
+  assert.equal(result.summary.reviewerPicksMade, 1);
+  assert.equal(result.summary.pickReasonsWritten, 1);
+
+  // Current-month submissions sort ahead of past-month fallback candidates.
+  assert.equal(result.candidates[0]?.templateName, 'Brokerwise');
+  assert.equal(result.candidates[0]?.monthsSinceSubmission, 0);
+  assert.equal(result.candidates[1]?.templateName, 'Alderas');
+  assert.equal(result.candidates[1]?.monthsSinceSubmission, 1);
+  assert.equal(result.candidates[1]?.creatorTimesFeatured, 22);
+  assert.equal(result.candidates[1]?.reviewerPick, true);
+  assert.equal(result.candidates[0]?.reviewerPick, false);
+
+  // Read-only vote state joins onto candidates so the coordinator can judge
+  // batch readiness without mutating anything.
+  assert.equal(result.candidates[1]?.votingStateId, 'rec_state_ald');
+  assert.deepEqual(result.candidates[1]?.voteTallies, { up: 3, down: 1, net: 2, inQualifiedPool: true });
+  assert.equal(result.candidates[0]?.voteTallies, undefined);
+});
+
+test('listFeaturedCandidates keeps already-featured templates only when asked', async () => {
+  const capturedFormulas: string[] = [];
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input) => {
+      const url = new URL(String(input));
+      capturedFormulas.push(url.searchParams.get('filterByFormula') ?? '');
+      return jsonResponse({ records: [] });
+    },
+  });
+
+  await client.listFeaturedCandidates({ includeAlreadyFeatured: true, monthsBack: 0 });
+
+  const formula = capturedFormulas[0] ?? '';
+  assert.ok(!formula.includes(`NOT({${FEATURED_ASSET_FIELDS.isFeatured}})`));
+  assert.ok(formula.includes(`DATETIME_DIFF(TODAY(), {${CONFIRMED_ASSET_FIELDS.submittedDate}}, 'months') <= 0`));
+});
+
+test('setFeaturedPick stages drafts by field ID and surfaces style warnings', async () => {
+  const patches: Array<{ path: string; body: Record<string, unknown> }> = [];
+  const assetFields = {
+    [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+    [CONFIRMED_ASSET_FIELDS.name]: 'Brokerwise',
+    [FEATURED_ASSET_FIELDS.isEligibleForUpcomingFeatured]: 1,
+  };
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input, init) => {
+      const url = new URL(String(input));
+      if (init?.method === 'PATCH') {
+        patches.push({ path: url.pathname, body: JSON.parse(String(init.body)) as Record<string, unknown> });
+        return jsonResponse({
+          id: 'rec_asset_pick',
+          fields: { ...assetFields, [FEATURED_ASSET_FIELDS.reviewerPick]: true, [FEATURED_ASSET_FIELDS.reviewerPickReasonAiDraft]: 'Short draft.' },
+        });
+      }
+      return jsonResponse({ id: 'rec_asset_pick', fields: assetFields });
+    },
+  });
+
+  const result = await client.setFeaturedPick('rec_asset_pick', {
+    reviewer_pick: true,
+    pick_reason_draft: 'Short draft.',
+  });
+
+  assert.equal(patches.length, 1);
+  const patchedFields = (patches[0]?.body as { fields: Record<string, unknown> }).fields;
+  assert.deepEqual(Object.keys(patchedFields).sort(), [FEATURED_ASSET_FIELD_IDS.reviewerPick, FEATURED_ASSET_FIELD_IDS.reviewerPickReasonAiDraft].sort());
+  assert.equal(result.candidate.reviewerPick, true);
+  assert.ok(result.warnings.some((warning) => warning.startsWith('pick_reason_short')));
+  assert.ok(result.warnings.some((warning) => warning.startsWith('pick_without_live_reason')));
+});
+
+test('setFeaturedPick rejects raw HTML in the live creator-facing reason', async () => {
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async () => {
+      throw new Error('No fetch expected — validation happens before any request.');
+    },
+  });
+
+  await assert.rejects(
+    client.setFeaturedPick('rec_asset', { pick_reason: 'Uses <script type="application/ld+json"> markup nicely.' }),
+    (error: Error & { code?: string }) => error.code === 'RAW_HTML_IN_PICK_REASON',
+  );
+});
+
+test('castFeaturedVote creates voting state when missing and upserts the reviewer vote', async () => {
+  const creates: Array<{ path: string; body: Record<string, unknown> }> = [];
+  const assetFields = {
+    [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+    [CONFIRMED_ASSET_FIELDS.name]: 'Alderas',
+  };
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input, init) => {
+      const url = new URL(String(input));
+      if (init?.method === 'POST') {
+        const body = JSON.parse(String(init.body)) as Record<string, unknown>;
+        creates.push({ path: url.pathname, body });
+        if (url.pathname.endsWith(`/${TABLE_IDS.assetVotingState}`)) {
+          return jsonResponse({ id: 'rec_state_new', fields: body.fields as Record<string, unknown> });
+        }
+        return jsonResponse({ id: 'rec_vote_new', fields: body.fields as Record<string, unknown> });
+      }
+      if (url.pathname.endsWith('/rec_asset_vote')) {
+        return jsonResponse({ id: 'rec_asset_vote', fields: assetFields });
+      }
+      if (url.pathname.endsWith('/rec_state_new')) {
+        return jsonResponse({
+          id: 'rec_state_new',
+          fields: { '👍 count': 1, '👎 count': 0, 'Net votes': 1, 'In qualified pool?': 1 },
+        });
+      }
+      throw new Error(`Unexpected fetch: ${url.toString()}`);
+    },
+  });
+
+  const result = await client.castFeaturedVote('rec_asset_vote', { vote: 'up', note: 'Strong pick.' }, ericReviewer);
+
+  assert.equal(creates.length, 2);
+  const voteFields = (creates[1]?.body as { fields: Record<string, unknown> }).fields;
+  assert.deepEqual(voteFields['Reviewer'], { id: ericReviewer.id });
+  assert.equal(voteFields['Vote'], '👍 Up');
+  assert.equal(result.action, 'created');
+  assert.equal(result.votingStateId, 'rec_state_new');
+  assert.deepEqual(result.tallies, { up: 1, down: 0, net: 1, inQualifiedPool: true });
+});
+
+test('castFeaturedVote updates an existing vote instead of double-counting', async () => {
+  const patches: string[] = [];
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input, init) => {
+      const url = new URL(String(input));
+      if (init?.method === 'PATCH') {
+        patches.push(url.pathname);
+        return jsonResponse({ id: 'rec_vote_existing', fields: { Vote: '👎 Down', Note: 'Changed my mind.' } });
+      }
+      if (init?.method === 'POST') {
+        throw new Error('No create expected when the reviewer already voted.');
+      }
+      if (url.pathname.endsWith('/rec_asset_vote2')) {
+        return jsonResponse({
+          id: 'rec_asset_vote2',
+          fields: {
+            [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+            [CONFIRMED_ASSET_FIELDS.name]: 'Nevio',
+            ['🏗️Voting State']: ['rec_state_existing'],
+          },
+        });
+      }
+      if (url.pathname.endsWith('/rec_state_existing')) {
+        return jsonResponse({
+          id: 'rec_state_existing',
+          fields: { '🗳️Votes': ['rec_vote_existing'], '👍 count': 0, '👎 count': 1, 'Net votes': -1, 'In qualified pool?': 0 },
+        });
+      }
+      if (url.pathname.endsWith(`/${TABLE_IDS.reviewerVotes}`)) {
+        return jsonResponse({
+          records: [{ id: 'rec_vote_existing', fields: { Reviewer: { id: ericReviewer.id }, Vote: '👍 Up' } }],
+        });
+      }
+      throw new Error(`Unexpected fetch: ${url.toString()}`);
+    },
+  });
+
+  const result = await client.castFeaturedVote('rec_asset_vote2', { vote: 'down', note: 'Changed my mind.' }, ericReviewer);
+
+  assert.deepEqual(patches, [`/v0/appMoIgXMTTTNIc3p/${TABLE_IDS.reviewerVotes}/rec_vote_existing`]);
+  assert.equal(result.action, 'updated');
+  assert.equal(result.vote, '👎 Down');
+});
+
+test('setFeaturedFlag writes the checkbox by field ID and reports the armed period', async () => {
+  const patches: Array<Record<string, unknown>> = [];
+  const reason = 'Brokerwise stands out for its confident financial-services layout system and clear conversion paths, making it a strong fit for brokerages and advisory firms that want an authoritative online presence with an obvious enquiry path for prospective clients.';
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input, init) => {
+      const url = new URL(String(input));
+      if (init?.method === 'PATCH') {
+        patches.push(JSON.parse(String(init.body)) as Record<string, unknown>);
+        return jsonResponse({
+          id: 'rec_asset_flag',
+          fields: {
+            [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+            [CONFIRMED_ASSET_FIELDS.name]: 'Brokerwise',
+            [FEATURED_ASSET_FIELDS.isFeatured]: true,
+            [FEATURED_ASSET_FIELDS.isFeaturedPeriod]: '2026-09-01',
+            [FEATURED_ASSET_FIELDS.isEligibleForUpcomingFeatured]: 1,
+            [FEATURED_ASSET_FIELDS.reviewerPickReason]: reason,
+          },
+        });
+      }
+      if (url.pathname.endsWith('/rec_state_flag')) {
+        return jsonResponse({ id: 'rec_state_flag', fields: { 'In qualified pool?': 1 } });
+      }
+      return jsonResponse({
+        id: 'rec_asset_flag',
+        fields: {
+          [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+          [CONFIRMED_ASSET_FIELDS.name]: 'Brokerwise',
+          [FEATURED_ASSET_FIELDS.reviewerPickReason]: reason,
+          [FEATURED_ASSET_FIELDS.reviewerPick]: true,
+          [FEATURED_ASSET_FIELDS.isEligibleForUpcomingFeatured]: 1,
+          ['🏗️Voting State']: ['rec_state_flag'],
+        },
+      });
+    },
+  });
+
+  const result = await client.setFeaturedFlag('rec_asset_flag', true);
+
+  assert.deepEqual((patches[0] as { fields: Record<string, unknown> }).fields, { [FEATURED_ASSET_FIELD_IDS.isFeatured]: true });
+  assert.equal(result.isFeatured, true);
+  assert.equal(result.featuredPeriod, '2026-09-01');
+  assert.deepEqual(result.warnings, []);
+});
+
+test('setFeaturedFlag rejects featuring before any write when the live pick reason is empty', async () => {
+  let patched = false;
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input, init) => {
+      if (init?.method === 'PATCH') {
+        patched = true;
+        throw new Error('No PATCH expected — featuring must be rejected before the write.');
+      }
+      return jsonResponse({
+        id: 'rec_asset_noreason',
+        fields: { [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️', [CONFIRMED_ASSET_FIELDS.name]: 'Vesper' },
+      });
+    },
+  });
+
+  await assert.rejects(
+    client.setFeaturedFlag('rec_asset_noreason', true),
+    (error: Error & { code?: string }) => error.code === 'MISSING_PICK_REASON',
+  );
+  assert.equal(patched, false);
+
+  // Unchecking (the abort path) never requires a reason.
+  const unflagClient = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input, init) => {
+      if (init?.method === 'PATCH') {
+        return jsonResponse({
+          id: 'rec_asset_noreason',
+          fields: { [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️', [CONFIRMED_ASSET_FIELDS.name]: 'Vesper', [FEATURED_ASSET_FIELDS.isFeatured]: false },
+        });
+      }
+      return jsonResponse({
+        id: 'rec_asset_noreason',
+        fields: { [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️', [CONFIRMED_ASSET_FIELDS.name]: 'Vesper' },
+      });
+    },
+  });
+  const reverted = await unflagClient.setFeaturedFlag('rec_asset_noreason', false);
+  assert.equal(reverted.isFeatured, false);
+});
+
+test('castFeaturedVote self-heals duplicate votes onto a deterministic keeper', async () => {
+  const deleted: string[] = [];
+  const patchedIds: string[] = [];
+  let stateReads = 0;
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input, init) => {
+      const url = new URL(String(input));
+      if (init?.method === 'POST') {
+        return jsonResponse({ id: 'rec_vote_zz', fields: { Vote: '👍 Up' } });
+      }
+      if (init?.method === 'PATCH') {
+        const id = url.pathname.split('/').pop() ?? '';
+        patchedIds.push(id);
+        return jsonResponse({ id, fields: { Vote: '👍 Up' } });
+      }
+      if (init?.method === 'DELETE') {
+        deleted.push(url.pathname.split('/').pop() ?? '');
+        return jsonResponse({ deleted: true });
+      }
+      if (url.pathname.endsWith('/rec_asset_dup')) {
+        return jsonResponse({
+          id: 'rec_asset_dup',
+          fields: {
+            [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+            [CONFIRMED_ASSET_FIELDS.name]: 'Mello',
+            ['🏗️Voting State']: ['rec_state_dup'],
+          },
+        });
+      }
+      if (url.pathname.endsWith('/rec_state_dup')) {
+        stateReads += 1;
+        // 1st read (pre-create ownVote check): no votes visible yet → create path.
+        // 2nd read (reconciliation): the race is now visible — two votes exist.
+        // 3rd read (tallies): healed counts.
+        if (stateReads === 1) return jsonResponse({ id: 'rec_state_dup', fields: { '🗳️Votes': [] } });
+        return jsonResponse({
+          id: 'rec_state_dup',
+          fields: { '🗳️Votes': ['rec_vote_aa', 'rec_vote_zz'], '👍 count': 1, '👎 count': 0, 'Net votes': 1, 'In qualified pool?': 1 },
+        });
+      }
+      if (url.pathname.endsWith(`/${TABLE_IDS.reviewerVotes}`)) {
+        return jsonResponse({
+          records: [
+            { id: 'rec_vote_aa', fields: { Reviewer: { id: ericReviewer.id }, Vote: '👍 Up' } },
+            { id: 'rec_vote_zz', fields: { Reviewer: { id: ericReviewer.id }, Vote: '👍 Up' } },
+          ],
+        });
+      }
+      throw new Error(`Unexpected fetch: ${url.toString()}`);
+    },
+  });
+
+  const result = await client.castFeaturedVote('rec_asset_dup', { vote: 'up' }, ericReviewer);
+
+  assert.deepEqual(patchedIds, ['rec_vote_aa']);
+  assert.deepEqual(deleted, ['rec_vote_zz']);
+  assert.equal(result.voteId, 'rec_vote_aa');
+  assert.equal(result.action, 'updated');
+});
+
+test('castFeaturedVote merges duplicate voting states into a deterministic keeper before voting', async () => {
+  const deleted: string[] = [];
+  const relinked: Array<{ id: string; body: Record<string, unknown> }> = [];
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input, init) => {
+      const url = new URL(String(input));
+      const recordId = url.pathname.split('/').pop() ?? '';
+      if (init?.method === 'DELETE') {
+        deleted.push(recordId);
+        return jsonResponse({ deleted: true });
+      }
+      if (init?.method === 'PATCH') {
+        const body = JSON.parse(String(init.body)) as Record<string, unknown>;
+        if (recordId === 'rec_vote_stray') {
+          relinked.push({ id: recordId, body });
+          return jsonResponse({ id: recordId, fields: {} });
+        }
+        return jsonResponse({ id: recordId, fields: { Vote: '👍 Up' } });
+      }
+      if (init?.method === 'POST') {
+        return jsonResponse({ id: 'rec_vote_mine', fields: { Vote: '👍 Up' } });
+      }
+      if (recordId === 'rec_asset_split') {
+        return jsonResponse({
+          id: 'rec_asset_split',
+          fields: {
+            [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+            [CONFIRMED_ASSET_FIELDS.name]: 'Fluexa',
+            ['🏗️Voting State']: ['rec_state_b', 'rec_state_a'],
+          },
+        });
+      }
+      if (recordId === 'rec_state_b') {
+        return jsonResponse({ id: 'rec_state_b', fields: { '🗳️Votes': ['rec_vote_stray'] } });
+      }
+      if (recordId === 'rec_state_a') {
+        return jsonResponse({
+          id: 'rec_state_a',
+          fields: { '🗳️Votes': [], '👍 count': 2, '👎 count': 0, 'Net votes': 2, 'In qualified pool?': 1 },
+        });
+      }
+      if (url.pathname.endsWith(`/${TABLE_IDS.reviewerVotes}`)) {
+        return jsonResponse({ records: [] });
+      }
+      throw new Error(`Unexpected fetch: ${url.toString()}`);
+    },
+  });
+
+  const result = await client.castFeaturedVote('rec_asset_split', { vote: 'up' }, ericReviewer);
+
+  // Keeper is the lexicographically lowest state id; the duplicate's stray
+  // vote is re-linked onto it before the duplicate state is deleted.
+  assert.equal(result.votingStateId, 'rec_state_a');
+  assert.deepEqual(relinked, [{ id: 'rec_vote_stray', body: { fields: { 'Asset Voting State': ['rec_state_a'] } } }]);
+  assert.deepEqual(deleted, ['rec_state_b']);
+});
+
+test('castFeaturedVote collapses same-reviewer duplicates on the update branch too', async () => {
+  const deleted: string[] = [];
+  const patchedIds: string[] = [];
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input, init) => {
+      const url = new URL(String(input));
+      const recordId = url.pathname.split('/').pop() ?? '';
+      if (init?.method === 'DELETE') {
+        deleted.push(recordId);
+        return jsonResponse({ deleted: true });
+      }
+      if (init?.method === 'PATCH') {
+        patchedIds.push(recordId);
+        return jsonResponse({ id: recordId, fields: { Vote: '👎 Down' } });
+      }
+      if (init?.method === 'POST') {
+        throw new Error('No create expected — the reviewer already has votes.');
+      }
+      if (recordId === 'rec_asset_merged') {
+        return jsonResponse({
+          id: 'rec_asset_merged',
+          fields: {
+            [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+            [CONFIRMED_ASSET_FIELDS.name]: 'Ardor',
+            ['🏗️Voting State']: ['rec_state_m'],
+          },
+        });
+      }
+      if (recordId === 'rec_state_m') {
+        return jsonResponse({
+          id: 'rec_state_m',
+          fields: { '🗳️Votes': ['rec_vote_aa', 'rec_vote_zz'], '👍 count': 0, '👎 count': 1, 'Net votes': -1, 'In qualified pool?': 0 },
+        });
+      }
+      if (url.pathname.endsWith(`/${TABLE_IDS.reviewerVotes}`)) {
+        return jsonResponse({
+          records: [
+            { id: 'rec_vote_aa', fields: { Reviewer: { id: ericReviewer.id }, Vote: '👍 Up' } },
+            { id: 'rec_vote_zz', fields: { Reviewer: { id: ericReviewer.id }, Vote: '👍 Up' } },
+          ],
+        });
+      }
+      throw new Error(`Unexpected fetch: ${url.toString()}`);
+    },
+  });
+
+  const result = await client.castFeaturedVote('rec_asset_merged', { vote: 'down' }, ericReviewer);
+
+  // ownVote (rec_vote_aa) is updated, then reconciliation deletes the merged
+  // duplicate — no double count survives even though no create happened.
+  assert.deepEqual(patchedIds, ['rec_vote_aa']);
+  assert.deepEqual(deleted, ['rec_vote_zz']);
+  assert.equal(result.voteId, 'rec_vote_aa');
+  assert.equal(result.action, 'updated');
+});
+
+test('setFeaturedFlag rejects unmet selection state unless deliberately overridden', async () => {
+  let patched = false;
+  const makeFetch = () => async (input: RequestInfo | URL, init?: RequestInit) => {
+    const url = new URL(String(input));
+    if (init?.method === 'PATCH') {
+      patched = true;
+      return jsonResponse({
+        id: 'rec_asset_unqualified',
+        fields: {
+          [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+          [CONFIRMED_ASSET_FIELDS.name]: 'Stotage',
+          [FEATURED_ASSET_FIELDS.isFeatured]: true,
+          [FEATURED_ASSET_FIELDS.isFeaturedPeriod]: '2026-09-01',
+        },
+      });
+    }
+    // Pre-read: has a live reason but no star, ineligible, and no voting state.
+    return jsonResponse({
+      id: 'rec_asset_unqualified',
+      fields: {
+        [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+        [CONFIRMED_ASSET_FIELDS.name]: 'Stotage',
+        [FEATURED_ASSET_FIELDS.reviewerPickReason]: 'A perfectly buyer-safe reason of reasonable length for the purposes of this test, written in third-person marketplace prose and describing what makes the template stand out for its audience and use case in enough detail.',
+      },
+    });
+  };
+
+  const client = new AirtableClient({ apiKey: 'test', fetchFn: makeFetch() });
+  await assert.rejects(
+    client.setFeaturedFlag('rec_asset_unqualified', true),
+    (error: Error & { code?: string; details?: { unmet?: string[] } }) => {
+      assert.equal(error.code, 'SELECTION_CHECKS_UNMET');
+      assert.equal(error.details?.unmet?.length, 3);
+      return true;
+    },
+  );
+  assert.equal(patched, false);
+
+  const overrideClient = new AirtableClient({ apiKey: 'test', fetchFn: makeFetch() });
+  const result = await overrideClient.setFeaturedFlag('rec_asset_unqualified', true, { overrideSelectionChecks: true });
+  assert.equal(patched, true);
+  assert.equal(result.isFeatured, true);
+  assert.equal(result.overriddenChecks?.length, 3);
 });
