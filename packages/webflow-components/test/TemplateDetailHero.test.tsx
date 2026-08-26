@@ -121,6 +121,20 @@ test('replaces a stale custom category suffix when the title category changes', 
   assert.doesNotMatch(html, /Fleet - Logistics - Technology/);
 });
 
+test('preserves a hyphenated base name when replacing a stale category suffix', () => {
+  const html = renderToStaticMarkup(
+    <TemplateDetailHero
+      templateName="Studio - Three - Logistics Website Template"
+      titleCategoryName="Technology"
+      categoryNames="Technology"
+      enableAnalytics={false}
+    />,
+  );
+
+  assert.match(html, /<h1 class="wfdt-title">Studio - Three - Technology Website Template<\/h1>/);
+  assert.doesNotMatch(html, /Studio - Technology Website Template/);
+});
+
 test('preserves a raw hyphenated template name', () => {
   const html = renderToStaticMarkup(
     <TemplateDetailHero

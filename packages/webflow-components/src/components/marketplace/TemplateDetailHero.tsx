@@ -151,11 +151,19 @@ function formatTemplateTitle(name: string, category?: string, knownCategories: s
       label,
     );
   const baseLabel =
-    titleWithoutKnownCategorySuffix
-      .replace(/\s+-\s+.*\s+website\s+template$/i, '')
+    stripGeneratedTemplateTitleSuffix(titleWithoutKnownCategorySuffix)
       .replace(/(?:\s+-\s+|\s+)website\s+template$/i, '')
       .trim() || 'Template name';
   return `${baseLabel} - ${categoryLabel} Website Template`;
+}
+
+function stripGeneratedTemplateTitleSuffix(value: string): string {
+  const suffixMatch = value.match(/\s+website\s+template$/i);
+  if (!suffixMatch) return value;
+
+  const labelWithoutSuffix = value.slice(0, -suffixMatch[0].length);
+  const separatorIndex = labelWithoutSuffix.lastIndexOf(' - ');
+  return separatorIndex >= 0 ? labelWithoutSuffix.slice(0, separatorIndex) : value;
 }
 
 function cleanCategoryListItem(value: string): string {
