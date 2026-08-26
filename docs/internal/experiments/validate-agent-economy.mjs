@@ -80,6 +80,7 @@ for (const fact of publicFacts) {
 }
 
 assert.ok(publicMetadata.includes("slug: 'governed-codex-model-routing'"));
+assert.ok(publicMetadata.includes("created_at: '2026-08-26T12:00:00Z'"));
 assert.ok(publicMetadata.includes("'file-governed-codex-model-routing': defineArtifactVisuals"));
 assert.equal(publicExperiment.includes('/Users/'), false, 'public experiment leaks a private local path');
 for (const overclaim of ['the result is validated', 'the result is statistically significant']) {
