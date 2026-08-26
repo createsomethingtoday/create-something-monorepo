@@ -163,10 +163,7 @@ function formatTemplateTitle(
 }
 
 function stripGeneratedTemplateTitleSuffix(value: string): string {
-  const suffixMatch = value.match(/\s+website\s+template$/i);
-  if (!suffixMatch) return value;
-
-  return value.slice(0, -suffixMatch[0].length);
+  return value.replace(/(?:\s+-\s+|\s+)website\s+template$/i, '');
 }
 
 function cleanCategoryListItem(value: string): string {
@@ -418,14 +415,22 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
   );
   const titleCategoryCandidates = useMemo(
     () =>
-      [
-        titleCategory,
-        ...splitCategoryList(categoryNames),
-        ...splitCategoryList(legacyTitleCategoryNames),
-        titleCategoryFromSingleCategoryName(categoryName),
-      ]
-        .map(displayCategoryLabel)
-        .filter(Boolean),
+      Array.from(
+        new Set(
+          [
+            titleCategory,
+            categoryNames,
+            ...splitCategoryList(categoryNames),
+            legacyTitleCategoryNames,
+            ...splitCategoryList(legacyTitleCategoryNames),
+            titleCategoryFromSingleCategoryName(categoryName),
+          ].flatMap((value) => {
+            const label = value.trim();
+            const displayLabel = displayCategoryLabel(label);
+            return displayLabel && displayLabel !== label ? [label, displayLabel] : [label];
+          }),
+        ),
+      ).filter(Boolean),
     [categoryName, categoryNames, legacyTitleCategoryNames, titleCategory],
   );
   const titleLabel = useMemo(

@@ -53,6 +53,15 @@ test('replaces an unhyphenated generic title suffix when adding the category', (
   assert.doesNotMatch(html, /Fleet Website Template - Transportation/);
 });
 
+test('replaces the separator-inclusive generic title suffix when adding the category', () => {
+  const html = renderToStaticMarkup(
+    <TemplateDetailHero templateName="Fleet - Website Template" categoryNames="Technology" enableAnalytics={false} />,
+  );
+
+  assert.match(html, /<h1 class="wfdt-title">Fleet - Technology Website Template<\/h1>/);
+  assert.doesNotMatch(html, /Fleet - - Technology Website Template/);
+});
+
 test('preserves every segment of a generic preformatted hyphenated name', () => {
   const html = renderToStaticMarkup(
     <TemplateDetailHero
@@ -90,6 +99,19 @@ test('replaces a hyphenated category-qualified title suffix when rebuilding the 
 
   assert.match(html, /<h1 class="wfdt-title">Shop - Retail &amp; E-Commerce Website Template<\/h1>/);
   assert.doesNotMatch(html, /Shop - Retail &amp; E-Commerce - Retail/);
+});
+
+test('recognizes a raw source category alias while displaying its normalized category title', () => {
+  const html = renderToStaticMarkup(
+    <TemplateDetailHero
+      templateName="Cinematic - Culture, Performance & Entertainment Website Template"
+      categoryNames={'"Culture, Performance & Entertainment"'}
+      enableAnalytics={false}
+    />,
+  );
+
+  assert.match(html, /<h1 class="wfdt-title">Cinematic - Arts &amp; Entertainment Website Template<\/h1>/);
+  assert.doesNotMatch(html, /Cinematic - Culture, Performance &amp; Entertainment - Arts/);
 });
 
 test('replaces a stale category-qualified title suffix when the title category changes', () => {
