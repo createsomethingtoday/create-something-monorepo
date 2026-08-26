@@ -5,7 +5,7 @@
     "name": "create-something-monorepo",
     "mainBranch": "main",
     "rulesetId": 17917451,
-    "requiredChecks": ["Philosophical Code Review", "Public Distribution GA"],
+    "requiredChecks": ["Require immutable action references", "Public Distribution GA"],
     "governanceMode": "sole-operator",
     "soleOperator": "createsomethingtoday",
     "minimumApprovingReviews": 0,
