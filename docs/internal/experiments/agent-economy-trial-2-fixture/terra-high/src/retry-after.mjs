@@ -2,14 +2,34 @@ const shortWeekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const longWeekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-function parseHttpDate(text) {
+function parseHttpDate(text, nowMs) {
   const leapSecond = /:60(?: GMT)?$/u.test(text) ? 1_000 : 0;
   const comparableText = leapSecond ? text.replace(':60', ':59') : text;
   const isAsctime =
     /^(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) {1,2}\d{1,2} \d{2}:\d{2}:\d{2} \d{4}$/.test(
       comparableText
     );
-  const parsed = Date.parse(isAsctime ? `${comparableText} GMT` : comparableText);
+  const rfc850 =
+    /^(?:Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday), (\d{2})-(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)-(\d{2}) (\d{2}):(\d{2}):(\d{2}) GMT$/u.exec(
+      comparableText
+    );
+  let parsed;
+  if (rfc850) {
+    const [, day, month, shortYear, hour, minute, second] = rfc850;
+    const currentYear = new Date(nowMs).getUTCFullYear();
+    let year = Math.floor(currentYear / 100) * 100 + Number(shortYear);
+    if (year > currentYear + 50) year -= 100;
+    parsed = Date.UTC(
+      year,
+      months.indexOf(month),
+      Number(day),
+      Number(hour),
+      Number(minute),
+      Number(second)
+    );
+  } else {
+    parsed = Date.parse(isAsctime ? `${comparableText} GMT` : comparableText);
+  }
   if (Number.isNaN(parsed)) return null;
   const date = new Date(parsed);
   const day = String(date.getUTCDate()).padStart(2, '0');
@@ -37,7 +57,7 @@ export function parseRetryAfter(value, nowMs = Date.now()) {
   }
   if (/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(text)) return null;
 
-  const parsedDate = parseHttpDate(text);
+  const parsedDate = parseHttpDate(text, nowMs);
   if (parsedDate === null) return null;
   return Math.max(0, parsedDate - nowMs);
 }
