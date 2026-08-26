@@ -184,6 +184,10 @@ export interface TemplateFeaturedVoteResult {
   };
 }
 
+export interface TemplateFeaturedFlagOptions {
+  overrideSelectionChecks?: boolean;
+}
+
 export interface TemplateFeaturedFlagResult {
   assetId: string;
   templateName: string;
@@ -191,6 +195,7 @@ export interface TemplateFeaturedFlagResult {
   featuredPeriod?: string;
   notifiedForPeriod?: string;
   reviewerPickReason?: string;
+  overriddenChecks?: string[];
   warnings: string[];
 }
 
@@ -1591,7 +1596,7 @@ export class AirtableClient {
    * email fire. Whalesync does not carry featured fields to the marketplace
    * CMS — the CMS backfill stays manual.
    */
-  async setFeaturedFlag(assetId: string, isFeatured: boolean): Promise<TemplateFeaturedFlagResult> {
+  async setFeaturedFlag(assetId: string, isFeatured: boolean, options: TemplateFeaturedFlagOptions = {}): Promise<TemplateFeaturedFlagResult> {
     const existing = await this.getScopedAssetRecord(assetId);
     if (isFeatured && !firstString(existing.fields[FEATURED_ASSET_FIELDS.reviewerPickReason])) {
       throw new AirtableClientError(
@@ -1602,15 +1607,42 @@ export class AirtableClient {
       );
     }
 
+    // Selection-state checks run BEFORE the write: the PATCH arms the
+    // creator-notification path, so an agent mistake must not notify a
+    // creator for a non-winning template. Unlike the pick-reason rule these
+    // are overridable — historically batches have shipped items with the
+    // star or votes lagging behind the coordinator's decision — but only by
+    // an explicit, per-call override, never silently.
+    let overriddenChecks: string[] | undefined;
+    if (isFeatured) {
+      const unmet: string[] = [];
+      if (existing.fields[FEATURED_ASSET_FIELDS.reviewerPick] !== true) {
+        unmet.push('reviewer_pick_unset: ⭐Reviewer pick (featured templates) is not starred on this asset.');
+      }
+      if (firstNumber(existing.fields[FEATURED_ASSET_FIELDS.isEligibleForUpcomingFeatured]) !== 1) {
+        unmet.push('not_currently_eligible: the upcoming-featured eligibility formula (Exceptional quality + re-feature cap) is not satisfied.');
+      }
+      const votingStateId = stringArray(existing.fields[FEATURED_ASSET_FIELDS.votingStateLink])[0];
+      const votingState = votingStateId ? await this.getRecord(TABLE_IDS.assetVotingState, votingStateId) : null;
+      if (firstNumber(votingState?.fields[FEATURED_VOTING_STATE_FIELDS.inQualifiedPool]) !== 1) {
+        unmet.push('votes_not_qualified: the asset is not in the qualified voting pool (needs at least one 👍 vote on its voting state).');
+      }
+      if (unmet.length > 0) {
+        if (!options.overrideSelectionChecks) {
+          throw new AirtableClientError(
+            'SELECTION_CHECKS_UNMET',
+            `Refusing to finalize: ${unmet.length} selection check(s) unmet. Confirm with the coordinator that featuring this asset is a deliberate decision, then resubmit with override_selection_checks: true.`,
+            409,
+            { asset_id: assetId, unmet },
+          );
+        }
+        overriddenChecks = unmet;
+      }
+    }
+
     const updated = await this.updateRecord(TABLE_IDS.assets, assetId, {
       [FEATURED_ASSET_FIELD_IDS.isFeatured]: isFeatured,
     });
-
-    const reviewerPickReason = firstString(updated.fields[FEATURED_ASSET_FIELDS.reviewerPickReason]);
-    const warnings: string[] = [];
-    if (isFeatured && firstNumber(updated.fields[FEATURED_ASSET_FIELDS.isEligibleForUpcomingFeatured]) !== 1) {
-      warnings.push('not_currently_eligible: this asset does not satisfy the upcoming-featured eligibility formula (Exceptional quality + re-feature cap).');
-    }
 
     return {
       assetId,
@@ -1618,8 +1650,9 @@ export class AirtableClient {
       isFeatured: updated.fields[FEATURED_ASSET_FIELDS.isFeatured] === true,
       featuredPeriod: firstString(updated.fields[FEATURED_ASSET_FIELDS.isFeaturedPeriod]),
       notifiedForPeriod: firstString(updated.fields[FEATURED_ASSET_FIELDS.featuredNotifiedForPeriod]),
-      reviewerPickReason,
-      warnings,
+      reviewerPickReason: firstString(updated.fields[FEATURED_ASSET_FIELDS.reviewerPickReason]),
+      ...(overriddenChecks ? { overriddenChecks } : {}),
+      warnings: [],
     };
   }
 

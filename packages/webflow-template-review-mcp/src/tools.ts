@@ -712,13 +712,14 @@ export function registerTools(
 
   server.tool(
     'template_review_set_featured_flag',
-    'Finalize (or revert) one template\'s membership in the upcoming Featured batch by setting ℹ️Is Featured?. CONSEQUENTIAL: checking it resolves the featured period to the first of next month and arms the creator-notification worker (hourly cron) for that period — the creator receives a congratulations email quoting the live Pick Reason. Restricted to reviewers whose directory entry grants featuredCoordinator (403 otherwise). Requires confirm_creator_notification: true AND a non-empty live ⭐Reviewer Pick Reason (featuring is rejected before any write otherwise). Unchecking before the worker fires is the abort path. The marketplace-CMS backfill remains a separate manual step.',
+    'Finalize (or revert) one template\'s membership in the upcoming Featured batch by setting ℹ️Is Featured?. CONSEQUENTIAL: checking it resolves the featured period to the first of next month and arms the creator-notification worker (hourly cron) for that period — the creator receives a congratulations email quoting the live Pick Reason. Restricted to reviewers whose directory entry grants featuredCoordinator (403 otherwise). Requires confirm_creator_notification: true AND a non-empty live ⭐Reviewer Pick Reason (never overridable). Selection-state checks (⭐Reviewer pick starred, eligibility formula, qualified votes) also run before the write and reject with SELECTION_CHECKS_UNMET; pass override_selection_checks: true only when the coordinator confirms featuring the asset is a deliberate decision. Unchecking before the worker fires is the abort path. The marketplace-CMS backfill remains a separate manual step.',
     {
       asset_id: z.string().min(1),
       is_featured: z.boolean(),
       confirm_creator_notification: z.boolean(),
+      override_selection_checks: z.boolean().optional(),
     },
-    async ({ asset_id, is_featured, confirm_creator_notification }) => {
+    async ({ asset_id, is_featured, confirm_creator_notification, override_selection_checks }) => {
       try {
         const reviewer = getReviewer();
         if (!reviewer?.featuredCoordinator) {
@@ -737,7 +738,9 @@ export function registerTools(
             { asset_id },
           );
         }
-        const result = await getClient().setFeaturedFlag(asset_id, is_featured);
+        const result = await getClient().setFeaturedFlag(asset_id, is_featured, {
+          overrideSelectionChecks: override_selection_checks,
+        });
         return asSuccess({
           ...result,
           support: TEMPLATE_REVIEW_FIELD_MAP.writeSupport.featuredFlag,

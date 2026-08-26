@@ -83,7 +83,11 @@ judge batch readiness without writing anything.
    majority).
 2. Per winner: `template_review_set_featured_flag` with `is_featured: true`
    and `confirm_creator_notification: true`. The result reports
-   `featuredPeriod` — expect the first of **next** month.
+   `featuredPeriod` — expect the first of **next** month. Selection checks
+   (star set, eligibility formula, qualified votes) run before the write and
+   reject with `SELECTION_CHECKS_UNMET`; if featuring an item that fails them
+   is a deliberate decision, resubmit with `override_selection_checks: true`
+   — the result then records exactly which checks were overridden.
 3. **What you just armed**: the `marketplace-featured-notifier` worker
    (CREATE SOMETHING Cloudflare account, cron `:17` past each hour) sends each
    creator a bell + email **quoting the live Pick Reason verbatim** once the
@@ -109,7 +113,8 @@ judge batch readiness without writing anything.
 |---|---|
 | Agent copy never lands directly in the live reason | `pick_reason` requires `confirm_creator_safe: true`; drafts go to the AI-draft staging field |
 | No raw HTML in the live reason (truncates the Zendesk-parsed email) | `RAW_HTML_IN_PICK_REASON` (400) |
-| No featuring without a live reason (the email quotes it) | `MISSING_PICK_REASON` (409) — rejected before any write |
+| No featuring without a live reason (the email quotes it) | `MISSING_PICK_REASON` (409) — rejected before any write, never overridable |
+| No featuring an unstarred / ineligible / unqualified item silently | `SELECTION_CHECKS_UNMET` (409) pre-write; `override_selection_checks: true` records a deliberate exception |
 | Finalization is coordinator-only | `FEATURED_COORDINATOR_REQUIRED` (403) |
 | One vote per reviewer per asset | Upsert + deterministic duplicate self-heal (lowest record id wins) |
 | One voting state per asset | State merge before every vote write |
@@ -125,6 +130,7 @@ way when building on these tools.
 | `FEATURED_COORDINATOR_REQUIRED` | Reviewer lacks the directory grant | Coordinator finalizes, or grant `featuredCoordinator` in `REVIEWER_DIRECTORY_JSON` and redeploy |
 | `MISSING_PICK_REASON` | Winner has no live reason | Promote a reason via `set_featured_pick` first |
 | `CREATOR_SAFE_CONFIRMATION_REQUIRED` | Live-reason write without the confirmation | Human reads the exact text, resend with `confirm_creator_safe: true` |
+| `SELECTION_CHECKS_UNMET` | Star, eligibility, or qualified votes missing on a finalization target | Fix the selection state, or override deliberately (`override_selection_checks: true`) after coordinator confirmation |
 | Candidate counts differ from the Airtable interface | Different windows: grid view = rolling past month only and does not exclude already-featured; the interface stat (and this tool) = months ≤ 1 + not featured | Expected; the tool matches the interface stat |
 | A featured template still shows as a candidate | `include_already_featured: true` was passed, or its `Is Featured?` was unchecked | Check the flag state in the result |
 | Schema drift suspected | Field renamed in Airtable | `AIRTABLE_API_KEY=… npx tsx scripts/audit-airtable-schema.ts` — covers both featured tables and all featured field names/IDs |

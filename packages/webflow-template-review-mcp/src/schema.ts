@@ -357,6 +357,7 @@ export const TEMPLATE_REVIEW_FIELD_MAP = {
     featuredFlag: [
       'is_featured',
       'confirm_creator_notification',
+      'override_selection_checks',
     ],
   },
 } as const;

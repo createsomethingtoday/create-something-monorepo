@@ -1709,12 +1709,18 @@ test('setFeaturedFlag writes the checkbox by field ID and reports the armed peri
           },
         });
       }
+      if (url.pathname.endsWith('/rec_state_flag')) {
+        return jsonResponse({ id: 'rec_state_flag', fields: { 'In qualified pool?': 1 } });
+      }
       return jsonResponse({
         id: 'rec_asset_flag',
         fields: {
           [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
           [CONFIRMED_ASSET_FIELDS.name]: 'Brokerwise',
           [FEATURED_ASSET_FIELDS.reviewerPickReason]: reason,
+          [FEATURED_ASSET_FIELDS.reviewerPick]: true,
+          [FEATURED_ASSET_FIELDS.isEligibleForUpcomingFeatured]: 1,
+          ['🏗️Voting State']: ['rec_state_flag'],
         },
       });
     },
@@ -1944,4 +1950,49 @@ test('castFeaturedVote collapses same-reviewer duplicates on the update branch t
   assert.deepEqual(deleted, ['rec_vote_zz']);
   assert.equal(result.voteId, 'rec_vote_aa');
   assert.equal(result.action, 'updated');
+});
+
+test('setFeaturedFlag rejects unmet selection state unless deliberately overridden', async () => {
+  let patched = false;
+  const makeFetch = () => async (input: RequestInfo | URL, init?: RequestInit) => {
+    const url = new URL(String(input));
+    if (init?.method === 'PATCH') {
+      patched = true;
+      return jsonResponse({
+        id: 'rec_asset_unqualified',
+        fields: {
+          [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+          [CONFIRMED_ASSET_FIELDS.name]: 'Stotage',
+          [FEATURED_ASSET_FIELDS.isFeatured]: true,
+          [FEATURED_ASSET_FIELDS.isFeaturedPeriod]: '2026-09-01',
+        },
+      });
+    }
+    // Pre-read: has a live reason but no star, ineligible, and no voting state.
+    return jsonResponse({
+      id: 'rec_asset_unqualified',
+      fields: {
+        [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+        [CONFIRMED_ASSET_FIELDS.name]: 'Stotage',
+        [FEATURED_ASSET_FIELDS.reviewerPickReason]: 'A perfectly buyer-safe reason of reasonable length for the purposes of this test, written in third-person marketplace prose and describing what makes the template stand out for its audience and use case in enough detail.',
+      },
+    });
+  };
+
+  const client = new AirtableClient({ apiKey: 'test', fetchFn: makeFetch() });
+  await assert.rejects(
+    client.setFeaturedFlag('rec_asset_unqualified', true),
+    (error: Error & { code?: string; details?: { unmet?: string[] } }) => {
+      assert.equal(error.code, 'SELECTION_CHECKS_UNMET');
+      assert.equal(error.details?.unmet?.length, 3);
+      return true;
+    },
+  );
+  assert.equal(patched, false);
+
+  const overrideClient = new AirtableClient({ apiKey: 'test', fetchFn: makeFetch() });
+  const result = await overrideClient.setFeaturedFlag('rec_asset_unqualified', true, { overrideSelectionChecks: true });
+  assert.equal(patched, true);
+  assert.equal(result.isFeatured, true);
+  assert.equal(result.overriddenChecks?.length, 3);
 });
