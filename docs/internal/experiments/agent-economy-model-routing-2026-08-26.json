@@ -1,0 +1,140 @@
+{
+  "schemaVersion": "create_something_internal_experiment.v0.1",
+  "experimentId": "EXP-AGENT-ECONOMY-2026-08-26",
+  "linearIssue": "CRE-1877",
+  "title": "Governed Codex Model Routing Economics",
+  "artifactClass": "internal_experiment",
+  "status": "supported_not_validated",
+  "startedAt": "2026-08-26",
+  "lastReviewedAt": "2026-08-26",
+  "reviewOwner": "CREATE SOMETHING",
+  "primaryClaim": "Model selection should follow task shape: a stronger low-effort model is a promising judgment governor, while lower-cost high-effort agents are promising executors for independent work with deterministic quality gates.",
+  "evidenceGrade": "benchmark",
+  "trials": [
+    {
+      "id": "trial-2-luna-high-fanout",
+      "taskSuite": "three-slice-write-enabled",
+      "strategy": "3x Luna / High",
+      "agentCount": 3,
+      "public": { "passed": 17, "total": 17 },
+      "hidden": { "passed": 3, "total": 3 },
+      "mutants": { "killed": 5, "total": 5 },
+      "authorizedFilesOnly": true,
+      "criticalPathSeconds": 98.865,
+      "totalTokens": 859682,
+      "creditEquivalent": 1.137818
+    },
+    {
+      "id": "trial-2-terra-high",
+      "taskSuite": "three-slice-write-enabled",
+      "strategy": "1x Terra / High",
+      "agentCount": 1,
+      "public": { "passed": 14, "total": 14, "note": "Grouped assertions differ from the other subjects." },
+      "hidden": { "passed": 3, "total": 3 },
+      "mutants": { "killed": 5, "total": 5 },
+      "authorizedFilesOnly": true,
+      "criticalPathSeconds": 78.676,
+      "totalTokens": 391791,
+      "creditEquivalent": 4.26732
+    },
+    {
+      "id": "trial-2-sol-high",
+      "taskSuite": "three-slice-write-enabled",
+      "strategy": "1x Sol / High",
+      "agentCount": 1,
+      "public": { "passed": 17, "total": 17 },
+      "hidden": { "passed": 3, "total": 3 },
+      "mutants": { "killed": 5, "total": 5 },
+      "authorizedFilesOnly": true,
+      "criticalPathSeconds": 129.263,
+      "totalTokens": 586459,
+      "creditEquivalent": 12.0719
+    },
+    {
+      "id": "trial-1-terra-high",
+      "taskSuite": "read-only-operational-audit",
+      "strategy": "1x Terra / High",
+      "quality": "Core facts correct; incomplete export inventory; two material judgment errors.",
+      "elapsedSeconds": 83.546,
+      "totalTokens": 501373,
+      "creditEquivalent": 6.24852
+    },
+    {
+      "id": "trial-1-terra-ultra-exact",
+      "taskSuite": "read-only-operational-audit",
+      "strategy": "1x Terra / Ultra",
+      "quality": "Complete export inventory; retained the same two material judgment errors as High.",
+      "elapsedSeconds": 307.422,
+      "totalTokens": 1158457,
+      "creditEquivalent": 15.43034,
+      "promptChanged": false
+    },
+    {
+      "id": "trial-1-sol-low-default",
+      "taskSuite": "read-only-operational-audit",
+      "strategy": "1x Sol / Low / Default",
+      "quality": "Fully correct, including complete export inventory, benchmark-status classification, dangling-symlink diagnosis, and compiler/runtime boundary.",
+      "elapsedSeconds": 140,
+      "inputTokens": 739952,
+      "cachedInputTokens": 665856,
+      "outputTokens": 9619,
+      "reasoningOutputTokens": 1936,
+      "baseRateCreditEquivalent": 18.87766
+    },
+    {
+      "id": "trial-1-sol-low-fast",
+      "taskSuite": "read-only-operational-audit",
+      "strategy": "1x Sol / Low / Fast",
+      "quality": "Fully correct, including complete export inventory, benchmark-status classification, dangling-symlink diagnosis, and compiler/runtime boundary.",
+      "elapsedSeconds": 59,
+      "inputTokens": 517259,
+      "cachedInputTokens": 457728,
+      "outputTokens": 6824,
+      "reasoningOutputTokens": 1223,
+      "baseRateCreditEquivalent": 13.94238,
+      "billingNote": "Base-rate equivalence excludes any Fast service-tier adjustment."
+    }
+  ],
+  "materialConfounds": [
+    "Each reported model and effort cohort has one run.",
+    "Trial ordering was not randomized.",
+    "Trial 2 is synthetic and cleanly decomposable by construction.",
+    "The Sol Low serving-tier pair followed different stochastic investigation paths, so token differences cannot be attributed causally to Fast.",
+    "Both local Sol Low runs initially launched one acceptance build from the repository root before completing the authoritative isolated run; ignored dist output may have been refreshed.",
+    "A clarified Terra Ultra run changed the prompt and is excluded from effort-only comparison."
+  ],
+  "prospectiveReplicationGate": {
+    "minimumRunsPerTaskFamilyPerCohort": 10,
+    "randomizeCohortOrder": true,
+    "taskFamilies": [
+      "read-only operational audit",
+      "debugging",
+      "test authoring",
+      "bounded implementation",
+      "coupled architecture and governance review"
+    ],
+    "quality": {
+      "deterministicJudgePassRate": 1,
+      "unauthorizedMutationCount": 0,
+      "materialJudgmentErrorRateMax": 0.05
+    },
+    "economics": {
+      "executorFanoutCreditRatioVsSolHighMax": 0.25,
+      "executorFanoutLatencyRatioVsFastestSingleAgentMax": 1.3
+    }
+  },
+  "sourceEvidence": [
+    {
+      "type": "local_benchmark_artifact",
+      "path": "/Users/micahjohnson/.codex/visualizations/2026/08/26/01a03e8c-9d04-74d1-a1ca-4a0b6767eab8/agent-economy-trial-2/RESULTS.md"
+    },
+    {
+      "type": "repository_prior_art",
+      "path": "packages/io/src/routes/papers/dual-agent-routing-experiment/+page.svelte"
+    },
+    {
+      "type": "policy",
+      "path": "docs/policies/v1/policy.paper-experiment-release-gate.v1.md"
+    }
+  ]
+}
