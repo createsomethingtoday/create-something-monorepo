@@ -1,0 +1,79 @@
+{
+  "schemaVersion": "create_something_agent_judge_receipt.v0.1",
+  "experimentId": "EXP-AGENT-ECONOMY-2026-08-26",
+  "trial": "three-slice-write-enabled",
+  "taskContractSha256": "02296d3ca9d666bd058335410193eac1d4925eeddcc8df9d5355fd60bae6b9b1",
+  "judgeArtifacts": {
+    "hiddenTestSha256": "02921d63c694143b3826e9db0ecc8e62dc7ec70356d4593b7f78bcc2408728e6",
+    "mutationRunnerSha256": "83c2236544c9f208d7925aeb5adabb83b1016123e09719ad831c9ee5d5606dd2",
+    "mutants": [
+      {
+        "name": "leading-digit",
+        "sha256": "a8d50b5b7b48bfd678000cb733a02ee3c2c36b64cf4eba7f13a2f649eecacb3e"
+      },
+      {
+        "name": "no-length-limit",
+        "sha256": "9ea866ff248b9120359d45f52bffedf6e656178114fa279c8fe55ca4b37f2908"
+      },
+      {
+        "name": "no-lowercase",
+        "sha256": "d689c4b6190324810861388388ad221ecd5285026c89c06f71f790d87094e0a8"
+      },
+      {
+        "name": "no-trim",
+        "sha256": "c86e8139bb363c6dea5169dbe17be7a29cbbe1a4e366f1686f1aff36be506a48"
+      },
+      {
+        "name": "wrong-nonstring",
+        "sha256": "c635913ac5920d977d72d08a412777659249b6fcc01b9df7d4b2a69b998cb580"
+      }
+    ]
+  },
+  "subjects": [
+    {
+      "cohort": "trial-2-luna-high-fanout",
+      "artifactSha256": [
+        "468e921cdd75a8a729fdf521bbdb181e6918c0a9f7b1a707719789e8da10ab07",
+        "8e872ca3a6ea92fc2b2cfac1f3e6ff7ba3814d802ec02486de235de58772cfa0",
+        "3714fcd6bfa00f767cbc574c3e93866e4a614a60100dd4d513b0cdd2afa79bb7",
+        "999095d7da689c0697dd4f3838d6da723be73f401aebc6b36bc893e76e2e3a5c",
+        "74b6bc8c18bb4bc4cbc217c62b8d947e2cd350613ded0a019bcb095afab74d9d",
+        "bee9b682f968cac7c12eefd10f943a94eb7c4dc5333605522444e3a841a09221"
+      ],
+      "public": { "passed": 17, "total": 17 },
+      "hidden": { "passed": 3, "total": 3 },
+      "mutants": { "killed": 5, "total": 5 },
+      "authorizedFilesOnly": true
+    },
+    {
+      "cohort": "trial-2-terra-high",
+      "artifactSha256": [
+        "c2330801bd6a90e3fcf06e08eb30a3964f194f6bd243e9e48be6133b704c0151",
+        "8e872ca3a6ea92fc2b2cfac1f3e6ff7ba3814d802ec02486de235de58772cfa0",
+        "24fdf85e3638081cfe36e8dc42c485e9651ae94ab816759901a3e2b187291044",
+        "999095d7da689c0697dd4f3838d6da723be73f401aebc6b36bc893e76e2e3a5c",
+        "1f95cba7e9b03ae2debf8f40b9ad9133ddd9042e146bde85ba110575acbd998c",
+        "bee9b682f968cac7c12eefd10f943a94eb7c4dc5333605522444e3a841a09221"
+      ],
+      "public": { "passed": 14, "total": 14 },
+      "hidden": { "passed": 3, "total": 3 },
+      "mutants": { "killed": 5, "total": 5 },
+      "authorizedFilesOnly": true
+    },
+    {
+      "cohort": "trial-2-sol-high",
+      "artifactSha256": [
+        "744e9949bc0b5521d1734709ccb0d46194dd5b0f29a06bb98f8b6ad697c4bc9d",
+        "8e872ca3a6ea92fc2b2cfac1f3e6ff7ba3814d802ec02486de235de58772cfa0",
+        "3879f6a8c35789209530bc7590469c97e3cd9b2e9c2466e13209cb2edf9e01a4",
+        "999095d7da689c0697dd4f3838d6da723be73f401aebc6b36bc893e76e2e3a5c",
+        "8d55791b5575a976f4848f6442468d6448d29f10605905f5a08479df8cd92e61",
+        "bee9b682f968cac7c12eefd10f943a94eb7c4dc5333605522444e3a841a09221"
+      ],
+      "public": { "passed": 17, "total": 17 },
+      "hidden": { "passed": 3, "total": 3 },
+      "mutants": { "killed": 5, "total": 5 },
+      "authorizedFilesOnly": true
+    }
+  ]
+}

@@ -1,5 +1,9 @@
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const results = JSON.parse(
   await readFile(new URL('./agent-economy-model-routing-2026-08-26.json', import.meta.url), 'utf8')
@@ -17,6 +21,16 @@ const trial1Telemetry = JSON.parse(
   )
 );
 const telemetryReceipts = [trial1Telemetry, trial2Telemetry];
+const judgeReceipt = JSON.parse(
+  await readFile(
+    new URL('./agent-economy-trial-2-judge-receipt-2026-08-26.json', import.meta.url),
+    'utf8'
+  )
+);
+const fixtureRoot = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  'agent-economy-trial-2-fixture'
+);
 const publicExperiment = await readFile(
   new URL(
     '../../../packages/io/content/experiments/governed-codex-model-routing.md',
@@ -96,7 +110,10 @@ const allowedReceiptKeys = new Set([
   'cachedInputTokens',
   'outputTokens',
   'reasoningOutputTokens',
-  'totalTokens'
+  'totalTokens',
+  'startedAt',
+  'completedAt',
+  'elapsedSeconds'
 ]);
 
 const validateReceiptShape = (value) => {
@@ -126,6 +143,14 @@ for (const receipt of telemetryReceipts) {
     assert.equal(session.inputTokens + session.outputTokens, session.totalTokens);
     assert.ok(session.cachedInputTokens <= session.inputTokens);
     assert.match(session.receiptId, /^[0-9a-f-]{36}$/u);
+    if (session.startedAt) {
+      assert.equal(
+        Number(
+          ((Date.parse(session.completedAt) - Date.parse(session.startedAt)) / 1000).toFixed(3)
+        ),
+        session.elapsedSeconds
+      );
+    }
   }
 }
 
@@ -144,6 +169,71 @@ for (const subject of [luna, terra, sol]) {
     ),
     Number(subject.creditEquivalent.toFixed(6))
   );
+  assert.equal(
+    Math.max(...sessions.map((session) => session.elapsedSeconds)),
+    subject.criticalPathSeconds
+  );
+}
+
+const sha256 = async (path) =>
+  createHash('sha256')
+    .update(await readFile(resolve(fixtureRoot, path)))
+    .digest('hex');
+assert.equal(await sha256('base/TASKS.md'), judgeReceipt.taskContractSha256);
+assert.equal(await sha256('judge/hidden.test.mjs'), judgeReceipt.judgeArtifacts.hiddenTestSha256);
+assert.equal(
+  await sha256('judge/mutation-score.mjs'),
+  judgeReceipt.judgeArtifacts.mutationRunnerSha256
+);
+for (const mutant of judgeReceipt.judgeArtifacts.mutants) {
+  assert.equal(await sha256(`judge/mutants/${mutant.name}.mjs`), mutant.sha256);
+}
+
+const artifactPaths = [
+  'src/approval-gate.mjs',
+  'src/canonical-tool-name.mjs',
+  'src/retry-after.mjs',
+  'test/approval-gate.test.mjs',
+  'test/canonical-tool-name.test.mjs',
+  'test/retry-after.test.mjs'
+];
+for (const judged of judgeReceipt.subjects) {
+  const subject = trial(judged.cohort);
+  const directory =
+    judged.cohort === 'trial-2-luna-high-fanout' ? 'luna' : judged.cohort.replace('trial-2-', '');
+  assert.equal(judged.public.passed, subject.public.passed);
+  assert.equal(judged.public.total, subject.public.total);
+  assert.deepEqual(judged.hidden, subject.hidden);
+  assert.deepEqual(judged.mutants, subject.mutants);
+  assert.equal(judged.authorizedFilesOnly, subject.authorizedFilesOnly);
+  for (const [index, path] of artifactPaths.entries()) {
+    assert.equal(await sha256(`${directory}/${path}`), judged.artifactSha256[index]);
+  }
+  const subjectRoot = resolve(fixtureRoot, directory);
+  const publicOutput = execFileSync(process.execPath, ['--test'], {
+    cwd: subjectRoot,
+    encoding: 'utf8'
+  });
+  assert.match(publicOutput, new RegExp(`# tests ${judged.public.total}\\b`, 'u'));
+  const hiddenOutput = execFileSync(
+    process.execPath,
+    [resolve(fixtureRoot, 'judge/hidden.test.mjs')],
+    {
+      cwd: subjectRoot,
+      env: { ...process.env, SUBJECT_ROOT: subjectRoot },
+      encoding: 'utf8'
+    }
+  );
+  assert.match(hiddenOutput, new RegExp(`# tests ${judged.hidden.total}\\b`, 'u'));
+  const mutation = JSON.parse(
+    execFileSync(
+      process.execPath,
+      [resolve(fixtureRoot, 'judge/mutation-score.mjs'), subjectRoot],
+      { encoding: 'utf8' }
+    )
+  );
+  assert.equal(mutation.killed, judged.mutants.killed);
+  assert.equal(mutation.totalMutants, judged.mutants.total);
 }
 
 for (const subject of [terraHigh, terraUltra, solLowDefault, solLowFast]) {
@@ -213,8 +303,8 @@ const publicFacts = [
   'Every reported model/effort cohort has one run.',
   'at least **10 trials per task family per cohort**',
   '[Dual-Agent Routing Experiment](/papers/dual-agent-routing-experiment)',
-  'Token and credit economics are recomputed from the durable receipts',
-  'latency observations are reconciled exactly against the durable ledger'
+  'Token and credit economics and Trial 2 latency are recomputed from durable receipts',
+  'the release gate reruns the checked-in public, hidden, and mutation judges'
 ];
 
 const publicRows = [

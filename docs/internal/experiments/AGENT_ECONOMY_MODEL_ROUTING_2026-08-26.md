@@ -8,7 +8,7 @@
 - Started: 2026-08-26
 - Last reviewed: 2026-08-26
 - Review owner: CREATE SOMETHING
-- Public publication: not approved
+- Public publication: approved 2026-08-26 (`publish-approved`)
 
 ```text
 ╔══════════════════════════════════════════════════════════════════╗
@@ -122,6 +122,12 @@ source, and formula are preserved in the
 [Trial 2 receipt](./agent-economy-trial-2-telemetry-2026-08-26.json).
 They are not invoice dollars. Session critical path, not summed subagent time,
 is the fan-out latency measure.
+
+The immutable Trial 2 task, subjects, public tests, hidden judge, and five mutant
+definitions are preserved in
+[agent-economy-trial-2-fixture](./agent-economy-trial-2-fixture/). The
+[judge receipt](./agent-economy-trial-2-judge-receipt-2026-08-26.json) binds
+their hashes and result counts to the ledger.
 
 For the Sol/Low serving-tier pair, token categories and elapsed time were
 captured directly from the local Codex runner. Fast's displayed base-rate credit
