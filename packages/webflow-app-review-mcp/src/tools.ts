@@ -927,7 +927,7 @@ export function registerTools(
 
   server.tool(
     'app_review_list_exception_queue',
-    'List the current global exception decision queue without an asset or version ID. Returns only app versions whose exception status is 🆕Requested or 👀Under Review, grouped with their per-item ⚖️Exceptions rows. Start here when asked what exceptions are currently in queue. This tool is read-only.',
+    'List the current global exception decision queue without an asset or version ID. Returns app versions whose exception status is 🆕Requested or 👀Under Review, or that still carry undecided per-item ⚖️Exceptions rows (the aggregate status can lag the items), grouped with those rows. Start here when asked what exceptions are currently in queue. This tool is read-only.',
     {},
     async () => {
       try {
