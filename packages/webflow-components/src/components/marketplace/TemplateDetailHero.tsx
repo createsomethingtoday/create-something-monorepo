@@ -21,6 +21,8 @@ export interface TemplateDetailHeroProps {
   templateSlug?: string;
   categoryName?: string;
   categoryNames?: string;
+  titleCategoryName?: string;
+  legacyTitleCategoryNames?: string;
   categoryLink?: TemplateDetailLink;
   categoryLinks?: string;
   categoryBaseUrl?: string;
@@ -127,9 +129,41 @@ function targetForHref(href: string, target?: string): string | undefined {
   return isExternalUrl(href) ? '_blank' : undefined;
 }
 
-function formatTemplateTitle(name: string): string {
+function formatTemplateTitle(
+  name: string,
+  category?: string,
+  knownCategories: string[] = [],
+): string {
   const label = name.trim() || 'Template name';
-  return /\bwebsite\s+template$/i.test(label) ? label : `${label} - Website Template`;
+  const categoryLabel = category?.trim();
+
+  if (!categoryLabel) {
+    return /\bwebsite\s+template$/i.test(label) ? label : `${label} - Website Template`;
+  }
+
+  const titleWithoutKnownCategorySuffix = [categoryLabel, ...knownCategories]
+    .filter((value, index, values) => value && values.indexOf(value) === index)
+    .sort((left, right) => right.length - left.length)
+    .reduce(
+      (value, knownCategory) =>
+        value.replace(
+          new RegExp(
+            `\\s+-\\s+${knownCategory.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s+website\\s+template$`,
+            'i',
+          ),
+          '',
+        ),
+      label,
+    );
+  const baseLabel =
+    stripGeneratedTemplateTitleSuffix(titleWithoutKnownCategorySuffix)
+      .replace(/(?:\s+-\s+|\s+)website\s+template$/i, '')
+      .trim() || 'Template name';
+  return `${baseLabel} - ${categoryLabel} Website Template`;
+}
+
+function stripGeneratedTemplateTitleSuffix(value: string): string {
+  return value.replace(/(?:\s+-\s+|\s+)website\s+template$/i, '');
 }
 
 function cleanCategoryListItem(value: string): string {
@@ -138,6 +172,11 @@ function cleanCategoryListItem(value: string): string {
     return trimmed.slice(1, -1).replace(/""/g, '"').trim();
   }
   return trimmed;
+}
+
+function titleCategoryFromSingleCategoryName(value: string): string {
+  const label = value.trim();
+  return label.toLowerCase() === 'templates' ? '' : label;
 }
 
 function splitCommaSeparatedCategoryList(value: string): string[] {
@@ -289,6 +328,8 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
   templateSlug = '',
   categoryName = 'Templates',
   categoryNames = '',
+  titleCategoryName = '',
+  legacyTitleCategoryNames = '',
   categoryLink,
   categoryLinks = '',
   categoryBaseUrl = 'https://webflow.com/templates/category',
@@ -363,7 +404,39 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
     height: `${previewDimensions.height}px`,
     transform: `translateX(-50%) scale(${previewScale})`,
   };
-  const titleLabel = useMemo(() => formatTemplateTitle(templateName), [templateName]);
+  const titleCategory = useMemo(
+    () =>
+      displayCategoryLabel(
+        titleCategoryName.trim() ||
+          splitCategoryList(categoryNames)[0] ||
+          titleCategoryFromSingleCategoryName(categoryName),
+      ),
+    [categoryName, categoryNames, titleCategoryName],
+  );
+  const titleCategoryCandidates = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          [
+            titleCategory,
+            categoryNames,
+            ...splitCategoryList(categoryNames),
+            legacyTitleCategoryNames,
+            ...splitCategoryList(legacyTitleCategoryNames),
+            titleCategoryFromSingleCategoryName(categoryName),
+          ].flatMap((value) => {
+            const label = value.trim();
+            const displayLabel = displayCategoryLabel(label);
+            return displayLabel && displayLabel !== label ? [label, displayLabel] : [label];
+          }),
+        ),
+      ).filter(Boolean),
+    [categoryName, categoryNames, legacyTitleCategoryNames, titleCategory],
+  );
+  const titleLabel = useMemo(
+    () => formatTemplateTitle(templateName, titleCategory, titleCategoryCandidates),
+    [templateName, titleCategory, titleCategoryCandidates],
+  );
   const offer = useMemo(
     () =>
       resolveTemplateDetailOffer({
