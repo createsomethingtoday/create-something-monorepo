@@ -150,11 +150,15 @@ async function main() {
 	if (DRY_RUN || rows.length === 0) return;
 
 	const stampedAt = new Date().toISOString();
+	// Logged BEFORE any write so an interrupted run's timestamp is always
+	// recoverable from the log for `--sweep=<timestamp>` compensation.
+	console.log(`RUN TIMESTAMP: ${stampedAt} (recover an aborted run with --sweep=${stampedAt})`);
 	let written = 0;
 	let snapshots = 0;
 	let respondedOnly = 0;
 	let skippedStale = 0;
 
+	try {
 	for (let i = 0; i < rows.length; i += WRITE_BATCH) {
 		const chunkIds = rows.slice(i, i + WRITE_BATCH).map((row) => row.id);
 
@@ -196,8 +200,12 @@ async function main() {
 	console.log(
 		`RECEIPT: stamped ${written} versions (${snapshots} with snapshots, ${respondedOnly} responded-only, ${skippedStale} skipped as stale) at ${stampedAt}.`
 	);
-
-	await sweepSilencedStamps(stampedAt);
+	} finally {
+		// Compensation must run even when a batch throws mid-run: stamps
+		// written before the failure could include a race victim. If the
+		// process is killed outright, rerun with --sweep=<RUN TIMESTAMP>.
+		await sweepSilencedStamps(stampedAt);
+	}
 }
 
 /**
@@ -286,7 +294,14 @@ async function sweepSilencedStamps(stampedAt) {
 	console.log(`SWEEP: cleared ${cleared} race-stamped silenced rows.`);
 }
 
-main().catch((error) => {
+// Standalone recovery: `--sweep=<RUN TIMESTAMP>` re-runs only the
+// compensating sweep for an aborted run whose stamps may include race
+// victims. The timestamp is printed at the start of every stamping run.
+const sweepArg = process.argv.find((arg) => arg.startsWith('--sweep='));
+
+const entry = sweepArg ? sweepSilencedStamps(sweepArg.slice('--sweep='.length)) : main();
+
+entry.catch((error) => {
 	console.error(error.message);
 	process.exit(1);
 });
