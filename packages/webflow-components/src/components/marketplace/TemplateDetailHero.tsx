@@ -128,7 +128,7 @@ function targetForHref(href: string, target?: string): string | undefined {
   return isExternalUrl(href) ? '_blank' : undefined;
 }
 
-function formatTemplateTitle(name: string, category?: string): string {
+function formatTemplateTitle(name: string, category?: string, knownCategories: string[] = []): string {
   const label = name.trim() || 'Template name';
   const categoryLabel = category?.trim();
 
@@ -136,10 +136,22 @@ function formatTemplateTitle(name: string, category?: string): string {
     return /\bwebsite\s+template$/i.test(label) ? label : `${label} - Website Template`;
   }
 
-  const escapedCategoryLabel = categoryLabel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const titleWithoutKnownCategorySuffix = [categoryLabel, ...knownCategories]
+    .filter((value, index, values) => value && values.indexOf(value) === index)
+    .sort((left, right) => right.length - left.length)
+    .reduce(
+      (value, knownCategory) =>
+        value.replace(
+          new RegExp(
+            `\\s+-\\s+${knownCategory.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s+website\\s+template$`,
+            'i',
+          ),
+          '',
+        ),
+      label,
+    );
   const baseLabel =
-    label
-      .replace(new RegExp(`\\s+-\\s+${escapedCategoryLabel}\\s+website\\s+template$`, 'i'), '')
+    titleWithoutKnownCategorySuffix
       .replace(/\s+-\s+[^-]+?\s+website\s+template$/i, '')
       .replace(/(?:\s+-\s+|\s+)website\s+template$/i, '')
       .trim() || 'Template name';
@@ -392,9 +404,16 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
       ),
     [categoryName, categoryNames, titleCategoryName],
   );
+  const titleCategoryCandidates = useMemo(
+    () =>
+      [titleCategory, ...splitCategoryList(categoryNames), titleCategoryFromSingleCategoryName(categoryName)]
+        .map(displayCategoryLabel)
+        .filter(Boolean),
+    [categoryName, categoryNames, titleCategory],
+  );
   const titleLabel = useMemo(
-    () => formatTemplateTitle(templateName, titleCategory),
-    [templateName, titleCategory],
+    () => formatTemplateTitle(templateName, titleCategory, titleCategoryCandidates),
+    [templateName, titleCategory, titleCategoryCandidates],
   );
   const offer = useMemo(
     () =>
