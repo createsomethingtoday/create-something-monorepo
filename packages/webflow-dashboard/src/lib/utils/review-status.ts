@@ -50,9 +50,16 @@ const ROUND_RELEASED_REVIEW_STATUSES = new Set([
 ]);
 
 /**
- * True when the review round's feedback has been released to the creator AND
- * the feedback field still holds exactly what was released. Gates the
- * mutable feedback body.
+ * True when the review round's feedback has been released to the creator
+ * and, in the normal flow, the feedback field still holds what was released.
+ * Gates the mutable feedback body.
+ *
+ * Trust assumption: a reviewer could redraft the field while a released
+ * status is still active (save_draft_feedback writes without a status
+ * change). No durable release snapshot exists on versions today; the normal
+ * edit path re-releases by flipping the status, which re-notifies the
+ * creator. The durable fix — a release timestamp/snapshot stamped by the
+ * notification automation — should replace this predicate if added.
  */
 export function isReviewFeedbackReleased(rawStatus: string | undefined | null): boolean {
 	if (!rawStatus) return false;
