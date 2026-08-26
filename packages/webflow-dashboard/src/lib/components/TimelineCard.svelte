@@ -7,6 +7,7 @@
 	 */
 	import type { Asset } from '$lib/server/airtable';
 	import { formatLongDate, formatRelativeAge } from '$lib/utils/format';
+	import { creatorReviewStatusLabel, isReviewFeedbackReleased } from '$lib/utils/review-status';
 	import { sanitizeFeedbackHtml } from '$lib/utils/sanitize';
 	import { Card, CardHeader, CardTitle, CardContent } from './ui';
 	import {
@@ -103,6 +104,25 @@
 
 		return items;
 	});
+
+	// Creator-safe review presentation. Raw statuses include internal pipeline
+	// states; feedback renders only once the review team has released it.
+	const reviewStatusLabel = $derived(creatorReviewStatusLabel(asset.latestReviewStatus));
+	const showReviewFeedback = $derived(
+		isReviewFeedbackReleased(asset.latestReviewStatus) && Boolean(asset.latestReviewFeedback)
+	);
+
+	// App-review rejections write the version's review feedback, not the legacy
+	// rejection fields. When those are empty, fall back to the released
+	// latest-review feedback so a rejected asset never shows no feedback at all.
+	const rejectionFallbackFeedback = $derived(
+		asset.status === 'Rejected' &&
+		!asset.rejectionFeedback &&
+		!asset.rejectionFeedbackHtml &&
+		showReviewFeedback
+			? asset.latestReviewFeedback
+			: undefined
+	);
 
 	// Calculate time metrics
 	const timeToReview = $derived(daysBetween(asset.submittedDate, asset.latestReviewDate || asset.decisionDate));
@@ -202,7 +222,7 @@
 	</Card>
 
 	<!-- Review Feedback (if rejected) -->
-	{#if asset.status === 'Rejected' && (asset.rejectionFeedback || asset.rejectionFeedbackHtml)}
+	{#if asset.status === 'Rejected' && (asset.rejectionFeedback || asset.rejectionFeedbackHtml || rejectionFallbackFeedback)}
 		<Card class="rejection-card">
 			<CardHeader>
 				<div class="rejection-header">
@@ -215,15 +235,17 @@
 					<div class="rejection-content">
 						{@html sanitizeFeedbackHtml(asset.rejectionFeedbackHtml)}
 					</div>
-				{:else}
+				{:else if asset.rejectionFeedback}
 					<p class="rejection-text">{asset.rejectionFeedback}</p>
+				{:else}
+					<p class="rejection-text">{rejectionFallbackFeedback}</p>
 				{/if}
 			</CardContent>
 		</Card>
 	{/if}
 
 	<!-- Latest Review Status -->
-	{#if asset.latestReviewStatus && asset.status !== 'Rejected'}
+	{#if reviewStatusLabel && asset.status !== 'Rejected'}
 		<Card>
 			<CardHeader>
 				<CardTitle>Latest Review</CardTitle>
@@ -232,12 +254,18 @@
 				<div class="review-info">
 					<div class="review-status">
 						<span class="review-label">Status:</span>
-						<span class="review-value">{asset.latestReviewStatus}</span>
+						<span class="review-value">{reviewStatusLabel}</span>
 					</div>
 					{#if asset.latestReviewDate}
 						<div class="review-date">
 							<span class="review-label">Date:</span>
 							<span class="review-value">{formatDate(asset.latestReviewDate)}</span>
+						</div>
+					{/if}
+					{#if showReviewFeedback}
+						<div class="review-feedback">
+							<span class="review-label">Feedback:</span>
+							<p class="review-feedback-text">{asset.latestReviewFeedback}</p>
 						</div>
 					{/if}
 				</div>
@@ -402,6 +430,10 @@
 		line-height: 1.6;
 	}
 
+	.rejection-text {
+		white-space: pre-line;
+	}
+
 	/* Review Info */
 	.review-info {
 		display: flex;
@@ -413,6 +445,22 @@
 	.review-date {
 		display: flex;
 		gap: var(--space-sm);
+	}
+
+	.review-feedback {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-xs);
+		padding-top: var(--space-sm);
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.review-feedback-text {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		line-height: 1.6;
+		white-space: pre-line;
+		margin: 0;
 	}
 
 	.review-label {

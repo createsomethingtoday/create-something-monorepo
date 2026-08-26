@@ -24,6 +24,7 @@
     TableCell,
     StatusBadge,
     TimelineCard,
+    RequiredFixesCard,
     AnalyticsCard,
     TemplateHealthCard,
     DataFreshnessIndicator,
@@ -34,6 +35,7 @@
   import { toast } from '$lib/stores/toast';
   import { trackEvent } from '$lib/utils/analytics';
   import { computeTemplateHealth, isTemplateSearchSuppressed } from '$lib/utils/template-health';
+  import { isReviewFeedbackReleased } from '$lib/utils/review-status';
   import {
     formatCompactCurrency,
     formatCompactNumber,
@@ -70,7 +72,7 @@
   // Smart default tab based on asset status
   // - Pending/Review assets: Show Timeline (most actionable)
   // - Published assets: Show Overview (quick summary)
-  // - Rejected assets: Show Timeline (shows feedback)
+  // - Rejected assets: Show Overview (its rejection feedback card leads)
   function getDefaultTab(status: string): string {
     if (['Draft', 'Upcoming', 'Scheduled'].includes(status)) return 'timeline';
     if (status === 'Rejected') return 'overview';
@@ -112,6 +114,17 @@
 
   // Can show metrics for non-Upcoming and non-Rejected statuses
   const canShowMetrics = $derived(!['Upcoming', 'Rejected'].includes(asset.status));
+
+  // App-review rejections write the version's review feedback, not the legacy
+  // rejection fields — fall back to it so rejected assets always show feedback.
+  const rejectionFallbackFeedback = $derived(
+    asset.status === 'Rejected' &&
+    !asset.rejectionFeedback &&
+    !asset.rejectionFeedbackHtml &&
+    isReviewFeedbackReleased(asset.latestReviewStatus)
+      ? asset.latestReviewFeedback
+      : undefined
+  );
 
   // Template Health is a template-only creator guidance surface.
   const canShowHealth = $derived(asset.type === 'Template');
@@ -549,7 +562,7 @@
               </Card>
 
               <!-- Rejection Feedback Card (if rejected) -->
-              {#if asset.status === 'Rejected' && (asset.rejectionFeedback || asset.rejectionFeedbackHtml)}
+              {#if asset.status === 'Rejected' && (asset.rejectionFeedback || asset.rejectionFeedbackHtml || rejectionFallbackFeedback)}
                 <Card class="rejection-card">
                   <CardHeader>
                     <div class="rejection-header">
@@ -562,8 +575,10 @@
                       <div class="rejection-content">
                         {@html sanitizeFeedbackHtml(asset.rejectionFeedbackHtml)}
                       </div>
-                    {:else}
+                    {:else if asset.rejectionFeedback}
                       <p class="rejection-text">{asset.rejectionFeedback}</p>
+                    {:else}
+                      <p class="rejection-text">{rejectionFallbackFeedback}</p>
                     {/if}
                   </CardContent>
                 </Card>
@@ -678,7 +693,12 @@
           tabindex={0}
           class="tab-content"
         >
-          <TimelineCard {asset} />
+          <div class="timeline-tab-stack">
+            <TimelineCard {asset} />
+            {#if data.requiredFixes && data.requiredFixes.length > 0}
+              <RequiredFixesCard items={data.requiredFixes} />
+            {/if}
+          </div>
         </TabsContent>
         {#if canShowHealth}
           <TabsContent
@@ -876,7 +896,8 @@
     gap: var(--space-md);
   }
 
-  .health-tab-stack {
+  .health-tab-stack,
+  .timeline-tab-stack {
     display: flex;
     flex-direction: column;
     gap: var(--space-md);
@@ -1042,6 +1063,7 @@
   .rejection-text {
     font-size: var(--text-body-sm);
     color: var(--color-fg-secondary);
+    white-space: pre-line;
   }
 
   .thumbnail-image {

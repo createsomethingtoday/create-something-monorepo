@@ -1,6 +1,6 @@
 import type { PageServerLoad } from './$types';
 import { error } from '@sveltejs/kit';
-import { getAirtableClient } from '$lib/server/airtable';
+import { getAirtableClient, type RequiredFixExceptionItem } from '$lib/server/airtable';
 
 export const load: PageServerLoad = async ({ params, locals, platform }) => {
 	// Check authentication
@@ -23,8 +23,21 @@ export const load: PageServerLoad = async ({ params, locals, platform }) => {
 		throw error(403, 'You do not have permission to view this asset');
 	}
 
+	// Partner-app exception ledger (❌Denied = fix required). Gated on:
+	// (1) ownership above, (2) App type, (3) the 🤝Partnership App flag, and
+	// (4) per item, its own version's review round having been released —
+	// gates 3 and 4 live inside getPartnerRequiredFixes. No asset-level
+	// release gate: the ledger is cross-version history, and released fixes
+	// must stay visible while a resubmitted round is still in review.
+	let requiredFixes: RequiredFixExceptionItem[] | null = null;
+	if (asset.type === 'App') {
+		const fixes = await airtable.getPartnerRequiredFixes(params.id);
+		requiredFixes = fixes && fixes.length > 0 ? fixes : null;
+	}
+
 	return {
 		asset,
+		requiredFixes,
 		user: locals.user
 	};
 };
