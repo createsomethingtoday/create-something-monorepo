@@ -128,10 +128,6 @@ function targetForHref(href: string, target?: string): string | undefined {
   return isExternalUrl(href) ? '_blank' : undefined;
 }
 
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
 function formatTemplateTitle(name: string, category?: string): string {
   const label = name.trim() || 'Template name';
   const categoryLabel = category?.trim();
@@ -142,10 +138,7 @@ function formatTemplateTitle(name: string, category?: string): string {
 
   const baseLabel =
     label
-      .replace(
-        new RegExp(`\\s*-\\s*${escapeRegExp(categoryLabel)}\\s+website\\s+template$`, 'i'),
-        '',
-      )
+      .replace(/\s+-\s+[^-]+?\s+website\s+template$/i, '')
       .replace(/(?:\s+-\s+|\s+)website\s+template$/i, '')
       .trim() || 'Template name';
   return `${baseLabel} - ${categoryLabel} Website Template`;
