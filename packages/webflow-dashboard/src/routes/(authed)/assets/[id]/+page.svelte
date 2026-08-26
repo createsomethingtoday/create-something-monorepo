@@ -35,6 +35,7 @@
   import { toast } from '$lib/stores/toast';
   import { trackEvent } from '$lib/utils/analytics';
   import { computeTemplateHealth, isTemplateSearchSuppressed } from '$lib/utils/template-health';
+  import { isReviewFeedbackReleased } from '$lib/utils/review-status';
   import {
     formatCompactCurrency,
     formatCompactNumber,
@@ -113,6 +114,17 @@
 
   // Can show metrics for non-Upcoming and non-Rejected statuses
   const canShowMetrics = $derived(!['Upcoming', 'Rejected'].includes(asset.status));
+
+  // App-review rejections write the version's review feedback, not the legacy
+  // rejection fields — fall back to it so rejected assets always show feedback.
+  const rejectionFallbackFeedback = $derived(
+    asset.status === 'Rejected' &&
+    !asset.rejectionFeedback &&
+    !asset.rejectionFeedbackHtml &&
+    isReviewFeedbackReleased(asset.latestReviewStatus)
+      ? asset.latestReviewFeedback
+      : undefined
+  );
 
   // Template Health is a template-only creator guidance surface.
   const canShowHealth = $derived(asset.type === 'Template');
@@ -550,7 +562,7 @@
               </Card>
 
               <!-- Rejection Feedback Card (if rejected) -->
-              {#if asset.status === 'Rejected' && (asset.rejectionFeedback || asset.rejectionFeedbackHtml)}
+              {#if asset.status === 'Rejected' && (asset.rejectionFeedback || asset.rejectionFeedbackHtml || rejectionFallbackFeedback)}
                 <Card class="rejection-card">
                   <CardHeader>
                     <div class="rejection-header">
@@ -563,8 +575,10 @@
                       <div class="rejection-content">
                         {@html sanitizeFeedbackHtml(asset.rejectionFeedbackHtml)}
                       </div>
-                    {:else}
+                    {:else if asset.rejectionFeedback}
                       <p class="rejection-text">{asset.rejectionFeedback}</p>
+                    {:else}
+                      <p class="rejection-text">{rejectionFallbackFeedback}</p>
                     {/if}
                   </CardContent>
                 </Card>
@@ -1049,6 +1063,7 @@
   .rejection-text {
     font-size: var(--text-body-sm);
     color: var(--color-fg-secondary);
+    white-space: pre-line;
   }
 
   .thumbnail-image {

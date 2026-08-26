@@ -112,6 +112,18 @@
 		isReviewFeedbackReleased(asset.latestReviewStatus) && Boolean(asset.latestReviewFeedback)
 	);
 
+	// App-review rejections write the version's review feedback, not the legacy
+	// rejection fields. When those are empty, fall back to the released
+	// latest-review feedback so a rejected asset never shows no feedback at all.
+	const rejectionFallbackFeedback = $derived(
+		asset.status === 'Rejected' &&
+		!asset.rejectionFeedback &&
+		!asset.rejectionFeedbackHtml &&
+		showReviewFeedback
+			? asset.latestReviewFeedback
+			: undefined
+	);
+
 	// Calculate time metrics
 	const timeToReview = $derived(daysBetween(asset.submittedDate, asset.latestReviewDate || asset.decisionDate));
 	// For time to publish, use publishedDate if available, otherwise use decisionDate for approved assets
@@ -210,7 +222,7 @@
 	</Card>
 
 	<!-- Review Feedback (if rejected) -->
-	{#if asset.status === 'Rejected' && (asset.rejectionFeedback || asset.rejectionFeedbackHtml)}
+	{#if asset.status === 'Rejected' && (asset.rejectionFeedback || asset.rejectionFeedbackHtml || rejectionFallbackFeedback)}
 		<Card class="rejection-card">
 			<CardHeader>
 				<div class="rejection-header">
@@ -223,8 +235,10 @@
 					<div class="rejection-content">
 						{@html sanitizeFeedbackHtml(asset.rejectionFeedbackHtml)}
 					</div>
-				{:else}
+				{:else if asset.rejectionFeedback}
 					<p class="rejection-text">{asset.rejectionFeedback}</p>
+				{:else}
+					<p class="rejection-text">{rejectionFallbackFeedback}</p>
 				{/if}
 			</CardContent>
 		</Card>
@@ -414,6 +428,10 @@
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-secondary);
 		line-height: 1.6;
+	}
+
+	.rejection-text {
+		white-space: pre-line;
 	}
 
 	/* Review Info */
