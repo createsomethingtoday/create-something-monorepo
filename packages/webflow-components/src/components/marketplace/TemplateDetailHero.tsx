@@ -14,6 +14,7 @@ import {
   resolveTemplateDetailOffer,
   templateDetailAnalyticsBase,
 } from './templateDetailOffer';
+import { SUPPORTED_TEMPLATE_CATEGORY_ROUTE_SLUGS } from './templateRoute';
 import { TEMPLATE_DETAIL_STYLES } from './templateDetailStyles';
 
 export interface TemplateDetailHeroProps {
@@ -151,11 +152,37 @@ function formatTemplateTitle(name: string, category?: string, knownCategories: s
       label,
     );
   const baseLabel =
-    titleWithoutKnownCategorySuffix
-      .replace(/\s+-\s+[^-]+?\s+website\s+template$/i, '')
+    stripKnownMarketplaceCategorySuffix(titleWithoutKnownCategorySuffix)
       .replace(/(?:\s+-\s+|\s+)website\s+template$/i, '')
       .trim() || 'Template name';
   return `${baseLabel} - ${categoryLabel} Website Template`;
+}
+
+function isKnownMarketplaceCategoryLabel(label: string): boolean {
+  const slug = categorySlug(label);
+  if (!slug) return false;
+
+  return [slug, `${slug}-websites`, CATEGORY_ROUTE_ALIASES[slug]].some(
+    (routeSlug) => Boolean(routeSlug && SUPPORTED_TEMPLATE_CATEGORY_ROUTE_SLUGS.has(routeSlug)),
+  );
+}
+
+function stripKnownMarketplaceCategorySuffix(value: string): string {
+  const suffixMatch = value.match(/\s+website\s+template$/i);
+  if (!suffixMatch) return value;
+
+  const labelWithoutSuffix = value.slice(0, -suffixMatch[0].length);
+  let delimiterIndex = labelWithoutSuffix.lastIndexOf(' - ');
+
+  while (delimiterIndex >= 0) {
+    const suffixLabel = labelWithoutSuffix.slice(delimiterIndex + 3);
+    if (isKnownMarketplaceCategoryLabel(suffixLabel)) {
+      return labelWithoutSuffix.slice(0, delimiterIndex);
+    }
+    delimiterIndex = labelWithoutSuffix.lastIndexOf(' - ', delimiterIndex - 1);
+  }
+
+  return value;
 }
 
 function cleanCategoryListItem(value: string): string {
