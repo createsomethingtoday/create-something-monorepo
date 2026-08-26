@@ -7,6 +7,10 @@ import {
   CONFIRMED_VERSION_FIELDS,
   CONFIRMED_WRITE_FIELD_IDS,
   DEFAULT_AIRTABLE_BASE_ID,
+  FEATURED_ASSET_FIELDS,
+  FEATURED_ASSET_FIELD_IDS,
+  FEATURED_VOTE_FIELDS,
+  FEATURED_VOTING_STATE_FIELDS,
   METRICS_ASSET_FIELD_IDS,
   TABLE_IDS,
 } from '../src/schema.js';
@@ -72,10 +76,12 @@ async function main() {
   const assetTable = tables.get('👛Assets');
   const versionTable = tables.get('🖌️Asset Versions');
   const releaseTable = tables.get('🚀Asset Releases');
+  const votingStateTable = tables.get('🏗️Asset Voting State');
+  const reviewerVotesTable = tables.get('🗳️Reviewer Votes');
 
-  if (!assetTable || !versionTable || !releaseTable) {
+  if (!assetTable || !versionTable || !releaseTable || !votingStateTable || !reviewerVotesTable) {
     throw new Error(
-      `Missing expected tables. Found assets=${Boolean(assetTable)} versions=${Boolean(versionTable)} releases=${Boolean(releaseTable)}`,
+      `Missing expected tables. Found assets=${Boolean(assetTable)} versions=${Boolean(versionTable)} releases=${Boolean(releaseTable)} votingState=${Boolean(votingStateTable)} reviewerVotes=${Boolean(reviewerVotesTable)}`,
     );
   }
 
@@ -85,6 +91,10 @@ async function main() {
     diffFieldNames('versions.confirmed', CONFIRMED_VERSION_FIELDS, versionTable.fields),
     diffFieldNames('releases.confirmed', CONFIRMED_RELEASE_FIELDS, releaseTable.fields),
     diffFieldIds('assets.metricsFieldIds', METRICS_ASSET_FIELD_IDS, assetTable.fields),
+    diffFieldNames('featured.assets', FEATURED_ASSET_FIELDS, assetTable.fields),
+    diffFieldIds('featured.assetFieldIds', FEATURED_ASSET_FIELD_IDS, assetTable.fields),
+    diffFieldNames('featured.votingState', FEATURED_VOTING_STATE_FIELDS, votingStateTable.fields),
+    diffFieldNames('featured.votes', FEATURED_VOTE_FIELDS, reviewerVotesTable.fields),
     {
       label: 'writeFieldIds',
       missing: [
@@ -102,6 +112,8 @@ async function main() {
     assets: assetTable.id,
     assetVersions: versionTable.id,
     assetReleases: releaseTable.id,
+    assetVotingState: votingStateTable.id,
+    reviewerVotes: reviewerVotesTable.id,
   }).filter(([key, id]) => TABLE_IDS[key as keyof typeof TABLE_IDS] !== id);
 
   const result = {
@@ -113,6 +125,8 @@ async function main() {
         assets: assetTable.id,
         assetVersions: versionTable.id,
         assetReleases: releaseTable.id,
+        assetVotingState: votingStateTable.id,
+        reviewerVotes: reviewerVotesTable.id,
       },
     },
     checks,

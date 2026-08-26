@@ -712,7 +712,7 @@ export function registerTools(
 
   server.tool(
     'template_review_set_featured_flag',
-    'Finalize (or revert) one template\'s membership in the upcoming Featured batch by setting ℹ️Is Featured?. CONSEQUENTIAL: checking it resolves the featured period to the first of next month and arms the creator-notification worker (hourly cron) for that period — the creator receives a congratulations email quoting the live Pick Reason. Requires confirm_creator_notification: true. Unchecking before the worker fires is the abort path. The marketplace-CMS backfill remains a separate manual step.',
+    'Finalize (or revert) one template\'s membership in the upcoming Featured batch by setting ℹ️Is Featured?. CONSEQUENTIAL: checking it resolves the featured period to the first of next month and arms the creator-notification worker (hourly cron) for that period — the creator receives a congratulations email quoting the live Pick Reason. Requires confirm_creator_notification: true AND a non-empty live ⭐Reviewer Pick Reason (featuring is rejected before any write otherwise). Unchecking before the worker fires is the abort path. The marketplace-CMS backfill remains a separate manual step.',
     {
       asset_id: z.string().min(1),
       is_featured: z.boolean(),

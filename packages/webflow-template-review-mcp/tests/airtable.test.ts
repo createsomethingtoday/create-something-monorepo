@@ -1673,6 +1673,7 @@ test('castFeaturedVote updates an existing vote instead of double-counting', asy
 
 test('setFeaturedFlag writes the checkbox by field ID and reports the armed period', async () => {
   const patches: Array<Record<string, unknown>> = [];
+  const reason = 'Brokerwise stands out for its confident financial-services layout system and clear conversion paths, making it a strong fit for brokerages and advisory firms that want an authoritative online presence with an obvious enquiry path for prospective clients.';
   const client = new AirtableClient({
     apiKey: 'test',
     fetchFn: async (input, init) => {
@@ -1687,12 +1688,17 @@ test('setFeaturedFlag writes the checkbox by field ID and reports the armed peri
             [FEATURED_ASSET_FIELDS.isFeatured]: true,
             [FEATURED_ASSET_FIELDS.isFeaturedPeriod]: '2026-09-01',
             [FEATURED_ASSET_FIELDS.isEligibleForUpcomingFeatured]: 1,
+            [FEATURED_ASSET_FIELDS.reviewerPickReason]: reason,
           },
         });
       }
       return jsonResponse({
         id: 'rec_asset_flag',
-        fields: { [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️', [CONFIRMED_ASSET_FIELDS.name]: 'Brokerwise' },
+        fields: {
+          [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+          [CONFIRMED_ASSET_FIELDS.name]: 'Brokerwise',
+          [FEATURED_ASSET_FIELDS.reviewerPickReason]: reason,
+        },
       });
     },
   });
@@ -1702,5 +1708,108 @@ test('setFeaturedFlag writes the checkbox by field ID and reports the armed peri
   assert.deepEqual((patches[0] as { fields: Record<string, unknown> }).fields, { [FEATURED_ASSET_FIELD_IDS.isFeatured]: true });
   assert.equal(result.isFeatured, true);
   assert.equal(result.featuredPeriod, '2026-09-01');
-  assert.ok(result.warnings.some((warning) => warning.startsWith('missing_pick_reason')));
+  assert.deepEqual(result.warnings, []);
+});
+
+test('setFeaturedFlag rejects featuring before any write when the live pick reason is empty', async () => {
+  let patched = false;
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input, init) => {
+      if (init?.method === 'PATCH') {
+        patched = true;
+        throw new Error('No PATCH expected — featuring must be rejected before the write.');
+      }
+      return jsonResponse({
+        id: 'rec_asset_noreason',
+        fields: { [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️', [CONFIRMED_ASSET_FIELDS.name]: 'Vesper' },
+      });
+    },
+  });
+
+  await assert.rejects(
+    client.setFeaturedFlag('rec_asset_noreason', true),
+    (error: Error & { code?: string }) => error.code === 'MISSING_PICK_REASON',
+  );
+  assert.equal(patched, false);
+
+  // Unchecking (the abort path) never requires a reason.
+  const unflagClient = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input, init) => {
+      if (init?.method === 'PATCH') {
+        return jsonResponse({
+          id: 'rec_asset_noreason',
+          fields: { [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️', [CONFIRMED_ASSET_FIELDS.name]: 'Vesper', [FEATURED_ASSET_FIELDS.isFeatured]: false },
+        });
+      }
+      return jsonResponse({
+        id: 'rec_asset_noreason',
+        fields: { [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️', [CONFIRMED_ASSET_FIELDS.name]: 'Vesper' },
+      });
+    },
+  });
+  const reverted = await unflagClient.setFeaturedFlag('rec_asset_noreason', false);
+  assert.equal(reverted.isFeatured, false);
+});
+
+test('castFeaturedVote self-heals duplicate votes onto a deterministic keeper', async () => {
+  const deleted: string[] = [];
+  const patchedIds: string[] = [];
+  let stateReads = 0;
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input, init) => {
+      const url = new URL(String(input));
+      if (init?.method === 'POST') {
+        return jsonResponse({ id: 'rec_vote_zz', fields: { Vote: '👍 Up' } });
+      }
+      if (init?.method === 'PATCH') {
+        const id = url.pathname.split('/').pop() ?? '';
+        patchedIds.push(id);
+        return jsonResponse({ id, fields: { Vote: '👍 Up' } });
+      }
+      if (init?.method === 'DELETE') {
+        deleted.push(url.pathname.split('/').pop() ?? '');
+        return jsonResponse({ deleted: true });
+      }
+      if (url.pathname.endsWith('/rec_asset_dup')) {
+        return jsonResponse({
+          id: 'rec_asset_dup',
+          fields: {
+            [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+            [CONFIRMED_ASSET_FIELDS.name]: 'Mello',
+            ['🏗️Voting State']: ['rec_state_dup'],
+          },
+        });
+      }
+      if (url.pathname.endsWith('/rec_state_dup')) {
+        stateReads += 1;
+        // 1st read (pre-create ownVote check): no votes visible yet → create path.
+        // 2nd read (reconciliation): the race is now visible — two votes exist.
+        // 3rd read (tallies): healed counts.
+        if (stateReads === 1) return jsonResponse({ id: 'rec_state_dup', fields: { '🗳️Votes': [] } });
+        return jsonResponse({
+          id: 'rec_state_dup',
+          fields: { '🗳️Votes': ['rec_vote_aa', 'rec_vote_zz'], '👍 count': 1, '👎 count': 0, 'Net votes': 1, 'In qualified pool?': 1 },
+        });
+      }
+      if (url.pathname.endsWith(`/${TABLE_IDS.reviewerVotes}`)) {
+        return jsonResponse({
+          records: [
+            { id: 'rec_vote_aa', fields: { Reviewer: { id: ericReviewer.id }, Vote: '👍 Up' } },
+            { id: 'rec_vote_zz', fields: { Reviewer: { id: ericReviewer.id }, Vote: '👍 Up' } },
+          ],
+        });
+      }
+      throw new Error(`Unexpected fetch: ${url.toString()}`);
+    },
+  });
+
+  const result = await client.castFeaturedVote('rec_asset_dup', { vote: 'up' }, ericReviewer);
+
+  assert.deepEqual(patchedIds, ['rec_vote_aa']);
+  assert.deepEqual(deleted, ['rec_vote_zz']);
+  assert.equal(result.voteId, 'rec_vote_aa');
+  assert.equal(result.action, 'updated');
 });

@@ -1186,6 +1186,18 @@ export class AirtableClient {
     return (await response.json()) as AirtableRecord;
   }
 
+  private async deleteRecord(tableId: string, recordId: string): Promise<void> {
+    const response = await this.request(`/${tableId}/${recordId}`, { method: 'DELETE' });
+    if (!response.ok) {
+      const airtable = await this.readErrorDetails(response);
+      throw new AirtableClientError('AIRTABLE_DELETE_FAILED', 'Failed to delete Airtable record.', response.status, {
+        tableId,
+        recordId,
+        ...(airtable === undefined ? {} : { airtable }),
+      });
+    }
+  }
+
   private async updateRecord(tableId: string, recordId: string, fields: Record<string, unknown>): Promise<AirtableRecord> {
     const response = await this.request(`/${tableId}/${recordId}`, {
       method: 'PATCH',
@@ -1452,6 +1464,29 @@ export class AirtableClient {
         ...voteFields,
       });
       action = 'created';
+
+      // Airtable has no unique constraint, so two overlapping requests (or a
+      // retry racing the voting-state backlink) can both miss ownVote and
+      // create duplicate votes that double-count the rollups. Self-heal: all
+      // writers deterministically keep the reviewer's lowest-record-id vote
+      // (re-applying this request's fields to it) and delete the rest, so
+      // concurrent duplicates converge to exactly one record.
+      const reconciledState = await this.getRecord(TABLE_IDS.assetVotingState, votingStateId);
+      const reconciledVoteIds = stringArray(reconciledState?.fields[FEATURED_VOTING_STATE_FIELDS.votesLink]);
+      const reconciledVotes = reconciledVoteIds.length
+        ? await this.listRecords({ tableId: TABLE_IDS.reviewerVotes, filterByFormula: recordIdsFormula(reconciledVoteIds) })
+        : [];
+      const ownVotes = reconciledVotes.filter((record) => collaboratorValue(record.fields[FEATURED_VOTE_FIELDS.reviewer])?.id === currentReviewer.id);
+      if (ownVotes.length > 1) {
+        const keeper = ownVotes.reduce((lowest, candidate) => (candidate.id < lowest.id ? candidate : lowest));
+        if (keeper.id !== voteRecord.id) {
+          voteRecord = await this.updateRecord(TABLE_IDS.reviewerVotes, keeper.id, voteFields);
+          action = 'updated';
+        }
+        for (const duplicate of ownVotes.filter((record) => record.id !== keeper.id)) {
+          await this.deleteRecord(TABLE_IDS.reviewerVotes, duplicate.id);
+        }
+      }
     }
 
     const refreshedState = await this.getRecord(TABLE_IDS.assetVotingState, votingStateId);
@@ -1477,20 +1512,29 @@ export class AirtableClient {
    * batch by setting ℹ️Is Featured?. Checking it makes 📅Is Featured Period
    * resolve to the first of NEXT month, which arms the creator-notification
    * worker for that period; unchecking before the worker's hourly run is the
-   * abort path. Whalesync does not carry featured fields to the marketplace
+   * abort path. Featuring is rejected BEFORE the write when the live
+   * ⭐Reviewer Pick Reason is empty — the creator email quotes it verbatim, so
+   * arming the notification first and warning after would let a degraded
+   * email fire. Whalesync does not carry featured fields to the marketplace
    * CMS — the CMS backfill stays manual.
    */
   async setFeaturedFlag(assetId: string, isFeatured: boolean): Promise<TemplateFeaturedFlagResult> {
-    await this.getScopedAssetRecord(assetId);
+    const existing = await this.getScopedAssetRecord(assetId);
+    if (isFeatured && !firstString(existing.fields[FEATURED_ASSET_FIELDS.reviewerPickReason])) {
+      throw new AirtableClientError(
+        'MISSING_PICK_REASON',
+        'Cannot mark this asset featured: ⭐Reviewer Pick Reason is empty, and checking ℹ️Is Featured? arms the creator-notification worker. Write the buyer-safe reason first via template_review_set_featured_pick (pick_reason + confirm_creator_safe), then finalize.',
+        409,
+        { asset_id: assetId },
+      );
+    }
+
     const updated = await this.updateRecord(TABLE_IDS.assets, assetId, {
       [FEATURED_ASSET_FIELD_IDS.isFeatured]: isFeatured,
     });
 
     const reviewerPickReason = firstString(updated.fields[FEATURED_ASSET_FIELDS.reviewerPickReason]);
     const warnings: string[] = [];
-    if (isFeatured && !reviewerPickReason) {
-      warnings.push('missing_pick_reason: ⭐Reviewer Pick Reason is empty — the creator email degrades to a plain congratulations and the listing shows no reason. Write the buyer-safe reason before the notification period arrives.');
-    }
     if (isFeatured && firstNumber(updated.fields[FEATURED_ASSET_FIELDS.isEligibleForUpcomingFeatured]) !== 1) {
       warnings.push('not_currently_eligible: this asset does not satisfy the upcoming-featured eligibility formula (Exceptional quality + re-feature cap).');
     }
