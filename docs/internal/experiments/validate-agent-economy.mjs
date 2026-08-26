@@ -303,7 +303,7 @@ const publicFacts = [
   'at least **10 trials per task family per cohort**',
   '[Dual-Agent Routing Experiment](/papers/dual-agent-routing-experiment)',
   'Token and credit economics and Trial 2 latency are recomputed from durable receipts',
-  'the release gate reruns the session-time outputs against the checked-in public, hidden, and mutation judges'
+  'The release gate reruns the public and mutation suites against the remediated reference copies, and reruns the expanded hidden judge with each preserved session-time retry parser.'
 ];
 
 const publicRows = [

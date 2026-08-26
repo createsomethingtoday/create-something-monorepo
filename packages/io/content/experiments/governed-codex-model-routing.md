@@ -32,7 +32,7 @@ Subjects had to enumerate a public package surface, run an acceptance command, i
 
 ### Trial 2: three independent implementation slices
 
-The suite combined debugging, test authoring, and bounded implementation. Three Luna agents received independent slices; Terra and Sol each received the complete suite as single-agent controls. A separate judge checked public tests, three hidden test groups, five withheld mutants, and the authorized-file boundary. Review expanded the retry-parser cases after the runs. The original session-time outputs are preserved and scored below; later human-remediated copies are reference implementations only.
+The suite combined debugging, test authoring, and bounded implementation. Three Luna agents received independent slices; Terra and Sol each received the complete suite as single-agent controls. A separate judge checked public tests, three hidden test groups, and five withheld mutants. Review expanded the retry-parser cases after the runs. The original session-time outputs are preserved and scored below; later human-remediated copies are reference implementations only.
 
 Credit-equivalent values use redacted session telemetry and the Codex rate card observed on 2026-08-26. The source receipts preserve the receipt identifiers, token categories, versioned rates, and exact computation for both trials. These are comparative units, not invoice dollars. Fan-out latency is the session critical path rather than summed agent time.
 
@@ -118,7 +118,7 @@ open_questions:
 
 ## Evidence and reproducibility
 
-The source repository preserves a machine-readable ledger, redacted token telemetry for both trials, Trial 2 timing receipts, the immutable Trial 2 task, session-time subjects, review-remediated reference copies, public tests, hidden judge, and five mutants, plus the rate-card version, formula, integrity validator, and prospective decision rule under CRE-1877. Private session paths and raw transcripts are intentionally excluded from this public route. Token and credit economics and Trial 2 latency are recomputed from durable receipts; the release gate reruns the session-time outputs against the checked-in public, hidden, and mutation judges.
+The source repository preserves a machine-readable ledger, redacted token telemetry for both trials, Trial 2 timing receipts, the immutable Trial 2 task, session-time subjects, review-remediated reference copies, public tests, hidden judge, and five mutants, plus the rate-card version, formula, integrity validator, and prospective decision rule under CRE-1877. Private session paths and raw transcripts are intentionally excluded from this public route. Token and credit economics and Trial 2 latency are recomputed from durable receipts. The release gate reruns the public and mutation suites against the remediated reference copies, and reruns the expanded hidden judge with each preserved session-time retry parser.
 
 Relevant public references:
 
