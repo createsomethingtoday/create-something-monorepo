@@ -10,16 +10,17 @@
  */
 
 /**
- * Statuses whose feedback has been released to the creator (the status flip
- * itself sends the Zendesk email). "(No Notification)" variants are excluded
- * on purpose: they suppress the creator email, so the dashboard must stay
- * silent too.
+ * Statuses whose flip itself sends the creator notification, so the CURRENT
+ * contents of the feedback field are exactly what was released.
+ *
+ * "(No Notification)" variants are excluded on purpose: they suppress the
+ * creator email, so the dashboard must stay silent too. "🔁Response to
+ * Review" is also excluded even though a prior round was released: while a
+ * version sits in that status a reviewer can overwrite the feedback field
+ * with an unreleased draft (save_draft_feedback writes it without a status
+ * change), so the field is no longer guaranteed to hold released text.
  */
-const RELEASED_REVIEW_STATUSES = new Set([
-	'📤Changes Requested',
-	'🔁Response to Review',
-	'❌Rejected'
-]);
+const RELEASED_REVIEW_STATUSES = new Set(['📤Changes Requested', '❌Rejected']);
 
 const EXACT_LABELS: Record<string, string> = {
 	'📤Changes Requested': 'Changes Requested',

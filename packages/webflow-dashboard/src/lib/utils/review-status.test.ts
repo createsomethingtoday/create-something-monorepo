@@ -2,10 +2,16 @@ import { describe, expect, it } from 'vitest';
 import { creatorReviewStatusLabel, isReviewFeedbackReleased } from './review-status';
 
 describe('isReviewFeedbackReleased', () => {
-	it('treats creator-notified statuses as released', () => {
+	it('treats only notification-triggering statuses as released', () => {
 		expect(isReviewFeedbackReleased('📤Changes Requested')).toBe(true);
-		expect(isReviewFeedbackReleased('🔁Response to Review')).toBe(true);
 		expect(isReviewFeedbackReleased('❌Rejected')).toBe(true);
+	});
+
+	it('keeps Response to Review unreleased — the field may hold an unreleased draft', () => {
+		// While a version sits in 🔁Response to Review, save_draft_feedback can
+		// overwrite the feedback field without a status change; the current
+		// field value is no longer guaranteed to be what the creator was sent.
+		expect(isReviewFeedbackReleased('🔁Response to Review')).toBe(false);
 	});
 
 	it('keeps deliberately silent variants unreleased (partnership shield)', () => {
