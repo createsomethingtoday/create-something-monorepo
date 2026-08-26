@@ -1,6 +1,7 @@
 import Airtable from 'airtable';
 import { randomBytes, createHash } from 'node:crypto';
 import { isLongDescriptionOnlyAssetVersionChange } from '../utils/asset-version-changes';
+import { isReviewFeedbackReleased } from '../utils/review-status';
 
 // Airtable table IDs
 const TABLES = {
@@ -34,8 +35,9 @@ const EXCEPTIONS_FIELD_IDS = {
 // 🤝Partnership App checkbox on Assets (CRM-synced daily by partner-flag-sync).
 const ASSETS_PARTNERSHIP_APP_FIELD_ID = 'fldzZ2Zo8a7vtIMT3';
 
-// Version Number on 🖌️Asset Versions.
+// Version Number and 📝Review Status on 🖌️Asset Versions.
 const ASSET_VERSIONS_VERSION_NUMBER_FIELD_ID = 'fldn2ImbgwKfCdWWA';
+const ASSET_VERSIONS_REVIEW_STATUS_FIELD_ID = 'flde8Huk5NRIdm2wZ';
 
 // Airtable field IDs for authentication
 const FIELDS = {
@@ -926,6 +928,39 @@ export function mapRequiredFixExceptionRecord(
 	};
 }
 
+export interface RequiredFixVersionInfo {
+	versionNumber?: number;
+	reviewStatus?: string;
+}
+
+/**
+ * Per-version release gate for exception items. The exceptions query is
+ * asset-wide, but each item may only surface once ITS OWN review round has
+ * been released to the creator — an item from a round still on hold or in a
+ * silent state must not ride a later round's release. Fail-closed: items
+ * without a resolvable, released version are dropped.
+ */
+export function gateRequiredFixesByVersion(
+	items: RequiredFixExceptionItem[],
+	versions: Map<string, RequiredFixVersionInfo>
+): RequiredFixExceptionItem[] {
+	const gated: RequiredFixExceptionItem[] = [];
+
+	for (const item of items) {
+		if (!item.versionRecordId) continue;
+		const version = versions.get(item.versionRecordId);
+		if (!version || !isReviewFeedbackReleased(version.reviewStatus)) continue;
+
+		gated.push(
+			Number.isFinite(version.versionNumber)
+				? { ...item, versionNumber: version.versionNumber }
+				: item
+		);
+	}
+
+	return gated;
+}
+
 function firstString(value: unknown): string | undefined {
 	if (typeof value === 'string') {
 		const trimmed = value.trim();
@@ -1662,8 +1697,10 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		 * ❌Denied (fix-required) exception items for a partnership app.
 		 *
 		 * Returns null unless the asset carries the 🤝Partnership App flag —
-		 * fail-closed: any error also returns null. Caller is responsible for
-		 * ownership and release gating (isReviewFeedbackReleased).
+		 * fail-closed: any error also returns null. Each item is release-gated
+		 * by its own version's review status; the caller's asset-level check
+		 * (isReviewFeedbackReleased on latestReviewStatus) is only a cheap
+		 * pre-gate. Caller remains responsible for ownership.
 		 */
 		async getPartnerRequiredFixes(assetId: string): Promise<RequiredFixExceptionItem[] | null> {
 			if (!/^rec[A-Za-z0-9]{14}$/.test(assetId)) return null;
@@ -1701,41 +1738,39 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					.map(mapRequiredFixExceptionRecord)
 					.filter((entry): entry is RequiredFixExceptionItem => entry !== null);
 
-				// Best effort: resolve version numbers for "from the vN review" labels.
+				if (items.length === 0) return items;
+
+				// Each item is gated by ITS OWN version's review status, so the
+				// version fetch is mandatory — if it fails, nothing is shown.
 				const versionIds = [
 					...new Set(items.map((entry) => entry.versionRecordId).filter(Boolean))
 				].slice(0, 50) as string[];
+				if (versionIds.length === 0) return [];
 
-				if (versionIds.length > 0) {
-					try {
-						const versionRows = await base(TABLES.ASSET_VERSIONS)
-							.select({
-								filterByFormula: `OR(${versionIds
-									.map((id) => `RECORD_ID() = ${airtableFormulaValue(id)}`)
-									.join(', ')})`,
-								fields: [ASSET_VERSIONS_VERSION_NUMBER_FIELD_ID],
-								returnFieldsByFieldId: true
-							})
-							.all();
+				const versionRows = await base(TABLES.ASSET_VERSIONS)
+					.select({
+						filterByFormula: `OR(${versionIds
+							.map((id) => `RECORD_ID() = ${airtableFormulaValue(id)}`)
+							.join(', ')})`,
+						fields: [
+							ASSET_VERSIONS_VERSION_NUMBER_FIELD_ID,
+							ASSET_VERSIONS_REVIEW_STATUS_FIELD_ID
+						],
+						returnFieldsByFieldId: true
+					})
+					.all();
 
-						const numbers = new Map(
-							versionRows.map((row) => [
-								row.id,
-								Number(row.fields[ASSET_VERSIONS_VERSION_NUMBER_FIELD_ID])
-							])
-						);
-
-						for (const entry of items) {
-							if (!entry.versionRecordId) continue;
-							const versionNumber = numbers.get(entry.versionRecordId);
-							if (Number.isFinite(versionNumber)) entry.versionNumber = versionNumber;
+				const versions = new Map<string, RequiredFixVersionInfo>(
+					versionRows.map((row) => [
+						row.id,
+						{
+							versionNumber: Number(row.fields[ASSET_VERSIONS_VERSION_NUMBER_FIELD_ID]),
+							reviewStatus: firstString(row.fields[ASSET_VERSIONS_REVIEW_STATUS_FIELD_ID])
 						}
-					} catch {
-						// Version labels are decorative; the ledger stands without them.
-					}
-				}
+					])
+				);
 
-				return items;
+				return gateRequiredFixesByVersion(items, versions);
 			} catch (err) {
 				console.error('[Airtable] getPartnerRequiredFixes failed:', {
 					assetId,

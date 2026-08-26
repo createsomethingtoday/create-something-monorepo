@@ -4,6 +4,7 @@ import {
 	buildAssetListFormula,
 	buildAssetVersionCreateFields,
 	buildRequiredFixExceptionsFormula,
+	gateRequiredFixesByVersion,
 	mapRequiredFixExceptionRecord,
 	buildAssetUpdateFields,
 	buildAssetVersionSnapshot,
@@ -457,5 +458,63 @@ describe('mapRequiredFixExceptionRecord', () => {
 
 		expect(JSON.stringify(mapped)).not.toContain('internal rationale');
 		expect(JSON.stringify(mapped)).not.toContain('internal decision notes');
+	});
+});
+
+describe('gateRequiredFixesByVersion', () => {
+	const item = (id: string, versionRecordId?: string) => ({
+		id,
+		item: `Finding ${id}`,
+		versionRecordId
+	});
+
+	it('keeps items whose own version round was released, attaching the version number', () => {
+		const gated = gateRequiredFixesByVersion(
+			[item('a', 'recV1'), item('b', 'recV2')],
+			new Map([
+				['recV1', { versionNumber: 1, reviewStatus: '📤Changes Requested' }],
+				['recV2', { versionNumber: 2, reviewStatus: '❌Rejected' }]
+			])
+		);
+
+		expect(gated.map((g) => g.id)).toEqual(['a', 'b']);
+		expect(gated[0].versionNumber).toBe(1);
+		expect(gated[1].versionNumber).toBe(2);
+	});
+
+	it('drops items whose version round is unreleased, on hold, or silent', () => {
+		const gated = gateRequiredFixesByVersion(
+			[item('held', 'recHold'), item('silent', 'recSilent'), item('open', 'recOpen')],
+			new Map([
+				['recHold', { versionNumber: 2, reviewStatus: '⏸️On Hold' }],
+				['recSilent', { versionNumber: 3, reviewStatus: '❌Rejected (No Notification)' }],
+				['recOpen', { versionNumber: 4, reviewStatus: '🏃🏾In Review' }]
+			])
+		);
+
+		expect(gated).toEqual([]);
+	});
+
+	it('fails closed on items without a resolvable version', () => {
+		const gated = gateRequiredFixesByVersion(
+			[item('nolink', undefined), item('missing', 'recGone')],
+			new Map([['recOther', { versionNumber: 1, reviewStatus: '📤Changes Requested' }]])
+		);
+
+		expect(gated).toEqual([]);
+	});
+
+	it('does not leak a held round through a sibling released round', () => {
+		// The regression: asset-level release (v3 Changes Requested) must not
+		// surface v2's items while v2 itself is still on hold.
+		const gated = gateRequiredFixesByVersion(
+			[item('v2item', 'recV2'), item('v3item', 'recV3')],
+			new Map([
+				['recV2', { versionNumber: 2, reviewStatus: '⏸️On Hold' }],
+				['recV3', { versionNumber: 3, reviewStatus: '📤Changes Requested' }]
+			])
+		);
+
+		expect(gated.map((g) => g.id)).toEqual(['v3item']);
 	});
 });
