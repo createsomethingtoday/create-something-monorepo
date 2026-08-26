@@ -331,6 +331,9 @@ for (const row of publicRows) {
 assert.ok(publicMetadata.includes("slug: 'governed-codex-model-routing'"));
 assert.ok(publicMetadata.includes("created_at: '2026-08-26T12:00:00Z'"));
 assert.ok(publicMetadata.includes("'file-governed-codex-model-routing': defineArtifactVisuals"));
+assert.ok(publicMetadata.includes('Session-time hidden: 2/3'));
+assert.ok(publicMetadata.includes('INCONCLUSIVE — QUALITY GATE FAILED'));
+assert.equal(publicMetadata.includes('Same hidden gates: 3/3'), false);
 assert.equal(
   publicExperiment.includes('/Users/'),
   false,

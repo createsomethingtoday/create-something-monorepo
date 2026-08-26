@@ -877,8 +877,8 @@ const fileBasedExperimentMetadata: FileBasedExperiment[] = [
 		slug: 'governed-codex-model-routing',
 		title: 'Governed Codex Model Routing Economics',
 		description: 'A controlled exploratory benchmark of Codex model, reasoning-effort, serving-tier, and fan-out choices under deterministic quality gates.',
-		excerpt_short: 'Task-shaped model routing is supported—but seven n=1 trials do not validate it',
-		excerpt_long: 'Seven exploratory Codex trials compare Luna executor fan-out, Terra effort levels, and Sol at low reasoning effort. The results support separating judgment from execution, while preserving the limitations and replication gates needed before any production routing policy changes.',
+		excerpt_short: 'The session-time quality gate failed, leaving task-shaped model routing inconclusive',
+		excerpt_long: 'Seven exploratory Codex trials compare Luna executor fan-out, Terra effort levels, and Sol at low reasoning effort. Every Trial 2 cohort failed the expanded hidden retry-parser gate, so cost and timing remain descriptive and no production routing policy changes.',
 		category: 'research',
 		tags: ['Codex', 'Model Routing', 'Agent Economics', 'Evaluation', 'Governance', 'Living Research'],
 		created_at: '2026-08-26T12:00:00Z',
@@ -899,10 +899,10 @@ const fileBasedExperimentMetadata: FileBasedExperiment[] = [
     │ Judgment governor                 Bounded executors       │
     │ Sol / Low       ── policy ──▶     Luna / High fan-out    │
     │                                                          │
-    │ Same hidden gates: 3/3  ·  mutants killed: 5/5          │
-    │ Fan-out credits vs Sol/High: −90.57%                    │
+    │ Session-time hidden: 2/3  ·  mutants killed: 5/5        │
+    │ Cost difference: descriptive only                       │
     │                                                          │
-    │ SUPPORTED — NOT VALIDATED                                │
+    │ INCONCLUSIVE — QUALITY GATE FAILED                       │
     ╰──────────────────────────────────────────────────────────╯
 `
 	},
