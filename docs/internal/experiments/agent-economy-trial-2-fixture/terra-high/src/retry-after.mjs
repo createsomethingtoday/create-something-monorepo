@@ -41,6 +41,18 @@ function parseHttpDate(text, nowMs) {
       now.getUTCSeconds(),
       now.getUTCMilliseconds()
     );
+    const nextCentury = Date.UTC(
+      year + 100,
+      months.indexOf(month),
+      Number(day),
+      Number(hour),
+      Number(minute),
+      Number(second)
+    );
+    if (nextCentury <= fiftyYearsAhead) {
+      year += 100;
+      parsed = nextCentury;
+    }
     if (parsed > fiftyYearsAhead) {
       year -= 100;
       parsed = Date.UTC(
