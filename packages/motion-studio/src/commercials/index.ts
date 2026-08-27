@@ -110,3 +110,10 @@ export {
   useMarkerProgress,
 } from './shared/audio';
 export type { TimingMarker } from './shared/audio';
+
+// Ground operator walkthrough
+export {
+  GroundOperatorWalkthrough,
+  GROUND_OPERATOR_WALKTHROUGH_CONFIG,
+  groundWalkthroughScenes,
+} from './ground-walkthrough';

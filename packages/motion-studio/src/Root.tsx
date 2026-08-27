@@ -37,6 +37,8 @@ import {
   SEEING_COMMERCIAL_CONFIG, 
   GroundCommercial, 
   GROUND_COMMERCIAL_CONFIG,
+  GroundOperatorWalkthrough,
+  GROUND_OPERATOR_WALKTHROUGH_CONFIG,
   GitHubHistoryCommercial,
   GITHUB_HISTORY_COMMERCIAL_CONFIG,
   OuterfieldsCommercial,
@@ -399,6 +401,17 @@ export const RemotionRoot: React.FC = () => {
         width={GROUND_COMMERCIAL_CONFIG.width}
         height={GROUND_COMMERCIAL_CONFIG.height}
         defaultProps={GROUND_COMMERCIAL_CONFIG.defaultProps}
+      />
+
+      {/* Ground operator walkthrough — scope, coverage, claim gate, receipt */}
+      <Composition
+        id={GROUND_OPERATOR_WALKTHROUGH_CONFIG.id}
+        component={GroundOperatorWalkthrough}
+        durationInFrames={GROUND_OPERATOR_WALKTHROUGH_CONFIG.durationInFrames}
+        fps={GROUND_OPERATOR_WALKTHROUGH_CONFIG.fps}
+        width={GROUND_OPERATOR_WALKTHROUGH_CONFIG.width}
+        height={GROUND_OPERATOR_WALKTHROUGH_CONFIG.height}
+        defaultProps={GROUND_OPERATOR_WALKTHROUGH_CONFIG.defaultProps}
       />
       
       {/* GitHub History Commercial - Contribution heatmap visualization */}

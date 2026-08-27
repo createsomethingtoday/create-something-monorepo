@@ -170,3 +170,6 @@ config/mcp-hub/fleet-secrets.local.*
 
 # Local evidence and write receipts from Featured-template review runs
 packages/webflow-template-search/output/featured-template-feedback/
+
+# Private generated narration used for local Remotion renders
+packages/motion-studio/public/audio/ground-walkthrough/
