@@ -1,6 +1,6 @@
 # Quality evals derived from a fixture app carrying 24 planted violations.
 # Baseline (cases 1-5): 24/24 caught with this skill; 14/24 unaided, with 3 inverted recommendations.
-# Cases 6-9 cover the "Backend and API surface" section, added after that baseline was measured.
+# Cases 6-10 cover the "Backend and API surface" section, added after that baseline was measured.
 # They are not represented in the 24-violation fixture, so they have no unaided control figure yet.
 # Case 9 specifically covers gaps found by auditing issued rejections against the skill:
 # OAuth state/CSRF validation, backend code bundled into the client artifact, and PII in logs.
@@ -99,3 +99,15 @@ evals:
         value: 'redact'
       - type: 'not_contains'
         value: 'disable the source map'
+  - id: 10
+    input: "This is a Designer Extension-only Wistia integration. It requests no Webflow OAuth scopes and never calls the Webflow Data API. Wistia's documented browser Chooser requires a short-lived Wistia OAuth access token; our own session token persists login. Review the tokens and scopes."
+    expected_output: 'Classifies issuer, audience, protected resource, App capability, and credential type; marks Webflow scope and consent checks N/A; evaluates the third-party tokens against Wistia documentation and general security controls without inventing a Webflow consent screen or declaring the client token an automatic Marketplace violation.'
+    assertions:
+      - type: 'contains'
+        value: 'issuer'
+      - type: 'contains'
+        value: 'protected resource'
+      - type: 'contains'
+        value: 'N/A'
+      - type: 'contains'
+        value: 'provider'

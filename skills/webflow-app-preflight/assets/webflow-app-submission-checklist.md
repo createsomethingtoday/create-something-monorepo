@@ -47,6 +47,12 @@ If you can answer yes to all three _with evidence_, the App passes.
 - [ ] `bundle.zip` does not exceed the 5MB Designer Extension bundle limit — an oversized bundle fails at upload, before review starts.
 - [ ] The bundled `webflow.json` declares the required manifest fields — `name`, `apiVersion` (`"2"`), and `publicDir` matching your build output directory.
 
+### Authority classification
+
+- [ ] For every token, scope, session, consent flow, and 401, record issuer, audience, protected resource, App capability, and credential type.
+- [ ] Apply Webflow OAuth/Data API checks only to Webflow-issued credentials or credentials carrying authority over Webflow APIs, sites, users, or data.
+- [ ] Mark inapplicable checks `N/A` with a reason; do not infer Webflow authority from generic token or scope names.
+
 ### Backend and API surface
 
 Reviewers verify these by calling your endpoints and asking for evidence, not by reading your bundle. Start from one premise: **a Designer Extension is client code running on someone else's machine, so every value it sends is attacker-controlled** — including identifiers that feel internal. A Webflow site ID is visible in published page source.
@@ -54,11 +60,11 @@ Reviewers verify these by calling your endpoints and asking for evidence, not by
 - [ ] Every backend endpoint requires verified caller authentication.
 - [ ] No endpoint authorizes on a client-supplied identifier alone (site ID, account ID, project ID — site IDs are visible in published page source). Identity is resolved server-side from the Webflow ID token.
 - [ ] Object-level authorization tested: a caller authorized for one site or tenant cannot read or write another's records, and gets a non-enumerating failure.
-- [ ] No reusable credential — third-party API key, access token, connection secret — is returned to the extension or visible in browser network traffic.
+- [ ] No reusable secret is returned contrary to the provider's documented client architecture. Provider-required short-lived browser tokens are assessed for scope, lifetime, storage, exposure, and revocation. `[control]`
 - [ ] Outbound request destinations resolve from a server-side allowlist. HTTPS enforced. No user-supplied hosts.
 - [ ] CORS allowlists your production origins — not `*`, and never `*` together with `Allow-Credentials: true`; CORS is defense-in-depth, not authorization.
 - [ ] `[control]` Credentials encrypted at rest and scoped per tenant; decrypted values server-side only.
-- [ ] No identity, session, or entitlement state derived from `localStorage` or `sessionStorage`.
+- [ ] No privileged identity or entitlement decision trusts `localStorage` or `sessionStorage`; ordinary UI/session persistence is assessed separately. `[control]`
 - [ ] Values interpolated into generated scripts, markup, or custom attributes are JSON-serialized and format-validated.
 - [ ] Uploads validated server-side for type, size, count, and file signature; archive contents inspected.
 - [ ] Actions are attributed to the authenticated user — no hardcoded owner or service identity standing in for real users.
@@ -70,9 +76,9 @@ Reviewers verify these by calling your endpoints and asking for evidence, not by
 
 ### Consent and lifecycle
 
-- [ ] Requested scopes are the minimum the App actually calls.
-- [ ] Install URL scopes are equal to or a subset of your configured scopes.
-- [ ] App stops calling the Data API immediately on revoke or uninstall — a persistent 401 on a previously valid token is revocation, not an error to retry past.
+- [ ] Data Client/Hybrid only: requested Webflow scopes are the minimum the App's Webflow Data API calls require. Otherwise `N/A`.
+- [ ] Data Client/Hybrid only: Webflow Install URL scopes are equal to or a subset of configured Webflow scopes. Otherwise `N/A`.
+- [ ] Webflow Data API only: App stops calling immediately on revoke or uninstall; third-party 401 behavior follows that provider's documented contract.
 - [ ] Code on customer sites is delivered via the Custom Code API, not manual copy-paste.
 - [ ] Injected scripts are version-pinned — hosted scripts use an SRI `integrityHash`. No runtime loaders unless every remote resource is declared and pinned at submission.
 - [ ] Any change to injected code ships as a new script version plus an App update — never edited in place.
@@ -141,7 +147,7 @@ These are the recurring reasons a well-intentioned App gets bounced or pulled in
 
 **6 · Iframe-only or opaque apps.** A Designer Extension that's essentially a remote site in a frame. The objection isn't iframes as technology — your extension already runs in a sandboxed iframe. It's that a remotely hosted surface **can change after approval**, which makes the reviewed version unenforceable. That's the same objection as an unpinned loader: **behavior that reaches a user must be versioned and re-reviewable, whichever transport delivers it.** _Ship your UI as readable client-side source in the bundle; reserve externally hosted iframes for authentication._
 
-**7 · Backend endpoints that trust the client.** An endpoint acting on a client-supplied site, account, or project ID with no caller authentication — or with authentication but no check that this caller owns that record. Often paired with `Access-Control-Allow-Origin: *`, a credential returned to the browser, or state kept in `localStorage`. This is the class reviewers find by _calling_ your endpoint, so it survives an otherwise clean-looking submission. _Authenticate everything. Resolve identity server-side from the Webflow ID token and bind it to the record. Enforce and test object-level authorization. Never return reusable credentials. Treat CORS as defense-in-depth, never as the control that keeps callers out._
+**7 · Backend endpoints that trust the client.** An endpoint acting on a client-supplied site, account, or project ID with no caller authentication — or with authentication but no check that this caller owns that record. Often paired with `Access-Control-Allow-Origin: *` or a credential returned contrary to its provider's documented client architecture. This is the class reviewers find by _calling_ your endpoint, so it survives an otherwise clean-looking submission. _Classify authority first. For Webflow-authorized actions, resolve identity server-side from the Webflow ID token and bind it to the record. Enforce and test object-level authorization. Treat CORS as defense-in-depth, never as the control that keeps callers out._
 
 **8 · Non-production infrastructure in a production artifact.** The bundle points at staging, localhost, or a tunnel host, or the declared installation URL is a non-production endpoint. _Deploy a documented production service, generate a production-only bundle, separate test and production data, and add a build rule that fails when development endpoints appear in a Marketplace artifact. Check the installation URL you declare, not just the code._
 

@@ -1,5 +1,11 @@
 # OAuth, scopes & security
 
+## Authority guard
+
+Classify every credential and scope by issuer, audience, protected resource, App capability, and credential type before applying this reference. The Webflow OAuth flow, scope table, consent, and Data API lifecycle requirements below apply only to Webflow-issued credentials or credentials that carry authority over Webflow APIs, sites, users, or data. They do not automatically apply to an App's own login/session or to a named third-party provider's OAuth scopes.
+
+Do not infer Webflow authority from generic names such as `token`, `scope`, `OAuth`, `session`, `Authorization`, or a 401 response. For third-party credentials, check the provider's documented client architecture and evaluate scope, lifetime, storage, exposure, and revocation as security controls. If a provider's browser SDK explicitly requires a short-lived client token, do not declare a Marketplace violation or require a proxy without separate evidence. For inapplicable Webflow checks, report `N/A`, not failure.
+
 ## OAuth flow (Data Clients)
 
 1. Send the user to the **Install URL** (authorization URL). The recommended form initiates OAuth directly:
@@ -60,7 +66,7 @@ A `:write` scope you only read with, or an `ecommerce` scope on a non-commerce A
 
 - **Stop on revocation.** When a user revokes access or uninstalls, immediately stop calling the Data API for that site/user. Continuing to call after revocation is a recurring cause of escalation.
 - **Handle uninstall as an event.** There is no uninstall webhook — treat persistent 401s on a previously valid token as revocation, then tear down: stop scheduled jobs, remove injected code (below), forget cached tokens.
-- **Store tokens securely, server-side only.** Never in the browser, never in the Designer Extension bundle.
+- **Store Webflow OAuth tokens securely, server-side only.** Never in the browser or Designer Extension bundle. Evaluate App sessions and third-party tokens separately under the authority guard above.
 
 ## Delivering code to customer sites (Custom Code API)
 
@@ -105,7 +111,7 @@ Use official APIs for data, not DOM scraping. Need form option data (select/radi
 
 The Designer Extension runs on the user's machine, so nothing it sends can be trusted as an authorization decision. This is the part reviewers verify by calling your service.
 
-**Identity.** `webflow.getIdToken()` returns a short-lived ID token (valid ~15 minutes — fetch it just in time rather than persisting it). Send it to your backend and **resolve it server-side** to get the authenticated user and site. That resolved identity is the only trustworthy identity you have.
+**Identity for Webflow-authorized actions.** `webflow.getIdToken()` returns a short-lived ID token (valid ~15 minutes — fetch it just in time rather than persisting it). Send it to your backend and **resolve it server-side** when the endpoint acts with Webflow authority or needs Webflow installation/user/site identity. Do not require it merely because a Designer Extension talks to the developer's own login service or a third-party provider.
 
 **Authorization.** Resolve, then check ownership:
 
@@ -114,8 +120,8 @@ The Designer Extension runs on the user's machine, so nothing it sends can be tr
 | Act on a `siteId` in the request body                            | Resolve the ID token, then confirm that installation/user is authorized for that site |
 | Assume "only our extension calls this"                           | Assume any client can call it, with any values                                        |
 | Rely on CORS to restrict callers                                 | Authenticate and authorize; CORS is defense-in-depth only                             |
-| Return the third-party API key so the client can call the vendor | Proxy the call server-side; return status or a masked identifier                      |
-| Keep session/user state in `localStorage`                        | Verify server-side on every privileged request                                        |
+| Return a reusable third-party secret contrary to the provider's client architecture | Prefer a server-side proxy or a provider-supported short-lived browser credential |
+| Treat `localStorage` state as proof of identity or entitlement   | Verify privileged requests server-side; assess ordinary UI/session persistence separately |
 
 **Object-level authorization** is the specific control: an identity authorized for site A must not read or write site B. Test it explicitly with two tenants and dedicated test records, and make the failure non-enumerating — don't reveal whether the other record exists.
 

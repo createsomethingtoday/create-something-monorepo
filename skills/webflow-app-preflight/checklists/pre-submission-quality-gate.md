@@ -2,6 +2,8 @@
 
 Every item must pass before submitting. If one fails, fix it — a failed submission costs another 10–15 business days.
 
+First complete the authority classification in `SKILL.md`. Mark conditional items `N/A` with a reason when the App capability or credential provenance makes them inapplicable. `N/A` is not a failure. Do not classify a token or scope as Webflow-owned without evidence of its issuer, audience, and protected resource.
+
 **Provenance:** items trace to Webflow's published Marketplace Guidelines and developer documentation unless tagged **`[control]`** — a security or engineering control that generalizes recurring review risk and prepares evidence, but is not verbatim published Webflow policy. (These are the same labels the toolkit defines: published requirement vs. security control.)
 
 ## Is it real?
@@ -36,11 +38,11 @@ Reviewers verify these by calling your endpoints and asking for evidence, not by
 - [ ] Every backend endpoint requires verified caller authentication.
 - [ ] No endpoint authorizes on a client-supplied identifier alone (site ID, account ID, project ID — site IDs are visible in published page source); identity is resolved server-side from the Webflow ID token.
 - [ ] Object-level authorization tested: a caller authorized for one site/tenant cannot read or write another's records, and gets a non-enumerating failure.
-- [ ] No reusable credential (third-party API key, access token, connection secret) is returned to the extension or visible in browser network traffic.
+- [ ] No reusable secret is returned contrary to the provider's documented client architecture. A provider-required short-lived browser token is reviewed for scope, lifetime, storage, exposure, and revocation rather than automatically failed. `[control]`
 - [ ] Outbound request destinations resolve from a server-side allowlist; HTTPS enforced; no user-supplied hosts.
 - [ ] CORS allowlists your production origins — not `*`, and never `*` together with `Allow-Credentials: true`; CORS is defense-in-depth, not authorization.
 - [ ] `[control]` Credentials encrypted at rest and scoped per tenant; decrypted values server-side only.
-- [ ] No identity, session, or entitlement state derived from `localStorage`/`sessionStorage`.
+- [ ] No privileged identity or entitlement decision trusts `localStorage`/`sessionStorage`; ordinary UI/session persistence is assessed separately and privileged requests are verified server-side. `[control]`
 - [ ] Values interpolated into generated scripts, markup, or custom attributes are JSON-serialized and format-validated.
 - [ ] Uploads validated server-side for type, size, count, and file signature; archive contents inspected.
 - [ ] Actions are attributed to the authenticated user — no hardcoded owner or service identity standing in for real users.
@@ -52,9 +54,9 @@ Reviewers verify these by calling your endpoints and asking for evidence, not by
 
 ## Consent & lifecycle
 
-- [ ] Requested scopes are the minimum the App actually calls.
-- [ ] Install URL scopes are equal to or a subset of configured scopes.
-- [ ] App stops calling the Data API immediately on revoke/uninstall — a persistent 401 on a previously valid token is revocation, not an error to retry past.
+- [ ] Data Client/Hybrid only: requested **Webflow** scopes are the minimum Webflow Data API scopes the App actually calls. Designer Extension-only with no Data API access: `N/A`.
+- [ ] Data Client/Hybrid only: Webflow Install URL scopes are equal to or a subset of configured Webflow scopes. Designer Extension-only with no Webflow Install URL: `N/A`.
+- [ ] Webflow Data API only: App stops calling immediately on revoke/uninstall — a persistent 401 on a previously valid token is revocation, not an error to retry past. This sentence applies to the previously classified Webflow token; third-party 401 behavior follows that provider's documented contract.
 - [ ] Code on customer sites is delivered via the Custom Code API, not manual paste.
 - [ ] Injected scripts are version-pinned (hosted scripts use SRI `integrityHash`); no runtime loaders unless declared + pinned at submission.
 - [ ] Any change to injected code ships as a new script version + App update — never edited in place.

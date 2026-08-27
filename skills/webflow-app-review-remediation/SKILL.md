@@ -31,6 +31,8 @@ Before planning code changes:
 - Do not probe another tenant, enumerate records, attempt a write, or retrieve a response body merely to prove that an authorization flaw exists.
 - Use dedicated test tenants and records for cross-tenant tests. Stop if two authorized test identities are not available.
 
+Before applying any issued token, scope, consent, OAuth, session, or revocation finding, classify the credential's issuer, audience, protected resource, App capability, and type. Preserve the reviewer's wording, but do not silently assume an App-owned or third-party token/scope is a Webflow token/scope. Webflow OAuth and Data API requirements apply only to Webflow-issued credentials or credentials carrying authority over Webflow APIs, sites, users, or data. For third-party credentials, use the provider's documented architecture and label any additional recommendation as a `security control` or `open decision`. If the issued finding itself conflates authorities, mark `needs reviewer clarification` rather than implementing an unrelated Webflow consent screen or scope change.
+
 If a finding indicates a live credential exposure, unauthorized cross-tenant access, or an actively exploitable production path, open a separate containment lane first:
 
 1. Name the authorized security owner.
@@ -53,6 +55,7 @@ Create one row per finding:
 | Acceptance criteria | Copy the issued criteria or mark them `needs reviewer clarification`.                               |
 | Provenance          | Label as `published requirement`, `issued finding`, `security control`, or `open decision`.         |
 | Evidence state      | `missing`, `source-verified`, `artifact-verified`, `runtime-observed`, or `reviewer-accepted`.      |
+| Authority           | Issuer, audience, protected resource, App capability, and credential type; use `N/A` where a Webflow OAuth check does not apply. |
 
 Resolve P1 items first, but keep containment ahead of ordinary P1 implementation. Treat `unassigned` findings as P1 for planning and evidence purposes unless the reviewer states otherwise — most real rejection emails carry no P0/P1 nomenclature, and an unlabeled finding still blocks resubmission.
 

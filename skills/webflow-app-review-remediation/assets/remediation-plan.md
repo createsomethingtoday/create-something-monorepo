@@ -18,9 +18,9 @@
 
 ## Finding matrix
 
-| Finding | Issued priority | Provenance | Acceptance criterion | Evidence state | Owner |
-| ------- | --------------- | ---------- | -------------------- | -------------- | ----- |
-|         |                 |            |                      | missing        |       |
+| Finding | Issued priority | Provenance | Authority | Acceptance criterion | Evidence state | Owner |
+| ------- | --------------- | ---------- | --------- | -------------------- | -------------- | ----- |
+|         |                 |            | issuer / audience / protected resource / capability / type |                      | missing        |       |
 
 Allowed evidence states: `missing`, `source-verified`, `artifact-verified`, `runtime-observed`, `reviewer-accepted`.
 
