@@ -4,6 +4,8 @@ A shareable agent skill that helps a Webflow App developer or partner resolve **
 
 Use this skill only after findings exist. For first-time builds and pre-submission preparation, use `webflow-app-preflight` instead.
 
+Before implementing a token, scope, consent, or revocation finding, the workflow classifies issuer, audience, protected resource, App capability, and credential type. It preserves issued wording while preventing App-owned or third-party authority from being silently treated as Webflow OAuth authority.
+
 ## What's inside
 
 ```
