@@ -299,6 +299,8 @@ export interface TemplateGridProps {
 const DEFAULT_API_BASE = 'https://templates.webflow.com/templates-api';
 // The direct Worker origin is blocked by webflow.com's CSP — rewrite to proxy.
 const WORKER_ORIGIN = 'https://webflow-template-search.webflow-inc.workers.dev';
+// Persisted component properties may retain the pre-migration Worker origin.
+const LEGACY_WORKER_ORIGIN = 'https://webflow-template-search.createsomething.workers.dev';
 // Legacy preview URL — rewrite to the production base.
 const CLOUD_APP_PREVIEW_ORIGIN = 'https://webflow-template-marketplace.webflow.io';
 const DEFAULT_PAGE_SIZE = 24;
@@ -1252,7 +1254,9 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
   //   - Cloud App preview subdomain (different origin from webflow.com)
   const rawBase = apiBaseProp || DEFAULT_API_BASE;
   const apiBase =
-    rawBase.startsWith(WORKER_ORIGIN) || rawBase.startsWith(CLOUD_APP_PREVIEW_ORIGIN)
+    rawBase.startsWith(WORKER_ORIGIN) ||
+    rawBase.startsWith(LEGACY_WORKER_ORIGIN) ||
+    rawBase.startsWith(CLOUD_APP_PREVIEW_ORIGIN)
       ? DEFAULT_API_BASE
       : rawBase;
   const resolvedPageSize = pageSize || DEFAULT_PAGE_SIZE;
