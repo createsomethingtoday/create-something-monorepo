@@ -90,6 +90,21 @@ inline std::size_t nextUtf8LineEnd(
   return end > start ? end : byte_length;
 }
 
+inline std::size_t nextUtf8CodePointEnd(
+    const char* text,
+    std::size_t byte_length,
+    std::size_t start) {
+  if (start >= byte_length) return byte_length;
+  const unsigned char lead = static_cast<unsigned char>(text[start]);
+  const std::size_t width =
+      (lead & 0x80) == 0 ? 1
+      : (lead & 0xE0) == 0xC0 ? 2
+      : (lead & 0xF0) == 0xE0 ? 3
+      : (lead & 0xF8) == 0xF0 ? 4
+                              : 1;
+  return start + width < byte_length ? start + width : byte_length;
+}
+
 struct OperatorTaskSnapshot {
   bool synthetic_new_task;
   bool needs_input;

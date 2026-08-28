@@ -62,8 +62,8 @@ export type VoiceCommandError = { ok: false; status: number; error: string };
 
 const MAX_AUDIO_BYTES = 320_000;
 const MAX_DURATION_MS = 10_000;
-// Four 39-byte display lines can lose up to three bytes at each UTF-8 boundary.
-const MAX_TRANSCRIPT_BYTES = 144;
+// The device still measures the selected font; this ceiling keeps four wide-glyph lines practical.
+const MAX_TRANSCRIPT_BYTES = 80;
 const DEFAULT_TTL_MS = 15 * 60 * 1000;
 const DEFAULT_LEASE_MS = 2 * 60 * 1000;
 const MAX_LEASE_MS = 5 * 60 * 1000;

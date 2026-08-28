@@ -102,6 +102,22 @@ export interface AgentDecisionReceipt {
   error: string;
 }
 
+export function agentDecisionReceipt(decision: StoredAgentDecision): AgentDecisionReceipt {
+  return {
+    id: decision.id,
+    agent_id: decision.agent_id,
+    provider: decision.provider,
+    progress_version: decision.progress_version,
+    decision_id: decision.decision_id,
+    kind: decision.kind,
+    label: decision.label,
+    state: decision.state,
+    updated_at: decision.updated_at,
+    result_summary: decision.result_summary,
+    error: decision.error
+  };
+}
+
 export interface AgentDecisionInput {
   agent_id?: string;
   progress_version?: number;
@@ -289,19 +305,7 @@ export function buildAgentConsole(
     recent_decisions: recentDecisions
       .sort((left, right) => right.updated_at - left.updated_at)
       .slice(0, 8)
-      .map((decision) => ({
-        id: decision.id,
-        agent_id: decision.agent_id,
-        provider: decision.provider,
-        progress_version: decision.progress_version,
-        decision_id: decision.decision_id,
-        kind: decision.kind,
-        label: decision.label,
-        state: decision.state,
-        updated_at: decision.updated_at,
-        result_summary: decision.result_summary,
-        error: decision.error
-      }))
+      .map(agentDecisionReceipt)
   };
 }
 

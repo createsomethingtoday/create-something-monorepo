@@ -163,7 +163,7 @@ test('bounds a transcript to the complete Stopwatch review surface', () => {
   );
   assert.equal(result.ok, true);
   if (!result.ok) return;
-  assert.equal(new TextEncoder().encode(result.command.transcript).length, 144);
+  assert.equal(new TextEncoder().encode(result.command.transcript).length, 80);
 });
 
 test('keeps the bounded Stopwatch transcript valid UTF-8', () => {
@@ -185,6 +185,6 @@ test('keeps the bounded Stopwatch transcript valid UTF-8', () => {
   );
   assert.equal(result.ok, true);
   if (!result.ok) return;
-  assert.ok(new TextEncoder().encode(result.command.transcript).length <= 144);
+  assert.ok(new TextEncoder().encode(result.command.transcript).length <= 80);
   assert.equal(result.command.transcript.includes('\uFFFD'), false);
 });

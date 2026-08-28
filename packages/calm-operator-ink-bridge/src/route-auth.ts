@@ -36,6 +36,9 @@ export function authRoleForOperatorRoute(method: string, path: string): AuthRole
   if (normalizedMethod === 'GET' && /^\/ink\/voice-command\/[^/]+$/.test(canonicalPath)) {
     return 'device';
   }
+  if (normalizedMethod === 'GET' && /^\/ink\/agent-decisions\/[^/]+$/.test(canonicalPath)) {
+    return 'device';
+  }
   if (normalizedMethod === 'POST' && devicePostPaths.has(canonicalPath)) return 'device';
   if (normalizedMethod === 'POST' && /^\/ink\/voice-command\/[^/]+\/confirm$/.test(canonicalPath)) {
     return 'device';

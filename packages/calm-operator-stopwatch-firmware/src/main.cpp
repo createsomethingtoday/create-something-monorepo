@@ -79,6 +79,7 @@ String voice_transcript;
 DeliveryReceiptState receipt_state = DeliveryReceiptState::Queued;
 bool recording = false;
 bool bridge_confirmed = false;
+bool voice_review_complete = false;
 int16_t* recording_data = nullptr;
 size_t recorded_samples = 0;
 uint32_t last_console_poll = 0;
@@ -479,24 +480,26 @@ void pollDecisionReceipt() {
     return;
   last_receipt_poll = millis();
   JsonDocument response;
-  if (!requestJson("GET", "/operator/agent-console", "", response)) return;
-  for (JsonObject candidate : response["recent_decisions"].as<JsonArray>()) {
-    if (candidate["id"].as<String>() != pending_decision_id) continue;
-    const String state = candidate["state"].as<String>();
-    if (state == "completed") {
-      receipt_state = DeliveryReceiptState::Delivered;
-      receipt_text = candidate["result_summary"].as<String>();
-      if (!receipt_text.length()) receipt_text = "Agent completed steering";
-      Serial.println("[operator] decision delivered");
-      draw();
-    } else if (state == "failed") {
-      receipt_state = DeliveryReceiptState::Failed;
-      receipt_text = candidate["error"].as<String>();
-      if (!receipt_text.length()) receipt_text = "Agent delivery failed";
-      Serial.println("[operator] decision delivery failed");
-      draw();
-    }
+  if (!requestJson(
+          "GET",
+          "/operator/agent-decisions/" + pending_decision_id,
+          "",
+          response))
     return;
+  JsonObject candidate = response["decision"].as<JsonObject>();
+  const String state = candidate["state"].as<String>();
+  if (state == "completed") {
+    receipt_state = DeliveryReceiptState::Delivered;
+    receipt_text = candidate["result_summary"].as<String>();
+    if (!receipt_text.length()) receipt_text = "Agent completed steering";
+    Serial.println("[operator] decision delivered");
+    draw();
+  } else if (state == "failed") {
+    receipt_state = DeliveryReceiptState::Failed;
+    receipt_text = candidate["error"].as<String>();
+    if (!receipt_text.length()) receipt_text = "Agent delivery failed";
+    Serial.println("[operator] decision delivery failed");
+    draw();
   }
 }
 
@@ -684,13 +687,21 @@ void drawConfirmation(bool voice) {
     size_t start = 0;
     for (size_t line = 0; line < 4; ++line) {
       if (start >= message.length()) break;
-      const size_t end = calm_operator::nextUtf8LineEnd(
-          message.c_str(), message.length(), start, 39);
+      size_t end = start;
+      while (end < message.length()) {
+        const size_t candidate_end = calm_operator::nextUtf8CodePointEnd(
+            message.c_str(), message.length(), end);
+        const String candidate = message.substring(start, candidate_end);
+        if (M5.Display.textWidth(candidate, &fonts::FreeSans9pt7b) > 320 && end > start) break;
+        end = candidate_end;
+      }
       M5.Display.drawString(message.substring(start, end), 233,
                             126 + line * 23, &fonts::FreeSans9pt7b);
       start = end;
     }
+    voice_review_complete = start >= message.length();
   } else {
+    voice_review_complete = true;
     M5.Display.drawString(clipped(message, 32), 233, 148, &fonts::FreeSansBold12pt7b);
   }
   M5.Display.setTextColor(TFT_LIGHTGREY, TFT_BLACK);
@@ -847,6 +858,12 @@ void handleInputs() {
     if (button_a_pressed || (released && touch.x < 233)) {
       cancelToAgents();
     } else if (button_b_pressed || (released && touch.x >= 233)) {
+      if (operator_state.screen == Screen::VoiceReview && !voice_review_complete) {
+        bridge_error = "Prompt not fully visible";
+        tone(1400, 80);
+        draw();
+        return;
+      }
       const auto effect = calm_operator::transition(operator_state, Event::Confirm);
       applyEffect(effect);
       if (effect.submit_button_decision) submitButtonDecision();

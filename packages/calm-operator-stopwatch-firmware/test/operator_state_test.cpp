@@ -30,6 +30,7 @@ int main() {
   const char utf8_review[] = "abcd\xE7\xA2\xBA\xE8\xAA\x8D";
   assert(nextUtf8LineEnd(utf8_review, sizeof(utf8_review) - 1, 0, 5) == 4);
   assert(nextUtf8LineEnd(utf8_review, sizeof(utf8_review) - 1, 4, 5) == 7);
+  assert(nextUtf8CodePointEnd(utf8_review, sizeof(utf8_review) - 1, 4) == 7);
   const OperatorTaskSnapshot task_snapshots[] = {
       {true, false, false, false},
       {false, true, false, true},

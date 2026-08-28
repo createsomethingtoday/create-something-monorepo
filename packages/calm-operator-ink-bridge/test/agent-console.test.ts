@@ -3,6 +3,7 @@ import { test } from 'node:test';
 
 import {
   buildAgentConsole,
+  agentDecisionReceipt,
   leaseAgentDecisions,
   normalizeAgentProgress,
   prepareAgentDecision,
@@ -117,6 +118,14 @@ test('normalizes progress and exposes only remote-safe decisions to the device',
     console.agents[0]?.decisions.map((decision) => decision.id),
     ['focus-test', 'custom-redirect']
   );
+});
+
+test('projects one device-safe decision receipt without relying on recent history', () => {
+  const receipt = agentDecisionReceipt(storedDecision({ state: 'completed' }));
+  assert.equal(receipt.id, 'decision-1');
+  assert.equal(receipt.state, 'completed');
+  assert.equal('message' in receipt, false);
+  assert.equal('payload' in receipt, false);
 });
 
 test('rejects stale, unadvertised, unsafe, unconfirmed, and incomplete decisions', () => {
