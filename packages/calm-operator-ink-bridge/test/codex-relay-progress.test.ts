@@ -83,6 +83,19 @@ test('renews quiet Codex progress until its terminal receipt is posted', () => {
     { status: terminal.status, phase: terminal.phase, expires_at: terminal.expires_at },
     { status: 'completed', phase: 'Codex completed', expires_at: 70_000 }
   );
+
+  const taskVersionTerminal = buildCodexRelayTerminalProgress({
+    decision: decision({ progress_version: 1_787_278_000 }),
+    result: {
+      threadId: '01a-source',
+      turnId: 'turn-2',
+      status: 'completed',
+      summary: 'Complete.'
+    },
+    now: 1_787_278_100_000,
+    ttlMs: 30_000
+  });
+  assert.equal(taskVersionTerminal.progress_version, 1_787_278_000);
 });
 
 test('drains serialized heartbeat writes before terminal publication', async () => {
