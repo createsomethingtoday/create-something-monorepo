@@ -5,6 +5,7 @@ import { buildAgentConsole, normalizeAgentProgress } from '../src/agent-console.
 import {
   buildCodexRelayActiveProgress,
   buildCodexRelayTerminalProgress,
+  createSerialProgressPublisher,
   publishCodexTerminalProgressBestEffort
 } from '../src/codex-relay-progress.js';
 import type { StoredAgentDecision } from '../src/agent-console.js';
@@ -82,6 +83,33 @@ test('renews quiet Codex progress until its terminal receipt is posted', () => {
     { status: terminal.status, phase: terminal.phase, expires_at: terminal.expires_at },
     { status: 'completed', phase: 'Codex completed', expires_at: 70_000 }
   );
+});
+
+test('drains serialized heartbeat writes before terminal publication', async () => {
+  const calls: string[] = [];
+  let releaseHeartbeat!: () => void;
+  const heartbeatBlocked = new Promise<void>((resolve) => {
+    releaseHeartbeat = resolve;
+  });
+  const publisher = createSerialProgressPublisher(async (value: string) => {
+    calls.push(`start:${value}`);
+    if (value === 'heartbeat') await heartbeatBlocked;
+    calls.push(`finish:${value}`);
+  });
+
+  void publisher.enqueue('heartbeat');
+  const drained = publisher.drain();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.deepEqual(calls, ['start:heartbeat']);
+  releaseHeartbeat();
+  await drained;
+  await publisher.enqueue('terminal');
+  assert.deepEqual(calls, [
+    'start:heartbeat',
+    'finish:heartbeat',
+    'start:terminal',
+    'finish:terminal'
+  ]);
 });
 
 test('keeps a completed Codex result successful when terminal progress publication fails', async () => {

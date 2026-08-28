@@ -12,6 +12,7 @@ import {
 import {
   buildCodexRelayActiveProgress,
   buildCodexRelayTerminalProgress,
+  createSerialProgressPublisher,
   publishCodexTerminalProgressBestEffort
 } from '../src/codex-relay-progress.js';
 import { boundedTranscript, voiceTranscriberCommand } from '../src/voice-relay.js';
@@ -146,9 +147,12 @@ async function execute(decision) {
     });
     assertCodexDecisionAuthorized(currentTasks, decision);
     let latestProgress;
+    const progressPublisher = createSerialProgressPublisher((update) =>
+      publishCodexProgress(decision, update)
+    );
     const heartbeat = setInterval(() => {
       if (!latestProgress) return;
-      void publishCodexProgress(decision, latestProgress).catch(() => undefined);
+      void progressPublisher.enqueue(latestProgress).catch(() => undefined);
     }, progressHeartbeatMs);
     try {
       const result = await dispatchCodexDecision(codexClient, decision, {
@@ -156,10 +160,11 @@ async function execute(decision) {
         timeoutMs: commandTimeoutMs,
         onProgress: (update) => {
           latestProgress = update;
-          return publishCodexProgress(decision, update);
+          return progressPublisher.enqueue(update);
         }
       });
       clearInterval(heartbeat);
+      await progressPublisher.drain();
       const terminalProgressPublished = await publishCodexTerminalProgressBestEffort(() =>
         publishCodexTerminalProgress(decision, result)
       );
@@ -171,6 +176,7 @@ async function execute(decision) {
       return result.summary;
     } finally {
       clearInterval(heartbeat);
+      await progressPublisher.drain();
     }
   }
 

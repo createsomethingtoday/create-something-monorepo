@@ -89,3 +89,25 @@ export async function publishCodexTerminalProgressBestEffort(
     return false;
   }
 }
+
+export function createSerialProgressPublisher<T>(
+  publish: (value: T) => Promise<unknown>
+): {
+  enqueue(value: T): Promise<void>;
+  drain(): Promise<void>;
+} {
+  let pending = Promise.resolve();
+  return {
+    enqueue(value: T) {
+      const next = pending
+        .catch(() => undefined)
+        .then(() => publish(value))
+        .then(() => undefined);
+      pending = next;
+      return next;
+    },
+    drain() {
+      return pending.catch(() => undefined);
+    }
+  };
+}
