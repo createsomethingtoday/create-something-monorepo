@@ -1,7 +1,7 @@
 name = "webflow-marketplace-sync"
 main = "src/index.ts"
 compatibility_date = "2025-01-01"
-account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+account_id = "ac24bc906aca8307bdba8c2a85ff08c9"
 compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
 workers_dev = true
 
@@ -11,7 +11,7 @@ enabled = true
 [[d1_databases]]
 binding = "DB"
 database_name = "webflow-marketplace-sync"
-database_id = "42fc36cc-23c3-417a-b2b3-0752f03041b9"
+database_id = "93b35a49-5583-4148-b130-529aa7139f67"
 
 [vars]
 ENVIRONMENT = "production"
