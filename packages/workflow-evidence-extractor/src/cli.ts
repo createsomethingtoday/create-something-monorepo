@@ -18,7 +18,7 @@ import type {
   WorkflowExtractionPolicy,
   WorkflowProposalApprovalManifest,
 } from './types.js';
-import type { WorkflowDefinition } from '@create-something/workflow-compiler';
+import type { WorkflowDefinition } from '@createsomething/workflow-compiler';
 
 function usage(): string {
   return [

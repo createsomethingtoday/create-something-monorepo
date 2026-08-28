@@ -12713,13 +12713,15 @@
       "transport": "http",
       "url": "https://gmail-notion-mcp.createsomething.workers.dev/mcp",
       "description": "Dormant Gmail to Notion MCP prototype",
+      "bearer_token_env_var": "GMAIL_NOTION_MCP_API_KEY",
       "tags": [
         "dormant",
         "prototype",
         "cs"
       ],
       "catalog_exposure_mode": "direct",
-      "estimated_tool_count": 0
+      "estimated_tool_count": 0,
+      "setupNotes": "Worker-side bearer secret is MCP_API_KEY; the Composio entity is configured only through MCP_ACCOUNT_ID and cannot be selected by callers."
     },
     "ground-mcp": {
       "transport": "stdio",
@@ -12744,6 +12746,7 @@
       "transport": "http",
       "url": "https://youtube.mcp.workway.co/mcp",
       "description": "Half Dozen YouTube sync MCP",
+      "bearer_token_env_var": "HALFDOZEN_YOUTUBE_SYNC_MCP_BEARER_TOKEN",
       "tags": [
         "halfdozen",
         "youtube",
@@ -12761,7 +12764,8 @@
         ]
       },
       "catalog_exposure_mode": "direct",
-      "estimated_tool_count": 0
+      "estimated_tool_count": 0,
+      "setupNotes": "Worker-side bearer secret is MCP_BEARER_TOKEN; Hub retrieval secret is prod:/mcp-hub/hubs:HALFDOZEN_YOUTUBE_SYNC_MCP_BEARER_TOKEN."
     },
     "halfdozen-agent-analyzer-telemetry": {
       "transport": "http",
@@ -12938,18 +12942,21 @@
       "transport": "http",
       "url": "https://halfdozen-telemetry-mcp.half-dozen.workers.dev/mcp",
       "description": "Fleet telemetry MCP for WORKWAY account",
+      "bearer_token_env_var": "HALFDOZEN_TELEMETRY_OPERATOR_API_TOKEN",
       "tags": [
         "observability",
         "telemetry",
         "workway"
       ],
       "catalog_exposure_mode": "direct",
-      "estimated_tool_count": 0
+      "estimated_tool_count": 0,
+      "setupNotes": "Worker-side bearer secret is MCP_BEARER_TOKEN; Hub retrieval uses HALFDOZEN_TELEMETRY_OPERATOR_API_TOKEN."
     },
     "halfdozen-zoom-sync": {
       "transport": "http",
       "url": "https://zoom.mcp.workway.co/mcp",
       "description": "Half Dozen Zoom sync MCP",
+      "bearer_token_env_var": "HALFDOZEN_ZOOM_SYNC_MCP_BEARER_TOKEN",
       "tags": [
         "halfdozen",
         "zoom",
@@ -12967,7 +12974,8 @@
         ]
       },
       "catalog_exposure_mode": "direct",
-      "estimated_tool_count": 0
+      "estimated_tool_count": 0,
+      "setupNotes": "Worker-side bearer secret is MCP_BEARER_TOKEN; Hub retrieval secret is prod:/mcp-hub/hubs:HALFDOZEN_ZOOM_SYNC_MCP_BEARER_TOKEN."
     },
     "harness-mcp": {
       "transport": "stdio",
@@ -13572,7 +13580,9 @@
         ]
       },
       "catalog_exposure_mode": "direct",
-      "estimated_tool_count": 24
+      "estimated_tool_count": 31,
+      "exposure_exception_reason": "Existing Webflow reviewer clients depend on direct MCP tool names; this surface is limited to one governed Airtable review domain and protected by bearer and Cloudflare Access boundaries.",
+      "exposure_review_owner": "CRE-1867"
     },
     "webflow-local": {
       "transport": "http",

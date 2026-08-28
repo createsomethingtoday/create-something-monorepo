@@ -67,17 +67,21 @@
 	];
 	const fallbackHostUrl = 'https://YOUR-MCP-URL/mcp';
 
-	let token = $state<ManagedToken>(data.access.token ?? null);
+	function initial<T>(read: () => T): T {
+		return read();
+	}
+
+	let token = $state<ManagedToken>(initial(() => data.access.token ?? null));
 	let busy = $state(false);
 	let revealedToken = $state('');
-	let errorMessage = $state(data.access.tokenAvailable ? '' : (data.access.tokenError ?? ''));
+	let errorMessage = $state(initial(() => data.access.tokenAvailable ? '' : (data.access.tokenError ?? '')));
 	let successMessage = $state('');
 	let tokenCopiedState = $state('');
 	let snippetCopiedState = $state('');
 	let passwordBusy = $state(false);
-	let passwordError = $state(data.access.password.available ? '' : (data.access.password.error ?? ''));
+	let passwordError = $state(initial(() => data.access.password.available ? '' : (data.access.password.error ?? '')));
 	let passwordSuccess = $state('');
-	let oauthPassword = $state<OAuthPasswordPayload | null>({
+	let oauthPassword = $state<OAuthPasswordPayload | null>(initial(() => ({
 		email: data.access.password.email,
 		auth_subject: data.user.id,
 		account_id: data.entitlement.accountId,
@@ -86,7 +90,7 @@
 		email_verified: data.access.password.emailVerified,
 		identity_user_exists: data.access.password.identityUserExists,
 		entitlement: data.entitlement.decision,
-	});
+	})));
 	let newPassword = $state('');
 	let confirmPassword = $state('');
 	let selectedHost = $state<HostId>('codex');

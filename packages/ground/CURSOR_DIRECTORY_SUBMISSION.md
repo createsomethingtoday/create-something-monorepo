@@ -8,12 +8,12 @@ Submit Ground MCP at: https://cursor.directory/mcp/new
 Ground
 
 ### Short Description
-Grounded claims for code. An MCP server that prevents AI hallucination in code analysis by requiring verification before claims.
+Evidence-first TypeScript, JavaScript, and Svelte code analysis for agents.
 
 ### Full Description
 AI agents are confident. Too confident. They'll tell you two files are "95% similar" without ever comparing them. They'll declare code "dead" without checking who uses it.
 
-Ground blocks this hallucination by requiring **verification before claims**:
+Ground requires **verification before its claim tools record a finding**:
 
 - **ground_compare** — Compare two files before claiming they're duplicates
 - **ground_count_uses** — Count symbol uses before claiming code is dead
@@ -21,21 +21,15 @@ Ground blocks this hallucination by requiring **verification before claims**:
 - **ground_find_drift** — Find design system violations (hardcoded colors, spacing)
 - **ground_adoption_ratio** — Calculate design token adoption metrics
 
-Used in production to reduce 155 scripts to 13 (92% reduction) with zero false positives.
+The 0.3.6 advisory release gate uses a checked-in calibration ledger, native and published-package receipts, and a 21-tool MCP smoke test. The calibration is not a population-wide accuracy estimate.
 
 ### Install Config
 
 ```json
 {
   "command": "npx",
-  "args": ["@createsomething/ground-mcp"]
+  "args": ["--yes", "-p", "@createsomething/ground-mcp", "ground-mcp"]
 }
-```
-
-### One-Click Install Link
-
-```
-cursor://anysphere.cursor-deeplink/mcp/install?name=ground&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyJAY3JlYXRlc29tZXRoaW5nL2dyb3VuZC1tY3AiXX0%3D
 ```
 
 ### Category

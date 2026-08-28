@@ -32,17 +32,17 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           fetch-depth: 0
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
         with:
           version: 9.15.0
 
       - name: Setup Node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version: '22'
           cache: 'pnpm'
@@ -68,6 +68,72 @@ jobs:
 
       - name: Build Agency
         run: pnpm --filter @create-something/agency build
+
+      - name: Require matching Ground release before production deploy
+        if: steps.deploy.outputs.eligible == 'true' && github.ref_name == 'main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          version=$(node -p "require('./packages/ground/npm/package.json').version")
+          package_name=$(node -p "require('./packages/ground/npm/package.json').name")
+          tag="ground-v${version}"
+          release_sha=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${tag}" --jq '.sha')
+          git merge-base --is-ancestor "$release_sha" "$GITHUB_SHA"
+          for release_path in \
+            packages/ground \
+            config/ground-ga.v1.json \
+            scripts/ground-adjudication.mjs \
+            scripts/ground-calibration-execution-receipt.mjs \
+            scripts/ground-calibration-verify.mjs \
+            scripts/ground-ga-policy.mjs \
+            scripts/ground-ga-verify.mjs \
+            docs/internal/ground-adjudication-ledger.v1.json; do
+            test "$(git rev-parse "${release_sha}:${release_path}")" = \
+              "$(git rev-parse "${GITHUB_SHA}:${release_path}")"
+          done
+          assets=$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${tag}" --jq '.assets[].name')
+          for asset in \
+            ground-darwin-arm64.tar.gz \
+            ground-darwin-x64.tar.gz \
+            ground-linux-x64.tar.gz \
+            ground-linux-arm64.tar.gz \
+            ground-win32-x64.zip \
+            ground-darwin-arm64-smoke.json \
+            ground-darwin-x64-smoke.json \
+            ground-linux-x64-smoke.json \
+            ground-linux-arm64-smoke.json \
+            ground-win32-x64-smoke.json \
+            ground-darwin-arm64-consumer-smoke.json \
+            ground-darwin-x64-consumer-smoke.json \
+            ground-linux-x64-consumer-smoke.json \
+            ground-linux-arm64-consumer-smoke.json \
+            ground-win32-x64-consumer-smoke.json \
+            ground-calibration-receipt.json \
+            CONSUMER-SHA256SUMS \
+            SHA256SUMS; do
+            grep -Fx "$asset" <<< "$assets"
+          done
+          receipt_dir=$(mktemp -d)
+          trap 'rm -rf "$receipt_dir"' EXIT
+          gh release download "$tag" \
+            --pattern ground-calibration-receipt.json \
+            --dir "$receipt_dir"
+          node -e '
+            const [file, sourceSha, version] = process.argv.slice(1);
+            const receipt = JSON.parse(require("node:fs").readFileSync(file, "utf8"));
+            if (receipt.schema_version !== "ground-calibration-release-receipt.v1" ||
+                receipt.source_sha !== sourceSha || receipt.version !== version ||
+                receipt.release_tag !== `ground-v${version}` ||
+                receipt.fixture_execution?.schema_version !== "ground-calibration-execution-receipt.v1" ||
+                receipt.fixture_execution?.source_sha !== sourceSha ||
+                receipt.fixture_execution?.result?.exit_code !== 0 ||
+                receipt.fixture_execution?.result?.failed !== 0 ||
+                receipt.fixture_execution?.ready !== true ||
+                receipt.promotion?.ready !== true) process.exit(1);
+          ' "$receipt_dir/ground-calibration-receipt.json" "$release_sha" "$version"
+          test "$(npm view "${package_name}@${version}" version)" = "$version"
 
       - name: Resolve Pages branch alias
         id: branch

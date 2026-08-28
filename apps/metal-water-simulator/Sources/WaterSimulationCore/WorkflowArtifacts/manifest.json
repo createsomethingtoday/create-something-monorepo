@@ -2,68 +2,80 @@
   "schemaVersion": "workflow_artifact_manifest.v0.1",
   "workflowId": "webflow.marketplace.template-lifecycle",
   "workflowVersion": "0.1.0",
-  "definitionHash": "sha256:96e880807497d7a417cbf7e7a009d9331996d55e249068767b2417131a91156f",
+  "definitionHash": "sha256:c3d6a10501d0e0419881cb65ace3e70792719922d8e558877dd6189210f4848f",
   "compilerVersion": "workflow-compiler-v0.1",
   "files": [
     {
       "path": "acceptance-summary.json",
-      "hash": "sha256:52b70291b8855b5c2899a20e8f25949d1790b9d9bf090f020388581b4c5e3fb5"
+      "hash": "sha256:7c09d8c57d8d1ecbf5706cf7be921e94bd058b096f37b2facd661ef3213776c3"
     },
     {
       "path": "agent-contracts.json",
-      "hash": "sha256:0db732d1bff70c8dc05d25a52f560d0bf440aba3f99d7f2171420b526e54ab8c"
+      "hash": "sha256:b35ad54b268aad8906c17bbef65022e0065d4e25ac195fd497aa55cae3a26ea6"
     },
     {
       "path": "approval-surfaces.json",
-      "hash": "sha256:35eb0f749418e71ed089818acd4de99a77a40bd17693beea5d7ca1e4258a2f78"
+      "hash": "sha256:a8f3d5a8a24ca2aea53a27935583a70e57dbccbea04760ac14195a8e23003990"
     },
     {
       "path": "compiled-workflow.json",
-      "hash": "sha256:700e5a07480ad05df641f26036f29b216acf5ebbc340b87b62975a2b39aa434b"
+      "hash": "sha256:91b8b42f85de05a69ff89dd551c36eccb744175df2881368180672e1f5ed8176"
     },
     {
       "path": "decision-inventory.json",
-      "hash": "sha256:f6b697bf163ebb456ed48e6720c83b631788fe715cdff2c7abea05bf48dcbaf0"
+      "hash": "sha256:b0b8c91599c0b692c433efabbb5d25785c823bef0b1d05f596d4391b2f8a5df2"
     },
     {
       "path": "evaluation-manifest.json",
-      "hash": "sha256:a63a93e1001256f7ac58fce3dd244973d79c5e6246a6abd10d1a5fd2f286350c"
+      "hash": "sha256:b8beba5c26f691c0dce63acbc393f36c5a70e7939c36672efff44685328623ed"
     },
     {
       "path": "event-schemas.json",
-      "hash": "sha256:732cd2b50d8fc62dea9ee51d963e7904c7601a4873bf309feb6d27d8bd2f60f5"
+      "hash": "sha256:be8382fdd483b45d07001e2a26aea1807c7994b4c6cdddcd39e9fc67b639c3e0"
     },
     {
       "path": "evidence-ledger.json",
-      "hash": "sha256:eddedb34b12ec8d8fcdb67fbd31345a5f8586a26fce92d67ea40b9cb9b2d0265"
+      "hash": "sha256:0a806cfab6b12ada5770d8487a921b2c1c11fe783490f46dcb9d4f81177d2674"
+    },
+    {
+      "path": "governed-interaction.json",
+      "hash": "sha256:bdc856fdd00731465d62bb52a5a1b67a1aa975b8ea3708ea469dccaaa21b9f0c"
     },
     {
       "path": "object-schemas.json",
-      "hash": "sha256:6af36be99b56278a8fbec47b223785fad09c2cc6206dc5b8c01cf6bc1b05e751"
+      "hash": "sha256:0310d7a82a1300fdbc4ac9495870149e694f1764e3f1941d0c82c9bed27cd02b"
+    },
+    {
+      "path": "operator-console/app.css",
+      "hash": "sha256:9b410716c3044b80309219212b8d3c8bff46e827e0f6fa214ba7fec616ba5007"
+    },
+    {
+      "path": "operator-console/app.js",
+      "hash": "sha256:059af2745fb61d97ba366c8affecf69832609771de4ae0ea8f4940514c5f18f7"
     },
     {
       "path": "operator-console/data.json",
-      "hash": "sha256:bcb9268655b194bd8a61d327fdea505ff87cac8e2eca1a64a7d17969c93b475e"
+      "hash": "sha256:495c596bb0dba1636112cbba5ca463871fed5ea276e55c9f138769ced09c1749"
     },
     {
       "path": "operator-console/index.html",
-      "hash": "sha256:f3125f887688bb8148317c74e07ee061ed6ec5607e2221de17df0e61dc32a02a"
+      "hash": "sha256:652b77933b5c4209a83b897b6d771c3bfc7f1417257c5eb585ae1d0f9ac65200"
     },
     {
       "path": "replay-report.json",
-      "hash": "sha256:af30d0215d94f13fea00e0a3433173e1f0f3382b7665766ec483da7da552160b"
+      "hash": "sha256:f71387d150425192c051d94b33c477f69c81e29703cee30160e7a0c88614f814"
     },
     {
       "path": "runtime-targets.json",
-      "hash": "sha256:dc409a41853a4c296b98de80326eed87b0beb5fed155806bb1f96eb5134969df"
+      "hash": "sha256:e0d0f713e50041f6cf2987c46ce2874aea42c25577e7ef6da57e493deb4ea816"
     },
     {
       "path": "tool-contracts.json",
-      "hash": "sha256:8811ba21dd1584f308d6f4c3d4a72420f033e7f6c9f44b3ac3e4594440d003da"
+      "hash": "sha256:901d7bbc0099881df12b0ba0d91ea259f6b56b68b53c435c81a49a9c56d88c45"
     },
     {
       "path": "workflow-map.json",
-      "hash": "sha256:5fa9616bcce688265509a3757b7b926436be3e4d4a1f88b750b44f53e3cb61a6"
+      "hash": "sha256:8eaf44e4389bbf97827b1a172d64b24ee7dc5bf91461aafb4083fca7d760fe81"
     }
   ]
 }

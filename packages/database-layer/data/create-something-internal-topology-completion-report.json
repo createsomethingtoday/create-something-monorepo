@@ -2,11 +2,11 @@
   "id": "substrate:create-something:topology:completion-report:internal",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
-  "generatedAt": "2026-07-23T05:11:08.429Z",
+  "generatedAt": "2026-08-25T18:50:37.046Z",
   "totals": {
-    "nodes": 467,
-    "edges": 964,
-    "mapped": 467,
+    "nodes": 506,
+    "edges": 1055,
+    "mapped": 506,
     "gaps": 0,
     "gapCounts": {
       "needs_atlas": 0,
@@ -17,17 +17,17 @@
     {
       "status": "mapped",
       "surface": "agent",
-      "count": 29
+      "count": 31
     },
     {
       "status": "mapped",
       "surface": "app",
-      "count": 9
+      "count": 11
     },
     {
       "status": "mapped",
       "surface": "client",
-      "count": 7
+      "count": 8
     },
     {
       "status": "mapped",
@@ -42,22 +42,22 @@
     {
       "status": "mapped",
       "surface": "guide",
-      "count": 57
+      "count": 64
     },
     {
       "status": "mapped",
       "surface": "mcp",
-      "count": 72
+      "count": 74
     },
     {
       "status": "mapped",
       "surface": "package",
-      "count": 51
+      "count": 60
     },
     {
       "status": "mapped",
       "surface": "policy",
-      "count": 62
+      "count": 64
     },
     {
       "status": "mapped",
@@ -67,32 +67,41 @@
     {
       "status": "mapped",
       "surface": "worker",
-      "count": 149
+      "count": 163
     }
   ],
   "statusByTier": [
     {
       "tier": "Automation",
       "status": "mapped",
-      "count": 248
+      "count": 268
     },
     {
       "tier": "Database",
       "status": "mapped",
-      "count": 25
+      "count": 27
     },
     {
       "tier": "Judgment",
       "status": "mapped",
-      "count": 101
+      "count": 106
     },
     {
       "tier": "Mixed",
       "status": "mapped",
-      "count": 93
+      "count": 105
     }
   ],
   "clientOverlays": [
+    {
+      "clientSlug": "cato-supply-insights-cms",
+      "path": "packages/agency/clients/cato-supply-insights-cms",
+      "title": "@create-something/cato-supply-insights-cms",
+      "status": "mapped",
+      "tier": "Mixed",
+      "runtime": "cloudflare, node",
+      "relationCount": 3
+    },
     {
       "clientSlug": "cato-supply-insights-review",
       "path": "packages/agency/clients/cato-supply-insights-review",
@@ -116,9 +125,9 @@
       "path": "packages/agency/clients/jandjhomehealth",
       "title": "@create-something/jandjhomehealth",
       "status": "mapped",
-      "tier": "Mixed",
+      "tier": "Automation",
       "runtime": "cloudflare, node",
-      "relationCount": 3
+      "relationCount": 5
     },
     {
       "clientSlug": "outerfields",

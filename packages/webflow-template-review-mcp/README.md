@@ -588,6 +588,10 @@ creator-facing feedback.
 - `template_review_get_metrics`
 - `template_review_list_queue` (compact queue summaries)
 - `template_review_my_queue` (compact active queue summaries for the authenticated reviewer; pass `status` or `include_completed` for history)
+- `template_review_featured_candidates` (eligible pool for the upcoming Featured batch, with pick/vote state — see `docs/FEATURED_BATCH_RUNBOOK.md`)
+- `template_review_set_featured_pick` (star ⭐Reviewer pick; live reason gated by `confirm_creator_safe`)
+- `template_review_cast_featured_vote` (per-reviewer up/down/comment upsert)
+- `template_review_set_featured_flag` (batch finalization; coordinator-only via `featuredCoordinator` directory grant)
 - `template_review_search_assets`
 - `template_review_search_versions`
 - `template_review_get_asset`

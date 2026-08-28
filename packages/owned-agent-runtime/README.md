@@ -72,6 +72,48 @@ a workflow from a prompt. This repository currently registers no customer
 workflow, so the start route fails closed and deploying the lane creates no
 activation or run authority.
 
+The proposed Template Review A3 adapter is a separately exported, unregistered
+Control-host seam. It accepts only a runtime attempt that already has a
+durable `effect_intent` checkpoint, creates one fixed-parameter dispatch
+identity, requires an explicit exact parameter-digest registration plus an
+active matching Agency activation, and rechecks the durable running
+runtime/step/prepared-attempt state before a new or replayed dispatch. It
+accepts only a source-owned count-only projection plus verifier digest. Its
+additive dispatch ledger has no raw queue-record, credential, or
+user-identifier column. It contains no OAuth client, service binding, source
+transport, Worker registration, or automatic checkpoint transition; each of
+those remains an independent promotion gate. Its public preflight returns a
+prepared intent without a source tool or transport parameters, so it cannot
+authorize a source call. A future promoted source gateway must atomically
+redeem an active Agency activation permit immediately before source invocation.
+Replays return the recorded
+terminal verifier result rather than a dispatch after verification or ambiguity;
+if a stop races a verifier already in progress, the adapter retains that
+observed terminal evidence without advancing a runtime checkpoint. Ambiguous
+results retain the same bounded count and source digests for reconciliation,
+but failure codes and verifier labels are constrained to safe machine
+identifiers.
+
+`D1WorkflowRuntimeProofReader` is the paired read-only database reader.
+Control owns the ledger that it reads. Future Substrate and Atlas views may
+display its result, but cannot change a run. The reader resolves the manifest
+by persisted digest through a trusted artifact authority, then verifies it and
+the persisted hash chain before deriving one
+`create-something/workflow-runtime-proof@1` value. That value contains exact
+run, step, attempt, approval, checkpoint, receipt, and redacted capability
+observation identities; it omits source routes, raw source records, operator
+subjects, free-text outcomes, and every execution or approval command. It is
+not yet an HTTP route, MCP tool, Atlas write-back, deployment, or live Proof
+surface. Approval rows are append-only: they begin pending, can receive one
+decision, and cannot be altered or deleted afterward. A persisted wait also
+requires a manifest resolved through the trusted artifact authority. It stores
+the exact Control scope, run and step versions, activation and artifact/runtime
+digests, compiler workflow identity, action and evidence digests, approval
+policy/expiry, and an explicit `no_capability_attempt` marker. The proof reader
+rejects a missing, changed, malformed, cross-scope, or receipt-inconsistent
+approval context. This is still a durable Control ledger seam, not an approval
+HTTP route, an Identity actor-role assertion, or permission for a source call.
+
 D1 owns conversation continuation and normalized run receipts. OpenAI Agents SDK owns the model/tool loop. Agent definitions own MCP allowlists and judgment policy.
 
 Each conversation is protected by a D1 run lease. Concurrent continuation returns `409 conversation_busy` before model execution. Completion and failure write the terminal receipt and release the lease in one D1 batch transaction; an abandoned lease can be reclaimed after ten minutes.
@@ -110,3 +152,9 @@ empty or historical ledger; receipt and command deletion is intentionally
 blocked. Registering a customer Build executor, activating a workflow, issuing
 access, or running a customer workflow remains a separate approval-gated
 promotion.
+
+Migration `0008_control_workflow_runtime_approval_context.sql` adds the
+append-only wait-context column. It is required for new approval rows; existing
+historical rows remain intact but fail closed when requested through the v1
+proof projection until they have an explicitly governed legacy-read path. The
+migration does not permit a historical row to be retroactively populated.

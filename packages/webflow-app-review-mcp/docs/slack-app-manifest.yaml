@@ -1,0 +1,36 @@
+# Slack app manifest for the exception webhook leg's bot identity.
+# Create at https://api.slack.com/apps → "Create New App" → "From a manifest"
+# → workspace: Webflow → paste this file.
+#
+# The display name deliberately matches the "Marketplace Asset Bot" username
+# override that the Airtable native automations and the legacy Zapier
+# notifications already stamp on their posts, so the channel reads as one
+# identity. Scope is minimal: chat:write posts only in channels the bot has
+# been invited to.
+#
+# After creation:
+#   1. "Install App" → "Request to Install" → approve via Flowbot ticket.
+#   2. Invite the bot: /invite @Marketplace Asset Bot in
+#      #app-review-exceptions (C0BN54FQU84) and #marketplace-app-reviews
+#      (C04DDRJ5VGT).
+#   3. Store the Bot User OAuth Token (xoxb-…) in the 1Password Marketplace
+#      vault, then: cd packages/webflow-app-review-mcp/worker &&
+#      npx wrangler secret put SLACK_BOT_TOKEN
+#   4. Register the webhooks (see docs/exception-transparency-loop.md).
+
+display_information:
+  name: Marketplace Asset Bot
+  description: App Review exception transparency loop — threads Airtable exception requests, holds, and decisions into Slack.
+  background_color: "#146EF5"
+features:
+  bot_user:
+    display_name: Marketplace Asset Bot
+    always_online: true
+oauth_config:
+  scopes:
+    bot:
+      - chat:write
+settings:
+  org_deploy_enabled: false
+  socket_mode_enabled: false
+  token_rotation_enabled: false

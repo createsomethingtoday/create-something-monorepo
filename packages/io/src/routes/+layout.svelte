@@ -259,7 +259,7 @@
   }
 
   .main-content {
-    /* Navigation bar height offset: header (72px) + breathing room */
-    padding-top: calc(var(--height-performance-header) + var(--space-performance-md));
+    /* Reserve the fixed navigation; each route owns its internal section spacing. */
+    padding-top: var(--height-performance-header);
   }
 </style>

@@ -5,24 +5,9 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 
 import { SCOPE_READ } from '../src/oauth-access.js';
+import { WRITE_TOOL_NAMES } from '../src/tools.js';
 
 const DEFAULT_DEV_URL = 'https://webflow-template-review-mcp-dev.createsomething.workers.dev';
-const WRITE_TOOL_NAMES = new Set([
-  'template_review_assign_self',
-  'template_review_unassign_self',
-  'template_review_assign_reviewer',
-  'template_review_request_changes',
-  'template_review_set_review_status',
-  'template_review_save_agent_feedback',
-  'template_review_save_draft_feedback',
-  'template_review_set_checklist_items',
-  'template_review_complete_publishing',
-  'template_review_update_asset_metadata',
-  'template_review_update_asset_publishing',
-  'template_review_update_version_review',
-  'template_review_approve_version',
-  'template_review_reject_version',
-]);
 
 function requiredEnv(name: 'MCP_API_KEY' | 'E2B_API_KEY'): string {
   const value = process.env[name]?.trim();

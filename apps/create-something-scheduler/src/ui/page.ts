@@ -10,7 +10,45 @@ export function renderBookingManagementActions(status: string): string {
     : '<div class="actions"><button id="reschedule" type="button">Choose another time</button><button id="cancel" class="danger" type="button">Cancel meeting</button></div><div id="confirm-action"></div>';
 }
 
-export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string }): string {
+type SchedulerPageOffer = {
+  metaDescription: string;
+  title: string;
+  heading: string;
+  lede: string;
+  policy: string;
+};
+
+const workflowMappingOffer: SchedulerPageOffer = {
+  metaDescription:
+    'Schedule a verified 30- or 60-minute workflow mapping session with Micah Johnson.',
+  title: 'Workflow Mapping Session | CREATE SOMETHING',
+  heading: 'Map One Workflow',
+  lede:
+    'Choose an open time for a focused, 30- or 60-minute workflow mapping session with Micah Johnson. Bring one real handoff, its decision owner, and the proof your team needs next.',
+  policy: 'Workflow Mapping / V2'
+};
+
+const compilerIntegrationOffer: SchedulerPageOffer = {
+  metaDescription:
+    'Schedule a verified 30- or 60-minute Workflow Compiler Integration fit call with Micah Johnson.',
+  title: 'Workflow Compiler Integration Fit Call | CREATE SOMETHING',
+  heading: 'Fit One Integration',
+  lede:
+    'Choose an open time for a focused, 30- or 60-minute integration fit call with Micah Johnson. Bring one repository, one consequential workflow, and the required MCP or agent tool boundary.',
+  policy: 'Compiler Integration / V1'
+};
+
+export function resolveSchedulerPageOffer(intent: string | null | undefined): SchedulerPageOffer {
+  return intent === 'compiler-integration' ? compilerIntegrationOffer : workflowMappingOffer;
+}
+
+export function schedulerPage(input: {
+  nonce: string;
+  turnstileSiteKey?: string;
+  intent?: string | null;
+}): string {
+  const offer = resolveSchedulerPageOffer(input.intent);
+  const offerIntent = input.intent === 'compiler-integration' ? input.intent : null;
   const configuration = JSON.stringify({
     turnstileSiteKey: input.turnstileSiteKey ?? null
   }).replaceAll('<', '\\u003c');
@@ -23,8 +61,8 @@ export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string 
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Schedule a verified 30- or 60-minute workflow mapping session with Micah Johnson.">
-  <title>Workflow Mapping Session | CREATE SOMETHING</title>
+  <meta name="description" content="${offer.metaDescription}">
+  <title>${offer.title}</title>
   ${performanceDocumentFontLinks}
   ${turnstileScript}
   <style nonce="${input.nonce}">
@@ -114,8 +152,8 @@ export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string 
     <div><span>Proof</span><strong>Receipt issued</strong></div>
   </section>
   <header>
-    <div><div class="eyebrow">CREATE SOMETHING · PERFORMANCE LAB · SCHEDULER</div><h1>Map One Workflow</h1></div>
-    <div class="hero-spec"><p class="lede">Choose an open time for a focused, 30- or 60-minute workflow mapping session with Micah Johnson. Bring one real handoff, its decision owner, and the proof your team needs next.</p><div class="spec-grid"><div class="spec-row"><span>Policy</span><strong>Workflow Mapping / V2</strong></div><div class="spec-row"><span>Window</span><strong>28 Days / Live Conflicts</strong></div><div class="spec-row"><span>Calendar</span><strong>Google Calendar</strong></div></div></div>
+    <div><div class="eyebrow">CREATE SOMETHING · PERFORMANCE LAB · SCHEDULER</div><h1>${offer.heading}</h1></div>
+    <div class="hero-spec"><p class="lede">${offer.lede}</p><div class="spec-grid"><div class="spec-row"><span>Policy</span><strong>${offer.policy}</strong></div><div class="spec-row"><span>Window</span><strong>28 Days / Live Conflicts</strong></div><div class="spec-row"><span>Calendar</span><strong>Google Calendar</strong></div></div></div>
   </header>
   <div class="layout">
     <section class="panel" aria-labelledby="booking-heading">
@@ -154,6 +192,7 @@ export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string 
 (() => {
   const renderBookingManagementActions=${renderBookingManagementActions.toString()};
   const config = ${configuration};
+  const offerIntent=${JSON.stringify(offerIntent)};
   const state = { slots: [], selected: null, selectedDay: null, durationMinutes: 30, browserProof: null, booking: null, actionToken: null, mode: 'book', context: null, schedulerSessionId: crypto.randomUUID(), formStarted: false };
   const status = document.querySelector('#status');
   const statusState = document.querySelector('#status-state');
@@ -250,6 +289,7 @@ export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string 
   function formatWeekday(value) { return new Intl.DateTimeFormat(undefined,{weekday:'short',timeZone:timezone}).format(new Date(value)); }
   function formatDate(value) { return new Intl.DateTimeFormat(undefined,{month:'short',day:'numeric',timeZone:timezone}).format(new Date(value)); }
   function tokenKey(bookingId) { return 'scheduler:action:' + bookingId; }
+  function canonicalBookingUrl(bookingId) { const params=new URLSearchParams({booking:bookingId}); if (offerIntent) params.set('intent',offerIntent); return location.pathname+'?'+params.toString(); }
   function slotDuration(slot) { return Math.round((new Date(slot.end).getTime()-new Date(slot.start).getTime())/60000); }
   function renderDuration() { durationSummary.textContent=state.durationMinutes+' minutes'; for (const button of durationButtons) { const active=Number(button.dataset.duration)===state.durationMinutes; button.setAttribute('aria-pressed',String(active)); button.disabled=state.mode==='reschedule'&&!active; } }
 
@@ -335,7 +375,7 @@ export function schedulerPage(input: { nonce: string; turnstileSiteKey?: string 
       const committed = await api('/api/v1/bookings',{method:'POST',headers:{'x-browser-proof':state.browserProof || ''},body:JSON.stringify({proposalToken:prepared.proposalToken,idempotencyKey:idempotency('browser-book'),explicitIntent:true})});
       state.booking=committed.booking; state.actionToken=committed.actionToken;
       sessionStorage.setItem(tokenKey(state.booking.bookingId),state.actionToken);
-      history.replaceState({},'',location.pathname+'?booking='+encodeURIComponent(state.booking.bookingId));
+      history.replaceState({},'',canonicalBookingUrl(state.booking.bookingId));
       notifyParent('booking_completed',{bookingId:state.booking.bookingId,receiptId:committed.receiptId,durationMinutes:state.durationMinutes});
       showBooking(committed);
     } catch (error) { setStatus(error.message,'stop'); submit.disabled=false; }

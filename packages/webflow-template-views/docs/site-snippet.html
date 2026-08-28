@@ -10,11 +10,11 @@
   connect-src, which blocks sendBeacon/fetch to the worker. The policy sets no
   script-src, so views are delivered as a <script src> GET instead.
 
-  Deployed endpoint: https://webflow-template-views.createsomething.workers.dev
+  Deployed endpoint: https://webflow-template-views.webflow-inc.workers.dev
 -->
 <script>
   (function () {
-    var ENDPOINT = 'https://webflow-template-views.createsomething.workers.dev/t.js';
+    var ENDPOINT = 'https://webflow-template-views.webflow-inc.workers.dev/t.js';
     try {
       var path = location.pathname;
       if (path.indexOf('/templates') !== 0) return;

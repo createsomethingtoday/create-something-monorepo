@@ -112,6 +112,15 @@ export function getSourceOrigin(request: Request): string | null {
 }
 
 /**
+ * Fetch Metadata is browser-controlled and cannot be set by page JavaScript.
+ * It gives privacy-preserving browsers a safe fallback when they omit both
+ * Origin and Referer from an otherwise same-origin request.
+ */
+function isBrowserReportedSameOrigin(request: Request): boolean {
+  return request.headers.get('sec-fetch-site')?.trim().toLowerCase() === 'same-origin';
+}
+
+/**
  * Validates that a public mutation was submitted by the dashboard origin itself.
  * This is stricter than iframe mutation CSRF checks because these endpoints do
  * not have an authenticated session boundary yet.
@@ -130,7 +139,7 @@ export function isTrustedRequestOrigin(
   environment?: string
 ): boolean {
   const sourceOrigin = getSourceOrigin(request);
-  if (!sourceOrigin) return false;
+  if (!sourceOrigin) return isBrowserReportedSameOrigin(request);
 
   const extraOrigins = new Set(
     parseCsv(extraTrustedOriginsCsv)

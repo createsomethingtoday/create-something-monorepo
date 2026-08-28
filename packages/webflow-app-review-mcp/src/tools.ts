@@ -3,6 +3,8 @@ import { z } from 'zod';
 
 import type { AirtableClient, AppReviewVersion, CollaboratorRef } from './airtable.js';
 import { AirtableClientError } from './airtable.js';
+import type { ZendeskClient } from './zendesk.js';
+import { ZendeskClientError, renderCreatorFacingHtml } from './zendesk.js';
 import {
   APP_REVIEW_FIELD_MAP,
   CAPABILITIES_OPTIONS,
@@ -13,15 +15,18 @@ import {
   GOVERNANCE_FINDING_STATUS_OPTIONS,
   HOLD_REASON_OPTIONS,
   MARKETPLACE_STATUS_OPTIONS,
+  PENDING_EXCEPTION_STATUS_OPTIONS,
   REJECTION_REASON_OPTIONS,
   REVIEW_STATUS_OPTIONS,
   REVIEW_TYPE_OPTIONS,
+  TABLE_IDS,
   VISIBILITY_OPTIONS,
   getReadOnlyAssetWriteHint,
 } from './schema.js';
 
 type ClientFactory = () => AirtableClient;
 type ReviewerFactory = () => unknown;
+type ZendeskFactory = () => ZendeskClient | null;
 
 const collaboratorRefSchema = z.object({
   id: z.string().min(1),
@@ -37,12 +42,16 @@ const APP_REVIEW_QUEUE_STATUS_OPTIONS = [
   'archived',
 ] as const;
 
+const APP_REVIEW_STATS_GROUP_BY_OPTIONS = ['status', 'review_type', 'capability', 'month', 'reviewer'] as const;
+
 const APP_REVIEW_QUEUE_SORT_OPTIONS = [
   'submissionDatetime_desc',
   'submissionDatetime_asc',
   'versionNumber_desc',
   'versionNumber_asc',
 ] as const;
+
+const EXCEPTIONS_GRID_VIEW_ID = 'viwGawHG68xIIIDaQ';
 
 const REVIEWER_CONTROLLED_STATUS_OPTIONS = [
   '🏃🏾In Review',
@@ -71,7 +80,7 @@ function asSuccess(data: unknown) {
 }
 
 function asError(error: unknown) {
-  if (error instanceof AirtableClientError) {
+  if (error instanceof AirtableClientError || error instanceof ZendeskClientError) {
     return jsonContent({
       ok: false,
       error: {
@@ -130,6 +139,55 @@ async function requireAppVersion(client: AirtableClient, versionId: string): Pro
 function cleanObject<T extends Record<string, unknown>>(value: T): T {
   const entries = Object.entries(value).filter(([, v]) => v !== undefined);
   return Object.fromEntries(entries) as T;
+}
+
+const APPROVAL_GATED_REVIEW_STATUSES = new Set<string>(['✅Approved', '✅Approved (No Notification)']);
+const UNDECIDED_VERSION_EXCEPTION_STATUSES = new Set<string>(['🆕Requested', '👀Under Review']);
+
+// Server-side half of the ⚖️Approval Gate + Partnership Shield automation (dual sign-off
+// rule, 8/6/2026): the Airtable guard reverts a stray approval after the fact, so on that
+// path the creator email can win the race — refusing before the write closes the MCP path
+// entirely. Empty rollups (no ⚖️Exceptions rows anywhere) pass; only a real count blocks.
+function ensureApprovalUnblocked(version: AppReviewVersion): void {
+  const blockers: string[] = [];
+  if (version.exceptionStatus && UNDECIDED_VERSION_EXCEPTION_STATUSES.has(version.exceptionStatus)) {
+    blockers.push(`version-level ⚖️Exception Status is ${version.exceptionStatus}`);
+  }
+  if ((version.undecidedExceptionItems ?? 0) > 0) {
+    blockers.push(`${version.undecidedExceptionItems} undecided ⚖️Exceptions item(s) on this version`);
+  }
+  if ((version.assetUndecidedExceptions ?? 0) > 0) {
+    blockers.push(
+      `${version.assetUndecidedExceptions} undecided ⚖️exception(s) across the app (see ⚖️Asset Exception History)`,
+    );
+  }
+  if (blockers.length > 0) {
+    throw new AirtableClientError(
+      'APPROVAL_BLOCKED_UNDECIDED_EXCEPTIONS',
+      `Cannot set an approved status: ${blockers.join('; ')}. Decide every open ⚖️exception in #app-review-exceptions first — final approval requires both review sign-off and settled exceptions.`,
+      409,
+      {
+        versionId: version.versionId,
+        exceptionStatus: version.exceptionStatus ?? null,
+        undecidedExceptionItems: version.undecidedExceptionItems ?? null,
+        assetUndecidedExceptions: version.assetUndecidedExceptions ?? null,
+      },
+    );
+  }
+}
+
+// Mirror of exception-decisions-mcp v1.3.1's decide_version_exception refusal: the version-level
+// aggregate flipping to ❌Denied releases the developer-facing rejection email, so it must not
+// happen while per-item rows are still open.
+function ensureVersionDenialUnblocked(version: AppReviewVersion): void {
+  if ((version.undecidedExceptionItems ?? 0) > 0) {
+    throw new AirtableClientError(
+      'DENIAL_BLOCKED_UNDECIDED_ITEMS',
+      `Cannot set version-level ⚖️Exception Status to ❌Denied while ${version.undecidedExceptionItems} ⚖️Exceptions item(s) are undecided. Decide every item first, then flip the aggregate deliberately.`,
+      409,
+      { versionId: version.versionId, undecidedExceptionItems: version.undecidedExceptionItems ?? null },
+    );
+  }
 }
 
 const governanceFindingQuerySchema = {
@@ -228,7 +286,12 @@ function ensureRequestChangesStatus(value: string | undefined) {
   );
 }
 
-export function registerTools(server: McpServer, getClient: ClientFactory, _getReviewer: ReviewerFactory = () => null): void {
+export function registerTools(
+  server: McpServer,
+  getClient: ClientFactory,
+  _getReviewer: ReviewerFactory = () => null,
+  getZendesk: ZendeskFactory = () => null,
+): void {
   server.tool(
     'app_review_health',
     'Runtime health check for Webflow App Review MCP and Airtable connectivity.',
@@ -269,6 +332,56 @@ export function registerTools(server: McpServer, getClient: ClientFactory, _getR
           statusApplied: status ?? null,
           assignedApplied: assigned ?? 'any',
           records: queue.items,
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'app_review_queue_stats',
+    'Aggregate app submission counts server-side over the full dataset — no 500-record cap, no raw record dumps. Groups by status, review_type, capability, month, or reviewer (up to two dimensions) within an optional submission-date window. Counts every submission (version) by default; count="assets" keeps only the latest version per app. Prefer this over app_review_list_queue for totals, trends, and reporting. When the user asks for a chart, graph, or visualization, render these counts as an interactive chart artifact (bar/line/pie) or a markdown table — do not re-pull raw records.',
+    {
+      group_by: z
+        .array(z.enum(APP_REVIEW_STATS_GROUP_BY_OPTIONS))
+        .min(1)
+        .max(2)
+        .optional()
+        .describe('Dimensions to group counts by, primary first. Default: ["status"].'),
+      submitted_after: z
+        .string()
+        .min(1)
+        .optional()
+        .describe('Inclusive window start: ISO date (YYYY-MM-DD) or datetime.'),
+      submitted_before: z
+        .string()
+        .min(1)
+        .optional()
+        .describe('Inclusive window end: ISO date (YYYY-MM-DD, covers the whole day) or datetime.'),
+      status: z.enum(APP_REVIEW_QUEUE_STATUS_OPTIONS).optional().describe('Only count submissions in this normalized status.'),
+      count: z
+        .enum(['submissions', 'assets'])
+        .optional()
+        .describe('"submissions" (default) counts every version; "assets" counts the latest version per app.'),
+    },
+    async ({ group_by, submitted_after, submitted_before, status, count }) => {
+      try {
+        const stats = await getClient().getQueueStats({
+          groupBy: group_by,
+          submittedAfter: submitted_after,
+          submittedBefore: submitted_before,
+          status,
+          countMode: count,
+        });
+        return asSuccess({
+          total: stats.total,
+          count_mode: stats.countMode,
+          group_by: stats.groupBy,
+          window: stats.window,
+          groups: stats.groups,
+          out_of_scope_versions_excluded: stats.outOfScopeVersionsExcluded,
+          note: 'Counts are aggregated server-side over all matching submissions. Render as a chart artifact or table on request.',
         });
       } catch (error) {
         return asError(error);
@@ -588,8 +701,54 @@ export function registerTools(server: McpServer, getClient: ClientFactory, _getR
   );
 
   server.tool(
+    'app_review_send_ticket_followup',
+    'Send a follow-up comment on the Zendesk ticket linked to an app version. CREATOR-FACING when visibility is "public" — use only when the reviewer explicitly asks to send it (e.g. correcting a truncated review email, answering a creator question). The message is delivered verbatim, rendered from Markdown with HTML escaping; the Airtable composer wrapper does NOT apply on this path, so include a greeting and sign-off. Standard closing line for resubmission asks (neutral tone, no "please"): "Once you\'ve addressed the required feedback necessary for approval, [submit a new bundle](https://developers.webflow.com/submit) for review."',
+    {
+      version_id: z.string().min(1),
+      message: z.string().min(1),
+      visibility: z.enum(['public', 'internal']).default('public'),
+    },
+    async ({ version_id, message, visibility }) => {
+      try {
+        const zendesk = getZendesk();
+        if (!zendesk) {
+          throw new ZendeskClientError(
+            'ZENDESK_NOT_CONFIGURED',
+            'Zendesk follow-ups are not configured on this deployment (ZENDESK_API_TOKEN / ZENDESK_API_EMAIL missing).',
+            503,
+          );
+        }
+        const version = await requireAppVersion(getClient(), version_id);
+        if (!version.zendeskTicketId) {
+          throw new ZendeskClientError(
+            'NO_ZENDESK_TICKET',
+            'This version has no linked Zendesk ticket.',
+            404,
+            { version_id },
+          );
+        }
+        const htmlBody = renderCreatorFacingHtml(message);
+        const result = await zendesk.addTicketComment(version.zendeskTicketId, {
+          htmlBody,
+          isPublic: visibility === 'public',
+        });
+        return asSuccess({
+          ticket_id: version.zendeskTicketId,
+          ticket_subject: version.zendeskSubject,
+          visibility,
+          audit_id: result.auditId,
+          ticket_status: result.ticketStatus,
+          html_body: htmlBody,
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
     'app_review_approve_version',
-    'Approve an app version without reviewer-session scoping.',
+    'Approve an app version without reviewer-session scoping. Refuses while any ⚖️exception on the app is undecided (dual sign-off rule: approval requires review sign-off AND settled exceptions).',
     {
       version_id: z.string().min(1),
       review_feedback: z.string().optional(),
@@ -597,7 +756,8 @@ export function registerTools(server: McpServer, getClient: ClientFactory, _getR
     },
     async ({ version_id, review_feedback, review_type }) => {
       try {
-        await requireAppVersion(getClient(), version_id);
+        const version = await requireAppVersion(getClient(), version_id);
+        ensureApprovalUnblocked(version);
         const updated = await getClient().updateVersionReview(version_id, {
           review_status: '✅Approved',
           review_type,
@@ -637,7 +797,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory, _getR
 
   server.tool(
     'app_review_update_version_review',
-    'Update review fields on an Asset Version record, including exception and hold fields. Exception sequencing rule: fill exception_type + exception_rationale first, then flip exception_status to 🆕Requested in a separate call — the status flip triggers the #app-review-exceptions Slack post.',
+    'Update review fields on an Asset Version record, including exception and hold fields. Exception sequencing rule: fill exception_type + exception_rationale first, then flip exception_status to 🆕Requested in a separate call — the status flip triggers the #app-review-exceptions Slack post. Refuses an approved review_status while any ⚖️exception on the app is undecided, and refuses exception_status ❌Denied while ⚖️Exceptions items are undecided.',
     {
       version_id: z.string().min(1),
       review_status: z.enum(REVIEW_STATUS_OPTIONS).optional(),
@@ -656,7 +816,13 @@ export function registerTools(server: McpServer, getClient: ClientFactory, _getR
     async (params) => {
       try {
         const client = getClient();
-        await requireAppVersion(client, params.version_id);
+        const version = await requireAppVersion(client, params.version_id);
+        if (params.review_status && APPROVAL_GATED_REVIEW_STATUSES.has(params.review_status)) {
+          ensureApprovalUnblocked(version);
+        }
+        if (params.exception_status === '❌Denied') {
+          ensureVersionDenialUnblocked(version);
+        }
         const mutation = cleanObject({
           review_status: params.review_status,
           review_type: params.review_type,
@@ -689,8 +855,135 @@ export function registerTools(server: McpServer, getClient: ClientFactory, _getR
   );
 
   server.tool(
+    'app_review_list_exceptions',
+    'List the complete global ⚖️Exceptions table across every app, version, and status. Omit status to return the full Airtable list; optionally filter the returned rows to one status. This tool is read-only.',
+    {
+      status: z.enum(EXCEPTION_STATUS_OPTIONS).optional().describe('Optional status filter; omit for the full exception list'),
+    },
+    async ({ status }) => {
+      try {
+        const client = getClient();
+        const allItems = await client.listAllExceptionItems();
+        const counts: Record<string, number> = {};
+        for (const item of allItems) {
+          const itemStatus = item.exceptionStatus ?? '(no status)';
+          counts[itemStatus] = (counts[itemStatus] ?? 0) + 1;
+        }
+
+        const items = status
+          ? allItems.filter((item) => item.exceptionStatus === status)
+          : [...allItems];
+        const statusOrder = new Map<string, number>(
+          (EXCEPTION_STATUS_OPTIONS as readonly string[]).map((value, index) => [value, index]),
+        );
+        const sortKey = (item: (typeof items)[number]) =>
+          item.decisionDatetime ?? item.requestedDatetime ?? item.createdTime ?? item.exceptionItemId;
+        items.sort((left, right) => {
+          const leftOrder = statusOrder.get(left.exceptionStatus ?? '') ?? 99;
+          const rightOrder = statusOrder.get(right.exceptionStatus ?? '') ?? 99;
+          if (leftOrder !== rightOrder) return leftOrder - rightOrder;
+          return sortKey(left).localeCompare(sortKey(right));
+        });
+
+        const lines = [
+          `${status ? `${status} exceptions` : 'All exceptions'} — ${items.length} item${items.length === 1 ? '' : 's'}`,
+        ];
+        let currentStatus: string | undefined;
+        for (const item of items) {
+          const itemStatus = item.exceptionStatus ?? '(no status)';
+          if (itemStatus !== currentStatus) {
+            currentStatus = itemStatus;
+            lines.push('', `${itemStatus}:`);
+          }
+          const links = [
+            item.assetId ? `asset ${item.assetId}` : undefined,
+            item.assetVersionId ? `version ${item.assetVersionId}` : undefined,
+            item.exceptionType,
+          ].filter(Boolean).join(' · ');
+          lines.push(`- ${item.exceptionItemId} — ${item.item ?? '(untitled item)'}${links ? ` [${links}]` : ''}`);
+          if (item.rationale) lines.push(`  Rationale: ${item.rationale}`);
+          if (item.decisionNotes) lines.push(`  Decision: ${item.decisionNotes}`);
+        }
+
+        return asSuccess({
+          source: {
+            base_id: client.baseId,
+            table_id: TABLE_IDS.exceptions,
+            reference_view_id: EXCEPTIONS_GRID_VIEW_ID,
+            query_scope: 'entire_table',
+          },
+          status_filter: status ?? null,
+          count: items.length,
+          total_count: allItems.length,
+          counts_all_statuses: counts,
+          exception_items: items,
+          copy_block: lines.join('\n'),
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'app_review_list_exception_queue',
+    'List the current global exception decision queue without an asset or version ID. Returns app versions whose exception status is 🆕Requested or 👀Under Review, or that still carry undecided per-item ⚖️Exceptions rows (the aggregate status can lag the items), grouped with those rows. Start here when asked what exceptions are currently in queue. This tool is read-only.',
+    {},
+    async () => {
+      try {
+        const queue = await getClient().listPendingExceptionQueue();
+        const lines = [
+          `# Exception decision queue — ${queue.length} version${queue.length === 1 ? '' : 's'} awaiting decisions`,
+        ];
+
+        if (queue.length === 0) {
+          lines.push('', 'The decision queue is empty — no exception requests are awaiting a decision.');
+        }
+
+        for (const entry of queue) {
+          const versionLabel = entry.version.versionNumber === undefined
+            ? entry.version.versionId
+            : `v${entry.version.versionNumber}`;
+          lines.push(
+            '',
+            `## ${entry.asset.appName} — ${versionLabel}`,
+            `Status: ${entry.version.exceptionStatus ?? '(no status)'}`,
+            `Version record: ${entry.version.versionId}`,
+            `Undecided items: ${entry.version.undecidedExceptionItems ?? 0} · Denied items: ${entry.version.deniedExceptionItems ?? 0}`,
+          );
+          if (entry.version.exceptionRequestedDatetime) {
+            lines.push(`Requested: ${entry.version.exceptionRequestedDatetime}`);
+          }
+          if (entry.version.holdNotes) lines.push(`Context: ${entry.version.holdNotes}`);
+
+          if (entry.exceptionItems.length === 0) {
+            lines.push('- (no linked per-item exception rows)');
+          }
+          for (const item of entry.exceptionItems) {
+            const pending = (PENDING_EXCEPTION_STATUS_OPTIONS as readonly string[])
+              .includes(item.exceptionStatus ?? '');
+            const type = item.exceptionType ? ` [${item.exceptionType}]` : '';
+            lines.push(
+              `- ${pending ? '☐' : '☑'} ${item.exceptionItemId}${type} ${item.item ?? '(untitled item)'} — ${item.exceptionStatus ?? '(no status)'}`,
+            );
+          }
+        }
+
+        return asSuccess({
+          count: queue.length,
+          pending_statuses: [...PENDING_EXCEPTION_STATUS_OPTIONS],
+          queue,
+          copy_block: lines.join('\n'),
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
     'app_review_list_exception_items',
-    'List per-item exception rows (⚖️Exceptions table) linked to an Asset Version. The version cannot be approved while any item is undecided.',
+    'List per-item exception rows (⚖️Exceptions table) linked to one Asset Version. The version cannot be approved while any item is undecided. For global pending work use app_review_list_exception_queue; for the full cross-version history of one app use app_review_list_asset_exceptions.',
     {
       version_id: z.string().min(1),
     },
@@ -700,6 +993,97 @@ export function registerTools(server: McpServer, getClient: ClientFactory, _getR
         await requireAppVersion(client, version_id);
         const items = await client.listExceptionItems(version_id);
         return asSuccess({ version_id, exception_items: items });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'app_review_list_asset_exceptions',
+    'List ALL per-item exception rows (⚖️Exceptions table) across every version of an app in one call — the asset-level exception history. Pass status "✅Approved" to grab the complete set of approved flags at once (e.g. to compare a new bundle against previously approved exemptions). Accepts asset_id or version_id (resolved to its asset). Returns structured rows plus copy_block, a paste-ready plain-text summary.',
+    {
+      asset_id: z.string().min(1).optional(),
+      version_id: z.string().min(1).optional().describe('Alternative to asset_id — any version of the app; resolved to its asset'),
+      status: z.enum(EXCEPTION_STATUS_OPTIONS).optional().describe('Filter to one ⚖️Status (e.g. "✅Approved"). Omit for the full history.'),
+    },
+    async (params) => {
+      try {
+        if (!params.asset_id && !params.version_id) {
+          throw new AirtableClientError('INVALID_INPUT', 'Provide either asset_id or version_id.', 400);
+        }
+        const client = getClient();
+
+        const assetId = params.asset_id
+          ?? (await requireAppVersion(client, params.version_id as string)).assetId as string;
+        const asset = await requireAppAsset(client, assetId);
+
+        const versions = await client.listVersionsForAsset(assetId, 100);
+        const versionNumberById = new Map<string, number | undefined>(
+          versions.map((v) => [v.versionId, v.versionNumber]),
+        );
+        // Union of per-version item links plus the asset-history lookup — covers
+        // rows linked to the asset even if their version fell outside the window.
+        const itemIds = [
+          ...versions.flatMap((v) => v.exceptionItemIds ?? []),
+          ...versions.flatMap((v) => v.assetExceptionHistoryIds ?? []),
+        ];
+
+        const allItems = await client.listExceptionItemsByIds(itemIds);
+        const items = params.status
+          ? allItems.filter((item) => item.exceptionStatus === params.status)
+          : allItems;
+
+        const statusOrder = new Map<string, number>(
+          (EXCEPTION_STATUS_OPTIONS as readonly string[]).map((s, i) => [s, i]),
+        );
+        const sortKey = (item: (typeof items)[number]) =>
+          item.decisionDatetime ?? item.requestedDatetime ?? item.createdTime ?? '';
+        items.sort((a, b) => {
+          const orderA = statusOrder.get(a.exceptionStatus ?? '') ?? 99;
+          const orderB = statusOrder.get(b.exceptionStatus ?? '') ?? 99;
+          if (orderA !== orderB) return orderA - orderB;
+          return sortKey(a).localeCompare(sortKey(b));
+        });
+
+        const counts: Record<string, number> = {};
+        for (const item of allItems) {
+          const key = item.exceptionStatus ?? '(no status)';
+          counts[key] = (counts[key] ?? 0) + 1;
+        }
+
+        const lines: string[] = [
+          `⚖️ Exception history — ${asset.appName}${params.status ? ` — ${params.status} only` : ''} (${items.length} item${items.length === 1 ? '' : 's'})`,
+        ];
+        let currentStatus: string | undefined;
+        for (const item of items) {
+          const status = item.exceptionStatus ?? '(no status)';
+          if (status !== currentStatus) {
+            currentStatus = status;
+            lines.push('', `${status}:`);
+          }
+          const versionNumber = item.assetVersionId ? versionNumberById.get(item.assetVersionId) : undefined;
+          const meta = [
+            versionNumber !== undefined ? `v${versionNumber}` : undefined,
+            item.exceptionType,
+            item.decisionDatetime
+              ? `decided ${item.decisionDatetime.slice(0, 10)}${item.decisionBy?.name ? ` by ${item.decisionBy.name}` : ''}`
+              : item.requestedDatetime
+                ? `requested ${item.requestedDatetime.slice(0, 10)}`
+                : undefined,
+          ].filter(Boolean).join(' · ');
+          lines.push(`- ${item.item ?? '(untitled item)'}${meta ? ` [${meta}]` : ''}`);
+          if (item.decisionNotes) lines.push(`  Decision: ${item.decisionNotes}`);
+        }
+
+        return asSuccess({
+          asset_id: assetId,
+          app_name: asset.appName,
+          status_filter: params.status ?? null,
+          counts_all_statuses: counts,
+          exception_items: items,
+          copy_block: lines.join('\n'),
+        });
       } catch (error) {
         return asError(error);
       }
@@ -718,9 +1102,10 @@ export function registerTools(server: McpServer, getClient: ClientFactory, _getR
     async ({ version_id, item, exception_type, rationale }) => {
       try {
         const client = getClient();
-        await requireAppVersion(client, version_id);
+        const version = await requireAppVersion(client, version_id);
         const created = await client.createExceptionItem({
           asset_version_id: version_id,
+          asset_id: version.assetId,
           item,
           exception_type,
           rationale,

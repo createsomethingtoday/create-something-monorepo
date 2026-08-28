@@ -1,7 +1,7 @@
 import {
   compileWorkflowDefinition,
   type WorkflowDefinition,
-} from '@create-something/workflow-compiler';
+} from '@createsomething/workflow-compiler';
 
 import { calculateWorkflowProposalHash } from './extract.js';
 

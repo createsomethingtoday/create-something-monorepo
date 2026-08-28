@@ -1,7 +1,7 @@
 name = "webflow-template-search"
 main = "src/index.ts"
 compatibility_date = "2025-01-01"
-account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+account_id = "ac24bc906aca8307bdba8c2a85ff08c9"
 compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
 workers_dev = true
 
@@ -11,7 +11,7 @@ enabled = true
 [[d1_databases]]
 binding = "DB"
 database_name = "webflow-template-search"
-database_id = "bffab674-a86b-456b-a72d-f620b2755396"
+database_id = "14da3362-2807-404f-a1d6-0b10385bc83c"
 
 # Marketplace code-component telemetry fallback (see src/telemetry.ts). Analytics
 # Engine, not D1: beacon volume during a page-SDK outage would add write load to

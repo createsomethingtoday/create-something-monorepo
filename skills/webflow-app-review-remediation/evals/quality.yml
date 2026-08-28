@@ -45,3 +45,15 @@ evals:
         value: 'security control'
       - type: not_contains
         value: 'other app'
+  - id: 5
+    input: 'Finding WF-09 calls our Wistia access token and Wistia scopes Webflow credentials and asks us to add a Webflow consent screen, but this is a Designer Extension-only App with no Data Client or Webflow Data API calls. Prepare the remediation disposition.'
+    expected_output: 'Preserves WF-09, classifies issuer, audience, protected resource, App capability, and credential type, marks the Webflow OAuth checks N/A, and requests reviewer clarification instead of implementing an unrelated consent screen.'
+    assertions:
+      - type: contains
+        value: 'WF-09'
+      - type: contains
+        value: 'issuer'
+      - type: contains
+        value: 'N/A'
+      - type: contains
+        value: 'needs reviewer clarification'

@@ -109,11 +109,11 @@ The harness is the policy. The configuration is the contract. The development wo
 The Pi package ecosystem enables a new funnel:
 
 ```text
-pi install npm:@create-something/pi-three-tier-framework
+pi install npm:@createsomething/pi-three-tier-framework
     -> Developer learns Database/Automation/Judgment
     -> Classifies their own systems
 
-pi install npm:@create-something/pi-policy-os
+pi install npm:@createsomething/pi-policy-os
     -> Developer runs /policy-check
     -> Sees governance score and gaps
     -> Contacts createsomething.agency

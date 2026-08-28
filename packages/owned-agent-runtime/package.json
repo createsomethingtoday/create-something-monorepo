@@ -15,6 +15,7 @@
     "tail": "node ../../scripts/run-wrangler.mjs tail --config wrangler.jsonc"
   },
   "dependencies": {
+    "@createsomething/workflow-runtime": "workspace:*",
     "@openai/agents": "^0.4.10",
     "hono": "^4.12.34",
     "jose": "^6.1.3",

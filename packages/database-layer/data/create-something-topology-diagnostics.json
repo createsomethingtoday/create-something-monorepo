@@ -2,34 +2,34 @@
   "id": "substrate:create-something:topology-diagnostics:internal",
   "topologyId": "substrate:create-something:topology:internal",
   "atlasCanvasId": "create-something-internal-operating-topology",
-  "generatedAt": "2026-07-23T05:11:08.429Z",
+  "generatedAt": "2026-08-25T18:50:37.046Z",
   "summary": {
     "valueState": "connected_map_with_review_signals",
-    "nodes": 467,
-    "edges": 964,
-    "mapped": 467,
+    "nodes": 506,
+    "edges": 1055,
+    "mapped": 506,
     "hardGapCount": 0,
     "reviewSignalCount": 6,
     "exactDuplicatePathCount": 0,
     "isolatedNodeCount": 0,
     "surfaceCounts": {
       "repo": 1,
-      "package": 51,
-      "app": 9,
-      "mcp": 72,
-      "client": 7,
-      "worker": 149,
-      "agent": 29,
+      "package": 60,
+      "app": 11,
+      "mcp": 74,
+      "client": 8,
+      "worker": 163,
+      "agent": 31,
       "doc": 6,
-      "policy": 62,
-      "guide": 57,
+      "policy": 64,
+      "guide": 64,
       "config": 24
     },
     "tierCounts": {
-      "Mixed": 93,
-      "Judgment": 101,
-      "Automation": 248,
-      "Database": 25
+      "Mixed": 105,
+      "Judgment": 106,
+      "Automation": 268,
+      "Database": 27
     }
   },
   "signals": [
@@ -60,11 +60,11 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "Automation and Database balance",
-      "summary": "Automation has 248 record(s); Database has 25 record(s). This is a business-shape review signal, not a hard gap.",
+      "summary": "Automation has 268 record(s); Database has 27 record(s). This is a business-shape review signal, not a hard gap.",
       "evidence": [
-        "Automation=248",
-        "Database=25",
-        "Total nodes=467"
+        "Automation=268",
+        "Database=27",
+        "Total nodes=506"
       ],
       "nodeIds": [],
       "paths": [],
@@ -75,7 +75,7 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "Worker surface concentration",
-      "summary": "149 worker record(s) carry runtime delivery context. This is where Substrate receipts and Cloudflare proof matter most.",
+      "summary": "163 worker record(s) carry runtime delivery context. This is where Substrate receipts and Cloudflare proof matter most.",
       "evidence": [
         "worker: packages/agency",
         "worker: packages/agency/workers/social-poster",
@@ -101,6 +101,7 @@
         "substrate:create-something:package:create-something-codebase-vector-database-packages-codebase-vector-database",
         "substrate:create-something:package:create-something-concierge-chat-packages-concierge-chat",
         "substrate:create-something:package:create-something-database-layer-worker-packages-database-layer-worker",
+        "substrate:create-something:package:create-something-github-actions-runner-broker-packages-github-actions-runner-broker",
         "substrate:create-something:package:create-something-gsap-validation-worker-packages-gsap-validation-worker",
         "substrate:create-something:package:halfdozen-youtube-sync-worker-packages-half-dozen-youtube-sync-worker",
         "substrate:create-something:package:halfdozen-gmail-sync-worker-packages-halfdozen-gmail-sync-worker",
@@ -109,8 +110,7 @@
         "substrate:create-something:package:create-something-identity-worker-packages-identity-worker",
         "substrate:create-something:package:create-something-bundle-scanner-api-packages-io-workers-bundle-scanner-api",
         "substrate:create-something:package:create-something-webflow-validation-packages-io-workers-webflow-validation",
-        "substrate:create-something:package:create-something-landing-page-filter-packages-landing-page-filter",
-        "substrate:create-something:package:create-something-lms-packages-lms"
+        "substrate:create-something:package:create-something-landing-page-filter-packages-landing-page-filter"
       ],
       "paths": [
         "packages/agency",
@@ -127,6 +127,7 @@
         "packages/codebase-vector-database",
         "packages/concierge-chat",
         "packages/database-layer/worker",
+        "packages/github-actions-runner-broker",
         "packages/gsap-validation-worker",
         "packages/half-dozen-youtube-sync/worker",
         "packages/halfdozen-gmail-sync/worker",
@@ -135,8 +136,7 @@
         "packages/identity-worker",
         "packages/io/workers/bundle-scanner-api",
         "packages/io/workers/webflow-validation",
-        "packages/landing-page-filter",
-        "packages/lms"
+        "packages/landing-page-filter"
       ],
       "nextAction": "Review worker records through runtime binding coverage before promoting execution claims."
     },
@@ -145,7 +145,7 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "worker surface review",
-      "summary": "149 record(s) are classified as worker.",
+      "summary": "163 record(s) are classified as worker.",
       "evidence": [
         "@create-something/agency: packages/agency",
         "social-poster-worker: packages/agency/workers/social-poster",
@@ -188,7 +188,7 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "mcp surface review",
-      "summary": "72 record(s) are classified as mcp.",
+      "summary": "74 record(s) are classified as mcp.",
       "evidence": [
         "@create-something/abundance-jobs-mcp: packages/abundance-jobs-mcp",
         "abundance-jobs-mcp-worker: packages/abundance-jobs-mcp/worker",
@@ -231,7 +231,7 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "policy surface review",
-      "summary": "62 record(s) are classified as policy.",
+      "summary": "64 record(s) are classified as policy.",
       "evidence": [
         "policy.hub-route-authorization.v1.json: docs/policies/generated/fallback/policy.hub-route-authorization.v1.json",
         "policy.judgment-baseline.v1.json: docs/policies/generated/fallback/policy.judgment-baseline.v1.json",
@@ -274,7 +274,7 @@
       "classification": "review_signal",
       "severity": "review",
       "title": "guide surface review",
-      "summary": "57 record(s) are classified as guide.",
+      "summary": "64 record(s) are classified as guide.",
       "evidence": [
         "AGENCY_ARTICLE_IMAGE_WORKFLOW.md: docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
         "AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md: docs/guides/AGENCY_GOVERNANCE_PRODUCTS_OPERATIONS_RUNBOOK.md",
@@ -293,8 +293,8 @@
         "substrate:create-something:guide:docs-guides-antigravity-mcp-enablement-md",
         "substrate:create-something:guide:docs-guides-arena-taste-integration-md",
         "substrate:create-something:guide:docs-guides-atlas-linear-integration-md",
-        "substrate:create-something:guide:docs-guides-chatgpt-mcp-oauth-managed-bearer-md",
-        "substrate:create-something:guide:docs-guides-cloudflare-bot-access-hardening-md"
+        "substrate:create-something:guide:docs-guides-bounded-research-interrupt-runbook-md",
+        "substrate:create-something:guide:docs-guides-browser-proof-and-closeout-runbook-md"
       ],
       "paths": [
         "docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md",
@@ -307,8 +307,8 @@
         "docs/guides/ANTIGRAVITY_MCP_ENABLEMENT.md",
         "docs/guides/ARENA_TASTE_INTEGRATION.md",
         "docs/guides/ATLAS_LINEAR_INTEGRATION.md",
-        "docs/guides/CHATGPT_MCP_OAUTH_MANAGED_BEARER.md",
-        "docs/guides/CLOUDFLARE_BOT_ACCESS_HARDENING.md"
+        "docs/guides/BOUNDED_RESEARCH_INTERRUPT_RUNBOOK.md",
+        "docs/guides/BROWSER_PROOF_AND_CLOSEOUT_RUNBOOK.md"
       ],
       "nextAction": "Use group explanation before drawing product or business conclusions from this surface."
     }

@@ -5,7 +5,10 @@ import type {
 } from './snapshot-store.js';
 
 interface D1StatementLike {
-  bind(...values: unknown[]): D1StatementLike;
+  bind(...values: unknown[]): D1BoundStatementLike;
+}
+
+interface D1BoundStatementLike {
   first<T>(): Promise<T | null>;
   run(): Promise<{ success: boolean }>;
 }

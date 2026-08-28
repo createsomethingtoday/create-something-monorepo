@@ -18,6 +18,28 @@ describe('booking management link contract', () => {
     expect(new URL(url).search).not.toContain('controlled.token');
   });
 
+  it('preserves only the allowlisted compiler integration offer intent', () => {
+    const integration = buildBookingManageUrl({
+      publicOrigin: 'https://createsomething.agency',
+      bookingId: 'booking_integration',
+      actionToken: 'controlled.token',
+      intent: 'compiler-integration'
+    });
+    const unknown = buildBookingManageUrl({
+      publicOrigin: 'https://createsomething.agency',
+      bookingId: 'booking_unknown',
+      actionToken: 'controlled.token',
+      intent: 'unknown-offer'
+    });
+
+    expect(integration).toBe(
+      'https://createsomething.agency/book?booking=booking_integration&intent=compiler-integration#access=controlled.token'
+    );
+    expect(unknown).toBe(
+      'https://createsomething.agency/book?booking=booking_unknown#access=controlled.token'
+    );
+  });
+
   it('expires access one day after the current meeting ends', () => {
     expect(bookingActionExpiresAt({ end: '2026-07-14T16:30:00Z' })).toBe(
       '2026-07-15T16:30:00Z'

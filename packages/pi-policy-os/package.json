@@ -1,22 +1,55 @@
 {
-  "name": "@create-something/pi-policy-os",
-  "version": "1.0.0",
+  "name": "@createsomething/pi-policy-os",
+  "version": "1.0.5",
   "description": "Policy OS starter for Pi coding agents — governed AI execution with quality gates, policy checks, and the MCP-First Thesis. The entry point to CREATE SOMETHING's governed automation platform.",
-  "keywords": ["pi-package", "policy-os", "governance", "mcp", "quality-gates", "agent-systems"],
+  "keywords": [
+    "pi-package",
+    "policy-os",
+    "governance",
+    "mcp",
+    "quality-gates",
+    "agent-systems"
+  ],
   "author": "CREATE SOMETHING <hello@createsomething.agency>",
   "license": "MIT",
-  "files": ["skills", "prompts", "extensions", "README.md"],
+  "type": "module",
+  "files": [
+    "skills",
+    "prompts",
+    "extensions",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
   "scripts": {
-    "prepublishOnly": "echo 'Publishing @create-something/pi-policy-os'"
+    "check": "tsc --noEmit",
+    "test": "tsx --test test/*.test.ts && node ../../scripts/pi-public-package-contract.mjs . --pack",
+    "prepublishOnly": "npm run check && npm test"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+    "url": "git+https://github.com/createsomethingtoday/create-something-monorepo.git",
     "directory": "packages/pi-policy-os"
   },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": "0.84.2",
+    "@types/node": "^22.15.3",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  },
   "pi": {
-    "skills": ["./skills"],
-    "prompts": ["./prompts"],
-    "extensions": ["./extensions"]
+    "skills": [
+      "./skills"
+    ],
+    "prompts": [
+      "./prompts"
+    ],
+    "extensions": [
+      "./extensions"
+    ]
   }
 }

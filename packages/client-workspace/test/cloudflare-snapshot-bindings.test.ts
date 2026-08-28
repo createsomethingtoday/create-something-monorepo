@@ -15,14 +15,14 @@ test('D1 snapshot ledger reads and upserts one sanitized pointer per sandbox', a
         bind(...values: unknown[]) {
           calls.push(['bind', ...values]);
           return {
-            async first() {
+            async first<T>() {
               calls.push(['first']);
               return {
                 sandbox_id: 'client-workspace-0123456789abcdef0123456789abcdef',
                 object_key: 'snapshots/private.tgz',
                 size_bytes: 42,
                 captured_at: '2026-07-15T14:00:00.000Z'
-              };
+              } as T;
             },
             async run() {
               calls.push(['run']);

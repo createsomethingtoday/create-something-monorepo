@@ -6,7 +6,7 @@
       "tier": "database",
       "relativePath": "packages/database-layer/data/create-something-internal-operating-topology.atlas-session.json",
       "owner": "Atlas Studio",
-      "expectedSha256": "sha256:9c0ceca1ec7494d46910c78b01f1206dd86dc0662f63238b3551df4941ac71fc",
+      "expectedSha256": "sha256:bf5f8cb1cc03e6f4818aa5b9b1abd7eececb8a5d24c8e6c69549eaf5ae8d8e29",
       "evidence": "atlas_session_export_hash",
       "receipt": "atlas_readback_receipt",
       "escalation": "operator_topology_review"
@@ -36,7 +36,7 @@
       "tier": "automation",
       "relativePath": "packages/webflow-template-review-mcp/src/tools.ts",
       "owner": "Webflow Template Review MCP",
-      "expectedSha256": "sha256:3df0f677e2b2997ef58bcd1ac0901e2c11a7b77b8a14d0156072f91a8e0326fa",
+      "expectedSha256": "sha256:8dcead8def628d6eba6664c5d2be4ea810ed1bc3ce478700d91e5db78182c2d5",
       "evidence": "review_contract_hash",
       "receipt": "review_observation_receipt",
       "escalation": "review_lead"
@@ -46,7 +46,7 @@
       "tier": "database",
       "relativePath": "packages/database-layer/data/create-something-business-operating-recommendations.json",
       "owner": "Substrate",
-      "expectedSha256": "sha256:bd2598c4e754ab79fd5a4b0ab99ec59c07d43e0197c7147dc53b12bc7f9470c9",
+      "expectedSha256": "sha256:4193e5887b386d6535b0e9d4bab4d7a29971809d0eb839e447d8039c36fdfb4d",
       "evidence": "topology_resource_hash",
       "receipt": "substrate_readback_receipt",
       "escalation": "substrate_operator"

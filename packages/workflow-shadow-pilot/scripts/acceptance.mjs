@@ -4,10 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import {
-  assertWorkflowPilotAmbiguityPreserved,
-  runWorkflowShadowPilot,
-} from '../dist/index.js';
+import { assertWorkflowPilotAmbiguityPreserved, runWorkflowShadowPilot } from '../dist/index.js';
 
 const packageDir = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const repoRoot = path.resolve(packageDir, '../..');
@@ -18,7 +15,7 @@ const liveAdapterReceiptPath = process.env.WORKFLOW_PILOT_LIVE_RECEIPT?.trim();
 const startedAt = process.env.WORKFLOW_PILOT_STARTED_AT ?? '2026-07-12T03:02:56Z';
 const stableOutput = path.resolve(
   process.env.WORKFLOW_PILOT_ACCEPTANCE_OUT ??
-    path.join(os.tmpdir(), 'cre-1219-workflow-shadow-pilot'),
+    path.join(os.tmpdir(), 'cre-1219-workflow-shadow-pilot')
 );
 
 async function filesUnder(root, prefix = '') {
@@ -42,28 +39,28 @@ try {
     corpusDir,
     outputDir: firstDir,
     measurementStartedAt: startedAt,
-    ...(liveAdapterReceiptPath ? { liveAdapterReceiptPath } : {}),
+    ...(liveAdapterReceiptPath ? { liveAdapterReceiptPath } : {})
   });
   const second = await runWorkflowShadowPilot({
     repoRoot,
     corpusDir,
     outputDir: secondDir,
     measurementStartedAt: startedAt,
-    ...(liveAdapterReceiptPath ? { liveAdapterReceiptPath } : {}),
+    ...(liveAdapterReceiptPath ? { liveAdapterReceiptPath } : {})
   });
 
   const firstFiles = (await filesUnder(firstDir)).filter(
-    (file) => file !== 'measurement-receipt.json',
+    (file) => file !== 'measurement-receipt.json'
   );
   const secondFiles = (await filesUnder(secondDir)).filter(
-    (file) => file !== 'measurement-receipt.json',
+    (file) => file !== 'measurement-receipt.json'
   );
   assert.deepEqual(firstFiles, secondFiles);
   for (const file of firstFiles) {
     assert.equal(
       await readFile(path.join(firstDir, file), 'utf8'),
       await readFile(path.join(secondDir, file), 'utf8'),
-      `${file} was not deterministic`,
+      `${file} was not deterministic`
     );
   }
 
@@ -76,7 +73,7 @@ try {
     approved_good: 4,
     iterative_review: 4,
     policy_or_duplicate: 4,
-    rejected_low_quality: 4,
+    rejected_low_quality: 4
   });
   assert.equal(first.reconciliationSummary.samplingGateStatus, 'pass');
   assert.equal(first.reconciliationSummary.discrepancyCount, 13);
@@ -85,44 +82,45 @@ try {
   assert.equal(first.reconciliationSummary.cases.length, 13);
   assert.equal(
     first.reconciliationSummary.cases.filter((item) => item.status === 'context_supported').length,
-    12,
+    12
   );
   const ambiguousCase = first.reconciliationSummary.cases.find(
-    (item) => item.status === 'ambiguous',
+    (item) => item.status === 'ambiguous'
   );
   assert.ok(ambiguousCase);
   assert.match(ambiguousCase.caseFingerprint, /^sha256:[0-9a-f]{64}$/);
   assert.deepEqual(ambiguousCase.missingEvidence, [
     'decision_time_snapshot',
     'historical_decision_receipt',
-    'override_or_exception_record',
+    'override_or_exception_record'
   ]);
   assert.equal(first.reconciliationSummary.proposalApplied, false);
   assertWorkflowPilotAmbiguityPreserved({
     expectedAmbiguousCount: 1,
     actualAmbiguousCount: first.reconciliationSummary.ambiguousCount,
-    proposalApplied: first.reconciliationSummary.proposalApplied,
+    proposalApplied: first.reconciliationSummary.proposalApplied
   });
   assert.equal(first.privacySummary.status, 'pass');
   assert.equal(first.privacySummary.exactLeakCount, 0);
   assert.equal(first.privacySummary.forbiddenKeyCount, 0);
   assert.equal(first.discoveryPack.sources.length, 6);
   assert.equal(first.discoveryPack.adapters.length, 6);
-  assert.equal(first.compiledRuntime.artifactCount, 10);
+  assert.equal(first.compiledRuntime.artifactCount, 11);
   assert.equal(first.artifactManifest.files.length, liveAdapterReceiptPath ? 9 : 8);
-  assert.equal(first.measurementReceipt.deterministicArtifactCount, liveAdapterReceiptPath ? 19 : 18);
+  assert.equal(
+    first.measurementReceipt.deterministicArtifactCount,
+    liveAdapterReceiptPath ? 20 : 19
+  );
   assert.equal(first.measurementReceipt.mutationsPerformed, 0);
   assert.equal(first.scorecard.langfuseUsed, false);
   if (liveAdapterReceiptPath) {
     assert.ok(first.liveAdapterReceipt);
     assert.equal(first.liveAdapterReceipt.mutationsPerformed, 0);
-    assert.deepEqual(first.liveAdapterReceipt.invokedTools, [
-      'template_review_list_queue',
-    ]);
+    assert.deepEqual(first.liveAdapterReceipt.invokedTools, ['template_review_list_queue']);
   }
 
   const operatorData = JSON.parse(
-    await readFile(path.join(firstDir, 'operator-console', 'data.json'), 'utf8'),
+    await readFile(path.join(firstDir, 'operator-console', 'data.json'), 'utf8')
   );
   assert.equal(operatorData.boundaries.readOnly, true);
   assert.equal(operatorData.boundaries.mutationsPerformed, 0);
@@ -130,7 +128,7 @@ try {
   assert.equal(operatorData.cases.filter((item) => item.status === 'ambiguous').length, 1);
   const operatorHtml = await readFile(
     path.join(firstDir, 'operator-console', 'index.html'),
-    'utf8',
+    'utf8'
   );
   assert.equal(operatorHtml.includes('<button'), false);
 
@@ -144,11 +142,11 @@ try {
         outputDir: stableOutput,
         deterministicFileCount: firstFiles.length,
         scorecard: first.scorecard,
-        measurementReceipt: second.measurementReceipt,
+        measurementReceipt: second.measurementReceipt
       },
       null,
-      2,
-    )}\n`,
+      2
+    )}\n`
   );
 } finally {
   await rm(scratch, { recursive: true, force: true });

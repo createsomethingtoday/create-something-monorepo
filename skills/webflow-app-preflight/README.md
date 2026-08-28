@@ -4,6 +4,8 @@ A shareable agent skill that guides a developer through building a **Webflow Mar
 
 It combines Webflow's official developer documentation with the recurring, real-world patterns that most often cause a submission to be rejected or escalated into deeper security review, so those patterns get designed out before they ship.
 
+The workflow classifies credential and scope authority before applying OAuth rules. It does not mistake an App-owned or third-party token, scope, session, or consent flow for Webflow OAuth merely because the same vocabulary appears in code.
+
 Use this skill before findings are issued. If the developer already has exact review findings or acceptance criteria, use `webflow-app-review-remediation` instead.
 
 ## What's inside

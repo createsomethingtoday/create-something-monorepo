@@ -55,6 +55,27 @@ describe('CSRF origin protection', () => {
     expect(resolve).not.toHaveBeenCalled();
   });
 
+  it('allows a browser-reported same-origin mutation when privacy tooling omits origin headers', async () => {
+    const { result, resolve } = callHandle('/api/auth/login', {
+      headers: { 'sec-fetch-site': 'same-origin' }
+    });
+
+    expect((await result).status).toBe(200);
+    expect(resolve).toHaveBeenCalled();
+  });
+
+  it('blocks an opaque sandbox mutation even when its Origin serializes as null', async () => {
+    const { result, resolve } = callHandle('/api/auth/login', {
+      headers: {
+        origin: 'null',
+        'sec-fetch-site': 'cross-site'
+      }
+    });
+
+    expect((await result).status).toBe(403);
+    expect(resolve).not.toHaveBeenCalled();
+  });
+
   it('allows the dashboard’s own origin', async () => {
     const { result, resolve } = callHandle('/api/auth/login', {
       headers: { origin: ORIGIN }

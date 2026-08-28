@@ -31,6 +31,7 @@
 
 <style>
   .meridian-metrics {
+    padding: 0;
     border-block: 1px solid
       color-mix(in srgb, var(--color-performance-editorial-dark, #181312) 18%, transparent);
     background: var(--color-performance-editorial-light-secondary, #d8cdbc);

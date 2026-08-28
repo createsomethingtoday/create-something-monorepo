@@ -16,19 +16,20 @@ describe('Canon property overlay coverage', () => {
 
 		assertCanonPropertyOverlayCoverage(report);
 		expect(report.summary).toMatchObject({
-			required: 30,
-			covered: 30,
+			required: 31,
+			covered: 31,
 			missingOverlay: 0,
 			mismatchedSourcePackage: 0,
 			missingModalities: 0,
 			excludedPropertySurfaces: 2,
-			excludedCanonConsumers: 8
+			excludedCanonConsumers: 10
 		});
 		expect(report.requiredPackages.map((entry) => entry.packageName)).toEqual([
 			'@create-something/atlas-studio-desktop',
 			'@create-something/client-workspace-desktop',
 			'@create-something/guard-performance-lab',
 			'@create-something/marketplace-template-submission-cloud',
+			'princess-pet-palace',
 			'@create-something/webflow-dashboard-cloud',
 			'@create-something/webflow-marketplace-category-cloud',
 			'@create-something/agency',

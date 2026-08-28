@@ -2,7 +2,7 @@
   "schemaVersion": "event_schemas.v0.1",
   "workflowId": "webflow.marketplace.template-lifecycle",
   "workflowVersion": "0.1.0",
-  "definitionHash": "sha256:96e880807497d7a417cbf7e7a009d9331996d55e249068767b2417131a91156f",
+  "definitionHash": "sha256:c3d6a10501d0e0419881cb65ace3e70792719922d8e558877dd6189210f4848f",
   "events": [
     {
       "id": "monitoring_signal",

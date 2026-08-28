@@ -1,6 +1,11 @@
 import Airtable from 'airtable';
 import { randomBytes, createHash } from 'node:crypto';
 import { isLongDescriptionOnlyAssetVersionChange } from '../utils/asset-version-changes';
+import {
+	hasReviewRoundBeenReleased,
+	isReviewRoundClosed,
+	isSilencedReviewStatus
+} from '../utils/review-status';
 
 // Airtable table IDs
 const TABLES = {
@@ -11,8 +16,41 @@ const TABLES = {
 	TAGS: '🏷️Tags (Free Form)',
 	CATEGORY_PERFORMANCE: 'tblDU1oUiobNfMQP9',
 	LEADERBOARD: 'tblcXLVLYobhNmrg6',
-	ASSET_VERSIONS: 'tblHxZ2hgSFLZxsZu'
+	ASSET_VERSIONS: 'tblHxZ2hgSFLZxsZu',
+	// ⚖️Exceptions — per-item app-review exception ledger. Queried by field ID
+	// (returnFieldsByFieldId) because display names in this table are volatile.
+	EXCEPTIONS: 'tblnbaaIbIulWl0b7'
 } as const;
+
+// ⚖️Exceptions field IDs (see webflow-app-review-mcp schema — the canonical map).
+const EXCEPTIONS_FIELD_IDS = {
+	item: 'fldmJcVJCytD1VY1r',
+	type: 'fldUqjcnkOUO7RRKS',
+	decisionDatetime: 'fldhqW4RSpazA6421',
+	// Formula: 1 only when ⚖️Status = ❌Denied. Denied = "fix required" —
+	// a denied exception waives nothing, the finding must be fixed.
+	denied: 'fldJXVOBAeKLACZtc',
+	versionLink: 'fldqVk39RERL1tVPP',
+	// Lookup of the linked version's asset-record-ID rollup — lets us filter
+	// exception rows by asset without knowing display names.
+	assetRecordIdLookup: 'fld2v3CWkknayjbjA'
+} as const;
+
+// 🤝Partnership App checkbox on Assets (CRM-synced daily by partner-flag-sync).
+const ASSETS_PARTNERSHIP_APP_FIELD_ID = 'fldzZ2Zo8a7vtIMT3';
+
+// Version Number and 📝Review Status on 🖌️Asset Versions.
+const ASSET_VERSIONS_VERSION_NUMBER_FIELD_ID = 'fldn2ImbgwKfCdWWA';
+const ASSET_VERSIONS_REVIEW_STATUS_FIELD_ID = 'flde8Huk5NRIdm2wZ';
+
+// Durable release evidence on 🖌️Asset Versions, written by the
+// "🌐Release evidence — stamp released feedback" automation (CRE-1874):
+// 📅Feedback Released At + 🌐Released Feedback (Snapshot).
+const ASSET_VERSIONS_RELEASED_AT_FIELD_ID = 'flddzMIDaAO9TSbKT';
+const ASSET_VERSIONS_RELEASED_FEEDBACK_FIELD_ID = 'fldd1FbAW3sVFw0UU';
+
+// Asset-record-ID rollup on 🖌️Asset Versions (filterable by {fldId} formula).
+const ASSET_VERSIONS_ASSET_RECORD_ID_FIELD_ID = 'fldknoYakli2sqznT';
 
 // Airtable field IDs for authentication
 const FIELDS = {
@@ -851,6 +889,109 @@ function mapAssetVersionRecord(record: Airtable.Record<Airtable.FieldSet>): Asse
 	};
 }
 
+/**
+ * A ❌Denied app-review exception item — a finding that was evaluated for an
+ * exception and ruled "fix required". Shown to partnership-app creators only,
+ * and only after the review round's feedback has been released to them.
+ *
+ * Deliberately excludes rationale and decision notes: those fields carry
+ * internal deliberation and must never reach a creator surface.
+ */
+export interface RequiredFixExceptionItem {
+	id: string;
+	item: string;
+	type?: string;
+	decidedAt?: string;
+	versionRecordId?: string;
+	versionNumber?: number;
+}
+
+/**
+ * Formula for ❌Denied exception rows belonging to one asset. Uses `{fldXxx}`
+ * field-ID references so it is immune to display-name changes.
+ */
+export function buildRequiredFixExceptionsFormula(assetRecordId: string): string {
+	return `AND({${EXCEPTIONS_FIELD_IDS.denied}} = 1, FIND(${airtableFormulaValue(
+		assetRecordId
+	)}, ARRAYJOIN({${EXCEPTIONS_FIELD_IDS.assetRecordIdLookup}})) > 0)`;
+}
+
+/**
+ * Map an ⚖️Exceptions record fetched with returnFieldsByFieldId. Returns null
+ * for rows without an item name (nothing meaningful to show).
+ */
+export function mapRequiredFixExceptionRecord(
+	record: Airtable.Record<Airtable.FieldSet>
+): RequiredFixExceptionItem | null {
+	const item = firstString(record.fields[EXCEPTIONS_FIELD_IDS.item]);
+	if (!item) return null;
+
+	const versionLinks = record.fields[EXCEPTIONS_FIELD_IDS.versionLink];
+	const versionRecordId =
+		Array.isArray(versionLinks) && typeof versionLinks[0] === 'string'
+			? versionLinks[0]
+			: undefined;
+
+	return {
+		id: record.id,
+		item,
+		type: firstString(record.fields[EXCEPTIONS_FIELD_IDS.type]),
+		decidedAt: firstString(record.fields[EXCEPTIONS_FIELD_IDS.decisionDatetime]),
+		versionRecordId
+	};
+}
+
+export interface RequiredFixVersionInfo {
+	versionNumber?: number;
+	reviewStatus?: string;
+	releasedAt?: string;
+}
+
+/**
+ * Per-version release gate for exception items. The exceptions query is
+ * asset-wide, but each item may only surface once ITS OWN review round has
+ * been released to the creator — an item from a round still on hold or in a
+ * silent state must not ride a later round's release. Fail-closed: items
+ * without a resolvable, released version are dropped.
+ *
+ * Release evidence, in preference order:
+ * 1. 📅Feedback Released At stamp — durable, survives every later status
+ *    transition (written by the release-evidence automation, CRE-1874).
+ * 2. Current-status fallback (hasReviewRoundBeenReleased) — for rounds
+ *    released before the automation existed.
+ * A closed round (approved/archived) always hides its items: they are
+ * resolved history, not open required fixes.
+ */
+export function gateRequiredFixesByVersion(
+	items: RequiredFixExceptionItem[],
+	versions: Map<string, RequiredFixVersionInfo>
+): RequiredFixExceptionItem[] {
+	const gated: RequiredFixExceptionItem[] = [];
+
+	for (const item of items) {
+		if (!item.versionRecordId) continue;
+		const version = versions.get(item.versionRecordId);
+		if (!version) continue;
+		if (isReviewRoundClosed(version.reviewStatus)) continue;
+		// A currently-silenced round shows nothing even when stamped: the
+		// silence (partnership shield) is the operative intent, and a stamp
+		// could have landed moments before a shield conversion.
+		if (isSilencedReviewStatus(version.reviewStatus)) continue;
+
+		const released =
+			Boolean(version.releasedAt) || hasReviewRoundBeenReleased(version.reviewStatus);
+		if (!released) continue;
+
+		gated.push(
+			Number.isFinite(version.versionNumber)
+				? { ...item, versionNumber: version.versionNumber }
+				: item
+		);
+	}
+
+	return gated;
+}
+
 function firstString(value: unknown): string | undefined {
 	if (typeof value === 'string') {
 		const trimmed = value.trim();
@@ -1581,6 +1722,145 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 			}
 
 			return { asset: mapAssetRecord(record), isOwner };
+		},
+
+		/**
+		 * ❌Denied (fix-required) exception items for a partnership app.
+		 *
+		 * Returns null unless the asset carries the 🤝Partnership App flag —
+		 * fail-closed: any error also returns null. Each item is release-gated
+		 * by its own version's review status; the caller's asset-level check
+		 * (isReviewFeedbackReleased on latestReviewStatus) is only a cheap
+		 * pre-gate. Caller remains responsible for ownership.
+		 */
+		async getPartnerRequiredFixes(assetId: string): Promise<RequiredFixExceptionItem[] | null> {
+			if (!/^rec[A-Za-z0-9]{14}$/.test(assetId)) return null;
+
+			try {
+				// Gate: the CRM-synced 🤝Partnership App checkbox, read by field ID.
+				const assetRows = await base(TABLES.ASSETS)
+					.select({
+						filterByFormula: `RECORD_ID() = ${airtableFormulaValue(assetId)}`,
+						fields: [ASSETS_PARTNERSHIP_APP_FIELD_ID],
+						returnFieldsByFieldId: true,
+						maxRecords: 1
+					})
+					.firstPage();
+
+				if (assetRows[0]?.fields?.[ASSETS_PARTNERSHIP_APP_FIELD_ID] !== true) {
+					return null;
+				}
+
+				const rows = await base(TABLES.EXCEPTIONS)
+					.select({
+						filterByFormula: buildRequiredFixExceptionsFormula(assetId),
+						fields: [
+							EXCEPTIONS_FIELD_IDS.item,
+							EXCEPTIONS_FIELD_IDS.type,
+							EXCEPTIONS_FIELD_IDS.decisionDatetime,
+							EXCEPTIONS_FIELD_IDS.versionLink
+						],
+						returnFieldsByFieldId: true,
+						sort: [{ field: EXCEPTIONS_FIELD_IDS.decisionDatetime, direction: 'desc' }]
+					})
+					.all();
+
+				const items = rows
+					.map(mapRequiredFixExceptionRecord)
+					.filter((entry): entry is RequiredFixExceptionItem => entry !== null);
+
+				if (items.length === 0) return items;
+
+				// Each item is gated by ITS OWN version's review status, so the
+				// version fetch is mandatory — if it fails, nothing is shown.
+				// Chunk the RECORD_ID() OR-formula to stay under Airtable's
+				// URL/formula limits; never truncate the ledger.
+				const versionIds = [
+					...new Set(items.map((entry) => entry.versionRecordId).filter(Boolean))
+				] as string[];
+				if (versionIds.length === 0) return [];
+
+				const versions = new Map<string, RequiredFixVersionInfo>();
+				const chunkSize = 50;
+				for (let i = 0; i < versionIds.length; i += chunkSize) {
+					const chunk = versionIds.slice(i, i + chunkSize);
+					const versionRows = await base(TABLES.ASSET_VERSIONS)
+						.select({
+							filterByFormula: `OR(${chunk
+								.map((id) => `RECORD_ID() = ${airtableFormulaValue(id)}`)
+								.join(', ')})`,
+							fields: [
+								ASSET_VERSIONS_VERSION_NUMBER_FIELD_ID,
+								ASSET_VERSIONS_REVIEW_STATUS_FIELD_ID,
+								ASSET_VERSIONS_RELEASED_AT_FIELD_ID
+							],
+							returnFieldsByFieldId: true
+						})
+						.all();
+
+					for (const row of versionRows) {
+						versions.set(row.id, {
+							versionNumber: Number(row.fields[ASSET_VERSIONS_VERSION_NUMBER_FIELD_ID]),
+							reviewStatus: firstString(row.fields[ASSET_VERSIONS_REVIEW_STATUS_FIELD_ID]),
+							releasedAt: firstString(row.fields[ASSET_VERSIONS_RELEASED_AT_FIELD_ID])
+						});
+					}
+				}
+
+				return gateRequiredFixesByVersion(items, versions);
+			} catch (err) {
+				console.error('[Airtable] getPartnerRequiredFixes failed:', {
+					assetId,
+					statusCode: (err as { statusCode?: number })?.statusCode
+				});
+				return null;
+			}
+		},
+
+		/**
+		 * The released-feedback snapshot for the asset's CURRENT review round.
+		 *
+		 * Looks at the highest-numbered version that has a review status (the
+		 * round that supplies the asset-level latest-review lookups; rows
+		 * without one are dashboard Meta Updates) and returns its 🌐Released
+		 * Feedback (Snapshot) only when THAT version carries a 📅Feedback
+		 * Released At stamp — never an older round's snapshot, which would
+		 * replace the current feedback with the wrong round's text. Null when
+		 * the current round is unstamped (pre-automation history) or has no
+		 * snapshot; callers fall back to the live lookup under the status gate.
+		 */
+		async getReleasedFeedbackSnapshot(assetId: string): Promise<string | null> {
+			if (!/^rec[A-Za-z0-9]{14}$/.test(assetId)) return null;
+
+			try {
+				const rows = await base(TABLES.ASSET_VERSIONS)
+					.select({
+						filterByFormula: `AND({${ASSET_VERSIONS_ASSET_RECORD_ID_FIELD_ID}} = ${airtableFormulaValue(
+							assetId
+						)}, {${ASSET_VERSIONS_REVIEW_STATUS_FIELD_ID}} != '')`,
+						fields: [
+							ASSET_VERSIONS_RELEASED_AT_FIELD_ID,
+							ASSET_VERSIONS_RELEASED_FEEDBACK_FIELD_ID,
+							ASSET_VERSIONS_VERSION_NUMBER_FIELD_ID
+						],
+						returnFieldsByFieldId: true,
+						sort: [{ field: ASSET_VERSIONS_VERSION_NUMBER_FIELD_ID, direction: 'desc' }],
+						maxRecords: 1
+					})
+					.firstPage();
+
+				const currentRound = rows[0];
+				if (!currentRound) return null;
+				if (!firstString(currentRound.fields[ASSET_VERSIONS_RELEASED_AT_FIELD_ID])) return null;
+
+				return firstString(currentRound.fields[ASSET_VERSIONS_RELEASED_FEEDBACK_FIELD_ID]) ?? null;
+			} catch (err) {
+				console.error('[Airtable] getReleasedFeedbackSnapshot failed:', {
+					assetId,
+					statusCode: (err as { statusCode?: number })?.statusCode
+				});
+				return null;
+			}
 		},
 
 		/**

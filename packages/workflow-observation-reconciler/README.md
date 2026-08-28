@@ -7,7 +7,7 @@ The package keeps four boundaries explicit:
 1. **Observation:** extract configured metrics with exact line provenance from an immutable report snapshot.
 2. **Reconciliation:** classify supported alignments, coverage gaps, and evidence limitations from a versioned policy artifact.
 3. **Proposal:** translate only configured gaps into additive workflow evaluations and preserve unsupported generalization as an operator-required conflict.
-4. **Approval:** delegate all mutation gates and compiler proof to `@create-something/workflow-evidence-extractor` and `@create-something/workflow-compiler`.
+4. **Approval:** delegate all mutation gates and compiler proof to `@create-something/workflow-evidence-extractor` and `@createsomething/workflow-compiler`.
 
 ## Marketplace result
 

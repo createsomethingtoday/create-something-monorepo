@@ -543,7 +543,7 @@ test('commercial decision routes use one primary and one conversational action',
   assert.match(messaging, /startWithWorkflowLabel: 'Start a private workflow draft'/);
   assert.match(messaging, /selfMapLabel: 'Start a private workflow draft'/);
   assert.match(messaging, /bookMappingSessionLabel: 'Book a mapping session'/);
-  assert.match(routes, />Start a private workflow draft</);
+  assert.match(routes, /(?:>Start a private workflow draft<|secondaryLabel: 'Start a private workflow draft')/);
   assert.doesNotMatch(
     routes,
     /Start Workflow Map|Talk Through a Workflow|Map the workflow first|Map your workflow/

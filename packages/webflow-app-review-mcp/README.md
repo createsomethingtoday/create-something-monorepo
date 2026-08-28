@@ -78,9 +78,13 @@ Optional:
 - `app_review_create_governance_finding`
 - `app_review_update_governance_finding`
 - `app_review_request_changes`
+- `app_review_send_ticket_followup`
 - `app_review_approve_version`
 - `app_review_reject_version`
 - `app_review_update_version_review`
+- `app_review_list_exceptions`
+- `app_review_list_exception_queue`
+- `app_review_list_asset_exceptions`
 - `app_review_list_exception_items`
 - `app_review_create_exception_item`
 - `app_review_update_exception_item`
@@ -94,6 +98,31 @@ Write posture:
 - draft feedback and controlled status changes write explicit Airtable fields only
 - narrow decision verbs are available for request-changes, approve, and reject
 - broad metadata and marketplace-status updates should stay operator-gated
+- `app_review_list_exceptions` reads every row in the complete Exceptions table
+  across all apps, versions, and statuses. Its `reference_view_id`
+  (`viwGawHG68xIIIDaQ`) identifies the operator's grid; the query itself is
+  deliberately scoped to the entire table and follows every Airtable page.
+- `app_review_send_ticket_followup` posts directly on the creator's Zendesk
+  ticket (resolved from the version record, never an arbitrary ticket ID),
+  rendering Markdown with HTML escaping so literal tags can't truncate the
+  email. It bypasses the Airtable composer wrapper, so messages carry their
+  own greeting/sign-off. Requires `ZENDESK_API_TOKEN` (secret) +
+  `ZENDESK_API_EMAIL`; the tool fails closed when unconfigured. Use only on
+  explicit reviewer request.
+
+Exception read paths:
+
+- `app_review_list_exception_queue` is the no-input starting point for “what
+  exceptions are currently in queue?” It returns only app versions whose
+  version-level exception status is `🆕Requested` or `👀Under Review`, grouped
+  with every linked per-item row and a copy-ready summary.
+- `app_review_list_exception_items` reads rows linked to one known Asset
+  Version.
+- `app_review_list_asset_exceptions` reads exception history across all known
+  versions of one app. Supply `status: "✅Approved"` for previously approved
+  exemptions.
+- These reads do not decide, recommend, or update an exception. Decision
+  authority remains on the dedicated Exception Decisions MCP.
 
 ## Resources
 
@@ -149,7 +178,7 @@ Recommended fields:
 | `Title` | Single line text | Required by `app_review_create_governance_finding` |
 | `Status` | Single select | `New`, `Triage`, `In Progress`, `Needs Decision`, `Waiting on Owner`, `Done`, `Parking Lot` |
 | `Priority` | Single select | `P0`, `P1`, `P2`, `P3` |
-| `Category` | Single select | Runtime integrity, private/beta governance, inspectability, Forms API/credentials, docs/tracking hub, tooling/security scanning, ecosystem watch, bundle-review precision, parking lot |
+| `Category` | Single select | Runtime integrity, private/beta governance, inspectability, Forms API/credentials, docs/tracking hub, tooling/security scanning, ecosystem watch, parking lot |
 | `Summary` | Long text | Required |
 | `Evidence` | Long text | Concrete thread/ticket/docs evidence |
 | `Recommendation` | Long text | Proposed policy, docs, platform, or tooling action |
@@ -164,11 +193,6 @@ Recommended fields:
 | `Linked URLs` | Long text | One URL per line |
 | `Reporter` | Single line text | Defaults to `Dify Governance Database` when omitted |
 | `Created By Agent` | Single line text | Defaults to `webflow-app-review-mcp` |
-
-Governance Findings are the cross-app policy and tooling backlog. Per-app or
-per-version waivers belong in the Marketplace Assets base's first-class
-`⚖️Exceptions` table and must use the `app_review_*_exception_item` tools; do
-not add an `Exceptions` category here as a substitute.
 
 ## Canonical Mappings
 

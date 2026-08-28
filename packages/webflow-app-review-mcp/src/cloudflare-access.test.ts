@@ -58,13 +58,13 @@ async function signer() {
 }
 
 describe('Cloudflare Access boundary', () => {
-  it('retains the provisioned Webflow Access audience across worker deploys', () => {
+  it('pins the provisioned Access config in wrangler.toml so deploys cannot clobber it', () => {
     const wranglerConfig = readFileSync(new URL('../worker/wrangler.toml', import.meta.url), 'utf8');
 
     expect(wranglerConfig).toMatch(/CF_ACCESS_TEAM_DOMAIN = "https:\/\/webflow\.cloudflareaccess\.com"/);
-    expect(wranglerConfig).toMatch(
-      /CF_ACCESS_AUD = "3b4a38c7c99ec7127bcbb99d9c8aae7b0011a51370bff31b7085385e1a2807ba"/,
-    );
+    // Access app provisioned 2026-07 (app-review-mcp-access.wf.app). Deploys replace
+    // [vars] wholesale — an empty AUD here would ship 503 MISCONFIGURED to /access/*.
+    expect(wranglerConfig).toMatch(/CF_ACCESS_AUD = "[0-9a-f]{64}"/);
     expect(wranglerConfig).toMatch(/OAUTH_ALLOWED_EMAILS = "pablo\.miranda@webflow\.com,shea\.sisco@webflow\.com,micah@webflow\.com,micah@createsomething\.io"/);
   });
 

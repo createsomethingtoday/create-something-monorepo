@@ -388,7 +388,8 @@ export class SchedulerDurableObject extends DurableObject<Env> {
         const manageUrl = buildBookingManageUrl({
           publicOrigin: bookingPublicOrigin,
           bookingId: booking.bookingId,
-          actionToken
+          actionToken,
+          ...(booking.context?.intent ? { intent: booking.context.intent } : {})
         });
         return resend.sendNotification(job, { booking, manageUrl });
       }
@@ -563,6 +564,7 @@ export default {
       const nonce = crypto.randomUUID().replaceAll('-', '');
       return new Response(schedulerPage({
         nonce,
+        intent: url.searchParams.get('intent'),
         ...(env.TURNSTILE_SITE_KEY ? { turnstileSiteKey: env.TURNSTILE_SITE_KEY } : {})
       }), {
         headers: {

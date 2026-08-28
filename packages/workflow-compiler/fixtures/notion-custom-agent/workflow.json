@@ -1,0 +1,169 @@
+{
+  "schemaVersion": "workflow_definition.v0.3",
+  "workflowId": "agency-ops.evidence-triage",
+  "version": "0.1.0",
+  "title": "Agency Ops evidence triage",
+  "businessObjective": "Surface missing or stale workflow evidence without changing an operating record.",
+  "owners": {
+    "workflow": "agency-ops-lead",
+    "policy": "policy-owner",
+    "technical": "notion-worker-owner"
+  },
+  "systems": [
+    {
+      "id": "agency-ops-read-model",
+      "title": "Agency Ops review data",
+      "tier": "database",
+      "owningSurface": "sanitized Notion test data source",
+      "sourceOfTruth": false
+    },
+    {
+      "id": "notion-worker",
+      "title": "Notion Worker agent tool",
+      "tier": "automation",
+      "owningSurface": "Notion Worker",
+      "sourceOfTruth": false
+    },
+    {
+      "id": "evidence-policy",
+      "title": "Evidence policy",
+      "tier": "judgment",
+      "owningSurface": "versioned policy artifact",
+      "sourceOfTruth": true
+    }
+  ],
+  "objects": [
+    {
+      "id": "workflow_evidence",
+      "title": "Workflow evidence",
+      "sourceSystemId": "agency-ops-read-model",
+      "requiredFields": ["workflow_reference", "evidence_status"]
+    }
+  ],
+  "events": [
+    {
+      "id": "triage_requested",
+      "title": "Evidence triage requested",
+      "objectId": "workflow_evidence",
+      "requiredEvidence": ["workflow_reference", "lookback_days", "include_drafts"]
+    }
+  ],
+  "actors": [
+    {
+      "id": "agency-ops-operator",
+      "title": "Agency Ops operator"
+    }
+  ],
+  "states": [
+    {
+      "id": "ready",
+      "title": "Ready"
+    }
+  ],
+  "actions": [
+    {
+      "id": "inspect_evidence_readiness",
+      "title": "Inspect evidence readiness",
+      "kind": "read",
+      "authority": "agency-ops-operator",
+      "autonomy": "auto_allow",
+      "systemsTouched": ["agency-ops-read-model", "notion-worker"],
+      "requiredEvidence": ["workflow_reference", "lookback_days", "include_drafts"],
+      "approval": {
+        "required": false
+      },
+      "receipt": {
+        "requiredFields": ["workflow_id", "action_id", "correlation_id", "outcome"]
+      },
+      "recovery": {
+        "mode": "manual_fallback",
+        "owner": "agency-ops-lead",
+        "path": "Pause the agent, retain the inspection result, and ask an operator to review the selected record."
+      },
+      "tool": {
+        "name": "inspectEvidenceReadiness",
+        "targetSystemId": "notion-worker",
+        "parameters": [
+          {
+            "name": "workflow_reference",
+            "type": "string",
+            "description": "Sanitized workflow record reference to inspect."
+          },
+          {
+            "name": "lookback_days",
+            "type": "number",
+            "description": "Number of days of evidence to inspect."
+          },
+          {
+            "name": "include_drafts",
+            "type": "boolean",
+            "description": "Whether draft evidence is included in the read-only summary."
+          }
+        ]
+      },
+      "agentId": "agency-ops-evidence-triage"
+    },
+    {
+      "id": "create_review_suggestion",
+      "title": "Create review suggestion",
+      "kind": "write",
+      "authority": "agency-ops-operator",
+      "autonomy": "approval_required",
+      "systemsTouched": ["agency-ops-read-model", "notion-worker", "evidence-policy"],
+      "requiredEvidence": ["workflow_reference", "suggestion_text", "approval_receipt"],
+      "approval": {
+        "required": true,
+        "owner": "agency-ops-operator"
+      },
+      "receipt": {
+        "requiredFields": ["workflow_id", "action_id", "correlation_id", "outcome", "approval_receipt"]
+      },
+      "recovery": {
+        "mode": "manual_fallback",
+        "owner": "agency-ops-lead",
+        "path": "Pause the agent and retain the draft for operator review; do not change the source workflow record."
+      },
+      "tool": {
+        "name": "createReviewSuggestion",
+        "targetSystemId": "notion-worker",
+        "parameters": [
+          {
+            "name": "workflow_reference",
+            "type": "string",
+            "description": "Sanitized workflow record reference for the requested suggestion."
+          },
+          {
+            "name": "suggestion_text",
+            "type": "string",
+            "description": "Operator-approved review suggestion text."
+          },
+          {
+            "name": "approval_receipt",
+            "type": "string",
+            "description": "Reference for the confirmation that permits this write."
+          }
+        ]
+      },
+      "agentId": "agency-ops-evidence-triage"
+    }
+  ],
+  "transitions": [],
+  "agents": [
+    {
+      "id": "agency-ops-evidence-triage",
+      "title": "Agency Ops evidence triage",
+      "purpose": "Summarize evidence gaps without changing Notion or an external system.",
+      "allowedActionIds": ["inspect_evidence_readiness", "create_review_suggestion"],
+      "escalationOwner": "agency-ops-lead"
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "readiness-inspection-is-read-only",
+      "title": "Readiness inspection remains read-only",
+      "actionId": "inspect_evidence_readiness",
+      "expectedOutcome": "pass",
+      "requiredEvidence": ["workflow_reference", "lookback_days", "include_drafts"]
+    }
+  ]
+}

@@ -10,7 +10,7 @@
 name = "webflow-template-views"
 main = "src/index.ts"
 compatibility_date = "2026-01-01"
-account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+account_id = "ac24bc906aca8307bdba8c2a85ff08c9"
 compatibility_flags = ["nodejs_compat"]
 workers_dev = true
 
@@ -20,7 +20,7 @@ enabled = true
 [[d1_databases]]
 binding = "DB"
 database_name = "webflow-template-views"
-database_id = "f5027b99-3216-4bce-bfb1-ae2376e98a7d"
+database_id = "a851960b-4e34-43dd-9c58-67cc1daead11"
 
 # Optional richer event stream (90-day retention) alongside the durable D1 rollup.
 [[analytics_engine_datasets]]
@@ -31,4 +31,4 @@ dataset = "webflow_template_views"
 ALLOWED_ORIGINS = "https://webflow.com,https://www.webflow.com,https://template-marketplace.webflow.io"
 
 # Secrets:
-# - STATS_API_KEY  (Bearer token protecting GET /stats; consumed by webflow-dashboard later)
+# - STATS_API_KEY  (Infisical prod: WEBFLOW_TEMPLATE_VIEWS_STATS_API_KEY)

@@ -164,8 +164,8 @@
 | `packages/ona-agents` | `@create-something/ona-agents` |  | `monorepo` |  |
 | `packages/orchestration` | `@create-something/orchestration` | platform | `monorepo` | Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction. |
 | `packages/pi-halfdozen` | `@create-something/pi-halfdozen` |  | `monorepo` |  |
-| `packages/pi-policy-os` | `@create-something/pi-policy-os` |  | `monorepo` |  |
-| `packages/pi-three-tier-framework` | `@create-something/pi-three-tier-framework` |  | `monorepo` |  |
+| `packages/pi-policy-os` | `@createsomething/pi-policy-os` |  | `monorepo` |  |
+| `packages/pi-three-tier-framework` | `@createsomething/pi-three-tier-framework` |  | `monorepo` |  |
 | `packages/pi-webflow` | `@create-something/pi-webflow` |  | `monorepo` |  |
 | `packages/playbook-mcp` | `@create-something/playbook-mcp` | services | `mixed` | Multiple ownership signals exist; verify authority before migrating or cleaning. |
 | `packages/playbook-mcp/worker` | `playbook-mcp-worker` | services | `mixed` | Multiple ownership signals exist; verify authority before migrating or cleaning.<br>Workspace dependencies must be published, vendored, or otherwise resolved before standalone extraction. |

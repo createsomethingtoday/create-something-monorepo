@@ -23,13 +23,13 @@ echo ""
 # 1. npm publish
 pnpm -s linear:create -- \
   --title "Publish Pi packages to npm" \
-  --description "Publish @create-something/pi-three-tier-framework and @create-something/pi-policy-os to npm.
+  --description "Publish @createsomething/pi-three-tier-framework and @createsomething/pi-policy-os to npm.
 
 Steps:
-1. npm login --scope=@create-something
+1. npm login --scope=@createsomething
 2. bash scripts/pi-publish.sh --dry-run
 3. bash scripts/pi-publish.sh
-4. Verify: pi install npm:@create-something/pi-three-tier-framework
+4. Verify: pi install npm:@createsomething/pi-three-tier-framework
 
 Evidence: npm package URLs" \
   --label feature
@@ -85,7 +85,7 @@ echo ""
 pnpm -s linear:create -- \
   --title "Prepare Three-Tier Framework Pi package conference demo" \
   --description "Build a 5-minute demo flow for agent/AI meetups:
-1. pi install npm:@create-something/pi-three-tier-framework
+1. pi install npm:@createsomething/pi-three-tier-framework
 2. Open any codebase
 3. /classify <component> — show tier classification
 4. /debug-tier <failure> — show causality heuristic

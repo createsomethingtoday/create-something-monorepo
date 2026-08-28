@@ -10,6 +10,7 @@
 	 */
 	import { FileText, Search, ChevronDown, ChevronUp, X } from 'lucide-svelte';
 	import { onMount } from 'svelte';
+	import { highlightTranscript } from '$lib/content-security';
 
 	interface TranscriptSegment {
 		start: number;
@@ -87,12 +88,6 @@
 		const mins = Math.floor(seconds / 60);
 		const secs = Math.floor(seconds % 60);
 		return `${mins}:${secs.toString().padStart(2, '0')}`;
-	}
-
-	function highlightSearchTerm(text: string): string {
-		if (!searchQuery.trim()) return text;
-		const regex = new RegExp(`(${searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-		return text.replace(regex, '<mark>$1</mark>');
 	}
 
 	// Auto-scroll to active segment
@@ -192,7 +187,9 @@
 							<span class="segment-time">{formatTime(segment.start)}</span>
 							<span class="segment-text">
 								{#if searchQuery}
-									{@html highlightSearchTerm(segment.text)}
+									{#each highlightTranscript(segment.text, searchQuery) as part}
+										{#if part.highlighted}<mark>{part.text}</mark>{:else}{part.text}{/if}
+									{/each}
 								{:else}
 									{segment.text}
 								{/if}

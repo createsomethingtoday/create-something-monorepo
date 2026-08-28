@@ -134,8 +134,8 @@ Publishable [Pi](https://pi.dev) coding agent packages that deliver CREATE SOMET
 
 | Package | Install | Purpose |
 |---------|---------|--------|
-| [@create-something/pi-three-tier-framework](./packages/pi-three-tier-framework) | `pi install npm:@create-something/pi-three-tier-framework` | Three-Tier Framework skills and prompts |
-| [@create-something/pi-policy-os](./packages/pi-policy-os) | `pi install npm:@create-something/pi-policy-os` | Policy OS governance starter |
+| [@createsomething/pi-three-tier-framework](./packages/pi-three-tier-framework) | `pi install npm:@createsomething/pi-three-tier-framework` | Three-Tier Framework skills and prompts |
+| [@createsomething/pi-policy-os](./packages/pi-policy-os) | `pi install npm:@createsomething/pi-policy-os` | Policy OS governance starter |
 | [@create-something/pi-halfdozen](./packages/pi-halfdozen) | Private | Half Dozen client fleet knowledge |
 | [@create-something/pi-webflow](./packages/pi-webflow) | Private | Webflow fleet knowledge |
 

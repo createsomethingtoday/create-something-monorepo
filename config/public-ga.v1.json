@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "repository": {
+    "owner": "createsomethingtoday",
+    "name": "create-something-monorepo",
+    "mainBranch": "main",
+    "rulesetId": 17917451,
+    "requiredChecks": ["Require immutable action references", "Public Distribution GA"],
+    "governanceMode": "sole-operator",
+    "soleOperator": "createsomethingtoday",
+    "minimumApprovingReviews": 0,
+    "requireCodeOwnerReview": false,
+    "requireReviewThreadResolution": true,
+    "requireLastPushApproval": false,
+    "minimumMaintainers": 1,
+    "minimumCodeOwners": 1,
+    "allowedRuntimeAdvisories": ["GHSA-jmr9-qjv8-65gv"]
+  },
+  "packages": [
+    {
+      "path": "packages/pi-three-tier-framework",
+      "name": "@createsomething/pi-three-tier-framework",
+      "version": "1.0.5",
+      "expectedFileCount": 9
+    },
+    {
+      "path": "packages/pi-policy-os",
+      "name": "@createsomething/pi-policy-os",
+      "version": "1.0.5",
+      "expectedFileCount": 11
+    }
+  ],
+  "npm": {
+    "registry": "https://registry.npmjs.org",
+    "repository": "createsomethingtoday/create-something-monorepo",
+    "workflowFile": "pi-public-release.yml",
+    "environment": "npm-public",
+    "trustedPublisherMode": "stage-only",
+    "piPackage": "@earendil-works/pi-coding-agent@0.84.2"
+  },
+  "pricing": {
+    "baseUrl": "https://createsomething.agency",
+    "routes": [
+      {
+        "path": "/products",
+        "requiredText": ["$0 / MIT", "From $900/month"]
+      },
+      {
+        "path": "/services",
+        "requiredText": ["$0 / MIT", "$0 browser-local starter", "From $900/month"]
+      },
+      {
+        "path": "/map",
+        "requiredText": ["$0 browser-local starter", "Account workspace · pricing at launch"]
+      },
+      {
+        "path": "/control",
+        "requiredText": ["$0 / MIT", "From $900 per month after launch"]
+      }
+    ],
+    "browserWidths": [1280, 390],
+    "browserEvidenceMaxAgeHours": 24
+  },
+  "map": {
+    "workflow": "agency-map-production-monitor.yml",
+    "requiredConsecutiveDays": 7,
+    "timeZone": "America/Chicago"
+  }
+}

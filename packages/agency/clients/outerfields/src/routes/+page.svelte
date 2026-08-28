@@ -14,6 +14,7 @@
 	import FeatureComparison from '$lib/components/FeatureComparison.svelte';
 	import Pricing from '$lib/components/Pricing.svelte';
 	import VideoModal from '$lib/components/VideoModal.svelte';
+	import { serializeJsonLd } from '$lib/content-security';
 
 	// SEO Configuration
 	const seo = {
@@ -180,10 +181,10 @@
 	<meta name="apple-mobile-web-app-title" content="OUTERFIELDS" />
 
 	<!-- Structured Data (JSON-LD) for AEO -->
-	{@html `<script type="application/ld+json">${JSON.stringify(organizationSchema)}</script>`}
-	{@html `<script type="application/ld+json">${JSON.stringify(softwareSchema)}</script>`}
-	{@html `<script type="application/ld+json">${JSON.stringify(faqSchema)}</script>`}
-	{@html `<script type="application/ld+json">${JSON.stringify(webPageSchema)}</script>`}
+	{@html `<script type="application/ld+json">${serializeJsonLd(organizationSchema)}</script>`}
+	{@html `<script type="application/ld+json">${serializeJsonLd(softwareSchema)}</script>`}
+	{@html `<script type="application/ld+json">${serializeJsonLd(faqSchema)}</script>`}
+	{@html `<script type="application/ld+json">${serializeJsonLd(webPageSchema)}</script>`}
 </svelte:head>
 
 <main>

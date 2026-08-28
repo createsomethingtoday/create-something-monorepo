@@ -24,6 +24,11 @@
       "title": "Request changes"
     },
     {
+      "id": "action:run_published_validation",
+      "kind": "action",
+      "title": "Run published-site validation"
+    },
+    {
       "id": "action:send_creator_decision",
       "kind": "action",
       "title": "Send creator-facing decision autonomously"
@@ -111,6 +116,12 @@
       "to": "action:monitor_post_launch"
     },
     {
+      "id": "authority:workflow-runtime:run_published_validation",
+      "kind": "authorizes",
+      "from": "actor:workflow-runtime",
+      "to": "action:run_published_validation"
+    },
+    {
       "id": "authority:workflow-runtime:validate_submission",
       "kind": "authorizes",
       "from": "actor:workflow-runtime",
@@ -175,6 +186,18 @@
       "kind": "transitions",
       "from": "action:validate_submission",
       "to": "state:ready_for_review"
+    },
+    {
+      "id": "transition:submitted-validation-requested:action",
+      "kind": "transitions",
+      "from": "state:submitted",
+      "to": "action:run_published_validation"
+    },
+    {
+      "id": "transition:submitted-validation-requested:state",
+      "kind": "transitions",
+      "from": "action:run_published_validation",
+      "to": "state:submitted"
     }
   ]
 }

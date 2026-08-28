@@ -3,10 +3,17 @@
 const { download, getChecksumsUrl } = require('./install.js');
 
 const REQUIRED_RELEASE_ASSETS = [
+  'ground-calibration-receipt.json',
   'ground-darwin-arm64.tar.gz',
+  'ground-darwin-x64.tar.gz',
   'ground-linux-arm64.tar.gz',
   'ground-linux-x64.tar.gz',
-  'ground-win32-x64.zip'
+  'ground-win32-x64.zip',
+  'ground-darwin-arm64-smoke.json',
+  'ground-darwin-x64-smoke.json',
+  'ground-linux-arm64-smoke.json',
+  'ground-linux-x64-smoke.json',
+  'ground-win32-x64-smoke.json'
 ];
 
 function verifyReleaseManifest(checksums) {

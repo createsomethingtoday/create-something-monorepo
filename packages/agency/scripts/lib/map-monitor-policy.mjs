@@ -15,7 +15,7 @@ export const MAP_MONITOR_POLICY = Object.freeze({
 		bookingContextConsistency: {
 			target: 1,
 			windowDays: 30,
-			definition: 'Visible session, readiness, and score match the booking URL after starter load, edit, restore, and reset.'
+			definition: 'The visible redacted Map reference, readiness, and score match the booking URL after starter load, edit, restore, and reset.'
 		},
 		mappingAgentBoundary: {
 			target: 1,

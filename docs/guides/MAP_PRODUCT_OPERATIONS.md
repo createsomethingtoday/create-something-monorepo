@@ -44,7 +44,7 @@ The machine-readable policy is `packages/agency/scripts/lib/map-monitor-policy.m
 | SLO | Target | Window | Measurement |
 | --- | ---: | ---: | --- |
 | Public Map availability | 99.9% | 30 days | `/map` returns 200 and the public canvas renders without document overflow |
-| Booking-context consistency | 100% | 30 days | visible session/readiness/score match the booking URL after starter, edit, restore, and reset |
+| Booking-context consistency | 100% | 30 days | visible redacted Map reference/readiness/score match the booking URL after starter, edit, restore, and reset |
 | Mapping-agent boundary | 100% | 30 days | GET remains non-mutating and malformed POST is rejected before execution/storage |
 
 The synthetic uses a labeled browser-local draft, never supplies an email, never asks the agent to mutate, never submits a booking, and never touches customer workspace data. Each run uploads desktop/mobile receipts for 30 days. The workflow failure is the first alert surface; two consecutive failures require CRE-1289 operator escalation. Booking-context mismatch is SEV-2; one isolated availability failure is SEV-3.

@@ -191,12 +191,17 @@ describe('Licensed Meridian public-system rollout', () => {
 
   it('keeps .io distinct as the research and field-evidence property', () => {
     const source = routeSource('io');
+    const layout = layoutSource('io');
 
     expect(source).toContain('expression="editorial"');
     expect(source.match(/expression="editorial"/g)).toHaveLength(2);
     expect(source).toContain('propertyRole="Research + field evidence"');
     expect(source).toContain('Research for automation you can defend.');
     expect(source).toContain('Read The Papers');
+    expect(layout).toContain('padding-top: var(--height-performance-header);');
+    expect(layout).not.toContain(
+      'padding-top: calc(var(--height-performance-header) + var(--space-performance-md));'
+    );
   });
 
   it('keeps .ltd distinct as the court and Playbook operator library', () => {

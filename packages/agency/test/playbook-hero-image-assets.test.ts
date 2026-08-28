@@ -97,3 +97,31 @@ test('the Home court candidate keeps its authored desktop and mobile studies dis
   assert.equal(sha256(desktop), 'ea7a153bf4dcb9a37fb689d80953e0afbc768bc412de09033d008668f9d08d08');
   assert.equal(sha256(mobile), '814fca6eed996d6133dc1521f75cd9c1f5b216413932eb55c2891cdbf8cc3f97');
 });
+
+test('the Ground hero keeps its verification instrument and provenance intact', () => {
+  const route = readFileSync(`${agencyRoot}/src/routes/products/ground/+page.svelte`, 'utf8');
+  const metadata = readFileSync(
+    `${agencyRoot}/content/assets/brand/agency-ground-verification-instrument.v20260825/metadata.md`,
+    'utf8'
+  );
+  const prompts = readFileSync(
+    `${agencyRoot}/content/assets/brand/agency-ground-verification-instrument.v20260825/source/prompts.md`,
+    'utf8'
+  );
+  const desktop = publicAsset('/images/performance-lab/ground-verification-instrument.webp');
+  const mobile = publicAsset('/images/performance-lab/ground-verification-instrument-mobile.webp');
+
+  assert.match(route, /ground-verification-instrument\.webp/);
+  assert.match(route, /ground-verification-instrument-mobile\.webp/);
+  assert.match(route, /objectPosition: 'center 62%'/);
+  assert.match(route, /colorMode: 'natural'/);
+  assert.doesNotMatch(route, /pressure-boundary-natural/);
+  assert.match(metadata, /compare code inputs, stop the unverified claim/i);
+  assert.match(metadata, /No third-party brand/);
+  assert.match(prompts, /Desktop crop correction v2/);
+  assert.match(prompts, /Mobile companion v1/);
+  assert.ok(desktop.byteLength > 50_000, 'Ground desktop export looks truncated');
+  assert.ok(mobile.byteLength > 50_000, 'Ground mobile export looks truncated');
+  assert.equal(sha256(desktop), '9ad234d752f7d1e966e10951abdc17698e9deb7780e5e9cdafa02762e8fc85fb');
+  assert.equal(sha256(mobile), '82f6fa352c9d7a935b141f2576297d4a355206f3e35ed5334950762e83271197');
+});

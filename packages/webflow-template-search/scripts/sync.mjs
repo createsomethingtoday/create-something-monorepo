@@ -2,7 +2,7 @@
 // Trigger an incremental sync (picks up Airtable records modified in the last ~10 min).
 // Usage: SYNC_ADMIN_TOKEN=<token> node scripts/sync.mjs
 
-const WORKER_URL = 'https://webflow-template-search.createsomething.workers.dev';
+const WORKER_URL = 'https://webflow-template-search.webflow-inc.workers.dev';
 
 const token = process.env.SYNC_ADMIN_TOKEN;
 if (!token) {

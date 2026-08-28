@@ -1,6 +1,7 @@
 <script lang="ts">
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
   import { getPublicProduct } from '$lib/data/productFamily';
+  import { PUBLIC_PRICING } from '$lib/data/publicPricing';
 
   const mapProduct = getPublicProduct('map');
   const buildProduct = getPublicProduct('build');
@@ -12,7 +13,7 @@
       number: '01',
       product: mapProduct,
       role: 'Define the workflow',
-      model: 'Standalone subscription',
+      model: `${PUBLIC_PRICING.map.publicStarterLabel} · ${PUBLIC_PRICING.map.workspaceLabel}`,
       href: mapProduct.route,
       linkLabel: 'Explore Map'
     },
@@ -22,15 +23,15 @@
       product: buildProduct,
       role: 'Build the owned system',
       model: 'Scoped implementation',
-      href: agencyCoreMessaging.servicesMappingSessionHref,
-      linkLabel: 'Discuss a Build'
+      href: agencyCoreMessaging.workflowCompilerIntegrationHref,
+      linkLabel: 'View the fixed-scope Build'
     },
     {
       id: 'control',
       number: '03',
       product: controlProduct,
       role: 'Operate with approvals and proof',
-      model: 'Managed AI Operations · from $900/month · includes Map',
+      model: `Managed AI Operations · ${PUBLIC_PRICING.managedControl.label} · includes Map`,
       href: controlProduct.route,
       linkLabel: 'Explore Control'
     }
@@ -45,8 +46,9 @@
     </div>
     <p class="product-path__description">
       Map defines the work. Build turns the approved definition into an owned system. After launch,
-      Control provides Managed AI Operations from $900/month for a standard-risk environment.
-      Control includes Map; new workflows and integrations return to Build.
+      Control provides Managed AI Operations {PUBLIC_PRICING.managedControl.label.toLowerCase()} for a
+      standard-risk environment. Control includes Map; new workflows and integrations return to Build.
+      The supported public source distribution is {PUBLIC_PRICING.publicSource.label}.
     </p>
   </div>
 

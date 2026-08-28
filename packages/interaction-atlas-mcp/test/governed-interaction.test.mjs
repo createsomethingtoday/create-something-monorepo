@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 
-import { compileWorkflowDefinition } from '@create-something/workflow-compiler';
+import { compileWorkflowDefinition } from '@createsomething/workflow-compiler';
 import { inspectAtlasGovernedInteraction } from '../dist/studio/governed-interaction.js';
 import { startStudioServer } from '../dist/studio/server.js';
 
@@ -19,8 +19,25 @@ test('Atlas Studio validates the shared governed interaction contract without re
 
   const inspected = inspectAtlasGovernedInteraction(interaction);
 
+  assert.equal(inspected.schemaVersion, 'atlas_governed_interaction_inspection.v0.2');
   assert.equal(inspected.bundle.workflowId, 'webflow.marketplace.template-lifecycle');
   assert.equal(inspected.compatibility.hostId, 'atlas-studio');
+  assert.equal(inspected.compatibility.compatible, true);
+  assert.deepEqual(inspected.compatibility.errors, []);
+});
+
+test('Atlas Studio explicitly supports the v0.3 exact-enum interaction envelope', async () => {
+  const definition = JSON.parse(await readFile(fixtureUrl, 'utf8'));
+  definition.schemaVersion = 'workflow_definition.v0.3';
+  definition.actions[0].requiredEvidenceMatchers = {
+    published_url: { kind: 'equals_one_of', values: ['https://fixture-template.webflow.io'] },
+  };
+  const interaction = compileWorkflowDefinition(definition).governedInteraction;
+
+  const inspected = inspectAtlasGovernedInteraction(interaction);
+
+  assert.equal(interaction.schemaVersion, 'governed_interaction_bundle.v0.3');
+  assert.equal(inspected.schemaVersion, 'atlas_governed_interaction_inspection.v0.3');
   assert.equal(inspected.compatibility.compatible, true);
   assert.deepEqual(inspected.compatibility.errors, []);
 });
@@ -52,8 +69,9 @@ test('Atlas Studio exposes the packaged interaction read-only and fails closed o
     assert.equal(valid.authority, 'read_only');
     assert.equal(valid.compatibility.compatible, true);
 
-    interaction.runtimeVersion = '99.0.0';
-    await writeFile(interactionPath, JSON.stringify(interaction));
+    const incompatibleInteraction = JSON.parse(JSON.stringify(interaction));
+    incompatibleInteraction.runtimeVersion = '99.0.0';
+    await writeFile(interactionPath, JSON.stringify(incompatibleInteraction));
     const invalidResponse = await fetch(url);
     assert.equal(invalidResponse.status, 400);
     assert.deepEqual(await invalidResponse.json(), {

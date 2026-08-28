@@ -105,6 +105,98 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_PLANS: CanonOverlayCandidatePromo
       }
     },
     {
+      "id": "canon-overlay-candidate-promotion-plan:overlay.client-workspace-desktop.surface-brief",
+      "packetId": "canon-overlay-candidate-review:overlay.client-workspace-desktop.surface-brief",
+      "candidateId": "overlay.client-workspace-desktop:overlay.client-workspace-desktop.surface-brief",
+      "intakeId": "overlay.client-workspace-desktop.surface-brief",
+      "title": "Surface Brief Template promotion plan",
+      "summary": "A reusable project-overlay brief for documenting workflow state, Canon reuse, local artifacts, evidence, and extension-intake needs.",
+      "overlayId": "overlay.client-workspace-desktop",
+      "overlayName": "Client Workspace Desktop Overlay",
+      "manifestPath": "apps/client-workspace-desktop/canon-overlay/manifest.ts",
+      "owner": "client-workspace-operator",
+      "sourcePackage": "@create-something/client-workspace-desktop",
+      "sourcePath": "canon-overlay/templates/surface-brief.md",
+      "requestedKind": "template",
+      "requestedModalities": [
+        "web",
+        "chat",
+        "app",
+        "voice",
+        "glasses"
+      ],
+      "planUri": "canon://overlays/candidates/overlay.client-workspace-desktop.surface-brief/promotion-plan",
+      "handoffUri": "canon://overlays/candidates/overlay.client-workspace-desktop.surface-brief/handoff",
+      "candidateUri": "canon://overlays/candidates/overlay.client-workspace-desktop.surface-brief",
+      "reviewUri": "canon://overlays/intake/overlay.client-workspace-desktop",
+      "preconditions": [
+        "Human maintainer approval is recorded outside this plan before implementation starts.",
+        "Candidate review packet has been read and current source paths still resolve.",
+        "Implementation owner confirms the candidate should move toward Canon candidate or stable work instead of remaining project-local."
+      ],
+      "implementationScope": [
+        "Evaluate the template candidate for Canon-owned source, export, docs, tests, compatibility, and registry routing.",
+        "Preserve the owning overlay as evidence: Client Workspace Desktop Overlay (overlay.client-workspace-desktop).",
+        "Cover modalities: web, chat, app, voice, glasses.",
+        "Review source package @create-something/client-workspace-desktop at canon-overlay/templates/surface-brief.md."
+      ],
+      "requiredChanges": [
+        "Choose the Canon source module, package export path, registry item id, and maturity target before editing.",
+        "Add or update Canon source implementation only after confirming no stable registry item already satisfies the candidate.",
+        "Update Canon registry metadata with kind, modalities, dependencies, docs path, and contract notes.",
+        "Update MCP generated content and public Canon docs for the new or changed Canon primitive.",
+        "Keep project overlay artifacts as evidence; do not mutate them as part of promotion planning."
+      ],
+      "validationPlan": [
+        "Run focused Canon tests for the touched source and registry behavior.",
+        "Run Canon build or package check covering public exports.",
+        "Run MCP parity/build checks if generated registry, overlay, or docs content changes.",
+        "Run .ltd check if public Canon docs change.",
+        "Record exact commands and evidence in the promotion PR or Linear issue."
+      ],
+      "documentationPlan": [
+        "Document the Canon-owned behavior and import path in the nearest Canon docs page.",
+        "Link the promoted item back to the registry and overlay evidence where useful.",
+        "Call out modality responsibilities for web, chat, app, voice, or glasses as applicable."
+      ],
+      "compatibilityPlan": [
+        "Preserve existing project overlay behavior until Canon consumers intentionally migrate.",
+        "Name any breaking API, token, copy, or policy change before promotion.",
+        "Include rollback or keep-local guidance if the candidate remains project-owned."
+      ],
+      "stopConditions": [
+        "Do not mark stable until Canon owns export path, docs, tests, and compatibility notes.",
+        "Stop if human approval is missing or ambiguous.",
+        "Stop if source paths, surface proofs, or required evidence are stale.",
+        "Stop if implementation would create a fork instead of a Canon-owned export and registry item.",
+        "Stop before creating Linear work automatically from this plan."
+      ],
+      "approvalBoundary": [
+        "This plan is read-only and does not approve implementation, create Linear issues, mutate overlays, or mark anything stable.",
+        "Open implementation work only after explicit human approval.",
+        "Stable promotion still requires Canon-owned export path, docs, tests, compatibility notes, and registry routing."
+      ],
+      "agentContract": {
+        "purpose": "canon-overlay-candidate-promotion-plan",
+        "primaryConsumers": [
+          "codex",
+          "mcp",
+          "ltd-docs",
+          "project-overlays"
+        ],
+        "useFor": [
+          "planning implementation after candidate approval",
+          "checking promotion scope before editing Canon",
+          "carrying evidence and stop conditions into a follow-up PR"
+        ],
+        "stopBefore": [
+          "automatically creating Linear issues",
+          "automatically editing Canon source",
+          "treating the plan as approval or stable promotion"
+        ]
+      }
+    },
+    {
       "id": "canon-overlay-candidate-promotion-plan:overlay.guard-performance-lab.surface-brief",
       "packetId": "canon-overlay-candidate-review:overlay.guard-performance-lab.surface-brief",
       "candidateId": "overlay.guard-performance-lab:overlay.guard-performance-lab.surface-brief",
@@ -2508,7 +2600,7 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_PLANS: CanonOverlayCandidatePromo
       "manifestPath": "packages/webflow-dashboard/canon-overlay/manifest.ts",
       "owner": "webflow-dashboard-team",
       "sourcePackage": "@create-something/webflow-dashboard",
-      "sourcePath": "src/routes/dashboard/+page.svelte",
+      "sourcePath": "src/routes/(authed)/dashboard/+page.svelte",
       "requestedKind": "template",
       "requestedModalities": [
         "web",
@@ -2530,7 +2622,7 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_PLANS: CanonOverlayCandidatePromo
         "Evaluate the template candidate for Canon-owned source, export, docs, tests, compatibility, and registry routing.",
         "Preserve the owning overlay as evidence: Webflow Dashboard Marketplace Overlay (overlay.webflow-dashboard-marketplace).",
         "Cover modalities: web, chat, app, voice, glasses.",
-        "Review source package @create-something/webflow-dashboard at src/routes/dashboard/+page.svelte."
+        "Review source package @create-something/webflow-dashboard at src/routes/(authed)/dashboard/+page.svelte."
       ],
       "requiredChanges": [
         "Choose the Canon source module, package export path, registry item id, and maturity target before editing.",
@@ -2682,34 +2774,34 @@ export const CANON_OVERLAY_CANDIDATE_PROMOTION_PLANS: CanonOverlayCandidatePromo
     }
   ],
   "summary": {
-    "total": 29,
-    "overlays": 29,
+    "total": 30,
+    "overlays": 30,
     "byRequestedKind": [
       {
         "kind": "template",
-        "count": 29
+        "count": 30
       }
     ],
     "byModality": [
       {
         "modality": "app",
-        "count": 29
+        "count": 30
       },
       {
         "modality": "chat",
-        "count": 29
+        "count": 30
       },
       {
         "modality": "glasses",
-        "count": 29
+        "count": 30
       },
       {
         "modality": "voice",
-        "count": 29
+        "count": 30
       },
       {
         "modality": "web",
-        "count": 29
+        "count": 30
       }
     ]
   },

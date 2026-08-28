@@ -414,7 +414,7 @@
   globalMetadata={globalAnalyticsMetadata}
   compactPrompt={useCompactPrivacyPrompt}
   obscured={mobileNavigationOpen}
-  mobilePlacement="safe-corner"
+  mobilePlacement="header-edge"
 />
 
 <!-- Unified Search - Cmd/Ctrl+K to open -->
@@ -455,13 +455,15 @@
     showNewsletter={false}
     aboutText="Calm, transparent, reliable workflow systems for operator-owned outcomes: clear operating boundaries, evidence-backed delivery, and escalation only when judgment is required."
     quickLinkGroups={footerQuickLinkGroups}
-    footerCta={{
-      title: 'Ready to make one workflow AI-native?',
-      label: agencyCoreMessaging.startWithWorkflowLabel,
-      href: primaryCtaHref,
-      description: 'Start a lightweight workflow map before booking.',
-      media: agencyFooterMacroMedia
-    }}
+    footerCta={routeOwnsPerformanceEnding
+      ? undefined
+      : {
+          title: 'Ready to make one workflow AI-native?',
+          label: agencyCoreMessaging.startWithWorkflowLabel,
+          href: primaryCtaHref,
+          description: 'Start a lightweight workflow map before booking.',
+          media: agencyFooterMacroMedia
+        }}
     showSocial={true}
     isAuthenticated={!!data.user}
     visualStyle="editorial"

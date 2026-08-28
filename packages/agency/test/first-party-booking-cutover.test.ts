@@ -30,7 +30,8 @@ test('owned /book route embeds the first-party scheduler and remains the Map des
 	assert.ok(mapRoute.includes('bookingHref="/book"'));
 	assert.ok(bookRoute.includes('buildFirstPartySchedulerUrl'));
 	assert.ok(bookRoute.includes('<iframe'));
-	assert.ok(bookRoute.includes('title="Schedule a CREATE SOMETHING mapping session"'));
+	assert.ok(bookRoute.includes("iframeTitle: 'Schedule a CREATE SOMETHING mapping session'"));
+	assert.ok(bookRoute.includes('title={bookingOffer.iframeTitle}'));
 	assert.equal(bookRoute.toLowerCase().includes('savvycal'), false);
 });
 
@@ -142,6 +143,18 @@ test('emailed management access crosses the owned page only through a stripped f
 		actionToken: 'controlled.action-token',
 		cleanPath: '/book?booking=booking_controlled'
 	});
+	const integrationUrl =
+		'https://createsomething.agency/book?booking=booking_integration&intent=compiler-integration#access=controlled.action-token';
+	assert.deepEqual(normalizeSchedulerAccessUrl(integrationUrl), {
+		bookingId: 'booking_integration',
+		actionToken: 'controlled.action-token',
+		cleanPath: '/book?booking=booking_integration&intent=compiler-integration'
+	});
+	const integrationIframe = new URL(
+		buildFirstPartySchedulerUrl('?booking=booking_integration&intent=compiler-integration')
+	);
+	assert.equal(integrationIframe.searchParams.get('booking'), 'booking_integration');
+	assert.equal(integrationIframe.searchParams.get('intent'), 'compiler-integration');
 	const iframe = new URL(buildFirstPartySchedulerUrl('?booking=booking_controlled&access=drop-me'));
 	assert.equal(iframe.searchParams.get('booking'), 'booking_controlled');
 	assert.equal(iframe.searchParams.has('access'), false);

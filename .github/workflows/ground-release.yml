@@ -23,25 +23,80 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  verify-calibration:
+    name: Verify governed Ground calibration
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout release source
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
+
+      - name: Execute governed Ground calibration fixtures
+        id: calibration-fixtures
+        continue-on-error: true
+        shell: bash
+        run: |
+          set +e
+          cargo test --manifest-path packages/ground/Cargo.toml --test ga_calibration -- --nocapture \
+            2>&1 | tee ground-calibration-test.log
+          test_status=${PIPESTATUS[0]}
+          set -e
+          source_sha=$(git rev-parse HEAD)
+          node scripts/ground-calibration-execution-receipt.mjs \
+            --config config/ground-ga.v1.json \
+            --source-sha "$source_sha" \
+            --exit-code "$test_status" \
+            --log ground-calibration-test.log \
+            --output ground-calibration-execution-receipt.json
+          exit "$test_status"
+
+      - name: Verify exact-source calibration gate
+        if: always()
+        shell: bash
+        run: |
+          source_sha=$(git rev-parse HEAD)
+          node scripts/ground-calibration-verify.mjs \
+            --config config/ground-ga.v1.json \
+            --source-sha "$source_sha" \
+            --release-tag "${{ github.event.inputs.tag || github.ref_name }}" \
+            --execution ground-calibration-execution-receipt.json \
+            --output ground-calibration-receipt.json
+
+      - name: Preserve calibration receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ground-calibration-receipt
+          path: ground-calibration-receipt.json
+
   build:
     name: Build ${{ matrix.target }}
+    needs: verify-calibration
     if: ${{ github.event_name != 'workflow_dispatch' || !inputs.publish_only }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          # macOS (builds universal binary on arm64 runner)
+          # macOS Apple Silicon
           - target: aarch64-apple-darwin
-            os: macos-latest
+            os: macos-15
             name: darwin-arm64
+          # macOS Intel
+          - target: x86_64-apple-darwin
+            os: macos-15-intel
+            name: darwin-x64
           # Linux x64
           - target: x86_64-unknown-linux-gnu
-            os: ubuntu-latest
+            os: ubuntu-24.04
             name: linux-x64
           # Linux ARM64
           - target: aarch64-unknown-linux-gnu
-            os: ubuntu-latest
+            os: ubuntu-24.04-arm
             name: linux-arm64
           # Windows x64
           - target: x86_64-pc-windows-msvc
@@ -50,7 +105,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           ref: ${{ github.event.inputs.tag || github.ref }}
 
@@ -60,22 +115,30 @@ jobs:
         run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
         with:
           targets: ${{ matrix.target }}
-
-      - name: Install cross-compilation tools (Linux ARM64)
-        if: matrix.target == 'aarch64-unknown-linux-gnu'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-aarch64-linux-gnu
 
       - name: Build
         working-directory: packages/ground
         run: cargo build --release --target ${{ matrix.target }}
         env:
           GROUND_SOURCE_SHA: ${{ steps.provenance.outputs.sha }}
-          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
+
+      - name: Smoke native CLI and MCP
+        shell: bash
+        run: |
+          ground_binary="packages/ground/target/${{ matrix.target }}/release/ground"
+          mcp_binary="packages/ground/target/${{ matrix.target }}/release/ground-mcp"
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            ground_binary="${ground_binary}.exe"
+            mcp_binary="${mcp_binary}.exe"
+          fi
+          node packages/ground/npm/pilot/smoke-native-release.mjs \
+            "$ground_binary" \
+            "$mcp_binary" \
+            "${{ matrix.name }}" \
+            "packages/ground/ground-${{ matrix.name }}-smoke.json"
 
       - name: Package (Unix)
         if: runner.os != 'Windows'
@@ -96,10 +159,12 @@ jobs:
           Compress-Archive -Path dist\* -DestinationPath ground-${{ matrix.name }}.zip
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: ground-${{ matrix.name }}
-          path: packages/ground/ground-${{ matrix.name }}.*
+          path: |
+            packages/ground/ground-${{ matrix.name }}.*
+            packages/ground/ground-${{ matrix.name }}-smoke.json
 
   release:
     name: Create Release
@@ -108,7 +173,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           path: artifacts
 
@@ -121,7 +186,7 @@ jobs:
           cat SHA256SUMS
 
       - name: Create Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v1
         with:
           tag_name: ${{ github.event.inputs.tag || github.ref_name }}
           name: Ground ${{ github.event.inputs.tag || github.ref_name }}
@@ -143,7 +208,8 @@ jobs:
 
             | Platform | File |
             |----------|------|
-            | macOS (Apple Silicon + Intel via Rosetta) | `ground-darwin-arm64.tar.gz` |
+            | macOS Apple Silicon | `ground-darwin-arm64.tar.gz` |
+            | macOS Intel | `ground-darwin-x64.tar.gz` |
             | Linux x64 | `ground-linux-x64.tar.gz` |
             | Linux ARM64 | `ground-linux-arm64.tar.gz` |
             | Windows x64 | `ground-win32-x64.zip` |
@@ -163,20 +229,20 @@ jobs:
 
   publish-npm:
     name: Publish npm through trusted publishing
-    needs: release
-    if: ${{ always() && (inputs.publish_only || needs.release.result == 'success') }}
+    needs: [release, verify-calibration]
+    if: ${{ always() && needs.verify-calibration.result == 'success' && (inputs.publish_only || needs.release.result == 'success') }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
     steps:
       - name: Checkout release source
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           ref: ${{ github.event.inputs.tag || github.ref }}
 
       - name: Set up Node for npm trusted publishing
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: '24'
           registry-url: 'https://registry.npmjs.org'
@@ -194,6 +260,100 @@ jobs:
         working-directory: packages/ground/npm
         run: node release-verify.js
 
+      - name: Check whether exact package version already exists
+        id: package
+        working-directory: packages/ground/npm
+        shell: bash
+        run: |
+          package_name=$(node -p "require('./package.json').name")
+          version=$(node -p "require('./package.json').version")
+          published_version=$(npm view "${package_name}@${version}" version 2>/dev/null || true)
+          if test "$published_version" = "$version"; then
+            echo "already_published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "already_published=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Publish package through npm trusted publishing
+        if: steps.package.outputs.already_published != 'true'
         working-directory: packages/ground/npm
         run: npm publish --access public
+
+  consumer-smoke:
+    name: Install published package on ${{ matrix.name }}
+    needs: publish-npm
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            name: darwin-arm64
+          - os: macos-15-intel
+            name: darwin-x64
+          - os: ubuntu-24.04
+            name: linux-x64
+          - os: ubuntu-24.04-arm
+            name: linux-arm64
+          - os: windows-latest
+            name: win32-x64
+    steps:
+      - name: Checkout release source
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - name: Set up Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false
+
+      - name: Smoke a fresh published-package consumer
+        shell: bash
+        run: |
+          version=$(node -p "require('./packages/ground/npm/package.json').version")
+          source_sha=$(git rev-parse HEAD)
+          node packages/ground/npm/pilot/smoke-published-consumer.mjs \
+            "@createsomething/ground-mcp@${version}" \
+            "${{ matrix.name }}" \
+            "$source_sha" \
+            "packages/ground/ground-${{ matrix.name }}-consumer-smoke.json"
+
+      - name: Upload consumer receipt
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ground-${{ matrix.name }}-consumer-smoke
+          path: packages/ground/ground-${{ matrix.name }}-consumer-smoke.json
+
+  publish-consumer-receipts:
+    name: Publish consumer smoke receipts
+    needs: consumer-smoke
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Download consumer receipts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: ground-*-consumer-smoke
+          path: artifacts
+          merge-multiple: true
+
+      - name: Verify, checksum, and attach consumer receipts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
+        shell: bash
+        run: |
+          test "$(find artifacts -type f -name 'ground-*-consumer-smoke.json' | wc -l | tr -d ' ')" = "5"
+          find artifacts -type f -name 'ground-*-consumer-smoke.json' -print0 \
+            | sort -z \
+            | xargs -0 sha256sum \
+            | sed 's#  .*/#  #' > CONSUMER-SHA256SUMS
+          while IFS= read -r receipt; do
+            gh release upload "$RELEASE_TAG" "$receipt" --clobber
+          done < <(find artifacts -type f -name 'ground-*-consumer-smoke.json' | sort)
+          gh release upload "$RELEASE_TAG" CONSUMER-SHA256SUMS --clobber

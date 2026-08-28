@@ -21,6 +21,22 @@ Everything below reduces to three questions a reviewer asks:
 
 If you can answer yes to all three with evidence, the submission is ready for review.
 
+## Classify authority before applying OAuth rules
+
+Before treating any token, scope, consent screen, session, `Authorization` header, or 401 as Webflow authorization, identify:
+
+| Field | Required classification |
+| --- | --- |
+| Issuer | Webflow, the App developer, or a named third-party provider |
+| Audience | The service that accepts the credential |
+| Protected resource | Webflow Data API/site/user data, the App's own backend, or third-party data |
+| App capability | Designer Extension, Data Client, or Hybrid |
+| Credential type | Webflow OAuth token, Webflow Designer ID token, App session, or third-party token |
+
+Do not infer Webflow authority from the words `token`, `scope`, `OAuth`, `session`, `consent`, `Authorization`, or `401`. Apply Webflow OAuth scopes, install-consent, token-storage, revocation, and Data API lifecycle requirements only when the credential is issued by Webflow or carries authority over Webflow APIs, sites, users, or data. A Designer Extension-only App with no Data Client has no Webflow OAuth scopes to minimize and needs no developer-built Webflow consent screen.
+
+For an App-owned session or third-party OAuth flow, use the provider's documented architecture and general security controls. Record the result as `published requirement`, `security control`, `review-required`, or `N/A`; do not present a security recommendation as a confirmed Marketplace violation. A client-side third-party token is not automatically a defect when the provider's documented browser SDK requires it—verify its scope, lifetime, storage, exposure, and revocation before assigning severity or prescribing a proxy.
+
 ## Phase 1 — Choose the App type
 
 Webflow Apps are built from two building blocks. An App can use one or both.
@@ -92,7 +108,7 @@ Four exemplar controls set the tone. The authoritative item-by-item set is the *
 
 ### Scopes
 
-- **Request the minimum scopes your App actually uses.** Each Data API endpoint lists its required scope; take the union of what you actually call and nothing more. Over-asking makes users hesitant and gives the reviewer more to verify.
+- **For Data Clients and Hybrid Apps, request the minimum Webflow scopes your App actually uses.** Each Data API endpoint lists its required scope; take the union of what you actually call and nothing more. Over-asking makes users hesitant and gives the reviewer more to verify. Mark this `N/A` for a Designer Extension-only App that does not call the Webflow Data API.
 - Keep the scopes in your Install URL equal to or a subset of the scopes configured in app settings, or installs will error.
 
 See `reference/oauth-scopes-and-security.md` for the full scope list and the OAuth flow.

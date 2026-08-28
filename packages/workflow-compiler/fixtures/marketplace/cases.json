@@ -23,7 +23,7 @@
       "title": "Approval remains reviewer-owned",
       "initialState": "ready_for_review",
       "actionId": "approve_template",
-      "actorId": "workflow-runtime",
+      "actorId": "marketplace-reviewer",
       "evidence": {
         "version_id": "version-fixture-002",
         "reviewer_id": "reviewer-fixture-001",
@@ -39,7 +39,7 @@
       "title": "Autonomous creator messaging remains blocked",
       "initialState": "ready_for_review",
       "actionId": "send_creator_decision",
-      "actorId": "workflow-runtime",
+      "actorId": "marketplace-reviewer",
       "evidence": {
         "reviewer_id": "reviewer-fixture-001",
         "human_send_confirmation": true,

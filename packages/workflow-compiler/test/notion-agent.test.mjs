@@ -1,0 +1,1286 @@
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import test from 'node:test';
+
+import {
+  compileWorkflowDefinition,
+  createNotionCustomAgentBlueprint,
+  evaluateNotionCustomAgentInstallation,
+  evaluateNotionCustomAgentOperationalReceipts
+} from '../dist/index.js';
+
+const workflowUrl = new URL('../fixtures/notion-custom-agent/workflow.json', import.meta.url);
+
+function readOnlyBlueprintInput() {
+  return {
+    schemaVersion: 'notion_custom_agent_blueprint_input.v0.1',
+    blueprintId: 'agency-ops-evidence-triage.v0.1',
+    agentId: 'agency-ops-evidence-triage',
+    instructions: {
+      sourceRef: 'policy://agency-ops/evidence-triage/v0.1',
+      sha256: 'sha256:instruction-fixture-v0.1'
+    },
+    resourceAccess: [
+      {
+        resourceRef: 'notion-data-source://sanitized-agency-ops-evidence',
+        kind: 'notion_data_source',
+        level: 'can_view',
+        purpose: 'Read sanitized evidence records for a manual review.'
+      }
+    ],
+    triggers: [
+      {
+        triggerId: 'manual-review',
+        kind: 'manual',
+        intent: 'Run only when an operator explicitly requests evidence triage.'
+      }
+    ],
+    toolBindings: [
+      {
+        actionId: 'inspect_evidence_readiness',
+        key: 'inspectEvidenceReadiness',
+        runtime: 'notion_worker',
+        contractRef: 'notion-worker://agency-ops/inspectEvidenceReadiness@v0.1'
+      }
+    ]
+  };
+}
+
+function matchingConfigurationReceipt(blueprint, agentRef) {
+  return {
+    schemaVersion: 'notion_custom_agent_configuration_receipt.v0.1',
+    blueprintId: blueprint.blueprintId,
+    agentRef,
+    workflowDefinitionHash: blueprint.definitionHash,
+    instructionsSha256: blueprint.agent.instructions.sha256,
+    resourceAccess: blueprint.resourceAccess.map(({ resourceRef, kind, level }) => ({
+      resourceRef,
+      kind,
+      level
+    })),
+    triggers: blueprint.triggers.map(({ triggerId, kind }) => ({ triggerId, kind })),
+    toolBindings: blueprint.toolBindings.map(({ actionId, key, runtime, contractRef }) => ({
+      actionId,
+      key,
+      runtime,
+      contractRef
+    }))
+  };
+}
+
+test('compiles a read-only Custom Agent blueprint that waits for installation readback', async () => {
+  const workflow = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const compiled = compileWorkflowDefinition(workflow);
+
+  const blueprint = createNotionCustomAgentBlueprint(compiled, {
+    schemaVersion: 'notion_custom_agent_blueprint_input.v0.1',
+    blueprintId: 'agency-ops-evidence-triage.v0.1',
+    agentId: 'agency-ops-evidence-triage',
+    instructions: {
+      sourceRef: 'policy://agency-ops/evidence-triage/v0.1',
+      sha256: 'sha256:instruction-fixture-v0.1'
+    },
+    resourceAccess: [
+      {
+        resourceRef: 'notion-data-source://sanitized-agency-ops-evidence',
+        kind: 'notion_data_source',
+        level: 'can_view',
+        purpose: 'Read sanitized evidence records for a manual review.'
+      }
+    ],
+    triggers: [
+      {
+        triggerId: 'manual-review',
+        kind: 'manual',
+        intent: 'Run only when an operator explicitly requests evidence triage.'
+      }
+    ],
+    toolBindings: [
+      {
+        actionId: 'inspect_evidence_readiness',
+        key: 'inspectEvidenceReadiness',
+        runtime: 'notion_worker',
+        contractRef: 'notion-worker://agency-ops/inspectEvidenceReadiness@v0.1'
+      }
+    ]
+  });
+
+  assert.deepEqual(blueprint, {
+    schemaVersion: 'notion_agent_blueprint.v0.1',
+    workflowId: 'agency-ops.evidence-triage',
+    workflowVersion: '0.1.0',
+    definitionHash: compiled.definitionHash,
+    blueprintId: 'agency-ops-evidence-triage.v0.1',
+    host: 'notion_custom_agent',
+    agent: {
+      id: 'agency-ops-evidence-triage',
+      title: 'Agency Ops evidence triage',
+      purpose: 'Summarize evidence gaps without changing Notion or an external system.',
+      instructions: {
+        sourceRef: 'policy://agency-ops/evidence-triage/v0.1',
+        sha256: 'sha256:instruction-fixture-v0.1'
+      },
+      escalationOwner: 'agency-ops-lead'
+    },
+    resourceAccess: [
+      {
+        resourceRef: 'notion-data-source://sanitized-agency-ops-evidence',
+        kind: 'notion_data_source',
+        level: 'can_view',
+        purpose: 'Read sanitized evidence records for a manual review.'
+      }
+    ],
+    triggers: [
+      {
+        triggerId: 'manual-review',
+        kind: 'manual',
+        intent: 'Run only when an operator explicitly requests evidence triage.'
+      }
+    ],
+    toolBindings: [
+      {
+        actionId: 'inspect_evidence_readiness',
+        key: 'inspectEvidenceReadiness',
+        runtime: 'notion_worker',
+        contractRef: 'notion-worker://agency-ops/inspectEvidenceReadiness@v0.1',
+        targetSystemId: 'notion-worker',
+        kind: 'read',
+        authority: 'agency-ops-operator',
+        autonomy: 'auto_allow',
+        parameters: [
+          {
+            name: 'include_drafts',
+            type: 'boolean',
+            description: 'Whether draft evidence is included in the read-only summary.'
+          },
+          {
+            name: 'lookback_days',
+            type: 'number',
+            description: 'Number of days of evidence to inspect.'
+          },
+          {
+            name: 'workflow_reference',
+            type: 'string',
+            description: 'Sanitized workflow record reference to inspect.'
+          }
+        ],
+        requiredEvidence: ['include_drafts', 'lookback_days', 'workflow_reference'],
+        receiptFields: ['action_id', 'correlation_id', 'outcome', 'workflow_id'],
+        recovery: {
+          mode: 'manual_fallback',
+          owner: 'agency-ops-lead',
+          path: 'Pause the agent, retain the inspection result, and ask an operator to review the selected record.'
+        },
+        readOnlyHint: true
+      }
+    ],
+    installation: {
+      disposition: 'wait',
+      reasonCode: 'CONFIGURATION_RECEIPT_REQUIRED',
+      requiredReceipts: ['configuration', 'activation', 'run', 'tool']
+    }
+  });
+});
+
+test('rejects mutating Notion resource access without a governed write or publish action', async () => {
+  const workflow = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const compiled = compileWorkflowDefinition(workflow);
+  const input = readOnlyBlueprintInput();
+  input.resourceAccess[0].level = 'can_edit';
+
+  assert.throws(
+    () => createNotionCustomAgentBlueprint(compiled, input),
+    (error) => error?.code === 'MUTATING_RESOURCE_ACCESS_REQUIRES_WRITE_ACTION'
+  );
+});
+
+test('freezes and provenance-checks compiled blueprints before either evaluator trusts them', async () => {
+  const workflow = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const compiled = compileWorkflowDefinition(workflow);
+  const blueprint = createNotionCustomAgentBlueprint(compiled, readOnlyBlueprintInput());
+
+  assert.throws(() => {
+    blueprint.toolBindings[0].kind = 'write';
+  }, TypeError);
+
+  const detachedBlueprint = structuredClone(blueprint);
+  detachedBlueprint.toolBindings[0].kind = 'write';
+
+  assert.throws(
+    () => evaluateNotionCustomAgentInstallation(detachedBlueprint),
+    (error) => error?.code === 'UNVERIFIED_NOTION_CUSTOM_AGENT_BLUEPRINT'
+  );
+  assert.throws(
+    () => evaluateNotionCustomAgentOperationalReceipts(detachedBlueprint),
+    (error) => error?.code === 'UNVERIFIED_NOTION_CUSTOM_AGENT_BLUEPRINT'
+  );
+});
+
+test('stops an unconfirmed approval-required decision tool receipt', async () => {
+  const workflow = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const action = workflow.actions.find((candidate) => candidate.id === 'inspect_evidence_readiness');
+  action.kind = 'decision';
+  action.autonomy = 'approval_required';
+  action.approval = { required: true, owner: 'agency-ops-lead' };
+  const compiled = compileWorkflowDefinition(workflow);
+  const blueprint = createNotionCustomAgentBlueprint(compiled, readOnlyBlueprintInput());
+  const installation = evaluateNotionCustomAgentInstallation(
+    blueprint,
+    matchingConfigurationReceipt(blueprint, 'notion-agent://approval-required-decision')
+  );
+
+  assert.deepEqual(
+    evaluateNotionCustomAgentOperationalReceipts(blueprint, {
+      schemaVersion: 'notion_custom_agent_operational_receipts.v0.1',
+      blueprintId: 'agency-ops-evidence-triage.v0.1',
+      agentRef: 'notion-agent://approval-required-decision',
+      activationReceipt: {
+        triggerId: 'manual-review',
+        runRef: 'notion-run://approval-required-decision',
+        activationRef: 'notion-activation://approval-required-decision'
+      },
+      runReceipt: {
+        runRef: 'notion-run://approval-required-decision'
+      },
+      toolReceipts: [
+        {
+          actionId: 'inspect_evidence_readiness',
+          runRef: 'notion-run://approval-required-decision',
+          toolInvocationRef: 'notion-worker-run://approval-required-decision',
+          confirmationState: 'not_confirmed'
+        }
+      ],
+      mutationReceipts: []
+    }, installation),
+    {
+      schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
+      blueprintId: 'agency-ops-evidence-triage.v0.1',
+      disposition: 'stop',
+      reasonCode: 'CONSEQUENTIAL_TOOL_AUTONOMY_VIOLATION',
+      missingActionIds: ['inspect_evidence_readiness']
+    }
+  );
+
+  assert.deepEqual(
+    evaluateNotionCustomAgentOperationalReceipts(blueprint, {
+      schemaVersion: 'notion_custom_agent_operational_receipts.v0.1',
+      blueprintId: 'agency-ops-evidence-triage.v0.1',
+      agentRef: 'notion-agent://approval-required-decision',
+      activationReceipt: {
+        triggerId: 'manual-review',
+        runRef: 'notion-run://approval-required-decision-confirmed',
+        activationRef: 'notion-activation://approval-required-decision-confirmed'
+      },
+      runReceipt: {
+        runRef: 'notion-run://approval-required-decision-confirmed'
+      },
+      toolReceipts: [
+        {
+          actionId: 'inspect_evidence_readiness',
+          runRef: 'notion-run://approval-required-decision-confirmed',
+          toolInvocationRef: 'notion-worker-run://approval-required-decision-confirmed',
+          confirmationState: 'confirmed'
+        }
+      ],
+      mutationReceipts: []
+    }, installation),
+    {
+      schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
+      blueprintId: 'agency-ops-evidence-triage.v0.1',
+      disposition: 'pass',
+      reasonCode: 'OPERATIONAL_RECEIPTS_MATCHED'
+    }
+  );
+});
+
+test('stops a blocked decision before it accepts any operational receipt', async () => {
+  const workflow = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const action = workflow.actions.find((candidate) => candidate.id === 'inspect_evidence_readiness');
+  action.kind = 'decision';
+  action.autonomy = 'blocked';
+  const compiled = compileWorkflowDefinition(workflow);
+  const blueprint = createNotionCustomAgentBlueprint(compiled, readOnlyBlueprintInput());
+  const installation = evaluateNotionCustomAgentInstallation(
+    blueprint,
+    matchingConfigurationReceipt(blueprint, 'notion-agent://blocked-decision')
+  );
+
+  assert.deepEqual(
+    evaluateNotionCustomAgentOperationalReceipts(blueprint, {
+      schemaVersion: 'notion_custom_agent_operational_receipts.v0.1',
+      blueprintId: 'agency-ops-evidence-triage.v0.1',
+      agentRef: 'notion-agent://blocked-decision',
+      activationReceipt: {
+        triggerId: 'manual-review',
+        runRef: 'notion-run://blocked-decision',
+        activationRef: 'notion-activation://blocked-decision'
+      },
+      runReceipt: {
+        runRef: 'notion-run://blocked-decision'
+      },
+      toolReceipts: [],
+      mutationReceipts: []
+    }, installation),
+    {
+      schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
+      blueprintId: 'agency-ops-evidence-triage.v0.1',
+      disposition: 'stop',
+      reasonCode: 'CONSEQUENTIAL_TOOL_AUTONOMY_VIOLATION',
+      missingActionIds: ['inspect_evidence_readiness']
+    }
+  );
+});
+
+test('stops a mutation receipt attributed to a read-only binding', async () => {
+  const workflow = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const compiled = compileWorkflowDefinition(workflow);
+  const blueprint = createNotionCustomAgentBlueprint(compiled, readOnlyBlueprintInput());
+  const installation = evaluateNotionCustomAgentInstallation(
+    blueprint,
+    matchingConfigurationReceipt(blueprint, 'notion-agent://read-binding-mutation')
+  );
+
+  assert.deepEqual(
+    evaluateNotionCustomAgentOperationalReceipts(blueprint, {
+      schemaVersion: 'notion_custom_agent_operational_receipts.v0.1',
+      blueprintId: 'agency-ops-evidence-triage.v0.1',
+      agentRef: 'notion-agent://read-binding-mutation',
+      activationReceipt: {
+        triggerId: 'manual-review',
+        runRef: 'notion-run://read-binding-mutation',
+        activationRef: 'notion-activation://read-binding-mutation'
+      },
+      runReceipt: {
+        runRef: 'notion-run://read-binding-mutation'
+      },
+      toolReceipts: [
+        {
+          actionId: 'inspect_evidence_readiness',
+          runRef: 'notion-run://read-binding-mutation',
+          toolInvocationRef: 'notion-worker-run://read-binding-mutation',
+          confirmationState: 'not_required'
+        }
+      ],
+      mutationReceipts: [
+        {
+          actionId: 'inspect_evidence_readiness',
+          runRef: 'notion-run://read-binding-mutation',
+          toolInvocationRef: 'notion-worker-run://read-binding-mutation',
+          mutationRef: 'notion-mutation://read-binding-mutation'
+        }
+      ]
+    }, installation),
+    {
+      schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
+      blueprintId: 'agency-ops-evidence-triage.v0.1',
+      disposition: 'stop',
+      reasonCode: 'NON_MUTATING_ACTION_MUTATION_RECEIPT',
+      unexpectedMutationActionIds: ['inspect_evidence_readiness']
+    }
+  );
+});
+
+test('passes a supplied configuration receipt only when it matches the read-only blueprint', async () => {
+  const workflow = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const compiled = compileWorkflowDefinition(workflow);
+  const blueprint = createNotionCustomAgentBlueprint(compiled, {
+    schemaVersion: 'notion_custom_agent_blueprint_input.v0.1',
+    blueprintId: 'agency-ops-evidence-triage.v0.1',
+    agentId: 'agency-ops-evidence-triage',
+    instructions: {
+      sourceRef: 'policy://agency-ops/evidence-triage/v0.1',
+      sha256: 'sha256:instruction-fixture-v0.1'
+    },
+    resourceAccess: [
+      {
+        resourceRef: 'notion-data-source://sanitized-agency-ops-evidence',
+        kind: 'notion_data_source',
+        level: 'can_view',
+        purpose: 'Read sanitized evidence records for a manual review.'
+      }
+    ],
+    triggers: [
+      {
+        triggerId: 'manual-review',
+        kind: 'manual',
+        intent: 'Run only when an operator explicitly requests evidence triage.'
+      }
+    ],
+    toolBindings: [
+      {
+        actionId: 'inspect_evidence_readiness',
+        key: 'inspectEvidenceReadiness',
+        runtime: 'notion_worker',
+        contractRef: 'notion-worker://agency-ops/inspectEvidenceReadiness@v0.1'
+      }
+    ]
+  });
+  assert.deepEqual(
+    evaluateNotionCustomAgentInstallation(blueprint, {
+      schemaVersion: 'notion_custom_agent_configuration_receipt.v0.1',
+      blueprintId: 'agency-ops-evidence-triage.v0.1',
+      agentRef: 'notion-agent://agency-ops-evidence-triage-fixture',
+      workflowDefinitionHash: compiled.definitionHash,
+      instructionsSha256: 'sha256:instruction-fixture-v0.1',
+      resourceAccess: [
+        {
+          resourceRef: 'notion-data-source://sanitized-agency-ops-evidence',
+          kind: 'notion_data_source',
+          level: 'can_view'
+        }
+      ],
+      triggers: [{ triggerId: 'manual-review', kind: 'manual' }],
+      toolBindings: [
+        {
+          actionId: 'inspect_evidence_readiness',
+          key: 'inspectEvidenceReadiness',
+          runtime: 'notion_worker',
+          contractRef: 'notion-worker://agency-ops/inspectEvidenceReadiness@v0.1'
+        }
+      ]
+    }),
+    {
+      schemaVersion: 'notion_custom_agent_installation_evaluation.v0.1',
+      blueprintId: 'agency-ops-evidence-triage.v0.1',
+      agentRef: 'notion-agent://agency-ops-evidence-triage-fixture',
+      disposition: 'pass',
+      reasonCode: 'CONFIGURATION_RECEIPT_MATCHED',
+      requiredOperationalReceipts: ['activation', 'run', 'tool']
+    }
+  );
+});
+
+test('stops when a configuration receipt binds a different Worker contract', async () => {
+  const workflow = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const compiled = compileWorkflowDefinition(workflow);
+  const blueprint = createNotionCustomAgentBlueprint(compiled, {
+    schemaVersion: 'notion_custom_agent_blueprint_input.v0.1',
+    blueprintId: 'agency-ops-evidence-triage.v0.1',
+    agentId: 'agency-ops-evidence-triage',
+    instructions: {
+      sourceRef: 'policy://agency-ops/evidence-triage/v0.1',
+      sha256: 'sha256:instruction-fixture-v0.1'
+    },
+    resourceAccess: [
+      {
+        resourceRef: 'notion-data-source://sanitized-agency-ops-evidence',
+        kind: 'notion_data_source',
+        level: 'can_view',
+        purpose: 'Read sanitized evidence records for a manual review.'
+      }
+    ],
+    triggers: [
+      {
+        triggerId: 'manual-review',
+        kind: 'manual',
+        intent: 'Run only when an operator explicitly requests evidence triage.'
+      }
+    ],
+    toolBindings: [
+      {
+        actionId: 'inspect_evidence_readiness',
+        key: 'inspectEvidenceReadiness',
+        runtime: 'notion_worker',
+        contractRef: 'notion-worker://agency-ops/inspectEvidenceReadiness@v0.1'
+      }
+    ]
+  });
+
+  assert.deepEqual(
+    evaluateNotionCustomAgentInstallation(blueprint, {
+      schemaVersion: 'notion_custom_agent_configuration_receipt.v0.1',
+      blueprintId: 'agency-ops-evidence-triage.v0.1',
+      agentRef: 'notion-agent://agency-ops-evidence-triage-fixture',
+      workflowDefinitionHash: compiled.definitionHash,
+      instructionsSha256: 'sha256:instruction-fixture-v0.1',
+      resourceAccess: [
+        {
+          resourceRef: 'notion-data-source://sanitized-agency-ops-evidence',
+          kind: 'notion_data_source',
+          level: 'can_view'
+        }
+      ],
+      triggers: [{ triggerId: 'manual-review', kind: 'manual' }],
+      toolBindings: [
+        {
+          actionId: 'inspect_evidence_readiness',
+          key: 'inspectEvidenceReadiness',
+          runtime: 'notion_worker',
+          contractRef: 'notion-worker://agency-ops/inspectEvidenceReadiness@v0.2'
+        }
+      ]
+    }),
+    {
+      schemaVersion: 'notion_custom_agent_installation_evaluation.v0.1',
+      blueprintId: 'agency-ops-evidence-triage.v0.1',
+      agentRef: 'notion-agent://agency-ops-evidence-triage-fixture',
+      disposition: 'stop',
+      reasonCode: 'CONFIGURATION_RECEIPT_MISMATCH',
+      mismatchFields: ['toolBindings'],
+      requiredOperationalReceipts: ['activation', 'run', 'tool']
+    }
+  );
+});
+
+test('stops a write binding without confirmation and mutation proof', async () => {
+  const workflow = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const compiled = compileWorkflowDefinition(workflow);
+  const blueprint = createNotionCustomAgentBlueprint(compiled, {
+    schemaVersion: 'notion_custom_agent_blueprint_input.v0.1',
+    blueprintId: 'agency-ops-review-suggestion.v0.1',
+    agentId: 'agency-ops-evidence-triage',
+    instructions: {
+      sourceRef: 'policy://agency-ops/review-suggestion/v0.1',
+      sha256: 'sha256:review-suggestion-instruction-fixture-v0.1'
+    },
+    resourceAccess: [
+      {
+        resourceRef: 'notion-data-source://sanitized-agency-ops-evidence',
+        kind: 'notion_data_source',
+        level: 'can_edit',
+        purpose: 'Create a review-only suggestion after explicit confirmation.'
+      }
+    ],
+    triggers: [
+      {
+        triggerId: 'manual-review-suggestion',
+        kind: 'manual',
+        intent: 'Run only after an operator asks to create a review suggestion.'
+      }
+    ],
+    toolBindings: [
+      {
+        actionId: 'create_review_suggestion',
+        key: 'createReviewSuggestion',
+        runtime: 'notion_worker',
+        contractRef: 'notion-worker://agency-ops/createReviewSuggestion@v0.1'
+      }
+    ]
+  });
+  const installation = evaluateNotionCustomAgentInstallation(
+    blueprint,
+    matchingConfigurationReceipt(blueprint, 'notion-agent://review-suggestion-current')
+  );
+
+  assert.deepEqual(blueprint.installation.requiredReceipts, [
+    'configuration',
+    'activation',
+    'run',
+    'tool',
+    'mutation'
+  ]);
+
+  assert.deepEqual(evaluateNotionCustomAgentInstallation(blueprint), {
+    schemaVersion: 'notion_custom_agent_installation_evaluation.v0.1',
+    blueprintId: 'agency-ops-review-suggestion.v0.1',
+    disposition: 'wait',
+    reasonCode: 'CONFIGURATION_RECEIPT_REQUIRED',
+    requiredOperationalReceipts: ['activation', 'run', 'tool', 'mutation']
+  });
+
+  assert.deepEqual(
+    evaluateNotionCustomAgentOperationalReceipts(blueprint, {
+      schemaVersion: 'notion_custom_agent_operational_receipts.v0.1',
+      blueprintId: 'agency-ops-review-suggestion.v0.1',
+      agentRef: 'notion-agent://review-suggestion-current',
+      activationReceipt: {
+        triggerId: 'manual-review-suggestion',
+        runRef: 'notion-run://agency-ops-review-suggestion-fixture',
+        activationRef: 'notion-activation://agency-ops-review-suggestion-fixture'
+      },
+      runReceipt: {
+        runRef: 'notion-run://agency-ops-review-suggestion-fixture'
+      },
+      toolReceipts: [
+        {
+          actionId: 'create_review_suggestion',
+          runRef: 'notion-run://agency-ops-review-suggestion-fixture',
+          toolInvocationRef: 'notion-worker-run://review-suggestion-fixture',
+          confirmationState: 'not_confirmed'
+        }
+      ],
+      mutationReceipts: []
+    }),
+    {
+      schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
+      blueprintId: 'agency-ops-review-suggestion.v0.1',
+      disposition: 'wait',
+      reasonCode: 'MATCHED_INSTALLATION_EVALUATION_REQUIRED'
+    }
+  );
+
+  assert.deepEqual(
+    evaluateNotionCustomAgentOperationalReceipts(blueprint, {
+      schemaVersion: 'notion_custom_agent_operational_receipts.v0.1',
+      blueprintId: 'agency-ops-review-suggestion.v0.1',
+      agentRef: 'notion-agent://review-suggestion-current',
+      activationReceipt: {
+        triggerId: 'manual-review-suggestion',
+        runRef: 'notion-run://agency-ops-review-suggestion-current',
+        activationRef: 'notion-activation://agency-ops-review-suggestion-fixture'
+      },
+      runReceipt: {
+        runRef: 'notion-run://agency-ops-review-suggestion-current'
+      },
+      toolReceipts: [
+        {
+          actionId: 'create_review_suggestion',
+          runRef: 'notion-run://agency-ops-review-suggestion-previous',
+          toolInvocationRef: 'notion-worker-run://review-suggestion-previous',
+          confirmationState: 'confirmed'
+        }
+      ],
+      mutationReceipts: [
+        {
+          actionId: 'create_review_suggestion',
+          runRef: 'notion-run://agency-ops-review-suggestion-previous',
+          toolInvocationRef: 'notion-worker-run://review-suggestion-previous',
+          mutationRef: 'notion-mutation://review-suggestion-previous'
+        }
+      ]
+    }, installation),
+    {
+      schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
+      blueprintId: 'agency-ops-review-suggestion.v0.1',
+      disposition: 'stop',
+      reasonCode: 'WRITE_CONFIRMATION_OR_MUTATION_RECEIPT_REQUIRED',
+      missingActionIds: ['create_review_suggestion']
+    }
+  );
+
+  assert.deepEqual(
+    evaluateNotionCustomAgentOperationalReceipts(blueprint, {
+      schemaVersion: 'notion_custom_agent_operational_receipts.v0.1',
+      blueprintId: 'agency-ops-review-suggestion.v0.1',
+      agentRef: 'notion-agent://review-suggestion-current',
+      activationReceipt: {
+        triggerId: 'manual-review-suggestion',
+        runRef: 'notion-run://agency-ops-review-suggestion-current',
+        activationRef: 'notion-activation://agency-ops-review-suggestion-fixture'
+      },
+      runReceipt: {
+        runRef: 'notion-run://agency-ops-review-suggestion-current'
+      },
+      toolReceipts: [
+        {
+          actionId: 'create_review_suggestion',
+          runRef: 'notion-run://agency-ops-review-suggestion-current',
+          toolInvocationRef: 'notion-worker-run://review-suggestion-current',
+          confirmationState: 'confirmed'
+        }
+      ],
+      agentRef: 'notion-agent://review-suggestion-current',
+      mutationReceipts: [
+        {
+          actionId: 'create_review_suggestion',
+          runRef: 'notion-run://agency-ops-review-suggestion-current',
+          toolInvocationRef: 'notion-worker-run://review-suggestion-current',
+          mutationRef: 'notion-mutation://review-suggestion-current'
+        }
+      ]
+    }, installation),
+    {
+      schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
+      blueprintId: 'agency-ops-review-suggestion.v0.1',
+      disposition: 'pass',
+      reasonCode: 'OPERATIONAL_RECEIPTS_MATCHED'
+    }
+  );
+
+  assert.deepEqual(
+    evaluateNotionCustomAgentOperationalReceipts(blueprint, {
+      schemaVersion: 'notion_custom_agent_operational_receipts.v0.1',
+      blueprintId: 'agency-ops-review-suggestion.v0.1',
+      activationReceipt: {
+        triggerId: 'manual-review-suggestion',
+        runRef: 'notion-run://agency-ops-review-suggestion-previous',
+        activationRef: 'notion-activation://agency-ops-review-suggestion-previous'
+      },
+      runReceipt: {
+        runRef: 'notion-run://agency-ops-review-suggestion-current'
+      },
+      toolReceipts: [
+        {
+          actionId: 'create_review_suggestion',
+          runRef: 'notion-run://agency-ops-review-suggestion-current',
+          toolInvocationRef: 'notion-worker-run://review-suggestion-current',
+          confirmationState: 'confirmed'
+        }
+      ],
+      mutationReceipts: [
+        {
+          actionId: 'create_review_suggestion',
+          runRef: 'notion-run://agency-ops-review-suggestion-current',
+          toolInvocationRef: 'notion-worker-run://review-suggestion-current',
+          mutationRef: 'notion-mutation://review-suggestion-current'
+        }
+      ]
+    }),
+    {
+      schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
+      blueprintId: 'agency-ops-review-suggestion.v0.1',
+      disposition: 'stop',
+      reasonCode: 'OPERATIONAL_RECEIPT_MISMATCH'
+    }
+  );
+
+  assert.deepEqual(
+    evaluateNotionCustomAgentOperationalReceipts(blueprint, {
+      schemaVersion: 'notion_custom_agent_operational_receipts.v0.1',
+      blueprintId: 'agency-ops-review-suggestion.v0.1',
+      agentRef: 'notion-agent://review-suggestion-current',
+      activationReceipt: {
+        triggerId: 'manual-review-suggestion',
+        runRef: 'notion-run://agency-ops-review-suggestion-current',
+        activationRef: 'notion-activation://agency-ops-review-suggestion-current'
+      },
+      runReceipt: {
+        runRef: 'notion-run://agency-ops-review-suggestion-current'
+      },
+      toolReceipts: [
+        {
+          actionId: 'create_review_suggestion',
+          runRef: 'notion-run://agency-ops-review-suggestion-current',
+          toolInvocationRef: 'notion-worker-run://review-suggestion-current',
+          confirmationState: 'confirmed'
+        },
+        {
+          actionId: 'unapproved_tool',
+          runRef: 'notion-run://agency-ops-review-suggestion-current',
+          toolInvocationRef: 'notion-worker-run://unapproved-tool-current',
+          confirmationState: 'confirmed'
+        }
+      ],
+      mutationReceipts: [
+        {
+          actionId: 'create_review_suggestion',
+          runRef: 'notion-run://agency-ops-review-suggestion-current',
+          toolInvocationRef: 'notion-worker-run://review-suggestion-current',
+          mutationRef: 'notion-mutation://review-suggestion-current'
+        },
+        {
+          actionId: 'unapproved_mutation',
+          runRef: 'notion-run://agency-ops-review-suggestion-current',
+          toolInvocationRef: 'notion-worker-run://unapproved-tool-current',
+          mutationRef: 'notion-mutation://unapproved-mutation-current'
+        }
+      ]
+    }, installation),
+    {
+      schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
+      blueprintId: 'agency-ops-review-suggestion.v0.1',
+      disposition: 'stop',
+      reasonCode: 'UNDECLARED_RECEIPT_ACTION',
+      unexpectedActionIds: ['unapproved_mutation', 'unapproved_tool']
+    }
+  );
+});
+
+test('rejects reused write and publish operational receipt references', async () => {
+  const workflow = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const publishAction = structuredClone(
+    workflow.actions.find((candidate) => candidate.id === 'create_review_suggestion')
+  );
+  publishAction.id = 'publish_review_suggestion';
+  publishAction.title = 'Publish review suggestion';
+  publishAction.kind = 'publish';
+  publishAction.tool.name = 'publishReviewSuggestion';
+  workflow.actions.push(publishAction);
+  workflow.agents.find((candidate) => candidate.id === 'agency-ops-evidence-triage').allowedActionIds.push(
+    'publish_review_suggestion'
+  );
+  const compiled = compileWorkflowDefinition(workflow);
+  const blueprint = createNotionCustomAgentBlueprint(compiled, {
+    schemaVersion: 'notion_custom_agent_blueprint_input.v0.1',
+    blueprintId: 'agency-ops-multi-write.v0.1',
+    agentId: 'agency-ops-evidence-triage',
+    instructions: {
+      sourceRef: 'policy://agency-ops/multi-write/v0.1',
+      sha256: 'sha256:multi-write-instruction-fixture-v0.1'
+    },
+    resourceAccess: [
+      {
+        resourceRef: 'notion-data-source://sanitized-agency-ops-evidence',
+        kind: 'notion_data_source',
+        level: 'can_edit',
+        purpose: 'Create or publish review suggestions after explicit confirmation.'
+      }
+    ],
+    triggers: [
+      {
+        triggerId: 'manual-review-suggestion',
+        kind: 'manual',
+        intent: 'Run only after an operator asks to create or publish a review suggestion.'
+      }
+    ],
+    toolBindings: [
+      {
+        actionId: 'create_review_suggestion',
+        key: 'createReviewSuggestion',
+        runtime: 'notion_worker',
+        contractRef: 'notion-worker://agency-ops/createReviewSuggestion@v0.1'
+      },
+      {
+        actionId: 'publish_review_suggestion',
+        key: 'publishReviewSuggestion',
+        runtime: 'notion_worker',
+        contractRef: 'notion-worker://agency-ops/publishReviewSuggestion@v0.1'
+      }
+    ]
+  });
+  const installation = evaluateNotionCustomAgentInstallation(
+    blueprint,
+    matchingConfigurationReceipt(blueprint, 'notion-agent://multi-write')
+  );
+  const baseReceipts = {
+    schemaVersion: 'notion_custom_agent_operational_receipts.v0.1',
+    blueprintId: blueprint.blueprintId,
+    agentRef: 'notion-agent://multi-write',
+    activationReceipt: {
+      triggerId: 'manual-review-suggestion',
+      runRef: 'notion-run://multi-write',
+      activationRef: 'notion-activation://multi-write'
+    },
+    runReceipt: {
+      runRef: 'notion-run://multi-write'
+    }
+  };
+
+  assert.throws(
+    () =>
+      evaluateNotionCustomAgentOperationalReceipts(
+        blueprint,
+        {
+          ...baseReceipts,
+          toolReceipts: [
+            {
+              actionId: 'create_review_suggestion',
+              runRef: 'notion-run://multi-write',
+              toolInvocationRef: 'notion-worker-run://multi-write-create',
+              confirmationState: 'confirmed'
+            },
+            {
+              actionId: 'publish_review_suggestion',
+              runRef: 'notion-run://multi-write',
+              toolInvocationRef: 'notion-worker-run://multi-write-publish',
+              confirmationState: 'confirmed'
+            }
+          ],
+          mutationReceipts: [
+            {
+              actionId: 'create_review_suggestion',
+              runRef: 'notion-run://multi-write',
+              toolInvocationRef: 'notion-worker-run://multi-write-create',
+              mutationRef: 'notion-mutation://multi-write-shared'
+            },
+            {
+              actionId: 'publish_review_suggestion',
+              runRef: 'notion-run://multi-write',
+              toolInvocationRef: 'notion-worker-run://multi-write-publish',
+              mutationRef: 'notion-mutation://multi-write-shared'
+            }
+          ]
+        },
+        installation
+      ),
+    /\$\.mutationReceipts\.mutationRef entries must be unique\./
+  );
+
+  assert.throws(
+    () =>
+      evaluateNotionCustomAgentOperationalReceipts(
+        blueprint,
+        {
+          ...baseReceipts,
+          toolReceipts: [
+            {
+              actionId: 'create_review_suggestion',
+              runRef: 'notion-run://multi-write',
+              toolInvocationRef: 'notion-worker-run://multi-write-shared',
+              confirmationState: 'confirmed'
+            },
+            {
+              actionId: 'publish_review_suggestion',
+              runRef: 'notion-run://multi-write',
+              toolInvocationRef: 'notion-worker-run://multi-write-shared',
+              confirmationState: 'confirmed'
+            }
+          ],
+          mutationReceipts: [
+            {
+              actionId: 'create_review_suggestion',
+              runRef: 'notion-run://multi-write',
+              toolInvocationRef: 'notion-worker-run://multi-write-shared',
+              mutationRef: 'notion-mutation://multi-write-create'
+            },
+            {
+              actionId: 'publish_review_suggestion',
+              runRef: 'notion-run://multi-write',
+              toolInvocationRef: 'notion-worker-run://multi-write-shared',
+              mutationRef: 'notion-mutation://multi-write-publish'
+            }
+          ]
+        },
+        installation
+      ),
+    /\$\.toolReceipts\.toolInvocationRef entries must be unique\./
+  );
+
+  assert.deepEqual(
+    evaluateNotionCustomAgentOperationalReceipts(
+      blueprint,
+      {
+        ...baseReceipts,
+        toolReceipts: [
+          {
+            actionId: 'create_review_suggestion',
+            runRef: 'notion-run://multi-write',
+            toolInvocationRef: 'notion-worker-run://multi-write-create',
+            confirmationState: 'confirmed'
+          },
+          {
+            actionId: 'publish_review_suggestion',
+            runRef: 'notion-run://multi-write',
+            toolInvocationRef: 'notion-worker-run://multi-write-publish',
+            confirmationState: 'confirmed'
+          }
+        ],
+        mutationReceipts: [
+          {
+            actionId: 'create_review_suggestion',
+            runRef: 'notion-run://multi-write',
+            toolInvocationRef: 'notion-worker-run://multi-write-publish',
+            mutationRef: 'notion-mutation://multi-write-create'
+          },
+          {
+            actionId: 'publish_review_suggestion',
+            runRef: 'notion-run://multi-write',
+            toolInvocationRef: 'notion-worker-run://multi-write-create',
+            mutationRef: 'notion-mutation://multi-write-publish'
+          }
+        ]
+      },
+      installation
+    ),
+    {
+      schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
+      blueprintId: 'agency-ops-multi-write.v0.1',
+      disposition: 'stop',
+      reasonCode: 'WRITE_CONFIRMATION_OR_MUTATION_RECEIPT_REQUIRED',
+      missingActionIds: ['create_review_suggestion', 'publish_review_suggestion']
+    }
+  );
+});
+
+test('stops a blocked write before it accepts matching operational receipts', async () => {
+  const workflow = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const action = workflow.actions.find((candidate) => candidate.id === 'create_review_suggestion');
+  action.autonomy = 'blocked';
+  const compiled = compileWorkflowDefinition(workflow);
+  const blueprint = createNotionCustomAgentBlueprint(compiled, {
+    schemaVersion: 'notion_custom_agent_blueprint_input.v0.1',
+    blueprintId: 'agency-ops-review-suggestion.v0.1',
+    agentId: 'agency-ops-evidence-triage',
+    instructions: {
+      sourceRef: 'policy://agency-ops/review-suggestion/v0.1',
+      sha256: 'sha256:review-suggestion-instruction-fixture-v0.1'
+    },
+    resourceAccess: [
+      {
+        resourceRef: 'notion-data-source://sanitized-agency-ops-evidence',
+        kind: 'notion_data_source',
+        level: 'can_edit',
+        purpose: 'Create a review-only suggestion after explicit confirmation.'
+      }
+    ],
+    triggers: [
+      {
+        triggerId: 'manual-review-suggestion',
+        kind: 'manual',
+        intent: 'Run only after an operator asks to create a review suggestion.'
+      }
+    ],
+    toolBindings: [
+      {
+        actionId: 'create_review_suggestion',
+        key: 'createReviewSuggestion',
+        runtime: 'notion_worker',
+        contractRef: 'notion-worker://agency-ops/createReviewSuggestion@v0.1'
+      }
+    ]
+  });
+  const installation = evaluateNotionCustomAgentInstallation(
+    blueprint,
+    matchingConfigurationReceipt(blueprint, 'notion-agent://blocked-write')
+  );
+
+  assert.deepEqual(
+    evaluateNotionCustomAgentOperationalReceipts(blueprint, {
+      schemaVersion: 'notion_custom_agent_operational_receipts.v0.1',
+      blueprintId: 'agency-ops-review-suggestion.v0.1',
+      agentRef: 'notion-agent://blocked-write',
+      activationReceipt: {
+        triggerId: 'manual-review-suggestion',
+        runRef: 'notion-run://blocked-write',
+        activationRef: 'notion-activation://blocked-write'
+      },
+      runReceipt: {
+        runRef: 'notion-run://blocked-write'
+      },
+      toolReceipts: [
+        {
+          actionId: 'create_review_suggestion',
+          runRef: 'notion-run://blocked-write',
+          toolInvocationRef: 'notion-worker-run://blocked-write',
+          confirmationState: 'confirmed'
+        }
+      ],
+      mutationReceipts: [
+        {
+          actionId: 'create_review_suggestion',
+          runRef: 'notion-run://blocked-write',
+          toolInvocationRef: 'notion-worker-run://blocked-write',
+          mutationRef: 'notion-mutation://blocked-write'
+        }
+      ]
+    }, installation),
+    {
+      schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
+      blueprintId: 'agency-ops-review-suggestion.v0.1',
+      disposition: 'stop',
+      reasonCode: 'CONSEQUENTIAL_TOOL_AUTONOMY_VIOLATION',
+      missingActionIds: ['create_review_suggestion']
+    }
+  );
+});
+
+test('binds operational receipts to the exact matched Custom Agent installation', async () => {
+  const workflow = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const compiled = compileWorkflowDefinition(workflow);
+  const blueprint = createNotionCustomAgentBlueprint(compiled, readOnlyBlueprintInput());
+  const installationA = evaluateNotionCustomAgentInstallation(
+    blueprint,
+    matchingConfigurationReceipt(blueprint, 'notion-agent://agency-ops-evidence-triage-a')
+  );
+  const installationB = evaluateNotionCustomAgentInstallation(
+    blueprint,
+    matchingConfigurationReceipt(blueprint, 'notion-agent://agency-ops-evidence-triage-b')
+  );
+  const receipts = {
+    schemaVersion: 'notion_custom_agent_operational_receipts.v0.1',
+    blueprintId: 'agency-ops-evidence-triage.v0.1',
+    agentRef: 'notion-agent://agency-ops-evidence-triage-b',
+    activationReceipt: {
+      triggerId: 'manual-review',
+      runRef: 'notion-run://installation-b',
+      activationRef: 'notion-activation://installation-b'
+    },
+    runReceipt: {
+      runRef: 'notion-run://installation-b'
+    },
+    toolReceipts: [
+      {
+        actionId: 'inspect_evidence_readiness',
+        runRef: 'notion-run://installation-b',
+        toolInvocationRef: 'notion-worker-run://installation-b',
+        confirmationState: 'not_required'
+      }
+    ],
+    mutationReceipts: []
+  };
+
+  assert.deepEqual(
+    evaluateNotionCustomAgentOperationalReceipts(blueprint, receipts, installationA),
+    {
+      schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
+      blueprintId: 'agency-ops-evidence-triage.v0.1',
+      disposition: 'stop',
+      reasonCode: 'OPERATIONAL_RECEIPT_INSTALLATION_MISMATCH'
+    }
+  );
+  assert.deepEqual(evaluateNotionCustomAgentOperationalReceipts(blueprint, receipts), {
+    schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
+    blueprintId: 'agency-ops-evidence-triage.v0.1',
+    disposition: 'wait',
+    reasonCode: 'MATCHED_INSTALLATION_EVALUATION_REQUIRED'
+  });
+  assert.deepEqual(
+    evaluateNotionCustomAgentOperationalReceipts(
+      blueprint,
+      receipts,
+      structuredClone(installationB)
+    ),
+    {
+      schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
+      blueprintId: 'agency-ops-evidence-triage.v0.1',
+      disposition: 'stop',
+      reasonCode: 'OPERATIONAL_RECEIPT_INSTALLATION_MISMATCH'
+    }
+  );
+  assert.deepEqual(
+    evaluateNotionCustomAgentOperationalReceipts(blueprint, receipts, installationB),
+    {
+      schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
+      blueprintId: 'agency-ops-evidence-triage.v0.1',
+      disposition: 'pass',
+      reasonCode: 'OPERATIONAL_RECEIPTS_MATCHED'
+    }
+  );
+});
+
+test('stops when a matching installation evaluation originated from another blueprint instance', async () => {
+  const workflow = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const compiled = compileWorkflowDefinition(workflow);
+  const blueprintA = createNotionCustomAgentBlueprint(compiled, readOnlyBlueprintInput());
+  const blueprintBInput = readOnlyBlueprintInput();
+  blueprintBInput.resourceAccess[0].resourceRef = 'notion-data-source://different-sanitized-evidence';
+  const blueprintB = createNotionCustomAgentBlueprint(compiled, blueprintBInput);
+  const installationA = evaluateNotionCustomAgentInstallation(
+    blueprintA,
+    matchingConfigurationReceipt(blueprintA, 'notion-agent://shared-agent-ref')
+  );
+  const receiptsForB = {
+    schemaVersion: 'notion_custom_agent_operational_receipts.v0.1',
+    blueprintId: blueprintB.blueprintId,
+    agentRef: 'notion-agent://shared-agent-ref',
+    activationReceipt: {
+      triggerId: 'manual-review',
+      runRef: 'notion-run://other-blueprint',
+      activationRef: 'notion-activation://other-blueprint'
+    },
+    runReceipt: {
+      runRef: 'notion-run://other-blueprint'
+    },
+    toolReceipts: [
+      {
+        actionId: 'inspect_evidence_readiness',
+        runRef: 'notion-run://other-blueprint',
+        toolInvocationRef: 'notion-worker-run://other-blueprint',
+        confirmationState: 'not_required'
+      }
+    ],
+    mutationReceipts: []
+  };
+
+  assert.deepEqual(
+    evaluateNotionCustomAgentOperationalReceipts(blueprintB, receiptsForB, installationA),
+    {
+      schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
+      blueprintId: 'agency-ops-evidence-triage.v0.1',
+      disposition: 'stop',
+      reasonCode: 'OPERATIONAL_RECEIPT_INSTALLATION_MISMATCH'
+    }
+  );
+});
+
+test('waits for the missing operational receipt of a read-only binding', async () => {
+  const workflow = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const compiled = compileWorkflowDefinition(workflow);
+  const blueprint = createNotionCustomAgentBlueprint(compiled, {
+    schemaVersion: 'notion_custom_agent_blueprint_input.v0.1',
+    blueprintId: 'agency-ops-evidence-triage.v0.1',
+    agentId: 'agency-ops-evidence-triage',
+    instructions: {
+      sourceRef: 'policy://agency-ops/evidence-triage/v0.1',
+      sha256: 'sha256:instruction-fixture-v0.1'
+    },
+    resourceAccess: [
+      {
+        resourceRef: 'notion-data-source://sanitized-agency-ops-evidence',
+        kind: 'notion_data_source',
+        level: 'can_view',
+        purpose: 'Read sanitized evidence records for a manual review.'
+      }
+    ],
+    triggers: [
+      {
+        triggerId: 'manual-review',
+        kind: 'manual',
+        intent: 'Run only when an operator explicitly requests evidence triage.'
+      }
+    ],
+    toolBindings: [
+      {
+        actionId: 'inspect_evidence_readiness',
+        key: 'inspectEvidenceReadiness',
+        runtime: 'notion_worker',
+        contractRef: 'notion-worker://agency-ops/inspectEvidenceReadiness@v0.1'
+      }
+    ]
+  });
+  const installation = evaluateNotionCustomAgentInstallation(
+    blueprint,
+    matchingConfigurationReceipt(blueprint, 'notion-agent://missing-read-receipt')
+  );
+
+  assert.deepEqual(
+    evaluateNotionCustomAgentOperationalReceipts(blueprint, {
+      schemaVersion: 'notion_custom_agent_operational_receipts.v0.1',
+      blueprintId: 'agency-ops-evidence-triage.v0.1',
+      agentRef: 'notion-agent://missing-read-receipt',
+      activationReceipt: {
+        triggerId: 'manual-review',
+        runRef: 'notion-run://agency-ops-evidence-triage-fixture',
+        activationRef: 'notion-activation://agency-ops-evidence-triage-fixture'
+      },
+      runReceipt: {
+        runRef: 'notion-run://agency-ops-evidence-triage-fixture'
+      },
+      toolReceipts: [],
+      mutationReceipts: []
+    }, installation),
+    {
+      schemaVersion: 'notion_custom_agent_operational_evaluation.v0.1',
+      blueprintId: 'agency-ops-evidence-triage.v0.1',
+      disposition: 'wait',
+      reasonCode: 'OPERATIONAL_RECEIPTS_REQUIRED',
+      missingActionIds: ['inspect_evidence_readiness']
+    }
+  );
+});
+
+test('stops a configuration receipt that expands the declared Notion resource scope', async () => {
+  const workflow = JSON.parse(await readFile(workflowUrl, 'utf8'));
+  const compiled = compileWorkflowDefinition(workflow);
+  const blueprint = createNotionCustomAgentBlueprint(compiled, readOnlyBlueprintInput());
+
+  assert.deepEqual(
+    evaluateNotionCustomAgentInstallation(blueprint, {
+      schemaVersion: 'notion_custom_agent_configuration_receipt.v0.1',
+      blueprintId: 'agency-ops-evidence-triage.v0.1',
+      agentRef: 'notion-agent://agency-ops-evidence-triage-fixture',
+      workflowDefinitionHash: compiled.definitionHash,
+      instructionsSha256: 'sha256:instruction-fixture-v0.1',
+      resourceAccess: [
+        {
+          resourceRef: 'notion-data-source://sanitized-agency-ops-evidence',
+          kind: 'notion_data_source',
+          level: 'can_view'
+        },
+        {
+          resourceRef: 'notion-page://unapproved-client-record',
+          kind: 'notion_page',
+          level: 'can_view'
+        }
+      ],
+      triggers: [{ triggerId: 'manual-review', kind: 'manual' }],
+      toolBindings: [
+        {
+          actionId: 'inspect_evidence_readiness',
+          key: 'inspectEvidenceReadiness',
+          runtime: 'notion_worker',
+          contractRef: 'notion-worker://agency-ops/inspectEvidenceReadiness@v0.1'
+        }
+      ]
+    }),
+    {
+      schemaVersion: 'notion_custom_agent_installation_evaluation.v0.1',
+      blueprintId: 'agency-ops-evidence-triage.v0.1',
+      agentRef: 'notion-agent://agency-ops-evidence-triage-fixture',
+      disposition: 'stop',
+      reasonCode: 'CONFIGURATION_RECEIPT_MISMATCH',
+      mismatchFields: ['resourceAccess'],
+      requiredOperationalReceipts: ['activation', 'run', 'tool']
+    }
+  );
+});

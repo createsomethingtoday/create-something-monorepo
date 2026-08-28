@@ -239,6 +239,12 @@ export const CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES: CanonPublicExportClassifi
     "rationale": "Inline-safe Performance email values are a narrow consumption artifact governed by Canon typography and token contracts."
   },
   {
+    "exportPath": "./performance/email",
+    "classification": "style-artifact",
+    "registryPolicy": "classified-out",
+    "rationale": "Inline-safe Performance email rendering is a narrow consumption artifact governed by Canon typography and token contracts."
+  },
+  {
     "exportPath": "./styles/glass.css",
     "classification": "style-artifact",
     "registryPolicy": "classified-out",
@@ -424,6 +430,54 @@ export const CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES: CanonPublicExportClassifi
     "rationale": "Experiment root barrel is a staging area and should not become stable registry surface."
   },
   {
+    "exportPath": "./experiments/threshold-dwelling/geometry-issuance",
+    "classification": "experiment",
+    "registryPolicy": "classified-out",
+    "rationale": "Threshold Dwelling physical-scene evidence gate is a project-specific experiment contract, not a reusable Canon primitive."
+  },
+  {
+    "exportPath": "./experiments/threshold-dwelling/geometry-evidence-packet",
+    "classification": "experiment",
+    "registryPolicy": "classified-out",
+    "rationale": "Threshold Dwelling private-evidence packet is a project-specific intake boundary, not a reusable Canon primitive."
+  },
+  {
+    "exportPath": "./experiments/threshold-dwelling/dimensioned-project",
+    "classification": "experiment",
+    "registryPolicy": "classified-out",
+    "rationale": "Threshold Dwelling dimensioned design intent is a project-specific experiment contract, not a reusable Canon primitive."
+  },
+  {
+    "exportPath": "./experiments/threshold-dwelling/living-system-revision",
+    "classification": "experiment",
+    "registryPolicy": "classified-out",
+    "rationale": "Threshold Dwelling living-system revisions remain project-specific design intent outside the stable registry."
+  },
+  {
+    "exportPath": "./experiments/threshold-dwelling/interior-infill",
+    "classification": "experiment",
+    "registryPolicy": "classified-out",
+    "rationale": "Threshold Dwelling interior infill is a project-specific concept-resolution artifact, not a reusable Canon primitive."
+  },
+  {
+    "exportPath": "./experiments/threshold-dwelling/outfitting-system",
+    "classification": "experiment",
+    "registryPolicy": "classified-out",
+    "rationale": "Threshold Dwelling outfitting is a project-specific occupancy and systems study outside the stable registry."
+  },
+  {
+    "exportPath": "./experiments/threshold-dwelling/assembly-schedule",
+    "classification": "experiment",
+    "registryPolicy": "classified-out",
+    "rationale": "Threshold Dwelling assembly scheduling is a project-specific material study, not a reusable Canon primitive."
+  },
+  {
+    "exportPath": "./experiments/threshold-dwelling/professional-review",
+    "classification": "experiment",
+    "registryPolicy": "classified-out",
+    "rationale": "Threshold Dwelling professional-review intake is a project-specific evidence boundary outside the stable registry."
+  },
+  {
     "exportPath": "./experiments/living-arena",
     "classification": "experiment",
     "registryPolicy": "classified-out",
@@ -530,6 +584,18 @@ export const CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES: CanonPublicExportClassifi
     "classification": "platform-surface",
     "registryPolicy": "classified-out",
     "rationale": "Newsletter helpers are product integration support, not foundation UI primitives."
+  },
+  {
+    "exportPath": "./newsletter/audience",
+    "classification": "platform-surface",
+    "registryPolicy": "classified-out",
+    "rationale": "Newsletter audience policy is a governed platform contract, not a UI primitive."
+  },
+  {
+    "exportPath": "./newsletter/reengagement-email",
+    "classification": "platform-surface",
+    "registryPolicy": "classified-out",
+    "rationale": "Newsletter campaign copy is a governed communication artifact, not a UI primitive."
   },
   {
     "exportPath": "./platform",
@@ -696,6 +762,12 @@ export const CANON_PUBLIC_EXPORT_CLASSIFICATION_RULES: CanonPublicExportClassifi
     "classification": "supporting-api",
     "registryPolicy": "classified-out",
     "rationale": "Validation helpers support product code without becoming registry UI artifacts."
+  },
+  {
+    "exportPath": "./search",
+    "classification": "supporting-api",
+    "registryPolicy": "classified-out",
+    "rationale": "Search discovery helpers serialize route-owned data without becoming registry UI artifacts."
   },
   {
     "exportPath": "./components/docs",

@@ -56,6 +56,10 @@ const campaignOpeningSource = readFileSync(
   ),
   'utf8'
 );
+const metricsSource = readFileSync(
+  new URL('../../canon/src/lib/components/meridian/MeridianMetrics.svelte', import.meta.url),
+  'utf8'
+);
 const footerSource = readFileSync(
   new URL('../../canon/src/lib/components/Footer.svelte', import.meta.url),
   'utf8'
@@ -73,11 +77,13 @@ const publicAtlasFlowSource = readFileSync(
   'utf8'
 );
 
-test('mobile navigation exposes state so fixed privacy UI cannot compete with it', () => {
+test('mobile privacy stays at the header edge instead of covering opening proof', () => {
   assert.match(navigationSource, /onMobileMenuChange\?: \(open: boolean\) => void/);
   assert.match(navigationSource, /onMobileMenuChange\?\.\(mobileMenuOpen\)/);
   assert.match(agencyLayoutSource, /let mobileNavigationOpen = \$state\(false\)/);
   assert.match(agencyLayoutSource, /obscured=\{mobileNavigationOpen\}/);
+  assert.match(agencyLayoutSource, /mobilePlacement="header-edge"/);
+  assert.doesNotMatch(agencyLayoutSource, /mobilePlacement="safe-corner"/);
   assert.match(
     agencyLayoutSource,
     /onMobileMenuChange=\{\(open\) => \(mobileNavigationOpen = open\)\}/
@@ -147,6 +153,17 @@ test('compact mobile composition reduces spacing while retaining readable contro
   assert.match(narrativeSource, /min-height:\s*var\(--height-performance-control-min, 2\.75rem\)/);
 });
 
+test('the narrow narrative rail reveals every scene label instead of clipping the final stage', () => {
+  assert.match(
+    narrativeSource,
+    /@media \(max-width: 25rem\)[\s\S]*?\.performance-narrative-stage__index\s*\{[\s\S]*?grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);[\s\S]*?grid-auto-flow:\s*row;[\s\S]*?overflow-x:\s*visible;/
+  );
+  assert.match(
+    narrativeSource,
+    /@media \(max-width: 25rem\)[\s\S]*?\.performance-narrative-stage__index-copy small\s*\{[\s\S]*?display:\s*none;/
+  );
+});
+
 test('the concise conversion handoff keeps its proof beside the action without a full-width repeat', () => {
   assert.match(handoffSource, /density\?: 'standard' \| 'compact' \| 'concise'/);
   assert.match(
@@ -172,6 +189,7 @@ test('the homepage boundary comparison is one compact proof object on desktop an
 test('homepage section components reset inherited shell padding before applying their own rhythm', () => {
   for (const [name, source, selector] of [
     ['campaign opening', campaignOpeningSource, '.performance-campaign-opening'],
+    ['scoreboard metrics', metricsSource, '.meridian-metrics'],
     ['adoption paths', adoptionPathSource, '.adoption-paths'],
     ['compatibility rail', compatibilityRailSource, '.compatibility-rail']
   ] as const) {

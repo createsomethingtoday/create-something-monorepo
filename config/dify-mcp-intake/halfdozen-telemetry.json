@@ -18,14 +18,19 @@
     "transport": "http",
     "url": "https://halfdozen-telemetry-mcp.half-dozen.workers.dev/mcp",
     "auth": {
-      "type": "none"
+      "type": "bearer",
+      "infisical": {
+        "environment": "prod",
+        "path": "/halfdozen-telemetry",
+        "secret_key": "MCP_BEARER_TOKEN"
+      }
     }
   },
   "dify_studio_steps": [
     "Open Dify Studio -> Tools -> MCP.",
     "Create an HTTP MCP server card with server ID halfdozen-telemetry.",
     "Set the MCP URL to https://halfdozen-telemetry-mcp.half-dozen.workers.dev/mcp.",
-    "Use no authentication for the server card.",
+    "Configure bearer auth from Infisical prod:/halfdozen-telemetry:MCP_BEARER_TOKEN.",
     "Refresh/discover tools in Dify Studio.",
     "Transcribe every discovered tool into config/dify/inventory.json with risk classification.",
     "Run pnpm dify:inventory:generate and pnpm dify:coverage:generate."
@@ -37,7 +42,12 @@
       "transport": "http",
       "url": "https://halfdozen-telemetry-mcp.half-dozen.workers.dev/mcp",
       "auth": {
-        "type": "none"
+        "type": "bearer",
+        "infisical": {
+          "environment": "prod",
+          "path": "/halfdozen-telemetry",
+          "secret_key": "MCP_BEARER_TOKEN"
+        }
       },
       "tools": []
     }

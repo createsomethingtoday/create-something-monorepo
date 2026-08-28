@@ -872,6 +872,40 @@ const fileBasedExperimentMetadata: FileBasedExperiment[] = [
     ╰──────────────────────────────────────────────────────────╯
 `
 	},
+	{
+		id: 'file-governed-codex-model-routing',
+		slug: 'governed-codex-model-routing',
+		title: 'Governed Codex Model Routing Economics',
+		description: 'A controlled exploratory benchmark of Codex model, reasoning-effort, serving-tier, and fan-out choices under deterministic quality gates.',
+		excerpt_short: 'The session-time quality gate failed, leaving task-shaped model routing inconclusive',
+		excerpt_long: 'Seven exploratory Codex trials compare Luna executor fan-out, Terra effort levels, and Sol at low reasoning effort. Every Trial 2 cohort failed the expanded hidden retry-parser gate, so cost and timing remain descriptive and no production routing policy changes.',
+		category: 'research',
+		tags: ['Codex', 'Model Routing', 'Agent Economics', 'Evaluation', 'Governance', 'Living Research'],
+		created_at: '2026-08-26T12:00:00Z',
+		updated_at: '2026-08-26T12:00:00Z',
+		reading_time_minutes: 12,
+		difficulty: 'advanced',
+		is_file_based: true,
+		tests_principles: [
+			'three-tier-framework',
+			'policy-as-artifact',
+			'tool-complementarity',
+			'evidence-bound-agent-routing'
+		],
+		ascii_art: `
+    ╭──────────────────────────────────────────────────────────╮
+    │ GOVERNED CODEX MODEL ROUTING                            │
+    │                                                          │
+    │ Judgment governor                 Bounded executors       │
+    │ Sol / Low       ── policy ──▶     Luna / High fan-out    │
+    │                                                          │
+    │ Session-time hidden: 2/3  ·  mutants killed: 5/5        │
+    │ Cost difference: descriptive only                       │
+    │                                                          │
+    │ INCONCLUSIVE — QUALITY GATE FAILED                       │
+    ╰──────────────────────────────────────────────────────────╯
+`
+	},
 ];
 
 const fileBasedExperimentVisuals = {
@@ -1315,6 +1349,27 @@ const fileBasedExperimentVisuals = {
 			'creator and reviewer surfaces separated at the end'
 		],
 		alt: 'Abstract Webflow analyzer lineage visual showing the system evolving from detection to productized review.'
+	}),
+	'file-governed-codex-model-routing': defineArtifactVisuals({
+		kind: 'flow',
+		title: 'Route by task shape, then require the same evidence gate.',
+		caption:
+			'The exploratory result separates policy judgment from independently verifiable execution; it does not establish a universal model ranking.',
+		nodes: [
+			{ label: 'Classify', detail: 'Name coupling, risk, and judgment traps.', icon: 'search', tone: 'neutral' },
+			{ label: 'Govern', detail: 'A capable low-effort model holds policy.', icon: 'document', tone: 'wait' },
+			{ label: 'Execute', detail: 'Cheaper agents take independent slices.', icon: 'settings', tone: 'run' },
+			{ label: 'Verify', detail: 'Hidden tests and mutation gates decide.', icon: 'check', tone: 'receipt' }
+		],
+		subject:
+			'A governed Codex routing decision tree separating task classification, policy judgment, bounded execution, and deterministic verification.',
+		motifs: [
+			'one judgment governor feeding three independent executor lanes',
+			'hidden test and mutation gates after aggregation',
+			'credit and latency receipts kept separate from correctness',
+			'visible supported but not validated status'
+		],
+		alt: 'Decision tree routing judged work to a governor and independent work to bounded executors before a shared verification gate.'
 	})
 };
 

@@ -14,6 +14,7 @@ import { MCP_CATALOG, getCatalogByCategory, getCatalogEntry } from './catalog.js
 import { WORKFLOW_IDS, WORKFLOWS, getWorkflowById } from './workflows.js';
 import { exportWorkflowToAtlasStudio, exportOutcomePlaybookToAtlasStudio } from './atlas-studio.js';
 import { OUTCOME_PLAYBOOK_IDS, OUTCOME_PLAYBOOKS, getOutcomePlaybookById } from './outcome-playbooks.js';
+import { parseCatalogHealthCheck, readJsonBodyLimited } from './connection-verification.js';
 
 export function registerTools(server: McpServer) {
   const workflowIdSchema = z.enum(WORKFLOW_IDS as [string, ...string[]])
@@ -689,19 +690,13 @@ export function registerTools(server: McpServer) {
 
   server.tool(
     'verify_mcp_connection',
-    'Check if an MCP server URL is reachable and responding. Automatically strips /mcp and /sse transport suffixes to find the health endpoint. Use this after installing an MCP server to confirm it works.',
+    'Check whether an MCP catalog server is reachable and responding. Automatically strips /mcp and /sse transport suffixes to find the health endpoint. Use this after installing a server returned by list_available_mcps.',
     {
-      url: z.string()
-        .describe('The MCP server URL to check (e.g., "https://playbook.mcp.createsomething.ltd" or "https://youtube.mcp.workway.co/mcp")'),
+      url: z.string().url()
+        .describe('An HTTPS URL returned by list_available_mcps (e.g., "https://playbook.mcp.createsomething.ltd" or "https://youtube.mcp.workway.co/mcp")'),
     },
     async ({ url }) => {
-      // Strip trailing slashes and transport suffixes to find the health/root endpoint
-      const cleaned = url.replace(/\/+$/, '');
-      const healthUrl = cleaned.replace(/\/(mcp|sse)(\/.*)?$/, '');
-      const strippedSuffix = healthUrl !== cleaned;
-
-      // Try the health/root URL first, fall back to the original if different
-      const urlsToTry = strippedSuffix ? [healthUrl, cleaned] : [cleaned];
+      const { cleanedUrl, healthUrl, strippedSuffix, urlsToTry } = parseCatalogHealthCheck(url);
       const results: { url: string; status: number; ok: boolean; info?: Record<string, unknown> }[] = [];
 
       for (const tryUrl of urlsToTry) {
@@ -709,6 +704,7 @@ export function registerTools(server: McpServer) {
           const response = await fetch(tryUrl, {
             method: 'GET',
             headers: { 'Accept': 'application/json' },
+            redirect: 'error',
             signal: AbortSignal.timeout(10000),
           });
 
@@ -717,7 +713,7 @@ export function registerTools(server: McpServer) {
 
           if (contentType.includes('application/json')) {
             try {
-              serverInfo = await response.json() as Record<string, unknown>;
+              serverInfo = await readJsonBodyLimited(response);
             } catch {
               // Non-JSON response body
             }
@@ -739,13 +735,13 @@ export function registerTools(server: McpServer) {
         content: [{
           type: 'text',
           text: JSON.stringify({
-            url: cleaned,
+            url: cleanedUrl,
             healthUrl,
             reachable,
             statusCode: bestResult.status || null,
             serverInfo: bestResult.info || null,
             ...(strippedSuffix && {
-              note: `Stripped transport suffix from URL. Health check used ${healthUrl} (root endpoint). Transport endpoint ${cleaned} is for MCP protocol connections, not plain HTTP.`,
+              note: `Stripped transport suffix from URL. Health check used ${healthUrl} (root endpoint). Transport endpoint ${cleanedUrl} is for MCP protocol connections, not plain HTTP.`,
             }),
             message: reachable
               ? `Server at ${healthUrl} is reachable and responding.`

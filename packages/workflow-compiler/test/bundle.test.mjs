@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-import { compileWorkflowDefinition } from '../dist/index.js';
+import { compileWorkflowDefinition, createMcpToolCallPlan } from '../dist/index.js';
 
 const fixtureUrl = new URL('../fixtures/marketplace/workflow.json', import.meta.url);
 
@@ -14,7 +14,7 @@ test('compiles one marketplace definition into a complete governed runtime bundl
   assert.equal(compiled.runtimeTargets.systems.length, 7);
   assert.equal(compiled.objectSchemas.objects.length, 3);
   assert.equal(compiled.eventSchemas.events.length, 5);
-  assert.equal(compiled.decisionInventory.decisions.length, 6);
+  assert.equal(compiled.decisionInventory.decisions.length, 7);
   assert.equal(compiled.toolContracts.tools.length, 3);
   assert.equal(compiled.agentContracts.agents.length, 1);
   assert.equal(compiled.approvalSurfaces.actions.length, 4);
@@ -27,21 +27,16 @@ test('compiles one marketplace definition into a complete governed runtime bundl
     workflowVersion: definition.version,
     definitionHash: compiled.definitionHash,
     entrySurfaceId: 'operator-console',
-    capabilities: [
-      'interaction.select',
-      'receipt.inspect',
-      'replay.inspect',
-      'workflow.inspect',
-    ],
+    capabilities: ['interaction.select', 'receipt.inspect', 'replay.inspect', 'workflow.inspect'],
     surfaces: [
       {
         id: 'operator-console',
         title: definition.title,
         kind: 'workflow_overview',
-        operations: [{ kind: 'select_replay_case' }],
-      },
+        operations: [{ kind: 'select_replay_case' }]
+      }
     ],
-    actions: compiled.decisionInventory.decisions,
+    actions: compiled.decisionInventory.decisions
   });
 
   const headers = [
@@ -52,7 +47,7 @@ test('compiles one marketplace definition into a complete governed runtime bundl
     compiled.toolContracts,
     compiled.agentContracts,
     compiled.approvalSurfaces,
-    compiled.evaluationManifest,
+    compiled.evaluationManifest
   ];
   for (const artifact of headers) {
     assert.equal(artifact.workflowId, definition.workflowId);
@@ -61,7 +56,7 @@ test('compiles one marketplace definition into a complete governed runtime bundl
   }
 
   const approval = compiled.decisionInventory.decisions.find(
-    (decision) => decision.actionId === 'approve_template',
+    (decision) => decision.actionId === 'approve_template'
   );
   assert.deepEqual(
     {
@@ -70,7 +65,7 @@ test('compiles one marketplace definition into a complete governed runtime bundl
       approvalOwner: approval.approvalOwner,
       requiredEvidence: approval.requiredEvidence,
       receiptFields: approval.receiptFields,
-      recoveryOwner: approval.recovery.owner,
+      recoveryOwner: approval.recovery.owner
     },
     {
       authority: 'marketplace-reviewer',
@@ -83,11 +78,129 @@ test('compiles one marketplace definition into a complete governed runtime bundl
         'evidence_refs',
         'outcome',
         'reviewer_id',
-        'workflow_id',
+        'workflow_id'
       ],
-      recoveryOwner: 'marketplace-reviewer',
-    },
+      recoveryOwner: 'marketplace-reviewer'
+    }
   );
+});
+
+test('versions approval surfaces when controlled actions carry evidence constraints', async () => {
+  const definition = JSON.parse(await readFile(fixtureUrl, 'utf8'));
+  definition.schemaVersion = 'workflow_definition.v0.2';
+  const requestChanges = definition.actions.find((action) => action.id === 'request_changes');
+  assert.ok(requestChanges);
+  requestChanges.requiredEvidenceValues = { version_id: 'version-fixture-001' };
+  requestChanges.requiredEvidenceMatchers = {
+    review_feedback: { kind: 'contains_case_insensitive', values: ['changes'] },
+  };
+
+  const compiled = compileWorkflowDefinition(definition);
+  const approvalSurface = compiled.approvalSurfaces.actions.find(
+    (action) => action.actionId === 'request_changes',
+  );
+
+  assert.equal(compiled.approvalSurfaces.schemaVersion, 'approval_surfaces.v0.2');
+  assert.deepEqual(approvalSurface?.requiredEvidenceValues, {
+    version_id: 'version-fixture-001',
+  });
+  assert.deepEqual(approvalSurface?.requiredEvidenceMatchers, {
+    review_feedback: { kind: 'contains_case_insensitive', values: ['changes'] },
+  });
+});
+
+test('versions tool contracts when tool actions carry evidence constraints', async () => {
+  const definition = JSON.parse(await readFile(fixtureUrl, 'utf8'));
+  definition.schemaVersion = 'workflow_definition.v0.2';
+  const runPublishedValidation = definition.actions.find(
+    (action) => action.id === 'run_published_validation',
+  );
+  assert.ok(runPublishedValidation);
+  runPublishedValidation.requiredEvidenceValues = {
+    published_url: 'https://fixture-template.webflow.io',
+  };
+  runPublishedValidation.requiredEvidenceMatchers = {
+    published_url: { kind: 'contains_case_insensitive', values: ['fixture-template'] },
+  };
+
+  const compiled = compileWorkflowDefinition(definition);
+  const toolContract = compiled.toolContracts.tools.find(
+    (tool) => tool.actionId === 'run_published_validation',
+  );
+  const decision = compiled.decisionInventory.decisions.find(
+    (entry) => entry.actionId === 'run_published_validation',
+  );
+
+  assert.equal(compiled.toolContracts.schemaVersion, 'tool_contracts.v0.2');
+  assert.deepEqual(toolContract?.requiredEvidenceValues, {
+    published_url: 'https://fixture-template.webflow.io',
+  });
+  assert.deepEqual(toolContract?.requiredEvidenceMatchers, {
+    published_url: { kind: 'contains_case_insensitive', values: ['fixture-template'] },
+  });
+  assert.deepEqual(decision?.toolContract, toolContract);
+});
+
+test('keeps marketplace write contracts aligned with the production review MCP', async () => {
+  const definition = JSON.parse(await readFile(fixtureUrl, 'utf8'));
+  const compiled = compileWorkflowDefinition(definition);
+
+  const contracts = Object.fromEntries(
+    compiled.toolContracts.tools.map((contract) => [contract.name, contract])
+  );
+
+  assert.deepEqual(contracts.template_review_request_changes.parameters, [
+    {
+      name: 'review_feedback',
+      type: 'string',
+      description: 'Reviewer-authored change request.'
+    },
+    {
+      name: 'version_id',
+      type: 'string',
+      description: 'Marketplace asset version identifier.'
+    }
+  ]);
+  assert.deepEqual(contracts.template_review_approve_version.parameters, [
+    {
+      name: 'version_id',
+      type: 'string',
+      description: 'Marketplace asset version identifier.'
+    }
+  ]);
+  assert.equal(
+    contracts.template_review_run_published_site_validation.actionId,
+    'run_published_validation'
+  );
+  assert.deepEqual(contracts.template_review_run_published_site_validation.parameters, [
+    {
+      name: 'published_url',
+      type: 'string',
+      description: 'Published template URL to validate.'
+    }
+  ]);
+
+  const validationPlan = createMcpToolCallPlan(compiled, {
+    caseId: 'published-validation-can-run',
+    title: 'Published validation runs before a result exists',
+    initialState: 'submitted',
+    actionId: 'run_published_validation',
+    actorId: 'workflow-runtime',
+    evidence: { published_url: 'https://fixture-template.webflow.io' },
+    approvals: [],
+    expectedOutcome: 'pass',
+    expectedState: 'submitted'
+  });
+  assert.equal(validationPlan.disposition, 'pass');
+  assert.equal(validationPlan.canInvoke, true);
+  assert.deepEqual(validationPlan.invocation, {
+    operation: 'tools/call',
+    targetSystemId: 'template-review-mcp',
+    tool: {
+      name: 'template_review_run_published_site_validation',
+      arguments: { published_url: 'https://fixture-template.webflow.io' }
+    }
+  });
 });
 
 test('fails closed when a transition references an unknown action', async () => {
@@ -98,10 +211,11 @@ test('fails closed when a transition references an unknown action', async () => 
     () => compileWorkflowDefinition(definition),
     (error) => {
       assert.equal(error.name, 'WorkflowCompilationError');
-      assert.deepEqual(error.diagnostics.map((diagnostic) => diagnostic.code), [
-        'UNKNOWN_TRANSITION_ACTION',
-      ]);
+      assert.deepEqual(
+        error.diagnostics.map((diagnostic) => diagnostic.code),
+        ['UNKNOWN_TRANSITION_ACTION']
+      );
       return true;
-    },
+    }
   );
 });

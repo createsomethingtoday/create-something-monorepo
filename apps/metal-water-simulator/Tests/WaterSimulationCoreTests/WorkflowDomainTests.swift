@@ -9,7 +9,7 @@ func canonicalWorkflowReplayMapsAllFiveGovernedOutcomes() throws {
     #expect(catalog.workflowId == "webflow.marketplace.template-lifecycle")
     #expect(catalog.workflowVersion == "0.1.0")
     #expect(catalog.scenarios.count == 5)
-    #expect(catalog.manifest.files.count == 15)
+    #expect(catalog.manifest.files.count == 18)
     #expect(catalog.acceptance.caseCount == 5)
     #expect(catalog.acceptance.allExpectationsMatched)
     #expect(catalog.acceptance.governanceComplete)
@@ -46,8 +46,8 @@ func workflowProofIsDeterministicAndComplete() throws {
 func bundledWorkflowArtifactsMatchManifest() throws {
     let report = try WorkflowArtifactVerifier.verifyBundled()
 
-    #expect(report.fileCount == 15)
-    #expect(report.verifiedPaths.count == 15)
+    #expect(report.fileCount == 18)
+    #expect(report.verifiedPaths.count == 18)
     #expect(report.mismatches.isEmpty)
 }
 
@@ -64,13 +64,13 @@ func artifactTourCoversBundledManifestExactlyOnce() throws {
         .evaluationEvidence,
         .presentationProvenance,
     ])
-    #expect(tour.artifacts.count == 15)
-    #expect(Set(tour.artifacts.map(\.path)).count == 15)
+    #expect(tour.artifacts.count == 18)
+    #expect(Set(tour.artifacts.map(\.path)).count == 18)
     #expect(
         Set(tour.artifacts.map(\.path))
             == Set(catalog.manifest.files.map(\.path))
     )
-    #expect(tour.chapters.map { $0.artifacts.count } == [2, 3, 2, 2, 4, 2])
+    #expect(tour.chapters.map { $0.artifacts.count } == [2, 3, 2, 3, 4, 4])
     #expect(tour.artifacts.allSatisfy { !$0.purpose.isEmpty })
     #expect(tour.artifacts.allSatisfy { !$0.owner.isEmpty })
     #expect(tour.artifacts.allSatisfy { !$0.teachingCue.isEmpty })
@@ -85,19 +85,19 @@ func artifactTourProgressRequiresExplicitVisits() throws {
 
     #expect(progress.currentPath == tour.artifacts.first?.path)
     #expect(progress.visitedCount == 0)
-    #expect(progress.totalCount == 15)
+    #expect(progress.totalCount == 18)
     #expect(!progress.isComplete)
 
     for artifact in tour.artifacts.dropLast() {
         try progress.visit(path: artifact.path)
     }
-    #expect(progress.visitedCount == 14)
+    #expect(progress.visitedCount == 17)
     #expect(!progress.isComplete)
 
     let last = try #require(tour.artifacts.last)
     try progress.visit(path: last.path)
     try progress.visit(path: last.path)
-    #expect(progress.visitedCount == 15)
+    #expect(progress.visitedCount == 18)
     #expect(progress.isComplete)
     #expect(progress.chapterProgress[.presentationProvenance]?.isComplete == true)
 
@@ -113,7 +113,7 @@ func artifactTourEvidenceRequiresCompleteCoverage() throws {
     var progress = WorkflowArtifactTourProgress(tour: tour)
 
     try progress.visit(path: tour.artifacts[0].path)
-    #expect(throws: WorkflowArtifactTourEvidenceError.incompleteCoverage(1, 15)) {
+    #expect(throws: WorkflowArtifactTourEvidenceError.incompleteCoverage(1, 18)) {
         _ = try WorkflowArtifactTourEvidence(
             catalog: catalog,
             tour: tour,
@@ -136,8 +136,8 @@ func artifactTourEvidenceRequiresCompleteCoverage() throws {
     )
 
     #expect(first.complete)
-    #expect(first.visitedCount == 15)
-    #expect(first.artifacts.count == 15)
+    #expect(first.visitedCount == 18)
+    #expect(first.artifacts.count == 18)
     #expect(first.visitOrder == tour.artifacts.map(\.path))
     #expect(try first.jsonData() == second.jsonData())
 }
@@ -231,7 +231,7 @@ func artifactTourRejectsManifestDrift() throws {
         files: divergentFiles
     )
     let report = try WorkflowArtifactVerifier.verify(manifest: divergent)
-    #expect(report.verifiedPaths.count == 14)
+    #expect(report.verifiedPaths.count == 17)
     #expect(report.mismatches.count == 1)
     #expect(report.mismatches[0].hasPrefix("\(first.path): expected"))
 }

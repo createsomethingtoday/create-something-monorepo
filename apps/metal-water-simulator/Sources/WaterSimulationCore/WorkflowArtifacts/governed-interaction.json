@@ -1,0 +1,236 @@
+{
+  "schemaVersion": "governed_interaction_bundle.v0.1",
+  "language": "create-something/control",
+  "runtimeVersion": "0.1.0",
+  "workflowId": "webflow.marketplace.template-lifecycle",
+  "workflowVersion": "0.1.0",
+  "definitionHash": "sha256:c3d6a10501d0e0419881cb65ace3e70792719922d8e558877dd6189210f4848f",
+  "entrySurfaceId": "operator-console",
+  "capabilities": [
+    "interaction.select",
+    "receipt.inspect",
+    "replay.inspect",
+    "workflow.inspect"
+  ],
+  "surfaces": [
+    {
+      "id": "operator-console",
+      "title": "Webflow Marketplace template lifecycle",
+      "kind": "workflow_overview",
+      "operations": [
+        {
+          "kind": "select_replay_case"
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "actionId": "approve_template",
+      "title": "Approve template",
+      "kind": "decision",
+      "authority": "marketplace-reviewer",
+      "autonomy": "approval_required",
+      "systemsTouched": [
+        "airtable-marketplace",
+        "policy-os",
+        "template-review-mcp"
+      ],
+      "requiredEvidence": [
+        "review_summary",
+        "reviewer_id",
+        "validation_result",
+        "version_id"
+      ],
+      "approvalOwner": "marketplace-reviewer",
+      "receiptFields": [
+        "action_id",
+        "correlation_id",
+        "evidence_refs",
+        "outcome",
+        "reviewer_id",
+        "workflow_id"
+      ],
+      "recovery": {
+        "mode": "manual_fallback",
+        "owner": "marketplace-reviewer",
+        "path": "Keep the version in review and resolve the approval manually in Airtable."
+      }
+    },
+    {
+      "actionId": "monitor_post_launch",
+      "title": "Monitor post-launch signals",
+      "kind": "read",
+      "authority": "workflow-runtime",
+      "autonomy": "auto_allow",
+      "systemsTouched": [
+        "airtable-marketplace",
+        "substrate"
+      ],
+      "requiredEvidence": [
+        "asset_id",
+        "observed_at",
+        "signal_type"
+      ],
+      "receiptFields": [
+        "action_id",
+        "correlation_id",
+        "evidence_refs",
+        "outcome",
+        "workflow_id"
+      ],
+      "recovery": {
+        "mode": "escalate",
+        "owner": "marketplace-operator",
+        "path": "Retain the last known signal state and request a manual health check."
+      }
+    },
+    {
+      "actionId": "publish_template",
+      "title": "Publish template",
+      "kind": "publish",
+      "authority": "marketplace-operator",
+      "autonomy": "manual_only",
+      "systemsTouched": [
+        "airtable-marketplace",
+        "policy-os"
+      ],
+      "requiredEvidence": [
+        "approval_receipt",
+        "operator_id",
+        "release_metadata",
+        "version_id"
+      ],
+      "approvalOwner": "marketplace-operator",
+      "receiptFields": [
+        "action_id",
+        "correlation_id",
+        "evidence_refs",
+        "operator_id",
+        "outcome",
+        "workflow_id"
+      ],
+      "recovery": {
+        "mode": "rollback",
+        "owner": "marketplace-operator",
+        "path": "Stop publication, preserve the approved version, and follow the marketplace release rollback runbook."
+      }
+    },
+    {
+      "actionId": "request_changes",
+      "title": "Request changes",
+      "kind": "decision",
+      "authority": "marketplace-reviewer",
+      "autonomy": "approval_required",
+      "systemsTouched": [
+        "airtable-marketplace",
+        "policy-os",
+        "template-review-mcp"
+      ],
+      "requiredEvidence": [
+        "review_feedback",
+        "review_summary",
+        "reviewer_id",
+        "version_id"
+      ],
+      "approvalOwner": "marketplace-reviewer",
+      "receiptFields": [
+        "action_id",
+        "correlation_id",
+        "evidence_refs",
+        "outcome",
+        "reviewer_id",
+        "workflow_id"
+      ],
+      "recovery": {
+        "mode": "manual_fallback",
+        "owner": "marketplace-reviewer",
+        "path": "Leave official state unchanged and record feedback manually in Airtable."
+      }
+    },
+    {
+      "actionId": "run_published_validation",
+      "title": "Run published-site validation",
+      "kind": "read",
+      "authority": "workflow-runtime",
+      "autonomy": "auto_allow",
+      "systemsTouched": [
+        "template-review-mcp",
+        "template-validation"
+      ],
+      "requiredEvidence": [
+        "published_url"
+      ],
+      "receiptFields": [
+        "action_id",
+        "correlation_id",
+        "evidence_refs",
+        "outcome",
+        "workflow_id"
+      ],
+      "recovery": {
+        "mode": "escalate",
+        "owner": "marketplace-reviewer",
+        "path": "Keep the submission in submitted state and request manual validation."
+      }
+    },
+    {
+      "actionId": "send_creator_decision",
+      "title": "Send creator-facing decision autonomously",
+      "kind": "write",
+      "authority": "marketplace-reviewer",
+      "autonomy": "blocked",
+      "systemsTouched": [
+        "policy-os",
+        "template-review-mcp"
+      ],
+      "requiredEvidence": [
+        "decision_receipt",
+        "human_send_confirmation",
+        "reviewer_id"
+      ],
+      "receiptFields": [
+        "action_id",
+        "correlation_id",
+        "evidence_refs",
+        "outcome",
+        "workflow_id"
+      ],
+      "recovery": {
+        "mode": "escalate",
+        "owner": "marketplace-reviewer",
+        "path": "Return a draft only and require the reviewer to send through the approved communication path."
+      }
+    },
+    {
+      "actionId": "validate_submission",
+      "title": "Validate submission",
+      "kind": "decision",
+      "authority": "workflow-runtime",
+      "autonomy": "auto_allow",
+      "systemsTouched": [
+        "airtable-marketplace",
+        "template-review-mcp",
+        "template-validation"
+      ],
+      "requiredEvidence": [
+        "asset_id",
+        "published_url",
+        "validation_result",
+        "version_id"
+      ],
+      "receiptFields": [
+        "action_id",
+        "correlation_id",
+        "evidence_refs",
+        "outcome",
+        "workflow_id"
+      ],
+      "recovery": {
+        "mode": "escalate",
+        "owner": "marketplace-reviewer",
+        "path": "Keep the submission in submitted state and request manual validation."
+      }
+    }
+  ]
+}

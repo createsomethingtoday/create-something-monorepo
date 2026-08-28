@@ -5,6 +5,7 @@ import test from 'node:test';
 const require = createRequire(__filename);
 const { version } = require('../package.json') as { version: string };
 const installer = require('../install.js') as {
+  getBinaryName?: (platform?: string, arch?: string) => string;
   getDownloadUrl?: (binaryName: string, platform?: string) => string;
   getChecksumsUrl?: () => string;
   verifyArchiveIntegrity?: (archive: Buffer, assetName: string, checksums: string) => void;
@@ -21,6 +22,10 @@ test('installer uses the Ground release-tag convention for every downloaded plat
     `${releaseBase}/ground-darwin-arm64.tar.gz`
   );
   assert.equal(
+    installer.getDownloadUrl?.('darwin-x64', 'darwin'),
+    `${releaseBase}/ground-darwin-x64.tar.gz`
+  );
+  assert.equal(
     installer.getDownloadUrl?.('linux-x64', 'linux'),
     `${releaseBase}/ground-linux-x64.tar.gz`
   );
@@ -32,6 +37,11 @@ test('installer uses the Ground release-tag convention for every downloaded plat
     installer.getDownloadUrl?.('win32-x64', 'win32'),
     `${releaseBase}/ground-win32-x64.zip`
   );
+});
+
+test('installer selects a native archive for both macOS architectures', () => {
+  assert.equal(installer.getBinaryName?.('darwin', 'arm64'), 'darwin-arm64');
+  assert.equal(installer.getBinaryName?.('darwin', 'x64'), 'darwin-x64');
 });
 
 test('installer verifies a release archive against the versioned checksum manifest', () => {

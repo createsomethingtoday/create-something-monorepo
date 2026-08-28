@@ -23,6 +23,7 @@
   import { templateReviewFieldReport } from '$lib/data/fieldReports';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
   import { playbookHeroMedia, playbookHomeHeroMedia } from '$lib/data/playbookHeroMedia';
+  import { PUBLIC_PRICING } from '$lib/data/publicPricing';
 
   const services = [
     {
@@ -30,8 +31,8 @@
       description:
         'A fixed first map of the workflow, systems, AI tasks, approval path, and first controlled pilot.',
       type: 'First workflow map',
-      price: 'Fixed scope',
-      priceDescription: 'Map before any build decision'
+      price: PUBLIC_PRICING.map.publicStarterLabel,
+      priceDescription: PUBLIC_PRICING.map.workspaceLabel
     },
     {
       name: 'Build',
@@ -46,8 +47,8 @@
       description:
         'Ongoing care for live AI-assisted work: approvals, release checks, blocked states, recovery notes, and review rhythm.',
       type: 'Operating Plan',
-      price: 'Custom',
-      priceDescription: 'Monthly control plan'
+      price: PUBLIC_PRICING.managedControl.label,
+      priceDescription: 'Managed Control after launch'
     },
     {
       name: 'Enterprise Extension',

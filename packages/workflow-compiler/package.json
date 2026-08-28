@@ -1,7 +1,7 @@
 {
-  "name": "@create-something/workflow-compiler",
-  "version": "0.1.0",
-  "description": "Compile versioned operating workflows into governed runtime, replay, and operator-console artifacts.",
+  "name": "@createsomething/workflow-compiler",
+  "version": "0.4.1",
+  "description": "Compile versioned operating workflows into deterministic, governed artifacts and provider-neutral execution plans.",
   "type": "module",
   "createSomething": {
     "agentLegibilityContract": true,
@@ -26,20 +26,58 @@
   },
   "files": [
     "dist",
-    "README.md"
+    "fixtures/release-promotion",
+    "skills",
+    "API.md",
+    "CHANGELOG.md",
+    "COMPATIBILITY.md",
+    "LICENSE",
+    "MIGRATING.md",
+    "README.md",
+    "RELEASING.md",
+    "SYSTEM.md",
+    "THREAT_MODEL.md"
   ],
   "scripts": {
     "build": "tsc",
-    "check": "tsc --noEmit",
+    "check": "tsc --noEmit && tsc -p tsconfig.type-tests.json",
     "compile": "node dist/cli.js compile",
     "serve": "node dist/cli.js serve",
-    "test": "pnpm build && node --test test/*.test.mjs",
-    "test:acceptance": "pnpm build && node scripts/acceptance.mjs"
+    "test": "npm run build && node --test test/*.test.mjs",
+    "test:acceptance": "npm run build && node scripts/acceptance.mjs",
+    "release:check": "npm run build && node scripts/release-contract.mjs",
+    "release:consumer": "npm run release:check && node scripts/clean-consumer.mjs",
+    "prepack": "npm run release:check"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
     "typescript": "^5.7.0"
   },
   "author": "CREATE SOMETHING <hello@createsomething.agency>",
-  "license": "MIT"
+  "license": "MIT",
+  "keywords": [
+    "workflow",
+    "compiler",
+    "mcp",
+    "openai",
+    "governance",
+    "automation"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/createsomethingtoday/create-something-monorepo.git",
+    "directory": "packages/workflow-compiler"
+  },
+  "homepage": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/workflow-compiler#readme",
+  "bugs": {
+    "url": "https://github.com/createsomethingtoday/create-something-monorepo/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "sideEffects": false
 }

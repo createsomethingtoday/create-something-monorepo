@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 import SEO from './SEO.svelte';
 
 const organizationId = 'https://createsomething.ltd/#organization';
-const organizationLogoUrl = 'https://createsomething.ltd/brand/create-something-ring-mark-512.png';
+const organizationLogoUrl = 'https://createsomething.ltd/icon-512.png';
 
 function schemasFor(propertyName: 'agency' | 'space' | 'io' | 'ltd') {
   return schemasFromHead(headFor(propertyName));

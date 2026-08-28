@@ -25,6 +25,16 @@ test('accepts scoped package names for Canon root exports', () => {
   assert.match(result.stdout, /Source: packages\/canon\/src\/lib\/overlays\/index\.ts/);
 });
 
+test('accepts the canonical public workflow compiler scope', () => {
+  const result = runExports('@createsomething/workflow-compiler', 'compileWorkflowDefinition');
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  assert.match(
+    result.stdout,
+    /compileWorkflowDefinition exists in @createsomething\/workflow-compiler/
+  );
+});
+
 test('preserves shorthand package lookup', () => {
   const result = runExports('canon', 'CommandPalette');
 

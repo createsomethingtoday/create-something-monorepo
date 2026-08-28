@@ -7,6 +7,7 @@
     "deploy": "node ../../../scripts/run-wrangler.mjs deploy",
     "deploy:base": "node ../../../scripts/run-wrangler.mjs deploy --env=\"\"",
     "deploy:team": "./scripts/deploy-team.sh",
+    "test": "node --import tsx --test tests/*.test.ts",
     "secrets": "echo 'Run: wrangler secret put <NAME>' && echo 'Required: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, NOTION_API_KEY, NOTION_INTERACTIONS_DB_ID, NOTION_CONTACTS_DB_ID' && echo 'Set in wrangler.toml [vars]: AUTHORIZED_EMAIL'"
   },
   "dependencies": {

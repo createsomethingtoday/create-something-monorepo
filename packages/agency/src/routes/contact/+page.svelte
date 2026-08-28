@@ -153,8 +153,12 @@
   const initialIntent = $derived(data.contactIntent as ContactIntent);
   const initialLane = $derived(data.contactLane as ServiceLane);
 
-  let selectedIntent = $state<ContactIntent>(data.contactIntent as ContactIntent);
-  let selectedLane = $state<ServiceLane>(data.contactLane as ServiceLane);
+  function initial<T>(read: () => T): T {
+    return read();
+  }
+
+  let selectedIntent = $state<ContactIntent>(initial(() => data.contactIntent as ContactIntent));
+  let selectedLane = $state<ServiceLane>(initial(() => data.contactLane as ServiceLane));
   let submitting = $state(false);
   let submitMessage = $state('');
   let submitSuccess = $state(false);

@@ -1,0 +1,8 @@
+# Default review owner for all repository changes.
+* @createsomethingtoday
+
+# Security-sensitive policy and automation surfaces.
+/.github/ @createsomethingtoday
+/SECURITY.md @createsomethingtoday
+/config/mcp-hub/ @createsomethingtoday
+/packages/identity-worker/ @createsomethingtoday

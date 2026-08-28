@@ -6,7 +6,7 @@
 //! 
 //! The natural agent workflow is: `analyze → fix → verify_fix`
 //! 
-//! ## Tools (13 total)
+//! ## Tools (21 total)
 //!
 //! ### Primary Entry Points
 //! - `ground_analyze` - Batch analysis (duplicates, dead exports, orphans, environment)
@@ -43,6 +43,7 @@ use crate::computations::environment::{analyze_environment_safety, WarningSeveri
 use crate::computations::{BloomFilter, HyperLogLog};
 use crate::computations::confidence::orphan_confidence;
 use crate::computations::framework::{detect_framework, is_implicit_entry};
+use crate::computations::function_dry::is_test_file;
 use crate::monorepo::{detect_monorepo, suggest_refactoring, generate_linear_command};
 use crate::config::GroundConfig;
 
@@ -615,6 +616,7 @@ impl VerificationResult {
 }
 
 const DEFAULT_DUPLICATE_TIMEOUT_MS: u64 = 120_000;
+const MAX_EXCLUDED_CHANGED_FILE_DETAILS: usize = 100;
 
 fn verification_status_from_value(value: Option<&Value>) -> VerificationStatus {
     value
@@ -1709,7 +1711,9 @@ fn handle_check_environment(args: &Value) -> ToolResult {
 }
 
 fn handle_find_orphans(args: &Value) -> ToolResult {
-    use crate::computations::analyze_connectivity;
+    use crate::computations::{
+        analyze_connectivity, analyze_reachability_with_config, ReachabilityStatus,
+    };
     
     let directory = match args.get("directory").and_then(|v| v.as_str()) {
         Some(d) => PathBuf::from(d),
@@ -1725,7 +1729,7 @@ fn handle_find_orphans(args: &Value) -> ToolResult {
     
     // Collect files
     let mut files = Vec::new();
-    let _ = collect_ts_files(&directory, &mut files);
+    let discovery_complete = collect_ts_files(&directory, &mut files);
     let total_files_before_filter = files.len();
     
     // Filter using config path patterns first
@@ -1758,26 +1762,64 @@ fn handle_find_orphans(args: &Value) -> ToolResult {
             !name.starts_with("+")  // SvelteKit route files
         })
         .collect();
+
+    let reachability = match analyze_reachability_with_config(&directory, &config) {
+        Ok(report) => report,
+        Err(error) => return ToolResult::error(format!(
+            "Orphan reachability analysis failed: {}",
+            error
+        )),
+    };
+    let reachability_by_path: HashMap<_, _> = reachability.modules.iter()
+        .map(|module| (module.path.clone(), module))
+        .collect();
+    let mut entry_point_evidence: Vec<Value> = reachability.entry_points.iter()
+        .map(|entry| {
+            let relative_path = entry.path.strip_prefix(&directory)
+                .map(|path| path.display().to_string())
+                .unwrap_or_else(|_| entry.path.display().to_string());
+            json!({
+                "path": entry.path.display().to_string(),
+                "relative_path": relative_path,
+                "entry_point_type": entry.entry_type.as_str(),
+                "source": entry.description,
+            })
+        })
+        .collect();
+    entry_point_evidence.sort_by(|left, right| {
+        left["relative_path"].as_str().cmp(&right["relative_path"].as_str())
+            .then_with(|| left["entry_point_type"].as_str().cmp(&right["entry_point_type"].as_str()))
+            .then_with(|| left["source"].as_str().cmp(&right["source"].as_str()))
+    });
     
     let mut orphans = Vec::new();
     let mut connected = 0;
     let mut errors = 0;
     
     for file in &files {
-        match analyze_connectivity(file) {
-            Ok(evidence) => {
-                if evidence.total_connections() == 0 && evidence.architectural.is_none() {
-                    orphans.push(json!({
-                        "path": file.display().to_string(),
-                        "relative_path": file.strip_prefix(&directory)
-                            .map(|p| p.display().to_string())
-                            .unwrap_or_else(|_| file.display().to_string())
-                    }));
-                } else {
-                    connected += 1;
+        match reachability_by_path.get(file) {
+            Some(module) if module.status == ReachabilityStatus::Unreachable => {
+                match analyze_connectivity(file) {
+                    Ok(evidence) if evidence.total_connections() == 0 && evidence.architectural.is_none() => {
+                        orphans.push(json!({
+                            "path": file.display().to_string(),
+                            "relative_path": file.strip_prefix(&directory)
+                                .map(|p| p.display().to_string())
+                                .unwrap_or_else(|_| file.display().to_string())
+                        }));
+                    }
+                    Ok(_) => {
+                        connected += 1;
+                    }
+                    Err(_) => {
+                        errors += 1;
+                    }
                 }
             }
-            Err(_) => {
+            Some(_) => {
+                connected += 1;
+            }
+            None => {
                 errors += 1;
             }
         }
@@ -1796,6 +1838,8 @@ fn handle_find_orphans(args: &Value) -> ToolResult {
         "orphans": orphans,
         "connected_count": connected,
         "error_count": errors,
+        "scan_complete": discovery_complete && errors == 0,
+        "entry_point_evidence": entry_point_evidence,
         "message": message
     });
     
@@ -2123,7 +2167,7 @@ fn collect_ts_files_inner(
             discovery_complete &= collect_ts_files_inner(&path, files, visited_directories);
         } else if file_type.is_file() || (file_type.is_symlink() && path.is_file()) {
             let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
-            if matches!(ext, "ts" | "tsx" | "js" | "jsx" | "mjs") {
+            if duplicate_function_supports_extension(ext) {
                 files.push(path);
             }
         }
@@ -2433,37 +2477,50 @@ fn generate_structured_fix(
 ) -> StructuredFix {
     let same_package = pkg_a == pkg_b;
     let confidence = calculate_duplicate_confidence(similarity, 20, 20, same_package);
+    let svelte_component = [file_a, file_b].iter().any(|path| {
+        path.extension()
+            .and_then(|extension| extension.to_str())
+            .is_some_and(|extension| extension.eq_ignore_ascii_case("svelte"))
+    });
+    let test_or_fixture = is_test_file(file_a) || is_test_file(file_b);
+    let review_only = test_or_fixture || svelte_component;
     
     // Determine target module
-    let target = if same_package {
+    let target = if review_only {
+        None
+    } else if same_package {
         // Same package: extract to utils in that package
-        format!("{}/src/lib/utils/{}.ts", pkg_a, func_name.to_lowercase())
+        Some(format!("{}/src/lib/utils/{}.ts", pkg_a, func_name.to_lowercase()))
     } else {
         // Cross-package: suggest shared package
-        format!("packages/shared/src/{}.ts", func_name.to_lowercase())
+        Some(format!("packages/shared/src/{}.ts", func_name.to_lowercase()))
     };
     
     // Generate import updates
-    let imports = vec![
-        ImportUpdate {
-            file: file_a.to_string_lossy().to_string(),
-            old_import: format!("./{}", func_name),
-            new_import: if same_package {
-                format!("$lib/utils/{}", func_name.to_lowercase())
-            } else {
-                format!("@create-something/shared/{}", func_name.to_lowercase())
+    let imports = if review_only {
+        Vec::new()
+    } else {
+        vec![
+            ImportUpdate {
+                file: file_a.to_string_lossy().to_string(),
+                old_import: format!("./{}", func_name),
+                new_import: if same_package {
+                    format!("$lib/utils/{}", func_name.to_lowercase())
+                } else {
+                    format!("@create-something/shared/{}", func_name.to_lowercase())
+                },
             },
-        },
-        ImportUpdate {
-            file: file_b.to_string_lossy().to_string(),
-            old_import: format!("./{}", func_name),
-            new_import: if same_package {
-                format!("$lib/utils/{}", func_name.to_lowercase())
-            } else {
-                format!("@create-something/shared/{}", func_name.to_lowercase())
+            ImportUpdate {
+                file: file_b.to_string_lossy().to_string(),
+                old_import: format!("./{}", func_name),
+                new_import: if same_package {
+                    format!("$lib/utils/{}", func_name.to_lowercase())
+                } else {
+                    format!("@create-something/shared/{}", func_name.to_lowercase())
+                },
             },
-        },
-    ];
+        ]
+    };
     
     StructuredFix {
         action: "consolidate".to_string(),
@@ -2471,17 +2528,29 @@ fn generate_structured_fix(
             file_a.to_string_lossy().to_string(),
             file_b.to_string_lossy().to_string(),
         ],
-        target: Some(target),
+        target,
         function_name: Some(func_name.to_string()),
         imports_to_update: imports,
         confidence,
-        safe_to_auto_fix: confidence > 0.9 && same_package,
-        rationale: format!(
-            "{:.1}% similar, {} duplicate. {}",
-            similarity * 100.0,
-            if same_package { "same-package" } else { "cross-package" },
-            if confidence > 0.9 { "High confidence - safe to auto-fix." } else { "Review recommended." }
-        ),
+        safe_to_auto_fix: !review_only && confidence > 0.9 && same_package,
+        rationale: if svelte_component {
+            format!(
+                "{:.1}% similar. Svelte component scripts require review because extracted helpers may close over component state or runes; no automatic consolidation target or import rewrite is proposed.",
+                similarity * 100.0
+            )
+        } else if test_or_fixture {
+            format!(
+                "{:.1}% similar. Test and fixture duplicates require review because intentional isolation is common; no automatic consolidation target is proposed.",
+                similarity * 100.0
+            )
+        } else {
+            format!(
+                "{:.1}% similar, {} duplicate. {}",
+                similarity * 100.0,
+                if same_package { "same-package" } else { "cross-package" },
+                if confidence > 0.9 { "High confidence - safe to auto-fix." } else { "Review recommended." }
+            )
+        },
     }
 }
 
@@ -2727,7 +2796,11 @@ fn handle_batch_analyze(args: &Value) -> ToolResult {
                 results["findings"]["orphans"] = json!(structured_orphans);
             }
             results["coverage"]["orphans"] = json!({
-                "status": orphan_status
+                "status": orphan_status,
+                "files_scanned": content.get("files_scanned"),
+                "error_count": content.get("error_count"),
+                "scan_complete": content.get("scan_complete"),
+                "entry_point_evidence": content.get("entry_point_evidence")
             });
         } else {
             results["coverage"]["orphans"] = json!({
@@ -2744,14 +2817,32 @@ fn handle_batch_analyze(args: &Value) -> ToolResult {
         });
     } else if checks.contains(&"environment") {
         let mut env_issues: Vec<Value> = Vec::new();
+        let mut env_entry_points: Vec<Value> = Vec::new();
         let mut environment_failed = false;
         
         for entry in &entry_points {
+            let resolved_entry = if entry.is_absolute() {
+                entry.clone()
+            } else if directory.is_dir() {
+                directory.join(entry)
+            } else {
+                directory.parent().unwrap_or(Path::new(".")).join(entry)
+            };
             let env_args = json!({
-                "entry_point": entry.to_string_lossy()
+                "entry_point": resolved_entry.to_string_lossy()
             });
             
-            if let ToolResult { success: true, content, .. } = handle_check_environment(&env_args) {
+            let env_result = handle_check_environment(&env_args);
+            if let ToolResult { success: true, content, .. } = env_result {
+                env_entry_points.push(json!({
+                    "requested": entry.to_string_lossy(),
+                    "resolved": content.get("entry_point"),
+                    "status": if content.get("is_safe") == Some(&json!(true)) {
+                        VerificationStatus::Pass
+                    } else {
+                        VerificationStatus::Fail
+                    }
+                }));
                 if content.get("is_safe") == Some(&json!(false)) {
                     if let Some(warnings) = content.get("warnings").and_then(|v| v.as_array()) {
                         for warning in warnings {
@@ -2777,6 +2868,12 @@ fn handle_batch_analyze(args: &Value) -> ToolResult {
                 }
             } else {
                 environment_failed = true;
+                env_entry_points.push(json!({
+                    "requested": entry.to_string_lossy(),
+                    "resolved": resolved_entry.to_string_lossy(),
+                    "status": VerificationStatus::Fail,
+                    "error": env_result.error.unwrap_or_else(|| "Environment analysis failed".to_string())
+                }));
             }
         }
         
@@ -2786,7 +2883,8 @@ fn handle_batch_analyze(args: &Value) -> ToolResult {
                 VerificationStatus::Fail
             } else {
                 VerificationStatus::Pass
-            }
+            },
+            "entry_points": env_entry_points
         });
     }
     
@@ -3000,7 +3098,7 @@ fn check_export_exists(path: &Path, export_name: &str) -> bool {
 // ─────────────────────────────────────────────────────────────────────────────
 
 fn duplicate_function_supports_extension(extension: &str) -> bool {
-    matches!(extension, "ts" | "tsx" | "js" | "jsx" | "mjs")
+    matches!(extension, "ts" | "tsx" | "js" | "jsx" | "mjs" | "svelte")
 }
 
 fn is_ground_source_extension(extension: &str) -> bool {
@@ -3078,7 +3176,10 @@ fn handle_diff(args: &Value) -> ToolResult {
             "changed_file_list": [],
             "discovered_changed_files": 0,
             "analyzable_changed_files": 0,
+            "excluded_changed_file_count": 0,
             "excluded_changed_files": [],
+            "excluded_changed_files_truncated": false,
+            "excluded_reason_counts": {},
             "check_coverage": check_coverage,
             "new_issues": [],
             "total_new_issues": 0,
@@ -3352,6 +3453,19 @@ fn handle_diff(args: &Value) -> ToolResult {
         .map(|coverage| verification_status_from_value(coverage.get("status")))
         .collect::<Vec<_>>();
     let verification_status = aggregate_verification_status(check_statuses.iter());
+    let excluded_changed_file_count = excluded_changed_files.len();
+    let excluded_changed_files_truncated =
+        excluded_changed_file_count > MAX_EXCLUDED_CHANGED_FILE_DETAILS;
+    let mut excluded_reason_counts = HashMap::<String, usize>::new();
+    for excluded in &excluded_changed_files {
+        if let Some(reason) = excluded.get("reason").and_then(Value::as_str) {
+            *excluded_reason_counts.entry(reason.to_string()).or_default() += 1;
+        }
+    }
+    let excluded_changed_file_details = excluded_changed_files.iter()
+        .take(MAX_EXCLUDED_CHANGED_FILE_DETAILS)
+        .cloned()
+        .collect::<Vec<_>>();
 
     let message = match verification_status {
         VerificationStatus::Pass => format!(
@@ -3389,7 +3503,10 @@ fn handle_diff(args: &Value) -> ToolResult {
             .collect::<Vec<_>>(),
         "discovered_changed_files": changed_files.len(),
         "analyzable_changed_files": relevant_files.len(),
-        "excluded_changed_files": excluded_changed_files,
+        "excluded_changed_file_count": excluded_changed_file_count,
+        "excluded_changed_files": excluded_changed_file_details,
+        "excluded_changed_files_truncated": excluded_changed_files_truncated,
+        "excluded_reason_counts": excluded_reason_counts,
         "check_coverage": check_coverage,
         "new_issues": new_issues,
         "total_new_issues": new_issues.len(),
@@ -4204,6 +4321,78 @@ mod tests {
     }
 
     #[test]
+    fn batch_orphans_reuses_declarative_and_manual_entry_point_evidence() {
+        use std::fs;
+
+        let directory = tempdir().unwrap();
+        let root = directory.path();
+        fs::create_dir_all(root.join("src")).unwrap();
+        fs::create_dir_all(root.join("scripts")).unwrap();
+        fs::create_dir_all(root.join("ops")).unwrap();
+        fs::create_dir_all(root.join("benchmarks/providers")).unwrap();
+        fs::write(root.join("package.json"), r#"{"main":"src/main.js"}"#).unwrap();
+        fs::write(
+            root.join(".ground.yml"),
+            "entry_points:\n  manual:\n    - ops/manual.mjs\n",
+        ).unwrap();
+        fs::write(
+            root.join("manifest.json"),
+            r#"{"manifest_version":3,"background":{"service_worker":"src/background.js"}}"#,
+        ).unwrap();
+        fs::write(root.join("src/main.js"), "console.log('main');\n").unwrap();
+        fs::write(root.join("src/background.js"), "console.log('background');\n").unwrap();
+        fs::write(root.join("scripts/maintenance.mjs"), "console.log('script');\n").unwrap();
+        fs::write(root.join("ops/manual.mjs"), "console.log('manual');\n").unwrap();
+        fs::write(
+            root.join("benchmarks/promptfooconfig.yaml"),
+            "prompts:\n  - id: file://providers/fixture.js\n",
+        ).unwrap();
+        fs::write(
+            root.join("benchmarks/providers/fixture.js"),
+            "console.log('provider');\n",
+        ).unwrap();
+        fs::write(root.join("src/review-me.js"), "console.log('review');\n").unwrap();
+
+        let db_path = root.join("ground.db");
+        let mut g = VerifiedTriad::new(&db_path).unwrap();
+        let result = handle_tool_call(&mut g, "ground_analyze", &json!({
+            "directory": root,
+            "checks": ["orphans"]
+        }));
+
+        assert!(result.success, "{:?}", result.content);
+        let findings = result.content["findings"]["orphans"].as_array().unwrap();
+        assert_eq!(findings.len(), 1, "{:?}", findings);
+        assert!(findings[0]["path"].as_str().unwrap().ends_with("src/review-me.js"));
+        assert_eq!(findings[0]["recommended_action"], "investigate");
+        assert_eq!(findings[0]["safe_to_auto_fix"], false);
+
+        let entry_points = result.content["coverage"]["orphans"]["entry_point_evidence"]
+            .as_array()
+            .unwrap();
+        assert!(entry_points.iter().any(|entry| {
+            entry["relative_path"] == "src/main.js" &&
+                entry["entry_point_type"] == "package.json main"
+        }));
+        assert!(entry_points.iter().any(|entry| {
+            entry["relative_path"] == "scripts/maintenance.mjs" &&
+                entry["entry_point_type"] == "script"
+        }));
+        assert!(entry_points.iter().any(|entry| {
+            entry["relative_path"] == "ops/manual.mjs" &&
+                entry["entry_point_type"] == "Ground manual entry point" &&
+                entry["source"].as_str().unwrap().contains("ops/manual.mjs")
+        }));
+        assert!(entry_points.iter().any(|entry| {
+            entry["relative_path"] == "benchmarks/providers/fixture.js" &&
+                entry["entry_point_type"] == "Promptfoo file reference" &&
+                entry["source"].as_str().unwrap().contains("prompts[].id") &&
+                entry["source"].as_str().unwrap().contains("promptfooconfig.yaml")
+        }));
+        assert_eq!(result.content["coverage"]["orphans"]["scan_complete"], true);
+    }
+
+    #[test]
     fn diff_paths_are_root_relative_when_called_from_a_subdirectory() {
         use std::fs;
         use std::process::Command;
@@ -4239,6 +4428,57 @@ mod tests {
         let changed = get_changed_files_since(&root, "HEAD").unwrap();
         assert!(changed.contains(&root.join("packages/ground/tracked.rs")));
         assert!(changed.contains(&root.join("packages/ground/untracked.ts")));
+    }
+
+    #[test]
+    fn scoped_diff_bounds_exclusion_details_without_losing_accounting() {
+        use std::fs;
+        use std::process::Command;
+
+        let repo = tempdir().unwrap();
+        let run_git = |args: &[&str]| {
+            let status = Command::new("git")
+                .args(args)
+                .current_dir(repo.path())
+                .status()
+                .unwrap();
+            assert!(status.success(), "git {:?} failed", args);
+        };
+
+        run_git(&["init", "--quiet"]);
+        run_git(&["config", "user.email", "ground@example.test"]);
+        run_git(&["config", "user.name", "Ground test"]);
+        let source = repo.path().join("src");
+        let outside = repo.path().join("outside");
+        fs::create_dir_all(&source).unwrap();
+        fs::create_dir_all(&outside).unwrap();
+        fs::write(source.join("focus.ts"), "export const focus = 1;\n").unwrap();
+        run_git(&["add", "."]);
+        run_git(&["commit", "--quiet", "-m", "baseline"]);
+
+        fs::write(source.join("focus.ts"), "export const focus = 2;\n").unwrap();
+        for index in 0..150 {
+            fs::write(outside.join(format!("file-{index:03}.md")), "outside\n").unwrap();
+        }
+        run_git(&["add", "."]);
+        run_git(&["commit", "--quiet", "-m", "scoped change"]);
+
+        let result = handle_diff(&json!({
+            "directory": source,
+            "base": "HEAD~1",
+            "checks": ["duplicates"]
+        }));
+
+        assert!(result.success, "{:?}", result.content);
+        assert_eq!(result.content["excluded_changed_file_count"], 150);
+        assert_eq!(result.content["excluded_changed_files"].as_array().unwrap().len(), 100);
+        assert_eq!(result.content["excluded_changed_files_truncated"], true);
+        assert_eq!(result.content["excluded_reason_counts"]["outside_analysis_root"], 150);
+        assert_eq!(
+            result.content["discovered_changed_files"].as_u64().unwrap(),
+            result.content["analyzable_changed_files"].as_u64().unwrap()
+                + result.content["excluded_changed_file_count"].as_u64().unwrap()
+        );
     }
 
     #[test]
@@ -4400,7 +4640,7 @@ mod tests {
     }
 
     #[test]
-    fn diff_reports_svelte_duplicate_check_as_unsupported() {
+    fn diff_reports_svelte_duplicate_check_as_completed() {
         use std::fs;
         use std::process::Command;
 
@@ -4436,33 +4676,112 @@ mod tests {
         }));
 
         assert!(result.success, "{:?}", result.content);
-        assert_eq!(result.content["verification_status"], "UNSUPPORTED");
+        assert_eq!(result.content["verification_status"], "PASS");
         assert_eq!(
             result.content["check_coverage"]["duplicates"]["status"],
-            "UNSUPPORTED"
+            "PASS"
         );
         assert_eq!(
-            result.content["check_coverage"]["duplicates"]["unsupported_changed_files"][0]["reason"],
-            "unsupported_language"
+            result.content["check_coverage"]["duplicates"]["analyzed_changed_files"]
+                .as_array()
+                .unwrap()
+                .len(),
+            1
         );
     }
 
     #[test]
-    fn targeted_svelte_duplicate_analysis_is_unsupported() {
+    fn targeted_svelte_duplicate_analysis_finds_script_functions() {
         use std::fs;
 
         let directory = tempdir().unwrap();
-        let component = directory.path().join("Footer.svelte");
-        fs::write(&component, "<footer>Ground must report coverage</footer>\n").unwrap();
+        let primary = directory.path().join("Primary.svelte");
+        let secondary = directory.path().join("Secondary.svelte");
+        let component = r#"<script lang="ts">
+  export function normalizeLabel(value: string) {
+    const trimmed = value.trim();
+    if (!trimmed) return 'Unknown';
+    return trimmed.toUpperCase();
+  }
+</script>
+
+<p>{normalizeLabel('ground')}</p>
+"#;
+        fs::write(&primary, component).unwrap();
+        fs::write(&secondary, component).unwrap();
 
         let result = handle_batch_analyze(&json!({
-            "directory": component,
+            "directory": directory.path(),
             "checks": ["duplicates"]
         }));
 
         assert!(result.success, "{:?}", result.content);
-        assert_eq!(result.content["verification_status"], "UNSUPPORTED");
-        assert_eq!(result.content["coverage"]["duplicates"]["status"], "UNSUPPORTED");
+        assert_eq!(result.content["verification_status"], "FAIL");
+        assert_eq!(result.content["coverage"]["duplicates"]["status"], "FAIL");
+        let findings = result.content["findings"]["duplicates"].as_array().unwrap();
+        assert_eq!(findings.len(), 1, "{:?}", result.content);
+        assert_eq!(findings[0]["function"], "normalizeLabel");
+        assert_eq!(findings[0]["safe_to_auto_fix"], false);
+        assert_eq!(findings[0]["fix"]["target"], Value::Null);
+        assert!(findings[0]["fix"]["rationale"]
+            .as_str()
+            .unwrap()
+            .contains("Svelte component scripts require review"));
+    }
+
+    #[test]
+    fn batch_duplicate_test_helpers_are_never_auto_fixable() {
+        use std::fs;
+
+        let directory = tempdir().unwrap();
+        let source = directory.path().join("src");
+        fs::create_dir_all(&source).unwrap();
+        let helper = "export function buildFixture(value: string) {\n  const trimmed = value.trim();\n  if (!trimmed) return 'fixture';\n  return trimmed.toUpperCase();\n}\n";
+        fs::write(source.join("alpha.test.ts"), helper).unwrap();
+        fs::write(source.join("beta.test.ts"), helper).unwrap();
+
+        let result = handle_batch_analyze(&json!({
+            "directory": directory.path(),
+            "checks": ["duplicates"]
+        }));
+
+        assert!(result.success, "{:?}", result.content);
+        let findings = result.content["findings"]["duplicates"].as_array().unwrap();
+        assert_eq!(findings.len(), 1, "{:?}", result.content);
+        assert_eq!(findings[0]["safe_to_auto_fix"], false);
+        assert_eq!(findings[0]["fix"]["target"], Value::Null);
+        assert!(findings[0]["fix"]["rationale"].as_str().unwrap()
+            .contains("Test and fixture duplicates require review"));
+    }
+
+    #[test]
+    fn batch_environment_resolves_entry_points_from_analysis_directory() {
+        use std::fs;
+
+        let directory = tempdir().unwrap();
+        let source = directory.path().join("src");
+        fs::create_dir_all(&source).unwrap();
+        fs::write(
+            directory.path().join("package.json"),
+            r#"{"bin":{"fixture":"src/index.ts"}}"#,
+        ).unwrap();
+        fs::write(source.join("index.ts"), "console.log('ground');\n").unwrap();
+
+        let result = handle_batch_analyze(&json!({
+            "directory": directory.path(),
+            "checks": ["environment"],
+            "entry_points": ["src/index.ts"]
+        }));
+
+        assert!(result.success, "{:?}", result.content);
+        assert_eq!(result.content["verification_status"], "PASS");
+        assert_eq!(result.content["coverage"]["environment"]["status"], "PASS");
+        assert_eq!(
+            result.content["coverage"]["environment"]["entry_points"][0]["requested"],
+            "src/index.ts"
+        );
+        assert!(result.content["coverage"]["environment"]["entry_points"][0]["resolved"]
+            .as_str().unwrap().ends_with("src/index.ts"));
     }
 
     #[test]

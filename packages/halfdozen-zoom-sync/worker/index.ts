@@ -35,6 +35,7 @@ import { registerPrompts } from '../src/prompts/analysis.js';
 import { initSchema, type D1Database } from '../src/lib/db.js';
 import { createHalfDozenZoomExecutionHooks } from '../src/lib/composio-security-policy.js';
 import type { SteelSessionContext } from '../src/lib/steel.js';
+import { authorizeMcpTransport } from './transport-auth.js';
 
 // =============================================================================
 // Types
@@ -65,6 +66,7 @@ interface Env {
   COMPOSIO_API_KEY?: string;
   // Optional: Composio Zoom auth config ID (from Composio dashboard) so zoom_api_get_connect_link can return a connect URL
   COMPOSIO_ZOOM_AUTH_CONFIG_ID?: string;
+  MCP_BEARER_TOKEN?: string;
 }
 
 // Session context KV key (cookie blob; used when no profile is set)
@@ -104,12 +106,6 @@ export class ZoomClipsMCP extends McpAgent<Env> {
   private getAccountIdFromRequest(request: Request): string | null {
     const accountHeader = request.headers.get('x-mcp-account-id') ?? request.headers.get('x-account-id');
     if (accountHeader?.trim()) return accountHeader.trim();
-
-    const auth = request.headers.get('authorization');
-    if (auth?.toLowerCase().startsWith('bearer ')) {
-      const token = auth.slice(7).trim();
-      if (token) return token;
-    }
 
     return null;
   }
@@ -238,10 +234,14 @@ export default {
 
     // MCP transports
     if (url.pathname === '/mcp' || url.pathname.startsWith('/mcp/')) {
+      const authError = authorizeMcpTransport(request, env);
+      if (authError) return authError;
       return ZoomClipsMCP.serve('/mcp').fetch(request, env, ctx);
     }
 
     if (url.pathname === '/sse' || url.pathname.startsWith('/sse/')) {
+      const authError = authorizeMcpTransport(request, env);
+      if (authError) return authError;
       return ZoomClipsMCP.serve('/sse').fetch(request, env, ctx);
     }
 
