@@ -4,7 +4,10 @@ Cloudflare Worker that owns the **Webflow Templates → Airtable 🕸️🚰WF C
 (currently Whalesync's "WF Templates → Marketplace Assets (Sync Log)") and runs a
 **drift reconciler** over the sync-log table.
 
-Production: `https://webflow-marketplace-sync.createsomething.workers.dev`
+Production: `https://webflow-marketplace-sync.webflow-inc.workers.dev`
+
+The former CREATE SOMETHING URL remains a temporary compatibility proxy during
+the migration rollback window.
 
 ## Why this exists
 
