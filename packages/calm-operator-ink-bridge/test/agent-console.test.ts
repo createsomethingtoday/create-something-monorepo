@@ -3,6 +3,7 @@ import { test } from 'node:test';
 
 import {
   buildAgentConsole,
+  agentDecisionReceipt,
   leaseAgentDecisions,
   normalizeAgentProgress,
   prepareAgentDecision,
@@ -90,17 +91,41 @@ function storedDecision(overrides: Partial<StoredAgentDecision> = {}): StoredAge
 }
 
 test('normalizes progress and exposes only remote-safe decisions to the device', () => {
-  const result = normalizeAgentProgress(progressInput(), NOW);
+  const result = normalizeAgentProgress(
+    progressInput({
+      payload: {
+        workspace_label: 'create-something-monorepo',
+        control_reason: 'settled-legacy-thread',
+        authority: 'dual-surface',
+        private_note: 'must not reach the device'
+      }
+    }),
+    NOW
+  );
   assert.equal(result.ok, true);
   if (!result.ok) return;
 
   const console = buildAgentConsole([result.progress], NOW);
   assert.equal(console.agents.length, 1);
   assert.equal(console.agents[0]?.progress_version, 17);
+  assert.deepEqual(console.agents[0]?.operator_context, {
+    workspace_label: 'create-something-monorepo',
+    control_reason: 'settled-legacy-thread',
+    authority: 'dual-surface'
+  });
+  assert.equal('private_note' in console.agents[0]!.operator_context, false);
   assert.deepEqual(
     console.agents[0]?.decisions.map((decision) => decision.id),
     ['focus-test', 'custom-redirect']
   );
+});
+
+test('projects one device-safe decision receipt without relying on recent history', () => {
+  const receipt = agentDecisionReceipt(storedDecision({ state: 'completed' }));
+  assert.equal(receipt.id, 'decision-1');
+  assert.equal(receipt.state, 'completed');
+  assert.equal('message' in receipt, false);
+  assert.equal('payload' in receipt, false);
 });
 
 test('rejects stale, unadvertised, unsafe, unconfirmed, and incomplete decisions', () => {

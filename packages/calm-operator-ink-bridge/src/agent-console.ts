@@ -76,7 +76,14 @@ export interface AgentConsole {
   count: number;
   needs_input_count: number;
   agents: Array<
-    Omit<StoredAgentProgress, 'payload' | 'decisions'> & { decisions: AgentDecisionOption[] }
+    Omit<StoredAgentProgress, 'payload' | 'decisions'> & {
+      decisions: AgentDecisionOption[];
+      operator_context: {
+        workspace_label: string;
+        control_reason: string;
+        authority: string;
+      };
+    }
   >;
   recent_decisions: AgentDecisionReceipt[];
 }
@@ -93,6 +100,22 @@ export interface AgentDecisionReceipt {
   updated_at: number;
   result_summary: string;
   error: string;
+}
+
+export function agentDecisionReceipt(decision: StoredAgentDecision): AgentDecisionReceipt {
+  return {
+    id: decision.id,
+    agent_id: decision.agent_id,
+    provider: decision.provider,
+    progress_version: decision.progress_version,
+    decision_id: decision.decision_id,
+    kind: decision.kind,
+    label: decision.label,
+    state: decision.state,
+    updated_at: decision.updated_at,
+    result_summary: decision.result_summary,
+    error: decision.error
+  };
 }
 
 export interface AgentDecisionInput {
@@ -260,12 +283,17 @@ export function buildAgentConsole(
       return right.updated_at - left.updated_at;
     })
     .slice(0, 8)
-    .map(({ payload: _payload, decisions, ...agent }) => ({
+    .map(({ payload, decisions, ...agent }) => ({
       ...agent,
       decisions: decisions.filter(
         (decision) =>
           decision.remote_safe && (decision.expires_at === null || decision.expires_at > now)
-      )
+      ),
+      operator_context: {
+        workspace_label: boundedText(payload.workspace_label, 72),
+        control_reason: boundedText(payload.control_reason, 96),
+        authority: boundedText(payload.authority, 72)
+      }
     }));
 
   return {
@@ -277,19 +305,7 @@ export function buildAgentConsole(
     recent_decisions: recentDecisions
       .sort((left, right) => right.updated_at - left.updated_at)
       .slice(0, 8)
-      .map((decision) => ({
-        id: decision.id,
-        agent_id: decision.agent_id,
-        provider: decision.provider,
-        progress_version: decision.progress_version,
-        decision_id: decision.decision_id,
-        kind: decision.kind,
-        label: decision.label,
-        state: decision.state,
-        updated_at: decision.updated_at,
-        result_summary: decision.result_summary,
-        error: decision.error
-      }))
+      .map(agentDecisionReceipt)
   };
 }
 

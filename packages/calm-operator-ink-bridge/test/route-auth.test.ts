@@ -7,6 +7,10 @@ test('classifies device-readable routes as device authenticated', () => {
   assert.equal(authRoleForOperatorRoute('GET', '/operator/brief'), 'device');
   assert.equal(authRoleForOperatorRoute('GET', '/operator/clock'), 'device');
   assert.equal(authRoleForOperatorRoute('GET', '/operator/agent-console'), 'device');
+  assert.equal(
+    authRoleForOperatorRoute('GET', '/operator/agent-decisions/decision-1'),
+    'device'
+  );
   assert.equal(authRoleForOperatorRoute('POST', '/operator/device-heartbeat'), 'device');
   assert.equal(authRoleForOperatorRoute('POST', '/operator/agent-decision'), 'device');
   assert.equal(authRoleForOperatorRoute('POST', '/operator/voice-command'), 'device');

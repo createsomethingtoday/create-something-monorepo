@@ -79,11 +79,21 @@ const NEW_TASK_DECISION = {
   remote_safe: true
 };
 
-const PROMPT_TASK_DECISION = {
-  id: 'prompt',
+const FORK_TASK_DECISION = {
+  id: 'fork',
   kind: 'redirect' as const,
-  label: 'Prompt task',
-  description: 'Review a spoken prompt, then continue this local Codex task.',
+  label: 'Continue in new task',
+  description: 'Copy completed task history, then continue from a reviewed spoken prompt.',
+  requires_confirmation: true,
+  requires_text: true,
+  remote_safe: true
+};
+
+const TAKE_OVER_TASK_DECISION = {
+  id: 'takeover',
+  kind: 'continue' as const,
+  label: 'Take over this task',
+  description: 'Continue this task directly from a reviewed spoken prompt. Desktop approvals stay on the laptop.',
   requires_confirmation: true,
   requires_text: true,
   remote_safe: true
@@ -101,6 +111,50 @@ function codexThreadId(agentId: string): string | null {
     throw new Error('Codex task id is not a safe resumable thread reference.');
   }
   return threadId;
+}
+
+export interface CodexThreadTarget {
+  threadId: string;
+  uri: string;
+}
+
+export function parseCodexThreadUri(value: string): CodexThreadTarget {
+  let uri: URL;
+  try {
+    uri = new URL(value);
+  } catch {
+    throw new Error('Codex task URI must use codex://threads/<thread-id>.');
+  }
+  if (
+    uri.protocol !== 'codex:' ||
+    uri.hostname !== 'threads' ||
+    !uri.pathname.startsWith('/') ||
+    uri.pathname.slice(1).includes('/') ||
+    uri.search ||
+    uri.hash ||
+    uri.username ||
+    uri.password
+  ) {
+    throw new Error('Codex task URI must use codex://threads/<thread-id>.');
+  }
+  const threadId = uri.pathname.slice(1);
+  codexThreadId(`codex:${threadId}`);
+  return { threadId, uri: `codex://threads/${threadId}` };
+}
+
+export async function resolveCodexThreadTarget(
+  rpc: CodexRpcClient,
+  value: string
+): Promise<CodexThreadSummary & CodexThreadTarget> {
+  const target = parseCodexThreadUri(value);
+  const response = await rpc.request<{ thread: CodexThreadSummary }>('thread/read', {
+    threadId: target.threadId,
+    includeTurns: false
+  });
+  if (response.thread.id !== target.threadId) {
+    throw new Error('Codex task URI resolved to an unexpected task.');
+  }
+  return { ...response.thread, ...target };
 }
 
 function operatorPrompt(decision: StoredAgentDecision): string {
@@ -146,6 +200,25 @@ function turnAgentMessage(turn: CodexTurnSummary): string {
   return '';
 }
 
+async function forkSettledCodexThread(
+  rpc: CodexRpcClient,
+  threadId: string
+): Promise<CodexThreadResponse> {
+  const source = await rpc.request<CodexThreadResponse>('thread/read', {
+    threadId,
+    includeTurns: true
+  });
+  const turns = source.thread.turns ?? [];
+  if (turns.some((turn) => turn.status === 'inProgress')) {
+    throw new Error('Source task became active. Wait for it to settle before continuing.');
+  }
+  const lastCompletedTurn = [...turns].reverse().find((turn) => turn.status === 'completed');
+  return rpc.request<CodexThreadResponse>(
+    'thread/fork',
+    lastCompletedTurn ? { threadId, lastTurnId: lastCompletedTurn.id } : { threadId }
+  );
+}
+
 export async function dispatchCodexDecision(
   rpc: CodexRpcClient,
   decision: StoredAgentDecision,
@@ -157,17 +230,28 @@ export async function dispatchCodexDecision(
   const timeoutMs = Math.max(1_000, options.timeoutMs ?? 10 * 60_000);
   const completionPollMs = Math.max(25, options.completionPollMs ?? 2_000);
 
-  const threadResponse = existingThreadId
-    ? await rpc.request<CodexThreadResponse>('thread/resume', {
-        threadId: existingThreadId,
-        approvalPolicy: 'never'
-      })
-    : await rpc.request<CodexThreadResponse>('thread/start', {
-        cwd: options.cwd,
-        approvalPolicy: 'never',
-        sandbox: 'workspace-write',
-        serviceName: 'calm_operator_stopwatch'
-      });
+  const isForkedContinuation = decision.decision_id === 'fork';
+  const isDirectContinuation = decision.decision_id === 'takeover' || decision.decision_id === 'prompt';
+  const threadResponse = isForkedContinuation
+    ? existingThreadId
+      ? await forkSettledCodexThread(rpc, existingThreadId)
+      : (() => {
+          throw new Error('A source task is required to continue in a new task.');
+        })()
+    : existingThreadId
+      ? isDirectContinuation
+        ? await rpc.request<CodexThreadResponse>('thread/resume', {
+            threadId: existingThreadId
+          })
+        : (() => {
+            throw new Error('Codex task does not expose a supported direct-continuation action.');
+          })()
+      : await rpc.request<CodexThreadResponse>('thread/start', {
+          cwd: options.cwd,
+          approvalPolicy: 'never',
+          sandbox: 'workspace-write',
+          serviceName: 'calm_operator_stopwatch'
+        });
   const threadId = threadResponse.thread.id;
   const activeTurn = [...(threadResponse.thread.turns ?? [])]
     .reverse()
@@ -208,6 +292,14 @@ export async function dispatchCodexDecision(
     if (turn.id === turnId) resolveCompletion(turn);
   });
 
+  const publish = options.onProgress?.({
+    threadId,
+    turnId,
+    phase: 'Codex working',
+    summary: isForkedContinuation ? `Forked child ${threadId}. Codex started.` : 'Codex started.'
+  });
+  if (publish) void Promise.resolve(publish).catch(() => undefined);
+
   try {
     if (activeTurn) {
       const response = await rpc.request<{ turnId: string }>('turn/steer', {
@@ -217,11 +309,19 @@ export async function dispatchCodexDecision(
       });
       turnId = response.turnId;
     } else {
-      const response = await rpc.request<{ turn: CodexTurnSummary }>('turn/start', {
-        threadId,
-        input: [{ type: 'text', text: prompt }],
-        approvalPolicy: 'never'
-      });
+      const response = await rpc.request<{ turn: CodexTurnSummary }>(
+        'turn/start',
+        existingThreadId
+          ? {
+              threadId,
+              input: [{ type: 'text', text: prompt }]
+            }
+          : {
+              threadId,
+              input: [{ type: 'text', text: prompt }],
+              approvalPolicy: 'never'
+            }
+      );
       turnId = response.turn.id;
     }
 
@@ -274,13 +374,17 @@ export async function dispatchCodexDecision(
       if (timeoutHandle !== undefined) clearTimeout(timeoutHandle);
     }
 
+    const summary =
+      boundedText(lastAgentMessage, 220) ||
+      (turn.status === 'completed' ? 'Codex completed the task.' : `Codex turn ${turn.status}.`);
+
     return {
       threadId,
       turnId,
       status: turn.status as CodexDispatchResult['status'],
-      summary:
-        boundedText(lastAgentMessage, 220) ||
-        (turn.status === 'completed' ? 'Codex completed the task.' : `Codex turn ${turn.status}.`)
+      summary: isForkedContinuation
+        ? boundedText(`Forked child ${threadId}: ${summary}`, 220)
+        : summary
     };
   } finally {
     unsubscribe();
@@ -333,10 +437,15 @@ export function buildCodexTaskProgress(
       summary: `Speak a prompt to start in ${directoryLabel(options.cwd)}.`,
       detail: options.cwd,
       progress_version: 1,
-      needs_input: true,
+      needs_input: false,
       decisions: [NEW_TASK_DECISION],
       expires_at: expiresAt,
-      payload: { authority: 'local-codex-app-server', history_mode: 'legacy' }
+      payload: {
+        authority: 'local-codex-app-server',
+        history_mode: 'legacy',
+        workspace_label: directoryLabel(options.cwd),
+        control_reason: 'new-task'
+      }
     }
   ];
 
@@ -345,7 +454,7 @@ export function buildCodexTaskProgress(
     const historyMode = thread.historyMode ?? 'legacy';
     const idleRuntime = thread.status.type === 'idle' || thread.status.type === 'notLoaded';
     const settled = now - thread.updatedAt * 1_000 >= minimumIdleMs;
-    const canPrompt = historyMode === 'legacy' && idleRuntime && settled;
+    const canTakeOver = historyMode === 'legacy' && idleRuntime && settled;
     const recentlyChanged = historyMode === 'legacy' && idleRuntime && !settled;
     output.push({
       agent_id: `codex:${thread.id}`,
@@ -357,13 +466,15 @@ export function buildCodexTaskProgress(
       detail: boundedText(thread.cwd, 500),
       progress_version: Math.max(1, Math.round(thread.updatedAt)),
       needs_input: state.needsInput,
-      decisions: canPrompt ? [PROMPT_TASK_DECISION] : [],
+      decisions: canTakeOver ? [TAKE_OVER_TASK_DECISION, FORK_TASK_DECISION] : [],
       expires_at: expiresAt,
       payload: {
-        authority: canPrompt ? 'local-codex-app-server' : 'read-only',
+        authority: canTakeOver ? 'dual-surface' : 'read-only',
         history_mode: historyMode,
         thread_id: thread.id,
+        thread_uri: `codex://threads/${thread.id}`,
         cwd: thread.cwd,
+        workspace_label: directoryLabel(thread.cwd),
         control_reason:
           historyMode === 'paginated'
             ? 'paginated-history-not-resumable'

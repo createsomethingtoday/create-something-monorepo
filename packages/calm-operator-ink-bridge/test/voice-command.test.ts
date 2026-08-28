@@ -44,9 +44,33 @@ test('rejects unsupported audio and clips outside the size or duration policy', 
   );
   assert.equal(
     normalizeVoiceCommand(
-      { ...validInput(), audio_base64: Buffer.alloc(200000, 1).toString('base64') },
+      { ...validInput(), audio_base64: Buffer.alloc(320_001, 1).toString('base64') },
       1000,
       'v1'
+    ).ok,
+    false
+  );
+});
+
+test('accepts a ten-second PCM recording within the expanded byte ceiling', () => {
+  const tenSecondRecording = Buffer.alloc(320_000, 1).toString('base64');
+  assert.equal(
+    normalizeVoiceCommand(
+      { ...validInput(), duration_ms: 10_000, audio_base64: tenSecondRecording },
+      1000,
+      'v10'
+    ).ok,
+    true
+  );
+  assert.equal(
+    normalizeVoiceCommand({ ...validInput(), duration_ms: 10_001 }, 1000, 'v10').ok,
+    false
+  );
+  assert.equal(
+    normalizeVoiceCommand(
+      { ...validInput(), audio_base64: Buffer.alloc(320_001, 1).toString('base64') },
+      1000,
+      'v10'
     ).ok,
     false
   );
@@ -118,4 +142,49 @@ test('rejects empty transcripts and relay ownership mismatches', () => {
     recordVoiceTranscript(command, { relay_id: 'relay-a', transcript: '   ' }, 2000).ok,
     false
   );
+});
+
+test('bounds a transcript to the complete Stopwatch review surface', () => {
+  const command = {
+    ...(
+      normalizeVoiceCommand(validInput(), 1000, 'voice-review') as {
+        ok: true;
+        command: StoredVoiceCommand;
+      }
+    ).command,
+    state: 'leased' as const,
+    lease_owner: 'relay-a',
+    lease_expires_at: 5000
+  };
+  const result = recordVoiceTranscript(
+    command,
+    { relay_id: 'relay-a', transcript: 'a'.repeat(220) },
+    2000
+  );
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  assert.equal(new TextEncoder().encode(result.command.transcript).length, 80);
+});
+
+test('keeps the bounded Stopwatch transcript valid UTF-8', () => {
+  const command = {
+    ...(
+      normalizeVoiceCommand(validInput(), 1000, 'voice-utf8') as {
+        ok: true;
+        command: StoredVoiceCommand;
+      }
+    ).command,
+    state: 'leased' as const,
+    lease_owner: 'relay-a',
+    lease_expires_at: 5000
+  };
+  const result = recordVoiceTranscript(
+    command,
+    { relay_id: 'relay-a', transcript: '確認して'.repeat(80) },
+    2000
+  );
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  assert.ok(new TextEncoder().encode(result.command.transcript).length <= 80);
+  assert.equal(result.command.transcript.includes('\uFFFD'), false);
 });

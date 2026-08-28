@@ -1,6 +1,7 @@
 import { DurableObject } from 'cloudflare:workers';
 import {
   buildAgentConsole,
+  agentDecisionReceipt,
   leaseAgentDecisions,
   normalizeAgentProgress,
   prepareAgentDecision,
@@ -91,7 +92,7 @@ const CORS_HEADERS = {
 };
 
 const MAX_BODY_BYTES = 64 * 1024;
-const MAX_VOICE_BODY_BYTES = 280 * 1024;
+const MAX_VOICE_BODY_BYTES = 448 * 1024;
 const REGISTRY_FALLBACK_MCP_COUNT = 1014;
 const REGISTRY_FALLBACK_FLEET_COUNT = 22;
 const REGISTRY_FALLBACK_AGENT_COUNT = 4;
@@ -890,6 +891,17 @@ export class InkState extends DurableObject<Env> {
     return buildAgentConsole(progress, now, decisions);
   }
 
+  agentDecision(id: string) {
+    const row = this.ctx.storage.sql
+      .exec<Record<string, SqlStorageValue>>(
+        `SELECT * FROM agent_decisions WHERE id = ? LIMIT 1`,
+        id
+      )
+      .toArray()[0];
+    if (!row) return { ok: false as const, status: 404, error: 'Decision not found.' };
+    return { ok: true as const, decision: agentDecisionReceipt(rowAgentDecision(row)) };
+  }
+
   enqueueAgentDecision(input: AgentDecisionInput) {
     const now = Date.now();
     const idempotencyKey = input.idempotency_key?.trim() ?? '';
@@ -1532,6 +1544,7 @@ async function route(request: Request, env: Env): Promise<Response> {
         'GET /operator/agent-console',
         'POST /operator/agent-progress',
         'POST /operator/agent-decision',
+        'GET /operator/agent-decisions/:id',
         'POST /operator/agent-decisions/lease',
         'POST /operator/agent-decisions/:id/receipt',
         'POST /operator/voice-command',
@@ -1580,6 +1593,13 @@ async function route(request: Request, env: Env): Promise<Response> {
   if (method === 'POST' && path === '/ink/agent-decisions/lease') {
     const body = await parseJsonBody<AgentDecisionLeaseInput>(request);
     return agentResult(await stub.leaseAgentDecisionQueue(body));
+  }
+
+  const agentDecisionMatch = path.match(/^\/ink\/agent-decisions\/([^/]+)$/);
+  if (method === 'GET' && agentDecisionMatch) {
+    return agentResult(
+      await stub.agentDecision(decodeURIComponent(agentDecisionMatch[1] ?? ''))
+    );
   }
 
   if (method === 'POST' && path === '/ink/voice-command') {

@@ -6,6 +6,8 @@ import {
   buildCodexTaskProgress,
   dispatchCodexDecision,
   listCodexTaskProgress,
+  parseCodexThreadUri,
+  resolveCodexThreadTarget,
   type CodexRpcClient,
   type CodexRpcNotification,
   type CodexThreadSummary
@@ -106,7 +108,7 @@ test('projects recent Codex threads and a new-task action into the existing Stop
     summary: 'Speak a prompt to start in create-something-monorepo.',
     detail: '/workspace/create-something-monorepo',
     progress_version: 1,
-    needs_input: true,
+    needs_input: false,
     decisions: [
       {
         id: 'start',
@@ -119,7 +121,12 @@ test('projects recent Codex threads and a new-task action into the existing Stop
       }
     ],
     expires_at: 1_787_278_130_000,
-    payload: { authority: 'local-codex-app-server', history_mode: 'legacy' }
+    payload: {
+      authority: 'local-codex-app-server',
+      history_mode: 'legacy',
+      workspace_label: 'create-something-monorepo',
+      control_reason: 'new-task'
+    }
   });
 
   assert.equal(progress[1]?.agent_id, 'codex:01a-thread');
@@ -128,10 +135,20 @@ test('projects recent Codex threads and a new-task action into the existing Stop
   assert.equal(progress[1]?.progress_version, 1_787_278_000);
   assert.deepEqual(progress[1]?.decisions, [
     {
-      id: 'prompt',
+      id: 'takeover',
+      kind: 'continue',
+      label: 'Take over this task',
+      description:
+        'Continue this task directly from a reviewed spoken prompt. Desktop approvals stay on the laptop.',
+      requires_confirmation: true,
+      requires_text: true,
+      remote_safe: true
+    },
+    {
+      id: 'fork',
       kind: 'redirect',
-      label: 'Prompt task',
-      description: 'Review a spoken prompt, then continue this local Codex task.',
+      label: 'Continue in new task',
+      description: 'Copy completed task history, then continue from a reviewed spoken prompt.',
       requires_confirmation: true,
       requires_text: true,
       remote_safe: true
@@ -142,6 +159,8 @@ test('projects recent Codex threads and a new-task action into the existing Stop
   assert.equal(progress[2]?.phase, 'Read-only history');
   assert.equal(progress[2]?.needs_input, false);
   assert.deepEqual(progress[2]?.decisions, []);
+  assert.equal(progress[2]?.payload.workspace_label, 'create-something-monorepo');
+  assert.equal(progress[2]?.payload.control_reason, 'paginated-history-not-resumable');
 });
 
 test('withholds device authority while a desktop task is active or recently changed', () => {
@@ -169,8 +188,40 @@ test('withholds device authority while a desktop task is active or recently chan
   assert.equal(progress[3]?.phase, 'Ready for prompt');
   assert.deepEqual(
     progress[3]?.decisions.map((item) => item.id),
-    ['prompt']
+    ['takeover', 'fork']
   );
+});
+
+test('offers a settled desktop task direct takeover and fork fallback actions', () => {
+  const progress = buildCodexTaskProgress([thread()], {
+    cwd: '/workspace/create-something-monorepo',
+    now: 1_787_278_300_000,
+    minimumIdleMs: 60_000
+  });
+
+  assert.deepEqual(progress[1]?.decisions, [
+    {
+      id: 'takeover',
+      kind: 'continue',
+      label: 'Take over this task',
+      description:
+        'Continue this task directly from a reviewed spoken prompt. Desktop approvals stay on the laptop.',
+      requires_confirmation: true,
+      requires_text: true,
+      remote_safe: true
+    },
+    {
+      id: 'fork',
+      kind: 'redirect',
+      label: 'Continue in new task',
+      description: 'Copy completed task history, then continue from a reviewed spoken prompt.',
+      requires_confirmation: true,
+      requires_text: true,
+      remote_safe: true
+    }
+  ]);
+  assert.equal(progress[1]?.payload.authority, 'dual-surface');
+  assert.equal(progress[1]?.payload.thread_uri, 'codex://threads/01a-thread');
 });
 
 test('revalidates the exact task version and action before dispatch', () => {
@@ -181,7 +232,7 @@ test('revalidates the exact task version and action before dispatch', () => {
   const approved = decision({
     agent_id: 'codex:01a-thread',
     progress_version: 1_787_278_000,
-    decision_id: 'prompt'
+    decision_id: 'takeover'
   });
 
   assert.doesNotThrow(() => assertCodexDecisionAuthorized(progress, approved));
@@ -244,7 +295,7 @@ test('starts a new local Codex task and returns streamed completion to the Stopw
     ],
     approvalPolicy: 'never'
   });
-  assert.deepEqual(progress, ['Checkout fixed.']);
+  assert.deepEqual(progress, ['Codex started.', 'Checkout fixed.']);
   assert.deepEqual(result, {
     threadId: '01a-new',
     turnId: 'turn-1',
@@ -298,7 +349,7 @@ test('reads back terminal turn state when the app-server completion notification
   });
 });
 
-test('resumes an idle legacy task and starts its next turn', async () => {
+test('takes over an idle legacy task and starts its next turn without overriding its policy', async () => {
   const rpc = new FakeRpc((method, _params, client) => {
     if (method === 'thread/resume') {
       return { thread: { id: '01a-existing', turns: [] } };
@@ -323,9 +374,9 @@ test('resumes an idle legacy task and starts its next turn', async () => {
     decision({
       agent_id: 'codex:01a-existing',
       progress_version: 7,
-      decision_id: 'prompt',
-      kind: 'redirect',
-      label: 'Prompt task',
+      decision_id: 'takeover',
+      kind: 'continue',
+      label: 'Take over this task',
       message: 'Run the focused test and continue.'
     }),
     { cwd: '/workspace/create-something-monorepo', timeoutMs: 1_000 }
@@ -336,11 +387,116 @@ test('resumes an idle legacy task and starts its next turn', async () => {
     ['thread/resume', 'turn/start']
   );
   assert.deepEqual(rpc.calls[0]?.params, {
+    threadId: '01a-existing'
+  });
+  assert.deepEqual(rpc.calls[1]?.params, {
     threadId: '01a-existing',
-    approvalPolicy: 'never'
+    input: [
+      {
+        type: 'text',
+        text: 'Operator prompt from stopwatch:\n\nRun the focused test and continue.\n\nWork within the current sandbox and approval policy. If broader authority or user input is required, stop with a clear handoff.'
+      }
+    ]
   });
   assert.equal(result.threadId, '01a-existing');
   assert.equal(result.status, 'completed');
+});
+
+test('forks a settled desktop task through its last completed turn before prompting the child', async () => {
+  const rpc = new FakeRpc((method, _params, client) => {
+    if (method === 'thread/read') {
+      return {
+        thread: {
+          id: '01a-desktop',
+          turns: [
+            { id: 'turn-earlier', status: 'completed', items: [] },
+            { id: 'turn-completed', status: 'completed', items: [] }
+          ]
+        }
+      };
+    }
+    if (method === 'thread/fork') return { thread: { id: '01a-child', turns: [] } };
+    if (method === 'turn/start') {
+      queueMicrotask(() => {
+        client.emit({
+          method: 'turn/completed',
+          params: {
+            threadId: '01a-child',
+            turn: { id: 'turn-child', status: 'completed', items: [] }
+          }
+        });
+      });
+      return { turn: { id: 'turn-child', status: 'inProgress', items: [] } };
+    }
+    throw new Error(`Unexpected method: ${method}`);
+  });
+
+  const result = await dispatchCodexDecision(
+    rpc,
+    decision({
+      agent_id: 'codex:01a-desktop',
+      progress_version: 7,
+      decision_id: 'fork',
+      kind: 'redirect',
+      label: 'Continue in new task',
+      message: 'Run the focused test and continue.'
+    }),
+    { cwd: '/workspace/create-something-monorepo', timeoutMs: 1_000 }
+  );
+
+  assert.deepEqual(
+    rpc.calls.map((call) => call.method),
+    ['thread/read', 'thread/fork', 'turn/start']
+  );
+  assert.deepEqual(rpc.calls[0]?.params, {
+    threadId: '01a-desktop',
+    includeTurns: true
+  });
+  assert.deepEqual(rpc.calls[1]?.params, {
+    threadId: '01a-desktop',
+    lastTurnId: 'turn-completed'
+  });
+  assert.equal(rpc.calls[2]?.params?.threadId, '01a-child');
+  assert.deepEqual(result, {
+    threadId: '01a-child',
+    turnId: 'turn-child',
+    status: 'completed',
+    summary: 'Forked child 01a-child: Codex completed the task.'
+  });
+});
+
+test('refuses a fork when source readback finds an active turn', async () => {
+  const rpc = new FakeRpc((method) => {
+    if (method === 'thread/read') {
+      return {
+        thread: {
+          id: '01a-desktop',
+          turns: [{ id: 'turn-active', status: 'inProgress', items: [] }]
+        }
+      };
+    }
+    throw new Error(`Unexpected method: ${method}`);
+  });
+
+  await assert.rejects(
+    dispatchCodexDecision(
+      rpc,
+      decision({
+        agent_id: 'codex:01a-desktop',
+        progress_version: 7,
+        decision_id: 'fork',
+        kind: 'redirect',
+        label: 'Continue in new task',
+        message: 'Run the focused test and continue.'
+      }),
+      { cwd: '/workspace/create-something-monorepo', timeoutMs: 1_000 }
+    ),
+    /Source task became active/
+  );
+  assert.deepEqual(
+    rpc.calls.map((call) => call.method),
+    ['thread/read']
+  );
 });
 
 test('steers a turn owned by the relay app-server when it is still active', async () => {
@@ -373,7 +529,7 @@ test('steers a turn owned by the relay app-server when it is still active', asyn
     decision({
       agent_id: 'codex:01a-existing',
       progress_version: 7,
-      decision_id: 'prompt',
+      decision_id: 'takeover',
       message: 'Add the focused regression test.'
     }),
     { cwd: '/workspace/create-something-monorepo', timeoutMs: 1_000 }
@@ -384,6 +540,40 @@ test('steers a turn owned by the relay app-server when it is still active', asyn
     ['thread/resume', 'turn/steer']
   );
   assert.equal(result.status, 'completed');
+});
+
+test('strictly parses and read-only resolves a URI-selected Codex task', async () => {
+  const rpc = new FakeRpc((method, params) => {
+    assert.equal(method, 'thread/read');
+    assert.deepEqual(params, {
+      threadId: '01a024a8-1410-7510-a498-4c281048c7ac',
+      includeTurns: false
+    });
+    return {
+      thread: thread({
+        id: '01a024a8-1410-7510-a498-4c281048c7ac',
+        historyMode: 'paginated',
+        status: { type: 'notLoaded' }
+      })
+    };
+  });
+
+  assert.deepEqual(
+    parseCodexThreadUri('codex://threads/01a024a8-1410-7510-a498-4c281048c7ac'),
+    {
+      threadId: '01a024a8-1410-7510-a498-4c281048c7ac',
+      uri: 'codex://threads/01a024a8-1410-7510-a498-4c281048c7ac'
+    }
+  );
+  assert.throws(() => parseCodexThreadUri('codex://threads/01a/thread'), /must use/);
+  assert.throws(() => parseCodexThreadUri('https://threads/01a-thread'), /must use/);
+
+  const target = await resolveCodexThreadTarget(
+    rpc,
+    'codex://threads/01a024a8-1410-7510-a498-4c281048c7ac'
+  );
+  assert.equal(target.historyMode, 'paginated');
+  assert.equal(target.uri, 'codex://threads/01a024a8-1410-7510-a498-4c281048c7ac');
 });
 
 test('lists recent top-level task state without repairing or mutating rollout history', async () => {

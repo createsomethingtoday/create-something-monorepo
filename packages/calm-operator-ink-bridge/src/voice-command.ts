@@ -60,15 +60,30 @@ export interface VoiceTranscriptInput {
 
 export type VoiceCommandError = { ok: false; status: number; error: string };
 
-const MAX_AUDIO_BYTES = 192_000;
-const MAX_DURATION_MS = 6_000;
-const MAX_TRANSCRIPT_LENGTH = 500;
+const MAX_AUDIO_BYTES = 320_000;
+const MAX_DURATION_MS = 10_000;
+// The device still measures the selected font; this ceiling keeps four wide-glyph lines practical.
+const MAX_TRANSCRIPT_BYTES = 80;
 const DEFAULT_TTL_MS = 15 * 60 * 1000;
 const DEFAULT_LEASE_MS = 2 * 60 * 1000;
 const MAX_LEASE_MS = 5 * 60 * 1000;
 
 function boundedText(value: unknown, maximum: number): string {
   return typeof value === 'string' ? value.trim().slice(0, maximum) : '';
+}
+
+function boundedUtf8Text(value: unknown, maximumBytes: number): string {
+  if (typeof value !== 'string') return '';
+  const encoder = new TextEncoder();
+  let bytes = 0;
+  let output = '';
+  for (const character of value.trim()) {
+    const characterBytes = encoder.encode(character).length;
+    if (bytes + characterBytes > maximumBytes) break;
+    output += character;
+    bytes += characterBytes;
+  }
+  return output;
 }
 
 function base64ByteLength(value: string): number {
@@ -113,10 +128,10 @@ export function normalizeVoiceCommand(
   const audioBase64 = typeof input.audio_base64 === 'string' ? input.audio_base64 : '';
   const audioBytes = base64ByteLength(audioBase64);
   if (!Number.isFinite(durationMs) || durationMs < 250 || durationMs > MAX_DURATION_MS) {
-    return { ok: false, status: 400, error: 'Voice duration must be between 250 and 6000 ms.' };
+    return { ok: false, status: 400, error: 'Voice duration must be between 250 and 10000 ms.' };
   }
   if (audioBytes <= 0 || audioBytes > MAX_AUDIO_BYTES) {
-    return { ok: false, status: 413, error: 'Voice audio exceeds the 192000-byte limit.' };
+    return { ok: false, status: 413, error: 'Voice audio exceeds the 320000-byte limit.' };
   }
 
   return {
@@ -197,7 +212,7 @@ export function recordVoiceTranscript(
   }
 
   const error = boundedText(input.error, 500);
-  const transcript = boundedText(input.transcript, MAX_TRANSCRIPT_LENGTH);
+  const transcript = boundedUtf8Text(input.transcript, MAX_TRANSCRIPT_BYTES);
   if (error) {
     return {
       ok: true,

@@ -9,6 +9,13 @@ import {
   dispatchCodexDecision,
   listCodexTaskProgress
 } from '../src/codex-app-server.js';
+import {
+  buildCodexRelayActiveProgress,
+  buildCodexRelayTerminalProgress,
+  completedCodexDecisionSummary,
+  createSerialProgressPublisher,
+  publishCodexTerminalProgressBestEffort
+} from '../src/codex-relay-progress.js';
 import { boundedTranscript, voiceTranscriberCommand } from '../src/voice-relay.js';
 import { codexAppServerEnvironment, startCodexAppServer } from './codex-app-server-client.mjs';
 
@@ -34,6 +41,7 @@ const once = process.argv.includes('--once');
 const syncOnly = process.argv.includes('--sync-only');
 const agentWorkdir = process.env.INK_AGENT_WORKDIR || process.cwd();
 const progressTtlMs = Math.max(30_000, pollMs * 3);
+const progressHeartbeatMs = Math.max(1_000, Math.min(pollMs, Math.floor(progressTtlMs / 3)));
 
 if (!token) throw new Error('OPERATOR_RELAY_TOKEN or INK_RELAY_TOKEN is required.');
 
@@ -105,24 +113,18 @@ function spawnCapture(command, timeoutMs) {
 
 async function publishCodexProgress(decision, update) {
   const now = Date.now();
-  await bridge('/operator/agent-progress', {
-    agent_id: `codex:${update.threadId}`,
-    provider: 'codex',
-    label: decision.message.trim().replace(/\s+/g, ' ').slice(0, 72) || 'Codex task',
-    status: 'working',
-    phase: update.phase,
-    summary: update.summary,
-    detail: `Prompted from ${decision.device_id || 'stopwatch'}.`,
-    progress_version: Math.max(1, Math.floor(now / 1000)),
-    needs_input: false,
-    decisions: [],
-    expires_at: now + progressTtlMs,
-    payload: {
-      authority: 'local-codex-app-server',
-      thread_id: update.threadId,
-      turn_id: update.turnId
-    }
-  });
+  await bridge(
+    '/operator/agent-progress',
+    buildCodexRelayActiveProgress({ decision, update, now, ttlMs: progressTtlMs })
+  );
+}
+
+async function publishCodexTerminalProgress(decision, result) {
+  const now = Date.now();
+  await bridge(
+    '/operator/agent-progress',
+    buildCodexRelayTerminalProgress({ decision, result, now, ttlMs: progressTtlMs })
+  );
 }
 
 async function syncCodexTasks() {
@@ -145,12 +147,38 @@ async function execute(decision) {
       limit: 7
     });
     assertCodexDecisionAuthorized(currentTasks, decision);
-    const result = await dispatchCodexDecision(codexClient, decision, {
-      cwd: agentWorkdir,
-      timeoutMs: commandTimeoutMs,
-      onProgress: (update) => publishCodexProgress(decision, update)
-    });
-    return result.summary;
+    let latestProgress;
+    const progressPublisher = createSerialProgressPublisher((update) =>
+      publishCodexProgress(decision, update)
+    );
+    const heartbeat = setInterval(() => {
+      if (!latestProgress) return;
+      void progressPublisher.enqueue(latestProgress).catch(() => undefined);
+    }, progressHeartbeatMs);
+    try {
+      const result = await dispatchCodexDecision(codexClient, decision, {
+        cwd: agentWorkdir,
+        timeoutMs: commandTimeoutMs,
+        onProgress: (update) => {
+          latestProgress = update;
+          return progressPublisher.enqueue(update);
+        }
+      });
+      clearInterval(heartbeat);
+      await progressPublisher.drain();
+      const terminalProgressPublished = await publishCodexTerminalProgressBestEffort(() =>
+        publishCodexTerminalProgress(decision, result)
+      );
+      if (!terminalProgressPublished) {
+        process.stderr.write(
+          `${decision.id} terminal progress publication deferred; decision receipt remains authoritative\n`
+        );
+      }
+      return completedCodexDecisionSummary(result);
+    } finally {
+      clearInterval(heartbeat);
+      await progressPublisher.drain();
+    }
   }
 
   const command = adapterCommand(decision, {

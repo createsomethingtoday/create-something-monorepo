@@ -4,10 +4,17 @@
 #include <M5Unified.h>
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
+#include <driver/gpio.h>
 #include <esp_heap_caps.h>
 #include <mbedtls/base64.h>
 
+#include "operator_buttons.h"
+#include "operator_diagnostics.h"
+#include "operator_receipt.h"
 #include "operator_state.h"
+#include "operator_touch.h"
+#include "operator_ui.h"
+#include "operator_voice.h"
 #include "trust_roots.h"
 
 #if __has_include("operator_config.local.h")
@@ -19,18 +26,20 @@
 namespace {
 
 using calm_operator::DecisionPolicy;
+using calm_operator::DeliveryReceiptState;
 using calm_operator::Event;
 using calm_operator::Screen;
 using calm_operator::State;
 
-constexpr char FIRMWARE_VERSION[] = "0.3.0-stopwatch";
+constexpr char FIRMWARE_VERSION[] = "0.3.7-stopwatch";
 constexpr uint32_t CONSOLE_POLL_MS = 15000;
 constexpr uint32_t HEARTBEAT_MS = 5 * 60 * 1000;
+constexpr uint32_t RECEIPT_POLL_MS = 1500;
 constexpr uint32_t VOICE_POLL_MS = 1500;
 constexpr size_t MAX_AGENTS = 8;
 constexpr size_t MAX_DECISIONS = 6;
-constexpr size_t RECORD_SAMPLE_RATE = 16000;
-constexpr size_t RECORD_MAX_SAMPLES = RECORD_SAMPLE_RATE * 3;
+constexpr size_t RECORD_SAMPLE_RATE = calm_operator::kVoiceSampleRateHz;
+constexpr size_t RECORD_MAX_SAMPLES = calm_operator::kVoiceMaxSamples;
 constexpr size_t RECORD_BLOCK_SAMPLES = 256;
 
 struct Decision {
@@ -49,6 +58,9 @@ struct Agent {
   String status;
   String phase;
   String summary;
+  String workspace_label;
+  String control_reason;
+  String authority;
   uint32_t progress_version = 0;
   bool needs_input = false;
   Decision decisions[MAX_DECISIONS];
@@ -61,14 +73,30 @@ size_t agent_count = 0;
 size_t decision_index = 0;
 String bridge_error;
 String receipt_text;
+String pending_decision_id;
 String voice_command_id;
 String voice_transcript;
+DeliveryReceiptState receipt_state = DeliveryReceiptState::Queued;
 bool recording = false;
+bool bridge_confirmed = false;
+bool voice_review_complete = false;
 int16_t* recording_data = nullptr;
 size_t recorded_samples = 0;
 uint32_t last_console_poll = 0;
 uint32_t last_heartbeat = 0;
+uint32_t last_receipt_poll = 0;
 uint32_t last_voice_poll = 0;
+uint32_t last_recording_draw = 0;
+
+void draw();
+
+void configureStopwatchButtonInputs() {
+  calm_operator::configureStopwatchButtonPullups([](int pin) {
+    gpio_set_direction(static_cast<gpio_num_t>(pin), GPIO_MODE_INPUT);
+    gpio_set_pull_mode(static_cast<gpio_num_t>(pin), GPIO_PULLUP_ONLY);
+  });
+  Serial.println("[operator] stopwatch button pull-ups enabled");
+}
 
 String clipped(const String& value, size_t maximum) {
   if (value.length() <= maximum) return value;
@@ -115,7 +143,10 @@ bool connectWifi() {
 
 bool requestJson(const char* method, const String& path, const String& body, JsonDocument& response) {
   if (!connectWifi()) {
+    bridge_confirmed = false;
     bridge_error = "Wi-Fi unavailable";
+    Serial.println(
+        calm_operator::bridgeFailureDiagnostic(calm_operator::BridgeFailure::WiFiUnavailable));
     return false;
   }
   WiFiClientSecure client;
@@ -123,7 +154,9 @@ bool requestJson(const char* method, const String& path, const String& body, Jso
   HTTPClient http;
   const String url = String(CALM_OPERATOR_BRIDGE_ORIGIN) + path;
   if (!http.begin(client, url)) {
+    bridge_confirmed = false;
     bridge_error = "TLS setup failed";
+    Serial.println(calm_operator::bridgeFailureDiagnostic(calm_operator::BridgeFailure::TlsSetup));
     return false;
   }
   http.setTimeout(12000);
@@ -136,10 +169,13 @@ bool requestJson(const char* method, const String& path, const String& body, Jso
   } else {
     status = http.GET();
   }
+  bridge_confirmed =
+      status >= 200 && status < 500 && status != 401 && status != 403;
   const String payload = http.getString();
   http.end();
   if (status < 200 || status >= 300) {
     bridge_error = "Bridge HTTP " + String(status);
+    Serial.println(calm_operator::bridgeFailureDiagnostic(calm_operator::BridgeFailure::Http));
     if (payload.length()) {
       JsonDocument error_doc;
       if (!deserializeJson(error_doc, payload)) {
@@ -150,10 +186,14 @@ bool requestJson(const char* method, const String& path, const String& body, Jso
   }
   const auto error = deserializeJson(response, payload);
   if (error) {
+    bridge_confirmed = false;
     bridge_error = "Invalid bridge JSON";
+    Serial.println(
+        calm_operator::bridgeFailureDiagnostic(calm_operator::BridgeFailure::InvalidJson));
     return false;
   }
   bridge_error = "";
+  bridge_confirmed = true;
   return true;
 }
 
@@ -168,6 +208,9 @@ void parseConsole(JsonDocument& document) {
     agent.status = source["status"].as<String>();
     agent.phase = source["phase"].as<String>();
     agent.summary = source["summary"].as<String>();
+    agent.workspace_label = source["operator_context"]["workspace_label"].as<String>();
+    agent.control_reason = source["operator_context"]["control_reason"].as<String>();
+    agent.authority = source["operator_context"]["authority"].as<String>();
     agent.progress_version = source["progress_version"] | 0;
     agent.needs_input = source["needs_input"] | false;
     agent.decision_count = 0;
@@ -208,7 +251,8 @@ void postHeartbeat() {
   String body;
   serializeJson(body_doc, body);
   JsonDocument response;
-  requestJson("POST", "/operator/device-heartbeat", body, response);
+  const bool heartbeat_accepted = requestJson("POST", "/operator/device-heartbeat", body, response);
+  Serial.println(calm_operator::heartbeatDiagnostic(heartbeat_accepted));
   last_heartbeat = millis();
 }
 
@@ -240,6 +284,9 @@ bool submitButtonDecision() {
   serializeJson(body_doc, body);
   JsonDocument response;
   if (!requestJson("POST", "/operator/agent-decision", body, response)) return false;
+  pending_decision_id = response["decision"]["id"].as<String>();
+  receipt_state = DeliveryReceiptState::Queued;
+  last_receipt_poll = 0;
   receipt_text = "Queued " + decision->label;
   applyEffect(calm_operator::transition(operator_state, Event::Submitted));
   return true;
@@ -248,7 +295,7 @@ bool submitButtonDecision() {
 void startRecording() {
   if (!recording_data) {
     recording_data = static_cast<int16_t*>(
-        heap_caps_malloc(RECORD_MAX_SAMPLES * sizeof(int16_t), MALLOC_CAP_8BIT));
+        heap_caps_malloc(calm_operator::kVoiceMaxRawBytes, MALLOC_CAP_8BIT | MALLOC_CAP_SPIRAM));
   }
   if (!recording_data) {
     bridge_error = "Audio memory unavailable";
@@ -257,9 +304,18 @@ void startRecording() {
   recorded_samples = 0;
   voice_command_id = "";
   voice_transcript = "";
+  bridge_error = "";
   M5.Speaker.end();
-  M5.Mic.begin();
+  if (!M5.Mic.begin()) {
+    M5.Speaker.begin();
+    bridge_error = "Microphone unavailable";
+    Serial.println("[operator] voice microphone start failed");
+    return;
+  }
   recording = true;
+  last_recording_draw = millis();
+  Serial.printf("[operator] voice recording started max_samples=%u\n",
+                static_cast<unsigned>(RECORD_MAX_SAMPLES));
 }
 
 bool postVoiceRecording() {
@@ -303,11 +359,29 @@ bool postVoiceRecording() {
   body_doc["format"] = "pcm_s16le";
   body_doc["sample_rate_hz"] = RECORD_SAMPLE_RATE;
   body_doc["duration_ms"] = recorded_samples * 1000 / RECORD_SAMPLE_RATE;
-  body_doc["audio_base64"] = reinterpret_cast<const char*>(encoded);
   String body;
-  body.reserve(written + 1024);
   serializeJson(body_doc, body);
+  if (!body.length() || body[body.length() - 1] != '}') {
+    heap_caps_free(encoded);
+    bridge_error = "Voice payload unavailable";
+    return false;
+  }
+  body.remove(body.length() - 1);
+  if (!body.reserve(body.length() + written + 24)) {
+    heap_caps_free(encoded);
+    bridge_error = "Voice upload memory unavailable";
+    return false;
+  }
+  calm_operator::appendVoiceBase64JsonField(
+      [&body](const char* fragment) { body += fragment; },
+      reinterpret_cast<const char*>(encoded));
   heap_caps_free(encoded);
+  Serial.printf(
+      "[operator] voice upload duration_ms=%u raw_bytes=%u base64_bytes=%u body_bytes=%u\n",
+      static_cast<unsigned>(recorded_samples * 1000 / RECORD_SAMPLE_RATE),
+      static_cast<unsigned>(recorded_samples * sizeof(int16_t)),
+      static_cast<unsigned>(written),
+      static_cast<unsigned>(body.length()));
 
   JsonDocument response;
   if (!requestJson("POST", "/operator/voice-command", body, response)) return false;
@@ -321,6 +395,8 @@ void stopRecording() {
   while (M5.Mic.isRecording()) delay(1);
   M5.Mic.end();
   M5.Speaker.begin();
+  Serial.printf("[operator] voice recording stopped samples=%u\n",
+                static_cast<unsigned>(recorded_samples));
   if (postVoiceRecording()) tone(4200, 50);
 }
 
@@ -333,11 +409,25 @@ void captureRecordingBlock() {
   const size_t block = remaining < RECORD_BLOCK_SAMPLES ? remaining : RECORD_BLOCK_SAMPLES;
   if (M5.Mic.record(recording_data + recorded_samples, block, RECORD_SAMPLE_RATE)) {
     recorded_samples += block;
+    if (millis() - last_recording_draw >= 100) {
+      last_recording_draw = millis();
+      draw();
+    }
+  } else {
+    recording = false;
+    M5.Mic.end();
+    M5.Speaker.begin();
+    bridge_error = "Microphone capture unavailable";
+    Serial.println("[operator] voice microphone capture failed");
+    draw();
   }
 }
 
 void pollVoiceCommand() {
-  if (!voice_command_id.length() || millis() - last_voice_poll < VOICE_POLL_MS) return;
+  if (!calm_operator::shouldPollVoiceCommand(
+          voice_command_id.length(), operator_state.screen == Screen::VoiceRecord) ||
+      millis() - last_voice_poll < VOICE_POLL_MS)
+    return;
   last_voice_poll = millis();
   JsonDocument response;
   if (!requestJson(
@@ -348,15 +438,22 @@ void pollVoiceCommand() {
   const String state = response["command"]["state"].as<String>();
   if (state == "transcribed") {
     voice_transcript = response["command"]["transcript"].as<String>();
-    applyEffect(calm_operator::transition(operator_state, Event::TranscriptReady));
+    const auto effect = calm_operator::transition(operator_state, Event::TranscriptReady);
+    applyEffect(effect);
+    if (calm_operator::shouldRedrawVoiceCommandPoll(effect.changed)) {
+      Serial.println("[operator] voice transcript ready");
+      draw();
+    }
   } else if (state == "failed" || state == "expired") {
     bridge_error = clipped(response["command"]["error"].as<String>(), 54);
     voice_command_id = "";
+    draw();
   }
 }
 
 bool confirmVoice() {
   if (!voice_command_id.length()) return false;
+  Serial.println("[operator] voice confirmation requested");
   JsonDocument body_doc;
   body_doc["confirmed"] = true;
   String body;
@@ -367,9 +464,43 @@ bool confirmVoice() {
           "/operator/voice-command/" + voice_command_id + "/confirm",
           body,
           response)) return false;
+  pending_decision_id = response["decision"]["id"].as<String>();
+  receipt_state = DeliveryReceiptState::Queued;
+  last_receipt_poll = 0;
   receipt_text = "Voice steering queued";
   applyEffect(calm_operator::transition(operator_state, Event::Submitted));
+  Serial.println("[operator] voice confirmation queued");
   return true;
+}
+
+void pollDecisionReceipt() {
+  if (!calm_operator::shouldPollDeliveryReceipt(
+          pending_decision_id.length(), receipt_state) ||
+      millis() - last_receipt_poll < RECEIPT_POLL_MS)
+    return;
+  last_receipt_poll = millis();
+  JsonDocument response;
+  if (!requestJson(
+          "GET",
+          "/operator/agent-decisions/" + pending_decision_id,
+          "",
+          response))
+    return;
+  JsonObject candidate = response["decision"].as<JsonObject>();
+  const String state = candidate["state"].as<String>();
+  if (state == "completed") {
+    receipt_state = DeliveryReceiptState::Delivered;
+    receipt_text = candidate["result_summary"].as<String>();
+    if (!receipt_text.length()) receipt_text = "Agent completed steering";
+    Serial.println("[operator] decision delivered");
+    draw();
+  } else if (state == "failed") {
+    receipt_state = DeliveryReceiptState::Failed;
+    receipt_text = candidate["error"].as<String>();
+    if (!receipt_text.length()) receipt_text = "Agent delivery failed";
+    Serial.println("[operator] decision delivery failed");
+    draw();
+  }
 }
 
 void header(const char* title, uint16_t accent = TFT_CYAN) {
@@ -390,60 +521,161 @@ void footer(const String& left, const String& right) {
   M5.Display.drawString(right, 370, 425, &fonts::FreeSans9pt7b);
 }
 
-void drawDashboard() {
-  header("CALM OPERATOR", agent_count > 0 ? TFT_CYAN : TFT_DARKGREY);
-  M5.Display.setTextDatum(middle_center);
-  M5.Display.setTextColor(TFT_WHITE, TFT_BLACK);
-  M5.Display.drawString(String(agent_count), 233, 178, &fonts::FreeSansBold24pt7b);
+void operatorRail(const char* view, bool connected) {
+  const uint16_t link_color = connected ? TFT_GREEN : TFT_DARKGREY;
+  M5.Display.fillScreen(TFT_BLACK);
+  M5.Display.fillRect(86, 92, 294, 2, TFT_DARKGREY);
+  M5.Display.fillRect(86, 92, connected ? 112 : 66, 2, link_color);
+  M5.Display.setTextDatum(top_center);
   M5.Display.setTextColor(TFT_LIGHTGREY, TFT_BLACK);
-  M5.Display.drawString(agent_count == 1 ? "active agent" : "active agents", 233, 226,
-                        &fonts::FreeSans12pt7b);
-  size_t attention = 0;
-  for (size_t index = 0; index < agent_count; ++index) attention += agents[index].needs_input ? 1 : 0;
-  M5.Display.setTextColor(attention ? TFT_ORANGE : TFT_DARKGREY, TFT_BLACK);
-  M5.Display.drawString(attention ? String(attention) + " awaiting direction" : "no input requested",
-                        233, 276, &fonts::FreeSans12pt7b);
+  M5.Display.drawString("CALM / STOPWATCH", 233, 54, &fonts::FreeSans9pt7b);
+  M5.Display.setTextColor(link_color, TFT_BLACK);
+  M5.Display.drawString(calm_operator::connectionLabel(connected), 233, 73, &fonts::FreeSans9pt7b);
+  M5.Display.setTextColor(TFT_CYAN, TFT_BLACK);
+  M5.Display.drawString(view, 233, 111, &fonts::FreeSansBold12pt7b);
+}
+
+void operatorFooter(const String& left, const String& right) {
+  M5.Display.fillRect(76, 383, 314, 2, TFT_DARKGREY);
+  M5.Display.setTextDatum(top_left);
+  M5.Display.setTextColor(TFT_LIGHTGREY, TFT_BLACK);
+  M5.Display.drawString(left, 88, 391, &fonts::FreeSans9pt7b);
+  M5.Display.setTextDatum(top_right);
+  M5.Display.drawString(right, 378, 391, &fonts::FreeSans9pt7b);
+}
+
+void operatorControlRail(const char* action, const char* detail, uint16_t accent) {
+  M5.Display.fillRect(64, 342, 338, 2, TFT_DARKGREY);
+  M5.Display.setTextDatum(top_left);
+  M5.Display.setTextColor(accent, TFT_BLACK);
+  M5.Display.drawString(action, 78, 352, &fonts::FreeSansBold9pt7b);
+  M5.Display.setTextDatum(top_right);
+  M5.Display.setTextColor(TFT_LIGHTGREY, TFT_BLACK);
+  M5.Display.drawString(detail, 388, 352, &fonts::FreeSans9pt7b);
+}
+
+calm_operator::ControlReason controlReasonFor(const String& reason) {
+  if (reason == "paginated-history-not-resumable") {
+    return calm_operator::ControlReason::PaginatedHistory;
+  }
+  if (reason == "recent-desktop-activity") {
+    return calm_operator::ControlReason::RecentDesktopActivity;
+  }
+  if (reason == "runtime-not-idle") {
+    return calm_operator::ControlReason::RuntimeNotIdle;
+  }
+  if (reason == "new-task" || reason == "settled-legacy-thread") {
+    return calm_operator::ControlReason::Actionable;
+  }
+  return calm_operator::ControlReason::Unknown;
+}
+
+void drawDashboard() {
+  const bool connected =
+      calm_operator::linkConfirmed(WiFi.status() == WL_CONNECTED, bridge_confirmed);
+  calm_operator::OperatorTaskSnapshot snapshots[MAX_AGENTS] = {};
+  for (size_t index = 0; index < agent_count; ++index) {
+    snapshots[index] = {
+        agents[index].id == "codex:new",
+        agents[index].needs_input,
+        agents[index].status == "working",
+        agents[index].decision_count > 0,
+    };
+  }
+  const auto counts = calm_operator::summarizeOperatorTasks(snapshots, agent_count);
+  const uint16_t state_color = counts.total > 0 ? TFT_CYAN : TFT_DARKGREY;
+  operatorRail("OPERATOR / DASHBOARD", connected);
+  M5.Display.setTextDatum(top_center);
+  M5.Display.setTextColor(TFT_LIGHTGREY, TFT_BLACK);
+  M5.Display.drawString("CODEX TASKS", 233, 143, &fonts::FreeSans9pt7b);
+  M5.Display.setTextDatum(middle_center);
+  M5.Display.setTextColor(state_color, TFT_BLACK);
+  M5.Display.drawString(String(counts.total), 233, 187, &fonts::FreeSansBold24pt7b);
+  M5.Display.fillRect(64, 229, 338, 2, TFT_DARKGREY);
+  M5.Display.setTextDatum(top_left);
+  M5.Display.setTextColor(TFT_LIGHTGREY, TFT_BLACK);
+  M5.Display.drawString("OPERATOR ATTENTION", 64, 245, &fonts::FreeSans9pt7b);
+  M5.Display.setTextColor(counts.attention ? TFT_ORANGE : TFT_GREEN, TFT_BLACK);
+  M5.Display.drawString(calm_operator::attentionLabel(counts.attention), 64, 270,
+                        &fonts::FreeSansBold12pt7b);
+  M5.Display.setTextColor(TFT_LIGHTGREY, TFT_BLACK);
+  M5.Display.drawString("RUNNING " + String(counts.running) + " / VIEW ONLY " +
+                            String(counts.read_only),
+                        64, 298, &fonts::FreeSans9pt7b);
   if (bridge_error.length()) {
     M5.Display.setTextColor(TFT_RED, TFT_BLACK);
-    M5.Display.drawString(clipped(bridge_error, 38), 233, 328, &fonts::FreeSans9pt7b);
+    M5.Display.drawString("BRIDGE / " + clipped(bridge_error, 34), 64, 321, &fonts::FreeSans9pt7b);
+  } else {
+    M5.Display.setTextColor(connected ? TFT_GREEN : TFT_DARKGREY, TFT_BLACK);
+    M5.Display.drawString(connected ? "HEARTBEAT / READY" : "HEARTBEAT / WAITING", 64, 321,
+                          &fonts::FreeSans9pt7b);
   }
-  footer("TAP AGENTS", WiFi.status() == WL_CONNECTED ? "ONLINE" : "OFFLINE");
+  operatorControlRail("TAP OR A/B", "OPEN AGENTS", state_color);
+  operatorFooter("STATE / MONITOR", connected ? "LINK CONFIRMED" : "LINK PENDING");
 }
 
 void drawAgents() {
-  header("AGENTS");
+  const bool connected =
+      calm_operator::linkConfirmed(WiFi.status() == WL_CONNECTED, bridge_confirmed);
+  operatorRail("OPERATOR / CODEX TASKS", connected);
   Agent* agent = currentAgent();
   if (!agent) {
     M5.Display.setTextDatum(middle_center);
     M5.Display.setTextColor(TFT_LIGHTGREY, TFT_BLACK);
-    M5.Display.drawString("No active agents", 233, 220, &fonts::FreeSans12pt7b);
-    footer("A/B NAV", "TAP HOME");
+    M5.Display.drawString("NO CODEX TASKS", 233, 230, &fonts::FreeSansBold12pt7b);
+    operatorControlRail("TAP", "RETURN DASHBOARD", TFT_DARKGREY);
+    operatorFooter("STATE / IDLE", "0 / 0");
     return;
   }
   M5.Display.setTextDatum(top_center);
   M5.Display.setTextColor(agent->needs_input ? TFT_ORANGE : TFT_CYAN, TFT_BLACK);
-  M5.Display.drawString(clipped(agent->label, 26), 233, 82, &fonts::FreeSansBold18pt7b);
-  M5.Display.setTextColor(TFT_LIGHTGREY, TFT_BLACK);
-  M5.Display.drawString(clipped(agent->provider + " · " + agent->status, 34), 233, 126,
-                        &fonts::FreeSans9pt7b);
+  M5.Display.drawString("TASK " + String(operator_state.agent_index + 1) + " / " + String(agent_count),
+                        233, 138, &fonts::FreeSansBold12pt7b);
   M5.Display.setTextColor(TFT_WHITE, TFT_BLACK);
-  M5.Display.drawString(clipped(agent->phase, 38), 233, 158, &fonts::FreeSans12pt7b);
+  M5.Display.drawString(clipped(agent->label, 26), 233, 166, &fonts::FreeSansBold18pt7b);
   M5.Display.setTextColor(TFT_LIGHTGREY, TFT_BLACK);
-  M5.Display.drawString(clipped(agent->summary, 46), 233, 194, &fonts::FreeSans9pt7b);
+  M5.Display.drawString(clipped(agent->provider + " / " + agent->status, 34), 233, 202,
+                        &fonts::FreeSans9pt7b);
+  M5.Display.fillRect(64, 225, 338, 2, TFT_DARKGREY);
+  M5.Display.setTextDatum(top_left);
+  M5.Display.setTextColor(TFT_LIGHTGREY, TFT_BLACK);
+  M5.Display.drawString("CURRENT PHASE", 64, 237, &fonts::FreeSans9pt7b);
+  M5.Display.setTextColor(TFT_WHITE, TFT_BLACK);
+  M5.Display.drawString(clipped(agent->phase, 38), 64, 257, &fonts::FreeSansBold12pt7b);
+  M5.Display.setTextColor(TFT_LIGHTGREY, TFT_BLACK);
+  M5.Display.drawString("WORKSPACE / " + clipped(agent->workspace_label, 28), 64, 278,
+                        &fonts::FreeSans9pt7b);
 
   if (agent->decision_count > 0) {
     Decision& decision = agent->decisions[decision_index % agent->decision_count];
-    M5.Display.fillRoundRect(76, 255, 314, 105, 20, TFT_DARKCYAN);
-    M5.Display.setTextColor(TFT_WHITE, TFT_DARKCYAN);
-    M5.Display.drawString(clipped(decision.label, 28), 233, 278, &fonts::FreeSansBold12pt7b);
-    M5.Display.setTextColor(TFT_LIGHTGREY, TFT_DARKCYAN);
-    M5.Display.drawString(decision.requires_text ? "SPEAK + CONFIRM" : "TAP + CONFIRM", 233, 320,
-                          &fonts::FreeSans9pt7b);
+    const uint16_t decision_color = decision.remote_safe ? TFT_CYAN : TFT_DARKGREY;
+    M5.Display.drawRect(64, 294, 338, 48, decision_color);
+    if (agent->decision_count > 1) M5.Display.drawFastVLine(334, 294, 48, decision_color);
+    M5.Display.setTextDatum(top_left);
+    M5.Display.setTextColor(decision_color, TFT_BLACK);
+    M5.Display.drawString(clipped(decision.label, 22), 72, 300, &fonts::FreeSansBold9pt7b);
+    M5.Display.setTextColor(TFT_LIGHTGREY, TFT_BLACK);
+    M5.Display.drawString(calm_operator::actionPositionLabel(
+                              decision_index % agent->decision_count, agent->decision_count),
+                          72, 320, &fonts::FreeSans9pt7b);
+    if (agent->decision_count > 1) {
+      M5.Display.setTextDatum(middle_center);
+      M5.Display.setTextColor(TFT_CYAN, TFT_BLACK);
+      M5.Display.drawString("NEXT", 368, 318, &fonts::FreeSansBold9pt7b);
+    }
   } else {
-    M5.Display.setTextColor(TFT_DARKGREY, TFT_BLACK);
-    M5.Display.drawString("No remote-safe actions", 233, 292, &fonts::FreeSans9pt7b);
+    M5.Display.drawRect(64, 294, 338, 48, TFT_DARKGREY);
+    M5.Display.setTextDatum(top_left);
+    M5.Display.setTextColor(TFT_LIGHTGREY, TFT_BLACK);
+    M5.Display.drawString(calm_operator::readOnlyReasonLabel(
+                              controlReasonFor(agent->control_reason)),
+                          72, 308, &fonts::FreeSans9pt7b);
   }
-  footer("A/B AGENT", String(operator_state.agent_index + 1) + "/" + String(agent_count));
+  operatorControlRail(agent->decision_count ? "TAP ACTION" : "VIEW ONLY",
+                      agent->decision_count > 1 ? "TAP NEXT >" : "A/B SELECT TASK",
+                      agent->needs_input ? TFT_ORANGE : TFT_CYAN);
+  operatorFooter("A/B / SELECT TASK",
+                 clipped(agent->authority.length() ? agent->authority : "read-only", 22));
 }
 
 void drawConfirmation(bool voice) {
@@ -451,15 +683,43 @@ void drawConfirmation(bool voice) {
   M5.Display.setTextDatum(top_center);
   M5.Display.setTextColor(TFT_WHITE, TFT_BLACK);
   const String message = voice ? voice_transcript : (currentDecision() ? currentDecision()->label : "");
-  M5.Display.drawString(clipped(message, 58), 233, 130, &fonts::FreeSansBold12pt7b);
+  if (voice) {
+    size_t start = 0;
+    for (size_t line = 0; line < 4; ++line) {
+      if (start >= message.length()) break;
+      size_t end = start;
+      while (end < message.length()) {
+        const size_t candidate_end = calm_operator::nextUtf8CodePointEnd(
+            message.c_str(), message.length(), end);
+        const String candidate = message.substring(start, candidate_end);
+        if (M5.Display.textWidth(candidate, &fonts::FreeSans9pt7b) > 320 && end > start) break;
+        end = candidate_end;
+      }
+      M5.Display.drawString(message.substring(start, end), 233,
+                            126 + line * 23, &fonts::FreeSans9pt7b);
+      start = end;
+    }
+    voice_review_complete = start >= message.length();
+  } else {
+    voice_review_complete = true;
+    M5.Display.drawString(clipped(message, 32), 233, 148, &fonts::FreeSansBold12pt7b);
+  }
   M5.Display.setTextColor(TFT_LIGHTGREY, TFT_BLACK);
-  M5.Display.drawString("This will steer the live agent.", 233, 215, &fonts::FreeSans9pt7b);
+  Agent* agent = currentAgent();
+  M5.Display.drawString("WORKSPACE / " + clipped(agent ? agent->workspace_label : "", 28), 233, 226,
+                        &fonts::FreeSans9pt7b);
+  M5.Display.drawString(voice ? "Reviewed prompt will be sent." : "Reviewed action will be sent.",
+                        233, 249, &fonts::FreeSans9pt7b);
   M5.Display.fillRoundRect(82, 292, 136, 58, 16, TFT_DARKGREY);
   M5.Display.fillRoundRect(248, 292, 136, 58, 16, TFT_DARKCYAN);
   M5.Display.setTextColor(TFT_WHITE, TFT_DARKGREY);
   M5.Display.drawString("CANCEL", 150, 311, &fonts::FreeSansBold9pt7b);
   M5.Display.setTextColor(TFT_WHITE, TFT_DARKCYAN);
   M5.Display.drawString("CONFIRM", 316, 311, &fonts::FreeSansBold9pt7b);
+  if (bridge_error.length()) {
+    M5.Display.setTextColor(TFT_RED, TFT_BLACK);
+    M5.Display.drawString(clipped(bridge_error, 42), 233, 370, &fonts::FreeSans9pt7b);
+  }
   footer("A CANCEL", "B CONFIRM");
 }
 
@@ -472,8 +732,12 @@ void drawVoiceRecord() {
                         233, 207, &fonts::FreeSansBold12pt7b);
   M5.Display.setTextColor(TFT_LIGHTGREY, TFT_BLACK);
   const uint32_t duration = recorded_samples * 1000 / RECORD_SAMPLE_RATE;
-  M5.Display.drawString(recording ? String(duration / 1000.0f, 1) + " sec" : "Maximum 3 seconds",
+  M5.Display.drawString(recording ? String(duration / 1000.0f, 1) + " sec"
+                                 : "Maximum " + String(calm_operator::kVoiceMaxDurationSeconds) + " seconds",
                         233, 307, &fonts::FreeSans9pt7b);
+  Agent* agent = currentAgent();
+  M5.Display.drawString("WORKSPACE / " + clipped(agent ? agent->workspace_label : "", 28), 233, 333,
+                        &fonts::FreeSans9pt7b);
   if (bridge_error.length()) {
     M5.Display.setTextColor(TFT_RED, TFT_BLACK);
     M5.Display.drawString(clipped(bridge_error, 42), 233, 354, &fonts::FreeSans9pt7b);
@@ -482,14 +746,20 @@ void drawVoiceRecord() {
 }
 
 void drawReceipt() {
-  header("DELIVERED", TFT_GREEN);
+  const auto presentation = calm_operator::deliveryReceiptPresentation(receipt_state);
+  const uint16_t accent = receipt_state == DeliveryReceiptState::Delivered
+                              ? TFT_GREEN
+                          : receipt_state == DeliveryReceiptState::Failed
+                              ? TFT_RED
+                              : TFT_ORANGE;
+  header(presentation.title, accent);
   M5.Display.setTextDatum(middle_center);
-  M5.Display.setTextColor(TFT_GREEN, TFT_BLACK);
-  M5.Display.drawCircle(233, 190, 56, TFT_GREEN);
-  M5.Display.drawString("✓", 233, 190, &fonts::FreeSansBold24pt7b);
+  M5.Display.setTextColor(accent, TFT_BLACK);
+  M5.Display.drawCircle(233, 190, 56, accent);
+  M5.Display.drawString(presentation.symbol, 233, 190, &fonts::FreeSansBold24pt7b);
   M5.Display.setTextColor(TFT_WHITE, TFT_BLACK);
   M5.Display.drawString(clipped(receipt_text, 42), 233, 286, &fonts::FreeSans12pt7b);
-  footer("TAP AGENTS", "QUEUED");
+  footer("TAP AGENTS", presentation.footer);
 }
 
 void draw() {
@@ -524,6 +794,8 @@ void cancelToAgents() {
     M5.Speaker.begin();
   }
   voice_command_id = "";
+  pending_decision_id = "";
+  receipt_state = DeliveryReceiptState::Queued;
   bridge_error = "";
   applyEffect(calm_operator::transition(operator_state, Event::Cancel));
   draw();
@@ -531,9 +803,21 @@ void cancelToAgents() {
 
 void handleInputs() {
   const auto touch = M5.Touch.getDetail();
-  const bool clicked = touch.wasClicked();
+  const bool button_a_pressed = M5.BtnA.wasPressed();
+  const bool button_b_pressed = M5.BtnB.wasPressed();
+  if (button_a_pressed || button_b_pressed) {
+    Serial.printf("[operator] button %c pressed\n", button_a_pressed ? 'A' : 'B');
+  }
+  if (touch.wasPressed()) {
+    Serial.printf("[operator] touch press x=%d y=%d\n", touch.x, touch.y);
+  }
+  const bool released = calm_operator::isDeliberateTouchRelease(
+      touch.wasReleased(), touch.wasFlicked(), touch.wasDragged());
+  if (released) {
+    Serial.printf("[operator] touch release x=%d y=%d\n", touch.x, touch.y);
+  }
   if (operator_state.screen == Screen::Dashboard) {
-    if (clicked || M5.BtnA.wasPressed() || M5.BtnB.wasPressed()) {
+    if (released || button_a_pressed || button_b_pressed) {
       calm_operator::transition(operator_state, Event::OpenAgents);
       refreshConsole();
       draw();
@@ -541,52 +825,71 @@ void handleInputs() {
     return;
   }
   if (operator_state.screen == Screen::Agents) {
-    if (M5.BtnA.wasPressed()) {
+    if (button_a_pressed) {
       calm_operator::transition(operator_state, Event::PreviousAgent, {}, agent_count);
       decision_index = 0;
       draw();
     }
-    if (M5.BtnB.wasPressed()) {
+    if (button_b_pressed) {
       calm_operator::transition(operator_state, Event::NextAgent, {}, agent_count);
       decision_index = 0;
       draw();
     }
-    if (clicked) {
+    if (released) {
       if (touch.y < 115) {
         operator_state.screen = Screen::Dashboard;
         draw();
-      } else if (touch.y >= 245 && touch.y <= 375) {
-        chooseCurrentDecision();
-      } else if (currentAgent() && currentAgent()->decision_count > 1) {
+      } else if (currentAgent() &&
+                 calm_operator::actionTouchTarget(
+                     touch.x, touch.y, currentAgent()->decision_count) ==
+                     calm_operator::ActionTouchTarget::Next) {
         decision_index = (decision_index + 1) % currentAgent()->decision_count;
         draw();
+      } else if (currentAgent() &&
+                 calm_operator::actionTouchTarget(
+                     touch.x, touch.y, currentAgent()->decision_count) ==
+                     calm_operator::ActionTouchTarget::Review) {
+        chooseCurrentDecision();
       }
     }
     return;
   }
   if (operator_state.screen == Screen::DecisionConfirm || operator_state.screen == Screen::VoiceReview) {
-    if (M5.BtnA.wasPressed() || (clicked && touch.x < 233)) {
+    if (button_a_pressed || (released && touch.x < 233)) {
       cancelToAgents();
-    } else if (M5.BtnB.wasPressed() || (clicked && touch.x >= 233)) {
+    } else if (button_b_pressed || (released && touch.x >= 233)) {
+      if (operator_state.screen == Screen::VoiceReview && !voice_review_complete) {
+        bridge_error = "Prompt not fully visible";
+        tone(1400, 80);
+        draw();
+        return;
+      }
       const auto effect = calm_operator::transition(operator_state, Event::Confirm);
       applyEffect(effect);
       if (effect.submit_button_decision) submitButtonDecision();
-      if (effect.submit_voice_decision) confirmVoice();
+      if (effect.submit_voice_decision && !confirmVoice()) {
+        Serial.println("[operator] voice confirmation failed");
+      }
       draw();
     }
     return;
   }
   if (operator_state.screen == Screen::VoiceRecord) {
-    if (M5.BtnA.wasPressed()) {
+    if (button_a_pressed) {
       cancelToAgents();
       return;
     }
-    if (M5.BtnB.wasPressed() && !recording && !voice_command_id.length()) {
+    const bool button_was_pressed = button_b_pressed;
+    const bool button_was_released = M5.BtnB.wasReleased();
+    const bool button_is_pressed = M5.BtnB.isPressed();
+    if (button_was_pressed && !recording && !voice_command_id.length()) {
       applyEffect(calm_operator::transition(operator_state, Event::StartRecording));
       startRecording();
       draw();
-    }
-    if (M5.BtnB.wasReleased() && recording) {
+    } else if (calm_operator::shouldStopVoiceRecording(
+                   recording,
+                   button_was_released,
+                   button_is_pressed)) {
       applyEffect(calm_operator::transition(operator_state, Event::StopRecording));
       stopRecording();
       draw();
@@ -594,7 +897,7 @@ void handleInputs() {
     return;
   }
   if (operator_state.screen == Screen::Receipt &&
-      (clicked || M5.BtnA.wasPressed() || M5.BtnB.wasPressed())) {
+      (released || button_a_pressed || button_b_pressed)) {
     cancelToAgents();
   }
 }
@@ -607,6 +910,8 @@ void setup() {
   config.output_power = true;
   M5.begin(config);
   Serial.begin(115200);
+  configureStopwatchButtonInputs();
+  Serial.printf("[operator] stopwatch booted %s\n", FIRMWARE_VERSION);
   M5.Display.setRotation(0);
   M5.Display.setBrightness(96);
   M5.Display.setTextWrap(false);
@@ -622,6 +927,7 @@ void loop() {
   handleInputs();
   captureRecordingBlock();
   pollVoiceCommand();
+  pollDecisionReceipt();
   if (operator_state.screen == Screen::Agents && millis() - last_console_poll >= CONSOLE_POLL_MS) {
     refreshConsole();
     draw();
