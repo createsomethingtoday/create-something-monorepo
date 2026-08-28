@@ -876,7 +876,9 @@ export class InkState extends DurableObject<Env> {
       .exec<Record<string, SqlStorageValue>>(
         `SELECT * FROM agent_progress
          WHERE expires_at > ?
-         ORDER BY needs_input DESC, updated_at DESC
+         ORDER BY needs_input DESC,
+                  CASE WHEN agent_id = 'codex:new' THEN 0 ELSE 1 END ASC,
+                  updated_at DESC
          LIMIT 24`,
         now
       )
