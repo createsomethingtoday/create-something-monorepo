@@ -18,7 +18,7 @@ on:
       base_url:
         description: 'Dashboard base URL to snapshot.'
         required: false
-        default: 'https://webflow-dashboard.pages.dev'
+        default: 'https://webflow-dashboard-2v4.pages.dev'
 
 permissions:
   contents: read
@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      DASHBOARD_BASE_URL: ${{ github.event_name == 'workflow_dispatch' && inputs.base_url || 'https://webflow-dashboard.pages.dev' }}
+      DASHBOARD_BASE_URL: ${{ github.event_name == 'workflow_dispatch' && inputs.base_url || 'https://webflow-dashboard-2v4.pages.dev' }}
       CRON_SECRET: ${{ secrets.WEBFLOW_DASHBOARD_CRON_SECRET }}
     steps:
       - name: Verify cron credential
