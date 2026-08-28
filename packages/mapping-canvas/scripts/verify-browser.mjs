@@ -97,6 +97,7 @@ try {
   if (await page.locator('g[aria-label^="Group:"]').count() !== 1) throw new Error('Group conversion failed');
   await page.mouse.click(box.x + 190, box.y + 410);
   if (!(await page.locator('rect[aria-label="Rectangle"]').getAttribute('class'))?.includes('selected')) throw new Error('Group boundary obscured a child object');
+  if (await page.locator('rect[aria-label="Rectangle"]').evaluate((node) => getComputedStyle(node).filter === 'none')) throw new Error('Selected-object filter is not active');
 
   await page.getByRole('button', { name: 'Undo' }).click();
   await page.getByRole('button', { name: 'Redo' }).click();
@@ -108,6 +109,19 @@ try {
   await page.mouse.move(box.x + 700, box.y + 400);
   await page.mouse.wheel(0, -300);
   await page.waitForTimeout(300);
+
+  await page.locator('rect[aria-label="Rectangle"]').focus();
+  await page.locator('rect[aria-label="Rectangle"]').press('Enter');
+  await page.getByTestId('convert-menu').click();
+  await page.getByTestId('convert-note').click();
+  await page.evaluate(() => {
+    window.__mappingCanvasPngText = [];
+    const original = CanvasRenderingContext2D.prototype.fillText;
+    CanvasRenderingContext2D.prototype.fillText = function (text, ...args) {
+      window.__mappingCanvasPngText.push(String(text));
+      return original.call(this, text, ...args);
+    };
+  });
 
   const exports = {};
   for (const extension of ['json', 'svg', 'png']) {
@@ -121,6 +135,7 @@ try {
   }
   const svgExport = await readFile(`${outputRoot}canvas.svg`, 'utf8');
   if (!svgExport.includes('New thought') || svgExport.includes('foreignObject') || !svgExport.includes('class="group-label"') || !svgExport.includes('fill="#fcaa2d"')) throw new Error('SVG export did not materialize portable note and label styles');
+  if (!(await page.evaluate(() => window.__mappingCanvasPngText.some((text) => text.startsWith('CONVERTED · '))))) throw new Error('PNG export omitted conversion provenance');
 
   const countBeforeReload = await page.locator('[role="button"][aria-label]').count();
   await page.reload({ waitUntil: 'networkidle' });

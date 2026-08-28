@@ -100,7 +100,7 @@ export function convert(document: CanvasDocument, selectedIds: string[], target:
 export function restoreConversion(document: CanvasDocument, id: string): CanvasDocument {
   const conversion = document.objects.find((object) => object.id === id);
   if (!conversion?.sourceSnapshot) return document;
-  const remaining = document.objects.filter((object) => object.id !== id);
+  const remaining = removeObjects(document, [id]).objects;
   const existing = new Set(remaining.map((object) => object.id));
   return withObjects(document, [...remaining, ...conversion.sourceSnapshot.filter((object) => !existing.has(object.id))]);
 }

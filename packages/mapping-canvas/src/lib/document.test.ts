@@ -26,6 +26,16 @@ describe('mapping canvas contract', () => {
     const withoutInk = withObjects(converted, converted.objects.filter(({ id }) => id !== 'a'));
     expect(restoreConversion(withoutInk, group.id).objects.map(({ id }) => id)).toContain('a');
   });
+
+  it('removes connectors that reference a restored conversion', () => {
+    const source = withObjects(createDocument(), [{ id: 'a', kind: 'stroke', createdAt: 'now', points: [{ x: 0, y: 0 }, { x: 1, y: 1 }], color: '#fff', width: 2 }]);
+    const converted = convert(source, ['a'], 'note');
+    const note = converted.objects.at(-1)!;
+    const linked = withObjects(converted, [...converted.objects, { id: 'link', kind: 'connector', createdAt: 'now', fromId: 'a', toId: note.id, label: '' }]);
+    const restored = restoreConversion(linked, note.id);
+    expect(restored.objects.some(({ id }) => id === 'link')).toBe(false);
+    expect(parse(serialize(restored))).toEqual(restored);
+  });
   it('undoes and redoes committed states', () => {
     const first = createDocument(), second = withObjects(first, [stroke('a')]);
     const history: History = commit({ past: [], present: first, future: [] }, second);
