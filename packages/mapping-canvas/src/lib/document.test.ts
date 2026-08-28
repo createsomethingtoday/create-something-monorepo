@@ -49,4 +49,13 @@ describe('mapping canvas contract', () => {
     expect(result.objects.some(({ kind }) => kind === 'connector')).toBe(false);
     expect(result.objects.find(({ kind }) => kind === 'group')).toMatchObject({ childIds: ['b'] });
   });
+  it('round trips arbitrarily nested operator conversion provenance', () => {
+    let source = withObjects(createDocument(), [stroke('nested')]);
+    let selected = 'nested';
+    for (let index = 0; index < 4; index += 1) {
+      source = convert(source, [selected], 'note');
+      selected = source.objects.at(-1)!.id;
+    }
+    expect(parse(serialize(source))).toEqual(source);
+  });
 });

@@ -120,7 +120,7 @@ try {
     if (exports[extension] < 100) throw new Error(`${extension} export is empty`);
   }
   const svgExport = await readFile(`${outputRoot}canvas.svg`, 'utf8');
-  if (!svgExport.includes('New thought') || svgExport.includes('foreignObject')) throw new Error('SVG export did not materialize note text');
+  if (!svgExport.includes('New thought') || svgExport.includes('foreignObject') || !svgExport.includes('class="group-label"') || !svgExport.includes('fill="#fcaa2d"')) throw new Error('SVG export did not materialize portable note and label styles');
 
   const countBeforeReload = await page.locator('[role="button"][aria-label]').count();
   await page.reload({ waitUntil: 'networkidle' });
@@ -166,9 +166,10 @@ try {
     width: document.documentElement.scrollWidth,
     viewport: innerWidth,
     toolbar: !!document.querySelector('.toolbar'),
-    conversion: !!document.querySelector('.provenance')
+    conversion: !!document.querySelector('.provenance'),
+    fileActions: [...document.querySelectorAll('.file-actions button')].every((button) => getComputedStyle(button).display !== 'none')
   }));
-  if (mobileCritical.width !== mobileCritical.viewport || !mobileCritical.toolbar || !mobileCritical.conversion) throw new Error(`Mobile layout failed: ${JSON.stringify(mobileCritical)}`);
+  if (mobileCritical.width !== mobileCritical.viewport || !mobileCritical.toolbar || !mobileCritical.conversion || !mobileCritical.fileActions) throw new Error(`Mobile layout failed: ${JSON.stringify(mobileCritical)}`);
   await mobile.page.screenshot({ path: `${outputRoot}mobile.png`, fullPage: true });
   requireCleanRun(mobile, 'Mobile');
   await mobile.context.close();

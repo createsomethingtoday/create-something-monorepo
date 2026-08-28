@@ -31,12 +31,12 @@ export function isDocument(value: unknown): value is CanvasDocument {
 const isFiniteNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
 const isPoint = (value: unknown): value is Point => !!value && typeof value === 'object' && isFiniteNumber((value as Point).x) && isFiniteNumber((value as Point).y);
 const isViewport = (value: unknown): value is Viewport => isPoint(value) && isFiniteNumber((value as Viewport).zoom) && (value as Viewport).zoom > 0;
-function isCanvasObject(value: unknown, depth = 0): value is CanvasObject {
-  if (!value || typeof value !== 'object' || depth > 2) return false;
+function isCanvasObject(value: unknown): value is CanvasObject {
+  if (!value || typeof value !== 'object') return false;
   const object = value as Partial<CanvasObject>;
   if (typeof object.id !== 'string' || typeof object.createdAt !== 'string' || typeof object.kind !== 'string') return false;
   if (object.sourceIds !== undefined && (!Array.isArray(object.sourceIds) || !object.sourceIds.every((id) => typeof id === 'string'))) return false;
-  if (object.sourceSnapshot !== undefined && (!Array.isArray(object.sourceSnapshot) || !object.sourceSnapshot.every((source) => isCanvasObject(source, depth + 1)))) return false;
+  if (object.sourceSnapshot !== undefined && (!Array.isArray(object.sourceSnapshot) || !object.sourceSnapshot.every((source) => isCanvasObject(source)))) return false;
   if (object.kind === 'stroke') return Array.isArray(object.points) && object.points.length > 1 && object.points.every(isPoint) && typeof object.color === 'string' && isFiniteNumber(object.width) && object.width > 0;
   if (object.kind === 'rectangle' || object.kind === 'ellipse' || object.kind === 'arrow') return isPoint(object.from) && isPoint(object.to) && typeof object.color === 'string';
   if (object.kind === 'note') return isFiniteNumber(object.x) && isFiniteNumber(object.y) && isFiniteNumber(object.width) && object.width > 0 && isFiniteNumber(object.height) && object.height > 0 && typeof object.text === 'string';
