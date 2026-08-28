@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DOCUMENT_VERSION, commit, convert, createDocument, parse, redo, restoreConversion, serialize, undo, withObjects, type History, type Stroke } from './document';
+import { DOCUMENT_VERSION, commit, convert, createDocument, parse, redo, removeObjects, restoreConversion, serialize, undo, withObjects, type History, type Stroke } from './document';
 const stroke = (id: string, x = 10): Stroke => ({ id, kind: 'stroke', createdAt: '2026-08-27T00:00:00Z', points: [{ x, y: 20 }, { x: x + 40, y: 60 }], color: '#f7f4ee', width: 3 });
 describe('mapping canvas contract', () => {
   it('creates a versioned document', () => expect(createDocument().version).toBe(DOCUMENT_VERSION));
@@ -36,5 +36,17 @@ describe('mapping canvas contract', () => {
     const source = withObjects(createDocument(), [stroke('a')]);
     expect(parse(serialize(source))).toEqual(source);
     expect(() => parse('{"hello":"world"}')).toThrow(/not a supported/);
+  });
+  it('rejects malformed known objects before they reach rendering or persistence', () => {
+    const source = createDocument();
+    expect(() => parse(JSON.stringify({ ...source, objects: [{ id: 'bad', kind: 'stroke', createdAt: source.createdAt, color: '#fff', width: 3 }] }))).toThrow(/not a supported/);
+  });
+  it('removes connectors that reference an erased endpoint and repairs groups', () => {
+    const source = withObjects(createDocument(), [stroke('a'), stroke('b', 100)]);
+    const connected = convert(source, ['a', 'b'], 'connector');
+    const grouped = convert(connected, ['a', 'b'], 'group');
+    const result = removeObjects(grouped, ['a']);
+    expect(result.objects.some(({ kind }) => kind === 'connector')).toBe(false);
+    expect(result.objects.find(({ kind }) => kind === 'group')).toMatchObject({ childIds: ['b'] });
   });
 });

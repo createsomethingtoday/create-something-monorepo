@@ -23,11 +23,38 @@ export function createDocument(title = 'Untitled mapping session'): CanvasDocume
 export function isDocument(value: unknown): value is CanvasDocument {
   if (!value || typeof value !== 'object') return false;
   const candidate = value as Partial<CanvasDocument>;
-  return candidate.version === DOCUMENT_VERSION && typeof candidate.id === 'string' && typeof candidate.title === 'string' && Array.isArray(candidate.objects) && !!candidate.viewport && typeof candidate.viewport.x === 'number' && typeof candidate.viewport.y === 'number' && typeof candidate.viewport.zoom === 'number';
+  if (candidate.version !== DOCUMENT_VERSION || typeof candidate.id !== 'string' || typeof candidate.title !== 'string' || typeof candidate.createdAt !== 'string' || typeof candidate.updatedAt !== 'string' || !Array.isArray(candidate.objects) || !isViewport(candidate.viewport) || !candidate.objects.every((object) => isCanvasObject(object))) return false;
+  const ids = new Set(candidate.objects.map(({ id }) => id));
+  return candidate.objects.every((object) => object.kind !== 'connector' || (ids.has(object.fromId) && ids.has(object.toId)));
+}
+
+const isFiniteNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
+const isPoint = (value: unknown): value is Point => !!value && typeof value === 'object' && isFiniteNumber((value as Point).x) && isFiniteNumber((value as Point).y);
+const isViewport = (value: unknown): value is Viewport => isPoint(value) && isFiniteNumber((value as Viewport).zoom) && (value as Viewport).zoom > 0;
+function isCanvasObject(value: unknown, depth = 0): value is CanvasObject {
+  if (!value || typeof value !== 'object' || depth > 2) return false;
+  const object = value as Partial<CanvasObject>;
+  if (typeof object.id !== 'string' || typeof object.createdAt !== 'string' || typeof object.kind !== 'string') return false;
+  if (object.sourceIds !== undefined && (!Array.isArray(object.sourceIds) || !object.sourceIds.every((id) => typeof id === 'string'))) return false;
+  if (object.sourceSnapshot !== undefined && (!Array.isArray(object.sourceSnapshot) || !object.sourceSnapshot.every((source) => isCanvasObject(source, depth + 1)))) return false;
+  if (object.kind === 'stroke') return Array.isArray(object.points) && object.points.length > 1 && object.points.every(isPoint) && typeof object.color === 'string' && isFiniteNumber(object.width) && object.width > 0;
+  if (object.kind === 'rectangle' || object.kind === 'ellipse' || object.kind === 'arrow') return isPoint(object.from) && isPoint(object.to) && typeof object.color === 'string';
+  if (object.kind === 'note') return isFiniteNumber(object.x) && isFiniteNumber(object.y) && isFiniteNumber(object.width) && object.width > 0 && isFiniteNumber(object.height) && object.height > 0 && typeof object.text === 'string';
+  if (object.kind === 'connector') return typeof object.fromId === 'string' && typeof object.toId === 'string' && typeof object.label === 'string';
+  if (object.kind === 'group') return isFiniteNumber(object.x) && isFiniteNumber(object.y) && isFiniteNumber(object.width) && object.width > 0 && isFiniteNumber(object.height) && object.height > 0 && typeof object.label === 'string' && Array.isArray(object.childIds) && object.childIds.every((id) => typeof id === 'string');
+  return false;
 }
 
 export function withObjects(document: CanvasDocument, objects: CanvasObject[]): CanvasDocument {
   return { ...document, objects, updatedAt: now() };
+}
+
+export function removeObjects(document: CanvasDocument, ids: string[]): CanvasDocument {
+  const removed = new Set(ids);
+  const objects = document.objects
+    .filter((object) => !removed.has(object.id) && (object.kind !== 'connector' || (!removed.has(object.fromId) && !removed.has(object.toId))))
+    .map((object) => object.kind === 'group' ? { ...object, childIds: object.childIds.filter((id) => !removed.has(id)) } : object);
+  return withObjects(document, objects);
 }
 
 export function commit(history: History, present: CanvasDocument): History {

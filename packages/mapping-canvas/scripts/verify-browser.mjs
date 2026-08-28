@@ -1,5 +1,5 @@
 import { chromium } from '@playwright/test';
-import { mkdir, stat } from 'node:fs/promises';
+import { mkdir, readFile, stat } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
 const baseUrl = process.env.CANVAS_URL ?? 'http://127.0.0.1:5173';
@@ -95,6 +95,8 @@ try {
   await page.getByTestId('convert-menu').click();
   await page.getByTestId('convert-group').click();
   if (await page.locator('g[aria-label^="Group:"]').count() !== 1) throw new Error('Group conversion failed');
+  await page.mouse.click(box.x + 190, box.y + 410);
+  if (!(await page.locator('rect[aria-label="Rectangle"]').getAttribute('class'))?.includes('selected')) throw new Error('Group boundary obscured a child object');
 
   await page.getByRole('button', { name: 'Undo' }).click();
   await page.getByRole('button', { name: 'Redo' }).click();
@@ -117,6 +119,8 @@ try {
     exports[extension] = (await stat(target)).size;
     if (exports[extension] < 100) throw new Error(`${extension} export is empty`);
   }
+  const svgExport = await readFile(`${outputRoot}canvas.svg`, 'utf8');
+  if (!svgExport.includes('New thought') || svgExport.includes('foreignObject')) throw new Error('SVG export did not materialize note text');
 
   const countBeforeReload = await page.locator('[role="button"][aria-label]').count();
   await page.reload({ waitUntil: 'networkidle' });
@@ -131,6 +135,17 @@ try {
   await page.locator('input[type=file]').setInputFiles(`${outputRoot}canvas.json`);
   await page.waitForFunction(() => document.querySelector('.statusbar')?.textContent?.includes('Canvas imported'));
   if (await page.locator('g[aria-label^="Group:"]').count() !== 1) throw new Error('JSON import did not restore the group');
+  await page.getByRole('button', { name: /Note tool/ }).click();
+  await page.mouse.click(box.x + 520, box.y + 210);
+  page.once('dialog', (dialog) => dialog.accept());
+  await page.getByRole('button', { name: 'Reset', exact: true }).click();
+  await page.waitForFunction(() => document.querySelector('.statusbar')?.textContent?.includes('New local session'));
+  await page.waitForTimeout(200);
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.waitForFunction(() => !document.querySelector('.statusbar')?.textContent?.includes('Loading local canvas'));
+  if (await page.locator('[data-object-id], [aria-label="Ink stroke"], [aria-label="Rectangle"], [aria-label="Connector"]').count()) throw new Error('Reset allowed a pending autosave to restore stale objects');
+  await page.locator('input[type=file]').setInputFiles(`${outputRoot}canvas.json`);
+  await page.waitForFunction(() => document.querySelector('.statusbar')?.textContent?.includes('Canvas imported'));
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.screenshot({ path: `${outputRoot}desktop.png`, fullPage: true });
   requireCleanRun(desktop, 'Desktop');
