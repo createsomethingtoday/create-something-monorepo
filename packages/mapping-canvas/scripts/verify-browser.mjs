@@ -114,6 +114,7 @@ try {
   await page.locator('rect[aria-label="Rectangle"]').press('Enter');
   await page.getByTestId('convert-menu').click();
   await page.getByTestId('convert-note').click();
+  await page.locator('textarea[aria-label="Edit note"]').last().fill('First export line\nSecond export line');
   await page.evaluate(() => {
     window.__mappingCanvasPngText = [];
     const original = CanvasRenderingContext2D.prototype.fillText;
@@ -135,7 +136,9 @@ try {
   }
   const svgExport = await readFile(`${outputRoot}canvas.svg`, 'utf8');
   if (!svgExport.includes('New thought') || svgExport.includes('foreignObject') || !svgExport.includes('class="group-label"') || !svgExport.includes('fill="#fcaa2d"')) throw new Error('SVG export did not materialize portable note and label styles');
+  if (!svgExport.includes('First export line') || !svgExport.includes('Second export line') || !svgExport.includes('dy="1.35em"')) throw new Error('SVG export collapsed explicit note line breaks');
   if (!(await page.evaluate(() => window.__mappingCanvasPngText.some((text) => text.startsWith('CONVERTED · '))))) throw new Error('PNG export omitted conversion provenance');
+  if (!(await page.evaluate(() => window.__mappingCanvasPngText.includes('First export line') && window.__mappingCanvasPngText.includes('Second export line')))) throw new Error('PNG export collapsed explicit note line breaks');
 
   const countBeforeReload = await page.locator('[role="button"][aria-label]').count();
   await page.reload({ waitUntil: 'networkidle' });

@@ -25,7 +25,21 @@ export function isDocument(value: unknown): value is CanvasDocument {
   const candidate = value as Partial<CanvasDocument>;
   if (candidate.version !== DOCUMENT_VERSION || typeof candidate.id !== 'string' || typeof candidate.title !== 'string' || typeof candidate.createdAt !== 'string' || typeof candidate.updatedAt !== 'string' || !Array.isArray(candidate.objects) || !isViewport(candidate.viewport) || !candidate.objects.every((object) => isCanvasObject(object))) return false;
   const ids = new Set(candidate.objects.map(({ id }) => id));
-  return candidate.objects.every((object) => object.kind !== 'connector' || (ids.has(object.fromId) && ids.has(object.toId)));
+  return candidate.objects.every((object) => object.kind !== 'connector' || (ids.has(object.fromId) && ids.has(object.toId))) && !hasConnectorCycle(candidate.objects);
+}
+
+function hasConnectorCycle(objects: CanvasObject[]) {
+  const byId = new Map(objects.map((object) => [object.id, object]));
+  const visiting = new Set<string>(), visited = new Set<string>();
+  const visit = (id: string): boolean => {
+    const object = byId.get(id);
+    if (object?.kind !== 'connector' || visited.has(id)) return false;
+    if (visiting.has(id)) return true;
+    visiting.add(id);
+    if (visit(object.fromId) || visit(object.toId)) return true;
+    visiting.delete(id); visited.add(id); return false;
+  };
+  return objects.some(({ id }) => visit(id));
 }
 
 const isFiniteNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
@@ -69,13 +83,18 @@ export function redo(history: History): History {
   return next ? { past: [...history.past, history.present], present: next, future: history.future.slice(1) } : history;
 }
 
-export function objectBounds(objects: CanvasObject[]) {
+export function objectBounds(objects: CanvasObject[], allObjects = objects) {
   const points: Point[] = [];
-  for (const object of objects) {
+  const byId = new Map(allObjects.map((object) => [object.id, object])), visited = new Set<string>();
+  const add = (object: CanvasObject) => {
+    if (visited.has(object.id)) return;
+    visited.add(object.id);
     if (object.kind === 'stroke') points.push(...object.points);
     else if (object.kind === 'rectangle' || object.kind === 'ellipse' || object.kind === 'arrow') points.push(object.from, object.to);
     else if (object.kind === 'note' || object.kind === 'group') points.push({ x: object.x, y: object.y }, { x: object.x + object.width, y: object.y + object.height });
-  }
+    else if (object.kind === 'connector') { const from = byId.get(object.fromId), to = byId.get(object.toId); if (from) add(from); if (to) add(to); }
+  };
+  objects.forEach(add);
   if (!points.length) return { x: 100, y: 100, width: 320, height: 180 };
   const xs = points.map(({ x }) => x), ys = points.map(({ y }) => y);
   const x = Math.min(...xs), y = Math.min(...ys);
@@ -85,7 +104,7 @@ export function objectBounds(objects: CanvasObject[]) {
 export function convert(document: CanvasDocument, selectedIds: string[], target: 'note' | 'connector' | 'group'): CanvasDocument {
   const sources = document.objects.filter(({ id }) => selectedIds.includes(id));
   if (!sources.length || (target === 'connector' && sources.length < 2)) return document;
-  const bounds = objectBounds(sources);
+  const bounds = objectBounds(sources, document.objects);
   // Svelte state exposes proxy-backed objects; JSON cloning produces a portable
   // document snapshot where structuredClone would throw DataCloneError.
   const sourceSnapshot = JSON.parse(JSON.stringify(sources)) as CanvasObject[];
@@ -102,7 +121,16 @@ export function restoreConversion(document: CanvasDocument, id: string): CanvasD
   if (!conversion?.sourceSnapshot) return document;
   const remaining = removeObjects(document, [id]).objects;
   const existing = new Set(remaining.map((object) => object.id));
-  return withObjects(document, [...remaining, ...conversion.sourceSnapshot.filter((object) => !existing.has(object.id))]);
+  let restored = [...remaining, ...conversion.sourceSnapshot.filter((object) => !existing.has(object.id))];
+  let changed = true;
+  while (changed) {
+    const ids = new Set(restored.map((object) => object.id));
+    const next = restored.filter((object) => object.kind !== 'connector' || (ids.has(object.fromId) && ids.has(object.toId)));
+    changed = next.length !== restored.length; restored = next;
+  }
+  const ids = new Set(restored.map((object) => object.id));
+  restored = restored.map((object) => object.kind === 'group' ? { ...object, childIds: object.childIds.filter((childId) => ids.has(childId)) } : object);
+  return withObjects(document, restored);
 }
 
 export const serialize = (document: CanvasDocument) => JSON.stringify(document, null, 2);

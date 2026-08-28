@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DOCUMENT_VERSION, commit, convert, createDocument, parse, redo, removeObjects, restoreConversion, serialize, undo, withObjects, type History, type Stroke } from './document';
+import { DOCUMENT_VERSION, commit, convert, createDocument, objectBounds, parse, redo, removeObjects, restoreConversion, serialize, undo, withObjects, type Connector, type History, type Stroke } from './document';
 const stroke = (id: string, x = 10): Stroke => ({ id, kind: 'stroke', createdAt: '2026-08-27T00:00:00Z', points: [{ x, y: 20 }, { x: x + 40, y: 60 }], color: '#f7f4ee', width: 3 });
 describe('mapping canvas contract', () => {
   it('creates a versioned document', () => expect(createDocument().version).toBe(DOCUMENT_VERSION));
@@ -35,6 +35,29 @@ describe('mapping canvas contract', () => {
     const restored = restoreConversion(linked, note.id);
     expect(restored.objects.some(({ id }) => id === 'link')).toBe(false);
     expect(parse(serialize(restored))).toEqual(restored);
+  });
+  it('does not restore preserved connectors whose endpoint was erased', () => {
+    const source = withObjects(createDocument(), [stroke('a'), stroke('b', 100)]);
+    const connected = convert(source, ['a', 'b'], 'connector');
+    const connector = connected.objects.at(-1)!;
+    const converted = convert(connected, [connector.id], 'note');
+    const note = converted.objects.at(-1)!;
+    const endpointRemoved = removeObjects(converted, ['a']);
+    const restored = restoreConversion(endpointRemoved, note.id);
+    expect(restored.objects.some(({ id }) => id === connector.id)).toBe(false);
+    expect(parse(serialize(restored))).toEqual(restored);
+  });
+  it('rejects cyclic connector graphs', () => {
+    const source = createDocument();
+    const cycle: Connector = { id: 'cycle', kind: 'connector', createdAt: 'now', fromId: 'cycle', toId: 'cycle', label: '' };
+    expect(() => parse(JSON.stringify({ ...source, objects: [cycle] }))).toThrow(/not a supported/);
+  });
+  it('derives connector conversion bounds from its endpoints', () => {
+    const source = withObjects(createDocument(), [stroke('a', 700), stroke('b', 900)]);
+    const connected = convert(source, ['a', 'b'], 'connector');
+    const connector = connected.objects.at(-1)!;
+    expect(objectBounds([connector], connected.objects).x).toBeGreaterThanOrEqual(700);
+    expect(convert(connected, [connector.id], 'note').objects.at(-1)).toMatchObject({ kind: 'note', x: 700 });
   });
   it('undoes and redoes committed states', () => {
     const first = createDocument(), second = withObjects(first, [stroke('a')]);
