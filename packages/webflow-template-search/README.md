@@ -2,6 +2,12 @@
 
 Cloudflare Worker and D1 search index for the Webflow template marketplace.
 
+Production: `https://webflow-template-search.webflow-inc.workers.dev`
+
+The former CREATE SOMETHING URL remains a temporary compatibility proxy during
+consumer rollout and rollback retention. New integrations must use the Webflow
+Hosting endpoint above.
+
 ## Routes
 
 - `GET /health`

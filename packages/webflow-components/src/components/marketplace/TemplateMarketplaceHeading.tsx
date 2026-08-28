@@ -181,7 +181,7 @@ const BREADCRUMB_LABELS: Record<TemplateScope, string> = {
 
 const GENERIC_FALLBACK_DESCRIPTION = 'Explore Webflow templates by category, style, type, price, and popularity.';
 const DEFAULT_API_BASE = 'https://templates.webflow.com/templates-api';
-const WORKER_ORIGIN = 'https://webflow-template-search.createsomething.workers.dev';
+const WORKER_ORIGIN = 'https://webflow-template-search.webflow-inc.workers.dev';
 const CLOUD_APP_PREVIEW_ORIGIN = 'https://webflow-template-marketplace.webflow.io';
 
 function titleCase(value: string): string {

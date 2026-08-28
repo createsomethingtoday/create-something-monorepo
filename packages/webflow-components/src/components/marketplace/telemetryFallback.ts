@@ -18,7 +18,7 @@
 // verified 2026-08-03 that /api/templates/telemetry 404s there while the
 // workers.dev origin accepts. Flip the order once the proxy gains the route.
 export const TELEMETRY_FALLBACK_ENDPOINT =
-  'https://webflow-template-search.createsomething.workers.dev/api/templates/telemetry';
+  'https://webflow-template-search.webflow-inc.workers.dev/api/templates/telemetry';
 export const TELEMETRY_FALLBACK_ENDPOINT_SECONDARY =
   'https://templates.webflow.com/templates-api/api/templates/telemetry';
 

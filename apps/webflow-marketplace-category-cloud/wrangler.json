@@ -12,7 +12,7 @@
   "vars": {
     "ENVIRONMENT": "production",
     "MARKETPLACE_BASE_URL": "https://webflow.com",
-    "TEMPLATE_SEARCH_API_BASE": "https://webflow-template-search.createsomething.workers.dev",
+    "TEMPLATE_SEARCH_API_BASE": "https://webflow-template-search.webflow-inc.workers.dev",
     "NEXT_PUBLIC_BASE_PATH": "/templates/category"
   }
 }

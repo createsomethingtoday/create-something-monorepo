@@ -42,7 +42,7 @@ const TEMPLATE_ANALYZER_API_BASE = (
 ).replace(/\/$/, '');
 const TEMPLATE_SEARCH_API_BASE = (
   process.env.NEXT_PUBLIC_TEMPLATE_SEARCH_API_BASE ||
-  'https://webflow-template-search.createsomething.workers.dev'
+  'https://webflow-template-search.webflow-inc.workers.dev'
 ).replace(/\/$/, '');
 const TEMPLATE_SUGGESTIONS_TIMEOUT_MS = 90_000;
 const ASSET_DASHBOARD_URL = 'https://webflow.com/templates/dashboard/assets';

@@ -3,7 +3,7 @@
 // stored image URL. Use after bulk Airtable uploads or when images look stale.
 // Usage: SYNC_ADMIN_TOKEN=<token> node scripts/rebuild.mjs
 
-const WORKER_URL = 'https://webflow-template-search.createsomething.workers.dev';
+const WORKER_URL = 'https://webflow-template-search.webflow-inc.workers.dev';
 
 const token = process.env.SYNC_ADMIN_TOKEN;
 if (!token) {
