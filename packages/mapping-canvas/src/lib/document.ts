@@ -59,7 +59,10 @@ export function convert(document: CanvasDocument, selectedIds: string[], target:
   const sources = document.objects.filter(({ id }) => selectedIds.includes(id));
   if (!sources.length || (target === 'connector' && sources.length < 2)) return document;
   const bounds = objectBounds(sources);
-  const base = { id: uid(target), createdAt: now(), sourceIds: [...selectedIds], sourceSnapshot: structuredClone(sources) };
+  // Svelte state exposes proxy-backed objects; JSON cloning produces a portable
+  // document snapshot where structuredClone would throw DataCloneError.
+  const sourceSnapshot = JSON.parse(JSON.stringify(sources)) as CanvasObject[];
+  const base = { id: uid(target), createdAt: now(), sourceIds: [...selectedIds], sourceSnapshot };
   let result: CanvasObject;
   if (target === 'note') result = { ...base, kind: 'note', x: bounds.x, y: bounds.y, width: Math.max(240, bounds.width), height: Math.max(120, bounds.height), text: 'Captured thought' };
   else if (target === 'group') result = { ...base, kind: 'group', x: bounds.x - 24, y: bounds.y - 40, width: bounds.width + 48, height: bounds.height + 64, label: 'Working group', childIds: [...selectedIds] };

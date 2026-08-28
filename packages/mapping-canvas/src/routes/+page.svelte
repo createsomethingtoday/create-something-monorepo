@@ -16,7 +16,7 @@
   let history = $state<History>({ past: [], present: createDocument(), future: [] });
   let selectedIds = $state<string[]>([]), tool = $state<Tool>('pen'), drawing = $state(false);
   let start = $state<Point | null>(null), draftPoints = $state<Point[]>([]), draftShape = $state<Shape | null>(null);
-  let lasso = $state<{ from: Point; to: Point } | null>(null), conversionOpen = $state(false), status = $state('New local session');
+  let lasso = $state<{ from: Point; to: Point } | null>(null), conversionOpen = $state(false), status = $state('Loading local canvas…'), ready = $state(false);
   let surface: SVGSVGElement, fileInput: HTMLInputElement, viewportWidth = $state(1200), viewportHeight = $state(800);
   let saveTimer: ReturnType<typeof setTimeout> | undefined;
   const document = $derived(history.present), viewport = $derived(document.viewport);
@@ -24,7 +24,7 @@
   const transform = $derived(`translate(${viewport.x} ${viewport.y}) scale(${viewport.zoom})`);
 
   onMount(() => {
-    void loadDocument().then((saved) => { if (saved) { history = { past: [], present: saved, future: [] }; status = 'Restored from this device'; } }).catch(() => undefined);
+    void loadDocument().then((saved) => { if (saved) { history = { past: [], present: saved, future: [] }; status = 'Restored from this device'; } else status = 'New local session'; }).catch(() => status = 'Local storage unavailable · export copies').finally(() => ready = true);
     const resize = () => { viewportWidth = surface?.clientWidth || window.innerWidth; viewportHeight = surface?.clientHeight || window.innerHeight; };
     resize(); window.addEventListener('resize', resize); window.addEventListener('keydown', keydown);
     if (import.meta.env.PROD) navigator.serviceWorker?.register('/service-worker.js').catch(() => undefined);
@@ -32,13 +32,13 @@
   });
 
   function point(event: PointerEvent): Point { const rect = surface.getBoundingClientRect(); return { x: (event.clientX - rect.left - viewport.x) / viewport.zoom, y: (event.clientY - rect.top - viewport.y) / viewport.zoom }; }
-  function queueSave(next: CanvasDocument) { if (!browser) return; clearTimeout(saveTimer); status = 'Saving locally…'; saveTimer = setTimeout(() => void saveDocument(next).then(() => status = 'Saved on this device'), 120); }
+  function queueSave(next: CanvasDocument) { if (!browser) return; clearTimeout(saveTimer); status = 'Saving locally…'; saveTimer = setTimeout(() => void saveDocument(next).then(() => status = 'Saved on this device').catch(() => status = 'Local save failed · export a copy'), 120); }
   function apply(next: CanvasDocument) { history = commit(history, next); queueSave(next); }
   function updateViewport(next: CanvasDocument['viewport']) { const updated = { ...document, viewport: next, updatedAt: new Date().toISOString() }; history = { ...history, present: updated }; queueSave(updated); }
 
   function pointerDown(event: PointerEvent) {
-    if (event.button !== 0) return;
-    surface.setPointerCapture(event.pointerId); const here = point(event); drawing = true; start = here;
+    if (event.button !== 0 || !ready) return;
+    const here = point(event); drawing = true; start = here;
     if (tool === 'pen') draftPoints = [here];
     if (tool === 'rectangle' || tool === 'ellipse' || tool === 'arrow') draftShape = { id: 'draft', kind: tool, createdAt: new Date().toISOString(), from: here, to: here, color: '#f7f4ee' };
     if (tool === 'select') lasso = { from: here, to: here };
@@ -88,7 +88,25 @@
   function exportJson() { download(serialize(document), 'application/json', 'json'); status = 'JSON exported'; }
   function svgMarkup() { const clone = surface.cloneNode(true) as SVGSVGElement; clone.querySelectorAll('[data-ui=true]').forEach((node) => node.remove()); clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg'); clone.setAttribute('width', String(viewportWidth)); clone.setAttribute('height', String(viewportHeight)); return new XMLSerializer().serializeToString(clone); }
   function exportSvg() { download(svgMarkup(), 'image/svg+xml', 'svg'); status = 'SVG exported'; }
-  async function exportPng() { const image = new Image(), url = URL.createObjectURL(new Blob([svgMarkup()], { type: 'image/svg+xml' })); await new Promise<void>((resolve, reject) => { image.onload = () => resolve(); image.onerror = reject; image.src = url; }); const canvas = window.document.createElement('canvas'); canvas.width = viewportWidth * devicePixelRatio; canvas.height = viewportHeight * devicePixelRatio; const context = canvas.getContext('2d')!; context.scale(devicePixelRatio, devicePixelRatio); context.drawImage(image, 0, 0, viewportWidth, viewportHeight); URL.revokeObjectURL(url); const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png')); if (!blob) throw new Error('PNG export failed'); download(blob, 'image/png', 'png'); status = 'PNG exported'; }
+  async function exportPng() {
+    const ratio = devicePixelRatio, canvas = window.document.createElement('canvas'); canvas.width = viewportWidth * ratio; canvas.height = viewportHeight * ratio;
+    const context = canvas.getContext('2d')!; context.scale(ratio, ratio); context.fillStyle = '#000'; context.fillRect(0, 0, viewportWidth, viewportHeight);
+    context.strokeStyle = 'rgba(255,255,255,.055)'; context.lineWidth = 1;
+    for (let x = 0; x < viewportWidth; x += 32) { context.beginPath(); context.moveTo(x, 0); context.lineTo(x, viewportHeight); context.stroke(); }
+    for (let y = 0; y < viewportHeight; y += 32) { context.beginPath(); context.moveTo(0, y); context.lineTo(viewportWidth, y); context.stroke(); }
+    context.save(); context.translate(viewport.x, viewport.y); context.scale(viewport.zoom, viewport.zoom);
+    const arrow = (from: Point, to: Point, color: string) => { context.strokeStyle = color; context.fillStyle = color; context.lineWidth = 2; context.beginPath(); context.moveTo(from.x, from.y); context.lineTo(to.x, to.y); context.stroke(); const angle = Math.atan2(to.y - from.y, to.x - from.x); context.beginPath(); context.moveTo(to.x, to.y); context.lineTo(to.x - 10 * Math.cos(angle - Math.PI / 6), to.y - 10 * Math.sin(angle - Math.PI / 6)); context.lineTo(to.x - 10 * Math.cos(angle + Math.PI / 6), to.y - 10 * Math.sin(angle + Math.PI / 6)); context.closePath(); context.fill(); };
+    for (const object of document.objects) {
+      if (object.kind === 'stroke') { context.strokeStyle = object.color; context.lineWidth = object.width; context.lineCap = 'round'; context.lineJoin = 'round'; context.beginPath(); object.points.forEach((value, index) => index ? context.lineTo(value.x, value.y) : context.moveTo(value.x, value.y)); context.stroke(); }
+      else if (object.kind === 'rectangle') { context.strokeStyle = object.color; context.lineWidth = 2; context.strokeRect(object.from.x, object.from.y, object.to.x - object.from.x, object.to.y - object.from.y); }
+      else if (object.kind === 'ellipse') { context.strokeStyle = object.color; context.lineWidth = 2; context.beginPath(); context.ellipse((object.from.x + object.to.x) / 2, (object.from.y + object.to.y) / 2, Math.abs(object.to.x - object.from.x) / 2, Math.abs(object.to.y - object.from.y) / 2, 0, 0, Math.PI * 2); context.stroke(); }
+      else if (object.kind === 'arrow') arrow(object.from, object.to, object.color);
+      else if (object.kind === 'connector') { const from = document.objects.find(({ id }) => id === object.fromId), to = document.objects.find(({ id }) => id === object.toId); if (from && to) arrow(objectCenter(from), objectCenter(to), '#fcaa2d'); }
+      else if (object.kind === 'note') { context.fillStyle = '#111'; context.strokeStyle = 'rgba(255,255,255,.18)'; context.fillRect(object.x, object.y, object.width, object.height); context.strokeRect(object.x, object.y, object.width, object.height); context.fillStyle = '#fff'; context.font = '500 16px Arial'; const words = object.text.split(/\s+/); let line = '', y = object.y + 30; for (const word of words) { const next = `${line}${line ? ' ' : ''}${word}`; if (context.measureText(next).width > object.width - 32 && line) { context.fillText(line, object.x + 16, y); line = word; y += 22; } else line = next; } if (line) context.fillText(line, object.x + 16, y); }
+      else if (object.kind === 'group') { context.strokeStyle = '#fcaa2d'; context.setLineDash([8, 6]); context.strokeRect(object.x, object.y, object.width, object.height); context.setLineDash([]); context.fillStyle = '#fcaa2d'; context.font = '700 11px monospace'; context.fillText(object.label.toUpperCase(), object.x + 12, object.y + 24); }
+    }
+    context.restore(); const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png')); if (!blob) throw new Error('PNG export failed'); download(blob, 'image/png', 'png'); status = 'PNG exported';
+  }
   async function importJson(event: Event) { const file = (event.currentTarget as HTMLInputElement).files?.[0]; if (!file) return; try { const next = parse(await file.text()); history = commit(history, next); selectedIds = []; queueSave(next); status = 'Canvas imported'; } catch (error) { status = error instanceof Error ? error.message : 'Import failed'; } finally { fileInput.value = ''; } }
   async function resetCanvas() { if (!confirm('Reset this local canvas? Export first if you need a copy.')) return; await clearDocument(); const next = createDocument(); history = { past: [], present: next, future: [] }; selectedIds = []; status = 'New local session'; }
   function updateTitle(value: string) { const next = { ...document, title: value || 'Untitled mapping session', updatedAt: new Date().toISOString() }; history = { ...history, present: next }; queueSave(next); }

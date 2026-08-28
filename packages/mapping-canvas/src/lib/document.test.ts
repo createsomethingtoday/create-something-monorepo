@@ -9,6 +9,11 @@ describe('mapping canvas contract', () => {
     expect(note).toMatchObject({ kind: 'note', sourceIds: ['a'] });
     expect(note.sourceSnapshot?.[0]).toMatchObject({ id: 'a', kind: 'stroke' });
   });
+  it('converts proxy-backed UI state into a portable source snapshot', () => {
+    const proxied = new Proxy(stroke('proxy-source'), {});
+    const source = withObjects(createDocument(), [proxied]);
+    expect(convert(source, ['proxy-source'], 'note').objects.at(-1)?.sourceSnapshot?.[0]).toMatchObject({ id: 'proxy-source', kind: 'stroke' });
+  });
   it('requires two objects for connectors', () => {
     const source = withObjects(createDocument(), [stroke('a'), stroke('b', 100)]);
     expect(convert(source, ['a'], 'connector')).toBe(source);
