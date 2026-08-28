@@ -78,6 +78,7 @@ String voice_command_id;
 String voice_transcript;
 DeliveryReceiptState receipt_state = DeliveryReceiptState::Queued;
 bool recording = false;
+bool bridge_confirmed = false;
 int16_t* recording_data = nullptr;
 size_t recorded_samples = 0;
 uint32_t last_console_poll = 0;
@@ -141,6 +142,7 @@ bool connectWifi() {
 
 bool requestJson(const char* method, const String& path, const String& body, JsonDocument& response) {
   if (!connectWifi()) {
+    bridge_confirmed = false;
     bridge_error = "Wi-Fi unavailable";
     Serial.println(
         calm_operator::bridgeFailureDiagnostic(calm_operator::BridgeFailure::WiFiUnavailable));
@@ -151,6 +153,7 @@ bool requestJson(const char* method, const String& path, const String& body, Jso
   HTTPClient http;
   const String url = String(CALM_OPERATOR_BRIDGE_ORIGIN) + path;
   if (!http.begin(client, url)) {
+    bridge_confirmed = false;
     bridge_error = "TLS setup failed";
     Serial.println(calm_operator::bridgeFailureDiagnostic(calm_operator::BridgeFailure::TlsSetup));
     return false;
@@ -165,6 +168,8 @@ bool requestJson(const char* method, const String& path, const String& body, Jso
   } else {
     status = http.GET();
   }
+  bridge_confirmed =
+      status >= 200 && status < 500 && status != 401 && status != 403;
   const String payload = http.getString();
   http.end();
   if (status < 200 || status >= 300) {
@@ -180,12 +185,14 @@ bool requestJson(const char* method, const String& path, const String& body, Jso
   }
   const auto error = deserializeJson(response, payload);
   if (error) {
+    bridge_confirmed = false;
     bridge_error = "Invalid bridge JSON";
     Serial.println(
         calm_operator::bridgeFailureDiagnostic(calm_operator::BridgeFailure::InvalidJson));
     return false;
   }
   bridge_error = "";
+  bridge_confirmed = true;
   return true;
 }
 
@@ -561,7 +568,8 @@ calm_operator::ControlReason controlReasonFor(const String& reason) {
 }
 
 void drawDashboard() {
-  const bool connected = WiFi.status() == WL_CONNECTED;
+  const bool connected =
+      calm_operator::linkConfirmed(WiFi.status() == WL_CONNECTED, bridge_confirmed);
   calm_operator::OperatorTaskSnapshot snapshots[MAX_AGENTS] = {};
   for (size_t index = 0; index < agent_count; ++index) {
     snapshots[index] = {
@@ -604,7 +612,8 @@ void drawDashboard() {
 }
 
 void drawAgents() {
-  const bool connected = WiFi.status() == WL_CONNECTED;
+  const bool connected =
+      calm_operator::linkConfirmed(WiFi.status() == WL_CONNECTED, bridge_confirmed);
   operatorRail("OPERATOR / CODEX TASKS", connected);
   Agent* agent = currentAgent();
   if (!agent) {
@@ -672,11 +681,14 @@ void drawConfirmation(bool voice) {
   M5.Display.setTextColor(TFT_WHITE, TFT_BLACK);
   const String message = voice ? voice_transcript : (currentDecision() ? currentDecision()->label : "");
   if (voice) {
+    size_t start = 0;
     for (size_t line = 0; line < 4; ++line) {
-      const size_t start = line * 39;
       if (start >= message.length()) break;
-      M5.Display.drawString(message.substring(start, min(start + 39, message.length())), 233,
+      const size_t end = calm_operator::nextUtf8LineEnd(
+          message.c_str(), message.length(), start, 39);
+      M5.Display.drawString(message.substring(start, end), 233,
                             126 + line * 23, &fonts::FreeSans9pt7b);
+      start = end;
     }
   } else {
     M5.Display.drawString(clipped(message, 32), 233, 148, &fonts::FreeSansBold12pt7b);

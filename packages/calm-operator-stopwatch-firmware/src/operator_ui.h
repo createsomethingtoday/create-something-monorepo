@@ -12,6 +12,10 @@ inline constexpr const char* connectionLabel(bool connected) {
   return connected ? "LINK LIVE" : "LINK WAIT";
 }
 
+inline constexpr bool linkConfirmed(bool wifi_connected, bool bridge_confirmed) {
+  return wifi_connected && bridge_confirmed;
+}
+
 inline constexpr const char* attentionLabel(std::size_t count) {
   return count == 0 ? "CLEAR TO MONITOR"
          : count == 1 ? "01 AWAITING INPUT"
@@ -69,6 +73,21 @@ inline const char* readOnlyReasonLabel(ControlReason reason) {
       return "VIEW ONLY / NO SAFE ACTION";
   }
   return "VIEW ONLY / NO SAFE ACTION";
+}
+
+inline std::size_t nextUtf8LineEnd(
+    const char* text,
+    std::size_t byte_length,
+    std::size_t start,
+    std::size_t maximum_bytes) {
+  if (start >= byte_length) return byte_length;
+  std::size_t end =
+      start + maximum_bytes < byte_length ? start + maximum_bytes : byte_length;
+  while (end > start && end < byte_length &&
+         (static_cast<unsigned char>(text[end]) & 0xC0) == 0x80) {
+    --end;
+  }
+  return end > start ? end : byte_length;
 }
 
 struct OperatorTaskSnapshot {

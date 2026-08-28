@@ -11,7 +11,8 @@ import {
 } from '../src/codex-app-server.js';
 import {
   buildCodexRelayActiveProgress,
-  buildCodexRelayTerminalProgress
+  buildCodexRelayTerminalProgress,
+  publishCodexTerminalProgressBestEffort
 } from '../src/codex-relay-progress.js';
 import { boundedTranscript, voiceTranscriberCommand } from '../src/voice-relay.js';
 import { codexAppServerEnvironment, startCodexAppServer } from './codex-app-server-client.mjs';
@@ -159,7 +160,14 @@ async function execute(decision) {
         }
       });
       clearInterval(heartbeat);
-      await publishCodexTerminalProgress(decision, result);
+      const terminalProgressPublished = await publishCodexTerminalProgressBestEffort(() =>
+        publishCodexTerminalProgress(decision, result)
+      );
+      if (!terminalProgressPublished) {
+        process.stderr.write(
+          `${decision.id} terminal progress publication deferred; decision receipt remains authoritative\n`
+        );
+      }
       return result.summary;
     } finally {
       clearInterval(heartbeat);

@@ -163,5 +163,28 @@ test('bounds a transcript to the complete Stopwatch review surface', () => {
   );
   assert.equal(result.ok, true);
   if (!result.ok) return;
-  assert.equal(result.command.transcript.length, 156);
+  assert.equal(new TextEncoder().encode(result.command.transcript).length, 144);
+});
+
+test('keeps the bounded Stopwatch transcript valid UTF-8', () => {
+  const command = {
+    ...(
+      normalizeVoiceCommand(validInput(), 1000, 'voice-utf8') as {
+        ok: true;
+        command: StoredVoiceCommand;
+      }
+    ).command,
+    state: 'leased' as const,
+    lease_owner: 'relay-a',
+    lease_expires_at: 5000
+  };
+  const result = recordVoiceTranscript(
+    command,
+    { relay_id: 'relay-a', transcript: '確認して'.repeat(80) },
+    2000
+  );
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  assert.ok(new TextEncoder().encode(result.command.transcript).length <= 144);
+  assert.equal(result.command.transcript.includes('\uFFFD'), false);
 });

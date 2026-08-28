@@ -78,3 +78,14 @@ export function buildCodexRelayTerminalProgress(input: {
     }
   };
 }
+
+export async function publishCodexTerminalProgressBestEffort(
+  publish: () => Promise<unknown>
+): Promise<boolean> {
+  try {
+    await publish();
+    return true;
+  } catch {
+    return false;
+  }
+}

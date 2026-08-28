@@ -62,14 +62,28 @@ export type VoiceCommandError = { ok: false; status: number; error: string };
 
 const MAX_AUDIO_BYTES = 320_000;
 const MAX_DURATION_MS = 10_000;
-// The round Stopwatch review surface renders four complete 39-character lines.
-const MAX_TRANSCRIPT_LENGTH = 156;
+// Four 39-byte display lines can lose up to three bytes at each UTF-8 boundary.
+const MAX_TRANSCRIPT_BYTES = 144;
 const DEFAULT_TTL_MS = 15 * 60 * 1000;
 const DEFAULT_LEASE_MS = 2 * 60 * 1000;
 const MAX_LEASE_MS = 5 * 60 * 1000;
 
 function boundedText(value: unknown, maximum: number): string {
   return typeof value === 'string' ? value.trim().slice(0, maximum) : '';
+}
+
+function boundedUtf8Text(value: unknown, maximumBytes: number): string {
+  if (typeof value !== 'string') return '';
+  const encoder = new TextEncoder();
+  let bytes = 0;
+  let output = '';
+  for (const character of value.trim()) {
+    const characterBytes = encoder.encode(character).length;
+    if (bytes + characterBytes > maximumBytes) break;
+    output += character;
+    bytes += characterBytes;
+  }
+  return output;
 }
 
 function base64ByteLength(value: string): number {
@@ -198,7 +212,7 @@ export function recordVoiceTranscript(
   }
 
   const error = boundedText(input.error, 500);
-  const transcript = boundedText(input.transcript, MAX_TRANSCRIPT_LENGTH);
+  const transcript = boundedUtf8Text(input.transcript, MAX_TRANSCRIPT_BYTES);
   if (error) {
     return {
       ok: true,

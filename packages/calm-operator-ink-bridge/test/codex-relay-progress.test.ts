@@ -4,7 +4,8 @@ import { test } from 'node:test';
 import { buildAgentConsole, normalizeAgentProgress } from '../src/agent-console.js';
 import {
   buildCodexRelayActiveProgress,
-  buildCodexRelayTerminalProgress
+  buildCodexRelayTerminalProgress,
+  publishCodexTerminalProgressBestEffort
 } from '../src/codex-relay-progress.js';
 import type { StoredAgentDecision } from '../src/agent-console.js';
 
@@ -81,4 +82,14 @@ test('renews quiet Codex progress until its terminal receipt is posted', () => {
     { status: terminal.status, phase: terminal.phase, expires_at: terminal.expires_at },
     { status: 'completed', phase: 'Codex completed', expires_at: 70_000 }
   );
+});
+
+test('keeps a completed Codex result successful when terminal progress publication fails', async () => {
+  assert.equal(
+    await publishCodexTerminalProgressBestEffort(async () => {
+      throw new Error('temporary bridge outage');
+    }),
+    false
+  );
+  assert.equal(await publishCodexTerminalProgressBestEffort(async () => undefined), true);
 });

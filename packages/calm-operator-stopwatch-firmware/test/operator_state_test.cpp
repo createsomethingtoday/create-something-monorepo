@@ -14,6 +14,9 @@ using namespace calm_operator;
 int main() {
   assert(std::string(connectionLabel(true)) == "LINK LIVE");
   assert(std::string(connectionLabel(false)) == "LINK WAIT");
+  assert(linkConfirmed(true, true));
+  assert(!linkConfirmed(true, false));
+  assert(!linkConfirmed(false, true));
   assert(std::string(attentionLabel(0)) == "CLEAR TO MONITOR");
   assert(std::string(attentionLabel(2)) == "02 AWAITING INPUT");
   assert(std::string(decisionModeLabel(false)) == "REVIEW REQUIRED");
@@ -24,6 +27,9 @@ int main() {
          "VIEW ONLY / PAGINATED HISTORY");
   assert(std::string(readOnlyReasonLabel(ControlReason::RecentDesktopActivity)) ==
          "VIEW ONLY / RECENT DESKTOP ACTIVITY");
+  const char utf8_review[] = "abcd\xE7\xA2\xBA\xE8\xAA\x8D";
+  assert(nextUtf8LineEnd(utf8_review, sizeof(utf8_review) - 1, 0, 5) == 4);
+  assert(nextUtf8LineEnd(utf8_review, sizeof(utf8_review) - 1, 4, 5) == 7);
   const OperatorTaskSnapshot task_snapshots[] = {
       {true, false, false, false},
       {false, true, false, true},
