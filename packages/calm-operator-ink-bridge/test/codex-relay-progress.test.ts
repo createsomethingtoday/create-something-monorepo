@@ -5,6 +5,7 @@ import { buildAgentConsole, normalizeAgentProgress } from '../src/agent-console.
 import {
   buildCodexRelayActiveProgress,
   buildCodexRelayTerminalProgress,
+  completedCodexDecisionSummary,
   createSerialProgressPublisher,
   publishCodexTerminalProgressBestEffort
 } from '../src/codex-relay-progress.js';
@@ -96,6 +97,24 @@ test('renews quiet Codex progress until its terminal receipt is posted', () => {
     ttlMs: 30_000
   });
   assert.equal(taskVersionTerminal.progress_version, 1_787_278_000);
+});
+
+test('returns a delivered receipt only for a completed Codex turn', () => {
+  const completed = {
+    threadId: '01a-child',
+    turnId: 'turn-1',
+    status: 'completed' as const,
+    summary: 'Done.'
+  };
+  assert.equal(completedCodexDecisionSummary(completed), 'Done.');
+  assert.throws(
+    () => completedCodexDecisionSummary({ ...completed, status: 'failed' }),
+    /Codex turn failed/
+  );
+  assert.throws(
+    () => completedCodexDecisionSummary({ ...completed, status: 'interrupted' }),
+    /Codex turn interrupted/
+  );
 });
 
 test('drains serialized heartbeat writes before terminal publication', async () => {

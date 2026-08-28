@@ -79,6 +79,15 @@ export function buildCodexRelayTerminalProgress(input: {
   };
 }
 
+export function completedCodexDecisionSummary(result: CodexDispatchResult): string {
+  if (result.status !== 'completed') {
+    throw new Error(
+      `Codex turn ${result.status}: ${boundedText(result.summary, 180) || 'No result summary.'}`
+    );
+  }
+  return result.summary;
+}
+
 export async function publishCodexTerminalProgressBestEffort(
   publish: () => Promise<unknown>
 ): Promise<boolean> {

@@ -12,6 +12,7 @@ import {
 import {
   buildCodexRelayActiveProgress,
   buildCodexRelayTerminalProgress,
+  completedCodexDecisionSummary,
   createSerialProgressPublisher,
   publishCodexTerminalProgressBestEffort
 } from '../src/codex-relay-progress.js';
@@ -173,7 +174,7 @@ async function execute(decision) {
           `${decision.id} terminal progress publication deferred; decision receipt remains authoritative\n`
         );
       }
-      return result.summary;
+      return completedCodexDecisionSummary(result);
     } finally {
       clearInterval(heartbeat);
       await progressPublisher.drain();
