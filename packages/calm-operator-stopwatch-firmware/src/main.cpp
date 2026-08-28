@@ -31,7 +31,7 @@ using calm_operator::Event;
 using calm_operator::Screen;
 using calm_operator::State;
 
-constexpr char FIRMWARE_VERSION[] = "0.3.7-stopwatch";
+constexpr char FIRMWARE_VERSION[] = "0.3.8-stopwatch";
 constexpr uint32_t CONSOLE_POLL_MS = 15000;
 constexpr uint32_t HEARTBEAT_MS = 5 * 60 * 1000;
 constexpr uint32_t RECEIPT_POLL_MS = 1500;

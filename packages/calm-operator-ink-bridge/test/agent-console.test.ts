@@ -120,6 +120,35 @@ test('normalizes progress and exposes only remote-safe decisions to the device',
   );
 });
 
+test('keeps the new Codex task first among non-attention tasks', () => {
+  const attentionTask = storedProgress({
+    agent_id: 'codex:attention',
+    provider: 'codex',
+    needs_input: true,
+    updated_at: NOW - 2_000
+  });
+  const currentTask = storedProgress({
+    agent_id: 'codex:current',
+    provider: 'codex',
+    needs_input: false,
+    updated_at: NOW
+  });
+  const newTask = storedProgress({
+    agent_id: 'codex:new',
+    provider: 'codex',
+    label: 'New Codex task',
+    needs_input: false,
+    updated_at: NOW - 1_000
+  });
+
+  const console = buildAgentConsole([currentTask, newTask, attentionTask], NOW);
+
+  assert.deepEqual(
+    console.agents.map((agent) => agent.agent_id),
+    ['codex:attention', 'codex:new', 'codex:current']
+  );
+});
+
 test('projects one device-safe decision receipt without relying on recent history', () => {
   const receipt = agentDecisionReceipt(storedDecision({ state: 'completed' }));
   assert.equal(receipt.id, 'decision-1');
