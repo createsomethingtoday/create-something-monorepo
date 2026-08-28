@@ -3021,6 +3021,49 @@ importers:
         specifier: ^4.103.0
         version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
+  packages/mapping-canvas:
+    dependencies:
+      '@create-something/canon':
+        specifier: workspace:*
+        version: link:../canon
+    devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^4.20260621.1
+        version: 4.20260621.1
+      '@playwright/test':
+        specifier: ^1.58.2
+        version: 1.58.2
+      '@sveltejs/adapter-cloudflare':
+        specifier: ^7.2.4
+        version: 7.2.4(@sveltejs/kit@2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.56.9(@typescript-eslint/types@8.58.2))(vite@7.3.6(@types/node@24.10.9)(jiti@2.7.0)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.56.9(@typescript-eslint/types@8.58.2))(typescript@5.9.3)(vite@7.3.6(@types/node@24.10.9)(jiti@2.7.0)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(wrangler@4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6))
+      '@sveltejs/kit':
+        specifier: ^2.70.2
+        version: 2.70.2(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.56.9(@typescript-eslint/types@8.58.2))(vite@7.3.6(@types/node@24.10.9)(jiti@2.7.0)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)))(svelte@5.56.9(@typescript-eslint/types@8.58.2))(typescript@5.9.3)(vite@7.3.6(@types/node@24.10.9)(jiti@2.7.0)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+      '@sveltejs/vite-plugin-svelte':
+        specifier: ^6.2.1
+        version: 6.2.4(svelte@5.56.9(@typescript-eslint/types@8.58.2))(vite@7.3.6(@types/node@24.10.9)(jiti@2.7.0)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+      '@types/node':
+        specifier: 24.10.9
+        version: 24.10.9
+      svelte:
+        specifier: ^5.56.9
+        version: 5.56.9(@typescript-eslint/types@8.58.2)
+      svelte-check:
+        specifier: ^4.3.3
+        version: 4.3.5(picomatch@4.0.5)(svelte@5.56.9(@typescript-eslint/types@8.58.2))(typescript@5.9.3)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vite:
+        specifier: ^7.3.6
+        version: 7.3.6(@types/node@24.10.9)(jiti@2.7.0)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0)
+      vitest:
+        specifier: ^4.0.16
+        version: 4.1.8(@opentelemetry/api@1.9.0)(@types/node@24.10.9)(jsdom@27.4.0(@noble/hashes@1.8.0)(bufferutil@4.1.0)(utf-8-validate@6.0.6))(vite@7.3.6(@types/node@24.10.9)(jiti@2.7.0)(terser@5.46.0)(tsx@4.21.0)(yaml@2.9.0))
+      wrangler:
+        specifier: ^4.103.0
+        version: 4.110.0(@cloudflare/workers-types@4.20260621.1)(@types/node@24.10.9)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+
   packages/maverick:
     dependencies:
       '@create-something/canon':
@@ -11062,7 +11105,7 @@ packages:
     engines: {node: ^10 || ^12 || >=14}
     hasBin: true
     peerDependencies:
-      postcss: '>=8.5.18'
+      postcss: '>=8.5.23'
 
   available-typed-arrays@1.0.7:
     resolution: {integrity: sha512-wvUjBtSGN7+7SjNpq/9M2Tg350UZD3q62IFZLbRAR1bSMlCo1ZaeW+BJ+D090e4hIIZLBcTDWe4Mh4jvUDajzQ==}
@@ -16569,7 +16612,7 @@ packages:
     peerDependencies:
       '@microsoft/api-extractor': ^7.36.0
       '@swc/core': ^1
-      postcss: '>=8.5.23'
+      postcss: '>=8.5.18'
       typescript: '>=4.5.0'
     peerDependenciesMeta:
       '@microsoft/api-extractor':
