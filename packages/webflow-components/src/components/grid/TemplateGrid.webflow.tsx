@@ -12,7 +12,7 @@ export default declareComponent(TemplateGrid, {
       name: 'API Base URL',
       defaultValue: '',
       tooltip:
-        'Base URL for the template search API (no trailing slash). Leave blank to use the production default: https://webflow-template-marketplace.webflow.io/templates (Cloud App proxy — CSP-safe). Override to https://webflow-template-search.createsomething.workers.dev for local dev.',
+        'Base URL for the template search API (no trailing slash). Leave blank to use the production default: https://webflow-template-marketplace.webflow.io/templates (Cloud App proxy — CSP-safe). Override to https://webflow-template-search.webflow-inc.workers.dev for local dev.',
     }),
     categorySlug: props.Text({
       name: 'Category Slug (preview)',

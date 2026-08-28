@@ -13,7 +13,7 @@ ENVIRONMENT = "production"
 # Server-side calls are not subject to the webflow.com CSP, so the direct
 # worker origin is fine here. The *client* chat component must still reach
 # this agent through a *.webflow.com proxy path.
-SEARCH_API_BASE = "https://webflow-template-search.createsomething.workers.dev"
+SEARCH_API_BASE = "https://webflow-template-search.webflow-inc.workers.dev"
 ALLOWED_ORIGINS = "https://webflow.com,https://www.webflow.com,https://templates.webflow.com,https://template-marketplace.webflow.io,*.webflow.com,https://webflowtest.com,*.webflowtest.com"
 ANTHROPIC_MODEL = "claude-opus-4-8"
 # Comma-separated exact hostnames. webflowtest.com = acceptance, for the MiW

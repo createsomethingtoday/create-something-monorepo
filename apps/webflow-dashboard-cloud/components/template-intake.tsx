@@ -33,7 +33,7 @@ const IMAGE_CONSTRAINTS = {
 } as const;
 const TEMPLATE_SEARCH_API_BASE = (
   process.env.NEXT_PUBLIC_TEMPLATE_SEARCH_API_BASE ||
-  'https://webflow-template-search.createsomething.workers.dev'
+  'https://webflow-template-search.webflow-inc.workers.dev'
 ).replace(/\/$/, '');
 const ASSET_DASHBOARD_URL = 'https://webflow.com/templates/dashboard/assets';
 const FEATURED_TEMPLATES_URL = 'https://webflow.com/templates/featured';

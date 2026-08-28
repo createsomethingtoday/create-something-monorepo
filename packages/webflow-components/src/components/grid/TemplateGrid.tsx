@@ -216,7 +216,7 @@ export interface TemplateGridProps {
    * Base URL for the template search API, no trailing slash.
    * Production default: https://templates.webflow.com/templates-api
    * (Cloud App proxy — CSP-safe from webflow.com pages).
-   * Override to https://webflow-template-search.createsomething.workers.dev for local dev.
+   * Override to https://webflow-template-search.webflow-inc.workers.dev for local dev.
    */
   apiBase?: string;
   /**
@@ -298,7 +298,7 @@ export interface TemplateGridProps {
 // webflow.com page CSP (connect-src https://*.webflow.com).
 const DEFAULT_API_BASE = 'https://templates.webflow.com/templates-api';
 // The direct Worker origin is blocked by webflow.com's CSP — rewrite to proxy.
-const WORKER_ORIGIN = 'https://webflow-template-search.createsomething.workers.dev';
+const WORKER_ORIGIN = 'https://webflow-template-search.webflow-inc.workers.dev';
 // Legacy preview URL — rewrite to the production base.
 const CLOUD_APP_PREVIEW_ORIGIN = 'https://webflow-template-marketplace.webflow.io';
 const DEFAULT_PAGE_SIZE = 24;

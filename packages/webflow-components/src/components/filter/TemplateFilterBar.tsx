@@ -142,7 +142,7 @@ export interface TemplateFilterBarProps {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const DEFAULT_API_BASE = 'https://templates.webflow.com/templates-api';
-const WORKER_ORIGIN = 'https://webflow-template-search.createsomething.workers.dev';
+const WORKER_ORIGIN = 'https://webflow-template-search.webflow-inc.workers.dev';
 const CLOUD_APP_PREVIEW_ORIGIN = 'https://webflow-template-marketplace.webflow.io';
 const FACETS_CACHE_TTL_MS = 5 * 60 * 1000;
 
