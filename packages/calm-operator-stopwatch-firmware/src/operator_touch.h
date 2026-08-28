@@ -13,9 +13,9 @@ inline constexpr bool isDeliberateTouchRelease(bool released, bool flicked, bool
 enum class ActionTouchTarget { None, Review, Next };
 
 inline constexpr ActionTouchTarget actionTouchTarget(int x, int y, std::size_t decision_count) {
-  return y < 294 || y > 342
+  return y < 115 || y > 342
              ? ActionTouchTarget::None
-         : decision_count > 1 && x >= 334
+         : decision_count > 1 && y >= 294 && x >= 334
              ? ActionTouchTarget::Next
              : ActionTouchTarget::Review;
 }

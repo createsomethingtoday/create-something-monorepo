@@ -89,7 +89,9 @@ int main() {
   assert(actionTouchTarget(200, 318, 2) == ActionTouchTarget::Review);
   assert(actionTouchTarget(370, 318, 2) == ActionTouchTarget::Next);
   assert(actionTouchTarget(370, 318, 1) == ActionTouchTarget::Review);
-  assert(actionTouchTarget(200, 270, 2) == ActionTouchTarget::None);
+  assert(actionTouchTarget(200, 270, 2) == ActionTouchTarget::Review);
+  assert(actionTouchTarget(233, 192, 1) == ActionTouchTarget::Review);
+  assert(actionTouchTarget(233, 110, 1) == ActionTouchTarget::None);
 
   assert(kVoiceSampleRateHz == 16000);
   assert(kVoiceMaxDurationSeconds == 10);

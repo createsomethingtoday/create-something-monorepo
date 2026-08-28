@@ -280,6 +280,9 @@ export function buildAgentConsole(
     .filter((agent) => agent.expires_at > now)
     .sort((left, right) => {
       if (left.needs_input !== right.needs_input) return left.needs_input ? -1 : 1;
+      const leftStartsTask = left.agent_id === 'codex:new';
+      const rightStartsTask = right.agent_id === 'codex:new';
+      if (leftStartsTask !== rightStartsTask) return leftStartsTask ? -1 : 1;
       return right.updated_at - left.updated_at;
     })
     .slice(0, 8)
