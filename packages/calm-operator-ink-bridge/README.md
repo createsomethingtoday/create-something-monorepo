@@ -243,7 +243,7 @@ button input from actual provider delivery.
 ### Voice steering
 
 Voice is an input adapter to the same decision queue, not a second authority
-path. Stopwatch uploads at most 192 kB of mono `pcm_s16le` audio at 16 kHz. A
+path. Stopwatch uploads at most 320 kB (ten seconds) of mono `pcm_s16le` audio at 16 kHz. A
 relay must lease the item, attach a transcript, and release the raw audio before
 the device can review it. Confirmation then calls the normal decision validator.
 

@@ -60,9 +60,10 @@ export interface VoiceTranscriptInput {
 
 export type VoiceCommandError = { ok: false; status: number; error: string };
 
-const MAX_AUDIO_BYTES = 192_000;
-const MAX_DURATION_MS = 6_000;
-const MAX_TRANSCRIPT_LENGTH = 500;
+const MAX_AUDIO_BYTES = 320_000;
+const MAX_DURATION_MS = 10_000;
+// The round Stopwatch review surface renders four complete 39-character lines.
+const MAX_TRANSCRIPT_LENGTH = 156;
 const DEFAULT_TTL_MS = 15 * 60 * 1000;
 const DEFAULT_LEASE_MS = 2 * 60 * 1000;
 const MAX_LEASE_MS = 5 * 60 * 1000;
@@ -113,10 +114,10 @@ export function normalizeVoiceCommand(
   const audioBase64 = typeof input.audio_base64 === 'string' ? input.audio_base64 : '';
   const audioBytes = base64ByteLength(audioBase64);
   if (!Number.isFinite(durationMs) || durationMs < 250 || durationMs > MAX_DURATION_MS) {
-    return { ok: false, status: 400, error: 'Voice duration must be between 250 and 6000 ms.' };
+    return { ok: false, status: 400, error: 'Voice duration must be between 250 and 10000 ms.' };
   }
   if (audioBytes <= 0 || audioBytes > MAX_AUDIO_BYTES) {
-    return { ok: false, status: 413, error: 'Voice audio exceeds the 192000-byte limit.' };
+    return { ok: false, status: 413, error: 'Voice audio exceeds the 320000-byte limit.' };
   }
 
   return {

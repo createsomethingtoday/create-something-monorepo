@@ -108,7 +108,7 @@ test('projects recent Codex threads and a new-task action into the existing Stop
     summary: 'Speak a prompt to start in create-something-monorepo.',
     detail: '/workspace/create-something-monorepo',
     progress_version: 1,
-    needs_input: true,
+    needs_input: false,
     decisions: [
       {
         id: 'start',
@@ -121,7 +121,12 @@ test('projects recent Codex threads and a new-task action into the existing Stop
       }
     ],
     expires_at: 1_787_278_130_000,
-    payload: { authority: 'local-codex-app-server', history_mode: 'legacy' }
+    payload: {
+      authority: 'local-codex-app-server',
+      history_mode: 'legacy',
+      workspace_label: 'create-something-monorepo',
+      control_reason: 'new-task'
+    }
   });
 
   assert.equal(progress[1]?.agent_id, 'codex:01a-thread');
@@ -154,6 +159,8 @@ test('projects recent Codex threads and a new-task action into the existing Stop
   assert.equal(progress[2]?.phase, 'Read-only history');
   assert.equal(progress[2]?.needs_input, false);
   assert.deepEqual(progress[2]?.decisions, []);
+  assert.equal(progress[2]?.payload.workspace_label, 'create-something-monorepo');
+  assert.equal(progress[2]?.payload.control_reason, 'paginated-history-not-resumable');
 });
 
 test('withholds device authority while a desktop task is active or recently changed', () => {

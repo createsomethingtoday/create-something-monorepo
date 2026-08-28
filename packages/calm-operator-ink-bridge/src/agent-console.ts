@@ -76,7 +76,14 @@ export interface AgentConsole {
   count: number;
   needs_input_count: number;
   agents: Array<
-    Omit<StoredAgentProgress, 'payload' | 'decisions'> & { decisions: AgentDecisionOption[] }
+    Omit<StoredAgentProgress, 'payload' | 'decisions'> & {
+      decisions: AgentDecisionOption[];
+      operator_context: {
+        workspace_label: string;
+        control_reason: string;
+        authority: string;
+      };
+    }
   >;
   recent_decisions: AgentDecisionReceipt[];
 }
@@ -260,12 +267,17 @@ export function buildAgentConsole(
       return right.updated_at - left.updated_at;
     })
     .slice(0, 8)
-    .map(({ payload: _payload, decisions, ...agent }) => ({
+    .map(({ payload, decisions, ...agent }) => ({
       ...agent,
       decisions: decisions.filter(
         (decision) =>
           decision.remote_safe && (decision.expires_at === null || decision.expires_at > now)
-      )
+      ),
+      operator_context: {
+        workspace_label: boundedText(payload.workspace_label, 72),
+        control_reason: boundedText(payload.control_reason, 96),
+        authority: boundedText(payload.authority, 72)
+      }
     }));
 
   return {

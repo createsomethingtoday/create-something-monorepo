@@ -437,10 +437,15 @@ export function buildCodexTaskProgress(
       summary: `Speak a prompt to start in ${directoryLabel(options.cwd)}.`,
       detail: options.cwd,
       progress_version: 1,
-      needs_input: true,
+      needs_input: false,
       decisions: [NEW_TASK_DECISION],
       expires_at: expiresAt,
-      payload: { authority: 'local-codex-app-server', history_mode: 'legacy' }
+      payload: {
+        authority: 'local-codex-app-server',
+        history_mode: 'legacy',
+        workspace_label: directoryLabel(options.cwd),
+        control_reason: 'new-task'
+      }
     }
   ];
 
@@ -469,6 +474,7 @@ export function buildCodexTaskProgress(
         thread_id: thread.id,
         thread_uri: `codex://threads/${thread.id}`,
         cwd: thread.cwd,
+        workspace_label: directoryLabel(thread.cwd),
         control_reason:
           historyMode === 'paginated'
             ? 'paginated-history-not-resumable'

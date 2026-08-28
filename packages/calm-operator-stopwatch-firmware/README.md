@@ -8,13 +8,13 @@ The device shows milestone-level agent progress and only exposes actions the
 bridge has marked `remote_safe`. Every action still requires a second explicit
 confirmation. Decisions requiring text use a bounded push-to-talk flow:
 
-1. Record up to three seconds of mono 16-bit PCM at 16 kHz.
+1. Record up to ten seconds of mono 16-bit PCM at 16 kHz.
 2. Upload it to the private `/operator/voice-command` queue.
 3. A configured local relay transcribes it.
 4. Review the transcript on the Stopwatch.
 5. Confirm to enqueue the existing agent decision.
 
-Raw audio is capped at 192 kB by the bridge and removed after transcription.
+Raw audio is capped at 320 kB by the bridge and removed after transcription.
 The transcript cannot bypass stale-progress, advertised-decision,
 `remote_safe`, or explicit-confirmation checks. There is no BLE notification
 capture, on-device model, or paid transcription dependency in this build.
@@ -73,10 +73,11 @@ For the next firmware flash:
 ## Controls
 
 - Dashboard: tap or either button opens Agents.
-- Agents: Button A/B moves between agents. The relay adds `New Codex task` plus
-  recent laptop tasks; unsupported or active history remains visible without an
-  action. Tap the action card to choose the displayed action; tap outside the
-  card to cycle that agent's other actions.
+- Codex tasks: Button A/B moves between tasks. The relay adds `New Codex task`
+  plus recent laptop tasks; unsupported or active history remains visible with
+  its view-only reason. The action card names the exact action and target
+  workspace. Tap `NEXT` inside the card to change actions, then tap the named
+  action to review it.
 - Button-only action: Button A cancels; Button B confirms.
 - Spoken action: hold Button B to record and release to upload.
 - Transcript review: Button A cancels; Button B confirms.
