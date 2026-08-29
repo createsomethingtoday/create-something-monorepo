@@ -174,36 +174,6 @@ pub fn valid_document(document: &Value) -> bool {
     let Some(viewport) = document.get("viewport").and_then(Value::as_object) else {
         return false;
     };
-    let ids: Vec<&str> = objects
-        .iter()
-        .filter_map(|object| object.get("id").and_then(Value::as_str))
-        .collect();
-    let unique_ids = ids.len() == objects.len()
-        && ids
-            .iter()
-            .enumerate()
-            .all(|(index, id)| !ids[..index].contains(id));
-    let relationships_valid =
-        objects
-            .iter()
-            .all(|object| match object.get("kind").and_then(Value::as_str) {
-                Some("connector") => {
-                    let from = object.get("fromId").and_then(Value::as_str);
-                    let to = object.get("toId").and_then(Value::as_str);
-                    from.zip(to).is_some_and(|(from, to)| {
-                        from != to && ids.contains(&from) && ids.contains(&to)
-                    })
-                }
-                Some("group") => object
-                    .get("childIds")
-                    .and_then(Value::as_array)
-                    .is_some_and(|children| {
-                        children
-                            .iter()
-                            .all(|child| child.as_str().is_some_and(|id| ids.contains(&id)))
-                    }),
-                _ => true,
-            });
     document.get("version").and_then(Value::as_str) == Some(DOCUMENT_VERSION)
         && document
             .get("id")
@@ -228,10 +198,7 @@ pub fn valid_document(document: &Value) -> bool {
             .get("zoom")
             .and_then(Value::as_f64)
             .is_some_and(|zoom| zoom > 0.0)
-        && unique_ids
-        && objects.iter().all(valid_object)
-        && relationships_valid
-        && !has_connector_cycle(objects)
+        && valid_object_set(objects, &HashSet::new())
 }
 
 fn has_connector_cycle(objects: &[Value]) -> bool {
@@ -327,7 +294,7 @@ fn valid_object(object: &Value) -> bool {
     if object.get("sourceSnapshot").is_some_and(|value| {
         !value
             .as_array()
-            .is_some_and(|sources| valid_object_set(sources))
+            .is_some_and(|sources| valid_snapshot_shape(sources))
     }) {
         return false;
     }
@@ -404,7 +371,7 @@ fn valid_object(object: &Value) -> bool {
     }
 }
 
-fn valid_object_set(objects: &[Value]) -> bool {
+fn valid_snapshot_shape(objects: &[Value]) -> bool {
     let ids: Vec<&str> = objects
         .iter()
         .filter_map(|object| object.get("id").and_then(Value::as_str))
@@ -414,6 +381,18 @@ fn valid_object_set(objects: &[Value]) -> bool {
             .iter()
             .enumerate()
             .all(|(index, id)| !ids[..index].contains(id));
+    unique_ids && objects.iter().all(valid_object) && !has_connector_cycle(objects)
+}
+
+fn valid_object_set(objects: &[Value], external_ids: &HashSet<String>) -> bool {
+    if !valid_snapshot_shape(objects) {
+        return false;
+    }
+    let ids: HashSet<String> = objects
+        .iter()
+        .filter_map(|object| object.get("id").and_then(Value::as_str).map(str::to_owned))
+        .collect();
+    let available_ids: HashSet<String> = external_ids.union(&ids).cloned().collect();
     let relationships_valid =
         objects
             .iter()
@@ -422,23 +401,26 @@ fn valid_object_set(objects: &[Value]) -> bool {
                     let from = object.get("fromId").and_then(Value::as_str);
                     let to = object.get("toId").and_then(Value::as_str);
                     from.zip(to).is_some_and(|(from, to)| {
-                        from != to && ids.contains(&from) && ids.contains(&to)
+                        from != to && available_ids.contains(from) && available_ids.contains(to)
                     })
                 }
                 Some("group") => object
                     .get("childIds")
                     .and_then(Value::as_array)
                     .is_some_and(|children| {
-                        children
-                            .iter()
-                            .all(|child| child.as_str().is_some_and(|id| ids.contains(&id)))
+                        children.iter().all(|child| {
+                            child.as_str().is_some_and(|id| available_ids.contains(id))
+                        })
                     }),
                 _ => true,
             });
-    unique_ids
-        && objects.iter().all(valid_object)
-        && relationships_valid
-        && !has_connector_cycle(objects)
+    relationships_valid
+        && objects.iter().all(|object| {
+            object
+                .get("sourceSnapshot")
+                .and_then(Value::as_array)
+                .is_none_or(|snapshot| valid_object_set(snapshot, &available_ids))
+        })
 }
 
 fn validate_envelope(envelope: &OperationEnvelope) -> bool {
@@ -994,6 +976,45 @@ mod tests {
         assert!(!objects
             .iter()
             .any(|object| object.get("id").and_then(Value::as_str) == Some("note-fixture")));
+    }
+
+    #[test]
+    fn connector_only_conversion_can_reference_retained_outer_endpoints() {
+        let mut document = state().document;
+        document["objects"] = serde_json::json!([
+            { "id": "note-a", "kind": "note", "text": "A", "x": 0, "y": 0, "width": 200, "height": 100, "createdAt": NOW },
+            { "id": "note-b", "kind": "note", "text": "B", "x": 300, "y": 0, "width": 200, "height": 100, "createdAt": NOW },
+            { "id": "connector-ab", "kind": "connector", "fromId": "note-a", "toId": "note-b", "label": "", "createdAt": NOW }
+        ]);
+        assert!(valid_document(&document));
+
+        let converted = apply_canvas_operation(
+            &document,
+            &CanvasOperation::Convert {
+                selected_ids: vec!["connector-ab".into()],
+                target: ConversionTarget::Note,
+                result_id: "connector-note".into(),
+                created_at: NOW.into(),
+            },
+            NOW,
+        )
+        .expect("connector-only conversion should retain valid outer references");
+        assert!(valid_document(&converted));
+
+        let restored = apply_canvas_operation(
+            &converted,
+            &CanvasOperation::RestoreConversion {
+                id: "connector-note".into(),
+            },
+            NOW,
+        )
+        .expect("connector-only conversion should restore against retained endpoints");
+        assert!(valid_document(&restored));
+        assert!(restored["objects"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|object| { object.get("id").and_then(Value::as_str) == Some("connector-ab") }));
     }
 
     #[test]
