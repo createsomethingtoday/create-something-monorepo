@@ -45,6 +45,61 @@ fn optimistic_companion_document(session: &CompanionSession) -> Value {
         })
 }
 
+fn is_safe_idempotent(document: &Value, operation: &CanvasOperation) -> bool {
+    match operation {
+        CanvasOperation::RemoveObjects { ids } => document
+            .get("objects")
+            .and_then(Value::as_array)
+            .is_some_and(|objects| {
+                ids.iter().all(|id| {
+                    !objects
+                        .iter()
+                        .any(|object| object.get("id").and_then(Value::as_str) == Some(id.as_str()))
+                })
+            }),
+        CanvasOperation::SetTitle { title } => {
+            document.get("title").and_then(Value::as_str) == Some(title)
+        }
+        CanvasOperation::SetViewport { viewport } => serde_json::to_value(viewport)
+            .ok()
+            .is_some_and(|value| document.get("viewport") == Some(&value)),
+        CanvasOperation::PutObject { object } => {
+            object.get("id").and_then(Value::as_str).and_then(|id| {
+                document
+                    .get("objects")
+                    .and_then(Value::as_array)?
+                    .iter()
+                    .find(|candidate| candidate.get("id").and_then(Value::as_str) == Some(id))
+            }) == Some(object)
+        }
+        CanvasOperation::Convert {
+            selected_ids,
+            target,
+            result_id,
+            ..
+        } => document
+            .get("objects")
+            .and_then(Value::as_array)
+            .and_then(|objects| {
+                objects.iter().find(|object| {
+                    object.get("id").and_then(Value::as_str) == Some(result_id.as_str())
+                })
+            })
+            .is_some_and(|object| {
+                let expected_kind = match target {
+                    create_something_draw_pairing_protocol::ConversionTarget::Note => "note",
+                    create_something_draw_pairing_protocol::ConversionTarget::Connector => {
+                        "connector"
+                    }
+                    create_something_draw_pairing_protocol::ConversionTarget::Group => "group",
+                };
+                object.get("kind").and_then(Value::as_str) == Some(expected_kind)
+                    && object.get("sourceIds") == serde_json::to_value(selected_ids).ok().as_ref()
+            }),
+        CanvasOperation::RestoreConversion { .. } => false,
+    }
+}
+
 pub(crate) struct DrawRuntime {
     state_path: PathBuf,
     host: Mutex<PairingHostState>,
@@ -334,7 +389,7 @@ pub(crate) fn host_status(runtime: &DrawRuntime) -> Result<Value, String> {
         "sessionId": state.session_id,
         "revision": state.revision,
         "document": state.document,
-        "pairedClients": state.clients.iter().map(|(id, client)| json!({
+        "pairedClients": state.clients.iter().filter(|(id, _)| id.as_str() != "native-mac").map(|(id, client)| json!({
             "clientId": id,
             "expiresAt": client.expires_at,
             "revokedAt": client.revoked_at
@@ -415,8 +470,16 @@ pub(crate) fn apply_operation(
     runtime: &DrawRuntime,
     envelope: OperationEnvelope,
 ) -> Result<Value, String> {
-    let timestamp = rfc3339(now())?;
     let mut state = runtime.host.lock().map_err(|error| error.to_string())?;
+    apply_operation_locked(runtime, &mut state, envelope)
+}
+
+fn apply_operation_locked(
+    runtime: &DrawRuntime,
+    state: &mut PairingHostState,
+    envelope: OperationEnvelope,
+) -> Result<Value, String> {
+    let timestamp = rfc3339(now())?;
     let result = apply_envelope(state.clone(), envelope, &timestamp);
     match &result {
         OperationResult::Applied { state: next, .. } => {
@@ -554,7 +617,7 @@ fn draw_host_apply_local(
     runtime: tauri::State<'_, Arc<DrawRuntime>>,
     operation: CanvasOperation,
 ) -> Result<Value, String> {
-    let state = runtime.host.lock().map_err(|error| error.to_string())?;
+    let mut state = runtime.host.lock().map_err(|error| error.to_string())?;
     let envelope = OperationEnvelope {
         protocol_version: PROTOCOL_VERSION.into(),
         document_version: DOCUMENT_VERSION.into(),
@@ -566,8 +629,7 @@ fn draw_host_apply_local(
         capability: runtime.host_capability.clone(),
         operation,
     };
-    drop(state);
-    apply_operation(&runtime, envelope)
+    apply_operation_locked(&runtime, &mut state, envelope)
 }
 
 fn replace_host_document(
@@ -693,20 +755,34 @@ async fn flush_companion(runtime: &DrawRuntime) -> Result<Value, String> {
                 result["code"].as_str(),
                 Some("STALE_REVISION" | "FUTURE_REVISION")
             ) {
-                Some(transport::RemoteSnapshotRequest {
-                    endpoint: session.host.endpoint.clone(),
-                    certificate_der: session.host.certificate_der.clone(),
-                    certificate_fingerprint: session.host.certificate_fingerprint.clone(),
-                    client_id: session.client_id.clone(),
-                    capability: session.capability.clone(),
-                })
+                Some((
+                    transport::RemoteSnapshotRequest {
+                        endpoint: session.host.endpoint.clone(),
+                        certificate_der: session.host.certificate_der.clone(),
+                        certificate_fingerprint: session.host.certificate_fingerprint.clone(),
+                        client_id: session.client_id.clone(),
+                        capability: session.capability.clone(),
+                    },
+                    false,
+                ))
+            } else if result["code"].as_str() == Some("INVALID_OPERATION") {
+                Some((
+                    transport::RemoteSnapshotRequest {
+                        endpoint: session.host.endpoint.clone(),
+                        certificate_der: session.host.certificate_der.clone(),
+                        certificate_fingerprint: session.host.certificate_fingerprint.clone(),
+                        client_id: session.client_id.clone(),
+                        capability: session.capability.clone(),
+                    },
+                    true,
+                ))
             } else {
                 return Ok(
                     json!({ "status": "conflict", "queueDepth": session.queue.len(), "revision": session.revision, "document": session.document, "hostResult": result }),
                 );
             }
         };
-        let Some(snapshot_request) = rebase_request else {
+        let Some((snapshot_request, invalid_operation)) = rebase_request else {
             continue;
         };
         let snapshot = transport::remote_snapshot(snapshot_request).await?;
@@ -719,6 +795,25 @@ async fn flush_companion(runtime: &DrawRuntime) -> Result<Value, String> {
             .as_u64()
             .ok_or("Snapshot omitted revision")?;
         session.document = snapshot["document"].clone();
+        if invalid_operation {
+            let safely_reconciled = session
+                .queue
+                .front()
+                .is_some_and(|envelope| is_safe_idempotent(&session.document, &envelope.operation));
+            if safely_reconciled {
+                session.queue.pop_front();
+                persist_companion_state(&runtime.companion_state_path, session)?;
+                continue;
+            }
+            persist_companion_state(&runtime.companion_state_path, session)?;
+            return Ok(json!({
+                "status": "conflict",
+                "queueDepth": session.queue.len(),
+                "revision": session.revision,
+                "document": optimistic_companion_document(session),
+                "code": "INVALID_OPERATION"
+            }));
+        }
         let revision = session.revision;
         for (offset, envelope) in session.queue.iter_mut().enumerate() {
             envelope.base_revision = revision + offset as u64;
@@ -968,6 +1063,63 @@ mod tests {
         let second = random_capability();
         assert_eq!(first.len(), 48);
         assert_ne!(first, second);
+    }
+
+    #[test]
+    fn host_status_never_exposes_the_internal_mac_client() {
+        let directory = std::env::temp_dir().join(format!("draw-host-status-{}", Uuid::new_v4()));
+        let mut state = initial_state();
+        let client = PairedClient {
+            capability_digest: digest_capability("fixture"),
+            expires_at: "2099-01-01T00:00:00Z".into(),
+            revoked_at: None,
+        };
+        state.clients.insert("native-mac".into(), client.clone());
+        state.clients.insert("iphone-visible".into(), client);
+        let runtime = DrawRuntime {
+            state_path: directory.join(STATE_FILE),
+            host: Mutex::new(state),
+            pending: Mutex::new(HashMap::new()),
+            transport: Mutex::new(None),
+            host_capability: random_capability(),
+            companion_state_path: directory.join(COMPANION_STATE_FILE),
+            companion: Mutex::new(None),
+            companion_flush: tokio::sync::Mutex::new(()),
+        };
+        let status = host_status(&runtime).unwrap();
+        let clients = status["pairedClients"].as_array().unwrap();
+        assert_eq!(clients.len(), 1);
+        assert_eq!(clients[0]["clientId"], "iphone-visible");
+        let _ = fs::remove_dir_all(directory);
+    }
+
+    #[test]
+    fn only_semantically_completed_operations_are_safe_to_drop() {
+        let state = initial_state();
+        assert!(is_safe_idempotent(
+            &state.document,
+            &CanvasOperation::RemoveObjects {
+                ids: vec!["already-absent".into()]
+            }
+        ));
+        assert!(is_safe_idempotent(
+            &state.document,
+            &CanvasOperation::SetTitle {
+                title: "Untitled mapping session".into()
+            }
+        ));
+        assert!(!is_safe_idempotent(
+            &state.document,
+            &CanvasOperation::SetTitle {
+                title: "Still pending".into()
+            }
+        ));
+        assert!(!is_safe_idempotent(
+            &state.document,
+            &CanvasOperation::PutObject {
+                object: json!({ "id": "malformed" })
+            }
+        ));
     }
 
     #[test]

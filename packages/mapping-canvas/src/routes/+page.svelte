@@ -119,7 +119,11 @@
     if (nativeRole === 'companion' && (!nativeSession.sessionId || nativeSession.online === false || (nativeSession.queueDepth || 0) > 0)) return;
     try {
       const refreshed = nativeRole === 'host' ? await hostStatus() : await refreshCompanion();
-      if (refreshed.revision !== nativeSession.revision && refreshed.document) history = { past: history.past, present: refreshed.document, future: [] };
+      if (refreshed.revision !== nativeSession.revision && refreshed.document) {
+        history = nativeRole === 'host'
+          ? { past: [...history.past, history.present], present: refreshed.document, future: [] }
+          : { past: history.past, present: refreshed.document, future: [] };
+      }
       nativeSession = { ...nativeSession, ...refreshed };
     } catch { /* A transient local-network loss is represented by the queue path. */ }
   }
