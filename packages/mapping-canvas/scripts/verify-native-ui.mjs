@@ -1,10 +1,35 @@
 import { chromium } from '@playwright/test';
+import { spawn, spawnSync } from 'node:child_process';
 import { mkdir } from 'node:fs/promises';
+import { createServer } from 'node:net';
 import { fileURLToPath } from 'node:url';
 
-const baseUrl = process.env.CANVAS_URL ?? 'http://127.0.0.1:4173';
+let baseUrl = process.env.CANVAS_URL;
+const packageRoot = fileURLToPath(new URL('../', import.meta.url));
 const outputRoot = fileURLToPath(new URL('../output/native-ui/', import.meta.url));
 await mkdir(outputRoot, { recursive: true });
+let preview;
+if (!process.env.CANVAS_URL) {
+  const port = await new Promise((resolve, reject) => {
+    const listener = createServer();
+    listener.once('error', reject);
+    listener.listen(0, '127.0.0.1', () => {
+      const address = listener.address();
+      if (!address || typeof address === 'string') { listener.close(); reject(new Error('Could not reserve a native preview port')); return; }
+      listener.close((error) => error ? reject(error) : resolve(address.port));
+    });
+  });
+  baseUrl = `http://127.0.0.1:${port}`;
+  const build = spawnSync('pnpm', ['run', 'build:native'], { cwd: packageRoot, stdio: 'inherit' });
+  if (build.status !== 0) throw new Error(`Native static build failed with status ${build.status}`);
+  preview = spawn('pnpm', ['exec', 'vite', 'preview', '--host', '127.0.0.1', '--port', String(port), '--strictPort'], { cwd: packageRoot, stdio: 'inherit' });
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    try { if ((await fetch(baseUrl)).ok) break; } catch { /* Wait for the local preview listener. */ }
+    if (attempt === 99) throw new Error(`Native preview did not start at ${baseUrl}`);
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+}
+if (!baseUrl) throw new Error('Native verifier URL is unavailable');
 const browser = await chromium.launch({ headless: true });
 
 const blankDocument = {
@@ -23,6 +48,7 @@ async function nativePage(role, viewport, restoredQueue = false) {
     let revision = 0;
     let online = true;
     let document = structuredClone(blankDocument);
+    let titleSubmission = 0;
     window.__nativeCalls = [];
     window.__TAURI_INTERNALS__ = {
       invoke: async (command, args = {}) => {
@@ -43,6 +69,10 @@ async function nativePage(role, viewport, restoredQueue = false) {
         if (command === 'draw_host_apply_local' || command === 'draw_companion_submit') {
           revision += 1;
           const operation = args.operation;
+          if (operation.type === 'set_title') {
+            titleSubmission += 1;
+            await new Promise((resolve) => setTimeout(resolve, titleSubmission === 1 ? 50 : 200));
+          }
           if (operation.type === 'put_object') document = { ...document, objects: [...document.objects.filter((item) => item.id !== operation.object.id), operation.object] };
           if (operation.type === 'set_title') document = { ...document, title: operation.title };
           if (operation.type === 'set_viewport') document = { ...document, viewport: operation.viewport };
@@ -101,6 +131,14 @@ try {
   for (const action of ['Import', 'Reset']) {
     if (await page.getByRole('button', { name: action, exact: true }).count()) throw new Error(`${action} must not be exposed on the companion`);
   }
+
+  const title = page.getByLabel('Canvas title');
+  await title.fill('A');
+  await title.fill('AB');
+  await page.waitForTimeout(100);
+  if (await title.inputValue() !== 'AB') throw new Error('Earlier native response overwrote newer optimistic title input');
+  await page.waitForTimeout(200);
+  if (await title.inputValue() !== 'AB') throw new Error('Final native title reconciliation lost rapid input');
 
   const surface = page.locator('svg');
   const box = await surface.boundingBox();
@@ -168,4 +206,5 @@ try {
   console.log(JSON.stringify({ result: 'pass', hostCode: '271828', iPhoneOperations: operations, screenshots: [`${outputRoot}mac-pairing.png`, `${outputRoot}iphone-paired.png`] }, null, 2));
 } finally {
   await browser.close();
+  preview?.kill('SIGTERM');
 }

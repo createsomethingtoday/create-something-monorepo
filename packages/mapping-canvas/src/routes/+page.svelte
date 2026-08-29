@@ -66,6 +66,7 @@
   let saveTimer: ReturnType<typeof setTimeout> | undefined;
   let mirrorTimer: ReturnType<typeof setInterval> | undefined;
   let nativeTail: Promise<void> = Promise.resolve();
+  let nativeOptimisticVersion = 0;
   const document = $derived(history.present), viewport = $derived(document.viewport);
   const selectedObjects = $derived(document.objects.filter(({ id }) => selectedIds.includes(id)));
   const paletteVisible = $derived(['pen', 'rectangle', 'ellipse', 'arrow'].includes(tool) || selectedObjects.some(isColorableObject));
@@ -142,11 +143,12 @@
   function sendNative(operations: CanvasOperation[]) {
     if (nativeRole === 'web' || !operations.length) return;
     const role = nativeRole;
+    const queued = operations.map((operation) => ({ operation, optimisticVersion: ++nativeOptimisticVersion }));
     nativeTail = nativeTail.then(async () => {
-      for (const operation of operations) {
+      for (const { operation, optimisticVersion } of queued) {
         const result = await submitNativeOperation(role, operation);
         nativeSession = { ...nativeSession, ...result };
-        if (result.document && result.status !== 'queued' && result.status !== 'conflict') history = { past: history.past, present: result.document, future: [] };
+        if (result.document && result.status !== 'queued' && result.status !== 'conflict' && optimisticVersion === nativeOptimisticVersion) history = { past: history.past, present: result.document, future: [] };
         if (result.status === 'queued') status = `${result.queueDepth || 1} action queued · reconnect to Mac`;
         else if (result.status === 'queue_full') status = result.error || 'Offline queue is full · reconnect before editing';
         else if (result.status === 'conflict') status = 'Session changed on Mac · reconciliation required';

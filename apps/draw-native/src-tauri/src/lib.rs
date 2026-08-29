@@ -316,6 +316,7 @@ fn load_companion_state(path: &Path) -> Option<StoredCompanionSession> {
     fs::read(path)
         .ok()
         .and_then(|bytes| serde_json::from_slice(&bytes).ok())
+        .filter(|stored: &StoredCompanionSession| valid_document(&stored.document))
 }
 
 #[cfg(any(target_os = "macos", target_os = "ios"))]
@@ -560,12 +561,14 @@ fn apply_operation_locked(
 
 pub(crate) fn revoke_client(runtime: &DrawRuntime, client_id: String) -> Result<Value, String> {
     let mut state = runtime.host.lock().map_err(|error| error.to_string())?;
-    let client = state
+    let mut next = state.clone();
+    let client = next
         .clients
         .get_mut(&client_id)
         .ok_or_else(|| "Paired client not found".to_string())?;
     client.revoked_at = Some(rfc3339(now())?);
-    persist_state(&runtime.state_path, &state)?;
+    persist_state(&runtime.state_path, &next)?;
+    *state = next;
     Ok(json!({ "status": "revoked", "clientId": client_id }))
 }
 
@@ -1356,6 +1359,32 @@ mod tests {
     }
 
     #[test]
+    fn schema_invalid_companion_document_is_not_restored() {
+        let directory =
+            std::env::temp_dir().join(format!("draw-companion-invalid-{}", Uuid::new_v4()));
+        let path = directory.join(COMPANION_STATE_FILE);
+        let session = CompanionSession {
+            host: transport::DiscoveredHost {
+                endpoint: "https://draw-mac.local:4242".into(),
+                session_id: "session-test".into(),
+                protocol_version: PROTOCOL_VERSION.into(),
+                certificate_fingerprint: "a".repeat(64),
+                certificate_der: "fixture-certificate".into(),
+            },
+            client_id: "iphone-test".into(),
+            capability: "never-write-this-secret".into(),
+            expires_at: "2099-01-01T00:00:00Z".into(),
+            revision: 3,
+            document: json!({ "version": DOCUMENT_VERSION }),
+            queue: VecDeque::new(),
+            online: true,
+        };
+        persist_companion_state(&path, &session).unwrap();
+        assert!(load_companion_state(&path).is_none());
+        let _ = fs::remove_dir_all(directory);
+    }
+
+    #[test]
     fn mac_document_replacement_is_validated_persisted_and_revisioned() {
         let directory = std::env::temp_dir().join(format!("draw-replace-{}", Uuid::new_v4()));
         let state_path = directory.join(STATE_FILE);
@@ -1429,6 +1458,39 @@ mod tests {
         assert_eq!(host.revision, 0);
         assert_eq!(host.document, original_document);
         assert!(host.applied.is_empty());
+        let _ = fs::remove_dir_all(directory);
+    }
+
+    #[test]
+    fn failed_revocation_persistence_does_not_revoke_in_memory() {
+        let directory =
+            std::env::temp_dir().join(format!("draw-revoke-failure-{}", Uuid::new_v4()));
+        fs::create_dir_all(&directory).unwrap();
+        let invalid_parent = directory.join("not-a-directory");
+        fs::write(&invalid_parent, b"fixture").unwrap();
+        let mut state = initial_state();
+        state.clients.insert(
+            "iphone-test".into(),
+            PairedClient {
+                capability_digest: digest_capability("fixture"),
+                expires_at: "2099-01-01T00:00:00Z".into(),
+                revoked_at: None,
+            },
+        );
+        let runtime = DrawRuntime {
+            state_path: invalid_parent.join(STATE_FILE),
+            host: Mutex::new(state),
+            pending: Mutex::new(HashMap::new()),
+            transport: Mutex::new(None),
+            host_capability: random_capability(),
+            companion_state_path: directory.join(COMPANION_STATE_FILE),
+            companion: Mutex::new(None),
+            companion_flush: tokio::sync::Mutex::new(()),
+        };
+
+        assert!(revoke_client(&runtime, "iphone-test".into()).is_err());
+        let host = runtime.host.lock().unwrap();
+        assert!(host.clients["iphone-test"].revoked_at.is_none());
         let _ = fs::remove_dir_all(directory);
     }
 
