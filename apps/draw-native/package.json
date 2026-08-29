@@ -1,0 +1,22 @@
+{
+  "name": "@create-something/draw-native",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Rust/Tauri host and iPhone companion for CREATE SOMETHING Draw",
+  "scripts": {
+    "prepare:canvas": "pnpm --dir ../../packages/mapping-canvas build:native",
+    "dev": "tauri dev",
+    "check": "pnpm prepare:canvas && tauri build --debug --no-bundle",
+    "test:native": "cargo test --manifest-path src-tauri/Cargo.toml",
+    "build:app": "tauri build --bundles app",
+    "build:dmg": "tauri build --bundles dmg",
+    "verify:installed": "node scripts/installed-acceptance.mjs",
+    "ios:init": "tauri ios init",
+    "ios:dev": "tauri ios dev",
+    "ios:build": "tauri ios build"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "2.11.2"
+  }
+}

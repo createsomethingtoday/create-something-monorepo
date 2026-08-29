@@ -45,7 +45,7 @@ function hasConnectorCycle(objects: CanvasObject[]) {
 const isFiniteNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
 const isPoint = (value: unknown): value is Point => !!value && typeof value === 'object' && isFiniteNumber((value as Point).x) && isFiniteNumber((value as Point).y);
 const isViewport = (value: unknown): value is Viewport => isPoint(value) && isFiniteNumber((value as Viewport).zoom) && (value as Viewport).zoom > 0;
-function isCanvasObject(value: unknown): value is CanvasObject {
+export function isCanvasObject(value: unknown): value is CanvasObject {
   if (!value || typeof value !== 'object') return false;
   const object = value as Partial<CanvasObject>;
   if (typeof object.id !== 'string' || typeof object.createdAt !== 'string' || typeof object.kind !== 'string') return false;
@@ -101,19 +101,23 @@ export function objectBounds(objects: CanvasObject[], allObjects = objects) {
   return { x, y, width: Math.max(120, Math.max(...xs) - x), height: Math.max(80, Math.max(...ys) - y) };
 }
 
-export function convert(document: CanvasDocument, selectedIds: string[], target: 'note' | 'connector' | 'group'): CanvasDocument {
+export function convertWithIdentity(document: CanvasDocument, selectedIds: string[], target: 'note' | 'connector' | 'group', identity: { id: string; createdAt: string }): CanvasDocument {
   const sources = document.objects.filter(({ id }) => selectedIds.includes(id));
   if (!sources.length || (target === 'connector' && sources.length < 2)) return document;
   const bounds = objectBounds(sources, document.objects);
   // Svelte state exposes proxy-backed objects; JSON cloning produces a portable
   // document snapshot where structuredClone would throw DataCloneError.
   const sourceSnapshot = JSON.parse(JSON.stringify(sources)) as CanvasObject[];
-  const base = { id: uid(target), createdAt: now(), sourceIds: [...selectedIds], sourceSnapshot };
+  const base = { id: identity.id, createdAt: identity.createdAt, sourceIds: [...selectedIds], sourceSnapshot };
   let result: CanvasObject;
   if (target === 'note') result = { ...base, kind: 'note', x: bounds.x, y: bounds.y, width: Math.max(240, bounds.width), height: Math.max(120, bounds.height), text: 'Captured thought' };
   else if (target === 'group') result = { ...base, kind: 'group', x: bounds.x - 24, y: bounds.y - 40, width: bounds.width + 48, height: bounds.height + 64, label: 'Working group', childIds: [...selectedIds] };
   else result = { ...base, kind: 'connector', fromId: selectedIds[0], toId: selectedIds[1], label: '' };
   return withObjects(document, [...document.objects, result]);
+}
+
+export function convert(document: CanvasDocument, selectedIds: string[], target: 'note' | 'connector' | 'group'): CanvasDocument {
+  return convertWithIdentity(document, selectedIds, target, { id: uid(target), createdAt: now() });
 }
 
 export function restoreConversion(document: CanvasDocument, id: string): CanvasDocument {

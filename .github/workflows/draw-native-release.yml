@@ -1,0 +1,66 @@
+name: Draw native release candidate
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: Immutable release version already present in tauri.conf.json
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  verify-and-package:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Verify immutable version input
+        shell: bash
+        run: |
+          configured="$(node -p "require('./apps/draw-native/src-tauri/tauri.conf.json').version")"
+          test "$configured" = "${{ inputs.release_version }}"
+      - run: pnpm install --frozen-lockfile
+      - run: cargo test --manifest-path apps/draw-native/src-tauri/Cargo.toml --lib
+      - run: pnpm --dir packages/mapping-canvas check
+      - run: pnpm --dir packages/mapping-canvas test -- --run
+      - run: pnpm --dir apps/draw-native build:dmg
+      - name: Build unsigned iPhone simulator archive
+        run: CI=true pnpm --dir apps/draw-native exec tauri ios build --target aarch64-sim --archive-only --no-sign
+      - name: Verify unsigned installed candidate
+        run: DRAW_INSTALLED_SKIP_BUILD=1 pnpm --dir apps/draw-native verify:installed
+      - name: Record artifact hashes
+        shell: bash
+        run: |
+          shasum -a 256 apps/draw-native/src-tauri/target/release/bundle/dmg/*.dmg > apps/draw-native/output/SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: draw-native-${{ inputs.release_version }}-unsigned-candidate
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            apps/draw-native/src-tauri/target/release/bundle/dmg/*.dmg
+            apps/draw-native/output/SHA256SUMS
+            apps/draw-native/output/installed-acceptance/*.json
+            apps/draw-native/src-tauri/gen/apple/build/create_something_draw_native_iOS.xcarchive/**
+
+  signing-owner-gate:
+    needs: verify-and-package
+    runs-on: macos-15
+    environment: draw-apple-production
+    if: ${{ vars.DRAW_SIGNING_ENABLED == 'true' }}
+    steps:
+      - name: Owner-authorized signing boundary
+        run: |
+          echo "The protected draw-apple-production environment owns certificate import, signing, notarization, stapling, Gatekeeper verification, and signed artifact publication."
+          echo "It must consume the exact verified candidate and emit signed-byte hashes plus Apple receipts."

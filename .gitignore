@@ -77,6 +77,11 @@ apps/guard-performance-lab/node_modules/
 !apps/atlas-studio-desktop/
 !apps/atlas-studio-desktop/**
 apps/atlas-studio-desktop/node_modules/
+!apps/draw-native/
+!apps/draw-native/**
+apps/draw-native/node_modules/
+apps/draw-native/src-tauri/gen/
+apps/draw-native/src-tauri/target/
 !apps/client-workspace-desktop/
 !apps/client-workspace-desktop/**
 apps/client-workspace-desktop/node_modules/

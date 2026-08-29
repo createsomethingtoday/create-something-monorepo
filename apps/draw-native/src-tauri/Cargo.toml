@@ -1,0 +1,33 @@
+[package]
+name = "create_something_draw_native"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "create_something_draw_native_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+axum = "0.8"
+axum-server = { version = "0.7", features = ["tls-rustls"] }
+base64 = "0.23"
+create-something-draw-pairing-protocol = { path = "../../../packages/draw-pairing-protocol" }
+local-ip-address = "0.6"
+mdns-sd = "0.17"
+rand = "0.9"
+rcgen = "0.14"
+reqwest = { version = "0.13", default-features = false, features = ["json", "rustls"] }
+rustls-pemfile = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+tauri = { version = "2", features = [] }
+time = { version = "0.3", features = ["formatting"] }
+tokio = { version = "1", features = ["rt-multi-thread"] }
+uuid = { version = "1", features = ["v4"] }
+
+[target.'cfg(any(target_os = "macos", target_os = "ios"))'.dependencies]
+security-framework = "3.7"
