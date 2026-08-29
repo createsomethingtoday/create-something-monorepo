@@ -61,12 +61,23 @@ try {
   const svg = page.locator('svg');
   const box = await svg.boundingBox();
   if (!box) throw new Error('Canvas surface unavailable');
+  const swatches = page.locator('.palette button');
+  if (await swatches.count() !== 5) throw new Error('Minimal five-color palette is unavailable');
+  if (await page.getByTestId('color-chalk').getAttribute('aria-pressed') !== 'true') throw new Error('Chalk is not the clean-state default');
+  if (!(await page.getByTestId('color-signal').getAttribute('style'))?.includes('var(--color-performance-signal,#0057b8)')) throw new Error('Signal swatch is not bound to its Performance token');
+  if ((await swatches.first().boundingBox())?.height < 40) throw new Error('Desktop swatches are below the minimum target size');
+  await page.getByRole('button', { name: /Note tool/ }).click();
+  if (await page.locator('.palette').count()) throw new Error('Palette remained visible for an ineligible tool without eligible selection');
+  await page.getByRole('button', { name: /Pen tool/ }).click();
+  await page.getByTestId('color-signal').focus();
+  await page.getByTestId('color-signal').press('Enter');
 
   await page.mouse.move(box.x + 210, box.y + 180);
   await page.mouse.down();
   await page.mouse.move(box.x + 280, box.y + 220, { steps: 6 });
   await page.mouse.move(box.x + 350, box.y + 170, { steps: 6 });
   await page.mouse.up();
+  if (await page.locator('path[aria-label="Ink stroke"]').getAttribute('stroke') !== '#0057b8') throw new Error('Pen did not use the Signal color');
   await page.getByTestId('convert-menu').click();
   await page.getByTestId('convert-note').click();
   if (await page.locator('.provenance').count() !== 1) throw new Error('Note conversion did not preserve provenance');
@@ -101,6 +112,38 @@ try {
 
   await page.getByRole('button', { name: 'Undo' }).click();
   await page.getByRole('button', { name: 'Redo' }).click();
+  await page.getByRole('button', { name: /Ellipse tool/ }).click();
+  await page.mouse.move(box.x + 900, box.y + 180);
+  await page.mouse.down();
+  await page.mouse.move(box.x + 1050, box.y + 270, { steps: 4 });
+  await page.mouse.up();
+  await page.getByRole('button', { name: /Arrow tool/ }).click();
+  await page.mouse.move(box.x + 600, box.y + 600);
+  await page.mouse.down();
+  await page.mouse.move(box.x + 800, box.y + 680, { steps: 4 });
+  await page.mouse.up();
+  if (await page.locator('ellipse[aria-label="Ellipse"]').getAttribute('stroke') !== '#0057b8' || await page.locator('line[aria-label="Arrow"]').getAttribute('stroke') !== '#0057b8' || await page.locator('rect[aria-label="Rectangle"]').getAttribute('stroke') !== '#0057b8') throw new Error('Signal did not carry across authored shape tools');
+  await page.locator('path[aria-label="Ink stroke"]').focus();
+  await page.locator('path[aria-label="Ink stroke"]').press('Enter');
+  await page.locator('rect[aria-label="Rectangle"]').focus();
+  await page.locator('rect[aria-label="Rectangle"]').press('Shift+Enter');
+  await page.locator('ellipse[aria-label="Ellipse"]').focus();
+  await page.locator('ellipse[aria-label="Ellipse"]').press('Shift+Enter');
+  await page.locator('line[aria-label="Arrow"]').focus();
+  await page.locator('line[aria-label="Arrow"]').press('Shift+Enter');
+  await page.getByTestId('color-growth').click();
+  const eligibleColors = async () => Promise.all([
+    page.locator('path[aria-label="Ink stroke"]').getAttribute('stroke'),
+    page.locator('rect[aria-label="Rectangle"]').getAttribute('stroke'),
+    page.locator('ellipse[aria-label="Ellipse"]').getAttribute('stroke'),
+    page.locator('line[aria-label="Arrow"]').getAttribute('stroke')
+  ]);
+  if (!(await eligibleColors()).every((color) => color === '#007a4d')) throw new Error('Growth did not recolor the eligible selection');
+  if (await page.locator('line[aria-label="Connector"]').getAttribute('stroke') !== '#fcaa2d' || !(await page.locator('g[aria-label^="Group:"] rect').getAttribute('stroke'))?.includes('252,170,45')) throw new Error('Structural Amber was changed by drawing recolor');
+  await page.getByRole('button', { name: 'Undo' }).click();
+  if (!(await eligibleColors()).every((color) => color === '#0057b8')) throw new Error('Undo did not restore the prior drawing color');
+  await page.getByRole('button', { name: 'Redo' }).click();
+  if (!(await eligibleColors()).every((color) => color === '#007a4d')) throw new Error('Redo did not reapply the drawing color');
   await page.getByRole('button', { name: /Pan tool/ }).click();
   await page.mouse.move(box.x + 600, box.y + 300);
   await page.mouse.down();
@@ -117,11 +160,14 @@ try {
   await page.locator('textarea[aria-label="Edit note"]').last().fill('First export line\nSecond export line');
   await page.evaluate(() => {
     window.__mappingCanvasPngText = [];
+    window.__mappingCanvasPngStrokes = [];
     const original = CanvasRenderingContext2D.prototype.fillText;
     CanvasRenderingContext2D.prototype.fillText = function (text, ...args) {
       window.__mappingCanvasPngText.push(String(text));
       return original.call(this, text, ...args);
     };
+    const strokeStyle = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'strokeStyle');
+    if (strokeStyle?.get && strokeStyle.set) Object.defineProperty(CanvasRenderingContext2D.prototype, 'strokeStyle', { configurable: true, get: strokeStyle.get, set(value) { window.__mappingCanvasPngStrokes.push(String(value)); strokeStyle.set.call(this, value); } });
   });
 
   const exports = {};
@@ -139,11 +185,16 @@ try {
   if (!svgExport.includes('First export line') || !svgExport.includes('Second export line') || !svgExport.includes('dy="1.35em"')) throw new Error('SVG export collapsed explicit note line breaks');
   if (!(await page.evaluate(() => window.__mappingCanvasPngText.some((text) => text.startsWith('CONVERTED · '))))) throw new Error('PNG export omitted conversion provenance');
   if (!(await page.evaluate(() => window.__mappingCanvasPngText.includes('First export line') && window.__mappingCanvasPngText.includes('Second export line')))) throw new Error('PNG export collapsed explicit note line breaks');
+  const jsonExport = JSON.parse(await readFile(`${outputRoot}canvas.json`, 'utf8'));
+  const exportedDrawingColors = jsonExport.objects.filter((object) => ['stroke', 'rectangle', 'ellipse', 'arrow'].includes(object.kind)).map((object) => object.color);
+  if (!exportedDrawingColors.length || !exportedDrawingColors.every((color) => color === '#007a4d') || !svgExport.includes('stroke="#007a4d"')) throw new Error('JSON or SVG export lost the resolved Growth color');
+  if (!(await page.evaluate(() => window.__mappingCanvasPngStrokes.includes('#007a4d') && window.__mappingCanvasPngStrokes.includes('#fcaa2d')))) throw new Error('PNG export lost drawing or structural colors');
 
   const countBeforeReload = await page.locator('[role="button"][aria-label]').count();
   await page.reload({ waitUntil: 'networkidle' });
   await page.getByRole('button', { name: /Pen tool/ }).waitFor();
   await page.waitForFunction(() => !document.querySelector('.statusbar')?.textContent?.includes('Loading local canvas'));
+  if (await page.getByTestId('color-growth').getAttribute('aria-pressed') !== 'true' || !(await eligibleColors()).every((color) => color === '#007a4d')) throw new Error('Reload lost the palette preference or authored colors');
   const countAfterReload = await page.locator('[role="button"][aria-label]').count();
   if (countAfterReload < countBeforeReload - 1) throw new Error('Reload lost canvas objects');
 
@@ -174,10 +225,15 @@ try {
   const mobileSvg = mobile.page.locator('svg');
   const mobileBox = await mobileSvg.boundingBox();
   if (!mobileBox) throw new Error('Mobile canvas unavailable');
+  const mobileSwatches = mobile.page.locator('.palette button');
+  if (await mobileSwatches.count() !== 5 || (await mobileSwatches.first().boundingBox())?.height < 44) throw new Error('Mobile palette is incomplete or below the touch target');
+  if (await mobileSwatches.locator('small').allTextContents().then((labels) => labels.join(',')) !== 'Chalk,Amber,Signal,Growth,Risk') throw new Error('Mobile palette lacks color-independent labels');
+  await mobile.page.getByTestId('color-risk').click();
   await mobile.page.mouse.move(mobileBox.x + 80, mobileBox.y + 100);
   await mobile.page.mouse.down();
   await mobile.page.mouse.move(mobileBox.x + 240, mobileBox.y + 180, { steps: 8 });
   await mobile.page.mouse.up();
+  if (await mobile.page.locator('path[aria-label="Ink stroke"]').getAttribute('stroke') !== '#c62026') throw new Error('Mobile pen did not use the Risk color');
   await mobile.page.getByTestId('convert-menu').click();
   await mobile.page.getByTestId('convert-note').click();
   const mobileCritical = await mobile.page.evaluate(() => ({
@@ -185,9 +241,10 @@ try {
     viewport: innerWidth,
     toolbar: !!document.querySelector('.toolbar'),
     conversion: !!document.querySelector('.provenance'),
-    fileActions: [...document.querySelectorAll('.file-actions button')].every((button) => getComputedStyle(button).display !== 'none')
+    fileActions: [...document.querySelectorAll('.file-actions button')].every((button) => getComputedStyle(button).display !== 'none'),
+    palette: document.querySelectorAll('.palette button').length === 5
   }));
-  if (mobileCritical.width !== mobileCritical.viewport || !mobileCritical.toolbar || !mobileCritical.conversion || !mobileCritical.fileActions) throw new Error(`Mobile layout failed: ${JSON.stringify(mobileCritical)}`);
+  if (mobileCritical.width !== mobileCritical.viewport || !mobileCritical.toolbar || !mobileCritical.conversion || !mobileCritical.fileActions || !mobileCritical.palette) throw new Error(`Mobile layout failed: ${JSON.stringify(mobileCritical)}`);
   await mobile.page.screenshot({ path: `${outputRoot}mobile.png`, fullPage: true });
   requireCleanRun(mobile, 'Mobile');
   await mobile.context.close();
