@@ -18,6 +18,7 @@ export type NativeSessionStatus = {
   sessionId?: string;
   revision?: number;
   document?: CanvasDocument;
+  previousDocument?: CanvasDocument;
   pairedClients?: { clientId: string; expiresAt: string; revokedAt?: string }[];
   transport?: { endpoint: string; certificateFingerprint: string };
   certificateFingerprint?: string;

@@ -140,15 +140,22 @@
     finally { pairingBusy = false; }
   }
 
-  function sendNative(operations: CanvasOperation[]) {
+  function sendNative(operations: CanvasOperation[], recordsHistory = false) {
     if (nativeRole === 'web' || !operations.length) return;
     const role = nativeRole;
     const queued = operations.map((operation) => ({ operation, optimisticVersion: ++nativeOptimisticVersion }));
     nativeTail = nativeTail.then(async () => {
+      let authoritativePrevious: CanvasDocument | undefined;
       for (const { operation, optimisticVersion } of queued) {
         const result = await submitNativeOperation(role, operation);
+        authoritativePrevious ||= result.previousDocument;
         nativeSession = { ...nativeSession, ...result };
-        if (result.document && result.status !== 'queued' && result.status !== 'conflict' && optimisticVersion === nativeOptimisticVersion) history = { past: history.past, present: result.document, future: [] };
+        if (result.document && result.status !== 'queued' && result.status !== 'conflict' && optimisticVersion === nativeOptimisticVersion) {
+          const past = recordsHistory && authoritativePrevious
+            ? [...history.past.slice(0, -1), authoritativePrevious]
+            : history.past;
+          history = { past, present: result.document, future: [] };
+        }
         if (result.status === 'queued') status = `${result.queueDepth || 1} action queued · reconnect to Mac`;
         else if (result.status === 'queue_full') status = result.error || 'Offline queue is full · reconnect before editing';
         else if (result.status === 'conflict') status = 'Session changed on Mac · reconciliation required';
@@ -160,7 +167,7 @@
   function point(event: PointerEvent): Point { const rect = surface.getBoundingClientRect(); return { x: (event.clientX - rect.left - viewport.x) / viewport.zoom, y: (event.clientY - rect.top - viewport.y) / viewport.zoom }; }
   function companionCanEdit() { if (nativeRole !== 'companion' || nativeSession.sessionId) return true; status = 'Pair this iPhone with a Mac before editing'; return false; }
   function queueSave(next: CanvasDocument) { if (!browser || nativeRole !== 'web') return; clearTimeout(saveTimer); status = 'Saving locally…'; saveTimer = setTimeout(() => void saveDocument(next).then(() => status = 'Saved on this device').catch(() => status = 'Local save failed · export a copy'), 120); }
-  function apply(next: CanvasDocument, operation?: CanvasOperation | CanvasOperation[]) { if (!companionCanEdit()) return; history = commit(history, next); queueSave(next); sendNative(operation ? (Array.isArray(operation) ? operation : [operation]) : []); }
+  function apply(next: CanvasDocument, operation?: CanvasOperation | CanvasOperation[]) { if (!companionCanEdit()) return; history = commit(history, next); queueSave(next); sendNative(operation ? (Array.isArray(operation) ? operation : [operation]) : [], true); }
   function updateViewport(next: CanvasDocument['viewport'], authoritative = true) { if (!companionCanEdit()) return; const updated = { ...document, viewport: next, updatedAt: new Date().toISOString() }; history = { ...history, present: updated }; queueSave(updated); if (authoritative) sendNative([{ type: 'set_viewport', viewport: next }]); }
   function chooseColor(color: DrawingColor, label: string) { drawingColor = color; try { localStorage.setItem(DRAWING_COLOR_PREFERENCE, color); } catch { /* Keep drawing when preference storage is unavailable. */ } const next = recolorObjects(document, selectedIds, color); if (next !== document) { const changed = next.objects.filter((object) => selectedIds.includes(object.id)); apply(next, changed.map((object) => ({ type: 'put_object', object }))); status = `Selected marks changed to ${label}`; } else status = `${label} selected for new marks`; }
   function toggleSidebar() { sidebarCollapsed = !sidebarCollapsed; try { localStorage.setItem(TOOL_SIDEBAR_PREFERENCE, String(sidebarCollapsed)); } catch { /* Keep the rail usable when preference storage is unavailable. */ } }
@@ -197,7 +204,7 @@
       const moved = document.objects.find(({ id }) => id === movingObjectId);
       if (dragMoved && moved && dragOrigin) {
         history = { past: [...history.past, dragOrigin], present: document, future: [] };
-        sendNative([{ type: 'put_object', object: moved }]); queueSave(document);
+        sendNative([{ type: 'put_object', object: moved }], true); queueSave(document);
       }
       movingObjectId = null; dragLast = null; dragOrigin = null; dragMoved = false; drawing = false; start = null;
       try { surface.releasePointerCapture(event.pointerId); } catch { /* Capture may not have been acquired. */ }
@@ -240,9 +247,9 @@
   function selectKeyboard(event: KeyboardEvent, id: string) { if (isTextEditingEvent(event) || (event.key !== 'Enter' && event.key !== ' ')) return; event.preventDefault(); selectedIds = event.shiftKey ? [...new Set([...selectedIds, id])] : [id]; }
   function runConversion(target: 'note' | 'connector' | 'group') { const next = convert(document, selectedIds, target); if (next === document) { status = target === 'connector' ? 'Select two objects to make a connector' : 'Select source material first'; return; } const created = next.objects.at(-1)!; apply(next, { type: 'convert', selectedIds: [...selectedIds], target, resultId: created.id, createdAt: created.createdAt }); selectedIds = [created.id]; conversionOpen = false; status = `Converted to ${target}. Source preserved.`; }
   function restoreSelected() { const selected = selectedObjects[0]; if (!selected?.sourceSnapshot) return; const next = restoreConversion(document, selected.id); apply(next, { type: 'restore_conversion', id: selected.id }); selectedIds = selected.sourceIds || []; status = 'Conversion removed. Source restored.'; }
-  async function commitHostReplacement(next: CanvasDocument, reason: 'undo' | 'redo' | 'import' | 'reset') { if (nativeRole !== 'host') return; const expectedRevision = nativeSession.revision || 0; const replacement = nativeTail.then(async () => { const result = await replaceHostDocument(next, reason, expectedRevision); nativeSession = { ...nativeSession, ...result }; status = `Mac committed ${reason} at revision ${nativeSession.revision}`; }); nativeTail = replacement.catch(() => undefined); try { await replacement; } catch (error) { const refreshed = await hostStatus(); nativeSession = { ...nativeSession, ...refreshed }; if (refreshed.document) history = { past: history.past, present: refreshed.document, future: [] }; throw error; } }
-  async function doUndo() { if (nativeRole === 'companion') return; const next = undo(history); try { await commitHostReplacement(next.present, 'undo'); history = next; selectedIds = []; queueSave(next.present); } catch (error) { status = error instanceof Error ? error.message : 'Undo conflicted with an iPhone change'; } }
-  async function doRedo() { if (nativeRole === 'companion') return; const next = redo(history); try { await commitHostReplacement(next.present, 'redo'); history = next; selectedIds = []; queueSave(next.present); } catch (error) { status = error instanceof Error ? error.message : 'Redo conflicted with an iPhone change'; } }
+  async function commitHostReplacement<T>(resolve: () => T, documentOf: (value: T) => CanvasDocument, install: (value: T) => void, reason: 'undo' | 'redo' | 'import' | 'reset') { if (nativeRole !== 'host') { const value = resolve(); install(value); return value; } let committed!: T; const replacement = nativeTail.then(async () => { committed = resolve(); const expectedRevision = nativeSession.revision || 0; const result = await replaceHostDocument(documentOf(committed), reason, expectedRevision); nativeSession = { ...nativeSession, ...result }; install(committed); status = `Mac committed ${reason} at revision ${nativeSession.revision}`; }); nativeTail = replacement.catch(() => undefined); try { await replacement; return committed; } catch (error) { const refreshed = await hostStatus(); nativeSession = { ...nativeSession, ...refreshed }; if (refreshed.document) history = { past: history.past, present: refreshed.document, future: [] }; throw error; } }
+  async function doUndo() { if (nativeRole === 'companion') return; try { const next = await commitHostReplacement(() => undo(history), (value) => value.present, (value) => history = value, 'undo'); selectedIds = []; queueSave(next.present); } catch (error) { status = error instanceof Error ? error.message : 'Undo conflicted with an iPhone change'; } }
+  async function doRedo() { if (nativeRole === 'companion') return; try { const next = await commitHostReplacement(() => redo(history), (value) => value.present, (value) => history = value, 'redo'); selectedIds = []; queueSave(next.present); } catch (error) { status = error instanceof Error ? error.message : 'Redo conflicted with an iPhone change'; } }
   function keydown(event: KeyboardEvent) { if (isTextEditingEvent(event)) return; if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'z') { event.preventDefault(); void (event.shiftKey ? doRedo() : doUndo()); return; } if ((event.key === 'Delete' || event.key === 'Backspace') && selectedIds.length) { const ids = [...selectedIds]; apply(removeObjects(document, ids), { type: 'remove_objects', ids }); selectedIds = []; return; } const match = tools.find(({ key }) => key.toLowerCase() === event.key.toLowerCase()); if (match) tool = match.id; }
   function wheel(event: WheelEvent) { event.preventDefault(); updateViewport({ ...viewport, zoom: Math.max(.25, Math.min(3, viewport.zoom * (event.deltaY > 0 ? .9 : 1.1))) }); }
   const path = (points: Point[]) => points.map((value, index) => `${index ? 'L' : 'M'} ${value.x} ${value.y}`).join(' ');
@@ -285,8 +292,8 @@
     }
     context.restore(); const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png')); if (!blob) throw new Error('PNG export failed'); download(blob, 'image/png', 'png'); status = 'PNG exported';
   }
-  async function importJson(event: Event) { const file = (event.currentTarget as HTMLInputElement).files?.[0]; if (!file || nativeRole === 'companion') return; try { const next = parse(await file.text()); if (nativeRole === 'host') await commitHostReplacement(next, 'import'); history = commit(history, next); selectedIds = []; queueSave(next); status = 'Canvas imported'; } catch (error) { status = error instanceof Error ? error.message : 'Import failed'; } finally { if (fileInput) fileInput.value = ''; } }
-  async function resetCanvas() { if (nativeRole === 'companion') { status = 'Reset is owned by the Mac'; return; } if (!confirm(nativeRole === 'host' ? 'Reset the Mac-authoritative canvas? Export first if you need a copy.' : 'Reset this local canvas? Export first if you need a copy.')) return; clearTimeout(saveTimer); saveTimer = undefined; status = 'Resetting canvas…'; if (nativeRole === 'web') await clearDocument(); const next = createDocument(); try { await commitHostReplacement(next, 'reset'); history = { past: [], present: next, future: [] }; selectedIds = []; status = nativeRole === 'host' ? 'New Mac session document' : 'New local session'; } catch (error) { status = error instanceof Error ? error.message : 'Reset conflicted with an iPhone change'; } }
+  async function importJson(event: Event) { const file = (event.currentTarget as HTMLInputElement).files?.[0]; if (!file || nativeRole === 'companion') return; try { const next = parse(await file.text()); const committed = await commitHostReplacement(() => next, (value) => value, (value) => history = commit(history, value), 'import'); selectedIds = []; queueSave(committed); status = 'Canvas imported'; } catch (error) { status = error instanceof Error ? error.message : 'Import failed'; } finally { if (fileInput) fileInput.value = ''; } }
+  async function resetCanvas() { if (nativeRole === 'companion') { status = 'Reset is owned by the Mac'; return; } if (!confirm(nativeRole === 'host' ? 'Reset the Mac-authoritative canvas? Export first if you need a copy.' : 'Reset this local canvas? Export first if you need a copy.')) return; clearTimeout(saveTimer); saveTimer = undefined; status = 'Resetting canvas…'; if (nativeRole === 'web') await clearDocument(); try { await commitHostReplacement(() => createDocument(), (value) => value, (value) => history = { past: [], present: value, future: [] }, 'reset'); selectedIds = []; status = nativeRole === 'host' ? 'New Mac session document' : 'New local session'; } catch (error) { status = error instanceof Error ? error.message : 'Reset conflicted with an iPhone change'; } }
   function updateTitle(input: HTMLInputElement) { if (!companionCanEdit()) return; const title = input.value || 'Untitled mapping session'; if (!isValidCanvasTitle(title)) { input.value = document.title; status = 'Title must be 240 UTF-8 bytes or fewer'; return; } const next = { ...document, title, updatedAt: new Date().toISOString() }; history = { ...history, present: next }; queueSave(next); sendNative([{ type: 'set_title', title }]); }
 </script>
 

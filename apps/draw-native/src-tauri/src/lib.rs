@@ -143,6 +143,7 @@ pub(crate) struct DrawRuntime {
     companion_flush: tokio::sync::Mutex<()>,
 }
 
+#[derive(Clone)]
 struct CompanionSession {
     host: transport::DiscoveredHost,
     client_id: String,
@@ -671,6 +672,10 @@ fn draw_runtime_role() -> &'static str {
 
 #[tauri::command]
 fn draw_companion_status(runtime: tauri::State<'_, Arc<DrawRuntime>>) -> Result<Value, String> {
+    companion_status(&runtime)
+}
+
+fn companion_status(runtime: &DrawRuntime) -> Result<Value, String> {
     let companion = runtime
         .companion
         .lock()
@@ -683,7 +688,7 @@ fn draw_companion_status(runtime: tauri::State<'_, Arc<DrawRuntime>>) -> Result<
             "expiresAt": session.expires_at,
             "capabilityReady": !session.capability.is_empty(),
             "revision": session.revision,
-            "document": session.document,
+            "document": optimistic_companion_document(session),
             "queueDepth": session.queue.len(),
             "online": session.online,
             "endpoint": session.host.endpoint,
@@ -723,7 +728,12 @@ fn draw_host_apply_local(
     runtime: tauri::State<'_, Arc<DrawRuntime>>,
     operation: CanvasOperation,
 ) -> Result<Value, String> {
+    host_apply_local(&runtime, operation)
+}
+
+fn host_apply_local(runtime: &DrawRuntime, operation: CanvasOperation) -> Result<Value, String> {
     let mut state = runtime.host.lock().map_err(|error| error.to_string())?;
+    let previous_document = state.document.clone();
     let envelope = OperationEnvelope {
         protocol_version: PROTOCOL_VERSION.into(),
         document_version: DOCUMENT_VERSION.into(),
@@ -735,7 +745,9 @@ fn draw_host_apply_local(
         capability: runtime.host_capability.clone(),
         operation,
     };
-    apply_operation_locked(&runtime, &mut state, envelope)
+    let mut result = apply_operation_locked(&runtime, &mut state, envelope)?;
+    result["previousDocument"] = previous_document;
+    Ok(result)
 }
 
 fn replace_host_document(
@@ -965,10 +977,10 @@ fn queue_companion_operation(
         .lock()
         .map_err(|error| error.to_string())?;
     let session = companion.as_mut().ok_or("iPhone is not paired")?;
-    if !session.online {
+    let mut next = session.clone();
+    if !next.online {
         let superseded =
-            session
-                .queue
+            next.queue
                 .iter()
                 .rposition(|envelope| match (&envelope.operation, &operation) {
                     (CanvasOperation::SetTitle { .. }, CanvasOperation::SetTitle { .. }) => true,
@@ -982,49 +994,51 @@ fn queue_companion_operation(
                     _ => false,
                 });
         let superseded = superseded.filter(|index| {
-            let Some(id) = operation_put_id(&session.queue[*index].operation) else {
+            let Some(id) = operation_put_id(&next.queue[*index].operation) else {
                 return true;
             };
-            !session
+            !next
                 .queue
                 .iter()
                 .skip(*index + 1)
                 .any(|queued| operation_references_id(&queued.operation, id))
         });
         if let Some(index) = superseded {
-            let envelope = session
+            let envelope = next
                 .queue
                 .get_mut(index)
                 .ok_or("Superseded queue entry disappeared")?;
             envelope.operation = operation;
             envelope.operation_id = format!("iphone-coalesced-{}", Uuid::new_v4());
             envelope.sent_at = rfc3339(now())?;
-            for (offset, queued) in session.queue.iter_mut().enumerate() {
-                queued.base_revision = session.revision + offset as u64;
+            for (offset, queued) in next.queue.iter_mut().enumerate() {
+                queued.base_revision = next.revision + offset as u64;
             }
-            persist_companion_state(&runtime.companion_state_path, session)?;
+            persist_companion_state(&runtime.companion_state_path, &next)?;
+            *session = next;
             return Ok(());
         }
     }
-    if session.queue.len() >= MAX_COMPANION_QUEUE {
+    if next.queue.len() >= MAX_COMPANION_QUEUE {
         return Err("Offline queue is full; reconnect before adding more changes".into());
     }
-    let base_revision = session.revision + session.queue.len() as u64;
-    session.queue.push_back(OperationEnvelope {
+    let base_revision = next.revision + next.queue.len() as u64;
+    next.queue.push_back(OperationEnvelope {
         protocol_version: PROTOCOL_VERSION.into(),
         document_version: DOCUMENT_VERSION.into(),
-        session_id: session.host.session_id.clone(),
-        client_id: session.client_id.clone(),
+        session_id: next.host.session_id.clone(),
+        client_id: next.client_id.clone(),
         operation_id: format!("iphone-{}", Uuid::new_v4()),
         base_revision,
         sent_at: rfc3339(now())?,
-        capability: session.capability.clone(),
+        capability: next.capability.clone(),
         operation,
     });
-    for (offset, envelope) in session.queue.iter_mut().enumerate() {
-        envelope.base_revision = session.revision + offset as u64;
+    for (offset, envelope) in next.queue.iter_mut().enumerate() {
+        envelope.base_revision = next.revision + offset as u64;
     }
-    persist_companion_state(&runtime.companion_state_path, session)?;
+    persist_companion_state(&runtime.companion_state_path, &next)?;
+    *session = next;
     Ok(())
 }
 
@@ -1447,6 +1461,143 @@ mod tests {
             restored.queue[0].operation_id,
             "operation-persisted-offline"
         );
+        let _ = fs::remove_dir_all(directory);
+    }
+
+    #[test]
+    fn companion_status_replays_the_durable_offline_queue() {
+        let directory = std::env::temp_dir().join(format!("draw-status-{}", Uuid::new_v4()));
+        let mut queue = VecDeque::new();
+        queue.push_back(OperationEnvelope {
+            protocol_version: PROTOCOL_VERSION.into(),
+            document_version: DOCUMENT_VERSION.into(),
+            session_id: "session-test".into(),
+            client_id: "iphone-test".into(),
+            operation_id: "operation-persisted-offline".into(),
+            base_revision: 0,
+            sent_at: "2026-08-29T16:00:00Z".into(),
+            capability: "fixture".into(),
+            operation: CanvasOperation::SetTitle {
+                title: "Visible after relaunch".into(),
+            },
+        });
+        let session = CompanionSession {
+            host: transport::DiscoveredHost {
+                endpoint: "https://draw-mac.local:4242".into(),
+                session_id: "session-test".into(),
+                protocol_version: PROTOCOL_VERSION.into(),
+                certificate_fingerprint: "a".repeat(64),
+                certificate_der: "fixture-certificate".into(),
+            },
+            client_id: "iphone-test".into(),
+            capability: "fixture".into(),
+            expires_at: "2099-01-01T00:00:00Z".into(),
+            revision: 0,
+            document: initial_state().document,
+            queue,
+            online: false,
+        };
+        let runtime = DrawRuntime {
+            state_path: directory.join(STATE_FILE),
+            host: Mutex::new(initial_state()),
+            pending: Mutex::new(HashMap::new()),
+            transport: Mutex::new(None),
+            host_capability: random_capability(),
+            companion_state_path: directory.join(COMPANION_STATE_FILE),
+            companion: Mutex::new(Some(session)),
+            companion_flush: tokio::sync::Mutex::new(()),
+        };
+
+        let status = companion_status(&runtime).unwrap();
+        assert_eq!(status["queueDepth"], 1);
+        assert_eq!(status["document"]["title"], "Visible after relaunch");
+        let _ = fs::remove_dir_all(directory);
+    }
+
+    #[test]
+    fn failed_companion_queue_persistence_does_not_mutate_memory() {
+        let directory = std::env::temp_dir().join(format!("draw-queue-failure-{}", Uuid::new_v4()));
+        fs::create_dir_all(&directory).unwrap();
+        let invalid_parent = directory.join("not-a-directory");
+        fs::write(&invalid_parent, b"fixture").unwrap();
+        let original_document = initial_state().document;
+        let session = CompanionSession {
+            host: transport::DiscoveredHost {
+                endpoint: "https://draw-mac.local:4242".into(),
+                session_id: "session-test".into(),
+                protocol_version: PROTOCOL_VERSION.into(),
+                certificate_fingerprint: "a".repeat(64),
+                certificate_der: "fixture-certificate".into(),
+            },
+            client_id: "iphone-test".into(),
+            capability: "fixture".into(),
+            expires_at: "2099-01-01T00:00:00Z".into(),
+            revision: 0,
+            document: original_document.clone(),
+            queue: VecDeque::new(),
+            online: false,
+        };
+        let runtime = DrawRuntime {
+            state_path: directory.join(STATE_FILE),
+            host: Mutex::new(initial_state()),
+            pending: Mutex::new(HashMap::new()),
+            transport: Mutex::new(None),
+            host_capability: random_capability(),
+            companion_state_path: invalid_parent.join(COMPANION_STATE_FILE),
+            companion: Mutex::new(Some(session)),
+            companion_flush: tokio::sync::Mutex::new(()),
+        };
+
+        assert!(queue_companion_operation(
+            &runtime,
+            CanvasOperation::SetTitle {
+                title: "Must not enter memory".into(),
+            },
+        )
+        .is_err());
+        let companion = runtime.companion.lock().unwrap();
+        let session = companion.as_ref().unwrap();
+        assert!(session.queue.is_empty());
+        assert_eq!(session.document, original_document);
+        let _ = fs::remove_dir_all(directory);
+    }
+
+    #[test]
+    fn mac_operation_reports_its_authoritative_undo_basis() {
+        let directory = std::env::temp_dir().join(format!("draw-undo-basis-{}", Uuid::new_v4()));
+        let mut state = initial_state();
+        state.document["title"] = json!("Unseen iPhone revision");
+        let prior = state.document.clone();
+        let host_capability = random_capability();
+        state.clients.insert(
+            "native-mac".into(),
+            PairedClient {
+                capability_digest: digest_capability(&host_capability),
+                expires_at: "2099-01-01T00:00:00Z".into(),
+                revoked_at: None,
+            },
+        );
+        let runtime = DrawRuntime {
+            state_path: directory.join(STATE_FILE),
+            host: Mutex::new(state),
+            pending: Mutex::new(HashMap::new()),
+            transport: Mutex::new(None),
+            host_capability,
+            companion_state_path: directory.join(COMPANION_STATE_FILE),
+            companion: Mutex::new(None),
+            companion_flush: tokio::sync::Mutex::new(()),
+        };
+
+        let result = host_apply_local(
+            &runtime,
+            CanvasOperation::SetViewport {
+                viewport: serde_json::from_value(json!({ "x": 20.0, "y": 30.0, "zoom": 1.0 }))
+                    .unwrap(),
+            },
+        )
+        .unwrap();
+        assert_eq!(result["previousDocument"], prior);
+        assert_eq!(result["document"]["title"], "Unseen iPhone revision");
         let _ = fs::remove_dir_all(directory);
     }
 
