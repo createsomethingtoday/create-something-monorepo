@@ -1,0 +1,24 @@
+{
+  "protocolVersion": "create-something.draw-pairing.v1",
+  "documentVersion": "create-something.mapping-canvas.v1",
+  "sessionId": "session-fixture",
+  "clientId": "phone-fixture",
+  "operationId": "operation-fixture-1",
+  "baseRevision": 0,
+  "sentAt": "2026-08-29T12:00:00.000Z",
+  "capability": "fixture-secret",
+  "operation": {
+    "type": "put_object",
+    "object": {
+      "id": "stroke-fixture",
+      "kind": "stroke",
+      "createdAt": "2026-08-29T12:00:00.000Z",
+      "points": [
+        { "x": 12, "y": 24 },
+        { "x": 48, "y": 72 }
+      ],
+      "color": "#f3ebe4",
+      "width": 3
+    }
+  }
+}

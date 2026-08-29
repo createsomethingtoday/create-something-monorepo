@@ -1,0 +1,44 @@
+{
+  "schema": "create-something/draw-installed-acceptance@1",
+  "ok": true,
+  "runId": "2026-08-29T17-53-15-133Z",
+  "artifact": {
+    "name": "CREATE SOMETHING Draw_0.1.0_aarch64.dmg",
+    "sha256": "dfa8ad18fb8bb036ad8fc2bcfa2ef6fad9b5d1df9405c767a6bfab434f0cf625",
+    "appSha256": "2513a7eab4c178c6b44ccfa336b4b7452c195eafd6dc1d68c2acddcdc70ef798"
+  },
+  "bundle": {
+    "identifier": "agency.createsomething.draw",
+    "version": "0.1.0",
+    "binary": "/private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/draw-installed-acceptance-NPJ25l/installed/CREATE SOMETHING Draw.app/Contents/MacOS/create_something_draw_native",
+    "selfContained": true
+  },
+  "state": {
+    "sessionId": "session-99cde169-055d-41cb-9931-0be0d87b6100",
+    "revision": 0,
+    "documentHash": "17898fbb97c8ef7fbd7dab4b564af5103bf07ead3782be32f1d99239b0749747",
+    "relaunchExact": true
+  },
+  "evidence": {
+    "hdiutilVerify": true,
+    "readonlyMount": true,
+    "isolatedCopy": true,
+    "processIds": [
+      "99030"
+    ],
+    "externalDylibCheck": true
+  },
+  "gates": {
+    "installedLaunch": "performed",
+    "persistenceRelaunch": "performed",
+    "signing": {
+      "status": "unperformed",
+      "reason": "No valid Apple distribution identity is available on this Mac."
+    },
+    "notarization": {
+      "status": "unperformed",
+      "reason": "Notarization credentials are unavailable."
+    },
+    "physicalIPhoneAcceptance": "unperformed"
+  }
+}

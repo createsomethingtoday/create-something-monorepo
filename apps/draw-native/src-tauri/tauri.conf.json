@@ -1,0 +1,41 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "CREATE SOMETHING Draw",
+  "version": "0.1.0",
+  "identifier": "agency.createsomething.draw",
+  "build": {
+    "beforeDevCommand": "pnpm prepare:canvas",
+    "beforeBuildCommand": "pnpm prepare:canvas",
+    "frontendDist": "../../../packages/mapping-canvas/build"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "CREATE SOMETHING Draw",
+        "width": 1440,
+        "height": 920,
+        "minWidth": 780,
+        "minHeight": 600,
+        "resizable": true,
+        "fullscreen": false
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; connect-src 'self' https://draw.createsomething.agency; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["app", "dmg"],
+    "icon": ["../../atlas-studio-desktop/src-tauri/icons/icon.png"],
+    "iOS": {
+      "developmentTeam": "PRP5VQQPPB",
+      "minimumSystemVersion": "17.0",
+      "infoPlist": "Info.ios.plist"
+    },
+    "macOS": {
+      "minimumSystemVersion": "13.0"
+    }
+  }
+}

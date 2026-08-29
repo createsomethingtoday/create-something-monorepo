@@ -1,0 +1,17 @@
+{
+  "protocolVersion": "create-something.draw-pairing.v1",
+  "documentVersion": "create-something.mapping-canvas.v1",
+  "sessionId": "session-fixture",
+  "clientId": "phone-fixture",
+  "operationId": "operation-fixture-2",
+  "baseRevision": 1,
+  "sentAt": "2026-08-29T12:01:00.000Z",
+  "capability": "fixture-secret",
+  "operation": {
+    "type": "convert",
+    "selectedIds": ["stroke-fixture"],
+    "target": "note",
+    "resultId": "note-fixture",
+    "createdAt": "2026-08-29T12:01:00.000Z"
+  }
+}

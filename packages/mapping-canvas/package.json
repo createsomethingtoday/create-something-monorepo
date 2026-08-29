@@ -7,11 +7,13 @@
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
+    "build:native": "DRAW_NATIVE_BUILD=1 vite build",
     "preview": "vite preview",
     "prepare": "svelte-kit sync || echo ''",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
     "test": "vitest run",
     "verify:browser": "node scripts/verify-browser.mjs",
+    "verify:native-ui": "node scripts/verify-native-ui.mjs",
     "deploy": "pnpm build && CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=create-something-mapping-canvas --branch=main --commit-dirty=true"
   },
   "dependencies": { "@create-something/canon": "workspace:*" },
@@ -19,6 +21,7 @@
     "@cloudflare/workers-types": "^4.20260621.1",
     "@playwright/test": "^1.58.2",
     "@sveltejs/adapter-cloudflare": "^7.2.4",
+    "@sveltejs/adapter-static": "^3.0.10",
     "@sveltejs/kit": "^2.70.2",
     "@sveltejs/vite-plugin-svelte": "^6.2.1",
     "@types/node": "^24.10.1",

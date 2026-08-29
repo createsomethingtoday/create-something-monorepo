@@ -1,0 +1,13 @@
+:root {
+  --overlay-accent: var(--color-performance-signal, #fcaa2d);
+  --overlay-surface: var(--color-performance-panel, #111111);
+  --overlay-border: var(--color-performance-line, #303030);
+  --overlay-proof: var(--color-performance-growth, #009a67);
+  --overlay-block: var(--color-performance-risk, #d92c32);
+  --overlay-radius: var(--radius-performance-md, 4px);
+}
+
+[data-canon-overlay='overlay.draw-native-paired-canvas'] {
+  color: var(--color-performance-ink, #f5f2ed);
+  background: var(--overlay-surface);
+}
