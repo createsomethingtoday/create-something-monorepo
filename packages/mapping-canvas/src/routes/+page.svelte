@@ -14,6 +14,40 @@
     { id: 'group', label: 'Group', key: 'G' }, { id: 'pan', label: 'Pan', key: 'H' }
   ];
   const TOOL_SIDEBAR_PREFERENCE = 'mapping-canvas-tool-sidebar-collapsed';
+  const canonicalUrl = 'https://draw.createsomething.agency/';
+  const publicTitle = 'Drawing Canvas for Mapping Meetings | CREATE SOMETHING';
+  const publicDescription = 'A local-first drawing canvas for mapping meetings, spatial notes, shapes, connectors, groups, and portable JSON, SVG, or PNG exports.';
+  const socialImage = `${canonicalUrl}og-image.png`;
+  const organizationSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    '@id': 'https://createsomething.ltd/#organization',
+    name: 'CREATE SOMETHING',
+    url: 'https://createsomething.agency',
+    logo: 'https://createsomething.ltd/icon-512.png'
+  };
+  const applicationSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    '@id': `${canonicalUrl}#application`,
+    name: 'CREATE SOMETHING Draw',
+    alternateName: 'Mapping Canvas',
+    url: canonicalUrl,
+    applicationCategory: 'DesignApplication',
+    operatingSystem: 'Any',
+    browserRequirements: 'Requires JavaScript and a modern browser',
+    description: publicDescription,
+    isAccessibleForFree: true,
+    image: socialImage,
+    publisher: { '@id': organizationSchema['@id'] },
+    featureList: [
+      'Free-form pen and shape drawing',
+      'Spatial notes, connectors, and groups',
+      'Local-first browser storage',
+      'JSON, SVG, and PNG export'
+    ]
+  };
+  const jsonLd = (schema: unknown) => `<script type="application/ld+json">${JSON.stringify(schema).replace(/</g, '\\u003c')}</scr` + 'ipt>';
 
   let history = $state<History>({ past: [], present: createDocument(), future: [] });
   let selectedIds = $state<string[]>([]), tool = $state<Tool>('pen'), drawing = $state(false);
@@ -141,11 +175,33 @@
   function updateTitle(value: string) { const next = { ...document, title: value || 'Untitled mapping session', updatedAt: new Date().toISOString() }; history = { ...history, present: next }; queueSave(next); }
 </script>
 
-<svelte:head><title>{document.title} · Mapping Canvas</title><meta name="description" content="Free-form thinking that becomes structured mapping material." /></svelte:head>
+<svelte:head>
+  <title>{document.title === 'Untitled mapping session' ? publicTitle : `${document.title} · CREATE SOMETHING Draw`}</title>
+  <meta name="description" content={publicDescription} />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+  <meta name="author" content="CREATE SOMETHING" />
+  <link rel="canonical" href={canonicalUrl} />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content={canonicalUrl} />
+  <meta property="og:site_name" content="CREATE SOMETHING Draw" />
+  <meta property="og:title" content={publicTitle} />
+  <meta property="og:description" content={publicDescription} />
+  <meta property="og:image" content={socialImage} />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="CREATE SOMETHING Draw mapping canvas interface" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content={publicTitle} />
+  <meta name="twitter:description" content={publicDescription} />
+  <meta name="twitter:image" content={socialImage} />
+  <meta name="twitter:image:alt" content="CREATE SOMETHING Draw mapping canvas interface" />
+  {@html jsonLd(organizationSchema)}
+  {@html jsonLd(applicationSchema)}
+</svelte:head>
 
 <main class="app-shell">
   <header class="topbar">
-    <div class="identity"><i aria-hidden="true"></i><div><b>CREATE SOMETHING</b><span>Mapping canvas</span></div></div>
+    <div class="identity"><img src="/brand/create-something-agency-white.svg" alt="CREATE SOMETHING .agency" /><span>Draw · Mapping canvas</span></div>
     <input class="title" aria-label="Canvas title" value={document.title} oninput={(event) => updateTitle(event.currentTarget.value)} />
     <div class="file-actions"><button onclick={() => fileInput.click()}>Import</button><button onclick={exportJson}>JSON</button><button onclick={exportSvg}>SVG</button><button onclick={exportPng}>PNG</button><button onclick={resetCanvas}>Reset</button><input bind:this={fileInput} class="visually-hidden" type="file" accept="application/json,.json" onchange={importJson} /></div>
   </header>

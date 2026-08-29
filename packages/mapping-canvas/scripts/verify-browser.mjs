@@ -61,6 +61,12 @@ try {
   const svg = page.locator('svg');
   const box = await svg.boundingBox();
   if (!box) throw new Error('Canvas surface unavailable');
+  const brandLogo = page.getByRole('img', { name: 'CREATE SOMETHING .agency' });
+  if (!(await brandLogo.isVisible()) || !(await brandLogo.getAttribute('src'))?.endsWith('/brand/create-something-agency-white.svg')) throw new Error('Governed CREATE SOMETHING logo is unavailable');
+  if (await page.locator('link[rel="canonical"][href="https://draw.createsomething.agency/"]').count() !== 1) throw new Error('Canonical Draw URL is unavailable');
+  if (await page.locator('meta[property="og:image"][content="https://draw.createsomething.agency/og-image.png"]').count() !== 1) throw new Error('Draw social image metadata is unavailable');
+  const schemas = await page.locator('script[type="application/ld+json"]').allTextContents();
+  if (!schemas.some((value) => JSON.parse(value)['@type'] === 'WebApplication') || !schemas.some((value) => JSON.parse(value)['@type'] === 'Organization')) throw new Error('Draw structured identity is incomplete');
   const toolbarOverflows = await page.locator('.toolbar button').evaluateAll((buttons) => buttons.some((button) => button.scrollWidth > button.clientWidth));
   if (toolbarOverflows) throw new Error('Desktop tool sidebar text overflows its rail');
   const toolbarBox = await page.locator('.toolbar').boundingBox();
@@ -246,6 +252,7 @@ try {
   const mobileSvg = mobile.page.locator('svg');
   const mobileBox = await mobileSvg.boundingBox();
   if (!mobileBox) throw new Error('Mobile canvas unavailable');
+  if (!(await mobile.page.getByRole('img', { name: 'CREATE SOMETHING .agency' }).isVisible())) throw new Error('Mobile CREATE SOMETHING logo is unavailable');
   const mobileSwatches = mobile.page.locator('.palette button');
   if (await mobileSwatches.count() !== 5 || (await mobileSwatches.first().boundingBox())?.height < 44) throw new Error('Mobile palette is incomplete or below the touch target');
   if (await mobileSwatches.locator('small').allTextContents().then((labels) => labels.join(',')) !== 'Chalk,Amber,Signal,Growth,Risk') throw new Error('Mobile palette lacks color-independent labels');
