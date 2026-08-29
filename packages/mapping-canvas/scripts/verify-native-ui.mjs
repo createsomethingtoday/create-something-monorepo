@@ -17,9 +17,9 @@ const blankDocument = {
   objects: []
 };
 
-async function nativePage(role, viewport) {
+async function nativePage(role, viewport, restoredQueue = false) {
   const context = await browser.newContext({ viewport });
-  await context.addInitScript(({ role, blankDocument }) => {
+  await context.addInitScript(({ role, blankDocument, restoredQueue }) => {
     let revision = 0;
     let online = true;
     let document = structuredClone(blankDocument);
@@ -29,7 +29,7 @@ async function nativePage(role, viewport) {
         window.__nativeCalls.push({ command, args });
         if (command === 'draw_runtime_role') return role;
         if (command === 'draw_host_status') return { sessionId: 'session-native', revision, document, pairedClients: [], transport: { endpoint: 'https://192.0.2.1:4242', certificateFingerprint: 'a'.repeat(64) } };
-        if (command === 'draw_companion_status') return { status: 'unpaired' };
+        if (command === 'draw_companion_status') return restoredQueue ? { status: 'paired', sessionId: 'session-native', revision, document, certificateFingerprint: 'abcdef0123456789'.repeat(4), queueDepth: 1, online: true } : { status: 'unpaired' };
         if (command === 'draw_pair_begin') return { code: '271828', expiresAt: '2099-01-01T00:00:00Z' };
         if (command === 'draw_discover_hosts') return [{ endpoint: 'https://draw-mac.local:4242', sessionId: 'session-native', protocolVersion: 'create-something.draw-pairing.v1', certificateFingerprint: 'abcdef0123456789'.repeat(4), certificateDer: 'fixture-certificate' }];
         if (command === 'draw_companion_pair') return { status: 'paired', sessionId: 'session-native', revision, document, certificateFingerprint: 'abcdef0123456789'.repeat(4), queueDepth: 0, online };
@@ -58,7 +58,7 @@ async function nativePage(role, viewport) {
         throw new Error(`Unexpected native command: ${command}`);
       }
     };
-  }, { role, blankDocument });
+  }, { role, blankDocument, restoredQueue });
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
@@ -122,6 +122,7 @@ try {
   await page.mouse.move(box.x + 180, box.y + 140, { steps: 6 });
   await page.mouse.up();
   await page.getByText(/action queued/).waitFor();
+  if (await page.locator('path[aria-label="Ink stroke"]').count() < 1) throw new Error('Queued optimistic ink disappeared before reconnect');
   await page.getByRole('button', { name: 'Open device pairing' }).click();
   await page.getByRole('button', { name: 'Reconnect' }).click();
   await page.getByLabel('Canvas title').waitFor();
@@ -139,6 +140,14 @@ try {
   await page.screenshot({ path: `${outputRoot}iphone-paired.png`, fullPage: true });
   if (phone.errors.length) throw new Error(`iPhone native-shell errors: ${phone.errors.join(' | ')}`);
   await phone.context.close();
+
+  const restored = await nativePage('companion', { width: 393, height: 852 }, true);
+  await restored.page.getByLabel('Canvas title').waitFor();
+  if (await restored.page.getByLabel('Canvas title').inputValue() !== 'Mac authoritative reconciliation') throw new Error('Restored companion queue did not flush during initialization');
+  const restoredCalls = await restored.page.evaluate(() => window.__nativeCalls);
+  if (!restoredCalls.some(({ command, args }) => command === 'draw_companion_set_online' && args.online === true)) throw new Error('Initialization did not invoke restored-queue reconciliation');
+  if (restored.errors.length) throw new Error(`Restored iPhone native-shell errors: ${restored.errors.join(' | ')}`);
+  await restored.context.close();
   console.log(JSON.stringify({ result: 'pass', hostCode: '271828', iPhoneOperations: operations, screenshots: [`${outputRoot}mac-pairing.png`, `${outputRoot}iphone-paired.png`] }, null, 2));
 } finally {
   await browser.close();

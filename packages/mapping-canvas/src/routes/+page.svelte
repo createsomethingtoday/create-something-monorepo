@@ -95,6 +95,11 @@
       nativeRole = await readNativeRole();
       nativeSession = nativeRole === 'host' ? await hostStatus() : await companionStatus();
       if (nativeSession.document) history = { past: [], present: nativeSession.document, future: [] };
+      if (nativeRole === 'companion' && nativeSession.sessionId && nativeSession.online !== false && (nativeSession.queueDepth || 0) > 0) {
+        const reconciled = await setCompanionOnline(true);
+        nativeSession = { ...nativeSession, ...reconciled };
+        if (reconciled.document) history = { past: [], present: reconciled.document, future: [] };
+      }
       status = nativeRole === 'host' ? 'Mac session ready · Wi-Fi pairing available' : nativeSession.status === 'paired' ? 'Paired with Mac' : 'Pair this iPhone with Draw on Mac';
     } catch (error) { status = error instanceof Error ? error.message : 'Native session unavailable'; }
     ready = true;
@@ -137,7 +142,7 @@
       for (const operation of operations) {
         const result = await submitNativeOperation(role, operation);
         nativeSession = { ...nativeSession, ...result };
-        if (role === 'companion' && result.document) history = { past: history.past, present: result.document, future: [] };
+        if (role === 'companion' && result.document && result.status !== 'queued' && result.status !== 'conflict') history = { past: history.past, present: result.document, future: [] };
         if (result.status === 'queued') status = `${result.queueDepth || 1} action queued · reconnect to Mac`;
         else if (result.status === 'conflict') status = 'Session changed on Mac · reconciliation required';
         else status = role === 'host' ? `Mac committed revision ${result.revision}` : `Synced revision ${result.revision}`;

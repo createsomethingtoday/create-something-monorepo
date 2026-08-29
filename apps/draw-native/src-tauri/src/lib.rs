@@ -10,9 +10,9 @@ use std::{
 mod transport;
 
 use create_something_draw_pairing_protocol::{
-    apply_envelope, digest_capability, valid_document, AppliedOperation, CanvasOperation,
-    OperationEnvelope, OperationResult, PairedClient, PairingHostState, DOCUMENT_VERSION,
-    PROTOCOL_VERSION,
+    apply_envelope, digest_capability, prune_applied_receipts, valid_document, AppliedOperation,
+    CanvasOperation, OperationEnvelope, OperationResult, PairedClient, PairingHostState,
+    DOCUMENT_VERSION, PROTOCOL_VERSION,
 };
 use rand::{distr::Alphanumeric, Rng};
 use serde::Serialize;
@@ -62,8 +62,14 @@ struct StoredCompanionSession {
     expires_at: String,
     revision: u64,
     document: Value,
+    #[serde(default = "default_online")]
+    online: bool,
     #[serde(default)]
     queue: VecDeque<StoredQueuedOperation>,
+}
+
+fn default_online() -> bool {
+    true
 }
 
 #[derive(serde::Deserialize, Serialize)]
@@ -160,6 +166,7 @@ fn persist_companion_state(path: &Path, session: &CompanionSession) -> Result<()
         expires_at: session.expires_at.clone(),
         revision: session.revision,
         document: session.document.clone(),
+        online: session.online,
         queue: session
             .queue
             .iter()
@@ -270,7 +277,7 @@ fn restore_companion(path: &Path) -> Option<CompanionSession> {
         revision: stored.revision,
         document: stored.document,
         queue,
-        online: true,
+        online: stored.online,
     })
 }
 
@@ -568,6 +575,7 @@ fn replace_host_document(
             .to_string(),
     };
     state.applied.insert(operation_id, receipt);
+    prune_applied_receipts(&mut state.applied);
     persist_state(&runtime.state_path, &state)?;
     Ok(json!({
         "status": "applied",
@@ -622,9 +630,12 @@ async fn flush_companion(runtime: &DrawRuntime) -> Result<Value, String> {
         let result = match transport::remote_submit(request).await {
             Ok(result) => result,
             Err(error) => {
-                let companion = runtime.companion.lock().map_err(|lock| lock.to_string())?;
+                let mut companion = runtime.companion.lock().map_err(|lock| lock.to_string())?;
+                let session = companion.as_mut().ok_or("iPhone is not paired")?;
+                session.online = false;
+                persist_companion_state(&runtime.companion_state_path, session)?;
                 return Ok(
-                    json!({ "status": "queued", "queueDepth": companion.as_ref().map(|session| session.queue.len()).unwrap_or(0), "error": error }),
+                    json!({ "status": "queued", "queueDepth": session.queue.len(), "revision": session.revision, "online": false, "error": error }),
                 );
             }
         };
@@ -947,6 +958,7 @@ mod tests {
         assert!(source.contains("Durable queued action"));
         let restored = load_companion_state(&path).unwrap();
         assert_eq!(restored.revision, 3);
+        assert!(restored.online);
         assert_eq!(restored.queue.len(), 1);
         assert_eq!(
             restored.queue[0].operation_id,
@@ -988,6 +1000,98 @@ mod tests {
         assert_eq!(persisted.revision, 1);
         assert_eq!(persisted.document, replacement);
         assert_eq!(persisted.applied.len(), 1);
+        let _ = fs::remove_dir_all(directory);
+    }
+
+    #[test]
+    fn host_replacements_share_the_bounded_receipt_window() {
+        let directory = std::env::temp_dir().join(format!("draw-replace-bound-{}", Uuid::new_v4()));
+        let state_path = directory.join(STATE_FILE);
+        let companion_state_path = directory.join(COMPANION_STATE_FILE);
+        let mut state = initial_state();
+        for revision in 1..=create_something_draw_pairing_protocol::MAX_APPLIED_RECEIPTS {
+            let operation_id = format!("existing-{revision}");
+            state.applied.insert(
+                operation_id.clone(),
+                AppliedOperation {
+                    operation_id,
+                    client_id: "native-mac".into(),
+                    fingerprint: "fixture".into(),
+                    revision: revision as u64,
+                    document_updated_at: "2026-08-29T16:00:00Z".into(),
+                },
+            );
+        }
+        state.revision = create_something_draw_pairing_protocol::MAX_APPLIED_RECEIPTS as u64;
+        let replacement = state.document.clone();
+        let runtime = DrawRuntime {
+            state_path: state_path.clone(),
+            host: Mutex::new(state),
+            pending: Mutex::new(HashMap::new()),
+            transport: Mutex::new(None),
+            host_capability: random_capability(),
+            companion_state_path,
+            companion: Mutex::new(None),
+            companion_flush: tokio::sync::Mutex::new(()),
+        };
+        replace_host_document(&runtime, replacement, "reset".into()).unwrap();
+        let persisted = load_state(&state_path);
+        assert_eq!(
+            persisted.applied.len(),
+            create_something_draw_pairing_protocol::MAX_APPLIED_RECEIPTS
+        );
+        assert!(!persisted.applied.contains_key("existing-1"));
+        assert!(persisted
+            .applied
+            .values()
+            .any(|receipt| receipt.revision == persisted.revision));
+        let _ = fs::remove_dir_all(directory);
+    }
+
+    #[test]
+    fn transport_failure_persists_offline_reconnect_state() {
+        let directory = std::env::temp_dir().join(format!("draw-offline-{}", Uuid::new_v4()));
+        let companion_state_path = directory.join(COMPANION_STATE_FILE);
+        let runtime = DrawRuntime {
+            state_path: directory.join(STATE_FILE),
+            host: Mutex::new(initial_state()),
+            pending: Mutex::new(HashMap::new()),
+            transport: Mutex::new(None),
+            host_capability: random_capability(),
+            companion_state_path: companion_state_path.clone(),
+            companion: Mutex::new(Some(CompanionSession {
+                host: transport::DiscoveredHost {
+                    endpoint: "https://127.0.0.1:9".into(),
+                    session_id: "session-offline".into(),
+                    protocol_version: PROTOCOL_VERSION.into(),
+                    certificate_fingerprint: "a".repeat(64),
+                    certificate_der: "invalid-certificate".into(),
+                },
+                client_id: "iphone-offline".into(),
+                capability: "offline-secret".into(),
+                expires_at: "2099-01-01T00:00:00Z".into(),
+                revision: 0,
+                document: initial_state().document,
+                queue: VecDeque::new(),
+                online: true,
+            })),
+            companion_flush: tokio::sync::Mutex::new(()),
+        };
+        queue_companion_operation(
+            &runtime,
+            CanvasOperation::SetTitle {
+                title: "Queued".into(),
+            },
+        )
+        .unwrap();
+        let result = tokio::runtime::Runtime::new()
+            .unwrap()
+            .block_on(flush_companion(&runtime))
+            .unwrap();
+        assert_eq!(result["status"], "queued");
+        assert_eq!(result["online"], false);
+        assert!(!runtime.companion.lock().unwrap().as_ref().unwrap().online);
+        assert!(!load_companion_state(&companion_state_path).unwrap().online);
         let _ = fs::remove_dir_all(directory);
     }
 }

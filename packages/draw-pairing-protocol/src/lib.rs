@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -6,7 +6,7 @@ use sha2::{Digest, Sha256};
 
 pub const PROTOCOL_VERSION: &str = "create-something.draw-pairing.v1";
 pub const DOCUMENT_VERSION: &str = "create-something.mapping-canvas.v1";
-const MAX_APPLIED_RECEIPTS: usize = 4096;
+pub const MAX_APPLIED_RECEIPTS: usize = 4096;
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -204,6 +204,32 @@ pub fn valid_document(document: &Value) -> bool {
         && unique_ids
         && objects.iter().all(valid_object)
         && relationships_valid
+        && !has_connector_cycle(objects)
+}
+
+fn has_connector_cycle(objects: &[Value]) -> bool {
+    fn visit(id: &str, objects: &[Value], visiting: &mut HashSet<String>, visited: &mut HashSet<String>) -> bool {
+        if visited.contains(id) { return false; }
+        let Some(object) = objects.iter().find(|object| object.get("id").and_then(Value::as_str) == Some(id)) else { return false; };
+        if object.get("kind").and_then(Value::as_str) != Some("connector") { return false; }
+        if !visiting.insert(id.to_owned()) { return true; }
+        let cyclic = ["fromId", "toId"].iter().any(|field| object.get(*field).and_then(Value::as_str).is_some_and(|endpoint| visit(endpoint, objects, visiting, visited)));
+        visiting.remove(id);
+        visited.insert(id.to_owned());
+        cyclic
+    }
+    let mut visiting = HashSet::new();
+    let mut visited = HashSet::new();
+    objects.iter().any(|object| object.get("id").and_then(Value::as_str).is_some_and(|id| visit(id, objects, &mut visiting, &mut visited)))
+}
+
+pub fn prune_applied_receipts(applied: &mut BTreeMap<String, AppliedOperation>) {
+    if applied.len() <= MAX_APPLIED_RECEIPTS { return; }
+    let mut oldest: Vec<_> = applied.values().map(|receipt| (receipt.revision, receipt.operation_id.clone())).collect();
+    oldest.sort();
+    for (_, operation_id) in oldest.into_iter().take(applied.len() - MAX_APPLIED_RECEIPTS) {
+        applied.remove(&operation_id);
+    }
 }
 
 fn valid_point(value: &Value) -> bool {
@@ -630,13 +656,7 @@ pub fn apply_envelope(
     next.revision = receipt.revision;
     next.document = document;
     next.applied.insert(envelope.operation_id, receipt.clone());
-    if next.applied.len() > MAX_APPLIED_RECEIPTS {
-        let mut oldest: Vec<_> = next.applied.values().map(|receipt| (receipt.revision, receipt.operation_id.clone())).collect();
-        oldest.sort();
-        for (_, operation_id) in oldest.into_iter().take(next.applied.len() - MAX_APPLIED_RECEIPTS) {
-            next.applied.remove(&operation_id);
-        }
-    }
+    prune_applied_receipts(&mut next.applied);
     OperationResult::Applied {
         state: next,
         receipt,
@@ -868,6 +888,15 @@ mod tests {
         document["objects"] = serde_json::json!([]);
         document["viewport"]["zoom"] = serde_json::json!(0);
         assert!(!valid_document(&document));
+
+        let mut cyclic = state().document;
+        cyclic["objects"] = serde_json::json!([
+            { "id": "connector-a", "kind": "connector", "fromId": "connector-b", "toId": "note-a", "label": "", "createdAt": NOW },
+            { "id": "connector-b", "kind": "connector", "fromId": "connector-a", "toId": "note-b", "label": "", "createdAt": NOW },
+            { "id": "note-a", "kind": "note", "text": "A", "x": 0, "y": 0, "width": 200, "height": 100, "createdAt": NOW },
+            { "id": "note-b", "kind": "note", "text": "B", "x": 20, "y": 20, "width": 200, "height": 100, "createdAt": NOW }
+        ]);
+        assert!(!valid_document(&cyclic));
     }
 
     #[test]
