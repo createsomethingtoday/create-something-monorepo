@@ -34,9 +34,10 @@
     try { sidebarCollapsed = localStorage.getItem(TOOL_SIDEBAR_PREFERENCE) === 'true'; } catch { /* Preference persistence is optional. */ }
     void loadDocument().then((saved) => { if (saved) { history = { past: [], present: saved, future: [] }; status = 'Restored from this device'; } else status = 'New local session'; }).catch(() => status = 'Local storage unavailable · export copies').finally(() => ready = true);
     const resize = () => { viewportWidth = surface?.clientWidth || window.innerWidth; viewportHeight = surface?.clientHeight || window.innerHeight; };
-    resize(); window.addEventListener('resize', resize); window.addEventListener('keydown', keydown);
+    const surfaceObserver = new ResizeObserver(resize);
+    resize(); surfaceObserver.observe(surface); window.addEventListener('resize', resize); window.addEventListener('keydown', keydown);
     if (import.meta.env.PROD) navigator.serviceWorker?.register('/service-worker.js').catch(() => undefined);
-    return () => { window.removeEventListener('resize', resize); window.removeEventListener('keydown', keydown); };
+    return () => { surfaceObserver.disconnect(); window.removeEventListener('resize', resize); window.removeEventListener('keydown', keydown); };
   });
 
   function point(event: PointerEvent): Point { const rect = surface.getBoundingClientRect(); return { x: (event.clientX - rect.left - viewport.x) / viewport.zoom, y: (event.clientY - rect.top - viewport.y) / viewport.zoom }; }

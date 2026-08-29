@@ -69,6 +69,9 @@ try {
   await sidebarToggle.click();
   const collapsedToolbarBox = await page.locator('.toolbar').boundingBox();
   if (!collapsedToolbarBox || collapsedToolbarBox.width < 56 || collapsedToolbarBox.width > 72) throw new Error('Collapsed tool sidebar is not a compact letter rail');
+  const collapsedCanvasWidth = (await svg.boundingBox())?.width;
+  const collapsedViewBoxWidth = await svg.evaluate((node) => node.viewBox.baseVal.width);
+  if (!collapsedCanvasWidth || Math.abs(collapsedCanvasWidth - collapsedViewBoxWidth) > 1) throw new Error('Canvas viewBox did not follow the collapsed sidebar layout');
   if (await page.locator('.toolbar .tool-label:visible').count()) throw new Error('Collapsed tool sidebar still shows tool labels');
   if (await page.locator('.toolbar .tool-key:visible').count() !== 10) throw new Error('Collapsed tool sidebar lost letter indicators');
   await page.reload({ waitUntil: 'networkidle' });
