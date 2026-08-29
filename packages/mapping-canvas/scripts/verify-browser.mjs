@@ -61,6 +61,8 @@ try {
   const svg = page.locator('svg');
   const box = await svg.boundingBox();
   if (!box) throw new Error('Canvas surface unavailable');
+  const toolbarOverflows = await page.locator('.toolbar button').evaluateAll((buttons) => buttons.some((button) => button.scrollWidth > button.clientWidth));
+  if (toolbarOverflows) throw new Error('Desktop tool sidebar text overflows its rail');
   const swatches = page.locator('.palette button');
   if (await swatches.count() !== 5) throw new Error('Minimal five-color palette is unavailable');
   if (await page.getByTestId('color-chalk').getAttribute('aria-pressed') !== 'true') throw new Error('Chalk is not the clean-state default');
