@@ -14,7 +14,7 @@ export type DiscoveredHost = {
 export type PairingOffer = { code: string; expiresAt: string };
 
 export type NativeSessionStatus = {
-  status?: 'unpaired' | 'paired' | 'applied' | 'duplicate' | 'queued' | 'synced' | 'conflict';
+  status?: 'unpaired' | 'paired' | 'applied' | 'duplicate' | 'queued' | 'queue_full' | 'synced' | 'conflict';
   sessionId?: string;
   revision?: number;
   document?: CanvasDocument;

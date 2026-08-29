@@ -148,6 +148,7 @@
         nativeSession = { ...nativeSession, ...result };
         if (result.document && result.status !== 'queued' && result.status !== 'conflict') history = { past: history.past, present: result.document, future: [] };
         if (result.status === 'queued') status = `${result.queueDepth || 1} action queued · reconnect to Mac`;
+        else if (result.status === 'queue_full') status = result.error || 'Offline queue is full · reconnect before editing';
         else if (result.status === 'conflict') status = 'Session changed on Mac · reconciliation required';
         else status = role === 'host' ? `Mac committed revision ${result.revision}` : `Synced revision ${result.revision}`;
       }

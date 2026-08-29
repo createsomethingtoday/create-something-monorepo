@@ -232,12 +232,21 @@ fn initial_state() -> PairingHostState {
 
 fn load_state(path: &Path) -> Result<PairingHostState, String> {
     match fs::read(path) {
-        Ok(bytes) => serde_json::from_slice(&bytes).map_err(|error| {
-            format!(
-                "Canonical Draw state is unreadable at {}: {error}",
-                path.display()
-            )
-        }),
+        Ok(bytes) => {
+            let state: PairingHostState = serde_json::from_slice(&bytes).map_err(|error| {
+                format!(
+                    "Canonical Draw state is unreadable at {}: {error}",
+                    path.display()
+                )
+            })?;
+            if !valid_document(&state.document) {
+                return Err(format!(
+                    "Canonical Draw document is invalid at {}",
+                    path.display()
+                ));
+            }
+            Ok(state)
+        }
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(initial_state()),
         Err(error) => Err(format!(
             "Canonical Draw state could not be read at {}: {error}",
@@ -983,7 +992,18 @@ async fn draw_companion_submit(
     runtime: tauri::State<'_, Arc<DrawRuntime>>,
     operation: CanvasOperation,
 ) -> Result<Value, String> {
-    queue_companion_operation(&runtime, operation)?;
+    if let Err(error) = queue_companion_operation(&runtime, operation) {
+        let companion = runtime.companion.lock().map_err(|lock| lock.to_string())?;
+        let session = companion.as_ref().ok_or("iPhone is not paired")?;
+        return Ok(json!({
+            "status": "queue_full",
+            "queueDepth": session.queue.len(),
+            "revision": session.revision,
+            "document": optimistic_companion_document(session),
+            "online": session.online,
+            "error": error
+        }));
+    }
     flush_companion(&runtime).await
 }
 
@@ -1044,15 +1064,16 @@ async fn draw_companion_refresh(
         }
     };
     let snapshot = transport::remote_snapshot(request).await?;
+    let snapshot_revision = snapshot["revision"]
+        .as_u64()
+        .ok_or("Snapshot omitted revision")?;
     let mut companion = runtime
         .companion
         .lock()
         .map_err(|error| error.to_string())?;
     let session = companion.as_mut().ok_or("iPhone is not paired")?;
-    if session.queue.is_empty() {
-        session.revision = snapshot["revision"]
-            .as_u64()
-            .ok_or("Snapshot omitted revision")?;
+    if session.queue.is_empty() && snapshot_revision >= session.revision {
+        session.revision = snapshot_revision;
         session.document = snapshot["document"].clone();
         persist_companion_state(&runtime.companion_state_path, session)?;
     }
