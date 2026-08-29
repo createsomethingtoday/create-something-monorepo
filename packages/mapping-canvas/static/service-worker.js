@@ -1,5 +1,5 @@
-const CACHE = 'mapping-canvas-shell-v2';
-const SHELL = ['/', '/manifest.webmanifest', '/icon.svg'];
+const CACHE = 'mapping-canvas-shell-v3';
+const SHELL = ['/', '/manifest.webmanifest', '/icon.svg', '/brand/create-something-agency-white.svg'];
 
 async function cacheApplicationShell() {
   const cache = await caches.open(CACHE);

@@ -1,0 +1,22 @@
+# CREATE SOMETHING Draw
+
+CREATE SOMETHING Draw is a free, local-first drawing canvas for mapping meetings and spatial notes.
+
+## Capabilities
+
+- Draw free-form pen strokes, rectangles, ellipses, and arrows.
+- Add editable spatial notes and organize work with groups.
+- Convert selected marks into notes, connectors, or groups while retaining source provenance.
+- Export the canvas as JSON, SVG, or PNG and import compatible JSON documents.
+
+## Data boundary
+
+Canvas content is saved only on the current device in browser storage. CREATE SOMETHING does not receive the canvas contents. Browser storage and installed-app state are specific to the hostname in use, so use JSON export and import when moving between origins or devices.
+
+## Canonical URL
+
+https://draw.createsomething.agency/
+
+## Publisher
+
+CREATE SOMETHING: https://createsomething.agency/
