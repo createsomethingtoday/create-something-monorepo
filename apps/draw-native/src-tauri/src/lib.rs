@@ -850,7 +850,18 @@ fn queue_companion_operation(
                     _ => false,
                 });
         if let Some(index) = superseded {
-            session.queue.remove(index);
+            let envelope = session
+                .queue
+                .get_mut(index)
+                .ok_or("Superseded queue entry disappeared")?;
+            envelope.operation = operation;
+            envelope.operation_id = format!("iphone-coalesced-{}", Uuid::new_v4());
+            envelope.sent_at = rfc3339(now())?;
+            for (offset, queued) in session.queue.iter_mut().enumerate() {
+                queued.base_revision = session.revision + offset as u64;
+            }
+            persist_companion_state(&runtime.companion_state_path, session)?;
+            return Ok(());
         }
     }
     if session.queue.len() >= MAX_COMPANION_QUEUE {
@@ -1271,6 +1282,79 @@ mod tests {
             .applied
             .values()
             .any(|receipt| receipt.revision == persisted.revision));
+        let _ = fs::remove_dir_all(directory);
+    }
+
+    #[test]
+    fn offline_put_coalescing_preserves_dependency_order() {
+        let directory = std::env::temp_dir().join(format!("draw-queue-order-{}", Uuid::new_v4()));
+        let runtime = DrawRuntime {
+            state_path: directory.join(STATE_FILE),
+            host: Mutex::new(initial_state()),
+            pending: Mutex::new(HashMap::new()),
+            transport: Mutex::new(None),
+            host_capability: random_capability(),
+            companion_state_path: directory.join(COMPANION_STATE_FILE),
+            companion: Mutex::new(Some(CompanionSession {
+                host: transport::DiscoveredHost {
+                    endpoint: "https://draw-mac.local:4242".into(),
+                    session_id: "session-order".into(),
+                    protocol_version: PROTOCOL_VERSION.into(),
+                    certificate_fingerprint: "a".repeat(64),
+                    certificate_der: "fixture-certificate".into(),
+                },
+                client_id: "iphone-order".into(),
+                capability: "fixture-secret".into(),
+                expires_at: "2099-01-01T00:00:00Z".into(),
+                revision: 4,
+                document: initial_state().document,
+                queue: VecDeque::new(),
+                online: false,
+            })),
+            companion_flush: tokio::sync::Mutex::new(()),
+        };
+        queue_companion_operation(
+            &runtime,
+            CanvasOperation::PutObject {
+                object: json!({ "id": "note-a", "text": "first" }),
+            },
+        )
+        .unwrap();
+        queue_companion_operation(
+            &runtime,
+            CanvasOperation::SetTitle {
+                title: "Depends on prior queue order".into(),
+            },
+        )
+        .unwrap();
+        queue_companion_operation(
+            &runtime,
+            CanvasOperation::PutObject {
+                object: json!({ "id": "note-a", "text": "latest" }),
+            },
+        )
+        .unwrap();
+        let companion = runtime.companion.lock().unwrap();
+        let queue = &companion.as_ref().unwrap().queue;
+        assert_eq!(queue.len(), 2);
+        assert!(matches!(
+            queue[0].operation,
+            CanvasOperation::PutObject { .. }
+        ));
+        assert!(matches!(
+            queue[1].operation,
+            CanvasOperation::SetTitle { .. }
+        ));
+        assert_eq!(queue[0].base_revision, 4);
+        assert_eq!(queue[1].base_revision, 5);
+        assert_eq!(
+            match &queue[0].operation {
+                CanvasOperation::PutObject { object } => object["text"].as_str(),
+                _ => None,
+            },
+            Some("latest")
+        );
+        drop(companion);
         let _ = fs::remove_dir_all(directory);
     }
 
