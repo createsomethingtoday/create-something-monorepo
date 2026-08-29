@@ -718,27 +718,29 @@ fn replace_host_document(
             state.revision
         ));
     }
-    state.revision += 1;
-    state.document = document;
+    let mut next = state.clone();
+    next.revision += 1;
+    next.document = document;
     let operation_id = format!("mac-replace-{}", Uuid::new_v4());
     let fingerprint = digest_capability(
-        &serde_json::to_string(&state.document).map_err(|error| error.to_string())?,
+        &serde_json::to_string(&next.document).map_err(|error| error.to_string())?,
     );
     let receipt = AppliedOperation {
         operation_id: operation_id.clone(),
         client_id: "native-mac".into(),
         fingerprint,
-        revision: state.revision,
-        document_updated_at: state
+        revision: next.revision,
+        document_updated_at: next
             .document
             .get("updatedAt")
             .and_then(Value::as_str)
             .unwrap_or("")
             .to_string(),
     };
-    state.applied.insert(operation_id, receipt);
-    prune_applied_receipts(&mut state.applied);
-    persist_state(&runtime.state_path, &state)?;
+    next.applied.insert(operation_id, receipt);
+    prune_applied_receipts(&mut next.applied);
+    persist_state(&runtime.state_path, &next)?;
+    *state = next;
     Ok(json!({
         "status": "applied",
         "reason": reason,
@@ -1396,6 +1398,37 @@ mod tests {
                 .contains("HOST_REVISION_CONFLICT")
         );
         assert_eq!(load_state(&state_path).unwrap().revision, 1);
+        let _ = fs::remove_dir_all(directory);
+    }
+
+    #[test]
+    fn failed_mac_document_persistence_does_not_advance_memory() {
+        let directory =
+            std::env::temp_dir().join(format!("draw-replace-failure-{}", Uuid::new_v4()));
+        fs::create_dir_all(&directory).unwrap();
+        let invalid_parent = directory.join("not-a-directory");
+        fs::write(&invalid_parent, b"fixture").unwrap();
+        let state = initial_state();
+        let original_document = state.document.clone();
+        let runtime = DrawRuntime {
+            state_path: invalid_parent.join(STATE_FILE),
+            host: Mutex::new(state),
+            pending: Mutex::new(HashMap::new()),
+            transport: Mutex::new(None),
+            host_capability: random_capability(),
+            companion_state_path: directory.join(COMPANION_STATE_FILE),
+            companion: Mutex::new(None),
+            companion_flush: tokio::sync::Mutex::new(()),
+        };
+        let mut replacement = original_document.clone();
+        replacement["title"] = json!("Must not enter memory");
+        replacement["updatedAt"] = json!("2026-08-29T16:45:00Z");
+
+        assert!(replace_host_document(&runtime, replacement, "import".into(), 0).is_err());
+        let host = runtime.host.lock().unwrap();
+        assert_eq!(host.revision, 0);
+        assert_eq!(host.document, original_document);
+        assert!(host.applied.is_empty());
         let _ = fs::remove_dir_all(directory);
     }
 

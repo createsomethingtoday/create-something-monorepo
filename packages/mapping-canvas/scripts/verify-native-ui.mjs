@@ -78,6 +78,19 @@ try {
   if (host.errors.length) throw new Error(`Mac native-shell errors: ${host.errors.join(' | ')}`);
   await host.context.close();
 
+  const unpaired = await nativePage('companion', { width: 393, height: 852 });
+  const unpairedSurface = unpaired.page.locator('svg');
+  const unpairedBox = await unpairedSurface.boundingBox();
+  if (!unpairedBox) throw new Error('Unpaired iPhone canvas surface unavailable');
+  await unpaired.page.getByRole('button', { name: /Note tool/ }).click();
+  await unpaired.page.mouse.click(unpairedBox.x + 110, unpairedBox.y + 170);
+  if (await unpaired.page.getByLabel('Edit note').count()) throw new Error('Unpaired iPhone created an optimistic note');
+  await unpaired.page.getByText('Pair this iPhone with a Mac before editing').waitFor();
+  const unpairedCalls = await unpaired.page.evaluate(() => window.__nativeCalls);
+  if (unpairedCalls.some(({ command }) => command === 'draw_companion_submit')) throw new Error('Unpaired iPhone submitted a canvas operation');
+  if (unpaired.errors.length) throw new Error(`Unpaired iPhone native-shell errors: ${unpaired.errors.join(' | ')}`);
+  await unpaired.context.close();
+
   const phone = await nativePage('companion', { width: 393, height: 852 });
   const { page } = phone;
   await page.getByRole('button', { name: 'Open device pairing' }).click();
@@ -100,11 +113,15 @@ try {
 
   await page.getByRole('button', { name: /Select tool/ }).click();
   const note = page.locator('g[aria-label^="Note:"]');
+  const editorBeforePointer = await note.boundingBox();
+  await editor.dispatchEvent('pointerdown', { pointerId: 11, button: 0, clientX: 130, clientY: 190 });
+  const editorAfterPointer = await note.boundingBox();
+  if (!editorBeforePointer || !editorAfterPointer || editorAfterPointer.x !== editorBeforePointer.x || editorAfterPointer.y !== editorBeforePointer.y) throw new Error('Note textarea pointerdown started a canvas drag');
   const before = await note.boundingBox();
   if (!before) throw new Error('Native note unavailable for movement');
-  await page.mouse.move(before.x + 20, before.y + 20);
+  await page.mouse.move(before.x + 5, before.y + 5);
   await page.mouse.down();
-  await page.mouse.move(before.x + 70, before.y + 70, { steps: 4 });
+  await page.mouse.move(before.x + 55, before.y + 55, { steps: 4 });
   await page.mouse.up();
   const after = await note.boundingBox();
   if (!after || after.x < before.x + 40 || after.y < before.y + 40) throw new Error('Touch movement did not reposition the note');
