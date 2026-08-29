@@ -153,6 +153,7 @@ struct CompanionSession {
     document: Value,
     queue: VecDeque<OperationEnvelope>,
     online: bool,
+    requires_repair: bool,
 }
 
 fn companion_session_from_grant(
@@ -205,6 +206,7 @@ fn companion_session_from_grant(
         document,
         queue: VecDeque::new(),
         online: true,
+        requires_repair: false,
     })
 }
 
@@ -218,6 +220,8 @@ struct StoredCompanionSession {
     document: Value,
     #[serde(default = "default_online")]
     online: bool,
+    #[serde(default)]
+    requires_repair: bool,
     #[serde(default)]
     queue: VecDeque<StoredQueuedOperation>,
 }
@@ -339,6 +343,7 @@ fn persist_companion_state(path: &Path, session: &CompanionSession) -> Result<()
         revision: session.revision,
         document: session.document.clone(),
         online: session.online,
+        requires_repair: session.requires_repair,
         queue: session
             .queue
             .iter()
@@ -451,6 +456,7 @@ fn restore_companion(path: &Path) -> Option<CompanionSession> {
         document: stored.document,
         queue,
         online: stored.online,
+        requires_repair: stored.requires_repair,
     })
 }
 
@@ -691,6 +697,7 @@ fn companion_status(runtime: &DrawRuntime) -> Result<Value, String> {
             "document": optimistic_companion_document(session),
             "queueDepth": session.queue.len(),
             "online": session.online,
+            "requiresRepair": session.requires_repair,
             "endpoint": session.host.endpoint,
             "certificateFingerprint": session.host.certificate_fingerprint
         }),
@@ -715,6 +722,23 @@ fn install_companion_snapshot(
     session.revision = snapshot_revision;
     session.document = snapshot["document"].clone();
     Ok(true)
+}
+
+fn pairing_matches(session: &CompanionSession, session_id: &str, client_id: &str) -> bool {
+    session.host.session_id == session_id && session.client_id == client_id
+}
+
+fn credential_rejection(code: Option<&str>) -> bool {
+    matches!(
+        code,
+        Some(
+            "CLIENT_REVOKED"
+                | "CAPABILITY_EXPIRED"
+                | "CAPABILITY_REJECTED"
+                | "UNKNOWN_CLIENT"
+                | "WRONG_SESSION"
+        )
+    )
 }
 
 #[tauri::command]
@@ -833,7 +857,7 @@ fn draw_host_replace_document(
 async fn flush_companion(runtime: &DrawRuntime) -> Result<Value, String> {
     let _flush_guard = runtime.companion_flush.lock().await;
     loop {
-        let (request, expected_operation_id) = {
+        let (request, expected_operation_id, requested_session_id, requested_client_id) = {
             let companion = runtime
                 .companion
                 .lock()
@@ -853,6 +877,8 @@ async fn flush_companion(runtime: &DrawRuntime) -> Result<Value, String> {
                 );
             };
             let expected_operation_id = envelope.operation_id.clone();
+            let requested_session_id = session.host.session_id.clone();
+            let requested_client_id = session.client_id.clone();
             (
                 transport::RemoteOperationRequest {
                     endpoint: session.host.endpoint.clone(),
@@ -861,6 +887,8 @@ async fn flush_companion(runtime: &DrawRuntime) -> Result<Value, String> {
                     envelope,
                 },
                 expected_operation_id,
+                requested_session_id,
+                requested_client_id,
             )
         };
         let result = match transport::remote_submit(request).await {
@@ -868,6 +896,9 @@ async fn flush_companion(runtime: &DrawRuntime) -> Result<Value, String> {
             Err(error) => {
                 let mut companion = runtime.companion.lock().map_err(|lock| lock.to_string())?;
                 let session = companion.as_mut().ok_or("iPhone is not paired")?;
+                if !pairing_matches(session, &requested_session_id, &requested_client_id) {
+                    return Ok(json!({ "status": "pairing_changed" }));
+                }
                 session.online = false;
                 persist_companion_state(&runtime.companion_state_path, session)?;
                 return Ok(
@@ -881,7 +912,30 @@ async fn flush_companion(runtime: &DrawRuntime) -> Result<Value, String> {
                 .lock()
                 .map_err(|error| error.to_string())?;
             let session = companion.as_mut().ok_or("iPhone is not paired")?;
-            if matches!(result["status"].as_str(), Some("applied" | "duplicate")) {
+            if !pairing_matches(session, &requested_session_id, &requested_client_id) {
+                return Ok(json!({
+                    "status": "pairing_changed",
+                    "queueDepth": session.queue.len(),
+                    "revision": session.revision,
+                    "document": optimistic_companion_document(session),
+                    "online": session.online,
+                    "requiresRepair": session.requires_repair
+                }));
+            }
+            if credential_rejection(result["code"].as_str()) {
+                session.online = false;
+                session.requires_repair = true;
+                persist_companion_state(&runtime.companion_state_path, session)?;
+                return Ok(json!({
+                    "status": "credentials_rejected",
+                    "queueDepth": session.queue.len(),
+                    "revision": session.revision,
+                    "document": optimistic_companion_document(session),
+                    "online": false,
+                    "requiresRepair": true,
+                    "hostResult": result
+                }));
+            } else if matches!(result["status"].as_str(), Some("applied" | "duplicate")) {
                 session.revision = result["revision"]
                     .as_u64()
                     .ok_or("Host response omitted revision")?;
@@ -937,6 +991,9 @@ async fn flush_companion(runtime: &DrawRuntime) -> Result<Value, String> {
             Err(error) => {
                 let mut companion = runtime.companion.lock().map_err(|lock| lock.to_string())?;
                 let session = companion.as_mut().ok_or("iPhone is not paired")?;
+                if !pairing_matches(session, &requested_session_id, &requested_client_id) {
+                    return Ok(json!({ "status": "pairing_changed" }));
+                }
                 session.online = false;
                 persist_companion_state(&runtime.companion_state_path, session)?;
                 return Ok(json!({
@@ -954,6 +1011,9 @@ async fn flush_companion(runtime: &DrawRuntime) -> Result<Value, String> {
             .lock()
             .map_err(|error| error.to_string())?;
         let session = companion.as_mut().ok_or("iPhone is not paired")?;
+        if !pairing_matches(session, &requested_session_id, &requested_client_id) {
+            return Ok(json!({ "status": "pairing_changed" }));
+        }
         session.revision = snapshot["revision"]
             .as_u64()
             .ok_or("Snapshot omitted revision")?;
@@ -997,6 +1057,11 @@ fn queue_companion_operation(
         .map_err(|error| error.to_string())?;
     let session = companion.as_mut().ok_or("iPhone is not paired")?;
     let mut next = session.clone();
+    if next.requires_repair {
+        return Err(
+            "Pairing credentials were rejected; export if needed, then forget and re-pair".into(),
+        );
+    }
     if !next.online {
         let superseded =
             next.queue
@@ -1070,11 +1135,12 @@ async fn draw_companion_submit(
         let companion = runtime.companion.lock().map_err(|lock| lock.to_string())?;
         let session = companion.as_ref().ok_or("iPhone is not paired")?;
         return Ok(json!({
-            "status": "queue_full",
+            "status": if session.requires_repair { "credentials_rejected" } else { "queue_full" },
             "queueDepth": session.queue.len(),
             "revision": session.revision,
             "document": optimistic_companion_document(session),
             "online": session.online,
+            "requiresRepair": session.requires_repair,
             "error": error
         }));
     }
@@ -1091,10 +1157,19 @@ async fn draw_companion_set_online(
             .companion
             .lock()
             .map_err(|error| error.to_string())?;
-        companion.as_mut().ok_or("iPhone is not paired")?.online = online;
-        if let Some(session) = companion.as_ref() {
-            persist_companion_state(&runtime.companion_state_path, session)?;
+        let session = companion.as_mut().ok_or("iPhone is not paired")?;
+        if online && session.requires_repair {
+            return Ok(json!({
+                "status": "credentials_rejected",
+                "queueDepth": session.queue.len(),
+                "revision": session.revision,
+                "document": optimistic_companion_document(session),
+                "online": false,
+                "requiresRepair": true
+            }));
         }
+        session.online = online;
+        persist_companion_state(&runtime.companion_state_path, session)?;
     }
     if online {
         flush_companion(&runtime).await
@@ -1470,6 +1545,7 @@ mod tests {
             document: initial_state().document,
             queue,
             online: true,
+            requires_repair: false,
         };
         persist_companion_state(&path, &session).unwrap();
         let source = fs::read_to_string(&path).unwrap();
@@ -1519,6 +1595,7 @@ mod tests {
             document: initial_state().document,
             queue,
             online: false,
+            requires_repair: false,
         };
         let runtime = DrawRuntime {
             state_path: directory.join(STATE_FILE),
@@ -1554,6 +1631,7 @@ mod tests {
             document: initial_state().document,
             queue: VecDeque::new(),
             online: true,
+            requires_repair: false,
         };
         let current = session.document.clone();
         let mut old_document = current.clone();
@@ -1592,6 +1670,7 @@ mod tests {
             document: original_document.clone(),
             queue: VecDeque::new(),
             online: false,
+            requires_repair: false,
         };
         let runtime = DrawRuntime {
             state_path: directory.join(STATE_FILE),
@@ -1677,6 +1756,7 @@ mod tests {
             document: json!({ "version": DOCUMENT_VERSION }),
             queue: VecDeque::new(),
             online: true,
+            requires_repair: false,
         };
         persist_companion_state(&path, &session).unwrap();
         assert!(load_companion_state(&path).is_none());
@@ -1869,6 +1949,7 @@ mod tests {
                 document: initial_state().document,
                 queue: VecDeque::new(),
                 online: false,
+                requires_repair: false,
             })),
             companion_flush: tokio::sync::Mutex::new(()),
         };
@@ -1943,6 +2024,7 @@ mod tests {
                 document: initial_state().document,
                 queue: VecDeque::new(),
                 online: true,
+                requires_repair: false,
             })),
             companion_flush: tokio::sync::Mutex::new(()),
         };
@@ -1962,5 +2044,86 @@ mod tests {
         assert!(!runtime.companion.lock().unwrap().as_ref().unwrap().online);
         assert!(!load_companion_state(&companion_state_path).unwrap().online);
         let _ = fs::remove_dir_all(directory);
+    }
+
+    #[test]
+    fn rejected_credentials_disable_new_edits_without_dropping_the_queue() {
+        let directory =
+            std::env::temp_dir().join(format!("draw-repair-required-{}", Uuid::new_v4()));
+        let runtime = DrawRuntime {
+            state_path: directory.join(STATE_FILE),
+            host: Mutex::new(initial_state()),
+            pending: Mutex::new(HashMap::new()),
+            transport: Mutex::new(None),
+            host_capability: random_capability(),
+            companion_state_path: directory.join(COMPANION_STATE_FILE),
+            companion: Mutex::new(Some(CompanionSession {
+                host: transport::DiscoveredHost {
+                    endpoint: "https://draw-mac.local:4242".into(),
+                    session_id: "session-rejected".into(),
+                    protocol_version: PROTOCOL_VERSION.into(),
+                    certificate_fingerprint: "a".repeat(64),
+                    certificate_der: "fixture-certificate".into(),
+                },
+                client_id: "iphone-rejected".into(),
+                capability: "rejected-secret".into(),
+                expires_at: "2099-01-01T00:00:00Z".into(),
+                revision: 4,
+                document: initial_state().document,
+                queue: VecDeque::from([OperationEnvelope {
+                    protocol_version: PROTOCOL_VERSION.into(),
+                    document_version: DOCUMENT_VERSION.into(),
+                    session_id: "session-rejected".into(),
+                    client_id: "iphone-rejected".into(),
+                    operation_id: "preserved-offline-edit".into(),
+                    base_revision: 4,
+                    sent_at: "2026-08-29T20:00:00Z".into(),
+                    capability: "rejected-secret".into(),
+                    operation: CanvasOperation::SetTitle {
+                        title: "Preserve me".into(),
+                    },
+                }]),
+                online: false,
+                requires_repair: true,
+            })),
+            companion_flush: tokio::sync::Mutex::new(()),
+        };
+        assert!(credential_rejection(Some("CLIENT_REVOKED")));
+        assert!(credential_rejection(Some("CAPABILITY_EXPIRED")));
+        assert!(queue_companion_operation(
+            &runtime,
+            CanvasOperation::SetTitle {
+                title: "Must not queue".into()
+            }
+        )
+        .is_err());
+        let companion = runtime.companion.lock().unwrap();
+        let session = companion.as_ref().unwrap();
+        assert_eq!(session.queue.len(), 1);
+        assert_eq!(session.queue[0].operation_id, "preserved-offline-edit");
+        let _ = fs::remove_dir_all(directory);
+    }
+
+    #[test]
+    fn submit_response_identity_must_match_the_active_pairing() {
+        let session = CompanionSession {
+            host: transport::DiscoveredHost {
+                endpoint: "https://new-mac.local:4242".into(),
+                session_id: "new-session".into(),
+                protocol_version: PROTOCOL_VERSION.into(),
+                certificate_fingerprint: "b".repeat(64),
+                certificate_der: "fixture-certificate".into(),
+            },
+            client_id: "new-iphone".into(),
+            capability: "new-secret".into(),
+            expires_at: "2099-01-01T00:00:00Z".into(),
+            revision: 1,
+            document: initial_state().document,
+            queue: VecDeque::new(),
+            online: true,
+            requires_repair: false,
+        };
+        assert!(!pairing_matches(&session, "old-session", "old-iphone"));
+        assert!(pairing_matches(&session, "new-session", "new-iphone"));
     }
 }

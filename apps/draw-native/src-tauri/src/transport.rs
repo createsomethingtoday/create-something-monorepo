@@ -598,6 +598,7 @@ mod tests {
             document: applied["document"].clone(),
             queue: VecDeque::new(),
             online: false,
+            requires_repair: false,
         });
         queue_companion_operation(
             &runtime,

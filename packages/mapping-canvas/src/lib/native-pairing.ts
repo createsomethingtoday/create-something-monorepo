@@ -14,7 +14,7 @@ export type DiscoveredHost = {
 export type PairingOffer = { code: string; expiresAt: string };
 
 export type NativeSessionStatus = {
-  status?: 'unpaired' | 'paired' | 'applied' | 'duplicate' | 'queued' | 'queue_full' | 'synced' | 'conflict';
+  status?: 'unpaired' | 'paired' | 'applied' | 'duplicate' | 'queued' | 'queue_full' | 'synced' | 'conflict' | 'credentials_rejected' | 'pairing_changed';
   sessionId?: string;
   revision?: number;
   document?: CanvasDocument;
@@ -24,6 +24,7 @@ export type NativeSessionStatus = {
   certificateFingerprint?: string;
   queueDepth?: number;
   online?: boolean;
+  requiresRepair?: boolean;
   error?: string;
 };
 
