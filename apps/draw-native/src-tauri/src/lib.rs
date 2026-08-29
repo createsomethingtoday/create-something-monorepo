@@ -230,11 +230,20 @@ fn initial_state() -> PairingHostState {
     }
 }
 
-fn load_state(path: &Path) -> PairingHostState {
-    fs::read(path)
-        .ok()
-        .and_then(|bytes| serde_json::from_slice(&bytes).ok())
-        .unwrap_or_else(initial_state)
+fn load_state(path: &Path) -> Result<PairingHostState, String> {
+    match fs::read(path) {
+        Ok(bytes) => serde_json::from_slice(&bytes).map_err(|error| {
+            format!(
+                "Canonical Draw state is unreadable at {}: {error}",
+                path.display()
+            )
+        }),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(initial_state()),
+        Err(error) => Err(format!(
+            "Canonical Draw state could not be read at {}: {error}",
+            path.display()
+        )),
+    }
 }
 
 fn persist_state(path: &Path, state: &PairingHostState) -> Result<(), String> {
@@ -1081,7 +1090,7 @@ pub fn run() {
                 .unwrap_or(app.path().app_data_dir()?);
             let state_path = home.join(STATE_FILE);
             let companion_state_path = home.join(COMPANION_STATE_FILE);
-            let host = load_state(&state_path);
+            let host = load_state(&state_path).map_err(std::io::Error::other)?;
             let host_capability = random_capability();
             let mut host = host;
             host.clients.insert(
@@ -1147,7 +1156,19 @@ mod tests {
         persist_state(&path, &state).unwrap();
         let source = fs::read_to_string(&path).unwrap();
         assert!(!source.contains("top-secret"));
-        assert_eq!(load_state(&path), state);
+        assert_eq!(load_state(&path).unwrap(), state);
+        let _ = fs::remove_dir_all(directory);
+    }
+
+    #[test]
+    fn unreadable_canonical_state_is_not_replaced_with_a_blank_session() {
+        let directory = std::env::temp_dir().join(format!("draw-corrupt-{}", Uuid::new_v4()));
+        fs::create_dir_all(&directory).unwrap();
+        let path = directory.join(STATE_FILE);
+        fs::write(&path, b"{truncated").unwrap();
+        let before = fs::read(&path).unwrap();
+        assert!(load_state(&path).unwrap_err().contains("unreadable"));
+        assert_eq!(fs::read(&path).unwrap(), before);
         let _ = fs::remove_dir_all(directory);
     }
 
@@ -1341,7 +1362,7 @@ mod tests {
         let result =
             replace_host_document(&runtime, replacement.clone(), "undo".into(), 0).unwrap();
         assert_eq!(result["revision"], 1);
-        let persisted = load_state(&state_path);
+        let persisted = load_state(&state_path).unwrap();
         assert_eq!(persisted.session_id, session_id);
         assert_eq!(persisted.revision, 1);
         assert_eq!(persisted.document, replacement);
@@ -1353,7 +1374,7 @@ mod tests {
                 .unwrap_err()
                 .contains("HOST_REVISION_CONFLICT")
         );
-        assert_eq!(load_state(&state_path).revision, 1);
+        assert_eq!(load_state(&state_path).unwrap().revision, 1);
         let _ = fs::remove_dir_all(directory);
     }
 
@@ -1395,7 +1416,7 @@ mod tests {
             create_something_draw_pairing_protocol::MAX_APPLIED_RECEIPTS as u64,
         )
         .unwrap();
-        let persisted = load_state(&state_path);
+        let persisted = load_state(&state_path).unwrap();
         assert_eq!(
             persisted.applied.len(),
             create_something_draw_pairing_protocol::MAX_APPLIED_RECEIPTS
