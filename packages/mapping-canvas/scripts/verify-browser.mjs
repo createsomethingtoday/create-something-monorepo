@@ -63,6 +63,18 @@ try {
   if (!box) throw new Error('Canvas surface unavailable');
   const toolbarOverflows = await page.locator('.toolbar button').evaluateAll((buttons) => buttons.some((button) => button.scrollWidth > button.clientWidth));
   if (toolbarOverflows) throw new Error('Desktop tool sidebar text overflows its rail');
+  const toolbarBox = await page.locator('.toolbar').boundingBox();
+  if (!toolbarBox || toolbarBox.width < 144 || toolbarBox.width > 160) throw new Error('Desktop tool sidebar lacks a deliberate readable width');
+  const sidebarToggle = page.getByRole('button', { name: 'Collapse tool sidebar' });
+  await sidebarToggle.click();
+  const collapsedToolbarBox = await page.locator('.toolbar').boundingBox();
+  if (!collapsedToolbarBox || collapsedToolbarBox.width < 56 || collapsedToolbarBox.width > 72) throw new Error('Collapsed tool sidebar is not a compact letter rail');
+  if (await page.locator('.toolbar .tool-label:visible').count()) throw new Error('Collapsed tool sidebar still shows tool labels');
+  if (await page.locator('.toolbar .tool-key:visible').count() !== 10) throw new Error('Collapsed tool sidebar lost letter indicators');
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.getByRole('button', { name: 'Expand tool sidebar' }).waitFor();
+  if ((await page.locator('.toolbar').boundingBox())?.width !== collapsedToolbarBox.width) throw new Error('Collapsed tool sidebar state did not persist locally');
+  await page.getByRole('button', { name: 'Expand tool sidebar' }).click();
   const swatches = page.locator('.palette button');
   if (await swatches.count() !== 5) throw new Error('Minimal five-color palette is unavailable');
   if (await page.getByTestId('color-chalk').getAttribute('aria-pressed') !== 'true') throw new Error('Chalk is not the clean-state default');
