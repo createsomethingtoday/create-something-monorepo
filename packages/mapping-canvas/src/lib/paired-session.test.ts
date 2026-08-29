@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DOCUMENT_VERSION, createDocument, type Stroke } from './document';
-import { PAIRING_PROTOCOL_VERSION, applyEnvelope, type OperationEnvelope, type PairingHostState } from './paired-session';
+import { PAIRING_PROTOCOL_VERSION, applyEnvelope, isOperationEnvelope, isValidCanvasTitle, type OperationEnvelope, type PairingHostState } from './paired-session';
 
 const digest = (value: string) => `digest:${value}`;
 const stroke: Stroke = { id: 'stroke-1', kind: 'stroke', createdAt: '2026-08-29T00:00:00.000Z', points: [{ x: 1, y: 2 }, { x: 3, y: 4 }], color: '#f3ebe4', width: 3 };
@@ -71,6 +71,15 @@ describe('paired session protocol', () => {
     expect(apply(baseState(), envelope({ sessionId: 'other' }))).toMatchObject({ status: 'rejected', code: 'WRONG_SESSION' });
     expect(apply(baseState(), { ...envelope(), operation: { type: 'remove_objects', ids: [] } })).toMatchObject({ status: 'rejected', code: 'INVALID_ENVELOPE' });
     expect(apply(baseState(), envelope({ operation: { type: 'convert', selectedIds: ['missing'], target: 'note', resultId: 'note-1', createdAt: '2026-08-29T12:00:00Z' } }))).toMatchObject({ status: 'rejected', code: 'INVALID_OPERATION' });
+  });
+
+  it('enforces the title boundary in UTF-8 bytes', () => {
+    const valid = 'é'.repeat(120);
+    const invalid = 'é'.repeat(121);
+    expect(isValidCanvasTitle(valid)).toBe(true);
+    expect(isValidCanvasTitle(invalid)).toBe(false);
+    expect(isOperationEnvelope(envelope({ operation: { type: 'set_title', title: valid } }))).toBe(true);
+    expect(isOperationEnvelope(envelope({ operation: { type: 'set_title', title: invalid } }))).toBe(false);
   });
 
   it('replays conversion with an envelope-owned identity', () => {

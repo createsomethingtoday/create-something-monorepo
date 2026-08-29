@@ -154,6 +154,59 @@ struct CompanionSession {
     online: bool,
 }
 
+fn companion_session_from_grant(
+    host: transport::DiscoveredHost,
+    client_id: String,
+    grant: &Value,
+) -> Result<CompanionSession, String> {
+    if host.protocol_version != PROTOCOL_VERSION {
+        return Err("Discovered host uses an unsupported pairing protocol".into());
+    }
+    if grant["protocolVersion"].as_str() != Some(PROTOCOL_VERSION) {
+        return Err("Pairing grant uses an unsupported protocol".into());
+    }
+    if grant["documentVersion"].as_str() != Some(DOCUMENT_VERSION) {
+        return Err("Pairing grant uses an unsupported document version".into());
+    }
+    if grant["sessionId"].as_str() != Some(host.session_id.as_str()) {
+        return Err("Pairing grant does not match the discovered Mac session".into());
+    }
+    if grant["clientId"].as_str() != Some(client_id.as_str()) {
+        return Err("Pairing grant does not match this companion".into());
+    }
+    let capability = grant["capability"]
+        .as_str()
+        .filter(|value| !value.trim().is_empty())
+        .ok_or("Pairing grant omitted capability")?
+        .to_string();
+    let expires_at = grant["expiresAt"]
+        .as_str()
+        .ok_or("Pairing grant omitted expiry")?
+        .to_string();
+    let expiry = OffsetDateTime::parse(&expires_at, &Rfc3339)
+        .map_err(|_| "Pairing grant expiry is invalid".to_string())?;
+    if expiry <= OffsetDateTime::now_utc() {
+        return Err("Pairing grant is already expired".into());
+    }
+    let revision = grant["revision"]
+        .as_u64()
+        .ok_or("Pairing grant omitted revision")?;
+    let document = grant["document"].clone();
+    if !valid_document(&document) {
+        return Err("Pairing grant contains an invalid canvas document".into());
+    }
+    Ok(CompanionSession {
+        host,
+        client_id,
+        capability,
+        expires_at,
+        revision,
+        document,
+        queue: VecDeque::new(),
+        online: true,
+    })
+}
+
 #[derive(serde::Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct StoredCompanionSession {
@@ -655,24 +708,7 @@ async fn draw_companion_pair(
         client_id: client_id.clone(),
     })
     .await?;
-    let session = CompanionSession {
-        host,
-        client_id,
-        capability: grant["capability"]
-            .as_str()
-            .ok_or("Pairing grant omitted capability")?
-            .to_string(),
-        expires_at: grant["expiresAt"]
-            .as_str()
-            .ok_or("Pairing grant omitted expiry")?
-            .to_string(),
-        revision: grant["revision"]
-            .as_u64()
-            .ok_or("Pairing grant omitted revision")?,
-        document: grant["document"].clone(),
-        queue: VecDeque::new(),
-        online: true,
-    };
+    let session = companion_session_from_grant(host, client_id, &grant)?;
     store_companion_capability(&session.capability)?;
     persist_companion_state(&runtime.companion_state_path, &session)?;
     *runtime
@@ -1204,6 +1240,62 @@ mod tests {
         let second = random_capability();
         assert_eq!(first.len(), 48);
         assert_ne!(first, second);
+    }
+
+    fn discovered_host_fixture() -> transport::DiscoveredHost {
+        transport::DiscoveredHost {
+            endpoint: "https://127.0.0.1:43123".into(),
+            session_id: "session-fixture".into(),
+            protocol_version: PROTOCOL_VERSION.into(),
+            certificate_fingerprint: "fixture-fingerprint".into(),
+            certificate_der: "fixture-certificate".into(),
+        }
+    }
+
+    fn pairing_grant_fixture() -> Value {
+        json!({
+            "sessionId": "session-fixture",
+            "clientId": "iphone-fixture",
+            "capability": "fixture-capability",
+            "expiresAt": "2099-01-01T00:00:00Z",
+            "protocolVersion": PROTOCOL_VERSION,
+            "documentVersion": DOCUMENT_VERSION,
+            "revision": 0,
+            "document": initial_state().document,
+        })
+    }
+
+    #[test]
+    fn companion_accepts_a_matching_valid_pairing_grant() {
+        let session = companion_session_from_grant(
+            discovered_host_fixture(),
+            "iphone-fixture".into(),
+            &pairing_grant_fixture(),
+        )
+        .unwrap();
+        assert_eq!(session.host.session_id, "session-fixture");
+        assert_eq!(session.client_id, "iphone-fixture");
+        assert!(valid_document(&session.document));
+    }
+
+    #[test]
+    fn companion_rejects_mismatched_or_invalid_pairing_grants() {
+        for (field, value) in [
+            ("protocolVersion", json!("future")),
+            ("documentVersion", json!("future")),
+            ("sessionId", json!("another-session")),
+            ("clientId", json!("another-client")),
+            ("document", json!({ "version": DOCUMENT_VERSION })),
+        ] {
+            let mut grant = pairing_grant_fixture();
+            grant[field] = value;
+            assert!(companion_session_from_grant(
+                discovered_host_fixture(),
+                "iphone-fixture".into(),
+                &grant,
+            )
+            .is_err());
+        }
     }
 
     #[test]

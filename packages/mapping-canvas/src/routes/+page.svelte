@@ -5,7 +5,7 @@
   import { clearDocument, loadDocument, saveDocument } from '$lib/persistence';
   import { commit, convert, createDocument, parse, redo, removeObjects, restoreConversion, serialize, uid, undo, withObjects, type CanvasDocument, type CanvasObject, type History, type Point, type Shape, type Stroke, type Tool } from '$lib/document';
   import { DEFAULT_DRAWING_COLOR, DRAWING_COLOR_PREFERENCE, DRAWING_PALETTE, isColorableObject, isDrawingColor, recolorObjects, type DrawingColor } from '$lib/palette';
-  import type { CanvasOperation } from '$lib/paired-session';
+  import { isValidCanvasTitle, type CanvasOperation } from '$lib/paired-session';
   import { beginPairing, companionStatus, discoverHosts, forgetCompanion, hasNativeBridge, hostStatus, nativeRole as readNativeRole, pairCompanion, refreshCompanion, replaceHostDocument, revokeCompanion, setCompanionOnline, submitNativeOperation, type DiscoveredHost, type NativeRole, type NativeSessionStatus, type PairingOffer } from '$lib/native-pairing';
 
   const tools: { id: Tool; label: string; key: string }[] = [
@@ -287,7 +287,7 @@
   }
   async function importJson(event: Event) { const file = (event.currentTarget as HTMLInputElement).files?.[0]; if (!file || nativeRole === 'companion') return; try { const next = parse(await file.text()); if (nativeRole === 'host') await commitHostReplacement(next, 'import'); history = commit(history, next); selectedIds = []; queueSave(next); status = 'Canvas imported'; } catch (error) { status = error instanceof Error ? error.message : 'Import failed'; } finally { if (fileInput) fileInput.value = ''; } }
   async function resetCanvas() { if (nativeRole === 'companion') { status = 'Reset is owned by the Mac'; return; } if (!confirm(nativeRole === 'host' ? 'Reset the Mac-authoritative canvas? Export first if you need a copy.' : 'Reset this local canvas? Export first if you need a copy.')) return; clearTimeout(saveTimer); saveTimer = undefined; status = 'Resetting canvas…'; if (nativeRole === 'web') await clearDocument(); const next = createDocument(); try { await commitHostReplacement(next, 'reset'); history = { past: [], present: next, future: [] }; selectedIds = []; status = nativeRole === 'host' ? 'New Mac session document' : 'New local session'; } catch (error) { status = error instanceof Error ? error.message : 'Reset conflicted with an iPhone change'; } }
-  function updateTitle(value: string) { if (!companionCanEdit()) return; const title = value || 'Untitled mapping session'; const next = { ...document, title, updatedAt: new Date().toISOString() }; history = { ...history, present: next }; queueSave(next); sendNative([{ type: 'set_title', title }]); }
+  function updateTitle(input: HTMLInputElement) { if (!companionCanEdit()) return; const title = input.value || 'Untitled mapping session'; if (!isValidCanvasTitle(title)) { input.value = document.title; status = 'Title must be 240 UTF-8 bytes or fewer'; return; } const next = { ...document, title, updatedAt: new Date().toISOString() }; history = { ...history, present: next }; queueSave(next); sendNative([{ type: 'set_title', title }]); }
 </script>
 
 <svelte:head>
@@ -317,7 +317,7 @@
 <main class="app-shell" class:native-shell={nativeShell}>
   <header class="topbar">
     <div class="identity"><img src="/brand/create-something-agency-white.svg" alt="CREATE SOMETHING .agency" /><span>Draw · Mapping canvas</span>{#if nativeRole !== 'web'}<button class="native-link" aria-label="Open device pairing" onclick={openPairing}>{nativeRole === 'host' ? 'Pair' : nativeSession.sessionId ? 'Linked' : 'Link'}</button>{/if}</div>
-    <input class="title" aria-label="Canvas title" value={document.title} oninput={(event) => updateTitle(event.currentTarget.value)} />
+    <input class="title" aria-label="Canvas title" maxlength="240" value={document.title} oninput={(event) => updateTitle(event.currentTarget)} />
     {#if nativeRole !== 'companion'}<div class="file-actions"><button onclick={() => fileInput?.click()}>Import</button><button onclick={exportJson}>JSON</button><button onclick={exportSvg}>SVG</button><button onclick={exportPng}>PNG</button><button onclick={resetCanvas}>Reset</button><input bind:this={fileInput} class="visually-hidden" type="file" accept="application/json,.json" onchange={importJson} /></div>{/if}
   </header>
   <section class="workbench" class:tool-sidebar-collapsed={sidebarCollapsed} aria-label="Mapping canvas workbench">

@@ -98,6 +98,12 @@ const rejected = (state: PairingHostState, code: OperationErrorCode): OperationR
 });
 
 const isFiniteNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
+const utf8 = new TextEncoder();
+
+export function isValidCanvasTitle(title: unknown): title is string {
+  return typeof title === 'string' && title.trim().length > 0 && utf8.encode(title).byteLength <= 240;
+}
+
 const isViewport = (value: unknown): value is Viewport => {
   if (!value || typeof value !== 'object') return false;
   const candidate = value as Partial<Viewport>;
@@ -113,7 +119,7 @@ export function isOperationEnvelope(value: unknown): value is OperationEnvelope 
   const operation = envelope.operation;
   if (operation.type === 'put_object') return isCanvasObject(operation.object);
   if (operation.type === 'remove_objects') return Array.isArray(operation.ids) && operation.ids.length > 0 && operation.ids.every((id) => typeof id === 'string' && id.length > 0);
-  if (operation.type === 'set_title') return typeof operation.title === 'string' && operation.title.trim().length > 0 && operation.title.length <= 240;
+  if (operation.type === 'set_title') return isValidCanvasTitle(operation.title);
   if (operation.type === 'set_viewport') return isViewport(operation.viewport);
   if (operation.type === 'convert') return Array.isArray(operation.selectedIds) && operation.selectedIds.length > 0 && operation.selectedIds.every((id) => typeof id === 'string' && id.length > 0) && ['note', 'connector', 'group'].includes(operation.target) && typeof operation.resultId === 'string' && operation.resultId.length > 0 && typeof operation.createdAt === 'string' && operation.createdAt.length > 0;
   return operation.type === 'restore_conversion' && typeof operation.id === 'string' && operation.id.length > 0;

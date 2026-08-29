@@ -139,6 +139,11 @@ try {
   if (await title.inputValue() !== 'AB') throw new Error('Earlier native response overwrote newer optimistic title input');
   await page.waitForTimeout(200);
   if (await title.inputValue() !== 'AB') throw new Error('Final native title reconciliation lost rapid input');
+  const submittedBeforeInvalidTitle = await page.evaluate(() => window.__nativeCalls.filter(({ command }) => command === 'draw_companion_submit').length);
+  await title.fill('é'.repeat(121));
+  if (await title.inputValue() !== 'AB') throw new Error('Over-limit UTF-8 title changed optimistic UI');
+  const submittedAfterInvalidTitle = await page.evaluate(() => window.__nativeCalls.filter(({ command }) => command === 'draw_companion_submit').length);
+  if (submittedAfterInvalidTitle !== submittedBeforeInvalidTitle) throw new Error('Over-limit UTF-8 title reached native transport');
 
   const surface = page.locator('svg');
   const box = await surface.boundingBox();
