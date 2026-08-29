@@ -6,7 +6,7 @@ use std::{
 };
 
 use axum::{
-    extract::State,
+    extract::{ConnectInfo, State},
     http::StatusCode,
     routing::{get, post},
     Json, Router,
@@ -21,7 +21,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 
-use crate::{apply_operation, authorized_snapshot, host_status, pair_confirm, DrawRuntime};
+use crate::{apply_operation, authorized_snapshot, host_status, DrawRuntime};
 
 const SERVICE_TYPE: &str = "_csdraw._tcp.local.";
 const CERT_FILE: &str = "pairing-cert.pem";
@@ -98,10 +98,16 @@ async fn public_status(
 
 async fn confirm_pairing(
     State(runtime): State<Arc<DrawRuntime>>,
+    ConnectInfo(source): ConnectInfo<SocketAddr>,
     Json(request): Json<PairRequest>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
-    let grant = pair_confirm(&runtime, request.code, request.client_id)
-        .map_err(|error| api_error(StatusCode::UNAUTHORIZED, error))?;
+    let grant = crate::pair_confirm_from_source(
+        &runtime,
+        request.code,
+        request.client_id,
+        &source.ip().to_string(),
+    )
+    .map_err(|error| api_error(StatusCode::UNAUTHORIZED, error))?;
     serde_json::to_value(grant)
         .map(Json)
         .map_err(|error| api_error(StatusCode::INTERNAL_SERVER_ERROR, error.to_string()))

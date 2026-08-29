@@ -3,7 +3,7 @@ use std::{
     fs::{self, OpenOptions},
     io::Write,
     path::{Path, PathBuf},
-    sync::{Arc, Mutex},
+    sync::{Arc, Mutex, OnceLock},
     time::{Duration, SystemTime},
 };
 
@@ -32,8 +32,9 @@ const MAX_COMPANION_QUEUE: usize = 2048;
 
 struct PendingPairing {
     expires_at: SystemTime,
-    failed_attempts: u8,
 }
+
+static PAIRING_FAILURES: OnceLock<Mutex<HashMap<String, (SystemTime, u8)>>> = OnceLock::new();
 
 fn optimistic_companion_document(session: &CompanionSession) -> Value {
     session
@@ -97,6 +98,37 @@ fn is_safe_idempotent(document: &Value, operation: &CanvasOperation) -> bool {
                     && object.get("sourceIds") == serde_json::to_value(selected_ids).ok().as_ref()
             }),
         CanvasOperation::RestoreConversion { .. } => false,
+    }
+}
+
+fn operation_put_id(operation: &CanvasOperation) -> Option<&str> {
+    match operation {
+        CanvasOperation::PutObject { object } => object.get("id").and_then(Value::as_str),
+        _ => None,
+    }
+}
+
+fn operation_references_id(operation: &CanvasOperation, id: &str) -> bool {
+    match operation {
+        CanvasOperation::PutObject { object } => {
+            ["fromId", "toId"]
+                .iter()
+                .any(|field| object.get(field).and_then(Value::as_str) == Some(id))
+                || ["childIds", "sourceIds"].iter().any(|field| {
+                    object
+                        .get(field)
+                        .and_then(Value::as_array)
+                        .is_some_and(|ids| {
+                            ids.iter().any(|candidate| candidate.as_str() == Some(id))
+                        })
+                })
+        }
+        CanvasOperation::RemoveObjects { ids } => ids.iter().any(|candidate| candidate == id),
+        CanvasOperation::Convert { selected_ids, .. } => {
+            selected_ids.iter().any(|candidate| candidate == id)
+        }
+        CanvasOperation::RestoreConversion { id: restored } => restored == id,
+        CanvasOperation::SetTitle { .. } | CanvasOperation::SetViewport { .. } => false,
     }
 }
 
@@ -405,23 +437,18 @@ pub(crate) fn pair_begin(runtime: &DrawRuntime) -> Result<PairingOffer, String> 
     let expires_at = now() + PAIRING_LIFETIME;
     let mut pending = runtime.pending.lock().map_err(|error| error.to_string())?;
     pending.retain(|_, offer| offer.expires_at > now());
-    pending.insert(
-        code.clone(),
-        PendingPairing {
-            expires_at,
-            failed_attempts: 0,
-        },
-    );
+    pending.insert(code.clone(), PendingPairing { expires_at });
     Ok(PairingOffer {
         code,
         expires_at: rfc3339(expires_at)?,
     })
 }
 
-pub(crate) fn pair_confirm(
+pub(crate) fn pair_confirm_from_source(
     runtime: &DrawRuntime,
     code: String,
     client_id: String,
+    source: &str,
 ) -> Result<PairingGrant, String> {
     if client_id.trim().is_empty() {
         return Err("Client id is required".into());
@@ -429,16 +456,32 @@ pub(crate) fn pair_confirm(
     if client_id == "native-mac" {
         return Err("Client id is reserved".into());
     }
+    let failures = PAIRING_FAILURES.get_or_init(|| Mutex::new(HashMap::new()));
+    {
+        let mut failures = failures.lock().map_err(|error| error.to_string())?;
+        failures.retain(|_, (started, _)| {
+            now().duration_since(*started).unwrap_or_default() < PAIRING_LIFETIME
+        });
+        if failures
+            .get(source)
+            .is_some_and(|(_, count)| *count >= MAX_PAIRING_FAILURES)
+        {
+            return Err("Pairing attempts are temporarily rate limited".into());
+        }
+    }
     let offer = {
         let mut pending = runtime.pending.lock().map_err(|error| error.to_string())?;
         pending.retain(|_, offer| offer.expires_at > now());
         if let Some(offer) = pending.remove(&code) {
+            failures
+                .lock()
+                .map_err(|error| error.to_string())?
+                .remove(source);
             offer
         } else {
-            for offer in pending.values_mut() {
-                offer.failed_attempts = offer.failed_attempts.saturating_add(1);
-            }
-            pending.retain(|_, offer| offer.failed_attempts < MAX_PAIRING_FAILURES);
+            let mut failures = failures.lock().map_err(|error| error.to_string())?;
+            let entry = failures.entry(source.to_string()).or_insert((now(), 0));
+            entry.1 = entry.1.saturating_add(1);
             return Err("Pairing code is invalid or attempt limit reached".into());
         }
     };
@@ -879,6 +922,16 @@ fn queue_companion_operation(
                     ) => prior.get("id") == next.get("id"),
                     _ => false,
                 });
+        let superseded = superseded.filter(|index| {
+            let Some(id) = operation_put_id(&session.queue[*index].operation) else {
+                return true;
+            };
+            !session
+                .queue
+                .iter()
+                .skip(*index + 1)
+                .any(|queued| operation_references_id(&queued.operation, id))
+        });
         if let Some(index) = superseded {
             let envelope = session
                 .queue
@@ -1164,7 +1217,7 @@ mod tests {
     }
 
     #[test]
-    fn pairing_offer_is_invalidated_after_bounded_failures() {
+    fn pairing_failures_are_bounded_per_source_without_invalidating_the_offer() {
         let directory = std::env::temp_dir().join(format!("draw-pair-limit-{}", Uuid::new_v4()));
         let runtime = DrawRuntime {
             state_path: directory.join(STATE_FILE),
@@ -1177,11 +1230,34 @@ mod tests {
             companion_flush: tokio::sync::Mutex::new(()),
         };
         let offer = pair_begin(&runtime).unwrap();
-        assert!(pair_confirm(&runtime, offer.code.clone(), "native-mac".into()).is_err());
+        assert!(pair_confirm_from_source(
+            &runtime,
+            offer.code.clone(),
+            "native-mac".into(),
+            "operator"
+        )
+        .is_err());
         for attempt in 0..MAX_PAIRING_FAILURES {
-            assert!(pair_confirm(&runtime, format!("wrong-{attempt}"), "attacker".into()).is_err());
+            assert!(pair_confirm_from_source(
+                &runtime,
+                format!("wrong-{attempt}"),
+                "attacker".into(),
+                "attacker-ip"
+            )
+            .is_err());
         }
-        assert!(pair_confirm(&runtime, offer.code, "iphone".into()).is_err());
+        assert!(pair_confirm_from_source(
+            &runtime,
+            "still-wrong".into(),
+            "attacker".into(),
+            "attacker-ip"
+        )
+        .err()
+        .unwrap()
+        .contains("rate limited"));
+        assert!(
+            pair_confirm_from_source(&runtime, offer.code, "iphone".into(), "operator-ip").is_ok()
+        );
         let _ = fs::remove_dir_all(directory);
     }
 
