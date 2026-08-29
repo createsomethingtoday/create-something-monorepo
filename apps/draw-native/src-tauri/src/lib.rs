@@ -10,9 +10,9 @@ use std::{
 mod transport;
 
 use create_something_draw_pairing_protocol::{
-    apply_envelope, digest_capability, prune_applied_receipts, valid_document, AppliedOperation,
-    CanvasOperation, OperationEnvelope, OperationResult, PairedClient, PairingHostState,
-    DOCUMENT_VERSION, PROTOCOL_VERSION,
+    apply_canvas_operation, apply_envelope, digest_capability, prune_applied_receipts,
+    valid_document, AppliedOperation, CanvasOperation, OperationEnvelope, OperationResult,
+    PairedClient, PairingHostState, DOCUMENT_VERSION, PROTOCOL_VERSION,
 };
 use rand::{distr::Alphanumeric, Rng};
 use serde::Serialize;
@@ -27,9 +27,22 @@ const KEYCHAIN_SERVICE: &str = "agency.createsomething.draw.pairing";
 const KEYCHAIN_ACCOUNT: &str = "active-companion";
 const PAIRING_LIFETIME: Duration = Duration::from_secs(5 * 60);
 const CAPABILITY_LIFETIME: Duration = Duration::from_secs(12 * 60 * 60);
+const MAX_PAIRING_FAILURES: u8 = 5;
+const MAX_COMPANION_QUEUE: usize = 2048;
 
 struct PendingPairing {
     expires_at: SystemTime,
+    failed_attempts: u8,
+}
+
+fn optimistic_companion_document(session: &CompanionSession) -> Value {
+    session
+        .queue
+        .iter()
+        .fold(session.document.clone(), |document, envelope| {
+            apply_canvas_operation(&document, &envelope.operation, &envelope.sent_at)
+                .unwrap_or(document)
+        })
 }
 
 pub(crate) struct DrawRuntime {
@@ -337,7 +350,13 @@ pub(crate) fn pair_begin(runtime: &DrawRuntime) -> Result<PairingOffer, String> 
     let expires_at = now() + PAIRING_LIFETIME;
     let mut pending = runtime.pending.lock().map_err(|error| error.to_string())?;
     pending.retain(|_, offer| offer.expires_at > now());
-    pending.insert(code.clone(), PendingPairing { expires_at });
+    pending.insert(
+        code.clone(),
+        PendingPairing {
+            expires_at,
+            failed_attempts: 0,
+        },
+    );
     Ok(PairingOffer {
         code,
         expires_at: rfc3339(expires_at)?,
@@ -352,12 +371,19 @@ pub(crate) fn pair_confirm(
     if client_id.trim().is_empty() {
         return Err("Client id is required".into());
     }
-    let offer = runtime
-        .pending
-        .lock()
-        .map_err(|error| error.to_string())?
-        .remove(&code)
-        .ok_or_else(|| "Pairing code is invalid or already used".to_string())?;
+    let offer = {
+        let mut pending = runtime.pending.lock().map_err(|error| error.to_string())?;
+        pending.retain(|_, offer| offer.expires_at > now());
+        if let Some(offer) = pending.remove(&code) {
+            offer
+        } else {
+            for offer in pending.values_mut() {
+                offer.failed_attempts = offer.failed_attempts.saturating_add(1);
+            }
+            pending.retain(|_, offer| offer.failed_attempts < MAX_PAIRING_FAILURES);
+            return Err("Pairing code is invalid or attempt limit reached".into());
+        }
+    };
     if offer.expires_at <= now() {
         return Err("Pairing code expired".into());
     }
@@ -607,8 +633,9 @@ async fn flush_companion(runtime: &DrawRuntime) -> Result<Value, String> {
                 return Err("iPhone is not paired".into());
             };
             if !session.online {
+                let document = optimistic_companion_document(session);
                 return Ok(
-                    json!({ "status": "queued", "queueDepth": session.queue.len(), "revision": session.revision, "document": session.document }),
+                    json!({ "status": "queued", "queueDepth": session.queue.len(), "revision": session.revision, "document": document, "online": false }),
                 );
             }
             let Some(envelope) = session.queue.front().cloned() else {
@@ -711,6 +738,29 @@ fn queue_companion_operation(
         .lock()
         .map_err(|error| error.to_string())?;
     let session = companion.as_mut().ok_or("iPhone is not paired")?;
+    if !session.online {
+        let superseded =
+            session
+                .queue
+                .iter()
+                .rposition(|envelope| match (&envelope.operation, &operation) {
+                    (CanvasOperation::SetTitle { .. }, CanvasOperation::SetTitle { .. }) => true,
+                    (CanvasOperation::SetViewport { .. }, CanvasOperation::SetViewport { .. }) => {
+                        true
+                    }
+                    (
+                        CanvasOperation::PutObject { object: prior },
+                        CanvasOperation::PutObject { object: next },
+                    ) => prior.get("id") == next.get("id"),
+                    _ => false,
+                });
+        if let Some(index) = superseded {
+            session.queue.remove(index);
+        }
+    }
+    if session.queue.len() >= MAX_COMPANION_QUEUE {
+        return Err("Offline queue is full; reconnect before adding more changes".into());
+    }
     let base_revision = session.revision + session.queue.len() as u64;
     session.queue.push_back(OperationEnvelope {
         protocol_version: PROTOCOL_VERSION.into(),
@@ -723,6 +773,9 @@ fn queue_companion_operation(
         capability: session.capability.clone(),
         operation,
     });
+    for (offset, envelope) in session.queue.iter_mut().enumerate() {
+        envelope.base_revision = session.revision + offset as u64;
+    }
     persist_companion_state(&runtime.companion_state_path, session)?;
     Ok(())
 }
@@ -915,6 +968,27 @@ mod tests {
         let second = random_capability();
         assert_eq!(first.len(), 48);
         assert_ne!(first, second);
+    }
+
+    #[test]
+    fn pairing_offer_is_invalidated_after_bounded_failures() {
+        let directory = std::env::temp_dir().join(format!("draw-pair-limit-{}", Uuid::new_v4()));
+        let runtime = DrawRuntime {
+            state_path: directory.join(STATE_FILE),
+            host: Mutex::new(initial_state()),
+            pending: Mutex::new(HashMap::new()),
+            transport: Mutex::new(None),
+            host_capability: random_capability(),
+            companion_state_path: directory.join(COMPANION_STATE_FILE),
+            companion: Mutex::new(None),
+            companion_flush: tokio::sync::Mutex::new(()),
+        };
+        let offer = pair_begin(&runtime).unwrap();
+        for attempt in 0..MAX_PAIRING_FAILURES {
+            assert!(pair_confirm(&runtime, format!("wrong-{attempt}"), "attacker".into()).is_err());
+        }
+        assert!(pair_confirm(&runtime, offer.code, "iphone".into()).is_err());
+        let _ = fs::remove_dir_all(directory);
     }
 
     #[test]

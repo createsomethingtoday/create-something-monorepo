@@ -552,10 +552,17 @@ mod tests {
         .unwrap();
         let queued = thread.block_on(flush_companion(&runtime)).unwrap();
         assert_eq!(queued["status"], "queued");
-        assert_eq!(queued["queueDepth"], 2);
+        assert_eq!(queued["queueDepth"], 1);
+        assert_eq!(
+            queued["document"]["title"],
+            "Second queued while disconnected"
+        );
         let stored_queue = crate::load_companion_state(&runtime.companion_state_path)
             .expect("offline queue should persist");
-        assert_eq!(stored_queue.queue.len(), 2);
+        assert_eq!(stored_queue.queue.len(), 1);
+        assert!(
+            matches!(stored_queue.queue[0].operation, CanvasOperation::SetTitle { ref title } if title == "Second queued while disconnected")
+        );
         assert_eq!(runtime.host.lock().unwrap().revision, 1);
         let mut concurrent = envelope.clone();
         concurrent.operation_id = "operation-concurrent-host-change".into();
@@ -572,13 +579,13 @@ mod tests {
         let repeated = second_flush.unwrap();
         assert_eq!(synced["status"], "synced");
         assert_eq!(synced["queueDepth"], 0);
-        assert_eq!(synced["revision"], 4);
+        assert_eq!(synced["revision"], 3);
         assert_eq!(
             synced["document"]["title"],
             "Second queued while disconnected"
         );
         assert_eq!(repeated["status"], "synced");
-        assert_eq!(repeated["revision"], 4);
+        assert_eq!(repeated["revision"], 3);
         assert_eq!(
             runtime
                 .companion
@@ -609,7 +616,7 @@ mod tests {
         assert!(thread
             .block_on(remote_snapshot(snapshot_request()))
             .is_err());
-        assert_eq!(runtime.host.lock().unwrap().revision, 4);
+        assert_eq!(runtime.host.lock().unwrap().revision, 3);
         #[cfg(unix)]
         {
             use std::os::unix::fs::PermissionsExt;

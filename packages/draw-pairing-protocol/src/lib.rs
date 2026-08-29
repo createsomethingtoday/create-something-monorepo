@@ -251,6 +251,12 @@ fn valid_object(object: &Value) -> bool {
     {
         return false;
     }
+    if object.get("sourceIds").is_some_and(|value| !value.as_array().is_some_and(|ids| ids.iter().all(|id| id.as_str().is_some_and(non_empty)))) {
+        return false;
+    }
+    if object.get("sourceSnapshot").is_some_and(|value| !value.as_array().is_some_and(|sources| sources.iter().all(valid_object))) {
+        return false;
+    }
     match kind {
         "stroke" => {
             object
@@ -471,7 +477,7 @@ fn remove_and_repair(objects: &mut Vec<Value>, ids: &[String]) {
     }
 }
 
-fn apply_operation(document: &Value, operation: &CanvasOperation, now: &str) -> Option<Value> {
+pub fn apply_canvas_operation(document: &Value, operation: &CanvasOperation, now: &str) -> Option<Value> {
     if !valid_document(document) {
         return None;
     }
@@ -642,7 +648,7 @@ pub fn apply_envelope(
     if envelope.base_revision > state.revision {
         return reject(state, OperationErrorCode::FutureRevision);
     }
-    let Some(document) = apply_operation(&state.document, &envelope.operation, now) else {
+    let Some(document) = apply_canvas_operation(&state.document, &envelope.operation, now) else {
         return reject(state, OperationErrorCode::InvalidOperation);
     };
     let receipt = AppliedOperation {
@@ -897,6 +903,13 @@ mod tests {
             { "id": "note-b", "kind": "note", "text": "B", "x": 20, "y": 20, "width": 200, "height": 100, "createdAt": NOW }
         ]);
         assert!(!valid_document(&cyclic));
+
+        let mut malformed_provenance = state().document;
+        malformed_provenance["objects"] = serde_json::json!([{
+            "id": "note-provenance", "kind": "note", "text": "A", "x": 0, "y": 0,
+            "width": 200, "height": 100, "createdAt": NOW, "sourceSnapshot": {}
+        }]);
+        assert!(!valid_document(&malformed_provenance));
     }
 
     #[test]
