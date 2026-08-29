@@ -6,6 +6,7 @@ use sha2::{Digest, Sha256};
 
 pub const PROTOCOL_VERSION: &str = "create-something.draw-pairing.v1";
 pub const DOCUMENT_VERSION: &str = "create-something.mapping-canvas.v1";
+const MAX_APPLIED_RECEIPTS: usize = 4096;
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -167,17 +168,46 @@ fn non_empty(value: &str) -> bool {
 }
 
 pub fn valid_document(document: &Value) -> bool {
+    let Some(objects) = document.get("objects").and_then(Value::as_array) else {
+        return false;
+    };
+    let Some(viewport) = document.get("viewport").and_then(Value::as_object) else {
+        return false;
+    };
+    let ids: Vec<&str> = objects
+        .iter()
+        .filter_map(|object| object.get("id").and_then(Value::as_str))
+        .collect();
+    let unique_ids = ids.len() == objects.len()
+        && ids.iter().enumerate().all(|(index, id)| !ids[..index].contains(id));
+    let relationships_valid = objects.iter().all(|object| match object.get("kind").and_then(Value::as_str) {
+        Some("connector") => {
+            let from = object.get("fromId").and_then(Value::as_str);
+            let to = object.get("toId").and_then(Value::as_str);
+            from.zip(to).is_some_and(|(from, to)| from != to && ids.contains(&from) && ids.contains(&to))
+        }
+        Some("group") => object.get("childIds").and_then(Value::as_array).is_some_and(|children| {
+            children.iter().all(|child| child.as_str().is_some_and(|id| ids.contains(&id)))
+        }),
+        _ => true,
+    });
     document.get("version").and_then(Value::as_str) == Some(DOCUMENT_VERSION)
         && document
             .get("id")
             .and_then(Value::as_str)
             .is_some_and(non_empty)
         && document.get("title").and_then(Value::as_str).is_some()
-        && document.get("objects").and_then(Value::as_array).is_some()
-        && document
-            .get("viewport")
-            .and_then(Value::as_object)
-            .is_some()
+        && document.get("createdAt").and_then(Value::as_str).is_some_and(non_empty)
+        && document.get("updatedAt").and_then(Value::as_str).is_some_and(non_empty)
+        && ["x", "y", "zoom"].iter().all(|field| viewport.get(*field).and_then(Value::as_f64).is_some_and(f64::is_finite))
+        && viewport.get("zoom").and_then(Value::as_f64).is_some_and(|zoom| zoom > 0.0)
+        && unique_ids
+        && objects.iter().all(valid_object)
+        && relationships_valid
+}
+
+fn valid_point(value: &Value) -> bool {
+    ["x", "y"].iter().all(|field| value.get(*field).and_then(Value::as_f64).is_some_and(f64::is_finite))
 }
 
 fn valid_object(object: &Value) -> bool {
@@ -200,19 +230,22 @@ fn valid_object(object: &Value) -> bool {
             object
                 .get("points")
                 .and_then(Value::as_array)
-                .is_some_and(|points| points.len() > 1)
-                && object.get("color").and_then(Value::as_str).is_some()
+                .is_some_and(|points| points.len() > 1 && points.iter().all(valid_point))
+                && object.get("color").and_then(Value::as_str).is_some_and(non_empty)
                 && object
                     .get("width")
                     .and_then(Value::as_f64)
                     .is_some_and(|width| width > 0.0)
         }
         "rectangle" | "ellipse" | "arrow" => {
-            object.get("from").is_some()
-                && object.get("to").is_some()
-                && object.get("color").and_then(Value::as_str).is_some()
+            object.get("from").is_some_and(valid_point)
+                && object.get("to").is_some_and(valid_point)
+                && object.get("color").and_then(Value::as_str).is_some_and(non_empty)
         }
-        "note" => object.get("text").and_then(Value::as_str).is_some(),
+        "note" => object.get("text").and_then(Value::as_str).is_some()
+            && ["x", "y", "width", "height"].iter().all(|field| object.get(*field).and_then(Value::as_f64).is_some_and(f64::is_finite))
+            && object.get("width").and_then(Value::as_f64).is_some_and(|value| value > 0.0)
+            && object.get("height").and_then(Value::as_f64).is_some_and(|value| value > 0.0),
         "connector" => {
             object
                 .get("fromId")
@@ -227,6 +260,9 @@ fn valid_object(object: &Value) -> bool {
         "group" => {
             object.get("label").and_then(Value::as_str).is_some()
                 && object.get("childIds").and_then(Value::as_array).is_some()
+                && ["x", "y", "width", "height"].iter().all(|field| object.get(*field).and_then(Value::as_f64).is_some_and(f64::is_finite))
+                && object.get("width").and_then(Value::as_f64).is_some_and(|value| value > 0.0)
+                && object.get("height").and_then(Value::as_f64).is_some_and(|value| value > 0.0)
         }
         _ => false,
     }
@@ -594,6 +630,13 @@ pub fn apply_envelope(
     next.revision = receipt.revision;
     next.document = document;
     next.applied.insert(envelope.operation_id, receipt.clone());
+    if next.applied.len() > MAX_APPLIED_RECEIPTS {
+        let mut oldest: Vec<_> = next.applied.values().map(|receipt| (receipt.revision, receipt.operation_id.clone())).collect();
+        oldest.sort();
+        for (_, operation_id) in oldest.into_iter().take(next.applied.len() - MAX_APPLIED_RECEIPTS) {
+            next.applied.remove(&operation_id);
+        }
+    }
     OperationResult::Applied {
         state: next,
         receipt,
@@ -780,5 +823,76 @@ mod tests {
         assert!(!objects
             .iter()
             .any(|object| object.get("id").and_then(Value::as_str) == Some("note-fixture")));
+    }
+
+    #[test]
+    fn rejects_malformed_objects_and_broken_relationships() {
+        let mut malformed = fixture();
+        let CanvasOperation::PutObject { object } = &mut malformed.operation else {
+            panic!("fixture must put an object");
+        };
+        object["points"] = serde_json::json!([{ "x": 10, "y": 10 }]);
+        assert!(matches!(
+            apply_envelope(state(), malformed, NOW),
+            OperationResult::Rejected {
+                code: OperationErrorCode::InvalidEnvelope,
+                ..
+            }
+        ));
+
+        let mut broken = fixture();
+        broken.operation = CanvasOperation::PutObject {
+            object: serde_json::json!({
+                "id": "connector-broken",
+                "kind": "connector",
+                "fromId": "missing-a",
+                "toId": "missing-b",
+                "label": "",
+                "createdAt": NOW
+            }),
+        };
+        assert!(matches!(
+            apply_envelope(state(), broken, NOW),
+            OperationResult::Rejected {
+                code: OperationErrorCode::InvalidOperation,
+                ..
+            }
+        ));
+
+        let mut document = state().document;
+        document["objects"] = serde_json::json!([
+            { "id": "duplicate", "kind": "note", "text": "A", "x": 0, "y": 0, "width": 200, "height": 100, "createdAt": NOW },
+            { "id": "duplicate", "kind": "note", "text": "B", "x": 20, "y": 20, "width": 200, "height": 100, "createdAt": NOW }
+        ]);
+        assert!(!valid_document(&document));
+        document["objects"] = serde_json::json!([]);
+        document["viewport"]["zoom"] = serde_json::json!(0);
+        assert!(!valid_document(&document));
+    }
+
+    #[test]
+    fn bounds_applied_operation_receipts_by_revision() {
+        let mut current = state();
+        for index in 0..=MAX_APPLIED_RECEIPTS {
+            let envelope = OperationEnvelope {
+                operation_id: format!("operation-bounded-{index}"),
+                base_revision: index as u64,
+                operation: CanvasOperation::SetTitle {
+                    title: format!("Title {index}"),
+                },
+                ..fixture()
+            };
+            let OperationResult::Applied { state, .. } = apply_envelope(current, envelope, NOW)
+            else {
+                panic!("operation {index} should apply");
+            };
+            current = state;
+        }
+        assert_eq!(current.revision, (MAX_APPLIED_RECEIPTS + 1) as u64);
+        assert_eq!(current.applied.len(), MAX_APPLIED_RECEIPTS);
+        assert!(!current.applied.contains_key("operation-bounded-0"));
+        assert!(current
+            .applied
+            .contains_key(&format!("operation-bounded-{MAX_APPLIED_RECEIPTS}")));
     }
 }

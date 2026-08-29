@@ -40,6 +40,7 @@ pub(crate) struct DrawRuntime {
     host_capability: String,
     companion_state_path: PathBuf,
     companion: Mutex<Option<CompanionSession>>,
+    companion_flush: tokio::sync::Mutex<()>,
 }
 
 struct CompanionSession {
@@ -61,6 +62,17 @@ struct StoredCompanionSession {
     expires_at: String,
     revision: u64,
     document: Value,
+    #[serde(default)]
+    queue: VecDeque<StoredQueuedOperation>,
+}
+
+#[derive(serde::Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct StoredQueuedOperation {
+    operation_id: String,
+    base_revision: u64,
+    sent_at: String,
+    operation: CanvasOperation,
 }
 
 #[derive(serde::Deserialize, Serialize)]
@@ -148,6 +160,16 @@ fn persist_companion_state(path: &Path, session: &CompanionSession) -> Result<()
         expires_at: session.expires_at.clone(),
         revision: session.revision,
         document: session.document.clone(),
+        queue: session
+            .queue
+            .iter()
+            .map(|envelope| StoredQueuedOperation {
+                operation_id: envelope.operation_id.clone(),
+                base_revision: envelope.base_revision,
+                sent_at: envelope.sent_at.clone(),
+                operation: envelope.operation.clone(),
+            })
+            .collect(),
     };
     let parent = path.parent().ok_or("Companion state path has no parent")?;
     fs::create_dir_all(parent).map_err(|error| error.to_string())?;
@@ -188,6 +210,19 @@ fn load_companion_capability() -> Option<String> {
         .and_then(|bytes| String::from_utf8(bytes).ok())
 }
 
+#[cfg(any(target_os = "macos", target_os = "ios"))]
+fn delete_companion_capability() -> Result<(), String> {
+    security_framework::passwords::delete_generic_password(KEYCHAIN_SERVICE, KEYCHAIN_ACCOUNT)
+        .or_else(|error| {
+            if error.code() == -25300 {
+                Ok(())
+            } else {
+                Err(error)
+            }
+        })
+        .map_err(|error| error.to_string())
+}
+
 #[cfg(not(any(target_os = "macos", target_os = "ios")))]
 fn store_companion_capability(_capability: &str) -> Result<(), String> {
     Err("Apple Keychain is unavailable".into())
@@ -198,6 +233,11 @@ fn load_companion_capability() -> Option<String> {
     None
 }
 
+#[cfg(not(any(target_os = "macos", target_os = "ios")))]
+fn delete_companion_capability() -> Result<(), String> {
+    Ok(())
+}
+
 fn restore_companion(path: &Path) -> Option<CompanionSession> {
     let stored = load_companion_state(path)?;
     let expires_at = OffsetDateTime::parse(&stored.expires_at, &Rfc3339).ok()?;
@@ -205,14 +245,31 @@ fn restore_companion(path: &Path) -> Option<CompanionSession> {
         return None;
     }
     let capability = load_companion_capability()?;
+    let host = stored.host;
+    let client_id = stored.client_id;
+    let queue = stored
+        .queue
+        .into_iter()
+        .map(|queued| OperationEnvelope {
+            protocol_version: PROTOCOL_VERSION.into(),
+            document_version: DOCUMENT_VERSION.into(),
+            session_id: host.session_id.clone(),
+            client_id: client_id.clone(),
+            operation_id: queued.operation_id,
+            base_revision: queued.base_revision,
+            sent_at: queued.sent_at,
+            capability: capability.clone(),
+            operation: queued.operation,
+        })
+        .collect();
     Some(CompanionSession {
-        host: stored.host,
-        client_id: stored.client_id,
+        host,
+        client_id,
         capability,
         expires_at: stored.expires_at,
         revision: stored.revision,
         document: stored.document,
-        queue: VecDeque::new(),
+        queue,
         online: true,
     })
 }
@@ -531,8 +588,9 @@ fn draw_host_replace_document(
 }
 
 async fn flush_companion(runtime: &DrawRuntime) -> Result<Value, String> {
+    let _flush_guard = runtime.companion_flush.lock().await;
     loop {
-        let request = {
+        let (request, expected_operation_id) = {
             let companion = runtime
                 .companion
                 .lock()
@@ -550,12 +608,16 @@ async fn flush_companion(runtime: &DrawRuntime) -> Result<Value, String> {
                     json!({ "status": "synced", "queueDepth": 0, "revision": session.revision, "document": session.document }),
                 );
             };
-            transport::RemoteOperationRequest {
-                endpoint: session.host.endpoint.clone(),
-                certificate_der: session.host.certificate_der.clone(),
-                certificate_fingerprint: session.host.certificate_fingerprint.clone(),
-                envelope,
-            }
+            let expected_operation_id = envelope.operation_id.clone();
+            (
+                transport::RemoteOperationRequest {
+                    endpoint: session.host.endpoint.clone(),
+                    certificate_der: session.host.certificate_der.clone(),
+                    certificate_fingerprint: session.host.certificate_fingerprint.clone(),
+                    envelope,
+                },
+                expected_operation_id,
+            )
         };
         let result = match transport::remote_submit(request).await {
             Ok(result) => result,
@@ -577,7 +639,16 @@ async fn flush_companion(runtime: &DrawRuntime) -> Result<Value, String> {
                     .as_u64()
                     .ok_or("Host response omitted revision")?;
                 session.document = result["document"].clone();
-                session.queue.pop_front();
+                if session
+                    .queue
+                    .front()
+                    .map(|queued| queued.operation_id.as_str())
+                    == Some(expected_operation_id.as_str())
+                {
+                    session.queue.pop_front();
+                } else {
+                    return Err("Companion queue changed while an operation was in flight".into());
+                }
                 persist_companion_state(&runtime.companion_state_path, session)?;
                 None
             } else if matches!(
@@ -641,6 +712,7 @@ fn queue_companion_operation(
         capability: session.capability.clone(),
         operation,
     });
+    persist_companion_state(&runtime.companion_state_path, session)?;
     Ok(())
 }
 
@@ -664,12 +736,26 @@ async fn draw_companion_set_online(
             .lock()
             .map_err(|error| error.to_string())?;
         companion.as_mut().ok_or("iPhone is not paired")?.online = online;
+        if let Some(session) = companion.as_ref() {
+            persist_companion_state(&runtime.companion_state_path, session)?;
+        }
     }
     if online {
         flush_companion(&runtime).await
     } else {
         draw_companion_status(runtime)
     }
+}
+
+#[tauri::command]
+fn draw_companion_forget(runtime: tauri::State<'_, Arc<DrawRuntime>>) -> Result<Value, String> {
+    *runtime
+        .companion
+        .lock()
+        .map_err(|error| error.to_string())? = None;
+    let _ = fs::remove_file(&runtime.companion_state_path);
+    delete_companion_capability()?;
+    Ok(json!({ "status": "unpaired" }))
 }
 
 #[tauri::command]
@@ -762,6 +848,7 @@ pub fn run() {
                 host_capability,
                 companion: Mutex::new(restore_companion(&companion_state_path)),
                 companion_state_path,
+                companion_flush: tokio::sync::Mutex::new(()),
             });
             #[cfg(desktop)]
             transport::start(runtime.clone(), &home).map_err(std::io::Error::other)?;
@@ -778,6 +865,7 @@ pub fn run() {
             draw_companion_submit,
             draw_companion_set_online,
             draw_companion_refresh,
+            draw_companion_forget,
             draw_pair_begin,
             draw_revoke_client,
             draw_discover_hosts
@@ -822,6 +910,20 @@ mod tests {
     fn companion_metadata_excludes_the_keychain_capability() {
         let directory = std::env::temp_dir().join(format!("draw-companion-{}", Uuid::new_v4()));
         let path = directory.join(COMPANION_STATE_FILE);
+        let mut queue = VecDeque::new();
+        queue.push_back(OperationEnvelope {
+            protocol_version: PROTOCOL_VERSION.into(),
+            document_version: DOCUMENT_VERSION.into(),
+            session_id: "session-test".into(),
+            client_id: "iphone-test".into(),
+            operation_id: "operation-persisted-offline".into(),
+            base_revision: 3,
+            sent_at: "2026-08-29T16:00:00Z".into(),
+            capability: "never-write-this-secret".into(),
+            operation: CanvasOperation::SetTitle {
+                title: "Durable queued action".into(),
+            },
+        });
         let session = CompanionSession {
             host: transport::DiscoveredHost {
                 endpoint: "https://draw-mac.local:4242".into(),
@@ -835,13 +937,21 @@ mod tests {
             expires_at: "2099-01-01T00:00:00Z".into(),
             revision: 3,
             document: initial_state().document,
-            queue: VecDeque::new(),
+            queue,
             online: true,
         };
         persist_companion_state(&path, &session).unwrap();
         let source = fs::read_to_string(&path).unwrap();
         assert!(!source.contains("never-write-this-secret"));
-        assert_eq!(load_companion_state(&path).unwrap().revision, 3);
+        assert!(source.contains("operation-persisted-offline"));
+        assert!(source.contains("Durable queued action"));
+        let restored = load_companion_state(&path).unwrap();
+        assert_eq!(restored.revision, 3);
+        assert_eq!(restored.queue.len(), 1);
+        assert_eq!(
+            restored.queue[0].operation_id,
+            "operation-persisted-offline"
+        );
         let _ = fs::remove_dir_all(directory);
     }
 
@@ -860,6 +970,7 @@ mod tests {
             host_capability: random_capability(),
             companion_state_path,
             companion: Mutex::new(None),
+            companion_flush: tokio::sync::Mutex::new(()),
         };
         assert!(replace_host_document(
             &runtime,

@@ -52,4 +52,5 @@ export const replaceHostDocument = (document: CanvasDocument, reason: 'undo' | '
   invokeNative<NativeSessionStatus>('draw_host_replace_document', { document, reason });
 export const setCompanionOnline = (online: boolean) => invokeNative<NativeSessionStatus>('draw_companion_set_online', { online });
 export const refreshCompanion = () => invokeNative<NativeSessionStatus>('draw_companion_refresh');
+export const forgetCompanion = () => invokeNative<NativeSessionStatus>('draw_companion_forget');
 export const revokeCompanion = (clientId: string) => invokeNative<NativeSessionStatus>('draw_revoke_client', { clientId });

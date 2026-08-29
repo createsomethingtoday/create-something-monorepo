@@ -452,6 +452,7 @@ mod tests {
             host_capability: "test-host-capability".into(),
             companion_state_path: home.join("companion-session.json"),
             companion: Mutex::new(None),
+            companion_flush: tokio::sync::Mutex::new(()),
         });
         crate::persist_state(&state_path, &runtime.host.lock().unwrap()).unwrap();
         start(runtime.clone(), &home).unwrap();
@@ -538,13 +539,23 @@ mod tests {
         queue_companion_operation(
             &runtime,
             CanvasOperation::SetTitle {
-                title: "Queued while disconnected".into(),
+                title: "First queued while disconnected".into(),
+            },
+        )
+        .unwrap();
+        queue_companion_operation(
+            &runtime,
+            CanvasOperation::SetTitle {
+                title: "Second queued while disconnected".into(),
             },
         )
         .unwrap();
         let queued = thread.block_on(flush_companion(&runtime)).unwrap();
         assert_eq!(queued["status"], "queued");
-        assert_eq!(queued["queueDepth"], 1);
+        assert_eq!(queued["queueDepth"], 2);
+        let stored_queue = crate::load_companion_state(&runtime.companion_state_path)
+            .expect("offline queue should persist");
+        assert_eq!(stored_queue.queue.len(), 2);
         assert_eq!(runtime.host.lock().unwrap().revision, 1);
         let mut concurrent = envelope.clone();
         concurrent.operation_id = "operation-concurrent-host-change".into();
@@ -555,11 +566,37 @@ mod tests {
         let concurrent_result = thread.block_on(remote_submit(submit(concurrent))).unwrap();
         assert_eq!(concurrent_result["revision"], 2);
         runtime.companion.lock().unwrap().as_mut().unwrap().online = true;
-        let synced = thread.block_on(flush_companion(&runtime)).unwrap();
+        let (first_flush, second_flush) = thread
+            .block_on(async { tokio::join!(flush_companion(&runtime), flush_companion(&runtime)) });
+        let synced = first_flush.unwrap();
+        let repeated = second_flush.unwrap();
         assert_eq!(synced["status"], "synced");
         assert_eq!(synced["queueDepth"], 0);
-        assert_eq!(synced["revision"], 3);
-        assert_eq!(synced["document"]["title"], "Queued while disconnected");
+        assert_eq!(synced["revision"], 4);
+        assert_eq!(
+            synced["document"]["title"],
+            "Second queued while disconnected"
+        );
+        assert_eq!(repeated["status"], "synced");
+        assert_eq!(repeated["revision"], 4);
+        assert_eq!(
+            runtime
+                .companion
+                .lock()
+                .unwrap()
+                .as_ref()
+                .unwrap()
+                .queue
+                .len(),
+            0
+        );
+        assert_eq!(
+            crate::load_companion_state(&runtime.companion_state_path)
+                .unwrap()
+                .queue
+                .len(),
+            0
+        );
         revoke_client(&runtime, "integration-iphone".into()).unwrap();
         let mut after_revoke = envelope;
         after_revoke.operation_id = "operation-after-revoke".into();
@@ -572,7 +609,7 @@ mod tests {
         assert!(thread
             .block_on(remote_snapshot(snapshot_request()))
             .is_err());
-        assert_eq!(runtime.host.lock().unwrap().revision, 3);
+        assert_eq!(runtime.host.lock().unwrap().revision, 4);
         #[cfg(unix)]
         {
             use std::os::unix::fs::PermissionsExt;

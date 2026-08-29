@@ -33,8 +33,13 @@ async function nativePage(role, viewport) {
         if (command === 'draw_pair_begin') return { code: '271828', expiresAt: '2099-01-01T00:00:00Z' };
         if (command === 'draw_discover_hosts') return [{ endpoint: 'https://draw-mac.local:4242', sessionId: 'session-native', protocolVersion: 'create-something.draw-pairing.v1', certificateFingerprint: 'abcdef0123456789'.repeat(4), certificateDer: 'fixture-certificate' }];
         if (command === 'draw_companion_pair') return { status: 'paired', sessionId: 'session-native', revision, document, certificateFingerprint: 'abcdef0123456789'.repeat(4), queueDepth: 0, online };
-        if (command === 'draw_companion_set_online') { online = args.online; return { status: online ? 'synced' : 'paired', revision, document, queueDepth: online ? 0 : 1, online }; }
+        if (command === 'draw_companion_set_online') {
+          online = args.online;
+          if (online) document = { ...document, title: 'Mac authoritative reconciliation' };
+          return { status: online ? 'synced' : 'paired', revision, document, queueDepth: online ? 0 : 1, online };
+        }
         if (command === 'draw_companion_refresh') return { status: 'paired', sessionId: 'session-native', revision, document, queueDepth: 0, online, certificateFingerprint: 'abcdef0123456789'.repeat(4) };
+        if (command === 'draw_companion_forget') return { status: 'unpaired' };
         if (command === 'draw_host_apply_local' || command === 'draw_companion_submit') {
           revision += 1;
           const operation = args.operation;
@@ -42,6 +47,11 @@ async function nativePage(role, viewport) {
           if (operation.type === 'set_title') document = { ...document, title: operation.title };
           if (operation.type === 'set_viewport') document = { ...document, viewport: operation.viewport };
           if (operation.type === 'remove_objects') document = { ...document, objects: document.objects.filter((item) => !operation.ids.includes(item.id)) };
+          if (operation.type === 'convert') {
+            const sourceSnapshot = document.objects.filter((item) => operation.selectedIds.includes(item.id));
+            const retained = document.objects.filter((item) => !operation.selectedIds.includes(item.id));
+            document = { ...document, objects: [...retained, { id: operation.resultId, kind: 'note', text: 'New thought', x: 100, y: 100, width: 260, height: 140, createdAt: operation.createdAt, sourceIds: operation.selectedIds, sourceSnapshot }] };
+          }
           return online ? { status: 'applied', revision, document, queueDepth: 0, online } : { status: 'queued', revision: revision - 1, queueDepth: 1, online };
         }
         if (command === 'draw_revoke_client') return { status: 'revoked' };
@@ -63,6 +73,7 @@ try {
   await host.page.getByRole('button', { name: 'Open device pairing' }).click();
   await host.page.getByText('271828').waitFor();
   if (!(await host.page.getByText(/Both devices must be on the same local network/).isVisible())) throw new Error('Mac pairing guidance is unavailable');
+  if (!(await host.page.getByText(/Mac fingerprint aaaaaaaaaaaaaaaa/).isVisible())) throw new Error('Mac pairing fingerprint is unavailable beside the code');
   await host.page.screenshot({ path: `${outputRoot}mac-pairing.png`, fullPage: true });
   if (host.errors.length) throw new Error(`Mac native-shell errors: ${host.errors.join(' | ')}`);
   await host.context.close();
@@ -74,6 +85,9 @@ try {
   await page.getByLabel('Pairing code').fill('271828');
   await page.getByRole('button', { name: 'Pair securely' }).click();
   await page.getByText('Paired securely with Mac over local Wi-Fi').waitFor();
+  for (const action of ['Import', 'Reset']) {
+    if (await page.getByRole('button', { name: action, exact: true }).count()) throw new Error(`${action} must not be exposed on the companion`);
+  }
 
   const surface = page.locator('svg');
   const box = await surface.boundingBox();
@@ -110,11 +124,18 @@ try {
   await page.getByText(/action queued/).waitFor();
   await page.getByRole('button', { name: 'Open device pairing' }).click();
   await page.getByRole('button', { name: 'Reconnect' }).click();
+  await page.getByLabel('Canvas title').waitFor();
+  if (await page.getByLabel('Canvas title').inputValue() !== 'Mac authoritative reconciliation') throw new Error('Reconciliation did not install the Mac-authoritative document');
+
+  await page.getByRole('button', { name: 'Forget and re-pair' }).click();
+  await page.getByRole('button', { name: 'Open device pairing' }).click();
+  await page.getByText(/Confirm the Mac fingerprint/).waitFor();
 
   const calls = await page.evaluate(() => window.__nativeCalls);
   const operations = calls.filter(({ command }) => command === 'draw_companion_submit').map(({ args }) => args.operation.type);
   for (const required of ['put_object', 'convert']) if (!operations.includes(required)) throw new Error(`iPhone native bridge omitted ${required}`);
   if (!calls.some(({ command, args }) => command === 'draw_companion_set_online' && args.online === false) || !calls.some(({ command, args }) => command === 'draw_companion_set_online' && args.online === true)) throw new Error('Offline/reconnect bridge was not exercised');
+  if (!calls.some(({ command }) => command === 'draw_companion_forget')) throw new Error('Forget and re-pair bridge was not exercised');
   await page.screenshot({ path: `${outputRoot}iphone-paired.png`, fullPage: true });
   if (phone.errors.length) throw new Error(`iPhone native-shell errors: ${phone.errors.join(' | ')}`);
   await phone.context.close();
