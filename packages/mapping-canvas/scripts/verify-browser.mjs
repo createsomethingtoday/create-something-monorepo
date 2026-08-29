@@ -88,6 +88,10 @@ try {
   await page.mouse.click(box.x + 780, box.y + 440);
   const notes = page.locator('g[aria-label^="Note:"]');
   if (await notes.count() !== 2) throw new Error('Two spatial notes were not created');
+  const noteEditor = page.locator('textarea[aria-label="Edit note"]').first();
+  await noteEditor.fill('MCP');
+  await noteEditor.pressSequentially(' tools');
+  if (await noteEditor.inputValue() !== 'MCP tools') throw new Error('Note editing did not preserve typed spaces');
   await notes.nth(0).focus();
   await notes.nth(0).press('Enter');
   await notes.nth(1).focus();
