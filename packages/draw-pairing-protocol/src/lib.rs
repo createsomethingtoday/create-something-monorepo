@@ -179,28 +179,55 @@ pub fn valid_document(document: &Value) -> bool {
         .filter_map(|object| object.get("id").and_then(Value::as_str))
         .collect();
     let unique_ids = ids.len() == objects.len()
-        && ids.iter().enumerate().all(|(index, id)| !ids[..index].contains(id));
-    let relationships_valid = objects.iter().all(|object| match object.get("kind").and_then(Value::as_str) {
-        Some("connector") => {
-            let from = object.get("fromId").and_then(Value::as_str);
-            let to = object.get("toId").and_then(Value::as_str);
-            from.zip(to).is_some_and(|(from, to)| from != to && ids.contains(&from) && ids.contains(&to))
-        }
-        Some("group") => object.get("childIds").and_then(Value::as_array).is_some_and(|children| {
-            children.iter().all(|child| child.as_str().is_some_and(|id| ids.contains(&id)))
-        }),
-        _ => true,
-    });
+        && ids
+            .iter()
+            .enumerate()
+            .all(|(index, id)| !ids[..index].contains(id));
+    let relationships_valid =
+        objects
+            .iter()
+            .all(|object| match object.get("kind").and_then(Value::as_str) {
+                Some("connector") => {
+                    let from = object.get("fromId").and_then(Value::as_str);
+                    let to = object.get("toId").and_then(Value::as_str);
+                    from.zip(to).is_some_and(|(from, to)| {
+                        from != to && ids.contains(&from) && ids.contains(&to)
+                    })
+                }
+                Some("group") => object
+                    .get("childIds")
+                    .and_then(Value::as_array)
+                    .is_some_and(|children| {
+                        children
+                            .iter()
+                            .all(|child| child.as_str().is_some_and(|id| ids.contains(&id)))
+                    }),
+                _ => true,
+            });
     document.get("version").and_then(Value::as_str) == Some(DOCUMENT_VERSION)
         && document
             .get("id")
             .and_then(Value::as_str)
             .is_some_and(non_empty)
         && document.get("title").and_then(Value::as_str).is_some()
-        && document.get("createdAt").and_then(Value::as_str).is_some_and(non_empty)
-        && document.get("updatedAt").and_then(Value::as_str).is_some_and(non_empty)
-        && ["x", "y", "zoom"].iter().all(|field| viewport.get(*field).and_then(Value::as_f64).is_some_and(f64::is_finite))
-        && viewport.get("zoom").and_then(Value::as_f64).is_some_and(|zoom| zoom > 0.0)
+        && document
+            .get("createdAt")
+            .and_then(Value::as_str)
+            .is_some_and(non_empty)
+        && document
+            .get("updatedAt")
+            .and_then(Value::as_str)
+            .is_some_and(non_empty)
+        && ["x", "y", "zoom"].iter().all(|field| {
+            viewport
+                .get(*field)
+                .and_then(Value::as_f64)
+                .is_some_and(f64::is_finite)
+        })
+        && viewport
+            .get("zoom")
+            .and_then(Value::as_f64)
+            .is_some_and(|zoom| zoom > 0.0)
         && unique_ids
         && objects.iter().all(valid_object)
         && relationships_valid
@@ -208,32 +235,71 @@ pub fn valid_document(document: &Value) -> bool {
 }
 
 fn has_connector_cycle(objects: &[Value]) -> bool {
-    fn visit(id: &str, objects: &[Value], visiting: &mut HashSet<String>, visited: &mut HashSet<String>) -> bool {
-        if visited.contains(id) { return false; }
-        let Some(object) = objects.iter().find(|object| object.get("id").and_then(Value::as_str) == Some(id)) else { return false; };
-        if object.get("kind").and_then(Value::as_str) != Some("connector") { return false; }
-        if !visiting.insert(id.to_owned()) { return true; }
-        let cyclic = ["fromId", "toId"].iter().any(|field| object.get(*field).and_then(Value::as_str).is_some_and(|endpoint| visit(endpoint, objects, visiting, visited)));
+    fn visit(
+        id: &str,
+        objects: &[Value],
+        visiting: &mut HashSet<String>,
+        visited: &mut HashSet<String>,
+    ) -> bool {
+        if visited.contains(id) {
+            return false;
+        }
+        let Some(object) = objects
+            .iter()
+            .find(|object| object.get("id").and_then(Value::as_str) == Some(id))
+        else {
+            return false;
+        };
+        if object.get("kind").and_then(Value::as_str) != Some("connector") {
+            return false;
+        }
+        if !visiting.insert(id.to_owned()) {
+            return true;
+        }
+        let cyclic = ["fromId", "toId"].iter().any(|field| {
+            object
+                .get(*field)
+                .and_then(Value::as_str)
+                .is_some_and(|endpoint| visit(endpoint, objects, visiting, visited))
+        });
         visiting.remove(id);
         visited.insert(id.to_owned());
         cyclic
     }
     let mut visiting = HashSet::new();
     let mut visited = HashSet::new();
-    objects.iter().any(|object| object.get("id").and_then(Value::as_str).is_some_and(|id| visit(id, objects, &mut visiting, &mut visited)))
+    objects.iter().any(|object| {
+        object
+            .get("id")
+            .and_then(Value::as_str)
+            .is_some_and(|id| visit(id, objects, &mut visiting, &mut visited))
+    })
 }
 
 pub fn prune_applied_receipts(applied: &mut BTreeMap<String, AppliedOperation>) {
-    if applied.len() <= MAX_APPLIED_RECEIPTS { return; }
-    let mut oldest: Vec<_> = applied.values().map(|receipt| (receipt.revision, receipt.operation_id.clone())).collect();
+    if applied.len() <= MAX_APPLIED_RECEIPTS {
+        return;
+    }
+    let mut oldest: Vec<_> = applied
+        .values()
+        .map(|receipt| (receipt.revision, receipt.operation_id.clone()))
+        .collect();
     oldest.sort();
-    for (_, operation_id) in oldest.into_iter().take(applied.len() - MAX_APPLIED_RECEIPTS) {
+    for (_, operation_id) in oldest
+        .into_iter()
+        .take(applied.len() - MAX_APPLIED_RECEIPTS)
+    {
         applied.remove(&operation_id);
     }
 }
 
 fn valid_point(value: &Value) -> bool {
-    ["x", "y"].iter().all(|field| value.get(*field).and_then(Value::as_f64).is_some_and(f64::is_finite))
+    ["x", "y"].iter().all(|field| {
+        value
+            .get(*field)
+            .and_then(Value::as_f64)
+            .is_some_and(f64::is_finite)
+    })
 }
 
 fn valid_object(object: &Value) -> bool {
@@ -251,10 +317,18 @@ fn valid_object(object: &Value) -> bool {
     {
         return false;
     }
-    if object.get("sourceIds").is_some_and(|value| !value.as_array().is_some_and(|ids| ids.iter().all(|id| id.as_str().is_some_and(non_empty)))) {
+    if object.get("sourceIds").is_some_and(|value| {
+        !value
+            .as_array()
+            .is_some_and(|ids| ids.iter().all(|id| id.as_str().is_some_and(non_empty)))
+    }) {
         return false;
     }
-    if object.get("sourceSnapshot").is_some_and(|value| !value.as_array().is_some_and(|sources| sources.iter().all(valid_object))) {
+    if object.get("sourceSnapshot").is_some_and(|value| {
+        !value
+            .as_array()
+            .is_some_and(|sources| valid_object_set(sources))
+    }) {
         return false;
     }
     match kind {
@@ -263,7 +337,10 @@ fn valid_object(object: &Value) -> bool {
                 .get("points")
                 .and_then(Value::as_array)
                 .is_some_and(|points| points.len() > 1 && points.iter().all(valid_point))
-                && object.get("color").and_then(Value::as_str).is_some_and(non_empty)
+                && object
+                    .get("color")
+                    .and_then(Value::as_str)
+                    .is_some_and(non_empty)
                 && object
                     .get("width")
                     .and_then(Value::as_f64)
@@ -272,12 +349,28 @@ fn valid_object(object: &Value) -> bool {
         "rectangle" | "ellipse" | "arrow" => {
             object.get("from").is_some_and(valid_point)
                 && object.get("to").is_some_and(valid_point)
-                && object.get("color").and_then(Value::as_str).is_some_and(non_empty)
+                && object
+                    .get("color")
+                    .and_then(Value::as_str)
+                    .is_some_and(non_empty)
         }
-        "note" => object.get("text").and_then(Value::as_str).is_some()
-            && ["x", "y", "width", "height"].iter().all(|field| object.get(*field).and_then(Value::as_f64).is_some_and(f64::is_finite))
-            && object.get("width").and_then(Value::as_f64).is_some_and(|value| value > 0.0)
-            && object.get("height").and_then(Value::as_f64).is_some_and(|value| value > 0.0),
+        "note" => {
+            object.get("text").and_then(Value::as_str).is_some()
+                && ["x", "y", "width", "height"].iter().all(|field| {
+                    object
+                        .get(*field)
+                        .and_then(Value::as_f64)
+                        .is_some_and(f64::is_finite)
+                })
+                && object
+                    .get("width")
+                    .and_then(Value::as_f64)
+                    .is_some_and(|value| value > 0.0)
+                && object
+                    .get("height")
+                    .and_then(Value::as_f64)
+                    .is_some_and(|value| value > 0.0)
+        }
         "connector" => {
             object
                 .get("fromId")
@@ -292,12 +385,60 @@ fn valid_object(object: &Value) -> bool {
         "group" => {
             object.get("label").and_then(Value::as_str).is_some()
                 && object.get("childIds").and_then(Value::as_array).is_some()
-                && ["x", "y", "width", "height"].iter().all(|field| object.get(*field).and_then(Value::as_f64).is_some_and(f64::is_finite))
-                && object.get("width").and_then(Value::as_f64).is_some_and(|value| value > 0.0)
-                && object.get("height").and_then(Value::as_f64).is_some_and(|value| value > 0.0)
+                && ["x", "y", "width", "height"].iter().all(|field| {
+                    object
+                        .get(*field)
+                        .and_then(Value::as_f64)
+                        .is_some_and(f64::is_finite)
+                })
+                && object
+                    .get("width")
+                    .and_then(Value::as_f64)
+                    .is_some_and(|value| value > 0.0)
+                && object
+                    .get("height")
+                    .and_then(Value::as_f64)
+                    .is_some_and(|value| value > 0.0)
         }
         _ => false,
     }
+}
+
+fn valid_object_set(objects: &[Value]) -> bool {
+    let ids: Vec<&str> = objects
+        .iter()
+        .filter_map(|object| object.get("id").and_then(Value::as_str))
+        .collect();
+    let unique_ids = ids.len() == objects.len()
+        && ids
+            .iter()
+            .enumerate()
+            .all(|(index, id)| !ids[..index].contains(id));
+    let relationships_valid =
+        objects
+            .iter()
+            .all(|object| match object.get("kind").and_then(Value::as_str) {
+                Some("connector") => {
+                    let from = object.get("fromId").and_then(Value::as_str);
+                    let to = object.get("toId").and_then(Value::as_str);
+                    from.zip(to).is_some_and(|(from, to)| {
+                        from != to && ids.contains(&from) && ids.contains(&to)
+                    })
+                }
+                Some("group") => object
+                    .get("childIds")
+                    .and_then(Value::as_array)
+                    .is_some_and(|children| {
+                        children
+                            .iter()
+                            .all(|child| child.as_str().is_some_and(|id| ids.contains(&id)))
+                    }),
+                _ => true,
+            });
+    unique_ids
+        && objects.iter().all(valid_object)
+        && relationships_valid
+        && !has_connector_cycle(objects)
 }
 
 fn validate_envelope(envelope: &OperationEnvelope) -> bool {
@@ -477,7 +618,11 @@ fn remove_and_repair(objects: &mut Vec<Value>, ids: &[String]) {
     }
 }
 
-pub fn apply_canvas_operation(document: &Value, operation: &CanvasOperation, now: &str) -> Option<Value> {
+pub fn apply_canvas_operation(
+    document: &Value,
+    operation: &CanvasOperation,
+    now: &str,
+) -> Option<Value> {
     if !valid_document(document) {
         return None;
     }
@@ -908,6 +1053,17 @@ mod tests {
         malformed_provenance["objects"] = serde_json::json!([{
             "id": "note-provenance", "kind": "note", "text": "A", "x": 0, "y": 0,
             "width": 200, "height": 100, "createdAt": NOW, "sourceSnapshot": {}
+        }]);
+        assert!(!valid_document(&malformed_provenance));
+
+        malformed_provenance["objects"] = serde_json::json!([{
+            "id": "note-provenance", "kind": "note", "text": "A", "x": 0, "y": 0,
+            "width": 200, "height": 100, "createdAt": NOW,
+            "sourceIds": ["duplicate"],
+            "sourceSnapshot": [
+                { "id": "duplicate", "kind": "note", "text": "Before", "x": 0, "y": 0, "width": 200, "height": 100, "createdAt": NOW },
+                { "id": "duplicate", "kind": "note", "text": "After", "x": 20, "y": 20, "width": 200, "height": 100, "createdAt": NOW }
+            ]
         }]);
         assert!(!valid_document(&malformed_provenance));
     }
