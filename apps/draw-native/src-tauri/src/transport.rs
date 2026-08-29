@@ -26,6 +26,8 @@ use crate::{apply_operation, authorized_snapshot, host_status, DrawRuntime};
 const SERVICE_TYPE: &str = "_csdraw._tcp.local.";
 const CERT_FILE: &str = "pairing-cert.pem";
 const KEY_FILE: &str = "pairing-key.pem";
+const HOST_ID_FILE: &str = "pairing-host-id";
+const CERT_IDENTITY_FILE: &str = "pairing-cert-identity";
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -131,15 +133,38 @@ async fn snapshot(
         .map_err(|error| api_error(StatusCode::UNAUTHORIZED, error))
 }
 
-fn certificate_material(home: &Path) -> Result<(Vec<u8>, Vec<u8>, String), String> {
+fn host_identity(home: &Path) -> Result<String, String> {
+    let path = home.join(HOST_ID_FILE);
+    if let Ok(value) = fs::read_to_string(&path) {
+        let value = value.trim();
+        if !value.is_empty()
+            && value.len() <= 32
+            && value
+                .chars()
+                .all(|character| character.is_ascii_lowercase() || character.is_ascii_digit())
+        {
+            return Ok(value.to_string());
+        }
+        return Err("Persisted Draw host identity is invalid".into());
+    }
+    fs::create_dir_all(home).map_err(|error| error.to_string())?;
+    let identity = uuid::Uuid::new_v4().simple().to_string()[..12].to_string();
+    fs::write(&path, format!("{identity}\n")).map_err(|error| error.to_string())?;
+    Ok(identity)
+}
+
+fn certificate_material(home: &Path, hostname: &str) -> Result<(Vec<u8>, Vec<u8>, String), String> {
     let cert_path = home.join(CERT_FILE);
     let key_path = home.join(KEY_FILE);
-    let (cert, key) = match (fs::read(&cert_path), fs::read(&key_path)) {
-        (Ok(cert), Ok(key)) => (cert, key),
+    let identity_path = home.join(CERT_IDENTITY_FILE);
+    let reusable =
+        fs::read_to_string(&identity_path).is_ok_and(|identity| identity.trim() == hostname);
+    let (cert, key) = match (reusable, fs::read(&cert_path), fs::read(&key_path)) {
+        (true, Ok(cert), Ok(key)) => (cert, key),
         _ => {
             fs::create_dir_all(home).map_err(|error| error.to_string())?;
             let CertifiedKey { cert, signing_key } = generate_simple_self_signed(vec![
-                "create-something-draw.local".into(),
+                hostname.trim_end_matches('.').into(),
                 "localhost".into(),
             ])
             .map_err(|error| error.to_string())?;
@@ -147,6 +172,8 @@ fn certificate_material(home: &Path) -> Result<(Vec<u8>, Vec<u8>, String), Strin
             let key = signing_key.serialize_pem().into_bytes();
             fs::write(&cert_path, &cert).map_err(|error| error.to_string())?;
             fs::write(&key_path, &key).map_err(|error| error.to_string())?;
+            fs::write(&identity_path, format!("{hostname}\n"))
+                .map_err(|error| error.to_string())?;
             (cert, key)
         }
     };
@@ -173,6 +200,8 @@ fn advertise(
     certificate_der: &[u8],
     fingerprint: &str,
     session_id: &str,
+    instance_name: &str,
+    hostname: &str,
 ) -> Result<ServiceDaemon, String> {
     let daemon = ServiceDaemon::new().map_err(|error| error.to_string())?;
     let encoded_certificate = BASE64.encode(certificate_der);
@@ -197,8 +226,8 @@ fn advertise(
     }
     let service = ServiceInfo::new(
         SERVICE_TYPE,
-        "CREATE SOMETHING Draw",
-        "create-something-draw.local.",
+        instance_name,
+        hostname,
         address,
         port,
         properties.as_slice(),
@@ -221,7 +250,10 @@ pub(crate) fn start(runtime: Arc<DrawRuntime>, home: &Path) -> Result<(), String
         .map_err(|error| error.to_string())?
         .port();
     let address = local_ip().unwrap_or(IpAddr::from([127, 0, 0, 1]));
-    let (cert, key, fingerprint) = certificate_material(home)?;
+    let host_id = host_identity(home)?;
+    let hostname = format!("create-something-draw-{host_id}.local.");
+    let instance_name = format!("CREATE SOMETHING Draw {host_id}");
+    let (cert, key, fingerprint) = certificate_material(home, &hostname)?;
     let certificate_der = rustls_pemfile::certs(&mut cert.as_slice())
         .next()
         .ok_or_else(|| "Pairing certificate is missing".to_string())?
@@ -238,6 +270,8 @@ pub(crate) fn start(runtime: Arc<DrawRuntime>, home: &Path) -> Result<(), String
         certificate_der.as_ref(),
         &fingerprint,
         &session_id,
+        &instance_name,
+        &hostname,
     )?;
     *runtime
         .transport
@@ -246,6 +280,8 @@ pub(crate) fn start(runtime: Arc<DrawRuntime>, home: &Path) -> Result<(), String
         "status": "listening",
         "endpoint": format!("https://{address}:{port}"),
         "serviceType": SERVICE_TYPE,
+        "serviceName": instance_name,
+        "hostname": hostname,
         "certificateFingerprint": fingerprint
     }));
     let router = Router::new()
@@ -445,6 +481,27 @@ mod tests {
         flush_companion, initial_state, pair_begin, queue_companion_operation, revoke_client,
         CompanionSession,
     };
+
+    #[test]
+    fn bonjour_and_certificate_identity_is_unique_per_mac_home() {
+        let first = std::env::temp_dir().join(format!("draw-host-a-{}", uuid::Uuid::new_v4()));
+        let second = std::env::temp_dir().join(format!("draw-host-b-{}", uuid::Uuid::new_v4()));
+        let first_id = host_identity(&first).unwrap();
+        let second_id = host_identity(&second).unwrap();
+        assert_ne!(first_id, second_id);
+        assert_eq!(host_identity(&first).unwrap(), first_id);
+        let first_hostname = format!("create-something-draw-{first_id}.local.");
+        let second_hostname = format!("create-something-draw-{second_id}.local.");
+        assert_ne!(first_hostname, second_hostname);
+        let (first_cert, _, first_fingerprint) =
+            certificate_material(&first, &first_hostname).unwrap();
+        let (second_cert, _, second_fingerprint) =
+            certificate_material(&second, &second_hostname).unwrap();
+        assert_ne!(first_cert, second_cert);
+        assert_ne!(first_fingerprint, second_fingerprint);
+        let _ = fs::remove_dir_all(first);
+        let _ = fs::remove_dir_all(second);
+    }
 
     #[test]
     fn discovery_and_certificate_pinned_pairing_reach_the_authoritative_host() {

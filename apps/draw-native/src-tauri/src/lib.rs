@@ -698,6 +698,25 @@ fn companion_status(runtime: &DrawRuntime) -> Result<Value, String> {
     })
 }
 
+fn install_companion_snapshot(
+    session: &mut CompanionSession,
+    requested_session_id: &str,
+    requested_client_id: &str,
+    snapshot: &Value,
+) -> Result<bool, String> {
+    let snapshot_revision = snapshot["revision"]
+        .as_u64()
+        .ok_or("Snapshot omitted revision")?;
+    let same_pairing =
+        session.host.session_id == requested_session_id && session.client_id == requested_client_id;
+    if !same_pairing || !session.queue.is_empty() || snapshot_revision < session.revision {
+        return Ok(false);
+    }
+    session.revision = snapshot_revision;
+    session.document = snapshot["document"].clone();
+    Ok(true)
+}
+
 #[tauri::command]
 async fn draw_companion_pair(
     runtime: tauri::State<'_, Arc<DrawRuntime>>,
@@ -1099,7 +1118,7 @@ fn draw_companion_forget(runtime: tauri::State<'_, Arc<DrawRuntime>>) -> Result<
 async fn draw_companion_refresh(
     runtime: tauri::State<'_, Arc<DrawRuntime>>,
 ) -> Result<Value, String> {
-    let request = {
+    let (request, requested_session_id, requested_client_id) = {
         let companion = runtime
             .companion
             .lock()
@@ -1110,26 +1129,30 @@ async fn draw_companion_refresh(
                 json!({ "status": "paired", "sessionId": session.host.session_id, "revision": session.revision, "document": session.document, "queueDepth": session.queue.len(), "online": false, "certificateFingerprint": session.host.certificate_fingerprint }),
             );
         }
-        transport::RemoteSnapshotRequest {
-            endpoint: session.host.endpoint.clone(),
-            certificate_der: session.host.certificate_der.clone(),
-            certificate_fingerprint: session.host.certificate_fingerprint.clone(),
-            client_id: session.client_id.clone(),
-            capability: session.capability.clone(),
-        }
+        (
+            transport::RemoteSnapshotRequest {
+                endpoint: session.host.endpoint.clone(),
+                certificate_der: session.host.certificate_der.clone(),
+                certificate_fingerprint: session.host.certificate_fingerprint.clone(),
+                client_id: session.client_id.clone(),
+                capability: session.capability.clone(),
+            },
+            session.host.session_id.clone(),
+            session.client_id.clone(),
+        )
     };
     let snapshot = transport::remote_snapshot(request).await?;
-    let snapshot_revision = snapshot["revision"]
-        .as_u64()
-        .ok_or("Snapshot omitted revision")?;
     let mut companion = runtime
         .companion
         .lock()
         .map_err(|error| error.to_string())?;
     let session = companion.as_mut().ok_or("iPhone is not paired")?;
-    if session.queue.is_empty() && snapshot_revision >= session.revision {
-        session.revision = snapshot_revision;
-        session.document = snapshot["document"].clone();
+    if install_companion_snapshot(
+        session,
+        &requested_session_id,
+        &requested_client_id,
+        &snapshot,
+    )? {
         persist_companion_state(&runtime.companion_state_path, session)?;
     }
     Ok(
@@ -1512,6 +1535,39 @@ mod tests {
         assert_eq!(status["queueDepth"], 1);
         assert_eq!(status["document"]["title"], "Visible after relaunch");
         let _ = fs::remove_dir_all(directory);
+    }
+
+    #[test]
+    fn refresh_from_a_forgotten_pairing_cannot_replace_the_current_session() {
+        let mut session = CompanionSession {
+            host: transport::DiscoveredHost {
+                endpoint: "https://new-mac.local:4242".into(),
+                session_id: "new-session".into(),
+                protocol_version: PROTOCOL_VERSION.into(),
+                certificate_fingerprint: "b".repeat(64),
+                certificate_der: "new-certificate".into(),
+            },
+            client_id: "new-iphone".into(),
+            capability: "new-capability".into(),
+            expires_at: "2099-01-01T00:00:00Z".into(),
+            revision: 1,
+            document: initial_state().document,
+            queue: VecDeque::new(),
+            online: true,
+        };
+        let current = session.document.clone();
+        let mut old_document = current.clone();
+        old_document["title"] = json!("Old Mac must be discarded");
+
+        assert!(!install_companion_snapshot(
+            &mut session,
+            "old-session",
+            "old-iphone",
+            &json!({ "revision": 99, "document": old_document }),
+        )
+        .unwrap());
+        assert_eq!(session.revision, 1);
+        assert_eq!(session.document, current);
     }
 
     #[test]
