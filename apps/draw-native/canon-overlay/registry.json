@@ -1,0 +1,9 @@
+{
+  "id": "overlay.draw-native-paired-canvas",
+  "name": "Draw Native Paired Canvas Overlay",
+  "owner": "mapping-canvas-team",
+  "sourcePackage": "@create-something/draw-native",
+  "targetModalities": ["web", "app"],
+  "registryItemIds": ["token.performance-core", "component.clear-decision-panel", "component.clear-proof-strip", "template.canon-project-overlay-manifest", "template.canon-extension-intake", "policy.signal-decision-proof"],
+  "overlayRule": "Keep Mac authority, iPhone companion state, pairing evidence, and recovery language local while reusing Canon and Performance primitives."
+}
