@@ -54,6 +54,17 @@ async function waitForFile(path, timeout = 20_000) {
   }
   throw new Error(`Timed out waiting for ${path}`);
 }
+async function waitForNewProcess(binary, previousPids, timeout = 20_000) {
+  const deadline = Date.now() + timeout;
+  while (Date.now() < deadline) {
+    const result = command('pgrep', ['-f', binary], { allowFailure: true });
+    const pids = result.status === 0 ? result.stdout.split('\n').filter(Boolean) : [];
+    const fresh = pids.filter((pid) => !previousPids.has(pid));
+    if (fresh.length) return fresh;
+    await delay(200);
+  }
+  throw new Error('Timed out waiting for a fresh installed-app process');
+}
 function newestDmg() {
   const directory = join(bundleRoot, 'dmg');
   const candidates = readdirSync(directory).filter((name) => name.endsWith('.dmg'))
@@ -96,8 +107,12 @@ async function main() {
   const firstState = await waitForFile(join(stateHome, 'paired-session.json'));
   const firstDocumentHash = createHash('sha256').update(JSON.stringify(firstState.document)).digest('hex');
   const processEvidence = command('pgrep', ['-f', binary]);
+  const firstProcessIds = new Set(processEvidence.stdout.split('\n').filter(Boolean));
   quit(); await delay(800);
-  launch(canonicalApp, executable); await delay(1200);
+  launch(canonicalApp, executable);
+  const secondProcessIds = await waitForNewProcess(binary, firstProcessIds);
+  await delay(1200);
+  for (const pid of secondProcessIds) command('kill', ['-0', pid]);
   const secondState = await waitForFile(join(stateHome, 'paired-session.json'));
   const secondDocumentHash = createHash('sha256').update(JSON.stringify(secondState.document)).digest('hex');
   quit();
@@ -113,7 +128,7 @@ async function main() {
     artifact: { name: basename(dmgPath), sha256: sha256File(dmgPath), appSha256: hashDirectory(canonicalApp) },
     bundle: { identifier, version, binary, selfContained: true },
     state: { sessionId: firstState.sessionId, revision: firstState.revision, documentHash: firstDocumentHash, relaunchExact: true },
-    evidence: { hdiutilVerify: dmgVerification.status === 0, readonlyMount: true, isolatedCopy: true, processIds: processEvidence.stdout.split('\n'), externalDylibCheck: true },
+    evidence: { hdiutilVerify: dmgVerification.status === 0, readonlyMount: true, isolatedCopy: true, processIds: processEvidence.stdout.split('\n'), relaunchProcessIds: secondProcessIds, externalDylibCheck: true },
     gates: { installedLaunch: 'performed', persistenceRelaunch: 'performed', signing, notarization: { status: 'unperformed', reason: 'Notarization credentials are unavailable.' }, physicalIPhoneAcceptance: 'unperformed' },
   };
   mkdirSync(outputRoot, { recursive: true });

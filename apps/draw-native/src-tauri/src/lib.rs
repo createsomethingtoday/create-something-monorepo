@@ -426,6 +426,9 @@ pub(crate) fn pair_confirm(
     if client_id.trim().is_empty() {
         return Err("Client id is required".into());
     }
+    if client_id == "native-mac" {
+        return Err("Client id is reserved".into());
+    }
     let offer = {
         let mut pending = runtime.pending.lock().map_err(|error| error.to_string())?;
         pending.retain(|_, offer| offer.expires_at > now());
@@ -445,6 +448,9 @@ pub(crate) fn pair_confirm(
     let capability = random_capability();
     let expires_at = rfc3339(now() + CAPABILITY_LIFETIME)?;
     let mut state = runtime.host.lock().map_err(|error| error.to_string())?;
+    if state.clients.contains_key(&client_id) {
+        return Err("Client id is already paired".into());
+    }
     state.clients.insert(
         client_id.clone(),
         PairedClient {
@@ -636,6 +642,7 @@ fn replace_host_document(
     runtime: &DrawRuntime,
     document: Value,
     reason: String,
+    expected_revision: u64,
 ) -> Result<Value, String> {
     if cfg!(mobile) {
         return Err("Only the Mac authority can replace the canonical document".into());
@@ -644,6 +651,12 @@ fn replace_host_document(
         return Err("Replacement document is invalid".into());
     }
     let mut state = runtime.host.lock().map_err(|error| error.to_string())?;
+    if state.revision != expected_revision {
+        return Err(format!(
+            "HOST_REVISION_CONFLICT: expected revision {expected_revision}, current revision {}",
+            state.revision
+        ));
+    }
     state.revision += 1;
     state.document = document;
     let operation_id = format!("mac-replace-{}", Uuid::new_v4());
@@ -679,8 +692,9 @@ fn draw_host_replace_document(
     runtime: tauri::State<'_, Arc<DrawRuntime>>,
     document: Value,
     reason: String,
+    expected_revision: u64,
 ) -> Result<Value, String> {
-    replace_host_document(&runtime, document, reason)
+    replace_host_document(&runtime, document, reason, expected_revision)
 }
 
 async fn flush_companion(runtime: &DrawRuntime) -> Result<Value, String> {
@@ -785,7 +799,23 @@ async fn flush_companion(runtime: &DrawRuntime) -> Result<Value, String> {
         let Some((snapshot_request, invalid_operation)) = rebase_request else {
             continue;
         };
-        let snapshot = transport::remote_snapshot(snapshot_request).await?;
+        let snapshot = match transport::remote_snapshot(snapshot_request).await {
+            Ok(snapshot) => snapshot,
+            Err(error) => {
+                let mut companion = runtime.companion.lock().map_err(|lock| lock.to_string())?;
+                let session = companion.as_mut().ok_or("iPhone is not paired")?;
+                session.online = false;
+                persist_companion_state(&runtime.companion_state_path, session)?;
+                return Ok(json!({
+                    "status": "queued",
+                    "queueDepth": session.queue.len(),
+                    "revision": session.revision,
+                    "document": optimistic_companion_document(session),
+                    "online": false,
+                    "error": error
+                }));
+            }
+        };
         let mut companion = runtime
             .companion
             .lock()
@@ -1147,6 +1177,7 @@ mod tests {
             companion_flush: tokio::sync::Mutex::new(()),
         };
         let offer = pair_begin(&runtime).unwrap();
+        assert!(pair_confirm(&runtime, offer.code.clone(), "native-mac".into()).is_err());
         for attempt in 0..MAX_PAIRING_FAILURES {
             assert!(pair_confirm(&runtime, format!("wrong-{attempt}"), "attacker".into()).is_err());
         }
@@ -1224,19 +1255,29 @@ mod tests {
         assert!(replace_host_document(
             &runtime,
             json!({ "version": DOCUMENT_VERSION }),
-            "import".into()
+            "import".into(),
+            0
         )
         .is_err());
         let mut replacement = state.document;
         replacement["title"] = json!("Restored Mac history");
         replacement["updatedAt"] = json!("2026-08-29T16:30:00Z");
-        let result = replace_host_document(&runtime, replacement.clone(), "undo".into()).unwrap();
+        let result =
+            replace_host_document(&runtime, replacement.clone(), "undo".into(), 0).unwrap();
         assert_eq!(result["revision"], 1);
         let persisted = load_state(&state_path);
         assert_eq!(persisted.session_id, session_id);
         assert_eq!(persisted.revision, 1);
         assert_eq!(persisted.document, replacement);
         assert_eq!(persisted.applied.len(), 1);
+        let mut stale_replacement = replacement;
+        stale_replacement["title"] = json!("Must not overwrite a newer revision");
+        assert!(
+            replace_host_document(&runtime, stale_replacement, "reset".into(), 0)
+                .unwrap_err()
+                .contains("HOST_REVISION_CONFLICT")
+        );
+        assert_eq!(load_state(&state_path).revision, 1);
         let _ = fs::remove_dir_all(directory);
     }
 
@@ -1271,7 +1312,13 @@ mod tests {
             companion: Mutex::new(None),
             companion_flush: tokio::sync::Mutex::new(()),
         };
-        replace_host_document(&runtime, replacement, "reset".into()).unwrap();
+        replace_host_document(
+            &runtime,
+            replacement,
+            "reset".into(),
+            create_something_draw_pairing_protocol::MAX_APPLIED_RECEIPTS as u64,
+        )
+        .unwrap();
         let persisted = load_state(&state_path);
         assert_eq!(
             persisted.applied.len(),
