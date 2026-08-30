@@ -4,259 +4,119 @@
 	let { data }: { data: PageData } = $props();
 
 	function formatTime(iso: string): string {
-		const date = new Date(iso);
-		return date.toLocaleString('en-US', {
-			month: 'short',
-			day: 'numeric',
-			hour: '2-digit',
-			minute: '2-digit',
-			timeZoneName: 'short',
+		return new Date(iso).toLocaleString('en-US', {
+			month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short'
 		});
 	}
 
-	function getStatusColor(healthy: boolean): string {
-		return healthy ? 'var(--color-performance-success)' : 'var(--color-performance-error)';
-	}
-
-	function getOverallStatus(status: string): { label: string; color: string } {
-		switch (status) {
-			case 'operational':
-				return { label: 'All Systems Operational', color: 'var(--color-performance-success)' };
-			case 'degraded':
-				return { label: 'Partial Outage', color: 'var(--color-performance-warning)' };
-			default:
-				return { label: 'Major Outage', color: 'var(--color-performance-error)' };
-		}
-	}
+	const statusCopy = {
+		operational: { label: 'All four sites responded', detail: 'Each public site returned a successful response during this check.' },
+		degraded: { label: 'Some sites need attention', detail: 'At least one site responded successfully and at least one did not.' },
+		outage: { label: 'All sites reported a problem', detail: 'Every public site responded, but none returned a successful response.' },
+		unknown: { label: 'Current status is unknown', detail: 'None of the public sites returned a response before this check ended.' }
+	} as const;
 </script>
 
 <svelte:head>
-	<title>Status | CREATE SOMETHING</title>
-	<meta name="description" content="Current operational status of CREATE SOMETHING properties" />
+	<title>Public Site Status | CREATE SOMETHING</title>
+	<meta name="description" content="A current response check for the four CREATE SOMETHING public sites." />
 </svelte:head>
 
-<main class="container">
-	<header class="header">
-		<h1>System Status</h1>
-		<p class="subtitle">Real-time health monitoring for CREATE SOMETHING infrastructure</p>
-	</header>
-
-	{#if data.error}
-		<div class="error-card">
-			<p>Unable to fetch status: {data.error}</p>
+<div class="status-page">
+	<section class="chapter task-state" data-performance-chapter="task-state">
+		<p class="eyebrow">Current check</p>
+		<h1>{statusCopy[data.status.status].label}</h1>
+		<p class="lede">{statusCopy[data.status.status].detail}</p>
+		<div class:operational={data.status.status === 'operational'} class:degraded={data.status.status === 'degraded'} class:outage={data.status.status === 'outage'} class:unknown={data.status.status === 'unknown'} class="state-badge">
+			{data.status.status}
 		</div>
-	{:else if data.status}
-		{@const overall = getOverallStatus(data.status.status)}
-		<section class="overall-status" style="--status-color: {overall.color}">
-			<div class="status-indicator"></div>
-			<span class="status-label">{overall.label}</span>
-		</section>
+		<p class="freshness">Checked {formatTime(data.status.updated_at)}</p>
+	</section>
 
-		<section class="properties">
-			<h2>Properties</h2>
-			<div class="property-grid">
-				{#each data.status.properties as prop}
-					<div class="property-card">
-						<div class="property-header">
-							<span class="dot" style="background: {getStatusColor(prop.healthy)}"></span>
-							<span class="domain">{prop.domain}</span>
-						</div>
-						<div class="property-status">
-							{#if prop.healthy}
-								<span class="healthy">Operational</span>
-							{:else}
-								<span class="unhealthy">Down</span>
-								{#if prop.down_since}
-									<span class="since">since {formatTime(prop.down_since)}</span>
-								{/if}
-							{/if}
-						</div>
-					</div>
-				{/each}
+	<section class="chapter workspace" data-performance-chapter="workspace">
+		<div class="section-heading">
+			<div>
+				<p class="eyebrow">Four direct checks</p>
+				<h2>See which site responded</h2>
 			</div>
-		</section>
+			<a class="check-again" href="/status">Check again</a>
+		</div>
+		<div class="property-grid">
+			{#each data.status.properties as property}
+				<article class:healthy={property.healthy} class="property-card">
+					<div>
+						<h3>{property.domain}</h3>
+						<p>{property.healthy ? 'Responded successfully' : property.error}</p>
+					</div>
+					<div class="code">
+						<span>HTTP status</span>
+						<strong>{property.status_code || 'No response'}</strong>
+					</div>
+				</article>
+			{/each}
+		</div>
+		<p class="scope-note">These checks confirm that each home page responds. They do not test every feature behind it.</p>
+	</section>
 
-		{#if data.status.incidents.length > 0}
-			<section class="incidents">
-				<h2>Recent Incidents</h2>
-				<ul class="incident-list">
-					{#each data.status.incidents as incident}
-						<li class="incident">
-							<time>{formatTime(incident.timestamp)}</time>
-							<span>{incident.message}</span>
-						</li>
-					{/each}
-				</ul>
-			</section>
+	<section class="chapter receipt" data-performance-chapter="decision-receipt">
+		<p class="eyebrow">Incident record</p>
+		<h2>Use history to decide what to inspect next</h2>
+		{#if data.status.incidentSource.state === 'unavailable'}
+			<div class="incident-state" role="status">
+				Incident history is unavailable. The current site checks above are still valid, but we cannot confirm whether a recent problem was recorded.
+			</div>
+		{:else if data.status.incidents.length > 0}
+			<ul class="incidents">
+				{#each data.status.incidents as incident}
+					<li><time>{formatTime(incident.timestamp)}</time><span>{incident.message}</span></li>
+				{/each}
+			</ul>
 		{:else}
-			<section class="incidents">
-				<h2>Recent Incidents</h2>
-				<p class="no-incidents">No incidents in the last 7 days</p>
-			</section>
+			<p class="incident-state">The incident source responded with no recorded incidents.</p>
 		{/if}
-
-		<footer class="updated">
-			Last updated: {formatTime(data.status.updated_at)}
-		</footer>
-	{/if}
-</main>
+		<div class="handoff">
+			<p>If a site failed, check its owned service and recent deployment before changing shared infrastructure.</p>
+			<a href="/">Return to research home</a>
+		</div>
+	</section>
+</div>
 
 <style>
-	.container {
-		max-width: 800px;
-		margin: 0 auto;
-		padding: var(--space-performance-lg) var(--space-performance-md);
-	}
+	.status-page { max-width: 980px; margin: 0 auto; padding: 0 var(--space-performance-md) var(--space-performance-2xl); }
+	.chapter { padding: clamp(2.25rem, 7vw, 5rem) 0; border-bottom: 1px solid var(--color-performance-border-default); }
+	.chapter:last-child { border-bottom: 0; }
+	.task-state { max-width: 820px; }
+	.eyebrow { margin: 0 0 .7rem; color: var(--color-performance-fg-muted); font-size: var(--text-performance-caption); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+	h1 { max-width: 760px; margin: 0; font-size: clamp(2.7rem, 8vw, 6rem); line-height: .95; letter-spacing: -.06em; }
+	h2 { margin: 0; font-size: clamp(1.7rem, 4vw, 2.7rem); letter-spacing: -.04em; }
+	h3 { margin: 0; font-size: var(--text-performance-body-lg); }
+	.lede { max-width: 640px; margin: 1.35rem 0; color: var(--color-performance-fg-secondary); font-size: var(--text-performance-body-lg); line-height: 1.55; }
+	.state-badge { display: inline-flex; padding: .4rem .65rem; border: 1px solid currentColor; border-radius: 999px; font-size: var(--text-performance-caption); font-weight: 750; text-transform: uppercase; }
+	.state-badge.operational { color: var(--color-performance-success); }
+	.state-badge.degraded { color: var(--color-performance-warning); }
+	.state-badge.outage { color: var(--color-performance-error); }
+	.state-badge.unknown { color: var(--color-performance-fg-muted); }
+	.freshness, .scope-note { color: var(--color-performance-fg-muted); font-size: var(--text-performance-body-sm); }
+	.section-heading { display: flex; align-items: end; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; }
+	.check-again, .handoff a { display: inline-flex; align-items: center; min-height: 44px; padding: .6rem .85rem; border: 1px solid var(--color-performance-border-strong); color: var(--color-performance-fg-primary); text-decoration: none; }
+	.property-grid { display: grid; gap: .7rem; }
+	.property-card { display: flex; justify-content: space-between; gap: 1rem; padding: 1rem; border-left: 4px solid var(--color-performance-error); background: var(--color-performance-bg-surface); }
+	.property-card.healthy { border-left-color: var(--color-performance-success); }
+	.property-card p { margin: .35rem 0 0; color: var(--color-performance-fg-muted); }
+	.code { display: flex; flex-direction: column; align-items: end; gap: .2rem; }
+	.code span { color: var(--color-performance-fg-muted); font-size: var(--text-performance-caption); }
+	.code strong { font-family: 'Geist Mono', monospace; }
+	.scope-note { margin: 1rem 0 0; }
+	.incident-state { max-width: 720px; margin-top: 1.2rem; padding: 1rem; border-left: 3px solid var(--color-performance-data-4, #9a6b00); background: var(--color-performance-bg-subtle); color: var(--color-performance-fg-secondary); }
+	.incidents { margin: 1.2rem 0 0; padding: 0; list-style: none; }
+	.incidents li { display: grid; grid-template-columns: 180px 1fr; gap: 1rem; padding: .8rem 0; border-bottom: 1px solid var(--color-performance-border-default); }
+	.incidents time { color: var(--color-performance-fg-muted); }
+	.handoff { display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; margin-top: 2rem; }
+	.handoff p { max-width: 620px; color: var(--color-performance-fg-secondary); }
 
-	.header {
-		margin-bottom: var(--space-performance-xl);
-	}
-
-	h1 {
-		font-size: var(--text-performance-h1);
-		color: var(--color-performance-fg-primary);
-		margin-bottom: var(--space-performance-xs);
-	}
-
-	.subtitle {
-		color: var(--color-performance-fg-muted);
-		font-size: var(--text-performance-body);
-	}
-
-	h2 {
-		font-size: var(--text-performance-h3);
-		color: var(--color-performance-fg-primary);
-		margin-bottom: var(--space-performance-md);
-	}
-
-	.overall-status {
-		display: flex;
-		align-items: center;
-		gap: var(--space-performance-sm);
-		padding: var(--space-performance-md);
-		background: var(--color-performance-bg-subtle);
-		border-radius: var(--radius-performance-scale-lg);
-		margin-bottom: var(--space-performance-xl);
-	}
-
-	.status-indicator {
-		width: 12px;
-		height: 12px;
-		border-radius: var(--radius-performance-scale-full);
-		background: var(--status-color);
-		animation: pulse 2s infinite;
-	}
-
-	@keyframes pulse {
-		0%, 100% { opacity: 1; }
-		50% { opacity: 0.5; }
-	}
-
-	.status-label {
-		font-size: var(--text-performance-body-lg);
-		font-weight: 600;
-		color: var(--color-performance-fg-primary);
-	}
-
-	.properties {
-		margin-bottom: var(--space-performance-xl);
-	}
-
-	.property-grid {
-		display: grid;
-		gap: var(--space-performance-sm);
-	}
-
-	.property-card {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		padding: var(--space-performance-md);
-		background: var(--color-performance-bg-surface);
-		border-radius: var(--radius-performance-scale-md);
-	}
-
-	.property-header {
-		display: flex;
-		align-items: center;
-		gap: var(--space-performance-sm);
-	}
-
-	.dot {
-		width: 8px;
-		height: 8px;
-		border-radius: var(--radius-performance-scale-full);
-	}
-
-	.domain {
-		color: var(--color-performance-fg-primary);
-		font-family: monospace;
-	}
-
-	.property-status {
-		display: flex;
-		align-items: center;
-		gap: var(--space-performance-xs);
-	}
-
-	.healthy {
-		color: var(--color-performance-success);
-		font-size: var(--text-performance-body-sm);
-	}
-
-	.unhealthy {
-		color: var(--color-performance-error);
-		font-size: var(--text-performance-body-sm);
-	}
-
-	.since {
-		color: var(--color-performance-fg-muted);
-		font-size: var(--text-performance-caption);
-	}
-
-	.incidents {
-		margin-bottom: var(--space-performance-xl);
-	}
-
-	.incident-list {
-		list-style: none;
-		padding: 0;
-		margin: 0;
-	}
-
-	.incident {
-		display: flex;
-		gap: var(--space-performance-md);
-		padding: var(--space-performance-sm) 0;
-	}
-
-	.incident time {
-		color: var(--color-performance-fg-muted);
-		font-size: var(--text-performance-body-sm);
-		white-space: nowrap;
-	}
-
-	.incident span {
-		color: var(--color-performance-fg-secondary);
-		font-size: var(--text-performance-body-sm);
-	}
-
-	.no-incidents {
-		color: var(--color-performance-fg-muted);
-		font-size: var(--text-performance-body-sm);
-	}
-
-	.error-card {
-		padding: var(--space-performance-md);
-		background: var(--color-performance-error-muted);
-		border: 1px solid var(--color-performance-error-border);
-		border-radius: var(--radius-performance-scale-md);
-		color: var(--color-performance-error);
-	}
-
-	.updated {
-		color: var(--color-performance-fg-muted);
-		font-size: var(--text-performance-caption);
-		text-align: center;
+	@media (max-width: 620px) {
+		.section-heading, .property-card, .handoff { align-items: stretch; flex-direction: column; }
+		.code { align-items: start; }
+		.incidents li { grid-template-columns: 1fr; gap: .25rem; }
 	}
 </style>
