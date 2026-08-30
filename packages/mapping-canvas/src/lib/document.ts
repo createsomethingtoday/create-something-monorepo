@@ -71,6 +71,34 @@ export function removeObjects(document: CanvasDocument, ids: string[]): CanvasDo
   return withObjects(document, objects);
 }
 
+export function resizeGroup(document: CanvasDocument, groupId: string, width: number, height: number): CanvasDocument {
+  const group = document.objects.find((object): object is Group => object.id === groupId && object.kind === 'group');
+  if (!group || !Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) return document;
+  const scaleX = width / group.width, scaleY = height / group.height;
+  const byId = new Map(document.objects.map((object) => [object.id, object]));
+  const descendants = new Set<string>();
+  const collect = (id: string) => {
+    if (descendants.has(id)) return;
+    descendants.add(id);
+    const object = byId.get(id);
+    if (object?.kind === 'group') object.childIds.forEach(collect);
+  };
+  group.childIds.forEach(collect);
+  const point = (value: Point): Point => ({ x: group.x + (value.x - group.x) * scaleX, y: group.y + (value.y - group.y) * scaleY });
+  const resize = (object: CanvasObject): CanvasObject => {
+    if (object.kind === 'stroke') return { ...object, points: object.points.map(point) };
+    if (object.kind === 'rectangle' || object.kind === 'ellipse' || object.kind === 'arrow') return { ...object, from: point(object.from), to: point(object.to) };
+    if (object.kind === 'note' || object.kind === 'group') {
+      const origin = point({ x: object.x, y: object.y });
+      return { ...object, x: origin.x, y: origin.y, width: object.width * scaleX, height: object.height * scaleY };
+    }
+    return object;
+  };
+  return withObjects(document, document.objects.map((object) => object.id === groupId
+    ? { ...group, width, height }
+    : descendants.has(object.id) ? resize(object) : object));
+}
+
 export function commit(history: History, present: CanvasDocument): History {
   return { past: [...history.past, history.present], present, future: [] };
 }

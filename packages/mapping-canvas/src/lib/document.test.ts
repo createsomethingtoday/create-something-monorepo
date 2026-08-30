@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DOCUMENT_VERSION, commit, convert, createDocument, objectBounds, parse, redo, removeObjects, restoreConversion, serialize, undo, withObjects, type Connector, type History, type Stroke } from './document';
+import { DOCUMENT_VERSION, commit, convert, createDocument, objectBounds, parse, redo, removeObjects, resizeGroup, restoreConversion, serialize, undo, withObjects, type Connector, type History, type Stroke } from './document';
 const stroke = (id: string, x = 10): Stroke => ({ id, kind: 'stroke', createdAt: '2026-08-27T00:00:00Z', points: [{ x, y: 20 }, { x: x + 40, y: 60 }], color: '#f7f4ee', width: 3 });
 describe('mapping canvas contract', () => {
   it('creates a versioned document', () => expect(createDocument().version).toBe(DOCUMENT_VERSION));
@@ -81,6 +81,17 @@ describe('mapping canvas contract', () => {
     const result = removeObjects(grouped, ['a']);
     expect(result.objects.some(({ kind }) => kind === 'connector')).toBe(false);
     expect(result.objects.find(({ kind }) => kind === 'group')).toMatchObject({ childIds: ['b'] });
+  });
+  it('resizes a group and its contained elements as one unit', () => {
+    const source = withObjects(createDocument(), [
+      { id: 'note', kind: 'note', createdAt: 'now', x: 20, y: 30, width: 40, height: 20, text: 'Together' },
+      { id: 'shape', kind: 'rectangle', createdAt: 'now', from: { x: 60, y: 50 }, to: { x: 90, y: 80 }, color: '#fff' },
+      { id: 'group', kind: 'group', createdAt: 'now', x: 10, y: 20, width: 100, height: 80, label: 'Working group', childIds: ['note', 'shape'] }
+    ]);
+    const resized = resizeGroup(source, 'group', 200, 160);
+    expect(resized.objects.find(({ id }) => id === 'group')).toMatchObject({ width: 200, height: 160 });
+    expect(resized.objects.find(({ id }) => id === 'note')).toMatchObject({ x: 30, y: 40, width: 80, height: 40 });
+    expect(resized.objects.find(({ id }) => id === 'shape')).toMatchObject({ from: { x: 110, y: 80 }, to: { x: 170, y: 140 } });
   });
   it('round trips arbitrarily nested operator conversion provenance', () => {
     let source = withObjects(createDocument(), [stroke('nested')]);

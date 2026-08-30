@@ -3,7 +3,7 @@
   import { browser } from '$app/environment';
   import { onMount } from 'svelte';
   import { clearDocument, loadDocument, saveDocument } from '$lib/persistence';
-  import { commit, convert, createDocument, parse, redo, removeObjects, restoreConversion, serialize, uid, undo, withObjects, type CanvasDocument, type CanvasObject, type History, type Point, type Shape, type Stroke, type Tool } from '$lib/document';
+  import { commit, convert, createDocument, parse, redo, removeObjects, resizeGroup, restoreConversion, serialize, uid, undo, withObjects, type CanvasDocument, type CanvasObject, type History, type Point, type Shape, type Stroke, type Tool } from '$lib/document';
   import { DEFAULT_DRAWING_COLOR, DRAWING_COLOR_PREFERENCE, DRAWING_PALETTE, isColorableObject, isDrawingColor, recolorObjects, type DrawingColor } from '$lib/palette';
   import { isValidCanvasTitle, type CanvasOperation } from '$lib/paired-session';
   import { beginPairing, companionStatus, discoverHosts, forgetCompanion, hasNativeBridge, hostStatus, nativeRole as readNativeRole, pairCompanion, refreshCompanion, replaceHostDocument, revokeCompanion, setCompanionOnline, submitNativeOperation, type DiscoveredHost, type NativeRole, type NativeSessionStatus, type PairingOffer } from '$lib/native-pairing';
@@ -61,6 +61,7 @@
   let drawingColor = $state<DrawingColor>(DEFAULT_DRAWING_COLOR);
   let start = $state<Point | null>(null), draftPoints = $state<Point[]>([]), draftShape = $state<Shape | null>(null);
   let movingObjectId = $state<string | null>(null), dragLast = $state<Point | null>(null), dragOrigin = $state<CanvasDocument | null>(null), dragMoved = $state(false);
+  let resizingGroupId = $state<string | null>(null), resizeOrigin = $state<CanvasDocument | null>(null), resizeMoved = $state(false);
   let lasso = $state<{ from: Point; to: Point } | null>(null), conversionOpen = $state(false), status = $state('Loading local canvas…'), ready = $state(false);
   let companionResetArmed = $state(false);
   let companionResetTimer: ReturnType<typeof setTimeout> | undefined;
@@ -238,6 +239,15 @@
       return;
     }
     if (!drawing || !start) return; const here = point(event);
+    if (resizingGroupId && resizeOrigin) {
+      const group = resizeOrigin.objects.find((object) => object.id === resizingGroupId && object.kind === 'group');
+      if (group?.kind === 'group') {
+        const width = Math.max(120, here.x - group.x), height = Math.max(80, here.y - group.y);
+        history = { ...history, present: resizeGroup(resizeOrigin, group.id, width, height) };
+        resizeMoved = width !== group.width || height !== group.height;
+      }
+      return;
+    }
     if (movingObjectId && dragLast) {
       const dx = here.x - dragLast.x, dy = here.y - dragLast.y;
       if (dx || dy) {
@@ -270,6 +280,15 @@
       return;
     }
     if (!drawing) return; const here = point(event);
+    if (resizingGroupId) {
+      if (resizeMoved && resizeOrigin) {
+        history = { past: [...history.past, resizeOrigin], present: document, future: [] };
+        sendNative([{ type: 'replace_objects', objects: document.objects }], true); queueSave(document);
+      }
+      resizingGroupId = null; resizeOrigin = null; resizeMoved = false; drawing = false; start = null;
+      try { surface.releasePointerCapture(event.pointerId); } catch { /* Capture may not have been acquired. */ }
+      return;
+    }
     if (movingObjectId) {
       const moved = document.objects.find(({ id }) => id === movingObjectId);
       if (dragMoved && moved && dragOrigin) {
@@ -313,6 +332,23 @@
       const here = point(event); movingObjectId = id; dragLast = here; dragOrigin = document; dragMoved = false; drawing = true; start = here;
       try { surface.setPointerCapture(event.pointerId); } catch { /* SVG pointer capture is not supported in every browser. */ }
     }
+  }
+  function resizePointer(event: PointerEvent, id: string) {
+    event.stopPropagation();
+    if (tool !== 'select' || !companionCanEdit()) return;
+    const here = point(event); selectedIds = [id]; resizingGroupId = id; resizeOrigin = document; resizeMoved = false; drawing = true; start = here;
+    try { surface.setPointerCapture(event.pointerId); } catch { /* SVG pointer capture is not supported in every browser. */ }
+  }
+  function resizeKeyboard(event: KeyboardEvent, id: string) {
+    if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key) || !companionCanEdit()) return;
+    const group = document.objects.find((object) => object.id === id && object.kind === 'group');
+    if (group?.kind !== 'group') return;
+    event.preventDefault(); event.stopPropagation();
+    const step = event.shiftKey ? 10 : 1;
+    const width = Math.max(120, group.width + (event.key === 'ArrowRight' ? step : event.key === 'ArrowLeft' ? -step : 0));
+    const height = Math.max(80, group.height + (event.key === 'ArrowDown' ? step : event.key === 'ArrowUp' ? -step : 0));
+    const next = resizeGroup(document, id, width, height);
+    if (next !== document) apply(next, { type: 'replace_objects', objects: next.objects });
   }
   function isTextEditingEvent(event: KeyboardEvent) { return event.target instanceof Element && Boolean(event.target.closest('input,textarea,[contenteditable="true"]')); }
   function selectKeyboard(event: KeyboardEvent, id: string) { if (isTextEditingEvent(event) || (event.key !== 'Enter' && event.key !== ' ')) return; event.preventDefault(); selectedIds = event.shiftKey ? [...new Set([...selectedIds, id])] : [id]; }
@@ -412,7 +448,7 @@
             {:else if object.kind === 'ellipse'}<ellipse class:selected role="button" tabindex="0" aria-label="Ellipse" cx={(object.from.x + object.to.x) / 2} cy={(object.from.y + object.to.y) / 2} rx={Math.abs(object.to.x - object.from.x) / 2} ry={Math.abs(object.to.y - object.from.y) / 2} fill="transparent" stroke={object.color} stroke-width="2" onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)} />
             {:else if object.kind === 'arrow'}<line class:selected role="button" tabindex="0" aria-label="Arrow" x1={object.from.x} y1={object.from.y} x2={object.to.x} y2={object.to.y} stroke={object.color} stroke-width="2" marker-end="url(#arrowhead)" onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)} />
             {:else if object.kind === 'note'}<g data-object-id={object.id} class:selected role="button" tabindex="0" aria-label={`Note: ${object.text}`} onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)}><rect x={object.x} y={object.y} width={object.width} height={object.height} rx="4" fill="#111" stroke={selected ? '#fcaa2d' : 'rgba(255,255,255,.18)'} /><foreignObject x={object.x + 16} y={object.y + 14} width={object.width - 32} height={object.height - 28}><textarea xmlns="http://www.w3.org/1999/xhtml" aria-label="Edit note" value={object.text} disabled={nativeRole === 'companion' && (!nativeSession.sessionId || nativeSession.requiresRepair)} onpointerdown={(event) => event.stopPropagation()} oninput={(event) => { if (!companionCanEdit()) return; const changed = { ...object, text: event.currentTarget.value }; const next = withObjects(document, document.objects.map((entry) => entry.id === object.id ? changed : entry)); history = { ...history, present: next }; queueSave(next); sendNative([{ type: 'put_object', object: changed }]); }}></textarea></foreignObject>{#if object.sourceIds?.length}<text x={object.x + 16} y={object.y + object.height - 10} class="provenance">CONVERTED · {object.sourceIds.length} SOURCE</text>{/if}</g>
-            {:else if object.kind === 'group'}<g class:selected role="button" tabindex="0" aria-label={`Group: ${object.label}`} onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)}><rect x={object.x} y={object.y} width={object.width} height={object.height} rx="4" fill="rgba(252,170,45,.025)" stroke={selected ? '#fcaa2d' : 'rgba(252,170,45,.5)'} stroke-dasharray="8 6" /><text x={object.x + 12} y={object.y + 24} class="group-label">{object.label}</text></g>
+            {:else if object.kind === 'group'}<g class:selected role="button" tabindex="0" aria-label={`Group: ${object.label}`} onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)}><rect x={object.x} y={object.y} width={object.width} height={object.height} rx="4" fill="rgba(252,170,45,.025)" stroke={selected ? '#fcaa2d' : 'rgba(252,170,45,.5)'} stroke-dasharray="8 6" /><text x={object.x + 12} y={object.y + 24} class="group-label">{object.label}</text>{#if selected && tool === 'select'}<rect data-ui="true" class="resize-handle" role="button" tabindex="0" aria-label="Resize group" x={object.x + object.width - 9} y={object.y + object.height - 9} width="18" height="18" rx="2" onpointerdown={(event) => resizePointer(event, object.id)} onkeydown={(event) => resizeKeyboard(event, object.id)} />{/if}</g>
             {:else if object.kind === 'connector'}{@const from = document.objects.find(({ id }) => id === object.fromId)}{@const to = document.objects.find(({ id }) => id === object.toId)}{#if from && to}{@const a = objectCenter(from)}{@const b = objectCenter(to)}<line class:selected role="button" tabindex="0" aria-label="Connector" x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#fcaa2d" stroke-width="2" marker-end="url(#arrowhead)" onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)} />{/if}{/if}
           {/each}
           {#if draftPoints.length > 1}<path data-ui="true" d={path(draftPoints)} fill="none" stroke={drawingColor} stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />{/if}
