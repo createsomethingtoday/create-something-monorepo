@@ -54,7 +54,7 @@ sha2 = "0.10"  # Hashing (more compatible than blake3)
 regex-lite = "0.1"  # Lightweight regex for CSS parsing
 
 # Config and patterns
-toml = "0.8"   # Config file parsing
+toml = "1.1"   # Config file parsing
 glob = "0.3"   # Path pattern matching
 serde_yaml = "0.9"  # YAML config parsing
 
