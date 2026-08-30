@@ -759,36 +759,31 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'ona-agent-index',
     'ona-agents',
     ['agents'],
-    'pending',
+    'migrated',
     contract(
-      'index',
-      'Choose the agent whose owned boundary matches the current work.',
-      'The agent collection exposes purpose, owner, readiness, and destination.',
-      'Inspect one agent'
+      'editorial',
+      'Understand why the standalone agent app is closed and what remains approval-gated.',
+      'Three dated transition receipts distinguish the verified runtime candidate, retired route, and pending promotion.',
+      'Review the owned stack or wait for approved production promotion'
     )
   ),
-  group(
+  exclusion(
     'ona-agent-detail',
     'ona-agents',
     ['agents/[agentId]'],
-    'pending',
-    contract(
-      'tool',
-      'Inspect or operate one agent with visible authority and proof.',
-      'The agent surface exposes state, policy, inputs, output, and receipt.',
-      'Run, stop, or hand off the governed action'
-    )
+    'redirect',
+    'The retired detail implementation permanently redirects every agent id with HTTP 308 to /agents; it has no reachable page state.'
   ),
   group(
     'ona-sign-in',
     'ona-agents',
     ['sign-in'],
-    'pending',
+    'migrated',
     contract(
       'tool',
-      'Complete sign-in and return to the authorized agent surface.',
-      'The access state explains the allowed next destination.',
-      'Continue to the authorized agent'
+      'Sign in with an approved staff identity and return to the requested local path.',
+      'The form exposes its resolved destination and the application access decision.',
+      'Continue to the retirement notice or follow the visible recovery instruction'
     )
   )
 ];
