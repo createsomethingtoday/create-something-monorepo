@@ -22,7 +22,7 @@ Worker secrets / vars:
 - `PARTNER_KEY`
 - `PARTNER_CLIENT_SLUG`
 - `OPENAI_API_KEY` (optional, enables OpenAI-agent fallback in `operator_notion_router`)
-- `ROUTER_OPENAI_MODEL` (optional, default `gpt-4.1-mini`)
+- `ROUTER_OPENAI_MODEL` (optional, default `gpt-5.5`)
 - `ROUTER_OPENAI_TIMEOUT_MS` (optional, default `3000`)
 - `ROUTER_OPENAI_CACHE_TTL_MS` (optional, default `120000`)
 - `LANGFUSE_SECRET_KEY` (optional, enables Langfuse export for MCP telemetry and router-agent traces)
