@@ -117,7 +117,7 @@ function buildAgentResponse(
 		const actionLabels = context.actions.map((action) => action.label).join(', ');
 		return {
 			answer:
-				`The current action model includes ${actionLabels}. Drafting and review actions can be previewed safely; external or connector execution remains blocked until a production connector contract, named approval owner, and rollback path exist.`,
+				`The current action model includes ${actionLabels}. Drafting and review actions can be previewed safely. External or connector execution remains blocked until there is a production connector contract, named approval owner, and rollback path.`,
 			grounding: context.actions.map((action) => action.label),
 			followUps: ['Preview the approval request?', 'What approval owner should be recorded?'],
 			restricted: false,
@@ -144,10 +144,14 @@ function buildAgentResponse(
 	return {
 		answer:
 			historyCount > 0
-				? 'Continuing from the current control context: Webflow owns the polished interface, Cloudflare owns the runtime behavior, and the approval boundary keeps recommendations from becoming actions without operator review.'
-				: `${context.summary} The useful way to read the system is Database for memory, Automation for callable previews, and Judgment for policy-backed approval.`,
+				? `Current delivery: ${context.summary}`
+				: `${context.summary} Read the system from what is recorded, through what can run, to what still needs human approval.`,
 		grounding: context.layers.map((layer) => layer.title),
-		followUps: ['What needs approval next?', 'What evidence is safe to publish?', 'Which runtime action should be previewed?'],
+		followUps: [
+			'Which decision needs an owner?',
+			'What is safe to forward?',
+			'How do the operating layers fit together?'
+		],
 		restricted: false,
 		contextId: context.contextId,
 		contextSource: context.source,
