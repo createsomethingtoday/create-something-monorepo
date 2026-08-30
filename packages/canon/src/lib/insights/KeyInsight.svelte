@@ -26,6 +26,7 @@
 		animation = { enabled: true, trigger: 'click' },
 		variant = 'fullscreen',
 		direction = 'forward',
+		sourceAction = '',
 		class: className = ''
 	}: KeyInsightProps = $props();
 
@@ -90,12 +91,6 @@
 		requestAnimationFrame(animate);
 	}
 
-	function handleClick() {
-		if (animation.trigger === 'click' && !hasAnimated) {
-			startAnimation();
-		}
-	}
-
 	function toggleOriginal() {
 		if (!hasAnimated) return;
 
@@ -137,13 +132,6 @@
 		}
 
 		requestAnimationFrame(animateToggle);
-	}
-
-	function handleKeydown(e: KeyboardEvent) {
-		if (e.key === 'Enter' || e.key === ' ') {
-			e.preventDefault();
-			handleClick();
-		}
 	}
 
 	// =============================================================================
@@ -204,15 +192,10 @@
 	);
 </script>
 
-<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-	<article
-		bind:this={container}
-		class="key-insight {containerClass} {className}"
-		onclick={animation.trigger === 'click' ? handleClick : undefined}
-		onkeydown={animation.trigger === 'click' ? handleKeydown : undefined}
-		role={animation.trigger === 'click' ? 'button' : undefined}
-		tabindex={animation.trigger === 'click' ? 0 : undefined}
-		aria-label="Key Insight: {insight.principle}"
+<article
+	bind:this={container}
+	class="key-insight {containerClass} {className}"
+	aria-label="Key Insight: {insight.principle}"
 >
 
 	<!-- Main content -->
@@ -231,27 +214,33 @@
 		{/if}
 
 		<!-- Statement text (animated or static) -->
-		{#if insight.statement}
-			<StatementText
-				statement={insight.statement}
-				{phase}
-				{progress}
-				direction={currentDirection}
-				size="display"
-			/>
-		{:else}
-			<p class="principle-text">{insight.principle}</p>
-		{/if}
+		<div class="statement-region" aria-live="polite">
+			{#if insight.statement}
+				<StatementText
+					statement={insight.statement}
+					{phase}
+					{progress}
+					direction={currentDirection}
+					size="display"
+				/>
+			{:else}
+				<p class="principle-text">{insight.principle}</p>
+			{/if}
+		</div>
 
-		<!-- Click hint or toggle -->
-		{#if showClickHint}
-			<p class="click-hint">Click to reveal</p>
-		{:else if hasAnimated && animation.enabled}
+		<!-- One persistent action preserves focus while its state changes. -->
+		{#if animation.enabled && (showClickHint || hasAnimated)}
 			<button
-				class="toggle-btn"
-				onclick={(e) => { e.stopPropagation(); toggleOriginal(); }}
+				type="button"
+				class:reveal-btn={showClickHint}
+				class:toggle-btn={hasAnimated}
+				onclick={showClickHint ? startAnimation : toggleOriginal}
 			>
-				{showingOriginal ? '← Back to insight' : 'Show original →'}
+				{showClickHint
+					? 'Reveal the principle'
+					: showingOriginal
+						? '← Back to insight'
+						: 'Show original →'}
 			</button>
 		{/if}
 	</div>
@@ -260,7 +249,7 @@
 	<footer class="insight-footer">
 		{#if insight.source}
 			<a href={insight.source.url} class="source-link">
-				{insight.source.title}
+				{sourceAction ? `${sourceAction}: ${insight.source.title}` : insight.source.title}
 			</a>
 		{:else if insight.paperId}
 			<span class="paper-id">{insight.paperId}</span>
@@ -301,15 +290,6 @@
 		border: 2px solid var(--color-performance-border-emphasis, rgba(255,255,255,0.2));
 	}
 
-	.key-insight[role="button"] {
-		cursor: pointer;
-	}
-
-	.key-insight[role="button"]:focus-visible {
-		outline: 2px solid var(--color-performance-focus, rgba(255,255,255,0.5));
-		outline-offset: 4px;
-	}
-
 	/* ==========================================================================
 	   Content
 	   ========================================================================== */
@@ -322,6 +302,12 @@
 		justify-content: center;
 		gap: var(--space-performance-lg, 2.5rem);
 		padding: var(--space-performance-xl, 4rem) 0;
+	}
+
+	.statement-region {
+		display: flex;
+		justify-content: center;
+		width: 100%;
 	}
 
 	/* Comparison rows */
@@ -398,22 +384,11 @@
 		color: var(--color-performance-fg-primary);
 	}
 
-	/* Click hint */
-	.click-hint {
-		font-size: var(--text-performance-body-sm, 0.875rem);
-		color: var(--color-performance-fg-muted, rgba(255,255,255,0.46));
-		animation: pulse 2s ease-in-out infinite;
-	}
-
-	@keyframes pulse {
-		0%, 100% { opacity: 0.46; }
-		50% { opacity: 0.8; }
-	}
-
-	/* Toggle button */
+	/* Reveal and toggle controls */
+	.reveal-btn,
 	.toggle-btn {
 		font-size: var(--text-performance-body-sm, 0.875rem);
-		color: var(--color-performance-fg-tertiary, rgba(255,255,255,0.6));
+		color: var(--color-performance-fg-muted, rgba(255,255,255,0.46));
 		background: transparent;
 		border: 1px solid var(--color-performance-border-default, rgba(255,255,255,0.1));
 		border-radius: var(--radius-performance-scale-md, 8px);
@@ -422,6 +397,17 @@
 		transition: all var(--duration-performance-micro, 200ms) var(--ease-performance-standard);
 	}
 
+	.reveal-btn {
+		border-color: transparent;
+		animation: pulse 2s ease-in-out infinite;
+	}
+
+	@keyframes pulse {
+		0%, 100% { opacity: 0.46; }
+		50% { opacity: 0.8; }
+	}
+
+	.reveal-btn:hover,
 	.toggle-btn:hover {
 		color: var(--color-performance-fg-primary);
 		border-color: var(--color-performance-border-emphasis, rgba(255,255,255,0.2));
@@ -491,7 +477,7 @@
 	   ========================================================================== */
 
 	@media (prefers-reduced-motion: reduce) {
-		.click-hint {
+		.reveal-btn {
 			animation: none;
 			opacity: 0.6;
 		}

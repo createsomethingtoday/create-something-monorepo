@@ -494,7 +494,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'io-insights',
     'io',
     ['insights/cumulative-state-antipattern', 'insights/tool-betrayal'],
-    'pending',
+    'migrated',
     contract(
       'editorial',
       'Recognize the operating failure and decide how to change the practice.',
