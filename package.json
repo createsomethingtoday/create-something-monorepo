@@ -328,6 +328,7 @@
     "deploy:cracked-notion-mcp": "node scripts/run-wrangler.mjs --cwd packages/halfdozen-notion-mcp/worker deploy --config wrangler.cracked.toml",
     "deploy:fanpad-notion-mcp": "node scripts/run-wrangler.mjs --cwd packages/halfdozen-notion-mcp/worker deploy --config wrangler.fanpad.toml",
     "deploy:halfdozen-notion-mcp": "node scripts/run-wrangler.mjs --cwd packages/halfdozen-notion-mcp/worker deploy",
+    "deploy:halfdozen-blondish-ticket-sync": "node scripts/run-wrangler.mjs --cwd packages/halfdozen-blondish-ticket-sync deploy",
     "deploy:juice-labs-notion-mcp": "node scripts/run-wrangler.mjs --cwd packages/halfdozen-notion-mcp/worker deploy --config wrangler.juice-labs.toml",
     "deploy:kk-management-notion-mcp": "node scripts/run-wrangler.mjs --cwd packages/halfdozen-notion-mcp/worker deploy --config wrangler.kk-management.toml",
     "deploy:lightswitch-notion-mcp": "node scripts/run-wrangler.mjs --cwd packages/halfdozen-notion-mcp/worker deploy --config wrangler.lightswitch.toml",

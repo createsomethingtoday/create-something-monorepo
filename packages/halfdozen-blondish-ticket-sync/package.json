@@ -1,0 +1,22 @@
+{
+  "name": "@create-something/halfdozen-blondish-ticket-sync",
+  "version": "0.1.0",
+  "description": "Standalone Cloudflare Worker for real-time BLOND:ISH Support Tickets <-> Half Dozen Tickets sync.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node ../../scripts/run-wrangler.mjs dev",
+    "deploy": "node ../../scripts/run-wrangler.mjs deploy",
+    "tail": "node ../../scripts/run-wrangler.mjs tail",
+    "check": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test test/*.test.ts"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20251128.0",
+    "@types/node": "24.10.9",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "wrangler": "^4.64.0"
+  }
+}
