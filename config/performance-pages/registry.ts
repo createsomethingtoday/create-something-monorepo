@@ -360,7 +360,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'ltd-account',
     'ltd',
     ['account', 'login'],
-    'pending',
+    'migrated',
     contract(
       'tool',
       'Complete the identity or account task and return to Canon work.',
