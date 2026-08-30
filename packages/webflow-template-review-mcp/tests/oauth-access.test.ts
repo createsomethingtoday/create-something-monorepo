@@ -233,6 +233,48 @@ test('resolveIdentityOAuthRequest rejects a valid identity token minted for anot
   });
 });
 
+test('resolveIdentityOAuthRequest accepts only an explicitly configured Cloud resource audience', async () => {
+  const publicCloudResource = 'https://template-review.webflow.io/mcp';
+  const base = {
+    request: new Request('https://template-review-worker.example.test/mcp', {
+      headers: { Authorization: 'Bearer identity-token' },
+    }),
+    issuer: 'https://id.example.test',
+    expectedResource: 'https://template-review-worker.example.test/mcp',
+    additionalExpectedResources: new Set([publicCloudResource]),
+    allowedDomain: 'webflow.com',
+    allowedEmails: allowlist,
+    directory,
+  };
+  const identity = {
+    sub: 'user_micah',
+    email: 'micah@createsomething.io',
+    email_verified: true,
+    scope: 'template-review:read template-review:write',
+  };
+
+  const configured = await resolveIdentityOAuthRequest({
+    ...base,
+    fetch: async () => Response.json({ ...identity, resource: publicCloudResource }),
+  });
+  const unconfigured = await resolveIdentityOAuthRequest({
+    ...base,
+    fetch: async () => Response.json({
+      ...identity,
+      resource: 'https://another-app.webflow.io/mcp',
+    }),
+  });
+
+  assert.equal(configured.ok, true);
+  if (configured.ok) assert.equal(configured.accountId, 'acct_wf_micah');
+  assert.deepEqual(unconfigured, {
+    ok: false,
+    status: 401,
+    code: 'unauthorized',
+    message: 'OAuth access token is not valid for this resource.',
+  });
+});
+
 test('resolveIdentityOAuthRequest never promotes token scope from reviewer policy', async () => {
   const base = {
     request: new Request('https://template-review.example.test/mcp', {
