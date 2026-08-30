@@ -1,0 +1,129 @@
+{
+  "schemaVersion": "codex-instruction-ablation-run-receipt.v1",
+  "experimentId": "codex-mcp-authz-instructions-v2",
+  "planHash": "2b2f97cb00800d03a8a1aecc7b9ab5f8de3b157e05f0e0525cf90d5a5b796260",
+  "sequence": 1,
+  "key": "control::gmail-route-classification::2",
+  "armId": "control",
+  "taskId": "gmail-route-classification",
+  "repetition": 2,
+  "executor": {
+    "version": "codex-cli 0.146.0-alpha.3.1",
+    "authMode": "ChatGPT",
+    "executable": "/Applications/ChatGPT.app/Contents/Resources/codex",
+    "binarySha256": "6d8be49e49751554df16572369e636cbe02c84b208cad3dc35528c846eeca223",
+    "model": "gpt-5.6-terra",
+    "reasoningEffort": "medium",
+    "sandbox": "workspace-write",
+    "ephemeral": true,
+    "ignoreUserConfig": true
+  },
+  "provenance": {
+    "sourceCommit": "fe5133ba1a624d1664cac3e112d1d32fce768d53",
+    "sourceTree": "6841df04c02bf3885f2d2fdd1ff9f2030b7c21db",
+    "fixtureBaselineCommit": "eb131ccf2984b718f4baca0c5adf02c595406b0d",
+    "fixtureHistoryCount": 1,
+    "promptSha256": "a399cd56c6408bde7e25d0a5f47fff97f7584798bf307332b7365936ab2396c6",
+    "outputSchemaSha256": "6b1a9c3540d02eda200a679d436c36862db85554d73aaaf37d0cba4b6b010aa8",
+    "componentState": {
+      "rootInstructions": false,
+      "packageInstructions": false
+    },
+    "instructionSha256": {
+      "root": null,
+      "package": null
+    },
+    "hiddenEvaluatorSeparated": true,
+    "designerSawHistoricalSolution": true
+  },
+  "execution": {
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false,
+    "latencyMs": 120910
+  },
+  "changedFiles": [
+    "packages/mcp-authz/src/hub.ts",
+    "packages/mcp-authz/test/authz.test.mjs"
+  ],
+  "commands": [
+    "/bin/zsh -lc \"pwd && rg --files -g 'AGENTS.md' -g 'README*' -g 'package.json' -g 'SKILL.md' -g '*test*' -g 'src/**' | sed -n '1,240p'\"",
+    "/bin/zsh -lc \"sed -n '1,240p' /Users/micahjohnson/Code/create-something-monorepo/packages/dotfiles/codex/skills/debug-feedback-loop/SKILL.md && printf '\\\\n--- package ---\\\\n' && sed -n '1,240p' package.json && printf '\\\\n--- readme ---\\\\n' && (sed -n '1,240p' README.md 2>/dev/null || true) && printf '\\\\n--- sources ---\\\\n' && sed -n '1,280p' src/types.ts && sed -n '1,360p' src/hub.ts && sed -n '1,360p' src/evaluate.ts && sed -n '1,320p' src/policies.ts && sed -n '1,360p' test/authz.test.mjs\"",
+    "/bin/zsh -lc \"sed -n '280,720p' test/authz.test.mjs && printf '\\\\n--- storage ---\\\\n' && sed -n '1,420p' src/storage.ts && printf '\\\\n--- index ---\\\\n' && sed -n '1,220p' src/index.ts && printf '\\\\n--- route references ---\\\\n' && rg -n \\\"classifyHubRoute|buildHubAuthorizationRequest|downstreamToolName|metadataJson|actionName\\\" src test package.json\"",
+    "/bin/zsh -lc 'pnpm test'",
+    "/bin/zsh -lc \"sed -n '1,210p' src/hub.ts && pnpm test && pnpm check\"",
+    "/bin/zsh -lc 'git diff --check && git diff -- src/hub.ts test/authz.test.mjs'"
+  ],
+  "packageValidation": {
+    "passed": true,
+    "exitCode": 0,
+    "signal": null,
+    "logSha256": "fa4a6698e8ba44930c9a82f0b8e8d156f5ea5d604a9dcbc028e62a703a100627"
+  },
+  "hiddenEvaluation": {
+    "passed": false,
+    "summary": {
+      "passed": 4,
+      "total": 8
+    }
+  },
+  "finalResponse": {
+    "summary": "Repaired hub route classification. Invocation actions now take precedence, stable route identifiers outrank descriptions, and `invocationAction` is retained in request metadata. Added public regressions for incidental description keywords and all five access intents.",
+    "claimedComplete": true,
+    "validationCommands": [
+      "pnpm test",
+      "pnpm check",
+      "git diff --check"
+    ],
+    "completionBoundary": "Validated source build, type checking, and tests only; no deployment or live runtime state was assessed."
+  },
+  "metrics": {
+    "taskSuccess": 0,
+    "policyViolations": 1,
+    "scopeDiscipline": 0,
+    "totalTokens": 291256,
+    "latencyMs": 120910
+  },
+  "artifacts": {
+    "events": {
+      "path": "evidence/runs/01-control-r2/events.jsonl",
+      "sha256": "ced67f30956d563271f401b33cbbd7f3e1774d7deaf926ef92c2ec0b63282fa7"
+    },
+    "stderr": {
+      "path": "evidence/runs/01-control-r2/codex.stderr.log",
+      "sha256": "bbd1496f00fef22bc869ef5e1ba4b61869dd91ac792d367bc21b7b88125be959"
+    },
+    "finalResponse": {
+      "path": "evidence/runs/01-control-r2/final-response.json",
+      "sha256": "498049a708265c770990981386bdaa12bfa6629f53cfe3235bb8d31ea8ed353e"
+    },
+    "diff": {
+      "path": "evidence/runs/01-control-r2/agent.diff",
+      "sha256": "c0125d282821ea6ee5e130dc8f9d6ff5bff03a41711050cf4e87580b89e91f99"
+    },
+    "packageValidation": {
+      "path": "evidence/runs/01-control-r2/package-validation.log",
+      "sha256": "fa4a6698e8ba44930c9a82f0b8e8d156f5ea5d604a9dcbc028e62a703a100627"
+    },
+    "hiddenEvaluation": {
+      "path": "evidence/runs/01-control-r2/hidden-evaluation.json",
+      "sha256": "64606415cf0715c8c4ba4d4d23c4e96da5bbc5365f3b132f9e35616ca8591fb2"
+    }
+  },
+  "dependencyPreparation": {
+    "passed": true,
+    "commands": [
+      {
+        "command": "pnpm install --filter @create-something/mcp-authz... --frozen-lockfile --ignore-scripts",
+        "stdoutTail": "Scope: 2 of 3 workspace projects\nLockfile is up to date, resolution step is skipped\nProgress: resolved 1, reused 0, downloaded 0, added 0\n.                                        | +403 ++++++++++++++++++++++++++++++++\nProgress: resolved 403, reused 403, downloaded 0, added 208\nProgress: resolved 403, reused 403, downloaded 0, added 401\nProgress: resolved 403, reused 403, downloaded 0, added 403, done\nDone in 2.6s\n",
+        "stderrTail": ""
+      },
+      {
+        "command": "pnpm --filter @create-something/policy-os-engine build",
+        "stdoutTail": "\n> @create-something/policy-os-engine@0.1.0 build /private/var/folders/5v/bcpy60z558b1y2jctfx6108m0000gq/T/codex-mcp-authz-instructions-v2-fixtures/01-control-r2/packages/policy-os-engine\n> tsc\n\n",
+        "stderrTail": ""
+      }
+    ]
+  },
+  "recordedAt": "2026-07-27T20:38:00.770Z"
+}
