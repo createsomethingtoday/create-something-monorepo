@@ -16,6 +16,7 @@ export const PAIRING_PROTOCOL_VERSION = 'create-something.draw-pairing.v1' as co
 export type CanvasOperation =
   | { type: 'put_object'; object: CanvasObject }
   | { type: 'remove_objects'; ids: string[] }
+  | { type: 'replace_objects'; objects: CanvasObject[] }
   | { type: 'set_title'; title: string }
   | { type: 'set_viewport'; viewport: Viewport }
   | { type: 'convert'; selectedIds: string[]; target: 'note' | 'connector' | 'group'; resultId: string; createdAt: string }
@@ -119,6 +120,7 @@ export function isOperationEnvelope(value: unknown): value is OperationEnvelope 
   const operation = envelope.operation;
   if (operation.type === 'put_object') return isCanvasObject(operation.object);
   if (operation.type === 'remove_objects') return Array.isArray(operation.ids) && operation.ids.length > 0 && operation.ids.every((id) => typeof id === 'string' && id.length > 0);
+  if (operation.type === 'replace_objects') return Array.isArray(operation.objects) && operation.objects.every(isCanvasObject);
   if (operation.type === 'set_title') return isValidCanvasTitle(operation.title);
   if (operation.type === 'set_viewport') return isViewport(operation.viewport);
   if (operation.type === 'convert') return Array.isArray(operation.selectedIds) && operation.selectedIds.length > 0 && operation.selectedIds.every((id) => typeof id === 'string' && id.length > 0) && ['note', 'connector', 'group'].includes(operation.target) && typeof operation.resultId === 'string' && operation.resultId.length > 0 && typeof operation.createdAt === 'string' && operation.createdAt.length > 0;
@@ -132,6 +134,7 @@ function applyOperation(document: CanvasDocument, operation: CanvasOperation): C
     return isDocument(next) ? next : undefined;
   }
   if (operation.type === 'remove_objects') return removeObjects(document, operation.ids);
+  if (operation.type === 'replace_objects') return withObjects(document, operation.objects);
   if (operation.type === 'set_title') return { ...document, title: operation.title, updatedAt: new Date().toISOString() };
   if (operation.type === 'set_viewport') return { ...document, viewport: operation.viewport, updatedAt: new Date().toISOString() };
   if (operation.type === 'convert') {

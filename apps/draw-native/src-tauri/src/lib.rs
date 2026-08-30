@@ -97,7 +97,7 @@ fn is_safe_idempotent(document: &Value, operation: &CanvasOperation) -> bool {
                 object.get("kind").and_then(Value::as_str) == Some(expected_kind)
                     && object.get("sourceIds") == serde_json::to_value(selected_ids).ok().as_ref()
             }),
-        CanvasOperation::RestoreConversion { .. } => false,
+        CanvasOperation::RestoreConversion { .. } | CanvasOperation::ReplaceObjects { .. } => false,
     }
 }
 
@@ -128,7 +128,9 @@ fn operation_references_id(operation: &CanvasOperation, id: &str) -> bool {
             selected_ids.iter().any(|candidate| candidate == id)
         }
         CanvasOperation::RestoreConversion { id: restored } => restored == id,
-        CanvasOperation::SetTitle { .. } | CanvasOperation::SetViewport { .. } => false,
+        CanvasOperation::SetTitle { .. }
+        | CanvasOperation::SetViewport { .. }
+        | CanvasOperation::ReplaceObjects { .. } => false,
     }
 }
 
@@ -1035,6 +1037,19 @@ async fn flush_companion(runtime: &DrawRuntime) -> Result<Value, String> {
                 "revision": session.revision,
                 "document": optimistic_companion_document(session),
                 "code": "INVALID_OPERATION"
+            }));
+        }
+        if session.queue.front().is_some_and(|envelope| {
+            matches!(envelope.operation, CanvasOperation::ReplaceObjects { .. })
+        }) {
+            session.queue.pop_front();
+            persist_companion_state(&runtime.companion_state_path, session)?;
+            return Ok(json!({
+                "status": "conflict",
+                "queueDepth": session.queue.len(),
+                "revision": session.revision,
+                "document": session.document,
+                "code": "STALE_REVISION"
             }));
         }
         let revision = session.revision;

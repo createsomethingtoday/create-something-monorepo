@@ -62,11 +62,16 @@
   let start = $state<Point | null>(null), draftPoints = $state<Point[]>([]), draftShape = $state<Shape | null>(null);
   let movingObjectId = $state<string | null>(null), dragLast = $state<Point | null>(null), dragOrigin = $state<CanvasDocument | null>(null), dragMoved = $state(false);
   let lasso = $state<{ from: Point; to: Point } | null>(null), conversionOpen = $state(false), status = $state('Loading local canvas…'), ready = $state(false);
+  let companionResetArmed = $state(false);
+  let companionResetTimer: ReturnType<typeof setTimeout> | undefined;
   let surface: SVGSVGElement, fileInput = $state<HTMLInputElement | null>(null), viewportWidth = $state(1200), viewportHeight = $state(800);
   let saveTimer: ReturnType<typeof setTimeout> | undefined;
   let mirrorTimer: ReturnType<typeof setInterval> | undefined;
   let nativeTail: Promise<void> = Promise.resolve();
   let nativeOptimisticVersion = 0;
+  const activeTouches = new Map<number, { x: number; y: number }>();
+  let pinch: { distance: number; world: Point } | null = null;
+  let pendingTouchAction: { pointerId: number; point: Point; tool: 'note' | 'group' } | null = null;
   const document = $derived(history.present), viewport = $derived(document.viewport);
   const selectedObjects = $derived(document.objects.filter(({ id }) => selectedIds.includes(id)));
   const paletteVisible = $derived(['pen', 'rectangle', 'ellipse', 'arrow'].includes(tool) || selectedObjects.some(isColorableObject));
@@ -111,7 +116,7 @@
     try {
       if (nativeRole === 'host') pairingOffer = await beginPairing();
       else { discoveredHosts = await discoverHosts(); selectedHost = discoveredHosts[0] || null; }
-    } catch (error) { status = error instanceof Error ? error.message : 'Pairing unavailable'; }
+    } catch (error) { status = error instanceof Error ? error.message : String(error || 'Pairing unavailable'); }
     finally { pairingBusy = false; }
   }
 
@@ -121,9 +126,10 @@
     try {
       const refreshed = nativeRole === 'host' ? await hostStatus() : await refreshCompanion();
       if (refreshed.revision !== nativeSession.revision && refreshed.document) {
+        companionResetArmed = false; clearTimeout(companionResetTimer);
         history = nativeRole === 'host'
           ? { past: [...history.past, history.present], present: refreshed.document, future: [] }
-          : { past: history.past, present: refreshed.document, future: [] };
+          : { past: [], present: refreshed.document, future: [] };
       }
       nativeSession = { ...nativeSession, ...refreshed };
     } catch { /* A transient local-network loss is represented by the queue path. */ }
@@ -140,7 +146,7 @@
     finally { pairingBusy = false; }
   }
 
-  function sendNative(operations: CanvasOperation[], recordsHistory = false) {
+  function sendNative(operations: CanvasOperation[], recordsHistory = false, preserveFuture = false) {
     if (nativeRole === 'web' || !operations.length) return;
     const role = nativeRole;
     const queued = operations.map((operation) => ({ operation, optimisticVersion: ++nativeOptimisticVersion }));
@@ -154,7 +160,7 @@
           const past = recordsHistory && authoritativePrevious
             ? [...history.past.slice(0, -1), authoritativePrevious]
             : history.past;
-          history = { past, present: result.document, future: [] };
+          history = { past, present: result.document, future: preserveFuture ? history.future : [] };
         }
         if (result.status === 'queued') status = `${result.queueDepth || 1} action queued · reconnect to Mac`;
         else if (result.status === 'queue_full') status = result.error || 'Offline queue is full · reconnect before editing';
@@ -170,22 +176,67 @@
   function companionCanEdit() { if (nativeRole !== 'companion') return true; if (nativeSession.sessionId && !nativeSession.requiresRepair) return true; status = nativeSession.requiresRepair ? 'Pairing credentials rejected · export if needed, then forget and re-pair' : 'Pair this iPhone with a Mac before editing'; return false; }
   function queueSave(next: CanvasDocument) { if (!browser || nativeRole !== 'web') return; clearTimeout(saveTimer); status = 'Saving locally…'; saveTimer = setTimeout(() => void saveDocument(next).then(() => status = 'Saved on this device').catch(() => status = 'Local save failed · export a copy'), 120); }
   function apply(next: CanvasDocument, operation?: CanvasOperation | CanvasOperation[]) { if (!companionCanEdit()) return; history = commit(history, next); queueSave(next); sendNative(operation ? (Array.isArray(operation) ? operation : [operation]) : [], true); }
+  function operationsBetween(from: CanvasDocument, to: CanvasDocument): CanvasOperation[] {
+    const operations: CanvasOperation[] = [];
+    if (JSON.stringify(from.objects) !== JSON.stringify(to.objects)) {
+      operations.push({ type: 'replace_objects', objects: to.objects });
+    }
+    if (from.title !== to.title) operations.push({ type: 'set_title', title: to.title });
+    if (JSON.stringify(from.viewport) !== JSON.stringify(to.viewport)) operations.push({ type: 'set_viewport', viewport: to.viewport });
+    return operations;
+  }
   function updateViewport(next: CanvasDocument['viewport'], authoritative = true) { if (!companionCanEdit()) return; const updated = { ...document, viewport: next, updatedAt: new Date().toISOString() }; history = { ...history, present: updated }; queueSave(updated); if (authoritative) sendNative([{ type: 'set_viewport', viewport: next }]); }
   function chooseColor(color: DrawingColor, label: string) { drawingColor = color; try { localStorage.setItem(DRAWING_COLOR_PREFERENCE, color); } catch { /* Keep drawing when preference storage is unavailable. */ } const next = recolorObjects(document, selectedIds, color); if (next !== document) { const changed = next.objects.filter((object) => selectedIds.includes(object.id)); apply(next, changed.map((object) => ({ type: 'put_object', object }))); status = `Selected marks changed to ${label}`; } else status = `${label} selected for new marks`; }
   function toggleSidebar() { sidebarCollapsed = !sidebarCollapsed; try { localStorage.setItem(TOOL_SIDEBAR_PREFERENCE, String(sidebarCollapsed)); } catch { /* Keep the rail usable when preference storage is unavailable. */ } }
+  function createTapObject(action: { point: Point; tool: 'note' | 'group' }) {
+    const { point: here } = action;
+    const item: CanvasObject = action.tool === 'note'
+      ? { id: uid('note'), kind: 'note', createdAt: new Date().toISOString(), x: here.x, y: here.y, width: 260, height: 132, text: 'New thought' }
+      : { id: uid('group'), kind: 'group', createdAt: new Date().toISOString(), x: here.x, y: here.y, width: 360, height: 220, label: 'Working group', childIds: [] };
+    apply(withObjects(document, [...document.objects, item]), { type: 'put_object', object: item });
+    selectedIds = [item.id]; drawing = false;
+  }
+  function trackTouchPointer(event: PointerEvent) {
+    if (event.pointerType !== 'touch' || event.button !== 0 || !ready) return;
+    activeTouches.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (activeTouches.size !== 2) return;
+    pendingTouchAction = null;
+    const [a, b] = [...activeTouches.values()];
+    const rect = surface.getBoundingClientRect();
+    const center = { x: (a.x + b.x) / 2 - rect.left, y: (a.y + b.y) / 2 - rect.top };
+    pinch = { distance: Math.max(1, Math.hypot(a.x - b.x, a.y - b.y)), world: { x: (center.x - viewport.x) / viewport.zoom, y: (center.y - viewport.y) / viewport.zoom } };
+    drawing = false; start = null; draftPoints = []; draftShape = null; lasso = null;
+    if (dragOrigin) history = { ...history, present: dragOrigin };
+    movingObjectId = null; dragLast = null; dragOrigin = null; dragMoved = false;
+  }
 
   function pointerDown(event: PointerEvent) {
     if (event.button !== 0 || !ready) return;
     if (!companionCanEdit()) return;
     try { surface.setPointerCapture(event.pointerId); } catch { /* SVG pointer capture is not supported in every browser. */ }
-    const here = point(event); drawing = true; start = here;
+    if (pinch) return;
+    const here = point(event);
+    if (event.pointerType === 'touch' && (tool === 'note' || tool === 'group')) {
+      pendingTouchAction = { pointerId: event.pointerId, point: here, tool };
+      return;
+    }
+    drawing = true; start = here;
     if (tool === 'pen') draftPoints = [here];
     if (tool === 'rectangle' || tool === 'ellipse' || tool === 'arrow') draftShape = { id: 'draft', kind: tool, createdAt: new Date().toISOString(), from: here, to: here, color: drawingColor };
     if (tool === 'select') lasso = { from: here, to: here };
-    if (tool === 'note') { const item: CanvasObject = { id: uid('note'), kind: 'note', createdAt: new Date().toISOString(), x: here.x, y: here.y, width: 260, height: 132, text: 'New thought' }; apply(withObjects(document, [...document.objects, item]), { type: 'put_object', object: item }); selectedIds = [item.id]; drawing = false; }
-    if (tool === 'group') { const item: CanvasObject = { id: uid('group'), kind: 'group', createdAt: new Date().toISOString(), x: here.x, y: here.y, width: 360, height: 220, label: 'Working group', childIds: [] }; apply(withObjects(document, [...document.objects, item]), { type: 'put_object', object: item }); selectedIds = [item.id]; drawing = false; }
+    if (tool === 'note' || tool === 'group') createTapObject({ point: here, tool });
   }
   function pointerMove(event: PointerEvent) {
+    if (event.pointerType === 'touch' && activeTouches.has(event.pointerId)) activeTouches.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (pinch && activeTouches.size >= 2) {
+      const [a, b] = [...activeTouches.values()];
+      const rect = surface.getBoundingClientRect();
+      const center = { x: (a.x + b.x) / 2 - rect.left, y: (a.y + b.y) / 2 - rect.top };
+      const zoom = Math.max(.25, Math.min(3, viewport.zoom * Math.hypot(a.x - b.x, a.y - b.y) / pinch.distance));
+      pinch.distance = Math.max(1, Math.hypot(a.x - b.x, a.y - b.y));
+      updateViewport({ x: center.x - pinch.world.x * zoom, y: center.y - pinch.world.y * zoom, zoom }, false);
+      return;
+    }
     if (!drawing || !start) return; const here = point(event);
     if (movingObjectId && dragLast) {
       const dx = here.x - dragLast.x, dy = here.y - dragLast.y;
@@ -201,6 +252,23 @@
     if (tool === 'pan') updateViewport({ ...viewport, x: viewport.x + event.movementX, y: viewport.y + event.movementY }, false);
   }
   function pointerUp(event: PointerEvent) {
+    if (event.pointerType === 'touch') activeTouches.delete(event.pointerId);
+    if (pinch) {
+      if (activeTouches.size < 2) { pinch = null; sendNative([{ type: 'set_viewport', viewport }]); }
+      drawing = false; start = null; draftPoints = []; draftShape = null; lasso = null;
+      try { surface.releasePointerCapture(event.pointerId); } catch { /* Capture may not have been acquired. */ }
+      return;
+    }
+    if (pendingTouchAction?.pointerId === event.pointerId) {
+      if (event.type === 'pointercancel') {
+        pendingTouchAction = null;
+        try { surface.releasePointerCapture(event.pointerId); } catch { /* Capture may not have been acquired. */ }
+        return;
+      }
+      const action = pendingTouchAction; pendingTouchAction = null; createTapObject(action);
+      try { surface.releasePointerCapture(event.pointerId); } catch { /* Capture may not have been acquired. */ }
+      return;
+    }
     if (!drawing) return; const here = point(event);
     if (movingObjectId) {
       const moved = document.objects.find(({ id }) => id === movingObjectId);
@@ -237,6 +305,7 @@
   }
   function selectPointer(event: PointerEvent, id: string) {
     event.stopPropagation();
+    if (pinch) return;
     if (tool === 'eraser') { apply(removeObjects(document, [id]), { type: 'remove_objects', ids: [id] }); selectedIds = []; return; }
     if (tool === 'connector') { selectedIds = selectedIds.includes(id) ? selectedIds : [...selectedIds.slice(-1), id]; if (selectedIds.length === 2) runConversion('connector'); return; }
     selectedIds = event.shiftKey ? (selectedIds.includes(id) ? selectedIds.filter((value) => value !== id) : [...selectedIds, id]) : [id];
@@ -250,8 +319,8 @@
   function runConversion(target: 'note' | 'connector' | 'group') { const next = convert(document, selectedIds, target); if (next === document) { status = target === 'connector' ? 'Select two objects to make a connector' : 'Select source material first'; return; } const created = next.objects.at(-1)!; apply(next, { type: 'convert', selectedIds: [...selectedIds], target, resultId: created.id, createdAt: created.createdAt }); selectedIds = [created.id]; conversionOpen = false; status = `Converted to ${target}. Source preserved.`; }
   function restoreSelected() { const selected = selectedObjects[0]; if (!selected?.sourceSnapshot) return; const next = restoreConversion(document, selected.id); apply(next, { type: 'restore_conversion', id: selected.id }); selectedIds = selected.sourceIds || []; status = 'Conversion removed. Source restored.'; }
   async function commitHostReplacement<T>(resolve: () => T, documentOf: (value: T) => CanvasDocument, install: (value: T) => void, reason: 'undo' | 'redo' | 'import' | 'reset') { if (nativeRole !== 'host') { const value = resolve(); install(value); return value; } let committed!: T; const replacement = nativeTail.then(async () => { committed = resolve(); const expectedRevision = nativeSession.revision || 0; const result = await replaceHostDocument(documentOf(committed), reason, expectedRevision); nativeSession = { ...nativeSession, ...result }; install(committed); status = `Mac committed ${reason} at revision ${nativeSession.revision}`; }); nativeTail = replacement.catch(() => undefined); try { await replacement; return committed; } catch (error) { const refreshed = await hostStatus(); nativeSession = { ...nativeSession, ...refreshed }; if (refreshed.document) history = { past: history.past, present: refreshed.document, future: [] }; throw error; } }
-  async function doUndo() { if (nativeRole === 'companion') return; try { const next = await commitHostReplacement(() => undo(history), (value) => value.present, (value) => history = value, 'undo'); selectedIds = []; queueSave(next.present); } catch (error) { status = error instanceof Error ? error.message : 'Undo conflicted with an iPhone change'; } }
-  async function doRedo() { if (nativeRole === 'companion') return; try { const next = await commitHostReplacement(() => redo(history), (value) => value.present, (value) => history = value, 'redo'); selectedIds = []; queueSave(next.present); } catch (error) { status = error instanceof Error ? error.message : 'Redo conflicted with an iPhone change'; } }
+  async function doUndo() { if (nativeRole === 'companion') { const current = document, next = undo(history); if (next === history) return; history = next; selectedIds = []; sendNative(operationsBetween(current, next.present), false, true); return; } try { const next = await commitHostReplacement(() => undo(history), (value) => value.present, (value) => history = value, 'undo'); selectedIds = []; queueSave(next.present); } catch (error) { status = error instanceof Error ? error.message : 'Undo conflicted with an iPhone change'; } }
+  async function doRedo() { if (nativeRole === 'companion') { const current = document, next = redo(history); if (next === history) return; history = next; selectedIds = []; sendNative(operationsBetween(current, next.present)); return; } try { const next = await commitHostReplacement(() => redo(history), (value) => value.present, (value) => history = value, 'redo'); selectedIds = []; queueSave(next.present); } catch (error) { status = error instanceof Error ? error.message : 'Redo conflicted with an iPhone change'; } }
   function keydown(event: KeyboardEvent) { if (isTextEditingEvent(event)) return; if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'z') { event.preventDefault(); void (event.shiftKey ? doRedo() : doUndo()); return; } if ((event.key === 'Delete' || event.key === 'Backspace') && selectedIds.length) { const ids = [...selectedIds]; apply(removeObjects(document, ids), { type: 'remove_objects', ids }); selectedIds = []; return; } const match = tools.find(({ key }) => key.toLowerCase() === event.key.toLowerCase()); if (match) tool = match.id; }
   function wheel(event: WheelEvent) { event.preventDefault(); updateViewport({ ...viewport, zoom: Math.max(.25, Math.min(3, viewport.zoom * (event.deltaY > 0 ? .9 : 1.1))) }); }
   const path = (points: Point[]) => points.map((value, index) => `${index ? 'L' : 'M'} ${value.x} ${value.y}`).join(' ');
@@ -295,7 +364,7 @@
     context.restore(); const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png')); if (!blob) throw new Error('PNG export failed'); download(blob, 'image/png', 'png'); status = 'PNG exported';
   }
   async function importJson(event: Event) { const file = (event.currentTarget as HTMLInputElement).files?.[0]; if (!file || nativeRole === 'companion') return; try { const next = parse(await file.text()); const committed = await commitHostReplacement(() => next, (value) => value, (value) => history = commit(history, value), 'import'); selectedIds = []; queueSave(committed); status = 'Canvas imported'; } catch (error) { status = error instanceof Error ? error.message : 'Import failed'; } finally { if (fileInput) fileInput.value = ''; } }
-  async function resetCanvas() { if (nativeRole === 'companion') { status = 'Reset is owned by the Mac'; return; } if (!confirm(nativeRole === 'host' ? 'Reset the Mac-authoritative canvas? Export first if you need a copy.' : 'Reset this local canvas? Export first if you need a copy.')) return; clearTimeout(saveTimer); saveTimer = undefined; status = 'Resetting canvas…'; if (nativeRole === 'web') await clearDocument(); try { await commitHostReplacement(() => createDocument(), (value) => value, (value) => history = { past: [], present: value, future: [] }, 'reset'); selectedIds = []; status = nativeRole === 'host' ? 'New Mac session document' : 'New local session'; } catch (error) { status = error instanceof Error ? error.message : 'Reset conflicted with an iPhone change'; } }
+  async function resetCanvas() { if (nativeRole === 'companion') { if (!companionResetArmed) { companionResetArmed = true; clearTimeout(companionResetTimer); companionResetTimer = setTimeout(() => companionResetArmed = false, 5000); status = 'Tap Confirm reset to clear the Mac canvas'; return; } companionResetArmed = false; clearTimeout(companionResetTimer); const current = document; const next = { ...document, title: 'Untitled mapping session', objects: [], viewport: { x: 0, y: 0, zoom: 1 }, updatedAt: new Date().toISOString() }; history = commit(history, next); selectedIds = []; sendNative(operationsBetween(current, next), true); status = 'Clear requested from iPhone'; return; } if (!confirm(nativeRole === 'host' ? 'Reset the Mac-authoritative canvas? Export first if you need a copy.' : 'Reset this local canvas? Export first if you need a copy.')) return; clearTimeout(saveTimer); saveTimer = undefined; status = 'Resetting canvas…'; if (nativeRole === 'web') await clearDocument(); try { await commitHostReplacement(() => createDocument(), (value) => value, (value) => history = { past: [], present: value, future: [] }, 'reset'); selectedIds = []; status = nativeRole === 'host' ? 'New Mac session document' : 'New local session'; } catch (error) { status = error instanceof Error ? error.message : 'Reset conflicted with an iPhone change'; } }
   function updateTitle(input: HTMLInputElement) { if (!companionCanEdit()) return; const title = input.value || 'Untitled mapping session'; if (!isValidCanvasTitle(title)) { input.value = document.title; status = 'Title must be 240 UTF-8 bytes or fewer'; return; } const next = { ...document, title, updatedAt: new Date().toISOString() }; history = { ...history, present: next }; queueSave(next); sendNative([{ type: 'set_title', title }]); }
 </script>
 
@@ -332,7 +401,7 @@
   <section class="workbench" class:tool-sidebar-collapsed={sidebarCollapsed} aria-label="Mapping canvas workbench">
     <nav class="toolbar" aria-label="Canvas tools"><button class="sidebar-toggle" aria-expanded={!sidebarCollapsed} aria-label={sidebarCollapsed ? 'Expand tool sidebar' : 'Collapse tool sidebar'} title={sidebarCollapsed ? 'Expand tools' : 'Collapse tools'} onclick={toggleSidebar}><i aria-hidden="true">{sidebarCollapsed ? '›' : '‹'}</i><span>{sidebarCollapsed ? 'Expand' : 'Collapse'}</span></button>{#each tools as entry}<button class:active={tool === entry.id} aria-pressed={tool === entry.id} aria-label={`${entry.label} tool (${entry.key})`} title={`${entry.label} · ${entry.key}`} onclick={() => tool = entry.id}><kbd class="tool-key">{entry.key}</kbd><span class="tool-label">{entry.label}</span></button>{/each}</nav>
     <div class="canvas-frame">
-      <svg bind:this={surface} class:crosshair={tool !== 'select' && tool !== 'pan'} role="group" aria-label="Canvas objects" viewBox={`0 0 ${viewportWidth} ${viewportHeight}`} onpointerdown={pointerDown} onpointermove={pointerMove} onpointerup={pointerUp} onpointercancel={pointerUp} onwheel={wheel}>
+      <svg bind:this={surface} class:crosshair={tool !== 'select' && tool !== 'pan'} role="group" aria-label="Canvas objects" viewBox={`0 0 ${viewportWidth} ${viewportHeight}`} onpointerdowncapture={trackTouchPointer} onpointerdown={pointerDown} onpointermove={pointerMove} onpointerup={pointerUp} onpointercancel={pointerUp} onwheel={wheel}>
         <defs><pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0L0 0 0 32" fill="none" stroke="rgba(255,255,255,.055)" /></pattern><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="context-stroke" /></marker><filter id="selected"><feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#fcaa2d" flood-opacity=".6" /></filter></defs>
         <rect width="100%" height="100%" fill="#000" /><rect width="100%" height="100%" fill="url(#grid)" />
         <g transform={transform}>
@@ -351,10 +420,10 @@
           {#if lasso}<rect data-ui="true" x={Math.min(lasso.from.x, lasso.to.x)} y={Math.min(lasso.from.y, lasso.to.y)} width={Math.abs(lasso.to.x - lasso.from.x)} height={Math.abs(lasso.to.y - lasso.from.y)} fill="rgba(252,170,45,.08)" stroke="#fcaa2d" stroke-dasharray="5 5" />{/if}
         </g>
       </svg>
-      <div class="history"><button onclick={() => void doUndo()} disabled={nativeRole === 'companion' || !history.past.length}>Undo</button><button onclick={() => void doRedo()} disabled={nativeRole === 'companion' || !history.future.length}>Redo</button><span>{Math.round(viewport.zoom * 100)}%</span><button onclick={() => updateViewport({ x: 0, y: 0, zoom: 1 })}>Reset view</button></div>
+      <div class="history"><button onclick={() => void doUndo()} disabled={!history.past.length}>Undo</button><button onclick={() => void doRedo()} disabled={!history.future.length}>Redo</button><span>{Math.round(viewport.zoom * 100)}%</span>{#if nativeRole === 'companion'}<button class:reset-confirm={companionResetArmed} aria-label={companionResetArmed ? 'Confirm reset' : 'Reset'} onclick={resetCanvas}>{companionResetArmed ? 'Confirm' : 'Reset'}</button>{/if}<button onclick={() => updateViewport({ x: 0, y: 0, zoom: 1 })}>Reset view</button></div>
       {#if paletteVisible}<div class="palette" role="group" aria-label="Mark color" data-ui="true"><span>Mark color</span><div>{#each DRAWING_PALETTE as color}<button class:active={drawingColor === color.value} aria-pressed={drawingColor === color.value} aria-label={`${color.label} color`} data-testid={`color-${color.id}`} style={`--swatch:var(${color.token},${color.value})`} onclick={() => chooseColor(color.value, color.label)}><i aria-hidden="true"></i><small>{color.label}</small></button>{/each}</div></div>{/if}
       {#if selectedIds.length}<div class="selection" data-ui="true"><span>{selectedIds.length} selected</span><button class="convert" data-testid="convert-menu" onclick={() => conversionOpen = !conversionOpen}>Convert to…</button>{#if selectedObjects.length === 1 && selectedObjects[0].sourceSnapshot}<button data-testid="restore-source" onclick={restoreSelected}>Restore source</button>{/if}{#if conversionOpen}<div class="conversion-menu"><button data-testid="convert-note" onclick={() => runConversion('note')}>Note<small>Retain as editable text</small></button><button data-testid="convert-connector" onclick={() => runConversion('connector')} disabled={selectedIds.length < 2}>Connector<small>Relate two selected objects</small></button><button data-testid="convert-group" onclick={() => runConversion('group')}>Group<small>Name a working boundary</small></button></div>{/if}</div>{/if}
-      {#if pairingOpen}<section class="pairing-panel" data-ui="true" aria-label="Device pairing"><header><strong>{nativeRole === 'host' ? 'Pair iPhone' : 'Connect to Mac'}</strong><button aria-label="Close pairing" onclick={() => pairingOpen = false}>×</button></header>{#if pairingBusy}<p>Looking for the secure session…</p>{:else if nativeRole === 'host'}<p>Enter this one-time code on the iPhone. Both devices must be on the same local network.</p><output class="pairing-code">{pairingOffer?.code || '—'}</output><small>Mac fingerprint {nativeSession.transport?.certificateFingerprint?.slice(0, 16) || 'unavailable'} · expires {pairingOffer ? new Date(pairingOffer.expiresAt).toLocaleTimeString() : 'soon'}</small>{#if nativeSession.pairedClients?.length}<div class="paired-list">{#each nativeSession.pairedClients as client}<span>{client.clientId}<button disabled={Boolean(client.revokedAt)} onclick={async () => { await revokeCompanion(client.clientId); nativeSession = await hostStatus(); }}>Revoke</button></span>{/each}</div>{/if}{:else if nativeSession.sessionId}<p>{nativeSession.requiresRepair ? 'This Mac rejected the pairing credentials. Export if needed, then forget and re-pair.' : 'Securely linked to the Mac session.'}</p><small>{nativeSession.certificateFingerprint?.slice(0, 16)} · revision {nativeSession.revision} · {nativeSession.queueDepth || 0} queued</small><button disabled={nativeSession.requiresRepair} onclick={async () => { const result = await setCompanionOnline(nativeSession.online === false); nativeSession = { ...nativeSession, ...result }; if (result.document) history = { past: history.past, present: result.document, future: [] }; }}> {nativeSession.online === false ? 'Reconnect' : 'Test offline'} </button><button onclick={async () => { nativeSession = await forgetCompanion(); discoveredHosts = []; selectedHost = null; pairingCode = ''; status = 'Pairing removed · choose Link to pair again'; pairingOpen = false; }}>Forget and re-pair</button>{:else}<p>{discoveredHosts.length ? 'Confirm the Mac fingerprint, then enter its six-digit code.' : 'No Mac session found. Open Draw on Mac and choose Pair.'}</p>{#if selectedHost}<label>Mac session<select bind:value={selectedHost}>{#each discoveredHosts as host}<option value={host}>{host.endpoint}</option>{/each}</select></label><small>Fingerprint {selectedHost.certificateFingerprint.slice(0, 16)}</small><label>Pairing code<input inputmode="numeric" maxlength="6" bind:value={pairingCode} placeholder="000000" /></label><button class="convert" disabled={!/^\d{6}$/.test(pairingCode)} onclick={confirmCompanionPairing}>Pair securely</button>{/if}{/if}</section>{/if}
+      {#if pairingOpen}<section class="pairing-panel" data-ui="true" aria-label="Device pairing"><header><strong>{nativeRole === 'host' ? 'Pair iPhone' : 'Connect to Mac'}</strong><button aria-label="Close pairing" onclick={() => pairingOpen = false}>×</button></header>{#if pairingBusy}<p>Looking for the secure session…</p>{:else if nativeRole === 'host'}<p>Enter this one-time code on the iPhone. Both devices must be on the same local network.</p><output class="pairing-code">{pairingOffer?.code || '—'}</output><small>Mac fingerprint {nativeSession.transport?.certificateFingerprint?.slice(0, 16) || 'unavailable'} · expires {pairingOffer ? new Date(pairingOffer.expiresAt).toLocaleTimeString() : 'soon'}</small>{#if nativeSession.pairedClients?.length}<div class="paired-list">{#each nativeSession.pairedClients as client}<span>{client.clientId}<button disabled={Boolean(client.revokedAt)} onclick={async () => { await revokeCompanion(client.clientId); nativeSession = await hostStatus(); }}>Revoke</button></span>{/each}</div>{/if}{:else if nativeSession.sessionId}<p>{nativeSession.requiresRepair ? 'This Mac rejected the pairing credentials. Export if needed, then forget and re-pair.' : 'Securely linked to the Mac session.'}</p><small>{nativeSession.certificateFingerprint?.slice(0, 16)} · revision {nativeSession.revision} · {nativeSession.queueDepth || 0} queued</small><button disabled={nativeSession.requiresRepair} onclick={async () => { const result = await setCompanionOnline(nativeSession.online === false); nativeSession = { ...nativeSession, ...result }; if (result.document) history = { past: [], present: result.document, future: [] }; }}> {nativeSession.online === false ? 'Reconnect' : 'Test offline'} </button><button onclick={async () => { nativeSession = await forgetCompanion(); discoveredHosts = []; selectedHost = null; pairingCode = ''; status = 'Pairing removed · choose Link to pair again'; pairingOpen = false; }}>Forget and re-pair</button>{:else}<p>{discoveredHosts.length ? 'Confirm the Mac fingerprint, then enter its six-digit code.' : 'No Mac session found. Open Draw on Mac and choose Pair.'}</p>{#if selectedHost}<label>Mac session<select bind:value={selectedHost}>{#each discoveredHosts as host}<option value={host}>{host.endpoint}</option>{/each}</select></label><small>Fingerprint {selectedHost.certificateFingerprint.slice(0, 16)}</small><label>Pairing code<input inputmode="numeric" maxlength="6" bind:value={pairingCode} placeholder="000000" /></label><button class="convert" disabled={!/^\d{6}$/.test(pairingCode)} onclick={confirmCompanionPairing}>Pair securely</button>{/if}{/if}</section>{/if}
     </div>
   </section>
   <footer class="statusbar"><span><i aria-hidden="true"></i>{status}</span><span>{nativeRole === 'host' ? 'MAC AUTHORITY' : nativeRole === 'companion' ? 'IPHONE COMPANION' : 'LOCAL DRAFT'} · CONVERSION IS OPERATOR-APPROVED</span></footer>

@@ -613,6 +613,7 @@ dependencies = [
  "axum-server",
  "base64 0.23.1",
  "create-something-draw-pairing-protocol",
+ "libc",
  "local-ip-address",
  "mdns-sd",
  "rand 0.9.5",
