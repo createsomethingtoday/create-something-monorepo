@@ -68,7 +68,11 @@ export function clearPageActionTimers(timers: PageActionTimers): void {
   timers.clear();
 }
 
-/** Params the marketplace filter contract owns; cleared as a set on reset. */
+/**
+ * Params the marketplace filter contract owns; cleared as a set on reset.
+ * Includes every alias parseTemplateRoute / TemplateGrid.parseRouteState and
+ * the search worker recognize, so clear_filters actually clears them.
+ */
 const FILTER_PARAM_KEYS = [
   'q',
   'query',
@@ -78,9 +82,23 @@ const FILTER_PARAM_KEYS = [
   'subcategory',
   'child_category_slug',
   'styles',
+  'style',
+  'style_slug',
   'tags',
+  'tag',
+  'tag_slug',
   'types',
   'free_only',
+  'free',
+  'pricing',
+  'featured',
+  'scope',
+  'creator',
+  'creator_slug',
+  'creator_record_id',
+  'designer',
+  'designer_slug',
+  'designer_record_id',
   'sort',
   'page',
 ] as const;
