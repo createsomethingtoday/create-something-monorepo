@@ -36,6 +36,11 @@ Explain the four-layer system before the reader reaches the first paragraph: a f
 
 Four connected layers turn a familiar website into a bounded agent system: declared actions, portable capabilities, isolated workspaces, and proof.
 
-## Provenance status
+## Production asset
 
-Brief only. Hero generation and visual review remain open gates.
+- Path: `/images/newsletters/the-interface-is-becoming-executable/hero.png`
+- Dimensions: `1536x1024`
+- SHA-256: `b9322e00fbd3f426d0c33f7c7edef44a23871fc848f7b47b68a20f2748442af3`
+- Generated from this brief with the workspace image service after the local API path returned `credit_balance_exhausted`.
+- The first generated variant was rejected because its receipt stamps contained pseudo-lettering. The production candidate removes those glyphs while preserving the approved composition.
+- No third-party marks, screenshots, private data, or literal vendor interfaces.
