@@ -186,7 +186,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     search: {
       changefreq: 'weekly',
       priority: '1.0',
-      lastmod: '2026-06-19'
+      lastmod: '2026-08-31'
     },
     selfHealing: ['copy:heal', 'search-route:sync']
   },

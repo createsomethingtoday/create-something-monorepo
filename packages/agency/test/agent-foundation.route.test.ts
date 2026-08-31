@@ -67,6 +67,7 @@ test('Agent Foundation is registered for discovery, Canon review, and booking', 
   const marketingPages = read('../src/lib/data/marketingPages.ts');
   const searchRoutes = JSON.parse(read('../src/lib/data/searchRoutes.json')) as Array<{
     path: string;
+    lastmod: string;
   }>;
   const registry = read('../../../config/performance-pages/registry.ts');
   const surfacePolicy = read('../src/lib/atlas/surface-policy.ts');
@@ -84,6 +85,11 @@ test('Agent Foundation is registered for discovery, Canon review, and booking', 
   );
   assert.match(marketingPages, /path: '\/agent-foundation'/);
   assert.ok(searchRoutes.some((route) => route.path === '/agent-foundation'));
+  assert.equal(searchRoutes.find((route) => route.path === '/')?.lastmod, '2026-08-31');
+  assert.match(
+    marketingPages,
+    /path: '\/',[\s\S]*?intent:[\s\S]*?Agent Foundation[\s\S]*?lastmod: '2026-08-31'/
+  );
   assert.match(registry, /'agent-foundation'/);
   assert.match(surfacePolicy, /'\/agent-foundation'/);
   assert.match(booking, /intent === 'agent-foundation'/);
