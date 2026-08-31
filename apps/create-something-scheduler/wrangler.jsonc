@@ -4,6 +4,13 @@
   "account_id": "9645bd52e640b8a4f40a3a55ff1dd75a",
   "main": "src/worker.ts",
   "compatibility_date": "2026-07-11",
+  "workers_dev": true,
+  "routes": [
+    {
+      "pattern": "schedule.createsomething.agency",
+      "custom_domain": true
+    }
+  ],
   "vars": {
     "GOOGLE_EVENT_CALENDAR_ID": "micah@createsomething.io",
     "GOOGLE_SELECTED_CALENDAR_IDS": "micah@createsomething.io",
@@ -11,11 +18,11 @@
     "GOOGLE_REDIRECT_URI": "https://create-something-scheduler.createsomething.workers.dev/oauth/google/callback",
     "RESEND_FROM": "CREATE SOMETHING <noreply@createsomething.io>",
     "TURNSTILE_SITE_KEY": "0x4AAAAAADz8zw7ebYd-V5eU",
-    "TURNSTILE_EXPECTED_HOSTNAME": "create-something-scheduler.createsomething.workers.dev",
+    "TURNSTILE_EXPECTED_HOSTNAME": "schedule.createsomething.agency",
     "REALTIMEKIT_APP_ID": "8011e22d-a0e9-40f8-8a7a-27d3e5982744",
     "REALTIMEKIT_HOST_PRESET_ID": "5015ba09-150e-40d2-9724-54bc6350d547",
     "REALTIMEKIT_GUEST_PRESET_ID": "9227fe9f-0586-4c49-aa45-87780f4867e0",
-    "SCHEDULER_PUBLIC_ORIGIN": "https://create-something-scheduler.createsomething.workers.dev",
+    "SCHEDULER_PUBLIC_ORIGIN": "https://schedule.createsomething.agency",
     "CONFERENCING_PROVIDER": "google_meet"
   },
   "assets": {
