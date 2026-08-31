@@ -1288,6 +1288,35 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
     typeof window === 'undefined' ? 4 : templateGridColumnCount(window.innerWidth),
   );
 
+  // Publish the resolved filter state (URL + prop overrides) so page-level
+  // agent tooling can read what this grid actually shows — the URL alone
+  // misses prop-driven constraints like categorySlug or scopeOverride.
+  // propOverrides records provenance: these constraints survive URL resets.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    (window as unknown as Record<string, unknown>).__templateMarketplaceGridState = {
+      href: window.location.href,
+      ...filters,
+      propOverrides: {
+        categorySlug: categorySlugProp || null,
+        scopeOverride: scopeOverride || null,
+        styleSlug: styleSlugProp || null,
+        tagSlug: tagSlugProp || null,
+        creatorSlug: creatorSlugProp || null,
+        creatorRecordId: creatorRecordIdProp || null,
+      },
+      updatedAt: Date.now(),
+    };
+  }, [
+    filters,
+    categorySlugProp,
+    scopeOverride,
+    styleSlugProp,
+    tagSlugProp,
+    creatorSlugProp,
+    creatorRecordIdProp,
+  ]);
+
   // Stale-fetch guard: every new filter/sort change increments this
   const fetchEpochRef = useRef(0);
   const activeFetchAbortRef = useRef<AbortController | null>(null);
@@ -2105,7 +2134,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
 
   if (loading && items.length === 0) {
     return withFeaturedPreview(
-      <div style={S.root}>
+      <div style={S.root} data-marketplace-component="template-grid">
         <style dangerouslySetInnerHTML={{ __html: GRID_STYLES }} />
         <div className="tmgrid-grid">
           {Array.from({ length: Math.min(resolvedPageSize, 12) }).map((_, i) => (
@@ -2118,7 +2147,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
 
   if (error && items.length === 0) {
     return withFeaturedPreview(
-      <div style={S.root}>
+      <div style={S.root} data-marketplace-component="template-grid">
         <div style={S.errorBox}>
           <p>Unable to load templates. Please try refreshing the page.</p>
           <button
@@ -2143,7 +2172,11 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
   // When no component empty state is enabled, let the native
   // [fs-cmsfilter-element="empty"] element handle zero-result rendering.
   if (items.length === 0) {
-    if (!rendersComponentEmptyState) return withFeaturedPreview(null);
+    if (!rendersComponentEmptyState) {
+      // Keep a persistent marker so page-level agents can still detect the
+      // mounted, filter-aware grid while the native empty element renders.
+      return withFeaturedPreview(<div hidden data-marketplace-component="template-grid" />);
+    }
     const query = filters.q.trim();
     const resolvedEmptyTitle = query ? `No templates found for "${query}"` : emptyTitle;
     const resolvedEmptyDescription = query
@@ -2151,7 +2184,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
       : emptyDescription;
 
     return withFeaturedPreview(
-      <div style={S.root}>
+      <div style={S.root} data-marketplace-component="template-grid">
         <style dangerouslySetInnerHTML={{ __html: GRID_STYLES }} />
         <div style={S.emptyRecovery} role="status">
           <p style={S.emptyTitle}>{resolvedEmptyTitle}</p>
@@ -2167,7 +2200,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
         </div>
 
         {(emptyRecommendationsLoading || emptyRecommendations.length > 0) && (
-          <div style={S.emptyRecommendations}>
+          <div style={S.emptyRecommendations} data-template-grid-section="empty-recommendations">
             <div style={S.emptyRecommendationsHeader}>
               <p style={S.emptyRecommendationsTitle}>{emptyRecommendationsTitleState}</p>
               <p style={S.emptyRecommendationsDescription}>Fresh starting points while you refine the search.</p>
@@ -2202,7 +2235,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
   const displayItems = buildTemplateGridDisplayItems(items, campaignInsertAfter, shouldShowMcpCampaign);
 
   return withFeaturedPreview(
-    <div style={S.root} aria-busy={isRefreshing ? true : undefined}>
+    <div style={S.root} data-marketplace-component="template-grid" aria-busy={isRefreshing ? true : undefined}>
       <style dangerouslySetInnerHTML={{ __html: GRID_STYLES }} />
       {totalItems !== null && (
         <div style={S.countLabel}>

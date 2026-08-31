@@ -1,0 +1,884 @@
+import assert from 'node:assert/strict';
+import { beforeEach, test } from 'node:test';
+import {
+  buildAgentSearchUrl,
+  createAgentToolsWindowHandle,
+  createMarketplaceAgentTools,
+  demandTier,
+  registerMarketplaceAgentTools,
+  resolveAgentToolsApiBase,
+  summarizeSearchItem,
+  toWebMcpTool,
+  DEFAULT_TEMPLATE_API_BASE,
+  type MarketplaceAgentTool,
+} from '../src/components/marketplace/agentTools';
+
+type GlobalWithDom = typeof globalThis & { window?: Window; document?: Document };
+
+function removeDom(): void {
+  const g = globalThis as GlobalWithDom;
+  delete g.window;
+  delete g.document;
+}
+
+function installWindow(overrides: Record<string, unknown>): void {
+  (globalThis as GlobalWithDom).window = overrides as unknown as Window;
+}
+
+beforeEach(() => {
+  removeDom();
+});
+
+function stubFetch(
+  body: unknown,
+  calls: string[] = [],
+  status = 200,
+): typeof fetch {
+  return (async (input: unknown) => {
+    calls.push(String(input));
+    return {
+      ok: status >= 200 && status < 300,
+      status,
+      json: async () => body,
+    };
+  }) as unknown as typeof fetch;
+}
+
+// ── API base resolution ──────────────────────────────────────────────────────
+
+test('resolveAgentToolsApiBase falls back to the production proxy', () => {
+  assert.equal(resolveAgentToolsApiBase(''), DEFAULT_TEMPLATE_API_BASE);
+  assert.equal(resolveAgentToolsApiBase(undefined), DEFAULT_TEMPLATE_API_BASE);
+  assert.equal(
+    resolveAgentToolsApiBase('https://webflow-template-search.createsomething.workers.dev'),
+    DEFAULT_TEMPLATE_API_BASE,
+  );
+  assert.equal(
+    resolveAgentToolsApiBase('https://webflow-template-marketplace.webflow.io/api'),
+    DEFAULT_TEMPLATE_API_BASE,
+  );
+  assert.equal(
+    resolveAgentToolsApiBase('https://templates.webflow.com/templates-api/'),
+    'https://templates.webflow.com/templates-api',
+  );
+});
+
+// ── Search URL mapping ───────────────────────────────────────────────────────
+
+test('buildAgentSearchUrl maps every supported parameter', () => {
+  const url = new URL(
+    buildAgentSearchUrl(DEFAULT_TEMPLATE_API_BASE, {
+      q: ' portfolio ',
+      scope: 'free',
+      category_group_slug: 'business',
+      child_category_slug: 'consulting',
+      styles: ['minimal', 'dark'],
+      tags: ['saas'],
+      types: ['One Page'],
+      free_only: true,
+      sort: 'best-selling',
+      page: 2,
+      page_size: 12,
+    }),
+  );
+  assert.equal(url.origin + url.pathname, `${DEFAULT_TEMPLATE_API_BASE}/api/templates/search`);
+  assert.equal(url.searchParams.get('q'), 'portfolio');
+  assert.equal(url.searchParams.get('scope'), 'free');
+  assert.equal(url.searchParams.get('category_group_slug'), 'business');
+  assert.equal(url.searchParams.get('child_category_slug'), 'consulting');
+  assert.deepEqual(url.searchParams.getAll('styles'), ['minimal', 'dark']);
+  assert.deepEqual(url.searchParams.getAll('tags'), ['saas']);
+  assert.deepEqual(url.searchParams.getAll('types'), ['One Page']);
+  assert.equal(url.searchParams.get('free_only'), 'true');
+  assert.equal(url.searchParams.get('sort'), 'best_selling');
+  assert.equal(url.searchParams.get('page'), '2');
+  assert.equal(url.searchParams.get('page_size'), '12');
+  assert.equal(url.searchParams.get('include'), 'items');
+  assert.equal(url.searchParams.get('view'), 'full');
+});
+
+test('buildAgentSearchUrl clamps pagination and defaults sparse input', () => {
+  const url = new URL(
+    buildAgentSearchUrl(DEFAULT_TEMPLATE_API_BASE, { page: 9999, page_size: 100 }),
+  );
+  assert.equal(url.searchParams.get('page'), '500');
+  assert.equal(url.searchParams.get('page_size'), '24');
+  const sparse = new URL(buildAgentSearchUrl(DEFAULT_TEMPLATE_API_BASE, {}));
+  assert.equal(sparse.searchParams.get('page'), '1');
+  assert.equal(sparse.searchParams.get('page_size'), '12');
+  assert.equal(sparse.searchParams.get('q'), null);
+});
+
+// ── Deployed-contract discipline ─────────────────────────────────────────────
+
+test('search_templates schema advertises only parameters the deployed worker supports', () => {
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  const search = tools.find((tool) => tool.name === 'search_templates');
+  assert.ok(search);
+  const schema = search.inputSchema as {
+    additionalProperties: boolean;
+    properties: Record<string, unknown>;
+  };
+  assert.equal(schema.additionalProperties, false);
+  // Capability filters are silent no-ops on the deployed worker (verified
+  // 2026-08-31); the schema must not advertise them until the worker gains them.
+  for (const forbidden of ['features', 'has_ecommerce', 'has_membership', 'has_cms', 'tags']) {
+    assert.equal(forbidden in schema.properties, false, `schema must not advertise ${forbidden}`);
+  }
+});
+
+// ── Output shaping ───────────────────────────────────────────────────────────
+
+test('demandTier mirrors the chat agent thresholds', () => {
+  assert.equal(demandTier(null), null);
+  assert.equal(demandTier(undefined), null);
+  assert.equal(demandTier(0), 'new');
+  assert.equal(demandTier(1), 'emerging');
+  assert.equal(demandTier(25), 'steady demand');
+  assert.equal(demandTier(100), 'strong demand');
+  assert.equal(demandTier(500), 'top seller');
+});
+
+test('summarizeSearchItem shapes output and withholds raw sales counts', () => {
+  const summary = summarizeSearchItem({
+    template_slug: 'zenith',
+    name: 'Zenith',
+    creator_name: 'Studio A',
+    price: 79,
+    is_free: false,
+    template_type: 'Multi Page',
+    cumulative_purchases: 640,
+    category_groups: [{ name: 'Business', slug: 'business' }],
+    child_categories: [{ name: 'Consulting', slug: 'consulting' }],
+    styles: ['Minimal', { name: 'Dark', slug: 'dark' }],
+    tags: [{ slug: 'saas' }],
+    url: 'https://webflow.com/templates/html/zenith-website-template',
+    preview_url: 'https://zenith-template.webflow.io',
+  });
+  assert.equal(summary.price, '$79');
+  assert.equal(summary.demand, 'top seller');
+  assert.deepEqual(summary.categories, ['Business']);
+  assert.deepEqual(summary.styles, ['Minimal', 'Dark']);
+  assert.deepEqual(summary.tags, ['saas']);
+  assert.equal('cumulative_purchases' in summary, false);
+  const free = summarizeSearchItem({ is_free: true });
+  assert.equal(free.price, 'Free');
+});
+
+// ── Tool execution ───────────────────────────────────────────────────────────
+
+const SEARCH_BODY = {
+  items: [
+    { template_slug: 'zenith', name: 'Zenith', creator_name: 'Studio A', price: 79 },
+    { template_slug: 'apex-studio', name: 'Apex Studio', creator_name: 'Studio B', is_free: true },
+  ],
+  pagination: { page: 1, page_size: 12, total_items: 2, has_next_page: false },
+  applied_filters: { relaxed: true },
+};
+
+async function runTool(tools: MarketplaceAgentTool[], name: string, input = {}) {
+  const tool = tools.find((entry) => entry.name === name);
+  assert.ok(tool, `missing tool ${name}`);
+  return tool.execute(input);
+}
+
+test('search_templates summarizes results and surfaces the relaxed flag', async () => {
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch(SEARCH_BODY) });
+  const result = (await runTool(tools, 'search_templates', { q: 'zenith' })) as Record<
+    string,
+    unknown
+  >;
+  assert.equal(result.total_items, 2);
+  assert.equal(result.relaxed, true);
+  assert.ok(String(result.note).includes('related results'));
+  assert.equal((result.items as unknown[]).length, 2);
+});
+
+test('search responses are cached per URL for repeat calls', async () => {
+  const calls: string[] = [];
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch(SEARCH_BODY, calls) });
+  await runTool(tools, 'search_templates', { q: 'zenith' });
+  await runTool(tools, 'search_templates', { q: 'zenith' });
+  assert.equal(calls.length, 1);
+  await runTool(tools, 'search_templates', { q: 'apex' });
+  assert.equal(calls.length, 2);
+});
+
+test('get_template matches exact slug and suggests on miss', async () => {
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch(SEARCH_BODY) });
+  const hit = (await runTool(tools, 'get_template', { template_slug: 'Apex-Studio' })) as {
+    ok: boolean;
+    template: Record<string, unknown>;
+  };
+  assert.equal(hit.ok, true);
+  assert.equal(hit.template.name, 'Apex Studio');
+  const miss = (await runTool(tools, 'get_template', { template_slug: 'nope' })) as {
+    ok: boolean;
+    suggestions: unknown[];
+  };
+  assert.equal(miss.ok, false);
+  assert.equal(miss.suggestions.length, 2);
+});
+
+test('list_categories_and_styles maps pills and facets', async () => {
+  const body = {
+    category_pills: [{ name: 'Business', slug: 'business', count: 900, active: false }],
+    subcategory_pills: [{ name: 'Consulting', slug: 'consulting', count: 120 }],
+    available_facets: {
+      styles: [{ name: 'Minimal', slug: 'minimal', count: 400 }],
+      types: [{ value: 'One Page', count: 800 }],
+    },
+  };
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch(body) });
+  const result = (await runTool(tools, 'list_categories_and_styles')) as Record<string, unknown>;
+  assert.deepEqual(result.categories, [{ name: 'Business', slug: 'business', count: 900 }]);
+  assert.deepEqual(result.subcategories, [{ name: 'Consulting', slug: 'consulting', count: 120 }]);
+  assert.equal((result.styles as unknown[]).length, 1);
+  assert.deepEqual(result.scopes, ['all', 'featured', 'free', 'landing_pages']);
+});
+
+test('update_page_filters degrades gracefully without a page context', async () => {
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  const result = (await runTool(tools, 'update_page_filters', { q: 'portfolio' })) as {
+    ok: boolean;
+    message: string;
+  };
+  assert.equal(result.ok, false);
+  assert.match(result.message, /Page context unavailable/);
+});
+
+test('enablePageActions=false omits the write tool', () => {
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}), enablePageActions: false });
+  assert.equal(tools.some((tool) => tool.name === 'update_page_filters'), false);
+  assert.equal(tools.length, 4);
+  for (const tool of tools) assert.equal(tool.annotations.readOnlyHint, true);
+});
+
+test('onToolCall reports success and converts thrown errors into results', async () => {
+  const events: Array<{ tool: string; ok: boolean }> = [];
+  const failingFetch = (async () => {
+    throw new Error('network down');
+  }) as unknown as typeof fetch;
+  const tools = createMarketplaceAgentTools({
+    fetchImpl: failingFetch,
+    onToolCall: ({ tool, ok }) => events.push({ tool, ok }),
+  });
+  const result = (await runTool(tools, 'search_templates', { q: 'x' })) as {
+    ok: boolean;
+    error: string;
+  };
+  assert.equal(result.ok, false);
+  assert.match(result.error, /network down/);
+  assert.deepEqual(events, [{ tool: 'search_templates', ok: false }]);
+});
+
+// ── WebMCP registration ──────────────────────────────────────────────────────
+
+test('registerMarketplaceAgentTools prefers registerTool', () => {
+  const registered: unknown[] = [];
+  installWindow({
+    navigator: { modelContext: { registerTool: (tool: unknown) => registered.push(tool) } },
+  });
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  const result = registerMarketplaceAgentTools(tools);
+  assert.equal(result.api, 'registerTool');
+  assert.equal(result.registered, 5);
+  assert.equal(registered.length, 5);
+  const names = registered.map((tool) => (tool as { name: string }).name);
+  assert.deepEqual(names, [
+    'search_templates',
+    'list_categories_and_styles',
+    'get_template',
+    'update_page_filters',
+    'get_page_state',
+  ]);
+});
+
+test('registerMarketplaceAgentTools falls back to provideContext, then none', () => {
+  let provided: { tools: unknown[] } | null = null;
+  installWindow({
+    navigator: {
+      modelContext: {
+        provideContext: (context: { tools: unknown[] }) => {
+          provided = context;
+        },
+      },
+    },
+  });
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  assert.equal(registerMarketplaceAgentTools(tools).api, 'provideContext');
+  assert.equal(provided!.tools.length, 5);
+
+  installWindow({ navigator: {} });
+  assert.deepEqual(registerMarketplaceAgentTools(tools), { api: 'none', registered: 0 });
+  removeDom();
+  assert.deepEqual(registerMarketplaceAgentTools(tools), { api: 'none', registered: 0 });
+});
+
+test('toWebMcpTool wraps plain results in a content array and passes annotations through', async () => {
+  const wrapped = toWebMcpTool({
+    name: 'demo',
+    description: 'demo',
+    inputSchema: { type: 'object' },
+    annotations: { readOnlyHint: true },
+    execute: async () => ({ hello: 'world' }),
+  }) as {
+    annotations: { readOnlyHint: boolean };
+    execute: (input: Record<string, unknown>) => Promise<{ content: Array<{ text: string }> }>;
+  };
+  assert.equal(wrapped.annotations.readOnlyHint, true);
+  const result = await wrapped.execute({});
+  assert.match(result.content[0].text, /"hello": "world"/);
+
+  const passthrough = toWebMcpTool({
+    name: 'demo2',
+    description: 'demo2',
+    inputSchema: { type: 'object' },
+    annotations: { readOnlyHint: true },
+    execute: async () => ({ content: [{ type: 'text', text: 'already shaped' }] }),
+  }) as { execute: (input: Record<string, unknown>) => Promise<{ content: Array<{ text: string }> }> };
+  const shaped = await passthrough.execute({});
+  assert.equal(shaped.content[0].text, 'already shaped');
+});
+
+test('window handle lists and routes tool calls', async () => {
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch(SEARCH_BODY) });
+  const handle = createAgentToolsWindowHandle(tools);
+  assert.equal(handle.listTools().length, 5);
+  assert.equal(handle.listTools()[0].readOnly, true);
+  const result = (await handle.callTool('search_templates', { q: 'zenith' })) as {
+    total_items: number;
+  };
+  assert.equal(result.total_items, 2);
+  await assert.rejects(() => handle.callTool('unknown_tool'), /Unknown marketplace agent tool/);
+});
+
+// ── Codex review regressions (PR #1556) ──────────────────────────────────────
+
+test('get_page_state ignores a stale filters snapshot after history navigation', async () => {
+  const stubDoc = { querySelectorAll: () => [] } as unknown as Document;
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+
+  (globalThis as GlobalWithDom).document = stubDoc;
+  installWindow({
+    location: { href: 'https://webflow.com/templates?q=new' },
+    __templateMarketplaceFilters: { q: 'old', href: 'https://webflow.com/templates?q=old' },
+  });
+  const stale = (await runTool(tools, 'get_page_state')) as { filters: { q: string } };
+  assert.equal(stale.filters.q, 'new');
+
+  (globalThis as GlobalWithDom).document = stubDoc;
+  installWindow({
+    location: { href: 'https://webflow.com/templates?q=current' },
+    __templateMarketplaceFilters: {
+      q: 'snapshot-q',
+      href: 'https://webflow.com/templates?q=current',
+    },
+  });
+  const fresh = (await runTool(tools, 'get_page_state')) as { filters: { q: string } };
+  assert.equal(fresh.filters.q, 'snapshot-q');
+});
+
+test('onToolCall counts semantic failures ({ok:false}) as failures', async () => {
+  const events: Array<{ tool: string; ok: boolean }> = [];
+  const tools = createMarketplaceAgentTools({
+    fetchImpl: stubFetch(SEARCH_BODY),
+    onToolCall: ({ tool, ok }) => events.push({ tool, ok }),
+  });
+  await runTool(tools, 'get_template', { template_slug: 'nope' });
+  await runTool(tools, 'get_template', { template_slug: 'zenith' });
+  assert.deepEqual(events, [
+    { tool: 'get_template', ok: false },
+    { tool: 'get_template', ok: true },
+  ]);
+});
+
+// ── Codex review round 2: carousel cards vs filter-aware grids ───────────────
+
+const CHAT_GRID_MARKER = '[data-template-slug], .tmgrid-grid, .tmgrid-item, .tmsearch-page';
+const FILTER_AWARE_MARKER =
+  '[data-marketplace-component="template-grid"], .tmgrid-grid, .tmgrid-item, .tmsearch-page';
+const GRID_SCOPED_SLUGS = '.tmgrid-item[data-template-slug], .tmgrid-grid [data-template-slug]';
+
+function fakeDoc(matchers: Record<string, unknown[]>): void {
+  (globalThis as GlobalWithDom).document = {
+    querySelectorAll: (selector: string) => matchers[selector] ?? [],
+    dispatchEvent: () => true,
+  } as unknown as Document;
+}
+
+function fakeWindow(href: string): Record<string, unknown> {
+  const entries: string[] = [href];
+  const win: { location: { href: string }; history: Record<string, unknown> } & Record<string, unknown> = {
+    location: { href },
+    __historyEntries: entries,
+    history: {
+      pushState: (_s: unknown, _t: unknown, url: string) => {
+        win.location.href = new URL(url, win.location.href).toString();
+        entries.push(win.location.href);
+      },
+      replaceState: (_s: unknown, _t: unknown, url: string) => {
+        win.location.href = new URL(url, win.location.href).toString();
+        entries[entries.length - 1] = win.location.href;
+      },
+    },
+    dispatchEvent: () => true,
+    setTimeout: () => 1,
+    clearTimeout: () => undefined,
+  };
+  installWindow(win);
+  return win;
+}
+
+test('update_page_filters refuses filter changes on carousel-only pages', async () => {
+  const carouselCard = { getAttribute: () => 'carousel-slug' };
+  fakeDoc({
+    [CHAT_GRID_MARKER]: [carouselCard],
+    '[data-template-slug]': [carouselCard],
+  });
+  fakeWindow('https://webflow.com/templates/landing');
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  const result = (await runTool(tools, 'update_page_filters', { q: 'portfolio' })) as {
+    ok: boolean;
+    message: string;
+  };
+  assert.equal(result.ok, false);
+  assert.match(result.message, /filter-aware/);
+});
+
+test('update_page_filters clear_filters reports route-owned filters it cannot clear', async () => {
+  const gridItem = { getAttribute: () => 'grid-slug' };
+  fakeDoc({
+    [CHAT_GRID_MARKER]: [gridItem],
+    [FILTER_AWARE_MARKER]: [gridItem],
+  });
+  fakeWindow('https://webflow.com/templates/category/portfolio?styles=minimal');
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  const result = (await runTool(tools, 'update_page_filters', { clear_filters: true })) as {
+    ok: boolean;
+    preserved_route_filters: string[];
+    note: string;
+  };
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.preserved_route_filters, ['category:portfolio']);
+  assert.match(result.note, /page path/);
+});
+
+test('get_page_state scopes visible slugs to the filter-aware grid', async () => {
+  const gridCard = { getAttribute: () => 'grid-one' };
+  const carouselCard = { getAttribute: () => 'carousel-two' };
+  fakeDoc({
+    [GRID_SCOPED_SLUGS]: [gridCard],
+    '[data-template-slug]': [gridCard, carouselCard],
+    [FILTER_AWARE_MARKER]: [gridCard],
+  });
+  fakeWindow('https://webflow.com/templates?q=x');
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  const scoped = (await runTool(tools, 'get_page_state')) as {
+    visible_template_slugs: string[];
+    visible_slug_source: string;
+    has_template_grid: boolean;
+  };
+  assert.deepEqual(scoped.visible_template_slugs, ['grid-one']);
+  assert.equal(scoped.visible_slug_source, 'grid');
+  assert.equal(scoped.has_template_grid, true);
+
+  // Carousel-only page: falls back to page-wide slugs, labeled as such.
+  fakeDoc({ '[data-template-slug]': [carouselCard] });
+  fakeWindow('https://webflow.com/templates/landing');
+  const fallback = (await runTool(tools, 'get_page_state')) as {
+    visible_template_slugs: string[];
+    visible_slug_source: string;
+    has_template_grid: boolean;
+  };
+  assert.deepEqual(fallback.visible_template_slugs, ['carousel-two']);
+  assert.equal(fallback.visible_slug_source, 'page');
+  assert.equal(fallback.has_template_grid, false);
+});
+
+// ── Codex review round 3: no-op payloads and route-only fallback state ───────
+
+test('update_page_filters rejects unknown categories and empty normalized payloads', async () => {
+  const gridItem = { getAttribute: () => 'grid-slug' };
+  fakeDoc({
+    [CHAT_GRID_MARKER]: [gridItem],
+    [FILTER_AWARE_MARKER]: [gridItem],
+  });
+  fakeWindow('https://webflow.com/templates');
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+
+  const unknown = (await runTool(tools, 'update_page_filters', {
+    category_group_slug: 'not-a-real-category',
+  })) as { ok: boolean; message: string };
+  assert.equal(unknown.ok, false);
+  assert.match(unknown.message, /Unknown category "not-a-real-category"/);
+
+  const empty = (await runTool(tools, 'update_page_filters', {})) as {
+    ok: boolean;
+    message: string;
+  };
+  assert.equal(empty.ok, false);
+  assert.match(empty.message, /No supported filters/);
+});
+
+test('get_page_state fallback filters include route-owned tag, style, and scope', async () => {
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+
+  fakeDoc({});
+  fakeWindow('https://webflow.com/templates/tag/automation');
+  const tagState = (await runTool(tools, 'get_page_state')) as {
+    filters: { tagSlug: string | null; scope: string };
+  };
+  assert.equal(tagState.filters.tagSlug, 'automation');
+
+  fakeDoc({});
+  fakeWindow('https://webflow.com/templates/free');
+  const freeState = (await runTool(tools, 'get_page_state')) as {
+    filters: { scope: string };
+  };
+  assert.equal(freeState.filters.scope, 'free');
+});
+
+// ── Codex review round 4: designer routes + telemetry isolation ──────────────
+
+test('clear_filters reports the creator constraint on designer routes', async () => {
+  const gridItem = { getAttribute: () => 'grid-slug' };
+  fakeDoc({
+    [CHAT_GRID_MARKER]: [gridItem],
+    [FILTER_AWARE_MARKER]: [gridItem],
+  });
+  fakeWindow('https://webflow.com/templates/designers/studio-a?styles=minimal');
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  const result = (await runTool(tools, 'update_page_filters', { clear_filters: true })) as {
+    ok: boolean;
+    preserved_route_filters: string[];
+  };
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.preserved_route_filters, ['creator:studio-a']);
+});
+
+test('a throwing analytics callback never breaks a tool call', async () => {
+  const tools = createMarketplaceAgentTools({
+    fetchImpl: stubFetch(SEARCH_BODY),
+    onToolCall: () => {
+      throw new Error('analytics exploded');
+    },
+  });
+  const result = (await runTool(tools, 'search_templates', { q: 'zenith' })) as {
+    total_items: number;
+  };
+  assert.equal(result.total_items, 2);
+});
+
+// ── Codex review round 5: route preservation, empty grids, false clears ──────
+
+test('a clear_filters:false-only payload is rejected as a no-op', async () => {
+  const gridItem = { getAttribute: () => 'grid-slug' };
+  fakeDoc({ [FILTER_AWARE_MARKER]: [gridItem], [CHAT_GRID_MARKER]: [gridItem] });
+  fakeWindow('https://webflow.com/templates');
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  const result = (await runTool(tools, 'update_page_filters', { clear_filters: false })) as {
+    ok: boolean;
+    message: string;
+  };
+  assert.equal(result.ok, false);
+  assert.match(result.message, /No supported filters/);
+});
+
+test('unrelated actions on category routes keep the route category in the detail', async () => {
+  const gridItem = { getAttribute: () => 'grid-slug' };
+  fakeDoc({ [FILTER_AWARE_MARKER]: [gridItem], [CHAT_GRID_MARKER]: [gridItem] });
+  const win = fakeWindow('https://webflow.com/templates/category/portfolio');
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  const result = (await runTool(tools, 'update_page_filters', { q: 'crm' })) as {
+    ok: boolean;
+    href: string;
+  };
+  assert.equal(result.ok, true);
+  assert.match(result.href, /category=portfolio/);
+  const detail = win.__templateMarketplaceFilters as { categoryGroupSlug: string; q: string };
+  assert.equal(detail.categoryGroupSlug, 'portfolio');
+  assert.equal(detail.q, 'crm');
+});
+
+test('a mounted grid with zero results still accepts filter changes via its marker', async () => {
+  const marker = { getAttribute: () => null };
+  // Empty-result grid: persistent data marker present, no result markup.
+  fakeDoc({ [FILTER_AWARE_MARKER]: [marker] });
+  fakeWindow('https://webflow.com/templates?q=zzzz');
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  const result = (await runTool(tools, 'update_page_filters', { clear_filters: true })) as {
+    ok: boolean;
+  };
+  assert.equal(result.ok, true);
+});
+
+// ── Codex review round 6: grid state, empty recommendations, telemetry ───────
+
+test('get_page_state prefers the grid-published resolved state', async () => {
+  fakeDoc({});
+  const win = fakeWindow('https://webflow.com/templates');
+  win.__templateMarketplaceGridState = {
+    href: 'https://webflow.com/templates',
+    q: '',
+    scope: 'featured',
+    categoryGroupSlug: 'portfolio',
+  };
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  const state = (await runTool(tools, 'get_page_state')) as {
+    filters: { scope: string; categoryGroupSlug: string };
+    filters_source: string;
+  };
+  assert.equal(state.filters_source, 'grid');
+  assert.equal(state.filters.scope, 'featured');
+  assert.equal(state.filters.categoryGroupSlug, 'portfolio');
+
+  // Stale grid state (href mismatch) falls back to the URL.
+  fakeDoc({});
+  const win2 = fakeWindow('https://webflow.com/templates/free');
+  win2.__templateMarketplaceGridState = {
+    href: 'https://webflow.com/templates',
+    scope: 'featured',
+  };
+  const fallback = (await runTool(tools, 'get_page_state')) as {
+    filters: { scope: string };
+    filters_source: string;
+  };
+  assert.equal(fallback.filters_source, 'url');
+  assert.equal(fallback.filters.scope, 'free');
+});
+
+test('get_page_state excludes empty-state recommendation cards', async () => {
+  const recSection = {};
+  const recCard = {
+    getAttribute: () => 'rec-slug',
+    closest: (sel: string) =>
+      sel === '[data-template-grid-section="empty-recommendations"]' ? recSection : null,
+  };
+  const resultCard = { getAttribute: () => 'result-slug', closest: () => null };
+  fakeDoc({
+    [GRID_SCOPED_SLUGS]: [recCard, resultCard],
+    [FILTER_AWARE_MARKER]: [resultCard],
+  });
+  fakeWindow('https://webflow.com/templates?q=x');
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  const state = (await runTool(tools, 'get_page_state')) as {
+    visible_template_slugs: string[];
+  };
+  assert.deepEqual(state.visible_template_slugs, ['result-slug']);
+});
+
+// ── Codex review round 7: clear aliases, slug lookup, prop constraints ───────
+
+test('clear_filters removes alias params like scope and pricing', async () => {
+  const gridItem = { getAttribute: () => 'grid-slug' };
+  fakeDoc({ [FILTER_AWARE_MARKER]: [gridItem], [CHAT_GRID_MARKER]: [gridItem] });
+  fakeWindow('https://webflow.com/templates?scope=featured&pricing=free&style_slug=minimal');
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  const result = (await runTool(tools, 'update_page_filters', { clear_filters: true })) as {
+    ok: boolean;
+    href: string;
+  };
+  assert.equal(result.ok, true);
+  assert.doesNotMatch(result.href, /scope=|pricing=|style_slug=/);
+});
+
+test('get_template retries without a duplicate-name suffix', async () => {
+  const fetchByQuery = (async (input: unknown) => {
+    const q = new URL(String(input)).searchParams.get('q');
+    const items =
+      q === 'zenith'
+        ? [{ template_slug: 'zenith-2', name: 'Zenith', creator_name: 'Studio A' }]
+        : [];
+    return { ok: true, status: 200, json: async () => ({ items }) };
+  }) as unknown as typeof fetch;
+  const tools = createMarketplaceAgentTools({ fetchImpl: fetchByQuery });
+  const hit = (await runTool(tools, 'get_template', { template_slug: 'zenith-2' })) as {
+    ok: boolean;
+    template: { name: string };
+  };
+  assert.equal(hit.ok, true);
+  assert.equal(hit.template.name, 'Zenith');
+
+  const miss = (await runTool(tools, 'get_template', { template_slug: 'ghost' })) as {
+    ok: boolean;
+    message: string;
+  };
+  assert.equal(miss.ok, false);
+  assert.match(miss.message, /best-effort/);
+});
+
+test('clear_filters reports component prop-owned constraints as preserved', async () => {
+  const gridItem = { getAttribute: () => 'grid-slug' };
+  fakeDoc({ [FILTER_AWARE_MARKER]: [gridItem], [CHAT_GRID_MARKER]: [gridItem] });
+  const win = fakeWindow('https://webflow.com/templates?q=old');
+  win.__templateMarketplaceGridState = {
+    href: 'https://webflow.com/templates?q=old',
+    scope: 'featured',
+    styleSlug: 'minimal-websites',
+    categoryGroupSlug: null,
+    tagSlug: null,
+    creatorSlug: null,
+  };
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  const result = (await runTool(tools, 'update_page_filters', { clear_filters: true })) as {
+    ok: boolean;
+    preserved_route_filters: string[];
+  };
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.preserved_route_filters, ['scope:featured', 'style:minimal-websites']);
+});
+
+test('errors become { ok: false } results even without a telemetry callback', async () => {
+  const failingFetch = (async () => {
+    throw new Error('offline');
+  }) as unknown as typeof fetch;
+  const tools = createMarketplaceAgentTools({ fetchImpl: failingFetch });
+  const result = (await runTool(tools, 'search_templates', { q: 'x' })) as {
+    ok: boolean;
+    error: string;
+  };
+  assert.equal(result.ok, false);
+  assert.match(result.error, /offline/);
+});
+
+// ── Codex review round 8: default sort + creator record constraints ──────────
+
+test('unrelated actions keep a grid non-default sort in the detail', async () => {
+  const gridItem = { getAttribute: () => 'grid-slug' };
+  fakeDoc({ [FILTER_AWARE_MARKER]: [gridItem], [CHAT_GRID_MARKER]: [gridItem] });
+  const win = fakeWindow('https://webflow.com/templates');
+  win.__templateMarketplaceGridState = {
+    href: 'https://webflow.com/templates',
+    sort: 'newest',
+  };
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  const result = (await runTool(tools, 'update_page_filters', { q: 'crm' })) as {
+    ok: boolean;
+    href: string;
+  };
+  assert.equal(result.ok, true);
+  assert.match(result.href, /sort=newest/);
+  const detail = win.__templateMarketplaceFilters as { sort: string };
+  assert.equal(detail.sort, 'newest');
+});
+
+test('clear_filters reports a creatorRecordId prop constraint as preserved', async () => {
+  const gridItem = { getAttribute: () => 'grid-slug' };
+  fakeDoc({ [FILTER_AWARE_MARKER]: [gridItem], [CHAT_GRID_MARKER]: [gridItem] });
+  const win = fakeWindow('https://webflow.com/templates?q=old');
+  win.__templateMarketplaceGridState = {
+    href: 'https://webflow.com/templates?q=old',
+    scope: 'all',
+    creatorRecordId: 'rec1234567890abcd',
+  };
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  const result = (await runTool(tools, 'update_page_filters', { clear_filters: true })) as {
+    preserved_route_filters: string[];
+  };
+  assert.deepEqual(result.preserved_route_filters, ['creator_record_id:rec1234567890abcd']);
+});
+
+// ── Codex review round 9: free scope, empty-grid fallback, prop provenance ───
+
+test('free_only:false clears free aliases and reports a path-owned free scope', async () => {
+  const gridItem = { getAttribute: () => 'grid-slug' };
+  fakeDoc({ [FILTER_AWARE_MARKER]: [gridItem], [CHAT_GRID_MARKER]: [gridItem] });
+  fakeWindow('https://webflow.com/templates?pricing=free&scope=free');
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  const aliasResult = (await runTool(tools, 'update_page_filters', { free_only: false })) as {
+    ok: boolean;
+    href: string;
+  };
+  assert.equal(aliasResult.ok, true);
+  assert.doesNotMatch(aliasResult.href, /pricing=|scope=/);
+
+  fakeDoc({ [FILTER_AWARE_MARKER]: [gridItem], [CHAT_GRID_MARKER]: [gridItem] });
+  fakeWindow('https://webflow.com/templates/free');
+  const pathResult = (await runTool(tools, 'update_page_filters', { free_only: false })) as {
+    preserved_route_filters: string[];
+  };
+  assert.deepEqual(pathResult.preserved_route_filters, ['scope:free']);
+});
+
+test('an empty mounted grid reports no visible slugs even with a carousel present', async () => {
+  const carouselCard = { getAttribute: () => 'carousel-two', closest: () => null };
+  const marker = { getAttribute: () => null };
+  fakeDoc({
+    [FILTER_AWARE_MARKER]: [marker],
+    '[data-template-slug]': [carouselCard],
+  });
+  fakeWindow('https://webflow.com/templates?q=zzzz');
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  const state = (await runTool(tools, 'get_page_state')) as {
+    visible_template_slugs: string[];
+    has_template_grid: boolean;
+    visible_slug_source: string;
+  };
+  assert.deepEqual(state.visible_template_slugs, []);
+  assert.equal(state.has_template_grid, true);
+  assert.equal(state.visible_slug_source, 'grid');
+});
+
+test('prop constraints duplicated in the URL are still reported via provenance', async () => {
+  const gridItem = { getAttribute: () => 'grid-slug' };
+  fakeDoc({ [FILTER_AWARE_MARKER]: [gridItem], [CHAT_GRID_MARKER]: [gridItem] });
+  const win = fakeWindow('https://webflow.com/templates?style_slug=minimal-websites');
+  win.__templateMarketplaceGridState = {
+    href: 'https://webflow.com/templates?style_slug=minimal-websites',
+    styleSlug: 'minimal-websites',
+    propOverrides: {
+      categorySlug: null,
+      scopeOverride: null,
+      styleSlug: 'minimal-websites',
+      tagSlug: null,
+      creatorSlug: null,
+      creatorRecordId: null,
+    },
+  };
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  const result = (await runTool(tools, 'update_page_filters', { clear_filters: true })) as {
+    preserved_route_filters: string[];
+  };
+  assert.deepEqual(result.preserved_route_filters, ['style:minimal-websites']);
+});
+
+// ── Codex review round 10: reset detail consistency + undo preservation ──────
+
+test('clear_filters on a category route keeps the category in the dispatched detail', async () => {
+  const gridItem = { getAttribute: () => 'grid-slug' };
+  fakeDoc({ [FILTER_AWARE_MARKER]: [gridItem], [CHAT_GRID_MARKER]: [gridItem] });
+  const win = fakeWindow('https://webflow.com/templates/category/portfolio?styles=minimal');
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  const result = (await runTool(tools, 'update_page_filters', { clear_filters: true })) as {
+    ok: boolean;
+    preserved_route_filters: string[];
+  };
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.preserved_route_filters, ['category:portfolio']);
+  const detail = win.__templateMarketplaceFilters as { categoryGroupSlug: string | null };
+  assert.equal(detail.categoryGroupSlug, 'portfolio');
+});
+
+test('query-alias categories survive unrelated actions via canonicalization', async () => {
+  const gridItem = { getAttribute: () => 'grid-slug' };
+  fakeDoc({ [FILTER_AWARE_MARKER]: [gridItem], [CHAT_GRID_MARKER]: [gridItem] });
+  const win = fakeWindow('https://webflow.com/templates?category_group_slug=portfolio');
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  const result = (await runTool(tools, 'update_page_filters', { q: 'crm' })) as { href: string };
+  assert.match(result.href, /category=portfolio/);
+  const detail = win.__templateMarketplaceFilters as { categoryGroupSlug: string | null };
+  assert.equal(detail.categoryGroupSlug, 'portfolio');
+});
+
+test('free_only:false keeps the original free entry reachable via Back', async () => {
+  const gridItem = { getAttribute: () => 'grid-slug' };
+  fakeDoc({ [FILTER_AWARE_MARKER]: [gridItem], [CHAT_GRID_MARKER]: [gridItem] });
+  const win = fakeWindow('https://webflow.com/templates?scope=free&q=shop');
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  await runTool(tools, 'update_page_filters', { free_only: false });
+  const entries = win.__historyEntries as string[];
+  assert.equal(entries.length, 2);
+  assert.match(entries[0], /scope=free/);
+  assert.doesNotMatch(entries[1], /scope=free/);
+});
