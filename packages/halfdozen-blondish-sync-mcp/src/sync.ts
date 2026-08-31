@@ -15,10 +15,10 @@ import {
 import {
   DEFAULT_HD_STATUS,
   FILE_UPLOAD_TARGET_WORKSPACE,
-  HD_TO_OS_STATUS,
   TARGET_EXT_PAGE_ID_PROPERTIES,
 } from './constants.js';
 import { resolveRuntimeConfig, toolName } from './config.js';
+import { effectiveSourceStatusMap, mapHdStatusToOsStatus } from './status-policy.js';
 import type { AuditResult, DataSourceSchema, Env, NotionBlock, NotionPage, SyncConfig, SyncFile, SyncResult, Workspace } from './types.js';
 
 type WritableValue = string | Array<Record<string, unknown>>;
@@ -563,19 +563,7 @@ export async function fullReconcile(env: Env): Promise<SyncResult> {
   };
 }
 
-export function mapHdStatusToOsStatus(value: string, overrides: Record<string, string | null> = {}): string | null {
-  const defaultStatus = HD_TO_OS_STATUS[value];
-  if (!defaultStatus) return null;
-  if (!Object.prototype.hasOwnProperty.call(overrides, value)) return defaultStatus;
-  const override = overrides[value];
-  return override === null ? null : override.trim() || defaultStatus;
-}
-
-function effectiveSourceStatusMap(overrides: Record<string, string | null>): Record<string, string | null> {
-  return Object.fromEntries(
-    Object.keys(HD_TO_OS_STATUS).map((hdStatus) => [hdStatus, mapHdStatusToOsStatus(hdStatus, overrides)]),
-  ) as Record<string, string | null>;
-}
+export { mapHdStatusToOsStatus } from './status-policy.js';
 
 export function buildTicketTitle(ticket: string, clientDisplayName = 'BLONDISH'): string {
   return ticket.trim() || `${clientDisplayName} support ticket`;

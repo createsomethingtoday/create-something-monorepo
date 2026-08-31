@@ -28,7 +28,7 @@ CLIENT_SUPPORT_TICKETS_DATA_SOURCE_TITLE = "Support Tickets [OS]"
 HALFDOZEN_TICKETS_DATA_SOURCE_ID = "2a101918-7ac5-8074-bf06-000b97592481"
 HALFDOZEN_TICKETS_DATA_SOURCE_TITLE = "Tickets [HD]"
 CLIENT_OS_STATUS_PROPERTY = "Status"
-CLIENT_OS_STATUS_MAP = "{\"Archive\":null}"
+CLIENT_OS_STATUS_MAP = "{\"Not Started\":\"Submitted\",\"Responded\":\"Under Review\",\"Client Action\":\"Under Review\",\"Assigned\":\"Under Review\",\"Needs Review\":\"Under Review\",\"Backburner\":null,\"Archive\":null}"
 CS_IDENTITY_ISSUER = "https://id.createsomething.space"
 # Claude connector access is limited to verified client and operator domains.
 OAUTH_ALLOWED_DOMAINS = "halfdozen.co,createsomething.io"
