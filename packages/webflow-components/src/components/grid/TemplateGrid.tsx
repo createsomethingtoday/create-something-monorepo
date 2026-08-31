@@ -1288,6 +1288,18 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
     typeof window === 'undefined' ? 4 : templateGridColumnCount(window.innerWidth),
   );
 
+  // Publish the resolved filter state (URL + prop overrides) so page-level
+  // agent tooling can read what this grid actually shows — the URL alone
+  // misses prop-driven constraints like categorySlug or scopeOverride.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    (window as unknown as Record<string, unknown>).__templateMarketplaceGridState = {
+      href: window.location.href,
+      ...filters,
+      updatedAt: Date.now(),
+    };
+  }, [filters]);
+
   // Stale-fetch guard: every new filter/sort change increments this
   const fetchEpochRef = useRef(0);
   const activeFetchAbortRef = useRef<AbortController | null>(null);
@@ -2171,7 +2183,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
         </div>
 
         {(emptyRecommendationsLoading || emptyRecommendations.length > 0) && (
-          <div style={S.emptyRecommendations}>
+          <div style={S.emptyRecommendations} data-template-grid-section="empty-recommendations">
             <div style={S.emptyRecommendationsHeader}>
               <p style={S.emptyRecommendationsTitle}>{emptyRecommendationsTitleState}</p>
               <p style={S.emptyRecommendationsDescription}>Fresh starting points while you refine the search.</p>

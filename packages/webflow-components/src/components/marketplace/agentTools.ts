@@ -618,13 +618,26 @@ export function createMarketplaceAgentTools(
       const snapshot = (window as unknown as Record<string, unknown>)
         .__templateMarketplaceFilters as Record<string, unknown> | undefined;
       const snapshotIsCurrent = snapshot?.href === href;
+      // TemplateGrid publishes its resolved state (URL + prop overrides like
+      // categorySlug/scopeOverride), which the URL alone cannot reproduce.
+      const gridState = (window as unknown as Record<string, unknown>)
+        .__templateMarketplaceGridState as Record<string, unknown> | undefined;
+      const gridStateIsCurrent = gridState?.href === href;
       const roots = discoverOpenRoots(document);
       // Prefer cards inside the filter-aware grid; editorial carousels reuse
-      // [data-template-slug] but are not part of the active result set.
-      let slugElements = queryDiscoveredRoots(roots, GRID_SCOPED_SLUG_SELECTOR);
+      // [data-template-slug] but are not part of the active result set, and
+      // neither are the fallback cards in the grid's empty-state section.
+      const inEmptyRecommendations = (el: Element) =>
+        typeof el.closest === 'function' &&
+        el.closest('[data-template-grid-section="empty-recommendations"]') != null;
+      let slugElements = queryDiscoveredRoots(roots, GRID_SCOPED_SLUG_SELECTOR).filter(
+        (el) => !inEmptyRecommendations(el),
+      );
       let slugSource: 'grid' | 'page' = 'grid';
       if (slugElements.length === 0) {
-        slugElements = queryDiscoveredRoots(roots, '[data-template-slug]');
+        slugElements = queryDiscoveredRoots(roots, '[data-template-slug]').filter(
+          (el) => !inEmptyRecommendations(el),
+        );
         if (slugElements.length > 0) slugSource = 'page';
       }
       const seen = new Set<string>();
@@ -637,18 +650,24 @@ export function createMarketplaceAgentTools(
         ok: true,
         href,
         path_kind: route.pathKind,
-        filters: snapshotIsCurrent && snapshot ? snapshot : {
-          q: route.q,
-          scope: route.scope,
-          categoryGroupSlug: route.categoryGroupSlug,
-          childCategorySlug: route.childCategorySlug,
-          styleSlug: route.styleSlug,
-          tagSlug: route.tagSlug,
-          styles: route.styles,
-          types: route.types,
-          freeOnly: route.freeOnly,
-          sort: route.sort,
-        },
+        filters:
+          gridStateIsCurrent && gridState
+            ? gridState
+            : snapshotIsCurrent && snapshot
+              ? snapshot
+              : {
+                  q: route.q,
+                  scope: route.scope,
+                  categoryGroupSlug: route.categoryGroupSlug,
+                  childCategorySlug: route.childCategorySlug,
+                  styleSlug: route.styleSlug,
+                  tagSlug: route.tagSlug,
+                  styles: route.styles,
+                  types: route.types,
+                  freeOnly: route.freeOnly,
+                  sort: route.sort,
+                },
+        filters_source: gridStateIsCurrent ? 'grid' : snapshotIsCurrent ? 'event' : 'url',
         has_template_grid: pageHasFilterAwareGrid(),
         visible_template_slugs: Array.from(seen),
         visible_slug_source: slugSource,

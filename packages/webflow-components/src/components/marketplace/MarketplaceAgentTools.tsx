@@ -67,11 +67,15 @@ export const MarketplaceAgentTools: React.FC<MarketplaceAgentToolsProps> = ({
     const result = registerMarketplaceAgentTools(tools);
 
     if (enableAnalytics) {
-      emitTemplateComponentEvent('agent-tools', 'registered', {
-        api: result.api,
-        tool_count: result.registered,
-        tools_version: MARKETPLACE_AGENT_TOOLS_VERSION,
-      });
+      try {
+        emitTemplateComponentEvent('agent-tools', 'registered', {
+          api: result.api,
+          tool_count: result.registered,
+          tools_version: MARKETPLACE_AGENT_TOOLS_VERSION,
+        });
+      } catch {
+        // Analytics failures must not surface as effect errors on the host page.
+      }
     }
     if (debug) {
       console.info(

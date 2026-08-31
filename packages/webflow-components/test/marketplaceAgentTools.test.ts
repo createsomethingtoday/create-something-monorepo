@@ -608,3 +608,58 @@ test('a mounted grid with zero results still accepts filter changes via its mark
   };
   assert.equal(result.ok, true);
 });
+
+// ── Codex review round 6: grid state, empty recommendations, telemetry ───────
+
+test('get_page_state prefers the grid-published resolved state', async () => {
+  fakeDoc({});
+  const win = fakeWindow('https://webflow.com/templates');
+  win.__templateMarketplaceGridState = {
+    href: 'https://webflow.com/templates',
+    q: '',
+    scope: 'featured',
+    categoryGroupSlug: 'portfolio',
+  };
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  const state = (await runTool(tools, 'get_page_state')) as {
+    filters: { scope: string; categoryGroupSlug: string };
+    filters_source: string;
+  };
+  assert.equal(state.filters_source, 'grid');
+  assert.equal(state.filters.scope, 'featured');
+  assert.equal(state.filters.categoryGroupSlug, 'portfolio');
+
+  // Stale grid state (href mismatch) falls back to the URL.
+  fakeDoc({});
+  const win2 = fakeWindow('https://webflow.com/templates/free');
+  win2.__templateMarketplaceGridState = {
+    href: 'https://webflow.com/templates',
+    scope: 'featured',
+  };
+  const fallback = (await runTool(tools, 'get_page_state')) as {
+    filters: { scope: string };
+    filters_source: string;
+  };
+  assert.equal(fallback.filters_source, 'url');
+  assert.equal(fallback.filters.scope, 'free');
+});
+
+test('get_page_state excludes empty-state recommendation cards', async () => {
+  const recSection = {};
+  const recCard = {
+    getAttribute: () => 'rec-slug',
+    closest: (sel: string) =>
+      sel === '[data-template-grid-section="empty-recommendations"]' ? recSection : null,
+  };
+  const resultCard = { getAttribute: () => 'result-slug', closest: () => null };
+  fakeDoc({
+    [GRID_SCOPED_SLUGS]: [recCard, resultCard],
+    [FILTER_AWARE_MARKER]: [resultCard],
+  });
+  fakeWindow('https://webflow.com/templates?q=x');
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  const state = (await runTool(tools, 'get_page_state')) as {
+    visible_template_slugs: string[];
+  };
+  assert.deepEqual(state.visible_template_slugs, ['result-slug']);
+});
