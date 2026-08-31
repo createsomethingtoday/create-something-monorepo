@@ -197,3 +197,59 @@ test('a network exception also restores the subscriber consent state', async () 
   assert.equal(calls.length, 2);
   assert.match(calls[1]!.sql, /consent_evidence = \?/);
 });
+
+test('a failed rollback is reported as requiring manual review', async () => {
+  const subscriber = {
+    id: 10,
+    email: 'legacy@example.com',
+    active: 1,
+    status: 'active',
+    unsubscribed_at: null,
+    confirmed_at: '2025-11-17T02:23:40.000Z',
+    confirmation_token: 'old-token',
+    consent_requested_at: '2025-11-17T02:23:40.000Z',
+    consent_confirmed_at: null,
+    consent_method: 'single_opt_in',
+    consent_evidence: 'legacy_signup_form',
+    confirmation_email_id: null,
+    audience_classification: 'confirmed_subscriber'
+  };
+  let runCount = 0;
+  const db: NewsletterConfirmationDatabase = {
+    prepare() {
+      return {
+        bind() {
+          return {
+            async first<T>() {
+              return { ...subscriber } as T;
+            },
+            async run() {
+              runCount += 1;
+              return runCount === 1
+                ? { success: true, meta: { changes: 1 } }
+                : { success: false, meta: { changes: 0 } };
+            }
+          };
+        }
+      };
+    }
+  };
+
+  await assert.rejects(
+    requestNewsletterDoubleOptIn(
+      db,
+      { subscriberId: 10 },
+      {
+        apiKey: 're_test',
+        fetch: async () =>
+          new Response(JSON.stringify({ message: 'provider unavailable' }), {
+            status: 503,
+            headers: { 'Content-Type': 'application/json' }
+          }),
+        now: () => new Date('2026-08-31T15:00:00.000Z'),
+        token: () => 'fresh-confirmation-token'
+      }
+    ),
+    /could not be restored.*manual review/i
+  );
+});

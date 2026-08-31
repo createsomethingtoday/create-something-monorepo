@@ -145,7 +145,7 @@ async function restoreSubscriberConsent(
   subscriber: NewsletterConfirmationSubscriber,
   confirmationToken: string
 ): Promise<void> {
-  await db
+  const restored = await db
     .prepare(
       `UPDATE newsletter_subscribers
        SET confirmed_at = ?, confirmation_token = ?, consent_requested_at = ?,
@@ -165,6 +165,11 @@ async function restoreSubscriberConsent(
       confirmationToken
     )
     .run();
+  if (!restored.success || Number(restored.meta?.changes ?? 0) !== 1) {
+    throw new Error(
+      'Confirmation email could not be sent and the prior consent state could not be restored. Manual review is required.'
+    );
+  }
 }
 
 function createConfirmationToken(): string {
