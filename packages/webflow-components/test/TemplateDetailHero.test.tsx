@@ -28,6 +28,22 @@ test('normalizes quoted comma-containing category names to the canonical categor
   assert.doesNotMatch(html, /culture-websites/);
 });
 
+test('links the Documentation & Help Center label to the canonical Documentation category route', () => {
+  const html = renderToStaticMarkup(
+    <TemplateDetailHero
+      templateName="KnowledgeHub X"
+      categoryNames="Documentation & Help Center, Technology"
+      enableAnalytics={false}
+    />,
+  );
+
+  assert.match(
+    html,
+    /href="https:\/\/webflow\.com\/templates\/category\/documentation-websites">Documentation &amp; Help Center<\/a>/,
+  );
+  assert.doesNotMatch(html, /documentation-and-help-center-websites/);
+});
+
 test('uses the first category name in the template title', () => {
   const html = renderToStaticMarkup(
     <TemplateDetailHero
