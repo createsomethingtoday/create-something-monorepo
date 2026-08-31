@@ -1,7 +1,7 @@
 export interface NewsletterLifecycleDatabase {
   prepare(sql: string): {
     bind(...values: unknown[]): {
-      run(): Promise<{ success: boolean }>;
+      run(): Promise<{ success: boolean; meta?: { changes?: number } }>;
     };
   };
 }
@@ -12,8 +12,8 @@ export async function markNewsletterConfirmed(
   db: NewsletterLifecycleDatabase,
   subscriberId: number,
   confirmedAt = new Date().toISOString()
-): Promise<void> {
-  await db
+): Promise<boolean> {
+  const result = await db
     .prepare(
       `UPDATE newsletter_subscribers
        SET confirmed_at = COALESCE(confirmed_at, ?),
@@ -28,8 +28,12 @@ export async function markNewsletterConfirmed(
            status = 'active',
            unsubscribed_at = NULL,
            updated_at = datetime('now')
-       WHERE id = ?`
+       WHERE id = ?
+         AND unsubscribed_at IS NULL
+         AND active = 1
+         AND status = 'active'`
     )
     .bind(confirmedAt, confirmedAt, subscriberId)
     .run();
+  return result.success && Number(result.meta?.changes ?? 0) === 1;
 }

@@ -15,7 +15,7 @@ test('direct confirmation records explicit consent evidence and restores active 
           return {
             async run() {
               calls.push({ sql, values });
-              return { success: true };
+              return { success: true, meta: { changes: 1 } };
             }
           };
         }
@@ -23,8 +23,9 @@ test('direct confirmation records explicit consent evidence and restores active 
     }
   };
 
-  await markNewsletterConfirmed(db, 24, '2026-08-12T17:00:00.000Z');
+  const confirmed = await markNewsletterConfirmed(db, 24, '2026-08-12T17:00:00.000Z');
 
+  assert.equal(confirmed, true);
   assert.equal(calls.length, 1);
   assert.match(calls[0]!.sql, /consent_method = 'double_opt_in'/);
   assert.match(calls[0]!.sql, /consent_evidence = 'confirmation_link'/);
@@ -32,6 +33,31 @@ test('direct confirmation records explicit consent evidence and restores active 
   assert.match(calls[0]!.sql, /status = 'active'/);
   assert.doesNotMatch(calls[0]!.sql, /confirmation_token = NULL/);
   assert.deepEqual(calls[0]!.values, ['2026-08-12T17:00:00.000Z', '2026-08-12T17:00:00.000Z', 24]);
+});
+
+test('direct confirmation cannot reactivate a subscriber who opted out after the request', async () => {
+  let sql = '';
+  const db: NewsletterLifecycleDatabase = {
+    prepare(value) {
+      sql = value;
+      return {
+        bind() {
+          return {
+            async run() {
+              return { success: true, meta: { changes: 0 } };
+            }
+          };
+        }
+      };
+    }
+  };
+
+  const confirmed = await markNewsletterConfirmed(db, 24, '2026-08-12T17:00:00.000Z');
+
+  assert.equal(confirmed, false);
+  assert.match(sql, /unsubscribed_at IS NULL/);
+  assert.match(sql, /active = 1/);
+  assert.match(sql, /status = 'active'/);
 });
 
 test('eligible audience requires direct consent and excludes every suppression state', () => {
