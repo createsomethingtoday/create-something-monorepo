@@ -219,7 +219,10 @@ test('Map and Template Review each carry a route-specific Playbook court hero wi
   assert.match(map, /media=\{playbookHeroMedia\.map\}/);
   assert.match(map, /mediaMobilePlacement="background"/);
   assert.doesNotMatch(map, /artifactOwnsMedia|artifactMobilePlacement/);
-  assert.match(map, /<PlaybookField variant="map" embedded \/>/);
+  assert.match(map, /src=\{playbookMapSectionMedia\.src\}/);
+  assert.match(map, /srcset=\{playbookMapSectionMedia\.mobileSrc\}/);
+  assert.match(map, /data-campaign-media="map-overhead-study"/);
+  assert.doesNotMatch(map, /<PlaybookField variant="map"/);
   assert.match(templateReview, /media=\{playbookHeroMedia\.templateReview\}/);
   assert.match(templateReview, /mediaMobilePlacement="background"/);
   assert.doesNotMatch(templateReview, /paperAttachedReceiptMedia/);
