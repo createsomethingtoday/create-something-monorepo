@@ -352,3 +352,43 @@ test('window handle lists and routes tool calls', async () => {
   assert.equal(result.total_items, 2);
   await assert.rejects(() => handle.callTool('unknown_tool'), /Unknown marketplace agent tool/);
 });
+
+// ── Codex review regressions (PR #1556) ──────────────────────────────────────
+
+test('get_page_state ignores a stale filters snapshot after history navigation', async () => {
+  const stubDoc = { querySelectorAll: () => [] } as unknown as Document;
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+
+  (globalThis as GlobalWithDom).document = stubDoc;
+  installWindow({
+    location: { href: 'https://webflow.com/templates?q=new' },
+    __templateMarketplaceFilters: { q: 'old', href: 'https://webflow.com/templates?q=old' },
+  });
+  const stale = (await runTool(tools, 'get_page_state')) as { filters: { q: string } };
+  assert.equal(stale.filters.q, 'new');
+
+  (globalThis as GlobalWithDom).document = stubDoc;
+  installWindow({
+    location: { href: 'https://webflow.com/templates?q=current' },
+    __templateMarketplaceFilters: {
+      q: 'snapshot-q',
+      href: 'https://webflow.com/templates?q=current',
+    },
+  });
+  const fresh = (await runTool(tools, 'get_page_state')) as { filters: { q: string } };
+  assert.equal(fresh.filters.q, 'snapshot-q');
+});
+
+test('onToolCall counts semantic failures ({ok:false}) as failures', async () => {
+  const events: Array<{ tool: string; ok: boolean }> = [];
+  const tools = createMarketplaceAgentTools({
+    fetchImpl: stubFetch(SEARCH_BODY),
+    onToolCall: ({ tool, ok }) => events.push({ tool, ok }),
+  });
+  await runTool(tools, 'get_template', { template_slug: 'nope' });
+  await runTool(tools, 'get_template', { template_slug: 'zenith' });
+  assert.deepEqual(events, [
+    { tool: 'get_template', ok: false },
+    { tool: 'get_template', ok: true },
+  ]);
+});

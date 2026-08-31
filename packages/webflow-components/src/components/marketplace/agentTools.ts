@@ -490,8 +490,12 @@ export function createMarketplaceAgentTools(
       }
       const href = window.location.href;
       const route = parseTemplateRoute({ href });
+      // popstate (Back/Forward) changes the URL and grid without refreshing the
+      // __templateMarketplaceFilters snapshot, so trust it only when its href
+      // still matches the page; otherwise derive filters from the URL.
       const snapshot = (window as unknown as Record<string, unknown>)
         .__templateMarketplaceFilters as Record<string, unknown> | undefined;
+      const snapshotIsCurrent = snapshot?.href === href;
       const roots = discoverOpenRoots(document);
       const seen = new Set<string>();
       for (const el of queryDiscoveredRoots(roots, '[data-template-slug]')) {
@@ -503,7 +507,7 @@ export function createMarketplaceAgentTools(
         ok: true,
         href,
         path_kind: route.pathKind,
-        filters: snapshot ?? {
+        filters: snapshotIsCurrent && snapshot ? snapshot : {
           q: route.q,
           categoryGroupSlug: route.categoryGroupSlug,
           childCategorySlug: route.childCategorySlug,
@@ -536,7 +540,14 @@ function instrumentTool(
     const started = Date.now();
     try {
       const result = await inner(input);
-      onToolCall({ tool: tool.name, ok: true, durationMs: Date.now() - started });
+      // A resolved result can still be a semantic failure ({ ok: false });
+      // count those as failures so tool-health metrics stay honest.
+      const semanticOk = !(
+        result &&
+        typeof result === 'object' &&
+        (result as { ok?: unknown }).ok === false
+      );
+      onToolCall({ tool: tool.name, ok: semanticOk, durationMs: Date.now() - started });
       return result;
     } catch (err) {
       onToolCall({ tool: tool.name, ok: false, durationMs: Date.now() - started });
