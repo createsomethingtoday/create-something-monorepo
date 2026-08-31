@@ -19,7 +19,7 @@ export type RuntimeConfig = {
   sourceDataSourceId?: string;
   sourceDataSourceTitle: string;
   sourceStatusProperty?: string;
-  sourceStatusMap: Record<string, string>;
+  sourceStatusMap: Record<string, string | null>;
   targetDataSourceId?: string;
   targetDatabaseId?: string;
   targetDataSourceTitle: string;
@@ -60,7 +60,7 @@ export function resolveRuntimeConfig(env: Env): RuntimeConfig {
   };
 }
 
-export function parseStatusMap(value?: string): Record<string, string> {
+export function parseStatusMap(value?: string): Record<string, string | null> {
   if (!value?.trim()) return {};
   let parsed: unknown;
   try {
@@ -72,15 +72,18 @@ export function parseStatusMap(value?: string): Record<string, string> {
     throw new Error('CLIENT_OS_STATUS_MAP must be a JSON object of Half Dozen status names to client status names.');
   }
 
-  const statusMap: Record<string, string> = {};
+  const statusMap: Record<string, string | null> = {};
   for (const [hdStatus, sourceStatus] of Object.entries(parsed)) {
-    if (typeof sourceStatus !== 'string' || !hdStatus.trim() || !sourceStatus.trim()) {
-      throw new Error('CLIENT_OS_STATUS_MAP entries must use non-empty string keys and values.');
+    if (
+      !hdStatus.trim()
+      || (sourceStatus !== null && (typeof sourceStatus !== 'string' || !sourceStatus.trim()))
+    ) {
+      throw new Error('CLIENT_OS_STATUS_MAP entries must use non-empty string keys and values, or null values to disable writeback.');
     }
     if (!HD_TO_OS_STATUS[hdStatus.trim()]) {
       throw new Error(`CLIENT_OS_STATUS_MAP cannot override unmapped Half Dozen status "${hdStatus.trim()}".`);
     }
-    statusMap[hdStatus.trim()] = sourceStatus.trim();
+    statusMap[hdStatus.trim()] = sourceStatus === null ? null : sourceStatus.trim();
   }
   return statusMap;
 }
