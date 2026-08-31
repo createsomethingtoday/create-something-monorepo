@@ -4,10 +4,10 @@ subject: "The interface is becoming executable"
 preview: "WebMCP is one part of a larger shift: pages declare actions, packages carry capabilities, workspaces isolate execution, and proof closes the loop."
 delivery_target: "2026-09-01T09:00:00-05:00"
 timezone: "America/Chicago"
-status: "production-candidate-test-delivered-awaiting-human-approval"
+status: "production-scheduled"
 linear_issue: "CRE-1898"
 hero: "/images/newsletters/the-interface-is-becoming-executable/hero.png"
-audience: "confirmed subscribers only; exact audience requires operator approval"
+audience: "one double-opt-in subscriber plus one named operator-approved legacy subscriber"
 ---
 
 # The interface is becoming executable
@@ -139,4 +139,4 @@ Required footer: subscriber-specific unsubscribe URL.
 - Current repository evidence: the published-site review snippet on `origin/main` still references the older `navigator.modelContext` path and suppresses registration failures. The draft therefore describes CREATE SOMETHING’s WebMCP direction, not a completed current implementation.
 - “The interface is becoming executable” is our synthesis across the four categories, not a quoted industry term.
 - The “All Smoke, No Alarm” result is based on a syntactic oracle taxonomy over patches. It is evidence that test presence is an insufficient proxy, not a direct execution study proving each test ineffective.
-- Delivery remains blocked until final human read, hero approval, email render, desktop/mobile and image-blocked proof, test send/readback, exact audience approval, and schedule receipt.
+- Production was scheduled through Resend for September 1, 2026 at 9:00 AM America/Chicago. One strict double-opt-in subscriber and one named, active legacy single-opt-in subscriber were approved; delivery remains unproved until post-send provider evidence exists.
