@@ -737,3 +737,40 @@ test('errors become { ok: false } results even without a telemetry callback', as
   assert.equal(result.ok, false);
   assert.match(result.error, /offline/);
 });
+
+// ── Codex review round 8: default sort + creator record constraints ──────────
+
+test('unrelated actions keep a grid non-default sort in the detail', async () => {
+  const gridItem = { getAttribute: () => 'grid-slug' };
+  fakeDoc({ [FILTER_AWARE_MARKER]: [gridItem], [CHAT_GRID_MARKER]: [gridItem] });
+  const win = fakeWindow('https://webflow.com/templates');
+  win.__templateMarketplaceGridState = {
+    href: 'https://webflow.com/templates',
+    sort: 'newest',
+  };
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  const result = (await runTool(tools, 'update_page_filters', { q: 'crm' })) as {
+    ok: boolean;
+    href: string;
+  };
+  assert.equal(result.ok, true);
+  assert.match(result.href, /sort=newest/);
+  const detail = win.__templateMarketplaceFilters as { sort: string };
+  assert.equal(detail.sort, 'newest');
+});
+
+test('clear_filters reports a creatorRecordId prop constraint as preserved', async () => {
+  const gridItem = { getAttribute: () => 'grid-slug' };
+  fakeDoc({ [FILTER_AWARE_MARKER]: [gridItem], [CHAT_GRID_MARKER]: [gridItem] });
+  const win = fakeWindow('https://webflow.com/templates?q=old');
+  win.__templateMarketplaceGridState = {
+    href: 'https://webflow.com/templates?q=old',
+    scope: 'all',
+    creatorRecordId: 'rec1234567890abcd',
+  };
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  const result = (await runTool(tools, 'update_page_filters', { clear_filters: true })) as {
+    preserved_route_filters: string[];
+  };
+  assert.deepEqual(result.preserved_route_filters, ['creator_record_id:rec1234567890abcd']);
+});

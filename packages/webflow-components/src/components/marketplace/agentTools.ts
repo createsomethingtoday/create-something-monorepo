@@ -346,11 +346,17 @@ function routeOwnedFilters(href: string): string[] {
  * preserved. Detected by comparing the grid-published resolved state against
  * what the current URL alone would produce.
  */
-function componentOwnedFilters(win: Window, already: string[]): string[] {
+/** The grid-published resolved state, only when it matches the current URL. */
+function currentGridState(win: Window): Record<string, unknown> | null {
   const state = (win as unknown as Record<string, unknown>).__templateMarketplaceGridState as
     | Record<string, unknown>
     | undefined;
-  if (!state || state.href !== win.location.href) return [];
+  return state && state.href === win.location.href ? state : null;
+}
+
+function componentOwnedFilters(win: Window, already: string[]): string[] {
+  const state = currentGridState(win);
+  if (!state) return [];
   let params: URLSearchParams;
   try {
     params = new URL(win.location.href).searchParams;
@@ -379,6 +385,9 @@ function componentOwnedFilters(win: Window, already: string[]): string[] {
   if (typeof state.creatorSlug === 'string' && state.creatorSlug) {
     push(`creator:${state.creatorSlug}`);
   }
+  if (typeof state.creatorRecordId === 'string' && state.creatorRecordId) {
+    push(`creator_record_id:${state.creatorRecordId}`);
+  }
   if (
     typeof state.categoryGroupSlug === 'string' &&
     state.categoryGroupSlug &&
@@ -390,23 +399,37 @@ function componentOwnedFilters(win: Window, already: string[]): string[] {
   return owned;
 }
 
-/** Copy route-derived category/subcategory into query params before an action. */
-function preserveRouteCategoryParams(win: Window): void {
+/**
+ * Copy resolved page state the dispatched detail would otherwise lose into
+ * query params before an action: route-derived category/subcategory (the
+ * detail's nulls read as explicit clears) and the grid's non-default sort
+ * (buildFilterChangeDetail defaults a missing sort param to 'popular').
+ */
+function preserveResolvedPageParams(win: Window, payload: PageActionPayload): void {
   try {
     const url = new URL(win.location.href);
     const route = parseTemplateRoute({ href: url.toString() });
     let mutated = false;
-    if (route.categoryGroupSlug && route.categoryIsRoute && !url.searchParams.get('category')) {
-      url.searchParams.set('category', route.categoryGroupSlug);
-      mutated = true;
+    if (payload.category_group_slug == null) {
+      if (route.categoryGroupSlug && route.categoryIsRoute && !url.searchParams.get('category')) {
+        url.searchParams.set('category', route.categoryGroupSlug);
+        mutated = true;
+      }
+      if (
+        route.childCategorySlug &&
+        route.childCategoryIsRoute &&
+        !url.searchParams.get('subcategory')
+      ) {
+        url.searchParams.set('subcategory', route.childCategorySlug);
+        mutated = true;
+      }
     }
-    if (
-      route.childCategorySlug &&
-      route.childCategoryIsRoute &&
-      !url.searchParams.get('subcategory')
-    ) {
-      url.searchParams.set('subcategory', route.childCategorySlug);
-      mutated = true;
+    if (payload.sort == null && !url.searchParams.get('sort')) {
+      const gridSort = currentGridState(win)?.sort;
+      if (typeof gridSort === 'string' && gridSort && gridSort !== 'popular') {
+        url.searchParams.set('sort', gridSort);
+        mutated = true;
+      }
     }
     if (mutated) win.history.replaceState({}, '', url.toString());
   } catch {
@@ -637,15 +660,12 @@ export function createMarketplaceAgentTools(
         ? [...routeOwnedBase, ...componentOwnedFilters(window, routeOwnedBase)]
         : [];
       // TemplateGrid's external merge treats null category/subcategory in the
-      // dispatched detail as explicit clears, so an unrelated action (q, sort)
-      // on a /templates/category|subcategory route would wipe the route's
-      // filter. Pre-seed those values as query params so the detail keeps them.
-      if (
-        pageActionChangesFilters(payload) &&
-        !payload.clear_filters &&
-        payload.category_group_slug == null
-      ) {
-        preserveRouteCategoryParams(window);
+      // dispatched detail as explicit clears, and buildFilterChangeDetail
+      // defaults a missing sort param to 'popular' — either would let an
+      // unrelated action wipe route- or prop-derived state. Pre-seed those
+      // values as query params so the detail keeps them.
+      if (pageActionChangesFilters(payload) && !payload.clear_filters) {
+        preserveResolvedPageParams(window, payload);
       }
       applyPageAction(payload, highlightMisses, timers, { history: 'push' });
       return {
