@@ -526,3 +526,34 @@ test('get_page_state fallback filters include route-owned tag, style, and scope'
   };
   assert.equal(freeState.filters.scope, 'free');
 });
+
+// ── Codex review round 4: designer routes + telemetry isolation ──────────────
+
+test('clear_filters reports the creator constraint on designer routes', async () => {
+  const gridItem = { getAttribute: () => 'grid-slug' };
+  fakeDoc({
+    [CHAT_GRID_MARKER]: [gridItem],
+    [FILTER_AWARE_MARKER]: [gridItem],
+  });
+  fakeWindow('https://webflow.com/templates/designers/studio-a?styles=minimal');
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  const result = (await runTool(tools, 'update_page_filters', { clear_filters: true })) as {
+    ok: boolean;
+    preserved_route_filters: string[];
+  };
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.preserved_route_filters, ['creator:studio-a']);
+});
+
+test('a throwing analytics callback never breaks a tool call', async () => {
+  const tools = createMarketplaceAgentTools({
+    fetchImpl: stubFetch(SEARCH_BODY),
+    onToolCall: () => {
+      throw new Error('analytics exploded');
+    },
+  });
+  const result = (await runTool(tools, 'search_templates', { q: 'zenith' })) as {
+    total_items: number;
+  };
+  assert.equal(result.total_items, 2);
+});

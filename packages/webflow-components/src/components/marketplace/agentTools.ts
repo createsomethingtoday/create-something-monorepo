@@ -301,8 +301,17 @@ function pageHasFilterAwareGrid(): boolean {
 }
 
 /** Filters the current route derives from its pathname; clearing query params cannot remove them. */
-function routeOwnedFilters(route: TemplateRouteState): string[] {
+function routeOwnedFilters(href: string): string[] {
   const owned: string[] = [];
+  // Designer routes are not a TemplatePathKind (parseTemplateRoute reports
+  // 'auto'), but the grid derives a creator filter from the pathname there.
+  try {
+    const designer = new URL(href).pathname.match(/^\/templates\/designers\/([^/]+)\/?$/);
+    if (designer?.[1]) owned.push(`creator:${designer[1]}`);
+  } catch {
+    // Unparseable href: fall through to route parsing below.
+  }
+  const route: TemplateRouteState = parseTemplateRoute({ href });
   switch (route.pathKind) {
     case 'category':
       if (route.categoryGroupSlug) owned.push(`category:${route.categoryGroupSlug}`);
@@ -533,9 +542,7 @@ export function createMarketplaceAgentTools(
             'No filter-aware template grid on this page. Navigate to https://webflow.com/templates (or a category page under /templates) and call update_page_filters again.',
         };
       }
-      const routeOwned = payload.clear_filters
-        ? routeOwnedFilters(parseTemplateRoute({ href: window.location.href }))
-        : [];
+      const routeOwned = payload.clear_filters ? routeOwnedFilters(window.location.href) : [];
       applyPageAction(payload, highlightMisses, timers, { history: 'push' });
       return {
         ok: true,
@@ -623,6 +630,15 @@ function instrumentTool(
   onToolCall: NonNullable<MarketplaceAgentToolsOptions['onToolCall']>,
 ): void {
   const inner = tool.execute;
+  // Telemetry must never break a tool call: the callback ultimately reaches
+  // third-party analytics, so its failures are swallowed, not propagated.
+  const report = (ok: boolean, started: number) => {
+    try {
+      onToolCall({ tool: tool.name, ok, durationMs: Date.now() - started });
+    } catch {
+      // Ignore analytics failures.
+    }
+  };
   tool.execute = async (input) => {
     const started = Date.now();
     try {
@@ -634,10 +650,10 @@ function instrumentTool(
         typeof result === 'object' &&
         (result as { ok?: unknown }).ok === false
       );
-      onToolCall({ tool: tool.name, ok: semanticOk, durationMs: Date.now() - started });
+      report(semanticOk, started);
       return result;
     } catch (err) {
-      onToolCall({ tool: tool.name, ok: false, durationMs: Date.now() - started });
+      report(false, started);
       return { ok: false, error: err instanceof Error ? err.message : String(err) };
     }
   };
