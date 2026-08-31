@@ -339,6 +339,57 @@ function routeOwnedFilters(href: string): string[] {
   return owned;
 }
 
+/**
+ * Constraints a mounted grid resolved from its own props (scopeOverride,
+ * styleSlug, tagSlug, creatorSlug, categorySlug) rather than the URL — a
+ * clear_filters call cannot remove these, so they must be reported as
+ * preserved. Detected by comparing the grid-published resolved state against
+ * what the current URL alone would produce.
+ */
+function componentOwnedFilters(win: Window, already: string[]): string[] {
+  const state = (win as unknown as Record<string, unknown>).__templateMarketplaceGridState as
+    | Record<string, unknown>
+    | undefined;
+  if (!state || state.href !== win.location.href) return [];
+  let params: URLSearchParams;
+  try {
+    params = new URL(win.location.href).searchParams;
+  } catch {
+    return [];
+  }
+  const route = parseTemplateRoute({ href: win.location.href });
+  const owned: string[] = [];
+  const push = (entry: string) => {
+    if (!already.includes(entry) && !owned.includes(entry)) owned.push(entry);
+  };
+  if (
+    typeof state.scope === 'string' &&
+    state.scope !== 'all' &&
+    route.scope === 'all' &&
+    !params.get('scope')
+  ) {
+    push(`scope:${state.scope}`);
+  }
+  if (typeof state.styleSlug === 'string' && state.styleSlug && !route.styleSlug) {
+    push(`style:${state.styleSlug}`);
+  }
+  if (typeof state.tagSlug === 'string' && state.tagSlug && !route.tagSlug) {
+    push(`tag:${state.tagSlug}`);
+  }
+  if (typeof state.creatorSlug === 'string' && state.creatorSlug) {
+    push(`creator:${state.creatorSlug}`);
+  }
+  if (
+    typeof state.categoryGroupSlug === 'string' &&
+    state.categoryGroupSlug &&
+    !route.categoryGroupSlug &&
+    !params.get('category')
+  ) {
+    push(`category:${state.categoryGroupSlug}`);
+  }
+  return owned;
+}
+
 /** Copy route-derived category/subcategory into query params before an action. */
 function preserveRouteCategoryParams(win: Window): void {
   try {
@@ -505,15 +556,25 @@ export function createMarketplaceAgentTools(
     async execute(input) {
       const slug = String(input.template_slug ?? '').trim().toLowerCase();
       if (!slug) return { ok: false, message: 'template_slug is required.' };
-      const body = await fetchSearch(
-        buildAgentSearchUrl(apiBase, { q: slug.replace(/-/g, ' '), page_size: 24 }),
-      );
-      const items = body.items ?? [];
-      const match = items.find((item) => (item.template_slug ?? '').toLowerCase() === slug);
+      // The search worker has no exact-slug filter (its FTS index covers
+      // names/descriptions/taxonomy, not slugs), so this is a best-effort
+      // name-token lookup: try the full slug, then without a duplicate-name
+      // numeric suffix (e.g. "zenith-2" → "zenith").
+      const queries = [slug.replace(/-/g, ' ')];
+      const withoutSuffix = slug.replace(/-\d+$/, '');
+      if (withoutSuffix !== slug) queries.push(withoutSuffix.replace(/-/g, ' '));
+      let items: SearchApiItem[] = [];
+      let match: SearchApiItem | undefined;
+      for (const q of queries) {
+        const body = await fetchSearch(buildAgentSearchUrl(apiBase, { q, page_size: 24 }));
+        items = body.items ?? [];
+        match = items.find((item) => (item.template_slug ?? '').toLowerCase() === slug);
+        if (match) break;
+      }
       if (!match) {
         return {
           ok: false,
-          message: `No template found with slug "${slug}".`,
+          message: `No template found with slug "${slug}". Slug lookup is best-effort (the search API has no exact-slug filter) — try search_templates with the template's name instead.`,
           suggestions: items.slice(0, 5).map(summarizeSearchItem),
         };
       }
@@ -571,7 +632,10 @@ export function createMarketplaceAgentTools(
             'No filter-aware template grid on this page. Navigate to https://webflow.com/templates (or a category page under /templates) and call update_page_filters again.',
         };
       }
-      const routeOwned = payload.clear_filters ? routeOwnedFilters(window.location.href) : [];
+      const routeOwnedBase = payload.clear_filters ? routeOwnedFilters(window.location.href) : [];
+      const routeOwned = payload.clear_filters
+        ? [...routeOwnedBase, ...componentOwnedFilters(window, routeOwnedBase)]
+        : [];
       // TemplateGrid's external merge treats null category/subcategory in the
       // dispatched detail as explicit clears, so an unrelated action (q, sort)
       // on a /templates/category|subcategory route would wipe the route's
@@ -678,22 +742,22 @@ export function createMarketplaceAgentTools(
   const tools = [searchTemplates, listCategoriesAndStyles, getTemplate, getPageState];
   if (enablePageActions) tools.splice(3, 0, updatePageFilters);
 
-  if (options.onToolCall) {
-    for (const tool of tools) instrumentTool(tool, options.onToolCall);
-  }
+  // Always instrument: the error-to-result contract (thrown errors become
+  // { ok: false, error }) must not depend on whether telemetry is enabled.
+  for (const tool of tools) instrumentTool(tool, options.onToolCall);
   return tools;
 }
 
 function instrumentTool(
   tool: MarketplaceAgentTool,
-  onToolCall: NonNullable<MarketplaceAgentToolsOptions['onToolCall']>,
+  onToolCall: MarketplaceAgentToolsOptions['onToolCall'],
 ): void {
   const inner = tool.execute;
   // Telemetry must never break a tool call: the callback ultimately reaches
   // third-party analytics, so its failures are swallowed, not propagated.
   const report = (ok: boolean, started: number) => {
     try {
-      onToolCall({ tool: tool.name, ok, durationMs: Date.now() - started });
+      onToolCall?.({ tool: tool.name, ok, durationMs: Date.now() - started });
     } catch {
       // Ignore analytics failures.
     }

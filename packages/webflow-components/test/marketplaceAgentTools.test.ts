@@ -663,3 +663,77 @@ test('get_page_state excludes empty-state recommendation cards', async () => {
   };
   assert.deepEqual(state.visible_template_slugs, ['result-slug']);
 });
+
+// ── Codex review round 7: clear aliases, slug lookup, prop constraints ───────
+
+test('clear_filters removes alias params like scope and pricing', async () => {
+  const gridItem = { getAttribute: () => 'grid-slug' };
+  fakeDoc({ [FILTER_AWARE_MARKER]: [gridItem], [CHAT_GRID_MARKER]: [gridItem] });
+  fakeWindow('https://webflow.com/templates?scope=featured&pricing=free&style_slug=minimal');
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  const result = (await runTool(tools, 'update_page_filters', { clear_filters: true })) as {
+    ok: boolean;
+    href: string;
+  };
+  assert.equal(result.ok, true);
+  assert.doesNotMatch(result.href, /scope=|pricing=|style_slug=/);
+});
+
+test('get_template retries without a duplicate-name suffix', async () => {
+  const fetchByQuery = (async (input: unknown) => {
+    const q = new URL(String(input)).searchParams.get('q');
+    const items =
+      q === 'zenith'
+        ? [{ template_slug: 'zenith-2', name: 'Zenith', creator_name: 'Studio A' }]
+        : [];
+    return { ok: true, status: 200, json: async () => ({ items }) };
+  }) as unknown as typeof fetch;
+  const tools = createMarketplaceAgentTools({ fetchImpl: fetchByQuery });
+  const hit = (await runTool(tools, 'get_template', { template_slug: 'zenith-2' })) as {
+    ok: boolean;
+    template: { name: string };
+  };
+  assert.equal(hit.ok, true);
+  assert.equal(hit.template.name, 'Zenith');
+
+  const miss = (await runTool(tools, 'get_template', { template_slug: 'ghost' })) as {
+    ok: boolean;
+    message: string;
+  };
+  assert.equal(miss.ok, false);
+  assert.match(miss.message, /best-effort/);
+});
+
+test('clear_filters reports component prop-owned constraints as preserved', async () => {
+  const gridItem = { getAttribute: () => 'grid-slug' };
+  fakeDoc({ [FILTER_AWARE_MARKER]: [gridItem], [CHAT_GRID_MARKER]: [gridItem] });
+  const win = fakeWindow('https://webflow.com/templates?q=old');
+  win.__templateMarketplaceGridState = {
+    href: 'https://webflow.com/templates?q=old',
+    scope: 'featured',
+    styleSlug: 'minimal-websites',
+    categoryGroupSlug: null,
+    tagSlug: null,
+    creatorSlug: null,
+  };
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  const result = (await runTool(tools, 'update_page_filters', { clear_filters: true })) as {
+    ok: boolean;
+    preserved_route_filters: string[];
+  };
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.preserved_route_filters, ['scope:featured', 'style:minimal-websites']);
+});
+
+test('errors become { ok: false } results even without a telemetry callback', async () => {
+  const failingFetch = (async () => {
+    throw new Error('offline');
+  }) as unknown as typeof fetch;
+  const tools = createMarketplaceAgentTools({ fetchImpl: failingFetch });
+  const result = (await runTool(tools, 'search_templates', { q: 'x' })) as {
+    ok: boolean;
+    error: string;
+  };
+  assert.equal(result.ok, false);
+  assert.match(result.error, /offline/);
+});
