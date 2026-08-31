@@ -84,6 +84,7 @@ const CATEGORY_ROUTE_ALIASES: Record<string, string> = {
   'retail-and-e-commerce': 'retail-and-e-commerce-websites',
   'construction-and-home-services': 'home-services-websites',
   'construction-and-home-services-websites': 'home-services-websites',
+  'documentation-and-help-center': 'documentation-websites',
 };
 
 const CATEGORY_LABEL_ALIASES: Record<string, string> = {
