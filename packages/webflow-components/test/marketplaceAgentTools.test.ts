@@ -396,7 +396,8 @@ test('onToolCall counts semantic failures ({ok:false}) as failures', async () =>
 // ── Codex review round 2: carousel cards vs filter-aware grids ───────────────
 
 const CHAT_GRID_MARKER = '[data-template-slug], .tmgrid-grid, .tmgrid-item, .tmsearch-page';
-const FILTER_AWARE_MARKER = '.tmgrid-grid, .tmgrid-item, .tmsearch-page';
+const FILTER_AWARE_MARKER =
+  '[data-marketplace-component="template-grid"], .tmgrid-grid, .tmgrid-item, .tmsearch-page';
 const GRID_SCOPED_SLUGS = '.tmgrid-item[data-template-slug], .tmgrid-grid [data-template-slug]';
 
 function fakeDoc(matchers: Record<string, unknown[]>): void {
@@ -407,9 +408,16 @@ function fakeDoc(matchers: Record<string, unknown[]>): void {
 }
 
 function fakeWindow(href: string): Record<string, unknown> {
-  const win = {
+  const win: { location: { href: string }; history: Record<string, unknown> } & Record<string, unknown> = {
     location: { href },
-    history: { pushState: () => undefined, replaceState: () => undefined },
+    history: {
+      pushState: (_s: unknown, _t: unknown, url: string) => {
+        win.location.href = new URL(url, win.location.href).toString();
+      },
+      replaceState: (_s: unknown, _t: unknown, url: string) => {
+        win.location.href = new URL(url, win.location.href).toString();
+      },
+    },
     dispatchEvent: () => true,
     setTimeout: () => 1,
     clearTimeout: () => undefined,
@@ -556,4 +564,47 @@ test('a throwing analytics callback never breaks a tool call', async () => {
     total_items: number;
   };
   assert.equal(result.total_items, 2);
+});
+
+// ── Codex review round 5: route preservation, empty grids, false clears ──────
+
+test('a clear_filters:false-only payload is rejected as a no-op', async () => {
+  const gridItem = { getAttribute: () => 'grid-slug' };
+  fakeDoc({ [FILTER_AWARE_MARKER]: [gridItem], [CHAT_GRID_MARKER]: [gridItem] });
+  fakeWindow('https://webflow.com/templates');
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  const result = (await runTool(tools, 'update_page_filters', { clear_filters: false })) as {
+    ok: boolean;
+    message: string;
+  };
+  assert.equal(result.ok, false);
+  assert.match(result.message, /No supported filters/);
+});
+
+test('unrelated actions on category routes keep the route category in the detail', async () => {
+  const gridItem = { getAttribute: () => 'grid-slug' };
+  fakeDoc({ [FILTER_AWARE_MARKER]: [gridItem], [CHAT_GRID_MARKER]: [gridItem] });
+  const win = fakeWindow('https://webflow.com/templates/category/portfolio');
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  const result = (await runTool(tools, 'update_page_filters', { q: 'crm' })) as {
+    ok: boolean;
+    href: string;
+  };
+  assert.equal(result.ok, true);
+  assert.match(result.href, /category=portfolio/);
+  const detail = win.__templateMarketplaceFilters as { categoryGroupSlug: string; q: string };
+  assert.equal(detail.categoryGroupSlug, 'portfolio');
+  assert.equal(detail.q, 'crm');
+});
+
+test('a mounted grid with zero results still accepts filter changes via its marker', async () => {
+  const marker = { getAttribute: () => null };
+  // Empty-result grid: persistent data marker present, no result markup.
+  fakeDoc({ [FILTER_AWARE_MARKER]: [marker] });
+  fakeWindow('https://webflow.com/templates?q=zzzz');
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  const result = (await runTool(tools, 'update_page_filters', { clear_filters: true })) as {
+    ok: boolean;
+  };
+  assert.equal(result.ok, true);
 });

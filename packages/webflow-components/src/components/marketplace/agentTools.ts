@@ -288,7 +288,10 @@ const UPDATE_PAGE_INPUT_SCHEMA: Record<string, unknown> = {
 // Markers rendered only by the filter-aware grid experiences (TemplateGrid,
 // TemplateSearchPage) — deliberately excludes bare [data-template-slug], which
 // editorial carousels also render without listening for templateFiltersChanged.
-const FILTER_AWARE_GRID_SELECTOR = '.tmgrid-grid, .tmgrid-item, .tmsearch-page';
+// The data attribute persists across the grid's loading/empty/error branches;
+// the class markers cover pages still running older grid bundles.
+const FILTER_AWARE_GRID_SELECTOR =
+  '[data-marketplace-component="template-grid"], .tmgrid-grid, .tmgrid-item, .tmsearch-page';
 // The grid puts data-template-slug on the .tmgrid-item element itself
 // (TemplateGrid card markup); the descendant form covers nested variants.
 const GRID_SCOPED_SLUG_SELECTOR =
@@ -336,6 +339,30 @@ function routeOwnedFilters(href: string): string[] {
   return owned;
 }
 
+/** Copy route-derived category/subcategory into query params before an action. */
+function preserveRouteCategoryParams(win: Window): void {
+  try {
+    const url = new URL(win.location.href);
+    const route = parseTemplateRoute({ href: url.toString() });
+    let mutated = false;
+    if (route.categoryGroupSlug && route.categoryIsRoute && !url.searchParams.get('category')) {
+      url.searchParams.set('category', route.categoryGroupSlug);
+      mutated = true;
+    }
+    if (
+      route.childCategorySlug &&
+      route.childCategoryIsRoute &&
+      !url.searchParams.get('subcategory')
+    ) {
+      url.searchParams.set('subcategory', route.childCategorySlug);
+      mutated = true;
+    }
+    if (mutated) win.history.replaceState({}, '', url.toString());
+  } catch {
+    // Unparseable href: leave the URL untouched.
+  }
+}
+
 function sanitizePageActionInput(input: Record<string, unknown>): PageActionPayload {
   const payload: PageActionPayload = {};
   if (typeof input.q === 'string') payload.q = input.q;
@@ -348,7 +375,9 @@ function sanitizePageActionInput(input: Record<string, unknown>): PageActionPayl
   if (typeof input.sort === 'string' && input.sort.trim()) {
     payload.sort = normalizeTemplateSort(input.sort);
   }
-  if (typeof input.clear_filters === 'boolean') payload.clear_filters = input.clear_filters;
+  // clear_filters: false is a no-op the page-action contract ignores; keeping
+  // it would let a {clear_filters: false}-only call claim success.
+  if (input.clear_filters === true) payload.clear_filters = true;
   const highlights = stringList(input.highlight_slugs);
   if (highlights.length > 0) payload.highlight_slugs = highlights;
   return payload;
@@ -543,6 +572,17 @@ export function createMarketplaceAgentTools(
         };
       }
       const routeOwned = payload.clear_filters ? routeOwnedFilters(window.location.href) : [];
+      // TemplateGrid's external merge treats null category/subcategory in the
+      // dispatched detail as explicit clears, so an unrelated action (q, sort)
+      // on a /templates/category|subcategory route would wipe the route's
+      // filter. Pre-seed those values as query params so the detail keeps them.
+      if (
+        pageActionChangesFilters(payload) &&
+        !payload.clear_filters &&
+        payload.category_group_slug == null
+      ) {
+        preserveRouteCategoryParams(window);
+      }
       applyPageAction(payload, highlightMisses, timers, { history: 'push' });
       return {
         ok: true,
