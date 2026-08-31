@@ -11,6 +11,8 @@ describe('asset work queue disclosure regressions', () => {
     expect(assetWorkQueueSource).toContain('let isExpanded = $state(false);');
     expect(assetWorkQueueSource).toContain('aria-expanded={isExpanded}');
     expect(assetWorkQueueSource).toContain('aria-controls="asset-work-queue-content"');
+    expect(assetWorkQueueSource).toContain('role="heading"');
+    expect(assetWorkQueueSource).toContain('aria-level="2"');
     expect(assetWorkQueueSource).toContain(
       "aria-label={`${isExpanded ? 'Collapse' : 'Expand'} portfolio triage. ${items.length} ${items.length === 1 ? 'asset has' : 'assets have'} a next action.`}"
     );

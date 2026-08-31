@@ -46,7 +46,12 @@
       >
         <span class="queue-heading">
           <span class="queue-kicker">Portfolio triage</span>
-          <span class="queue-title" id="asset-work-queue-title">Needs attention</span>
+          <span
+            class="queue-title"
+            id="asset-work-queue-title"
+            role="heading"
+            aria-level="2">Needs attention</span
+          >
         </span>
         <span class="queue-meta">
           <span class="queue-summary">
