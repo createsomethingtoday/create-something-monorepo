@@ -103,5 +103,5 @@ test('the integration CTA resolves to matching Agency and scheduler booking copy
   assert.match(schedulerPage, /if \(offerIntent\) params\.set\('intent',offerIntent\)/);
   assert.match(schedulerWorker, /intent: url\.searchParams\.get\('intent'\)/);
   assert.match(schedulerWorker, /booking\.context\?\.intent/);
-  assert.match(schedulerManageLink, /input\.intent === 'compiler-integration'/);
+  assert.match(schedulerManageLink, /normalizeSchedulerOfferIntent\(input\.intent\)/);
 });
