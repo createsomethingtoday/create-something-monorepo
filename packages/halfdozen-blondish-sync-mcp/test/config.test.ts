@@ -64,13 +64,20 @@ test('resolveRuntimeConfig supports Cracked Live runtime config', () => {
 test('parseStatusMap accepts explicit client status aliases and rejects invalid config', () => {
   assert.deepEqual(parseStatusMap('{"Complete":"Completed"}'), { Complete: 'Completed' });
   assert.deepEqual(parseStatusMap('{"Archive":null}'), { Archive: null });
+  assert.deepEqual(parseStatusMap('{"Not Started":"Submitted","Responded":"Under Review","Backburner":null}'), {
+    'Not Started': 'Submitted',
+    Responded: 'Under Review',
+    Backburner: null,
+  });
   assert.throws(() => parseStatusMap('[]'), /must be a JSON object/);
   assert.throws(() => parseStatusMap('{"Complete":""}'), /non-empty string keys and values/);
-  assert.throws(() => parseStatusMap('{"Backburner":"Later"}'), /cannot override unmapped Half Dozen status/);
+  assert.throws(() => parseStatusMap('{"Unknown":"Later"}'), /cannot override unknown Half Dozen status/);
 });
 
-test('Cracked production config disables Archive writeback', () => {
+test('Cracked production config carries the transcript status policy', () => {
   const wrangler = readFileSync(new URL('../wrangler.cracked.toml', import.meta.url), 'utf8');
 
-  assert.ok(wrangler.includes('CLIENT_OS_STATUS_MAP = "{\\"Archive\\":null}"'));
+  assert.ok(wrangler.includes(
+    'CLIENT_OS_STATUS_MAP = "{\\"Not Started\\":\\"Submitted\\",\\"Responded\\":\\"Under Review\\",\\"Client Action\\":\\"Under Review\\",\\"Assigned\\":\\"Under Review\\",\\"Needs Review\\":\\"Under Review\\",\\"Backburner\\":null,\\"Archive\\":null}"',
+  ));
 });
