@@ -563,16 +563,18 @@ export async function fullReconcile(env: Env): Promise<SyncResult> {
   };
 }
 
-export function mapHdStatusToOsStatus(value: string, overrides: Record<string, string> = {}): string | null {
+export function mapHdStatusToOsStatus(value: string, overrides: Record<string, string | null> = {}): string | null {
   const defaultStatus = HD_TO_OS_STATUS[value];
   if (!defaultStatus) return null;
-  return overrides[value]?.trim() || defaultStatus;
+  if (!Object.prototype.hasOwnProperty.call(overrides, value)) return defaultStatus;
+  const override = overrides[value];
+  return override === null ? null : override.trim() || defaultStatus;
 }
 
-function effectiveSourceStatusMap(overrides: Record<string, string>): Record<string, string> {
+function effectiveSourceStatusMap(overrides: Record<string, string | null>): Record<string, string | null> {
   return Object.fromEntries(
     Object.keys(HD_TO_OS_STATUS).map((hdStatus) => [hdStatus, mapHdStatusToOsStatus(hdStatus, overrides)]),
-  ) as Record<string, string>;
+  ) as Record<string, string | null>;
 }
 
 export function buildTicketTitle(ticket: string, clientDisplayName = 'BLONDISH'): string {

@@ -85,6 +85,10 @@ Clients whose source database uses different option names can set
 sets `{"Complete":"Completed"}`. Preflight validates the effective mapping
 overrides against the source status options before any write tool runs.
 
+Set a mapping value to `null` when a client must not receive writeback for that
+Half Dozen status. Cracked Live sets `{"Archive":null}`, so an archived HD
+ticket does not change the Cracked source ticket status.
+
 ## Scale path
 
 The current MCP is an operator control plane. For hundreds of rows per client,

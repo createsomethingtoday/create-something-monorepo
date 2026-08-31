@@ -173,7 +173,7 @@ function toolNames(prefix: string) {
   };
 }
 
-function buildContract(clientDisplayName: string, sourceStatusMap: Record<string, string>) {
+function buildContract(clientDisplayName: string, sourceStatusMap: Record<string, string | null>) {
   return {
     source: `${clientDisplayName} Support Tickets [OS]`,
     target: 'Half Dozen Tickets [HD]',
