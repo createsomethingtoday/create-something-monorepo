@@ -6,6 +6,7 @@ import test from 'node:test';
 import {
   playbookHeroMedia,
   playbookHomeHeroMedia,
+  playbookMapSectionMedia,
   type PlaybookHeroRoute
 } from '../src/lib/data/playbookHeroMedia';
 
@@ -96,6 +97,28 @@ test('the Home court candidate keeps its authored desktop and mobile studies dis
   assert.ok(mobile.byteLength > 50_000, 'Home mobile export looks truncated');
   assert.equal(sha256(desktop), 'ea7a153bf4dcb9a37fb689d80953e0afbc768bc412de09033d008668f9d08d08');
   assert.equal(sha256(mobile), '814fca6eed996d6133dc1521f75cd9c1f5b216413932eb55c2891cdbf8cc3f97');
+});
+
+test('the Map chapter keeps a distinct overhead desktop and mobile study', () => {
+  assert.equal(
+    playbookMapSectionMedia.src,
+    '/images/performance-lab/playbook-map-overhead-study.webp'
+  );
+  assert.equal(
+    playbookMapSectionMedia.mobileSrc,
+    '/images/performance-lab/playbook-map-overhead-study-mobile.webp'
+  );
+  assert.match(playbookMapSectionMedia.alt, /Top-down Playbook operating map/i);
+  assert.equal(playbookMapSectionMedia.width, 1536);
+  assert.equal(playbookMapSectionMedia.height, 1024);
+
+  const desktop = publicAsset(playbookMapSectionMedia.src);
+  const mobile = publicAsset(playbookMapSectionMedia.mobileSrc!);
+
+  assert.ok(desktop.byteLength > 100_000, 'Map overhead desktop export looks truncated');
+  assert.ok(mobile.byteLength > 100_000, 'Map overhead mobile export looks truncated');
+  assert.equal(sha256(desktop), '9ace212b5128c35621950e958b6a456a91dc52941e8deec57487de294844dbd7');
+  assert.equal(sha256(mobile), 'f40147ee8592f979e9d13c1b654805e6637612bf5c02bf4e862e4a485b8f922a');
 });
 
 test('the Ground hero keeps its verification instrument and provenance intact', () => {

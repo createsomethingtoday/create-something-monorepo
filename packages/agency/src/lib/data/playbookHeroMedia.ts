@@ -26,6 +26,19 @@ export const playbookHomeHeroMedia: PerformanceCampaignMedia = {
   colorMode: 'natural'
 };
 
+/**
+ * The wide Map chapter needs the same tactile Playbook world as the campaign
+ * opening, but with the full operation visible from directly overhead.
+ */
+export const playbookMapSectionMedia: PerformanceCampaignMedia = {
+  src: `${imageRoot}/playbook-map-overhead-study.webp`,
+  mobileSrc: `${imageRoot}/playbook-map-overhead-study-mobile.webp`,
+  alt: 'Top-down Playbook operating map with ivory owner and source markers, a smoked-metal decision gate, an amber route, and a proof-green terminal.',
+  width: 1536,
+  height: 1024,
+  colorMode: 'natural'
+};
+
 export const playbookHeroMedia: Record<PlaybookHeroRoute, PerformanceCampaignMedia> = {
   services: {
     src: `${imageRoot}/playbook-how-it-works-approval-gate.webp`,
