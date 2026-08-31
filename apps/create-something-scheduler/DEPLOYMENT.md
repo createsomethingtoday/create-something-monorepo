@@ -6,7 +6,8 @@ Linear: [CRE-1213](https://linear.app/createsomething/issue/CRE-1213/replace-cre
 
 - Owning Cloudflare account: `Create Something`.
 - Worker name: `create-something-scheduler`.
-- Public origin: `https://create-something-scheduler.createsomething.workers.dev`.
+- Public origin: `https://schedule.createsomething.agency`.
+- The legacy `workers.dev` public page routes redirect permanently to the custom domain. The existing Google OAuth callback and operator ingestion endpoint remain available on `workers.dev` to avoid an unrelated credential cutover.
 - Durable Object migration `v1` and static asset binding are deployed.
 - Live operator status on 2026-07-11 reports ready, Google OAuth connected, 11 selected calendars discovered, writable event calendar `micah@createsomething.io`, and RealtimeKit/room-capability configuration present.
 - RealtimeKit App `8011e22d-a0e9-40f8-8a7a-27d3e5982744` uses the least-privilege `create_something_host` and `create_something_guest` presets.
@@ -25,7 +26,7 @@ Non-secret Worker variables:
 - `REALTIMEKIT_APP_ID=8011e22d-a0e9-40f8-8a7a-27d3e5982744`
 - `REALTIMEKIT_HOST_PRESET_ID=5015ba09-150e-40d2-9724-54bc6350d547`
 - `REALTIMEKIT_GUEST_PRESET_ID=9227fe9f-0586-4c49-aa45-87780f4867e0`
-- `SCHEDULER_PUBLIC_ORIGIN=https://create-something-scheduler.createsomething.workers.dev`
+- `SCHEDULER_PUBLIC_ORIGIN=https://schedule.createsomething.agency`
 - `CONFERENCING_PROVIDER=google_meet|first_party`
 
 Secrets:

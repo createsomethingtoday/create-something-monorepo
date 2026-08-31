@@ -1,5 +1,5 @@
 export const FIRST_PARTY_SCHEDULER_ORIGIN =
-	'https://create-something-scheduler.createsomething.workers.dev';
+	'https://schedule.createsomething.agency';
 
 export const FIRST_PARTY_SCHEDULER_PATH = '/createsomething/together';
 
