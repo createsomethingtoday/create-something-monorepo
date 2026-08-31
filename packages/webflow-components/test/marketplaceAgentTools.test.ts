@@ -774,3 +774,67 @@ test('clear_filters reports a creatorRecordId prop constraint as preserved', asy
   };
   assert.deepEqual(result.preserved_route_filters, ['creator_record_id:rec1234567890abcd']);
 });
+
+// ── Codex review round 9: free scope, empty-grid fallback, prop provenance ───
+
+test('free_only:false clears free aliases and reports a path-owned free scope', async () => {
+  const gridItem = { getAttribute: () => 'grid-slug' };
+  fakeDoc({ [FILTER_AWARE_MARKER]: [gridItem], [CHAT_GRID_MARKER]: [gridItem] });
+  fakeWindow('https://webflow.com/templates?pricing=free&scope=free');
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  const aliasResult = (await runTool(tools, 'update_page_filters', { free_only: false })) as {
+    ok: boolean;
+    href: string;
+  };
+  assert.equal(aliasResult.ok, true);
+  assert.doesNotMatch(aliasResult.href, /pricing=|scope=/);
+
+  fakeDoc({ [FILTER_AWARE_MARKER]: [gridItem], [CHAT_GRID_MARKER]: [gridItem] });
+  fakeWindow('https://webflow.com/templates/free');
+  const pathResult = (await runTool(tools, 'update_page_filters', { free_only: false })) as {
+    preserved_route_filters: string[];
+  };
+  assert.deepEqual(pathResult.preserved_route_filters, ['scope:free']);
+});
+
+test('an empty mounted grid reports no visible slugs even with a carousel present', async () => {
+  const carouselCard = { getAttribute: () => 'carousel-two', closest: () => null };
+  const marker = { getAttribute: () => null };
+  fakeDoc({
+    [FILTER_AWARE_MARKER]: [marker],
+    '[data-template-slug]': [carouselCard],
+  });
+  fakeWindow('https://webflow.com/templates?q=zzzz');
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  const state = (await runTool(tools, 'get_page_state')) as {
+    visible_template_slugs: string[];
+    has_template_grid: boolean;
+    visible_slug_source: string;
+  };
+  assert.deepEqual(state.visible_template_slugs, []);
+  assert.equal(state.has_template_grid, true);
+  assert.equal(state.visible_slug_source, 'grid');
+});
+
+test('prop constraints duplicated in the URL are still reported via provenance', async () => {
+  const gridItem = { getAttribute: () => 'grid-slug' };
+  fakeDoc({ [FILTER_AWARE_MARKER]: [gridItem], [CHAT_GRID_MARKER]: [gridItem] });
+  const win = fakeWindow('https://webflow.com/templates?style_slug=minimal-websites');
+  win.__templateMarketplaceGridState = {
+    href: 'https://webflow.com/templates?style_slug=minimal-websites',
+    styleSlug: 'minimal-websites',
+    propOverrides: {
+      categorySlug: null,
+      scopeOverride: null,
+      styleSlug: 'minimal-websites',
+      tagSlug: null,
+      creatorSlug: null,
+      creatorRecordId: null,
+    },
+  };
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  const result = (await runTool(tools, 'update_page_filters', { clear_filters: true })) as {
+    preserved_route_filters: string[];
+  };
+  assert.deepEqual(result.preserved_route_filters, ['style:minimal-websites']);
+});

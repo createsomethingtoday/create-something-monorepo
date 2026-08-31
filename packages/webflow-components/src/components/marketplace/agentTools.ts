@@ -357,6 +357,33 @@ function currentGridState(win: Window): Record<string, unknown> | null {
 function componentOwnedFilters(win: Window, already: string[]): string[] {
   const state = currentGridState(win);
   if (!state) return [];
+  const owned: string[] = [];
+  const push = (entry: string) => {
+    if (!already.includes(entry) && !owned.includes(entry)) owned.push(entry);
+  };
+  // Preferred: exact provenance published by the grid. These constraints come
+  // from component props, so they survive any URL reset — even when the same
+  // value also appears as a query param.
+  const overrides = state.propOverrides as Record<string, unknown> | undefined;
+  if (overrides && typeof overrides === 'object') {
+    const str = (key: string) =>
+      typeof overrides[key] === 'string' && overrides[key] ? (overrides[key] as string) : null;
+    const scope = str('scopeOverride');
+    if (scope && scope !== 'all') push(`scope:${scope}`);
+    const category = str('categorySlug');
+    if (category) push(`category:${category}`);
+    const style = str('styleSlug');
+    if (style) push(`style:${style}`);
+    const tag = str('tagSlug');
+    if (tag) push(`tag:${tag}`);
+    const creator = str('creatorSlug');
+    if (creator) push(`creator:${creator}`);
+    const creatorRecordId = str('creatorRecordId');
+    if (creatorRecordId) push(`creator_record_id:${creatorRecordId}`);
+    return owned;
+  }
+  // Fallback inference for pages still running a grid bundle that predates
+  // propOverrides: compare resolved state against what the URL alone yields.
   let params: URLSearchParams;
   try {
     params = new URL(win.location.href).searchParams;
@@ -364,10 +391,6 @@ function componentOwnedFilters(win: Window, already: string[]): string[] {
     return [];
   }
   const route = parseTemplateRoute({ href: win.location.href });
-  const owned: string[] = [];
-  const push = (entry: string) => {
-    if (!already.includes(entry) && !owned.includes(entry)) owned.push(entry);
-  };
   if (
     typeof state.scope === 'string' &&
     state.scope !== 'all' &&
@@ -397,6 +420,33 @@ function componentOwnedFilters(win: Window, already: string[]): string[] {
     push(`category:${state.categoryGroupSlug}`);
   }
   return owned;
+}
+
+/**
+ * Turning free-only off must also drop the query aliases that keep the page
+ * free-scoped (?free, ?pricing=free, ?scope=free); the page-action contract
+ * only touches the free_only param itself.
+ */
+function clearFreeScopeAliases(win: Window): void {
+  try {
+    const url = new URL(win.location.href);
+    let mutated = false;
+    if (url.searchParams.get('free') != null) {
+      url.searchParams.delete('free');
+      mutated = true;
+    }
+    if ((url.searchParams.get('pricing') ?? '').toLowerCase() === 'free') {
+      url.searchParams.delete('pricing');
+      mutated = true;
+    }
+    if ((url.searchParams.get('scope') ?? '').toLowerCase() === 'free') {
+      url.searchParams.delete('scope');
+      mutated = true;
+    }
+    if (mutated) win.history.replaceState({}, '', url.toString());
+  } catch {
+    // Unparseable href: leave the URL untouched.
+  }
 }
 
 /**
@@ -655,10 +705,25 @@ export function createMarketplaceAgentTools(
             'No filter-aware template grid on this page. Navigate to https://webflow.com/templates (or a category page under /templates) and call update_page_filters again.',
         };
       }
+      // Disabling free-only must also drop the free query aliases the
+      // page-action contract does not touch, and report a pathname- or
+      // prop-owned free scope it cannot remove.
+      if (payload.free_only === false) clearFreeScopeAliases(window);
       const routeOwnedBase = payload.clear_filters ? routeOwnedFilters(window.location.href) : [];
       const routeOwned = payload.clear_filters
         ? [...routeOwnedBase, ...componentOwnedFilters(window, routeOwnedBase)]
         : [];
+      if (payload.free_only === false && !payload.clear_filters) {
+        if (
+          parseTemplateRoute({ href: window.location.href }).pathKind === 'free' &&
+          !routeOwned.includes('scope:free')
+        ) {
+          routeOwned.push('scope:free');
+        }
+        for (const entry of componentOwnedFilters(window, routeOwned)) {
+          if (entry === 'scope:free') routeOwned.push(entry);
+        }
+      }
       // TemplateGrid's external merge treats null category/subcategory in the
       // dispatched detail as explicit clears, and buildFilterChangeDetail
       // defaults a missing sort param to 'popular' — either would let an
@@ -714,11 +779,15 @@ export function createMarketplaceAgentTools(
       const inEmptyRecommendations = (el: Element) =>
         typeof el.closest === 'function' &&
         el.closest('[data-template-grid-section="empty-recommendations"]') != null;
+      const hasGrid = pageHasFilterAwareGrid();
       let slugElements = queryDiscoveredRoots(roots, GRID_SCOPED_SLUG_SELECTOR).filter(
         (el) => !inEmptyRecommendations(el),
       );
       let slugSource: 'grid' | 'page' = 'grid';
-      if (slugElements.length === 0) {
+      // Page-wide fallback only when no filter-aware grid is mounted at all:
+      // a mounted grid with zero results must report an empty result set, not
+      // unrelated carousel cards.
+      if (slugElements.length === 0 && !hasGrid) {
         slugElements = queryDiscoveredRoots(roots, '[data-template-slug]').filter(
           (el) => !inEmptyRecommendations(el),
         );
@@ -752,7 +821,7 @@ export function createMarketplaceAgentTools(
                   sort: route.sort,
                 },
         filters_source: gridStateIsCurrent ? 'grid' : snapshotIsCurrent ? 'event' : 'url',
-        has_template_grid: pageHasFilterAwareGrid(),
+        has_template_grid: hasGrid,
         visible_template_slugs: Array.from(seen),
         visible_slug_source: slugSource,
       };

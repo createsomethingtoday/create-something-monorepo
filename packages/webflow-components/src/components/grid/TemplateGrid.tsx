@@ -1291,14 +1291,31 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
   // Publish the resolved filter state (URL + prop overrides) so page-level
   // agent tooling can read what this grid actually shows — the URL alone
   // misses prop-driven constraints like categorySlug or scopeOverride.
+  // propOverrides records provenance: these constraints survive URL resets.
   useEffect(() => {
     if (typeof window === 'undefined') return;
     (window as unknown as Record<string, unknown>).__templateMarketplaceGridState = {
       href: window.location.href,
       ...filters,
+      propOverrides: {
+        categorySlug: categorySlugProp || null,
+        scopeOverride: scopeOverride || null,
+        styleSlug: styleSlugProp || null,
+        tagSlug: tagSlugProp || null,
+        creatorSlug: creatorSlugProp || null,
+        creatorRecordId: creatorRecordIdProp || null,
+      },
       updatedAt: Date.now(),
     };
-  }, [filters]);
+  }, [
+    filters,
+    categorySlugProp,
+    scopeOverride,
+    styleSlugProp,
+    tagSlugProp,
+    creatorSlugProp,
+    creatorRecordIdProp,
+  ]);
 
   // Stale-fetch guard: every new filter/sort change increments this
   const fetchEpochRef = useRef(0);
