@@ -1,7 +1,7 @@
-version: "2.2"
+version: "2.3"
 name: "CREATE SOMETHING Control Commercial Interface"
 owner: "CREATE SOMETHING .agency"
-updated_at: "2026-08-12"
+updated_at: "2026-08-31"
 
 message_taxonomy:
   public_category: "AI workflow systems"
@@ -28,6 +28,13 @@ buyer_readiness_audit:
   self_service_checkout: "inactive"
 
 build_services:
+  agent_foundation:
+    public_name: "Agent Foundation"
+    role: "fixed_scope_agent_build_with_codex_continuation"
+    contract_ref: "packages/agency/content/sales/agent-foundation.yaml"
+    pricing_state: "quoted_after_fit"
+    self_service_checkout: "inactive"
+    production_promotion: "separately_scoped"
   control_compiler_integration:
     public_name: "Control Compiler Integration"
     role: "fixed_scope_builder_integration"
@@ -163,6 +170,7 @@ call_script_interface:
     - "next_step_owner"
     - "next_step_date"
   close_paths:
+    agent_project_fit: "Assess Agent Foundation boundary"
     high_fit: "Schedule paid Workflow Mapping Session"
     standard_operation: "Quote Control from 900 USD per month after launch"
     custom_operation: "Scope higher-risk Control terms"

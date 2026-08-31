@@ -121,12 +121,12 @@ test('the Agency hero makes the Playbook operating grammar visible without a pro
   );
   const field = read('src/lib/components/PlaybookField.svelte');
 
-  assert.match(home, /title="Your people and AI need the same playbook\."/);
+  assert.match(home, /title="Build an agent you can keep building\."/);
   assert.match(home, /media=\{playbookHomeHeroMedia\}/);
   assert.match(home, /mediaMobilePlacement="background"/);
   assert.match(home, /client-owned Playbook/);
-  assert.match(home, /Offense advances approved work/);
-  assert.match(home, /Defense protects decisions, proof, and recovery/);
+  assert.match(home, /Advance approved work/);
+  assert.match(home, /Protect every decision/);
   assert.doesNotMatch(home, /OpenAI[^\n]{0,80}<img|Cloudflare[^\n]{0,80}<img/);
   assert.match(campaignOpening, /media\?: PerformanceCampaignMedia/);
   assert.match(field, /O = owner/);

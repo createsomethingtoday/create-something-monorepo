@@ -53,7 +53,7 @@ test('the fixed-scope service is governed by a machine-readable commercial contr
   assert.match(commercialInterface, /control_compiler_integration:/);
   assert.match(
     commercialInterface,
-    /contract_ref: "packages\/agency\/content\/sales\/workflow-compiler-integration\.yaml"/
+    /contract_ref: ['"]packages\/agency\/content\/sales\/workflow-compiler-integration\.yaml['"]/
   );
   assert.match(salesReadme, /Workflow Compiler Integration contract/);
   assert.match(salesReadme, /workflow-compiler-integration\.yaml/);
@@ -68,6 +68,7 @@ test('the integration route is registered for discovery, performance review, and
   const registry = read('../../../config/performance-pages/registry.ts');
   const surfacePolicy = read('../src/lib/atlas/surface-policy.ts');
   const servicesProductPath = read('../src/lib/components/ServicesProductPath.svelte');
+  const agentFoundation = read('../src/routes/agent-foundation/+page.svelte');
 
   assert.match(marketingCopy, /workflowCompilerIntegrationHref: '\/workflow-compiler-integration'/);
   assert.match(
@@ -78,7 +79,8 @@ test('the integration route is registered for discovery, performance review, and
   assert.ok(searchRoutes.some((route) => route.path === '/workflow-compiler-integration'));
   assert.match(registry, /'workflow-compiler-integration'/);
   assert.match(surfacePolicy, /'\/workflow-compiler-integration'/);
-  assert.match(servicesProductPath, /agencyCoreMessaging\.workflowCompilerIntegrationHref/);
+  assert.match(servicesProductPath, /agencyCoreMessaging\.agentFoundationHref/);
+  assert.match(agentFoundation, /agencyCoreMessaging\.workflowCompilerIntegrationHref/);
 });
 
 test('the integration CTA resolves to matching Agency and scheduler booking copy', () => {

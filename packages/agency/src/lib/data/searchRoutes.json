@@ -12,6 +12,12 @@
     "lastmod": "2026-06-19"
   },
   {
+    "path": "/agent-foundation",
+    "changefreq": "monthly",
+    "priority": "0.94",
+    "lastmod": "2026-08-31"
+  },
+  {
     "path": "/workflow-compiler-integration",
     "changefreq": "monthly",
     "priority": "0.9",
