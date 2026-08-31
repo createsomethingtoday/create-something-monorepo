@@ -71,6 +71,10 @@ test('Agent Foundation is registered for discovery, Canon review, and booking', 
   const registry = read('../../../config/performance-pages/registry.ts');
   const surfacePolicy = read('../src/lib/atlas/surface-policy.ts');
   const booking = read('../src/routes/book/+page.svelte');
+  const schedulerPage = read('../../../apps/create-something-scheduler/src/ui/page.ts');
+  const schedulerManageLink = read(
+    '../../../apps/create-something-scheduler/src/notifications/manage-link.ts'
+  );
 
   assert.match(marketingCopy, /agentFoundationHref: '\/agent-foundation'/);
   assert.match(marketingCopy, /bringAgentProjectLabel: 'Bring your agent project'/);
@@ -85,6 +89,10 @@ test('Agent Foundation is registered for discovery, Canon review, and booking', 
   assert.match(booking, /intent === 'agent-foundation'/);
   assert.match(booking, /Agent Foundation fit call/);
   assert.match(booking, /one role, one job, and one representative case/);
+  assert.match(schedulerPage, /title: 'Agent Foundation Fit Call \| CREATE SOMETHING'/);
+  assert.match(schedulerPage, /heading: 'Fit One Agent Foundation'/);
+  assert.match(schedulerPage, /normalizeSchedulerOfferIntent\(input\.intent\)/);
+  assert.match(schedulerManageLink, /normalizeSchedulerOfferIntent\(input\.intent\)/);
 });
 
 test('the homepage and shared navigation lead with the Agent Foundation path', () => {
