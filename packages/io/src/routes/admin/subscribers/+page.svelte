@@ -8,6 +8,8 @@
 	let filterStatus = 'all';
 	let filterSource = 'all';
 	let sortBy = 'newest';
+	let requestingConfirmationId: number | null = null;
+	let confirmationNotice = '';
 
 	onMount(async () => {
 		await loadSubscribers();
@@ -61,6 +63,29 @@
 			}
 		} catch (error) {
 			console.error('Failed to delete subscriber:', error);
+		}
+	}
+
+	async function requestDoubleOptIn(subscriberId: number) {
+		if (!confirm('Send this subscriber a fresh double-opt-in confirmation request?')) return;
+
+		requestingConfirmationId = subscriberId;
+		confirmationNotice = '';
+		try {
+			const response = await fetch('/api/admin/subscribers', {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ id: subscriberId, action: 'request_confirmation' })
+			});
+			const result = (await response.json()) as { error?: string };
+			if (!response.ok) throw new Error(result.error || 'Confirmation request failed');
+			confirmationNotice =
+				'Confirmation request sent. The subscriber remains pending until they click the link.';
+			await loadSubscribers();
+		} catch (error) {
+			confirmationNotice = error instanceof Error ? error.message : 'Confirmation request failed';
+		} finally {
+			requestingConfirmationId = null;
 		}
 	}
 
@@ -167,6 +192,10 @@
 		</select>
 	</div>
 
+	{#if confirmationNotice}
+		<div class="confirmation-notice p-4" role="status">{confirmationNotice}</div>
+	{/if}
+
 	<!-- Subscribers Table -->
 	{#if loading}
 		<div class="space-y-3">
@@ -212,6 +241,15 @@
 						</div>
 					</div>
 					<div class="card-actions-mobile">
+						{#if subscriber.status === 'active' && (subscriber.consent_method !== 'double_opt_in' || subscriber.consent_evidence !== 'confirmation_link')}
+							<button
+								onclick={() => requestDoubleOptIn(subscriber.id)}
+								disabled={requestingConfirmationId === subscriber.id}
+								class="btn-small-mobile"
+							>
+								{requestingConfirmationId === subscriber.id ? 'Sending…' : 'Request double opt-in'}
+							</button>
+						{/if}
 						{#if subscriber.status === 'unsubscribed'}
 							<button
 								onclick={() => updateSubscriberStatus(subscriber.id, 'active')}
@@ -284,6 +322,17 @@
 								</td>
 								<td class="px-6 py-4">
 									<div class="flex justify-end gap-2">
+										{#if subscriber.status === 'active' && (subscriber.consent_method !== 'double_opt_in' || subscriber.consent_evidence !== 'confirmation_link')}
+											<button
+												onclick={() => requestDoubleOptIn(subscriber.id)}
+												disabled={requestingConfirmationId === subscriber.id}
+												class="btn-small"
+											>
+												{requestingConfirmationId === subscriber.id
+													? 'Sending…'
+													: 'Request double opt-in'}
+											</button>
+										{/if}
 										{#if subscriber.status === 'unsubscribed'}
 											<button
 												onclick={() => updateSubscriberStatus(subscriber.id, 'active')}
@@ -458,6 +507,14 @@
 		text-align: center;
 		padding: 3rem 0;
 		color: var(--color-performance-fg-tertiary);
+	}
+
+	.confirmation-notice {
+		background: var(--color-performance-bg-surface);
+		border: 1px solid var(--color-performance-border-emphasis);
+		border-radius: var(--radius-performance-scale-lg);
+		color: var(--color-performance-fg-primary);
+		font-size: var(--text-performance-body-sm);
 	}
 
 	/* Mobile Card Layout Overrides */
