@@ -11,6 +11,7 @@ export { ELIGIBLE_SUBSCRIBERS_SQL } from '@create-something/canon/newsletter/aud
 export async function markNewsletterConfirmed(
   db: NewsletterLifecycleDatabase,
   subscriberId: number,
+  confirmationToken: string,
   confirmedAt = new Date().toISOString()
 ): Promise<boolean> {
   const result = await db
@@ -29,11 +30,12 @@ export async function markNewsletterConfirmed(
            unsubscribed_at = NULL,
            updated_at = datetime('now')
        WHERE id = ?
+         AND confirmation_token = ?
          AND unsubscribed_at IS NULL
          AND active = 1
          AND status = 'active'`
     )
-    .bind(confirmedAt, confirmedAt, subscriberId)
+    .bind(confirmedAt, confirmedAt, subscriberId, confirmationToken)
     .run();
   return result.success && Number(result.meta?.changes ?? 0) === 1;
 }

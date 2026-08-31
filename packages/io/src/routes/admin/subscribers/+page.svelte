@@ -241,7 +241,7 @@
 						</div>
 					</div>
 					<div class="card-actions-mobile">
-						{#if subscriber.status === 'active' && subscriber.audience_classification === 'confirmed_subscriber' && (subscriber.consent_method !== 'double_opt_in' || subscriber.consent_evidence !== 'confirmation_link')}
+						{#if subscriber.status === 'active' && subscriber.active === 1 && !subscriber.unsubscribed_at && subscriber.audience_classification === 'confirmed_subscriber' && (subscriber.consent_method !== 'double_opt_in' || subscriber.consent_evidence !== 'confirmation_link')}
 							<button
 								onclick={() => requestDoubleOptIn(subscriber.id)}
 								disabled={requestingConfirmationId === subscriber.id}
@@ -322,7 +322,7 @@
 								</td>
 								<td class="px-6 py-4">
 									<div class="flex justify-end gap-2">
-										{#if subscriber.status === 'active' && subscriber.audience_classification === 'confirmed_subscriber' && (subscriber.consent_method !== 'double_opt_in' || subscriber.consent_evidence !== 'confirmation_link')}
+										{#if subscriber.status === 'active' && subscriber.active === 1 && !subscriber.unsubscribed_at && subscriber.audience_classification === 'confirmed_subscriber' && (subscriber.consent_method !== 'double_opt_in' || subscriber.consent_evidence !== 'confirmation_link')}
 											<button
 												onclick={() => requestDoubleOptIn(subscriber.id)}
 												disabled={requestingConfirmationId === subscriber.id}

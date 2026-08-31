@@ -66,7 +66,7 @@ export const load: PageServerLoad = async ({ url, platform, request }) => {
 		}
 
 		// Confirm the subscription and record direct consent evidence.
-		const confirmed = await markNewsletterConfirmed(db, subscriber.id as number);
+		const confirmed = await markNewsletterConfirmed(db, subscriber.id as number, token);
 		if (!confirmed) {
 			return {
 				success: false,
