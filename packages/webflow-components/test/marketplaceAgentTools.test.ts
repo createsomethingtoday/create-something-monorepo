@@ -392,3 +392,94 @@ test('onToolCall counts semantic failures ({ok:false}) as failures', async () =>
     { tool: 'get_template', ok: true },
   ]);
 });
+
+// ── Codex review round 2: carousel cards vs filter-aware grids ───────────────
+
+const CHAT_GRID_MARKER = '[data-template-slug], .tmgrid-grid, .tmgrid-item, .tmsearch-page';
+const FILTER_AWARE_MARKER = '.tmgrid-grid, .tmgrid-item, .tmsearch-page';
+const GRID_SCOPED_SLUGS = '.tmgrid-item[data-template-slug], .tmgrid-grid [data-template-slug]';
+
+function fakeDoc(matchers: Record<string, unknown[]>): void {
+  (globalThis as GlobalWithDom).document = {
+    querySelectorAll: (selector: string) => matchers[selector] ?? [],
+    dispatchEvent: () => true,
+  } as unknown as Document;
+}
+
+function fakeWindow(href: string): Record<string, unknown> {
+  const win = {
+    location: { href },
+    history: { pushState: () => undefined, replaceState: () => undefined },
+    dispatchEvent: () => true,
+    setTimeout: () => 1,
+    clearTimeout: () => undefined,
+  };
+  installWindow(win);
+  return win;
+}
+
+test('update_page_filters refuses filter changes on carousel-only pages', async () => {
+  const carouselCard = { getAttribute: () => 'carousel-slug' };
+  fakeDoc({
+    [CHAT_GRID_MARKER]: [carouselCard],
+    '[data-template-slug]': [carouselCard],
+  });
+  fakeWindow('https://webflow.com/templates/landing');
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  const result = (await runTool(tools, 'update_page_filters', { q: 'portfolio' })) as {
+    ok: boolean;
+    message: string;
+  };
+  assert.equal(result.ok, false);
+  assert.match(result.message, /filter-aware/);
+});
+
+test('update_page_filters clear_filters reports route-owned filters it cannot clear', async () => {
+  const gridItem = { getAttribute: () => 'grid-slug' };
+  fakeDoc({
+    [CHAT_GRID_MARKER]: [gridItem],
+    [FILTER_AWARE_MARKER]: [gridItem],
+  });
+  fakeWindow('https://webflow.com/templates/category/portfolio?styles=minimal');
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  const result = (await runTool(tools, 'update_page_filters', { clear_filters: true })) as {
+    ok: boolean;
+    preserved_route_filters: string[];
+    note: string;
+  };
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.preserved_route_filters, ['category:portfolio']);
+  assert.match(result.note, /page path/);
+});
+
+test('get_page_state scopes visible slugs to the filter-aware grid', async () => {
+  const gridCard = { getAttribute: () => 'grid-one' };
+  const carouselCard = { getAttribute: () => 'carousel-two' };
+  fakeDoc({
+    [GRID_SCOPED_SLUGS]: [gridCard],
+    '[data-template-slug]': [gridCard, carouselCard],
+    [FILTER_AWARE_MARKER]: [gridCard],
+  });
+  fakeWindow('https://webflow.com/templates?q=x');
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  const scoped = (await runTool(tools, 'get_page_state')) as {
+    visible_template_slugs: string[];
+    visible_slug_source: string;
+    has_template_grid: boolean;
+  };
+  assert.deepEqual(scoped.visible_template_slugs, ['grid-one']);
+  assert.equal(scoped.visible_slug_source, 'grid');
+  assert.equal(scoped.has_template_grid, true);
+
+  // Carousel-only page: falls back to page-wide slugs, labeled as such.
+  fakeDoc({ '[data-template-slug]': [carouselCard] });
+  fakeWindow('https://webflow.com/templates/landing');
+  const fallback = (await runTool(tools, 'get_page_state')) as {
+    visible_template_slugs: string[];
+    visible_slug_source: string;
+    has_template_grid: boolean;
+  };
+  assert.deepEqual(fallback.visible_template_slugs, ['carousel-two']);
+  assert.equal(fallback.visible_slug_source, 'page');
+  assert.equal(fallback.has_template_grid, false);
+});

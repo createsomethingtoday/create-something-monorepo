@@ -19,6 +19,7 @@
 import {
   applyPageAction,
   normalizePageActionPayload,
+  pageActionChangesFilters,
   pageHasTemplateGrid,
   type PageActionTimers,
 } from '../chat/templateChatPageAction';
@@ -32,6 +33,7 @@ import {
   TEMPLATE_SORT_OPTIONS,
   normalizeTemplateSort,
   parseTemplateRoute,
+  type TemplateRouteState,
 } from './templateRoute';
 
 export const MARKETPLACE_AGENT_TOOLS_VERSION = '2026-08-31.1';
@@ -281,6 +283,48 @@ const UPDATE_PAGE_INPUT_SCHEMA: Record<string, unknown> = {
   },
 };
 
+// Markers rendered only by the filter-aware grid experiences (TemplateGrid,
+// TemplateSearchPage) — deliberately excludes bare [data-template-slug], which
+// editorial carousels also render without listening for templateFiltersChanged.
+const FILTER_AWARE_GRID_SELECTOR = '.tmgrid-grid, .tmgrid-item, .tmsearch-page';
+// The grid puts data-template-slug on the .tmgrid-item element itself
+// (TemplateGrid card markup); the descendant form covers nested variants.
+const GRID_SCOPED_SLUG_SELECTOR =
+  '.tmgrid-item[data-template-slug], .tmgrid-grid [data-template-slug]';
+
+function pageHasFilterAwareGrid(): boolean {
+  if (typeof document === 'undefined') return false;
+  const roots = discoverOpenRoots(document);
+  return queryDiscoveredRoots(roots, FILTER_AWARE_GRID_SELECTOR).length > 0;
+}
+
+/** Filters the current route derives from its pathname; clearing query params cannot remove them. */
+function routeOwnedFilters(route: TemplateRouteState): string[] {
+  const owned: string[] = [];
+  switch (route.pathKind) {
+    case 'category':
+      if (route.categoryGroupSlug) owned.push(`category:${route.categoryGroupSlug}`);
+      break;
+    case 'subcategory':
+      if (route.childCategorySlug) owned.push(`subcategory:${route.childCategorySlug}`);
+      break;
+    case 'style':
+      if (route.styleSlug) owned.push(`style:${route.styleSlug}`);
+      break;
+    case 'tag':
+      if (route.tagSlug) owned.push(`tag:${route.tagSlug}`);
+      break;
+    case 'featured':
+    case 'free':
+    case 'landing_pages':
+      owned.push(`scope:${route.pathKind}`);
+      break;
+    default:
+      break;
+  }
+  return owned;
+}
+
 function sanitizePageActionInput(input: Record<string, unknown>): PageActionPayload {
   const payload: PageActionPayload = {};
   if (typeof input.q === 'string') payload.q = input.q;
@@ -460,20 +504,33 @@ export function createMarketplaceAgentTools(
       if (typeof window === 'undefined' || typeof document === 'undefined') {
         return { ok: false, message: 'Page context unavailable.' };
       }
-      if (!pageHasTemplateGrid()) {
+      const payload = normalizePageActionPayload(sanitizePageActionInput(input));
+      // Carousel cards also carry [data-template-slug] but do not listen for
+      // templateFiltersChanged, so filter mutations require a filter-aware
+      // grid; highlight-only calls may target any template card on the page.
+      if (pageActionChangesFilters(payload) ? !pageHasFilterAwareGrid() : !pageHasTemplateGrid()) {
         return {
           ok: false,
           message:
-            'No template grid on this page. Navigate to https://webflow.com/templates (or a category page under /templates) and call update_page_filters again.',
+            'No filter-aware template grid on this page. Navigate to https://webflow.com/templates (or a category page under /templates) and call update_page_filters again.',
         };
       }
-      const payload = normalizePageActionPayload(sanitizePageActionInput(input));
+      const routeOwned = payload.clear_filters
+        ? routeOwnedFilters(parseTemplateRoute({ href: window.location.href }))
+        : [];
       applyPageAction(payload, highlightMisses, timers, { history: 'push' });
       return {
         ok: true,
         applied: payload,
         href: window.location.href,
-        note: 'Filters applied to the visible page; the grid refetches and highlights render asynchronously.',
+        ...(routeOwned.length > 0
+          ? {
+              preserved_route_filters: routeOwned,
+              note: 'Query filters were cleared, but these filters come from the page path itself and remain active. Navigate to https://webflow.com/templates for a fully unfiltered view.',
+            }
+          : {
+              note: 'Filters applied to the visible page; the grid refetches and highlights render asynchronously.',
+            }),
       };
     },
   };
@@ -497,8 +554,16 @@ export function createMarketplaceAgentTools(
         .__templateMarketplaceFilters as Record<string, unknown> | undefined;
       const snapshotIsCurrent = snapshot?.href === href;
       const roots = discoverOpenRoots(document);
+      // Prefer cards inside the filter-aware grid; editorial carousels reuse
+      // [data-template-slug] but are not part of the active result set.
+      let slugElements = queryDiscoveredRoots(roots, GRID_SCOPED_SLUG_SELECTOR);
+      let slugSource: 'grid' | 'page' = 'grid';
+      if (slugElements.length === 0) {
+        slugElements = queryDiscoveredRoots(roots, '[data-template-slug]');
+        if (slugElements.length > 0) slugSource = 'page';
+      }
       const seen = new Set<string>();
-      for (const el of queryDiscoveredRoots(roots, '[data-template-slug]')) {
+      for (const el of slugElements) {
         const slug = el.getAttribute('data-template-slug');
         if (slug) seen.add(slug);
         if (seen.size >= MAX_VISIBLE_SLUGS) break;
@@ -516,8 +581,9 @@ export function createMarketplaceAgentTools(
           freeOnly: route.freeOnly,
           sort: route.sort,
         },
-        has_template_grid: seen.size > 0 || pageHasTemplateGrid(),
+        has_template_grid: pageHasFilterAwareGrid(),
         visible_template_slugs: Array.from(seen),
+        visible_slug_source: slugSource,
       };
     },
   };
