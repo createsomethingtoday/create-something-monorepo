@@ -65,6 +65,20 @@ describe('scheduler Worker transport', () => {
     expect(integrationPageHtml).toContain('Fit One Integration');
     expect(integrationPageHtml).toContain('Compiler Integration / V1');
 
+    const legacyPage = await SELF.fetch(
+      'https://create-something-scheduler.createsomething.workers.dev/createsomething/together?intent=compiler-integration',
+      { redirect: 'manual' }
+    );
+    expect(legacyPage.status).toBe(308);
+    expect(legacyPage.headers.get('location')).toBe(
+      'https://schedule.createsomething.agency/createsomething/together?intent=compiler-integration'
+    );
+
+    const legacyHealth = await SELF.fetch(
+      'https://create-something-scheduler.createsomething.workers.dev/health'
+    );
+    expect(legacyHealth.status).toBe(200);
+
     const room = await SELF.fetch('https://scheduler.local/rooms/room_controlled');
     expect(room.status).toBe(200);
     expect(room.headers.get('cache-control')).toBe('no-store');
