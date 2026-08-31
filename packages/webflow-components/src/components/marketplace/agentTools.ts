@@ -252,7 +252,9 @@ const SEARCH_INPUT_SCHEMA: Record<string, unknown> = {
     },
     child_category_slug: { type: 'string', description: 'Subcategory slug within a category.' },
     styles: { type: 'array', items: { type: 'string' }, description: 'Style slugs.' },
-    tags: { type: 'array', items: { type: 'string' }, description: 'Tag slugs.' },
+    // No `tags` filter: tag slugs are not discoverable through the public
+    // facets, so advertising the parameter would invite guessed slugs and
+    // silently wrong results.
     types: { type: 'array', items: { type: 'string', enum: TYPE_ENUM } },
     free_only: { type: 'boolean' },
     sort: { type: 'string', enum: SORT_ENUM },
@@ -399,7 +401,7 @@ export function createMarketplaceAgentTools(
   const searchTemplates: MarketplaceAgentTool = {
     name: 'search_templates',
     description:
-      'Search the Webflow Template Marketplace catalog. Returns matching templates with name, creator, price, categories, styles, demand tier, and links. Use list_categories_and_styles first to discover valid category, style, and tag slugs.',
+      'Search the Webflow Template Marketplace catalog. Returns matching templates with name, creator, price, categories, styles, demand tier, and links. Use list_categories_and_styles first to discover valid category and style slugs.',
     inputSchema: SEARCH_INPUT_SCHEMA,
     annotations: { readOnlyHint: true },
     async execute(input) {
@@ -504,7 +506,23 @@ export function createMarketplaceAgentTools(
       if (typeof window === 'undefined' || typeof document === 'undefined') {
         return { ok: false, message: 'Page context unavailable.' };
       }
-      const payload = normalizePageActionPayload(sanitizePageActionInput(input));
+      const requested = sanitizePageActionInput(input);
+      const payload = normalizePageActionPayload(requested);
+      // Normalization drops unknown category slugs; report that instead of
+      // pretending the (now empty) action filtered the page.
+      if (requested.category_group_slug != null && payload.category_group_slug == null) {
+        return {
+          ok: false,
+          message: `Unknown category "${requested.category_group_slug}". Call list_categories_and_styles for valid category slugs.`,
+        };
+      }
+      if (Object.keys(payload).length === 0) {
+        return {
+          ok: false,
+          message:
+            'No supported filters in this call. Provide q, category_group_slug, styles, types, free_only, sort, clear_filters, or highlight_slugs.',
+        };
+      }
       // Carousel cards also carry [data-template-slug] but do not listen for
       // templateFiltersChanged, so filter mutations require a filter-aware
       // grid; highlight-only calls may target any template card on the page.
@@ -574,8 +592,11 @@ export function createMarketplaceAgentTools(
         path_kind: route.pathKind,
         filters: snapshotIsCurrent && snapshot ? snapshot : {
           q: route.q,
+          scope: route.scope,
           categoryGroupSlug: route.categoryGroupSlug,
           childCategorySlug: route.childCategorySlug,
+          styleSlug: route.styleSlug,
+          tagSlug: route.tagSlug,
           styles: route.styles,
           types: route.types,
           freeOnly: route.freeOnly,

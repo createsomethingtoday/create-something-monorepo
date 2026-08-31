@@ -122,7 +122,7 @@ test('search_templates schema advertises only parameters the deployed worker sup
   assert.equal(schema.additionalProperties, false);
   // Capability filters are silent no-ops on the deployed worker (verified
   // 2026-08-31); the schema must not advertise them until the worker gains them.
-  for (const forbidden of ['features', 'has_ecommerce', 'has_membership', 'has_cms']) {
+  for (const forbidden of ['features', 'has_ecommerce', 'has_membership', 'has_cms', 'tags']) {
     assert.equal(forbidden in schema.properties, false, `schema must not advertise ${forbidden}`);
   }
 });
@@ -482,4 +482,47 @@ test('get_page_state scopes visible slugs to the filter-aware grid', async () =>
   assert.deepEqual(fallback.visible_template_slugs, ['carousel-two']);
   assert.equal(fallback.visible_slug_source, 'page');
   assert.equal(fallback.has_template_grid, false);
+});
+
+// ── Codex review round 3: no-op payloads and route-only fallback state ───────
+
+test('update_page_filters rejects unknown categories and empty normalized payloads', async () => {
+  const gridItem = { getAttribute: () => 'grid-slug' };
+  fakeDoc({
+    [CHAT_GRID_MARKER]: [gridItem],
+    [FILTER_AWARE_MARKER]: [gridItem],
+  });
+  fakeWindow('https://webflow.com/templates');
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+
+  const unknown = (await runTool(tools, 'update_page_filters', {
+    category_group_slug: 'not-a-real-category',
+  })) as { ok: boolean; message: string };
+  assert.equal(unknown.ok, false);
+  assert.match(unknown.message, /Unknown category "not-a-real-category"/);
+
+  const empty = (await runTool(tools, 'update_page_filters', {})) as {
+    ok: boolean;
+    message: string;
+  };
+  assert.equal(empty.ok, false);
+  assert.match(empty.message, /No supported filters/);
+});
+
+test('get_page_state fallback filters include route-owned tag, style, and scope', async () => {
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+
+  fakeDoc({});
+  fakeWindow('https://webflow.com/templates/tag/automation');
+  const tagState = (await runTool(tools, 'get_page_state')) as {
+    filters: { tagSlug: string | null; scope: string };
+  };
+  assert.equal(tagState.filters.tagSlug, 'automation');
+
+  fakeDoc({});
+  fakeWindow('https://webflow.com/templates/free');
+  const freeState = (await runTool(tools, 'get_page_state')) as {
+    filters: { scope: string };
+  };
+  assert.equal(freeState.filters.scope, 'free');
 });
