@@ -318,6 +318,20 @@ export type {
   MarketplaceLandingExperimentGateProps,
 } from './components/marketplace/MarketplaceLandingExperimentGate';
 
+export { MarketplaceAgentTools } from './components/marketplace/MarketplaceAgentTools';
+export type { MarketplaceAgentToolsProps } from './components/marketplace/MarketplaceAgentTools';
+export {
+  MARKETPLACE_AGENT_TOOLS_VERSION,
+  buildAgentSearchUrl,
+  createMarketplaceAgentTools,
+  registerMarketplaceAgentTools,
+  resolveAgentToolsApiBase,
+} from './components/marketplace/agentTools';
+export type {
+  MarketplaceAgentTool,
+  MarketplaceAgentToolsOptions,
+} from './components/marketplace/agentTools';
+
 export type {
   MarketplaceAnalyticsData,
   MarketplaceExperimentRole,
