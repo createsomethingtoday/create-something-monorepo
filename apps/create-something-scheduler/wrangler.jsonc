@@ -4,6 +4,7 @@
   "account_id": "9645bd52e640b8a4f40a3a55ff1dd75a",
   "main": "src/worker.ts",
   "compatibility_date": "2026-07-11",
+  "workers_dev": true,
   "routes": [
     {
       "pattern": "schedule.createsomething.agency",
