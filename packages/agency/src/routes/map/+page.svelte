@@ -78,9 +78,9 @@
   <PerformancePageSection
     id="canvas"
     variant="white"
-    eyebrow="Public mapping surface"
-    title="The canvas turns a starting sheet into operating context."
-    description="Cold readers can test the method without exposing credentials. The private draft stays in this browser; its summary and readiness signal can move into booking, a durable Map workspace, Build, or Control."
+    eyebrow="Private workflow draft"
+    title="Map one real workflow before you connect AI to it."
+    description="Start with a blank canvas or an industry starter. Name the owner, systems, approval point, stop condition, and proof the work requires. The canvas never connects to production, and the draft stays in this browser until you choose to bring its summary to a mapping session."
   >
     {#snippet after()}
       <figure class="map-overhead-study">
