@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="supported-color-schemes" content="light" />
+    <title>The interface is becoming executable</title>
+    <style>
+      /* Email-safe translation of Canon Performance + Meridian tokens. */
+      body, table, td, p, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+      table, td { box-sizing: border-box; mso-table-lspace: 0; mso-table-rspace: 0; }
+      img { -ms-interpolation-mode: bicubic; border: 0; display: block; height: auto; line-height: 100%; max-width: 100%; outline: none; text-decoration: none; }
+      .article h1, .article h2 {
+        color: #181312;
+        font-family: Georgia, 'Times New Roman', serif;
+        font-style: normal;
+        font-weight: 400;
+        letter-spacing: -0.035em;
+      }
+      .article h1 { font-size: 52px; line-height: .98; margin: 0 0 28px; max-width: 560px; }
+      .article h2 { border-top: 1px solid #b9ac9b; font-size: 32px; line-height: 1.1; margin: 52px 0 22px; padding-top: 18px; }
+      .article h3, .article h4 {
+        color: #181312;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 15px;
+        font-weight: 800;
+        letter-spacing: .015em;
+        line-height: 1.35;
+        margin: 34px 0 12px;
+      }
+      .article h3::before { color: #d47a00; content: '→'; display: inline-block; margin-right: 9px; }
+      .article h4 { color: #6b625b; font-family: 'Courier New', Courier, monospace; font-size: 12px; letter-spacing: .07em; text-transform: uppercase; }
+      .article p, .article li { color: #2e2927; font-family: Arial, Helvetica, sans-serif; font-size: 17px; line-height: 1.62; }
+      .article p { margin: 0 0 20px; }
+      .article h1 + p, .article h1 + p + p { font-size: 20px; line-height: 1.5; }
+      .article ol, .article ul { margin: 4px 0 28px; padding-left: 25px; }
+      .article li { border-bottom: 1px solid #d8cdbc; margin: 0; padding: 9px 0 10px 4px; }
+      .article a { color: #181312; font-weight: 700; text-decoration-color: #fcaa2d; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+      .article code { background: #e6dbce; border: 1px solid #d8cdbc; color: #181312; font-family: 'Courier New', Courier, monospace; font-size: .86em; padding: 2px 5px; }
+      .article figure { margin: 30px 0 36px; }
+      .article figure img { width: 100%; }
+      .article figcaption {
+        color: #6b625b;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 10px;
+        letter-spacing: .025em;
+        line-height: 1.45;
+        margin-top: 9px;
+        text-transform: uppercase;
+      }
+      .article hr { border: 0; border-top: 1px solid #b9ac9b; margin: 46px 0; }
+      .article { overflow-wrap: anywhere; word-break: normal; }
+      .article figure, .article figure img { box-sizing: border-box; max-width: 100%; width: 100%; }
+      @media screen and (max-width: 640px) {
+        body { min-width: 0 !important; width: 100% !important; }
+        .outer-table, .frame-pad, .newsletter-shell { max-width: 100vw !important; width: 100vw !important; }
+        .outer-table, .newsletter-shell, .newsletter-shell table { table-layout: fixed !important; }
+        .frame-pad { padding: 0 0 32px !important; }
+        .article-pad { padding: 28px 22px 38px !important; }
+        .article h1 { font-size: 39px !important; max-width: 100% !important; overflow-wrap: break-word !important; }
+        .article h2 { font-size: 27px !important; }
+        .article p, .article li { font-size: 16px !important; }
+        .article h1 + p, .article h1 + p + p { font-size: 18px !important; }
+        .masthead-name { font-size: 11px !important; }
+        .field-date { font-size: 9px !important; letter-spacing: .03em !important; white-space: normal !important; }
+        .field-label { display: none !important; }
+      }
+    </style>
+  </head>
+  <body style="margin:0;padding:0;background:#d8cdbc;color:#181312;">
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">
+      WebMCP is one part of a larger shift: pages declare actions, packages carry capabilities, workspaces isolate execution, and proof closes the loop.
+    </div>
+    <table class="outer-table" role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;background:#d8cdbc;">
+      <tr>
+        <td class="frame-pad" align="center" style="padding:24px 20px 48px;">
+          <table class="newsletter-shell" role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:680px;border-collapse:collapse;table-layout:fixed;">
+            <tr>
+              <td style="background:#181312;border-bottom:4px solid #fcaa2d;padding:18px 22px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;table-layout:fixed;">
+                  <tr>
+                    <td class="masthead-name" width="50%" style="color:#f3ebe4;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:800;letter-spacing:.02em;">CREATE SOMETHING</td>
+                    <td class="field-date" width="50%" align="right" style="color:#fcaa2d;font-family:'Courier New',Courier,monospace;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;"><span class="field-label">Field note / </span>2026.09.01</td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td class="article article-pad" style="background:#f3ebe4;border-left:1px solid #b9ac9b;border-right:1px solid #b9ac9b;padding:42px 44px 52px;">
+                $body$
+              </td>
+            </tr>
+            <tr>
+              <td style="background:#181312;padding:24px 22px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;table-layout:fixed;">
+                  <tr>
+                    <td style="color:#f3ebe4;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.55;"><strong style="font-size:13px;">CREATE SOMETHING</strong><br />Systems for operators building with agents.</td>
+                    <td align="right" valign="bottom" style="color:#aaa098;font-family:'Courier New',Courier,monospace;font-size:10px;line-height:1.5;">You received this because you subscribed to CREATE SOMETHING.<br /><a href="{{unsubscribe_url}}" style="color:#fcaa2d;font-weight:700;text-decoration:underline;">Unsubscribe</a></td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
