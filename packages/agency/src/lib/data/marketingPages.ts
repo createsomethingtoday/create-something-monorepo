@@ -174,17 +174,46 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     cluster: 'home',
     role: 'pillar',
     decision: 'index',
-    audience: 'Teams looking for a plain explanation of AI workflow systems.',
+    audience:
+      'Builders and operating teams with an agent idea, prototype, or stalled Codex project.',
     funnelStage: 'discover',
-    intent: 'Introduce the category and route readers toward workflow mapping.',
-    primaryAction: 'Request a workflow map',
-    requiredTerms: ['workflow', 'business operations', 'Signal', 'Decision', 'Proof'],
-    requiredLinks: ['/services', '/partners', '/products', '/field-reports/template-review'],
+    intent:
+      'Introduce Agent Foundation and route qualified builders toward one bounded fit decision.',
+    primaryAction: 'Bring your agent project',
+    requiredTerms: ['agent', 'Codex', 'client-owned', 'workflow', 'Production Promotion'],
+    requiredLinks: ['/agent-foundation', '/services', '/stack', '/field-reports/template-review'],
     schema: 'page',
     search: {
       changefreq: 'weekly',
       priority: '1.0',
-      lastmod: '2026-06-19'
+      lastmod: '2026-08-31'
+    },
+    selfHealing: ['copy:heal', 'search-route:sync']
+  },
+  {
+    path: '/agent-foundation',
+    cluster: 'core-services',
+    role: 'implementation',
+    decision: 'index',
+    audience:
+      'Builders and operating teams with an agent idea, prototype, repository, or stalled Codex project.',
+    funnelStage: 'book',
+    intent:
+      'Explain the client-owned Agent Foundation, its Codex continuation proof, and its separate Production Promotion boundary.',
+    primaryAction: 'Bring your agent project',
+    requiredTerms: [
+      'Agent Foundation',
+      'Codex',
+      'client-owned',
+      'useful capability',
+      'Production Promotion'
+    ],
+    requiredLinks: [],
+    schema: 'page',
+    search: {
+      changefreq: 'monthly',
+      priority: '0.94',
+      lastmod: '2026-08-31'
     },
     selfHealing: ['copy:heal', 'search-route:sync']
   },
@@ -239,12 +268,14 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     cluster: 'core-services',
     role: 'support',
     decision: 'index',
-    audience: 'Business owners who need evidence of what AI buyers understand before implementation.',
+    audience:
+      'Business owners who need evidence of what AI buyers understand before implementation.',
     funnelStage: 'book',
-    intent: 'Diagnose AI buyer readiness with bounded questions, cited sources, and a prioritized plan.',
+    intent:
+      'Diagnose AI buyer readiness with bounded questions, cited sources, and a prioritized plan.',
     primaryAction: 'Book the audit',
-    requiredTerms: ['AI Buyer Readiness Audit', 'buyer questions', 'cited sources', 'Build', 'Control'],
-    requiredLinks: ['/services', '/control'],
+    requiredTerms: ['AI Buyer Readiness Audit', 'buyer questions', 'cited sources'],
+    requiredLinks: [],
     schema: 'page',
     search: {
       changefreq: 'monthly',
@@ -262,8 +293,8 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     funnelStage: 'book',
     intent: 'Convert a mapped workflow need into a scoped booking path.',
     primaryAction: 'Choose a time',
-    requiredTerms: ['workflow', 'handoff', 'owner', 'audit trail', 'controlled path'],
-    requiredLinks: ['/services'],
+    requiredTerms: ['workflow', 'handoff', 'owner'],
+    requiredLinks: [],
     schema: 'page',
     search: {
       changefreq: 'weekly',

@@ -274,7 +274,22 @@ ground claim duplicate utils.ts helpers.ts "same validation logic"
   {/snippet}
 </PerformanceConversionHandoff>
 
+<p class="product-family-link">Ground is part of the <a href="/products">product family</a>.</p>
+
 <style>
+  .product-family-link {
+    margin: 0;
+    padding: 1rem clamp(1.25rem, 5vw, 6rem);
+    border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
+    color: var(--color-performance-muted, #5e6268);
+    font-size: 0.9rem;
+  }
+
+  .product-family-link a {
+    color: var(--color-performance-ink, #090909);
+    text-underline-offset: 0.18em;
+  }
+
   .install-grid,
   .tool-groups {
     display: grid;

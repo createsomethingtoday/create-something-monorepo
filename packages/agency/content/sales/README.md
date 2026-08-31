@@ -52,6 +52,12 @@
    - Purpose: bind the paid Build engagement to one repository, one consequential workflow, required MCP or agent tools, governed artifacts, one CI gate, and a portable client-owned handoff.
    - Boundary: commercial terms are quoted after fit. The engagement does not include a hosted control plane, live workflow execution, ongoing managed operation, or self-service checkout.
 
+10. **Agent Foundation contract (client-owned agent Build)**
+
+- `agent-foundation.yaml`
+- Purpose: bind one role, one consequential job, one useful working capability, a client-owned repository, and a verified Codex continuation exercise into a fixed-scope Build.
+- Boundary: commercial terms are quoted after fit. Production credentials, live writes, deployment, monitoring, ongoing operation, and real-user acceptance require separately scoped Production Promotion or Control.
+
 ### Commercial boundary
 
 - Managed AI Operations starts at $900 per month after launch for one standard-risk managed production environment.
@@ -64,32 +70,37 @@
 - Machine payment is inactive until a price, receipt path, spend caps, rollback, and production promotion are separately approved.
 - Payment never grants private data access or permission to execute a write.
 
-10. **Discovery note (required after every call)**
-   - `../templates/sales/discovery-note-template.md`
-   - Purpose: standardize proposal inputs in one pass.
+11. **Discovery note (required after every call)**
 
-11. **Client-facing Workflow Mapping Session agenda**
-   - `../templates/sales/workflow-mapping-session-agenda.md`
-   - Purpose: align stakeholders on session inputs, structure, and outputs before the paid mapping session.
+- `../templates/sales/discovery-note-template.md`
+- Purpose: standardize proposal inputs in one pass.
 
-12. **Delivery artifact templates**
-   - `../templates/delivery/README.md`
-   - `../templates/delivery/mcp_contract.yaml`
-   - `../templates/delivery/agent_contract.yaml`
-   - `../templates/delivery/outcome_contract.md`
-   - `../templates/delivery/golden_tasks.yaml`
-   - `../templates/delivery/runbook.md`
-   - `../templates/delivery/halfdozen-mcp-onboarding-pack.md`
-   - `../templates/delivery/halfdozen-mcp-onboarding-checklist.md`
-   - Purpose: convert workflow mapping outputs into implementation-ready artifact drafts.
+12. **Client-facing Workflow Mapping Session agenda**
 
-13. **Proposal input template (delivery handoff)**
-   - `../templates/sales/policy-os-proposal-input-template.md`
-   - Purpose: convert discovery output into proposal scope and contract artifact implications.
+- `../templates/sales/workflow-mapping-session-agenda.md`
+- Purpose: align stakeholders on session inputs, structure, and outputs before the paid mapping session.
 
-14. **Follow-up sequence (post-call execution)**
-   - `../templates/sales/policy-os-follow-up-sequence.md`
-   - Purpose: move high and medium fit deals to decision with clear owner and date.
+13. **Delivery artifact templates**
+
+- `../templates/delivery/README.md`
+- `../templates/delivery/mcp_contract.yaml`
+- `../templates/delivery/agent_contract.yaml`
+- `../templates/delivery/outcome_contract.md`
+- `../templates/delivery/golden_tasks.yaml`
+- `../templates/delivery/runbook.md`
+- `../templates/delivery/halfdozen-mcp-onboarding-pack.md`
+- `../templates/delivery/halfdozen-mcp-onboarding-checklist.md`
+- Purpose: convert workflow mapping outputs into implementation-ready artifact drafts.
+
+14. **Proposal input template (delivery handoff)**
+
+- `../templates/sales/policy-os-proposal-input-template.md`
+- Purpose: convert discovery output into proposal scope and contract artifact implications.
+
+15. **Follow-up sequence (post-call execution)**
+
+- `../templates/sales/policy-os-follow-up-sequence.md`
+- Purpose: move high and medium fit deals to decision with clear owner and date.
 
 ---
 
@@ -113,10 +124,12 @@
 8. For high-fit work, send `workflow-mapping-session-agenda.md`.
 9. Execute follow-up sequence and lock next action.
 10. Build proposal using:
-   - `mcp_contract.yaml`
-   - `agent_contract.yaml`
-   - `outcome_contract.md`
-   - `golden_tasks.yaml`
+
+- `mcp_contract.yaml`
+- `agent_contract.yaml`
+- `outcome_contract.md`
+- `golden_tasks.yaml`
+
 11. After the Workflow Mapping Session, instantiate the delivery templates before implementation starts.
 
 ---

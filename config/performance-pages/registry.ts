@@ -12,9 +12,9 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'migrated',
     contract(
       'landing',
-      'Decide whether one workflow is ready to map.',
-      'The indexed operating stage binds the workflow map to Signal, Decision, and Proof.',
-      'Map one workflow'
+      'Decide whether an existing agent project is ready for a client-owned working foundation.',
+      'The opening and operating stage bind one agent job to an owned repository, explicit proof, and a separate production boundary.',
+      'Bring one agent project'
     )
   ),
   group(
@@ -22,6 +22,7 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'agency',
     [
       'about',
+      'agent-foundation',
       'agent-readiness',
       'ai-workflow-control',
       'ai-workflow-recovery',
@@ -752,6 +753,18 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
       'Exercise the experiment and decide what its resulting state proves.',
       'The work surface, controls, and resulting state expose the experiment evidence.',
       'Continue to the next test or related concept'
+    )
+  ),
+  group(
+    'space-workway-tools',
+    'space',
+    ['workway/threshold-dwelling'],
+    'pending',
+    contract(
+      'tool',
+      'Inspect the local spatial package and decide what its proposal evidence supports.',
+      'The tabletop, massing, chapter, and decision receipts expose the current package state.',
+      'Continue to the next local spatial verification'
     )
   ),
 

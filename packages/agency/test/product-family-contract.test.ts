@@ -85,28 +85,28 @@ test('canonical commercial interface sells managed Control operation instead of 
     'utf8'
   );
 
-  assert.match(commercialInterface, /name: "CREATE SOMETHING Control Commercial Interface"/);
-  assert.match(commercialInterface, /commercial_descriptor: "Managed AI Operations"/);
+  assert.match(commercialInterface, /name: ['"]CREATE SOMETHING Control Commercial Interface['"]/);
+  assert.match(commercialInterface, /commercial_descriptor: ['"]Managed AI Operations['"]/);
   assert.match(commercialInterface, /starting_monthly_usd: 900/);
-  assert.match(commercialInterface, /billing_unit: "managed_production_environment"/);
+  assert.match(commercialInterface, /billing_unit: ['"]managed_production_environment['"]/);
   assert.match(commercialInterface, /agent_count_metered: false/);
-  assert.match(commercialInterface, /ai_usage_billing: "client_owned_or_separately_metered"/);
+  assert.match(commercialInterface, /ai_usage_billing: ['"]client_owned_or_separately_metered['"]/);
   assert.match(commercialInterface, /forecast_threshold: 0\.75/);
   assert.match(commercialInterface, /automatic_charge: false/);
-  assert.match(commercialInterface, /new_workflows: "separately_scoped_build"/);
-  assert.match(commercialInterface, /higher_risk_operation: "custom"/);
+  assert.match(commercialInterface, /new_workflows: ['"]separately_scoped_build['"]/);
+  assert.match(commercialInterface, /higher_risk_operation: ['"]custom['"]/);
   assert.match(
     commercialInterface,
     /canonical_contract_ref: .*agent-commercial\/v1\/create-something\.json/
   );
-  assert.match(commercialInterface, /uncataloged_capability: "deny"/);
+  assert.match(commercialInterface, /uncataloged_capability: ['"]deny['"]/);
   assert.match(commercialInterface, /decision_receipt_required: true/);
   assert.match(
     commercialInterface,
-    /machine_payment_status: "inactive_until_price_receipts_caps_rollback_and_production_approval"/
+    /machine_payment_status: ['"]inactive_until_price_receipts_caps_rollback_and_production_approval['"]/
   );
   assert.match(commercialInterface, /payment_never_grants_private_or_write_access/);
-  assert.doesNotMatch(commercialInterface, /name: "Policy OS Commercial Interface"/);
+  assert.doesNotMatch(commercialInterface, /name: ['"]Policy OS Commercial Interface['"]/);
 });
 
 test('sales and delivery enablement preserve the managed operations commercial boundary', () => {

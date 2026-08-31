@@ -176,10 +176,11 @@ test('public agency surfaces state the OpenAI conviction and owned-system bounda
 
   assert.match(home, /<span>How we build<\/span>/);
   assert.match(home, /Built with OpenAI and Cloudflare\. Designed to remain yours\./);
-  assert.match(home, /We use OpenAI Codex to map, build, and maintain the workflow\./);
+  assert.match(home, /We use OpenAI Codex to map and build the workflow/);
+  assert.match(home, /Your team owns the system\./);
   assert.match(
     home,
-    /If the model\s+or agent environment\s+changes, the system does not have to start over\./
+    /If the model\s+or agent environment changes, the\s+operating knowledge does not have to start over\./
   );
   assert.match(home, />Why we build this way</);
   assert.doesNotMatch(
@@ -196,7 +197,7 @@ test('public agency surfaces state the OpenAI conviction and owned-system bounda
   assert.match(partners, /open-weight and custom models/i);
 });
 
-test('the homepage leads with a Playbook-led operating-system message before its provider stack', () => {
+test('the homepage leads with an Agent Foundation message before its provider stack', () => {
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
   const opening = home.slice(
     home.indexOf('<PerformanceCampaignOpening'),
@@ -207,29 +208,28 @@ test('the homepage leads with a Playbook-led operating-system message before its
     home.indexOf('</aside>', home.indexOf('<aside class="ownership-callout">'))
   );
 
-  assert.match(home, /title="AI Operating Systems \| CREATE SOMETHING \.agency"/);
+  assert.match(home, /title="Agent Foundations \| CREATE SOMETHING \.agency"/);
   assert.match(opening, /eyebrow="CREATE SOMETHING \.agency"/);
-  assert.match(opening, /propertyRole="Embedded AI operating partner"/);
+  assert.match(opening, /propertyRole="Client-owned agent engineering"/);
   assert.match(opening, /expression="editorial"/);
-  assert.match(opening, /title="Your people and AI need the same playbook\."/);
+  assert.match(opening, /title="Build an agent you can keep building\."/);
   assert.match(
     opening,
-    /We embed with operators to map one workflow, install its AI infrastructure, and hand back a client-owned Playbook\./
+    /Bring the project you started with Codex\. We deliver one useful capability in your GitHub repository/
   );
-  assert.match(
-    opening,
-    /Offense advances approved work\. Defense protects decisions, proof, and recovery\./
-  );
-  assert.match(opening, /The opposition is ambiguity, AI out of reach, and untrusted automation\./);
+  assert.match(opening, /Production Promotion is scoped separately\./);
   assert.match(opening, /media=\{playbookHomeHeroMedia\}/);
   assert.match(opening, /mediaMobilePlacement="background"/);
   assert.doesNotMatch(opening, /mode="paper"|paperOperatingRouteMedia/);
   assert.match(ownership, /Built with OpenAI and Cloudflare\. Designed to remain yours\./);
   assert.match(
     ownership,
-    /CREATE SOMETHING owns the system\. OpenAI provides intelligence\. Cloudflare provides\s+infrastructure\./
+    /Your team owns the system\. OpenAI provides intelligence\. Cloudflare can provide\s+infrastructure\./
   );
-  assert.match(ownership, /Your\s+team\s+keeps the map, rules, history, and recovery path\./);
+  assert.match(
+    ownership,
+    /Your team keeps the repository, map, rules,\s+tests, history, and recovery path\./
+  );
   assert.doesNotMatch(home, /Cloudflare OS/);
 });
 
@@ -259,10 +259,10 @@ test('commercial decision routes lead with plain meaning before owned terminolog
   assert.doesNotMatch(layout, /label: 'How I Work'/);
   assert.doesNotMatch(layout, /label: 'Stack Boundary'/);
 
-  assert.match(home, /title="Your people and AI need the same playbook\."/);
-  assert.match(home, /We embed with operators to map one workflow/);
+  assert.match(home, /title="Build an agent you can keep building\."/);
+  assert.match(home, /Bring the project you started with Codex/);
   assert.match(home, />See the Marketplace workflow</);
-  assert.match(home, /label: 'Control',[\s\S]*?value: 'Run \/ Wait \/ Stop'/);
+  assert.match(home, /label: 'Boundary',[\s\S]*?value: 'Production separate'/);
   const heroProof = home.slice(
     home.indexOf('const heroProofItems'),
     home.indexOf('const serviceFlowSteps')
@@ -543,7 +543,10 @@ test('commercial decision routes use one primary and one conversational action',
   assert.match(messaging, /startWithWorkflowLabel: 'Start a private workflow draft'/);
   assert.match(messaging, /selfMapLabel: 'Start a private workflow draft'/);
   assert.match(messaging, /bookMappingSessionLabel: 'Book a mapping session'/);
-  assert.match(routes, /(?:>Start a private workflow draft<|secondaryLabel: 'Start a private workflow draft')/);
+  assert.match(
+    routes,
+    /(?:>Start a private workflow draft<|secondaryLabel: 'Start a private workflow draft')/
+  );
   assert.doesNotMatch(
     routes,
     /Start Workflow Map|Talk Through a Workflow|Map the workflow first|Map your workflow/

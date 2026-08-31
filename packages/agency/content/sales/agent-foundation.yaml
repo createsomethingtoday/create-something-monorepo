@@ -1,0 +1,63 @@
+version: '1.0'
+public_name: 'Agent Foundation'
+route: '/agent-foundation'
+status: 'active'
+
+commercial_boundary:
+  engagement_model: 'paid_fixed_scope_build'
+  pricing_state: 'quoted_after_fit'
+  self_service_checkout: 'inactive'
+  agent_roles: 1
+  consequential_jobs: 1
+  accepted_environment: 'local_or_approved_development'
+
+includes:
+  - 'one_useful_end_to_end_capability'
+  - 'client_owned_repository_source_and_schema'
+  - 'required_tools_or_mcp_surface'
+  - 'agent_instructions_policies_and_stop_conditions'
+  - 'golden_failure_and_stop_cases'
+  - 'bootstrap_runbook_known_limits_and_continuation_backlog'
+  - 'codex_onboarding_and_one_bounded_continuation_change'
+
+acceptance:
+  - 'documented_fresh_checkout_bootstrap'
+  - 'representative_case_produces_expected_artifact_or_state_transition'
+  - 'golden_failure_and_stop_checks_pass'
+  - 'database_automation_and_judgment_ownership_is_explicit'
+  - 'secrets_and_unavailable_integrations_use_documented_bindings'
+  - 'client_completes_one_bounded_codex_change_and_verifier_rerun'
+  - 'handoff_records_working_blocked_unknown_and_next_states'
+
+ownership:
+  client_owns:
+    - 'repository_source_and_configuration'
+    - 'data_model_vendor_accounts_and_project_history'
+    - 'agent_instructions_policies_tests_and_runbook'
+    - 'business_decisions_and_approval_authority'
+  create_something_owns_during_delivery:
+    - 'scoped_integration_architecture'
+    - 'foundation_implementation'
+    - 'quality_gates'
+    - 'codex_continuation_onboarding'
+
+foundation_capabilities:
+  production_credentials_or_writes: false
+  live_data_migration: false
+  public_deployment_or_hosting: false
+  signing_notarization_or_distribution: false
+  production_monitoring_or_incident_response: false
+  ongoing_managed_operation: false
+  real_user_acceptance: false
+  guaranteed_business_results: false
+
+expansion_path:
+  undefined_role_job_or_authority: 'CREATE SOMETHING Map'
+  agent_configuration_only: 'Agent Harness Configuration'
+  connector_only: 'MCP-only'
+  live_authority_and_deployment: 'Production Promotion'
+  ongoing_operation: 'CREATE SOMETHING Control'
+
+conversion:
+  cta: 'Bring your agent project'
+  href: '/book?source=agent-foundation&intent=agent-foundation&lane=workflow_infrastructure'

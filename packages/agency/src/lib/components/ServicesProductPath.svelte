@@ -21,10 +21,10 @@
       id: 'build',
       number: '02',
       product: buildProduct,
-      role: 'Build the owned system',
+      role: 'Build the owned agent foundation',
       model: 'Scoped implementation',
-      href: agencyCoreMessaging.workflowCompilerIntegrationHref,
-      linkLabel: 'View the fixed-scope Build'
+      href: agencyCoreMessaging.agentFoundationHref,
+      linkLabel: 'Explore Agent Foundation'
     },
     {
       id: 'control',
