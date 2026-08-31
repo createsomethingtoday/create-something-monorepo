@@ -408,14 +408,18 @@ function fakeDoc(matchers: Record<string, unknown[]>): void {
 }
 
 function fakeWindow(href: string): Record<string, unknown> {
+  const entries: string[] = [href];
   const win: { location: { href: string }; history: Record<string, unknown> } & Record<string, unknown> = {
     location: { href },
+    __historyEntries: entries,
     history: {
       pushState: (_s: unknown, _t: unknown, url: string) => {
         win.location.href = new URL(url, win.location.href).toString();
+        entries.push(win.location.href);
       },
       replaceState: (_s: unknown, _t: unknown, url: string) => {
         win.location.href = new URL(url, win.location.href).toString();
+        entries[entries.length - 1] = win.location.href;
       },
     },
     dispatchEvent: () => true,
@@ -837,4 +841,44 @@ test('prop constraints duplicated in the URL are still reported via provenance',
     preserved_route_filters: string[];
   };
   assert.deepEqual(result.preserved_route_filters, ['style:minimal-websites']);
+});
+
+// ── Codex review round 10: reset detail consistency + undo preservation ──────
+
+test('clear_filters on a category route keeps the category in the dispatched detail', async () => {
+  const gridItem = { getAttribute: () => 'grid-slug' };
+  fakeDoc({ [FILTER_AWARE_MARKER]: [gridItem], [CHAT_GRID_MARKER]: [gridItem] });
+  const win = fakeWindow('https://webflow.com/templates/category/portfolio?styles=minimal');
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  const result = (await runTool(tools, 'update_page_filters', { clear_filters: true })) as {
+    ok: boolean;
+    preserved_route_filters: string[];
+  };
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.preserved_route_filters, ['category:portfolio']);
+  const detail = win.__templateMarketplaceFilters as { categoryGroupSlug: string | null };
+  assert.equal(detail.categoryGroupSlug, 'portfolio');
+});
+
+test('query-alias categories survive unrelated actions via canonicalization', async () => {
+  const gridItem = { getAttribute: () => 'grid-slug' };
+  fakeDoc({ [FILTER_AWARE_MARKER]: [gridItem], [CHAT_GRID_MARKER]: [gridItem] });
+  const win = fakeWindow('https://webflow.com/templates?category_group_slug=portfolio');
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  const result = (await runTool(tools, 'update_page_filters', { q: 'crm' })) as { href: string };
+  assert.match(result.href, /category=portfolio/);
+  const detail = win.__templateMarketplaceFilters as { categoryGroupSlug: string | null };
+  assert.equal(detail.categoryGroupSlug, 'portfolio');
+});
+
+test('free_only:false keeps the original free entry reachable via Back', async () => {
+  const gridItem = { getAttribute: () => 'grid-slug' };
+  fakeDoc({ [FILTER_AWARE_MARKER]: [gridItem], [CHAT_GRID_MARKER]: [gridItem] });
+  const win = fakeWindow('https://webflow.com/templates?scope=free&q=shop');
+  const tools = createMarketplaceAgentTools({ fetchImpl: stubFetch({}) });
+  await runTool(tools, 'update_page_filters', { free_only: false });
+  const entries = win.__historyEntries as string[];
+  assert.equal(entries.length, 2);
+  assert.match(entries[0], /scope=free/);
+  assert.doesNotMatch(entries[1], /scope=free/);
 });

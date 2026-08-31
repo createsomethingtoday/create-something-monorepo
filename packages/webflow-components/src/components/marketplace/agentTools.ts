@@ -427,7 +427,7 @@ function componentOwnedFilters(win: Window, already: string[]): string[] {
  * free-scoped (?free, ?pricing=free, ?scope=free); the page-action contract
  * only touches the free_only param itself.
  */
-function clearFreeScopeAliases(win: Window): void {
+function clearFreeScopeAliases(win: Window): boolean {
   try {
     const url = new URL(win.location.href);
     let mutated = false;
@@ -443,9 +443,14 @@ function clearFreeScopeAliases(win: Window): void {
       url.searchParams.delete('scope');
       mutated = true;
     }
-    if (mutated) win.history.replaceState({}, '', url.toString());
+    // Push (not replace) so the original free-scoped entry survives for the
+    // Back button; the caller applies the action with history: 'replace' so
+    // the whole change still costs exactly one history entry.
+    if (mutated) win.history.pushState({}, '', url.toString());
+    return mutated;
   } catch {
     // Unparseable href: leave the URL untouched.
+    return false;
   }
 }
 
@@ -471,6 +476,18 @@ function preserveResolvedPageParams(win: Window, payload: PageActionPayload): vo
         !url.searchParams.get('subcategory')
       ) {
         url.searchParams.set('subcategory', route.childCategorySlug);
+        mutated = true;
+      }
+      // Canonicalize worker aliases the dispatched detail cannot read: it
+      // only looks at category/subcategory, so aliases would read as clears.
+      const aliasCategory = url.searchParams.get('category_group_slug');
+      if (aliasCategory && !url.searchParams.get('category')) {
+        url.searchParams.set('category', aliasCategory);
+        mutated = true;
+      }
+      const aliasChild = url.searchParams.get('child_category_slug');
+      if (aliasChild && !url.searchParams.get('subcategory')) {
+        url.searchParams.set('subcategory', aliasChild);
         mutated = true;
       }
     }
@@ -707,8 +724,10 @@ export function createMarketplaceAgentTools(
       }
       // Disabling free-only must also drop the free query aliases the
       // page-action contract does not touch, and report a pathname- or
-      // prop-owned free scope it cannot remove.
-      if (payload.free_only === false) clearFreeScopeAliases(window);
+      // prop-owned free scope it cannot remove. The alias strip is pushed so
+      // Back restores the free page; the action then replaces that entry.
+      let historyMode: 'push' | 'replace' = 'push';
+      if (payload.free_only === false && clearFreeScopeAliases(window)) historyMode = 'replace';
       const routeOwnedBase = payload.clear_filters ? routeOwnedFilters(window.location.href) : [];
       const routeOwned = payload.clear_filters
         ? [...routeOwnedBase, ...componentOwnedFilters(window, routeOwnedBase)]
@@ -724,6 +743,16 @@ export function createMarketplaceAgentTools(
           if (entry === 'scope:free') routeOwned.push(entry);
         }
       }
+      // A reset's dispatched detail would carry null categories, which the
+      // grid merge treats as explicit clears — contradicting the preserved
+      // report on category routes. Re-apply the route-owned category so the
+      // event matches what the URL (and any reload) shows.
+      if (payload.clear_filters && payload.category_group_slug == null) {
+        const clearRoute = parseTemplateRoute({ href: window.location.href });
+        if (clearRoute.categoryGroupSlug && clearRoute.categoryIsRoute) {
+          payload.category_group_slug = clearRoute.categoryGroupSlug;
+        }
+      }
       // TemplateGrid's external merge treats null category/subcategory in the
       // dispatched detail as explicit clears, and buildFilterChangeDetail
       // defaults a missing sort param to 'popular' — either would let an
@@ -732,7 +761,7 @@ export function createMarketplaceAgentTools(
       if (pageActionChangesFilters(payload) && !payload.clear_filters) {
         preserveResolvedPageParams(window, payload);
       }
-      applyPageAction(payload, highlightMisses, timers, { history: 'push' });
+      applyPageAction(payload, highlightMisses, timers, { history: historyMode });
       return {
         ok: true,
         applied: payload,
