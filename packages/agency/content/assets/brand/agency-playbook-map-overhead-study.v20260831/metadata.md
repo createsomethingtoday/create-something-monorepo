@@ -59,3 +59,26 @@ authored compositions; the route must not substitute a blind crop.
 4. The image introduces no text, logo, watermark, sports equipment, or UI.
 5. The real public map remains editable, labeled, and inspectable below it.
 6. The page has no horizontal overflow at 1440 x 1000 or 390 x 844.
+
+## Rejection and review history
+
+- No generated candidate was rejected in this bounded pass. Desktop v1 met the
+  material, overhead-camera, topology, and no-text requirements on first review.
+- Mobile v1 was accepted as a composition-only adaptation after confirming that
+  every required object and the complete amber route remained inside the 2:3
+  frame.
+- Both runtime exports passed source-hash contracts, package check and build,
+  1440 x 1000 and 390 x 844 rendered inspection, responsive-source readback,
+  zero horizontal overflow, and a zero-message browser console.
+
+## Rights and refresh condition
+
+This is original generated work from CREATE SOMETHING-authored prompts. Its only
+references were CREATE SOMETHING-owned Playbook images; no third-party source
+image was copied into the asset.
+
+Replace this study only when the Map chapter's workflow meaning changes, the
+required owner/source/gate/stop/proof topology no longer reads at either target
+viewport, the responsive composition clips a required object, or a later owned
+asset demonstrates materially stronger page-context legibility. Do not refresh
+it for novelty alone.
