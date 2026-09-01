@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { DatabaseSync } from 'node:sqlite';
+import { DatabaseSync, type SQLInputValue } from 'node:sqlite';
 
 import {
 	assessHealthcareProviderCoverage,
@@ -197,7 +197,7 @@ test('bulk provider upsert executes against the healthcare coverage migration', 
 		database.exec('PRAGMA foreign_keys = ON;');
 		database.exec(migration);
 		const upsert = buildHealthcareProviderBulkUpsert(providers);
-		database.prepare(upsert.sql).run(...upsert.args);
+		database.prepare(upsert.sql).run(...upsert.args as SQLInputValue[]);
 		const result = database.prepare('SELECT count(*) AS count FROM abundance_healthcare_providers').get() as { count: number };
 		assert.equal(result.count, 3);
 	} finally {
