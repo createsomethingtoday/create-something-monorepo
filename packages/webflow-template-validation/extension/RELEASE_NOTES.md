@@ -5,7 +5,7 @@
 - Shows the exact affected page names for missing, long, and duplicate SEO metadata findings.
 - Includes affected pages and duplicate groups in copied support reports.
 - Preserves the approved 1.3.3 Worker-only validation route and URL normalization behavior.
-- Pairs with the Worker update that excludes disabled User-system 404 routes from SEO blockers and retains bounded page diagnostics without persisting unknown detail fields.
+- Pairs with the Worker update that ignores the non-routable Ecommerce SKU template during SEO checks and retains bounded page diagnostics without persisting unknown detail fields.
 
 ---
 

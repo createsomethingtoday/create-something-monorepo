@@ -9,4 +9,4 @@
 
 ## Worker pairing
 
-The matching Worker update excludes disabled User-system 404 routes from SEO blockers and retains bounded issue IDs, fixes, locations, affected pages, and duplicate groups while dropping unknown detail fields.
+The matching Worker update ignores the non-routable Ecommerce SKU template during SEO checks and retains bounded issue IDs, fixes, locations, affected pages, and duplicate groups while dropping unknown detail fields.

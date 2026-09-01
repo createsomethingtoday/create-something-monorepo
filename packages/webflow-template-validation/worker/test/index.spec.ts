@@ -587,19 +587,19 @@ describe('Designer Validator', () => {
 			expect(seoCategory!.issues[0].severity).toBe('warning');
 		});
 
-		it('does not block on disabled User-system pages that are not public routes', async () => {
+		it('does not treat the non-routable Ecommerce SKU template as a public SEO page', async () => {
 			const result = await validateDesignerData({
 				variables: { collections: [] },
 				components: [],
 				styles: [],
 				pages: [
 					{
-						id: 'p1', name: 'Home', slug: '', type: 'Page', kind: 'static', isHomePage: true, publishPath: '/',
+						id: 'p1', name: 'Home', slug: '', type: 'Page', isHomePage: true, publishPath: '/',
 						seo: { title: 'Acme - Webflow HTML website template', description: 'D'.repeat(140), openGraphImage: 'https://example.com/og.jpg' }
 					},
 					{
-						id: 'p2', name: 'Log In', slug: 'log-in', type: 'Page', kind: 'userSystems', publishPath: '/log-in',
-						seo: {}
+						id: 'p2', name: 'SKUs Template', slug: 'sku', type: 'Page', kind: 'ecommerce',
+						isCmsTemplate: true, publishPath: '/sku', seo: {}
 					}
 				],
 				assets: []
