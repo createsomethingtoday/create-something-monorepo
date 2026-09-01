@@ -33,6 +33,16 @@ export interface NppesProviderFetchResult {
 	fetched_at: string;
 }
 
+export class NppesProviderFetchError extends Error {
+	constructor(
+		message: string,
+		readonly progress: NppesProviderFetchResult
+	) {
+		super(message);
+		this.name = 'NppesProviderFetchError';
+	}
+}
+
 export function buildNppesProviderUrl(
 	filters: NppesProviderFilters,
 	page: { limit: number; skip: number }
@@ -81,25 +91,38 @@ export async function fetchNppesProviders(
 		const skip = sourceRecordsScanned;
 		if (skip > NPPES_MAX_SKIP) break;
 		const limit = Math.min(NPPES_PAGE_LIMIT, maxRecords - sourceRecordsScanned);
-		const response = await fetchFn(buildNppesProviderUrl(filters, { limit, skip }), {
-			headers: { Accept: 'application/json' }
-		});
-		const text = await response.text();
-		if (!response.ok) {
-			throw new Error(`NPPES provider query failed with HTTP ${response.status}: ${text.slice(0, 500)}`);
-		}
+		try {
+			const response = await fetchFn(buildNppesProviderUrl(filters, { limit, skip }), {
+				headers: { Accept: 'application/json' }
+			});
+			const text = await response.text();
+			if (!response.ok) {
+				throw new Error(`NPPES provider query failed with HTTP ${response.status}: ${text.slice(0, 500)}`);
+			}
 
-		const payload = parseJsonObject(text);
-		const pageRecords = Array.isArray(payload.results)
-			? payload.results.filter(isRecord)
-			: [];
-		pagesFetched += 1;
-		sourceRecordsScanned += pageRecords.length;
-		records.push(...(requiresCanonicalFilter
-			? pageRecords.filter((record) => hasCanonicalTaxonomy(record, filters.taxonomy_description))
-			: pageRecords));
-		lastPageWasFull = pageRecords.length >= limit;
-		if (pageRecords.length < limit) break;
+			const payload = parseJsonObject(text);
+			const pageRecords = Array.isArray(payload.results)
+				? payload.results.filter(isRecord)
+				: [];
+			pagesFetched += 1;
+			sourceRecordsScanned += pageRecords.length;
+			records.push(...(requiresCanonicalFilter
+				? pageRecords.filter((record) => hasCanonicalTaxonomy(record, filters.taxonomy_description))
+				: pageRecords));
+			lastPageWasFull = pageRecords.length >= limit;
+			if (pageRecords.length < limit) break;
+		} catch (error) {
+			throw new NppesProviderFetchError(
+				error instanceof Error ? error.message : String(error),
+				{
+					records: [...records],
+					source_records_scanned: sourceRecordsScanned,
+					pages_fetched: pagesFetched,
+					coverage_limit_reached: false,
+					fetched_at: fetchedAt
+				}
+			);
+		}
 	}
 
 	return {

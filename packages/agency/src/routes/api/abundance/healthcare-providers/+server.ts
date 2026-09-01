@@ -21,6 +21,7 @@ import {
 import {
 	createHealthcareProviderIngestionRun,
 	fetchNppesProviders,
+	NppesProviderFetchError,
 	normalizeNppesRecordsForAbundance,
 	readHealthcareProviderCoverage,
 	upsertHealthcareProviders
@@ -68,6 +69,14 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
 	const fetchedAt = new Date().toISOString();
 	let persona: NursingPersonaCoverageQuery | undefined;
+	let progress = {
+		pagesFetched: 0,
+		sourceResultCount: 0,
+		normalizedCount: 0,
+		rejectedCount: 0,
+		excludedCount: 0,
+		coverageLimitReached: false
+	};
 	try {
 		const body = (await request.json()) as CoverageRefreshRequest;
 		persona = validatePersona(body);
@@ -78,9 +87,21 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			postal_code: persona.postal_code,
 			max_records: body.max_records
 		}, { fetchedAt });
+		progress = {
+			...progress,
+			pagesFetched: fetched.pages_fetched,
+			sourceResultCount: fetched.source_records_scanned,
+			coverageLimitReached: fetched.coverage_limit_reached
+		};
 		const normalized = await normalizeNppesRecordsForAbundance(fetched.records, fetchedAt);
 		const providers = filterHealthcareProvidersForPersona(normalized.providers, persona);
 		const excludedCount = normalized.providers.length - providers.length;
+		progress = {
+			...progress,
+			normalizedCount: providers.length,
+			rejectedCount: normalized.rejected_count,
+			excludedCount
+		};
 		await upsertHealthcareProviders(platform.env.DB, providers);
 		await createHealthcareProviderIngestionRun(platform.env.DB, {
 			id: `abproviderrun_${crypto.randomUUID()}`,
@@ -117,19 +138,22 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		};
 		return json({ success: true, data } as ApiResponse<CoverageResponse>, { status: 201 });
 	} catch (err) {
+		if (err instanceof NppesProviderFetchError) {
+			progress = {
+				...progress,
+				pagesFetched: err.progress.pages_fetched,
+				sourceResultCount: err.progress.source_records_scanned,
+				coverageLimitReached: err.progress.coverage_limit_reached
+			};
+		}
 		if (persona) {
 			await createHealthcareProviderIngestionRun(platform.env.DB, {
 				id: `abproviderrun_${crypto.randomUUID()}`,
 				persona,
 				status: 'failed',
 				fetchedAt,
-				pagesFetched: 0,
-				sourceResultCount: 0,
-				normalizedCount: 0,
-				rejectedCount: 0,
-				excludedCount: 0,
+				...progress,
 				providers: [],
-				coverageLimitReached: false,
 				error: err instanceof Error ? err.message : String(err)
 			}).catch((runError) => console.error('Failed to record healthcare provider ingestion failure:', runError));
 		}

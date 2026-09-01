@@ -14,10 +14,12 @@ import {
 	buildNppesProviderUrl,
 	createHealthcareProviderIngestionRun,
 	fetchNppesProviders,
+	NppesProviderFetchError,
 	readHealthcareProviderCoverage,
 	upsertHealthcareProviders
 } from '../src/lib/server/abundance-healthcare-providers.ts';
 import { NPG_NURSING_PERSONA_COVERAGE } from '../src/lib/abundance/npg-healthcare-personas.ts';
+import { POST as refreshHealthcareProviderCoverage } from '../src/routes/api/abundance/healthcare-providers/+server.ts';
 
 const fetchedAt = '2026-09-01T18:00:00.000Z';
 
@@ -422,6 +424,79 @@ test('NPPES fetch stops when a page is shorter than requested', async () => {
 	assert.equal(requestCount, 1);
 	assert.equal(result.records.length, 2);
 	assert.equal(result.coverage_limit_reached, false);
+});
+
+test('NPPES fetch failures preserve completed-page progress', async () => {
+	let callCount = 0;
+	await assert.rejects(
+		fetchNppesProviders(
+			{
+				taxonomy_description: 'Nurse Practitioner',
+				state: 'MO',
+				max_records: 400
+			},
+			{
+				fetchFn: async () => {
+					callCount += 1;
+					return callCount === 1
+						? jsonResponse({ results: Array.from({ length: 200 }, (_, index) => ({ number: String(index) })) })
+						: new Response('upstream unavailable', { status: 503 });
+				}
+			}
+		),
+		(error: unknown) => {
+			assert.ok(error instanceof NppesProviderFetchError);
+			assert.equal(error.progress.pages_fetched, 1);
+			assert.equal(error.progress.source_records_scanned, 200);
+			assert.equal(error.progress.records.length, 200);
+			return true;
+		}
+	);
+});
+
+test('failed refresh ledger retains partial NPPES progress', async () => {
+	const originalFetch = globalThis.fetch;
+	let callCount = 0;
+	const captured: Array<{ sql: string; args: unknown[] }> = [];
+	globalThis.fetch = (async () => {
+		callCount += 1;
+		return callCount === 1
+			? jsonResponse({ results: Array.from({ length: 200 }, (_, index) => ({ number: String(index) })) })
+			: new Response('upstream unavailable', { status: 503 });
+	}) as typeof fetch;
+	const db = {
+		prepare(sql: string) {
+			return {
+				bind(...args: unknown[]) {
+					const statement = { sql, args };
+					captured.push(statement);
+					return statement;
+				}
+			};
+		},
+		async batch(statements: unknown[]) { return statements; }
+	} as unknown as D1Database;
+
+	try {
+		const response = await refreshHealthcareProviderCoverage({
+			request: new Request('https://createsomething.agency/api/abundance/healthcare-providers', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					...NPG_NURSING_PERSONA_COVERAGE[1],
+					max_records: 400
+				})
+			}),
+			platform: { env: { DB: db } }
+		} as never);
+		assert.equal(response.status, 500);
+		const runStatement = captured.find((statement) => /INSERT INTO abundance_healthcare_provider_ingestion_runs/.test(statement.sql));
+		assert.equal(runStatement?.args[7], 'failed');
+		assert.equal(runStatement?.args[9], 1);
+		assert.equal(runStatement?.args[10], 200);
+	} finally {
+		globalThis.fetch = originalFetch;
+	}
 });
 
 test('healthcare provider migration preserves provenance and ingestion evidence', async () => {
