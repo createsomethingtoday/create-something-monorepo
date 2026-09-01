@@ -95,7 +95,7 @@ export async function normalizeNppesProvider(
 	const taxonomies = asRecordArray(record.taxonomies);
 	const addresses = asRecordArray(record.addresses);
 	const endpoints = asRecordArray(record.endpoints);
-	const primaryTaxonomy = taxonomies.find((taxonomy) => taxonomy.primary === true) ?? taxonomies[0];
+	const primaryTaxonomy = taxonomies.find((taxonomy) => taxonomy.primary === true);
 	const practiceAddress =
 		addresses.find((address) => cleanString(address.address_purpose)?.toUpperCase() === 'LOCATION') ??
 		addresses[0];
@@ -234,6 +234,10 @@ export function assessHealthcareProviderCoverage(
 	if (providers.length > 0 && olderThan3YearsCount / providers.length > 0.5 && marketCoverageStatus !== 'blocked') {
 		marketCoverageStatus = 'degraded';
 		reasons.push('More than half of the cohort has not received an NPPES administrative update in over three years.');
+	}
+	if (providers.length > 0 && unknownRecencyCount > 0 && marketCoverageStatus !== 'blocked') {
+		marketCoverageStatus = 'degraded';
+		reasons.push('Administrative update recency is unknown for one or more records.');
 	}
 	if (reasons.length === 0) {
 		reasons.push('The source snapshot is current and the cohort has sufficient taxonomy and location coverage for market analysis.');

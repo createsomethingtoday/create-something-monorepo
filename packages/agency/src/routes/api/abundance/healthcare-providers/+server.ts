@@ -97,6 +97,14 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			coverageLimitReached: fetched.coverage_limit_reached
 		};
 		const normalized = await normalizeNppesRecordsForAbundance(fetched.records, fetchedAt);
+		progress = {
+			...progress,
+			normalizedCount: normalized.providers.length,
+			rejectedCount: normalized.rejected_count
+		};
+		if (fetched.records.length > 0 && normalized.providers.length === 0) {
+			throw new Error('Every NPPES source record failed provider normalization.');
+		}
 		const providers = filterHealthcareProvidersForPersona(normalized.providers, persona);
 		const excludedCount = normalized.providers.length - providers.length;
 		progress = {

@@ -77,6 +77,21 @@ test('NPPES records normalize into a provider-independent healthcare coverage sh
 	assert.match(provider.source_payload_hash, /^[a-f0-9]{64}$/);
 });
 
+test('normalization does not infer a primary taxonomy from list order', async () => {
+	const provider = await normalizeNppesProvider(
+		{
+			number: '1528597565',
+			basic: { first_name: 'TEST', last_name: 'PROVIDER', status: 'A' },
+			taxonomies: [{ code: '363LF0000X', desc: 'Nurse Practitioner, Family', state: 'MO' }],
+			addresses: [{ address_purpose: 'LOCATION', city: 'SPRINGFIELD', state: 'MO' }]
+		},
+		{ fetchedAt }
+	);
+
+	assert.equal(provider.primary_taxonomy_code, undefined);
+	assert.equal(provider.primary_taxonomy_description, undefined);
+});
+
 test('coverage health separates fresh market evidence from outreach eligibility', async () => {
 	const providers = await Promise.all([
 		fixtureProvider({ npi: '1000000001', lastUpdated: '2026-08-20', phone: '417-555-0101' }),
@@ -133,6 +148,18 @@ test('coverage health is degraded when the source result cap is reached', async 
 
 	assert.equal(report.market_coverage_status, 'degraded');
 	assert.ok(report.market_coverage_reasons.some((reason) => /result limit/i.test(reason)));
+});
+
+test('coverage health is degraded when administrative recency is unknown', async () => {
+	const provider = await fixtureProvider({ npi: '1000000015', lastUpdated: '2026-08-20' });
+	const report = assessHealthcareProviderCoverage([{ ...provider, last_updated_date: undefined }], {
+		evaluatedAt: '2026-09-01T20:00:00.000Z',
+		persona: NPG_NURSING_PERSONA_COVERAGE[0],
+		source: { latest_fetched_at: fetchedAt }
+	});
+
+	assert.equal(report.market_coverage_status, 'degraded');
+	assert.ok(report.market_coverage_reasons.some((reason) => /recency is unknown/i.test(reason)));
 });
 
 test('coverage is blocked when a cohort has no active providers', async () => {
@@ -549,6 +576,43 @@ test('failed refresh ledger retains partial NPPES progress', async () => {
 		assert.equal(runStatement?.args[7], 'failed');
 		assert.equal(runStatement?.args[9], 1);
 		assert.equal(runStatement?.args[10], 200);
+	} finally {
+		globalThis.fetch = originalFetch;
+	}
+});
+
+test('refresh fails closed when every source record is rejected', async () => {
+	const originalFetch = globalThis.fetch;
+	const captured: Array<{ sql: string; args: unknown[] }> = [];
+	globalThis.fetch = (async () => jsonResponse({
+		results: [{ basic: { status: 'A' }, taxonomies: [{ desc: 'Nurse Practitioner, Family', primary: true }] }]
+	})) as typeof fetch;
+	const db = {
+		prepare(sql: string) {
+			return {
+				bind(...args: unknown[]) {
+					const statement = { sql, args };
+					captured.push(statement);
+					return statement;
+				}
+			};
+		},
+		async batch(statements: unknown[]) { return statements; }
+	} as unknown as D1Database;
+
+	try {
+		const response = await refreshHealthcareProviderCoverage({
+			request: new Request('https://createsomething.agency/api/abundance/healthcare-providers', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(NPG_NURSING_PERSONA_COVERAGE[0])
+			}),
+			platform: { env: { DB: db } }
+		} as never);
+		assert.equal(response.status, 500);
+		const runStatement = captured.find((statement) => /INSERT INTO abundance_healthcare_provider_ingestion_runs/.test(statement.sql));
+		assert.equal(runStatement?.args[7], 'failed');
+		assert.equal(runStatement?.args[12], 1);
 	} finally {
 		globalThis.fetch = originalFetch;
 	}
