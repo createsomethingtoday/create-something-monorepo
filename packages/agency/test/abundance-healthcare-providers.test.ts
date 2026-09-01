@@ -462,6 +462,24 @@ test('canonical taxonomy filtering rejects records with missing taxonomy shape',
 	);
 });
 
+test('canonical taxonomy filtering rejects records without a usable taxonomy description', async () => {
+	await assert.rejects(
+		fetchNppesProviders(
+			{
+				taxonomy_description: 'Nurse Practitioner, Family',
+				city: 'Springfield',
+				state: 'MO'
+			},
+			{ fetchFn: async () => jsonResponse({ results: [{ number: '1111111111', taxonomies: [{}] }] }) }
+		),
+		(error: unknown) => {
+			assert.ok(error instanceof NppesProviderFetchError);
+			assert.match(error.message, /malformed taxonomy data/i);
+			return true;
+		}
+	);
+});
+
 test('NPPES fetch paginates within the public API limit and reports truncation', async () => {
 	const requests: URL[] = [];
 	const fetchFn: typeof fetch = async (input) => {
@@ -634,6 +652,58 @@ test('failed refresh ledger retains partial NPPES progress', async () => {
 		assert.equal(runStatement?.args[7], 'failed');
 		assert.equal(runStatement?.args[9], 1);
 		assert.equal(runStatement?.args[10], 200);
+	} finally {
+		globalThis.fetch = originalFetch;
+	}
+});
+
+test('refresh ledger accounts for records removed by canonical taxonomy filtering', async () => {
+	const originalFetch = globalThis.fetch;
+	const captured: Array<{ sql: string; args: unknown[] }> = [];
+	globalThis.fetch = (async () => jsonResponse({
+		results: [
+			{
+				number: '1111111111',
+				basic: { first_name: 'FAMILY', last_name: 'NP', status: 'A', last_updated: '2026-08-20' },
+				taxonomies: [{ code: '363LF0000X', desc: 'Nurse Practitioner, Family', primary: true }],
+				addresses: [{ address_purpose: 'LOCATION', city: 'SPRINGFIELD', state: 'MO' }]
+			},
+			{
+				number: '2222222222',
+				basic: { first_name: 'ACUTE', last_name: 'NP', status: 'A', last_updated: '2026-08-20' },
+				taxonomies: [{ code: '363LA2100X', desc: 'Nurse Practitioner, Acute Care', primary: true }],
+				addresses: [{ address_purpose: 'LOCATION', city: 'SPRINGFIELD', state: 'MO' }]
+			}
+		]
+	})) as typeof fetch;
+	const db = {
+		prepare(sql: string) {
+			return {
+				bind(...args: unknown[]) {
+					const statement = { sql, args };
+					captured.push(statement);
+					return statement;
+				}
+			};
+		},
+		async batch(statements: unknown[]) { return statements; }
+	} as unknown as D1Database;
+
+	try {
+		const response = await refreshHealthcareProviderCoverage({
+			request: new Request('https://createsomething.agency/api/abundance/healthcare-providers', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(NPG_NURSING_PERSONA_COVERAGE[0])
+			}),
+			platform: { env: { DB: db } }
+		} as never);
+		assert.equal(response.status, 201);
+		const runStatement = captured.find((statement) => /INSERT INTO abundance_healthcare_provider_ingestion_runs/.test(statement.sql));
+		assert.equal(runStatement?.args[10], 2);
+		assert.equal(runStatement?.args[11], 1);
+		assert.equal(runStatement?.args[12], 0);
+		assert.equal(runStatement?.args[13], 1);
 	} finally {
 		globalThis.fetch = originalFetch;
 	}

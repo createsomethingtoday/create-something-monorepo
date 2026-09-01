@@ -111,7 +111,9 @@ export async function fetchNppesProviders(
 			}
 			const pageRecords = payload.results.filter(isRecord);
 			if (requiresCanonicalFilter && pageRecords.some((record) =>
-				!Array.isArray(record.taxonomies) || record.taxonomies.some((taxonomy) => !isRecord(taxonomy)))) {
+				!Array.isArray(record.taxonomies) ||
+				record.taxonomies.some((taxonomy) => !isRecord(taxonomy)) ||
+				record.taxonomies.every((taxonomy) => !isRecord(taxonomy) || !cleanString(taxonomy.desc)))) {
 				throw new Error('NPPES provider query returned malformed taxonomy data.');
 			}
 			pagesFetched += 1;

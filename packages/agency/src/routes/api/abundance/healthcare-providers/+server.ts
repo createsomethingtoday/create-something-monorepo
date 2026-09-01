@@ -77,6 +77,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		excludedCount: 0,
 		coverageLimitReached: false
 	};
+	let canonicalExcludedCount = 0;
 	try {
 		const body = (await request.json()) as CoverageRefreshRequest;
 		if (body.include_records !== undefined && typeof body.include_records !== 'boolean') {
@@ -90,11 +91,13 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			postal_code: persona.postal_code,
 			max_records: body.max_records
 		}, { fetchedAt });
+		canonicalExcludedCount = Math.max(0, fetched.source_records_scanned - fetched.records.length);
 		progress = {
 			...progress,
 			pagesFetched: fetched.pages_fetched,
 			sourceResultCount: fetched.source_records_scanned,
-			coverageLimitReached: fetched.coverage_limit_reached
+			coverageLimitReached: fetched.coverage_limit_reached,
+			excludedCount: canonicalExcludedCount
 		};
 		const normalized = await normalizeNppesRecordsForAbundance(fetched.records, fetchedAt);
 		progress = {
@@ -106,7 +109,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			throw new Error('Every NPPES source record failed provider normalization.');
 		}
 		const providers = filterHealthcareProvidersForPersona(normalized.providers, persona);
-		const excludedCount = normalized.providers.length - providers.length;
+		const excludedCount = canonicalExcludedCount + normalized.providers.length - providers.length;
 		progress = {
 			...progress,
 			normalizedCount: providers.length,
@@ -150,11 +153,13 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		return json({ success: true, data } as ApiResponse<CoverageResponse>, { status: 201 });
 	} catch (err) {
 		if (err instanceof NppesProviderFetchError) {
+			canonicalExcludedCount = Math.max(0, err.progress.source_records_scanned - err.progress.records.length);
 			progress = {
 				...progress,
 				pagesFetched: err.progress.pages_fetched,
 				sourceResultCount: err.progress.source_records_scanned,
-				coverageLimitReached: err.progress.coverage_limit_reached
+				coverageLimitReached: err.progress.coverage_limit_reached,
+				excludedCount: canonicalExcludedCount
 			};
 		}
 		if (persona) {
