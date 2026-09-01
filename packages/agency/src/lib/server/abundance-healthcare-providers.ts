@@ -6,6 +6,7 @@ import type {
 import {
 	assessHealthcareProviderCoverage,
 	buildHealthcareProviderBulkUpsert,
+	filterHealthcareProvidersForPersona,
 	normalizeNppesProvider
 } from '$lib/abundance/healthcare-providers';
 
@@ -152,20 +153,6 @@ export async function readHealthcareProviderCoverage(
 	persona: NursingPersonaCoverageQuery,
 	options: { evaluatedAt?: string; limit?: number } = {}
 ): Promise<{ report: HealthcareProviderCoverageReport; providers: HealthcareProvider[] }> {
-	const where = ['lower(primary_taxonomy_description) LIKE lower(?)'];
-	const args: unknown[] = [`%${persona.taxonomy_description.trim()}%`];
-	if (persona.state) {
-		where.push('upper(practice_state) = upper(?)');
-		args.push(persona.state);
-	}
-	if (persona.city) {
-		where.push('lower(practice_city) = lower(?)');
-		args.push(persona.city);
-	}
-	if (persona.postal_code) {
-		where.push('practice_postal_code LIKE ?');
-		args.push(`${persona.postal_code.slice(0, 5)}%`);
-	}
 	const limit = Math.min(Math.max(options.limit ?? NPPES_MAX_RECORDS, 1), NPPES_MAX_RECORDS);
 	const run = await db
 		.prepare(`
@@ -191,18 +178,19 @@ export async function readHealthcareProviderCoverage(
 	const result = run?.id
 		? await db
 			.prepare(`
-				SELECT provider.*
-				FROM abundance_healthcare_providers AS provider
-				INNER JOIN abundance_healthcare_provider_ingestion_memberships AS membership
-					ON membership.provider_npi = provider.npi
-				WHERE membership.run_id = ? AND ${where.join(' AND ')}
-				ORDER BY provider.last_updated_date DESC, provider.npi ASC
+				SELECT provider_snapshot_json
+				FROM abundance_healthcare_provider_ingestion_memberships
+				WHERE run_id = ?
+				ORDER BY provider_npi ASC
 				LIMIT ?
 			`)
-			.bind(run.id, ...args, limit)
-			.all<HealthcareProvider>()
-		: { results: [] as HealthcareProvider[] };
-	const providers = result.results ?? [];
+			.bind(run.id, limit)
+			.all<{ provider_snapshot_json: string }>()
+		: { results: [] as Array<{ provider_snapshot_json: string }> };
+	const providers = filterHealthcareProvidersForPersona(
+		(result.results ?? []).map((row) => parseHealthcareProviderSnapshot(row.provider_snapshot_json)),
+		persona
+	);
 
 	return {
 		providers,
@@ -231,7 +219,7 @@ export async function createHealthcareProviderIngestionRun(
 		excludedCount: number;
 		coverageLimitReached: boolean;
 		error?: string;
-		providerNpis?: string[];
+		providers?: HealthcareProvider[];
 	}
 ): Promise<void> {
 	const runStatement = db
@@ -261,22 +249,32 @@ export async function createHealthcareProviderIngestionRun(
 			input.error ?? null
 		);
 
-	const providerNpis = [...new Set(input.providerNpis ?? [])];
+	const providers = [...new Map((input.providers ?? []).map((provider) => [provider.npi, provider])).values()];
 	const statements = [runStatement];
-	if (providerNpis.length > 0) {
-		for (let index = 0; index < providerNpis.length; index += 50) {
-			const chunk = providerNpis.slice(index, index + 50);
-			const placeholders = chunk.map(() => '(?, ?)').join(', ');
+	if (providers.length > 0) {
+		for (let index = 0; index < providers.length; index += 30) {
+			const chunk = providers.slice(index, index + 30);
+			const placeholders = chunk.map(() => '(?, ?, ?)').join(', ');
 			statements.push(
 				db.prepare(`
-					INSERT INTO abundance_healthcare_provider_ingestion_memberships (run_id, provider_npi)
+					INSERT INTO abundance_healthcare_provider_ingestion_memberships (
+						run_id, provider_npi, provider_snapshot_json
+					)
 					VALUES ${placeholders}
 					ON CONFLICT(run_id, provider_npi) DO NOTHING
-				`).bind(...chunk.flatMap((npi) => [input.id, npi]))
+				`).bind(...chunk.flatMap((provider) => [input.id, provider.npi, JSON.stringify(provider)]))
 			);
 		}
 	}
 	await db.batch(statements);
+}
+
+function parseHealthcareProviderSnapshot(value: string): HealthcareProvider {
+	const parsed = parseJsonObject(value);
+	if (!cleanString(parsed.npi) || !cleanString(parsed.name) || !cleanString(parsed.source_system)) {
+		throw new Error('Stored healthcare provider snapshot is missing required provenance fields.');
+	}
+	return parsed as unknown as HealthcareProvider;
 }
 
 function normalizeMaxRecords(value: number | undefined): number {

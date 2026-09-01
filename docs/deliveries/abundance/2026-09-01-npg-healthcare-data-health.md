@@ -38,7 +38,7 @@ The NPG persona remains human-readable as “Nurse Practitioner, Family.” The 
 1. Sending the canonical taxonomy label directly to NPPES returns zero records.
 2. NPPES geography search can match a mailing address even when the practice location is elsewhere.
 
-Each stored record carries its NPI, normalized taxonomy and practice location, source fetch time, source payload hash, and administrative dates. Each ingestion run records records scanned, normalized, rejected, excluded, whether the public result bound was reached, and the exact providers included in that snapshot. Historical upserts therefore cannot inflate the latest cohort.
+Each stored record carries its NPI, normalized taxonomy and practice location, source fetch time, source payload hash, and administrative dates. Each ingestion run records records scanned, normalized, rejected, excluded, whether the public result bound was reached, and an immutable copy of every provider included in that snapshot. Later provider changes therefore cannot rewrite historical NPG evidence or inflate the latest cohort.
 
 ## Recruiter promotion gates
 

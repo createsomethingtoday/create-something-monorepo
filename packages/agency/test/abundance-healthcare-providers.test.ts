@@ -97,7 +97,8 @@ test('coverage health separates fresh market evidence from outreach eligibility'
 		}
 	});
 
-	assert.equal(report.market_coverage_status, 'ready');
+	assert.equal(report.market_coverage_status, 'degraded');
+	assert.ok(report.market_coverage_reasons.some((reason) => /fewer than 80%.*active/i.test(reason)));
 	assert.equal(report.direct_outreach_status, 'blocked');
 	assert.equal(report.provider_count, 3);
 	assert.equal(report.active_count, 2);
@@ -130,6 +131,21 @@ test('coverage health is degraded when the source result cap is reached', async 
 
 	assert.equal(report.market_coverage_status, 'degraded');
 	assert.ok(report.market_coverage_reasons.some((reason) => /result limit/i.test(reason)));
+});
+
+test('coverage is blocked when a cohort has no active providers', async () => {
+	const provider = await fixtureProvider({
+		npi: '1000000014',
+		lastUpdated: '2026-08-20',
+		status: 'D'
+	});
+	const report = assessHealthcareProviderCoverage([provider], {
+		evaluatedAt: '2026-09-01T20:00:00.000Z',
+		persona: NPG_NURSING_PERSONA_COVERAGE[0],
+		source: { latest_fetched_at: fetchedAt }
+	});
+	assert.equal(report.market_coverage_status, 'blocked');
+	assert.ok(report.market_coverage_reasons.some((reason) => /no active provider/i.test(reason)));
 });
 
 test('persona coverage excludes mailing-address and taxonomy false positives', async () => {
@@ -206,6 +222,12 @@ test('bulk provider upsert executes against the healthcare coverage migration', 
 });
 
 test('snapshot membership writes stay within the D1 100-bind ceiling', async () => {
+	const base = await fixtureProvider({ npi: '1000000031', lastUpdated: '2026-08-20' });
+	const providers = Array.from({ length: 1200 }, (_, index) => ({
+		...base,
+		id: `abprovider_${String(index).padStart(10, '0')}`,
+		npi: String(index).padStart(10, '0')
+	}));
 	const captured: Array<{ sql: string; args: unknown[] }> = [];
 	const db = {
 		prepare(sql: string) {
@@ -231,11 +253,31 @@ test('snapshot membership writes stay within the D1 100-bind ceiling', async () 
 		rejectedCount: 0,
 		excludedCount: 0,
 		coverageLimitReached: true,
-		providerNpis: Array.from({ length: 1200 }, (_, index) => String(index).padStart(10, '0'))
+		providers
 	});
 
-	assert.equal(captured.length, 25);
+	assert.equal(captured.length, 41);
 	assert.ok(captured.every((statement) => statement.args.length <= 100));
+	assert.equal(JSON.parse(String(captured[1].args[2])).practice_state, 'MO');
+});
+
+test('stored coverage reads immutable run snapshots instead of mutable provider rows', async () => {
+	const historical = await fixtureProvider({ npi: '1000000041', lastUpdated: '2024-08-20' });
+	const db = {
+		prepare(sql: string) {
+			return {
+				bind() {
+					return sql.includes('FROM abundance_healthcare_provider_ingestion_runs')
+						? { async first() { return { id: 'historical_run', fetched_at: fetchedAt, coverage_limit_reached: 0 }; } }
+						: { async all() { return { results: [{ provider_snapshot_json: JSON.stringify(historical) }] }; } };
+				}
+			};
+		}
+	} as unknown as D1Database;
+
+	const result = await readHealthcareProviderCoverage(db, NPG_NURSING_PERSONA_COVERAGE[0], { evaluatedAt: fetchedAt });
+	assert.equal(result.providers[0].practice_state, 'MO');
+	assert.equal(result.providers[0].last_updated_date, '2024-08-20');
 });
 
 test('stored coverage reads require exact nullable geography', async () => {
@@ -389,6 +431,7 @@ test('healthcare provider migration preserves provenance and ingestion evidence'
 	assert.match(migration, /CREATE TABLE IF NOT EXISTS abundance_healthcare_provider_ingestion_runs/);
 	assert.match(migration, /CREATE TABLE IF NOT EXISTS abundance_healthcare_provider_ingestion_memberships/);
 	assert.match(migration, /PRIMARY KEY \(run_id, provider_npi\)/);
+	assert.match(migration, /provider_snapshot_json TEXT NOT NULL/);
 	assert.match(migration, /coverage_limit_reached INTEGER NOT NULL/);
 	assert.match(migration, /excluded_count INTEGER NOT NULL/);
 	assert.doesNotMatch(migration, /social_security|date_of_birth|personal_email/i);

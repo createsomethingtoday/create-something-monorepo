@@ -205,6 +205,13 @@ export function assessHealthcareProviderCoverage(
 		marketCoverageStatus = 'blocked';
 		reasons.push('No provider records were available for this persona and geography.');
 	}
+	if (providers.length > 0 && activeCount === 0) {
+		marketCoverageStatus = 'blocked';
+		reasons.push('No active provider records were available for this persona and geography.');
+	} else if (providers.length > 0 && activeCount / providers.length < 0.8) {
+		marketCoverageStatus = 'degraded';
+		reasons.push('Fewer than 80% of records are active in NPPES.');
+	}
 	if (coverageLimitReached && marketCoverageStatus !== 'blocked') {
 		marketCoverageStatus = 'degraded';
 		reasons.push('The NPPES result limit was reached, so the observed provider count is a lower bound.');

@@ -92,7 +92,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			normalizedCount: providers.length,
 			rejectedCount: normalized.rejected_count,
 			excludedCount,
-			providerNpis: providers.map((provider) => provider.npi),
+			providers,
 			coverageLimitReached: fetched.coverage_limit_reached
 		});
 
@@ -128,7 +128,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 				normalizedCount: 0,
 				rejectedCount: 0,
 				excludedCount: 0,
-				providerNpis: [],
+				providers: [],
 				coverageLimitReached: false,
 				error: err instanceof Error ? err.message : String(err)
 			}).catch((runError) => console.error('Failed to record healthcare provider ingestion failure:', runError));

@@ -76,6 +76,7 @@ CREATE INDEX IF NOT EXISTS idx_abundance_healthcare_provider_runs_persona
 CREATE TABLE IF NOT EXISTS abundance_healthcare_provider_ingestion_memberships (
   run_id TEXT NOT NULL,
   provider_npi TEXT NOT NULL,
+  provider_snapshot_json TEXT NOT NULL CHECK (json_valid(provider_snapshot_json)),
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (run_id, provider_npi),
   FOREIGN KEY (run_id) REFERENCES abundance_healthcare_provider_ingestion_runs(id),
