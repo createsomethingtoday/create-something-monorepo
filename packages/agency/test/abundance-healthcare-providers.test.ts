@@ -179,6 +179,7 @@ test('provider upserts stay under D1 bind and query budgets at the public maximu
 		npi: String(index).padStart(10, '0')
 	}));
 	const captured: Array<{ sql: string; args: unknown[] }> = [];
+	const batchSizes: number[] = [];
 	const db = {
 		prepare(sql: string) {
 			return {
@@ -189,11 +190,15 @@ test('provider upserts stay under D1 bind and query budgets at the public maximu
 				}
 			};
 		},
-		async batch(statements: unknown[]) { return statements; }
+		async batch(statements: unknown[]) {
+			batchSizes.push(statements.length);
+			return statements;
+		}
 	} as unknown as D1Database;
 
 	await upsertHealthcareProviders(db, providers);
 	assert.equal(captured.length, 400);
+	assert.deepEqual(batchSizes, [100, 100, 100, 100]);
 	assert.ok(captured.every((statement) => statement.args.length <= 100));
 	assert.equal(buildHealthcareProviderBulkUpsert(providers.slice(0, 3)).args.length, 84);
 });

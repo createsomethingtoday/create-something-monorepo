@@ -14,6 +14,7 @@ const NPPES_API_URL = 'https://npiregistry.cms.hhs.gov/api/';
 const NPPES_PAGE_LIMIT = 200;
 const NPPES_MAX_SKIP = 1000;
 const NPPES_MAX_RECORDS = 1200;
+const D1_BATCH_STATEMENT_LIMIT = 100;
 
 export interface NppesProviderFilters {
 	taxonomy_description: string;
@@ -144,7 +145,9 @@ export async function upsertHealthcareProviders(db: D1Database, providers: Healt
 		const statement = buildHealthcareProviderBulkUpsert(providers.slice(index, index + 3));
 		statements.push(db.prepare(statement.sql).bind(...statement.args));
 	}
-	await db.batch(statements);
+	for (let index = 0; index < statements.length; index += D1_BATCH_STATEMENT_LIMIT) {
+		await db.batch(statements.slice(index, index + D1_BATCH_STATEMENT_LIMIT));
+	}
 	return providers.length;
 }
 
