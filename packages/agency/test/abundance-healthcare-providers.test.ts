@@ -92,6 +92,21 @@ test('normalization does not infer a primary taxonomy from list order', async ()
 	assert.equal(provider.primary_taxonomy_description, undefined);
 });
 
+test('normalization does not treat a mailing address as a practice location', async () => {
+	const provider = await normalizeNppesProvider(
+		{
+			number: '1528597566',
+			basic: { first_name: 'TEST', last_name: 'PROVIDER', status: 'A' },
+			taxonomies: [{ code: '363LF0000X', desc: 'Nurse Practitioner, Family', primary: true }],
+			addresses: [{ address_purpose: 'MAILING', city: 'SPRINGFIELD', state: 'MO' }]
+		},
+		{ fetchedAt }
+	);
+
+	assert.equal(provider.practice_city, undefined);
+	assert.equal(provider.practice_state, undefined);
+});
+
 test('coverage health separates fresh market evidence from outreach eligibility', async () => {
 	const providers = await Promise.all([
 		fixtureProvider({ npi: '1000000001', lastUpdated: '2026-08-20', phone: '417-555-0101' }),
@@ -502,6 +517,25 @@ test('NPPES fetch rejects successful responses without a results array', async (
 			assert.ok(error instanceof NppesProviderFetchError);
 			assert.match(error.message, /no results array/i);
 			assert.match(error.message, /Invalid source response/);
+			assert.equal(error.progress.pages_fetched, 0);
+			return true;
+		}
+	);
+});
+
+test('NPPES fetch rejects malformed entries inside a results array', async () => {
+	await assert.rejects(
+		fetchNppesProviders(
+			{
+				taxonomy_description: 'Registered Nurse',
+				city: 'Springfield',
+				state: 'MO'
+			},
+			{ fetchFn: async () => jsonResponse({ results: ['invalid'] }) }
+		),
+		(error: unknown) => {
+			assert.ok(error instanceof NppesProviderFetchError);
+			assert.match(error.message, /malformed results array/i);
 			assert.equal(error.progress.pages_fetched, 0);
 			return true;
 		}

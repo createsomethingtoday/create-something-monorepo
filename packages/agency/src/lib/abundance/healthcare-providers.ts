@@ -96,9 +96,9 @@ export async function normalizeNppesProvider(
 	const addresses = asRecordArray(record.addresses);
 	const endpoints = asRecordArray(record.endpoints);
 	const primaryTaxonomy = taxonomies.find((taxonomy) => taxonomy.primary === true);
-	const practiceAddress =
-		addresses.find((address) => cleanString(address.address_purpose)?.toUpperCase() === 'LOCATION') ??
-		addresses[0];
+	const practiceAddress = addresses.find(
+		(address) => cleanString(address.address_purpose)?.toUpperCase() === 'LOCATION'
+	);
 	const firstName = cleanNamePart(basic.first_name);
 	const middleName = cleanNamePart(basic.middle_name);
 	const lastName = cleanNamePart(basic.last_name);

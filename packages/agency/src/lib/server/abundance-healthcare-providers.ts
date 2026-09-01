@@ -106,6 +106,9 @@ export async function fetchNppesProviders(
 					(payload.Errors === undefined ? undefined : JSON.stringify(payload.Errors).slice(0, 500));
 				throw new Error(`NPPES provider query returned no results array${upstreamError ? `: ${upstreamError}` : '.'}`);
 			}
+			if (payload.results.some((record) => !isRecord(record))) {
+				throw new Error('NPPES provider query returned a malformed results array.');
+			}
 			const pageRecords = payload.results.filter(isRecord);
 			pagesFetched += 1;
 			sourceRecordsScanned += pageRecords.length;
