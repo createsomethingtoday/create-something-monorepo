@@ -138,16 +138,35 @@ test('coverage health is degraded when the source result cap is reached', async 
 test('coverage is blocked when a cohort has no active providers', async () => {
 	const provider = await fixtureProvider({
 		npi: '1000000014',
-		lastUpdated: '2026-08-20',
+		lastUpdated: '2018-08-20',
 		status: 'D'
 	});
-	const report = assessHealthcareProviderCoverage([provider], {
+	const incompleteProvider = {
+		...provider,
+		primary_taxonomy_code: undefined,
+		practice_city: undefined,
+		practice_state: undefined
+	};
+	const report = assessHealthcareProviderCoverage([incompleteProvider], {
 		evaluatedAt: '2026-09-01T20:00:00.000Z',
 		persona: NPG_NURSING_PERSONA_COVERAGE[0],
 		source: { latest_fetched_at: fetchedAt }
 	});
 	assert.equal(report.market_coverage_status, 'blocked');
 	assert.ok(report.market_coverage_reasons.some((reason) => /no active provider/i.test(reason)));
+});
+
+test('malformed refresh JSON returns a client error', async () => {
+	const response = await refreshHealthcareProviderCoverage({
+		request: new Request('https://createsomething.agency/api/abundance/healthcare-providers', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: '{broken'
+		}),
+		platform: { env: { DB: {} as D1Database } }
+	} as never);
+
+	assert.equal(response.status, 400);
 });
 
 test('persona coverage excludes mailing-address and taxonomy false positives', async () => {

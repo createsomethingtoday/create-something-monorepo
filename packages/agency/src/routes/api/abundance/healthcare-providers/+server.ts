@@ -204,7 +204,8 @@ function clean(value: unknown): string | undefined {
 }
 
 function validationOrServerError(err: unknown, action: string): Response {
-	const isValidation = err instanceof TypeError || (err instanceof Error && /required|must be|between/.test(err.message));
+	const isValidation = err instanceof SyntaxError || err instanceof TypeError ||
+		(err instanceof Error && /required|must be|between/.test(err.message));
 	return json(
 		{ success: false, error: `Error ${action}: ${err instanceof Error ? err.message : 'Unknown error'}` } as ApiResponse<never>,
 		{ status: isValidation ? 400 : 500 }

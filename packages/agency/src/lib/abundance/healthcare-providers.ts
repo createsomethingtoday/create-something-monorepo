@@ -223,15 +223,15 @@ export function assessHealthcareProviderCoverage(
 		marketCoverageStatus = 'degraded';
 		reasons.push('The latest source fetch is more than seven days old.');
 	}
-	if (providers.length > 0 && primaryTaxonomyCount / providers.length < 0.9) {
+	if (providers.length > 0 && primaryTaxonomyCount / providers.length < 0.9 && marketCoverageStatus !== 'blocked') {
 		marketCoverageStatus = 'degraded';
 		reasons.push('Fewer than 90% of records have a primary taxonomy.');
 	}
-	if (providers.length > 0 && practiceLocationCount / providers.length < 0.8) {
+	if (providers.length > 0 && practiceLocationCount / providers.length < 0.8 && marketCoverageStatus !== 'blocked') {
 		marketCoverageStatus = 'degraded';
 		reasons.push('Fewer than 80% of records have a usable practice location.');
 	}
-	if (providers.length > 0 && olderThan3YearsCount / providers.length > 0.5) {
+	if (providers.length > 0 && olderThan3YearsCount / providers.length > 0.5 && marketCoverageStatus !== 'blocked') {
 		marketCoverageStatus = 'degraded';
 		reasons.push('More than half of the cohort has not received an NPPES administrative update in over three years.');
 	}
