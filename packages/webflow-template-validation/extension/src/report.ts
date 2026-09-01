@@ -10,6 +10,8 @@ export interface ReportIssueLike {
   details?: {
     location?: string;
     howToFix?: string;
+    pages?: string[];
+    duplicates?: string[][];
     [key: string]: any;
   };
 }
@@ -59,9 +61,20 @@ export function buildReportMarkdown(input: ReportInput): string {
       if (location) lines.push(`  - Location: ${location}`);
       const howToFix = issue.howToFix || issue.details?.howToFix;
       if (howToFix) lines.push(`  - Fix: ${howToFix}`);
+      for (const page of issue.details?.pages || []) {
+        lines.push(`  - Affected page: ${formatDetailLabel(page)}`);
+      }
+      for (const group of issue.details?.duplicates || []) {
+        const labels = group.map(formatDetailLabel).filter(Boolean);
+        if (labels.length > 0) lines.push(`  - Duplicate group: ${labels.join(' · ')}`);
+      }
     }
     lines.push('');
   }
 
   return lines.filter((line): line is string => line !== null).join('\n');
+}
+
+function formatDetailLabel(value: string): string {
+  return String(value).replace(/\s+/g, ' ').trim();
 }

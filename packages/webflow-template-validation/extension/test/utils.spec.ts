@@ -38,6 +38,7 @@ describe('ensureHttps', () => {
   it('upgrades http and adds missing protocols', () => {
     expect(ensureHttps('http://example.webflow.io')).toBe('https://example.webflow.io');
     expect(ensureHttps('example.webflow.io')).toBe('https://example.webflow.io');
+    expect(ensureHttps('preview.example.com:8443')).toBe('https://preview.example.com:8443');
     expect(ensureHttps('https://example.webflow.io')).toBe('https://example.webflow.io');
   });
 });
