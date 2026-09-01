@@ -26,4 +26,23 @@ describe('buildValidationSubmitIssue', () => {
       },
     });
   });
+
+  it('normalizes nested extension fixes and locations before whitelisting details', () => {
+    expect(buildValidationSubmitIssue({
+      id: 'canvas.missing-alt',
+      severity: 'error',
+      message: 'An image is missing alt text.',
+      details: {
+        howToFix: 'Add alt text in Element settings.',
+        location: 'Hero image',
+      },
+    })).toEqual({
+      id: 'canvas.missing-alt',
+      severity: 'error',
+      message: 'An image is missing alt text.',
+      howToFix: 'Add alt text in Element settings.',
+      location: 'Hero image',
+      details: undefined,
+    });
+  });
 });

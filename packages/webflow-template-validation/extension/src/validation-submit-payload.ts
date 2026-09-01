@@ -5,6 +5,8 @@ export interface ValidationSubmitIssueLike {
   howToFix?: string;
   location?: string;
   details?: {
+    howToFix?: string;
+    location?: string;
     pages?: string[];
     duplicates?: string[][];
     [key: string]: unknown;
@@ -19,8 +21,8 @@ export function buildValidationSubmitIssue(issue: ValidationSubmitIssueLike): Re
     id: issue.id,
     severity: issue.severity,
     message: issue.message,
-    howToFix: issue.howToFix,
-    location: issue.location,
+    howToFix: issue.howToFix || issue.details?.howToFix,
+    location: issue.location || issue.details?.location,
     details: pages || duplicates ? { pages, duplicates } : undefined,
   };
 }
