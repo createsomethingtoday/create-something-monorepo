@@ -1,7 +1,7 @@
 "use strict";
 (() => {
   // src/utils.ts
-  var EXTENSION_VERSION = "1.2.1";
+  var EXTENSION_VERSION = "1.3.4";
   function filterRetiredAccessibilityIssues(issues) {
     return issues.filter((issue) => issue.id !== "color-contrast-violations");
   }
@@ -12,13 +12,15 @@
     return value.replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&").replace(/&quot;/gi, '"').replace(/&#39;/gi, "'").replace(/&#x27;/gi, "'").replace(/&lt;/gi, "<").replace(/&gt;/gi, ">");
   }
   function ensureHttps(url) {
-    if (url.startsWith("http://")) {
-      return url.replace("http://", "https://");
-    }
-    if (!url.startsWith("https://") && !url.startsWith("http://")) {
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol === "http:") {
+        return `https:${url.slice(url.indexOf(":") + 1)}`;
+      }
+      return url;
+    } catch {
       return `https://${url}`;
     }
-    return url;
   }
   function getSlugPathname(value) {
     const trimmed = value.trim();
@@ -135,10 +137,20 @@
         if (location) lines.push(`  - Location: ${location}`);
         const howToFix = issue.howToFix || issue.details?.howToFix;
         if (howToFix) lines.push(`  - Fix: ${howToFix}`);
+        for (const page of issue.details?.pages || []) {
+          lines.push(`  - Affected page: ${formatDetailLabel(page)}`);
+        }
+        for (const group of issue.details?.duplicates || []) {
+          const labels = group.map(formatDetailLabel).filter(Boolean);
+          if (labels.length > 0) lines.push(`  - Duplicate group: ${labels.join(" \xB7 ")}`);
+        }
       }
       lines.push("");
     }
     return lines.filter((line) => line !== null).join("\n");
+  }
+  function formatDetailLabel(value) {
+    return String(value).replace(/\s+/g, " ").trim();
   }
 
   // src/page-seo.ts
@@ -168,8 +180,33 @@
     };
   }
 
+  // src/page-metadata-details.ts
+  function renderDetails(label, items) {
+    if (items.length === 0) return "";
+    return `
+    <details class="issue-subitems-details">
+      <summary class="issue-subitems-summary">
+        <strong>${label} (${items.length})</strong>
+      </summary>
+      <div class="issue-subitems-list">
+        ${items.map((item) => `<div class="subitem">\u2022 ${escapeHtml(item)}</div>`).join("")}
+      </div>
+    </details>
+  `;
+  }
+  function createPageMetadataDetailsHTML(details) {
+    if (!details) return "";
+    const pages = Array.isArray(details.pages) ? details.pages.filter((page) => typeof page === "string" && page.trim() !== "") : [];
+    const duplicates = Array.isArray(details.duplicates) ? details.duplicates.filter((group) => Array.isArray(group)).map(
+      (group) => group.filter((page) => typeof page === "string" && page.trim() !== "").join(" \xB7 ")
+    ).filter(Boolean) : [];
+    return [
+      renderDetails(`View affected page${pages.length === 1 ? "" : "s"}`, pages),
+      renderDetails(`View duplicate group${duplicates.length === 1 ? "" : "s"}`, duplicates)
+    ].join("");
+  }
+
   // src/index.ts
-  var API_BASE = "https://webflow-way-validator.vercel.app";
   var WORKER_API_BASE = "https://validation-worker.createsomething.workers.dev";
   var APP_VALIDATOR_BASE = "https://validation-worker.createsomething.workers.dev";
   var REVIEW_START_URL = `${APP_VALIDATOR_BASE}/app-validator/review/start`;
@@ -944,7 +981,7 @@
   }
   async function runDesignerValidation(projectData, siteUrl, correlationId) {
     const body = JSON.stringify({ designerData: projectData, siteUrl });
-    const endpoints = [`${APP_VALIDATOR_BASE}/api/validate`, `${API_BASE}/api/validate`];
+    const endpoints = [`${APP_VALIDATOR_BASE}/api/validate`];
     for (const endpoint of endpoints) {
       try {
         const result = await fetchJsonWithRetry(
@@ -3120,6 +3157,7 @@
     html += createStructuredArrayDetails(details, "unoptimizedAssets", "View asset to optimize", formatAssetItem);
     html += createStructuredArrayDetails(details, "unusedAssets", "View unused asset", formatAssetItem);
     html += createStructuredArrayDetails(details, "missingTags", "View missing tag", formatStructuredItem);
+    html += createPageMetadataDetailsHTML(details);
     html += createSeoDetailHTML(details);
     return html;
   }

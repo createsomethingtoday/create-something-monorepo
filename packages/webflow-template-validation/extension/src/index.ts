@@ -17,9 +17,9 @@ import {
 } from './utils';
 import { buildReportMarkdown as buildReportMarkdownPure, type ReportInput } from './report';
 import { collectPageSeoData } from './page-seo';
+import { createPageMetadataDetailsHTML } from './page-metadata-details';
 
 // API Configuration
-const API_BASE = 'https://webflow-way-validator.vercel.app';
 const WORKER_API_BASE = 'https://validation-worker.createsomething.workers.dev';
 const APP_VALIDATOR_BASE = 'https://validation-worker.createsomething.workers.dev';
 const REVIEW_START_URL = `${APP_VALIDATOR_BASE}/app-validator/review/start`;
@@ -1288,7 +1288,7 @@ async function runDesignerValidation(
   correlationId: string
 ): Promise<ValidationResponse> {
   const body = JSON.stringify({ designerData: projectData, siteUrl });
-  const endpoints = [`${APP_VALIDATOR_BASE}/api/validate`, `${API_BASE}/api/validate`];
+  const endpoints = [`${APP_VALIDATOR_BASE}/api/validate`];
 
   for (const endpoint of endpoints) {
     try {
@@ -4190,6 +4190,7 @@ function createDetailsHTML(details?: ValidationIssue['details']): string {
   html += createStructuredArrayDetails(details, 'unoptimizedAssets', 'View asset to optimize', formatAssetItem);
   html += createStructuredArrayDetails(details, 'unusedAssets', 'View unused asset', formatAssetItem);
   html += createStructuredArrayDetails(details, 'missingTags', 'View missing tag', formatStructuredItem);
+  html += createPageMetadataDetailsHTML(details);
   html += createSeoDetailHTML(details);
 
   return html;

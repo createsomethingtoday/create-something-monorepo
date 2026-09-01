@@ -536,8 +536,12 @@ function validateRequiredPages(pages: DesignerData['pages']): CategoryResult {
 // --- Page SEO Validation (Designer API data — covers CMS template pages) ---
 function validatePageSEO(pages: DesignerData['pages']): CategoryResult {
   const issues: ValidationIssue[] = [];
+  // Webflow returns disabled User-system pages from getAllPagesAndFolders even
+  // when User-system publishing is off and their public routes return 404. The
+  // Designer API exposes their kind but no enabled/published signal, so they
+  // cannot be treated as public SEO blockers.
   const eligiblePages = pages.filter(
-    p => !p.isDraft && (p.type === 'Page' || p.isCmsTemplate)
+    p => !p.isDraft && p.kind !== 'userSystems' && (p.type === 'Page' || p.isCmsTemplate)
   );
   // The extension sets `seo` to null when Designer API collection failed for a
   // page. Only judge pages whose SEO data was actually collected — a collection

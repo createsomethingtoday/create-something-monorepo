@@ -1,5 +1,14 @@
 # Webflow Way Validator - Release Notes
 
+## Version 1.3.4 - Page-specific validation details
+
+- Shows the exact affected page names for missing, long, and duplicate SEO metadata findings.
+- Includes affected pages and duplicate groups in copied support reports.
+- Preserves the approved 1.3.3 Worker-only validation route and URL normalization behavior.
+- Pairs with the Worker update that excludes disabled User-system 404 routes from SEO blockers and retains bounded page diagnostics without persisting unknown detail fields.
+
+---
+
 ## Version 1.2.1 - Contrast Check Removal
 
 - Removed the unreliable automated color-contrast check.
