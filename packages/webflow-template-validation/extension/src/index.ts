@@ -18,6 +18,7 @@ import {
 import { buildReportMarkdown as buildReportMarkdownPure, type ReportInput } from './report';
 import { collectPageSeoData } from './page-seo';
 import { createPageMetadataDetailsHTML } from './page-metadata-details';
+import { buildValidationSubmitIssue } from './validation-submit-payload';
 
 // API Configuration
 const WORKER_API_BASE = 'https://validation-worker.createsomething.workers.dev';
@@ -855,10 +856,7 @@ function buildValidationSubmitPayload(validationResults: ValidationResponse): Re
           category: category.category,
           passed: category.passed,
           issues: Array.isArray(category.issues)
-            ? category.issues.map((issue) => ({
-                severity: issue.severity,
-                message: issue.message,
-              }))
+            ? category.issues.map(buildValidationSubmitIssue)
             : [],
         }))
       : [],

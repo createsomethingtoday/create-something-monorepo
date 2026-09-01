@@ -1,7 +1,7 @@
 "use strict";
 (() => {
   // src/utils.ts
-  var EXTENSION_VERSION = "1.3.4";
+  var EXTENSION_VERSION = "1.3.5";
   function filterRetiredAccessibilityIssues(issues) {
     return issues.filter((issue) => issue.id !== "color-contrast-violations");
   }
@@ -12,15 +12,10 @@
     return value.replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&").replace(/&quot;/gi, '"').replace(/&#39;/gi, "'").replace(/&#x27;/gi, "'").replace(/&lt;/gi, "<").replace(/&gt;/gi, ">");
   }
   function ensureHttps(url) {
-    try {
-      const parsed = new URL(url);
-      if (parsed.protocol === "http:") {
-        return `https:${url.slice(url.indexOf(":") + 1)}`;
-      }
-      return url;
-    } catch {
-      return `https://${url}`;
-    }
+    const trimmed = url.trim();
+    if (/^https:\/\//i.test(trimmed)) return trimmed;
+    if (/^http:\/\//i.test(trimmed)) return `https:${trimmed.slice(trimmed.indexOf(":") + 1)}`;
+    return `https://${trimmed.replace(/^\/\//, "")}`;
   }
   function getSlugPathname(value) {
     const trimmed = value.trim();
@@ -204,6 +199,20 @@
       renderDetails(`View affected page${pages.length === 1 ? "" : "s"}`, pages),
       renderDetails(`View duplicate group${duplicates.length === 1 ? "" : "s"}`, duplicates)
     ].join("");
+  }
+
+  // src/validation-submit-payload.ts
+  function buildValidationSubmitIssue(issue) {
+    const pages = Array.isArray(issue.details?.pages) ? issue.details.pages : void 0;
+    const duplicates = Array.isArray(issue.details?.duplicates) ? issue.details.duplicates : void 0;
+    return {
+      id: issue.id,
+      severity: issue.severity,
+      message: issue.message,
+      howToFix: issue.howToFix,
+      location: issue.location,
+      details: pages || duplicates ? { pages, duplicates } : void 0
+    };
   }
 
   // src/index.ts
@@ -637,10 +646,7 @@
       categories: Array.isArray(validationResults.categories) ? validationResults.categories.map((category) => ({
         category: category.category,
         passed: category.passed,
-        issues: Array.isArray(category.issues) ? category.issues.map((issue) => ({
-          severity: issue.severity,
-          message: issue.message
-        })) : []
+        issues: Array.isArray(category.issues) ? category.issues.map(buildValidationSubmitIssue) : []
       })) : [],
       // The marketplace form uses this to reject partial runs (skipped checks or
       // current-page scope) — a 100% pass only counts when the full suite ran.

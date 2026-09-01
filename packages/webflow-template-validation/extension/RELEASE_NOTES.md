@@ -1,5 +1,14 @@
 # Webflow Way Validator - Release Notes
 
+## Version 1.3.5 - Complete page diagnostics
+
+- Includes issue IDs, fixes, locations, affected pages, and duplicate groups in submitted validation artifacts.
+- Keeps unknown diagnostic fields out of submissions.
+- Correctly normalizes schemeless validation domains that include an explicit port.
+- Pairs with the Worker correction that ignores the non-routable Ecommerce SKU template during SEO checks.
+
+---
+
 ## Version 1.3.4 - Page-specific validation details
 
 - Shows the exact affected page names for missing, long, and duplicate SEO metadata findings.

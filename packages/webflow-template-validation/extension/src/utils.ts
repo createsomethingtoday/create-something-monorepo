@@ -1,7 +1,7 @@
 // Pure helpers shared across the extension. No DOM, no Designer API —
 // everything here is unit-testable in isolation.
 
-export const EXTENSION_VERSION = '1.3.4';
+export const EXTENSION_VERSION = '1.3.5';
 
 export function filterRetiredAccessibilityIssues<T extends { id: string }>(issues: readonly T[]): T[] {
   return issues.filter((issue) => issue.id !== 'color-contrast-violations');
@@ -28,15 +28,10 @@ export function decodeCommonHtmlEntities(value: string): string {
 }
 
 export function ensureHttps(url: string): string {
-  try {
-    const parsed = new URL(url);
-    if (parsed.protocol === 'http:') {
-      return `https:${url.slice(url.indexOf(':') + 1)}`;
-    }
-    return url;
-  } catch {
-    return `https://${url}`;
-  }
+  const trimmed = url.trim();
+  if (/^https:\/\//i.test(trimmed)) return trimmed;
+  if (/^http:\/\//i.test(trimmed)) return `https:${trimmed.slice(trimmed.indexOf(':') + 1)}`;
+  return `https://${trimmed.replace(/^\/\//, '')}`;
 }
 
 export function getSlugPathname(value: string): string {
