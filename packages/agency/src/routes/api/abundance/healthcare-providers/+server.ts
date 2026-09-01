@@ -79,6 +79,9 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 	};
 	try {
 		const body = (await request.json()) as CoverageRefreshRequest;
+		if (body.include_records !== undefined && typeof body.include_records !== 'boolean') {
+			throw new TypeError('include_records must be a boolean.');
+		}
 		persona = validatePersona(body);
 		const fetched = await fetchNppesProviders({
 			taxonomy_description: persona.taxonomy_description,
@@ -134,7 +137,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 				excluded_count: excludedCount,
 				coverage_limit_reached: fetched.coverage_limit_reached
 			},
-			...(body.include_records ? { providers } : {})
+			...(body.include_records === true ? { providers } : {})
 		};
 		return json({ success: true, data } as ApiResponse<CoverageResponse>, { status: 201 });
 	} catch (err) {

@@ -101,9 +101,12 @@ export async function fetchNppesProviders(
 			}
 
 			const payload = parseJsonObject(text);
-			const pageRecords = Array.isArray(payload.results)
-				? payload.results.filter(isRecord)
-				: [];
+			if (!Array.isArray(payload.results)) {
+				const upstreamError = cleanString(payload.error) ?? cleanString(payload.message) ??
+					(payload.Errors === undefined ? undefined : JSON.stringify(payload.Errors).slice(0, 500));
+				throw new Error(`NPPES provider query returned no results array${upstreamError ? `: ${upstreamError}` : '.'}`);
+			}
+			const pageRecords = payload.results.filter(isRecord);
 			pagesFetched += 1;
 			sourceRecordsScanned += pageRecords.length;
 			records.push(...(requiresCanonicalFilter

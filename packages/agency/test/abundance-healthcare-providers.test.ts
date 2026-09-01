@@ -169,6 +169,22 @@ test('malformed refresh JSON returns a client error', async () => {
 	assert.equal(response.status, 400);
 });
 
+test('refresh rejects non-boolean include_records values', async () => {
+	const response = await refreshHealthcareProviderCoverage({
+		request: new Request('https://createsomething.agency/api/abundance/healthcare-providers', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				...NPG_NURSING_PERSONA_COVERAGE[0],
+				include_records: 'false'
+			})
+		}),
+		platform: { env: { DB: {} as D1Database } }
+	} as never);
+
+	assert.equal(response.status, 400);
+});
+
 test('persona coverage excludes mailing-address and taxonomy false positives', async () => {
 	const springfieldFamily = await fixtureProvider({ npi: '1000000011', lastUpdated: '2026-08-20' });
 	const otherCity = { ...springfieldFamily, npi: '1000000012', practice_city: 'Branson' };
@@ -443,6 +459,26 @@ test('NPPES fetch stops when a page is shorter than requested', async () => {
 	assert.equal(requestCount, 1);
 	assert.equal(result.records.length, 2);
 	assert.equal(result.coverage_limit_reached, false);
+});
+
+test('NPPES fetch rejects successful responses without a results array', async () => {
+	await assert.rejects(
+		fetchNppesProviders(
+			{
+				taxonomy_description: 'Registered Nurse',
+				city: 'Springfield',
+				state: 'MO'
+			},
+			{ fetchFn: async () => jsonResponse({ Errors: [{ description: 'Invalid source response' }] }) }
+		),
+		(error: unknown) => {
+			assert.ok(error instanceof NppesProviderFetchError);
+			assert.match(error.message, /no results array/i);
+			assert.match(error.message, /Invalid source response/);
+			assert.equal(error.progress.pages_fetched, 0);
+			return true;
+		}
+	);
 });
 
 test('NPPES fetch failures preserve completed-page progress', async () => {
