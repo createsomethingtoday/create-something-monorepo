@@ -443,6 +443,25 @@ test('NPPES fetch broadens source syntax but keeps only the requested canonical 
 	assert.deepEqual(result.records.map((record) => record.number), ['1111111111']);
 });
 
+test('canonical taxonomy filtering rejects records with missing taxonomy shape', async () => {
+	await assert.rejects(
+		fetchNppesProviders(
+			{
+				taxonomy_description: 'Nurse Practitioner, Family',
+				city: 'Springfield',
+				state: 'MO'
+			},
+			{ fetchFn: async () => jsonResponse({ results: [{ number: '1111111111' }] }) }
+		),
+		(error: unknown) => {
+			assert.ok(error instanceof NppesProviderFetchError);
+			assert.match(error.message, /malformed taxonomy data/i);
+			assert.equal(error.progress.pages_fetched, 0);
+			return true;
+		}
+	);
+});
+
 test('NPPES fetch paginates within the public API limit and reports truncation', async () => {
 	const requests: URL[] = [];
 	const fetchFn: typeof fetch = async (input) => {
@@ -577,7 +596,12 @@ test('failed refresh ledger retains partial NPPES progress', async () => {
 	globalThis.fetch = (async () => {
 		callCount += 1;
 		return callCount === 1
-			? jsonResponse({ results: Array.from({ length: 200 }, (_, index) => ({ number: String(index) })) })
+			? jsonResponse({
+				results: Array.from({ length: 200 }, (_, index) => ({
+					number: String(index),
+					taxonomies: [{ desc: 'Nurse Practitioner, Family', primary: true }]
+				}))
+			})
 			: new Response('upstream unavailable', { status: 503 });
 	}) as typeof fetch;
 	const db = {
