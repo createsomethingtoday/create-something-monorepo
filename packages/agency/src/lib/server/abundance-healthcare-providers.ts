@@ -1,0 +1,312 @@
+import type {
+	HealthcareProvider,
+	HealthcareProviderCoverageReport,
+	NursingPersonaCoverageQuery
+} from '$lib/abundance/healthcare-providers';
+import {
+	assessHealthcareProviderCoverage,
+	buildHealthcareProviderUpsert,
+	normalizeNppesProvider
+} from '$lib/abundance/healthcare-providers';
+
+const NPPES_API_URL = 'https://npiregistry.cms.hhs.gov/api/';
+const NPPES_PAGE_LIMIT = 200;
+const NPPES_MAX_SKIP = 1000;
+const NPPES_MAX_RECORDS = 1200;
+
+export interface NppesProviderFilters {
+	taxonomy_description: string;
+	state?: string;
+	city?: string;
+	postal_code?: string;
+	enumeration_type?: 'NPI-1' | 'NPI-2';
+	max_records?: number;
+}
+
+export interface NppesProviderFetchResult {
+	records: Record<string, unknown>[];
+	source_records_scanned: number;
+	pages_fetched: number;
+	coverage_limit_reached: boolean;
+	fetched_at: string;
+}
+
+export function buildNppesProviderUrl(
+	filters: NppesProviderFilters,
+	page: { limit: number; skip: number }
+): string {
+	const taxonomyDescription = filters.taxonomy_description?.trim();
+	if (!taxonomyDescription) {
+		throw new Error('taxonomy_description is required.');
+	}
+	if (![filters.state, filters.city, filters.postal_code].some((value) => value?.trim())) {
+		throw new Error('At least one of state, city, or postal_code is required.');
+	}
+	if (!Number.isInteger(page.limit) || page.limit < 1 || page.limit > NPPES_PAGE_LIMIT) {
+		throw new Error(`NPPES page limit must be between 1 and ${NPPES_PAGE_LIMIT}.`);
+	}
+	if (!Number.isInteger(page.skip) || page.skip < 0 || page.skip > NPPES_MAX_SKIP) {
+		throw new Error(`NPPES skip must be between 0 and ${NPPES_MAX_SKIP}.`);
+	}
+
+	const url = new URL(NPPES_API_URL);
+	url.searchParams.set('version', '2.1');
+	url.searchParams.set('enumeration_type', filters.enumeration_type ?? 'NPI-1');
+	url.searchParams.set('taxonomy_description', nppesTaxonomySearchTerm(taxonomyDescription));
+	if (filters.state?.trim()) url.searchParams.set('state', filters.state.trim().toUpperCase());
+	if (filters.city?.trim()) url.searchParams.set('city', filters.city.trim());
+	if (filters.postal_code?.trim()) url.searchParams.set('postal_code', filters.postal_code.trim());
+	url.searchParams.set('limit', String(page.limit));
+	url.searchParams.set('skip', String(page.skip));
+	return url.toString();
+}
+
+export async function fetchNppesProviders(
+	filters: NppesProviderFilters,
+	options: { fetchFn?: typeof fetch; fetchedAt?: string } = {}
+): Promise<NppesProviderFetchResult> {
+	const fetchFn = options.fetchFn ?? fetch;
+	const fetchedAt = options.fetchedAt ?? new Date().toISOString();
+	const maxRecords = normalizeMaxRecords(filters.max_records);
+	const records: Record<string, unknown>[] = [];
+	let sourceRecordsScanned = 0;
+	let pagesFetched = 0;
+	let lastPageWasFull = false;
+	const sourceTaxonomy = nppesTaxonomySearchTerm(filters.taxonomy_description);
+	const requiresCanonicalFilter = sourceTaxonomy !== filters.taxonomy_description.trim();
+
+	while (sourceRecordsScanned < maxRecords) {
+		const skip = sourceRecordsScanned;
+		if (skip > NPPES_MAX_SKIP) break;
+		const limit = Math.min(NPPES_PAGE_LIMIT, maxRecords - sourceRecordsScanned);
+		const response = await fetchFn(buildNppesProviderUrl(filters, { limit, skip }), {
+			headers: { Accept: 'application/json' }
+		});
+		const text = await response.text();
+		if (!response.ok) {
+			throw new Error(`NPPES provider query failed with HTTP ${response.status}: ${text.slice(0, 500)}`);
+		}
+
+		const payload = parseJsonObject(text);
+		const pageRecords = Array.isArray(payload.results)
+			? payload.results.filter(isRecord)
+			: [];
+		pagesFetched += 1;
+		sourceRecordsScanned += pageRecords.length;
+		records.push(...(requiresCanonicalFilter
+			? pageRecords.filter((record) => hasCanonicalTaxonomy(record, filters.taxonomy_description))
+			: pageRecords));
+		lastPageWasFull = pageRecords.length >= limit;
+		if (pageRecords.length < limit) break;
+	}
+
+	return {
+		records,
+		source_records_scanned: sourceRecordsScanned,
+		pages_fetched: pagesFetched,
+		coverage_limit_reached: sourceRecordsScanned >= maxRecords && lastPageWasFull,
+		fetched_at: fetchedAt
+	};
+}
+
+function nppesTaxonomySearchTerm(taxonomyDescription: string): string {
+	return taxonomyDescription.split(',', 1)[0].trim();
+}
+
+function hasCanonicalTaxonomy(record: Record<string, unknown>, taxonomyDescription: string): boolean {
+	const target = taxonomyDescription.trim().toLowerCase();
+	return asRecordArray(record.taxonomies).some(
+		(taxonomy) => cleanString(taxonomy.desc)?.toLowerCase() === target
+	);
+}
+
+export async function normalizeNppesRecordsForAbundance(
+	records: Record<string, unknown>[],
+	fetchedAt: string
+): Promise<{ providers: HealthcareProvider[]; rejected_count: number }> {
+	const providers: HealthcareProvider[] = [];
+	let rejectedCount = 0;
+	for (const record of records) {
+		try {
+			providers.push(await normalizeNppesProvider(record, { fetchedAt }));
+		} catch {
+			rejectedCount += 1;
+		}
+	}
+	return { providers, rejected_count: rejectedCount };
+}
+
+export async function upsertHealthcareProviders(db: D1Database, providers: HealthcareProvider[]): Promise<number> {
+	if (providers.length === 0) return 0;
+	const statements = providers.map((provider) => {
+		const statement = buildHealthcareProviderUpsert(provider);
+		return db.prepare(statement.sql).bind(...statement.args);
+	});
+	await db.batch(statements);
+	return providers.length;
+}
+
+export async function readHealthcareProviderCoverage(
+	db: D1Database,
+	persona: NursingPersonaCoverageQuery,
+	options: { evaluatedAt?: string; limit?: number } = {}
+): Promise<{ report: HealthcareProviderCoverageReport; providers: HealthcareProvider[] }> {
+	const where = ['lower(primary_taxonomy_description) LIKE lower(?)'];
+	const args: unknown[] = [`%${persona.taxonomy_description.trim()}%`];
+	if (persona.state) {
+		where.push('upper(practice_state) = upper(?)');
+		args.push(persona.state);
+	}
+	if (persona.city) {
+		where.push('lower(practice_city) = lower(?)');
+		args.push(persona.city);
+	}
+	if (persona.postal_code) {
+		where.push('practice_postal_code LIKE ?');
+		args.push(`${persona.postal_code.slice(0, 5)}%`);
+	}
+	const limit = Math.min(Math.max(options.limit ?? NPPES_MAX_RECORDS, 1), NPPES_MAX_RECORDS);
+	const run = await db
+		.prepare(`
+			SELECT id, fetched_at, coverage_limit_reached
+			FROM abundance_healthcare_provider_ingestion_runs
+			WHERE persona_id = ?
+				AND lower(taxonomy_description) = lower(?)
+				AND (? IS NULL OR upper(state) = upper(?))
+				AND (? IS NULL OR lower(city) = lower(?))
+				AND (? IS NULL OR postal_code = ?)
+				AND status = 'succeeded'
+			ORDER BY fetched_at DESC
+			LIMIT 1
+		`)
+		.bind(
+			persona.id,
+			persona.taxonomy_description,
+			persona.state ?? null,
+			persona.state ?? null,
+			persona.city ?? null,
+			persona.city ?? null,
+			persona.postal_code ?? null,
+			persona.postal_code ?? null
+		)
+		.first<{ id?: string; fetched_at?: string; coverage_limit_reached?: number }>();
+	const result = run?.id
+		? await db
+			.prepare(`
+				SELECT provider.*
+				FROM abundance_healthcare_providers AS provider
+				INNER JOIN abundance_healthcare_provider_ingestion_memberships AS membership
+					ON membership.provider_npi = provider.npi
+				WHERE membership.run_id = ? AND ${where.join(' AND ')}
+				ORDER BY provider.last_updated_date DESC, provider.npi ASC
+				LIMIT ?
+			`)
+			.bind(run.id, ...args, limit)
+			.all<HealthcareProvider>()
+		: { results: [] as HealthcareProvider[] };
+	const providers = result.results ?? [];
+
+	return {
+		providers,
+		report: assessHealthcareProviderCoverage(providers, {
+			persona,
+			evaluatedAt: options.evaluatedAt,
+			source: {
+				latest_fetched_at: run?.fetched_at,
+				coverage_limit_reached: run?.coverage_limit_reached === 1
+			}
+		})
+	};
+}
+
+export async function createHealthcareProviderIngestionRun(
+	db: D1Database,
+	input: {
+		id: string;
+		persona: NursingPersonaCoverageQuery;
+		status: 'succeeded' | 'failed';
+		fetchedAt: string;
+		pagesFetched: number;
+		sourceResultCount: number;
+		normalizedCount: number;
+		rejectedCount: number;
+		excludedCount: number;
+		coverageLimitReached: boolean;
+		error?: string;
+		providerNpis?: string[];
+	}
+): Promise<void> {
+	const runStatement = db
+		.prepare(`
+			INSERT INTO abundance_healthcare_provider_ingestion_runs (
+				id, persona_id, persona_label, taxonomy_description, state, city, postal_code,
+				status, fetched_at, pages_fetched, source_result_count, normalized_count,
+				rejected_count, excluded_count, coverage_limit_reached, error, finished_at
+			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+		`)
+		.bind(
+			input.id,
+			input.persona.id,
+			input.persona.label,
+			input.persona.taxonomy_description,
+			input.persona.state ?? null,
+			input.persona.city ?? null,
+			input.persona.postal_code ?? null,
+			input.status,
+			input.fetchedAt,
+			input.pagesFetched,
+			input.sourceResultCount,
+			input.normalizedCount,
+			input.rejectedCount,
+			input.excludedCount,
+			input.coverageLimitReached ? 1 : 0,
+			input.error ?? null
+		);
+
+	const providerNpis = [...new Set(input.providerNpis ?? [])];
+	const statements = [runStatement];
+	if (providerNpis.length > 0) {
+		for (let index = 0; index < providerNpis.length; index += 100) {
+			const chunk = providerNpis.slice(index, index + 100);
+			const placeholders = chunk.map(() => '(?, ?)').join(', ');
+			statements.push(
+				db.prepare(`
+					INSERT INTO abundance_healthcare_provider_ingestion_memberships (run_id, provider_npi)
+					VALUES ${placeholders}
+					ON CONFLICT(run_id, provider_npi) DO NOTHING
+				`).bind(...chunk.flatMap((npi) => [input.id, npi]))
+			);
+		}
+	}
+	await db.batch(statements);
+}
+
+function normalizeMaxRecords(value: number | undefined): number {
+	if (value === undefined) return NPPES_MAX_RECORDS;
+	if (!Number.isInteger(value) || value < 1 || value > NPPES_MAX_RECORDS) {
+		throw new Error(`max_records must be an integer between 1 and ${NPPES_MAX_RECORDS}.`);
+	}
+	return value;
+}
+
+function parseJsonObject(value: string): Record<string, unknown> {
+	try {
+		const parsed = JSON.parse(value);
+		if (isRecord(parsed)) return parsed;
+	} catch {
+		// Fall through to the bounded error below.
+	}
+	throw new Error('NPPES returned an invalid JSON object.');
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function asRecordArray(value: unknown): Record<string, unknown>[] {
+	return Array.isArray(value) ? value.filter(isRecord) : [];
+}
+
+function cleanString(value: unknown): string | undefined {
+	return typeof value === 'string' && value.trim() ? value.trim() : undefined;
+}
