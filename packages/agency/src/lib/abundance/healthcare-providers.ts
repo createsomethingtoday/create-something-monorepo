@@ -291,77 +291,54 @@ export function filterHealthcareProvidersForPersona(
 }
 
 export function buildHealthcareProviderUpsert(provider: HealthcareProvider): SqlStatement {
+	return buildHealthcareProviderBulkUpsert([provider]);
+}
+
+export function buildHealthcareProviderBulkUpsert(providers: HealthcareProvider[]): SqlStatement {
+	if (providers.length < 1 || providers.length > 3) {
+		throw new Error('Healthcare provider bulk upserts require between one and three providers.');
+	}
+	const valueRows = providers.map(() => `(${HEALTHCARE_PROVIDER_COLUMNS.map(() => '?').join(', ')})`);
 	return {
 		sql: `
 			INSERT INTO abundance_healthcare_providers (
-				id, npi, enumeration_type, name, first_name, middle_name, last_name,
-				credential, status, enumeration_date, last_updated_date, certification_date,
-				primary_taxonomy_code, primary_taxonomy_description, license_state,
-				license_number, taxonomies_json, practice_address_1, practice_address_2,
-				practice_city, practice_state, practice_postal_code, practice_country,
-				practice_phone, endpoint_count, source_system, source_payload_hash,
-				source_fetched_at
-			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+				${HEALTHCARE_PROVIDER_COLUMNS.join(', ')}
+			) VALUES ${valueRows.join(', ')}
 			ON CONFLICT(npi) DO UPDATE SET
-				enumeration_type = excluded.enumeration_type,
-				name = excluded.name,
-				first_name = excluded.first_name,
-				middle_name = excluded.middle_name,
-				last_name = excluded.last_name,
-				credential = excluded.credential,
-				status = excluded.status,
-				enumeration_date = excluded.enumeration_date,
-				last_updated_date = excluded.last_updated_date,
-				certification_date = excluded.certification_date,
-				primary_taxonomy_code = excluded.primary_taxonomy_code,
-				primary_taxonomy_description = excluded.primary_taxonomy_description,
-				license_state = excluded.license_state,
-				license_number = excluded.license_number,
-				taxonomies_json = excluded.taxonomies_json,
-				practice_address_1 = excluded.practice_address_1,
-				practice_address_2 = excluded.practice_address_2,
-				practice_city = excluded.practice_city,
-				practice_state = excluded.practice_state,
-				practice_postal_code = excluded.practice_postal_code,
-				practice_country = excluded.practice_country,
-				practice_phone = excluded.practice_phone,
-				endpoint_count = excluded.endpoint_count,
-				source_system = excluded.source_system,
-				source_payload_hash = excluded.source_payload_hash,
-				source_fetched_at = excluded.source_fetched_at,
+				${HEALTHCARE_PROVIDER_UPDATE_COLUMNS.map((column) => `${column} = excluded.${column}`).join(',\n\t\t\t\t')},
 				updated_at = datetime('now')
 		`.trim(),
-		args: [
-			provider.id,
-			provider.npi,
-			provider.enumeration_type,
-			provider.name,
-			provider.first_name ?? null,
-			provider.middle_name ?? null,
-			provider.last_name ?? null,
-			provider.credential ?? null,
-			provider.status,
-			provider.enumeration_date ?? null,
-			provider.last_updated_date ?? null,
-			provider.certification_date ?? null,
-			provider.primary_taxonomy_code ?? null,
-			provider.primary_taxonomy_description ?? null,
-			provider.license_state ?? null,
-			provider.license_number ?? null,
-			provider.taxonomies_json,
-			provider.practice_address_1 ?? null,
-			provider.practice_address_2 ?? null,
-			provider.practice_city ?? null,
-			provider.practice_state ?? null,
-			provider.practice_postal_code ?? null,
-			provider.practice_country ?? null,
-			provider.practice_phone ?? null,
-			provider.endpoint_count,
-			provider.source_system,
-			provider.source_payload_hash,
-			provider.source_fetched_at
-		]
+		args: providers.flatMap(healthcareProviderArgs)
 	};
+}
+
+const HEALTHCARE_PROVIDER_COLUMNS = [
+	'id', 'npi', 'enumeration_type', 'name', 'first_name', 'middle_name', 'last_name',
+	'credential', 'status', 'enumeration_date', 'last_updated_date', 'certification_date',
+	'primary_taxonomy_code', 'primary_taxonomy_description', 'license_state', 'license_number',
+	'taxonomies_json', 'practice_address_1', 'practice_address_2', 'practice_city',
+	'practice_state', 'practice_postal_code', 'practice_country', 'practice_phone',
+	'endpoint_count', 'source_system', 'source_payload_hash', 'source_fetched_at'
+] as const;
+
+const HEALTHCARE_PROVIDER_UPDATE_COLUMNS = HEALTHCARE_PROVIDER_COLUMNS.filter(
+	(column) => column !== 'id' && column !== 'npi'
+);
+
+function healthcareProviderArgs(provider: HealthcareProvider): unknown[] {
+	return [
+		provider.id, provider.npi, provider.enumeration_type, provider.name,
+		provider.first_name ?? null, provider.middle_name ?? null, provider.last_name ?? null,
+		provider.credential ?? null, provider.status, provider.enumeration_date ?? null,
+		provider.last_updated_date ?? null, provider.certification_date ?? null,
+		provider.primary_taxonomy_code ?? null, provider.primary_taxonomy_description ?? null,
+		provider.license_state ?? null, provider.license_number ?? null, provider.taxonomies_json,
+		provider.practice_address_1 ?? null, provider.practice_address_2 ?? null,
+		provider.practice_city ?? null, provider.practice_state ?? null,
+		provider.practice_postal_code ?? null, provider.practice_country ?? null,
+		provider.practice_phone ?? null, provider.endpoint_count, provider.source_system,
+		provider.source_payload_hash, provider.source_fetched_at
+	];
 }
 
 function normalizeProviderStatus(value: unknown): HealthcareProviderStatus {

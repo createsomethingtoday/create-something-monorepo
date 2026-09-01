@@ -5,7 +5,7 @@ import type {
 } from '$lib/abundance/healthcare-providers';
 import {
 	assessHealthcareProviderCoverage,
-	buildHealthcareProviderUpsert,
+	buildHealthcareProviderBulkUpsert,
 	normalizeNppesProvider
 } from '$lib/abundance/healthcare-providers';
 
@@ -138,10 +138,11 @@ export async function normalizeNppesRecordsForAbundance(
 
 export async function upsertHealthcareProviders(db: D1Database, providers: HealthcareProvider[]): Promise<number> {
 	if (providers.length === 0) return 0;
-	const statements = providers.map((provider) => {
-		const statement = buildHealthcareProviderUpsert(provider);
-		return db.prepare(statement.sql).bind(...statement.args);
-	});
+	const statements = [];
+	for (let index = 0; index < providers.length; index += 3) {
+		const statement = buildHealthcareProviderBulkUpsert(providers.slice(index, index + 3));
+		statements.push(db.prepare(statement.sql).bind(...statement.args));
+	}
 	await db.batch(statements);
 	return providers.length;
 }
@@ -172,9 +173,9 @@ export async function readHealthcareProviderCoverage(
 			FROM abundance_healthcare_provider_ingestion_runs
 			WHERE persona_id = ?
 				AND lower(taxonomy_description) = lower(?)
-				AND (? IS NULL OR upper(state) = upper(?))
-				AND (? IS NULL OR lower(city) = lower(?))
-				AND (? IS NULL OR postal_code = ?)
+				AND coalesce(upper(state), '') = coalesce(upper(?), '')
+				AND coalesce(lower(city), '') = coalesce(lower(?), '')
+				AND coalesce(postal_code, '') = coalesce(?, '')
 				AND status = 'succeeded'
 			ORDER BY fetched_at DESC
 			LIMIT 1
@@ -183,10 +184,7 @@ export async function readHealthcareProviderCoverage(
 			persona.id,
 			persona.taxonomy_description,
 			persona.state ?? null,
-			persona.state ?? null,
 			persona.city ?? null,
-			persona.city ?? null,
-			persona.postal_code ?? null,
 			persona.postal_code ?? null
 		)
 		.first<{ id?: string; fetched_at?: string; coverage_limit_reached?: number }>();
@@ -266,8 +264,8 @@ export async function createHealthcareProviderIngestionRun(
 	const providerNpis = [...new Set(input.providerNpis ?? [])];
 	const statements = [runStatement];
 	if (providerNpis.length > 0) {
-		for (let index = 0; index < providerNpis.length; index += 100) {
-			const chunk = providerNpis.slice(index, index + 100);
+		for (let index = 0; index < providerNpis.length; index += 50) {
+			const chunk = providerNpis.slice(index, index + 50);
 			const placeholders = chunk.map(() => '(?, ?)').join(', ');
 			statements.push(
 				db.prepare(`

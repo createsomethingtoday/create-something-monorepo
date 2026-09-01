@@ -1,16 +1,21 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { DatabaseSync } from 'node:sqlite';
 
 import {
 	assessHealthcareProviderCoverage,
+	buildHealthcareProviderBulkUpsert,
 	buildHealthcareProviderUpsert,
 	filterHealthcareProvidersForPersona,
 	normalizeNppesProvider
 } from '../src/lib/abundance/healthcare-providers.ts';
 import {
 	buildNppesProviderUrl,
-	fetchNppesProviders
+	createHealthcareProviderIngestionRun,
+	fetchNppesProviders,
+	readHealthcareProviderCoverage,
+	upsertHealthcareProviders
 } from '../src/lib/server/abundance-healthcare-providers.ts';
 import { NPG_NURSING_PERSONA_COVERAGE } from '../src/lib/abundance/npg-healthcare-personas.ts';
 
@@ -148,6 +153,114 @@ test('provider upsert keeps NPI as the stable source boundary', async () => {
 
 	assert.match(statement.sql, /ON CONFLICT\(npi\)/);
 	assert.equal(statement.args[1], '1000000005');
+});
+
+test('provider upserts stay under D1 bind and query budgets at the public maximum', async () => {
+	const base = await fixtureProvider({ npi: '1000000005', lastUpdated: '2026-08-20' });
+	const providers = Array.from({ length: 1200 }, (_, index) => ({
+		...base,
+		id: `abprovider_${String(index).padStart(10, '0')}`,
+		npi: String(index).padStart(10, '0')
+	}));
+	const captured: Array<{ sql: string; args: unknown[] }> = [];
+	const db = {
+		prepare(sql: string) {
+			return {
+				bind(...args: unknown[]) {
+					const statement = { sql, args };
+					captured.push(statement);
+					return statement;
+				}
+			};
+		},
+		async batch(statements: unknown[]) { return statements; }
+	} as unknown as D1Database;
+
+	await upsertHealthcareProviders(db, providers);
+	assert.equal(captured.length, 400);
+	assert.ok(captured.every((statement) => statement.args.length <= 100));
+	assert.equal(buildHealthcareProviderBulkUpsert(providers.slice(0, 3)).args.length, 84);
+});
+
+test('bulk provider upsert executes against the healthcare coverage migration', async () => {
+	const providers = await Promise.all([
+		fixtureProvider({ npi: '1000000021', lastUpdated: '2026-08-20' }),
+		fixtureProvider({ npi: '1000000022', lastUpdated: '2025-08-20' }),
+		fixtureProvider({ npi: '1000000023', lastUpdated: '2024-08-20' })
+	]);
+	const migration = await readFile(
+		new URL('../migrations/0044_abundance_healthcare_provider_coverage.sql', import.meta.url),
+		'utf8'
+	);
+	const database = new DatabaseSync(':memory:');
+	try {
+		database.exec('PRAGMA foreign_keys = ON;');
+		database.exec(migration);
+		const upsert = buildHealthcareProviderBulkUpsert(providers);
+		database.prepare(upsert.sql).run(...upsert.args);
+		const result = database.prepare('SELECT count(*) AS count FROM abundance_healthcare_providers').get() as { count: number };
+		assert.equal(result.count, 3);
+	} finally {
+		database.close();
+	}
+});
+
+test('snapshot membership writes stay within the D1 100-bind ceiling', async () => {
+	const captured: Array<{ sql: string; args: unknown[] }> = [];
+	const db = {
+		prepare(sql: string) {
+			return {
+				bind(...args: unknown[]) {
+					const statement = { sql, args };
+					captured.push(statement);
+					return statement;
+				}
+			};
+		},
+		async batch(statements: unknown[]) { return statements; }
+	} as unknown as D1Database;
+
+	await createHealthcareProviderIngestionRun(db, {
+		id: 'run_maximum',
+		persona: NPG_NURSING_PERSONA_COVERAGE[1],
+		status: 'succeeded',
+		fetchedAt,
+		pagesFetched: 6,
+		sourceResultCount: 1200,
+		normalizedCount: 1200,
+		rejectedCount: 0,
+		excludedCount: 0,
+		coverageLimitReached: true,
+		providerNpis: Array.from({ length: 1200 }, (_, index) => String(index).padStart(10, '0'))
+	});
+
+	assert.equal(captured.length, 25);
+	assert.ok(captured.every((statement) => statement.args.length <= 100));
+});
+
+test('stored coverage reads require exact nullable geography', async () => {
+	let runQuery: { sql: string; args: unknown[] } | undefined;
+	const db = {
+		prepare(sql: string) {
+			return {
+				bind(...args: unknown[]) {
+					runQuery = { sql, args };
+					return { async first() { return null; } };
+				}
+			};
+		}
+	} as unknown as D1Database;
+
+	await readHealthcareProviderCoverage(db, NPG_NURSING_PERSONA_COVERAGE[1], { evaluatedAt: fetchedAt });
+	assert.match(runQuery?.sql ?? '', /coalesce\(upper\(state\), ''\) = coalesce\(upper\(\?\), ''\)/);
+	assert.match(runQuery?.sql ?? '', /coalesce\(lower\(city\), ''\) = coalesce\(lower\(\?\), ''\)/);
+	assert.deepEqual(runQuery?.args, [
+		'npg-family-np-missouri',
+		'Nurse Practitioner, Family',
+		'MO',
+		null,
+		null
+	]);
 });
 
 test('NPPES query builder requires a nursing taxonomy and geography', () => {
