@@ -430,8 +430,16 @@ test('NPPES fetch broadens source syntax but keeps only the requested canonical 
 				return jsonResponse({
 					result_count: 2,
 					results: [
-						{ number: '1111111111', taxonomies: [{ desc: 'Nurse Practitioner, Family', primary: true }] },
-						{ number: '2222222222', taxonomies: [{ desc: 'Nurse Practitioner, Acute Care', primary: true }] }
+						{
+							number: '1111111111',
+							taxonomies: [{ desc: 'Nurse Practitioner, Family', primary: true }],
+							addresses: [mockLocationAddress()]
+						},
+						{
+							number: '2222222222',
+							taxonomies: [{ desc: 'Nurse Practitioner, Acute Care', primary: true }],
+							addresses: [mockLocationAddress()]
+						}
 					]
 				});
 			}
@@ -480,6 +488,52 @@ test('canonical taxonomy filtering rejects records without a usable taxonomy des
 	);
 });
 
+test('NPPES fetch validates address shape before geography filtering', async () => {
+	await assert.rejects(
+		fetchNppesProviders(
+			{
+				taxonomy_description: 'Nurse Practitioner, Family',
+				city: 'Springfield',
+				state: 'MO'
+			},
+			{
+				fetchFn: async () => jsonResponse({
+					results: [{
+						number: '1111111111',
+						taxonomies: [{ desc: 'Nurse Practitioner, Family', primary: true }]
+					}]
+				})
+			}
+		),
+		(error: unknown) => {
+			assert.ok(error instanceof NppesProviderFetchError);
+			assert.match(error.message, /malformed address data/i);
+			return true;
+		}
+	);
+});
+
+test('NPPES fetch permits well-formed mailing-only records for normal exclusion', async () => {
+	const result = await fetchNppesProviders(
+		{
+			taxonomy_description: 'Nurse Practitioner, Family',
+			city: 'Springfield',
+			state: 'MO'
+		},
+		{
+			fetchFn: async () => jsonResponse({
+				results: [{
+					number: '1111111111',
+					taxonomies: [{ desc: 'Nurse Practitioner, Family', primary: true }],
+					addresses: [{ address_purpose: 'MAILING', city: 'SPRINGFIELD', state: 'MO' }]
+				}]
+			})
+		}
+	);
+
+	assert.equal(result.records.length, 1);
+});
+
 test('NPPES fetch paginates within the public API limit and reports truncation', async () => {
 	const requests: URL[] = [];
 	const fetchFn: typeof fetch = async (input) => {
@@ -491,7 +545,8 @@ test('NPPES fetch paginates within the public API limit and reports truncation',
 			result_count: limit,
 			results: Array.from({ length: limit }, (_, index) => ({
 				number: String(1000000000 + skip + index),
-				basic: { status: 'A' }
+				basic: { status: 'A' },
+				addresses: [mockLocationAddress()]
 			}))
 		});
 	};
@@ -521,7 +576,10 @@ test('NPPES fetch stops when a page is shorter than requested', async () => {
 		requestCount += 1;
 		return jsonResponse({
 			result_count: 2,
-			results: [{ number: '1000000001' }, { number: '1000000002' }]
+			results: [
+				{ number: '1000000001', addresses: [mockLocationAddress()] },
+				{ number: '1000000002', addresses: [mockLocationAddress()] }
+			]
 		});
 	};
 
@@ -592,7 +650,12 @@ test('NPPES fetch failures preserve completed-page progress', async () => {
 				fetchFn: async () => {
 					callCount += 1;
 					return callCount === 1
-						? jsonResponse({ results: Array.from({ length: 200 }, (_, index) => ({ number: String(index) })) })
+						? jsonResponse({
+							results: Array.from({ length: 200 }, (_, index) => ({
+								number: String(index),
+								addresses: [mockLocationAddress()]
+							}))
+						})
 						: new Response('upstream unavailable', { status: 503 });
 				}
 			}
@@ -617,7 +680,8 @@ test('failed refresh ledger retains partial NPPES progress', async () => {
 			? jsonResponse({
 				results: Array.from({ length: 200 }, (_, index) => ({
 					number: String(index),
-					taxonomies: [{ desc: 'Nurse Practitioner, Family', primary: true }]
+					taxonomies: [{ desc: 'Nurse Practitioner, Family', primary: true }],
+					addresses: [mockLocationAddress()]
 				}))
 			})
 			: new Response('upstream unavailable', { status: 503 });
@@ -713,7 +777,11 @@ test('refresh fails closed when every source record is rejected', async () => {
 	const originalFetch = globalThis.fetch;
 	const captured: Array<{ sql: string; args: unknown[] }> = [];
 	globalThis.fetch = (async () => jsonResponse({
-		results: [{ basic: { status: 'A' }, taxonomies: [{ desc: 'Nurse Practitioner, Family', primary: true }] }]
+		results: [{
+			basic: { status: 'A' },
+			taxonomies: [{ desc: 'Nurse Practitioner, Family', primary: true }],
+			addresses: [mockLocationAddress()]
+		}]
 	})) as typeof fetch;
 	const db = {
 		prepare(sql: string) {
@@ -762,6 +830,16 @@ test('healthcare provider migration preserves provenance and ingestion evidence'
 	assert.match(migration, /coverage_limit_reached INTEGER NOT NULL/);
 	assert.match(migration, /excluded_count INTEGER NOT NULL/);
 	assert.doesNotMatch(migration, /social_security|date_of_birth|personal_email/i);
+});
+
+test('standalone NPG report reconciles canonical-filter exclusions', async () => {
+	const script = await readFile(
+		new URL('../scripts/report-npg-healthcare-coverage.ts', import.meta.url),
+		'utf8'
+	);
+
+	assert.match(script, /fetched\.source_records_scanned - fetched\.records\.length/);
+	assert.match(script, /Every NPPES source record failed provider normalization/);
 });
 
 test('NPG persona coverage mirrors the client sourcing question without inventing roles', () => {
@@ -831,4 +909,8 @@ function jsonResponse(body: unknown, init?: ResponseInit): Response {
 		...init,
 		headers: { 'Content-Type': 'application/json' }
 	});
+}
+
+function mockLocationAddress() {
+	return { address_purpose: 'LOCATION', city: 'SPRINGFIELD', state: 'MO', postal_code: '65801' };
 }

@@ -116,6 +116,21 @@ export async function fetchNppesProviders(
 				record.taxonomies.every((taxonomy) => !isRecord(taxonomy) || !cleanString(taxonomy.desc)))) {
 				throw new Error('NPPES provider query returned malformed taxonomy data.');
 			}
+			if (pageRecords.some((record) => {
+				if (!Array.isArray(record.addresses) || record.addresses.length === 0) return true;
+				return record.addresses.some((address) => {
+					if (!isRecord(address)) return true;
+					const purpose = cleanString(address.address_purpose)?.toUpperCase();
+					if (purpose !== 'LOCATION' && purpose !== 'MAILING') return true;
+					if (purpose !== 'LOCATION') return false;
+					if (filters.state && !cleanString(address.state)) return true;
+					if (filters.city && !cleanString(address.city)) return true;
+					if (filters.postal_code && !cleanString(address.postal_code)) return true;
+					return false;
+				});
+			})) {
+				throw new Error('NPPES provider query returned malformed address data.');
+			}
 			pagesFetched += 1;
 			sourceRecordsScanned += pageRecords.length;
 			records.push(...(requiresCanonicalFilter

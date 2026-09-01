@@ -19,7 +19,12 @@ for (const persona of NPG_NURSING_PERSONA_COVERAGE) {
 		postal_code: persona.postal_code
 	}, { fetchedAt: evaluatedAt });
 	const normalized = await normalizeNppesRecordsForAbundance(fetched.records, evaluatedAt);
+	if (fetched.records.length > 0 && normalized.providers.length === 0) {
+		throw new Error(`Every NPPES source record failed provider normalization for ${persona.id}.`);
+	}
 	const providers = filterHealthcareProvidersForPersona(normalized.providers, persona);
+	const excludedCount = fetched.source_records_scanned - fetched.records.length +
+		normalized.providers.length - providers.length;
 	const report = assessHealthcareProviderCoverage(providers, {
 		persona,
 		evaluatedAt,
@@ -36,7 +41,7 @@ for (const persona of NPG_NURSING_PERSONA_COVERAGE) {
 			source_result_count: fetched.source_records_scanned,
 			normalized_count: providers.length,
 			rejected_count: normalized.rejected_count,
-			excluded_count: normalized.providers.length - providers.length
+			excluded_count: excludedCount
 		}
 	});
 }
