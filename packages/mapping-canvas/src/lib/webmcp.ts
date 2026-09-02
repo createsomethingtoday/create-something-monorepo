@@ -78,11 +78,14 @@ function affectedIds(operations: CanvasOperation[]) {
   return [...ids];
 }
 
-function transitionKind(operations: CanvasOperation[]): DrawTransitionKind {
+function transitionKind(before: CanvasDocument, operations: CanvasOperation[]): DrawTransitionKind {
   if (operations.some(({ type }) => type === 'convert')) return 'convert';
   if (operations.some(({ type }) => type === 'restore_conversion')) return 'restore';
   if (operations.some(({ type }) => type === 'remove_objects')) return 'remove';
-  if (operations.every(({ type }) => type === 'put_object')) return 'create';
+  if (operations.every(({ type }) => type === 'put_object')) {
+    const existingIds = new Set(before.objects.map(({ id }) => id));
+    return operations.some((operation) => operation.type === 'put_object' && existingIds.has(operation.object.id)) ? 'update' : 'create';
+  }
   return 'update';
 }
 
@@ -116,8 +119,9 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         if (!Array.isArray(operations) || !operations.length || operations.length > 100) throw new Error('operations must contain 1 to 100 Draw operations.');
         if (operations.some((operation) => operation && typeof operation === 'object' && (operation as { type?: unknown }).type === 'replace_objects') && input.confirmation !== REPLACE_CONFIRMATION) throw new Error(`Whole-canvas replacement requires confirmation exactly "${REPLACE_CONFIRMATION}".`);
         const typed = operations as CanvasOperation[];
+        const before = controller.getState().document;
         await controller.applyOperations(typed);
-        return receipt(controller, transitionKind(typed), affectedIds(typed));
+        return receipt(controller, transitionKind(before, typed), affectedIds(typed));
       }
     },
     {
