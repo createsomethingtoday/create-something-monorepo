@@ -50,11 +50,14 @@ async function nativePage(role, viewport, restoredQueue = false) {
     let document = structuredClone(blankDocument);
     let titleSubmission = 0;
     window.__nativeCalls = [];
+    window.__nativeConflictNextReplace = false;
+    window.__nativeConflictInFlight = false;
+    window.__nativeQueueFullNextReplace = false;
     window.__TAURI_INTERNALS__ = {
       invoke: async (command, args = {}) => {
         window.__nativeCalls.push({ command, args });
         if (command === 'draw_runtime_role') return role;
-        if (command === 'draw_host_status') return { sessionId: 'session-native', revision, document, pairedClients: [], transport: { endpoint: 'https://192.0.2.1:4242', certificateFingerprint: 'a'.repeat(64) } };
+        if (command === 'draw_host_status') return { sessionId: 'session-native', revision, document, pairedClients: [{ clientId: 'iphone-d5794285-1d79-4609-9d08-6a5adab8bd56', revokedAt: null }], transport: { endpoint: 'https://192.0.2.1:4242', certificateFingerprint: 'a'.repeat(64) } };
         if (command === 'draw_companion_status') return restoredQueue ? { status: 'paired', sessionId: 'session-native', revision, document, certificateFingerprint: 'abcdef0123456789'.repeat(4), queueDepth: 1, online: true } : { status: 'unpaired' };
         if (command === 'draw_pair_begin') return { code: '271828', expiresAt: '2099-01-01T00:00:00Z' };
         if (command === 'draw_discover_hosts') return [{ endpoint: 'https://draw-mac.local:4242', sessionId: 'session-native', protocolVersion: 'create-something.draw-pairing.v1', certificateFingerprint: 'abcdef0123456789'.repeat(4), certificateDer: 'fixture-certificate' }];
@@ -67,8 +70,21 @@ async function nativePage(role, viewport, restoredQueue = false) {
         if (command === 'draw_companion_refresh') return { status: 'paired', sessionId: 'session-native', revision, document, queueDepth: 0, online, certificateFingerprint: 'abcdef0123456789'.repeat(4) };
         if (command === 'draw_companion_forget') return { status: 'unpaired' };
         if (command === 'draw_host_apply_local' || command === 'draw_companion_submit') {
-          revision += 1;
           const operation = args.operation;
+          if (operation.type === 'replace_objects' && window.__nativeQueueFullNextReplace) {
+            window.__nativeQueueFullNextReplace = false;
+            return { status: 'queue_full', error: 'Offline queue is full', revision, document, queueDepth: 500, online: false };
+          }
+          if (operation.type === 'replace_objects' && window.__nativeConflictNextReplace) {
+            window.__nativeConflictInFlight = true;
+            await new Promise((resolve) => setTimeout(resolve, 100));
+            window.__nativeConflictNextReplace = false;
+            window.__nativeConflictInFlight = false;
+            const authoritative = { ...structuredClone(document), title: 'Conflict authoritative canvas' };
+            document = authoritative;
+            return { status: 'conflict', code: 'STALE_REVISION', revision, document: authoritative, queueDepth: 0, online };
+          }
+          revision += 1;
           if (operation.type === 'set_title') {
             titleSubmission += 1;
             await new Promise((resolve) => setTimeout(resolve, titleSubmission === 1 ? 50 : 200));
@@ -77,6 +93,7 @@ async function nativePage(role, viewport, restoredQueue = false) {
           if (operation.type === 'set_title') document = { ...document, title: operation.title };
           if (operation.type === 'set_viewport') document = { ...document, viewport: operation.viewport };
           if (operation.type === 'remove_objects') document = { ...document, objects: document.objects.filter((item) => !operation.ids.includes(item.id)) };
+          if (operation.type === 'replace_objects') document = { ...document, objects: operation.objects };
           if (operation.type === 'convert') {
             const sourceSnapshot = document.objects.filter((item) => operation.selectedIds.includes(item.id));
             const retained = document.objects.filter((item) => !operation.selectedIds.includes(item.id));
@@ -102,8 +119,10 @@ try {
   const host = await nativePage('host', { width: 1440, height: 900 });
   await host.page.getByRole('button', { name: 'Open device pairing' }).click();
   await host.page.getByText('271828').waitFor();
-  if (!(await host.page.getByText(/Both devices must be on the same local network/).isVisible())) throw new Error('Mac pairing guidance is unavailable');
+  await host.page.getByText(/Both devices must be on the same local network/).waitFor();
   if (!(await host.page.getByText(/Mac fingerprint aaaaaaaaaaaaaaaa/).isVisible())) throw new Error('Mac pairing fingerprint is unavailable beside the code');
+  const revoke = host.page.getByRole('button', { name: 'Revoke', exact: true });
+  if (await revoke.evaluate((button) => getComputedStyle(button).whiteSpace !== 'nowrap')) throw new Error('Mac pairing Revoke action can wrap inside the paired-device row');
   await host.page.screenshot({ path: `${outputRoot}mac-pairing.png`, fullPage: true });
   if (host.errors.length) throw new Error(`Mac native-shell errors: ${host.errors.join(' | ')}`);
   await host.context.close();
@@ -128,9 +147,10 @@ try {
   await page.getByLabel('Pairing code').fill('271828');
   await page.getByRole('button', { name: 'Pair securely' }).click();
   await page.getByText('Paired securely with Mac over local Wi-Fi').waitFor();
-  for (const action of ['Import', 'Reset']) {
+  for (const action of ['Import']) {
     if (await page.getByRole('button', { name: action, exact: true }).count()) throw new Error(`${action} must not be exposed on the companion`);
   }
+  if (!(await page.getByRole('button', { name: 'Reset', exact: true }).isVisible())) throw new Error('Companion reset control is unavailable');
 
   const title = page.getByLabel('Canvas title');
   await title.fill('A');
@@ -149,13 +169,60 @@ try {
   const box = await surface.boundingBox();
   if (!box) throw new Error('iPhone canvas surface unavailable');
   await page.getByRole('button', { name: /Note tool/ }).click();
-  await page.mouse.click(box.x + 110, box.y + 170);
+  const notesBeforePinch = await page.locator('g[aria-label^="Note:"]').count();
+  const putsBeforePinch = await page.evaluate(() => window.__nativeCalls.filter(({ command, args }) => command === 'draw_companion_submit' && args?.operation?.type === 'put_object').length);
+  await surface.dispatchEvent('pointerdown', { pointerId: 21, pointerType: 'touch', button: 0, clientX: box.x + 90, clientY: box.y + 180 });
+  await surface.dispatchEvent('pointerdown', { pointerId: 22, pointerType: 'touch', button: 0, clientX: box.x + 220, clientY: box.y + 180 });
+  await surface.dispatchEvent('pointermove', { pointerId: 22, pointerType: 'touch', button: 0, clientX: box.x + 300, clientY: box.y + 230 });
+  await surface.dispatchEvent('pointerup', { pointerId: 22, pointerType: 'touch', button: 0, clientX: box.x + 300, clientY: box.y + 230 });
+  await surface.dispatchEvent('pointerup', { pointerId: 21, pointerType: 'touch', button: 0, clientX: box.x + 90, clientY: box.y + 180 });
+  if (await page.getByText('100%').count()) throw new Error('Two-finger pinch did not change companion zoom');
+  if (await page.locator('g[aria-label^="Note:"]').count() !== notesBeforePinch) throw new Error('Pinch while the Note tool was active created a stray note');
+  const putsAfterPinch = await page.evaluate(() => window.__nativeCalls.filter(({ command, args }) => command === 'draw_companion_submit' && args?.operation?.type === 'put_object').length);
+  if (putsAfterPinch !== putsBeforePinch) throw new Error('Pinch while the Note tool was active submitted a stray object');
+  const zoomBeforeCancelledPinch = await page.locator('.history span').textContent();
+  const viewportSubmitsBeforeCancel = await page.evaluate(() => window.__nativeCalls.filter(({ command, args }) => command === 'draw_companion_submit' && args?.operation?.type === 'set_viewport').length);
+  await surface.dispatchEvent('pointerdown', { pointerId: 25, pointerType: 'touch', button: 0, clientX: box.x + 90, clientY: box.y + 180 });
+  await surface.dispatchEvent('pointerdown', { pointerId: 26, pointerType: 'touch', button: 0, clientX: box.x + 220, clientY: box.y + 180 });
+  await surface.dispatchEvent('pointermove', { pointerId: 26, pointerType: 'touch', button: 0, clientX: box.x + 340, clientY: box.y + 250 });
+  await surface.dispatchEvent('pointercancel', { pointerId: 26, pointerType: 'touch', button: 0, clientX: box.x + 340, clientY: box.y + 250 });
+  await surface.dispatchEvent('pointerup', { pointerId: 25, pointerType: 'touch', button: 0, clientX: box.x + 90, clientY: box.y + 180 });
+  if (await page.locator('.history span').textContent() !== zoomBeforeCancelledPinch) throw new Error('Cancelled pinch did not restore its starting viewport');
+  const viewportSubmitsAfterCancel = await page.evaluate(() => window.__nativeCalls.filter(({ command, args }) => command === 'draw_companion_submit' && args?.operation?.type === 'set_viewport').length);
+  if (viewportSubmitsAfterCancel !== viewportSubmitsBeforeCancel) throw new Error('Cancelled pinch submitted a tentative viewport');
+  await surface.dispatchEvent('pointerdown', { pointerId: 24, pointerType: 'touch', button: 0, clientX: box.x + 130, clientY: box.y + 190 });
+  await surface.dispatchEvent('pointercancel', { pointerId: 24, pointerType: 'touch', button: 0, clientX: box.x + 130, clientY: box.y + 190 });
+  if (await page.locator('g[aria-label^="Note:"]').count() !== notesBeforePinch) throw new Error('A cancelled touch created a stray note');
+  await surface.dispatchEvent('pointerdown', { pointerId: 23, pointerType: 'touch', button: 0, clientX: box.x + 110, clientY: box.y + 170 });
+  await surface.dispatchEvent('pointerup', { pointerId: 23, pointerType: 'touch', button: 0, clientX: box.x + 110, clientY: box.y + 170 });
   const editor = page.getByLabel('Edit note');
   await editor.fill('MCP tools use spaces');
   if (await editor.inputValue() !== 'MCP tools use spaces') throw new Error('Native note lost spaces');
+  await page.waitForTimeout(250);
+  const callsBeforeQueueFullReset = await page.evaluate(() => {
+    window.__nativeQueueFullNextReplace = true;
+    return window.__nativeCalls.filter(({ command }) => command === 'draw_companion_submit').length;
+  });
+  await page.getByRole('button', { name: 'Reset', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirm reset', exact: true }).click();
+  await page.waitForFunction((before) => window.__nativeCalls.filter(({ command }) => command === 'draw_companion_submit').length > before, callsBeforeQueueFullReset);
+  await page.waitForTimeout(100);
+  const callsAfterQueueFullReset = await page.evaluate(() => window.__nativeCalls.filter(({ command }) => command === 'draw_companion_submit').length);
+  if (callsAfterQueueFullReset !== callsBeforeQueueFullReset + 1) throw new Error('Queue-full history replacement did not abort its trailing operations');
+  if (await page.getByLabel('Edit note').inputValue() !== 'MCP tools use spaces') throw new Error('Queue-full history replacement did not restore the authoritative document');
 
   await page.getByRole('button', { name: /Select tool/ }).click();
   const note = page.locator('g[aria-label^="Note:"]');
+  const beforeObjectPinch = await note.boundingBox();
+  if (!beforeObjectPinch) throw new Error('Native note unavailable for object pinch');
+  const putsBeforeObjectPinch = await page.evaluate(() => window.__nativeCalls.filter(({ command, args }) => command === 'draw_companion_submit' && args?.operation?.type === 'put_object').length);
+  await note.dispatchEvent('pointerdown', { pointerId: 31, pointerType: 'touch', button: 0, clientX: beforeObjectPinch.x + 8, clientY: beforeObjectPinch.y + 8 });
+  await surface.dispatchEvent('pointerdown', { pointerId: 32, pointerType: 'touch', button: 0, clientX: box.x + 300, clientY: box.y + 300 });
+  await surface.dispatchEvent('pointermove', { pointerId: 32, pointerType: 'touch', button: 0, clientX: box.x + 350, clientY: box.y + 350 });
+  await surface.dispatchEvent('pointerup', { pointerId: 32, pointerType: 'touch', button: 0, clientX: box.x + 350, clientY: box.y + 350 });
+  await note.dispatchEvent('pointerup', { pointerId: 31, pointerType: 'touch', button: 0, clientX: beforeObjectPinch.x + 8, clientY: beforeObjectPinch.y + 8 });
+  const putsAfterObjectPinch = await page.evaluate(() => window.__nativeCalls.filter(({ command, args }) => command === 'draw_companion_submit' && args?.operation?.type === 'put_object').length);
+  if (putsAfterObjectPinch !== putsBeforeObjectPinch) throw new Error('Pinch beginning on a canvas object committed an object drag');
   const editorBeforePointer = await note.boundingBox();
   await editor.dispatchEvent('pointerdown', { pointerId: 11, button: 0, clientX: 130, clientY: 190 });
   const editorAfterPointer = await note.boundingBox();
@@ -168,7 +235,43 @@ try {
   await page.mouse.up();
   const after = await note.boundingBox();
   if (!after || after.x < before.x + 40 || after.y < before.y + 40) throw new Error('Touch movement did not reposition the note');
+  await page.getByRole('button', { name: 'Undo' }).click();
+  if (await page.getByRole('button', { name: 'Redo' }).isDisabled()) throw new Error('Companion undo did not preserve redo history');
+  await page.getByRole('button', { name: 'Redo' }).click();
 
+  await page.getByRole('button', { name: /Group tool/ }).click();
+  await surface.dispatchEvent('pointerdown', { pointerId: 40, pointerType: 'touch', button: 0, clientX: box.x + 45, clientY: box.y + 430 });
+  await surface.dispatchEvent('pointerup', { pointerId: 40, pointerType: 'touch', button: 0, clientX: box.x + 45, clientY: box.y + 430 });
+  await page.getByRole('button', { name: /Select tool/ }).click();
+  const group = page.getByRole('button', { name: /^Group:/ });
+  await group.click();
+  const resize = page.getByRole('button', { name: 'Resize group' });
+  const groupGeometry = (locator) => locator.locator('rect').first().evaluate((rect) => ({ width: rect.getAttribute('width'), height: rect.getAttribute('height') }));
+  const groupBeforeCancel = await groupGeometry(group);
+  const resizeBox = await resize.boundingBox();
+  if (!resizeBox) throw new Error('Native group resize affordance unavailable');
+  const replacementsBeforeCancel = await page.evaluate(() => window.__nativeCalls.filter(({ command, args }) => command === 'draw_companion_submit' && args?.operation?.type === 'replace_objects').length);
+  await resize.dispatchEvent('pointerdown', { pointerId: 41, pointerType: 'touch', button: 0, clientX: resizeBox.x + 5, clientY: resizeBox.y + 5 });
+  await surface.dispatchEvent('pointermove', { pointerId: 41, pointerType: 'touch', button: 0, clientX: resizeBox.x + 50, clientY: resizeBox.y + 50 });
+  await surface.dispatchEvent('pointercancel', { pointerId: 41, pointerType: 'touch', button: 0, clientX: resizeBox.x + 50, clientY: resizeBox.y + 50 });
+  const groupAfterCancel = await groupGeometry(group);
+  const replacementsAfterCancel = await page.evaluate(() => window.__nativeCalls.filter(({ command, args }) => command === 'draw_companion_submit' && args?.operation?.type === 'replace_objects').length);
+  if (groupAfterCancel.width !== groupBeforeCancel.width || groupAfterCancel.height !== groupBeforeCancel.height) throw new Error('Cancelled group resize changed group geometry');
+  if (replacementsAfterCancel !== replacementsBeforeCancel) throw new Error('Cancelled group resize submitted a replacement');
+
+  const resizeForPinch = await resize.boundingBox();
+  if (!resizeForPinch) throw new Error('Native group resize affordance disappeared');
+  await resize.dispatchEvent('pointerdown', { pointerId: 42, pointerType: 'touch', button: 0, clientX: resizeForPinch.x + 5, clientY: resizeForPinch.y + 5 });
+  await surface.dispatchEvent('pointermove', { pointerId: 42, pointerType: 'touch', button: 0, clientX: resizeForPinch.x + 45, clientY: resizeForPinch.y + 45 });
+  await resize.dispatchEvent('pointerdown', { pointerId: 43, pointerType: 'touch', button: 0, clientX: resizeForPinch.x + 7, clientY: resizeForPinch.y + 7 });
+  await surface.dispatchEvent('pointermove', { pointerId: 43, pointerType: 'touch', button: 0, clientX: box.x + 340, clientY: box.y + 390 });
+  await surface.dispatchEvent('pointerup', { pointerId: 43, pointerType: 'touch', button: 0, clientX: box.x + 340, clientY: box.y + 390 });
+  await resize.dispatchEvent('pointerup', { pointerId: 42, pointerType: 'touch', button: 0, clientX: resizeForPinch.x + 45, clientY: resizeForPinch.y + 45 });
+  const groupAfterPinch = await groupGeometry(group);
+  if (groupAfterPinch.width !== groupBeforeCancel.width || groupAfterPinch.height !== groupBeforeCancel.height) throw new Error('Pinch takeover committed an in-progress group resize');
+
+  await note.focus();
+  await note.press('Enter');
   await page.getByTestId('convert-menu').click();
   await page.getByTestId('convert-note').click();
   if (await page.locator('.provenance').count() !== 1) throw new Error('Native conversion did not preserve its source');
@@ -177,24 +280,56 @@ try {
   await page.getByRole('button', { name: 'Test offline' }).click();
   await page.getByRole('button', { name: 'Close pairing' }).click();
   await page.getByRole('button', { name: /Pen tool/ }).click();
-  await page.mouse.move(box.x + 50, box.y + 90);
-  await page.mouse.down();
-  await page.mouse.move(box.x + 180, box.y + 140, { steps: 6 });
-  await page.mouse.up();
-  await page.getByText(/action queued/).waitFor();
-  if (await page.locator('path[aria-label="Ink stroke"]').count() < 1) throw new Error('Queued optimistic ink disappeared before reconnect');
+  const currentBox = await surface.boundingBox();
+  if (!currentBox) throw new Error('iPhone canvas surface disappeared after pinch verification');
+  await surface.dispatchEvent('pointerdown', { pointerId: 60, pointerType: 'mouse', button: 0, clientX: currentBox.x + 50, clientY: currentBox.y + 90 });
+  await surface.dispatchEvent('pointermove', { pointerId: 60, pointerType: 'mouse', button: 0, clientX: currentBox.x + 180, clientY: currentBox.y + 140 });
+  await surface.dispatchEvent('pointerup', { pointerId: 60, pointerType: 'mouse', button: 0, clientX: currentBox.x + 180, clientY: currentBox.y + 140 });
+  await page.locator('path[aria-label="Ink stroke"]').last().waitFor();
+  const queuedInk = await page.evaluate(() => window.__nativeCalls.some(({ command, args }) => command === 'draw_companion_submit' && args?.operation?.type === 'put_object' && args.operation.object?.kind === 'stroke'));
+  if (!queuedInk) throw new Error('Offline ink did not reach the durable companion queue');
   await page.getByRole('button', { name: 'Open device pairing' }).click();
   await page.getByRole('button', { name: 'Reconnect' }).click();
   await page.getByLabel('Canvas title').waitFor();
   if (await page.getByLabel('Canvas title').inputValue() !== 'Mac authoritative reconciliation') throw new Error('Reconciliation did not install the Mac-authoritative document');
+  await page.getByRole('button', { name: 'Close pairing' }).click();
 
+  await page.getByRole('button', { name: /Note tool/ }).click();
+  await surface.dispatchEvent('pointerdown', { pointerId: 50, pointerType: 'touch', button: 0, clientX: box.x + 180, clientY: box.y + 260 });
+  await surface.dispatchEvent('pointerup', { pointerId: 50, pointerType: 'touch', button: 0, clientX: box.x + 180, clientY: box.y + 260 });
+  await page.waitForTimeout(1000);
+
+  const submitsBeforeConflict = await page.evaluate(() => window.__nativeCalls.filter(({ command }) => command === 'draw_companion_submit').length);
+  await page.evaluate(() => { window.__nativeConflictNextReplace = true; });
+  await page.getByRole('button', { name: 'Reset', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirm reset', exact: true }).click();
+  await page.waitForFunction(() => window.__nativeConflictNextReplace === false);
+  await page.waitForTimeout(500);
+  const submitsAfterConflict = await page.evaluate(() => window.__nativeCalls.filter(({ command }) => command === 'draw_companion_submit').length);
+  if (submitsAfterConflict !== submitsBeforeConflict + 1) throw new Error('Rejected replacement did not abort the remaining reset operation batch');
+
+  const replacementsBeforeSuccessfulReset = await page.evaluate(() => window.__nativeCalls.filter(({ command, args }) => command === 'draw_companion_submit' && args?.operation?.type === 'replace_objects').length);
+  await page.getByRole('button', { name: 'Reset', exact: true }).click();
+  const confirmReset = page.getByRole('button', { name: 'Confirm reset', exact: true });
+  if (!await confirmReset.evaluate((button) => button.classList.contains('reset-confirm'))) throw new Error('Companion reset confirmation is not visually distinguished as a risk action');
+  await confirmReset.click();
+  await page.waitForFunction((before) => window.__nativeCalls.filter(({ command, args }) => command === 'draw_companion_submit' && args?.operation?.type === 'replace_objects').length > before, replacementsBeforeSuccessfulReset);
+  await page.waitForTimeout(100);
+  if (await page.locator('[aria-label="Ink stroke"], [aria-label^="Note:"]').count()) throw new Error('Companion reset did not clear the authoritative canvas');
+  await page.waitForTimeout(250);
+  const emptyReplacementsBeforeReset = await page.evaluate(() => window.__nativeCalls.filter(({ command, args }) => command === 'draw_companion_submit' && args?.operation?.type === 'replace_objects').length);
+  await page.getByRole('button', { name: 'Reset', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirm reset', exact: true }).click();
+  await page.waitForFunction((before) => window.__nativeCalls.filter(({ command, args }) => command === 'draw_companion_submit' && args?.operation?.type === 'replace_objects').length > before, emptyReplacementsBeforeReset);
+
+  await page.getByRole('button', { name: 'Open device pairing' }).click();
   await page.getByRole('button', { name: 'Forget and re-pair' }).click();
   await page.getByRole('button', { name: 'Open device pairing' }).click();
   await page.getByText(/Confirm the Mac fingerprint/).waitFor();
 
   const calls = await page.evaluate(() => window.__nativeCalls);
   const operations = calls.filter(({ command }) => command === 'draw_companion_submit').map(({ args }) => args.operation.type);
-  for (const required of ['put_object', 'convert']) if (!operations.includes(required)) throw new Error(`iPhone native bridge omitted ${required}`);
+  for (const required of ['put_object', 'convert', 'replace_objects', 'set_viewport']) if (!operations.includes(required)) throw new Error(`iPhone native bridge omitted ${required}`);
   if (!calls.some(({ command, args }) => command === 'draw_companion_set_online' && args.online === false) || !calls.some(({ command, args }) => command === 'draw_companion_set_online' && args.online === true)) throw new Error('Offline/reconnect bridge was not exercised');
   if (!calls.some(({ command }) => command === 'draw_companion_forget')) throw new Error('Forget and re-pair bridge was not exercised');
   await page.screenshot({ path: `${outputRoot}iphone-paired.png`, fullPage: true });

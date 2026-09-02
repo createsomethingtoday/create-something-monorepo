@@ -97,7 +97,7 @@ fn is_safe_idempotent(document: &Value, operation: &CanvasOperation) -> bool {
                 object.get("kind").and_then(Value::as_str) == Some(expected_kind)
                     && object.get("sourceIds") == serde_json::to_value(selected_ids).ok().as_ref()
             }),
-        CanvasOperation::RestoreConversion { .. } => false,
+        CanvasOperation::RestoreConversion { .. } | CanvasOperation::ReplaceObjects { .. } => false,
     }
 }
 
@@ -128,8 +128,22 @@ fn operation_references_id(operation: &CanvasOperation, id: &str) -> bool {
             selected_ids.iter().any(|candidate| candidate == id)
         }
         CanvasOperation::RestoreConversion { id: restored } => restored == id,
-        CanvasOperation::SetTitle { .. } | CanvasOperation::SetViewport { .. } => false,
+        CanvasOperation::SetTitle { .. }
+        | CanvasOperation::SetViewport { .. }
+        | CanvasOperation::ReplaceObjects { .. } => false,
     }
+}
+
+fn discard_queue_with_replacement(queue: &mut VecDeque<OperationEnvelope>) -> usize {
+    if !queue
+        .iter()
+        .any(|envelope| matches!(envelope.operation, CanvasOperation::ReplaceObjects { .. }))
+    {
+        return 0;
+    }
+    let discarded = queue.len();
+    queue.clear();
+    discarded
 }
 
 pub(crate) struct DrawRuntime {
@@ -1035,6 +1049,18 @@ async fn flush_companion(runtime: &DrawRuntime) -> Result<Value, String> {
                 "revision": session.revision,
                 "document": optimistic_companion_document(session),
                 "code": "INVALID_OPERATION"
+            }));
+        }
+        let discarded_operations = discard_queue_with_replacement(&mut session.queue);
+        if discarded_operations > 0 {
+            persist_companion_state(&runtime.companion_state_path, session)?;
+            return Ok(json!({
+                "status": "conflict",
+                "queueDepth": session.queue.len(),
+                "revision": session.revision,
+                "document": session.document,
+                "code": "STALE_REVISION",
+                "discardedOperations": discarded_operations
             }));
         }
         let revision = session.revision;
@@ -1996,6 +2022,50 @@ mod tests {
         );
         drop(companion);
         let _ = fs::remove_dir_all(directory);
+    }
+
+    #[test]
+    fn stale_rebase_discards_the_whole_history_batch_around_a_replacement() {
+        let operation = |id: &str, operation| OperationEnvelope {
+            protocol_version: PROTOCOL_VERSION.into(),
+            document_version: DOCUMENT_VERSION.into(),
+            session_id: "session-test".into(),
+            operation_id: id.into(),
+            client_id: "iphone-test".into(),
+            base_revision: 4,
+            operation,
+            sent_at: "2026-08-29T16:00:00Z".into(),
+            capability: "fixture-secret".into(),
+        };
+        let mut queue = VecDeque::from([
+            operation(
+                "safe-before",
+                CanvasOperation::SetTitle {
+                    title: "Safe".into(),
+                },
+            ),
+            operation(
+                "unsafe-middle",
+                CanvasOperation::ReplaceObjects { objects: vec![] },
+            ),
+            operation(
+                "safe-after",
+                CanvasOperation::SetViewport {
+                    viewport: create_something_draw_pairing_protocol::Viewport {
+                        x: 1.0,
+                        y: 2.0,
+                        zoom: 1.0,
+                    },
+                },
+            ),
+            operation(
+                "unsafe-last",
+                CanvasOperation::ReplaceObjects { objects: vec![] },
+            ),
+        ]);
+
+        assert_eq!(discard_queue_with_replacement(&mut queue), 4);
+        assert!(queue.is_empty());
     }
 
     #[test]
