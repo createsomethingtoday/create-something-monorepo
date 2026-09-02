@@ -8,6 +8,7 @@ use std::{
 };
 
 use super::DiscoveredHost;
+use create_something_draw_pairing_protocol::PROTOCOL_VERSION;
 
 type DnsServiceRef = *mut c_void;
 type DnsServiceFlags = u32;
@@ -266,6 +267,9 @@ pub(super) fn discover(service_type: &str) -> Result<Vec<DiscoveredHost>, String
         ) else {
             continue;
         };
+        if protocol_version != PROTOCOL_VERSION {
+            continue;
+        }
         let part_count = properties
             .get("certparts")
             .and_then(|value| value.parse::<usize>().ok())
