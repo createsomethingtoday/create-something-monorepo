@@ -111,7 +111,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
     },
     {
       name: 'draw_apply_operations', title: 'Change Draw canvas',
-      description: `Atomically apply Draw document operations. Supported types: put_object, remove_objects, replace_objects, set_title, set_viewport, convert, restore_conversion. replace_objects requires confirmation exactly "${REPLACE_CONFIRMATION}". Changes share the visible canvas, history, persistence, and paired-device path.`,
+      description: `Atomically apply browser-local Draw document operations. Supported types: put_object, remove_objects, replace_objects, set_title, set_viewport, convert, restore_conversion. replace_objects requires confirmation exactly "${REPLACE_CONFIRMATION}". Changes share the visible browser canvas, history, and persistence. Native Mac and iPhone shells reject WebMCP mutations and use their dedicated pairing protocol.`,
       inputSchema: { type: 'object', required: ['operations'], additionalProperties: false, properties: { operations: { type: 'array', minItems: 1, maxItems: 100, items: operationSchema }, confirmation: { type: 'string' } } },
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
       execute: async (input) => {

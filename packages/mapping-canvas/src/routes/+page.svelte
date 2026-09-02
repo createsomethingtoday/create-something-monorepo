@@ -288,7 +288,7 @@
     selectedIds = [item.id]; drawing = false;
   }
   function trackTouchPointer(event: PointerEvent) {
-    if (event.pointerType !== 'touch' || event.button !== 0 || !ready) return;
+    if (event.pointerType !== 'touch' || event.button !== 0 || !ready || agentMutationActive) return;
     activeTouches.set(event.pointerId, { x: event.clientX, y: event.clientY });
     if (activeTouches.size !== 2) return;
     pendingTouchAction = null;
