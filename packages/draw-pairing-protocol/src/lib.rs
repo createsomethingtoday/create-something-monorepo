@@ -31,6 +31,9 @@ pub enum CanvasOperation {
     RemoveObjects {
         ids: Vec<String>,
     },
+    ReplaceObjects {
+        objects: Vec<Value>,
+    },
     SetTitle {
         title: String,
     },
@@ -437,6 +440,7 @@ fn validate_envelope(envelope: &OperationEnvelope) -> bool {
         CanvasOperation::RemoveObjects { ids } => {
             !ids.is_empty() && ids.iter().all(|id| non_empty(id))
         }
+        CanvasOperation::ReplaceObjects { objects } => valid_object_set(objects, &HashSet::new()),
         CanvasOperation::SetTitle { title } => non_empty(title) && title.len() <= 240,
         CanvasOperation::SetViewport { viewport } => {
             viewport.x.is_finite()
@@ -622,6 +626,9 @@ pub fn apply_canvas_operation(
             if objects.len() == before {
                 return None;
             }
+        }
+        CanvasOperation::ReplaceObjects { objects } => {
+            next["objects"] = Value::Array(objects.clone());
         }
         CanvasOperation::SetTitle { title } => {
             if next.get("title").and_then(Value::as_str) == Some(title) {

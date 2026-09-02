@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">CREATE SOMETHING Draw</title>
+  <desc id="desc">The CREATE SOMETHING double-ring mark crossed by an amber drawing stroke on black.</desc>
+  <rect width="1024" height="1024" rx="224" fill="#000000"/>
+  <g fill="none" stroke="#f7f4ee" stroke-width="72">
+    <circle cx="542" cy="482" r="300"/>
+    <circle cx="470" cy="482" r="226"/>
+  </g>
+  <path d="M202 746c122-118 220 82 330-44 96-110 164 52 290-94" fill="none" stroke="#fcaa2d" stroke-width="58" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M822 608l-55 8 42 38z" fill="#fcaa2d"/>
+</svg>

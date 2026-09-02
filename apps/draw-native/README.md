@@ -65,3 +65,26 @@ requires all of the following against the exact candidate bytes:
 Signing and notarization use an already-authorized Apple owner surface. Never
 commit certificates, provisioning profiles, app-specific passwords, or API
 keys. Retain the previous signed DMG and hash as the rollback artifact.
+
+The `Draw native release candidate` workflow owns the production candidate.
+Its first job produces unsigned development evidence. Its
+`draw-apple-production` job is restricted to protected branches, requires an
+operator review, and remains disabled unless the repository variable
+`DRAW_SIGNING_ENABLED` is exactly `true`.
+
+The protected environment requires these secrets:
+
+- `APPLE_CERTIFICATE` and `APPLE_CERTIFICATE_PASSWORD`: base64 Developer ID
+  Application `.p12` and its export password;
+- `IOS_CERTIFICATE` and `IOS_CERTIFICATE_PASSWORD`: base64 Apple Distribution
+  `.p12` and its export password;
+- `IOS_MOBILE_PROVISION`: base64 App Store Connect provisioning profile for
+  `agency.createsomething.draw`;
+- `APPLE_API_ISSUER`, `APPLE_API_KEY`, and `APPLE_API_PRIVATE_KEY`: App Store
+  Connect issuer, key ID, and base64 `.p8` private key.
+
+On an approved run, the workflow builds and verifies the Developer ID DMG,
+builds the App Store Connect IPA, uploads it to TestFlight, creates a draft
+GitHub release, and downloads the release assets again to prove their hashes
+match `production-release.json`. The release stays draft until two clean
+physical Mac/iPhone acceptance receipts are attached.

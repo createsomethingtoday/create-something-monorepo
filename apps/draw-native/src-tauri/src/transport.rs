@@ -15,13 +15,18 @@ use axum_server::tls_rustls::RustlsConfig;
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use create_something_draw_pairing_protocol::{OperationEnvelope, PROTOCOL_VERSION};
 use local_ip_address::local_ip;
-use mdns_sd::{ServiceDaemon, ServiceEvent, ServiceInfo};
+#[cfg(not(target_os = "ios"))]
+use mdns_sd::ServiceEvent;
+use mdns_sd::{ServiceDaemon, ServiceInfo};
 use rcgen::{generate_simple_self_signed, CertifiedKey};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 
 use crate::{apply_operation, authorized_snapshot, host_status, DrawRuntime};
+
+#[cfg(target_os = "ios")]
+mod ios_bonjour;
 
 const SERVICE_TYPE: &str = "_csdraw._tcp.local.";
 const CERT_FILE: &str = "pairing-cert.pem";
@@ -309,6 +314,12 @@ pub(crate) fn start(runtime: Arc<DrawRuntime>, home: &Path) -> Result<(), String
     Ok(())
 }
 
+#[cfg(target_os = "ios")]
+pub(crate) fn discover() -> Result<Vec<DiscoveredHost>, String> {
+    ios_bonjour::discover(SERVICE_TYPE)
+}
+
+#[cfg(not(target_os = "ios"))]
 pub(crate) fn discover() -> Result<Vec<DiscoveredHost>, String> {
     let daemon = ServiceDaemon::new().map_err(|error| error.to_string())?;
     let receiver = daemon
