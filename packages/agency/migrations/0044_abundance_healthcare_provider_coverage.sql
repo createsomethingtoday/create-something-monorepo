@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS abundance_healthcare_provider_ingestion_runs (
   pages_fetched INTEGER NOT NULL DEFAULT 0,
   source_result_count INTEGER NOT NULL DEFAULT 0,
   normalized_count INTEGER NOT NULL DEFAULT 0,
+  included_count INTEGER NOT NULL DEFAULT 0,
   rejected_count INTEGER NOT NULL DEFAULT 0,
   excluded_count INTEGER NOT NULL DEFAULT 0,
   coverage_limit_reached INTEGER NOT NULL DEFAULT 0

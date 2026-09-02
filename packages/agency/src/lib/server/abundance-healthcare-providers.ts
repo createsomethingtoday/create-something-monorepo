@@ -281,6 +281,7 @@ export async function createHealthcareProviderIngestionRun(
 		pagesFetched: number;
 		sourceResultCount: number;
 		normalizedCount: number;
+		includedCount: number;
 		rejectedCount: number;
 		excludedCount: number;
 		coverageLimitReached: boolean;
@@ -293,8 +294,8 @@ export async function createHealthcareProviderIngestionRun(
 			INSERT INTO abundance_healthcare_provider_ingestion_runs (
 				id, persona_id, persona_label, taxonomy_description, state, city, postal_code,
 				status, fetched_at, pages_fetched, source_result_count, normalized_count,
-				rejected_count, excluded_count, coverage_limit_reached, error, finished_at
-			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+				included_count, rejected_count, excluded_count, coverage_limit_reached, error, finished_at
+			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
 		`)
 		.bind(
 			input.id,
@@ -309,6 +310,7 @@ export async function createHealthcareProviderIngestionRun(
 			input.pagesFetched,
 			input.sourceResultCount,
 			input.normalizedCount,
+			input.includedCount,
 			input.rejectedCount,
 			input.excludedCount,
 			input.coverageLimitReached ? 1 : 0,

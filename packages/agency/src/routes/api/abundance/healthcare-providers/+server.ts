@@ -34,6 +34,7 @@ type CoverageResponse = {
 		pages_fetched: number;
 		source_result_count: number;
 		normalized_count: number;
+		included_count: number;
 		rejected_count: number;
 		excluded_count: number;
 		coverage_limit_reached: boolean;
@@ -73,6 +74,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		pagesFetched: 0,
 		sourceResultCount: 0,
 		normalizedCount: 0,
+		includedCount: 0,
 		rejectedCount: 0,
 		excludedCount: 0,
 		coverageLimitReached: false
@@ -113,6 +115,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		progress = {
 			...progress,
 			normalizedCount: normalized.providers.length,
+			includedCount: providers.length,
 			rejectedCount: normalized.rejected_count,
 			excludedCount
 		};
@@ -125,6 +128,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			pagesFetched: fetched.pages_fetched,
 			sourceResultCount: fetched.source_records_scanned,
 			normalizedCount: normalized.providers.length,
+			includedCount: providers.length,
 			rejectedCount: normalized.rejected_count,
 			excludedCount,
 			providers,
@@ -146,6 +150,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 				pages_fetched: fetched.pages_fetched,
 				source_result_count: fetched.source_records_scanned,
 				normalized_count: normalized.providers.length,
+				included_count: providers.length,
 				rejected_count: normalized.rejected_count,
 				excluded_count: excludedCount,
 				coverage_limit_reached: fetched.coverage_limit_reached

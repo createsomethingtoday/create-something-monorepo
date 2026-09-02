@@ -42,6 +42,7 @@ for (const persona of NPG_NURSING_PERSONA_COVERAGE) {
 			pages_fetched: fetched.pages_fetched,
 			source_result_count: fetched.source_records_scanned,
 			normalized_count: normalized.providers.length,
+			included_count: providers.length,
 			rejected_count: normalized.rejected_count,
 			excluded_count: excludedCount
 		}

@@ -368,6 +368,7 @@ test('snapshot membership writes stay within the D1 100-bind ceiling', async () 
 		pagesFetched: 6,
 		sourceResultCount: 1200,
 		normalizedCount: 1200,
+		includedCount: 1200,
 		rejectedCount: 0,
 		excludedCount: 0,
 		coverageLimitReached: true,
@@ -919,8 +920,13 @@ test('refresh ledger accounts for records removed by canonical taxonomy filterin
 		const runStatement = captured.find((statement) => /INSERT INTO abundance_healthcare_provider_ingestion_runs/.test(statement.sql));
 		assert.equal(runStatement?.args[10], 3);
 		assert.equal(runStatement?.args[11], 2);
-		assert.equal(runStatement?.args[12], 0);
-		assert.equal(runStatement?.args[13], 2);
+		assert.equal(runStatement?.args[12], 1);
+		assert.equal(runStatement?.args[13], 0);
+		assert.equal(runStatement?.args[14], 2);
+		assert.equal(
+			Number(runStatement?.args[12]) + Number(runStatement?.args[13]) + Number(runStatement?.args[14]),
+			Number(runStatement?.args[10])
+		);
 	} finally {
 		globalThis.fetch = originalFetch;
 	}
@@ -961,7 +967,7 @@ test('refresh fails closed when every source record is rejected', async () => {
 		assert.equal(response.status, 500);
 		const runStatement = captured.find((statement) => /INSERT INTO abundance_healthcare_provider_ingestion_runs/.test(statement.sql));
 		assert.equal(runStatement?.args[7], 'failed');
-		assert.equal(runStatement?.args[12], 1);
+		assert.equal(runStatement?.args[13], 1);
 	} finally {
 		globalThis.fetch = originalFetch;
 	}
@@ -981,6 +987,7 @@ test('healthcare provider migration preserves provenance and ingestion evidence'
 	assert.match(migration, /PRIMARY KEY \(run_id, provider_npi\)/);
 	assert.match(migration, /provider_snapshot_json TEXT NOT NULL/);
 	assert.match(migration, /coverage_limit_reached INTEGER NOT NULL/);
+	assert.match(migration, /included_count INTEGER NOT NULL/);
 	assert.match(migration, /excluded_count INTEGER NOT NULL/);
 	assert.doesNotMatch(migration, /social_security|date_of_birth|personal_email/i);
 });
