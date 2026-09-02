@@ -3,7 +3,7 @@ export interface NewsletterEdition {
   title: string;
   description: string;
   deliveryTarget: string;
-  webPublishAt: string;
+  webPublishAt: string | null;
   webStatus: 'draft' | 'published';
   hero: string | null;
   markdown: string;
@@ -68,6 +68,9 @@ export function parseNewsletterEdition(slug: string, raw: string): NewsletterEdi
   const { frontmatter, markdown: completeMarkdown } = splitFrontmatter(raw);
   const publicEndBefore = frontmatter.public_end_before;
   const markerIndex = publicEndBefore ? completeMarkdown.indexOf(publicEndBefore) : -1;
+  if (publicEndBefore && markerIndex === -1) {
+    throw new Error(`Newsletter ${slug} is missing public_end_before marker: ${publicEndBefore}`);
+  }
   let markdown = (
     markerIndex >= 0 ? completeMarkdown.slice(0, markerIndex) : completeMarkdown
   ).trim();
@@ -88,13 +91,17 @@ export function parseNewsletterEdition(slug: string, raw: string): NewsletterEdi
   if (webStatus !== 'draft' && webStatus !== 'published') {
     throw new Error(`Newsletter ${slug} has invalid web_status: ${webStatus}`);
   }
+  const webPublishAt = frontmatter.web_publish_at?.trim() || null;
+  if (webStatus === 'published' && !webPublishAt) {
+    throw new Error(`Newsletter ${slug} is missing web_publish_at`);
+  }
 
   return {
     slug,
     title,
     description: requireField(frontmatter, 'preview', slug),
     deliveryTarget: requireField(frontmatter, 'delivery_target', slug),
-    webPublishAt: requireField(frontmatter, 'web_publish_at', slug),
+    webPublishAt,
     webStatus,
     hero,
     markdown,
@@ -109,6 +116,7 @@ export function getPublishedNewsletterEditions(
   return editions
     .filter((edition) => {
       if (edition.webStatus !== 'published') return false;
+      if (!edition.webPublishAt) return false;
       const releaseTime = new Date(edition.webPublishAt).getTime();
       return Number.isFinite(releaseTime) && releaseTime <= now.getTime();
     })

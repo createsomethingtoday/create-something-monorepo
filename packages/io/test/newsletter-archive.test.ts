@@ -51,6 +51,30 @@ describe('newsletter archive publication contract', () => {
     expect(edition.readingMinutes).toBeGreaterThan(0);
   });
 
+  it('fails closed when a configured public cutoff marker is missing', () => {
+    expect(() =>
+      parseNewsletterEdition(
+        'renamed-cutoff',
+        SOURCE.replace('public_end_before: "## Email edition"', 'public_end_before: "## Missing"')
+      )
+    ).toThrow('missing public_end_before marker');
+  });
+
+  it('keeps unscheduled drafts out of the archive without rejecting the source', () => {
+    const draft = parseNewsletterEdition(
+      'next-draft',
+      SOURCE.replace('web_status: "published"', 'web_status: "draft"').replace(
+        'web_publish_at: "2026-09-02T09:00:00-05:00"\n',
+        ''
+      )
+    );
+
+    expect(draft.webPublishAt).toBeNull();
+    expect(getPublishedNewsletterEditions([draft], new Date('2026-09-03T14:00:00.000Z'))).toEqual(
+      []
+    );
+  });
+
   it('uses the Performance and Meridian editorial token contract', () => {
     const routeSources = [
       readFileSync(new URL('../src/routes/newsletters/+page.svelte', import.meta.url), 'utf8'),
