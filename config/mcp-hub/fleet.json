@@ -523,7 +523,7 @@
       "client": "npg",
       "tenant": "abundance",
       "url": "https://abundance-healthcare-mcp.createsomething.workers.dev/mcp",
-      "status": "pending",
+      "status": "deployed",
       "account": "create-something",
       "auth": {
         "type": "bearer",
@@ -532,7 +532,7 @@
       },
       "package_path": "packages/abundance-healthcare-mcp",
       "related_deployments": ["abundance-thenpgroup", "create-something-agency"],
-      "notes": "Read-only nationwide Family NP coverage and practitioner lookup over successful monthly-full plus weekly-incremental NPPES snapshots."
+      "notes": "Production deployed 2026-09-02 as Worker version 0caa86a9-c8dc-4f05-a9d1-7fba64ee601f. The NPG hub includes the service through the abundance-thenpgroup-review discovery pack and a live routed coverage call returned the complete current nationwide snapshot with outreach fail-closed."
     },
     "abundance-thenpgroup": {
       "type": "policy_os_hub",
