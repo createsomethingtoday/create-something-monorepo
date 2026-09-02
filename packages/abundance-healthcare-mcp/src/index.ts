@@ -319,8 +319,10 @@ export async function enrichProviderProfessionalContact(input: z.input<typeof pr
   };
   const run = await createAndAwaitExaRun(createBody, exaApiKey, options);
   const structured = exaStructuredOutputSchema.parse(run.output?.structured);
+  const sourceCitations = Array.isArray(run.output?.grounding) ? run.output.grounding : [];
+  const matchAllowsCandidate = structured.match_status === 'verified_match' || structured.match_status === 'plausible_match';
   const hasCandidate = Boolean(
-    structured.professional_profile_url || structured.professional_email || structured.professional_phone,
+    matchAllowsCandidate && (structured.professional_profile_url || structured.professional_email || structured.professional_phone),
   );
   const estimatedMaxCostUsd = 0.012 + (requestedEmail ? 0.02 : 0) + (requestedPhone ? 0.07 : 0);
   return {
@@ -330,15 +332,15 @@ export async function enrichProviderProfessionalContact(input: z.input<typeof pr
     match_status: structured.match_status,
     identity_reason: structured.identity_reason,
     professional_contact: compactObject({
-      profile_url: structured.professional_profile_url ?? undefined,
-      email: structured.professional_email ?? undefined,
-      phone: structured.professional_phone ?? undefined,
-      current_affiliation: structured.current_professional_affiliation ?? undefined,
+      profile_url: matchAllowsCandidate ? structured.professional_profile_url ?? undefined : undefined,
+      email: matchAllowsCandidate ? structured.professional_email ?? undefined : undefined,
+      phone: matchAllowsCandidate ? structured.professional_phone ?? undefined : undefined,
+      current_affiliation: matchAllowsCandidate ? structured.current_professional_affiliation ?? undefined : undefined,
     }),
     evidence_summary: structured.evidence_summary ?? undefined,
-    source_citations: Array.isArray(run.output?.grounding) ? run.output.grounding : [],
+    source_citations: sourceCitations,
     contact_route_status: hasCandidate ? 'unverified_enrichment_candidate' : 'no_contact_candidate_found',
-    identity_verification_status: structured.match_status === 'verified_match' ? 'source_grounded' : 'operator_review_required',
+    identity_verification_status: structured.match_status === 'verified_match' && hasGroundedSourceUrl(sourceCitations) ? 'source_grounded' : 'operator_review_required',
     outreach_authority_status: 'not_established',
     advertising_eligibility_status: 'not_established',
     recruiting_readiness_impact: 'none',
@@ -347,6 +349,14 @@ export async function enrichProviderProfessionalContact(input: z.input<typeof pr
     usage: run.usage,
     enrichment_limitation: 'Exa enrichment returns source-backed professional contact candidates, not verified ownership, current employment, availability, consent, advertising eligibility, or recruiting readiness. An operator must resolve identity and validate the route before any use.',
   };
+}
+
+function hasGroundedSourceUrl(value: unknown, depth = 0): boolean {
+  if (depth > 6) return false;
+  if (typeof value === 'string') return /^https:\/\//i.test(value);
+  if (Array.isArray(value)) return value.some((item) => hasGroundedSourceUrl(item, depth + 1));
+  if (!value || typeof value !== 'object') return false;
+  return Object.values(value).some((item) => hasGroundedSourceUrl(item, depth + 1));
 }
 
 const requiredKinds = ['license_or_privilege', 'discipline', 'exclusion', 'practice_or_employment', 'contact_route', 'outreach_authority', 'recruiter_approval'];
@@ -417,8 +427,17 @@ async function createAndAwaitExaRun(body: Record<string, unknown>, apiKey: strin
       throw new Error(`Exa Agent enrichment ended with status ${run.status}. No contact result was accepted.`);
     }
   }
-  await fetchFn(`${baseUrl}/agent/runs/${encodeURIComponent(run.id)}/cancel`, { method: 'POST', headers: { 'x-api-key': apiKey } }).catch(() => undefined);
-  throw new Error(`Exa Agent enrichment did not complete within ${timeoutMs}ms and was cancelled. Retry later or use the no-cost registry contact tool.`);
+  let cancellationConfirmed = false;
+  try {
+    const cancellation = await fetchFn(`${baseUrl}/agent/runs/${encodeURIComponent(run.id)}/cancel`, { method: 'POST', headers: { 'x-api-key': apiKey } });
+    cancellationConfirmed = cancellation.ok;
+  } catch {
+    cancellationConfirmed = false;
+  }
+  if (cancellationConfirmed) {
+    throw new Error(`Exa Agent enrichment did not complete within ${timeoutMs}ms and was cancelled. Retry later or use the no-cost registry contact tool.`);
+  }
+  throw new Error(`Exa Agent enrichment did not complete within ${timeoutMs}ms, and cancellation could not be confirmed. The paid run may still be active; do not retry until its Exa run status is reviewed.`);
 }
 
 async function readExaRun(response: Response, operation: 'create' | 'poll'): Promise<ExaAgentRun> {

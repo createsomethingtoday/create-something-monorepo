@@ -270,6 +270,32 @@ test('Exa enrichment cancels an unfinished run at the bounded timeout', async ()
   assert.equal(cancelCalled, true);
 });
 
+test('Exa timeout does not claim cancellation when cleanup fails', async () => {
+  const fetchFn: typeof fetch = async (input) => {
+    const url = String(input);
+    if (url.includes('/api/abundance/healthcare-providers/nationwide')) {
+      return Response.json({ success: true, data: {
+        report,
+        providers: [{ npi: '1265049910', name: 'Jane Test Provider', source_fetched_at: '2026-09-02T01:39:07.502Z' }],
+        readiness: [], total: 1, limit: 1, offset: 0,
+      } } satisfies HealthcareApiResponse);
+    }
+    if (url.endsWith('/cancel')) return new Response(null, { status: 503 });
+    return Response.json({ id: 'agent_run_cancel_failed', object: 'agent_run', status: url.endsWith('/agent/runs') ? 'queued' : 'running' });
+  };
+
+  await assert.rejects(
+    enrichProviderProfessionalContact(
+      { npi: '1265049910', purpose: 'recruiting_outreach', confirm_paid_enrichment: true },
+      {
+        agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn,
+        exaTimeoutMs: 1_000, exaPollIntervalMs: 100,
+      },
+    ),
+    /cancellation could not be confirmed/i,
+  );
+});
+
 test('Exa upstream failures do not reflect response bodies containing contact data', async () => {
   const fetchFn: typeof fetch = async (input) => {
     if (String(input).includes('/api/abundance/healthcare-providers/nationwide')) {
@@ -296,6 +322,73 @@ test('Exa upstream failures do not reflect response bodies containing contact da
       return true;
     },
   );
+});
+
+test('Exa no-match responses suppress contradictory contact fields', async () => {
+  const fetchFn: typeof fetch = async (input) => {
+    if (String(input).includes('/api/abundance/healthcare-providers/nationwide')) {
+      return Response.json({ success: true, data: {
+        report,
+        providers: [{ npi: '1265049910', name: 'Jane Test Provider', source_fetched_at: '2026-09-02T01:39:07.502Z' }],
+        readiness: [], total: 1, limit: 1, offset: 0,
+      } } satisfies HealthcareApiResponse);
+    }
+    return Response.json({
+      id: 'agent_run_no_match', object: 'agent_run', status: 'completed',
+      output: {
+        structured: {
+          match_status: 'no_match', identity_reason: 'The profile belongs to another person.',
+          professional_profile_url: 'https://example.test/wrong-person',
+          professional_email: 'wrong-person@example.test', professional_phone: '+1 555 0100',
+          current_professional_affiliation: null, evidence_summary: 'No exact match.',
+        },
+        grounding: [{ field: 'professional_profile_url', citations: [{ url: 'https://example.test/wrong-person' }] }],
+      },
+      usage: {}, costDollars: { total: 0.102 },
+    });
+  };
+
+  const result = await enrichProviderProfessionalContact(
+    { npi: '1265049910', purpose: 'recruiting_outreach', confirm_paid_enrichment: true },
+    { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn },
+  );
+
+  assert.deepEqual(result.professional_contact, {});
+  assert.equal(result.contact_route_status, 'no_contact_candidate_found');
+  assert.equal(result.identity_verification_status, 'operator_review_required');
+});
+
+test('Exa verified-match labels still require a usable source citation', async () => {
+  const fetchFn: typeof fetch = async (input) => {
+    if (String(input).includes('/api/abundance/healthcare-providers/nationwide')) {
+      return Response.json({ success: true, data: {
+        report,
+        providers: [{ npi: '1265049910', name: 'Jane Test Provider', source_fetched_at: '2026-09-02T01:39:07.502Z' }],
+        readiness: [], total: 1, limit: 1, offset: 0,
+      } } satisfies HealthcareApiResponse);
+    }
+    return Response.json({
+      id: 'agent_run_ungrounded', object: 'agent_run', status: 'completed',
+      output: {
+        structured: {
+          match_status: 'verified_match', identity_reason: 'The model reported a match.',
+          professional_profile_url: 'https://example.test/unproven-profile',
+          professional_email: null, professional_phone: null,
+          current_professional_affiliation: null, evidence_summary: 'No citation was emitted.',
+        },
+        grounding: [],
+      },
+      usage: {}, costDollars: { total: 0.012 },
+    });
+  };
+
+  const result = await enrichProviderProfessionalContact(
+    { npi: '1265049910', purpose: 'recruiting_outreach', confirm_paid_enrichment: true },
+    { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn },
+  );
+
+  assert.equal(result.match_status, 'verified_match');
+  assert.equal(result.identity_verification_status, 'operator_review_required');
 });
 
 test('candidate search is bounded, filterable, and omits bulk contact fields', async () => {
