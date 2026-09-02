@@ -117,7 +117,12 @@ export function isOperationEnvelope(value: unknown): value is OperationEnvelope 
   if (envelope.protocolVersion !== PAIRING_PROTOCOL_VERSION || envelope.documentVersion !== DOCUMENT_VERSION) return false;
   if (![envelope.sessionId, envelope.clientId, envelope.operationId, envelope.sentAt, envelope.capability].every((part) => typeof part === 'string' && part.length > 0)) return false;
   if (!Number.isSafeInteger(envelope.baseRevision) || (envelope.baseRevision ?? -1) < 0 || !envelope.operation || typeof envelope.operation !== 'object') return false;
-  const operation = envelope.operation;
+  return isCanvasOperation(envelope.operation);
+}
+
+export function isCanvasOperation(value: unknown): value is CanvasOperation {
+  if (!value || typeof value !== 'object') return false;
+  const operation = value as CanvasOperation;
   if (operation.type === 'put_object') return isCanvasObject(operation.object);
   if (operation.type === 'remove_objects') return Array.isArray(operation.ids) && operation.ids.length > 0 && operation.ids.every((id) => typeof id === 'string' && id.length > 0);
   if (operation.type === 'replace_objects') return Array.isArray(operation.objects) && operation.objects.every(isCanvasObject);
@@ -127,7 +132,7 @@ export function isOperationEnvelope(value: unknown): value is OperationEnvelope 
   return operation.type === 'restore_conversion' && typeof operation.id === 'string' && operation.id.length > 0;
 }
 
-function applyOperation(document: CanvasDocument, operation: CanvasOperation): CanvasDocument | undefined {
+export function applyCanvasOperation(document: CanvasDocument, operation: CanvasOperation): CanvasDocument | undefined {
   if (operation.type === 'put_object') {
     const objects = [...document.objects.filter(({ id }) => id !== operation.object.id), operation.object];
     const next = withObjects(document, objects);
@@ -144,6 +149,16 @@ function applyOperation(document: CanvasDocument, operation: CanvasOperation): C
   }
   const next = restoreConversion(document, operation.id);
   return next === document ? undefined : next;
+}
+
+export function applyCanvasOperations(document: CanvasDocument, values: unknown[]): CanvasDocument | undefined {
+  if (!values.length || !values.every(isCanvasOperation)) return undefined;
+  let next: CanvasDocument | undefined = document;
+  for (const operation of values) {
+    next = next && applyCanvasOperation(next, operation);
+    if (!next) return undefined;
+  }
+  return isDocument(next) ? next : undefined;
 }
 
 export function applyEnvelope(state: PairingHostState, value: unknown, options: ApplyOptions): OperationResult {
@@ -169,7 +184,7 @@ export function applyEnvelope(state: PairingHostState, value: unknown, options: 
   if (envelope.baseRevision < state.revision) return rejected(state, 'STALE_REVISION');
   if (envelope.baseRevision > state.revision) return rejected(state, 'FUTURE_REVISION');
 
-  const document = applyOperation(state.document, envelope.operation);
+  const document = applyCanvasOperation(state.document, envelope.operation);
   if (!document || !isDocument(document)) return rejected(state, 'INVALID_OPERATION');
   const receipt: AppliedOperation = {
     operationId: envelope.operationId,
