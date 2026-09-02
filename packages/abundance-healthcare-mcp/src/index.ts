@@ -408,36 +408,88 @@ async function createAndAwaitExaRun(body: Record<string, unknown>, apiKey: strin
   const fetchFn = options.fetchFn ?? fetch;
   const baseUrl = (options.exaAgentBaseUrl?.trim() || DEFAULT_EXA_AGENT_BASE_URL).replace(/\/$/, '');
   const headers = { 'Content-Type': 'application/json', 'x-api-key': apiKey };
-  let run = await readExaRun(await fetchFn(`${baseUrl}/agent/runs`, {
+  const timeoutMs = Math.min(Math.max(options.exaTimeoutMs ?? 45_000, 1_000), 55_000);
+  let run = await readExaRun(await fetchWithTimeout(fetchFn, `${baseUrl}/agent/runs`, {
     method: 'POST', headers, body: JSON.stringify(body),
-  }), 'create');
+  }, Math.min(timeoutMs, 15_000)), 'create');
   if (run.status === 'completed') return run;
   if (run.status === 'failed' || run.status === 'cancelled') {
     throw new Error(`Exa Agent enrichment ended with status ${run.status}. No contact result was accepted.`);
   }
-  const timeoutMs = Math.min(Math.max(options.exaTimeoutMs ?? 45_000, 1_000), 55_000);
   const pollIntervalMs = Math.min(Math.max(options.exaPollIntervalMs ?? 1_000, 100), 5_000);
   const waitFn = options.waitFn ?? ((milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds)));
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
-    await waitFn(pollIntervalMs);
-    run = await readExaRun(await fetchFn(`${baseUrl}/agent/runs/${encodeURIComponent(run.id)}`, { headers: { 'x-api-key': apiKey } }), 'poll');
+    await waitFn(Math.min(pollIntervalMs, Math.max(deadline - Date.now(), 0)));
+    const remainingMs = deadline - Date.now();
+    if (remainingMs <= 0) break;
+    try {
+      run = await readExaRun(await fetchWithTimeout(
+        fetchFn,
+        `${baseUrl}/agent/runs/${encodeURIComponent(run.id)}`,
+        { headers: { 'x-api-key': apiKey } },
+        Math.min(remainingMs, 10_000),
+      ), 'poll');
+    } catch {
+      const cancellationConfirmed = await cancelExaRun(fetchFn, baseUrl, run.id, apiKey);
+      if (cancellationConfirmed) {
+        throw new Error('Exa Agent polling failed and the paid run was cancelled. Retry later or use the no-cost registry contact tool.');
+      }
+      throw new Error('Exa Agent polling failed, and cancellation could not be confirmed. The paid run may still be active; do not retry until its Exa run status is reviewed.');
+    }
     if (run.status === 'completed') return run;
     if (run.status === 'failed' || run.status === 'cancelled') {
       throw new Error(`Exa Agent enrichment ended with status ${run.status}. No contact result was accepted.`);
     }
   }
-  let cancellationConfirmed = false;
-  try {
-    const cancellation = await fetchFn(`${baseUrl}/agent/runs/${encodeURIComponent(run.id)}/cancel`, { method: 'POST', headers: { 'x-api-key': apiKey } });
-    cancellationConfirmed = cancellation.ok;
-  } catch {
-    cancellationConfirmed = false;
-  }
+  const cancellationConfirmed = await cancelExaRun(fetchFn, baseUrl, run.id, apiKey);
   if (cancellationConfirmed) {
     throw new Error(`Exa Agent enrichment did not complete within ${timeoutMs}ms and was cancelled. Retry later or use the no-cost registry contact tool.`);
   }
   throw new Error(`Exa Agent enrichment did not complete within ${timeoutMs}ms, and cancellation could not be confirmed. The paid run may still be active; do not retry until its Exa run status is reviewed.`);
+}
+
+async function fetchWithTimeout(
+  fetchFn: typeof fetch,
+  input: string,
+  init: RequestInit,
+  timeoutMs: number,
+): Promise<Response> {
+  const controller = new AbortController();
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeout = setTimeout(() => {
+      controller.abort();
+      reject(new Error('Exa Agent request timed out.'));
+    }, Math.max(timeoutMs, 1));
+  });
+  try {
+    return await Promise.race([
+      fetchFn(input, { ...init, signal: controller.signal }),
+      timeoutPromise,
+    ]);
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
+}
+
+async function cancelExaRun(
+  fetchFn: typeof fetch,
+  baseUrl: string,
+  runId: string,
+  apiKey: string,
+): Promise<boolean> {
+  try {
+    const cancellation = await fetchWithTimeout(
+      fetchFn,
+      `${baseUrl}/agent/runs/${encodeURIComponent(runId)}/cancel`,
+      { method: 'POST', headers: { 'x-api-key': apiKey } },
+      5_000,
+    );
+    return cancellation.ok;
+  } catch {
+    return false;
+  }
 }
 
 async function readExaRun(response: Response, operation: 'create' | 'poll'): Promise<ExaAgentRun> {
@@ -466,7 +518,7 @@ export function registerAbundanceHealthcareTools(server: McpServer, options: Hea
   server.registerTool('search_coverage_candidates', { description: 'Search the nationwide Family NP snapshot by optional US state and city, or search an approved named local view. Results are bounded and omit practice phone and street address. Read-only.', inputSchema: searchCandidatesSchema, annotations: readOnlyAnnotations() }, async (input) => structuredJson(await searchCoverageCandidates(input, options)));
   server.registerTool('get_healthcare_practitioner', { description: 'Read one practitioner by NPI, including public NPPES practice fields and fail-closed evidence gates. Read-only.', inputSchema: practitionerSchema, annotations: readOnlyAnnotations() }, async (input) => structuredJson(await getHealthcarePractitioner(input, options)));
   server.registerTool('get_provider_contact_information', { description: 'Read public NPPES phone and address fields for one exact Family NP NPI. Classifies individual records as possibly personal or residential and never establishes consent, employment, advertising eligibility, or recruiting readiness. Read-only.', inputSchema: providerContactSchema, outputSchema: providerContactOutputSchema, annotations: readOnlyAnnotations() }, async (input) => structuredJson(await getProviderContactInformation(input, options)));
-  server.registerTool('enrich_provider_professional_contact', { description: 'Run one bounded paid Exa Agent lookup for an exact Family NP NPI when registry contact is missing or unsuitable. Requires explicit paid-enrichment confirmation, requests at most one email and one phone, returns citations, and never establishes consent, employment, advertising eligibility, or recruiting readiness.', inputSchema: providerEnrichmentSchema, outputSchema: providerEnrichmentOutputSchema, annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true } }, async (input) => structuredJson(await enrichProviderProfessionalContact(input, options)));
+  server.registerTool('enrich_provider_professional_contact', { description: 'Run one bounded paid Exa Agent lookup for an exact Family NP NPI when registry contact is missing or unsuitable. Requires explicit paid-enrichment confirmation, requests at most one email and one phone, returns citations, and never establishes consent, employment, advertising eligibility, or recruiting readiness.', inputSchema: providerEnrichmentSchema, outputSchema: providerEnrichmentOutputSchema, annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true } }, async (input) => structuredJson(await enrichProviderProfessionalContact(input, options)));
   server.registerTool('get_healthcare_coverage', { description: 'Read aggregate nationwide or derived-local coverage, snapshot provenance, and fail-closed recruiting state. Read-only.', inputSchema: z.object({ market_id: marketIdSchema }).strict(), annotations: readOnlyAnnotations() }, async (input) => structuredJson(await getHealthcareCoverage(input, options)));
 }
 function readOnlyAnnotations() { return { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false } as const; }

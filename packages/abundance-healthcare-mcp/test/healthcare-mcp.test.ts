@@ -296,6 +296,75 @@ test('Exa timeout does not claim cancellation when cleanup fails', async () => {
   );
 });
 
+test('Exa polling failures cancel the paid run before returning an error', async () => {
+  let cancelCalled = false;
+  const fetchFn: typeof fetch = async (input) => {
+    const url = String(input);
+    if (url.includes('/api/abundance/healthcare-providers/nationwide')) {
+      return Response.json({ success: true, data: {
+        report,
+        providers: [{ npi: '1265049910', name: 'Jane Test Provider', source_fetched_at: '2026-09-02T01:39:07.502Z' }],
+        readiness: [], total: 1, limit: 1, offset: 0,
+      } } satisfies HealthcareApiResponse);
+    }
+    if (url.endsWith('/cancel')) {
+      cancelCalled = true;
+      return new Response(null, { status: 204 });
+    }
+    if (url.endsWith('/agent/runs')) {
+      return Response.json({ id: 'agent_run_poll_failed', object: 'agent_run', status: 'queued' });
+    }
+    return new Response('unsafe upstream detail', { status: 503 });
+  };
+
+  await assert.rejects(
+    enrichProviderProfessionalContact(
+      { npi: '1265049910', purpose: 'recruiting_outreach', confirm_paid_enrichment: true },
+      { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn, exaPollIntervalMs: 100 },
+    ),
+    (error: unknown) => {
+      assert.match(String(error), /polling failed.*was cancelled/i);
+      assert.doesNotMatch(String(error), /unsafe upstream detail/i);
+      return true;
+    },
+  );
+  assert.equal(cancelCalled, true);
+});
+
+test('a stalled Exa poll is bounded by the overall deadline and cancelled', async () => {
+  let cancelCalled = false;
+  const fetchFn: typeof fetch = async (input) => {
+    const url = String(input);
+    if (url.includes('/api/abundance/healthcare-providers/nationwide')) {
+      return Response.json({ success: true, data: {
+        report,
+        providers: [{ npi: '1265049910', name: 'Jane Test Provider', source_fetched_at: '2026-09-02T01:39:07.502Z' }],
+        readiness: [], total: 1, limit: 1, offset: 0,
+      } } satisfies HealthcareApiResponse);
+    }
+    if (url.endsWith('/cancel')) {
+      cancelCalled = true;
+      return new Response(null, { status: 204 });
+    }
+    if (url.endsWith('/agent/runs')) {
+      return Response.json({ id: 'agent_run_stalled_poll', object: 'agent_run', status: 'queued' });
+    }
+    return await new Promise<Response>(() => undefined);
+  };
+
+  await assert.rejects(
+    enrichProviderProfessionalContact(
+      { npi: '1265049910', purpose: 'recruiting_outreach', confirm_paid_enrichment: true },
+      {
+        agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn,
+        exaTimeoutMs: 1_000, exaPollIntervalMs: 100,
+      },
+    ),
+    /polling failed.*was cancelled/i,
+  );
+  assert.equal(cancelCalled, true);
+});
+
 test('Exa upstream failures do not reflect response bodies containing contact data', async () => {
   const fetchFn: typeof fetch = async (input) => {
     if (String(input).includes('/api/abundance/healthcare-providers/nationwide')) {
@@ -600,7 +669,7 @@ test('MCP discovery advertises the registry-first contact tools and paid fallbac
   assert.equal(registryTool.annotations?.readOnlyHint, true);
   assert.equal(registryTool.annotations?.openWorldHint, false);
   assert.ok(enrichmentTool?.outputSchema);
-  assert.equal(enrichmentTool.annotations?.readOnlyHint, true);
+  assert.equal(enrichmentTool.annotations?.readOnlyHint, false);
   assert.equal(enrichmentTool.annotations?.idempotentHint, false);
   assert.equal(enrichmentTool.annotations?.openWorldHint, true);
   assert.deepEqual(
