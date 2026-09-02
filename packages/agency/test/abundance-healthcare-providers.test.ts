@@ -495,6 +495,9 @@ test('stored coverage promotes only providers with persisted current evidence', 
 	assert.equal(result.report.recruiting_pipeline.recruiter_ready_count, 1);
 	assert.equal(result.report.recruiting_pipeline.coverage_candidate_count, 0);
 	assert.equal(result.report.direct_outreach_status, 'ready');
+	assert.equal(result.readiness[0].npi, provider.npi);
+	assert.equal(result.readiness[0].stage, 'recruiter_ready');
+	assert.equal(result.readiness[0].gates.length, 7);
 });
 
 test('stored coverage reads require exact nullable geography', async () => {

@@ -12,10 +12,12 @@ import type { ApiResponse } from '$lib/types/abundance';
 import type {
 	HealthcareProvider,
 	HealthcareProviderCoverageReport,
+	HealthcareRecruitingReadiness,
 	NursingPersonaCoverageQuery
 } from '$lib/abundance/healthcare-providers';
 import {
 	assessHealthcareProviderCoverage,
+	assessHealthcareRecruitingReadiness,
 	filterHealthcareProvidersForPersona
 } from '$lib/abundance/healthcare-providers';
 import {
@@ -31,6 +33,7 @@ import {
 type CoverageResponse = {
 	report: HealthcareProviderCoverageReport;
 	providers?: HealthcareProvider[];
+	readiness?: HealthcareRecruitingReadiness[];
 	ingestion?: {
 		pages_fetched: number;
 		source_result_count: number;
@@ -57,7 +60,9 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 			success: true,
 			data: {
 				report: result.report,
-				...(url.searchParams.get('include_records') === 'true' ? { providers: result.providers } : {})
+				...(url.searchParams.get('include_records') === 'true'
+					? { providers: result.providers, readiness: result.readiness }
+					: {})
 			}
 		} as ApiResponse<CoverageResponse>);
 	} catch (err) {
@@ -161,7 +166,14 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 				excluded_count: excludedCount,
 				coverage_limit_reached: fetched.coverage_limit_reached
 			},
-			...(body.include_records === true ? { providers } : {})
+			...(body.include_records === true ? {
+				providers,
+				readiness: providers.map((provider) => assessHealthcareRecruitingReadiness(
+					provider.npi,
+					recruitingEvidence,
+					{ evaluatedAt: report.evaluated_at }
+				))
+			} : {})
 		};
 		return json({ success: true, data } as ApiResponse<CoverageResponse>, { status: 201 });
 	} catch (err) {
