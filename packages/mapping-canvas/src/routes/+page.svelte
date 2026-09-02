@@ -70,6 +70,7 @@
   let saveTimer: ReturnType<typeof setTimeout> | undefined;
   let mirrorTimer: ReturnType<typeof setInterval> | undefined;
   let nativeTail: Promise<void> = Promise.resolve();
+  let agentMutationTail: Promise<void> = Promise.resolve();
   let nativeOptimisticVersion = 0;
   let nativeConflictEpoch = 0;
   let agentTransition = $state<{ id: string; kind: DrawTransitionKind; affectedIds: string[] } | null>(null);
@@ -90,12 +91,12 @@
     void initializeSession();
     const webMcp = registerDrawWebMcpTools(createDrawWebMcpTools({
       getState: agentState,
-      applyOperations: applyAgentOperations,
+      applyOperations: (operations) => queueAgentMutation(() => applyAgentOperations(operations)),
       select: (ids) => { const existing = new Set(document.objects.map(({ id }) => id)); selectedIds = ids.filter((id) => existing.has(id)); status = selectedIds.length ? `Agent focused ${selectedIds.length} object${selectedIds.length === 1 ? '' : 's'}` : 'Agent cleared selection'; },
       setTool: (next) => { tool = next; status = `Agent selected ${next} tool`; },
-      undo: () => browserLocalHistory('undo'),
-      redo: () => browserLocalHistory('redo'),
-      reset: resetCanvasFromAgent,
+      undo: () => queueAgentMutation(() => browserLocalHistory('undo')),
+      redo: () => queueAgentMutation(() => browserLocalHistory('redo')),
+      reset: () => queueAgentMutation(resetCanvasFromAgent),
       animate: showAgentTransition
     }));
     if (webMcp.registered) status = `${webMcp.registered} agent tools ready · loading local canvas…`;
@@ -106,6 +107,12 @@
     if (import.meta.env.PROD) navigator.serviceWorker?.register('/service-worker.js').catch(() => undefined);
     return () => { surfaceObserver.disconnect(); clearInterval(mirrorTimer); clearTimeout(agentTransitionTimer); window.removeEventListener('resize', resize); window.removeEventListener('keydown', keydown); };
   });
+
+  function queueAgentMutation<T>(action: () => Promise<T> | T): Promise<T> {
+    const queued = agentMutationTail.then(action);
+    agentMutationTail = queued.then(() => undefined, () => undefined);
+    return queued;
+  }
 
   function agentState() {
     if (!ready) throw new Error('Draw is still loading. Try the tool again.');

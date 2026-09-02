@@ -34,9 +34,29 @@ export type DrawWebMcpTool = {
   execute: (input: Record<string, unknown>) => Promise<unknown>;
 };
 
-const objectSchema = { type: 'object', additionalProperties: true };
 const emptySchema = { type: 'object', properties: {}, additionalProperties: false };
 const toolNames: Tool[] = ['select', 'pen', 'eraser', 'rectangle', 'ellipse', 'arrow', 'note', 'connector', 'group', 'pan'];
+const pointSchema = { type: 'object', required: ['x', 'y'], additionalProperties: false, properties: { x: { type: 'number' }, y: { type: 'number' } } };
+const canvasObjectSchema = {
+  oneOf: [
+    { type: 'object', required: ['id', 'kind', 'createdAt', 'points', 'color', 'width'], properties: { id: { type: 'string' }, kind: { const: 'stroke' }, createdAt: { type: 'string' }, points: { type: 'array', minItems: 2, items: pointSchema }, color: { type: 'string' }, width: { type: 'number', exclusiveMinimum: 0 } } },
+    ...(['rectangle', 'ellipse', 'arrow'] as const).map((kind) => ({ type: 'object', required: ['id', 'kind', 'createdAt', 'from', 'to', 'color'], properties: { id: { type: 'string' }, kind: { const: kind }, createdAt: { type: 'string' }, from: pointSchema, to: pointSchema, color: { type: 'string' } } })),
+    { type: 'object', required: ['id', 'kind', 'createdAt', 'x', 'y', 'width', 'height', 'text'], properties: { id: { type: 'string' }, kind: { const: 'note' }, createdAt: { type: 'string' }, x: { type: 'number' }, y: { type: 'number' }, width: { type: 'number', exclusiveMinimum: 0 }, height: { type: 'number', exclusiveMinimum: 0 }, text: { type: 'string' } } },
+    { type: 'object', required: ['id', 'kind', 'createdAt', 'fromId', 'toId', 'label'], properties: { id: { type: 'string' }, kind: { const: 'connector' }, createdAt: { type: 'string' }, fromId: { type: 'string' }, toId: { type: 'string' }, label: { type: 'string' } } },
+    { type: 'object', required: ['id', 'kind', 'createdAt', 'x', 'y', 'width', 'height', 'label', 'childIds'], properties: { id: { type: 'string' }, kind: { const: 'group' }, createdAt: { type: 'string' }, x: { type: 'number' }, y: { type: 'number' }, width: { type: 'number', exclusiveMinimum: 0 }, height: { type: 'number', exclusiveMinimum: 0 }, label: { type: 'string' }, childIds: { type: 'array', items: { type: 'string' } } } }
+  ]
+};
+const operationSchema = {
+  oneOf: [
+    { type: 'object', required: ['type', 'object'], additionalProperties: false, properties: { type: { const: 'put_object' }, object: canvasObjectSchema } },
+    { type: 'object', required: ['type', 'ids'], additionalProperties: false, properties: { type: { const: 'remove_objects' }, ids: { type: 'array', minItems: 1, items: { type: 'string' } } } },
+    { type: 'object', required: ['type', 'objects'], additionalProperties: false, properties: { type: { const: 'replace_objects' }, objects: { type: 'array', items: canvasObjectSchema } } },
+    { type: 'object', required: ['type', 'title'], additionalProperties: false, properties: { type: { const: 'set_title' }, title: { type: 'string', minLength: 1, maxLength: 240 } } },
+    { type: 'object', required: ['type', 'viewport'], additionalProperties: false, properties: { type: { const: 'set_viewport' }, viewport: { type: 'object', required: ['x', 'y', 'zoom'], additionalProperties: false, properties: { x: { type: 'number' }, y: { type: 'number' }, zoom: { type: 'number', minimum: 0.25, maximum: 3 } } } } },
+    { type: 'object', required: ['type', 'selectedIds', 'target', 'resultId', 'createdAt'], additionalProperties: false, properties: { type: { const: 'convert' }, selectedIds: { type: 'array', minItems: 1, items: { type: 'string' } }, target: { type: 'string', enum: ['note', 'connector', 'group'] }, resultId: { type: 'string' }, createdAt: { type: 'string' } } },
+    { type: 'object', required: ['type', 'id'], additionalProperties: false, properties: { type: { const: 'restore_conversion' }, id: { type: 'string' } } }
+  ]
+};
 
 function affectedIds(operations: CanvasOperation[]) {
   const ids = new Set<string>();
@@ -81,7 +101,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
     {
       name: 'draw_apply_operations', title: 'Change Draw canvas',
       description: `Atomically apply Draw document operations. Supported types: put_object, remove_objects, replace_objects, set_title, set_viewport, convert, restore_conversion. replace_objects requires confirmation exactly "${REPLACE_CONFIRMATION}". Changes share the visible canvas, history, persistence, and paired-device path.`,
-      inputSchema: { type: 'object', required: ['operations'], additionalProperties: false, properties: { operations: { type: 'array', minItems: 1, maxItems: 100, items: objectSchema }, confirmation: { type: 'string' } } },
+      inputSchema: { type: 'object', required: ['operations'], additionalProperties: false, properties: { operations: { type: 'array', minItems: 1, maxItems: 100, items: operationSchema }, confirmation: { type: 'string' } } },
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
       execute: async (input) => {
         const operations = input.operations;
