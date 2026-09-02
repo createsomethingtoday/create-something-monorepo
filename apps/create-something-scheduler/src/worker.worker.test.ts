@@ -29,9 +29,7 @@ describe('scheduler Worker transport', () => {
       info: { title: 'CREATE SOMETHING Scheduler API' }
     });
 
-    const link = await SELF.fetch(
-      'https://scheduler.local/api/v1/links/createsomething/together'
-    );
+    const link = await SELF.fetch('https://scheduler.local/api/v1/links/createsomething/together');
     expect(await link.json()).toMatchObject({
       slug: 'createsomething/together',
       durationMinutes: 30,
@@ -65,11 +63,36 @@ describe('scheduler Worker transport', () => {
     expect(integrationPageHtml).toContain('Fit One Integration');
     expect(integrationPageHtml).toContain('Compiler Integration / V1');
 
+    const foundationPage = await SELF.fetch(
+      'https://scheduler.local/createsomething/together?intent=agent-foundation'
+    );
+    const foundationPageHtml = await foundationPage.text();
+    expect(foundationPageHtml).toContain('Agent Foundation Fit Call | CREATE SOMETHING');
+    expect(foundationPageHtml).toContain('Fit One Agent Foundation');
+    expect(foundationPageHtml).toContain('Agent Foundation / V1');
+    expect(foundationPageHtml).toContain('const offerIntent="agent-foundation";');
+
+    const legacyPage = await SELF.fetch(
+      'https://create-something-scheduler.createsomething.workers.dev/createsomething/together?intent=compiler-integration',
+      { redirect: 'manual' }
+    );
+    expect(legacyPage.status).toBe(308);
+    expect(legacyPage.headers.get('location')).toBe(
+      'https://schedule.createsomething.agency/createsomething/together?intent=compiler-integration'
+    );
+
+    const legacyHealth = await SELF.fetch(
+      'https://create-something-scheduler.createsomething.workers.dev/health'
+    );
+    expect(legacyHealth.status).toBe(200);
+
     const room = await SELF.fetch('https://scheduler.local/rooms/room_controlled');
     expect(room.status).toBe(200);
     expect(room.headers.get('cache-control')).toBe('no-store');
     expect(room.headers.get('permissions-policy')).toContain('display-capture=(self)');
-    expect(room.headers.get('content-security-policy')).toContain('https://*.realtime.cloudflare.com');
+    expect(room.headers.get('content-security-policy')).toContain(
+      'https://*.realtime.cloudflare.com'
+    );
     expect(room.headers.get('content-security-policy')).toContain('https://*.dyte.in');
     expect(room.headers.get('content-security-policy')).toContain('wss://*.dyte.io');
     expect(room.headers.get('content-security-policy')).toContain('https://api.fontshare.com');
@@ -154,12 +177,14 @@ describe('scheduler Worker transport', () => {
     vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
       expect(String(input)).toContain('/calendar/v3/users/me/calendarList');
       return Response.json({
-        items: [{
-          id: 'micah@createsomething.io',
-          selected: true,
-          accessRole: 'owner',
-          conferenceProperties: { allowedConferenceSolutionTypes: ['hangoutsMeet'] }
-        }]
+        items: [
+          {
+            id: 'micah@createsomething.io',
+            selected: true,
+            accessRole: 'owner',
+            conferenceProperties: { allowedConferenceSolutionTypes: ['hangoutsMeet'] }
+          }
+        ]
       });
     });
 
@@ -209,7 +234,8 @@ describe('scheduler Worker transport', () => {
       });
     });
 
-    const endpoint = 'https://scheduler.local/api/v1/operator/conflict-projections/webflow-google-calendar';
+    const endpoint =
+      'https://scheduler.local/api/v1/operator/conflict-projections/webflow-google-calendar';
     expect((await SELF.fetch(endpoint, { method: 'PUT' })).status).toBe(403);
 
     const rejectedFutureProjection = await SELF.fetch(endpoint, {
@@ -245,10 +271,12 @@ describe('scheduler Worker transport', () => {
         rangeEnd: '2037-08-20T00:00:00Z',
         observedAt: observedAt.toISOString(),
         expiresAt: expiresAt.toISOString(),
-        intervals: [{
-          start: '2037-07-14T18:00:00Z',
-          end: '2037-07-14T18:30:00Z'
-        }],
+        intervals: [
+          {
+            start: '2037-07-14T18:00:00Z',
+            end: '2037-07-14T18:30:00Z'
+          }
+        ],
         explicitIntent: true
       })
     });
@@ -263,7 +291,7 @@ describe('scheduler Worker transport', () => {
       'https://scheduler.local/api/v1/availability?from=2037-07-14T00%3A00%3A00Z&to=2037-07-15T00%3A00%3A00Z&timezone=America%2FChicago'
     );
     expect(availability.status).toBe(200);
-    const result = await availability.json() as {
+    const result = (await availability.json()) as {
       status: string;
       slots: Array<{ start: string; end: string }>;
     };
@@ -339,9 +367,13 @@ describe('scheduler Worker transport', () => {
       overrides: [{ overrideId: 'worker-wednesday-2037-07-15' }]
     });
 
-    const availabilityUrl = 'https://scheduler.local/api/v1/availability?from=2037-07-15T00%3A00%3A00Z&to=2037-07-16T00%3A00%3A00Z&timezone=America%2FChicago';
+    const availabilityUrl =
+      'https://scheduler.local/api/v1/availability?from=2037-07-15T00%3A00%3A00Z&to=2037-07-16T00%3A00%3A00Z&timezone=America%2FChicago';
     const opened = await SELF.fetch(availabilityUrl);
-    const openedBody = await opened.json() as { status: string; slots: Array<{ start: string; end: string }> };
+    const openedBody = (await opened.json()) as {
+      status: string;
+      slots: Array<{ start: string; end: string }>;
+    };
     expect(openedBody).toMatchObject({
       status: 'available',
       slots: expect.arrayContaining([
@@ -351,7 +383,7 @@ describe('scheduler Worker transport', () => {
     expect(openedBody.slots).toHaveLength(4);
 
     const oneHour = await SELF.fetch(`${availabilityUrl}&durationMinutes=60`);
-    const oneHourBody = await oneHour.json() as {
+    const oneHourBody = (await oneHour.json()) as {
       durationMinutes: number;
       slots: Array<{ start: string; end: string }>;
     };
@@ -424,9 +456,11 @@ describe('scheduler Worker transport', () => {
           }
         });
       }
-      if (url.startsWith(
-        'https://www.googleapis.com/calendar/v3/calendars/micah%40createsomething.io/events?'
-      )) {
+      if (
+        url.startsWith(
+          'https://www.googleapis.com/calendar/v3/calendars/micah%40createsomething.io/events?'
+        )
+      ) {
         return Response.json({
           id: 'google-event-worker',
           hangoutLink: 'https://meet.google.com/worker-test'
@@ -441,10 +475,8 @@ describe('scheduler Worker transport', () => {
           hangoutLink: 'https://meet.google.com/worker-test'
         });
       }
-      if (
-        url.includes('/events/google-event-worker?sendUpdates=all') &&
-        init?.method === 'DELETE'
-      ) return new Response(null, { status: 204 });
+      if (url.includes('/events/google-event-worker?sendUpdates=all') && init?.method === 'DELETE')
+        return new Response(null, { status: 204 });
       throw new Error(`Unexpected provider request: ${url}`);
     });
 
@@ -482,7 +514,7 @@ describe('scheduler Worker transport', () => {
       })
     });
     expect(prepare.status).toBe(200);
-    const proposal = await prepare.json() as { proposalToken: string };
+    const proposal = (await prepare.json()) as { proposalToken: string };
 
     const commit = await SELF.fetch('https://scheduler.local/api/v1/bookings', {
       method: 'POST',
@@ -497,7 +529,7 @@ describe('scheduler Worker transport', () => {
       })
     });
     expect(commit.status).toBe(200);
-    const committed = await commit.json() as {
+    const committed = (await commit.json()) as {
       actionToken: string;
       booking: { bookingId: string };
     };
@@ -505,9 +537,12 @@ describe('scheduler Worker transport', () => {
       booking: { provider: { meetUrl: 'https://meet.google.com/worker-test' } }
     });
     const queuedNotifications = await runInDurableObject(stub, async (_instance, state) =>
-      state.storage.sql.exec<{ payload_json: string }>(
-        'SELECT payload_json FROM reminders ORDER BY run_at, reminder_id'
-      ).toArray().map((row) => JSON.parse(row.payload_json) as Record<string, unknown>)
+      state.storage.sql
+        .exec<{ payload_json: string }>(
+          'SELECT payload_json FROM reminders ORDER BY run_at, reminder_id'
+        )
+        .toArray()
+        .map((row) => JSON.parse(row.payload_json) as Record<string, unknown>)
     );
     expect(queuedNotifications).toEqual([
       expect.objectContaining({
@@ -550,10 +585,7 @@ describe('scheduler Worker transport', () => {
       }
     );
     const rescheduleBody = await reschedule.json();
-    expect(
-      reschedule.status,
-      JSON.stringify({ rescheduleBody, providerRequests })
-    ).toBe(200);
+    expect(reschedule.status, JSON.stringify({ rescheduleBody, providerRequests })).toBe(200);
     const rescheduled = rescheduleBody as {
       actionToken: string;
       booking: { bookingId: string; slot: { start: string } };
@@ -581,19 +613,24 @@ describe('scheduler Worker transport', () => {
     expect(await cancel.json()).toMatchObject({ status: 'cancelled' });
 
     const lifecycleNotifications = await runInDurableObject(stub, async (_instance, state) =>
-      state.storage.sql.exec<{ status: string; payload_json: string }>(
-        'SELECT status, payload_json FROM reminders ORDER BY run_at, reminder_id'
-      ).toArray().map((row) => ({
-        status: row.status,
-        kind: (JSON.parse(row.payload_json) as { kind: string }).kind
-      }))
+      state.storage.sql
+        .exec<{ status: string; payload_json: string }>(
+          'SELECT status, payload_json FROM reminders ORDER BY run_at, reminder_id'
+        )
+        .toArray()
+        .map((row) => ({
+          status: row.status,
+          kind: (JSON.parse(row.payload_json) as { kind: string }).kind
+        }))
     );
-    expect(lifecycleNotifications).toEqual(expect.arrayContaining([
-      { kind: 'confirmation', status: 'sent' },
-      { kind: 'rescheduled', status: 'sent' },
-      { kind: 'reminder', status: 'cancelled' },
-      { kind: 'reminder', status: 'cancelled' }
-    ]));
+    expect(lifecycleNotifications).toEqual(
+      expect.arrayContaining([
+        { kind: 'confirmation', status: 'sent' },
+        { kind: 'rescheduled', status: 'sent' },
+        { kind: 'reminder', status: 'cancelled' },
+        { kind: 'reminder', status: 'cancelled' }
+      ])
+    );
     expect(resendDeliveries).toHaveLength(2);
     expect(resendDeliveries.map((delivery) => delivery.idempotencyKey)).toEqual([
       expect.stringMatching(/^notification_confirmation_/),
@@ -660,19 +697,25 @@ describe('scheduler Worker transport', () => {
 
     const publicTools = await mcpRequest('tools/list', {}, 2);
     expect(publicTools.status).toBe(200);
-    const publicBody = await publicTools.json() as {
+    const publicBody = (await publicTools.json()) as {
       result: { tools: Array<{ name: string }> };
     };
-    expect(publicBody.result.tools.map((tool) => tool.name)).toContain('scheduler_list_availability');
-    expect(publicBody.result.tools.map((tool) => tool.name)).not.toContain('scheduler_commit_booking');
+    expect(publicBody.result.tools.map((tool) => tool.name)).toContain(
+      'scheduler_list_availability'
+    );
+    expect(publicBody.result.tools.map((tool) => tool.name)).not.toContain(
+      'scheduler_commit_booking'
+    );
 
     const operatorTools = await mcpRequest('tools/list', {}, 3, {
       authorization: 'Bearer controlled-operator-token'
     });
-    const operatorBody = await operatorTools.json() as {
+    const operatorBody = (await operatorTools.json()) as {
       result: { tools: Array<{ name: string }> };
     };
-    expect(operatorBody.result.tools.map((tool) => tool.name)).toContain('scheduler_commit_booking');
+    expect(operatorBody.result.tools.map((tool) => tool.name)).toContain(
+      'scheduler_commit_booking'
+    );
 
     const foreign = await SELF.fetch('https://scheduler.local/mcp', {
       method: 'POST',

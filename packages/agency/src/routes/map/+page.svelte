@@ -9,11 +9,10 @@
     SEO,
     type PerformanceCondition
   } from '@create-something/canon';
-  import PlaybookField from '$lib/components/PlaybookField.svelte';
   import PublicAtlasCanvas from '$lib/components/PublicAtlasCanvas.svelte';
   import SystemContextRail from '$lib/components/SystemContextRail.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
-  import { playbookHeroMedia } from '$lib/data/playbookHeroMedia';
+  import { playbookHeroMedia, playbookMapSectionMedia } from '$lib/data/playbookHeroMedia';
   import { PUBLIC_PRICING } from '$lib/data/publicPricing';
 
   const mapProtocol: PerformanceCondition[] = [
@@ -79,12 +78,27 @@
   <PerformancePageSection
     id="canvas"
     variant="white"
-    eyebrow="Public mapping surface"
-    title="The canvas turns a starting sheet into operating context."
-    description="Cold readers can test the method without exposing credentials. The private draft stays in this browser; its summary and readiness signal can move into booking, a durable Map workspace, Build, or Control."
+    eyebrow="Private workflow draft"
+    title="Map one real workflow before you connect AI to it."
+    description="Start with a blank canvas or an industry starter. Name the owner, systems, approval point, stop condition, and proof the work requires. The canvas never connects to production, and the draft stays in this browser until you choose to bring its summary to a mapping session."
   >
     {#snippet after()}
-      <PlaybookField variant="map" embedded />
+      <figure class="map-overhead-study">
+        <picture>
+          {#if playbookMapSectionMedia.mobileSrc}
+            <source media="(max-width: 47.99rem)" srcset={playbookMapSectionMedia.mobileSrc} />
+          {/if}
+          <img
+            src={playbookMapSectionMedia.src}
+            alt={playbookMapSectionMedia.alt}
+            width={playbookMapSectionMedia.width}
+            height={playbookMapSectionMedia.height}
+            loading="lazy"
+            decoding="async"
+            data-campaign-media="map-overhead-study"
+          />
+        </picture>
+      </figure>
       <SystemContextRail />
       <PublicAtlasCanvas
         bookingHref="/book"
@@ -119,3 +133,29 @@
     {/snippet}
   </PerformanceConversionHandoff>
 </main>
+
+<style>
+  .map-overhead-study {
+    margin: 0;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--color-performance-paper, #f4efe7) 18%, transparent);
+    background: #121310;
+  }
+
+  .map-overhead-study picture,
+  .map-overhead-study img {
+    display: block;
+    width: 100%;
+  }
+
+  .map-overhead-study img {
+    aspect-ratio: 3 / 2;
+    object-fit: cover;
+  }
+
+  @media (max-width: 47.99rem) {
+    .map-overhead-study img {
+      aspect-ratio: 2 / 3;
+    }
+  }
+</style>

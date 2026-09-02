@@ -97,7 +97,8 @@ type RuntimeService = Pick<
 const HOST_OBJECT_NAME = 'micah-johnson';
 const eventCalendarDefault = 'micah@createsomething.io';
 const accountId = '9645bd52e640b8a4f40a3a55ff1dd75a';
-const publicOriginDefault = 'https://create-something-scheduler.createsomething.workers.dev';
+const publicOriginDefault = 'https://schedule.createsomething.agency';
+const legacyPublicHostname = 'create-something-scheduler.createsomething.workers.dev';
 const bookingPublicOrigin = 'https://createsomething.agency';
 const clock = { now: () => new Date().toISOString() };
 const projectionReadinessHorizonDays = 28;
@@ -551,6 +552,14 @@ export class SchedulerDurableObject extends DurableObject<Env> {
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
+    if (
+      request.method === 'GET' &&
+      url.hostname === legacyPublicHostname &&
+      (url.pathname === '/' || url.pathname === '/createsomething/together')
+    ) {
+      url.hostname = 'schedule.createsomething.agency';
+      return Response.redirect(url, 308);
+    }
     if (request.method === 'GET' && url.pathname === '/health') {
       return json({ ok: true, service: 'create-something-scheduler' }, 200);
     }

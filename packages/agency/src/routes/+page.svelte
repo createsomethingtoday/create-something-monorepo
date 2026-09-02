@@ -35,12 +35,12 @@
       priceDescription: PUBLIC_PRICING.map.workspaceLabel
     },
     {
-      name: 'Build',
+      name: 'Agent Foundation',
       description:
-        'One painful workflow turned into a reliable operating path with clear rules, clean handoffs, and ownership.',
-      type: 'Implementation Sprint',
+        'One useful agent capability delivered with its data path, tools, policy, tests, runbook, and Codex continuation path.',
+      type: 'Fixed-scope Build',
       price: 'Custom',
-      priceDescription: 'Scoped build with optional ongoing support'
+      priceDescription: 'Quoted after fit; production promoted separately'
     },
     {
       name: 'Ongoing Workflow Control',
@@ -64,7 +64,7 @@
     {
       question: 'What does CREATE SOMETHING build?',
       answer:
-        'CREATE SOMETHING builds operating systems for AI work in business operations. Each system makes one business workflow safe to delegate. Signals show what changed. Decisions reach the right person or agent. Proof records what happened.'
+        'CREATE SOMETHING builds client-owned Agent Foundations: one useful capability, the infrastructure and policy around it, and a Codex continuation path. Underneath, each system makes one business workflow safe to delegate. Signals show what changed. Decisions reach the right person or agent. Proof records what happened.'
     },
     {
       question: 'What makes a workflow reliable?',
@@ -74,12 +74,12 @@
     {
       question: 'Where does CREATE SOMETHING start?',
       answer:
-        'The work starts with one messy handoff your team wants to delegate, then maps the first controlled pilot before expanding automation.'
+        'Bring the agent project, prototype, or repository and one job the agent should perform. If the role or authority is still unclear, the work starts with Map before Build.'
     },
     {
       question: 'What do clients leave with?',
       answer:
-        'Clients leave with a visible workflow map, connected-system plan, approval path, run/wait/stop states, and an audit trail the team can inspect.'
+        'Foundation clients leave with the repository, source, schemas, instructions, tests, runbook, known limits, and an exercised Codex continuation path. Production access and operation remain a separate promotion.'
     }
   ];
 
@@ -120,20 +120,20 @@
 
   const heroProofItems: PerformanceCampaignProof[] = [
     {
-      label: 'Signal',
-      value: 'One queue'
+      label: 'Agent',
+      value: '1 role · 1 job'
     },
     {
-      label: 'Decision',
-      value: 'Named owner'
+      label: 'Delivery',
+      value: 'Working foundation'
     },
     {
-      label: 'Control',
-      value: 'Run / Wait / Stop'
+      label: 'Ownership',
+      value: 'Client repository'
     },
     {
-      label: 'Proof',
-      value: 'Attached receipt'
+      label: 'Boundary',
+      value: 'Production separate'
     }
   ];
 
@@ -220,7 +220,7 @@
       summary: 'The route is installed',
       title: 'Build the operating path your team approves.',
       detail:
-        'We connect the tools, agent, and rules that serve the play. Unapproved access stays out of the route.',
+        'We deliver the first useful capability in your repository, then connect the data, tools, agent instructions, tests, and rules that serve it. Unapproved access stays out of the route.',
       tone: 'allow',
       evidence: [
         'One view shows systems, owners, and allowed actions',
@@ -228,7 +228,12 @@
         'Your team inspects the first test before a live run'
       ],
       receipts: ['workflow map', 'approved route', 'runbook'],
-      actions: [{ label: agencyCoreMessaging.selfMapLabel, href: agencyCoreMessaging.selfMapHref }]
+      actions: [
+        {
+          label: agencyCoreMessaging.bringAgentProjectLabel,
+          href: agencyCoreMessaging.agentFoundationHref
+        }
+      ]
     },
     {
       id: 'control',
@@ -289,9 +294,9 @@
 </script>
 
 <SEO
-  title="AI Operating Systems | CREATE SOMETHING .agency"
-  description="CREATE SOMETHING maps one business workflow, marks what can run, names where people decide, and attaches proof to every important action."
-  keywords="AI operating systems, AI workflow systems, workflow automation consultant, governed AI workflows, workflow control layer, workflow mapping, workflow pilot, production automation, technical operators"
+  title="Agent Foundation | CREATE SOMETHING .agency"
+  description="Bring the agent project you started with Codex. CREATE SOMETHING delivers one useful capability, its infrastructure, and a client-owned continuation path."
+  keywords="agent foundation, Codex agent development, client-owned AI agent, AI agent infrastructure, AI workflow systems, governed AI workflows, MCP agent tools, technical operators"
   ogImage="/og-image.png"
   propertyName="agency"
   {services}
@@ -301,17 +306,19 @@
 <div class="home-pilot property-performance">
   <PerformanceCampaignOpening
     eyebrow="CREATE SOMETHING .agency"
-    propertyRole="Embedded AI operating partner"
+    propertyRole="Client-owned agent engineering"
     expression="editorial"
-    title="Your people and AI need the same playbook."
-    lede="We embed with operators to map one workflow, install its AI infrastructure, and hand back a client-owned Playbook. Offense advances approved work. Defense protects decisions, proof, and recovery. The opposition is ambiguity, AI out of reach, and untrusted automation."
+    title="Build an agent you can keep building."
+    lede="Bring the project you started with Codex. We deliver one useful capability in your GitHub repository. We establish its data, tools, policy, tests, and runbook, then onboard you to continue in your own environment. Production Promotion is scoped separately."
     media={playbookHomeHeroMedia}
     proof={heroProofItems}
     density="compact"
     mediaMobilePlacement="background"
   >
     {#snippet actions()}
-      <Button href={agencyCoreMessaging.selfMapHref}>{agencyCoreMessaging.selfMapLabel}</Button>
+      <Button href={agencyCoreMessaging.agentFoundationHref}>
+        {agencyCoreMessaging.bringAgentProjectLabel}
+      </Button>
       <Button href="/proof/marketplace-workflow" variant="secondary"
         >See the Marketplace workflow</Button
       >
@@ -322,20 +329,24 @@
 
   <MeridianMetrics
     eyebrow="Scoreboard"
-    title="A shared play is a control surface."
+    title="The agent is useful when the system around it is inspectable."
     metrics={[
-      { value: '1', label: 'workflow first', detail: 'Start with the handoff that matters.' },
-      { value: '3', label: 'run states', detail: 'Every run, wait, or stop stays explicit.' },
-      { value: '1', label: 'owned Playbook', detail: 'Your team keeps the working system.' }
+      { value: '1', label: 'role and job', detail: 'Start with one capability that matters.' },
+      {
+        value: '3',
+        label: 'system layers',
+        detail: 'Data, automation, and judgment stay explicit.'
+      },
+      { value: '1', label: 'owned repository', detail: 'Your team keeps and continues the system.' }
     ]}
   />
 
   <PerformanceNarrativeStage
     id="agency-operating-story"
     expression="editorial"
-    eyebrow="One shared Playbook"
-    title="Map the play. Build the system. Keep control."
-    description="We work beside an operator to map one workflow and install its AI infrastructure. Your team decides what can run, what needs approval, and what must stop. Your team keeps a Playbook it can inspect, run, stop, recover, and review with proof."
+    eyebrow="The system around the agent"
+    title="Bound the job. Build the foundation. Promote with proof."
+    description="Agent is the public entry point. One role and job define the purchase. Map, Build, and Control remain the operating model underneath. Your team decides what can run, what needs approval, and what must stop. It keeps the repository, Playbook, and proof it can inspect, recover, and continue."
     scenes={agencyScenes}
     motionIntent={agencyOperatingStoryMotion}
     ariaLabel="Shared Playbook delivery story"
@@ -422,7 +433,9 @@
           {/each}
         </div>
         <div class="service-flow-action">
-          <Button href={agencyCoreMessaging.selfMapHref}>{agencyCoreMessaging.selfMapLabel}</Button>
+          <Button href={agencyCoreMessaging.agentFoundationHref}>
+            {agencyCoreMessaging.bringAgentProjectLabel}
+          </Button>
           <p>
             See the <a href="/services">service path</a>, the <a href="/partners">tools we use</a>,
             the <a href="/products">product surfaces</a>, or the
@@ -433,10 +446,11 @@
           <span>How we build</span>
           <h3>Built with OpenAI and Cloudflare. Designed to remain yours.</h3>
           <p>
-            CREATE SOMETHING owns the system. OpenAI provides intelligence. Cloudflare provides
-            infrastructure. We use OpenAI Codex to map, build, and maintain the workflow. Your team
-            keeps the map, rules, history, and recovery path. If the model or agent environment
-            changes, the system does not have to start over.
+            Your team owns the system. OpenAI provides intelligence. Cloudflare can provide
+            infrastructure. We use OpenAI Codex to map and build the workflow, then exercise the
+            continuation path in your environment. Your team keeps the repository, map, rules,
+            tests, history, and recovery path. If the model or agent environment changes, the
+            operating knowledge does not have to start over.
           </p>
           <div>
             <a href="/stack">See what you keep</a>
@@ -458,7 +472,7 @@
     <div class="home-mobile-supporting-record__body">
       <p>
         The first choice does not need every detail. Use the record when you want to inspect the
-        delivery path, proof, or system boundary before you start a map.
+        delivery path, proof, or ownership boundary before you bring an agent project.
       </p>
       <div class="home-mobile-supporting-record__links">
         <a href="/proof/marketplace-workflow">
@@ -511,25 +525,23 @@
 
   <PerformanceConversionHandoff
     expression="editorial"
-    eyebrow="Fixed-scope first step"
-    title={agencyCoreMessaging.workflowCtaHeading}
-    description="Start with a workflow map and proof plan. If the map does not show a useful controlled pilot, the work stops there; if it does, the first build has a clear delegation boundary."
+    eyebrow="Agent Foundation fit"
+    title="Bring one agent project and one job it should perform."
+    description="Share the repository or prototype, one representative input, and an acceptable result. We return a fit decision and the proposed Foundation boundary. If the role or authority is unclear, Map comes first. Production access and operation remain a separate promotion."
     handoff={{
-      owner: 'CREATE SOMETHING',
-      authority: 'Operator approval',
-      proof: 'Workflow map + proof plan',
+      owner: 'Builder + capability owner',
+      authority: 'Approve role, job, and boundary',
+      proof: 'Repository + representative case',
       state: 'ready'
     }}
     artifactPlacement="sidecar"
     density="concise"
   >
     {#snippet actions()}
-      <Button href={agencyCoreMessaging.selfMapHref}>
-        {agencyCoreMessaging.selfMapLabel}
+      <Button href={agencyCoreMessaging.agentFoundationHref}>
+        {agencyCoreMessaging.bringAgentProjectLabel}
       </Button>
-      <Button href={agencyCoreMessaging.workflowMappingSessionHref} variant="secondary">
-        {agencyCoreMessaging.bookMappingSessionLabel}
-      </Button>
+      <Button href={agencyCoreMessaging.selfMapHref} variant="secondary">Start with Map</Button>
     {/snippet}
     {#snippet aside()}<HeroTrustArtifact />{/snippet}
   </PerformanceConversionHandoff>

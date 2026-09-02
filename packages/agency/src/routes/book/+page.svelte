@@ -18,7 +18,8 @@
 
 	const mappingBookingOffer = {
 		seoTitle: 'Book a CREATE SOMETHING Mapping Session',
-		seoDescription: 'Choose a verified 30- or 60-minute opening for a scoped workflow mapping session.',
+		seoDescription:
+			'Choose a verified 30- or 60-minute opening for a scoped workflow mapping session.',
 		eyebrow: 'Workflow mapping session',
 		title: 'Review the handoff, then choose a time.',
 		description:
@@ -44,7 +45,25 @@
 		fallbackHref: '/workflow-compiler-integration',
 		fallbackLabel: 'the fixed-scope integration offer'
 	} as const;
-	type BookingOffer = typeof mappingBookingOffer | typeof compilerIntegrationBookingOffer;
+
+	const agentFoundationBookingOffer = {
+		seoTitle: 'Book an Agent Foundation Fit Call | CREATE SOMETHING',
+		seoDescription:
+			'Choose a verified 30- or 60-minute opening to assess one bounded, client-owned Agent Foundation.',
+		eyebrow: 'Agent Foundation fit call',
+		title: 'Bring the project and one job for the agent.',
+		description:
+			'Use this scheduler to assess one role, one job, and one representative case. We will determine whether the right next step is Agent Foundation, Map first, Harness or MCP-only, Production scope, or not a current fit.',
+		secondaryHref: '/agent-foundation',
+		secondaryLabel: 'Review the Agent Foundation offer',
+		iframeTitle: 'Schedule an Agent Foundation fit call',
+		fallbackHref: '/agent-foundation',
+		fallbackLabel: 'the Agent Foundation offer'
+	} as const;
+	type BookingOffer =
+		| typeof mappingBookingOffer
+		| typeof compilerIntegrationBookingOffer
+		| typeof agentFoundationBookingOffer;
 
 	let schedulerHref = buildFirstPartySchedulerUrl();
 	let schedulerFrame: HTMLIFrameElement;
@@ -55,9 +74,12 @@
 	let bookingOffer: BookingOffer = mappingBookingOffer;
 
 	$: intent = $page.url.searchParams.get('intent');
-	$: bookingOffer = intent === 'compiler-integration'
-		? compilerIntegrationBookingOffer
-		: mappingBookingOffer;
+	$: bookingOffer =
+		intent === 'agent-foundation'
+			? agentFoundationBookingOffer
+			: intent === 'compiler-integration'
+				? compilerIntegrationBookingOffer
+				: mappingBookingOffer;
 
 	function sendSchedulerContext() {
 		schedulerFrame?.contentWindow?.postMessage(
@@ -103,7 +125,8 @@
 			window.history.replaceState(window.history.state, '', schedulerAccess.cleanPath);
 		}
 		schedulerHref = buildFirstPartySchedulerUrl(window.location.search);
-		const warmupNotes = window.localStorage.getItem(PUBLIC_ATLAS_STORAGE_KEYS.warmupSummary) ?? undefined;
+		const warmupNotes =
+			window.localStorage.getItem(PUBLIC_ATLAS_STORAGE_KEYS.warmupSummary) ?? undefined;
 		handoffContext = schedulerHandoffContext(window.location.search, warmupNotes);
 		handoffSheet = schedulerHandoffSheet(handoffContext);
 		sendSchedulerContext();
@@ -139,7 +162,7 @@
 			state: 'ready'
 		}}
 		steps={[
-		{
+			{
 				label: 'Handoff',
 				title: 'Review what will be shared',
 				detail: 'Confirm the source, decision owner, and draft notes that will reach the scheduler.'
@@ -152,7 +175,8 @@
 			{
 				label: 'Confirm',
 				title: 'Commit with explicit intent',
-				detail: 'Your name and email are used only when you explicitly create the calendar event and meeting receipt.'
+				detail:
+					'Your name and email are used only when you explicitly create the calendar event and meeting receipt.'
 			}
 		]}
 		headingLevel="h1"
@@ -194,12 +218,16 @@
 				{/if}
 
 				<p class="booking-handoff__privacy">
-					Only these fields are shared with the scheduler below. Do not add credentials,
-					client secrets, or private records.
+					Only these fields are shared with the scheduler below. Do not add credentials, client
+					secrets, or private records.
 				</p>
 			</section>
 
-			<section id="first-party-scheduler" class="scheduler-shell" aria-label="Choose a verified opening">
+			<section
+				id="first-party-scheduler"
+				class="scheduler-shell"
+				aria-label="Choose a verified opening"
+			>
 				<iframe
 					bind:this={schedulerFrame}
 					src={schedulerHref}
@@ -212,8 +240,10 @@
 
 				<p class="scheduler-shell__fallback">
 					If the embedded scheduler is unavailable,
-					<a href={schedulerHref} target="_blank" rel="noopener noreferrer">open the first-party scheduler</a>.
-					Review <a href={bookingOffer.fallbackHref}>{bookingOffer.fallbackLabel}</a> before choosing a time.
+					<a href={schedulerHref} target="_blank" rel="noopener noreferrer"
+						>open the first-party scheduler</a
+					>. Review <a href={bookingOffer.fallbackHref}>{bookingOffer.fallbackLabel}</a> before choosing
+					a time.
 				</p>
 			</section>
 		{/snippet}

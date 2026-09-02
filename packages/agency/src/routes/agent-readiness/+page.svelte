@@ -72,6 +72,7 @@
   >
     {#snippet actions()}
       <Button href={agencyCoreMessaging.agentReadinessAuditBookingHref}>Book the audit</Button>
+      <Button href="/services" variant="secondary">Review all services</Button>
     {/snippet}
   </PerformanceConversionHandoff>
 </main>

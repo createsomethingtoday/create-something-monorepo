@@ -29,11 +29,6 @@ const macroRouteContracts = [
 
 const fieldRouteContracts = [
   {
-    path: '../src/routes/map/+page.svelte',
-    variant: 'map',
-    title: 'See the whole operation before AI runs the play.'
-  },
-  {
     path: '../src/routes/control/+page.svelte',
     variant: 'control',
     title: 'Run offense and defense from one playbook.'
@@ -116,7 +111,7 @@ test('the commercial hero cohort uses responsive Playbook macro studies and no P
   }
 });
 
-test('the decision routes retain readable Playbook fields where the field itself is the proof', () => {
+test('Control retains a readable Playbook field where the field itself is the proof', () => {
   for (const contract of fieldRouteContracts) {
     const source = read(contract.path);
 
@@ -136,12 +131,30 @@ test('the decision routes retain readable Playbook fields where the field itself
   assert.match(playbookField, /position: relative/);
 });
 
-test('the Home hero uses the campaign court study while preserving the Playbook field in the narrative', () => {
+test('Map uses the responsive overhead study while the editable canvas remains the proof', () => {
+  const map = read('../src/routes/map/+page.svelte');
+
+  assert.match(map, /title="See the whole operation before AI runs the play\."/);
+  assert.match(map, /playbookMapSectionMedia/);
+  assert.match(map, /src=\{playbookMapSectionMedia\.src\}/);
+  assert.match(map, /srcset=\{playbookMapSectionMedia\.mobileSrc\}/);
+  assert.match(map, /data-campaign-media="map-overhead-study"/);
+  assert.match(map, /<PublicAtlasCanvas/);
+  assert.doesNotMatch(map, /<PlaybookField variant="map"/);
+  assert.doesNotMatch(map, /from '\$lib\/data\/performanceMedia'/);
+  assert.doesNotMatch(map, /mode="paper"/);
+});
+
+test('the Home hero and Map narrative use responsive campaign studies while preserving operating context', () => {
   const home = read('../src/routes/+page.svelte');
 
   assert.match(home, /media=\{playbookHomeHeroMedia\}/);
   assert.match(home, /mediaMobilePlacement="background"/);
-  assert.match(home, /<PlaybookField variant="services" embedded/);
+  assert.match(home, /srcset=\{playbookHeroMedia\.map\.mobileSrc\}/);
+  assert.match(home, /src=\{playbookHeroMedia\.map\.src\}/);
+  assert.match(home, /aria-label="Shared Playbook: Map, Build, Control"/);
+  assert.match(home, /boundary-study__outcomes/);
+  assert.doesNotMatch(home, /<PlaybookField/);
   assert.doesNotMatch(home, /artifactOwnsMedia/);
 });
 

@@ -91,7 +91,7 @@
     const product = getPublicProduct(id);
     return { label: product.shortName, href: product.route };
   });
-  const primaryCtaHref = agencyCoreMessaging.startWithWorkflowHref;
+  const primaryCtaHref = agencyCoreMessaging.agentFoundationHref;
   const agencyFooterMacroMedia = {
     src: '/images/performance-lab/playbook-footer-decision-gate-macro.webp',
     alt: 'Macro-real Playbook decision gate: an ivory AI-agent marker held inside a black steel ring as amber and proof-green routes cross a physical court surface.'
@@ -113,6 +113,7 @@
       ariaLabel: 'Commercial paths',
       links: [
         { label: 'How It Works', href: '/services' },
+        { label: 'Agent Foundation', href: agencyCoreMessaging.agentFoundationHref },
         { label: 'AI Buyer Readiness Audit', href: '/agent-readiness' },
         { label: 'What You Keep', href: '/stack' },
         { label: 'Products', href: '/products' },
@@ -275,6 +276,22 @@
       keywords: ['service provider', 'consultant', 'clients', 'delivery', 'workflow handoff']
     },
     {
+      id: 'nav-agent-foundation',
+      label: agencyCoreMessaging.agentFoundationLabel,
+      description:
+        'One useful agent capability in a client-owned repository, ready to continue with Codex',
+      href: agencyCoreMessaging.agentFoundationHref,
+      icon: 'AF',
+      keywords: [
+        'agent foundation',
+        'codex',
+        'agent project',
+        'repository',
+        'client owned',
+        'build'
+      ]
+    },
+    {
       id: 'nav-self-map',
       label: agencyCoreMessaging.startWithWorkflowLabel,
       description: 'Start a lightweight workflow map before booking',
@@ -433,7 +450,7 @@
     links={navLinks}
     currentPath={$page.url.pathname}
     fixed={true}
-    ctaLabel={agencyCoreMessaging.startWithWorkflowLabel}
+    ctaLabel={agencyCoreMessaging.bringAgentProjectLabel}
     ctaHref={primaryCtaHref}
     user={data.user}
     onLogout={handleLogout}
@@ -453,15 +470,15 @@
   <Footer
     mode="agency"
     showNewsletter={false}
-    aboutText="Calm, transparent, reliable workflow systems for operator-owned outcomes: clear operating boundaries, evidence-backed delivery, and escalation only when judgment is required."
+    aboutText="Client-owned agent foundations and workflow systems: one bounded capability, explicit operating authority, evidence-backed delivery, and a continuation path your team keeps."
     quickLinkGroups={footerQuickLinkGroups}
     footerCta={routeOwnsPerformanceEnding
       ? undefined
       : {
-          title: 'Ready to make one workflow AI-native?',
-          label: agencyCoreMessaging.startWithWorkflowLabel,
+          title: 'Ready to turn your agent project into a working foundation?',
+          label: agencyCoreMessaging.bringAgentProjectLabel,
           href: primaryCtaHref,
-          description: 'Start a lightweight workflow map before booking.',
+          description: 'Bring the repository or prototype and one useful job for the agent.',
           media: agencyFooterMacroMedia
         }}
     showSocial={true}

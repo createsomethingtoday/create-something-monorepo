@@ -39,7 +39,10 @@ export const load: PageServerLoad = async ({ url, platform, request }) => {
 		const subscriber = await db
 			.prepare(
 				`SELECT id, email, confirmed_at, unsubscribed_at, source FROM newsletter_subscribers
-				 WHERE confirmation_token = ?`
+				 WHERE confirmation_token = ?
+				   AND unsubscribed_at IS NULL
+				   AND active = 1
+				   AND status = 'active'`
 			)
 			.bind(token)
 			.first();
@@ -63,7 +66,14 @@ export const load: PageServerLoad = async ({ url, platform, request }) => {
 		}
 
 		// Confirm the subscription and record direct consent evidence.
-		await markNewsletterConfirmed(db, subscriber.id as number);
+		const confirmed = await markNewsletterConfirmed(db, subscriber.id as number, token);
+		if (!confirmed) {
+			return {
+				success: false,
+				message: 'This confirmation link is no longer valid.',
+				email: null
+			};
+		}
 
 		// Send welcome email now that subscription is confirmed
 		const email = subscriber.email as string;
