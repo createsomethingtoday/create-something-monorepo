@@ -294,7 +294,7 @@
 </script>
 
 <SEO
-  title="Agent Foundations | CREATE SOMETHING .agency"
+  title="Agent Foundation | CREATE SOMETHING .agency"
   description="Bring the agent project you started with Codex. CREATE SOMETHING delivers one useful capability, its infrastructure, and a client-owned continuation path."
   keywords="agent foundation, Codex agent development, client-owned AI agent, AI agent infrastructure, AI workflow systems, governed AI workflows, MCP agent tools, technical operators"
   ogImage="/og-image.png"

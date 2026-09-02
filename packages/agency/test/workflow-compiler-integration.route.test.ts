@@ -80,7 +80,7 @@ test('the integration route is registered for discovery, performance review, and
   assert.match(registry, /'workflow-compiler-integration'/);
   assert.match(surfacePolicy, /'\/workflow-compiler-integration'/);
   assert.match(servicesProductPath, /agencyCoreMessaging\.agentFoundationHref/);
-  assert.match(agentFoundation, /agencyCoreMessaging\.workflowCompilerIntegrationHref/);
+  assert.doesNotMatch(agentFoundation, /agencyCoreMessaging\.workflowCompilerIntegrationHref/);
 });
 
 test('the integration CTA resolves to matching Agency and scheduler booking copy', () => {
