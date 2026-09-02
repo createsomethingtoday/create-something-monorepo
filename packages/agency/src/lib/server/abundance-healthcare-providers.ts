@@ -110,7 +110,7 @@ export async function fetchNppesProviders(
 				throw new Error('NPPES provider query returned a malformed results array.');
 			}
 			const pageRecords = payload.results.filter(isRecord);
-			if (requiresCanonicalFilter && pageRecords.some((record) =>
+			if (pageRecords.some((record) =>
 				!Array.isArray(record.taxonomies) ||
 				record.taxonomies.some((taxonomy) => !isRecord(taxonomy)) ||
 				record.taxonomies.every((taxonomy) => !isRecord(taxonomy) || !cleanString(taxonomy.desc)) ||

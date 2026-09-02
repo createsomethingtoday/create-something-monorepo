@@ -470,6 +470,25 @@ test('canonical taxonomy filtering rejects records with missing taxonomy shape',
 	);
 });
 
+test('exact taxonomy searches also reject missing taxonomy evidence', async () => {
+	await assert.rejects(
+		fetchNppesProviders(
+			{
+				taxonomy_description: 'Registered Nurse',
+				city: 'Springfield',
+				state: 'MO'
+			},
+			{ fetchFn: async () => jsonResponse({ results: [{ number: '1111111111' }] }) }
+		),
+		(error: unknown) => {
+			assert.ok(error instanceof NppesProviderFetchError);
+			assert.match(error.message, /malformed taxonomy data/i);
+			assert.equal(error.progress.pages_fetched, 0);
+			return true;
+		}
+	);
+});
+
 test('canonical taxonomy filtering rejects records without a usable taxonomy description', async () => {
 	await assert.rejects(
 		fetchNppesProviders(
@@ -572,6 +591,7 @@ test('NPPES fetch paginates within the public API limit and reports truncation',
 			results: Array.from({ length: limit }, (_, index) => ({
 				number: String(1000000000 + skip + index),
 				basic: { status: 'A' },
+				taxonomies: [{ desc: 'Nurse Practitioner', primary: true }],
 				addresses: [mockLocationAddress()]
 			}))
 		});
@@ -603,8 +623,16 @@ test('NPPES fetch stops when a page is shorter than requested', async () => {
 		return jsonResponse({
 			result_count: 2,
 			results: [
-				{ number: '1000000001', addresses: [mockLocationAddress()] },
-				{ number: '1000000002', addresses: [mockLocationAddress()] }
+				{
+					number: '1000000001',
+					taxonomies: [{ desc: 'Registered Nurse', primary: true }],
+					addresses: [mockLocationAddress()]
+				},
+				{
+					number: '1000000002',
+					taxonomies: [{ desc: 'Registered Nurse', primary: true }],
+					addresses: [mockLocationAddress()]
+				}
 			]
 		});
 	};
@@ -679,6 +707,7 @@ test('NPPES fetch failures preserve completed-page progress', async () => {
 						? jsonResponse({
 							results: Array.from({ length: 200 }, (_, index) => ({
 								number: String(index),
+								taxonomies: [{ desc: 'Nurse Practitioner', primary: true }],
 								addresses: [mockLocationAddress()]
 							}))
 						})
