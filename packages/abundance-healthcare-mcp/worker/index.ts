@@ -21,6 +21,7 @@ interface Env {
   MCP_API_KEY?: string;
   AGENCY_INTERNAL_API_KEY?: string;
   AGENCY_BASE_URL?: string;
+  EXA_API_KEY?: string;
 }
 
 const CORS_HEADERS = {
@@ -46,10 +47,15 @@ export class AbundanceHealthcareMCP extends McpAgent<Env> {
       publicKey: this.env.LANGFUSE_PUBLIC_KEY,
       secretKey: this.env.LANGFUSE_SECRET_KEY,
       projectName: this.env.LANGFUSE_PROJECT_NAME?.trim() || 'CREATE SOMETHING',
+      // Langfuse captures full tool inputs and outputs. Keep only aggregate D1
+      // invocation telemetry so NPIs and public contact fields are not copied
+      // into a secondary trace store.
+      enabled: false,
     });
     registerAbundanceHealthcareTools(this.server, {
       agencyApiKey: this.env.AGENCY_INTERNAL_API_KEY,
       agencyBaseUrl: this.env.AGENCY_BASE_URL?.trim() || DEFAULT_AGENCY_BASE_URL,
+      exaApiKey: this.env.EXA_API_KEY,
     });
   }
 }

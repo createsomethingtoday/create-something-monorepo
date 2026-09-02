@@ -1,10 +1,15 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 
 import {
   NPG_HEALTHCARE_MARKETS,
+  createAbundanceHealthcareServer,
+  enrichProviderProfessionalContact,
   getHealthcareCoverage,
   getHealthcarePractitioner,
+  getProviderContactInformation,
   isAcceptedHealthcareBearer,
   listHealthcareMarkets,
   searchCoverageCandidates,
@@ -95,7 +100,202 @@ test('individual practitioner lookup returns public practice contact with readin
   assert.equal(result.provider.practice_phone, '4175550100');
   assert.equal(result.readiness.stage, 'coverage_candidate');
   assert.equal(result.direct_outreach_status, 'blocked');
-  assert.match(result.contact_limitation, /organization-level/i);
+  assert.match(result.contact_limitation, /may be personal or residential/i);
+});
+
+test('exact-NPI contact lookup classifies Type 1 registry fields without granting outreach authority', async () => {
+  const provider = {
+    npi: '1265049910',
+    enumeration_type: 'NPI-1',
+    name: 'Jane Test Provider',
+    status: 'active',
+    practice_address_1: '100 Registry Ave',
+    practice_city: 'Springfield',
+    practice_state: 'MO',
+    practice_postal_code: '65801',
+    practice_phone: '4175550100',
+    source_system: 'nppes_npi_registry_v2_1',
+    source_fetched_at: '2026-09-02T01:39:07.502Z',
+  };
+  const fetchFn: typeof fetch = async () => Response.json({
+    success: true,
+    data: { report, providers: [provider], readiness: [], total: 1, limit: 1, offset: 0 },
+  } satisfies HealthcareApiResponse);
+
+  const result = await getProviderContactInformation(
+    { npi: provider.npi, purpose: 'recruiting_outreach' },
+    { agencyApiKey: 'test-key', fetchFn },
+  );
+
+  assert.equal(result.provider.npi, provider.npi);
+  assert.equal(result.contact.classification, 'individual_public_registry');
+  assert.equal(result.contact.possible_personal_or_residential, true);
+  assert.equal(result.contact.practice_phone, '4175550100');
+  assert.equal(result.contact.source.system, 'nppes_npi_registry_v2_1');
+  assert.equal(result.outreach_authority_status, 'not_established');
+  assert.equal(result.advertising_eligibility_status, 'not_established');
+  assert.equal(result.recruiting_readiness_impact, 'none');
+  assert.match(result.contact_limitation, /does not establish consent/i);
+});
+
+test('confirmed Exa enrichment is bounded to one exact provider and preserves unverified status', async () => {
+  const requests: Array<{ url: string; init?: RequestInit }> = [];
+  const fetchFn: typeof fetch = async (input, init) => {
+    const url = String(input);
+    requests.push({ url, init });
+    if (url.includes('/api/abundance/healthcare-providers/nationwide')) {
+      return Response.json({
+        success: true,
+        data: {
+          report,
+          providers: [{
+            npi: '1265049910', enumeration_type: 'NPI-1', name: 'Jane Test Provider',
+            primary_taxonomy_description: 'Nurse Practitioner, Family', practice_city: 'Springfield',
+            practice_state: 'MO', source_fetched_at: '2026-09-02T01:39:07.502Z',
+          }],
+          readiness: [], total: 1, limit: 1, offset: 0,
+        },
+      } satisfies HealthcareApiResponse);
+    }
+    return Response.json({
+      id: 'agent_run_test',
+      object: 'agent_run',
+      status: 'completed',
+      stopReason: 'schema_satisfied',
+      output: {
+        text: '',
+        structured: {
+          match_status: 'plausible_match',
+          identity_reason: 'Name, profession, and market align; NPI was not present on the profile.',
+          professional_profile_url: 'https://example.test/professional-profile',
+          professional_email: null,
+          professional_phone: null,
+          current_professional_affiliation: null,
+          evidence_summary: 'One public professional profile was located.',
+        },
+        grounding: [{ field: 'professional_profile_url', citations: [{ url: 'https://example.test/professional-profile' }] }],
+      },
+      usage: { agentComputeUnits: 0.1, searches: 1, emails: 0, phoneNumbers: 0 },
+      costDollars: { total: 0.012, agentCompute: 0.012, search: 0, emails: 0, phoneNumbers: 0 },
+    });
+  };
+
+  const result = await enrichProviderProfessionalContact(
+    {
+      npi: '1265049910', purpose: 'recruiting_outreach',
+      confirm_paid_enrichment: true, contact_types: ['email', 'phone'],
+    },
+    { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn },
+  );
+
+  const exaRequest = requests.find((request) => request.url === 'https://api.exa.ai/agent/runs');
+  assert.ok(exaRequest);
+  assert.equal(new Headers(exaRequest.init?.headers).get('x-api-key'), 'exa-test-key');
+  const body = JSON.parse(String(exaRequest.init?.body));
+  assert.equal(body.effort, 'minimal');
+  assert.equal(body.input.data.length, 1);
+  assert.equal(body.input.data[0].npi, '1265049910');
+  assert.equal(body.outputSchema.properties.professional_email.format, 'email');
+  assert.equal(body.outputSchema.properties.professional_phone.format, 'phone');
+  assert.equal(result.match_status, 'plausible_match');
+  assert.equal(result.contact_route_status, 'unverified_enrichment_candidate');
+  assert.equal(result.outreach_authority_status, 'not_established');
+  assert.equal(result.advertising_eligibility_status, 'not_established');
+  assert.equal(result.estimated_max_cost_usd, 0.102);
+});
+
+test('Exa enrichment fails before any lookup when its server-side key is unavailable', async () => {
+  let fetchCalled = false;
+  const fetchFn: typeof fetch = async () => {
+    fetchCalled = true;
+    throw new Error('fetch should not run');
+  };
+
+  await assert.rejects(
+    enrichProviderProfessionalContact(
+      { npi: '1265049910', purpose: 'recruiting_outreach', confirm_paid_enrichment: true },
+      { agencyApiKey: 'test-key', fetchFn },
+    ),
+    /EXA_API_KEY is not configured/i,
+  );
+  assert.equal(fetchCalled, false);
+});
+
+test('Exa enrichment requires explicit paid-call confirmation before any lookup', async () => {
+  let fetchCalled = false;
+  const fetchFn: typeof fetch = async () => {
+    fetchCalled = true;
+    throw new Error('fetch should not run');
+  };
+
+  await assert.rejects(
+    enrichProviderProfessionalContact(
+      // @ts-expect-error Exercise runtime validation for an MCP client that omits confirmation.
+      { npi: '1265049910', purpose: 'recruiting_outreach', confirm_paid_enrichment: false },
+      { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn },
+    ),
+    /confirm_paid_enrichment/i,
+  );
+  assert.equal(fetchCalled, false);
+});
+
+test('Exa enrichment cancels an unfinished run at the bounded timeout', async () => {
+  let cancelCalled = false;
+  const fetchFn: typeof fetch = async (input) => {
+    const url = String(input);
+    if (url.includes('/api/abundance/healthcare-providers/nationwide')) {
+      return Response.json({ success: true, data: {
+        report,
+        providers: [{ npi: '1265049910', name: 'Jane Test Provider', source_fetched_at: '2026-09-02T01:39:07.502Z' }],
+        readiness: [], total: 1, limit: 1, offset: 0,
+      } } satisfies HealthcareApiResponse);
+    }
+    if (url.endsWith('/cancel')) {
+      cancelCalled = true;
+      return new Response(null, { status: 204 });
+    }
+    return Response.json({ id: 'agent_run_timeout', object: 'agent_run', status: url.endsWith('/agent/runs') ? 'queued' : 'running' });
+  };
+
+  await assert.rejects(
+    enrichProviderProfessionalContact(
+      { npi: '1265049910', purpose: 'recruiting_outreach', confirm_paid_enrichment: true },
+      {
+        agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn,
+        exaTimeoutMs: 1_000, exaPollIntervalMs: 100,
+      },
+    ),
+    /was cancelled/i,
+  );
+  assert.equal(cancelCalled, true);
+});
+
+test('Exa upstream failures do not reflect response bodies containing contact data', async () => {
+  const fetchFn: typeof fetch = async (input) => {
+    if (String(input).includes('/api/abundance/healthcare-providers/nationwide')) {
+      return Response.json({ success: true, data: {
+        report,
+        providers: [{ npi: '1265049910', name: 'Jane Test Provider', source_fetched_at: '2026-09-02T01:39:07.502Z' }],
+        readiness: [], total: 1, limit: 1, offset: 0,
+      } } satisfies HealthcareApiResponse);
+    }
+    return new Response('upstream detail contained fake-contact@example.test', {
+      status: 500,
+      headers: { 'x-request-id': 'request-safe-id' },
+    });
+  };
+
+  await assert.rejects(
+    enrichProviderProfessionalContact(
+      { npi: '1265049910', purpose: 'recruiting_outreach', confirm_paid_enrichment: true },
+      { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn },
+    ),
+    (error: unknown) => {
+      assert.match(String(error), /HTTP 500.*request-safe-id/i);
+      assert.doesNotMatch(String(error), /fake-contact/i);
+      return true;
+    },
+  );
 });
 
 test('candidate search is bounded, filterable, and omits bulk contact fields', async () => {
@@ -278,4 +478,46 @@ test('shared Hub bearer remains valid when a scoped direct key is also provision
   assert.equal(await isAcceptedHealthcareBearer('wrong-token', [
     'shared-hub-token', 'scoped-direct-token',
   ]), false);
+});
+
+test('MCP discovery advertises the registry-first contact tools and paid fallback boundary', async (t) => {
+  const fetchFn: typeof fetch = async () => Response.json({ success: true, data: {
+    report,
+    providers: [{
+      npi: '1265049910', enumeration_type: 'NPI-1', name: 'Jane Test Provider',
+      practice_phone: '4175550100', source_system: 'nppes_npi_registry_v2_1',
+      source_fetched_at: '2026-09-02T01:39:07.502Z',
+    }],
+    readiness: [], total: 1, limit: 1, offset: 0,
+  } } satisfies HealthcareApiResponse);
+  const server = createAbundanceHealthcareServer({ agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn });
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  await server.connect(serverTransport);
+  const client = new Client({ name: 'healthcare-mcp-test', version: '1.0.0' });
+  await client.connect(clientTransport);
+  t.after(async () => {
+    await client.close();
+    await server.close();
+  });
+
+  const tools = (await client.listTools()).tools;
+  const registryTool = tools.find((tool) => tool.name === 'get_provider_contact_information');
+  const enrichmentTool = tools.find((tool) => tool.name === 'enrich_provider_professional_contact');
+  assert.ok(registryTool?.outputSchema);
+  assert.equal(registryTool.annotations?.readOnlyHint, true);
+  assert.equal(registryTool.annotations?.openWorldHint, false);
+  assert.ok(enrichmentTool?.outputSchema);
+  assert.equal(enrichmentTool.annotations?.readOnlyHint, true);
+  assert.equal(enrichmentTool.annotations?.idempotentHint, false);
+  assert.equal(enrichmentTool.annotations?.openWorldHint, true);
+  assert.deepEqual(
+    enrichmentTool.inputSchema.properties?.confirm_paid_enrichment,
+    { type: 'boolean', const: true },
+  );
+  const result = await client.callTool({
+    name: 'get_provider_contact_information',
+    arguments: { npi: '1265049910', purpose: 'recruiting_outreach' },
+  });
+  assert.equal(result.isError, undefined);
+  assert.equal((result.structuredContent as Record<string, unknown>).outreach_authority_status, 'not_established');
 });
