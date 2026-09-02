@@ -16,13 +16,13 @@ export type DrawState = {
 export type DrawTransitionKind = 'create' | 'update' | 'remove' | 'convert' | 'restore' | 'history' | 'reset';
 export type DrawController = {
   getState: () => DrawState;
-  applyOperations: (operations: CanvasOperation[]) => Promise<CanvasDocument> | CanvasDocument;
+  applyOperations: (operations: CanvasOperation[]) => Promise<{ before: CanvasDocument; after: CanvasDocument }> | { before: CanvasDocument; after: CanvasDocument };
   select: (ids: string[]) => void;
   setTool: (tool: Tool) => void;
   undo: () => Promise<void> | void;
   redo: () => Promise<void> | void;
   reset: () => Promise<void> | void;
-  animate: (kind: DrawTransitionKind, affectedIds: string[]) => string | void;
+  animate: (kind: DrawTransitionKind, affectedIds: string[], preserveViewport?: boolean) => string | void;
 };
 
 export type DrawWebMcpTool = {
@@ -95,8 +95,8 @@ function changedObjectIds(before: CanvasDocument, after: CanvasDocument) {
   return [...new Set([...prior.keys(), ...next.keys()])].filter((id) => prior.get(id) !== next.get(id));
 }
 
-function receipt(controller: DrawController, kind: DrawTransitionKind, ids: string[]) {
-  const transitionId = controller.animate(kind, ids) || `agent-${crypto.randomUUID()}`;
+function receipt(controller: DrawController, kind: DrawTransitionKind, ids: string[], preserveViewport = false) {
+  const transitionId = controller.animate(kind, ids, preserveViewport) || `agent-${crypto.randomUUID()}`;
   return { ok: true, transition: { transitionId, kind, affectedIds: ids, durationMs: 520 }, state: controller.getState() };
 }
 
@@ -119,9 +119,9 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         if (!Array.isArray(operations) || !operations.length || operations.length > 100) throw new Error('operations must contain 1 to 100 Draw operations.');
         if (operations.some((operation) => operation && typeof operation === 'object' && (operation as { type?: unknown }).type === 'replace_objects') && input.confirmation !== REPLACE_CONFIRMATION) throw new Error(`Whole-canvas replacement requires confirmation exactly "${REPLACE_CONFIRMATION}".`);
         const typed = operations as CanvasOperation[];
-        const before = controller.getState().document;
-        await controller.applyOperations(typed);
-        return receipt(controller, transitionKind(before, typed), affectedIds(typed));
+        const { before, after } = await controller.applyOperations(typed);
+        const ids = [...new Set([...affectedIds(typed), ...changedObjectIds(before, after)])];
+        return receipt(controller, transitionKind(before, typed), ids, typed.some(({ type }) => type === 'set_viewport'));
       }
     },
     {

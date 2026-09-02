@@ -64,6 +64,10 @@ describe('mapping canvas contract', () => {
     expect(objectBounds([connector], connected.objects).x).toBeGreaterThanOrEqual(700);
     expect(convert(connected, [connector.id], 'note').objects.at(-1)).toMatchObject({ kind: 'note', x: 700 });
   });
+  it('computes bounds for strokes larger than the function argument limit', () => {
+    const large: Stroke = { id: 'large', kind: 'stroke', createdAt: 'now', color: '#fff', width: 3, points: Array.from({ length: 200_000 }, (_, index) => ({ x: index, y: -index })) };
+    expect(objectBounds([large])).toEqual({ x: 0, y: -199_999, width: 199_999, height: 199_999 });
+  });
   it('undoes and redoes committed states', () => {
     const first = createDocument(), second = withObjects(first, [stroke('a')]);
     const history: History = commit({ past: [], present: first, future: [] }, second);
