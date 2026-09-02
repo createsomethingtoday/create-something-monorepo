@@ -29,6 +29,7 @@ preservation_risks:
   - Attribute Fable performance and cost claims to Anthropic.
   - Keep CodeRabbit's evaluation bounded to its harness and snapshot.
   - Do not turn provider delivery into inbox-placement or acceptance proof.
+  - Preserve the subscriber-specific unsubscribe field in both HTML and plain-text parts.
 deterministic_findings:
   - Seven non-blocking long-sentence warnings remain in source notes and the production receipt; none occur in email.md or email.txt.
 human_review_needed: yes, consequential publication still requires Micah's final read and explicit approval

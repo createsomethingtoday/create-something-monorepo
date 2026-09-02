@@ -19,11 +19,11 @@
 ## Candidate hashes
 
 - Markdown email: `sha256:380c3ec2db29d46f738b46973f04c9d4024b86ec413afa16583fe79067326923`
-- Plain text: `sha256:3c3cccde45255057c864efab17109c4bfb24a3e2d8262c493eb5b62019e8eda3`
+- Plain text before subscriber-specific unsubscribe substitution: `sha256:b70b7a86fc95c6ae58d21b529e5757e793831e9fceb614a4d65fc858ec35fb23`
 - Performance/Meridian template: `sha256:0ef7b9301df682047862521b95f87e63e96d96f7a165140f6c6b09d95cf8a271`
 - Rendered HTML before subscriber-specific unsubscribe substitution: `sha256:e9a6508c54de57c638d672400e6ca4915d9783ba95ed60da899f2faf2e64140f`
 
-The rendered HTML hash proves this repository candidate only. It is not the final per-recipient HTML hash because `{{unsubscribe_url}}` remains a required provider merge field.
+The HTML and plain-text hashes prove this repository candidate only. They are not final per-recipient content hashes because `{{unsubscribe_url}}` remains a required provider merge field in both parts.
 
 ## Content contract
 

@@ -115,3 +115,6 @@ Claude Fable 5.1:
 https://www.anthropic.com/claude-fable-and-mythos-5-1
 
 — CREATE SOMETHING
+
+You received this because you subscribed to CREATE SOMETHING.
+Unsubscribe: {{unsubscribe_url}}
