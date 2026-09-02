@@ -291,7 +291,7 @@ export function assessHealthcareProviderCoverage(
 			coverage_limit_reached: coverageLimitReached,
 			normalized_count: normalizedCount,
 			rejected_count: rejectedCount,
-			rejection_rate: rejectionRate === undefined ? undefined : round(rejectionRate)
+			rejection_rate: rejectionRate === undefined ? undefined : round(rejectionRate, 4)
 		},
 		limitations: [
 			'NPPES administrative recency does not establish current employment or availability.',
@@ -434,6 +434,7 @@ async function sha256(value: string): Promise<string> {
 	return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
-function round(value: number): number {
-	return Math.round(value * 100) / 100;
+function round(value: number, decimalPlaces = 2): number {
+	const factor = 10 ** decimalPlaces;
+	return Math.round(value * factor) / factor;
 }

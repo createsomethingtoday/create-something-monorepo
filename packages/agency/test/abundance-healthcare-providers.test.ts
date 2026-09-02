@@ -182,6 +182,23 @@ test('coverage health is degraded when source normalization rejects materially m
 	assert.match(report.market_coverage_reasons.join(' '), /more than 5%.*failed provider normalization/i);
 });
 
+test('reported rejection precision preserves a just-over-threshold degradation decision', async () => {
+	const provider = await fixtureProvider({ npi: '1000000001', lastUpdated: '2026-08-20' });
+	const report = assessHealthcareProviderCoverage([provider], {
+		evaluatedAt: '2026-09-01T20:00:00.000Z',
+		persona: NPG_NURSING_PERSONA_COVERAGE[0],
+		source: {
+			latest_fetched_at: fetchedAt,
+			normalized_count: 18,
+			rejected_count: 1
+		}
+	});
+
+	assert.equal(report.market_coverage_status, 'degraded');
+	assert.equal(report.source.rejection_rate, 0.0526);
+	assert.ok((report.source.rejection_rate ?? 0) > 0.05);
+});
+
 test('coverage health is degraded when administrative recency is unknown', async () => {
 	const provider = await fixtureProvider({ npi: '1000000015', lastUpdated: '2026-08-20' });
 	const report = assessHealthcareProviderCoverage([{ ...provider, last_updated_date: undefined }], {
