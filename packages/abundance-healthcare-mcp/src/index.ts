@@ -407,6 +407,13 @@ interface ExaAgentRun {
 
 class ExaRequestTimeoutError extends Error {}
 
+class ExaRunHttpError extends Error {
+  constructor(readonly status: number, message: string) {
+    super(message);
+    this.name = 'ExaRunHttpError';
+  }
+}
+
 async function createAndAwaitExaRun(body: Record<string, unknown>, apiKey: string, options: HealthcareClientOptions): Promise<ExaAgentRun> {
   const fetchFn = options.fetchFn ?? fetch;
   const baseUrl = (options.exaAgentBaseUrl?.trim() || DEFAULT_EXA_AGENT_BASE_URL).replace(/\/$/, '');
@@ -422,10 +429,10 @@ async function createAndAwaitExaRun(body: Record<string, unknown>, apiKey: strin
       'create',
     );
   } catch (error) {
-    if (error instanceof ExaRequestTimeoutError) {
-      throw new Error('Exa Agent create result is indeterminate. A paid run may be active, but no run ID was received; do not retry until the Exa dashboard is reviewed.');
+    if (error instanceof ExaRunHttpError && error.status >= 400 && error.status < 500) {
+      throw error;
     }
-    throw error;
+    throw new Error('Exa Agent create result is indeterminate. A paid run may be active, but no run ID was received; do not retry until the Exa dashboard is reviewed.');
   }
   if (run.status === 'completed') return run;
   if (run.status === 'failed' || run.status === 'cancelled') {
@@ -536,7 +543,10 @@ async function cancelExaRun(
 async function readExaRun(response: Response, operation: 'create' | 'poll'): Promise<ExaAgentRun> {
   if (!response.ok) {
     const requestId = response.headers.get('x-request-id');
-    throw new Error(`Exa Agent ${operation} returned HTTP ${response.status}${requestId ? ` (request ${requestId})` : ''}. No contact result was accepted.`);
+    throw new ExaRunHttpError(
+      response.status,
+      `Exa Agent ${operation} returned HTTP ${response.status}${requestId ? ` (request ${requestId})` : ''}. No contact result was accepted.`,
+    );
   }
   let payload: unknown;
   try { payload = await response.json(); } catch { throw new Error(`Exa Agent ${operation} returned invalid JSON.`); }

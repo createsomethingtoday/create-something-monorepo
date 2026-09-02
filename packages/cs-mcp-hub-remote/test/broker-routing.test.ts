@@ -624,6 +624,14 @@ test('NPG review pack excludes paid healthcare enrichment while retaining health
   assert.deepEqual(pack.preferences.excludedProxyTools, [
     'abundance-healthcare-mcp__enrich_provider_professional_contact',
   ]);
+
+  const alternatePack = resolveDiscoveryPack('shared-auth-core', runtime as any, {
+    HUB_DISCOVERY_SHARED_PACK: 'abundance-thenpgroup-review',
+  } as any);
+  assert.ok(alternatePack);
+  assert.deepEqual(alternatePack.preferences.excludedProxyTools, [
+    'abundance-healthcare-mcp__enrich_provider_professional_contact',
+  ]);
 });
 
 test('resolveDiscoveryPack returns C3Denver pack with the expected active services', () => {

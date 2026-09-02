@@ -413,8 +413,33 @@ test('Exa upstream failures do not reflect response bodies containing contact da
       { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn },
     ),
     (error: unknown) => {
-      assert.match(String(error), /HTTP 500.*request-safe-id/i);
+      assert.match(String(error), /create result is indeterminate.*do not retry/i);
       assert.doesNotMatch(String(error), /fake-contact/i);
+      return true;
+    },
+  );
+});
+
+test('Exa create connection failures are indeterminate and do not reflect transport details', async () => {
+  const fetchFn: typeof fetch = async (input) => {
+    if (String(input).includes('/api/abundance/healthcare-providers/nationwide')) {
+      return Response.json({ success: true, data: {
+        report,
+        providers: [{ npi: '1265049910', name: 'Jane Test Provider', source_fetched_at: '2026-09-02T01:39:07.502Z' }],
+        readiness: [], total: 1, limit: 1, offset: 0,
+      } } satisfies HealthcareApiResponse);
+    }
+    throw new Error('connection reset included fake-contact@example.test');
+  };
+
+  await assert.rejects(
+    enrichProviderProfessionalContact(
+      { npi: '1265049910', purpose: 'recruiting_outreach', confirm_paid_enrichment: true },
+      { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn },
+    ),
+    (error: unknown) => {
+      assert.match(String(error), /create result is indeterminate.*do not retry/i);
+      assert.doesNotMatch(String(error), /fake-contact|connection reset/i);
       return true;
     },
   );

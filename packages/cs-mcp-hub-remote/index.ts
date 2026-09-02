@@ -4065,6 +4065,7 @@ function normalizeDiscoveryPreferences(
   env?: Env,
 ): DiscoveryPreferences {
   const requiredActiveServers = getRequiredDiscoveryServers(runtime, env);
+  const mandatoryExcludedProxyTools = getMandatoryExcludedProxyTools(env);
   return {
     mode: prefs.mode,
     activeServers: resolveDiscoveryActiveServers(
@@ -4072,8 +4073,18 @@ function normalizeDiscoveryPreferences(
       runtime,
     ),
     maxProxyTools: resolveDiscoveryMaxProxyTools(prefs.maxProxyTools),
-    excludedProxyTools: uniqueSortedStrings(prefs.excludedProxyTools ?? []),
+    excludedProxyTools: uniqueSortedStrings([
+      ...(prefs.excludedProxyTools ?? []),
+      ...mandatoryExcludedProxyTools,
+    ]),
   };
+}
+
+function getMandatoryExcludedProxyTools(env?: Env): string[] {
+  if (!env) return [];
+  const sharedPackId = readEnvString(env, 'HUB_DISCOVERY_SHARED_PACK');
+  if (!sharedPackId) return [];
+  return parseStateStringArray(discoveryPackRegistry.packs?.[sharedPackId]?.excludedProxyTools);
 }
 
 function buildDiscoveryKvKey(env: Env, accountId: string): string {
