@@ -31,6 +31,21 @@ export interface HealthcareApiResponse {
 }
 export interface HealthcareClientOptions { agencyApiKey?: string; agencyBaseUrl?: string; fetchFn?: typeof fetch }
 
+export async function isAcceptedHealthcareBearer(provided: string | undefined, configured: Array<string | undefined>): Promise<boolean> {
+  const candidates = configured.map((value) => value?.trim()).filter((value): value is string => Boolean(value));
+  if (!provided || candidates.length === 0) return false;
+  return (await Promise.all(candidates.map((candidate) => constantTimeEqual(provided, candidate)))).some(Boolean);
+}
+
+async function constantTimeEqual(left: string, right: string): Promise<boolean> {
+  const [a, b] = await Promise.all([left, right].map(async (value) => new Uint8Array(
+    await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value)),
+  )));
+  let diff = a.length ^ b.length;
+  for (let index = 0; index < Math.max(a.length, b.length); index += 1) diff |= (a[index] ?? 0) ^ (b[index] ?? 0);
+  return diff === 0;
+}
+
 const marketIdSchema = z.enum(['npg-family-np-nationwide', 'npg-family-np-springfield-mo', 'npg-family-np-arlington-tx']);
 const searchCandidatesSchema = z.object({
   market_id: marketIdSchema,

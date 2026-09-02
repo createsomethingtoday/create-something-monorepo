@@ -5,6 +5,7 @@ import {
   NPG_HEALTHCARE_MARKETS,
   getHealthcareCoverage,
   getHealthcarePractitioner,
+  isAcceptedHealthcareBearer,
   listHealthcareMarkets,
   searchCoverageCandidates,
   type HealthcareApiResponse,
@@ -170,4 +171,13 @@ test('list healthcare markets exposes weekly defaults and no daily locale', asyn
   assert.ok(result.markets.every((market) => market.refresh_cadence === 'weekly'));
   assert.ok(result.markets.every((market) => market.daily_monitoring === false));
   assert.ok(result.markets.every((market) => market.latest_fetched_at === '2026-09-02T01:39:07.502Z'));
+});
+
+test('shared Hub bearer remains valid when a scoped direct key is also provisioned', async () => {
+  assert.equal(await isAcceptedHealthcareBearer('shared-hub-token', [
+    'shared-hub-token', 'scoped-direct-token',
+  ]), true);
+  assert.equal(await isAcceptedHealthcareBearer('wrong-token', [
+    'shared-hub-token', 'scoped-direct-token',
+  ]), false);
 });

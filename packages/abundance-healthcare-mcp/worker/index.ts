@@ -3,6 +3,7 @@ import { McpAgent } from 'agents/mcp';
 import { enableTelemetry } from '@create-something/mcp-core';
 import {
   DEFAULT_AGENCY_BASE_URL,
+  isAcceptedHealthcareBearer,
   registerAbundanceHealthcareTools,
   SERVER_NAME,
   SERVER_VERSION,
@@ -71,27 +72,20 @@ export async function validateApiKey(
   request: Request,
   env: Pick<Env, 'ABUNDANCE_MCP_BEARER_TOKEN' | 'ABUNDANCE_HEALTHCARE_MCP_API_KEY' | 'MCP_API_KEY'>,
 ): Promise<Response | null> {
-  const configured = env.ABUNDANCE_HEALTHCARE_MCP_API_KEY?.trim()
-    || env.ABUNDANCE_MCP_BEARER_TOKEN?.trim()
-    || env.MCP_API_KEY?.trim();
-  if (!configured) return jsonResponse({ error: 'ServerMisconfigured', message: 'Healthcare MCP bearer token is not configured.' }, 500);
+  const configured = [
+    env.ABUNDANCE_MCP_BEARER_TOKEN,
+    env.ABUNDANCE_HEALTHCARE_MCP_API_KEY,
+    env.MCP_API_KEY,
+  ].map((value) => value?.trim()).filter((value): value is string => Boolean(value));
+  if (configured.length === 0) return jsonResponse({ error: 'ServerMisconfigured', message: 'Healthcare MCP bearer token is not configured.' }, 500);
   const auth = request.headers.get('Authorization');
   const provided = auth?.toLowerCase().startsWith('bearer ')
     ? auth.slice(7).trim()
     : request.headers.get('X-API-Key')?.trim();
-  if (!provided || !(await constantTimeEqual(provided, configured))) {
+  if (!(await isAcceptedHealthcareBearer(provided, configured))) {
     return jsonResponse({ error: 'Unauthorized', message: 'Valid API key required.' }, 401);
   }
   return null;
-}
-
-async function constantTimeEqual(left: string, right: string): Promise<boolean> {
-  const [a, b] = await Promise.all([left, right].map(async (value) => new Uint8Array(
-    await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value)),
-  )));
-  let diff = a.length ^ b.length;
-  for (let index = 0; index < Math.max(a.length, b.length); index += 1) diff |= (a[index] ?? 0) ^ (b[index] ?? 0);
-  return diff === 0;
 }
 
 function jsonResponse(data: unknown, status = 200): Response {

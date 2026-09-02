@@ -184,15 +184,38 @@ export async function finalizeNationwideRun(db: D1Database, input: {
 		SET status = 'succeeded', finished_at = ?, source_sha256 = ?, provider_count = ?
 		WHERE id = ? AND status = 'running'
 	`).bind(input.finishedAt, input.sourceSha256, count.provider_count, input.runId).run();
+	await pruneNationwideSnapshots(db, 2);
 	return (await readNationwideRun(db, input.runId))!;
 }
 
 export async function failNationwideRun(db: D1Database, runId: string, error: string): Promise<void> {
-	await db.prepare(`
-		UPDATE abundance_healthcare_nationwide_runs
-		SET status = 'failed', finished_at = datetime('now'), error = ?
-		WHERE id = ? AND status = 'running'
-	`).bind(error.slice(0, 500), runId).run();
+	await db.batch([
+		db.prepare('DELETE FROM abundance_healthcare_nationwide_memberships WHERE run_id = ?').bind(runId),
+		db.prepare(`
+			UPDATE abundance_healthcare_nationwide_runs
+			SET status = 'failed', finished_at = datetime('now'), error = ?
+			WHERE id = ? AND status = 'running'
+		`).bind(error.slice(0, 500), runId)
+	]);
+}
+
+export async function pruneNationwideSnapshots(db: D1Database, retain = 2): Promise<string[]> {
+	const old = await db.prepare(`
+		SELECT id FROM abundance_healthcare_nationwide_runs
+		WHERE status = 'succeeded'
+		ORDER BY finished_at DESC
+		LIMIT -1 OFFSET ?
+	`).bind(Math.max(1, retain)).all<{ id: string }>();
+	const ids = (old.results ?? []).map((row) => row.id);
+	if (ids.length === 0) return [];
+	for (const id of ids) {
+		await db.batch([
+			db.prepare('UPDATE abundance_healthcare_nationwide_runs SET base_run_id = NULL WHERE base_run_id = ?').bind(id),
+			db.prepare('DELETE FROM abundance_healthcare_nationwide_memberships WHERE run_id = ?').bind(id),
+			db.prepare('DELETE FROM abundance_healthcare_nationwide_runs WHERE id = ?').bind(id)
+		]);
+	}
+	return ids;
 }
 
 export async function queryNationwideCoverage(db: D1Database, input: {
@@ -217,16 +240,16 @@ export async function queryNationwideCoverage(db: D1Database, input: {
 	if (!run) throw new Error('No successful nationwide healthcare snapshot is available.');
 	const limit = Math.min(Math.max(input.limit ?? 25, 1), 25);
 	const offset = Math.min(Math.max(input.offset ?? 0, 0), 1_000_000);
-	const filters = ['run_id = ?'];
+	const filters = ['m.run_id = ?'];
 	const args: unknown[] = [run.id];
-	if (input.state) { filters.push('practice_state = upper(?)'); args.push(input.state); }
-	if (input.city) { filters.push('practice_city = lower(?)'); args.push(input.city); }
-	if (input.name) { filters.push('name_search LIKE ?'); args.push(`%${input.name.toLowerCase()}%`); }
-	if (input.npi) { filters.push('provider_npi = ?'); args.push(input.npi); }
-	if (input.updatedSince) { filters.push('last_updated_date >= ?'); args.push(input.updatedSince); }
+	if (input.state) { filters.push('m.practice_state = upper(?)'); args.push(input.state); }
+	if (input.city) { filters.push('m.practice_city = lower(?)'); args.push(input.city); }
+	if (input.name) { filters.push('m.name_search LIKE ?'); args.push(`%${input.name.toLowerCase()}%`); }
+	if (input.npi) { filters.push('m.provider_npi = ?'); args.push(input.npi); }
+	if (input.updatedSince) { filters.push('m.last_updated_date >= ?'); args.push(input.updatedSince); }
 	const where = filters.join(' AND ');
 	const evaluatedAt = input.evaluatedAt ?? new Date().toISOString();
-	const [aggregate, rows] = await Promise.all([
+	const [aggregate, rows, readyAggregate] = await Promise.all([
 		db.prepare(`
 			SELECT count(*) AS total,
 				sum(CASE WHEN provider_status = 'active' THEN 1 ELSE 0 END) AS active_count,
@@ -241,7 +264,7 @@ export async function queryNationwideCoverage(db: D1Database, input: {
 				sum(practice_has_phone) AS phone_count,
 				sum(license_has_fields) AS license_count,
 				sum(CASE WHEN endpoint_count > 0 THEN 1 ELSE 0 END) AS endpoint_count
-			FROM abundance_healthcare_nationwide_memberships WHERE ${where}
+			FROM abundance_healthcare_nationwide_memberships m WHERE ${where}
 		`).bind(evaluatedAt.slice(0, 10), evaluatedAt.slice(0, 10), evaluatedAt.slice(0, 10), ...args).first<{
 			total: number; active_count: number; deactivated_count: number; unknown_status_count: number;
 			updated_1y: number; updated_3y: number; older_3y: number; unknown_recency: number;
@@ -249,11 +272,39 @@ export async function queryNationwideCoverage(db: D1Database, input: {
 		}>(),
 		db.prepare(`
 			SELECT provider_snapshot_json
-			FROM abundance_healthcare_nationwide_memberships
+			FROM abundance_healthcare_nationwide_memberships m
 			WHERE ${where}
-			ORDER BY coalesce(last_updated_date, '') DESC, provider_npi ASC
+			ORDER BY coalesce(m.last_updated_date, '') DESC, m.provider_npi ASC
 			LIMIT ? OFFSET ?
-		`).bind(...args, limit, offset).all<{ provider_snapshot_json: string }>()
+		`).bind(...args, limit, offset).all<{ provider_snapshot_json: string }>(),
+		db.prepare(`
+			WITH latest_evidence AS (
+				SELECT e.provider_npi, e.evidence_kind, e.source_system, e.outcome,
+					e.verified_at, e.valid_through,
+					ROW_NUMBER() OVER (
+						PARTITION BY e.provider_npi, e.evidence_kind
+						ORDER BY unixepoch(e.verified_at) DESC, e.created_at DESC, e.id DESC
+					) AS evidence_rank
+				FROM abundance_healthcare_provider_recruiting_evidence e
+				INNER JOIN abundance_healthcare_nationwide_memberships m
+					ON m.provider_npi = e.provider_npi
+				WHERE ${where}
+					AND (
+						(e.evidence_kind IN ('license_or_privilege', 'discipline') AND e.source_system = 'missouri_board_or_nursys')
+						OR (e.evidence_kind = 'exclusion' AND e.source_system = 'oig_leie')
+						OR (e.evidence_kind = 'practice_or_employment' AND e.source_system IN ('cms_doctors_and_clinicians', 'npg_first_party'))
+						OR (e.evidence_kind IN ('contact_route', 'outreach_authority', 'recruiter_approval') AND e.source_system = 'npg_first_party')
+					)
+			), ready AS (
+				SELECT provider_npi
+				FROM latest_evidence
+				WHERE evidence_rank = 1
+				GROUP BY provider_npi
+				HAVING count(DISTINCT evidence_kind) = 7
+					AND sum(CASE WHEN outcome = 'passed' AND verified_at <= ? AND valid_through >= ? THEN 1 ELSE 0 END) = 7
+			)
+			SELECT count(*) AS recruiter_ready_count FROM ready
+		`).bind(...args, evaluatedAt, evaluatedAt).first<{ recruiter_ready_count: number }>()
 	]);
 	const providers = (rows.results ?? []).map((row) => JSON.parse(row.provider_snapshot_json) as HealthcareProvider);
 	const evidence = await readHealthcareRecruitingEvidence(db, providers.map((provider) => provider.npi));
@@ -292,8 +343,53 @@ export async function queryNationwideCoverage(db: D1Database, input: {
 		license_field_count: aggregate?.license_count ?? 0,
 		endpoint_count: aggregate?.endpoint_count ?? 0
 	};
-	report.recruiting_pipeline.coverage_candidate_count = Math.max(0, total - report.recruiting_pipeline.recruiter_ready_count);
+	const recruiterReadyCount = readyAggregate?.recruiter_ready_count ?? 0;
+	report.recruiting_pipeline.recruiter_ready_count = recruiterReadyCount;
+	report.recruiting_pipeline.coverage_candidate_count = Math.max(0, total - recruiterReadyCount);
+	applyAggregateCoverageJudgment(report, run, aggregate, recruiterReadyCount, evaluatedAt);
 	return { run, report, providers, readiness, total, limit, offset };
+}
+
+function applyAggregateCoverageJudgment(
+	report: ReturnType<typeof assessHealthcareProviderCoverage>,
+	run: NationwideRun,
+	aggregate: {
+		total: number; active_count: number; older_3y: number; unknown_recency: number;
+		taxonomy_count: number; location_count: number;
+	} | null | undefined,
+	recruiterReadyCount: number,
+	evaluatedAt: string
+): void {
+	const total = aggregate?.total ?? 0;
+	const reasons: string[] = [];
+	let status: 'ready' | 'degraded' | 'blocked' = 'ready';
+	if (total === 0) {
+		status = 'blocked';
+		reasons.push('No provider records were available for this persona and geography.');
+	} else if ((aggregate?.active_count ?? 0) === 0) {
+		status = 'blocked';
+		reasons.push('No active provider records were available for this persona and geography.');
+	} else {
+		if ((aggregate?.active_count ?? 0) / total < 0.8) reasons.push('Fewer than 80% of records are active in NPPES.');
+		if ((aggregate?.taxonomy_count ?? 0) / total < 0.9) reasons.push('Fewer than 90% of records have a primary taxonomy.');
+		if ((aggregate?.location_count ?? 0) / total < 0.8) reasons.push('Fewer than 80% of records have a usable practice location.');
+		if ((aggregate?.older_3y ?? 0) / total > 0.5) reasons.push('More than half of the cohort has not received an NPPES administrative update in over three years.');
+		if ((aggregate?.unknown_recency ?? 0) > 0) reasons.push('Administrative update recency is unknown for one or more records.');
+		const assessed = run.included_count + run.rejected_count;
+		if (assessed > 0 && run.rejected_count / assessed > 0.05) reasons.push('More than 5% of canonical source records failed provider normalization.');
+		if (run.finished_at && (Date.parse(evaluatedAt) - Date.parse(run.finished_at)) / 86_400_000 > 7) reasons.push('The latest source fetch is more than seven days old.');
+		if (reasons.length > 0) status = 'degraded';
+	}
+	if (reasons.length === 0) reasons.push('The source snapshot is current and the cohort has sufficient taxonomy and location coverage for market analysis.');
+	report.market_coverage_status = status;
+	report.market_coverage_reasons = reasons;
+	report.direct_outreach_status = total > 0 && recruiterReadyCount === total ? 'ready' : 'blocked';
+	report.direct_outreach_reasons = report.direct_outreach_status === 'ready'
+		? ['Every provider in this cohort has current evidence for every recruiting promotion gate.']
+		: [
+			'NPPES does not provide recruiting consent, personal contact details, or current employment availability.',
+			'One or more providers remain coverage candidates because current recruiting evidence is incomplete.'
+		];
 }
 
 export async function latestSuccessfulNationwideRun(db: D1Database): Promise<NationwideRun | null> {

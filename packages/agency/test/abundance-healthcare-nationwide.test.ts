@@ -67,6 +67,50 @@ test('weekly increments copy the last successful snapshot then add and remove NP
 		const arlington = await queryNationwideCoverage(fixture.db, { state: 'TX', city: 'Arlington' });
 		assert.equal(arlington.total, 1);
 		assert.equal(arlington.providers[0].npi, '1000000002');
+		await beginNationwideRun(fixture.db, {
+			id: 'abnationalrun_weekly2', sourceKind: 'weekly_incremental', sourceFile: 'weekly2.zip',
+			sourceUrl: 'https://download.cms.gov/weekly2.zip', startedAt: '2026-09-15T00:00:00Z'
+		});
+		await applyNationwideChunk(fixture.db, {
+			runId: 'abnationalrun_weekly2', providers: [provider('1000000003', 'CA', 'Oakland')],
+			removeNpis: [], processedRowCount: 1, rejectedCount: 0
+		});
+		await finalizeNationwideRun(fixture.db, {
+			runId: 'abnationalrun_weekly2', finishedAt: '2026-09-15T01:00:00Z', sourceSha256: 'e'.repeat(64), expectedProcessedRowCount: 1
+		});
+		const retained = fixture.database.prepare("SELECT count(*) AS count FROM abundance_healthcare_nationwide_runs WHERE status = 'succeeded'").get() as { count: number };
+		assert.equal(retained.count, 2);
+		const oldMemberships = fixture.database.prepare("SELECT count(*) AS count FROM abundance_healthcare_nationwide_memberships WHERE run_id = 'abnationalrun_base'").get() as { count: number };
+		assert.equal(oldMemberships.count, 0);
+	} finally { fixture.database.close(); }
+});
+
+test('coverage health and outreach are derived from the full cohort, not the first page', async () => {
+	const fixture = await createDatabase();
+	try {
+		const providers = Array.from({ length: 35 }, (_, index) => ({
+			...provider(String(2_000_000_000 + index), 'TX', 'Arlington'),
+			status: index < 25 ? 'active' as const : 'deactivated' as const,
+			last_updated_date: index < 25 ? '2026-09-01' : '2016-01-01'
+		}));
+		await beginNationwideRun(fixture.db, {
+			id: 'abnationalrun_health', sourceKind: 'monthly_full', sourceFile: 'health.zip',
+			sourceUrl: 'https://download.cms.gov/health.zip', startedAt: '2026-09-02T00:00:00Z'
+		});
+		await applyNationwideChunk(fixture.db, {
+			runId: 'abnationalrun_health', providers, removeNpis: [], processedRowCount: 35, rejectedCount: 0
+		});
+		await finalizeNationwideRun(fixture.db, {
+			runId: 'abnationalrun_health', finishedAt: '2026-09-02T01:00:00Z', sourceSha256: 'f'.repeat(64), expectedProcessedRowCount: 35
+		});
+		const result = await queryNationwideCoverage(fixture.db, { state: 'TX', city: 'Arlington', limit: 25, evaluatedAt: '2026-09-02T02:00:00Z' });
+		assert.equal(result.providers.length, 25);
+		assert.equal(result.report.provider_count, 35);
+		assert.equal(result.report.active_count, 25);
+		assert.equal(result.report.market_coverage_status, 'degraded');
+		assert.match(result.report.market_coverage_reasons.join(' '), /fewer than 80%.*active/i);
+		assert.equal(result.report.direct_outreach_status, 'blocked');
+		assert.equal(result.report.recruiting_pipeline.recruiter_ready_count, 0);
 	} finally { fixture.database.close(); }
 });
 
@@ -111,4 +155,3 @@ async function createDatabase(): Promise<{ database: DatabaseSync; db: D1Databas
 	} as unknown as D1Database;
 	return { database, db };
 }
-
