@@ -487,6 +487,39 @@ test('Exa verified-match labels still require a usable source citation', async (
   assert.equal(result.identity_verification_status, 'operator_review_required');
 });
 
+test('Exa enrichment suppresses contact types the operator did not request', async () => {
+  const fetchFn: typeof fetch = async (input) => {
+    if (String(input).includes('/api/abundance/healthcare-providers/nationwide')) {
+      return Response.json({ success: true, data: {
+        report,
+        providers: [{ npi: '1265049910', name: 'Jane Test Provider', source_fetched_at: '2026-09-02T01:39:07.502Z' }],
+        readiness: [], total: 1, limit: 1, offset: 0,
+      } } satisfies HealthcareApiResponse);
+    }
+    return Response.json({
+      id: 'agent_run_unrequested_phone', object: 'agent_run', status: 'completed',
+      output: { structured: {
+        match_status: 'verified_match', identity_reason: 'Exact NPI match.',
+        professional_profile_url: null, professional_email: null,
+        professional_phone: '+1 555 0100', current_professional_affiliation: null,
+        evidence_summary: 'A phone was returned despite the email-only request.',
+      }, grounding: [{ url: 'https://example.test/provider' }] },
+      costDollars: { total: 0.032 },
+    });
+  };
+
+  const result = await enrichProviderProfessionalContact(
+    {
+      npi: '1265049910', purpose: 'recruiting_outreach', confirm_paid_enrichment: true,
+      contact_types: ['email'],
+    },
+    { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn },
+  );
+
+  assert.equal(result.professional_contact.phone, undefined);
+  assert.equal(result.contact_route_status, 'no_contact_candidate_found');
+});
+
 test('candidate search is bounded, filterable, and omits bulk contact fields', async () => {
   const providers = [
     {

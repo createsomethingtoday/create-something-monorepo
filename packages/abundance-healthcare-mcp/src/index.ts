@@ -321,9 +321,10 @@ export async function enrichProviderProfessionalContact(input: z.input<typeof pr
   const structured = exaStructuredOutputSchema.parse(run.output?.structured);
   const sourceCitations = Array.isArray(run.output?.grounding) ? run.output.grounding : [];
   const matchAllowsCandidate = structured.match_status === 'verified_match' || structured.match_status === 'plausible_match';
-  const hasCandidate = Boolean(
-    matchAllowsCandidate && (structured.professional_profile_url || structured.professional_email || structured.professional_phone),
-  );
+  const acceptedProfileUrl = matchAllowsCandidate ? structured.professional_profile_url : undefined;
+  const acceptedEmail = matchAllowsCandidate && requestedEmail ? structured.professional_email : undefined;
+  const acceptedPhone = matchAllowsCandidate && requestedPhone ? structured.professional_phone : undefined;
+  const hasCandidate = Boolean(acceptedProfileUrl || acceptedEmail || acceptedPhone);
   const estimatedMaxCostUsd = 0.012 + (requestedEmail ? 0.02 : 0) + (requestedPhone ? 0.07 : 0);
   return {
     provider: compactObject({ npi: provider.npi, name: provider.name, taxonomy: cleanString(provider.primary_taxonomy_description) }),
@@ -332,9 +333,9 @@ export async function enrichProviderProfessionalContact(input: z.input<typeof pr
     match_status: structured.match_status,
     identity_reason: structured.identity_reason,
     professional_contact: compactObject({
-      profile_url: matchAllowsCandidate ? structured.professional_profile_url ?? undefined : undefined,
-      email: matchAllowsCandidate ? structured.professional_email ?? undefined : undefined,
-      phone: matchAllowsCandidate ? structured.professional_phone ?? undefined : undefined,
+      profile_url: acceptedProfileUrl ?? undefined,
+      email: acceptedEmail ?? undefined,
+      phone: acceptedPhone ?? undefined,
       current_affiliation: matchAllowsCandidate ? structured.current_professional_affiliation ?? undefined : undefined,
     }),
     evidence_summary: structured.evidence_summary ?? undefined,
