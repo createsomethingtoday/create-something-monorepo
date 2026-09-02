@@ -532,7 +532,7 @@
       },
       "package_path": "packages/abundance-healthcare-mcp",
       "related_deployments": ["abundance-thenpgroup", "create-something-agency"],
-      "notes": "Production deployed 2026-09-02 as Worker version 0caa86a9-c8dc-4f05-a9d1-7fba64ee601f. The NPG hub includes the service through the abundance-thenpgroup-review discovery pack and a live routed coverage call returned the complete current nationwide snapshot with outreach fail-closed."
+      "notes": "Production deployed 2026-09-02; current Worker version 1e062e10-b6a7-42d8-8adc-16fe9ddc85d1 supports bounded arbitrary US state and city searches. The NPG hub includes the service through the abundance-thenpgroup-review discovery pack; live routed Austin and nationwide calls returned uncapped coverage with outreach fail-closed."
     },
     "abundance-thenpgroup": {
       "type": "policy_os_hub",
