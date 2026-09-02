@@ -51,6 +51,7 @@ async function nativePage(role, viewport, restoredQueue = false) {
     let titleSubmission = 0;
     window.__nativeCalls = [];
     window.__nativeConflictNextReplace = false;
+    window.__nativeConflictInFlight = false;
     window.__TAURI_INTERNALS__ = {
       invoke: async (command, args = {}) => {
         window.__nativeCalls.push({ command, args });
@@ -70,7 +71,10 @@ async function nativePage(role, viewport, restoredQueue = false) {
         if (command === 'draw_host_apply_local' || command === 'draw_companion_submit') {
           const operation = args.operation;
           if (operation.type === 'replace_objects' && window.__nativeConflictNextReplace) {
+            window.__nativeConflictInFlight = true;
+            await new Promise((resolve) => setTimeout(resolve, 100));
             window.__nativeConflictNextReplace = false;
+            window.__nativeConflictInFlight = false;
             const authoritative = { ...structuredClone(document), title: 'Conflict authoritative canvas' };
             document = authoritative;
             return { status: 'conflict', code: 'STALE_REVISION', revision, document: authoritative, queueDepth: 0, online };
@@ -232,7 +236,7 @@ try {
   if (!resizeForPinch) throw new Error('Native group resize affordance disappeared');
   await resize.dispatchEvent('pointerdown', { pointerId: 42, pointerType: 'touch', button: 0, clientX: resizeForPinch.x + 5, clientY: resizeForPinch.y + 5 });
   await surface.dispatchEvent('pointermove', { pointerId: 42, pointerType: 'touch', button: 0, clientX: resizeForPinch.x + 45, clientY: resizeForPinch.y + 45 });
-  await surface.dispatchEvent('pointerdown', { pointerId: 43, pointerType: 'touch', button: 0, clientX: box.x + 300, clientY: box.y + 350 });
+  await resize.dispatchEvent('pointerdown', { pointerId: 43, pointerType: 'touch', button: 0, clientX: resizeForPinch.x + 7, clientY: resizeForPinch.y + 7 });
   await surface.dispatchEvent('pointermove', { pointerId: 43, pointerType: 'touch', button: 0, clientX: box.x + 340, clientY: box.y + 390 });
   await surface.dispatchEvent('pointerup', { pointerId: 43, pointerType: 'touch', button: 0, clientX: box.x + 340, clientY: box.y + 390 });
   await resize.dispatchEvent('pointerup', { pointerId: 42, pointerType: 'touch', button: 0, clientX: resizeForPinch.x + 45, clientY: resizeForPinch.y + 45 });
@@ -249,12 +253,14 @@ try {
   await page.getByRole('button', { name: 'Test offline' }).click();
   await page.getByRole('button', { name: 'Close pairing' }).click();
   await page.getByRole('button', { name: /Pen tool/ }).click();
-  await page.mouse.move(box.x + 50, box.y + 90);
-  await page.mouse.down();
-  await page.mouse.move(box.x + 180, box.y + 140, { steps: 6 });
-  await page.mouse.up();
-  await page.getByText(/action queued/).waitFor();
-  if (await page.locator('path[aria-label="Ink stroke"]').count() < 1) throw new Error('Queued optimistic ink disappeared before reconnect');
+  const currentBox = await surface.boundingBox();
+  if (!currentBox) throw new Error('iPhone canvas surface disappeared after pinch verification');
+  await surface.dispatchEvent('pointerdown', { pointerId: 60, pointerType: 'mouse', button: 0, clientX: currentBox.x + 50, clientY: currentBox.y + 90 });
+  await surface.dispatchEvent('pointermove', { pointerId: 60, pointerType: 'mouse', button: 0, clientX: currentBox.x + 180, clientY: currentBox.y + 140 });
+  await surface.dispatchEvent('pointerup', { pointerId: 60, pointerType: 'mouse', button: 0, clientX: currentBox.x + 180, clientY: currentBox.y + 140 });
+  await page.locator('path[aria-label="Ink stroke"]').last().waitFor();
+  const queuedInk = await page.evaluate(() => window.__nativeCalls.some(({ command, args }) => command === 'draw_companion_submit' && args?.operation?.type === 'put_object' && args.operation.object?.kind === 'stroke'));
+  if (!queuedInk) throw new Error('Offline ink did not reach the durable companion queue');
   await page.getByRole('button', { name: 'Open device pairing' }).click();
   await page.getByRole('button', { name: 'Reconnect' }).click();
   await page.getByLabel('Canvas title').waitFor();

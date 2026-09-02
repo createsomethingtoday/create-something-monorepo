@@ -134,10 +134,16 @@ fn operation_references_id(operation: &CanvasOperation, id: &str) -> bool {
     }
 }
 
-fn discard_queued_replacements(queue: &mut VecDeque<OperationEnvelope>) -> usize {
-    let before = queue.len();
-    queue.retain(|envelope| !matches!(envelope.operation, CanvasOperation::ReplaceObjects { .. }));
-    before - queue.len()
+fn discard_queue_with_replacement(queue: &mut VecDeque<OperationEnvelope>) -> usize {
+    if !queue
+        .iter()
+        .any(|envelope| matches!(envelope.operation, CanvasOperation::ReplaceObjects { .. }))
+    {
+        return 0;
+    }
+    let discarded = queue.len();
+    queue.clear();
+    discarded
 }
 
 pub(crate) struct DrawRuntime {
@@ -1045,8 +1051,8 @@ async fn flush_companion(runtime: &DrawRuntime) -> Result<Value, String> {
                 "code": "INVALID_OPERATION"
             }));
         }
-        let discarded_replacements = discard_queued_replacements(&mut session.queue);
-        if discarded_replacements > 0 {
+        let discarded_operations = discard_queue_with_replacement(&mut session.queue);
+        if discarded_operations > 0 {
             persist_companion_state(&runtime.companion_state_path, session)?;
             return Ok(json!({
                 "status": "conflict",
@@ -1054,7 +1060,7 @@ async fn flush_companion(runtime: &DrawRuntime) -> Result<Value, String> {
                 "revision": session.revision,
                 "document": session.document,
                 "code": "STALE_REVISION",
-                "discardedReplacements": discarded_replacements
+                "discardedOperations": discarded_operations
             }));
         }
         let revision = session.revision;
@@ -2019,7 +2025,7 @@ mod tests {
     }
 
     #[test]
-    fn stale_rebase_discards_replacements_anywhere_in_the_queue() {
+    fn stale_rebase_discards_the_whole_history_batch_around_a_replacement() {
         let operation = |id: &str, operation| OperationEnvelope {
             protocol_version: PROTOCOL_VERSION.into(),
             document_version: DOCUMENT_VERSION.into(),
@@ -2058,11 +2064,8 @@ mod tests {
             ),
         ]);
 
-        assert_eq!(discard_queued_replacements(&mut queue), 2);
-        assert_eq!(queue.len(), 2);
-        assert!(queue
-            .iter()
-            .all(|envelope| !matches!(envelope.operation, CanvasOperation::ReplaceObjects { .. })));
+        assert_eq!(discard_queue_with_replacement(&mut queue), 4);
+        assert!(queue.is_empty());
     }
 
     #[test]

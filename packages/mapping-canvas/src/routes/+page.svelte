@@ -70,6 +70,7 @@
   let mirrorTimer: ReturnType<typeof setInterval> | undefined;
   let nativeTail: Promise<void> = Promise.resolve();
   let nativeOptimisticVersion = 0;
+  let nativeConflictEpoch = 0;
   const activeTouches = new Map<number, { x: number; y: number }>();
   let pinch: { distance: number; world: Point } | null = null;
   let pendingTouchAction: { pointerId: number; point: Point; tool: 'note' | 'group' } | null = null;
@@ -150,8 +151,10 @@
   function sendNative(operations: CanvasOperation[], recordsHistory = false, preserveFuture = false) {
     if (nativeRole === 'web' || !operations.length) return;
     const role = nativeRole;
+    const conflictEpoch = nativeConflictEpoch;
     const queued = operations.map((operation) => ({ operation, optimisticVersion: ++nativeOptimisticVersion }));
     nativeTail = nativeTail.then(async () => {
+      if (conflictEpoch !== nativeConflictEpoch) return;
       let authoritativePrevious: CanvasDocument | undefined;
       for (const { operation, optimisticVersion } of queued) {
         const result = await submitNativeOperation(role, operation);
@@ -159,6 +162,7 @@
         authoritativePrevious ||= result.previousDocument;
         nativeSession = { ...nativeSession, ...result };
         if (result.status === 'conflict') {
+          nativeConflictEpoch += 1;
           nativeOptimisticVersion += 1;
           if (authoritativeDocument) history = { past: [], present: authoritativeDocument, future: [] };
           status = 'Session changed on Mac · authoritative canvas restored';
@@ -349,7 +353,7 @@
   }
   function resizePointer(event: PointerEvent, id: string) {
     event.stopPropagation();
-    if (tool !== 'select' || !companionCanEdit()) return;
+    if (pinch || tool !== 'select' || !companionCanEdit()) return;
     const here = point(event); selectedIds = [id]; resizingGroupId = id; resizeOrigin = document; resizeMoved = false; drawing = true; start = here;
     try { surface.setPointerCapture(event.pointerId); } catch { /* SVG pointer capture is not supported in every browser. */ }
   }
