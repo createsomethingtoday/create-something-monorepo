@@ -1,0 +1,117 @@
+The new bottleneck is proof
+
+Two launches this week point in the same direction.
+
+Webflow Source gives agents direct access to the code that ships. Claude
+Fable 5.1 gives them more capacity for long-running coding and knowledge
+work.
+
+The first makes the artifact more legible. The second makes the actor
+more capable.
+
+Neither makes the outcome self-proving.
+
+As execution gets cheaper and more autonomous, the scarce part moves
+from making the change to proving what happened.
+
+Source makes the artifact canonical
+
+Webflow describes Source as a shared environment where marketers,
+designers, developers, and agents work directly on real code. The canvas
+and the agent are different views over the same artifact. Roles, review
+paths, and audit trails govern what can ship.
+
+But canonical code does not collapse the delivery chain.
+
+A pull request can be green but unmerged. Code can be merged but
+undeployed. A deployment can succeed on a branch alias while the
+canonical domain still serves the previous build. A shared library can
+be uploaded while the destination site still uses an older revision.
+
+Source answers: “What is the artifact?”
+
+The operator still has to answer: “Which state is proved?”
+
+Fable makes the actor more capable
+
+Anthropic positions Fable 5.1 for demanding reasoning and long-horizon
+agentic work. It adds readable progress updates between tool calls and
+content provenance. Cheaper cache reads also reduce the cost of agent
+loops that repeatedly use the same context.
+
+Those are useful improvements. They are still not acceptance evidence.
+
+Anthropic says the model can sometimes bypass approvals and that its
+evaluations have less coverage for very long-context and multi-agent
+work. An independent CodeRabbit review found better precision and fewer
+comments than Fable 5, but most final comments were still judged invalid.
+
+The model can report what it tried. The delivery system must prove what
+changed.
+
+The receipt names the transition
+
+We hit this distinction while publishing the CREATE SOMETHING newsletter
+archive.
+
+The first Cloudflare upload succeeded. The archive was still not live.
+It came from a feature branch, so Cloudflare created a branch alias.
+That receipt proved the artifact had reached Pages. It did not prove
+that createsomething.io served it.
+
+We promoted the same artifact with branch=main and the merged commit SHA.
+Then we checked the public archive, the edition, the sitemap, and the
+rendered HTML. Each receipt proved a different transition.
+
+The practical rule is simple:
+
+Every receipt should name the state it proves and the next state it does
+not prove.
+
+Use a small state chain
+
+1. Authored — the artifact exists.
+2. Reviewed — the candidate passed its declared checks and review.
+3. Merged — the canonical source contains the accepted change.
+4. Deployed — the production runtime accepted the merged artifact.
+5. Observed — the intended surface behaves as expected.
+
+The labels can change. The separation should not.
+
+Keep six fields in every receipt
+
+artifact: newsletter-archive
+state: deployed
+evidence: cloudflare-pages-deployment
+observed_at: 2026-09-02T17:20:57Z
+owner: create-something-io
+next_gate: verify-canonical-domain
+
+The important field is next_gate. It stops the current receipt from
+silently claiming the next transition.
+
+What this proves—and what it does not
+
+Source and Fable 5.1 support a narrow conclusion: agents are getting
+better access to the artifact and more capacity to act on it. That makes
+proof infrastructure more important, not less.
+
+It does not prove that Source’s announced model works in production;
+Source is in a limited research preview. It does not prove Fable 5.1 is
+right for every workflow. It does not make model provenance equivalent
+to a successful deploy or a correct public result.
+
+The artifact can be canonical. The agent can be capable.
+
+The receipt must still make the transition legible.
+
+Use the Proof Surface template:
+https://createsomething.io/papers/proof-surface
+
+Webflow Source:
+https://webflow.com/source
+
+Claude Fable 5.1:
+https://www.anthropic.com/claude-fable-and-mythos-5-1
+
+— CREATE SOMETHING
