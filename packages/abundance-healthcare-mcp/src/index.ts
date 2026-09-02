@@ -324,7 +324,7 @@ export async function enrichProviderProfessionalContact(input: z.input<typeof pr
   const acceptedProfileUrl = matchAllowsCandidate ? structured.professional_profile_url : undefined;
   const acceptedEmail = matchAllowsCandidate && requestedEmail ? structured.professional_email : undefined;
   const acceptedPhone = matchAllowsCandidate && requestedPhone ? structured.professional_phone : undefined;
-  const hasCandidate = Boolean(acceptedProfileUrl || acceptedEmail || acceptedPhone);
+  const hasCandidate = Boolean(acceptedEmail || acceptedPhone);
   const estimatedMaxCostUsd = 0.012 + (requestedEmail ? 0.02 : 0) + (requestedPhone ? 0.07 : 0);
   return {
     provider: compactObject({ npi: provider.npi, name: provider.name, taxonomy: cleanString(provider.primary_taxonomy_description) }),

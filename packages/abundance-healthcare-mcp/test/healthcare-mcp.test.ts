@@ -168,15 +168,15 @@ test('confirmed Exa enrichment is bounded to one exact provider and preserves un
           match_status: 'plausible_match',
           identity_reason: 'Name, profession, and market align; NPI was not present on the profile.',
           professional_profile_url: 'https://example.test/professional-profile',
-          professional_email: null,
+          professional_email: 'jane.provider@example.test',
           professional_phone: null,
           current_professional_affiliation: null,
           evidence_summary: 'One public professional profile was located.',
         },
         grounding: [{ field: 'professional_profile_url', citations: [{ url: 'https://example.test/professional-profile' }] }],
       },
-      usage: { agentComputeUnits: 0.1, searches: 1, emails: 0, phoneNumbers: 0 },
-      costDollars: { total: 0.012, agentCompute: 0.012, search: 0, emails: 0, phoneNumbers: 0 },
+      usage: { agentComputeUnits: 0.1, searches: 1, emails: 1, phoneNumbers: 0 },
+      costDollars: { total: 0.032, agentCompute: 0.012, search: 0, emails: 0.02, phoneNumbers: 0 },
     });
   };
 
@@ -525,7 +525,7 @@ test('Exa enrichment suppresses contact types the operator did not request', asy
       id: 'agent_run_unrequested_phone', object: 'agent_run', status: 'completed',
       output: { structured: {
         match_status: 'verified_match', identity_reason: 'Exact NPI match.',
-        professional_profile_url: null, professional_email: null,
+        professional_profile_url: 'https://example.test/provider-profile', professional_email: null,
         professional_phone: '+1 555 0100', current_professional_affiliation: null,
         evidence_summary: 'A phone was returned despite the email-only request.',
       }, grounding: [{ url: 'https://example.test/provider' }] },
@@ -542,6 +542,7 @@ test('Exa enrichment suppresses contact types the operator did not request', asy
   );
 
   assert.equal(result.professional_contact.phone, undefined);
+  assert.equal(result.professional_contact.profile_url, 'https://example.test/provider-profile');
   assert.equal(result.contact_route_status, 'no_contact_candidate_found');
 });
 
