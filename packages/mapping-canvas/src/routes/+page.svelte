@@ -109,7 +109,10 @@
   });
 
   function queueAgentMutation<T>(action: () => Promise<T> | T): Promise<T> {
-    const queued = agentMutationTail.then(action);
+    const queued = agentMutationTail.then(() => {
+      if (resizingGroupId || resizeOrigin) throw new Error('Finish the active group resize before applying an agent canvas change.');
+      return action();
+    });
     agentMutationTail = queued.then(() => undefined, () => undefined);
     return queued;
   }

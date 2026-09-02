@@ -37,6 +37,13 @@ export type DrawWebMcpTool = {
 const emptySchema = { type: 'object', properties: {}, additionalProperties: false };
 const toolNames: Tool[] = ['select', 'pen', 'eraser', 'rectangle', 'ellipse', 'arrow', 'note', 'connector', 'group', 'pan'];
 const pointSchema = { type: 'object', required: ['x', 'y'], additionalProperties: false, properties: { x: { type: 'number' }, y: { type: 'number' } } };
+const canvasTitleSchema = {
+  type: 'string',
+  minLength: 1,
+  maxLength: 240,
+  description: 'Canvas title. Maximum 240 UTF-8 bytes; this byte limit is validated atomically when the operation runs.',
+  'x-maxUtf8Bytes': 240
+};
 const canvasObjectSchema = {
   oneOf: [
     { type: 'object', required: ['id', 'kind', 'createdAt', 'points', 'color', 'width'], properties: { id: { type: 'string' }, kind: { const: 'stroke' }, createdAt: { type: 'string' }, points: { type: 'array', minItems: 2, items: pointSchema }, color: { type: 'string' }, width: { type: 'number', exclusiveMinimum: 0 } } },
@@ -51,7 +58,7 @@ const operationSchema = {
     { type: 'object', required: ['type', 'object'], additionalProperties: false, properties: { type: { const: 'put_object' }, object: canvasObjectSchema } },
     { type: 'object', required: ['type', 'ids'], additionalProperties: false, properties: { type: { const: 'remove_objects' }, ids: { type: 'array', minItems: 1, items: { type: 'string' } } } },
     { type: 'object', required: ['type', 'objects'], additionalProperties: false, properties: { type: { const: 'replace_objects' }, objects: { type: 'array', items: canvasObjectSchema } } },
-    { type: 'object', required: ['type', 'title'], additionalProperties: false, properties: { type: { const: 'set_title' }, title: { type: 'string', minLength: 1, maxLength: 240 } } },
+    { type: 'object', required: ['type', 'title'], additionalProperties: false, properties: { type: { const: 'set_title' }, title: canvasTitleSchema } },
     { type: 'object', required: ['type', 'viewport'], additionalProperties: false, properties: { type: { const: 'set_viewport' }, viewport: { type: 'object', required: ['x', 'y', 'zoom'], additionalProperties: false, properties: { x: { type: 'number' }, y: { type: 'number' }, zoom: { type: 'number', minimum: 0.25, maximum: 3 } } } } },
     { type: 'object', required: ['type', 'selectedIds', 'target', 'resultId', 'createdAt'], additionalProperties: false, properties: { type: { const: 'convert' }, selectedIds: { type: 'array', minItems: 1, items: { type: 'string' } }, target: { type: 'string', enum: ['note', 'connector', 'group'] }, resultId: { type: 'string' }, createdAt: { type: 'string' } } },
     { type: 'object', required: ['type', 'id'], additionalProperties: false, properties: { type: { const: 'restore_conversion' }, id: { type: 'string' } } }
