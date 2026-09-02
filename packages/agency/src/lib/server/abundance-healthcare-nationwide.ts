@@ -112,7 +112,11 @@ export async function applyNationwideChunk(db: D1Database, input: {
 			run_id, provider_npi, provider_snapshot_json, practice_state,
 			practice_city, last_updated_date, provider_status, primary_taxonomy_code,
 			practice_has_location, practice_has_phone, license_has_fields, endpoint_count, name_search
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		) SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+		WHERE EXISTS (
+			SELECT 1 FROM abundance_healthcare_nationwide_runs
+			WHERE id = ? AND status = 'running'
+		)
 		ON CONFLICT(run_id, provider_npi) DO UPDATE SET
 			provider_snapshot_json = excluded.provider_snapshot_json,
 			practice_state = excluded.practice_state,
@@ -138,7 +142,8 @@ export async function applyNationwideChunk(db: D1Database, input: {
 		provider.practice_phone ? 1 : 0,
 		provider.license_state && provider.license_number ? 1 : 0,
 		provider.endpoint_count,
-		provider.name.toLowerCase()
+		provider.name.toLowerCase(),
+		input.runId
 	));
 	const uniqueRemoveNpis = [...new Set(input.removeNpis)];
 	let removedCount = 0;

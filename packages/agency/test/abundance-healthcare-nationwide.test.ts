@@ -189,6 +189,35 @@ test('a late fail callback cannot erase a run that already succeeded', async () 
 	} finally { fixture.database.close(); }
 });
 
+test('a late chunk cannot repopulate memberships after its run fails', async () => {
+	const fixture = await createDatabase();
+	try {
+		await beginNationwideRun(fixture.db, {
+			id: 'abnationalrun_race', sourceKind: 'monthly_full', sourceFile: 'race.zip',
+			sourceUrl: 'https://download.cms.gov/race.zip', startedAt: '2026-09-02T00:00:00Z'
+		});
+		let batchCalls = 0;
+		const racingDb = {
+			prepare: fixture.db.prepare.bind(fixture.db),
+			async batch(statements: unknown[]) {
+				const result = await fixture.db.batch(statements as never[]);
+				batchCalls += 1;
+				if (batchCalls === 1) {
+					fixture.database.prepare("UPDATE abundance_healthcare_nationwide_runs SET status = 'failed' WHERE id = 'abnationalrun_race'").run();
+					fixture.database.prepare("DELETE FROM abundance_healthcare_nationwide_memberships WHERE run_id = 'abnationalrun_race'").run();
+				}
+				return result;
+			}
+		} as unknown as D1Database;
+		await applyNationwideChunk(racingDb, {
+			runId: 'abnationalrun_race', providers: [provider('1000000097', 'MO', 'Springfield')],
+			removeNpis: [], processedRowCount: 1, rejectedCount: 0
+		});
+		const memberships = fixture.database.prepare("SELECT count(*) AS count FROM abundance_healthcare_nationwide_memberships WHERE run_id = 'abnationalrun_race'").get() as { count: number };
+		assert.equal(memberships.count, 0);
+	} finally { fixture.database.close(); }
+});
+
 test('coverage health and outreach are derived from the full cohort, not the first page', async () => {
 	const fixture = await createDatabase();
 	try {
