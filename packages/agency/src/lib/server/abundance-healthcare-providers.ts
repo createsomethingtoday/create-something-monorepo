@@ -3,11 +3,13 @@ import type {
 	HealthcareProviderCoverageReport,
 	HealthcareRecruitingEvidence,
 	HealthcareRecruitingEvidenceKind,
+	HealthcareRecruitingReadiness,
 	HealthcareRecruitingEvidenceSource,
 	NursingPersonaCoverageQuery
 } from '$lib/abundance/healthcare-providers';
 import {
 	assessHealthcareProviderCoverage,
+	assessHealthcareRecruitingReadiness,
 	buildHealthcareProviderBulkUpsert,
 	buildHealthcareRecruitingEvidenceUpsert,
 	filterHealthcareProvidersForPersona,
@@ -296,7 +298,11 @@ export async function readHealthcareProviderCoverage(
 	db: D1Database,
 	persona: NursingPersonaCoverageQuery,
 	options: { evaluatedAt?: string; limit?: number } = {}
-): Promise<{ report: HealthcareProviderCoverageReport; providers: HealthcareProvider[] }> {
+): Promise<{
+	report: HealthcareProviderCoverageReport;
+	providers: HealthcareProvider[];
+	readiness: HealthcareRecruitingReadiness[];
+}> {
 	const limit = Math.min(Math.max(options.limit ?? NPPES_MAX_RECORDS, 1), NPPES_MAX_RECORDS);
 	const run = await db
 		.prepare(`
@@ -342,12 +348,18 @@ export async function readHealthcareProviderCoverage(
 		persona
 	);
 	const recruitingEvidence = await readHealthcareRecruitingEvidence(db, providers.map((provider) => provider.npi));
+	const evaluatedAt = options.evaluatedAt ?? new Date().toISOString();
 
 	return {
 		providers,
+		readiness: providers.map((provider) => assessHealthcareRecruitingReadiness(
+			provider.npi,
+			recruitingEvidence,
+			{ evaluatedAt }
+		)),
 		report: assessHealthcareProviderCoverage(providers, {
 			persona,
-			evaluatedAt: options.evaluatedAt,
+			evaluatedAt,
 			source: {
 				latest_fetched_at: run?.fetched_at,
 				coverage_limit_reached: run?.coverage_limit_reached === 1,

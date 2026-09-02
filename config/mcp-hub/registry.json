@@ -1,6 +1,24 @@
 {
   "version": 1,
   "servers": {
+    "abundance-healthcare-mcp": {
+      "transport": "http",
+      "url": "https://abundance-healthcare-mcp.createsomething.workers.dev/mcp",
+      "description": "Read-only NPG healthcare coverage MCP backed by complete nationwide NPPES Family Nurse Practitioner snapshots, with derived local views and fail-closed recruiter-readiness evidence.",
+      "bearer_token_env_var": "ABUNDANCE_MCP_BEARER_TOKEN",
+      "tags": [
+        "client",
+        "abundance",
+        "npg",
+        "healthcare",
+        "providers",
+        "nppes"
+      ],
+      "package_path": "packages/abundance-healthcare-mcp",
+      "catalog_exposure_mode": "direct",
+      "estimated_tool_count": 4,
+      "setupNotes": "Read-only coverage and practitioner lookup. Monthly full NPPES dissemination files establish national completeness; weekly incrementals advance the successful snapshot. Bulk results omit practice phone and street address."
+    },
     "abundance-jobs-mcp": {
       "transport": "http",
       "url": "https://abundance-jobs-mcp.createsomething.workers.dev/mcp",
@@ -37,7 +55,7 @@
     "abundance-thenpgroup-hub": {
       "transport": "http",
       "url": "https://abundance-thenpgroup.mcp.createsomething.agency/mcp",
-      "description": "NPG-scoped MCP hub for Abundance review across Jotform, Mailchimp, WhatsApp, Staff MCP, and Jobs MCP boundaries.",
+      "description": "NPG-scoped MCP hub for Abundance review across Jotform, Mailchimp, WhatsApp, Staff, Jobs, and nationwide healthcare coverage boundaries.",
       "bearer_token_env_var": "CS_HUB_ABUNDANCE_THENPGROUP_API_TOKEN",
       "tags": [
         "client",

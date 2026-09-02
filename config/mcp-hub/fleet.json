@@ -517,6 +517,23 @@
       "related_deployments": ["abundance-thenpgroup", "abundance-staff-mcp"],
       "notes": "Source-controlled Worker reads from the normalized abundance_public_jobs table and refreshes RapidAPI Active Jobs through an authenticated admin endpoint; write-capable send_job_to_funnel remains confirmation-gated in the agent policy."
     },
+    "abundance-healthcare-mcp": {
+      "type": "remote_mcp_server",
+      "product": "Abundance Healthcare Coverage MCP",
+      "client": "npg",
+      "tenant": "abundance",
+      "url": "https://abundance-healthcare-mcp.createsomething.workers.dev/mcp",
+      "status": "pending",
+      "account": "create-something",
+      "auth": {
+        "type": "bearer",
+        "bearer_token_env_var": "ABUNDANCE_MCP_BEARER_TOKEN",
+        "infisical_path": "/mcp-hub/hubs"
+      },
+      "package_path": "packages/abundance-healthcare-mcp",
+      "related_deployments": ["abundance-thenpgroup", "create-something-agency"],
+      "notes": "Read-only nationwide Family NP coverage and practitioner lookup over successful monthly-full plus weekly-incremental NPPES snapshots."
+    },
     "abundance-thenpgroup": {
       "type": "policy_os_hub",
       "product": "The NP Group — Abundance scoped hub",
@@ -530,7 +547,7 @@
         "bearer_token_env_var": "CS_HUB_ABUNDANCE_THENPGROUP_API_TOKEN",
         "infisical_path": "/"
       },
-      "related_deployments": ["abundance-staff-mcp", "abundance-jobs-mcp"],
+      "related_deployments": ["abundance-staff-mcp", "abundance-jobs-mcp", "abundance-healthcare-mcp"],
       "toolkits": ["jotform", "mailchimp", "whatsapp"],
       "discovery_pack": "abundance-thenpgroup-review",
       "known_blockers": [
