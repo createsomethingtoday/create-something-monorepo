@@ -161,12 +161,16 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 	} catch (err) {
 		if (err instanceof NppesProviderFetchError) {
 			canonicalExcludedCount = Math.max(0, err.progress.source_records_scanned - err.progress.records.length);
+			const partialNormalized = await normalizeNppesRecordsForAbundance(err.progress.records, fetchedAt);
 			progress = {
 				...progress,
 				pagesFetched: err.progress.pages_fetched,
 				sourceResultCount: err.progress.source_records_scanned,
+				normalizedCount: partialNormalized.providers.length,
+				includedCount: 0,
+				rejectedCount: partialNormalized.rejected_count,
 				coverageLimitReached: err.progress.coverage_limit_reached,
-				excludedCount: canonicalExcludedCount
+				excludedCount: canonicalExcludedCount + partialNormalized.providers.length
 			};
 		}
 		if (persona) {

@@ -827,7 +827,7 @@ test('failed refresh ledger retains partial NPPES progress', async () => {
 		return callCount === 1
 			? jsonResponse({
 				results: Array.from({ length: 200 }, (_, index) => ({
-					number: String(index),
+					number: String(1_000_000_000 + index),
 					taxonomies: [{ desc: 'Nurse Practitioner, Family', primary: true }],
 					addresses: [mockLocationAddress()]
 				}))
@@ -864,6 +864,14 @@ test('failed refresh ledger retains partial NPPES progress', async () => {
 		assert.equal(runStatement?.args[7], 'failed');
 		assert.equal(runStatement?.args[9], 1);
 		assert.equal(runStatement?.args[10], 200);
+		assert.equal(runStatement?.args[11], 200);
+		assert.equal(runStatement?.args[12], 0);
+		assert.equal(runStatement?.args[13], 0);
+		assert.equal(runStatement?.args[14], 200);
+		assert.equal(
+			Number(runStatement?.args[12]) + Number(runStatement?.args[13]) + Number(runStatement?.args[14]),
+			Number(runStatement?.args[10])
+		);
 	} finally {
 		globalThis.fetch = originalFetch;
 	}
