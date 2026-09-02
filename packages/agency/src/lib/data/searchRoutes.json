@@ -3,7 +3,7 @@
     "path": "/",
     "changefreq": "weekly",
     "priority": "1.0",
-    "lastmod": "2026-08-31"
+    "lastmod": "2026-09-02"
   },
   {
     "path": "/services",
@@ -15,7 +15,7 @@
     "path": "/agent-foundation",
     "changefreq": "monthly",
     "priority": "0.94",
-    "lastmod": "2026-08-31"
+    "lastmod": "2026-09-02"
   },
   {
     "path": "/workflow-compiler-integration",

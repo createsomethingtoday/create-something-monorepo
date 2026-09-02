@@ -1,96 +1,78 @@
-import type { PerformanceCampaignProof, PerformanceNarrativeScene } from '@create-something/canon';
+import type { PerformanceCampaignProof } from '@create-something/canon';
 
 export const agentFoundationHero = {
-  title: 'Build an agent you can keep building.',
-  lede: 'For builders and operating teams with an idea, prototype, or stalled Codex project: we deliver one useful capability in your GitHub repository, establish the data, tools, policy, tests, and runbook around it, and onboard you to continue in your own environment. Production access and operation are promoted separately.',
+  title: 'You started the agent. We’ll get one useful job working.',
+  lede: 'For builders and operating teams with an idea, prototype, or stalled Codex project. We work in your GitHub repository, then help your team make the next change with Codex. The rules, tests, and runbook stay with you.',
   proof: [
-    { label: 'Unit', value: '1 role · 1 job' },
-    { label: 'Delivery', value: 'Working foundation' },
-    { label: 'Ownership', value: 'Client repository' },
-    { label: 'Continuation', value: 'Codex-ready' }
+    { label: 'Scope', value: '1 role · 1 job' },
+    { label: 'Ownership', value: 'Your repository' },
+    { label: 'Handoff', value: 'Your team makes the next change' }
   ] satisfies PerformanceCampaignProof[]
 };
 
-export const agentFoundationScenes: PerformanceNarrativeScene[] = [
+export const agentFoundationRepository = [
   {
-    id: 'bound',
-    label: 'Bound the job',
-    summary: 'One role and one useful capability',
-    title: 'Start with the work the agent must perform.',
-    detail:
-      'Bring the repository or prototype, the role the agent serves, one representative input, and an acceptable result. We name what the agent may read, propose, change, and must stop before implementation expands.',
-    tone: 'review',
-    receipts: ['named owner', 'representative case', 'authority boundary']
+    path: 'AGENTS.md',
+    purpose: 'How Codex should work in the project'
   },
   {
-    id: 'build',
-    label: 'Build the foundation',
-    summary: 'A working vertical slice in your repository',
-    title: 'Deliver the capability and the system around it.',
-    detail:
-      'We implement the data path, required tools or MCP surface, agent instructions, policy gates, golden cases, and runbook for one end-to-end capability. Unavailable production dependencies remain visibly blocked or bound to approved development fixtures.',
-    tone: 'neutral',
-    receipts: ['working capability', 'tests and stop cases', 'known limits']
+    path: 'src/',
+    purpose: 'One useful job, working end to end'
   },
   {
-    id: 'continue',
-    label: 'Continue with Codex',
-    summary: 'A handoff your team exercises',
-    title: 'Make one bounded change before the handoff closes.',
-    detail:
-      'Your team uses Codex in its own environment to inspect the project, run the verifier, make one agreed change, and rerun the relevant check. The exercise proves the continuation path—not every future change or production use.',
-    tone: 'allow',
-    evidence: ['documented bootstrap', 'bounded continuation change', 'verifier rerun']
+    path: 'policy/',
+    purpose: 'Rules for what the agent may do, ask, or stop'
+  },
+  {
+    path: 'evals/',
+    purpose: 'One real example and one failure case'
+  },
+  {
+    path: 'tests/',
+    purpose: 'The verifier your team reruns'
+  },
+  {
+    path: 'RUNBOOK.md',
+    purpose: 'Setup, known limits, and recovery'
+  },
+  {
+    path: 'CONTINUATION.md',
+    purpose: 'The next agreed change'
   }
-];
+] as const;
 
-export const agentFoundationLayers = [
-  {
-    label: 'Database',
-    title: 'State your agent can understand.',
-    detail:
-      'Schemas, fixtures or approved development bindings, state ownership, and data assumptions for the bounded capability.'
-  },
-  {
-    label: 'Automation',
-    title: 'Tools your agent can use.',
-    detail:
-      'The executable path, required tools or MCP surface, deterministic checks, and explicit blocked actions.'
-  },
-  {
-    label: 'Judgment',
-    title: 'Policy that decides when to act or stop.',
-    detail:
-      'Instructions, approvals, stop conditions, evaluation cases, and uncertainty behavior stored as inspectable artifacts.'
-  }
+export const agentFoundationChecks = [
+  'A fresh checkout starts from the runbook.',
+  'One real example produces the agreed result.',
+  'One failure case makes the agent stop.',
+  'Your team makes one agreed change with Codex.',
+  'The verifier passes again.'
 ] as const;
 
 export const agentFoundationStages = [
   {
-    state: 'Stage 1 · Agent Foundation',
-    title: 'Continuation-ready in the accepted development path.',
+    state: 'Agent Foundation',
+    title: 'One job works in the agreed development environment.',
     items: [
-      'One useful end-to-end capability',
-      'Client-owned repository, source, tests, and runbook',
-      'Codex onboarding and one bounded continuation change',
-      'Working, blocked, unknown, and next states recorded'
+      'The repository includes the source, rules, tests, and runbook.',
+      'Working, blocked, unknown, and next states stay visible.',
+      'Your team completes one change with Codex before handoff.'
     ]
   },
   {
-    state: 'Stage 2 · Production Promotion',
-    title: 'Live authority and operation are separately scoped.',
+    state: 'Production Promotion',
+    title: 'Going live is a separate project.',
     items: [
       'Production credentials, bindings, and data migration',
       'Deployment, rollback, monitoring, and recovery',
-      'Live integration and negative-path verification',
-      'Named operator or real-user acceptance'
+      'Live integration checks and real-user verification'
     ]
   }
 ] as const;
 
-export const agentFoundationHandoff = {
-  owner: 'Builder + capability owner',
-  authority: 'Approve one role, job, and boundary',
-  proof: 'Repository + verifier + continuation exercise',
-  state: 'ready' as const
-};
+export const agentFoundationFit = [
+  { label: 'Project', value: 'An idea, prototype, repository, or stalled Codex project' },
+  { label: 'Role', value: 'The person or team the agent serves' },
+  { label: 'Input', value: 'One real example of the work' },
+  { label: 'Result', value: 'What a good result looks like, including when to stop' }
+] as const;

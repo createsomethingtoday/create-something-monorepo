@@ -186,7 +186,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     search: {
       changefreq: 'weekly',
       priority: '1.0',
-      lastmod: '2026-08-31'
+      lastmod: '2026-09-02'
     },
     selfHealing: ['copy:heal', 'search-route:sync']
   },
@@ -205,7 +205,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
       'Agent Foundation',
       'Codex',
       'client-owned',
-      'useful capability',
+      'useful job',
       'Production Promotion'
     ],
     requiredLinks: [],
@@ -213,7 +213,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     search: {
       changefreq: 'monthly',
       priority: '0.94',
-      lastmod: '2026-08-31'
+      lastmod: '2026-09-02'
     },
     selfHealing: ['copy:heal', 'search-route:sync']
   },

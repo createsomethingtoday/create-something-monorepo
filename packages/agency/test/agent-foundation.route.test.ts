@@ -7,30 +7,40 @@ function read(relativePath: string) {
   return existsSync(url) ? readFileSync(url, 'utf8') : '';
 }
 
-test('Agent Foundation names the buyer, bounded capability, ownership, continuation, boundary, and CTA', () => {
+test('Agent Foundation makes one clear argument from stalled project to owned continuation', () => {
   const route = read('../src/routes/agent-foundation/+page.svelte');
   const offer = read('../src/lib/data/agentFoundation.ts');
 
   assert.match(route, /PerformanceCampaignOpening/);
-  assert.match(route, /PerformanceNarrativeStage/);
-  assert.match(route, /PerformanceConversionHandoff/);
   assert.match(route, /media=\{playbookHeroMedia\.services\}/);
-  assert.match(route, /agencyCoreMessaging\.agentFoundationBookingHref/);
-  assert.match(route, /agencyCoreMessaging\.bringAgentProjectLabel/);
-  assert.match(route, /Foundation pricing is quoted after fit/);
+  assert.match(route, /data-agent-foundation-proof/);
+  assert.match(route, /Inside your repository/);
+  assert.match(route, /Example handoff structure/);
+  assert.match(route, /Your team makes the next change/);
+  assert.match(route, /We quote the Foundation after we review the project and agree on the job/);
   assert.match(route, /Production Promotion/);
-  assert.match(route, /No hidden CREATE SOMETHING account/);
+  assert.match(route, /No hidden CREATE\s+SOMETHING account/);
+  assert.match(route, /agent_foundation_booking_clicked/);
+  assert.equal(route.match(/href=\{agencyCoreMessaging\.agentFoundationBookingHref\}/g)?.length, 2);
+  assert.equal(route.match(/agencyCoreMessaging\.bringAgentProjectLabel/g)?.length, 2);
+  assert.doesNotMatch(route, /PerformanceNarrativeStage/);
+  assert.doesNotMatch(route, /PerformanceConversionHandoff/);
+  assert.doesNotMatch(route, /agencyCoreMessaging\.selfMapHref/);
+  assert.doesNotMatch(route, /workflowCompilerIntegrationHref/);
+  assert.doesNotMatch(route, /href="\/services"/);
+  assert.doesNotMatch(route, /See what the foundation includes|Start with Map|State:\s*ready/i);
 
   assert.match(
     offer,
     /builders and operating teams with an idea, prototype, or stalled Codex project/i
   );
-  assert.match(offer, /one useful capability/i);
+  assert.match(offer, /You started the agent\. We’ll get one useful job working\./);
+  assert.match(offer, /one useful job/i);
   assert.match(offer, /GitHub repository/i);
-  assert.match(offer, /continue in your own environment/i);
-  assert.match(offer, /Production access and operation are promoted separately/i);
-  assert.match(offer, /one agreed change/i);
-  assert.match(offer, /not every future change or production use/i);
+  assert.match(offer, /your team makes the next change/i);
+  assert.match(offer, /real example/i);
+  assert.match(offer, /rules for what the agent may do/i);
+  assert.doesNotMatch(offer, /Database|Automation|Judgment|accepted development path/);
   assert.doesNotMatch(
     `${route}\n${offer}`,
     /finished product|fully autonomous|runs your whole business|guaranteed savings/i
@@ -85,10 +95,10 @@ test('Agent Foundation is registered for discovery, Canon review, and booking', 
   );
   assert.match(marketingPages, /path: '\/agent-foundation'/);
   assert.ok(searchRoutes.some((route) => route.path === '/agent-foundation'));
-  assert.equal(searchRoutes.find((route) => route.path === '/')?.lastmod, '2026-08-31');
+  assert.equal(searchRoutes.find((route) => route.path === '/')?.lastmod, '2026-09-02');
   assert.match(
     marketingPages,
-    /path: '\/',[\s\S]*?intent:[\s\S]*?Agent Foundation[\s\S]*?lastmod: '2026-08-31'/
+    /path: '\/',[\s\S]*?intent:[\s\S]*?Agent Foundation[\s\S]*?lastmod: '2026-09-02'/
   );
   assert.match(registry, /'agent-foundation'/);
   assert.match(surfacePolicy, /'\/agent-foundation'/);
