@@ -47,9 +47,19 @@ async function constantTimeEqual(left: string, right: string): Promise<boolean> 
 }
 
 const marketIdSchema = z.enum(['npg-family-np-nationwide', 'npg-family-np-springfield-mo', 'npg-family-np-arlington-tx']);
+const SUPPORTED_US_STATE_CODES = new Set([
+  'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
+  'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD',
+  'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY', 'DC', 'AS', 'GU', 'MP', 'PR', 'VI',
+]);
+const stateCodeSchema = z.string()
+  .trim()
+  .regex(/^[A-Za-z]{2}$/, 'Use a two-letter US state code.')
+  .transform((value) => value.toUpperCase())
+  .refine((value) => SUPPORTED_US_STATE_CODES.has(value), 'Use a supported US state, district, or territory code.');
 const searchCandidatesSchema = z.object({
   market_id: marketIdSchema.default('npg-family-np-nationwide'),
-  state: z.string().trim().regex(/^[A-Za-z]{2}$/, 'Use a two-letter US state code.').transform((value) => value.toUpperCase()).optional(),
+  state: stateCodeSchema.optional(),
   city: z.string().trim().min(1).max(100).optional(),
   name: z.string().trim().min(1).max(100).optional(),
   updated_since: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD.').optional(),
@@ -90,7 +100,7 @@ export async function searchCoverageCandidates(input: SearchCoverageCandidatesIn
     throw new TypeError('state and city filters can only be combined with the nationwide market.');
   }
   const data = await fetchHealthcareMarket(parsed.market_id, {
-    state: parsed.state, city: parsed.city, name: parsed.name, updated_since: parsed.updated_since,
+    state: parsed.state, city: parsed.city?.toLowerCase(), name: parsed.name, updated_since: parsed.updated_since,
     limit: String(parsed.limit), offset: String(parsed.offset),
   }, options);
   const readinessByNpi = new Map(data.readiness.map((item) => [item.npi, item]));

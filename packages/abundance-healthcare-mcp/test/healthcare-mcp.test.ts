@@ -193,7 +193,7 @@ test('candidate search derives an arbitrary city market from the nationwide snap
 
   const url = new URL(requestedUrl);
   assert.equal(url.searchParams.get('state'), 'TX');
-  assert.equal(url.searchParams.get('city'), 'Austin');
+  assert.equal(url.searchParams.get('city'), 'austin');
   assert.equal(result.market_id, 'npg-family-np-nationwide');
   assert.deepEqual(result.location, {
     scope: 'derived_locale',
@@ -204,6 +204,43 @@ test('candidate search derives an arbitrary city market from the nationwide snap
   assert.equal(result.total, 882);
   assert.equal(result.results.length, 1);
   assert.doesNotMatch(JSON.stringify(result), /Private In Bulk|512555/);
+});
+
+test('candidate search rejects an unknown US state code before querying coverage', async () => {
+  let fetchCalled = false;
+  const fetchFn: typeof fetch = async () => {
+    fetchCalled = true;
+    throw new Error('fetch should not run');
+  };
+
+  await assert.rejects(
+    searchCoverageCandidates(
+      { state: 'ZZ', city: 'Nowhere', limit: 5, offset: 0 },
+      { agencyApiKey: 'test-key', fetchFn },
+    ),
+    /supported US state, district, or territory code/i,
+  );
+  assert.equal(fetchCalled, false);
+});
+
+test('candidate search Unicode-normalizes the city query while preserving its market label', async () => {
+  let requestedUrl = '';
+  const fetchFn: typeof fetch = async (input) => {
+    requestedUrl = String(input);
+    return Response.json({
+      success: true,
+      data: { report, providers: [], readiness: [], total: 0, limit: 5, offset: 0 },
+    } satisfies HealthcareApiResponse);
+  };
+
+  const result = await searchCoverageCandidates(
+    { state: 'PR', city: 'MAYAGÜEZ', limit: 5, offset: 0 },
+    { agencyApiKey: 'test-key', fetchFn },
+  );
+
+  const url = new URL(requestedUrl);
+  assert.equal(url.searchParams.get('city'), 'mayagüez');
+  assert.equal(result.location?.label, 'MAYAGÜEZ, PR');
 });
 
 test('list healthcare markets exposes weekly defaults and no daily locale', async () => {
