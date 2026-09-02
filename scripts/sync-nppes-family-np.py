@@ -79,6 +79,11 @@ def iso_date(value: str | None) -> str | None:
     return None
 
 
+def zip_member_published_at(member: zipfile.ZipInfo) -> str:
+    """Use the official archive member timestamp as the dissemination publication time."""
+    return datetime(*member.date_time, tzinfo=timezone.utc).isoformat().replace("+00:00", "Z")
+
+
 def title(value: str | None) -> str | None:
     value = clean(value)
     return value.title() if value else None
@@ -120,7 +125,7 @@ def provider_from_row(row: dict[str, str], fetched_at: str) -> tuple[dict | None
     name = " ".join(part for part in (first, middle, last) if part) or organization or f"NPI {npi}"
     deactivated = iso_date(row.get("NPI Deactivation Date"))
     reactivated = iso_date(row.get("NPI Reactivation Date"))
-    status = "active" if not deactivated or reactivated else "deactivated"
+    status = "deactivated" if deactivated and (not reactivated or deactivated > reactivated) else "active"
     country = clean(row.get("Provider Business Practice Location Address Country Code (If outside U.S.)")) or "US"
     canonical = json.dumps(row, sort_keys=True, separators=(",", ":"))
     provider = {
@@ -158,10 +163,7 @@ def import_zip(api_url: str, token: str, source_url: str, kind: str) -> dict:
     fetched_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     run_id = "abnationalrun_" + hashlib.sha256((source_url + fetched_at).encode()).hexdigest()[:24]
     source_file = Path(urllib.parse.urlparse(source_url).path).name
-    request_json(api_url, token, {
-        "action": "begin", "run_id": run_id, "source_kind": kind, "source_file": source_file,
-        "source_url": source_url, "started_at": fetched_at,
-    })
+    run_started = False
     try:
         with tempfile.TemporaryDirectory(prefix="nppes-family-np-") as directory:
             archive = Path(directory) / source_file
@@ -178,6 +180,13 @@ def import_zip(api_url: str, token: str, source_url: str, kind: str) -> dict:
                 ]
                 if len(names) != 1:
                     raise RuntimeError(f"Expected one npidata CSV, found {len(names)}")
+                source_published_at = zip_member_published_at(bundle.getinfo(names[0]))
+                request_json(api_url, token, {
+                    "action": "begin", "run_id": run_id, "source_kind": kind, "source_file": source_file,
+                    "source_url": source_url, "source_published_at": source_published_at,
+                    "started_at": fetched_at,
+                })
+                run_started = True
                 with bundle.open(names[0]) as binary:
                     import io
                     reader = csv.DictReader(io.TextIOWrapper(binary, encoding="utf-8-sig", newline=""))
@@ -203,10 +212,12 @@ def import_zip(api_url: str, token: str, source_url: str, kind: str) -> dict:
                 "source_sha256": source_sha256, "expected_processed_row_count": processed,
             })["run"]
     except Exception as error:
-        try:
-            request_json(api_url, token, {"action": "fail", "run_id": run_id, "error": str(error)[:500]})
-        finally:
-            raise
+        if run_started:
+            try:
+                request_json(api_url, token, {"action": "fail", "run_id": run_id, "error": str(error)[:500]})
+            finally:
+                raise
+        raise
 
 
 def main() -> int:

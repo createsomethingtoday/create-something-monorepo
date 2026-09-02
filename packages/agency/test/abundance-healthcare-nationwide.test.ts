@@ -38,7 +38,8 @@ test('monthly full snapshots become visible only after complete finalization', a
 	try {
 		await beginNationwideRun(fixture.db, {
 			id: 'abnationalrun_monthly', sourceKind: 'monthly_full', sourceFile: 'monthly.zip',
-			sourceUrl: 'https://download.cms.gov/monthly.zip', startedAt: '2026-09-02T00:00:00Z'
+			sourceUrl: 'https://download.cms.gov/monthly.zip', sourcePublishedAt: '2026-08-31T03:06:00Z',
+			startedAt: '2026-09-02T00:00:00Z'
 		});
 		await applyNationwideChunk(fixture.db, {
 			runId: 'abnationalrun_monthly', providers: [provider('1000000001', 'MO', 'Springfield')],
@@ -56,7 +57,31 @@ test('monthly full snapshots become visible only after complete finalization', a
 		const result = await queryNationwideCoverage(fixture.db, { state: 'MO', city: 'Springfield' });
 		assert.equal(result.total, 1);
 		assert.equal(result.run.source_kind, 'monthly_full');
+		assert.equal(result.report.source.latest_fetched_at, '2026-08-31T03:06:00Z');
 		assert.equal(result.report.source.coverage_limit_reached, false);
+	} finally { fixture.database.close(); }
+});
+
+test('coverage freshness follows official source publication time instead of import completion', async () => {
+	const fixture = await createDatabase();
+	try {
+		await beginNationwideRun(fixture.db, {
+			id: 'abnationalrun_historical', sourceKind: 'monthly_full', sourceFile: 'historical.zip',
+			sourceUrl: 'https://download.cms.gov/historical.zip', sourcePublishedAt: '2026-06-30T03:06:00Z',
+			startedAt: '2026-09-02T00:00:00Z'
+		});
+		await applyNationwideChunk(fixture.db, {
+			runId: 'abnationalrun_historical', providers: [provider('1000000098', 'TX', 'Arlington')],
+			removeNpis: [], processedRowCount: 1, rejectedCount: 0
+		});
+		await finalizeNationwideRun(fixture.db, {
+			runId: 'abnationalrun_historical', finishedAt: '2026-09-02T01:00:00Z',
+			sourceSha256: '8'.repeat(64), expectedProcessedRowCount: 1
+		});
+		const result = await queryNationwideCoverage(fixture.db, { evaluatedAt: '2026-09-02T12:00:00Z' });
+		assert.equal(result.report.source.latest_fetched_at, '2026-06-30T03:06:00Z');
+		assert.equal(result.report.market_coverage_status, 'degraded');
+		assert.match(result.report.market_coverage_reasons.join(' '), /official source publication is more than seven days old/i);
 	} finally { fixture.database.close(); }
 });
 

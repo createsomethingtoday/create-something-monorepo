@@ -349,7 +349,7 @@ export async function queryNationwideCoverage(db: D1Database, input: {
 		persona,
 		evaluatedAt,
 		source: {
-			latest_fetched_at: run.finished_at,
+			latest_fetched_at: run.source_published_at ?? run.finished_at,
 			coverage_limit_reached: false,
 			normalized_count: run.included_count,
 			rejected_count: run.rejected_count
@@ -407,7 +407,8 @@ function applyAggregateCoverageJudgment(
 		if ((aggregate?.unknown_recency ?? 0) > 0) reasons.push('Administrative update recency is unknown for one or more records.');
 		const assessed = run.included_count + run.rejected_count;
 		if (assessed > 0 && run.rejected_count / assessed > 0.05) reasons.push('More than 5% of canonical source records failed provider normalization.');
-		if (run.finished_at && (Date.parse(evaluatedAt) - Date.parse(run.finished_at)) / 86_400_000 > 7) reasons.push('The latest source fetch is more than seven days old.');
+		const freshnessTimestamp = run.source_published_at ?? run.finished_at;
+		if (freshnessTimestamp && (Date.parse(evaluatedAt) - Date.parse(freshnessTimestamp)) / 86_400_000 > 7) reasons.push('The latest official source publication is more than seven days old.');
 		if (reasons.length > 0) status = 'degraded';
 	}
 	if (reasons.length === 0) reasons.push('The source snapshot is current and the cohort has sufficient taxonomy and location coverage for market analysis.');

@@ -27,7 +27,21 @@ row = {
     "Healthcare Provider Primary Taxonomy Switch_1": "Y",
 }
 provider, removal = module.provider_from_row(row, "2026-09-02T00:00:00Z")
-print(json.dumps({"provider": provider, "removal": removal}))
+row["NPI Deactivation Date"] = "09/01/2026"
+row["NPI Reactivation Date"] = "08/01/2026"
+redeactivated, _ = module.provider_from_row(row, "2026-09-02T00:00:00Z")
+row["NPI Reactivation Date"] = "09/02/2026"
+reactivated, _ = module.provider_from_row(row, "2026-09-02T00:00:00Z")
+
+import zipfile
+member = zipfile.ZipInfo("npidata.csv", date_time=(2026, 8, 31, 3, 6, 0))
+print(json.dumps({
+    "provider": provider,
+    "removal": removal,
+    "redeactivated_status": redeactivated["status"],
+    "reactivated_status": reactivated["status"],
+    "source_published_at": module.zip_member_published_at(member),
+}))
 `;
 	const output = execFileSync('python3', ['-c', program, importerPath], {
 		encoding: 'utf8'
@@ -38,4 +52,7 @@ print(json.dumps({"provider": provider, "removal": removal}))
 	assert.equal(result.provider.enumeration_date, '2010-01-15');
 	assert.equal(result.provider.last_updated_date, '2026-09-02');
 	assert.equal(result.provider.certification_date, '2026-08-31');
+	assert.equal(result.redeactivated_status, 'deactivated');
+	assert.equal(result.reactivated_status, 'active');
+	assert.equal(result.source_published_at, '2026-08-31T03:06:00Z');
 });
