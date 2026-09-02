@@ -183,10 +183,10 @@ export async function finalizeNationwideRun(db: D1Database, input: {
 	await db.batch([
 		db.prepare(`
 			INSERT INTO abundance_healthcare_nationwide_source_receipts (
-				source_file, source_kind, source_url, source_sha256, run_id,
+				source_file, source_kind, source_url, source_published_at, source_sha256, run_id,
 				applied_at, processed_row_count, provider_count
 			)
-			SELECT source_file, source_kind, source_url, ?, id, ?, processed_row_count, ?
+			SELECT source_file, source_kind, source_url, coalesce(source_published_at, started_at), ?, id, ?, processed_row_count, ?
 			FROM abundance_healthcare_nationwide_runs
 			WHERE id = ? AND status = 'running'
 		`).bind(input.sourceSha256, input.finishedAt, count.provider_count, input.runId),
@@ -452,6 +452,7 @@ export async function listAppliedNationwideSources(db: D1Database, limit = 120):
 	source_file: string;
 	source_kind: NationwideRunKind;
 	source_url: string;
+	source_published_at: string;
 	source_sha256: string;
 	run_id: string;
 	applied_at: string;
@@ -459,13 +460,14 @@ export async function listAppliedNationwideSources(db: D1Database, limit = 120):
 	provider_count: number;
 }>> {
 	const result = await db.prepare(`
-		SELECT source_file, source_kind, source_url, source_sha256, run_id,
+		SELECT source_file, source_kind, source_url, source_published_at, source_sha256, run_id,
 			applied_at, processed_row_count, provider_count
 		FROM abundance_healthcare_nationwide_source_receipts
 		ORDER BY applied_at DESC
 		LIMIT ?
 	`).bind(Math.min(Math.max(limit, 1), 500)).all<{
 		source_file: string; source_kind: NationwideRunKind; source_url: string;
+		source_published_at: string;
 		source_sha256: string; run_id: string; applied_at: string;
 		processed_row_count: number; provider_count: number;
 	}>();

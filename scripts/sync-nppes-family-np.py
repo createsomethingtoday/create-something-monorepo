@@ -52,6 +52,30 @@ def discover_urls(kind: str) -> list[str]:
     return sorted(matches, key=lambda url: re.search(r"_(\d{6})_\d{6}_Weekly", url).group(1))
 
 
+def weekly_interval_end(url: str) -> datetime | None:
+    match = re.search(r"_\d{6}_(\d{6})_Weekly", url, re.IGNORECASE)
+    if not match:
+        return None
+    return datetime.strptime(match.group(1), "%m%d%y").replace(tzinfo=timezone.utc)
+
+
+def filter_weeklies_after_full_snapshot(urls: list[str], receipts: list[dict]) -> list[str]:
+    full_publications = [
+        datetime.fromisoformat(receipt["source_published_at"].replace("Z", "+00:00"))
+        for receipt in receipts
+        if receipt.get("source_kind") == "monthly_full" and receipt.get("source_published_at")
+    ]
+    if not full_publications:
+        return urls
+    cutoff = max(full_publications).date()
+    filtered = []
+    for url in urls:
+        interval_end = weekly_interval_end(url)
+        if interval_end and interval_end.date() >= cutoff:
+            filtered.append(url)
+    return filtered
+
+
 def download(url: str, destination: Path) -> str:
     digest = hashlib.sha256()
     with urllib.request.urlopen(url, timeout=120) as response, destination.open("wb") as output:
@@ -100,6 +124,8 @@ def provider_from_row(row: dict[str, str], fetched_at: str) -> tuple[dict | None
     npi = clean(row.get("NPI"))
     if not npi or not re.fullmatch(r"\d{10}", npi):
         return None, None
+    if clean(row.get("Entity Type Code")) != "1":
+        return None, npi
     taxonomies = []
     primary = None
     for index in range(1, 16):
@@ -130,7 +156,7 @@ def provider_from_row(row: dict[str, str], fetched_at: str) -> tuple[dict | None
     canonical = json.dumps(row, sort_keys=True, separators=(",", ":"))
     provider = {
         "id": f"abprovider_{npi}", "npi": npi,
-        "enumeration_type": clean(row.get("Entity Type Code")) or "unknown",
+        "enumeration_type": "NPI-1",
         "name": name, "first_name": first, "middle_name": middle, "last_name": last,
         "credential": clean(row.get("Provider Credential Text")), "status": status,
         "enumeration_date": iso_date(row.get("Provider Enumeration Date")),
@@ -231,8 +257,11 @@ def main() -> int:
         raise RuntimeError("AGENCY_INTERNAL_API_KEY is required")
     api_url = args.agency_base_url.rstrip("/") + API_PATH
     request_json(api_url, token, {"action": "maintenance"})
-    applied = {run["source_file"] for run in request_json(api_url + "?runs=true", token)["runs"]}
+    receipts = request_json(api_url + "?runs=true", token)["runs"]
+    applied = {run["source_file"] for run in receipts}
     urls = [args.source_url] if args.source_url else discover_urls(args.kind)
+    if args.kind == "weekly_incremental":
+        urls = filter_weeklies_after_full_snapshot(urls, receipts)
     pending = [url for url in urls if Path(urllib.parse.urlparse(url).path).name not in applied]
     if args.kind == "monthly_full" and pending:
         pending = pending[:1]

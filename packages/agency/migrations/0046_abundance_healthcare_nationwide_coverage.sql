@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS abundance_healthcare_nationwide_source_receipts (
   source_file TEXT PRIMARY KEY,
   source_kind TEXT NOT NULL CHECK (source_kind IN ('monthly_full', 'weekly_incremental')),
   source_url TEXT NOT NULL,
+  source_published_at TEXT NOT NULL,
   source_sha256 TEXT NOT NULL,
   run_id TEXT NOT NULL,
   applied_at TEXT NOT NULL,

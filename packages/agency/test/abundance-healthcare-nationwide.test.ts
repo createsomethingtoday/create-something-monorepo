@@ -131,6 +131,7 @@ test('weekly increments copy the last successful snapshot then add and remove NP
 		assert.equal(oldMemberships.count, 0);
 		const receipts = await listAppliedNationwideSources(fixture.db);
 		assert.deepEqual(receipts.map((receipt) => receipt.source_file).sort(), ['base.zip', 'weekly.zip', 'weekly2.zip']);
+		assert.ok(receipts.every((receipt) => Boolean(receipt.source_published_at)));
 	} finally { fixture.database.close(); }
 });
 

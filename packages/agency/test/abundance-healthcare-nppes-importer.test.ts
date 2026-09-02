@@ -27,6 +27,9 @@ row = {
     "Healthcare Provider Primary Taxonomy Switch_1": "Y",
 }
 provider, removal = module.provider_from_row(row, "2026-09-02T00:00:00Z")
+row["Entity Type Code"] = "2"
+organization, organization_removal = module.provider_from_row(row, "2026-09-02T00:00:00Z")
+row["Entity Type Code"] = "1"
 row["NPI Deactivation Date"] = "09/01/2026"
 row["NPI Reactivation Date"] = "08/01/2026"
 redeactivated, _ = module.provider_from_row(row, "2026-09-02T00:00:00Z")
@@ -35,12 +38,24 @@ reactivated, _ = module.provider_from_row(row, "2026-09-02T00:00:00Z")
 
 import zipfile
 member = zipfile.ZipInfo("npidata.csv", date_time=(2026, 8, 31, 3, 6, 0))
+weekly_urls = [
+    "https://download.cms.gov/nppes/NPPES_Data_Dissemination_080326_080926_Weekly_V2.zip",
+    "https://download.cms.gov/nppes/NPPES_Data_Dissemination_081026_081626_Weekly_V2.zip",
+    "https://download.cms.gov/nppes/NPPES_Data_Dissemination_081726_082326_Weekly_V2.zip",
+]
+filtered_weeklies = module.filter_weeklies_after_full_snapshot(weekly_urls, [{
+    "source_kind": "monthly_full",
+    "source_published_at": "2026-08-10T03:06:00Z",
+}])
 print(json.dumps({
     "provider": provider,
     "removal": removal,
     "redeactivated_status": redeactivated["status"],
     "reactivated_status": reactivated["status"],
     "source_published_at": module.zip_member_published_at(member),
+    "organization": organization,
+    "organization_removal": organization_removal,
+    "filtered_weeklies": filtered_weeklies,
 }))
 `;
 	const output = execFileSync('python3', ['-c', program, importerPath], {
@@ -55,4 +70,10 @@ print(json.dumps({
 	assert.equal(result.redeactivated_status, 'deactivated');
 	assert.equal(result.reactivated_status, 'active');
 	assert.equal(result.source_published_at, '2026-08-31T03:06:00Z');
+	assert.equal(result.organization, null);
+	assert.equal(result.organization_removal, '1234567890');
+	assert.deepEqual(result.filtered_weeklies, [
+		'https://download.cms.gov/nppes/NPPES_Data_Dissemination_081026_081626_Weekly_V2.zip',
+		'https://download.cms.gov/nppes/NPPES_Data_Dissemination_081726_082326_Weekly_V2.zip'
+	]);
 });
