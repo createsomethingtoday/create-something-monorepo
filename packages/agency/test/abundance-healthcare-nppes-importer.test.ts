@@ -47,6 +47,10 @@ filtered_weeklies = module.filter_weeklies_after_full_snapshot(weekly_urls, [{
     "source_kind": "monthly_full",
     "source_published_at": "2026-08-10T03:06:00Z",
 }])
+cross_year_weeklies = module.sort_weekly_urls([
+    "https://download.cms.gov/nppes/NPPES_Data_Dissemination_010427_011027_Weekly_V2.zip",
+    "https://download.cms.gov/nppes/NPPES_Data_Dissemination_122126_122726_Weekly_V2.zip",
+])
 print(json.dumps({
     "provider": provider,
     "removal": removal,
@@ -56,6 +60,7 @@ print(json.dumps({
     "organization": organization,
     "organization_removal": organization_removal,
     "filtered_weeklies": filtered_weeklies,
+    "cross_year_weeklies": cross_year_weeklies,
 }))
 `;
 	const output = execFileSync('python3', ['-c', program, importerPath], {
@@ -76,4 +81,6 @@ print(json.dumps({
 		'https://download.cms.gov/nppes/NPPES_Data_Dissemination_081026_081626_Weekly_V2.zip',
 		'https://download.cms.gov/nppes/NPPES_Data_Dissemination_081726_082326_Weekly_V2.zip'
 	]);
+	assert.match(result.cross_year_weeklies[0], /122126_122726/);
+	assert.match(result.cross_year_weeklies[1], /010427_011027/);
 });

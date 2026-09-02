@@ -49,7 +49,7 @@ def discover_urls(kind: str) -> list[str]:
         matches = [url for url in absolute if "Data_Dissemination" in url and "Weekly" not in url and "_V2.zip" in url]
         return matches[:1]
     matches = [url for url in absolute if "Weekly_V2.zip" in url]
-    return sorted(matches, key=lambda url: re.search(r"_(\d{6})_\d{6}_Weekly", url).group(1))
+    return sort_weekly_urls(matches)
 
 
 def weekly_interval_end(url: str) -> datetime | None:
@@ -57,6 +57,11 @@ def weekly_interval_end(url: str) -> datetime | None:
     if not match:
         return None
     return datetime.strptime(match.group(1), "%m%d%y").replace(tzinfo=timezone.utc)
+
+
+def sort_weekly_urls(urls: list[str]) -> list[str]:
+    minimum = datetime.min.replace(tzinfo=timezone.utc)
+    return sorted(urls, key=lambda url: weekly_interval_end(url) or minimum)
 
 
 def filter_weeklies_after_full_snapshot(urls: list[str], receipts: list[dict]) -> list[str]:
