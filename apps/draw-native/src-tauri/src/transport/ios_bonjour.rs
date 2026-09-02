@@ -14,7 +14,8 @@ type DnsServiceFlags = u32;
 type DnsServiceError = i32;
 const NO_ERROR: DnsServiceError = 0;
 const MAX_CERTIFICATE_CHUNKS: usize = 32;
-const MAX_DISCOVERED_SERVICES: usize = 16;
+const MAX_VALIDATED_HOSTS: usize = 16;
+const DISCOVERY_RESOLUTION_TIMEOUT: Duration = Duration::from_secs(5);
 
 #[link(name = "dns_sd")]
 unsafe extern "C" {
@@ -187,7 +188,10 @@ fn browse_services(service_type: &str) -> Result<Vec<ServiceName>, String> {
     processed.map(|_| found)
 }
 
-fn resolve_service(name: &ServiceName) -> Result<(String, u16, Vec<u8>), String> {
+fn resolve_service(
+    name: &ServiceName,
+    discovery_deadline: Instant,
+) -> Result<(String, u16, Vec<u8>), String> {
     let instance = CString::new(name.name.as_str()).map_err(|error| error.to_string())?;
     let regtype = CString::new(name.regtype.as_str()).map_err(|error| error.to_string())?;
     let domain = CString::new(name.domain.as_str()).map_err(|error| error.to_string())?;
@@ -211,7 +215,8 @@ fn resolve_service(name: &ServiceName) -> Result<(String, u16, Vec<u8>), String>
     if error != NO_ERROR {
         return Err(format!("Bonjour resolve failed ({error})"));
     }
-    let processed = process_until(service, Instant::now() + Duration::from_secs(2), || {
+    let service_deadline = (Instant::now() + Duration::from_secs(2)).min(discovery_deadline);
+    let processed = process_until(service, service_deadline, || {
         // SAFETY: DNS-SD callbacks and this completion check execute
         // sequentially on this thread inside `DNSServiceProcessResult`.
         unsafe { (*result.get()).is_some() }
@@ -245,11 +250,12 @@ fn txt_properties(record: &[u8]) -> HashMap<String, String> {
 
 pub(super) fn discover(service_type: &str) -> Result<Vec<DiscoveredHost>, String> {
     let mut hosts = Vec::new();
-    for service in browse_services(service_type)?
-        .into_iter()
-        .take(MAX_DISCOVERED_SERVICES)
-    {
-        let Ok((hostname, port, txt)) = resolve_service(&service) else {
+    let discovery_deadline = Instant::now() + DISCOVERY_RESOLUTION_TIMEOUT;
+    for service in browse_services(service_type)? {
+        if hosts.len() >= MAX_VALIDATED_HOSTS || Instant::now() >= discovery_deadline {
+            break;
+        }
+        let Ok((hostname, port, txt)) = resolve_service(&service, discovery_deadline) else {
             continue;
         };
         let properties = txt_properties(&txt);
