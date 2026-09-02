@@ -124,18 +124,21 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
 }
 
 type ModelContextLike = { registerTool?: (tool: unknown) => unknown; provideContext?: (context: { tools: unknown[] }) => unknown };
-function asWebMcpTool(tool: DrawWebMcpTool) {
-  return { ...tool, execute: async (input: Record<string, unknown> = {}) => tool.execute(input) };
+function asWebMcpTool(tool: DrawWebMcpTool, legacy = false) {
+  return { ...tool, execute: async (input: Record<string, unknown> = {}) => {
+    const result = await tool.execute(input);
+    return legacy ? { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] } : result;
+  } };
 }
 
 export function registerDrawWebMcpTools(tools: DrawWebMcpTool[], contexts?: { documentContext?: ModelContextLike; navigatorContext?: ModelContextLike }) {
   try {
     const doc = contexts?.documentContext ?? (typeof document === 'undefined' ? undefined : (document as Document & { modelContext?: ModelContextLike }).modelContext);
     const nav = contexts?.navigatorContext ?? (typeof navigator === 'undefined' ? undefined : (navigator as Navigator & { modelContext?: ModelContextLike }).modelContext);
-    const modelContext = doc ?? nav;
-    if (!modelContext) return { api: 'none' as const, registered: 0 };
-    if (typeof modelContext.registerTool === 'function') { tools.forEach((tool) => modelContext.registerTool!(asWebMcpTool(tool))); return { api: 'registerTool' as const, registered: tools.length }; }
-    if (typeof modelContext.provideContext === 'function') { modelContext.provideContext({ tools: tools.map(asWebMcpTool) }); return { api: 'provideContext' as const, registered: tools.length }; }
+    if (typeof doc?.registerTool === 'function') { tools.forEach((tool) => doc.registerTool!(asWebMcpTool(tool))); return { api: 'registerTool' as const, registered: tools.length }; }
+    const legacy = nav ?? doc;
+    if (typeof legacy?.registerTool === 'function') { tools.forEach((tool) => legacy.registerTool!(asWebMcpTool(tool, true))); return { api: 'registerTool' as const, registered: tools.length }; }
+    if (typeof legacy?.provideContext === 'function') { legacy.provideContext({ tools: tools.map((tool) => asWebMcpTool(tool, true)) }); return { api: 'provideContext' as const, registered: tools.length }; }
   } catch (error) { console.warn('[Draw WebMCP] registration failed', error); }
   return { api: 'none' as const, registered: 0 };
 }

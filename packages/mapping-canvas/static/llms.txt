@@ -12,7 +12,7 @@ CREATE SOMETHING Draw is a free, local-first drawing canvas for mapping meetings
 
 ## Agent interface
 
-Draw registers `draw_get_state`, `draw_apply_operations`, `draw_select`, `draw_set_tool`, `draw_undo`, `draw_redo`, and `draw_reset` through `document.modelContext.registerTool`. Agent changes use the same local document, history, persistence, and paired-device operations as human changes, and display an on-canvas transition receipt.
+Draw registers `draw_get_state`, `draw_apply_operations`, `draw_select`, `draw_set_tool`, `draw_undo`, `draw_redo`, and `draw_reset` through `document.modelContext.registerTool`. Agent changes use the same local document, history, and persistence operations as human changes, and display an on-canvas transition receipt. WebMCP mutation is limited to the browser-local canvas; paired native shells use their dedicated synchronization controls.
 
 ## Data boundary
 

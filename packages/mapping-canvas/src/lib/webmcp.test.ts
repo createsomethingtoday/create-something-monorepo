@@ -43,4 +43,15 @@ describe('Draw WebMCP tools', () => {
     const result = await (registered[0].execute as (input: unknown) => Promise<unknown>)({});
     expect(result).toMatchObject({ document: { title: 'Untitled mapping session' }, selectedIds: [] });
   });
+
+  it('wraps results for the legacy navigator registration contract', async () => {
+    const registered: Array<Record<string, unknown>> = [];
+    const tools = createDrawWebMcpTools({
+      getState: () => ({ document: createDocument(), selectedIds: [], tool: 'pen', canUndo: false, canRedo: false }),
+      applyOperations: vi.fn(), select: vi.fn(), setTool: vi.fn(), undo: vi.fn(), redo: vi.fn(), reset: vi.fn(), animate: vi.fn()
+    });
+    registerDrawWebMcpTools(tools, { navigatorContext: { registerTool: (tool) => registered.push(tool as Record<string, unknown>) } });
+    const result = await (registered[0].execute as (input: unknown) => Promise<unknown>)({});
+    expect(result).toMatchObject({ content: [{ type: 'text' }] });
+  });
 });

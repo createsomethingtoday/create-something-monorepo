@@ -30,4 +30,4 @@ Draw registers seven tools through `document.modelContext.registerTool`, with a 
 
 `draw_apply_operations` supports `put_object`, `remove_objects`, `replace_objects`, `set_title`, `set_viewport`, `convert`, and `restore_conversion`. Whole-canvas replacement requires `confirmation: "REPLACE CANVAS"`; reset requires `confirmation: "RESET CANVAS"`. Agent mutations are serialized through the document/history path and produce a visible, reduced-motion-safe transition receipt.
 
-Canvas data remains in the current browser or native app unless the operator explicitly exports it. WebMCP tools do not send documents to a CREATE SOMETHING server.
+Canvas data remains in the current browser or native app unless the operator explicitly exports it. WebMCP tools do not send documents to a CREATE SOMETHING server. Site-tool mutation is intentionally limited to the browser-local canvas; paired Mac/iPhone shells fail closed and continue using their native synchronization controls.

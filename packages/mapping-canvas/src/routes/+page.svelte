@@ -118,15 +118,19 @@
 
   async function applyAgentOperations(operations: CanvasOperation[]) {
     if (!ready) throw new Error('Draw is still loading. Try the tool again.');
+    if (nativeRole !== 'web') throw new Error('WebMCP mutation is limited to the browser-local canvas. Use Draw device controls for paired Mac and iPhone sessions.');
     if (!companionCanEdit()) throw new Error(status);
     const next = applyCanvasOperations(document, operations);
     if (!next) throw new Error('One or more Draw operations are invalid for the current document. No changes were applied.');
     apply(next, operations);
+    const existing = new Set(next.objects.map(({ id }) => id));
+    selectedIds = selectedIds.filter((id) => existing.has(id));
     return next;
   }
 
   async function resetCanvasFromAgent() {
     if (!ready) throw new Error('Draw is still loading. Try the tool again.');
+    if (nativeRole !== 'web') throw new Error('WebMCP reset is limited to the browser-local canvas. Use Draw device controls for paired Mac and iPhone sessions.');
     clearTimeout(saveTimer); saveTimer = undefined;
     if (nativeRole === 'web') await clearDocument();
     const next = createDocument();
