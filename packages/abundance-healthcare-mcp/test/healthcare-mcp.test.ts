@@ -154,6 +154,58 @@ test('candidate search is bounded, filterable, and omits bulk contact fields', a
   assert.doesNotMatch(serialized, /Private In Bulk|417555/);
 });
 
+test('candidate search derives an arbitrary city market from the nationwide snapshot', async () => {
+  let requestedUrl = '';
+  const fetchFn: typeof fetch = async (input) => {
+    requestedUrl = String(input);
+    return Response.json({
+      success: true,
+      data: {
+        report,
+        providers: [{
+          npi: '1750298360',
+          name: 'Austin Family NP',
+          credential: 'FNP-BC',
+          last_updated_date: '2026-08-27',
+          practice_address_1: '100 Private In Bulk Ave',
+          practice_city: 'Austin',
+          practice_state: 'TX',
+          practice_phone: '5125550100',
+          source_fetched_at: '2026-09-02T01:39:07.502Z',
+        }],
+        readiness: [],
+        total: 882,
+        limit: 5,
+        offset: 0,
+      },
+    } satisfies HealthcareApiResponse);
+  };
+
+  const result = await searchCoverageCandidates(
+    {
+      state: 'tx',
+      city: 'Austin',
+      limit: 5,
+      offset: 0,
+    },
+    { agencyApiKey: 'test-key', fetchFn },
+  );
+
+  const url = new URL(requestedUrl);
+  assert.equal(url.searchParams.get('state'), 'TX');
+  assert.equal(url.searchParams.get('city'), 'Austin');
+  assert.equal(result.market_id, 'npg-family-np-nationwide');
+  assert.deepEqual(result.location, {
+    scope: 'derived_locale',
+    label: 'Austin, TX',
+    state: 'TX',
+    city: 'Austin',
+  });
+  assert.equal(result.total, 882);
+  assert.equal(result.results.length, 1);
+  assert.doesNotMatch(JSON.stringify(result), /Private In Bulk|512555/);
+});
+
 test('list healthcare markets exposes weekly defaults and no daily locale', async () => {
   const fetchFn: typeof fetch = async (input) => {
     const url = new URL(String(input));
