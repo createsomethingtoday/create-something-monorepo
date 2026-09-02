@@ -2,6 +2,13 @@
   "name": "@create-something/mapping-canvas",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
+  "homepage": "https://draw.createsomething.agency/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+    "directory": "packages/mapping-canvas"
+  },
   "description": "Local-first free-form canvas for CREATE SOMETHING mapping meetings.",
   "type": "module",
   "scripts": {

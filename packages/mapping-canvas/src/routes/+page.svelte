@@ -5,7 +5,8 @@
   import { clearDocument, loadDocument, saveDocument } from '$lib/persistence';
   import { commit, convert, createDocument, parse, redo, removeObjects, resizeGroup, restoreConversion, serialize, uid, undo, withObjects, type CanvasDocument, type CanvasObject, type History, type Point, type Shape, type Stroke, type Tool } from '$lib/document';
   import { DEFAULT_DRAWING_COLOR, DRAWING_COLOR_PREFERENCE, DRAWING_PALETTE, isColorableObject, isDrawingColor, recolorObjects, type DrawingColor } from '$lib/palette';
-  import { isValidCanvasTitle, type CanvasOperation } from '$lib/paired-session';
+  import { applyCanvasOperations, isValidCanvasTitle, type CanvasOperation } from '$lib/paired-session';
+  import { createDrawWebMcpTools, registerDrawWebMcpTools, type DrawTransitionKind } from '$lib/webmcp';
   import { beginPairing, companionStatus, discoverHosts, forgetCompanion, hasNativeBridge, hostStatus, nativeRole as readNativeRole, pairCompanion, refreshCompanion, replaceHostDocument, revokeCompanion, setCompanionOnline, submitNativeOperation, type DiscoveredHost, type NativeRole, type NativeSessionStatus, type PairingOffer } from '$lib/native-pairing';
 
   const tools: { id: Tool; label: string; key: string }[] = [
@@ -69,8 +70,12 @@
   let saveTimer: ReturnType<typeof setTimeout> | undefined;
   let mirrorTimer: ReturnType<typeof setInterval> | undefined;
   let nativeTail: Promise<void> = Promise.resolve();
+  let agentMutationTail: Promise<void> = Promise.resolve();
+  let agentMutationActive = $state(false);
   let nativeOptimisticVersion = 0;
   let nativeConflictEpoch = 0;
+  let agentTransition = $state<{ id: string; kind: DrawTransitionKind; affectedIds: string[] } | null>(null);
+  let agentTransitionTimer: ReturnType<typeof setTimeout> | undefined;
   const activeTouches = new Map<number, { x: number; y: number }>();
   let pinch: { distance: number; world: Point; origin: CanvasDocument['viewport'] } | null = null;
   let pendingTouchAction: { pointerId: number; point: Point; tool: 'note' | 'group' } | null = null;
@@ -85,13 +90,82 @@
     try { const savedColor = localStorage.getItem(DRAWING_COLOR_PREFERENCE); if (isDrawingColor(savedColor)) drawingColor = savedColor; } catch { /* Preference persistence is optional. */ }
     try { sidebarCollapsed = localStorage.getItem(TOOL_SIDEBAR_PREFERENCE) === 'true'; } catch { /* Preference persistence is optional. */ }
     void initializeSession();
+    const webMcp = registerDrawWebMcpTools(createDrawWebMcpTools({
+      getState: agentState,
+      applyOperations: (operations) => queueAgentMutation(() => applyAgentOperations(operations)),
+      select: (ids) => { assertAgentControlReady(); const existing = new Set(document.objects.map(({ id }) => id)); selectedIds = ids.filter((id) => existing.has(id)); status = selectedIds.length ? `Agent focused ${selectedIds.length} object${selectedIds.length === 1 ? '' : 's'}` : 'Agent cleared selection'; },
+      setTool: (next) => { assertAgentControlReady(); tool = next; status = `Agent selected ${next} tool`; },
+      undo: () => queueAgentMutation(() => browserLocalHistory('undo')),
+      redo: () => queueAgentMutation(() => browserLocalHistory('redo')),
+      reset: () => queueAgentMutation(resetCanvasFromAgent),
+      animate: showAgentTransition
+    }));
+    if (webMcp.registered) status = `${webMcp.registered} agent tools ready · loading local canvas…`;
     const resize = () => { viewportWidth = surface?.clientWidth || window.innerWidth; viewportHeight = surface?.clientHeight || window.innerHeight; };
     const surfaceObserver = new ResizeObserver(resize);
     resize(); surfaceObserver.observe(surface); window.addEventListener('resize', resize); window.addEventListener('keydown', keydown);
     mirrorTimer = setInterval(() => void refreshMirroredState(), 750);
     if (import.meta.env.PROD) navigator.serviceWorker?.register('/service-worker.js').catch(() => undefined);
-    return () => { surfaceObserver.disconnect(); clearInterval(mirrorTimer); window.removeEventListener('resize', resize); window.removeEventListener('keydown', keydown); };
+    return () => { surfaceObserver.disconnect(); clearInterval(mirrorTimer); clearTimeout(agentTransitionTimer); window.removeEventListener('resize', resize); window.removeEventListener('keydown', keydown); };
   });
+
+  function queueAgentMutation<T>(action: () => Promise<T> | T): Promise<T> {
+    const queued = agentMutationTail.then(async () => {
+      assertAgentControlReady();
+      agentMutationActive = true;
+      try { return await action(); }
+      finally { agentMutationActive = false; }
+    });
+    agentMutationTail = queued.then(() => undefined, () => undefined);
+    return queued;
+  }
+
+  function assertAgentControlReady() {
+    if (!ready) throw new Error('Draw is still loading. Try the tool again.');
+    if (drawing || pinch || pendingTouchAction || resizingGroupId || resizeOrigin || movingObjectId || dragOrigin) throw new Error('Finish the active human gesture before applying an agent control.');
+  }
+
+  function agentState() {
+    if (!ready) throw new Error('Draw is still loading. Try the tool again.');
+    return { document: JSON.parse(JSON.stringify(document)) as CanvasDocument, selectedIds: [...selectedIds], tool, canUndo: history.past.length > 0, canRedo: history.future.length > 0 };
+  }
+
+  async function browserLocalHistory(direction: 'undo' | 'redo') {
+    if (nativeShell || nativeRole !== 'web') throw new Error('WebMCP history is limited to the browser-local canvas. Use Draw device controls for paired Mac and iPhone sessions.');
+    await (direction === 'undo' ? doUndo() : doRedo());
+  }
+
+  function showAgentTransition(kind: DrawTransitionKind, affectedIds: string[]) {
+    const id = `agent-${crypto.randomUUID()}`;
+    agentTransition = { id, kind, affectedIds };
+    clearTimeout(agentTransitionTimer);
+    agentTransitionTimer = setTimeout(() => agentTransition = null, 700);
+    status = `Agent ${kind} · ${affectedIds.length || 'canvas'} ${affectedIds.length === 1 ? 'object' : 'objects'}`;
+    return id;
+  }
+
+  async function applyAgentOperations(operations: CanvasOperation[]) {
+    if (!ready) throw new Error('Draw is still loading. Try the tool again.');
+    if (nativeShell || nativeRole !== 'web') throw new Error('WebMCP mutation is limited to the browser-local canvas. Use Draw device controls for paired Mac and iPhone sessions.');
+    if (!companionCanEdit()) throw new Error(status);
+    const next = applyCanvasOperations(document, operations);
+    if (!next) throw new Error('One or more Draw operations are invalid for the current document. No changes were applied.');
+    apply(next, operations);
+    const existing = new Set(next.objects.map(({ id }) => id));
+    selectedIds = selectedIds.filter((id) => existing.has(id));
+    return next;
+  }
+
+  async function resetCanvasFromAgent() {
+    if (!ready) throw new Error('Draw is still loading. Try the tool again.');
+    if (nativeShell || nativeRole !== 'web') throw new Error('WebMCP reset is limited to the browser-local canvas. Use Draw device controls for paired Mac and iPhone sessions.');
+    clearTimeout(saveTimer); saveTimer = undefined;
+    if (nativeRole === 'web') await clearDocument();
+    const next = createDocument();
+    await commitHostReplacement(() => next, (value) => value, (value) => history = { past: [], present: value, future: [] }, 'reset');
+    selectedIds = [];
+    queueSave(next);
+  }
 
   async function initializeSession() {
     if (!nativeShell) {
@@ -214,7 +288,7 @@
     selectedIds = [item.id]; drawing = false;
   }
   function trackTouchPointer(event: PointerEvent) {
-    if (event.pointerType !== 'touch' || event.button !== 0 || !ready) return;
+    if (event.pointerType !== 'touch' || event.button !== 0 || !ready || agentMutationActive) return;
     activeTouches.set(event.pointerId, { x: event.clientX, y: event.clientY });
     if (activeTouches.size !== 2) return;
     pendingTouchAction = null;
@@ -230,7 +304,7 @@
   }
 
   function pointerDown(event: PointerEvent) {
-    if (event.button !== 0 || !ready) return;
+    if (event.button !== 0 || !ready || agentMutationActive) return;
     if (!companionCanEdit()) return;
     try { surface.setPointerCapture(event.pointerId); } catch { /* SVG pointer capture is not supported in every browser. */ }
     if (pinch) return;
@@ -351,7 +425,7 @@
   }
   function selectPointer(event: PointerEvent, id: string) {
     event.stopPropagation();
-    if (pinch) return;
+    if (pinch || agentMutationActive) return;
     if (tool === 'eraser') { apply(removeObjects(document, [id]), { type: 'remove_objects', ids: [id] }); selectedIds = []; return; }
     if (tool === 'connector') { selectedIds = selectedIds.includes(id) ? selectedIds : [...selectedIds.slice(-1), id]; if (selectedIds.length === 2) runConversion('connector'); return; }
     selectedIds = event.shiftKey ? (selectedIds.includes(id) ? selectedIds.filter((value) => value !== id) : [...selectedIds, id]) : [id];
@@ -362,12 +436,12 @@
   }
   function resizePointer(event: PointerEvent, id: string) {
     event.stopPropagation();
-    if (pinch || tool !== 'select' || !companionCanEdit()) return;
+    if (pinch || agentMutationActive || tool !== 'select' || !companionCanEdit()) return;
     const here = point(event); selectedIds = [id]; resizingGroupId = id; resizeOrigin = document; resizeMoved = false; drawing = true; start = here;
     try { surface.setPointerCapture(event.pointerId); } catch { /* SVG pointer capture is not supported in every browser. */ }
   }
   function resizeKeyboard(event: KeyboardEvent, id: string) {
-    if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key) || !companionCanEdit()) return;
+    if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key) || agentMutationActive || !companionCanEdit()) return;
     const group = document.objects.find((object) => object.id === id && object.kind === 'group');
     if (group?.kind !== 'group') return;
     event.preventDefault(); event.stopPropagation();
@@ -457,7 +531,7 @@
 
 <main class="app-shell" class:native-shell={nativeShell}>
   <header class="topbar">
-    <div class="identity"><img src="/brand/create-something-agency-white.svg" alt="CREATE SOMETHING .agency" /><span>Draw · Mapping canvas</span>{#if nativeRole !== 'web'}<button class="native-link" aria-label="Open device pairing" onclick={openPairing}>{nativeRole === 'host' ? 'Pair' : nativeSession.sessionId ? 'Linked' : 'Link'}</button>{/if}</div>
+    <div class="identity"><img src="/brand/create-something-agency-white.svg" alt="CREATE SOMETHING .agency" /><span>Draw · Mapping canvas</span><a class="source-link" href="https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/mapping-canvas" target="_blank" rel="noreferrer">Source</a>{#if nativeRole !== 'web'}<button class="native-link" aria-label="Open device pairing" onclick={openPairing}>{nativeRole === 'host' ? 'Pair' : nativeSession.sessionId ? 'Linked' : 'Link'}</button>{/if}</div>
     <input class="title" aria-label="Canvas title" maxlength="240" value={document.title} oninput={(event) => updateTitle(event.currentTarget)} />
     {#if nativeRole !== 'companion'}<div class="file-actions"><button onclick={() => fileInput?.click()}>Import</button><button onclick={exportJson}>JSON</button><button onclick={exportSvg}>SVG</button><button onclick={exportPng}>PNG</button><button onclick={resetCanvas}>Reset</button><input bind:this={fileInput} class="visually-hidden" type="file" accept="application/json,.json" onchange={importJson} /></div>{/if}
   </header>
@@ -470,13 +544,13 @@
         <g transform={transform}>
           {#each renderObjects as object (object.id)}
             {@const selected = selectedIds.includes(object.id)}
-            {#if object.kind === 'stroke'}<path class:selected role="button" tabindex="0" aria-label="Ink stroke" d={path(object.points)} fill="none" stroke={object.color} stroke-width={object.width} stroke-linecap="round" stroke-linejoin="round" onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)} />
-            {:else if object.kind === 'rectangle'}<rect class:selected role="button" tabindex="0" aria-label="Rectangle" x={Math.min(object.from.x, object.to.x)} y={Math.min(object.from.y, object.to.y)} width={Math.abs(object.to.x - object.from.x)} height={Math.abs(object.to.y - object.from.y)} fill="transparent" stroke={object.color} stroke-width="2" onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)} />
-            {:else if object.kind === 'ellipse'}<ellipse class:selected role="button" tabindex="0" aria-label="Ellipse" cx={(object.from.x + object.to.x) / 2} cy={(object.from.y + object.to.y) / 2} rx={Math.abs(object.to.x - object.from.x) / 2} ry={Math.abs(object.to.y - object.from.y) / 2} fill="transparent" stroke={object.color} stroke-width="2" onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)} />
-            {:else if object.kind === 'arrow'}<line class:selected role="button" tabindex="0" aria-label="Arrow" x1={object.from.x} y1={object.from.y} x2={object.to.x} y2={object.to.y} stroke={object.color} stroke-width="2" marker-end="url(#arrowhead)" onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)} />
-            {:else if object.kind === 'note'}<g data-object-id={object.id} class:selected role="button" tabindex="0" aria-label={`Note: ${object.text}`} onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)}><rect x={object.x} y={object.y} width={object.width} height={object.height} rx="4" fill="#111" stroke={selected ? '#fcaa2d' : 'rgba(255,255,255,.18)'} /><foreignObject x={object.x + 16} y={object.y + 14} width={object.width - 32} height={object.height - 28}><textarea xmlns="http://www.w3.org/1999/xhtml" aria-label="Edit note" value={object.text} disabled={nativeRole === 'companion' && (!nativeSession.sessionId || nativeSession.requiresRepair)} onpointerdown={(event) => event.stopPropagation()} oninput={(event) => { if (!companionCanEdit()) return; const changed = { ...object, text: event.currentTarget.value }; const next = withObjects(document, document.objects.map((entry) => entry.id === object.id ? changed : entry)); history = { ...history, present: next }; queueSave(next); sendNative([{ type: 'put_object', object: changed }]); }}></textarea></foreignObject>{#if object.sourceIds?.length}<text x={object.x + 16} y={object.y + object.height - 10} class="provenance">CONVERTED · {object.sourceIds.length} SOURCE</text>{/if}</g>
-            {:else if object.kind === 'group'}<g class:selected role="button" tabindex="0" aria-label={`Group: ${object.label}`} onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)}><rect x={object.x} y={object.y} width={object.width} height={object.height} rx="4" fill="rgba(252,170,45,.025)" stroke={selected ? '#fcaa2d' : 'rgba(252,170,45,.5)'} stroke-dasharray="8 6" /><text x={object.x + 12} y={object.y + 24} class="group-label">{object.label}</text>{#if selected && tool === 'select'}<rect data-ui="true" class="resize-handle" role="button" tabindex="0" aria-label="Resize group" x={object.x + object.width - 9} y={object.y + object.height - 9} width="18" height="18" rx="2" onpointerdown={(event) => resizePointer(event, object.id)} onkeydown={(event) => resizeKeyboard(event, object.id)} />{/if}</g>
-            {:else if object.kind === 'connector'}{@const from = document.objects.find(({ id }) => id === object.fromId)}{@const to = document.objects.find(({ id }) => id === object.toId)}{#if from && to}{@const a = objectCenter(from)}{@const b = objectCenter(to)}<line class:selected role="button" tabindex="0" aria-label="Connector" x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#fcaa2d" stroke-width="2" marker-end="url(#arrowhead)" onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)} />{/if}{/if}
+            {#if object.kind === 'stroke'}<path data-object-id={object.id} class:selected class:agent-change={agentTransition?.affectedIds.includes(object.id)} role="button" tabindex="0" aria-label="Ink stroke" d={path(object.points)} fill="none" stroke={object.color} stroke-width={object.width} stroke-linecap="round" stroke-linejoin="round" onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)} />
+            {:else if object.kind === 'rectangle'}<rect data-object-id={object.id} class:selected class:agent-change={agentTransition?.affectedIds.includes(object.id)} role="button" tabindex="0" aria-label="Rectangle" x={Math.min(object.from.x, object.to.x)} y={Math.min(object.from.y, object.to.y)} width={Math.abs(object.to.x - object.from.x)} height={Math.abs(object.to.y - object.from.y)} fill="transparent" stroke={object.color} stroke-width="2" onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)} />
+            {:else if object.kind === 'ellipse'}<ellipse data-object-id={object.id} class:selected class:agent-change={agentTransition?.affectedIds.includes(object.id)} role="button" tabindex="0" aria-label="Ellipse" cx={(object.from.x + object.to.x) / 2} cy={(object.from.y + object.to.y) / 2} rx={Math.abs(object.to.x - object.from.x) / 2} ry={Math.abs(object.to.y - object.from.y) / 2} fill="transparent" stroke={object.color} stroke-width="2" onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)} />
+            {:else if object.kind === 'arrow'}<line data-object-id={object.id} class:selected class:agent-change={agentTransition?.affectedIds.includes(object.id)} role="button" tabindex="0" aria-label="Arrow" x1={object.from.x} y1={object.from.y} x2={object.to.x} y2={object.to.y} stroke={object.color} stroke-width="2" marker-end="url(#arrowhead)" onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)} />
+            {:else if object.kind === 'note'}<g data-object-id={object.id} class:selected class:agent-change={agentTransition?.affectedIds.includes(object.id)} role="button" tabindex="0" aria-label={`Note: ${object.text}`} onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)}><rect x={object.x} y={object.y} width={object.width} height={object.height} rx="4" fill="#111" stroke={selected ? '#fcaa2d' : 'rgba(255,255,255,.18)'} /><foreignObject x={object.x + 16} y={object.y + 14} width={object.width - 32} height={object.height - 28}><textarea xmlns="http://www.w3.org/1999/xhtml" aria-label="Edit note" value={object.text} disabled={nativeRole === 'companion' && (!nativeSession.sessionId || nativeSession.requiresRepair)} onpointerdown={(event) => event.stopPropagation()} oninput={(event) => { if (!companionCanEdit()) return; const changed = { ...object, text: event.currentTarget.value }; const next = withObjects(document, document.objects.map((entry) => entry.id === object.id ? changed : entry)); history = { ...history, present: next }; queueSave(next); sendNative([{ type: 'put_object', object: changed }]); }}></textarea></foreignObject>{#if object.sourceIds?.length}<text x={object.x + 16} y={object.y + object.height - 10} class="provenance">CONVERTED · {object.sourceIds.length} SOURCE</text>{/if}</g>
+            {:else if object.kind === 'group'}<g data-object-id={object.id} class:selected class:agent-change={agentTransition?.affectedIds.includes(object.id)} role="button" tabindex="0" aria-label={`Group: ${object.label}`} onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)}><rect x={object.x} y={object.y} width={object.width} height={object.height} rx="4" fill="rgba(252,170,45,.025)" stroke={selected ? '#fcaa2d' : 'rgba(252,170,45,.5)'} stroke-dasharray="8 6" /><text x={object.x + 12} y={object.y + 24} class="group-label">{object.label}</text>{#if selected && tool === 'select'}<rect data-ui="true" class="resize-handle" role="button" tabindex="0" aria-label="Resize group" x={object.x + object.width - 9} y={object.y + object.height - 9} width="18" height="18" rx="2" onpointerdown={(event) => resizePointer(event, object.id)} onkeydown={(event) => resizeKeyboard(event, object.id)} />{/if}</g>
+            {:else if object.kind === 'connector'}{@const from = document.objects.find(({ id }) => id === object.fromId)}{@const to = document.objects.find(({ id }) => id === object.toId)}{#if from && to}{@const a = objectCenter(from)}{@const b = objectCenter(to)}<line data-object-id={object.id} class:selected class:agent-change={agentTransition?.affectedIds.includes(object.id)} role="button" tabindex="0" aria-label="Connector" x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#fcaa2d" stroke-width="2" marker-end="url(#arrowhead)" onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)} />{/if}{/if}
           {/each}
           {#if draftPoints.length > 1}<path data-ui="true" d={path(draftPoints)} fill="none" stroke={drawingColor} stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />{/if}
           {#if draftShape}{#if draftShape.kind === 'rectangle'}<rect data-ui="true" x={Math.min(draftShape.from.x, draftShape.to.x)} y={Math.min(draftShape.from.y, draftShape.to.y)} width={Math.abs(draftShape.to.x - draftShape.from.x)} height={Math.abs(draftShape.to.y - draftShape.from.y)} fill="transparent" stroke={draftShape.color} />{:else if draftShape.kind === 'ellipse'}<ellipse data-ui="true" cx={(draftShape.from.x + draftShape.to.x) / 2} cy={(draftShape.from.y + draftShape.to.y) / 2} rx={Math.abs(draftShape.to.x - draftShape.from.x) / 2} ry={Math.abs(draftShape.to.y - draftShape.from.y) / 2} fill="transparent" stroke={draftShape.color} />{:else}<line data-ui="true" x1={draftShape.from.x} y1={draftShape.from.y} x2={draftShape.to.x} y2={draftShape.to.y} stroke={draftShape.color} marker-end="url(#arrowhead)" />{/if}{/if}
@@ -486,6 +560,7 @@
       <div class="history"><button onclick={() => void doUndo()} disabled={!history.past.length}>Undo</button><button onclick={() => void doRedo()} disabled={!history.future.length}>Redo</button><span>{Math.round(viewport.zoom * 100)}%</span>{#if nativeRole === 'companion'}<button class:reset-confirm={companionResetArmed} aria-label={companionResetArmed ? 'Confirm reset' : 'Reset'} onclick={resetCanvas}>{companionResetArmed ? 'Confirm' : 'Reset'}</button>{/if}<button onclick={() => updateViewport({ x: 0, y: 0, zoom: 1 })}>Reset view</button></div>
       {#if paletteVisible}<div class="palette" role="group" aria-label="Mark color" data-ui="true"><span>Mark color</span><div>{#each DRAWING_PALETTE as color}<button class:active={drawingColor === color.value} aria-pressed={drawingColor === color.value} aria-label={`${color.label} color`} data-testid={`color-${color.id}`} style={`--swatch:var(${color.token},${color.value})`} onclick={() => chooseColor(color.value, color.label)}><i aria-hidden="true"></i><small>{color.label}</small></button>{/each}</div></div>{/if}
       {#if selectedIds.length}<div class="selection" data-ui="true"><span>{selectedIds.length} selected</span><button class="convert" data-testid="convert-menu" onclick={() => conversionOpen = !conversionOpen}>Convert to…</button>{#if selectedObjects.length === 1 && selectedObjects[0].sourceSnapshot}<button data-testid="restore-source" onclick={restoreSelected}>Restore source</button>{/if}{#if conversionOpen}<div class="conversion-menu"><button data-testid="convert-note" onclick={() => runConversion('note')}>Note<small>Retain as editable text</small></button><button data-testid="convert-connector" onclick={() => runConversion('connector')} disabled={selectedIds.length < 2}>Connector<small>Relate two selected objects</small></button><button data-testid="convert-group" onclick={() => runConversion('group')}>Group<small>Name a working boundary</small></button></div>{/if}</div>{/if}
+      {#if agentTransition}<output class="agent-transition" aria-live="polite"><i aria-hidden="true"></i><span>Agent {agentTransition.kind}</span><small>{agentTransition.affectedIds.length ? `${agentTransition.affectedIds.length} artifact${agentTransition.affectedIds.length === 1 ? '' : 's'}` : 'canvas'}</small></output>{/if}
       {#if pairingOpen}<section class="pairing-panel" data-ui="true" aria-label="Device pairing"><header><strong>{nativeRole === 'host' ? 'Pair iPhone' : 'Connect to Mac'}</strong><button aria-label="Close pairing" onclick={() => pairingOpen = false}>×</button></header>{#if pairingBusy}<p>Looking for the secure session…</p>{:else if nativeRole === 'host'}<p>Enter this one-time code on the iPhone. Both devices must be on the same local network.</p><output class="pairing-code">{pairingOffer?.code || '—'}</output><small>Mac fingerprint {nativeSession.transport?.certificateFingerprint?.slice(0, 16) || 'unavailable'} · expires {pairingOffer ? new Date(pairingOffer.expiresAt).toLocaleTimeString() : 'soon'}</small>{#if nativeSession.pairedClients?.length}<div class="paired-list">{#each nativeSession.pairedClients as client}<span>{client.clientId}<button disabled={Boolean(client.revokedAt)} onclick={async () => { await revokeCompanion(client.clientId); nativeSession = await hostStatus(); }}>Revoke</button></span>{/each}</div>{/if}{:else if nativeSession.sessionId}<p>{nativeSession.requiresRepair ? 'This Mac rejected the pairing credentials. Export if needed, then forget and re-pair.' : 'Securely linked to the Mac session.'}</p><small>{nativeSession.certificateFingerprint?.slice(0, 16)} · revision {nativeSession.revision} · {nativeSession.queueDepth || 0} queued</small><button disabled={nativeSession.requiresRepair} onclick={async () => { const result = await setCompanionOnline(nativeSession.online === false); nativeSession = { ...nativeSession, ...result }; if (result.document) history = { past: [], present: result.document, future: [] }; }}> {nativeSession.online === false ? 'Reconnect' : 'Test offline'} </button><button onclick={async () => { nativeSession = await forgetCompanion(); discoveredHosts = []; selectedHost = null; pairingCode = ''; status = 'Pairing removed · choose Link to pair again'; pairingOpen = false; }}>Forget and re-pair</button>{:else}<p>{discoveredHosts.length ? 'Confirm the Mac fingerprint, then enter its six-digit code.' : 'No Mac session found. Open Draw on Mac and choose Pair.'}</p>{#if selectedHost}<label>Mac session<select bind:value={selectedHost}>{#each discoveredHosts as host}<option value={host}>{host.endpoint}</option>{/each}</select></label><small>Fingerprint {selectedHost.certificateFingerprint.slice(0, 16)}</small><label>Pairing code<input inputmode="numeric" maxlength="6" bind:value={pairingCode} placeholder="000000" /></label><button class="convert" disabled={!/^\d{6}$/.test(pairingCode)} onclick={confirmCompanionPairing}>Pair securely</button>{/if}{/if}</section>{/if}
     </div>
   </section>

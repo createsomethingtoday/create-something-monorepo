@@ -3,6 +3,11 @@ import { DOCUMENT_VERSION, commit, convert, createDocument, objectBounds, parse,
 const stroke = (id: string, x = 10): Stroke => ({ id, kind: 'stroke', createdAt: '2026-08-27T00:00:00Z', points: [{ x, y: 20 }, { x: x + 40, y: 60 }], color: '#f7f4ee', width: 3 });
 describe('mapping canvas contract', () => {
   it('creates a versioned document', () => expect(createDocument().version).toBe(DOCUMENT_VERSION));
+  it('rejects ambiguous duplicate object ids', () => {
+    const document = createDocument();
+    const object = { id: 'duplicate', kind: 'note' as const, createdAt: document.createdAt, x: 10, y: 10, width: 200, height: 100, text: 'One' };
+    expect(() => parse(JSON.stringify({ ...document, objects: [object, { ...object, text: 'Two' }] }))).toThrow(/not a supported/);
+  });
   it('preserves source when converting ink to a note', () => {
     const source = withObjects(createDocument(), [stroke('a')]);
     const note = convert(source, ['a'], 'note').objects.at(-1)!;
