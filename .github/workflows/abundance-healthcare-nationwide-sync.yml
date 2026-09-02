@@ -1,0 +1,56 @@
+name: Abundance Healthcare Nationwide Sync
+
+on:
+  schedule:
+    - cron: '17 8 * * 1'
+  workflow_dispatch:
+    inputs:
+      source_kind:
+        description: Source file type. Use monthly_full for the initial seed or replacement.
+        required: true
+        type: choice
+        default: weekly_incremental
+        options:
+          - weekly_incremental
+          - monthly_full
+      source_url:
+        description: Optional explicit official CMS ZIP URL.
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: abundance-healthcare-nationwide-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - name: Resolve source kind
+        id: source
+        env:
+          DISPATCH_KIND: ${{ inputs.source_kind }}
+          DISPATCH_URL: ${{ inputs.source_url }}
+        run: |
+          set -euo pipefail
+          kind="${DISPATCH_KIND:-weekly_incremental}"
+          printf 'kind=%s\n' "$kind" >> "$GITHUB_OUTPUT"
+          printf 'url=%s\n' "${DISPATCH_URL:-}" >> "$GITHUB_OUTPUT"
+      - name: Sync official NPPES Family NP snapshot
+        env:
+          AGENCY_INTERNAL_API_KEY: ${{ secrets.AGENCY_INTERNAL_API_KEY }}
+          SOURCE_KIND: ${{ steps.source.outputs.kind }}
+          SOURCE_URL: ${{ steps.source.outputs.url }}
+        run: |
+          set -euo pipefail
+          if [[ "$SOURCE_KIND" == "weekly_incremental" ]]; then
+            python3 scripts/sync-nppes-family-np.py --kind monthly_full
+          fi
+          args=(--kind "$SOURCE_KIND")
+          if [[ -n "$SOURCE_URL" ]]; then args+=(--source-url "$SOURCE_URL"); fi
+          python3 scripts/sync-nppes-family-np.py "${args[@]}"

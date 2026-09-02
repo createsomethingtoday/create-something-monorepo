@@ -4,6 +4,7 @@ const DEFAULT_DELIVERY_URL = 'https://createsomething.agency/delivery/abundance'
 const DEFAULT_DELIVERY_ASK_URL = 'https://createsomething.agency/api/delivery/abundance/ask';
 const DEFAULT_STAFF_MCP_URL = 'https://abundance-staff-mcp.createsomething.workers.dev/mcp';
 const DEFAULT_JOBS_MCP_URL = 'https://abundance-jobs-mcp.createsomething.workers.dev/mcp';
+const DEFAULT_HEALTHCARE_MCP_URL = 'https://abundance-healthcare-mcp.createsomething.workers.dev/mcp';
 const DEFAULT_NPG_HUB_URL = 'https://abundance-thenpgroup.mcp.createsomething.agency/mcp';
 const DEFAULT_NPG_HUB_HEALTH_URL = 'https://abundance-thenpgroup.mcp.createsomething.agency/health';
 const DEFAULT_DIFY_BASE_URL = 'https://api.dify.ai/v1';
@@ -288,6 +289,21 @@ async function callMcpTool(session, name, args = {}) {
 	return call.body;
 }
 
+async function listMcpTools(session) {
+	const response = await mcpRequest({
+		url: session.url,
+		token: session.token,
+		sessionId: session.sessionId,
+		timeoutMs: session.timeoutMs,
+		id: `abundance-smoke-tools-${Date.now()}`,
+		method: 'tools/list',
+		params: {}
+	});
+	assertOk(response.ok, `tools/list failed with HTTP ${response.status}`);
+	assertOk(!response.body?.error, `tools/list returned JSON-RPC error: ${truncate(response.body?.error)}`);
+	return response.body?.result?.tools ?? [];
+}
+
 async function smokeDeliveryPage() {
 	const url = readUrl('ABUNDANCE_DELIVERY_URL', DEFAULT_DELIVERY_URL);
 	const response = await fetchWithTimeout(url);
@@ -331,6 +347,22 @@ async function smokeJobsMcp(token) {
 	return `list_public_jobs returned ${truncate(serialized, 240)}`;
 }
 
+async function smokeHealthcareMcp(token) {
+	const url = readUrl('ABUNDANCE_HEALTHCARE_MCP_URL', DEFAULT_HEALTHCARE_MCP_URL);
+	const session = await createMcpSession(url, token, CORE_TIMEOUT_MS);
+	const tools = await listMcpTools(session);
+	const names = tools.map((tool) => tool.name);
+	for (const name of ['list_healthcare_markets', 'get_healthcare_coverage', 'search_coverage_candidates', 'get_healthcare_practitioner']) {
+		assertOk(names.includes(name), `healthcare MCP tools/list did not include ${name}`);
+	}
+	const result = await callMcpTool(session, 'get_healthcare_coverage', { market_id: 'npg-family-np-nationwide' });
+	const payload = extractToolPayload(result);
+	assertOk(Number(payload?.total ?? payload?.report?.provider_count) > 0, 'nationwide healthcare coverage returned no providers');
+	assertOk(payload?.report?.source?.coverage_limit_reached === false, 'nationwide healthcare snapshot reported a source cap');
+	assertOk(payload?.report?.direct_outreach_status === 'blocked', 'healthcare coverage did not fail closed on outreach');
+	return `nationwide providers=${payload?.total ?? payload?.report?.provider_count}; tools=${names.length}`;
+}
+
 async function smokeNpgHub(token, includeSlowHubDiscovery) {
 	const healthUrl = readUrl('ABUNDANCE_NPG_HUB_HEALTH_URL', DEFAULT_NPG_HUB_HEALTH_URL);
 	const health = await fetchWithTimeout(healthUrl, { headers: { Authorization: `Bearer ${token}` } }, CORE_TIMEOUT_MS);
@@ -343,6 +375,7 @@ async function smokeNpgHub(token, includeSlowHubDiscovery) {
 	for (const toolkit of ['jotform', 'mailchimp', 'whatsapp']) {
 		assertOk(servicesText.toLowerCase().includes(toolkit), `hub_list_services did not include ${toolkit}`);
 	}
+	assertOk(servicesText.includes('abundance-healthcare-mcp'), 'hub_list_services did not include abundance-healthcare-mcp');
 
 	const connectionStatuses = [];
 	for (const toolkit of ['jotform', 'mailchimp', 'whatsapp']) {
@@ -364,7 +397,7 @@ async function smokeNpgHub(token, includeSlowHubDiscovery) {
 	const statusSummary = connectionStatuses
 		.map(({ toolkit, payload }) => `${toolkit}:${summarizeConnectionPayload(payload)}`)
 		.join(', ');
-	return `health ok; services include Jotform/Mailchimp/WhatsApp; ${statusSummary}`;
+	return `health ok; services include Jotform/Mailchimp/WhatsApp/Healthcare; ${statusSummary}`;
 }
 
 async function smokeDify(apiKey) {
@@ -418,6 +451,15 @@ async function main() {
 		skip(results, 'jobs MCP public listing', 'missing ABUNDANCE_JOBS_MCP_API_KEY/ABUNDANCE_JOBS_MCP_BEARER_TOKEN/ABUNDANCE_MCP_BEARER_TOKEN');
 	} else {
 		results.push(makeResult('jobs MCP public listing', 'fail', 'missing Jobs MCP bearer token env'));
+	}
+
+	const healthcareToken = envFirst(['ABUNDANCE_HEALTHCARE_MCP_API_KEY', 'ABUNDANCE_MCP_BEARER_TOKEN']);
+	if (healthcareToken) {
+		await runCheck(results, 'healthcare MCP nationwide coverage', () => smokeHealthcareMcp(healthcareToken.value));
+	} else if (options.allowSkips) {
+		skip(results, 'healthcare MCP nationwide coverage', 'missing ABUNDANCE_HEALTHCARE_MCP_API_KEY/ABUNDANCE_MCP_BEARER_TOKEN');
+	} else {
+		results.push(makeResult('healthcare MCP nationwide coverage', 'fail', 'missing Healthcare MCP bearer token env'));
 	}
 
 	const hubToken = envFirst(['CS_HUB_ABUNDANCE_THENPGROUP_API_TOKEN', 'CS_HUB_ABUNDANCE_NPG_API_TOKEN', 'HUB_API_TOKEN']);
