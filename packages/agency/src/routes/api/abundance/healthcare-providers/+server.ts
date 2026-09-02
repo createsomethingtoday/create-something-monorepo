@@ -124,7 +124,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			fetchedAt,
 			pagesFetched: fetched.pages_fetched,
 			sourceResultCount: fetched.source_records_scanned,
-			normalizedCount: providers.length,
+			normalizedCount: normalized.providers.length,
 			rejectedCount: normalized.rejected_count,
 			excludedCount,
 			providers,

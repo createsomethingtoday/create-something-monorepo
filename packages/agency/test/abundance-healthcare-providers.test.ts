@@ -867,6 +867,12 @@ test('refresh ledger accounts for records removed by canonical taxonomy filterin
 				basic: { first_name: 'ACUTE', last_name: 'NP', status: 'A', last_updated: '2026-08-20' },
 				taxonomies: [{ code: '363LA2100X', desc: 'Nurse Practitioner, Acute Care', primary: true }],
 				addresses: [{ address_purpose: 'LOCATION', city: 'SPRINGFIELD', state: 'MO' }]
+			},
+			{
+				number: '3333333333',
+				basic: { first_name: 'MAILING', last_name: 'NP', status: 'A', last_updated: '2026-08-20' },
+				taxonomies: [{ code: '363LF0000X', desc: 'Nurse Practitioner, Family', primary: true }],
+				addresses: [{ address_purpose: 'MAILING', city: 'SPRINGFIELD', state: 'MO' }]
 			}
 		]
 	})) as typeof fetch;
@@ -894,10 +900,10 @@ test('refresh ledger accounts for records removed by canonical taxonomy filterin
 		} as never);
 		assert.equal(response.status, 201);
 		const runStatement = captured.find((statement) => /INSERT INTO abundance_healthcare_provider_ingestion_runs/.test(statement.sql));
-		assert.equal(runStatement?.args[10], 2);
-		assert.equal(runStatement?.args[11], 1);
+		assert.equal(runStatement?.args[10], 3);
+		assert.equal(runStatement?.args[11], 2);
 		assert.equal(runStatement?.args[12], 0);
-		assert.equal(runStatement?.args[13], 1);
+		assert.equal(runStatement?.args[13], 2);
 	} finally {
 		globalThis.fetch = originalFetch;
 	}
