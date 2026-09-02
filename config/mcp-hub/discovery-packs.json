@@ -175,6 +175,9 @@
         "composio-toolkit-whatsapp",
         "abundance-healthcare-mcp"
       ],
+      "excludedProxyTools": [
+        "abundance-healthcare-mcp__enrich_provider_professional_contact"
+      ],
       "maxProxyTools": 30
     },
     "webflow-marketplace-review-phase-a": {
