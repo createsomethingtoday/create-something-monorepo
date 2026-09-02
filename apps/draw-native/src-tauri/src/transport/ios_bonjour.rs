@@ -14,6 +14,7 @@ type DnsServiceFlags = u32;
 type DnsServiceError = i32;
 const NO_ERROR: DnsServiceError = 0;
 const MAX_CERTIFICATE_CHUNKS: usize = 32;
+const MAX_DISCOVERED_SERVICES: usize = 16;
 
 #[link(name = "dns_sd")]
 unsafe extern "C" {
@@ -244,7 +245,10 @@ fn txt_properties(record: &[u8]) -> HashMap<String, String> {
 
 pub(super) fn discover(service_type: &str) -> Result<Vec<DiscoveredHost>, String> {
     let mut hosts = Vec::new();
-    for service in browse_services(service_type)? {
+    for service in browse_services(service_type)?
+        .into_iter()
+        .take(MAX_DISCOVERED_SERVICES)
+    {
         let Ok((hostname, port, txt)) = resolve_service(&service) else {
             continue;
         };

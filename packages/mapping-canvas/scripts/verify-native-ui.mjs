@@ -50,6 +50,7 @@ async function nativePage(role, viewport, restoredQueue = false) {
     let document = structuredClone(blankDocument);
     let titleSubmission = 0;
     window.__nativeCalls = [];
+    window.__nativeConflictNextReplace = false;
     window.__TAURI_INTERNALS__ = {
       invoke: async (command, args = {}) => {
         window.__nativeCalls.push({ command, args });
@@ -67,8 +68,14 @@ async function nativePage(role, viewport, restoredQueue = false) {
         if (command === 'draw_companion_refresh') return { status: 'paired', sessionId: 'session-native', revision, document, queueDepth: 0, online, certificateFingerprint: 'abcdef0123456789'.repeat(4) };
         if (command === 'draw_companion_forget') return { status: 'unpaired' };
         if (command === 'draw_host_apply_local' || command === 'draw_companion_submit') {
-          revision += 1;
           const operation = args.operation;
+          if (operation.type === 'replace_objects' && window.__nativeConflictNextReplace) {
+            window.__nativeConflictNextReplace = false;
+            const authoritative = { ...structuredClone(document), title: 'Conflict authoritative canvas' };
+            document = authoritative;
+            return { status: 'conflict', code: 'STALE_REVISION', revision, document: authoritative, queueDepth: 0, online };
+          }
+          revision += 1;
           if (operation.type === 'set_title') {
             titleSubmission += 1;
             await new Promise((resolve) => setTimeout(resolve, titleSubmission === 1 ? 50 : 200));
@@ -201,6 +208,37 @@ try {
   if (await page.getByRole('button', { name: 'Redo' }).isDisabled()) throw new Error('Companion undo did not preserve redo history');
   await page.getByRole('button', { name: 'Redo' }).click();
 
+  await page.getByRole('button', { name: /Group tool/ }).click();
+  await surface.dispatchEvent('pointerdown', { pointerId: 40, pointerType: 'touch', button: 0, clientX: box.x + 45, clientY: box.y + 430 });
+  await surface.dispatchEvent('pointerup', { pointerId: 40, pointerType: 'touch', button: 0, clientX: box.x + 45, clientY: box.y + 430 });
+  await page.getByRole('button', { name: /Select tool/ }).click();
+  const group = page.getByRole('button', { name: /^Group:/ });
+  await group.click();
+  const resize = page.getByRole('button', { name: 'Resize group' });
+  const groupGeometry = (locator) => locator.locator('rect').first().evaluate((rect) => ({ width: rect.getAttribute('width'), height: rect.getAttribute('height') }));
+  const groupBeforeCancel = await groupGeometry(group);
+  const resizeBox = await resize.boundingBox();
+  if (!resizeBox) throw new Error('Native group resize affordance unavailable');
+  const replacementsBeforeCancel = await page.evaluate(() => window.__nativeCalls.filter(({ command, args }) => command === 'draw_companion_submit' && args?.operation?.type === 'replace_objects').length);
+  await resize.dispatchEvent('pointerdown', { pointerId: 41, pointerType: 'touch', button: 0, clientX: resizeBox.x + 5, clientY: resizeBox.y + 5 });
+  await surface.dispatchEvent('pointermove', { pointerId: 41, pointerType: 'touch', button: 0, clientX: resizeBox.x + 50, clientY: resizeBox.y + 50 });
+  await surface.dispatchEvent('pointercancel', { pointerId: 41, pointerType: 'touch', button: 0, clientX: resizeBox.x + 50, clientY: resizeBox.y + 50 });
+  const groupAfterCancel = await groupGeometry(group);
+  const replacementsAfterCancel = await page.evaluate(() => window.__nativeCalls.filter(({ command, args }) => command === 'draw_companion_submit' && args?.operation?.type === 'replace_objects').length);
+  if (groupAfterCancel.width !== groupBeforeCancel.width || groupAfterCancel.height !== groupBeforeCancel.height) throw new Error('Cancelled group resize changed group geometry');
+  if (replacementsAfterCancel !== replacementsBeforeCancel) throw new Error('Cancelled group resize submitted a replacement');
+
+  const resizeForPinch = await resize.boundingBox();
+  if (!resizeForPinch) throw new Error('Native group resize affordance disappeared');
+  await resize.dispatchEvent('pointerdown', { pointerId: 42, pointerType: 'touch', button: 0, clientX: resizeForPinch.x + 5, clientY: resizeForPinch.y + 5 });
+  await surface.dispatchEvent('pointermove', { pointerId: 42, pointerType: 'touch', button: 0, clientX: resizeForPinch.x + 45, clientY: resizeForPinch.y + 45 });
+  await surface.dispatchEvent('pointerdown', { pointerId: 43, pointerType: 'touch', button: 0, clientX: box.x + 300, clientY: box.y + 350 });
+  await surface.dispatchEvent('pointermove', { pointerId: 43, pointerType: 'touch', button: 0, clientX: box.x + 340, clientY: box.y + 390 });
+  await surface.dispatchEvent('pointerup', { pointerId: 43, pointerType: 'touch', button: 0, clientX: box.x + 340, clientY: box.y + 390 });
+  await resize.dispatchEvent('pointerup', { pointerId: 42, pointerType: 'touch', button: 0, clientX: resizeForPinch.x + 45, clientY: resizeForPinch.y + 45 });
+  const groupAfterPinch = await groupGeometry(group);
+  if (groupAfterPinch.width !== groupBeforeCancel.width || groupAfterPinch.height !== groupBeforeCancel.height) throw new Error('Pinch takeover committed an in-progress group resize');
+
   await note.focus();
   await note.press('Enter');
   await page.getByTestId('convert-menu').click();
@@ -222,6 +260,20 @@ try {
   await page.getByLabel('Canvas title').waitFor();
   if (await page.getByLabel('Canvas title').inputValue() !== 'Mac authoritative reconciliation') throw new Error('Reconciliation did not install the Mac-authoritative document');
   await page.getByRole('button', { name: 'Close pairing' }).click();
+
+  await page.getByRole('button', { name: /Note tool/ }).click();
+  await surface.dispatchEvent('pointerdown', { pointerId: 50, pointerType: 'touch', button: 0, clientX: box.x + 180, clientY: box.y + 260 });
+  await surface.dispatchEvent('pointerup', { pointerId: 50, pointerType: 'touch', button: 0, clientX: box.x + 180, clientY: box.y + 260 });
+  await page.waitForTimeout(1000);
+
+  const submitsBeforeConflict = await page.evaluate(() => window.__nativeCalls.filter(({ command }) => command === 'draw_companion_submit').length);
+  await page.evaluate(() => { window.__nativeConflictNextReplace = true; });
+  await page.getByRole('button', { name: 'Reset', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirm reset', exact: true }).click();
+  await page.waitForFunction(() => window.__nativeConflictNextReplace === false);
+  await page.waitForTimeout(500);
+  const submitsAfterConflict = await page.evaluate(() => window.__nativeCalls.filter(({ command }) => command === 'draw_companion_submit').length);
+  if (submitsAfterConflict !== submitsBeforeConflict + 1) throw new Error('Rejected replacement did not abort the remaining reset operation batch');
 
   await page.getByRole('button', { name: 'Reset', exact: true }).click();
   const confirmReset = page.getByRole('button', { name: 'Confirm reset', exact: true });

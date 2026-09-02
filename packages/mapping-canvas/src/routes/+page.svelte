@@ -155,17 +155,23 @@
       let authoritativePrevious: CanvasDocument | undefined;
       for (const { operation, optimisticVersion } of queued) {
         const result = await submitNativeOperation(role, operation);
+        const authoritativeDocument = result.document ? structuredClone(result.document) : undefined;
         authoritativePrevious ||= result.previousDocument;
         nativeSession = { ...nativeSession, ...result };
-        if (result.document && result.status !== 'queued' && result.status !== 'conflict' && optimisticVersion === nativeOptimisticVersion) {
+        if (result.status === 'conflict') {
+          nativeOptimisticVersion += 1;
+          if (authoritativeDocument) history = { past: [], present: authoritativeDocument, future: [] };
+          status = 'Session changed on Mac · authoritative canvas restored';
+          break;
+        }
+        if (authoritativeDocument && result.status !== 'queued' && optimisticVersion === nativeOptimisticVersion) {
           const past = recordsHistory && authoritativePrevious
             ? [...history.past.slice(0, -1), authoritativePrevious]
             : history.past;
-          history = { past, present: result.document, future: preserveFuture ? history.future : [] };
+          history = { past, present: authoritativeDocument, future: preserveFuture ? history.future : [] };
         }
         if (result.status === 'queued') status = `${result.queueDepth || 1} action queued · reconnect to Mac`;
         else if (result.status === 'queue_full') status = result.error || 'Offline queue is full · reconnect before editing';
-        else if (result.status === 'conflict') status = 'Session changed on Mac · reconciliation required';
         else if (result.status === 'credentials_rejected') status = 'Pairing credentials rejected · export if needed, then forget and re-pair';
         else if (result.status === 'pairing_changed') status = 'Pairing changed while syncing · using the current Mac session';
         else status = role === 'host' ? `Mac committed revision ${result.revision}` : `Synced revision ${result.revision}`;
@@ -209,6 +215,8 @@
     drawing = false; start = null; draftPoints = []; draftShape = null; lasso = null;
     if (dragOrigin) history = { ...history, present: dragOrigin };
     movingObjectId = null; dragLast = null; dragOrigin = null; dragMoved = false;
+    if (resizeOrigin) history = { ...history, present: resizeOrigin };
+    resizingGroupId = null; resizeOrigin = null; resizeMoved = false;
   }
 
   function pointerDown(event: PointerEvent) {
@@ -281,6 +289,12 @@
     }
     if (!drawing) return; const here = point(event);
     if (resizingGroupId) {
+      if (event.type === 'pointercancel') {
+        if (resizeOrigin) history = { ...history, present: resizeOrigin };
+        resizingGroupId = null; resizeOrigin = null; resizeMoved = false; drawing = false; start = null;
+        try { surface.releasePointerCapture(event.pointerId); } catch { /* Capture may not have been acquired. */ }
+        return;
+      }
       if (resizeMoved && resizeOrigin) {
         history = { past: [...history.past, resizeOrigin], present: document, future: [] };
         sendNative([{ type: 'replace_objects', objects: document.objects }], true); queueSave(document);
@@ -356,7 +370,7 @@
   function restoreSelected() { const selected = selectedObjects[0]; if (!selected?.sourceSnapshot) return; const next = restoreConversion(document, selected.id); apply(next, { type: 'restore_conversion', id: selected.id }); selectedIds = selected.sourceIds || []; status = 'Conversion removed. Source restored.'; }
   async function commitHostReplacement<T>(resolve: () => T, documentOf: (value: T) => CanvasDocument, install: (value: T) => void, reason: 'undo' | 'redo' | 'import' | 'reset') { if (nativeRole !== 'host') { const value = resolve(); install(value); return value; } let committed!: T; const replacement = nativeTail.then(async () => { committed = resolve(); const expectedRevision = nativeSession.revision || 0; const result = await replaceHostDocument(documentOf(committed), reason, expectedRevision); nativeSession = { ...nativeSession, ...result }; install(committed); status = `Mac committed ${reason} at revision ${nativeSession.revision}`; }); nativeTail = replacement.catch(() => undefined); try { await replacement; return committed; } catch (error) { const refreshed = await hostStatus(); nativeSession = { ...nativeSession, ...refreshed }; if (refreshed.document) history = { past: history.past, present: refreshed.document, future: [] }; throw error; } }
   async function doUndo() { if (nativeRole === 'companion') { const current = document, next = undo(history); if (next === history) return; history = next; selectedIds = []; sendNative(operationsBetween(current, next.present), false, true); return; } try { const next = await commitHostReplacement(() => undo(history), (value) => value.present, (value) => history = value, 'undo'); selectedIds = []; queueSave(next.present); } catch (error) { status = error instanceof Error ? error.message : 'Undo conflicted with an iPhone change'; } }
-  async function doRedo() { if (nativeRole === 'companion') { const current = document, next = redo(history); if (next === history) return; history = next; selectedIds = []; sendNative(operationsBetween(current, next.present)); return; } try { const next = await commitHostReplacement(() => redo(history), (value) => value.present, (value) => history = value, 'redo'); selectedIds = []; queueSave(next.present); } catch (error) { status = error instanceof Error ? error.message : 'Redo conflicted with an iPhone change'; } }
+  async function doRedo() { if (nativeRole === 'companion') { const current = document, next = redo(history); if (next === history) return; history = next; selectedIds = []; sendNative(operationsBetween(current, next.present), false, true); return; } try { const next = await commitHostReplacement(() => redo(history), (value) => value.present, (value) => history = value, 'redo'); selectedIds = []; queueSave(next.present); } catch (error) { status = error instanceof Error ? error.message : 'Redo conflicted with an iPhone change'; } }
   function keydown(event: KeyboardEvent) { if (isTextEditingEvent(event)) return; if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'z') { event.preventDefault(); void (event.shiftKey ? doRedo() : doUndo()); return; } if ((event.key === 'Delete' || event.key === 'Backspace') && selectedIds.length) { const ids = [...selectedIds]; apply(removeObjects(document, ids), { type: 'remove_objects', ids }); selectedIds = []; return; } const match = tools.find(({ key }) => key.toLowerCase() === event.key.toLowerCase()); if (match) tool = match.id; }
   function wheel(event: WheelEvent) { event.preventDefault(); updateViewport({ ...viewport, zoom: Math.max(.25, Math.min(3, viewport.zoom * (event.deltaY > 0 ? .9 : 1.1))) }); }
   const path = (points: Point[]) => points.map((value, index) => `${index ? 'L' : 'M'} ${value.x} ${value.y}`).join(' ');

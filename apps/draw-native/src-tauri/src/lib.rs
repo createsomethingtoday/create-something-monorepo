@@ -134,6 +134,12 @@ fn operation_references_id(operation: &CanvasOperation, id: &str) -> bool {
     }
 }
 
+fn discard_queued_replacements(queue: &mut VecDeque<OperationEnvelope>) -> usize {
+    let before = queue.len();
+    queue.retain(|envelope| !matches!(envelope.operation, CanvasOperation::ReplaceObjects { .. }));
+    before - queue.len()
+}
+
 pub(crate) struct DrawRuntime {
     state_path: PathBuf,
     host: Mutex<PairingHostState>,
@@ -1039,17 +1045,16 @@ async fn flush_companion(runtime: &DrawRuntime) -> Result<Value, String> {
                 "code": "INVALID_OPERATION"
             }));
         }
-        if session.queue.front().is_some_and(|envelope| {
-            matches!(envelope.operation, CanvasOperation::ReplaceObjects { .. })
-        }) {
-            session.queue.pop_front();
+        let discarded_replacements = discard_queued_replacements(&mut session.queue);
+        if discarded_replacements > 0 {
             persist_companion_state(&runtime.companion_state_path, session)?;
             return Ok(json!({
                 "status": "conflict",
                 "queueDepth": session.queue.len(),
                 "revision": session.revision,
                 "document": session.document,
-                "code": "STALE_REVISION"
+                "code": "STALE_REVISION",
+                "discardedReplacements": discarded_replacements
             }));
         }
         let revision = session.revision;
@@ -2011,6 +2016,53 @@ mod tests {
         );
         drop(companion);
         let _ = fs::remove_dir_all(directory);
+    }
+
+    #[test]
+    fn stale_rebase_discards_replacements_anywhere_in_the_queue() {
+        let operation = |id: &str, operation| OperationEnvelope {
+            protocol_version: PROTOCOL_VERSION.into(),
+            document_version: DOCUMENT_VERSION.into(),
+            session_id: "session-test".into(),
+            operation_id: id.into(),
+            client_id: "iphone-test".into(),
+            base_revision: 4,
+            operation,
+            sent_at: "2026-08-29T16:00:00Z".into(),
+            capability: "fixture-secret".into(),
+        };
+        let mut queue = VecDeque::from([
+            operation(
+                "safe-before",
+                CanvasOperation::SetTitle {
+                    title: "Safe".into(),
+                },
+            ),
+            operation(
+                "unsafe-middle",
+                CanvasOperation::ReplaceObjects { objects: vec![] },
+            ),
+            operation(
+                "safe-after",
+                CanvasOperation::SetViewport {
+                    viewport: create_something_draw_pairing_protocol::Viewport {
+                        x: 1.0,
+                        y: 2.0,
+                        zoom: 1.0,
+                    },
+                },
+            ),
+            operation(
+                "unsafe-last",
+                CanvasOperation::ReplaceObjects { objects: vec![] },
+            ),
+        ]);
+
+        assert_eq!(discard_queued_replacements(&mut queue), 2);
+        assert_eq!(queue.len(), 2);
+        assert!(queue
+            .iter()
+            .all(|envelope| !matches!(envelope.operation, CanvasOperation::ReplaceObjects { .. })));
     }
 
     #[test]
