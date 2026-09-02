@@ -12,6 +12,26 @@ import {
 	listAppliedNationwideSources,
 	queryNationwideCoverage
 } from '../src/lib/server/abundance-healthcare-nationwide.ts';
+import { POST as mutateNationwideCoverage } from '../src/routes/api/abundance/healthcare-providers/nationwide/+server.ts';
+
+test('nationwide snapshot mutations require the internal service key even for routed users', async () => {
+	const requestBody = JSON.stringify({ action: 'maintenance' });
+	const unauthorized = await mutateNationwideCoverage({
+		request: new Request('https://createsomething.agency/api/abundance/healthcare-providers/nationwide', {
+			method: 'POST', headers: { 'Content-Type': 'application/json' }, body: requestBody
+		}),
+		platform: { env: { DB: {} as D1Database, AGENCY_INTERNAL_API_KEY: 'service-secret' } }
+	} as never);
+	assert.equal(unauthorized.status, 401);
+
+	const wrongBearer = await mutateNationwideCoverage({
+		request: new Request('https://createsomething.agency/api/abundance/healthcare-providers/nationwide', {
+			method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer user-session-token' }, body: requestBody
+		}),
+		platform: { env: { DB: {} as D1Database, AGENCY_INTERNAL_API_KEY: 'service-secret' } }
+	} as never);
+	assert.equal(wrongBearer.status, 401);
+});
 
 test('monthly full snapshots become visible only after complete finalization', async () => {
 	const fixture = await createDatabase();

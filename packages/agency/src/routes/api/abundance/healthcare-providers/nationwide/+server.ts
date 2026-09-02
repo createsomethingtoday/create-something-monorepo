@@ -1,6 +1,7 @@
 import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import type { HealthcareProvider } from '$lib/abundance/healthcare-providers';
+import { isValidAbundanceApiBearer } from '$lib/server/abundance-api-auth';
 import {
 	applyNationwideChunk,
 	beginNationwideRun,
@@ -35,6 +36,13 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 
 export const POST: RequestHandler = async ({ request, platform }) => {
 	if (!platform?.env?.DB) throw error(500, 'Database not available');
+	const isServiceAuthorized = await isValidAbundanceApiBearer(
+		request.headers.get('authorization'),
+		platform.env.AGENCY_INTERNAL_API_KEY
+	);
+	if (!isServiceAuthorized) {
+		return json({ success: false, error: 'Unauthorized' }, { status: 401 });
+	}
 	let body: Record<string, unknown>;
 	try {
 		body = await request.json() as Record<string, unknown>;

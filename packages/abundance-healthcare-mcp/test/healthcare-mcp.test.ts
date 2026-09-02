@@ -35,7 +35,14 @@ test('get healthcare coverage reads one approved market without requesting pract
   const fetchFn: typeof fetch = async (input, init) => {
     requestedUrl = String(input);
     authorization = new Headers(init?.headers).get('Authorization') ?? '';
-    return Response.json({ success: true, data: { report, providers: [], readiness: [], total: 385, limit: 25, offset: 0 } } satisfies HealthcareApiResponse);
+    return Response.json({ success: true, data: {
+      report,
+      providers: [{
+        npi: '1265049910', name: 'Jane Doe', source_fetched_at: '2026-09-02T01:39:07.502Z',
+        practice_address_1: '100 Private In Coverage Ave', practice_phone: '4175550100',
+      }],
+      readiness: [], total: 385, limit: 1, offset: 0,
+    } } satisfies HealthcareApiResponse);
   };
 
   const result = await getHealthcareCoverage(
@@ -47,9 +54,11 @@ test('get healthcare coverage reads one approved market without requesting pract
   assert.equal(url.pathname, '/api/abundance/healthcare-providers/nationwide');
   assert.equal(url.searchParams.get('state'), 'MO');
   assert.equal(url.searchParams.get('city'), 'Springfield');
+  assert.equal(url.searchParams.get('limit'), '1');
   assert.equal(authorization, 'Bearer test-key');
   assert.equal(result.report.provider_count, 385);
   assert.equal(result.report.direct_outreach_status, 'blocked');
+  assert.doesNotMatch(JSON.stringify(result), /Private In Coverage|417555/);
 });
 
 test('individual practitioner lookup returns public practice contact with readiness gates', async () => {

@@ -59,7 +59,14 @@ const practitionerSchema = z.object({ market_id: marketIdSchema, npi: z.string()
 export type SearchCoverageCandidatesInput = z.input<typeof searchCandidatesSchema>;
 
 export async function getHealthcareCoverage(input: { market_id: HealthcareMarketId }, options: HealthcareClientOptions) {
-  return fetchHealthcareMarket(marketIdSchema.parse(input.market_id), {}, options);
+  const data = await fetchHealthcareMarket(marketIdSchema.parse(input.market_id), { limit: '1' }, options);
+  return {
+    report: data.report,
+    total: data.total,
+    limit: data.limit,
+    offset: data.offset,
+    run: data.run,
+  };
 }
 
 export async function listHealthcareMarkets(options: HealthcareClientOptions) {
