@@ -35,6 +35,7 @@
     "seo:check": "node ./scripts/check-seo-aeo.mjs && pnpm marketing:check",
     "analytics:commercial-funnel": "node ./scripts/report-commercial-funnel.mjs",
     "analytics:high-intent-search": "node ./scripts/report-high-intent-search.mjs",
+    "healthcare:coverage:npg": "node --import tsx ./scripts/report-npg-healthcare-coverage.ts",
     "search:campaign:check": "node ./scripts/check-high-intent-search.mjs && node --import tsx --test test/high-intent-search.test.ts test/high-intent-search-attribution.test.ts && node --test test/high-intent-search-campaign.test.mjs",
     "research:clarity-capture": "node ./scripts/capture-zero-context-surface.mjs",
     "governance:slack-monitor": "node ./scripts/run-governance-slack-monitor.mjs",
