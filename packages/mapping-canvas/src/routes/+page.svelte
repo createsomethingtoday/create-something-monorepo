@@ -89,12 +89,12 @@
     try { sidebarCollapsed = localStorage.getItem(TOOL_SIDEBAR_PREFERENCE) === 'true'; } catch { /* Preference persistence is optional. */ }
     void initializeSession();
     const webMcp = registerDrawWebMcpTools(createDrawWebMcpTools({
-      getState: () => ({ document: JSON.parse(JSON.stringify(document)) as CanvasDocument, selectedIds: [...selectedIds], tool, canUndo: history.past.length > 0, canRedo: history.future.length > 0 }),
+      getState: agentState,
       applyOperations: applyAgentOperations,
       select: (ids) => { const existing = new Set(document.objects.map(({ id }) => id)); selectedIds = ids.filter((id) => existing.has(id)); status = selectedIds.length ? `Agent focused ${selectedIds.length} object${selectedIds.length === 1 ? '' : 's'}` : 'Agent cleared selection'; },
       setTool: (next) => { tool = next; status = `Agent selected ${next} tool`; },
-      undo: doUndo,
-      redo: doRedo,
+      undo: () => browserLocalHistory('undo'),
+      redo: () => browserLocalHistory('redo'),
       reset: resetCanvasFromAgent,
       animate: showAgentTransition
     }));
@@ -106,6 +106,16 @@
     if (import.meta.env.PROD) navigator.serviceWorker?.register('/service-worker.js').catch(() => undefined);
     return () => { surfaceObserver.disconnect(); clearInterval(mirrorTimer); clearTimeout(agentTransitionTimer); window.removeEventListener('resize', resize); window.removeEventListener('keydown', keydown); };
   });
+
+  function agentState() {
+    if (!ready) throw new Error('Draw is still loading. Try the tool again.');
+    return { document: JSON.parse(JSON.stringify(document)) as CanvasDocument, selectedIds: [...selectedIds], tool, canUndo: history.past.length > 0, canRedo: history.future.length > 0 };
+  }
+
+  async function browserLocalHistory(direction: 'undo' | 'redo') {
+    if (nativeRole !== 'web') throw new Error('WebMCP history is limited to the browser-local canvas. Use Draw device controls for paired Mac and iPhone sessions.');
+    await (direction === 'undo' ? doUndo() : doRedo());
+  }
 
   function showAgentTransition(kind: DrawTransitionKind, affectedIds: string[]) {
     const id = `agent-${crypto.randomUUID()}`;
