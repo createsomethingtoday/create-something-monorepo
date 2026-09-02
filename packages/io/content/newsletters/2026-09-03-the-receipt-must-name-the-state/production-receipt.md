@@ -25,6 +25,30 @@
 
 The HTML and plain-text hashes prove this repository candidate only. They are not final per-recipient content hashes because `{{unsubscribe_url}}` remains a required provider merge field in both parts.
 
+## Resend operator test
+
+- Issue: `CRE-1921`
+- Recipient: `micah@createsomething.io`
+- Gmail profile readback: `micah@createsomething.io` (`Micah Johnson`)
+- Subject: `[TEST] The new bottleneck is proof`
+- Sender: `CREATE SOMETHING <hello@createsomething.io>`
+- Reply-to: `micah@createsomething.io`
+- Resend domain readback: `createsomething.io`, `verified`, `us-east-1`
+- Idempotency key: `cre-1921-operator-test-f97bd20-b70b7a86-v1`
+- Resend email ID: `01a0634d-34b5-72c1-9a32-7c4e2767daba`
+- Provider accepted at: `2026-09-02T18:06:39.463Z`
+- Provider readback state: `delivered`
+- Personalized HTML SHA-256: `f0deb6f5971059104a872b83388e71f051d908e5761a0bd7e6a89daa567c36d7`
+- Personalized plain-text SHA-256: `0205aa851555c105521433f5acb5701c0ae2bbf33d4d2a1c773a2f1393f3b42f`
+- Unsubscribe mode: non-mutating operator-seed preview at `https://createsomething.io/unsubscribe?preview=operator-seed`
+- Gmail message ID: `1a0634d3bc142dd4`
+- Gmail thread ID: `1a0634d3bc142dd4`
+- Gmail received at: `2026-09-02T18:06:39Z`
+- Gmail labels: `INBOX`, `UNREAD`, `IMPORTANT`, `CATEGORY_UPDATES`
+- Gmail MIME readback: `multipart/alternative` with `text/plain` and `text/html`; both parts contained the title and exact operator-seed unsubscribe URL.
+
+This receipt proves that Resend reported delivery and the exact named Gmail account received both MIME alternatives with working test-only unsubscribe controls. It does not approve an audience, schedule a cohort send, publish the archive, or prove that the operator read and accepted the content.
+
 ## Content contract
 
 - One operating thesis: execution capacity is rising faster than proof capacity; every receipt names the state it proves and the next state it does not prove.
@@ -45,7 +69,7 @@ The HTML and plain-text hashes prove this repository candidate only. They are no
 - [x] Verify desktop and 390px mobile rendering with Chromium; both report viewport width equal to document width.
 - [x] Verify image-blocked behavior: the candidate contains no `<img>` elements and has no image dependency.
 - [ ] Generate a current governed audience count and fingerprint.
-- [ ] Send the exact candidate to the operator inbox and verify provider plus inbox readback.
+- [x] Send the exact candidate to the operator inbox and verify provider plus inbox readback.
 - [ ] Receive explicit operator approval for the exact content, audience, and target time.
 - [ ] Schedule idempotently and read back subject, recipient, scheduled time, and provider state.
 - [ ] Preserve cancellation IDs and the operator cancellation deadline.
