@@ -66,6 +66,19 @@ def clean(value: str | None) -> str | None:
     return value or None
 
 
+def iso_date(value: str | None) -> str | None:
+    """Normalize CMS dissemination dates to the ISO format used by D1 queries."""
+    value = clean(value)
+    if not value:
+        return None
+    for date_format in ("%m/%d/%Y", "%Y-%m-%d"):
+        try:
+            return datetime.strptime(value, date_format).date().isoformat()
+        except ValueError:
+            continue
+    return None
+
+
 def title(value: str | None) -> str | None:
     value = clean(value)
     return value.title() if value else None
@@ -105,8 +118,8 @@ def provider_from_row(row: dict[str, str], fetched_at: str) -> tuple[dict | None
     last = title(row.get("Provider Last Name (Legal Name)"))
     organization = title(row.get("Provider Organization Name (Legal Business Name)"))
     name = " ".join(part for part in (first, middle, last) if part) or organization or f"NPI {npi}"
-    deactivated = clean(row.get("NPI Deactivation Date"))
-    reactivated = clean(row.get("NPI Reactivation Date"))
+    deactivated = iso_date(row.get("NPI Deactivation Date"))
+    reactivated = iso_date(row.get("NPI Reactivation Date"))
     status = "active" if not deactivated or reactivated else "deactivated"
     country = clean(row.get("Provider Business Practice Location Address Country Code (If outside U.S.)")) or "US"
     canonical = json.dumps(row, sort_keys=True, separators=(",", ":"))
@@ -115,9 +128,9 @@ def provider_from_row(row: dict[str, str], fetched_at: str) -> tuple[dict | None
         "enumeration_type": clean(row.get("Entity Type Code")) or "unknown",
         "name": name, "first_name": first, "middle_name": middle, "last_name": last,
         "credential": clean(row.get("Provider Credential Text")), "status": status,
-        "enumeration_date": clean(row.get("Provider Enumeration Date")),
-        "last_updated_date": clean(row.get("Last Update Date")),
-        "certification_date": clean(row.get("Certification Date")),
+        "enumeration_date": iso_date(row.get("Provider Enumeration Date")),
+        "last_updated_date": iso_date(row.get("Last Update Date")),
+        "certification_date": iso_date(row.get("Certification Date")),
         "primary_taxonomy_code": FAMILY_NP, "primary_taxonomy_description": "Nurse Practitioner, Family",
         "license_state": primary["license_state"], "license_number": primary["license_number"],
         "taxonomies_json": json.dumps(taxonomies, sort_keys=True, separators=(",", ":")),
