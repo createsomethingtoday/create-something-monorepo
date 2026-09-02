@@ -1,4 +1,5 @@
 import type { Handle } from '@sveltejs/kit';
+import { dev } from '$app/environment';
 
 const SECURITY_HEADERS = {
   'Content-Security-Policy': [
@@ -7,7 +8,7 @@ const SECURITY_HEADERS = {
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",
     "font-src 'self'",
-    "connect-src 'self'",
+    `connect-src 'self'${dev ? ' ws: wss:' : ''}`,
     "worker-src 'self' blob:",
     "manifest-src 'self'",
     "object-src 'none'",
