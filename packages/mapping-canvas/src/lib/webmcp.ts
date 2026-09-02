@@ -60,7 +60,8 @@ const operationSchema = {
     { type: 'object', required: ['type', 'objects'], additionalProperties: false, properties: { type: { const: 'replace_objects' }, objects: { type: 'array', items: canvasObjectSchema } } },
     { type: 'object', required: ['type', 'title'], additionalProperties: false, properties: { type: { const: 'set_title' }, title: canvasTitleSchema } },
     { type: 'object', required: ['type', 'viewport'], additionalProperties: false, properties: { type: { const: 'set_viewport' }, viewport: { type: 'object', required: ['x', 'y', 'zoom'], additionalProperties: false, properties: { x: { type: 'number' }, y: { type: 'number' }, zoom: { type: 'number', minimum: 0.25, maximum: 3 } } } } },
-    { type: 'object', required: ['type', 'selectedIds', 'target', 'resultId', 'createdAt'], additionalProperties: false, properties: { type: { const: 'convert' }, selectedIds: { type: 'array', minItems: 1, items: { type: 'string' } }, target: { type: 'string', enum: ['note', 'connector', 'group'] }, resultId: { type: 'string' }, createdAt: { type: 'string' } } },
+    { type: 'object', required: ['type', 'selectedIds', 'target', 'resultId', 'createdAt'], additionalProperties: false, properties: { type: { const: 'convert' }, selectedIds: { type: 'array', minItems: 1, items: { type: 'string' } }, target: { type: 'string', enum: ['note', 'group'] }, resultId: { type: 'string' }, createdAt: { type: 'string' } } },
+    { type: 'object', required: ['type', 'selectedIds', 'target', 'resultId', 'createdAt'], additionalProperties: false, properties: { type: { const: 'convert' }, selectedIds: { type: 'array', minItems: 2, items: { type: 'string' } }, target: { const: 'connector' }, resultId: { type: 'string' }, createdAt: { type: 'string' } } },
     { type: 'object', required: ['type', 'id'], additionalProperties: false, properties: { type: { const: 'restore_conversion' }, id: { type: 'string' } } }
   ]
 };

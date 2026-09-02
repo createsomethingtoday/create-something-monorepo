@@ -14,6 +14,7 @@ describe('Draw WebMCP tools', () => {
     expect(tools.map(({ name }) => name)).toEqual(['draw_get_state', 'draw_apply_operations', 'draw_select', 'draw_set_tool', 'draw_undo', 'draw_redo', 'draw_reset']);
     const applySchema = tools.find(({ name }) => name === 'draw_apply_operations')!.inputSchema;
     expect(JSON.stringify(applySchema)).toContain('x-maxUtf8Bytes');
+    expect(JSON.stringify(applySchema)).toContain('"minItems":2');
     const result = await tools.find(({ name }) => name === 'draw_apply_operations')!.execute({ operations: [{ type: 'set_title', title: 'Agent map' }] });
     expect(document.title).toBe('Agent map');
     expect(animate).toHaveBeenCalledWith('update', []);
