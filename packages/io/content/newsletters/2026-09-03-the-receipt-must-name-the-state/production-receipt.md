@@ -76,4 +76,4 @@ This receipt proves that Resend reported delivery and the exact named Gmail acco
 
 ## Current completion boundary
 
-This receipt proves that the editorial candidate, source evidence, pre-personalization render, target-reader review, and layout checks exist. It does not prove audience eligibility, final human approval, subscriber-specific rendering, scheduling, delivery, inbox placement, or public release.
+This receipt proves that the editorial candidate, source evidence, render, target-reader review, and layout checks exist. It also proves that the operator-specific HTML and plain-text test reached Micah's named Gmail inbox. It does not prove audience eligibility, final human approval, production-recipient personalization, scheduling, audience delivery or inbox placement, operator acceptance, or public release.
