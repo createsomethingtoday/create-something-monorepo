@@ -52,6 +52,7 @@ async function nativePage(role, viewport, restoredQueue = false) {
     window.__nativeCalls = [];
     window.__nativeConflictNextReplace = false;
     window.__nativeConflictInFlight = false;
+    window.__nativeQueueFullNextReplace = false;
     window.__TAURI_INTERNALS__ = {
       invoke: async (command, args = {}) => {
         window.__nativeCalls.push({ command, args });
@@ -70,6 +71,10 @@ async function nativePage(role, viewport, restoredQueue = false) {
         if (command === 'draw_companion_forget') return { status: 'unpaired' };
         if (command === 'draw_host_apply_local' || command === 'draw_companion_submit') {
           const operation = args.operation;
+          if (operation.type === 'replace_objects' && window.__nativeQueueFullNextReplace) {
+            window.__nativeQueueFullNextReplace = false;
+            return { status: 'queue_full', error: 'Offline queue is full', revision, document, queueDepth: 500, online: false };
+          }
           if (operation.type === 'replace_objects' && window.__nativeConflictNextReplace) {
             window.__nativeConflictInFlight = true;
             await new Promise((resolve) => setTimeout(resolve, 100));
@@ -175,6 +180,16 @@ try {
   if (await page.locator('g[aria-label^="Note:"]').count() !== notesBeforePinch) throw new Error('Pinch while the Note tool was active created a stray note');
   const putsAfterPinch = await page.evaluate(() => window.__nativeCalls.filter(({ command, args }) => command === 'draw_companion_submit' && args?.operation?.type === 'put_object').length);
   if (putsAfterPinch !== putsBeforePinch) throw new Error('Pinch while the Note tool was active submitted a stray object');
+  const zoomBeforeCancelledPinch = await page.locator('.history span').textContent();
+  const viewportSubmitsBeforeCancel = await page.evaluate(() => window.__nativeCalls.filter(({ command, args }) => command === 'draw_companion_submit' && args?.operation?.type === 'set_viewport').length);
+  await surface.dispatchEvent('pointerdown', { pointerId: 25, pointerType: 'touch', button: 0, clientX: box.x + 90, clientY: box.y + 180 });
+  await surface.dispatchEvent('pointerdown', { pointerId: 26, pointerType: 'touch', button: 0, clientX: box.x + 220, clientY: box.y + 180 });
+  await surface.dispatchEvent('pointermove', { pointerId: 26, pointerType: 'touch', button: 0, clientX: box.x + 340, clientY: box.y + 250 });
+  await surface.dispatchEvent('pointercancel', { pointerId: 26, pointerType: 'touch', button: 0, clientX: box.x + 340, clientY: box.y + 250 });
+  await surface.dispatchEvent('pointerup', { pointerId: 25, pointerType: 'touch', button: 0, clientX: box.x + 90, clientY: box.y + 180 });
+  if (await page.locator('.history span').textContent() !== zoomBeforeCancelledPinch) throw new Error('Cancelled pinch did not restore its starting viewport');
+  const viewportSubmitsAfterCancel = await page.evaluate(() => window.__nativeCalls.filter(({ command, args }) => command === 'draw_companion_submit' && args?.operation?.type === 'set_viewport').length);
+  if (viewportSubmitsAfterCancel !== viewportSubmitsBeforeCancel) throw new Error('Cancelled pinch submitted a tentative viewport');
   await surface.dispatchEvent('pointerdown', { pointerId: 24, pointerType: 'touch', button: 0, clientX: box.x + 130, clientY: box.y + 190 });
   await surface.dispatchEvent('pointercancel', { pointerId: 24, pointerType: 'touch', button: 0, clientX: box.x + 130, clientY: box.y + 190 });
   if (await page.locator('g[aria-label^="Note:"]').count() !== notesBeforePinch) throw new Error('A cancelled touch created a stray note');
@@ -183,6 +198,18 @@ try {
   const editor = page.getByLabel('Edit note');
   await editor.fill('MCP tools use spaces');
   if (await editor.inputValue() !== 'MCP tools use spaces') throw new Error('Native note lost spaces');
+  await page.waitForTimeout(250);
+  const callsBeforeQueueFullReset = await page.evaluate(() => {
+    window.__nativeQueueFullNextReplace = true;
+    return window.__nativeCalls.filter(({ command }) => command === 'draw_companion_submit').length;
+  });
+  await page.getByRole('button', { name: 'Reset', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirm reset', exact: true }).click();
+  await page.waitForFunction((before) => window.__nativeCalls.filter(({ command }) => command === 'draw_companion_submit').length > before, callsBeforeQueueFullReset);
+  await page.waitForTimeout(100);
+  const callsAfterQueueFullReset = await page.evaluate(() => window.__nativeCalls.filter(({ command }) => command === 'draw_companion_submit').length);
+  if (callsAfterQueueFullReset !== callsBeforeQueueFullReset + 1) throw new Error('Queue-full history replacement did not abort its trailing operations');
+  if (await page.getByLabel('Edit note').inputValue() !== 'MCP tools use spaces') throw new Error('Queue-full history replacement did not restore the authoritative document');
 
   await page.getByRole('button', { name: /Select tool/ }).click();
   const note = page.locator('g[aria-label^="Note:"]');

@@ -185,7 +185,39 @@ jobs:
           else
             gh release create "$tag" --target "$GITHUB_SHA" --draft --title "CREATE SOMETHING Draw $RELEASE_VERSION" --notes "Signed production candidate. Publication remains gated on two clean physical Mac/iPhone acceptance runs."
           fi
-          gh release upload "$tag" --clobber "$dmg" "$ipa" apps/draw-native/output/production-release.json apps/draw-native/output/PRODUCTION_SHA256SUMS apps/draw-native/output/installed-acceptance/installed-acceptance.json
+          stage_id="candidate-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          stage_dir="$RUNNER_TEMP/draw-release-$stage_id"
+          readback_dir="$RUNNER_TEMP/draw-release-readback-$stage_id"
+          manifest="$RUNNER_TEMP/draw-release-$stage_id.tsv"
+          mkdir -p "$stage_dir" "$readback_dir"
+          : > "$manifest"
+          for source in "$dmg" "$ipa" apps/draw-native/output/production-release.json apps/draw-native/output/PRODUCTION_SHA256SUMS apps/draw-native/output/installed-acceptance/installed-acceptance.json; do
+            canonical="$(basename "$source")"
+            staged="$canonical.$stage_id"
+            cp "$source" "$stage_dir/$staged"
+            printf '%s\t%s\t%s\n' "$source" "$staged" "$canonical" >> "$manifest"
+          done
+
+          # Upload and verify uniquely named candidates before touching the last
+          # known-good canonical assets. A retry may replace only its own staged set.
+          release_id="$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/$tag" --jq .id)"
+          while IFS=$'\t' read -r source staged canonical; do
+            stale_id="$(gh api "repos/$GITHUB_REPOSITORY/releases/$release_id/assets" --paginate --jq ".[] | select(.name == \"$staged\") | .id" | head -n 1)"
+            test -z "$stale_id" || gh api --method DELETE "repos/$GITHUB_REPOSITORY/releases/assets/$stale_id"
+            gh release upload "$tag" "$stage_dir/$staged"
+            gh release download "$tag" --pattern "$staged" --dir "$readback_dir"
+            test "$(shasum -a 256 "$source" | awk '{print $1}')" = "$(shasum -a 256 "$readback_dir/$staged" | awk '{print $1}')"
+          done < "$manifest"
+
+          # Promote the fully verified staged set. If a rename fails, the verified
+          # candidate remains attached to the draft for recovery.
+          while IFS=$'\t' read -r source staged canonical; do
+            canonical_id="$(gh api "repos/$GITHUB_REPOSITORY/releases/$release_id/assets" --paginate --jq ".[] | select(.name == \"$canonical\") | .id" | head -n 1)"
+            test -z "$canonical_id" || gh api --method DELETE "repos/$GITHUB_REPOSITORY/releases/assets/$canonical_id"
+            staged_id="$(gh api "repos/$GITHUB_REPOSITORY/releases/$release_id/assets" --paginate --jq ".[] | select(.name == \"$staged\") | .id" | head -n 1)"
+            test -n "$staged_id"
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/releases/assets/$staged_id" -f name="$canonical" >/dev/null
+          done < "$manifest"
       - name: Verify published draft bytes
         env:
           GH_TOKEN: ${{ github.token }}

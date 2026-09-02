@@ -72,7 +72,7 @@
   let nativeOptimisticVersion = 0;
   let nativeConflictEpoch = 0;
   const activeTouches = new Map<number, { x: number; y: number }>();
-  let pinch: { distance: number; world: Point } | null = null;
+  let pinch: { distance: number; world: Point; origin: CanvasDocument['viewport'] } | null = null;
   let pendingTouchAction: { pointerId: number; point: Point; tool: 'note' | 'group' } | null = null;
   const document = $derived(history.present), viewport = $derived(document.viewport);
   const selectedObjects = $derived(document.objects.filter(({ id }) => selectedIds.includes(id)));
@@ -168,6 +168,13 @@
           status = 'Session changed on Mac · authoritative canvas restored';
           break;
         }
+        if (result.status === 'queue_full') {
+          nativeConflictEpoch += 1;
+          nativeOptimisticVersion += 1;
+          if (authoritativeDocument) history = { past: [], present: authoritativeDocument, future: [] };
+          status = result.error || 'Offline queue is full · reconnect before editing';
+          break;
+        }
         if (authoritativeDocument && result.status !== 'queued' && optimisticVersion === nativeOptimisticVersion) {
           const past = recordsHistory && authoritativePrevious
             ? [...history.past.slice(0, -1), authoritativePrevious]
@@ -175,7 +182,6 @@
           history = { past, present: authoritativeDocument, future: preserveFuture ? history.future : [] };
         }
         if (result.status === 'queued') status = `${result.queueDepth || 1} action queued · reconnect to Mac`;
-        else if (result.status === 'queue_full') status = result.error || 'Offline queue is full · reconnect before editing';
         else if (result.status === 'credentials_rejected') status = 'Pairing credentials rejected · export if needed, then forget and re-pair';
         else if (result.status === 'pairing_changed') status = 'Pairing changed while syncing · using the current Mac session';
         else status = role === 'host' ? `Mac committed revision ${result.revision}` : `Synced revision ${result.revision}`;
@@ -215,7 +221,7 @@
     const [a, b] = [...activeTouches.values()];
     const rect = surface.getBoundingClientRect();
     const center = { x: (a.x + b.x) / 2 - rect.left, y: (a.y + b.y) / 2 - rect.top };
-    pinch = { distance: Math.max(1, Math.hypot(a.x - b.x, a.y - b.y)), world: { x: (center.x - viewport.x) / viewport.zoom, y: (center.y - viewport.y) / viewport.zoom } };
+    pinch = { distance: Math.max(1, Math.hypot(a.x - b.x, a.y - b.y)), world: { x: (center.x - viewport.x) / viewport.zoom, y: (center.y - viewport.y) / viewport.zoom }, origin: { ...viewport } };
     drawing = false; start = null; draftPoints = []; draftShape = null; lasso = null;
     if (dragOrigin) history = { ...history, present: dragOrigin };
     movingObjectId = null; dragLast = null; dragOrigin = null; dragMoved = false;
@@ -276,7 +282,10 @@
   function pointerUp(event: PointerEvent) {
     if (event.pointerType === 'touch') activeTouches.delete(event.pointerId);
     if (pinch) {
-      if (activeTouches.size < 2) { pinch = null; sendNative([{ type: 'set_viewport', viewport }]); }
+      if (event.type === 'pointercancel') {
+        history = { ...history, present: { ...document, viewport: pinch.origin } };
+        pinch = null;
+      } else if (activeTouches.size < 2) { pinch = null; sendNative([{ type: 'set_viewport', viewport }]); }
       drawing = false; start = null; draftPoints = []; draftShape = null; lasso = null;
       try { surface.releasePointerCapture(event.pointerId); } catch { /* Capture may not have been acquired. */ }
       return;
