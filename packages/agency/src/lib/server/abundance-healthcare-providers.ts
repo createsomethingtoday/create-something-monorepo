@@ -113,7 +113,9 @@ export async function fetchNppesProviders(
 			if (requiresCanonicalFilter && pageRecords.some((record) =>
 				!Array.isArray(record.taxonomies) ||
 				record.taxonomies.some((taxonomy) => !isRecord(taxonomy)) ||
-				record.taxonomies.every((taxonomy) => !isRecord(taxonomy) || !cleanString(taxonomy.desc)))) {
+				record.taxonomies.every((taxonomy) => !isRecord(taxonomy) || !cleanString(taxonomy.desc)) ||
+				record.taxonomies.some((taxonomy) => !isRecord(taxonomy) || typeof taxonomy.primary !== 'boolean') ||
+				!record.taxonomies.some((taxonomy) => isRecord(taxonomy) && taxonomy.primary === true))) {
 				throw new Error('NPPES provider query returned malformed taxonomy data.');
 			}
 			if (pageRecords.some((record) => {

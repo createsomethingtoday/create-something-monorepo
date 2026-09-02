@@ -488,6 +488,32 @@ test('canonical taxonomy filtering rejects records without a usable taxonomy des
 	);
 });
 
+test('canonical taxonomy filtering rejects records without explicit primary markers', async () => {
+	await assert.rejects(
+		fetchNppesProviders(
+			{
+				taxonomy_description: 'Nurse Practitioner, Family',
+				city: 'Springfield',
+				state: 'MO'
+			},
+			{
+				fetchFn: async () => jsonResponse({
+					results: [{
+						number: '1111111111',
+						taxonomies: [{ desc: 'Nurse Practitioner, Family' }],
+						addresses: [mockLocationAddress()]
+					}]
+				})
+			}
+		),
+		(error: unknown) => {
+			assert.ok(error instanceof NppesProviderFetchError);
+			assert.match(error.message, /malformed taxonomy data/i);
+			return true;
+		}
+	);
+});
+
 test('NPPES fetch validates address shape before geography filtering', async () => {
 	await assert.rejects(
 		fetchNppesProviders(
