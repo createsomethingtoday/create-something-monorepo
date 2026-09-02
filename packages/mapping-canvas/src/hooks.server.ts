@@ -4,11 +4,11 @@ import { dev } from '$app/environment';
 const SECURITY_HEADERS = {
   'Content-Security-Policy': [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline'",
+    "script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com",
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",
     "font-src 'self'",
-    `connect-src 'self'${dev ? ' ws: wss:' : ''}`,
+    `connect-src 'self' https://cloudflareinsights.com${dev ? ' ws: wss:' : ''}`,
     "worker-src 'self' blob:",
     "manifest-src 'self'",
     "object-src 'none'",
