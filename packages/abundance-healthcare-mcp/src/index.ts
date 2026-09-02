@@ -47,8 +47,20 @@ async function constantTimeEqual(left: string, right: string): Promise<boolean> 
 }
 
 const marketIdSchema = z.enum(['npg-family-np-nationwide', 'npg-family-np-springfield-mo', 'npg-family-np-arlington-tx']);
+const SUPPORTED_US_STATE_CODES = new Set([
+  'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
+  'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD',
+  'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY', 'DC', 'AS', 'GU', 'MP', 'PR', 'VI',
+]);
+const stateCodeSchema = z.string()
+  .trim()
+  .regex(/^[A-Za-z]{2}$/, 'Use a two-letter US state code.')
+  .transform((value) => value.toUpperCase())
+  .refine((value) => SUPPORTED_US_STATE_CODES.has(value), 'Use a supported US state, district, or territory code.');
 const searchCandidatesSchema = z.object({
-  market_id: marketIdSchema,
+  market_id: marketIdSchema.default('npg-family-np-nationwide'),
+  state: stateCodeSchema.optional(),
+  city: z.string().trim().min(1).max(100).optional(),
   name: z.string().trim().min(1).max(100).optional(),
   updated_since: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD.').optional(),
   readiness_state: z.enum(['coverage_candidate', 'recruiter_ready']).optional(),
@@ -83,8 +95,13 @@ export async function listHealthcareMarkets(options: HealthcareClientOptions) {
 
 export async function searchCoverageCandidates(input: SearchCoverageCandidatesInput, options: HealthcareClientOptions) {
   const parsed = searchCandidatesSchema.parse(input);
+  if (parsed.city && !parsed.state) throw new TypeError('state is required when city is provided.');
+  if (parsed.market_id !== 'npg-family-np-nationwide' && (parsed.state || parsed.city)) {
+    throw new TypeError('state and city filters can only be combined with the nationwide market.');
+  }
   const data = await fetchHealthcareMarket(parsed.market_id, {
-    name: parsed.name, updated_since: parsed.updated_since, limit: String(parsed.limit), offset: String(parsed.offset),
+    state: parsed.state, city: parsed.city?.toLowerCase(), name: parsed.name, updated_since: parsed.updated_since,
+    limit: String(parsed.limit), offset: String(parsed.offset),
   }, options);
   const readinessByNpi = new Map(data.readiness.map((item) => [item.npi, item]));
   const results = data.providers
@@ -92,6 +109,12 @@ export async function searchCoverageCandidates(input: SearchCoverageCandidatesIn
     .map((provider) => summarizeProvider(provider, readinessByNpi.get(provider.npi)));
   return {
     market_id: parsed.market_id,
+    ...(parsed.state ? { location: {
+      scope: 'derived_locale',
+      label: parsed.city ? `${parsed.city}, ${parsed.state}` : parsed.state,
+      state: parsed.state,
+      ...(parsed.city ? { city: parsed.city } : {}),
+    } } : {}),
     source_latest_fetched_at: data.report.source.latest_fetched_at,
     direct_outreach_status: data.report.direct_outreach_status,
     total: data.total,
@@ -174,7 +197,7 @@ export function createAbundanceHealthcareServer(options: HealthcareClientOptions
 export function registerAbundanceHealthcareTools(server: McpServer, options: HealthcareClientOptions): void {
   server.resource('abundance-healthcare-status', 'abundance-healthcare://status', { description: 'Healthcare MCP status and approved NPG market IDs. Contains no secret values.', mimeType: 'application/json' }, async () => ({ contents: [{ uri: 'abundance-healthcare://status', mimeType: 'application/json', text: JSON.stringify({ name: SERVER_NAME, version: SERVER_VERSION, tools: ['list_healthcare_markets', 'get_healthcare_coverage', 'search_coverage_candidates', 'get_healthcare_practitioner'], market_ids: NPG_HEALTHCARE_MARKETS.map((market) => market.id), coverage_model: 'monthly_full_plus_weekly_incremental', refresh_policy: 'weekly_default_daily_locale_opt_in' }, null, 2) }] }));
   server.registerTool('list_healthcare_markets', { description: 'List nationwide and approved derived NPG healthcare views with source freshness and outreach status. Read-only.', inputSchema: z.object({}).strict(), annotations: readOnlyAnnotations() }, async () => structuredJson(await listHealthcareMarkets(options)));
-  server.registerTool('search_coverage_candidates', { description: 'Search the nationwide Family NP snapshot or an approved local view. Results are bounded and omit practice phone and street address. Read-only.', inputSchema: searchCandidatesSchema, annotations: readOnlyAnnotations() }, async (input) => structuredJson(await searchCoverageCandidates(input, options)));
+  server.registerTool('search_coverage_candidates', { description: 'Search the nationwide Family NP snapshot by optional US state and city, or search an approved named local view. Results are bounded and omit practice phone and street address. Read-only.', inputSchema: searchCandidatesSchema, annotations: readOnlyAnnotations() }, async (input) => structuredJson(await searchCoverageCandidates(input, options)));
   server.registerTool('get_healthcare_practitioner', { description: 'Read one practitioner by NPI, including public NPPES practice fields and fail-closed evidence gates. Read-only.', inputSchema: practitionerSchema, annotations: readOnlyAnnotations() }, async (input) => structuredJson(await getHealthcarePractitioner(input, options)));
   server.registerTool('get_healthcare_coverage', { description: 'Read aggregate nationwide or derived-local coverage, snapshot provenance, and fail-closed recruiting state. Read-only.', inputSchema: z.object({ market_id: marketIdSchema }).strict(), annotations: readOnlyAnnotations() }, async (input) => structuredJson(await getHealthcareCoverage(input, options)));
 }
