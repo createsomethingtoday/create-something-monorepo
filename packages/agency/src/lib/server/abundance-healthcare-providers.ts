@@ -244,9 +244,26 @@ export async function readHealthcareRecruitingEvidence(
 				valid_through,
 				reference_id,
 				source_payload_hash
-			FROM abundance_healthcare_provider_recruiting_evidence
-			WHERE provider_npi IN (${chunk.map(() => '?').join(', ')})
-			ORDER BY provider_npi ASC, evidence_kind ASC, verified_at DESC
+			FROM (
+				SELECT
+					id,
+					provider_npi,
+					evidence_kind,
+					source_system,
+					outcome,
+					verified_at,
+					valid_through,
+					reference_id,
+					source_payload_hash,
+					ROW_NUMBER() OVER (
+						PARTITION BY provider_npi, evidence_kind
+						ORDER BY verified_at DESC, created_at DESC, id DESC
+					) AS evidence_rank
+				FROM abundance_healthcare_provider_recruiting_evidence
+				WHERE provider_npi IN (${chunk.map(() => '?').join(', ')})
+			)
+			WHERE evidence_rank = 1
+			ORDER BY provider_npi ASC, evidence_kind ASC
 		`).bind(...chunk).all<{
 			id: string;
 			provider_npi: string;

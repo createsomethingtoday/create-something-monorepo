@@ -524,8 +524,10 @@ test('stored coverage reads require exact nullable geography', async () => {
 
 test('recruiting evidence reads stay below the D1 bind ceiling', async () => {
 	const bindSizes: number[] = [];
+	const queries: string[] = [];
 	const db = {
-		prepare() {
+		prepare(sql: string) {
+			queries.push(sql);
 			return {
 				bind(...args: unknown[]) {
 					bindSizes.push(args.length);
@@ -540,6 +542,8 @@ test('recruiting evidence reads stay below the D1 bind ceiling', async () => {
 
 	assert.equal(bindSizes.length, 14);
 	assert.equal(Math.max(...bindSizes), 90);
+	assert.equal(queries.every((sql) => /row_number\(\).*partition by provider_npi, evidence_kind/is.test(sql)), true);
+	assert.equal(queries.every((sql) => /WHERE evidence_rank = 1/i.test(sql)), true);
 });
 
 test('NPPES query builder requires a nursing taxonomy and geography', () => {
@@ -1026,6 +1030,9 @@ test('refresh ledger accounts for records removed by canonical taxonomy filterin
 				bind(...args: unknown[]) {
 					const statement = { sql, args };
 					captured.push(statement);
+					if (/FROM abundance_healthcare_provider_recruiting_evidence/.test(sql)) {
+						return { ...statement, async all() { return { results: [] }; } };
+					}
 					return statement;
 				}
 			};
@@ -1053,6 +1060,51 @@ test('refresh ledger accounts for records removed by canonical taxonomy filterin
 			Number(runStatement?.args[12]) + Number(runStatement?.args[13]) + Number(runStatement?.args[14]),
 			Number(runStatement?.args[10])
 		);
+	} finally {
+		globalThis.fetch = originalFetch;
+	}
+});
+
+test('refresh reports include persisted recruiting evidence', async () => {
+	const originalFetch = globalThis.fetch;
+	globalThis.fetch = (async () => jsonResponse({
+		results: [{
+			number: '1111111111',
+			basic: { first_name: 'FAMILY', last_name: 'NP', status: 'A', last_updated: '2026-08-20' },
+			taxonomies: [{ code: '363LF0000X', desc: 'Nurse Practitioner, Family', primary: true }],
+			addresses: [{ address_purpose: 'LOCATION', city: 'SPRINGFIELD', state: 'MO' }]
+		}]
+	})) as typeof fetch;
+	const evidenceRows = completeRecruitingEvidence('1111111111').map(toEvidenceRow);
+	const db = {
+		prepare(sql: string) {
+			return {
+				bind(...args: unknown[]) {
+					if (/FROM abundance_healthcare_provider_recruiting_evidence/.test(sql)) {
+						return { sql, args, async all() { return { results: evidenceRows }; } };
+					}
+					return { sql, args };
+				}
+			};
+		},
+		async batch(statements: unknown[]) { return statements; }
+	} as unknown as D1Database;
+
+	try {
+		const response = await refreshHealthcareProviderCoverage({
+			request: new Request('https://createsomething.agency/api/abundance/healthcare-providers', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(NPG_NURSING_PERSONA_COVERAGE[0])
+			}),
+			platform: { env: { DB: db } }
+		} as never);
+		assert.equal(response.status, 201);
+		const payload = await response.json() as {
+			data: { report: { direct_outreach_status: string; recruiting_pipeline: { recruiter_ready_count: number } } };
+		};
+		assert.equal(payload.data.report.recruiting_pipeline.recruiter_ready_count, 1);
+		assert.equal(payload.data.report.direct_outreach_status, 'ready');
 	} finally {
 		globalThis.fetch = originalFetch;
 	}
