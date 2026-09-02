@@ -40,6 +40,8 @@ describe('public identity and discovery', () => {
     expect(serverHooks).toContain('Strict-Transport-Security');
     expect(serverHooks).toContain('Permissions-Policy');
     expect(serverHooks).toContain('X-Content-Type-Options');
+    expect(serverHooks).toContain('https://static.cloudflareinsights.com');
+    expect(serverHooks).toContain('https://cloudflareinsights.com');
     expect(serverHooks).toContain("dev ? ' ws: wss:' : ''");
   });
 });
