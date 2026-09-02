@@ -110,14 +110,7 @@ export async function fetchNppesProviders(
 				throw new Error('NPPES provider query returned a malformed results array.');
 			}
 			const pageRecords = payload.results.filter(isRecord);
-			if (pageRecords.some((record) =>
-				!Array.isArray(record.taxonomies) ||
-				record.taxonomies.some((taxonomy) => !isRecord(taxonomy)) ||
-				record.taxonomies.every((taxonomy) => !isRecord(taxonomy) || !cleanString(taxonomy.desc)) ||
-				record.taxonomies.some((taxonomy) => !isRecord(taxonomy) || typeof taxonomy.primary !== 'boolean') ||
-				!record.taxonomies.some((taxonomy) =>
-					isRecord(taxonomy) && taxonomy.primary === true && Boolean(cleanString(taxonomy.desc))
-				))) {
+			if (pageRecords.some((record) => !hasValidNppesTaxonomies(record))) {
 				throw new Error('NPPES provider query returned malformed taxonomy data.');
 			}
 			if (pageRecords.some((record) => {
@@ -174,6 +167,14 @@ function hasCanonicalTaxonomy(record: Record<string, unknown>, taxonomyDescripti
 	return asRecordArray(record.taxonomies).some(
 		(taxonomy) => cleanString(taxonomy.desc)?.toLowerCase() === target
 	);
+}
+
+function hasValidNppesTaxonomies(record: Record<string, unknown>): boolean {
+	if (!Array.isArray(record.taxonomies) || record.taxonomies.length === 0) return false;
+	if (record.taxonomies.some((taxonomy) =>
+		!isRecord(taxonomy) || !cleanString(taxonomy.desc) || typeof taxonomy.primary !== 'boolean'
+	)) return false;
+	return record.taxonomies.filter((taxonomy) => isRecord(taxonomy) && taxonomy.primary === true).length === 1;
 }
 
 export async function normalizeNppesRecordsForAbundance(

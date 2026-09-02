@@ -562,6 +562,35 @@ test('taxonomy validation requires the primary taxonomy itself to have a descrip
 	);
 });
 
+test('taxonomy validation requires exactly one primary taxonomy', async () => {
+	await assert.rejects(
+		fetchNppesProviders(
+			{
+				taxonomy_description: 'Nurse Practitioner, Family',
+				city: 'Springfield',
+				state: 'MO'
+			},
+			{
+				fetchFn: async () => jsonResponse({
+					results: [{
+						number: '1111111111',
+						taxonomies: [
+							{ desc: 'Nurse Practitioner, Acute Care', primary: true },
+							{ desc: 'Nurse Practitioner, Family', primary: true }
+						],
+						addresses: [mockLocationAddress()]
+					}]
+				})
+			}
+		),
+		(error: unknown) => {
+			assert.ok(error instanceof NppesProviderFetchError);
+			assert.match(error.message, /malformed taxonomy data/i);
+			return true;
+		}
+	);
+});
+
 test('NPPES fetch validates address shape before geography filtering', async () => {
 	await assert.rejects(
 		fetchNppesProviders(
