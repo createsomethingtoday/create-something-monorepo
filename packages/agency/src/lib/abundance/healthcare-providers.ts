@@ -71,6 +71,9 @@ export interface HealthcareProviderCoverageReport {
 		latest_fetched_at?: string;
 		snapshot_age_days?: number;
 		coverage_limit_reached: boolean;
+		normalized_count?: number;
+		rejected_count?: number;
+		rejection_rate?: number;
 	};
 	limitations: string[];
 }
@@ -154,6 +157,8 @@ export function assessHealthcareProviderCoverage(
 		source?: {
 			latest_fetched_at?: string;
 			coverage_limit_reached?: boolean;
+			normalized_count?: number;
+			rejected_count?: number;
 		};
 	}
 ): HealthcareProviderCoverageReport {
@@ -164,6 +169,12 @@ export function assessHealthcareProviderCoverage(
 		? Math.max(0, (evaluatedAtMs - Date.parse(sourceFetchedAt)) / 86_400_000)
 		: undefined;
 	const coverageLimitReached = options.source?.coverage_limit_reached ?? false;
+	const normalizedCount = options.source?.normalized_count;
+	const rejectedCount = options.source?.rejected_count;
+	const assessedIngestionCount = (normalizedCount ?? 0) + (rejectedCount ?? 0);
+	const rejectionRate = assessedIngestionCount > 0 && rejectedCount !== undefined
+		? rejectedCount / assessedIngestionCount
+		: undefined;
 
 	let activeCount = 0;
 	let deactivatedCount = 0;
@@ -215,6 +226,10 @@ export function assessHealthcareProviderCoverage(
 	if (coverageLimitReached && marketCoverageStatus !== 'blocked') {
 		marketCoverageStatus = 'degraded';
 		reasons.push('The NPPES result limit was reached, so the observed provider count is a lower bound.');
+	}
+	if (rejectionRate !== undefined && rejectionRate > 0.05 && marketCoverageStatus !== 'blocked') {
+		marketCoverageStatus = 'degraded';
+		reasons.push('More than 5% of canonical source records failed provider normalization.');
 	}
 	if (sourceAgeDays === undefined && marketCoverageStatus !== 'blocked') {
 		marketCoverageStatus = 'degraded';
@@ -273,7 +288,10 @@ export function assessHealthcareProviderCoverage(
 		source: {
 			latest_fetched_at: sourceFetchedAt,
 			snapshot_age_days: sourceAgeDays === undefined ? undefined : round(sourceAgeDays),
-			coverage_limit_reached: coverageLimitReached
+			coverage_limit_reached: coverageLimitReached,
+			normalized_count: normalizedCount,
+			rejected_count: rejectedCount,
+			rejection_rate: rejectionRate === undefined ? undefined : round(rejectionRate)
 		},
 		limitations: [
 			'NPPES administrative recency does not establish current employment or availability.',

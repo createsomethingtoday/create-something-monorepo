@@ -30,7 +30,9 @@ for (const persona of NPG_NURSING_PERSONA_COVERAGE) {
 		evaluatedAt,
 		source: {
 			latest_fetched_at: evaluatedAt,
-			coverage_limit_reached: fetched.coverage_limit_reached
+			coverage_limit_reached: fetched.coverage_limit_reached,
+			normalized_count: normalized.providers.length,
+			rejected_count: normalized.rejected_count
 		}
 	});
 
@@ -39,7 +41,7 @@ for (const persona of NPG_NURSING_PERSONA_COVERAGE) {
 		ingestion: {
 			pages_fetched: fetched.pages_fetched,
 			source_result_count: fetched.source_records_scanned,
-			normalized_count: providers.length,
+			normalized_count: normalized.providers.length,
 			rejected_count: normalized.rejected_count,
 			excluded_count: excludedCount
 		}

@@ -112,7 +112,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		const excludedCount = canonicalExcludedCount + normalized.providers.length - providers.length;
 		progress = {
 			...progress,
-			normalizedCount: providers.length,
+			normalizedCount: normalized.providers.length,
 			rejectedCount: normalized.rejected_count,
 			excludedCount
 		};
@@ -135,7 +135,9 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			persona,
 			source: {
 				latest_fetched_at: fetchedAt,
-				coverage_limit_reached: fetched.coverage_limit_reached
+				coverage_limit_reached: fetched.coverage_limit_reached,
+				normalized_count: normalized.providers.length,
+				rejected_count: normalized.rejected_count
 			}
 		});
 		const data: CoverageResponse = {
@@ -143,7 +145,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			ingestion: {
 				pages_fetched: fetched.pages_fetched,
 				source_result_count: fetched.source_records_scanned,
-				normalized_count: providers.length,
+				normalized_count: normalized.providers.length,
 				rejected_count: normalized.rejected_count,
 				excluded_count: excludedCount,
 				coverage_limit_reached: fetched.coverage_limit_reached

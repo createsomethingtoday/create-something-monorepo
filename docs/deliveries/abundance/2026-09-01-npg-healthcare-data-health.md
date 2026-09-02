@@ -40,6 +40,8 @@ The NPG persona remains human-readable as “Nurse Practitioner, Family.” The 
 
 Each stored record carries its NPI, normalized taxonomy and practice location, source fetch time, source payload hash, and administrative dates. Each ingestion run records records scanned, normalized, rejected, excluded, whether the public result bound was reached, and an immutable copy of every provider included in that snapshot. Later provider changes therefore cannot rewrite historical NPG evidence or inflate the latest cohort.
 
+Coverage is also degraded when more than 5% of canonical source records fail normalization. This keeps a small surviving subset from appearing healthy when the upstream batch is materially malformed; the report exposes the normalized count, rejected count, and rejection rate as source-health evidence.
+
 ## Recruiter promotion gates
 
 Before a record becomes a warm lead or enters Paylocity, NPG should verify:

@@ -214,7 +214,7 @@ export async function readHealthcareProviderCoverage(
 	const limit = Math.min(Math.max(options.limit ?? NPPES_MAX_RECORDS, 1), NPPES_MAX_RECORDS);
 	const run = await db
 		.prepare(`
-			SELECT id, fetched_at, coverage_limit_reached
+			SELECT id, fetched_at, coverage_limit_reached, normalized_count, rejected_count
 			FROM abundance_healthcare_provider_ingestion_runs
 			WHERE persona_id = ?
 				AND lower(taxonomy_description) = lower(?)
@@ -232,7 +232,13 @@ export async function readHealthcareProviderCoverage(
 			persona.city ?? null,
 			persona.postal_code ?? null
 		)
-		.first<{ id?: string; fetched_at?: string; coverage_limit_reached?: number }>();
+		.first<{
+			id?: string;
+			fetched_at?: string;
+			coverage_limit_reached?: number;
+			normalized_count?: number;
+			rejected_count?: number;
+		}>();
 	const result = run?.id
 		? await db
 			.prepare(`
@@ -257,7 +263,9 @@ export async function readHealthcareProviderCoverage(
 			evaluatedAt: options.evaluatedAt,
 			source: {
 				latest_fetched_at: run?.fetched_at,
-				coverage_limit_reached: run?.coverage_limit_reached === 1
+				coverage_limit_reached: run?.coverage_limit_reached === 1,
+				normalized_count: run?.normalized_count,
+				rejected_count: run?.rejected_count
 			}
 		})
 	};
