@@ -24,6 +24,7 @@ import {
 	NppesProviderFetchError,
 	normalizeNppesRecordsForAbundance,
 	readHealthcareProviderCoverage,
+	readHealthcareRecruitingEvidence,
 	upsertHealthcareProviders
 } from '$lib/server/abundance-healthcare-providers';
 
@@ -120,6 +121,10 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			excludedCount
 		};
 		await upsertHealthcareProviders(platform.env.DB, providers);
+		const recruitingEvidence = await readHealthcareRecruitingEvidence(
+			platform.env.DB,
+			providers.map((provider) => provider.npi)
+		);
 		await createHealthcareProviderIngestionRun(platform.env.DB, {
 			id: `abproviderrun_${crypto.randomUUID()}`,
 			persona,
@@ -142,7 +147,8 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 				coverage_limit_reached: fetched.coverage_limit_reached,
 				normalized_count: normalized.providers.length,
 				rejected_count: normalized.rejected_count
-			}
+			},
+			recruiting_evidence: recruitingEvidence
 		});
 		const data: CoverageResponse = {
 			report,

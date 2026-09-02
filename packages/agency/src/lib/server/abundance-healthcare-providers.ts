@@ -1,11 +1,15 @@
 import type {
 	HealthcareProvider,
 	HealthcareProviderCoverageReport,
+	HealthcareRecruitingEvidence,
+	HealthcareRecruitingEvidenceKind,
+	HealthcareRecruitingEvidenceSource,
 	NursingPersonaCoverageQuery
 } from '$lib/abundance/healthcare-providers';
 import {
 	assessHealthcareProviderCoverage,
 	buildHealthcareProviderBulkUpsert,
+	buildHealthcareRecruitingEvidenceUpsert,
 	filterHealthcareProvidersForPersona,
 	normalizeNppesProvider
 } from '$lib/abundance/healthcare-providers';
@@ -206,6 +210,88 @@ export async function upsertHealthcareProviders(db: D1Database, providers: Healt
 	return providers.length;
 }
 
+export async function upsertHealthcareRecruitingEvidence(
+	db: D1Database,
+	evidence: HealthcareRecruitingEvidence[]
+): Promise<number> {
+	if (evidence.length === 0) return 0;
+	const statements = evidence.map((item) => {
+		const statement = buildHealthcareRecruitingEvidenceUpsert(item);
+		return db.prepare(statement.sql).bind(...statement.args);
+	});
+	for (let index = 0; index < statements.length; index += D1_BATCH_STATEMENT_LIMIT) {
+		await db.batch(statements.slice(index, index + D1_BATCH_STATEMENT_LIMIT));
+	}
+	return evidence.length;
+}
+
+export async function readHealthcareRecruitingEvidence(
+	db: D1Database,
+	npis: string[]
+): Promise<HealthcareRecruitingEvidence[]> {
+	const uniqueNpis = [...new Set(npis.filter((npi) => /^\d{10}$/.test(npi)))];
+	const evidence: HealthcareRecruitingEvidence[] = [];
+	for (let index = 0; index < uniqueNpis.length; index += 90) {
+		const chunk = uniqueNpis.slice(index, index + 90);
+		const result = await db.prepare(`
+			SELECT
+				id,
+				provider_npi,
+				evidence_kind,
+				source_system,
+				outcome,
+				verified_at,
+				valid_through,
+				reference_id,
+				source_payload_hash
+			FROM (
+				SELECT
+					id,
+					provider_npi,
+					evidence_kind,
+					source_system,
+					outcome,
+					verified_at,
+					valid_through,
+					reference_id,
+					source_payload_hash,
+					ROW_NUMBER() OVER (
+						PARTITION BY provider_npi, evidence_kind
+						ORDER BY unixepoch(verified_at) DESC, created_at DESC, id DESC
+					) AS evidence_rank
+				FROM abundance_healthcare_provider_recruiting_evidence
+				WHERE provider_npi IN (${chunk.map(() => '?').join(', ')})
+			)
+			WHERE evidence_rank = 1
+			ORDER BY provider_npi ASC, evidence_kind ASC
+		`).bind(...chunk).all<{
+			id: string;
+			provider_npi: string;
+			evidence_kind: HealthcareRecruitingEvidenceKind;
+			source_system: HealthcareRecruitingEvidenceSource;
+			outcome: 'passed' | 'failed';
+			verified_at: string;
+			valid_through: string;
+			reference_id?: string | null;
+			source_payload_hash?: string | null;
+		}>();
+		for (const row of result.results ?? []) {
+			evidence.push({
+				id: row.id,
+				npi: row.provider_npi,
+				kind: row.evidence_kind,
+				source_system: row.source_system,
+				outcome: row.outcome,
+				verified_at: row.verified_at,
+				valid_through: row.valid_through,
+				reference_id: row.reference_id ?? undefined,
+				source_payload_hash: row.source_payload_hash ?? undefined
+			});
+		}
+	}
+	return evidence;
+}
+
 export async function readHealthcareProviderCoverage(
 	db: D1Database,
 	persona: NursingPersonaCoverageQuery,
@@ -255,6 +341,7 @@ export async function readHealthcareProviderCoverage(
 		(result.results ?? []).map((row) => parseHealthcareProviderSnapshot(row.provider_snapshot_json)),
 		persona
 	);
+	const recruitingEvidence = await readHealthcareRecruitingEvidence(db, providers.map((provider) => provider.npi));
 
 	return {
 		providers,
@@ -266,7 +353,8 @@ export async function readHealthcareProviderCoverage(
 				coverage_limit_reached: run?.coverage_limit_reached === 1,
 				normalized_count: run?.normalized_count,
 				rejected_count: run?.rejected_count
-			}
+			},
+			recruiting_evidence: recruitingEvidence
 		})
 	};
 }

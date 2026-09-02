@@ -410,9 +410,9 @@ paths:
       operationId: getHealthcareProviderCoverage
       summary: Read stored nursing-persona coverage health
       description: |
-        Evaluates the latest stored NPPES cohort for market coverage. This does
-        not authorize recruiting outreach or establish current licensure,
-        employment, or availability.
+        Evaluates the latest stored NPPES cohort for market coverage and applies
+        the fail-closed recruiting-readiness evidence policy. Reading a report
+        does not itself grant outreach authority.
       parameters:
         - { name: persona_id, in: query, required: true, schema: { type: string } }
         - { name: label, in: query, required: true, schema: { type: string } }
@@ -435,8 +435,9 @@ paths:
       summary: Refresh a bounded nursing-persona cohort from NPPES
       description: |
         Fetches current public NPPES enumeration records, normalizes and stores
-        provenance, then returns aggregate health. Individual records are omitted
-        unless include_records is explicitly true.
+        provenance, then returns aggregate health. An NPPES refresh creates
+        coverage candidates; it does not create recruiting verification evidence.
+        Individual records are omitted unless include_records is explicitly true.
       requestBody:
         required: true
         content:
@@ -483,7 +484,33 @@ components:
           properties:
             report:
               type: object
-              description: Aggregate cohort health with separate market-coverage and direct-outreach gates.
+              description: Aggregate cohort health with separate market-coverage and recruiting-readiness gates.
+              required: [market_coverage_status, direct_outreach_status, recruiting_pipeline]
+              properties:
+                market_coverage_status:
+                  type: string
+                  enum: [ready, degraded, blocked]
+                direct_outreach_status:
+                  type: string
+                  enum: [ready, blocked]
+                recruiting_pipeline:
+                  type: object
+                  required: [coverage_candidate_count, recruiter_ready_count, required_evidence_kinds]
+                  properties:
+                    coverage_candidate_count: { type: integer, minimum: 0 }
+                    recruiter_ready_count: { type: integer, minimum: 0 }
+                    required_evidence_kinds:
+                      type: array
+                      items:
+                        type: string
+                        enum:
+                          - license_or_privilege
+                          - discipline
+                          - exclusion
+                          - practice_or_employment
+                          - contact_route
+                          - outreach_authority
+                          - recruiter_approval
               additionalProperties: true
             ingestion:
               type: object
