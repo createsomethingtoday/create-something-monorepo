@@ -404,14 +404,28 @@ interface ExaAgentRun {
   costDollars?: { total?: number; [key: string]: unknown };
 }
 
+class ExaRequestTimeoutError extends Error {}
+
 async function createAndAwaitExaRun(body: Record<string, unknown>, apiKey: string, options: HealthcareClientOptions): Promise<ExaAgentRun> {
   const fetchFn = options.fetchFn ?? fetch;
   const baseUrl = (options.exaAgentBaseUrl?.trim() || DEFAULT_EXA_AGENT_BASE_URL).replace(/\/$/, '');
   const headers = { 'Content-Type': 'application/json', 'x-api-key': apiKey };
   const timeoutMs = Math.min(Math.max(options.exaTimeoutMs ?? 45_000, 1_000), 55_000);
-  let run = await readExaRun(await fetchWithTimeout(fetchFn, `${baseUrl}/agent/runs`, {
-    method: 'POST', headers, body: JSON.stringify(body),
-  }, Math.min(timeoutMs, 15_000)), 'create');
+  let run: ExaAgentRun;
+  try {
+    run = await fetchAndReadExaRun(
+      fetchFn,
+      `${baseUrl}/agent/runs`,
+      { method: 'POST', headers, body: JSON.stringify(body) },
+      Math.min(timeoutMs, 15_000),
+      'create',
+    );
+  } catch (error) {
+    if (error instanceof ExaRequestTimeoutError) {
+      throw new Error('Exa Agent create result is indeterminate. A paid run may be active, but no run ID was received; do not retry until the Exa dashboard is reviewed.');
+    }
+    throw error;
+  }
   if (run.status === 'completed') return run;
   if (run.status === 'failed' || run.status === 'cancelled') {
     throw new Error(`Exa Agent enrichment ended with status ${run.status}. No contact result was accepted.`);
@@ -424,12 +438,13 @@ async function createAndAwaitExaRun(body: Record<string, unknown>, apiKey: strin
     const remainingMs = deadline - Date.now();
     if (remainingMs <= 0) break;
     try {
-      run = await readExaRun(await fetchWithTimeout(
+      run = await fetchAndReadExaRun(
         fetchFn,
         `${baseUrl}/agent/runs/${encodeURIComponent(run.id)}`,
         { headers: { 'x-api-key': apiKey } },
         Math.min(remainingMs, 10_000),
-      ), 'poll');
+        'poll',
+      );
     } catch {
       const cancellationConfirmed = await cancelExaRun(fetchFn, baseUrl, run.id, apiKey);
       if (cancellationConfirmed) {
@@ -449,6 +464,31 @@ async function createAndAwaitExaRun(body: Record<string, unknown>, apiKey: strin
   throw new Error(`Exa Agent enrichment did not complete within ${timeoutMs}ms, and cancellation could not be confirmed. The paid run may still be active; do not retry until its Exa run status is reviewed.`);
 }
 
+async function fetchAndReadExaRun(
+  fetchFn: typeof fetch,
+  input: string,
+  init: RequestInit,
+  timeoutMs: number,
+  operation: 'create' | 'poll',
+): Promise<ExaAgentRun> {
+  const controller = new AbortController();
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeout = setTimeout(() => {
+      reject(new ExaRequestTimeoutError(`Exa Agent ${operation} timed out.`));
+      controller.abort();
+    }, Math.max(timeoutMs, 1));
+  });
+  try {
+    return await Promise.race([
+      (async () => readExaRun(await fetchFn(input, { ...init, signal: controller.signal }), operation))(),
+      timeoutPromise,
+    ]);
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
+}
+
 async function fetchWithTimeout(
   fetchFn: typeof fetch,
   input: string,
@@ -459,8 +499,8 @@ async function fetchWithTimeout(
   let timeout: ReturnType<typeof setTimeout> | undefined;
   const timeoutPromise = new Promise<never>((_, reject) => {
     timeout = setTimeout(() => {
+      reject(new ExaRequestTimeoutError('Exa Agent request timed out.'));
       controller.abort();
-      reject(new Error('Exa Agent request timed out.'));
     }, Math.max(timeoutMs, 1));
   });
   try {

@@ -331,7 +331,7 @@ test('Exa polling failures cancel the paid run before returning an error', async
   assert.equal(cancelCalled, true);
 });
 
-test('a stalled Exa poll is bounded by the overall deadline and cancelled', async () => {
+test('a stalled Exa poll response body is bounded by the overall deadline and cancelled', async () => {
   let cancelCalled = false;
   const fetchFn: typeof fetch = async (input) => {
     const url = String(input);
@@ -349,7 +349,10 @@ test('a stalled Exa poll is bounded by the overall deadline and cancelled', asyn
     if (url.endsWith('/agent/runs')) {
       return Response.json({ id: 'agent_run_stalled_poll', object: 'agent_run', status: 'queued' });
     }
-    return await new Promise<Response>(() => undefined);
+    return new Response(new ReadableStream({ start() { /* Keep the response body open. */ } }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
   };
 
   await assert.rejects(
@@ -363,6 +366,30 @@ test('a stalled Exa poll is bounded by the overall deadline and cancelled', asyn
     /polling failed.*was cancelled/i,
   );
   assert.equal(cancelCalled, true);
+});
+
+test('an indeterminate Exa create response warns that a paid run may be active and must not be retried', async () => {
+  const fetchFn: typeof fetch = async (input) => {
+    if (String(input).includes('/api/abundance/healthcare-providers/nationwide')) {
+      return Response.json({ success: true, data: {
+        report,
+        providers: [{ npi: '1265049910', name: 'Jane Test Provider', source_fetched_at: '2026-09-02T01:39:07.502Z' }],
+        readiness: [], total: 1, limit: 1, offset: 0,
+      } } satisfies HealthcareApiResponse);
+    }
+    return new Response(new ReadableStream({ start() { /* Simulate a create response whose body never arrives. */ } }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  };
+
+  await assert.rejects(
+    enrichProviderProfessionalContact(
+      { npi: '1265049910', purpose: 'recruiting_outreach', confirm_paid_enrichment: true },
+      { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn, exaTimeoutMs: 1_000 },
+    ),
+    /create result is indeterminate.*paid run may be active.*do not retry/i,
+  );
 });
 
 test('Exa upstream failures do not reflect response bodies containing contact data', async () => {
