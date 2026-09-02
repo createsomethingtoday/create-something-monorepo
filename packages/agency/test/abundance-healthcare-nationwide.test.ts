@@ -137,7 +137,7 @@ test('weekly increments copy the last successful snapshot then add and remove NP
 	} finally { fixture.database.close(); }
 });
 
-test('an older monthly archive cannot rewind a newer successful nationwide snapshot', async () => {
+test('an older monthly or weekly archive cannot rewind a newer successful nationwide snapshot', async () => {
 	const fixture = await createDatabase();
 	try {
 		await beginNationwideRun(fixture.db, {
@@ -156,6 +156,11 @@ test('an older monthly archive cannot rewind a newer successful nationwide snaps
 		await assert.rejects(beginNationwideRun(fixture.db, {
 			id: 'abnationalrun_older', sourceKind: 'monthly_full', sourceFile: 'older.zip',
 			sourceUrl: 'https://download.cms.gov/older.zip', sourcePublishedAt: '2026-07-31T03:06:00Z',
+			startedAt: '2026-09-03T00:00:00Z'
+		}), /older than the current nationwide snapshot/i);
+		await assert.rejects(beginNationwideRun(fixture.db, {
+			id: 'abnationalrun_older_weekly', sourceKind: 'weekly_incremental', sourceFile: 'older-weekly.zip',
+			sourceUrl: 'https://download.cms.gov/older-weekly.zip', sourcePublishedAt: '2026-08-24T03:06:00Z',
 			startedAt: '2026-09-03T00:00:00Z'
 		}), /older than the current nationwide snapshot/i);
 		const result = await queryNationwideCoverage(fixture.db, {});

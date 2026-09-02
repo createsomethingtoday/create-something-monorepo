@@ -48,7 +48,7 @@ export async function beginNationwideRun(db: D1Database, input: {
 	if (input.sourceKind === 'weekly_incremental' && !latest) {
 		throw new Error('A weekly incremental requires a successful nationwide base snapshot.');
 	}
-	assertMonthlyReplacementIsCurrent(input.sourceKind, input.sourcePublishedAt, latest);
+	assertSourceIsCurrent(input.sourcePublishedAt, latest);
 	const insert = db.prepare(`
 		INSERT INTO abundance_healthcare_nationwide_runs (
 			id, source_kind, source_file, source_url, source_published_at,
@@ -183,7 +183,7 @@ export async function finalizeNationwideRun(db: D1Database, input: {
 	expectedProcessedRowCount: number;
 }): Promise<NationwideRun> {
 	const run = await requireRunningRun(db, input.runId);
-	assertMonthlyReplacementIsCurrent(run.source_kind, run.source_published_at, await latestSuccessfulNationwideRun(db));
+	assertSourceIsCurrent(run.source_published_at, await latestSuccessfulNationwideRun(db));
 	if (!/^[a-f0-9]{64}$/.test(input.sourceSha256)) throw new TypeError('source_sha256 must be a lowercase SHA-256 digest.');
 	if (run.processed_row_count !== input.expectedProcessedRowCount) {
 		throw new Error(`Nationwide run is incomplete: processed ${run.processed_row_count} of ${input.expectedProcessedRowCount} rows.`);
@@ -216,16 +216,15 @@ export async function finalizeNationwideRun(db: D1Database, input: {
 	return finalized;
 }
 
-function assertMonthlyReplacementIsCurrent(
-	sourceKind: NationwideRunKind,
+function assertSourceIsCurrent(
 	sourcePublishedAt: string | undefined,
 	latest: NationwideRun | null
 ): void {
-	if (sourceKind !== 'monthly_full' || !sourcePublishedAt || !latest?.source_published_at) return;
+	if (!sourcePublishedAt || !latest?.source_published_at) return;
 	const incomingPublishedAt = Date.parse(sourcePublishedAt);
 	const currentPublishedAt = Date.parse(latest.source_published_at);
 	if (Number.isFinite(incomingPublishedAt) && Number.isFinite(currentPublishedAt) && incomingPublishedAt < currentPublishedAt) {
-		throw new Error(`Monthly replacement published at ${sourcePublishedAt} is older than the current nationwide snapshot published at ${latest.source_published_at}.`);
+		throw new Error(`Source published at ${sourcePublishedAt} is older than the current nationwide snapshot published at ${latest.source_published_at}.`);
 	}
 }
 
