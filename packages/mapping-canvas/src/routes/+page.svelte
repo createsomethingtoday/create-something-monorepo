@@ -71,6 +71,7 @@
   let mirrorTimer: ReturnType<typeof setInterval> | undefined;
   let nativeTail: Promise<void> = Promise.resolve();
   let agentMutationTail: Promise<void> = Promise.resolve();
+  let agentMutationActive = $state(false);
   let nativeOptimisticVersion = 0;
   let nativeConflictEpoch = 0;
   let agentTransition = $state<{ id: string; kind: DrawTransitionKind; affectedIds: string[] } | null>(null);
@@ -92,8 +93,8 @@
     const webMcp = registerDrawWebMcpTools(createDrawWebMcpTools({
       getState: agentState,
       applyOperations: (operations) => queueAgentMutation(() => applyAgentOperations(operations)),
-      select: (ids) => { const existing = new Set(document.objects.map(({ id }) => id)); selectedIds = ids.filter((id) => existing.has(id)); status = selectedIds.length ? `Agent focused ${selectedIds.length} object${selectedIds.length === 1 ? '' : 's'}` : 'Agent cleared selection'; },
-      setTool: (next) => { if (drawing) throw new Error('Finish the active drawing gesture before changing tools.'); tool = next; status = `Agent selected ${next} tool`; },
+      select: (ids) => { assertAgentControlReady(); const existing = new Set(document.objects.map(({ id }) => id)); selectedIds = ids.filter((id) => existing.has(id)); status = selectedIds.length ? `Agent focused ${selectedIds.length} object${selectedIds.length === 1 ? '' : 's'}` : 'Agent cleared selection'; },
+      setTool: (next) => { assertAgentControlReady(); tool = next; status = `Agent selected ${next} tool`; },
       undo: () => queueAgentMutation(() => browserLocalHistory('undo')),
       redo: () => queueAgentMutation(() => browserLocalHistory('redo')),
       reset: () => queueAgentMutation(resetCanvasFromAgent),
@@ -109,12 +110,19 @@
   });
 
   function queueAgentMutation<T>(action: () => Promise<T> | T): Promise<T> {
-    const queued = agentMutationTail.then(() => {
-      if (resizingGroupId || resizeOrigin || movingObjectId || dragOrigin) throw new Error('Finish the active object gesture before applying an agent canvas change.');
-      return action();
+    const queued = agentMutationTail.then(async () => {
+      assertAgentControlReady();
+      agentMutationActive = true;
+      try { return await action(); }
+      finally { agentMutationActive = false; }
     });
     agentMutationTail = queued.then(() => undefined, () => undefined);
     return queued;
+  }
+
+  function assertAgentControlReady() {
+    if (!ready) throw new Error('Draw is still loading. Try the tool again.');
+    if (drawing || pinch || pendingTouchAction || resizingGroupId || resizeOrigin || movingObjectId || dragOrigin) throw new Error('Finish the active human gesture before applying an agent control.');
   }
 
   function agentState() {
@@ -296,7 +304,7 @@
   }
 
   function pointerDown(event: PointerEvent) {
-    if (event.button !== 0 || !ready) return;
+    if (event.button !== 0 || !ready || agentMutationActive) return;
     if (!companionCanEdit()) return;
     try { surface.setPointerCapture(event.pointerId); } catch { /* SVG pointer capture is not supported in every browser. */ }
     if (pinch) return;
@@ -417,7 +425,7 @@
   }
   function selectPointer(event: PointerEvent, id: string) {
     event.stopPropagation();
-    if (pinch) return;
+    if (pinch || agentMutationActive) return;
     if (tool === 'eraser') { apply(removeObjects(document, [id]), { type: 'remove_objects', ids: [id] }); selectedIds = []; return; }
     if (tool === 'connector') { selectedIds = selectedIds.includes(id) ? selectedIds : [...selectedIds.slice(-1), id]; if (selectedIds.length === 2) runConversion('connector'); return; }
     selectedIds = event.shiftKey ? (selectedIds.includes(id) ? selectedIds.filter((value) => value !== id) : [...selectedIds, id]) : [id];
@@ -428,12 +436,12 @@
   }
   function resizePointer(event: PointerEvent, id: string) {
     event.stopPropagation();
-    if (pinch || tool !== 'select' || !companionCanEdit()) return;
+    if (pinch || agentMutationActive || tool !== 'select' || !companionCanEdit()) return;
     const here = point(event); selectedIds = [id]; resizingGroupId = id; resizeOrigin = document; resizeMoved = false; drawing = true; start = here;
     try { surface.setPointerCapture(event.pointerId); } catch { /* SVG pointer capture is not supported in every browser. */ }
   }
   function resizeKeyboard(event: KeyboardEvent, id: string) {
-    if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key) || !companionCanEdit()) return;
+    if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key) || agentMutationActive || !companionCanEdit()) return;
     const group = document.objects.find((object) => object.id === id && object.kind === 'group');
     if (group?.kind !== 'group') return;
     event.preventDefault(); event.stopPropagation();
