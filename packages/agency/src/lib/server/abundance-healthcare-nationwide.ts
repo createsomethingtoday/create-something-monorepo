@@ -48,6 +48,7 @@ export async function beginNationwideRun(db: D1Database, input: {
 	if (input.sourceKind === 'weekly_incremental' && !latest) {
 		throw new Error('A weekly incremental requires a successful nationwide base snapshot.');
 	}
+	assertMonthlyReplacementIsCurrent(input.sourceKind, input.sourcePublishedAt, latest);
 	const insert = db.prepare(`
 		INSERT INTO abundance_healthcare_nationwide_runs (
 			id, source_kind, source_file, source_url, source_published_at,
@@ -101,6 +102,10 @@ export async function applyNationwideChunk(db: D1Database, input: {
 			throw new TypeError(`Provider ${provider.npi} is not a primary Family Nurse Practitioner.`);
 		}
 	}
+	const providerNpis = new Set(input.providers.map((provider) => provider.npi));
+	if (input.removeNpis.some((npi) => providerNpis.has(npi))) {
+		throw new TypeError('A nationwide chunk cannot add and remove the same NPI.');
+	}
 	await upsertHealthcareProviders(db, input.providers);
 	const statements = input.providers.map((provider) => db.prepare(`
 		INSERT INTO abundance_healthcare_nationwide_memberships (
@@ -135,9 +140,17 @@ export async function applyNationwideChunk(db: D1Database, input: {
 		provider.endpoint_count,
 		provider.name.toLowerCase()
 	));
-	for (let index = 0; index < input.removeNpis.length; index += 90) {
-		const chunk = [...new Set(input.removeNpis.slice(index, index + 90))];
+	const uniqueRemoveNpis = [...new Set(input.removeNpis)];
+	let removedCount = 0;
+	for (let index = 0; index < uniqueRemoveNpis.length; index += 90) {
+		const chunk = uniqueRemoveNpis.slice(index, index + 90);
 		if (chunk.length > 0) {
+			const existing = await db.prepare(`
+				SELECT count(*) AS count
+				FROM abundance_healthcare_nationwide_memberships
+				WHERE run_id = ? AND provider_npi IN (${chunk.map(() => '?').join(', ')})
+			`).bind(input.runId, ...chunk).first<{ count: number }>();
+			removedCount += existing?.count ?? 0;
 			statements.push(db.prepare(`
 				DELETE FROM abundance_healthcare_nationwide_memberships
 				WHERE run_id = ? AND provider_npi IN (${chunk.map(() => '?').join(', ')})
@@ -154,7 +167,7 @@ export async function applyNationwideChunk(db: D1Database, input: {
 	`).bind(
 		input.processedRowCount,
 		input.providers.length,
-		input.removeNpis.length,
+		removedCount,
 		input.rejectedCount,
 		input.runId
 	));
@@ -170,6 +183,7 @@ export async function finalizeNationwideRun(db: D1Database, input: {
 	expectedProcessedRowCount: number;
 }): Promise<NationwideRun> {
 	const run = await requireRunningRun(db, input.runId);
+	assertMonthlyReplacementIsCurrent(run.source_kind, run.source_published_at, await latestSuccessfulNationwideRun(db));
 	if (!/^[a-f0-9]{64}$/.test(input.sourceSha256)) throw new TypeError('source_sha256 must be a lowercase SHA-256 digest.');
 	if (run.processed_row_count !== input.expectedProcessedRowCount) {
 		throw new Error(`Nationwide run is incomplete: processed ${run.processed_row_count} of ${input.expectedProcessedRowCount} rows.`);
@@ -200,6 +214,19 @@ export async function finalizeNationwideRun(db: D1Database, input: {
 	if (finalized?.status !== 'succeeded') throw new Error(`Nationwide run ${input.runId} did not finalize.`);
 	await pruneNationwideSnapshots(db, 2);
 	return finalized;
+}
+
+function assertMonthlyReplacementIsCurrent(
+	sourceKind: NationwideRunKind,
+	sourcePublishedAt: string | undefined,
+	latest: NationwideRun | null
+): void {
+	if (sourceKind !== 'monthly_full' || !sourcePublishedAt || !latest?.source_published_at) return;
+	const incomingPublishedAt = Date.parse(sourcePublishedAt);
+	const currentPublishedAt = Date.parse(latest.source_published_at);
+	if (Number.isFinite(incomingPublishedAt) && Number.isFinite(currentPublishedAt) && incomingPublishedAt < currentPublishedAt) {
+		throw new Error(`Monthly replacement published at ${sourcePublishedAt} is older than the current nationwide snapshot published at ${latest.source_published_at}.`);
+	}
 }
 
 export async function failNationwideRun(db: D1Database, runId: string, error: string): Promise<void> {

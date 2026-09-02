@@ -105,7 +105,7 @@ test('weekly increments copy the last successful snapshot then add and remove NP
 		});
 		await applyNationwideChunk(fixture.db, {
 			runId: 'abnationalrun_weekly', providers: [provider('1000000002', 'TX', 'Arlington')],
-			removeNpis: ['1000000001'], processedRowCount: 2, rejectedCount: 0
+			removeNpis: ['1000000001', '1999999999'], processedRowCount: 2, rejectedCount: 0
 		});
 		await finalizeNationwideRun(fixture.db, {
 			runId: 'abnationalrun_weekly', finishedAt: '2026-09-08T01:00:00Z', sourceSha256: 'c'.repeat(64), expectedProcessedRowCount: 2
@@ -114,6 +114,8 @@ test('weekly increments copy the last successful snapshot then add and remove NP
 		const arlington = await queryNationwideCoverage(fixture.db, { state: 'TX', city: 'Arlington' });
 		assert.equal(arlington.total, 1);
 		assert.equal(arlington.providers[0].npi, '1000000002');
+		const weeklyRun = fixture.database.prepare("SELECT removed_count FROM abundance_healthcare_nationwide_runs WHERE id = 'abnationalrun_weekly'").get() as { removed_count: number };
+		assert.equal(weeklyRun.removed_count, 1);
 		await beginNationwideRun(fixture.db, {
 			id: 'abnationalrun_weekly2', sourceKind: 'weekly_incremental', sourceFile: 'weekly2.zip',
 			sourceUrl: 'https://download.cms.gov/weekly2.zip', startedAt: '2026-09-15T00:00:00Z'
@@ -132,6 +134,32 @@ test('weekly increments copy the last successful snapshot then add and remove NP
 		const receipts = await listAppliedNationwideSources(fixture.db);
 		assert.deepEqual(receipts.map((receipt) => receipt.source_file).sort(), ['base.zip', 'weekly.zip', 'weekly2.zip']);
 		assert.ok(receipts.every((receipt) => Boolean(receipt.source_published_at)));
+	} finally { fixture.database.close(); }
+});
+
+test('an older monthly archive cannot rewind a newer successful nationwide snapshot', async () => {
+	const fixture = await createDatabase();
+	try {
+		await beginNationwideRun(fixture.db, {
+			id: 'abnationalrun_current', sourceKind: 'monthly_full', sourceFile: 'current.zip',
+			sourceUrl: 'https://download.cms.gov/current.zip', sourcePublishedAt: '2026-08-31T03:06:00Z',
+			startedAt: '2026-09-02T00:00:00Z'
+		});
+		await applyNationwideChunk(fixture.db, {
+			runId: 'abnationalrun_current', providers: [provider('1000000001', 'MO', 'Springfield')],
+			removeNpis: [], processedRowCount: 1, rejectedCount: 0
+		});
+		await finalizeNationwideRun(fixture.db, {
+			runId: 'abnationalrun_current', finishedAt: '2026-09-02T01:00:00Z',
+			sourceSha256: '1'.repeat(64), expectedProcessedRowCount: 1
+		});
+		await assert.rejects(beginNationwideRun(fixture.db, {
+			id: 'abnationalrun_older', sourceKind: 'monthly_full', sourceFile: 'older.zip',
+			sourceUrl: 'https://download.cms.gov/older.zip', sourcePublishedAt: '2026-07-31T03:06:00Z',
+			startedAt: '2026-09-03T00:00:00Z'
+		}), /older than the current nationwide snapshot/i);
+		const result = await queryNationwideCoverage(fixture.db, {});
+		assert.equal(result.run.id, 'abnationalrun_current');
 	} finally { fixture.database.close(); }
 });
 
