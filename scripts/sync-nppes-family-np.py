@@ -21,11 +21,13 @@ from pathlib import Path
 FILES_PAGE = "https://download.cms.gov/nppes/NPI_Files.html"
 FAMILY_NP = "363LF0000X"
 API_PATH = "/api/abundance/healthcare-providers/nationwide"
+REQUEST_USER_AGENT = "CREATE-SOMETHING-NPPES-Sync/1.0"
 
 
 def request_json(url: str, token: str, payload: dict | None = None) -> dict:
     data = None if payload is None else json.dumps(payload, separators=(",", ":")).encode()
     request = urllib.request.Request(url, data=data)
+    request.add_header("User-Agent", REQUEST_USER_AGENT)
     request.add_header("Authorization", f"Bearer {token}")
     if data is not None:
         request.add_header("Content-Type", "application/json")

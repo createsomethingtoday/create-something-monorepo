@@ -52,6 +52,7 @@ cross_year_weeklies = module.sort_weekly_urls([
     "https://download.cms.gov/nppes/NPPES_Data_Dissemination_122126_122726_Weekly_V2.zip",
 ])
 print(json.dumps({
+	"request_user_agent": module.REQUEST_USER_AGENT,
     "provider": provider,
     "removal": removal,
     "redeactivated_status": redeactivated["status"],
@@ -68,6 +69,7 @@ print(json.dumps({
 	});
 	const result = JSON.parse(output);
 
+	assert.equal(result.request_user_agent, 'CREATE-SOMETHING-NPPES-Sync/1.0');
 	assert.equal(result.removal, null);
 	assert.equal(result.provider.enumeration_date, '2010-01-15');
 	assert.equal(result.provider.last_updated_date, '2026-09-02');
