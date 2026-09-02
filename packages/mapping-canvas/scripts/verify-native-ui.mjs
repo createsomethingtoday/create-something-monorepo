@@ -308,12 +308,19 @@ try {
   const submitsAfterConflict = await page.evaluate(() => window.__nativeCalls.filter(({ command }) => command === 'draw_companion_submit').length);
   if (submitsAfterConflict !== submitsBeforeConflict + 1) throw new Error('Rejected replacement did not abort the remaining reset operation batch');
 
+  const replacementsBeforeSuccessfulReset = await page.evaluate(() => window.__nativeCalls.filter(({ command, args }) => command === 'draw_companion_submit' && args?.operation?.type === 'replace_objects').length);
   await page.getByRole('button', { name: 'Reset', exact: true }).click();
   const confirmReset = page.getByRole('button', { name: 'Confirm reset', exact: true });
   if (!await confirmReset.evaluate((button) => button.classList.contains('reset-confirm'))) throw new Error('Companion reset confirmation is not visually distinguished as a risk action');
   await confirmReset.click();
-  await page.getByText(/Clear requested|Synced revision/).waitFor();
+  await page.waitForFunction((before) => window.__nativeCalls.filter(({ command, args }) => command === 'draw_companion_submit' && args?.operation?.type === 'replace_objects').length > before, replacementsBeforeSuccessfulReset);
+  await page.waitForTimeout(100);
   if (await page.locator('[aria-label="Ink stroke"], [aria-label^="Note:"]').count()) throw new Error('Companion reset did not clear the authoritative canvas');
+  await page.waitForTimeout(250);
+  const emptyReplacementsBeforeReset = await page.evaluate(() => window.__nativeCalls.filter(({ command, args }) => command === 'draw_companion_submit' && args?.operation?.type === 'replace_objects').length);
+  await page.getByRole('button', { name: 'Reset', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirm reset', exact: true }).click();
+  await page.waitForFunction((before) => window.__nativeCalls.filter(({ command, args }) => command === 'draw_companion_submit' && args?.operation?.type === 'replace_objects').length > before, emptyReplacementsBeforeReset);
 
   await page.getByRole('button', { name: 'Open device pairing' }).click();
   await page.getByRole('button', { name: 'Forget and re-pair' }).click();

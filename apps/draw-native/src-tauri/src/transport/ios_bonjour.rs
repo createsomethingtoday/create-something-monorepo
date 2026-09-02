@@ -251,8 +251,9 @@ fn txt_properties(record: &[u8]) -> HashMap<String, String> {
 
 pub(super) fn discover(service_type: &str) -> Result<Vec<DiscoveredHost>, String> {
     let mut hosts = Vec::new();
+    let services = browse_services(service_type)?;
     let discovery_deadline = Instant::now() + DISCOVERY_RESOLUTION_TIMEOUT;
-    for service in browse_services(service_type)? {
+    for service in services {
         if hosts.len() >= MAX_VALIDATED_HOSTS || Instant::now() >= discovery_deadline {
             break;
         }
