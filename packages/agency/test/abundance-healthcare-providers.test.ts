@@ -533,6 +533,35 @@ test('canonical taxonomy filtering rejects records without explicit primary mark
 	);
 });
 
+test('taxonomy validation requires the primary taxonomy itself to have a description', async () => {
+	await assert.rejects(
+		fetchNppesProviders(
+			{
+				taxonomy_description: 'Registered Nurse',
+				city: 'Springfield',
+				state: 'MO'
+			},
+			{
+				fetchFn: async () => jsonResponse({
+					results: [{
+						number: '1111111111',
+						taxonomies: [
+							{ desc: 'Registered Nurse', primary: false },
+							{ primary: true }
+						],
+						addresses: [mockLocationAddress()]
+					}]
+				})
+			}
+		),
+		(error: unknown) => {
+			assert.ok(error instanceof NppesProviderFetchError);
+			assert.match(error.message, /malformed taxonomy data/i);
+			return true;
+		}
+	);
+});
+
 test('NPPES fetch validates address shape before geography filtering', async () => {
 	await assert.rejects(
 		fetchNppesProviders(
