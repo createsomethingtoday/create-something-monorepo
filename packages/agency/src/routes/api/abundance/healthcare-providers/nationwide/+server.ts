@@ -6,15 +6,17 @@ import {
 	beginNationwideRun,
 	failNationwideRun,
 	finalizeNationwideRun,
-	listSuccessfulNationwideRuns,
-	queryNationwideCoverage
+	listAppliedNationwideSources,
+	pruneNationwideSnapshots,
+	queryNationwideCoverage,
+	reapStaleNationwideRuns
 } from '$lib/server/abundance-healthcare-nationwide';
 
 export const GET: RequestHandler = async ({ url, platform }) => {
 	if (!platform?.env?.DB) throw error(500, 'Database not available');
 	try {
 		if (url.searchParams.get('runs') === 'true') {
-			return json({ success: true, data: { runs: await listSuccessfulNationwideRuns(platform.env.DB) } });
+			return json({ success: true, data: { runs: await listAppliedNationwideSources(platform.env.DB) } });
 		}
 		const result = await queryNationwideCoverage(platform.env.DB, {
 			state: optional(url.searchParams.get('state')),
@@ -74,7 +76,12 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			await failNationwideRun(platform.env.DB, requiredString(body.run_id, 'run_id'), requiredString(body.error, 'error'));
 			return json({ success: true, data: { failed: true } });
 		}
-		throw new TypeError('action must be begin, chunk, finalize, or fail.');
+		if (action === 'maintenance') {
+			const reaped_run_ids = await reapStaleNationwideRuns(platform.env.DB);
+			const pruned_run_ids = await pruneNationwideSnapshots(platform.env.DB, 2);
+			return json({ success: true, data: { reaped_run_ids, pruned_run_ids } });
+		}
+		throw new TypeError('action must be begin, chunk, finalize, fail, or maintenance.');
 	} catch (cause) {
 		return json({ success: false, error: message(cause) }, { status: cause instanceof TypeError ? 400 : 409 });
 	}

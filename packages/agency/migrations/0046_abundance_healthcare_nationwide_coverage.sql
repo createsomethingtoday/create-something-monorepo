@@ -54,3 +54,20 @@ CREATE INDEX IF NOT EXISTS idx_abundance_healthcare_nationwide_market
 
 CREATE INDEX IF NOT EXISTS idx_abundance_healthcare_nationwide_updated
   ON abundance_healthcare_nationwide_memberships (run_id, last_updated_date DESC);
+
+-- Lightweight permanent ingestion ledger. Materialized snapshots can be pruned
+-- without making an already-applied weekly file appear pending again.
+CREATE TABLE IF NOT EXISTS abundance_healthcare_nationwide_source_receipts (
+  source_file TEXT PRIMARY KEY,
+  source_kind TEXT NOT NULL CHECK (source_kind IN ('monthly_full', 'weekly_incremental')),
+  source_url TEXT NOT NULL,
+  source_sha256 TEXT NOT NULL,
+  run_id TEXT NOT NULL,
+  applied_at TEXT NOT NULL,
+  processed_row_count INTEGER NOT NULL,
+  provider_count INTEGER NOT NULL,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_abundance_healthcare_source_receipts_applied
+  ON abundance_healthcare_nationwide_source_receipts (applied_at DESC);

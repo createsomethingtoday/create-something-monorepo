@@ -206,6 +206,7 @@ def main() -> int:
     if not token:
         raise RuntimeError("AGENCY_INTERNAL_API_KEY is required")
     api_url = args.agency_base_url.rstrip("/") + API_PATH
+    request_json(api_url, token, {"action": "maintenance"})
     applied = {run["source_file"] for run in request_json(api_url + "?runs=true", token)["runs"]}
     urls = [args.source_url] if args.source_url else discover_urls(args.kind)
     pending = [url for url in urls if Path(urllib.parse.urlparse(url).path).name not in applied]

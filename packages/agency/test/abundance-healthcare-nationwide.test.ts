@@ -7,7 +7,9 @@ import type { HealthcareProvider } from '../src/lib/abundance/healthcare-provide
 import {
 	applyNationwideChunk,
 	beginNationwideRun,
+	failNationwideRun,
 	finalizeNationwideRun,
+	listAppliedNationwideSources,
 	queryNationwideCoverage
 } from '../src/lib/server/abundance-healthcare-nationwide.ts';
 
@@ -82,6 +84,29 @@ test('weekly increments copy the last successful snapshot then add and remove NP
 		assert.equal(retained.count, 2);
 		const oldMemberships = fixture.database.prepare("SELECT count(*) AS count FROM abundance_healthcare_nationwide_memberships WHERE run_id = 'abnationalrun_base'").get() as { count: number };
 		assert.equal(oldMemberships.count, 0);
+		const receipts = await listAppliedNationwideSources(fixture.db);
+		assert.deepEqual(receipts.map((receipt) => receipt.source_file).sort(), ['base.zip', 'weekly.zip', 'weekly2.zip']);
+	} finally { fixture.database.close(); }
+});
+
+test('a late fail callback cannot erase a run that already succeeded', async () => {
+	const fixture = await createDatabase();
+	try {
+		await beginNationwideRun(fixture.db, {
+			id: 'abnationalrun_timeout', sourceKind: 'monthly_full', sourceFile: 'timeout.zip',
+			sourceUrl: 'https://download.cms.gov/timeout.zip', startedAt: '2026-09-02T00:00:00Z'
+		});
+		await applyNationwideChunk(fixture.db, {
+			runId: 'abnationalrun_timeout', providers: [provider('1000000099', 'MO', 'Springfield')],
+			removeNpis: [], processedRowCount: 1, rejectedCount: 0
+		});
+		await finalizeNationwideRun(fixture.db, {
+			runId: 'abnationalrun_timeout', finishedAt: '2026-09-02T01:00:00Z', sourceSha256: '9'.repeat(64), expectedProcessedRowCount: 1
+		});
+		await failNationwideRun(fixture.db, 'abnationalrun_timeout', 'client timed out after finalization');
+		const result = await queryNationwideCoverage(fixture.db, { state: 'MO' });
+		assert.equal(result.total, 1);
+		assert.equal(result.run.status, 'succeeded');
 	} finally { fixture.database.close(); }
 });
 

@@ -41,6 +41,7 @@ export async function beginNationwideRun(db: D1Database, input: {
 	sourcePublishedAt?: string;
 	startedAt: string;
 }): Promise<NationwideRun> {
+	await reapStaleNationwideRuns(db);
 	if (!/^abnationalrun_[a-zA-Z0-9_-]+$/.test(input.id)) throw new TypeError('Invalid nationwide run id.');
 	if (!input.sourceFile.trim()) throw new TypeError('source_file is required.');
 	const latest = await latestSuccessfulNationwideRun(db);
@@ -179,24 +180,53 @@ export async function finalizeNationwideRun(db: D1Database, input: {
 		WHERE run_id = ?
 	`).bind(input.runId).first<{ provider_count: number }>();
 	if (!count?.provider_count) throw new Error('Nationwide run cannot succeed with zero Family Nurse Practitioners.');
-	await db.prepare(`
-		UPDATE abundance_healthcare_nationwide_runs
-		SET status = 'succeeded', finished_at = ?, source_sha256 = ?, provider_count = ?
-		WHERE id = ? AND status = 'running'
-	`).bind(input.finishedAt, input.sourceSha256, count.provider_count, input.runId).run();
+	await db.batch([
+		db.prepare(`
+			INSERT INTO abundance_healthcare_nationwide_source_receipts (
+				source_file, source_kind, source_url, source_sha256, run_id,
+				applied_at, processed_row_count, provider_count
+			)
+			SELECT source_file, source_kind, source_url, ?, id, ?, processed_row_count, ?
+			FROM abundance_healthcare_nationwide_runs
+			WHERE id = ? AND status = 'running'
+		`).bind(input.sourceSha256, input.finishedAt, count.provider_count, input.runId),
+		db.prepare(`
+			UPDATE abundance_healthcare_nationwide_runs
+			SET status = 'succeeded', finished_at = ?, source_sha256 = ?, provider_count = ?
+			WHERE id = ? AND status = 'running'
+		`).bind(input.finishedAt, input.sourceSha256, count.provider_count, input.runId)
+	]);
+	const finalized = await readNationwideRun(db, input.runId);
+	if (finalized?.status !== 'succeeded') throw new Error(`Nationwide run ${input.runId} did not finalize.`);
 	await pruneNationwideSnapshots(db, 2);
-	return (await readNationwideRun(db, input.runId))!;
+	return finalized;
 }
 
 export async function failNationwideRun(db: D1Database, runId: string, error: string): Promise<void> {
 	await db.batch([
-		db.prepare('DELETE FROM abundance_healthcare_nationwide_memberships WHERE run_id = ?').bind(runId),
+		db.prepare(`
+			DELETE FROM abundance_healthcare_nationwide_memberships
+			WHERE run_id = ? AND EXISTS (
+				SELECT 1 FROM abundance_healthcare_nationwide_runs
+				WHERE id = ? AND status = 'running'
+			)
+		`).bind(runId, runId),
 		db.prepare(`
 			UPDATE abundance_healthcare_nationwide_runs
 			SET status = 'failed', finished_at = datetime('now'), error = ?
 			WHERE id = ? AND status = 'running'
 		`).bind(error.slice(0, 500), runId)
 	]);
+}
+
+export async function reapStaleNationwideRuns(db: D1Database, olderThanHours = 8): Promise<string[]> {
+	const stale = await db.prepare(`
+		SELECT id FROM abundance_healthcare_nationwide_runs
+		WHERE status = 'running' AND datetime(started_at) < datetime('now', ?)
+	`).bind(`-${Math.max(1, olderThanHours)} hours`).all<{ id: string }>();
+	const ids = (stale.results ?? []).map((row) => row.id);
+	for (const id of ids) await failNationwideRun(db, id, 'Stale running import reaped before the next nationwide sync.');
+	return ids;
 }
 
 export async function pruneNationwideSnapshots(db: D1Database, retain = 2): Promise<string[]> {
@@ -414,6 +444,30 @@ export async function listSuccessfulNationwideRuns(db: D1Database, limit = 24): 
 		ORDER BY finished_at DESC
 		LIMIT ?
 	`).bind(Math.min(Math.max(limit, 1), 60)).all<NationwideRun>();
+	return result.results ?? [];
+}
+
+export async function listAppliedNationwideSources(db: D1Database, limit = 120): Promise<Array<{
+	source_file: string;
+	source_kind: NationwideRunKind;
+	source_url: string;
+	source_sha256: string;
+	run_id: string;
+	applied_at: string;
+	processed_row_count: number;
+	provider_count: number;
+}>> {
+	const result = await db.prepare(`
+		SELECT source_file, source_kind, source_url, source_sha256, run_id,
+			applied_at, processed_row_count, provider_count
+		FROM abundance_healthcare_nationwide_source_receipts
+		ORDER BY applied_at DESC
+		LIMIT ?
+	`).bind(Math.min(Math.max(limit, 1), 500)).all<{
+		source_file: string; source_kind: NationwideRunKind; source_url: string;
+		source_sha256: string; run_id: string; applied_at: string;
+		processed_row_count: number; provider_count: number;
+	}>();
 	return result.results ?? [];
 }
 
