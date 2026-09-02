@@ -1,26 +1,28 @@
 <script lang="ts">
-  import {
-    Button,
-    PerformanceCampaignOpening,
-    PerformanceConversionHandoff,
-    PerformanceNarrativeStage,
-    SEO,
-    type PerformanceNarrativeScene
-  } from '@create-something/canon';
+  import { Button, PerformanceCampaignOpening, SEO } from '@create-something/canon';
+  import { getAnalytics } from '@create-something/canon/analytics';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
   import { playbookHeroMedia } from '$lib/data/playbookHeroMedia';
   import {
-    agentFoundationHandoff,
+    agentFoundationChecks,
+    agentFoundationFit,
     agentFoundationHero,
-    agentFoundationLayers,
-    agentFoundationScenes,
+    agentFoundationRepository,
     agentFoundationStages
   } from '$lib/data/agentFoundation';
+
+  function trackFoundationBooking(location: 'opening' | 'handoff') {
+    getAnalytics()?.conversion('agent_foundation_booking_clicked', {
+      surface: 'agent-foundation',
+      location,
+      destination: agencyCoreMessaging.agentFoundationBookingHref
+    });
+  }
 </script>
 
 <SEO
-  title="Agent Foundation | Build an Agent You Can Keep Building"
-  description="Bring the agent project you started with Codex. CREATE SOMETHING delivers one useful capability, its infrastructure, tests, policy, and client-owned continuation path."
+  title="Agent Foundation | One Useful Job in Your Repository"
+  description="Bring the agent you started with Codex. CREATE SOMETHING gets one useful job working in your repository, then proves your team can continue."
   keywords="agent foundation, Codex agent development, client-owned AI agent, AI agent infrastructure, MCP agent tools, agent handoff, agent production promotion"
   propertyName="agency"
 />
@@ -28,7 +30,7 @@
 <main class="agent-foundation-page property-performance">
   <PerformanceCampaignOpening
     eyebrow="Agent Foundation"
-    propertyRole="One role · one job · one owned repository"
+    propertyRole="One role · one job · your repository"
     expression="editorial"
     title={agentFoundationHero.title}
     lede={agentFoundationHero.lede}
@@ -38,32 +40,65 @@
     density="compact"
   >
     {#snippet actions()}
-      <Button href={agencyCoreMessaging.agentFoundationBookingHref}>
+      <Button
+        href={agencyCoreMessaging.agentFoundationBookingHref}
+        onclick={() => trackFoundationBooking('opening')}
+      >
         {agencyCoreMessaging.bringAgentProjectLabel}
       </Button>
-      <Button href="#foundation-boundary" variant="secondary"
-        >See what the foundation includes</Button
-      >
     {/snippet}
   </PerformanceCampaignOpening>
 
-  <PerformanceNarrativeStage
-    id="agent-foundation-delivery"
-    eyebrow="What ships"
-    title="Bound the job. Build the capability. Exercise the handoff."
-    description="Agent Foundation is a scoped CREATE SOMETHING Build for teams that already have a real agent project. The workflow and infrastructure stay underneath; your team receives a working, inspectable system it can continue with Codex."
-    scenes={agentFoundationScenes}
-    ariaLabel="Agent Foundation delivery sequence"
-    density="compact"
+  <section
+    class="foundation-proof"
+    data-agent-foundation-proof
+    aria-labelledby="foundation-proof-title"
   >
-    {#snippet artifact(scene: PerformanceNarrativeScene)}
-      <aside class="foundation-receipt" aria-label={`${scene.label} delivery receipt`}>
-        <span>{scene.label}</span>
-        <strong>{scene.summary}</strong>
-        <p>{scene.detail}</p>
+    <header class="foundation-proof__heading">
+      <div>
+        <p>The handoff</p>
+        <h2 id="foundation-proof-title">Inside your repository.</h2>
+      </div>
+      <p>
+        We define the job, build it, and prove the handoff. Your team receives the working path and
+        the records needed to understand what the agent can do.
+      </p>
+    </header>
+
+    <div class="foundation-proof__workbench">
+      <article class="repository-record" aria-labelledby="repository-record-title">
+        <header>
+          <div>
+            <span>Example handoff structure</span>
+            <h3 id="repository-record-title">agent-foundation/</h3>
+          </div>
+          <small>Illustrative · not a client result</small>
+        </header>
+        <ul>
+          {#each agentFoundationRepository as entry}
+            <li>
+              <code>{entry.path}</code>
+              <span>{entry.purpose}</span>
+            </li>
+          {/each}
+        </ul>
+      </article>
+
+      <aside class="continuation-record" aria-labelledby="continuation-record-title">
+        <span>Handoff proof</span>
+        <h3 id="continuation-record-title">Your team makes the next change.</h3>
+        <ol>
+          {#each agentFoundationChecks as check, index}
+            <li>
+              <b>{String(index + 1).padStart(2, '0')}</b>
+              <span>{check}</span>
+            </li>
+          {/each}
+        </ol>
+        <p>Foundation proves this continuation path. It does not prove every future change.</p>
       </aside>
-    {/snippet}
-  </PerformanceNarrativeStage>
+    </div>
+  </section>
 
   <section
     id="foundation-boundary"
@@ -72,29 +107,20 @@
   >
     <header class="foundation-boundary__heading">
       <div>
-        <p>Ownership and authority</p>
+        <p>Ownership and production</p>
         <h2 id="foundation-boundary-title">
           The foundation is working. Production is a promotion.
         </h2>
       </div>
       <p>
-        Your team keeps the repository, source, schemas, instructions, policies, tests, runbook,
-        known limits, and project history. No hidden CREATE SOMETHING account or undocumented
-        credential is required for the accepted development path.
+        Your team keeps the repository and everything needed to understand it: source, schemas,
+        instructions, policies, tests, runbook, known limits, and project history. No hidden CREATE
+        SOMETHING account or undocumented credential is required for the agreed development
+        environment.
       </p>
     </header>
 
-    <div class="foundation-layers" aria-label="Agent Foundation system layers">
-      {#each agentFoundationLayers as layer}
-        <article>
-          <span>{layer.label}</span>
-          <h3>{layer.title}</h3>
-          <p>{layer.detail}</p>
-        </article>
-      {/each}
-    </div>
-
-    <div class="foundation-stages" aria-label="Agent Foundation and Production Promotion boundary">
+    <div class="foundation-stages" aria-label="Foundation and Production Promotion boundary">
       {#each agentFoundationStages as stage}
         <article>
           <span>{stage.state}</span>
@@ -109,49 +135,41 @@
     </div>
 
     <p class="foundation-boundary__note">
-      Foundation pricing is quoted after fit. Deployment, hosting, live writes, monitoring, signing,
-      distribution, ongoing managed operation, and real-user acceptance are not implied. If the
-      accepted capability should go live, Production Promotion receives its own owner, authority,
-      rollback plan, and verification scope. Review the <a href="/services">full service path</a> or,
-      if the application already exists and only needs a governed workflow contract, inspect the
-      <a href={agencyCoreMessaging.workflowCompilerIntegrationHref}>Control Compiler Integration</a
-      >.
+      We quote the Foundation after we review the project and agree on the job. Production
+      credentials, deployment, live writes, monitoring, and real-user acceptance require a
+      separately scoped Production Promotion.
     </p>
   </section>
 
-  <PerformanceConversionHandoff
-    expression="editorial"
-    eyebrow="Foundation fit"
-    title="Bring the repository and one job for the agent."
-    description="Share the project or prototype, the role the agent serves, one representative input, an acceptable result, and the intended Codex environment. We will return a fit decision and the proposed Foundation boundary before implementation is quoted."
-    handoff={agentFoundationHandoff}
-    steps={[
-      {
-        label: 'Project',
-        title: 'Show what you started',
-        detail: 'Bring the repository, prototype, or current working artifact.'
-      },
-      {
-        label: 'Job',
-        title: 'Name one useful capability',
-        detail: 'Define the role, representative input, acceptable result, and stop boundary.'
-      },
-      {
-        label: 'Fit',
-        title: 'Choose the smallest responsible path',
-        detail: 'Foundation fit, Map first, Harness or MCP-only, Production scope, or not a fit.'
-      }
-    ]}
-    artifactPlacement="sidecar"
-    density="concise"
-  >
-    {#snippet actions()}
-      <Button href={agencyCoreMessaging.agentFoundationBookingHref}>
-        {agencyCoreMessaging.bringAgentProjectLabel}
-      </Button>
-      <Button href={agencyCoreMessaging.selfMapHref} variant="secondary">Start with Map</Button>
-    {/snippet}
-  </PerformanceConversionHandoff>
+  <section class="foundation-fit" aria-labelledby="foundation-fit-title">
+    <div class="foundation-fit__inner">
+      <div class="foundation-fit__copy">
+        <p>Foundation fit</p>
+        <h2 id="foundation-fit-title">Bring your repository and one job for the agent.</h2>
+        <p>
+          Show us what you started, who the agent serves, one real input, and what a good result
+          looks like. We’ll tell you whether Agent Foundation is the responsible next step and
+          define what it should include.
+        </p>
+        <Button
+          href={agencyCoreMessaging.agentFoundationBookingHref}
+          onclick={() => trackFoundationBooking('handoff')}
+        >
+          {agencyCoreMessaging.bringAgentProjectLabel}
+        </Button>
+        <small>If the role is still unclear, we may recommend mapping the job first.</small>
+      </div>
+
+      <dl class="foundation-fit__brief" aria-label="What to bring to an Agent Foundation fit call">
+        {#each agentFoundationFit as item}
+          <div>
+            <dt>{item.label}</dt>
+            <dd>{item.value}</dd>
+          </div>
+        {/each}
+      </dl>
+    </div>
+  </section>
 </main>
 
 <style>
@@ -160,19 +178,43 @@
     color: var(--color-performance-ink, #090909);
   }
 
-  .foundation-receipt {
-    display: grid;
-    gap: 0.75rem;
-    min-height: 16rem;
-    padding: clamp(1.25rem, 3vw, 2rem);
-    border: 1px solid var(--color-performance-line, #d7d7d2);
-    background: var(--color-performance-panel, #fff);
+  .foundation-proof,
+  .foundation-boundary,
+  .foundation-fit {
+    padding: clamp(4rem, 9vw, 8rem) clamp(1.25rem, 5vw, 6rem);
+    border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
   }
 
-  .foundation-receipt span,
+  .foundation-proof {
+    background: var(--color-performance-paper, #f3f3f0);
+  }
+
+  .foundation-proof__heading,
+  .foundation-proof__workbench,
+  .foundation-boundary__heading,
+  .foundation-stages,
+  .foundation-boundary__note,
+  .foundation-fit__inner {
+    width: min(var(--content-width-performance, 85rem), 100%);
+    margin-inline: auto;
+  }
+
+  .foundation-proof__heading,
+  .foundation-boundary__heading {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(18rem, 0.75fr);
+    gap: clamp(2rem, 7vw, 8rem);
+    align-items: end;
+    margin-bottom: clamp(2.5rem, 6vw, 5rem);
+  }
+
+  .foundation-proof__heading > div > p,
   .foundation-boundary__heading > div > p,
-  .foundation-layers span,
-  .foundation-stages span {
+  .repository-record header span,
+  .continuation-record > span,
+  .foundation-stages > article > span,
+  .foundation-fit__copy > p:first-child,
+  .foundation-fit dt {
     margin: 0;
     color: var(--color-performance-signal, #0f62fe);
     font-family: var(--font-performance-mono);
@@ -182,42 +224,9 @@
     text-transform: uppercase;
   }
 
-  .foundation-receipt strong {
-    max-width: 25ch;
-    font-size: clamp(1.35rem, 3vw, 2.1rem);
-    line-height: 1.05;
-  }
-
-  .foundation-receipt p {
-    max-width: 56ch;
-    margin: auto 0 0;
-    color: var(--color-performance-muted, #5e6268);
-    line-height: 1.6;
-  }
-
-  .foundation-boundary {
-    padding: clamp(4rem, 9vw, 8rem) clamp(1.25rem, 5vw, 6rem);
-    border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
-    background: var(--color-performance-paper, #f3f3f0);
-  }
-
-  .foundation-boundary__heading,
-  .foundation-layers,
-  .foundation-stages,
-  .foundation-boundary__note {
-    width: min(var(--content-width-performance, 85rem), 100%);
-    margin-inline: auto;
-  }
-
-  .foundation-boundary__heading {
-    display: grid;
-    grid-template-columns: minmax(0, 1.25fr) minmax(18rem, 0.75fr);
-    gap: clamp(2rem, 7vw, 8rem);
-    align-items: end;
-    margin-bottom: clamp(2.5rem, 6vw, 5rem);
-  }
-
-  .foundation-boundary__heading h2 {
+  .foundation-proof__heading h2,
+  .foundation-boundary__heading h2,
+  .foundation-fit h2 {
     max-width: 14ch;
     margin: 0.7rem 0 0;
     font-size: clamp(2.6rem, 5.4vw, 5.4rem);
@@ -226,40 +235,155 @@
     line-height: 0.94;
   }
 
+  .foundation-proof__heading > p,
   .foundation-boundary__heading > p,
-  .foundation-boundary__note {
+  .foundation-boundary__note,
+  .foundation-fit__copy > p:nth-of-type(2) {
     margin-block: 0;
     color: var(--color-performance-muted, #5e6268);
     font-size: clamp(1rem, 1.3vw, 1.15rem);
     line-height: 1.6;
   }
 
-  .foundation-layers,
+  .foundation-proof__workbench {
+    display: grid;
+    grid-template-columns: minmax(0, 1.08fr) minmax(20rem, 0.92fr);
+    gap: 1px;
+    overflow: hidden;
+    border: 1px solid var(--color-performance-line-strong, #a7a7a2);
+    background: var(--color-performance-line-strong, #a7a7a2);
+  }
+
+  .repository-record,
+  .continuation-record {
+    min-width: 0;
+    margin: 0;
+    padding: clamp(1.25rem, 3vw, 2rem);
+  }
+
+  .repository-record {
+    background:
+      linear-gradient(90deg, rgba(10, 14, 25, 0.04) 1px, transparent 1px) 0 0 / 3rem 3rem,
+      var(--color-performance-panel, #fff);
+  }
+
+  .repository-record header {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: start;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
+  }
+
+  .repository-record h3,
+  .continuation-record h3 {
+    margin: 0.65rem 0 0;
+    font-size: clamp(1.5rem, 3vw, 2.5rem);
+    font-weight: var(--font-performance-medium, 500);
+    letter-spacing: -0.035em;
+    line-height: 1;
+  }
+
+  .repository-record small {
+    max-width: 16ch;
+    color: var(--color-performance-muted, #5e6268);
+    font-family: var(--font-performance-mono);
+    font-size: 0.68rem;
+    line-height: 1.4;
+    text-align: right;
+    text-transform: uppercase;
+  }
+
+  .repository-record ul,
+  .continuation-record ol,
+  .foundation-stages ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .repository-record li {
+    display: grid;
+    grid-template-columns: minmax(8rem, 0.34fr) minmax(0, 0.66fr);
+    gap: 1rem;
+    padding: 0.9rem 0;
+    border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
+  }
+
+  .repository-record code {
+    color: var(--color-performance-ink, #090909);
+    font-family: var(--font-performance-mono);
+    font-size: 0.82rem;
+    font-weight: var(--font-performance-semibold, 650);
+  }
+
+  .repository-record li > span {
+    color: var(--color-performance-muted, #5e6268);
+    font-size: 0.9rem;
+    line-height: 1.45;
+  }
+
+  .continuation-record {
+    display: grid;
+    align-content: start;
+    background: var(--color-performance-ink, #090909);
+    color: var(--color-performance-panel, #fff);
+  }
+
+  .continuation-record > span {
+    color: var(--color-performance-growth, #23a779);
+  }
+
+  .continuation-record ol {
+    margin-top: clamp(2rem, 5vw, 4rem);
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .continuation-record li {
+    display: grid;
+    grid-template-columns: 2.5rem minmax(0, 1fr);
+    gap: 1rem;
+    padding: 0.9rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .continuation-record li b {
+    color: var(--color-performance-growth, #23a779);
+    font-family: var(--font-performance-mono);
+    font-size: 0.72rem;
+  }
+
+  .continuation-record li span,
+  .continuation-record > p {
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 0.9rem;
+    line-height: 1.45;
+  }
+
+  .continuation-record > p {
+    margin: 1.5rem 0 0;
+  }
+
+  .foundation-boundary {
+    background: var(--color-performance-panel, #fff);
+  }
+
   .foundation-stages {
     display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1px;
     overflow: hidden;
     border: 1px solid var(--color-performance-line, #d7d7d2);
     background: var(--color-performance-line, #d7d7d2);
   }
 
-  .foundation-layers {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .foundation-stages {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    margin-top: clamp(1.5rem, 3vw, 2.5rem);
-  }
-
-  .foundation-layers article,
   .foundation-stages article {
     min-width: 0;
     padding: clamp(1.25rem, 3vw, 2rem);
-    background: var(--color-performance-panel, #fff);
+    background: var(--color-performance-paper, #f3f3f0);
   }
 
-  .foundation-layers h3,
   .foundation-stages h3 {
     max-width: 24ch;
     margin: 0.85rem 0 1rem;
@@ -269,28 +393,16 @@
     line-height: 1.08;
   }
 
-  .foundation-layers p,
   .foundation-stages li {
+    position: relative;
+    padding-left: 1rem;
     color: var(--color-performance-muted, #5e6268);
     font-size: 0.92rem;
     line-height: 1.5;
   }
 
-  .foundation-layers p {
-    margin: 0;
-  }
-
-  .foundation-stages ul {
-    display: grid;
-    gap: 0.65rem;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  .foundation-stages li {
-    position: relative;
-    padding-left: 1rem;
+  .foundation-stages li + li {
+    margin-top: 0.65rem;
   }
 
   .foundation-stages li::before {
@@ -310,24 +422,105 @@
     border-left: 3px solid var(--color-performance-gold, #b7791f);
   }
 
+  .foundation-fit__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(22rem, 0.8fr);
+    gap: clamp(3rem, 8vw, 8rem);
+    align-items: end;
+  }
+
+  .foundation-fit {
+    background: var(--color-performance-ink, #090909);
+    color: var(--color-performance-panel, #fff);
+  }
+
+  .foundation-fit__copy {
+    display: grid;
+    justify-items: start;
+    gap: 1.25rem;
+  }
+
+  .foundation-fit h2 {
+    margin-top: 0;
+  }
+
+  .foundation-fit__copy > p:first-child {
+    color: var(--color-performance-growth, #23a779);
+  }
+
+  .foundation-fit__copy > p:nth-of-type(2),
+  .foundation-fit__copy small {
+    color: rgba(255, 255, 255, 0.72);
+  }
+
+  .foundation-fit__copy small {
+    max-width: 42ch;
+    font-size: 0.8rem;
+    line-height: 1.45;
+  }
+
+  .foundation-fit__brief {
+    margin: 0;
+    border-top: 2px solid var(--color-performance-growth, #23a779);
+  }
+
+  .foundation-fit__brief div {
+    display: grid;
+    grid-template-columns: 5rem minmax(0, 1fr);
+    gap: 1rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .foundation-fit dt {
+    color: var(--color-performance-growth, #23a779);
+  }
+
+  .foundation-fit dd {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 0.9rem;
+    line-height: 1.45;
+  }
+
   @media (max-width: 48rem) {
-    .foundation-boundary {
+    .foundation-proof,
+    .foundation-boundary,
+    .foundation-fit {
       padding-block: 3.5rem;
     }
 
+    .foundation-proof__heading,
     .foundation-boundary__heading,
-    .foundation-layers,
-    .foundation-stages {
+    .foundation-proof__workbench,
+    .foundation-stages,
+    .foundation-fit__inner {
       grid-template-columns: 1fr;
     }
 
+    .foundation-proof__heading,
     .foundation-boundary__heading {
       gap: 1.5rem;
       margin-bottom: 2.5rem;
     }
 
-    .foundation-boundary__heading h2 {
+    .foundation-proof__heading h2,
+    .foundation-boundary__heading h2,
+    .foundation-fit h2 {
       font-size: clamp(2.55rem, 13vw, 4.2rem);
+    }
+
+    .repository-record header {
+      align-items: end;
+    }
+
+    .repository-record li {
+      grid-template-columns: 1fr;
+      gap: 0.35rem;
+    }
+
+    .foundation-fit__inner {
+      gap: 3rem;
     }
   }
 </style>

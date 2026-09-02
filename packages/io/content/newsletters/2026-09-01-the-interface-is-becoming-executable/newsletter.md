@@ -8,6 +8,9 @@ status: "production-scheduled"
 linear_issue: "CRE-1898"
 hero: "/images/newsletters/the-interface-is-becoming-executable/hero.png"
 audience: "one double-opt-in subscriber plus one named operator-approved legacy subscriber"
+web_status: "published"
+web_publish_at: "2026-09-02T09:00:00-05:00"
+public_end_before: "## Email edition"
 ---
 
 # The interface is becoming executable

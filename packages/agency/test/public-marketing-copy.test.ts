@@ -208,7 +208,7 @@ test('the homepage leads with an Agent Foundation message before its provider st
     home.indexOf('</aside>', home.indexOf('<aside class="ownership-callout">'))
   );
 
-  assert.match(home, /title="Agent Foundations \| CREATE SOMETHING \.agency"/);
+  assert.match(home, /title="Agent Foundation \| CREATE SOMETHING \.agency"/);
   assert.match(opening, /eyebrow="CREATE SOMETHING \.agency"/);
   assert.match(opening, /propertyRole="Client-owned agent engineering"/);
   assert.match(opening, /expression="editorial"/);
