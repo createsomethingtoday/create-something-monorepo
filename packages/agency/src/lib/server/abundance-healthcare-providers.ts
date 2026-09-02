@@ -257,7 +257,7 @@ export async function readHealthcareRecruitingEvidence(
 					source_payload_hash,
 					ROW_NUMBER() OVER (
 						PARTITION BY provider_npi, evidence_kind
-						ORDER BY verified_at DESC, created_at DESC, id DESC
+						ORDER BY unixepoch(verified_at) DESC, created_at DESC, id DESC
 					) AS evidence_rank
 				FROM abundance_healthcare_provider_recruiting_evidence
 				WHERE provider_npi IN (${chunk.map(() => '?').join(', ')})

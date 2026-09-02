@@ -26,6 +26,12 @@ CREATE TABLE IF NOT EXISTS abundance_healthcare_provider_recruiting_evidence (
   reference_id TEXT,
   source_payload_hash TEXT,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CHECK (
+    (evidence_kind IN ('license_or_privilege', 'discipline') AND source_system = 'missouri_board_or_nursys')
+    OR (evidence_kind = 'exclusion' AND source_system = 'oig_leie')
+    OR (evidence_kind = 'practice_or_employment' AND source_system IN ('cms_doctors_and_clinicians', 'npg_first_party'))
+    OR (evidence_kind IN ('contact_route', 'outreach_authority', 'recruiter_approval') AND source_system = 'npg_first_party')
+  ),
   FOREIGN KEY (provider_npi) REFERENCES abundance_healthcare_providers(npi)
 );
 

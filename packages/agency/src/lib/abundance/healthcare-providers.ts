@@ -470,7 +470,12 @@ export function buildHealthcareRecruitingEvidenceUpsert(
 		throw new Error('Recruiting evidence requires a 10-digit NPI.');
 	}
 	if (!evidence.id.trim()) throw new Error('Recruiting evidence requires an id.');
-	if (!Number.isFinite(Date.parse(evidence.verified_at)) || !Number.isFinite(Date.parse(evidence.valid_through))) {
+	if (!ALLOWED_RECRUITING_EVIDENCE_SOURCES[evidence.kind]?.includes(evidence.source_system)) {
+		throw new Error(`Recruiting evidence source ${evidence.source_system} is not allowed for ${evidence.kind}.`);
+	}
+	const verifiedAt = new Date(evidence.verified_at);
+	const validThrough = new Date(evidence.valid_through);
+	if (!Number.isFinite(verifiedAt.getTime()) || !Number.isFinite(validThrough.getTime())) {
 		throw new Error('Recruiting evidence requires valid verification dates.');
 	}
 	return {
@@ -491,8 +496,8 @@ export function buildHealthcareRecruitingEvidenceUpsert(
 			evidence.kind,
 			evidence.source_system,
 			evidence.outcome,
-			evidence.verified_at,
-			evidence.valid_through,
+			verifiedAt.toISOString(),
+			validThrough.toISOString(),
 			evidence.reference_id ?? null,
 			evidence.source_payload_hash ?? null
 		]

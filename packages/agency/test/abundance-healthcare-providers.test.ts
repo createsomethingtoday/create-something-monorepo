@@ -543,6 +543,7 @@ test('recruiting evidence reads stay below the D1 bind ceiling', async () => {
 	assert.equal(bindSizes.length, 14);
 	assert.equal(Math.max(...bindSizes), 90);
 	assert.equal(queries.every((sql) => /row_number\(\).*partition by provider_npi, evidence_kind/is.test(sql)), true);
+	assert.equal(queries.every((sql) => /ORDER BY unixepoch\(verified_at\) DESC/i.test(sql)), true);
 	assert.equal(queries.every((sql) => /WHERE evidence_rank = 1/i.test(sql)), true);
 });
 
@@ -1218,6 +1219,25 @@ test('recruiting evidence receipts execute against the additive migration', asyn
 	} finally {
 		database.close();
 	}
+});
+
+test('recruiting evidence writes enforce source ownership and canonical UTC timestamps', () => {
+	const [licenseEvidence] = completeRecruitingEvidence('1000000088');
+	assert.throws(
+		() => buildHealthcareRecruitingEvidenceUpsert({
+			...licenseEvidence,
+			source_system: 'npg_first_party'
+		}),
+		/source.*not allowed.*license_or_privilege/i
+	);
+
+	const statement = buildHealthcareRecruitingEvidenceUpsert({
+		...licenseEvidence,
+		verified_at: '2026-09-01T01:00:00+01:00',
+		valid_through: '2026-10-01T01:00:00+01:00'
+	});
+	assert.equal(statement.args[5], '2026-09-01T00:00:00.000Z');
+	assert.equal(statement.args[6], '2026-10-01T00:00:00.000Z');
 });
 
 test('standalone NPG report reconciles canonical-filter exclusions', async () => {
