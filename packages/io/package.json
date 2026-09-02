@@ -34,6 +34,7 @@
 		"test:footer-handoff": "vitest run test/footer-handoff.test.ts",
 		"test:legacy-paper-redirects": "vitest run test/legacy-paper-redirects.test.ts",
 		"test:newsletter-confirmation": "node --import tsx --test test/newsletter-confirmation-request.test.ts test/newsletter-lifecycle.test.ts",
+		"test:newsletter-archive": "vitest run test/newsletter-archive.test.ts",
 		"test:search": "vitest run src/routes/sitemap.xml/sitemap.test.ts",
 		"check": "pnpm --filter @create-something/spritz package && pnpm --filter @create-something/canon package && pnpm check:content && pnpm test:newsletter-confirmation && pnpm test:search && pnpm test:footer-handoff && pnpm test:legacy-paper-redirects && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings --watch",
