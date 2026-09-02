@@ -1,5 +1,78 @@
 export type HealthcareProviderStatus = 'active' | 'deactivated' | 'unknown';
 export type HealthcareCoverageStatus = 'ready' | 'degraded' | 'blocked';
+export type HealthcareRecruitingStage = 'coverage_candidate' | 'recruiter_ready';
+export type HealthcareRecruitingEvidenceKind =
+	| 'license_or_privilege'
+	| 'discipline'
+	| 'exclusion'
+	| 'practice_or_employment'
+	| 'contact_route'
+	| 'outreach_authority'
+	| 'recruiter_approval';
+export type HealthcareRecruitingEvidenceSource =
+	| 'missouri_board_or_nursys'
+	| 'cms_doctors_and_clinicians'
+	| 'oig_leie'
+	| 'npg_first_party';
+
+export interface HealthcareRecruitingEvidence {
+	id: string;
+	npi: string;
+	kind: HealthcareRecruitingEvidenceKind;
+	source_system: HealthcareRecruitingEvidenceSource;
+	outcome: 'passed' | 'failed';
+	verified_at: string;
+	valid_through: string;
+	reference_id?: string;
+	source_payload_hash?: string;
+}
+
+export interface HealthcareRecruitingReadiness {
+	npi: string;
+	stage: HealthcareRecruitingStage;
+	evaluated_at: string;
+	gates: Array<{
+		kind: HealthcareRecruitingEvidenceKind;
+		status: 'passed' | 'failed' | 'expired' | 'not_yet_valid' | 'missing';
+		source_system?: HealthcareRecruitingEvidenceSource;
+		verified_at?: string;
+		valid_through?: string;
+	}>;
+	blocking_reasons: string[];
+}
+
+export const REQUIRED_RECRUITING_EVIDENCE_KINDS: HealthcareRecruitingEvidenceKind[] = [
+	'license_or_privilege',
+	'discipline',
+	'exclusion',
+	'practice_or_employment',
+	'contact_route',
+	'outreach_authority',
+	'recruiter_approval'
+];
+
+const RECRUITING_EVIDENCE_LABELS: Record<HealthcareRecruitingEvidenceKind, string> = {
+	license_or_privilege: 'license or practice privilege',
+	discipline: 'discipline check',
+	exclusion: 'federal exclusion check',
+	practice_or_employment: 'practice or employment corroboration',
+	contact_route: 'validated recruiting contact route',
+	outreach_authority: 'outreach authority or consent',
+	recruiter_approval: 'recruiter approval'
+};
+
+const ALLOWED_RECRUITING_EVIDENCE_SOURCES: Record<
+	HealthcareRecruitingEvidenceKind,
+	HealthcareRecruitingEvidenceSource[]
+> = {
+	license_or_privilege: ['missouri_board_or_nursys'],
+	discipline: ['missouri_board_or_nursys'],
+	exclusion: ['oig_leie'],
+	practice_or_employment: ['cms_doctors_and_clinicians', 'npg_first_party'],
+	contact_route: ['npg_first_party'],
+	outreach_authority: ['npg_first_party'],
+	recruiter_approval: ['npg_first_party']
+};
 
 export interface HealthcareProvider {
 	id: string;
@@ -48,8 +121,13 @@ export interface HealthcareProviderCoverageReport {
 	evaluated_at: string;
 	market_coverage_status: HealthcareCoverageStatus;
 	market_coverage_reasons: string[];
-	direct_outreach_status: 'blocked';
+	direct_outreach_status: 'ready' | 'blocked';
 	direct_outreach_reasons: string[];
+	recruiting_pipeline: {
+		coverage_candidate_count: number;
+		recruiter_ready_count: number;
+		required_evidence_kinds: HealthcareRecruitingEvidenceKind[];
+	};
 	provider_count: number;
 	active_count: number;
 	deactivated_count: number;
@@ -84,6 +162,51 @@ export interface SqlStatement {
 }
 
 type NppesRecord = Record<string, unknown>;
+
+export function assessHealthcareRecruitingReadiness(
+	npi: string,
+	evidence: HealthcareRecruitingEvidence[],
+	options: { evaluatedAt?: string } = {}
+): HealthcareRecruitingReadiness {
+	const evaluatedAt = options.evaluatedAt ?? new Date().toISOString();
+	const evaluatedAtMs = Date.parse(evaluatedAt);
+	if (!/^\d{10}$/.test(npi)) throw new Error('Recruiting readiness requires a 10-digit NPI.');
+	if (!Number.isFinite(evaluatedAtMs)) throw new Error('Recruiting readiness requires a valid evaluation time.');
+
+	const gates = REQUIRED_RECRUITING_EVIDENCE_KINDS.map((kind) => {
+		const matching = evidence
+			.filter((item) => item.npi === npi && item.kind === kind &&
+				ALLOWED_RECRUITING_EVIDENCE_SOURCES[kind].includes(item.source_system))
+			.sort((left, right) => Date.parse(right.verified_at) - Date.parse(left.verified_at));
+		const item = matching[0];
+		if (!item) return { kind, status: 'missing' as const };
+		const verifiedAtMs = Date.parse(item.verified_at);
+		const validThroughMs = Date.parse(item.valid_through);
+		const details = {
+			kind,
+			source_system: item.source_system,
+			verified_at: item.verified_at,
+			valid_through: item.valid_through
+		};
+		if (!Number.isFinite(verifiedAtMs) || !Number.isFinite(validThroughMs) || validThroughMs < evaluatedAtMs) {
+			return { ...details, status: 'expired' as const };
+		}
+		if (verifiedAtMs > evaluatedAtMs) return { ...details, status: 'not_yet_valid' as const };
+		if (item.outcome !== 'passed') return { ...details, status: 'failed' as const };
+		return { ...details, status: 'passed' as const };
+	});
+	const blockingReasons = gates
+		.filter((gate) => gate.status !== 'passed')
+		.map((gate) => `${RECRUITING_EVIDENCE_LABELS[gate.kind]} is ${gate.status.replaceAll('_', ' ')}.`);
+
+	return {
+		npi,
+		stage: blockingReasons.length === 0 ? 'recruiter_ready' : 'coverage_candidate',
+		evaluated_at: evaluatedAt,
+		gates,
+		blocking_reasons: blockingReasons
+	};
+}
 
 export async function normalizeNppesProvider(
 	record: NppesRecord,
@@ -160,6 +283,7 @@ export function assessHealthcareProviderCoverage(
 			normalized_count?: number;
 			rejected_count?: number;
 		};
+		recruiting_evidence?: HealthcareRecruitingEvidence[];
 	}
 ): HealthcareProviderCoverageReport {
 	const evaluatedAt = options.evaluatedAt ?? new Date().toISOString();
@@ -257,17 +381,33 @@ export function assessHealthcareProviderCoverage(
 	if (reasons.length === 0) {
 		reasons.push('The source snapshot is current and the cohort has sufficient taxonomy and location coverage for market analysis.');
 	}
+	const readiness = providers.map((provider) => assessHealthcareRecruitingReadiness(
+		provider.npi,
+		options.recruiting_evidence ?? [],
+		{ evaluatedAt }
+	));
+	const recruiterReadyCount = readiness.filter((item) => item.stage === 'recruiter_ready').length;
+	const coverageCandidateCount = providers.length - recruiterReadyCount;
+	const directOutreachStatus = providers.length > 0 && coverageCandidateCount === 0 ? 'ready' : 'blocked';
+	const directOutreachReasons = directOutreachStatus === 'ready'
+		? ['Every provider in this cohort has current evidence for every recruiting promotion gate.']
+		: [
+			'NPPES does not provide recruiting consent, personal contact details, or current employment availability.',
+			'One or more providers remain coverage candidates because current recruiting evidence is incomplete.'
+		];
 
 	return {
 		persona: options.persona,
 		evaluated_at: evaluatedAt,
 		market_coverage_status: marketCoverageStatus,
 		market_coverage_reasons: reasons,
-		direct_outreach_status: 'blocked',
-		direct_outreach_reasons: [
-			'NPPES does not provide recruiting consent, personal contact details, or current employment availability.',
-			'A recruiter must validate the person, role fit, contact route, and outreach authority before promotion.'
-		],
+		direct_outreach_status: directOutreachStatus,
+		direct_outreach_reasons: directOutreachReasons,
+		recruiting_pipeline: {
+			coverage_candidate_count: coverageCandidateCount,
+			recruiter_ready_count: recruiterReadyCount,
+			required_evidence_kinds: [...REQUIRED_RECRUITING_EVIDENCE_KINDS]
+		},
 		provider_count: providers.length,
 		active_count: activeCount,
 		deactivated_count: deactivatedCount,
@@ -321,6 +461,42 @@ export function filterHealthcareProvidersForPersona(
 
 export function buildHealthcareProviderUpsert(provider: HealthcareProvider): SqlStatement {
 	return buildHealthcareProviderBulkUpsert([provider]);
+}
+
+export function buildHealthcareRecruitingEvidenceUpsert(
+	evidence: HealthcareRecruitingEvidence
+): SqlStatement {
+	if (!/^\d{10}$/.test(evidence.npi)) {
+		throw new Error('Recruiting evidence requires a 10-digit NPI.');
+	}
+	if (!evidence.id.trim()) throw new Error('Recruiting evidence requires an id.');
+	if (!Number.isFinite(Date.parse(evidence.verified_at)) || !Number.isFinite(Date.parse(evidence.valid_through))) {
+		throw new Error('Recruiting evidence requires valid verification dates.');
+	}
+	return {
+		sql: `
+			INSERT INTO abundance_healthcare_provider_recruiting_evidence (
+				id, provider_npi, evidence_kind, source_system, outcome,
+				verified_at, valid_through, reference_id, source_payload_hash
+			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+			ON CONFLICT(provider_npi, evidence_kind, source_system, verified_at) DO UPDATE SET
+				outcome = excluded.outcome,
+				valid_through = excluded.valid_through,
+				reference_id = excluded.reference_id,
+				source_payload_hash = excluded.source_payload_hash
+		`.trim(),
+		args: [
+			evidence.id,
+			evidence.npi,
+			evidence.kind,
+			evidence.source_system,
+			evidence.outcome,
+			evidence.verified_at,
+			evidence.valid_through,
+			evidence.reference_id ?? null,
+			evidence.source_payload_hash ?? null
+		]
+	};
 }
 
 export function buildHealthcareProviderBulkUpsert(providers: HealthcareProvider[]): SqlStatement {

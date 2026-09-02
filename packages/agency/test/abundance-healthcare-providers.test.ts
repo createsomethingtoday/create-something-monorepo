@@ -5,10 +5,13 @@ import { DatabaseSync, type SQLInputValue } from 'node:sqlite';
 
 import {
 	assessHealthcareProviderCoverage,
+	assessHealthcareRecruitingReadiness,
+	buildHealthcareRecruitingEvidenceUpsert,
 	buildHealthcareProviderBulkUpsert,
 	buildHealthcareProviderUpsert,
 	filterHealthcareProvidersForPersona,
-	normalizeNppesProvider
+	normalizeNppesProvider,
+	type HealthcareRecruitingEvidence
 } from '../src/lib/abundance/healthcare-providers.ts';
 import {
 	buildNppesProviderUrl,
@@ -16,12 +19,51 @@ import {
 	fetchNppesProviders,
 	NppesProviderFetchError,
 	readHealthcareProviderCoverage,
+	readHealthcareRecruitingEvidence,
 	upsertHealthcareProviders
 } from '../src/lib/server/abundance-healthcare-providers.ts';
 import { NPG_NURSING_PERSONA_COVERAGE } from '../src/lib/abundance/npg-healthcare-personas.ts';
 import { POST as refreshHealthcareProviderCoverage } from '../src/routes/api/abundance/healthcare-providers/+server.ts';
 
 const fetchedAt = '2026-09-01T18:00:00.000Z';
+
+test('NPPES discovery remains a coverage candidate without recruiting evidence', () => {
+	const readiness = assessHealthcareRecruitingReadiness('1528597564', [], {
+		evaluatedAt: '2026-09-01T20:00:00.000Z'
+	});
+
+	assert.equal(readiness.stage, 'coverage_candidate');
+	assert.equal(readiness.gates.every((gate) => gate.status === 'missing'), true);
+	assert.match(readiness.blocking_reasons.join(' '), /license or practice privilege/i);
+	assert.match(readiness.blocking_reasons.join(' '), /outreach authority/i);
+});
+
+test('current evidence from the owning sources promotes a provider to recruiter ready', () => {
+	const readiness = assessHealthcareRecruitingReadiness(
+		'1528597564',
+		completeRecruitingEvidence('1528597564'),
+		{ evaluatedAt: '2026-09-01T20:00:00.000Z' }
+	);
+
+	assert.equal(readiness.stage, 'recruiter_ready');
+	assert.equal(readiness.blocking_reasons.length, 0);
+	assert.equal(readiness.gates.every((gate) => gate.status === 'passed'), true);
+});
+
+test('stale or failed verification evidence cannot promote a provider', () => {
+	const staleEvidence = completeRecruitingEvidence('1528597564');
+	staleEvidence.find((item) => item.kind === 'license_or_privilege')!.valid_through =
+		'2026-08-31T23:59:59.000Z';
+	staleEvidence.find((item) => item.kind === 'exclusion')!.outcome = 'failed';
+
+	const readiness = assessHealthcareRecruitingReadiness('1528597564', staleEvidence, {
+		evaluatedAt: '2026-09-01T20:00:00.000Z'
+	});
+
+	assert.equal(readiness.stage, 'coverage_candidate');
+	assert.equal(readiness.gates.find((gate) => gate.kind === 'license_or_privilege')?.status, 'expired');
+	assert.equal(readiness.gates.find((gate) => gate.kind === 'exclusion')?.status, 'failed');
+});
 
 test('NPPES records normalize into a provider-independent healthcare coverage shape', async () => {
 	const provider = await normalizeNppesProvider(
@@ -140,6 +182,35 @@ test('coverage health separates fresh market evidence from outreach eligibility'
 	assert.equal(report.completeness.primary_taxonomy_count, 3);
 	assert.ok(report.limitations.some((limitation) => /does not verify current licensure/i.test(limitation)));
 	assert.ok(report.limitations.some((limitation) => /does not provide recruiting consent/i.test(limitation)));
+});
+
+test('coverage reports expose candidate and recruiter-ready counts separately', async () => {
+	const providers = await Promise.all([
+		fixtureProvider({ npi: '1000000001', lastUpdated: '2026-08-20' }),
+		fixtureProvider({ npi: '1000000002', lastUpdated: '2026-08-20' })
+	]);
+	const report = assessHealthcareProviderCoverage(providers, {
+		evaluatedAt: '2026-09-01T20:00:00.000Z',
+		persona: NPG_NURSING_PERSONA_COVERAGE[0],
+		source: { latest_fetched_at: fetchedAt },
+		recruiting_evidence: completeRecruitingEvidence('1000000001')
+	});
+
+	assert.deepEqual(report.recruiting_pipeline, {
+		coverage_candidate_count: 1,
+		recruiter_ready_count: 1,
+		required_evidence_kinds: [
+			'license_or_privilege',
+			'discipline',
+			'exclusion',
+			'practice_or_employment',
+			'contact_route',
+			'outreach_authority',
+			'recruiter_approval'
+		]
+	});
+	assert.equal(report.direct_outreach_status, 'blocked');
+	assert.match(report.direct_outreach_reasons.join(' '), /one or more providers remain coverage candidates/i);
 });
 
 test('coverage health is degraded when the source result cap is reached', async () => {
@@ -399,6 +470,33 @@ test('stored coverage reads immutable run snapshots instead of mutable provider 
 	assert.equal(result.providers[0].last_updated_date, '2024-08-20');
 });
 
+test('stored coverage promotes only providers with persisted current evidence', async () => {
+	const provider = await fixtureProvider({ npi: '1000000042', lastUpdated: '2026-08-20' });
+	const evidence = completeRecruitingEvidence(provider.npi);
+	const db = {
+		prepare(sql: string) {
+			return {
+				bind() {
+					if (sql.includes('FROM abundance_healthcare_provider_ingestion_runs')) {
+						return { async first() { return { id: 'current_run', fetched_at: fetchedAt, coverage_limit_reached: 0 }; } };
+					}
+					if (sql.includes('FROM abundance_healthcare_provider_ingestion_memberships')) {
+						return { async all() { return { results: [{ provider_snapshot_json: JSON.stringify(provider) }] }; } };
+					}
+					return { async all() { return { results: evidence.map(toEvidenceRow) }; } };
+				}
+			};
+		}
+	} as unknown as D1Database;
+
+	const result = await readHealthcareProviderCoverage(db, NPG_NURSING_PERSONA_COVERAGE[0], {
+		evaluatedAt: '2026-09-01T20:00:00.000Z'
+	});
+	assert.equal(result.report.recruiting_pipeline.recruiter_ready_count, 1);
+	assert.equal(result.report.recruiting_pipeline.coverage_candidate_count, 0);
+	assert.equal(result.report.direct_outreach_status, 'ready');
+});
+
 test('stored coverage reads require exact nullable geography', async () => {
 	let runQuery: { sql: string; args: unknown[] } | undefined;
 	const db = {
@@ -422,6 +520,26 @@ test('stored coverage reads require exact nullable geography', async () => {
 		null,
 		null
 	]);
+});
+
+test('recruiting evidence reads stay below the D1 bind ceiling', async () => {
+	const bindSizes: number[] = [];
+	const db = {
+		prepare() {
+			return {
+				bind(...args: unknown[]) {
+					bindSizes.push(args.length);
+					return { async all() { return { results: [] }; } };
+				}
+			};
+		}
+	} as unknown as D1Database;
+	const npis = Array.from({ length: 1200 }, (_, index) => String(1_000_000_000 + index));
+
+	await readHealthcareRecruitingEvidence(db, npis);
+
+	assert.equal(bindSizes.length, 14);
+	assert.equal(Math.max(...bindSizes), 90);
 });
 
 test('NPPES query builder requires a nursing taxonomy and geography', () => {
@@ -1000,6 +1118,56 @@ test('healthcare provider migration preserves provenance and ingestion evidence'
 	assert.doesNotMatch(migration, /social_security|date_of_birth|personal_email/i);
 });
 
+test('recruiting evidence migration stores verification facts without contact details', async () => {
+	const migration = await readFile(
+		new URL('../migrations/0045_abundance_healthcare_recruiting_evidence.sql', import.meta.url),
+		'utf8'
+	);
+
+	assert.match(migration, /CREATE TABLE IF NOT EXISTS abundance_healthcare_provider_recruiting_evidence/);
+	assert.match(migration, /provider_npi TEXT NOT NULL/);
+	assert.match(migration, /evidence_kind TEXT NOT NULL/);
+	assert.match(migration, /source_system TEXT NOT NULL/);
+	assert.match(migration, /outcome TEXT NOT NULL/);
+	assert.match(migration, /verified_at TEXT NOT NULL/);
+	assert.match(migration, /valid_through TEXT NOT NULL/);
+	assert.doesNotMatch(migration, /email|telephone|phone|contact_value|address/i);
+});
+
+test('recruiting evidence receipts execute against the additive migration', async () => {
+	const provider = await fixtureProvider({ npi: '1000000088', lastUpdated: '2026-08-20' });
+	const [evidence] = completeRecruitingEvidence(provider.npi);
+	const baseMigration = await readFile(
+		new URL('../migrations/0044_abundance_healthcare_provider_coverage.sql', import.meta.url),
+		'utf8'
+	);
+	const evidenceMigration = await readFile(
+		new URL('../migrations/0045_abundance_healthcare_recruiting_evidence.sql', import.meta.url),
+		'utf8'
+	);
+	const database = new DatabaseSync(':memory:');
+	try {
+		database.exec('PRAGMA foreign_keys = ON;');
+		database.exec(baseMigration);
+		database.exec(evidenceMigration);
+		const providerUpsert = buildHealthcareProviderUpsert(provider);
+		database.prepare(providerUpsert.sql).run(...providerUpsert.args as SQLInputValue[]);
+		const receiptUpsert = buildHealthcareRecruitingEvidenceUpsert(evidence);
+		database.prepare(receiptUpsert.sql).run(...receiptUpsert.args as SQLInputValue[]);
+		const row = database.prepare(`
+			SELECT evidence_kind, source_system, outcome
+			FROM abundance_healthcare_provider_recruiting_evidence
+		`).get() as { evidence_kind: string; source_system: string; outcome: string };
+		assert.deepEqual({ ...row }, {
+			evidence_kind: 'license_or_privilege',
+			source_system: 'missouri_board_or_nursys',
+			outcome: 'passed'
+		});
+	} finally {
+		database.close();
+	}
+});
+
 test('standalone NPG report reconciles canonical-filter exclusions', async () => {
 	const script = await readFile(
 		new URL('../scripts/report-npg-healthcare-coverage.ts', import.meta.url),
@@ -1081,4 +1249,32 @@ function jsonResponse(body: unknown, init?: ResponseInit): Response {
 
 function mockLocationAddress() {
 	return { address_purpose: 'LOCATION', city: 'SPRINGFIELD', state: 'MO', postal_code: '65801' };
+}
+
+function completeRecruitingEvidence(npi: string): HealthcareRecruitingEvidence[] {
+	const validThrough = '2026-10-01T00:00:00.000Z';
+	const verifiedAt = '2026-09-01T00:00:00.000Z';
+	return [
+		{ id: 'license', npi, kind: 'license_or_privilege', source_system: 'missouri_board_or_nursys', outcome: 'passed', verified_at: verifiedAt, valid_through: validThrough },
+		{ id: 'discipline', npi, kind: 'discipline', source_system: 'missouri_board_or_nursys', outcome: 'passed', verified_at: verifiedAt, valid_through: validThrough },
+		{ id: 'exclusion', npi, kind: 'exclusion', source_system: 'oig_leie', outcome: 'passed', verified_at: verifiedAt, valid_through: validThrough },
+		{ id: 'practice', npi, kind: 'practice_or_employment', source_system: 'cms_doctors_and_clinicians', outcome: 'passed', verified_at: verifiedAt, valid_through: validThrough },
+		{ id: 'contact', npi, kind: 'contact_route', source_system: 'npg_first_party', outcome: 'passed', verified_at: verifiedAt, valid_through: validThrough },
+		{ id: 'authority', npi, kind: 'outreach_authority', source_system: 'npg_first_party', outcome: 'passed', verified_at: verifiedAt, valid_through: validThrough },
+		{ id: 'approval', npi, kind: 'recruiter_approval', source_system: 'npg_first_party', outcome: 'passed', verified_at: verifiedAt, valid_through: validThrough }
+	];
+}
+
+function toEvidenceRow(evidence: HealthcareRecruitingEvidence) {
+	return {
+		id: evidence.id,
+		provider_npi: evidence.npi,
+		evidence_kind: evidence.kind,
+		source_system: evidence.source_system,
+		outcome: evidence.outcome,
+		verified_at: evidence.verified_at,
+		valid_through: evidence.valid_through,
+		reference_id: evidence.reference_id ?? null,
+		source_payload_hash: evidence.source_payload_hash ?? null
+	};
 }

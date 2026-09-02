@@ -16,5 +16,5 @@ This directory is the client-delivery knowledge area for The NP Group (NPG).
 
 - NPG-specific personas and reports live with the NPG/Abundance delivery.
 - Reusable provider normalization, source adapters, and API contracts live in `packages/agency`.
-- NPPES records support market coverage analysis only. Recruiter approval, contact validation, current licensure checks, and outreach authority remain separate gates.
+- NPPES records enter as `coverage_candidate`. Only current, source-owned verification receipts can promote a provider to `recruiter_ready`; Nursys, CMS Doctors & Clinicians, LEIE, and NPG operator adapters remain separate delivery gates.
 - Raw private staff data, credentials, PHI, and token-bearing access do not belong in this directory.
