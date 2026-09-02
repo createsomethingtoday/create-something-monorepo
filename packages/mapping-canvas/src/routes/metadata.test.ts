@@ -7,6 +7,7 @@ const robots = readFileSync(new URL('../../static/robots.txt', import.meta.url),
 const sitemap = readFileSync(new URL('../../static/sitemap.xml', import.meta.url), 'utf8');
 const llms = readFileSync(new URL('../../static/llms.txt', import.meta.url), 'utf8');
 const serviceWorker = readFileSync(new URL('../../static/service-worker.js', import.meta.url), 'utf8');
+const serverHooks = readFileSync(new URL('../hooks.server.ts', import.meta.url), 'utf8');
 
 describe('public identity and discovery', () => {
   it('uses the governed CREATE SOMETHING logo in the product header', () => {
@@ -31,5 +32,13 @@ describe('public identity and discovery', () => {
     expect(llms).toContain('# CREATE SOMETHING Draw');
     expect(llms).toContain('saved only on the current device');
     expect(serviceWorker).toContain("'/brand/create-something-agency-white.svg'");
+  });
+
+  it('sets the production browser security contract on dynamic Pages responses', () => {
+    expect(serverHooks).toContain('Content-Security-Policy');
+    expect(serverHooks).toContain("frame-ancestors 'none'");
+    expect(serverHooks).toContain('Strict-Transport-Security');
+    expect(serverHooks).toContain('Permissions-Policy');
+    expect(serverHooks).toContain('X-Content-Type-Options');
   });
 });
