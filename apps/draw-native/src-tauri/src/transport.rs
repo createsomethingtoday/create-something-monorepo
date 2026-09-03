@@ -16,8 +16,7 @@ use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use create_something_draw_pairing_protocol::{OperationEnvelope, PROTOCOL_VERSION};
 use local_ip_address::local_ip;
 #[cfg(not(target_os = "ios"))]
-use mdns_sd::ServiceEvent;
-use mdns_sd::{ServiceDaemon, ServiceInfo};
+use mdns_sd::{ServiceDaemon, ServiceEvent, ServiceInfo};
 use rcgen::{generate_simple_self_signed, CertifiedKey};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -199,6 +198,7 @@ fn certificate_material(home: &Path, hostname: &str) -> Result<(Vec<u8>, Vec<u8>
     Ok((cert, key, fingerprint))
 }
 
+#[cfg(not(target_os = "ios"))]
 fn advertise(
     port: u16,
     address: IpAddr,
@@ -245,6 +245,7 @@ fn advertise(
     Ok(daemon)
 }
 
+#[cfg(not(target_os = "ios"))]
 pub(crate) fn start(runtime: Arc<DrawRuntime>, home: &Path) -> Result<(), String> {
     let listener = TcpListener::bind(("0.0.0.0", 0)).map_err(|error| error.to_string())?;
     listener
