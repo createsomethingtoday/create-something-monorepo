@@ -319,6 +319,7 @@
   }
   function trackTouchPointer(event: PointerEvent) {
     if (!ready || agentMutationActive) return;
+    noteInput.flushAll();
     stopAgentCamera();
     if (event.pointerType !== 'touch' || event.button !== 0) return;
     activeTouches.set(event.pointerId, { x: event.clientX, y: event.clientY });

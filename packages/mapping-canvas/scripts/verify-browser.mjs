@@ -175,7 +175,8 @@ try {
     catch (error) { return error instanceof Error ? error.message : String(error); }
   });
   if (!editingConflict.includes('Finish the active human gesture')) throw new Error(`Agent access was not paused for active note editing: ${editingConflict}`);
-  await page.waitForFunction(() => document.querySelector('g[aria-label="Note: But loves pink more!"]'));
+  await notes.nth(1).dispatchEvent('pointerdown', { bubbles: true, button: 0, pointerId: 77, pointerType: 'mouse' });
+  if (await notes.first().getAttribute('aria-label') !== 'Note: But loves pink more!') throw new Error('Pointer gesture did not flush note text before capturing canvas state');
   await noteEditor.fill('MCP');
   await noteEditor.pressSequentially(' tools');
   if (await noteEditor.inputValue() !== 'MCP tools') throw new Error('Note editing did not preserve typed spaces');
