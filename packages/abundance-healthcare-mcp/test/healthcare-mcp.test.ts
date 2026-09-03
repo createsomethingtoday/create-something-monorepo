@@ -582,7 +582,8 @@ test('Exa enrichment suppresses contact types the operator did not request', asy
       output: { structured: {
         match_status: 'verified_match', identity_reason: 'Exact NPI match.',
         professional_profile_url: 'https://example.test/provider-profile', professional_email: null,
-        professional_phone: '+1 555 0100', current_professional_affiliation: null,
+        professional_phone: '+1 555 0100',
+        current_professional_affiliation: 'Example Clinic; alternate phone +1 555 0101; alternate@example.test',
         evidence_summary: 'A phone was returned despite the email-only request.',
       }, grounding: [{ url: 'https://example.test/provider' }] },
       costDollars: { total: 0.032 },
@@ -599,6 +600,7 @@ test('Exa enrichment suppresses contact types the operator did not request', asy
 
   assert.equal(result.professional_contact.phone, undefined);
   assert.equal(result.professional_contact.profile_url, 'https://example.test/provider-profile');
+  assert.equal(result.professional_contact.current_affiliation, 'Example Clinic; alternate phone [redacted phone]; [redacted email]');
   assert.equal(result.contact_route_status, 'no_contact_candidate_found');
 });
 

@@ -346,7 +346,9 @@ export async function enrichProviderProfessionalContact(input: z.input<typeof pr
       profile_url: acceptedProfileUrl ?? undefined,
       email: acceptedEmail ?? undefined,
       phone: acceptedPhone ?? undefined,
-      current_affiliation: matchAllowsCandidate ? structured.current_professional_affiliation ?? undefined : undefined,
+      current_affiliation: matchAllowsCandidate && structured.current_professional_affiliation
+        ? redactContactTokens(structured.current_professional_affiliation)
+        : undefined,
     }),
     evidence_summary: structured.evidence_summary ? redactContactTokens(structured.evidence_summary) : undefined,
     source_citations: sourceCitations,
