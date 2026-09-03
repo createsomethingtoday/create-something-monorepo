@@ -1,4 +1,4 @@
-import React, { CSSProperties, ReactNode } from 'react';
+import React, { CSSProperties, ReactNode, useRef } from 'react';
 import { tokens, BrandVariant, getBrandColors } from '../../styles/tokens';
 import { Button } from '../core/Button';
 
@@ -56,6 +56,7 @@ export const KineticHero: React.FC<KineticHeroProps> = ({
   className = '',
 }) => {
   const brand = getBrandColors(variant);
+  const rootRef = useRef<HTMLDivElement>(null);
 
   const minHeightValues = {
     full: '100vh',
@@ -184,14 +185,17 @@ export const KineticHero: React.FC<KineticHeroProps> = ({
   `;
 
   const handleScrollDown = () => {
-    const hero = document.querySelector('.mavx-kinetic-hero');
-    if (hero?.nextElementSibling) {
+    const hero = rootRef.current;
+    if (!hero) return;
+    if (hero.nextElementSibling) {
       hero.nextElementSibling.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      window.scrollBy({ top: hero.offsetHeight, behavior: 'smooth' });
     }
   };
 
   return (
-    <div className={`mavx-kinetic-hero ${className}`} style={containerStyles}>
+    <div ref={rootRef} className={`mavx-kinetic-hero ${className}`} style={containerStyles}>
       <style>{hoverCSS}</style>
 
       {/* Background - Video, Image, or Gradient */}

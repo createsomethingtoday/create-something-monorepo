@@ -85,6 +85,7 @@ const CLOUD_APP_PREVIEW_ORIGIN = 'https://webflow-template-marketplace.webflow.i
 const SIDEBAR_CACHE_TTL_MS = 5 * 60 * 1000;
 
 const sidebarPayloadCache = new Map<string, { timestamp: number; data: SidebarPayload }>();
+const sidebarPendingFetches = new Map<string, Promise<SidebarPayload>>();
 
 const SPECIAL_ROWS: Array<{
   key: keyof SidebarCounts;
@@ -489,14 +490,28 @@ function buildSearchApiUrl(apiBase: string, context: CountContext, scope?: Templ
   return url.toString();
 }
 
-async function fetchSidebarPayload(url: string, signal: AbortSignal): Promise<SidebarPayload> {
+function fetchSidebarPayload(url: string): Promise<SidebarPayload> {
   const cached = sidebarPayloadCache.get(url);
-  if (cached && Date.now() - cached.timestamp < SIDEBAR_CACHE_TTL_MS) return cached.data;
-  const response = await fetch(url, { signal });
-  if (!response.ok) throw new Error(`Sidebar counts failed with ${response.status}`);
-  const data = (await response.json()) as SidebarPayload;
-  sidebarPayloadCache.set(url, { timestamp: Date.now(), data });
-  return data;
+  if (cached && Date.now() - cached.timestamp < SIDEBAR_CACHE_TTL_MS) return Promise.resolve(cached.data);
+  const pending = sidebarPendingFetches.get(url);
+  if (pending) return pending;
+  const request = fetch(url)
+    .then(async (response) => {
+      if (!response.ok) throw new Error(`Sidebar counts failed with ${response.status}`);
+      const data = (await response.json()) as SidebarPayload;
+      sidebarPayloadCache.set(url, { timestamp: Date.now(), data });
+      return data;
+    })
+    .finally(() => {
+      sidebarPendingFetches.delete(url);
+    });
+  sidebarPendingFetches.set(url, request);
+  return request;
+}
+
+function readTotalCount(payload: SidebarPayload): number | null {
+  const value = payload.pagination?.total_items;
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 
 function formatCount(value: number | null): string {
@@ -598,20 +613,20 @@ const TemplateSearchSidebarInner: React.FC<TemplateSearchSidebarProps> = ({
     }, { all: categoryUrl, featured: categoryUrl, landing_pages: categoryUrl, free: categoryUrl });
 
     Promise.all([
-      fetchSidebarPayload(categoryUrl, ac.signal),
-      fetchSidebarPayload(specialUrls.all, ac.signal),
-      fetchSidebarPayload(specialUrls.featured, ac.signal),
-      fetchSidebarPayload(specialUrls.landing_pages, ac.signal),
-      fetchSidebarPayload(specialUrls.free, ac.signal),
+      fetchSidebarPayload(categoryUrl),
+      fetchSidebarPayload(specialUrls.all),
+      fetchSidebarPayload(specialUrls.featured),
+      fetchSidebarPayload(specialUrls.landing_pages),
+      fetchSidebarPayload(specialUrls.free),
     ])
       .then(([categoryPayload, allPayload, featuredPayload, landingPayload, freePayload]) => {
         if (ac.signal.aborted) return;
         setCategories(categoryPayload.category_pills ?? []);
         setCounts({
-          all: Number(allPayload.pagination?.total_items ?? 0),
-          featured: Number(featuredPayload.pagination?.total_items ?? 0),
-          landing_pages: Number(landingPayload.pagination?.total_items ?? 0),
-          free: Number(freePayload.pagination?.total_items ?? 0),
+          all: readTotalCount(allPayload),
+          featured: readTotalCount(featuredPayload),
+          landing_pages: readTotalCount(landingPayload),
+          free: readTotalCount(freePayload),
         });
       })
       .catch((err) => {
@@ -688,7 +703,7 @@ const TemplateSearchSidebarInner: React.FC<TemplateSearchSidebarProps> = ({
   };
 
   const renderCount = (value: number | null) => {
-    if (!showCounts) return null;
+    if (!showCounts || value === null) return null;
     return <span className="tmsidebar-count">{formatCount(value)}</span>;
   };
 

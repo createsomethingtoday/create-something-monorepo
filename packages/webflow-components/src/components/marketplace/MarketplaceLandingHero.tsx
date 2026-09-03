@@ -396,13 +396,22 @@ export const MarketplaceLandingHero: React.FC<MarketplaceLandingHeroProps> = ({
   }, [apiBase, showSuggestions, suggestionLimit, useSearchSuggestions]);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
     const form = event.currentTarget;
     const data = new FormData(form);
     const query = String(data.get(effectiveQueryParam) ?? '').trim();
-    if (!query) return;
+    if (!query) {
+      event.preventDefault();
+      return;
+    }
 
-    const nextUrl = buildSearchUrl(effectiveSearchAction, effectiveQueryParam, query);
+    let nextUrl: string;
+    try {
+      nextUrl = buildSearchUrl(effectiveSearchAction, effectiveQueryParam, query);
+    } catch {
+      // Unparseable action: let the native form submission handle it.
+      return;
+    }
+    event.preventDefault();
     trackMarketplaceEvent(
       'Marketplace Landing Hero - Search Submitted',
       {
