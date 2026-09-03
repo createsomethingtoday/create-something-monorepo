@@ -170,7 +170,6 @@ test('confirmed Exa enrichment is bounded to one exact provider and preserves un
           professional_profile_url: 'https://example.test/professional-profile',
           professional_email: 'jane.provider@example.test',
           professional_phone: null,
-          current_professional_affiliation: null,
           evidence_summary: 'One public professional profile was located.',
         },
         grounding: [{ field: 'professional_profile_url', citations: [{ url: 'https://example.test/professional-profile' }] }],
@@ -516,7 +515,6 @@ test('Exa no-match responses suppress contradictory contact fields', async () =>
           match_status: 'no_match', identity_reason: 'The profile belongs to another person.',
           professional_profile_url: 'https://example.test/wrong-person',
           professional_email: 'wrong-person@example.test', professional_phone: '+1 555 0100',
-          current_professional_affiliation: null,
           evidence_summary: 'No match; ignore wrong-person@example.test, +1 555 0100, https://example.test/wrong-person, and www.linkedin.com/in/wrong-person.',
         },
         grounding: [{ field: 'professional_profile_url', citations: [{ url: 'https://example.test/wrong-person' }] }],
@@ -532,7 +530,8 @@ test('Exa no-match responses suppress contradictory contact fields', async () =>
 
   assert.deepEqual(result.professional_contact, {});
   assert.deepEqual(result.source_citations, []);
-  assert.equal(result.evidence_summary, 'No match; ignore [redacted email], [redacted phone], [redacted URL] and [redacted URL]');
+  assert.equal(result.identity_reason, 'Exa reported no identity match; no contact candidate was accepted.');
+  assert.equal(result.evidence_summary, 'Exa returned 0 validated citation URLs for operator review.');
   assert.equal(result.contact_route_status, 'no_contact_candidate_found');
   assert.equal(result.identity_verification_status, 'operator_review_required');
 });
@@ -553,7 +552,7 @@ test('Exa verified-match labels still require a usable source citation', async (
           match_status: 'verified_match', identity_reason: 'The model reported a match.',
           professional_profile_url: 'https://example.test/unproven-profile',
           professional_email: null, professional_phone: null,
-          current_professional_affiliation: null, evidence_summary: 'No citation was emitted.',
+          evidence_summary: 'No citation was emitted.',
         },
         grounding: [{ url: 'https://' }, { field: 'https://example.test/not-a-citation' }],
       },
@@ -585,7 +584,6 @@ test('Exa enrichment suppresses contact types the operator did not request', asy
         match_status: 'verified_match', identity_reason: 'Exact NPI match.',
         professional_profile_url: 'https://example.test/provider/4175550103?tracking=1#contact', professional_email: null,
         professional_phone: '+1 555 0100',
-        current_professional_affiliation: 'Example Clinic; alternate phones +1 555 0101 and 417/555/0100; alternate@example.test',
         evidence_summary: 'A phone was returned despite the email-only request.',
       }, grounding: [
         { url: 'https://example.test/provider/4175550104', snippet: 'Unrequested phone path.' },
@@ -607,7 +605,7 @@ test('Exa enrichment suppresses contact types the operator did not request', asy
 
   assert.equal(result.professional_contact.phone, undefined);
   assert.equal(result.professional_contact.profile_url, undefined);
-  assert.equal(result.professional_contact.current_affiliation, 'Example Clinic; alternate phones [redacted phone] and [redacted phone]; [redacted email]');
+  assert.equal('current_affiliation' in result.professional_contact, false);
   assert.deepEqual(result.source_citations, [
     { url: 'https://registry.example.test/npi/1265049910' },
     { url: 'https://example.test/provider' },
@@ -630,7 +628,7 @@ test('Exa enrichment rejects placeholder phones and normalizes grounding records
       output: { structured: {
         match_status: 'verified_match', identity_reason: 'Exact NPI match.',
         professional_profile_url: 'https://example.test/provider-profile', professional_email: null,
-        professional_phone: 'not available', current_professional_affiliation: null,
+        professional_phone: 'not available',
         evidence_summary: 'A professional profile was located without a usable phone.',
       }, grounding: [null, 'invalid citation', { url: 'https://example.test/provider-profile' }] },
       costDollars: { total: 0.082 },

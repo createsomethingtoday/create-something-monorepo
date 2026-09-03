@@ -97,7 +97,6 @@ const exaStructuredOutputSchema = z.object({
   professional_profile_url: z.string().url().nullable().optional(),
   professional_email: z.string().email().nullable().optional(),
   professional_phone: z.string().max(80).nullable().optional(),
-  current_professional_affiliation: z.string().max(300).nullable().optional(),
   evidence_summary: z.string().max(600).nullable().optional(),
 }).strict();
 const providerContactOutputSchema = z.object({
@@ -130,7 +129,7 @@ const providerEnrichmentOutputSchema = z.object({
   identity_reason: z.string(),
   professional_contact: z.object({
     profile_url: z.string().url().optional(), email: z.string().email().optional(),
-    phone: z.string().optional(), current_affiliation: z.string().optional(),
+    phone: z.string().optional(),
   }),
   evidence_summary: z.string().optional(),
   source_citations: z.array(z.object({ url: z.string() })),
@@ -293,14 +292,13 @@ export async function enrichProviderProfessionalContact(input: z.input<typeof pr
     additionalProperties: false,
     required: [
       'match_status', 'identity_reason', 'professional_profile_url',
-      'current_professional_affiliation', 'evidence_summary', ...Object.keys(contactProperties),
+      'evidence_summary', ...Object.keys(contactProperties),
     ],
     properties: {
       match_status: { type: 'string', enum: ['verified_match', 'plausible_match', 'ambiguous', 'no_match'] },
       identity_reason: { type: 'string', maxLength: 600 },
       professional_profile_url: { type: ['string', 'null'], format: 'uri' },
       ...contactProperties,
-      current_professional_affiliation: { type: ['string', 'null'], maxLength: 300 },
       evidence_summary: { type: ['string', 'null'], maxLength: 600 },
     },
   };
@@ -345,16 +343,13 @@ export async function enrichProviderProfessionalContact(input: z.input<typeof pr
     requested_purpose: parsed.purpose,
     requested_contact_types: parsed.contact_types,
     match_status: structured.match_status,
-    identity_reason: redactContactTokens(structured.identity_reason),
+    identity_reason: safeIdentityReason(structured.match_status),
     professional_contact: compactObject({
       profile_url: acceptedProfileUrl ?? undefined,
       email: acceptedEmail ?? undefined,
       phone: acceptedPhone ?? undefined,
-      current_affiliation: matchAllowsCandidate && structured.current_professional_affiliation
-        ? redactContactTokens(structured.current_professional_affiliation)
-        : undefined,
     }),
-    evidence_summary: structured.evidence_summary ? redactContactTokens(structured.evidence_summary) : undefined,
+    evidence_summary: `Exa returned ${sourceCitations.length} validated citation URL${sourceCitations.length === 1 ? '' : 's'} for operator review.`,
     source_citations: sourceCitations,
     contact_route_status: hasCandidate ? 'unverified_enrichment_candidate' : 'no_contact_candidate_found',
     identity_verification_status: structured.match_status === 'verified_match' && hasGroundedSourceUrl(sourceCitations) ? 'source_grounded' : 'operator_review_required',
@@ -443,12 +438,11 @@ function cleanProfessionalPhone(value: string | null | undefined): string | unde
   return digitCount >= 7 && digitCount <= 15 ? phone : undefined;
 }
 
-function redactContactTokens(value: string): string {
-  return value
-    .replace(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, '[redacted email]')
-    .replace(/https?:\/\/\S+/gi, '[redacted URL]')
-    .replace(/\b(?:www\.)?(?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/[^\s]*)?/gi, '[redacted URL]')
-    .replace(/\+?\d[\d().\s/-]{6,}\d/g, '[redacted phone]');
+function safeIdentityReason(status: z.infer<typeof exaStructuredOutputSchema>['match_status']): string {
+  if (status === 'verified_match') return 'Exa reported an exact identity match; verify it against the cited sources before use.';
+  if (status === 'plausible_match') return 'Exa reported a plausible identity match; operator review of the cited sources is required.';
+  if (status === 'ambiguous') return 'Exa reported ambiguous identity evidence; no contact candidate was accepted.';
+  return 'Exa reported no identity match; no contact candidate was accepted.';
 }
 
 const requiredKinds = ['license_or_privilege', 'discipline', 'exclusion', 'practice_or_employment', 'contact_route', 'outreach_authority', 'recruiter_approval'];
