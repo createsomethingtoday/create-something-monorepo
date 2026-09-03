@@ -331,11 +331,12 @@ export async function enrichProviderProfessionalContact(input: z.input<typeof pr
   const sourceCitations = matchAllowsCandidate
     ? collectGroundedCitationUrls(normalizedCitations, provider.npi, requestedPhone)
     : [];
-  const acceptedProfileUrl = matchAllowsCandidate
+  const hasGroundedEvidence = sourceCitations.length > 0;
+  const acceptedProfileUrl = matchAllowsCandidate && hasGroundedEvidence
     ? cleanPublicHttpsUrl(structured.professional_profile_url, provider.npi, requestedPhone)
     : undefined;
-  const acceptedEmail = matchAllowsCandidate && requestedEmail ? structured.professional_email : undefined;
-  const acceptedPhone = matchAllowsCandidate && requestedPhone
+  const acceptedEmail = matchAllowsCandidate && hasGroundedEvidence && requestedEmail ? structured.professional_email : undefined;
+  const acceptedPhone = matchAllowsCandidate && hasGroundedEvidence && requestedPhone
     ? cleanProfessionalPhone(structured.professional_phone, provider.npi)
     : undefined;
   const hasCandidate = Boolean(acceptedEmail || acceptedPhone);
@@ -354,7 +355,7 @@ export async function enrichProviderProfessionalContact(input: z.input<typeof pr
     evidence_summary: `Exa returned ${sourceCitations.length} validated citation URL${sourceCitations.length === 1 ? '' : 's'} for operator review.`,
     source_citations: sourceCitations,
     contact_route_status: hasCandidate ? 'unverified_enrichment_candidate' : 'no_contact_candidate_found',
-    identity_verification_status: structured.match_status === 'verified_match' && hasGroundedSourceUrl(sourceCitations) ? 'source_grounded' : 'operator_review_required',
+    identity_verification_status: structured.match_status === 'verified_match' && hasGroundedEvidence ? 'source_grounded' : 'operator_review_required',
     outreach_authority_status: 'not_established',
     advertising_eligibility_status: 'not_established',
     recruiting_readiness_impact: 'none',
@@ -363,15 +364,6 @@ export async function enrichProviderProfessionalContact(input: z.input<typeof pr
     usage: sanitizeExaUsage(run.usage),
     enrichment_limitation: 'Exa enrichment returns source-backed professional contact candidates, not verified ownership, current employment, availability, consent, advertising eligibility, or recruiting readiness. An operator must resolve identity and validate the route before any use.',
   };
-}
-
-function hasGroundedSourceUrl(value: unknown, depth = 0): boolean {
-  if (depth > 6) return false;
-  if (Array.isArray(value)) return value.some((item) => hasGroundedSourceUrl(item, depth + 1));
-  if (!value || typeof value !== 'object') return false;
-  const citation = value as Record<string, unknown>;
-  if (typeof citation.url === 'string' && isUsableHttpsUrl(citation.url)) return true;
-  return Array.isArray(citation.citations) && hasGroundedSourceUrl(citation.citations, depth + 1);
 }
 
 function collectGroundedCitationUrls(

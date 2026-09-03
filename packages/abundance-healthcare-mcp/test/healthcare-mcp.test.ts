@@ -583,7 +583,7 @@ test('Exa verified-match labels still require a usable source citation', async (
         structured: {
           match_status: 'verified_match', identity_reason: 'The model reported a match.',
           professional_profile_url: 'https://example.test/unproven-profile',
-          professional_email: null, professional_phone: null,
+          professional_email: 'unsupported@example.test', professional_phone: '4175550100',
           evidence_summary: 'No citation was emitted.',
         },
         grounding: [{ url: 'https://' }, { field: 'https://example.test/not-a-citation' }],
@@ -599,6 +599,8 @@ test('Exa verified-match labels still require a usable source citation', async (
 
   assert.equal(result.match_status, 'verified_match');
   assert.equal(result.identity_verification_status, 'operator_review_required');
+  assert.deepEqual(result.professional_contact, {});
+  assert.equal(result.contact_route_status, 'no_contact_candidate_found');
 });
 
 test('Exa enrichment suppresses contact types the operator did not request', async () => {
