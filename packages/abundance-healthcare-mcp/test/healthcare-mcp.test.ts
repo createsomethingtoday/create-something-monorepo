@@ -588,7 +588,7 @@ test('Exa enrichment suppresses contact types the operator did not request', asy
       }, grounding: [
         { url: 'https://example.test/provider/4175550104', snippet: 'Unrequested phone path.' },
         { url: 'https://registry.example.test/npi/1265049910', snippet: 'Known NPI path.' },
-        { url: 'https://example.test/provider?phone=4175550105#contact', snippet: 'Query data is discarded.' },
+        { url: 'https://example.test/provider?record=1265049910', snippet: 'Query-dependent evidence is discarded.' },
       ] },
       costDollars: { total: 0.032 },
       usage: { searches: 1, debug: 'hidden-phone@example.test' },
@@ -608,7 +608,6 @@ test('Exa enrichment suppresses contact types the operator did not request', asy
   assert.equal('current_affiliation' in result.professional_contact, false);
   assert.deepEqual(result.source_citations, [
     { url: 'https://registry.example.test/npi/1265049910' },
-    { url: 'https://example.test/provider' },
   ]);
   assert.deepEqual(result.usage, { searches: 1 });
   assert.equal(result.contact_route_status, 'no_contact_candidate_found');

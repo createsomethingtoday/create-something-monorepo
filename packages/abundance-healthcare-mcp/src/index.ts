@@ -400,6 +400,7 @@ function collectGroundedCitationUrls(
 function cleanPublicHttpsUrl(value: unknown, allowedNpi: string, allowPhone: boolean): string | undefined {
   if (typeof value !== 'string' || !isUsableHttpsUrl(value)) return undefined;
   const url = new URL(value);
+  if (url.search || url.hash) return undefined;
   let decodedPathname: string;
   try { decodedPathname = decodeURIComponent(url.pathname); } catch { return undefined; }
   if (/@/.test(decodedPathname)) return undefined;
@@ -407,8 +408,6 @@ function cleanPublicHttpsUrl(value: unknown, allowedNpi: string, allowPhone: boo
     const phoneLikeTokens = `${url.hostname}${decodedPathname}`.match(/\+?\d[\d().\s\/-]{6,}\d/g) ?? [];
     if (phoneLikeTokens.some((token) => token.replace(/\D/g, '') !== allowedNpi)) return undefined;
   }
-  url.search = '';
-  url.hash = '';
   return url.toString();
 }
 
