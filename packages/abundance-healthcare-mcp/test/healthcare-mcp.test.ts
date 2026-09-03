@@ -445,6 +445,35 @@ test('Exa create connection failures are indeterminate and do not reflect transp
   );
 });
 
+test('completed Exa runs with unusable output are explicitly non-retryable', async () => {
+  const fetchFn: typeof fetch = async (input) => {
+    if (String(input).includes('/api/abundance/healthcare-providers/nationwide')) {
+      return Response.json({ success: true, data: {
+        report,
+        providers: [{ npi: '1265049910', name: 'Jane Test Provider', source_fetched_at: '2026-09-02T01:39:07.502Z' }],
+        readiness: [], total: 1, limit: 1, offset: 0,
+      } } satisfies HealthcareApiResponse);
+    }
+    return Response.json({
+      id: 'agent_run_invalid_output', object: 'agent_run', status: 'completed',
+      output: { structured: { unexpected: 'fake-contact@example.test' }, grounding: [] },
+      costDollars: { total: 0.032 },
+    });
+  };
+
+  await assert.rejects(
+    enrichProviderProfessionalContact(
+      { npi: '1265049910', purpose: 'recruiting_outreach', confirm_paid_enrichment: true },
+      { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn },
+    ),
+    (error: unknown) => {
+      assert.match(String(error), /agent_run_invalid_output.*completed.*Reported cost: \$0\.032.*do not retry/i);
+      assert.doesNotMatch(String(error), /fake-contact/i);
+      return true;
+    },
+  );
+});
+
 test('Exa no-match responses suppress contradictory contact fields', async () => {
   const fetchFn: typeof fetch = async (input) => {
     if (String(input).includes('/api/abundance/healthcare-providers/nationwide')) {

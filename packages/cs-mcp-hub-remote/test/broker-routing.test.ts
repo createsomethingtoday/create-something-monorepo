@@ -4,6 +4,7 @@ import test from 'node:test';
 import {
   buildAuthorizedVisibleProxyRoutes,
   buildVisibleProxyRoutes,
+  isDirectProxyToolAllowed,
   resolveDiscoveryPack,
   resolveIntentRouteCandidate,
   searchProxyTools,
@@ -632,6 +633,15 @@ test('NPG review pack excludes paid healthcare enrichment while retaining health
   assert.deepEqual(alternatePack.preferences.excludedProxyTools, [
     'abundance-healthcare-mcp__enrich_provider_professional_contact',
   ]);
+
+  assert.equal(isDirectProxyToolAllowed({
+    HUB_ALLOW_DIRECT_PROXY_TOOLS: 'true',
+    HUB_DISCOVERY_SHARED_PACK: 'abundance-thenpgroup-review',
+  } as any, 'abundance-healthcare-mcp__enrich_provider_professional_contact'), false);
+  assert.equal(isDirectProxyToolAllowed({
+    HUB_ALLOW_DIRECT_PROXY_TOOLS: 'true',
+    HUB_DISCOVERY_SHARED_PACK: 'abundance-thenpgroup-review',
+  } as any, 'abundance-healthcare-mcp__get_provider_contact_information'), true);
 });
 
 test('resolveDiscoveryPack returns C3Denver pack with the expected active services', () => {

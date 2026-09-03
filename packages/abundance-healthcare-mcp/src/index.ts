@@ -318,7 +318,14 @@ export async function enrichProviderProfessionalContact(input: z.input<typeof pr
     outputSchema,
   };
   const run = await createAndAwaitExaRun(createBody, exaApiKey, options);
-  const structured = exaStructuredOutputSchema.parse(run.output?.structured);
+  const structuredResult = exaStructuredOutputSchema.safeParse(run.output?.structured);
+  if (!structuredResult.success) {
+    const reportedCost = typeof run.costDollars?.total === 'number'
+      ? ` Reported cost: $${run.costDollars.total.toFixed(3)}.`
+      : '';
+    throw new Error(`Exa Agent run ${run.id} completed but returned unusable structured output.${reportedCost} No contact result was accepted; do not retry until the completed run is reviewed in Exa.`);
+  }
+  const structured = structuredResult.data;
   const sourceCitations = Array.isArray(run.output?.grounding) ? run.output.grounding : [];
   const matchAllowsCandidate = structured.match_status === 'verified_match' || structured.match_status === 'plausible_match';
   const acceptedProfileUrl = matchAllowsCandidate ? structured.professional_profile_url : undefined;

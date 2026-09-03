@@ -6000,7 +6000,8 @@ function parseBooleanWithDefault(raw: string | undefined, fallback: boolean): bo
   return fallback;
 }
 
-function isDirectProxyToolAllowed(env: Env, proxyToolName: string): boolean {
+export function isDirectProxyToolAllowed(env: Env, proxyToolName: string): boolean {
+  if (getMandatoryExcludedProxyTools(env).includes(proxyToolName)) return false;
   const directProxyEnabled = parseBooleanWithDefault(
     readEnvString(env, 'HUB_ALLOW_DIRECT_PROXY_TOOLS'),
     false,
