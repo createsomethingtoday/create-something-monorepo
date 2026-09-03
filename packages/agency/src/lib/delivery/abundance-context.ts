@@ -16,7 +16,7 @@ export const abundanceWorkflowContext: CanonWorkflowContext = {
 	contextId: ABUNDANCE_CONTEXT_ID,
 	title: 'Abundance nurse staffing delivery record',
 	summary:
-		'The NP Group has a live nurse-facing Concierge app, a client-safe delivery record, read-only public job discovery, recruiter-gated protected steps, repo-backed data contracts, production-smoked Staff and Jobs MCPs, an NPG scoped hub, and private eval/evidence trails kept outside the public page.',
+		'The NP Group has a live nurse-facing Concierge app, an enabled healthcare coverage analyst for operator research, a client-safe delivery record, read-only public job discovery, recruiter-gated protected steps, repo-backed data contracts, production-smoked healthcare, Staff, and Jobs MCPs, an NPG scoped hub, and private eval/evidence trails kept outside the public page.',
 	source: 'fallback',
 	updatedAt: null,
 	engagement: {
@@ -35,6 +35,12 @@ export const abundanceWorkflowContext: CanonWorkflowContext = {
 				label: 'Concierge live app',
 				status: 'ok',
 				detail: 'The polished nurse-facing intake surface is live on Cloudflare Pages.'
+			},
+			{
+				label: 'Healthcare coverage analyst',
+				status: 'ok',
+				detail:
+					'The private Dify agent is enabled for NPG operator review over nationwide NPPES coverage and exact-NPI contact research.'
 			},
 			{
 				label: 'Staff and Jobs MCPs',
@@ -65,11 +71,11 @@ export const abundanceWorkflowContext: CanonWorkflowContext = {
 		},
 		{
 			tier: 'Automation',
-			title: 'Staff, Jobs, and NPG Hub',
+			title: 'Healthcare, Staff, Jobs, and NPG Hub',
 			status: 'Production-smoked',
 			description:
-				'Staff MCP, Jobs MCP, and the NPG scoped hub are the serving automation paths. The public delivery page keeps job discovery read-only while credentials, funnel writes, and private traces stay outside the browser.',
-			evidence: ['Staff MCP', 'Jobs MCP', 'NPG scoped hub', 'Owned route checks'],
+				'The healthcare analyst, Healthcare MCP, Staff MCP, Jobs MCP, and NPG scoped hub are the serving automation paths. Coverage discovery remains distinct from recruiter readiness while credentials, funnel writes, and private traces stay outside the browser.',
+			evidence: ['Healthcare coverage analyst', 'Healthcare MCP', 'Staff MCP', 'Jobs MCP', 'NPG scoped hub', 'Owned route checks'],
 			tone: 'success'
 		},
 		{
@@ -249,6 +255,13 @@ export const abundanceWorkflowContext: CanonWorkflowContext = {
 			tone: 'success'
 		},
 		{
+			title: 'NPG Healthcare Coverage Analyst',
+			type: 'Private nationwide coverage and contact-research agent',
+			href: '/delivery/abundance/healthcare-analyst',
+			visibility: 'public',
+			tone: 'success'
+		},
+		{
 			title: 'Progress walkthrough',
 			type: 'Current job/database workflow walkthrough',
 			href: 'https://share.descript.com/view/RWYv3CqKbEC',
@@ -301,7 +314,7 @@ export const abundanceWorkflowContext: CanonWorkflowContext = {
 	],
 	activeBusinessContextId: ABUNDANCE_CONTEXT_ID,
 	metrics: [
-		{ label: 'MCP surfaces smoked', value: '3', detail: 'Staff MCP, Jobs MCP, NPG scoped hub', tone: 'success' },
+		{ label: 'MCP surfaces smoked', value: '4', detail: 'Healthcare MCP, Staff MCP, Jobs MCP, NPG scoped hub', tone: 'success' },
 		{ label: 'Open decisions', value: '6', detail: 'Secrets, reauthorization, mapping, access', tone: 'warning' },
 		{ label: 'Agent boundary', value: 'Recruiter-gated', detail: 'No autonomous staffing decisions', tone: 'info' },
 		{ label: 'Runtime boundary', value: 'Candidate green', detail: 'Owned route and dependency gates', tone: 'success' }
@@ -311,6 +324,13 @@ export const abundanceWorkflowContext: CanonWorkflowContext = {
 			system: 'Abundance Concierge app',
 			status: 'ok',
 			detail: 'Live nurse-facing Concierge intake surface on Cloudflare Pages.',
+			tier: 'Automation'
+		},
+		{
+			system: 'NPG Healthcare Coverage Analyst',
+			status: 'ok',
+			detail:
+				'Enabled private Dify access for nationwide coverage discovery and exact-NPI public contact research.',
 			tier: 'Automation'
 		},
 		{
@@ -356,7 +376,8 @@ export const abundanceWorkflowContext: CanonWorkflowContext = {
 	activityEvents: [],
 	guardrails: [
 		'Answers use the sanitized Abundance delivery context only.',
-		'Safe to share: the live app, walkthrough links, and the generated delivery page.',
+		'Safe to share with NPG client operators: the live intake app, healthcare coverage analyst, walkthrough links, and generated delivery page.',
+		'NPPES contact fields and Exa enrichment support research only; operators must validate the route and apply outreach policy before contact or advertising use.',
 		'Keep private: token-bearing MCP URLs, raw Paylocity rows, local file paths, private Notion links, contact names or emails, and credential values.',
 		'If a token was shared outside secret storage, rotate it before relying on it in production.'
 	]
