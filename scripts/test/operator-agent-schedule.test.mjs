@@ -68,12 +68,13 @@ test('operator-agent schedule parses a deterministic once run', () => {
   assert.equal(options.patternTimeoutMs, 12345);
   assert.equal(options.modelProbeTimeoutMs, 12345);
   assert.equal(options.evalTimeoutMs, 12345);
-  assert.equal(plan.length, 2);
-  assert.equal(plan[0].id, 'pattern-review');
-  assert.ok(plan[0].args.includes('--pattern-scope'));
-  assert.ok(plan[0].args.includes('all'));
-  assert.equal(plan[1].id, 'batch-eval');
-  assert.ok(plan[1].args.includes('--no-revise'));
+  assert.equal(plan.length, 3);
+  assert.equal(plan[0].id, 'capabilities');
+  assert.equal(plan[1].id, 'pattern-review');
+  assert.ok(plan[1].args.includes('--pattern-scope'));
+  assert.ok(plan[1].args.includes('all'));
+  assert.equal(plan[2].id, 'batch-eval');
+  assert.ok(plan[2].args.includes('--no-revise'));
 });
 
 test('operator-agent schedule rejects an empty launchd job selection', () => {
@@ -100,20 +101,21 @@ test('operator-agent schedule defaults pattern review to deterministic even when
 
   assert.equal(options.noModel, false);
   assert.equal(options.patternNoModel, true);
-  assert.equal(plan.length, 3);
-  assert.ok(plan[0].args.includes('--no-model'));
-  assert.equal(plan[1].id, 'model-probe');
-  assert.ok(plan[1].args.includes('120000'));
-  assert.equal(plan[2].args.includes('--no-model'), false);
+  assert.equal(plan.length, 4);
+  assert.equal(plan[0].id, 'capabilities');
+  assert.ok(plan[1].args.includes('--no-model'));
+  assert.equal(plan[2].id, 'model-probe');
+  assert.ok(plan[2].args.includes('120000'));
+  assert.equal(plan[3].args.includes('--no-model'), false);
 
   const experimentOptions = parseArgs(['once', '--model-pattern-review', '--json', '--eval-limit', '1']);
   const experimentPlan = buildRunPlan(experimentOptions);
 
   assert.equal(experimentOptions.patternNoModel, false);
-  assert.equal(experimentPlan.length, 3);
-  assert.equal(experimentPlan[0].args.includes('--no-model'), false);
-  assert.equal(experimentPlan[1].id, 'model-probe');
-  assert.equal(experimentPlan[2].args.includes('--no-model'), false);
+  assert.equal(experimentPlan.length, 4);
+  assert.equal(experimentPlan[1].args.includes('--no-model'), false);
+  assert.equal(experimentPlan[2].id, 'model-probe');
+  assert.equal(experimentPlan[3].args.includes('--no-model'), false);
 });
 
 test('operator-agent schedule carries a bounded CTX packet into batch eval and its receipt', () => {
@@ -124,6 +126,14 @@ test('operator-agent schedule carries a bounded CTX packet into batch eval and i
     citations: [{ provider: 'codex', ctxEventId: 'event-a', ctxSessionId: 'session-a' }],
     highlights: ['Prior no-write schedule receipt passed.'],
     modelContext: 'CTX history is advisory. Cited history: codex:event-a.',
+    searchScope: 'cross-worktree-fallback',
+    repository: {
+      available: true,
+      profileId: 'local-readonly',
+      manifest: { path: 'config/operator-agent-capabilities.v1.json', sha256: 'manifest-sha', schemaVersion: 'operator-agent-capabilities.v1' },
+      sources: [{ id: 'agent-wiki', path: 'packages/database-layer/docs/agent-wiki/README.md', sha256: 'wiki-sha' }],
+      failure: null,
+    },
   };
   const plan = buildRunPlan(options, contextPacket);
   const batch = plan.find((step) => step.id === 'batch-eval');
@@ -139,6 +149,15 @@ test('operator-agent schedule carries a bounded CTX packet into batch eval and i
     citations: contextPacket.citations,
     highlightCount: 1,
     failure: null,
+    searchScope: 'cross-worktree-fallback',
+    repository: {
+      available: true,
+      profileId: 'local-readonly',
+      manifest: { path: 'config/operator-agent-capabilities.v1.json', sha256: 'manifest-sha', schemaVersion: 'operator-agent-capabilities.v1' },
+      sourceCount: 1,
+      sources: [{ id: 'agent-wiki', path: 'packages/database-layer/docs/agent-wiki/README.md', sha256: 'wiki-sha' }],
+      failure: null,
+    },
   });
 });
 
@@ -157,14 +176,16 @@ test('operator-agent schedule once writes a single regular-run receipt', () => {
   assert.equal(output.outcome, 'schedule-complete');
   assert.equal(output.passed, true);
   assert.equal(output.modelBacked, false);
-  assert.equal(output.runs.length, 2);
+  assert.equal(output.runs.length, 3);
   assert.deepEqual(
     output.runs.map((runResult) => [runResult.id, runResult.ok]),
     [
+      ['capabilities', true],
       ['pattern-review', true],
       ['batch-eval', true],
     ]
   );
+  assert.equal(output.scorecard.capabilityGatePassed, true);
   assert.equal(output.scorecard.patternReviewPassed, true);
   assert.equal(output.scorecard.batchEvalWritesPerformed, 0);
   assert.ok(output.nextRecommendedRun);
@@ -174,6 +195,40 @@ test('operator-agent schedule once writes a single regular-run receipt', () => {
   const receipt = JSON.parse(readFileSync(output.receiptPath, 'utf8'));
   assert.equal(receipt.mode, 'schedule-once');
   assert.equal(receipt.scorecard.batchEvalWritesPerformed, 0);
+});
+
+test('operator-agent schedule degrades model health when a model probe needs contract repair', () => {
+  const options = parseArgs(['once', '--eval-limit', '1']);
+  const report = scheduleReport(options, [
+    {
+      id: 'capabilities',
+      ok: true,
+      report: { passed: true, capabilityGate: true, profileId: 'local-readonly', manifestSha256: 'manifest-sha' },
+    },
+    {
+      id: 'pattern-review',
+      ok: true,
+      report: { passed: true, patternReviewSource: 'deterministic' },
+    },
+    {
+      id: 'model-probe',
+      ok: true,
+      report: { passed: true, outcome: 'model-probe-repaired', latencyMs: 44321, reliability: 'repaired' },
+    },
+    {
+      id: 'batch-eval',
+      ok: true,
+      report: {
+        passed: true,
+        scorecard: { candidatesProposed: 1, modelScoutOk: true, writesPerformed: 0 },
+      },
+    },
+  ]);
+
+  assert.equal(report.scorecard.capabilityGatePassed, true);
+  assert.equal(report.scorecard.modelProbeReliability, 'repaired');
+  assert.equal(report.scorecard.modelHealth, 'degraded');
+  assert.match(report.scorecard.modelIssues.join('\n'), /retry\/repair/);
 });
 
 test('operator-agent schedule marks model health degraded when model-backed scout falls back', () => {
