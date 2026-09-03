@@ -1,5 +1,6 @@
 <script lang="ts">
   import './page.css';
+  import { onMount } from 'svelte';
 
   const canonicalUrl = 'https://draw.createsomething.agency/download';
   const title = 'Draw for Mac | CREATE SOMETHING';
@@ -30,6 +31,17 @@
     }
   };
   const jsonLd = `<script type="application/ld+json">${JSON.stringify(applicationSchema).replace(/</g, '\\u003c')}</scr` + 'ipt>';
+
+  onMount(() => {
+    const htmlOverflow = document.documentElement.style.overflow;
+    const bodyOverflow = document.body.style.overflow;
+    document.documentElement.style.overflow = 'auto';
+    document.body.style.overflow = 'auto';
+    return () => {
+      document.documentElement.style.overflow = htmlOverflow;
+      document.body.style.overflow = bodyOverflow;
+    };
+  });
 </script>
 
 <svelte:head>

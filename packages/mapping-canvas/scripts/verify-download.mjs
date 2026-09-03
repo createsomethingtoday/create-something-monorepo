@@ -39,6 +39,13 @@ async function verify(viewport, label) {
   await page.getByRole('button', { name: /Pen tool/ }).waitFor();
   const workbenchPadding = await page.locator('.workbench').evaluate((node) => getComputedStyle(node).paddingTop);
   if (workbenchPadding !== '0px') throw new Error(`${label} landing styles leaked into the canvas (${workbenchPadding} workbench padding)`);
+  await page.getByRole('link', { name: 'Mac', exact: true }).click();
+  await page.getByRole('heading', { level: 1, name: /Keep the Mac authoritative/ }).waitFor();
+  const canScroll = await page.evaluate(() => {
+    window.scrollTo(0, document.documentElement.scrollHeight);
+    return getComputedStyle(document.body).overflow !== 'hidden' && scrollY > 0;
+  });
+  if (!canScroll) throw new Error(`${label} landing cannot scroll after client navigation from the canvas`);
   await context.close();
   return 'pass';
 }
