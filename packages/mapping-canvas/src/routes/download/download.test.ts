@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 const page = readFileSync(new URL('./+page.svelte', import.meta.url), 'utf8');
+const canvasPage = readFileSync(new URL('../+page.svelte', import.meta.url), 'utf8');
 const sitemap = readFileSync(new URL('../../../static/sitemap.xml', import.meta.url), 'utf8');
 const llms = readFileSync(new URL('../../../static/llms.txt', import.meta.url), 'utf8');
 
@@ -25,5 +26,9 @@ describe('Mac preview landing', () => {
     expect(sitemap).toContain('<loc>https://draw.createsomething.agency/download</loc>');
     expect(llms).toContain('## Mac preview');
     expect(llms).toContain('Developer ID signing');
+  });
+
+  it('opens the landing separately so the active canvas history stays mounted', () => {
+    expect(canvasPage).toContain('href="/download" target="_blank" rel="noreferrer"');
   });
 });

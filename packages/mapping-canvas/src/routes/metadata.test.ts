@@ -13,7 +13,7 @@ describe('public identity and discovery', () => {
   it('uses the governed CREATE SOMETHING logo in the product header', () => {
     expect(page).toContain('src="/brand/create-something-agency-white.svg"');
     expect(page).toContain('alt="CREATE SOMETHING .agency"');
-    expect(page).toContain('href="/download">Mac</a>');
+    expect(page).toContain('href="/download" target="_blank" rel="noreferrer">Mac</a>');
   });
 
   it('publishes canonical, social, and application metadata for Draw', () => {
