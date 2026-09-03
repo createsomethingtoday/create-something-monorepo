@@ -128,11 +128,11 @@
 
   function assertAgentControlReady() {
     if (!ready) throw new Error('Draw is still loading. Try the tool again.');
-    if (drawing || pinch || pendingTouchAction || resizingGroupId || resizeOrigin || movingObjectId || dragOrigin) throw new Error('Finish the active human gesture before applying an agent control.');
+    if (drawing || pinch || pendingTouchAction || resizingGroupId || resizeOrigin || movingObjectId || dragOrigin || noteInput.hasPending()) throw new Error('Finish the active human gesture before applying an agent control.');
   }
 
   function agentState() {
-    if (!ready) throw new Error('Draw is still loading. Try the tool again.');
+    assertAgentControlReady();
     return { document: JSON.parse(JSON.stringify(document)) as CanvasDocument, selectedIds: [...selectedIds], tool, canUndo: history.past.length > 0, canRedo: history.future.length > 0 };
   }
 

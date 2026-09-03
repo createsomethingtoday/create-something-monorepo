@@ -19,5 +19,9 @@ export function createNoteInputBuffer(commit: (id: string, text: string) => void
     for (const id of [...pending.keys()]) flush(id);
   }
 
-  return { schedule, flush, flushAll };
+  function hasPending() {
+    return pending.size > 0;
+  }
+
+  return { schedule, flush, flushAll, hasPending };
 }

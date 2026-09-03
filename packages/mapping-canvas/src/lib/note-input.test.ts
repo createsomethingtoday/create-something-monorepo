@@ -13,11 +13,13 @@ describe('note input buffer', () => {
     buffer.schedule('note-1', 'Bu');
     buffer.schedule('note-1', 'But');
 
+    expect(buffer.hasPending()).toBe(true);
     expect(commits).toEqual([]);
     vi.advanceTimersByTime(79);
     expect(commits).toEqual([]);
     vi.advanceTimersByTime(1);
     expect(commits).toEqual([['note-1', 'But']]);
+    expect(buffer.hasPending()).toBe(false);
   });
 
   it('flushes the latest text immediately when editing ends', () => {
@@ -30,5 +32,6 @@ describe('note input buffer', () => {
     vi.runAllTimers();
 
     expect(commits).toEqual([['note-1', 'Instant note']]);
+    expect(buffer.hasPending()).toBe(false);
   });
 });

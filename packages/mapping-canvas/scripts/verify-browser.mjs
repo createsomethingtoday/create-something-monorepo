@@ -170,6 +170,11 @@ try {
   });
   if (immediateTyping.value !== 'But loves pink more!' || immediateTyping.elapsed > 50) throw new Error(`Note keystrokes did not paint immediately: ${JSON.stringify(immediateTyping)}`);
   if (immediateTyping.label === 'Note: But loves pink more!') throw new Error('Note input rebuilt the canvas document during the keystroke burst');
+  const editingConflict = await page.evaluate(async () => {
+    try { await window.__drawWebMcpTools.draw_get_state.execute({}); return 'allowed'; }
+    catch (error) { return error instanceof Error ? error.message : String(error); }
+  });
+  if (!editingConflict.includes('Finish the active human gesture')) throw new Error(`Agent access was not paused for active note editing: ${editingConflict}`);
   await page.waitForFunction(() => document.querySelector('g[aria-label="Note: But loves pink more!"]'));
   await noteEditor.fill('MCP');
   await noteEditor.pressSequentially(' tools');
