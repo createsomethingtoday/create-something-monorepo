@@ -40,9 +40,11 @@ jobs:
           [[ "$BUILD_NUMBER" =~ ^[1-9][0-9]*$ ]]
           test "$configured" = "$RELEASE_VERSION"
       - run: pnpm install --frozen-lockfile
-      - run: cargo test --manifest-path apps/draw-native/src-tauri/Cargo.toml --lib
       - run: pnpm --dir packages/mapping-canvas check
       - run: pnpm --dir packages/mapping-canvas test -- --run
+      - name: Build native frontend for Tauri compile-time context
+        run: pnpm --dir apps/draw-native prepare:canvas
+      - run: cargo test --manifest-path apps/draw-native/src-tauri/Cargo.toml --lib
       - run: pnpm --dir apps/draw-native build:dmg
       - name: Build unsigned iPhone simulator archive
         run: CI=true pnpm --dir apps/draw-native exec tauri ios build --target aarch64-sim --archive-only --no-sign
@@ -117,9 +119,10 @@ jobs:
           done
       - name: Run release verification
         run: |
-          cargo test --manifest-path apps/draw-native/src-tauri/Cargo.toml --lib
           pnpm --dir packages/mapping-canvas check
           pnpm --dir packages/mapping-canvas test -- --run
+          pnpm --dir apps/draw-native prepare:canvas
+          cargo test --manifest-path apps/draw-native/src-tauri/Cargo.toml --lib
           pnpm --dir packages/mapping-canvas verify:native-ui
       - name: Build signed and notarized Mac DMG
         run: pnpm --dir apps/draw-native build:dmg
