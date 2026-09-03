@@ -37,6 +37,7 @@ If you intentionally switch to a per-user discovery path via `ZOOM_USER_ID`, the
 
 - `GET /health` — public health/config summary
 - `GET /status` — recent runs and recent ledger rows, requires `SYNC_API_KEY`
+- `GET /recordings/:meetingId?from=YYYY-MM-DD&to=YYYY-MM-DD` — read-only inspection of the same Zoom recording-list GET used by discovery; returns sanitized recording metadata without download URLs or tokens, requires `SYNC_API_KEY`
 - `POST /scan` — manual discovery trigger, requires `SYNC_API_KEY`
 - `POST /replay/:dedupKey` — replay a failed or stale transcript job, requires `SYNC_API_KEY`
 

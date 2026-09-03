@@ -15,6 +15,8 @@ interface ZoomMeeting {
   uuid?: string;
   topic?: string;
   start_time?: string;
+  duration?: number;
+  recording_count?: number;
   host_id?: string;
   recording_files?: ZoomRecordingFile[];
 }
@@ -27,6 +29,37 @@ interface ZoomRecordingFile {
   file_extension?: string;
   recording_type?: string;
   file_name?: string;
+  status?: string;
+  recording_start?: string;
+  recording_end?: string;
+  file_size?: number;
+}
+
+export interface ZoomRecordingInspection {
+  meetingId: string;
+  from: string;
+  to: string;
+  meetingsScanned: number;
+  occurrences: Array<{
+    meetingId: string | null;
+    meetingUuid: string | null;
+    topic: string;
+    startTime: string | null;
+    duration: number | null;
+    recordingCount: number;
+    transcriptFileCount: number;
+    recordingFiles: Array<{
+      id: string | null;
+      fileType: string | null;
+      fileExtension: string | null;
+      recordingType: string | null;
+      status: string | null;
+      recordingStart: string | null;
+      recordingEnd: string | null;
+      fileSize: number | null;
+      hasDownloadUrl: boolean;
+    }>;
+  }>;
 }
 
 export async function listTranscriptCandidates(env: Env): Promise<ZoomDiscoveryResult> {
@@ -38,22 +71,9 @@ export async function listTranscriptCandidates(env: Env): Promise<ZoomDiscoveryR
   const candidates = new Map<string, TranscriptCandidate>();
   let meetingsScanned = 0;
   let transcriptFilesScanned = 0;
-  let nextPageToken = '';
 
-  do {
-    const payload = await zoomApiFetch<ZoomRecordingListResponse>(
-      env,
-      buildRecordingsPath(env, {
-        from,
-        to,
-        pageSize,
-        nextPageToken,
-      }),
-    );
-
-    const meetings = Array.isArray(payload.meetings) ? payload.meetings : [];
+  await forEachRecordingPage(env, { from, to, pageSize }, async (meetings) => {
     meetingsScanned += meetings.length;
-
     for (const meeting of meetings) {
       const transcriptFiles = dedupeRecordingFiles(meeting.recording_files ?? []).filter(isTranscriptFile);
       transcriptFilesScanned += transcriptFiles.length;
@@ -66,9 +86,7 @@ export async function listTranscriptCandidates(env: Env): Promise<ZoomDiscoveryR
         candidates.set(candidate.dedupKey, candidate);
       }
     }
-
-    nextPageToken = payload.next_page_token?.trim() || '';
-  } while (nextPageToken);
+  });
 
   return {
     candidates: Array.from(candidates.values()),
@@ -77,6 +95,100 @@ export async function listTranscriptCandidates(env: Env): Promise<ZoomDiscoveryR
     from,
     to,
   };
+}
+
+export async function inspectMeetingRecordings(
+  env: Env,
+  meetingId: string,
+  input: { from?: string; to?: string } = {},
+): Promise<ZoomRecordingInspection> {
+  const normalizedMeetingId = meetingId.replace(/\s+/g, '').trim();
+  if (!normalizedMeetingId) {
+    throw new Error('meeting_id is required');
+  }
+
+  const lookbackDays = parsePositiveInt(env.ZOOM_LOOKBACK_DAYS, DEFAULT_LOOKBACK_DAYS);
+  const to = normalizeInspectionDate(input.to, 'to') ?? formatDate(new Date());
+  const from = normalizeInspectionDate(input.from, 'from')
+    ?? formatDate(new Date(new Date(`${to}T00:00:00Z`).getTime() - lookbackDays * 24 * 60 * 60 * 1000));
+  if (from > to) {
+    throw new Error('from must be on or before to');
+  }
+  const rangeDays = (
+    new Date(`${to}T00:00:00Z`).getTime() - new Date(`${from}T00:00:00Z`).getTime()
+  ) / (24 * 60 * 60 * 1000);
+  if (rangeDays > 30) {
+    throw new Error('from and to must be at most 30 days apart');
+  }
+
+  let meetingsScanned = 0;
+  const matchingMeetings: ZoomMeeting[] = [];
+  await forEachRecordingPage(
+    env,
+    {
+      from,
+      to,
+      pageSize: parsePositiveInt(env.ZOOM_PAGE_SIZE, DEFAULT_PAGE_SIZE),
+    },
+    (meetings) => {
+      meetingsScanned += meetings.length;
+      matchingMeetings.push(...meetings.filter(
+        (meeting) => stringify(meeting.id) === normalizedMeetingId,
+      ));
+    },
+  );
+
+  return {
+    meetingId: normalizedMeetingId,
+    from,
+    to,
+    meetingsScanned,
+    occurrences: matchingMeetings.map((meeting) => {
+      const recordingFiles = dedupeRecordingFiles(meeting.recording_files ?? []);
+      return {
+        meetingId: stringify(meeting.id),
+        meetingUuid: meeting.uuid?.trim() || null,
+        topic: cleanMeetingTitle(meeting.topic?.trim() || 'Zoom Meeting'),
+        startTime: meeting.start_time?.trim() || null,
+        duration: Number.isFinite(meeting.duration) ? meeting.duration ?? null : null,
+        recordingCount: Number.isFinite(meeting.recording_count)
+          ? meeting.recording_count ?? recordingFiles.length
+          : recordingFiles.length,
+        transcriptFileCount: recordingFiles.filter(isTranscriptFile).length,
+        recordingFiles: recordingFiles.map((file) => ({
+          id: file.id?.trim() || file.recording_id?.trim() || null,
+          fileType: file.file_type?.trim() || null,
+          fileExtension: file.file_extension?.trim() || null,
+          recordingType: file.recording_type?.trim() || null,
+          status: file.status?.trim() || null,
+          recordingStart: file.recording_start?.trim() || null,
+          recordingEnd: file.recording_end?.trim() || null,
+          fileSize: Number.isFinite(file.file_size) ? file.file_size ?? null : null,
+          hasDownloadUrl: Boolean(file.download_url?.trim()),
+        })),
+      };
+    }),
+  };
+}
+
+async function forEachRecordingPage(
+  env: Env,
+  input: { from: string; to: string; pageSize: number },
+  processPage: (meetings: ZoomMeeting[]) => void | Promise<void>,
+): Promise<void> {
+  let nextPageToken = '';
+
+  do {
+    const payload = await zoomApiFetch<ZoomRecordingListResponse>(
+      env,
+      buildRecordingsPath(env, {
+        ...input,
+        nextPageToken,
+      }),
+    );
+    await processPage(Array.isArray(payload.meetings) ? payload.meetings : []);
+    nextPageToken = payload.next_page_token?.trim() || '';
+  } while (nextPageToken);
 }
 
 export async function downloadTranscript(env: Env, candidate: TranscriptCandidate): Promise<string> {
@@ -129,6 +241,19 @@ export function buildCanonicalMeetingSourceUrl(
 function parsePositiveInt(raw: string | undefined, fallback: number): number {
   const parsed = Number.parseInt(raw ?? '', 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function normalizeInspectionDate(raw: string | undefined, label: 'from' | 'to'): string | null {
+  const value = raw?.trim();
+  if (!value) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    throw new Error(`${label} must use YYYY-MM-DD format`);
+  }
+  const parsed = new Date(`${value}T00:00:00Z`);
+  if (Number.isNaN(parsed.getTime()) || formatDate(parsed) !== value) {
+    throw new Error(`${label} must be a valid calendar date`);
+  }
+  return value;
 }
 
 function buildRecordingsPath(
