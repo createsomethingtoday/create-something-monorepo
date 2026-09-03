@@ -326,11 +326,13 @@ export async function enrichProviderProfessionalContact(input: z.input<typeof pr
     throw new Error(`Exa Agent run ${run.id} completed but returned unusable structured output.${reportedCost} No contact result was accepted; do not retry until the completed run is reviewed in Exa.`);
   }
   const structured = structuredResult.data;
-  const sourceCitations = Array.isArray(run.output?.grounding) ? run.output.grounding : [];
+  const sourceCitations = Array.isArray(run.output?.grounding)
+    ? run.output.grounding.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === 'object' && !Array.isArray(item))
+    : [];
   const matchAllowsCandidate = structured.match_status === 'verified_match' || structured.match_status === 'plausible_match';
   const acceptedProfileUrl = matchAllowsCandidate ? structured.professional_profile_url : undefined;
   const acceptedEmail = matchAllowsCandidate && requestedEmail ? structured.professional_email : undefined;
-  const acceptedPhone = matchAllowsCandidate && requestedPhone ? structured.professional_phone : undefined;
+  const acceptedPhone = matchAllowsCandidate && requestedPhone ? cleanProfessionalPhone(structured.professional_phone) : undefined;
   const hasCandidate = Boolean(acceptedEmail || acceptedPhone);
   const estimatedMaxCostUsd = 0.012 + (requestedEmail ? 0.02 : 0) + (requestedPhone ? 0.07 : 0);
   return {
@@ -365,6 +367,13 @@ function hasGroundedSourceUrl(value: unknown, depth = 0): boolean {
   if (Array.isArray(value)) return value.some((item) => hasGroundedSourceUrl(item, depth + 1));
   if (!value || typeof value !== 'object') return false;
   return Object.values(value).some((item) => hasGroundedSourceUrl(item, depth + 1));
+}
+
+function cleanProfessionalPhone(value: string | null | undefined): string | undefined {
+  const phone = cleanString(value);
+  if (!phone) return undefined;
+  const digitCount = phone.replace(/\D/g, '').length;
+  return digitCount >= 7 && digitCount <= 15 ? phone : undefined;
 }
 
 const requiredKinds = ['license_or_privilege', 'discipline', 'exclusion', 'practice_or_employment', 'contact_route', 'outreach_authority', 'recruiter_approval'];
