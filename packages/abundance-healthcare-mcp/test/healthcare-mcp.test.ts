@@ -515,7 +515,7 @@ test('Exa no-match responses suppress contradictory contact fields', async () =>
           professional_profile_url: 'https://example.test/wrong-person',
           professional_email: 'wrong-person@example.test', professional_phone: '+1 555 0100',
           current_professional_affiliation: null,
-          evidence_summary: 'No match; ignore wrong-person@example.test, +1 555 0100, and https://example.test/wrong-person.',
+          evidence_summary: 'No match; ignore wrong-person@example.test, +1 555 0100, https://example.test/wrong-person, and www.linkedin.com/in/wrong-person.',
         },
         grounding: [{ field: 'professional_profile_url', citations: [{ url: 'https://example.test/wrong-person' }] }],
       },
@@ -529,7 +529,7 @@ test('Exa no-match responses suppress contradictory contact fields', async () =>
   );
 
   assert.deepEqual(result.professional_contact, {});
-  assert.equal(result.evidence_summary, 'No match; ignore [redacted email], [redacted phone], and [redacted URL]');
+  assert.equal(result.evidence_summary, 'No match; ignore [redacted email], [redacted phone], [redacted URL] and [redacted URL]');
   assert.equal(result.contact_route_status, 'no_contact_candidate_found');
   assert.equal(result.identity_verification_status, 'operator_review_required');
 });
@@ -552,7 +552,7 @@ test('Exa verified-match labels still require a usable source citation', async (
           professional_email: null, professional_phone: null,
           current_professional_affiliation: null, evidence_summary: 'No citation was emitted.',
         },
-        grounding: [],
+        grounding: [{ url: 'https://' }],
       },
       usage: {}, costDollars: { total: 0.012 },
     });

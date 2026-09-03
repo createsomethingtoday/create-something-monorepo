@@ -363,10 +363,19 @@ export async function enrichProviderProfessionalContact(input: z.input<typeof pr
 
 function hasGroundedSourceUrl(value: unknown, depth = 0): boolean {
   if (depth > 6) return false;
-  if (typeof value === 'string') return /^https:\/\//i.test(value);
+  if (typeof value === 'string') return isUsableHttpsUrl(value);
   if (Array.isArray(value)) return value.some((item) => hasGroundedSourceUrl(item, depth + 1));
   if (!value || typeof value !== 'object') return false;
   return Object.values(value).some((item) => hasGroundedSourceUrl(item, depth + 1));
+}
+
+function isUsableHttpsUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && url.hostname.includes('.') && !url.username && !url.password;
+  } catch {
+    return false;
+  }
 }
 
 function cleanProfessionalPhone(value: string | null | undefined): string | undefined {
@@ -380,6 +389,7 @@ function redactContactTokens(value: string): string {
   return value
     .replace(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, '[redacted email]')
     .replace(/https?:\/\/\S+/gi, '[redacted URL]')
+    .replace(/\b(?:www\.)?(?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/[^\s]*)?/gi, '[redacted URL]')
     .replace(/\+?\d[\d().\s-]{6,}\d/g, '[redacted phone]');
 }
 
