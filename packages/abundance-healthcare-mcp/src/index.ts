@@ -331,7 +331,9 @@ export async function enrichProviderProfessionalContact(input: z.input<typeof pr
     : [];
   const matchAllowsCandidate = structured.match_status === 'verified_match' || structured.match_status === 'plausible_match';
   const sourceCitations = matchAllowsCandidate ? collectGroundedCitationUrls(normalizedCitations) : [];
-  const acceptedProfileUrl = matchAllowsCandidate ? structured.professional_profile_url : undefined;
+  const acceptedProfileUrl = matchAllowsCandidate
+    ? cleanPublicHttpsUrl(structured.professional_profile_url)
+    : undefined;
   const acceptedEmail = matchAllowsCandidate && requestedEmail ? structured.professional_email : undefined;
   const acceptedPhone = matchAllowsCandidate && requestedPhone ? cleanProfessionalPhone(structured.professional_phone) : undefined;
   const hasCandidate = Boolean(acceptedEmail || acceptedPhone);
@@ -359,7 +361,7 @@ export async function enrichProviderProfessionalContact(input: z.input<typeof pr
     recruiting_readiness_impact: 'none',
     estimated_max_cost_usd: Number(estimatedMaxCostUsd.toFixed(3)),
     actual_cost_usd: typeof run.costDollars?.total === 'number' ? run.costDollars.total : undefined,
-    usage: run.usage,
+    usage: sanitizeExaUsage(run.usage),
     enrichment_limitation: 'Exa enrichment returns source-backed professional contact candidates, not verified ownership, current employment, availability, consent, advertising eligibility, or recruiting readiness. An operator must resolve identity and validate the route before any use.',
   };
 }
@@ -381,14 +383,36 @@ function collectGroundedCitationUrls(value: unknown, depth = 0, seen = new Set<s
   if (!value || typeof value !== 'object') return [];
   const citation = value as Record<string, unknown>;
   const results: Array<{ url: string }> = [];
-  if (typeof citation.url === 'string' && isUsableHttpsUrl(citation.url) && !seen.has(citation.url)) {
-    seen.add(citation.url);
-    results.push({ url: citation.url });
+  const safeUrl = cleanPublicHttpsUrl(citation.url);
+  if (safeUrl && !seen.has(safeUrl)) {
+    seen.add(safeUrl);
+    results.push({ url: safeUrl });
   }
   if (Array.isArray(citation.citations)) {
     results.push(...collectGroundedCitationUrls(citation.citations, depth + 1, seen));
   }
   return results;
+}
+
+function cleanPublicHttpsUrl(value: unknown): string | undefined {
+  if (typeof value !== 'string' || !isUsableHttpsUrl(value)) return undefined;
+  const url = new URL(value);
+  let decodedPathname: string;
+  try { decodedPathname = decodeURIComponent(url.pathname); } catch { return undefined; }
+  if (/@/.test(decodedPathname)) return undefined;
+  url.search = '';
+  url.hash = '';
+  return url.toString();
+}
+
+function sanitizeExaUsage(value: Record<string, unknown> | undefined): Record<string, number> | undefined {
+  if (!value) return undefined;
+  const allowedKeys = ['agentComputeUnits', 'searches', 'emails', 'phoneNumbers'] as const;
+  const entries = allowedKeys.flatMap((key) => {
+    const count = value[key];
+    return typeof count === 'number' && Number.isFinite(count) && count >= 0 ? [[key, count] as const] : [];
+  });
+  return entries.length > 0 ? Object.fromEntries(entries) : undefined;
 }
 
 function isUsableHttpsUrl(value: string): boolean {
