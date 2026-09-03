@@ -321,7 +321,7 @@ export async function enrichProviderProfessionalContact(input: z.input<typeof pr
     const reportedCost = typeof run.costDollars?.total === 'number'
       ? ` Reported cost: $${run.costDollars.total.toFixed(3)}.`
       : '';
-    throw new Error(`Exa Agent run ${run.id} completed but returned unusable structured output.${reportedCost} No contact result was accepted; do not retry until the completed run is reviewed in Exa.`);
+    throw new Error(`Exa Agent completed but returned unusable structured output.${reportedCost} No contact result was accepted; do not retry until the completed run is reviewed in Exa.`);
   }
   const structured = structuredResult.data;
   const normalizedCitations = Array.isArray(run.output?.grounding)
@@ -567,7 +567,7 @@ function formatTerminalExaRunError(run: ExaAgentRun): string {
   const reportedCost = typeof run.costDollars?.total === 'number'
     ? ` Reported cost: $${run.costDollars.total.toFixed(3)}.`
     : '';
-  return `Exa Agent run ${run.id} ended with terminal status ${run.status}.${reportedCost} No contact result was accepted; do not retry until the terminal run is reviewed in Exa.`;
+  return `Exa Agent ended with terminal status ${run.status}.${reportedCost} No contact result was accepted; do not retry until the terminal run is reviewed in Exa.`;
 }
 
 async function fetchAndReadExaRun(
@@ -642,10 +642,9 @@ async function cancelExaRun(
 
 async function readExaRun(response: Response, operation: 'create' | 'poll'): Promise<ExaAgentRun> {
   if (!response.ok) {
-    const requestId = response.headers.get('x-request-id');
     throw new ExaRunHttpError(
       response.status,
-      `Exa Agent ${operation} returned HTTP ${response.status}${requestId ? ` (request ${requestId})` : ''}. No contact result was accepted.`,
+      `Exa Agent ${operation} returned HTTP ${response.status}. No contact result was accepted.`,
     );
   }
   let payload: unknown;

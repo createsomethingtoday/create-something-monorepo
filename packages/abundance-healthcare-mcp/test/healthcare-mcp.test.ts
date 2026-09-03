@@ -497,7 +497,7 @@ test('terminal failed Exa runs preserve safe cost metadata and no-retry guidance
       { npi: '1265049910', purpose: 'recruiting_outreach', confirm_paid_enrichment: true },
       { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn },
     ),
-    /agent_run_failed_paid.*terminal status failed.*Reported cost: \$0\.012.*do not retry/i,
+    /terminal status failed.*Reported cost: \$0\.012.*do not retry/i,
   );
 });
 
@@ -523,7 +523,8 @@ test('completed Exa runs with unusable output are explicitly non-retryable', asy
       { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn },
     ),
     (error: unknown) => {
-      assert.match(String(error), /agent_run_invalid_output.*completed.*Reported cost: \$0\.032.*do not retry/i);
+      assert.match(String(error), /completed.*Reported cost: \$0\.032.*do not retry/i);
+      assert.doesNotMatch(String(error), /agent_run_invalid_output/);
       assert.doesNotMatch(String(error), /fake-contact/i);
       return true;
     },
