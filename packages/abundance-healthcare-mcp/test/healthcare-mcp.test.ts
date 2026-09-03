@@ -445,6 +445,30 @@ test('Exa create connection failures are indeterminate and do not reflect transp
   );
 });
 
+test('terminal failed Exa runs preserve safe cost metadata and no-retry guidance', async () => {
+  const fetchFn: typeof fetch = async (input) => {
+    if (String(input).includes('/api/abundance/healthcare-providers/nationwide')) {
+      return Response.json({ success: true, data: {
+        report,
+        providers: [{ npi: '1265049910', name: 'Jane Test Provider', source_fetched_at: '2026-09-02T01:39:07.502Z' }],
+        readiness: [], total: 1, limit: 1, offset: 0,
+      } } satisfies HealthcareApiResponse);
+    }
+    return Response.json({
+      id: 'agent_run_failed_paid', object: 'agent_run', status: 'failed',
+      costDollars: { total: 0.012 },
+    });
+  };
+
+  await assert.rejects(
+    enrichProviderProfessionalContact(
+      { npi: '1265049910', purpose: 'recruiting_outreach', confirm_paid_enrichment: true },
+      { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn },
+    ),
+    /agent_run_failed_paid.*terminal status failed.*Reported cost: \$0\.012.*do not retry/i,
+  );
+});
+
 test('completed Exa runs with unusable output are explicitly non-retryable', async () => {
   const fetchFn: typeof fetch = async (input) => {
     if (String(input).includes('/api/abundance/healthcare-providers/nationwide')) {
@@ -490,7 +514,8 @@ test('Exa no-match responses suppress contradictory contact fields', async () =>
           match_status: 'no_match', identity_reason: 'The profile belongs to another person.',
           professional_profile_url: 'https://example.test/wrong-person',
           professional_email: 'wrong-person@example.test', professional_phone: '+1 555 0100',
-          current_professional_affiliation: null, evidence_summary: 'No exact match.',
+          current_professional_affiliation: null,
+          evidence_summary: 'No match; ignore wrong-person@example.test, +1 555 0100, and https://example.test/wrong-person.',
         },
         grounding: [{ field: 'professional_profile_url', citations: [{ url: 'https://example.test/wrong-person' }] }],
       },
@@ -504,6 +529,7 @@ test('Exa no-match responses suppress contradictory contact fields', async () =>
   );
 
   assert.deepEqual(result.professional_contact, {});
+  assert.equal(result.evidence_summary, 'No match; ignore [redacted email], [redacted phone], and [redacted URL]');
   assert.equal(result.contact_route_status, 'no_contact_candidate_found');
   assert.equal(result.identity_verification_status, 'operator_review_required');
 });

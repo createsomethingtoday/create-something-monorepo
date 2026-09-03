@@ -340,14 +340,14 @@ export async function enrichProviderProfessionalContact(input: z.input<typeof pr
     requested_purpose: parsed.purpose,
     requested_contact_types: parsed.contact_types,
     match_status: structured.match_status,
-    identity_reason: structured.identity_reason,
+    identity_reason: redactContactTokens(structured.identity_reason),
     professional_contact: compactObject({
       profile_url: acceptedProfileUrl ?? undefined,
       email: acceptedEmail ?? undefined,
       phone: acceptedPhone ?? undefined,
       current_affiliation: matchAllowsCandidate ? structured.current_professional_affiliation ?? undefined : undefined,
     }),
-    evidence_summary: structured.evidence_summary ?? undefined,
+    evidence_summary: structured.evidence_summary ? redactContactTokens(structured.evidence_summary) : undefined,
     source_citations: sourceCitations,
     contact_route_status: hasCandidate ? 'unverified_enrichment_candidate' : 'no_contact_candidate_found',
     identity_verification_status: structured.match_status === 'verified_match' && hasGroundedSourceUrl(sourceCitations) ? 'source_grounded' : 'operator_review_required',
@@ -374,6 +374,13 @@ function cleanProfessionalPhone(value: string | null | undefined): string | unde
   if (!phone) return undefined;
   const digitCount = phone.replace(/\D/g, '').length;
   return digitCount >= 7 && digitCount <= 15 ? phone : undefined;
+}
+
+function redactContactTokens(value: string): string {
+  return value
+    .replace(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, '[redacted email]')
+    .replace(/https?:\/\/\S+/gi, '[redacted URL]')
+    .replace(/\+?\d[\d().\s-]{6,}\d/g, '[redacted phone]');
 }
 
 const requiredKinds = ['license_or_privilege', 'discipline', 'exclusion', 'practice_or_employment', 'contact_route', 'outreach_authority', 'recruiter_approval'];
@@ -452,7 +459,7 @@ async function createAndAwaitExaRun(body: Record<string, unknown>, apiKey: strin
   }
   if (run.status === 'completed') return run;
   if (run.status === 'failed' || run.status === 'cancelled') {
-    throw new Error(`Exa Agent enrichment ended with status ${run.status}. No contact result was accepted.`);
+    throw new Error(formatTerminalExaRunError(run));
   }
   const pollIntervalMs = Math.min(Math.max(options.exaPollIntervalMs ?? 1_000, 100), 5_000);
   const waitFn = options.waitFn ?? ((milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds)));
@@ -478,7 +485,7 @@ async function createAndAwaitExaRun(body: Record<string, unknown>, apiKey: strin
     }
     if (run.status === 'completed') return run;
     if (run.status === 'failed' || run.status === 'cancelled') {
-      throw new Error(`Exa Agent enrichment ended with status ${run.status}. No contact result was accepted.`);
+      throw new Error(formatTerminalExaRunError(run));
     }
   }
   const cancellationConfirmed = await cancelExaRun(fetchFn, baseUrl, run.id, apiKey);
@@ -486,6 +493,13 @@ async function createAndAwaitExaRun(body: Record<string, unknown>, apiKey: strin
     throw new Error(`Exa Agent enrichment did not complete within ${timeoutMs}ms and was cancelled. Retry later or use the no-cost registry contact tool.`);
   }
   throw new Error(`Exa Agent enrichment did not complete within ${timeoutMs}ms, and cancellation could not be confirmed. The paid run may still be active; do not retry until its Exa run status is reviewed.`);
+}
+
+function formatTerminalExaRunError(run: ExaAgentRun): string {
+  const reportedCost = typeof run.costDollars?.total === 'number'
+    ? ` Reported cost: $${run.costDollars.total.toFixed(3)}.`
+    : '';
+  return `Exa Agent run ${run.id} ended with terminal status ${run.status}.${reportedCost} No contact result was accepted; do not retry until the terminal run is reviewed in Exa.`;
 }
 
 async function fetchAndReadExaRun(
