@@ -1,4 +1,4 @@
-const NPG_EMAIL_DOMAIN = 'thenursepractitionergroup.com';
+const NPG_EMAIL_DOMAINS = new Set(['thenursepractitionergroup.com', 'thenpgroup.com']);
 
 function parseEmailList(raw: string | undefined): Set<string> {
 	return new Set(
@@ -17,7 +17,7 @@ export function canAccessNpgHealthcareAnalyst(
 	if (!normalized) return false;
 
 	const [, domain, ...extra] = normalized.split('@');
-	if (extra.length === 0 && domain === NPG_EMAIL_DOMAIN) return true;
+	if (extra.length === 0 && NPG_EMAIL_DOMAINS.has(domain)) return true;
 
 	return parseEmailList(agencyOperatorEmails).has(normalized);
 }

@@ -24,7 +24,10 @@ test('the NPG client delivery exposes the enabled healthcare coverage analyst', 
 	assert.match(analyst.type ?? '', /coverage/i);
 	assert.equal(isAgencyProtectedPath(analyst.href), true);
 	assert.equal(canAccessNpgHealthcareAnalyst('operator@thenursepractitionergroup.com', undefined), true);
+	assert.equal(canAccessNpgHealthcareAnalyst('operator@thenpgroup.com', undefined), true);
+	assert.equal(canAccessNpgHealthcareAnalyst(' OPERATOR@THENPGROUP.COM ', undefined), true);
 	assert.equal(canAccessNpgHealthcareAnalyst('owner@createsomething.io', 'owner@createsomething.io'), true);
+	assert.equal(canAccessNpgHealthcareAnalyst('operator@sub.thenpgroup.com', undefined), false);
 	assert.equal(canAccessNpgHealthcareAnalyst('unrelated@example.com', 'owner@createsomething.io'), false);
 	assert.throws(
 		() =>
