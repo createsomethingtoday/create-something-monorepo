@@ -2,6 +2,8 @@
 
 Draw is a free, local-first canvas for mapping meetings, spatial notes, and live visual explanation. The public app runs at [draw.createsomething.agency](https://draw.createsomething.agency/).
 
+The [Mac preview landing](https://draw.createsomething.agency/download) keeps the production web canvas primary and routes the unsigned native candidate through disclosed, individual delivery. A general-public DMG link remains held until Developer ID signing, Apple notarization, Gatekeeper verification, and clean install acceptance pass.
+
 The source is MIT licensed as part of the public [CREATE SOMETHING monorepo](https://github.com/createsomethingtoday/create-something-monorepo). Contributions are welcome. Read the repository [contribution guide](https://github.com/createsomethingtoday/create-something-monorepo/blob/main/CONTRIBUTING.md), [code of conduct](https://github.com/createsomethingtoday/create-something-monorepo/blob/main/CODE_OF_CONDUCT.md), and [security policy](https://github.com/createsomethingtoday/create-something-monorepo/blob/main/SECURITY.md) before opening a pull request or report.
 
 ## Run locally
@@ -17,6 +19,7 @@ Quality gates:
 pnpm --filter @create-something/mapping-canvas test
 pnpm --filter @create-something/mapping-canvas check
 pnpm --filter @create-something/mapping-canvas build
+pnpm --filter @create-something/mapping-canvas verify:download
 ```
 
 ## WebMCP site tools
