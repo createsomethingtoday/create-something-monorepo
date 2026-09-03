@@ -39,6 +39,7 @@ declare global {
 	namespace App {
 		interface Platform {
 			env?: {
+				[key: `DIFY_${string}`]: string | undefined;
 				DB?: D1Database;
 				JOBS_DB?: D1Database;
 				UPLOADS?: R2Bucket;
