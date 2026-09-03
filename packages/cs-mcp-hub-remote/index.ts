@@ -1,4 +1,5 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { CfWorkerJsonSchemaValidator } from '@modelcontextprotocol/sdk/validation/cfworker';
 import { Langfuse } from 'langfuse';
 import { runProductionWatchdog } from './production-watchdog.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
@@ -1202,10 +1203,7 @@ async function connectSingleDownstream(
 
   const maxBootstrapAttempts = 2;
   for (let attempt = 1; attempt <= maxBootstrapAttempts; attempt += 1) {
-    const client = new Client({
-      name: `${HUB_NAME}:${name}`,
-      version: HUB_VERSION,
-    });
+    const client = createDownstreamClient(name);
 
     try {
       const transport = new StreamableHTTPClientTransport(new URL(config.url), { requestInit });
@@ -1245,6 +1243,18 @@ async function connectSingleDownstream(
   }
 
   return { name, error: `Unknown downstream bootstrap failure for "${name}"` };
+}
+
+export function createDownstreamClient(name: string): Client {
+  return new Client(
+    {
+      name: `${HUB_NAME}:${name}`,
+      version: HUB_VERSION,
+    },
+    {
+      jsonSchemaValidator: new CfWorkerJsonSchemaValidator(),
+    },
+  );
 }
 
 function isRetryableBootstrapTimeoutError(message: string, serverName: string): boolean {
@@ -1355,10 +1365,7 @@ async function callDownstreamToolWithTrace(
   trace: InvocationTrace,
   accountId: string,
 ): Promise<any> {
-  const client = new Client({
-    name: `${HUB_NAME}:${server.name}:proxy`,
-    version: HUB_VERSION,
-  });
+  const client = createDownstreamClient(`${server.name}:proxy`);
 
   const headers: Record<string, string> = {
     ...server.baseHeaders,
