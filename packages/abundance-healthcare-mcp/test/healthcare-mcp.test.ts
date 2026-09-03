@@ -583,14 +583,15 @@ test('Exa enrichment suppresses contact types the operator did not request', asy
       id: 'agent_run_unrequested_phone', object: 'agent_run', status: 'completed',
       output: { structured: {
         match_status: 'verified_match', identity_reason: 'Exact NPI match.',
-        professional_profile_url: 'https://example.test/provider-profile?phone=15550103#contact', professional_email: null,
+        professional_profile_url: 'https://example.test/provider/4175550103?tracking=1#contact', professional_email: null,
         professional_phone: '+1 555 0100',
         current_professional_affiliation: 'Example Clinic; alternate phones +1 555 0101 and 417/555/0100; alternate@example.test',
         evidence_summary: 'A phone was returned despite the email-only request.',
-      }, grounding: [{
-        url: 'https://example.test/provider',
-        snippet: 'Call +1 555 0102 or use hidden-phone@example.test.',
-      }] },
+      }, grounding: [
+        { url: 'https://example.test/provider/4175550104', snippet: 'Unrequested phone path.' },
+        { url: 'https://registry.example.test/npi/1265049910', snippet: 'Known NPI path.' },
+        { url: 'https://example.test/provider?phone=4175550105#contact', snippet: 'Query data is discarded.' },
+      ] },
       costDollars: { total: 0.032 },
       usage: { searches: 1, debug: 'hidden-phone@example.test' },
     });
@@ -605,9 +606,12 @@ test('Exa enrichment suppresses contact types the operator did not request', asy
   );
 
   assert.equal(result.professional_contact.phone, undefined);
-  assert.equal(result.professional_contact.profile_url, 'https://example.test/provider-profile');
+  assert.equal(result.professional_contact.profile_url, undefined);
   assert.equal(result.professional_contact.current_affiliation, 'Example Clinic; alternate phones [redacted phone] and [redacted phone]; [redacted email]');
-  assert.deepEqual(result.source_citations, [{ url: 'https://example.test/provider' }]);
+  assert.deepEqual(result.source_citations, [
+    { url: 'https://registry.example.test/npi/1265049910' },
+    { url: 'https://example.test/provider' },
+  ]);
   assert.deepEqual(result.usage, { searches: 1 });
   assert.equal(result.contact_route_status, 'no_contact_candidate_found');
 });

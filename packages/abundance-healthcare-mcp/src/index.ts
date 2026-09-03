@@ -330,9 +330,11 @@ export async function enrichProviderProfessionalContact(input: z.input<typeof pr
     ? run.output.grounding.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === 'object' && !Array.isArray(item))
     : [];
   const matchAllowsCandidate = structured.match_status === 'verified_match' || structured.match_status === 'plausible_match';
-  const sourceCitations = matchAllowsCandidate ? collectGroundedCitationUrls(normalizedCitations) : [];
+  const sourceCitations = matchAllowsCandidate
+    ? collectGroundedCitationUrls(normalizedCitations, provider.npi, requestedPhone)
+    : [];
   const acceptedProfileUrl = matchAllowsCandidate
-    ? cleanPublicHttpsUrl(structured.professional_profile_url)
+    ? cleanPublicHttpsUrl(structured.professional_profile_url, provider.npi, requestedPhone)
     : undefined;
   const acceptedEmail = matchAllowsCandidate && requestedEmail ? structured.professional_email : undefined;
   const acceptedPhone = matchAllowsCandidate && requestedPhone ? cleanProfessionalPhone(structured.professional_phone) : undefined;
@@ -375,31 +377,41 @@ function hasGroundedSourceUrl(value: unknown, depth = 0): boolean {
   return Array.isArray(citation.citations) && hasGroundedSourceUrl(citation.citations, depth + 1);
 }
 
-function collectGroundedCitationUrls(value: unknown, depth = 0, seen = new Set<string>()): Array<{ url: string }> {
+function collectGroundedCitationUrls(
+  value: unknown,
+  allowedNpi: string,
+  allowPhone: boolean,
+  depth = 0,
+  seen = new Set<string>(),
+): Array<{ url: string }> {
   if (depth > 6) return [];
   if (Array.isArray(value)) {
-    return value.flatMap((item) => collectGroundedCitationUrls(item, depth + 1, seen));
+    return value.flatMap((item) => collectGroundedCitationUrls(item, allowedNpi, allowPhone, depth + 1, seen));
   }
   if (!value || typeof value !== 'object') return [];
   const citation = value as Record<string, unknown>;
   const results: Array<{ url: string }> = [];
-  const safeUrl = cleanPublicHttpsUrl(citation.url);
+  const safeUrl = cleanPublicHttpsUrl(citation.url, allowedNpi, allowPhone);
   if (safeUrl && !seen.has(safeUrl)) {
     seen.add(safeUrl);
     results.push({ url: safeUrl });
   }
   if (Array.isArray(citation.citations)) {
-    results.push(...collectGroundedCitationUrls(citation.citations, depth + 1, seen));
+    results.push(...collectGroundedCitationUrls(citation.citations, allowedNpi, allowPhone, depth + 1, seen));
   }
   return results;
 }
 
-function cleanPublicHttpsUrl(value: unknown): string | undefined {
+function cleanPublicHttpsUrl(value: unknown, allowedNpi: string, allowPhone: boolean): string | undefined {
   if (typeof value !== 'string' || !isUsableHttpsUrl(value)) return undefined;
   const url = new URL(value);
   let decodedPathname: string;
   try { decodedPathname = decodeURIComponent(url.pathname); } catch { return undefined; }
   if (/@/.test(decodedPathname)) return undefined;
+  if (!allowPhone) {
+    const phoneLikeTokens = `${url.hostname}${decodedPathname}`.match(/\+?\d[\d().\s\/-]{6,}\d/g) ?? [];
+    if (phoneLikeTokens.some((token) => token.replace(/\D/g, '') !== allowedNpi)) return undefined;
+  }
   url.search = '';
   url.hash = '';
   return url.toString();
