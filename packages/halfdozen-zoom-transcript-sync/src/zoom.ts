@@ -112,6 +112,12 @@ export async function inspectMeetingRecordings(
   if (from > to) {
     throw new Error('from must be on or before to');
   }
+  const rangeDays = (
+    new Date(`${to}T00:00:00Z`).getTime() - new Date(`${from}T00:00:00Z`).getTime()
+  ) / (24 * 60 * 60 * 1000);
+  if (rangeDays > 30) {
+    throw new Error('from and to must be at most 30 days apart');
+  }
 
   const discovery = await listRecordingMeetings(env, {
     from,

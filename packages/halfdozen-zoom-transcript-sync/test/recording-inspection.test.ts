@@ -163,3 +163,18 @@ test('GET recording inspection requires the sync key and returns sanitized metad
   assert.equal(JSON.stringify(body).includes('secret-video-download'), false);
   assert.equal(JSON.stringify(body).includes('test-access-token'), false);
 });
+
+test('recording inspection rejects ranges wider than Zoom supports', async () => {
+  await assert.rejects(
+    inspectMeetingRecordings(
+      {
+        ZOOM_ACCOUNT_ID: 'account-id',
+        ZOOM_CLIENT_ID: 'client-id',
+        ZOOM_CLIENT_SECRET: 'client-secret',
+      } as Env,
+      '87210304877',
+      { from: '2026-07-01', to: '2026-09-03' },
+    ),
+    /at most 30 days apart/,
+  );
+});
