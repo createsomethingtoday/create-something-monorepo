@@ -53,6 +53,10 @@ async function nativePage(role, viewport, restoredQueue = false) {
     window.__nativeConflictNextReplace = false;
     window.__nativeConflictInFlight = false;
     window.__nativeQueueFullNextReplace = false;
+    window.__nativeRefreshDelay = false;
+    window.__nativeRefreshInFlight = false;
+    window.__nativeReplacementInFlight = false;
+    window.__nativeViewportDelay = false;
     window.__TAURI_INTERNALS__ = {
       invoke: async (command, args = {}) => {
         window.__nativeCalls.push({ command, args });
@@ -67,10 +71,32 @@ async function nativePage(role, viewport, restoredQueue = false) {
           if (online) document = { ...document, title: 'Mac authoritative reconciliation' };
           return { status: online ? 'synced' : 'paired', revision, document, queueDepth: online ? 0 : 1, online };
         }
-        if (command === 'draw_companion_refresh') return { status: 'paired', sessionId: 'session-native', revision, document, queueDepth: 0, online, certificateFingerprint: 'abcdef0123456789'.repeat(4) };
+        if (command === 'draw_companion_refresh') {
+          if (window.__nativeRefreshDelay) {
+            window.__nativeRefreshDelay = false;
+            window.__nativeRefreshInFlight = true;
+            const staleDocument = { ...structuredClone(document), viewport: { x: 0, y: 0, zoom: 1 } };
+            await new Promise((resolve) => setTimeout(resolve, 200));
+            window.__nativeRefreshInFlight = false;
+            return { status: 'paired', sessionId: 'session-native', revision: revision + 1, document: staleDocument, queueDepth: 0, online, certificateFingerprint: 'abcdef0123456789'.repeat(4) };
+          }
+          return { status: 'paired', sessionId: 'session-native', revision, document, queueDepth: 0, online, certificateFingerprint: 'abcdef0123456789'.repeat(4) };
+        }
         if (command === 'draw_companion_forget') return { status: 'unpaired' };
+        if (command === 'draw_host_replace_document') {
+          window.__nativeReplacementInFlight = true;
+          await new Promise((resolve) => setTimeout(resolve, 200));
+          document = structuredClone(args.document);
+          revision += 1;
+          window.__nativeReplacementInFlight = false;
+          return { status: 'applied', revision, document, queueDepth: 0, online };
+        }
         if (command === 'draw_host_apply_local' || command === 'draw_companion_submit') {
           const operation = args.operation;
+          if (operation.type === 'set_viewport' && window.__nativeViewportDelay) {
+            window.__nativeViewportDelay = false;
+            await new Promise((resolve) => setTimeout(resolve, 200));
+          }
           if (operation.type === 'replace_objects' && window.__nativeQueueFullNextReplace) {
             window.__nativeQueueFullNextReplace = false;
             return { status: 'queue_full', error: 'Offline queue is full', revision, document, queueDepth: 500, online: false };
@@ -124,6 +150,21 @@ try {
   const revoke = host.page.getByRole('button', { name: 'Revoke', exact: true });
   if (await revoke.evaluate((button) => getComputedStyle(button).whiteSpace !== 'nowrap')) throw new Error('Mac pairing Revoke action can wrap inside the paired-device row');
   await host.page.screenshot({ path: `${outputRoot}mac-pairing.png`, fullPage: true });
+  await host.page.getByRole('button', { name: 'Close pairing' }).click();
+  const hostSurface = host.page.locator('svg');
+  const hostBox = await hostSurface.boundingBox();
+  if (!hostBox) throw new Error('Mac canvas surface unavailable');
+  await host.page.getByRole('button', { name: /Note tool/ }).click();
+  await host.page.mouse.click(hostBox.x + 220, hostBox.y + 220);
+  await host.page.waitForFunction(() => window.__nativeCalls.some(({ command, args }) => command === 'draw_host_apply_local' && args?.operation?.type === 'put_object'));
+  const hostViewportSubmits = await host.page.evaluate(() => window.__nativeCalls.filter(({ command, args }) => command === 'draw_host_apply_local' && args?.operation?.type === 'set_viewport').length);
+  await host.page.mouse.move(hostBox.x + 320, hostBox.y + 280);
+  await host.page.mouse.wheel(18, -12);
+  await host.page.getByRole('button', { name: 'Undo' }).click();
+  await host.page.waitForFunction(() => window.__nativeReplacementInFlight);
+  await host.page.waitForTimeout(400);
+  const hostViewportSubmitsAfterUndo = await host.page.evaluate(() => window.__nativeCalls.filter(({ command, args }) => command === 'draw_host_apply_local' && args?.operation?.type === 'set_viewport').length);
+  if (hostViewportSubmitsAfterUndo !== hostViewportSubmits) throw new Error('Mac Undo allowed a debounced wheel viewport to submit after the history replacement');
   if (host.errors.length) throw new Error(`Mac native-shell errors: ${host.errors.join(' | ')}`);
   await host.context.close();
 
@@ -168,6 +209,55 @@ try {
   const surface = page.locator('svg');
   const box = await surface.boundingBox();
   if (!box) throw new Error('iPhone canvas surface unavailable');
+  await title.fill('Wheel race');
+  await page.mouse.move(box.x + 180, box.y + 240);
+  await page.mouse.wheel(40, -30);
+  await page.waitForTimeout(450);
+  const viewportTransformAfterRace = await surface.locator('g[data-agent-camera]').getAttribute('transform');
+  if (viewportTransformAfterRace !== 'translate(-40 30) scale(1)') throw new Error(`Earlier native response overwrote debounced trackpad navigation: ${viewportTransformAfterRace}`);
+  await title.evaluate((input) => input.blur());
+  await page.evaluate(() => { window.__nativeRefreshDelay = true; });
+  await page.waitForFunction(() => window.__nativeRefreshInFlight, undefined, { timeout: 2000 });
+  await page.mouse.wheel(10, 5);
+  await page.waitForTimeout(350);
+  const viewportTransformAfterRefreshRace = await surface.locator('g[data-agent-camera]').getAttribute('transform');
+  if (viewportTransformAfterRefreshRace !== 'translate(-50 25) scale(1)') throw new Error(`Mirror refresh overwrote debounced trackpad navigation: ${viewportTransformAfterRefreshRace}`);
+  const refreshCallsBeforePendingWheel = await page.evaluate(() => window.__nativeCalls.filter(({ command }) => command === 'draw_companion_refresh').length);
+  await surface.evaluate(async (node, point) => {
+    const dispatch = () => node.dispatchEvent(new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaX: 1, clientX: point.x, clientY: point.y }));
+    dispatch();
+    window.__nativeRefreshDelay = true;
+    const interval = setInterval(dispatch, 10);
+    await new Promise((resolve) => setTimeout(resolve, 900));
+    clearInterval(interval);
+    dispatch();
+  }, { x: box.x + 180, y: box.y + 240 });
+  const pollStartedInsideWheelDebounce = await page.evaluate((before) => ({ started: !window.__nativeRefreshDelay || window.__nativeCalls.filter(({ command }) => command === 'draw_companion_refresh').length !== before, calls: window.__nativeCalls.filter(({ command }) => command === 'draw_companion_refresh').length }), refreshCallsBeforePendingWheel);
+  if (pollStartedInsideWheelDebounce.started) throw new Error(`Mirror polling started while trackpad navigation was still debouncing: ${JSON.stringify({ ...pollStartedInsideWheelDebounce, transform: await surface.locator('g[data-agent-camera]').getAttribute('transform') })}`);
+  await page.evaluate(() => { window.__nativeRefreshDelay = false; });
+  const viewportBeforeWheelPinch = await surface.locator('g[data-agent-camera]').getAttribute('transform');
+  const viewportBeforeWheelPinchMatch = viewportBeforeWheelPinch?.match(/^translate\(([-.\d]+) ([-.\d]+)\) scale\(([-.\d]+)\)$/);
+  if (!viewportBeforeWheelPinchMatch) throw new Error(`Could not read viewport before wheel-to-pinch verification: ${viewportBeforeWheelPinch}`);
+  const expectedWheelPinch = { x: Number(viewportBeforeWheelPinchMatch[1]) - 12, y: Number(viewportBeforeWheelPinchMatch[2]) - 8, zoom: Number(viewportBeforeWheelPinchMatch[3]) };
+  const viewportSubmitsBeforeWheelPinch = await page.evaluate(() => window.__nativeCalls.filter(({ command, args }) => command === 'draw_companion_submit' && args?.operation?.type === 'set_viewport').length);
+  await page.mouse.wheel(12, 8);
+  await surface.dispatchEvent('pointerdown', { pointerId: 41, pointerType: 'touch', button: 0, clientX: box.x + 90, clientY: box.y + 180 });
+  await surface.dispatchEvent('pointerdown', { pointerId: 42, pointerType: 'touch', button: 0, clientX: box.x + 220, clientY: box.y + 180 });
+  await surface.dispatchEvent('pointermove', { pointerId: 42, pointerType: 'touch', button: 0, clientX: box.x + 320, clientY: box.y + 250 });
+  await surface.dispatchEvent('pointercancel', { pointerId: 42, pointerType: 'touch', button: 0, clientX: box.x + 320, clientY: box.y + 250 });
+  await surface.dispatchEvent('pointerup', { pointerId: 41, pointerType: 'touch', button: 0, clientX: box.x + 90, clientY: box.y + 180 });
+  await page.waitForTimeout(250);
+  const wheelPinchResult = await page.evaluate((before) => {
+    const viewports = window.__nativeCalls.filter(({ command, args }) => command === 'draw_companion_submit' && args?.operation?.type === 'set_viewport');
+    return { count: viewports.length - before, last: viewports.at(-1)?.args?.operation?.viewport };
+  }, viewportSubmitsBeforeWheelPinch);
+  if (wheelPinchResult.count !== 1 || wheelPinchResult.last?.x !== expectedWheelPinch.x || wheelPinchResult.last?.y !== expectedWheelPinch.y || wheelPinchResult.last?.zoom !== expectedWheelPinch.zoom) throw new Error(`Wheel-to-cancelled-pinch leaked a tentative native viewport: ${JSON.stringify({ wheelPinchResult, expectedWheelPinch })}`);
+  const callsBeforeWheelTitle = await page.evaluate(() => window.__nativeCalls.filter(({ command }) => command === 'draw_companion_submit').length);
+  await page.mouse.wheel(7, -3);
+  await title.fill('Wheel then title');
+  await page.waitForTimeout(300);
+  const wheelTitleOperations = await page.evaluate((before) => window.__nativeCalls.filter(({ command }) => command === 'draw_companion_submit').slice(before).map(({ args }) => args.operation.type), callsBeforeWheelTitle);
+  if (wheelTitleOperations[0] !== 'set_viewport' || wheelTitleOperations[1] !== 'set_title') throw new Error(`A native title mutation did not flush pending trackpad navigation first: ${JSON.stringify(wheelTitleOperations)}`);
   await page.getByRole('button', { name: /Note tool/ }).click();
   const notesBeforePinch = await page.locator('g[aria-label^="Note:"]').count();
   const putsBeforePinch = await page.evaluate(() => window.__nativeCalls.filter(({ command, args }) => command === 'draw_companion_submit' && args?.operation?.type === 'put_object').length);
@@ -229,9 +319,15 @@ try {
   if (!editorBeforePointer || !editorAfterPointer || editorAfterPointer.x !== editorBeforePointer.x || editorAfterPointer.y !== editorBeforePointer.y) throw new Error('Note textarea pointerdown started a canvas drag');
   const before = await note.boundingBox();
   if (!before) throw new Error('Native note unavailable for movement');
+  await page.evaluate(() => { window.__nativeViewportDelay = true; });
+  await page.mouse.move(box.x + 180, box.y + 240);
+  await page.mouse.wheel(6, -4);
   await page.mouse.move(before.x + 5, before.y + 5);
   await page.mouse.down();
   await page.mouse.move(before.x + 55, before.y + 55, { steps: 4 });
+  await page.waitForTimeout(300);
+  const duringDelayedViewport = await note.boundingBox();
+  if (!duringDelayedViewport || duringDelayedViewport.x < before.x + 40 || duringDelayedViewport.y < before.y + 40) throw new Error('Delayed wheel response erased an in-progress object drag');
   await page.mouse.up();
   const after = await note.boundingBox();
   if (!after || after.x < before.x + 40 || after.y < before.y + 40) throw new Error('Touch movement did not reposition the note');

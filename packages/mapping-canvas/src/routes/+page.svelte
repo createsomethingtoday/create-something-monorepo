@@ -3,11 +3,12 @@
   import { browser } from '$app/environment';
   import { onMount } from 'svelte';
   import { clearDocument, loadDocument, saveDocument } from '$lib/persistence';
-  import { commit, convert, createDocument, parse, redo, removeObjects, resizeGroup, restoreConversion, serialize, uid, undo, withObjects, type CanvasDocument, type CanvasObject, type History, type Point, type Shape, type Stroke, type Tool } from '$lib/document';
+  import { commit, convert, createDocument, objectBounds, parse, redo, removeObjects, resizeGroup, restoreConversion, serialize, uid, undo, withObjects, type CanvasDocument, type CanvasObject, type History, type Point, type Shape, type Stroke, type Tool } from '$lib/document';
   import { DEFAULT_DRAWING_COLOR, DRAWING_COLOR_PREFERENCE, DRAWING_PALETTE, isColorableObject, isDrawingColor, recolorObjects, type DrawingColor } from '$lib/palette';
   import { applyCanvasOperations, isValidCanvasTitle, type CanvasOperation } from '$lib/paired-session';
   import { createDrawWebMcpTools, registerDrawWebMcpTools, type DrawTransitionKind } from '$lib/webmcp';
   import { beginPairing, companionStatus, discoverHosts, forgetCompanion, hasNativeBridge, hostStatus, nativeRole as readNativeRole, pairCompanion, refreshCompanion, replaceHostDocument, revokeCompanion, setCompanionOnline, submitNativeOperation, type DiscoveredHost, type NativeRole, type NativeSessionStatus, type PairingOffer } from '$lib/native-pairing';
+  import { fitViewportToBounds, normalizeWheelDelta, panViewport, zoomViewportAt } from '$lib/viewport';
 
   const tools: { id: Tool; label: string; key: string }[] = [
     { id: 'select', label: 'Select', key: 'V' }, { id: 'pen', label: 'Pen', key: 'P' },
@@ -66,7 +67,7 @@
   let lasso = $state<{ from: Point; to: Point } | null>(null), conversionOpen = $state(false), status = $state('Loading local canvas…'), ready = $state(false);
   let companionResetArmed = $state(false);
   let companionResetTimer: ReturnType<typeof setTimeout> | undefined;
-  let surface: SVGSVGElement, fileInput = $state<HTMLInputElement | null>(null), viewportWidth = $state(1200), viewportHeight = $state(800);
+  let surface: SVGSVGElement, canvasContent: SVGGElement, fileInput = $state<HTMLInputElement | null>(null), viewportWidth = $state(1200), viewportHeight = $state(800);
   let saveTimer: ReturnType<typeof setTimeout> | undefined;
   let mirrorTimer: ReturnType<typeof setInterval> | undefined;
   let nativeTail: Promise<void> = Promise.resolve();
@@ -76,6 +77,9 @@
   let nativeConflictEpoch = 0;
   let agentTransition = $state<{ id: string; kind: DrawTransitionKind; affectedIds: string[] } | null>(null);
   let agentTransitionTimer: ReturnType<typeof setTimeout> | undefined;
+  let agentCameraActive = $state(false);
+  let agentCameraTimer: ReturnType<typeof setTimeout> | undefined;
+  let wheelTimer: ReturnType<typeof setTimeout> | undefined;
   const activeTouches = new Map<number, { x: number; y: number }>();
   let pinch: { distance: number; world: Point; origin: CanvasDocument['viewport'] } | null = null;
   let pendingTouchAction: { pointerId: number; point: Point; tool: 'note' | 'group' } | null = null;
@@ -106,7 +110,7 @@
     resize(); surfaceObserver.observe(surface); window.addEventListener('resize', resize); window.addEventListener('keydown', keydown);
     mirrorTimer = setInterval(() => void refreshMirroredState(), 750);
     if (import.meta.env.PROD) navigator.serviceWorker?.register('/service-worker.js').catch(() => undefined);
-    return () => { surfaceObserver.disconnect(); clearInterval(mirrorTimer); clearTimeout(agentTransitionTimer); window.removeEventListener('resize', resize); window.removeEventListener('keydown', keydown); };
+    return () => { surfaceObserver.disconnect(); clearInterval(mirrorTimer); clearTimeout(agentTransitionTimer); clearTimeout(agentCameraTimer); clearTimeout(wheelTimer); window.removeEventListener('resize', resize); window.removeEventListener('keydown', keydown); };
   });
 
   function queueAgentMutation<T>(action: () => Promise<T> | T): Promise<T> {
@@ -135,12 +139,22 @@
     await (direction === 'undo' ? doUndo() : doRedo());
   }
 
-  function showAgentTransition(kind: DrawTransitionKind, affectedIds: string[]) {
+  function showAgentTransition(kind: DrawTransitionKind, affectedIds: string[], preserveViewport = false) {
     const id = `agent-${crypto.randomUUID()}`;
     agentTransition = { id, kind, affectedIds };
     clearTimeout(agentTransitionTimer);
     agentTransitionTimer = setTimeout(() => agentTransition = null, 700);
-    status = `Agent ${kind} · ${affectedIds.length || 'canvas'} ${affectedIds.length === 1 ? 'object' : 'objects'}`;
+    const affected = document.objects.filter(({ id }) => affectedIds.includes(id));
+    const followable = !preserveViewport && !['history', 'reset'].includes(kind) && affected.length > 0;
+    const nextViewport = followable ? fitViewportToBounds(viewport, objectBounds(affected, document.objects), { width: viewportWidth, height: viewportHeight }) : viewport;
+    const framed = nextViewport !== viewport;
+    if (framed) {
+      clearTimeout(agentCameraTimer);
+      agentCameraActive = true;
+      updateViewport(nextViewport, false);
+      agentCameraTimer = setTimeout(() => agentCameraActive = false, 520);
+    }
+    status = `Agent ${kind} · ${affectedIds.length || 'canvas'} ${affectedIds.length === 1 ? 'object' : 'objects'}${framed ? ' · framed' : ''}`;
     return id;
   }
 
@@ -148,12 +162,13 @@
     if (!ready) throw new Error('Draw is still loading. Try the tool again.');
     if (nativeShell || nativeRole !== 'web') throw new Error('WebMCP mutation is limited to the browser-local canvas. Use Draw device controls for paired Mac and iPhone sessions.');
     if (!companionCanEdit()) throw new Error(status);
-    const next = applyCanvasOperations(document, operations);
+    const before = JSON.parse(JSON.stringify(document)) as CanvasDocument;
+    const next = applyCanvasOperations(before, operations);
     if (!next) throw new Error('One or more Draw operations are invalid for the current document. No changes were applied.');
     apply(next, operations);
     const existing = new Set(next.objects.map(({ id }) => id));
     selectedIds = selectedIds.filter((id) => existing.has(id));
-    return next;
+    return { before, after: next };
   }
 
   async function resetCanvasFromAgent() {
@@ -197,10 +212,12 @@
   }
 
   async function refreshMirroredState() {
-    if (!ready || nativeRole === 'web' || drawing || window.document.activeElement?.closest('input,textarea,[contenteditable="true"]')) return;
+    if (!ready || nativeRole === 'web' || drawing || wheelTimer || window.document.activeElement?.closest('input,textarea,[contenteditable="true"]')) return;
     if (nativeRole === 'companion' && (!nativeSession.sessionId || nativeSession.online === false || (nativeSession.queueDepth || 0) > 0)) return;
+    const optimisticVersion = nativeOptimisticVersion;
     try {
       const refreshed = nativeRole === 'host' ? await hostStatus() : await refreshCompanion();
+      if (optimisticVersion !== nativeOptimisticVersion || wheelTimer) return;
       if (refreshed.revision !== nativeSession.revision && refreshed.document) {
         companionResetArmed = false; clearTimeout(companionResetTimer);
         history = nativeRole === 'host'
@@ -224,16 +241,22 @@
 
   function sendNative(operations: CanvasOperation[], recordsHistory = false, preserveFuture = false) {
     if (nativeRole === 'web' || !operations.length) return;
+    let historyOperationIndex = 0;
+    if (wheelTimer && operations.some(({ type }) => type !== 'set_viewport')) {
+      clearTimeout(wheelTimer); wheelTimer = undefined;
+      operations = [{ type: 'set_viewport', viewport: { ...viewport } }, ...operations];
+      historyOperationIndex = 1;
+    }
     const role = nativeRole;
     const conflictEpoch = nativeConflictEpoch;
     const queued = operations.map((operation) => ({ operation, optimisticVersion: ++nativeOptimisticVersion }));
     nativeTail = nativeTail.then(async () => {
       if (conflictEpoch !== nativeConflictEpoch) return;
       let authoritativePrevious: CanvasDocument | undefined;
-      for (const { operation, optimisticVersion } of queued) {
+      for (const [index, { operation, optimisticVersion }] of queued.entries()) {
         const result = await submitNativeOperation(role, operation);
         const authoritativeDocument = result.document ? structuredClone(result.document) : undefined;
-        authoritativePrevious ||= result.previousDocument;
+        if (recordsHistory && index === historyOperationIndex) authoritativePrevious = result.previousDocument;
         nativeSession = { ...nativeSession, ...result };
         if (result.status === 'conflict') {
           nativeConflictEpoch += 1;
@@ -276,7 +299,7 @@
     if (JSON.stringify(from.viewport) !== JSON.stringify(to.viewport)) operations.push({ type: 'set_viewport', viewport: to.viewport });
     return operations;
   }
-  function updateViewport(next: CanvasDocument['viewport'], authoritative = true) { if (!companionCanEdit()) return; const updated = { ...document, viewport: next, updatedAt: new Date().toISOString() }; history = { ...history, present: updated }; queueSave(updated); if (authoritative) sendNative([{ type: 'set_viewport', viewport: next }]); }
+  function updateViewport(next: CanvasDocument['viewport'], authoritative = true) { if (!companionCanEdit()) return; if (authoritative) { clearTimeout(wheelTimer); wheelTimer = undefined; } const updated = { ...document, viewport: next, updatedAt: new Date().toISOString() }; history = { ...history, present: updated }; queueSave(updated); if (authoritative) sendNative([{ type: 'set_viewport', viewport: next }]); }
   function chooseColor(color: DrawingColor, label: string) { drawingColor = color; try { localStorage.setItem(DRAWING_COLOR_PREFERENCE, color); } catch { /* Keep drawing when preference storage is unavailable. */ } const next = recolorObjects(document, selectedIds, color); if (next !== document) { const changed = next.objects.filter((object) => selectedIds.includes(object.id)); apply(next, changed.map((object) => ({ type: 'put_object', object }))); status = `Selected marks changed to ${label}`; } else status = `${label} selected for new marks`; }
   function toggleSidebar() { sidebarCollapsed = !sidebarCollapsed; try { localStorage.setItem(TOOL_SIDEBAR_PREFERENCE, String(sidebarCollapsed)); } catch { /* Keep the rail usable when preference storage is unavailable. */ } }
   function createTapObject(action: { point: Point; tool: 'note' | 'group' }) {
@@ -287,10 +310,18 @@
     apply(withObjects(document, [...document.objects, item]), { type: 'put_object', object: item });
     selectedIds = [item.id]; drawing = false;
   }
+  function beginNativePointerGesture() {
+    if (wheelTimer) { clearTimeout(wheelTimer); wheelTimer = undefined; sendNative([{ type: 'set_viewport', viewport }]); }
+    if (nativeRole !== 'web') nativeOptimisticVersion += 1;
+  }
   function trackTouchPointer(event: PointerEvent) {
-    if (event.pointerType !== 'touch' || event.button !== 0 || !ready || agentMutationActive) return;
+    if (!ready || agentMutationActive) return;
+    stopAgentCamera();
+    if (event.pointerType !== 'touch' || event.button !== 0) return;
     activeTouches.set(event.pointerId, { x: event.clientX, y: event.clientY });
     if (activeTouches.size !== 2) return;
+    if (wheelTimer) { clearTimeout(wheelTimer); wheelTimer = undefined; sendNative([{ type: 'set_viewport', viewport }]); }
+    if (nativeRole !== 'web') nativeOptimisticVersion += 1;
     pendingTouchAction = null;
     const [a, b] = [...activeTouches.values()];
     const rect = surface.getBoundingClientRect();
@@ -306,6 +337,8 @@
   function pointerDown(event: PointerEvent) {
     if (event.button !== 0 || !ready || agentMutationActive) return;
     if (!companionCanEdit()) return;
+    stopAgentCamera();
+    beginNativePointerGesture();
     try { surface.setPointerCapture(event.pointerId); } catch { /* SVG pointer capture is not supported in every browser. */ }
     if (pinch) return;
     const here = point(event);
@@ -425,7 +458,9 @@
   }
   function selectPointer(event: PointerEvent, id: string) {
     event.stopPropagation();
+    stopAgentCamera();
     if (pinch || agentMutationActive) return;
+    beginNativePointerGesture();
     if (tool === 'eraser') { apply(removeObjects(document, [id]), { type: 'remove_objects', ids: [id] }); selectedIds = []; return; }
     if (tool === 'connector') { selectedIds = selectedIds.includes(id) ? selectedIds : [...selectedIds.slice(-1), id]; if (selectedIds.length === 2) runConversion('connector'); return; }
     selectedIds = event.shiftKey ? (selectedIds.includes(id) ? selectedIds.filter((value) => value !== id) : [...selectedIds, id]) : [id];
@@ -436,7 +471,9 @@
   }
   function resizePointer(event: PointerEvent, id: string) {
     event.stopPropagation();
+    stopAgentCamera();
     if (pinch || agentMutationActive || tool !== 'select' || !companionCanEdit()) return;
+    beginNativePointerGesture();
     const here = point(event); selectedIds = [id]; resizingGroupId = id; resizeOrigin = document; resizeMoved = false; drawing = true; start = here;
     try { surface.setPointerCapture(event.pointerId); } catch { /* SVG pointer capture is not supported in every browser. */ }
   }
@@ -455,11 +492,37 @@
   function selectKeyboard(event: KeyboardEvent, id: string) { if (isTextEditingEvent(event) || (event.key !== 'Enter' && event.key !== ' ')) return; event.preventDefault(); selectedIds = event.shiftKey ? [...new Set([...selectedIds, id])] : [id]; }
   function runConversion(target: 'note' | 'connector' | 'group') { const next = convert(document, selectedIds, target); if (next === document) { status = target === 'connector' ? 'Select two objects to make a connector' : 'Select source material first'; return; } const created = next.objects.at(-1)!; apply(next, { type: 'convert', selectedIds: [...selectedIds], target, resultId: created.id, createdAt: created.createdAt }); selectedIds = [created.id]; conversionOpen = false; status = `Converted to ${target}. Source preserved.`; }
   function restoreSelected() { const selected = selectedObjects[0]; if (!selected?.sourceSnapshot) return; const next = restoreConversion(document, selected.id); apply(next, { type: 'restore_conversion', id: selected.id }); selectedIds = selected.sourceIds || []; status = 'Conversion removed. Source restored.'; }
-  async function commitHostReplacement<T>(resolve: () => T, documentOf: (value: T) => CanvasDocument, install: (value: T) => void, reason: 'undo' | 'redo' | 'import' | 'reset') { if (nativeRole !== 'host') { const value = resolve(); install(value); return value; } let committed!: T; const replacement = nativeTail.then(async () => { committed = resolve(); const expectedRevision = nativeSession.revision || 0; const result = await replaceHostDocument(documentOf(committed), reason, expectedRevision); nativeSession = { ...nativeSession, ...result }; install(committed); status = `Mac committed ${reason} at revision ${nativeSession.revision}`; }); nativeTail = replacement.catch(() => undefined); try { await replacement; return committed; } catch (error) { const refreshed = await hostStatus(); nativeSession = { ...nativeSession, ...refreshed }; if (refreshed.document) history = { past: history.past, present: refreshed.document, future: [] }; throw error; } }
-  async function doUndo() { if (nativeRole === 'companion') { const current = document, next = undo(history); if (next === history) return; history = next; selectedIds = []; sendNative(operationsBetween(current, next.present), false, true); return; } try { const next = await commitHostReplacement(() => undo(history), (value) => value.present, (value) => history = value, 'undo'); selectedIds = []; queueSave(next.present); } catch (error) { status = error instanceof Error ? error.message : 'Undo conflicted with an iPhone change'; } }
-  async function doRedo() { if (nativeRole === 'companion') { const current = document, next = redo(history); if (next === history) return; history = next; selectedIds = []; sendNative(operationsBetween(current, next.present), false, true); return; } try { const next = await commitHostReplacement(() => redo(history), (value) => value.present, (value) => history = value, 'redo'); selectedIds = []; queueSave(next.present); } catch (error) { status = error instanceof Error ? error.message : 'Redo conflicted with an iPhone change'; } }
+  function cancelPendingWheelSync() { clearTimeout(wheelTimer); wheelTimer = undefined; }
+  async function commitHostReplacement<T>(resolve: () => T, documentOf: (value: T) => CanvasDocument, install: (value: T) => void, reason: 'undo' | 'redo' | 'import' | 'reset') { if (nativeRole === 'host') cancelPendingWheelSync(); if (nativeRole !== 'host') { const value = resolve(); install(value); return value; } let committed!: T; const replacement = nativeTail.then(async () => { committed = resolve(); const expectedRevision = nativeSession.revision || 0; const result = await replaceHostDocument(documentOf(committed), reason, expectedRevision); nativeSession = { ...nativeSession, ...result }; install(committed); status = `Mac committed ${reason} at revision ${nativeSession.revision}`; }); nativeTail = replacement.catch(() => undefined); try { await replacement; return committed; } catch (error) { const refreshed = await hostStatus(); nativeSession = { ...nativeSession, ...refreshed }; if (refreshed.document) history = { past: history.past, present: refreshed.document, future: [] }; throw error; } }
+  async function doUndo() { if (nativeRole === 'companion') { cancelPendingWheelSync(); const current = document, next = undo(history); if (next === history) return; history = next; selectedIds = []; sendNative(operationsBetween(current, next.present), false, true); return; } try { const next = await commitHostReplacement(() => undo(history), (value) => value.present, (value) => history = value, 'undo'); selectedIds = []; queueSave(next.present); } catch (error) { status = error instanceof Error ? error.message : 'Undo conflicted with an iPhone change'; } }
+  async function doRedo() { if (nativeRole === 'companion') { cancelPendingWheelSync(); const current = document, next = redo(history); if (next === history) return; history = next; selectedIds = []; sendNative(operationsBetween(current, next.present), false, true); return; } try { const next = await commitHostReplacement(() => redo(history), (value) => value.present, (value) => history = value, 'redo'); selectedIds = []; queueSave(next.present); } catch (error) { status = error instanceof Error ? error.message : 'Redo conflicted with an iPhone change'; } }
   function keydown(event: KeyboardEvent) { if (isTextEditingEvent(event)) return; if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'z') { event.preventDefault(); void (event.shiftKey ? doRedo() : doUndo()); return; } if ((event.key === 'Delete' || event.key === 'Backspace') && selectedIds.length) { const ids = [...selectedIds]; apply(removeObjects(document, ids), { type: 'remove_objects', ids }); selectedIds = []; return; } const match = tools.find(({ key }) => key.toLowerCase() === event.key.toLowerCase()); if (match) tool = match.id; }
-  function wheel(event: WheelEvent) { event.preventDefault(); updateViewport({ ...viewport, zoom: Math.max(.25, Math.min(3, viewport.zoom * (event.deltaY > 0 ? .9 : 1.1))) }); }
+  function stopAgentCamera() {
+    if (agentCameraActive && canvasContent) {
+      const renderedTransform = getComputedStyle(canvasContent).transform;
+      if (renderedTransform && renderedTransform !== 'none') {
+        const matrix = new DOMMatrixReadOnly(renderedTransform);
+        const rendered = { x: matrix.e, y: matrix.f, zoom: Math.hypot(matrix.a, matrix.b) };
+        if (Object.values(rendered).every(Number.isFinite)) updateViewport(rendered, false);
+      }
+    }
+    clearTimeout(agentCameraTimer); agentCameraActive = false;
+  }
+  function wheel(event: WheelEvent) {
+    event.preventDefault();
+    if (agentMutationActive || !companionCanEdit()) return;
+    stopAgentCamera();
+    const rect = surface.getBoundingClientRect();
+    const deltaX = normalizeWheelDelta(event.deltaX, event.deltaMode, rect.width);
+    const deltaY = normalizeWheelDelta(event.deltaY, event.deltaMode, rect.height);
+    const next = event.ctrlKey || event.metaKey
+      ? zoomViewportAt(viewport, { x: event.clientX - rect.left, y: event.clientY - rect.top }, Math.exp(-deltaY * .01))
+      : panViewport(viewport, deltaX, deltaY);
+    if (nativeRole !== 'web') nativeOptimisticVersion += 1;
+    updateViewport(next, false);
+    clearTimeout(wheelTimer);
+    wheelTimer = setTimeout(() => { wheelTimer = undefined; sendNative([{ type: 'set_viewport', viewport }]); }, 120);
+  }
   const path = (points: Point[]) => points.map((value, index) => `${index ? 'L' : 'M'} ${value.x} ${value.y}`).join(' ');
   function wrappedLines(text: string, fits: (value: string) => boolean) { const lines: string[] = []; for (const paragraph of text.split('\n')) { if (!paragraph) { lines.push(''); continue; } let line = ''; for (const word of paragraph.split(/\s+/)) { const next = `${line}${line ? ' ' : ''}${word}`; if (line && !fits(next)) { lines.push(line); line = word; } else line = next; } lines.push(line); } return lines; }
 
@@ -541,7 +604,7 @@
       <svg bind:this={surface} class:crosshair={tool !== 'select' && tool !== 'pan'} role="group" aria-label="Canvas objects" viewBox={`0 0 ${viewportWidth} ${viewportHeight}`} onpointerdowncapture={trackTouchPointer} onpointerdown={pointerDown} onpointermove={pointerMove} onpointerup={pointerUp} onpointercancel={pointerUp} onwheel={wheel}>
         <defs><pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0L0 0 0 32" fill="none" stroke="rgba(255,255,255,.055)" /></pattern><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="context-stroke" /></marker><filter id="selected"><feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#fcaa2d" flood-opacity=".6" /></filter></defs>
         <rect width="100%" height="100%" fill="#000" /><rect width="100%" height="100%" fill="url(#grid)" />
-        <g transform={transform}>
+        <g bind:this={canvasContent} class:agent-camera={agentCameraActive} data-agent-camera={agentCameraActive ? 'following' : 'idle'} transform={transform}>
           {#each renderObjects as object (object.id)}
             {@const selected = selectedIds.includes(object.id)}
             {#if object.kind === 'stroke'}<path data-object-id={object.id} class:selected class:agent-change={agentTransition?.affectedIds.includes(object.id)} role="button" tabindex="0" aria-label="Ink stroke" d={path(object.points)} fill="none" stroke={object.color} stroke-width={object.width} stroke-linecap="round" stroke-linejoin="round" onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)} />

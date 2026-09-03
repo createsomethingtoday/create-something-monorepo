@@ -112,21 +112,20 @@ export function redo(history: History): History {
 }
 
 export function objectBounds(objects: CanvasObject[], allObjects = objects) {
-  const points: Point[] = [];
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  const include = ({ x, y }: Point) => { minX = Math.min(minX, x); minY = Math.min(minY, y); maxX = Math.max(maxX, x); maxY = Math.max(maxY, y); };
   const byId = new Map(allObjects.map((object) => [object.id, object])), visited = new Set<string>();
   const add = (object: CanvasObject) => {
     if (visited.has(object.id)) return;
     visited.add(object.id);
-    if (object.kind === 'stroke') points.push(...object.points);
-    else if (object.kind === 'rectangle' || object.kind === 'ellipse' || object.kind === 'arrow') points.push(object.from, object.to);
-    else if (object.kind === 'note' || object.kind === 'group') points.push({ x: object.x, y: object.y }, { x: object.x + object.width, y: object.y + object.height });
+    if (object.kind === 'stroke') object.points.forEach(include);
+    else if (object.kind === 'rectangle' || object.kind === 'ellipse' || object.kind === 'arrow') { include(object.from); include(object.to); }
+    else if (object.kind === 'note' || object.kind === 'group') { include({ x: object.x, y: object.y }); include({ x: object.x + object.width, y: object.y + object.height }); }
     else if (object.kind === 'connector') { const from = byId.get(object.fromId), to = byId.get(object.toId); if (from) add(from); if (to) add(to); }
   };
   objects.forEach(add);
-  if (!points.length) return { x: 100, y: 100, width: 320, height: 180 };
-  const xs = points.map(({ x }) => x), ys = points.map(({ y }) => y);
-  const x = Math.min(...xs), y = Math.min(...ys);
-  return { x, y, width: Math.max(120, Math.max(...xs) - x), height: Math.max(80, Math.max(...ys) - y) };
+  if (!Number.isFinite(minX)) return { x: 100, y: 100, width: 320, height: 180 };
+  return { x: minX, y: minY, width: Math.max(120, maxX - minX), height: Math.max(80, maxY - minY) };
 }
 
 export function convertWithIdentity(document: CanvasDocument, selectedIds: string[], target: 'note' | 'connector' | 'group', identity: { id: string; createdAt: string }): CanvasDocument {
