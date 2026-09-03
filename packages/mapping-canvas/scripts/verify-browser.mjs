@@ -29,7 +29,12 @@ async function startPage(viewport) {
   const failedRequests = [];
   page.on('console', (message) => message.type() === 'error' && errors.push(message.text()));
   page.on('pageerror', (error) => errors.push(error.message));
-  page.on('requestfailed', (request) => failedRequests.push(`${request.method()} ${request.url()}: ${request.failure()?.errorText ?? 'failed'}`));
+  page.on('requestfailed', (request) => {
+    const failure = request.failure()?.errorText ?? 'failed';
+    const url = new URL(request.url());
+    if (url.pathname === '/cdn-cgi/rum' && failure === 'net::ERR_ABORTED') return;
+    failedRequests.push(`${request.method()} ${request.url()}: ${failure}`);
+  });
   await page.goto(baseUrl, { waitUntil: 'networkidle' });
   await page.getByRole('button', { name: /Pen tool/ }).waitFor();
   await clearDatabase(page);
