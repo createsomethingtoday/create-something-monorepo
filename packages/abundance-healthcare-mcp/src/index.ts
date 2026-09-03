@@ -326,10 +326,11 @@ export async function enrichProviderProfessionalContact(input: z.input<typeof pr
     throw new Error(`Exa Agent run ${run.id} completed but returned unusable structured output.${reportedCost} No contact result was accepted; do not retry until the completed run is reviewed in Exa.`);
   }
   const structured = structuredResult.data;
-  const sourceCitations = Array.isArray(run.output?.grounding)
+  const normalizedCitations = Array.isArray(run.output?.grounding)
     ? run.output.grounding.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === 'object' && !Array.isArray(item))
     : [];
   const matchAllowsCandidate = structured.match_status === 'verified_match' || structured.match_status === 'plausible_match';
+  const sourceCitations = matchAllowsCandidate ? normalizedCitations : [];
   const acceptedProfileUrl = matchAllowsCandidate ? structured.professional_profile_url : undefined;
   const acceptedEmail = matchAllowsCandidate && requestedEmail ? structured.professional_email : undefined;
   const acceptedPhone = matchAllowsCandidate && requestedPhone ? cleanProfessionalPhone(structured.professional_phone) : undefined;
@@ -363,10 +364,11 @@ export async function enrichProviderProfessionalContact(input: z.input<typeof pr
 
 function hasGroundedSourceUrl(value: unknown, depth = 0): boolean {
   if (depth > 6) return false;
-  if (typeof value === 'string') return isUsableHttpsUrl(value);
   if (Array.isArray(value)) return value.some((item) => hasGroundedSourceUrl(item, depth + 1));
   if (!value || typeof value !== 'object') return false;
-  return Object.values(value).some((item) => hasGroundedSourceUrl(item, depth + 1));
+  const citation = value as Record<string, unknown>;
+  if (typeof citation.url === 'string' && isUsableHttpsUrl(citation.url)) return true;
+  return Array.isArray(citation.citations) && hasGroundedSourceUrl(citation.citations, depth + 1);
 }
 
 function isUsableHttpsUrl(value: string): boolean {
@@ -452,6 +454,7 @@ async function createAndAwaitExaRun(body: Record<string, unknown>, apiKey: strin
   const baseUrl = (options.exaAgentBaseUrl?.trim() || DEFAULT_EXA_AGENT_BASE_URL).replace(/\/$/, '');
   const headers = { 'Content-Type': 'application/json', 'x-api-key': apiKey };
   const timeoutMs = Math.min(Math.max(options.exaTimeoutMs ?? 45_000, 1_000), 55_000);
+  const deadline = Date.now() + timeoutMs;
   let run: ExaAgentRun;
   try {
     run = await fetchAndReadExaRun(
@@ -473,7 +476,6 @@ async function createAndAwaitExaRun(body: Record<string, unknown>, apiKey: strin
   }
   const pollIntervalMs = Math.min(Math.max(options.exaPollIntervalMs ?? 1_000, 100), 5_000);
   const waitFn = options.waitFn ?? ((milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds)));
-  const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     await waitFn(Math.min(pollIntervalMs, Math.max(deadline - Date.now(), 0)));
     const remainingMs = deadline - Date.now();

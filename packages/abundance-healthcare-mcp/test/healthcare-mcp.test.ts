@@ -529,6 +529,7 @@ test('Exa no-match responses suppress contradictory contact fields', async () =>
   );
 
   assert.deepEqual(result.professional_contact, {});
+  assert.deepEqual(result.source_citations, []);
   assert.equal(result.evidence_summary, 'No match; ignore [redacted email], [redacted phone], [redacted URL] and [redacted URL]');
   assert.equal(result.contact_route_status, 'no_contact_candidate_found');
   assert.equal(result.identity_verification_status, 'operator_review_required');
@@ -552,7 +553,7 @@ test('Exa verified-match labels still require a usable source citation', async (
           professional_email: null, professional_phone: null,
           current_professional_affiliation: null, evidence_summary: 'No citation was emitted.',
         },
-        grounding: [{ url: 'https://' }],
+        grounding: [{ url: 'https://' }, { field: 'https://example.test/not-a-citation' }],
       },
       usage: {}, costDollars: { total: 0.012 },
     });
