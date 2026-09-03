@@ -433,6 +433,7 @@ function isUsableHttpsUrl(value: string): boolean {
 function cleanProfessionalPhone(value: string | null | undefined): string | undefined {
   const phone = cleanString(value);
   if (!phone) return undefined;
+  if (!/^\+?[\d().\s/-]+$/.test(phone)) return undefined;
   const digitCount = phone.replace(/\D/g, '').length;
   return digitCount >= 7 && digitCount <= 15 ? phone : undefined;
 }
