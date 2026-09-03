@@ -46,6 +46,8 @@ jobs:
         run: pnpm --dir apps/draw-native prepare:canvas
       - run: cargo test --manifest-path apps/draw-native/src-tauri/Cargo.toml --lib
       - run: pnpm --dir apps/draw-native build:dmg
+      - name: Initialize clean-checkout iOS project
+        run: CI=true pnpm --dir apps/draw-native ios:init
       - name: Build unsigned iPhone simulator archive
         run: CI=true pnpm --dir apps/draw-native exec tauri ios build --target aarch64-sim --archive-only --no-sign
       - name: Verify unsigned installed candidate
@@ -131,6 +133,8 @@ jobs:
           DRAW_INSTALLED_SKIP_BUILD: '1'
           DRAW_REQUIRE_PRODUCTION_RELEASE: '1'
         run: pnpm --dir apps/draw-native verify:installed
+      - name: Initialize clean-checkout iOS project
+        run: CI=true pnpm --dir apps/draw-native ios:init
       - name: Validate release slot before external mutation
         env:
           GH_TOKEN: ${{ github.token }}

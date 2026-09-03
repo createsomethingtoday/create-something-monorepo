@@ -18,7 +18,9 @@ const MAX_CERTIFICATE_CHUNKS: usize = 32;
 const MAX_VALIDATED_HOSTS: usize = 16;
 const DISCOVERY_RESOLUTION_TIMEOUT: Duration = Duration::from_secs(5);
 
-#[link(name = "dns_sd")]
+// iOS and the iOS simulator export DNS-SD through libSystem. Declaring a
+// standalone `dns_sd` library makes the simulator linker search for a library
+// that the SDK does not ship.
 unsafe extern "C" {
     fn DNSServiceBrowse(
         sd_ref: *mut DnsServiceRef,
