@@ -17,8 +17,8 @@ import path from 'path';
 
 // Script markup patterns
 const MARKUP_PATTERNS = {
-  SILENCE: /\[SILENCE\s*(\d+)?s?\]/gi,
-  PAUSE: /\[PAUSE\s*(\d+)?s?\]/gi,
+  SILENCE: /\[SILENCE\s*(\d+(?:\.\d+)?)?s?\]/gi,
+  PAUSE: /\[PAUSE\s*(\d+(?:\.\d+)?)?s?\]/gi,
   BEAT: /\[BEAT\]/gi,
   SLOW: /\[SLOW\](.*?)\[\/SLOW\]/gis,
   QUOTE: /\[QUOTE\](.*?)\[\/QUOTE\]/gis,
@@ -68,21 +68,21 @@ function parseScript(scriptContent: string): ScriptSegment[] {
     if (!trimmed) continue;
     
     // Check for silence
-    const silenceMatch = trimmed.match(/\[SILENCE\s*(\d+)?s?\]/i);
+    const silenceMatch = trimmed.match(/\[SILENCE\s*(\d+(?:\.\d+)?)?s?\]/i);
     if (silenceMatch) {
       segments.push({
         type: 'silence',
-        duration: parseInt(silenceMatch[1] || '2', 10),
+        duration: parseFloat(silenceMatch[1] || '2'),
       });
       continue;
     }
     
     // Check for pause
-    const pauseMatch = trimmed.match(/\[PAUSE\s*(\d+)?s?\]/i);
+    const pauseMatch = trimmed.match(/\[PAUSE\s*(\d+(?:\.\d+)?)?s?\]/i);
     if (pauseMatch) {
       segments.push({
         type: 'pause',
-        duration: parseInt(pauseMatch[1] || '1', 10),
+        duration: parseFloat(pauseMatch[1] || '1'),
       });
       continue;
     }
@@ -103,7 +103,7 @@ function parseScript(scriptContent: string): ScriptSegment[] {
     
     // It's text content - strip inline markup
     let text = trimmed
-      .replace(/\[PAUSE\s*\d*s?\]/gi, '...')
+      .replace(/\[PAUSE\s*\d+(?:\.\d+)?s?\]/gi, '...')
       .replace(/\[BEAT\]/gi, '...')
       .replace(/\[SLOW\]|\[\/SLOW\]/gi, '')
       .replace(/\[QUOTE\]|\[\/QUOTE\]/gi, '')
