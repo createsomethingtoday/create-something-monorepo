@@ -187,6 +187,7 @@ type DiscoveryPreferences = {
   mode: DiscoveryMode;
   activeServers: string[];
   maxProxyTools: number | null;
+  excludedProxyTools?: string[];
 };
 
 type DiscoveryPackDefinition = {
@@ -194,6 +195,7 @@ type DiscoveryPackDefinition = {
   mode?: DiscoveryMode;
   activeServers?: string[];
   maxProxyTools?: number | null;
+  excludedProxyTools?: string[];
 };
 
 type DiscoveryPackRegistry = {
@@ -1538,6 +1540,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
             mode: pack.preferences.mode,
             activeServers: pack.preferences.activeServers,
             maxProxyTools: pack.preferences.maxProxyTools,
+            excludedProxyTools: pack.preferences.excludedProxyTools ?? [],
           })),
         });
       }
@@ -2071,6 +2074,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
             maxProxyTools: resolveDiscoveryMaxProxyTools(
               optionalNumberArg(args.maxProxyTools, 'maxProxyTools') ?? basePrefs.maxProxyTools,
             ),
+            excludedProxyTools: basePrefs.excludedProxyTools ?? [],
           };
           await persistDiscoveryPreferences(accountId, nextPrefs, env);
         }
@@ -2681,9 +2685,13 @@ export function buildVisibleProxyRoutes(
     .filter((entry): entry is { tool: Tool; route: ProxyRoute } => Boolean(entry))
     .filter((entry) => isRouteAllowedForSession(entry.route, accountContext.allowedToolPrefixes));
 
+  const exclusionScoped = sessionScoped.filter(
+    (entry) => !(prefs.excludedProxyTools ?? []).includes(entry.route.proxyToolName),
+  );
+
   const discoveryScoped = prefs.mode === 'full'
-    ? sessionScoped
-    : sessionScoped.filter((entry) => prefs.activeServers.includes(entry.route.serverName));
+    ? exclusionScoped
+    : exclusionScoped.filter((entry) => prefs.activeServers.includes(entry.route.serverName));
 
   const capped = prefs.maxProxyTools && prefs.maxProxyTools > 0
     ? discoveryScoped.slice(0, prefs.maxProxyTools)
@@ -3961,6 +3969,7 @@ async function getDiscoveryPreferences(
               maxProxyTools: resolveDiscoveryMaxProxyTools(
                 typeof parsed.maxProxyTools === 'number' ? parsed.maxProxyTools : null,
               ),
+              excludedProxyTools: parseStateStringArray(parsed.excludedProxyTools),
             },
             runtime,
             env,
@@ -3998,6 +4007,7 @@ function buildDefaultDiscoveryPreferences(runtime: HubRuntime, env: Env): Discov
       runtime,
     ),
     maxProxyTools: maxProxyToolsFromEnv ?? sharedPack?.preferences.maxProxyTools ?? null,
+    excludedProxyTools: sharedPack?.preferences.excludedProxyTools ?? [],
   }, runtime, env);
 }
 
@@ -4055,6 +4065,7 @@ function normalizeDiscoveryPreferences(
   env?: Env,
 ): DiscoveryPreferences {
   const requiredActiveServers = getRequiredDiscoveryServers(runtime, env);
+  const mandatoryExcludedProxyTools = getMandatoryExcludedProxyTools(env);
   return {
     mode: prefs.mode,
     activeServers: resolveDiscoveryActiveServers(
@@ -4062,7 +4073,18 @@ function normalizeDiscoveryPreferences(
       runtime,
     ),
     maxProxyTools: resolveDiscoveryMaxProxyTools(prefs.maxProxyTools),
+    excludedProxyTools: uniqueSortedStrings([
+      ...(prefs.excludedProxyTools ?? []),
+      ...mandatoryExcludedProxyTools,
+    ]),
   };
+}
+
+function getMandatoryExcludedProxyTools(env?: Env): string[] {
+  if (!env) return [];
+  const sharedPackId = readEnvString(env, 'HUB_DISCOVERY_SHARED_PACK');
+  if (!sharedPackId) return [];
+  return parseStateStringArray(discoveryPackRegistry.packs?.[sharedPackId]?.excludedProxyTools);
 }
 
 function buildDiscoveryKvKey(env: Env, accountId: string): string {
@@ -4125,6 +4147,7 @@ function resolveDiscoveryPackDefinition(
   const maxProxyTools = resolveDiscoveryMaxProxyTools(
     typeof definition.maxProxyTools === 'number' ? definition.maxProxyTools : null,
   );
+  const excludedProxyTools = parseStateStringArray(definition.excludedProxyTools);
 
   return {
     id: packId,
@@ -4133,6 +4156,7 @@ function resolveDiscoveryPackDefinition(
       mode,
       activeServers,
       maxProxyTools,
+      excludedProxyTools,
     }, runtime, env),
   };
 }
@@ -5976,7 +6000,8 @@ function parseBooleanWithDefault(raw: string | undefined, fallback: boolean): bo
   return fallback;
 }
 
-function isDirectProxyToolAllowed(env: Env, proxyToolName: string): boolean {
+export function isDirectProxyToolAllowed(env: Env, proxyToolName: string): boolean {
+  if (getMandatoryExcludedProxyTools(env).includes(proxyToolName)) return false;
   const directProxyEnabled = parseBooleanWithDefault(
     readEnvString(env, 'HUB_ALLOW_DIRECT_PROXY_TOOLS'),
     false,

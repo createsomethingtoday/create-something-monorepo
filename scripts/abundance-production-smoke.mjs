@@ -352,7 +352,7 @@ async function smokeHealthcareMcp(token) {
 	const session = await createMcpSession(url, token, CORE_TIMEOUT_MS);
 	const tools = await listMcpTools(session);
 	const names = tools.map((tool) => tool.name);
-	for (const name of ['list_healthcare_markets', 'get_healthcare_coverage', 'search_coverage_candidates', 'get_healthcare_practitioner']) {
+	for (const name of ['list_healthcare_markets', 'get_healthcare_coverage', 'search_coverage_candidates', 'get_healthcare_practitioner', 'get_provider_contact_information', 'enrich_provider_professional_contact']) {
 		assertOk(names.includes(name), `healthcare MCP tools/list did not include ${name}`);
 	}
 	const result = await callMcpTool(session, 'get_healthcare_coverage', { market_id: 'npg-family-np-nationwide' });

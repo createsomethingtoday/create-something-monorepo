@@ -4,7 +4,7 @@
     "abundance-healthcare-mcp": {
       "transport": "http",
       "url": "https://abundance-healthcare-mcp.createsomething.workers.dev/mcp",
-      "description": "Read-only NPG healthcare coverage MCP backed by complete nationwide NPPES Family Nurse Practitioner snapshots, with derived local views and fail-closed recruiter-readiness evidence.",
+      "description": "NPG healthcare coverage MCP backed by complete nationwide NPPES Family Nurse Practitioner snapshots, with exact-NPI public registry contact reads and an explicitly confirmed, bounded Exa professional-enrichment fallback.",
       "bearer_token_env_var": "ABUNDANCE_MCP_BEARER_TOKEN",
       "tags": [
         "client",
@@ -16,8 +16,8 @@
       ],
       "package_path": "packages/abundance-healthcare-mcp",
       "catalog_exposure_mode": "direct",
-      "estimated_tool_count": 4,
-      "setupNotes": "Read-only coverage and practitioner lookup. Monthly full NPPES dissemination files establish national completeness; weekly incrementals advance the successful snapshot. Bulk results omit practice phone and street address."
+      "estimated_tool_count": 6,
+      "setupNotes": "Registry-first coverage and practitioner lookup. Monthly full NPPES dissemination files establish national completeness; weekly incrementals advance the successful snapshot. Bulk results omit contact fields. Exact-NPI contact reads classify public registry scope; the Exa fallback requires explicit paid-call confirmation and never grants outreach authority."
     },
     "abundance-jobs-mcp": {
       "transport": "http",

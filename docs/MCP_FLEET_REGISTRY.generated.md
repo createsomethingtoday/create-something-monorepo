@@ -12,7 +12,7 @@
 
 | Server | Transport | Endpoint | Exposure | Est. Tools | Tags |
 | --- | --- | --- | --- | --- | --- |
-| `abundance-healthcare-mcp` | `http` | `https://abundance-healthcare-mcp.createsomething.workers.dev/mcp` | `direct` | `4` | `client`, `abundance`, `npg`, `healthcare`, `providers`, `nppes` |
+| `abundance-healthcare-mcp` | `http` | `https://abundance-healthcare-mcp.createsomething.workers.dev/mcp` | `direct` | `6` | `client`, `abundance`, `npg`, `healthcare`, `providers`, `nppes` |
 | `abundance-jobs-mcp` | `http` | `https://abundance-jobs-mcp.createsomething.workers.dev/mcp` | `direct` | `4` | `client`, `abundance`, `npg`, `jobs`, `healthcare` |
 | `abundance-staff-mcp` | `http` | `https://abundance-staff-mcp.createsomething.workers.dev/mcp` | `direct` | `1` | `client`, `abundance`, `npg`, `staffing`, `healthcare` |
 | `abundance-thenpgroup-hub` | `http` | `https://abundance-thenpgroup.mcp.createsomething.agency/mcp` | `brokered` | `319` | `client`, `abundance`, `npg`, `policy-os`, `hub` |
