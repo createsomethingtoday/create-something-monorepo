@@ -335,7 +335,9 @@ export async function enrichProviderProfessionalContact(input: z.input<typeof pr
     ? cleanPublicHttpsUrl(structured.professional_profile_url, provider.npi, requestedPhone)
     : undefined;
   const acceptedEmail = matchAllowsCandidate && requestedEmail ? structured.professional_email : undefined;
-  const acceptedPhone = matchAllowsCandidate && requestedPhone ? cleanProfessionalPhone(structured.professional_phone) : undefined;
+  const acceptedPhone = matchAllowsCandidate && requestedPhone
+    ? cleanProfessionalPhone(structured.professional_phone, provider.npi)
+    : undefined;
   const hasCandidate = Boolean(acceptedEmail || acceptedPhone);
   const estimatedMaxCostUsd = 0.012 + (requestedEmail ? 0.02 : 0) + (requestedPhone ? 0.07 : 0);
   return {
@@ -430,11 +432,11 @@ function isUsableHttpsUrl(value: string): boolean {
   }
 }
 
-function cleanProfessionalPhone(value: string | null | undefined): string | undefined {
+function cleanProfessionalPhone(value: string | null | undefined, providerNpi: string): string | undefined {
   const phone = cleanString(value);
   if (!phone) return undefined;
   const northAmericanPhone = /^(?:\+?1[\s.-]?)?(?:\([2-9]\d{2}\)|[2-9]\d{2})[\s.-]?[2-9]\d{2}[\s.-]?\d{4}$/;
-  return northAmericanPhone.test(phone) ? phone : undefined;
+  return northAmericanPhone.test(phone) && phone.replace(/\D/g, '') !== providerNpi ? phone : undefined;
 }
 
 function safeIdentityReason(status: z.infer<typeof exaStructuredOutputSchema>['match_status']): string {

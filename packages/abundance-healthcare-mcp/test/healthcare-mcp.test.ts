@@ -644,7 +644,8 @@ test('Exa enrichment suppresses contact types the operator did not request', asy
   assert.equal(result.contact_route_status, 'no_contact_candidate_found');
 });
 
-test('Exa enrichment rejects multi-number phone values and normalizes grounding records', async () => {
+test('Exa enrichment rejects multi-number and NPI-as-phone values and normalizes grounding records', async () => {
+  let exaResponseCount = 0;
   const fetchFn: typeof fetch = async (input) => {
     if (String(input).includes('/api/abundance/healthcare-providers/nationwide')) {
       return Response.json({ success: true, data: {
@@ -653,12 +654,13 @@ test('Exa enrichment rejects multi-number phone values and normalizes grounding 
         readiness: [], total: 1, limit: 1, offset: 0,
       } } satisfies HealthcareApiResponse);
     }
+    exaResponseCount += 1;
     return Response.json({
       id: 'agent_run_placeholder_phone', object: 'agent_run', status: 'completed',
       output: { structured: {
         match_status: 'verified_match', identity_reason: 'Exact NPI match.',
         professional_profile_url: 'https://example.test/provider-profile', professional_email: null,
-        professional_phone: '5550100 / 5550199',
+        professional_phone: exaResponseCount === 1 ? '5550100 / 5550199' : '1265049910',
         evidence_summary: 'A professional profile was located without a usable phone.',
       }, grounding: [null, 'invalid citation', { url: 'https://example.test/provider-profile' }] },
       costDollars: { total: 0.082 },
@@ -677,6 +679,16 @@ test('Exa enrichment rejects multi-number phone values and normalizes grounding 
   assert.equal(result.contact_route_status, 'no_contact_candidate_found');
   assert.equal(result.identity_verification_status, 'source_grounded');
   assert.deepEqual(result.source_citations, [{ url: 'https://example.test/provider-profile' }]);
+
+  const npiAsPhoneResult = await enrichProviderProfessionalContact(
+    {
+      npi: '1265049910', purpose: 'recruiting_outreach', confirm_paid_enrichment: true,
+      contact_types: ['phone'],
+    },
+    { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn },
+  );
+  assert.equal(npiAsPhoneResult.professional_contact.phone, undefined);
+  assert.equal(npiAsPhoneResult.contact_route_status, 'no_contact_candidate_found');
 });
 
 test('candidate search is bounded, filterable, and omits bulk contact fields', async () => {
