@@ -651,7 +651,7 @@ test('Exa enrichment rejects multi-number and NPI-as-phone values and normalizes
     if (String(input).includes('/api/abundance/healthcare-providers/nationwide')) {
       return Response.json({ success: true, data: {
         report,
-        providers: [{ npi: '1265049910', name: 'Jane Test Provider', source_fetched_at: '2026-09-02T01:39:07.502Z' }],
+        providers: [{ npi: '4175550100', name: 'Jane Test Provider', source_fetched_at: '2026-09-02T01:39:07.502Z' }],
         readiness: [], total: 1, limit: 1, offset: 0,
       } } satisfies HealthcareApiResponse);
     }
@@ -661,7 +661,7 @@ test('Exa enrichment rejects multi-number and NPI-as-phone values and normalizes
       output: { structured: {
         match_status: 'verified_match', identity_reason: 'Exact NPI match.',
         professional_profile_url: 'https://example.test/provider-profile', professional_email: null,
-        professional_phone: exaResponseCount === 1 ? '5550100 / 5550199' : '1265049910',
+        professional_phone: exaResponseCount === 1 ? '5550100 / 5550199' : '+1 417-555-0100',
         evidence_summary: 'A professional profile was located without a usable phone.',
       }, grounding: [null, 'invalid citation', { url: 'https://example.test/provider-profile' }] },
       costDollars: { total: 0.082 },
@@ -670,7 +670,7 @@ test('Exa enrichment rejects multi-number and NPI-as-phone values and normalizes
 
   const result = await enrichProviderProfessionalContact(
     {
-      npi: '1265049910', purpose: 'recruiting_outreach', confirm_paid_enrichment: true,
+      npi: '4175550100', purpose: 'recruiting_outreach', confirm_paid_enrichment: true,
       contact_types: ['phone'],
     },
     { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn },
@@ -683,7 +683,7 @@ test('Exa enrichment rejects multi-number and NPI-as-phone values and normalizes
 
   const npiAsPhoneResult = await enrichProviderProfessionalContact(
     {
-      npi: '1265049910', purpose: 'recruiting_outreach', confirm_paid_enrichment: true,
+      npi: '4175550100', purpose: 'recruiting_outreach', confirm_paid_enrichment: true,
       contact_types: ['phone'],
     },
     { agencyApiKey: 'test-key', exaApiKey: 'exa-test-key', fetchFn },

@@ -436,7 +436,10 @@ function cleanProfessionalPhone(value: string | null | undefined, providerNpi: s
   const phone = cleanString(value);
   if (!phone) return undefined;
   const northAmericanPhone = /^(?:\+?1[\s.-]?)?(?:\([2-9]\d{2}\)|[2-9]\d{2})[\s.-]?[2-9]\d{2}[\s.-]?\d{4}$/;
-  return northAmericanPhone.test(phone) && phone.replace(/\D/g, '') !== providerNpi ? phone : undefined;
+  if (!northAmericanPhone.test(phone)) return undefined;
+  const digits = phone.replace(/\D/g, '');
+  const nationalDigits = digits.length === 11 && digits.startsWith('1') ? digits.slice(1) : digits;
+  return nationalDigits !== providerNpi ? phone : undefined;
 }
 
 function safeIdentityReason(status: z.infer<typeof exaStructuredOutputSchema>['match_status']): string {
