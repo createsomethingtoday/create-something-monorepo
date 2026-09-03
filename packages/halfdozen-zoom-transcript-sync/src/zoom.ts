@@ -68,27 +68,29 @@ export async function listTranscriptCandidates(env: Env): Promise<ZoomDiscoveryR
   const to = formatDate(new Date());
   const from = formatDate(new Date(Date.now() - lookbackDays * 24 * 60 * 60 * 1000));
 
-  const discovery = await listRecordingMeetings(env, { from, to, pageSize });
-
   const candidates = new Map<string, TranscriptCandidate>();
+  let meetingsScanned = 0;
   let transcriptFilesScanned = 0;
 
-  for (const meeting of discovery.meetings) {
-    const transcriptFiles = dedupeRecordingFiles(meeting.recording_files ?? []).filter(isTranscriptFile);
-    transcriptFilesScanned += transcriptFiles.length;
+  await forEachRecordingPage(env, { from, to, pageSize }, async (meetings) => {
+    meetingsScanned += meetings.length;
+    for (const meeting of meetings) {
+      const transcriptFiles = dedupeRecordingFiles(meeting.recording_files ?? []).filter(isTranscriptFile);
+      transcriptFilesScanned += transcriptFiles.length;
 
-    for (const file of transcriptFiles) {
-      const downloadUrl = file.download_url?.trim();
-      if (!downloadUrl) continue;
+      for (const file of transcriptFiles) {
+        const downloadUrl = file.download_url?.trim();
+        if (!downloadUrl) continue;
 
-      const candidate = await buildTranscriptCandidate(meeting, file, downloadUrl);
-      candidates.set(candidate.dedupKey, candidate);
+        const candidate = await buildTranscriptCandidate(meeting, file, downloadUrl);
+        candidates.set(candidate.dedupKey, candidate);
+      }
     }
-  }
+  });
 
   return {
     candidates: Array.from(candidates.values()),
-    meetingsScanned: discovery.meetings.length,
+    meetingsScanned,
     transcriptFilesScanned,
     from,
     to,
@@ -119,20 +121,28 @@ export async function inspectMeetingRecordings(
     throw new Error('from and to must be at most 30 days apart');
   }
 
-  const discovery = await listRecordingMeetings(env, {
-    from,
-    to,
-    pageSize: parsePositiveInt(env.ZOOM_PAGE_SIZE, DEFAULT_PAGE_SIZE),
-  });
-  const matchingMeetings = discovery.meetings.filter(
-    (meeting) => stringify(meeting.id) === normalizedMeetingId,
+  let meetingsScanned = 0;
+  const matchingMeetings: ZoomMeeting[] = [];
+  await forEachRecordingPage(
+    env,
+    {
+      from,
+      to,
+      pageSize: parsePositiveInt(env.ZOOM_PAGE_SIZE, DEFAULT_PAGE_SIZE),
+    },
+    (meetings) => {
+      meetingsScanned += meetings.length;
+      matchingMeetings.push(...meetings.filter(
+        (meeting) => stringify(meeting.id) === normalizedMeetingId,
+      ));
+    },
   );
 
   return {
     meetingId: normalizedMeetingId,
     from,
     to,
-    meetingsScanned: discovery.meetings.length,
+    meetingsScanned,
     occurrences: matchingMeetings.map((meeting) => {
       const recordingFiles = dedupeRecordingFiles(meeting.recording_files ?? []);
       return {
@@ -161,11 +171,11 @@ export async function inspectMeetingRecordings(
   };
 }
 
-async function listRecordingMeetings(
+async function forEachRecordingPage(
   env: Env,
   input: { from: string; to: string; pageSize: number },
-): Promise<{ meetings: ZoomMeeting[] }> {
-  const meetings: ZoomMeeting[] = [];
+  processPage: (meetings: ZoomMeeting[]) => void | Promise<void>,
+): Promise<void> {
   let nextPageToken = '';
 
   do {
@@ -176,11 +186,9 @@ async function listRecordingMeetings(
         nextPageToken,
       }),
     );
-    meetings.push(...(Array.isArray(payload.meetings) ? payload.meetings : []));
+    await processPage(Array.isArray(payload.meetings) ? payload.meetings : []);
     nextPageToken = payload.next_page_token?.trim() || '';
   } while (nextPageToken);
-
-  return { meetings };
 }
 
 export async function downloadTranscript(env: Env, candidate: TranscriptCandidate): Promise<string> {

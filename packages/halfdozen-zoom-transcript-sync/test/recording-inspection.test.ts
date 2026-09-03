@@ -33,6 +33,19 @@ test('recording inspection uses the scheduler GET path and keeps non-transcript 
     }
 
     if (url.startsWith('https://api.zoom.us/v2/accounts/me/recordings?')) {
+      if (!url.includes('next_page_token=')) {
+        return Response.json({
+          meetings: [{
+            id: 11111111111,
+            uuid: 'other-occurrence',
+            topic: 'Other meeting',
+            start_time: '2026-09-02T15:00:00Z',
+            recording_files: [],
+          }],
+          next_page_token: 'page-two',
+        });
+      }
+
       return Response.json({
         meetings: [
           {
@@ -60,13 +73,6 @@ test('recording inspection uses the scheduler GET path and keeps non-transcript 
               },
             ],
           },
-          {
-            id: 11111111111,
-            uuid: 'other-occurrence',
-            topic: 'Other meeting',
-            start_time: '2026-09-02T15:00:00Z',
-            recording_files: [],
-          },
         ],
         next_page_token: '',
       });
@@ -92,6 +98,7 @@ test('recording inspection uses the scheduler GET path and keeps non-transcript 
 
   assert.equal(requests[1]?.method, 'GET');
   assert.match(requests[1]?.url ?? '', /\/accounts\/me\/recordings\?/);
+  assert.ok(requests.some((request) => /next_page_token=page-two/.test(request.url)));
   assert.equal(result.meetingsScanned, 2);
   assert.equal(result.occurrences.length, 1);
   assert.equal(result.occurrences[0]?.meetingId, '87210304877');
