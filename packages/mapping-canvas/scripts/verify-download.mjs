@@ -1,6 +1,33 @@
 import { chromium } from '@playwright/test';
+import { spawn, spawnSync } from 'node:child_process';
+import { createServer } from 'node:net';
+import { fileURLToPath } from 'node:url';
 
-const baseUrl = new URL(process.env.CANVAS_URL ?? 'http://127.0.0.1:4178');
+let configuredUrl = process.env.CANVAS_URL;
+const packageRoot = fileURLToPath(new URL('../', import.meta.url));
+let preview;
+if (!configuredUrl) {
+  const port = await new Promise((resolve, reject) => {
+    const listener = createServer();
+    listener.once('error', reject);
+    listener.listen(0, '127.0.0.1', () => {
+      const address = listener.address();
+      if (!address || typeof address === 'string') { listener.close(); reject(new Error('Could not reserve a preview port')); return; }
+      listener.close((error) => error ? reject(error) : resolve(address.port));
+    });
+  });
+  const build = spawnSync('pnpm', ['run', 'build'], { cwd: packageRoot, stdio: 'inherit' });
+  if (build.status !== 0) throw new Error(`Production build failed with status ${build.status}`);
+  configuredUrl = `http://127.0.0.1:${port}`;
+  preview = spawn('pnpm', ['exec', 'vite', 'preview', '--host', '127.0.0.1', '--port', String(port), '--strictPort'], { cwd: packageRoot, stdio: 'inherit' });
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    try { if ((await fetch(configuredUrl)).ok) break; } catch { /* Wait for the preview listener. */ }
+    if (attempt === 99) throw new Error(`Preview did not start at ${configuredUrl}`);
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+}
+if (!configuredUrl) throw new Error('Download verifier URL is unavailable');
+const baseUrl = new URL(configuredUrl);
 const downloadUrl = new URL('/download', baseUrl).href;
 const browser = await chromium.launch({ headless: true });
 
@@ -30,6 +57,10 @@ async function verify(viewport, label) {
   if (overflow) throw new Error(`${label} has horizontal overflow`);
   if (errors.length) throw new Error(`${label} console errors: ${errors.join(' | ')}`);
   if (failedRequests.length) throw new Error(`${label} failed requests: ${failedRequests.join(' | ')}`);
+  await page.getByRole('navigation', { name: 'Draw navigation' }).getByRole('link', { name: 'Open Draw' }).click();
+  await page.getByRole('button', { name: /Pen tool/ }).waitFor();
+  const workbenchPadding = await page.locator('.workbench').evaluate((node) => getComputedStyle(node).paddingTop);
+  if (workbenchPadding !== '0px') throw new Error(`${label} landing styles leaked into the canvas (${workbenchPadding} workbench padding)`);
   await context.close();
   return 'pass';
 }
@@ -44,4 +75,5 @@ try {
   console.log(JSON.stringify(result, null, 2));
 } finally {
   await browser.close();
+  preview?.kill('SIGTERM');
 }
