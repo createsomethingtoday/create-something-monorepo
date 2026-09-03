@@ -22,6 +22,12 @@ Canvas content is saved only on the current device in browser storage. CREATE SO
 
 https://draw.createsomething.agency/
 
+## Mac preview
+
+https://draw.createsomething.agency/download
+
+The Mac and iPhone companion is an individually delivered preview. The current candidate is unsigned and not notarized, so no general-public binary is linked. The landing page records the exact source revision, SHA-256 checksum, and candidate workflow receipt. A public DMG download remains held until Developer ID signing, Apple notarization, Gatekeeper verification, and clean install acceptance pass.
+
 ## Publisher
 
 CREATE SOMETHING: https://createsomething.agency/

@@ -13,6 +13,7 @@ describe('public identity and discovery', () => {
   it('uses the governed CREATE SOMETHING logo in the product header', () => {
     expect(page).toContain('src="/brand/create-something-agency-white.svg"');
     expect(page).toContain('alt="CREATE SOMETHING .agency"');
+    expect(page).toContain('href="/download">Mac</a>');
   });
 
   it('publishes canonical, social, and application metadata for Draw', () => {
@@ -29,6 +30,7 @@ describe('public identity and discovery', () => {
     expect(manifest.description).toContain('local-first');
     expect(robots).toContain('Sitemap: https://draw.createsomething.agency/sitemap.xml');
     expect(sitemap).toContain('<loc>https://draw.createsomething.agency/</loc>');
+    expect(sitemap).toContain('<loc>https://draw.createsomething.agency/download</loc>');
     expect(llms).toContain('# CREATE SOMETHING Draw');
     expect(llms).toContain('saved only on the current device');
     expect(serviceWorker).toContain("'/brand/create-something-agency-white.svg'");
