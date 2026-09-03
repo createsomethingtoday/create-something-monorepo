@@ -436,7 +436,7 @@ function redactContactTokens(value: string): string {
     .replace(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, '[redacted email]')
     .replace(/https?:\/\/\S+/gi, '[redacted URL]')
     .replace(/\b(?:www\.)?(?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/[^\s]*)?/gi, '[redacted URL]')
-    .replace(/\+?\d[\d().\s-]{6,}\d/g, '[redacted phone]');
+    .replace(/\+?\d[\d().\s/-]{6,}\d/g, '[redacted phone]');
 }
 
 const requiredKinds = ['license_or_privilege', 'discipline', 'exclusion', 'practice_or_employment', 'contact_route', 'outreach_authority', 'recruiter_approval'];
@@ -498,14 +498,16 @@ async function createAndAwaitExaRun(body: Record<string, unknown>, apiKey: strin
   const baseUrl = (options.exaAgentBaseUrl?.trim() || DEFAULT_EXA_AGENT_BASE_URL).replace(/\/$/, '');
   const headers = { 'Content-Type': 'application/json', 'x-api-key': apiKey };
   const timeoutMs = Math.min(Math.max(options.exaTimeoutMs ?? 45_000, 1_000), 55_000);
-  const deadline = Date.now() + timeoutMs;
+  const overallDeadline = Date.now() + timeoutMs;
+  const cleanupReserveMs = Math.min(1_000, Math.max(100, Math.floor(timeoutMs * 0.2)));
+  const executionDeadline = overallDeadline - cleanupReserveMs;
   let run: ExaAgentRun;
   try {
     run = await fetchAndReadExaRun(
       fetchFn,
       `${baseUrl}/agent/runs`,
       { method: 'POST', headers, body: JSON.stringify(body) },
-      Math.min(timeoutMs, 15_000),
+      Math.min(Math.max(executionDeadline - Date.now(), 1), 15_000),
       'create',
     );
   } catch (error) {
@@ -520,9 +522,9 @@ async function createAndAwaitExaRun(body: Record<string, unknown>, apiKey: strin
   }
   const pollIntervalMs = Math.min(Math.max(options.exaPollIntervalMs ?? 1_000, 100), 5_000);
   const waitFn = options.waitFn ?? ((milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds)));
-  while (Date.now() < deadline) {
-    await waitFn(Math.min(pollIntervalMs, Math.max(deadline - Date.now(), 0)));
-    const remainingMs = deadline - Date.now();
+  while (Date.now() < executionDeadline) {
+    await waitFn(Math.min(pollIntervalMs, Math.max(executionDeadline - Date.now(), 0)));
+    const remainingMs = executionDeadline - Date.now();
     if (remainingMs <= 0) break;
     try {
       run = await fetchAndReadExaRun(
@@ -533,7 +535,7 @@ async function createAndAwaitExaRun(body: Record<string, unknown>, apiKey: strin
         'poll',
       );
     } catch {
-      const cancellationConfirmed = await cancelExaRun(fetchFn, baseUrl, run.id, apiKey);
+      const cancellationConfirmed = await cancelExaRun(fetchFn, baseUrl, run.id, apiKey, overallDeadline - Date.now());
       if (cancellationConfirmed) {
         throw new Error('Exa Agent polling failed and the paid run was cancelled. Retry later or use the no-cost registry contact tool.');
       }
@@ -544,7 +546,7 @@ async function createAndAwaitExaRun(body: Record<string, unknown>, apiKey: strin
       throw new Error(formatTerminalExaRunError(run));
     }
   }
-  const cancellationConfirmed = await cancelExaRun(fetchFn, baseUrl, run.id, apiKey);
+  const cancellationConfirmed = await cancelExaRun(fetchFn, baseUrl, run.id, apiKey, overallDeadline - Date.now());
   if (cancellationConfirmed) {
     throw new Error(`Exa Agent enrichment did not complete within ${timeoutMs}ms and was cancelled. Retry later or use the no-cost registry contact tool.`);
   }
@@ -612,13 +614,15 @@ async function cancelExaRun(
   baseUrl: string,
   runId: string,
   apiKey: string,
+  timeoutMs: number,
 ): Promise<boolean> {
+  if (timeoutMs <= 0) return false;
   try {
     const cancellation = await fetchWithTimeout(
       fetchFn,
       `${baseUrl}/agent/runs/${encodeURIComponent(runId)}/cancel`,
       { method: 'POST', headers: { 'x-api-key': apiKey } },
-      5_000,
+      timeoutMs,
     );
     return cancellation.ok;
   } catch {

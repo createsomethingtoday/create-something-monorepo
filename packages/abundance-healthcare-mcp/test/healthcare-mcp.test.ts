@@ -271,6 +271,7 @@ test('Exa enrichment cancels an unfinished run at the bounded timeout', async ()
 });
 
 test('Exa timeout does not claim cancellation when cleanup fails', async () => {
+  const startedAt = Date.now();
   const fetchFn: typeof fetch = async (input) => {
     const url = String(input);
     if (url.includes('/api/abundance/healthcare-providers/nationwide')) {
@@ -280,7 +281,7 @@ test('Exa timeout does not claim cancellation when cleanup fails', async () => {
         readiness: [], total: 1, limit: 1, offset: 0,
       } } satisfies HealthcareApiResponse);
     }
-    if (url.endsWith('/cancel')) return new Response(null, { status: 503 });
+    if (url.endsWith('/cancel')) return new Promise<Response>(() => { /* Simulate stalled cleanup. */ });
     return Response.json({ id: 'agent_run_cancel_failed', object: 'agent_run', status: url.endsWith('/agent/runs') ? 'queued' : 'running' });
   };
 
@@ -294,6 +295,7 @@ test('Exa timeout does not claim cancellation when cleanup fails', async () => {
     ),
     /cancellation could not be confirmed/i,
   );
+  assert.ok(Date.now() - startedAt < 1_500, 'cleanup must stay inside the declared one-second deadline');
 });
 
 test('Exa polling failures cancel the paid run before returning an error', async () => {
@@ -583,7 +585,7 @@ test('Exa enrichment suppresses contact types the operator did not request', asy
         match_status: 'verified_match', identity_reason: 'Exact NPI match.',
         professional_profile_url: 'https://example.test/provider-profile?phone=15550103#contact', professional_email: null,
         professional_phone: '+1 555 0100',
-        current_professional_affiliation: 'Example Clinic; alternate phone +1 555 0101; alternate@example.test',
+        current_professional_affiliation: 'Example Clinic; alternate phones +1 555 0101 and 417/555/0100; alternate@example.test',
         evidence_summary: 'A phone was returned despite the email-only request.',
       }, grounding: [{
         url: 'https://example.test/provider',
@@ -604,7 +606,7 @@ test('Exa enrichment suppresses contact types the operator did not request', asy
 
   assert.equal(result.professional_contact.phone, undefined);
   assert.equal(result.professional_contact.profile_url, 'https://example.test/provider-profile');
-  assert.equal(result.professional_contact.current_affiliation, 'Example Clinic; alternate phone [redacted phone]; [redacted email]');
+  assert.equal(result.professional_contact.current_affiliation, 'Example Clinic; alternate phones [redacted phone] and [redacted phone]; [redacted email]');
   assert.deepEqual(result.source_citations, [{ url: 'https://example.test/provider' }]);
   assert.deepEqual(result.usage, { searches: 1 });
   assert.equal(result.contact_route_status, 'no_contact_candidate_found');
