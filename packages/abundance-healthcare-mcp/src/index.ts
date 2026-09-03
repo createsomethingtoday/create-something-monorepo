@@ -204,7 +204,7 @@ export async function getHealthcarePractitioner(input: z.input<typeof practition
   const parsed = practitionerSchema.parse(input);
   const data = await fetchHealthcareMarket(parsed.market_id, { npi: parsed.npi, limit: '1' }, options);
   const provider = data.providers[0];
-  if (!provider) throw new Error(`NPI ${parsed.npi} was not found in market ${parsed.market_id}.`);
+  if (!provider) throw new Error(`The requested NPI was not found in market ${parsed.market_id}.`);
   const readiness = data.readiness[0] ?? failClosedReadiness(provider.npi, data.report);
   return {
     market_id: parsed.market_id,
@@ -231,7 +231,7 @@ export async function getProviderContactInformation(input: z.input<typeof provid
   const parsed = providerContactSchema.parse(input);
   const data = await fetchHealthcareMarket('npg-family-np-nationwide', { npi: parsed.npi, limit: '1' }, options);
   const provider = data.providers[0];
-  if (!provider) throw new Error(`NPI ${parsed.npi} was not found in the nationwide Family Nurse Practitioner snapshot.`);
+  if (!provider) throw new Error('The requested NPI was not found in the nationwide Family Nurse Practitioner snapshot.');
   const enumerationType = cleanString(provider.enumeration_type);
   const classification = enumerationType === 'NPI-1'
     ? 'individual_public_registry'
@@ -281,7 +281,7 @@ export async function enrichProviderProfessionalContact(input: z.input<typeof pr
   if (!exaApiKey) throw new Error('EXA_API_KEY is not configured for the healthcare MCP. Use the no-cost get_provider_contact_information tool instead, or configure Exa before requesting paid enrichment.');
   const data = await fetchHealthcareMarket('npg-family-np-nationwide', { npi: parsed.npi, limit: '1' }, options);
   const provider = data.providers[0];
-  if (!provider) throw new Error(`NPI ${parsed.npi} was not found in the nationwide Family Nurse Practitioner snapshot.`);
+  if (!provider) throw new Error('The requested NPI was not found in the nationwide Family Nurse Practitioner snapshot.');
   const requestedEmail = parsed.contact_types.includes('email');
   const requestedPhone = parsed.contact_types.includes('phone');
   const contactProperties: Record<string, unknown> = {};
@@ -472,8 +472,8 @@ async function fetchHealthcareMarket(marketId: HealthcareMarketId, params: Recor
   if ('city' in market && market.city) url.searchParams.set('city', market.city);
   for (const [key, value] of Object.entries(params)) if (value !== undefined) url.searchParams.set(key, value);
   const response = await (options.fetchFn ?? fetch)(url, { headers: { Authorization: `Bearer ${agencyApiKey}` } });
+  if (!response.ok) throw new Error(`Agency healthcare API returned HTTP ${response.status}. No response body was retained.`);
   const text = await response.text();
-  if (!response.ok) throw new Error(`Agency healthcare API returned HTTP ${response.status}: ${text.slice(0, 300)}`);
   let payload: HealthcareApiResponse;
   try { payload = JSON.parse(text) as HealthcareApiResponse; } catch { throw new Error('Agency healthcare API returned invalid JSON.'); }
   if (!payload.success || !payload.data?.report || !Array.isArray(payload.data.providers)) throw new Error('Agency healthcare API returned a malformed nationwide coverage response.');

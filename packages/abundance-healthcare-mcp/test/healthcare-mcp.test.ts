@@ -138,6 +138,35 @@ test('exact-NPI contact lookup classifies Type 1 registry fields without grantin
   assert.match(result.contact_limitation, /does not establish consent/i);
 });
 
+test('healthcare lookup failures omit NPIs and upstream response bodies', async () => {
+  const input = { npi: '1265049910', purpose: 'recruiting_outreach' as const };
+  await assert.rejects(
+    getProviderContactInformation(input, {
+      agencyApiKey: 'test-key',
+      fetchFn: async () => Response.json({
+        success: true,
+        data: { report, providers: [], readiness: [], total: 0, limit: 1, offset: 0 },
+      } satisfies HealthcareApiResponse),
+    }),
+    (error: unknown) => {
+      assert.match(String(error), /requested NPI was not found/i);
+      assert.doesNotMatch(String(error), /1265049910/);
+      return true;
+    },
+  );
+  await assert.rejects(
+    getProviderContactInformation(input, {
+      agencyApiKey: 'test-key',
+      fetchFn: async () => new Response('contact@example.test 4175550100', { status: 503 }),
+    }),
+    (error: unknown) => {
+      assert.match(String(error), /HTTP 503/i);
+      assert.doesNotMatch(String(error), /contact@example\.test|4175550100/);
+      return true;
+    },
+  );
+});
+
 test('confirmed Exa enrichment is bounded to one exact provider and preserves unverified status', async () => {
   const requests: Array<{ url: string; init?: RequestInit }> = [];
   const fetchFn: typeof fetch = async (input, init) => {

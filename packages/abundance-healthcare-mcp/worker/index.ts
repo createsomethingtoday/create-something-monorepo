@@ -47,9 +47,9 @@ export class AbundanceHealthcareMCP extends McpAgent<Env> {
       publicKey: this.env.LANGFUSE_PUBLIC_KEY,
       secretKey: this.env.LANGFUSE_SECRET_KEY,
       projectName: this.env.LANGFUSE_PROJECT_NAME?.trim() || 'CREATE SOMETHING',
-      // Langfuse captures full tool inputs and outputs. Keep only aggregate D1
-      // invocation telemetry so NPIs and public contact fields are not copied
-      // into a secondary trace store.
+      // Langfuse captures full tool inputs and outputs. Keep D1 invocation
+      // metering only; healthcare errors are identifier-free so NPIs and public
+      // contact fields are not copied into a secondary trace store.
       enabled: false,
     });
     registerAbundanceHealthcareTools(this.server, {
