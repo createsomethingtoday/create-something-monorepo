@@ -6,30 +6,8 @@ import { fileURLToPath } from 'node:url';
 let configuredUrl = process.env.CANVAS_URL;
 const packageRoot = fileURLToPath(new URL('../', import.meta.url));
 let preview;
-if (!configuredUrl) {
-  const port = await new Promise((resolve, reject) => {
-    const listener = createServer();
-    listener.once('error', reject);
-    listener.listen(0, '127.0.0.1', () => {
-      const address = listener.address();
-      if (!address || typeof address === 'string') { listener.close(); reject(new Error('Could not reserve a preview port')); return; }
-      listener.close((error) => error ? reject(error) : resolve(address.port));
-    });
-  });
-  const build = spawnSync('pnpm', ['run', 'build'], { cwd: packageRoot, stdio: 'inherit' });
-  if (build.status !== 0) throw new Error(`Production build failed with status ${build.status}`);
-  configuredUrl = `http://127.0.0.1:${port}`;
-  preview = spawn('pnpm', ['exec', 'vite', 'preview', '--host', '127.0.0.1', '--port', String(port), '--strictPort'], { cwd: packageRoot, stdio: 'inherit' });
-  for (let attempt = 0; attempt < 100; attempt += 1) {
-    try { if ((await fetch(configuredUrl)).ok) break; } catch { /* Wait for the preview listener. */ }
-    if (attempt === 99) throw new Error(`Preview did not start at ${configuredUrl}`);
-    await new Promise((resolve) => setTimeout(resolve, 100));
-  }
-}
-if (!configuredUrl) throw new Error('Download verifier URL is unavailable');
-const baseUrl = new URL(configuredUrl);
-const downloadUrl = new URL('/download', baseUrl).href;
-const browser = await chromium.launch({ headless: true });
+let browser;
+let downloadUrl;
 
 async function verify(viewport, label) {
   const context = await browser.newContext({ viewport, reducedMotion: 'reduce' });
@@ -66,6 +44,29 @@ async function verify(viewport, label) {
 }
 
 try {
+  if (!configuredUrl) {
+    const port = await new Promise((resolve, reject) => {
+      const listener = createServer();
+      listener.once('error', reject);
+      listener.listen(0, '127.0.0.1', () => {
+        const address = listener.address();
+        if (!address || typeof address === 'string') { listener.close(); reject(new Error('Could not reserve a preview port')); return; }
+        listener.close((error) => error ? reject(error) : resolve(address.port));
+      });
+    });
+    const build = spawnSync('pnpm', ['run', 'build'], { cwd: packageRoot, stdio: 'inherit' });
+    if (build.status !== 0) throw new Error(`Production build failed with status ${build.status}`);
+    configuredUrl = `http://127.0.0.1:${port}`;
+    preview = spawn('pnpm', ['exec', 'vite', 'preview', '--host', '127.0.0.1', '--port', String(port), '--strictPort'], { cwd: packageRoot, stdio: 'inherit' });
+    for (let attempt = 0; attempt < 100; attempt += 1) {
+      try { if ((await fetch(configuredUrl)).ok) break; } catch { /* Wait for the preview listener. */ }
+      if (attempt === 99) throw new Error(`Preview did not start at ${configuredUrl}`);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+  }
+  if (!configuredUrl) throw new Error('Download verifier URL is unavailable');
+  downloadUrl = new URL('/download', new URL(configuredUrl)).href;
+  browser = await chromium.launch({ headless: true });
   const result = {
     url: downloadUrl,
     desktop: await verify({ width: 1440, height: 1000 }, 'Desktop'),
@@ -74,6 +75,6 @@ try {
   };
   console.log(JSON.stringify(result, null, 2));
 } finally {
-  await browser.close();
+  await browser?.close();
   preview?.kill('SIGTERM');
 }
