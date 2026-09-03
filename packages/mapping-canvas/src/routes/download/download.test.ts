@@ -31,4 +31,10 @@ describe('Mac preview landing', () => {
   it('opens the landing separately so the active canvas history stays mounted', () => {
     expect(canvasPage).toContain('href="/download" target="_blank" rel="noreferrer"');
   });
+
+  it('uses the provenance-tracked Draw communication image without baking claims into it', () => {
+    expect(page).toContain('/images/draw/draw-together-mapping-instrument.webp');
+    expect(page).toContain('alt="A tactile desktop mapping plane linked to a smaller handheld companion plane"');
+    expect(page).toContain('<figcaption>');
+  });
 });

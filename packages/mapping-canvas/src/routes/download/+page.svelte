@@ -75,14 +75,20 @@
   </nav>
 
   <section class="opening" aria-labelledby="download-title">
-    <div class="eyebrow"><span>MAC PREVIEW · 0.1.0</span><span>INDIVIDUAL DELIVERY</span></div>
-    <h1 id="download-title">Draw together.<br />Keep the Mac authoritative.</h1>
-    <p class="lede">The browser canvas is free and ready now. The optional Mac preview hosts a local session so an iPhone can draw, navigate, and mirror changes during a meeting.</p>
-    <div class="actions">
-      <a class="primary" href="/">Open Draw</a>
-      <a class="secondary" href={requestUrl}>Request Mac preview</a>
+    <div class="opening-copy">
+      <div class="eyebrow"><span>MAC PREVIEW · 0.1.0</span><span>INDIVIDUAL DELIVERY</span></div>
+      <h1 id="download-title">Draw together.<br />Keep the Mac authoritative.</h1>
+      <p class="lede">The browser canvas is free and ready now. The optional Mac preview hosts a local session so an iPhone can draw, navigate, and mirror changes during a meeting.</p>
+      <div class="actions">
+        <a class="primary" href="/">Open Draw</a>
+        <a class="secondary" href={requestUrl}>Request Mac preview</a>
+      </div>
+      <p class="boundary">Current Mac builds are delivered directly to informed testers. They are unsigned, not notarized, and not a general-public release.</p>
     </div>
-    <p class="boundary">Current Mac builds are delivered directly to informed testers. They are unsigned, not notarized, and not a general-public release.</p>
+    <figure class="hero-visual">
+      <img src="/images/draw/draw-together-mapping-instrument.webp" width="1536" height="1024" alt="A tactile desktop mapping plane linked to a smaller handheld companion plane" fetchpriority="high" />
+      <figcaption><span>DRAW TOGETHER</span><p>The phone moves with the conversation. The larger canvas keeps the shared map visible and authoritative.</p></figcaption>
+    </figure>
   </section>
 
   <section class="proof" aria-labelledby="proof-title">
