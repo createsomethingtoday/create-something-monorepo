@@ -433,9 +433,8 @@ function isUsableHttpsUrl(value: string): boolean {
 function cleanProfessionalPhone(value: string | null | undefined): string | undefined {
   const phone = cleanString(value);
   if (!phone) return undefined;
-  if (!/^\+?[\d().\s/-]+$/.test(phone)) return undefined;
-  const digitCount = phone.replace(/\D/g, '').length;
-  return digitCount >= 7 && digitCount <= 15 ? phone : undefined;
+  const northAmericanPhone = /^(?:\+?1[\s.-]?)?(?:\([2-9]\d{2}\)|[2-9]\d{2})[\s.-]?[2-9]\d{2}[\s.-]?\d{4}$/;
+  return northAmericanPhone.test(phone) ? phone : undefined;
 }
 
 function safeIdentityReason(status: z.infer<typeof exaStructuredOutputSchema>['match_status']): string {

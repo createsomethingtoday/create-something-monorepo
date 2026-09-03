@@ -613,7 +613,7 @@ test('Exa enrichment suppresses contact types the operator did not request', asy
   assert.equal(result.contact_route_status, 'no_contact_candidate_found');
 });
 
-test('Exa enrichment rejects mixed-content phones and normalizes grounding records', async () => {
+test('Exa enrichment rejects multi-number phone values and normalizes grounding records', async () => {
   const fetchFn: typeof fetch = async (input) => {
     if (String(input).includes('/api/abundance/healthcare-providers/nationwide')) {
       return Response.json({ success: true, data: {
@@ -627,7 +627,7 @@ test('Exa enrichment rejects mixed-content phones and normalizes grounding recor
       output: { structured: {
         match_status: 'verified_match', identity_reason: 'Exact NPI match.',
         professional_profile_url: 'https://example.test/provider-profile', professional_email: null,
-        professional_phone: 'wrong@example.test / 4175550100',
+        professional_phone: '5550100 / 5550199',
         evidence_summary: 'A professional profile was located without a usable phone.',
       }, grounding: [null, 'invalid citation', { url: 'https://example.test/provider-profile' }] },
       costDollars: { total: 0.082 },
