@@ -585,7 +585,10 @@ test('Exa enrichment suppresses contact types the operator did not request', asy
         professional_phone: '+1 555 0100',
         current_professional_affiliation: 'Example Clinic; alternate phone +1 555 0101; alternate@example.test',
         evidence_summary: 'A phone was returned despite the email-only request.',
-      }, grounding: [{ url: 'https://example.test/provider' }] },
+      }, grounding: [{
+        url: 'https://example.test/provider',
+        snippet: 'Call +1 555 0102 or use hidden-phone@example.test.',
+      }] },
       costDollars: { total: 0.032 },
     });
   };
@@ -601,6 +604,7 @@ test('Exa enrichment suppresses contact types the operator did not request', asy
   assert.equal(result.professional_contact.phone, undefined);
   assert.equal(result.professional_contact.profile_url, 'https://example.test/provider-profile');
   assert.equal(result.professional_contact.current_affiliation, 'Example Clinic; alternate phone [redacted phone]; [redacted email]');
+  assert.deepEqual(result.source_citations, [{ url: 'https://example.test/provider' }]);
   assert.equal(result.contact_route_status, 'no_contact_candidate_found');
 });
 

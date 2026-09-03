@@ -133,7 +133,7 @@ const providerEnrichmentOutputSchema = z.object({
     phone: z.string().optional(), current_affiliation: z.string().optional(),
   }),
   evidence_summary: z.string().optional(),
-  source_citations: z.array(z.record(z.unknown())),
+  source_citations: z.array(z.object({ url: z.string() })),
   contact_route_status: z.enum(['unverified_enrichment_candidate', 'no_contact_candidate_found']),
   identity_verification_status: z.enum(['source_grounded', 'operator_review_required']),
   outreach_authority_status: z.literal('not_established'),
@@ -330,7 +330,7 @@ export async function enrichProviderProfessionalContact(input: z.input<typeof pr
     ? run.output.grounding.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === 'object' && !Array.isArray(item))
     : [];
   const matchAllowsCandidate = structured.match_status === 'verified_match' || structured.match_status === 'plausible_match';
-  const sourceCitations = matchAllowsCandidate ? normalizedCitations : [];
+  const sourceCitations = matchAllowsCandidate ? collectGroundedCitationUrls(normalizedCitations) : [];
   const acceptedProfileUrl = matchAllowsCandidate ? structured.professional_profile_url : undefined;
   const acceptedEmail = matchAllowsCandidate && requestedEmail ? structured.professional_email : undefined;
   const acceptedPhone = matchAllowsCandidate && requestedPhone ? cleanProfessionalPhone(structured.professional_phone) : undefined;
@@ -371,6 +371,24 @@ function hasGroundedSourceUrl(value: unknown, depth = 0): boolean {
   const citation = value as Record<string, unknown>;
   if (typeof citation.url === 'string' && isUsableHttpsUrl(citation.url)) return true;
   return Array.isArray(citation.citations) && hasGroundedSourceUrl(citation.citations, depth + 1);
+}
+
+function collectGroundedCitationUrls(value: unknown, depth = 0, seen = new Set<string>()): Array<{ url: string }> {
+  if (depth > 6) return [];
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => collectGroundedCitationUrls(item, depth + 1, seen));
+  }
+  if (!value || typeof value !== 'object') return [];
+  const citation = value as Record<string, unknown>;
+  const results: Array<{ url: string }> = [];
+  if (typeof citation.url === 'string' && isUsableHttpsUrl(citation.url) && !seen.has(citation.url)) {
+    seen.add(citation.url);
+    results.push({ url: citation.url });
+  }
+  if (Array.isArray(citation.citations)) {
+    results.push(...collectGroundedCitationUrls(citation.citations, depth + 1, seen));
+  }
+  return results;
 }
 
 function isUsableHttpsUrl(value: string): boolean {
