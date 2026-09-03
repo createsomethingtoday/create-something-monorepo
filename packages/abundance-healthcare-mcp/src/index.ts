@@ -525,6 +525,7 @@ async function createAndAwaitExaRun(body: Record<string, unknown>, apiKey: strin
   if (run.status === 'failed' || run.status === 'cancelled') {
     throw new Error(formatTerminalExaRunError(run));
   }
+  const runId = run.id;
   const pollIntervalMs = Math.min(Math.max(options.exaPollIntervalMs ?? 1_000, 100), 5_000);
   const waitFn = options.waitFn ?? ((milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds)));
   while (Date.now() < executionDeadline) {
@@ -532,15 +533,17 @@ async function createAndAwaitExaRun(body: Record<string, unknown>, apiKey: strin
     const remainingMs = executionDeadline - Date.now();
     if (remainingMs <= 0) break;
     try {
-      run = await fetchAndReadExaRun(
+      const polledRun = await fetchAndReadExaRun(
         fetchFn,
-        `${baseUrl}/agent/runs/${encodeURIComponent(run.id)}`,
+        `${baseUrl}/agent/runs/${encodeURIComponent(runId)}`,
         { headers: { 'x-api-key': apiKey } },
         Math.min(remainingMs, 10_000),
         'poll',
       );
+      if (polledRun.id !== runId) throw new Error('Exa Agent poll returned a mismatched run ID.');
+      run = polledRun;
     } catch {
-      const cancellationConfirmed = await cancelExaRun(fetchFn, baseUrl, run.id, apiKey, overallDeadline - Date.now());
+      const cancellationConfirmed = await cancelExaRun(fetchFn, baseUrl, runId, apiKey, overallDeadline - Date.now());
       if (cancellationConfirmed) {
         throw new Error('Exa Agent polling failed and the paid run was cancelled. Retry later or use the no-cost registry contact tool.');
       }
@@ -551,7 +554,7 @@ async function createAndAwaitExaRun(body: Record<string, unknown>, apiKey: strin
       throw new Error(formatTerminalExaRunError(run));
     }
   }
-  const cancellationConfirmed = await cancelExaRun(fetchFn, baseUrl, run.id, apiKey, overallDeadline - Date.now());
+  const cancellationConfirmed = await cancelExaRun(fetchFn, baseUrl, runId, apiKey, overallDeadline - Date.now());
   if (cancellationConfirmed) {
     throw new Error(`Exa Agent enrichment did not complete within ${timeoutMs}ms and was cancelled. Retry later or use the no-cost registry contact tool.`);
   }

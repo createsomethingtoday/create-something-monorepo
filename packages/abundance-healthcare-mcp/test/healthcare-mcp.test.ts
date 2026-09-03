@@ -299,6 +299,7 @@ test('Exa timeout does not claim cancellation when cleanup fails', async () => {
 
 test('Exa polling failures cancel the paid run before returning an error', async () => {
   let cancelCalled = false;
+  let cancelledUrl = '';
   const fetchFn: typeof fetch = async (input) => {
     const url = String(input);
     if (url.includes('/api/abundance/healthcare-providers/nationwide')) {
@@ -310,12 +311,13 @@ test('Exa polling failures cancel the paid run before returning an error', async
     }
     if (url.endsWith('/cancel')) {
       cancelCalled = true;
+      cancelledUrl = url;
       return new Response(null, { status: 204 });
     }
     if (url.endsWith('/agent/runs')) {
       return Response.json({ id: 'agent_run_poll_failed', object: 'agent_run', status: 'queued' });
     }
-    return new Response('unsafe upstream detail', { status: 503 });
+    return Response.json({ id: 'different_paid_run', object: 'agent_run', status: 'completed' });
   };
 
   await assert.rejects(
@@ -325,11 +327,11 @@ test('Exa polling failures cancel the paid run before returning an error', async
     ),
     (error: unknown) => {
       assert.match(String(error), /polling failed.*was cancelled/i);
-      assert.doesNotMatch(String(error), /unsafe upstream detail/i);
       return true;
     },
   );
   assert.equal(cancelCalled, true);
+  assert.match(cancelledUrl, /agent_run_poll_failed\/cancel$/);
 });
 
 test('a stalled Exa poll response body is bounded by the overall deadline and cancelled', async () => {
