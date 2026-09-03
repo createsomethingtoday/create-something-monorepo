@@ -157,6 +157,26 @@ try {
   const notes = page.locator('g[aria-label^="Note:"]');
   if (await notes.count() !== 2) throw new Error('Two spatial notes were not created');
   const noteEditor = page.locator('textarea[aria-label="Edit note"]').first();
+  const immediateTyping = await noteEditor.evaluate((input) => {
+    const text = 'But loves pink more!';
+    const started = performance.now();
+    input.value = '';
+    input.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'deleteContentBackward' }));
+    for (const character of text) {
+      input.value += character;
+      input.dispatchEvent(new InputEvent('input', { bubbles: true, data: character, inputType: 'insertText' }));
+    }
+    return { value: input.value, elapsed: performance.now() - started, label: input.closest('g')?.getAttribute('aria-label') };
+  });
+  if (immediateTyping.value !== 'But loves pink more!' || immediateTyping.elapsed > 50) throw new Error(`Note keystrokes did not paint immediately: ${JSON.stringify(immediateTyping)}`);
+  if (immediateTyping.label === 'Note: But loves pink more!') throw new Error('Note input rebuilt the canvas document during the keystroke burst');
+  const editingConflict = await page.evaluate(async () => {
+    try { await window.__drawWebMcpTools.draw_get_state.execute({}); return 'allowed'; }
+    catch (error) { return error instanceof Error ? error.message : String(error); }
+  });
+  if (!editingConflict.includes('Finish the active human gesture')) throw new Error(`Agent access was not paused for active note editing: ${editingConflict}`);
+  await notes.nth(1).dispatchEvent('pointerdown', { bubbles: true, button: 0, pointerId: 77, pointerType: 'mouse' });
+  if (await notes.first().getAttribute('aria-label') !== 'Note: But loves pink more!') throw new Error('Pointer gesture did not flush note text before capturing canvas state');
   await noteEditor.fill('MCP');
   await noteEditor.pressSequentially(' tools');
   if (await noteEditor.inputValue() !== 'MCP tools') throw new Error('Note editing did not preserve typed spaces');
