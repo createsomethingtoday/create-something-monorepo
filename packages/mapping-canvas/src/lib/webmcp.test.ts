@@ -118,6 +118,16 @@ describe('Draw WebMCP tools', () => {
     expect(receipt.summary.selectedIds.every((id) => id.length <= 240)).toBe(true);
   });
 
+  it('projects only documented compact object fields and bounds semantic refs', async () => {
+    const rectangle = { id: 'extended-shape', kind: 'rectangle' as const, createdAt: '2026-09-04T00:00:00.000Z', from: { x: 0, y: 0 }, to: { x: 100, y: 80 }, color: '#0057b8', extensionPayload: Array.from({ length: 10_000 }, (_, index) => index) };
+    const controller = harness({ ...createDocument(), objects: [rectangle] });
+    const tools = createDrawWebMcpTools(controller);
+    const projection = await tools.find(({ name }) => name === 'draw_inspect')!.execute({ kinds: ['rectangle'] }) as { objects: Record<string, unknown>[] };
+    expect(projection.objects[0]).not.toHaveProperty('extensionPayload');
+    await expect(tools.find(({ name }) => name === 'draw_compose')!.execute({ nodes: [{ ref: 'r'.repeat(121), text: 'Too long' }] })).rejects.toThrow('at most 120');
+    expect(JSON.stringify(tools.find(({ name }) => name === 'draw_compose')!.inputSchema)).toContain('"maxLength":120');
+  });
+
   it('composes a labeled workflow from local references and creates v1 paths without storage fields', async () => {
     const controller = harness();
     const tools = createDrawWebMcpTools(controller);

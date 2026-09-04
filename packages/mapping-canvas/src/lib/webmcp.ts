@@ -147,6 +147,12 @@ function requiredText(value: unknown, label: string) {
   return value.trim();
 }
 
+function localReference(value: unknown, label: string) {
+  const reference = requiredText(value, label);
+  if (reference.length > 120) throw new Error(`${label} must be at most 120 characters.`);
+  return reference;
+}
+
 function finite(value: unknown, fallback: number) {
   return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
 }
@@ -272,26 +278,23 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
           visibleWorld: { x: -x / zoom, y: -y / zoom, width: surface.width / zoom, height: surface.height / zoom, zoom },
           summary: { ...summary(controller), matchedCount: matches.length },
           objects: matches.slice(0, limit).map((object) => {
-            const { sourceSnapshot, sourceIds, ...compact } = object;
+            const { sourceSnapshot, sourceIds } = object;
             const sources = sourceIds ? { sourceIds: sourceIds.slice(0, 50), sourceIdCount: sourceIds.length, ...(sourceIds.length > 50 ? { sourceIdsTruncated: true } : {}) } : {};
             const snapshots = sourceSnapshot ? { sourceSnapshotCount: sourceSnapshot.length } : {};
-            if (compact.kind === 'stroke') {
-              const { points, ...stroke } = compact;
-              return { ...stroke, ...sources, ...snapshots, pointCount: points.length, bounds: objectBounds([object], state.document.objects) };
+            const base = { id: object.id, kind: object.kind, createdAt: object.createdAt, ...sources, ...snapshots };
+            if (object.kind === 'stroke') {
+              return { ...base, color: object.color, width: object.width, pointCount: object.points.length, bounds: objectBounds([object], state.document.objects) };
             }
-            if (compact.kind === 'note') {
-              const { text, ...note } = compact;
-              return { ...note, ...sources, ...snapshots, text: text.slice(0, 240), textLength: text.length, ...(text.length > 240 ? { textTruncated: true } : {}) };
+            if (object.kind === 'note') {
+              return { ...base, x: object.x, y: object.y, width: object.width, height: object.height, text: object.text.slice(0, 240), textLength: object.text.length, ...(object.text.length > 240 ? { textTruncated: true } : {}) };
             }
-            if (compact.kind === 'connector') {
-              const { label, ...connector } = compact;
-              return { ...connector, ...sources, ...snapshots, label: label.slice(0, 240), labelLength: label.length, ...(label.length > 240 ? { labelTruncated: true } : {}) };
+            if (object.kind === 'connector') {
+              return { ...base, fromId: object.fromId, toId: object.toId, label: object.label.slice(0, 240), labelLength: object.label.length, ...(object.label.length > 240 ? { labelTruncated: true } : {}) };
             }
-            if (compact.kind === 'group') {
-              const { label, childIds, ...group } = compact;
-              return { ...group, ...sources, ...snapshots, label: label.slice(0, 240), labelLength: label.length, ...(label.length > 240 ? { labelTruncated: true } : {}), childIds: childIds.slice(0, 50), childCount: childIds.length, ...(childIds.length > 50 ? { childIdsTruncated: true } : {}) };
+            if (object.kind === 'group') {
+              return { ...base, x: object.x, y: object.y, width: object.width, height: object.height, label: object.label.slice(0, 240), labelLength: object.label.length, ...(object.label.length > 240 ? { labelTruncated: true } : {}), childIds: object.childIds.slice(0, 50), childCount: object.childIds.length, ...(object.childIds.length > 50 ? { childIdsTruncated: true } : {}) };
             }
-            return { ...compact, ...sources, ...snapshots };
+            return { ...base, from: object.from, to: object.to, color: object.color };
           }),
           truncated: matches.length > limit
         };
@@ -308,10 +311,10 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
           expectedRevision: { type: 'string' },
           placement: { type: 'string', enum: ['visible-center', 'after-content'], default: 'visible-center' },
           layout: { type: 'object', additionalProperties: false, properties: { direction: { type: 'string', enum: ['row', 'column', 'grid'], default: 'row' }, gap: { type: 'number', minimum: 16, maximum: 400 }, columns: { type: 'integer', minimum: 1, maximum: 12 } } },
-          nodes: { type: 'array', maxItems: 50, items: { type: 'object', required: ['ref', 'text'], additionalProperties: false, properties: { ref: { type: 'string' }, text: { type: 'string', maxLength: 4000 }, width: { type: 'number', minimum: 80, maximum: 1200 }, height: { type: 'number', minimum: 60, maximum: 900 } } } },
-          shapes: { type: 'array', maxItems: 50, items: { type: 'object', required: ['ref', 'kind'], additionalProperties: false, properties: { ref: { type: 'string' }, kind: { type: 'string', enum: ['rectangle', 'ellipse', 'arrow'] }, color: { type: 'string', enum: DRAWING_PALETTE.map(({ id }) => id) }, width: { type: 'number', minimum: 8, maximum: 1600 }, height: { type: 'number', minimum: 8, maximum: 1200 } } } },
-          edges: { type: 'array', maxItems: 100, items: { type: 'object', required: ['ref', 'from', 'to'], additionalProperties: false, properties: { ref: { type: 'string' }, from: { type: 'string' }, to: { type: 'string' }, label: { type: 'string', maxLength: 240 } } } },
-          groups: { type: 'array', maxItems: 20, items: { type: 'object', required: ['ref', 'members'], additionalProperties: false, properties: { ref: { type: 'string' }, label: { type: 'string', maxLength: 240 }, members: { type: 'array', minItems: 1, uniqueItems: true, items: { type: 'string' } } } } }
+          nodes: { type: 'array', maxItems: 50, items: { type: 'object', required: ['ref', 'text'], additionalProperties: false, properties: { ref: { type: 'string', minLength: 1, maxLength: 120 }, text: { type: 'string', maxLength: 4000 }, width: { type: 'number', minimum: 80, maximum: 1200 }, height: { type: 'number', minimum: 60, maximum: 900 } } } },
+          shapes: { type: 'array', maxItems: 50, items: { type: 'object', required: ['ref', 'kind'], additionalProperties: false, properties: { ref: { type: 'string', minLength: 1, maxLength: 120 }, kind: { type: 'string', enum: ['rectangle', 'ellipse', 'arrow'] }, color: { type: 'string', enum: DRAWING_PALETTE.map(({ id }) => id) }, width: { type: 'number', minimum: 8, maximum: 1600 }, height: { type: 'number', minimum: 8, maximum: 1200 } } } },
+          edges: { type: 'array', maxItems: 100, items: { type: 'object', required: ['ref', 'from', 'to'], additionalProperties: false, properties: { ref: { type: 'string', minLength: 1, maxLength: 120 }, from: { type: 'string' }, to: { type: 'string' }, label: { type: 'string', maxLength: 240 } } } },
+          groups: { type: 'array', maxItems: 20, items: { type: 'object', required: ['ref', 'members'], additionalProperties: false, properties: { ref: { type: 'string', minLength: 1, maxLength: 120 }, label: { type: 'string', maxLength: 240 }, members: { type: 'array', minItems: 1, uniqueItems: true, items: { type: 'string' } } } } }
         }
       },
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
@@ -327,17 +330,17 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         const refs: Record<string, string> = Object.create(null) as Record<string, string>;
         const items = [...nodes.map((item) => ({ item, category: 'node' as const })), ...shapes.map((item) => ({ item, category: 'shape' as const }))];
         for (const { item, category } of items) {
-          const ref = requiredText(item.ref, `${category}.ref`);
+          const ref = localReference(item.ref, `${category}.ref`);
           if (Object.hasOwn(refs, ref)) throw new Error(`Duplicate local reference: ${ref}.`);
           refs[ref] = identity(category).id;
         }
         for (const edge of edges) {
-          const ref = requiredText(edge.ref, 'edge.ref');
+          const ref = localReference(edge.ref, 'edge.ref');
           if (Object.hasOwn(refs, ref)) throw new Error(`Duplicate local reference: ${ref}.`);
           refs[ref] = identity('connector').id;
         }
         for (const group of groups) {
-          const ref = requiredText(group.ref, 'group.ref');
+          const ref = localReference(group.ref, 'group.ref');
           if (Object.hasOwn(refs, ref)) throw new Error(`Duplicate local reference: ${ref}.`);
           refs[ref] = identity('group').id;
         }
