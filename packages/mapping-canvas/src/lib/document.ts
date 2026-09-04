@@ -66,7 +66,11 @@ function findConnectorCycles(objects: CanvasObject[]): Set<string> {
   for (const [id, object] of connectors) {
     const targets = [...new Set([object.fromId, object.toId])].filter((target) => connectors.has(target));
     adjacent.set(id, targets);
-    for (const target of targets) reverse.set(target, [...(reverse.get(target) ?? []), id]);
+    for (const target of targets) {
+      const sources = reverse.get(target);
+      if (sources) sources.push(id);
+      else reverse.set(target, [id]);
+    }
   }
   const visited = new Set<string>(), order: string[] = [];
   for (const id of connectors.keys()) {

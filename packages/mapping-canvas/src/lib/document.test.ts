@@ -65,6 +65,12 @@ describe('mapping canvas contract', () => {
     });
     expect(parse(JSON.stringify({ ...source, objects: cycles })).objects).toEqual([]);
   });
+  it('validates a 20,000-connector fan-in without copying reverse adjacency arrays', () => {
+    const source = createDocument(), origin = stroke('fan-origin'), anchor = stroke('fan-anchor', 100);
+    const hub: Connector = { id: 'fan-hub', kind: 'connector', createdAt: 'now', fromId: origin.id, toId: anchor.id, label: '' };
+    const fan: Connector[] = Array.from({ length: 20_000 }, (_, index) => ({ id: `fan-${index}`, kind: 'connector', createdAt: 'now', fromId: hub.id, toId: anchor.id, label: '' }));
+    expect(parse(JSON.stringify({ ...source, objects: [origin, anchor, hub, ...fan] })).objects).toHaveLength(fan.length + 3);
+  });
   it('migrates connector self-loops and repairs legacy dangling group membership', () => {
     const source = createDocument(), endpoint = stroke('endpoint');
     const selfLoop: Connector = { id: 'self-loop', kind: 'connector', createdAt: 'now', fromId: endpoint.id, toId: endpoint.id, label: '' };

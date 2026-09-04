@@ -183,6 +183,13 @@ describe('Draw WebMCP tools', () => {
     expect(controller.read().objects).toEqual([existing]);
   });
 
+  it('rejects raw local refs that shadow opaque existing IDs after normalization', async () => {
+    const existing = { id: ' brief ', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 0, y: 0, width: 100, height: 80, text: 'Existing' };
+    const controller = harness({ ...createDocument(), objects: [existing] });
+    await expect(createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_compose')!.execute({ nodes: [{ ref: existing.id, text: 'New' }] })).rejects.toThrow('conflicts with an existing object ID');
+    expect(controller.read().objects).toEqual([existing]);
+  });
+
   it('composes around a 20,000-deep connector dependency without overflowing the stack', async () => {
     const origin = { id: 'compose-origin', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 0, y: 0, width: 100, height: 80, text: 'Origin' };
     const anchor = { ...origin, id: 'compose-anchor', x: 200, text: 'Anchor' }, objects: CanvasDocument['objects'] = [origin, anchor];

@@ -371,20 +371,20 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         const refs: Record<string, string> = Object.create(null) as Record<string, string>;
         const items = [...nodes.map((item) => ({ item, category: 'node' as const })), ...shapes.map((item) => ({ item, category: 'shape' as const }))];
         for (const { item, category } of items) {
-          const ref = localReference(item.ref, `${category}.ref`);
-          if (existingIds.has(ref)) throw new Error(`Local reference ${ref} conflicts with an existing object ID.`);
+          const rawRef = requiredId(item.ref, `${category}.ref`), ref = localReference(rawRef, `${category}.ref`);
+          if (existingIds.has(rawRef) || existingIds.has(ref)) throw new Error(`Local reference ${rawRef} conflicts with an existing object ID.`);
           if (Object.hasOwn(refs, ref)) throw new Error(`Duplicate local reference: ${ref}.`);
           refs[ref] = identity(category).id;
         }
         for (const edge of edges) {
-          const ref = localReference(edge.ref, 'edge.ref');
-          if (existingIds.has(ref)) throw new Error(`Local reference ${ref} conflicts with an existing object ID.`);
+          const rawRef = requiredId(edge.ref, 'edge.ref'), ref = localReference(rawRef, 'edge.ref');
+          if (existingIds.has(rawRef) || existingIds.has(ref)) throw new Error(`Local reference ${rawRef} conflicts with an existing object ID.`);
           if (Object.hasOwn(refs, ref)) throw new Error(`Duplicate local reference: ${ref}.`);
           refs[ref] = identity('connector').id;
         }
         for (const group of groups) {
-          const ref = localReference(group.ref, 'group.ref');
-          if (existingIds.has(ref)) throw new Error(`Local reference ${ref} conflicts with an existing object ID.`);
+          const rawRef = requiredId(group.ref, 'group.ref'), ref = localReference(rawRef, 'group.ref');
+          if (existingIds.has(rawRef) || existingIds.has(ref)) throw new Error(`Local reference ${rawRef} conflicts with an existing object ID.`);
           if (Object.hasOwn(refs, ref)) throw new Error(`Duplicate local reference: ${ref}.`);
           refs[ref] = identity('group').id;
         }
