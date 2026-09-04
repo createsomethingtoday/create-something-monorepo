@@ -99,12 +99,22 @@ function changedObjectIds(before: CanvasDocument, after: CanvasDocument) {
   return [...new Set([...prior.keys(), ...next.keys()])].filter((id) => prior.get(id) !== next.get(id));
 }
 
-function changedOrderIds(before: CanvasDocument, after: CanvasDocument) {
-  const prior = new Map(before.objects.map(({ id }, index) => [id, index]));
-  const next = new Map(after.objects.map(({ id }, index) => [id, index]));
-  const shared = [...prior.keys()].filter((id) => next.has(id));
-  return shared.filter((id) => shared.some((peer) => peer !== id
-    && Math.sign(prior.get(id)! - prior.get(peer)!) !== Math.sign(next.get(id)! - next.get(peer)!)));
+export function changedOrderIds(before: CanvasDocument, after: CanvasDocument) {
+  const nextIds = new Set(after.objects.map(({ id }) => id));
+  const priorOrder = before.objects.map(({ id }) => id).filter((id) => nextIds.has(id));
+  const priorPosition = new Map(priorOrder.map((id, index) => [id, index]));
+  const shared = after.objects.map(({ id }) => id).filter((id) => priorPosition.has(id));
+  const positions = shared.map((id) => priorPosition.get(id)!);
+  const prefixMax = new Array<number>(positions.length), suffixMin = new Array<number>(positions.length);
+  for (let index = 0, maximum = -1; index < positions.length; index += 1) {
+    prefixMax[index] = maximum;
+    maximum = Math.max(maximum, positions[index]);
+  }
+  for (let index = positions.length - 1, minimum = positions.length; index >= 0; index -= 1) {
+    suffixMin[index] = minimum;
+    minimum = Math.min(minimum, positions[index]);
+  }
+  return shared.filter((_, index) => prefixMax[index] > positions[index] || suffixMin[index] < positions[index]);
 }
 
 export function drawRevision(document: CanvasDocument) {

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createDrawWebMcpTools, registerDrawWebMcpTools } from './webmcp';
+import { changedOrderIds, createDrawWebMcpTools, registerDrawWebMcpTools } from './webmcp';
 import { createDocument, type CanvasDocument } from './document';
 import { applyCanvasOperations } from './paired-session';
 
@@ -20,6 +20,18 @@ describe('Draw WebMCP tools', () => {
     };
     return controller;
   };
+
+  it('detects reordered layers in linear time without losing inversion participants', () => {
+    const objects = Array.from({ length: 20_000 }, (_, index) => ({
+      id: `large-${index}`, kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z',
+      x: 0, y: index, width: 100, height: 80, text: String(index)
+    }));
+    const unchanged = { ...createDocument(), objects };
+    expect(changedOrderIds(unchanged, unchanged)).toEqual([]);
+
+    const reversedEdges = { ...unchanged, objects: [objects.at(-1)!, ...objects.slice(1, -1), objects[0]] };
+    expect(new Set(changedOrderIds(unchanged, reversedEdges))).toEqual(new Set(objects.map(({ id }) => id)));
+  });
 
   it('exposes complete canvas control through bounded document operations', async () => {
     let document = createDocument();
