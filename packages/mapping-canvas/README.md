@@ -24,13 +24,21 @@ pnpm --filter @create-something/mapping-canvas verify:download
 
 ## WebMCP site tools
 
-Draw registers seven tools through `document.modelContext.registerTool`, with a compatibility fallback for older `navigator.modelContext` or `provideContext` implementations:
+Draw registers sixteen tools through `document.modelContext.registerTool`, with a compatibility fallback for older `navigator.modelContext` or `provideContext` implementations:
 
 - `draw_get_state` reads the full local document and shared focus state.
+- `draw_inspect` returns a compact, filterable projection with revision, palette, surface, and visible-world geometry.
+- `draw_compose` creates semantic notes, shapes, labeled relationships, and groups with local references, automatic identity, layout, and placement.
+- `draw_path` creates bounded line, polyline, polygon, or smoothed paths compiled to portable v1 strokes.
+- `draw_patch_objects` partially changes text, labels, position, size, named color, and layer arrangement.
+- `draw_layout` arranges objects in a deterministic row, column, or grid.
+- `draw_focus` fits the camera to all objects, selection, IDs, or bounds.
+- `draw_revert_change` conflict-safely reverses a receipt-identified agent change.
+- `draw_delete` and `draw_replace_canvas` isolate destructive operations behind exact confirmations.
 - `draw_apply_operations` atomically applies the same typed operations used by desktop/iPhone mirroring.
 - `draw_select` and `draw_set_tool` share visual focus with the operator.
 - `draw_undo`, `draw_redo`, and `draw_reset` expose history controls.
 
-`draw_apply_operations` supports `put_object`, `remove_objects`, `replace_objects`, `set_title`, `set_viewport`, `convert`, and `restore_conversion`. Whole-canvas replacement requires `confirmation: "REPLACE CANVAS"`; reset requires `confirmation: "RESET CANVAS"`. Agent mutations are serialized through the document/history path and produce a visible, reduced-motion-safe transition receipt.
+`draw_apply_operations` supports `put_object`, `remove_objects`, `replace_objects`, `set_title`, `set_viewport`, `convert`, and `restore_conversion` for backwards compatibility. Whole-canvas replacement requires `confirmation: "REPLACE CANVAS"`; dedicated deletion requires `confirmation: "DELETE OBJECTS"`; reset requires `confirmation: "RESET CANVAS"`. Agent mutations are serialized through the document/history path and produce compact revision-bearing receipts plus a visible, reduced-motion-safe transition.
 
 Canvas data remains in the current browser or native app unless the operator explicitly exports it. WebMCP tools do not send documents to a CREATE SOMETHING server. Site-tool mutation is intentionally limited to the browser-local canvas; paired Mac/iPhone shells fail closed and continue using their native synchronization controls.

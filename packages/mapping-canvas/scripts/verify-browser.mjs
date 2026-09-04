@@ -107,13 +107,55 @@ try {
     const restored = await tools.draw_get_state.execute({});
     return { beforeCount: before.document.objects.length, receipt, camera, cameraAfterObjectPress, mixedCamera, viewport: state.document.viewport, explicitViewport, explicitViewportState, interruptedViewport: interrupted.document.viewport, renderedBeforePress: { x: renderedBeforePress.e, y: renderedBeforePress.f }, renderedAfterPress: { x: renderedAfterPress.e, y: renderedAfterPress.f }, restoredCount: restored.document.objects.length };
   });
-  if (agentFollow.camera !== 'following' || !agentFollow.receipt.state.document.objects.some(({ id }) => id === 'browser-agent-follow-note')) throw new Error(`Agent follow transition was not visible: ${JSON.stringify(agentFollow)}`);
+  if (agentFollow.camera !== 'following' || !agentFollow.receipt.changeId || agentFollow.receipt.state) throw new Error(`Agent follow transition or compact receipt was invalid: ${JSON.stringify(agentFollow)}`);
   if (agentFollow.cameraAfterObjectPress !== 'idle') throw new Error(`Object pointer-down did not cancel the agent camera: ${JSON.stringify(agentFollow)}`);
   if (Math.abs(agentFollow.interruptedViewport.x - agentFollow.renderedBeforePress.x) > 2 || Math.abs(agentFollow.interruptedViewport.y - agentFollow.renderedBeforePress.y) > 2 || Math.abs(agentFollow.renderedAfterPress.x - agentFollow.renderedBeforePress.x) > 2 || Math.abs(agentFollow.renderedAfterPress.y - agentFollow.renderedBeforePress.y) > 2) throw new Error(`Agent camera interruption snapped away from its displayed frame: ${JSON.stringify(agentFollow)}`);
   if (agentFollow.mixedCamera !== 'following') throw new Error('Mixed remove-and-create batch did not follow the surviving artifact');
   if (JSON.stringify(agentFollow.explicitViewportState) !== JSON.stringify(agentFollow.explicitViewport)) throw new Error(`Agent follow replaced an explicit viewport: ${JSON.stringify(agentFollow)}`);
   if (agentFollow.viewport.x === 0 && agentFollow.viewport.y === 0) throw new Error('Agent follow camera did not frame the offscreen artifact');
   if (agentFollow.restoredCount !== agentFollow.beforeCount) throw new Error('Agent follow proof did not restore the original canvas');
+  const semantic = await page.evaluate(async () => {
+    const tools = window.__drawWebMcpTools;
+    const names = Object.keys(tools).sort();
+    const before = await tools.draw_get_state.execute({});
+    const inspect = await tools.draw_inspect.execute({ limit: 10 });
+    const composed = await tools.draw_compose.execute({
+      expectedRevision: inspect.revision,
+      layout: { direction: 'row', gap: 96 },
+      placement: 'visible-center',
+      nodes: [{ ref: 'brief', text: 'Mission brief' }, { ref: 'launch', text: 'Spaceship launch' }],
+      edges: [{ ref: 'approval', from: 'brief', to: 'launch', label: 'approved' }],
+      groups: [{ ref: 'mission', label: 'Mission control', members: ['brief', 'launch'] }]
+    });
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    const connectorLabel = [...document.querySelectorAll('.connector-label')].find((node) => node.textContent === 'approved');
+    const path = await tools.draw_path.execute({ kind: 'polygon', color: 'signal', width: 5, smooth: true, points: [{ x: 0, y: -100 }, { x: 75, y: 70 }, { x: 25, y: 50 }, { x: 0, y: 95 }, { x: -25, y: 50 }, { x: -75, y: 70 }] });
+    const patched = await tools.draw_patch_objects.execute({ patches: [{ id: composed.refs.launch, text: 'Launch ready', translate: { dx: 24, dy: 16 }, arrange: 'front' }] });
+    const staleRevision = inspect.revision;
+    let staleError = '';
+    try { await tools.draw_patch_objects.execute({ expectedRevision: staleRevision, patches: [{ id: composed.refs.brief, text: 'Stale write' }] }); }
+    catch (error) { staleError = error instanceof Error ? error.message : String(error); }
+    const layout = await tools.draw_layout.execute({ ids: [composed.refs.brief, composed.refs.launch], direction: 'column', gap: 56 });
+    const focus = await tools.draw_focus.execute({ scope: 'ids', ids: [composed.refs.brief, composed.refs.launch], padding: 84 });
+    let deleteError = '', replaceError = '';
+    try { await tools.draw_delete.execute({ ids: [composed.refs.brief] }); } catch (error) { deleteError = error instanceof Error ? error.message : String(error); }
+    try { await tools.draw_replace_canvas.execute({ objects: [] }); } catch (error) { replaceError = error instanceof Error ? error.message : String(error); }
+    await tools.draw_revert_change.execute({ changeId: layout.changeId });
+    await tools.draw_revert_change.execute({ changeId: patched.changeId });
+    await tools.draw_revert_change.execute({ changeId: path.changeId });
+    await tools.draw_revert_change.execute({ changeId: composed.changeId });
+    const restored = await tools.draw_get_state.execute({});
+    return {
+      names, version: inspect.version, compactBytes: JSON.stringify(inspect).length, fullBytes: JSON.stringify(before).length,
+      composed, connectorVisible: Boolean(connectorLabel && getComputedStyle(connectorLabel).display !== 'none'),
+      staleError, deleteError, replaceError, focus, restoredCount: restored.document.objects.length, beforeCount: before.document.objects.length
+    };
+  });
+  const requiredSemanticTools = ['draw_compose', 'draw_delete', 'draw_focus', 'draw_inspect', 'draw_layout', 'draw_patch_objects', 'draw_path', 'draw_replace_canvas', 'draw_revert_change'];
+  if (!requiredSemanticTools.every((name) => semantic.names.includes(name)) || semantic.names.length !== 16) throw new Error(`Semantic Draw tool inventory is incomplete: ${JSON.stringify(semantic.names)}`);
+  if (semantic.version !== '2026-09-04.1' || !semantic.composed.changeId || !semantic.connectorVisible) throw new Error(`Semantic composition or visible connector label failed: ${JSON.stringify(semantic)}`);
+  if (!semantic.staleError.includes('revision') || !semantic.deleteError.includes('DELETE OBJECTS') || !semantic.replaceError.includes('REPLACE CANVAS')) throw new Error(`Semantic safety boundary failed: ${JSON.stringify(semantic)}`);
+  if (semantic.restoredCount !== semantic.beforeCount || !semantic.focus.ok) throw new Error(`Semantic workflow did not restore its isolated fixture: ${JSON.stringify(semantic)}`);
   const toolbarBox = await page.locator('.toolbar').boundingBox();
   if (!toolbarBox || toolbarBox.width < 144 || toolbarBox.width > 160) throw new Error('Desktop tool sidebar lacks a deliberate readable width');
   const sidebarToggle = page.getByRole('button', { name: 'Collapse tool sidebar' });
@@ -351,7 +393,7 @@ try {
   await mobile.context.close();
 
   const offlineShell = await verifyOfflineShell();
-  console.log(JSON.stringify({ baseUrl, runLabel, desktop: { exports, countBeforeReload, countAfterReload }, mobile: mobileCritical, offlineShell, result: 'pass' }, null, 2));
+  console.log(JSON.stringify({ baseUrl, runLabel, semantic: { version: semantic.version, toolCount: semantic.names.length, connectorVisible: semantic.connectorVisible, restored: semantic.restoredCount === semantic.beforeCount }, desktop: { exports, countBeforeReload, countAfterReload }, mobile: mobileCritical, offlineShell, result: 'pass' }, null, 2));
 } finally {
   await browser.close();
 }

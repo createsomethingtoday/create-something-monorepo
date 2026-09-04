@@ -104,7 +104,8 @@
       undo: () => queueAgentMutation(() => browserLocalHistory('undo')),
       redo: () => queueAgentMutation(() => browserLocalHistory('redo')),
       reset: () => queueAgentMutation(resetCanvasFromAgent),
-      animate: showAgentTransition
+      animate: showAgentTransition,
+      focus: focusAgentCamera
     }));
     if (webMcp.registered) status = `${webMcp.registered} agent tools ready · loading local canvas…`;
     const resize = () => { viewportWidth = surface?.clientWidth || window.innerWidth; viewportHeight = surface?.clientHeight || window.innerHeight; };
@@ -133,7 +134,20 @@
 
   function agentState() {
     assertAgentControlReady();
-    return { document: JSON.parse(JSON.stringify(document)) as CanvasDocument, selectedIds: [...selectedIds], tool, canUndo: history.past.length > 0, canRedo: history.future.length > 0 };
+    return { document: JSON.parse(JSON.stringify(document)) as CanvasDocument, selectedIds: [...selectedIds], tool, canUndo: history.past.length > 0, canRedo: history.future.length > 0, surface: { width: viewportWidth, height: viewportHeight } };
+  }
+
+  function focusAgentCamera(target: { ids?: string[]; bounds?: { x: number; y: number; width: number; height: number }; padding: number }) {
+    assertAgentControlReady();
+    const objects = target.ids ? document.objects.filter(({ id }) => target.ids!.includes(id)) : [];
+    if (target.ids && objects.length !== target.ids.length) throw new Error('One or more focus IDs do not exist.');
+    const bounds = target.bounds ?? objectBounds(objects, document.objects);
+    const next = fitViewportToBounds(viewport, bounds, { width: viewportWidth, height: viewportHeight }, { padding: target.padding, force: true });
+    clearTimeout(agentCameraTimer);
+    agentCameraActive = true;
+    updateViewport(next, false);
+    agentCameraTimer = setTimeout(() => agentCameraActive = false, 520);
+    status = `Agent focused ${target.ids?.length || 'canvas'}${target.ids?.length === 1 ? ' object' : ' objects'}`;
   }
 
   async function browserLocalHistory(direction: 'undo' | 'redo') {
@@ -617,7 +631,7 @@
             {:else if object.kind === 'arrow'}<line data-object-id={object.id} class:selected class:agent-change={agentTransition?.affectedIds.includes(object.id)} role="button" tabindex="0" aria-label="Arrow" x1={object.from.x} y1={object.from.y} x2={object.to.x} y2={object.to.y} stroke={object.color} stroke-width="2" marker-end="url(#arrowhead)" onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)} />
             {:else if object.kind === 'note'}<g data-object-id={object.id} class:selected class:agent-change={agentTransition?.affectedIds.includes(object.id)} role="button" tabindex="0" aria-label={`Note: ${object.text}`} onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)}><rect x={object.x} y={object.y} width={object.width} height={object.height} rx="4" fill="#111" stroke={selected ? '#fcaa2d' : 'rgba(255,255,255,.18)'} /><foreignObject x={object.x + 16} y={object.y + 14} width={object.width - 32} height={object.height - 28}><textarea xmlns="http://www.w3.org/1999/xhtml" aria-label="Edit note" value={object.text} disabled={nativeRole === 'companion' && (!nativeSession.sessionId || nativeSession.requiresRepair)} onpointerdown={(event) => event.stopPropagation()} oninput={(event) => { if (!companionCanEdit()) return; if (nativeRole !== 'web' && !noteInput.hasPending()) nativeOptimisticVersion += 1; noteInput.schedule(object.id, event.currentTarget.value); }} onblur={() => noteInput.flush(object.id)}></textarea></foreignObject>{#if object.sourceIds?.length}<text x={object.x + 16} y={object.y + object.height - 10} class="provenance">CONVERTED · {object.sourceIds.length} SOURCE</text>{/if}</g>
             {:else if object.kind === 'group'}<g data-object-id={object.id} class:selected class:agent-change={agentTransition?.affectedIds.includes(object.id)} role="button" tabindex="0" aria-label={`Group: ${object.label}`} onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)}><rect x={object.x} y={object.y} width={object.width} height={object.height} rx="4" fill="rgba(252,170,45,.025)" stroke={selected ? '#fcaa2d' : 'rgba(252,170,45,.5)'} stroke-dasharray="8 6" /><text x={object.x + 12} y={object.y + 24} class="group-label">{object.label}</text>{#if selected && tool === 'select'}<rect data-ui="true" class="resize-handle" role="button" tabindex="0" aria-label="Resize group" x={object.x + object.width - 9} y={object.y + object.height - 9} width="18" height="18" rx="2" onpointerdown={(event) => resizePointer(event, object.id)} onkeydown={(event) => resizeKeyboard(event, object.id)} />{/if}</g>
-            {:else if object.kind === 'connector'}{@const from = document.objects.find(({ id }) => id === object.fromId)}{@const to = document.objects.find(({ id }) => id === object.toId)}{#if from && to}{@const a = objectCenter(from)}{@const b = objectCenter(to)}<line data-object-id={object.id} class:selected class:agent-change={agentTransition?.affectedIds.includes(object.id)} role="button" tabindex="0" aria-label="Connector" x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#fcaa2d" stroke-width="2" marker-end="url(#arrowhead)" onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)} />{/if}{/if}
+            {:else if object.kind === 'connector'}{@const from = document.objects.find(({ id }) => id === object.fromId)}{@const to = document.objects.find(({ id }) => id === object.toId)}{#if from && to}{@const a = objectCenter(from)}{@const b = objectCenter(to)}<g class:agent-change={agentTransition?.affectedIds.includes(object.id)}><line data-object-id={object.id} class:selected role="button" tabindex="0" aria-label="Connector" x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#fcaa2d" stroke-width="2" marker-end="url(#arrowhead)" onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)} />{#if object.label}<text class="connector-label" x={(a.x + b.x) / 2} y={(a.y + b.y) / 2 - 10} text-anchor="middle">{object.label}</text>{/if}</g>{/if}{/if}
           {/each}
           {#if draftPoints.length > 1}<path data-ui="true" d={path(draftPoints)} fill="none" stroke={drawingColor} stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />{/if}
           {#if draftShape}{#if draftShape.kind === 'rectangle'}<rect data-ui="true" x={Math.min(draftShape.from.x, draftShape.to.x)} y={Math.min(draftShape.from.y, draftShape.to.y)} width={Math.abs(draftShape.to.x - draftShape.from.x)} height={Math.abs(draftShape.to.y - draftShape.from.y)} fill="transparent" stroke={draftShape.color} />{:else if draftShape.kind === 'ellipse'}<ellipse data-ui="true" cx={(draftShape.from.x + draftShape.to.x) / 2} cy={(draftShape.from.y + draftShape.to.y) / 2} rx={Math.abs(draftShape.to.x - draftShape.from.x) / 2} ry={Math.abs(draftShape.to.y - draftShape.from.y) / 2} fill="transparent" stroke={draftShape.color} />{:else}<line data-ui="true" x1={draftShape.from.x} y1={draftShape.from.y} x2={draftShape.to.x} y2={draftShape.to.y} stroke={draftShape.color} marker-end="url(#arrowhead)" />{/if}{/if}
