@@ -143,21 +143,28 @@ export function redo(history: History): History {
   return next ? { past: [...history.past, history.present], present: next, future: history.future.slice(1) } : history;
 }
 
-export function objectCenter(object: CanvasObject, allObjects = [object], cache = new Map<string, Point>()): Point {
-  const cached = cache.get(object.id);
-  if (cached) return cached;
-  let center: Point;
-  if (object.kind === 'stroke') center = object.points[Math.floor(object.points.length / 2)] || { x: 0, y: 0 };
-  else if (object.kind === 'rectangle' || object.kind === 'ellipse' || object.kind === 'arrow') center = { x: (object.from.x + object.to.x) / 2, y: (object.from.y + object.to.y) / 2 };
-  else if (object.kind === 'note' || object.kind === 'group') center = { x: object.x + object.width / 2, y: object.y + object.height / 2 };
-  else if (object.kind === 'connector') {
-    const byId = new Map(allObjects.map((candidate) => [candidate.id, candidate]));
-    const from = byId.get(object.fromId), to = byId.get(object.toId);
-    const a = from ? objectCenter(from, allObjects, cache) : { x: 0, y: 0 }, b = to ? objectCenter(to, allObjects, cache) : { x: 0, y: 0 };
-    center = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
-  } else center = { x: 0, y: 0 };
-  cache.set(object.id, center);
-  return center;
+export function createObjectCenterResolver(allObjects: CanvasObject[]) {
+  const byId = new Map(allObjects.map((object) => [object.id, object])), cache = new Map<string, Point>();
+  const resolve = (object: CanvasObject): Point => {
+    const cached = cache.get(object.id);
+    if (cached) return cached;
+    let center: Point;
+    if (object.kind === 'stroke') center = object.points[Math.floor(object.points.length / 2)] || { x: 0, y: 0 };
+    else if (object.kind === 'rectangle' || object.kind === 'ellipse' || object.kind === 'arrow') center = { x: (object.from.x + object.to.x) / 2, y: (object.from.y + object.to.y) / 2 };
+    else if (object.kind === 'note' || object.kind === 'group') center = { x: object.x + object.width / 2, y: object.y + object.height / 2 };
+    else if (object.kind === 'connector') {
+      const from = byId.get(object.fromId), to = byId.get(object.toId);
+      const a = from ? resolve(from) : { x: 0, y: 0 }, b = to ? resolve(to) : { x: 0, y: 0 };
+      center = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    } else center = { x: 0, y: 0 };
+    cache.set(object.id, center);
+    return center;
+  };
+  return resolve;
+}
+
+export function objectCenter(object: CanvasObject, allObjects = [object]): Point {
+  return createObjectCenterResolver(allObjects)(object);
 }
 
 export function objectBounds(objects: CanvasObject[], allObjects = objects) {

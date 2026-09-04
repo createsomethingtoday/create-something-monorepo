@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DOCUMENT_VERSION, commit, convert, createDocument, objectBounds, objectCenter, parse, redo, removeObjects, resizeGroup, restoreConversion, serialize, undo, withObjects, type CanvasObject, type Connector, type History, type Stroke } from './document';
+import { DOCUMENT_VERSION, commit, convert, createDocument, createObjectCenterResolver, objectBounds, objectCenter, parse, redo, removeObjects, resizeGroup, restoreConversion, serialize, undo, withObjects, type CanvasObject, type Connector, type History, type Stroke } from './document';
 const stroke = (id: string, x = 10): Stroke => ({ id, kind: 'stroke', createdAt: '2026-08-27T00:00:00Z', points: [{ x, y: 20 }, { x: x + 40, y: 60 }], color: '#f7f4ee', width: 3 });
 describe('mapping canvas contract', () => {
   it('creates a versioned document', () => expect(createDocument().version).toBe(DOCUMENT_VERSION));
@@ -75,6 +75,13 @@ describe('mapping canvas contract', () => {
     const objects: CanvasObject[] = [stroke('origin', 0), stroke('second', 100)];
     for (let index = 0; index < 45; index += 1) objects.push({ id: `edge-${index}`, kind: 'connector', createdAt: 'now', fromId: objects.at(-1)!.id, toId: objects.at(-2)!.id, label: '' });
     expect(objectCenter(objects.at(-1)!, objects)).toMatchObject({ x: expect.any(Number), y: expect.any(Number) });
+  });
+  it('reuses one connector index and center cache across a document pass', () => {
+    const objects: CanvasObject[] = [stroke('origin', 0)];
+    for (let index = 0; index < 900; index += 1) objects.push({ id: `chain-${index}`, kind: 'connector', createdAt: 'now', fromId: objects.at(-1)!.id, toId: 'origin', label: '' });
+    const resolve = createObjectCenterResolver(objects), first = resolve(objects.at(-1)!);
+    expect(resolve(objects.at(-1)!)).toBe(first);
+    expect(objects.map(resolve)).toHaveLength(901);
   });
   it('computes bounds for strokes larger than the function argument limit', () => {
     const large: Stroke = { id: 'large', kind: 'stroke', createdAt: 'now', color: '#fff', width: 3, points: Array.from({ length: 200_000 }, (_, index) => ({ x: index, y: -index })) };
