@@ -413,6 +413,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
             }
           }
           if (typeof patch.arrange === 'string') {
+            if (object.kind === 'group') throw new Error('Group layer arrangement is unavailable because groups always render behind their content. Arrange the group members instead.');
             const position = objects.findIndex((candidate) => candidate.id === id), [moving] = objects.splice(position, 1);
             if (patch.arrange === 'front') objects.push(moving);
             else if (patch.arrange === 'back') objects.unshift(moving);
@@ -437,11 +438,13 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         if (!ids.length) throw new Error('ids must contain at least one object ID.');
         const before = controller.getState().document, selected = ids.map((id) => before.objects.find((object) => object.id === id));
         if (selected.some((object) => !object || object.kind === 'connector')) throw new Error('Layout IDs must reference existing non-connector objects.');
-        const selectedSet = new Set(ids);
-        for (const object of selected) {
-          if (object?.kind !== 'group') continue;
-          const nested = descendants(before, [object.id]);
-          if ([...nested].some((id) => id !== object.id && selectedSet.has(id))) throw new Error('Layout roots overlap through group membership; pass the group or its descendants, not both.');
+        const claimedDescendants = new Map<string, string>();
+        for (const id of ids) {
+          for (const nestedId of descendants(before, [id])) {
+            const owner = claimedDescendants.get(nestedId);
+            if (owner) throw new Error(`Layout roots overlap through group membership (${owner} and ${id}); pass independent roots only.`);
+            claimedDescendants.set(nestedId, id);
+          }
         }
         const bounds = selected.map((object) => objectBounds([object!], before.objects));
         const anchor = { x: Math.min(...bounds.map(({ x }) => x)), y: Math.min(...bounds.map(({ y }) => y)) };
@@ -504,9 +507,15 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         }
         if (change.before.title !== change.after.title && current.title !== change.after.title) throw new Error(`Canvas title changed since ${changeId}; targeted revert refused.`);
         if (JSON.stringify(change.before.viewport) !== JSON.stringify(change.after.viewport) && JSON.stringify(current.viewport) !== JSON.stringify(change.after.viewport)) throw new Error(`Canvas viewport changed since ${changeId}; targeted revert refused.`);
-        const touched = new Set(change.ids);
-        const restored = current.objects.filter(({ id }) => !touched.has(id));
-        for (const prior of change.before.objects.filter(({ id }) => touched.has(id))) {
+        const touched = new Set(change.ids), beforeById = new Map(change.before.objects.map((object) => [object.id, object]));
+        const orderStable = new Set(change.ids.filter((id) => {
+          const beforeIndex = beforeOrder.indexOf(id), afterIndex = afterOrder.indexOf(id);
+          return beforeIndex >= 0 && beforeIndex === afterIndex;
+        }));
+        const restored = current.objects
+          .filter(({ id }) => !touched.has(id) || orderStable.has(id))
+          .map((object) => orderStable.has(object.id) ? beforeById.get(object.id)! : object);
+        for (const prior of change.before.objects.filter(({ id }) => touched.has(id) && !orderStable.has(id))) {
           const priorIndex = change.before.objects.findIndex(({ id }) => id === prior.id);
           const preceding = change.before.objects.slice(0, priorIndex).reverse().find(({ id }) => restored.some((object) => object.id === id));
           if (preceding) restored.splice(restored.findIndex(({ id }) => id === preceding.id) + 1, 0, prior);

@@ -185,6 +185,19 @@ describe('Draw WebMCP tools', () => {
     expect(controller.read().objects.find(({ id }) => id === second.id)).toMatchObject({ text: 'Second' });
   });
 
+  it('preserves a later arrangement of the object touched by a non-order patch', async () => {
+    const first = { id: 'slot-first', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 0, y: 0, width: 100, height: 80, text: 'First' };
+    const second = { ...first, id: 'slot-second', text: 'Second' };
+    const third = { ...first, id: 'slot-third', text: 'Third' };
+    const controller = harness({ ...createDocument(), objects: [first, second, third] }), tools = createDrawWebMcpTools(controller);
+    const patch = tools.find(({ name }) => name === 'draw_patch_objects')!;
+    const older = await patch.execute({ patches: [{ id: second.id, text: 'Agent second' }] }) as { changeId: string };
+    await patch.execute({ patches: [{ id: second.id, arrange: 'front' }] });
+    await tools.find(({ name }) => name === 'draw_revert_change')!.execute({ changeId: older.changeId });
+    expect(controller.read().objects.map(({ id }) => id)).toEqual([first.id, third.id, second.id]);
+    expect(controller.read().objects.at(-1)).toMatchObject({ id: second.id, text: 'Second' });
+  });
+
   it('rejects a mixed delete when any requested ID is unknown', async () => {
     const note = { id: 'keep-me', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 0, y: 0, width: 100, height: 80, text: 'Keep' };
     const controller = harness({ ...createDocument(), objects: [note] });
@@ -232,6 +245,25 @@ describe('Draw WebMCP tools', () => {
     const controller = harness({ ...createDocument(), objects: [group, child] });
     const layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_layout')!;
     await expect(layout.execute({ ids: [group.id, child.id], direction: 'row' })).rejects.toThrow('overlap');
+    expect(controller.read().objects).toEqual([group, child]);
+  });
+
+  it('rejects layout roots with a shared descendant', async () => {
+    const child = { id: 'shared-child', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 20, y: 40, width: 100, height: 80, text: 'Child' };
+    const first = { id: 'first-group', kind: 'group' as const, createdAt: child.createdAt, x: 0, y: 0, width: 160, height: 140, label: 'First', childIds: [child.id] };
+    const second = { ...first, id: 'second-group', x: 240, label: 'Second' };
+    const controller = harness({ ...createDocument(), objects: [first, second, child] });
+    const layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_layout')!;
+    await expect(layout.execute({ ids: [first.id, second.id], direction: 'row' })).rejects.toThrow('overlap');
+    expect(controller.read().objects).toEqual([first, second, child]);
+  });
+
+  it('rejects layer arrangement for groups that always render behind content', async () => {
+    const child = { id: 'arrange-child', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 20, y: 40, width: 100, height: 80, text: 'Child' };
+    const group = { id: 'arrange-group', kind: 'group' as const, createdAt: child.createdAt, x: 0, y: 0, width: 160, height: 140, label: 'Group', childIds: [child.id] };
+    const controller = harness({ ...createDocument(), objects: [group, child] });
+    const patch = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_patch_objects')!;
+    await expect(patch.execute({ patches: [{ id: group.id, arrange: 'front' }] })).rejects.toThrow('Group layer arrangement');
     expect(controller.read().objects).toEqual([group, child]);
   });
 
