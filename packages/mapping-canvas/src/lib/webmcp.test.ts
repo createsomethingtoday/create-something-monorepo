@@ -80,6 +80,17 @@ describe('Draw WebMCP tools', () => {
     expect(JSON.stringify(projection).length).toBeLessThan(JSON.stringify(stroke).length / 10);
   });
 
+  it('bounds imported text and reference arrays in compact inspection', async () => {
+    const longText = 'agent context '.repeat(1_000);
+    const note = { id: 'long-note', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 0, y: 0, width: 100, height: 80, text: longText, sourceIds: Array.from({ length: 100 }, (_, index) => `source-${index}`) };
+    const controller = harness({ ...createDocument(), objects: [note] });
+    const projection = await createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_inspect')!.execute({ ids: [note.id] }) as { objects: Record<string, unknown>[] };
+    expect(projection.objects[0]).toMatchObject({ id: note.id, textLength: longText.length, textTruncated: true, sourceIdCount: 100, sourceIdsTruncated: true });
+    expect((projection.objects[0].text as string).length).toBe(240);
+    expect((projection.objects[0].sourceIds as string[])).toHaveLength(50);
+    expect(JSON.stringify(projection).length).toBeLessThan(JSON.stringify(note).length / 5);
+  });
+
   it('composes a labeled workflow from local references and creates v1 paths without storage fields', async () => {
     const controller = harness();
     const tools = createDrawWebMcpTools(controller);

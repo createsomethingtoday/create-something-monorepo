@@ -256,12 +256,26 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
           visibleWorld: { x: -x / zoom, y: -y / zoom, width: surface.width / zoom, height: surface.height / zoom, zoom },
           summary: { ...summary(controller), matchedCount: matches.length },
           objects: matches.slice(0, limit).map((object) => {
-            const { sourceSnapshot, ...compact } = object;
+            const { sourceSnapshot, sourceIds, ...compact } = object;
+            const sources = sourceIds ? { sourceIds: sourceIds.slice(0, 50), sourceIdCount: sourceIds.length, ...(sourceIds.length > 50 ? { sourceIdsTruncated: true } : {}) } : {};
+            const snapshots = sourceSnapshot ? { sourceSnapshotCount: sourceSnapshot.length } : {};
             if (compact.kind === 'stroke') {
               const { points, ...stroke } = compact;
-              return { ...stroke, pointCount: points.length, bounds: objectBounds([object], state.document.objects), ...(sourceSnapshot ? { sourceSnapshotCount: sourceSnapshot.length } : {}) };
+              return { ...stroke, ...sources, ...snapshots, pointCount: points.length, bounds: objectBounds([object], state.document.objects) };
             }
-            return { ...compact, ...(sourceSnapshot ? { sourceSnapshotCount: sourceSnapshot.length } : {}) };
+            if (compact.kind === 'note') {
+              const { text, ...note } = compact;
+              return { ...note, ...sources, ...snapshots, text: text.slice(0, 240), textLength: text.length, ...(text.length > 240 ? { textTruncated: true } : {}) };
+            }
+            if (compact.kind === 'connector') {
+              const { label, ...connector } = compact;
+              return { ...connector, ...sources, ...snapshots, label: label.slice(0, 240), labelLength: label.length, ...(label.length > 240 ? { labelTruncated: true } : {}) };
+            }
+            if (compact.kind === 'group') {
+              const { label, childIds, ...group } = compact;
+              return { ...group, ...sources, ...snapshots, label: label.slice(0, 240), labelLength: label.length, ...(label.length > 240 ? { labelTruncated: true } : {}), childIds: childIds.slice(0, 50), childCount: childIds.length, ...(childIds.length > 50 ? { childIdsTruncated: true } : {}) };
+            }
+            return { ...compact, ...sources, ...snapshots };
           }),
           truncated: matches.length > limit
         };
