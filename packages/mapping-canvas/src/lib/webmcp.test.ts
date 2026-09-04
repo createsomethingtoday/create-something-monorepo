@@ -147,6 +147,17 @@ describe('Draw WebMCP tools', () => {
     await expect(tools.find(({ name }) => name === 'draw_revert_change')!.execute({ changeId: changed.changeId })).rejects.toThrow('changed since');
   });
 
+  it('refuses to revert a creation referenced by a later group', async () => {
+    const controller = harness(), tools = createDrawWebMcpTools(controller);
+    const created = await tools.find(({ name }) => name === 'draw_compose')!.execute({ nodes: [{ ref: 'created', text: 'Created' }] }) as { changeId: string; refs: Record<string, string> };
+    const note = controller.read().objects[0];
+    await tools.find(({ name }) => name === 'draw_apply_operations')!.execute({ operations: [{ type: 'put_object', object: {
+      id: 'later-group', kind: 'group', createdAt: note.createdAt, x: 0, y: 0, width: 300, height: 200, label: 'Later', childIds: [created.refs.created]
+    } }] });
+    await expect(tools.find(({ name }) => name === 'draw_revert_change')!.execute({ changeId: created.changeId })).rejects.toThrow('depends on');
+    expect(controller.read().objects.map(({ id }) => id)).toEqual([created.refs.created, 'later-group']);
+  });
+
   it('serializes read-modify-write revisions and restores non-object fields on targeted revert', async () => {
     const note = { id: 'serial', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 100, y: 100, width: 200, height: 100, text: 'Original' };
     const controller = harness({ ...createDocument('Before title'), objects: [note] });
@@ -237,6 +248,15 @@ describe('Draw WebMCP tools', () => {
       fromId: result.refs.mission,
       toId: result.refs.launch
     });
+  });
+
+  it('rejects semantic connector self-loops without changing the canvas', async () => {
+    const controller = harness(), compose = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_compose')!;
+    await expect(compose.execute({
+      nodes: [{ ref: 'only', text: 'Only' }],
+      edges: [{ ref: 'loop', from: 'only', to: 'only' }]
+    })).rejects.toThrow('distinct endpoints');
+    expect(controller.read().objects).toEqual([]);
   });
 
   it('composes nested groups independently of declaration order', async () => {

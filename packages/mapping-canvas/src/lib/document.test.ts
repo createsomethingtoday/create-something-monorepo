@@ -57,6 +57,13 @@ describe('mapping canvas contract', () => {
     const cycle: Connector = { id: 'cycle', kind: 'connector', createdAt: 'now', fromId: 'cycle', toId: 'cycle', label: '' };
     expect(() => parse(JSON.stringify({ ...source, objects: [cycle] }))).toThrow(/not a supported/);
   });
+  it('rejects connector self-loops and dangling group membership like the native host', () => {
+    const source = createDocument(), endpoint = stroke('endpoint');
+    const selfLoop: Connector = { id: 'self-loop', kind: 'connector', createdAt: 'now', fromId: endpoint.id, toId: endpoint.id, label: '' };
+    expect(() => parse(JSON.stringify({ ...source, objects: [endpoint, selfLoop] }))).toThrow(/not a supported/);
+    const dangling = { id: 'dangling-group', kind: 'group', createdAt: 'now', x: 0, y: 0, width: 100, height: 80, label: '', childIds: ['missing'] };
+    expect(() => parse(JSON.stringify({ ...source, objects: [dangling] }))).toThrow(/not a supported/);
+  });
   it('derives connector conversion bounds from its endpoints', () => {
     const source = withObjects(createDocument(), [stroke('a', 700), stroke('b', 900)]);
     const connected = convert(source, ['a', 'b'], 'connector');

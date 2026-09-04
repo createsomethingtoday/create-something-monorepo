@@ -25,7 +25,11 @@ export function isDocument(value: unknown): value is CanvasDocument {
   const candidate = value as Partial<CanvasDocument>;
   if (candidate.version !== DOCUMENT_VERSION || typeof candidate.id !== 'string' || typeof candidate.title !== 'string' || typeof candidate.createdAt !== 'string' || typeof candidate.updatedAt !== 'string' || !Array.isArray(candidate.objects) || !isViewport(candidate.viewport) || !candidate.objects.every((object) => isCanvasObject(object))) return false;
   const ids = new Set(candidate.objects.map(({ id }) => id));
-  return ids.size === candidate.objects.length && candidate.objects.every((object) => object.kind !== 'connector' || (ids.has(object.fromId) && ids.has(object.toId))) && !hasConnectorCycle(candidate.objects);
+  return ids.size === candidate.objects.length && candidate.objects.every((object) => {
+    if (object.kind === 'connector') return object.fromId !== object.toId && ids.has(object.fromId) && ids.has(object.toId);
+    if (object.kind === 'group') return object.childIds.every((id) => ids.has(id));
+    return true;
+  }) && !hasConnectorCycle(candidate.objects);
 }
 
 function hasConnectorCycle(objects: CanvasObject[]) {

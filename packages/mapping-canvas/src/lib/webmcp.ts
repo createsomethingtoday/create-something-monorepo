@@ -328,7 +328,10 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         }
         const validIds = new Set([...state.document.objects.map(({ id }) => id), ...objects.map(({ id }) => id)]);
         for (const object of objects) {
-          if (object.kind === 'connector' && (!validIds.has(object.fromId) || !validIds.has(object.toId))) throw new Error(`Edge ${edges.find((edge) => refs[requiredText(edge.ref, 'edge.ref')] === object.id)?.ref ?? object.id} references an unknown endpoint.`);
+          if (object.kind !== 'connector') continue;
+          const edgeName = edges.find((edge) => refs[requiredText(edge.ref, 'edge.ref')] === object.id)?.ref ?? object.id;
+          if (object.fromId === object.toId) throw new Error(`Edge ${edgeName} requires distinct endpoints.`);
+          if (!validIds.has(object.fromId) || !validIds.has(object.toId)) throw new Error(`Edge ${edgeName} references an unknown endpoint.`);
         }
         const { before, after } = await controller.applyOperations([{ type: 'replace_objects', objects: [...state.document.objects, ...objects] }], currentRevision);
         const ids = changedObjectIds(before, after);
@@ -499,7 +502,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         assertRevision(controller, input.expectedRevision);
         const changeId = requiredText(input.changeId, 'changeId'), change = changes.get(changeId);
         if (!change) throw new Error('Unknown or expired Draw change ID.');
-        const current = controller.getState().document, currentById = new Map(current.objects.map((object) => [object.id, object])), afterById = new Map(change.after.objects.map((object) => [object.id, object]));
+        const current = controller.getState().document, currentById = new Map(current.objects.map((object) => [object.id, object])), beforeById = new Map(change.before.objects.map((object) => [object.id, object])), afterById = new Map(change.after.objects.map((object) => [object.id, object]));
         for (const id of change.ids) if (JSON.stringify(currentById.get(id)) !== JSON.stringify(afterById.get(id))) throw new Error(`Object ${id} changed since ${changeId}; targeted revert refused.`);
         const beforeOrder = change.before.objects.map(({ id }) => id), afterOrder = change.after.objects.map(({ id }) => id), currentOrder = current.objects.map(({ id }) => id);
         for (const id of change.ids) {
@@ -512,9 +515,15 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
             if (expectedSide !== currentSide) throw new Error(`Object ${id} layer order changed since ${changeId}; targeted revert refused.`);
           }
         }
+        const removing = new Set(change.ids.filter((id) => !beforeById.has(id) && afterById.has(id)));
+        for (const object of current.objects) {
+          if (change.ids.includes(object.id)) continue;
+          const depends = object.kind === 'connector' ? removing.has(object.fromId) || removing.has(object.toId) : object.kind === 'group' ? object.childIds.some((id) => removing.has(id)) : false;
+          if (depends) throw new Error(`Object ${object.id} depends on an object created by ${changeId}; targeted revert refused.`);
+        }
         if (change.before.title !== change.after.title && current.title !== change.after.title) throw new Error(`Canvas title changed since ${changeId}; targeted revert refused.`);
         if (JSON.stringify(change.before.viewport) !== JSON.stringify(change.after.viewport) && JSON.stringify(current.viewport) !== JSON.stringify(change.after.viewport)) throw new Error(`Canvas viewport changed since ${changeId}; targeted revert refused.`);
-        const touched = new Set(change.ids), beforeById = new Map(change.before.objects.map((object) => [object.id, object]));
+        const touched = new Set(change.ids);
         const orderStable = new Set(change.ids.filter((id) => {
           const beforeIndex = beforeOrder.indexOf(id), afterIndex = afterOrder.indexOf(id);
           return beforeIndex >= 0 && beforeIndex === afterIndex;
