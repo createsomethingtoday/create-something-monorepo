@@ -158,6 +158,13 @@ describe('Draw WebMCP tools', () => {
     expect(controller.read().objects).toEqual([{ ...first, text: 'Human first' }, second]);
   });
 
+  it('preserves opaque imported IDs when patching', async () => {
+    const note = { id: ' note ', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 0, y: 0, width: 100, height: 80, text: 'Before' };
+    const controller = harness({ ...createDocument(), objects: [note] });
+    await createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_patch_objects')!.execute({ patches: [{ id: note.id, text: 'After' }] });
+    expect(controller.read().objects[0]).toMatchObject({ id: note.id, text: 'After' });
+  });
+
   it('journals only objects actually moved by layout', async () => {
     const first = { id: 'layout-journal-first', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 0, y: 0, width: 100, height: 80, text: 'First' };
     const second = { ...first, id: 'layout-journal-second', x: 500, text: 'Second' };
@@ -617,6 +624,16 @@ describe('Draw WebMCP tools', () => {
     await patch.execute({ patches: [{ id: second.id, arrange: 'back' }] });
     await expect(tools.find(({ name }) => name === 'draw_revert_change')!.execute({ changeId: older.changeId })).rejects.toThrow('layer order changed');
     expect(controller.read().objects.map(({ id }) => id)).toEqual([second.id, first.id, third.id]);
+  });
+
+  it('refuses to resurrect an order-touched object deleted after the receipt', async () => {
+    const first = { id: 'deleted-after-order-first', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 0, y: 0, width: 100, height: 80, text: 'First' };
+    const second = { ...first, id: 'deleted-after-order-second', text: 'Second' };
+    const controller = harness({ ...createDocument(), objects: [first, second] }), tools = createDrawWebMcpTools(controller);
+    const changed = await tools.find(({ name }) => name === 'draw_replace_canvas')!.execute({ objects: [second, first], confirmation: 'REPLACE CANVAS' }) as { changeId: string };
+    await controller.applyOperations([{ type: 'remove_objects', ids: [first.id] }]);
+    await expect(tools.find(({ name }) => name === 'draw_revert_change')!.execute({ changeId: changed.changeId })).rejects.toThrow(`Object ${first.id} changed`);
+    expect(controller.read().objects).toEqual([second]);
   });
 
   it('fails closed for destructive replacement and reset', async () => {

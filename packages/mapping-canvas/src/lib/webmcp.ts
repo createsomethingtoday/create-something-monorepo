@@ -165,6 +165,11 @@ function requiredText(value: unknown, label: string) {
   return value.trim();
 }
 
+function requiredId(value: unknown, label: string) {
+  if (typeof value !== 'string' || !value.length) throw new Error(`${label} is required.`);
+  return value;
+}
+
 function localReference(value: unknown, label: string) {
   const reference = requiredText(value, label);
   if (reference.length > 120) throw new Error(`${label} must be at most 120 characters.`);
@@ -475,7 +480,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         let objects = before.objects.map((object) => ({ ...object })) as CanvasObject[];
         const touched = new Set<string>();
         for (const patch of patches) {
-          const id = requiredText(patch.id, 'patch.id');
+          const id = requiredId(patch.id, 'patch.id');
           const index = objects.findIndex((object) => object.id === id);
           if (index < 0) throw new Error(`Unknown Draw object: ${id}.`);
           let object = objects[index];
@@ -613,7 +618,10 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         const beforeOrder = change.before.objects.map(({ id }) => id), afterOrder = change.after.objects.map(({ id }) => id);
         const originallyReordered = new Set(changedOrderIds(change.before, change.after));
         const reorderedSince = new Set(changedOrderIds(change.after, current));
-        for (const id of change.orderIds) if (originallyReordered.has(id) && reorderedSince.has(id)) throw new Error(`Object ${id} layer order changed since ${changeId}; targeted revert refused.`);
+        for (const id of change.orderIds) {
+          if (!currentById.has(id)) throw new Error(`Object ${id} changed since ${changeId}; targeted revert refused.`);
+          if (originallyReordered.has(id) && reorderedSince.has(id)) throw new Error(`Object ${id} layer order changed since ${changeId}; targeted revert refused.`);
+        }
         const removing = new Set(change.ids.filter((id) => !beforeById.has(id) && afterById.has(id)));
         const touched = new Set(change.ids);
         for (const object of current.objects) {
