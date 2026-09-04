@@ -147,6 +147,31 @@ describe('Draw WebMCP tools', () => {
     await expect(tools.find(({ name }) => name === 'draw_revert_change')!.execute({ changeId: changed.changeId })).rejects.toThrow('changed since');
   });
 
+  it('serializes read-modify-write revisions and restores non-object fields on targeted revert', async () => {
+    const note = { id: 'serial', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 100, y: 100, width: 200, height: 100, text: 'Original' };
+    const controller = harness({ ...createDocument('Before title'), objects: [note] });
+    const originalApply = controller.applyOperations;
+    controller.applyOperations = vi.fn(originalApply);
+    const tools = createDrawWebMcpTools(controller);
+    await tools.find(({ name }) => name === 'draw_patch_objects')!.execute({ patches: [{ id: note.id, text: 'Serialized' }] });
+    expect(controller.applyOperations).toHaveBeenLastCalledWith(expect.any(Array), expect.stringMatching(/^draw-/));
+
+    const titleChange = await tools.find(({ name }) => name === 'draw_apply_operations')!.execute({ operations: [{ type: 'set_title', title: 'After title' }] }) as { changeId: string };
+    expect(controller.read().title).toBe('After title');
+    await tools.find(({ name }) => name === 'draw_revert_change')!.execute({ changeId: titleChange.changeId });
+    expect(controller.read().title).toBe('Before title');
+  });
+
+  it('returns the post-focus revision for safe mutation chaining', async () => {
+    const note = { id: 'focus-note', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 100, y: 100, width: 200, height: 100, text: 'Focus' };
+    const controller = harness({ ...createDocument(), objects: [note] });
+    Object.assign(controller, { focus: async () => { await controller.applyOperations([{ type: 'set_viewport', viewport: { x: -80, y: -60, zoom: 1.2 } }]); } });
+    const tools = createDrawWebMcpTools(controller);
+    const result = await tools.find(({ name }) => name === 'draw_focus')!.execute({ scope: 'ids', ids: [note.id] }) as { revision: string };
+    const after = await tools.find(({ name }) => name === 'draw_inspect')!.execute({}) as { revision: string };
+    expect(result.revision).toBe(after.revision);
+  });
+
   it('fails closed for destructive replacement and reset', async () => {
     const reset = vi.fn();
     const controller = {

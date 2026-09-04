@@ -19,7 +19,7 @@ export type DrawState = {
 export type DrawTransitionKind = 'create' | 'update' | 'remove' | 'convert' | 'restore' | 'history' | 'reset';
 export type DrawController = {
   getState: () => DrawState;
-  applyOperations: (operations: CanvasOperation[]) => Promise<{ before: CanvasDocument; after: CanvasDocument }> | { before: CanvasDocument; after: CanvasDocument };
+  applyOperations: (operations: CanvasOperation[], expectedRevision?: string) => Promise<{ before: CanvasDocument; after: CanvasDocument }> | { before: CanvasDocument; after: CanvasDocument };
   select: (ids: string[]) => void;
   setTool: (tool: Tool) => void;
   undo: () => Promise<void> | void;
@@ -99,7 +99,7 @@ function changedObjectIds(before: CanvasDocument, after: CanvasDocument) {
   return [...new Set([...prior.keys(), ...next.keys()])].filter((id) => prior.get(id) !== next.get(id));
 }
 
-function revisionFor(document: CanvasDocument) {
+export function drawRevision(document: CanvasDocument) {
   const source = JSON.stringify(document);
   let hash = 14695981039346656037n;
   for (let index = 0; index < source.length; index += 1) {
@@ -178,13 +178,13 @@ function descendants(document: CanvasDocument, ids: string[]) {
 }
 
 function assertRevision(controller: DrawController, expected: unknown) {
-  const current = revisionFor(controller.getState().document);
+  const current = drawRevision(controller.getState().document);
   if (typeof expected === 'string' && expected !== current) throw new Error(`Canvas revision is stale. Inspect again and retry with revision ${current}.`);
 }
 
 function receipt(controller: DrawController, kind: DrawTransitionKind, ids: string[], preserveViewport = false, changeId = `change-${crypto.randomUUID()}`) {
   const transitionId = controller.animate(kind, ids, preserveViewport) || `agent-${crypto.randomUUID()}`;
-  return { ok: true, changeId, revision: revisionFor(controller.getState().document), transition: { transitionId, kind, affectedIds: ids, durationMs: 520 }, summary: summary(controller) };
+  return { ok: true, changeId, revision: drawRevision(controller.getState().document), transition: { transitionId, kind, affectedIds: ids, durationMs: 520 }, summary: summary(controller) };
 }
 
 export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpTool[] {
@@ -233,7 +233,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         return {
           version: DRAW_WEBMCP_VERSION,
           document: { id: state.document.id, title: state.document.title, version: state.document.version, updatedAt: state.document.updatedAt },
-          revision: revisionFor(state.document),
+          revision: drawRevision(state.document),
           palette: Object.fromEntries(DRAWING_PALETTE.map(({ id, value }) => [id, value])),
           surface,
           visibleWorld: { x: -x / zoom, y: -y / zoom, width: surface.width / zoom, height: surface.height / zoom, zoom },
@@ -260,7 +260,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
       execute: async (input) => {
         const state = controller.getState();
-        const currentRevision = revisionFor(state.document);
+        const currentRevision = drawRevision(state.document);
         if (typeof input.expectedRevision === 'string' && input.expectedRevision !== currentRevision) throw new Error(`Canvas revision is stale. Inspect again and retry with revision ${currentRevision}.`);
         const nodes = asRecords(input.nodes, 'nodes');
         const shapes = asRecords(input.shapes, 'shapes');
@@ -321,7 +321,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
           const bounds = objectBounds(children, objects);
           objects.push({ id: refs[ref], kind: 'group', createdAt: new Date().toISOString(), x: bounds.x - 28, y: bounds.y - 52, width: bounds.width + 56, height: bounds.height + 80, label: typeof group.label === 'string' ? group.label : '', childIds: members });
         }
-        const { before, after } = await controller.applyOperations(objects.map((object) => ({ type: 'put_object', object })));
+        const { before, after } = await controller.applyOperations(objects.map((object) => ({ type: 'put_object', object })), currentRevision);
         const ids = changedObjectIds(before, after);
         return { ...finish('create', ids, before, after), refs };
       }
@@ -332,7 +332,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
       inputSchema: { type: 'object', required: ['kind', 'points'], additionalProperties: false, properties: { expectedRevision: { type: 'string' }, kind: { type: 'string', enum: ['line', 'polyline', 'polygon'] }, points: { type: 'array', minItems: 2, maxItems: 200, items: pointSchema }, color: { type: 'string', enum: DRAWING_PALETTE.map(({ id }) => id), default: 'chalk' }, width: { type: 'number', minimum: 1, maximum: 48, default: 4 }, smooth: { type: 'boolean', default: false }, origin: pointSchema } },
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
       execute: async (input) => {
-        const state = controller.getState(), currentRevision = revisionFor(state.document);
+        const state = controller.getState(), currentRevision = drawRevision(state.document);
         if (typeof input.expectedRevision === 'string' && input.expectedRevision !== currentRevision) throw new Error(`Canvas revision is stale. Inspect again and retry with revision ${currentRevision}.`);
         if (!Array.isArray(input.points) || input.points.length < 2 || input.points.length > 200) throw new Error('points must contain 2 to 200 points.');
         const raw = input.points.map((value) => {
@@ -347,7 +347,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         if (input.smooth === true) points = smoothPoints(points);
         if (input.kind === 'polygon' && (points[0].x !== points.at(-1)!.x || points[0].y !== points.at(-1)!.y)) points.push({ ...points[0] });
         const object: CanvasObject = { ...identity('stroke'), kind: 'stroke', points, color: colorValue((input.color ?? 'chalk') as NamedColor), width: Math.max(1, Math.min(48, finite(input.width, 4))) };
-        const { before, after } = await controller.applyOperations([{ type: 'put_object', object }]);
+        const { before, after } = await controller.applyOperations([{ type: 'put_object', object }], currentRevision);
         const ids = changedObjectIds(before, after);
         return finish('create', ids, before, after);
       }
@@ -419,7 +419,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
             else throw new Error('Unsupported arrange value.');
           }
         }
-        const result = await controller.applyOperations([{ type: 'replace_objects', objects }]);
+        const result = await controller.applyOperations([{ type: 'replace_objects', objects }], drawRevision(before));
         const ids = [...new Set([...touched, ...changedObjectIds(result.before, result.after)])];
         return finish('update', ids, result.before, result.after);
       }
@@ -449,7 +449,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
           objects = objects.map((object) => moving.has(object.id) ? translated(object, dx, dy) : object);
           moving.forEach((movingId) => movedIds.add(movingId));
         });
-        const result = await controller.applyOperations([{ type: 'replace_objects', objects }]);
+        const result = await controller.applyOperations([{ type: 'replace_objects', objects }], drawRevision(before));
         return finish('update', [...movedIds], result.before, result.after);
       }
     },
@@ -469,7 +469,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         else throw new Error('Focus scope requires matching ids or bounds.');
         if (ids && !ids.length) throw new Error('No objects are available for focus.');
         await controller.focus({ ...(ids ? { ids } : {}), ...(bounds ? { bounds } : {}), padding });
-        return { ok: true, revision: revisionFor(state.document), focusedIds: ids ?? [], bounds, padding };
+        return { ok: true, revision: drawRevision(controller.getState().document), focusedIds: ids ?? [], bounds, padding };
       }
     },
     {
@@ -483,6 +483,8 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         if (!change) throw new Error('Unknown or expired Draw change ID.');
         const current = controller.getState().document, currentById = new Map(current.objects.map((object) => [object.id, object])), afterById = new Map(change.after.objects.map((object) => [object.id, object]));
         for (const id of change.ids) if (JSON.stringify(currentById.get(id)) !== JSON.stringify(afterById.get(id))) throw new Error(`Object ${id} changed since ${changeId}; targeted revert refused.`);
+        if (change.before.title !== change.after.title && current.title !== change.after.title) throw new Error(`Canvas title changed since ${changeId}; targeted revert refused.`);
+        if (JSON.stringify(change.before.viewport) !== JSON.stringify(change.after.viewport) && JSON.stringify(current.viewport) !== JSON.stringify(change.after.viewport)) throw new Error(`Canvas viewport changed since ${changeId}; targeted revert refused.`);
         const touched = new Set(change.ids), beforeById = new Map(change.before.objects.map((object) => [object.id, object]));
         const currentUntouched = current.objects.filter(({ id }) => !touched.has(id));
         const restored: CanvasObject[] = [];
@@ -494,7 +496,10 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
           }
         }
         for (const live of currentUntouched) if (!beforeById.has(live.id)) restored.push(live);
-        const result = await controller.applyOperations([{ type: 'replace_objects', objects: restored }]);
+        const operations: CanvasOperation[] = [{ type: 'replace_objects', objects: restored }];
+        if (change.before.title !== change.after.title) operations.push({ type: 'set_title', title: change.before.title });
+        if (JSON.stringify(change.before.viewport) !== JSON.stringify(change.after.viewport)) operations.push({ type: 'set_viewport', viewport: change.before.viewport });
+        const result = await controller.applyOperations(operations, drawRevision(current));
         changes.delete(changeId);
         return finish('restore', change.ids, result.before, result.after);
       }
@@ -509,7 +514,8 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         assertRevision(controller, input.expectedRevision);
         const ids = Array.isArray(input.ids) ? input.ids.map(String) : [];
         if (!ids.length) throw new Error('ids must contain at least one object ID.');
-        const result = await controller.applyOperations([{ type: 'remove_objects', ids }]);
+        const before = controller.getState().document;
+        const result = await controller.applyOperations([{ type: 'remove_objects', ids }], drawRevision(before));
         return finish('remove', changedObjectIds(result.before, result.after), result.before, result.after);
       }
     },
@@ -524,7 +530,8 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         if (!Array.isArray(input.objects)) throw new Error('objects must be an array.');
         const operations: CanvasOperation[] = [{ type: 'replace_objects', objects: input.objects as CanvasObject[] }];
         if (typeof input.title === 'string') operations.push({ type: 'set_title', title: input.title });
-        const result = await controller.applyOperations(operations);
+        const before = controller.getState().document;
+        const result = await controller.applyOperations(operations, drawRevision(before));
         return finish('reset', changedObjectIds(result.before, result.after), result.before, result.after);
       }
     },
@@ -536,11 +543,11 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
       execute: async (input) => {
         const operations = input.operations;
         if (!Array.isArray(operations) || !operations.length || operations.length > 100) throw new Error('operations must contain 1 to 100 Draw operations.');
-        const currentRevision = revisionFor(controller.getState().document);
+        const currentRevision = drawRevision(controller.getState().document);
         if (typeof input.expectedRevision === 'string' && input.expectedRevision !== currentRevision) throw new Error(`Canvas revision is stale. Inspect again and retry with revision ${currentRevision}.`);
         if (operations.some((operation) => operation && typeof operation === 'object' && (operation as { type?: unknown }).type === 'replace_objects') && input.confirmation !== REPLACE_CONFIRMATION) throw new Error(`Whole-canvas replacement requires confirmation exactly "${REPLACE_CONFIRMATION}".`);
         const typed = operations as CanvasOperation[];
-        const { before, after } = await controller.applyOperations(typed);
+        const { before, after } = await controller.applyOperations(typed, currentRevision);
         const ids = [...new Set([...affectedIds(typed), ...changedObjectIds(before, after)])];
         return finish(transitionKind(before, typed), ids, before, after, typed.some(({ type }) => type === 'set_viewport'));
       }

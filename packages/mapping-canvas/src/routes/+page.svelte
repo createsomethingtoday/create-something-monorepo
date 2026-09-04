@@ -6,7 +6,7 @@
   import { commit, convert, createDocument, objectBounds, parse, redo, removeObjects, resizeGroup, restoreConversion, serialize, uid, undo, withObjects, type CanvasDocument, type CanvasObject, type History, type Point, type Shape, type Stroke, type Tool } from '$lib/document';
   import { DEFAULT_DRAWING_COLOR, DRAWING_COLOR_PREFERENCE, DRAWING_PALETTE, isColorableObject, isDrawingColor, recolorObjects, type DrawingColor } from '$lib/palette';
   import { applyCanvasOperations, isValidCanvasTitle, type CanvasOperation } from '$lib/paired-session';
-  import { createDrawWebMcpTools, registerDrawWebMcpTools, type DrawTransitionKind } from '$lib/webmcp';
+  import { createDrawWebMcpTools, drawRevision, registerDrawWebMcpTools, type DrawTransitionKind } from '$lib/webmcp';
   import { beginPairing, companionStatus, discoverHosts, forgetCompanion, hasNativeBridge, hostStatus, nativeRole as readNativeRole, pairCompanion, refreshCompanion, replaceHostDocument, revokeCompanion, setCompanionOnline, submitNativeOperation, type DiscoveredHost, type NativeRole, type NativeSessionStatus, type PairingOffer } from '$lib/native-pairing';
   import { fitViewportToBounds, normalizeWheelDelta, panViewport, zoomViewportAt } from '$lib/viewport';
   import { createNoteInputBuffer } from '$lib/note-input';
@@ -98,7 +98,11 @@
     void initializeSession();
     const webMcp = registerDrawWebMcpTools(createDrawWebMcpTools({
       getState: agentState,
-      applyOperations: (operations) => queueAgentMutation(() => applyAgentOperations(operations)),
+      applyOperations: (operations, expectedRevision) => queueAgentMutation(() => {
+        const currentRevision = drawRevision(document);
+        if (expectedRevision && expectedRevision !== currentRevision) throw new Error(`Canvas revision is stale. Inspect again and retry with revision ${currentRevision}.`);
+        return applyAgentOperations(operations);
+      }),
       select: (ids) => { assertAgentControlReady(); const existing = new Set(document.objects.map(({ id }) => id)); selectedIds = ids.filter((id) => existing.has(id)); status = selectedIds.length ? `Agent focused ${selectedIds.length} object${selectedIds.length === 1 ? '' : 's'}` : 'Agent cleared selection'; },
       setTool: (next) => { assertAgentControlReady(); tool = next; status = `Agent selected ${next} tool`; },
       undo: () => queueAgentMutation(() => browserLocalHistory('undo')),
