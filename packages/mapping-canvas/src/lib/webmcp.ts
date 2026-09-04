@@ -199,6 +199,16 @@ function assertRevision(controller: DrawController, expected: unknown) {
   if (typeof expected === 'string' && expected !== current) throw new Error(`Canvas revision is stale. Inspect again and retry with revision ${current}.`);
 }
 
+function boundProjectionStrings(value: unknown, state: { truncated: boolean }): unknown {
+  if (typeof value === 'string') {
+    if (value.length > 240) state.truncated = true;
+    return value.slice(0, 240);
+  }
+  if (Array.isArray(value)) return value.map((item) => boundProjectionStrings(item, state));
+  if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, boundProjectionStrings(item, state)]));
+  return value;
+}
+
 function receipt(controller: DrawController, kind: DrawTransitionKind, ids: string[], preserveViewport = false, changeId?: string) {
   const transitionId = controller.animate(kind, ids, preserveViewport) || `agent-${crypto.randomUUID()}`;
   return { ok: true, ...(changeId ? { changeId } : {}), revision: drawRevision(controller.getState().document), transition: { transitionId, kind, affectedIds: ids, durationMs: 520 }, summary: summary(controller) };
@@ -222,7 +232,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
     },
     {
       name: 'draw_inspect', title: 'Inspect Draw efficiently',
-      description: 'Read a compact, filterable projection with revision, palette, surface, visible-world geometry, selection, and matching objects. Use draw_get_state only when the complete portable document is required.',
+      description: 'Read a compact, filterable projection with revision, palette, surface, visible-world geometry, selection, and matching objects. Variable-size geometry, text, references, and residual strings are bounded; stringsTruncated signals that draw_get_state is needed for exact oversized values or the complete portable document.',
       inputSchema: {
         type: 'object', additionalProperties: false, properties: {
           ids: { type: 'array', uniqueItems: true, items: { type: 'string' } },
@@ -247,7 +257,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         });
         const surface = state.surface ?? { width: 1440, height: 900 };
         const { x, y, zoom } = state.document.viewport;
-        return {
+        const projection = {
           version: DRAW_WEBMCP_VERSION,
           document: { id: state.document.id, title: state.document.title, version: state.document.version, updatedAt: state.document.updatedAt },
           revision: drawRevision(state.document),
@@ -279,6 +289,9 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
           }),
           truncated: matches.length > limit
         };
+        const stringState = { truncated: false };
+        const bounded = boundProjectionStrings(projection, stringState) as typeof projection;
+        return { ...bounded, stringsTruncated: stringState.truncated };
       }
     },
     {

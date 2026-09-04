@@ -91,6 +91,19 @@ describe('Draw WebMCP tools', () => {
     expect(JSON.stringify(projection).length).toBeLessThan(JSON.stringify(note).length / 5);
   });
 
+  it('bounds residual imported strings across compact inspection', async () => {
+    const huge = 'x'.repeat(20_000);
+    const rectangle = { id: huge, kind: 'rectangle' as const, createdAt: huge, from: { x: 0, y: 0 }, to: { x: 100, y: 80 }, color: huge };
+    const controller = harness({ ...createDocument(), objects: [rectangle] });
+    const projection = await createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_inspect')!.execute({ kinds: ['rectangle'] }) as { stringsTruncated: boolean; objects: Record<string, unknown>[] };
+    expect(projection.stringsTruncated).toBe(true);
+    expect(projection.objects[0]).toMatchObject({ kind: 'rectangle' });
+    expect((projection.objects[0].id as string).length).toBe(240);
+    expect((projection.objects[0].createdAt as string).length).toBe(240);
+    expect((projection.objects[0].color as string).length).toBe(240);
+    expect(JSON.stringify(projection).length).toBeLessThan(JSON.stringify(rectangle).length / 20);
+  });
+
   it('composes a labeled workflow from local references and creates v1 paths without storage fields', async () => {
     const controller = harness();
     const tools = createDrawWebMcpTools(controller);
