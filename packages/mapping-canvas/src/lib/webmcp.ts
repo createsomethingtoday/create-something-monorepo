@@ -257,6 +257,10 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
           summary: { ...summary(controller), matchedCount: matches.length },
           objects: matches.slice(0, limit).map((object) => {
             const { sourceSnapshot, ...compact } = object;
+            if (compact.kind === 'stroke') {
+              const { points, ...stroke } = compact;
+              return { ...stroke, pointCount: points.length, bounds: objectBounds([object], state.document.objects), ...(sourceSnapshot ? { sourceSnapshotCount: sourceSnapshot.length } : {}) };
+            }
             return { ...compact, ...(sourceSnapshot ? { sourceSnapshotCount: sourceSnapshot.length } : {}) };
           }),
           truncated: matches.length > limit

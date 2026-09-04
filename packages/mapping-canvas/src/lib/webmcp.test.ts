@@ -70,6 +70,16 @@ describe('Draw WebMCP tools', () => {
     await expect(tools.find(({ name }) => name === 'draw_apply_operations')!.execute({ expectedRevision: revision, operations: [{ type: 'set_title', title: 'Stale' }] })).rejects.toThrow('revision');
   });
 
+  it('summarizes dense stroke geometry in compact inspection', async () => {
+    const points = Array.from({ length: 2_000 }, (_, index) => ({ x: index, y: index % 50 }));
+    const stroke = { id: 'dense-stroke', kind: 'stroke' as const, createdAt: '2026-09-04T00:00:00.000Z', points, color: '#0057b8', width: 5 };
+    const controller = harness({ ...createDocument(), objects: [stroke] });
+    const projection = await createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_inspect')!.execute({ ids: [stroke.id] }) as { objects: Record<string, unknown>[] };
+    expect(projection.objects[0]).toMatchObject({ id: stroke.id, kind: 'stroke', pointCount: 2_000, bounds: { x: 0, y: 0, width: 1_999, height: 80 } });
+    expect(projection.objects[0]).not.toHaveProperty('points');
+    expect(JSON.stringify(projection).length).toBeLessThan(JSON.stringify(stroke).length / 10);
+  });
+
   it('composes a labeled workflow from local references and creates v1 paths without storage fields', async () => {
     const controller = harness();
     const tools = createDrawWebMcpTools(controller);
