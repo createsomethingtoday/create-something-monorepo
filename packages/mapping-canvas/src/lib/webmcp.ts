@@ -26,7 +26,7 @@ export type DrawController = {
   redo: () => Promise<void> | void;
   reset: () => Promise<void> | void;
   animate: (kind: DrawTransitionKind, affectedIds: string[], preserveViewport?: boolean) => string | void;
-  focus?: (target: { ids?: string[]; bounds?: { x: number; y: number; width: number; height: number }; padding: number }) => Promise<void> | void;
+  focus?: (target: { scope: 'all' | 'selection' | 'ids' | 'bounds'; ids?: string[]; bounds?: { x: number; y: number; width: number; height: number }; padding: number }) => Promise<{ ids?: string[]; bounds?: { x: number; y: number; width: number; height: number } } | void> | { ids?: string[]; bounds?: { x: number; y: number; width: number; height: number } } | void;
 };
 
 export type DrawWebMcpTool = {
@@ -578,17 +578,16 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
       execute: async (input) => {
         if (!controller.focus) throw new Error('Camera focus is unavailable in this Draw surface.');
-        const state = controller.getState(), scope = String(input.scope), padding = Math.max(0, Math.min(400, finite(input.padding, 72)));
+        const scope = String(input.scope), padding = Math.max(0, Math.min(400, finite(input.padding, 72)));
         let ids: string[] | undefined, bounds: { x: number; y: number; width: number; height: number } | undefined;
-        if (scope === 'all') ids = state.document.objects.map(({ id }) => id);
-        else if (scope === 'selection') ids = state.selectedIds;
+        if (scope === 'all' || scope === 'selection') { /* Resolved inside the serialized controller call. */ }
         else if (scope === 'ids') ids = Array.isArray(input.ids) ? input.ids.map(String) : [];
         else if (scope === 'bounds' && input.bounds && typeof input.bounds === 'object') bounds = input.bounds as typeof bounds;
         else throw new Error('Focus scope requires matching ids or bounds.');
-        if (ids && !ids.length) throw new Error('No objects are available for focus.');
-        await controller.focus({ ...(ids ? { ids } : {}), ...(bounds ? { bounds } : {}), padding });
-        const focused = compactIdList(ids ?? []);
-        return { ok: true, revision: drawRevision(controller.getState().document), focusedIds: focused.preview, focusedCount: focused.count, ...(focused.truncated ? { focusedIdsTruncated: true } : {}), bounds, padding };
+        if (scope === 'ids' && !ids?.length) throw new Error('No objects are available for focus.');
+        const resolved = await controller.focus({ scope: scope as 'all' | 'selection' | 'ids' | 'bounds', ...(ids ? { ids } : {}), ...(bounds ? { bounds } : {}), padding });
+        const focused = compactIdList(resolved?.ids ?? ids ?? []), focusedBounds = resolved?.bounds ?? bounds;
+        return { ok: true, revision: drawRevision(controller.getState().document), focusedIds: focused.preview, focusedCount: focused.count, ...(focused.truncated ? { focusedIdsTruncated: true } : {}), bounds: focusedBounds, padding };
       }
     },
     {

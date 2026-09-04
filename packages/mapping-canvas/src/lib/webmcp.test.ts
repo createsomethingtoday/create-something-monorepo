@@ -227,7 +227,7 @@ describe('Draw WebMCP tools', () => {
     expect(controller.read().objects.map((object) => object.kind === 'note' ? object.x : 0)).toEqual([100, 100, 100]);
     expect(controller.read().objects.map((object) => object.kind === 'note' ? object.y : 0)).toEqual([100, 240, 380]);
     await focusTool.execute({ scope: 'ids', ids: [second.id, third.id], padding: 80 });
-    expect(focus).toHaveBeenCalledWith({ ids: [second.id, third.id], padding: 80 });
+    expect(focus).toHaveBeenCalledWith({ scope: 'ids', ids: [second.id, third.id], padding: 80 });
 
     await expect(deleteTool.execute({ ids: [third.id] })).rejects.toThrow('DELETE OBJECTS');
     await deleteTool.execute({ ids: [third.id], confirmation: 'DELETE OBJECTS' });
@@ -280,6 +280,18 @@ describe('Draw WebMCP tools', () => {
     const result = await tools.find(({ name }) => name === 'draw_focus')!.execute({ scope: 'ids', ids: [note.id] }) as { revision: string };
     const after = await tools.find(({ name }) => name === 'draw_inspect')!.execute({}) as { revision: string };
     expect(result.revision).toBe(after.revision);
+  });
+
+  it('resolves dynamic focus scopes inside the serialized controller call', async () => {
+    const document = createDocument(), focus = vi.fn(async (target) => ({ ids: ['created-before-focus'], bounds: { x: 0, y: 0, width: 100, height: 100 } }));
+    let focusStarted = false;
+    focus.mockImplementation(async (target) => { focusStarted = true; expect(target).toEqual({ scope: 'all', padding: 72 }); return { ids: ['created-before-focus'], bounds: { x: 0, y: 0, width: 100, height: 100 } }; });
+    const controller = {
+      getState: () => { if (!focusStarted) throw new Error('Focus scope was read before entering the controller queue.'); return { document, selectedIds: [], tool: 'select' as const, canUndo: false, canRedo: false }; },
+      applyOperations: vi.fn(), select: vi.fn(), setTool: vi.fn(), undo: vi.fn(), redo: vi.fn(), reset: vi.fn(), animate: vi.fn(), focus
+    };
+    const result = await createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_focus')!.execute({ scope: 'all' }) as { focusedIds: string[]; focusedCount: number };
+    expect(result).toMatchObject({ focusedIds: ['created-before-focus'], focusedCount: 1 });
   });
 
   it('preserves later unrelated layer ordering when reverting an older patch', async () => {
