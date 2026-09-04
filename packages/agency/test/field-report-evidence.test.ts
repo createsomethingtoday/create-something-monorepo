@@ -270,7 +270,7 @@ test('booking carries the Field Report handoff into the owned mapping scheduler'
   assert.match(book, /30- or 60-minute/);
   assert.match(book, /Choose 30 or 60 minutes/);
   assert.match(book, /first-party scheduler/);
-  assert.match(book, /schedulerHandoffContext/);
+  assert.match(book, /createBookingHandoffState/);
   assert.match(book, /What will travel into booking/);
 });
 

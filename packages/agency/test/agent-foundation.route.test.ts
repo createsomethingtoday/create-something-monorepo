@@ -16,7 +16,11 @@ test('Agent Foundation makes one clear argument from stalled project to owned co
   assert.match(route, /data-agent-foundation-proof/);
   assert.match(route, /Inside your repository/);
   assert.match(route, /Example handoff structure/);
-  assert.match(route, /Your team makes the next change/);
+  assert.match(route, /You make the next change/);
+  assert.match(route, /Illustrative job/);
+  assert.match(route, /Meeting notes/);
+  assert.match(route, /Draft result/);
+  assert.match(route, /Human review before any external write/);
   assert.match(route, /We quote the Foundation after we review the project and agree on the job/);
   assert.match(route, /Production Promotion/);
   assert.match(route, /No hidden CREATE\s+SOMETHING account/);
@@ -30,14 +34,12 @@ test('Agent Foundation makes one clear argument from stalled project to owned co
   assert.doesNotMatch(route, /href="\/services"/);
   assert.doesNotMatch(route, /See what the foundation includes|Start with Map|State:\s*ready/i);
 
-  assert.match(
-    offer,
-    /builders and operating teams with an idea, prototype, or stalled Codex project/i
-  );
+  assert.match(offer, /Bring an idea, prototype, or stalled agent project/i);
   assert.match(offer, /You started the agent\. We’ll get one useful job working\./);
   assert.match(offer, /one useful job/i);
   assert.match(offer, /GitHub repository/i);
-  assert.match(offer, /your team makes the next change/i);
+  assert.match(offer, /you make the next change/i);
+  assert.match(offer, /Codex helps you make the next change/i);
   assert.match(offer, /real example/i);
   assert.match(offer, /rules for what the agent may do/i);
   assert.doesNotMatch(offer, /Database|Automation|Judgment|accepted development path/);
@@ -104,7 +106,14 @@ test('Agent Foundation is registered for discovery, Canon review, and booking', 
   assert.match(surfacePolicy, /'\/agent-foundation'/);
   assert.match(booking, /intent === 'agent-foundation'/);
   assert.match(booking, /Agent Foundation fit call/);
-  assert.match(booking, /one role, one job, and one representative case/);
+  assert.match(booking, /person or team the agent serves, and one representative example/);
+  assert.match(booking, /data-agent-foundation-booking/);
+  assert.match(booking, /Choose a time to review your agent project/);
+  assert.match(booking, /What you leave with/);
+  assert.doesNotMatch(
+    booking.match(/const agentFoundationBookingOffer = \{[\s\S]*?\} as const;/)?.[0] ?? '',
+    /Map first|Harness or MCP-only|Production scope/
+  );
   assert.match(schedulerPage, /title: 'Agent Foundation Fit Call \| CREATE SOMETHING'/);
   assert.match(schedulerPage, /heading: 'Fit One Agent Foundation'/);
   assert.match(schedulerPage, /normalizeSchedulerOfferIntent\(input\.intent\)/);

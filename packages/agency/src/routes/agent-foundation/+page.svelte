@@ -22,7 +22,7 @@
 
 <SEO
   title="Agent Foundation | One Useful Job in Your Repository"
-  description="Bring the agent you started with Codex. CREATE SOMETHING gets one useful job working in your repository, then proves your team can continue."
+  description="Bring the agent you started with Codex. CREATE SOMETHING gets one useful job working in your repository, then proves you can continue."
   keywords="agent foundation, Codex agent development, client-owned AI agent, AI agent infrastructure, MCP agent tools, agent handoff, agent production promotion"
   propertyName="agency"
 />
@@ -60,8 +60,8 @@
         <h2 id="foundation-proof-title">Inside your repository.</h2>
       </div>
       <p>
-        We define the job, build it, and prove the handoff. Your team receives the working path and
-        the records needed to understand what the agent can do.
+        We define the job, build it, and prove the handoff. You receive the working path and the
+        records needed to understand what the agent can do.
       </p>
     </header>
 
@@ -74,6 +74,24 @@
           </div>
           <small>Illustrative · not a client result</small>
         </header>
+        <dl class="job-example" aria-label="Illustrative agent job">
+          <div>
+            <dt>Illustrative job</dt>
+            <dd>Turn meeting notes into a reviewable action list.</dd>
+          </div>
+          <div>
+            <dt>Input</dt>
+            <dd>Meeting notes</dd>
+          </div>
+          <div>
+            <dt>Draft result</dt>
+            <dd>Actions with owners and due dates</dd>
+          </div>
+          <div>
+            <dt>Approval</dt>
+            <dd>Human review before any external write</dd>
+          </div>
+        </dl>
         <ul>
           {#each agentFoundationRepository as entry}
             <li>
@@ -86,7 +104,7 @@
 
       <aside class="continuation-record" aria-labelledby="continuation-record-title">
         <span>Handoff proof</span>
-        <h3 id="continuation-record-title">Your team makes the next change.</h3>
+        <h3 id="continuation-record-title">You make the next change.</h3>
         <ol>
           {#each agentFoundationChecks as check, index}
             <li>
@@ -108,12 +126,10 @@
     <header class="foundation-boundary__heading">
       <div>
         <p>Ownership and production</p>
-        <h2 id="foundation-boundary-title">
-          The foundation is working. Production is a promotion.
-        </h2>
+        <h2 id="foundation-boundary-title">What works at handoff—and what going live adds.</h2>
       </div>
       <p>
-        Your team keeps the repository and everything needed to understand it: source, schemas,
+        You keep the repository and everything needed to understand it: source, schemas,
         instructions, policies, tests, runbook, known limits, and project history. No hidden CREATE
         SOMETHING account or undocumented credential is required for the agreed development
         environment.
@@ -147,9 +163,8 @@
         <p>Foundation fit</p>
         <h2 id="foundation-fit-title">Bring your repository and one job for the agent.</h2>
         <p>
-          Show us what you started, who the agent serves, one real input, and what a good result
-          looks like. We’ll tell you whether Agent Foundation is the responsible next step and
-          define what it should include.
+          On the call, we’ll agree on the first useful job. If there’s a fit, you leave with the
+          proposed scope and the basis for a quote.
         </p>
         <Button
           href={agencyCoreMessaging.agentFoundationBookingHref}
@@ -301,6 +316,36 @@
     margin: 0;
     padding: 0;
     list-style: none;
+  }
+
+  .job-example {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1px;
+    margin: 1.5rem 0;
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    background: var(--color-performance-line, #d7d7d2);
+  }
+
+  .job-example > div {
+    min-width: 0;
+    padding: 0.85rem;
+    background: var(--color-performance-paper, #f3f3f0);
+  }
+
+  .job-example dt {
+    color: var(--color-performance-signal, #0f62fe);
+    font-family: var(--font-performance-mono);
+    font-size: 0.68rem;
+    font-weight: var(--font-performance-semibold, 650);
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+  }
+
+  .job-example dd {
+    margin: 0.35rem 0 0;
+    font-size: 0.88rem;
+    line-height: 1.4;
   }
 
   .repository-record li {

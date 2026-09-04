@@ -2,11 +2,11 @@ import type { PerformanceCampaignProof } from '@create-something/canon';
 
 export const agentFoundationHero = {
   title: 'You started the agent. We’ll get one useful job working.',
-  lede: 'For builders and operating teams with an idea, prototype, or stalled Codex project. We work in your GitHub repository, then help your team make the next change with Codex. The rules, tests, and runbook stay with you.',
+  lede: 'Bring an idea, prototype, or stalled agent project. We build one useful job in your GitHub repository, then Codex helps you make the next change. The rules, tests, and runbook stay with you.',
   proof: [
     { label: 'Scope', value: '1 role · 1 job' },
     { label: 'Ownership', value: 'Your repository' },
-    { label: 'Handoff', value: 'Your team makes the next change' }
+    { label: 'Handoff', value: 'You make the next change' }
   ] satisfies PerformanceCampaignProof[]
 };
 
@@ -29,7 +29,7 @@ export const agentFoundationRepository = [
   },
   {
     path: 'tests/',
-    purpose: 'The verifier your team reruns'
+    purpose: 'The verifier you rerun'
   },
   {
     path: 'RUNBOOK.md',
@@ -45,7 +45,7 @@ export const agentFoundationChecks = [
   'A fresh checkout starts from the runbook.',
   'One real example produces the agreed result.',
   'One failure case makes the agent stop.',
-  'Your team makes one agreed change with Codex.',
+  'You make one agreed change with Codex.',
   'The verifier passes again.'
 ] as const;
 
@@ -56,7 +56,7 @@ export const agentFoundationStages = [
     items: [
       'The repository includes the source, rules, tests, and runbook.',
       'Working, blocked, unknown, and next states stay visible.',
-      'Your team completes one change with Codex before handoff.'
+      'You complete one change with Codex before handoff.'
     ]
   },
   {

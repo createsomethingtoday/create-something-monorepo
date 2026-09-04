@@ -1,5 +1,4 @@
-export const FIRST_PARTY_SCHEDULER_ORIGIN =
-	'https://schedule.createsomething.agency';
+export const FIRST_PARTY_SCHEDULER_ORIGIN = 'https://schedule.createsomething.agency';
 
 export const FIRST_PARTY_SCHEDULER_PATH = '/createsomething/together';
 
@@ -21,6 +20,12 @@ export type SchedulerHandoffSheet = {
 	summary: string;
 	fields: Array<{ label: string; value: string }>;
 	warmupNotes?: string;
+};
+
+export type BookingHandoffState = {
+	handoffContext: SchedulerHandoffContext;
+	handoffSheet: SchedulerHandoffSheet;
+	schedulerHref: string;
 };
 
 export type SchedulerDeclaredTrafficClass = 'internal' | 'test';
@@ -111,7 +116,8 @@ export function normalizeSchedulerAccessUrl(value: string | URL): SchedulerAcces
 		!actionToken ||
 		!ACTION_TOKEN.test(actionToken) ||
 		Array.from(fragment.keys()).some((key) => key !== 'access')
-	) return null;
+	)
+		return null;
 	return {
 		bookingId,
 		actionToken,
@@ -119,7 +125,10 @@ export function normalizeSchedulerAccessUrl(value: string | URL): SchedulerAcces
 	};
 }
 
-export function schedulerHandoffContext(search = '', warmupNotes?: string): SchedulerHandoffContext {
+export function schedulerHandoffContext(
+	search = '',
+	warmupNotes?: string
+): SchedulerHandoffContext {
 	const params = new URLSearchParams(search);
 	const context: SchedulerHandoffContext = {};
 	const copy = (key: string, target: keyof SchedulerHandoffContext, max: number) => {
@@ -144,9 +153,7 @@ export function schedulerHandoffContext(search = '', warmupNotes?: string): Sche
 			context.agentMessages = agentMessages;
 		}
 	}
-	const notes = warmupNotes
-		?.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '')
-		.trim();
+	const notes = warmupNotes?.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '').trim();
 	if (notes) context.warmupNotes = notes.slice(0, 2000);
 	return context;
 }
@@ -174,7 +181,8 @@ export function schedulerHandoffSheet(context: SchedulerHandoffContext): Schedul
 	add('Intent', context.intent);
 	add('Operating lane', context.lane);
 	add('Draft readiness', context.readiness);
-	if (context.score !== undefined) fields.push({ label: 'Readiness score', value: `${context.score} / 100` });
+	if (context.score !== undefined)
+		fields.push({ label: 'Readiness score', value: `${context.score} / 100` });
 	if (context.agentMessages !== undefined) {
 		fields.push({
 			label: 'Draft messages',
@@ -190,6 +198,15 @@ export function schedulerHandoffSheet(context: SchedulerHandoffContext): Schedul
 			: 'No private draft is attached yet. You can still book a mapping session, or start a draft first.',
 		fields,
 		...(context.warmupNotes ? { warmupNotes: context.warmupNotes } : {})
+	};
+}
+
+export function createBookingHandoffState(search = '', warmupNotes?: string): BookingHandoffState {
+	const handoffContext = schedulerHandoffContext(search, warmupNotes);
+	return {
+		handoffContext,
+		handoffSheet: schedulerHandoffSheet(handoffContext),
+		schedulerHref: buildFirstPartySchedulerUrl(search)
 	};
 }
 
@@ -234,6 +251,7 @@ export function normalizeSchedulerResizeMessage(input: unknown): number | null {
 		!Number.isFinite(height) ||
 		height < SCHEDULER_DOCUMENT_HEIGHT_MIN ||
 		height > SCHEDULER_DOCUMENT_HEIGHT_MAX
-	) return null;
+	)
+		return null;
 	return Math.ceil(height);
 }
