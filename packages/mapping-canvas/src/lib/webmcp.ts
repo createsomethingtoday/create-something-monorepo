@@ -246,11 +246,13 @@ function receipt(controller: DrawController, kind: DrawTransitionKind, ids: stri
 
 export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpTool[] {
   const maxJournalBytes = 4 * 1024 * 1024;
-  const changes = new Map<string, { before: CanvasDocument; after: CanvasDocument; ids: string[]; bytes: number }>();
+  const changes = new Map<string, { before: CanvasDocument; after: CanvasDocument; ids: string[]; objectIds: string[]; orderIds: string[]; bytes: number }>();
   let journalBytes = 0;
-  const finish = (kind: DrawTransitionKind, ids: string[], before: CanvasDocument, after: CanvasDocument, preserveViewport = false, journalIds = ids) => {
+  const finish = (kind: DrawTransitionKind, ids: string[], before: CanvasDocument, after: CanvasDocument, preserveViewport = false) => {
+    const objectIds = changedObjectIds(before, after), orderIds = changedOrderIds(before, after);
+    const journalIds = [...new Set([...objectIds, ...orderIds])];
     const changeId = `change-${crypto.randomUUID()}`;
-    const bytes = new TextEncoder().encode(JSON.stringify({ before, after, ids: journalIds })).byteLength;
+    const bytes = new TextEncoder().encode(JSON.stringify({ before, after, objectIds, orderIds })).byteLength;
     if (bytes <= maxJournalBytes) {
       while (changes.size >= 100 || journalBytes + bytes > maxJournalBytes) {
         const oldestId = changes.keys().next().value;
@@ -258,7 +260,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         journalBytes -= changes.get(oldestId)!.bytes;
         changes.delete(oldestId);
       }
-      changes.set(changeId, { before, after, ids: journalIds, bytes });
+      changes.set(changeId, { before, after, ids: journalIds, objectIds, orderIds, bytes });
       journalBytes += bytes;
       return receipt(controller, kind, ids, preserveViewport, changeId);
     }
@@ -536,7 +538,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         const result = await controller.applyOperations([{ type: 'replace_objects', objects }], drawRevision(before));
         const objectChanges = changedObjectIds(result.before, result.after), orderChanges = changedOrderIds(result.before, result.after);
         const ids = [...new Set([...touched, ...objectChanges, ...orderChanges])];
-        return finish('update', ids, result.before, result.after, false, [...new Set([...objectChanges, ...orderChanges])]);
+        return finish('update', ids, result.before, result.after);
       }
     },
     {
@@ -607,11 +609,11 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         if (!change) throw new Error('Unknown or expired Draw change ID.');
         const current = controller.getState().document, currentById = new Map(current.objects.map((object) => [object.id, object])), beforeById = new Map(change.before.objects.map((object) => [object.id, object])), afterById = new Map(change.after.objects.map((object) => [object.id, object]));
         if (current.id !== change.after.id) throw new Error(`Change ${changeId} belongs to another Draw canvas and cannot be reverted here.`);
-        for (const id of change.ids) if (JSON.stringify(currentById.get(id)) !== JSON.stringify(afterById.get(id))) throw new Error(`Object ${id} changed since ${changeId}; targeted revert refused.`);
+        for (const id of change.objectIds) if (JSON.stringify(currentById.get(id)) !== JSON.stringify(afterById.get(id))) throw new Error(`Object ${id} changed since ${changeId}; targeted revert refused.`);
         const beforeOrder = change.before.objects.map(({ id }) => id), afterOrder = change.after.objects.map(({ id }) => id);
         const originallyReordered = new Set(changedOrderIds(change.before, change.after));
         const reorderedSince = new Set(changedOrderIds(change.after, current));
-        for (const id of change.ids) if (originallyReordered.has(id) && reorderedSince.has(id)) throw new Error(`Object ${id} layer order changed since ${changeId}; targeted revert refused.`);
+        for (const id of change.orderIds) if (originallyReordered.has(id) && reorderedSince.has(id)) throw new Error(`Object ${id} layer order changed since ${changeId}; targeted revert refused.`);
         const removing = new Set(change.ids.filter((id) => !beforeById.has(id) && afterById.has(id)));
         const touched = new Set(change.ids);
         for (const object of current.objects) {
@@ -723,8 +725,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         const typed = operations as CanvasOperation[];
         const { before, after } = await controller.applyOperations(typed, currentRevision);
         const ids = [...new Set([...affectedIds(typed), ...changedObjectIds(before, after)])];
-        const journalIds = [...new Set([...changedObjectIds(before, after), ...changedOrderIds(before, after)])];
-        return finish(transitionKind(before, typed), ids, before, after, typed.some(({ type }) => type === 'set_viewport'), journalIds);
+        return finish(transitionKind(before, typed), ids, before, after, typed.some(({ type }) => type === 'set_viewport'));
       }
     },
     {
