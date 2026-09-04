@@ -236,6 +236,16 @@ describe('Draw WebMCP tools', () => {
     expect(controller.read().objects).toHaveLength(4);
   });
 
+  it('accepts local references that match inherited object keys', async () => {
+    const controller = harness(), tools = createDrawWebMcpTools(controller);
+    const result = await tools.find(({ name }) => name === 'draw_compose')!.execute({
+      nodes: [{ ref: 'constructor', text: 'Constructor' }, { ref: '__proto__', text: 'Prototype' }],
+      edges: [{ ref: 'toString', from: 'constructor', to: '__proto__' }]
+    }) as { refs: Record<string, string> };
+    expect(Object.keys(result.refs).sort()).toEqual(['__proto__', 'constructor', 'toString']);
+    expect(controller.read().objects).toHaveLength(3);
+  });
+
   it('connects to a group created in the same composition batch', async () => {
     const controller = harness(), tools = createDrawWebMcpTools(controller);
     const result = await tools.find(({ name }) => name === 'draw_compose')!.execute({

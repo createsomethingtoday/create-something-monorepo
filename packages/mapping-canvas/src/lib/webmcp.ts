@@ -267,21 +267,21 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         const edges = asRecords(input.edges, 'edges', 100);
         const groups = asRecords(input.groups, 'groups', 20);
         if (!nodes.length && !shapes.length) throw new Error('draw_compose requires at least one node or shape.');
-        const refs: Record<string, string> = {};
+        const refs: Record<string, string> = Object.create(null) as Record<string, string>;
         const items = [...nodes.map((item) => ({ item, category: 'node' as const })), ...shapes.map((item) => ({ item, category: 'shape' as const }))];
         for (const { item, category } of items) {
           const ref = requiredText(item.ref, `${category}.ref`);
-          if (refs[ref]) throw new Error(`Duplicate local reference: ${ref}.`);
+          if (Object.hasOwn(refs, ref)) throw new Error(`Duplicate local reference: ${ref}.`);
           refs[ref] = identity(category).id;
         }
         for (const edge of edges) {
           const ref = requiredText(edge.ref, 'edge.ref');
-          if (refs[ref]) throw new Error(`Duplicate local reference: ${ref}.`);
+          if (Object.hasOwn(refs, ref)) throw new Error(`Duplicate local reference: ${ref}.`);
           refs[ref] = identity('connector').id;
         }
         for (const group of groups) {
           const ref = requiredText(group.ref, 'group.ref');
-          if (refs[ref]) throw new Error(`Duplicate local reference: ${ref}.`);
+          if (Object.hasOwn(refs, ref)) throw new Error(`Duplicate local reference: ${ref}.`);
           refs[ref] = identity('group').id;
         }
         const layout = input.layout && typeof input.layout === 'object' ? input.layout as Record<string, unknown> : {};
