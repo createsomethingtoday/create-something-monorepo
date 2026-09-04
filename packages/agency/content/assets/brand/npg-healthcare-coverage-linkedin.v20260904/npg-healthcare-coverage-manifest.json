@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "assetType": "screenshot-annotation",
+  "surface": "linkedin",
+  "generatedAt": "2026-09-04T18:55:09.435Z",
+  "renderer": "sharp",
+  "generatedImage": false,
+  "evidenceContract": "Source pixels are preserved outside declared redactions; the public composition resizes but does not regenerate the evidence layer.",
+  "owner": "CREATE SOMETHING",
+  "reviewStatus": "approved",
+  "rightsNote": "Operator-captured private client test; public use is limited to this redacted evidence export.",
+  "source": {
+    "file": "Screenshot 2026-09-04 at 1.39.11 PM.png",
+    "sha256": "9ada02097a8a54a2a7d072abfec71dae695aaf1aa22d9b835a24dc94044112b9",
+    "width": 3244,
+    "height": 2392
+  },
+  "redactions": [
+    {
+      "x": 0.045,
+      "y": 0.238,
+      "width": 0.135,
+      "height": 0.115
+    },
+    {
+      "x": 0.548,
+      "y": 0.154,
+      "width": 0.255,
+      "height": 0.058
+    },
+    {
+      "x": 0.405,
+      "y": 0.385,
+      "width": 0.405,
+      "height": 0.295
+    }
+  ],
+  "copy": {
+    "headline": "Find the market before you recruit it.",
+    "dek": "Nationwide provider coverage, refreshed weekly and governed by verification gates.",
+    "proofs": [
+      "1,111 coverage candidates",
+      "Weekly source refresh",
+      "Verification-gated outreach"
+    ]
+  },
+  "provenance": {
+    "sourceUrl": "https://createsomething.agency/delivery/abundance",
+    "checkedDate": "2026-09-04",
+    "refreshDue": "2026-09-11"
+  },
+  "outputs": {
+    "redacted": {
+      "file": "npg-healthcare-coverage-redacted.png",
+      "sha256": "a283cab2df408da7e6375b63e703920be8254e5c8d1719f840fb4f28eb6a392b"
+    },
+    "linkedin": {
+      "file": "npg-healthcare-coverage-linkedin.png",
+      "sha256": "31e9af9d15908e3b6088694dd3779e53a6f0055c4ac4aabe2a4645ed8389e559",
+      "width": 1080,
+      "height": 1350
+    }
+  }
+}

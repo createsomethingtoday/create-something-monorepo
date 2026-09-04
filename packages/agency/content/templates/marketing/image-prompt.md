@@ -88,5 +88,7 @@ watermarks, vendor endorsement, and decorative AI atmosphere.
 - [ ] The claim is supported by visible proof or a real screenshot.
 - [ ] No fake UI is presented as a screenshot.
 - [ ] No secrets, private data, private prompts, client records, or tokens appear.
+- [ ] Screenshot evidence declares explicit redaction regions, or an owner has approved it as unredacted.
+- [ ] Identifiable people are not presented as available, interested, or recruiter-ready without separate verification.
 - [ ] The source prompt, source brief, model, date, output hash, owner, target surface, and refresh date are stored.
 - [ ] Langfuse is not required unless a separate scored image-quality rubric exists.
