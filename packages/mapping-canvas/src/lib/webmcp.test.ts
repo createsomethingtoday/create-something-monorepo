@@ -172,6 +172,46 @@ describe('Draw WebMCP tools', () => {
     expect(result.revision).toBe(after.revision);
   });
 
+  it('preserves later unrelated layer ordering when reverting an older patch', async () => {
+    const first = { id: 'layer-first', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 0, y: 0, width: 100, height: 80, text: 'First' };
+    const second = { ...first, id: 'layer-second', text: 'Second' };
+    const third = { ...first, id: 'layer-third', text: 'Third' };
+    const controller = harness({ ...createDocument(), objects: [first, second, third] });
+    const tools = createDrawWebMcpTools(controller), patch = tools.find(({ name }) => name === 'draw_patch_objects')!;
+    const older = await patch.execute({ patches: [{ id: second.id, text: 'Agent second' }] }) as { changeId: string };
+    await patch.execute({ patches: [{ id: third.id, arrange: 'back' }] });
+    await tools.find(({ name }) => name === 'draw_revert_change')!.execute({ changeId: older.changeId });
+    expect(controller.read().objects.map(({ id }) => id)).toEqual([third.id, first.id, second.id]);
+    expect(controller.read().objects.find(({ id }) => id === second.id)).toMatchObject({ text: 'Second' });
+  });
+
+  it('rejects a mixed delete when any requested ID is unknown', async () => {
+    const note = { id: 'keep-me', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 0, y: 0, width: 100, height: 80, text: 'Keep' };
+    const controller = harness({ ...createDocument(), objects: [note] });
+    const remove = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_delete')!;
+    await expect(remove.execute({ ids: [note.id, 'misspelled'], confirmation: 'DELETE OBJECTS' })).rejects.toThrow('Unknown');
+    expect(controller.read().objects).toEqual([note]);
+  });
+
+  it('omits change IDs from receipts that targeted revert cannot consume', async () => {
+    const tools = createDrawWebMcpTools(harness());
+    for (const name of ['draw_undo', 'draw_redo']) {
+      const result = await tools.find((tool) => tool.name === name)!.execute({});
+      expect(result).not.toHaveProperty('changeId');
+    }
+  });
+
+  it('normalizes semantic local references consistently', async () => {
+    const controller = harness(), tools = createDrawWebMcpTools(controller);
+    const result = await tools.find(({ name }) => name === 'draw_compose')!.execute({
+      nodes: [{ ref: ' brief ', text: 'Brief' }, { ref: ' launch ', text: 'Launch' }],
+      edges: [{ ref: ' approval ', from: ' brief ', to: ' launch ', label: 'approved' }],
+      groups: [{ ref: ' mission ', label: 'Mission', members: [' brief ', ' launch '] }]
+    }) as { refs: Record<string, string> };
+    expect(result.refs).toHaveProperty('brief');
+    expect(controller.read().objects).toHaveLength(4);
+  });
+
   it('fails closed for destructive replacement and reset', async () => {
     const reset = vi.fn();
     const controller = {

@@ -182,9 +182,9 @@ function assertRevision(controller: DrawController, expected: unknown) {
   if (typeof expected === 'string' && expected !== current) throw new Error(`Canvas revision is stale. Inspect again and retry with revision ${current}.`);
 }
 
-function receipt(controller: DrawController, kind: DrawTransitionKind, ids: string[], preserveViewport = false, changeId = `change-${crypto.randomUUID()}`) {
+function receipt(controller: DrawController, kind: DrawTransitionKind, ids: string[], preserveViewport = false, changeId?: string) {
   const transitionId = controller.animate(kind, ids, preserveViewport) || `agent-${crypto.randomUUID()}`;
-  return { ok: true, changeId, revision: drawRevision(controller.getState().document), transition: { transitionId, kind, affectedIds: ids, durationMs: 520 }, summary: summary(controller) };
+  return { ok: true, ...(changeId ? { changeId } : {}), revision: drawRevision(controller.getState().document), transition: { transitionId, kind, affectedIds: ids, durationMs: 520 }, summary: summary(controller) };
 }
 
 export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpTool[] {
@@ -302,20 +302,20 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
           return { x: center.x + (column - (columnCount - 1) / 2) * (maxWidth + gap), y: center.y + (row - (rowCount - 1) / 2) * (maxHeight + gap) };
         });
         const objects: CanvasObject[] = items.map(({ item, category }, index) => {
-          const ref = String(item.ref), size = sizes[index], slot = slots[index], base = { id: refs[ref], createdAt: new Date().toISOString() };
+          const ref = requiredText(item.ref, `${category}.ref`), size = sizes[index], slot = slots[index], base = { id: refs[ref], createdAt: new Date().toISOString() };
           if (category === 'node') return { ...base, kind: 'note', x: slot.x - size.width / 2, y: slot.y - size.height / 2, width: size.width, height: size.height, text: requiredText(item.text, `node ${ref} text`) };
           const kind = item.kind;
           if (!['rectangle', 'ellipse', 'arrow'].includes(String(kind))) throw new Error(`Unsupported shape kind for ${ref}.`);
           return { ...base, kind: kind as 'rectangle' | 'ellipse' | 'arrow', from: { x: slot.x - size.width / 2, y: slot.y - size.height / 2 }, to: { x: slot.x + size.width / 2, y: slot.y + size.height / 2 }, color: colorValue((item.color ?? 'chalk') as NamedColor) };
         });
         for (const edge of edges) {
-          const ref = String(edge.ref), from = refs[String(edge.from)] ?? String(edge.from), to = refs[String(edge.to)] ?? String(edge.to);
+          const ref = requiredText(edge.ref, 'edge.ref'), fromRef = requiredText(edge.from, `edge ${ref} from`), toRef = requiredText(edge.to, `edge ${ref} to`), from = refs[fromRef] ?? fromRef, to = refs[toRef] ?? toRef;
           const validIds = new Set([...state.document.objects.map(({ id }) => id), ...objects.map(({ id }) => id)]);
           if (!validIds.has(from) || !validIds.has(to)) throw new Error(`Edge ${ref} references an unknown endpoint.`);
           objects.push({ id: refs[ref], kind: 'connector', createdAt: new Date().toISOString(), fromId: from, toId: to, label: typeof edge.label === 'string' ? edge.label : '' });
         }
         for (const group of groups) {
-          const ref = String(group.ref), members = Array.isArray(group.members) ? group.members.map((member) => refs[String(member)] ?? String(member)) : [];
+          const ref = requiredText(group.ref, 'group.ref'), members = Array.isArray(group.members) ? group.members.map((member) => { const normalized = requiredText(member, `group ${ref} member`); return refs[normalized] ?? normalized; }) : [];
           const children = objects.filter(({ id }) => members.includes(id));
           if (!members.length || children.length !== members.length) throw new Error(`Group ${ref} references an unknown member.`);
           const bounds = objectBounds(children, objects);
@@ -485,17 +485,18 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         for (const id of change.ids) if (JSON.stringify(currentById.get(id)) !== JSON.stringify(afterById.get(id))) throw new Error(`Object ${id} changed since ${changeId}; targeted revert refused.`);
         if (change.before.title !== change.after.title && current.title !== change.after.title) throw new Error(`Canvas title changed since ${changeId}; targeted revert refused.`);
         if (JSON.stringify(change.before.viewport) !== JSON.stringify(change.after.viewport) && JSON.stringify(current.viewport) !== JSON.stringify(change.after.viewport)) throw new Error(`Canvas viewport changed since ${changeId}; targeted revert refused.`);
-        const touched = new Set(change.ids), beforeById = new Map(change.before.objects.map((object) => [object.id, object]));
-        const currentUntouched = current.objects.filter(({ id }) => !touched.has(id));
-        const restored: CanvasObject[] = [];
-        for (const prior of change.before.objects) {
-          if (touched.has(prior.id)) restored.push(prior);
+        const touched = new Set(change.ids);
+        const restored = current.objects.filter(({ id }) => !touched.has(id));
+        for (const prior of change.before.objects.filter(({ id }) => touched.has(id))) {
+          const priorIndex = change.before.objects.findIndex(({ id }) => id === prior.id);
+          const preceding = change.before.objects.slice(0, priorIndex).reverse().find(({ id }) => restored.some((object) => object.id === id));
+          if (preceding) restored.splice(restored.findIndex(({ id }) => id === preceding.id) + 1, 0, prior);
           else {
-            const live = currentUntouched.find(({ id }) => id === prior.id);
-            if (live) restored.push(live);
+            const following = change.before.objects.slice(priorIndex + 1).find(({ id }) => restored.some((object) => object.id === id));
+            if (following) restored.splice(restored.findIndex(({ id }) => id === following.id), 0, prior);
+            else restored.push(prior);
           }
         }
-        for (const live of currentUntouched) if (!beforeById.has(live.id)) restored.push(live);
         const operations: CanvasOperation[] = [{ type: 'replace_objects', objects: restored }];
         if (change.before.title !== change.after.title) operations.push({ type: 'set_title', title: change.before.title });
         if (JSON.stringify(change.before.viewport) !== JSON.stringify(change.after.viewport)) operations.push({ type: 'set_viewport', viewport: change.before.viewport });
@@ -515,6 +516,9 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         const ids = Array.isArray(input.ids) ? input.ids.map(String) : [];
         if (!ids.length) throw new Error('ids must contain at least one object ID.');
         const before = controller.getState().document;
+        const existing = new Set(before.objects.map(({ id }) => id));
+        const unknown = ids.filter((id) => !existing.has(id));
+        if (unknown.length) throw new Error(`Unknown Draw object ID${unknown.length === 1 ? '' : 's'}: ${unknown.join(', ')}.`);
         const result = await controller.applyOperations([{ type: 'remove_objects', ids }], drawRevision(before));
         return finish('remove', changedObjectIds(result.before, result.after), result.before, result.after);
       }
