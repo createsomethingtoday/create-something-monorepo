@@ -118,6 +118,24 @@ describe('Draw WebMCP tools', () => {
     expect(receipt.summary.selectedIds.every((id) => id.length <= 240)).toBe(true);
   });
 
+  it('omits targeted-revert receipts that exceed the byte-capped journal', async () => {
+    const text = 'x'.repeat(2_200_000);
+    const note = { id: 'oversized-journal-note', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 0, y: 0, width: 100, height: 80, text };
+    const controller = harness({ ...createDocument(), objects: [note] });
+    const result = await createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_patch_objects')!.execute({ patches: [{ id: note.id, text: `${text}y` }] });
+    expect(result).not.toHaveProperty('changeId');
+  });
+
+  it('journals only objects changed by a low-level replacement', async () => {
+    const first = { id: 'journal-first', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 0, y: 0, width: 100, height: 80, text: 'First' };
+    const second = { ...first, id: 'journal-second', text: 'Second' };
+    const controller = harness({ ...createDocument(), objects: [first, second] }), tools = createDrawWebMcpTools(controller);
+    const changed = await tools.find(({ name }) => name === 'draw_apply_operations')!.execute({ operations: [{ type: 'replace_objects', objects: [first, { ...second, text: 'Agent second' }] }], confirmation: 'REPLACE CANVAS' }) as { changeId: string };
+    await tools.find(({ name }) => name === 'draw_apply_operations')!.execute({ operations: [{ type: 'put_object', object: { ...first, text: 'Human first' } }] });
+    await tools.find(({ name }) => name === 'draw_revert_change')!.execute({ changeId: changed.changeId });
+    expect(controller.read().objects).toEqual([{ ...first, text: 'Human first' }, second]);
+  });
+
   it('projects only documented compact object fields and bounds semantic refs', async () => {
     const rectangle = { id: 'extended-shape', kind: 'rectangle' as const, createdAt: '2026-09-04T00:00:00.000Z', from: { x: 0, y: 0 }, to: { x: 100, y: 80 }, color: '#0057b8', extensionPayload: Array.from({ length: 10_000 }, (_, index) => index) };
     const controller = harness({ ...createDocument(), objects: [rectangle] });

@@ -99,6 +99,12 @@ function changedObjectIds(before: CanvasDocument, after: CanvasDocument) {
   return [...new Set([...prior.keys(), ...next.keys()])].filter((id) => prior.get(id) !== next.get(id));
 }
 
+function changedOrderIds(before: CanvasDocument, after: CanvasDocument) {
+  const prior = new Map(before.objects.map(({ id }, index) => [id, index]));
+  const next = new Map(after.objects.map(({ id }, index) => [id, index]));
+  return [...new Set([...prior.keys(), ...next.keys()])].filter((id) => prior.get(id) !== next.get(id));
+}
+
 export function drawRevision(document: CanvasDocument) {
   const source = JSON.stringify(document);
   let hash = 14695981039346656037n;
@@ -227,12 +233,24 @@ function receipt(controller: DrawController, kind: DrawTransitionKind, ids: stri
 }
 
 export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpTool[] {
-  const changes = new Map<string, { before: CanvasDocument; after: CanvasDocument; ids: string[] }>();
-  const finish = (kind: DrawTransitionKind, ids: string[], before: CanvasDocument, after: CanvasDocument, preserveViewport = false) => {
+  const maxJournalBytes = 4 * 1024 * 1024;
+  const changes = new Map<string, { before: CanvasDocument; after: CanvasDocument; ids: string[]; bytes: number }>();
+  let journalBytes = 0;
+  const finish = (kind: DrawTransitionKind, ids: string[], before: CanvasDocument, after: CanvasDocument, preserveViewport = false, journalIds = ids) => {
     const changeId = `change-${crypto.randomUUID()}`;
-    changes.set(changeId, { before, after, ids });
-    if (changes.size > 100) changes.delete(changes.keys().next().value!);
-    return receipt(controller, kind, ids, preserveViewport, changeId);
+    const bytes = new TextEncoder().encode(JSON.stringify({ before, after, ids: journalIds })).byteLength;
+    if (bytes <= maxJournalBytes) {
+      while (changes.size >= 100 || journalBytes + bytes > maxJournalBytes) {
+        const oldestId = changes.keys().next().value;
+        if (!oldestId) break;
+        journalBytes -= changes.get(oldestId)!.bytes;
+        changes.delete(oldestId);
+      }
+      changes.set(changeId, { before, after, ids: journalIds, bytes });
+      journalBytes += bytes;
+      return receipt(controller, kind, ids, preserveViewport, changeId);
+    }
+    return receipt(controller, kind, ids, preserveViewport);
   };
   return [
     {
@@ -642,6 +660,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         if (change.before.title !== change.after.title) operations.push({ type: 'set_title', title: change.before.title });
         if (restoresViewport) operations.push({ type: 'set_viewport', viewport: change.before.viewport });
         const result = await controller.applyOperations(operations, drawRevision(current));
+        journalBytes -= change.bytes;
         changes.delete(changeId);
         return finish('restore', change.ids, result.before, result.after, restoresViewport);
       }
@@ -697,7 +716,8 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         const typed = operations as CanvasOperation[];
         const { before, after } = await controller.applyOperations(typed, currentRevision);
         const ids = [...new Set([...affectedIds(typed), ...changedObjectIds(before, after)])];
-        return finish(transitionKind(before, typed), ids, before, after, typed.some(({ type }) => type === 'set_viewport'));
+        const journalIds = [...new Set([...changedObjectIds(before, after), ...changedOrderIds(before, after)])];
+        return finish(transitionKind(before, typed), ids, before, after, typed.some(({ type }) => type === 'set_viewport'), journalIds);
       }
     },
     {
