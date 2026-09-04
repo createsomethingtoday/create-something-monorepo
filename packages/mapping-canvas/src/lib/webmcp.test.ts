@@ -284,6 +284,16 @@ describe('Draw WebMCP tools', () => {
     });
   });
 
+  it('composes an edge using only existing canvas objects', async () => {
+    const first = { id: 'existing-first', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 0, y: 0, width: 100, height: 80, text: 'First' };
+    const second = { ...first, id: 'existing-second', x: 200, text: 'Second' };
+    const controller = harness({ ...createDocument(), objects: [first, second] }), tools = createDrawWebMcpTools(controller);
+    const result = await tools.find(({ name }) => name === 'draw_compose')!.execute({
+      edges: [{ ref: 'existing-edge', from: first.id, to: second.id, label: 'existing' }]
+    }) as { refs: Record<string, string> };
+    expect(controller.read().objects.at(-1)).toMatchObject({ id: result.refs['existing-edge'], kind: 'connector', fromId: first.id, toId: second.id });
+  });
+
   it('rejects layout roots that overlap through group membership', async () => {
     const child = { id: 'group-child', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 20, y: 40, width: 100, height: 80, text: 'Child' };
     const group = { id: 'parent-group', kind: 'group' as const, createdAt: child.createdAt, x: 0, y: 0, width: 160, height: 140, label: 'Parent', childIds: [child.id] };
@@ -310,6 +320,18 @@ describe('Draw WebMCP tools', () => {
     const patch = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_patch_objects')!;
     await expect(patch.execute({ patches: [{ id: group.id, arrange: 'front' }] })).rejects.toThrow('Group layer arrangement');
     expect(controller.read().objects).toEqual([group, child]);
+  });
+
+  it('arranges visible objects across fixed background groups', async () => {
+    const first = { id: 'visible-first', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 0, y: 0, width: 100, height: 80, text: 'First' };
+    const second = { ...first, id: 'visible-second', text: 'Second' };
+    const group = { id: 'background-group', kind: 'group' as const, createdAt: first.createdAt, x: 0, y: 0, width: 160, height: 140, label: 'Background', childIds: [first.id] };
+    const controller = harness({ ...createDocument(), objects: [first, group, second] });
+    const tools = createDrawWebMcpTools(controller), patch = tools.find(({ name }) => name === 'draw_patch_objects')!;
+    const changed = await patch.execute({ patches: [{ id: second.id, arrange: 'backward' }] }) as { changeId: string };
+    expect(controller.read().objects.map(({ id }) => id)).toEqual([second.id, group.id, first.id]);
+    await tools.find(({ name }) => name === 'draw_revert_change')!.execute({ changeId: changed.changeId });
+    expect(controller.read().objects.map(({ id }) => id)).toEqual([first.id, group.id, second.id]);
   });
 
   it('reverts a whole-canvas replacement that only changes layer order', async () => {

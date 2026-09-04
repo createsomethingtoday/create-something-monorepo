@@ -266,7 +266,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         const shapes = asRecords(input.shapes, 'shapes');
         const edges = asRecords(input.edges, 'edges', 100);
         const groups = asRecords(input.groups, 'groups', 20);
-        if (!nodes.length && !shapes.length) throw new Error('draw_compose requires at least one node or shape.');
+        if (!nodes.length && !shapes.length && !edges.length && !groups.length) throw new Error('draw_compose requires at least one node, shape, edge, or group.');
         const refs: Record<string, string> = Object.create(null) as Record<string, string>;
         const items = [...nodes.map((item) => ({ item, category: 'node' as const })), ...shapes.map((item) => ({ item, category: 'shape' as const }))];
         for (const { item, category } of items) {
@@ -289,7 +289,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         const gap = Math.max(16, Math.min(400, finite(layout.gap, 80)));
         const columns = Math.max(1, Math.min(12, Math.floor(finite(layout.columns, Math.ceil(Math.sqrt(items.length))))));
         const sizes = items.map(({ item, category }) => ({ width: finite(item.width, category === 'node' ? 260 : 180), height: finite(item.height, category === 'node' ? 132 : 120) }));
-        const maxWidth = Math.max(...sizes.map(({ width }) => width)), maxHeight = Math.max(...sizes.map(({ height }) => height));
+        const maxWidth = Math.max(0, ...sizes.map(({ width }) => width)), maxHeight = Math.max(0, ...sizes.map(({ height }) => height));
         const contentBounds = objectBounds(state.document.objects, state.document.objects);
         const center = input.placement === 'after-content'
           ? { x: contentBounds.x + contentBounds.width + gap + maxWidth / 2, y: contentBounds.y + contentBounds.height / 2 }
@@ -424,12 +424,14 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
           }
           if (typeof patch.arrange === 'string') {
             if (object.kind === 'group') throw new Error('Group layer arrangement is unavailable because groups always render behind their content. Arrange the group members instead.');
-            const position = objects.findIndex((candidate) => candidate.id === id), [moving] = objects.splice(position, 1);
-            if (patch.arrange === 'front') objects.push(moving);
-            else if (patch.arrange === 'back') objects.unshift(moving);
-            else if (patch.arrange === 'forward') objects.splice(Math.min(objects.length, position + 1), 0, moving);
-            else if (patch.arrange === 'backward') objects.splice(Math.max(0, position - 1), 0, moving);
+            const visibleObjects = objects.filter((candidate) => candidate.kind !== 'group'), position = visibleObjects.findIndex((candidate) => candidate.id === id), [moving] = visibleObjects.splice(position, 1);
+            if (patch.arrange === 'front') visibleObjects.push(moving);
+            else if (patch.arrange === 'back') visibleObjects.unshift(moving);
+            else if (patch.arrange === 'forward') visibleObjects.splice(Math.min(visibleObjects.length, position + 1), 0, moving);
+            else if (patch.arrange === 'backward') visibleObjects.splice(Math.max(0, position - 1), 0, moving);
             else throw new Error('Unsupported arrange value.');
+            let visibleIndex = 0;
+            objects = objects.map((candidate) => candidate.kind === 'group' ? candidate : visibleObjects[visibleIndex++]);
           }
         }
         const result = await controller.applyOperations([{ type: 'replace_objects', objects }], drawRevision(before));
@@ -528,17 +530,27 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
           const beforeIndex = beforeOrder.indexOf(id), afterIndex = afterOrder.indexOf(id);
           return beforeIndex >= 0 && beforeIndex === afterIndex;
         }));
-        const restored = current.objects
+        let restored = current.objects
           .filter(({ id }) => !touched.has(id) || orderStable.has(id))
           .map((object) => orderStable.has(object.id) ? beforeById.get(object.id)! : object);
         for (const prior of change.before.objects.filter(({ id }) => touched.has(id) && !orderStable.has(id))) {
           const priorIndex = change.before.objects.findIndex(({ id }) => id === prior.id);
-          const preceding = change.before.objects.slice(0, priorIndex).reverse().find(({ id }) => restored.some((object) => object.id === id));
+          const sameLayer = (object: CanvasObject) => (object.kind === 'group') === (prior.kind === 'group');
+          const preceding = change.before.objects.slice(0, priorIndex).reverse().find((object) => sameLayer(object) && restored.some(({ id }) => id === object.id));
           if (preceding) restored.splice(restored.findIndex(({ id }) => id === preceding.id) + 1, 0, prior);
           else {
-            const following = change.before.objects.slice(priorIndex + 1).find(({ id }) => restored.some((object) => object.id === id));
+            const following = change.before.objects.slice(priorIndex + 1).find((object) => sameLayer(object) && restored.some(({ id }) => id === object.id));
             if (following) restored.splice(restored.findIndex(({ id }) => id === following.id), 0, prior);
             else restored.push(prior);
+          }
+        }
+        if (!change.ids.some((id) => currentById.get(id)?.kind === 'group') && restored.length === current.objects.length) {
+          const restoredGroups = new Map(restored.filter((object) => object.kind === 'group').map((object) => [object.id, object]));
+          const currentGroupIds = current.objects.filter((object) => object.kind === 'group').map(({ id }) => id);
+          if (currentGroupIds.every((id) => restoredGroups.has(id)) && restoredGroups.size === currentGroupIds.length) {
+            const visible = restored.filter((object) => object.kind !== 'group');
+            let visibleIndex = 0;
+            restored = current.objects.map((object) => object.kind === 'group' ? restoredGroups.get(object.id)! : visible[visibleIndex++]);
           }
         }
         const operations: CanvasOperation[] = [{ type: 'replace_objects', objects: restored }];
