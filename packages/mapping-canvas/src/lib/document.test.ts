@@ -52,15 +52,15 @@ describe('mapping canvas contract', () => {
     expect(restored.objects.some(({ id }) => id === connector.id)).toBe(false);
     expect(parse(serialize(restored))).toEqual(restored);
   });
-  it('rejects cyclic connector graphs', () => {
+  it('migrates cyclic connector graphs without discarding the canvas', () => {
     const source = createDocument();
     const cycle: Connector = { id: 'cycle', kind: 'connector', createdAt: 'now', fromId: 'cycle', toId: 'cycle', label: '' };
-    expect(() => parse(JSON.stringify({ ...source, objects: [cycle] }))).toThrow(/not a supported/);
+    expect(parse(JSON.stringify({ ...source, objects: [cycle] })).objects).toEqual([]);
   });
-  it('rejects connector self-loops and repairs legacy dangling group membership', () => {
+  it('migrates connector self-loops and repairs legacy dangling group membership', () => {
     const source = createDocument(), endpoint = stroke('endpoint');
     const selfLoop: Connector = { id: 'self-loop', kind: 'connector', createdAt: 'now', fromId: endpoint.id, toId: endpoint.id, label: '' };
-    expect(() => parse(JSON.stringify({ ...source, objects: [endpoint, selfLoop] }))).toThrow(/not a supported/);
+    expect(parse(JSON.stringify({ ...source, objects: [endpoint, selfLoop] })).objects).toEqual([endpoint]);
     const dangling = { id: 'dangling-group', kind: 'group', createdAt: 'now', x: 0, y: 0, width: 100, height: 80, label: '', childIds: ['missing'] };
     expect(parse(JSON.stringify({ ...source, objects: [dangling] })).objects).toEqual([{ ...dangling, childIds: [] }]);
   });

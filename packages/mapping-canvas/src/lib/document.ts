@@ -29,31 +29,43 @@ export function isDocument(value: unknown): value is CanvasDocument {
     if (object.kind === 'connector') return object.fromId !== object.toId && ids.has(object.fromId) && ids.has(object.toId);
     if (object.kind === 'group') return object.childIds.every((id) => ids.has(id));
     return true;
-  }) && !hasConnectorCycle(candidate.objects);
+  }) && !findConnectorCycle(candidate.objects);
 }
 
 export function normalizeDocument(value: unknown): CanvasDocument | null {
   if (!value || typeof value !== 'object') return null;
   const candidate = value as Partial<CanvasDocument>;
   if (candidate.version !== DOCUMENT_VERSION || typeof candidate.id !== 'string' || typeof candidate.title !== 'string' || typeof candidate.createdAt !== 'string' || typeof candidate.updatedAt !== 'string' || !Array.isArray(candidate.objects) || !isViewport(candidate.viewport) || !candidate.objects.every((object) => isCanvasObject(object))) return null;
-  const objects = candidate.objects as CanvasObject[], ids = new Set(objects.map(({ id }) => id));
-  if (ids.size !== objects.length || objects.some((object) => object.kind === 'connector' && (object.fromId === object.toId || !ids.has(object.fromId) || !ids.has(object.toId))) || hasConnectorCycle(objects)) return null;
+  let objects = candidate.objects as CanvasObject[];
+  if (new Set(objects.map(({ id }) => id)).size !== objects.length) return null;
+  while (true) {
+    const ids = new Set(objects.map(({ id }) => id));
+    const invalid = new Set(objects.filter((object) => object.kind === 'connector' && (object.fromId === object.toId || !ids.has(object.fromId) || !ids.has(object.toId))).map(({ id }) => id));
+    const cycle = findConnectorCycle(objects);
+    if (cycle?.length) invalid.add(cycle[0]);
+    if (!invalid.size) break;
+    objects = objects.filter(({ id }) => !invalid.has(id));
+  }
+  const ids = new Set(objects.map(({ id }) => id));
   const repaired = { ...candidate, objects: objects.map((object) => object.kind === 'group' ? { ...object, childIds: object.childIds.filter((id) => ids.has(id)) } : object) } as CanvasDocument;
   return isDocument(repaired) ? repaired : null;
 }
 
-function hasConnectorCycle(objects: CanvasObject[]) {
+function findConnectorCycle(objects: CanvasObject[]): string[] | null {
   const byId = new Map(objects.map((object) => [object.id, object]));
-  const visiting = new Set<string>(), visited = new Set<string>();
-  const visit = (id: string): boolean => {
+  const visiting = new Map<string, number>(), visited = new Set<string>(), stack: string[] = [];
+  const visit = (id: string): string[] | null => {
     const object = byId.get(id);
-    if (object?.kind !== 'connector' || visited.has(id)) return false;
-    if (visiting.has(id)) return true;
-    visiting.add(id);
-    if (visit(object.fromId) || visit(object.toId)) return true;
-    visiting.delete(id); visited.add(id); return false;
+    if (object?.kind !== 'connector' || visited.has(id)) return null;
+    const cycleStart = visiting.get(id);
+    if (cycleStart !== undefined) return stack.slice(cycleStart);
+    visiting.set(id, stack.length); stack.push(id);
+    const cycle = visit(object.fromId) ?? visit(object.toId);
+    stack.pop(); visiting.delete(id); visited.add(id);
+    return cycle;
   };
-  return objects.some(({ id }) => visit(id));
+  for (const { id } of objects) { const cycle = visit(id); if (cycle) return cycle; }
+  return null;
 }
 
 const isFiniteNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
