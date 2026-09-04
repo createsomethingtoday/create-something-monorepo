@@ -435,6 +435,12 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         if (!ids.length) throw new Error('ids must contain at least one object ID.');
         const before = controller.getState().document, selected = ids.map((id) => before.objects.find((object) => object.id === id));
         if (selected.some((object) => !object || object.kind === 'connector')) throw new Error('Layout IDs must reference existing non-connector objects.');
+        const selectedSet = new Set(ids);
+        for (const object of selected) {
+          if (object?.kind !== 'group') continue;
+          const nested = descendants(before, [object.id]);
+          if ([...nested].some((id) => id !== object.id && selectedSet.has(id))) throw new Error('Layout roots overlap through group membership; pass the group or its descendants, not both.');
+        }
         const bounds = selected.map((object) => objectBounds([object!], before.objects));
         const anchor = { x: Math.min(...bounds.map(({ x }) => x)), y: Math.min(...bounds.map(({ y }) => y)) };
         const gap = Math.max(0, Math.min(400, finite(input.gap, 48))), direction = String(input.direction);
@@ -536,7 +542,10 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         if (typeof input.title === 'string') operations.push({ type: 'set_title', title: input.title });
         const before = controller.getState().document;
         const result = await controller.applyOperations(operations, drawRevision(before));
-        return finish('reset', changedObjectIds(result.before, result.after), result.before, result.after);
+        const changed = changedObjectIds(result.before, result.after);
+        const beforeOrder = result.before.objects.map(({ id }) => id), afterOrder = result.after.objects.map(({ id }) => id);
+        const ids = JSON.stringify(beforeOrder) === JSON.stringify(afterOrder) ? changed : [...new Set([...changed, ...beforeOrder, ...afterOrder])];
+        return finish('reset', ids, result.before, result.after);
       }
     },
     {

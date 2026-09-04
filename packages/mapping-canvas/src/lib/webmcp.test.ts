@@ -212,6 +212,25 @@ describe('Draw WebMCP tools', () => {
     expect(controller.read().objects).toHaveLength(4);
   });
 
+  it('rejects layout roots that overlap through group membership', async () => {
+    const child = { id: 'group-child', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 20, y: 40, width: 100, height: 80, text: 'Child' };
+    const group = { id: 'parent-group', kind: 'group' as const, createdAt: child.createdAt, x: 0, y: 0, width: 160, height: 140, label: 'Parent', childIds: [child.id] };
+    const controller = harness({ ...createDocument(), objects: [group, child] });
+    const layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_layout')!;
+    await expect(layout.execute({ ids: [group.id, child.id], direction: 'row' })).rejects.toThrow('overlap');
+    expect(controller.read().objects).toEqual([group, child]);
+  });
+
+  it('reverts a whole-canvas replacement that only changes layer order', async () => {
+    const first = { id: 'replace-first', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 0, y: 0, width: 100, height: 80, text: 'First' };
+    const second = { ...first, id: 'replace-second', text: 'Second' };
+    const controller = harness({ ...createDocument(), objects: [first, second] }), tools = createDrawWebMcpTools(controller);
+    const changed = await tools.find(({ name }) => name === 'draw_replace_canvas')!.execute({ objects: [second, first], confirmation: 'REPLACE CANVAS' }) as { changeId: string };
+    expect(controller.read().objects.map(({ id }) => id)).toEqual([second.id, first.id]);
+    await tools.find(({ name }) => name === 'draw_revert_change')!.execute({ changeId: changed.changeId });
+    expect(controller.read().objects.map(({ id }) => id)).toEqual([first.id, second.id]);
+  });
+
   it('fails closed for destructive replacement and reset', async () => {
     const reset = vi.fn();
     const controller = {

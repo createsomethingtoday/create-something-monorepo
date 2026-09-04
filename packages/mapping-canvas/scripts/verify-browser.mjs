@@ -229,6 +229,13 @@ try {
   await page.getByTestId('convert-menu').click();
   await page.getByTestId('convert-connector').click();
   if (await page.locator('line[aria-label="Connector"]').count() !== 1) throw new Error('Connector conversion failed');
+  await page.evaluate(async () => {
+    const state = await window.__drawWebMcpTools.draw_get_state.execute({});
+    const connector = state.document.objects.find((object) => object.kind === 'connector');
+    if (!connector) throw new Error('Connector unavailable for export-label proof');
+    await window.__drawWebMcpTools.draw_patch_objects.execute({ patches: [{ id: connector.id, label: 'Approved path' }] });
+  });
+  if (await page.locator('.connector-label').textContent() !== 'Approved path') throw new Error('Connector label patch was not rendered');
 
   await page.getByRole('button', { name: /Rectangle tool/ }).click();
   await page.mouse.move(box.x + 190, box.y + 350);
@@ -323,9 +330,10 @@ try {
     if (exports[extension] < 100) throw new Error(`${extension} export is empty`);
   }
   const svgExport = await readFile(`${outputRoot}canvas.svg`, 'utf8');
-  if (!svgExport.includes('New thought') || svgExport.includes('foreignObject') || !svgExport.includes('class="group-label"') || !svgExport.includes('fill="#fcaa2d"')) throw new Error('SVG export did not materialize portable note and label styles');
+  if (!svgExport.includes('New thought') || svgExport.includes('foreignObject') || !svgExport.includes('class="group-label"') || !svgExport.includes('Approved path') || !svgExport.includes('fill="#fcaa2d"')) throw new Error('SVG export did not materialize portable note and label styles');
   if (!svgExport.includes('First export line') || !svgExport.includes('Second export line') || !svgExport.includes('dy="1.35em"')) throw new Error('SVG export collapsed explicit note line breaks');
   if (!(await page.evaluate(() => window.__mappingCanvasPngText.some((text) => text.startsWith('CONVERTED · '))))) throw new Error('PNG export omitted conversion provenance');
+  if (!(await page.evaluate(() => window.__mappingCanvasPngText.includes('Approved path')))) throw new Error('PNG export omitted the visible connector label');
   if (!(await page.evaluate(() => window.__mappingCanvasPngText.includes('First export line') && window.__mappingCanvasPngText.includes('Second export line')))) throw new Error('PNG export collapsed explicit note line breaks');
   const jsonExport = JSON.parse(await readFile(`${outputRoot}canvas.json`, 'utf8'));
   const exportedDrawingColors = jsonExport.objects.filter((object) => ['stroke', 'rectangle', 'ellipse', 'arrow'].includes(object.kind)).map((object) => object.color);
