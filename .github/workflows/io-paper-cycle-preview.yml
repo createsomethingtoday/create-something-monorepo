@@ -45,17 +45,17 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
         with:
           version: 9.15.0
 
       - name: Setup Node
-        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '22'
           cache: 'pnpm'
@@ -116,7 +116,7 @@ jobs:
 
       - name: Upsert preview comment
         if: steps.context.outputs.publishable == 'true' && env.CLOUDFLARE_API_TOKEN != ''
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           PREVIEW_URL: https://${{ env.PR_BRANCH_ALIAS }}.create-something-io.pages.dev
           VERIFICATION_ROUTES: ${{ steps.context.outputs.routes }}
@@ -157,7 +157,7 @@ jobs:
 
       - name: Enforce publish approval label on ready PRs
         if: steps.context.outputs.publishable == 'true' && github.event.pull_request.draft == false
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             const labels = (context.payload.pull_request.labels || []).map((label) => label.name);
