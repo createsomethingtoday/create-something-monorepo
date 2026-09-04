@@ -202,25 +202,28 @@ function translated(object: CanvasObject, dx: number, dy: number): CanvasObject 
 
 function descendants(document: CanvasDocument, ids: string[]) {
   const result = new Set(ids), byId = new Map(document.objects.map((object) => [object.id, object]));
-  const collect = (id: string) => {
+  const stack = [...ids];
+  while (stack.length) {
+    const id = stack.pop()!;
     const object = byId.get(id);
-    if (object?.kind !== 'group') return;
-    for (const childId of object.childIds) if (!result.has(childId)) { result.add(childId); collect(childId); }
-  };
-  ids.forEach(collect);
+    if (object?.kind !== 'group') continue;
+    for (const childId of object.childIds) if (!result.has(childId)) { result.add(childId); stack.push(childId); }
+  }
   return result;
 }
 
 function boundsDependenciesAvailable(objects: CanvasObject[], allObjects: CanvasObject[]) {
   const byId = new Map(allObjects.map((object) => [object.id, object])), visited = new Set<string>();
-  const visit = (id: string): boolean => {
-    if (visited.has(id)) return true;
+  const stack = objects.map(({ id }) => id);
+  while (stack.length) {
+    const id = stack.pop()!;
+    if (visited.has(id)) continue;
     const object = byId.get(id);
     if (!object) return false;
     visited.add(id);
-    return object.kind !== 'connector' || (visit(object.fromId) && visit(object.toId));
-  };
-  return objects.every(({ id }) => visit(id));
+    if (object.kind === 'connector') stack.push(object.fromId, object.toId);
+  }
+  return true;
 }
 
 function assertMovableConnectorEndpoints(objects: CanvasObject[], moving: Set<string>) {
@@ -364,24 +367,27 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         const edges = asRecords(input.edges, 'edges', 100);
         const groups = asRecords(input.groups, 'groups', 20);
         if (!nodes.length && !shapes.length && !edges.length && !groups.length) throw new Error('draw_compose requires at least one node, shape, edge, or group.');
+        const existingIds = new Set(state.document.objects.map(({ id }) => id));
         const refs: Record<string, string> = Object.create(null) as Record<string, string>;
         const items = [...nodes.map((item) => ({ item, category: 'node' as const })), ...shapes.map((item) => ({ item, category: 'shape' as const }))];
         for (const { item, category } of items) {
           const ref = localReference(item.ref, `${category}.ref`);
+          if (existingIds.has(ref)) throw new Error(`Local reference ${ref} conflicts with an existing object ID.`);
           if (Object.hasOwn(refs, ref)) throw new Error(`Duplicate local reference: ${ref}.`);
           refs[ref] = identity(category).id;
         }
         for (const edge of edges) {
           const ref = localReference(edge.ref, 'edge.ref');
+          if (existingIds.has(ref)) throw new Error(`Local reference ${ref} conflicts with an existing object ID.`);
           if (Object.hasOwn(refs, ref)) throw new Error(`Duplicate local reference: ${ref}.`);
           refs[ref] = identity('connector').id;
         }
         for (const group of groups) {
           const ref = localReference(group.ref, 'group.ref');
+          if (existingIds.has(ref)) throw new Error(`Local reference ${ref} conflicts with an existing object ID.`);
           if (Object.hasOwn(refs, ref)) throw new Error(`Duplicate local reference: ${ref}.`);
           refs[ref] = identity('group').id;
         }
-        const existingIds = new Set(state.document.objects.map(({ id }) => id));
         const compositionReference = (value: unknown, label: string) => {
           const exact = requiredId(value, label);
           if (existingIds.has(exact)) return exact;

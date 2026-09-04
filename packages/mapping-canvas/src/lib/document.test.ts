@@ -97,6 +97,11 @@ describe('mapping canvas contract', () => {
     expect(createObjectCenterResolver(objects)(objects[0])).toMatchObject({ x: expect.any(Number), y: expect.any(Number) });
     expect(objectBounds([objects[0]], objects)).toMatchObject({ x: expect.any(Number), y: expect.any(Number) });
   });
+  it('resizes a 20,000-level nested group without overflowing the stack', () => {
+    const leaf = stroke('nested-leaf'), objects: CanvasObject[] = [leaf];
+    for (let index = 0; index < 20_000; index += 1) objects.unshift({ id: `nested-${index}`, kind: 'group', createdAt: 'now', x: 0, y: 0, width: 100, height: 80, label: '', childIds: [objects[0].id] });
+    expect(resizeGroup({ ...createDocument(), objects }, objects[0].id, 200, 160).objects).toHaveLength(objects.length);
+  });
   it('computes bounds for strokes larger than the function argument limit', () => {
     const large: Stroke = { id: 'large', kind: 'stroke', createdAt: 'now', color: '#fff', width: 3, points: Array.from({ length: 200_000 }, (_, index) => ({ x: index, y: -index })) };
     expect(objectBounds([large])).toEqual({ x: 0, y: -199_999, width: 199_999, height: 199_999 });

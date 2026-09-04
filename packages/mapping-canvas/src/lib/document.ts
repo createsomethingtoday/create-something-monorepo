@@ -143,14 +143,14 @@ export function resizeGroup(document: CanvasDocument, groupId: string, width: nu
   if (!group || !Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) return document;
   const scaleX = width / group.width, scaleY = height / group.height;
   const byId = new Map(document.objects.map((object) => [object.id, object]));
-  const descendants = new Set<string>();
-  const collect = (id: string) => {
-    if (descendants.has(id)) return;
+  const descendants = new Set<string>(), stack = [...group.childIds];
+  while (stack.length) {
+    const id = stack.pop()!;
+    if (descendants.has(id)) continue;
     descendants.add(id);
     const object = byId.get(id);
-    if (object?.kind === 'group') object.childIds.forEach(collect);
-  };
-  group.childIds.forEach(collect);
+    if (object?.kind === 'group') stack.push(...object.childIds);
+  }
   const point = (value: Point): Point => ({ x: group.x + (value.x - group.x) * scaleX, y: group.y + (value.y - group.y) * scaleY });
   const resize = (object: CanvasObject): CanvasObject => {
     if (object.kind === 'stroke') return { ...object, points: object.points.map(point) };

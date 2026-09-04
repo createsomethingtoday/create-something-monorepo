@@ -176,6 +176,22 @@ describe('Draw WebMCP tools', () => {
     ]));
   });
 
+  it('rejects local composition refs that collide with existing object IDs', async () => {
+    const existing = { id: 'brief', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 0, y: 0, width: 100, height: 80, text: 'Existing' };
+    const controller = harness({ ...createDocument(), objects: [existing] });
+    await expect(createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_compose')!.execute({ nodes: [{ ref: existing.id, text: 'New' }] })).rejects.toThrow('conflicts with an existing object ID');
+    expect(controller.read().objects).toEqual([existing]);
+  });
+
+  it('composes around a 20,000-deep connector dependency without overflowing the stack', async () => {
+    const origin = { id: 'compose-origin', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 0, y: 0, width: 100, height: 80, text: 'Origin' };
+    const anchor = { ...origin, id: 'compose-anchor', x: 200, text: 'Anchor' }, objects: CanvasDocument['objects'] = [origin, anchor];
+    for (let index = 0; index < 20_000; index += 1) objects.unshift({ id: `compose-deep-${index}`, kind: 'connector', createdAt: origin.createdAt, fromId: objects[0].id, toId: anchor.id, label: '' });
+    const controller = harness({ ...createDocument(), objects });
+    await createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_compose')!.execute({ groups: [{ ref: 'deep-group', members: [objects[0].id] }] });
+    expect(controller.read().objects.at(-1)).toMatchObject({ kind: 'group', childIds: [objects[0].id] });
+  });
+
   it('journals only objects actually moved by layout', async () => {
     const first = { id: 'layout-journal-first', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 0, y: 0, width: 100, height: 80, text: 'First' };
     const second = { ...first, id: 'layout-journal-second', x: 500, text: 'Second' };
