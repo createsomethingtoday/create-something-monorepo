@@ -110,7 +110,7 @@
       redo: () => queueAgentMutation(() => browserLocalHistory('redo')),
       reset: () => queueAgentMutation(resetCanvasFromAgent),
       animate: showAgentTransition,
-      focus: focusAgentCamera
+      focus: (target) => queueAgentMutation(() => focusAgentCamera(target))
     }));
     if (webMcp.registered) status = `${webMcp.registered} agent tools ready · loading local canvas…`;
     const resize = () => { viewportWidth = surface?.clientWidth || window.innerWidth; viewportHeight = surface?.clientHeight || window.innerHeight; };
@@ -148,6 +148,7 @@
     if (target.ids && objects.length !== target.ids.length) throw new Error('One or more focus IDs do not exist.');
     const bounds = target.bounds ?? objectBounds(objects, document.objects);
     const next = fitViewportToBounds(viewport, bounds, { width: viewportWidth, height: viewportHeight }, { padding: target.padding, force: true });
+    if (next.x === viewport.x && next.y === viewport.y && next.zoom === viewport.zoom) return;
     clearTimeout(agentCameraTimer);
     agentCameraActive = true;
     updateViewport(next, false);
