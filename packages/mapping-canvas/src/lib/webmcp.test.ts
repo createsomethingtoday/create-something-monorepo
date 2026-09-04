@@ -165,6 +165,17 @@ describe('Draw WebMCP tools', () => {
     expect(controller.read().objects[0]).toMatchObject({ id: note.id, text: 'After' });
   });
 
+  it('preserves opaque existing IDs in composed edges and groups', async () => {
+    const first = { id: ' first ', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 0, y: 0, width: 100, height: 80, text: 'First' };
+    const second = { ...first, id: ' second ', x: 200, text: 'Second' };
+    const controller = harness({ ...createDocument(), objects: [first, second] });
+    await createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_compose')!.execute({ edges: [{ ref: 'edge', from: first.id, to: second.id }], groups: [{ ref: 'group', members: [first.id, second.id] }] });
+    expect(controller.read().objects).toEqual(expect.arrayContaining([
+      expect.objectContaining({ kind: 'connector', fromId: first.id, toId: second.id }),
+      expect.objectContaining({ kind: 'group', childIds: [first.id, second.id] })
+    ]));
+  });
+
   it('journals only objects actually moved by layout', async () => {
     const first = { id: 'layout-journal-first', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 0, y: 0, width: 100, height: 80, text: 'First' };
     const second = { ...first, id: 'layout-journal-second', x: 500, text: 'Second' };
@@ -572,6 +583,16 @@ describe('Draw WebMCP tools', () => {
     await controller.applyOperations([{ type: 'put_object', object: { ...second, text: 'Human second' } }]);
     await tools.find(({ name }) => name === 'draw_revert_change')!.execute({ changeId: changed.changeId });
     expect(controller.read().objects).toEqual([first, { ...second, text: 'Human second' }]);
+  });
+
+  it('preserves a later insertion slot while reverting a partial layer reorder', async () => {
+    const first = { id: 'slot-first', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 0, y: 0, width: 100, height: 80, text: 'First' };
+    const second = { ...first, id: 'slot-second', text: 'Second' }, third = { ...first, id: 'slot-third', text: 'Third' }, inserted = { ...first, id: 'slot-inserted', text: 'Inserted' };
+    const controller = harness({ ...createDocument(), objects: [first, second, third] }), tools = createDrawWebMcpTools(controller);
+    const changed = await tools.find(({ name }) => name === 'draw_patch_objects')!.execute({ patches: [{ id: second.id, arrange: 'back' }] }) as { changeId: string };
+    await controller.applyOperations([{ type: 'replace_objects', objects: [second, inserted, first, third] }]);
+    await tools.find(({ name }) => name === 'draw_revert_change')!.execute({ changeId: changed.changeId });
+    expect(controller.read().objects.map(({ id }) => id)).toEqual([first.id, inserted.id, second.id, third.id]);
   });
 
   it('validates and reverts the maximum semantic layer reorder without repeated index scans', async () => {

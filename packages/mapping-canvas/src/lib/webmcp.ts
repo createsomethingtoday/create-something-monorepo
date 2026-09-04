@@ -381,6 +381,13 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
           if (Object.hasOwn(refs, ref)) throw new Error(`Duplicate local reference: ${ref}.`);
           refs[ref] = identity('group').id;
         }
+        const existingIds = new Set(state.document.objects.map(({ id }) => id));
+        const compositionReference = (value: unknown, label: string) => {
+          const exact = requiredId(value, label);
+          if (existingIds.has(exact)) return exact;
+          const normalized = requiredText(exact, label);
+          return refs[normalized] ?? normalized;
+        };
         const layout = input.layout && typeof input.layout === 'object' ? input.layout as Record<string, unknown> : {};
         const direction = ['row', 'column', 'grid'].includes(String(layout.direction)) ? String(layout.direction) : 'row';
         const gap = Math.max(16, Math.min(400, finite(layout.gap, 80)));
@@ -406,7 +413,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
           return { ...base, kind: kind as 'rectangle' | 'ellipse' | 'arrow', from: { x: slot.x - size.width / 2, y: slot.y - size.height / 2 }, to: { x: slot.x + size.width / 2, y: slot.y + size.height / 2 }, color: colorValue((item.color ?? 'chalk') as NamedColor) };
         });
         for (const edge of edges) {
-          const ref = requiredText(edge.ref, 'edge.ref'), fromRef = requiredText(edge.from, `edge ${ref} from`), toRef = requiredText(edge.to, `edge ${ref} to`), from = refs[fromRef] ?? fromRef, to = refs[toRef] ?? toRef;
+          const ref = requiredText(edge.ref, 'edge.ref'), from = compositionReference(edge.from, `edge ${ref} from`), to = compositionReference(edge.to, `edge ${ref} to`);
           objects.push({ id: refs[ref], kind: 'connector', createdAt: new Date().toISOString(), fromId: from, toId: to, label: typeof edge.label === 'string' ? edge.label : '' });
         }
         let pendingGroups = [...groups], candidates = [...state.document.objects, ...objects];
@@ -414,7 +421,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         while (pendingGroups.length) {
           const unresolved: typeof pendingGroups = [];
           for (const group of pendingGroups) {
-            const ref = requiredText(group.ref, 'group.ref'), members = Array.isArray(group.members) ? group.members.map((member) => { const normalized = requiredText(member, `group ${ref} member`); return refs[normalized] ?? normalized; }) : [];
+            const ref = requiredText(group.ref, 'group.ref'), members = Array.isArray(group.members) ? group.members.map((member) => compositionReference(member, `group ${ref} member`)) : [];
             if (!members.length) throw new Error(`Group ${ref} requires at least one member.`);
             if (members.length > 200) throw new Error(`Group ${ref} must contain at most 200 members.`);
             if (new Set(members).size !== members.length) throw new Error(`Group ${ref} members must be unique.`);
@@ -638,7 +645,12 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         const objectChanged = new Set(change.objectIds);
         const priorValue = (object: CanvasObject) => objectChanged.has(object.id) ? object : currentById.get(object.id) ?? object;
         let restored: CanvasObject[];
-        if (wholeCanvasReplacement) {
+        if (!change.objectIds.length && change.orderIds.length) {
+          const ordered = new Set(change.orderIds);
+          const desired = change.before.objects.filter(({ id }) => ordered.has(id)).map(({ id }) => currentById.get(id)!);
+          let index = 0;
+          restored = current.objects.map((object) => ordered.has(object.id) ? desired[index++] : object);
+        } else if (wholeCanvasReplacement) {
           const prior = change.before.objects.filter((object) => touched.has(object.id)).map(priorValue);
           let priorIndex = 0, insertionIndex = 0;
           restored = [];

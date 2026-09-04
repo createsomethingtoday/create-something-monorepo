@@ -183,17 +183,32 @@ export function createObjectCenterResolver(allObjects: CanvasObject[]) {
   const resolve = (object: CanvasObject): Point => {
     const cached = cache.get(object.id);
     if (cached) return cached;
-    let center: Point;
-    if (object.kind === 'stroke') center = object.points[Math.floor(object.points.length / 2)] || { x: 0, y: 0 };
-    else if (object.kind === 'rectangle' || object.kind === 'ellipse' || object.kind === 'arrow') center = { x: (object.from.x + object.to.x) / 2, y: (object.from.y + object.to.y) / 2 };
-    else if (object.kind === 'note' || object.kind === 'group') center = { x: object.x + object.width / 2, y: object.y + object.height / 2 };
-    else if (object.kind === 'connector') {
-      const from = byId.get(object.fromId), to = byId.get(object.toId);
-      const a = from ? resolve(from) : { x: 0, y: 0 }, b = to ? resolve(to) : { x: 0, y: 0 };
-      center = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
-    } else center = { x: 0, y: 0 };
-    cache.set(object.id, center);
-    return center;
+    const pending = new Set<string>(), stack: Array<[CanvasObject, boolean]> = [[object, false]];
+    while (stack.length) {
+      const [current, expanded] = stack.pop()!;
+      if (cache.has(current.id)) continue;
+      if (current.kind !== 'connector') {
+        let center: Point;
+        if (current.kind === 'stroke') center = current.points[Math.floor(current.points.length / 2)] || { x: 0, y: 0 };
+        else if (current.kind === 'rectangle' || current.kind === 'ellipse' || current.kind === 'arrow') center = { x: (current.from.x + current.to.x) / 2, y: (current.from.y + current.to.y) / 2 };
+        else if (current.kind === 'note' || current.kind === 'group') center = { x: current.x + current.width / 2, y: current.y + current.height / 2 };
+        else center = { x: 0, y: 0 };
+        cache.set(current.id, center);
+        continue;
+      }
+      if (expanded) {
+        pending.delete(current.id);
+        const a = cache.get(current.fromId) ?? { x: 0, y: 0 }, b = cache.get(current.toId) ?? { x: 0, y: 0 };
+        cache.set(current.id, { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+        continue;
+      }
+      pending.add(current.id); stack.push([current, true]);
+      for (const id of [current.toId, current.fromId]) {
+        const dependency = byId.get(id);
+        if (dependency && !cache.has(id) && !pending.has(id)) stack.push([dependency, false]);
+      }
+    }
+    return cache.get(object.id) ?? { x: 0, y: 0 };
   };
   return resolve;
 }
@@ -205,16 +220,16 @@ export function objectCenter(object: CanvasObject, allObjects = [object]): Point
 export function objectBounds(objects: CanvasObject[], allObjects = objects) {
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   const include = ({ x, y }: Point) => { minX = Math.min(minX, x); minY = Math.min(minY, y); maxX = Math.max(maxX, x); maxY = Math.max(maxY, y); };
-  const byId = new Map(allObjects.map((object) => [object.id, object])), visited = new Set<string>();
-  const add = (object: CanvasObject) => {
-    if (visited.has(object.id)) return;
+  const byId = new Map(allObjects.map((object) => [object.id, object])), visited = new Set<string>(), stack = [...objects];
+  while (stack.length) {
+    const object = stack.pop()!;
+    if (visited.has(object.id)) continue;
     visited.add(object.id);
     if (object.kind === 'stroke') object.points.forEach(include);
     else if (object.kind === 'rectangle' || object.kind === 'ellipse' || object.kind === 'arrow') { include(object.from); include(object.to); }
     else if (object.kind === 'note' || object.kind === 'group') { include({ x: object.x, y: object.y }); include({ x: object.x + object.width, y: object.y + object.height }); }
-    else if (object.kind === 'connector') { const from = byId.get(object.fromId), to = byId.get(object.toId); if (from) add(from); if (to) add(to); }
-  };
-  objects.forEach(add);
+    else if (object.kind === 'connector') { const from = byId.get(object.fromId), to = byId.get(object.toId); if (from) stack.push(from); if (to) stack.push(to); }
+  }
   if (!Number.isFinite(minX)) return { x: 100, y: 100, width: 320, height: 180 };
   return { x: minX, y: minY, width: Math.max(120, maxX - minX), height: Math.max(80, maxY - minY) };
 }

@@ -91,6 +91,12 @@ describe('mapping canvas contract', () => {
     expect(resolve(objects.at(-1)!)).toBe(first);
     expect(objects.map(resolve)).toHaveLength(901);
   });
+  it('resolves a deepest-first 20,000-connector chain without overflowing the stack', () => {
+    const origin = stroke('deep-origin', 0), objects: CanvasObject[] = [origin];
+    for (let index = 0; index < 20_000; index += 1) objects.unshift({ id: `deep-${index}`, kind: 'connector', createdAt: 'now', fromId: objects[0].id, toId: origin.id, label: '' });
+    expect(createObjectCenterResolver(objects)(objects[0])).toMatchObject({ x: expect.any(Number), y: expect.any(Number) });
+    expect(objectBounds([objects[0]], objects)).toMatchObject({ x: expect.any(Number), y: expect.any(Number) });
+  });
   it('computes bounds for strokes larger than the function argument limit', () => {
     const large: Stroke = { id: 'large', kind: 'stroke', createdAt: 'now', color: '#fff', width: 3, points: Array.from({ length: 200_000 }, (_, index) => ({ x: index, y: -index })) };
     expect(objectBounds([large])).toEqual({ x: 0, y: -199_999, width: 199_999, height: 199_999 });
