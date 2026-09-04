@@ -212,6 +212,20 @@ describe('Draw WebMCP tools', () => {
     expect(controller.read().objects).toHaveLength(4);
   });
 
+  it('connects to a group created in the same composition batch', async () => {
+    const controller = harness(), tools = createDrawWebMcpTools(controller);
+    const result = await tools.find(({ name }) => name === 'draw_compose')!.execute({
+      nodes: [{ ref: 'brief', text: 'Brief' }, { ref: 'launch', text: 'Launch' }],
+      groups: [{ ref: 'mission', label: 'Mission', members: ['brief'] }],
+      edges: [{ ref: 'handoff', from: 'mission', to: 'launch', label: 'approved' }]
+    }) as { refs: Record<string, string> };
+    expect(controller.read().objects.find(({ id }) => id === result.refs.handoff)).toMatchObject({
+      kind: 'connector',
+      fromId: result.refs.mission,
+      toId: result.refs.launch
+    });
+  });
+
   it('rejects layout roots that overlap through group membership', async () => {
     const child = { id: 'group-child', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 20, y: 40, width: 100, height: 80, text: 'Child' };
     const group = { id: 'parent-group', kind: 'group' as const, createdAt: child.createdAt, x: 0, y: 0, width: 160, height: 140, label: 'Parent', childIds: [child.id] };
@@ -229,6 +243,18 @@ describe('Draw WebMCP tools', () => {
     expect(controller.read().objects.map(({ id }) => id)).toEqual([second.id, first.id]);
     await tools.find(({ name }) => name === 'draw_revert_change')!.execute({ changeId: changed.changeId });
     expect(controller.read().objects.map(({ id }) => id)).toEqual([first.id, second.id]);
+  });
+
+  it('refuses revert after a touched layer is rearranged again', async () => {
+    const first = { id: 'order-first', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 0, y: 0, width: 100, height: 80, text: 'First' };
+    const second = { ...first, id: 'order-second', text: 'Second' };
+    const third = { ...first, id: 'order-third', text: 'Third' };
+    const controller = harness({ ...createDocument(), objects: [first, second, third] }), tools = createDrawWebMcpTools(controller);
+    const patch = tools.find(({ name }) => name === 'draw_patch_objects')!;
+    const older = await patch.execute({ patches: [{ id: second.id, arrange: 'front' }] }) as { changeId: string };
+    await patch.execute({ patches: [{ id: second.id, arrange: 'back' }] });
+    await expect(tools.find(({ name }) => name === 'draw_revert_change')!.execute({ changeId: older.changeId })).rejects.toThrow('layer order changed');
+    expect(controller.read().objects.map(({ id }) => id)).toEqual([second.id, first.id, third.id]);
   });
 
   it('fails closed for destructive replacement and reset', async () => {

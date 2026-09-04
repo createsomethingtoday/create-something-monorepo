@@ -310,8 +310,6 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         });
         for (const edge of edges) {
           const ref = requiredText(edge.ref, 'edge.ref'), fromRef = requiredText(edge.from, `edge ${ref} from`), toRef = requiredText(edge.to, `edge ${ref} to`), from = refs[fromRef] ?? fromRef, to = refs[toRef] ?? toRef;
-          const validIds = new Set([...state.document.objects.map(({ id }) => id), ...objects.map(({ id }) => id)]);
-          if (!validIds.has(from) || !validIds.has(to)) throw new Error(`Edge ${ref} references an unknown endpoint.`);
           objects.push({ id: refs[ref], kind: 'connector', createdAt: new Date().toISOString(), fromId: from, toId: to, label: typeof edge.label === 'string' ? edge.label : '' });
         }
         for (const group of groups) {
@@ -321,7 +319,11 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
           const bounds = objectBounds(children, objects);
           objects.push({ id: refs[ref], kind: 'group', createdAt: new Date().toISOString(), x: bounds.x - 28, y: bounds.y - 52, width: bounds.width + 56, height: bounds.height + 80, label: typeof group.label === 'string' ? group.label : '', childIds: members });
         }
-        const { before, after } = await controller.applyOperations(objects.map((object) => ({ type: 'put_object', object })), currentRevision);
+        const validIds = new Set([...state.document.objects.map(({ id }) => id), ...objects.map(({ id }) => id)]);
+        for (const object of objects) {
+          if (object.kind === 'connector' && (!validIds.has(object.fromId) || !validIds.has(object.toId))) throw new Error(`Edge ${edges.find((edge) => refs[requiredText(edge.ref, 'edge.ref')] === object.id)?.ref ?? object.id} references an unknown endpoint.`);
+        }
+        const { before, after } = await controller.applyOperations([{ type: 'replace_objects', objects: [...state.document.objects, ...objects] }], currentRevision);
         const ids = changedObjectIds(before, after);
         return { ...finish('create', ids, before, after), refs };
       }
@@ -489,6 +491,17 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         if (!change) throw new Error('Unknown or expired Draw change ID.');
         const current = controller.getState().document, currentById = new Map(current.objects.map((object) => [object.id, object])), afterById = new Map(change.after.objects.map((object) => [object.id, object]));
         for (const id of change.ids) if (JSON.stringify(currentById.get(id)) !== JSON.stringify(afterById.get(id))) throw new Error(`Object ${id} changed since ${changeId}; targeted revert refused.`);
+        const beforeOrder = change.before.objects.map(({ id }) => id), afterOrder = change.after.objects.map(({ id }) => id), currentOrder = current.objects.map(({ id }) => id);
+        for (const id of change.ids) {
+          const beforeIndex = beforeOrder.indexOf(id), afterIndex = afterOrder.indexOf(id);
+          if (beforeIndex === afterIndex || afterIndex < 0) continue;
+          for (const peer of afterOrder) {
+            if (peer === id || !currentById.has(peer)) continue;
+            const expectedSide = Math.sign(afterIndex - afterOrder.indexOf(peer));
+            const currentSide = Math.sign(currentOrder.indexOf(id) - currentOrder.indexOf(peer));
+            if (expectedSide !== currentSide) throw new Error(`Object ${id} layer order changed since ${changeId}; targeted revert refused.`);
+          }
+        }
         if (change.before.title !== change.after.title && current.title !== change.after.title) throw new Error(`Canvas title changed since ${changeId}; targeted revert refused.`);
         if (JSON.stringify(change.before.viewport) !== JSON.stringify(change.after.viewport) && JSON.stringify(current.viewport) !== JSON.stringify(change.after.viewport)) throw new Error(`Canvas viewport changed since ${changeId}; targeted revert refused.`);
         const touched = new Set(change.ids);
