@@ -650,12 +650,13 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
           && [...new Set([...beforeOrder, ...afterOrder])].every((id) => touched.has(id));
         const objectChanged = new Set(change.objectIds);
         const priorValue = (object: CanvasObject) => objectChanged.has(object.id) ? object : currentById.get(object.id) ?? object;
+        const membershipChanged = change.objectIds.some((id) => !beforeById.has(id) || !afterById.has(id));
         let restored: CanvasObject[];
-        if (!change.objectIds.length && change.orderIds.length) {
+        if (!membershipChanged && change.orderIds.length) {
           const ordered = new Set(change.orderIds);
-          const desired = change.before.objects.filter(({ id }) => ordered.has(id)).map(({ id }) => currentById.get(id)!);
+          const desired = change.before.objects.filter(({ id }) => ordered.has(id)).map(priorValue);
           let index = 0;
-          restored = current.objects.map((object) => ordered.has(object.id) ? desired[index++] : object);
+          restored = current.objects.map((object) => ordered.has(object.id) ? desired[index++] : objectChanged.has(object.id) ? beforeById.get(object.id)! : object);
         } else if (wholeCanvasReplacement) {
           const prior = change.before.objects.filter((object) => touched.has(object.id)).map(priorValue);
           let priorIndex = 0, insertionIndex = 0;
