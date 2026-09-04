@@ -255,7 +255,10 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
           surface,
           visibleWorld: { x: -x / zoom, y: -y / zoom, width: surface.width / zoom, height: surface.height / zoom, zoom },
           summary: { ...summary(controller), matchedCount: matches.length },
-          objects: matches.slice(0, limit),
+          objects: matches.slice(0, limit).map((object) => {
+            const { sourceSnapshot, ...compact } = object;
+            return { ...compact, ...(sourceSnapshot ? { sourceSnapshotCount: sourceSnapshot.length } : {}) };
+          }),
           truncated: matches.length > limit
         };
       }

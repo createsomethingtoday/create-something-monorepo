@@ -32,6 +32,16 @@ export function isDocument(value: unknown): value is CanvasDocument {
   }) && !hasConnectorCycle(candidate.objects);
 }
 
+export function normalizeDocument(value: unknown): CanvasDocument | null {
+  if (!value || typeof value !== 'object') return null;
+  const candidate = value as Partial<CanvasDocument>;
+  if (candidate.version !== DOCUMENT_VERSION || typeof candidate.id !== 'string' || typeof candidate.title !== 'string' || typeof candidate.createdAt !== 'string' || typeof candidate.updatedAt !== 'string' || !Array.isArray(candidate.objects) || !isViewport(candidate.viewport) || !candidate.objects.every((object) => isCanvasObject(object))) return null;
+  const objects = candidate.objects as CanvasObject[], ids = new Set(objects.map(({ id }) => id));
+  if (ids.size !== objects.length || objects.some((object) => object.kind === 'connector' && (object.fromId === object.toId || !ids.has(object.fromId) || !ids.has(object.toId))) || hasConnectorCycle(objects)) return null;
+  const repaired = { ...candidate, objects: objects.map((object) => object.kind === 'group' ? { ...object, childIds: object.childIds.filter((id) => ids.has(id)) } : object) } as CanvasDocument;
+  return isDocument(repaired) ? repaired : null;
+}
+
 function hasConnectorCycle(objects: CanvasObject[]) {
   const byId = new Map(objects.map((object) => [object.id, object]));
   const visiting = new Set<string>(), visited = new Set<string>();
@@ -177,6 +187,7 @@ export function restoreConversion(document: CanvasDocument, id: string): CanvasD
 export const serialize = (document: CanvasDocument) => JSON.stringify(document, null, 2);
 export function parse(source: string): CanvasDocument {
   const value: unknown = JSON.parse(source);
-  if (!isDocument(value)) throw new Error('This file is not a supported mapping canvas document.');
-  return value;
+  const document = normalizeDocument(value);
+  if (!document) throw new Error('This file is not a supported mapping canvas document.');
+  return document;
 }

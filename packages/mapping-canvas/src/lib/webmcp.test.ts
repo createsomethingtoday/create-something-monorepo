@@ -260,6 +260,16 @@ describe('Draw WebMCP tools', () => {
     });
   });
 
+  it('summarizes conversion provenance in compact inspection', async () => {
+    const source = { id: 'source', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 0, y: 0, width: 100, height: 80, text: 'Source' };
+    const converted = { ...source, id: 'converted', text: 'Converted', sourceIds: [source.id], sourceSnapshot: Array.from({ length: 100 }, (_, index) => ({ ...source, id: `source-${index}` })) };
+    const tools = createDrawWebMcpTools(harness({ ...createDocument(), objects: [converted] }));
+    const result = await tools.find(({ name }) => name === 'draw_inspect')!.execute({ limit: 1 }) as { objects: Array<Record<string, unknown>> };
+    expect(result.objects[0]).not.toHaveProperty('sourceSnapshot');
+    expect(result.objects[0]).toMatchObject({ sourceIds: [source.id], sourceSnapshotCount: 100 });
+    expect(JSON.stringify(result).length).toBeLessThan(3000);
+  });
+
   it('rejects semantic connector self-loops without changing the canvas', async () => {
     const controller = harness(), compose = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_compose')!;
     await expect(compose.execute({
