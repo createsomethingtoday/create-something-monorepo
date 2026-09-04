@@ -111,7 +111,12 @@ export function drawRevision(document: CanvasDocument) {
 
 function summary(controller: DrawController) {
   const state = controller.getState();
-  return { objectCount: state.document.objects.length, selectedIds: state.selectedIds, tool: state.tool, canUndo: state.canUndo, canRedo: state.canRedo };
+  const selected = compactIdList(state.selectedIds);
+  return { objectCount: state.document.objects.length, selectedIds: selected.preview, selectedCount: selected.count, ...(selected.truncated ? { selectedIdsTruncated: true } : {}), tool: state.tool, canUndo: state.canUndo, canRedo: state.canRedo };
+}
+
+function compactIdList(ids: string[]) {
+  return { preview: ids.slice(0, 50).map((id) => id.slice(0, 240)), count: ids.length, truncated: ids.length > 50 || ids.some((id) => id.length > 240) };
 }
 
 type NamedColor = (typeof DRAWING_PALETTE)[number]['id'];
@@ -211,7 +216,8 @@ function boundProjectionStrings(value: unknown, state: { truncated: boolean }): 
 
 function receipt(controller: DrawController, kind: DrawTransitionKind, ids: string[], preserveViewport = false, changeId?: string) {
   const transitionId = controller.animate(kind, ids, preserveViewport) || `agent-${crypto.randomUUID()}`;
-  return { ok: true, ...(changeId ? { changeId } : {}), revision: drawRevision(controller.getState().document), transition: { transitionId, kind, affectedIds: ids, durationMs: 520 }, summary: summary(controller) };
+  const affected = compactIdList(ids);
+  return { ok: true, ...(changeId ? { changeId } : {}), revision: drawRevision(controller.getState().document), transition: { transitionId, kind, affectedIds: affected.preview, affectedCount: affected.count, ...(affected.truncated ? { affectedIdsTruncated: true } : {}), durationMs: 520 }, summary: summary(controller) };
 }
 
 export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpTool[] {
@@ -548,7 +554,8 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         else throw new Error('Focus scope requires matching ids or bounds.');
         if (ids && !ids.length) throw new Error('No objects are available for focus.');
         await controller.focus({ ...(ids ? { ids } : {}), ...(bounds ? { bounds } : {}), padding });
-        return { ok: true, revision: drawRevision(controller.getState().document), focusedIds: ids ?? [], bounds, padding };
+        const focused = compactIdList(ids ?? []);
+        return { ok: true, revision: drawRevision(controller.getState().document), focusedIds: focused.preview, focusedCount: focused.count, ...(focused.truncated ? { focusedIdsTruncated: true } : {}), bounds, padding };
       }
     },
     {
@@ -694,7 +701,11 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
       name: 'draw_select', title: 'Select Draw objects', description: 'Select zero or more existing canvas object IDs so the user and agent share focus.',
       inputSchema: { type: 'object', required: ['ids'], additionalProperties: false, properties: { ids: { type: 'array', uniqueItems: true, items: { type: 'string' } } } },
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
-      execute: async (input) => { controller.select(Array.isArray(input.ids) ? input.ids.map(String) : []); return { ok: true, selectedIds: controller.getState().selectedIds }; }
+      execute: async (input) => {
+        controller.select(Array.isArray(input.ids) ? input.ids.map(String) : []);
+        const selected = compactIdList(controller.getState().selectedIds);
+        return { ok: true, selectedIds: selected.preview, selectedCount: selected.count, ...(selected.truncated ? { selectedIdsTruncated: true } : {}) };
+      }
     },
     {
       name: 'draw_set_tool', title: 'Choose Draw tool', description: 'Choose the active human drawing tool without changing the document.',

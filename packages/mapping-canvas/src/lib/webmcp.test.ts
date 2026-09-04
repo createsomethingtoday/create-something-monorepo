@@ -104,6 +104,20 @@ describe('Draw WebMCP tools', () => {
     expect(JSON.stringify(projection).length).toBeLessThan(JSON.stringify(rectangle).length / 20);
   });
 
+  it('bounds ID arrays in receipts and selection summaries', async () => {
+    const objects = Array.from({ length: 120 }, (_, index) => ({ id: `receipt-${index}-${'x'.repeat(300)}`, kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: index * 10, y: 0, width: 100, height: 80, text: `Note ${index}` }));
+    const controller = harness();
+    const baseState = controller.getState;
+    controller.getState = () => ({ ...baseState(), selectedIds: objects.map(({ id }) => id) });
+    const receipt = await createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_apply_operations')!.execute({ operations: [{ type: 'replace_objects', objects }], confirmation: 'REPLACE CANVAS' }) as { transition: { affectedIds: string[]; affectedCount: number; affectedIdsTruncated: boolean }; summary: { selectedIds: string[]; selectedCount: number; selectedIdsTruncated: boolean } };
+    expect(receipt.transition).toMatchObject({ affectedCount: 120, affectedIdsTruncated: true });
+    expect(receipt.transition.affectedIds).toHaveLength(50);
+    expect(receipt.transition.affectedIds.every((id) => id.length <= 240)).toBe(true);
+    expect(receipt.summary).toMatchObject({ selectedCount: 120, selectedIdsTruncated: true });
+    expect(receipt.summary.selectedIds).toHaveLength(50);
+    expect(receipt.summary.selectedIds.every((id) => id.length <= 240)).toBe(true);
+  });
+
   it('composes a labeled workflow from local references and creates v1 paths without storage fields', async () => {
     const controller = harness();
     const tools = createDrawWebMcpTools(controller);
