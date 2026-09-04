@@ -628,7 +628,6 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         const current = controller.getState().document, currentById = new Map(current.objects.map((object) => [object.id, object])), beforeById = new Map(change.before.objects.map((object) => [object.id, object])), afterById = new Map(change.after.objects.map((object) => [object.id, object]));
         if (current.id !== change.after.id) throw new Error(`Change ${changeId} belongs to another Draw canvas and cannot be reverted here.`);
         for (const id of change.objectIds) if (JSON.stringify(currentById.get(id)) !== JSON.stringify(afterById.get(id))) throw new Error(`Object ${id} changed since ${changeId}; targeted revert refused.`);
-        const beforeOrder = change.before.objects.map(({ id }) => id), afterOrder = change.after.objects.map(({ id }) => id);
         const originallyReordered = new Set(changedOrderIds(change.before, change.after));
         const reorderedSince = new Set(changedOrderIds(change.after, current));
         for (const id of change.orderIds) {
@@ -645,47 +644,32 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         if (change.before.title !== change.after.title && current.title !== change.after.title) throw new Error(`Canvas title changed since ${changeId}; targeted revert refused.`);
         const restoresViewport = JSON.stringify(change.before.viewport) !== JSON.stringify(change.after.viewport);
         if (restoresViewport && JSON.stringify(current.viewport) !== JSON.stringify(change.after.viewport)) throw new Error(`Canvas viewport changed since ${changeId}; targeted revert refused.`);
-        const orderStable = new Set(change.ids.filter((id) => beforeById.has(id) && afterById.has(id) && !originallyReordered.has(id)));
-        const wholeCanvasReplacement = JSON.stringify(beforeOrder) !== JSON.stringify(afterOrder)
-          && [...new Set([...beforeOrder, ...afterOrder])].every((id) => touched.has(id));
         const objectChanged = new Set(change.objectIds);
         const priorValue = (object: CanvasObject) => objectChanged.has(object.id) ? object : currentById.get(object.id) ?? object;
-        const membershipChanged = change.objectIds.some((id) => !beforeById.has(id) || !afterById.has(id));
-        let restored: CanvasObject[];
-        if (!membershipChanged && change.orderIds.length) {
-          const ordered = new Set(change.orderIds);
-          const desired = change.before.objects.filter(({ id }) => ordered.has(id)).map(priorValue);
-          let index = 0;
-          restored = current.objects.map((object) => ordered.has(object.id) ? desired[index++] : objectChanged.has(object.id) ? beforeById.get(object.id)! : object);
-        } else if (wholeCanvasReplacement) {
-          const prior = change.before.objects.filter((object) => touched.has(object.id)).map(priorValue);
-          let priorIndex = 0, insertionIndex = 0;
-          restored = [];
-          for (const object of current.objects) {
-            if (!touched.has(object.id)) restored.push(object);
-            else if (priorIndex < prior.length) {
-              restored.push(prior[priorIndex++]);
-              insertionIndex = restored.length;
-            }
-          }
-          restored.splice(insertionIndex, 0, ...prior.slice(priorIndex));
-        } else {
-          restored = current.objects
-            .filter(({ id }) => !touched.has(id) || orderStable.has(id))
-            .map((object) => orderStable.has(object.id) && objectChanged.has(object.id) ? beforeById.get(object.id)! : object);
-          for (const prior of change.before.objects.filter(({ id }) => touched.has(id) && !orderStable.has(id))) {
-            const priorIndex = change.before.objects.findIndex(({ id }) => id === prior.id);
-            const sameLayer = (object: CanvasObject) => (object.kind === 'group') === (prior.kind === 'group');
-            const preceding = change.before.objects.slice(0, priorIndex).reverse().find((object) => sameLayer(object) && restored.some(({ id }) => id === object.id));
-            const value = priorValue(prior);
-            if (preceding) restored.splice(restored.findIndex(({ id }) => id === preceding.id) + 1, 0, value);
-            else {
-              const following = change.before.objects.slice(priorIndex + 1).find((object) => sameLayer(object) && restored.some(({ id }) => id === object.id));
-              if (following) restored.splice(restored.findIndex(({ id }) => id === following.id), 0, value);
-              else restored.push(value);
-            }
-          }
+        const ordered = new Set(change.orderIds);
+        const desired = change.before.objects.filter(({ id }) => ordered.has(id)).map(priorValue);
+        let desiredIndex = 0;
+        let restored = current.objects
+          .map((object) => ordered.has(object.id) ? desired[desiredIndex++] : objectChanged.has(object.id) && beforeById.has(object.id) ? beforeById.get(object.id)! : object)
+          .filter(({ id }) => !removing.has(id));
+        const retained = new Set(restored.map(({ id }) => id)), after = new Map<string, CanvasObject[]>(), prefix = new Map<boolean, CanvasObject[]>();
+        const anchors = new Map<boolean, string>();
+        for (const object of change.before.objects) {
+          const layer = object.kind === 'group';
+          if (retained.has(object.id)) { anchors.set(layer, object.id); continue; }
+          if (afterById.has(object.id)) continue;
+          const anchor = anchors.get(layer), bucket = anchor ? after.get(anchor) ?? [] : prefix.get(layer) ?? [];
+          bucket.push(object);
+          if (anchor) after.set(anchor, bucket); else prefix.set(layer, bucket);
         }
+        const emittedPrefix = new Set<boolean>(), rebuilt: CanvasObject[] = [];
+        for (const object of restored) {
+          const layer = object.kind === 'group';
+          if (!emittedPrefix.has(layer)) { rebuilt.push(...(prefix.get(layer) ?? [])); emittedPrefix.add(layer); }
+          rebuilt.push(object, ...(after.get(object.id) ?? []));
+        }
+        for (const layer of [false, true]) if (!emittedPrefix.has(layer)) rebuilt.push(...(prefix.get(layer) ?? []));
+        restored = rebuilt;
         if (!change.ids.some((id) => currentById.get(id)?.kind === 'group') && restored.length === current.objects.length) {
           const restoredGroups = new Map(restored.filter((object) => object.kind === 'group').map((object) => [object.id, object]));
           const currentGroupIds = current.objects.filter((object) => object.kind === 'group').map(({ id }) => id);

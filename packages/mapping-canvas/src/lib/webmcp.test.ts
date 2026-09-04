@@ -629,6 +629,16 @@ describe('Draw WebMCP tools', () => {
     expect(controller.read().objects).toEqual([first, inserted, second, third]);
   });
 
+  it('preserves a later insertion slot while reverting membership and order changes', async () => {
+    const base = { id: 'membership-u', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 0, y: 0, width: 100, height: 80, text: 'U' };
+    const a = { ...base, id: 'membership-a', text: 'A' }, b = { ...base, id: 'membership-b', text: 'B' }, c = { ...base, id: 'membership-c', text: 'C' }, v = { ...base, id: 'membership-v', text: 'V' }, inserted = { ...base, id: 'membership-x', text: 'X' };
+    const controller = harness({ ...createDocument(), objects: [base, a, b, c, v] }), tools = createDrawWebMcpTools(controller);
+    const changed = await tools.find(({ name }) => name === 'draw_replace_canvas')!.execute({ objects: [base, c, b, v], confirmation: 'REPLACE CANVAS' }) as { changeId: string };
+    await controller.applyOperations([{ type: 'replace_objects', objects: [base, c, inserted, b, v] }]);
+    await tools.find(({ name }) => name === 'draw_revert_change')!.execute({ changeId: changed.changeId });
+    expect(controller.read().objects).toEqual([base, a, b, inserted, c, v]);
+  });
+
   it('validates and reverts the maximum semantic layer reorder without repeated index scans', async () => {
     const objects = Array.from({ length: 1_000 }, (_, index) => ({ id: `revert-scale-${index}`, kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: index, y: 0, width: 80, height: 60, text: String(index) }));
     const controller = harness({ ...createDocument(), objects }), tools = createDrawWebMcpTools(controller);
