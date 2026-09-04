@@ -616,8 +616,14 @@ pub fn apply_canvas_operation(
     match operation {
         CanvasOperation::PutObject { object } => {
             let objects = next.get_mut("objects")?.as_array_mut()?;
-            objects.retain(|candidate| candidate.get("id") != object.get("id"));
-            objects.push(object.clone());
+            if let Some(index) = objects
+                .iter()
+                .position(|candidate| candidate.get("id") == object.get("id"))
+            {
+                objects[index] = object.clone();
+            } else {
+                objects.push(object.clone());
+            }
         }
         CanvasOperation::RemoveObjects { ids } => {
             let objects = next.get_mut("objects")?.as_array_mut()?;
@@ -870,6 +876,25 @@ mod tests {
         };
         assert_eq!(state.revision, 1);
         assert_eq!(repeated, receipt);
+    }
+
+    #[test]
+    fn put_object_updates_without_changing_native_layer_order() {
+        let mut document = state().document;
+        document["objects"] = serde_json::json!([
+            { "id": "first", "kind": "note", "text": "Before", "x": 0, "y": 0, "width": 200, "height": 100, "createdAt": NOW },
+            { "id": "second", "kind": "note", "text": "Second", "x": 300, "y": 0, "width": 200, "height": 100, "createdAt": NOW }
+        ]);
+        let updated = apply_canvas_operation(
+            &document,
+            &CanvasOperation::PutObject { object: serde_json::json!({
+                "id": "first", "kind": "note", "text": "After", "x": 0, "y": 0, "width": 200, "height": 100, "createdAt": NOW
+            }) },
+            NOW,
+        ).expect("put-object update");
+        let ids: Vec<_> = updated["objects"].as_array().unwrap().iter().map(|object| object["id"].as_str().unwrap()).collect();
+        assert_eq!(ids, vec!["first", "second"]);
+        assert_eq!(updated["objects"][0]["text"], "After");
     }
 
     #[test]

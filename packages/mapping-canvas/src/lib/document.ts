@@ -25,21 +25,79 @@ export function isDocument(value: unknown): value is CanvasDocument {
   const candidate = value as Partial<CanvasDocument>;
   if (candidate.version !== DOCUMENT_VERSION || typeof candidate.id !== 'string' || typeof candidate.title !== 'string' || typeof candidate.createdAt !== 'string' || typeof candidate.updatedAt !== 'string' || !Array.isArray(candidate.objects) || !isViewport(candidate.viewport) || !candidate.objects.every((object) => isCanvasObject(object))) return false;
   const ids = new Set(candidate.objects.map(({ id }) => id));
-  return ids.size === candidate.objects.length && candidate.objects.every((object) => object.kind !== 'connector' || (ids.has(object.fromId) && ids.has(object.toId))) && !hasConnectorCycle(candidate.objects);
+  return ids.size === candidate.objects.length && candidate.objects.every((object) => {
+    if (object.kind === 'connector') return object.fromId !== object.toId && ids.has(object.fromId) && ids.has(object.toId);
+    if (object.kind === 'group') return object.childIds.every((id) => ids.has(id));
+    return true;
+  }) && !findConnectorCycles(candidate.objects).size;
 }
 
-function hasConnectorCycle(objects: CanvasObject[]) {
-  const byId = new Map(objects.map((object) => [object.id, object]));
-  const visiting = new Set<string>(), visited = new Set<string>();
-  const visit = (id: string): boolean => {
-    const object = byId.get(id);
-    if (object?.kind !== 'connector' || visited.has(id)) return false;
-    if (visiting.has(id)) return true;
-    visiting.add(id);
-    if (visit(object.fromId) || visit(object.toId)) return true;
-    visiting.delete(id); visited.add(id); return false;
-  };
-  return objects.some(({ id }) => visit(id));
+export function normalizeDocument(value: unknown): CanvasDocument | null {
+  if (!value || typeof value !== 'object') return null;
+  const candidate = value as Partial<CanvasDocument>;
+  if (candidate.version !== DOCUMENT_VERSION || typeof candidate.id !== 'string' || typeof candidate.title !== 'string' || typeof candidate.createdAt !== 'string' || typeof candidate.updatedAt !== 'string' || !Array.isArray(candidate.objects) || !isViewport(candidate.viewport) || !candidate.objects.every((object) => isCanvasObject(object))) return null;
+  const objects = candidate.objects as CanvasObject[];
+  if (new Set(objects.map(({ id }) => id)).size !== objects.length) return null;
+  const ids = new Set(objects.map(({ id }) => id));
+  const invalid = new Set(objects.filter((object) => object.kind === 'connector' && (object.fromId === object.toId || !ids.has(object.fromId) || !ids.has(object.toId))).map(({ id }) => id));
+  findConnectorCycles(objects).forEach((id) => invalid.add(id));
+  const dependents = new Map<string, string[]>();
+  for (const object of objects) {
+    if (object.kind !== 'connector') continue;
+    for (const endpoint of new Set([object.fromId, object.toId])) {
+      const entries = dependents.get(endpoint) ?? [];
+      entries.push(object.id);
+      dependents.set(endpoint, entries);
+    }
+  }
+  const queue = [...invalid];
+  for (let index = 0; index < queue.length; index += 1) {
+    for (const dependent of dependents.get(queue[index]) ?? []) if (!invalid.has(dependent)) { invalid.add(dependent); queue.push(dependent); }
+  }
+  const retained = objects.filter(({ id }) => !invalid.has(id));
+  const retainedIds = new Set(retained.map(({ id }) => id));
+  const repaired = { ...candidate, objects: retained.map((object) => object.kind === 'group' ? { ...object, childIds: object.childIds.filter((id) => retainedIds.has(id)) } : object) } as CanvasDocument;
+  return isDocument(repaired) ? repaired : null;
+}
+
+function findConnectorCycles(objects: CanvasObject[]): Set<string> {
+  const connectors = new Map(objects.filter((object): object is Connector => object.kind === 'connector').map((object) => [object.id, object]));
+  const adjacent = new Map<string, string[]>(), reverse = new Map<string, string[]>();
+  for (const [id, object] of connectors) {
+    const targets = [...new Set([object.fromId, object.toId])].filter((target) => connectors.has(target));
+    adjacent.set(id, targets);
+    for (const target of targets) {
+      const sources = reverse.get(target);
+      if (sources) sources.push(id);
+      else reverse.set(target, [id]);
+    }
+  }
+  const visited = new Set<string>(), order: string[] = [];
+  for (const id of connectors.keys()) {
+    if (visited.has(id)) continue;
+    const stack: Array<[string, boolean]> = [[id, false]];
+    while (stack.length) {
+      const [current, expanded] = stack.pop()!;
+      if (expanded) { order.push(current); continue; }
+      if (visited.has(current)) continue;
+      visited.add(current); stack.push([current, true]);
+      for (const target of adjacent.get(current) ?? []) if (!visited.has(target)) stack.push([target, false]);
+    }
+  }
+  const assigned = new Set<string>(), cyclic = new Set<string>();
+  for (let index = order.length - 1; index >= 0; index -= 1) {
+    const id = order[index];
+    if (assigned.has(id)) continue;
+    const component: string[] = [], stack = [id];
+    assigned.add(id);
+    while (stack.length) {
+      const current = stack.pop()!;
+      component.push(current);
+      for (const source of reverse.get(current) ?? []) if (!assigned.has(source)) { assigned.add(source); stack.push(source); }
+    }
+    if (component.length > 1 || (adjacent.get(id) ?? []).includes(id)) component.forEach((member) => cyclic.add(member));
+  }
+  return cyclic;
 }
 
 const isFiniteNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
@@ -65,9 +123,22 @@ export function withObjects(document: CanvasDocument, objects: CanvasObject[]): 
 
 export function removeObjects(document: CanvasDocument, ids: string[]): CanvasDocument {
   const removed = new Set(ids);
-  const objects = document.objects
-    .filter((object) => !removed.has(object.id) && (object.kind !== 'connector' || (!removed.has(object.fromId) && !removed.has(object.toId))))
-    .map((object) => object.kind === 'group' ? { ...object, childIds: object.childIds.filter((id) => !removed.has(id)) } : object);
+  const dependents = new Map<string, string[]>();
+  for (const object of document.objects) {
+    if (object.kind !== 'connector') continue;
+    for (const endpoint of new Set([object.fromId, object.toId])) {
+      const entries = dependents.get(endpoint) ?? [];
+      entries.push(object.id);
+      dependents.set(endpoint, entries);
+    }
+  }
+  const queue = [...removed];
+  for (let index = 0; index < queue.length; index += 1) {
+    for (const dependent of dependents.get(queue[index]) ?? []) if (!removed.has(dependent)) { removed.add(dependent); queue.push(dependent); }
+  }
+  let objects = document.objects.filter((object) => !removed.has(object.id));
+  const existing = new Set(objects.map(({ id }) => id));
+  objects = objects.map((object) => object.kind === 'group' ? { ...object, childIds: object.childIds.filter((id) => existing.has(id)) } : object);
   return withObjects(document, objects);
 }
 
@@ -76,14 +147,14 @@ export function resizeGroup(document: CanvasDocument, groupId: string, width: nu
   if (!group || !Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) return document;
   const scaleX = width / group.width, scaleY = height / group.height;
   const byId = new Map(document.objects.map((object) => [object.id, object]));
-  const descendants = new Set<string>();
-  const collect = (id: string) => {
-    if (descendants.has(id)) return;
+  const descendants = new Set<string>(), stack = [...group.childIds];
+  while (stack.length) {
+    const id = stack.pop()!;
+    if (descendants.has(id)) continue;
     descendants.add(id);
     const object = byId.get(id);
-    if (object?.kind === 'group') object.childIds.forEach(collect);
-  };
-  group.childIds.forEach(collect);
+    if (object?.kind === 'group') stack.push(...object.childIds);
+  }
   const point = (value: Point): Point => ({ x: group.x + (value.x - group.x) * scaleX, y: group.y + (value.y - group.y) * scaleY });
   const resize = (object: CanvasObject): CanvasObject => {
     if (object.kind === 'stroke') return { ...object, points: object.points.map(point) };
@@ -111,25 +182,64 @@ export function redo(history: History): History {
   return next ? { past: [...history.past, history.present], present: next, future: history.future.slice(1) } : history;
 }
 
+export function createObjectCenterResolver(allObjects: CanvasObject[]) {
+  const byId = new Map(allObjects.map((object) => [object.id, object])), cache = new Map<string, Point>();
+  const resolve = (object: CanvasObject): Point => {
+    const cached = cache.get(object.id);
+    if (cached) return cached;
+    const pending = new Set<string>(), stack: Array<[CanvasObject, boolean]> = [[object, false]];
+    while (stack.length) {
+      const [current, expanded] = stack.pop()!;
+      if (cache.has(current.id)) continue;
+      if (current.kind !== 'connector') {
+        let center: Point;
+        if (current.kind === 'stroke') center = current.points[Math.floor(current.points.length / 2)] || { x: 0, y: 0 };
+        else if (current.kind === 'rectangle' || current.kind === 'ellipse' || current.kind === 'arrow') center = { x: (current.from.x + current.to.x) / 2, y: (current.from.y + current.to.y) / 2 };
+        else if (current.kind === 'note' || current.kind === 'group') center = { x: current.x + current.width / 2, y: current.y + current.height / 2 };
+        else center = { x: 0, y: 0 };
+        cache.set(current.id, center);
+        continue;
+      }
+      if (expanded) {
+        pending.delete(current.id);
+        const a = cache.get(current.fromId) ?? { x: 0, y: 0 }, b = cache.get(current.toId) ?? { x: 0, y: 0 };
+        cache.set(current.id, { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+        continue;
+      }
+      pending.add(current.id); stack.push([current, true]);
+      for (const id of [current.toId, current.fromId]) {
+        const dependency = byId.get(id);
+        if (dependency && !cache.has(id) && !pending.has(id)) stack.push([dependency, false]);
+      }
+    }
+    return cache.get(object.id) ?? { x: 0, y: 0 };
+  };
+  return resolve;
+}
+
+export function objectCenter(object: CanvasObject, allObjects = [object]): Point {
+  return createObjectCenterResolver(allObjects)(object);
+}
+
 export function objectBounds(objects: CanvasObject[], allObjects = objects) {
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   const include = ({ x, y }: Point) => { minX = Math.min(minX, x); minY = Math.min(minY, y); maxX = Math.max(maxX, x); maxY = Math.max(maxY, y); };
-  const byId = new Map(allObjects.map((object) => [object.id, object])), visited = new Set<string>();
-  const add = (object: CanvasObject) => {
-    if (visited.has(object.id)) return;
+  const byId = new Map(allObjects.map((object) => [object.id, object])), visited = new Set<string>(), stack = [...objects];
+  while (stack.length) {
+    const object = stack.pop()!;
+    if (visited.has(object.id)) continue;
     visited.add(object.id);
     if (object.kind === 'stroke') object.points.forEach(include);
     else if (object.kind === 'rectangle' || object.kind === 'ellipse' || object.kind === 'arrow') { include(object.from); include(object.to); }
     else if (object.kind === 'note' || object.kind === 'group') { include({ x: object.x, y: object.y }); include({ x: object.x + object.width, y: object.y + object.height }); }
-    else if (object.kind === 'connector') { const from = byId.get(object.fromId), to = byId.get(object.toId); if (from) add(from); if (to) add(to); }
-  };
-  objects.forEach(add);
+    else if (object.kind === 'connector') { const from = byId.get(object.fromId), to = byId.get(object.toId); if (from) stack.push(from); if (to) stack.push(to); }
+  }
   if (!Number.isFinite(minX)) return { x: 100, y: 100, width: 320, height: 180 };
   return { x: minX, y: minY, width: Math.max(120, maxX - minX), height: Math.max(80, maxY - minY) };
 }
 
 export function convertWithIdentity(document: CanvasDocument, selectedIds: string[], target: 'note' | 'connector' | 'group', identity: { id: string; createdAt: string }): CanvasDocument {
-  const sources = document.objects.filter(({ id }) => selectedIds.includes(id));
+  const selected = new Set(selectedIds), sources = document.objects.filter(({ id }) => selected.has(id));
   if (!sources.length || (target === 'connector' && sources.length < 2)) return document;
   const bounds = objectBounds(sources, document.objects);
   // Svelte state exposes proxy-backed objects; JSON cloning produces a portable
@@ -167,6 +277,7 @@ export function restoreConversion(document: CanvasDocument, id: string): CanvasD
 export const serialize = (document: CanvasDocument) => JSON.stringify(document, null, 2);
 export function parse(source: string): CanvasDocument {
   const value: unknown = JSON.parse(source);
-  if (!isDocument(value)) throw new Error('This file is not a supported mapping canvas document.');
-  return value;
+  const document = normalizeDocument(value);
+  if (!document) throw new Error('This file is not a supported mapping canvas document.');
+  return document;
 }

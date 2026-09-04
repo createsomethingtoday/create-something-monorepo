@@ -8,11 +8,11 @@ CREATE SOMETHING Draw is a free, local-first drawing canvas for mapping meetings
 - Add editable spatial notes and organize work with groups.
 - Convert selected marks into notes, connectors, or groups while retaining source provenance.
 - Export the canvas as JSON, SVG, or PNG and import compatible JSON documents.
-- Control the visible canvas with seven WebMCP site tools in supported agent browsers.
+- Control the visible canvas with sixteen WebMCP site tools in supported agent browsers.
 
 ## Agent interface
 
-Draw registers `draw_get_state`, `draw_apply_operations`, `draw_select`, `draw_set_tool`, `draw_undo`, `draw_redo`, and `draw_reset` through `document.modelContext.registerTool`. Agent changes use the same local document, history, and persistence operations as human changes, and display an on-canvas transition receipt. WebMCP mutation is limited to the browser-local canvas; paired native shells use their dedicated synchronization controls.
+Draw registers a semantic WebMCP surface through `document.modelContext.registerTool`: compact inspection, composition, paths, partial patches, layout, camera focus, targeted revert, dedicated destructive actions, complete state, low-level operations, selection, tool choice, history, and reset. Agent changes use the same local document, history, and persistence operations as human changes, return revision-bearing receipts, and display an on-canvas transition. WebMCP mutation is limited to the browser-local canvas; paired native shells use their dedicated synchronization controls.
 
 ## Data boundary
 

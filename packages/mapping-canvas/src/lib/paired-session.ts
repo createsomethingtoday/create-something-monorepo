@@ -134,7 +134,10 @@ export function isCanvasOperation(value: unknown): value is CanvasOperation {
 
 export function applyCanvasOperation(document: CanvasDocument, operation: CanvasOperation): CanvasDocument | undefined {
   if (operation.type === 'put_object') {
-    const objects = [...document.objects.filter(({ id }) => id !== operation.object.id), operation.object];
+    const index = document.objects.findIndex(({ id }) => id === operation.object.id);
+    const objects = index < 0
+      ? [...document.objects, operation.object]
+      : document.objects.map((object, objectIndex) => objectIndex === index ? operation.object : object);
     const next = withObjects(document, objects);
     return isDocument(next) ? next : undefined;
   }
