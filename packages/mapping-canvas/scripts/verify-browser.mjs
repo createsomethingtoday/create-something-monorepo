@@ -117,6 +117,7 @@ try {
   const semantic = await page.evaluate(async () => {
     const tools = window.__drawWebMcpTools;
     const names = Object.keys(tools).sort();
+    const drawNames = names.filter((name) => name.startsWith('draw_'));
     const before = await tools.draw_get_state.execute({});
     const inspect = await tools.draw_inspect.execute({ limit: 10 });
     const composed = await tools.draw_compose.execute({
@@ -146,13 +147,13 @@ try {
     await tools.draw_revert_change.execute({ changeId: composed.changeId });
     const restored = await tools.draw_get_state.execute({});
     return {
-      names, version: inspect.version, compactBytes: JSON.stringify(inspect).length, fullBytes: JSON.stringify(before).length,
+      names, drawNames, version: inspect.version, compactBytes: JSON.stringify(inspect).length, fullBytes: JSON.stringify(before).length,
       composed, connectorVisible: Boolean(connectorLabel && getComputedStyle(connectorLabel).display !== 'none'),
       staleError, deleteError, replaceError, focus, restoredCount: restored.document.objects.length, beforeCount: before.document.objects.length
     };
   });
   const requiredSemanticTools = ['draw_compose', 'draw_delete', 'draw_focus', 'draw_inspect', 'draw_layout', 'draw_patch_objects', 'draw_path', 'draw_replace_canvas', 'draw_revert_change'];
-  if (!requiredSemanticTools.every((name) => semantic.names.includes(name)) || semantic.names.length !== 16) throw new Error(`Semantic Draw tool inventory is incomplete: ${JSON.stringify(semantic.names)}`);
+  if (!requiredSemanticTools.every((name) => semantic.drawNames.includes(name)) || semantic.drawNames.length !== 16) throw new Error(`Semantic Draw tool inventory is incomplete: ${JSON.stringify(semantic.drawNames)} (all registered tools: ${JSON.stringify(semantic.names)})`);
   if (semantic.version !== '2026-09-04.1' || !semantic.composed.changeId || !semantic.connectorVisible) throw new Error(`Semantic composition or visible connector label failed: ${JSON.stringify(semantic)}`);
   if (!semantic.staleError.includes('revision') || !semantic.deleteError.includes('DELETE OBJECTS') || !semantic.replaceError.includes('REPLACE CANVAS')) throw new Error(`Semantic safety boundary failed: ${JSON.stringify(semantic)}`);
   if (semantic.restoredCount !== semantic.beforeCount || !semantic.focus.ok) throw new Error(`Semantic workflow did not restore its isolated fixture: ${JSON.stringify(semantic)}`);
@@ -401,7 +402,7 @@ try {
   await mobile.context.close();
 
   const offlineShell = await verifyOfflineShell();
-  console.log(JSON.stringify({ baseUrl, runLabel, semantic: { version: semantic.version, toolCount: semantic.names.length, connectorVisible: semantic.connectorVisible, restored: semantic.restoredCount === semantic.beforeCount }, desktop: { exports, countBeforeReload, countAfterReload }, mobile: mobileCritical, offlineShell, result: 'pass' }, null, 2));
+  console.log(JSON.stringify({ baseUrl, runLabel, semantic: { version: semantic.version, drawToolCount: semantic.drawNames.length, registeredToolCount: semantic.names.length, connectorVisible: semantic.connectorVisible, restored: semantic.restoredCount === semantic.beforeCount }, desktop: { exports, countBeforeReload, countAfterReload }, mobile: mobileCritical, offlineShell, result: 'pass' }, null, 2));
 } finally {
   await browser.close();
 }
