@@ -557,18 +557,21 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
           const beforeIndex = beforeOrder.indexOf(id), afterIndex = afterOrder.indexOf(id);
           return beforeIndex >= 0 && beforeIndex === afterIndex;
         }));
-        const wholeCanvasReorder = beforeOrder.length === afterOrder.length
-          && beforeOrder.every((id) => touched.has(id) && afterById.has(id) && currentById.has(id))
-          && beforeOrder.some((id, index) => afterOrder[index] !== id);
+        const wholeCanvasReplacement = JSON.stringify(beforeOrder) !== JSON.stringify(afterOrder)
+          && [...new Set([...beforeOrder, ...afterOrder])].every((id) => touched.has(id));
         let restored: CanvasObject[];
-        if (wholeCanvasReorder) {
-          const priorGroups = change.before.objects.filter((object) => touched.has(object.id) && object.kind === 'group');
-          const priorVisible = change.before.objects.filter((object) => touched.has(object.id) && object.kind !== 'group');
-          let groupIndex = 0, visibleIndex = 0;
-          restored = current.objects.map((object) => {
-            if (!touched.has(object.id)) return object;
-            return object.kind === 'group' ? priorGroups[groupIndex++] ?? object : priorVisible[visibleIndex++] ?? object;
-          });
+        if (wholeCanvasReplacement) {
+          const prior = change.before.objects.filter((object) => touched.has(object.id));
+          let priorIndex = 0, insertionIndex = 0;
+          restored = [];
+          for (const object of current.objects) {
+            if (!touched.has(object.id)) restored.push(object);
+            else if (priorIndex < prior.length) {
+              restored.push(prior[priorIndex++]);
+              insertionIndex = restored.length;
+            }
+          }
+          restored.splice(insertionIndex, 0, ...prior.slice(priorIndex));
         } else {
           restored = current.objects
             .filter(({ id }) => !touched.has(id) || orderStable.has(id))

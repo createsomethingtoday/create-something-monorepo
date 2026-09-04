@@ -430,6 +430,27 @@ describe('Draw WebMCP tools', () => {
     expect(controller.read().objects.map(({ id }) => id)).toEqual([first.id, second.id, third.id]);
   });
 
+  it('preserves a newer layer position while reverting a replacement that deleted an object', async () => {
+    const first = { id: 'deleted-first', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 0, y: 0, width: 100, height: 80, text: 'First' };
+    const second = { ...first, id: 'surviving-second', text: 'Second' };
+    const third = { ...first, id: 'newer-after-delete', text: 'Third' };
+    const controller = harness({ ...createDocument(), objects: [first, second] }), tools = createDrawWebMcpTools(controller);
+    const changed = await tools.find(({ name }) => name === 'draw_replace_canvas')!.execute({ objects: [second], confirmation: 'REPLACE CANVAS' }) as { changeId: string };
+    await tools.find(({ name }) => name === 'draw_apply_operations')!.execute({ operations: [{ type: 'put_object', object: third }] });
+    await tools.find(({ name }) => name === 'draw_revert_change')!.execute({ changeId: changed.changeId });
+    expect(controller.read().objects.map(({ id }) => id)).toEqual([first.id, second.id, third.id]);
+  });
+
+  it('restores reordered replacement objects by identity across layer-kind changes', async () => {
+    const first = { id: 'kind-first', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 0, y: 0, width: 100, height: 80, text: 'First' };
+    const second = { ...first, id: 'kind-second', text: 'Second' };
+    const changedSecond = { id: second.id, kind: 'group' as const, createdAt: second.createdAt, x: 0, y: 0, width: 160, height: 140, label: 'Changed', childIds: [first.id] };
+    const controller = harness({ ...createDocument(), objects: [first, second] }), tools = createDrawWebMcpTools(controller);
+    const changed = await tools.find(({ name }) => name === 'draw_replace_canvas')!.execute({ objects: [changedSecond, first], confirmation: 'REPLACE CANVAS' }) as { changeId: string };
+    await tools.find(({ name }) => name === 'draw_revert_change')!.execute({ changeId: changed.changeId });
+    expect(controller.read().objects).toEqual([first, second]);
+  });
+
   it('refuses revert after a touched layer is rearranged again', async () => {
     const first = { id: 'order-first', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 0, y: 0, width: 100, height: 80, text: 'First' };
     const second = { ...first, id: 'order-second', text: 'Second' };
