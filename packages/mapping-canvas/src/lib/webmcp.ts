@@ -557,18 +557,32 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
           const beforeIndex = beforeOrder.indexOf(id), afterIndex = afterOrder.indexOf(id);
           return beforeIndex >= 0 && beforeIndex === afterIndex;
         }));
-        let restored = current.objects
-          .filter(({ id }) => !touched.has(id) || orderStable.has(id))
-          .map((object) => orderStable.has(object.id) ? beforeById.get(object.id)! : object);
-        for (const prior of change.before.objects.filter(({ id }) => touched.has(id) && !orderStable.has(id))) {
-          const priorIndex = change.before.objects.findIndex(({ id }) => id === prior.id);
-          const sameLayer = (object: CanvasObject) => (object.kind === 'group') === (prior.kind === 'group');
-          const preceding = change.before.objects.slice(0, priorIndex).reverse().find((object) => sameLayer(object) && restored.some(({ id }) => id === object.id));
-          if (preceding) restored.splice(restored.findIndex(({ id }) => id === preceding.id) + 1, 0, prior);
-          else {
-            const following = change.before.objects.slice(priorIndex + 1).find((object) => sameLayer(object) && restored.some(({ id }) => id === object.id));
-            if (following) restored.splice(restored.findIndex(({ id }) => id === following.id), 0, prior);
-            else restored.push(prior);
+        const wholeCanvasReorder = beforeOrder.length === afterOrder.length
+          && beforeOrder.every((id) => touched.has(id) && afterById.has(id) && currentById.has(id))
+          && beforeOrder.some((id, index) => afterOrder[index] !== id);
+        let restored: CanvasObject[];
+        if (wholeCanvasReorder) {
+          const priorGroups = change.before.objects.filter((object) => touched.has(object.id) && object.kind === 'group');
+          const priorVisible = change.before.objects.filter((object) => touched.has(object.id) && object.kind !== 'group');
+          let groupIndex = 0, visibleIndex = 0;
+          restored = current.objects.map((object) => {
+            if (!touched.has(object.id)) return object;
+            return object.kind === 'group' ? priorGroups[groupIndex++] ?? object : priorVisible[visibleIndex++] ?? object;
+          });
+        } else {
+          restored = current.objects
+            .filter(({ id }) => !touched.has(id) || orderStable.has(id))
+            .map((object) => orderStable.has(object.id) ? beforeById.get(object.id)! : object);
+          for (const prior of change.before.objects.filter(({ id }) => touched.has(id) && !orderStable.has(id))) {
+            const priorIndex = change.before.objects.findIndex(({ id }) => id === prior.id);
+            const sameLayer = (object: CanvasObject) => (object.kind === 'group') === (prior.kind === 'group');
+            const preceding = change.before.objects.slice(0, priorIndex).reverse().find((object) => sameLayer(object) && restored.some(({ id }) => id === object.id));
+            if (preceding) restored.splice(restored.findIndex(({ id }) => id === preceding.id) + 1, 0, prior);
+            else {
+              const following = change.before.objects.slice(priorIndex + 1).find((object) => sameLayer(object) && restored.some(({ id }) => id === object.id));
+              if (following) restored.splice(restored.findIndex(({ id }) => id === following.id), 0, prior);
+              else restored.push(prior);
+            }
           }
         }
         if (!change.ids.some((id) => currentById.get(id)?.kind === 'group') && restored.length === current.objects.length) {
