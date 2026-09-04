@@ -312,12 +312,19 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
           const ref = requiredText(edge.ref, 'edge.ref'), fromRef = requiredText(edge.from, `edge ${ref} from`), toRef = requiredText(edge.to, `edge ${ref} to`), from = refs[fromRef] ?? fromRef, to = refs[toRef] ?? toRef;
           objects.push({ id: refs[ref], kind: 'connector', createdAt: new Date().toISOString(), fromId: from, toId: to, label: typeof edge.label === 'string' ? edge.label : '' });
         }
-        for (const group of groups) {
-          const ref = requiredText(group.ref, 'group.ref'), members = Array.isArray(group.members) ? group.members.map((member) => { const normalized = requiredText(member, `group ${ref} member`); return refs[normalized] ?? normalized; }) : [];
-          const children = objects.filter(({ id }) => members.includes(id));
-          if (!members.length || children.length !== members.length) throw new Error(`Group ${ref} references an unknown member.`);
-          const bounds = objectBounds(children, objects);
-          objects.push({ id: refs[ref], kind: 'group', createdAt: new Date().toISOString(), x: bounds.x - 28, y: bounds.y - 52, width: bounds.width + 56, height: bounds.height + 80, label: typeof group.label === 'string' ? group.label : '', childIds: members });
+        let pendingGroups = [...groups];
+        while (pendingGroups.length) {
+          const unresolved: typeof pendingGroups = [];
+          for (const group of pendingGroups) {
+            const ref = requiredText(group.ref, 'group.ref'), members = Array.isArray(group.members) ? group.members.map((member) => { const normalized = requiredText(member, `group ${ref} member`); return refs[normalized] ?? normalized; }) : [];
+            const candidates = [...state.document.objects, ...objects], children = candidates.filter(({ id }) => members.includes(id));
+            if (!members.length) throw new Error(`Group ${ref} requires at least one member.`);
+            if (children.length !== members.length) { unresolved.push(group); continue; }
+            const bounds = objectBounds(children, candidates);
+            objects.push({ id: refs[ref], kind: 'group', createdAt: new Date().toISOString(), x: bounds.x - 28, y: bounds.y - 52, width: bounds.width + 56, height: bounds.height + 80, label: typeof group.label === 'string' ? group.label : '', childIds: members });
+          }
+          if (unresolved.length === pendingGroups.length) throw new Error(`Group ${requiredText(unresolved[0].ref, 'group.ref')} references an unknown or cyclic member.`);
+          pendingGroups = unresolved;
         }
         const validIds = new Set([...state.document.objects.map(({ id }) => id), ...objects.map(({ id }) => id)]);
         for (const object of objects) {

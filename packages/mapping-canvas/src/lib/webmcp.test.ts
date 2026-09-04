@@ -239,6 +239,21 @@ describe('Draw WebMCP tools', () => {
     });
   });
 
+  it('composes nested groups independently of declaration order', async () => {
+    const controller = harness(), tools = createDrawWebMcpTools(controller);
+    const result = await tools.find(({ name }) => name === 'draw_compose')!.execute({
+      nodes: [{ ref: 'brief', text: 'Brief' }],
+      groups: [
+        { ref: 'portfolio', label: 'Portfolio', members: ['mission'] },
+        { ref: 'mission', label: 'Mission', members: ['brief'] }
+      ]
+    }) as { refs: Record<string, string> };
+    expect(controller.read().objects.find(({ id }) => id === result.refs.portfolio)).toMatchObject({
+      kind: 'group',
+      childIds: [result.refs.mission]
+    });
+  });
+
   it('rejects layout roots that overlap through group membership', async () => {
     const child = { id: 'group-child', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 20, y: 40, width: 100, height: 80, text: 'Child' };
     const group = { id: 'parent-group', kind: 'group' as const, createdAt: child.createdAt, x: 0, y: 0, width: 160, height: 140, label: 'Parent', childIds: [child.id] };

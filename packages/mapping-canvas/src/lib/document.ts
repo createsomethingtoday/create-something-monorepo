@@ -65,9 +65,15 @@ export function withObjects(document: CanvasDocument, objects: CanvasObject[]): 
 
 export function removeObjects(document: CanvasDocument, ids: string[]): CanvasDocument {
   const removed = new Set(ids);
-  const objects = document.objects
-    .filter((object) => !removed.has(object.id) && (object.kind !== 'connector' || (!removed.has(object.fromId) && !removed.has(object.toId))))
-    .map((object) => object.kind === 'group' ? { ...object, childIds: object.childIds.filter((id) => !removed.has(id)) } : object);
+  let objects = document.objects.filter((object) => !removed.has(object.id));
+  while (true) {
+    const existing = new Set(objects.map(({ id }) => id));
+    const repaired = objects.filter((object) => object.kind !== 'connector' || (existing.has(object.fromId) && existing.has(object.toId)));
+    if (repaired.length === objects.length) break;
+    objects = repaired;
+  }
+  const existing = new Set(objects.map(({ id }) => id));
+  objects = objects.map((object) => object.kind === 'group' ? { ...object, childIds: object.childIds.filter((id) => existing.has(id)) } : object);
   return withObjects(document, objects);
 }
 

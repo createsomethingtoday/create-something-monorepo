@@ -91,6 +91,17 @@ describe('mapping canvas contract', () => {
     expect(result.objects.some(({ kind }) => kind === 'connector')).toBe(false);
     expect(result.objects.find(({ kind }) => kind === 'group')).toMatchObject({ childIds: ['b'] });
   });
+  it('removes transitively dependent connector chains', () => {
+    const source = withObjects(createDocument(), [
+      stroke('a'),
+      stroke('b', 100),
+      { id: 'first-link', kind: 'connector', createdAt: 'now', fromId: 'a', toId: 'b', label: '' },
+      { id: 'second-link', kind: 'connector', createdAt: 'now', fromId: 'first-link', toId: 'b', label: '' }
+    ]);
+    const result = removeObjects(source, ['a']);
+    expect(result.objects.map(({ id }) => id)).toEqual(['b']);
+    expect(parse(serialize(result))).toEqual(result);
+  });
   it('resizes a group and its contained elements as one unit', () => {
     const source = withObjects(createDocument(), [
       { id: 'note', kind: 'note', createdAt: 'now', x: 20, y: 30, width: 40, height: 20, text: 'Together' },
