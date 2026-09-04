@@ -91,13 +91,20 @@ export function withObjects(document: CanvasDocument, objects: CanvasObject[]): 
 
 export function removeObjects(document: CanvasDocument, ids: string[]): CanvasDocument {
   const removed = new Set(ids);
-  let objects = document.objects.filter((object) => !removed.has(object.id));
-  while (true) {
-    const existing = new Set(objects.map(({ id }) => id));
-    const repaired = objects.filter((object) => object.kind !== 'connector' || (existing.has(object.fromId) && existing.has(object.toId)));
-    if (repaired.length === objects.length) break;
-    objects = repaired;
+  const dependents = new Map<string, string[]>();
+  for (const object of document.objects) {
+    if (object.kind !== 'connector') continue;
+    for (const endpoint of new Set([object.fromId, object.toId])) {
+      const entries = dependents.get(endpoint) ?? [];
+      entries.push(object.id);
+      dependents.set(endpoint, entries);
+    }
   }
+  const queue = [...removed];
+  for (let index = 0; index < queue.length; index += 1) {
+    for (const dependent of dependents.get(queue[index]) ?? []) if (!removed.has(dependent)) { removed.add(dependent); queue.push(dependent); }
+  }
+  let objects = document.objects.filter((object) => !removed.has(object.id));
   const existing = new Set(objects.map(({ id }) => id));
   objects = objects.map((object) => object.kind === 'group' ? { ...object, childIds: object.childIds.filter((id) => existing.has(id)) } : object);
   return withObjects(document, objects);
@@ -185,7 +192,7 @@ export function objectBounds(objects: CanvasObject[], allObjects = objects) {
 }
 
 export function convertWithIdentity(document: CanvasDocument, selectedIds: string[], target: 'note' | 'connector' | 'group', identity: { id: string; createdAt: string }): CanvasDocument {
-  const sources = document.objects.filter(({ id }) => selectedIds.includes(id));
+  const selected = new Set(selectedIds), sources = document.objects.filter(({ id }) => selected.has(id));
   if (!sources.length || (target === 'connector' && sources.length < 2)) return document;
   const bounds = objectBounds(sources, document.objects);
   // Svelte state exposes proxy-backed objects; JSON cloning produces a portable

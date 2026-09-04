@@ -121,6 +121,11 @@ describe('mapping canvas contract', () => {
     expect(result.objects.map(({ id }) => id)).toEqual(['b']);
     expect(parse(serialize(result))).toEqual(result);
   });
+  it('removes a large connector dependency chain in one indexed traversal', () => {
+    const objects: CanvasObject[] = [stroke('root')];
+    for (let index = 0; index < 20_000; index += 1) objects.push({ id: `dependent-${index}`, kind: 'connector', createdAt: 'now', fromId: objects.at(-1)!.id, toId: 'root', label: '' });
+    expect(removeObjects(withObjects(createDocument(), objects), ['root']).objects).toEqual([]);
+  });
   it('resizes a group and its contained elements as one unit', () => {
     const source = withObjects(createDocument(), [
       { id: 'note', kind: 'note', createdAt: 'now', x: 20, y: 30, width: 40, height: 20, text: 'Together' },

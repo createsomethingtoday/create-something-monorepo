@@ -148,6 +148,16 @@ describe('Draw WebMCP tools', () => {
     expect(controller.read().objects).toEqual([{ ...first, text: 'Human first' }, second]);
   });
 
+  it('journals only objects actually changed by semantic patches', async () => {
+    const first = { id: 'semantic-journal-first', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 0, y: 0, width: 100, height: 80, text: 'First' };
+    const second = { ...first, id: 'semantic-journal-second', text: 'Second' };
+    const controller = harness({ ...createDocument(), objects: [first, second] }), tools = createDrawWebMcpTools(controller);
+    const changed = await tools.find(({ name }) => name === 'draw_patch_objects')!.execute({ patches: [{ id: first.id, text: first.text }, { id: second.id, text: 'Agent second' }] }) as { changeId: string };
+    await controller.applyOperations([{ type: 'put_object', object: { ...first, text: 'Human first' } }]);
+    await tools.find(({ name }) => name === 'draw_revert_change')!.execute({ changeId: changed.changeId });
+    expect(controller.read().objects).toEqual([{ ...first, text: 'Human first' }, second]);
+  });
+
   it('does not journal index shifts caused only by a low-level insertion', async () => {
     const first = { id: 'insert-first', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 0, y: 0, width: 100, height: 80, text: 'First' };
     const second = { ...first, id: 'insert-second', text: 'Second' };
@@ -167,6 +177,13 @@ describe('Draw WebMCP tools', () => {
     expect(projection.objects[0]).not.toHaveProperty('extensionPayload');
     await expect(tools.find(({ name }) => name === 'draw_compose')!.execute({ nodes: [{ ref: 'r'.repeat(121), text: 'Too long' }] })).rejects.toThrow('at most 120');
     expect(JSON.stringify(tools.find(({ name }) => name === 'draw_compose')!.inputSchema)).toContain('"maxLength":120');
+  });
+
+  it('bounds semantic group memberships in schema and runtime', async () => {
+    const controller = harness(), compose = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_compose')!;
+    const members = Array.from({ length: 201 }, (_, index) => `member-${index}`);
+    await expect(compose.execute({ groups: [{ ref: 'oversized', members }] })).rejects.toThrow('at most 200');
+    expect(JSON.stringify(compose.inputSchema)).toContain('"maxItems":200');
   });
 
   it('composes a labeled workflow from local references and creates v1 paths without storage fields', async () => {
@@ -528,6 +545,14 @@ describe('Draw WebMCP tools', () => {
     expect(controller.read().objects.map(({ id }) => id)).toEqual([second.id, first.id]);
     await tools.find(({ name }) => name === 'draw_revert_change')!.execute({ changeId: changed.changeId });
     expect(controller.read().objects.map(({ id }) => id)).toEqual([first.id, second.id]);
+  });
+
+  it('validates and reverts the maximum semantic layer reorder without repeated index scans', async () => {
+    const objects = Array.from({ length: 1_000 }, (_, index) => ({ id: `revert-scale-${index}`, kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: index, y: 0, width: 80, height: 60, text: String(index) }));
+    const controller = harness({ ...createDocument(), objects }), tools = createDrawWebMcpTools(controller);
+    const changed = await tools.find(({ name }) => name === 'draw_replace_canvas')!.execute({ objects: [...objects].reverse(), confirmation: 'REPLACE CANVAS' }) as { changeId: string };
+    await tools.find(({ name }) => name === 'draw_revert_change')!.execute({ changeId: changed.changeId });
+    expect(controller.read().objects.map(({ id }) => id)).toEqual(objects.map(({ id }) => id));
   });
 
   it('preserves a newer layer position while reverting an older whole-canvas reorder', async () => {

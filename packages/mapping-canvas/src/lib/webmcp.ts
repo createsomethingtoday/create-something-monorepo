@@ -344,7 +344,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
           nodes: { type: 'array', maxItems: 50, items: { type: 'object', required: ['ref', 'text'], additionalProperties: false, properties: { ref: { type: 'string', minLength: 1, maxLength: 120 }, text: { type: 'string', maxLength: 4000 }, width: { type: 'number', minimum: 80, maximum: 1200 }, height: { type: 'number', minimum: 60, maximum: 900 } } } },
           shapes: { type: 'array', maxItems: 50, items: { type: 'object', required: ['ref', 'kind'], additionalProperties: false, properties: { ref: { type: 'string', minLength: 1, maxLength: 120 }, kind: { type: 'string', enum: ['rectangle', 'ellipse', 'arrow'] }, color: { type: 'string', enum: DRAWING_PALETTE.map(({ id }) => id) }, width: { type: 'number', minimum: 8, maximum: 1600 }, height: { type: 'number', minimum: 8, maximum: 1200 } } } },
           edges: { type: 'array', maxItems: 100, items: { type: 'object', required: ['ref', 'from', 'to'], additionalProperties: false, properties: { ref: { type: 'string', minLength: 1, maxLength: 120 }, from: { type: 'string' }, to: { type: 'string' }, label: { type: 'string', maxLength: 240 } } } },
-          groups: { type: 'array', maxItems: 20, items: { type: 'object', required: ['ref', 'members'], additionalProperties: false, properties: { ref: { type: 'string', minLength: 1, maxLength: 120 }, label: { type: 'string', maxLength: 240 }, members: { type: 'array', minItems: 1, uniqueItems: true, items: { type: 'string' } } } } }
+          groups: { type: 'array', maxItems: 20, items: { type: 'object', required: ['ref', 'members'], additionalProperties: false, properties: { ref: { type: 'string', minLength: 1, maxLength: 120 }, label: { type: 'string', maxLength: 240 }, members: { type: 'array', minItems: 1, maxItems: 200, uniqueItems: true, items: { type: 'string' } } } } }
         }
       },
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
@@ -402,17 +402,22 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
           const ref = requiredText(edge.ref, 'edge.ref'), fromRef = requiredText(edge.from, `edge ${ref} from`), toRef = requiredText(edge.to, `edge ${ref} to`), from = refs[fromRef] ?? fromRef, to = refs[toRef] ?? toRef;
           objects.push({ id: refs[ref], kind: 'connector', createdAt: new Date().toISOString(), fromId: from, toId: to, label: typeof edge.label === 'string' ? edge.label : '' });
         }
-        let pendingGroups = [...groups];
+        let pendingGroups = [...groups], candidates = [...state.document.objects, ...objects];
+        const candidateById = new Map(candidates.map((object) => [object.id, object]));
         while (pendingGroups.length) {
           const unresolved: typeof pendingGroups = [];
           for (const group of pendingGroups) {
             const ref = requiredText(group.ref, 'group.ref'), members = Array.isArray(group.members) ? group.members.map((member) => { const normalized = requiredText(member, `group ${ref} member`); return refs[normalized] ?? normalized; }) : [];
-            const candidates = [...state.document.objects, ...objects], children = candidates.filter(({ id }) => members.includes(id));
             if (!members.length) throw new Error(`Group ${ref} requires at least one member.`);
-            if (children.length !== members.length) { unresolved.push(group); continue; }
-            if (!boundsDependenciesAvailable(children, candidates)) { unresolved.push(group); continue; }
-            const bounds = objectBounds(children, candidates);
-            objects.push({ id: refs[ref], kind: 'group', createdAt: new Date().toISOString(), x: bounds.x - 28, y: bounds.y - 52, width: bounds.width + 56, height: bounds.height + 80, label: typeof group.label === 'string' ? group.label : '', childIds: members });
+            if (members.length > 200) throw new Error(`Group ${ref} must contain at most 200 members.`);
+            if (new Set(members).size !== members.length) throw new Error(`Group ${ref} members must be unique.`);
+            const children = members.map((id) => candidateById.get(id));
+            if (children.some((child) => !child)) { unresolved.push(group); continue; }
+            const resolvedChildren = children as CanvasObject[];
+            if (!boundsDependenciesAvailable(resolvedChildren, candidates)) { unresolved.push(group); continue; }
+            const bounds = objectBounds(resolvedChildren, candidates);
+            const created: CanvasObject = { id: refs[ref], kind: 'group', createdAt: new Date().toISOString(), x: bounds.x - 28, y: bounds.y - 52, width: bounds.width + 56, height: bounds.height + 80, label: typeof group.label === 'string' ? group.label : '', childIds: members };
+            objects.push(created); candidates.push(created); candidateById.set(created.id, created);
           }
           if (unresolved.length === pendingGroups.length) throw new Error(`Group ${requiredText(unresolved[0].ref, 'group.ref')} references an unknown or cyclic member.`);
           pendingGroups = unresolved;
@@ -529,8 +534,9 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
           }
         }
         const result = await controller.applyOperations([{ type: 'replace_objects', objects }], drawRevision(before));
-        const ids = [...new Set([...touched, ...changedObjectIds(result.before, result.after)])];
-        return finish('update', ids, result.before, result.after);
+        const objectChanges = changedObjectIds(result.before, result.after), orderChanges = changedOrderIds(result.before, result.after);
+        const ids = [...new Set([...touched, ...objectChanges, ...orderChanges])];
+        return finish('update', ids, result.before, result.after, false, [...new Set([...objectChanges, ...orderChanges])]);
       }
     },
     {
@@ -602,31 +608,21 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         const current = controller.getState().document, currentById = new Map(current.objects.map((object) => [object.id, object])), beforeById = new Map(change.before.objects.map((object) => [object.id, object])), afterById = new Map(change.after.objects.map((object) => [object.id, object]));
         if (current.id !== change.after.id) throw new Error(`Change ${changeId} belongs to another Draw canvas and cannot be reverted here.`);
         for (const id of change.ids) if (JSON.stringify(currentById.get(id)) !== JSON.stringify(afterById.get(id))) throw new Error(`Object ${id} changed since ${changeId}; targeted revert refused.`);
-        const beforeOrder = change.before.objects.map(({ id }) => id), afterOrder = change.after.objects.map(({ id }) => id), currentOrder = current.objects.map(({ id }) => id);
-        for (const id of change.ids) {
-          const beforeIndex = beforeOrder.indexOf(id), afterIndex = afterOrder.indexOf(id);
-          if (beforeIndex === afterIndex || afterIndex < 0) continue;
-          for (const peer of afterOrder) {
-            if (peer === id || !currentById.has(peer)) continue;
-            const expectedSide = Math.sign(afterIndex - afterOrder.indexOf(peer));
-            const currentSide = Math.sign(currentOrder.indexOf(id) - currentOrder.indexOf(peer));
-            if (expectedSide !== currentSide) throw new Error(`Object ${id} layer order changed since ${changeId}; targeted revert refused.`);
-          }
-        }
+        const beforeOrder = change.before.objects.map(({ id }) => id), afterOrder = change.after.objects.map(({ id }) => id);
+        const originallyReordered = new Set(changedOrderIds(change.before, change.after));
+        const reorderedSince = new Set(changedOrderIds(change.after, current));
+        for (const id of change.ids) if (originallyReordered.has(id) && reorderedSince.has(id)) throw new Error(`Object ${id} layer order changed since ${changeId}; targeted revert refused.`);
         const removing = new Set(change.ids.filter((id) => !beforeById.has(id) && afterById.has(id)));
+        const touched = new Set(change.ids);
         for (const object of current.objects) {
-          if (change.ids.includes(object.id)) continue;
+          if (touched.has(object.id)) continue;
           const depends = object.kind === 'connector' ? removing.has(object.fromId) || removing.has(object.toId) : object.kind === 'group' ? object.childIds.some((id) => removing.has(id)) : false;
           if (depends) throw new Error(`Object ${object.id} depends on an object created by ${changeId}; targeted revert refused.`);
         }
         if (change.before.title !== change.after.title && current.title !== change.after.title) throw new Error(`Canvas title changed since ${changeId}; targeted revert refused.`);
         const restoresViewport = JSON.stringify(change.before.viewport) !== JSON.stringify(change.after.viewport);
         if (restoresViewport && JSON.stringify(current.viewport) !== JSON.stringify(change.after.viewport)) throw new Error(`Canvas viewport changed since ${changeId}; targeted revert refused.`);
-        const touched = new Set(change.ids);
-        const orderStable = new Set(change.ids.filter((id) => {
-          const beforeIndex = beforeOrder.indexOf(id), afterIndex = afterOrder.indexOf(id);
-          return beforeIndex >= 0 && beforeIndex === afterIndex;
-        }));
+        const orderStable = new Set(change.ids.filter((id) => beforeById.has(id) && afterById.has(id) && !originallyReordered.has(id)));
         const wholeCanvasReplacement = JSON.stringify(beforeOrder) !== JSON.stringify(afterOrder)
           && [...new Set([...beforeOrder, ...afterOrder])].every((id) => touched.has(id));
         let restored: CanvasObject[];
@@ -702,7 +698,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
       execute: async (input) => {
         if (input.confirmation !== REPLACE_CONFIRMATION) throw new Error(`Whole-canvas replacement requires confirmation exactly "${REPLACE_CONFIRMATION}".`);
         assertRevision(controller, input.expectedRevision);
-        if (!Array.isArray(input.objects)) throw new Error('objects must be an array.');
+        if (!Array.isArray(input.objects) || input.objects.length > 1000) throw new Error('objects must be an array of at most 1000 objects.');
         const operations: CanvasOperation[] = [{ type: 'replace_objects', objects: input.objects as CanvasObject[] }];
         if (typeof input.title === 'string') operations.push({ type: 'set_title', title: input.title });
         const before = controller.getState().document;
