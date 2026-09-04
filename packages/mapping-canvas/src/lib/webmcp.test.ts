@@ -136,6 +136,17 @@ describe('Draw WebMCP tools', () => {
     expect(controller.read().objects).toEqual([{ ...first, text: 'Human first' }, second]);
   });
 
+  it('does not journal index shifts caused only by a low-level insertion', async () => {
+    const first = { id: 'insert-first', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 0, y: 0, width: 100, height: 80, text: 'First' };
+    const second = { ...first, id: 'insert-second', text: 'Second' };
+    const inserted = { ...first, id: 'insert-new', text: 'New' };
+    const controller = harness({ ...createDocument(), objects: [first, second] }), tools = createDrawWebMcpTools(controller);
+    const changed = await tools.find(({ name }) => name === 'draw_apply_operations')!.execute({ operations: [{ type: 'replace_objects', objects: [inserted, first, second] }], confirmation: 'REPLACE CANVAS' }) as { changeId: string };
+    await tools.find(({ name }) => name === 'draw_apply_operations')!.execute({ operations: [{ type: 'put_object', object: { ...first, text: 'Human first' } }] });
+    await tools.find(({ name }) => name === 'draw_revert_change')!.execute({ changeId: changed.changeId });
+    expect(controller.read().objects).toEqual([{ ...first, text: 'Human first' }, second]);
+  });
+
   it('projects only documented compact object fields and bounds semantic refs', async () => {
     const rectangle = { id: 'extended-shape', kind: 'rectangle' as const, createdAt: '2026-09-04T00:00:00.000Z', from: { x: 0, y: 0 }, to: { x: 100, y: 80 }, color: '#0057b8', extensionPayload: Array.from({ length: 10_000 }, (_, index) => index) };
     const controller = harness({ ...createDocument(), objects: [rectangle] });

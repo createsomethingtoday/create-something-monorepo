@@ -102,7 +102,9 @@ function changedObjectIds(before: CanvasDocument, after: CanvasDocument) {
 function changedOrderIds(before: CanvasDocument, after: CanvasDocument) {
   const prior = new Map(before.objects.map(({ id }, index) => [id, index]));
   const next = new Map(after.objects.map(({ id }, index) => [id, index]));
-  return [...new Set([...prior.keys(), ...next.keys()])].filter((id) => prior.get(id) !== next.get(id));
+  const shared = [...prior.keys()].filter((id) => next.has(id));
+  return shared.filter((id) => shared.some((peer) => peer !== id
+    && Math.sign(prior.get(id)! - prior.get(peer)!) !== Math.sign(next.get(id)! - next.get(peer)!)));
 }
 
 export function drawRevision(document: CanvasDocument) {
