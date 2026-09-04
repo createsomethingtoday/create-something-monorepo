@@ -564,6 +564,16 @@ describe('Draw WebMCP tools', () => {
     expect(controller.read().objects.map(({ id }) => id)).toEqual([first.id, second.id]);
   });
 
+  it('preserves later content edits while reverting a pure layer reorder', async () => {
+    const first = { id: 'content-first', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 0, y: 0, width: 100, height: 80, text: 'First' };
+    const second = { ...first, id: 'content-second', text: 'Second' };
+    const controller = harness({ ...createDocument(), objects: [first, second] }), tools = createDrawWebMcpTools(controller);
+    const changed = await tools.find(({ name }) => name === 'draw_replace_canvas')!.execute({ objects: [second, first], confirmation: 'REPLACE CANVAS' }) as { changeId: string };
+    await controller.applyOperations([{ type: 'put_object', object: { ...second, text: 'Human second' } }]);
+    await tools.find(({ name }) => name === 'draw_revert_change')!.execute({ changeId: changed.changeId });
+    expect(controller.read().objects).toEqual([first, { ...second, text: 'Human second' }]);
+  });
+
   it('validates and reverts the maximum semantic layer reorder without repeated index scans', async () => {
     const objects = Array.from({ length: 1_000 }, (_, index) => ({ id: `revert-scale-${index}`, kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: index, y: 0, width: 80, height: 60, text: String(index) }));
     const controller = harness({ ...createDocument(), objects }), tools = createDrawWebMcpTools(controller);

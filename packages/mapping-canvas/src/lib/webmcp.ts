@@ -635,9 +635,11 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         const orderStable = new Set(change.ids.filter((id) => beforeById.has(id) && afterById.has(id) && !originallyReordered.has(id)));
         const wholeCanvasReplacement = JSON.stringify(beforeOrder) !== JSON.stringify(afterOrder)
           && [...new Set([...beforeOrder, ...afterOrder])].every((id) => touched.has(id));
+        const objectChanged = new Set(change.objectIds);
+        const priorValue = (object: CanvasObject) => objectChanged.has(object.id) ? object : currentById.get(object.id) ?? object;
         let restored: CanvasObject[];
         if (wholeCanvasReplacement) {
-          const prior = change.before.objects.filter((object) => touched.has(object.id));
+          const prior = change.before.objects.filter((object) => touched.has(object.id)).map(priorValue);
           let priorIndex = 0, insertionIndex = 0;
           restored = [];
           for (const object of current.objects) {
@@ -651,16 +653,17 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         } else {
           restored = current.objects
             .filter(({ id }) => !touched.has(id) || orderStable.has(id))
-            .map((object) => orderStable.has(object.id) ? beforeById.get(object.id)! : object);
+            .map((object) => orderStable.has(object.id) && objectChanged.has(object.id) ? beforeById.get(object.id)! : object);
           for (const prior of change.before.objects.filter(({ id }) => touched.has(id) && !orderStable.has(id))) {
             const priorIndex = change.before.objects.findIndex(({ id }) => id === prior.id);
             const sameLayer = (object: CanvasObject) => (object.kind === 'group') === (prior.kind === 'group');
             const preceding = change.before.objects.slice(0, priorIndex).reverse().find((object) => sameLayer(object) && restored.some(({ id }) => id === object.id));
-            if (preceding) restored.splice(restored.findIndex(({ id }) => id === preceding.id) + 1, 0, prior);
+            const value = priorValue(prior);
+            if (preceding) restored.splice(restored.findIndex(({ id }) => id === preceding.id) + 1, 0, value);
             else {
               const following = change.before.objects.slice(priorIndex + 1).find((object) => sameLayer(object) && restored.some(({ id }) => id === object.id));
-              if (following) restored.splice(restored.findIndex(({ id }) => id === following.id), 0, prior);
-              else restored.push(prior);
+              if (following) restored.splice(restored.findIndex(({ id }) => id === following.id), 0, value);
+              else restored.push(value);
             }
           }
         }

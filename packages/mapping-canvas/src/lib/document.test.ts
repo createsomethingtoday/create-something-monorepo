@@ -57,6 +57,14 @@ describe('mapping canvas contract', () => {
     const cycle: Connector = { id: 'cycle', kind: 'connector', createdAt: 'now', fromId: 'cycle', toId: 'cycle', label: '' };
     expect(parse(JSON.stringify({ ...source, objects: [cycle] })).objects).toEqual([]);
   });
+  it('removes many disjoint connector cycles in one normalization pass', () => {
+    const source = createDocument();
+    const cycles: Connector[] = Array.from({ length: 1_000 }, (_, index) => {
+      const pair = Math.floor(index / 2) * 2;
+      return { id: `cycle-${index}`, kind: 'connector', createdAt: 'now', fromId: `cycle-${index === pair ? pair + 1 : pair}`, toId: `cycle-${index === pair ? pair + 1 : pair}`, label: '' };
+    });
+    expect(parse(JSON.stringify({ ...source, objects: cycles })).objects).toEqual([]);
+  });
   it('migrates connector self-loops and repairs legacy dangling group membership', () => {
     const source = createDocument(), endpoint = stroke('endpoint');
     const selfLoop: Connector = { id: 'self-loop', kind: 'connector', createdAt: 'now', fromId: endpoint.id, toId: endpoint.id, label: '' };
