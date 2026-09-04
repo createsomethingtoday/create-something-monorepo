@@ -303,6 +303,26 @@ describe('Draw WebMCP tools', () => {
     expect(enclosing.x + enclosing.width).toBeGreaterThanOrEqual(target.x + target.width);
   });
 
+  it('waits for transitive connector endpoints before bounding an enclosing group', async () => {
+    const controller = harness(), tools = createDrawWebMcpTools(controller);
+    const result = await tools.find(({ name }) => name === 'draw_compose')!.execute({
+      nodes: [{ ref: 'source', text: 'Source' }, { ref: 'target', text: 'Target' }],
+      edges: [
+        { ref: 'outer-edge', from: 'source', to: 'inner-edge' },
+        { ref: 'inner-edge', from: 'source', to: 'target-group' }
+      ],
+      groups: [
+        { ref: 'edge-group', label: 'Edge group', members: ['outer-edge'] },
+        { ref: 'target-group', label: 'Target group', members: ['target'] }
+      ]
+    }) as { refs: Record<string, string> };
+    const objects = controller.read().objects;
+    const enclosing = objects.find(({ id }) => id === result.refs['edge-group'])!;
+    const target = objects.find(({ id }) => id === result.refs['target-group'])!;
+    if (enclosing.kind !== 'group' || target.kind !== 'group') throw new Error('Expected groups');
+    expect(enclosing.x + enclosing.width).toBeGreaterThanOrEqual(target.x + target.width);
+  });
+
   it('composes an edge using only existing canvas objects', async () => {
     const first = { id: 'existing-first', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 0, y: 0, width: 100, height: 80, text: 'First' };
     const second = { ...first, id: 'existing-second', x: 200, text: 'Second' };
@@ -437,6 +457,26 @@ describe('Draw WebMCP tools', () => {
     await tools.find(({ name }) => name === 'draw_revert_change')!.execute({ changeId: changed.changeId });
     expect(controller.animate).toHaveBeenLastCalledWith('restore', [note.id], true);
     expect(controller.read().viewport).toEqual(createDocument().viewport);
+  });
+
+  it('rejects a change receipt from a replaced canvas identity', async () => {
+    let document = createDocument('Before title');
+    const controller = {
+      getState: () => ({ document, selectedIds: [] as string[], tool: 'select' as const, canUndo: true, canRedo: false }),
+      applyOperations: async (operations: Parameters<typeof applyCanvasOperations>[1]) => {
+        const before = document, after = applyCanvasOperations(document, operations);
+        if (!after) throw new Error('Invalid operation batch');
+        document = after;
+        return { before, after };
+      },
+      select: vi.fn(), setTool: vi.fn(), undo: vi.fn(), redo: vi.fn(),
+      reset: vi.fn(() => { document = createDocument('After title'); }), animate: vi.fn()
+    };
+    const tools = createDrawWebMcpTools(controller);
+    const changed = await tools.find(({ name }) => name === 'draw_apply_operations')!.execute({ operations: [{ type: 'set_title', title: 'After title' }] }) as { changeId: string };
+    await tools.find(({ name }) => name === 'draw_reset')!.execute({ confirmation: 'RESET CANVAS' });
+    await expect(tools.find(({ name }) => name === 'draw_revert_change')!.execute({ changeId: changed.changeId })).rejects.toThrow('canvas');
+    expect(document.title).toBe('After title');
   });
 
   it('prefers document registerTool and returns structured site-tool results', async () => {

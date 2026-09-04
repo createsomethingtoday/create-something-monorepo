@@ -177,6 +177,18 @@ function descendants(document: CanvasDocument, ids: string[]) {
   return result;
 }
 
+function boundsDependenciesAvailable(objects: CanvasObject[], allObjects: CanvasObject[]) {
+  const byId = new Map(allObjects.map((object) => [object.id, object])), visited = new Set<string>();
+  const visit = (id: string): boolean => {
+    if (visited.has(id)) return true;
+    const object = byId.get(id);
+    if (!object) return false;
+    visited.add(id);
+    return object.kind !== 'connector' || (visit(object.fromId) && visit(object.toId));
+  };
+  return objects.every(({ id }) => visit(id));
+}
+
 function assertRevision(controller: DrawController, expected: unknown) {
   const current = drawRevision(controller.getState().document);
   if (typeof expected === 'string' && expected !== current) throw new Error(`Canvas revision is stale. Inspect again and retry with revision ${current}.`);
@@ -320,8 +332,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
             const candidates = [...state.document.objects, ...objects], children = candidates.filter(({ id }) => members.includes(id));
             if (!members.length) throw new Error(`Group ${ref} requires at least one member.`);
             if (children.length !== members.length) { unresolved.push(group); continue; }
-            const availableIds = new Set(candidates.map(({ id }) => id));
-            if (children.some((child) => child.kind === 'connector' && (!availableIds.has(child.fromId) || !availableIds.has(child.toId)))) { unresolved.push(group); continue; }
+            if (!boundsDependenciesAvailable(children, candidates)) { unresolved.push(group); continue; }
             const bounds = objectBounds(children, candidates);
             objects.push({ id: refs[ref], kind: 'group', createdAt: new Date().toISOString(), x: bounds.x - 28, y: bounds.y - 52, width: bounds.width + 56, height: bounds.height + 80, label: typeof group.label === 'string' ? group.label : '', childIds: members });
           }
@@ -508,6 +519,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         const changeId = requiredText(input.changeId, 'changeId'), change = changes.get(changeId);
         if (!change) throw new Error('Unknown or expired Draw change ID.');
         const current = controller.getState().document, currentById = new Map(current.objects.map((object) => [object.id, object])), beforeById = new Map(change.before.objects.map((object) => [object.id, object])), afterById = new Map(change.after.objects.map((object) => [object.id, object]));
+        if (current.id !== change.after.id) throw new Error(`Change ${changeId} belongs to another Draw canvas and cannot be reverted here.`);
         for (const id of change.ids) if (JSON.stringify(currentById.get(id)) !== JSON.stringify(afterById.get(id))) throw new Error(`Object ${id} changed since ${changeId}; targeted revert refused.`);
         const beforeOrder = change.before.objects.map(({ id }) => id), afterOrder = change.after.objects.map(({ id }) => id), currentOrder = current.objects.map(({ id }) => id);
         for (const id of change.ids) {
