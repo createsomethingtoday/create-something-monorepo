@@ -189,6 +189,11 @@ function boundsDependenciesAvailable(objects: CanvasObject[], allObjects: Canvas
   return objects.every(({ id }) => visit(id));
 }
 
+function assertMovableConnectorEndpoints(objects: CanvasObject[], moving: Set<string>) {
+  const stranded = objects.find((object) => object.kind === 'connector' && moving.has(object.id) && (!moving.has(object.fromId) || !moving.has(object.toId)));
+  if (stranded) throw new Error(`Group movement requires connector endpoints to be included with ${stranded.id}.`);
+}
+
 function assertRevision(controller: DrawController, expected: unknown) {
   const current = drawRevision(controller.getState().document);
   if (typeof expected === 'string' && expected !== current) throw new Error(`Canvas revision is stale. Inspect again and retry with revision ${current}.`);
@@ -413,6 +418,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
             const move = patch.translate as Record<string, unknown>, dx = finite(move.dx, NaN), dy = finite(move.dy, NaN);
             if (!Number.isFinite(dx) || !Number.isFinite(dy)) throw new Error('translate requires finite dx and dy.');
             const moving = descendants({ ...before, objects }, [id]);
+            assertMovableConnectorEndpoints(objects, moving);
             objects = objects.map((candidate) => moving.has(candidate.id) ? translated(candidate, dx, dy) : candidate);
             moving.forEach((movingId) => touched.add(movingId));
           }
@@ -424,6 +430,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
             if (current.kind === 'note') objects = objects.map((candidate) => candidate.id === id ? { ...current, width, height } : candidate);
             else {
               const scaleX = width / current.width, scaleY = height / current.height, moving = descendants({ ...before, objects }, [id]);
+              assertMovableConnectorEndpoints(objects, moving);
               const scalePoint = ({ x, y }: Point) => ({ x: current.x + (x - current.x) * scaleX, y: current.y + (y - current.y) * scaleY });
               objects = objects.map((candidate) => {
                 if (candidate.id === id) return { ...current, width, height };
@@ -483,6 +490,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
           const column = direction === 'column' ? 0 : index % columns, row = direction === 'row' ? 0 : Math.floor(index / columns);
           const target = { x: anchor.x + column * (maxWidth + gap), y: anchor.y + row * (maxHeight + gap) };
           const dx = target.x - bounds[index].x, dy = target.y - bounds[index].y, moving = descendants({ ...before, objects }, [id]);
+          assertMovableConnectorEndpoints(objects, moving);
           objects = objects.map((object) => moving.has(object.id) ? translated(object, dx, dy) : object);
           moving.forEach((movingId) => movedIds.add(movingId));
         });

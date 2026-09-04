@@ -371,6 +371,22 @@ describe('Draw WebMCP tools', () => {
     expect(controller.read().objects).toEqual([first, second, connector]);
   });
 
+  it('rejects moving a group when connector endpoints are outside the group', async () => {
+    const first = { id: 'external-first', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 0, y: 0, width: 100, height: 80, text: 'First' };
+    const second = { ...first, id: 'external-second', x: 200, text: 'Second' };
+    const connector = { id: 'contained-edge', kind: 'connector' as const, createdAt: first.createdAt, fromId: first.id, toId: second.id, label: 'Edge' };
+    const group = { id: 'edge-only-group', kind: 'group' as const, createdAt: first.createdAt, x: -20, y: -40, width: 340, height: 160, label: 'Edges', childIds: [connector.id] };
+    const initial = { ...createDocument(), objects: [group, first, second, connector] };
+    for (const [toolName, input] of [
+      ['draw_patch_objects', { patches: [{ id: group.id, translate: { dx: 20, dy: 30 } }] }],
+      ['draw_layout', { ids: [group.id], direction: 'row' }]
+    ] as const) {
+      const controller = harness(initial), tool = createDrawWebMcpTools(controller).find(({ name }) => name === toolName)!;
+      await expect(tool.execute(input)).rejects.toThrow('connector endpoints');
+      expect(controller.read().objects).toEqual(initial.objects);
+    }
+  });
+
   it('arranges visible objects across fixed background groups', async () => {
     const first = { id: 'visible-first', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 0, y: 0, width: 100, height: 80, text: 'First' };
     const second = { ...first, id: 'visible-second', text: 'Second' };
