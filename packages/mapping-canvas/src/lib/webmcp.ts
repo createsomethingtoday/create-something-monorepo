@@ -320,6 +320,8 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
             const candidates = [...state.document.objects, ...objects], children = candidates.filter(({ id }) => members.includes(id));
             if (!members.length) throw new Error(`Group ${ref} requires at least one member.`);
             if (children.length !== members.length) { unresolved.push(group); continue; }
+            const availableIds = new Set(candidates.map(({ id }) => id));
+            if (children.some((child) => child.kind === 'connector' && (!availableIds.has(child.fromId) || !availableIds.has(child.toId)))) { unresolved.push(group); continue; }
             const bounds = objectBounds(children, candidates);
             objects.push({ id: refs[ref], kind: 'group', createdAt: new Date().toISOString(), x: bounds.x - 28, y: bounds.y - 52, width: bounds.width + 56, height: bounds.height + 80, label: typeof group.label === 'string' ? group.label : '', childIds: members });
           }
@@ -396,6 +398,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
           objects[index] = object;
           touched.add(id);
           if (patch.translate && typeof patch.translate === 'object') {
+            if (object.kind === 'connector') throw new Error('translate cannot patch a connector; move its endpoint objects instead.');
             const move = patch.translate as Record<string, unknown>, dx = finite(move.dx, NaN), dy = finite(move.dy, NaN);
             if (!Number.isFinite(dx) || !Number.isFinite(dy)) throw new Error('translate requires finite dx and dy.');
             const moving = descendants({ ...before, objects }, [id]);
@@ -524,7 +527,8 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
           if (depends) throw new Error(`Object ${object.id} depends on an object created by ${changeId}; targeted revert refused.`);
         }
         if (change.before.title !== change.after.title && current.title !== change.after.title) throw new Error(`Canvas title changed since ${changeId}; targeted revert refused.`);
-        if (JSON.stringify(change.before.viewport) !== JSON.stringify(change.after.viewport) && JSON.stringify(current.viewport) !== JSON.stringify(change.after.viewport)) throw new Error(`Canvas viewport changed since ${changeId}; targeted revert refused.`);
+        const restoresViewport = JSON.stringify(change.before.viewport) !== JSON.stringify(change.after.viewport);
+        if (restoresViewport && JSON.stringify(current.viewport) !== JSON.stringify(change.after.viewport)) throw new Error(`Canvas viewport changed since ${changeId}; targeted revert refused.`);
         const touched = new Set(change.ids);
         const orderStable = new Set(change.ids.filter((id) => {
           const beforeIndex = beforeOrder.indexOf(id), afterIndex = afterOrder.indexOf(id);
@@ -555,10 +559,10 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         }
         const operations: CanvasOperation[] = [{ type: 'replace_objects', objects: restored }];
         if (change.before.title !== change.after.title) operations.push({ type: 'set_title', title: change.before.title });
-        if (JSON.stringify(change.before.viewport) !== JSON.stringify(change.after.viewport)) operations.push({ type: 'set_viewport', viewport: change.before.viewport });
+        if (restoresViewport) operations.push({ type: 'set_viewport', viewport: change.before.viewport });
         const result = await controller.applyOperations(operations, drawRevision(current));
         changes.delete(changeId);
-        return finish('restore', change.ids, result.before, result.after);
+        return finish('restore', change.ids, result.before, result.after, restoresViewport);
       }
     },
     {

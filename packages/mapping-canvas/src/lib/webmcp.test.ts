@@ -284,6 +284,25 @@ describe('Draw WebMCP tools', () => {
     });
   });
 
+  it('waits for connector endpoints before bounding an enclosing group', async () => {
+    const controller = harness(), tools = createDrawWebMcpTools(controller);
+    const result = await tools.find(({ name }) => name === 'draw_compose')!.execute({
+      nodes: [{ ref: 'source', text: 'Source' }, { ref: 'target', text: 'Target' }],
+      edges: [{ ref: 'handoff', from: 'source', to: 'target-group' }],
+      groups: [
+        { ref: 'edge-group', label: 'Edge group', members: ['handoff'] },
+        { ref: 'target-group', label: 'Target group', members: ['target'] }
+      ]
+    }) as { refs: Record<string, string> };
+    const objects = controller.read().objects;
+    const enclosing = objects.find(({ id }) => id === result.refs['edge-group'])!;
+    const target = objects.find(({ id }) => id === result.refs['target-group'])!;
+    expect(enclosing).toMatchObject({ kind: 'group' });
+    expect(target).toMatchObject({ kind: 'group' });
+    if (enclosing.kind !== 'group' || target.kind !== 'group') throw new Error('Expected groups');
+    expect(enclosing.x + enclosing.width).toBeGreaterThanOrEqual(target.x + target.width);
+  });
+
   it('composes an edge using only existing canvas objects', async () => {
     const first = { id: 'existing-first', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 0, y: 0, width: 100, height: 80, text: 'First' };
     const second = { ...first, id: 'existing-second', x: 200, text: 'Second' };
@@ -320,6 +339,16 @@ describe('Draw WebMCP tools', () => {
     const patch = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_patch_objects')!;
     await expect(patch.execute({ patches: [{ id: group.id, arrange: 'front' }] })).rejects.toThrow('Group layer arrangement');
     expect(controller.read().objects).toEqual([group, child]);
+  });
+
+  it('rejects connector translation instead of reporting a no-op success', async () => {
+    const first = { id: 'translate-first', kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: 0, y: 0, width: 100, height: 80, text: 'First' };
+    const second = { ...first, id: 'translate-second', x: 200, text: 'Second' };
+    const connector = { id: 'translate-edge', kind: 'connector' as const, createdAt: first.createdAt, fromId: first.id, toId: second.id, label: 'Edge' };
+    const controller = harness({ ...createDocument(), objects: [first, second, connector] });
+    const patch = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_patch_objects')!;
+    await expect(patch.execute({ patches: [{ id: connector.id, translate: { dx: 20, dy: 30 } }] })).rejects.toThrow('connector');
+    expect(controller.read().objects).toEqual([first, second, connector]);
   });
 
   it('arranges visible objects across fixed background groups', async () => {
@@ -397,6 +426,17 @@ describe('Draw WebMCP tools', () => {
     expect(animate).toHaveBeenCalledWith('update', [note.id], true);
     expect(result).toMatchObject({ transition: { affectedIds: [note.id] }, revision: expect.any(String), summary: { objectCount: 1 } });
     expect(result).not.toHaveProperty('state');
+  });
+
+  it('preserves the restored viewport during a targeted revert transition', async () => {
+    const note = { id: 'revert-framed-note', kind: 'note' as const, createdAt: '2026-09-02T00:00:00.000Z', x: 4000, y: 2800, width: 260, height: 132, text: 'Explicit frame' };
+    const controller = harness(), tools = createDrawWebMcpTools(controller);
+    const changed = await tools.find(({ name }) => name === 'draw_apply_operations')!.execute({
+      operations: [{ type: 'put_object', object: note }, { type: 'set_viewport', viewport: { x: -300, y: -200, zoom: .8 } }]
+    }) as { changeId: string };
+    await tools.find(({ name }) => name === 'draw_revert_change')!.execute({ changeId: changed.changeId });
+    expect(controller.animate).toHaveBeenLastCalledWith('restore', [note.id], true);
+    expect(controller.read().viewport).toEqual(createDocument().viewport);
   });
 
   it('prefers document registerTool and returns structured site-tool results', async () => {
