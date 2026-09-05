@@ -280,6 +280,28 @@ describe('Draw WebMCP tools', () => {
     expect(labelRight + 48).toBeLessThanOrEqual(placedPeer.x - .5);
   });
 
+  it('reserves painted space for labels on connectors between layout roots', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', label = 'Approval evidence '.repeat(8);
+    const first = { id: 'first', kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: 'First' }, second = { ...first, id: 'second', text: 'Second' };
+    const connector = { id: 'edge', kind: 'connector' as const, createdAt, fromId: first.id, toId: second.id, label };
+    const controller = harness({ ...createDocument(), objects: [first, second, connector] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: [first.id, second.id], mode: 'flow', gap: 16 });
+    const notes = controller.read().objects.filter((object): object is typeof first => object.kind === 'note').sort((a, b) => a.x - b.x), labelCenter = (notes[0].x + notes[0].width / 2 + notes[1].x + notes[1].width / 2) / 2, halfLabel = (label.length * 7 + 5) / 2;
+    expect(labelCenter - halfLabel).toBeGreaterThanOrEqual(notes[0].x + notes[0].width + .5 + 16);
+    expect(labelCenter + halfLabel).toBeLessThanOrEqual(notes[1].x - .5 - 16);
+  });
+
+  it('reserves marker paint for descendant connectors', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z';
+    const first = { id: 'first', kind: 'rectangle' as const, createdAt, from: { x: 0, y: 0 }, to: { x: 20, y: 20 }, color: '#fcaa2d' }, second = { ...first, id: 'second', from: { x: 80, y: 0 }, to: { x: 100, y: 20 } };
+    const internal = { id: 'internal', kind: 'connector' as const, createdAt, fromId: first.id, toId: second.id, label: '' }, group = { id: 'group', kind: 'group' as const, createdAt, x: 0, y: 0, width: 100, height: 80, label: '', childIds: [first.id, second.id, internal.id] };
+    const peer = { id: 'peer', kind: 'note' as const, createdAt, x: 10, y: 0, width: 120, height: 80, text: 'Peer' }, outbound = { ...internal, id: 'outbound', fromId: second.id, toId: peer.id };
+    const controller = harness({ ...createDocument(), objects: [group, first, second, internal, peer, outbound] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: [group.id, peer.id], mode: 'flow', gap: 16 });
+    const state = controller.read(), placedGroup = state.objects.find((object): object is typeof group => object.id === group.id)!, placedPeer = state.objects.find((object): object is typeof peer => object.id === peer.id)!;
+    expect(placedPeer.x - .5 - (placedGroup.x + placedGroup.width + 19)).toBeGreaterThanOrEqual(16);
+  });
+
   it('summarizes dense stroke geometry in compact inspection', async () => {
     const points = Array.from({ length: 2_000 }, (_, index) => ({ x: index, y: index % 50 }));
     const stroke = { id: 'dense-stroke', kind: 'stroke' as const, createdAt: '2026-09-04T00:00:00.000Z', points, color: '#0057b8', width: 5 };

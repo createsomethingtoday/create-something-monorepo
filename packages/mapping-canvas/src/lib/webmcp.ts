@@ -252,43 +252,57 @@ function descendants(document: CanvasDocument, ids: string[]) {
   return result;
 }
 
-function paintedLayoutBounds(objects: CanvasObject[], allObjects: CanvasObject[]) {
+function estimatedTextWidth(value: string) {
+  return Array.from(value).reduce((width, character) => width + (character.codePointAt(0)! > 255 ? 12 : 7), 0);
+}
+
+function paintedLayoutBounds(objects: CanvasObject[], allObjects: CanvasObject[], externalPadding = 0) {
   const bounds = objectBounds(objects, allObjects);
   const byId = new Map(allObjects.map((object) => [object.id, object]));
   const resolveCenter = createObjectCenterResolver(allObjects);
-  const textWidth = (value: string) => Array.from(value).reduce((width, character) => width + (character.codePointAt(0)! > 255 ? 12 : 7), 0);
   let minX = bounds.x, minY = bounds.y, maxX = bounds.x + bounds.width, maxY = bounds.y + bounds.height;
   for (const object of objects) {
-    if (object.kind === 'group') maxX = Math.max(maxX, object.x + 12 + textWidth(object.label));
+    if (object.kind === 'group') maxX = Math.max(maxX, object.x + 12 + estimatedTextWidth(object.label));
     if (object.kind !== 'connector' || !object.label) continue;
     const from = byId.get(object.fromId), to = byId.get(object.toId);
     if (!from || !to) continue;
     const fromCenter = resolveCenter(from), toCenter = resolveCenter(to);
     const center = { x: (fromCenter.x + toCenter.x) / 2, y: (fromCenter.y + toCenter.y) / 2 - 10 };
-    const halfWidth = (textWidth(object.label) + 5) / 2;
+    const halfWidth = (estimatedTextWidth(object.label) + 5) / 2;
     minX = Math.min(minX, center.x - halfWidth); maxX = Math.max(maxX, center.x + halfWidth);
     minY = Math.min(minY, center.y - 12); maxY = Math.max(maxY, center.y + 4);
   }
-  const padding = Math.max(0, ...objects.map((object) => {
+  const paintPadding = Math.max(0, ...objects.map((object) => {
     if (object.kind === 'stroke') return object.width / 2;
     if (object.kind === 'arrow') return 19;
+    if (object.kind === 'connector') return 19;
     if (object.kind === 'rectangle' || object.kind === 'ellipse' || object.kind === 'group') return 1;
     if (object.kind === 'note') return .5;
     return 0;
   }));
+  const padding = paintPadding + externalPadding;
   return { x: minX - padding, y: minY - padding, width: maxX - minX + padding * 2, height: maxY - minY + padding * 2 };
 }
 
 function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: 'flow' | 'hierarchy' | 'loop' | 'orbit' | 'swimlane', gap: number, laneById: Map<string, string>, orientation?: 'horizontal' | 'vertical') {
   const roots = [...rootIds].sort();
+  const rootByMember = new Map<string, string>();
+  for (const root of roots) for (const id of descendants(document, [root])) rootByMember.set(id, root);
+  const externalPadding = new Map(roots.map((id) => [id, 0]));
+  for (const connector of document.objects) {
+    if (connector.kind !== 'connector' || !connector.label) continue;
+    const from = rootByMember.get(connector.fromId), to = rootByMember.get(connector.toId);
+    if (!from || !to || from === to) continue;
+    const labelPadding = (estimatedTextWidth(connector.label) + 5 + gap) / 2;
+    externalPadding.set(from, Math.max(externalPadding.get(from)!, labelPadding));
+    externalPadding.set(to, Math.max(externalPadding.get(to)!, labelPadding));
+  }
   const rootBounds = new Map(roots.map((id) => {
     const moving = descendants(document, [id]);
-    return [id, paintedLayoutBounds(document.objects.filter((object) => moving.has(object.id)), document.objects)] as const;
+    return [id, paintedLayoutBounds(document.objects.filter((object) => moving.has(object.id)), document.objects, externalPadding.get(id))] as const;
   }));
   const width = Math.max(...[...rootBounds.values()].map((bounds) => bounds.width)), height = Math.max(...[...rootBounds.values()].map((bounds) => bounds.height));
   const anchor = { x: Math.min(...[...rootBounds.values()].map(({ x }) => x)), y: Math.min(...[...rootBounds.values()].map(({ y }) => y)) };
-  const rootByMember = new Map<string, string>();
-  for (const root of roots) for (const id of descendants(document, [root])) rootByMember.set(id, root);
   const adjacency = new Map(roots.map((id) => [id, new Set<string>()]));
   for (const connector of document.objects) {
     if (connector.kind !== 'connector') continue;
@@ -299,7 +313,7 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
   if (mode === 'loop' || mode === 'orbit') {
     const orbiting = mode === 'orbit' ? roots.slice(1) : roots;
     if (mode === 'orbit') targets.set(roots[0], anchor);
-    if (mode === 'loop' && orbiting.length === 1) { targets.set(orbiting[0], anchor); return { targets, layerCount: 1, laneCount: 0 }; }
+    if (mode === 'loop' && orbiting.length === 1) { targets.set(orbiting[0], anchor); return { targets, bounds: rootBounds, layerCount: 1, laneCount: 0 }; }
     const diameter = Math.max(width, height) + gap;
     const hubBounds = rootBounds.get(roots[0])!;
     let radius = diameter;
@@ -324,7 +338,7 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
       radius *= 1.25;
       if (attempt === 31) throw new Error('Circular layout could not satisfy bounded object clearance.');
     }
-    return { targets, layerCount: mode === 'orbit' ? 2 : 1, laneCount: 0 };
+    return { targets, bounds: rootBounds, layerCount: mode === 'orbit' ? 2 : 1, laneCount: 0 };
   }
   if (mode === 'swimlane') {
     const lanes = [...new Set(roots.map((id) => laneById.get(id) ?? 'Unassigned'))].sort();
@@ -333,7 +347,7 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
         ? { x: anchor.x + itemIndex * (width + gap), y: anchor.y + laneIndex * (height + gap * 2) }
         : { x: anchor.x + laneIndex * (width + gap * 2), y: anchor.y + itemIndex * (height + gap) }));
     }
-    return { targets, layerCount: 0, laneCount: lanes.length };
+    return { targets, bounds: rootBounds, layerCount: 0, laneCount: lanes.length };
   }
   const reverse = new Map(roots.map((id) => [id, new Set<string>()]));
   for (const [from, toIds] of adjacency) for (const to of toIds) reverse.get(to)!.add(from);
@@ -367,7 +381,7 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
   for (const [level, ids] of [...idsByLevel].sort(([a], [b]) => a - b)) ids.forEach((id, index) => targets.set(id, !vertical
     ? { x: anchor.x + level * (width + gap), y: anchor.y + index * (height + gap) }
     : { x: anchor.x + index * (width + gap), y: anchor.y + level * (height + gap) }));
-  return { targets, layerCount: idsByLevel.size, laneCount: 0 };
+  return { targets, bounds: rootBounds, layerCount: idsByLevel.size, laneCount: 0 };
 }
 
 function boundsDependenciesAvailable(objects: CanvasObject[], allObjects: CanvasObject[]) {
@@ -870,7 +884,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         let objects = before.objects;
         const movedIds = new Set<string>();
         for (const id of ids) {
-          const moving = descendants(before, [id]), bounds = paintedLayoutBounds(before.objects.filter((object) => moving.has(object.id)), before.objects), target = layout.targets.get(id)!;
+          const moving = descendants(before, [id]), bounds = layout.bounds.get(id)!, target = layout.targets.get(id)!;
           assertMovableConnectorEndpoints(objects, moving);
           objects = objects.map((object) => moving.has(object.id) ? translated(object, target.x - bounds.x, target.y - bounds.y) : object);
           moving.forEach((movingId) => movedIds.add(movingId));
