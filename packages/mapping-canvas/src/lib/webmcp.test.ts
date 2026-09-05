@@ -251,6 +251,20 @@ describe('Draw WebMCP tools', () => {
     expect((notes[1].x - .5) - (notes[0].x + notes[0].width + .5)).toBeGreaterThanOrEqual(16);
   });
 
+  it('spaces group roots around labeled descendant connectors', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', label = 'Internal governed approval route '.repeat(5);
+    const first = { id: 'first', kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: 'First' };
+    const second = { ...first, id: 'second', x: 140, text: 'Second' }, peer = { ...first, id: 'peer', x: 10, text: 'Peer' };
+    const internal = { id: 'internal', kind: 'connector' as const, createdAt, fromId: first.id, toId: second.id, label };
+    const group = { id: 'group', kind: 'group' as const, createdAt, x: 0, y: 0, width: 260, height: 100, label: '', childIds: [first.id, second.id, internal.id] };
+    const outbound = { ...internal, id: 'outbound', fromId: second.id, toId: peer.id, label: '' };
+    const controller = harness({ ...createDocument(), objects: [group, first, second, internal, peer, outbound] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: [group.id, peer.id], mode: 'flow', gap: 48 });
+    const state = controller.read(), placedFirst = state.objects.find((object): object is typeof first => object.id === first.id)!, placedSecond = state.objects.find((object): object is typeof second => object.id === second.id)!, placedPeer = state.objects.find((object): object is typeof peer => object.id === peer.id)!;
+    const labelCenter = ((placedFirst.x + placedFirst.width / 2) + (placedSecond.x + placedSecond.width / 2)) / 2, labelRight = labelCenter + (label.length * 7 + 5) / 2;
+    expect(labelRight + 48).toBeLessThanOrEqual(placedPeer.x - .5);
+  });
+
   it('summarizes dense stroke geometry in compact inspection', async () => {
     const points = Array.from({ length: 2_000 }, (_, index) => ({ x: index, y: index % 50 }));
     const stroke = { id: 'dense-stroke', kind: 'stroke' as const, createdAt: '2026-09-04T00:00:00.000Z', points, color: '#0057b8', width: 5 };

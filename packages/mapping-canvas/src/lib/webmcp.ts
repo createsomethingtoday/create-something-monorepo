@@ -254,7 +254,20 @@ function descendants(document: CanvasDocument, ids: string[]) {
 
 function paintedLayoutBounds(objects: CanvasObject[], allObjects: CanvasObject[]) {
   const bounds = objectBounds(objects, allObjects);
-  const labelRight = Math.max(bounds.x + bounds.width, ...objects.map((object) => object.kind === 'group' ? object.x + 12 + object.label.length * 7 : -Infinity));
+  const byId = new Map(allObjects.map((object) => [object.id, object]));
+  const textWidth = (value: string) => Array.from(value).reduce((width, character) => width + (character.codePointAt(0)! > 255 ? 12 : 7), 0);
+  let minX = bounds.x, minY = bounds.y, maxX = bounds.x + bounds.width, maxY = bounds.y + bounds.height;
+  for (const object of objects) {
+    if (object.kind === 'group') maxX = Math.max(maxX, object.x + 12 + textWidth(object.label));
+    if (object.kind !== 'connector' || !object.label) continue;
+    const from = byId.get(object.fromId), to = byId.get(object.toId);
+    if (!from || !to) continue;
+    const fromBounds = objectBounds([from], allObjects), toBounds = objectBounds([to], allObjects);
+    const center = { x: (fromBounds.x + fromBounds.width / 2 + toBounds.x + toBounds.width / 2) / 2, y: (fromBounds.y + fromBounds.height / 2 + toBounds.y + toBounds.height / 2) / 2 - 10 };
+    const halfWidth = (textWidth(object.label) + 5) / 2;
+    minX = Math.min(minX, center.x - halfWidth); maxX = Math.max(maxX, center.x + halfWidth);
+    minY = Math.min(minY, center.y - 12); maxY = Math.max(maxY, center.y + 4);
+  }
   const padding = Math.max(0, ...objects.map((object) => {
     if (object.kind === 'stroke') return object.width / 2;
     if (object.kind === 'arrow') return 19;
@@ -262,7 +275,7 @@ function paintedLayoutBounds(objects: CanvasObject[], allObjects: CanvasObject[]
     if (object.kind === 'note') return .5;
     return 0;
   }));
-  return { x: bounds.x - padding, y: bounds.y - padding, width: labelRight - bounds.x + padding * 2, height: bounds.height + padding * 2 };
+  return { x: minX - padding, y: minY - padding, width: maxX - minX + padding * 2, height: maxY - minY + padding * 2 };
 }
 
 function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: 'flow' | 'hierarchy' | 'loop' | 'orbit' | 'swimlane', gap: number, laneById: Map<string, string>, orientation?: 'horizontal' | 'vertical') {

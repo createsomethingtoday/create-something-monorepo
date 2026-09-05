@@ -173,6 +173,10 @@ try {
     const collisionPatch = await tools.draw_patch_objects.execute({ patches: [{ id: collisionB.id, translate: { dx: collisionA.x - collisionB.x, dy: collisionA.y - collisionB.y } }] });
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     const collisionGeometry = await tools.draw_get_rendered_geometry.execute({ ids: [collisionA.id, collisionB.id], limit: 10 });
+    const provenanceIds = ['browser-provenance-a', 'browser-provenance-b'];
+    const provenance = await tools.draw_apply_operations.execute({ operations: provenanceIds.map((id) => ({ type: 'put_object', object: { id, kind: 'stroke', createdAt: new Date().toISOString(), points: [{ x: 200, y: 200 }, { x: 400, y: 300 }], color: '#fcaa2d', width: 8, sourceIds: ['shared-import-source'] } })) });
+    const provenanceGeometry = await tools.draw_get_rendered_geometry.execute({ ids: provenanceIds, limit: 10 });
+    await tools.draw_revert_change.execute({ changeId: provenance.changeId });
     const offscreenId = 'browser-rendered-offscreen';
     const offscreen = await tools.draw_apply_operations.execute({ operations: [{ type: 'put_object', object: { id: offscreenId, kind: 'note', createdAt: new Date().toISOString(), x: 100000, y: 100000, width: 180, height: 100, text: 'Offscreen' } }, { type: 'set_viewport', viewport: collisionState.document.viewport }] });
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
@@ -198,7 +202,7 @@ try {
     const restored = await tools.draw_get_state.execute({});
     return {
       names, drawNames, version: inspect.version, compactBytes: JSON.stringify(inspect).length, fullBytes: JSON.stringify(before).length,
-      composed, renderedGeometry, connectorCollisionGeometry, briefModelWidth, rawConnectorLabelBounds, selectedGroupGeometry, unselectedGroupGeometry, autoLayouts, arrow, arrowGeometry, settledArrowGeometry, edgeArrowGeometry, thickArrowGeometry, collisionGeometry, clippedGeometry, connectorVisible: Boolean(connectorLabel && getComputedStyle(connectorLabel).display !== 'none'),
+      composed, renderedGeometry, connectorCollisionGeometry, briefModelWidth, rawConnectorLabelBounds, selectedGroupGeometry, unselectedGroupGeometry, autoLayouts, arrow, arrowGeometry, settledArrowGeometry, edgeArrowGeometry, thickArrowGeometry, collisionGeometry, provenanceGeometry, clippedGeometry, connectorVisible: Boolean(connectorLabel && getComputedStyle(connectorLabel).display !== 'none'),
       staleError, deleteError, replaceError, focus, restoredCount: restored.document.objects.length, beforeCount: before.document.objects.length
     };
   });
@@ -213,7 +217,7 @@ try {
   if (semantic.autoLayouts.length !== 5 || semantic.autoLayouts.some(({ peerOverlaps }) => peerOverlaps) || semantic.arrow.geometry.arrowhead !== 'triangle' || semantic.arrowGeometry.objects.length !== 2 || semantic.arrowGeometry.overlaps.some(({ classification }) => classification === 'peer')) throw new Error(`Semantic auto-layout or freehand arrow proof failed: ${JSON.stringify({ autoLayouts: semantic.autoLayouts, arrow: semantic.arrow, arrowGeometry: semantic.arrowGeometry })}`);
   if (!semantic.edgeArrowGeometry.objects.some(({ clipped }) => clipped)) throw new Error(`Rendered arrowhead marker clipping was not included: ${JSON.stringify(semantic.edgeArrowGeometry)}`);
   if (!semantic.thickArrowGeometry.objects.some(({ clipped }) => clipped)) throw new Error(`Rendered stroke-width clipping was not included: ${JSON.stringify(semantic.thickArrowGeometry)}`);
-  if (!semantic.collisionGeometry.overlaps.some(({ classification }) => classification === 'peer') || !semantic.clippedGeometry.objects[0]?.clipped || !semantic.clippedGeometry.missingIds.includes('missing-rendered-id')) throw new Error(`Rendered collision, clipping, or missing-ID evidence failed: ${JSON.stringify({ collision: semantic.collisionGeometry, clipped: semantic.clippedGeometry })}`);
+  if (!semantic.collisionGeometry.overlaps.some(({ classification }) => classification === 'peer') || !semantic.provenanceGeometry.overlaps.some(({ classification }) => classification === 'peer') || !semantic.clippedGeometry.objects[0]?.clipped || !semantic.clippedGeometry.missingIds.includes('missing-rendered-id')) throw new Error(`Rendered collision, provenance, clipping, or missing-ID evidence failed: ${JSON.stringify({ collision: semantic.collisionGeometry, provenance: semantic.provenanceGeometry, clipped: semantic.clippedGeometry })}`);
   if (!semantic.staleError.includes('revision') || !semantic.deleteError.includes('DELETE OBJECTS') || !semantic.replaceError.includes('REPLACE CANVAS')) throw new Error(`Semantic safety boundary failed: ${JSON.stringify(semantic)}`);
   if (semantic.restoredCount !== semantic.beforeCount || !semantic.focus.ok) throw new Error(`Semantic workflow did not restore its isolated fixture: ${JSON.stringify(semantic)}`);
   await page.waitForTimeout(800);

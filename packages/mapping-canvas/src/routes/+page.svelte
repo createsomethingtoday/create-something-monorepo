@@ -276,7 +276,10 @@
           || (candidate.kind === 'group' && (contains(candidate.id, connector.fromId) || contains(candidate.id, connector.toId)))
           || (candidate.kind === 'connector' && [connector.fromId, connector.toId].some((id) => id === candidate.fromId || id === candidate.toId));
         if ((firstObject?.kind === 'connector' && secondObject && connectorRelated(firstObject, secondObject)) || (secondObject?.kind === 'connector' && firstObject && connectorRelated(secondObject, firstObject))) continue;
-        const sharedCompound = firstObject?.kind === 'stroke' && secondObject?.kind === 'stroke' && firstObject.sourceIds?.some((id) => secondObject.sourceIds?.includes(id));
+        const sharedCompound = firstObject?.kind === 'stroke' && secondObject?.kind === 'stroke'
+          && firstObject.sourceIds?.length === 2 && secondObject.sourceIds?.length === 2
+          && firstObject.sourceIds.every((id, index) => id === secondObject.sourceIds?.[index])
+          && firstObject.sourceIds.includes(firstObject.id) && firstObject.sourceIds.includes(secondObject.id);
         if (sharedCompound) continue;
         const bounds = overlap(first, second);
         if (!bounds) continue;
