@@ -519,16 +519,16 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
       if (!fromObject || !toObject) return [];
       return [{ id: connector.id, start: layoutCenter(fromObject).center, end: layoutCenter(toObject).center }];
     });
+    const routes = connectorRouteIndex(segments);
     for (const connector of connectors) {
       if (!connector.label) continue;
       const from = rootByMember.get(connector.fromId), to = rootByMember.get(connector.toId), fromObject = byId.get(connector.fromId), toObject = byId.get(connector.toId);
       if (!fromObject || !toObject) continue;
       const endpointRoots = new Set([...layoutRoots(fromObject), ...layoutRoots(toObject)]);
       if (!endpointRoots.size) continue;
-      const start = layoutCenter(fromObject).center, end = layoutCenter(toObject).center, width = estimatedTextWidth(connector.label) + 5, x = (start.x + end.x) / 2, otherSegments = segments.filter((segment) => segment.id !== connector.id), fallbackTop = otherSegments.length ? otherSegments.reduce((minimum, { start: a, end: b }) => Math.min(minimum, a.y - 4, b.y - 4, connectorMarkerBounds(a, b).y), Number.POSITIVE_INFINITY) - 16 : undefined;
-      const sameRoute = (segment: { start: Point; end: Point }) => (segment.start.x === start.x && segment.start.y === start.y && segment.end.x === end.x && segment.end.y === end.y) || (segment.start.x === end.x && segment.start.y === end.y && segment.end.x === start.x && segment.end.y === start.y);
-      const distinctSegments = otherSegments.filter((segment) => !sameRoute(segment));
-      const baseY = (start.y + end.y) / 2 - 10, y = stackedLabelY(occupied, x, baseY, width, (bounds) => distinctSegments.some((segment) => connectorPaintHitsBounds(segment.start, segment.end, bounds)), fallbackTop);
+      const start = layoutCenter(fromObject).center, end = layoutCenter(toObject).center, width = estimatedTextWidth(connector.label) + 5, x = (start.x + end.x) / 2;
+      const routeKey = routes.keyById.get(connector.id), fallbackTop = routes.fallback.find(({ key }) => key !== routeKey)?.fallbackTop;
+      const baseY = (start.y + end.y) / 2 - 10, y = stackedLabelY(occupied, x, baseY, width, (bounds) => routes.query(bounds).some((route) => route.key !== routeKey && route.segments.some((segment) => connectorPaintHitsBounds(segment.start, segment.end, bounds))), fallbackTop);
       labels.set(connector.id, { x: x - width / 2, y: y - 12, width, height: 16 });
     }
     return labels;

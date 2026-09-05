@@ -635,6 +635,15 @@ describe('Draw WebMCP tools', () => {
     expect(performance.now() - startedAt).toBeLessThan(2_000);
   }, 10_000);
 
+  it('auto-layouts 20,000 labeled parallel edges without quadratic route scans', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', first = { id: 'parallel-a', kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: 'A' }, second = { ...first, id: 'parallel-b', x: 400, text: 'B' };
+    const edges = Array.from({ length: 20_000 }, (_, index) => ({ id: `parallel-edge-${String(index).padStart(5, '0')}`, kind: 'connector' as const, createdAt, fromId: first.id, toId: second.id, label: 'approval' }));
+    const controller = harness({ ...createDocument(), objects: [first, second, ...edges] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    const startedAt = performance.now();
+    await layout.execute({ ids: [first.id, second.id], mode: 'flow', gap: 16 });
+    expect(performance.now() - startedAt).toBeLessThan(3_000);
+  }, 10_000);
+
   it('preserves painted root gaps after routing multiple connector labels', async () => {
     const createdAt = '2026-09-05T00:00:00.000Z';
     const hub = { id: 'hub', kind: 'note' as const, createdAt, x: 0, y: 0, width: 260, height: 160, text: 'Hub' };

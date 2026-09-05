@@ -280,6 +280,13 @@ try {
     ] });
     const zeroAreaGeometry = await tools.draw_get_rendered_geometry.execute({ ids: zeroAreaIds, limit: 10 });
     await tools.draw_revert_change.execute({ changeId: zeroArea.changeId });
+    const transparentIds = ['browser-none-stroke', 'browser-zero-alpha-shape'];
+    const transparent = await tools.draw_apply_operations.execute({ operations: [
+      { type: 'put_object', object: { id: transparentIds[0], kind: 'stroke', createdAt: new Date().toISOString(), points: [{ x: 200, y: 800 }, { x: 400, y: 900 }], color: 'none', width: 20 } },
+      { type: 'put_object', object: { id: transparentIds[1], kind: 'rectangle', createdAt: new Date().toISOString(), from: { x: 200, y: 800 }, to: { x: 400, y: 900 }, color: 'rgba(0, 0, 0, 0)' } }
+    ] });
+    const transparentGeometry = await tools.draw_get_rendered_geometry.execute({ ids: transparentIds, limit: 10 });
+    await tools.draw_revert_change.execute({ changeId: transparent.changeId });
     const endpointFixtureIds = ['browser-label-endpoint-a', 'browser-label-endpoint-b', 'browser-label-endpoint-edge', 'browser-label-endpoint-group'];
     const endpointFixture = await tools.draw_apply_operations.execute({ operations: [
       { type: 'put_object', object: { id: endpointFixtureIds[0], kind: 'note', createdAt: new Date().toISOString(), x: 200, y: 680, width: 120, height: 80, text: 'Endpoint A' } },
@@ -345,7 +352,7 @@ try {
     const restored = await tools.draw_get_state.execute({});
     return {
       names, drawNames, version: inspect.version, compactBytes: JSON.stringify(inspect).length, fullBytes: JSON.stringify(before).length,
-      composed, renderedGeometry, connectorCollisionGeometry, diagonalClearGeometry, sparseClearGeometry, markerCornerGeometry, endpointCornerGeometry, connectorEndpointOverlapGeometry, ellipseTouchGeometry, hugeEllipseGeometry, cappedEllipseGeometry, disjointEllipseGeometry, concentricEllipseGeometry, groupGapGeometry, briefModelWidth, rawConnectorLabelBounds, selectedGroupGeometry, unselectedGroupGeometry, autoLayouts, arrow, arrowGeometry, settledArrowGeometry, compoundArrow: { selectedCount: selectedArrow.selectedCount, moved: compoundMoved, deleted: compoundDeleted }, edgeArrowGeometry, thickArrowGeometry, zeroArrowGeometry, zeroAreaGeometry, endpointLabelGeometry, sharedConnectorGeometry, fanConnectorGeometry, collisionGeometry, provenanceGeometry, clippedGeometry, connectorVisible: Boolean(connectorLabel && getComputedStyle(connectorLabel).display !== 'none'),
+      composed, renderedGeometry, connectorCollisionGeometry, diagonalClearGeometry, sparseClearGeometry, markerCornerGeometry, endpointCornerGeometry, connectorEndpointOverlapGeometry, ellipseTouchGeometry, hugeEllipseGeometry, cappedEllipseGeometry, disjointEllipseGeometry, concentricEllipseGeometry, groupGapGeometry, briefModelWidth, rawConnectorLabelBounds, selectedGroupGeometry, unselectedGroupGeometry, autoLayouts, arrow, arrowGeometry, settledArrowGeometry, compoundArrow: { selectedCount: selectedArrow.selectedCount, moved: compoundMoved, deleted: compoundDeleted }, edgeArrowGeometry, thickArrowGeometry, zeroArrowGeometry, zeroAreaGeometry, transparentGeometry, endpointLabelGeometry, sharedConnectorGeometry, fanConnectorGeometry, collisionGeometry, provenanceGeometry, clippedGeometry, connectorVisible: Boolean(connectorLabel && getComputedStyle(connectorLabel).display !== 'none'),
       staleError, deleteError, replaceError, focus, restoredCount: restored.document.objects.length, beforeCount: before.document.objects.length
     };
   });
@@ -375,6 +382,7 @@ try {
   if (!semantic.thickArrowGeometry.objects.some(({ clipped }) => clipped)) throw new Error(`Rendered stroke-width clipping was not included: ${JSON.stringify(semantic.thickArrowGeometry)}`);
   if (semantic.zeroArrowGeometry.objects[0]?.viewportBounds.width < 18 || semantic.zeroArrowGeometry.objects[0]?.viewportBounds.height < 14) throw new Error(`Rendered zero-length arrow omitted its marker footprint: ${JSON.stringify(semantic.zeroArrowGeometry)}`);
   if (semantic.zeroAreaGeometry.objects.length || semantic.zeroAreaGeometry.unrenderedIds.length !== 2) throw new Error(`Rendered geometry treated zero-area SVG shapes as painted: ${JSON.stringify(semantic.zeroAreaGeometry)}`);
+  if (semantic.transparentGeometry.objects.length || semantic.transparentGeometry.unrenderedIds.length !== 2) throw new Error(`Rendered geometry treated fully transparent strokes as painted: ${JSON.stringify(semantic.transparentGeometry)}`);
   if (!semantic.endpointLabelGeometry.overlaps.some(({ firstId, secondId }) => firstId.includes('endpoint-edge') || secondId.includes('endpoint-edge')) || !semantic.endpointLabelGeometry.overlaps.some(({ firstId, secondId }) => [firstId, secondId].includes('browser-label-endpoint-edge') && [firstId, secondId].includes('browser-label-endpoint-group'))) throw new Error(`Rendered geometry suppressed a visible connector-label overlap with its endpoint or containing group: ${JSON.stringify(semantic.endpointLabelGeometry)}`);
   if (!semantic.sharedConnectorGeometry.overlaps.some(({ classification }) => classification === 'peer') || semantic.fanConnectorGeometry.overlaps.length) throw new Error(`Rendered geometry did not isolate shared-endpoint contact from visible connector overlap: ${JSON.stringify({ shared: semantic.sharedConnectorGeometry, fan: semantic.fanConnectorGeometry })}`);
   if (!semantic.collisionGeometry.overlaps.some(({ classification }) => classification === 'peer') || !semantic.provenanceGeometry.overlaps.some(({ classification }) => classification === 'peer') || !semantic.clippedGeometry.objects[0]?.clipped || !semantic.clippedGeometry.missingIds.includes('missing-rendered-id')) throw new Error(`Rendered collision, provenance, clipping, or missing-ID evidence failed: ${JSON.stringify({ collision: semantic.collisionGeometry, provenance: semantic.provenanceGeometry, clipped: semantic.clippedGeometry })}`);

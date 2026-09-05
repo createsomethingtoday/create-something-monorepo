@@ -188,6 +188,15 @@
     const selected = matches.slice(0, input.limit);
     const existingIds = new Set(document.objects.map(({ id }) => id));
     const missingIds = input.ids?.filter((id) => !existingIds.has(id)) ?? [];
+    const colorProbe = window.document.createElement('canvas'); colorProbe.width = 1; colorProbe.height = 1;
+    const colorContext = colorProbe.getContext('2d', { willReadFrequently: true });
+    const visibleStroke = (element: SVGGraphicsElement) => {
+      const style = getComputedStyle(element), opacity = Number.parseFloat(style.opacity), strokeOpacity = Number.parseFloat(style.strokeOpacity);
+      if (style.stroke === 'none' || opacity === 0 || strokeOpacity === 0) return false;
+      if (!colorContext) return style.stroke !== 'transparent';
+      colorContext.clearRect(0, 0, 1, 1); colorContext.fillStyle = '#000'; colorContext.fillStyle = style.stroke; colorContext.fillRect(0, 0, 1, 1);
+      return colorContext.getImageData(0, 0, 1, 1).data[3] > 0;
+    };
     const paintedRect = (element: SVGGraphicsElement) => {
       const rect = element.getBoundingClientRect(), matrix = element.getScreenCTM(), style = getComputedStyle(element);
       const strokeWidth = style.stroke === 'none' ? 0 : Number.parseFloat(style.strokeWidth);
@@ -219,6 +228,7 @@
     const rendered = selected.flatMap((object) => {
       const element = surface.querySelector<SVGGraphicsElement>(`[data-object-id="${CSS.escape(object.id)}"]`);
       if (!element) return [];
+      if (!(element instanceof SVGGElement) && !visibleStroke(element)) return [];
       if ((element instanceof SVGRectElement && (!element.width.baseVal.value || !element.height.baseVal.value))
         || (element instanceof SVGEllipseElement && (!element.rx.baseVal.value || !element.ry.baseVal.value))) return [];
       let rect = element instanceof SVGGElement
