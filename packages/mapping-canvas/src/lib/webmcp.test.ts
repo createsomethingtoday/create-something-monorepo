@@ -367,6 +367,13 @@ describe('Draw WebMCP tools', () => {
     expect(second.y + 4).toBeLessThanOrEqual(first.y - 12 - 4);
   });
 
+  it('keeps connector labels clear of another connector arrowhead', () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string, x: number) => ({ id, kind: 'note' as const, createdAt, x, y: 0, width: 120, height: 80, text: id });
+    const labelA = note('label-a', 0), labelB = note('label-b', 400), markerA = note('marker-a', 0), markerB = note('marker-b', 248);
+    const label = { id: 'label', kind: 'connector' as const, createdAt, fromId: labelA.id, toId: labelB.id, label: 'Approval' }, marker = { id: 'marker', kind: 'connector' as const, createdAt, fromId: markerA.id, toId: markerB.id, label: '' };
+    expect(connectorLabelLayout([labelA, labelB, markerA, markerB, label, marker]).get(label.id)?.y).toBeLessThan(30);
+  });
+
   it('finds a label slot beyond 128 blocking connector shafts', () => {
     const createdAt = '2026-09-05T00:00:00.000Z';
     const note = (id: string, x: number, y: number) => ({ id, kind: 'note' as const, createdAt, x, y, width: 120, height: 80, text: id });
@@ -462,6 +469,19 @@ describe('Draw WebMCP tools', () => {
     const bridge = { id: 'peer-to-group', kind: 'connector' as const, createdAt, fromId: peer.id, toId: first.id, label: '' };
     const group = { id: 'z-group', kind: 'group' as const, createdAt, x: 0, y: -140, width: 240, height: 320, label: 'Boundary', childIds: [first.id, second.id, internal.id, ...blockers.map(({ id }) => id)] };
     const controller = harness({ ...createDocument(), objects: [peer, group, first, second, ...blockers, internal, bridge] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: [peer.id, group.id], mode: 'hierarchy', gap: 16 });
+    const state = controller.read(), placedPeer = state.objects.find((object): object is typeof peer => object.id === peer.id)!, label = connectorLabelLayout(state.objects).get(internal.id)!;
+    const labelBounds = { x: label.x - label.width / 2, y: label.y - 12, width: label.width, height: label.height };
+    expect(labelBounds.x + labelBounds.width + 16 <= placedPeer.x || placedPeer.x + placedPeer.width + 16 <= labelBounds.x || labelBounds.y + labelBounds.height + 16 <= placedPeer.y || placedPeer.y + placedPeer.height + 16 <= labelBounds.y).toBe(true);
+  });
+
+  it('includes stationary external shafts when routing selected labels', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string, x: number, y: number) => ({ id, kind: 'note' as const, createdAt, x, y, width: 80, height: 60, text: id });
+    const peer = note('a-peer', 0, -220), bridgeChild = note('bridge-child', 20, 100), first = note('inside-a', 400, 100), second = note('inside-b', 520, 100);
+    const internal = { id: 'internal-label', kind: 'connector' as const, createdAt, fromId: first.id, toId: second.id, label: 'A deliberately wide internal approval label' }, bridge = { id: 'peer-to-group', kind: 'connector' as const, createdAt, fromId: peer.id, toId: bridgeChild.id, label: '' };
+    const externalTop = note('external-top', 460, -200), externalBottom = note('external-bottom', 460, 660), external = { id: 'external-shaft', kind: 'connector' as const, createdAt, fromId: externalBottom.id, toId: externalTop.id, label: '' };
+    const group = { id: 'z-group', kind: 'group' as const, createdAt, x: 0, y: -140, width: 600, height: 320, label: 'Boundary', childIds: [bridgeChild.id, first.id, second.id, internal.id] };
+    const controller = harness({ ...createDocument(), objects: [peer, group, bridgeChild, first, second, internal, bridge, externalTop, externalBottom, external] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
     await layout.execute({ ids: [peer.id, group.id], mode: 'hierarchy', gap: 16 });
     const state = controller.read(), placedPeer = state.objects.find((object): object is typeof peer => object.id === peer.id)!, label = connectorLabelLayout(state.objects).get(internal.id)!;
     const labelBounds = { x: label.x - label.width / 2, y: label.y - 12, width: label.width, height: label.height };

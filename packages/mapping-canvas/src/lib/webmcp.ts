@@ -268,6 +268,18 @@ function segmentHitsBounds(start: Point, end: Point, bounds: { x: number; y: num
   return true;
 }
 
+function connectorMarkerBounds(start: Point, end: Point) {
+  const distance = Math.hypot(end.x - start.x, end.y - start.y), unit = distance ? { x: (end.x - start.x) / distance, y: (end.y - start.y) / distance } : { x: 1, y: 0 }, normal = { x: -unit.y, y: unit.x };
+  const points = [{ x: end.x + unit.x * 2, y: end.y + unit.y * 2 }, { x: end.x - unit.x * 18 + normal.x * 7, y: end.y - unit.y * 18 + normal.y * 7 }, { x: end.x - unit.x * 18 - normal.x * 7, y: end.y - unit.y * 18 - normal.y * 7 }];
+  const xs = points.map(({ x }) => x), ys = points.map(({ y }) => y), x = Math.min(...xs), y = Math.min(...ys);
+  return { x, y, width: Math.max(...xs) - x, height: Math.max(...ys) - y };
+}
+
+function connectorPaintHitsBounds(start: Point, end: Point, bounds: { x: number; y: number; width: number; height: number }) {
+  const marker = connectorMarkerBounds(start, end);
+  return segmentHitsBounds(start, end, bounds, 4) || (marker.x < bounds.x + bounds.width && marker.x + marker.width > bounds.x && marker.y < bounds.y + bounds.height && marker.y + marker.height > bounds.y);
+}
+
 function stackedLabelY(index: Map<string, number>, x: number, baseY: number, width: number, blocked?: (bounds: { x: number; y: number; width: number; height: number }) => boolean, blockedFallbackTop?: number) {
   const firstCell = Math.floor((x - width / 2) / 32), lastCell = Math.floor((x + width / 2) / 32), band = Math.floor(baseY / 16);
   let top = baseY - 12;
@@ -310,8 +322,8 @@ export function connectorLabelLayout(objects: CanvasObject[]) {
     const from = byId.get(connector.fromId), to = byId.get(connector.toId);
     if (!from || !to) continue;
     const a = resolveCenter(from), b = resolveCenter(to), width = estimatedTextWidth(connector.label) + 5, x = (a.x + b.x) / 2;
-    const otherSegments = segments.filter((segment) => segment.id !== connector.id), fallbackTop = otherSegments.length ? otherSegments.reduce((minimum, { start, end }) => Math.min(minimum, start.y, end.y), Number.POSITIVE_INFINITY) - 20 : undefined;
-    const baseY = (a.y + b.y) / 2 - 10, y = stackedLabelY(occupiedSlots, x, baseY, width, (bounds) => otherSegments.some((segment) => segmentHitsBounds(segment.start, segment.end, bounds, 4)), fallbackTop);
+    const otherSegments = segments.filter((segment) => segment.id !== connector.id), fallbackTop = otherSegments.length ? otherSegments.reduce((minimum, { start, end }) => Math.min(minimum, start.y - 4, end.y - 4, connectorMarkerBounds(start, end).y), Number.POSITIVE_INFINITY) - 16 : undefined;
+    const baseY = (a.y + b.y) / 2 - 10, y = stackedLabelY(occupiedSlots, x, baseY, width, (bounds) => otherSegments.some((segment) => connectorPaintHitsBounds(segment.start, segment.end, bounds)), fallbackTop);
     result.set(connector.id, { x, y, width, height: 16 });
   }
   return result;
@@ -393,15 +405,17 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
   const positionedLabels = () => {
     const occupied = new Map<string, number>(), labels = new Map<string, { x: number; y: number; width: number; height: number }>();
     const segments = connectors.flatMap((connector) => {
-      const from = rootByMember.get(connector.fromId), to = rootByMember.get(connector.toId), fromObject = byId.get(connector.fromId), toObject = byId.get(connector.toId);
-      return from && to && fromObject && toObject && targets.has(from) && targets.has(to) ? [{ id: connector.id, start: positionedCenter(from, fromObject), end: positionedCenter(to, toObject) }] : [];
+      const fromObject = byId.get(connector.fromId), toObject = byId.get(connector.toId);
+      if (!fromObject || !toObject) return [];
+      const center = (object: CanvasObject) => { const root = rootByMember.get(object.id); return root && targets.has(root) ? positionedCenter(root, object) : resolveCenter(object); };
+      return [{ id: connector.id, start: center(fromObject), end: center(toObject) }];
     });
     for (const connector of connectors) {
       if (!connector.label) continue;
       const from = rootByMember.get(connector.fromId), to = rootByMember.get(connector.toId), fromObject = byId.get(connector.fromId), toObject = byId.get(connector.toId);
       if (!from || !to || !fromObject || !toObject || !targets.has(from) || !targets.has(to)) continue;
-      const start = positionedCenter(from, fromObject), end = positionedCenter(to, toObject), width = estimatedTextWidth(connector.label) + 5, x = (start.x + end.x) / 2, otherSegments = segments.filter((segment) => segment.id !== connector.id), fallbackTop = otherSegments.length ? otherSegments.reduce((minimum, { start: a, end: b }) => Math.min(minimum, a.y, b.y), Number.POSITIVE_INFINITY) - 20 : undefined;
-      const baseY = (start.y + end.y) / 2 - 10, y = stackedLabelY(occupied, x, baseY, width, (bounds) => otherSegments.some((segment) => segmentHitsBounds(segment.start, segment.end, bounds, 4)), fallbackTop);
+      const start = positionedCenter(from, fromObject), end = positionedCenter(to, toObject), width = estimatedTextWidth(connector.label) + 5, x = (start.x + end.x) / 2, otherSegments = segments.filter((segment) => segment.id !== connector.id), fallbackTop = otherSegments.length ? otherSegments.reduce((minimum, { start: a, end: b }) => Math.min(minimum, a.y - 4, b.y - 4, connectorMarkerBounds(a, b).y), Number.POSITIVE_INFINITY) - 16 : undefined;
+      const baseY = (start.y + end.y) / 2 - 10, y = stackedLabelY(occupied, x, baseY, width, (bounds) => otherSegments.some((segment) => connectorPaintHitsBounds(segment.start, segment.end, bounds)), fallbackTop);
       labels.set(connector.id, { x: x - width / 2, y: y - 12, width, height: 16 });
     }
     return labels;
