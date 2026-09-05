@@ -252,11 +252,22 @@ function descendants(document: CanvasDocument, ids: string[]) {
   return result;
 }
 
+function paintedLayoutBounds(objects: CanvasObject[], allObjects: CanvasObject[]) {
+  const bounds = objectBounds(objects, allObjects);
+  const padding = Math.max(0, ...objects.map((object) => {
+    if (object.kind === 'stroke') return object.width / 2;
+    if (object.kind === 'arrow') return 19;
+    if (object.kind === 'rectangle' || object.kind === 'ellipse' || object.kind === 'group') return 1;
+    return 0;
+  }));
+  return { x: bounds.x - padding, y: bounds.y - padding, width: bounds.width + padding * 2, height: bounds.height + padding * 2 };
+}
+
 function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: 'flow' | 'hierarchy' | 'loop' | 'orbit' | 'swimlane', gap: number, laneById: Map<string, string>, orientation?: 'horizontal' | 'vertical') {
   const roots = [...rootIds].sort();
   const rootBounds = new Map(roots.map((id) => {
     const moving = descendants(document, [id]);
-    return [id, objectBounds(document.objects.filter((object) => moving.has(object.id)), document.objects)] as const;
+    return [id, paintedLayoutBounds(document.objects.filter((object) => moving.has(object.id)), document.objects)] as const;
   }));
   const width = Math.max(...[...rootBounds.values()].map((bounds) => bounds.width)), height = Math.max(...[...rootBounds.values()].map((bounds) => bounds.height));
   const anchor = { x: Math.min(...[...rootBounds.values()].map(({ x }) => x)), y: Math.min(...[...rootBounds.values()].map(({ y }) => y)) };
@@ -842,7 +853,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         let objects = before.objects;
         const movedIds = new Set<string>();
         for (const id of ids) {
-          const moving = descendants(before, [id]), bounds = objectBounds(before.objects.filter((object) => moving.has(object.id)), before.objects), target = layout.targets.get(id)!;
+          const moving = descendants(before, [id]), bounds = paintedLayoutBounds(before.objects.filter((object) => moving.has(object.id)), before.objects), target = layout.targets.get(id)!;
           assertMovableConnectorEndpoints(objects, moving);
           objects = objects.map((object) => moving.has(object.id) ? translated(object, target.x - bounds.x, target.y - bounds.y) : object);
           moving.forEach((movingId) => movedIds.add(movingId));

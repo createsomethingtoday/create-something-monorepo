@@ -214,6 +214,19 @@ describe('Draw WebMCP tools', () => {
     expect(outside.x + outside.width + 48 <= placedPeer.x || placedPeer.x + placedPeer.width + 48 <= outside.x).toBe(true);
   });
 
+  it('preserves the requested gap between connected thick stroke roots', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z';
+    const first = { id: 'first', kind: 'stroke' as const, createdAt, points: [{ x: 0, y: 0 }, { x: 1_000, y: 0 }], color: '#fcaa2d', width: 48 };
+    const second = { ...first, id: 'second' };
+    const connector = { id: 'edge', kind: 'connector' as const, createdAt, fromId: first.id, toId: second.id, label: '' };
+    const controller = harness({ ...createDocument(), objects: [first, second, connector] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: [first.id, second.id], mode: 'flow', gap: 16 });
+    const strokes = controller.read().objects.filter((object): object is typeof first => object.kind === 'stroke').sort((a, b) => a.points[0].x - b.points[0].x);
+    const paintedRight = Math.max(...strokes[0].points.map(({ x }) => x)) + strokes[0].width / 2;
+    const paintedLeft = Math.min(...strokes[1].points.map(({ x }) => x)) - strokes[1].width / 2;
+    expect(paintedLeft - paintedRight).toBeGreaterThanOrEqual(16);
+  });
+
   it('summarizes dense stroke geometry in compact inspection', async () => {
     const points = Array.from({ length: 2_000 }, (_, index) => ({ x: index, y: index % 50 }));
     const stroke = { id: 'dense-stroke', kind: 'stroke' as const, createdAt: '2026-09-04T00:00:00.000Z', points, color: '#0057b8', width: 5 };
