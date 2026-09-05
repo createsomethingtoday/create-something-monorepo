@@ -171,6 +171,15 @@ try {
     ] });
     const endpointCornerGeometry = await tools.draw_get_rendered_geometry.execute({ ids: endpointCornerIds.slice(3), limit: 10 });
     await tools.draw_revert_change.execute({ changeId: endpointCornerFixture.changeId });
+    const connectorEndpointOverlapIds = ['browser-connector-endpoint-a', 'browser-connector-endpoint-b', 'browser-connector-endpoint-base', 'browser-connector-endpoint-continuation'];
+    const connectorEndpointOverlapFixture = await tools.draw_apply_operations.execute({ operations: [
+      { type: 'put_object', object: { id: connectorEndpointOverlapIds[0], kind: 'note', createdAt: new Date().toISOString(), x: 0, y: 760, width: 40, height: 40, text: 'A' } },
+      { type: 'put_object', object: { id: connectorEndpointOverlapIds[1], kind: 'note', createdAt: new Date().toISOString(), x: 400, y: 760, width: 40, height: 40, text: 'B' } },
+      { type: 'put_object', object: { id: connectorEndpointOverlapIds[2], kind: 'connector', createdAt: new Date().toISOString(), fromId: connectorEndpointOverlapIds[0], toId: connectorEndpointOverlapIds[1], label: '' } },
+      { type: 'put_object', object: { id: connectorEndpointOverlapIds[3], kind: 'connector', createdAt: new Date().toISOString(), fromId: connectorEndpointOverlapIds[2], toId: connectorEndpointOverlapIds[0], label: '' } }
+    ] });
+    const connectorEndpointOverlapGeometry = await tools.draw_get_rendered_geometry.execute({ ids: connectorEndpointOverlapIds.slice(2), limit: 10 });
+    await tools.draw_revert_change.execute({ changeId: connectorEndpointOverlapFixture.changeId });
     const ellipseIds = ['browser-large-ellipse', 'browser-large-ellipse-touch'];
     const ellipseAngle = Math.PI / 48, ellipsePoint = { x: 10_000 + Math.cos(ellipseAngle) * 10_000, y: 10_000 + Math.sin(ellipseAngle) * 10_000 };
     const ellipseFixture = await tools.draw_apply_operations.execute({ operations: [
@@ -315,7 +324,7 @@ try {
     const restored = await tools.draw_get_state.execute({});
     return {
       names, drawNames, version: inspect.version, compactBytes: JSON.stringify(inspect).length, fullBytes: JSON.stringify(before).length,
-      composed, renderedGeometry, connectorCollisionGeometry, diagonalClearGeometry, sparseClearGeometry, markerCornerGeometry, endpointCornerGeometry, ellipseTouchGeometry, hugeEllipseGeometry, cappedEllipseGeometry, disjointEllipseGeometry, concentricEllipseGeometry, groupGapGeometry, briefModelWidth, rawConnectorLabelBounds, selectedGroupGeometry, unselectedGroupGeometry, autoLayouts, arrow, arrowGeometry, settledArrowGeometry, edgeArrowGeometry, thickArrowGeometry, zeroArrowGeometry, endpointLabelGeometry, sharedConnectorGeometry, fanConnectorGeometry, collisionGeometry, provenanceGeometry, clippedGeometry, connectorVisible: Boolean(connectorLabel && getComputedStyle(connectorLabel).display !== 'none'),
+      composed, renderedGeometry, connectorCollisionGeometry, diagonalClearGeometry, sparseClearGeometry, markerCornerGeometry, endpointCornerGeometry, connectorEndpointOverlapGeometry, ellipseTouchGeometry, hugeEllipseGeometry, cappedEllipseGeometry, disjointEllipseGeometry, concentricEllipseGeometry, groupGapGeometry, briefModelWidth, rawConnectorLabelBounds, selectedGroupGeometry, unselectedGroupGeometry, autoLayouts, arrow, arrowGeometry, settledArrowGeometry, edgeArrowGeometry, thickArrowGeometry, zeroArrowGeometry, endpointLabelGeometry, sharedConnectorGeometry, fanConnectorGeometry, collisionGeometry, provenanceGeometry, clippedGeometry, connectorVisible: Boolean(connectorLabel && getComputedStyle(connectorLabel).display !== 'none'),
       staleError, deleteError, replaceError, focus, restoredCount: restored.document.objects.length, beforeCount: before.document.objects.length
     };
   });
@@ -330,6 +339,7 @@ try {
   if (semantic.sparseClearGeometry.overlaps.length) throw new Error(`Rendered geometry reported an AABB-only sparse-stroke collision: ${JSON.stringify(semantic.sparseClearGeometry)}`);
   if (semantic.markerCornerGeometry.overlaps.length) throw new Error(`Rendered geometry reported an AABB-only arrowhead-corner collision: ${JSON.stringify(semantic.markerCornerGeometry)}`);
   if (semantic.endpointCornerGeometry.overlaps.length) throw new Error(`Rendered geometry reported an AABB-only endpoint-label collision: ${JSON.stringify(semantic.endpointCornerGeometry)}`);
+  if (!semantic.connectorEndpointOverlapGeometry.overlaps.some(({ classification }) => classification === 'peer')) throw new Error(`Rendered geometry suppressed a connector-as-endpoint shaft overlap: ${JSON.stringify(semantic.connectorEndpointOverlapGeometry)}`);
   if (!semantic.ellipseTouchGeometry.overlaps.some(({ classification }) => classification === 'peer')) throw new Error(`Rendered geometry missed a visible large-ellipse arc collision: ${JSON.stringify(semantic.ellipseTouchGeometry)}`);
   if (semantic.hugeEllipseGeometry.objects.length !== 2 || semantic.hugeEllipseGeometry.overlaps.length) throw new Error(`Rendered geometry did not bound a huge finite ellipse safely: ${JSON.stringify(semantic.hugeEllipseGeometry)}`);
   if (!semantic.cappedEllipseGeometry.overlaps.some(({ classification }) => classification === 'peer')) throw new Error(`Rendered geometry missed a capped-subdivision ellipse arc collision: ${JSON.stringify(semantic.cappedEllipseGeometry)}`);

@@ -372,14 +372,26 @@
       return a.triangles.some((triangle) => b.triangles.some((candidate) => trianglesOverlap(triangle, candidate)));
     };
     const paintedOverlap = (firstObject: CanvasObject, first: typeof rendered[number], secondObject: CanvasObject, second: typeof rendered[number]) => paintsOverlap(paintFor(firstObject, first), paintFor(secondObject, second));
-    const connectorPaintPastSharedEndpoint = (object: Extract<CanvasObject, { kind: 'connector' }>, entry: typeof rendered[number], sharedIds: Set<string>) => {
-      const paint = paintFor(object, entry), trim = (segment: PaintSegment) => {
-        const dx = segment.end.x - segment.start.x, dy = segment.end.y - segment.start.y, distance = Math.hypot(dx, dy), clearance = Math.max(4, segment.padding * 4);
-        const trimStart = sharedIds.has(object.fromId) ? clearance : 0, trimEnd = sharedIds.has(object.toId) ? clearance : 0;
-        if (distance <= trimStart + trimEnd) return undefined;
-        return { ...segment, start: { x: segment.start.x + dx / distance * trimStart, y: segment.start.y + dy / distance * trimStart }, end: { x: segment.end.x - dx / distance * trimEnd, y: segment.end.y - dy / distance * trimEnd } };
+    const connectorContactPoint = (id: string) => {
+      const connector = connectorById.get(id);
+      if (connector) return { x: (connector.route[0].x + connector.route[1].x) / 2, y: (connector.route[0].y + connector.route[1].y) / 2 };
+      const object = byId.get(id);
+      return object ? resolveObjectCenter(object) : undefined;
+    };
+    const connectorPaintPastContacts = (object: Extract<CanvasObject, { kind: 'connector' }>, entry: typeof rendered[number], contacts: Point[]) => {
+      const paint = paintFor(object, entry), cut = (segment: PaintSegment, contact: Point) => {
+        const dx = segment.end.x - segment.start.x, dy = segment.end.y - segment.start.y, lengthSquared = dx * dx + dy * dy;
+        if (!lengthSquared) return [];
+        const distance = Math.sqrt(lengthSquared), t = Math.max(0, Math.min(1, ((contact.x - segment.start.x) * dx + (contact.y - segment.start.y) * dy) / lengthSquared));
+        const nearest = { x: segment.start.x + dx * t, y: segment.start.y + dy * t }, perpendicular = Math.hypot(contact.x - nearest.x, contact.y - nearest.y), clearance = Math.max(4, segment.padding * 4);
+        if (perpendicular >= clearance) return [segment];
+        const half = Math.sqrt(clearance * clearance - perpendicular * perpendicular) / distance, low = Math.max(0, t - half), high = Math.min(1, t + half), pieces: PaintSegment[] = [];
+        if (low > 0) pieces.push({ ...segment, end: { x: segment.start.x + dx * low, y: segment.start.y + dy * low } });
+        if (high < 1) pieces.push({ ...segment, start: { x: segment.start.x + dx * high, y: segment.start.y + dy * high } });
+        return pieces;
       };
-      return { ...paint, segments: paint.segments.map(trim).filter((segment): segment is PaintSegment => segment !== undefined), triangles: sharedIds.has(object.toId) ? [] : paint.triangles };
+      const segments = contacts.reduce((pieces, contact) => pieces.flatMap((segment) => cut(segment, contact)), paint.segments);
+      return { ...paint, segments, triangles: paint.triangles.filter((triangle) => !contacts.some((contact) => pointInTriangle(contact, triangle))) };
     };
     const overlap = (first: typeof rendered[number], second: typeof rendered[number]) => overlapBounds(first.worldBounds, second.worldBounds);
     const overlaps: DrawRenderedGeometry['overlaps'] = [];
@@ -400,11 +412,16 @@
         const firstLabelBounds = firstEndpointContainer ? connectorById.get(first.id)?.labelBounds?.worldBounds : undefined, secondLabelBounds = secondEndpointContainer ? connectorById.get(second.id)?.labelBounds?.worldBounds : undefined;
         const relatedLabelOverlap = firstLabelBounds && secondObject && paintHitsRect(paintFor(secondObject, second), firstLabelBounds) ? firstLabelBounds
           : secondLabelBounds && firstObject && paintHitsRect(paintFor(firstObject, first), secondLabelBounds) ? secondLabelBounds : undefined;
-        if ((firstRelated || secondRelated) && !relatedLabelOverlap) continue;
-        const sharedConnectorIds = firstObject?.kind === 'connector' && secondObject?.kind === 'connector'
-          ? new Set([firstObject.fromId, firstObject.toId].filter((id) => id === secondObject.fromId || id === secondObject.toId)) : new Set<string>();
-        const visiblePaintOverlap = firstObject && secondObject && (sharedConnectorIds.size
-          ? paintsOverlap(connectorPaintPastSharedEndpoint(firstObject as Extract<CanvasObject, { kind: 'connector' }>, first, sharedConnectorIds), connectorPaintPastSharedEndpoint(secondObject as Extract<CanvasObject, { kind: 'connector' }>, second, sharedConnectorIds))
+        const connectorContactIds = firstObject?.kind === 'connector' && secondObject?.kind === 'connector'
+          ? new Set([
+              ...[firstObject.fromId, firstObject.toId].filter((id) => id === secondObject.fromId || id === secondObject.toId),
+              ...[firstObject.fromId, firstObject.toId].filter((id) => id === secondObject.id),
+              ...[secondObject.fromId, secondObject.toId].filter((id) => id === firstObject.id)
+            ]) : new Set<string>();
+        const connectorContactPoints = [...connectorContactIds].map(connectorContactPoint).filter((point): point is Point => point !== undefined);
+        if ((firstRelated || secondRelated) && !relatedLabelOverlap && !connectorContactPoints.length) continue;
+        const visiblePaintOverlap = firstObject && secondObject && (connectorContactPoints.length
+          ? paintsOverlap(connectorPaintPastContacts(firstObject as Extract<CanvasObject, { kind: 'connector' }>, first, connectorContactPoints), connectorPaintPastContacts(secondObject as Extract<CanvasObject, { kind: 'connector' }>, second, connectorContactPoints))
           : paintedOverlap(firstObject, first, secondObject, second));
         if (!relatedLabelOverlap && !visiblePaintOverlap) continue;
         const sharedCompound = firstObject?.kind === 'stroke' && secondObject?.kind === 'stroke'

@@ -394,18 +394,27 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
     return { x: center.x + target.x - bounds.x, y: center.y + target.y - bounds.y };
   };
   const layoutCenterCache = new Map<string, { root?: string; center: Point }>();
-  const layoutCenter = (object: CanvasObject, visiting = new Set<string>()): { root?: string; center: Point } => {
-    const cached = layoutCenterCache.get(object.id);
-    if (cached) return cached;
-    const root = rootByMember.get(object.id);
-    if (root && targets.has(root)) { const result = { root, center: positionedCenter(root, object) }; layoutCenterCache.set(object.id, result); return result; }
-    if (object.kind !== 'connector' || visiting.has(object.id)) return { root, center: resolveCenter(object) };
-    const from = byId.get(object.fromId), to = byId.get(object.toId);
-    if (!from || !to) return { root, center: resolveCenter(object) };
-    const pending = new Set(visiting).add(object.id), start = layoutCenter(from, pending).center, end = layoutCenter(to, pending).center;
-    const result = { root, center: { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 } };
-    layoutCenterCache.set(object.id, result); return result;
+  const rebuildLayoutCenters = () => {
+    layoutCenterCache.clear();
+    const queue: string[] = [];
+    for (const object of document.objects) {
+      const root = rootByMember.get(object.id);
+      if (root && targets.has(root)) layoutCenterCache.set(object.id, { root, center: positionedCenter(root, object) });
+      else if (object.kind !== 'connector') layoutCenterCache.set(object.id, { root, center: resolveCenter(object) });
+      if (layoutCenterCache.has(object.id)) queue.push(object.id);
+    }
+    for (let index = 0; index < queue.length; index += 1) for (const connectorId of dependentConnectors.get(queue[index]) ?? []) {
+      if (layoutCenterCache.has(connectorId)) continue;
+      const connector = byId.get(connectorId);
+      if (connector?.kind !== 'connector') continue;
+      const start = layoutCenterCache.get(connector.fromId), end = layoutCenterCache.get(connector.toId);
+      if (!start || !end) continue;
+      layoutCenterCache.set(connectorId, { root: rootByMember.get(connectorId), center: { x: (start.center.x + end.center.x) / 2, y: (start.center.y + end.center.y) / 2 } });
+      queue.push(connectorId);
+    }
+    for (const object of document.objects) if (!layoutCenterCache.has(object.id)) layoutCenterCache.set(object.id, { root: rootByMember.get(object.id), center: resolveCenter(object) });
   };
+  const layoutCenter = (object: CanvasObject): { root?: string; center: Point } => { if (!layoutCenterCache.size) rebuildLayoutCenters(); return layoutCenterCache.get(object.id)!; };
   const rootsByObject = new Map(document.objects.map((object) => [object.id, new Set(rootByMember.has(object.id) ? [rootByMember.get(object.id)!] : [])]));
   const dependentConnectors = new Map<string, string[]>();
   for (const object of document.objects) {

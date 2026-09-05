@@ -419,9 +419,10 @@ describe('Draw WebMCP tools', () => {
     await expect(layout.execute({ ids: roots.map(({ id }) => id), mode: 'hierarchy', gap: 16 })).resolves.toMatchObject({ placedIds: roots.map(({ id }) => id) });
   });
 
-  it('memoizes transitive roots across a long connector dependency chain', async () => {
+  it('iteratively resolves a deepest-first 10,000-link connector dependency chain', async () => {
     const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id });
-    const a = note('a'), b = note('b'), external = note('external'), connectors = Array.from({ length: 997 }, (_, index) => ({ id: `edge-${index}`, kind: 'connector' as const, createdAt, fromId: index ? `edge-${index - 1}` : a.id, toId: index === 996 ? b.id : external.id, label: '' }));
+    const a = note('a'), b = note('b'), external = note('external'), connectorId = (index: number) => `edge-${String(10_000 - index).padStart(5, '0')}`;
+    const connectors = Array.from({ length: 10_000 }, (_, index) => ({ id: connectorId(index), kind: 'connector' as const, createdAt, fromId: index ? connectorId(index - 1) : a.id, toId: index === 9_999 ? b.id : external.id, label: '' }));
     const controller = harness({ ...createDocument(), objects: [a, b, external, ...connectors] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
     await expect(layout.execute({ ids: [a.id, b.id], mode: 'flow', gap: 16 })).resolves.toMatchObject({ placedIds: [a.id, b.id] });
   });
