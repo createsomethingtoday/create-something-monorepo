@@ -419,6 +419,25 @@ describe('Draw WebMCP tools', () => {
     await expect(layout.execute({ ids: roots.map(({ id }) => id), mode: 'hierarchy', gap: 16 })).resolves.toMatchObject({ placedIds: roots.map(({ id }) => id) });
   });
 
+  it('memoizes transitive roots across a long connector dependency chain', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id });
+    const a = note('a'), b = note('b'), external = note('external'), connectors = Array.from({ length: 997 }, (_, index) => ({ id: `edge-${index}`, kind: 'connector' as const, createdAt, fromId: index ? `edge-${index - 1}` : a.id, toId: index === 996 ? b.id : external.id, label: '' }));
+    const controller = harness({ ...createDocument(), objects: [a, b, external, ...connectors] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await expect(layout.execute({ ids: [a.id, b.id], mode: 'flow', gap: 16 })).resolves.toMatchObject({ placedIds: [a.id, b.id] });
+  });
+
+  it('aligns a connected fan-in without swapping same-layer sources', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id }), edge = (id: string, fromId: string, toId: string) => ({ id, kind: 'connector' as const, createdAt, fromId, toId, label: '' });
+    const roots = [note('a'), note('b'), note('c')], controller = harness({ ...createDocument(), objects: [...roots, edge('ac', 'a', 'c'), edge('bc', 'b', 'c')] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await expect(layout.execute({ ids: roots.map(({ id }) => id), mode: 'flow', gap: 16 })).resolves.toMatchObject({ placedIds: roots.map(({ id }) => id) });
+  });
+
+  it.each(['flow', 'loop', 'orbit'] as const)('ignores coincident reciprocal shafts while placing labels in %s mode', async (mode) => {
+    const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id }), a = note('a'), b = note('b');
+    const controller = harness({ ...createDocument(), objects: [a, b, { id: 'ab', kind: 'connector', createdAt, fromId: a.id, toId: b.id, label: 'Approval' }, { id: 'ba', kind: 'connector', createdAt, fromId: b.id, toId: a.id, label: '' }] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await expect(layout.execute({ ids: [a.id, b.id], mode, gap: 16 })).resolves.toMatchObject({ placedIds: [a.id, b.id] });
+  });
+
   it('stacks coincident connector labels deterministically', () => {
     const createdAt = '2026-09-05T00:00:00.000Z', first = { id: 'a', kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: 'A' }, second = { ...first, id: 'b', x: 400, text: 'B' };
     const connector = (id: string) => ({ id, kind: 'connector' as const, createdAt, fromId: first.id, toId: second.id, label: 'approval' });

@@ -392,23 +392,36 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
     const center = resolveCenter(object), target = targets.get(rootId)!, bounds = rootBounds.get(rootId)!;
     return { x: center.x + target.x - bounds.x, y: center.y + target.y - bounds.y };
   };
+  const layoutCenterCache = new Map<string, { root?: string; center: Point }>();
   const layoutCenter = (object: CanvasObject, visiting = new Set<string>()): { root?: string; center: Point } => {
+    const cached = layoutCenterCache.get(object.id);
+    if (cached) return cached;
     const root = rootByMember.get(object.id);
-    if (root && targets.has(root)) return { root, center: positionedCenter(root, object) };
+    if (root && targets.has(root)) { const result = { root, center: positionedCenter(root, object) }; layoutCenterCache.set(object.id, result); return result; }
     if (object.kind !== 'connector' || visiting.has(object.id)) return { root, center: resolveCenter(object) };
     const from = byId.get(object.fromId), to = byId.get(object.toId);
     if (!from || !to) return { root, center: resolveCenter(object) };
     const pending = new Set(visiting).add(object.id), start = layoutCenter(from, pending).center, end = layoutCenter(to, pending).center;
-    return { root, center: { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 } };
+    const result = { root, center: { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 } };
+    layoutCenterCache.set(object.id, result); return result;
   };
-  const layoutRoots = (object: CanvasObject, visiting = new Set<string>()): Set<string> => {
-    const root = rootByMember.get(object.id);
-    if (root) return new Set([root]);
-    if (object.kind !== 'connector' || visiting.has(object.id)) return new Set();
-    const pending = new Set(visiting).add(object.id), result = new Set<string>();
-    for (const endpoint of [byId.get(object.fromId), byId.get(object.toId)]) if (endpoint) for (const id of layoutRoots(endpoint, pending)) result.add(id);
-    return result;
-  };
+  const rootsByObject = new Map(document.objects.map((object) => [object.id, new Set(rootByMember.has(object.id) ? [rootByMember.get(object.id)!] : [])]));
+  const dependentConnectors = new Map<string, string[]>();
+  for (const object of document.objects) {
+    if (object.kind !== 'connector' || rootByMember.has(object.id)) continue;
+    for (const endpointId of [object.fromId, object.toId]) { const bucket = dependentConnectors.get(endpointId) ?? []; bucket.push(object.id); dependentConnectors.set(endpointId, bucket); }
+  }
+  const pendingRootPropagation = [...rootsByObject].filter(([, objectRoots]) => objectRoots.size).map(([id]) => id);
+  for (let index = 0; index < pendingRootPropagation.length; index += 1) {
+    const sourceId = pendingRootPropagation[index], sourceRoots = rootsByObject.get(sourceId)!;
+    for (const connectorId of dependentConnectors.get(sourceId) ?? []) {
+      const connectorRoots = rootsByObject.get(connectorId)!;
+      let changed = false;
+      for (const root of sourceRoots) if (!connectorRoots.has(root)) { connectorRoots.add(root); changed = true; }
+      if (changed) pendingRootPropagation.push(connectorId);
+    }
+  }
+  const layoutRoots = (object: CanvasObject) => rootsByObject.get(object.id) ?? new Set<string>();
   const sameEndpointRoot = (fromRoots: Set<string>, toRoots: Set<string>) => fromRoots.size === 1 && toRoots.size === 1 && [...fromRoots][0] === [...toRoots][0];
   const adjacency = new Map(roots.map((id) => [id, new Set<string>()]));
   for (const connector of document.objects) {
@@ -418,6 +431,7 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
     for (const from of layoutRoots(fromObject)) for (const to of layoutRoots(toObject)) if (from !== to) adjacency.get(from)!.add(to);
   }
   const intersects = (a: { x: number; y: number; width: number; height: number }, b: { x: number; y: number; width: number; height: number }) => a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+  const containsPoint = (bounds: { x: number; y: number; width: number; height: number }, point: Point) => point.x >= bounds.x && point.x <= bounds.x + bounds.width && point.y >= bounds.y && point.y <= bounds.y + bounds.height;
   const separatedByGap = (a: { x: number; y: number; width: number; height: number }, b: { x: number; y: number; width: number; height: number }) => a.x + a.width + gap <= b.x || b.x + b.width + gap <= a.x || a.y + a.height + gap <= b.y || b.y + b.height + gap <= a.y;
   const segmentIntersects = (start: Point, end: Point, bounds: { x: number; y: number; width: number; height: number }) => segmentHitsBounds(start, end, bounds, gap + 19);
   const connectors = document.objects.filter((object): object is Extract<CanvasObject, { kind: 'connector' }> => object.kind === 'connector').sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
@@ -435,7 +449,9 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
       const endpointRoots = new Set([...layoutRoots(fromObject), ...layoutRoots(toObject)]);
       if (!endpointRoots.size) continue;
       const start = layoutCenter(fromObject).center, end = layoutCenter(toObject).center, width = estimatedTextWidth(connector.label) + 5, x = (start.x + end.x) / 2, otherSegments = segments.filter((segment) => segment.id !== connector.id), fallbackTop = otherSegments.length ? otherSegments.reduce((minimum, { start: a, end: b }) => Math.min(minimum, a.y - 4, b.y - 4, connectorMarkerBounds(a, b).y), Number.POSITIVE_INFINITY) - 16 : undefined;
-      const baseY = (start.y + end.y) / 2 - 10, y = stackedLabelY(occupied, x, baseY, width, (bounds) => otherSegments.some((segment) => connectorPaintHitsBounds(segment.start, segment.end, bounds)), fallbackTop);
+      const sameRoute = (segment: { start: Point; end: Point }) => (segment.start.x === start.x && segment.start.y === start.y && segment.end.x === end.x && segment.end.y === end.y) || (segment.start.x === end.x && segment.start.y === end.y && segment.end.x === start.x && segment.end.y === start.y);
+      const distinctSegments = otherSegments.filter((segment) => !sameRoute(segment));
+      const baseY = (start.y + end.y) / 2 - 10, y = stackedLabelY(occupied, x, baseY, width, (bounds) => distinctSegments.some((segment) => connectorPaintHitsBounds(segment.start, segment.end, bounds)), fallbackTop);
       labels.set(connector.id, { x: x - width / 2, y: y - 12, width, height: 16 });
     }
     return labels;
@@ -444,6 +460,7 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
     for (let attempt = 0; attempt <= roots.length; attempt += 1) {
       const target = targets.get(id)!;
       targets.set(id, axis === 'x' ? { x: target.x + width + gap, y: target.y } : { x: target.x, y: target.y + height + gap });
+      layoutCenterCache.clear();
       const candidate = positionedBaseBounds(id);
       if (!roots.some((other) => other !== id && !separatedByGap(candidate, positionedBaseBounds(other)))) return;
     }
@@ -464,7 +481,11 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
         if (!endpointRoots.size || (from && from === to) || sameEndpointRoot(fromRoots, toRoots)) continue;
         let cleared = false;
         for (let attempt = 0; attempt <= roots.length; attempt += 1) {
-          const start = layoutCenter(fromObject).center, end = layoutCenter(toObject).center, conflict = roots.find((id) => id !== from && id !== to && (endpointRoots.has(id) ? segmentHitsBounds(start, end, positionedBaseBounds(id), 0) : segmentIntersects(start, end, positionedBaseBounds(id))));
+          const start = layoutCenter(fromObject).center, end = layoutCenter(toObject).center, conflict = roots.find((id) => {
+            if (id === from || id === to) return false;
+            const bounds = positionedBaseBounds(id);
+            return endpointRoots.has(id) ? !containsPoint(bounds, start) && !containsPoint(bounds, end) && segmentHitsBounds(start, end, bounds, 0) : segmentIntersects(start, end, bounds);
+          });
           if (!conflict) { cleared = true; break; }
           const alternate = to === preservedRoot ? from : from === preservedRoot ? to : (to ?? from), movingId = conflict === preservedRoot && alternate ? alternate : conflict;
           const opposite = fromRoots.has(conflict) ? [...toRoots][0] : toRoots.has(conflict) ? [...fromRoots][0] : undefined;
@@ -482,7 +503,11 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
         if (!fromObject || !toObject) continue;
         const fromRoots = layoutRoots(fromObject), toRoots = layoutRoots(toObject), endpointRoots = new Set([...fromRoots, ...toRoots]);
         if (!endpointRoots.size || (from && from === to) || sameEndpointRoot(fromRoots, toRoots)) continue;
-        const start = layoutCenter(fromObject).center, end = layoutCenter(toObject).center, conflict = roots.find((id) => id !== from && id !== to && (endpointRoots.has(id) ? segmentHitsBounds(start, end, positionedBaseBounds(id), 0) : segmentIntersects(start, end, positionedBaseBounds(id))));
+        const start = layoutCenter(fromObject).center, end = layoutCenter(toObject).center, conflict = roots.find((id) => {
+          if (id === from || id === to) return false;
+          const bounds = positionedBaseBounds(id);
+          return endpointRoots.has(id) ? !containsPoint(bounds, start) && !containsPoint(bounds, end) && segmentHitsBounds(start, end, bounds, 0) : segmentIntersects(start, end, bounds);
+        });
         if (!conflict) continue;
         const preservedConflict = conflict === preservedRoot;
         const alternate = to === preservedRoot ? from : from === preservedRoot ? to : (to ?? from), movingId = preservedConflict && alternate ? alternate : conflict;
@@ -626,6 +651,19 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
       ? { x: anchor.x + level * (width + gap), y: anchor.y + (bandOffset + index) * (height + gap) }
       : { x: anchor.x + (bandOffset + index) * (width + gap), y: anchor.y + level * (height + gap) }));
     bandOffset += Math.max(...[...componentLevels.values()].map((ids) => ids.length)) + 1;
+  }
+  for (const component of weakComponents) {
+    const componentSet = new Set(component);
+    const componentLevels = new Map<number, string[]>();
+    for (const id of component) { const level = levels[componentById.get(id)!], bucket = componentLevels.get(level) ?? []; bucket.push(id); componentLevels.set(level, bucket); }
+    for (const [level, ids] of [...componentLevels].sort(([a], [b]) => a - b)) {
+      if (ids.length !== 1 || level === 0) continue;
+      const id = ids[0], predecessors = [...reverse.get(id)!].filter((candidate) => componentSet.has(candidate));
+      if (!predecessors.length) continue;
+      const centers = predecessors.map((candidate) => { const bounds = positionedBaseBounds(candidate); return vertical ? bounds.x + bounds.width / 2 : bounds.y + bounds.height / 2; });
+      const desired = centers.reduce((sum, value) => sum + value, 0) / centers.length, bounds = positionedBaseBounds(id), target = targets.get(id)!;
+      targets.set(id, vertical ? { x: target.x + desired - (bounds.x + bounds.width / 2), y: target.y } : { x: target.x, y: target.y + desired - (bounds.y + bounds.height / 2) });
+    }
   }
   settleConnectorRouting(vertical ? 'x' : 'y');
   return { targets, bounds: rootBounds, layerCount: idsByLevel.size, laneCount: 0 };
