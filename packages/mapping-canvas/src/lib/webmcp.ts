@@ -2,7 +2,7 @@ import { objectBounds, type CanvasDocument, type CanvasObject, type Point, type 
 import type { CanvasOperation } from './paired-session';
 import { DRAWING_PALETTE } from './palette';
 
-export const DRAW_WEBMCP_VERSION = '2026-09-04.1';
+export const DRAW_WEBMCP_VERSION = '2026-09-05.1';
 export const REPLACE_CONFIRMATION = 'REPLACE CANVAS';
 export const RESET_CONFIRMATION = 'RESET CANVAS';
 export const DELETE_CONFIRMATION = 'DELETE OBJECTS';
@@ -16,6 +16,19 @@ export type DrawState = {
   surface?: { width: number; height: number };
 };
 
+type RenderedBounds = { x: number; y: number; width: number; height: number };
+export type DrawRenderedGeometry = {
+  surface: RenderedBounds;
+  objects: Array<{ id: string; kind: CanvasObject['kind']; worldBounds: RenderedBounds; viewportBounds: RenderedBounds; clipped: boolean }>;
+  connectors: Array<{ id: string; fromId: string; toId: string; route: Point[]; labelBounds?: { worldBounds: RenderedBounds; viewportBounds: RenderedBounds } }>;
+  overlaps: Array<{ firstId: string; secondId: string; bounds: RenderedBounds; classification: 'peer' | 'containment' }>;
+  totalObjectCount: number;
+  missingIds?: string[];
+  unrenderedIds?: string[];
+  comparisonCount?: number;
+  truncated?: boolean;
+};
+
 export type DrawTransitionKind = 'create' | 'update' | 'remove' | 'convert' | 'restore' | 'history' | 'reset';
 export type DrawController = {
   getState: () => DrawState;
@@ -27,6 +40,7 @@ export type DrawController = {
   reset: () => Promise<void> | void;
   animate: (kind: DrawTransitionKind, affectedIds: string[], preserveViewport?: boolean) => string | void;
   focus?: (target: { scope: 'all' | 'selection' | 'ids' | 'bounds'; ids?: string[]; bounds?: { x: number; y: number; width: number; height: number }; padding: number }) => Promise<{ ids?: string[]; bounds?: { x: number; y: number; width: number; height: number } } | void> | { ids?: string[]; bounds?: { x: number; y: number; width: number; height: number } } | void;
+  renderedGeometry?: (input: { ids?: string[]; limit: number }) => Promise<DrawRenderedGeometry> | DrawRenderedGeometry;
 };
 
 export type DrawWebMcpTool = {
@@ -192,6 +206,32 @@ function smoothPoints(points: Point[]) {
   return result;
 }
 
+function semanticArrowPoints(start: Point, end: Point, curvature: number, looseness: number) {
+  const dx = end.x - start.x, dy = end.y - start.y, distance = Math.hypot(dx, dy);
+  const normal = { x: -dy / distance, y: dx / distance };
+  const control = { x: (start.x + end.x) / 2 + normal.x * distance * curvature * .5, y: (start.y + end.y) / 2 + normal.y * distance * curvature * .5 };
+  return Array.from({ length: 33 }, (_, index) => {
+    const t = index / 32, inverse = 1 - t;
+    const organic = Math.sin(t * Math.PI * 6) * Math.sin(t * Math.PI) * distance * .015 * looseness;
+    return {
+      x: inverse * inverse * start.x + 2 * inverse * t * control.x + t * t * end.x + normal.x * organic,
+      y: inverse * inverse * start.y + 2 * inverse * t * control.y + t * t * end.y + normal.y * organic
+    };
+  });
+}
+
+function semanticArrowHead(points: Point[], weight: number, style: 'vee' | 'triangle' | 'barbed') {
+  const end = points.at(-1)!, previous = points.at(-2)!;
+  const angle = Math.atan2(end.y - previous.y, end.x - previous.x), length = Math.max(14, Math.min(64, weight * 5));
+  const wing = .62;
+  const left = { x: end.x - Math.cos(angle - wing) * length, y: end.y - Math.sin(angle - wing) * length };
+  const right = { x: end.x - Math.cos(angle + wing) * length, y: end.y - Math.sin(angle + wing) * length };
+  if (style === 'vee') return [left, end, right];
+  if (style === 'triangle') return [left, end, right, left];
+  const notch = { x: end.x - Math.cos(angle) * length * .55, y: end.y - Math.sin(angle) * length * .55 };
+  return [left, end, right, notch, left];
+}
+
 function translated(object: CanvasObject, dx: number, dy: number): CanvasObject {
   const point = ({ x, y }: Point) => ({ x: x + dx, y: y + dy });
   if (object.kind === 'stroke') return { ...object, points: object.points.map(point) };
@@ -210,6 +250,75 @@ function descendants(document: CanvasDocument, ids: string[]) {
     for (const childId of object.childIds) if (!result.has(childId)) { result.add(childId); stack.push(childId); }
   }
   return result;
+}
+
+function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: 'flow' | 'hierarchy' | 'loop' | 'orbit' | 'swimlane', gap: number, laneById: Map<string, string>, orientation?: 'horizontal' | 'vertical') {
+  const roots = [...rootIds].sort();
+  const rootBounds = new Map(roots.map((id) => [id, objectBounds([document.objects.find((object) => object.id === id)!], document.objects)]));
+  const width = Math.max(...[...rootBounds.values()].map((bounds) => bounds.width)), height = Math.max(...[...rootBounds.values()].map((bounds) => bounds.height));
+  const anchor = { x: Math.min(...[...rootBounds.values()].map(({ x }) => x)), y: Math.min(...[...rootBounds.values()].map(({ y }) => y)) };
+  const rootByMember = new Map<string, string>();
+  for (const root of roots) for (const id of descendants(document, [root])) rootByMember.set(id, root);
+  const adjacency = new Map(roots.map((id) => [id, new Set<string>()]));
+  for (const connector of document.objects) {
+    if (connector.kind !== 'connector') continue;
+    const from = rootByMember.get(connector.fromId), to = rootByMember.get(connector.toId);
+    if (from && to && from !== to) adjacency.get(from)!.add(to);
+  }
+  const targets = new Map<string, Point>();
+  if (mode === 'loop' || mode === 'orbit') {
+    const orbiting = mode === 'orbit' ? roots.slice(1) : roots;
+    if (mode === 'orbit') targets.set(roots[0], anchor);
+    const radius = orbiting.length < 2 ? width + gap : Math.max(width, height) + gap + (Math.max(width, height) + gap) / (2 * Math.sin(Math.PI / orbiting.length));
+    const center = { x: anchor.x + radius + width / 2, y: anchor.y + radius + height / 2 };
+    orbiting.forEach((id, index) => {
+      const angle = -Math.PI / 2 + index * Math.PI * 2 / Math.max(1, orbiting.length);
+      targets.set(id, { x: center.x + Math.cos(angle) * radius - rootBounds.get(id)!.width / 2, y: center.y + Math.sin(angle) * radius - rootBounds.get(id)!.height / 2 });
+    });
+    return { targets, layerCount: mode === 'orbit' ? 2 : 1, laneCount: 0 };
+  }
+  if (mode === 'swimlane') {
+    const lanes = [...new Set(roots.map((id) => laneById.get(id) ?? 'Unassigned'))].sort();
+    for (const [laneIndex, lane] of lanes.entries()) {
+      roots.filter((id) => (laneById.get(id) ?? 'Unassigned') === lane).forEach((id, itemIndex) => targets.set(id, orientation === 'vertical'
+        ? { x: anchor.x + itemIndex * (width + gap), y: anchor.y + laneIndex * (height + gap * 2) }
+        : { x: anchor.x + laneIndex * (width + gap * 2), y: anchor.y + itemIndex * (height + gap) }));
+    }
+    return { targets, layerCount: 0, laneCount: lanes.length };
+  }
+  const reverse = new Map(roots.map((id) => [id, new Set<string>()]));
+  for (const [from, toIds] of adjacency) for (const to of toIds) reverse.get(to)!.add(from);
+  const visited = new Set<string>(), order: string[] = [];
+  const visit = (id: string) => { if (visited.has(id)) return; visited.add(id); [...adjacency.get(id)!].sort().forEach(visit); order.push(id); };
+  roots.forEach(visit);
+  const assigned = new Set<string>(), components: string[][] = [];
+  const collect = (id: string, component: string[]) => { if (assigned.has(id)) return; assigned.add(id); component.push(id); [...reverse.get(id)!].sort().forEach((next) => collect(next, component)); };
+  [...order].reverse().forEach((id) => { if (assigned.has(id)) return; const component: string[] = []; collect(id, component); components.push(component.sort()); });
+  components.sort((a, b) => a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0);
+  const componentById = new Map<string, number>();
+  components.forEach((component, index) => component.forEach((id) => componentById.set(id, index)));
+  const incoming = components.map(() => new Set<number>()), outgoing = components.map(() => new Set<number>());
+  for (const [from, toIds] of adjacency) for (const to of toIds) {
+    const source = componentById.get(from)!, target = componentById.get(to)!;
+    if (source !== target) { outgoing[source].add(target); incoming[target].add(source); }
+  }
+  const levels = components.map(() => 0), queue = components.map((_, index) => index).filter((index) => incoming[index].size === 0).sort((a, b) => components[a][0] < components[b][0] ? -1 : components[a][0] > components[b][0] ? 1 : 0);
+  const pendingIncoming = incoming.map((entries) => new Set(entries));
+  while (queue.length) {
+    const source = queue.shift()!;
+    for (const target of [...outgoing[source]].sort((a, b) => components[a][0] < components[b][0] ? -1 : components[a][0] > components[b][0] ? 1 : 0)) {
+      levels[target] = Math.max(levels[target], levels[source] + 1);
+      pendingIncoming[target].delete(source);
+      if (!pendingIncoming[target].size) { queue.push(target); queue.sort((a, b) => components[a][0] < components[b][0] ? -1 : components[a][0] > components[b][0] ? 1 : 0); }
+    }
+  }
+  const idsByLevel = new Map<number, string[]>();
+  components.forEach((component, index) => { const bucket = idsByLevel.get(levels[index]) ?? []; bucket.push(...component); idsByLevel.set(levels[index], bucket.sort()); });
+  const vertical = orientation ? orientation === 'vertical' : mode === 'hierarchy';
+  for (const [level, ids] of [...idsByLevel].sort(([a], [b]) => a - b)) ids.forEach((id, index) => targets.set(id, !vertical
+    ? { x: anchor.x + level * (width + gap), y: anchor.y + index * (height + gap) }
+    : { x: anchor.x + index * (width + gap), y: anchor.y + level * (height + gap) }));
+  return { targets, layerCount: idsByLevel.size, laneCount: 0 };
 }
 
 function boundsDependenciesAvailable(objects: CanvasObject[], allObjects: CanvasObject[]) {
@@ -337,6 +446,54 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
             return { ...base, from: object.from, to: object.to, color: object.color };
           }),
           truncated: matches.length > limit
+        };
+        const stringState = { truncated: false };
+        const bounded = boundProjectionStrings(projection, stringState) as typeof projection;
+        return { ...bounded, stringsTruncated: stringState.truncated };
+      }
+    },
+    {
+      name: 'draw_get_rendered_geometry', title: 'Inspect rendered Draw geometry',
+      description: 'Read actual post-render object bounds, connector routes, label bounds, viewport clipping, and overlaps from the current web canvas. This capability is unavailable in native shells without a rendered web surface.',
+      inputSchema: {
+        type: 'object', additionalProperties: false, properties: {
+          ids: { type: 'array', maxItems: 200, uniqueItems: true, items: { type: 'string', minLength: 1, maxLength: 240 } },
+          limit: { type: 'integer', minimum: 1, maximum: 200, default: 50 }
+        }
+      },
+      annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+      execute: async (input) => {
+        if (!controller.renderedGeometry) throw new Error('Rendered geometry requires the rendered web surface and is unavailable in this Draw environment.');
+        let ids: string[] | undefined;
+        if (input.ids !== undefined) {
+          if (!Array.isArray(input.ids) || input.ids.length > 200 || input.ids.some((id) => typeof id !== 'string' || !id.length || id.length > 240) || new Set(input.ids).size !== input.ids.length) throw new Error('ids must contain at most 200 unique non-empty IDs of at most 240 characters.');
+          ids = input.ids as string[];
+        }
+        if (input.limit !== undefined && (typeof input.limit !== 'number' || !Number.isInteger(input.limit) || input.limit < 1 || input.limit > 200)) throw new Error('limit must be an integer from 1 to 200.');
+        const limit = typeof input.limit === 'number' ? input.limit : 50;
+        const state = controller.getState(), initialRevision = drawRevision(state.document);
+        const rendered = await controller.renderedGeometry({ ...(ids ? { ids } : {}), limit });
+        const finalRevision = drawRevision(controller.getState().document);
+        if (finalRevision !== initialRevision) throw new Error(`Canvas changed while rendered geometry was measured. Inspect again with revision ${finalRevision}.`);
+        const projection = {
+          version: DRAW_WEBMCP_VERSION,
+          revision: finalRevision,
+          surface: rendered.surface,
+          summary: {
+            objectCount: rendered.totalObjectCount,
+            returnedObjectCount: rendered.objects.length,
+            connectorCount: rendered.connectors.length,
+            overlapCount: rendered.overlaps.length,
+            comparisonCount: rendered.comparisonCount ?? 0,
+            missingIdCount: rendered.missingIds?.length ?? 0,
+            unrenderedIdCount: rendered.unrenderedIds?.length ?? 0
+          },
+          objects: rendered.objects,
+          connectors: rendered.connectors,
+          overlaps: rendered.overlaps,
+          missingIds: rendered.missingIds ?? [],
+          unrenderedIds: rendered.unrenderedIds ?? [],
+          truncated: rendered.truncated === true || rendered.objects.length < rendered.totalObjectCount
         };
         const stringState = { truncated: false };
         const bounded = boundProjectionStrings(projection, stringState) as typeof projection;
@@ -481,6 +638,39 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
       }
     },
     {
+      name: 'draw_create_freehand_arrow', title: 'Create a freehand arrow',
+      description: 'Create a deterministic natural-looking arrow from semantic start, end, curvature, looseness, named color, weight, and arrowhead inputs. The result compiles only to portable v1 strokes.',
+      inputSchema: { type: 'object', required: ['start', 'end'], additionalProperties: false, properties: { expectedRevision: { type: 'string' }, start: pointSchema, end: pointSchema, curvature: { type: 'number', minimum: -1, maximum: 1, default: 0 }, looseness: { type: 'number', minimum: 0, maximum: 1, default: .35 }, color: { type: 'string', enum: DRAWING_PALETTE.map(({ id }) => id), default: 'chalk' }, weight: { type: 'number', minimum: 1, maximum: 24, default: 4 }, arrowhead: { type: 'string', enum: ['vee', 'triangle', 'barbed'], default: 'vee' } } },
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+      execute: async (input) => {
+        const state = controller.getState(), currentRevision = drawRevision(state.document);
+        if (typeof input.expectedRevision === 'string' && input.expectedRevision !== currentRevision) throw new Error(`Canvas revision is stale. Inspect again and retry with revision ${currentRevision}.`);
+        const readPoint = (value: unknown, label: string): Point => {
+          if (!value || typeof value !== 'object') throw new Error(`${label} requires finite x and y.`);
+          const point = value as Record<string, unknown>;
+          if (typeof point.x !== 'number' || !Number.isFinite(point.x) || typeof point.y !== 'number' || !Number.isFinite(point.y)) throw new Error(`${label} requires finite x and y.`);
+          if (Math.abs(point.x) > 1_000_000 || Math.abs(point.y) > 1_000_000) throw new Error(`${label} coordinates must stay within 1,000,000 world units.`);
+          return { x: point.x, y: point.y };
+        };
+        const start = readPoint(input.start, 'start'), end = readPoint(input.end, 'end');
+        if (Math.hypot(end.x - start.x, end.y - start.y) < 8) throw new Error('Freehand arrow endpoints must be at least 8 world units apart.');
+        const curvature = finite(input.curvature, 0), looseness = finite(input.looseness, .35), weight = finite(input.weight, 4);
+        if (curvature < -1 || curvature > 1) throw new Error('curvature must be from -1 to 1.');
+        if (looseness < 0 || looseness > 1) throw new Error('looseness must be from 0 to 1.');
+        if (weight < 1 || weight > 24) throw new Error('weight must be from 1 to 24.');
+        const arrowhead = (input.arrowhead ?? 'vee') as 'vee' | 'triangle' | 'barbed';
+        if (!['vee', 'triangle', 'barbed'].includes(arrowhead)) throw new Error('arrowhead must be vee, triangle, or barbed.');
+        const color = colorValue((input.color ?? 'chalk') as NamedColor), points = semanticArrowPoints(start, end, curvature, looseness);
+        const objects: CanvasObject[] = [
+          { ...identity('stroke'), kind: 'stroke', points, color, width: weight },
+          { ...identity('stroke'), kind: 'stroke', points: semanticArrowHead(points, weight, arrowhead), color, width: weight }
+        ];
+        const { before, after } = await controller.applyOperations([{ type: 'replace_objects', objects: [...state.document.objects, ...objects] }], currentRevision);
+        const objectIds = changedObjectIds(before, after);
+        return { ...finish('create', objectIds, before, after), objectIds, geometry: { start, end, curvature, looseness, weight, arrowhead, pointCount: points.length, compiledKinds: ['stroke'] } };
+      }
+    },
+    {
       name: 'draw_patch_objects', title: 'Patch Draw objects',
       description: 'Partially update text, labels, position, size, named color, or layer arrangement without reconstructing stored objects. Group translation moves descendants as a unit.',
       inputSchema: { type: 'object', required: ['patches'], additionalProperties: false, properties: { expectedRevision: { type: 'string' }, patches: { type: 'array', minItems: 1, maxItems: 100, items: { type: 'object', required: ['id'], additionalProperties: false, properties: { id: { type: 'string' }, text: { type: 'string', maxLength: 4000 }, label: { type: 'string', maxLength: 240 }, color: { type: 'string', enum: DRAWING_PALETTE.map(({ id }) => id) }, translate: { type: 'object', required: ['dx', 'dy'], additionalProperties: false, properties: { dx: { type: 'number' }, dy: { type: 'number' } } }, size: { type: 'object', additionalProperties: false, properties: { width: { type: 'number', minimum: 1 }, height: { type: 'number', minimum: 1 } } }, arrange: { type: 'string', enum: ['front', 'back', 'forward', 'backward'] } } } } } },
@@ -595,6 +785,49 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         });
         const result = await controller.applyOperations([{ type: 'replace_objects', objects }], drawRevision(before));
         return finish('update', [...movedIds], result.before, result.after);
+      }
+    },
+    {
+      name: 'draw_auto_layout', title: 'Automatically lay out a Draw graph',
+      description: 'Arrange independent object or group roots as a topology-aware flow, hierarchy, loop, orbit, or swimlane. Existing connectors determine directed flow; cycles and disconnected components are handled deterministically.',
+      inputSchema: { type: 'object', required: ['ids', 'mode'], additionalProperties: false, properties: { expectedRevision: { type: 'string' }, ids: { type: 'array', minItems: 1, maxItems: 100, uniqueItems: true, items: { type: 'string', minLength: 1, maxLength: 240 } }, mode: { type: 'string', enum: ['flow', 'hierarchy', 'loop', 'orbit', 'swimlane'] }, orientation: { type: 'string', enum: ['horizontal', 'vertical'] }, gap: { type: 'number', minimum: 16, maximum: 400, default: 64 }, lanes: { type: 'array', maxItems: 100, items: { type: 'object', required: ['id', 'lane'], additionalProperties: false, properties: { id: { type: 'string', minLength: 1, maxLength: 240 }, lane: { type: 'string', minLength: 1, maxLength: 120 } } } } } },
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+      execute: async (input) => {
+        assertRevision(controller, input.expectedRevision);
+        if (!Array.isArray(input.ids) || !input.ids.length || input.ids.length > 100 || input.ids.some((id) => typeof id !== 'string' || !id.length || id.length > 240) || new Set(input.ids).size !== input.ids.length) throw new Error('ids must contain 1 to 100 unique existing root IDs.');
+        const ids = (input.ids as string[]).slice().sort();
+        const mode = String(input.mode) as 'flow' | 'hierarchy' | 'loop' | 'orbit' | 'swimlane';
+        if (!['flow', 'hierarchy', 'loop', 'orbit', 'swimlane'].includes(mode)) throw new Error('mode must be flow, hierarchy, loop, orbit, or swimlane.');
+        const before = controller.getState().document, selected = ids.map((id) => before.objects.find((object) => object.id === id));
+        if (selected.some((object) => !object || object.kind === 'connector')) throw new Error('Auto-layout IDs must reference existing non-connector objects.');
+        const claimed = new Map<string, string>();
+        for (const id of ids) for (const nestedId of descendants(before, [id])) {
+          const owner = claimed.get(nestedId);
+          if (owner) throw new Error(`Auto-layout roots overlap through group membership (${owner} and ${id}); pass independent roots only.`);
+          claimed.set(nestedId, id);
+        }
+        const lanes = asRecords(input.lanes, 'lanes', 100), laneById = new Map<string, string>();
+        for (const lane of lanes) {
+          const id = requiredId(lane.id, 'lane.id'), name = requiredText(lane.lane, 'lane.lane');
+          if (!ids.includes(id)) throw new Error(`Lane references unknown layout root: ${id}.`);
+          if (name.length > 120 || laneById.has(id)) throw new Error('Lane names must be at most 120 characters and root assignments must be unique.');
+          laneById.set(id, name);
+        }
+        const gap = finite(input.gap, 64);
+        if (gap < 16 || gap > 400) throw new Error('gap must be from 16 to 400.');
+        const orientation = input.orientation === 'horizontal' || input.orientation === 'vertical' ? input.orientation : undefined;
+        const layout = graphLayoutTargets(before, ids, mode, gap, laneById, orientation);
+        let objects = before.objects;
+        const movedIds = new Set<string>();
+        for (const id of ids) {
+          const bounds = objectBounds([before.objects.find((object) => object.id === id)!], before.objects), target = layout.targets.get(id)!;
+          const moving = descendants(before, [id]);
+          assertMovableConnectorEndpoints(objects, moving);
+          objects = objects.map((object) => moving.has(object.id) ? translated(object, target.x - bounds.x, target.y - bounds.y) : object);
+          moving.forEach((movingId) => movedIds.add(movingId));
+        }
+        const result = await controller.applyOperations([{ type: 'replace_objects', objects }], drawRevision(before));
+        return { ...finish('update', [...movedIds], result.before, result.after), mode, orientation: orientation ?? (mode === 'hierarchy' ? 'vertical' : 'horizontal'), placedIds: ids, layerCount: layout.layerCount, laneCount: layout.laneCount };
       }
     },
     {

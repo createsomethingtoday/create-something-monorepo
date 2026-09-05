@@ -41,7 +41,7 @@ describe('Draw WebMCP tools', () => {
       applyOperations: async (operations) => { const before = document; document = { ...document, title: operations[0].type === 'set_title' ? operations[0].title : document.title }; return { before, after: document }; },
       select: vi.fn(), setTool: vi.fn(), undo: vi.fn(), redo: vi.fn(), reset: vi.fn(), animate
     });
-    expect(tools.map(({ name }) => name)).toEqual(['draw_get_state', 'draw_inspect', 'draw_compose', 'draw_path', 'draw_patch_objects', 'draw_layout', 'draw_focus', 'draw_revert_change', 'draw_delete', 'draw_replace_canvas', 'draw_apply_operations', 'draw_select', 'draw_set_tool', 'draw_undo', 'draw_redo', 'draw_reset']);
+    expect(tools.map(({ name }) => name)).toEqual(['draw_get_state', 'draw_inspect', 'draw_get_rendered_geometry', 'draw_compose', 'draw_path', 'draw_create_freehand_arrow', 'draw_patch_objects', 'draw_layout', 'draw_auto_layout', 'draw_focus', 'draw_revert_change', 'draw_delete', 'draw_replace_canvas', 'draw_apply_operations', 'draw_select', 'draw_set_tool', 'draw_undo', 'draw_redo', 'draw_reset']);
     const applySchema = tools.find(({ name }) => name === 'draw_apply_operations')!.inputSchema;
     expect(JSON.stringify(applySchema)).toContain('x-maxUtf8Bytes');
     expect(JSON.stringify(applySchema)).toContain('"minItems":2');
@@ -65,7 +65,7 @@ describe('Draw WebMCP tools', () => {
     expect(inspect).toBeDefined();
     const projection = await inspect.execute({ kinds: ['note'], text: 'owner', limit: 10 });
     expect(projection).toMatchObject({
-      version: '2026-09-04.1',
+      version: '2026-09-05.1',
       revision: expect.any(String),
       palette: { chalk: '#f3ebe4', signal: '#0057b8' },
       surface: { width: 1200, height: 800 },
@@ -80,6 +80,102 @@ describe('Draw WebMCP tools', () => {
     expect(receipt).toMatchObject({ ok: true, changeId: expect.any(String), revision: expect.any(String), summary: { objectCount: 21 } });
     expect(receipt).not.toHaveProperty('state');
     await expect(tools.find(({ name }) => name === 'draw_apply_operations')!.execute({ expectedRevision: revision, operations: [{ type: 'set_title', title: 'Stale' }] })).rejects.toThrow('revision');
+  });
+
+  it('returns actual bounded rendered geometry and fails closed without a web render surface', async () => {
+    const note = { id: 'rendered-note', kind: 'note' as const, createdAt: '2026-09-05T00:00:00.000Z', x: 20, y: 30, width: 200, height: 100, text: 'Rendered' };
+    const renderedGeometry = vi.fn(async () => ({
+      surface: { x: 0, y: 0, width: 1200, height: 800 },
+      objects: [{ id: note.id, kind: note.kind, worldBounds: { x: 20, y: 30, width: 214, height: 112 }, viewportBounds: { x: 84, y: 96, width: 214, height: 112 }, clipped: false }],
+      connectors: [], overlaps: [], totalObjectCount: 1
+    }));
+    const controller = { ...harness({ ...createDocument(), objects: [note] }), renderedGeometry };
+    const tool = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_get_rendered_geometry');
+    expect(tool).toBeDefined();
+    expect(tool?.annotations).toMatchObject({ readOnlyHint: true, destructiveHint: false, idempotentHint: true });
+    const result = await tool!.execute({ ids: [note.id], limit: 25 });
+    expect(renderedGeometry).toHaveBeenCalledWith({ ids: [note.id], limit: 25 });
+    expect(result).toMatchObject({
+      version: expect.any(String), revision: expect.any(String), truncated: false,
+      surface: { width: 1200, height: 800 },
+      summary: { objectCount: 1, returnedObjectCount: 1, connectorCount: 0, overlapCount: 0 },
+      objects: [{ id: note.id, worldBounds: { width: 214 }, viewportBounds: { x: 84 }, clipped: false }]
+    });
+
+    const unavailable = createDrawWebMcpTools(harness()).find(({ name }) => name === 'draw_get_rendered_geometry');
+    await expect(unavailable!.execute({})).rejects.toThrow('rendered web surface');
+  });
+
+  it('creates a deterministic semantic freehand arrow as portable v1 strokes and reverts it exactly', async () => {
+    const controller = harness(), tools = createDrawWebMcpTools(controller);
+    const arrow = tools.find(({ name }) => name === 'draw_create_freehand_arrow');
+    expect(arrow).toBeDefined();
+    expect(arrow?.annotations).toMatchObject({ readOnlyHint: false, destructiveHint: false, idempotentHint: false });
+    const input = { start: { x: 40, y: 80 }, end: { x: 440, y: 220 }, curvature: .35, looseness: .45, color: 'signal', weight: 6, arrowhead: 'triangle' };
+    const first = await arrow!.execute(input) as { changeId: string; objectIds: string[]; geometry: { pointCount: number; arrowhead: string } };
+    const firstObjects = controller.read().objects.map(({ id, createdAt, ...object }) => object);
+    expect(first).toMatchObject({ changeId: expect.any(String), objectIds: expect.any(Array), geometry: { pointCount: expect.any(Number), arrowhead: 'triangle' } });
+    expect(controller.read().version).toBe('create-something.mapping-canvas.v1');
+    expect(controller.read().objects.every(({ kind }) => kind === 'stroke')).toBe(true);
+    expect(first.geometry.pointCount).toBeLessThanOrEqual(64);
+    await tools.find(({ name }) => name === 'draw_revert_change')!.execute({ changeId: first.changeId });
+    expect(controller.read().objects).toEqual([]);
+    const second = await arrow!.execute(input) as { objectIds: string[] };
+    const secondObjects = controller.read().objects.map(({ id, createdAt, ...object }) => object);
+    expect(secondObjects).toEqual(firstObjects);
+    expect(second.objectIds).toHaveLength(first.objectIds.length);
+  });
+
+  it('bounds semantic arrow geometry and produces distinct supported treatments', async () => {
+    const geometries: string[] = [];
+    for (const [index, arrowhead] of ['vee', 'triangle', 'barbed'].entries()) {
+      const controller = harness(), tool = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_create_freehand_arrow')!;
+      await tool.execute({ start: { x: 0, y: 0 }, end: { x: 320, y: 120 }, curvature: index * .25, looseness: index * .3, weight: 5, arrowhead });
+      geometries.push(JSON.stringify(controller.read().objects.map((object) => object.kind === 'stroke' ? object.points : [])));
+    }
+    expect(new Set(geometries).size).toBe(3);
+    const controller = harness(), tool = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_create_freehand_arrow')!;
+    await expect(tool.execute({ start: { x: 0, y: 0 }, end: { x: 1, y: 1 } })).rejects.toThrow('at least 8');
+    await expect(tool.execute({ start: { x: Number.POSITIVE_INFINITY, y: 0 }, end: { x: 100, y: 0 } })).rejects.toThrow('finite');
+    await expect(tool.execute({ start: { x: 0, y: 0 }, end: { x: 100, y: 0 }, curvature: 2 })).rejects.toThrow('curvature');
+    await expect(tool.execute({ start: { x: 0, y: 0 }, end: { x: 100, y: 0 }, arrowhead: 'random' })).rejects.toThrow('arrowhead');
+    expect(controller.read().objects).toEqual([]);
+  });
+
+  it.each(['flow', 'hierarchy', 'loop', 'orbit', 'swimlane'] as const)('auto-layouts graph roots deterministically in %s mode with exact revert', async (mode) => {
+    const notes = ['alpha', 'beta', 'gamma', 'delta'].map((id, index) => ({ id, kind: 'note' as const, createdAt: '2026-09-05T00:00:00.000Z', x: index * 12, y: index * 8, width: 120, height: 80, text: id }));
+    const connectors = [
+      { id: 'edge-ab', kind: 'connector' as const, createdAt: '2026-09-05T00:00:00.000Z', fromId: 'alpha', toId: 'beta', label: '' },
+      { id: 'edge-bg', kind: 'connector' as const, createdAt: '2026-09-05T00:00:00.000Z', fromId: 'beta', toId: 'gamma', label: '' },
+      { id: 'edge-ga', kind: 'connector' as const, createdAt: '2026-09-05T00:00:00.000Z', fromId: 'gamma', toId: 'alpha', label: '' }
+    ];
+    const initial = { ...createDocument(), objects: [...notes, ...connectors] };
+    const run = async (objects: CanvasDocument['objects']) => {
+      const controller = harness({ ...initial, objects }), tools = createDrawWebMcpTools(controller);
+      const autoLayout = tools.find(({ name }) => name === 'draw_auto_layout');
+      expect(autoLayout).toBeDefined();
+      const result = await autoLayout!.execute({ mode, ids: notes.map(({ id }) => id).reverse(), gap: 48, lanes: [{ id: 'alpha', lane: 'Plan' }, { id: 'beta', lane: 'Build' }, { id: 'gamma', lane: 'Build' }] }) as { changeId: string; mode: string; placedIds: string[] };
+      expect(result).toMatchObject({ changeId: expect.any(String), mode, placedIds: ['alpha', 'beta', 'delta', 'gamma'] });
+      const positioned = Object.fromEntries(controller.read().objects.filter((object): object is Extract<CanvasDocument['objects'][number], { kind: 'note' }> => object.kind === 'note').map((object) => [object.id, { x: object.x, y: object.y }]));
+      await tools.find(({ name }) => name === 'draw_revert_change')!.execute({ changeId: result.changeId });
+      expect(controller.read().objects).toEqual(objects);
+      return positioned;
+    };
+    expect(await run(initial.objects)).toEqual(await run([...connectors, ...notes].reverse()));
+  });
+
+  it('moves nested group roots as units and rejects overlapping roots atomically in auto-layout', async () => {
+    const child = { id: 'nested-child', kind: 'note' as const, createdAt: '2026-09-05T00:00:00.000Z', x: 30, y: 50, width: 120, height: 80, text: 'Child' };
+    const group = { id: 'nested-group', kind: 'group' as const, createdAt: child.createdAt, x: 0, y: 0, width: 180, height: 160, label: 'Group', childIds: [child.id] };
+    const peer = { ...child, id: 'peer', x: 20, y: 20, text: 'Peer' };
+    const controller = harness({ ...createDocument(), objects: [group, child, peer] }), tools = createDrawWebMcpTools(controller), layout = tools.find(({ name }) => name === 'draw_auto_layout')!;
+    const beforeOffset = { x: child.x - group.x, y: child.y - group.y };
+    await layout.execute({ ids: [group.id, peer.id], mode: 'flow' });
+    const movedGroup = controller.read().objects.find((object): object is typeof group => object.id === group.id)!, movedChild = controller.read().objects.find((object): object is typeof child => object.id === child.id)!;
+    expect({ x: movedChild.x - movedGroup.x, y: movedChild.y - movedGroup.y }).toEqual(beforeOffset);
+    const stable = controller.read();
+    await expect(layout.execute({ ids: [group.id, child.id], mode: 'hierarchy' })).rejects.toThrow('overlap through group membership');
+    expect(controller.read()).toEqual(stable);
   });
 
   it('summarizes dense stroke geometry in compact inspection', async () => {
@@ -792,7 +888,7 @@ describe('Draw WebMCP tools', () => {
       getState: () => ({ document: createDocument(), selectedIds: [], tool: 'pen', canUndo: false, canRedo: false }),
       applyOperations: vi.fn(), select: vi.fn(), setTool: vi.fn(), undo: vi.fn(), redo: vi.fn(), reset: vi.fn(), animate: vi.fn()
     });
-    expect(registerDrawWebMcpTools(tools, { documentContext: modelContext })).toEqual({ api: 'registerTool', registered: 16 });
+    expect(registerDrawWebMcpTools(tools, { documentContext: modelContext })).toEqual({ api: 'registerTool', registered: 19 });
     const result = await (registered[0].execute as (input: unknown) => Promise<unknown>)({});
     expect(result).toMatchObject({ document: { title: 'Untitled mapping session' }, selectedIds: [] });
   });

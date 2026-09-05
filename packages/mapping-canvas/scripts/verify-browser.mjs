@@ -130,6 +130,33 @@ try {
     });
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     const connectorLabel = [...document.querySelectorAll('.connector-label')].find((node) => node.textContent === 'approved');
+    const renderedGeometry = await tools.draw_get_rendered_geometry.execute({ ids: [composed.refs.brief, composed.refs.launch, composed.refs.approval, composed.refs.mission], limit: 10 });
+    const autoLayouts = [];
+    for (const mode of ['flow', 'hierarchy', 'loop', 'orbit', 'swimlane']) {
+      const result = await tools.draw_auto_layout.execute({ ids: [composed.refs.launch, composed.refs.brief], mode, gap: 64, lanes: [{ id: composed.refs.brief, lane: 'Plan' }, { id: composed.refs.launch, lane: 'Launch' }] });
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const geometry = await tools.draw_get_rendered_geometry.execute({ ids: [composed.refs.brief, composed.refs.launch], limit: 10 });
+      autoLayouts.push({ mode: result.mode, placedIds: result.placedIds, peerOverlaps: geometry.overlaps.filter(({ classification }) => classification === 'peer').length });
+      await tools.draw_revert_change.execute({ changeId: result.changeId });
+    }
+    const arrow = await tools.draw_create_freehand_arrow.execute({ start: { x: 40, y: 480 }, end: { x: 440, y: 620 }, curvature: .35, looseness: .55, color: 'signal', weight: 6, arrowhead: 'triangle' });
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    const arrowGeometry = await tools.draw_get_rendered_geometry.execute({ ids: arrow.objectIds, limit: 10 });
+    await tools.draw_revert_change.execute({ changeId: arrow.changeId });
+    const collision = await tools.draw_compose.execute({ nodes: [{ ref: 'collision-a', text: 'Collision A' }, { ref: 'collision-b', text: 'Collision B' }], layout: { direction: 'row', gap: 64 } });
+    const collisionState = await tools.draw_get_state.execute({});
+    const collisionA = collisionState.document.objects.find(({ id }) => id === collision.refs['collision-a']);
+    const collisionB = collisionState.document.objects.find(({ id }) => id === collision.refs['collision-b']);
+    const collisionPatch = await tools.draw_patch_objects.execute({ patches: [{ id: collisionB.id, translate: { dx: collisionA.x - collisionB.x, dy: collisionA.y - collisionB.y } }] });
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    const collisionGeometry = await tools.draw_get_rendered_geometry.execute({ ids: [collisionA.id, collisionB.id], limit: 10 });
+    const offscreenId = 'browser-rendered-offscreen';
+    const offscreen = await tools.draw_apply_operations.execute({ operations: [{ type: 'put_object', object: { id: offscreenId, kind: 'note', createdAt: new Date().toISOString(), x: 100000, y: 100000, width: 180, height: 100, text: 'Offscreen' } }, { type: 'set_viewport', viewport: collisionState.document.viewport }] });
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    const clippedGeometry = await tools.draw_get_rendered_geometry.execute({ ids: [offscreenId, 'missing-rendered-id'], limit: 10 });
+    await tools.draw_revert_change.execute({ changeId: offscreen.changeId });
+    await tools.draw_revert_change.execute({ changeId: collisionPatch.changeId });
+    await tools.draw_revert_change.execute({ changeId: collision.changeId });
     const path = await tools.draw_path.execute({ kind: 'polygon', color: 'signal', width: 5, smooth: true, points: [{ x: 0, y: -100 }, { x: 75, y: 70 }, { x: 25, y: 50 }, { x: 0, y: 95 }, { x: -25, y: 50 }, { x: -75, y: 70 }] });
     const patched = await tools.draw_patch_objects.execute({ patches: [{ id: composed.refs.launch, text: 'Launch ready', translate: { dx: 24, dy: 16 }, arrange: 'front' }] });
     const staleRevision = inspect.revision;
@@ -148,13 +175,16 @@ try {
     const restored = await tools.draw_get_state.execute({});
     return {
       names, drawNames, version: inspect.version, compactBytes: JSON.stringify(inspect).length, fullBytes: JSON.stringify(before).length,
-      composed, connectorVisible: Boolean(connectorLabel && getComputedStyle(connectorLabel).display !== 'none'),
+      composed, renderedGeometry, autoLayouts, arrow, arrowGeometry, collisionGeometry, clippedGeometry, connectorVisible: Boolean(connectorLabel && getComputedStyle(connectorLabel).display !== 'none'),
       staleError, deleteError, replaceError, focus, restoredCount: restored.document.objects.length, beforeCount: before.document.objects.length
     };
   });
-  const requiredSemanticTools = ['draw_compose', 'draw_delete', 'draw_focus', 'draw_inspect', 'draw_layout', 'draw_patch_objects', 'draw_path', 'draw_replace_canvas', 'draw_revert_change'];
-  if (!requiredSemanticTools.every((name) => semantic.drawNames.includes(name)) || semantic.drawNames.length !== 16) throw new Error(`Semantic Draw tool inventory is incomplete: ${JSON.stringify(semantic.drawNames)} (all registered tools: ${JSON.stringify(semantic.names)})`);
-  if (semantic.version !== '2026-09-04.1' || !semantic.composed.changeId || !semantic.connectorVisible) throw new Error(`Semantic composition or visible connector label failed: ${JSON.stringify(semantic)}`);
+  const requiredSemanticTools = ['draw_auto_layout', 'draw_compose', 'draw_create_freehand_arrow', 'draw_delete', 'draw_focus', 'draw_get_rendered_geometry', 'draw_inspect', 'draw_layout', 'draw_patch_objects', 'draw_path', 'draw_replace_canvas', 'draw_revert_change'];
+  if (!requiredSemanticTools.every((name) => semantic.drawNames.includes(name)) || semantic.drawNames.length !== 19) throw new Error(`Semantic Draw tool inventory is incomplete: ${JSON.stringify(semantic.drawNames)} (all registered tools: ${JSON.stringify(semantic.names)})`);
+  if (semantic.version !== '2026-09-05.1' || !semantic.composed.changeId || !semantic.connectorVisible) throw new Error(`Semantic composition or visible connector label failed: ${JSON.stringify(semantic)}`);
+  if (semantic.renderedGeometry.objects.length !== 4 || semantic.renderedGeometry.connectors.length !== 1 || !semantic.renderedGeometry.connectors[0].labelBounds || semantic.renderedGeometry.overlaps.some(({ classification }) => classification === 'peer') || !semantic.renderedGeometry.overlaps.some(({ classification }) => classification === 'containment')) throw new Error(`Rendered geometry did not match the visible semantic graph: ${JSON.stringify(semantic.renderedGeometry)}`);
+  if (semantic.autoLayouts.length !== 5 || semantic.autoLayouts.some(({ peerOverlaps }) => peerOverlaps) || semantic.arrow.geometry.arrowhead !== 'triangle' || semantic.arrowGeometry.objects.length !== 2) throw new Error(`Semantic auto-layout or freehand arrow proof failed: ${JSON.stringify({ autoLayouts: semantic.autoLayouts, arrow: semantic.arrow, arrowGeometry: semantic.arrowGeometry })}`);
+  if (!semantic.collisionGeometry.overlaps.some(({ classification }) => classification === 'peer') || !semantic.clippedGeometry.objects[0]?.clipped || !semantic.clippedGeometry.missingIds.includes('missing-rendered-id')) throw new Error(`Rendered collision, clipping, or missing-ID evidence failed: ${JSON.stringify({ collision: semantic.collisionGeometry, clipped: semantic.clippedGeometry })}`);
   if (!semantic.staleError.includes('revision') || !semantic.deleteError.includes('DELETE OBJECTS') || !semantic.replaceError.includes('REPLACE CANVAS')) throw new Error(`Semantic safety boundary failed: ${JSON.stringify(semantic)}`);
   if (semantic.restoredCount !== semantic.beforeCount || !semantic.focus.ok) throw new Error(`Semantic workflow did not restore its isolated fixture: ${JSON.stringify(semantic)}`);
   const toolbarBox = await page.locator('.toolbar').boundingBox();
@@ -308,6 +338,7 @@ try {
   await page.getByTestId('convert-menu').click();
   await page.getByTestId('convert-note').click();
   await page.locator('textarea[aria-label="Edit note"]').last().fill('First export line\nSecond export line');
+  await page.locator('textarea[aria-label="Edit note"]').last().blur();
   await page.evaluate(() => {
     window.__mappingCanvasPngText = [];
     window.__mappingCanvasPngStrokes = [];
@@ -318,6 +349,11 @@ try {
     };
     const strokeStyle = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'strokeStyle');
     if (strokeStyle?.get && strokeStyle.set) Object.defineProperty(CanvasRenderingContext2D.prototype, 'strokeStyle', { configurable: true, get: strokeStyle.get, set(value) { window.__mappingCanvasPngStrokes.push(String(value)); strokeStyle.set.call(this, value); } });
+  });
+  const exportArrow = await page.evaluate(async () => {
+    const inspect = await window.__drawWebMcpTools.draw_inspect.execute({ limit: 1 });
+    const start = { x: inspect.visibleWorld.x + 160, y: inspect.visibleWorld.y + 160 };
+    return window.__drawWebMcpTools.draw_create_freehand_arrow.execute({ start, end: { x: start.x + 360, y: start.y + 140 }, curvature: -.3, looseness: .6, color: 'signal', weight: 7, arrowhead: 'barbed' });
   });
 
   const exports = {};
@@ -337,9 +373,14 @@ try {
   if (!(await page.evaluate(() => window.__mappingCanvasPngText.includes('Approved path')))) throw new Error('PNG export omitted the visible connector label');
   if (!(await page.evaluate(() => window.__mappingCanvasPngText.includes('First export line') && window.__mappingCanvasPngText.includes('Second export line')))) throw new Error('PNG export collapsed explicit note line breaks');
   const jsonExport = JSON.parse(await readFile(`${outputRoot}canvas.json`, 'utf8'));
-  const exportedDrawingColors = jsonExport.objects.filter((object) => ['stroke', 'rectangle', 'ellipse', 'arrow'].includes(object.kind)).map((object) => object.color);
+  const exportArrowIds = new Set(exportArrow.objectIds);
+  const exportedArrowObjects = jsonExport.objects.filter(({ id }) => exportArrowIds.has(id));
+  if (exportedArrowObjects.length !== 2 || !exportedArrowObjects.every(({ kind, color, points }) => kind === 'stroke' && color === '#0057b8' && points.length >= 3) || !svgExport.includes('stroke="#0057b8"')) throw new Error('Semantic freehand arrow was not retained in JSON and SVG exports');
+  const exportedDrawingColors = jsonExport.objects.filter((object) => ['stroke', 'rectangle', 'ellipse', 'arrow'].includes(object.kind) && !exportArrowIds.has(object.id)).map((object) => object.color);
   if (!exportedDrawingColors.length || !exportedDrawingColors.every((color) => color === '#007a4d') || !svgExport.includes('stroke="#007a4d"')) throw new Error('JSON or SVG export lost the resolved Growth color');
-  if (!(await page.evaluate(() => window.__mappingCanvasPngStrokes.includes('#007a4d') && window.__mappingCanvasPngStrokes.includes('#fcaa2d')))) throw new Error('PNG export lost drawing or structural colors');
+  if (!(await page.evaluate(() => window.__mappingCanvasPngStrokes.includes('#007a4d') && window.__mappingCanvasPngStrokes.includes('#0057b8') && window.__mappingCanvasPngStrokes.includes('#fcaa2d')))) throw new Error('PNG export lost drawing, semantic arrow, or structural colors');
+  await page.evaluate((changeId) => window.__drawWebMcpTools.draw_revert_change.execute({ changeId }), exportArrow.changeId);
+  await page.waitForTimeout(300);
 
   const countBeforeReload = await page.locator('[role="button"][aria-label]').count();
   await page.reload({ waitUntil: 'networkidle' });

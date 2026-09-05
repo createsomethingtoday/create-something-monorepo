@@ -6,7 +6,7 @@
   import { commit, convert, createDocument, createObjectCenterResolver, objectBounds, parse, redo, removeObjects, resizeGroup, restoreConversion, serialize, uid, undo, withObjects, type CanvasDocument, type CanvasObject, type History, type Point, type Shape, type Stroke, type Tool } from '$lib/document';
   import { DEFAULT_DRAWING_COLOR, DRAWING_COLOR_PREFERENCE, DRAWING_PALETTE, isColorableObject, isDrawingColor, recolorObjects, type DrawingColor } from '$lib/palette';
   import { applyCanvasOperations, isValidCanvasTitle, type CanvasOperation } from '$lib/paired-session';
-  import { createDrawWebMcpTools, drawRevision, registerDrawWebMcpTools, type DrawTransitionKind } from '$lib/webmcp';
+  import { createDrawWebMcpTools, drawRevision, registerDrawWebMcpTools, type DrawRenderedGeometry, type DrawTransitionKind } from '$lib/webmcp';
   import { beginPairing, companionStatus, discoverHosts, forgetCompanion, hasNativeBridge, hostStatus, nativeRole as readNativeRole, pairCompanion, refreshCompanion, replaceHostDocument, revokeCompanion, setCompanionOnline, submitNativeOperation, type DiscoveredHost, type NativeRole, type NativeSessionStatus, type PairingOffer } from '$lib/native-pairing';
   import { fitViewportToBounds, normalizeWheelDelta, panViewport, zoomViewportAt } from '$lib/viewport';
   import { createNoteInputBuffer } from '$lib/note-input';
@@ -113,7 +113,8 @@
       redo: () => queueAgentMutation(() => browserLocalHistory('redo')),
       reset: () => queueAgentMutation(resetCanvasFromAgent),
       animate: showAgentTransition,
-      focus: (target) => queueAgentMutation(() => focusAgentCamera(target))
+      focus: (target) => queueAgentMutation(() => focusAgentCamera(target)),
+      renderedGeometry: readRenderedGeometry
     }));
     if (webMcp.registered) status = `${webMcp.registered} agent tools ready · loading local canvas…`;
     const resize = () => { viewportWidth = surface?.clientWidth || window.innerWidth; viewportHeight = surface?.clientHeight || window.innerHeight; };
@@ -143,6 +144,107 @@
   function agentState() {
     assertAgentControlReady();
     return { document: JSON.parse(JSON.stringify(document)) as CanvasDocument, selectedIds: [...selectedIds], tool, canUndo: history.past.length > 0, canRedo: history.future.length > 0, surface: { width: viewportWidth, height: viewportHeight } };
+  }
+
+  function settledRender() {
+    return new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+  }
+
+  async function readRenderedGeometry(input: { ids?: string[]; limit: number }): Promise<DrawRenderedGeometry> {
+    assertAgentControlReady();
+    if (nativeShell || nativeRole !== 'web') throw new Error('Rendered geometry is limited to the browser-local web canvas.');
+    await settledRender();
+    assertAgentControlReady();
+
+    const surfaceRect = surface.getBoundingClientRect();
+    const contentMatrix = canvasContent.getScreenCTM();
+    if (!contentMatrix) throw new Error('Draw could not resolve the rendered canvas transform.');
+    const inverse = contentMatrix.inverse();
+    const viewportBounds = (rect: DOMRect): { x: number; y: number; width: number; height: number } => ({
+      x: rect.left - surfaceRect.left,
+      y: rect.top - surfaceRect.top,
+      width: rect.width,
+      height: rect.height
+    });
+    const worldBounds = (rect: DOMRect): { x: number; y: number; width: number; height: number } => {
+      const corners = [
+        new DOMPoint(rect.left, rect.top), new DOMPoint(rect.right, rect.top),
+        new DOMPoint(rect.right, rect.bottom), new DOMPoint(rect.left, rect.bottom)
+      ].map((point) => point.matrixTransform(inverse));
+      const xs = corners.map(({ x }) => x), ys = corners.map(({ y }) => y);
+      const x = Math.min(...xs), y = Math.min(...ys);
+      return { x, y, width: Math.max(...xs) - x, height: Math.max(...ys) - y };
+    };
+    const clipped = (bounds: { x: number; y: number; width: number; height: number }) => bounds.x < 0 || bounds.y < 0 || bounds.x + bounds.width > surfaceRect.width || bounds.y + bounds.height > surfaceRect.height;
+    const requested = input.ids ? new Set(input.ids) : undefined;
+    const matches = document.objects.filter(({ id }) => !requested || requested.has(id));
+    const selected = matches.slice(0, input.limit);
+    const existingIds = new Set(document.objects.map(({ id }) => id));
+    const missingIds = input.ids?.filter((id) => !existingIds.has(id)) ?? [];
+    const rendered = selected.flatMap((object) => {
+      const element = surface.querySelector<SVGGraphicsElement>(`[data-object-id="${CSS.escape(object.id)}"]`);
+      if (!element) return [];
+      const rect = element.getBoundingClientRect();
+      const view = viewportBounds(rect);
+      return [{ id: object.id, kind: object.kind, worldBounds: worldBounds(rect), viewportBounds: view, clipped: clipped(view) }];
+    });
+    const byId = new Map(document.objects.map((object) => [object.id, object]));
+    const connectors = selected.flatMap((object) => {
+      if (object.kind !== 'connector') return [];
+      const line = surface.querySelector<SVGLineElement>(`line[data-object-id="${CSS.escape(object.id)}"]`);
+      if (!line) return [];
+      const label = line.parentElement?.querySelector<SVGTextElement>('.connector-label');
+      const labelRect = label?.getBoundingClientRect();
+      return [{
+        id: object.id,
+        fromId: object.fromId,
+        toId: object.toId,
+        route: [{ x: line.x1.baseVal.value, y: line.y1.baseVal.value }, { x: line.x2.baseVal.value, y: line.y2.baseVal.value }],
+        ...(labelRect ? { labelBounds: { worldBounds: worldBounds(labelRect), viewportBounds: viewportBounds(labelRect) } } : {})
+      }];
+    });
+    const contains = (groupId: string, candidateId: string) => {
+      const group = byId.get(groupId);
+      const visited = new Set<string>(), stack = group?.kind === 'group' ? [...group.childIds] : [];
+      while (stack.length) {
+        const id = stack.pop()!;
+        if (id === candidateId) return true;
+        if (visited.has(id)) continue;
+        visited.add(id);
+        const child = byId.get(id);
+        if (child?.kind === 'group') stack.push(...child.childIds);
+      }
+      return false;
+    };
+    const overlap = (first: typeof rendered[number], second: typeof rendered[number]) => {
+      const x = Math.max(first.worldBounds.x, second.worldBounds.x), y = Math.max(first.worldBounds.y, second.worldBounds.y);
+      const right = Math.min(first.worldBounds.x + first.worldBounds.width, second.worldBounds.x + second.worldBounds.width);
+      const bottom = Math.min(first.worldBounds.y + first.worldBounds.height, second.worldBounds.y + second.worldBounds.height);
+      return right > x && bottom > y ? { x, y, width: right - x, height: bottom - y } : undefined;
+    };
+    const actionable = rendered.filter(({ kind }) => kind !== 'connector');
+    const overlaps: DrawRenderedGeometry['overlaps'] = [];
+    let comparisonCount = 0;
+    for (let firstIndex = 0; firstIndex < actionable.length; firstIndex += 1) {
+      for (let secondIndex = firstIndex + 1; secondIndex < actionable.length; secondIndex += 1) {
+        comparisonCount += 1;
+        const first = actionable[firstIndex], second = actionable[secondIndex], bounds = overlap(first, second);
+        if (!bounds) continue;
+        const containment = (first.kind === 'group' && contains(first.id, second.id)) || (second.kind === 'group' && contains(second.id, first.id));
+        overlaps.push({ firstId: first.id, secondId: second.id, bounds, classification: containment ? 'containment' : 'peer' });
+      }
+    }
+    return {
+      surface: { x: 0, y: 0, width: surfaceRect.width, height: surfaceRect.height },
+      objects: rendered,
+      connectors,
+      overlaps,
+      totalObjectCount: matches.length,
+      missingIds,
+      unrenderedIds: selected.filter(({ id }) => !rendered.some((entry) => entry.id === id)).map(({ id }) => id),
+      comparisonCount,
+      truncated: matches.length > selected.length
+    };
   }
 
   function focusAgentCamera(target: { scope: 'all' | 'selection' | 'ids' | 'bounds'; ids?: string[]; bounds?: { x: number; y: number; width: number; height: number }; padding: number }) {
