@@ -314,6 +314,36 @@
       if (projectionsOverlap && firstSides[0] * firstSides[1] <= 0 && secondSides[0] * secondSides[1] <= 0) return 0;
       return Math.min(pointSegmentDistance(first.start, second), pointSegmentDistance(first.end, second), pointSegmentDistance(second.start, first), pointSegmentDistance(second.end, first));
     };
+    type SegmentNode = { minX: number; maxX: number; minY: number; maxY: number; count: number; segments?: PaintSegment[]; left?: SegmentNode; right?: SegmentNode };
+    const segmentTrees = new WeakMap<PaintSegment[], SegmentNode | undefined>();
+    const segmentTree = (segments: PaintSegment[]) => {
+      if (segmentTrees.has(segments)) return segmentTrees.get(segments);
+      const build = (items: PaintSegment[]): SegmentNode | undefined => {
+        if (!items.length) return undefined;
+        const node = { minX: Math.min(...items.map((segment) => Math.min(segment.start.x, segment.end.x) - segment.padding)), maxX: Math.max(...items.map((segment) => Math.max(segment.start.x, segment.end.x) + segment.padding)), minY: Math.min(...items.map((segment) => Math.min(segment.start.y, segment.end.y) - segment.padding)), maxY: Math.max(...items.map((segment) => Math.max(segment.start.y, segment.end.y) + segment.padding)), count: items.length };
+        if (items.length <= 8) return { ...node, segments: items };
+        const horizontal = node.maxX - node.minX >= node.maxY - node.minY, sorted = [...items].sort((a, b) => (horizontal ? (a.start.x + a.end.x) - (b.start.x + b.end.x) : (a.start.y + a.end.y) - (b.start.y + b.end.y)));
+        const middle = Math.ceil(sorted.length / 2);
+        return { ...node, left: build(sorted.slice(0, middle)), right: build(sorted.slice(middle)) };
+      };
+      const tree = build(segments); segmentTrees.set(segments, tree); return tree;
+    };
+    const segmentsOverlap = (first: PaintSegment[], second: PaintSegment[]) => {
+      const a = segmentTree(first), b = segmentTree(second);
+      if (!a || !b) return false;
+      const stack: Array<[SegmentNode, SegmentNode]> = [[a, b]];
+      while (stack.length) {
+        const [left, right] = stack.pop()!;
+        if (left.maxX < right.minX || right.maxX < left.minX || left.maxY < right.minY || right.maxY < left.minY) continue;
+        if (left.segments && right.segments) {
+          if (left.segments.some((segment) => right.segments!.some((candidate) => segmentDistance(segment, candidate) <= segment.padding + candidate.padding))) return true;
+          continue;
+        }
+        if (!right.segments && (left.segments || right.count >= left.count)) { if (right.left) stack.push([left, right.left]); if (right.right) stack.push([left, right.right]); }
+        else { if (left.left) stack.push([left.left, right]); if (left.right) stack.push([left.right, right]); }
+      }
+      return false;
+    };
     const triangleEdges = (triangle: Array<{ x: number; y: number }>) => triangle.map((start, index) => ({ start, end: triangle[(index + 1) % triangle.length], padding: 0 }));
     const pointInTriangle = (point: { x: number; y: number }, triangle: Array<{ x: number; y: number }>) => {
       const cross = (a: { x: number; y: number }, b: { x: number; y: number }, c: { x: number; y: number }) => (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
@@ -327,11 +357,13 @@
     const triangleHitsSegment = (triangle: Array<{ x: number; y: number }>, segment: PaintSegment) => pointInTriangle(segment.start, triangle) || pointInTriangle(segment.end, triangle) || triangleEdges(triangle).some((edge) => segmentDistance(edge, segment) <= segment.padding);
     const trianglesOverlap = (first: Array<{ x: number; y: number }>, second: Array<{ x: number; y: number }>) => first.some((point) => pointInTriangle(point, second)) || second.some((point) => pointInTriangle(point, first)) || triangleEdges(first).some((edge) => triangleEdges(second).some((candidate) => segmentDistance(edge, candidate) === 0));
     const paintHitsRect = (paint: ReturnType<typeof paintGeometry>, rect: { x: number; y: number; width: number; height: number }) => paint.rects.some((candidate) => overlapBounds(candidate, rect)) || paint.segments.some((segment) => segmentHitsBounds(segment.start, segment.end, rect, segment.padding)) || paint.triangles.some((triangle) => triangleHitsRect(triangle, rect));
+    const paintCache = new Map<string, ReturnType<typeof paintGeometry>>();
+    const paintFor = (object: CanvasObject, entry: typeof rendered[number]) => { const cached = paintCache.get(object.id); if (cached) return cached; const paint = paintGeometry(object, entry); paintCache.set(object.id, paint); return paint; };
     const paintedOverlap = (firstObject: CanvasObject, first: typeof rendered[number], secondObject: CanvasObject, second: typeof rendered[number]) => {
-      const a = paintGeometry(firstObject, first), b = paintGeometry(secondObject, second);
+      const a = paintFor(firstObject, first), b = paintFor(secondObject, second);
       if (a.rects.some((rect) => b.rects.some((candidate) => overlapBounds(rect, candidate)))) return true;
       if (a.segments.some((segment) => b.rects.some((rect) => segmentHitsBounds(segment.start, segment.end, rect, segment.padding))) || b.segments.some((segment) => a.rects.some((rect) => segmentHitsBounds(segment.start, segment.end, rect, segment.padding)))) return true;
-      if (a.segments.some((firstSegment) => b.segments.some((secondSegment) => segmentDistance(firstSegment, secondSegment) <= firstSegment.padding + secondSegment.padding))) return true;
+      if (segmentsOverlap(a.segments, b.segments)) return true;
       if (a.triangles.some((triangle) => b.rects.some((rect) => triangleHitsRect(triangle, rect))) || b.triangles.some((triangle) => a.rects.some((rect) => triangleHitsRect(triangle, rect)))) return true;
       if (a.triangles.some((triangle) => b.segments.some((segment) => triangleHitsSegment(triangle, segment))) || b.triangles.some((triangle) => a.segments.some((segment) => triangleHitsSegment(triangle, segment)))) return true;
       return a.triangles.some((triangle) => b.triangles.some((candidate) => trianglesOverlap(triangle, candidate)));
@@ -354,8 +386,8 @@
         const secondEndpointContainer = secondObject?.kind === 'connector' && firstObject && (secondObject.fromId === firstObject.id || secondObject.toId === firstObject.id
           || (firstObject.kind === 'group' && (contains(firstObject.id, secondObject.fromId) || contains(firstObject.id, secondObject.toId))));
         const firstLabelBounds = firstEndpointContainer ? connectorById.get(first.id)?.labelBounds?.worldBounds : undefined, secondLabelBounds = secondEndpointContainer ? connectorById.get(second.id)?.labelBounds?.worldBounds : undefined;
-        const relatedLabelOverlap = firstLabelBounds && secondObject && paintHitsRect(paintGeometry(secondObject, second), firstLabelBounds) ? firstLabelBounds
-          : secondLabelBounds && firstObject && paintHitsRect(paintGeometry(firstObject, first), secondLabelBounds) ? secondLabelBounds : undefined;
+        const relatedLabelOverlap = firstLabelBounds && secondObject && paintHitsRect(paintFor(secondObject, second), firstLabelBounds) ? firstLabelBounds
+          : secondLabelBounds && firstObject && paintHitsRect(paintFor(firstObject, first), secondLabelBounds) ? secondLabelBounds : undefined;
         if ((firstRelated || secondRelated) && !relatedLabelOverlap) continue;
         if (!relatedLabelOverlap && firstObject && secondObject && !paintedOverlap(firstObject, first, secondObject, second)) continue;
         const sharedCompound = firstObject?.kind === 'stroke' && secondObject?.kind === 'stroke'

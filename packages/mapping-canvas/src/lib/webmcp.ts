@@ -441,7 +441,7 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
     return labels;
   };
   const relocate = (id: string, axis: 'x' | 'y') => {
-    for (let attempt = 0; attempt < 32; attempt += 1) {
+    for (let attempt = 0; attempt <= roots.length; attempt += 1) {
       const target = targets.get(id)!;
       targets.set(id, axis === 'x' ? { x: target.x + width + gap, y: target.y } : { x: target.x, y: target.y + height + gap });
       const candidate = positionedBaseBounds(id);
