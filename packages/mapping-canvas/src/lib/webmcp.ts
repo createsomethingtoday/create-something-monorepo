@@ -463,7 +463,7 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
         const fromRoots = layoutRoots(fromObject), toRoots = layoutRoots(toObject), endpointRoots = new Set([...fromRoots, ...toRoots]);
         if (!endpointRoots.size || (from && from === to) || sameEndpointRoot(fromRoots, toRoots)) continue;
         let cleared = false;
-        for (let attempt = 0; attempt < 32; attempt += 1) {
+        for (let attempt = 0; attempt <= roots.length; attempt += 1) {
           const start = layoutCenter(fromObject).center, end = layoutCenter(toObject).center, conflict = roots.find((id) => id !== from && id !== to && (endpointRoots.has(id) ? segmentHitsBounds(start, end, positionedBaseBounds(id), 0) : segmentIntersects(start, end, positionedBaseBounds(id))));
           if (!conflict) { cleared = true; break; }
           const alternate = to === preservedRoot ? from : from === preservedRoot ? to : (to ?? from), movingId = conflict === preservedRoot && alternate ? alternate : conflict;

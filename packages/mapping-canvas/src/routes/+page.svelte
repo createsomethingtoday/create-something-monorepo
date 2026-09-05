@@ -296,7 +296,11 @@
         const estimatedSegments = Math.ceil(Math.PI / Math.acos(Math.max(-1, 1 - maximumError / Math.max(maximumError, renderedRadius))));
         const segmentCount = Math.max(48, Math.min(4_096, Number.isFinite(estimatedSegments) ? estimatedSegments : 4_096));
         const points = Array.from({ length: segmentCount + 1 }, (_, index) => ({ x: center.x + Math.cos(index / segmentCount * Math.PI * 2) * radius.x, y: center.y + Math.sin(index / segmentCount * Math.PI * 2) * radius.y }));
-        for (let index = 1; index < points.length; index += 1) addLine(points[index - 1], points[index]);
+        for (let index = 1; index < points.length; index += 1) {
+          const middleAngle = (index - .5) / segmentCount * Math.PI * 2;
+          const sagitta = (1 - Math.cos(Math.PI / segmentCount)) * Math.hypot(radius.x * Math.cos(middleAngle), radius.y * Math.sin(middleAngle));
+          addLine(points[index - 1], points[index], 1 + sagitta);
+        }
       }
       else if (object.kind === 'group') {
         rects.push({ x: object.x - 1, y: object.y - 1, width: object.width + 2, height: object.height + 2 });

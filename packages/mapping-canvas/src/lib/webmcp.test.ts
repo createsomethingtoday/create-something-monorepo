@@ -389,6 +389,13 @@ describe('Draw WebMCP tools', () => {
     expect(notes.get(blockers[0].id)!.y).toBeGreaterThan(notes.get(blockers.at(-1)!.id)!.y);
   });
 
+  it('clears every intervening swimlane root beyond the former shaft limit', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id });
+    const first = note('a'), blockers = Array.from({ length: 32 }, (_, index) => note(`blocker-${String(index).padStart(2, '0')}`)), last = note('c'), roots = [first, ...blockers, last];
+    const connector = { id: 'ac', kind: 'connector' as const, createdAt, fromId: first.id, toId: last.id, label: '' }, controller = harness({ ...createDocument(), objects: [...roots, connector] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await expect(layout.execute({ ids: roots.map(({ id }) => id), mode: 'swimlane', gap: 16, lanes: roots.map(({ id }, index) => ({ id, lane: String(index).padStart(2, '0') })) })).resolves.toMatchObject({ placedIds: expect.arrayContaining(roots.map(({ id }) => id)) });
+  });
+
   it('globally rechecks connector shafts after cyclic hierarchy relocations', async () => {
     const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id });
     const d = note('d'), e = note('e'), f = note('f'), edge = (id: string, fromId: string, toId: string) => ({ id, kind: 'connector' as const, createdAt, fromId, toId, label: 'Long owner approval evidence' });
