@@ -429,7 +429,9 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
     for (const connector of connectors) {
       if (!connector.label) continue;
       const from = rootByMember.get(connector.fromId), to = rootByMember.get(connector.toId), fromObject = byId.get(connector.fromId), toObject = byId.get(connector.toId);
-      if ((!from && !to) || !fromObject || !toObject) continue;
+      if (!fromObject || !toObject) continue;
+      const endpointRoots = new Set([...layoutRoots(fromObject), ...layoutRoots(toObject)]);
+      if (!endpointRoots.size) continue;
       const start = layoutCenter(fromObject).center, end = layoutCenter(toObject).center, width = estimatedTextWidth(connector.label) + 5, x = (start.x + end.x) / 2, otherSegments = segments.filter((segment) => segment.id !== connector.id), fallbackTop = otherSegments.length ? otherSegments.reduce((minimum, { start: a, end: b }) => Math.min(minimum, a.y - 4, b.y - 4, connectorMarkerBounds(a, b).y), Number.POSITIVE_INFINITY) - 16 : undefined;
       const baseY = (start.y + end.y) / 2 - 10, y = stackedLabelY(occupied, x, baseY, width, (bounds) => otherSegments.some((segment) => connectorPaintHitsBounds(segment.start, segment.end, bounds)), fallbackTop);
       labels.set(connector.id, { x: x - width / 2, y: y - 12, width, height: 16 });
@@ -506,13 +508,16 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
       const labels = positionedLabels();
       for (const connector of connectors) {
         const from = rootByMember.get(connector.fromId), to = rootByMember.get(connector.toId), fromObject = byId.get(connector.fromId), toObject = byId.get(connector.toId);
-        if ((!from && !to) || !fromObject || !toObject) continue;
+        if (!fromObject || !toObject) continue;
+        const fromRoots = layoutRoots(fromObject), toRoots = layoutRoots(toObject), endpointRoots = new Set([...fromRoots, ...toRoots]);
+        if (!endpointRoots.size) continue;
         const labelBounds = labels.get(connector.id);
         if (!labelBounds) continue;
         const labelConflict = labelBounds && roots.find((id) => (from !== to || id !== from) && intersects(positionedBaseBounds(id), { x: labelBounds!.x - gap, y: labelBounds!.y - gap, width: labelBounds!.width + gap * 2, height: labelBounds!.height + gap * 2 }));
         const conflict = labelConflict;
         if (!conflict) continue;
-        const id = conflict === from ? (to ?? from) : conflict === to ? (from ?? to) : conflict === preservedRoot ? (from && from !== preservedRoot ? from : to && to !== preservedRoot ? to : conflict) : conflict;
+        const transitiveOpposite = fromRoots.has(conflict) ? [...toRoots][0] : toRoots.has(conflict) ? [...fromRoots][0] : undefined;
+        const id = transitiveOpposite ?? (conflict === from ? (to ?? from) : conflict === to ? (from ?? to) : conflict === preservedRoot ? (from && from !== preservedRoot ? from : to && to !== preservedRoot ? to : conflict) : conflict);
         move = { id };
         break;
       }

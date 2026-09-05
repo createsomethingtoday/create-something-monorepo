@@ -179,6 +179,20 @@ try {
     ] });
     const ellipseTouchGeometry = await tools.draw_get_rendered_geometry.execute({ ids: ellipseIds, limit: 10 });
     await tools.draw_revert_change.execute({ changeId: ellipseFixture.changeId });
+    const hugeEllipseIds = ['browser-huge-ellipse', 'browser-huge-ellipse-clear'];
+    const hugeEllipseFixture = await tools.draw_apply_operations.execute({ operations: [
+      { type: 'put_object', object: { id: hugeEllipseIds[0], kind: 'ellipse', createdAt: new Date().toISOString(), from: { x: 0, y: 0 }, to: { x: 2e12, y: 2e12 }, color: '#fcaa2d' } },
+      { type: 'put_object', object: { id: hugeEllipseIds[1], kind: 'note', createdAt: new Date().toISOString(), x: 1e12, y: 1e12, width: 40, height: 40, text: 'Clear center' } }
+    ] });
+    const hugeEllipseGeometry = await tools.draw_get_rendered_geometry.execute({ ids: hugeEllipseIds, limit: 10 });
+    await tools.draw_revert_change.execute({ changeId: hugeEllipseFixture.changeId });
+    const groupGapIds = ['browser-long-label-group', 'browser-long-label-clear'];
+    const groupGapFixture = await tools.draw_apply_operations.execute({ operations: [
+      { type: 'put_object', object: { id: groupGapIds[0], kind: 'group', createdAt: new Date().toISOString(), x: 100, y: 100, width: 120, height: 80, label: 'A deliberately extended group ownership label', childIds: [] } },
+      { type: 'put_object', object: { id: groupGapIds[1], kind: 'note', createdAt: new Date().toISOString(), x: 300, y: 140, width: 20, height: 20, text: '' } }
+    ] });
+    const groupGapGeometry = await tools.draw_get_rendered_geometry.execute({ ids: groupGapIds, limit: 10 });
+    await tools.draw_revert_change.execute({ changeId: groupGapFixture.changeId });
     await tools.draw_select.execute({ ids: [composed.refs.mission] });
     const selectedGroupGeometry = await tools.draw_get_rendered_geometry.execute({ ids: [composed.refs.mission] });
     await tools.draw_select.execute({ ids: [] });
@@ -256,7 +270,7 @@ try {
     const restored = await tools.draw_get_state.execute({});
     return {
       names, drawNames, version: inspect.version, compactBytes: JSON.stringify(inspect).length, fullBytes: JSON.stringify(before).length,
-      composed, renderedGeometry, connectorCollisionGeometry, diagonalClearGeometry, sparseClearGeometry, markerCornerGeometry, endpointCornerGeometry, ellipseTouchGeometry, briefModelWidth, rawConnectorLabelBounds, selectedGroupGeometry, unselectedGroupGeometry, autoLayouts, arrow, arrowGeometry, settledArrowGeometry, edgeArrowGeometry, thickArrowGeometry, zeroArrowGeometry, endpointLabelGeometry, collisionGeometry, provenanceGeometry, clippedGeometry, connectorVisible: Boolean(connectorLabel && getComputedStyle(connectorLabel).display !== 'none'),
+      composed, renderedGeometry, connectorCollisionGeometry, diagonalClearGeometry, sparseClearGeometry, markerCornerGeometry, endpointCornerGeometry, ellipseTouchGeometry, hugeEllipseGeometry, groupGapGeometry, briefModelWidth, rawConnectorLabelBounds, selectedGroupGeometry, unselectedGroupGeometry, autoLayouts, arrow, arrowGeometry, settledArrowGeometry, edgeArrowGeometry, thickArrowGeometry, zeroArrowGeometry, endpointLabelGeometry, collisionGeometry, provenanceGeometry, clippedGeometry, connectorVisible: Boolean(connectorLabel && getComputedStyle(connectorLabel).display !== 'none'),
       staleError, deleteError, replaceError, focus, restoredCount: restored.document.objects.length, beforeCount: before.document.objects.length
     };
   });
@@ -272,6 +286,8 @@ try {
   if (semantic.markerCornerGeometry.overlaps.length) throw new Error(`Rendered geometry reported an AABB-only arrowhead-corner collision: ${JSON.stringify(semantic.markerCornerGeometry)}`);
   if (semantic.endpointCornerGeometry.overlaps.length) throw new Error(`Rendered geometry reported an AABB-only endpoint-label collision: ${JSON.stringify(semantic.endpointCornerGeometry)}`);
   if (!semantic.ellipseTouchGeometry.overlaps.some(({ classification }) => classification === 'peer')) throw new Error(`Rendered geometry missed a visible large-ellipse arc collision: ${JSON.stringify(semantic.ellipseTouchGeometry)}`);
+  if (semantic.hugeEllipseGeometry.objects.length !== 2 || semantic.hugeEllipseGeometry.overlaps.length) throw new Error(`Rendered geometry did not bound a huge finite ellipse safely: ${JSON.stringify(semantic.hugeEllipseGeometry)}`);
+  if (semantic.groupGapGeometry.overlaps.length) throw new Error(`Rendered geometry treated the group-label union as solid paint: ${JSON.stringify(semantic.groupGapGeometry)}`);
   if (!semantic.rawConnectorLabelBounds || semantic.renderedGeometry.connectors[0].labelBounds.viewportBounds.width < semantic.rawConnectorLabelBounds.width + 4 || semantic.renderedGeometry.connectors[0].labelBounds.viewportBounds.height < semantic.rawConnectorLabelBounds.height + 4) throw new Error(`Rendered connector-label bounds omitted the painted outline: ${JSON.stringify({ raw: semantic.rawConnectorLabelBounds, rendered: semantic.renderedGeometry.connectors[0].labelBounds })}`);
   if (JSON.stringify(semantic.selectedGroupGeometry.objects[0]?.worldBounds) !== JSON.stringify(semantic.unselectedGroupGeometry.objects[0]?.worldBounds) || JSON.stringify(semantic.arrowGeometry.objects) !== JSON.stringify(semantic.settledArrowGeometry.objects)) throw new Error(`Rendered geometry changed with selection UI or after the tool declared the animation settled: ${JSON.stringify({ selected: semantic.selectedGroupGeometry, unselected: semantic.unselectedGroupGeometry, immediateArrow: semantic.arrowGeometry, settledArrow: semantic.settledArrowGeometry })}`);
   if (semantic.autoLayouts.length !== 5 || semantic.autoLayouts.some(({ peerOverlaps }) => peerOverlaps) || semantic.arrow.geometry.arrowhead !== 'triangle' || semantic.arrowGeometry.objects.length !== 2 || semantic.arrowGeometry.overlaps.some(({ classification }) => classification === 'peer')) throw new Error(`Semantic auto-layout or freehand arrow proof failed: ${JSON.stringify({ autoLayouts: semantic.autoLayouts, arrow: semantic.arrow, arrowGeometry: semantic.arrowGeometry })}`);

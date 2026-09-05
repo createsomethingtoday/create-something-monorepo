@@ -293,9 +293,15 @@
       else if (object.kind === 'ellipse') {
         const center = { x: (object.from.x + object.to.x) / 2, y: (object.from.y + object.to.y) / 2 }, radius = { x: Math.abs(object.to.x - object.from.x) / 2, y: Math.abs(object.to.y - object.from.y) / 2 };
         const renderedRadius = Math.max(entry.viewportBounds.width, entry.viewportBounds.height) / 2, maximumError = .25;
-        const segmentCount = Math.max(48, Math.ceil(Math.PI / Math.acos(Math.max(-1, 1 - maximumError / Math.max(maximumError, renderedRadius)))));
+        const estimatedSegments = Math.ceil(Math.PI / Math.acos(Math.max(-1, 1 - maximumError / Math.max(maximumError, renderedRadius))));
+        const segmentCount = Math.max(48, Math.min(4_096, Number.isFinite(estimatedSegments) ? estimatedSegments : 4_096));
         const points = Array.from({ length: segmentCount + 1 }, (_, index) => ({ x: center.x + Math.cos(index / segmentCount * Math.PI * 2) * radius.x, y: center.y + Math.sin(index / segmentCount * Math.PI * 2) * radius.y }));
         for (let index = 1; index < points.length; index += 1) addLine(points[index - 1], points[index]);
+      }
+      else if (object.kind === 'group') {
+        rects.push({ x: object.x - 1, y: object.y - 1, width: object.width + 2, height: object.height + 2 });
+        const label = surface.querySelector<SVGGraphicsElement>(`[data-object-id="${CSS.escape(object.id)}"] .group-label`);
+        if (label) rects.push(worldBounds(paintedRect(label)));
       }
       else rects.push(entry.worldBounds);
       return { segments, rects, triangles };
