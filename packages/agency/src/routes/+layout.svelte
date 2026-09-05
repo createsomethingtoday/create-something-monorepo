@@ -118,6 +118,7 @@
         { label: 'What You Keep', href: '/stack' },
         { label: 'Products', href: '/products' },
         { label: 'Field Reports', href: '/field-reports' },
+        { label: 'Dispatch', href: '/dispatch' },
         { label: 'Use With Clients', href: '/for-service-providers' },
         { label: 'About', href: '/about' }
       ]
