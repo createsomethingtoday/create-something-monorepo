@@ -214,13 +214,13 @@
     const rendered = selected.flatMap((object) => {
       const element = surface.querySelector<SVGGraphicsElement>(`[data-object-id="${CSS.escape(object.id)}"]`);
       if (!element) return [];
-      const rect = object.kind === 'group'
+      const rect = element instanceof SVGGElement
         ? [...element.querySelectorAll<SVGGraphicsElement>(':scope > :not([data-ui="true"])')].reduce<DOMRect | undefined>((bounds, child) => {
             const childBounds = paintedRect(child);
             if (!bounds) return DOMRect.fromRect(childBounds);
             const left = Math.min(bounds.left, childBounds.left), top = Math.min(bounds.top, childBounds.top);
             return new DOMRect(left, top, Math.max(bounds.right, childBounds.right) - left, Math.max(bounds.bottom, childBounds.bottom) - top);
-          }, undefined) ?? element.getBoundingClientRect()
+          }, undefined) ?? paintedRect(element)
         : element instanceof SVGLineElement ? decoratedLineRect(element) : paintedRect(element);
       const view = viewportBounds(rect);
       return [{ id: object.id, kind: object.kind, worldBounds: worldBounds(rect), viewportBounds: view, clipped: clipped(view) }];

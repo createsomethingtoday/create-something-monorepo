@@ -254,13 +254,14 @@ function descendants(document: CanvasDocument, ids: string[]) {
 
 function paintedLayoutBounds(objects: CanvasObject[], allObjects: CanvasObject[]) {
   const bounds = objectBounds(objects, allObjects);
+  const labelRight = Math.max(bounds.x + bounds.width, ...objects.map((object) => object.kind === 'group' ? object.x + 12 + object.label.length * 7 : -Infinity));
   const padding = Math.max(0, ...objects.map((object) => {
     if (object.kind === 'stroke') return object.width / 2;
     if (object.kind === 'arrow') return 19;
     if (object.kind === 'rectangle' || object.kind === 'ellipse' || object.kind === 'group') return 1;
     return 0;
   }));
-  return { x: bounds.x - padding, y: bounds.y - padding, width: bounds.width + padding * 2, height: bounds.height + padding * 2 };
+  return { x: bounds.x - padding, y: bounds.y - padding, width: labelRight - bounds.x + padding * 2, height: bounds.height + padding * 2 };
 }
 
 function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: 'flow' | 'hierarchy' | 'loop' | 'orbit' | 'swimlane', gap: number, laneById: Map<string, string>, orientation?: 'horizontal' | 'vertical') {

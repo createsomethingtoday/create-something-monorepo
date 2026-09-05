@@ -227,6 +227,17 @@ describe('Draw WebMCP tools', () => {
     expect(paintedLeft - paintedRight).toBeGreaterThanOrEqual(16);
   });
 
+  it('spaces layout roots around protruding group labels', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', label = 'Long governed boundary label '.repeat(5);
+    const group = { id: 'group', kind: 'group' as const, createdAt, x: 0, y: 0, width: 120, height: 80, label, childIds: [] };
+    const peer = { id: 'peer', kind: 'note' as const, createdAt, x: 10, y: 10, width: 120, height: 80, text: 'Peer' };
+    const connector = { id: 'edge', kind: 'connector' as const, createdAt, fromId: group.id, toId: peer.id, label: '' };
+    const controller = harness({ ...createDocument(), objects: [group, peer, connector] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: [group.id, peer.id], mode: 'flow', gap: 48 });
+    const placedGroup = controller.read().objects.find((object): object is typeof group => object.id === group.id)!, placedPeer = controller.read().objects.find((object): object is typeof peer => object.id === peer.id)!;
+    expect(placedGroup.x + 12 + label.length * 7 + 48).toBeLessThanOrEqual(placedPeer.x);
+  });
+
   it('summarizes dense stroke geometry in compact inspection', async () => {
     const points = Array.from({ length: 2_000 }, (_, index) => ({ x: index, y: index % 50 }));
     const stroke = { id: 'dense-stroke', kind: 'stroke' as const, createdAt: '2026-09-04T00:00:00.000Z', points, color: '#0057b8', width: 5 };
