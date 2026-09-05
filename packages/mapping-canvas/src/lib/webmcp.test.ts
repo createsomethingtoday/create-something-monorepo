@@ -439,6 +439,12 @@ describe('Draw WebMCP tools', () => {
     await expect(layout.execute({ ids: roots.map(({ id }) => id), mode: 'flow', gap: 16 })).resolves.toMatchObject({ placedIds: roots.map(({ id }) => id) });
   });
 
+  it('grows an orbit monotonically around a satellite fan-out', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id }), edge = (id: string, fromId: string, toId: string) => ({ id, kind: 'connector' as const, createdAt, fromId, toId, label: '' });
+    const roots = ['a', 'b', 'c', 'd'].map(note), controller = harness({ ...createDocument(), objects: [...roots, edge('bc', 'b', 'c'), edge('bd', 'b', 'd')] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await expect(layout.execute({ ids: roots.map(({ id }) => id), mode: 'orbit', gap: 16 })).resolves.toMatchObject({ placedIds: roots.map(({ id }) => id) });
+  });
+
   it.each(['flow', 'loop', 'orbit'] as const)('ignores coincident reciprocal shafts while placing labels in %s mode', async (mode) => {
     const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id }), a = note('a'), b = note('b');
     const controller = harness({ ...createDocument(), objects: [a, b, { id: 'ab', kind: 'connector', createdAt, fromId: a.id, toId: b.id, label: 'Approval' }, { id: 'ba', kind: 'connector', createdAt, fromId: b.id, toId: a.id, label: '' }] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;

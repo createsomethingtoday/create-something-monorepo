@@ -581,6 +581,18 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
       }
       return true;
     };
+    const shaftsClear = () => connectors.every((connector) => {
+      const fromObject = byId.get(connector.fromId), toObject = byId.get(connector.toId);
+      if (!fromObject || !toObject) return true;
+      const fromRoots = layoutRoots(fromObject), toRoots = layoutRoots(toObject), endpointRoots = new Set([...fromRoots, ...toRoots]);
+      if (!endpointRoots.size || sameEndpointRoot(fromRoots, toRoots)) return true;
+      const start = layoutCenter(fromObject).center, end = layoutCenter(toObject).center;
+      return !roots.some((id) => {
+        const bounds = positionedBaseBounds(id);
+        if (endpointRoots.has(id) && (containsPoint(bounds, start) || containsPoint(bounds, end))) return false;
+        return endpointRoots.has(id) ? segmentHitsBounds(start, end, bounds, 0) : segmentIntersects(start, end, bounds);
+      });
+    });
     for (let attempt = 0; attempt < 32; attempt += 1) {
       if (mode === 'orbit') targets.set(roots[0], { x: hubBounds.x, y: hubBounds.y }); else targets.clear();
       const center = mode === 'orbit'
@@ -590,7 +602,8 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
         const angle = -Math.PI / 2 + index * Math.PI * 2 / Math.max(1, orbiting.length), bounds = rootBounds.get(id)!;
         targets.set(id, { x: center.x + Math.cos(angle) * radius - bounds.width / 2, y: center.y + Math.sin(angle) * radius - bounds.height / 2 });
       });
-      if (separated()) break;
+      layoutCenterCache.clear();
+      if (separated() && (shaftsClear() || attempt === 31)) break;
       radius *= 1.25;
       if (attempt === 31) throw new Error('Circular layout could not satisfy bounded object clearance.');
     }
