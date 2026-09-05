@@ -1,4 +1,4 @@
-import { createObjectCenterResolver, objectBounds, type CanvasDocument, type CanvasObject, type Point, type Tool } from './document';
+import { createObjectCenterResolver, expandCompoundIds, objectBounds, type CanvasDocument, type CanvasObject, type Point, type Tool } from './document';
 import type { CanvasOperation } from './paired-session';
 import { DRAWING_PALETTE } from './palette';
 
@@ -241,15 +241,26 @@ function translated(object: CanvasObject, dx: number, dy: number): CanvasObject 
 }
 
 function descendants(document: CanvasDocument, ids: string[]) {
-  const result = new Set(ids), byId = new Map(document.objects.map((object) => [object.id, object]));
-  const stack = [...ids];
+  const result = expandCompoundIds(document, ids), byId = new Map(document.objects.map((object) => [object.id, object]));
+  const stack = [...result];
   while (stack.length) {
     const id = stack.pop()!;
     const object = byId.get(id);
     if (object?.kind !== 'group') continue;
-    for (const childId of object.childIds) if (!result.has(childId)) { result.add(childId); stack.push(childId); }
+    for (const childId of expandCompoundIds(document, object.childIds)) if (!result.has(childId)) { result.add(childId); stack.push(childId); }
   }
   return result;
+}
+
+function independentRoots(document: CanvasDocument, ids: string[]) {
+  const byId = new Map(document.objects.map((object) => [object.id, object]));
+  const seen = new Set<string>(), roots: string[] = [];
+  for (const id of ids) {
+    const object = byId.get(id), compound = expandCompoundIds(document, [id]);
+    const root = compound.size > 1 ? object?.sourceIds?.find((candidate) => compound.has(candidate)) ?? id : id;
+    if (!seen.has(root)) { seen.add(root); roots.push(root); }
+  }
+  return roots;
 }
 
 function estimatedTextWidth(value: string) {
@@ -1133,8 +1144,9 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
       execute: async (input) => {
         assertRevision(controller, input.expectedRevision);
-        const ids = Array.isArray(input.ids) ? input.ids.map(String) : [];
-        if (!ids.length) throw new Error('ids must contain at least one object ID.');
+        const requestedIds = Array.isArray(input.ids) ? input.ids.map(String) : [];
+        if (!requestedIds.length) throw new Error('ids must contain at least one object ID.');
+        const ids = independentRoots(controller.getState().document, requestedIds);
         const before = controller.getState().document, selected = ids.map((id) => before.objects.find((object) => object.id === id));
         if (selected.some((object) => !object || object.kind === 'connector')) throw new Error('Layout IDs must reference existing non-connector objects.');
         const claimedDescendants = new Map<string, string>();
@@ -1145,7 +1157,10 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
             claimedDescendants.set(nestedId, id);
           }
         }
-        const bounds = selected.map((object) => objectBounds([object!], before.objects));
+        const bounds = selected.map((object, index) => {
+          const compound = expandCompoundIds(before, [ids[index]]);
+          return objectBounds(compound.size > 1 ? before.objects.filter(({ id }) => compound.has(id)) : [object!], before.objects);
+        });
         const anchor = { x: Math.min(...bounds.map(({ x }) => x)), y: Math.min(...bounds.map(({ y }) => y)) };
         const gap = Math.max(0, Math.min(400, finite(input.gap, 48))), direction = String(input.direction);
         const columns = direction === 'grid' ? Math.max(1, Math.min(12, Math.floor(finite(input.columns, Math.ceil(Math.sqrt(ids.length)))))) : direction === 'row' ? ids.length : 1;
@@ -1172,7 +1187,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
       execute: async (input) => {
         assertRevision(controller, input.expectedRevision);
         if (!Array.isArray(input.ids) || !input.ids.length || input.ids.length > 100 || input.ids.some((id) => typeof id !== 'string' || !id.length || id.length > 240) || new Set(input.ids).size !== input.ids.length) throw new Error('ids must contain 1 to 100 unique existing root IDs.');
-        const ids = (input.ids as string[]).slice().sort();
+        const ids = independentRoots(controller.getState().document, input.ids as string[]).sort();
         const mode = String(input.mode) as 'flow' | 'hierarchy' | 'loop' | 'orbit' | 'swimlane';
         if (!['flow', 'hierarchy', 'loop', 'orbit', 'swimlane'].includes(mode)) throw new Error('mode must be flow, hierarchy, loop, orbit, or swimlane.');
         const before = controller.getState().document, selected = ids.map((id) => before.objects.find((object) => object.id === id));
@@ -1356,7 +1371,8 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
       inputSchema: { type: 'object', required: ['ids'], additionalProperties: false, properties: { ids: { type: 'array', uniqueItems: true, items: { type: 'string' } } } },
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
       execute: async (input) => {
-        controller.select(Array.isArray(input.ids) ? input.ids.map(String) : []);
+        const requested = Array.isArray(input.ids) ? input.ids.map(String) : [];
+        controller.select([...expandCompoundIds(controller.getState().document, requested)]);
         const selected = compactIdList(controller.getState().selectedIds);
         return { ok: true, selectedIds: selected.preview, selectedCount: selected.count, ...(selected.truncated ? { selectedIdsTruncated: true } : {}) };
       }

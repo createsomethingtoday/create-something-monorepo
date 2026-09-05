@@ -3,7 +3,7 @@
   import { browser } from '$app/environment';
   import { onMount } from 'svelte';
   import { clearDocument, loadDocument, saveDocument } from '$lib/persistence';
-  import { commit, convert, createDocument, createObjectCenterResolver, objectBounds, parse, redo, removeObjects, resizeGroup, restoreConversion, serialize, uid, undo, withObjects, type CanvasDocument, type CanvasObject, type History, type Point, type Shape, type Stroke, type Tool } from '$lib/document';
+  import { commit, convert, createDocument, createObjectCenterResolver, expandCompoundIds, objectBounds, parse, redo, removeObjects, resizeGroup, restoreConversion, serialize, uid, undo, withObjects, type CanvasDocument, type CanvasObject, type History, type Point, type Shape, type Stroke, type Tool } from '$lib/document';
   import { DEFAULT_DRAWING_COLOR, DRAWING_COLOR_PREFERENCE, DRAWING_PALETTE, isColorableObject, isDrawingColor, recolorObjects, type DrawingColor } from '$lib/palette';
   import { applyCanvasOperations, isValidCanvasTitle, type CanvasOperation } from '$lib/paired-session';
   import { connectorLabelLayout, createDrawWebMcpTools, drawRevision, registerDrawWebMcpTools, type DrawRenderedGeometry, type DrawTransitionKind } from '$lib/webmcp';
@@ -108,7 +108,7 @@
         if (expectedRevision && expectedRevision !== currentRevision) throw new Error(`Canvas revision is stale. Inspect again and retry with revision ${currentRevision}.`);
         return applyAgentOperations(operations);
       }),
-      select: (ids) => { assertAgentControlReady(); const existing = new Set(document.objects.map(({ id }) => id)); selectedIds = ids.filter((id) => existing.has(id)); status = selectedIds.length ? `Agent focused ${selectedIds.length} object${selectedIds.length === 1 ? '' : 's'}` : 'Agent cleared selection'; },
+      select: (ids) => { assertAgentControlReady(); const existing = new Set(document.objects.map(({ id }) => id)); selectedIds = [...expandCompoundIds(document, ids.filter((id) => existing.has(id)))]; status = selectedIds.length ? `Agent focused ${selectedIds.length} object${selectedIds.length === 1 ? '' : 's'}` : 'Agent cleared selection'; },
       setTool: (next) => { assertAgentControlReady(); tool = next; status = `Agent selected ${next} tool`; },
       undo: () => queueAgentMutation(() => browserLocalHistory('undo')),
       redo: () => queueAgentMutation(() => browserLocalHistory('redo')),
@@ -709,7 +709,8 @@
     if (movingObjectId && dragLast) {
       const dx = here.x - dragLast.x, dy = here.y - dragLast.y;
       if (dx || dy) {
-        const moved = document.objects.map((object) => object.id === movingObjectId ? moveObject(object, dx, dy) : object);
+        const movingIds = expandCompoundIds(document, [movingObjectId]);
+        const moved = document.objects.map((object) => movingIds.has(object.id) ? moveObject(object, dx, dy) : object);
         history = { ...history, present: withObjects(document, moved) }; dragLast = here; dragMoved = true;
       }
       return;
@@ -757,10 +758,11 @@
       return;
     }
     if (movingObjectId) {
-      const moved = document.objects.find(({ id }) => id === movingObjectId);
-      if (dragMoved && moved && dragOrigin) {
+      const movingIds = expandCompoundIds(document, [movingObjectId]);
+      const moved = document.objects.filter(({ id }) => movingIds.has(id));
+      if (dragMoved && moved.length && dragOrigin) {
         history = { past: [...history.past, dragOrigin], present: document, future: [] };
-        sendNative([{ type: 'put_object', object: moved }], true); queueSave(document);
+        sendNative(moved.map((object) => ({ type: 'put_object' as const, object })), true); queueSave(document);
       }
       movingObjectId = null; dragLast = null; dragOrigin = null; dragMoved = false; drawing = false; start = null;
       try { surface.releasePointerCapture(event.pointerId); } catch { /* Capture may not have been acquired. */ }
@@ -787,7 +789,8 @@
     beginNativePointerGesture();
     if (tool === 'eraser') { apply(removeObjects(document, [id]), { type: 'remove_objects', ids: [id] }); selectedIds = []; return; }
     if (tool === 'connector') { selectedIds = selectedIds.includes(id) ? selectedIds : [...selectedIds.slice(-1), id]; if (selectedIds.length === 2) runConversion('connector'); return; }
-    selectedIds = event.shiftKey ? (selectedIds.includes(id) ? selectedIds.filter((value) => value !== id) : [...selectedIds, id]) : [id];
+    const compoundIds = [...expandCompoundIds(document, [id])];
+    selectedIds = event.shiftKey ? (selectedIds.includes(id) ? selectedIds.filter((value) => !compoundIds.includes(value)) : [...new Set([...selectedIds, ...compoundIds])]) : compoundIds;
     if (tool === 'select' && !event.shiftKey) {
       const here = point(event); movingObjectId = id; dragLast = here; dragOrigin = document; dragMoved = false; drawing = true; start = here;
       try { surface.setPointerCapture(event.pointerId); } catch { /* SVG pointer capture is not supported in every browser. */ }
@@ -813,7 +816,7 @@
     if (next !== document) apply(next, { type: 'replace_objects', objects: next.objects });
   }
   function isTextEditingEvent(event: KeyboardEvent) { return event.target instanceof Element && Boolean(event.target.closest('input,textarea,[contenteditable="true"]')); }
-  function selectKeyboard(event: KeyboardEvent, id: string) { if (isTextEditingEvent(event) || (event.key !== 'Enter' && event.key !== ' ')) return; event.preventDefault(); selectedIds = event.shiftKey ? [...new Set([...selectedIds, id])] : [id]; }
+  function selectKeyboard(event: KeyboardEvent, id: string) { if (isTextEditingEvent(event) || (event.key !== 'Enter' && event.key !== ' ')) return; event.preventDefault(); const compoundIds = [...expandCompoundIds(document, [id])]; selectedIds = event.shiftKey ? [...new Set([...selectedIds, ...compoundIds])] : compoundIds; }
   function runConversion(target: 'note' | 'connector' | 'group') { const next = convert(document, selectedIds, target); if (next === document) { status = target === 'connector' ? 'Select two objects to make a connector' : 'Select source material first'; return; } const created = next.objects.at(-1)!; apply(next, { type: 'convert', selectedIds: [...selectedIds], target, resultId: created.id, createdAt: created.createdAt }); selectedIds = [created.id]; conversionOpen = false; status = `Converted to ${target}. Source preserved.`; }
   function restoreSelected() { const selected = selectedObjects[0]; if (!selected?.sourceSnapshot) return; const next = restoreConversion(document, selected.id); apply(next, { type: 'restore_conversion', id: selected.id }); selectedIds = selected.sourceIds || []; status = 'Conversion removed. Source restored.'; }
   function cancelPendingWheelSync() { clearTimeout(wheelTimer); wheelTimer = undefined; }

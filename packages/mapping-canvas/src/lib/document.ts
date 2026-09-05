@@ -121,8 +121,25 @@ export function withObjects(document: CanvasDocument, objects: CanvasObject[]): 
   return { ...document, objects, updatedAt: now() };
 }
 
+/** Expand a selection to every member of a portable compound object. */
+export function expandCompoundIds(document: CanvasDocument, ids: Iterable<string>): Set<string> {
+  const byId = new Map(document.objects.map((object) => [object.id, object]));
+  const expanded = new Set(ids), pending = [...expanded];
+  while (pending.length) {
+    const object = byId.get(pending.pop()!), members = object?.sourceIds;
+    if (!members || members.length < 2 || !members.includes(object.id)) continue;
+    const signature = JSON.stringify(members);
+    if (!members.every((id) => {
+      const member = byId.get(id);
+      return member?.sourceIds && member.sourceIds.includes(member.id) && JSON.stringify(member.sourceIds) === signature;
+    })) continue;
+    for (const id of members) if (!expanded.has(id)) { expanded.add(id); pending.push(id); }
+  }
+  return expanded;
+}
+
 export function removeObjects(document: CanvasDocument, ids: string[]): CanvasDocument {
-  const removed = new Set(ids);
+  const removed = expandCompoundIds(document, ids);
   const dependents = new Map<string, string[]>();
   for (const object of document.objects) {
     if (object.kind !== 'connector') continue;

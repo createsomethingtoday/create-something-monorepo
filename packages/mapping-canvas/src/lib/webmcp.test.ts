@@ -128,6 +128,27 @@ describe('Draw WebMCP tools', () => {
     expect(second.objectIds).toHaveLength(first.objectIds.length);
   });
 
+  it('keeps a semantic freehand arrow compound through selection, movement, layout, and deletion', async () => {
+    const controller = harness(), tools = createDrawWebMcpTools(controller);
+    const created = await tools.find(({ name }) => name === 'draw_create_freehand_arrow')!.execute({ start: { x: 20, y: 30 }, end: { x: 260, y: 130 } }) as { objectIds: string[] };
+    const [shaftId, headId] = created.objectIds;
+    const initial = controller.read().objects.map((object) => object.kind === 'stroke' ? object.points : []);
+    await tools.find(({ name }) => name === 'draw_select')!.execute({ ids: [headId] });
+    expect(controller.select).toHaveBeenCalledWith([headId, shaftId]);
+    await tools.find(({ name }) => name === 'draw_patch_objects')!.execute({ patches: [{ id: shaftId, translate: { dx: 40, dy: 25 } }] });
+    const translated = controller.read().objects.map((object) => object.kind === 'stroke' ? object.points : []);
+    expect(translated.every((points, index) => points.every((point, pointIndex) => point.x === initial[index][pointIndex].x + 40 && point.y === initial[index][pointIndex].y + 25))).toBe(true);
+    const beforeOffset = translated[1][0].x - translated[0].at(-1)!.x;
+    await tools.find(({ name }) => name === 'draw_layout')!.execute({ ids: created.objectIds, direction: 'row' });
+    const laidOut = controller.read().objects.map((object) => object.kind === 'stroke' ? object.points : []);
+    expect(laidOut[1][0].x - laidOut[0].at(-1)!.x).toBe(beforeOffset);
+    await tools.find(({ name }) => name === 'draw_auto_layout')!.execute({ ids: created.objectIds, mode: 'flow' });
+    const autoLaidOut = controller.read().objects.map((object) => object.kind === 'stroke' ? object.points : []);
+    expect(autoLaidOut[1][0].x - autoLaidOut[0].at(-1)!.x).toBe(beforeOffset);
+    await tools.find(({ name }) => name === 'draw_delete')!.execute({ ids: [headId], confirmation: 'DELETE OBJECTS' });
+    expect(controller.read().objects).toEqual([]);
+  });
+
   it('bounds semantic arrow geometry and produces distinct supported treatments', async () => {
     const geometries: string[] = [];
     for (const [index, arrowhead] of ['vee', 'triangle', 'barbed'].entries()) {
