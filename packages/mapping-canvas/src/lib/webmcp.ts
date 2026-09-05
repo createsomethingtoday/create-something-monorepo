@@ -367,9 +367,13 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
     for (const connector of connectors) {
       const from = rootByMember.get(connector.fromId), to = rootByMember.get(connector.toId), fromObject = byId.get(connector.fromId), toObject = byId.get(connector.toId);
       if (!from || !to || from === to || !fromObject || !toObject || !targets.has(from) || !targets.has(to)) continue;
-      const start = positionedCenter(from, fromObject), end = positionedCenter(to, toObject), conflict = roots.find((id) => id !== from && id !== to && segmentIntersects(start, end, positionedBaseBounds(id)));
-      if (!conflict) continue;
-      relocate(conflict === preservedRoot ? (to === preservedRoot ? from : to) : conflict, axis);
+      let cleared = false;
+      for (let attempt = 0; attempt < 32; attempt += 1) {
+        const start = positionedCenter(from, fromObject), end = positionedCenter(to, toObject), conflict = roots.find((id) => id !== from && id !== to && segmentIntersects(start, end, positionedBaseBounds(id)));
+        if (!conflict) { cleared = true; break; }
+        relocate(conflict === preservedRoot ? (to === preservedRoot ? from : to) : conflict, axis);
+      }
+      if (!cleared) throw new Error('Layout could not clear every connector-shaft obstruction.');
     }
   };
   const routeConnectors = (axis: 'x' | 'y', preservedRoot?: string) => {
@@ -429,7 +433,6 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
       radius *= 1.25;
       if (attempt === 31) throw new Error('Circular layout could not satisfy bounded object clearance.');
     }
-    routeConnectorShafts('y', mode === 'orbit' ? roots[0] : undefined);
     routeConnectors('y', mode === 'orbit' ? roots[0] : undefined);
     return { targets, bounds: rootBounds, layerCount: mode === 'orbit' ? 2 : 1, laneCount: 0 };
   }
@@ -440,7 +443,6 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
         ? { x: anchor.x + itemIndex * (width + gap), y: anchor.y + laneIndex * (height + gap * 2) }
         : { x: anchor.x + laneIndex * (width + gap * 2), y: anchor.y + itemIndex * (height + gap) }));
     }
-    routeConnectorShafts(orientation === 'vertical' ? 'x' : 'y');
     routeConnectors(orientation === 'vertical' ? 'x' : 'y');
     return { targets, bounds: rootBounds, layerCount: 0, laneCount: lanes.length };
   }

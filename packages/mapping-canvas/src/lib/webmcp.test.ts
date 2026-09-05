@@ -316,14 +316,14 @@ describe('Draw WebMCP tools', () => {
     expect(separated).toBe(true);
   });
 
-  it('routes unlabeled long-edge shafts around intermediate layout roots', async () => {
+  it('routes unlabeled long-edge shafts around every intermediate layout root', async () => {
     const createdAt = '2026-09-05T00:00:00.000Z';
     const note = (id: string) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id });
-    const first = note('a'), middle = note('b'), last = note('c'), edge = (id: string, fromId: string, toId: string) => ({ id, kind: 'connector' as const, createdAt, fromId, toId, label: '' });
-    const controller = harness({ ...createDocument(), objects: [first, middle, last, edge('ab', first.id, middle.id), edge('bc', middle.id, last.id), edge('ac', first.id, last.id)] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
-    await layout.execute({ ids: [first.id, middle.id, last.id], mode: 'flow', gap: 16 });
-    const notes = new Map(controller.read().objects.filter((object): object is typeof first => object.kind === 'note').map((object) => [object.id, object])), a = notes.get(first.id)!, b = notes.get(middle.id)!, c = notes.get(last.id)!, shaftY = (a.y + a.height / 2 + c.y + c.height / 2) / 2;
-    expect(b.y > shaftY + 19 + 16 || b.y + b.height < shaftY - 19 - 16).toBe(true);
+    const first = note('a'), middleB = note('b'), middleC = note('c'), last = note('d'), edge = (id: string, fromId: string, toId: string) => ({ id, kind: 'connector' as const, createdAt, fromId, toId, label: '' });
+    const controller = harness({ ...createDocument(), objects: [first, middleB, middleC, last, edge('ab', first.id, middleB.id), edge('bc', middleB.id, middleC.id), edge('cd', middleC.id, last.id), edge('ad', first.id, last.id)] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: [first.id, middleB.id, middleC.id, last.id], mode: 'flow', gap: 16 });
+    const notes = new Map(controller.read().objects.filter((object): object is typeof first => object.kind === 'note').map((object) => [object.id, object])), a = notes.get(first.id)!, d = notes.get(last.id)!, shaftY = (a.y + a.height / 2 + d.y + d.height / 2) / 2;
+    for (const middle of [notes.get(middleB.id)!, notes.get(middleC.id)!]) expect(middle.y > shaftY + 19 + 16 || middle.y + middle.height < shaftY - 19 - 16).toBe(true);
   });
 
   it('stacks coincident connector labels deterministically', () => {
