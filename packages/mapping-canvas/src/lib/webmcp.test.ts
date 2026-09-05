@@ -316,6 +316,19 @@ describe('Draw WebMCP tools', () => {
     expect(separated).toBe(true);
   });
 
+  it('routes opposite-satellite labels around a preserved orbit hub', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', label = 'Satellite handoff';
+    const note = (id: string) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id });
+    const hub = note('hub'), left = note('left'), right = note('right'), connector = { id: 'edge', kind: 'connector' as const, createdAt, fromId: left.id, toId: right.id, label };
+    const controller = harness({ ...createDocument(), objects: [hub, left, right, connector] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: [hub.id, left.id, right.id], mode: 'orbit', gap: 16 });
+    const notes = new Map(controller.read().objects.filter((object): object is typeof hub => object.kind === 'note').map((object) => [object.id, object])), placedHub = notes.get(hub.id)!, placedLeft = notes.get(left.id)!, placedRight = notes.get(right.id)!;
+    expect({ x: placedHub.x, y: placedHub.y }).toEqual({ x: 0, y: 0 });
+    const halfLabel = (label.length * 7 + 5) / 2, labelBounds = { x: (placedLeft.x + placedLeft.width / 2 + placedRight.x + placedRight.width / 2) / 2 - halfLabel, y: (placedLeft.y + placedLeft.height / 2 + placedRight.y + placedRight.height / 2) / 2 - 22, width: halfLabel * 2, height: 16 };
+    const separated = placedHub.x + placedHub.width + 16 <= labelBounds.x || labelBounds.x + labelBounds.width + 16 <= placedHub.x || placedHub.y + placedHub.height + 16 <= labelBounds.y || labelBounds.y + labelBounds.height + 16 <= placedHub.y;
+    expect(separated).toBe(true);
+  });
+
   it('reserves marker paint for descendant connectors', async () => {
     const createdAt = '2026-09-05T00:00:00.000Z';
     const first = { id: 'first', kind: 'rectangle' as const, createdAt, from: { x: 0, y: 0 }, to: { x: 20, y: 20 }, color: '#fcaa2d' }, second = { ...first, id: 'second', from: { x: 80, y: 0 }, to: { x: 100, y: 20 } };
