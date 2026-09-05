@@ -211,17 +211,24 @@
       const right = Math.max(rect.right, ...points.map(({ x }) => x)), bottom = Math.max(rect.bottom, ...points.map(({ y }) => y));
       return new DOMRect(left, top, right - left, bottom - top);
     };
+    const unionRect = (first: DOMRect, second: DOMRect) => {
+      const left = Math.min(first.left, second.left), top = Math.min(first.top, second.top);
+      return new DOMRect(left, top, Math.max(first.right, second.right) - left, Math.max(first.bottom, second.bottom) - top);
+    };
     const rendered = selected.flatMap((object) => {
       const element = surface.querySelector<SVGGraphicsElement>(`[data-object-id="${CSS.escape(object.id)}"]`);
       if (!element) return [];
-      const rect = element instanceof SVGGElement
+      let rect = element instanceof SVGGElement
         ? [...element.querySelectorAll<SVGGraphicsElement>(':scope > :not([data-ui="true"])')].reduce<DOMRect | undefined>((bounds, child) => {
             const childBounds = paintedRect(child);
             if (!bounds) return DOMRect.fromRect(childBounds);
-            const left = Math.min(bounds.left, childBounds.left), top = Math.min(bounds.top, childBounds.top);
-            return new DOMRect(left, top, Math.max(bounds.right, childBounds.right) - left, Math.max(bounds.bottom, childBounds.bottom) - top);
+            return unionRect(bounds, childBounds);
           }, undefined) ?? paintedRect(element)
         : element instanceof SVGLineElement ? decoratedLineRect(element) : paintedRect(element);
+      if (object.kind === 'connector') {
+        const label = element.parentElement?.querySelector<SVGTextElement>('.connector-label');
+        if (label) rect = unionRect(rect, paintedRect(label));
+      }
       const view = viewportBounds(rect);
       return [{ id: object.id, kind: object.kind, worldBounds: worldBounds(rect), viewportBounds: view, clipped: clipped(view) }];
     });
@@ -259,13 +266,19 @@
       const bottom = Math.min(first.worldBounds.y + first.worldBounds.height, second.worldBounds.y + second.worldBounds.height);
       return right > x && bottom > y ? { x, y, width: right - x, height: bottom - y } : undefined;
     };
-    const actionable = rendered.filter(({ kind }) => kind !== 'connector');
     const overlaps: DrawRenderedGeometry['overlaps'] = [];
     let comparisonCount = 0;
-    for (let firstIndex = 0; firstIndex < actionable.length; firstIndex += 1) {
-      for (let secondIndex = firstIndex + 1; secondIndex < actionable.length; secondIndex += 1) {
+    for (let firstIndex = 0; firstIndex < rendered.length; firstIndex += 1) {
+      for (let secondIndex = firstIndex + 1; secondIndex < rendered.length; secondIndex += 1) {
         comparisonCount += 1;
-        const first = actionable[firstIndex], second = actionable[secondIndex], bounds = overlap(first, second);
+        const first = rendered[firstIndex], second = rendered[secondIndex], firstObject = byId.get(first.id), secondObject = byId.get(second.id);
+        const connectorRelated = (connector: Extract<CanvasObject, { kind: 'connector' }>, candidate: CanvasObject) => connector.fromId === candidate.id || connector.toId === candidate.id
+          || (candidate.kind === 'group' && (contains(candidate.id, connector.fromId) || contains(candidate.id, connector.toId)))
+          || (candidate.kind === 'connector' && [connector.fromId, connector.toId].some((id) => id === candidate.fromId || id === candidate.toId));
+        if ((firstObject?.kind === 'connector' && secondObject && connectorRelated(firstObject, secondObject)) || (secondObject?.kind === 'connector' && firstObject && connectorRelated(secondObject, firstObject))) continue;
+        const sharedCompound = firstObject?.kind === 'stroke' && secondObject?.kind === 'stroke' && firstObject.sourceIds?.some((id) => secondObject.sourceIds?.includes(id));
+        if (sharedCompound) continue;
+        const bounds = overlap(first, second);
         if (!bounds) continue;
         const containment = (first.kind === 'group' && contains(first.id, second.id)) || (second.kind === 'group' && contains(second.id, first.id));
         overlaps.push({ firstId: first.id, secondId: second.id, bounds, classification: containment ? 'containment' : 'peer' });

@@ -113,7 +113,9 @@ describe('Draw WebMCP tools', () => {
     expect(arrow?.annotations).toMatchObject({ readOnlyHint: false, destructiveHint: false, idempotentHint: false });
     const input = { start: { x: 40, y: 80 }, end: { x: 440, y: 220 }, curvature: .35, looseness: .45, color: 'signal', weight: 6, arrowhead: 'triangle' };
     const first = await arrow!.execute(input) as { changeId: string; objectIds: string[]; geometry: { pointCount: number; arrowhead: string } };
-    const firstObjects = controller.read().objects.map(({ id, createdAt, ...object }) => object);
+    const createdObjects = controller.read().objects, createdIds = createdObjects.map(({ id }) => id);
+    expect(createdObjects.every(({ sourceIds }) => JSON.stringify(sourceIds) === JSON.stringify(createdIds))).toBe(true);
+    const firstObjects = createdObjects.map(({ id, createdAt, sourceIds, ...object }) => object);
     expect(first).toMatchObject({ changeId: expect.any(String), objectIds: expect.any(Array), geometry: { pointCount: expect.any(Number), arrowhead: 'triangle' } });
     expect(controller.read().version).toBe('create-something.mapping-canvas.v1');
     expect(controller.read().objects.every(({ kind }) => kind === 'stroke')).toBe(true);
@@ -121,7 +123,7 @@ describe('Draw WebMCP tools', () => {
     await tools.find(({ name }) => name === 'draw_revert_change')!.execute({ changeId: first.changeId });
     expect(controller.read().objects).toEqual([]);
     const second = await arrow!.execute(input) as { objectIds: string[] };
-    const secondObjects = controller.read().objects.map(({ id, createdAt, ...object }) => object);
+    const secondObjects = controller.read().objects.map(({ id, createdAt, sourceIds, ...object }) => object);
     expect(secondObjects).toEqual(firstObjects);
     expect(second.objectIds).toHaveLength(first.objectIds.length);
   });

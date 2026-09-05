@@ -695,9 +695,10 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         const arrowhead = (input.arrowhead ?? 'vee') as 'vee' | 'triangle' | 'barbed';
         if (!['vee', 'triangle', 'barbed'].includes(arrowhead)) throw new Error('arrowhead must be vee, triangle, or barbed.');
         const color = colorValue((input.color ?? 'chalk') as NamedColor), points = semanticArrowPoints(start, end, curvature, looseness);
+        const shaftId = identity('stroke'), headId = identity('stroke'), compoundIds = [shaftId.id, headId.id];
         const objects: CanvasObject[] = [
-          { ...identity('stroke'), kind: 'stroke', points, color, width: weight },
-          { ...identity('stroke'), kind: 'stroke', points: semanticArrowHead(points, weight, arrowhead), color, width: weight }
+          { ...shaftId, kind: 'stroke', points, color, width: weight, sourceIds: compoundIds },
+          { ...headId, kind: 'stroke', points: semanticArrowHead(points, weight, arrowhead), color, width: weight, sourceIds: compoundIds }
         ];
         const { before, after } = await controller.applyOperations([{ type: 'replace_objects', objects: [...state.document.objects, ...objects] }], currentRevision);
         const objectIds = changedObjectIds(before, after);
