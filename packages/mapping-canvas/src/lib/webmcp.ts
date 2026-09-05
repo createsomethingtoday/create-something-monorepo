@@ -268,15 +268,15 @@ function segmentHitsBounds(start: Point, end: Point, bounds: { x: number; y: num
   return true;
 }
 
-function stackedLabelY(index: Map<string, number>, x: number, baseY: number, width: number, blocked?: (bounds: { x: number; y: number; width: number; height: number }) => boolean) {
+function stackedLabelY(index: Map<string, number>, x: number, baseY: number, width: number, blocked?: (bounds: { x: number; y: number; width: number; height: number }) => boolean, blockedFallbackTop?: number) {
   const firstCell = Math.floor((x - width / 2) / 32), lastCell = Math.floor((x + width / 2) / 32), band = Math.floor(baseY / 16);
   let top = baseY - 12;
   for (let cell = firstCell; cell <= lastCell; cell += 1) for (let offset = -1; offset <= 1; offset += 1) {
     const occupiedTop = index.get(`stack:${cell}:${band + offset}`);
     if (occupiedTop !== undefined) top = Math.min(top, occupiedTop - 20);
   }
-  let settled = false;
-  for (let attempt = 0; attempt < 128; attempt += 1) {
+  let blockedAttempts = 0, usedFallback = false;
+  while (true) {
     let occupiedTop: number | undefined;
     const firstBand = Math.floor(top / 16), lastBand = Math.floor((top + 16) / 16);
     for (let cell = firstCell; cell <= lastCell; cell += 1) for (let paintedBand = firstBand; paintedBand <= lastBand; paintedBand += 1) {
@@ -284,11 +284,12 @@ function stackedLabelY(index: Map<string, number>, x: number, baseY: number, wid
       if (candidate !== undefined && top + 20 > candidate) occupiedTop = occupiedTop === undefined ? candidate : Math.min(occupiedTop, candidate);
     }
     if (occupiedTop !== undefined) { top = Math.min(top, occupiedTop - 20); continue; }
-    if (blocked?.({ x: x - width / 2, y: top, width, height: 16 })) { top -= 20; continue; }
-    settled = true;
+    if (blocked?.({ x: x - width / 2, y: top, width, height: 16 })) {
+      if (blockedAttempts < 128) { top -= 20; blockedAttempts += 1; continue; }
+      if (!usedFallback && blockedFallbackTop !== undefined) { top = Math.min(top - 20, blockedFallbackTop); usedFallback = true; continue; }
+    }
     break;
   }
-  if (!settled) throw new Error('Connector label stacking could not converge.');
   for (let cell = firstCell; cell <= lastCell; cell += 1) {
     const stackKey = `stack:${cell}:${band}`, stackTop = index.get(stackKey);
     index.set(stackKey, stackTop === undefined ? top : Math.min(stackTop, top));
@@ -309,7 +310,8 @@ export function connectorLabelLayout(objects: CanvasObject[]) {
     const from = byId.get(connector.fromId), to = byId.get(connector.toId);
     if (!from || !to) continue;
     const a = resolveCenter(from), b = resolveCenter(to), width = estimatedTextWidth(connector.label) + 5, x = (a.x + b.x) / 2;
-    const baseY = (a.y + b.y) / 2 - 10, y = stackedLabelY(occupiedSlots, x, baseY, width, (bounds) => segments.some((segment) => segment.id !== connector.id && segmentHitsBounds(segment.start, segment.end, bounds, 4)));
+    const otherSegments = segments.filter((segment) => segment.id !== connector.id), fallbackTop = otherSegments.length ? otherSegments.reduce((minimum, { start, end }) => Math.min(minimum, start.y, end.y), Number.POSITIVE_INFINITY) - 20 : undefined;
+    const baseY = (a.y + b.y) / 2 - 10, y = stackedLabelY(occupiedSlots, x, baseY, width, (bounds) => otherSegments.some((segment) => segmentHitsBounds(segment.start, segment.end, bounds, 4)), fallbackTop);
     result.set(connector.id, { x, y, width, height: 16 });
   }
   return result;
@@ -398,7 +400,8 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
       if (!connector.label) continue;
       const from = rootByMember.get(connector.fromId), to = rootByMember.get(connector.toId), fromObject = byId.get(connector.fromId), toObject = byId.get(connector.toId);
       if (!from || !to || !fromObject || !toObject || !targets.has(from) || !targets.has(to)) continue;
-      const start = positionedCenter(from, fromObject), end = positionedCenter(to, toObject), width = estimatedTextWidth(connector.label) + 5, x = (start.x + end.x) / 2, baseY = (start.y + end.y) / 2 - 10, y = stackedLabelY(occupied, x, baseY, width, (bounds) => segments.some((segment) => segment.id !== connector.id && segmentHitsBounds(segment.start, segment.end, bounds, 4)));
+      const start = positionedCenter(from, fromObject), end = positionedCenter(to, toObject), width = estimatedTextWidth(connector.label) + 5, x = (start.x + end.x) / 2, otherSegments = segments.filter((segment) => segment.id !== connector.id), fallbackTop = otherSegments.length ? otherSegments.reduce((minimum, { start: a, end: b }) => Math.min(minimum, a.y, b.y), Number.POSITIVE_INFINITY) - 20 : undefined;
+      const baseY = (start.y + end.y) / 2 - 10, y = stackedLabelY(occupied, x, baseY, width, (bounds) => otherSegments.some((segment) => segmentHitsBounds(segment.start, segment.end, bounds, 4)), fallbackTop);
       labels.set(connector.id, { x: x - width / 2, y: y - 12, width, height: 16 });
     }
     return labels;
@@ -458,10 +461,10 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
       const labels = positionedLabels();
       for (const connector of connectors) {
         const from = rootByMember.get(connector.fromId), to = rootByMember.get(connector.toId), fromObject = byId.get(connector.fromId), toObject = byId.get(connector.toId);
-        if (!from || !to || from === to || !fromObject || !toObject || !targets.has(from) || !targets.has(to)) continue;
+        if (!from || !to || !fromObject || !toObject || !targets.has(from) || !targets.has(to)) continue;
         const labelBounds = labels.get(connector.id);
         if (!labelBounds) continue;
-        const labelConflict = labelBounds && roots.find((id) => intersects(positionedBaseBounds(id), { x: labelBounds!.x - gap, y: labelBounds!.y - gap, width: labelBounds!.width + gap * 2, height: labelBounds!.height + gap * 2 }));
+        const labelConflict = labelBounds && roots.find((id) => (from !== to || id !== from) && intersects(positionedBaseBounds(id), { x: labelBounds!.x - gap, y: labelBounds!.y - gap, width: labelBounds!.width + gap * 2, height: labelBounds!.height + gap * 2 }));
         const conflict = labelConflict;
         if (!conflict) continue;
         const id = conflict === from ? to : conflict === to ? from : conflict === preservedRoot ? (to === preservedRoot ? from : to) : conflict;

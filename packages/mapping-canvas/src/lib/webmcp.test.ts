@@ -367,6 +367,18 @@ describe('Draw WebMCP tools', () => {
     expect(second.y + 4).toBeLessThanOrEqual(first.y - 12 - 4);
   });
 
+  it('finds a label slot beyond 128 blocking connector shafts', () => {
+    const createdAt = '2026-09-05T00:00:00.000Z';
+    const note = (id: string, x: number, y: number) => ({ id, kind: 'note' as const, createdAt, x, y, width: 120, height: 80, text: id });
+    const labelA = note('label-a', 0, 0), labelB = note('label-b', 400, 0);
+    const blockerObjects = Array.from({ length: 129 }, (_, index) => {
+      const y = 18 - index * 20 - 40, left = note(`block-${index}-a`, 0, y), right = note(`block-${index}-b`, 400, y);
+      return [left, right, { id: `block-${index}`, kind: 'connector' as const, createdAt, fromId: left.id, toId: right.id, label: '' }] as const;
+    }).flat();
+    const label = { id: 'zz-label', kind: 'connector' as const, createdAt, fromId: labelA.id, toId: labelB.id, label: 'Approval' };
+    expect(connectorLabelLayout([labelA, labelB, ...blockerObjects, label]).get(label.id)?.y).toBeLessThan(18 - 128 * 20);
+  });
+
   it('indexes shifted connector labels in their painted destination bands', () => {
     const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string, y: number) => ({ id, kind: 'note' as const, createdAt, x: id.endsWith('b') ? 400 : 0, y, width: 120, height: 80, text: id });
     const a = note('a', 0), b = note('b', 0), c = note('c', -44), d = note('db', -44), edge = (id: string, fromId: string, toId: string) => ({ id, kind: 'connector' as const, createdAt, fromId, toId, label: 'approval' });
@@ -437,6 +449,23 @@ describe('Draw WebMCP tools', () => {
       const overlaps = labelBounds.x < note.x + note.width && labelBounds.x + labelBounds.width > note.x && labelBounds.y < note.y + note.height && labelBounds.y + labelBounds.height > note.y;
       expect(overlaps).toBe(false);
     }
+  });
+
+  it('checks shifted same-group connector labels against peer roots', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string, x: number, y: number) => ({ id, kind: 'note' as const, createdAt, x, y, width: 80, height: 60, text: id });
+    const first = note('inside-a', 20, 100), second = note('inside-b', 140, 100), peer = note('a-peer', 0, -220);
+    const blockers = Array.from({ length: 10 }, (_, index) => {
+      const left = note(`shaft-${index}-a`, 20, 78 - index * 20), right = note(`shaft-${index}-b`, 140, 78 - index * 20);
+      return [left, right, { id: `shaft-${index}`, kind: 'connector' as const, createdAt, fromId: left.id, toId: right.id, label: '' }] as const;
+    }).flat();
+    const internal = { id: 'internal-label', kind: 'connector' as const, createdAt, fromId: first.id, toId: second.id, label: 'A deliberately wide internal approval label' };
+    const bridge = { id: 'peer-to-group', kind: 'connector' as const, createdAt, fromId: peer.id, toId: first.id, label: '' };
+    const group = { id: 'z-group', kind: 'group' as const, createdAt, x: 0, y: -140, width: 240, height: 320, label: 'Boundary', childIds: [first.id, second.id, internal.id, ...blockers.map(({ id }) => id)] };
+    const controller = harness({ ...createDocument(), objects: [peer, group, first, second, ...blockers, internal, bridge] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: [peer.id, group.id], mode: 'hierarchy', gap: 16 });
+    const state = controller.read(), placedPeer = state.objects.find((object): object is typeof peer => object.id === peer.id)!, label = connectorLabelLayout(state.objects).get(internal.id)!;
+    const labelBounds = { x: label.x - label.width / 2, y: label.y - 12, width: label.width, height: label.height };
+    expect(labelBounds.x + labelBounds.width + 16 <= placedPeer.x || placedPeer.x + placedPeer.width + 16 <= labelBounds.x || labelBounds.y + labelBounds.height + 16 <= placedPeer.y || placedPeer.y + placedPeer.height + 16 <= labelBounds.y).toBe(true);
   });
 
   it('keeps large labeled graph layout within a bounded execution budget', async () => {
