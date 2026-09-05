@@ -487,6 +487,15 @@ describe('Draw WebMCP tools', () => {
     expect(labels.get('edge-0999')?.y).toBe(baseY - 999 * 20);
   });
 
+  it('indexes a 20,000-label coincident-route fan-in within a bounded budget', () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', first = { id: 'fan-a', kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: 'A' }, second = { ...first, id: 'fan-b', x: 400, text: 'B' };
+    const connectors = Array.from({ length: 20_000 }, (_, index) => ({ id: `fan-edge-${String(index).padStart(5, '0')}`, kind: 'connector' as const, createdAt, fromId: first.id, toId: second.id, label: 'approval' }));
+    const startedAt = performance.now(), labels = connectorLabelLayout([first, second, ...connectors]);
+    expect(labels).toHaveLength(20_000);
+    expect(labels.get('fan-edge-19999')?.y).toBe(30 - 19_999 * 20);
+    expect(performance.now() - startedAt).toBeLessThan(2_000);
+  }, 10_000);
+
   it('stacks connector labels with nearby painted midpoints', () => {
     const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string, x: number, y: number) => ({ id, kind: 'note' as const, createdAt, x, y, width: 120, height: 80, text: id });
     const a = note('a', 0, 0), b = note('b', 400, 0), c = note('c', 1, 1), d = note('d', 401, 1), edge = (id: string, fromId: string, toId: string) => ({ id, kind: 'connector' as const, createdAt, fromId, toId, label: 'a wide approval label' });

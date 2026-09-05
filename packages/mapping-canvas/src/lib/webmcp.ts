@@ -291,6 +291,61 @@ function connectorPaintHitsBounds(start: Point, end: Point, bounds: { x: number;
   return segmentHitsBounds(start, end, bounds, 4) || (marker.x < bounds.x + bounds.width && marker.x + marker.width > bounds.x && marker.y < bounds.y + bounds.height && marker.y + marker.height > bounds.y);
 }
 
+type ConnectorRoute = { key: string; ids: Set<string>; segments: Array<{ start: Point; end: Point }>; minX: number; maxX: number; minY: number; maxY: number; fallbackTop: number };
+type ConnectorRouteNode = { minX: number; maxX: number; minY: number; maxY: number; routes?: ConnectorRoute[]; left?: ConnectorRouteNode; right?: ConnectorRouteNode };
+
+function connectorRouteIndex(segments: Array<{ id: string; start: Point; end: Point }>) {
+  const pointKey = (point: Point) => `${Object.is(point.x, -0) ? 0 : point.x},${Object.is(point.y, -0) ? 0 : point.y}`;
+  const grouped = new Map<string, ConnectorRoute>(), keyById = new Map<string, string>();
+  for (const segment of segments) {
+    const endpoints = [pointKey(segment.start), pointKey(segment.end)].sort(), key = `${endpoints[0]}|${endpoints[1]}`;
+    keyById.set(segment.id, key);
+    const existing = grouped.get(key);
+    const marker = connectorMarkerBounds(segment.start, segment.end);
+    if (existing) {
+      existing.ids.add(segment.id);
+      if (!existing.segments.some(({ start, end }) => start.x === segment.start.x && start.y === segment.start.y && end.x === segment.end.x && end.y === segment.end.y)) existing.segments.push({ start: segment.start, end: segment.end });
+      existing.minX = Math.min(existing.minX, segment.start.x - 4, segment.end.x - 4, marker.x);
+      existing.maxX = Math.max(existing.maxX, segment.start.x + 4, segment.end.x + 4, marker.x + marker.width);
+      existing.minY = Math.min(existing.minY, segment.start.y - 4, segment.end.y - 4, marker.y);
+      existing.maxY = Math.max(existing.maxY, segment.start.y + 4, segment.end.y + 4, marker.y + marker.height);
+      existing.fallbackTop = Math.min(existing.fallbackTop, Math.min(segment.start.y - 4, segment.end.y - 4, marker.y) - 16);
+      continue;
+    }
+    grouped.set(key, {
+      key, ids: new Set([segment.id]), segments: [{ start: segment.start, end: segment.end }],
+      minX: Math.min(segment.start.x - 4, segment.end.x - 4, marker.x), maxX: Math.max(segment.start.x + 4, segment.end.x + 4, marker.x + marker.width),
+      minY: Math.min(segment.start.y, segment.end.y, marker.y) - 4,
+      maxY: Math.max(segment.start.y, segment.end.y, marker.y + marker.height) + 4,
+      fallbackTop: Math.min(segment.start.y - 4, segment.end.y - 4, marker.y) - 16
+    });
+  }
+  const routes = [...grouped.values()];
+  const build = (items: ConnectorRoute[]): ConnectorRouteNode | undefined => {
+    if (!items.length) return undefined;
+    let minX = Number.POSITIVE_INFINITY, maxX = Number.NEGATIVE_INFINITY, minY = Number.POSITIVE_INFINITY, maxY = Number.NEGATIVE_INFINITY;
+    for (const route of items) { minX = Math.min(minX, route.minX); maxX = Math.max(maxX, route.maxX); minY = Math.min(minY, route.minY); maxY = Math.max(maxY, route.maxY); }
+    const node = { minX, maxX, minY, maxY };
+    if (items.length <= 8) return { ...node, routes: items };
+    const horizontal = maxX - minX >= maxY - minY, sorted = [...items].sort((a, b) => horizontal ? a.minX + a.maxX - b.minX - b.maxX : a.minY + a.maxY - b.minY - b.maxY);
+    const middle = Math.ceil(sorted.length / 2);
+    return { ...node, left: build(sorted.slice(0, middle)), right: build(sorted.slice(middle)) };
+  };
+  const tree = build(routes), fallback = [...routes].sort((a, b) => a.fallbackTop - b.fallbackTop || a.key.localeCompare(b.key)).slice(0, 2);
+  const query = (bounds: { x: number; y: number; width: number; height: number }) => {
+    if (!tree) return [];
+    const matches: ConnectorRoute[] = [], stack = [tree];
+    while (stack.length) {
+      const node = stack.pop()!;
+      if (node.maxX < bounds.x || node.minX > bounds.x + bounds.width || node.maxY < bounds.y || node.minY > bounds.y + bounds.height) continue;
+      if (node.routes) matches.push(...node.routes);
+      else { if (node.left) stack.push(node.left); if (node.right) stack.push(node.right); }
+    }
+    return matches;
+  };
+  return { keyById, query, fallback };
+}
+
 function stackedLabelY(index: Map<string, number>, x: number, baseY: number, width: number, blocked?: (bounds: { x: number; y: number; width: number; height: number }) => boolean, blockedFallbackTop?: number) {
   const firstCell = Math.floor((x - width / 2) / 32), lastCell = Math.floor((x + width / 2) / 32), band = Math.floor(baseY / 16);
   let top = baseY - 12;
@@ -329,13 +384,14 @@ export function connectorLabelLayout(objects: CanvasObject[]) {
   const occupiedSlots = new Map<string, number>(), result = new Map<string, { x: number; y: number; width: number; height: number }>();
   const connectors = objects.filter((object): object is Extract<CanvasObject, { kind: 'connector' }> => object.kind === 'connector').sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
   const segments = connectors.flatMap((connector) => { const from = byId.get(connector.fromId), to = byId.get(connector.toId); return from && to ? [{ id: connector.id, start: resolveCenter(from), end: resolveCenter(to) }] : []; });
+  const routes = connectorRouteIndex(segments);
   for (const connector of connectors.filter(({ label }) => Boolean(label))) {
     const from = byId.get(connector.fromId), to = byId.get(connector.toId);
     if (!from || !to) continue;
     const a = resolveCenter(from), b = resolveCenter(to), width = estimatedTextWidth(connector.label) + 5, x = (a.x + b.x) / 2;
-    const sameRoute = (segment: { start: Point; end: Point }) => (segment.start.x === a.x && segment.start.y === a.y && segment.end.x === b.x && segment.end.y === b.y) || (segment.start.x === b.x && segment.start.y === b.y && segment.end.x === a.x && segment.end.y === a.y);
-    const otherSegments = segments.filter((segment) => segment.id !== connector.id && !sameRoute(segment)), fallbackTop = otherSegments.length ? otherSegments.reduce((minimum, { start, end }) => Math.min(minimum, start.y - 4, end.y - 4, connectorMarkerBounds(start, end).y), Number.POSITIVE_INFINITY) - 16 : undefined;
-    const baseY = (a.y + b.y) / 2 - 10, y = stackedLabelY(occupiedSlots, x, baseY, width, (bounds) => otherSegments.some((segment) => connectorPaintHitsBounds(segment.start, segment.end, bounds)), fallbackTop);
+    const routeKey = routes.keyById.get(connector.id);
+    const fallbackTop = routes.fallback.find(({ key }) => key !== routeKey)?.fallbackTop;
+    const baseY = (a.y + b.y) / 2 - 10, y = stackedLabelY(occupiedSlots, x, baseY, width, (bounds) => routes.query(bounds).some((route) => route.key !== routeKey && route.segments.some((segment) => connectorPaintHitsBounds(segment.start, segment.end, bounds))), fallbackTop);
     result.set(connector.id, { x, y, width, height: 16 });
   }
   return result;

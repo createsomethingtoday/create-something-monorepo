@@ -219,6 +219,8 @@
     const rendered = selected.flatMap((object) => {
       const element = surface.querySelector<SVGGraphicsElement>(`[data-object-id="${CSS.escape(object.id)}"]`);
       if (!element) return [];
+      if ((element instanceof SVGRectElement && (!element.width.baseVal.value || !element.height.baseVal.value))
+        || (element instanceof SVGEllipseElement && (!element.rx.baseVal.value || !element.ry.baseVal.value))) return [];
       let rect = element instanceof SVGGElement
         ? [...element.querySelectorAll<SVGGraphicsElement>(':scope > :not([data-ui="true"])')].reduce<DOMRect | undefined>((bounds, child) => {
             const childBounds = paintedRect(child);
