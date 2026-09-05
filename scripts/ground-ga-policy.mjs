@@ -75,6 +75,11 @@ export function validateGroundGaConfig(config) {
     issues
   );
   issue(
+    config?.calibration?.minimumRecall >= 0.9,
+    'Ground recall threshold must be at least 90%',
+    issues
+  );
+  issue(
     config?.calibration?.maximumFalsePositiveRate <= 0.1,
     'Ground false-positive threshold must be at most 10%',
     issues
@@ -130,6 +135,11 @@ function publishedConsumerSmokeIsValid(smoke, platform, config, sourceSha) {
     /^sha512-/.test(smoke?.package?.integrity ?? '') &&
     smoke?.mcp?.initialized === true &&
     smoke?.mcp?.tool_count >= config.package.minimumToolCount &&
+    smoke?.trust_contract?.invalid_policy_rejected === true &&
+    smoke?.trust_contract?.stale_evidence_rejected === true &&
+    smoke?.trust_contract?.inferred_fixes_review_only === true &&
+    smoke?.trust_contract?.workspace_discovery_verified === true &&
+    smoke?.trust_contract?.policy_digest_verified === true &&
     config.languages.every((language) => {
       const lane = smoke?.language_smokes?.[language.id];
       return lane?.verification_status === 'FAIL' && typeof lane?.finding === 'string';
@@ -166,6 +176,11 @@ export function evaluateGroundCalibration(config, calibration) {
     reasons,
     calibration?.precision >= config.calibration.minimumPrecision,
     'calibration:precision_below_threshold'
+  );
+  record(
+    reasons,
+    calibration?.recall >= config.calibration.minimumRecall,
+    'calibration:recall_below_threshold'
   );
   record(
     reasons,

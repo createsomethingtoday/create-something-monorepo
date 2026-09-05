@@ -11,23 +11,9 @@
 version: "1"
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Pattern Composition
-# ─────────────────────────────────────────────────────────────────────────────
-# Extends shared pattern files for maintainability and reusability
-
-extends:
-  # Framework patterns
-  - .ground/sveltekit-patterns.yml    # SvelteKit framework conventions
-  - .ground/cloudflare-patterns.yml   # Cloudflare Workers/Pages patterns
-  - .ground/monorepo-patterns.yml     # General monorepo patterns
-  - .ground/project-specific.yml      # Project-specific exceptions
-  
-  # Consolidation patterns (from Canon migration audit)
-  - .ground/import-health.yml         # Deprecated imports, direct source imports
-  - .ground/component-locality.yml    # Components in Canon, not routes
-  - .ground/experiment-graduation.yml # Track experiment component usage
-  - .ground/duplication.yml           # Duplicate utility detection
-  - .ground/dependency-health.yml     # Package.json health checks
+# Native policy only. Specialized repository checks retain their own config in
+# `.ground/`; Ground must never imply those policies were enforced by parsing
+# them as extensions.
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Additional Project-Specific Patterns
@@ -46,14 +32,10 @@ thresholds:
   duplicate_similarity: 85        # 85% catches violations without false positives
   min_function_lines: 5           # Ignore trivial functions
 
-monorepo:
-  enabled: true
-
 report:
   format: markdown
   include_suggestions: true
   group_by: type
-  verbose: true
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Usage Notes
