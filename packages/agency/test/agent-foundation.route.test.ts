@@ -26,12 +26,13 @@ test('Agent Foundation makes one clear argument from stalled project to owned co
   assert.match(route, /No hidden CREATE\s+SOMETHING account/);
   assert.match(route, /agent_foundation_booking_clicked/);
   assert.equal(route.match(/href=\{agencyCoreMessaging\.agentFoundationBookingHref\}/g)?.length, 2);
-  assert.equal(route.match(/agencyCoreMessaging\.bringAgentProjectLabel/g)?.length, 2);
+  assert.equal(route.match(/agencyCoreMessaging\.bookAgentFoundationLabel/g)?.length, 2);
   assert.doesNotMatch(route, /PerformanceNarrativeStage/);
   assert.doesNotMatch(route, /PerformanceConversionHandoff/);
   assert.doesNotMatch(route, /agencyCoreMessaging\.selfMapHref/);
   assert.doesNotMatch(route, /workflowCompilerIntegrationHref/);
-  assert.doesNotMatch(route, /href="\/services"/);
+  assert.match(route, /href="\/services"/);
+  assert.match(route, /See how delivery works/);
   assert.doesNotMatch(route, /See what the foundation includes|Start with Map|State:\s*ready/i);
 
   assert.match(offer, /Bring an idea, prototype, or stalled agent project/i);
@@ -64,6 +65,7 @@ test('Agent Foundation has a machine-readable quoted-after-fit contract with Pro
   assert.match(contract, /public_deployment_or_hosting: false/);
   assert.match(contract, /real_user_acceptance: false/);
   assert.match(contract, /live_authority_and_deployment: 'Production Promotion'/);
+  assert.match(contract, /cta: 'Book a Foundation fit call'/);
   assert.doesNotMatch(contract, /one_time_usd|monthly_usd|amount_usd/);
 
   assert.match(commercialInterface, /agent_foundation:/);
@@ -90,17 +92,18 @@ test('Agent Foundation is registered for discovery, Canon review, and booking', 
   );
 
   assert.match(marketingCopy, /agentFoundationHref: '\/agent-foundation'/);
-  assert.match(marketingCopy, /bringAgentProjectLabel: 'Bring your agent project'/);
+  assert.match(marketingCopy, /reviewAgentFoundationLabel: 'Review the Agent Foundation'/);
+  assert.match(marketingCopy, /bookAgentFoundationLabel: 'Book a Foundation fit call'/);
   assert.match(
     marketingCopy,
     /agentFoundationBookingHref:\s*'\/book\?source=agent-foundation&intent=agent-foundation&lane=workflow_infrastructure'/
   );
   assert.match(marketingPages, /path: '\/agent-foundation'/);
   assert.ok(searchRoutes.some((route) => route.path === '/agent-foundation'));
-  assert.equal(searchRoutes.find((route) => route.path === '/')?.lastmod, '2026-09-02');
+  assert.equal(searchRoutes.find((route) => route.path === '/')?.lastmod, '2026-09-04');
   assert.match(
     marketingPages,
-    /path: '\/',[\s\S]*?intent:[\s\S]*?Agent Foundation[\s\S]*?lastmod: '2026-09-02'/
+    /path: '\/',[\s\S]*?intent:[\s\S]*?Agent Foundation[\s\S]*?lastmod: '2026-09-04'/
   );
   assert.match(registry, /'agent-foundation'/);
   assert.match(surfacePolicy, /'\/agent-foundation'/);
@@ -126,9 +129,9 @@ test('the homepage and shared navigation lead with the Agent Foundation path', (
 
   assert.match(home, /Build an agent you can keep building\./);
   assert.match(home, /agencyCoreMessaging\.agentFoundationHref/);
-  assert.match(home, /agencyCoreMessaging\.bringAgentProjectLabel/);
+  assert.match(home, /agencyCoreMessaging\.reviewAgentFoundationLabel/);
   assert.match(home, /Production Promotion/);
-  assert.match(layout, /ctaLabel=\{agencyCoreMessaging\.bringAgentProjectLabel\}/);
+  assert.match(layout, /ctaLabel=\{agencyCoreMessaging\.reviewAgentFoundationLabel\}/);
   assert.match(layout, /const primaryCtaHref = agencyCoreMessaging\.agentFoundationHref/);
   assert.match(layout, /ctaHref=\{primaryCtaHref\}/);
 });

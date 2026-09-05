@@ -19,7 +19,8 @@ export const agencyCoreMessaging = {
     '/book?source=workflow-compiler-integration&intent=compiler-integration&lane=workflow_infrastructure',
   agentFoundationLabel: 'Agent Foundation',
   agentFoundationHref: '/agent-foundation',
-  bringAgentProjectLabel: 'Bring your agent project',
+  reviewAgentFoundationLabel: 'Review the Agent Foundation',
+  bookAgentFoundationLabel: 'Book a Foundation fit call',
   agentFoundationBookingHref:
     '/book?source=agent-foundation&intent=agent-foundation&lane=workflow_infrastructure',
   agentReadinessAuditHref: '/agent-readiness',

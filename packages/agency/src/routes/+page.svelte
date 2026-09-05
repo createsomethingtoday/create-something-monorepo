@@ -3,7 +3,6 @@
     Button,
     MeridianAccordion,
     MeridianEvidenceCarousel,
-    MeridianMetrics,
     PerformanceCampaignOpening,
     PerformanceConversionHandoff,
     PerformanceNarrativeStage,
@@ -17,8 +16,6 @@
   import type { MotionIntent } from '@create-something/canon/motion';
   import HeroTrustArtifact from '$lib/components/HeroTrustArtifact.svelte';
   import AgencyPerformanceReadback from '$lib/components/AgencyPerformanceReadback.svelte';
-  import AdoptionPathChooser from '$lib/components/AdoptionPathChooser.svelte';
-  import IntegrationCompatibilityRail from '$lib/components/IntegrationCompatibilityRail.svelte';
   import PublicSubstrateCanvas from '$lib/components/PublicSubstrateCanvas.svelte';
   import { templateReviewFieldReport } from '$lib/data/fieldReports';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
@@ -230,7 +227,7 @@
       receipts: ['workflow map', 'approved route', 'runbook'],
       actions: [
         {
-          label: agencyCoreMessaging.bringAgentProjectLabel,
+          label: agencyCoreMessaging.reviewAgentFoundationLabel,
           href: agencyCoreMessaging.agentFoundationHref
         }
       ]
@@ -317,36 +314,39 @@
   >
     {#snippet actions()}
       <Button href={agencyCoreMessaging.agentFoundationHref}>
-        {agencyCoreMessaging.bringAgentProjectLabel}
+        {agencyCoreMessaging.reviewAgentFoundationLabel}
       </Button>
       <Button href="/proof/marketplace-workflow" variant="secondary"
-        >See the Marketplace workflow</Button
+        >See a verified result</Button
       >
     {/snippet}
   </PerformanceCampaignOpening>
 
   <AgencyPerformanceReadback />
 
-  <MeridianMetrics
-    eyebrow="Scoreboard"
-    title="The agent is useful when the system around it is inspectable."
-    metrics={[
-      { value: '1', label: 'role and job', detail: 'Start with one capability that matters.' },
-      {
-        value: '3',
-        label: 'system layers',
-        detail: 'Data, automation, and judgment stay explicit.'
-      },
-      { value: '1', label: 'owned repository', detail: 'Your team keeps and continues the system.' }
-    ]}
-  />
+  <section class="foundation-example" aria-labelledby="foundation-example-title">
+    <header>
+      <span>Example Agent Foundation</span>
+      <h2 id="foundation-example-title">Turn meeting notes into a reviewable action list.</h2>
+      <p>
+        This example shows the size of the first job. The delivered capability stays in your
+        repository, and a person approves the result before any external write.
+      </p>
+    </header>
+    <dl aria-label="Illustrative Agent Foundation job">
+      <div><dt>Input</dt><dd>Meeting notes</dd></div>
+      <div><dt>Agent result</dt><dd>Actions with owners and due dates</dd></div>
+      <div><dt>Human decision</dt><dd>Review before any external write</dd></div>
+      <div><dt>You keep</dt><dd>Source, rules, tests, and runbook</dd></div>
+    </dl>
+  </section>
 
   <PerformanceNarrativeStage
     id="agency-operating-story"
     expression="editorial"
     eyebrow="The system around the agent"
     title="Bound the job. Build the foundation. Promote with proof."
-    description="Agent is the public entry point. One role and job define the purchase. Map, Build, and Control remain the operating model underneath. Your team decides what can run, what needs approval, and what must stop. It keeps the repository, Playbook, and proof it can inspect, recover, and continue."
+    description="Start with one job the agent should perform. We map its limits and approvals, build the working path in your repository, and leave proof your team can inspect and continue."
     scenes={agencyScenes}
     motionIntent={agencyOperatingStoryMotion}
     ariaLabel="Shared Playbook delivery story"
@@ -434,7 +434,7 @@
         </div>
         <div class="service-flow-action">
           <Button href={agencyCoreMessaging.agentFoundationHref}>
-            {agencyCoreMessaging.bringAgentProjectLabel}
+            {agencyCoreMessaging.reviewAgentFoundationLabel}
           </Button>
           <p>
             See the <a href="/services">service path</a>, the <a href="/partners">tools we use</a>,
@@ -502,18 +502,14 @@
   <div class="home-supporting-record__deferred home-supporting-record__deferred--early">
     <MeridianEvidenceCarousel
       eyebrow="Operator proof"
-      title="Evidence replaces borrowed testimonials."
-      description="The licensed testimonial treatment now carries inspectable operating evidence rather than made-up praise."
+      title="Inspect the work before you trust the claim."
+      description="Field reports, contribution records, and ownership boundaries show what worked, what stayed blocked, and what the client keeps."
       itemsPerView={2}
       items={operatorEvidence}
     />
   </div>
 
-  <AdoptionPathChooser />
-
   <div class="home-supporting-record__deferred home-supporting-record__deferred--late">
-    <IntegrationCompatibilityRail surface="homepage" />
-
     <MeridianAccordion
       eyebrow="Playbook questions"
       title="What the first workflow changes."
@@ -539,7 +535,7 @@
   >
     {#snippet actions()}
       <Button href={agencyCoreMessaging.agentFoundationHref}>
-        {agencyCoreMessaging.bringAgentProjectLabel}
+        {agencyCoreMessaging.reviewAgentFoundationLabel}
       </Button>
       <Button href={agencyCoreMessaging.selfMapHref} variant="secondary">Start with Map</Button>
     {/snippet}
@@ -555,6 +551,76 @@
 
   .home-mobile-supporting-record {
     display: none;
+  }
+
+  .foundation-example {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    gap: clamp(2rem, 6vw, 6rem);
+    padding: clamp(3.5rem, 8vw, 7rem) var(--space-performance-page-gutter);
+    border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
+    background: var(--color-performance-paper, #f3f3f0);
+  }
+
+  .foundation-example header {
+    display: grid;
+    align-content: start;
+    gap: 0.8rem;
+  }
+
+  .foundation-example :is(h2, p, dl, dd) {
+    margin: 0;
+  }
+
+  .foundation-example header > span,
+  .foundation-example dt {
+    color: var(--color-performance-muted, #5e6268);
+    font-family: var(--font-performance-mono);
+    font-size: 0.7rem;
+    font-weight: var(--font-performance-semibold);
+    text-transform: uppercase;
+  }
+
+  .foundation-example h2 {
+    max-width: 18ch;
+    font-size: clamp(2rem, 4.2vw, 4.25rem);
+    font-weight: var(--font-performance-medium);
+    line-height: 0.98;
+  }
+
+  .foundation-example header p {
+    max-width: 38rem;
+    color: var(--color-performance-muted, #5e6268);
+    line-height: 1.55;
+  }
+
+  .foundation-example dl {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border: 1px solid var(--color-performance-line, #d7d7d2);
+    background: var(--color-performance-panel, #fff);
+  }
+
+  .foundation-example dl > div {
+    display: grid;
+    align-content: start;
+    gap: 0.45rem;
+    min-height: 8rem;
+    padding: 1rem;
+  }
+
+  .foundation-example dl > div:nth-child(even) {
+    border-left: 1px solid var(--color-performance-line, #d7d7d2);
+  }
+
+  .foundation-example dl > div:nth-child(n + 3) {
+    border-top: 1px solid var(--color-performance-line, #d7d7d2);
+  }
+
+  .foundation-example dd {
+    max-width: 24ch;
+    font-size: 1.05rem;
+    line-height: 1.3;
   }
 
   .boundary-study {
@@ -866,6 +932,27 @@
   }
 
   @media (max-width: 640px) {
+    .foundation-example {
+      grid-template-columns: 1fr;
+      gap: 1.75rem;
+    }
+
+    .foundation-example dl {
+      grid-template-columns: 1fr;
+    }
+
+    .foundation-example dl > div {
+      min-height: 0;
+    }
+
+    .foundation-example dl > div:nth-child(even) {
+      border-left: 0;
+    }
+
+    .foundation-example dl > div + div {
+      border-top: 1px solid var(--color-performance-line, #d7d7d2);
+    }
+
     .home-supporting-record__deferred {
       display: none;
     }

@@ -44,7 +44,7 @@
         href={agencyCoreMessaging.agentFoundationBookingHref}
         onclick={() => trackFoundationBooking('opening')}
       >
-        {agencyCoreMessaging.bringAgentProjectLabel}
+        {agencyCoreMessaging.bookAgentFoundationLabel}
       </Button>
       <Button href="/services" variant="secondary">See how delivery works</Button>
     {/snippet}
@@ -171,7 +171,7 @@
           href={agencyCoreMessaging.agentFoundationBookingHref}
           onclick={() => trackFoundationBooking('handoff')}
         >
-          {agencyCoreMessaging.bringAgentProjectLabel}
+          {agencyCoreMessaging.bookAgentFoundationLabel}
         </Button>
         <small>If the role is still unclear, we may recommend mapping the job first.</small>
       </div>

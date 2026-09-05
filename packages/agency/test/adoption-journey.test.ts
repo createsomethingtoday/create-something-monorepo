@@ -4,15 +4,16 @@ import { test } from 'node:test';
 
 const read = (relativePath: string) => readFileSync(new URL(relativePath, import.meta.url), 'utf8');
 
-test('the public shell exposes Practice and keeps client-service adoption one click away', () => {
+test('the public shell uses first-visit labels and keeps deeper adoption paths off the homepage', () => {
   const layout = read('../src/routes/+layout.svelte');
   const home = read('../src/routes/+page.svelte');
   const chooser = read('../src/lib/components/AdoptionPathChooser.svelte');
 
-  assert.match(layout, /label:\s*'Practice',\s*href:\s*'\/practice'/);
-  assert.match(layout, /label: 'Field Reports', href: '\/field-reports'/);
+  assert.match(layout, /label:\s*'Try a Workflow',\s*href:\s*'\/practice'/);
+  assert.match(layout, /label: 'Proof', href: '\/field-reports'/);
+  assert.match(layout, /label: 'The System', href: '\/products'/);
   assert.match(layout, /label: 'Use With Clients', href: '\/for-service-providers'/);
-  assert.match(home, /<AdoptionPathChooser \/>/);
+  assert.doesNotMatch(home, /<AdoptionPathChooser \/>/);
   assert.match(chooser, /title: \['Improve one', 'internal workflow'\]/);
   assert.match(chooser, /title: \['Deliver one', 'client workflow'\]/);
   assert.match(
@@ -36,15 +37,12 @@ test('the public shell exposes Practice and keeps client-service adoption one cl
   assert.match(chooser, /adoption_path_click/);
 });
 
-test('tool compatibility follows the workflow choice as a bounded next step', () => {
+test('tool compatibility remains available beyond the focused homepage', () => {
   const home = read('../src/routes/+page.svelte');
   const chooser = read('../src/lib/components/AdoptionPathChooser.svelte');
   const compatibility = read('../src/lib/components/IntegrationCompatibilityRail.svelte');
 
-  assert.ok(
-    home.indexOf('<AdoptionPathChooser />') <
-      home.indexOf('<IntegrationCompatibilityRail surface="homepage" />')
-  );
+  assert.doesNotMatch(home, /IntegrationCompatibilityRail surface="homepage"/);
   assert.match(compatibility, /data-surface=\{surface\}/);
   assert.match(compatibility, /Connect the workflow after the boundary is clear\./);
   assert.match(compatibility, /Map the owner, approvals, and proof first\./);
