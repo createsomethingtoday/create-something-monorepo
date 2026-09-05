@@ -449,6 +449,7 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
         ? { x: anchor.x + itemIndex * (width + gap), y: anchor.y + laneIndex * (height + gap * 2) }
         : { x: anchor.x + laneIndex * (width + gap * 2), y: anchor.y + itemIndex * (height + gap) }));
     }
+    routeConnectorShafts(orientation === 'vertical' ? 'x' : 'y');
     routeConnectors(orientation === 'vertical' ? 'x' : 'y');
     return { targets, bounds: rootBounds, layerCount: 0, laneCount: lanes.length };
   }

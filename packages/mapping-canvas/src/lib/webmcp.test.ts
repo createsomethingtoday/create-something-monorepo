@@ -326,6 +326,15 @@ describe('Draw WebMCP tools', () => {
     for (const middle of [notes.get(middleB.id)!, notes.get(middleC.id)!]) expect(middle.y > shaftY + 19 + 16 || middle.y + middle.height < shaftY - 19 - 16).toBe(true);
   });
 
+  it('routes unlabeled shafts across nonadjacent swimlanes', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id });
+    const first = note('a'), middle = note('b'), last = note('c'), connector = { id: 'ac', kind: 'connector' as const, createdAt, fromId: first.id, toId: last.id, label: '' };
+    const controller = harness({ ...createDocument(), objects: [first, middle, last, connector] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: [first.id, middle.id, last.id], mode: 'swimlane', gap: 16, lanes: [{ id: first.id, lane: '1' }, { id: middle.id, lane: '2' }, { id: last.id, lane: '3' }] });
+    const notes = new Map(controller.read().objects.filter((object): object is typeof first => object.kind === 'note').map((object) => [object.id, object])), a = notes.get(first.id)!, b = notes.get(middle.id)!, c = notes.get(last.id)!, shaftY = (a.y + a.height / 2 + c.y + c.height / 2) / 2;
+    expect(b.y > shaftY + 19 + 16 || b.y + b.height < shaftY - 19 - 16).toBe(true);
+  });
+
   it('stacks coincident connector labels deterministically', () => {
     const createdAt = '2026-09-05T00:00:00.000Z', first = { id: 'a', kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: 'A' }, second = { ...first, id: 'b', x: 400, text: 'B' };
     const connector = (id: string) => ({ id, kind: 'connector' as const, createdAt, fromId: first.id, toId: second.id, label: 'approval' });
