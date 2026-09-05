@@ -347,6 +347,17 @@ describe('Draw WebMCP tools', () => {
     expect(separated).toBe(true);
   });
 
+  it('routes opposite-satellite unlabeled shafts around a preserved orbit hub', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z';
+    const note = (id: string) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id });
+    const hub = note('hub'), first = note('satellite-a'), second = note('satellite-b'), connector = { id: 'edge', kind: 'connector' as const, createdAt, fromId: first.id, toId: second.id, label: '' };
+    const controller = harness({ ...createDocument(), objects: [hub, first, second, connector] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: [hub.id, first.id, second.id], mode: 'orbit', gap: 16 });
+    const notes = new Map(controller.read().objects.filter((object): object is typeof hub => object.kind === 'note').map((object) => [object.id, object])), placedHub = notes.get(hub.id)!, a = notes.get(first.id)!, b = notes.get(second.id)!, shaftX = (a.x + a.width / 2 + b.x + b.width / 2) / 2;
+    expect({ x: placedHub.x, y: placedHub.y }).toEqual({ x: 0, y: 0 });
+    expect(shaftX < placedHub.x - 35 || shaftX > placedHub.x + placedHub.width + 35).toBe(true);
+  });
+
   it('preserves painted root gaps after routing multiple connector labels', async () => {
     const createdAt = '2026-09-05T00:00:00.000Z';
     const hub = { id: 'hub', kind: 'note' as const, createdAt, x: 0, y: 0, width: 260, height: 160, text: 'Hub' };

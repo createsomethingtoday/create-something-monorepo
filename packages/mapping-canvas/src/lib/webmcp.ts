@@ -367,11 +367,16 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
     for (const connector of connectors) {
       const from = rootByMember.get(connector.fromId), to = rootByMember.get(connector.toId), fromObject = byId.get(connector.fromId), toObject = byId.get(connector.toId);
       if (!from || !to || from === to || !fromObject || !toObject || !targets.has(from) || !targets.has(to)) continue;
+      const initialStart = positionedCenter(from, fromObject), initialEnd = positionedCenter(to, toObject);
+      const preservedAxis = Math.abs(initialEnd.x - initialStart.x) < Math.abs(initialEnd.y - initialStart.y) ? 'x' : 'y';
       let cleared = false;
       for (let attempt = 0; attempt < 32; attempt += 1) {
         const start = positionedCenter(from, fromObject), end = positionedCenter(to, toObject), conflict = roots.find((id) => id !== from && id !== to && segmentIntersects(start, end, positionedBaseBounds(id)));
         if (!conflict) { cleared = true; break; }
-        relocate(conflict === preservedRoot ? (to === preservedRoot ? from : to) : conflict, axis);
+        const preservedConflict = conflict === preservedRoot;
+        const movingId = preservedConflict ? (to === preservedRoot ? from : to) : conflict;
+        const movingAxis = preservedConflict ? preservedAxis : axis;
+        relocate(movingId, movingAxis);
       }
       if (!cleared) throw new Error('Layout could not clear every connector-shaft obstruction.');
     }
@@ -433,6 +438,7 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
       radius *= 1.25;
       if (attempt === 31) throw new Error('Circular layout could not satisfy bounded object clearance.');
     }
+    routeConnectorShafts('y', mode === 'orbit' ? roots[0] : undefined);
     routeConnectors('y', mode === 'orbit' ? roots[0] : undefined);
     return { targets, bounds: rootBounds, layerCount: mode === 'orbit' ? 2 : 1, laneCount: 0 };
   }

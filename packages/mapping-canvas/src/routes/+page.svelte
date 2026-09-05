@@ -247,6 +247,7 @@
         ...(labelRect ? { labelBounds: { worldBounds: worldBounds(labelRect), viewportBounds: viewportBounds(labelRect) } } : {})
       }];
     });
+    const connectorById = new Map(connectors.map((connector) => [connector.id, connector]));
     const contains = (groupId: string, candidateId: string) => {
       const group = byId.get(groupId);
       const visited = new Set<string>(), stack = group?.kind === 'group' ? [...group.childIds] : [];
@@ -260,12 +261,13 @@
       }
       return false;
     };
-    const overlap = (first: typeof rendered[number], second: typeof rendered[number]) => {
-      const x = Math.max(first.worldBounds.x, second.worldBounds.x), y = Math.max(first.worldBounds.y, second.worldBounds.y);
-      const right = Math.min(first.worldBounds.x + first.worldBounds.width, second.worldBounds.x + second.worldBounds.width);
-      const bottom = Math.min(first.worldBounds.y + first.worldBounds.height, second.worldBounds.y + second.worldBounds.height);
+    const overlapBounds = (first: { x: number; y: number; width: number; height: number }, second: { x: number; y: number; width: number; height: number }) => {
+      const x = Math.max(first.x, second.x), y = Math.max(first.y, second.y);
+      const right = Math.min(first.x + first.width, second.x + second.width);
+      const bottom = Math.min(first.y + first.height, second.y + second.height);
       return right > x && bottom > y ? { x, y, width: right - x, height: bottom - y } : undefined;
     };
+    const overlap = (first: typeof rendered[number], second: typeof rendered[number]) => overlapBounds(first.worldBounds, second.worldBounds);
     const overlaps: DrawRenderedGeometry['overlaps'] = [];
     let comparisonCount = 0;
     for (let firstIndex = 0; firstIndex < rendered.length; firstIndex += 1) {
@@ -275,13 +277,18 @@
         const connectorRelated = (connector: Extract<CanvasObject, { kind: 'connector' }>, candidate: CanvasObject) => connector.fromId === candidate.id || connector.toId === candidate.id
           || (candidate.kind === 'group' && (contains(candidate.id, connector.fromId) || contains(candidate.id, connector.toId)))
           || (candidate.kind === 'connector' && [connector.fromId, connector.toId].some((id) => id === candidate.fromId || id === candidate.toId));
-        if ((firstObject?.kind === 'connector' && secondObject && connectorRelated(firstObject, secondObject)) || (secondObject?.kind === 'connector' && firstObject && connectorRelated(secondObject, firstObject))) continue;
+        const firstRelated = firstObject?.kind === 'connector' && secondObject && connectorRelated(firstObject, secondObject), secondRelated = secondObject?.kind === 'connector' && firstObject && connectorRelated(secondObject, firstObject);
+        const firstDirectEndpoint = firstObject?.kind === 'connector' && secondObject && (firstObject.fromId === secondObject.id || firstObject.toId === secondObject.id);
+        const secondDirectEndpoint = secondObject?.kind === 'connector' && firstObject && (secondObject.fromId === firstObject.id || secondObject.toId === firstObject.id);
+        const relatedLabelOverlap = firstDirectEndpoint ? connectorById.get(first.id)?.labelBounds && overlapBounds(connectorById.get(first.id)!.labelBounds!.worldBounds, second.worldBounds)
+          : secondDirectEndpoint ? connectorById.get(second.id)?.labelBounds && overlapBounds(connectorById.get(second.id)!.labelBounds!.worldBounds, first.worldBounds) : undefined;
+        if ((firstRelated || secondRelated) && !relatedLabelOverlap) continue;
         const sharedCompound = firstObject?.kind === 'stroke' && secondObject?.kind === 'stroke'
           && firstObject.sourceIds?.length === 2 && secondObject.sourceIds?.length === 2
           && firstObject.sourceIds.every((id, index) => id === secondObject.sourceIds?.[index])
           && firstObject.sourceIds.includes(firstObject.id) && firstObject.sourceIds.includes(secondObject.id);
         if (sharedCompound) continue;
-        const bounds = overlap(first, second);
+        const bounds = relatedLabelOverlap || overlap(first, second);
         if (!bounds) continue;
         const containment = (first.kind === 'group' && contains(first.id, second.id)) || (second.kind === 'group' && contains(second.id, first.id));
         overlaps.push({ firstId: first.id, secondId: second.id, bounds, classification: containment ? 'containment' : 'peer' });
