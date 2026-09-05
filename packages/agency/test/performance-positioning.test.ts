@@ -33,7 +33,7 @@ const handoffBoundaryMetadata = read(
 test('every indexed public marketing route receives a route-owned or shared Performance ending', () => {
   const indexedRoutes = marketingPagePortfolio.filter((entry) => entry.decision === 'index');
 
-  assert.equal(indexedRoutes.length, 41);
+  assert.equal(indexedRoutes.length, 43);
   assert.ok(indexedRoutes.some((entry) => entry.path === '/'));
   assert.match(layout, /marketingPagePortfolio/);
   assert.match(layout, /entry\.decision !== 'archive'/);
@@ -58,13 +58,12 @@ test('every indexed public marketing route receives a route-owned or shared Perf
   assert.match(handoff, /<AgencyPerformanceReadback compact=\{true\} \/>/);
 });
 
-test('the homepage moves from claim to proof to method before asking visitors to choose a path', () => {
+test('the homepage moves from claim to proof to a concrete job before the method and handoff', () => {
   const sequence = [
     '<PerformanceCampaignOpening',
     '<AgencyPerformanceReadback',
+    '<section class="foundation-example"',
     '<PerformanceNarrativeStage',
-    '<AdoptionPathChooser',
-    '<IntegrationCompatibilityRail',
     '<PerformanceConversionHandoff'
   ];
 
@@ -151,8 +150,8 @@ test('the campaign can preserve property-owned color without changing its defaul
 });
 
 test('the homepage operating story uses the shared Playbook to show Map, Build, and Control', () => {
-  assert.match(home, /eyebrow="One shared Playbook"/);
-  assert.match(home, /title="Map the play\. Build the system\. Keep control\."/);
+  assert.match(home, /eyebrow="The system around the agent"/);
+  assert.match(home, /title="Bound the job\. Build the foundation\. Promote with proof\."/);
   assert.match(home, /label: 'Map'/);
   assert.match(home, /label: 'Build'/);
   assert.match(home, /label: 'Control'/);

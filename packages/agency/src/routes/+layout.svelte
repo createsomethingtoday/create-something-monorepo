@@ -50,18 +50,16 @@
     });
   });
 
-  // Primary nav intentionally uses plain meaning, not owned product names: a
-  // first-time visitor does not yet know what Map or Control are. The spine is
-  // named in the footer and on /products. See the plain-meaning assertion in
-  // test/public-marketing-copy.test.ts.
+  // Primary nav tells a first-time visitor what each destination contains.
+  // Owned product names remain available in the footer and on the system page.
   const navLinks = [
     { label: 'How It Works', href: '/services' },
     {
-      label: 'Practice',
+      label: 'Try a Workflow',
       href: '/practice',
       children: [
         {
-          label: 'Practice overview',
+          label: 'Try the method',
           href: '/practice',
           description: 'See the embedded operating-partner model and delivery lanes.'
         },
@@ -83,8 +81,8 @@
       ]
     },
     { label: 'What You Keep', href: '/stack' },
-    { label: 'Products', href: '/products' },
-    { label: 'Field Reports', href: '/field-reports' }
+    { label: 'The System', href: '/products' },
+    { label: 'Proof', href: '/field-reports' }
   ];
   // Derived from the product family so the footer cannot drift from the source of truth.
   const spineLinks = PUBLIC_PRODUCT_SEQUENCE.map((id) => {
@@ -450,7 +448,7 @@
     links={navLinks}
     currentPath={$page.url.pathname}
     fixed={true}
-    ctaLabel={agencyCoreMessaging.bringAgentProjectLabel}
+    ctaLabel={agencyCoreMessaging.reviewAgentFoundationLabel}
     ctaHref={primaryCtaHref}
     user={data.user}
     onLogout={handleLogout}
@@ -476,7 +474,7 @@
       ? undefined
       : {
           title: 'Ready to turn your agent project into a working foundation?',
-          label: agencyCoreMessaging.bringAgentProjectLabel,
+          label: agencyCoreMessaging.reviewAgentFoundationLabel,
           href: primaryCtaHref,
           description: 'Bring the repository or prototype and one useful job for the agent.',
           media: agencyFooterMacroMedia

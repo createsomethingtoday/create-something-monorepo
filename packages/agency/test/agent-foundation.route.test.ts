@@ -26,7 +26,7 @@ test('Agent Foundation makes one clear argument from stalled project to owned co
   assert.match(route, /No hidden CREATE\s+SOMETHING account/);
   assert.match(route, /agent_foundation_booking_clicked/);
   assert.equal(route.match(/href=\{agencyCoreMessaging\.agentFoundationBookingHref\}/g)?.length, 2);
-  assert.equal(route.match(/agencyCoreMessaging\.bringAgentProjectLabel/g)?.length, 2);
+  assert.equal(route.match(/agencyCoreMessaging\.bookAgentFoundationLabel/g)?.length, 2);
   assert.doesNotMatch(route, /PerformanceNarrativeStage/);
   assert.doesNotMatch(route, /PerformanceConversionHandoff/);
   assert.doesNotMatch(route, /agencyCoreMessaging\.selfMapHref/);
@@ -90,7 +90,8 @@ test('Agent Foundation is registered for discovery, Canon review, and booking', 
   );
 
   assert.match(marketingCopy, /agentFoundationHref: '\/agent-foundation'/);
-  assert.match(marketingCopy, /bringAgentProjectLabel: 'Bring your agent project'/);
+  assert.match(marketingCopy, /reviewAgentFoundationLabel: 'Review the Agent Foundation'/);
+  assert.match(marketingCopy, /bookAgentFoundationLabel: 'Book a Foundation fit call'/);
   assert.match(
     marketingCopy,
     /agentFoundationBookingHref:\s*'\/book\?source=agent-foundation&intent=agent-foundation&lane=workflow_infrastructure'/
@@ -126,9 +127,9 @@ test('the homepage and shared navigation lead with the Agent Foundation path', (
 
   assert.match(home, /Build an agent you can keep building\./);
   assert.match(home, /agencyCoreMessaging\.agentFoundationHref/);
-  assert.match(home, /agencyCoreMessaging\.bringAgentProjectLabel/);
+  assert.match(home, /agencyCoreMessaging\.reviewAgentFoundationLabel/);
   assert.match(home, /Production Promotion/);
-  assert.match(layout, /ctaLabel=\{agencyCoreMessaging\.bringAgentProjectLabel\}/);
+  assert.match(layout, /ctaLabel=\{agencyCoreMessaging\.reviewAgentFoundationLabel\}/);
   assert.match(layout, /const primaryCtaHref = agencyCoreMessaging\.agentFoundationHref/);
   assert.match(layout, /ctaHref=\{primaryCtaHref\}/);
 });

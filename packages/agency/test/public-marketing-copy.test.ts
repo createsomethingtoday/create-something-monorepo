@@ -261,7 +261,9 @@ test('commercial decision routes lead with plain meaning before owned terminolog
 
   assert.match(home, /title="Build an agent you can keep building\."/);
   assert.match(home, /Bring the project you started with Codex/);
-  assert.match(home, />See the Marketplace workflow</);
+  assert.match(home, />See a verified result</);
+  assert.match(home, /Turn meeting notes into a reviewable action list\./);
+  assert.match(home, /Source, rules, tests, and runbook/);
   assert.match(home, /label: 'Boundary',[\s\S]*?value: 'Production separate'/);
   const heroProof = home.slice(
     home.indexOf('const heroProofItems'),
@@ -643,7 +645,7 @@ test('integration proof keeps compatibility distinct from partnership and delive
     'utf8'
   );
 
-  assert.match(home, /IntegrationCompatibilityRail surface="homepage"/);
+  assert.doesNotMatch(home, /IntegrationCompatibilityRail surface="homepage"/);
   assert.match(partners, /IntegrationCompatibilityRail surface="partners"/);
   assert.match(partners, /<IntegrationCatalog \/>/);
   assert.match(rail, /Brand marks identify tool paths, not partnerships or endorsements/);
