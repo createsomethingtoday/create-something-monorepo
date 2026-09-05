@@ -278,10 +278,12 @@
           || (candidate.kind === 'group' && (contains(candidate.id, connector.fromId) || contains(candidate.id, connector.toId)))
           || (candidate.kind === 'connector' && [connector.fromId, connector.toId].some((id) => id === candidate.fromId || id === candidate.toId));
         const firstRelated = firstObject?.kind === 'connector' && secondObject && connectorRelated(firstObject, secondObject), secondRelated = secondObject?.kind === 'connector' && firstObject && connectorRelated(secondObject, firstObject);
-        const firstDirectEndpoint = firstObject?.kind === 'connector' && secondObject && (firstObject.fromId === secondObject.id || firstObject.toId === secondObject.id);
-        const secondDirectEndpoint = secondObject?.kind === 'connector' && firstObject && (secondObject.fromId === firstObject.id || secondObject.toId === firstObject.id);
-        const relatedLabelOverlap = firstDirectEndpoint ? connectorById.get(first.id)?.labelBounds && overlapBounds(connectorById.get(first.id)!.labelBounds!.worldBounds, second.worldBounds)
-          : secondDirectEndpoint ? connectorById.get(second.id)?.labelBounds && overlapBounds(connectorById.get(second.id)!.labelBounds!.worldBounds, first.worldBounds) : undefined;
+        const firstEndpointContainer = firstObject?.kind === 'connector' && secondObject && (firstObject.fromId === secondObject.id || firstObject.toId === secondObject.id
+          || (secondObject.kind === 'group' && (contains(secondObject.id, firstObject.fromId) || contains(secondObject.id, firstObject.toId))));
+        const secondEndpointContainer = secondObject?.kind === 'connector' && firstObject && (secondObject.fromId === firstObject.id || secondObject.toId === firstObject.id
+          || (firstObject.kind === 'group' && (contains(firstObject.id, secondObject.fromId) || contains(firstObject.id, secondObject.toId))));
+        const relatedLabelOverlap = firstEndpointContainer ? connectorById.get(first.id)?.labelBounds && overlapBounds(connectorById.get(first.id)!.labelBounds!.worldBounds, second.worldBounds)
+          : secondEndpointContainer ? connectorById.get(second.id)?.labelBounds && overlapBounds(connectorById.get(second.id)!.labelBounds!.worldBounds, first.worldBounds) : undefined;
         if ((firstRelated || secondRelated) && !relatedLabelOverlap) continue;
         const sharedCompound = firstObject?.kind === 'stroke' && secondObject?.kind === 'stroke'
           && firstObject.sourceIds?.length === 2 && secondObject.sourceIds?.length === 2

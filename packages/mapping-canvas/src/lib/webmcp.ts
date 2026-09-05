@@ -315,9 +315,8 @@ export function connectorLabelLayout(objects: CanvasObject[]) {
   return result;
 }
 
-function paintedLayoutBounds(objects: CanvasObject[], allObjects: CanvasObject[], externalPadding = 0) {
+function paintedLayoutBounds(objects: CanvasObject[], allObjects: CanvasObject[], labels: ReturnType<typeof connectorLabelLayout>, externalPadding = 0) {
   const bounds = objectBounds(objects, allObjects);
-  const labels = connectorLabelLayout(allObjects);
   let minX = bounds.x, minY = bounds.y, maxX = bounds.x + bounds.width, maxY = bounds.y + bounds.height;
   for (const object of objects) {
     if (object.kind === 'group') maxX = Math.max(maxX, object.x + 12 + estimatedTextWidth(object.label));
@@ -341,11 +340,12 @@ function paintedLayoutBounds(objects: CanvasObject[], allObjects: CanvasObject[]
 
 function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: 'flow' | 'hierarchy' | 'loop' | 'orbit' | 'swimlane', gap: number, laneById: Map<string, string>, orientation?: 'horizontal' | 'vertical') {
   const roots = [...rootIds].sort();
+  const labels = connectorLabelLayout(document.objects);
   const rootByMember = new Map<string, string>();
   for (const root of roots) for (const id of descendants(document, [root])) rootByMember.set(id, root);
   const baseRootBounds = new Map(roots.map((id) => {
     const moving = descendants(document, [id]);
-    return [id, paintedLayoutBounds(document.objects.filter((object) => moving.has(object.id)), document.objects)] as const;
+    return [id, paintedLayoutBounds(document.objects.filter((object) => moving.has(object.id)), document.objects, labels)] as const;
   }));
   const byId = new Map(document.objects.map((object) => [object.id, object]));
   const resolveCenter = createObjectCenterResolver(document.objects);
@@ -365,7 +365,7 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
   }
   const rootBounds = new Map(roots.map((id) => {
     const moving = descendants(document, [id]);
-    return [id, paintedLayoutBounds(document.objects.filter((object) => moving.has(object.id)), document.objects, externalPadding.get(id))] as const;
+    return [id, paintedLayoutBounds(document.objects.filter((object) => moving.has(object.id)), document.objects, labels, externalPadding.get(id))] as const;
   }));
   const width = Math.max(...[...rootBounds.values()].map((bounds) => bounds.width)), height = Math.max(...[...rootBounds.values()].map((bounds) => bounds.height));
   const anchor = { x: Math.min(...[...rootBounds.values()].map(({ x }) => x)), y: Math.min(...[...rootBounds.values()].map(({ y }) => y)) };

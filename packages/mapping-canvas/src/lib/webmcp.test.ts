@@ -439,6 +439,17 @@ describe('Draw WebMCP tools', () => {
     }
   });
 
+  it('keeps large labeled graph layout within a bounded execution budget', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z';
+    const notes = Array.from({ length: 100 }, (_, index) => ({ id: `scale-node-${String(index).padStart(3, '0')}`, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: String(index) }));
+    const endpointA = { ...notes[0], id: 'scale-endpoint-a', x: 100_000 }, endpointB = { ...notes[0], id: 'scale-endpoint-b', x: 101_000 };
+    const edges = Array.from({ length: 1_000 }, (_, index) => ({ id: `scale-edge-${String(index).padStart(4, '0')}`, kind: 'connector' as const, createdAt, fromId: endpointA.id, toId: endpointB.id, label: `Approval ${index}` }));
+    const controller = harness({ ...createDocument(), objects: [...notes, endpointA, endpointB, ...edges] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    const startedAt = performance.now();
+    await layout.execute({ ids: notes.map(({ id }) => id), mode: 'flow', gap: 16 });
+    expect(performance.now() - startedAt).toBeLessThan(2_000);
+  }, 10_000);
+
   it('preserves painted root gaps after routing multiple connector labels', async () => {
     const createdAt = '2026-09-05T00:00:00.000Z';
     const hub = { id: 'hub', kind: 'note' as const, createdAt, x: 0, y: 0, width: 260, height: 160, text: 'Hub' };
