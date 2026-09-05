@@ -1,4 +1,4 @@
-import { objectBounds, type CanvasDocument, type CanvasObject, type Point, type Tool } from './document';
+import { createObjectCenterResolver, objectBounds, type CanvasDocument, type CanvasObject, type Point, type Tool } from './document';
 import type { CanvasOperation } from './paired-session';
 import { DRAWING_PALETTE } from './palette';
 
@@ -255,6 +255,7 @@ function descendants(document: CanvasDocument, ids: string[]) {
 function paintedLayoutBounds(objects: CanvasObject[], allObjects: CanvasObject[]) {
   const bounds = objectBounds(objects, allObjects);
   const byId = new Map(allObjects.map((object) => [object.id, object]));
+  const resolveCenter = createObjectCenterResolver(allObjects);
   const textWidth = (value: string) => Array.from(value).reduce((width, character) => width + (character.codePointAt(0)! > 255 ? 12 : 7), 0);
   let minX = bounds.x, minY = bounds.y, maxX = bounds.x + bounds.width, maxY = bounds.y + bounds.height;
   for (const object of objects) {
@@ -262,8 +263,8 @@ function paintedLayoutBounds(objects: CanvasObject[], allObjects: CanvasObject[]
     if (object.kind !== 'connector' || !object.label) continue;
     const from = byId.get(object.fromId), to = byId.get(object.toId);
     if (!from || !to) continue;
-    const fromBounds = objectBounds([from], allObjects), toBounds = objectBounds([to], allObjects);
-    const center = { x: (fromBounds.x + fromBounds.width / 2 + toBounds.x + toBounds.width / 2) / 2, y: (fromBounds.y + fromBounds.height / 2 + toBounds.y + toBounds.height / 2) / 2 - 10 };
+    const fromCenter = resolveCenter(from), toCenter = resolveCenter(to);
+    const center = { x: (fromCenter.x + toCenter.x) / 2, y: (fromCenter.y + toCenter.y) / 2 - 10 };
     const halfWidth = (textWidth(object.label) + 5) / 2;
     minX = Math.min(minX, center.x - halfWidth); maxX = Math.max(maxX, center.x + halfWidth);
     minY = Math.min(minY, center.y - 12); maxY = Math.max(maxY, center.y + 4);

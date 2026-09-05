@@ -265,6 +265,21 @@ describe('Draw WebMCP tools', () => {
     expect(labelRight + 48).toBeLessThanOrEqual(placedPeer.x - .5);
   });
 
+  it('uses rendered asymmetric-stroke centers for descendant connector labels', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', label = 'Asymmetric internal route '.repeat(6);
+    const stroke = { id: 'stroke', kind: 'stroke' as const, createdAt, points: [{ x: 0, y: 0 }, { x: 1_000, y: 40 }, { x: 10, y: 80 }], color: '#fcaa2d', width: 4 };
+    const note = { id: 'note', kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: 'Note' };
+    const peer = { ...note, id: 'peer', x: 10, text: 'Peer' };
+    const internal = { id: 'internal', kind: 'connector' as const, createdAt, fromId: stroke.id, toId: note.id, label };
+    const group = { id: 'group', kind: 'group' as const, createdAt, x: 0, y: 0, width: 1_000, height: 100, label: '', childIds: [stroke.id, note.id, internal.id] };
+    const outbound = { ...internal, id: 'outbound', fromId: note.id, toId: peer.id, label: '' };
+    const controller = harness({ ...createDocument(), objects: [group, stroke, note, internal, peer, outbound] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: [group.id, peer.id], mode: 'flow', gap: 48 });
+    const state = controller.read(), placedStroke = state.objects.find((object): object is typeof stroke => object.id === stroke.id)!, placedNote = state.objects.find((object): object is typeof note => object.id === note.id)!, placedPeer = state.objects.find((object): object is typeof peer => object.id === peer.id)!;
+    const strokeCenter = placedStroke.points[Math.floor(placedStroke.points.length / 2)], labelCenter = (strokeCenter.x + placedNote.x + placedNote.width / 2) / 2, labelRight = labelCenter + (label.length * 7 + 5) / 2;
+    expect(labelRight + 48).toBeLessThanOrEqual(placedPeer.x - .5);
+  });
+
   it('summarizes dense stroke geometry in compact inspection', async () => {
     const points = Array.from({ length: 2_000 }, (_, index) => ({ x: index, y: index % 50 }));
     const stroke = { id: 'dense-stroke', kind: 'stroke' as const, createdAt: '2026-09-04T00:00:00.000Z', points, color: '#0057b8', width: 5 };
