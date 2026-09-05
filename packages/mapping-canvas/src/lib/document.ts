@@ -138,6 +138,15 @@ export function expandCompoundIds(document: CanvasDocument, ids: Iterable<string
   return expanded;
 }
 
+export function selectObjectIdsInBounds(document: CanvasDocument, bounds: { left: number; right: number; top: number; bottom: number }) {
+  const resolveCenter = createObjectCenterResolver(document.objects);
+  const matched = document.objects.filter((object) => {
+    const center = resolveCenter(object);
+    return center.x >= bounds.left && center.x <= bounds.right && center.y >= bounds.top && center.y <= bounds.bottom;
+  }).map(({ id }) => id);
+  return [...expandCompoundIds(document, matched)];
+}
+
 export function removeObjects(document: CanvasDocument, ids: string[]): CanvasDocument {
   const removed = expandCompoundIds(document, ids);
   const dependents = new Map<string, string[]>();

@@ -3,13 +3,14 @@
   import { browser } from '$app/environment';
   import { onMount } from 'svelte';
   import { clearDocument, loadDocument, saveDocument } from '$lib/persistence';
-  import { commit, convert, createDocument, createObjectCenterResolver, expandCompoundIds, objectBounds, parse, redo, removeObjects, resizeGroup, restoreConversion, serialize, uid, undo, withObjects, type CanvasDocument, type CanvasObject, type History, type Point, type Shape, type Stroke, type Tool } from '$lib/document';
+  import { commit, convert, createDocument, createObjectCenterResolver, expandCompoundIds, objectBounds, parse, redo, removeObjects, resizeGroup, restoreConversion, selectObjectIdsInBounds, serialize, uid, undo, withObjects, type CanvasDocument, type CanvasObject, type History, type Point, type Shape, type Stroke, type Tool } from '$lib/document';
   import { DEFAULT_DRAWING_COLOR, DRAWING_COLOR_PREFERENCE, DRAWING_PALETTE, isColorableObject, isDrawingColor, recolorObjects, type DrawingColor } from '$lib/palette';
   import { applyCanvasOperations, isValidCanvasTitle, type CanvasOperation } from '$lib/paired-session';
   import { connectorLabelLayout, createDrawWebMcpTools, drawRevision, registerDrawWebMcpTools, type DrawRenderedGeometry, type DrawTransitionKind } from '$lib/webmcp';
   import { beginPairing, companionStatus, discoverHosts, forgetCompanion, hasNativeBridge, hostStatus, nativeRole as readNativeRole, pairCompanion, refreshCompanion, replaceHostDocument, revokeCompanion, setCompanionOnline, submitNativeOperation, type DiscoveredHost, type NativeRole, type NativeSessionStatus, type PairingOffer } from '$lib/native-pairing';
   import { fitViewportToBounds, normalizeWheelDelta, panViewport, zoomViewportAt } from '$lib/viewport';
   import { createNoteInputBuffer } from '$lib/note-input';
+  import { paddedSegmentBounds } from '$lib/spatial';
 
   const tools: { id: Tool; label: string; key: string }[] = [
     { id: 'select', label: 'Select', key: 'V' }, { id: 'pen', label: 'Pen', key: 'P' },
@@ -324,7 +325,7 @@
       if (segmentTrees.has(segments)) return segmentTrees.get(segments);
       const build = (items: PaintSegment[]): SegmentNode | undefined => {
         if (!items.length) return undefined;
-        const node = { minX: Math.min(...items.map((segment) => Math.min(segment.start.x, segment.end.x) - segment.padding)), maxX: Math.max(...items.map((segment) => Math.max(segment.start.x, segment.end.x) + segment.padding)), minY: Math.min(...items.map((segment) => Math.min(segment.start.y, segment.end.y) - segment.padding)), maxY: Math.max(...items.map((segment) => Math.max(segment.start.y, segment.end.y) + segment.padding)), count: items.length };
+        const node = { ...paddedSegmentBounds(items)!, count: items.length };
         if (items.length <= 8) return { ...node, segments: items };
         const horizontal = node.maxX - node.minX >= node.maxY - node.minY, sorted = [...items].sort((a, b) => (horizontal ? (a.start.x + a.end.x) - (b.start.x + b.end.x) : (a.start.y + a.end.y) - (b.start.y + b.end.y)));
         const middle = Math.ceil(sorted.length / 2);
@@ -771,7 +772,7 @@
     if (tool === 'pen' && draftPoints.length > 1) { const item: Stroke = { id: uid('stroke'), kind: 'stroke', createdAt: new Date().toISOString(), points: draftPoints, color: drawingColor, width: 3 }; apply(withObjects(document, [...document.objects, item]), { type: 'put_object', object: item }); selectedIds = [item.id]; }
     if (draftShape && start && Math.hypot(here.x - start.x, here.y - start.y) > 4) { const item = { ...draftShape, id: uid(draftShape.kind), to: here }; apply(withObjects(document, [...document.objects, item]), { type: 'put_object', object: item }); selectedIds = [item.id]; }
     if (tool === 'pan') sendNative([{ type: 'set_viewport', viewport }]);
-    if (lasso) { const left = Math.min(lasso.from.x, lasso.to.x), right = Math.max(lasso.from.x, lasso.to.x), top = Math.min(lasso.from.y, lasso.to.y), bottom = Math.max(lasso.from.y, lasso.to.y); selectedIds = document.objects.filter((object) => { const center = resolveObjectCenter(object); return center.x >= left && center.x <= right && center.y >= top && center.y <= bottom; }).map(({ id }) => id); }
+    if (lasso) { const left = Math.min(lasso.from.x, lasso.to.x), right = Math.max(lasso.from.x, lasso.to.x), top = Math.min(lasso.from.y, lasso.to.y), bottom = Math.max(lasso.from.y, lasso.to.y); selectedIds = selectObjectIdsInBounds(document, { left, right, top, bottom }); }
     drawing = false; start = null; draftPoints = []; draftShape = null; lasso = null;
     try { surface.releasePointerCapture(event.pointerId); } catch { /* Capture may not have been acquired. */ }
   }
