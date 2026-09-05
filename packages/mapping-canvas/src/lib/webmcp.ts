@@ -254,7 +254,10 @@ function descendants(document: CanvasDocument, ids: string[]) {
 
 function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: 'flow' | 'hierarchy' | 'loop' | 'orbit' | 'swimlane', gap: number, laneById: Map<string, string>, orientation?: 'horizontal' | 'vertical') {
   const roots = [...rootIds].sort();
-  const rootBounds = new Map(roots.map((id) => [id, objectBounds([document.objects.find((object) => object.id === id)!], document.objects)]));
+  const rootBounds = new Map(roots.map((id) => {
+    const moving = descendants(document, [id]);
+    return [id, objectBounds(document.objects.filter((object) => moving.has(object.id)), document.objects)] as const;
+  }));
   const width = Math.max(...[...rootBounds.values()].map((bounds) => bounds.width)), height = Math.max(...[...rootBounds.values()].map((bounds) => bounds.height));
   const anchor = { x: Math.min(...[...rootBounds.values()].map(({ x }) => x)), y: Math.min(...[...rootBounds.values()].map(({ y }) => y)) };
   const rootByMember = new Map<string, string>();
@@ -839,8 +842,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         let objects = before.objects;
         const movedIds = new Set<string>();
         for (const id of ids) {
-          const bounds = objectBounds([before.objects.find((object) => object.id === id)!], before.objects), target = layout.targets.get(id)!;
-          const moving = descendants(before, [id]);
+          const moving = descendants(before, [id]), bounds = objectBounds(before.objects.filter((object) => moving.has(object.id)), before.objects), target = layout.targets.get(id)!;
           assertMovableConnectorEndpoints(objects, moving);
           objects = objects.map((object) => moving.has(object.id) ? translated(object, target.x - bounds.x, target.y - bounds.y) : object);
           moving.forEach((movingId) => movedIds.add(movingId));

@@ -204,6 +204,16 @@ describe('Draw WebMCP tools', () => {
     }
   });
 
+  it('spaces layout roots around protruding group descendants', async () => {
+    const child = { id: 'outside', kind: 'note' as const, createdAt: '2026-09-05T00:00:00.000Z', x: 300, y: 0, width: 120, height: 80, text: 'Outside' };
+    const group = { id: 'group', kind: 'group' as const, createdAt: child.createdAt, x: 0, y: 0, width: 100, height: 100, label: '', childIds: [child.id] };
+    const peer = { ...child, id: 'peer', x: 10, text: 'Peer' };
+    const controller = harness({ ...createDocument(), objects: [group, child, peer] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: [group.id, peer.id], mode: 'flow', gap: 48 });
+    const moved = controller.read().objects.filter((object): object is typeof child => object.kind === 'note'), outside = moved.find(({ id }) => id === child.id)!, placedPeer = moved.find(({ id }) => id === peer.id)!;
+    expect(outside.x + outside.width + 48 <= placedPeer.x || placedPeer.x + placedPeer.width + 48 <= outside.x).toBe(true);
+  });
+
   it('summarizes dense stroke geometry in compact inspection', async () => {
     const points = Array.from({ length: 2_000 }, (_, index) => ({ x: index, y: index % 50 }));
     const stroke = { id: 'dense-stroke', kind: 'stroke' as const, createdAt: '2026-09-04T00:00:00.000Z', points, color: '#0057b8', width: 5 };

@@ -186,6 +186,23 @@
     const selected = matches.slice(0, input.limit);
     const existingIds = new Set(document.objects.map(({ id }) => id));
     const missingIds = input.ids?.filter((id) => !existingIds.has(id)) ?? [];
+    const decoratedLineRect = (line: SVGLineElement) => {
+      const rect = line.getBoundingClientRect(), matrix = line.getScreenCTM();
+      if (!line.hasAttribute('marker-end') || !matrix) return rect;
+      const start = new DOMPoint(line.x1.baseVal.value, line.y1.baseVal.value).matrixTransform(matrix), end = new DOMPoint(line.x2.baseVal.value, line.y2.baseVal.value).matrixTransform(matrix);
+      const distance = Math.hypot(end.x - start.x, end.y - start.y);
+      if (!distance) return rect;
+      const unit = { x: (end.x - start.x) / distance, y: (end.y - start.y) / distance }, normal = { x: -unit.y, y: unit.x };
+      const scale = Math.hypot(matrix.a, matrix.b), stroke = Number.parseFloat(getComputedStyle(line).strokeWidth) * scale;
+      const points = [
+        { x: end.x + unit.x * stroke, y: end.y + unit.y * stroke },
+        { x: end.x - unit.x * 9 * stroke + normal.x * 3.5 * stroke, y: end.y - unit.y * 9 * stroke + normal.y * 3.5 * stroke },
+        { x: end.x - unit.x * 9 * stroke - normal.x * 3.5 * stroke, y: end.y - unit.y * 9 * stroke - normal.y * 3.5 * stroke }
+      ];
+      const left = Math.min(rect.left, ...points.map(({ x }) => x)), top = Math.min(rect.top, ...points.map(({ y }) => y));
+      const right = Math.max(rect.right, ...points.map(({ x }) => x)), bottom = Math.max(rect.bottom, ...points.map(({ y }) => y));
+      return new DOMRect(left, top, right - left, bottom - top);
+    };
     const rendered = selected.flatMap((object) => {
       const element = surface.querySelector<SVGGraphicsElement>(`[data-object-id="${CSS.escape(object.id)}"]`);
       if (!element) return [];
@@ -196,7 +213,7 @@
             const left = Math.min(bounds.left, childBounds.left), top = Math.min(bounds.top, childBounds.top);
             return new DOMRect(left, top, Math.max(bounds.right, childBounds.right) - left, Math.max(bounds.bottom, childBounds.bottom) - top);
           }, undefined) ?? element.getBoundingClientRect()
-        : element.getBoundingClientRect();
+        : element instanceof SVGLineElement ? decoratedLineRect(element) : element.getBoundingClientRect();
       const view = viewportBounds(rect);
       return [{ id: object.id, kind: object.kind, worldBounds: worldBounds(rect), viewportBounds: view, clipped: clipped(view) }];
     });

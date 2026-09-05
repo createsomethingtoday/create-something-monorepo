@@ -148,6 +148,12 @@ try {
     await new Promise((resolve) => setTimeout(resolve, 800));
     const settledArrowGeometry = await tools.draw_get_rendered_geometry.execute({ ids: arrow.objectIds, limit: 10 });
     await tools.draw_revert_change.execute({ changeId: arrow.changeId });
+    const edgeArrowId = 'browser-rendered-edge-arrow';
+    const edgeArrow = await tools.draw_apply_operations.execute({ operations: [{ type: 'put_object', object: { id: edgeArrowId, kind: 'arrow', createdAt: new Date().toISOString(), from: { x: inspect.visibleWorld.x + inspect.visibleWorld.width - 120, y: inspect.visibleWorld.y + 360 }, to: { x: inspect.visibleWorld.x + inspect.visibleWorld.width - 1, y: inspect.visibleWorld.y + 360 }, color: '#fcaa2d' } }] });
+    const edgeViewport = await tools.draw_apply_operations.execute({ operations: [{ type: 'set_viewport', viewport: before.document.viewport }] });
+    const edgeArrowGeometry = await tools.draw_get_rendered_geometry.execute({ ids: [edgeArrowId], limit: 10 });
+    await tools.draw_revert_change.execute({ changeId: edgeViewport.changeId });
+    await tools.draw_revert_change.execute({ changeId: edgeArrow.changeId });
     const collision = await tools.draw_compose.execute({ nodes: [{ ref: 'collision-a', text: 'Collision A' }, { ref: 'collision-b', text: 'Collision B' }], layout: { direction: 'row', gap: 64 } });
     const collisionState = await tools.draw_get_state.execute({});
     const collisionA = collisionState.document.objects.find(({ id }) => id === collision.refs['collision-a']);
@@ -180,7 +186,7 @@ try {
     const restored = await tools.draw_get_state.execute({});
     return {
       names, drawNames, version: inspect.version, compactBytes: JSON.stringify(inspect).length, fullBytes: JSON.stringify(before).length,
-      composed, renderedGeometry, selectedGroupGeometry, unselectedGroupGeometry, autoLayouts, arrow, arrowGeometry, settledArrowGeometry, collisionGeometry, clippedGeometry, connectorVisible: Boolean(connectorLabel && getComputedStyle(connectorLabel).display !== 'none'),
+      composed, renderedGeometry, selectedGroupGeometry, unselectedGroupGeometry, autoLayouts, arrow, arrowGeometry, settledArrowGeometry, edgeArrowGeometry, collisionGeometry, clippedGeometry, connectorVisible: Boolean(connectorLabel && getComputedStyle(connectorLabel).display !== 'none'),
       staleError, deleteError, replaceError, focus, restoredCount: restored.document.objects.length, beforeCount: before.document.objects.length
     };
   });
@@ -190,6 +196,7 @@ try {
   if (semantic.renderedGeometry.objects.length !== 4 || semantic.renderedGeometry.connectors.length !== 1 || !semantic.renderedGeometry.connectors[0].labelBounds || semantic.renderedGeometry.overlaps.some(({ classification }) => classification === 'peer') || !semantic.renderedGeometry.overlaps.some(({ classification }) => classification === 'containment')) throw new Error(`Rendered geometry did not match the visible semantic graph: ${JSON.stringify(semantic.renderedGeometry)}`);
   if (JSON.stringify(semantic.selectedGroupGeometry.objects[0]?.worldBounds) !== JSON.stringify(semantic.unselectedGroupGeometry.objects[0]?.worldBounds) || JSON.stringify(semantic.arrowGeometry.objects) !== JSON.stringify(semantic.settledArrowGeometry.objects)) throw new Error(`Rendered geometry changed with selection UI or after the tool declared the animation settled: ${JSON.stringify({ selected: semantic.selectedGroupGeometry, unselected: semantic.unselectedGroupGeometry, immediateArrow: semantic.arrowGeometry, settledArrow: semantic.settledArrowGeometry })}`);
   if (semantic.autoLayouts.length !== 5 || semantic.autoLayouts.some(({ peerOverlaps }) => peerOverlaps) || semantic.arrow.geometry.arrowhead !== 'triangle' || semantic.arrowGeometry.objects.length !== 2) throw new Error(`Semantic auto-layout or freehand arrow proof failed: ${JSON.stringify({ autoLayouts: semantic.autoLayouts, arrow: semantic.arrow, arrowGeometry: semantic.arrowGeometry })}`);
+  if (!semantic.edgeArrowGeometry.objects.some(({ clipped }) => clipped)) throw new Error(`Rendered arrowhead marker clipping was not included: ${JSON.stringify(semantic.edgeArrowGeometry)}`);
   if (!semantic.collisionGeometry.overlaps.some(({ classification }) => classification === 'peer') || !semantic.clippedGeometry.objects[0]?.clipped || !semantic.clippedGeometry.missingIds.includes('missing-rendered-id')) throw new Error(`Rendered collision, clipping, or missing-ID evidence failed: ${JSON.stringify({ collision: semantic.collisionGeometry, clipped: semantic.clippedGeometry })}`);
   if (!semantic.staleError.includes('revision') || !semantic.deleteError.includes('DELETE OBJECTS') || !semantic.replaceError.includes('REPLACE CANVAS')) throw new Error(`Semantic safety boundary failed: ${JSON.stringify(semantic)}`);
   if (semantic.restoredCount !== semantic.beforeCount || !semantic.focus.ok) throw new Error(`Semantic workflow did not restore its isolated fixture: ${JSON.stringify(semantic)}`);
