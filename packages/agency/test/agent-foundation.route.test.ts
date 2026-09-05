@@ -65,6 +65,7 @@ test('Agent Foundation has a machine-readable quoted-after-fit contract with Pro
   assert.match(contract, /public_deployment_or_hosting: false/);
   assert.match(contract, /real_user_acceptance: false/);
   assert.match(contract, /live_authority_and_deployment: 'Production Promotion'/);
+  assert.match(contract, /cta: 'Book a Foundation fit call'/);
   assert.doesNotMatch(contract, /one_time_usd|monthly_usd|amount_usd/);
 
   assert.match(commercialInterface, /agent_foundation:/);
