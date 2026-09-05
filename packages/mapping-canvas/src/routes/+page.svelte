@@ -231,7 +231,7 @@
       const line = surface.querySelector<SVGLineElement>(`line[data-object-id="${CSS.escape(object.id)}"]`);
       if (!line) return [];
       const label = line.parentElement?.querySelector<SVGTextElement>('.connector-label');
-      const labelRect = label?.getBoundingClientRect();
+      const labelRect = label ? paintedRect(label) : undefined;
       return [{
         id: object.id,
         fromId: object.fromId,
