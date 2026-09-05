@@ -335,12 +335,29 @@ describe('Draw WebMCP tools', () => {
     expect(b.y > shaftY + 19 + 16 || b.y + b.height < shaftY - 19 - 16).toBe(true);
   });
 
+  it('globally rechecks connector shafts after cyclic hierarchy relocations', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id });
+    const d = note('d'), e = note('e'), f = note('f'), edge = (id: string, fromId: string, toId: string) => ({ id, kind: 'connector' as const, createdAt, fromId, toId, label: '' });
+    const controller = harness({ ...createDocument(), objects: [d, e, f, edge('fe', f.id, e.id), edge('ed', e.id, d.id), edge('fd', f.id, d.id), edge('df', d.id, f.id)] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: [d.id, e.id, f.id], mode: 'hierarchy', gap: 16 });
+    const notes = new Map(controller.read().objects.filter((object): object is typeof d => object.kind === 'note').map((object) => [object.id, object])), start = notes.get(e.id)!, end = notes.get(d.id)!, obstruction = notes.get(f.id)!;
+    const a = { x: start.x + start.width / 2, y: start.y + start.height / 2 }, b = { x: end.x + end.width / 2, y: end.y + end.height / 2 }, bounds = { x: obstruction.x - 35, y: obstruction.y - 35, width: obstruction.width + 70, height: obstruction.height + 70 };
+    let minimum = 0, maximum = 1, intersects = true;
+    for (const [origin, delta, low, high] of [[a.x, b.x - a.x, bounds.x, bounds.x + bounds.width], [a.y, b.y - a.y, bounds.y, bounds.y + bounds.height]] as const) {
+      if (delta === 0) { if (origin < low || origin > high) intersects = false; continue; }
+      const first = (low - origin) / delta, second = (high - origin) / delta; minimum = Math.max(minimum, Math.min(first, second)); maximum = Math.min(maximum, Math.max(first, second));
+      if (minimum > maximum) intersects = false;
+    }
+    expect(intersects).toBe(false);
+  });
+
   it('stacks coincident connector labels deterministically', () => {
     const createdAt = '2026-09-05T00:00:00.000Z', first = { id: 'a', kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: 'A' }, second = { ...first, id: 'b', x: 400, text: 'B' };
     const connector = (id: string) => ({ id, kind: 'connector' as const, createdAt, fromId: first.id, toId: second.id, label: 'approval' });
-    const labels = connectorLabelLayout([first, second, connector('edge-b'), connector('edge-a')]);
-    expect(labels.get('edge-a')?.y).toBe((first.y + first.height / 2 + second.y + second.height / 2) / 2 - 10);
-    expect(labels.get('edge-b')?.y).toBe((first.y + first.height / 2 + second.y + second.height / 2) / 2 - 30);
+    const connectors = Array.from({ length: 1_000 }, (_, index) => connector(`edge-${String(index).padStart(4, '0')}`)), labels = connectorLabelLayout([first, second, ...connectors]), baseY = (first.y + first.height / 2 + second.y + second.height / 2) / 2 - 10;
+    expect(labels.get('edge-0000')?.y).toBe(baseY);
+    expect(labels.get('edge-0001')?.y).toBe(baseY - 20);
+    expect(labels.get('edge-0999')?.y).toBe(baseY - 999 * 20);
   });
 
   it('routes opposite-satellite labels around a preserved orbit hub', async () => {
