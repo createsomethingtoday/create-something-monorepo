@@ -288,14 +288,25 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
   const roots = [...rootIds].sort();
   const rootByMember = new Map<string, string>();
   for (const root of roots) for (const id of descendants(document, [root])) rootByMember.set(id, root);
+  const baseRootBounds = new Map(roots.map((id) => {
+    const moving = descendants(document, [id]);
+    return [id, paintedLayoutBounds(document.objects.filter((object) => moving.has(object.id)), document.objects)] as const;
+  }));
+  const byId = new Map(document.objects.map((object) => [object.id, object]));
+  const resolveCenter = createObjectCenterResolver(document.objects);
   const externalPadding = new Map(roots.map((id) => [id, 0]));
   for (const connector of document.objects) {
     if (connector.kind !== 'connector' || !connector.label) continue;
     const from = rootByMember.get(connector.fromId), to = rootByMember.get(connector.toId);
     if (!from || !to || from === to) continue;
     const labelPadding = (estimatedTextWidth(connector.label) + 5 + gap) / 2;
-    externalPadding.set(from, Math.max(externalPadding.get(from)!, labelPadding));
-    externalPadding.set(to, Math.max(externalPadding.get(to)!, labelPadding));
+    for (const [rootId, endpointId] of [[from, connector.fromId], [to, connector.toId]] as const) {
+      const endpoint = byId.get(endpointId), bounds = baseRootBounds.get(rootId)!;
+      if (!endpoint) continue;
+      const center = resolveCenter(endpoint);
+      const endpointOffset = Math.max(center.x - bounds.x, bounds.x + bounds.width - center.x, center.y - bounds.y, bounds.y + bounds.height - center.y);
+      externalPadding.set(rootId, Math.max(externalPadding.get(rootId)!, labelPadding + endpointOffset));
+    }
   }
   const rootBounds = new Map(roots.map((id) => {
     const moving = descendants(document, [id]);

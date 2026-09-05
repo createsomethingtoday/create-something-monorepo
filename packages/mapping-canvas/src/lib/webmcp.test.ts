@@ -291,6 +291,19 @@ describe('Draw WebMCP tools', () => {
     expect(labelCenter + halfLabel).toBeLessThanOrEqual(notes[1].x - .5 - 16);
   });
 
+  it('accounts for off-center descendant endpoints when reserving connector labels', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', label = 'Owner approval evidence';
+    const endpoint = { id: 'endpoint', kind: 'note' as const, createdAt, x: 10, y: 10, width: 100, height: 60, text: 'Endpoint' };
+    const group = { id: 'wide-group', kind: 'group' as const, createdAt, x: 0, y: 0, width: 1_000, height: 100, label: '', childIds: [endpoint.id] };
+    const peer = { ...endpoint, id: 'peer', x: 0, text: 'Peer' };
+    const connector = { id: 'edge', kind: 'connector' as const, createdAt, fromId: endpoint.id, toId: peer.id, label };
+    const controller = harness({ ...createDocument(), objects: [group, endpoint, peer, connector] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: [group.id, peer.id], mode: 'flow', gap: 16 });
+    const state = controller.read(), placedGroup = state.objects.find((object): object is typeof group => object.id === group.id)!, placedEndpoint = state.objects.find((object): object is typeof endpoint => object.id === endpoint.id)!, placedPeer = state.objects.find((object): object is typeof peer => object.id === peer.id)!;
+    const labelCenter = (placedEndpoint.x + placedEndpoint.width / 2 + placedPeer.x + placedPeer.width / 2) / 2, halfLabel = (label.length * 7 + 5) / 2;
+    expect(labelCenter - halfLabel).toBeGreaterThanOrEqual(placedGroup.x + placedGroup.width + 1 + 16);
+  });
+
   it('reserves marker paint for descendant connectors', async () => {
     const createdAt = '2026-09-05T00:00:00.000Z';
     const first = { id: 'first', kind: 'rectangle' as const, createdAt, from: { x: 0, y: 0 }, to: { x: 20, y: 20 }, color: '#fcaa2d' }, second = { ...first, id: 'second', from: { x: 80, y: 0 }, to: { x: 100, y: 20 } };
