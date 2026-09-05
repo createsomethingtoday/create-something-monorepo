@@ -337,7 +337,7 @@ describe('Draw WebMCP tools', () => {
 
   it('globally rechecks connector shafts after cyclic hierarchy relocations', async () => {
     const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id });
-    const d = note('d'), e = note('e'), f = note('f'), edge = (id: string, fromId: string, toId: string) => ({ id, kind: 'connector' as const, createdAt, fromId, toId, label: '' });
+    const d = note('d'), e = note('e'), f = note('f'), edge = (id: string, fromId: string, toId: string) => ({ id, kind: 'connector' as const, createdAt, fromId, toId, label: 'Long owner approval evidence' });
     const controller = harness({ ...createDocument(), objects: [d, e, f, edge('fe', f.id, e.id), edge('ed', e.id, d.id), edge('fd', f.id, d.id), edge('df', d.id, f.id)] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
     await layout.execute({ ids: [d.id, e.id, f.id], mode: 'hierarchy', gap: 16 });
     const notes = new Map(controller.read().objects.filter((object): object is typeof d => object.kind === 'note').map((object) => [object.id, object])), start = notes.get(e.id)!, end = notes.get(d.id)!, obstruction = notes.get(f.id)!;
@@ -365,6 +365,16 @@ describe('Draw WebMCP tools', () => {
     const a = note('a', 0, 0), b = note('b', 400, 0), c = note('c', 1, 1), d = note('d', 401, 1), edge = (id: string, fromId: string, toId: string) => ({ id, kind: 'connector' as const, createdAt, fromId, toId, label: 'a wide approval label' });
     const labels = connectorLabelLayout([a, b, c, d, edge('edge-a', a.id, b.id), edge('edge-b', c.id, d.id)]), first = labels.get('edge-a')!, second = labels.get('edge-b')!;
     expect(second.y + 4).toBeLessThanOrEqual(first.y - 12 - 4);
+  });
+
+  it('indexes shifted connector labels in their painted destination bands', () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string, y: number) => ({ id, kind: 'note' as const, createdAt, x: id.endsWith('b') ? 400 : 0, y, width: 120, height: 80, text: id });
+    const a = note('a', 0), b = note('b', 0), c = note('c', -44), d = note('db', -44), edge = (id: string, fromId: string, toId: string) => ({ id, kind: 'connector' as const, createdAt, fromId, toId, label: 'approval' });
+    const labels = connectorLabelLayout([a, b, c, d, edge('edge-1', a.id, b.id), edge('edge-2', a.id, b.id), edge('edge-3', a.id, b.id), edge('edge-4', a.id, b.id), edge('z-nearby', c.id, d.id)]), nearby = labels.get('z-nearby')!;
+    for (const id of ['edge-1', 'edge-2', 'edge-3', 'edge-4']) {
+      const existing = labels.get(id)!;
+      expect(nearby.y + 4 <= existing.y - 12 || existing.y + 4 <= nearby.y - 12).toBe(true);
+    }
   });
 
   it('routes opposite-satellite labels around a preserved orbit hub', async () => {

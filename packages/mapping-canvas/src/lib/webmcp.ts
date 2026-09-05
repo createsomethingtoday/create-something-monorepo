@@ -260,12 +260,27 @@ function stackedLabelY(index: Map<string, number>, x: number, baseY: number, wid
   const firstCell = Math.floor((x - width / 2) / 32), lastCell = Math.floor((x + width / 2) / 32), band = Math.floor(baseY / 16);
   let top = baseY - 12;
   for (let cell = firstCell; cell <= lastCell; cell += 1) for (let offset = -1; offset <= 1; offset += 1) {
-    const occupiedTop = index.get(`${cell}:${band + offset}`);
+    const occupiedTop = index.get(`stack:${cell}:${band + offset}`);
     if (occupiedTop !== undefined) top = Math.min(top, occupiedTop - 20);
   }
+  for (let attempt = 0; attempt < 32; attempt += 1) {
+    let occupiedTop: number | undefined;
+    const firstBand = Math.floor(top / 16), lastBand = Math.floor((top + 16) / 16);
+    for (let cell = firstCell; cell <= lastCell; cell += 1) for (let paintedBand = firstBand; paintedBand <= lastBand; paintedBand += 1) {
+      const candidate = index.get(`paint:${cell}:${paintedBand}`);
+      if (candidate !== undefined && top + 20 > candidate) occupiedTop = occupiedTop === undefined ? candidate : Math.min(occupiedTop, candidate);
+    }
+    if (occupiedTop === undefined) break;
+    top = Math.min(top, occupiedTop - 20);
+    if (attempt === 31) throw new Error('Connector label stacking could not converge.');
+  }
   for (let cell = firstCell; cell <= lastCell; cell += 1) {
-    const key = `${cell}:${band}`, occupiedTop = index.get(key);
-    index.set(key, occupiedTop === undefined ? top : Math.min(occupiedTop, top));
+    const stackKey = `stack:${cell}:${band}`, stackTop = index.get(stackKey);
+    index.set(stackKey, stackTop === undefined ? top : Math.min(stackTop, top));
+    for (let paintedBand = Math.floor(top / 16); paintedBand <= Math.floor((top + 16) / 16); paintedBand += 1) {
+      const paintKey = `paint:${cell}:${paintedBand}`, paintTop = index.get(paintKey);
+      index.set(paintKey, paintTop === undefined ? top : Math.min(paintTop, top));
+    }
   }
   return top + 12;
 }
@@ -441,6 +456,15 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
     }
     throw new Error('Layout could not converge while routing connectors.');
   };
+  const settleConnectorRouting = (axis: 'x' | 'y', preservedRoot?: string, globalShafts = true) => {
+    for (let pass = 0; pass < 16; pass += 1) {
+      const before = roots.map((id) => ({ ...targets.get(id)! }));
+      routeConnectorShafts(axis, preservedRoot, globalShafts);
+      routeConnectors(axis, preservedRoot);
+      if (roots.every((id, index) => targets.get(id)!.x === before[index].x && targets.get(id)!.y === before[index].y)) return;
+    }
+    throw new Error('Layout could not jointly converge connector shafts and labels.');
+  };
   if (mode === 'loop' || mode === 'orbit') {
     const orbiting = mode === 'orbit' ? roots.slice(1) : roots;
     const hubBounds = rootBounds.get(roots[0])!;
@@ -469,8 +493,7 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
       radius *= 1.25;
       if (attempt === 31) throw new Error('Circular layout could not satisfy bounded object clearance.');
     }
-    routeConnectorShafts('y', mode === 'orbit' ? roots[0] : undefined, true);
-    routeConnectors('y', mode === 'orbit' ? roots[0] : undefined);
+    settleConnectorRouting('y', mode === 'orbit' ? roots[0] : undefined);
     return { targets, bounds: rootBounds, layerCount: mode === 'orbit' ? 2 : 1, laneCount: 0 };
   }
   if (mode === 'swimlane') {
@@ -480,8 +503,7 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
         ? { x: anchor.x + itemIndex * (width + gap), y: anchor.y + laneIndex * (height + gap * 2) }
         : { x: anchor.x + laneIndex * (width + gap * 2), y: anchor.y + itemIndex * (height + gap) }));
     }
-    routeConnectorShafts(orientation === 'vertical' ? 'x' : 'y');
-    routeConnectors(orientation === 'vertical' ? 'x' : 'y');
+    settleConnectorRouting(orientation === 'vertical' ? 'x' : 'y', undefined, false);
     return { targets, bounds: rootBounds, layerCount: 0, laneCount: lanes.length };
   }
   const reverse = new Map(roots.map((id) => [id, new Set<string>()]));
@@ -516,8 +538,7 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
   for (const [level, ids] of [...idsByLevel].sort(([a], [b]) => a - b)) ids.forEach((id, index) => targets.set(id, !vertical
     ? { x: anchor.x + level * (width + gap), y: anchor.y + index * (height + gap) }
     : { x: anchor.x + index * (width + gap), y: anchor.y + level * (height + gap) }));
-  routeConnectorShafts(vertical ? 'x' : 'y', undefined, true);
-  routeConnectors(vertical ? 'x' : 'y');
+  settleConnectorRouting(vertical ? 'x' : 'y');
   return { targets, bounds: rootBounds, layerCount: idsByLevel.size, laneCount: 0 };
 }
 
