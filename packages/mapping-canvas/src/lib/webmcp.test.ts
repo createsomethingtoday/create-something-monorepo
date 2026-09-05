@@ -329,6 +329,20 @@ describe('Draw WebMCP tools', () => {
     expect(separated).toBe(true);
   });
 
+  it('preserves painted root gaps after routing multiple connector labels', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z';
+    const hub = { id: 'hub', kind: 'note' as const, createdAt, x: 0, y: 0, width: 260, height: 160, text: 'Hub' };
+    const small = { ...hub, id: 'small', width: 80, height: 60, text: 'Small' }, medium = { ...hub, id: 'medium', width: 160, height: 100, text: 'Medium' }, large = { ...hub, id: 'large', width: 220, height: 120, text: 'Large' };
+    const edge = (id: string, fromId: string, toId: string) => ({ id, kind: 'connector' as const, createdAt, fromId, toId, label: 'Governed handoff evidence' });
+    const controller = harness({ ...createDocument(), objects: [hub, small, medium, large, edge('sl', small.id, large.id), edge('ml', medium.id, large.id)] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: [hub.id, small.id, medium.id, large.id], mode: 'orbit', gap: 24 });
+    const notes = controller.read().objects.filter((object): object is typeof hub => object.kind === 'note');
+    for (let first = 0; first < notes.length; first += 1) for (let second = first + 1; second < notes.length; second += 1) {
+      const a = notes[first], b = notes[second], separated = a.x + a.width + 24 <= b.x || b.x + b.width + 24 <= a.x || a.y + a.height + 24 <= b.y || b.y + b.height + 24 <= a.y;
+      expect(separated).toBe(true);
+    }
+  });
+
   it('reserves marker paint for descendant connectors', async () => {
     const createdAt = '2026-09-05T00:00:00.000Z';
     const first = { id: 'first', kind: 'rectangle' as const, createdAt, from: { x: 0, y: 0 }, to: { x: 20, y: 20 }, color: '#fcaa2d' }, second = { ...first, id: 'second', from: { x: 80, y: 0 }, to: { x: 100, y: 20 } };

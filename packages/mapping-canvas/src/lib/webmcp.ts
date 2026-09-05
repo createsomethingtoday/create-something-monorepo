@@ -330,6 +330,7 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
     return { x: center.x + target.x - bounds.x, y: center.y + target.y - bounds.y };
   };
   const intersects = (a: { x: number; y: number; width: number; height: number }, b: { x: number; y: number; width: number; height: number }) => a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+  const separatedByGap = (a: { x: number; y: number; width: number; height: number }, b: { x: number; y: number; width: number; height: number }) => a.x + a.width + gap <= b.x || b.x + b.width + gap <= a.x || a.y + a.height + gap <= b.y || b.y + b.height + gap <= a.y;
   const labeledConnectors = document.objects.filter((object): object is Extract<CanvasObject, { kind: 'connector' }> => object.kind === 'connector' && Boolean(object.label)).sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
   const routeConnectorLabels = (axis: 'x' | 'y', preservedRoot?: string) => {
     for (let pass = 0; pass < 128; pass += 1) {
@@ -339,9 +340,9 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
         if (!from || !to || from === to || !fromObject || !toObject || !targets.has(from) || !targets.has(to)) continue;
         const fromCenter = positionedCenter(from, fromObject), toCenter = positionedCenter(to, toObject), halfWidth = (estimatedTextWidth(connector.label) + 5) / 2;
         const labelBounds = { x: (fromCenter.x + toCenter.x) / 2 - halfWidth - gap, y: (fromCenter.y + toCenter.y) / 2 - 22 - gap, width: halfWidth * 2 + gap * 2, height: 16 + gap * 2 };
-        const conflict = roots.find((id) => id !== from && id !== to && intersects(positionedBaseBounds(id), labelBounds));
+        const conflict = roots.find((id) => intersects(positionedBaseBounds(id), labelBounds));
         if (!conflict) continue;
-        const id = conflict === preservedRoot ? (to === preservedRoot ? from : to) : conflict;
+        const id = conflict === from ? to : conflict === to ? from : conflict === preservedRoot ? (to === preservedRoot ? from : to) : conflict;
         move = { id, labelBounds };
         break;
       }
@@ -351,7 +352,7 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
         const target = targets.get(move.id)!;
         targets.set(move.id, axis === 'x' ? { x: target.x + width + gap, y: target.y } : { x: target.x, y: target.y + height + gap });
         const candidate = positionedBaseBounds(move.id);
-        if (!roots.some((other) => other !== move!.id && intersects(candidate, positionedBaseBounds(other)))) { placed = true; break; }
+        if (!roots.some((other) => other !== move!.id && !separatedByGap(candidate, positionedBaseBounds(other)))) { placed = true; break; }
       }
       if (!placed) throw new Error('Layout could not route a connector label around other roots.');
     }
