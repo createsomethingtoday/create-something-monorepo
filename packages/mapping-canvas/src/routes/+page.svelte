@@ -146,8 +146,13 @@
     return { document: JSON.parse(JSON.stringify(document)) as CanvasDocument, selectedIds: [...selectedIds], tool, canUndo: history.past.length > 0, canRedo: history.future.length > 0, surface: { width: viewportWidth, height: viewportHeight } };
   }
 
-  function settledRender() {
-    return new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+  async function settledRender() {
+    const nextFrame = () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    const deadline = performance.now() + 1_200;
+    while ((agentTransition || agentCameraActive) && performance.now() < deadline) await nextFrame();
+    if (agentTransition || agentCameraActive) throw new Error('Draw rendering did not settle before geometry inspection. Try again.');
+    await nextFrame();
+    await nextFrame();
   }
 
   async function readRenderedGeometry(input: { ids?: string[]; limit: number }): Promise<DrawRenderedGeometry> {
@@ -184,7 +189,14 @@
     const rendered = selected.flatMap((object) => {
       const element = surface.querySelector<SVGGraphicsElement>(`[data-object-id="${CSS.escape(object.id)}"]`);
       if (!element) return [];
-      const rect = element.getBoundingClientRect();
+      const rect = object.kind === 'group'
+        ? [...element.querySelectorAll<SVGGraphicsElement>(':scope > :not([data-ui="true"])')].reduce<DOMRect | undefined>((bounds, child) => {
+            const childBounds = child.getBoundingClientRect();
+            if (!bounds) return DOMRect.fromRect(childBounds);
+            const left = Math.min(bounds.left, childBounds.left), top = Math.min(bounds.top, childBounds.top);
+            return new DOMRect(left, top, Math.max(bounds.right, childBounds.right) - left, Math.max(bounds.bottom, childBounds.bottom) - top);
+          }, undefined) ?? element.getBoundingClientRect()
+        : element.getBoundingClientRect();
       const view = viewportBounds(rect);
       return [{ id: object.id, kind: object.kind, worldBounds: worldBounds(rect), viewportBounds: view, clipped: clipped(view) }];
     });

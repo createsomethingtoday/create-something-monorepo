@@ -131,6 +131,10 @@ try {
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     const connectorLabel = [...document.querySelectorAll('.connector-label')].find((node) => node.textContent === 'approved');
     const renderedGeometry = await tools.draw_get_rendered_geometry.execute({ ids: [composed.refs.brief, composed.refs.launch, composed.refs.approval, composed.refs.mission], limit: 10 });
+    await tools.draw_select.execute({ ids: [composed.refs.mission] });
+    const selectedGroupGeometry = await tools.draw_get_rendered_geometry.execute({ ids: [composed.refs.mission] });
+    await tools.draw_select.execute({ ids: [] });
+    const unselectedGroupGeometry = await tools.draw_get_rendered_geometry.execute({ ids: [composed.refs.mission] });
     const autoLayouts = [];
     for (const mode of ['flow', 'hierarchy', 'loop', 'orbit', 'swimlane']) {
       const result = await tools.draw_auto_layout.execute({ ids: [composed.refs.launch, composed.refs.brief], mode, gap: 64, lanes: [{ id: composed.refs.brief, lane: 'Plan' }, { id: composed.refs.launch, lane: 'Launch' }] });
@@ -140,8 +144,9 @@ try {
       await tools.draw_revert_change.execute({ changeId: result.changeId });
     }
     const arrow = await tools.draw_create_freehand_arrow.execute({ start: { x: 40, y: 480 }, end: { x: 440, y: 620 }, curvature: .35, looseness: .55, color: 'signal', weight: 6, arrowhead: 'triangle' });
-    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     const arrowGeometry = await tools.draw_get_rendered_geometry.execute({ ids: arrow.objectIds, limit: 10 });
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    const settledArrowGeometry = await tools.draw_get_rendered_geometry.execute({ ids: arrow.objectIds, limit: 10 });
     await tools.draw_revert_change.execute({ changeId: arrow.changeId });
     const collision = await tools.draw_compose.execute({ nodes: [{ ref: 'collision-a', text: 'Collision A' }, { ref: 'collision-b', text: 'Collision B' }], layout: { direction: 'row', gap: 64 } });
     const collisionState = await tools.draw_get_state.execute({});
@@ -175,7 +180,7 @@ try {
     const restored = await tools.draw_get_state.execute({});
     return {
       names, drawNames, version: inspect.version, compactBytes: JSON.stringify(inspect).length, fullBytes: JSON.stringify(before).length,
-      composed, renderedGeometry, autoLayouts, arrow, arrowGeometry, collisionGeometry, clippedGeometry, connectorVisible: Boolean(connectorLabel && getComputedStyle(connectorLabel).display !== 'none'),
+      composed, renderedGeometry, selectedGroupGeometry, unselectedGroupGeometry, autoLayouts, arrow, arrowGeometry, settledArrowGeometry, collisionGeometry, clippedGeometry, connectorVisible: Boolean(connectorLabel && getComputedStyle(connectorLabel).display !== 'none'),
       staleError, deleteError, replaceError, focus, restoredCount: restored.document.objects.length, beforeCount: before.document.objects.length
     };
   });
@@ -183,10 +188,12 @@ try {
   if (!requiredSemanticTools.every((name) => semantic.drawNames.includes(name)) || semantic.drawNames.length !== 19) throw new Error(`Semantic Draw tool inventory is incomplete: ${JSON.stringify(semantic.drawNames)} (all registered tools: ${JSON.stringify(semantic.names)})`);
   if (semantic.version !== '2026-09-05.1' || !semantic.composed.changeId || !semantic.connectorVisible) throw new Error(`Semantic composition or visible connector label failed: ${JSON.stringify(semantic)}`);
   if (semantic.renderedGeometry.objects.length !== 4 || semantic.renderedGeometry.connectors.length !== 1 || !semantic.renderedGeometry.connectors[0].labelBounds || semantic.renderedGeometry.overlaps.some(({ classification }) => classification === 'peer') || !semantic.renderedGeometry.overlaps.some(({ classification }) => classification === 'containment')) throw new Error(`Rendered geometry did not match the visible semantic graph: ${JSON.stringify(semantic.renderedGeometry)}`);
+  if (JSON.stringify(semantic.selectedGroupGeometry.objects[0]?.worldBounds) !== JSON.stringify(semantic.unselectedGroupGeometry.objects[0]?.worldBounds) || JSON.stringify(semantic.arrowGeometry.objects) !== JSON.stringify(semantic.settledArrowGeometry.objects)) throw new Error(`Rendered geometry changed with selection UI or after the tool declared the animation settled: ${JSON.stringify({ selected: semantic.selectedGroupGeometry, unselected: semantic.unselectedGroupGeometry, immediateArrow: semantic.arrowGeometry, settledArrow: semantic.settledArrowGeometry })}`);
   if (semantic.autoLayouts.length !== 5 || semantic.autoLayouts.some(({ peerOverlaps }) => peerOverlaps) || semantic.arrow.geometry.arrowhead !== 'triangle' || semantic.arrowGeometry.objects.length !== 2) throw new Error(`Semantic auto-layout or freehand arrow proof failed: ${JSON.stringify({ autoLayouts: semantic.autoLayouts, arrow: semantic.arrow, arrowGeometry: semantic.arrowGeometry })}`);
   if (!semantic.collisionGeometry.overlaps.some(({ classification }) => classification === 'peer') || !semantic.clippedGeometry.objects[0]?.clipped || !semantic.clippedGeometry.missingIds.includes('missing-rendered-id')) throw new Error(`Rendered collision, clipping, or missing-ID evidence failed: ${JSON.stringify({ collision: semantic.collisionGeometry, clipped: semantic.clippedGeometry })}`);
   if (!semantic.staleError.includes('revision') || !semantic.deleteError.includes('DELETE OBJECTS') || !semantic.replaceError.includes('REPLACE CANVAS')) throw new Error(`Semantic safety boundary failed: ${JSON.stringify(semantic)}`);
   if (semantic.restoredCount !== semantic.beforeCount || !semantic.focus.ok) throw new Error(`Semantic workflow did not restore its isolated fixture: ${JSON.stringify(semantic)}`);
+  await page.waitForTimeout(800);
   const toolbarBox = await page.locator('.toolbar').boundingBox();
   if (!toolbarBox || toolbarBox.width < 144 || toolbarBox.width > 160) throw new Error('Desktop tool sidebar lacks a deliberate readable width');
   const sidebarToggle = page.getByRole('button', { name: 'Collapse tool sidebar' });
