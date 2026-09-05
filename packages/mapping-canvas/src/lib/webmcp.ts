@@ -256,24 +256,39 @@ function estimatedTextWidth(value: string) {
   return Array.from(value).reduce((width, character) => width + (character.codePointAt(0)! > 255 ? 12 : 7), 0);
 }
 
-function stackedLabelY(index: Map<string, number>, x: number, baseY: number, width: number) {
+function segmentHitsBounds(start: Point, end: Point, bounds: { x: number; y: number; width: number; height: number }, padding: number) {
+  const expanded = { x: bounds.x - padding, y: bounds.y - padding, width: bounds.width + padding * 2, height: bounds.height + padding * 2 };
+  let minimum = 0, maximum = 1;
+  for (const [origin, delta, low, high] of [[start.x, end.x - start.x, expanded.x, expanded.x + expanded.width], [start.y, end.y - start.y, expanded.y, expanded.y + expanded.height]] as const) {
+    if (delta === 0) { if (origin < low || origin > high) return false; continue; }
+    const first = (low - origin) / delta, second = (high - origin) / delta;
+    minimum = Math.max(minimum, Math.min(first, second)); maximum = Math.min(maximum, Math.max(first, second));
+    if (minimum > maximum) return false;
+  }
+  return true;
+}
+
+function stackedLabelY(index: Map<string, number>, x: number, baseY: number, width: number, blocked?: (bounds: { x: number; y: number; width: number; height: number }) => boolean) {
   const firstCell = Math.floor((x - width / 2) / 32), lastCell = Math.floor((x + width / 2) / 32), band = Math.floor(baseY / 16);
   let top = baseY - 12;
   for (let cell = firstCell; cell <= lastCell; cell += 1) for (let offset = -1; offset <= 1; offset += 1) {
     const occupiedTop = index.get(`stack:${cell}:${band + offset}`);
     if (occupiedTop !== undefined) top = Math.min(top, occupiedTop - 20);
   }
-  for (let attempt = 0; attempt < 32; attempt += 1) {
+  let settled = false;
+  for (let attempt = 0; attempt < 128; attempt += 1) {
     let occupiedTop: number | undefined;
     const firstBand = Math.floor(top / 16), lastBand = Math.floor((top + 16) / 16);
     for (let cell = firstCell; cell <= lastCell; cell += 1) for (let paintedBand = firstBand; paintedBand <= lastBand; paintedBand += 1) {
       const candidate = index.get(`paint:${cell}:${paintedBand}`);
       if (candidate !== undefined && top + 20 > candidate) occupiedTop = occupiedTop === undefined ? candidate : Math.min(occupiedTop, candidate);
     }
-    if (occupiedTop === undefined) break;
-    top = Math.min(top, occupiedTop - 20);
-    if (attempt === 31) throw new Error('Connector label stacking could not converge.');
+    if (occupiedTop !== undefined) { top = Math.min(top, occupiedTop - 20); continue; }
+    if (blocked?.({ x: x - width / 2, y: top, width, height: 16 })) { top -= 20; continue; }
+    settled = true;
+    break;
   }
+  if (!settled) throw new Error('Connector label stacking could not converge.');
   for (let cell = firstCell; cell <= lastCell; cell += 1) {
     const stackKey = `stack:${cell}:${band}`, stackTop = index.get(stackKey);
     index.set(stackKey, stackTop === undefined ? top : Math.min(stackTop, top));
@@ -288,11 +303,13 @@ function stackedLabelY(index: Map<string, number>, x: number, baseY: number, wid
 export function connectorLabelLayout(objects: CanvasObject[]) {
   const byId = new Map(objects.map((object) => [object.id, object])), resolveCenter = createObjectCenterResolver(objects);
   const occupiedSlots = new Map<string, number>(), result = new Map<string, { x: number; y: number; width: number; height: number }>();
-  for (const connector of objects.filter((object): object is Extract<CanvasObject, { kind: 'connector' }> => object.kind === 'connector' && Boolean(object.label)).sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0)) {
+  const connectors = objects.filter((object): object is Extract<CanvasObject, { kind: 'connector' }> => object.kind === 'connector').sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+  const segments = connectors.flatMap((connector) => { const from = byId.get(connector.fromId), to = byId.get(connector.toId); return from && to ? [{ id: connector.id, start: resolveCenter(from), end: resolveCenter(to) }] : []; });
+  for (const connector of connectors.filter(({ label }) => Boolean(label))) {
     const from = byId.get(connector.fromId), to = byId.get(connector.toId);
     if (!from || !to) continue;
     const a = resolveCenter(from), b = resolveCenter(to), width = estimatedTextWidth(connector.label) + 5, x = (a.x + b.x) / 2;
-    const baseY = (a.y + b.y) / 2 - 10, y = stackedLabelY(occupiedSlots, x, baseY, width);
+    const baseY = (a.y + b.y) / 2 - 10, y = stackedLabelY(occupiedSlots, x, baseY, width, (bounds) => segments.some((segment) => segment.id !== connector.id && segmentHitsBounds(segment.start, segment.end, bounds, 4)));
     result.set(connector.id, { x, y, width, height: 16 });
   }
   return result;
@@ -369,18 +386,23 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
   };
   const intersects = (a: { x: number; y: number; width: number; height: number }, b: { x: number; y: number; width: number; height: number }) => a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
   const separatedByGap = (a: { x: number; y: number; width: number; height: number }, b: { x: number; y: number; width: number; height: number }) => a.x + a.width + gap <= b.x || b.x + b.width + gap <= a.x || a.y + a.height + gap <= b.y || b.y + b.height + gap <= a.y;
-  const segmentIntersects = (start: Point, end: Point, bounds: { x: number; y: number; width: number; height: number }) => {
-    const expanded = { x: bounds.x - gap - 19, y: bounds.y - gap - 19, width: bounds.width + (gap + 19) * 2, height: bounds.height + (gap + 19) * 2 };
-    let minimum = 0, maximum = 1;
-    for (const [origin, delta, low, high] of [[start.x, end.x - start.x, expanded.x, expanded.x + expanded.width], [start.y, end.y - start.y, expanded.y, expanded.y + expanded.height]] as const) {
-      if (delta === 0) { if (origin < low || origin > high) return false; continue; }
-      const first = (low - origin) / delta, second = (high - origin) / delta;
-      minimum = Math.max(minimum, Math.min(first, second)); maximum = Math.min(maximum, Math.max(first, second));
-      if (minimum > maximum) return false;
-    }
-    return true;
-  };
+  const segmentIntersects = (start: Point, end: Point, bounds: { x: number; y: number; width: number; height: number }) => segmentHitsBounds(start, end, bounds, gap + 19);
   const connectors = document.objects.filter((object): object is Extract<CanvasObject, { kind: 'connector' }> => object.kind === 'connector').sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+  const positionedLabels = () => {
+    const occupied = new Map<string, number>(), labels = new Map<string, { x: number; y: number; width: number; height: number }>();
+    const segments = connectors.flatMap((connector) => {
+      const from = rootByMember.get(connector.fromId), to = rootByMember.get(connector.toId), fromObject = byId.get(connector.fromId), toObject = byId.get(connector.toId);
+      return from && to && fromObject && toObject && targets.has(from) && targets.has(to) ? [{ id: connector.id, start: positionedCenter(from, fromObject), end: positionedCenter(to, toObject) }] : [];
+    });
+    for (const connector of connectors) {
+      if (!connector.label) continue;
+      const from = rootByMember.get(connector.fromId), to = rootByMember.get(connector.toId), fromObject = byId.get(connector.fromId), toObject = byId.get(connector.toId);
+      if (!from || !to || !fromObject || !toObject || !targets.has(from) || !targets.has(to)) continue;
+      const start = positionedCenter(from, fromObject), end = positionedCenter(to, toObject), width = estimatedTextWidth(connector.label) + 5, x = (start.x + end.x) / 2, baseY = (start.y + end.y) / 2 - 10, y = stackedLabelY(occupied, x, baseY, width, (bounds) => segments.some((segment) => segment.id !== connector.id && segmentHitsBounds(segment.start, segment.end, bounds, 4)));
+      labels.set(connector.id, { x: x - width / 2, y: y - 12, width, height: 16 });
+    }
+    return labels;
+  };
   const relocate = (id: string, axis: 'x' | 'y') => {
     for (let attempt = 0; attempt < 32; attempt += 1) {
       const target = targets.get(id)!;
@@ -405,7 +427,8 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
         for (let attempt = 0; attempt < 32; attempt += 1) {
           const start = positionedCenter(from, fromObject), end = positionedCenter(to, toObject), conflict = roots.find((id) => id !== from && id !== to && segmentIntersects(start, end, positionedBaseBounds(id)));
           if (!conflict) { cleared = true; break; }
-          relocate(conflict === preservedRoot ? (to === preservedRoot ? from : to) : conflict, preservedAxes.get(connector.id)!);
+          const movingId = conflict === preservedRoot ? (to === preservedRoot ? from : to) : conflict;
+          relocate(movingId, preservedAxes.get(connector.id)!);
         }
         if (!cleared) throw new Error('Layout could not clear every connector-shaft obstruction.');
       }

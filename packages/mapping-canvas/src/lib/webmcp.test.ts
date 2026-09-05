@@ -414,6 +414,18 @@ describe('Draw WebMCP tools', () => {
     expect(intersects).toBe(false);
   });
 
+  it('routes connector shafts around other painted connector labels', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id });
+    const roots = ['a', 'b', 'c', 'd'].map(note), edge = (id: string, fromId: string, toId: string, label = '') => ({ id, kind: 'connector' as const, createdAt, fromId, toId, label }), labeled = edge('ac', 'a', 'c', 'Crossing approval evidence'), crossing = edge('bd', 'b', 'd');
+    const controller = harness({ ...createDocument(), objects: [...roots, labeled, crossing] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: roots.map(({ id }) => id), mode: 'loop', gap: 16 });
+    const state = controller.read(), notes = new Map(state.objects.filter((object): object is typeof roots[number] => object.kind === 'note').map((object) => [object.id, object])), labels = connectorLabelLayout(state.objects), label = labels.get(labeled.id)!, start = notes.get(crossing.fromId)!, end = notes.get(crossing.toId)!;
+    const a = { x: start.x + start.width / 2, y: start.y + start.height / 2 }, b = { x: end.x + end.width / 2, y: end.y + end.height / 2 }, bounds = { x: label.x - label.width / 2 - 4, y: label.y - 12 - 4, width: label.width + 8, height: label.height + 8 };
+    let minimum = 0, maximum = 1, intersects = true;
+    for (const [origin, delta, low, high] of [[a.x, b.x - a.x, bounds.x, bounds.x + bounds.width], [a.y, b.y - a.y, bounds.y, bounds.y + bounds.height]] as const) { if (delta === 0) { if (origin < low || origin > high) intersects = false; continue; } const first = (low - origin) / delta, second = (high - origin) / delta; minimum = Math.max(minimum, Math.min(first, second)); maximum = Math.min(maximum, Math.max(first, second)); if (minimum > maximum) intersects = false; }
+    expect(intersects).toBe(false);
+  });
+
   it('preserves painted root gaps after routing multiple connector labels', async () => {
     const createdAt = '2026-09-05T00:00:00.000Z';
     const hub = { id: 'hub', kind: 'note' as const, createdAt, x: 0, y: 0, width: 260, height: 160, text: 'Hub' };
