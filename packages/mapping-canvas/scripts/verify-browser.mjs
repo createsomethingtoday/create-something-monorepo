@@ -147,6 +147,13 @@ try {
     ] });
     const diagonalClearGeometry = await tools.draw_get_rendered_geometry.execute({ ids: [diagonalIds[2], diagonalIds[3]], limit: 10 });
     await tools.draw_revert_change.execute({ changeId: diagonalFixture.changeId });
+    const sparseIds = ['browser-sparse-stroke', 'browser-sparse-clear-corner'];
+    const sparseFixture = await tools.draw_apply_operations.execute({ operations: [
+      { type: 'put_object', object: { id: sparseIds[0], kind: 'stroke', createdAt: new Date().toISOString(), points: [{ x: 100, y: 100 }, { x: 500, y: 500 }], color: '#fcaa2d', width: 8 } },
+      { type: 'put_object', object: { id: sparseIds[1], kind: 'note', createdAt: new Date().toISOString(), x: 110, y: 450, width: 40, height: 40, text: 'Clear stroke corner' } }
+    ] });
+    const sparseClearGeometry = await tools.draw_get_rendered_geometry.execute({ ids: sparseIds, limit: 10 });
+    await tools.draw_revert_change.execute({ changeId: sparseFixture.changeId });
     await tools.draw_select.execute({ ids: [composed.refs.mission] });
     const selectedGroupGeometry = await tools.draw_get_rendered_geometry.execute({ ids: [composed.refs.mission] });
     await tools.draw_select.execute({ ids: [] });
@@ -224,7 +231,7 @@ try {
     const restored = await tools.draw_get_state.execute({});
     return {
       names, drawNames, version: inspect.version, compactBytes: JSON.stringify(inspect).length, fullBytes: JSON.stringify(before).length,
-      composed, renderedGeometry, connectorCollisionGeometry, diagonalClearGeometry, briefModelWidth, rawConnectorLabelBounds, selectedGroupGeometry, unselectedGroupGeometry, autoLayouts, arrow, arrowGeometry, settledArrowGeometry, edgeArrowGeometry, thickArrowGeometry, zeroArrowGeometry, endpointLabelGeometry, collisionGeometry, provenanceGeometry, clippedGeometry, connectorVisible: Boolean(connectorLabel && getComputedStyle(connectorLabel).display !== 'none'),
+      composed, renderedGeometry, connectorCollisionGeometry, diagonalClearGeometry, sparseClearGeometry, briefModelWidth, rawConnectorLabelBounds, selectedGroupGeometry, unselectedGroupGeometry, autoLayouts, arrow, arrowGeometry, settledArrowGeometry, edgeArrowGeometry, thickArrowGeometry, zeroArrowGeometry, endpointLabelGeometry, collisionGeometry, provenanceGeometry, clippedGeometry, connectorVisible: Boolean(connectorLabel && getComputedStyle(connectorLabel).display !== 'none'),
       staleError, deleteError, replaceError, focus, restoredCount: restored.document.objects.length, beforeCount: before.document.objects.length
     };
   });
@@ -236,6 +243,7 @@ try {
   if (!semantic.briefModelWidth || semantic.renderedGeometry.objects.find(({ id }) => id === semantic.composed.refs.brief)?.worldBounds.width < semantic.briefModelWidth + .9) throw new Error(`Rendered note bounds omitted the painted child outline: ${JSON.stringify({ modelWidth: semantic.briefModelWidth, rendered: semantic.renderedGeometry.objects })}`);
   if (!semantic.connectorCollisionGeometry.overlaps.some(({ classification }) => classification === 'peer')) throw new Error(`Rendered geometry omitted an unrelated connector collision: ${JSON.stringify(semantic.connectorCollisionGeometry)}`);
   if (semantic.diagonalClearGeometry.overlaps.length) throw new Error(`Rendered geometry reported an AABB-only diagonal connector collision: ${JSON.stringify(semantic.diagonalClearGeometry)}`);
+  if (semantic.sparseClearGeometry.overlaps.length) throw new Error(`Rendered geometry reported an AABB-only sparse-stroke collision: ${JSON.stringify(semantic.sparseClearGeometry)}`);
   if (!semantic.rawConnectorLabelBounds || semantic.renderedGeometry.connectors[0].labelBounds.viewportBounds.width < semantic.rawConnectorLabelBounds.width + 4 || semantic.renderedGeometry.connectors[0].labelBounds.viewportBounds.height < semantic.rawConnectorLabelBounds.height + 4) throw new Error(`Rendered connector-label bounds omitted the painted outline: ${JSON.stringify({ raw: semantic.rawConnectorLabelBounds, rendered: semantic.renderedGeometry.connectors[0].labelBounds })}`);
   if (JSON.stringify(semantic.selectedGroupGeometry.objects[0]?.worldBounds) !== JSON.stringify(semantic.unselectedGroupGeometry.objects[0]?.worldBounds) || JSON.stringify(semantic.arrowGeometry.objects) !== JSON.stringify(semantic.settledArrowGeometry.objects)) throw new Error(`Rendered geometry changed with selection UI or after the tool declared the animation settled: ${JSON.stringify({ selected: semantic.selectedGroupGeometry, unselected: semantic.unselectedGroupGeometry, immediateArrow: semantic.arrowGeometry, settledArrow: semantic.settledArrowGeometry })}`);
   if (semantic.autoLayouts.length !== 5 || semantic.autoLayouts.some(({ peerOverlaps }) => peerOverlaps) || semantic.arrow.geometry.arrowhead !== 'triangle' || semantic.arrowGeometry.objects.length !== 2 || semantic.arrowGeometry.overlaps.some(({ classification }) => classification === 'peer')) throw new Error(`Semantic auto-layout or freehand arrow proof failed: ${JSON.stringify({ autoLayouts: semantic.autoLayouts, arrow: semantic.arrow, arrowGeometry: semantic.arrowGeometry })}`);

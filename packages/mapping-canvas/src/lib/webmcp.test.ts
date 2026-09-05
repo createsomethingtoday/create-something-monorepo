@@ -326,6 +326,18 @@ describe('Draw WebMCP tools', () => {
     for (const middle of [notes.get(middleB.id)!, notes.get(middleC.id)!]) expect(middle.y > shaftY + 19 + 16 || middle.y + middle.height < shaftY - 19 - 16).toBe(true);
   });
 
+  it('routes a changed shaft with one stationary external endpoint around selected roots', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string, x: number) => ({ id, kind: 'note' as const, createdAt, x, y: 0, width: 120, height: 80, text: id });
+    const selectedA = note('a', 0), selectedB = note('b', 0), external = note('external', 500), edge = { id: 'a-external', kind: 'connector' as const, createdAt, fromId: selectedA.id, toId: external.id, label: '' };
+    const controller = harness({ ...createDocument(), objects: [selectedA, selectedB, external, edge] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: [selectedA.id, selectedB.id], mode: 'flow', gap: 16 });
+    const notes = new Map(controller.read().objects.filter((object): object is typeof selectedA => object.kind === 'note').map((object) => [object.id, object])), a = notes.get(selectedA.id)!, b = notes.get(selectedB.id)!, x = notes.get(external.id)!;
+    const start = { x: a.x + a.width / 2, y: a.y + a.height / 2 }, end = { x: x.x + x.width / 2, y: x.y + x.height / 2 }, bounds = { x: b.x - 35, y: b.y - 35, width: b.width + 70, height: b.height + 70 };
+    let minimum = 0, maximum = 1, intersects = true;
+    for (const [origin, delta, low, high] of [[start.x, end.x - start.x, bounds.x, bounds.x + bounds.width], [start.y, end.y - start.y, bounds.y, bounds.y + bounds.height]] as const) { if (delta === 0) { if (origin < low || origin > high) intersects = false; continue; } const first = (low - origin) / delta, second = (high - origin) / delta; minimum = Math.max(minimum, Math.min(first, second)); maximum = Math.min(maximum, Math.max(first, second)); if (minimum > maximum) intersects = false; }
+    expect(intersects).toBe(false);
+  });
+
   it('routes unlabeled shafts across nonadjacent swimlanes', async () => {
     const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id });
     const first = note('a'), middle = note('b'), last = note('c'), connector = { id: 'ac', kind: 'connector' as const, createdAt, fromId: first.id, toId: last.id, label: '' };
