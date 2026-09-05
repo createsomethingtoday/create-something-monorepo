@@ -178,6 +178,21 @@ describe('Draw WebMCP tools', () => {
     expect(controller.read()).toEqual(stable);
   });
 
+  it('centers orbit satellites on the anchored root and leaves a singleton loop in place', async () => {
+    const notes = ['alpha', 'beta', 'gamma', 'delta'].map((id, index) => ({ id, kind: 'note' as const, createdAt: '2026-09-05T00:00:00.000Z', x: 100 + index * 20, y: 200 + index * 20, width: 120, height: 80, text: id }));
+    const controller = harness({ ...createDocument(), objects: notes }), tools = createDrawWebMcpTools(controller), layout = tools.find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: notes.map(({ id }) => id), mode: 'orbit', gap: 48 });
+    const positioned = controller.read().objects.filter((object): object is typeof notes[number] => object.kind === 'note');
+    const hub = positioned.find(({ id }) => id === 'alpha')!, satellites = positioned.filter(({ id }) => id !== 'alpha');
+    const average = { x: satellites.reduce((sum, note) => sum + note.x + note.width / 2, 0) / satellites.length, y: satellites.reduce((sum, note) => sum + note.y + note.height / 2, 0) / satellites.length };
+    expect(average.x).toBeCloseTo(hub.x + hub.width / 2, 8);
+    expect(average.y).toBeCloseTo(hub.y + hub.height / 2, 8);
+
+    const singleController = harness({ ...createDocument(), objects: [notes[0]] }), single = createDrawWebMcpTools(singleController).find(({ name }) => name === 'draw_auto_layout')!;
+    await single.execute({ ids: ['alpha'], mode: 'loop' });
+    expect(singleController.read().objects[0]).toEqual(notes[0]);
+  });
+
   it('summarizes dense stroke geometry in compact inspection', async () => {
     const points = Array.from({ length: 2_000 }, (_, index) => ({ x: index, y: index % 50 }));
     const stroke = { id: 'dense-stroke', kind: 'stroke' as const, createdAt: '2026-09-04T00:00:00.000Z', points, color: '#0057b8', width: 5 };

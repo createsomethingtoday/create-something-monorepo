@@ -269,8 +269,13 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
   if (mode === 'loop' || mode === 'orbit') {
     const orbiting = mode === 'orbit' ? roots.slice(1) : roots;
     if (mode === 'orbit') targets.set(roots[0], anchor);
-    const radius = orbiting.length < 2 ? width + gap : Math.max(width, height) + gap + (Math.max(width, height) + gap) / (2 * Math.sin(Math.PI / orbiting.length));
-    const center = { x: anchor.x + radius + width / 2, y: anchor.y + radius + height / 2 };
+    if (mode === 'loop' && orbiting.length === 1) { targets.set(orbiting[0], anchor); return { targets, layerCount: 1, laneCount: 0 }; }
+    const diameter = Math.max(width, height) + gap;
+    const radius = orbiting.length < 2 ? diameter : Math.max(diameter, diameter / (2 * Math.sin(Math.PI / orbiting.length)));
+    const hubBounds = rootBounds.get(roots[0])!;
+    const center = mode === 'orbit'
+      ? { x: anchor.x + hubBounds.width / 2, y: anchor.y + hubBounds.height / 2 }
+      : { x: anchor.x + radius + width / 2, y: anchor.y + radius + height / 2 };
     orbiting.forEach((id, index) => {
       const angle = -Math.PI / 2 + index * Math.PI * 2 / Math.max(1, orbiting.length);
       targets.set(id, { x: center.x + Math.cos(angle) * radius - rootBounds.get(id)!.width / 2, y: center.y + Math.sin(angle) * radius - rootBounds.get(id)!.height / 2 });
