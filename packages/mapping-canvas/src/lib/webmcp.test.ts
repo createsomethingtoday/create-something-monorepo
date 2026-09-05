@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { changedOrderIds, createDrawWebMcpTools, registerDrawWebMcpTools } from './webmcp';
+import { changedOrderIds, connectorLabelLayout, createDrawWebMcpTools, registerDrawWebMcpTools } from './webmcp';
 import { createDocument, type CanvasDocument } from './document';
 import { applyCanvasOperations } from './paired-session';
 
@@ -41,7 +41,7 @@ describe('Draw WebMCP tools', () => {
       applyOperations: async (operations) => { const before = document; document = { ...document, title: operations[0].type === 'set_title' ? operations[0].title : document.title }; return { before, after: document }; },
       select: vi.fn(), setTool: vi.fn(), undo: vi.fn(), redo: vi.fn(), reset: vi.fn(), animate
     });
-    expect(tools.map(({ name }) => name)).toEqual(['draw_get_state', 'draw_inspect', 'draw_compose', 'draw_path', 'draw_patch_objects', 'draw_layout', 'draw_focus', 'draw_revert_change', 'draw_delete', 'draw_replace_canvas', 'draw_apply_operations', 'draw_select', 'draw_set_tool', 'draw_undo', 'draw_redo', 'draw_reset']);
+    expect(tools.map(({ name }) => name)).toEqual(['draw_get_state', 'draw_inspect', 'draw_get_rendered_geometry', 'draw_compose', 'draw_path', 'draw_create_freehand_arrow', 'draw_patch_objects', 'draw_layout', 'draw_auto_layout', 'draw_focus', 'draw_revert_change', 'draw_delete', 'draw_replace_canvas', 'draw_apply_operations', 'draw_select', 'draw_set_tool', 'draw_undo', 'draw_redo', 'draw_reset']);
     const applySchema = tools.find(({ name }) => name === 'draw_apply_operations')!.inputSchema;
     expect(JSON.stringify(applySchema)).toContain('x-maxUtf8Bytes');
     expect(JSON.stringify(applySchema)).toContain('"minItems":2');
@@ -65,7 +65,7 @@ describe('Draw WebMCP tools', () => {
     expect(inspect).toBeDefined();
     const projection = await inspect.execute({ kinds: ['note'], text: 'owner', limit: 10 });
     expect(projection).toMatchObject({
-      version: '2026-09-04.1',
+      version: '2026-09-05.1',
       revision: expect.any(String),
       palette: { chalk: '#f3ebe4', signal: '#0057b8' },
       surface: { width: 1200, height: 800 },
@@ -80,6 +80,595 @@ describe('Draw WebMCP tools', () => {
     expect(receipt).toMatchObject({ ok: true, changeId: expect.any(String), revision: expect.any(String), summary: { objectCount: 21 } });
     expect(receipt).not.toHaveProperty('state');
     await expect(tools.find(({ name }) => name === 'draw_apply_operations')!.execute({ expectedRevision: revision, operations: [{ type: 'set_title', title: 'Stale' }] })).rejects.toThrow('revision');
+  });
+
+  it('returns actual bounded rendered geometry and fails closed without a web render surface', async () => {
+    const note = { id: 'rendered-note', kind: 'note' as const, createdAt: '2026-09-05T00:00:00.000Z', x: 20, y: 30, width: 200, height: 100, text: 'Rendered' };
+    const renderedGeometry = vi.fn(async () => ({
+      surface: { x: 0, y: 0, width: 1200, height: 800 },
+      objects: [{ id: note.id, kind: note.kind, worldBounds: { x: 20, y: 30, width: 214, height: 112 }, viewportBounds: { x: 84, y: 96, width: 214, height: 112 }, clipped: false }],
+      connectors: [], overlaps: [], totalObjectCount: 1
+    }));
+    const controller = { ...harness({ ...createDocument(), objects: [note] }), renderedGeometry };
+    const tool = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_get_rendered_geometry');
+    expect(tool).toBeDefined();
+    expect(tool?.annotations).toMatchObject({ readOnlyHint: true, destructiveHint: false, idempotentHint: true });
+    const result = await tool!.execute({ ids: [note.id], limit: 25 });
+    expect(renderedGeometry).toHaveBeenCalledWith({ ids: [note.id], limit: 25 });
+    expect(result).toMatchObject({
+      version: expect.any(String), revision: expect.any(String), truncated: false,
+      surface: { width: 1200, height: 800 },
+      summary: { objectCount: 1, returnedObjectCount: 1, connectorCount: 0, overlapCount: 0 },
+      objects: [{ id: note.id, worldBounds: { width: 214 }, viewportBounds: { x: 84 }, clipped: false }]
+    });
+
+    const unavailable = createDrawWebMcpTools(harness()).find(({ name }) => name === 'draw_get_rendered_geometry');
+    await expect(unavailable!.execute({})).rejects.toThrow('rendered web surface');
+  });
+
+  it('creates a deterministic semantic freehand arrow as portable v1 strokes and reverts it exactly', async () => {
+    const controller = harness(), tools = createDrawWebMcpTools(controller);
+    const arrow = tools.find(({ name }) => name === 'draw_create_freehand_arrow');
+    expect(arrow).toBeDefined();
+    expect(arrow?.annotations).toMatchObject({ readOnlyHint: false, destructiveHint: false, idempotentHint: false });
+    const input = { start: { x: 40, y: 80 }, end: { x: 440, y: 220 }, curvature: .35, looseness: .45, color: 'signal', weight: 6, arrowhead: 'triangle' };
+    const first = await arrow!.execute(input) as { changeId: string; objectIds: string[]; geometry: { pointCount: number; arrowhead: string } };
+    const createdObjects = controller.read().objects, createdIds = createdObjects.map(({ id }) => id);
+    expect(createdObjects.every(({ sourceIds }) => JSON.stringify(sourceIds) === JSON.stringify(createdIds))).toBe(true);
+    const firstObjects = createdObjects.map(({ id, createdAt, sourceIds, ...object }) => object);
+    expect(first).toMatchObject({ changeId: expect.any(String), objectIds: expect.any(Array), geometry: { pointCount: expect.any(Number), arrowhead: 'triangle' } });
+    expect(controller.read().version).toBe('create-something.mapping-canvas.v1');
+    expect(controller.read().objects.every(({ kind }) => kind === 'stroke')).toBe(true);
+    expect(first.geometry.pointCount).toBeLessThanOrEqual(64);
+    await tools.find(({ name }) => name === 'draw_revert_change')!.execute({ changeId: first.changeId });
+    expect(controller.read().objects).toEqual([]);
+    const second = await arrow!.execute(input) as { objectIds: string[] };
+    const secondObjects = controller.read().objects.map(({ id, createdAt, sourceIds, ...object }) => object);
+    expect(secondObjects).toEqual(firstObjects);
+    expect(second.objectIds).toHaveLength(first.objectIds.length);
+  });
+
+  it('keeps a semantic freehand arrow compound through selection, movement, layout, and deletion', async () => {
+    const controller = harness(), tools = createDrawWebMcpTools(controller);
+    const created = await tools.find(({ name }) => name === 'draw_create_freehand_arrow')!.execute({ start: { x: 20, y: 30 }, end: { x: 260, y: 130 } }) as { objectIds: string[] };
+    const [shaftId, headId] = created.objectIds;
+    const initial = controller.read().objects.map((object) => object.kind === 'stroke' ? object.points : []);
+    await tools.find(({ name }) => name === 'draw_select')!.execute({ ids: [headId] });
+    expect(controller.select).toHaveBeenCalledWith([headId, shaftId]);
+    await tools.find(({ name }) => name === 'draw_patch_objects')!.execute({ patches: [{ id: shaftId, translate: { dx: 40, dy: 25 } }] });
+    const translated = controller.read().objects.map((object) => object.kind === 'stroke' ? object.points : []);
+    expect(translated.every((points, index) => points.every((point, pointIndex) => point.x === initial[index][pointIndex].x + 40 && point.y === initial[index][pointIndex].y + 25))).toBe(true);
+    await tools.find(({ name }) => name === 'draw_patch_objects')!.execute({ patches: [{ id: headId, color: 'signal' }] });
+    expect(controller.read().objects.map((object) => 'color' in object ? object.color : undefined)).toEqual(['#0057b8', '#0057b8']);
+    const beforeOffset = translated[1][0].x - translated[0].at(-1)!.x;
+    await tools.find(({ name }) => name === 'draw_layout')!.execute({ ids: created.objectIds, direction: 'row' });
+    const laidOut = controller.read().objects.map((object) => object.kind === 'stroke' ? object.points : []);
+    expect(laidOut[1][0].x - laidOut[0].at(-1)!.x).toBe(beforeOffset);
+    await tools.find(({ name }) => name === 'draw_auto_layout')!.execute({ ids: created.objectIds, mode: 'flow' });
+    const autoLaidOut = controller.read().objects.map((object) => object.kind === 'stroke' ? object.points : []);
+    expect(autoLaidOut[1][0].x - autoLaidOut[0].at(-1)!.x).toBe(beforeOffset);
+    await tools.find(({ name }) => name === 'draw_delete')!.execute({ ids: [headId], confirmation: 'DELETE OBJECTS' });
+    expect(controller.read().objects).toEqual([]);
+  });
+
+  it('bounds semantic arrow geometry and produces distinct supported treatments', async () => {
+    const geometries: string[] = [];
+    for (const [index, arrowhead] of ['vee', 'triangle', 'barbed'].entries()) {
+      const controller = harness(), tool = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_create_freehand_arrow')!;
+      await tool.execute({ start: { x: 0, y: 0 }, end: { x: 320, y: 120 }, curvature: index * .25, looseness: index * .3, weight: 5, arrowhead });
+      geometries.push(JSON.stringify(controller.read().objects.map((object) => object.kind === 'stroke' ? object.points : [])));
+    }
+    expect(new Set(geometries).size).toBe(3);
+    const controller = harness(), tool = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_create_freehand_arrow')!;
+    await expect(tool.execute({ start: { x: 0, y: 0 }, end: { x: 1, y: 1 } })).rejects.toThrow('at least 8');
+    await expect(tool.execute({ start: { x: Number.POSITIVE_INFINITY, y: 0 }, end: { x: 100, y: 0 } })).rejects.toThrow('finite');
+    await expect(tool.execute({ start: { x: 0, y: 0 }, end: { x: 100, y: 0 }, curvature: 2 })).rejects.toThrow('curvature');
+    await expect(tool.execute({ start: { x: 0, y: 0 }, end: { x: 100, y: 0 }, arrowhead: 'random' })).rejects.toThrow('arrowhead');
+    expect(controller.read().objects).toEqual([]);
+  });
+
+  it.each(['flow', 'hierarchy', 'loop', 'orbit', 'swimlane'] as const)('auto-layouts graph roots deterministically in %s mode with exact revert', async (mode) => {
+    const notes = ['alpha', 'beta', 'gamma', 'delta'].map((id, index) => ({ id, kind: 'note' as const, createdAt: '2026-09-05T00:00:00.000Z', x: index * 12, y: index * 8, width: 120, height: 80, text: id }));
+    const connectors = [
+      { id: 'edge-ab', kind: 'connector' as const, createdAt: '2026-09-05T00:00:00.000Z', fromId: 'alpha', toId: 'beta', label: '' },
+      { id: 'edge-bg', kind: 'connector' as const, createdAt: '2026-09-05T00:00:00.000Z', fromId: 'beta', toId: 'gamma', label: '' },
+      { id: 'edge-ga', kind: 'connector' as const, createdAt: '2026-09-05T00:00:00.000Z', fromId: 'gamma', toId: 'alpha', label: '' }
+    ];
+    const initial = { ...createDocument(), objects: [...notes, ...connectors] };
+    const run = async (objects: CanvasDocument['objects']) => {
+      const controller = harness({ ...initial, objects }), tools = createDrawWebMcpTools(controller);
+      const autoLayout = tools.find(({ name }) => name === 'draw_auto_layout');
+      expect(autoLayout).toBeDefined();
+      const result = await autoLayout!.execute({ mode, ids: notes.map(({ id }) => id).reverse(), gap: 48, lanes: [{ id: 'alpha', lane: 'Plan' }, { id: 'beta', lane: 'Build' }, { id: 'gamma', lane: 'Build' }] }) as { changeId: string; mode: string; placedIds: string[] };
+      expect(result).toMatchObject({ changeId: expect.any(String), mode, placedIds: ['alpha', 'beta', 'delta', 'gamma'] });
+      const positioned = Object.fromEntries(controller.read().objects.filter((object): object is Extract<CanvasDocument['objects'][number], { kind: 'note' }> => object.kind === 'note').map((object) => [object.id, { x: object.x, y: object.y }]));
+      await tools.find(({ name }) => name === 'draw_revert_change')!.execute({ changeId: result.changeId });
+      expect(controller.read().objects).toEqual(objects);
+      return positioned;
+    };
+    expect(await run(initial.objects)).toEqual(await run([...connectors, ...notes].reverse()));
+  });
+
+  it('moves nested group roots as units and rejects overlapping roots atomically in auto-layout', async () => {
+    const child = { id: 'nested-child', kind: 'note' as const, createdAt: '2026-09-05T00:00:00.000Z', x: 30, y: 50, width: 120, height: 80, text: 'Child' };
+    const group = { id: 'nested-group', kind: 'group' as const, createdAt: child.createdAt, x: 0, y: 0, width: 180, height: 160, label: 'Group', childIds: [child.id] };
+    const peer = { ...child, id: 'peer', x: 20, y: 20, text: 'Peer' };
+    const controller = harness({ ...createDocument(), objects: [group, child, peer] }), tools = createDrawWebMcpTools(controller), layout = tools.find(({ name }) => name === 'draw_auto_layout')!;
+    const beforeOffset = { x: child.x - group.x, y: child.y - group.y };
+    await layout.execute({ ids: [group.id, peer.id], mode: 'flow' });
+    const movedGroup = controller.read().objects.find((object): object is typeof group => object.id === group.id)!, movedChild = controller.read().objects.find((object): object is typeof child => object.id === child.id)!;
+    expect({ x: movedChild.x - movedGroup.x, y: movedChild.y - movedGroup.y }).toEqual(beforeOffset);
+    const stable = controller.read();
+    await expect(layout.execute({ ids: [group.id, child.id], mode: 'hierarchy' })).rejects.toThrow('overlap through group membership');
+    expect(controller.read()).toEqual(stable);
+  });
+
+  it('centers orbit satellites on the anchored root and leaves a singleton loop in place', async () => {
+    const notes = ['alpha', 'beta', 'gamma', 'delta'].map((id, index) => ({ id, kind: 'note' as const, createdAt: '2026-09-05T00:00:00.000Z', x: 100 + index * 20, y: 200 + index * 20, width: 120, height: 80, text: id }));
+    const controller = harness({ ...createDocument(), objects: notes }), tools = createDrawWebMcpTools(controller), layout = tools.find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: notes.map(({ id }) => id), mode: 'orbit', gap: 48 });
+    const positioned = controller.read().objects.filter((object): object is typeof notes[number] => object.kind === 'note');
+    const hub = positioned.find(({ id }) => id === 'alpha')!, satellites = positioned.filter(({ id }) => id !== 'alpha');
+    const average = { x: satellites.reduce((sum, note) => sum + note.x + note.width / 2, 0) / satellites.length, y: satellites.reduce((sum, note) => sum + note.y + note.height / 2, 0) / satellites.length };
+    expect(average.x).toBeCloseTo(hub.x + hub.width / 2, 8);
+    expect(average.y).toBeCloseTo(hub.y + hub.height / 2, 8);
+
+    const singleController = harness({ ...createDocument(), objects: [notes[0]] }), single = createDrawWebMcpTools(singleController).find(({ name }) => name === 'draw_auto_layout')!;
+    await single.execute({ ids: ['alpha'], mode: 'loop' });
+    expect(singleController.read().objects[0]).toEqual(notes[0]);
+  });
+
+  it.each([['orbit', 7], ['loop', 12]] as const)('keeps dense axis-aligned nodes separated in %s mode', async (mode, count) => {
+    const notes = Array.from({ length: count }, (_, index) => ({ id: `node-${String(index).padStart(2, '0')}`, kind: 'note' as const, createdAt: '2026-09-05T00:00:00.000Z', x: index, y: index, width: 120, height: 120, text: String(index) }));
+    const controller = harness({ ...createDocument(), objects: notes }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: notes.map(({ id }) => id), mode, gap: 16 });
+    const positioned = controller.read().objects.filter((object): object is typeof notes[number] => object.kind === 'note');
+    for (let first = 0; first < positioned.length; first += 1) for (let second = first + 1; second < positioned.length; second += 1) {
+      const a = positioned[first], b = positioned[second];
+      expect(a.x + a.width + 16 <= b.x || b.x + b.width + 16 <= a.x || a.y + a.height + 16 <= b.y || b.y + b.height + 16 <= a.y).toBe(true);
+    }
+  });
+
+  it('spaces layout roots around protruding group descendants', async () => {
+    const child = { id: 'outside', kind: 'note' as const, createdAt: '2026-09-05T00:00:00.000Z', x: 300, y: 0, width: 120, height: 80, text: 'Outside' };
+    const group = { id: 'group', kind: 'group' as const, createdAt: child.createdAt, x: 0, y: 0, width: 100, height: 100, label: '', childIds: [child.id] };
+    const peer = { ...child, id: 'peer', x: 10, text: 'Peer' };
+    const controller = harness({ ...createDocument(), objects: [group, child, peer] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: [group.id, peer.id], mode: 'flow', gap: 48 });
+    const moved = controller.read().objects.filter((object): object is typeof child => object.kind === 'note'), outside = moved.find(({ id }) => id === child.id)!, placedPeer = moved.find(({ id }) => id === peer.id)!;
+    expect(outside.x + outside.width + 48 <= placedPeer.x || placedPeer.x + placedPeer.width + 48 <= outside.x).toBe(true);
+  });
+
+  it('preserves the requested gap between connected thick stroke roots', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z';
+    const first = { id: 'first', kind: 'stroke' as const, createdAt, points: [{ x: 0, y: 0 }, { x: 1_000, y: 0 }], color: '#fcaa2d', width: 48 };
+    const second = { ...first, id: 'second' };
+    const connector = { id: 'edge', kind: 'connector' as const, createdAt, fromId: first.id, toId: second.id, label: '' };
+    const controller = harness({ ...createDocument(), objects: [first, second, connector] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: [first.id, second.id], mode: 'flow', gap: 16 });
+    const strokes = controller.read().objects.filter((object): object is typeof first => object.kind === 'stroke').sort((a, b) => a.points[0].x - b.points[0].x);
+    const paintedRight = Math.max(...strokes[0].points.map(({ x }) => x)) + strokes[0].width / 2;
+    const paintedLeft = Math.min(...strokes[1].points.map(({ x }) => x)) - strokes[1].width / 2;
+    expect(paintedLeft - paintedRight).toBeGreaterThanOrEqual(16);
+  });
+
+  it('spaces layout roots around protruding group labels', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', label = 'Long governed boundary label '.repeat(5);
+    const group = { id: 'group', kind: 'group' as const, createdAt, x: 0, y: 0, width: 120, height: 80, label, childIds: [] };
+    const peer = { id: 'peer', kind: 'note' as const, createdAt, x: 10, y: 10, width: 120, height: 80, text: 'Peer' };
+    const connector = { id: 'edge', kind: 'connector' as const, createdAt, fromId: group.id, toId: peer.id, label: '' };
+    const controller = harness({ ...createDocument(), objects: [group, peer, connector] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: [group.id, peer.id], mode: 'flow', gap: 48 });
+    const placedGroup = controller.read().objects.find((object): object is typeof group => object.id === group.id)!, placedPeer = controller.read().objects.find((object): object is typeof peer => object.id === peer.id)!;
+    expect(placedGroup.x + 12 + label.length * 7 + 48).toBeLessThanOrEqual(placedPeer.x);
+  });
+
+  it('preserves the requested gap between painted note outlines', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z';
+    const first = { id: 'first', kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: 'First' };
+    const second = { ...first, id: 'second', text: 'Second' };
+    const connector = { id: 'edge', kind: 'connector' as const, createdAt, fromId: first.id, toId: second.id, label: '' };
+    const controller = harness({ ...createDocument(), objects: [first, second, connector] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: [first.id, second.id], mode: 'flow', gap: 16 });
+    const notes = controller.read().objects.filter((object): object is typeof first => object.kind === 'note').sort((a, b) => a.x - b.x);
+    expect((notes[1].x - .5) - (notes[0].x + notes[0].width + .5)).toBeGreaterThanOrEqual(16);
+  });
+
+  it('spaces group roots around labeled descendant connectors', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', label = 'Internal governed approval route '.repeat(5);
+    const first = { id: 'first', kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: 'First' };
+    const second = { ...first, id: 'second', x: 140, text: 'Second' }, peer = { ...first, id: 'peer', x: 10, text: 'Peer' };
+    const internal = { id: 'internal', kind: 'connector' as const, createdAt, fromId: first.id, toId: second.id, label };
+    const group = { id: 'group', kind: 'group' as const, createdAt, x: 0, y: 0, width: 260, height: 100, label: '', childIds: [first.id, second.id, internal.id] };
+    const outbound = { ...internal, id: 'outbound', fromId: second.id, toId: peer.id, label: '' };
+    const controller = harness({ ...createDocument(), objects: [group, first, second, internal, peer, outbound] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: [group.id, peer.id], mode: 'flow', gap: 48 });
+    const state = controller.read(), placedFirst = state.objects.find((object): object is typeof first => object.id === first.id)!, placedSecond = state.objects.find((object): object is typeof second => object.id === second.id)!, placedPeer = state.objects.find((object): object is typeof peer => object.id === peer.id)!;
+    const labelCenter = ((placedFirst.x + placedFirst.width / 2) + (placedSecond.x + placedSecond.width / 2)) / 2, labelRight = labelCenter + (label.length * 7 + 5) / 2;
+    expect(labelRight + 48).toBeLessThanOrEqual(placedPeer.x - .5);
+  });
+
+  it('uses rendered asymmetric-stroke centers for descendant connector labels', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', label = 'Asymmetric internal route '.repeat(6);
+    const stroke = { id: 'stroke', kind: 'stroke' as const, createdAt, points: [{ x: 0, y: 0 }, { x: 1_000, y: 40 }, { x: 10, y: 80 }], color: '#fcaa2d', width: 4 };
+    const note = { id: 'note', kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: 'Note' };
+    const peer = { ...note, id: 'peer', x: 10, text: 'Peer' };
+    const internal = { id: 'internal', kind: 'connector' as const, createdAt, fromId: stroke.id, toId: note.id, label };
+    const group = { id: 'group', kind: 'group' as const, createdAt, x: 0, y: 0, width: 1_000, height: 100, label: '', childIds: [stroke.id, note.id, internal.id] };
+    const outbound = { ...internal, id: 'outbound', fromId: note.id, toId: peer.id, label: '' };
+    const controller = harness({ ...createDocument(), objects: [group, stroke, note, internal, peer, outbound] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: [group.id, peer.id], mode: 'flow', gap: 48 });
+    const state = controller.read(), placedStroke = state.objects.find((object): object is typeof stroke => object.id === stroke.id)!, placedNote = state.objects.find((object): object is typeof note => object.id === note.id)!, placedPeer = state.objects.find((object): object is typeof peer => object.id === peer.id)!;
+    const strokeCenter = placedStroke.points[Math.floor(placedStroke.points.length / 2)], labelCenter = (strokeCenter.x + placedNote.x + placedNote.width / 2) / 2, labelRight = labelCenter + (label.length * 7 + 5) / 2;
+    expect(labelRight + 48).toBeLessThanOrEqual(placedPeer.x - .5);
+  });
+
+  it('reserves painted space for labels on connectors between layout roots', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', label = 'Approval evidence '.repeat(8);
+    const first = { id: 'first', kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: 'First' }, second = { ...first, id: 'second', text: 'Second' };
+    const connector = { id: 'edge', kind: 'connector' as const, createdAt, fromId: first.id, toId: second.id, label };
+    const controller = harness({ ...createDocument(), objects: [first, second, connector] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: [first.id, second.id], mode: 'flow', gap: 16 });
+    const notes = controller.read().objects.filter((object): object is typeof first => object.kind === 'note').sort((a, b) => a.x - b.x), labelCenter = (notes[0].x + notes[0].width / 2 + notes[1].x + notes[1].width / 2) / 2, halfLabel = (label.length * 7 + 5) / 2;
+    expect(labelCenter - halfLabel).toBeGreaterThanOrEqual(notes[0].x + notes[0].width + .5 + 16);
+    expect(labelCenter + halfLabel).toBeLessThanOrEqual(notes[1].x - .5 - 16);
+  });
+
+  it('accounts for off-center descendant endpoints when reserving connector labels', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', label = 'Owner approval evidence';
+    const endpoint = { id: 'endpoint', kind: 'note' as const, createdAt, x: 10, y: 10, width: 100, height: 60, text: 'Endpoint' };
+    const group = { id: 'wide-group', kind: 'group' as const, createdAt, x: 0, y: 0, width: 1_000, height: 100, label: '', childIds: [endpoint.id] };
+    const peer = { ...endpoint, id: 'peer', x: 0, text: 'Peer' };
+    const connector = { id: 'edge', kind: 'connector' as const, createdAt, fromId: endpoint.id, toId: peer.id, label };
+    const controller = harness({ ...createDocument(), objects: [group, endpoint, peer, connector] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: [group.id, peer.id], mode: 'flow', gap: 16 });
+    const state = controller.read(), placedGroup = state.objects.find((object): object is typeof group => object.id === group.id)!, placedEndpoint = state.objects.find((object): object is typeof endpoint => object.id === endpoint.id)!, placedPeer = state.objects.find((object): object is typeof peer => object.id === peer.id)!;
+    const labelCenter = (placedEndpoint.x + placedEndpoint.width / 2 + placedPeer.x + placedPeer.width / 2) / 2, halfLabel = (label.length * 7 + 5) / 2;
+    expect(labelCenter - halfLabel).toBeGreaterThanOrEqual(placedGroup.x + placedGroup.width + 1 + 16);
+  });
+
+  it('routes long-edge labels around intermediate layout roots', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', label = 'Cross-level approval evidence';
+    const first = { id: 'a', kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: 'A' }, middle = { ...first, id: 'b', text: 'B' }, last = { ...first, id: 'c', text: 'C' };
+    const edge = (id: string, fromId: string, toId: string, edgeLabel = '') => ({ id, kind: 'connector' as const, createdAt, fromId, toId, label: edgeLabel });
+    const controller = harness({ ...createDocument(), objects: [first, middle, last, edge('ab', first.id, middle.id), edge('bc', middle.id, last.id), edge('ac', first.id, last.id, label)] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: [first.id, middle.id, last.id], mode: 'flow', gap: 16 });
+    const notes = new Map(controller.read().objects.filter((object): object is typeof first => object.kind === 'note').map((object) => [object.id, object])), a = notes.get(first.id)!, b = notes.get(middle.id)!, c = notes.get(last.id)!;
+    const halfLabel = (label.length * 7 + 5) / 2, labelBounds = { x: (a.x + a.width / 2 + c.x + c.width / 2) / 2 - halfLabel, y: (a.y + a.height / 2 + c.y + c.height / 2) / 2 - 22, width: halfLabel * 2, height: 16 };
+    const separated = b.x + b.width + 16 <= labelBounds.x || labelBounds.x + labelBounds.width + 16 <= b.x || b.y + b.height + 16 <= labelBounds.y || labelBounds.y + labelBounds.height + 16 <= b.y;
+    expect(separated).toBe(true);
+  });
+
+  it('routes unlabeled long-edge shafts around every intermediate layout root', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z';
+    const note = (id: string) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id });
+    const first = note('a'), middleB = note('b'), middleC = note('c'), last = note('d'), edge = (id: string, fromId: string, toId: string) => ({ id, kind: 'connector' as const, createdAt, fromId, toId, label: '' });
+    const controller = harness({ ...createDocument(), objects: [first, middleB, middleC, last, edge('ab', first.id, middleB.id), edge('bc', middleB.id, middleC.id), edge('cd', middleC.id, last.id), edge('ad', first.id, last.id)] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: [first.id, middleB.id, middleC.id, last.id], mode: 'flow', gap: 16 });
+    const notes = new Map(controller.read().objects.filter((object): object is typeof first => object.kind === 'note').map((object) => [object.id, object])), a = notes.get(first.id)!, d = notes.get(last.id)!, shaftY = (a.y + a.height / 2 + d.y + d.height / 2) / 2;
+    for (const middle of [notes.get(middleB.id)!, notes.get(middleC.id)!]) expect(middle.y > shaftY + 19 + 16 || middle.y + middle.height < shaftY - 19 - 16).toBe(true);
+  });
+
+  it('routes a changed shaft with one stationary external endpoint around selected roots', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string, x: number) => ({ id, kind: 'note' as const, createdAt, x, y: 0, width: 120, height: 80, text: id });
+    const selectedA = note('a', 0), selectedB = note('b', 0), external = note('external', 500), edge = { id: 'a-external', kind: 'connector' as const, createdAt, fromId: selectedA.id, toId: external.id, label: '' };
+    const controller = harness({ ...createDocument(), objects: [selectedA, selectedB, external, edge] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: [selectedA.id, selectedB.id], mode: 'flow', gap: 16 });
+    const notes = new Map(controller.read().objects.filter((object): object is typeof selectedA => object.kind === 'note').map((object) => [object.id, object])), a = notes.get(selectedA.id)!, b = notes.get(selectedB.id)!, x = notes.get(external.id)!;
+    const start = { x: a.x + a.width / 2, y: a.y + a.height / 2 }, end = { x: x.x + x.width / 2, y: x.y + x.height / 2 }, bounds = { x: b.x - 35, y: b.y - 35, width: b.width + 70, height: b.height + 70 };
+    let minimum = 0, maximum = 1, intersects = true;
+    for (const [origin, delta, low, high] of [[start.x, end.x - start.x, bounds.x, bounds.x + bounds.width], [start.y, end.y - start.y, bounds.y, bounds.y + bounds.height]] as const) { if (delta === 0) { if (origin < low || origin > high) intersects = false; continue; } const first = (low - origin) / delta, second = (high - origin) / delta; minimum = Math.max(minimum, Math.min(first, second)); maximum = Math.min(maximum, Math.max(first, second)); if (minimum > maximum) intersects = false; }
+    expect(intersects).toBe(false);
+  });
+
+  it('routes transitive connector endpoints from their pending layout centers', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id });
+    const a = note('a'), b = note('b'), c = note('c'), connector = (id: string, fromId: string, toId: string) => ({ id, kind: 'connector' as const, createdAt, fromId, toId, label: '' });
+    const first = connector('ab', a.id, b.id), transitive = connector('ab-c', first.id, c.id);
+    const controller = harness({ ...createDocument(), objects: [a, b, c, first, transitive] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: [a.id, b.id, c.id], mode: 'flow', gap: 16 });
+    const notes = new Map(controller.read().objects.filter((object): object is typeof a => object.kind === 'note').map((object) => [object.id, object])), placedA = notes.get(a.id)!, placedB = notes.get(b.id)!, placedC = notes.get(c.id)!;
+    expect(placedC.x).toBeGreaterThan(placedB.x);
+    const start = { x: (placedA.x + placedA.width / 2 + placedB.x + placedB.width / 2) / 2, y: (placedA.y + placedA.height / 2 + placedB.y + placedB.height / 2) / 2 }, end = { x: placedC.x + placedC.width / 2, y: placedC.y + placedC.height / 2 };
+    const bounds = { x: placedA.x, y: placedA.y, width: placedA.width, height: placedA.height };
+    let minimum = 0, maximum = 1, intersects = true;
+    for (const [origin, delta, low, high] of [[start.x, end.x - start.x, bounds.x, bounds.x + bounds.width], [start.y, end.y - start.y, bounds.y, bounds.y + bounds.height]] as const) { if (delta === 0) { if (origin < low || origin > high) intersects = false; continue; } const firstHit = (low - origin) / delta, secondHit = (high - origin) / delta; minimum = Math.max(minimum, Math.min(firstHit, secondHit)); maximum = Math.min(maximum, Math.max(firstHit, secondHit)); if (minimum > maximum) intersects = false; }
+    expect(intersects).toBe(false);
+  });
+
+  it('routes shafts whose immediate endpoints are both connectors', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id }), edge = (id: string, fromId: string, toId: string) => ({ id, kind: 'connector' as const, createdAt, fromId, toId, label: '' });
+    const roots = ['a', 'b', 'c', 'd'].map(note), left = edge('ab', 'a', 'b'), right = edge('cd', 'c', 'd'), bridge = { ...edge('ab-cd', left.id, right.id), label: 'Bridge ownership evidence' };
+    const controller = harness({ ...createDocument(), objects: [...roots, left, right, bridge] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    const result = await layout.execute({ ids: roots.map(({ id }) => id), mode: 'swimlane', gap: 16, lanes: roots.map(({ id }, index) => ({ id, lane: String(index + 1) })) }) as { placedIds: string[] };
+    expect(result.placedIds).toEqual(expect.arrayContaining(roots.map(({ id }) => id)));
+  });
+
+  it('skips recursively internal connector shafts within one layout root', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string, x: number) => ({ id, kind: 'note' as const, createdAt, x, y: 0, width: 120, height: 80, text: id }), edge = (id: string, fromId: string, toId: string) => ({ id, kind: 'connector' as const, createdAt, fromId, toId, label: '' });
+    const a = note('a', 0), b = note('b', 160), group = { id: 'root', kind: 'group' as const, createdAt, x: -20, y: -20, width: 320, height: 120, label: 'Root', childIds: [a.id, b.id] }, left = edge('ab', a.id, b.id), right = edge('ba', b.id, a.id), bridge = edge('internal-bridge', left.id, right.id);
+    const controller = harness({ ...createDocument(), objects: [a, b, group, left, right, bridge] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await expect(layout.execute({ ids: [group.id], mode: 'flow', gap: 16 })).resolves.toMatchObject({ placedIds: [group.id] });
+  });
+
+  it('routes unlabeled shafts across nonadjacent swimlanes', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id });
+    const first = note('a'), middle = note('b'), last = note('c'), connector = { id: 'ac', kind: 'connector' as const, createdAt, fromId: first.id, toId: last.id, label: '' };
+    const controller = harness({ ...createDocument(), objects: [first, middle, last, connector] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: [first.id, middle.id, last.id], mode: 'swimlane', gap: 16, lanes: [{ id: first.id, lane: '1' }, { id: middle.id, lane: '2' }, { id: last.id, lane: '3' }] });
+    const notes = new Map(controller.read().objects.filter((object): object is typeof first => object.kind === 'note').map((object) => [object.id, object])), a = notes.get(first.id)!, b = notes.get(middle.id)!, c = notes.get(last.id)!, shaftY = (a.y + a.height / 2 + c.y + c.height / 2) / 2;
+    expect(b.y > shaftY + 19 + 16 || b.y + b.height < shaftY - 19 - 16).toBe(true);
+  });
+
+  it('relocates a swimlane obstruction beyond every occupied root slot', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id });
+    const first = note('a'), blockers = Array.from({ length: 34 }, (_, index) => note(`blocker-${String(index).padStart(2, '0')}`)), last = note('c');
+    const connector = { id: 'ac', kind: 'connector' as const, createdAt, fromId: first.id, toId: last.id, label: '' };
+    const roots = [first, ...blockers, last], controller = harness({ ...createDocument(), objects: [...roots, connector] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await expect(layout.execute({ ids: roots.map(({ id }) => id), mode: 'swimlane', gap: 16, lanes: [
+      { id: first.id, lane: '1' }, ...blockers.map(({ id }) => ({ id, lane: '2' })), { id: last.id, lane: '3' }
+    ] })).resolves.toMatchObject({ placedIds: expect.arrayContaining(roots.map(({ id }) => id)) });
+    const notes = new Map(controller.read().objects.filter((object): object is typeof first => object.kind === 'note').map((object) => [object.id, object]));
+    expect(notes.get(blockers[0].id)!.y).toBeGreaterThan(notes.get(blockers.at(-1)!.id)!.y);
+  });
+
+  it('clears every intervening swimlane root beyond the former shaft limit', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id });
+    const first = note('a'), blockers = Array.from({ length: 32 }, (_, index) => note(`blocker-${String(index).padStart(2, '0')}`)), last = note('c'), roots = [first, ...blockers, last];
+    const connector = { id: 'ac', kind: 'connector' as const, createdAt, fromId: first.id, toId: last.id, label: '' }, controller = harness({ ...createDocument(), objects: [...roots, connector] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await expect(layout.execute({ ids: roots.map(({ id }) => id), mode: 'swimlane', gap: 16, lanes: roots.map(({ id }, index) => ({ id, lane: String(index).padStart(2, '0') })) })).resolves.toMatchObject({ placedIds: expect.arrayContaining(roots.map(({ id }) => id)) });
+  });
+
+  it('globally rechecks connector shafts after cyclic hierarchy relocations', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id });
+    const d = note('d'), e = note('e'), f = note('f'), edge = (id: string, fromId: string, toId: string) => ({ id, kind: 'connector' as const, createdAt, fromId, toId, label: 'Long owner approval evidence' });
+    const controller = harness({ ...createDocument(), objects: [d, e, f, edge('fe', f.id, e.id), edge('ed', e.id, d.id), edge('fd', f.id, d.id), edge('df', d.id, f.id)] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: [d.id, e.id, f.id], mode: 'hierarchy', gap: 16 });
+    const notes = new Map(controller.read().objects.filter((object): object is typeof d => object.kind === 'note').map((object) => [object.id, object])), start = notes.get(e.id)!, end = notes.get(d.id)!, obstruction = notes.get(f.id)!;
+    const a = { x: start.x + start.width / 2, y: start.y + start.height / 2 }, b = { x: end.x + end.width / 2, y: end.y + end.height / 2 }, bounds = { x: obstruction.x - 35, y: obstruction.y - 35, width: obstruction.width + 70, height: obstruction.height + 70 };
+    let minimum = 0, maximum = 1, intersects = true;
+    for (const [origin, delta, low, high] of [[a.x, b.x - a.x, bounds.x, bounds.x + bounds.width], [a.y, b.y - a.y, bounds.y, bounds.y + bounds.height]] as const) {
+      if (delta === 0) { if (origin < low || origin > high) intersects = false; continue; }
+      const first = (low - origin) / delta, second = (high - origin) / delta; minimum = Math.max(minimum, Math.min(first, second)); maximum = Math.min(maximum, Math.max(first, second));
+      if (minimum > maximum) intersects = false;
+    }
+    expect(intersects).toBe(false);
+  });
+
+  it('separates disconnected hierarchy components without cyclic shaft relocation', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id }), edge = (id: string, fromId: string, toId: string) => ({ id, kind: 'connector' as const, createdAt, fromId, toId, label: '' });
+    const roots = Array.from({ length: 5 }, (_, index) => note(`n${index}`)), connectors = [edge('n1-n2', 'n1', 'n2'), edge('n3-n4', 'n3', 'n4')];
+    const controller = harness({ ...createDocument(), objects: [...roots, ...connectors] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await expect(layout.execute({ ids: roots.map(({ id }) => id), mode: 'hierarchy', gap: 16 })).resolves.toMatchObject({ placedIds: roots.map(({ id }) => id) });
+  });
+
+  it('iteratively resolves a deepest-first 10,000-link connector dependency chain', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id });
+    const a = note('a'), b = note('b'), external = note('external'), connectorId = (index: number) => `edge-${String(10_000 - index).padStart(5, '0')}`;
+    const connectors = Array.from({ length: 10_000 }, (_, index) => ({ id: connectorId(index), kind: 'connector' as const, createdAt, fromId: index ? connectorId(index - 1) : a.id, toId: index === 9_999 ? b.id : external.id, label: '' }));
+    const controller = harness({ ...createDocument(), objects: [a, b, external, ...connectors] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await expect(layout.execute({ ids: [a.id, b.id], mode: 'flow', gap: 16 })).resolves.toMatchObject({ placedIds: [a.id, b.id] });
+  });
+
+  it('aligns a connected fan-in without swapping same-layer sources', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id }), edge = (id: string, fromId: string, toId: string) => ({ id, kind: 'connector' as const, createdAt, fromId, toId, label: '' });
+    const roots = [note('a'), note('b'), note('c')], controller = harness({ ...createDocument(), objects: [...roots, edge('ac', 'a', 'c'), edge('bc', 'b', 'c')] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await expect(layout.execute({ ids: roots.map(({ id }) => id), mode: 'flow', gap: 16 })).resolves.toMatchObject({ placedIds: roots.map(({ id }) => id) });
+  });
+
+  it('packs a connected fan-out around its shared source without swapping targets', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id }), edge = (id: string, fromId: string, toId: string) => ({ id, kind: 'connector' as const, createdAt, fromId, toId, label: '' });
+    const roots = [note('a'), note('b'), note('c')], controller = harness({ ...createDocument(), objects: [...roots, edge('ab', 'a', 'b'), edge('ac', 'a', 'c')] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await expect(layout.execute({ ids: roots.map(({ id }) => id), mode: 'flow', gap: 16 })).resolves.toMatchObject({ placedIds: roots.map(({ id }) => id) });
+  });
+
+  it('grows an orbit monotonically around a satellite fan-out', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id }), edge = (id: string, fromId: string, toId: string) => ({ id, kind: 'connector' as const, createdAt, fromId, toId, label: '' });
+    const roots = ['a', 'b', 'c', 'd'].map(note), controller = harness({ ...createDocument(), objects: [...roots, edge('bc', 'b', 'c'), edge('bd', 'b', 'd')] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await expect(layout.execute({ ids: roots.map(({ id }) => id), mode: 'orbit', gap: 16 })).resolves.toMatchObject({ placedIds: roots.map(({ id }) => id) });
+  });
+
+  it.each(['flow', 'loop', 'orbit'] as const)('ignores coincident reciprocal shafts while placing labels in %s mode', async (mode) => {
+    const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id }), a = note('a'), b = note('b');
+    const controller = harness({ ...createDocument(), objects: [a, b, { id: 'ab', kind: 'connector', createdAt, fromId: a.id, toId: b.id, label: 'Approval' }, { id: 'ba', kind: 'connector', createdAt, fromId: b.id, toId: a.id, label: '' }] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await expect(layout.execute({ ids: [a.id, b.id], mode, gap: 16 })).resolves.toMatchObject({ placedIds: [a.id, b.id] });
+  });
+
+  it('keeps a reciprocal-edge label at the coincident route midpoint in rendered layout', () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', a = { id: 'a', kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: 'A' }, b = { ...a, id: 'b', y: 400, text: 'B' };
+    const labels = connectorLabelLayout([a, b, { id: 'ab', kind: 'connector', createdAt, fromId: a.id, toId: b.id, label: 'Approval' }, { id: 'ba', kind: 'connector', createdAt, fromId: b.id, toId: a.id, label: '' }]);
+    expect(labels.get('ab')?.y).toBe(230);
+  });
+
+  it('stacks coincident connector labels deterministically', () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', first = { id: 'a', kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: 'A' }, second = { ...first, id: 'b', x: 400, text: 'B' };
+    const connector = (id: string) => ({ id, kind: 'connector' as const, createdAt, fromId: first.id, toId: second.id, label: 'approval' });
+    const connectors = Array.from({ length: 1_000 }, (_, index) => connector(`edge-${String(index).padStart(4, '0')}`)), labels = connectorLabelLayout([first, second, ...connectors]), baseY = (first.y + first.height / 2 + second.y + second.height / 2) / 2 - 10;
+    expect(labels.get('edge-0000')?.y).toBe(baseY);
+    expect(labels.get('edge-0001')?.y).toBe(baseY - 20);
+    expect(labels.get('edge-0999')?.y).toBe(baseY - 999 * 20);
+  });
+
+  it('indexes a 20,000-label coincident-route fan-in within a bounded budget', () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', first = { id: 'fan-a', kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: 'A' }, second = { ...first, id: 'fan-b', x: 400, text: 'B' };
+    const connectors = Array.from({ length: 20_000 }, (_, index) => ({ id: `fan-edge-${String(index).padStart(5, '0')}`, kind: 'connector' as const, createdAt, fromId: first.id, toId: second.id, label: 'approval' }));
+    const startedAt = performance.now(), labels = connectorLabelLayout([first, second, ...connectors]);
+    expect(labels).toHaveLength(20_000);
+    expect(labels.get('fan-edge-19999')?.y).toBe(30 - 19_999 * 20);
+    expect(performance.now() - startedAt).toBeLessThan(2_000);
+  }, 10_000);
+
+  it('stacks connector labels with nearby painted midpoints', () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string, x: number, y: number) => ({ id, kind: 'note' as const, createdAt, x, y, width: 120, height: 80, text: id });
+    const a = note('a', 0, 0), b = note('b', 400, 0), c = note('c', 1, 1), d = note('d', 401, 1), edge = (id: string, fromId: string, toId: string) => ({ id, kind: 'connector' as const, createdAt, fromId, toId, label: 'a wide approval label' });
+    const labels = connectorLabelLayout([a, b, c, d, edge('edge-a', a.id, b.id), edge('edge-b', c.id, d.id)]), first = labels.get('edge-a')!, second = labels.get('edge-b')!;
+    expect(second.y + 4).toBeLessThanOrEqual(first.y - 12 - 4);
+  });
+
+  it('keeps connector labels clear of another connector arrowhead', () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string, x: number) => ({ id, kind: 'note' as const, createdAt, x, y: 0, width: 120, height: 80, text: id });
+    const labelA = note('label-a', 0), labelB = note('label-b', 400), markerA = note('marker-a', 0), markerB = note('marker-b', 248);
+    const label = { id: 'label', kind: 'connector' as const, createdAt, fromId: labelA.id, toId: labelB.id, label: 'Approval' }, marker = { id: 'marker', kind: 'connector' as const, createdAt, fromId: markerA.id, toId: markerB.id, label: '' };
+    expect(connectorLabelLayout([labelA, labelB, markerA, markerB, label, marker]).get(label.id)?.y).toBeLessThan(30);
+  });
+
+  it('finds a label slot beyond 128 blocking connector shafts', () => {
+    const createdAt = '2026-09-05T00:00:00.000Z';
+    const note = (id: string, x: number, y: number) => ({ id, kind: 'note' as const, createdAt, x, y, width: 120, height: 80, text: id });
+    const labelA = note('label-a', 0, 0), labelB = note('label-b', 400, 0);
+    const blockerObjects = Array.from({ length: 129 }, (_, index) => {
+      const y = 18 - index * 20 - 40, left = note(`block-${index}-a`, 0, y), right = note(`block-${index}-b`, 400, y);
+      return [left, right, { id: `block-${index}`, kind: 'connector' as const, createdAt, fromId: left.id, toId: right.id, label: '' }] as const;
+    }).flat();
+    const label = { id: 'zz-label', kind: 'connector' as const, createdAt, fromId: labelA.id, toId: labelB.id, label: 'Approval' };
+    expect(connectorLabelLayout([labelA, labelB, ...blockerObjects, label]).get(label.id)?.y).toBeLessThan(18 - 128 * 20);
+  });
+
+  it('indexes shifted connector labels in their painted destination bands', () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string, y: number) => ({ id, kind: 'note' as const, createdAt, x: id.endsWith('b') ? 400 : 0, y, width: 120, height: 80, text: id });
+    const a = note('a', 0), b = note('b', 0), c = note('c', -44), d = note('db', -44), edge = (id: string, fromId: string, toId: string) => ({ id, kind: 'connector' as const, createdAt, fromId, toId, label: 'approval' });
+    const labels = connectorLabelLayout([a, b, c, d, edge('edge-1', a.id, b.id), edge('edge-2', a.id, b.id), edge('edge-3', a.id, b.id), edge('edge-4', a.id, b.id), edge('z-nearby', c.id, d.id)]), nearby = labels.get('z-nearby')!;
+    for (const id of ['edge-1', 'edge-2', 'edge-3', 'edge-4']) {
+      const existing = labels.get(id)!;
+      expect(nearby.y + 4 <= existing.y - 12 || existing.y + 4 <= nearby.y - 12).toBe(true);
+    }
+  });
+
+  it('routes opposite-satellite labels around a preserved orbit hub', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', label = 'Satellite handoff';
+    const note = (id: string) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id });
+    const hub = note('hub'), left = note('left'), right = note('right'), connector = { id: 'edge', kind: 'connector' as const, createdAt, fromId: left.id, toId: right.id, label };
+    const controller = harness({ ...createDocument(), objects: [hub, left, right, connector] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: [hub.id, left.id, right.id], mode: 'orbit', gap: 16 });
+    const notes = new Map(controller.read().objects.filter((object): object is typeof hub => object.kind === 'note').map((object) => [object.id, object])), placedHub = notes.get(hub.id)!, placedLeft = notes.get(left.id)!, placedRight = notes.get(right.id)!;
+    expect({ x: placedHub.x, y: placedHub.y }).toEqual({ x: 0, y: 0 });
+    const halfLabel = (label.length * 7 + 5) / 2, labelBounds = { x: (placedLeft.x + placedLeft.width / 2 + placedRight.x + placedRight.width / 2) / 2 - halfLabel, y: (placedLeft.y + placedLeft.height / 2 + placedRight.y + placedRight.height / 2) / 2 - 22, width: halfLabel * 2, height: 16 };
+    const separated = placedHub.x + placedHub.width + 16 <= labelBounds.x || labelBounds.x + labelBounds.width + 16 <= placedHub.x || placedHub.y + placedHub.height + 16 <= labelBounds.y || labelBounds.y + labelBounds.height + 16 <= placedHub.y;
+    expect(separated).toBe(true);
+  });
+
+  it('routes opposite-satellite unlabeled shafts around a preserved orbit hub', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z';
+    const note = (id: string) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id });
+    const hub = note('hub'), first = note('satellite-a'), second = note('satellite-b'), connector = { id: 'edge', kind: 'connector' as const, createdAt, fromId: first.id, toId: second.id, label: '' };
+    const controller = harness({ ...createDocument(), objects: [hub, first, second, connector] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: [hub.id, first.id, second.id], mode: 'orbit', gap: 16 });
+    const notes = new Map(controller.read().objects.filter((object): object is typeof hub => object.kind === 'note').map((object) => [object.id, object])), placedHub = notes.get(hub.id)!, a = notes.get(first.id)!, b = notes.get(second.id)!, shaftX = (a.x + a.width / 2 + b.x + b.width / 2) / 2;
+    expect({ x: placedHub.x, y: placedHub.y }).toEqual({ x: 0, y: 0 });
+    expect(shaftX < placedHub.x - 35 || shaftX > placedHub.x + placedHub.width + 35).toBe(true);
+  });
+
+  it('globally rechecks interacting orbit shafts', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id });
+    const objects = ['a', 'b', 'c', 'd'].map(note), edge = (id: string, fromId: string, toId: string) => ({ id, kind: 'connector' as const, createdAt, fromId, toId, label: '' });
+    const edges = [edge('1-cb', 'c', 'b'), edge('2-ad', 'a', 'd'), edge('3-da', 'd', 'a'), edge('4-ca', 'c', 'a'), edge('5-ba', 'b', 'a'), edge('6-cd', 'c', 'd')];
+    const controller = harness({ ...createDocument(), objects: [...objects, ...edges] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: objects.map(({ id }) => id), mode: 'orbit', gap: 16 });
+    const placed = new Map(controller.read().objects.filter((object): object is typeof objects[number] => object.kind === 'note').map((object) => [object.id, object])), start = placed.get('c')!, end = placed.get('b')!, hub = placed.get('a')!;
+    const x1 = start.x + start.width / 2, y1 = start.y + start.height / 2, x2 = end.x + end.width / 2, y2 = end.y + end.height / 2, bounds = { x: hub.x - 35, y: hub.y - 35, width: hub.width + 70, height: hub.height + 70 };
+    let minimum = 0, maximum = 1, intersects = true;
+    for (const [origin, delta, low, high] of [[x1, x2 - x1, bounds.x, bounds.x + bounds.width], [y1, y2 - y1, bounds.y, bounds.y + bounds.height]] as const) { if (delta === 0) { if (origin < low || origin > high) intersects = false; continue; } const first = (low - origin) / delta, second = (high - origin) / delta; minimum = Math.max(minimum, Math.min(first, second)); maximum = Math.min(maximum, Math.max(first, second)); if (minimum > maximum) intersects = false; }
+    expect(intersects).toBe(false);
+  });
+
+  it('routes connector shafts around other painted connector labels', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id });
+    const roots = ['a', 'b', 'c', 'd'].map(note), edge = (id: string, fromId: string, toId: string, label = '') => ({ id, kind: 'connector' as const, createdAt, fromId, toId, label }), labeled = edge('ac', 'a', 'c', 'Crossing approval evidence'), crossing = edge('bd', 'b', 'd');
+    const controller = harness({ ...createDocument(), objects: [...roots, labeled, crossing] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: roots.map(({ id }) => id), mode: 'loop', gap: 16 });
+    const state = controller.read(), notes = new Map(state.objects.filter((object): object is typeof roots[number] => object.kind === 'note').map((object) => [object.id, object])), labels = connectorLabelLayout(state.objects), label = labels.get(labeled.id)!, start = notes.get(crossing.fromId)!, end = notes.get(crossing.toId)!;
+    const a = { x: start.x + start.width / 2, y: start.y + start.height / 2 }, b = { x: end.x + end.width / 2, y: end.y + end.height / 2 }, bounds = { x: label.x - label.width / 2 - 4, y: label.y - 12 - 4, width: label.width + 8, height: label.height + 8 };
+    let minimum = 0, maximum = 1, intersects = true;
+    for (const [origin, delta, low, high] of [[a.x, b.x - a.x, bounds.x, bounds.x + bounds.width], [a.y, b.y - a.y, bounds.y, bounds.y + bounds.height]] as const) { if (delta === 0) { if (origin < low || origin > high) intersects = false; continue; } const first = (low - origin) / delta, second = (high - origin) / delta; minimum = Math.max(minimum, Math.min(first, second)); maximum = Math.min(maximum, Math.max(first, second)); if (minimum > maximum) intersects = false; }
+    expect(intersects).toBe(false);
+  });
+
+  it('checks roots against the final shaft-shifted label positions', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', notes = ['a', 'b', 'c', 'd', 'e', 'f'].map((id) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id })), edge = (id: string, fromId: string, toId: string) => ({ id, kind: 'connector' as const, createdAt, fromId, toId, label: `Long approval evidence ${id}` });
+    const edges = [edge('ab', 'a', 'b'), edge('bc', 'b', 'c'), edge('cd', 'c', 'd'), edge('de', 'd', 'e'), edge('ef', 'e', 'f'), edge('ad', 'a', 'd'), edge('be', 'b', 'e'), edge('cf', 'c', 'f')];
+    const controller = harness({ ...createDocument(), objects: [...notes, ...edges] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: notes.map(({ id }) => id), mode: 'hierarchy', gap: 16 });
+    const state = controller.read(), placedNotes = state.objects.filter((object): object is typeof notes[number] => object.kind === 'note'), labels = connectorLabelLayout(state.objects);
+    for (const label of labels.values()) for (const note of placedNotes) {
+      const labelBounds = { x: label.x - label.width / 2, y: label.y - 12, width: label.width, height: label.height };
+      const overlaps = labelBounds.x < note.x + note.width && labelBounds.x + labelBounds.width > note.x && labelBounds.y < note.y + note.height && labelBounds.y + labelBounds.height > note.y;
+      expect(overlaps).toBe(false);
+    }
+  });
+
+  it('checks shifted same-group connector labels against peer roots', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string, x: number, y: number) => ({ id, kind: 'note' as const, createdAt, x, y, width: 80, height: 60, text: id });
+    const first = note('inside-a', 20, 100), second = note('inside-b', 140, 100), peer = note('a-peer', 0, -220);
+    const blockers = Array.from({ length: 10 }, (_, index) => {
+      const left = note(`shaft-${index}-a`, 20, 78 - index * 20), right = note(`shaft-${index}-b`, 140, 78 - index * 20);
+      return [left, right, { id: `shaft-${index}`, kind: 'connector' as const, createdAt, fromId: left.id, toId: right.id, label: '' }] as const;
+    }).flat();
+    const internal = { id: 'internal-label', kind: 'connector' as const, createdAt, fromId: first.id, toId: second.id, label: 'A deliberately wide internal approval label' };
+    const bridge = { id: 'peer-to-group', kind: 'connector' as const, createdAt, fromId: peer.id, toId: first.id, label: '' };
+    const group = { id: 'z-group', kind: 'group' as const, createdAt, x: 0, y: -140, width: 240, height: 320, label: 'Boundary', childIds: [first.id, second.id, internal.id, ...blockers.map(({ id }) => id)] };
+    const controller = harness({ ...createDocument(), objects: [peer, group, first, second, ...blockers, internal, bridge] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: [peer.id, group.id], mode: 'hierarchy', gap: 16 });
+    const state = controller.read(), placedPeer = state.objects.find((object): object is typeof peer => object.id === peer.id)!, label = connectorLabelLayout(state.objects).get(internal.id)!;
+    const labelBounds = { x: label.x - label.width / 2, y: label.y - 12, width: label.width, height: label.height };
+    expect(labelBounds.x + labelBounds.width + 16 <= placedPeer.x || placedPeer.x + placedPeer.width + 16 <= labelBounds.x || labelBounds.y + labelBounds.height + 16 <= placedPeer.y || placedPeer.y + placedPeer.height + 16 <= labelBounds.y).toBe(true);
+  });
+
+  it('includes stationary external shafts when routing selected labels', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string, x: number, y: number) => ({ id, kind: 'note' as const, createdAt, x, y, width: 80, height: 60, text: id });
+    const peer = note('a-peer', 0, -220), bridgeChild = note('bridge-child', 20, 100), first = note('inside-a', 400, 100), second = note('inside-b', 520, 100);
+    const internal = { id: 'internal-label', kind: 'connector' as const, createdAt, fromId: first.id, toId: second.id, label: 'A deliberately wide internal approval label' }, bridge = { id: 'peer-to-group', kind: 'connector' as const, createdAt, fromId: peer.id, toId: bridgeChild.id, label: '' };
+    const externalTop = note('external-top', 460, -200), externalBottom = note('external-bottom', 460, 660), external = { id: 'external-shaft', kind: 'connector' as const, createdAt, fromId: externalBottom.id, toId: externalTop.id, label: '' };
+    const group = { id: 'z-group', kind: 'group' as const, createdAt, x: 0, y: -140, width: 600, height: 320, label: 'Boundary', childIds: [bridgeChild.id, first.id, second.id, internal.id] };
+    const controller = harness({ ...createDocument(), objects: [peer, group, bridgeChild, first, second, internal, bridge, externalTop, externalBottom, external] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: [peer.id, group.id], mode: 'hierarchy', gap: 16 });
+    const state = controller.read(), placedPeer = state.objects.find((object): object is typeof peer => object.id === peer.id)!, label = connectorLabelLayout(state.objects).get(internal.id)!;
+    const labelBounds = { x: label.x - label.width / 2, y: label.y - 12, width: label.width, height: label.height };
+    expect(labelBounds.x + labelBounds.width + 16 <= placedPeer.x || placedPeer.x + placedPeer.width + 16 <= labelBounds.x || labelBounds.y + labelBounds.height + 16 <= placedPeer.y || placedPeer.y + placedPeer.height + 16 <= labelBounds.y).toBe(true);
+  });
+
+  it('keeps large labeled graph layout within a bounded execution budget', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z';
+    const notes = Array.from({ length: 100 }, (_, index) => ({ id: `scale-node-${String(index).padStart(3, '0')}`, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: String(index) }));
+    const endpointA = { ...notes[0], id: 'scale-endpoint-a', x: 100_000 }, endpointB = { ...notes[0], id: 'scale-endpoint-b', x: 101_000 };
+    const edges = Array.from({ length: 1_000 }, (_, index) => ({ id: `scale-edge-${String(index).padStart(4, '0')}`, kind: 'connector' as const, createdAt, fromId: endpointA.id, toId: endpointB.id, label: `Approval ${index}` }));
+    const controller = harness({ ...createDocument(), objects: [...notes, endpointA, endpointB, ...edges] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    const startedAt = performance.now();
+    await layout.execute({ ids: notes.map(({ id }) => id), mode: 'flow', gap: 16 });
+    expect(performance.now() - startedAt).toBeLessThan(2_000);
+  }, 10_000);
+
+  it('auto-layouts 20,000 labeled parallel edges without quadratic route scans', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', first = { id: 'parallel-a', kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: 'A' }, second = { ...first, id: 'parallel-b', x: 400, text: 'B' };
+    const edges = Array.from({ length: 20_000 }, (_, index) => ({ id: `parallel-edge-${String(index).padStart(5, '0')}`, kind: 'connector' as const, createdAt, fromId: first.id, toId: second.id, label: 'approval' }));
+    const controller = harness({ ...createDocument(), objects: [first, second, ...edges] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    const startedAt = performance.now();
+    await layout.execute({ ids: [first.id, second.id], mode: 'flow', gap: 16 });
+    expect(performance.now() - startedAt).toBeLessThan(3_000);
+  }, 10_000);
+
+  it('preserves painted root gaps after routing multiple connector labels', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z';
+    const hub = { id: 'hub', kind: 'note' as const, createdAt, x: 0, y: 0, width: 260, height: 160, text: 'Hub' };
+    const small = { ...hub, id: 'small', width: 80, height: 60, text: 'Small' }, medium = { ...hub, id: 'medium', width: 160, height: 100, text: 'Medium' }, large = { ...hub, id: 'large', width: 220, height: 120, text: 'Large' };
+    const edge = (id: string, fromId: string, toId: string) => ({ id, kind: 'connector' as const, createdAt, fromId, toId, label: 'Governed handoff evidence' });
+    const controller = harness({ ...createDocument(), objects: [hub, small, medium, large, edge('sl', small.id, large.id), edge('ml', medium.id, large.id)] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: [hub.id, small.id, medium.id, large.id], mode: 'orbit', gap: 24 });
+    const notes = controller.read().objects.filter((object): object is typeof hub => object.kind === 'note');
+    for (let first = 0; first < notes.length; first += 1) for (let second = first + 1; second < notes.length; second += 1) {
+      const a = notes[first], b = notes[second], separated = a.x + a.width + 24 <= b.x || b.x + b.width + 24 <= a.x || a.y + a.height + 24 <= b.y || b.y + b.height + 24 <= a.y;
+      expect(separated).toBe(true);
+    }
+  });
+
+  it('reserves marker paint for descendant connectors', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z';
+    const first = { id: 'first', kind: 'rectangle' as const, createdAt, from: { x: 0, y: 0 }, to: { x: 20, y: 20 }, color: '#fcaa2d' }, second = { ...first, id: 'second', from: { x: 80, y: 0 }, to: { x: 100, y: 20 } };
+    const internal = { id: 'internal', kind: 'connector' as const, createdAt, fromId: first.id, toId: second.id, label: '' }, group = { id: 'group', kind: 'group' as const, createdAt, x: 0, y: 0, width: 100, height: 80, label: '', childIds: [first.id, second.id, internal.id] };
+    const peer = { id: 'peer', kind: 'note' as const, createdAt, x: 10, y: 0, width: 120, height: 80, text: 'Peer' }, outbound = { ...internal, id: 'outbound', fromId: second.id, toId: peer.id };
+    const controller = harness({ ...createDocument(), objects: [group, first, second, internal, peer, outbound] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: [group.id, peer.id], mode: 'flow', gap: 16 });
+    const state = controller.read(), placedGroup = state.objects.find((object): object is typeof group => object.id === group.id)!, placedPeer = state.objects.find((object): object is typeof peer => object.id === peer.id)!;
+    expect(placedPeer.x - .5 - (placedGroup.x + placedGroup.width + 19)).toBeGreaterThanOrEqual(16);
   });
 
   it('summarizes dense stroke geometry in compact inspection', async () => {
@@ -792,7 +1381,7 @@ describe('Draw WebMCP tools', () => {
       getState: () => ({ document: createDocument(), selectedIds: [], tool: 'pen', canUndo: false, canRedo: false }),
       applyOperations: vi.fn(), select: vi.fn(), setTool: vi.fn(), undo: vi.fn(), redo: vi.fn(), reset: vi.fn(), animate: vi.fn()
     });
-    expect(registerDrawWebMcpTools(tools, { documentContext: modelContext })).toEqual({ api: 'registerTool', registered: 16 });
+    expect(registerDrawWebMcpTools(tools, { documentContext: modelContext })).toEqual({ api: 'registerTool', registered: 19 });
     const result = await (registered[0].execute as (input: unknown) => Promise<unknown>)({});
     expect(result).toMatchObject({ document: { title: 'Untitled mapping session' }, selectedIds: [] });
   });

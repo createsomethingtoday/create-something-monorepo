@@ -3,13 +3,14 @@
   import { browser } from '$app/environment';
   import { onMount } from 'svelte';
   import { clearDocument, loadDocument, saveDocument } from '$lib/persistence';
-  import { commit, convert, createDocument, createObjectCenterResolver, objectBounds, parse, redo, removeObjects, resizeGroup, restoreConversion, serialize, uid, undo, withObjects, type CanvasDocument, type CanvasObject, type History, type Point, type Shape, type Stroke, type Tool } from '$lib/document';
+  import { commit, convert, createDocument, createObjectCenterResolver, expandCompoundIds, objectBounds, parse, redo, removeObjects, resizeGroup, restoreConversion, selectObjectIdsInBounds, serialize, uid, undo, withObjects, type CanvasDocument, type CanvasObject, type History, type Point, type Shape, type Stroke, type Tool } from '$lib/document';
   import { DEFAULT_DRAWING_COLOR, DRAWING_COLOR_PREFERENCE, DRAWING_PALETTE, isColorableObject, isDrawingColor, recolorObjects, type DrawingColor } from '$lib/palette';
   import { applyCanvasOperations, isValidCanvasTitle, type CanvasOperation } from '$lib/paired-session';
-  import { createDrawWebMcpTools, drawRevision, registerDrawWebMcpTools, type DrawTransitionKind } from '$lib/webmcp';
+  import { connectorLabelLayout, createDrawWebMcpTools, drawRevision, registerDrawWebMcpTools, type DrawRenderedGeometry, type DrawTransitionKind } from '$lib/webmcp';
   import { beginPairing, companionStatus, discoverHosts, forgetCompanion, hasNativeBridge, hostStatus, nativeRole as readNativeRole, pairCompanion, refreshCompanion, replaceHostDocument, revokeCompanion, setCompanionOnline, submitNativeOperation, type DiscoveredHost, type NativeRole, type NativeSessionStatus, type PairingOffer } from '$lib/native-pairing';
   import { fitViewportToBounds, normalizeWheelDelta, panViewport, zoomViewportAt } from '$lib/viewport';
   import { createNoteInputBuffer } from '$lib/note-input';
+  import { paddedSegmentBounds } from '$lib/spatial';
 
   const tools: { id: Tool; label: string; key: string }[] = [
     { id: 'select', label: 'Select', key: 'V' }, { id: 'pen', label: 'Pen', key: 'P' },
@@ -87,6 +88,7 @@
   const noteInput = createNoteInputBuffer(commitNoteText);
   const document = $derived(history.present), viewport = $derived(document.viewport);
   const objectIndex = $derived(new Map(document.objects.map((object) => [object.id, object])));
+  const connectorLabels = $derived(connectorLabelLayout(document.objects));
   const selectedIdSet = $derived(new Set(selectedIds));
   const agentAffectedIdSet = $derived(new Set(agentTransition?.affectedIds ?? []));
   const resolveObjectCenter = $derived(createObjectCenterResolver(document.objects));
@@ -107,13 +109,14 @@
         if (expectedRevision && expectedRevision !== currentRevision) throw new Error(`Canvas revision is stale. Inspect again and retry with revision ${currentRevision}.`);
         return applyAgentOperations(operations);
       }),
-      select: (ids) => { assertAgentControlReady(); const existing = new Set(document.objects.map(({ id }) => id)); selectedIds = ids.filter((id) => existing.has(id)); status = selectedIds.length ? `Agent focused ${selectedIds.length} object${selectedIds.length === 1 ? '' : 's'}` : 'Agent cleared selection'; },
+      select: (ids) => { assertAgentControlReady(); const existing = new Set(document.objects.map(({ id }) => id)); selectedIds = [...expandCompoundIds(document, ids.filter((id) => existing.has(id)))]; status = selectedIds.length ? `Agent focused ${selectedIds.length} object${selectedIds.length === 1 ? '' : 's'}` : 'Agent cleared selection'; },
       setTool: (next) => { assertAgentControlReady(); tool = next; status = `Agent selected ${next} tool`; },
       undo: () => queueAgentMutation(() => browserLocalHistory('undo')),
       redo: () => queueAgentMutation(() => browserLocalHistory('redo')),
       reset: () => queueAgentMutation(resetCanvasFromAgent),
       animate: showAgentTransition,
-      focus: (target) => queueAgentMutation(() => focusAgentCamera(target))
+      focus: (target) => queueAgentMutation(() => focusAgentCamera(target)),
+      renderedGeometry: readRenderedGeometry
     }));
     if (webMcp.registered) status = `${webMcp.registered} agent tools ready · loading local canvas…`;
     const resize = () => { viewportWidth = surface?.clientWidth || window.innerWidth; viewportHeight = surface?.clientHeight || window.innerHeight; };
@@ -143,6 +146,319 @@
   function agentState() {
     assertAgentControlReady();
     return { document: JSON.parse(JSON.stringify(document)) as CanvasDocument, selectedIds: [...selectedIds], tool, canUndo: history.past.length > 0, canRedo: history.future.length > 0, surface: { width: viewportWidth, height: viewportHeight } };
+  }
+
+  async function settledRender() {
+    const nextFrame = () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    const deadline = performance.now() + 1_200;
+    while ((agentTransition || agentCameraActive) && performance.now() < deadline) await nextFrame();
+    if (agentTransition || agentCameraActive) throw new Error('Draw rendering did not settle before geometry inspection. Try again.');
+    await nextFrame();
+    await nextFrame();
+  }
+
+  async function readRenderedGeometry(input: { ids?: string[]; limit: number }): Promise<DrawRenderedGeometry> {
+    assertAgentControlReady();
+    if (nativeShell || nativeRole !== 'web') throw new Error('Rendered geometry is limited to the browser-local web canvas.');
+    await settledRender();
+    assertAgentControlReady();
+
+    const surfaceRect = surface.getBoundingClientRect();
+    const contentMatrix = canvasContent.getScreenCTM();
+    if (!contentMatrix) throw new Error('Draw could not resolve the rendered canvas transform.');
+    const inverse = contentMatrix.inverse();
+    const viewportBounds = (rect: DOMRect): { x: number; y: number; width: number; height: number } => ({
+      x: rect.left - surfaceRect.left,
+      y: rect.top - surfaceRect.top,
+      width: rect.width,
+      height: rect.height
+    });
+    const worldBounds = (rect: DOMRect): { x: number; y: number; width: number; height: number } => {
+      const corners = [
+        new DOMPoint(rect.left, rect.top), new DOMPoint(rect.right, rect.top),
+        new DOMPoint(rect.right, rect.bottom), new DOMPoint(rect.left, rect.bottom)
+      ].map((point) => point.matrixTransform(inverse));
+      const xs = corners.map(({ x }) => x), ys = corners.map(({ y }) => y);
+      const x = Math.min(...xs), y = Math.min(...ys);
+      return { x, y, width: Math.max(...xs) - x, height: Math.max(...ys) - y };
+    };
+    const clipped = (bounds: { x: number; y: number; width: number; height: number }) => bounds.x < 0 || bounds.y < 0 || bounds.x + bounds.width > surfaceRect.width || bounds.y + bounds.height > surfaceRect.height;
+    const requested = input.ids ? new Set(input.ids) : undefined;
+    const matches = document.objects.filter(({ id }) => !requested || requested.has(id));
+    const selected = matches.slice(0, input.limit);
+    const existingIds = new Set(document.objects.map(({ id }) => id));
+    const missingIds = input.ids?.filter((id) => !existingIds.has(id)) ?? [];
+    const colorProbe = window.document.createElement('canvas'); colorProbe.width = 1; colorProbe.height = 1;
+    const colorContext = colorProbe.getContext('2d', { willReadFrequently: true });
+    const visibleStroke = (element: SVGGraphicsElement) => {
+      const style = getComputedStyle(element), opacity = Number.parseFloat(style.opacity), strokeOpacity = Number.parseFloat(style.strokeOpacity);
+      if (style.stroke === 'none' || opacity === 0 || strokeOpacity === 0) return false;
+      if (!colorContext) return style.stroke !== 'transparent';
+      colorContext.clearRect(0, 0, 1, 1); colorContext.fillStyle = '#000'; colorContext.fillStyle = style.stroke; colorContext.fillRect(0, 0, 1, 1);
+      return colorContext.getImageData(0, 0, 1, 1).data[3] > 0;
+    };
+    const paintedRect = (element: SVGGraphicsElement) => {
+      const rect = element.getBoundingClientRect(), matrix = element.getScreenCTM(), style = getComputedStyle(element);
+      const strokeWidth = style.stroke === 'none' ? 0 : Number.parseFloat(style.strokeWidth);
+      if (!matrix || !Number.isFinite(strokeWidth) || strokeWidth <= 0) return rect;
+      const scale = Math.max(Math.hypot(matrix.a, matrix.b), Math.hypot(matrix.c, matrix.d));
+      const inset = strokeWidth * scale / 2;
+      return new DOMRect(rect.left - inset, rect.top - inset, rect.width + inset * 2, rect.height + inset * 2);
+    };
+    const decoratedLineRect = (line: SVGLineElement) => {
+      const rect = paintedRect(line), matrix = line.getScreenCTM();
+      if (!line.hasAttribute('marker-end') || !matrix) return rect;
+      const start = new DOMPoint(line.x1.baseVal.value, line.y1.baseVal.value).matrixTransform(matrix), end = new DOMPoint(line.x2.baseVal.value, line.y2.baseVal.value).matrixTransform(matrix);
+      const distance = Math.hypot(end.x - start.x, end.y - start.y);
+      const unit = distance ? { x: (end.x - start.x) / distance, y: (end.y - start.y) / distance } : { x: 1, y: 0 }, normal = { x: -unit.y, y: unit.x };
+      const scale = Math.hypot(matrix.a, matrix.b), stroke = Number.parseFloat(getComputedStyle(line).strokeWidth) * scale;
+      const points = [
+        { x: end.x + unit.x * stroke, y: end.y + unit.y * stroke },
+        { x: end.x - unit.x * 9 * stroke + normal.x * 3.5 * stroke, y: end.y - unit.y * 9 * stroke + normal.y * 3.5 * stroke },
+        { x: end.x - unit.x * 9 * stroke - normal.x * 3.5 * stroke, y: end.y - unit.y * 9 * stroke - normal.y * 3.5 * stroke }
+      ];
+      const left = Math.min(rect.left, ...points.map(({ x }) => x)), top = Math.min(rect.top, ...points.map(({ y }) => y));
+      const right = Math.max(rect.right, ...points.map(({ x }) => x)), bottom = Math.max(rect.bottom, ...points.map(({ y }) => y));
+      return new DOMRect(left, top, right - left, bottom - top);
+    };
+    const unionRect = (first: DOMRect, second: DOMRect) => {
+      const left = Math.min(first.left, second.left), top = Math.min(first.top, second.top);
+      return new DOMRect(left, top, Math.max(first.right, second.right) - left, Math.max(first.bottom, second.bottom) - top);
+    };
+    const rendered = selected.flatMap((object) => {
+      const element = surface.querySelector<SVGGraphicsElement>(`[data-object-id="${CSS.escape(object.id)}"]`);
+      if (!element) return [];
+      if (!(element instanceof SVGGElement) && !visibleStroke(element)) return [];
+      if ((element instanceof SVGRectElement && (!element.width.baseVal.value || !element.height.baseVal.value))
+        || (element instanceof SVGEllipseElement && (!element.rx.baseVal.value || !element.ry.baseVal.value))) return [];
+      let rect = element instanceof SVGGElement
+        ? [...element.querySelectorAll<SVGGraphicsElement>(':scope > :not([data-ui="true"])')].reduce<DOMRect | undefined>((bounds, child) => {
+            const childBounds = paintedRect(child);
+            if (!bounds) return DOMRect.fromRect(childBounds);
+            return unionRect(bounds, childBounds);
+          }, undefined) ?? paintedRect(element)
+        : element instanceof SVGLineElement ? decoratedLineRect(element) : paintedRect(element);
+      if (object.kind === 'connector') {
+        const label = element.parentElement?.querySelector<SVGTextElement>('.connector-label');
+        if (label) rect = unionRect(rect, paintedRect(label));
+      }
+      const view = viewportBounds(rect);
+      return [{ id: object.id, kind: object.kind, worldBounds: worldBounds(rect), viewportBounds: view, clipped: clipped(view) }];
+    });
+    const byId = new Map(document.objects.map((object) => [object.id, object]));
+    const connectors = selected.flatMap((object) => {
+      if (object.kind !== 'connector') return [];
+      const line = surface.querySelector<SVGLineElement>(`line[data-object-id="${CSS.escape(object.id)}"]`);
+      if (!line) return [];
+      const label = line.parentElement?.querySelector<SVGTextElement>('.connector-label');
+      const labelRect = label ? paintedRect(label) : undefined;
+      return [{
+        id: object.id,
+        fromId: object.fromId,
+        toId: object.toId,
+        route: [{ x: line.x1.baseVal.value, y: line.y1.baseVal.value }, { x: line.x2.baseVal.value, y: line.y2.baseVal.value }],
+        ...(labelRect ? { labelBounds: { worldBounds: worldBounds(labelRect), viewportBounds: viewportBounds(labelRect) } } : {})
+      }];
+    });
+    const connectorById = new Map(connectors.map((connector) => [connector.id, connector]));
+    const contains = (groupId: string, candidateId: string) => {
+      const group = byId.get(groupId);
+      const visited = new Set<string>(), stack = group?.kind === 'group' ? [...group.childIds] : [];
+      while (stack.length) {
+        const id = stack.pop()!;
+        if (id === candidateId) return true;
+        if (visited.has(id)) continue;
+        visited.add(id);
+        const child = byId.get(id);
+        if (child?.kind === 'group') stack.push(...child.childIds);
+      }
+      return false;
+    };
+    const overlapBounds = (first: { x: number; y: number; width: number; height: number }, second: { x: number; y: number; width: number; height: number }) => {
+      const x = Math.max(first.x, second.x), y = Math.max(first.y, second.y);
+      const right = Math.min(first.x + first.width, second.x + second.width);
+      const bottom = Math.min(first.y + first.height, second.y + second.height);
+      return right > x && bottom > y ? { x, y, width: right - x, height: bottom - y } : undefined;
+    };
+    const segmentHitsBounds = (start: { x: number; y: number }, end: { x: number; y: number }, bounds: { x: number; y: number; width: number; height: number }, padding = 1) => {
+      const expanded = { x: bounds.x - padding, y: bounds.y - padding, width: bounds.width + padding * 2, height: bounds.height + padding * 2 };
+      let minimum = 0, maximum = 1;
+      for (const [origin, delta, low, high] of [[start.x, end.x - start.x, expanded.x, expanded.x + expanded.width], [start.y, end.y - start.y, expanded.y, expanded.y + expanded.height]] as const) {
+        if (delta === 0) { if (origin < low || origin > high) return false; continue; }
+        const first = (low - origin) / delta, second = (high - origin) / delta;
+        minimum = Math.max(minimum, Math.min(first, second)); maximum = Math.min(maximum, Math.max(first, second));
+        if (minimum > maximum) return false;
+      }
+      return true;
+    };
+    const markerPoints = (start: { x: number; y: number }, end: { x: number; y: number }) => {
+      const distance = Math.hypot(end.x - start.x, end.y - start.y), unit = distance ? { x: (end.x - start.x) / distance, y: (end.y - start.y) / distance } : { x: 1, y: 0 }, normal = { x: -unit.y, y: unit.x };
+      return [{ x: end.x + unit.x * 2, y: end.y + unit.y * 2 }, { x: end.x - unit.x * 18 + normal.x * 7, y: end.y - unit.y * 18 + normal.y * 7 }, { x: end.x - unit.x * 18 - normal.x * 7, y: end.y - unit.y * 18 - normal.y * 7 }];
+    };
+    type PaintSegment = { start: { x: number; y: number }; end: { x: number; y: number }; padding: number };
+    const paintGeometry = (object: CanvasObject, entry: typeof rendered[number]) => {
+      const segments: PaintSegment[] = [], rects: Array<{ x: number; y: number; width: number; height: number }> = [], triangles: Array<Array<{ x: number; y: number }>> = [];
+      const addLine = (start: { x: number; y: number }, end: { x: number; y: number }, padding = 1) => segments.push({ start, end, padding });
+      if (object.kind === 'stroke') for (let index = 1; index < object.points.length; index += 1) addLine(object.points[index - 1], object.points[index], object.width / 2);
+      else if (object.kind === 'arrow') { addLine(object.from, object.to); triangles.push(markerPoints(object.from, object.to)); }
+      else if (object.kind === 'connector') { const connector = connectorById.get(object.id); if (connector) { addLine(connector.route[0], connector.route[1]); triangles.push(markerPoints(connector.route[0], connector.route[1])); if (connector.labelBounds) rects.push(connector.labelBounds.worldBounds); } }
+      else if (object.kind === 'rectangle') { const left = Math.min(object.from.x, object.to.x), right = Math.max(object.from.x, object.to.x), top = Math.min(object.from.y, object.to.y), bottom = Math.max(object.from.y, object.to.y); addLine({ x: left, y: top }, { x: right, y: top }); addLine({ x: right, y: top }, { x: right, y: bottom }); addLine({ x: right, y: bottom }, { x: left, y: bottom }); addLine({ x: left, y: bottom }, { x: left, y: top }); }
+      else if (object.kind === 'ellipse') {
+        const center = { x: (object.from.x + object.to.x) / 2, y: (object.from.y + object.to.y) / 2 }, radius = { x: Math.abs(object.to.x - object.from.x) / 2, y: Math.abs(object.to.y - object.from.y) / 2 };
+        const renderedRadius = Math.max(entry.viewportBounds.width, entry.viewportBounds.height) / 2, maximumError = .25;
+        const estimatedSegments = Math.ceil(Math.PI / Math.acos(Math.max(-1, 1 - maximumError / Math.max(maximumError, renderedRadius))));
+        const segmentCount = Math.max(48, Math.min(4_096, Number.isFinite(estimatedSegments) ? estimatedSegments : 4_096));
+        const points = Array.from({ length: segmentCount + 1 }, (_, index) => ({ x: center.x + Math.cos(index / segmentCount * Math.PI * 2) * radius.x, y: center.y + Math.sin(index / segmentCount * Math.PI * 2) * radius.y }));
+        for (let index = 1; index < points.length; index += 1) {
+          const middleAngle = (index - .5) / segmentCount * Math.PI * 2;
+          const sagitta = (1 - Math.cos(Math.PI / segmentCount)) * Math.hypot(radius.x * Math.cos(middleAngle), radius.y * Math.sin(middleAngle));
+          addLine(points[index - 1], points[index], 1 + sagitta);
+        }
+      }
+      else if (object.kind === 'group') {
+        rects.push({ x: object.x - 1, y: object.y - 1, width: object.width + 2, height: object.height + 2 });
+        const label = surface.querySelector<SVGGraphicsElement>(`[data-object-id="${CSS.escape(object.id)}"] .group-label`);
+        if (label) rects.push(worldBounds(paintedRect(label)));
+      }
+      else rects.push(entry.worldBounds);
+      return { segments, rects, triangles };
+    };
+    const pointSegmentDistance = (point: { x: number; y: number }, segment: PaintSegment) => { const dx = segment.end.x - segment.start.x, dy = segment.end.y - segment.start.y, lengthSquared = dx * dx + dy * dy, t = lengthSquared ? Math.max(0, Math.min(1, ((point.x - segment.start.x) * dx + (point.y - segment.start.y) * dy) / lengthSquared)) : 0; return Math.hypot(point.x - (segment.start.x + t * dx), point.y - (segment.start.y + t * dy)); };
+    const segmentDistance = (first: PaintSegment, second: PaintSegment) => {
+      const cross = (a: { x: number; y: number }, b: { x: number; y: number }, c: { x: number; y: number }) => (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+      const firstSides = [cross(first.start, first.end, second.start), cross(first.start, first.end, second.end)], secondSides = [cross(second.start, second.end, first.start), cross(second.start, second.end, first.end)];
+      const projectionsOverlap = Math.max(Math.min(first.start.x, first.end.x), Math.min(second.start.x, second.end.x)) <= Math.min(Math.max(first.start.x, first.end.x), Math.max(second.start.x, second.end.x)) && Math.max(Math.min(first.start.y, first.end.y), Math.min(second.start.y, second.end.y)) <= Math.min(Math.max(first.start.y, first.end.y), Math.max(second.start.y, second.end.y));
+      if (projectionsOverlap && firstSides[0] * firstSides[1] <= 0 && secondSides[0] * secondSides[1] <= 0) return 0;
+      return Math.min(pointSegmentDistance(first.start, second), pointSegmentDistance(first.end, second), pointSegmentDistance(second.start, first), pointSegmentDistance(second.end, first));
+    };
+    type SegmentNode = { minX: number; maxX: number; minY: number; maxY: number; count: number; segments?: PaintSegment[]; left?: SegmentNode; right?: SegmentNode };
+    const segmentTrees = new WeakMap<PaintSegment[], SegmentNode | undefined>();
+    const segmentTree = (segments: PaintSegment[]) => {
+      if (segmentTrees.has(segments)) return segmentTrees.get(segments);
+      const build = (items: PaintSegment[]): SegmentNode | undefined => {
+        if (!items.length) return undefined;
+        const node = { ...paddedSegmentBounds(items)!, count: items.length };
+        if (items.length <= 8) return { ...node, segments: items };
+        const horizontal = node.maxX - node.minX >= node.maxY - node.minY, sorted = [...items].sort((a, b) => (horizontal ? (a.start.x + a.end.x) - (b.start.x + b.end.x) : (a.start.y + a.end.y) - (b.start.y + b.end.y)));
+        const middle = Math.ceil(sorted.length / 2);
+        return { ...node, left: build(sorted.slice(0, middle)), right: build(sorted.slice(middle)) };
+      };
+      const tree = build(segments); segmentTrees.set(segments, tree); return tree;
+    };
+    const segmentsOverlap = (first: PaintSegment[], second: PaintSegment[]) => {
+      const a = segmentTree(first), b = segmentTree(second);
+      if (!a || !b) return false;
+      const stack: Array<[SegmentNode, SegmentNode]> = [[a, b]];
+      while (stack.length) {
+        const [left, right] = stack.pop()!;
+        if (left.maxX < right.minX || right.maxX < left.minX || left.maxY < right.minY || right.maxY < left.minY) continue;
+        if (left.segments && right.segments) {
+          if (left.segments.some((segment) => right.segments!.some((candidate) => segmentDistance(segment, candidate) <= segment.padding + candidate.padding))) return true;
+          continue;
+        }
+        if (!right.segments && (left.segments || right.count >= left.count)) { if (right.left) stack.push([left, right.left]); if (right.right) stack.push([left, right.right]); }
+        else { if (left.left) stack.push([left.left, right]); if (left.right) stack.push([left.right, right]); }
+      }
+      return false;
+    };
+    const triangleEdges = (triangle: Array<{ x: number; y: number }>) => triangle.map((start, index) => ({ start, end: triangle[(index + 1) % triangle.length], padding: 0 }));
+    const pointInTriangle = (point: { x: number; y: number }, triangle: Array<{ x: number; y: number }>) => {
+      const cross = (a: { x: number; y: number }, b: { x: number; y: number }, c: { x: number; y: number }) => (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+      const sides = triangle.map((vertex, index) => cross(vertex, triangle[(index + 1) % triangle.length], point));
+      return sides.every((side) => side >= 0) || sides.every((side) => side <= 0);
+    };
+    const triangleHitsRect = (triangle: Array<{ x: number; y: number }>, rect: { x: number; y: number; width: number; height: number }) => {
+      const corners = [{ x: rect.x, y: rect.y }, { x: rect.x + rect.width, y: rect.y }, { x: rect.x + rect.width, y: rect.y + rect.height }, { x: rect.x, y: rect.y + rect.height }];
+      return triangleEdges(triangle).some((edge) => segmentHitsBounds(edge.start, edge.end, rect, 0)) || corners.some((corner) => pointInTriangle(corner, triangle)) || triangle.some((point) => point.x >= rect.x && point.x <= rect.x + rect.width && point.y >= rect.y && point.y <= rect.y + rect.height);
+    };
+    const triangleHitsSegment = (triangle: Array<{ x: number; y: number }>, segment: PaintSegment) => pointInTriangle(segment.start, triangle) || pointInTriangle(segment.end, triangle) || triangleEdges(triangle).some((edge) => segmentDistance(edge, segment) <= segment.padding);
+    const trianglesOverlap = (first: Array<{ x: number; y: number }>, second: Array<{ x: number; y: number }>) => first.some((point) => pointInTriangle(point, second)) || second.some((point) => pointInTriangle(point, first)) || triangleEdges(first).some((edge) => triangleEdges(second).some((candidate) => segmentDistance(edge, candidate) === 0));
+    const paintHitsRect = (paint: ReturnType<typeof paintGeometry>, rect: { x: number; y: number; width: number; height: number }) => paint.rects.some((candidate) => overlapBounds(candidate, rect)) || paint.segments.some((segment) => segmentHitsBounds(segment.start, segment.end, rect, segment.padding)) || paint.triangles.some((triangle) => triangleHitsRect(triangle, rect));
+    const paintCache = new Map<string, ReturnType<typeof paintGeometry>>();
+    const paintFor = (object: CanvasObject, entry: typeof rendered[number]) => { const cached = paintCache.get(object.id); if (cached) return cached; const paint = paintGeometry(object, entry); paintCache.set(object.id, paint); return paint; };
+    const paintsOverlap = (a: ReturnType<typeof paintGeometry>, b: ReturnType<typeof paintGeometry>) => {
+      if (a.rects.some((rect) => b.rects.some((candidate) => overlapBounds(rect, candidate)))) return true;
+      if (a.segments.some((segment) => b.rects.some((rect) => segmentHitsBounds(segment.start, segment.end, rect, segment.padding))) || b.segments.some((segment) => a.rects.some((rect) => segmentHitsBounds(segment.start, segment.end, rect, segment.padding)))) return true;
+      if (segmentsOverlap(a.segments, b.segments)) return true;
+      if (a.triangles.some((triangle) => b.rects.some((rect) => triangleHitsRect(triangle, rect))) || b.triangles.some((triangle) => a.rects.some((rect) => triangleHitsRect(triangle, rect)))) return true;
+      if (a.triangles.some((triangle) => b.segments.some((segment) => triangleHitsSegment(triangle, segment))) || b.triangles.some((triangle) => a.segments.some((segment) => triangleHitsSegment(triangle, segment)))) return true;
+      return a.triangles.some((triangle) => b.triangles.some((candidate) => trianglesOverlap(triangle, candidate)));
+    };
+    const paintedOverlap = (firstObject: CanvasObject, first: typeof rendered[number], secondObject: CanvasObject, second: typeof rendered[number]) => paintsOverlap(paintFor(firstObject, first), paintFor(secondObject, second));
+    const connectorContactPoint = (id: string) => {
+      const connector = connectorById.get(id);
+      if (connector) return { x: (connector.route[0].x + connector.route[1].x) / 2, y: (connector.route[0].y + connector.route[1].y) / 2 };
+      const object = byId.get(id);
+      return object ? resolveObjectCenter(object) : undefined;
+    };
+    const connectorPaintPastContacts = (object: Extract<CanvasObject, { kind: 'connector' }>, entry: typeof rendered[number], contacts: Point[]) => {
+      const paint = paintFor(object, entry), cut = (segment: PaintSegment, contact: Point) => {
+        const dx = segment.end.x - segment.start.x, dy = segment.end.y - segment.start.y, lengthSquared = dx * dx + dy * dy;
+        if (!lengthSquared) return [];
+        const distance = Math.sqrt(lengthSquared), t = Math.max(0, Math.min(1, ((contact.x - segment.start.x) * dx + (contact.y - segment.start.y) * dy) / lengthSquared));
+        const nearest = { x: segment.start.x + dx * t, y: segment.start.y + dy * t }, perpendicular = Math.hypot(contact.x - nearest.x, contact.y - nearest.y), clearance = Math.max(4, segment.padding * 4);
+        if (perpendicular >= clearance) return [segment];
+        const half = Math.sqrt(clearance * clearance - perpendicular * perpendicular) / distance, low = Math.max(0, t - half), high = Math.min(1, t + half), pieces: PaintSegment[] = [];
+        if (low > 0) pieces.push({ ...segment, end: { x: segment.start.x + dx * low, y: segment.start.y + dy * low } });
+        if (high < 1) pieces.push({ ...segment, start: { x: segment.start.x + dx * high, y: segment.start.y + dy * high } });
+        return pieces;
+      };
+      const segments = contacts.reduce((pieces, contact) => pieces.flatMap((segment) => cut(segment, contact)), paint.segments);
+      return { ...paint, segments, triangles: paint.triangles.filter((triangle) => !contacts.some((contact) => pointInTriangle(contact, triangle))) };
+    };
+    const overlap = (first: typeof rendered[number], second: typeof rendered[number]) => overlapBounds(first.worldBounds, second.worldBounds);
+    const overlaps: DrawRenderedGeometry['overlaps'] = [];
+    let comparisonCount = 0;
+    for (let firstIndex = 0; firstIndex < rendered.length; firstIndex += 1) {
+      for (let secondIndex = firstIndex + 1; secondIndex < rendered.length; secondIndex += 1) {
+        comparisonCount += 1;
+        const first = rendered[firstIndex], second = rendered[secondIndex], firstObject = byId.get(first.id), secondObject = byId.get(second.id);
+        const broadOverlap = overlap(first, second);
+        if (!broadOverlap) continue;
+        const connectorRelated = (connector: Extract<CanvasObject, { kind: 'connector' }>, candidate: CanvasObject) => connector.fromId === candidate.id || connector.toId === candidate.id
+          || (candidate.kind === 'group' && (contains(candidate.id, connector.fromId) || contains(candidate.id, connector.toId)));
+        const firstRelated = firstObject?.kind === 'connector' && secondObject && connectorRelated(firstObject, secondObject), secondRelated = secondObject?.kind === 'connector' && firstObject && connectorRelated(secondObject, firstObject);
+        const firstEndpointContainer = firstObject?.kind === 'connector' && secondObject && (firstObject.fromId === secondObject.id || firstObject.toId === secondObject.id
+          || (secondObject.kind === 'group' && (contains(secondObject.id, firstObject.fromId) || contains(secondObject.id, firstObject.toId))));
+        const secondEndpointContainer = secondObject?.kind === 'connector' && firstObject && (secondObject.fromId === firstObject.id || secondObject.toId === firstObject.id
+          || (firstObject.kind === 'group' && (contains(firstObject.id, secondObject.fromId) || contains(firstObject.id, secondObject.toId))));
+        const firstLabelBounds = firstEndpointContainer ? connectorById.get(first.id)?.labelBounds?.worldBounds : undefined, secondLabelBounds = secondEndpointContainer ? connectorById.get(second.id)?.labelBounds?.worldBounds : undefined;
+        const relatedLabelOverlap = firstLabelBounds && secondObject && paintHitsRect(paintFor(secondObject, second), firstLabelBounds) ? firstLabelBounds
+          : secondLabelBounds && firstObject && paintHitsRect(paintFor(firstObject, first), secondLabelBounds) ? secondLabelBounds : undefined;
+        const connectorContactIds = firstObject?.kind === 'connector' && secondObject?.kind === 'connector'
+          ? new Set([
+              ...[firstObject.fromId, firstObject.toId].filter((id) => id === secondObject.fromId || id === secondObject.toId),
+              ...[firstObject.fromId, firstObject.toId].filter((id) => id === secondObject.id),
+              ...[secondObject.fromId, secondObject.toId].filter((id) => id === firstObject.id)
+            ]) : new Set<string>();
+        const connectorContactPoints = [...connectorContactIds].map(connectorContactPoint).filter((point): point is Point => point !== undefined);
+        if ((firstRelated || secondRelated) && !relatedLabelOverlap && !connectorContactPoints.length) continue;
+        const visiblePaintOverlap = firstObject && secondObject && (connectorContactPoints.length
+          ? paintsOverlap(connectorPaintPastContacts(firstObject as Extract<CanvasObject, { kind: 'connector' }>, first, connectorContactPoints), connectorPaintPastContacts(secondObject as Extract<CanvasObject, { kind: 'connector' }>, second, connectorContactPoints))
+          : paintedOverlap(firstObject, first, secondObject, second));
+        if (!relatedLabelOverlap && !visiblePaintOverlap) continue;
+        const sharedCompound = firstObject?.kind === 'stroke' && secondObject?.kind === 'stroke'
+          && firstObject.sourceIds?.length === 2 && secondObject.sourceIds?.length === 2
+          && firstObject.sourceIds.every((id, index) => id === secondObject.sourceIds?.[index])
+          && firstObject.sourceIds.includes(firstObject.id) && firstObject.sourceIds.includes(secondObject.id);
+        if (sharedCompound) continue;
+        const bounds = relatedLabelOverlap || broadOverlap;
+        if (!bounds) continue;
+        const containment = (first.kind === 'group' && contains(first.id, second.id)) || (second.kind === 'group' && contains(second.id, first.id));
+        overlaps.push({ firstId: first.id, secondId: second.id, bounds, classification: containment ? 'containment' : 'peer' });
+      }
+    }
+    return {
+      surface: { x: 0, y: 0, width: surfaceRect.width, height: surfaceRect.height },
+      objects: rendered,
+      connectors,
+      overlaps,
+      totalObjectCount: matches.length,
+      missingIds,
+      unrenderedIds: selected.filter(({ id }) => !rendered.some((entry) => entry.id === id)).map(({ id }) => id),
+      comparisonCount,
+      truncated: matches.length > selected.length
+    };
   }
 
   function focusAgentCamera(target: { scope: 'all' | 'selection' | 'ids' | 'bounds'; ids?: string[]; bounds?: { x: number; y: number; width: number; height: number }; padding: number }) {
@@ -406,7 +722,8 @@
     if (movingObjectId && dragLast) {
       const dx = here.x - dragLast.x, dy = here.y - dragLast.y;
       if (dx || dy) {
-        const moved = document.objects.map((object) => object.id === movingObjectId ? moveObject(object, dx, dy) : object);
+        const movingIds = expandCompoundIds(document, [movingObjectId]);
+        const moved = document.objects.map((object) => movingIds.has(object.id) ? moveObject(object, dx, dy) : object);
         history = { ...history, present: withObjects(document, moved) }; dragLast = here; dragMoved = true;
       }
       return;
@@ -454,10 +771,11 @@
       return;
     }
     if (movingObjectId) {
-      const moved = document.objects.find(({ id }) => id === movingObjectId);
-      if (dragMoved && moved && dragOrigin) {
+      const movingIds = expandCompoundIds(document, [movingObjectId]);
+      const moved = document.objects.filter(({ id }) => movingIds.has(id));
+      if (dragMoved && moved.length && dragOrigin) {
         history = { past: [...history.past, dragOrigin], present: document, future: [] };
-        sendNative([{ type: 'put_object', object: moved }], true); queueSave(document);
+        sendNative(moved.map((object) => ({ type: 'put_object' as const, object })), true); queueSave(document);
       }
       movingObjectId = null; dragLast = null; dragOrigin = null; dragMoved = false; drawing = false; start = null;
       try { surface.releasePointerCapture(event.pointerId); } catch { /* Capture may not have been acquired. */ }
@@ -466,7 +784,7 @@
     if (tool === 'pen' && draftPoints.length > 1) { const item: Stroke = { id: uid('stroke'), kind: 'stroke', createdAt: new Date().toISOString(), points: draftPoints, color: drawingColor, width: 3 }; apply(withObjects(document, [...document.objects, item]), { type: 'put_object', object: item }); selectedIds = [item.id]; }
     if (draftShape && start && Math.hypot(here.x - start.x, here.y - start.y) > 4) { const item = { ...draftShape, id: uid(draftShape.kind), to: here }; apply(withObjects(document, [...document.objects, item]), { type: 'put_object', object: item }); selectedIds = [item.id]; }
     if (tool === 'pan') sendNative([{ type: 'set_viewport', viewport }]);
-    if (lasso) { const left = Math.min(lasso.from.x, lasso.to.x), right = Math.max(lasso.from.x, lasso.to.x), top = Math.min(lasso.from.y, lasso.to.y), bottom = Math.max(lasso.from.y, lasso.to.y); selectedIds = document.objects.filter((object) => { const center = resolveObjectCenter(object); return center.x >= left && center.x <= right && center.y >= top && center.y <= bottom; }).map(({ id }) => id); }
+    if (lasso) { const left = Math.min(lasso.from.x, lasso.to.x), right = Math.max(lasso.from.x, lasso.to.x), top = Math.min(lasso.from.y, lasso.to.y), bottom = Math.max(lasso.from.y, lasso.to.y); selectedIds = selectObjectIdsInBounds(document, { left, right, top, bottom }); }
     drawing = false; start = null; draftPoints = []; draftShape = null; lasso = null;
     try { surface.releasePointerCapture(event.pointerId); } catch { /* Capture may not have been acquired. */ }
   }
@@ -484,7 +802,8 @@
     beginNativePointerGesture();
     if (tool === 'eraser') { apply(removeObjects(document, [id]), { type: 'remove_objects', ids: [id] }); selectedIds = []; return; }
     if (tool === 'connector') { selectedIds = selectedIds.includes(id) ? selectedIds : [...selectedIds.slice(-1), id]; if (selectedIds.length === 2) runConversion('connector'); return; }
-    selectedIds = event.shiftKey ? (selectedIds.includes(id) ? selectedIds.filter((value) => value !== id) : [...selectedIds, id]) : [id];
+    const compoundIds = [...expandCompoundIds(document, [id])];
+    selectedIds = event.shiftKey ? (selectedIds.includes(id) ? selectedIds.filter((value) => !compoundIds.includes(value)) : [...new Set([...selectedIds, ...compoundIds])]) : compoundIds;
     if (tool === 'select' && !event.shiftKey) {
       const here = point(event); movingObjectId = id; dragLast = here; dragOrigin = document; dragMoved = false; drawing = true; start = here;
       try { surface.setPointerCapture(event.pointerId); } catch { /* SVG pointer capture is not supported in every browser. */ }
@@ -510,7 +829,7 @@
     if (next !== document) apply(next, { type: 'replace_objects', objects: next.objects });
   }
   function isTextEditingEvent(event: KeyboardEvent) { return event.target instanceof Element && Boolean(event.target.closest('input,textarea,[contenteditable="true"]')); }
-  function selectKeyboard(event: KeyboardEvent, id: string) { if (isTextEditingEvent(event) || (event.key !== 'Enter' && event.key !== ' ')) return; event.preventDefault(); selectedIds = event.shiftKey ? [...new Set([...selectedIds, id])] : [id]; }
+  function selectKeyboard(event: KeyboardEvent, id: string) { if (isTextEditingEvent(event) || (event.key !== 'Enter' && event.key !== ' ')) return; event.preventDefault(); const compoundIds = [...expandCompoundIds(document, [id])]; selectedIds = event.shiftKey ? [...new Set([...selectedIds, ...compoundIds])] : compoundIds; }
   function runConversion(target: 'note' | 'connector' | 'group') { const next = convert(document, selectedIds, target); if (next === document) { status = target === 'connector' ? 'Select two objects to make a connector' : 'Select source material first'; return; } const created = next.objects.at(-1)!; apply(next, { type: 'convert', selectedIds: [...selectedIds], target, resultId: created.id, createdAt: created.createdAt }); selectedIds = [created.id]; conversionOpen = false; status = `Converted to ${target}. Source preserved.`; }
   function restoreSelected() { const selected = selectedObjects[0]; if (!selected?.sourceSnapshot) return; const next = restoreConversion(document, selected.id); apply(next, { type: 'restore_conversion', id: selected.id }); selectedIds = selected.sourceIds || []; status = 'Conversion removed. Source restored.'; }
   function cancelPendingWheelSync() { clearTimeout(wheelTimer); wheelTimer = undefined; }
@@ -579,7 +898,7 @@
       else if (object.kind === 'rectangle') { context.strokeStyle = object.color; context.lineWidth = 2; context.strokeRect(object.from.x, object.from.y, object.to.x - object.from.x, object.to.y - object.from.y); }
       else if (object.kind === 'ellipse') { context.strokeStyle = object.color; context.lineWidth = 2; context.beginPath(); context.ellipse((object.from.x + object.to.x) / 2, (object.from.y + object.to.y) / 2, Math.abs(object.to.x - object.from.x) / 2, Math.abs(object.to.y - object.from.y) / 2, 0, 0, Math.PI * 2); context.stroke(); }
       else if (object.kind === 'arrow') arrow(object.from, object.to, object.color);
-      else if (object.kind === 'connector') { const from = objectIndex.get(object.fromId), to = objectIndex.get(object.toId); if (from && to) { const a = resolveObjectCenter(from), b = resolveObjectCenter(to); arrow(a, b, '#fcaa2d'); if (object.label) { context.save(); context.font = '700 11px monospace'; context.textAlign = 'center'; context.lineWidth = 5; context.strokeStyle = '#000'; context.strokeText(object.label, (a.x + b.x) / 2, (a.y + b.y) / 2 - 10); context.fillStyle = '#fcaa2d'; context.fillText(object.label, (a.x + b.x) / 2, (a.y + b.y) / 2 - 10); context.textAlign = 'start'; context.restore(); } } }
+      else if (object.kind === 'connector') { const from = objectIndex.get(object.fromId), to = objectIndex.get(object.toId); if (from && to) { const a = resolveObjectCenter(from), b = resolveObjectCenter(to), label = connectorLabels.get(object.id); arrow(a, b, '#fcaa2d'); if (object.label && label) { context.save(); context.font = '700 11px monospace'; context.textAlign = 'center'; context.lineWidth = 5; context.strokeStyle = '#000'; context.strokeText(object.label, label.x, label.y); context.fillStyle = '#fcaa2d'; context.fillText(object.label, label.x, label.y); context.textAlign = 'start'; context.restore(); } } }
       else if (object.kind === 'note') { context.fillStyle = '#111'; context.strokeStyle = 'rgba(255,255,255,.18)'; context.fillRect(object.x, object.y, object.width, object.height); context.strokeRect(object.x, object.y, object.width, object.height); context.fillStyle = '#fff'; context.font = '500 16px Arial'; let y = object.y + 30; for (const line of wrappedLines(object.text, (value) => context.measureText(value).width <= object.width - 32)) { if (line) context.fillText(line, object.x + 16, y); y += 22; } if (object.sourceIds?.length) { context.fillStyle = 'rgba(255,255,255,.45)'; context.font = '700 9px monospace'; context.fillText(`CONVERTED · ${object.sourceIds.length} SOURCE`, object.x + 16, object.y + object.height - 10); } }
       else if (object.kind === 'group') { context.strokeStyle = '#fcaa2d'; context.setLineDash([8, 6]); context.strokeRect(object.x, object.y, object.width, object.height); context.setLineDash([]); context.fillStyle = '#fcaa2d'; context.font = '700 11px monospace'; context.fillText(object.label.toUpperCase(), object.x + 12, object.y + 24); }
     }
@@ -635,7 +954,7 @@
             {:else if object.kind === 'arrow'}<line data-object-id={object.id} class:selected class:agent-change={agentAffectedIdSet.has(object.id)} role="button" tabindex="0" aria-label="Arrow" x1={object.from.x} y1={object.from.y} x2={object.to.x} y2={object.to.y} stroke={object.color} stroke-width="2" marker-end="url(#arrowhead)" onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)} />
             {:else if object.kind === 'note'}<g data-object-id={object.id} class:selected class:agent-change={agentAffectedIdSet.has(object.id)} role="button" tabindex="0" aria-label={`Note: ${object.text}`} onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)}><rect x={object.x} y={object.y} width={object.width} height={object.height} rx="4" fill="#111" stroke={selected ? '#fcaa2d' : 'rgba(255,255,255,.18)'} /><foreignObject x={object.x + 16} y={object.y + 14} width={object.width - 32} height={object.height - 28}><textarea xmlns="http://www.w3.org/1999/xhtml" aria-label="Edit note" value={object.text} disabled={nativeRole === 'companion' && (!nativeSession.sessionId || nativeSession.requiresRepair)} onpointerdown={(event) => event.stopPropagation()} oninput={(event) => { if (!companionCanEdit()) return; if (nativeRole !== 'web' && !noteInput.hasPending()) nativeOptimisticVersion += 1; noteInput.schedule(object.id, event.currentTarget.value); }} onblur={() => noteInput.flush(object.id)}></textarea></foreignObject>{#if object.sourceIds?.length}<text x={object.x + 16} y={object.y + object.height - 10} class="provenance">CONVERTED · {object.sourceIds.length} SOURCE</text>{/if}</g>
             {:else if object.kind === 'group'}<g data-object-id={object.id} class:selected class:agent-change={agentAffectedIdSet.has(object.id)} role="button" tabindex="0" aria-label={`Group: ${object.label}`} onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)}><rect x={object.x} y={object.y} width={object.width} height={object.height} rx="4" fill="rgba(252,170,45,.025)" stroke={selected ? '#fcaa2d' : 'rgba(252,170,45,.5)'} stroke-dasharray="8 6" /><text x={object.x + 12} y={object.y + 24} class="group-label">{object.label}</text>{#if selected && tool === 'select'}<rect data-ui="true" class="resize-handle" role="button" tabindex="0" aria-label="Resize group" x={object.x + object.width - 9} y={object.y + object.height - 9} width="18" height="18" rx="2" onpointerdown={(event) => resizePointer(event, object.id)} onkeydown={(event) => resizeKeyboard(event, object.id)} />{/if}</g>
-            {:else if object.kind === 'connector'}{@const from = objectIndex.get(object.fromId)}{@const to = objectIndex.get(object.toId)}{#if from && to}{@const a = resolveObjectCenter(from)}{@const b = resolveObjectCenter(to)}<g class:agent-change={agentAffectedIdSet.has(object.id)}><line data-object-id={object.id} class:selected role="button" tabindex="0" aria-label="Connector" x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#fcaa2d" stroke-width="2" marker-end="url(#arrowhead)" onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)} />{#if object.label}<text class="connector-label" x={(a.x + b.x) / 2} y={(a.y + b.y) / 2 - 10} text-anchor="middle">{object.label}</text>{/if}</g>{/if}{/if}
+            {:else if object.kind === 'connector'}{@const from = objectIndex.get(object.fromId)}{@const to = objectIndex.get(object.toId)}{#if from && to}{@const a = resolveObjectCenter(from)}{@const b = resolveObjectCenter(to)}{@const label = connectorLabels.get(object.id)}<g class:agent-change={agentAffectedIdSet.has(object.id)}><line data-object-id={object.id} class:selected role="button" tabindex="0" aria-label="Connector" x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#fcaa2d" stroke-width="2" marker-end="url(#arrowhead)" onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)} />{#if object.label && label}<text class="connector-label" x={label.x} y={label.y} text-anchor="middle">{object.label}</text>{/if}</g>{/if}{/if}
           {/each}
           {#if draftPoints.length > 1}<path data-ui="true" d={path(draftPoints)} fill="none" stroke={drawingColor} stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />{/if}
           {#if draftShape}{#if draftShape.kind === 'rectangle'}<rect data-ui="true" x={Math.min(draftShape.from.x, draftShape.to.x)} y={Math.min(draftShape.from.y, draftShape.to.y)} width={Math.abs(draftShape.to.x - draftShape.from.x)} height={Math.abs(draftShape.to.y - draftShape.from.y)} fill="transparent" stroke={draftShape.color} />{:else if draftShape.kind === 'ellipse'}<ellipse data-ui="true" cx={(draftShape.from.x + draftShape.to.x) / 2} cy={(draftShape.from.y + draftShape.to.y) / 2} rx={Math.abs(draftShape.to.x - draftShape.from.x) / 2} ry={Math.abs(draftShape.to.y - draftShape.from.y) / 2} fill="transparent" stroke={draftShape.color} />{:else}<line data-ui="true" x1={draftShape.from.x} y1={draftShape.from.y} x2={draftShape.to.x} y2={draftShape.to.y} stroke={draftShape.color} marker-end="url(#arrowhead)" />{/if}{/if}

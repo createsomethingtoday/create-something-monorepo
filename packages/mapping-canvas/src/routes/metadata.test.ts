@@ -49,7 +49,7 @@ describe('public identity and discovery', () => {
 
   it('scopes PNG connector-label paint state before later objects render', () => {
     expect(page).toContain('for (const object of renderObjects)');
-    expect(page).toContain("if (object.label) { context.save(); context.font = '700 11px monospace'");
+    expect(page).toContain("if (object.label && label) { context.save(); context.font = '700 11px monospace'");
     expect(page).toContain("context.textAlign = 'start'; context.restore();");
   });
 });

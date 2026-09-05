@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DOCUMENT_VERSION, commit, convert, createDocument, createObjectCenterResolver, objectBounds, objectCenter, parse, redo, removeObjects, resizeGroup, restoreConversion, serialize, undo, withObjects, type CanvasObject, type Connector, type History, type Stroke } from './document';
+import { DOCUMENT_VERSION, commit, convert, createDocument, createObjectCenterResolver, expandCompoundIds, objectBounds, objectCenter, parse, redo, removeObjects, resizeGroup, restoreConversion, selectObjectIdsInBounds, serialize, undo, withObjects, type CanvasObject, type Connector, type History, type Stroke } from './document';
 const stroke = (id: string, x = 10): Stroke => ({ id, kind: 'stroke', createdAt: '2026-08-27T00:00:00Z', points: [{ x, y: 20 }, { x: x + 40, y: 60 }], color: '#f7f4ee', width: 3 });
 describe('mapping canvas contract', () => {
   it('creates a versioned document', () => expect(createDocument().version).toBe(DOCUMENT_VERSION));
@@ -134,6 +134,21 @@ describe('mapping canvas contract', () => {
     const result = removeObjects(grouped, ['a']);
     expect(result.objects.some(({ kind }) => kind === 'connector')).toBe(false);
     expect(result.objects.find(({ kind }) => kind === 'group')).toMatchObject({ childIds: ['b'] });
+  });
+  it('selects and erases every member of a valid portable compound while leaving provenance alone', () => {
+    const first = { ...stroke('compound-a'), sourceIds: ['compound-a', 'compound-b'] };
+    const second = { ...stroke('compound-b', 100), sourceIds: ['compound-a', 'compound-b'] };
+    const provenance = { ...stroke('converted'), sourceIds: ['absent-source'] };
+    const document = withObjects(createDocument(), [first, second, provenance]);
+    expect([...expandCompoundIds(document, [second.id])]).toEqual([second.id, first.id]);
+    expect(removeObjects(document, [first.id]).objects).toEqual([provenance]);
+    expect(removeObjects(document, [provenance.id]).objects).toEqual([first, second]);
+  });
+  it('expands a lasso hit on one compound member to the complete semantic arrow', () => {
+    const shaft = { ...stroke('lasso-shaft', 10), sourceIds: ['lasso-shaft', 'lasso-head'] };
+    const head = { ...stroke('lasso-head', 500), sourceIds: ['lasso-shaft', 'lasso-head'] };
+    const document = withObjects(createDocument(), [shaft, head]);
+    expect(selectObjectIdsInBounds(document, { left: 490, right: 560, top: 0, bottom: 100 })).toEqual(['lasso-head', 'lasso-shaft']);
   });
   it('removes transitively dependent connector chains', () => {
     const source = withObjects(createDocument(), [

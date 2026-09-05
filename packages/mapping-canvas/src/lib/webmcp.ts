@@ -1,8 +1,8 @@
-import { objectBounds, type CanvasDocument, type CanvasObject, type Point, type Tool } from './document';
+import { createObjectCenterResolver, expandCompoundIds, objectBounds, type CanvasDocument, type CanvasObject, type Point, type Tool } from './document';
 import type { CanvasOperation } from './paired-session';
 import { DRAWING_PALETTE } from './palette';
 
-export const DRAW_WEBMCP_VERSION = '2026-09-04.1';
+export const DRAW_WEBMCP_VERSION = '2026-09-05.1';
 export const REPLACE_CONFIRMATION = 'REPLACE CANVAS';
 export const RESET_CONFIRMATION = 'RESET CANVAS';
 export const DELETE_CONFIRMATION = 'DELETE OBJECTS';
@@ -16,6 +16,19 @@ export type DrawState = {
   surface?: { width: number; height: number };
 };
 
+type RenderedBounds = { x: number; y: number; width: number; height: number };
+export type DrawRenderedGeometry = {
+  surface: RenderedBounds;
+  objects: Array<{ id: string; kind: CanvasObject['kind']; worldBounds: RenderedBounds; viewportBounds: RenderedBounds; clipped: boolean }>;
+  connectors: Array<{ id: string; fromId: string; toId: string; route: Point[]; labelBounds?: { worldBounds: RenderedBounds; viewportBounds: RenderedBounds } }>;
+  overlaps: Array<{ firstId: string; secondId: string; bounds: RenderedBounds; classification: 'peer' | 'containment' }>;
+  totalObjectCount: number;
+  missingIds?: string[];
+  unrenderedIds?: string[];
+  comparisonCount?: number;
+  truncated?: boolean;
+};
+
 export type DrawTransitionKind = 'create' | 'update' | 'remove' | 'convert' | 'restore' | 'history' | 'reset';
 export type DrawController = {
   getState: () => DrawState;
@@ -27,6 +40,7 @@ export type DrawController = {
   reset: () => Promise<void> | void;
   animate: (kind: DrawTransitionKind, affectedIds: string[], preserveViewport?: boolean) => string | void;
   focus?: (target: { scope: 'all' | 'selection' | 'ids' | 'bounds'; ids?: string[]; bounds?: { x: number; y: number; width: number; height: number }; padding: number }) => Promise<{ ids?: string[]; bounds?: { x: number; y: number; width: number; height: number } } | void> | { ids?: string[]; bounds?: { x: number; y: number; width: number; height: number } } | void;
+  renderedGeometry?: (input: { ids?: string[]; limit: number }) => Promise<DrawRenderedGeometry> | DrawRenderedGeometry;
 };
 
 export type DrawWebMcpTool = {
@@ -192,6 +206,32 @@ function smoothPoints(points: Point[]) {
   return result;
 }
 
+function semanticArrowPoints(start: Point, end: Point, curvature: number, looseness: number) {
+  const dx = end.x - start.x, dy = end.y - start.y, distance = Math.hypot(dx, dy);
+  const normal = { x: -dy / distance, y: dx / distance };
+  const control = { x: (start.x + end.x) / 2 + normal.x * distance * curvature * .5, y: (start.y + end.y) / 2 + normal.y * distance * curvature * .5 };
+  return Array.from({ length: 33 }, (_, index) => {
+    const t = index / 32, inverse = 1 - t;
+    const organic = Math.sin(t * Math.PI * 6) * Math.sin(t * Math.PI) * distance * .015 * looseness;
+    return {
+      x: inverse * inverse * start.x + 2 * inverse * t * control.x + t * t * end.x + normal.x * organic,
+      y: inverse * inverse * start.y + 2 * inverse * t * control.y + t * t * end.y + normal.y * organic
+    };
+  });
+}
+
+function semanticArrowHead(points: Point[], weight: number, style: 'vee' | 'triangle' | 'barbed') {
+  const end = points.at(-1)!, previous = points.at(-2)!;
+  const angle = Math.atan2(end.y - previous.y, end.x - previous.x), length = Math.max(14, Math.min(64, weight * 5));
+  const wing = .62;
+  const left = { x: end.x - Math.cos(angle - wing) * length, y: end.y - Math.sin(angle - wing) * length };
+  const right = { x: end.x - Math.cos(angle + wing) * length, y: end.y - Math.sin(angle + wing) * length };
+  if (style === 'vee') return [left, end, right];
+  if (style === 'triangle') return [left, end, right, left];
+  const notch = { x: end.x - Math.cos(angle) * length * .55, y: end.y - Math.sin(angle) * length * .55 };
+  return [left, end, right, notch, left];
+}
+
 function translated(object: CanvasObject, dx: number, dy: number): CanvasObject {
   const point = ({ x, y }: Point) => ({ x: x + dx, y: y + dy });
   if (object.kind === 'stroke') return { ...object, points: object.points.map(point) };
@@ -201,15 +241,527 @@ function translated(object: CanvasObject, dx: number, dy: number): CanvasObject 
 }
 
 function descendants(document: CanvasDocument, ids: string[]) {
-  const result = new Set(ids), byId = new Map(document.objects.map((object) => [object.id, object]));
-  const stack = [...ids];
+  const result = expandCompoundIds(document, ids), byId = new Map(document.objects.map((object) => [object.id, object]));
+  const stack = [...result];
   while (stack.length) {
     const id = stack.pop()!;
     const object = byId.get(id);
     if (object?.kind !== 'group') continue;
-    for (const childId of object.childIds) if (!result.has(childId)) { result.add(childId); stack.push(childId); }
+    for (const childId of expandCompoundIds(document, object.childIds)) if (!result.has(childId)) { result.add(childId); stack.push(childId); }
   }
   return result;
+}
+
+function independentRoots(document: CanvasDocument, ids: string[]) {
+  const byId = new Map(document.objects.map((object) => [object.id, object]));
+  const seen = new Set<string>(), roots: string[] = [];
+  for (const id of ids) {
+    const object = byId.get(id), compound = expandCompoundIds(document, [id]);
+    const root = compound.size > 1 ? object?.sourceIds?.find((candidate) => compound.has(candidate)) ?? id : id;
+    if (!seen.has(root)) { seen.add(root); roots.push(root); }
+  }
+  return roots;
+}
+
+function estimatedTextWidth(value: string) {
+  return Array.from(value).reduce((width, character) => width + (character.codePointAt(0)! > 255 ? 12 : 7), 0);
+}
+
+function segmentHitsBounds(start: Point, end: Point, bounds: { x: number; y: number; width: number; height: number }, padding: number) {
+  const expanded = { x: bounds.x - padding, y: bounds.y - padding, width: bounds.width + padding * 2, height: bounds.height + padding * 2 };
+  let minimum = 0, maximum = 1;
+  for (const [origin, delta, low, high] of [[start.x, end.x - start.x, expanded.x, expanded.x + expanded.width], [start.y, end.y - start.y, expanded.y, expanded.y + expanded.height]] as const) {
+    if (delta === 0) { if (origin < low || origin > high) return false; continue; }
+    const first = (low - origin) / delta, second = (high - origin) / delta;
+    minimum = Math.max(minimum, Math.min(first, second)); maximum = Math.min(maximum, Math.max(first, second));
+    if (minimum > maximum) return false;
+  }
+  return true;
+}
+
+function connectorMarkerBounds(start: Point, end: Point) {
+  const distance = Math.hypot(end.x - start.x, end.y - start.y), unit = distance ? { x: (end.x - start.x) / distance, y: (end.y - start.y) / distance } : { x: 1, y: 0 }, normal = { x: -unit.y, y: unit.x };
+  const points = [{ x: end.x + unit.x * 2, y: end.y + unit.y * 2 }, { x: end.x - unit.x * 18 + normal.x * 7, y: end.y - unit.y * 18 + normal.y * 7 }, { x: end.x - unit.x * 18 - normal.x * 7, y: end.y - unit.y * 18 - normal.y * 7 }];
+  const xs = points.map(({ x }) => x), ys = points.map(({ y }) => y), x = Math.min(...xs), y = Math.min(...ys);
+  return { x, y, width: Math.max(...xs) - x, height: Math.max(...ys) - y };
+}
+
+function connectorPaintHitsBounds(start: Point, end: Point, bounds: { x: number; y: number; width: number; height: number }) {
+  const marker = connectorMarkerBounds(start, end);
+  return segmentHitsBounds(start, end, bounds, 4) || (marker.x < bounds.x + bounds.width && marker.x + marker.width > bounds.x && marker.y < bounds.y + bounds.height && marker.y + marker.height > bounds.y);
+}
+
+type ConnectorRoute = { key: string; ids: Set<string>; segments: Array<{ start: Point; end: Point }>; minX: number; maxX: number; minY: number; maxY: number; fallbackTop: number };
+type ConnectorRouteNode = { minX: number; maxX: number; minY: number; maxY: number; routes?: ConnectorRoute[]; left?: ConnectorRouteNode; right?: ConnectorRouteNode };
+
+function connectorRouteIndex(segments: Array<{ id: string; start: Point; end: Point }>) {
+  const pointKey = (point: Point) => `${Object.is(point.x, -0) ? 0 : point.x},${Object.is(point.y, -0) ? 0 : point.y}`;
+  const grouped = new Map<string, ConnectorRoute>(), keyById = new Map<string, string>();
+  for (const segment of segments) {
+    const endpoints = [pointKey(segment.start), pointKey(segment.end)].sort(), key = `${endpoints[0]}|${endpoints[1]}`;
+    keyById.set(segment.id, key);
+    const existing = grouped.get(key);
+    const marker = connectorMarkerBounds(segment.start, segment.end);
+    if (existing) {
+      existing.ids.add(segment.id);
+      if (!existing.segments.some(({ start, end }) => start.x === segment.start.x && start.y === segment.start.y && end.x === segment.end.x && end.y === segment.end.y)) existing.segments.push({ start: segment.start, end: segment.end });
+      existing.minX = Math.min(existing.minX, segment.start.x - 4, segment.end.x - 4, marker.x);
+      existing.maxX = Math.max(existing.maxX, segment.start.x + 4, segment.end.x + 4, marker.x + marker.width);
+      existing.minY = Math.min(existing.minY, segment.start.y - 4, segment.end.y - 4, marker.y);
+      existing.maxY = Math.max(existing.maxY, segment.start.y + 4, segment.end.y + 4, marker.y + marker.height);
+      existing.fallbackTop = Math.min(existing.fallbackTop, Math.min(segment.start.y - 4, segment.end.y - 4, marker.y) - 16);
+      continue;
+    }
+    grouped.set(key, {
+      key, ids: new Set([segment.id]), segments: [{ start: segment.start, end: segment.end }],
+      minX: Math.min(segment.start.x - 4, segment.end.x - 4, marker.x), maxX: Math.max(segment.start.x + 4, segment.end.x + 4, marker.x + marker.width),
+      minY: Math.min(segment.start.y, segment.end.y, marker.y) - 4,
+      maxY: Math.max(segment.start.y, segment.end.y, marker.y + marker.height) + 4,
+      fallbackTop: Math.min(segment.start.y - 4, segment.end.y - 4, marker.y) - 16
+    });
+  }
+  const routes = [...grouped.values()];
+  const build = (items: ConnectorRoute[]): ConnectorRouteNode | undefined => {
+    if (!items.length) return undefined;
+    let minX = Number.POSITIVE_INFINITY, maxX = Number.NEGATIVE_INFINITY, minY = Number.POSITIVE_INFINITY, maxY = Number.NEGATIVE_INFINITY;
+    for (const route of items) { minX = Math.min(minX, route.minX); maxX = Math.max(maxX, route.maxX); minY = Math.min(minY, route.minY); maxY = Math.max(maxY, route.maxY); }
+    const node = { minX, maxX, minY, maxY };
+    if (items.length <= 8) return { ...node, routes: items };
+    const horizontal = maxX - minX >= maxY - minY, sorted = [...items].sort((a, b) => horizontal ? a.minX + a.maxX - b.minX - b.maxX : a.minY + a.maxY - b.minY - b.maxY);
+    const middle = Math.ceil(sorted.length / 2);
+    return { ...node, left: build(sorted.slice(0, middle)), right: build(sorted.slice(middle)) };
+  };
+  const tree = build(routes), fallback = [...routes].sort((a, b) => a.fallbackTop - b.fallbackTop || a.key.localeCompare(b.key)).slice(0, 2);
+  const query = (bounds: { x: number; y: number; width: number; height: number }) => {
+    if (!tree) return [];
+    const matches: ConnectorRoute[] = [], stack = [tree];
+    while (stack.length) {
+      const node = stack.pop()!;
+      if (node.maxX < bounds.x || node.minX > bounds.x + bounds.width || node.maxY < bounds.y || node.minY > bounds.y + bounds.height) continue;
+      if (node.routes) matches.push(...node.routes);
+      else { if (node.left) stack.push(node.left); if (node.right) stack.push(node.right); }
+    }
+    return matches;
+  };
+  return { keyById, query, fallback };
+}
+
+function stackedLabelY(index: Map<string, number>, x: number, baseY: number, width: number, blocked?: (bounds: { x: number; y: number; width: number; height: number }) => boolean, blockedFallbackTop?: number) {
+  const firstCell = Math.floor((x - width / 2) / 32), lastCell = Math.floor((x + width / 2) / 32), band = Math.floor(baseY / 16);
+  let top = baseY - 12;
+  for (let cell = firstCell; cell <= lastCell; cell += 1) for (let offset = -1; offset <= 1; offset += 1) {
+    const occupiedTop = index.get(`stack:${cell}:${band + offset}`);
+    if (occupiedTop !== undefined) top = Math.min(top, occupiedTop - 20);
+  }
+  let blockedAttempts = 0, usedFallback = false;
+  while (true) {
+    let occupiedTop: number | undefined;
+    const firstBand = Math.floor(top / 16), lastBand = Math.floor((top + 16) / 16);
+    for (let cell = firstCell; cell <= lastCell; cell += 1) for (let paintedBand = firstBand; paintedBand <= lastBand; paintedBand += 1) {
+      const candidate = index.get(`paint:${cell}:${paintedBand}`);
+      if (candidate !== undefined && top + 20 > candidate) occupiedTop = occupiedTop === undefined ? candidate : Math.min(occupiedTop, candidate);
+    }
+    if (occupiedTop !== undefined) { top = Math.min(top, occupiedTop - 20); continue; }
+    if (blocked?.({ x: x - width / 2, y: top, width, height: 16 })) {
+      if (blockedAttempts < 128) { top -= 20; blockedAttempts += 1; continue; }
+      if (!usedFallback && blockedFallbackTop !== undefined) { top = Math.min(top - 20, blockedFallbackTop); usedFallback = true; continue; }
+    }
+    break;
+  }
+  for (let cell = firstCell; cell <= lastCell; cell += 1) {
+    const stackKey = `stack:${cell}:${band}`, stackTop = index.get(stackKey);
+    index.set(stackKey, stackTop === undefined ? top : Math.min(stackTop, top));
+    for (let paintedBand = Math.floor(top / 16); paintedBand <= Math.floor((top + 16) / 16); paintedBand += 1) {
+      const paintKey = `paint:${cell}:${paintedBand}`, paintTop = index.get(paintKey);
+      index.set(paintKey, paintTop === undefined ? top : Math.min(paintTop, top));
+    }
+  }
+  return top + 12;
+}
+
+export function connectorLabelLayout(objects: CanvasObject[]) {
+  const byId = new Map(objects.map((object) => [object.id, object])), resolveCenter = createObjectCenterResolver(objects);
+  const occupiedSlots = new Map<string, number>(), result = new Map<string, { x: number; y: number; width: number; height: number }>();
+  const connectors = objects.filter((object): object is Extract<CanvasObject, { kind: 'connector' }> => object.kind === 'connector').sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+  const segments = connectors.flatMap((connector) => { const from = byId.get(connector.fromId), to = byId.get(connector.toId); return from && to ? [{ id: connector.id, start: resolveCenter(from), end: resolveCenter(to) }] : []; });
+  const routes = connectorRouteIndex(segments);
+  for (const connector of connectors.filter(({ label }) => Boolean(label))) {
+    const from = byId.get(connector.fromId), to = byId.get(connector.toId);
+    if (!from || !to) continue;
+    const a = resolveCenter(from), b = resolveCenter(to), width = estimatedTextWidth(connector.label) + 5, x = (a.x + b.x) / 2;
+    const routeKey = routes.keyById.get(connector.id);
+    const fallbackTop = routes.fallback.find(({ key }) => key !== routeKey)?.fallbackTop;
+    const baseY = (a.y + b.y) / 2 - 10, y = stackedLabelY(occupiedSlots, x, baseY, width, (bounds) => routes.query(bounds).some((route) => route.key !== routeKey && route.segments.some((segment) => connectorPaintHitsBounds(segment.start, segment.end, bounds))), fallbackTop);
+    result.set(connector.id, { x, y, width, height: 16 });
+  }
+  return result;
+}
+
+function paintedLayoutBounds(objects: CanvasObject[], allObjects: CanvasObject[], labels: ReturnType<typeof connectorLabelLayout>, externalPadding = 0) {
+  const bounds = objectBounds(objects, allObjects);
+  let minX = bounds.x, minY = bounds.y, maxX = bounds.x + bounds.width, maxY = bounds.y + bounds.height;
+  for (const object of objects) {
+    if (object.kind === 'group') maxX = Math.max(maxX, object.x + 12 + estimatedTextWidth(object.label));
+    if (object.kind !== 'connector' || !object.label) continue;
+    const label = labels.get(object.id);
+    if (!label) continue;
+    minX = Math.min(minX, label.x - label.width / 2); maxX = Math.max(maxX, label.x + label.width / 2);
+    minY = Math.min(minY, label.y - 12); maxY = Math.max(maxY, label.y + 4);
+  }
+  const paintPadding = Math.max(0, ...objects.map((object) => {
+    if (object.kind === 'stroke') return object.width / 2;
+    if (object.kind === 'arrow') return 19;
+    if (object.kind === 'connector') return 19;
+    if (object.kind === 'rectangle' || object.kind === 'ellipse' || object.kind === 'group') return 1;
+    if (object.kind === 'note') return .5;
+    return 0;
+  }));
+  const padding = paintPadding + externalPadding;
+  return { x: minX - padding, y: minY - padding, width: maxX - minX + padding * 2, height: maxY - minY + padding * 2 };
+}
+
+function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: 'flow' | 'hierarchy' | 'loop' | 'orbit' | 'swimlane', gap: number, laneById: Map<string, string>, orientation?: 'horizontal' | 'vertical') {
+  const roots = [...rootIds].sort();
+  const labels = connectorLabelLayout(document.objects);
+  const rootByMember = new Map<string, string>();
+  for (const root of roots) for (const id of descendants(document, [root])) rootByMember.set(id, root);
+  const baseRootBounds = new Map(roots.map((id) => {
+    const moving = descendants(document, [id]);
+    return [id, paintedLayoutBounds(document.objects.filter((object) => moving.has(object.id)), document.objects, labels)] as const;
+  }));
+  const byId = new Map(document.objects.map((object) => [object.id, object]));
+  const resolveCenter = createObjectCenterResolver(document.objects);
+  const externalPadding = new Map(roots.map((id) => [id, 0]));
+  for (const connector of document.objects) {
+    if (connector.kind !== 'connector' || !connector.label) continue;
+    const from = rootByMember.get(connector.fromId), to = rootByMember.get(connector.toId);
+    if (!from || !to || from === to) continue;
+    const labelPadding = (estimatedTextWidth(connector.label) + 5 + gap) / 2;
+    for (const [rootId, endpointId] of [[from, connector.fromId], [to, connector.toId]] as const) {
+      const endpoint = byId.get(endpointId), bounds = baseRootBounds.get(rootId)!;
+      if (!endpoint) continue;
+      const center = resolveCenter(endpoint);
+      const endpointOffset = Math.max(center.x - bounds.x, bounds.x + bounds.width - center.x, center.y - bounds.y, bounds.y + bounds.height - center.y);
+      externalPadding.set(rootId, Math.max(externalPadding.get(rootId)!, labelPadding + endpointOffset));
+    }
+  }
+  const rootBounds = new Map(roots.map((id) => {
+    const moving = descendants(document, [id]);
+    return [id, paintedLayoutBounds(document.objects.filter((object) => moving.has(object.id)), document.objects, labels, externalPadding.get(id))] as const;
+  }));
+  const width = Math.max(...[...rootBounds.values()].map((bounds) => bounds.width)), height = Math.max(...[...rootBounds.values()].map((bounds) => bounds.height));
+  const anchor = { x: Math.min(...[...rootBounds.values()].map(({ x }) => x)), y: Math.min(...[...rootBounds.values()].map(({ y }) => y)) };
+  const targets = new Map<string, Point>();
+  const positionedBaseBounds = (id: string) => {
+    const target = targets.get(id)!, expanded = rootBounds.get(id)!, base = baseRootBounds.get(id)!;
+    return { x: target.x + base.x - expanded.x, y: target.y + base.y - expanded.y, width: base.width, height: base.height };
+  };
+  const positionedCenter = (rootId: string, object: CanvasObject) => {
+    const center = resolveCenter(object), target = targets.get(rootId)!, bounds = rootBounds.get(rootId)!;
+    return { x: center.x + target.x - bounds.x, y: center.y + target.y - bounds.y };
+  };
+  const layoutCenterCache = new Map<string, { root?: string; center: Point }>();
+  const rebuildLayoutCenters = () => {
+    layoutCenterCache.clear();
+    const queue: string[] = [];
+    for (const object of document.objects) {
+      const root = rootByMember.get(object.id);
+      if (root && targets.has(root)) layoutCenterCache.set(object.id, { root, center: positionedCenter(root, object) });
+      else if (object.kind !== 'connector') layoutCenterCache.set(object.id, { root, center: resolveCenter(object) });
+      if (layoutCenterCache.has(object.id)) queue.push(object.id);
+    }
+    for (let index = 0; index < queue.length; index += 1) for (const connectorId of dependentConnectors.get(queue[index]) ?? []) {
+      if (layoutCenterCache.has(connectorId)) continue;
+      const connector = byId.get(connectorId);
+      if (connector?.kind !== 'connector') continue;
+      const start = layoutCenterCache.get(connector.fromId), end = layoutCenterCache.get(connector.toId);
+      if (!start || !end) continue;
+      layoutCenterCache.set(connectorId, { root: rootByMember.get(connectorId), center: { x: (start.center.x + end.center.x) / 2, y: (start.center.y + end.center.y) / 2 } });
+      queue.push(connectorId);
+    }
+    for (const object of document.objects) if (!layoutCenterCache.has(object.id)) layoutCenterCache.set(object.id, { root: rootByMember.get(object.id), center: resolveCenter(object) });
+  };
+  const layoutCenter = (object: CanvasObject): { root?: string; center: Point } => { if (!layoutCenterCache.size) rebuildLayoutCenters(); return layoutCenterCache.get(object.id)!; };
+  const rootsByObject = new Map(document.objects.map((object) => [object.id, new Set(rootByMember.has(object.id) ? [rootByMember.get(object.id)!] : [])]));
+  const dependentConnectors = new Map<string, string[]>();
+  for (const object of document.objects) {
+    if (object.kind !== 'connector' || rootByMember.has(object.id)) continue;
+    for (const endpointId of [object.fromId, object.toId]) { const bucket = dependentConnectors.get(endpointId) ?? []; bucket.push(object.id); dependentConnectors.set(endpointId, bucket); }
+  }
+  const pendingRootPropagation = [...rootsByObject].filter(([, objectRoots]) => objectRoots.size).map(([id]) => id);
+  for (let index = 0; index < pendingRootPropagation.length; index += 1) {
+    const sourceId = pendingRootPropagation[index], sourceRoots = rootsByObject.get(sourceId)!;
+    for (const connectorId of dependentConnectors.get(sourceId) ?? []) {
+      const connectorRoots = rootsByObject.get(connectorId)!;
+      let changed = false;
+      for (const root of sourceRoots) if (!connectorRoots.has(root)) { connectorRoots.add(root); changed = true; }
+      if (changed) pendingRootPropagation.push(connectorId);
+    }
+  }
+  const layoutRoots = (object: CanvasObject) => rootsByObject.get(object.id) ?? new Set<string>();
+  const sameEndpointRoot = (fromRoots: Set<string>, toRoots: Set<string>) => fromRoots.size === 1 && toRoots.size === 1 && [...fromRoots][0] === [...toRoots][0];
+  const adjacency = new Map(roots.map((id) => [id, new Set<string>()]));
+  for (const connector of document.objects) {
+    if (connector.kind !== 'connector') continue;
+    const fromObject = byId.get(connector.fromId), toObject = byId.get(connector.toId);
+    if (!fromObject || !toObject) continue;
+    for (const from of layoutRoots(fromObject)) for (const to of layoutRoots(toObject)) if (from !== to) adjacency.get(from)!.add(to);
+  }
+  const intersects = (a: { x: number; y: number; width: number; height: number }, b: { x: number; y: number; width: number; height: number }) => a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+  const containsPoint = (bounds: { x: number; y: number; width: number; height: number }, point: Point) => point.x >= bounds.x && point.x <= bounds.x + bounds.width && point.y >= bounds.y && point.y <= bounds.y + bounds.height;
+  const separatedByGap = (a: { x: number; y: number; width: number; height: number }, b: { x: number; y: number; width: number; height: number }) => a.x + a.width + gap <= b.x || b.x + b.width + gap <= a.x || a.y + a.height + gap <= b.y || b.y + b.height + gap <= a.y;
+  const segmentIntersects = (start: Point, end: Point, bounds: { x: number; y: number; width: number; height: number }) => segmentHitsBounds(start, end, bounds, gap + 19);
+  const connectors = document.objects.filter((object): object is Extract<CanvasObject, { kind: 'connector' }> => object.kind === 'connector').sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+  const positionedLabels = () => {
+    const occupied = new Map<string, number>(), labels = new Map<string, { x: number; y: number; width: number; height: number }>();
+    const segments = connectors.flatMap((connector) => {
+      const fromObject = byId.get(connector.fromId), toObject = byId.get(connector.toId);
+      if (!fromObject || !toObject) return [];
+      return [{ id: connector.id, start: layoutCenter(fromObject).center, end: layoutCenter(toObject).center }];
+    });
+    const routes = connectorRouteIndex(segments);
+    for (const connector of connectors) {
+      if (!connector.label) continue;
+      const from = rootByMember.get(connector.fromId), to = rootByMember.get(connector.toId), fromObject = byId.get(connector.fromId), toObject = byId.get(connector.toId);
+      if (!fromObject || !toObject) continue;
+      const endpointRoots = new Set([...layoutRoots(fromObject), ...layoutRoots(toObject)]);
+      if (!endpointRoots.size) continue;
+      const start = layoutCenter(fromObject).center, end = layoutCenter(toObject).center, width = estimatedTextWidth(connector.label) + 5, x = (start.x + end.x) / 2;
+      const routeKey = routes.keyById.get(connector.id), fallbackTop = routes.fallback.find(({ key }) => key !== routeKey)?.fallbackTop;
+      const baseY = (start.y + end.y) / 2 - 10, y = stackedLabelY(occupied, x, baseY, width, (bounds) => routes.query(bounds).some((route) => route.key !== routeKey && route.segments.some((segment) => connectorPaintHitsBounds(segment.start, segment.end, bounds))), fallbackTop);
+      labels.set(connector.id, { x: x - width / 2, y: y - 12, width, height: 16 });
+    }
+    return labels;
+  };
+  const relocate = (id: string, axis: 'x' | 'y') => {
+    for (let attempt = 0; attempt <= roots.length; attempt += 1) {
+      const target = targets.get(id)!;
+      targets.set(id, axis === 'x' ? { x: target.x + width + gap, y: target.y } : { x: target.x, y: target.y + height + gap });
+      layoutCenterCache.clear();
+      const candidate = positionedBaseBounds(id);
+      if (!roots.some((other) => other !== id && !separatedByGap(candidate, positionedBaseBounds(other)))) return;
+    }
+    throw new Error('Layout could not relocate a connector obstruction.');
+  };
+  const routeConnectorShafts = (axis: 'x' | 'y', preservedRoot?: string, global = false) => {
+    const preservedAxes = new Map(connectors.map((connector) => {
+      const from = rootByMember.get(connector.fromId), to = rootByMember.get(connector.toId), fromObject = byId.get(connector.fromId), toObject = byId.get(connector.toId);
+      if ((!from && !to) || !fromObject || !toObject) return [connector.id, axis] as const;
+      const start = layoutCenter(fromObject).center, end = layoutCenter(toObject).center;
+      return [connector.id, Math.abs(end.x - start.x) < Math.abs(end.y - start.y) ? 'x' : 'y'] as const;
+    }));
+    if (!global) {
+      for (const connector of connectors) {
+        const from = rootByMember.get(connector.fromId), to = rootByMember.get(connector.toId), fromObject = byId.get(connector.fromId), toObject = byId.get(connector.toId);
+        if (!fromObject || !toObject) continue;
+        const fromRoots = layoutRoots(fromObject), toRoots = layoutRoots(toObject), endpointRoots = new Set([...fromRoots, ...toRoots]);
+        if (!endpointRoots.size || (from && from === to) || sameEndpointRoot(fromRoots, toRoots)) continue;
+        let cleared = false;
+        for (let attempt = 0; attempt <= roots.length; attempt += 1) {
+          const start = layoutCenter(fromObject).center, end = layoutCenter(toObject).center, conflict = roots.find((id) => {
+            if (id === from || id === to) return false;
+            const bounds = positionedBaseBounds(id);
+            return endpointRoots.has(id) ? !containsPoint(bounds, start) && !containsPoint(bounds, end) && segmentHitsBounds(start, end, bounds, 0) : segmentIntersects(start, end, bounds);
+          });
+          if (!conflict) { cleared = true; break; }
+          const alternate = to === preservedRoot ? from : from === preservedRoot ? to : (to ?? from), movingId = conflict === preservedRoot && alternate ? alternate : conflict;
+          const opposite = fromRoots.has(conflict) ? [...toRoots][0] : toRoots.has(conflict) ? [...fromRoots][0] : undefined;
+          const movingAxis = preservedAxes.get(connector.id)!, oppositeObject = fromRoots.has(conflict) ? toObject : toRoots.has(conflict) ? fromObject : undefined;
+          relocate(oppositeObject?.kind === 'connector' ? conflict : (opposite ?? movingId), movingAxis);
+        }
+        if (!cleared) throw new Error('Layout could not clear every connector-shaft obstruction.');
+      }
+      return;
+    }
+    for (let pass = 0; pass < 128; pass += 1) {
+      let moved = false;
+      for (const connector of connectors) {
+        const from = rootByMember.get(connector.fromId), to = rootByMember.get(connector.toId), fromObject = byId.get(connector.fromId), toObject = byId.get(connector.toId);
+        if (!fromObject || !toObject) continue;
+        const fromRoots = layoutRoots(fromObject), toRoots = layoutRoots(toObject), endpointRoots = new Set([...fromRoots, ...toRoots]);
+        if (!endpointRoots.size || (from && from === to) || sameEndpointRoot(fromRoots, toRoots)) continue;
+        const start = layoutCenter(fromObject).center, end = layoutCenter(toObject).center, conflict = roots.find((id) => {
+          if (id === from || id === to) return false;
+          const bounds = positionedBaseBounds(id);
+          return endpointRoots.has(id) ? !containsPoint(bounds, start) && !containsPoint(bounds, end) && segmentHitsBounds(start, end, bounds, 0) : segmentIntersects(start, end, bounds);
+        });
+        if (!conflict) continue;
+        const preservedConflict = conflict === preservedRoot;
+        const alternate = to === preservedRoot ? from : from === preservedRoot ? to : (to ?? from), movingId = preservedConflict && alternate ? alternate : conflict;
+        const movingAxis = preservedAxes.get(connector.id)!;
+        const opposite = fromRoots.has(conflict) ? [...toRoots][0] : toRoots.has(conflict) ? [...fromRoots][0] : undefined;
+        const oppositeObject = fromRoots.has(conflict) ? toObject : toRoots.has(conflict) ? fromObject : undefined;
+        relocate(oppositeObject?.kind === 'connector' ? conflict : (opposite ?? movingId), movingAxis);
+        moved = true;
+        break;
+      }
+      if (!moved) return;
+    }
+    throw new Error('Layout could not converge while routing connector shafts.');
+  };
+  const routeConnectors = (axis: 'x' | 'y', preservedRoot?: string) => {
+    for (let pass = 0; pass < 128; pass += 1) {
+      let move: { id: string } | undefined;
+      const labels = positionedLabels();
+      for (const connector of connectors) {
+        const from = rootByMember.get(connector.fromId), to = rootByMember.get(connector.toId), fromObject = byId.get(connector.fromId), toObject = byId.get(connector.toId);
+        if (!fromObject || !toObject) continue;
+        const fromRoots = layoutRoots(fromObject), toRoots = layoutRoots(toObject), endpointRoots = new Set([...fromRoots, ...toRoots]);
+        if (!endpointRoots.size) continue;
+        const labelBounds = labels.get(connector.id);
+        if (!labelBounds) continue;
+        const internalRoot = sameEndpointRoot(fromRoots, toRoots) ? [...fromRoots][0] : undefined;
+        const labelConflict = labelBounds && roots.find((id) => (from !== to || id !== from) && id !== internalRoot && intersects(positionedBaseBounds(id), { x: labelBounds!.x - gap, y: labelBounds!.y - gap, width: labelBounds!.width + gap * 2, height: labelBounds!.height + gap * 2 }));
+        const conflict = labelConflict;
+        if (!conflict) continue;
+        const transitiveOpposite = fromRoots.has(conflict) ? [...toRoots][0] : toRoots.has(conflict) ? [...fromRoots][0] : undefined;
+        const id = transitiveOpposite ?? (conflict === from ? (to ?? from) : conflict === to ? (from ?? to) : conflict === preservedRoot ? (from && from !== preservedRoot ? from : to && to !== preservedRoot ? to : conflict) : conflict);
+        move = { id };
+        break;
+      }
+      if (!move) return;
+      relocate(move.id, axis);
+    }
+    throw new Error('Layout could not converge while routing connectors.');
+  };
+  const settleConnectorRouting = (axis: 'x' | 'y', preservedRoot?: string, globalShafts = true) => {
+    for (let pass = 0; pass < 16; pass += 1) {
+      const before = roots.map((id) => ({ ...targets.get(id)! }));
+      routeConnectorShafts(axis, preservedRoot, globalShafts);
+      routeConnectors(axis, preservedRoot);
+      if (roots.every((id, index) => targets.get(id)!.x === before[index].x && targets.get(id)!.y === before[index].y)) return;
+    }
+    throw new Error('Layout could not jointly converge connector shafts and labels.');
+  };
+  if (mode === 'loop' || mode === 'orbit') {
+    const orbiting = mode === 'orbit' ? roots.slice(1) : roots;
+    const hubBounds = rootBounds.get(roots[0])!;
+    if (mode === 'orbit') targets.set(roots[0], { x: hubBounds.x, y: hubBounds.y });
+    if (mode === 'loop' && orbiting.length === 1) { targets.set(orbiting[0], anchor); return { targets, bounds: rootBounds, layerCount: 1, laneCount: 0 }; }
+    const diameter = Math.max(width, height) + gap;
+    let radius = diameter;
+    const separated = () => {
+      const ids = [...targets.keys()];
+      for (let first = 0; first < ids.length; first += 1) for (let second = first + 1; second < ids.length; second += 1) {
+        const a = targets.get(ids[first])!, b = targets.get(ids[second])!, aBounds = rootBounds.get(ids[first])!, bBounds = rootBounds.get(ids[second])!;
+        if (!(a.x + aBounds.width + gap <= b.x || b.x + bBounds.width + gap <= a.x || a.y + aBounds.height + gap <= b.y || b.y + bBounds.height + gap <= a.y)) return false;
+      }
+      return true;
+    };
+    const shaftsClear = () => connectors.every((connector) => {
+      const fromObject = byId.get(connector.fromId), toObject = byId.get(connector.toId);
+      if (!fromObject || !toObject) return true;
+      const fromRoots = layoutRoots(fromObject), toRoots = layoutRoots(toObject), endpointRoots = new Set([...fromRoots, ...toRoots]);
+      if (!endpointRoots.size || sameEndpointRoot(fromRoots, toRoots)) return true;
+      const start = layoutCenter(fromObject).center, end = layoutCenter(toObject).center;
+      return !roots.some((id) => {
+        const bounds = positionedBaseBounds(id);
+        if (endpointRoots.has(id) && (containsPoint(bounds, start) || containsPoint(bounds, end))) return false;
+        return endpointRoots.has(id) ? segmentHitsBounds(start, end, bounds, 0) : segmentIntersects(start, end, bounds);
+      });
+    });
+    for (let attempt = 0; attempt < 32; attempt += 1) {
+      if (mode === 'orbit') targets.set(roots[0], { x: hubBounds.x, y: hubBounds.y }); else targets.clear();
+      const center = mode === 'orbit'
+        ? { x: hubBounds.x + hubBounds.width / 2, y: hubBounds.y + hubBounds.height / 2 }
+        : { x: anchor.x + radius + width / 2, y: anchor.y + radius + height / 2 };
+      orbiting.forEach((id, index) => {
+        const angle = -Math.PI / 2 + index * Math.PI * 2 / Math.max(1, orbiting.length), bounds = rootBounds.get(id)!;
+        targets.set(id, { x: center.x + Math.cos(angle) * radius - bounds.width / 2, y: center.y + Math.sin(angle) * radius - bounds.height / 2 });
+      });
+      layoutCenterCache.clear();
+      if (separated() && (shaftsClear() || attempt === 31)) break;
+      radius *= 1.25;
+      if (attempt === 31) throw new Error('Circular layout could not satisfy bounded object clearance.');
+    }
+    settleConnectorRouting('y', mode === 'orbit' ? roots[0] : undefined);
+    return { targets, bounds: rootBounds, layerCount: mode === 'orbit' ? 2 : 1, laneCount: 0 };
+  }
+  if (mode === 'swimlane') {
+    const lanes = [...new Set(roots.map((id) => laneById.get(id) ?? 'Unassigned'))].sort();
+    for (const [laneIndex, lane] of lanes.entries()) {
+      roots.filter((id) => (laneById.get(id) ?? 'Unassigned') === lane).forEach((id, itemIndex) => targets.set(id, orientation === 'vertical'
+        ? { x: anchor.x + itemIndex * (width + gap), y: anchor.y + laneIndex * (height + gap * 2) }
+        : { x: anchor.x + laneIndex * (width + gap * 2), y: anchor.y + itemIndex * (height + gap) }));
+    }
+    settleConnectorRouting(orientation === 'vertical' ? 'x' : 'y', undefined, false);
+    return { targets, bounds: rootBounds, layerCount: 0, laneCount: lanes.length };
+  }
+  const reverse = new Map(roots.map((id) => [id, new Set<string>()]));
+  for (const [from, toIds] of adjacency) for (const to of toIds) reverse.get(to)!.add(from);
+  const visited = new Set<string>(), order: string[] = [];
+  const visit = (id: string) => { if (visited.has(id)) return; visited.add(id); [...adjacency.get(id)!].sort().forEach(visit); order.push(id); };
+  roots.forEach(visit);
+  const assigned = new Set<string>(), components: string[][] = [];
+  const collect = (id: string, component: string[]) => { if (assigned.has(id)) return; assigned.add(id); component.push(id); [...reverse.get(id)!].sort().forEach((next) => collect(next, component)); };
+  [...order].reverse().forEach((id) => { if (assigned.has(id)) return; const component: string[] = []; collect(id, component); components.push(component.sort()); });
+  components.sort((a, b) => a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0);
+  const componentById = new Map<string, number>();
+  components.forEach((component, index) => component.forEach((id) => componentById.set(id, index)));
+  const incoming = components.map(() => new Set<number>()), outgoing = components.map(() => new Set<number>());
+  for (const [from, toIds] of adjacency) for (const to of toIds) {
+    const source = componentById.get(from)!, target = componentById.get(to)!;
+    if (source !== target) { outgoing[source].add(target); incoming[target].add(source); }
+  }
+  const levels = components.map(() => 0), queue = components.map((_, index) => index).filter((index) => incoming[index].size === 0).sort((a, b) => components[a][0] < components[b][0] ? -1 : components[a][0] > components[b][0] ? 1 : 0);
+  const pendingIncoming = incoming.map((entries) => new Set(entries));
+  while (queue.length) {
+    const source = queue.shift()!;
+    for (const target of [...outgoing[source]].sort((a, b) => components[a][0] < components[b][0] ? -1 : components[a][0] > components[b][0] ? 1 : 0)) {
+      levels[target] = Math.max(levels[target], levels[source] + 1);
+      pendingIncoming[target].delete(source);
+      if (!pendingIncoming[target].size) { queue.push(target); queue.sort((a, b) => components[a][0] < components[b][0] ? -1 : components[a][0] > components[b][0] ? 1 : 0); }
+    }
+  }
+  const idsByLevel = new Map<number, string[]>();
+  components.forEach((component, index) => { const bucket = idsByLevel.get(levels[index]) ?? []; bucket.push(...component); idsByLevel.set(levels[index], bucket.sort()); });
+  const vertical = orientation ? orientation === 'vertical' : mode === 'hierarchy';
+  const undirected = new Map(roots.map((id) => [id, new Set<string>()]));
+  for (const [from, toIds] of adjacency) for (const to of toIds) { undirected.get(from)!.add(to); undirected.get(to)!.add(from); }
+  const weaklyAssigned = new Set<string>(), weakComponents: string[][] = [];
+  for (const root of roots) {
+    if (weaklyAssigned.has(root)) continue;
+    const component: string[] = [], pending = [root];
+    while (pending.length) {
+      const id = pending.pop()!;
+      if (weaklyAssigned.has(id)) continue;
+      weaklyAssigned.add(id); component.push(id);
+      pending.push(...[...undirected.get(id)!].sort().reverse());
+    }
+    weakComponents.push(component.sort());
+  }
+  let bandOffset = 0;
+  for (const component of weakComponents) {
+    const componentLevels = new Map<number, string[]>();
+    for (const id of component) {
+      const level = levels[componentById.get(id)!], bucket = componentLevels.get(level) ?? [];
+      bucket.push(id); componentLevels.set(level, bucket.sort());
+    }
+    for (const [level, ids] of componentLevels) ids.forEach((id, index) => targets.set(id, !vertical
+      ? { x: anchor.x + level * (width + gap), y: anchor.y + (bandOffset + index) * (height + gap) }
+      : { x: anchor.x + (bandOffset + index) * (width + gap), y: anchor.y + level * (height + gap) }));
+    bandOffset += Math.max(...[...componentLevels.values()].map((ids) => ids.length)) + 1;
+  }
+  for (const component of weakComponents) {
+    const componentSet = new Set(component);
+    const componentLevels = new Map<number, string[]>();
+    for (const id of component) { const level = levels[componentById.get(id)!], bucket = componentLevels.get(level) ?? []; bucket.push(id); componentLevels.set(level, bucket); }
+    for (const [level, ids] of [...componentLevels].sort(([a], [b]) => a - b)) {
+      if (level === 0) continue;
+      const entries = ids.map((id) => {
+        const bounds = positionedBaseBounds(id), current = vertical ? bounds.x + bounds.width / 2 : bounds.y + bounds.height / 2;
+        const predecessors = [...reverse.get(id)!].filter((candidate) => componentSet.has(candidate));
+        const predecessorCenters = predecessors.map((candidate) => { const candidateBounds = positionedBaseBounds(candidate); return vertical ? candidateBounds.x + candidateBounds.width / 2 : candidateBounds.y + candidateBounds.height / 2; });
+        return { id, current, desired: predecessorCenters.length ? predecessorCenters.reduce((sum, value) => sum + value, 0) / predecessorCenters.length : current };
+      }).sort((a, b) => a.desired - b.desired || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+      const step = (vertical ? width : height) + gap, packed = entries.map(({ desired }, index) => index ? Math.max(desired, entries[index - 1].desired) : desired);
+      for (let index = 1; index < packed.length; index += 1) packed[index] = Math.max(packed[index], packed[index - 1] + step);
+      const shift = entries.reduce((sum, entry) => sum + entry.desired, 0) / entries.length - packed.reduce((sum, value) => sum + value, 0) / packed.length;
+      entries.forEach((entry, index) => { const target = targets.get(entry.id)!, delta = packed[index] + shift - entry.current; targets.set(entry.id, vertical ? { x: target.x + delta, y: target.y } : { x: target.x, y: target.y + delta }); });
+    }
+  }
+  settleConnectorRouting(vertical ? 'x' : 'y');
+  return { targets, bounds: rootBounds, layerCount: idsByLevel.size, laneCount: 0 };
 }
 
 function boundsDependenciesAvailable(objects: CanvasObject[], allObjects: CanvasObject[]) {
@@ -337,6 +889,54 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
             return { ...base, from: object.from, to: object.to, color: object.color };
           }),
           truncated: matches.length > limit
+        };
+        const stringState = { truncated: false };
+        const bounded = boundProjectionStrings(projection, stringState) as typeof projection;
+        return { ...bounded, stringsTruncated: stringState.truncated };
+      }
+    },
+    {
+      name: 'draw_get_rendered_geometry', title: 'Inspect rendered Draw geometry',
+      description: 'Read actual post-render object bounds, connector routes, label bounds, viewport clipping, and overlaps from the current web canvas. This capability is unavailable in native shells without a rendered web surface.',
+      inputSchema: {
+        type: 'object', additionalProperties: false, properties: {
+          ids: { type: 'array', maxItems: 200, uniqueItems: true, items: { type: 'string', minLength: 1, maxLength: 240 } },
+          limit: { type: 'integer', minimum: 1, maximum: 200, default: 50 }
+        }
+      },
+      annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+      execute: async (input) => {
+        if (!controller.renderedGeometry) throw new Error('Rendered geometry requires the rendered web surface and is unavailable in this Draw environment.');
+        let ids: string[] | undefined;
+        if (input.ids !== undefined) {
+          if (!Array.isArray(input.ids) || input.ids.length > 200 || input.ids.some((id) => typeof id !== 'string' || !id.length || id.length > 240) || new Set(input.ids).size !== input.ids.length) throw new Error('ids must contain at most 200 unique non-empty IDs of at most 240 characters.');
+          ids = input.ids as string[];
+        }
+        if (input.limit !== undefined && (typeof input.limit !== 'number' || !Number.isInteger(input.limit) || input.limit < 1 || input.limit > 200)) throw new Error('limit must be an integer from 1 to 200.');
+        const limit = typeof input.limit === 'number' ? input.limit : 50;
+        const state = controller.getState(), initialRevision = drawRevision(state.document);
+        const rendered = await controller.renderedGeometry({ ...(ids ? { ids } : {}), limit });
+        const finalRevision = drawRevision(controller.getState().document);
+        if (finalRevision !== initialRevision) throw new Error(`Canvas changed while rendered geometry was measured. Inspect again with revision ${finalRevision}.`);
+        const projection = {
+          version: DRAW_WEBMCP_VERSION,
+          revision: finalRevision,
+          surface: rendered.surface,
+          summary: {
+            objectCount: rendered.totalObjectCount,
+            returnedObjectCount: rendered.objects.length,
+            connectorCount: rendered.connectors.length,
+            overlapCount: rendered.overlaps.length,
+            comparisonCount: rendered.comparisonCount ?? 0,
+            missingIdCount: rendered.missingIds?.length ?? 0,
+            unrenderedIdCount: rendered.unrenderedIds?.length ?? 0
+          },
+          objects: rendered.objects,
+          connectors: rendered.connectors,
+          overlaps: rendered.overlaps,
+          missingIds: rendered.missingIds ?? [],
+          unrenderedIds: rendered.unrenderedIds ?? [],
+          truncated: rendered.truncated === true || rendered.objects.length < rendered.totalObjectCount
         };
         const stringState = { truncated: false };
         const bounded = boundProjectionStrings(projection, stringState) as typeof projection;
@@ -481,6 +1081,40 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
       }
     },
     {
+      name: 'draw_create_freehand_arrow', title: 'Create a freehand arrow',
+      description: 'Create a deterministic natural-looking arrow from semantic start, end, curvature, looseness, named color, weight, and arrowhead inputs. The result compiles only to portable v1 strokes.',
+      inputSchema: { type: 'object', required: ['start', 'end'], additionalProperties: false, properties: { expectedRevision: { type: 'string' }, start: pointSchema, end: pointSchema, curvature: { type: 'number', minimum: -1, maximum: 1, default: 0 }, looseness: { type: 'number', minimum: 0, maximum: 1, default: .35 }, color: { type: 'string', enum: DRAWING_PALETTE.map(({ id }) => id), default: 'chalk' }, weight: { type: 'number', minimum: 1, maximum: 24, default: 4 }, arrowhead: { type: 'string', enum: ['vee', 'triangle', 'barbed'], default: 'vee' } } },
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+      execute: async (input) => {
+        const state = controller.getState(), currentRevision = drawRevision(state.document);
+        if (typeof input.expectedRevision === 'string' && input.expectedRevision !== currentRevision) throw new Error(`Canvas revision is stale. Inspect again and retry with revision ${currentRevision}.`);
+        const readPoint = (value: unknown, label: string): Point => {
+          if (!value || typeof value !== 'object') throw new Error(`${label} requires finite x and y.`);
+          const point = value as Record<string, unknown>;
+          if (typeof point.x !== 'number' || !Number.isFinite(point.x) || typeof point.y !== 'number' || !Number.isFinite(point.y)) throw new Error(`${label} requires finite x and y.`);
+          if (Math.abs(point.x) > 1_000_000 || Math.abs(point.y) > 1_000_000) throw new Error(`${label} coordinates must stay within 1,000,000 world units.`);
+          return { x: point.x, y: point.y };
+        };
+        const start = readPoint(input.start, 'start'), end = readPoint(input.end, 'end');
+        if (Math.hypot(end.x - start.x, end.y - start.y) < 8) throw new Error('Freehand arrow endpoints must be at least 8 world units apart.');
+        const curvature = finite(input.curvature, 0), looseness = finite(input.looseness, .35), weight = finite(input.weight, 4);
+        if (curvature < -1 || curvature > 1) throw new Error('curvature must be from -1 to 1.');
+        if (looseness < 0 || looseness > 1) throw new Error('looseness must be from 0 to 1.');
+        if (weight < 1 || weight > 24) throw new Error('weight must be from 1 to 24.');
+        const arrowhead = (input.arrowhead ?? 'vee') as 'vee' | 'triangle' | 'barbed';
+        if (!['vee', 'triangle', 'barbed'].includes(arrowhead)) throw new Error('arrowhead must be vee, triangle, or barbed.');
+        const color = colorValue((input.color ?? 'chalk') as NamedColor), points = semanticArrowPoints(start, end, curvature, looseness);
+        const shaftId = identity('stroke'), headId = identity('stroke'), compoundIds = [shaftId.id, headId.id];
+        const objects: CanvasObject[] = [
+          { ...shaftId, kind: 'stroke', points, color, width: weight, sourceIds: compoundIds },
+          { ...headId, kind: 'stroke', points: semanticArrowHead(points, weight, arrowhead), color, width: weight, sourceIds: compoundIds }
+        ];
+        const { before, after } = await controller.applyOperations([{ type: 'replace_objects', objects: [...state.document.objects, ...objects] }], currentRevision);
+        const objectIds = changedObjectIds(before, after);
+        return { ...finish('create', objectIds, before, after), objectIds, geometry: { start, end, curvature, looseness, weight, arrowhead, pointCount: points.length, compiledKinds: ['stroke'] } };
+      }
+    },
+    {
       name: 'draw_patch_objects', title: 'Patch Draw objects',
       description: 'Partially update text, labels, position, size, named color, or layer arrangement without reconstructing stored objects. Group translation moves descendants as a unit.',
       inputSchema: { type: 'object', required: ['patches'], additionalProperties: false, properties: { expectedRevision: { type: 'string' }, patches: { type: 'array', minItems: 1, maxItems: 100, items: { type: 'object', required: ['id'], additionalProperties: false, properties: { id: { type: 'string' }, text: { type: 'string', maxLength: 4000 }, label: { type: 'string', maxLength: 240 }, color: { type: 'string', enum: DRAWING_PALETTE.map(({ id }) => id) }, translate: { type: 'object', required: ['dx', 'dy'], additionalProperties: false, properties: { dx: { type: 'number' }, dy: { type: 'number' } } }, size: { type: 'object', additionalProperties: false, properties: { width: { type: 'number', minimum: 1 }, height: { type: 'number', minimum: 1 } } }, arrange: { type: 'string', enum: ['front', 'back', 'forward', 'backward'] } } } } } },
@@ -507,7 +1141,10 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
           }
           if (patch.color !== undefined) {
             if (object.kind !== 'stroke' && object.kind !== 'rectangle' && object.kind !== 'ellipse' && object.kind !== 'arrow') throw new Error(`color cannot patch ${object.kind}.`);
-            object = { ...object, color: colorValue(patch.color) };
+            const color = colorValue(patch.color), coloring = expandCompoundIds({ ...before, objects }, [id]);
+            objects = objects.map((candidate) => coloring.has(candidate.id) && (candidate.kind === 'stroke' || candidate.kind === 'rectangle' || candidate.kind === 'ellipse' || candidate.kind === 'arrow') ? { ...candidate, color } : candidate);
+            coloring.forEach((coloringId) => touched.add(coloringId));
+            object = objects[index];
           }
           objects[index] = object;
           touched.add(id);
@@ -566,8 +1203,9 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
       execute: async (input) => {
         assertRevision(controller, input.expectedRevision);
-        const ids = Array.isArray(input.ids) ? input.ids.map(String) : [];
-        if (!ids.length) throw new Error('ids must contain at least one object ID.');
+        const requestedIds = Array.isArray(input.ids) ? input.ids.map(String) : [];
+        if (!requestedIds.length) throw new Error('ids must contain at least one object ID.');
+        const ids = independentRoots(controller.getState().document, requestedIds);
         const before = controller.getState().document, selected = ids.map((id) => before.objects.find((object) => object.id === id));
         if (selected.some((object) => !object || object.kind === 'connector')) throw new Error('Layout IDs must reference existing non-connector objects.');
         const claimedDescendants = new Map<string, string>();
@@ -578,7 +1216,10 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
             claimedDescendants.set(nestedId, id);
           }
         }
-        const bounds = selected.map((object) => objectBounds([object!], before.objects));
+        const bounds = selected.map((object, index) => {
+          const compound = expandCompoundIds(before, [ids[index]]);
+          return objectBounds(compound.size > 1 ? before.objects.filter(({ id }) => compound.has(id)) : [object!], before.objects);
+        });
         const anchor = { x: Math.min(...bounds.map(({ x }) => x)), y: Math.min(...bounds.map(({ y }) => y)) };
         const gap = Math.max(0, Math.min(400, finite(input.gap, 48))), direction = String(input.direction);
         const columns = direction === 'grid' ? Math.max(1, Math.min(12, Math.floor(finite(input.columns, Math.ceil(Math.sqrt(ids.length)))))) : direction === 'row' ? ids.length : 1;
@@ -595,6 +1236,48 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
         });
         const result = await controller.applyOperations([{ type: 'replace_objects', objects }], drawRevision(before));
         return finish('update', [...movedIds], result.before, result.after);
+      }
+    },
+    {
+      name: 'draw_auto_layout', title: 'Automatically lay out a Draw graph',
+      description: 'Arrange independent object or group roots as a topology-aware flow, hierarchy, loop, orbit, or swimlane. Existing connectors determine directed flow; cycles and disconnected components are handled deterministically.',
+      inputSchema: { type: 'object', required: ['ids', 'mode'], additionalProperties: false, properties: { expectedRevision: { type: 'string' }, ids: { type: 'array', minItems: 1, maxItems: 100, uniqueItems: true, items: { type: 'string', minLength: 1, maxLength: 240 } }, mode: { type: 'string', enum: ['flow', 'hierarchy', 'loop', 'orbit', 'swimlane'] }, orientation: { type: 'string', enum: ['horizontal', 'vertical'] }, gap: { type: 'number', minimum: 16, maximum: 400, default: 64 }, lanes: { type: 'array', maxItems: 100, items: { type: 'object', required: ['id', 'lane'], additionalProperties: false, properties: { id: { type: 'string', minLength: 1, maxLength: 240 }, lane: { type: 'string', minLength: 1, maxLength: 120 } } } } } },
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+      execute: async (input) => {
+        assertRevision(controller, input.expectedRevision);
+        if (!Array.isArray(input.ids) || !input.ids.length || input.ids.length > 100 || input.ids.some((id) => typeof id !== 'string' || !id.length || id.length > 240) || new Set(input.ids).size !== input.ids.length) throw new Error('ids must contain 1 to 100 unique existing root IDs.');
+        const ids = independentRoots(controller.getState().document, input.ids as string[]).sort();
+        const mode = String(input.mode) as 'flow' | 'hierarchy' | 'loop' | 'orbit' | 'swimlane';
+        if (!['flow', 'hierarchy', 'loop', 'orbit', 'swimlane'].includes(mode)) throw new Error('mode must be flow, hierarchy, loop, orbit, or swimlane.');
+        const before = controller.getState().document, selected = ids.map((id) => before.objects.find((object) => object.id === id));
+        if (selected.some((object) => !object || object.kind === 'connector')) throw new Error('Auto-layout IDs must reference existing non-connector objects.');
+        const claimed = new Map<string, string>();
+        for (const id of ids) for (const nestedId of descendants(before, [id])) {
+          const owner = claimed.get(nestedId);
+          if (owner) throw new Error(`Auto-layout roots overlap through group membership (${owner} and ${id}); pass independent roots only.`);
+          claimed.set(nestedId, id);
+        }
+        const lanes = asRecords(input.lanes, 'lanes', 100), laneById = new Map<string, string>();
+        for (const lane of lanes) {
+          const id = requiredId(lane.id, 'lane.id'), name = requiredText(lane.lane, 'lane.lane');
+          if (!ids.includes(id)) throw new Error(`Lane references unknown layout root: ${id}.`);
+          if (name.length > 120 || laneById.has(id)) throw new Error('Lane names must be at most 120 characters and root assignments must be unique.');
+          laneById.set(id, name);
+        }
+        const gap = finite(input.gap, 64);
+        if (gap < 16 || gap > 400) throw new Error('gap must be from 16 to 400.');
+        const orientation = input.orientation === 'horizontal' || input.orientation === 'vertical' ? input.orientation : undefined;
+        const layout = graphLayoutTargets(before, ids, mode, gap, laneById, orientation);
+        let objects = before.objects;
+        const movedIds = new Set<string>();
+        for (const id of ids) {
+          const moving = descendants(before, [id]), bounds = layout.bounds.get(id)!, target = layout.targets.get(id)!;
+          assertMovableConnectorEndpoints(objects, moving);
+          objects = objects.map((object) => moving.has(object.id) ? translated(object, target.x - bounds.x, target.y - bounds.y) : object);
+          moving.forEach((movingId) => movedIds.add(movingId));
+        }
+        const result = await controller.applyOperations([{ type: 'replace_objects', objects }], drawRevision(before));
+        return { ...finish('update', [...movedIds], result.before, result.after), mode, orientation: orientation ?? (mode === 'hierarchy' ? 'vertical' : 'horizontal'), placedIds: ids, layerCount: layout.layerCount, laneCount: layout.laneCount };
       }
     },
     {
@@ -747,7 +1430,8 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
       inputSchema: { type: 'object', required: ['ids'], additionalProperties: false, properties: { ids: { type: 'array', uniqueItems: true, items: { type: 'string' } } } },
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
       execute: async (input) => {
-        controller.select(Array.isArray(input.ids) ? input.ids.map(String) : []);
+        const requested = Array.isArray(input.ids) ? input.ids.map(String) : [];
+        controller.select([...expandCompoundIds(controller.getState().document, requested)]);
         const selected = compactIdList(controller.getState().selectedIds);
         return { ok: true, selectedIds: selected.preview, selectedCount: selected.count, ...(selected.truncated ? { selectedIdsTruncated: true } : {}) };
       }
