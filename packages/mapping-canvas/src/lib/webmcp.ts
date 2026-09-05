@@ -256,21 +256,32 @@ function estimatedTextWidth(value: string) {
   return Array.from(value).reduce((width, character) => width + (character.codePointAt(0)! > 255 ? 12 : 7), 0);
 }
 
+export function connectorLabelLayout(objects: CanvasObject[]) {
+  const byId = new Map(objects.map((object) => [object.id, object])), resolveCenter = createObjectCenterResolver(objects);
+  const placed: Array<{ x: number; y: number; width: number; height: number }> = [], result = new Map<string, { x: number; y: number; width: number; height: number }>();
+  const intersects = (a: { x: number; y: number; width: number; height: number }, b: { x: number; y: number; width: number; height: number }) => a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+  for (const connector of objects.filter((object): object is Extract<CanvasObject, { kind: 'connector' }> => object.kind === 'connector' && Boolean(object.label)).sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0)) {
+    const from = byId.get(connector.fromId), to = byId.get(connector.toId);
+    if (!from || !to) continue;
+    const a = resolveCenter(from), b = resolveCenter(to), width = estimatedTextWidth(connector.label) + 5, x = (a.x + b.x) / 2;
+    let y = (a.y + b.y) / 2 - 10, bounds = { x: x - width / 2, y: y - 12, width, height: 16 };
+    while (placed.some((other) => intersects(bounds, other))) { y -= 20; bounds = { ...bounds, y: y - 12 }; }
+    placed.push(bounds); result.set(connector.id, { x, y, width, height: 16 });
+  }
+  return result;
+}
+
 function paintedLayoutBounds(objects: CanvasObject[], allObjects: CanvasObject[], externalPadding = 0) {
   const bounds = objectBounds(objects, allObjects);
-  const byId = new Map(allObjects.map((object) => [object.id, object]));
-  const resolveCenter = createObjectCenterResolver(allObjects);
+  const labels = connectorLabelLayout(allObjects);
   let minX = bounds.x, minY = bounds.y, maxX = bounds.x + bounds.width, maxY = bounds.y + bounds.height;
   for (const object of objects) {
     if (object.kind === 'group') maxX = Math.max(maxX, object.x + 12 + estimatedTextWidth(object.label));
     if (object.kind !== 'connector' || !object.label) continue;
-    const from = byId.get(object.fromId), to = byId.get(object.toId);
-    if (!from || !to) continue;
-    const fromCenter = resolveCenter(from), toCenter = resolveCenter(to);
-    const center = { x: (fromCenter.x + toCenter.x) / 2, y: (fromCenter.y + toCenter.y) / 2 - 10 };
-    const halfWidth = (estimatedTextWidth(object.label) + 5) / 2;
-    minX = Math.min(minX, center.x - halfWidth); maxX = Math.max(maxX, center.x + halfWidth);
-    minY = Math.min(minY, center.y - 12); maxY = Math.max(maxY, center.y + 4);
+    const label = labels.get(object.id);
+    if (!label) continue;
+    minX = Math.min(minX, label.x - label.width / 2); maxX = Math.max(maxX, label.x + label.width / 2);
+    minY = Math.min(minY, label.y - 12); maxY = Math.max(maxY, label.y + 4);
   }
   const paintPadding = Math.max(0, ...objects.map((object) => {
     if (object.kind === 'stroke') return object.width / 2;
@@ -331,32 +342,64 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
   };
   const intersects = (a: { x: number; y: number; width: number; height: number }, b: { x: number; y: number; width: number; height: number }) => a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
   const separatedByGap = (a: { x: number; y: number; width: number; height: number }, b: { x: number; y: number; width: number; height: number }) => a.x + a.width + gap <= b.x || b.x + b.width + gap <= a.x || a.y + a.height + gap <= b.y || b.y + b.height + gap <= a.y;
-  const labeledConnectors = document.objects.filter((object): object is Extract<CanvasObject, { kind: 'connector' }> => object.kind === 'connector' && Boolean(object.label)).sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
-  const routeConnectorLabels = (axis: 'x' | 'y', preservedRoot?: string) => {
+  const segmentIntersects = (start: Point, end: Point, bounds: { x: number; y: number; width: number; height: number }) => {
+    const expanded = { x: bounds.x - gap - 19, y: bounds.y - gap - 19, width: bounds.width + (gap + 19) * 2, height: bounds.height + (gap + 19) * 2 };
+    let minimum = 0, maximum = 1;
+    for (const [origin, delta, low, high] of [[start.x, end.x - start.x, expanded.x, expanded.x + expanded.width], [start.y, end.y - start.y, expanded.y, expanded.y + expanded.height]] as const) {
+      if (delta === 0) { if (origin < low || origin > high) return false; continue; }
+      const first = (low - origin) / delta, second = (high - origin) / delta;
+      minimum = Math.max(minimum, Math.min(first, second)); maximum = Math.min(maximum, Math.max(first, second));
+      if (minimum > maximum) return false;
+    }
+    return true;
+  };
+  const connectors = document.objects.filter((object): object is Extract<CanvasObject, { kind: 'connector' }> => object.kind === 'connector').sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+  const relocate = (id: string, axis: 'x' | 'y') => {
+    for (let attempt = 0; attempt < 32; attempt += 1) {
+      const target = targets.get(id)!;
+      targets.set(id, axis === 'x' ? { x: target.x + width + gap, y: target.y } : { x: target.x, y: target.y + height + gap });
+      const candidate = positionedBaseBounds(id);
+      if (!roots.some((other) => other !== id && !separatedByGap(candidate, positionedBaseBounds(other)))) return;
+    }
+    throw new Error('Layout could not relocate a connector obstruction.');
+  };
+  const routeConnectorShafts = (axis: 'x' | 'y', preservedRoot?: string) => {
+    for (const connector of connectors) {
+      const from = rootByMember.get(connector.fromId), to = rootByMember.get(connector.toId), fromObject = byId.get(connector.fromId), toObject = byId.get(connector.toId);
+      if (!from || !to || from === to || !fromObject || !toObject || !targets.has(from) || !targets.has(to)) continue;
+      const start = positionedCenter(from, fromObject), end = positionedCenter(to, toObject), conflict = roots.find((id) => id !== from && id !== to && segmentIntersects(start, end, positionedBaseBounds(id)));
+      if (!conflict) continue;
+      relocate(conflict === preservedRoot ? (to === preservedRoot ? from : to) : conflict, axis);
+    }
+  };
+  const routeConnectors = (axis: 'x' | 'y', preservedRoot?: string) => {
     for (let pass = 0; pass < 128; pass += 1) {
-      let move: { id: string; labelBounds: { x: number; y: number; width: number; height: number } } | undefined;
-      for (const connector of labeledConnectors) {
+      let move: { id: string } | undefined;
+      const placedLabels: Array<{ x: number; y: number; width: number; height: number }> = [];
+      for (const connector of connectors) {
         const from = rootByMember.get(connector.fromId), to = rootByMember.get(connector.toId), fromObject = byId.get(connector.fromId), toObject = byId.get(connector.toId);
         if (!from || !to || from === to || !fromObject || !toObject || !targets.has(from) || !targets.has(to)) continue;
-        const fromCenter = positionedCenter(from, fromObject), toCenter = positionedCenter(to, toObject), halfWidth = (estimatedTextWidth(connector.label) + 5) / 2;
-        const labelBounds = { x: (fromCenter.x + toCenter.x) / 2 - halfWidth - gap, y: (fromCenter.y + toCenter.y) / 2 - 22 - gap, width: halfWidth * 2 + gap * 2, height: 16 + gap * 2 };
-        const conflict = roots.find((id) => intersects(positionedBaseBounds(id), labelBounds));
+        const fromCenter = positionedCenter(from, fromObject), toCenter = positionedCenter(to, toObject);
+        let labelBounds: { x: number; y: number; width: number; height: number } | undefined;
+        if (connector.label) {
+          const width = estimatedTextWidth(connector.label) + 5, x = (fromCenter.x + toCenter.x) / 2;
+          let y = (fromCenter.y + toCenter.y) / 2 - 22;
+          labelBounds = { x: x - width / 2, y, width, height: 16 };
+          while (placedLabels.some((other) => intersects(labelBounds!, other))) { y -= 20; labelBounds = { ...labelBounds, y }; }
+          placedLabels.push(labelBounds);
+        }
+        if (!labelBounds) continue;
+        const labelConflict = labelBounds && roots.find((id) => intersects(positionedBaseBounds(id), { x: labelBounds!.x - gap, y: labelBounds!.y - gap, width: labelBounds!.width + gap * 2, height: labelBounds!.height + gap * 2 }));
+        const conflict = labelConflict;
         if (!conflict) continue;
         const id = conflict === from ? to : conflict === to ? from : conflict === preservedRoot ? (to === preservedRoot ? from : to) : conflict;
-        move = { id, labelBounds };
+        move = { id };
         break;
       }
       if (!move) return;
-      let placed = false;
-      for (let attempt = 0; attempt < 32; attempt += 1) {
-        const target = targets.get(move.id)!;
-        targets.set(move.id, axis === 'x' ? { x: target.x + width + gap, y: target.y } : { x: target.x, y: target.y + height + gap });
-        const candidate = positionedBaseBounds(move.id);
-        if (!roots.some((other) => other !== move!.id && !separatedByGap(candidate, positionedBaseBounds(other)))) { placed = true; break; }
-      }
-      if (!placed) throw new Error('Layout could not route a connector label around other roots.');
+      relocate(move.id, axis);
     }
-    throw new Error('Layout could not converge while routing connector labels.');
+    throw new Error('Layout could not converge while routing connectors.');
   };
   if (mode === 'loop' || mode === 'orbit') {
     const orbiting = mode === 'orbit' ? roots.slice(1) : roots;
@@ -386,7 +429,8 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
       radius *= 1.25;
       if (attempt === 31) throw new Error('Circular layout could not satisfy bounded object clearance.');
     }
-    routeConnectorLabels('y', mode === 'orbit' ? roots[0] : undefined);
+    routeConnectorShafts('y', mode === 'orbit' ? roots[0] : undefined);
+    routeConnectors('y', mode === 'orbit' ? roots[0] : undefined);
     return { targets, bounds: rootBounds, layerCount: mode === 'orbit' ? 2 : 1, laneCount: 0 };
   }
   if (mode === 'swimlane') {
@@ -396,7 +440,8 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
         ? { x: anchor.x + itemIndex * (width + gap), y: anchor.y + laneIndex * (height + gap * 2) }
         : { x: anchor.x + laneIndex * (width + gap * 2), y: anchor.y + itemIndex * (height + gap) }));
     }
-    routeConnectorLabels(orientation === 'vertical' ? 'x' : 'y');
+    routeConnectorShafts(orientation === 'vertical' ? 'x' : 'y');
+    routeConnectors(orientation === 'vertical' ? 'x' : 'y');
     return { targets, bounds: rootBounds, layerCount: 0, laneCount: lanes.length };
   }
   const reverse = new Map(roots.map((id) => [id, new Set<string>()]));
@@ -431,7 +476,8 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
   for (const [level, ids] of [...idsByLevel].sort(([a], [b]) => a - b)) ids.forEach((id, index) => targets.set(id, !vertical
     ? { x: anchor.x + level * (width + gap), y: anchor.y + index * (height + gap) }
     : { x: anchor.x + index * (width + gap), y: anchor.y + level * (height + gap) }));
-  routeConnectorLabels(vertical ? 'x' : 'y');
+  routeConnectorShafts(vertical ? 'x' : 'y');
+  routeConnectors(vertical ? 'x' : 'y');
   return { targets, bounds: rootBounds, layerCount: idsByLevel.size, laneCount: 0 };
 }
 

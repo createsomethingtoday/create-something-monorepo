@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { changedOrderIds, createDrawWebMcpTools, registerDrawWebMcpTools } from './webmcp';
+import { changedOrderIds, connectorLabelLayout, createDrawWebMcpTools, registerDrawWebMcpTools } from './webmcp';
 import { createDocument, type CanvasDocument } from './document';
 import { applyCanvasOperations } from './paired-session';
 
@@ -314,6 +314,24 @@ describe('Draw WebMCP tools', () => {
     const halfLabel = (label.length * 7 + 5) / 2, labelBounds = { x: (a.x + a.width / 2 + c.x + c.width / 2) / 2 - halfLabel, y: (a.y + a.height / 2 + c.y + c.height / 2) / 2 - 22, width: halfLabel * 2, height: 16 };
     const separated = b.x + b.width + 16 <= labelBounds.x || labelBounds.x + labelBounds.width + 16 <= b.x || b.y + b.height + 16 <= labelBounds.y || labelBounds.y + labelBounds.height + 16 <= b.y;
     expect(separated).toBe(true);
+  });
+
+  it('routes unlabeled long-edge shafts around intermediate layout roots', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z';
+    const note = (id: string) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id });
+    const first = note('a'), middle = note('b'), last = note('c'), edge = (id: string, fromId: string, toId: string) => ({ id, kind: 'connector' as const, createdAt, fromId, toId, label: '' });
+    const controller = harness({ ...createDocument(), objects: [first, middle, last, edge('ab', first.id, middle.id), edge('bc', middle.id, last.id), edge('ac', first.id, last.id)] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: [first.id, middle.id, last.id], mode: 'flow', gap: 16 });
+    const notes = new Map(controller.read().objects.filter((object): object is typeof first => object.kind === 'note').map((object) => [object.id, object])), a = notes.get(first.id)!, b = notes.get(middle.id)!, c = notes.get(last.id)!, shaftY = (a.y + a.height / 2 + c.y + c.height / 2) / 2;
+    expect(b.y > shaftY + 19 + 16 || b.y + b.height < shaftY - 19 - 16).toBe(true);
+  });
+
+  it('stacks coincident connector labels deterministically', () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', first = { id: 'a', kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: 'A' }, second = { ...first, id: 'b', x: 400, text: 'B' };
+    const connector = (id: string) => ({ id, kind: 'connector' as const, createdAt, fromId: first.id, toId: second.id, label: 'approval' });
+    const labels = connectorLabelLayout([first, second, connector('edge-b'), connector('edge-a')]);
+    expect(labels.get('edge-a')?.y).toBe((first.y + first.height / 2 + second.y + second.height / 2) / 2 - 10);
+    expect(labels.get('edge-b')?.y).toBe((first.y + first.height / 2 + second.y + second.height / 2) / 2 - 30);
   });
 
   it('routes opposite-satellite labels around a preserved orbit hub', async () => {
