@@ -186,6 +186,13 @@ try {
     ] });
     const hugeEllipseGeometry = await tools.draw_get_rendered_geometry.execute({ ids: hugeEllipseIds, limit: 10 });
     await tools.draw_revert_change.execute({ changeId: hugeEllipseFixture.changeId });
+    const disjointEllipseIds = Array.from({ length: 200 }, (_, index) => `browser-disjoint-ellipse-${index}`);
+    const disjointEllipseOperations = disjointEllipseIds.map((id, index) => ({ type: 'put_object', object: { id, kind: 'ellipse', createdAt: new Date().toISOString(), from: { x: index * 100_000, y: 0 }, to: { x: index * 100_000 + 20_000, y: 20_000 }, color: '#fcaa2d' } }));
+    const disjointEllipseFixtureA = await tools.draw_apply_operations.execute({ operations: disjointEllipseOperations.slice(0, 100) });
+    const disjointEllipseFixtureB = await tools.draw_apply_operations.execute({ operations: disjointEllipseOperations.slice(100) });
+    const disjointEllipseGeometry = await tools.draw_get_rendered_geometry.execute({ ids: disjointEllipseIds, limit: 200 });
+    await tools.draw_revert_change.execute({ changeId: disjointEllipseFixtureB.changeId });
+    await tools.draw_revert_change.execute({ changeId: disjointEllipseFixtureA.changeId });
     const groupGapIds = ['browser-long-label-group', 'browser-long-label-clear'];
     const groupGapFixture = await tools.draw_apply_operations.execute({ operations: [
       { type: 'put_object', object: { id: groupGapIds[0], kind: 'group', createdAt: new Date().toISOString(), x: 100, y: 100, width: 120, height: 80, label: 'A deliberately extended group ownership label', childIds: [] } },
@@ -270,7 +277,7 @@ try {
     const restored = await tools.draw_get_state.execute({});
     return {
       names, drawNames, version: inspect.version, compactBytes: JSON.stringify(inspect).length, fullBytes: JSON.stringify(before).length,
-      composed, renderedGeometry, connectorCollisionGeometry, diagonalClearGeometry, sparseClearGeometry, markerCornerGeometry, endpointCornerGeometry, ellipseTouchGeometry, hugeEllipseGeometry, groupGapGeometry, briefModelWidth, rawConnectorLabelBounds, selectedGroupGeometry, unselectedGroupGeometry, autoLayouts, arrow, arrowGeometry, settledArrowGeometry, edgeArrowGeometry, thickArrowGeometry, zeroArrowGeometry, endpointLabelGeometry, collisionGeometry, provenanceGeometry, clippedGeometry, connectorVisible: Boolean(connectorLabel && getComputedStyle(connectorLabel).display !== 'none'),
+      composed, renderedGeometry, connectorCollisionGeometry, diagonalClearGeometry, sparseClearGeometry, markerCornerGeometry, endpointCornerGeometry, ellipseTouchGeometry, hugeEllipseGeometry, disjointEllipseGeometry, groupGapGeometry, briefModelWidth, rawConnectorLabelBounds, selectedGroupGeometry, unselectedGroupGeometry, autoLayouts, arrow, arrowGeometry, settledArrowGeometry, edgeArrowGeometry, thickArrowGeometry, zeroArrowGeometry, endpointLabelGeometry, collisionGeometry, provenanceGeometry, clippedGeometry, connectorVisible: Boolean(connectorLabel && getComputedStyle(connectorLabel).display !== 'none'),
       staleError, deleteError, replaceError, focus, restoredCount: restored.document.objects.length, beforeCount: before.document.objects.length
     };
   });
@@ -287,6 +294,7 @@ try {
   if (semantic.endpointCornerGeometry.overlaps.length) throw new Error(`Rendered geometry reported an AABB-only endpoint-label collision: ${JSON.stringify(semantic.endpointCornerGeometry)}`);
   if (!semantic.ellipseTouchGeometry.overlaps.some(({ classification }) => classification === 'peer')) throw new Error(`Rendered geometry missed a visible large-ellipse arc collision: ${JSON.stringify(semantic.ellipseTouchGeometry)}`);
   if (semantic.hugeEllipseGeometry.objects.length !== 2 || semantic.hugeEllipseGeometry.overlaps.length) throw new Error(`Rendered geometry did not bound a huge finite ellipse safely: ${JSON.stringify(semantic.hugeEllipseGeometry)}`);
+  if (semantic.disjointEllipseGeometry.objects.length !== 200 || semantic.disjointEllipseGeometry.summary.comparisonCount !== 19_900 || semantic.disjointEllipseGeometry.overlaps.length) throw new Error(`Rendered geometry did not broad-phase disjoint ellipses: ${JSON.stringify(semantic.disjointEllipseGeometry)}`);
   if (semantic.groupGapGeometry.overlaps.length) throw new Error(`Rendered geometry treated the group-label union as solid paint: ${JSON.stringify(semantic.groupGapGeometry)}`);
   if (!semantic.rawConnectorLabelBounds || semantic.renderedGeometry.connectors[0].labelBounds.viewportBounds.width < semantic.rawConnectorLabelBounds.width + 4 || semantic.renderedGeometry.connectors[0].labelBounds.viewportBounds.height < semantic.rawConnectorLabelBounds.height + 4) throw new Error(`Rendered connector-label bounds omitted the painted outline: ${JSON.stringify({ raw: semantic.rawConnectorLabelBounds, rendered: semantic.renderedGeometry.connectors[0].labelBounds })}`);
   if (JSON.stringify(semantic.selectedGroupGeometry.objects[0]?.worldBounds) !== JSON.stringify(semantic.unselectedGroupGeometry.objects[0]?.worldBounds) || JSON.stringify(semantic.arrowGeometry.objects) !== JSON.stringify(semantic.settledArrowGeometry.objects)) throw new Error(`Rendered geometry changed with selection UI or after the tool declared the animation settled: ${JSON.stringify({ selected: semantic.selectedGroupGeometry, unselected: semantic.unselectedGroupGeometry, immediateArrow: semantic.arrowGeometry, settledArrow: semantic.settledArrowGeometry })}`);

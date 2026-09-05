@@ -345,6 +345,7 @@ describe('Draw WebMCP tools', () => {
     const controller = harness({ ...createDocument(), objects: [a, b, c, first, transitive] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
     await layout.execute({ ids: [a.id, b.id, c.id], mode: 'flow', gap: 16 });
     const notes = new Map(controller.read().objects.filter((object): object is typeof a => object.kind === 'note').map((object) => [object.id, object])), placedA = notes.get(a.id)!, placedB = notes.get(b.id)!, placedC = notes.get(c.id)!;
+    expect(placedC.x).toBeGreaterThan(placedB.x);
     const start = { x: (placedA.x + placedA.width / 2 + placedB.x + placedB.width / 2) / 2, y: (placedA.y + placedA.height / 2 + placedB.y + placedB.height / 2) / 2 }, end = { x: placedC.x + placedC.width / 2, y: placedC.y + placedC.height / 2 };
     const bounds = { x: placedA.x, y: placedA.y, width: placedA.width, height: placedA.height };
     let minimum = 0, maximum = 1, intersects = true;
@@ -358,6 +359,13 @@ describe('Draw WebMCP tools', () => {
     const controller = harness({ ...createDocument(), objects: [...roots, left, right, bridge] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
     const result = await layout.execute({ ids: roots.map(({ id }) => id), mode: 'swimlane', gap: 16, lanes: roots.map(({ id }, index) => ({ id, lane: String(index + 1) })) }) as { placedIds: string[] };
     expect(result.placedIds).toEqual(expect.arrayContaining(roots.map(({ id }) => id)));
+  });
+
+  it('skips recursively internal connector shafts within one layout root', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string, x: number) => ({ id, kind: 'note' as const, createdAt, x, y: 0, width: 120, height: 80, text: id }), edge = (id: string, fromId: string, toId: string) => ({ id, kind: 'connector' as const, createdAt, fromId, toId, label: '' });
+    const a = note('a', 0), b = note('b', 160), group = { id: 'root', kind: 'group' as const, createdAt, x: -20, y: -20, width: 320, height: 120, label: 'Root', childIds: [a.id, b.id] }, left = edge('ab', a.id, b.id), right = edge('ba', b.id, a.id), bridge = edge('internal-bridge', left.id, right.id);
+    const controller = harness({ ...createDocument(), objects: [a, b, group, left, right, bridge] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await expect(layout.execute({ ids: [group.id], mode: 'flow', gap: 16 })).resolves.toMatchObject({ placedIds: [group.id] });
   });
 
   it('routes unlabeled shafts across nonadjacent swimlanes', async () => {

@@ -343,6 +343,8 @@
       for (let secondIndex = firstIndex + 1; secondIndex < rendered.length; secondIndex += 1) {
         comparisonCount += 1;
         const first = rendered[firstIndex], second = rendered[secondIndex], firstObject = byId.get(first.id), secondObject = byId.get(second.id);
+        const broadOverlap = overlap(first, second);
+        if (!broadOverlap) continue;
         const connectorRelated = (connector: Extract<CanvasObject, { kind: 'connector' }>, candidate: CanvasObject) => connector.fromId === candidate.id || connector.toId === candidate.id
           || (candidate.kind === 'group' && (contains(candidate.id, connector.fromId) || contains(candidate.id, connector.toId)))
           || (candidate.kind === 'connector' && [connector.fromId, connector.toId].some((id) => id === candidate.fromId || id === candidate.toId));
@@ -361,7 +363,7 @@
           && firstObject.sourceIds.every((id, index) => id === secondObject.sourceIds?.[index])
           && firstObject.sourceIds.includes(firstObject.id) && firstObject.sourceIds.includes(secondObject.id);
         if (sharedCompound) continue;
-        const bounds = relatedLabelOverlap || overlap(first, second);
+        const bounds = relatedLabelOverlap || broadOverlap;
         if (!bounds) continue;
         const containment = (first.kind === 'group' && contains(first.id, second.id)) || (second.kind === 'group' && contains(second.id, first.id));
         overlaps.push({ firstId: first.id, secondId: second.id, bounds, classification: containment ? 'containment' : 'peer' });

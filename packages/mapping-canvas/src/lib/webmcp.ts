@@ -383,12 +383,6 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
   }));
   const width = Math.max(...[...rootBounds.values()].map((bounds) => bounds.width)), height = Math.max(...[...rootBounds.values()].map((bounds) => bounds.height));
   const anchor = { x: Math.min(...[...rootBounds.values()].map(({ x }) => x)), y: Math.min(...[...rootBounds.values()].map(({ y }) => y)) };
-  const adjacency = new Map(roots.map((id) => [id, new Set<string>()]));
-  for (const connector of document.objects) {
-    if (connector.kind !== 'connector') continue;
-    const from = rootByMember.get(connector.fromId), to = rootByMember.get(connector.toId);
-    if (from && to && from !== to) adjacency.get(from)!.add(to);
-  }
   const targets = new Map<string, Point>();
   const positionedBaseBounds = (id: string) => {
     const target = targets.get(id)!, expanded = rootBounds.get(id)!, base = baseRootBounds.get(id)!;
@@ -415,6 +409,14 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
     for (const endpoint of [byId.get(object.fromId), byId.get(object.toId)]) if (endpoint) for (const id of layoutRoots(endpoint, pending)) result.add(id);
     return result;
   };
+  const sameEndpointRoot = (fromRoots: Set<string>, toRoots: Set<string>) => fromRoots.size === 1 && toRoots.size === 1 && [...fromRoots][0] === [...toRoots][0];
+  const adjacency = new Map(roots.map((id) => [id, new Set<string>()]));
+  for (const connector of document.objects) {
+    if (connector.kind !== 'connector') continue;
+    const fromObject = byId.get(connector.fromId), toObject = byId.get(connector.toId);
+    if (!fromObject || !toObject) continue;
+    for (const from of layoutRoots(fromObject)) for (const to of layoutRoots(toObject)) if (from !== to) adjacency.get(from)!.add(to);
+  }
   const intersects = (a: { x: number; y: number; width: number; height: number }, b: { x: number; y: number; width: number; height: number }) => a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
   const separatedByGap = (a: { x: number; y: number; width: number; height: number }, b: { x: number; y: number; width: number; height: number }) => a.x + a.width + gap <= b.x || b.x + b.width + gap <= a.x || a.y + a.height + gap <= b.y || b.y + b.height + gap <= a.y;
   const segmentIntersects = (start: Point, end: Point, bounds: { x: number; y: number; width: number; height: number }) => segmentHitsBounds(start, end, bounds, gap + 19);
@@ -447,13 +449,6 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
     }
     throw new Error('Layout could not relocate a connector obstruction.');
   };
-  const alignEndpointRoot = (id: string, endpoint: CanvasObject, axis: 'x' | 'y', coordinate: number) => {
-    const target = targets.get(id)!, center = layoutCenter(endpoint).center, previous = { ...target };
-    targets.set(id, axis === 'x' ? { x: target.x + coordinate - center.x, y: target.y } : { x: target.x, y: target.y + coordinate - center.y });
-    const candidate = positionedBaseBounds(id);
-    if (roots.some((other) => other !== id && !separatedByGap(candidate, positionedBaseBounds(other)))) { targets.set(id, previous); return false; }
-    return true;
-  };
   const routeConnectorShafts = (axis: 'x' | 'y', preservedRoot?: string, global = false) => {
     const preservedAxes = new Map(connectors.map((connector) => {
       const from = rootByMember.get(connector.fromId), to = rootByMember.get(connector.toId), fromObject = byId.get(connector.fromId), toObject = byId.get(connector.toId);
@@ -466,7 +461,7 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
         const from = rootByMember.get(connector.fromId), to = rootByMember.get(connector.toId), fromObject = byId.get(connector.fromId), toObject = byId.get(connector.toId);
         if (!fromObject || !toObject) continue;
         const fromRoots = layoutRoots(fromObject), toRoots = layoutRoots(toObject), endpointRoots = new Set([...fromRoots, ...toRoots]);
-        if (!endpointRoots.size || (from && from === to)) continue;
+        if (!endpointRoots.size || (from && from === to) || sameEndpointRoot(fromRoots, toRoots)) continue;
         let cleared = false;
         for (let attempt = 0; attempt < 32; attempt += 1) {
           const start = layoutCenter(fromObject).center, end = layoutCenter(toObject).center, conflict = roots.find((id) => id !== from && id !== to && (endpointRoots.has(id) ? segmentHitsBounds(start, end, positionedBaseBounds(id), 0) : segmentIntersects(start, end, positionedBaseBounds(id))));
@@ -474,7 +469,7 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
           const alternate = to === preservedRoot ? from : from === preservedRoot ? to : (to ?? from), movingId = conflict === preservedRoot && alternate ? alternate : conflict;
           const opposite = fromRoots.has(conflict) ? [...toRoots][0] : toRoots.has(conflict) ? [...fromRoots][0] : undefined;
           const movingAxis = preservedAxes.get(connector.id)!, oppositeObject = fromRoots.has(conflict) ? toObject : toRoots.has(conflict) ? fromObject : undefined;
-          if (!opposite || !oppositeObject || oppositeObject.kind === 'connector' || !alignEndpointRoot(opposite, oppositeObject, movingAxis, movingAxis === 'x' ? start.x : start.y)) relocate(oppositeObject?.kind === 'connector' ? conflict : (opposite ?? movingId), movingAxis);
+          relocate(oppositeObject?.kind === 'connector' ? conflict : (opposite ?? movingId), movingAxis);
         }
         if (!cleared) throw new Error('Layout could not clear every connector-shaft obstruction.');
       }
@@ -486,7 +481,7 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
         const from = rootByMember.get(connector.fromId), to = rootByMember.get(connector.toId), fromObject = byId.get(connector.fromId), toObject = byId.get(connector.toId);
         if (!fromObject || !toObject) continue;
         const fromRoots = layoutRoots(fromObject), toRoots = layoutRoots(toObject), endpointRoots = new Set([...fromRoots, ...toRoots]);
-        if (!endpointRoots.size || (from && from === to)) continue;
+        if (!endpointRoots.size || (from && from === to) || sameEndpointRoot(fromRoots, toRoots)) continue;
         const start = layoutCenter(fromObject).center, end = layoutCenter(toObject).center, conflict = roots.find((id) => id !== from && id !== to && (endpointRoots.has(id) ? segmentHitsBounds(start, end, positionedBaseBounds(id), 0) : segmentIntersects(start, end, positionedBaseBounds(id))));
         if (!conflict) continue;
         const preservedConflict = conflict === preservedRoot;
@@ -494,7 +489,7 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
         const movingAxis = preservedAxes.get(connector.id)!;
         const opposite = fromRoots.has(conflict) ? [...toRoots][0] : toRoots.has(conflict) ? [...fromRoots][0] : undefined;
         const oppositeObject = fromRoots.has(conflict) ? toObject : toRoots.has(conflict) ? fromObject : undefined;
-        if (!opposite || !oppositeObject || oppositeObject.kind === 'connector' || !alignEndpointRoot(opposite, oppositeObject, movingAxis, movingAxis === 'x' ? start.x : start.y)) relocate(oppositeObject?.kind === 'connector' ? conflict : (opposite ?? movingId), movingAxis);
+        relocate(oppositeObject?.kind === 'connector' ? conflict : (opposite ?? movingId), movingAxis);
         moved = true;
         break;
       }
@@ -513,7 +508,8 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
         if (!endpointRoots.size) continue;
         const labelBounds = labels.get(connector.id);
         if (!labelBounds) continue;
-        const labelConflict = labelBounds && roots.find((id) => (from !== to || id !== from) && intersects(positionedBaseBounds(id), { x: labelBounds!.x - gap, y: labelBounds!.y - gap, width: labelBounds!.width + gap * 2, height: labelBounds!.height + gap * 2 }));
+        const internalRoot = sameEndpointRoot(fromRoots, toRoots) ? [...fromRoots][0] : undefined;
+        const labelConflict = labelBounds && roots.find((id) => (from !== to || id !== from) && id !== internalRoot && intersects(positionedBaseBounds(id), { x: labelBounds!.x - gap, y: labelBounds!.y - gap, width: labelBounds!.width + gap * 2, height: labelBounds!.height + gap * 2 }));
         const conflict = labelConflict;
         if (!conflict) continue;
         const transitiveOpposite = fromRoots.has(conflict) ? [...toRoots][0] : toRoots.has(conflict) ? [...fromRoots][0] : undefined;
