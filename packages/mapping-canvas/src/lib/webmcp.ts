@@ -601,9 +601,32 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
   const idsByLevel = new Map<number, string[]>();
   components.forEach((component, index) => { const bucket = idsByLevel.get(levels[index]) ?? []; bucket.push(...component); idsByLevel.set(levels[index], bucket.sort()); });
   const vertical = orientation ? orientation === 'vertical' : mode === 'hierarchy';
-  for (const [level, ids] of [...idsByLevel].sort(([a], [b]) => a - b)) ids.forEach((id, index) => targets.set(id, !vertical
-    ? { x: anchor.x + level * (width + gap), y: anchor.y + index * (height + gap) }
-    : { x: anchor.x + index * (width + gap), y: anchor.y + level * (height + gap) }));
+  const undirected = new Map(roots.map((id) => [id, new Set<string>()]));
+  for (const [from, toIds] of adjacency) for (const to of toIds) { undirected.get(from)!.add(to); undirected.get(to)!.add(from); }
+  const weaklyAssigned = new Set<string>(), weakComponents: string[][] = [];
+  for (const root of roots) {
+    if (weaklyAssigned.has(root)) continue;
+    const component: string[] = [], pending = [root];
+    while (pending.length) {
+      const id = pending.pop()!;
+      if (weaklyAssigned.has(id)) continue;
+      weaklyAssigned.add(id); component.push(id);
+      pending.push(...[...undirected.get(id)!].sort().reverse());
+    }
+    weakComponents.push(component.sort());
+  }
+  let bandOffset = 0;
+  for (const component of weakComponents) {
+    const componentLevels = new Map<number, string[]>();
+    for (const id of component) {
+      const level = levels[componentById.get(id)!], bucket = componentLevels.get(level) ?? [];
+      bucket.push(id); componentLevels.set(level, bucket.sort());
+    }
+    for (const [level, ids] of componentLevels) ids.forEach((id, index) => targets.set(id, !vertical
+      ? { x: anchor.x + level * (width + gap), y: anchor.y + (bandOffset + index) * (height + gap) }
+      : { x: anchor.x + (bandOffset + index) * (width + gap), y: anchor.y + level * (height + gap) }));
+    bandOffset += Math.max(...[...componentLevels.values()].map((ids) => ids.length)) + 1;
+  }
   settleConnectorRouting(vertical ? 'x' : 'y');
   return { targets, bounds: rootBounds, layerCount: idsByLevel.size, laneCount: 0 };
 }

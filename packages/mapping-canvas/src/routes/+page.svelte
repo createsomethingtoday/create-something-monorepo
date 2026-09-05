@@ -359,14 +359,23 @@
     const paintHitsRect = (paint: ReturnType<typeof paintGeometry>, rect: { x: number; y: number; width: number; height: number }) => paint.rects.some((candidate) => overlapBounds(candidate, rect)) || paint.segments.some((segment) => segmentHitsBounds(segment.start, segment.end, rect, segment.padding)) || paint.triangles.some((triangle) => triangleHitsRect(triangle, rect));
     const paintCache = new Map<string, ReturnType<typeof paintGeometry>>();
     const paintFor = (object: CanvasObject, entry: typeof rendered[number]) => { const cached = paintCache.get(object.id); if (cached) return cached; const paint = paintGeometry(object, entry); paintCache.set(object.id, paint); return paint; };
-    const paintedOverlap = (firstObject: CanvasObject, first: typeof rendered[number], secondObject: CanvasObject, second: typeof rendered[number]) => {
-      const a = paintFor(firstObject, first), b = paintFor(secondObject, second);
+    const paintsOverlap = (a: ReturnType<typeof paintGeometry>, b: ReturnType<typeof paintGeometry>) => {
       if (a.rects.some((rect) => b.rects.some((candidate) => overlapBounds(rect, candidate)))) return true;
       if (a.segments.some((segment) => b.rects.some((rect) => segmentHitsBounds(segment.start, segment.end, rect, segment.padding))) || b.segments.some((segment) => a.rects.some((rect) => segmentHitsBounds(segment.start, segment.end, rect, segment.padding)))) return true;
       if (segmentsOverlap(a.segments, b.segments)) return true;
       if (a.triangles.some((triangle) => b.rects.some((rect) => triangleHitsRect(triangle, rect))) || b.triangles.some((triangle) => a.rects.some((rect) => triangleHitsRect(triangle, rect)))) return true;
       if (a.triangles.some((triangle) => b.segments.some((segment) => triangleHitsSegment(triangle, segment))) || b.triangles.some((triangle) => a.segments.some((segment) => triangleHitsSegment(triangle, segment)))) return true;
       return a.triangles.some((triangle) => b.triangles.some((candidate) => trianglesOverlap(triangle, candidate)));
+    };
+    const paintedOverlap = (firstObject: CanvasObject, first: typeof rendered[number], secondObject: CanvasObject, second: typeof rendered[number]) => paintsOverlap(paintFor(firstObject, first), paintFor(secondObject, second));
+    const connectorPaintPastSharedEndpoint = (object: Extract<CanvasObject, { kind: 'connector' }>, entry: typeof rendered[number], sharedIds: Set<string>) => {
+      const paint = paintFor(object, entry), trim = (segment: PaintSegment) => {
+        const dx = segment.end.x - segment.start.x, dy = segment.end.y - segment.start.y, distance = Math.hypot(dx, dy), clearance = Math.max(4, segment.padding * 4);
+        const trimStart = sharedIds.has(object.fromId) ? clearance : 0, trimEnd = sharedIds.has(object.toId) ? clearance : 0;
+        if (distance <= trimStart + trimEnd) return undefined;
+        return { ...segment, start: { x: segment.start.x + dx / distance * trimStart, y: segment.start.y + dy / distance * trimStart }, end: { x: segment.end.x - dx / distance * trimEnd, y: segment.end.y - dy / distance * trimEnd } };
+      };
+      return { ...paint, segments: paint.segments.map(trim).filter((segment): segment is PaintSegment => segment !== undefined), triangles: sharedIds.has(object.toId) ? [] : paint.triangles };
     };
     const overlap = (first: typeof rendered[number], second: typeof rendered[number]) => overlapBounds(first.worldBounds, second.worldBounds);
     const overlaps: DrawRenderedGeometry['overlaps'] = [];
@@ -378,8 +387,7 @@
         const broadOverlap = overlap(first, second);
         if (!broadOverlap) continue;
         const connectorRelated = (connector: Extract<CanvasObject, { kind: 'connector' }>, candidate: CanvasObject) => connector.fromId === candidate.id || connector.toId === candidate.id
-          || (candidate.kind === 'group' && (contains(candidate.id, connector.fromId) || contains(candidate.id, connector.toId)))
-          || (candidate.kind === 'connector' && [connector.fromId, connector.toId].some((id) => id === candidate.fromId || id === candidate.toId));
+          || (candidate.kind === 'group' && (contains(candidate.id, connector.fromId) || contains(candidate.id, connector.toId)));
         const firstRelated = firstObject?.kind === 'connector' && secondObject && connectorRelated(firstObject, secondObject), secondRelated = secondObject?.kind === 'connector' && firstObject && connectorRelated(secondObject, firstObject);
         const firstEndpointContainer = firstObject?.kind === 'connector' && secondObject && (firstObject.fromId === secondObject.id || firstObject.toId === secondObject.id
           || (secondObject.kind === 'group' && (contains(secondObject.id, firstObject.fromId) || contains(secondObject.id, firstObject.toId))));
@@ -389,7 +397,12 @@
         const relatedLabelOverlap = firstLabelBounds && secondObject && paintHitsRect(paintFor(secondObject, second), firstLabelBounds) ? firstLabelBounds
           : secondLabelBounds && firstObject && paintHitsRect(paintFor(firstObject, first), secondLabelBounds) ? secondLabelBounds : undefined;
         if ((firstRelated || secondRelated) && !relatedLabelOverlap) continue;
-        if (!relatedLabelOverlap && firstObject && secondObject && !paintedOverlap(firstObject, first, secondObject, second)) continue;
+        const sharedConnectorIds = firstObject?.kind === 'connector' && secondObject?.kind === 'connector'
+          ? new Set([firstObject.fromId, firstObject.toId].filter((id) => id === secondObject.fromId || id === secondObject.toId)) : new Set<string>();
+        const visiblePaintOverlap = firstObject && secondObject && (sharedConnectorIds.size
+          ? paintsOverlap(connectorPaintPastSharedEndpoint(firstObject as Extract<CanvasObject, { kind: 'connector' }>, first, sharedConnectorIds), connectorPaintPastSharedEndpoint(secondObject as Extract<CanvasObject, { kind: 'connector' }>, second, sharedConnectorIds))
+          : paintedOverlap(firstObject, first, secondObject, second));
+        if (!relatedLabelOverlap && !visiblePaintOverlap) continue;
         const sharedCompound = firstObject?.kind === 'stroke' && secondObject?.kind === 'stroke'
           && firstObject.sourceIds?.length === 2 && secondObject.sourceIds?.length === 2
           && firstObject.sourceIds.every((id, index) => id === secondObject.sourceIds?.[index])

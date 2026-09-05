@@ -405,6 +405,13 @@ describe('Draw WebMCP tools', () => {
     expect(intersects).toBe(false);
   });
 
+  it('separates disconnected hierarchy components without cyclic shaft relocation', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id }), edge = (id: string, fromId: string, toId: string) => ({ id, kind: 'connector' as const, createdAt, fromId, toId, label: '' });
+    const roots = Array.from({ length: 5 }, (_, index) => note(`n${index}`)), connectors = [edge('n1-n2', 'n1', 'n2'), edge('n3-n4', 'n3', 'n4')];
+    const controller = harness({ ...createDocument(), objects: [...roots, ...connectors] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await expect(layout.execute({ ids: roots.map(({ id }) => id), mode: 'hierarchy', gap: 16 })).resolves.toMatchObject({ placedIds: roots.map(({ id }) => id) });
+  });
+
   it('stacks coincident connector labels deterministically', () => {
     const createdAt = '2026-09-05T00:00:00.000Z', first = { id: 'a', kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: 'A' }, second = { ...first, id: 'b', x: 400, text: 'B' };
     const connector = (id: string) => ({ id, kind: 'connector' as const, createdAt, fromId: first.id, toId: second.id, label: 'approval' });

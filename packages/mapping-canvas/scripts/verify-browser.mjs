@@ -251,6 +251,26 @@ try {
     ] });
     const endpointLabelGeometry = await tools.draw_get_rendered_geometry.execute({ ids: endpointFixtureIds, limit: 10 });
     await tools.draw_revert_change.execute({ changeId: endpointFixture.changeId });
+    const sharedConnectorIds = ['browser-shared-a', 'browser-shared-b', 'browser-shared-c', 'browser-shared-short', 'browser-shared-long'];
+    const sharedConnectorFixture = await tools.draw_apply_operations.execute({ operations: [
+      { type: 'put_object', object: { id: sharedConnectorIds[0], kind: 'note', createdAt: new Date().toISOString(), x: 0, y: 900, width: 40, height: 40, text: 'A' } },
+      { type: 'put_object', object: { id: sharedConnectorIds[1], kind: 'note', createdAt: new Date().toISOString(), x: 300, y: 900, width: 40, height: 40, text: 'B' } },
+      { type: 'put_object', object: { id: sharedConnectorIds[2], kind: 'note', createdAt: new Date().toISOString(), x: 500, y: 900, width: 40, height: 40, text: 'C' } },
+      { type: 'put_object', object: { id: sharedConnectorIds[3], kind: 'connector', createdAt: new Date().toISOString(), fromId: sharedConnectorIds[0], toId: sharedConnectorIds[1], label: '' } },
+      { type: 'put_object', object: { id: sharedConnectorIds[4], kind: 'connector', createdAt: new Date().toISOString(), fromId: sharedConnectorIds[0], toId: sharedConnectorIds[2], label: '' } }
+    ] });
+    const sharedConnectorGeometry = await tools.draw_get_rendered_geometry.execute({ ids: sharedConnectorIds.slice(3), limit: 10 });
+    await tools.draw_revert_change.execute({ changeId: sharedConnectorFixture.changeId });
+    const fanConnectorIds = ['browser-fan-a', 'browser-fan-b', 'browser-fan-c', 'browser-fan-up', 'browser-fan-down'];
+    const fanConnectorFixture = await tools.draw_apply_operations.execute({ operations: [
+      { type: 'put_object', object: { id: fanConnectorIds[0], kind: 'note', createdAt: new Date().toISOString(), x: 0, y: 1100, width: 40, height: 40, text: 'A' } },
+      { type: 'put_object', object: { id: fanConnectorIds[1], kind: 'note', createdAt: new Date().toISOString(), x: 300, y: 1000, width: 40, height: 40, text: 'B' } },
+      { type: 'put_object', object: { id: fanConnectorIds[2], kind: 'note', createdAt: new Date().toISOString(), x: 300, y: 1200, width: 40, height: 40, text: 'C' } },
+      { type: 'put_object', object: { id: fanConnectorIds[3], kind: 'connector', createdAt: new Date().toISOString(), fromId: fanConnectorIds[0], toId: fanConnectorIds[1], label: '' } },
+      { type: 'put_object', object: { id: fanConnectorIds[4], kind: 'connector', createdAt: new Date().toISOString(), fromId: fanConnectorIds[0], toId: fanConnectorIds[2], label: '' } }
+    ] });
+    const fanConnectorGeometry = await tools.draw_get_rendered_geometry.execute({ ids: fanConnectorIds.slice(3), limit: 10 });
+    await tools.draw_revert_change.execute({ changeId: fanConnectorFixture.changeId });
     const collision = await tools.draw_compose.execute({ nodes: [{ ref: 'collision-a', text: 'Collision A' }, { ref: 'collision-b', text: 'Collision B' }], layout: { direction: 'row', gap: 64 } });
     const collisionState = await tools.draw_get_state.execute({});
     const collisionA = collisionState.document.objects.find(({ id }) => id === collision.refs['collision-a']);
@@ -287,7 +307,7 @@ try {
     const restored = await tools.draw_get_state.execute({});
     return {
       names, drawNames, version: inspect.version, compactBytes: JSON.stringify(inspect).length, fullBytes: JSON.stringify(before).length,
-      composed, renderedGeometry, connectorCollisionGeometry, diagonalClearGeometry, sparseClearGeometry, markerCornerGeometry, endpointCornerGeometry, ellipseTouchGeometry, hugeEllipseGeometry, disjointEllipseGeometry, concentricEllipseGeometry, groupGapGeometry, briefModelWidth, rawConnectorLabelBounds, selectedGroupGeometry, unselectedGroupGeometry, autoLayouts, arrow, arrowGeometry, settledArrowGeometry, edgeArrowGeometry, thickArrowGeometry, zeroArrowGeometry, endpointLabelGeometry, collisionGeometry, provenanceGeometry, clippedGeometry, connectorVisible: Boolean(connectorLabel && getComputedStyle(connectorLabel).display !== 'none'),
+      composed, renderedGeometry, connectorCollisionGeometry, diagonalClearGeometry, sparseClearGeometry, markerCornerGeometry, endpointCornerGeometry, ellipseTouchGeometry, hugeEllipseGeometry, disjointEllipseGeometry, concentricEllipseGeometry, groupGapGeometry, briefModelWidth, rawConnectorLabelBounds, selectedGroupGeometry, unselectedGroupGeometry, autoLayouts, arrow, arrowGeometry, settledArrowGeometry, edgeArrowGeometry, thickArrowGeometry, zeroArrowGeometry, endpointLabelGeometry, sharedConnectorGeometry, fanConnectorGeometry, collisionGeometry, provenanceGeometry, clippedGeometry, connectorVisible: Boolean(connectorLabel && getComputedStyle(connectorLabel).display !== 'none'),
       staleError, deleteError, replaceError, focus, restoredCount: restored.document.objects.length, beforeCount: before.document.objects.length
     };
   });
@@ -314,6 +334,7 @@ try {
   if (!semantic.thickArrowGeometry.objects.some(({ clipped }) => clipped)) throw new Error(`Rendered stroke-width clipping was not included: ${JSON.stringify(semantic.thickArrowGeometry)}`);
   if (semantic.zeroArrowGeometry.objects[0]?.viewportBounds.width < 18 || semantic.zeroArrowGeometry.objects[0]?.viewportBounds.height < 14) throw new Error(`Rendered zero-length arrow omitted its marker footprint: ${JSON.stringify(semantic.zeroArrowGeometry)}`);
   if (!semantic.endpointLabelGeometry.overlaps.some(({ firstId, secondId }) => firstId.includes('endpoint-edge') || secondId.includes('endpoint-edge')) || !semantic.endpointLabelGeometry.overlaps.some(({ firstId, secondId }) => [firstId, secondId].includes('browser-label-endpoint-edge') && [firstId, secondId].includes('browser-label-endpoint-group'))) throw new Error(`Rendered geometry suppressed a visible connector-label overlap with its endpoint or containing group: ${JSON.stringify(semantic.endpointLabelGeometry)}`);
+  if (!semantic.sharedConnectorGeometry.overlaps.some(({ classification }) => classification === 'peer') || semantic.fanConnectorGeometry.overlaps.length) throw new Error(`Rendered geometry did not isolate shared-endpoint contact from visible connector overlap: ${JSON.stringify({ shared: semantic.sharedConnectorGeometry, fan: semantic.fanConnectorGeometry })}`);
   if (!semantic.collisionGeometry.overlaps.some(({ classification }) => classification === 'peer') || !semantic.provenanceGeometry.overlaps.some(({ classification }) => classification === 'peer') || !semantic.clippedGeometry.objects[0]?.clipped || !semantic.clippedGeometry.missingIds.includes('missing-rendered-id')) throw new Error(`Rendered collision, provenance, clipping, or missing-ID evidence failed: ${JSON.stringify({ collision: semantic.collisionGeometry, provenance: semantic.provenanceGeometry, clipped: semantic.clippedGeometry })}`);
   if (!semantic.staleError.includes('revision') || !semantic.deleteError.includes('DELETE OBJECTS') || !semantic.replaceError.includes('REPLACE CANVAS')) throw new Error(`Semantic safety boundary failed: ${JSON.stringify(semantic)}`);
   if (semantic.restoredCount !== semantic.beforeCount || !semantic.focus.ok) throw new Error(`Semantic workflow did not restore its isolated fixture: ${JSON.stringify(semantic)}`);
