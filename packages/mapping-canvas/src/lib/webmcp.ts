@@ -455,17 +455,11 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
   const routeConnectors = (axis: 'x' | 'y', preservedRoot?: string) => {
     for (let pass = 0; pass < 128; pass += 1) {
       let move: { id: string } | undefined;
-      const occupiedLabelSlots = new Map<string, number>();
+      const labels = positionedLabels();
       for (const connector of connectors) {
         const from = rootByMember.get(connector.fromId), to = rootByMember.get(connector.toId), fromObject = byId.get(connector.fromId), toObject = byId.get(connector.toId);
         if (!from || !to || from === to || !fromObject || !toObject || !targets.has(from) || !targets.has(to)) continue;
-        const fromCenter = positionedCenter(from, fromObject), toCenter = positionedCenter(to, toObject);
-        let labelBounds: { x: number; y: number; width: number; height: number } | undefined;
-        if (connector.label) {
-          const width = estimatedTextWidth(connector.label) + 5, x = (fromCenter.x + toCenter.x) / 2;
-          const baseY = (fromCenter.y + toCenter.y) / 2 - 10, y = stackedLabelY(occupiedLabelSlots, x, baseY, width);
-          labelBounds = { x: x - width / 2, y: y - 12, width, height: 16 };
-        }
+        const labelBounds = labels.get(connector.id);
         if (!labelBounds) continue;
         const labelConflict = labelBounds && roots.find((id) => intersects(positionedBaseBounds(id), { x: labelBounds!.x - gap, y: labelBounds!.y - gap, width: labelBounds!.width + gap * 2, height: labelBounds!.height + gap * 2 }));
         const conflict = labelConflict;

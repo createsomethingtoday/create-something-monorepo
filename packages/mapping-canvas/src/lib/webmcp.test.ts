@@ -426,6 +426,19 @@ describe('Draw WebMCP tools', () => {
     expect(intersects).toBe(false);
   });
 
+  it('checks roots against the final shaft-shifted label positions', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', notes = ['a', 'b', 'c', 'd', 'e', 'f'].map((id) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id })), edge = (id: string, fromId: string, toId: string) => ({ id, kind: 'connector' as const, createdAt, fromId, toId, label: `Long approval evidence ${id}` });
+    const edges = [edge('ab', 'a', 'b'), edge('bc', 'b', 'c'), edge('cd', 'c', 'd'), edge('de', 'd', 'e'), edge('ef', 'e', 'f'), edge('ad', 'a', 'd'), edge('be', 'b', 'e'), edge('cf', 'c', 'f')];
+    const controller = harness({ ...createDocument(), objects: [...notes, ...edges] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: notes.map(({ id }) => id), mode: 'hierarchy', gap: 16 });
+    const state = controller.read(), placedNotes = state.objects.filter((object): object is typeof notes[number] => object.kind === 'note'), labels = connectorLabelLayout(state.objects);
+    for (const label of labels.values()) for (const note of placedNotes) {
+      const labelBounds = { x: label.x - label.width / 2, y: label.y - 12, width: label.width, height: label.height };
+      const overlaps = labelBounds.x < note.x + note.width && labelBounds.x + labelBounds.width > note.x && labelBounds.y < note.y + note.height && labelBounds.y + labelBounds.height > note.y;
+      expect(overlaps).toBe(false);
+    }
+  });
+
   it('preserves painted root gaps after routing multiple connector labels', async () => {
     const createdAt = '2026-09-05T00:00:00.000Z';
     const hub = { id: 'hub', kind: 'note' as const, createdAt, x: 0, y: 0, width: 260, height: 160, text: 'Hub' };
