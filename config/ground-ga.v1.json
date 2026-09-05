@@ -4,7 +4,7 @@
   "package": {
     "path": "packages/ground/npm",
     "name": "@createsomething/ground-mcp",
-    "version": "0.3.6",
+    "version": "0.4.0",
     "releaseWorkflow": ".github/workflows/ground-release.yml",
     "minimumToolCount": 21
   },
@@ -20,6 +20,7 @@
     "minimumCompleteReceipts": 14,
     "minimumAdjudicatedFindings": 10,
     "minimumPrecision": 0.9,
+    "minimumRecall": 0.9,
     "maximumFalsePositiveRate": 0.1,
     "minimumAdjudicatedByCheck": {
       "duplicates": 4,

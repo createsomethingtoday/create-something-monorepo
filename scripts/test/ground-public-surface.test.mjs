@@ -44,7 +44,7 @@ test('Ground public surfaces use executable agent-client commands', async () => 
 
 test('Ground package README states the exact TS, JS, Svelte, and SvelteKit boundary', async () => {
   const readme = await readFile(packageReadme, 'utf8');
-  assert.match(readme, /Ground 0\.3\.6 supports TypeScript/);
+  assert.match(readme, /Ground 0\.4\.0 supports TypeScript/);
   assert.match(readme, /JavaScript/);
   assert.match(readme, /Svelte component/);
   assert.match(readme, /SvelteKit configuration/);

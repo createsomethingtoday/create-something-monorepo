@@ -53,7 +53,7 @@ pub struct ConnectivityEvidence {
 }
 
 /// Architectural connections detected from deployment configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ArchitecturalConnections {
     /// Type of architecture (e.g., "cloudflare-worker", "serverless")
     pub architecture_type: String,
@@ -78,7 +78,7 @@ pub struct ArchitecturalConnections {
 }
 
 /// A binding to an external service/resource
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ServiceBinding {
     /// Type of binding (kv, d1, r2, service, etc.)
     pub binding_type: String,
@@ -391,8 +391,7 @@ fn find_manifest_json(start: &Path) -> Option<PathBuf> {
         start
     };
     
-    // Check up to 5 levels up
-    for _ in 0..5 {
+    loop {
         let manifest_path = current.join("manifest.json");
         if manifest_path.exists() {
             // Quick check that it's a browser extension manifest
@@ -617,8 +616,7 @@ fn find_package_json(start: &Path) -> Option<PathBuf> {
         start
     };
     
-    // Check up to 5 levels up (within same package)
-    for _ in 0..5 {
+    loop {
         let pkg_path = current.join("package.json");
         if pkg_path.exists() {
             return Some(pkg_path);
@@ -644,8 +642,7 @@ fn find_wrangler_toml(start: &Path) -> Option<PathBuf> {
         start
     };
     
-    // Check up to 5 levels up
-    for _ in 0..5 {
+    loop {
         let wrangler_path = current.join("wrangler.toml");
         if wrangler_path.exists() {
             return Some(wrangler_path);
@@ -658,6 +655,9 @@ fn find_wrangler_toml(start: &Path) -> Option<PathBuf> {
             return None;
         }
         
+        if current.join("pnpm-workspace.yaml").exists() {
+            break;
+        }
         current = current.parent()?;
     }
     
