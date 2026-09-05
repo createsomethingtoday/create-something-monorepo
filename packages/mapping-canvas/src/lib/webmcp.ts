@@ -256,6 +256,20 @@ function estimatedTextWidth(value: string) {
   return Array.from(value).reduce((width, character) => width + (character.codePointAt(0)! > 255 ? 12 : 7), 0);
 }
 
+function stackedLabelY(index: Map<string, number>, x: number, baseY: number, width: number) {
+  const firstCell = Math.floor((x - width / 2) / 32), lastCell = Math.floor((x + width / 2) / 32), band = Math.floor(baseY / 16);
+  let top = baseY - 12;
+  for (let cell = firstCell; cell <= lastCell; cell += 1) for (let offset = -1; offset <= 1; offset += 1) {
+    const occupiedTop = index.get(`${cell}:${band + offset}`);
+    if (occupiedTop !== undefined) top = Math.min(top, occupiedTop - 20);
+  }
+  for (let cell = firstCell; cell <= lastCell; cell += 1) {
+    const key = `${cell}:${band}`, occupiedTop = index.get(key);
+    index.set(key, occupiedTop === undefined ? top : Math.min(occupiedTop, top));
+  }
+  return top + 12;
+}
+
 export function connectorLabelLayout(objects: CanvasObject[]) {
   const byId = new Map(objects.map((object) => [object.id, object])), resolveCenter = createObjectCenterResolver(objects);
   const occupiedSlots = new Map<string, number>(), result = new Map<string, { x: number; y: number; width: number; height: number }>();
@@ -263,8 +277,8 @@ export function connectorLabelLayout(objects: CanvasObject[]) {
     const from = byId.get(connector.fromId), to = byId.get(connector.toId);
     if (!from || !to) continue;
     const a = resolveCenter(from), b = resolveCenter(to), width = estimatedTextWidth(connector.label) + 5, x = (a.x + b.x) / 2;
-    const baseY = (a.y + b.y) / 2 - 10, slotKey = `${x}:${baseY}`, slot = occupiedSlots.get(slotKey) ?? 0, y = baseY - slot * 20;
-    occupiedSlots.set(slotKey, slot + 1); result.set(connector.id, { x, y, width, height: 16 });
+    const baseY = (a.y + b.y) / 2 - 10, y = stackedLabelY(occupiedSlots, x, baseY, width);
+    result.set(connector.id, { x, y, width, height: 16 });
   }
   return result;
 }
@@ -411,8 +425,8 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
         let labelBounds: { x: number; y: number; width: number; height: number } | undefined;
         if (connector.label) {
           const width = estimatedTextWidth(connector.label) + 5, x = (fromCenter.x + toCenter.x) / 2;
-          const baseY = (fromCenter.y + toCenter.y) / 2 - 22, slotKey = `${x}:${baseY}`, slot = occupiedLabelSlots.get(slotKey) ?? 0;
-          occupiedLabelSlots.set(slotKey, slot + 1); labelBounds = { x: x - width / 2, y: baseY - slot * 20, width, height: 16 };
+          const baseY = (fromCenter.y + toCenter.y) / 2 - 10, y = stackedLabelY(occupiedLabelSlots, x, baseY, width);
+          labelBounds = { x: x - width / 2, y: y - 12, width, height: 16 };
         }
         if (!labelBounds) continue;
         const labelConflict = labelBounds && roots.find((id) => intersects(positionedBaseBounds(id), { x: labelBounds!.x - gap, y: labelBounds!.y - gap, width: labelBounds!.width + gap * 2, height: labelBounds!.height + gap * 2 }));
@@ -455,7 +469,7 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
       radius *= 1.25;
       if (attempt === 31) throw new Error('Circular layout could not satisfy bounded object clearance.');
     }
-    routeConnectorShafts('y', mode === 'orbit' ? roots[0] : undefined);
+    routeConnectorShafts('y', mode === 'orbit' ? roots[0] : undefined, true);
     routeConnectors('y', mode === 'orbit' ? roots[0] : undefined);
     return { targets, bounds: rootBounds, layerCount: mode === 'orbit' ? 2 : 1, laneCount: 0 };
   }

@@ -360,6 +360,13 @@ describe('Draw WebMCP tools', () => {
     expect(labels.get('edge-0999')?.y).toBe(baseY - 999 * 20);
   });
 
+  it('stacks connector labels with nearby painted midpoints', () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string, x: number, y: number) => ({ id, kind: 'note' as const, createdAt, x, y, width: 120, height: 80, text: id });
+    const a = note('a', 0, 0), b = note('b', 400, 0), c = note('c', 1, 1), d = note('d', 401, 1), edge = (id: string, fromId: string, toId: string) => ({ id, kind: 'connector' as const, createdAt, fromId, toId, label: 'a wide approval label' });
+    const labels = connectorLabelLayout([a, b, c, d, edge('edge-a', a.id, b.id), edge('edge-b', c.id, d.id)]), first = labels.get('edge-a')!, second = labels.get('edge-b')!;
+    expect(second.y + 4).toBeLessThanOrEqual(first.y - 12 - 4);
+  });
+
   it('routes opposite-satellite labels around a preserved orbit hub', async () => {
     const createdAt = '2026-09-05T00:00:00.000Z', label = 'Satellite handoff';
     const note = (id: string) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id });
@@ -382,6 +389,19 @@ describe('Draw WebMCP tools', () => {
     const notes = new Map(controller.read().objects.filter((object): object is typeof hub => object.kind === 'note').map((object) => [object.id, object])), placedHub = notes.get(hub.id)!, a = notes.get(first.id)!, b = notes.get(second.id)!, shaftX = (a.x + a.width / 2 + b.x + b.width / 2) / 2;
     expect({ x: placedHub.x, y: placedHub.y }).toEqual({ x: 0, y: 0 });
     expect(shaftX < placedHub.x - 35 || shaftX > placedHub.x + placedHub.width + 35).toBe(true);
+  });
+
+  it('globally rechecks interacting orbit shafts', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id });
+    const objects = ['a', 'b', 'c', 'd'].map(note), edge = (id: string, fromId: string, toId: string) => ({ id, kind: 'connector' as const, createdAt, fromId, toId, label: '' });
+    const edges = [edge('1-cb', 'c', 'b'), edge('2-ad', 'a', 'd'), edge('3-da', 'd', 'a'), edge('4-ca', 'c', 'a'), edge('5-ba', 'b', 'a'), edge('6-cd', 'c', 'd')];
+    const controller = harness({ ...createDocument(), objects: [...objects, ...edges] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: objects.map(({ id }) => id), mode: 'orbit', gap: 16 });
+    const placed = new Map(controller.read().objects.filter((object): object is typeof objects[number] => object.kind === 'note').map((object) => [object.id, object])), start = placed.get('c')!, end = placed.get('b')!, hub = placed.get('a')!;
+    const x1 = start.x + start.width / 2, y1 = start.y + start.height / 2, x2 = end.x + end.width / 2, y2 = end.y + end.height / 2, bounds = { x: hub.x - 35, y: hub.y - 35, width: hub.width + 70, height: hub.height + 70 };
+    let minimum = 0, maximum = 1, intersects = true;
+    for (const [origin, delta, low, high] of [[x1, x2 - x1, bounds.x, bounds.x + bounds.width], [y1, y2 - y1, bounds.y, bounds.y + bounds.height]] as const) { if (delta === 0) { if (origin < low || origin > high) intersects = false; continue; } const first = (low - origin) / delta, second = (high - origin) / delta; minimum = Math.max(minimum, Math.min(first, second)); maximum = Math.min(maximum, Math.max(first, second)); if (minimum > maximum) intersects = false; }
+    expect(intersects).toBe(false);
   });
 
   it('preserves painted root gaps after routing multiple connector labels', async () => {
