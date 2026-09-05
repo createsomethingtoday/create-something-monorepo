@@ -392,6 +392,32 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
   for (const [level, ids] of [...idsByLevel].sort(([a], [b]) => a - b)) ids.forEach((id, index) => targets.set(id, !vertical
     ? { x: anchor.x + level * (width + gap), y: anchor.y + index * (height + gap) }
     : { x: anchor.x + index * (width + gap), y: anchor.y + level * (height + gap) }));
+  const positionedBaseBounds = (id: string) => {
+    const target = targets.get(id)!, expanded = rootBounds.get(id)!, base = baseRootBounds.get(id)!;
+    return { x: target.x + base.x - expanded.x, y: target.y + base.y - expanded.y, width: base.width, height: base.height };
+  };
+  const positionedCenter = (rootId: string, object: CanvasObject) => {
+    const center = resolveCenter(object), target = targets.get(rootId)!, bounds = rootBounds.get(rootId)!;
+    return { x: center.x + target.x - bounds.x, y: center.y + target.y - bounds.y };
+  };
+  const intersects = (a: { x: number; y: number; width: number; height: number }, b: { x: number; y: number; width: number; height: number }) => a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+  for (const connector of document.objects.filter((object): object is Extract<CanvasObject, { kind: 'connector' }> => object.kind === 'connector' && Boolean(object.label)).sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0)) {
+    const from = rootByMember.get(connector.fromId), to = rootByMember.get(connector.toId), fromObject = byId.get(connector.fromId), toObject = byId.get(connector.toId);
+    if (!from || !to || from === to || !fromObject || !toObject) continue;
+    const fromCenter = positionedCenter(from, fromObject), toCenter = positionedCenter(to, toObject), halfWidth = (estimatedTextWidth(connector.label) + 5) / 2;
+    const labelBounds = { x: (fromCenter.x + toCenter.x) / 2 - halfWidth - gap, y: (fromCenter.y + toCenter.y) / 2 - 22 - gap, width: halfWidth * 2 + gap * 2, height: 16 + gap * 2 };
+    for (const id of roots) {
+      if (id === from || id === to || !intersects(positionedBaseBounds(id), labelBounds)) continue;
+      for (let attempt = 0; attempt < 32; attempt += 1) {
+        const target = targets.get(id)!;
+        targets.set(id, vertical ? { x: target.x + width + gap, y: target.y } : { x: target.x, y: target.y + height + gap });
+        const candidate = positionedBaseBounds(id);
+        const overlapsRoot = roots.some((other) => other !== id && intersects(candidate, positionedBaseBounds(other)));
+        if (!intersects(candidate, labelBounds) && !overlapsRoot) break;
+        if (attempt === 31) throw new Error('Layout could not route a connector label around intermediate roots.');
+      }
+    }
+  }
   return { targets, bounds: rootBounds, layerCount: idsByLevel.size, laneCount: 0 };
 }
 

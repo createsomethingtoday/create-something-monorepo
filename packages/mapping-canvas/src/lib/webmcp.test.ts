@@ -304,6 +304,18 @@ describe('Draw WebMCP tools', () => {
     expect(labelCenter - halfLabel).toBeGreaterThanOrEqual(placedGroup.x + placedGroup.width + 1 + 16);
   });
 
+  it('routes long-edge labels around intermediate layout roots', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', label = 'Cross-level approval evidence';
+    const first = { id: 'a', kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: 'A' }, middle = { ...first, id: 'b', text: 'B' }, last = { ...first, id: 'c', text: 'C' };
+    const edge = (id: string, fromId: string, toId: string, edgeLabel = '') => ({ id, kind: 'connector' as const, createdAt, fromId, toId, label: edgeLabel });
+    const controller = harness({ ...createDocument(), objects: [first, middle, last, edge('ab', first.id, middle.id), edge('bc', middle.id, last.id), edge('ac', first.id, last.id, label)] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: [first.id, middle.id, last.id], mode: 'flow', gap: 16 });
+    const notes = new Map(controller.read().objects.filter((object): object is typeof first => object.kind === 'note').map((object) => [object.id, object])), a = notes.get(first.id)!, b = notes.get(middle.id)!, c = notes.get(last.id)!;
+    const halfLabel = (label.length * 7 + 5) / 2, labelBounds = { x: (a.x + a.width / 2 + c.x + c.width / 2) / 2 - halfLabel, y: (a.y + a.height / 2 + c.y + c.height / 2) / 2 - 22, width: halfLabel * 2, height: 16 };
+    const separated = b.x + b.width + 16 <= labelBounds.x || labelBounds.x + labelBounds.width + 16 <= b.x || b.y + b.height + 16 <= labelBounds.y || labelBounds.y + labelBounds.height + 16 <= b.y;
+    expect(separated).toBe(true);
+  });
+
   it('reserves marker paint for descendant connectors', async () => {
     const createdAt = '2026-09-05T00:00:00.000Z';
     const first = { id: 'first', kind: 'rectangle' as const, createdAt, from: { x: 0, y: 0 }, to: { x: 20, y: 20 }, color: '#fcaa2d' }, second = { ...first, id: 'second', from: { x: 80, y: 0 }, to: { x: 100, y: 20 } };
