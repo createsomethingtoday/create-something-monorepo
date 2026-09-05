@@ -300,7 +300,8 @@
     const segmentDistance = (first: PaintSegment, second: PaintSegment) => {
       const cross = (a: { x: number; y: number }, b: { x: number; y: number }, c: { x: number; y: number }) => (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
       const firstSides = [cross(first.start, first.end, second.start), cross(first.start, first.end, second.end)], secondSides = [cross(second.start, second.end, first.start), cross(second.start, second.end, first.end)];
-      if (firstSides[0] * firstSides[1] <= 0 && secondSides[0] * secondSides[1] <= 0) return 0;
+      const projectionsOverlap = Math.max(Math.min(first.start.x, first.end.x), Math.min(second.start.x, second.end.x)) <= Math.min(Math.max(first.start.x, first.end.x), Math.max(second.start.x, second.end.x)) && Math.max(Math.min(first.start.y, first.end.y), Math.min(second.start.y, second.end.y)) <= Math.min(Math.max(first.start.y, first.end.y), Math.max(second.start.y, second.end.y));
+      if (projectionsOverlap && firstSides[0] * firstSides[1] <= 0 && secondSides[0] * secondSides[1] <= 0) return 0;
       return Math.min(pointSegmentDistance(first.start, second), pointSegmentDistance(first.end, second), pointSegmentDistance(second.start, first), pointSegmentDistance(second.end, first));
     };
     const paintedOverlap = (firstObject: CanvasObject, first: typeof rendered[number], secondObject: CanvasObject, second: typeof rendered[number]) => {
