@@ -462,8 +462,9 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
     if (!global) {
       for (const connector of connectors) {
         const from = rootByMember.get(connector.fromId), to = rootByMember.get(connector.toId), fromObject = byId.get(connector.fromId), toObject = byId.get(connector.toId);
-        if ((!from && !to) || (from && from === to) || !fromObject || !toObject) continue;
+        if (!fromObject || !toObject) continue;
         const fromRoots = layoutRoots(fromObject), toRoots = layoutRoots(toObject), endpointRoots = new Set([...fromRoots, ...toRoots]);
+        if (!endpointRoots.size || (from && from === to)) continue;
         let cleared = false;
         for (let attempt = 0; attempt < 32; attempt += 1) {
           const start = layoutCenter(fromObject).center, end = layoutCenter(toObject).center, conflict = roots.find((id) => id !== from && id !== to && (endpointRoots.has(id) ? segmentHitsBounds(start, end, positionedBaseBounds(id), 0) : segmentIntersects(start, end, positionedBaseBounds(id))));
@@ -471,7 +472,7 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
           const alternate = to === preservedRoot ? from : from === preservedRoot ? to : (to ?? from), movingId = conflict === preservedRoot && alternate ? alternate : conflict;
           const opposite = fromRoots.has(conflict) ? [...toRoots][0] : toRoots.has(conflict) ? [...fromRoots][0] : undefined;
           const movingAxis = preservedAxes.get(connector.id)!, oppositeObject = fromRoots.has(conflict) ? toObject : toRoots.has(conflict) ? fromObject : undefined;
-          if (!opposite || !oppositeObject || !alignEndpointRoot(opposite, oppositeObject, movingAxis, movingAxis === 'x' ? start.x : start.y)) relocate(opposite ?? movingId, movingAxis);
+          if (!opposite || !oppositeObject || oppositeObject.kind === 'connector' || !alignEndpointRoot(opposite, oppositeObject, movingAxis, movingAxis === 'x' ? start.x : start.y)) relocate(oppositeObject?.kind === 'connector' ? conflict : (opposite ?? movingId), movingAxis);
         }
         if (!cleared) throw new Error('Layout could not clear every connector-shaft obstruction.');
       }
@@ -481,8 +482,9 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
       let moved = false;
       for (const connector of connectors) {
         const from = rootByMember.get(connector.fromId), to = rootByMember.get(connector.toId), fromObject = byId.get(connector.fromId), toObject = byId.get(connector.toId);
-        if ((!from && !to) || (from && from === to) || !fromObject || !toObject) continue;
+        if (!fromObject || !toObject) continue;
         const fromRoots = layoutRoots(fromObject), toRoots = layoutRoots(toObject), endpointRoots = new Set([...fromRoots, ...toRoots]);
+        if (!endpointRoots.size || (from && from === to)) continue;
         const start = layoutCenter(fromObject).center, end = layoutCenter(toObject).center, conflict = roots.find((id) => id !== from && id !== to && (endpointRoots.has(id) ? segmentHitsBounds(start, end, positionedBaseBounds(id), 0) : segmentIntersects(start, end, positionedBaseBounds(id))));
         if (!conflict) continue;
         const preservedConflict = conflict === preservedRoot;
@@ -490,7 +492,7 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
         const movingAxis = preservedAxes.get(connector.id)!;
         const opposite = fromRoots.has(conflict) ? [...toRoots][0] : toRoots.has(conflict) ? [...fromRoots][0] : undefined;
         const oppositeObject = fromRoots.has(conflict) ? toObject : toRoots.has(conflict) ? fromObject : undefined;
-        if (!opposite || !oppositeObject || !alignEndpointRoot(opposite, oppositeObject, movingAxis, movingAxis === 'x' ? start.x : start.y)) relocate(opposite ?? movingId, movingAxis);
+        if (!opposite || !oppositeObject || oppositeObject.kind === 'connector' || !alignEndpointRoot(opposite, oppositeObject, movingAxis, movingAxis === 'x' ? start.x : start.y)) relocate(oppositeObject?.kind === 'connector' ? conflict : (opposite ?? movingId), movingAxis);
         moved = true;
         break;
       }

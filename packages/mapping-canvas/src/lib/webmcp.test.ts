@@ -352,6 +352,14 @@ describe('Draw WebMCP tools', () => {
     expect(intersects).toBe(false);
   });
 
+  it('routes shafts whose immediate endpoints are both connectors', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id }), edge = (id: string, fromId: string, toId: string) => ({ id, kind: 'connector' as const, createdAt, fromId, toId, label: '' });
+    const roots = ['a', 'b', 'c', 'd'].map(note), left = edge('ab', 'a', 'b'), right = edge('cd', 'c', 'd'), bridge = edge('ab-cd', left.id, right.id);
+    const controller = harness({ ...createDocument(), objects: [...roots, left, right, bridge] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    const result = await layout.execute({ ids: roots.map(({ id }) => id), mode: 'swimlane', gap: 16, lanes: roots.map(({ id }, index) => ({ id, lane: String(index + 1) })) }) as { placedIds: string[] };
+    expect(result.placedIds).toEqual(expect.arrayContaining(roots.map(({ id }) => id)));
+  });
+
   it('routes unlabeled shafts across nonadjacent swimlanes', async () => {
     const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id });
     const first = note('a'), middle = note('b'), last = note('c'), connector = { id: 'ac', kind: 'connector' as const, createdAt, fromId: first.id, toId: last.id, label: '' };

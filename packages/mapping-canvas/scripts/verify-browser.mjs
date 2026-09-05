@@ -161,6 +161,24 @@ try {
     ] });
     const markerCornerGeometry = await tools.draw_get_rendered_geometry.execute({ ids: markerCornerIds, limit: 10 });
     await tools.draw_revert_change.execute({ changeId: markerCornerFixture.changeId });
+    const endpointCornerIds = ['browser-endpoint-corner-a', 'browser-endpoint-corner-b', 'browser-endpoint-corner-c', 'browser-endpoint-corner-diagonal', 'browser-endpoint-corner-labelled'];
+    const endpointCornerFixture = await tools.draw_apply_operations.execute({ operations: [
+      { type: 'put_object', object: { id: endpointCornerIds[0], kind: 'note', createdAt: new Date().toISOString(), x: 100, y: 100, width: 40, height: 40, text: 'A' } },
+      { type: 'put_object', object: { id: endpointCornerIds[1], kind: 'note', createdAt: new Date().toISOString(), x: 500, y: 500, width: 40, height: 40, text: 'B' } },
+      { type: 'put_object', object: { id: endpointCornerIds[2], kind: 'note', createdAt: new Date().toISOString(), x: -100, y: 620, width: 40, height: 40, text: 'C' } },
+      { type: 'put_object', object: { id: endpointCornerIds[3], kind: 'connector', createdAt: new Date().toISOString(), fromId: endpointCornerIds[0], toId: endpointCornerIds[1], label: '' } },
+      { type: 'put_object', object: { id: endpointCornerIds[4], kind: 'connector', createdAt: new Date().toISOString(), fromId: endpointCornerIds[3], toId: endpointCornerIds[2], label: 'x' } }
+    ] });
+    const endpointCornerGeometry = await tools.draw_get_rendered_geometry.execute({ ids: endpointCornerIds.slice(3), limit: 10 });
+    await tools.draw_revert_change.execute({ changeId: endpointCornerFixture.changeId });
+    const ellipseIds = ['browser-large-ellipse', 'browser-large-ellipse-touch'];
+    const ellipseAngle = Math.PI / 48, ellipsePoint = { x: 10_000 + Math.cos(ellipseAngle) * 10_000, y: 10_000 + Math.sin(ellipseAngle) * 10_000 };
+    const ellipseFixture = await tools.draw_apply_operations.execute({ operations: [
+      { type: 'put_object', object: { id: ellipseIds[0], kind: 'ellipse', createdAt: new Date().toISOString(), from: { x: 0, y: 0 }, to: { x: 20_000, y: 20_000 }, color: '#fcaa2d' } },
+      { type: 'put_object', object: { id: ellipseIds[1], kind: 'rectangle', createdAt: new Date().toISOString(), from: { x: ellipsePoint.x - 1, y: ellipsePoint.y - 1 }, to: { x: ellipsePoint.x + 1, y: ellipsePoint.y + 1 }, color: '#fcaa2d' } }
+    ] });
+    const ellipseTouchGeometry = await tools.draw_get_rendered_geometry.execute({ ids: ellipseIds, limit: 10 });
+    await tools.draw_revert_change.execute({ changeId: ellipseFixture.changeId });
     await tools.draw_select.execute({ ids: [composed.refs.mission] });
     const selectedGroupGeometry = await tools.draw_get_rendered_geometry.execute({ ids: [composed.refs.mission] });
     await tools.draw_select.execute({ ids: [] });
@@ -238,7 +256,7 @@ try {
     const restored = await tools.draw_get_state.execute({});
     return {
       names, drawNames, version: inspect.version, compactBytes: JSON.stringify(inspect).length, fullBytes: JSON.stringify(before).length,
-      composed, renderedGeometry, connectorCollisionGeometry, diagonalClearGeometry, sparseClearGeometry, markerCornerGeometry, briefModelWidth, rawConnectorLabelBounds, selectedGroupGeometry, unselectedGroupGeometry, autoLayouts, arrow, arrowGeometry, settledArrowGeometry, edgeArrowGeometry, thickArrowGeometry, zeroArrowGeometry, endpointLabelGeometry, collisionGeometry, provenanceGeometry, clippedGeometry, connectorVisible: Boolean(connectorLabel && getComputedStyle(connectorLabel).display !== 'none'),
+      composed, renderedGeometry, connectorCollisionGeometry, diagonalClearGeometry, sparseClearGeometry, markerCornerGeometry, endpointCornerGeometry, ellipseTouchGeometry, briefModelWidth, rawConnectorLabelBounds, selectedGroupGeometry, unselectedGroupGeometry, autoLayouts, arrow, arrowGeometry, settledArrowGeometry, edgeArrowGeometry, thickArrowGeometry, zeroArrowGeometry, endpointLabelGeometry, collisionGeometry, provenanceGeometry, clippedGeometry, connectorVisible: Boolean(connectorLabel && getComputedStyle(connectorLabel).display !== 'none'),
       staleError, deleteError, replaceError, focus, restoredCount: restored.document.objects.length, beforeCount: before.document.objects.length
     };
   });
@@ -252,6 +270,8 @@ try {
   if (semantic.diagonalClearGeometry.overlaps.length) throw new Error(`Rendered geometry reported an AABB-only diagonal connector collision: ${JSON.stringify(semantic.diagonalClearGeometry)}`);
   if (semantic.sparseClearGeometry.overlaps.length) throw new Error(`Rendered geometry reported an AABB-only sparse-stroke collision: ${JSON.stringify(semantic.sparseClearGeometry)}`);
   if (semantic.markerCornerGeometry.overlaps.length) throw new Error(`Rendered geometry reported an AABB-only arrowhead-corner collision: ${JSON.stringify(semantic.markerCornerGeometry)}`);
+  if (semantic.endpointCornerGeometry.overlaps.length) throw new Error(`Rendered geometry reported an AABB-only endpoint-label collision: ${JSON.stringify(semantic.endpointCornerGeometry)}`);
+  if (!semantic.ellipseTouchGeometry.overlaps.some(({ classification }) => classification === 'peer')) throw new Error(`Rendered geometry missed a visible large-ellipse arc collision: ${JSON.stringify(semantic.ellipseTouchGeometry)}`);
   if (!semantic.rawConnectorLabelBounds || semantic.renderedGeometry.connectors[0].labelBounds.viewportBounds.width < semantic.rawConnectorLabelBounds.width + 4 || semantic.renderedGeometry.connectors[0].labelBounds.viewportBounds.height < semantic.rawConnectorLabelBounds.height + 4) throw new Error(`Rendered connector-label bounds omitted the painted outline: ${JSON.stringify({ raw: semantic.rawConnectorLabelBounds, rendered: semantic.renderedGeometry.connectors[0].labelBounds })}`);
   if (JSON.stringify(semantic.selectedGroupGeometry.objects[0]?.worldBounds) !== JSON.stringify(semantic.unselectedGroupGeometry.objects[0]?.worldBounds) || JSON.stringify(semantic.arrowGeometry.objects) !== JSON.stringify(semantic.settledArrowGeometry.objects)) throw new Error(`Rendered geometry changed with selection UI or after the tool declared the animation settled: ${JSON.stringify({ selected: semantic.selectedGroupGeometry, unselected: semantic.unselectedGroupGeometry, immediateArrow: semantic.arrowGeometry, settledArrow: semantic.settledArrowGeometry })}`);
   if (semantic.autoLayouts.length !== 5 || semantic.autoLayouts.some(({ peerOverlaps }) => peerOverlaps) || semantic.arrow.geometry.arrowhead !== 'triangle' || semantic.arrowGeometry.objects.length !== 2 || semantic.arrowGeometry.overlaps.some(({ classification }) => classification === 'peer')) throw new Error(`Semantic auto-layout or freehand arrow proof failed: ${JSON.stringify({ autoLayouts: semantic.autoLayouts, arrow: semantic.arrow, arrowGeometry: semantic.arrowGeometry })}`);

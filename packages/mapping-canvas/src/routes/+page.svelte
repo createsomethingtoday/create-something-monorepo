@@ -290,7 +290,13 @@
       else if (object.kind === 'arrow') { addLine(object.from, object.to); triangles.push(markerPoints(object.from, object.to)); }
       else if (object.kind === 'connector') { const connector = connectorById.get(object.id); if (connector) { addLine(connector.route[0], connector.route[1]); triangles.push(markerPoints(connector.route[0], connector.route[1])); if (connector.labelBounds) rects.push(connector.labelBounds.worldBounds); } }
       else if (object.kind === 'rectangle') { const left = Math.min(object.from.x, object.to.x), right = Math.max(object.from.x, object.to.x), top = Math.min(object.from.y, object.to.y), bottom = Math.max(object.from.y, object.to.y); addLine({ x: left, y: top }, { x: right, y: top }); addLine({ x: right, y: top }, { x: right, y: bottom }); addLine({ x: right, y: bottom }, { x: left, y: bottom }); addLine({ x: left, y: bottom }, { x: left, y: top }); }
-      else if (object.kind === 'ellipse') { const center = { x: (object.from.x + object.to.x) / 2, y: (object.from.y + object.to.y) / 2 }, radius = { x: Math.abs(object.to.x - object.from.x) / 2, y: Math.abs(object.to.y - object.from.y) / 2 }, points = Array.from({ length: 49 }, (_, index) => ({ x: center.x + Math.cos(index / 48 * Math.PI * 2) * radius.x, y: center.y + Math.sin(index / 48 * Math.PI * 2) * radius.y })); for (let index = 1; index < points.length; index += 1) addLine(points[index - 1], points[index]); }
+      else if (object.kind === 'ellipse') {
+        const center = { x: (object.from.x + object.to.x) / 2, y: (object.from.y + object.to.y) / 2 }, radius = { x: Math.abs(object.to.x - object.from.x) / 2, y: Math.abs(object.to.y - object.from.y) / 2 };
+        const renderedRadius = Math.max(entry.viewportBounds.width, entry.viewportBounds.height) / 2, maximumError = .25;
+        const segmentCount = Math.max(48, Math.ceil(Math.PI / Math.acos(Math.max(-1, 1 - maximumError / Math.max(maximumError, renderedRadius)))));
+        const points = Array.from({ length: segmentCount + 1 }, (_, index) => ({ x: center.x + Math.cos(index / segmentCount * Math.PI * 2) * radius.x, y: center.y + Math.sin(index / segmentCount * Math.PI * 2) * radius.y }));
+        for (let index = 1; index < points.length; index += 1) addLine(points[index - 1], points[index]);
+      }
       else rects.push(entry.worldBounds);
       return { segments, rects, triangles };
     };
@@ -314,6 +320,7 @@
     };
     const triangleHitsSegment = (triangle: Array<{ x: number; y: number }>, segment: PaintSegment) => pointInTriangle(segment.start, triangle) || pointInTriangle(segment.end, triangle) || triangleEdges(triangle).some((edge) => segmentDistance(edge, segment) <= segment.padding);
     const trianglesOverlap = (first: Array<{ x: number; y: number }>, second: Array<{ x: number; y: number }>) => first.some((point) => pointInTriangle(point, second)) || second.some((point) => pointInTriangle(point, first)) || triangleEdges(first).some((edge) => triangleEdges(second).some((candidate) => segmentDistance(edge, candidate) === 0));
+    const paintHitsRect = (paint: ReturnType<typeof paintGeometry>, rect: { x: number; y: number; width: number; height: number }) => paint.rects.some((candidate) => overlapBounds(candidate, rect)) || paint.segments.some((segment) => segmentHitsBounds(segment.start, segment.end, rect, segment.padding)) || paint.triangles.some((triangle) => triangleHitsRect(triangle, rect));
     const paintedOverlap = (firstObject: CanvasObject, first: typeof rendered[number], secondObject: CanvasObject, second: typeof rendered[number]) => {
       const a = paintGeometry(firstObject, first), b = paintGeometry(secondObject, second);
       if (a.rects.some((rect) => b.rects.some((candidate) => overlapBounds(rect, candidate)))) return true;
@@ -338,8 +345,9 @@
           || (secondObject.kind === 'group' && (contains(secondObject.id, firstObject.fromId) || contains(secondObject.id, firstObject.toId))));
         const secondEndpointContainer = secondObject?.kind === 'connector' && firstObject && (secondObject.fromId === firstObject.id || secondObject.toId === firstObject.id
           || (firstObject.kind === 'group' && (contains(firstObject.id, secondObject.fromId) || contains(firstObject.id, secondObject.toId))));
-        const relatedLabelOverlap = firstEndpointContainer ? connectorById.get(first.id)?.labelBounds && overlapBounds(connectorById.get(first.id)!.labelBounds!.worldBounds, second.worldBounds)
-          : secondEndpointContainer ? connectorById.get(second.id)?.labelBounds && overlapBounds(connectorById.get(second.id)!.labelBounds!.worldBounds, first.worldBounds) : undefined;
+        const firstLabelBounds = firstEndpointContainer ? connectorById.get(first.id)?.labelBounds?.worldBounds : undefined, secondLabelBounds = secondEndpointContainer ? connectorById.get(second.id)?.labelBounds?.worldBounds : undefined;
+        const relatedLabelOverlap = firstLabelBounds && secondObject && paintHitsRect(paintGeometry(secondObject, second), firstLabelBounds) ? firstLabelBounds
+          : secondLabelBounds && firstObject && paintHitsRect(paintGeometry(firstObject, first), secondLabelBounds) ? secondLabelBounds : undefined;
         if ((firstRelated || secondRelated) && !relatedLabelOverlap) continue;
         if (!relatedLabelOverlap && firstObject && secondObject && !paintedOverlap(firstObject, first, secondObject, second)) continue;
         const sharedCompound = firstObject?.kind === 'stroke' && secondObject?.kind === 'stroke'
