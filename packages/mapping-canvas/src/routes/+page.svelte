@@ -267,6 +267,23 @@
       const bottom = Math.min(first.y + first.height, second.y + second.height);
       return right > x && bottom > y ? { x, y, width: right - x, height: bottom - y } : undefined;
     };
+    const segmentHitsBounds = (start: { x: number; y: number }, end: { x: number; y: number }, bounds: { x: number; y: number; width: number; height: number }, padding = 1) => {
+      const expanded = { x: bounds.x - padding, y: bounds.y - padding, width: bounds.width + padding * 2, height: bounds.height + padding * 2 };
+      let minimum = 0, maximum = 1;
+      for (const [origin, delta, low, high] of [[start.x, end.x - start.x, expanded.x, expanded.x + expanded.width], [start.y, end.y - start.y, expanded.y, expanded.y + expanded.height]] as const) {
+        if (delta === 0) { if (origin < low || origin > high) return false; continue; }
+        const first = (low - origin) / delta, second = (high - origin) / delta;
+        minimum = Math.max(minimum, Math.min(first, second)); maximum = Math.min(maximum, Math.max(first, second));
+        if (minimum > maximum) return false;
+      }
+      return true;
+    };
+    const connectorPaintsBounds = (connector: typeof connectors[number], bounds: { x: number; y: number; width: number; height: number }) => {
+      const [start, end] = connector.route, distance = Math.hypot(end.x - start.x, end.y - start.y), unit = distance ? { x: (end.x - start.x) / distance, y: (end.y - start.y) / distance } : { x: 1, y: 0 }, normal = { x: -unit.y, y: unit.x };
+      const markerPoints = [{ x: end.x + unit.x * 2, y: end.y + unit.y * 2 }, { x: end.x - unit.x * 18 + normal.x * 7, y: end.y - unit.y * 18 + normal.y * 7 }, { x: end.x - unit.x * 18 - normal.x * 7, y: end.y - unit.y * 18 - normal.y * 7 }];
+      const xs = markerPoints.map(({ x }) => x), ys = markerPoints.map(({ y }) => y), marker = { x: Math.min(...xs), y: Math.min(...ys), width: Math.max(...xs) - Math.min(...xs), height: Math.max(...ys) - Math.min(...ys) };
+      return segmentHitsBounds(start, end, bounds) || Boolean(overlapBounds(marker, bounds)) || Boolean(connector.labelBounds && overlapBounds(connector.labelBounds.worldBounds, bounds));
+    };
     const overlap = (first: typeof rendered[number], second: typeof rendered[number]) => overlapBounds(first.worldBounds, second.worldBounds);
     const overlaps: DrawRenderedGeometry['overlaps'] = [];
     let comparisonCount = 0;
@@ -285,6 +302,9 @@
         const relatedLabelOverlap = firstEndpointContainer ? connectorById.get(first.id)?.labelBounds && overlapBounds(connectorById.get(first.id)!.labelBounds!.worldBounds, second.worldBounds)
           : secondEndpointContainer ? connectorById.get(second.id)?.labelBounds && overlapBounds(connectorById.get(second.id)!.labelBounds!.worldBounds, first.worldBounds) : undefined;
         if ((firstRelated || secondRelated) && !relatedLabelOverlap) continue;
+        const firstConnectorGeometry = connectorById.get(first.id), secondConnectorGeometry = connectorById.get(second.id);
+        if (!relatedLabelOverlap && firstConnectorGeometry && !secondConnectorGeometry && !connectorPaintsBounds(firstConnectorGeometry, second.worldBounds)) continue;
+        if (!relatedLabelOverlap && secondConnectorGeometry && !firstConnectorGeometry && !connectorPaintsBounds(secondConnectorGeometry, first.worldBounds)) continue;
         const sharedCompound = firstObject?.kind === 'stroke' && secondObject?.kind === 'stroke'
           && firstObject.sourceIds?.length === 2 && secondObject.sourceIds?.length === 2
           && firstObject.sourceIds.every((id, index) => id === secondObject.sourceIds?.[index])
