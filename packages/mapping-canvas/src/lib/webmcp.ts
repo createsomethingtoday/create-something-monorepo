@@ -259,6 +259,7 @@ function paintedLayoutBounds(objects: CanvasObject[], allObjects: CanvasObject[]
     if (object.kind === 'stroke') return object.width / 2;
     if (object.kind === 'arrow') return 19;
     if (object.kind === 'rectangle' || object.kind === 'ellipse' || object.kind === 'group') return 1;
+    if (object.kind === 'note') return .5;
     return 0;
   }));
   return { x: bounds.x - padding, y: bounds.y - padding, width: labelRight - bounds.x + padding * 2, height: bounds.height + padding * 2 };
