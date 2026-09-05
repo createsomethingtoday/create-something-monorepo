@@ -186,8 +186,16 @@
     const selected = matches.slice(0, input.limit);
     const existingIds = new Set(document.objects.map(({ id }) => id));
     const missingIds = input.ids?.filter((id) => !existingIds.has(id)) ?? [];
+    const paintedRect = (element: SVGGraphicsElement) => {
+      const rect = element.getBoundingClientRect(), matrix = element.getScreenCTM(), style = getComputedStyle(element);
+      const strokeWidth = style.stroke === 'none' ? 0 : Number.parseFloat(style.strokeWidth);
+      if (!matrix || !Number.isFinite(strokeWidth) || strokeWidth <= 0) return rect;
+      const scale = Math.max(Math.hypot(matrix.a, matrix.b), Math.hypot(matrix.c, matrix.d));
+      const inset = strokeWidth * scale / 2;
+      return new DOMRect(rect.left - inset, rect.top - inset, rect.width + inset * 2, rect.height + inset * 2);
+    };
     const decoratedLineRect = (line: SVGLineElement) => {
-      const rect = line.getBoundingClientRect(), matrix = line.getScreenCTM();
+      const rect = paintedRect(line), matrix = line.getScreenCTM();
       if (!line.hasAttribute('marker-end') || !matrix) return rect;
       const start = new DOMPoint(line.x1.baseVal.value, line.y1.baseVal.value).matrixTransform(matrix), end = new DOMPoint(line.x2.baseVal.value, line.y2.baseVal.value).matrixTransform(matrix);
       const distance = Math.hypot(end.x - start.x, end.y - start.y);
@@ -208,12 +216,12 @@
       if (!element) return [];
       const rect = object.kind === 'group'
         ? [...element.querySelectorAll<SVGGraphicsElement>(':scope > :not([data-ui="true"])')].reduce<DOMRect | undefined>((bounds, child) => {
-            const childBounds = child.getBoundingClientRect();
+            const childBounds = paintedRect(child);
             if (!bounds) return DOMRect.fromRect(childBounds);
             const left = Math.min(bounds.left, childBounds.left), top = Math.min(bounds.top, childBounds.top);
             return new DOMRect(left, top, Math.max(bounds.right, childBounds.right) - left, Math.max(bounds.bottom, childBounds.bottom) - top);
           }, undefined) ?? element.getBoundingClientRect()
-        : element instanceof SVGLineElement ? decoratedLineRect(element) : element.getBoundingClientRect();
+        : element instanceof SVGLineElement ? decoratedLineRect(element) : paintedRect(element);
       const view = viewportBounds(rect);
       return [{ id: object.id, kind: object.kind, worldBounds: worldBounds(rect), viewportBounds: view, clipped: clipped(view) }];
     });
