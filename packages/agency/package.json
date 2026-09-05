@@ -34,6 +34,7 @@
     "check": "pnpm prepare:build-dir && pnpm prepare:local-deps && pnpm integrations:check && pnpm search:campaign:check && node ./scripts/run-pinned-bin.mjs @sveltejs/kit svelte-kit sync && node ./scripts/run-pinned-bin.mjs svelte-check svelte-check --tsconfig ./tsconfig.json --fail-on-warnings && pnpm canon:check && pnpm copy:check && node --import tsx --test test/community-api-auth.test.ts test/identity-provider-retirement.test.ts test/public-html-cache.test.ts && pnpm test:mcp-entitlement-authority && pnpm test:map-commercial-lifecycle && pnpm test:control-activation",
     "seo:check": "node ./scripts/check-seo-aeo.mjs && pnpm marketing:check",
     "analytics:commercial-funnel": "node ./scripts/report-commercial-funnel.mjs",
+    "analytics:marketing-attribution": "node ./scripts/report-marketing-attribution.mjs",
     "analytics:high-intent-search": "node ./scripts/report-high-intent-search.mjs",
     "healthcare:coverage:npg": "node --import tsx ./scripts/report-npg-healthcare-coverage.ts",
     "search:campaign:check": "node ./scripts/check-high-intent-search.mjs && node --import tsx --test test/high-intent-search.test.ts test/high-intent-search-attribution.test.ts && node --test test/high-intent-search-campaign.test.mjs",
