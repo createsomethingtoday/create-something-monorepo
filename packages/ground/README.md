@@ -67,6 +67,7 @@ Record the exact artifact that produced a receipt:
 
 ```bash
 ground build-info --json
+ground doctor . --json
 ```
 
 ---
@@ -108,7 +109,7 @@ view; read `discovered_changed_files`, `analyzable_changed_files`, and
 `unsupported_changed_files` and `excluded_changed_files`, so a clean claim is
 valid only with `PASS`.
 
-Ground 0.3.6 supports TypeScript (`.ts`, `.tsx`), JavaScript (`.js`, `.jsx`,
+Ground 0.4.0 supports TypeScript (`.ts`, `.tsx`), JavaScript (`.js`, `.jsx`,
 `.mjs`), and Svelte (`.svelte`) in the declared analysis lane. Svelte component
 scripts participate in duplicate analysis, while SvelteKit configuration,
 routes, aliases, actions, stores, and framework entry points inform reachability
@@ -121,6 +122,12 @@ with their exact config source. The legacy `ground find orphans` command now
 returns the same verified canonical report as `ground analyze --checks orphans`.
 Promptfoo and manual Ground configurations remain recognized alongside package
 scripts, and broad duplicate scans retain their explicit safety bound.
+
+Ground rejects malformed or unknown native policy fields instead of using
+defaults. Claim commands recompute current evidence and reject a stored result
+when source, scope, or the current engine's computation has changed. Duplicate
+suggestions remain review-only until a concrete patch, destination export, and
+import rewrites have been resolved and validated.
 
 ### Check Commands (do these first)
 
@@ -187,32 +194,17 @@ ground claim orphan ./old-module "nothing imports it"
 
 ## CREATE SOMETHING Monorepo Mode
 
-Ground knows our codebase. When you use `--monorepo`, it:
-
-- Suggests where to put shared code (`@create-something/components`)
-- Gives you the import statement to use
-- Generates a Linear command to create an issue
+Ground reads the declared pnpm workspace, including `apps/*`, nested packages,
+and exclusions. It parses internal manifest dependencies and package exports so
+reachability follows the workspace contract. Concrete refactor destinations are
+review-only until an export and patch have been resolved and validated.
 
 ```bash
 ground find duplicates ./packages --monorepo --linear
 ```
 
-Output:
-
-```
-Found 1 duplicate:
-
-1. 96.1% similar
-   design/+page.server.ts ↔ docs/+page.server.ts
-   ┌──────────────────────────────────────────
-   │ 📋 Create shared design page loader
-   │ 📁 packages/components/src/lib/auth/handlers.ts
-   │ 🎯 P1
-   └──────────────────────────────────────────
-
-Linear commands:
-pnpm linear:create -- --title "Extract shared design loader (96% duplicate)" --label "refactor" --label "dry" --priority "high"
-```
+Run `ground doctor . --json` to inspect the effective policy digest, discovered
+package count, and internal dependency count before a repository-wide check.
 
 ---
 

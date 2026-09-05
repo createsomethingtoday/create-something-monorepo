@@ -191,6 +191,23 @@ impl VerifiedTriad {
                     file_b.as_ref()
                 ),
             })?;
+
+        let current = computations::compute_similarity(file_a.as_ref(), file_b.as_ref())?;
+        let hashes_match = (current.hash_a == evidence.hash_a && current.hash_b == evidence.hash_b)
+            || (current.hash_a == evidence.hash_b && current.hash_b == evidence.hash_a);
+        let computation_matches = (current.similarity - evidence.similarity).abs() < f64::EPSILON
+            && (current.token_overlap - evidence.token_overlap).abs() < f64::EPSILON
+            && (current.line_similarity - evidence.line_similarity).abs() < f64::EPSILON
+            && current.ast_similarity == evidence.ast_similarity;
+        if !hashes_match || !computation_matches {
+            return Err(VerifiedTriadError::ClaimRejected(ClaimRejected::StaleEvidence {
+                reason: format!(
+                    "content or current-engine computation changed for {:?} or {:?}",
+                    file_a.as_ref(),
+                    file_b.as_ref()
+                ),
+            }));
+        }
         
         DryViolation::from_evidence(evidence, reason.into(), self.thresholds.dry_similarity)
             .map_err(VerifiedTriadError::ClaimRejected)
@@ -207,6 +224,21 @@ impl VerifiedTriad {
                 claim_type: "existence".to_string(),
                 suggestion: format!("Run: ground count uses {}", symbol),
             })?;
+
+        let current = computations::count_usages(symbol, &evidence.search_path)?;
+        if current.usage_count != evidence.usage_count
+            || current.definition_count != evidence.definition_count
+            || current.actual_usage_count != evidence.actual_usage_count
+            || current.type_only_count != evidence.type_only_count
+            || current.locations != evidence.locations
+        {
+            return Err(VerifiedTriadError::ClaimRejected(ClaimRejected::StaleEvidence {
+                reason: format!(
+                    "search results changed for '{}' under {:?}",
+                    symbol, evidence.search_path
+                ),
+            }));
+        }
         
         ExistenceClaim::from_evidence(evidence, reason.into(), self.thresholds.rams_min_usage)
             .map_err(VerifiedTriadError::ClaimRejected)
@@ -223,6 +255,19 @@ impl VerifiedTriad {
                 claim_type: "disconnection".to_string(),
                 suggestion: format!("Run: ground check connections {:?}", module_path.as_ref()),
             })?;
+
+        let current = computations::analyze_connectivity(module_path.as_ref())?;
+        if current.is_connected != evidence.is_connected
+            || current.incoming_connections != evidence.incoming_connections
+            || current.outgoing_connections != evidence.outgoing_connections
+            || current.imported_by != evidence.imported_by
+            || current.imports != evidence.imports
+            || current.architectural != evidence.architectural
+        {
+            return Err(VerifiedTriadError::ClaimRejected(ClaimRejected::StaleEvidence {
+                reason: format!("connectivity changed for {:?}", module_path.as_ref()),
+            }));
+        }
         
         ConnectivityClaim::from_evidence(
             evidence,
@@ -261,5 +306,51 @@ mod tests {
             VerifiedTriadError::ClaimRejected(ClaimRejected::NoEvidence { .. }) => {}
             _ => panic!("Expected NoEvidence error"),
         }
+    }
+
+    #[test]
+    fn test_duplicate_claim_rejects_evidence_after_file_content_changes() {
+        let dir = tempdir().unwrap();
+        let db_path = dir.path().join("test.db");
+        let file_a = dir.path().join("a.ts");
+        let file_b = dir.path().join("b.ts");
+        let duplicate = "export function total(values: number[]) {\n  return values.reduce((sum, value) => sum + value, 0);\n}\n";
+        std::fs::write(&file_a, duplicate).unwrap();
+        std::fs::write(&file_b, duplicate).unwrap();
+
+        let mut vt = VerifiedTriad::new(&db_path).unwrap();
+        vt.compute_similarity(&file_a, &file_b).unwrap();
+        std::fs::write(&file_b, "export const unrelated = true;\n").unwrap();
+
+        let result = vt.claim_dry_violation(&file_a, &file_b, "duplicate");
+        assert!(matches!(
+            result,
+            Err(VerifiedTriadError::ClaimRejected(ClaimRejected::StaleEvidence { .. }))
+        ));
+    }
+
+    #[test]
+    fn test_dead_code_claim_rejects_evidence_after_search_scope_changes() {
+        let dir = tempdir().unwrap();
+        let db_path = dir.path().join("test.db");
+        std::fs::write(
+            dir.path().join("definition.ts"),
+            "export const candidate = 1;\n",
+        )
+        .unwrap();
+
+        let mut vt = VerifiedTriad::new(&db_path).unwrap();
+        vt.count_usages("candidate", dir.path()).unwrap();
+        std::fs::write(
+            dir.path().join("consumer.ts"),
+            "import { candidate } from './definition';\nconsole.log(candidate);\n",
+        )
+        .unwrap();
+
+        let result = vt.claim_no_existence("candidate", "unused");
+        assert!(matches!(
+            result,
+            Err(VerifiedTriadError::ClaimRejected(ClaimRejected::StaleEvidence { .. }))
+        ));
     }
 }

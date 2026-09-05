@@ -22,6 +22,7 @@ function fixture(overrides = {}) {
       minimum_complete_receipts: 2,
       minimum_adjudicated_findings: 3,
       minimum_precision: 0.8,
+      minimum_recall: 0.8,
       maximum_false_positive_rate: 0.2
     },
     records: [
@@ -31,7 +32,10 @@ function fixture(overrides = {}) {
           source: 'https://example.test/pr/1',
           completion: 'complete',
           observed_findings: 2,
-          execution_failures: 0
+          execution_failures: 0,
+          expected_findings: 2,
+          missed_findings: 0,
+          recall_check: 'duplicates'
         },
         verdicts: [
           {
@@ -84,6 +88,8 @@ test('summarizes adjudicated Ground findings and keeps insufficient evidence adv
     out_of_scope: 0
   });
   assert.equal(summary.precision, 2 / 3);
+  assert.equal(summary.recall, 1);
+  assert.deepEqual(summary.recall_evidence, { expected: 2, detected: 2, missed: 0 });
   assert.equal(summary.false_positive_rate, 1 / 3);
   assert.equal(summary.promotion.ready, false);
   assert.deepEqual(summary.promotion.reasons, [

@@ -44,7 +44,10 @@ use crate::computations::{BloomFilter, HyperLogLog};
 use crate::computations::confidence::orphan_confidence;
 use crate::computations::framework::{detect_framework, is_implicit_entry};
 use crate::computations::function_dry::is_test_file;
-use crate::monorepo::{detect_monorepo, suggest_refactoring, generate_linear_command};
+use crate::monorepo::{
+    detect_monorepo, discover_workspace_package_paths, generate_linear_command,
+    suggest_refactoring,
+};
 use crate::config::GroundConfig;
 
 /// Log progress to stderr (visible in MCP server logs)
@@ -905,11 +908,17 @@ fn handle_find_duplicate_functions(args: &Value) -> ToolResult {
     
     // Load .ground.yml config - walk up directory tree to find it
     let config = if let Some(path) = config_path {
-        GroundConfig::load(&path).unwrap_or_default()
+        match GroundConfig::load(&path) {
+            Ok(config) => config,
+            Err(error) => return ToolResult::error(format!("Invalid Ground configuration: {}", error)),
+        }
     } else if let Some(ref dir) = base_dir {
-        find_config_in_ancestors(dir).unwrap_or_default()
+        match load_config_in_ancestors(dir) {
+            Ok(config) => config,
+            Err(error) => return ToolResult::error(error),
+        }
     } else {
-        GroundConfig::load_default()
+        GroundConfig::default()
     };
     
     // Use config threshold as default, allow override from args
@@ -961,15 +970,6 @@ fn handle_find_duplicate_functions(args: &Value) -> ToolResult {
     
     if directories.is_empty() {
         return ToolResult::error("No directories found to analyze");
-    }
-    
-    // Safety limit on packages
-    let max_packages = 50;
-    if directories.len() > max_packages {
-        return ToolResult::error(format!(
-            "Too many packages to scan ({} found, max {}). Use 'directories' to specify a subset.",
-            directories.len(), max_packages
-        ));
     }
     
     // Parse intra-file detection options
@@ -1325,84 +1325,26 @@ fn handle_find_duplicate_functions(args: &Value) -> ToolResult {
 
 /// Find .ground.yml by walking up the directory tree
 /// This allows configs to be placed at the monorepo root and still apply to subdirectories
-fn find_config_in_ancestors(start_dir: &Path) -> Option<GroundConfig> {
-    let mut current = if start_dir.is_absolute() {
-        start_dir.to_path_buf()
-    } else {
-        std::env::current_dir().ok()?.join(start_dir)
-    };
-    
-    // Canonicalize to resolve any symlinks or relative components
-    if let Ok(canonical) = current.canonicalize() {
-        current = canonical;
-    }
-    
-    // Walk up to 10 levels to avoid infinite loops
-    for _ in 0..10 {
-        // Check for .ground.yml in current directory
-        for name in &[".ground.yml", ".ground.yaml", "ground.yml", "ground.yaml"] {
-            let config_path = current.join(name);
-            if config_path.exists() {
-                if let Ok(config) = GroundConfig::load(&config_path) {
-                    return Some(config);
-                }
-            }
-        }
-        
-        // Move to parent directory
-        match current.parent() {
-            Some(parent) if parent != current => {
-                current = parent.to_path_buf();
-            }
-            _ => break,
-        }
-    }
-    
-    None
+fn load_config_in_ancestors(start_dir: &Path) -> Result<GroundConfig, String> {
+    GroundConfig::load_for_path(start_dir)
+        .map(|(config, _)| config)
+        .map_err(|error| format!("Invalid Ground configuration: {}", error))
 }
 
 /// Discover packages in a monorepo by looking for common patterns
 fn discover_monorepo_packages(base: &Path) -> Vec<PathBuf> {
-    let mut packages = Vec::new();
-    
-    // Check for packages/ directory (npm/pnpm workspaces)
-    let packages_dir = base.join("packages");
-    if packages_dir.is_dir() {
-        if let Ok(entries) = std::fs::read_dir(&packages_dir) {
-            for entry in entries.filter_map(|e| e.ok()) {
-                let path = entry.path();
-                if path.is_dir() {
-                    // Look for src/ subdirectory
-                    let src_dir = path.join("src");
-                    if src_dir.is_dir() {
-                        packages.push(src_dir);
-                    } else {
-                        // Also check for lib/ (common in some projects)
-                        let lib_dir = path.join("lib");
-                        if lib_dir.is_dir() {
-                            packages.push(lib_dir);
-                        }
-                    }
-                }
+    let mut packages = discover_workspace_package_paths(base)
+        .into_iter()
+        .map(|package| {
+            let source = package.join("src");
+            if source.is_dir() {
+                source
+            } else {
+                let library = package.join("lib");
+                if library.is_dir() { library } else { package }
             }
-        }
-    }
-    
-    // Check for apps/ directory (turborepo, nx)
-    let apps_dir = base.join("apps");
-    if apps_dir.is_dir() {
-        if let Ok(entries) = std::fs::read_dir(&apps_dir) {
-            for entry in entries.filter_map(|e| e.ok()) {
-                let path = entry.path();
-                if path.is_dir() {
-                    let src_dir = path.join("src");
-                    if src_dir.is_dir() {
-                        packages.push(src_dir);
-                    }
-                }
-            }
-        }
-    }
+        })
+        .collect::<Vec<_>>();
     
     // If no packages found, fall back to base directory
     if packages.is_empty() {
@@ -1414,6 +1356,23 @@ fn discover_monorepo_packages(base: &Path) -> Vec<PathBuf> {
 
 /// Extract a human-readable package name from a path
 fn extract_package_name(path: &Path) -> String {
+    let mut current = if path.is_file() {
+        path.parent().unwrap_or(path)
+    } else {
+        path
+    };
+    loop {
+        if let Ok(content) = std::fs::read_to_string(current.join("package.json")) {
+            if let Ok(manifest) = serde_json::from_str::<Value>(&content) {
+                if let Some(name) = manifest.get("name").and_then(Value::as_str) {
+                    return name.to_string();
+                }
+            }
+        }
+        let Some(parent) = current.parent() else { break };
+        current = parent;
+    }
+
     // Try to find "packages/NAME" or "apps/NAME" pattern
     let path_str = path.to_string_lossy();
     
@@ -1725,7 +1684,10 @@ fn handle_find_orphans(args: &Value) -> ToolResult {
         .unwrap_or(false);
     
     // Load config for path filtering
-    let config = find_config_in_ancestors(&directory).unwrap_or_default();
+    let config = match load_config_in_ancestors(&directory) {
+        Ok(config) => config,
+        Err(error) => return ToolResult::error(error),
+    };
     
     // Collect files
     let mut files = Vec::new();
@@ -2483,44 +2445,13 @@ fn generate_structured_fix(
             .is_some_and(|extension| extension.eq_ignore_ascii_case("svelte"))
     });
     let test_or_fixture = is_test_file(file_a) || is_test_file(file_b);
-    let review_only = test_or_fixture || svelte_component;
     
-    // Determine target module
-    let target = if review_only {
-        None
-    } else if same_package {
-        // Same package: extract to utils in that package
-        Some(format!("{}/src/lib/utils/{}.ts", pkg_a, func_name.to_lowercase()))
-    } else {
-        // Cross-package: suggest shared package
-        Some(format!("packages/shared/src/{}.ts", func_name.to_lowercase()))
-    };
-    
-    // Generate import updates
-    let imports = if review_only {
-        Vec::new()
-    } else {
-        vec![
-            ImportUpdate {
-                file: file_a.to_string_lossy().to_string(),
-                old_import: format!("./{}", func_name),
-                new_import: if same_package {
-                    format!("$lib/utils/{}", func_name.to_lowercase())
-                } else {
-                    format!("@create-something/shared/{}", func_name.to_lowercase())
-                },
-            },
-            ImportUpdate {
-                file: file_b.to_string_lossy().to_string(),
-                old_import: format!("./{}", func_name),
-                new_import: if same_package {
-                    format!("$lib/utils/{}", func_name.to_lowercase())
-                } else {
-                    format!("@create-something/shared/{}", func_name.to_lowercase())
-                },
-            },
-        ]
-    };
+    // Similarity evidence establishes that code is duplicated; it does not
+    // establish a safe destination or import rewrite. Keep the suggestion
+    // review-only until a future patch planner can resolve symbols, produce a
+    // concrete edit, and validate that edit with the owning package checks.
+    let target = None;
+    let imports = Vec::new();
     
     StructuredFix {
         action: "consolidate".to_string(),
@@ -2532,7 +2463,7 @@ fn generate_structured_fix(
         function_name: Some(func_name.to_string()),
         imports_to_update: imports,
         confidence,
-        safe_to_auto_fix: !review_only && confidence > 0.9 && same_package,
+        safe_to_auto_fix: false,
         rationale: if svelte_component {
             format!(
                 "{:.1}% similar. Svelte component scripts require review because extracted helpers may close over component state or runes; no automatic consolidation target or import rewrite is proposed.",
@@ -2545,10 +2476,9 @@ fn generate_structured_fix(
             )
         } else {
             format!(
-                "{:.1}% similar, {} duplicate. {}",
+                "{:.1}% similar, {} duplicate. Review required: Ground has not produced a validated patch with a resolved destination export and import rewrites.",
                 similarity * 100.0,
-                if same_package { "same-package" } else { "cross-package" },
-                if confidence > 0.9 { "High confidence - safe to auto-fix." } else { "Review recommended." }
+                if same_package { "same-package" } else { "cross-package" }
             )
         },
     }
@@ -2578,7 +2508,10 @@ fn handle_batch_analyze(args: &Value) -> ToolResult {
         .unwrap_or_default();
     
     // Load config
-    let config = find_config_in_ancestors(&directory).unwrap_or_default();
+    let config = match load_config_in_ancestors(&directory) {
+        Ok(config) => config,
+        Err(error) => return ToolResult::error(error),
+    };
     
     // Detect framework for smarter analysis
     let framework_detection = detect_framework(&directory);
@@ -3188,7 +3121,10 @@ fn handle_diff(args: &Value) -> ToolResult {
     }
     
     // Load config
-    let config = find_config_in_ancestors(&directory).unwrap_or_default();
+    let config = match load_config_in_ancestors(&directory) {
+        Ok(config) => config,
+        Err(error) => return ToolResult::error(error),
+    };
     
     // Classify every discovered file so a clean diff result cannot imply that
     // unsupported or policy-excluded changes were analyzed.
@@ -4089,8 +4025,7 @@ fn find_framework_root(dir: &Path) -> PathBuf {
     
     let mut current = dir.to_path_buf();
     
-    // Walk up to 5 levels to find framework config
-    for _ in 0..5 {
+    loop {
         for config in &config_files {
             if current.join(config).exists() {
                 return current;
@@ -4534,6 +4469,40 @@ mod tests {
             .unwrap()
             .iter()
             .any(|path| path.as_str().unwrap().ends_with("src/duplicate.mjs")));
+    }
+
+    #[test]
+    fn analyze_rejects_invalid_repository_policy_instead_of_passing_with_defaults() {
+        use std::fs;
+
+        let repo = tempdir().unwrap();
+        fs::write(repo.path().join(".ground.yml"), "thresholds: [broken\n").unwrap();
+        fs::write(repo.path().join("a.ts"), "export const a = 1;\n").unwrap();
+
+        let result = handle_batch_analyze(&json!({
+            "directory": repo.path(),
+            "checks": ["duplicates"]
+        }));
+
+        assert!(!result.success);
+        assert!(result.error.unwrap().contains("Invalid Ground configuration"));
+    }
+
+    #[test]
+    fn duplicate_suggestion_is_review_only_without_a_validated_patch() {
+        let fix = generate_structured_fix(
+            "calculateTotal",
+            Path::new("packages/example/src/a.ts"),
+            Path::new("packages/example/src/b.ts"),
+            1.0,
+            "packages/example",
+            "packages/example",
+        );
+
+        assert!(!fix.safe_to_auto_fix);
+        assert_eq!(fix.target, None);
+        assert!(fix.imports_to_update.is_empty());
+        assert!(fix.rationale.contains("validated patch"));
     }
 
     #[test]
