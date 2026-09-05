@@ -13,6 +13,7 @@ export type MarketingPageCluster =
   | 'delegation-practice'
   | 'products'
   | 'field-reports'
+  | 'dispatch'
   | 'proof-lab'
   | 'workflow-proof'
   | 'workflow-library'
@@ -169,6 +170,22 @@ const workflowMarketingDefinitions: Array<{
 ];
 
 export const marketingPagePortfolio: MarketingPageEntry[] = [
+  {
+    path: '/dispatch',
+    cluster: 'dispatch',
+    role: 'pillar',
+    decision: 'index',
+    audience: 'Builders and workflow owners who want inspectable lessons from current agent work.',
+    funnelStage: 'understand',
+    intent:
+      'Publish the evidence-gated CREATE SOMETHING editorial cadence and current lesson queue.',
+    primaryAction: 'See the current schedule',
+    requiredTerms: ['LinkedIn', 'YouTube', 'evidence', 'repository', 'workflow'],
+    requiredLinks: ['/field-reports'],
+    schema: 'page',
+    search: { changefreq: 'weekly', priority: '0.72', lastmod: '2026-09-04' },
+    selfHealing: ['copy:heal', 'search-route:sync']
+  },
   {
     path: '/',
     cluster: 'home',
