@@ -31,7 +31,8 @@ test('Agent Foundation makes one clear argument from stalled project to owned co
   assert.doesNotMatch(route, /PerformanceConversionHandoff/);
   assert.doesNotMatch(route, /agencyCoreMessaging\.selfMapHref/);
   assert.doesNotMatch(route, /workflowCompilerIntegrationHref/);
-  assert.doesNotMatch(route, /href="\/services"/);
+  assert.match(route, /href="\/services"/);
+  assert.match(route, /See how delivery works/);
   assert.doesNotMatch(route, /See what the foundation includes|Start with Map|State:\s*ready/i);
 
   assert.match(offer, /Bring an idea, prototype, or stalled agent project/i);

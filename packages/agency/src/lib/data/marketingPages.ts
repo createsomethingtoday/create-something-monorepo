@@ -179,7 +179,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     funnelStage: 'discover',
     intent:
       'Introduce Agent Foundation and route qualified builders toward one bounded fit decision.',
-    primaryAction: 'Bring your agent project',
+    primaryAction: 'Review the Agent Foundation',
     requiredTerms: ['agent', 'Codex', 'client-owned', 'workflow', 'Production Promotion'],
     requiredLinks: ['/agent-foundation', '/services', '/stack', '/field-reports/template-review'],
     schema: 'page',
@@ -200,7 +200,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     funnelStage: 'book',
     intent:
       'Explain the client-owned Agent Foundation, its Codex continuation proof, and its separate Production Promotion boundary.',
-    primaryAction: 'Bring your agent project',
+    primaryAction: 'Book a Foundation fit call',
     requiredTerms: [
       'Agent Foundation',
       'Codex',
@@ -208,7 +208,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
       'useful job',
       'Production Promotion'
     ],
-    requiredLinks: [],
+    requiredLinks: ['/services'],
     schema: 'page',
     search: {
       changefreq: 'monthly',
