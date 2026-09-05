@@ -432,10 +432,22 @@ describe('Draw WebMCP tools', () => {
     await expect(layout.execute({ ids: roots.map(({ id }) => id), mode: 'flow', gap: 16 })).resolves.toMatchObject({ placedIds: roots.map(({ id }) => id) });
   });
 
+  it('packs a connected fan-out around its shared source without swapping targets', async () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id }), edge = (id: string, fromId: string, toId: string) => ({ id, kind: 'connector' as const, createdAt, fromId, toId, label: '' });
+    const roots = [note('a'), note('b'), note('c')], controller = harness({ ...createDocument(), objects: [...roots, edge('ab', 'a', 'b'), edge('ac', 'a', 'c')] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await expect(layout.execute({ ids: roots.map(({ id }) => id), mode: 'flow', gap: 16 })).resolves.toMatchObject({ placedIds: roots.map(({ id }) => id) });
+  });
+
   it.each(['flow', 'loop', 'orbit'] as const)('ignores coincident reciprocal shafts while placing labels in %s mode', async (mode) => {
     const createdAt = '2026-09-05T00:00:00.000Z', note = (id: string) => ({ id, kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: id }), a = note('a'), b = note('b');
     const controller = harness({ ...createDocument(), objects: [a, b, { id: 'ab', kind: 'connector', createdAt, fromId: a.id, toId: b.id, label: 'Approval' }, { id: 'ba', kind: 'connector', createdAt, fromId: b.id, toId: a.id, label: '' }] }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
     await expect(layout.execute({ ids: [a.id, b.id], mode, gap: 16 })).resolves.toMatchObject({ placedIds: [a.id, b.id] });
+  });
+
+  it('keeps a reciprocal-edge label at the coincident route midpoint in rendered layout', () => {
+    const createdAt = '2026-09-05T00:00:00.000Z', a = { id: 'a', kind: 'note' as const, createdAt, x: 0, y: 0, width: 120, height: 80, text: 'A' }, b = { ...a, id: 'b', y: 400, text: 'B' };
+    const labels = connectorLabelLayout([a, b, { id: 'ab', kind: 'connector', createdAt, fromId: a.id, toId: b.id, label: 'Approval' }, { id: 'ba', kind: 'connector', createdAt, fromId: b.id, toId: a.id, label: '' }]);
+    expect(labels.get('ab')?.y).toBe(230);
   });
 
   it('stacks coincident connector labels deterministically', () => {

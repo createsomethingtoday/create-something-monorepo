@@ -322,7 +322,8 @@ export function connectorLabelLayout(objects: CanvasObject[]) {
     const from = byId.get(connector.fromId), to = byId.get(connector.toId);
     if (!from || !to) continue;
     const a = resolveCenter(from), b = resolveCenter(to), width = estimatedTextWidth(connector.label) + 5, x = (a.x + b.x) / 2;
-    const otherSegments = segments.filter((segment) => segment.id !== connector.id), fallbackTop = otherSegments.length ? otherSegments.reduce((minimum, { start, end }) => Math.min(minimum, start.y - 4, end.y - 4, connectorMarkerBounds(start, end).y), Number.POSITIVE_INFINITY) - 16 : undefined;
+    const sameRoute = (segment: { start: Point; end: Point }) => (segment.start.x === a.x && segment.start.y === a.y && segment.end.x === b.x && segment.end.y === b.y) || (segment.start.x === b.x && segment.start.y === b.y && segment.end.x === a.x && segment.end.y === a.y);
+    const otherSegments = segments.filter((segment) => segment.id !== connector.id && !sameRoute(segment)), fallbackTop = otherSegments.length ? otherSegments.reduce((minimum, { start, end }) => Math.min(minimum, start.y - 4, end.y - 4, connectorMarkerBounds(start, end).y), Number.POSITIVE_INFINITY) - 16 : undefined;
     const baseY = (a.y + b.y) / 2 - 10, y = stackedLabelY(occupiedSlots, x, baseY, width, (bounds) => otherSegments.some((segment) => connectorPaintHitsBounds(segment.start, segment.end, bounds)), fallbackTop);
     result.set(connector.id, { x, y, width, height: 16 });
   }
@@ -657,12 +658,17 @@ function graphLayoutTargets(document: CanvasDocument, rootIds: string[], mode: '
     const componentLevels = new Map<number, string[]>();
     for (const id of component) { const level = levels[componentById.get(id)!], bucket = componentLevels.get(level) ?? []; bucket.push(id); componentLevels.set(level, bucket); }
     for (const [level, ids] of [...componentLevels].sort(([a], [b]) => a - b)) {
-      if (ids.length !== 1 || level === 0) continue;
-      const id = ids[0], predecessors = [...reverse.get(id)!].filter((candidate) => componentSet.has(candidate));
-      if (!predecessors.length) continue;
-      const centers = predecessors.map((candidate) => { const bounds = positionedBaseBounds(candidate); return vertical ? bounds.x + bounds.width / 2 : bounds.y + bounds.height / 2; });
-      const desired = centers.reduce((sum, value) => sum + value, 0) / centers.length, bounds = positionedBaseBounds(id), target = targets.get(id)!;
-      targets.set(id, vertical ? { x: target.x + desired - (bounds.x + bounds.width / 2), y: target.y } : { x: target.x, y: target.y + desired - (bounds.y + bounds.height / 2) });
+      if (level === 0) continue;
+      const entries = ids.map((id) => {
+        const bounds = positionedBaseBounds(id), current = vertical ? bounds.x + bounds.width / 2 : bounds.y + bounds.height / 2;
+        const predecessors = [...reverse.get(id)!].filter((candidate) => componentSet.has(candidate));
+        const predecessorCenters = predecessors.map((candidate) => { const candidateBounds = positionedBaseBounds(candidate); return vertical ? candidateBounds.x + candidateBounds.width / 2 : candidateBounds.y + candidateBounds.height / 2; });
+        return { id, current, desired: predecessorCenters.length ? predecessorCenters.reduce((sum, value) => sum + value, 0) / predecessorCenters.length : current };
+      }).sort((a, b) => a.desired - b.desired || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+      const step = (vertical ? width : height) + gap, packed = entries.map(({ desired }, index) => index ? Math.max(desired, entries[index - 1].desired) : desired);
+      for (let index = 1; index < packed.length; index += 1) packed[index] = Math.max(packed[index], packed[index - 1] + step);
+      const shift = entries.reduce((sum, entry) => sum + entry.desired, 0) / entries.length - packed.reduce((sum, value) => sum + value, 0) / packed.length;
+      entries.forEach((entry, index) => { const target = targets.get(entry.id)!, delta = packed[index] + shift - entry.current; targets.set(entry.id, vertical ? { x: target.x + delta, y: target.y } : { x: target.x, y: target.y + delta }); });
     }
   }
   settleConnectorRouting(vertical ? 'x' : 'y');
