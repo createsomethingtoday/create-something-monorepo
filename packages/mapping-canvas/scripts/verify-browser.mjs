@@ -249,6 +249,8 @@ try {
     const movedArrow = await tools.draw_patch_objects.execute({ patches: [{ id: shaftId, translate: { dx: 37, dy: 23 } }] });
     const movedObjects = (await tools.draw_get_state.execute({})).document.objects.filter(({ id }) => arrow.objectIds.includes(id));
     const compoundMoved = movedObjects.every((object, index) => object.points.every((point, pointIndex) => point.x === initialArrow[index].points[pointIndex].x + 37 && point.y === initialArrow[index].points[pointIndex].y + 23));
+    const styledArrow = await tools.draw_patch_objects.execute({ patches: [{ id: headId, color: 'growth' }] });
+    const compoundStyled = (await tools.draw_get_state.execute({})).document.objects.filter(({ id }) => arrow.objectIds.includes(id)).every(({ color }) => color === '#007a4d');
     const compoundLayout = await tools.draw_layout.execute({ ids: arrow.objectIds, direction: 'row' });
     const compoundAutoLayout = await tools.draw_auto_layout.execute({ ids: arrow.objectIds, mode: 'flow' });
     const compoundDelete = await tools.draw_delete.execute({ ids: [headId], confirmation: 'DELETE OBJECTS' });
@@ -256,6 +258,7 @@ try {
     await tools.draw_revert_change.execute({ changeId: compoundDelete.changeId });
     await tools.draw_revert_change.execute({ changeId: compoundAutoLayout.changeId });
     await tools.draw_revert_change.execute({ changeId: compoundLayout.changeId });
+    await tools.draw_revert_change.execute({ changeId: styledArrow.changeId });
     await tools.draw_revert_change.execute({ changeId: movedArrow.changeId });
     await tools.draw_revert_change.execute({ changeId: arrow.changeId });
     const edgeArrowId = 'browser-rendered-edge-arrow';
@@ -352,7 +355,7 @@ try {
     const restored = await tools.draw_get_state.execute({});
     return {
       names, drawNames, version: inspect.version, compactBytes: JSON.stringify(inspect).length, fullBytes: JSON.stringify(before).length,
-      composed, renderedGeometry, connectorCollisionGeometry, diagonalClearGeometry, sparseClearGeometry, markerCornerGeometry, endpointCornerGeometry, connectorEndpointOverlapGeometry, ellipseTouchGeometry, hugeEllipseGeometry, cappedEllipseGeometry, disjointEllipseGeometry, concentricEllipseGeometry, groupGapGeometry, briefModelWidth, rawConnectorLabelBounds, selectedGroupGeometry, unselectedGroupGeometry, autoLayouts, arrow, arrowGeometry, settledArrowGeometry, compoundArrow: { selectedCount: selectedArrow.selectedCount, moved: compoundMoved, deleted: compoundDeleted }, edgeArrowGeometry, thickArrowGeometry, zeroArrowGeometry, zeroAreaGeometry, transparentGeometry, endpointLabelGeometry, sharedConnectorGeometry, fanConnectorGeometry, collisionGeometry, provenanceGeometry, clippedGeometry, connectorVisible: Boolean(connectorLabel && getComputedStyle(connectorLabel).display !== 'none'),
+      composed, renderedGeometry, connectorCollisionGeometry, diagonalClearGeometry, sparseClearGeometry, markerCornerGeometry, endpointCornerGeometry, connectorEndpointOverlapGeometry, ellipseTouchGeometry, hugeEllipseGeometry, cappedEllipseGeometry, disjointEllipseGeometry, concentricEllipseGeometry, groupGapGeometry, briefModelWidth, rawConnectorLabelBounds, selectedGroupGeometry, unselectedGroupGeometry, autoLayouts, arrow, arrowGeometry, settledArrowGeometry, compoundArrow: { selectedCount: selectedArrow.selectedCount, moved: compoundMoved, styled: compoundStyled, deleted: compoundDeleted }, edgeArrowGeometry, thickArrowGeometry, zeroArrowGeometry, zeroAreaGeometry, transparentGeometry, endpointLabelGeometry, sharedConnectorGeometry, fanConnectorGeometry, collisionGeometry, provenanceGeometry, clippedGeometry, connectorVisible: Boolean(connectorLabel && getComputedStyle(connectorLabel).display !== 'none'),
       staleError, deleteError, replaceError, focus, restoredCount: restored.document.objects.length, beforeCount: before.document.objects.length
     };
   });
@@ -377,7 +380,7 @@ try {
   if (!semantic.rawConnectorLabelBounds || semantic.renderedGeometry.connectors[0].labelBounds.viewportBounds.width < semantic.rawConnectorLabelBounds.width + 4 || semantic.renderedGeometry.connectors[0].labelBounds.viewportBounds.height < semantic.rawConnectorLabelBounds.height + 4) throw new Error(`Rendered connector-label bounds omitted the painted outline: ${JSON.stringify({ raw: semantic.rawConnectorLabelBounds, rendered: semantic.renderedGeometry.connectors[0].labelBounds })}`);
   if (JSON.stringify(semantic.selectedGroupGeometry.objects[0]?.worldBounds) !== JSON.stringify(semantic.unselectedGroupGeometry.objects[0]?.worldBounds) || JSON.stringify(semantic.arrowGeometry.objects) !== JSON.stringify(semantic.settledArrowGeometry.objects)) throw new Error(`Rendered geometry changed with selection UI or after the tool declared the animation settled: ${JSON.stringify({ selected: semantic.selectedGroupGeometry, unselected: semantic.unselectedGroupGeometry, immediateArrow: semantic.arrowGeometry, settledArrow: semantic.settledArrowGeometry })}`);
   if (semantic.autoLayouts.length !== 5 || semantic.autoLayouts.some(({ peerOverlaps }) => peerOverlaps) || semantic.arrow.geometry.arrowhead !== 'triangle' || semantic.arrowGeometry.objects.length !== 2 || semantic.arrowGeometry.overlaps.some(({ classification }) => classification === 'peer')) throw new Error(`Semantic auto-layout or freehand arrow proof failed: ${JSON.stringify({ autoLayouts: semantic.autoLayouts, arrow: semantic.arrow, arrowGeometry: semantic.arrowGeometry })}`);
-  if (semantic.compoundArrow.selectedCount !== 2 || !semantic.compoundArrow.moved || !semantic.compoundArrow.deleted) throw new Error(`Semantic freehand arrow did not behave as one compound: ${JSON.stringify(semantic.compoundArrow)}`);
+  if (semantic.compoundArrow.selectedCount !== 2 || !semantic.compoundArrow.moved || !semantic.compoundArrow.styled || !semantic.compoundArrow.deleted) throw new Error(`Semantic freehand arrow did not behave as one compound: ${JSON.stringify(semantic.compoundArrow)}`);
   if (!semantic.edgeArrowGeometry.objects.some(({ clipped }) => clipped)) throw new Error(`Rendered arrowhead marker clipping was not included: ${JSON.stringify(semantic.edgeArrowGeometry)}`);
   if (!semantic.thickArrowGeometry.objects.some(({ clipped }) => clipped)) throw new Error(`Rendered stroke-width clipping was not included: ${JSON.stringify(semantic.thickArrowGeometry)}`);
   if (semantic.zeroArrowGeometry.objects[0]?.viewportBounds.width < 18 || semantic.zeroArrowGeometry.objects[0]?.viewportBounds.height < 14) throw new Error(`Rendered zero-length arrow omitted its marker footprint: ${JSON.stringify(semantic.zeroArrowGeometry)}`);

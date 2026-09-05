@@ -1141,7 +1141,10 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
           }
           if (patch.color !== undefined) {
             if (object.kind !== 'stroke' && object.kind !== 'rectangle' && object.kind !== 'ellipse' && object.kind !== 'arrow') throw new Error(`color cannot patch ${object.kind}.`);
-            object = { ...object, color: colorValue(patch.color) };
+            const color = colorValue(patch.color), coloring = expandCompoundIds({ ...before, objects }, [id]);
+            objects = objects.map((candidate) => coloring.has(candidate.id) && (candidate.kind === 'stroke' || candidate.kind === 'rectangle' || candidate.kind === 'ellipse' || candidate.kind === 'arrow') ? { ...candidate, color } : candidate);
+            coloring.forEach((coloringId) => touched.add(coloringId));
+            object = objects[index];
           }
           objects[index] = object;
           touched.add(id);

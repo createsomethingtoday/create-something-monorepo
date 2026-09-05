@@ -138,6 +138,8 @@ describe('Draw WebMCP tools', () => {
     await tools.find(({ name }) => name === 'draw_patch_objects')!.execute({ patches: [{ id: shaftId, translate: { dx: 40, dy: 25 } }] });
     const translated = controller.read().objects.map((object) => object.kind === 'stroke' ? object.points : []);
     expect(translated.every((points, index) => points.every((point, pointIndex) => point.x === initial[index][pointIndex].x + 40 && point.y === initial[index][pointIndex].y + 25))).toBe(true);
+    await tools.find(({ name }) => name === 'draw_patch_objects')!.execute({ patches: [{ id: headId, color: 'signal' }] });
+    expect(controller.read().objects.map((object) => 'color' in object ? object.color : undefined)).toEqual(['#0057b8', '#0057b8']);
     const beforeOffset = translated[1][0].x - translated[0].at(-1)!.x;
     await tools.find(({ name }) => name === 'draw_layout')!.execute({ ids: created.objectIds, direction: 'row' });
     const laidOut = controller.read().objects.map((object) => object.kind === 'stroke' ? object.points : []);
