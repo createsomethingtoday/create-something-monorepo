@@ -193,6 +193,17 @@ describe('Draw WebMCP tools', () => {
     expect(singleController.read().objects[0]).toEqual(notes[0]);
   });
 
+  it.each([['orbit', 7], ['loop', 12]] as const)('keeps dense axis-aligned nodes separated in %s mode', async (mode, count) => {
+    const notes = Array.from({ length: count }, (_, index) => ({ id: `node-${String(index).padStart(2, '0')}`, kind: 'note' as const, createdAt: '2026-09-05T00:00:00.000Z', x: index, y: index, width: 120, height: 120, text: String(index) }));
+    const controller = harness({ ...createDocument(), objects: notes }), layout = createDrawWebMcpTools(controller).find(({ name }) => name === 'draw_auto_layout')!;
+    await layout.execute({ ids: notes.map(({ id }) => id), mode, gap: 16 });
+    const positioned = controller.read().objects.filter((object): object is typeof notes[number] => object.kind === 'note');
+    for (let first = 0; first < positioned.length; first += 1) for (let second = first + 1; second < positioned.length; second += 1) {
+      const a = positioned[first], b = positioned[second];
+      expect(a.x + a.width + 16 <= b.x || b.x + b.width + 16 <= a.x || a.y + a.height + 16 <= b.y || b.y + b.height + 16 <= a.y).toBe(true);
+    }
+  });
+
   it('summarizes dense stroke geometry in compact inspection', async () => {
     const points = Array.from({ length: 2_000 }, (_, index) => ({ x: index, y: index % 50 }));
     const stroke = { id: 'dense-stroke', kind: 'stroke' as const, createdAt: '2026-09-04T00:00:00.000Z', points, color: '#0057b8', width: 5 };
