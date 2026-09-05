@@ -199,8 +199,7 @@
       if (!line.hasAttribute('marker-end') || !matrix) return rect;
       const start = new DOMPoint(line.x1.baseVal.value, line.y1.baseVal.value).matrixTransform(matrix), end = new DOMPoint(line.x2.baseVal.value, line.y2.baseVal.value).matrixTransform(matrix);
       const distance = Math.hypot(end.x - start.x, end.y - start.y);
-      if (!distance) return rect;
-      const unit = { x: (end.x - start.x) / distance, y: (end.y - start.y) / distance }, normal = { x: -unit.y, y: unit.x };
+      const unit = distance ? { x: (end.x - start.x) / distance, y: (end.y - start.y) / distance } : { x: 1, y: 0 }, normal = { x: -unit.y, y: unit.x };
       const scale = Math.hypot(matrix.a, matrix.b), stroke = Number.parseFloat(getComputedStyle(line).strokeWidth) * scale;
       const points = [
         { x: end.x + unit.x * stroke, y: end.y + unit.y * stroke },

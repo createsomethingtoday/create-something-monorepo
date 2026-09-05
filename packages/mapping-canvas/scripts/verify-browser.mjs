@@ -166,6 +166,10 @@ try {
     const thickArrowGeometry = await tools.draw_get_rendered_geometry.execute({ ids: thickArrow.objectIds, limit: 10 });
     await tools.draw_revert_change.execute({ changeId: thickViewport.changeId });
     await tools.draw_revert_change.execute({ changeId: thickArrow.changeId });
+    const zeroArrowId = 'browser-rendered-zero-arrow', zeroPoint = { x: inspect.visibleWorld.x + 240, y: inspect.visibleWorld.y + 420 };
+    const zeroArrow = await tools.draw_apply_operations.execute({ operations: [{ type: 'put_object', object: { id: zeroArrowId, kind: 'arrow', createdAt: new Date().toISOString(), from: zeroPoint, to: zeroPoint, color: '#fcaa2d' } }] });
+    const zeroArrowGeometry = await tools.draw_get_rendered_geometry.execute({ ids: [zeroArrowId], limit: 10 });
+    await tools.draw_revert_change.execute({ changeId: zeroArrow.changeId });
     const collision = await tools.draw_compose.execute({ nodes: [{ ref: 'collision-a', text: 'Collision A' }, { ref: 'collision-b', text: 'Collision B' }], layout: { direction: 'row', gap: 64 } });
     const collisionState = await tools.draw_get_state.execute({});
     const collisionA = collisionState.document.objects.find(({ id }) => id === collision.refs['collision-a']);
@@ -202,7 +206,7 @@ try {
     const restored = await tools.draw_get_state.execute({});
     return {
       names, drawNames, version: inspect.version, compactBytes: JSON.stringify(inspect).length, fullBytes: JSON.stringify(before).length,
-      composed, renderedGeometry, connectorCollisionGeometry, briefModelWidth, rawConnectorLabelBounds, selectedGroupGeometry, unselectedGroupGeometry, autoLayouts, arrow, arrowGeometry, settledArrowGeometry, edgeArrowGeometry, thickArrowGeometry, collisionGeometry, provenanceGeometry, clippedGeometry, connectorVisible: Boolean(connectorLabel && getComputedStyle(connectorLabel).display !== 'none'),
+      composed, renderedGeometry, connectorCollisionGeometry, briefModelWidth, rawConnectorLabelBounds, selectedGroupGeometry, unselectedGroupGeometry, autoLayouts, arrow, arrowGeometry, settledArrowGeometry, edgeArrowGeometry, thickArrowGeometry, zeroArrowGeometry, collisionGeometry, provenanceGeometry, clippedGeometry, connectorVisible: Boolean(connectorLabel && getComputedStyle(connectorLabel).display !== 'none'),
       staleError, deleteError, replaceError, focus, restoredCount: restored.document.objects.length, beforeCount: before.document.objects.length
     };
   });
@@ -217,6 +221,7 @@ try {
   if (semantic.autoLayouts.length !== 5 || semantic.autoLayouts.some(({ peerOverlaps }) => peerOverlaps) || semantic.arrow.geometry.arrowhead !== 'triangle' || semantic.arrowGeometry.objects.length !== 2 || semantic.arrowGeometry.overlaps.some(({ classification }) => classification === 'peer')) throw new Error(`Semantic auto-layout or freehand arrow proof failed: ${JSON.stringify({ autoLayouts: semantic.autoLayouts, arrow: semantic.arrow, arrowGeometry: semantic.arrowGeometry })}`);
   if (!semantic.edgeArrowGeometry.objects.some(({ clipped }) => clipped)) throw new Error(`Rendered arrowhead marker clipping was not included: ${JSON.stringify(semantic.edgeArrowGeometry)}`);
   if (!semantic.thickArrowGeometry.objects.some(({ clipped }) => clipped)) throw new Error(`Rendered stroke-width clipping was not included: ${JSON.stringify(semantic.thickArrowGeometry)}`);
+  if (semantic.zeroArrowGeometry.objects[0]?.viewportBounds.width < 18 || semantic.zeroArrowGeometry.objects[0]?.viewportBounds.height < 14) throw new Error(`Rendered zero-length arrow omitted its marker footprint: ${JSON.stringify(semantic.zeroArrowGeometry)}`);
   if (!semantic.collisionGeometry.overlaps.some(({ classification }) => classification === 'peer') || !semantic.provenanceGeometry.overlaps.some(({ classification }) => classification === 'peer') || !semantic.clippedGeometry.objects[0]?.clipped || !semantic.clippedGeometry.missingIds.includes('missing-rendered-id')) throw new Error(`Rendered collision, provenance, clipping, or missing-ID evidence failed: ${JSON.stringify({ collision: semantic.collisionGeometry, provenance: semantic.provenanceGeometry, clipped: semantic.clippedGeometry })}`);
   if (!semantic.staleError.includes('revision') || !semantic.deleteError.includes('DELETE OBJECTS') || !semantic.replaceError.includes('REPLACE CANVAS')) throw new Error(`Semantic safety boundary failed: ${JSON.stringify(semantic)}`);
   if (semantic.restoredCount !== semantic.beforeCount || !semantic.focus.ok) throw new Error(`Semantic workflow did not restore its isolated fixture: ${JSON.stringify(semantic)}`);
