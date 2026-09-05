@@ -100,10 +100,10 @@ test('Agent Foundation is registered for discovery, Canon review, and booking', 
   );
   assert.match(marketingPages, /path: '\/agent-foundation'/);
   assert.ok(searchRoutes.some((route) => route.path === '/agent-foundation'));
-  assert.equal(searchRoutes.find((route) => route.path === '/')?.lastmod, '2026-09-02');
+  assert.equal(searchRoutes.find((route) => route.path === '/')?.lastmod, '2026-09-04');
   assert.match(
     marketingPages,
-    /path: '\/',[\s\S]*?intent:[\s\S]*?Agent Foundation[\s\S]*?lastmod: '2026-09-02'/
+    /path: '\/',[\s\S]*?intent:[\s\S]*?Agent Foundation[\s\S]*?lastmod: '2026-09-04'/
   );
   assert.match(registry, /'agent-foundation'/);
   assert.match(surfacePolicy, /'\/agent-foundation'/);
