@@ -52,10 +52,11 @@ async function authorize(db: ShareDb, shareId: string, token: string) {
   return Number(row.revision);
 }
 
-export async function updateShare(db: ShareDb, shareId: string, token: string, expectedRevision: number, documentValue: unknown) {
+export async function updateShare(db: ShareDb, shareId: string, token: string, expectedRevision: number, documentValue: unknown, rateSecret: string) {
   const authorizedRevision = await authorize(db, shareId, token);
   if (authorizedRevision === null) return null;
   if (authorizedRevision !== expectedRevision) return { conflict: true as const, revision: authorizedRevision };
+  if (!await consumeRateLimit(db, `update:${shareId}:${token}`, rateSecret, 30)) return { rateLimited: true as const };
   const document = validateSnapshot(documentValue), now = new Date().toISOString(), next = expectedRevision + 1;
   const result = await db.prepare('UPDATE draw_shares SET document_json = ?, title = ?, revision = ?, updated_at = ? WHERE share_id = ? AND revision = ? AND revoked_at IS NULL').bind(JSON.stringify(document), document.title, next, now, shareId, expectedRevision).run();
   if (!result.success || result.meta.changes !== 1) {
@@ -87,9 +88,13 @@ export async function purgeExpiredPublishLimits(db: ShareDb, currentWindowStart 
 }
 
 export async function consumePublishLimit(db: ShareDb, address: string, secret: string, now = Date.now()) {
+  return consumeRateLimit(db, `publish:${address || 'unknown'}`, secret, 10, now);
+}
+
+async function consumeRateLimit(db: ShareDb, subject: string, secret: string, maximum: number, now = Date.now()) {
   if (!secret) throw new Error('Sharing is temporarily unavailable.');
   const key = await crypto.subtle.importKey('raw', encoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
-  const digest = hex(await crypto.subtle.sign('HMAC', key, encoder.encode(address || 'unknown'))), windowStart = Math.floor(now / 600_000) * 600_000;
-  const result = await db.prepare('INSERT INTO draw_publish_limits (bucket_key, window_started_at, publish_count) VALUES (?, ?, 1) ON CONFLICT(bucket_key) DO UPDATE SET window_started_at = excluded.window_started_at, publish_count = CASE WHEN draw_publish_limits.window_started_at = excluded.window_started_at THEN draw_publish_limits.publish_count + 1 ELSE 1 END WHERE draw_publish_limits.window_started_at != excluded.window_started_at OR draw_publish_limits.publish_count < 10').bind(digest, windowStart).run();
+  const digest = hex(await crypto.subtle.sign('HMAC', key, encoder.encode(subject))), windowStart = Math.floor(now / 600_000) * 600_000;
+  const result = await db.prepare('INSERT INTO draw_publish_limits (bucket_key, window_started_at, publish_count) VALUES (?, ?, 1) ON CONFLICT(bucket_key) DO UPDATE SET window_started_at = excluded.window_started_at, publish_count = CASE WHEN draw_publish_limits.window_started_at = excluded.window_started_at THEN draw_publish_limits.publish_count + 1 ELSE 1 END WHERE draw_publish_limits.window_started_at != excluded.window_started_at OR draw_publish_limits.publish_count < ?').bind(digest, windowStart, maximum).run();
   return result.success && result.meta.changes === 1;
 }

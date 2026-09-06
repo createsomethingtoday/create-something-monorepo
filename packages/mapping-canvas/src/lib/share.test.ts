@@ -21,7 +21,7 @@ class MemoryStatement {
     if (this.sql.startsWith('UPDATE draw_shares SET revoked_at')) { const [revoked_at,document_json,share_id]=this.args; const row=this.db.shares.get(String(share_id)); if (!row || row.revoked_at) return {success:true,meta:{changes:0}}; Object.assign(row,{revoked_at,document_json}); return {success:true,meta:{changes:1}}; }
     if (this.sql.startsWith('DELETE FROM draw_shares')) { const [now,legacyCutoff,limit]=this.args; const expired=[...this.db.shares.entries()].filter(([,row])=>(row.expires_at && String(row.expires_at)<=String(now)) || (!row.expires_at && String(row.published_at)<=String(legacyCutoff))).slice(0,Number(limit)); expired.forEach(([id])=>this.db.shares.delete(id)); return {success:true,meta:{changes:expired.length}}; }
     if (this.sql.startsWith('DELETE FROM draw_publish_limits')) { const [windowStart,limit]=this.args; const expired=[...this.db.limits.entries()].filter(([,row])=>row.window_started_at<Number(windowStart)).slice(0,Number(limit)); expired.forEach(([key])=>this.db.limits.delete(key)); return {success:true,meta:{changes:expired.length}}; }
-    if (this.sql.startsWith('INSERT INTO draw_publish_limits')) { const [key,start]=this.args; const old=this.db.limits.get(String(key)); if (old && old.window_started_at===start && old.publish_count>=10) return {success:true,meta:{changes:0}}; this.db.limits.set(String(key),{window_started_at:Number(start),publish_count:old && old.window_started_at===start?old.publish_count+1:1}); return {success:true,meta:{changes:1}}; }
+    if (this.sql.startsWith('INSERT INTO draw_publish_limits')) { const [key,start,maximum]=this.args; const old=this.db.limits.get(String(key)); if (old && old.window_started_at===start && old.publish_count>=Number(maximum)) return {success:true,meta:{changes:0}}; this.db.limits.set(String(key),{window_started_at:Number(start),publish_count:old && old.window_started_at===start?old.publish_count+1:1}); return {success:true,meta:{changes:1}}; }
     return {success:false,meta:{changes:0}};
   }
 }
@@ -35,12 +35,12 @@ describe('share snapshot domain', () => {
     const stored = memory.shares.get(created.shareId)!;
     expect(stored.management_hash).toBe(await capabilityHash(created.managementToken)); expect(JSON.stringify(stored)).not.toContain(created.managementToken);
     expect((await readShare(db, created.shareId))?.document).toEqual(document);
-    expect(await updateShare(db, created.shareId, 'x'.repeat(43), 1, document)).toBeNull();
-    expect(await updateShare(db, created.shareId, created.managementToken, 2, document)).toEqual({conflict:true,revision:1});
-    expect(await updateShare(db, created.shareId, created.managementToken, 1, {...document,title:'Updated'})).toMatchObject({revision:2});
+    expect(await updateShare(db, created.shareId, 'x'.repeat(43), 1, document, 'secret')).toBeNull();
+    expect(await updateShare(db, created.shareId, created.managementToken, 2, document, 'secret')).toEqual({conflict:true,revision:1});
+    expect(await updateShare(db, created.shareId, created.managementToken, 1, {...document,title:'Updated'}, 'secret')).toMatchObject({revision:2});
     expect((await readShare(db, created.shareId))?.document.title).toBe('Updated');
     memory.raceNextUpdate = true;
-    expect(await updateShare(db, created.shareId, created.managementToken, 2, document)).toEqual({ conflict: true, revision: 3 });
+    expect(await updateShare(db, created.shareId, created.managementToken, 2, document, 'secret')).toEqual({ conflict: true, revision: 3 });
     expect(await revokeShare(db, created.shareId, created.managementToken)).toBe(true);
     expect(await readShare(db, created.shareId)).toBeNull(); expect(await revokeShare(db, created.shareId, created.managementToken)).toBe(false);
   });
@@ -55,6 +55,14 @@ describe('share snapshot domain', () => {
     await expect(createShare(db, createDocument(), 'not-a-date')).rejects.toThrow('future date');
     await expect(createShare(db, createDocument(), '2020-01-01T00:00:00.000Z')).rejects.toThrow('future date');
     await expect(createShare(db, createDocument(), '2999-01-01T00:00:00.000Z')).rejects.toThrow('within one year');
+  });
+
+  it('rate limits authorized updates by opaque capability', async () => {
+    const memory = new MemoryDb(), db = memory as unknown as ShareDb, document = createDocument('Limited updates');
+    const created = await createShare(db, document);
+    for (let revision = 1; revision <= 30; revision += 1) expect(await updateShare(db, created.shareId, created.managementToken, revision, { ...document, title: `Revision ${revision}` }, 'secret')).toMatchObject({ revision: revision + 1 });
+    expect(await updateShare(db, created.shareId, created.managementToken, 31, document, 'secret')).toEqual({ rateLimited: true });
+    expect([...memory.limits.keys()].join('')).not.toContain(created.managementToken);
   });
 
   it('purges expired snapshot payloads in bounded batches', async () => {

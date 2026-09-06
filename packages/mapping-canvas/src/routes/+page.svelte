@@ -1026,7 +1026,7 @@
       editor.remove();
       const clipId = `note-export-clip-${noteIndex}`, clip = window.document.createElementNS(namespace, 'clipPath'), clipRect = window.document.createElementNS(namespace, 'rect');
       clip.setAttribute('id', clipId); clipRect.setAttribute('x', String(note.x + 16)); clipRect.setAttribute('y', String(note.y + 14)); clipRect.setAttribute('width', String(Math.max(0, note.width - 32))); clipRect.setAttribute('height', String(Math.max(0, note.height - 28))); clip.append(clipRect); clone.querySelector('defs')?.append(clip);
-      const text = window.document.createElementNS(namespace, 'text'); text.setAttribute('x', String(note.x + 16)); text.setAttribute('y', String(note.y + 30)); text.setAttribute('fill', '#fff'); text.setAttribute('font-family', 'Arial, sans-serif'); text.setAttribute('font-size', '16'); text.setAttribute('clip-path', `url(#${clipId})`);
+      const text = window.document.createElementNS(namespace, 'text'); text.setAttribute('x', String(note.x + 16)); text.setAttribute('y', String(note.y + 30)); text.setAttribute('fill', '#fff'); text.setAttribute('font-family', 'Arial, sans-serif'); text.setAttribute('font-size', '16'); text.setAttribute('clip-path', `url(#${clipId})`); text.setAttribute('xml:space', 'preserve');
       if (note.content) {
         const lines = layoutNoteContent(note.content, Math.max(1, note.width - 32), (value, run, type, size) => { measurement.font = noteFont(run, type, size); return measurement.measureText(value).width; });
         let y = note.y + 32;
