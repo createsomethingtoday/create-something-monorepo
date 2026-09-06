@@ -6,7 +6,7 @@
 
 {#snippet runs(items: NoteRun[])}
   {#each items as run}
-    {#if run.link}<a href={run.link} target="_blank" rel="noopener noreferrer" class:bold={run.bold} class:italic={run.italic} class:underline={run.underline} class:code={run.code}>{run.text}</a>
+    {#if run.link}<a href={run.link} target="_blank" rel="noopener noreferrer" class:bold={run.bold} class:italic={run.italic} class:underline={run.underline} class:code={run.code} onpointerdown={(event) => event.stopPropagation()}>{run.text}</a>
     {:else}<span class:bold={run.bold} class:italic={run.italic} class:underline={run.underline} class:code={run.code}>{run.text}</span>{/if}
   {/each}
 {/snippet}

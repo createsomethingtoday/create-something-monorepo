@@ -32,4 +32,10 @@ describe('Draw WebMCP page integration', () => {
     expect(page).toContain("method: 'DELETE', headers: { Authorization: `Bearer ${candidate.token}` }");
     expect(page).toContain('await retainPublishedShare(candidate);');
   });
+
+  it('coordinates publishing and management state across browser tabs', () => {
+    expect(page).toContain('navigator.locks.request(`draw-share-publish:${document.id}`, run)');
+    expect(page).toContain("window.addEventListener('storage', storage)");
+    expect(page).toContain('restoreManagedShare(document.id);');
+  });
 });
