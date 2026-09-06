@@ -1,3 +1,5 @@
+import { normalizeNoteContent, noteContentText, type NoteContent } from './note-content';
+
 export const DOCUMENT_VERSION = 'create-something.mapping-canvas.v1' as const;
 export type Point = { x: number; y: number };
 export type Viewport = { x: number; y: number; zoom: number };
@@ -5,7 +7,7 @@ export type Tool = 'select' | 'pen' | 'eraser' | 'rectangle' | 'ellipse' | 'arro
 type Base = { id: string; createdAt: string; sourceIds?: string[]; sourceSnapshot?: CanvasObject[] };
 export type Stroke = Base & { kind: 'stroke'; points: Point[]; color: string; width: number };
 export type Shape = Base & { kind: 'rectangle' | 'ellipse' | 'arrow'; from: Point; to: Point; color: string };
-export type Note = Base & { kind: 'note'; x: number; y: number; width: number; height: number; text: string };
+export type Note = Base & { kind: 'note'; x: number; y: number; width: number; height: number; text: string; content?: NoteContent };
 export type Connector = Base & { kind: 'connector'; fromId: string; toId: string; label: string };
 export type Group = Base & { kind: 'group'; x: number; y: number; width: number; height: number; label: string; childIds: string[] };
 export type CanvasObject = Stroke | Shape | Note | Connector | Group;
@@ -111,7 +113,12 @@ export function isCanvasObject(value: unknown): value is CanvasObject {
   if (object.sourceSnapshot !== undefined && (!Array.isArray(object.sourceSnapshot) || !object.sourceSnapshot.every((source) => isCanvasObject(source)))) return false;
   if (object.kind === 'stroke') return Array.isArray(object.points) && object.points.length > 1 && object.points.every(isPoint) && typeof object.color === 'string' && isFiniteNumber(object.width) && object.width > 0;
   if (object.kind === 'rectangle' || object.kind === 'ellipse' || object.kind === 'arrow') return isPoint(object.from) && isPoint(object.to) && typeof object.color === 'string';
-  if (object.kind === 'note') return isFiniteNumber(object.x) && isFiniteNumber(object.y) && isFiniteNumber(object.width) && object.width > 0 && isFiniteNumber(object.height) && object.height > 0 && typeof object.text === 'string';
+  if (object.kind === 'note') {
+    if (!(isFiniteNumber(object.x) && isFiniteNumber(object.y) && isFiniteNumber(object.width) && object.width > 0 && isFiniteNumber(object.height) && object.height > 0 && typeof object.text === 'string')) return false;
+    if (object.content === undefined) return true;
+    const content = normalizeNoteContent(object.content);
+    return content !== null && noteContentText(content) === object.text;
+  }
   if (object.kind === 'connector') return typeof object.fromId === 'string' && typeof object.toId === 'string' && typeof object.label === 'string';
   if (object.kind === 'group') return isFiniteNumber(object.x) && isFiniteNumber(object.y) && isFiniteNumber(object.width) && object.width > 0 && isFiniteNumber(object.height) && object.height > 0 && typeof object.label === 'string' && Array.isArray(object.childIds) && object.childIds.every((id) => typeof id === 'string');
   return false;
