@@ -932,6 +932,7 @@
   }
   function rememberShare(next: ManagedShare | null, documentId = history.present.id, previousDocumentId?: string) { share = next; try { if (previousDocumentId && previousDocumentId !== documentId) localStorage.removeItem(`draw-share:${previousDocumentId}`); const key = `draw-share:${documentId}`; if (next) localStorage.setItem(key, JSON.stringify(next)); else localStorage.removeItem(key); scheduleShareExpiry(); return true; } catch { status = 'Link active, but management access could not be saved on this device'; scheduleShareExpiry(); return false; } }
   function restoreManagedShare(documentId: string) { try { const key = `draw-share:${documentId}`, restored = parseManagedShare(localStorage.getItem(key)); if (!restored || shareExpired(restored)) { localStorage.removeItem(key); share = null; clearTimeout(shareExpiryTimer); shareExpiryTimer = undefined; } else rememberShare(restored, documentId); } catch { share = null; } }
+  function restoreStoredManagedShare(documentId: string) { try { if (localStorage.getItem(`draw-share:${documentId}`) !== null) restoreManagedShare(documentId); } catch { /* Keep an emergency in-memory capability when storage is unavailable. */ } }
   function currentManagedShare() { if (share && shareExpired(share)) { rememberShare(null); status = 'Published link expired · ready to publish again'; } return share; }
   async function retainPublishedShare(candidate: ManagedShare) {
     if (rememberShare(candidate)) return;
@@ -961,7 +962,7 @@
       const run = async () => {
         const persisted = await loadDocument();
         if (persisted && persisted.id !== documentId) throw new Error('Another tab replaced this canvas. Reload Draw before replacing it again.');
-        restoreManagedShare(documentId);
+        restoreStoredManagedShare(documentId);
         return action();
       };
       return navigator.locks ? navigator.locks.request(`draw-share-publish:${documentId}`, run) : run();

@@ -39,6 +39,8 @@ describe('Draw WebMCP page integration', () => {
     expect(page).toContain('navigator.locks.request(`draw-share-publish:${documentId}`, run)');
     expect(page).toContain("window.addEventListener('storage', storage)");
     expect(page).toContain('restoreManagedShare(documentId);');
+    expect(page).toContain('function restoreStoredManagedShare(documentId: string)');
+    expect(page).toContain('restoreStoredManagedShare(documentId);');
     expect(page).toContain("if (sharing || replacingDocument) throw new Error('Wait for the active snapshot or document replacement to finish.')");
     expect(page).toContain('if (replacingDocument || agentMutationActive) throw new Error');
     expect(page).toContain('async function coordinateDocumentReplacement');
