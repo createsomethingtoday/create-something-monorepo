@@ -932,12 +932,12 @@
     clearTimeout(shareExpiryTimer); shareExpiryTimer = undefined;
     if (!share?.expiresAt) return;
     const delay = Math.max(0, Date.parse(share.expiresAt) - Date.now());
-    shareExpiryTimer = setTimeout(() => { if (share && shareExpired(share)) { rememberShare(null); status = 'Published link expired · ready to publish again'; } else scheduleShareExpiry(); }, Math.min(delay + 25, 2_147_483_647));
+    shareExpiryTimer = setTimeout(() => { if (share && shareExpired(share)) { shareExpiryTimer = undefined; status = 'Published link may have expired · update or revoke to confirm'; } else scheduleShareExpiry(); }, Math.min(delay + 25, 2_147_483_647));
   }
   function rememberShare(next: ManagedShare | null, documentId = history.present.id, previousDocumentId?: string) { share = next; try { if (previousDocumentId && previousDocumentId !== documentId) localStorage.removeItem(`draw-share:${previousDocumentId}`); const key = `draw-share:${documentId}`; if (next) localStorage.setItem(key, JSON.stringify(next)); else localStorage.removeItem(key); scheduleShareExpiry(); return true; } catch { status = 'Link active, but management access could not be saved on this device'; scheduleShareExpiry(); return false; } }
-  function restoreManagedShare(documentId: string) { try { const key = `draw-share:${documentId}`, restored = parseManagedShare(localStorage.getItem(key)); if (!restored || shareExpired(restored)) { localStorage.removeItem(key); share = null; clearTimeout(shareExpiryTimer); shareExpiryTimer = undefined; } else rememberShare(restored, documentId); } catch { share = null; } }
+  function restoreManagedShare(documentId: string) { try { const key = `draw-share:${documentId}`, restored = parseManagedShare(localStorage.getItem(key)); if (!restored) { localStorage.removeItem(key); share = null; clearTimeout(shareExpiryTimer); shareExpiryTimer = undefined; } else rememberShare(restored, documentId); } catch { share = null; } }
   function restoreStoredManagedShare(documentId: string) { try { if (localStorage.getItem(`draw-share:${documentId}`) !== null) restoreManagedShare(documentId); } catch { /* Keep an emergency in-memory capability when storage is unavailable. */ } }
-  function currentManagedShare() { if (share && shareExpired(share)) { rememberShare(null); status = 'Published link expired · ready to publish again'; } return share; }
+  function currentManagedShare() { return share; }
   async function retainPublishedShare(candidate: ManagedShare) {
     if (rememberShare(candidate)) return;
     const response = await fetch(`/api/shares/${candidate.shareId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${candidate.token}` } }).catch(() => null);
@@ -1059,7 +1059,7 @@
   async function importJson(event: Event) {
     const file = (event.currentTarget as HTMLInputElement).files?.[0];
     if (!file || nativeRole === 'companion' || sharing || replacingDocument) return;
-    try { await coordinateDocumentReplacement(async () => { const previous = history.present, managed = currentManagedShare(); const next = parse(await file.text()); const committed = await commitHostReplacement(() => next, (value) => value, (value) => history = commit(history, value), 'import'); selectedIds = []; if (nativeRole === 'web') { await saveDocument(committed); await transferManagedShareAfterReplacement(managed, previous, committed); } else { queueSave(committed); if (managed) rememberShare(managed, committed.id, previous.id); else restoreManagedShare(committed.id); } status = 'Canvas imported'; }); }
+    try { await coordinateDocumentReplacement(async () => { const previous = history.present, managed = currentManagedShare(); const next = parse(await file.text()); const committed = await commitHostReplacement(() => next, (value) => value, (value) => history = { past: [], present: value, future: [] }, 'import'); selectedIds = []; if (nativeRole === 'web') { await saveDocument(committed); await transferManagedShareAfterReplacement(managed, previous, committed); } else { queueSave(committed); if (managed) rememberShare(managed, committed.id, previous.id); else restoreManagedShare(committed.id); } status = 'Canvas imported'; }); }
     catch (error) { status = error instanceof Error ? error.message : 'Import failed'; }
     finally { if (fileInput) fileInput.value = ''; }
   }

@@ -64,22 +64,21 @@ export function layoutNoteContent(content: NoteContent, maxWidth: number, measur
       ...block.runs.flatMap(({ text, ...run }) => text.split(/(\n|[^\S\n]+)/).filter(Boolean).map((part) => ({ text: part, run }))),
       ...(suffix ? [{ text: suffix, run: {} as Omit<NoteRun, 'text'> }] : [])
     ];
-    let segments: NoteLayoutSegment[] = [], x = 0;
-    const flush = (force = false) => { if (segments.length || force) lines.push({ type: block.type, size, height, segments }); segments = []; x = 0; };
+    let segments: NoteLayoutSegment[] = [], x = 0, preserveLeadingWhitespace = true;
+    const flush = (force = false, hardBreak = false) => { if (segments.length || force) lines.push({ type: block.type, size, height, segments }); segments = []; x = 0; preserveLeadingWhitespace = hardBreak; };
     for (const [index, item] of items.entries()) {
-      if (item.text === '\n') { flush(true); if (index === items.length - 1) flush(true); continue; }
-      if (!segments.length && /^\s+$/.test(item.text)) continue;
+      if (item.text === '\n') { flush(true, true); if (index === items.length - 1) flush(true, true); continue; }
       const width = measure(item.text, item.run, block.type, size);
-      if (/^\s+$/.test(item.text) && x + width > maxWidth) { flush(); continue; }
-      if (segments.length && x + width > maxWidth && !/^\s+$/.test(item.text)) flush();
-      if (width <= maxWidth || /^\s+$/.test(item.text)) { segments.push({ ...item, x, width }); x += width; continue; }
+      if (!segments.length && /^\s+$/.test(item.text) && !preserveLeadingWhitespace) continue;
+      if (segments.length && x + width > maxWidth) { if (/^\s+$/.test(item.text)) { flush(); continue; } flush(); }
+      if (width <= maxWidth) { segments.push({ ...item, x, width }); x += width; preserveLeadingWhitespace = false; continue; }
       let fragment = '';
       for (const character of item.text) {
         const next = fragment + character, nextWidth = measure(next, item.run, block.type, size);
         if (fragment && nextWidth > maxWidth) { const fragmentWidth = measure(fragment, item.run, block.type, size); segments.push({ text: fragment, run: item.run, x, width: fragmentWidth }); flush(); fragment = character; }
         else fragment = next;
       }
-      if (fragment) { const fragmentWidth = measure(fragment, item.run, block.type, size); segments.push({ text: fragment, run: item.run, x, width: fragmentWidth }); x += fragmentWidth; }
+      if (fragment) { const fragmentWidth = measure(fragment, item.run, block.type, size); segments.push({ text: fragment, run: item.run, x, width: fragmentWidth }); x += fragmentWidth; preserveLeadingWhitespace = false; }
     }
     flush();
   }

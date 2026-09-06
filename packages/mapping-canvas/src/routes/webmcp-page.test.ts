@@ -20,10 +20,17 @@ describe('Draw WebMCP page integration', () => {
     expect(page).toContain('{@const from = objectIndex.get(object.fromId)}{@const to = objectIndex.get(object.toId)}');
   });
 
-  it('keeps formatting changes undoable and preserves managed shares across imports', () => {
+  it('keeps formatting changes undoable and makes imports a new history boundary', () => {
     expect(page).toContain("apply(withObjects(document, document.objects.map((entry) => entry.id === note.id ? changed : entry)), { type: 'put_object', object: changed });");
     expect(page).toContain('const previous = history.present, managed = currentManagedShare();');
+    expect(page).toContain("(value) => history = { past: [], present: value, future: [] }, 'import'");
     expect(page).toContain('await transferManagedShareAfterReplacement(managed, previous, committed);');
+  });
+
+  it('retains management capability until the server confirms expiry', () => {
+    expect(page).toContain("status = 'Published link may have expired · update or revoke to confirm'");
+    expect(page).toContain('function currentManagedShare() { return share; }');
+    expect(page).not.toContain("if (!restored || shareExpired(restored))");
   });
 
   it('revokes a newly published snapshot when its capability cannot be persisted', () => {

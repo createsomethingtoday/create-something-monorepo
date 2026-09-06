@@ -33,8 +33,8 @@ describe('formatted note content', () => {
   });
 
   it('preserves explicit and blank line breaks inside a formatted run', () => {
-    const lines = layoutNoteContent({ blocks: [{ type: 'paragraph', runs: [{ text: 'Alpha\n\nOmega', bold: true }] }] }, 100, (text) => text.length);
-    expect(lines.map((line) => line.segments.map((segment) => segment.text).join(''))).toEqual(['Alpha', '', 'Omega']);
+    const lines = layoutNoteContent({ blocks: [{ type: 'paragraph', runs: [{ text: 'Alpha\n\n  Omega', bold: true }] }] }, 100, (text) => text.length);
+    expect(lines.map((line) => line.segments.map((segment) => segment.text).join(''))).toEqual(['Alpha', '', '  Omega']);
     expect(lines[0].segments[0].run.bold).toBe(true);
   });
 });
