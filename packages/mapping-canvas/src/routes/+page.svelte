@@ -941,7 +941,7 @@
   }
   async function coordinatePublish<T>(action: (snapshot: CanvasDocument) => Promise<T>): Promise<T> {
     if (replacingDocument || agentMutationActive) throw new Error('Wait for the active document replacement or agent mutation to finish.');
-    const snapshot = structuredClone(document), documentId = snapshot.id;
+    const snapshot = JSON.parse(JSON.stringify(document)) as CanvasDocument, documentId = snapshot.id;
     const run = async () => {
       if (document.id !== documentId) throw new Error('The canvas changed while waiting to publish. Review it and try again.');
       const persisted = await loadDocument();
@@ -961,6 +961,7 @@
       const run = async () => {
         const persisted = await loadDocument();
         if (persisted && persisted.id !== documentId) throw new Error('Another tab replaced this canvas. Reload Draw before replacing it again.');
+        restoreManagedShare(documentId);
         return action();
       };
       return navigator.locks ? navigator.locks.request(`draw-share-publish:${documentId}`, run) : run();

@@ -34,7 +34,7 @@ describe('Draw WebMCP page integration', () => {
   });
 
   it('coordinates publishing and management state across browser tabs', () => {
-    expect(page).toContain('const snapshot = structuredClone(document), documentId = snapshot.id;');
+    expect(page).toContain('const snapshot = JSON.parse(JSON.stringify(document)) as CanvasDocument, documentId = snapshot.id;');
     expect(page).toContain("if (document.id !== documentId) throw new Error('The canvas changed while waiting to publish. Review it and try again.')");
     expect(page).toContain('navigator.locks.request(`draw-share-publish:${documentId}`, run)');
     expect(page).toContain("window.addEventListener('storage', storage)");
@@ -51,5 +51,6 @@ describe('Draw WebMCP page integration', () => {
     expect(page).toContain('clearTimeout(saveTimer); saveTimer = undefined;');
     expect(page).toContain("if (replacingDocument) { status = 'Wait for the document replacement to finish'; return false; }");
     expect(page).toContain('finally { replacingDocument = false; }');
+    expect(page).toContain('restoreManagedShare(documentId);');
   });
 });
