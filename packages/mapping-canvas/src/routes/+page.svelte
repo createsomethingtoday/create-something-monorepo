@@ -2,7 +2,7 @@
   import './page.css';
   import { browser } from '$app/environment';
   import { onMount } from 'svelte';
-  import { clearDocument, loadDocument, saveDocument } from '$lib/persistence';
+  import { loadDocument, saveDocument } from '$lib/persistence';
   import { commit, convert, createDocument, createObjectCenterResolver, expandCompoundIds, objectBounds, parse, redo, removeObjects, resizeGroup, restoreConversion, selectObjectIdsInBounds, serialize, uid, undo, withObjects, type CanvasDocument, type CanvasObject, type History, type Point, type Shape, type Stroke, type Tool } from '$lib/document';
   import { DEFAULT_DRAWING_COLOR, DRAWING_COLOR_PREFERENCE, DRAWING_PALETTE, isColorableObject, isDrawingColor, recolorObjects, type DrawingColor } from '$lib/palette';
   import { applyCanvasOperations, isValidCanvasTitle, type CanvasOperation } from '$lib/paired-session';
@@ -534,12 +534,11 @@
     await coordinateDocumentReplacement(async () => {
       const previousDocumentId = history.present.id;
       clearTimeout(saveTimer); saveTimer = undefined;
-      if (nativeRole === 'web') await clearDocument();
       const next = createDocument();
       await commitHostReplacement(() => next, (value) => value, (value) => history = { past: [], present: value, future: [] }, 'reset');
-      if (share) rememberShare(share, next.id, previousDocumentId);
       selectedIds = [];
       await saveDocument(next);
+      if (share) rememberShare(share, next.id, previousDocumentId);
     });
   }
 
@@ -1046,7 +1045,7 @@
   async function importJson(event: Event) {
     const file = (event.currentTarget as HTMLInputElement).files?.[0];
     if (!file || nativeRole === 'companion' || sharing || replacingDocument) return;
-    try { await coordinateDocumentReplacement(async () => { const previousDocumentId = history.present.id, managed = currentManagedShare(); const next = parse(await file.text()); const committed = await commitHostReplacement(() => next, (value) => value, (value) => history = commit(history, value), 'import'); if (managed) rememberShare(managed, committed.id, previousDocumentId); else restoreManagedShare(committed.id); selectedIds = []; if (nativeRole === 'web') await saveDocument(committed); else queueSave(committed); status = 'Canvas imported'; }); }
+    try { await coordinateDocumentReplacement(async () => { const previousDocumentId = history.present.id, managed = currentManagedShare(); const next = parse(await file.text()); const committed = await commitHostReplacement(() => next, (value) => value, (value) => history = commit(history, value), 'import'); selectedIds = []; if (nativeRole === 'web') await saveDocument(committed); else queueSave(committed); if (managed) rememberShare(managed, committed.id, previousDocumentId); else restoreManagedShare(committed.id); status = 'Canvas imported'; }); }
     catch (error) { status = error instanceof Error ? error.message : 'Import failed'; }
     finally { if (fileInput) fileInput.value = ''; }
   }
@@ -1055,7 +1054,7 @@
     if (nativeRole === 'companion') { if (!companionResetArmed) { companionResetArmed = true; clearTimeout(companionResetTimer); companionResetTimer = setTimeout(() => companionResetArmed = false, 5000); status = 'Tap Confirm reset to clear the Mac canvas'; return; } companionResetArmed = false; clearTimeout(companionResetTimer); const current = document; const next = { ...document, title: 'Untitled mapping session', objects: [], viewport: { x: 0, y: 0, zoom: 1 }, updatedAt: new Date().toISOString() }; history = commit(history, next); selectedIds = []; const operations: CanvasOperation[] = [{ type: 'replace_objects', objects: [] }]; if (current.title !== next.title) operations.push({ type: 'set_title', title: next.title }); if (JSON.stringify(current.viewport) !== JSON.stringify(next.viewport)) operations.push({ type: 'set_viewport', viewport: next.viewport }); sendNative(operations, true); status = 'Clear requested from iPhone'; return; }
     if (!confirm(nativeRole === 'host' ? 'Reset the Mac-authoritative canvas? Export first if you need a copy.' : share ? 'Reset this local canvas? Its published link will remain manageable here until you revoke it.' : 'Reset this local canvas? Export first if you need a copy.')) return;
     const previousDocumentId = history.present.id; clearTimeout(saveTimer); saveTimer = undefined; status = 'Resetting canvas…';
-    try { await coordinateDocumentReplacement(async () => { if (nativeRole === 'web') await clearDocument(); const next = createDocument(); await commitHostReplacement(() => next, (value) => value, (value) => history = { past: [], present: value, future: [] }, 'reset'); if (share) rememberShare(share, next.id, previousDocumentId); selectedIds = []; if (nativeRole === 'web') await saveDocument(next); else queueSave(next); status = nativeRole === 'host' ? 'New Mac session document' : 'New local session'; }); }
+    try { await coordinateDocumentReplacement(async () => { const next = createDocument(); await commitHostReplacement(() => next, (value) => value, (value) => history = { past: [], present: value, future: [] }, 'reset'); selectedIds = []; if (nativeRole === 'web') await saveDocument(next); else queueSave(next); if (share) rememberShare(share, next.id, previousDocumentId); status = nativeRole === 'host' ? 'New Mac session document' : 'New local session'; }); }
     catch (error) { status = error instanceof Error ? error.message : 'Reset conflicted with an iPhone change'; }
   }
   function updateTitle(input: HTMLInputElement) { if (!companionCanEdit()) return; const title = input.value || 'Untitled mapping session'; if (!isValidCanvasTitle(title)) { input.value = document.title; status = 'Title must be 240 UTF-8 bytes or fewer'; return; } const next = { ...document, title, updatedAt: new Date().toISOString() }; history = { ...history, present: next }; queueSave(next); sendNative([{ type: 'set_title', title }]); }

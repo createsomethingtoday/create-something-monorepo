@@ -52,6 +52,7 @@ describe('Draw WebMCP page integration', () => {
     expect(page).toContain('noteInput.flushAll();');
     expect(page).toContain('clearTimeout(saveTimer); saveTimer = undefined;');
     expect(page).toContain("if (replacingDocument) { status = 'Wait for the document replacement to finish'; return false; }");
+    expect(page.indexOf("await saveDocument(committed)")).toBeLessThan(page.indexOf("rememberShare(managed, committed.id"));
     expect(page).toContain('finally { replacingDocument = false; }');
     expect(page).toContain('restoreManagedShare(documentId);');
   });
