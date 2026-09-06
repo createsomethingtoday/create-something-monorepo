@@ -170,6 +170,22 @@ fn non_empty(value: &str) -> bool {
     !value.trim().is_empty()
 }
 
+fn unsafe_link_character(character: char) -> bool {
+    matches!(
+        character as u32,
+        0x0000..=0x0020
+            | 0x007f..=0x00a0
+            | 0x1680
+            | 0x2000..=0x200a
+            | 0x2028
+            | 0x2029
+            | 0x202f
+            | 0x205f
+            | 0x3000
+            | 0xfeff
+    )
+}
+
 fn note_content_text(content: &Value) -> Option<String> {
     let fields = content.as_object()?;
     if fields.keys().any(|key| key != "blocks") {
@@ -224,13 +240,15 @@ fn note_content_text(content: &Value) -> Option<String> {
                     }
                     if let Some(link) = run.get("link") {
                         let link = link.as_str()?;
-                        let safe_scheme = link
-                            .strip_prefix("https://")
-                            .or_else(|| link.strip_prefix("mailto:"))
-                            .is_some_and(|rest| !rest.is_empty());
+                        let safe_scheme = if let Some(rest) = link.strip_prefix("https://") {
+                            !rest.split(['/', '?', '#']).next().unwrap_or("").is_empty()
+                        } else {
+                            link.strip_prefix("mailto:")
+                                .is_some_and(|rest| !rest.is_empty())
+                        };
                         if link.len() > 2048
                             || !safe_scheme
-                            || link.chars().any(char::is_whitespace)
+                            || link.chars().any(unsafe_link_character)
                         {
                             return None;
                         }

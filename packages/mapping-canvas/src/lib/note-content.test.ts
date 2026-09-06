@@ -16,6 +16,8 @@ describe('formatted note content', () => {
 
   it('rejects unsafe links, unknown fields, empty runs, and oversized structures', () => {
     expect(normalizeNoteContent({ blocks: [{ type: 'paragraph', runs: [{ text: 'bad', link: 'javascript:alert(1)' }] }] })).toBeNull();
+    expect(normalizeNoteContent({ blocks: [{ type: 'paragraph', runs: [{ text: 'space', link: 'https://example.com/a b' }] }] })).toBeNull();
+    expect(normalizeNoteContent({ blocks: [{ type: 'paragraph', runs: [{ text: 'bytes', link: `https://example.com/${'é'.repeat(1_020)}` }] }] })).toBeNull();
     expect(normalizeNoteContent({ blocks: [{ type: 'paragraph', runs: [{ text: 'x', color: 'red' }] }] })).toBeNull();
     expect(normalizeNoteContent({ blocks: [{ type: 'paragraph', runs: [] }] })).toBeNull();
     expect(normalizeNoteContent({ blocks: Array.from({ length: 101 }, () => ({ type: 'paragraph', runs: [{ text: 'x' }] })) })).toBeNull();

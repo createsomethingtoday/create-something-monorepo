@@ -8,9 +8,11 @@ export type NoteLayoutLine = { type: NoteBlockType; size: number; height: number
 
 const encoder = new TextEncoder();
 const runKeys = new Set(['text', 'bold', 'italic', 'underline', 'code', 'link']);
+const unsafeLinkCharacter = /[\u0000-\u0020\u007f-\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]/;
 const safeLink = (value: string) => {
-  try { const url = new URL(value); return url.protocol === 'https:' || url.protocol === 'mailto:'; }
-  catch { return false; }
+  if (encoder.encode(value).length > 2048 || unsafeLinkCharacter.test(value)) return false;
+  if (value.startsWith('https://')) return value.slice(8).split(/[/?#]/, 1)[0].length > 0;
+  return value.startsWith('mailto:') && value.slice(7).length > 0;
 };
 
 export function normalizeNoteContent(value: unknown): NoteContent | null {
@@ -27,7 +29,7 @@ export function normalizeNoteContent(value: unknown): NoteContent | null {
       const item = run as Record<string, unknown>;
       if (typeof item.text !== 'string' || item.text.length < 1 || /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/.test(item.text)) return null;
       for (const mark of ['bold', 'italic', 'underline', 'code']) if (item[mark] !== undefined && item[mark] !== true) return null;
-      if (item.link !== undefined && (typeof item.link !== 'string' || item.link.length > 2048 || !safeLink(item.link))) return null;
+      if (item.link !== undefined && (typeof item.link !== 'string' || !safeLink(item.link))) return null;
       runs += 1; bytes += encoder.encode(item.text).length;
       if (runs > 500 || bytes > 32_000) return null;
     }

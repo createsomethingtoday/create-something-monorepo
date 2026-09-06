@@ -4,6 +4,8 @@ import type { D1Database } from '@cloudflare/workers-types';
 export const SHARE_ID_PATTERN = /^[A-Za-z0-9_-]{22}$/;
 const encoder = new TextEncoder();
 const MAX_DOCUMENT_BYTES = 500_000;
+const DEFAULT_RETENTION_MS = 90 * 24 * 60 * 60 * 1_000;
+const MAX_RETENTION_MS = 365 * 24 * 60 * 60 * 1_000;
 
 export type ShareRecord = { shareId: string; document: CanvasDocument; revision: number; publishedAt: string; updatedAt: string; expiresAt: string | null };
 export type ShareDb = Pick<D1Database, 'prepare' | 'batch'>;
@@ -28,9 +30,9 @@ const rowToShare = (row: Record<string, unknown>): ShareRecord => ({
 
 export async function createShare(db: ShareDb, documentValue: unknown, expiresAt?: string | null) {
   const document = validateSnapshot(documentValue), shareId = randomToken(16), managementToken = randomToken(32), managementHash = await capabilityHash(managementToken), now = new Date().toISOString();
-  const parsedExpiry = expiresAt ? Date.parse(expiresAt) : null;
-  if (parsedExpiry !== null && (!Number.isFinite(parsedExpiry) || parsedExpiry <= Date.now())) throw new Error('Snapshot expiration must be a valid future date.');
-  const expiry = parsedExpiry === null ? null : new Date(parsedExpiry).toISOString();
+  const currentTime = Date.now(), parsedExpiry = expiresAt ? Date.parse(expiresAt) : currentTime + DEFAULT_RETENTION_MS;
+  if (!Number.isFinite(parsedExpiry) || parsedExpiry <= currentTime || parsedExpiry > currentTime + MAX_RETENTION_MS) throw new Error('Snapshot expiration must be a valid future date within one year.');
+  const expiry = new Date(parsedExpiry).toISOString();
   await db.prepare('INSERT INTO draw_shares (share_id, management_hash, document_json, title, revision, published_at, updated_at, expires_at, revoked_at) VALUES (?, ?, ?, ?, 1, ?, ?, ?, NULL)')
     .bind(shareId, managementHash, JSON.stringify(document), document.title, now, now, expiry).run();
   return { shareId, managementToken, revision: 1, publishedAt: now, expiresAt: expiry };
@@ -71,8 +73,9 @@ export async function revokeShare(db: ShareDb, shareId: string, token: string) {
 
 export async function purgeExpiredShares(db: ShareDb, now = new Date().toISOString(), limit = 25) {
   const boundedLimit = Math.max(1, Math.min(100, Math.floor(limit)));
-  const result = await db.prepare('DELETE FROM draw_shares WHERE share_id IN (SELECT share_id FROM draw_shares WHERE expires_at IS NOT NULL AND expires_at <= ? LIMIT ?)')
-    .bind(now, boundedLimit).run();
+  const legacyCutoff = new Date(Date.parse(now) - MAX_RETENTION_MS).toISOString();
+  const result = await db.prepare('DELETE FROM draw_shares WHERE share_id IN (SELECT share_id FROM draw_shares WHERE (expires_at IS NOT NULL AND expires_at <= ?) OR (expires_at IS NULL AND published_at <= ?) LIMIT ?)')
+    .bind(now, legacyCutoff, boundedLimit).run();
   return result.success ? result.meta.changes : 0;
 }
 
