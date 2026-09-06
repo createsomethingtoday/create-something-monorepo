@@ -19,4 +19,10 @@ describe('Draw WebMCP page integration', () => {
     expect(page).toContain('const from = objectIndex.get(object.fromId), to = objectIndex.get(object.toId)');
     expect(page).toContain('{@const from = objectIndex.get(object.fromId)}{@const to = objectIndex.get(object.toId)}');
   });
+
+  it('keeps formatting changes undoable and preserves managed shares across imports', () => {
+    expect(page).toContain("apply(withObjects(document, document.objects.map((entry) => entry.id === note.id ? changed : entry)), { type: 'put_object', object: changed });");
+    expect(page).toContain('const previousDocumentId = history.present.id, managed = currentManagedShare();');
+    expect(page).toContain('if (managed) rememberShare(managed, committed.id, previousDocumentId); else restoreManagedShare(committed.id);');
+  });
 });
