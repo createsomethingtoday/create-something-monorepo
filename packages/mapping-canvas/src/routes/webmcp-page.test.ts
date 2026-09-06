@@ -36,7 +36,8 @@ describe('Draw WebMCP page integration', () => {
   it('coordinates publishing and management state across browser tabs', () => {
     expect(page).toContain('const snapshot = JSON.parse(JSON.stringify(document)) as CanvasDocument, documentId = snapshot.id;');
     expect(page).toContain("if (document.id !== documentId) throw new Error('The canvas changed while waiting to publish. Review it and try again.')");
-    expect(page).toContain('navigator.locks.request(`draw-share-publish:${documentId}`, run)');
+    expect(page).toContain("const DRAW_DOCUMENT_LOCK = 'draw-active-document';");
+    expect(page).toContain('navigator.locks.request(DRAW_DOCUMENT_LOCK, run)');
     expect(page).toContain("window.addEventListener('storage', storage)");
     expect(page).toContain('restoreManagedShare(documentId);');
     expect(page).toContain('function restoreStoredManagedShare(documentId: string)');
@@ -55,6 +56,8 @@ describe('Draw WebMCP page integration', () => {
     expect(page).toContain('async function transferManagedShareAfterReplacement');
     expect(page).toContain('await saveDocument(previous);');
     expect(page).toContain('await transferManagedShareAfterReplacement(managed, previous, committed);');
+    expect(page).toContain('async function persistCurrentDocument(next: CanvasDocument)');
+    expect(page).toContain('if (!persisted) await saveDocument(snapshot);');
     expect(page).toContain('finally { replacingDocument = false; }');
     expect(page).toContain('restoreManagedShare(documentId);');
   });

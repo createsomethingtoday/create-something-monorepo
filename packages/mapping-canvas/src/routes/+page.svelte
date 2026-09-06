@@ -22,6 +22,7 @@
     { id: 'group', label: 'Group', key: 'G' }, { id: 'pan', label: 'Pan', key: 'H' }
   ];
   const TOOL_SIDEBAR_PREFERENCE = 'mapping-canvas-tool-sidebar-collapsed';
+  const DRAW_DOCUMENT_LOCK = 'draw-active-document';
   const canonicalUrl = 'https://draw.createsomething.agency/';
   const publicTitle = 'Drawing Canvas for Mapping Meetings | CREATE SOMETHING';
   const publicDescription = 'A local-first drawing canvas for mapping meetings, spatial notes, shapes, connectors, groups, and portable JSON, SVG, or PNG exports.';
@@ -648,7 +649,11 @@
 
   function point(event: PointerEvent): Point { const rect = surface.getBoundingClientRect(); return { x: (event.clientX - rect.left - viewport.x) / viewport.zoom, y: (event.clientY - rect.top - viewport.y) / viewport.zoom }; }
   function companionCanEdit() { if (replacingDocument) { status = 'Wait for the document replacement to finish'; return false; } if (nativeRole !== 'companion') return true; if (nativeSession.sessionId && !nativeSession.requiresRepair) return true; status = nativeSession.requiresRepair ? 'Pairing credentials rejected · export if needed, then forget and re-pair' : 'Pair this iPhone with a Mac before editing'; return false; }
-  function queueSave(next: CanvasDocument) { if (!browser || nativeRole !== 'web') return; clearTimeout(saveTimer); status = 'Saving locally…'; saveTimer = setTimeout(() => void saveDocument(next).then(() => status = 'Saved on this device').catch(() => status = 'Local save failed · export a copy'), 120); }
+  async function persistCurrentDocument(next: CanvasDocument) {
+    const run = async () => { const persisted = await loadDocument(); if (persisted && persisted.id !== next.id) return false; await saveDocument(next); return true; };
+    return navigator.locks ? navigator.locks.request(DRAW_DOCUMENT_LOCK, run) : run();
+  }
+  function queueSave(next: CanvasDocument) { if (!browser || nativeRole !== 'web') return; clearTimeout(saveTimer); status = 'Saving locally…'; saveTimer = setTimeout(() => void persistCurrentDocument(next).then((saved) => status = saved ? 'Saved on this device' : 'Another tab replaced this canvas · reload to continue').catch(() => status = 'Local save failed · export a copy'), 120); }
   function commitNoteText(id: string, text: string) { if (!companionCanEdit()) return; const current = document.objects.find((entry) => entry.id === id); if (!current || current.kind !== 'note' || (current.text === text && !current.content)) return; const changed = { ...current, text, content: undefined }; const next = withObjects(document, document.objects.map((entry) => entry.id === id ? changed : entry)); history = { ...history, present: next }; queueSave(next); sendNative([{ type: 'put_object', object: changed }]); }
   function formatSelectedNote(blockType?: NoteBlockType, mark?: 'bold' | 'italic' | 'underline' | 'code' | 'link') {
     const note = selectedIds.length === 1 ? history.present.objects.find((entry) => entry.id === selectedIds[0]) : null;
@@ -946,11 +951,12 @@
       if (document.id !== documentId) throw new Error('The canvas changed while waiting to publish. Review it and try again.');
       const persisted = await loadDocument();
       if (persisted && persisted.id !== documentId) throw new Error('Another tab replaced this canvas. Reload Draw before publishing.');
+      if (!persisted) await saveDocument(snapshot);
       restoreManagedShare(documentId);
       if (currentManagedShare()) throw new Error('This canvas already has a managed snapshot. Update or revoke it first.');
       return action(snapshot);
     };
-    return navigator.locks ? navigator.locks.request(`draw-share-publish:${documentId}`, run) : run();
+    return navigator.locks ? navigator.locks.request(DRAW_DOCUMENT_LOCK, run) : run();
   }
   async function coordinateDocumentReplacement<T>(action: () => Promise<T>): Promise<T> {
     const documentId = document.id;
@@ -964,7 +970,7 @@
         restoreStoredManagedShare(documentId);
         return action();
       };
-      return navigator.locks ? navigator.locks.request(`draw-share-publish:${documentId}`, run) : run();
+      return navigator.locks ? navigator.locks.request(DRAW_DOCUMENT_LOCK, run) : run();
     } finally { replacingDocument = false; }
   }
   async function transferManagedShareAfterReplacement(managed: ManagedShare | null, previous: CanvasDocument, next: CanvasDocument) {

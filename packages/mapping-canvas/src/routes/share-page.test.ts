@@ -8,7 +8,7 @@ describe('Draw share page', () => {
     expect(page).toContain('const oldKey = existing ? `draw-share:${existing.id}` : null');
     expect(page.indexOf('await saveDocument(next);')).toBeLessThan(page.indexOf('localStorage.setItem(nextKey, managed)'));
     expect(page).toContain('if (existing) await saveDocument(existing)');
-    expect(page).toContain("const lockName = `draw-share-publish:${existing?.id ?? 'empty'}`");
-    expect(page).toContain('navigator.locks.request(lockName, replace)');
+    expect(page).toContain("const DRAW_DOCUMENT_LOCK = 'draw-active-document'");
+    expect(page).toContain('navigator.locks.request(DRAW_DOCUMENT_LOCK, replace)');
   });
 });

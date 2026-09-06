@@ -5,6 +5,7 @@
   import { loadDocument, saveDocument } from '$lib/persistence';
   import { connectorLabelLayout } from '$lib/webmcp';
   let { data }: { data: PageData } = $props();
+  const DRAW_DOCUMENT_LOCK = 'draw-active-document';
   let copyStatus = $state('');
   const document = $derived(data.share.document);
   const index = $derived(new Map(document.objects.map((object) => [object.id, object])));
@@ -30,8 +31,7 @@
           try { if (oldKey) localStorage.removeItem(oldKey); } catch { /* Both keys retain the same capability. */ }
         }
       };
-      const lockName = `draw-share-publish:${existing?.id ?? 'empty'}`;
-      if (navigator.locks) await navigator.locks.request(lockName, replace); else await replace();
+      if (navigator.locks) await navigator.locks.request(DRAW_DOCUMENT_LOCK, replace); else await replace();
       location.href = '/';
     } catch { copyStatus = 'Copy failed · your local canvas was preserved'; }
   }
