@@ -47,6 +47,9 @@ describe('Draw WebMCP page integration', () => {
     expect(page).toContain('await coordinateDocumentReplacement(async () => {');
     expect(page).toContain("if (nativeRole === 'web') await saveDocument(committed); else queueSave(committed);");
     expect(page).toContain("if (nativeRole === 'web') await saveDocument(next); else queueSave(next);");
+    expect(page).toContain('noteInput.flushAll();');
+    expect(page).toContain('clearTimeout(saveTimer); saveTimer = undefined;');
+    expect(page).toContain("if (replacingDocument) { status = 'Wait for the document replacement to finish'; return false; }");
     expect(page).toContain('finally { replacingDocument = false; }');
   });
 });
