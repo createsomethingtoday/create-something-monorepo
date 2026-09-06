@@ -2,7 +2,7 @@
   import type { PageData } from './$types';
   import RichNote from '$lib/RichNote.svelte';
   import { createObjectCenterResolver, objectBounds, uid } from '$lib/document';
-  import { saveDocument } from '$lib/persistence';
+  import { loadDocument, saveDocument } from '$lib/persistence';
   import { connectorLabelLayout } from '$lib/webmcp';
   let { data }: { data: PageData } = $props();
   const document = $derived(data.share.document);
@@ -14,6 +14,8 @@
   const frame = $derived({ x: bounds.x - 60, y: bounds.y - 60, width: Math.max(320, bounds.width + 120), height: Math.max(240, bounds.height + 120) });
   const path = (points: { x: number; y: number }[]) => points.map((point, i) => `${i ? 'L' : 'M'}${point.x} ${point.y}`).join(' ');
   async function copyLocal() {
+    const existing = await loadDocument();
+    if (existing && !confirm(`Replace your local canvas "${existing.title}" with a copy of this snapshot? Export it first if you need to keep both.`)) return;
     const now = new Date().toISOString();
     await saveDocument({ ...structuredClone(document), id: uid('canvas'), title: `${document.title} copy`, createdAt: now, updatedAt: now });
     location.href = '/';
@@ -21,7 +23,7 @@
 </script>
 
 <svelte:head><title>{document.title} · View-only Draw snapshot</title><meta name="robots" content="noindex,nofollow" /></svelte:head>
-<main><header><img src="/brand/create-something-agency-white.svg" alt="CREATE SOMETHING" /><div><strong>{document.title}</strong><span>View-only snapshot · revision {data.share.revision}</span></div><button onclick={copyLocal}>Copy to a new local canvas</button></header>
+<main><header><img src="/brand/create-something-agency-white.svg" alt="CREATE SOMETHING" /><div><strong>{document.title}</strong><span>View-only snapshot · revision {data.share.revision}</span></div><button onclick={copyLocal}>Copy into Draw</button></header>
   <section aria-label={`View-only snapshot: ${document.title}`}>
     <svg viewBox={`${frame.x} ${frame.y} ${frame.width} ${frame.height}`} role="img" aria-label={document.title}>
       <defs><marker id="head" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="context-stroke" /></marker></defs><rect x={frame.x} y={frame.y} width={frame.width} height={frame.height} fill="#000" />
