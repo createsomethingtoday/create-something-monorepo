@@ -25,4 +25,11 @@ describe('Draw WebMCP page integration', () => {
     expect(page).toContain('const previousDocumentId = history.present.id, managed = currentManagedShare();');
     expect(page).toContain('if (managed) rememberShare(managed, committed.id, previousDocumentId); else restoreManagedShare(committed.id);');
   });
+
+  it('revokes a newly published snapshot when its capability cannot be persisted', () => {
+    expect(page).toContain('async function retainPublishedShare(candidate: ManagedShare)');
+    expect(page).toContain("if (rememberShare(candidate)) return;");
+    expect(page).toContain("method: 'DELETE', headers: { Authorization: `Bearer ${candidate.token}` }");
+    expect(page).toContain('await retainPublishedShare(candidate);');
+  });
 });

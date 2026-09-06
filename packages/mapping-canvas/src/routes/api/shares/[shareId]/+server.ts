@@ -17,6 +17,7 @@ export const GET: RequestHandler = async ({ params, platform }) => {
 export const PUT: RequestHandler = async ({ params, platform, request, url }) => {
   sameOrigin(request, url.origin);
   let body: unknown; try { body = await readJsonBodyBounded(request, 520_000); } catch (cause) { if (cause instanceof RequestBodyTooLargeError) error(413, 'Snapshot exceeds Draw sharing limits.'); error(400, 'Invalid sharing request.'); }
+  if (!body || typeof body !== 'object' || Array.isArray(body)) error(400, 'Invalid sharing request.');
   const expectedRevision = (body as { expectedRevision?: unknown }).expectedRevision;
   if (!Number.isSafeInteger(expectedRevision) || Number(expectedRevision) < 1) error(400, 'A valid expected revision is required.');
   let result; try { result = await updateShare(database(platform), params.shareId, token(request), Number(expectedRevision), (body as { document?: unknown }).document); } catch { error(400, 'Snapshot could not be updated.'); }

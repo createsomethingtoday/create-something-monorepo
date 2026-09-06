@@ -69,6 +69,13 @@ export async function revokeShare(db: ShareDb, shareId: string, token: string) {
   return result.success && result.meta.changes === 1;
 }
 
+export async function purgeExpiredShares(db: ShareDb, now = new Date().toISOString(), limit = 25) {
+  const boundedLimit = Math.max(1, Math.min(100, Math.floor(limit)));
+  const result = await db.prepare('DELETE FROM draw_shares WHERE share_id IN (SELECT share_id FROM draw_shares WHERE expires_at IS NOT NULL AND expires_at <= ? LIMIT ?)')
+    .bind(now, boundedLimit).run();
+  return result.success ? result.meta.changes : 0;
+}
+
 export async function consumePublishLimit(db: ShareDb, address: string, secret: string, now = Date.now()) {
   if (!secret) throw new Error('Sharing is temporarily unavailable.');
   const key = await crypto.subtle.importKey('raw', encoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
