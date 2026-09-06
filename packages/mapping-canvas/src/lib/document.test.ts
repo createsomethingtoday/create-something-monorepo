@@ -1,8 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { DOCUMENT_VERSION, commit, convert, createDocument, createObjectCenterResolver, expandCompoundIds, objectBounds, objectCenter, parse, redo, removeObjects, resizeGroup, restoreConversion, selectObjectIdsInBounds, serialize, undo, withObjects, type CanvasObject, type Connector, type History, type Stroke } from './document';
+import { DOCUMENT_VERSION, commit, convert, createDocument, createObjectCenterResolver, expandCompoundIds, isDocument, objectBounds, objectCenter, parse, redo, removeObjects, resizeGroup, restoreConversion, selectObjectIdsInBounds, serialize, undo, withObjects, type CanvasObject, type Connector, type History, type Stroke } from './document';
 const stroke = (id: string, x = 10): Stroke => ({ id, kind: 'stroke', createdAt: '2026-08-27T00:00:00Z', points: [{ x, y: 20 }, { x: x + 40, y: 60 }], color: '#f7f4ee', width: 3 });
 describe('mapping canvas contract', () => {
   it('creates a versioned document', () => expect(createDocument().version).toBe(DOCUMENT_VERSION));
+  it('accepts formatted notes only when their canonical text projection matches', () => {
+    const base = createDocument();
+    const content = { blocks: [{ type: 'heading2' as const, runs: [{ text: 'Evidence', bold: true as const }] }, { type: 'numbered' as const, runs: [{ text: 'Verify' }] }] };
+    const note = { id: 'note-rich', kind: 'note' as const, createdAt: base.createdAt, x: 0, y: 0, width: 240, height: 120, text: 'Evidence\n1. Verify', content };
+    expect(isDocument({ ...base, objects: [note] })).toBe(true);
+    const legacyEdit = { ...base, objects: [{ ...note, text: 'drifted' }] };
+    expect(isDocument(legacyEdit)).toBe(false);
+    const repaired = parse(JSON.stringify(legacyEdit)).objects[0];
+    expect(repaired).toMatchObject({ id: note.id, text: 'drifted' });
+    expect('content' in repaired).toBe(false);
+  });
   it('rejects ambiguous duplicate object ids', () => {
     const document = createDocument();
     const object = { id: 'duplicate', kind: 'note' as const, createdAt: document.createdAt, x: 10, y: 10, width: 200, height: 100, text: 'One' };

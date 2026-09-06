@@ -41,7 +41,7 @@ describe('Draw WebMCP tools', () => {
       applyOperations: async (operations) => { const before = document; document = { ...document, title: operations[0].type === 'set_title' ? operations[0].title : document.title }; return { before, after: document }; },
       select: vi.fn(), setTool: vi.fn(), undo: vi.fn(), redo: vi.fn(), reset: vi.fn(), animate
     });
-    expect(tools.map(({ name }) => name)).toEqual(['draw_get_state', 'draw_inspect', 'draw_get_rendered_geometry', 'draw_compose', 'draw_path', 'draw_create_freehand_arrow', 'draw_patch_objects', 'draw_layout', 'draw_auto_layout', 'draw_focus', 'draw_revert_change', 'draw_delete', 'draw_replace_canvas', 'draw_apply_operations', 'draw_select', 'draw_set_tool', 'draw_undo', 'draw_redo', 'draw_reset']);
+    expect(tools.map(({ name }) => name)).toEqual(['draw_get_state', 'draw_inspect', 'draw_get_rendered_geometry', 'draw_compose', 'draw_path', 'draw_create_freehand_arrow', 'draw_edit_note', 'draw_get_share_status', 'draw_publish_snapshot', 'draw_update_snapshot', 'draw_revoke_snapshot', 'draw_patch_objects', 'draw_layout', 'draw_auto_layout', 'draw_focus', 'draw_revert_change', 'draw_delete', 'draw_replace_canvas', 'draw_apply_operations', 'draw_select', 'draw_set_tool', 'draw_undo', 'draw_redo', 'draw_reset']);
     const applySchema = tools.find(({ name }) => name === 'draw_apply_operations')!.inputSchema;
     expect(JSON.stringify(applySchema)).toContain('x-maxUtf8Bytes');
     expect(JSON.stringify(applySchema)).toContain('"minItems":2');
@@ -49,6 +49,30 @@ describe('Draw WebMCP tools', () => {
     expect(document.title).toBe('Agent map');
     expect(animate).toHaveBeenCalledWith('update', [], false);
     expect(JSON.stringify(result)).toContain('transitionId');
+  });
+
+  it('edits structured note content with exact projection and targeted revert', async () => {
+    const note = { id: 'note-rich', kind: 'note' as const, createdAt: '2026-09-06T00:00:00Z', x: 0, y: 0, width: 300, height: 180, text: 'Plain' };
+    const controller = harness({ ...createDocument(), objects: [note] }), tools = createDrawWebMcpTools(controller);
+    const edit = tools.find(({ name }) => name === 'draw_edit_note')!;
+    const result = await edit.execute({ id: note.id, content: { blocks: [{ type: 'heading1', runs: [{ text: 'Decision', bold: true }] }, { type: 'bullet', runs: [{ text: 'Ship', link: 'https://example.com' }] }] } }) as { changeId: string };
+    expect(controller.read().objects[0]).toMatchObject({ text: 'Decision\n• Ship', content: { blocks: expect.any(Array) } });
+    await expect(edit.execute({ id: note.id, text: 'wrong', content: { blocks: [{ type: 'paragraph', runs: [{ text: 'right' }] }] } })).rejects.toThrow('projection');
+    await tools.find(({ name }) => name === 'draw_revert_change')!.execute({ changeId: result.changeId });
+    expect(controller.read().objects).toEqual([note]);
+  });
+
+  it('exposes explicit open-world snapshot lifecycle tools without leaking a capability', async () => {
+    const publishSnapshot = vi.fn(async () => ({ shareId: 'a'.repeat(22), url: 'https://draw.example/s/' + 'a'.repeat(22), revision: 1 }));
+    const updateSnapshot = vi.fn(async () => ({ shareId: 'a'.repeat(22), url: 'https://draw.example/s/' + 'a'.repeat(22), revision: 2 }));
+    const revokeSnapshot = vi.fn(async () => undefined);
+    const tools = createDrawWebMcpTools({ ...harness(), shareStatus: () => ({ shareId: 'a'.repeat(22), url: 'https://draw.example/s/' + 'a'.repeat(22), revision: 1 }), publishSnapshot, updateSnapshot, revokeSnapshot });
+    expect(tools.find(({ name }) => name === 'draw_publish_snapshot')?.annotations.openWorldHint).toBe(true);
+    expect(await tools.find(({ name }) => name === 'draw_publish_snapshot')!.execute({})).toMatchObject({ ok: true, revision: 1 });
+    expect(await tools.find(({ name }) => name === 'draw_update_snapshot')!.execute({ expectedShareRevision: 1 })).toMatchObject({ ok: true, revision: 2 });
+    await expect(tools.find(({ name }) => name === 'draw_revoke_snapshot')!.execute({ confirmation: 'wrong' })).rejects.toThrow('REVOKE SNAPSHOT');
+    expect(await tools.find(({ name }) => name === 'draw_revoke_snapshot')!.execute({ confirmation: 'REVOKE SNAPSHOT' })).toEqual({ ok: true, revoked: true });
+    expect(JSON.stringify(await tools.find(({ name }) => name === 'draw_get_share_status')!.execute({}))).not.toContain('token');
   });
 
   it('inspects a filtered compact projection and returns revision-bearing compact receipts', async () => {
@@ -65,7 +89,7 @@ describe('Draw WebMCP tools', () => {
     expect(inspect).toBeDefined();
     const projection = await inspect.execute({ kinds: ['note'], text: 'owner', limit: 10 });
     expect(projection).toMatchObject({
-      version: '2026-09-05.1',
+      version: '2026-09-06.1',
       revision: expect.any(String),
       palette: { chalk: '#f3ebe4', signal: '#0057b8' },
       surface: { width: 1200, height: 800 },
@@ -1381,7 +1405,7 @@ describe('Draw WebMCP tools', () => {
       getState: () => ({ document: createDocument(), selectedIds: [], tool: 'pen', canUndo: false, canRedo: false }),
       applyOperations: vi.fn(), select: vi.fn(), setTool: vi.fn(), undo: vi.fn(), redo: vi.fn(), reset: vi.fn(), animate: vi.fn()
     });
-    expect(registerDrawWebMcpTools(tools, { documentContext: modelContext })).toEqual({ api: 'registerTool', registered: 19 });
+    expect(registerDrawWebMcpTools(tools, { documentContext: modelContext })).toEqual({ api: 'registerTool', registered: 24 });
     const result = await (registered[0].execute as (input: unknown) => Promise<unknown>)({});
     expect(result).toMatchObject({ document: { title: 'Untitled mapping session' }, selectedIds: [] });
   });

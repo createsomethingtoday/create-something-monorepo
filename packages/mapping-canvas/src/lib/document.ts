@@ -1,3 +1,5 @@
+import { normalizeNoteContent, noteContentText, type NoteContent } from './note-content';
+
 export const DOCUMENT_VERSION = 'create-something.mapping-canvas.v1' as const;
 export type Point = { x: number; y: number };
 export type Viewport = { x: number; y: number; zoom: number };
@@ -5,7 +7,7 @@ export type Tool = 'select' | 'pen' | 'eraser' | 'rectangle' | 'ellipse' | 'arro
 type Base = { id: string; createdAt: string; sourceIds?: string[]; sourceSnapshot?: CanvasObject[] };
 export type Stroke = Base & { kind: 'stroke'; points: Point[]; color: string; width: number };
 export type Shape = Base & { kind: 'rectangle' | 'ellipse' | 'arrow'; from: Point; to: Point; color: string };
-export type Note = Base & { kind: 'note'; x: number; y: number; width: number; height: number; text: string };
+export type Note = Base & { kind: 'note'; x: number; y: number; width: number; height: number; text: string; content?: NoteContent };
 export type Connector = Base & { kind: 'connector'; fromId: string; toId: string; label: string };
 export type Group = Base & { kind: 'group'; x: number; y: number; width: number; height: number; label: string; childIds: string[] };
 export type CanvasObject = Stroke | Shape | Note | Connector | Group;
@@ -35,14 +37,16 @@ export function isDocument(value: unknown): value is CanvasDocument {
 export function normalizeDocument(value: unknown): CanvasDocument | null {
   if (!value || typeof value !== 'object') return null;
   const candidate = value as Partial<CanvasDocument>;
-  if (candidate.version !== DOCUMENT_VERSION || typeof candidate.id !== 'string' || typeof candidate.title !== 'string' || typeof candidate.createdAt !== 'string' || typeof candidate.updatedAt !== 'string' || !Array.isArray(candidate.objects) || !isViewport(candidate.viewport) || !candidate.objects.every((object) => isCanvasObject(object))) return null;
-  const objects = candidate.objects as CanvasObject[];
-  if (new Set(objects.map(({ id }) => id)).size !== objects.length) return null;
-  const ids = new Set(objects.map(({ id }) => id));
-  const invalid = new Set(objects.filter((object) => object.kind === 'connector' && (object.fromId === object.toId || !ids.has(object.fromId) || !ids.has(object.toId))).map(({ id }) => id));
-  findConnectorCycles(objects).forEach((id) => invalid.add(id));
+  if (candidate.version !== DOCUMENT_VERSION || typeof candidate.id !== 'string' || typeof candidate.title !== 'string' || typeof candidate.createdAt !== 'string' || typeof candidate.updatedAt !== 'string' || !Array.isArray(candidate.objects) || !isViewport(candidate.viewport)) return null;
+  const objects = candidate.objects.map(normalizeCanvasObject);
+  if (objects.some((object) => object === null)) return null;
+  const normalizedObjects = objects as CanvasObject[];
+  if (new Set(normalizedObjects.map(({ id }) => id)).size !== normalizedObjects.length) return null;
+  const ids = new Set(normalizedObjects.map(({ id }) => id));
+  const invalid = new Set(normalizedObjects.filter((object) => object.kind === 'connector' && (object.fromId === object.toId || !ids.has(object.fromId) || !ids.has(object.toId))).map(({ id }) => id));
+  findConnectorCycles(normalizedObjects).forEach((id) => invalid.add(id));
   const dependents = new Map<string, string[]>();
-  for (const object of objects) {
+  for (const object of normalizedObjects) {
     if (object.kind !== 'connector') continue;
     for (const endpoint of new Set([object.fromId, object.toId])) {
       const entries = dependents.get(endpoint) ?? [];
@@ -54,7 +58,7 @@ export function normalizeDocument(value: unknown): CanvasDocument | null {
   for (let index = 0; index < queue.length; index += 1) {
     for (const dependent of dependents.get(queue[index]) ?? []) if (!invalid.has(dependent)) { invalid.add(dependent); queue.push(dependent); }
   }
-  const retained = objects.filter(({ id }) => !invalid.has(id));
+  const retained = normalizedObjects.filter(({ id }) => !invalid.has(id));
   const retainedIds = new Set(retained.map(({ id }) => id));
   const repaired = { ...candidate, objects: retained.map((object) => object.kind === 'group' ? { ...object, childIds: object.childIds.filter((id) => retainedIds.has(id)) } : object) } as CanvasDocument;
   return isDocument(repaired) ? repaired : null;
@@ -111,10 +115,33 @@ export function isCanvasObject(value: unknown): value is CanvasObject {
   if (object.sourceSnapshot !== undefined && (!Array.isArray(object.sourceSnapshot) || !object.sourceSnapshot.every((source) => isCanvasObject(source)))) return false;
   if (object.kind === 'stroke') return Array.isArray(object.points) && object.points.length > 1 && object.points.every(isPoint) && typeof object.color === 'string' && isFiniteNumber(object.width) && object.width > 0;
   if (object.kind === 'rectangle' || object.kind === 'ellipse' || object.kind === 'arrow') return isPoint(object.from) && isPoint(object.to) && typeof object.color === 'string';
-  if (object.kind === 'note') return isFiniteNumber(object.x) && isFiniteNumber(object.y) && isFiniteNumber(object.width) && object.width > 0 && isFiniteNumber(object.height) && object.height > 0 && typeof object.text === 'string';
+  if (object.kind === 'note') {
+    if (!(isFiniteNumber(object.x) && isFiniteNumber(object.y) && isFiniteNumber(object.width) && object.width > 0 && isFiniteNumber(object.height) && object.height > 0 && typeof object.text === 'string')) return false;
+    if (object.content === undefined) return true;
+    const content = normalizeNoteContent(object.content);
+    return content !== null && noteContentText(content) === object.text;
+  }
   if (object.kind === 'connector') return typeof object.fromId === 'string' && typeof object.toId === 'string' && typeof object.label === 'string';
   if (object.kind === 'group') return isFiniteNumber(object.x) && isFiniteNumber(object.y) && isFiniteNumber(object.width) && object.width > 0 && isFiniteNumber(object.height) && object.height > 0 && typeof object.label === 'string' && Array.isArray(object.childIds) && object.childIds.every((id) => typeof id === 'string');
   return false;
+}
+
+export function normalizeCanvasObject(value: unknown): CanvasObject | null {
+  if (!value || typeof value !== 'object') return null;
+  const candidate = { ...(value as Record<string, unknown>) };
+  if (candidate.sourceSnapshot !== undefined) {
+    if (!Array.isArray(candidate.sourceSnapshot)) return null;
+    const sources = candidate.sourceSnapshot.map(normalizeCanvasObject);
+    if (sources.some((source) => source === null)) return null;
+    candidate.sourceSnapshot = sources as CanvasObject[];
+  }
+  if (candidate.kind === 'note' && candidate.content !== undefined) {
+    const content = normalizeNoteContent(candidate.content);
+    if (!content) return null;
+    if (typeof candidate.text !== 'string' || noteContentText(content) !== candidate.text) delete candidate.content;
+    else candidate.content = content;
+  }
+  return isCanvasObject(candidate) ? candidate : null;
 }
 
 export function withObjects(document: CanvasDocument, objects: CanvasObject[]): CanvasDocument {

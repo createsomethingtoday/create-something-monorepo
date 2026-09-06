@@ -2,7 +2,7 @@
   import './page.css';
   import { browser } from '$app/environment';
   import { onMount } from 'svelte';
-  import { clearDocument, loadDocument, saveDocument } from '$lib/persistence';
+  import { loadDocument, saveDocument } from '$lib/persistence';
   import { commit, convert, createDocument, createObjectCenterResolver, expandCompoundIds, objectBounds, parse, redo, removeObjects, resizeGroup, restoreConversion, selectObjectIdsInBounds, serialize, uid, undo, withObjects, type CanvasDocument, type CanvasObject, type History, type Point, type Shape, type Stroke, type Tool } from '$lib/document';
   import { DEFAULT_DRAWING_COLOR, DRAWING_COLOR_PREFERENCE, DRAWING_PALETTE, isColorableObject, isDrawingColor, recolorObjects, type DrawingColor } from '$lib/palette';
   import { applyCanvasOperations, isValidCanvasTitle, type CanvasOperation } from '$lib/paired-session';
@@ -11,6 +11,8 @@
   import { fitViewportToBounds, normalizeWheelDelta, panViewport, zoomViewportAt } from '$lib/viewport';
   import { createNoteInputBuffer } from '$lib/note-input';
   import { paddedSegmentBounds } from '$lib/spatial';
+  import RichNote from '$lib/RichNote.svelte';
+  import { layoutNoteContent, normalizeNoteContent, noteContentText, plainNoteContent, type NoteBlockType, type NoteContent, type NoteRun } from '$lib/note-content';
 
   const tools: { id: Tool; label: string; key: string }[] = [
     { id: 'select', label: 'Select', key: 'V' }, { id: 'pen', label: 'Pen', key: 'P' },
@@ -20,6 +22,7 @@
     { id: 'group', label: 'Group', key: 'G' }, { id: 'pan', label: 'Pan', key: 'H' }
   ];
   const TOOL_SIDEBAR_PREFERENCE = 'mapping-canvas-tool-sidebar-collapsed';
+  const DRAW_DOCUMENT_LOCK = 'draw-active-document';
   const canonicalUrl = 'https://draw.createsomething.agency/';
   const publicTitle = 'Drawing Canvas for Mapping Meetings | CREATE SOMETHING';
   const publicDescription = 'A local-first drawing canvas for mapping meetings, spatial notes, shapes, connectors, groups, and portable JSON, SVG, or PNG exports.';
@@ -68,7 +71,11 @@
   let resizingGroupId = $state<string | null>(null), resizeOrigin = $state<CanvasDocument | null>(null), resizeMoved = $state(false);
   let lasso = $state<{ from: Point; to: Point } | null>(null), conversionOpen = $state(false), status = $state('Loading local canvas…'), ready = $state(false);
   let companionResetArmed = $state(false);
+  type ManagedShare = { shareId: string; url: string; token: string; revision: number; expiresAt: string | null };
+  let share = $state<ManagedShare | null>(null), sharing = $state(false);
+  let replacingDocument = $state(false);
   let companionResetTimer: ReturnType<typeof setTimeout> | undefined;
+  let shareExpiryTimer: ReturnType<typeof setTimeout> | undefined;
   let surface: SVGSVGElement, canvasContent: SVGGElement, fileInput = $state<HTMLInputElement | null>(null), viewportWidth = $state(1200), viewportHeight = $state(800);
   let saveTimer: ReturnType<typeof setTimeout> | undefined;
   let mirrorTimer: ReturnType<typeof setInterval> | undefined;
@@ -101,6 +108,7 @@
     nativeShell = hasNativeBridge();
     try { const savedColor = localStorage.getItem(DRAWING_COLOR_PREFERENCE); if (isDrawingColor(savedColor)) drawingColor = savedColor; } catch { /* Preference persistence is optional. */ }
     try { sidebarCollapsed = localStorage.getItem(TOOL_SIDEBAR_PREFERENCE) === 'true'; } catch { /* Preference persistence is optional. */ }
+    restoreManagedShare(history.present.id);
     void initializeSession();
     const webMcp = registerDrawWebMcpTools(createDrawWebMcpTools({
       getState: agentState,
@@ -116,15 +124,20 @@
       reset: () => queueAgentMutation(resetCanvasFromAgent),
       animate: showAgentTransition,
       focus: (target) => queueAgentMutation(() => focusAgentCamera(target)),
-      renderedGeometry: readRenderedGeometry
+      renderedGeometry: readRenderedGeometry,
+      shareStatus: () => { const managed = currentManagedShare(); return managed ? { shareId: managed.shareId, url: new URL(managed.url, location.origin).href, revision: managed.revision, expiresAt: managed.expiresAt } : null; },
+      publishSnapshot: publishSnapshotForAgent,
+      updateSnapshot: updateSnapshotForAgent,
+      revokeSnapshot: revokeSnapshotForAgent
     }));
     if (webMcp.registered) status = `${webMcp.registered} agent tools ready · loading local canvas…`;
     const resize = () => { viewportWidth = surface?.clientWidth || window.innerWidth; viewportHeight = surface?.clientHeight || window.innerHeight; };
     const surfaceObserver = new ResizeObserver(resize);
-    resize(); surfaceObserver.observe(surface); window.addEventListener('resize', resize); window.addEventListener('keydown', keydown);
+    const storage = (event: StorageEvent) => { if (event.key === `draw-share:${history.present.id}`) restoreManagedShare(history.present.id); };
+    resize(); surfaceObserver.observe(surface); window.addEventListener('resize', resize); window.addEventListener('keydown', keydown); window.addEventListener('storage', storage);
     mirrorTimer = setInterval(() => void refreshMirroredState(), 750);
     if (import.meta.env.PROD) navigator.serviceWorker?.register('/service-worker.js').catch(() => undefined);
-    return () => { noteInput.flushAll(); surfaceObserver.disconnect(); clearInterval(mirrorTimer); clearTimeout(agentTransitionTimer); clearTimeout(agentCameraTimer); clearTimeout(wheelTimer); window.removeEventListener('resize', resize); window.removeEventListener('keydown', keydown); };
+    return () => { noteInput.flushAll(); surfaceObserver.disconnect(); clearInterval(mirrorTimer); clearTimeout(agentTransitionTimer); clearTimeout(agentCameraTimer); clearTimeout(wheelTimer); clearTimeout(shareExpiryTimer); window.removeEventListener('resize', resize); window.removeEventListener('keydown', keydown); window.removeEventListener('storage', storage); };
   });
 
   function queueAgentMutation<T>(action: () => Promise<T> | T): Promise<T> {
@@ -140,6 +153,7 @@
 
   function assertAgentControlReady() {
     if (!ready) throw new Error('Draw is still loading. Try the tool again.');
+    if (sharing || replacingDocument) throw new Error('Wait for the active snapshot or document replacement to finish.');
     if (drawing || pinch || pendingTouchAction || resizingGroupId || resizeOrigin || movingObjectId || dragOrigin || noteInput.hasPending()) throw new Error('Finish the active human gesture before applying an agent control.');
   }
 
@@ -518,17 +532,20 @@
   async function resetCanvasFromAgent() {
     if (!ready) throw new Error('Draw is still loading. Try the tool again.');
     if (nativeShell || nativeRole !== 'web') throw new Error('WebMCP reset is limited to the browser-local canvas. Use Draw device controls for paired Mac and iPhone sessions.');
-    clearTimeout(saveTimer); saveTimer = undefined;
-    if (nativeRole === 'web') await clearDocument();
-    const next = createDocument();
-    await commitHostReplacement(() => next, (value) => value, (value) => history = { past: [], present: value, future: [] }, 'reset');
-    selectedIds = [];
-    queueSave(next);
+    await coordinateDocumentReplacement(async () => {
+      const previous = history.present, managed = currentManagedShare();
+      clearTimeout(saveTimer); saveTimer = undefined;
+      const next = createDocument();
+      await commitHostReplacement(() => next, (value) => value, (value) => history = { past: [], present: value, future: [] }, 'reset');
+      selectedIds = [];
+      await saveDocument(next);
+      await transferManagedShareAfterReplacement(managed, previous, next);
+    });
   }
 
   async function initializeSession() {
     if (!nativeShell) {
-      await loadDocument().then((saved) => { if (saved) { history = { past: [], present: saved, future: [] }; status = 'Restored from this device'; } else status = 'New local session'; }).catch(() => status = 'Local storage unavailable · export copies');
+      await loadDocument().then((saved) => { if (saved) { history = { past: [], present: saved, future: [] }; restoreManagedShare(saved.id); status = 'Restored from this device'; } else status = 'New local session'; }).catch(() => status = 'Local storage unavailable · export copies');
       ready = true;
       return;
     }
@@ -631,9 +648,34 @@
   }
 
   function point(event: PointerEvent): Point { const rect = surface.getBoundingClientRect(); return { x: (event.clientX - rect.left - viewport.x) / viewport.zoom, y: (event.clientY - rect.top - viewport.y) / viewport.zoom }; }
-  function companionCanEdit() { if (nativeRole !== 'companion') return true; if (nativeSession.sessionId && !nativeSession.requiresRepair) return true; status = nativeSession.requiresRepair ? 'Pairing credentials rejected · export if needed, then forget and re-pair' : 'Pair this iPhone with a Mac before editing'; return false; }
-  function queueSave(next: CanvasDocument) { if (!browser || nativeRole !== 'web') return; clearTimeout(saveTimer); status = 'Saving locally…'; saveTimer = setTimeout(() => void saveDocument(next).then(() => status = 'Saved on this device').catch(() => status = 'Local save failed · export a copy'), 120); }
-  function commitNoteText(id: string, text: string) { if (!companionCanEdit()) return; const current = document.objects.find((entry) => entry.id === id); if (!current || current.kind !== 'note' || current.text === text) return; const changed = { ...current, text }; const next = withObjects(document, document.objects.map((entry) => entry.id === id ? changed : entry)); history = { ...history, present: next }; queueSave(next); sendNative([{ type: 'put_object', object: changed }]); }
+  function companionCanEdit() { if (replacingDocument) { status = 'Wait for the document replacement to finish'; return false; } if (nativeRole !== 'companion') return true; if (nativeSession.sessionId && !nativeSession.requiresRepair) return true; status = nativeSession.requiresRepair ? 'Pairing credentials rejected · export if needed, then forget and re-pair' : 'Pair this iPhone with a Mac before editing'; return false; }
+  async function persistCurrentDocument(next: CanvasDocument) {
+    const run = async () => { const persisted = await loadDocument(); if (persisted && persisted.id !== next.id) return false; await saveDocument(next); return true; };
+    return navigator.locks ? navigator.locks.request(DRAW_DOCUMENT_LOCK, run) : run();
+  }
+  function queueSave(next: CanvasDocument) { if (!browser || nativeRole !== 'web') return; clearTimeout(saveTimer); status = 'Saving locally…'; saveTimer = setTimeout(() => void persistCurrentDocument(next).then((saved) => status = saved ? 'Saved on this device' : 'Another tab replaced this canvas · reload to continue').catch(() => status = 'Local save failed · export a copy'), 120); }
+  function commitNoteText(id: string, text: string) { if (!companionCanEdit()) return; const current = document.objects.find((entry) => entry.id === id); if (!current || current.kind !== 'note' || (current.text === text && !current.content)) return; const changed = { ...current, text, content: undefined }; const next = withObjects(document, document.objects.map((entry) => entry.id === id ? changed : entry)); history = { ...history, present: next }; queueSave(next); sendNative([{ type: 'put_object', object: changed }]); }
+  function formatSelectedNote(blockType?: NoteBlockType, mark?: 'bold' | 'italic' | 'underline' | 'code' | 'link') {
+    const note = selectedIds.length === 1 ? history.present.objects.find((entry) => entry.id === selectedIds[0]) : null;
+    if (!note || note.kind !== 'note' || !companionCanEdit()) return;
+    const link = mark === 'link' ? prompt('Safe link (https:// or mailto:)') : undefined;
+    if (mark === 'link' && (!link || (!link.startsWith('https://') && !link.startsWith('mailto:')))) { status = 'Links must use https:// or mailto:'; return; }
+    const content: NoteContent = note.content ? JSON.parse(JSON.stringify(note.content)) : plainNoteContent(note.text);
+    if (blockType) content.blocks = content.blocks.map((block) => ({ ...block, type: blockType }));
+    if (mark) content.blocks = content.blocks.map((block) => ({ ...block, runs: block.runs.map((run) => ({ ...run, ...(mark === 'link' ? { link: link! } : { [mark]: true }) })) }));
+    const normalized = normalizeNoteContent(content);
+    if (!normalized) { status = 'Note formatting is invalid or exceeds its limits'; return; }
+    const changed = { ...note, text: noteContentText(normalized), content: normalized };
+    apply(withObjects(document, document.objects.map((entry) => entry.id === note.id ? changed : entry)), { type: 'put_object', object: changed });
+    status = 'Formatted note saved locally';
+  }
+  function clearSelectedNoteFormatting() {
+    const note = selectedObjects.find((entry) => entry.kind === 'note');
+    if (!note || note.kind !== 'note' || !note.content || !companionCanEdit()) return;
+    const changed = { ...note, content: undefined };
+    apply(withObjects(document, document.objects.map((entry) => entry.id === note.id ? changed : entry)), { type: 'put_object', object: changed });
+    status = 'Note formatting cleared';
+  }
   function apply(next: CanvasDocument, operation?: CanvasOperation | CanvasOperation[]) { if (!companionCanEdit()) return; history = commit(history, next); queueSave(next); sendNative(operation ? (Array.isArray(operation) ? operation : [operation]) : [], true); }
   function operationsBetween(from: CanvasDocument, to: CanvasDocument): CanvasOperation[] {
     const operations: CanvasOperation[] = [];
@@ -660,7 +702,7 @@
     if (nativeRole !== 'web') nativeOptimisticVersion += 1;
   }
   function trackTouchPointer(event: PointerEvent) {
-    if (!ready || agentMutationActive) return;
+    if (!ready || agentMutationActive || replacingDocument) return;
     noteInput.flushAll();
     stopAgentCamera();
     if (event.pointerType !== 'touch' || event.button !== 0) return;
@@ -798,7 +840,7 @@
   function selectPointer(event: PointerEvent, id: string) {
     event.stopPropagation();
     stopAgentCamera();
-    if (pinch || agentMutationActive) return;
+    if (pinch || agentMutationActive || replacingDocument) return;
     beginNativePointerGesture();
     if (tool === 'eraser') { apply(removeObjects(document, [id]), { type: 'remove_objects', ids: [id] }); selectedIds = []; return; }
     if (tool === 'connector') { selectedIds = selectedIds.includes(id) ? selectedIds : [...selectedIds.slice(-1), id]; if (selectedIds.length === 2) runConversion('connector'); return; }
@@ -834,9 +876,9 @@
   function restoreSelected() { const selected = selectedObjects[0]; if (!selected?.sourceSnapshot) return; const next = restoreConversion(document, selected.id); apply(next, { type: 'restore_conversion', id: selected.id }); selectedIds = selected.sourceIds || []; status = 'Conversion removed. Source restored.'; }
   function cancelPendingWheelSync() { clearTimeout(wheelTimer); wheelTimer = undefined; }
   async function commitHostReplacement<T>(resolve: () => T, documentOf: (value: T) => CanvasDocument, install: (value: T) => void, reason: 'undo' | 'redo' | 'import' | 'reset') { if (nativeRole === 'host') cancelPendingWheelSync(); if (nativeRole !== 'host') { const value = resolve(); install(value); return value; } let committed!: T; const replacement = nativeTail.then(async () => { committed = resolve(); const expectedRevision = nativeSession.revision || 0; const result = await replaceHostDocument(documentOf(committed), reason, expectedRevision); nativeSession = { ...nativeSession, ...result }; install(committed); status = `Mac committed ${reason} at revision ${nativeSession.revision}`; }); nativeTail = replacement.catch(() => undefined); try { await replacement; return committed; } catch (error) { const refreshed = await hostStatus(); nativeSession = { ...nativeSession, ...refreshed }; if (refreshed.document) history = { past: history.past, present: refreshed.document, future: [] }; throw error; } }
-  async function doUndo() { if (nativeRole === 'companion') { cancelPendingWheelSync(); const current = document, next = undo(history); if (next === history) return; history = next; selectedIds = []; sendNative(operationsBetween(current, next.present), false, true); return; } try { const next = await commitHostReplacement(() => undo(history), (value) => value.present, (value) => history = value, 'undo'); selectedIds = []; queueSave(next.present); } catch (error) { status = error instanceof Error ? error.message : 'Undo conflicted with an iPhone change'; } }
-  async function doRedo() { if (nativeRole === 'companion') { cancelPendingWheelSync(); const current = document, next = redo(history); if (next === history) return; history = next; selectedIds = []; sendNative(operationsBetween(current, next.present), false, true); return; } try { const next = await commitHostReplacement(() => redo(history), (value) => value.present, (value) => history = value, 'redo'); selectedIds = []; queueSave(next.present); } catch (error) { status = error instanceof Error ? error.message : 'Redo conflicted with an iPhone change'; } }
-  function keydown(event: KeyboardEvent) { if (isTextEditingEvent(event)) return; if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'z') { event.preventDefault(); void (event.shiftKey ? doRedo() : doUndo()); return; } if ((event.key === 'Delete' || event.key === 'Backspace') && selectedIds.length) { const ids = [...selectedIds]; apply(removeObjects(document, ids), { type: 'remove_objects', ids }); selectedIds = []; return; } const match = tools.find(({ key }) => key.toLowerCase() === event.key.toLowerCase()); if (match) tool = match.id; }
+  async function doUndo() { if (replacingDocument) return; if (nativeRole === 'companion') { cancelPendingWheelSync(); const current = document, next = undo(history); if (next === history) return; history = next; selectedIds = []; sendNative(operationsBetween(current, next.present), false, true); return; } try { const next = await commitHostReplacement(() => undo(history), (value) => value.present, (value) => history = value, 'undo'); selectedIds = []; queueSave(next.present); } catch (error) { status = error instanceof Error ? error.message : 'Undo conflicted with an iPhone change'; } }
+  async function doRedo() { if (replacingDocument) return; if (nativeRole === 'companion') { cancelPendingWheelSync(); const current = document, next = redo(history); if (next === history) return; history = next; selectedIds = []; sendNative(operationsBetween(current, next.present), false, true); return; } try { const next = await commitHostReplacement(() => redo(history), (value) => value.present, (value) => history = value, 'redo'); selectedIds = []; queueSave(next.present); } catch (error) { status = error instanceof Error ? error.message : 'Redo conflicted with an iPhone change'; } }
+  function keydown(event: KeyboardEvent) { if (replacingDocument || isTextEditingEvent(event)) return; if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'z') { event.preventDefault(); void (event.shiftKey ? doRedo() : doUndo()); return; } if ((event.key === 'Delete' || event.key === 'Backspace') && selectedIds.length) { const ids = [...selectedIds]; apply(removeObjects(document, ids), { type: 'remove_objects', ids }); selectedIds = []; return; } const match = tools.find(({ key }) => key.toLowerCase() === event.key.toLowerCase()); if (match) tool = match.id; }
   function stopAgentCamera() {
     if (agentCameraActive && canvasContent) {
       const renderedTransform = getComputedStyle(canvasContent).transform;
@@ -865,21 +907,131 @@
   }
   const path = (points: Point[]) => points.map((value, index) => `${index ? 'L' : 'M'} ${value.x} ${value.y}`).join(' ');
   function wrappedLines(text: string, fits: (value: string) => boolean) { const lines: string[] = []; for (const paragraph of text.split('\n')) { if (!paragraph) { lines.push(''); continue; } let line = ''; for (const word of paragraph.split(/\s+/)) { const next = `${line}${line ? ' ' : ''}${word}`; if (line && !fits(next)) { lines.push(line); line = word; } else line = next; } lines.push(line); } return lines; }
+  const noteFont = (run: Omit<NoteRun, 'text'>, type: NoteBlockType, size: number) => `${run.italic ? 'italic ' : ''}${run.bold || type.startsWith('heading') ? '700' : '500'} ${size}px ${run.code ? 'monospace' : 'Arial'}`;
+  function paintNoteContent(context: CanvasRenderingContext2D, note: Extract<CanvasObject,{kind:'note'}>) {
+    context.save(); context.beginPath(); context.rect(note.x + 16, note.y + 14, Math.max(0, note.width - 32), Math.max(0, note.height - 28)); context.clip();
+    if (!note.content) { context.fillStyle = '#fff'; context.font = '500 16px Arial'; let y = note.y + 30; for (const line of wrappedLines(note.text, (value) => context.measureText(value).width <= note.width - 32)) { if (line) context.fillText(line, note.x + 16, y); y += 22; } context.restore(); return; }
+    const lines = layoutNoteContent(note.content, Math.max(1, note.width - 32), (text, run, type, size) => { context.font = noteFont(run, type, size); return context.measureText(text).width; });
+    let y = note.y + 32;
+    for (const line of lines) { if (y > note.y + note.height - 14) break; for (const segment of line.segments) { context.font = noteFont(segment.run, line.type, line.size); context.fillStyle = segment.run.link ? '#7bb7ff' : line.type === 'quote' ? '#ddd' : '#fff'; context.fillText(segment.text, note.x + 16 + segment.x, y); if (segment.run.underline || segment.run.link) context.fillRect(note.x + 16 + segment.x, y + 2, segment.width, 1); } y += line.height; }
+    context.restore();
+  }
 
   function download(content: BlobPart, type: string, extension: string) { const blob = content instanceof Blob ? content : new Blob([content], { type }); const url = URL.createObjectURL(blob); const anchor = window.document.createElement('a'); anchor.href = url; anchor.download = `${document.title.replace(/[^a-z0-9]+/gi, '-').toLowerCase() || 'mapping-canvas'}.${extension}`; anchor.click(); setTimeout(() => URL.revokeObjectURL(url)); }
   function exportJson() { download(serialize(document), 'application/json', 'json'); status = 'JSON exported'; }
+  function shareExpired(candidate: ManagedShare) { return candidate.expiresAt !== null && Date.parse(candidate.expiresAt) <= Date.now(); }
+  function parseManagedShare(value: string | null): ManagedShare | null {
+    if (!value) return null;
+    try {
+      const candidate = JSON.parse(value) as Partial<ManagedShare>, expiresAt = candidate.expiresAt ?? null;
+      if (typeof candidate.shareId !== 'string' || !/^[A-Za-z0-9_-]{22}$/.test(candidate.shareId) || typeof candidate.url !== 'string' || typeof candidate.token !== 'string' || !/^[A-Za-z0-9_-]{43}$/.test(candidate.token) || !Number.isSafeInteger(candidate.revision) || Number(candidate.revision) < 1 || (expiresAt !== null && (typeof expiresAt !== 'string' || !Number.isFinite(Date.parse(expiresAt))))) return null;
+      return { shareId: candidate.shareId, url: candidate.url, token: candidate.token, revision: Number(candidate.revision), expiresAt };
+    } catch { return null; }
+  }
+  function scheduleShareExpiry() {
+    clearTimeout(shareExpiryTimer); shareExpiryTimer = undefined;
+    if (!share?.expiresAt) return;
+    const delay = Math.max(0, Date.parse(share.expiresAt) - Date.now());
+    shareExpiryTimer = setTimeout(() => { if (share && shareExpired(share)) { shareExpiryTimer = undefined; status = 'Published link may have expired · update or revoke to confirm'; } else scheduleShareExpiry(); }, Math.min(delay + 25, 2_147_483_647));
+  }
+  function rememberShare(next: ManagedShare | null, documentId = history.present.id, previousDocumentId?: string) { share = next; try { if (previousDocumentId && previousDocumentId !== documentId) localStorage.removeItem(`draw-share:${previousDocumentId}`); const key = `draw-share:${documentId}`; if (next) localStorage.setItem(key, JSON.stringify(next)); else localStorage.removeItem(key); scheduleShareExpiry(); return true; } catch { status = 'Link active, but management access could not be saved on this device'; scheduleShareExpiry(); return false; } }
+  function restoreManagedShare(documentId: string) { try { const key = `draw-share:${documentId}`, restored = parseManagedShare(localStorage.getItem(key)); if (!restored) { localStorage.removeItem(key); share = null; clearTimeout(shareExpiryTimer); shareExpiryTimer = undefined; } else rememberShare(restored, documentId); } catch { share = null; } }
+  function restoreStoredManagedShare(documentId: string) { try { if (localStorage.getItem(`draw-share:${documentId}`) !== null) restoreManagedShare(documentId); } catch { /* Keep an emergency in-memory capability when storage is unavailable. */ } }
+  function currentManagedShare() { return share; }
+  async function retainPublishedShare(candidate: ManagedShare) {
+    if (rememberShare(candidate)) return;
+    const response = await fetch(`/api/shares/${candidate.shareId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${candidate.token}` } }).catch(() => null);
+    if (response?.ok || response?.status === 404) { share = null; clearTimeout(shareExpiryTimer); shareExpiryTimer = undefined; throw new Error('Snapshot was revoked because management access could not be saved on this device.'); }
+    throw new Error('Snapshot is public, but management access could not be saved. Keep this tab open and revoke the link before leaving.');
+  }
+  async function coordinatePublish<T>(action: (snapshot: CanvasDocument) => Promise<T>): Promise<T> {
+    if (replacingDocument || agentMutationActive) throw new Error('Wait for the active document replacement or agent mutation to finish.');
+    const snapshot = JSON.parse(JSON.stringify(document)) as CanvasDocument, documentId = snapshot.id;
+    const run = async () => {
+      if (document.id !== documentId) throw new Error('The canvas changed while waiting to publish. Review it and try again.');
+      const persisted = await loadDocument();
+      if (persisted && persisted.id !== documentId) throw new Error('Another tab replaced this canvas. Reload Draw before publishing.');
+      if (!persisted) await saveDocument(snapshot);
+      restoreManagedShare(documentId);
+      if (currentManagedShare()) throw new Error('This canvas already has a managed snapshot. Update or revoke it first.');
+      return action(snapshot);
+    };
+    return navigator.locks ? navigator.locks.request(DRAW_DOCUMENT_LOCK, run) : run();
+  }
+  async function coordinateDocumentReplacement<T>(action: () => Promise<T>): Promise<T> {
+    const documentId = document.id;
+    noteInput.flushAll();
+    replacingDocument = true;
+    clearTimeout(saveTimer); saveTimer = undefined;
+    try {
+      const run = async () => {
+        const persisted = await loadDocument();
+        if (persisted && persisted.id !== documentId) throw new Error('Another tab replaced this canvas. Reload Draw before replacing it again.');
+        restoreStoredManagedShare(documentId);
+        return action();
+      };
+      return navigator.locks ? navigator.locks.request(DRAW_DOCUMENT_LOCK, run) : run();
+    } finally { replacingDocument = false; }
+  }
+  async function transferManagedShareAfterReplacement(managed: ManagedShare | null, previous: CanvasDocument, next: CanvasDocument) {
+    if (!managed) { restoreManagedShare(next.id); return; }
+    if (rememberShare(managed, next.id, previous.id)) return;
+    await saveDocument(previous);
+    history = { past: history.past, present: previous, future: [] };
+    rememberShare(managed, previous.id, next.id);
+    throw new Error('Canvas replacement was rolled back because share management access could not be moved.');
+  }
+  async function refreshShareRevision(response: Response, managed: NonNullable<typeof share>) { if (response.status !== 409) return false; const result = await response.json().catch(() => null); if (Number.isSafeInteger(result?.revision) && result.revision > managed.revision) rememberShare({ ...managed, revision: result.revision }); return true; }
+  async function publishSnapshotForAgent(input: { expiresAt?: string } = {}) {
+    if (nativeRole !== 'web' || sharing || replacingDocument || currentManagedShare()) throw new Error('Snapshot publishing is not ready. Update or revoke the existing managed snapshot first.'); sharing = true;
+    try { return await coordinatePublish(async (snapshot) => { const response = await fetch('/api/shares', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ document: snapshot, ...input }) }); if (!response.ok) throw new Error('Snapshot could not be published'); const result = await response.json(), candidate = { shareId: result.shareId, url: result.url, token: result.managementToken, revision: result.revision, expiresAt: result.expiresAt ?? null }; await retainPublishedShare(candidate); status = `View-only snapshot published · expires ${String(result.expiresAt).slice(0, 10)}`; return { shareId: result.shareId, url: new URL(result.url, location.origin).href, revision: result.revision, expiresAt: result.expiresAt ?? null }; }); }
+    finally { sharing = false; }
+  }
+  async function updateSnapshotForAgent(input: { expectedShareRevision: number }) {
+    const managed = currentManagedShare(); if (!managed || sharing || input.expectedShareRevision !== managed.revision) throw new Error('Snapshot revision is stale or management access is unavailable.'); sharing = true;
+    try { const response = await fetch(`/api/shares/${managed.shareId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${managed.token}` }, body: JSON.stringify({ document, expectedRevision: input.expectedShareRevision }) }); if (!response.ok) { if (response.status === 404) rememberShare(null); const refreshed = await refreshShareRevision(response, managed); throw new Error(refreshed ? 'Snapshot revision was stale and has been refreshed. Review the shared state, then update again.' : 'Snapshot could not be updated'); } const result = await response.json(); rememberShare({ ...managed, revision: result.revision }); status = `Shared snapshot updated · revision ${result.revision}`; return { shareId: managed.shareId, url: new URL(managed.url, location.origin).href, revision: result.revision }; }
+    finally { sharing = false; }
+  }
+  async function revokeSnapshotForAgent() {
+    const managed = currentManagedShare(); if (!managed || sharing) throw new Error('Management access is unavailable.'); sharing = true;
+    try { const response = await fetch(`/api/shares/${managed.shareId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${managed.token}` } }); if (!response.ok) { if (response.status === 404) rememberShare(null); throw new Error('Snapshot could not be revoked'); } rememberShare(null); status = 'View-only link revoked'; }
+    finally { sharing = false; }
+  }
+  async function publishSnapshot() {
+    if (nativeRole !== 'web' || sharing || replacingDocument || currentManagedShare()) return; sharing = true;
+    try { await coordinatePublish(async (snapshot) => { const response = await fetch('/api/shares', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ document: snapshot }) }); if (!response.ok) throw new Error('Snapshot could not be published'); const result = await response.json(), candidate = { shareId: result.shareId, url: result.url, token: result.managementToken, revision: result.revision, expiresAt: result.expiresAt ?? null }; await retainPublishedShare(candidate); status = `View-only snapshot published · expires ${String(result.expiresAt).slice(0, 10)}`; await navigator.clipboard?.writeText(new URL(result.url, location.origin).href); }); }
+    catch (error) { status = error instanceof Error ? error.message : 'Snapshot could not be published'; } finally { sharing = false; }
+  }
+  async function updateSnapshot() {
+    const managed = currentManagedShare(); if (!managed || sharing) return; sharing = true;
+    try { const response = await fetch(`/api/shares/${managed.shareId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${managed.token}` }, body: JSON.stringify({ document, expectedRevision: managed.revision }) }); if (!response.ok) { if (response.status === 404) rememberShare(null); const refreshed = await refreshShareRevision(response, managed); throw new Error(refreshed ? 'Shared revision refreshed · review, then update again' : 'Snapshot could not be updated'); } const result = await response.json(); rememberShare({ ...managed, revision: result.revision }); status = `Shared snapshot updated · revision ${result.revision}`; }
+    catch (error) { status = error instanceof Error ? error.message : 'Snapshot could not be updated'; } finally { sharing = false; }
+  }
+  async function copyShareLink() { const managed = currentManagedShare(); if (!managed) return; await navigator.clipboard?.writeText(new URL(managed.url, location.origin).href); status = 'View-only link copied'; }
+  async function revokeSnapshot() {
+    const managed = currentManagedShare(); if (!managed || sharing || !confirm('Revoke this view-only link? Recipients will no longer be able to open it.')) return; sharing = true;
+    try { const response = await fetch(`/api/shares/${managed.shareId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${managed.token}` } }); if (!response.ok) { if (response.status === 404) rememberShare(null); throw new Error('Snapshot could not be revoked'); } rememberShare(null); status = 'View-only link revoked'; }
+    catch (error) { status = error instanceof Error ? error.message : 'Snapshot could not be revoked'; } finally { sharing = false; }
+  }
   function svgMarkup() {
     const clone = surface.cloneNode(true) as SVGSVGElement, namespace = 'http://www.w3.org/2000/svg';
+    const measurement = window.document.createElement('canvas').getContext('2d')!;
     clone.querySelectorAll('[data-ui=true]').forEach((node) => node.remove());
     clone.querySelectorAll('.group-label').forEach((node) => { node.setAttribute('fill', '#fcaa2d'); node.setAttribute('font-family', 'monospace'); node.setAttribute('font-size', '11'); node.setAttribute('font-weight', '700'); });
     clone.querySelectorAll('.connector-label').forEach((node) => { node.setAttribute('fill', '#fcaa2d'); node.setAttribute('font-family', 'monospace'); node.setAttribute('font-size', '11'); node.setAttribute('font-weight', '700'); node.setAttribute('paint-order', 'stroke'); node.setAttribute('stroke', '#000'); node.setAttribute('stroke-width', '5'); });
     clone.querySelectorAll('.provenance').forEach((node) => { node.setAttribute('fill', 'rgba(255,255,255,.45)'); node.setAttribute('font-family', 'monospace'); node.setAttribute('font-size', '9'); node.setAttribute('font-weight', '700'); });
-    for (const note of document.objects.filter((object) => object.kind === 'note')) {
+    for (const [noteIndex, note] of document.objects.filter((object) => object.kind === 'note').entries()) {
       const group = clone.querySelector(`[data-object-id="${CSS.escape(note.id)}"]`), editor = group?.querySelector('foreignObject');
       if (!group || !editor) continue;
       editor.remove();
-      const text = window.document.createElementNS(namespace, 'text'); text.setAttribute('x', String(note.x + 16)); text.setAttribute('y', String(note.y + 30)); text.setAttribute('fill', '#fff'); text.setAttribute('font-family', 'Arial, sans-serif'); text.setAttribute('font-size', '16');
-      for (const [lineNumber, line] of wrappedLines(note.text, (value) => value.length <= Math.max(12, Math.floor((note.width - 32) / 8))).entries()) { const span = window.document.createElementNS(namespace, 'tspan'); span.setAttribute('x', String(note.x + 16)); span.setAttribute('dy', lineNumber ? '1.35em' : '0'); span.textContent = line || '\u00a0'; text.append(span); }
+      const clipId = `note-export-clip-${noteIndex}`, clip = window.document.createElementNS(namespace, 'clipPath'), clipRect = window.document.createElementNS(namespace, 'rect');
+      clip.setAttribute('id', clipId); clipRect.setAttribute('x', String(note.x + 16)); clipRect.setAttribute('y', String(note.y + 14)); clipRect.setAttribute('width', String(Math.max(0, note.width - 32))); clipRect.setAttribute('height', String(Math.max(0, note.height - 28))); clip.append(clipRect); clone.querySelector('defs')?.append(clip);
+      const text = window.document.createElementNS(namespace, 'text'); text.setAttribute('x', String(note.x + 16)); text.setAttribute('y', String(note.y + 30)); text.setAttribute('fill', '#fff'); text.setAttribute('font-family', 'Arial, sans-serif'); text.setAttribute('font-size', '16'); text.setAttribute('clip-path', `url(#${clipId})`); text.setAttribute('xml:space', 'preserve');
+      if (note.content) {
+        const lines = layoutNoteContent(note.content, Math.max(1, note.width - 32), (value, run, type, size) => { measurement.font = noteFont(run, type, size); return measurement.measureText(value).width; });
+        let y = note.y + 32;
+        for (const line of lines) { if (y > note.y + note.height - 14) break; const row = window.document.createElementNS(namespace, 'tspan'); row.setAttribute('x', String(note.x + 16)); row.setAttribute('y', String(y)); row.setAttribute('font-size', String(line.size)); if (line.type.startsWith('heading')) row.setAttribute('font-weight', '700'); for (const segment of line.segments) { const part = window.document.createElementNS(namespace, 'tspan'); part.textContent = segment.text; if (segment.run.bold) part.setAttribute('font-weight', '700'); if (segment.run.italic) part.setAttribute('font-style', 'italic'); if (segment.run.underline || segment.run.link) part.setAttribute('text-decoration', 'underline'); if (segment.run.code) part.setAttribute('font-family', 'monospace'); if (segment.run.link) part.setAttribute('fill', '#7bb7ff'); else if (line.type === 'quote') part.setAttribute('fill', '#ddd'); row.append(part); } text.append(row); y += line.height; }
+      } else for (const [lineNumber, line] of wrappedLines(note.text, (value) => value.length <= Math.max(12, Math.floor((note.width - 32) / 8))).entries()) { const span = window.document.createElementNS(namespace, 'tspan'); span.setAttribute('x', String(note.x + 16)); span.setAttribute('dy', lineNumber ? '1.35em' : '0'); span.textContent = line || '\u00a0'; text.append(span); }
       group.append(text);
     }
     clone.setAttribute('xmlns', namespace); clone.setAttribute('width', String(viewportWidth)); clone.setAttribute('height', String(viewportHeight)); return new XMLSerializer().serializeToString(clone);
@@ -899,13 +1051,26 @@
       else if (object.kind === 'ellipse') { context.strokeStyle = object.color; context.lineWidth = 2; context.beginPath(); context.ellipse((object.from.x + object.to.x) / 2, (object.from.y + object.to.y) / 2, Math.abs(object.to.x - object.from.x) / 2, Math.abs(object.to.y - object.from.y) / 2, 0, 0, Math.PI * 2); context.stroke(); }
       else if (object.kind === 'arrow') arrow(object.from, object.to, object.color);
       else if (object.kind === 'connector') { const from = objectIndex.get(object.fromId), to = objectIndex.get(object.toId); if (from && to) { const a = resolveObjectCenter(from), b = resolveObjectCenter(to), label = connectorLabels.get(object.id); arrow(a, b, '#fcaa2d'); if (object.label && label) { context.save(); context.font = '700 11px monospace'; context.textAlign = 'center'; context.lineWidth = 5; context.strokeStyle = '#000'; context.strokeText(object.label, label.x, label.y); context.fillStyle = '#fcaa2d'; context.fillText(object.label, label.x, label.y); context.textAlign = 'start'; context.restore(); } } }
-      else if (object.kind === 'note') { context.fillStyle = '#111'; context.strokeStyle = 'rgba(255,255,255,.18)'; context.fillRect(object.x, object.y, object.width, object.height); context.strokeRect(object.x, object.y, object.width, object.height); context.fillStyle = '#fff'; context.font = '500 16px Arial'; let y = object.y + 30; for (const line of wrappedLines(object.text, (value) => context.measureText(value).width <= object.width - 32)) { if (line) context.fillText(line, object.x + 16, y); y += 22; } if (object.sourceIds?.length) { context.fillStyle = 'rgba(255,255,255,.45)'; context.font = '700 9px monospace'; context.fillText(`CONVERTED · ${object.sourceIds.length} SOURCE`, object.x + 16, object.y + object.height - 10); } }
+      else if (object.kind === 'note') { context.fillStyle = '#111'; context.strokeStyle = 'rgba(255,255,255,.18)'; context.fillRect(object.x, object.y, object.width, object.height); context.strokeRect(object.x, object.y, object.width, object.height); paintNoteContent(context, object); if (object.sourceIds?.length) { context.fillStyle = 'rgba(255,255,255,.45)'; context.font = '700 9px monospace'; context.fillText(`CONVERTED · ${object.sourceIds.length} SOURCE`, object.x + 16, object.y + object.height - 10); } }
       else if (object.kind === 'group') { context.strokeStyle = '#fcaa2d'; context.setLineDash([8, 6]); context.strokeRect(object.x, object.y, object.width, object.height); context.setLineDash([]); context.fillStyle = '#fcaa2d'; context.font = '700 11px monospace'; context.fillText(object.label.toUpperCase(), object.x + 12, object.y + 24); }
     }
     context.restore(); const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png')); if (!blob) throw new Error('PNG export failed'); download(blob, 'image/png', 'png'); status = 'PNG exported';
   }
-  async function importJson(event: Event) { const file = (event.currentTarget as HTMLInputElement).files?.[0]; if (!file || nativeRole === 'companion') return; try { const next = parse(await file.text()); const committed = await commitHostReplacement(() => next, (value) => value, (value) => history = commit(history, value), 'import'); selectedIds = []; queueSave(committed); status = 'Canvas imported'; } catch (error) { status = error instanceof Error ? error.message : 'Import failed'; } finally { if (fileInput) fileInput.value = ''; } }
-  async function resetCanvas() { if (nativeRole === 'companion') { if (!companionResetArmed) { companionResetArmed = true; clearTimeout(companionResetTimer); companionResetTimer = setTimeout(() => companionResetArmed = false, 5000); status = 'Tap Confirm reset to clear the Mac canvas'; return; } companionResetArmed = false; clearTimeout(companionResetTimer); const current = document; const next = { ...document, title: 'Untitled mapping session', objects: [], viewport: { x: 0, y: 0, zoom: 1 }, updatedAt: new Date().toISOString() }; history = commit(history, next); selectedIds = []; const operations: CanvasOperation[] = [{ type: 'replace_objects', objects: [] }]; if (current.title !== next.title) operations.push({ type: 'set_title', title: next.title }); if (JSON.stringify(current.viewport) !== JSON.stringify(next.viewport)) operations.push({ type: 'set_viewport', viewport: next.viewport }); sendNative(operations, true); status = 'Clear requested from iPhone'; return; } if (!confirm(nativeRole === 'host' ? 'Reset the Mac-authoritative canvas? Export first if you need a copy.' : 'Reset this local canvas? Export first if you need a copy.')) return; clearTimeout(saveTimer); saveTimer = undefined; status = 'Resetting canvas…'; if (nativeRole === 'web') await clearDocument(); try { await commitHostReplacement(() => createDocument(), (value) => value, (value) => history = { past: [], present: value, future: [] }, 'reset'); selectedIds = []; status = nativeRole === 'host' ? 'New Mac session document' : 'New local session'; } catch (error) { status = error instanceof Error ? error.message : 'Reset conflicted with an iPhone change'; } }
+  async function importJson(event: Event) {
+    const file = (event.currentTarget as HTMLInputElement).files?.[0];
+    if (!file || nativeRole === 'companion' || sharing || replacingDocument) return;
+    try { await coordinateDocumentReplacement(async () => { const previous = history.present, managed = currentManagedShare(); const next = parse(await file.text()); const committed = await commitHostReplacement(() => next, (value) => value, (value) => history = { past: [], present: value, future: [] }, 'import'); selectedIds = []; if (nativeRole === 'web') { await saveDocument(committed); await transferManagedShareAfterReplacement(managed, previous, committed); } else { queueSave(committed); if (managed) rememberShare(managed, committed.id, previous.id); else restoreManagedShare(committed.id); } status = 'Canvas imported'; }); }
+    catch (error) { status = error instanceof Error ? error.message : 'Import failed'; }
+    finally { if (fileInput) fileInput.value = ''; }
+  }
+  async function resetCanvas() {
+    if (sharing || replacingDocument) return;
+    if (nativeRole === 'companion') { if (!companionResetArmed) { companionResetArmed = true; clearTimeout(companionResetTimer); companionResetTimer = setTimeout(() => companionResetArmed = false, 5000); status = 'Tap Confirm reset to clear the Mac canvas'; return; } companionResetArmed = false; clearTimeout(companionResetTimer); const current = document; const next = { ...document, title: 'Untitled mapping session', objects: [], viewport: { x: 0, y: 0, zoom: 1 }, updatedAt: new Date().toISOString() }; history = commit(history, next); selectedIds = []; const operations: CanvasOperation[] = [{ type: 'replace_objects', objects: [] }]; if (current.title !== next.title) operations.push({ type: 'set_title', title: next.title }); if (JSON.stringify(current.viewport) !== JSON.stringify(next.viewport)) operations.push({ type: 'set_viewport', viewport: next.viewport }); sendNative(operations, true); status = 'Clear requested from iPhone'; return; }
+    if (!confirm(nativeRole === 'host' ? 'Reset the Mac-authoritative canvas? Export first if you need a copy.' : share ? 'Reset this local canvas? Its published link will remain manageable here until you revoke it.' : 'Reset this local canvas? Export first if you need a copy.')) return;
+    clearTimeout(saveTimer); saveTimer = undefined; status = 'Resetting canvas…';
+    try { await coordinateDocumentReplacement(async () => { const previous = history.present, managed = currentManagedShare(), next = createDocument(); await commitHostReplacement(() => next, (value) => value, (value) => history = { past: [], present: value, future: [] }, 'reset'); selectedIds = []; if (nativeRole === 'web') { await saveDocument(next); await transferManagedShareAfterReplacement(managed, previous, next); } else { queueSave(next); if (managed) rememberShare(managed, next.id, previous.id); } status = nativeRole === 'host' ? 'New Mac session document' : 'New local session'; }); }
+    catch (error) { status = error instanceof Error ? error.message : 'Reset conflicted with an iPhone change'; }
+  }
   function updateTitle(input: HTMLInputElement) { if (!companionCanEdit()) return; const title = input.value || 'Untitled mapping session'; if (!isValidCanvasTitle(title)) { input.value = document.title; status = 'Title must be 240 UTF-8 bytes or fewer'; return; } const next = { ...document, title, updatedAt: new Date().toISOString() }; history = { ...history, present: next }; queueSave(next); sendNative([{ type: 'set_title', title }]); }
 </script>
 
@@ -937,7 +1102,7 @@
   <header class="topbar">
     <div class="identity"><img src="/brand/create-something-agency-white.svg" alt="CREATE SOMETHING .agency" /><span>Draw · Mapping canvas</span><a class="source-link" href="/download" target="_blank" rel="noreferrer">Mac</a><a class="source-link" href="https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/mapping-canvas" target="_blank" rel="noreferrer">Source</a>{#if nativeRole !== 'web'}<button class="native-link" aria-label="Open device pairing" onclick={openPairing}>{nativeRole === 'host' ? 'Pair' : nativeSession.sessionId ? 'Linked' : 'Link'}</button>{/if}</div>
     <input class="title" aria-label="Canvas title" maxlength="240" value={document.title} oninput={(event) => updateTitle(event.currentTarget)} />
-    {#if nativeRole !== 'companion'}<div class="file-actions"><button onclick={() => fileInput?.click()}>Import</button><button onclick={exportJson}>JSON</button><button onclick={exportSvg}>SVG</button><button onclick={exportPng}>PNG</button><button onclick={resetCanvas}>Reset</button><input bind:this={fileInput} class="visually-hidden" type="file" accept="application/json,.json" onchange={importJson} /></div>{/if}
+    {#if nativeRole !== 'companion'}<div class="file-actions"><button onclick={() => fileInput?.click()} disabled={sharing || replacingDocument}>Import</button><button onclick={exportJson}>JSON</button><button onclick={exportSvg}>SVG</button><button onclick={exportPng}>PNG</button>{#if nativeRole === 'web'}{#if share}<button onclick={copyShareLink}>Copy link</button><button onclick={updateSnapshot} disabled={sharing || replacingDocument}>Update link</button><button onclick={revokeSnapshot} disabled={sharing || replacingDocument}>Revoke</button>{:else}<button class="share-action" onclick={publishSnapshot} disabled={sharing || replacingDocument}>Publish view-only</button>{/if}{/if}<button onclick={resetCanvas} disabled={sharing || replacingDocument}>Reset</button><input bind:this={fileInput} class="visually-hidden" type="file" accept="application/json,.json" disabled={sharing || replacingDocument} onchange={importJson} /></div>{/if}
   </header>
   <section class="workbench" class:tool-sidebar-collapsed={sidebarCollapsed} aria-label="Mapping canvas workbench">
     <nav class="toolbar" aria-label="Canvas tools"><button class="sidebar-toggle" aria-expanded={!sidebarCollapsed} aria-label={sidebarCollapsed ? 'Expand tool sidebar' : 'Collapse tool sidebar'} title={sidebarCollapsed ? 'Expand tools' : 'Collapse tools'} onclick={toggleSidebar}><i aria-hidden="true">{sidebarCollapsed ? '›' : '‹'}</i><span>{sidebarCollapsed ? 'Expand' : 'Collapse'}</span></button>{#each tools as entry}<button class:active={tool === entry.id} aria-pressed={tool === entry.id} aria-label={`${entry.label} tool (${entry.key})`} title={`${entry.label} · ${entry.key}`} onclick={() => tool = entry.id}><kbd class="tool-key">{entry.key}</kbd><span class="tool-label">{entry.label}</span></button>{/each}</nav>
@@ -952,7 +1117,7 @@
             {:else if object.kind === 'rectangle'}<rect data-object-id={object.id} class:selected class:agent-change={agentAffectedIdSet.has(object.id)} role="button" tabindex="0" aria-label="Rectangle" x={Math.min(object.from.x, object.to.x)} y={Math.min(object.from.y, object.to.y)} width={Math.abs(object.to.x - object.from.x)} height={Math.abs(object.to.y - object.from.y)} fill="transparent" stroke={object.color} stroke-width="2" onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)} />
             {:else if object.kind === 'ellipse'}<ellipse data-object-id={object.id} class:selected class:agent-change={agentAffectedIdSet.has(object.id)} role="button" tabindex="0" aria-label="Ellipse" cx={(object.from.x + object.to.x) / 2} cy={(object.from.y + object.to.y) / 2} rx={Math.abs(object.to.x - object.from.x) / 2} ry={Math.abs(object.to.y - object.from.y) / 2} fill="transparent" stroke={object.color} stroke-width="2" onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)} />
             {:else if object.kind === 'arrow'}<line data-object-id={object.id} class:selected class:agent-change={agentAffectedIdSet.has(object.id)} role="button" tabindex="0" aria-label="Arrow" x1={object.from.x} y1={object.from.y} x2={object.to.x} y2={object.to.y} stroke={object.color} stroke-width="2" marker-end="url(#arrowhead)" onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)} />
-            {:else if object.kind === 'note'}<g data-object-id={object.id} class:selected class:agent-change={agentAffectedIdSet.has(object.id)} role="button" tabindex="0" aria-label={`Note: ${object.text}`} onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)}><rect x={object.x} y={object.y} width={object.width} height={object.height} rx="4" fill="#111" stroke={selected ? '#fcaa2d' : 'rgba(255,255,255,.18)'} /><foreignObject x={object.x + 16} y={object.y + 14} width={object.width - 32} height={object.height - 28}><textarea xmlns="http://www.w3.org/1999/xhtml" aria-label="Edit note" value={object.text} disabled={nativeRole === 'companion' && (!nativeSession.sessionId || nativeSession.requiresRepair)} onpointerdown={(event) => event.stopPropagation()} oninput={(event) => { if (!companionCanEdit()) return; if (nativeRole !== 'web' && !noteInput.hasPending()) nativeOptimisticVersion += 1; noteInput.schedule(object.id, event.currentTarget.value); }} onblur={() => noteInput.flush(object.id)}></textarea></foreignObject>{#if object.sourceIds?.length}<text x={object.x + 16} y={object.y + object.height - 10} class="provenance">CONVERTED · {object.sourceIds.length} SOURCE</text>{/if}</g>
+            {:else if object.kind === 'note'}<g data-object-id={object.id} class:selected class:agent-change={agentAffectedIdSet.has(object.id)} role="button" tabindex="0" aria-label={`Note: ${object.text}`} onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)}><rect x={object.x} y={object.y} width={object.width} height={object.height} rx="4" fill="#111" stroke={selected ? '#fcaa2d' : 'rgba(255,255,255,.18)'} /><foreignObject x={object.x + 16} y={object.y + 14} width={object.width - 32} height={object.height - 28}>{#if object.content}<RichNote content={object.content} />{:else}<textarea xmlns="http://www.w3.org/1999/xhtml" aria-label="Edit note" value={object.text} disabled={nativeRole === 'companion' && (!nativeSession.sessionId || nativeSession.requiresRepair)} onpointerdown={(event) => event.stopPropagation()} oninput={(event) => { if (!companionCanEdit()) return; if (nativeRole !== 'web' && !noteInput.hasPending()) nativeOptimisticVersion += 1; noteInput.schedule(object.id, event.currentTarget.value); }} onblur={() => noteInput.flush(object.id)}></textarea>{/if}</foreignObject>{#if object.sourceIds?.length}<text x={object.x + 16} y={object.y + object.height - 10} class="provenance">CONVERTED · {object.sourceIds.length} SOURCE</text>{/if}</g>
             {:else if object.kind === 'group'}<g data-object-id={object.id} class:selected class:agent-change={agentAffectedIdSet.has(object.id)} role="button" tabindex="0" aria-label={`Group: ${object.label}`} onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)}><rect x={object.x} y={object.y} width={object.width} height={object.height} rx="4" fill="rgba(252,170,45,.025)" stroke={selected ? '#fcaa2d' : 'rgba(252,170,45,.5)'} stroke-dasharray="8 6" /><text x={object.x + 12} y={object.y + 24} class="group-label">{object.label}</text>{#if selected && tool === 'select'}<rect data-ui="true" class="resize-handle" role="button" tabindex="0" aria-label="Resize group" x={object.x + object.width - 9} y={object.y + object.height - 9} width="18" height="18" rx="2" onpointerdown={(event) => resizePointer(event, object.id)} onkeydown={(event) => resizeKeyboard(event, object.id)} />{/if}</g>
             {:else if object.kind === 'connector'}{@const from = objectIndex.get(object.fromId)}{@const to = objectIndex.get(object.toId)}{#if from && to}{@const a = resolveObjectCenter(from)}{@const b = resolveObjectCenter(to)}{@const label = connectorLabels.get(object.id)}<g class:agent-change={agentAffectedIdSet.has(object.id)}><line data-object-id={object.id} class:selected role="button" tabindex="0" aria-label="Connector" x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#fcaa2d" stroke-width="2" marker-end="url(#arrowhead)" onpointerdown={(event) => selectPointer(event, object.id)} onkeydown={(event) => selectKeyboard(event, object.id)} />{#if object.label && label}<text class="connector-label" x={label.x} y={label.y} text-anchor="middle">{object.label}</text>{/if}</g>{/if}{/if}
           {/each}
@@ -963,7 +1128,7 @@
       </svg>
       <div class="history"><button onclick={() => void doUndo()} disabled={!history.past.length}>Undo</button><button onclick={() => void doRedo()} disabled={!history.future.length}>Redo</button><span>{Math.round(viewport.zoom * 100)}%</span>{#if nativeRole === 'companion'}<button class:reset-confirm={companionResetArmed} aria-label={companionResetArmed ? 'Confirm reset' : 'Reset'} onclick={resetCanvas}>{companionResetArmed ? 'Confirm' : 'Reset'}</button>{/if}<button onclick={() => updateViewport({ x: 0, y: 0, zoom: 1 })}>Reset view</button></div>
       {#if paletteVisible}<div class="palette" role="group" aria-label="Mark color" data-ui="true"><span>Mark color</span><div>{#each DRAWING_PALETTE as color}<button class:active={drawingColor === color.value} aria-pressed={drawingColor === color.value} aria-label={`${color.label} color`} data-testid={`color-${color.id}`} style={`--swatch:var(${color.token},${color.value})`} onclick={() => chooseColor(color.value, color.label)}><i aria-hidden="true"></i><small>{color.label}</small></button>{/each}</div></div>{/if}
-      {#if selectedIds.length}<div class="selection" data-ui="true"><span>{selectedIds.length} selected</span><button class="convert" data-testid="convert-menu" onclick={() => conversionOpen = !conversionOpen}>Convert to…</button>{#if selectedObjects.length === 1 && selectedObjects[0].sourceSnapshot}<button data-testid="restore-source" onclick={restoreSelected}>Restore source</button>{/if}{#if conversionOpen}<div class="conversion-menu"><button data-testid="convert-note" onclick={() => runConversion('note')}>Note<small>Retain as editable text</small></button><button data-testid="convert-connector" onclick={() => runConversion('connector')} disabled={selectedIds.length < 2}>Connector<small>Relate two selected objects</small></button><button data-testid="convert-group" onclick={() => runConversion('group')}>Group<small>Name a working boundary</small></button></div>{/if}</div>{/if}
+      {#if selectedIds.length}<div class="selection" data-ui="true"><span>{selectedIds.length} selected</span>{#if selectedObjects.length === 1 && selectedObjects[0].kind === 'note'}<div class="note-format" role="toolbar" aria-label="Note formatting"><button onclick={() => formatSelectedNote('heading1')}>H1</button><button onclick={() => formatSelectedNote(undefined,'bold')}>Bold</button><button onclick={() => formatSelectedNote(undefined,'italic')}>Italic</button><button onclick={() => formatSelectedNote('bullet')}>Bullet</button><button onclick={() => formatSelectedNote('quote')}>Quote</button><button onclick={() => formatSelectedNote(undefined,'code')}>Code</button><button onclick={() => formatSelectedNote(undefined,'link')}>Link</button><button onclick={clearSelectedNoteFormatting}>Plain</button></div>{/if}<button class="convert" data-testid="convert-menu" onclick={() => conversionOpen = !conversionOpen}>Convert to…</button>{#if selectedObjects.length === 1 && selectedObjects[0].sourceSnapshot}<button data-testid="restore-source" onclick={restoreSelected}>Restore source</button>{/if}{#if conversionOpen}<div class="conversion-menu"><button data-testid="convert-note" onclick={() => runConversion('note')}>Note<small>Retain as editable text</small></button><button data-testid="convert-connector" onclick={() => runConversion('connector')} disabled={selectedIds.length < 2}>Connector<small>Relate two selected objects</small></button><button data-testid="convert-group" onclick={() => runConversion('group')}>Group<small>Name a working boundary</small></button></div>{/if}</div>{/if}
       {#if agentTransition}<output class="agent-transition" aria-live="polite"><i aria-hidden="true"></i><span>Agent {agentTransition.kind}</span><small>{agentTransition.affectedIds.length ? `${agentTransition.affectedIds.length} artifact${agentTransition.affectedIds.length === 1 ? '' : 's'}` : 'canvas'}</small></output>{/if}
       {#if pairingOpen}<section class="pairing-panel" data-ui="true" aria-label="Device pairing"><header><strong>{nativeRole === 'host' ? 'Pair iPhone' : 'Connect to Mac'}</strong><button aria-label="Close pairing" onclick={() => pairingOpen = false}>×</button></header>{#if pairingBusy}<p>Looking for the secure session…</p>{:else if nativeRole === 'host'}<p>Enter this one-time code on the iPhone. Both devices must be on the same local network.</p><output class="pairing-code">{pairingOffer?.code || '—'}</output><small>Mac fingerprint {nativeSession.transport?.certificateFingerprint?.slice(0, 16) || 'unavailable'} · expires {pairingOffer ? new Date(pairingOffer.expiresAt).toLocaleTimeString() : 'soon'}</small>{#if nativeSession.pairedClients?.length}<div class="paired-list">{#each nativeSession.pairedClients as client}<span>{client.clientId}<button disabled={Boolean(client.revokedAt)} onclick={async () => { await revokeCompanion(client.clientId); nativeSession = await hostStatus(); }}>Revoke</button></span>{/each}</div>{/if}{:else if nativeSession.sessionId}<p>{nativeSession.requiresRepair ? 'This Mac rejected the pairing credentials. Export if needed, then forget and re-pair.' : 'Securely linked to the Mac session.'}</p><small>{nativeSession.certificateFingerprint?.slice(0, 16)} · revision {nativeSession.revision} · {nativeSession.queueDepth || 0} queued</small><button disabled={nativeSession.requiresRepair} onclick={async () => { const result = await setCompanionOnline(nativeSession.online === false); nativeSession = { ...nativeSession, ...result }; if (result.document) history = { past: [], present: result.document, future: [] }; }}> {nativeSession.online === false ? 'Reconnect' : 'Test offline'} </button><button onclick={async () => { nativeSession = await forgetCompanion(); discoveredHosts = []; selectedHost = null; pairingCode = ''; status = 'Pairing removed · choose Link to pair again'; pairingOpen = false; }}>Forget and re-pair</button>{:else}<p>{discoveredHosts.length ? 'Confirm the Mac fingerprint, then enter its six-digit code.' : 'No Mac session found. Open Draw on Mac and choose Pair.'}</p>{#if selectedHost}<label>Mac session<select bind:value={selectedHost}>{#each discoveredHosts as host}<option value={host}>{host.endpoint}</option>{/each}</select></label><small>Fingerprint {selectedHost.certificateFingerprint.slice(0, 16)}</small><label>Pairing code<input inputmode="numeric" maxlength="6" bind:value={pairingCode} placeholder="000000" /></label><button class="convert" disabled={!/^\d{6}$/.test(pairingCode)} onclick={confirmCompanionPairing}>Pair securely</button>{/if}{/if}</section>{/if}
     </div>

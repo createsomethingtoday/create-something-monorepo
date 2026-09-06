@@ -134,6 +134,9 @@ try {
     const connectorLabel = [...document.querySelectorAll('.connector-label')].find((node) => node.textContent === 'approved');
     const rawConnectorLabelBounds = connectorLabel?.getBoundingClientRect().toJSON();
     const renderedGeometry = await tools.draw_get_rendered_geometry.execute({ ids: [composed.refs.brief, composed.refs.launch, composed.refs.approval, composed.refs.mission], limit: 10 });
+    const formatted = await tools.draw_edit_note.execute({ id: composed.refs.brief, content: { blocks: [{ type: 'heading1', runs: [{ text: 'Mission', bold: true }] }, { type: 'bullet', runs: [{ text: 'Evidence link', link: 'https://example.com/proof' }] }] } });
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    const formattedVisible = Boolean(document.querySelector(`[data-object-id="${composed.refs.brief}"] h1`) && document.querySelector(`[data-object-id="${composed.refs.brief}"] a[href="https://example.com/proof"]`));
     const route = renderedGeometry.connectors[0].route, routeMiddle = { x: (route[0].x + route[1].x) / 2, y: (route[0].y + route[1].y) / 2 }, connectorCollisionId = 'browser-connector-collision';
     const connectorCollisionChange = await tools.draw_apply_operations.execute({ operations: [{ type: 'put_object', object: { id: connectorCollisionId, kind: 'note', createdAt: new Date().toISOString(), x: routeMiddle.x - 60, y: routeMiddle.y - 40, width: 120, height: 80, text: 'Unrelated crossing' } }] });
     const connectorCollisionGeometry = await tools.draw_get_rendered_geometry.execute({ ids: [composed.refs.approval, connectorCollisionId], limit: 10 });
@@ -351,17 +354,19 @@ try {
     await tools.draw_revert_change.execute({ changeId: layout.changeId });
     await tools.draw_revert_change.execute({ changeId: patched.changeId });
     await tools.draw_revert_change.execute({ changeId: path.changeId });
+    await tools.draw_revert_change.execute({ changeId: formatted.changeId });
     await tools.draw_revert_change.execute({ changeId: composed.changeId });
     const restored = await tools.draw_get_state.execute({});
     return {
       names, drawNames, version: inspect.version, compactBytes: JSON.stringify(inspect).length, fullBytes: JSON.stringify(before).length,
-      composed, renderedGeometry, connectorCollisionGeometry, diagonalClearGeometry, sparseClearGeometry, markerCornerGeometry, endpointCornerGeometry, connectorEndpointOverlapGeometry, ellipseTouchGeometry, hugeEllipseGeometry, cappedEllipseGeometry, disjointEllipseGeometry, concentricEllipseGeometry, groupGapGeometry, briefModelWidth, rawConnectorLabelBounds, selectedGroupGeometry, unselectedGroupGeometry, autoLayouts, arrow, arrowGeometry, settledArrowGeometry, compoundArrow: { selectedCount: selectedArrow.selectedCount, moved: compoundMoved, styled: compoundStyled, deleted: compoundDeleted }, edgeArrowGeometry, thickArrowGeometry, zeroArrowGeometry, zeroAreaGeometry, transparentGeometry, endpointLabelGeometry, sharedConnectorGeometry, fanConnectorGeometry, collisionGeometry, provenanceGeometry, clippedGeometry, connectorVisible: Boolean(connectorLabel && getComputedStyle(connectorLabel).display !== 'none'),
+      composed, formatted: { receipt: formatted, visible: formattedVisible }, renderedGeometry, connectorCollisionGeometry, diagonalClearGeometry, sparseClearGeometry, markerCornerGeometry, endpointCornerGeometry, connectorEndpointOverlapGeometry, ellipseTouchGeometry, hugeEllipseGeometry, cappedEllipseGeometry, disjointEllipseGeometry, concentricEllipseGeometry, groupGapGeometry, briefModelWidth, rawConnectorLabelBounds, selectedGroupGeometry, unselectedGroupGeometry, autoLayouts, arrow, arrowGeometry, settledArrowGeometry, compoundArrow: { selectedCount: selectedArrow.selectedCount, moved: compoundMoved, styled: compoundStyled, deleted: compoundDeleted }, edgeArrowGeometry, thickArrowGeometry, zeroArrowGeometry, zeroAreaGeometry, transparentGeometry, endpointLabelGeometry, sharedConnectorGeometry, fanConnectorGeometry, collisionGeometry, provenanceGeometry, clippedGeometry, connectorVisible: Boolean(connectorLabel && getComputedStyle(connectorLabel).display !== 'none'),
       staleError, deleteError, replaceError, focus, restoredCount: restored.document.objects.length, beforeCount: before.document.objects.length
     };
   });
-  const requiredSemanticTools = ['draw_auto_layout', 'draw_compose', 'draw_create_freehand_arrow', 'draw_delete', 'draw_focus', 'draw_get_rendered_geometry', 'draw_inspect', 'draw_layout', 'draw_patch_objects', 'draw_path', 'draw_replace_canvas', 'draw_revert_change'];
-  if (!requiredSemanticTools.every((name) => semantic.drawNames.includes(name)) || semantic.drawNames.length !== 19) throw new Error(`Semantic Draw tool inventory is incomplete: ${JSON.stringify(semantic.drawNames)} (all registered tools: ${JSON.stringify(semantic.names)})`);
-  if (semantic.version !== '2026-09-05.1' || !semantic.composed.changeId || !semantic.connectorVisible) throw new Error(`Semantic composition or visible connector label failed: ${JSON.stringify(semantic)}`);
+  const requiredSemanticTools = ['draw_auto_layout', 'draw_compose', 'draw_create_freehand_arrow', 'draw_delete', 'draw_edit_note', 'draw_focus', 'draw_get_rendered_geometry', 'draw_get_share_status', 'draw_inspect', 'draw_layout', 'draw_patch_objects', 'draw_path', 'draw_publish_snapshot', 'draw_replace_canvas', 'draw_revert_change', 'draw_revoke_snapshot', 'draw_update_snapshot'];
+  if (!requiredSemanticTools.every((name) => semantic.drawNames.includes(name)) || semantic.drawNames.length !== 24) throw new Error(`Semantic Draw tool inventory is incomplete: ${JSON.stringify(semantic.drawNames)} (all registered tools: ${JSON.stringify(semantic.names)})`);
+  if (semantic.version !== '2026-09-06.1' || !semantic.composed.changeId || !semantic.connectorVisible) throw new Error(`Semantic composition or visible connector label failed: ${JSON.stringify(semantic)}`);
+  if (!semantic.formatted.receipt.formatted || !semantic.formatted.visible) throw new Error(`Formatted note did not render through its semantic WebMCP contract: ${JSON.stringify(semantic.formatted)}`);
   const unexpectedSemanticPeers = semantic.renderedGeometry.overlaps.filter(({ firstId, secondId, classification }) => classification === 'peer' && !([firstId, secondId].includes(semantic.composed.refs.approval) && [firstId, secondId].includes(semantic.composed.refs.mission)));
   if (semantic.renderedGeometry.objects.length !== 4 || semantic.renderedGeometry.connectors.length !== 1 || !semantic.renderedGeometry.connectors[0].labelBounds || unexpectedSemanticPeers.length || !semantic.renderedGeometry.overlaps.some(({ classification }) => classification === 'containment')) throw new Error(`Rendered geometry did not match the visible semantic graph: ${JSON.stringify(semantic.renderedGeometry)}`);
   if (!semantic.briefModelWidth || semantic.renderedGeometry.objects.find(({ id }) => id === semantic.composed.refs.brief)?.worldBounds.width < semantic.briefModelWidth + .9) throw new Error(`Rendered note bounds omitted the painted child outline: ${JSON.stringify({ modelWidth: semantic.briefModelWidth, rendered: semantic.renderedGeometry.objects })}`);
@@ -560,6 +565,26 @@ try {
     const start = { x: inspect.visibleWorld.x + 160, y: inspect.visibleWorld.y + 160 };
     return window.__drawWebMcpTools.draw_create_freehand_arrow.execute({ start, end: { x: start.x + 360, y: start.y + 140 }, curvature: -.3, looseness: .6, color: 'signal', weight: 7, arrowhead: 'barbed' });
   });
+  const exportFormatted = await page.evaluate(async () => {
+    const tools = window.__drawWebMcpTools, composed = await tools.draw_compose.execute({ nodes: [{ ref: 'formatted-export', text: 'Formatted export' }], placement: 'visible-center' });
+    const edited = await tools.draw_edit_note.execute({ id: composed.refs['formatted-export'], content: { blocks: [
+      { type: 'numbered', runs: [{ text: 'First formatted export item', bold: true }] },
+      { type: 'numbered', runs: [{ text: 'Second formatted item with Supercalifragilisticexpialidocious', italic: true, link: 'https://example.com/export' }] }
+    ] } });
+    return { id: composed.refs['formatted-export'], composeChangeId: composed.changeId, editChangeId: edited.changeId };
+  });
+  const numberedStarts = await page.locator(`[data-object-id="${exportFormatted.id}"] ol`).evaluateAll((lists) => lists.map((list) => list.getAttribute('start')));
+  if (JSON.stringify(numberedStarts) !== JSON.stringify(['1', '2'])) throw new Error(`Formatted numbered list sequence restarted: ${JSON.stringify(numberedStarts)}`);
+  await page.evaluate((id) => window.__drawWebMcpTools.draw_select.execute({ ids: [id] }), exportFormatted.id);
+  await page.waitForFunction((id) => window.__drawWebMcpTools.draw_inspect.execute({ limit: 1 }).then((result) => result.selectedIds?.includes(id)), exportFormatted.id);
+  await page.getByRole('button', { name: 'Bold', exact: true }).click();
+  await page.getByRole('button', { name: 'Italic', exact: true }).click();
+  const retainedFormatting = await page.evaluate(async (id) => (await window.__drawWebMcpTools.draw_get_state.execute({})).document.objects.find((object) => object.id === id)?.content, exportFormatted.id);
+  if (retainedFormatting?.blocks.length !== 2 || !retainedFormatting.blocks.every((block) => block.type === 'numbered' && block.runs.every((run) => run.bold && run.italic)) || retainedFormatting.blocks[1].runs[0].link !== 'https://example.com/export') throw new Error('Human formatting flattened or replaced existing structured note content');
+  page.once('dialog', (dialog) => dialog.accept('https://'));
+  await page.getByRole('button', { name: 'Link', exact: true }).click();
+  const afterInvalidLink = await page.evaluate(async (id) => (await window.__drawWebMcpTools.draw_get_state.execute({})).document.objects.find((object) => object.id === id)?.content, exportFormatted.id);
+  if (JSON.stringify(afterInvalidLink) !== JSON.stringify(retainedFormatting)) throw new Error('Malformed human link corrupted structured note content');
 
   const exports = {};
   for (const extension of ['json', 'svg', 'png']) {
@@ -574,9 +599,11 @@ try {
   const svgExport = await readFile(`${outputRoot}canvas.svg`, 'utf8');
   if (!svgExport.includes('New thought') || svgExport.includes('foreignObject') || !svgExport.includes('class="group-label"') || !svgExport.includes('Approved path') || !svgExport.includes('fill="#fcaa2d"')) throw new Error('SVG export did not materialize portable note and label styles');
   if (!svgExport.includes('First export line') || !svgExport.includes('Second export line') || !svgExport.includes('dy="1.35em"')) throw new Error('SVG export collapsed explicit note line breaks');
+  if (!svgExport.includes('First formatted') || !svgExport.includes('Supercalif') || !svgExport.includes('clip-path="url(#note-export-clip-')) throw new Error('SVG export did not wrap and clip formatted note content');
   if (!(await page.evaluate(() => window.__mappingCanvasPngText.some((text) => text.startsWith('CONVERTED · '))))) throw new Error('PNG export omitted conversion provenance');
   if (!(await page.evaluate(() => window.__mappingCanvasPngText.includes('Approved path')))) throw new Error('PNG export omitted the visible connector label');
   if (!(await page.evaluate(() => window.__mappingCanvasPngText.includes('First export line') && window.__mappingCanvasPngText.includes('Second export line')))) throw new Error('PNG export collapsed explicit note line breaks');
+  if (!(await page.evaluate(() => window.__mappingCanvasPngText.includes('1. ') && window.__mappingCanvasPngText.includes('2. ') && window.__mappingCanvasPngText.some((text) => text.startsWith('Supercalif'))))) throw new Error('PNG export did not preserve wrapped numbered formatted content');
   const jsonExport = JSON.parse(await readFile(`${outputRoot}canvas.json`, 'utf8'));
   const exportArrowIds = new Set(exportArrow.objectIds);
   const exportedArrowObjects = jsonExport.objects.filter(({ id }) => exportArrowIds.has(id));
@@ -585,6 +612,7 @@ try {
   if (!exportedDrawingColors.length || !exportedDrawingColors.every((color) => color === '#007a4d') || !svgExport.includes('stroke="#007a4d"')) throw new Error('JSON or SVG export lost the resolved Growth color');
   if (!(await page.evaluate(() => window.__mappingCanvasPngStrokes.includes('#007a4d') && window.__mappingCanvasPngStrokes.includes('#0057b8') && window.__mappingCanvasPngStrokes.includes('#fcaa2d')))) throw new Error('PNG export lost drawing, semantic arrow, or structural colors');
   await page.evaluate((changeId) => window.__drawWebMcpTools.draw_revert_change.execute({ changeId }), exportArrow.changeId);
+  await page.evaluate((id) => window.__drawWebMcpTools.draw_delete.execute({ ids: [id], confirmation: 'DELETE OBJECTS' }), exportFormatted.id);
   await page.waitForTimeout(300);
 
   const countBeforeReload = await page.locator('[role="button"][aria-label]').count();

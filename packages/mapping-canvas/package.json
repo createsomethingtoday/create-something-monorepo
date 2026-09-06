@@ -20,13 +20,16 @@
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
     "test": "vitest run",
     "verify:browser": "node scripts/verify-browser.mjs",
+    "verify:sharing": "node scripts/verify-sharing.mjs",
     "verify:download": "node scripts/verify-download.mjs",
     "verify:native-ui": "node scripts/verify-native-ui.mjs",
     "deploy": "pnpm build && CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=create-something-mapping-canvas --branch=main --commit-dirty=true"
   },
-  "dependencies": { "@create-something/canon": "workspace:*" },
+  "dependencies": {
+    "@create-something/canon": "workspace:*"
+  },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260621.1",
+    "@cloudflare/workers-types": "^5.20260903.1",
     "@playwright/test": "^1.58.2",
     "@sveltejs/adapter-cloudflare": "^7.2.4",
     "@sveltejs/adapter-static": "^3.0.10",
@@ -38,6 +41,6 @@
     "typescript": "^5.9.3",
     "vite": "^7.3.6",
     "vitest": "^4.0.16",
-    "wrangler": "^4.103.0"
+    "wrangler": "^4.129.0"
   }
 }

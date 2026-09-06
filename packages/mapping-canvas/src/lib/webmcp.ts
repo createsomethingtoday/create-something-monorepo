@@ -1,8 +1,9 @@
 import { createObjectCenterResolver, expandCompoundIds, objectBounds, type CanvasDocument, type CanvasObject, type Point, type Tool } from './document';
 import type { CanvasOperation } from './paired-session';
 import { DRAWING_PALETTE } from './palette';
+import { normalizeNoteContent, noteContentText } from './note-content';
 
-export const DRAW_WEBMCP_VERSION = '2026-09-05.1';
+export const DRAW_WEBMCP_VERSION = '2026-09-06.1';
 export const REPLACE_CONFIRMATION = 'REPLACE CANVAS';
 export const RESET_CONFIRMATION = 'RESET CANVAS';
 export const DELETE_CONFIRMATION = 'DELETE OBJECTS';
@@ -41,6 +42,10 @@ export type DrawController = {
   animate: (kind: DrawTransitionKind, affectedIds: string[], preserveViewport?: boolean) => string | void;
   focus?: (target: { scope: 'all' | 'selection' | 'ids' | 'bounds'; ids?: string[]; bounds?: { x: number; y: number; width: number; height: number }; padding: number }) => Promise<{ ids?: string[]; bounds?: { x: number; y: number; width: number; height: number } } | void> | { ids?: string[]; bounds?: { x: number; y: number; width: number; height: number } } | void;
   renderedGeometry?: (input: { ids?: string[]; limit: number }) => Promise<DrawRenderedGeometry> | DrawRenderedGeometry;
+  shareStatus?: () => { shareId: string; url: string; revision: number; expiresAt?: string | null } | null;
+  publishSnapshot?: (input: { expiresAt?: string }) => Promise<{ shareId: string; url: string; revision: number; expiresAt?: string | null }>;
+  updateSnapshot?: (input: { expectedShareRevision: number }) => Promise<{ shareId: string; url: string; revision: number }>;
+  revokeSnapshot?: () => Promise<void>;
 };
 
 export type DrawWebMcpTool = {
@@ -48,7 +53,7 @@ export type DrawWebMcpTool = {
   title: string;
   description: string;
   inputSchema: Record<string, unknown>;
-  annotations: { readOnlyHint: boolean; destructiveHint?: boolean; idempotentHint?: boolean; openWorldHint: false };
+  annotations: { readOnlyHint: boolean; destructiveHint?: boolean; idempotentHint?: boolean; openWorldHint: boolean };
   execute: (input: Record<string, unknown>) => Promise<unknown>;
 };
 
@@ -1115,6 +1120,52 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
       }
     },
     {
+      name: 'draw_edit_note', title: 'Edit Draw note content',
+      description: 'Update one note independently from its geometry using plain text or a safe bounded structured-content AST. Structured content preserves an exact canonical plain-text projection.',
+      inputSchema: { type: 'object', required: ['id'], additionalProperties: false, properties: { expectedRevision: { type: 'string' }, id: { type: 'string', minLength: 1, maxLength: 240 }, text: { type: 'string', maxLength: 32000 }, content: { type: 'object' } } },
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+      execute: async (input) => {
+        assertRevision(controller, input.expectedRevision);
+        const before = controller.getState().document, id = requiredId(input.id, 'id');
+        const note = before.objects.find((object) => object.id === id);
+        if (!note || note.kind !== 'note') throw new Error(`Unknown Draw note: ${id}.`);
+        if (input.text === undefined && input.content === undefined) throw new Error('Provide text or structured content.');
+        let text: string, content;
+        if (input.content !== undefined) {
+          content = normalizeNoteContent(input.content);
+          if (!content) throw new Error('Structured note content is invalid or exceeds its bounds.');
+          text = noteContentText(content);
+          if (input.text !== undefined && input.text !== text) throw new Error('Structured note content does not match its canonical plain-text projection.');
+        } else {
+          if (typeof input.text !== 'string' || new TextEncoder().encode(input.text).length > 32_000) throw new Error('Note text must be at most 32,000 UTF-8 bytes.');
+          text = input.text;
+        }
+        const changed = { ...note, text, ...(content ? { content } : { content: undefined }) };
+        const { before: previous, after } = await controller.applyOperations([{ type: 'put_object', object: changed }], drawRevision(before));
+        return { ...finish('update', [id], previous, after), id, textLength: text.length, formatted: Boolean(content) };
+      }
+    },
+    {
+      name: 'draw_get_share_status', title: 'Inspect Draw sharing status', description: 'Read whether this local canvas has a managed view-only snapshot link on this device.',
+      inputSchema: emptySchema, annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
+      execute: async () => ({ shared: Boolean(controller.shareStatus?.()), share: controller.shareStatus?.() ?? null })
+    },
+    {
+      name: 'draw_publish_snapshot', title: 'Publish a view-only Draw snapshot', description: 'Explicitly publish the current local document to a new unlisted view-only link. This is an external network write; ordinary local edits never call it.',
+      inputSchema: { type: 'object', additionalProperties: false, properties: { expectedRevision: { type: 'string' }, expiresAt: { type: 'string' } } }, annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+      execute: async (input) => { assertRevision(controller, input.expectedRevision); if (!controller.publishSnapshot) throw new Error('Snapshot publishing is unavailable in this Draw environment.'); return { ok: true, ...await controller.publishSnapshot({ ...(typeof input.expiresAt === 'string' ? { expiresAt: input.expiresAt } : {}) }) }; }
+    },
+    {
+      name: 'draw_update_snapshot', title: 'Update a view-only Draw snapshot', description: 'Explicitly replace the snapshot behind this canvas shared link using the locally stored management capability and an expected share revision.',
+      inputSchema: { type: 'object', required: ['expectedShareRevision'], additionalProperties: false, properties: { expectedRevision: { type: 'string' }, expectedShareRevision: { type: 'integer', minimum: 1 } } }, annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true },
+      execute: async (input) => { assertRevision(controller, input.expectedRevision); if (!controller.updateSnapshot || !Number.isSafeInteger(input.expectedShareRevision)) throw new Error('A managed snapshot and valid expected share revision are required.'); return { ok: true, ...await controller.updateSnapshot({ expectedShareRevision: Number(input.expectedShareRevision) }) }; }
+    },
+    {
+      name: 'draw_revoke_snapshot', title: 'Revoke a view-only Draw snapshot', description: 'Revoke this canvas managed snapshot link using the locally stored capability. The public snapshot becomes unavailable.',
+      inputSchema: { type: 'object', required: ['confirmation'], additionalProperties: false, properties: { confirmation: { type: 'string', const: 'REVOKE SNAPSHOT' } } }, annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true },
+      execute: async (input) => { if (input.confirmation !== 'REVOKE SNAPSHOT' || !controller.revokeSnapshot) throw new Error('Revocation requires confirmation exactly "REVOKE SNAPSHOT" and a managed snapshot.'); await controller.revokeSnapshot(); return { ok: true, revoked: true }; }
+    },
+    {
       name: 'draw_patch_objects', title: 'Patch Draw objects',
       description: 'Partially update text, labels, position, size, named color, or layer arrangement without reconstructing stored objects. Group translation moves descendants as a unit.',
       inputSchema: { type: 'object', required: ['patches'], additionalProperties: false, properties: { expectedRevision: { type: 'string' }, patches: { type: 'array', minItems: 1, maxItems: 100, items: { type: 'object', required: ['id'], additionalProperties: false, properties: { id: { type: 'string' }, text: { type: 'string', maxLength: 4000 }, label: { type: 'string', maxLength: 240 }, color: { type: 'string', enum: DRAWING_PALETTE.map(({ id }) => id) }, translate: { type: 'object', required: ['dx', 'dy'], additionalProperties: false, properties: { dx: { type: 'number' }, dy: { type: 'number' } } }, size: { type: 'object', additionalProperties: false, properties: { width: { type: 'number', minimum: 1 }, height: { type: 'number', minimum: 1 } } }, arrange: { type: 'string', enum: ['front', 'back', 'forward', 'backward'] } } } } } },
@@ -1133,7 +1184,7 @@ export function createDrawWebMcpTools(controller: DrawController): DrawWebMcpToo
           let object = objects[index];
           if (patch.text !== undefined) {
             if (object.kind !== 'note' || typeof patch.text !== 'string') throw new Error(`text can only patch a note.`);
-            object = { ...object, text: patch.text };
+            object = { ...object, text: patch.text, content: undefined };
           }
           if (patch.label !== undefined) {
             if ((object.kind !== 'connector' && object.kind !== 'group') || typeof patch.label !== 'string') throw new Error(`label can only patch a connector or group.`);

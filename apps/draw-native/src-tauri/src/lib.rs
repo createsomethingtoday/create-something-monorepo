@@ -10,9 +10,9 @@ use std::{
 mod transport;
 
 use create_something_draw_pairing_protocol::{
-    apply_canvas_operation, apply_envelope, digest_capability, prune_applied_receipts,
-    valid_document, AppliedOperation, CanvasOperation, OperationEnvelope, OperationResult,
-    PairedClient, PairingHostState, DOCUMENT_VERSION, PROTOCOL_VERSION,
+    apply_canvas_operation, apply_envelope, digest_capability, normalize_document_compat,
+    prune_applied_receipts, valid_document, AppliedOperation, CanvasOperation, OperationEnvelope,
+    OperationResult, PairedClient, PairingHostState, DOCUMENT_VERSION, PROTOCOL_VERSION,
 };
 use rand::{distr::Alphanumeric, Rng};
 use serde::Serialize;
@@ -207,7 +207,7 @@ fn companion_session_from_grant(
     let revision = grant["revision"]
         .as_u64()
         .ok_or("Pairing grant omitted revision")?;
-    let document = grant["document"].clone();
+    let document = normalize_document_compat(grant["document"].clone());
     if !valid_document(&document) {
         return Err("Pairing grant contains an invalid canvas document".into());
     }
@@ -305,12 +305,13 @@ fn initial_state() -> PairingHostState {
 fn load_state(path: &Path) -> Result<PairingHostState, String> {
     match fs::read(path) {
         Ok(bytes) => {
-            let state: PairingHostState = serde_json::from_slice(&bytes).map_err(|error| {
+            let mut state: PairingHostState = serde_json::from_slice(&bytes).map_err(|error| {
                 format!(
                     "Canonical Draw state is unreadable at {}: {error}",
                     path.display()
                 )
             })?;
+            state.document = normalize_document_compat(state.document);
             if !valid_document(&state.document) {
                 return Err(format!(
                     "Canonical Draw document is invalid at {}",
@@ -389,6 +390,10 @@ fn load_companion_state(path: &Path) -> Option<StoredCompanionSession> {
     fs::read(path)
         .ok()
         .and_then(|bytes| serde_json::from_slice(&bytes).ok())
+        .map(|mut stored: StoredCompanionSession| {
+            stored.document = normalize_document_compat(stored.document);
+            stored
+        })
         .filter(|stored: &StoredCompanionSession| valid_document(&stored.document))
 }
 
@@ -734,7 +739,7 @@ fn install_companion_snapshot(
         return Ok(false);
     }
     session.revision = snapshot_revision;
-    session.document = snapshot["document"].clone();
+    session.document = normalize_document_compat(snapshot["document"].clone());
     Ok(true)
 }
 
@@ -816,6 +821,7 @@ fn replace_host_document(
     if cfg!(mobile) {
         return Err("Only the Mac authority can replace the canonical document".into());
     }
+    let document = normalize_document_compat(document);
     if !valid_document(&document) {
         return Err("Replacement document is invalid".into());
     }
@@ -953,7 +959,7 @@ async fn flush_companion(runtime: &DrawRuntime) -> Result<Value, String> {
                 session.revision = result["revision"]
                     .as_u64()
                     .ok_or("Host response omitted revision")?;
-                session.document = result["document"].clone();
+                session.document = normalize_document_compat(result["document"].clone());
                 if session
                     .queue
                     .front()
@@ -1031,7 +1037,7 @@ async fn flush_companion(runtime: &DrawRuntime) -> Result<Value, String> {
         session.revision = snapshot["revision"]
             .as_u64()
             .ok_or("Snapshot omitted revision")?;
-        session.document = snapshot["document"].clone();
+        session.document = normalize_document_compat(snapshot["document"].clone());
         if invalid_operation {
             let safely_reconciled = session
                 .queue

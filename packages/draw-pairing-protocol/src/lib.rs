@@ -170,6 +170,136 @@ fn non_empty(value: &str) -> bool {
     !value.trim().is_empty()
 }
 
+fn unsafe_link_character(character: char) -> bool {
+    matches!(
+        character as u32,
+        0x0000..=0x0020
+            | 0x007f..=0x00a0
+            | 0x1680
+            | 0x2000..=0x200a
+            | 0x2028
+            | 0x2029
+            | 0x202f
+            | 0x205f
+            | 0x3000
+            | 0xfeff
+    )
+}
+
+fn note_content_text(content: &Value) -> Option<String> {
+    let fields = content.as_object()?;
+    if fields.keys().any(|key| key != "blocks") {
+        return None;
+    }
+    let blocks = content.get("blocks")?.as_array()?;
+    if blocks.is_empty() || blocks.len() > 100 {
+        return None;
+    }
+    let mut numbered = 0;
+    let mut run_count = 0;
+    let mut text_bytes = 0;
+    blocks
+        .iter()
+        .map(|block| {
+            let fields = block.as_object()?;
+            if fields.keys().any(|key| key != "type" && key != "runs") {
+                return None;
+            }
+            let kind = block.get("type")?.as_str()?;
+            let runs = block.get("runs")?.as_array()?;
+            if runs.is_empty() || runs.len() > 100 {
+                return None;
+            }
+            let text = runs
+                .iter()
+                .map(|run| {
+                    let fields = run.as_object()?;
+                    if fields.keys().any(|key| {
+                        !matches!(
+                            key.as_str(),
+                            "text" | "bold" | "italic" | "underline" | "code" | "link"
+                        )
+                    }) {
+                        return None;
+                    }
+                    let text = run.get("text")?.as_str()?;
+                    if text.is_empty()
+                        || text
+                            .chars()
+                            .any(|character| matches!(character as u32, 0..=8 | 11 | 12 | 14..=31))
+                    {
+                        return None;
+                    }
+                    for mark in ["bold", "italic", "underline", "code"] {
+                        if run
+                            .get(mark)
+                            .is_some_and(|value| value.as_bool() != Some(true))
+                        {
+                            return None;
+                        }
+                    }
+                    if let Some(link) = run.get("link") {
+                        let link = link.as_str()?;
+                        let safe_scheme = if let Some(rest) = link.strip_prefix("https://") {
+                            !rest.split(['/', '?', '#']).next().unwrap_or("").is_empty()
+                        } else {
+                            link.strip_prefix("mailto:")
+                                .is_some_and(|rest| !rest.is_empty())
+                        };
+                        if link.len() > 2048
+                            || !safe_scheme
+                            || link.chars().any(unsafe_link_character)
+                        {
+                            return None;
+                        }
+                    }
+                    run_count += 1;
+                    text_bytes += text.len();
+                    (run_count <= 500 && text_bytes <= 32_000).then_some(text)
+                })
+                .collect::<Option<Vec<_>>>()?
+                .join("");
+            match kind {
+                "bullet" => Some(format!("• {text}")),
+                "numbered" => {
+                    numbered += 1;
+                    Some(format!("{numbered}. {text}"))
+                }
+                "quote" => Some(format!("“{text}”")),
+                "paragraph" | "heading1" | "heading2" | "heading3" => Some(text),
+                _ => None,
+            }
+        })
+        .collect::<Option<Vec<_>>>()
+        .map(|lines| lines.join("\n"))
+}
+
+fn normalize_object_compat(object: &mut Value) {
+    if let Some(sources) = object
+        .get_mut("sourceSnapshot")
+        .and_then(Value::as_array_mut)
+    {
+        sources.iter_mut().for_each(normalize_object_compat);
+    }
+    if object.get("kind").and_then(Value::as_str) != Some("note") || object.get("content").is_none()
+    {
+        return;
+    }
+    let text = object.get("text").and_then(Value::as_str);
+    if object.get("content").and_then(note_content_text).as_deref() != text {
+        if let Some(fields) = object.as_object_mut() {
+            fields.remove("content");
+        }
+    }
+}
+
+pub fn normalize_document_compat(mut document: Value) -> Value {
+    if let Some(objects) = document.get_mut("objects").and_then(Value::as_array_mut) {
+        objects.iter_mut().for_each(normalize_object_compat);
+    }
+    document
+}
+
 pub fn valid_document(document: &Value) -> bool {
     let Some(objects) = document.get("objects").and_then(Value::as_array) else {
         return false;
@@ -325,7 +455,12 @@ fn valid_object(object: &Value) -> bool {
                     .is_some_and(non_empty)
         }
         "note" => {
-            object.get("text").and_then(Value::as_str).is_some()
+            let Some(text) = object.get("text").and_then(Value::as_str) else {
+                return false;
+            };
+            object
+                .get("content")
+                .is_none_or(|content| note_content_text(content).as_deref() == Some(text))
                 && ["x", "y", "width", "height"].iter().all(|field| {
                     object
                         .get(*field)
@@ -609,20 +744,22 @@ pub fn apply_canvas_operation(
     operation: &CanvasOperation,
     now: &str,
 ) -> Option<Value> {
-    if !valid_document(document) {
+    let mut next = normalize_document_compat(document.clone());
+    if !valid_document(&next) {
         return None;
     }
-    let mut next = document.clone();
     match operation {
         CanvasOperation::PutObject { object } => {
             let objects = next.get_mut("objects")?.as_array_mut()?;
+            let mut object = object.clone();
+            normalize_object_compat(&mut object);
             if let Some(index) = objects
                 .iter()
                 .position(|candidate| candidate.get("id") == object.get("id"))
             {
-                objects[index] = object.clone();
+                objects[index] = object;
             } else {
-                objects.push(object.clone());
+                objects.push(object);
             }
         }
         CanvasOperation::RemoveObjects { ids } => {
@@ -634,7 +771,9 @@ pub fn apply_canvas_operation(
             }
         }
         CanvasOperation::ReplaceObjects { objects } => {
-            next["objects"] = Value::Array(objects.clone());
+            let mut objects = objects.clone();
+            objects.iter_mut().for_each(normalize_object_compat);
+            next["objects"] = Value::Array(objects);
         }
         CanvasOperation::SetTitle { title } => {
             if next.get("title").and_then(Value::as_str) == Some(title) {
@@ -892,9 +1031,58 @@ mod tests {
             }) },
             NOW,
         ).expect("put-object update");
-        let ids: Vec<_> = updated["objects"].as_array().unwrap().iter().map(|object| object["id"].as_str().unwrap()).collect();
+        let ids: Vec<_> = updated["objects"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|object| object["id"].as_str().unwrap())
+            .collect();
         assert_eq!(ids, vec!["first", "second"]);
         assert_eq!(updated["objects"][0]["text"], "After");
+    }
+
+    #[test]
+    fn stale_rich_content_from_older_companions_cannot_hide_text_edits() {
+        let mut document = state().document;
+        document["objects"] = serde_json::json!([{
+            "id": "note-rich", "kind": "note", "text": "Before", "x": 0, "y": 0,
+            "width": 200, "height": 100, "createdAt": NOW,
+            "content": { "blocks": [{ "type": "heading1", "runs": [{ "text": "Before", "bold": true }] }] }
+        }]);
+        let updated = apply_canvas_operation(
+            &document,
+            &CanvasOperation::PutObject { object: serde_json::json!({
+                "id": "note-rich", "kind": "note", "text": "Edited on old companion", "x": 0, "y": 0,
+                "width": 200, "height": 100, "createdAt": NOW,
+                "content": { "blocks": [{ "type": "heading1", "runs": [{ "text": "Before", "bold": true }] }] }
+            }) },
+            NOW,
+        ).expect("compatible put-object update");
+        assert_eq!(updated["objects"][0]["text"], "Edited on old companion");
+        assert!(updated["objects"][0].get("content").is_none());
+    }
+
+    #[test]
+    fn native_compat_normalization_retains_valid_content_and_drops_unsafe_content() {
+        let mut document = state().document;
+        document["objects"] = serde_json::json!([
+            {
+                "id": "safe", "kind": "note", "text": "Heading\n• Link", "x": 0, "y": 0,
+                "width": 200, "height": 100, "createdAt": NOW,
+                "content": { "blocks": [
+                    { "type": "heading1", "runs": [{ "text": "Heading", "bold": true }] },
+                    { "type": "bullet", "runs": [{ "text": "Link", "link": "https://example.com" }] }
+                ] }
+            },
+            {
+                "id": "unsafe", "kind": "note", "text": "Unsafe", "x": 220, "y": 0,
+                "width": 200, "height": 100, "createdAt": NOW,
+                "content": { "blocks": [{ "type": "paragraph", "runs": [{ "text": "Unsafe", "link": "javascript:alert(1)" }] }] }
+            }
+        ]);
+        let normalized = normalize_document_compat(document);
+        assert!(normalized["objects"][0].get("content").is_some());
+        assert!(normalized["objects"][1].get("content").is_none());
     }
 
     #[test]

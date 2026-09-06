@@ -151,6 +151,7 @@ try {
   if (await revoke.evaluate((button) => getComputedStyle(button).whiteSpace !== 'nowrap')) throw new Error('Mac pairing Revoke action can wrap inside the paired-device row');
   await host.page.screenshot({ path: `${outputRoot}mac-pairing.png`, fullPage: true });
   await host.page.getByRole('button', { name: 'Close pairing' }).click();
+  if (await host.page.getByRole('button', { name: 'Publish view-only', exact: true }).count()) throw new Error('Mac native host exposed browser-only snapshot publishing');
   const hostSurface = host.page.locator('svg');
   const hostBox = await hostSurface.boundingBox();
   if (!hostBox) throw new Error('Mac canvas surface unavailable');

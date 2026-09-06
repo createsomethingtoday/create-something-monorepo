@@ -1,7 +1,7 @@
 import {
   DOCUMENT_VERSION,
   convertWithIdentity,
-  isCanvasObject,
+  normalizeCanvasObject,
   isDocument,
   removeObjects,
   restoreConversion,
@@ -123,9 +123,9 @@ export function isOperationEnvelope(value: unknown): value is OperationEnvelope 
 export function isCanvasOperation(value: unknown): value is CanvasOperation {
   if (!value || typeof value !== 'object') return false;
   const operation = value as CanvasOperation;
-  if (operation.type === 'put_object') return isCanvasObject(operation.object);
+  if (operation.type === 'put_object') return normalizeCanvasObject(operation.object) !== null;
   if (operation.type === 'remove_objects') return Array.isArray(operation.ids) && operation.ids.length > 0 && operation.ids.every((id) => typeof id === 'string' && id.length > 0);
-  if (operation.type === 'replace_objects') return Array.isArray(operation.objects) && operation.objects.every(isCanvasObject);
+  if (operation.type === 'replace_objects') return Array.isArray(operation.objects) && operation.objects.every((object) => normalizeCanvasObject(object) !== null);
   if (operation.type === 'set_title') return isValidCanvasTitle(operation.title);
   if (operation.type === 'set_viewport') return isViewport(operation.viewport);
   if (operation.type === 'convert') return Array.isArray(operation.selectedIds) && operation.selectedIds.length > 0 && operation.selectedIds.every((id) => typeof id === 'string' && id.length > 0) && ['note', 'connector', 'group'].includes(operation.target) && typeof operation.resultId === 'string' && operation.resultId.length > 0 && typeof operation.createdAt === 'string' && operation.createdAt.length > 0;
@@ -134,15 +134,17 @@ export function isCanvasOperation(value: unknown): value is CanvasOperation {
 
 export function applyCanvasOperation(document: CanvasDocument, operation: CanvasOperation): CanvasDocument | undefined {
   if (operation.type === 'put_object') {
-    const index = document.objects.findIndex(({ id }) => id === operation.object.id);
+    const normalized = normalizeCanvasObject(operation.object);
+    if (!normalized) return undefined;
+    const index = document.objects.findIndex(({ id }) => id === normalized.id);
     const objects = index < 0
-      ? [...document.objects, operation.object]
-      : document.objects.map((object, objectIndex) => objectIndex === index ? operation.object : object);
+      ? [...document.objects, normalized]
+      : document.objects.map((object, objectIndex) => objectIndex === index ? normalized : object);
     const next = withObjects(document, objects);
     return isDocument(next) ? next : undefined;
   }
   if (operation.type === 'remove_objects') return removeObjects(document, operation.ids);
-  if (operation.type === 'replace_objects') return withObjects(document, operation.objects);
+  if (operation.type === 'replace_objects') { const objects = operation.objects.map(normalizeCanvasObject); return objects.some((object) => object === null) ? undefined : withObjects(document, objects as CanvasObject[]); }
   if (operation.type === 'set_title') return { ...document, title: operation.title, updatedAt: new Date().toISOString() };
   if (operation.type === 'set_viewport') return { ...document, viewport: operation.viewport, updatedAt: new Date().toISOString() };
   if (operation.type === 'convert') {

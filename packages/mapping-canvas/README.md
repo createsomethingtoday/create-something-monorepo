@@ -24,7 +24,7 @@ pnpm --filter @create-something/mapping-canvas verify:download
 
 ## WebMCP site tools
 
-Draw registers nineteen tools through `document.modelContext.registerTool`, with a compatibility fallback for older `navigator.modelContext` or `provideContext` implementations:
+Draw registers twenty-four tools through `document.modelContext.registerTool`, with a compatibility fallback for older `navigator.modelContext` or `provideContext` implementations:
 
 - `draw_get_state` reads the full local document and shared focus state.
 - `draw_inspect` returns a compact, filterable projection with revision, palette, surface, and visible-world geometry.
@@ -41,7 +41,9 @@ Draw registers nineteen tools through `document.modelContext.registerTool`, with
 - `draw_apply_operations` atomically applies the same typed operations used by desktop/iPhone mirroring.
 - `draw_select` and `draw_set_tool` share visual focus with the operator.
 - `draw_undo`, `draw_redo`, and `draw_reset` expose history controls.
+- `draw_edit_note` updates plain or bounded structured note content independently from geometry.
+- `draw_get_share_status`, `draw_publish_snapshot`, `draw_update_snapshot`, and `draw_revoke_snapshot` expose an explicit view-only publishing lifecycle.
 
 `draw_apply_operations` supports `put_object`, `remove_objects`, `replace_objects`, `set_title`, `set_viewport`, `convert`, and `restore_conversion` for backwards compatibility. Whole-canvas replacement requires `confirmation: "REPLACE CANVAS"`; dedicated deletion requires `confirmation: "DELETE OBJECTS"`; reset requires `confirmation: "RESET CANVAS"`. Agent mutations are serialized through the document/history path and produce compact revision-bearing receipts plus a visible, reduced-motion-safe transition.
 
-Canvas data remains in the current browser or native app unless the operator explicitly exports it. WebMCP tools do not send documents to a CREATE SOMETHING server. Site-tool mutation is intentionally limited to the browser-local canvas; paired Mac/iPhone shells fail closed and continue using their native synchronization controls.
+Canvas data remains in the current browser or native app unless the operator explicitly exports it or invokes `draw_publish_snapshot`. Publishing is an open-world network write that sends the current document to CREATE SOMETHING's Draw service and returns an unlisted view-only URL; its update/revoke capability is stored only in that browser profile. Links expire after 90 days by default, custom expiry is capped at one year, and bounded opportunistic cleanup covers expired snapshots, legacy non-expiring rows, and stale rate-limit buckets. Ordinary WebMCP drawing and layout tools remain browser-local. Paired Mac/iPhone shells fail closed and continue using their native synchronization controls.
