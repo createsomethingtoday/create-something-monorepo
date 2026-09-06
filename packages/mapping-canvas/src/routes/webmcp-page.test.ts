@@ -41,7 +41,10 @@ describe('Draw WebMCP page integration', () => {
     expect(page).toContain('restoreManagedShare(documentId);');
     expect(page).toContain("if (sharing || replacingDocument) throw new Error('Wait for the active snapshot or document replacement to finish.')");
     expect(page).toContain('if (replacingDocument || agentMutationActive) throw new Error');
-    expect(page).toContain('replacingDocument = true;');
-    expect(page).toContain('finally { replacingDocument = false;');
+    expect(page).toContain('async function coordinateDocumentReplacement');
+    expect(page).toContain("if (persisted && persisted.id !== documentId) throw new Error('Another tab replaced this canvas. Reload Draw before publishing.')");
+    expect(page).toContain('try { await coordinateDocumentReplacement(async () =>');
+    expect(page).toContain('await coordinateDocumentReplacement(async () => {');
+    expect(page).toContain('finally { replacingDocument = false; }');
   });
 });

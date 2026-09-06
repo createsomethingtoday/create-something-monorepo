@@ -531,14 +531,16 @@
   async function resetCanvasFromAgent() {
     if (!ready) throw new Error('Draw is still loading. Try the tool again.');
     if (nativeShell || nativeRole !== 'web') throw new Error('WebMCP reset is limited to the browser-local canvas. Use Draw device controls for paired Mac and iPhone sessions.');
-    const previousDocumentId = history.present.id;
-    clearTimeout(saveTimer); saveTimer = undefined;
-    if (nativeRole === 'web') await clearDocument();
-    const next = createDocument();
-    await commitHostReplacement(() => next, (value) => value, (value) => history = { past: [], present: value, future: [] }, 'reset');
-    if (share) rememberShare(share, next.id, previousDocumentId);
-    selectedIds = [];
-    queueSave(next);
+    await coordinateDocumentReplacement(async () => {
+      const previousDocumentId = history.present.id;
+      clearTimeout(saveTimer); saveTimer = undefined;
+      if (nativeRole === 'web') await clearDocument();
+      const next = createDocument();
+      await commitHostReplacement(() => next, (value) => value, (value) => history = { past: [], present: value, future: [] }, 'reset');
+      if (share) rememberShare(share, next.id, previousDocumentId);
+      selectedIds = [];
+      queueSave(next);
+    });
   }
 
   async function initializeSession() {
@@ -942,11 +944,25 @@
     const snapshot = structuredClone(document), documentId = snapshot.id;
     const run = async () => {
       if (document.id !== documentId) throw new Error('The canvas changed while waiting to publish. Review it and try again.');
+      const persisted = await loadDocument();
+      if (persisted && persisted.id !== documentId) throw new Error('Another tab replaced this canvas. Reload Draw before publishing.');
       restoreManagedShare(documentId);
       if (currentManagedShare()) throw new Error('This canvas already has a managed snapshot. Update or revoke it first.');
       return action(snapshot);
     };
     return navigator.locks ? navigator.locks.request(`draw-share-publish:${documentId}`, run) : run();
+  }
+  async function coordinateDocumentReplacement<T>(action: () => Promise<T>): Promise<T> {
+    const documentId = document.id;
+    replacingDocument = true;
+    try {
+      const run = async () => {
+        const persisted = await loadDocument();
+        if (persisted && persisted.id !== documentId) throw new Error('Another tab replaced this canvas. Reload Draw before replacing it again.');
+        return action();
+      };
+      return navigator.locks ? navigator.locks.request(`draw-share-publish:${documentId}`, run) : run();
+    } finally { replacingDocument = false; }
   }
   async function refreshShareRevision(response: Response, managed: NonNullable<typeof share>) { if (response.status !== 409) return false; const result = await response.json().catch(() => null); if (Number.isSafeInteger(result?.revision) && result.revision > managed.revision) rememberShare({ ...managed, revision: result.revision }); return true; }
   async function publishSnapshotForAgent(input: { expiresAt?: string } = {}) {
@@ -1026,20 +1042,17 @@
   async function importJson(event: Event) {
     const file = (event.currentTarget as HTMLInputElement).files?.[0];
     if (!file || nativeRole === 'companion' || sharing || replacingDocument) return;
-    replacingDocument = true;
-    try { const previousDocumentId = history.present.id, managed = currentManagedShare(); const next = parse(await file.text()); const committed = await commitHostReplacement(() => next, (value) => value, (value) => history = commit(history, value), 'import'); if (managed) rememberShare(managed, committed.id, previousDocumentId); else restoreManagedShare(committed.id); selectedIds = []; queueSave(committed); status = 'Canvas imported'; }
+    try { await coordinateDocumentReplacement(async () => { const previousDocumentId = history.present.id, managed = currentManagedShare(); const next = parse(await file.text()); const committed = await commitHostReplacement(() => next, (value) => value, (value) => history = commit(history, value), 'import'); if (managed) rememberShare(managed, committed.id, previousDocumentId); else restoreManagedShare(committed.id); selectedIds = []; queueSave(committed); status = 'Canvas imported'; }); }
     catch (error) { status = error instanceof Error ? error.message : 'Import failed'; }
-    finally { replacingDocument = false; if (fileInput) fileInput.value = ''; }
+    finally { if (fileInput) fileInput.value = ''; }
   }
   async function resetCanvas() {
     if (sharing || replacingDocument) return;
     if (nativeRole === 'companion') { if (!companionResetArmed) { companionResetArmed = true; clearTimeout(companionResetTimer); companionResetTimer = setTimeout(() => companionResetArmed = false, 5000); status = 'Tap Confirm reset to clear the Mac canvas'; return; } companionResetArmed = false; clearTimeout(companionResetTimer); const current = document; const next = { ...document, title: 'Untitled mapping session', objects: [], viewport: { x: 0, y: 0, zoom: 1 }, updatedAt: new Date().toISOString() }; history = commit(history, next); selectedIds = []; const operations: CanvasOperation[] = [{ type: 'replace_objects', objects: [] }]; if (current.title !== next.title) operations.push({ type: 'set_title', title: next.title }); if (JSON.stringify(current.viewport) !== JSON.stringify(next.viewport)) operations.push({ type: 'set_viewport', viewport: next.viewport }); sendNative(operations, true); status = 'Clear requested from iPhone'; return; }
     if (!confirm(nativeRole === 'host' ? 'Reset the Mac-authoritative canvas? Export first if you need a copy.' : share ? 'Reset this local canvas? Its published link will remain manageable here until you revoke it.' : 'Reset this local canvas? Export first if you need a copy.')) return;
-    replacingDocument = true;
     const previousDocumentId = history.present.id; clearTimeout(saveTimer); saveTimer = undefined; status = 'Resetting canvas…';
-    try { if (nativeRole === 'web') await clearDocument(); const next = createDocument(); await commitHostReplacement(() => next, (value) => value, (value) => history = { past: [], present: value, future: [] }, 'reset'); if (share) rememberShare(share, next.id, previousDocumentId); selectedIds = []; queueSave(next); status = nativeRole === 'host' ? 'New Mac session document' : 'New local session'; }
+    try { await coordinateDocumentReplacement(async () => { if (nativeRole === 'web') await clearDocument(); const next = createDocument(); await commitHostReplacement(() => next, (value) => value, (value) => history = { past: [], present: value, future: [] }, 'reset'); if (share) rememberShare(share, next.id, previousDocumentId); selectedIds = []; queueSave(next); status = nativeRole === 'host' ? 'New Mac session document' : 'New local session'; }); }
     catch (error) { status = error instanceof Error ? error.message : 'Reset conflicted with an iPhone change'; }
-    finally { replacingDocument = false; }
   }
   function updateTitle(input: HTMLInputElement) { if (!companionCanEdit()) return; const title = input.value || 'Untitled mapping session'; if (!isValidCanvasTitle(title)) { input.value = document.title; status = 'Title must be 240 UTF-8 bytes or fewer'; return; } const next = { ...document, title, updatedAt: new Date().toISOString() }; history = { ...history, present: next }; queueSave(next); sendNative([{ type: 'set_title', title }]); }
 </script>
