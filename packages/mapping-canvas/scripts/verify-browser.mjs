@@ -575,6 +575,12 @@ try {
   });
   const numberedStarts = await page.locator(`[data-object-id="${exportFormatted.id}"] ol`).evaluateAll((lists) => lists.map((list) => list.getAttribute('start')));
   if (JSON.stringify(numberedStarts) !== JSON.stringify(['1', '2'])) throw new Error(`Formatted numbered list sequence restarted: ${JSON.stringify(numberedStarts)}`);
+  await page.evaluate((id) => window.__drawWebMcpTools.draw_select.execute({ ids: [id] }), exportFormatted.id);
+  await page.waitForFunction((id) => window.__drawWebMcpTools.draw_inspect.execute({ limit: 1 }).then((result) => result.selectedIds?.includes(id)), exportFormatted.id);
+  await page.getByRole('button', { name: 'Bold', exact: true }).click();
+  await page.getByRole('button', { name: 'Italic', exact: true }).click();
+  const retainedFormatting = await page.evaluate(async (id) => (await window.__drawWebMcpTools.draw_get_state.execute({})).document.objects.find((object) => object.id === id)?.content, exportFormatted.id);
+  if (retainedFormatting?.blocks.length !== 2 || !retainedFormatting.blocks.every((block) => block.type === 'numbered' && block.runs.every((run) => run.bold && run.italic)) || retainedFormatting.blocks[1].runs[0].link !== 'https://example.com/export') throw new Error('Human formatting flattened or replaced existing structured note content');
 
   const exports = {};
   for (const extension of ['json', 'svg', 'png']) {
@@ -602,7 +608,7 @@ try {
   if (!exportedDrawingColors.length || !exportedDrawingColors.every((color) => color === '#007a4d') || !svgExport.includes('stroke="#007a4d"')) throw new Error('JSON or SVG export lost the resolved Growth color');
   if (!(await page.evaluate(() => window.__mappingCanvasPngStrokes.includes('#007a4d') && window.__mappingCanvasPngStrokes.includes('#0057b8') && window.__mappingCanvasPngStrokes.includes('#fcaa2d')))) throw new Error('PNG export lost drawing, semantic arrow, or structural colors');
   await page.evaluate((changeId) => window.__drawWebMcpTools.draw_revert_change.execute({ changeId }), exportArrow.changeId);
-  await page.evaluate(async ({ editChangeId, composeChangeId }) => { await window.__drawWebMcpTools.draw_revert_change.execute({ changeId: editChangeId }); await window.__drawWebMcpTools.draw_revert_change.execute({ changeId: composeChangeId }); }, exportFormatted);
+  await page.evaluate((id) => window.__drawWebMcpTools.draw_delete.execute({ ids: [id], confirmation: 'DELETE OBJECTS' }), exportFormatted.id);
   await page.waitForTimeout(300);
 
   const countBeforeReload = await page.locator('[role="button"][aria-label]').count();

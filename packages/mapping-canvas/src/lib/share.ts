@@ -56,7 +56,10 @@ export async function updateShare(db: ShareDb, shareId: string, token: string, e
   if (authorizedRevision !== expectedRevision) return { conflict: true as const, revision: authorizedRevision };
   const document = validateSnapshot(documentValue), now = new Date().toISOString(), next = expectedRevision + 1;
   const result = await db.prepare('UPDATE draw_shares SET document_json = ?, title = ?, revision = ?, updated_at = ? WHERE share_id = ? AND revision = ? AND revoked_at IS NULL').bind(JSON.stringify(document), document.title, next, now, shareId, expectedRevision).run();
-  if (!result.success || result.meta.changes !== 1) return { conflict: true as const, revision: authorizedRevision };
+  if (!result.success || result.meta.changes !== 1) {
+    const current = await authorize(db, shareId, token);
+    return current === null ? null : { conflict: true as const, revision: current };
+  }
   return { shareId, revision: next, updatedAt: now };
 }
 
