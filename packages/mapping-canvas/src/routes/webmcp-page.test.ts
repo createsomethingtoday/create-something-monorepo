@@ -45,6 +45,8 @@ describe('Draw WebMCP page integration', () => {
     expect(page).toContain("if (persisted && persisted.id !== documentId) throw new Error('Another tab replaced this canvas. Reload Draw before publishing.')");
     expect(page).toContain('try { await coordinateDocumentReplacement(async () =>');
     expect(page).toContain('await coordinateDocumentReplacement(async () => {');
+    expect(page).toContain("if (nativeRole === 'web') await saveDocument(committed); else queueSave(committed);");
+    expect(page).toContain("if (nativeRole === 'web') await saveDocument(next); else queueSave(next);");
     expect(page).toContain('finally { replacingDocument = false; }');
   });
 });
