@@ -935,18 +935,20 @@
     if (response?.ok || response?.status === 404) { share = null; clearTimeout(shareExpiryTimer); shareExpiryTimer = undefined; throw new Error('Snapshot was revoked because management access could not be saved on this device.'); }
     throw new Error('Snapshot is public, but management access could not be saved. Keep this tab open and revoke the link before leaving.');
   }
-  async function coordinatePublish<T>(action: () => Promise<T>): Promise<T> {
+  async function coordinatePublish<T>(action: (snapshot: CanvasDocument) => Promise<T>): Promise<T> {
+    const snapshot = structuredClone(document), documentId = snapshot.id;
     const run = async () => {
-      restoreManagedShare(document.id);
+      if (document.id !== documentId) throw new Error('The canvas changed while waiting to publish. Review it and try again.');
+      restoreManagedShare(documentId);
       if (currentManagedShare()) throw new Error('This canvas already has a managed snapshot. Update or revoke it first.');
-      return action();
+      return action(snapshot);
     };
-    return navigator.locks ? navigator.locks.request(`draw-share-publish:${document.id}`, run) : run();
+    return navigator.locks ? navigator.locks.request(`draw-share-publish:${documentId}`, run) : run();
   }
   async function refreshShareRevision(response: Response, managed: NonNullable<typeof share>) { if (response.status !== 409) return false; const result = await response.json().catch(() => null); if (Number.isSafeInteger(result?.revision) && result.revision > managed.revision) rememberShare({ ...managed, revision: result.revision }); return true; }
   async function publishSnapshotForAgent(input: { expiresAt?: string } = {}) {
     if (nativeRole !== 'web' || sharing || currentManagedShare()) throw new Error('Snapshot publishing is not ready. Update or revoke the existing managed snapshot first.'); sharing = true;
-    try { return await coordinatePublish(async () => { const response = await fetch('/api/shares', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ document, ...input }) }); if (!response.ok) throw new Error('Snapshot could not be published'); const result = await response.json(), candidate = { shareId: result.shareId, url: result.url, token: result.managementToken, revision: result.revision, expiresAt: result.expiresAt ?? null }; await retainPublishedShare(candidate); status = `View-only snapshot published · expires ${String(result.expiresAt).slice(0, 10)}`; return { shareId: result.shareId, url: new URL(result.url, location.origin).href, revision: result.revision, expiresAt: result.expiresAt ?? null }; }); }
+    try { return await coordinatePublish(async (snapshot) => { const response = await fetch('/api/shares', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ document: snapshot, ...input }) }); if (!response.ok) throw new Error('Snapshot could not be published'); const result = await response.json(), candidate = { shareId: result.shareId, url: result.url, token: result.managementToken, revision: result.revision, expiresAt: result.expiresAt ?? null }; await retainPublishedShare(candidate); status = `View-only snapshot published · expires ${String(result.expiresAt).slice(0, 10)}`; return { shareId: result.shareId, url: new URL(result.url, location.origin).href, revision: result.revision, expiresAt: result.expiresAt ?? null }; }); }
     finally { sharing = false; }
   }
   async function updateSnapshotForAgent(input: { expectedShareRevision: number }) {
@@ -961,7 +963,7 @@
   }
   async function publishSnapshot() {
     if (nativeRole !== 'web' || sharing || currentManagedShare()) return; sharing = true;
-    try { await coordinatePublish(async () => { const response = await fetch('/api/shares', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ document }) }); if (!response.ok) throw new Error('Snapshot could not be published'); const result = await response.json(), candidate = { shareId: result.shareId, url: result.url, token: result.managementToken, revision: result.revision, expiresAt: result.expiresAt ?? null }; await retainPublishedShare(candidate); status = `View-only snapshot published · expires ${String(result.expiresAt).slice(0, 10)}`; await navigator.clipboard?.writeText(new URL(result.url, location.origin).href); }); }
+    try { await coordinatePublish(async (snapshot) => { const response = await fetch('/api/shares', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ document: snapshot }) }); if (!response.ok) throw new Error('Snapshot could not be published'); const result = await response.json(), candidate = { shareId: result.shareId, url: result.url, token: result.managementToken, revision: result.revision, expiresAt: result.expiresAt ?? null }; await retainPublishedShare(candidate); status = `View-only snapshot published · expires ${String(result.expiresAt).slice(0, 10)}`; await navigator.clipboard?.writeText(new URL(result.url, location.origin).href); }); }
     catch (error) { status = error instanceof Error ? error.message : 'Snapshot could not be published'; } finally { sharing = false; }
   }
   async function updateSnapshot() {
