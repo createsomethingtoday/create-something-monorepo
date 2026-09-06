@@ -24,8 +24,11 @@ const result = await page.evaluate(async () => {
 if (writes.length) throw new Error(`Ordinary local edits caused ambient share writes: ${writes.join(', ')}`);
 if (!result.formatted.formatted || result.state.document.objects.find(({ id }) => id === result.noteId)?.text !== 'Share proof\n• Safe circulation') throw new Error('Formatted note projection failed before sharing.');
 
-const published = await page.evaluate(async () => window.__drawWebMcpTools.draw_publish_snapshot.execute({}));
-if (!published.shareId || published.url.includes('?') || published.url.includes('#') || JSON.stringify(published).includes('managementToken')) throw new Error('Public share receipt is unsafe.');
+const expiry = new Date(Date.now() + 60_000).toISOString();
+const published = await page.evaluate(async (expiresAt) => window.__drawWebMcpTools.draw_publish_snapshot.execute({ expiresAt }), expiry);
+if (!published.shareId || published.url.includes('?') || published.url.includes('#') || published.expiresAt !== expiry || JSON.stringify(published).includes('managementToken')) throw new Error('Public share receipt is unsafe.');
+let duplicatePublishDenied = false; try { await page.evaluate(() => window.__drawWebMcpTools.draw_publish_snapshot.execute({})); } catch { duplicatePublishDenied = true; }
+if (!duplicatePublishDenied) throw new Error('Publishing again orphaned the first management capability.');
 const publicPayload = await (await context.request.get(`${baseUrl}/api/shares/${published.shareId}`)).json();
 if (JSON.stringify(publicPayload).toLowerCase().includes('management') || publicPayload.revision !== 1) throw new Error('Public payload exposed management data.');
 
@@ -37,7 +40,7 @@ const competing = await page.evaluate(async ({ shareId }) => {
 if (competing.status !== 200 || competing.revision !== 2) throw new Error('Competing snapshot update fixture failed.');
 let conflictDenied = false; try { await page.evaluate(() => window.__drawWebMcpTools.draw_update_snapshot.execute({ expectedShareRevision: 1 })); } catch { conflictDenied = true; }
 const refreshed = await page.evaluate(() => window.__drawWebMcpTools.draw_get_share_status.execute({}));
-if (!conflictDenied || refreshed.share?.revision !== 2) throw new Error('Stale local management revision was not refreshed after conflict.');
+if (!conflictDenied || refreshed.share?.revision !== 2 || refreshed.share?.expiresAt !== expiry) throw new Error('Stale local management revision or expiry was not retained after conflict.');
 
 const anonymous = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: 'block' });
 const view = await anonymous.newPage();
@@ -69,4 +72,4 @@ if (revokedApi.status() !== 404 || revokedView.status() !== 404) throw new Error
 const localAfter = await page.evaluate(() => window.__drawWebMcpTools.draw_get_state.execute({}));
 if (!localAfter.document.objects.some(({ id }) => id === result.noteId)) throw new Error('Sharing mutated the local source canvas.');
 await anonymous.close(); await context.close(); await browser.close();
-console.log(JSON.stringify({ baseUrl, runLabel, toolCount: 24, ambientWritesBeforePublish: 0, create: 201, anonymousRead: 200, conflictDenied, refreshedRevision: 2, stableRevision: 3, staleDenied, invalidCapability: 404, managementRetainedAcrossReset: true, revoke: 204, postRevokeApi: 404, postRevokeView: 404, localSourceRetained: true, screenshot: `${output}/anonymous-share.png`, result: 'pass' }, null, 2));
+console.log(JSON.stringify({ baseUrl, runLabel, toolCount: 24, ambientWritesBeforePublish: 0, create: 201, anonymousRead: 200, duplicatePublishDenied, expiryTracked: true, conflictDenied, refreshedRevision: 2, stableRevision: 3, staleDenied, invalidCapability: 404, managementRetainedAcrossReset: true, revoke: 204, postRevokeApi: 404, postRevokeView: 404, localSourceRetained: true, screenshot: `${output}/anonymous-share.png`, result: 'pass' }, null, 2));

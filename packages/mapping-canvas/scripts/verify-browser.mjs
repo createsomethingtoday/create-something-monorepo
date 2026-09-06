@@ -581,6 +581,10 @@ try {
   await page.getByRole('button', { name: 'Italic', exact: true }).click();
   const retainedFormatting = await page.evaluate(async (id) => (await window.__drawWebMcpTools.draw_get_state.execute({})).document.objects.find((object) => object.id === id)?.content, exportFormatted.id);
   if (retainedFormatting?.blocks.length !== 2 || !retainedFormatting.blocks.every((block) => block.type === 'numbered' && block.runs.every((run) => run.bold && run.italic)) || retainedFormatting.blocks[1].runs[0].link !== 'https://example.com/export') throw new Error('Human formatting flattened or replaced existing structured note content');
+  page.once('dialog', (dialog) => dialog.accept('https://'));
+  await page.getByRole('button', { name: 'Link', exact: true }).click();
+  const afterInvalidLink = await page.evaluate(async (id) => (await window.__drawWebMcpTools.draw_get_state.execute({})).document.objects.find((object) => object.id === id)?.content, exportFormatted.id);
+  if (JSON.stringify(afterInvalidLink) !== JSON.stringify(retainedFormatting)) throw new Error('Malformed human link corrupted structured note content');
 
   const exports = {};
   for (const extension of ['json', 'svg', 'png']) {

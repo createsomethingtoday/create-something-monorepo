@@ -1,6 +1,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { readShare, revokeShare, updateShare } from '$lib/share';
+import { readJsonBodyBounded, RequestBodyTooLargeError } from '$lib/request-body';
 
 const headers = { 'Cache-Control': 'private, no-store, max-age=0', 'Referrer-Policy': 'no-referrer', 'X-Robots-Tag': 'noindex, nofollow' };
 const database = (platform: App.Platform | undefined) => platform?.env.DRAW_DB ?? error(503, 'Sharing is temporarily unavailable.');
@@ -15,8 +16,7 @@ export const GET: RequestHandler = async ({ params, platform }) => {
 
 export const PUT: RequestHandler = async ({ params, platform, request, url }) => {
   sameOrigin(request, url.origin);
-  if (Number(request.headers.get('content-length') ?? 0) > 520_000) error(413, 'Snapshot exceeds Draw sharing limits.');
-  let body: unknown; try { const source = await request.text(); if (new TextEncoder().encode(source).length > 520_000) error(413, 'Snapshot exceeds Draw sharing limits.'); body = JSON.parse(source); } catch (cause) { if ((cause as { status?: number }).status === 413) throw cause; error(400, 'Invalid sharing request.'); }
+  let body: unknown; try { body = await readJsonBodyBounded(request, 520_000); } catch (cause) { if (cause instanceof RequestBodyTooLargeError) error(413, 'Snapshot exceeds Draw sharing limits.'); error(400, 'Invalid sharing request.'); }
   const expectedRevision = (body as { expectedRevision?: unknown }).expectedRevision;
   if (!Number.isSafeInteger(expectedRevision) || Number(expectedRevision) < 1) error(400, 'A valid expected revision is required.');
   let result; try { result = await updateShare(database(platform), params.shareId, token(request), Number(expectedRevision), (body as { document?: unknown }).document); } catch { error(400, 'Snapshot could not be updated.'); }

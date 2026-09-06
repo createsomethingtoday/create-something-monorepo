@@ -12,7 +12,7 @@
   import { createNoteInputBuffer } from '$lib/note-input';
   import { paddedSegmentBounds } from '$lib/spatial';
   import RichNote from '$lib/RichNote.svelte';
-  import { layoutNoteContent, noteContentText, plainNoteContent, type NoteBlockType, type NoteContent, type NoteRun } from '$lib/note-content';
+  import { layoutNoteContent, normalizeNoteContent, noteContentText, plainNoteContent, type NoteBlockType, type NoteContent, type NoteRun } from '$lib/note-content';
 
   const tools: { id: Tool; label: string; key: string }[] = [
     { id: 'select', label: 'Select', key: 'V' }, { id: 'pen', label: 'Pen', key: 'P' },
@@ -70,8 +70,10 @@
   let resizingGroupId = $state<string | null>(null), resizeOrigin = $state<CanvasDocument | null>(null), resizeMoved = $state(false);
   let lasso = $state<{ from: Point; to: Point } | null>(null), conversionOpen = $state(false), status = $state('Loading local canvas…'), ready = $state(false);
   let companionResetArmed = $state(false);
-  let share = $state<{ shareId: string; url: string; token: string; revision: number } | null>(null), sharing = $state(false);
+  type ManagedShare = { shareId: string; url: string; token: string; revision: number; expiresAt: string | null };
+  let share = $state<ManagedShare | null>(null), sharing = $state(false);
   let companionResetTimer: ReturnType<typeof setTimeout> | undefined;
+  let shareExpiryTimer: ReturnType<typeof setTimeout> | undefined;
   let surface: SVGSVGElement, canvasContent: SVGGElement, fileInput = $state<HTMLInputElement | null>(null), viewportWidth = $state(1200), viewportHeight = $state(800);
   let saveTimer: ReturnType<typeof setTimeout> | undefined;
   let mirrorTimer: ReturnType<typeof setInterval> | undefined;
@@ -104,7 +106,7 @@
     nativeShell = hasNativeBridge();
     try { const savedColor = localStorage.getItem(DRAWING_COLOR_PREFERENCE); if (isDrawingColor(savedColor)) drawingColor = savedColor; } catch { /* Preference persistence is optional. */ }
     try { sidebarCollapsed = localStorage.getItem(TOOL_SIDEBAR_PREFERENCE) === 'true'; } catch { /* Preference persistence is optional. */ }
-    try { const saved = localStorage.getItem(`draw-share:${history.present.id}`); if (saved) share = JSON.parse(saved); } catch { /* Sharing remains explicit and optional. */ }
+    restoreManagedShare(history.present.id);
     void initializeSession();
     const webMcp = registerDrawWebMcpTools(createDrawWebMcpTools({
       getState: agentState,
@@ -121,7 +123,7 @@
       animate: showAgentTransition,
       focus: (target) => queueAgentMutation(() => focusAgentCamera(target)),
       renderedGeometry: readRenderedGeometry,
-      shareStatus: () => share ? { shareId: share.shareId, url: new URL(share.url, location.origin).href, revision: share.revision } : null,
+      shareStatus: () => { const managed = currentManagedShare(); return managed ? { shareId: managed.shareId, url: new URL(managed.url, location.origin).href, revision: managed.revision, expiresAt: managed.expiresAt } : null; },
       publishSnapshot: publishSnapshotForAgent,
       updateSnapshot: updateSnapshotForAgent,
       revokeSnapshot: revokeSnapshotForAgent
@@ -132,7 +134,7 @@
     resize(); surfaceObserver.observe(surface); window.addEventListener('resize', resize); window.addEventListener('keydown', keydown);
     mirrorTimer = setInterval(() => void refreshMirroredState(), 750);
     if (import.meta.env.PROD) navigator.serviceWorker?.register('/service-worker.js').catch(() => undefined);
-    return () => { noteInput.flushAll(); surfaceObserver.disconnect(); clearInterval(mirrorTimer); clearTimeout(agentTransitionTimer); clearTimeout(agentCameraTimer); clearTimeout(wheelTimer); window.removeEventListener('resize', resize); window.removeEventListener('keydown', keydown); };
+    return () => { noteInput.flushAll(); surfaceObserver.disconnect(); clearInterval(mirrorTimer); clearTimeout(agentTransitionTimer); clearTimeout(agentCameraTimer); clearTimeout(wheelTimer); clearTimeout(shareExpiryTimer); window.removeEventListener('resize', resize); window.removeEventListener('keydown', keydown); };
   });
 
   function queueAgentMutation<T>(action: () => Promise<T> | T): Promise<T> {
@@ -538,7 +540,7 @@
 
   async function initializeSession() {
     if (!nativeShell) {
-      await loadDocument().then((saved) => { if (saved) { history = { past: [], present: saved, future: [] }; try { const managed = localStorage.getItem(`draw-share:${saved.id}`); share = managed ? JSON.parse(managed) : null; } catch { share = null; } status = 'Restored from this device'; } else status = 'New local session'; }).catch(() => status = 'Local storage unavailable · export copies');
+      await loadDocument().then((saved) => { if (saved) { history = { past: [], present: saved, future: [] }; restoreManagedShare(saved.id); status = 'Restored from this device'; } else status = 'New local session'; }).catch(() => status = 'Local storage unavailable · export copies');
       ready = true;
       return;
     }
@@ -652,7 +654,9 @@
     const content: NoteContent = note.content ? JSON.parse(JSON.stringify(note.content)) : plainNoteContent(note.text);
     if (blockType) content.blocks = content.blocks.map((block) => ({ ...block, type: blockType }));
     if (mark) content.blocks = content.blocks.map((block) => ({ ...block, runs: block.runs.map((run) => ({ ...run, ...(mark === 'link' ? { link: link! } : { [mark]: true }) })) }));
-    const changed = { ...note, text: noteContentText(content), content };
+    const normalized = normalizeNoteContent(content);
+    if (!normalized) { status = 'Note formatting is invalid or exceeds its limits'; return; }
+    const changed = { ...note, text: noteContentText(normalized), content: normalized };
     apply(withObjects(document, document.objects.map((entry) => entry.id === note.id ? changed : entry)), { type: 'put_object', object: changed });
     status = 'Formatted note saved locally';
   }
@@ -900,37 +904,54 @@
 
   function download(content: BlobPart, type: string, extension: string) { const blob = content instanceof Blob ? content : new Blob([content], { type }); const url = URL.createObjectURL(blob); const anchor = window.document.createElement('a'); anchor.href = url; anchor.download = `${document.title.replace(/[^a-z0-9]+/gi, '-').toLowerCase() || 'mapping-canvas'}.${extension}`; anchor.click(); setTimeout(() => URL.revokeObjectURL(url)); }
   function exportJson() { download(serialize(document), 'application/json', 'json'); status = 'JSON exported'; }
-  function rememberShare(next: typeof share, documentId = history.present.id, previousDocumentId?: string) { share = next; try { if (previousDocumentId && previousDocumentId !== documentId) localStorage.removeItem(`draw-share:${previousDocumentId}`); const key = `draw-share:${documentId}`; if (next) localStorage.setItem(key, JSON.stringify(next)); else localStorage.removeItem(key); } catch { status = 'Link active, but management access could not be saved on this device'; } }
+  function shareExpired(candidate: ManagedShare) { return candidate.expiresAt !== null && Date.parse(candidate.expiresAt) <= Date.now(); }
+  function parseManagedShare(value: string | null): ManagedShare | null {
+    if (!value) return null;
+    try {
+      const candidate = JSON.parse(value) as Partial<ManagedShare>, expiresAt = candidate.expiresAt ?? null;
+      if (typeof candidate.shareId !== 'string' || !/^[A-Za-z0-9_-]{22}$/.test(candidate.shareId) || typeof candidate.url !== 'string' || typeof candidate.token !== 'string' || !/^[A-Za-z0-9_-]{43}$/.test(candidate.token) || !Number.isSafeInteger(candidate.revision) || Number(candidate.revision) < 1 || (expiresAt !== null && (typeof expiresAt !== 'string' || !Number.isFinite(Date.parse(expiresAt))))) return null;
+      return { shareId: candidate.shareId, url: candidate.url, token: candidate.token, revision: Number(candidate.revision), expiresAt };
+    } catch { return null; }
+  }
+  function scheduleShareExpiry() {
+    clearTimeout(shareExpiryTimer); shareExpiryTimer = undefined;
+    if (!share?.expiresAt) return;
+    const delay = Math.max(0, Date.parse(share.expiresAt) - Date.now());
+    shareExpiryTimer = setTimeout(() => { if (share && shareExpired(share)) { rememberShare(null); status = 'Published link expired · ready to publish again'; } else scheduleShareExpiry(); }, Math.min(delay + 25, 2_147_483_647));
+  }
+  function rememberShare(next: ManagedShare | null, documentId = history.present.id, previousDocumentId?: string) { share = next; try { if (previousDocumentId && previousDocumentId !== documentId) localStorage.removeItem(`draw-share:${previousDocumentId}`); const key = `draw-share:${documentId}`; if (next) localStorage.setItem(key, JSON.stringify(next)); else localStorage.removeItem(key); } catch { status = 'Link active, but management access could not be saved on this device'; } scheduleShareExpiry(); }
+  function restoreManagedShare(documentId: string) { try { const key = `draw-share:${documentId}`, restored = parseManagedShare(localStorage.getItem(key)); if (!restored || shareExpired(restored)) { localStorage.removeItem(key); share = null; clearTimeout(shareExpiryTimer); shareExpiryTimer = undefined; } else rememberShare(restored, documentId); } catch { share = null; } }
+  function currentManagedShare() { if (share && shareExpired(share)) { rememberShare(null); status = 'Published link expired · ready to publish again'; } return share; }
   async function refreshShareRevision(response: Response, managed: NonNullable<typeof share>) { if (response.status !== 409) return false; const result = await response.json().catch(() => null); if (Number.isSafeInteger(result?.revision) && result.revision > managed.revision) rememberShare({ ...managed, revision: result.revision }); return true; }
   async function publishSnapshotForAgent(input: { expiresAt?: string } = {}) {
-    if (nativeRole !== 'web' || sharing) throw new Error('Snapshot publishing is not ready.'); sharing = true;
-    try { const response = await fetch('/api/shares', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ document, ...input }) }); if (!response.ok) throw new Error('Snapshot could not be published'); const result = await response.json(); rememberShare({ shareId: result.shareId, url: result.url, token: result.managementToken, revision: result.revision }); status = 'View-only snapshot published'; return { shareId: result.shareId, url: new URL(result.url, location.origin).href, revision: result.revision }; }
+    if (nativeRole !== 'web' || sharing || currentManagedShare()) throw new Error('Snapshot publishing is not ready. Update or revoke the existing managed snapshot first.'); sharing = true;
+    try { const response = await fetch('/api/shares', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ document, ...input }) }); if (!response.ok) throw new Error('Snapshot could not be published'); const result = await response.json(); rememberShare({ shareId: result.shareId, url: result.url, token: result.managementToken, revision: result.revision, expiresAt: result.expiresAt ?? null }); status = 'View-only snapshot published'; return { shareId: result.shareId, url: new URL(result.url, location.origin).href, revision: result.revision, expiresAt: result.expiresAt ?? null }; }
     finally { sharing = false; }
   }
   async function updateSnapshotForAgent(input: { expectedShareRevision: number }) {
-    if (!share || sharing || input.expectedShareRevision !== share.revision) throw new Error('Snapshot revision is stale or management access is unavailable.'); sharing = true;
-    try { const managed = share; const response = await fetch(`/api/shares/${managed.shareId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${managed.token}` }, body: JSON.stringify({ document, expectedRevision: input.expectedShareRevision }) }); if (!response.ok) { const refreshed = await refreshShareRevision(response, managed); throw new Error(refreshed ? 'Snapshot revision was stale and has been refreshed. Review the shared state, then update again.' : 'Snapshot could not be updated'); } const result = await response.json(); rememberShare({ ...managed, revision: result.revision }); status = `Shared snapshot updated · revision ${result.revision}`; return { shareId: managed.shareId, url: new URL(managed.url, location.origin).href, revision: result.revision }; }
+    const managed = currentManagedShare(); if (!managed || sharing || input.expectedShareRevision !== managed.revision) throw new Error('Snapshot revision is stale or management access is unavailable.'); sharing = true;
+    try { const response = await fetch(`/api/shares/${managed.shareId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${managed.token}` }, body: JSON.stringify({ document, expectedRevision: input.expectedShareRevision }) }); if (!response.ok) { if (response.status === 404) rememberShare(null); const refreshed = await refreshShareRevision(response, managed); throw new Error(refreshed ? 'Snapshot revision was stale and has been refreshed. Review the shared state, then update again.' : 'Snapshot could not be updated'); } const result = await response.json(); rememberShare({ ...managed, revision: result.revision }); status = `Shared snapshot updated · revision ${result.revision}`; return { shareId: managed.shareId, url: new URL(managed.url, location.origin).href, revision: result.revision }; }
     finally { sharing = false; }
   }
   async function revokeSnapshotForAgent() {
-    if (!share || sharing) throw new Error('Management access is unavailable.'); sharing = true;
-    try { const response = await fetch(`/api/shares/${share.shareId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${share.token}` } }); if (!response.ok) throw new Error('Snapshot could not be revoked'); rememberShare(null); status = 'View-only link revoked'; }
+    const managed = currentManagedShare(); if (!managed || sharing) throw new Error('Management access is unavailable.'); sharing = true;
+    try { const response = await fetch(`/api/shares/${managed.shareId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${managed.token}` } }); if (!response.ok) { if (response.status === 404) rememberShare(null); throw new Error('Snapshot could not be revoked'); } rememberShare(null); status = 'View-only link revoked'; }
     finally { sharing = false; }
   }
   async function publishSnapshot() {
-    if (nativeRole !== 'web' || sharing) return; sharing = true;
-    try { const response = await fetch('/api/shares', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ document }) }); if (!response.ok) throw new Error('Snapshot could not be published'); const result = await response.json(); rememberShare({ shareId: result.shareId, url: result.url, token: result.managementToken, revision: result.revision }); status = 'View-only snapshot published'; await navigator.clipboard?.writeText(new URL(result.url, location.origin).href); }
+    if (nativeRole !== 'web' || sharing || currentManagedShare()) return; sharing = true;
+    try { const response = await fetch('/api/shares', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ document }) }); if (!response.ok) throw new Error('Snapshot could not be published'); const result = await response.json(); rememberShare({ shareId: result.shareId, url: result.url, token: result.managementToken, revision: result.revision, expiresAt: result.expiresAt ?? null }); status = 'View-only snapshot published'; await navigator.clipboard?.writeText(new URL(result.url, location.origin).href); }
     catch (error) { status = error instanceof Error ? error.message : 'Snapshot could not be published'; } finally { sharing = false; }
   }
   async function updateSnapshot() {
-    if (!share || sharing) return; sharing = true;
-    try { const managed = share; const response = await fetch(`/api/shares/${managed.shareId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${managed.token}` }, body: JSON.stringify({ document, expectedRevision: managed.revision }) }); if (!response.ok) { const refreshed = await refreshShareRevision(response, managed); throw new Error(refreshed ? 'Shared revision refreshed · review, then update again' : 'Snapshot could not be updated'); } const result = await response.json(); rememberShare({ ...managed, revision: result.revision }); status = `Shared snapshot updated · revision ${result.revision}`; }
+    const managed = currentManagedShare(); if (!managed || sharing) return; sharing = true;
+    try { const response = await fetch(`/api/shares/${managed.shareId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${managed.token}` }, body: JSON.stringify({ document, expectedRevision: managed.revision }) }); if (!response.ok) { if (response.status === 404) rememberShare(null); const refreshed = await refreshShareRevision(response, managed); throw new Error(refreshed ? 'Shared revision refreshed · review, then update again' : 'Snapshot could not be updated'); } const result = await response.json(); rememberShare({ ...managed, revision: result.revision }); status = `Shared snapshot updated · revision ${result.revision}`; }
     catch (error) { status = error instanceof Error ? error.message : 'Snapshot could not be updated'; } finally { sharing = false; }
   }
-  async function copyShareLink() { if (!share) return; await navigator.clipboard?.writeText(new URL(share.url, location.origin).href); status = 'View-only link copied'; }
+  async function copyShareLink() { const managed = currentManagedShare(); if (!managed) return; await navigator.clipboard?.writeText(new URL(managed.url, location.origin).href); status = 'View-only link copied'; }
   async function revokeSnapshot() {
-    if (!share || sharing || !confirm('Revoke this view-only link? Recipients will no longer be able to open it.')) return; sharing = true;
-    try { const response = await fetch(`/api/shares/${share.shareId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${share.token}` } }); if (!response.ok) throw new Error('Snapshot could not be revoked'); rememberShare(null); status = 'View-only link revoked'; }
+    const managed = currentManagedShare(); if (!managed || sharing || !confirm('Revoke this view-only link? Recipients will no longer be able to open it.')) return; sharing = true;
+    try { const response = await fetch(`/api/shares/${managed.shareId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${managed.token}` } }); if (!response.ok) { if (response.status === 404) rememberShare(null); throw new Error('Snapshot could not be revoked'); } rememberShare(null); status = 'View-only link revoked'; }
     catch (error) { status = error instanceof Error ? error.message : 'Snapshot could not be revoked'; } finally { sharing = false; }
   }
   function svgMarkup() {

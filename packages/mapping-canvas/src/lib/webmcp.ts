@@ -42,8 +42,8 @@ export type DrawController = {
   animate: (kind: DrawTransitionKind, affectedIds: string[], preserveViewport?: boolean) => string | void;
   focus?: (target: { scope: 'all' | 'selection' | 'ids' | 'bounds'; ids?: string[]; bounds?: { x: number; y: number; width: number; height: number }; padding: number }) => Promise<{ ids?: string[]; bounds?: { x: number; y: number; width: number; height: number } } | void> | { ids?: string[]; bounds?: { x: number; y: number; width: number; height: number } } | void;
   renderedGeometry?: (input: { ids?: string[]; limit: number }) => Promise<DrawRenderedGeometry> | DrawRenderedGeometry;
-  shareStatus?: () => { shareId: string; url: string; revision: number } | null;
-  publishSnapshot?: (input: { expiresAt?: string }) => Promise<{ shareId: string; url: string; revision: number }>;
+  shareStatus?: () => { shareId: string; url: string; revision: number; expiresAt?: string | null } | null;
+  publishSnapshot?: (input: { expiresAt?: string }) => Promise<{ shareId: string; url: string; revision: number; expiresAt?: string | null }>;
   updateSnapshot?: (input: { expectedShareRevision: number }) => Promise<{ shareId: string; url: string; revision: number }>;
   revokeSnapshot?: () => Promise<void>;
 };
