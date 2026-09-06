@@ -29,6 +29,16 @@ if (!published.shareId || published.url.includes('?') || published.url.includes(
 const publicPayload = await (await context.request.get(`${baseUrl}/api/shares/${published.shareId}`)).json();
 if (JSON.stringify(publicPayload).toLowerCase().includes('management') || publicPayload.revision !== 1) throw new Error('Public payload exposed management data.');
 
+const competing = await page.evaluate(async ({ shareId }) => {
+  const state = await window.__drawWebMcpTools.draw_get_state.execute({}), managed = JSON.parse(localStorage.getItem(`draw-share:${state.document.id}`));
+  const response = await fetch(`/api/shares/${shareId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${managed.token}` }, body: JSON.stringify({ document: state.document, expectedRevision: 1 }) });
+  return { status: response.status, revision: (await response.json()).revision };
+}, { shareId: published.shareId });
+if (competing.status !== 200 || competing.revision !== 2) throw new Error('Competing snapshot update fixture failed.');
+let conflictDenied = false; try { await page.evaluate(() => window.__drawWebMcpTools.draw_update_snapshot.execute({ expectedShareRevision: 1 })); } catch { conflictDenied = true; }
+const refreshed = await page.evaluate(() => window.__drawWebMcpTools.draw_get_share_status.execute({}));
+if (!conflictDenied || refreshed.share?.revision !== 2) throw new Error('Stale local management revision was not refreshed after conflict.');
+
 const anonymous = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: 'block' });
 const view = await anonymous.newPage();
 await view.addInitScript(() => { window.__registeredShareTools = []; Object.defineProperty(document, 'modelContext', { configurable: true, value: { registerTool(tool) { window.__registeredShareTools.push(tool.name); } } }); });
@@ -37,8 +47,8 @@ if (!(await view.getByText('View-only snapshot').isVisible()) || !(await view.ge
 if (await view.locator('textarea,input.title,.toolbar,.file-actions').count() || (await view.evaluate(() => window.__registeredShareTools.length))) throw new Error('Anonymous snapshot exposed editing controls or WebMCP tools.');
 await view.screenshot({ path: `${output}/anonymous-share.png`, fullPage: true });
 
-const updated = await page.evaluate(async ({ noteId, revision }) => { const tools = window.__drawWebMcpTools; await tools.draw_edit_note.execute({ id: noteId, content: { blocks: [{ type: 'heading2', runs: [{ text: 'Updated proof', underline: true }] }, { type: 'quote', runs: [{ text: 'Stable link' }] }] } }); return tools.draw_update_snapshot.execute({ expectedShareRevision: revision }); }, { noteId: result.noteId, revision: published.revision });
-if (updated.revision !== 2 || updated.url !== published.url) throw new Error('Stable-link update failed.');
+const updated = await page.evaluate(async ({ noteId, revision }) => { const tools = window.__drawWebMcpTools; await tools.draw_edit_note.execute({ id: noteId, content: { blocks: [{ type: 'heading2', runs: [{ text: 'Updated proof', underline: true }] }, { type: 'quote', runs: [{ text: 'Stable link' }] }] } }); return tools.draw_update_snapshot.execute({ expectedShareRevision: revision }); }, { noteId: result.noteId, revision: refreshed.share.revision });
+if (updated.revision !== 3 || updated.url !== published.url) throw new Error('Stable-link update failed.');
 let staleDenied = false; try { await page.evaluate(() => window.__drawWebMcpTools.draw_update_snapshot.execute({ expectedShareRevision: 1 })); } catch { staleDenied = true; }
 if (!staleDenied) throw new Error('Stale update was accepted.');
 await view.reload({ waitUntil: 'networkidle' });
@@ -51,4 +61,4 @@ if (revokedApi.status() !== 404 || revokedView.status() !== 404) throw new Error
 const localAfter = await page.evaluate(() => window.__drawWebMcpTools.draw_get_state.execute({}));
 if (!localAfter.document.objects.some(({ id }) => id === result.noteId)) throw new Error('Sharing mutated the local source canvas.');
 await anonymous.close(); await context.close(); await browser.close();
-console.log(JSON.stringify({ baseUrl, runLabel, toolCount: 24, ambientWritesBeforePublish: 0, create: 201, anonymousRead: 200, stableRevision: 2, staleDenied, invalidCapability: 404, revoke: 204, postRevokeApi: 404, postRevokeView: 404, localSourceRetained: true, screenshot: `${output}/anonymous-share.png`, result: 'pass' }, null, 2));
+console.log(JSON.stringify({ baseUrl, runLabel, toolCount: 24, ambientWritesBeforePublish: 0, create: 201, anonymousRead: 200, conflictDenied, refreshedRevision: 2, stableRevision: 3, staleDenied, invalidCapability: 404, revoke: 204, postRevokeApi: 404, postRevokeView: 404, localSourceRetained: true, screenshot: `${output}/anonymous-share.png`, result: 'pass' }, null, 2));

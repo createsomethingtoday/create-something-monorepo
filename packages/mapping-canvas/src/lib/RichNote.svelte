@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { NoteContent, NoteRun } from './note-content';
   let { content }: { content: NoteContent } = $props();
+  const numberedStart = (index: number) => content.blocks.slice(0, index + 1).filter((block) => block.type === 'numbered').length;
 </script>
 
 {#snippet runs(items: NoteRun[])}
@@ -11,12 +12,12 @@
 {/snippet}
 
 <div xmlns="http://www.w3.org/1999/xhtml" class="rich-note">
-  {#each content.blocks as block}
+  {#each content.blocks as block, index}
     {#if block.type === 'heading1'}<h1>{@render runs(block.runs)}</h1>
     {:else if block.type === 'heading2'}<h2>{@render runs(block.runs)}</h2>
     {:else if block.type === 'heading3'}<h3>{@render runs(block.runs)}</h3>
     {:else if block.type === 'bullet'}<ul><li>{@render runs(block.runs)}</li></ul>
-    {:else if block.type === 'numbered'}<ol><li>{@render runs(block.runs)}</li></ol>
+    {:else if block.type === 'numbered'}<ol start={numberedStart(index)}><li>{@render runs(block.runs)}</li></ol>
     {:else if block.type === 'quote'}<blockquote>{@render runs(block.runs)}</blockquote>
     {:else}<p>{@render runs(block.runs)}</p>{/if}
   {/each}

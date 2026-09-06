@@ -565,6 +565,16 @@ try {
     const start = { x: inspect.visibleWorld.x + 160, y: inspect.visibleWorld.y + 160 };
     return window.__drawWebMcpTools.draw_create_freehand_arrow.execute({ start, end: { x: start.x + 360, y: start.y + 140 }, curvature: -.3, looseness: .6, color: 'signal', weight: 7, arrowhead: 'barbed' });
   });
+  const exportFormatted = await page.evaluate(async () => {
+    const tools = window.__drawWebMcpTools, composed = await tools.draw_compose.execute({ nodes: [{ ref: 'formatted-export', text: 'Formatted export' }], placement: 'visible-center' });
+    const edited = await tools.draw_edit_note.execute({ id: composed.refs['formatted-export'], content: { blocks: [
+      { type: 'numbered', runs: [{ text: 'First formatted export item', bold: true }] },
+      { type: 'numbered', runs: [{ text: 'Second formatted item with Supercalifragilisticexpialidocious', italic: true, link: 'https://example.com/export' }] }
+    ] } });
+    return { id: composed.refs['formatted-export'], composeChangeId: composed.changeId, editChangeId: edited.changeId };
+  });
+  const numberedStarts = await page.locator(`[data-object-id="${exportFormatted.id}"] ol`).evaluateAll((lists) => lists.map((list) => list.getAttribute('start')));
+  if (JSON.stringify(numberedStarts) !== JSON.stringify(['1', '2'])) throw new Error(`Formatted numbered list sequence restarted: ${JSON.stringify(numberedStarts)}`);
 
   const exports = {};
   for (const extension of ['json', 'svg', 'png']) {
@@ -579,9 +589,11 @@ try {
   const svgExport = await readFile(`${outputRoot}canvas.svg`, 'utf8');
   if (!svgExport.includes('New thought') || svgExport.includes('foreignObject') || !svgExport.includes('class="group-label"') || !svgExport.includes('Approved path') || !svgExport.includes('fill="#fcaa2d"')) throw new Error('SVG export did not materialize portable note and label styles');
   if (!svgExport.includes('First export line') || !svgExport.includes('Second export line') || !svgExport.includes('dy="1.35em"')) throw new Error('SVG export collapsed explicit note line breaks');
+  if (!svgExport.includes('First formatted') || !svgExport.includes('Supercalif') || !svgExport.includes('clip-path="url(#note-export-clip-')) throw new Error('SVG export did not wrap and clip formatted note content');
   if (!(await page.evaluate(() => window.__mappingCanvasPngText.some((text) => text.startsWith('CONVERTED · '))))) throw new Error('PNG export omitted conversion provenance');
   if (!(await page.evaluate(() => window.__mappingCanvasPngText.includes('Approved path')))) throw new Error('PNG export omitted the visible connector label');
   if (!(await page.evaluate(() => window.__mappingCanvasPngText.includes('First export line') && window.__mappingCanvasPngText.includes('Second export line')))) throw new Error('PNG export collapsed explicit note line breaks');
+  if (!(await page.evaluate(() => window.__mappingCanvasPngText.includes('1. ') && window.__mappingCanvasPngText.includes('2. ') && window.__mappingCanvasPngText.some((text) => text.startsWith('Supercalif'))))) throw new Error('PNG export did not preserve wrapped numbered formatted content');
   const jsonExport = JSON.parse(await readFile(`${outputRoot}canvas.json`, 'utf8'));
   const exportArrowIds = new Set(exportArrow.objectIds);
   const exportedArrowObjects = jsonExport.objects.filter(({ id }) => exportArrowIds.has(id));
@@ -590,6 +602,7 @@ try {
   if (!exportedDrawingColors.length || !exportedDrawingColors.every((color) => color === '#007a4d') || !svgExport.includes('stroke="#007a4d"')) throw new Error('JSON or SVG export lost the resolved Growth color');
   if (!(await page.evaluate(() => window.__mappingCanvasPngStrokes.includes('#007a4d') && window.__mappingCanvasPngStrokes.includes('#0057b8') && window.__mappingCanvasPngStrokes.includes('#fcaa2d')))) throw new Error('PNG export lost drawing, semantic arrow, or structural colors');
   await page.evaluate((changeId) => window.__drawWebMcpTools.draw_revert_change.execute({ changeId }), exportArrow.changeId);
+  await page.evaluate(async ({ editChangeId, composeChangeId }) => { await window.__drawWebMcpTools.draw_revert_change.execute({ changeId: editChangeId }); await window.__drawWebMcpTools.draw_revert_change.execute({ changeId: composeChangeId }); }, exportFormatted);
   await page.waitForTimeout(300);
 
   const countBeforeReload = await page.locator('[role="button"][aria-label]').count();
