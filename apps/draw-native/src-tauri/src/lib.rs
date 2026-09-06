@@ -390,6 +390,10 @@ fn load_companion_state(path: &Path) -> Option<StoredCompanionSession> {
     fs::read(path)
         .ok()
         .and_then(|bytes| serde_json::from_slice(&bytes).ok())
+        .map(|mut stored: StoredCompanionSession| {
+            stored.document = normalize_document_compat(stored.document);
+            stored
+        })
         .filter(|stored: &StoredCompanionSession| valid_document(&stored.document))
 }
 

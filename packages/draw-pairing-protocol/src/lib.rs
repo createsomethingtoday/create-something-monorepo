@@ -437,7 +437,12 @@ fn valid_object(object: &Value) -> bool {
                     .is_some_and(non_empty)
         }
         "note" => {
-            object.get("text").and_then(Value::as_str).is_some()
+            let Some(text) = object.get("text").and_then(Value::as_str) else {
+                return false;
+            };
+            object
+                .get("content")
+                .is_none_or(|content| note_content_text(content).as_deref() == Some(text))
                 && ["x", "y", "width", "height"].iter().all(|field| {
                     object
                         .get(*field)
