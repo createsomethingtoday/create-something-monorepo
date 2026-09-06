@@ -26,6 +26,13 @@ const envelope = (overrides: Partial<OperationEnvelope> = {}): OperationEnvelope
 const apply = (state: PairingHostState, value: unknown) => applyEnvelope(state, value, { now: '2026-08-29T12:00:00.000Z', digestCapability: digest });
 
 describe('paired session protocol', () => {
+  it('accepts an older client text edit by dropping stale formatted content', () => {
+    const note = { id: 'legacy-note', kind: 'note' as const, createdAt: stroke.createdAt, x: 1, y: 2, width: 200, height: 100, text: 'Edited on old client', content: { blocks: [{ type: 'heading1' as const, runs: [{ text: 'Old formatting' }] }] } };
+    const applied = applyCanvasOperation(createDocument(), { type: 'put_object', object: note });
+    expect(applied).toMatchObject({ objects: [{ id: note.id, text: note.text }] });
+    expect(applied && 'content' in applied.objects[0]).toBe(false);
+  });
+
   it('commits an authorized operation at the next revision', () => {
     const result = apply(baseState(), envelope());
     expect(result.status).toBe('applied');

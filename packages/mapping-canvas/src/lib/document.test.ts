@@ -8,7 +8,11 @@ describe('mapping canvas contract', () => {
     const content = { blocks: [{ type: 'heading2' as const, runs: [{ text: 'Evidence', bold: true as const }] }, { type: 'numbered' as const, runs: [{ text: 'Verify' }] }] };
     const note = { id: 'note-rich', kind: 'note' as const, createdAt: base.createdAt, x: 0, y: 0, width: 240, height: 120, text: 'Evidence\n1. Verify', content };
     expect(isDocument({ ...base, objects: [note] })).toBe(true);
-    expect(isDocument({ ...base, objects: [{ ...note, text: 'drifted' }] })).toBe(false);
+    const legacyEdit = { ...base, objects: [{ ...note, text: 'drifted' }] };
+    expect(isDocument(legacyEdit)).toBe(false);
+    const repaired = parse(JSON.stringify(legacyEdit)).objects[0];
+    expect(repaired).toMatchObject({ id: note.id, text: 'drifted' });
+    expect('content' in repaired).toBe(false);
   });
   it('rejects ambiguous duplicate object ids', () => {
     const document = createDocument();
