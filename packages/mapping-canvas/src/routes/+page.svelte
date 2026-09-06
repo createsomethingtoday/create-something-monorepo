@@ -72,6 +72,7 @@
   let companionResetArmed = $state(false);
   type ManagedShare = { shareId: string; url: string; token: string; revision: number; expiresAt: string | null };
   let share = $state<ManagedShare | null>(null), sharing = $state(false);
+  let replacingDocument = $state(false);
   let companionResetTimer: ReturnType<typeof setTimeout> | undefined;
   let shareExpiryTimer: ReturnType<typeof setTimeout> | undefined;
   let surface: SVGSVGElement, canvasContent: SVGGElement, fileInput = $state<HTMLInputElement | null>(null), viewportWidth = $state(1200), viewportHeight = $state(800);
@@ -151,7 +152,7 @@
 
   function assertAgentControlReady() {
     if (!ready) throw new Error('Draw is still loading. Try the tool again.');
-    if (sharing) throw new Error('Wait for the active snapshot request to finish.');
+    if (sharing || replacingDocument) throw new Error('Wait for the active snapshot or document replacement to finish.');
     if (drawing || pinch || pendingTouchAction || resizingGroupId || resizeOrigin || movingObjectId || dragOrigin || noteInput.hasPending()) throw new Error('Finish the active human gesture before applying an agent control.');
   }
 
@@ -937,6 +938,7 @@
     throw new Error('Snapshot is public, but management access could not be saved. Keep this tab open and revoke the link before leaving.');
   }
   async function coordinatePublish<T>(action: (snapshot: CanvasDocument) => Promise<T>): Promise<T> {
+    if (replacingDocument || agentMutationActive) throw new Error('Wait for the active document replacement or agent mutation to finish.');
     const snapshot = structuredClone(document), documentId = snapshot.id;
     const run = async () => {
       if (document.id !== documentId) throw new Error('The canvas changed while waiting to publish. Review it and try again.');
@@ -948,7 +950,7 @@
   }
   async function refreshShareRevision(response: Response, managed: NonNullable<typeof share>) { if (response.status !== 409) return false; const result = await response.json().catch(() => null); if (Number.isSafeInteger(result?.revision) && result.revision > managed.revision) rememberShare({ ...managed, revision: result.revision }); return true; }
   async function publishSnapshotForAgent(input: { expiresAt?: string } = {}) {
-    if (nativeRole !== 'web' || sharing || currentManagedShare()) throw new Error('Snapshot publishing is not ready. Update or revoke the existing managed snapshot first.'); sharing = true;
+    if (nativeRole !== 'web' || sharing || replacingDocument || currentManagedShare()) throw new Error('Snapshot publishing is not ready. Update or revoke the existing managed snapshot first.'); sharing = true;
     try { return await coordinatePublish(async (snapshot) => { const response = await fetch('/api/shares', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ document: snapshot, ...input }) }); if (!response.ok) throw new Error('Snapshot could not be published'); const result = await response.json(), candidate = { shareId: result.shareId, url: result.url, token: result.managementToken, revision: result.revision, expiresAt: result.expiresAt ?? null }; await retainPublishedShare(candidate); status = `View-only snapshot published · expires ${String(result.expiresAt).slice(0, 10)}`; return { shareId: result.shareId, url: new URL(result.url, location.origin).href, revision: result.revision, expiresAt: result.expiresAt ?? null }; }); }
     finally { sharing = false; }
   }
@@ -963,7 +965,7 @@
     finally { sharing = false; }
   }
   async function publishSnapshot() {
-    if (nativeRole !== 'web' || sharing || currentManagedShare()) return; sharing = true;
+    if (nativeRole !== 'web' || sharing || replacingDocument || currentManagedShare()) return; sharing = true;
     try { await coordinatePublish(async (snapshot) => { const response = await fetch('/api/shares', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ document: snapshot }) }); if (!response.ok) throw new Error('Snapshot could not be published'); const result = await response.json(), candidate = { shareId: result.shareId, url: result.url, token: result.managementToken, revision: result.revision, expiresAt: result.expiresAt ?? null }; await retainPublishedShare(candidate); status = `View-only snapshot published · expires ${String(result.expiresAt).slice(0, 10)}`; await navigator.clipboard?.writeText(new URL(result.url, location.origin).href); }); }
     catch (error) { status = error instanceof Error ? error.message : 'Snapshot could not be published'; } finally { sharing = false; }
   }
@@ -1021,8 +1023,24 @@
     }
     context.restore(); const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png')); if (!blob) throw new Error('PNG export failed'); download(blob, 'image/png', 'png'); status = 'PNG exported';
   }
-  async function importJson(event: Event) { const file = (event.currentTarget as HTMLInputElement).files?.[0]; if (!file || nativeRole === 'companion' || sharing) return; try { const previousDocumentId = history.present.id, managed = currentManagedShare(); const next = parse(await file.text()); const committed = await commitHostReplacement(() => next, (value) => value, (value) => history = commit(history, value), 'import'); if (managed) rememberShare(managed, committed.id, previousDocumentId); else restoreManagedShare(committed.id); selectedIds = []; queueSave(committed); status = 'Canvas imported'; } catch (error) { status = error instanceof Error ? error.message : 'Import failed'; } finally { if (fileInput) fileInput.value = ''; } }
-  async function resetCanvas() { if (sharing) return; if (nativeRole === 'companion') { if (!companionResetArmed) { companionResetArmed = true; clearTimeout(companionResetTimer); companionResetTimer = setTimeout(() => companionResetArmed = false, 5000); status = 'Tap Confirm reset to clear the Mac canvas'; return; } companionResetArmed = false; clearTimeout(companionResetTimer); const current = document; const next = { ...document, title: 'Untitled mapping session', objects: [], viewport: { x: 0, y: 0, zoom: 1 }, updatedAt: new Date().toISOString() }; history = commit(history, next); selectedIds = []; const operations: CanvasOperation[] = [{ type: 'replace_objects', objects: [] }]; if (current.title !== next.title) operations.push({ type: 'set_title', title: next.title }); if (JSON.stringify(current.viewport) !== JSON.stringify(next.viewport)) operations.push({ type: 'set_viewport', viewport: next.viewport }); sendNative(operations, true); status = 'Clear requested from iPhone'; return; } if (!confirm(nativeRole === 'host' ? 'Reset the Mac-authoritative canvas? Export first if you need a copy.' : share ? 'Reset this local canvas? Its published link will remain manageable here until you revoke it.' : 'Reset this local canvas? Export first if you need a copy.')) return; const previousDocumentId = history.present.id; clearTimeout(saveTimer); saveTimer = undefined; status = 'Resetting canvas…'; if (nativeRole === 'web') await clearDocument(); try { const next = createDocument(); await commitHostReplacement(() => next, (value) => value, (value) => history = { past: [], present: value, future: [] }, 'reset'); if (share) rememberShare(share, next.id, previousDocumentId); selectedIds = []; queueSave(next); status = nativeRole === 'host' ? 'New Mac session document' : 'New local session'; } catch (error) { status = error instanceof Error ? error.message : 'Reset conflicted with an iPhone change'; } }
+  async function importJson(event: Event) {
+    const file = (event.currentTarget as HTMLInputElement).files?.[0];
+    if (!file || nativeRole === 'companion' || sharing || replacingDocument) return;
+    replacingDocument = true;
+    try { const previousDocumentId = history.present.id, managed = currentManagedShare(); const next = parse(await file.text()); const committed = await commitHostReplacement(() => next, (value) => value, (value) => history = commit(history, value), 'import'); if (managed) rememberShare(managed, committed.id, previousDocumentId); else restoreManagedShare(committed.id); selectedIds = []; queueSave(committed); status = 'Canvas imported'; }
+    catch (error) { status = error instanceof Error ? error.message : 'Import failed'; }
+    finally { replacingDocument = false; if (fileInput) fileInput.value = ''; }
+  }
+  async function resetCanvas() {
+    if (sharing || replacingDocument) return;
+    if (nativeRole === 'companion') { if (!companionResetArmed) { companionResetArmed = true; clearTimeout(companionResetTimer); companionResetTimer = setTimeout(() => companionResetArmed = false, 5000); status = 'Tap Confirm reset to clear the Mac canvas'; return; } companionResetArmed = false; clearTimeout(companionResetTimer); const current = document; const next = { ...document, title: 'Untitled mapping session', objects: [], viewport: { x: 0, y: 0, zoom: 1 }, updatedAt: new Date().toISOString() }; history = commit(history, next); selectedIds = []; const operations: CanvasOperation[] = [{ type: 'replace_objects', objects: [] }]; if (current.title !== next.title) operations.push({ type: 'set_title', title: next.title }); if (JSON.stringify(current.viewport) !== JSON.stringify(next.viewport)) operations.push({ type: 'set_viewport', viewport: next.viewport }); sendNative(operations, true); status = 'Clear requested from iPhone'; return; }
+    if (!confirm(nativeRole === 'host' ? 'Reset the Mac-authoritative canvas? Export first if you need a copy.' : share ? 'Reset this local canvas? Its published link will remain manageable here until you revoke it.' : 'Reset this local canvas? Export first if you need a copy.')) return;
+    replacingDocument = true;
+    const previousDocumentId = history.present.id; clearTimeout(saveTimer); saveTimer = undefined; status = 'Resetting canvas…';
+    try { if (nativeRole === 'web') await clearDocument(); const next = createDocument(); await commitHostReplacement(() => next, (value) => value, (value) => history = { past: [], present: value, future: [] }, 'reset'); if (share) rememberShare(share, next.id, previousDocumentId); selectedIds = []; queueSave(next); status = nativeRole === 'host' ? 'New Mac session document' : 'New local session'; }
+    catch (error) { status = error instanceof Error ? error.message : 'Reset conflicted with an iPhone change'; }
+    finally { replacingDocument = false; }
+  }
   function updateTitle(input: HTMLInputElement) { if (!companionCanEdit()) return; const title = input.value || 'Untitled mapping session'; if (!isValidCanvasTitle(title)) { input.value = document.title; status = 'Title must be 240 UTF-8 bytes or fewer'; return; } const next = { ...document, title, updatedAt: new Date().toISOString() }; history = { ...history, present: next }; queueSave(next); sendNative([{ type: 'set_title', title }]); }
 </script>
 
@@ -1054,7 +1072,7 @@
   <header class="topbar">
     <div class="identity"><img src="/brand/create-something-agency-white.svg" alt="CREATE SOMETHING .agency" /><span>Draw · Mapping canvas</span><a class="source-link" href="/download" target="_blank" rel="noreferrer">Mac</a><a class="source-link" href="https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/mapping-canvas" target="_blank" rel="noreferrer">Source</a>{#if nativeRole !== 'web'}<button class="native-link" aria-label="Open device pairing" onclick={openPairing}>{nativeRole === 'host' ? 'Pair' : nativeSession.sessionId ? 'Linked' : 'Link'}</button>{/if}</div>
     <input class="title" aria-label="Canvas title" maxlength="240" value={document.title} oninput={(event) => updateTitle(event.currentTarget)} />
-    {#if nativeRole !== 'companion'}<div class="file-actions"><button onclick={() => fileInput?.click()} disabled={sharing}>Import</button><button onclick={exportJson}>JSON</button><button onclick={exportSvg}>SVG</button><button onclick={exportPng}>PNG</button>{#if nativeRole === 'web'}{#if share}<button onclick={copyShareLink}>Copy link</button><button onclick={updateSnapshot} disabled={sharing}>Update link</button><button onclick={revokeSnapshot} disabled={sharing}>Revoke</button>{:else}<button class="share-action" onclick={publishSnapshot} disabled={sharing}>Publish view-only</button>{/if}{/if}<button onclick={resetCanvas} disabled={sharing}>Reset</button><input bind:this={fileInput} class="visually-hidden" type="file" accept="application/json,.json" disabled={sharing} onchange={importJson} /></div>{/if}
+    {#if nativeRole !== 'companion'}<div class="file-actions"><button onclick={() => fileInput?.click()} disabled={sharing || replacingDocument}>Import</button><button onclick={exportJson}>JSON</button><button onclick={exportSvg}>SVG</button><button onclick={exportPng}>PNG</button>{#if nativeRole === 'web'}{#if share}<button onclick={copyShareLink}>Copy link</button><button onclick={updateSnapshot} disabled={sharing || replacingDocument}>Update link</button><button onclick={revokeSnapshot} disabled={sharing || replacingDocument}>Revoke</button>{:else}<button class="share-action" onclick={publishSnapshot} disabled={sharing || replacingDocument}>Publish view-only</button>{/if}{/if}<button onclick={resetCanvas} disabled={sharing || replacingDocument}>Reset</button><input bind:this={fileInput} class="visually-hidden" type="file" accept="application/json,.json" disabled={sharing || replacingDocument} onchange={importJson} /></div>{/if}
   </header>
   <section class="workbench" class:tool-sidebar-collapsed={sidebarCollapsed} aria-label="Mapping canvas workbench">
     <nav class="toolbar" aria-label="Canvas tools"><button class="sidebar-toggle" aria-expanded={!sidebarCollapsed} aria-label={sidebarCollapsed ? 'Expand tool sidebar' : 'Collapse tool sidebar'} title={sidebarCollapsed ? 'Expand tools' : 'Collapse tools'} onclick={toggleSidebar}><i aria-hidden="true">{sidebarCollapsed ? '›' : '‹'}</i><span>{sidebarCollapsed ? 'Expand' : 'Collapse'}</span></button>{#each tools as entry}<button class:active={tool === entry.id} aria-pressed={tool === entry.id} aria-label={`${entry.label} tool (${entry.key})`} title={`${entry.label} · ${entry.key}`} onclick={() => tool = entry.id}><kbd class="tool-key">{entry.key}</kbd><span class="tool-label">{entry.label}</span></button>{/each}</nav>
