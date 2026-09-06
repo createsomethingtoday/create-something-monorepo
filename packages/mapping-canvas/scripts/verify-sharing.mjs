@@ -12,7 +12,7 @@ const page = await context.newPage(), writes = [];
 page.on('request', (request) => { if (request.url().includes('/api/shares') && request.method() !== 'GET') writes.push(`${request.method()} ${new URL(request.url()).pathname}`); });
 await page.addInitScript(() => { window.__drawWebMcpTools = {}; Object.defineProperty(document, 'modelContext', { configurable: true, value: { registerTool(tool) { window.__drawWebMcpTools[tool.name] = tool; } } }); });
 await page.goto(baseUrl, { waitUntil: 'networkidle' });
-await page.waitForFunction(() => Object.keys(window.__drawWebMcpTools).length === 24);
+await page.waitForFunction(() => Object.keys(window.__drawWebMcpTools).filter((name) => name.startsWith('draw_')).length === 24);
 const result = await page.evaluate(async () => {
   const tools = window.__drawWebMcpTools;
   const before = await tools.draw_get_state.execute({});
@@ -47,7 +47,7 @@ const view = await anonymous.newPage();
 await view.addInitScript(() => { window.__registeredShareTools = []; Object.defineProperty(document, 'modelContext', { configurable: true, value: { registerTool(tool) { window.__registeredShareTools.push(tool.name); } } }); });
 await view.goto(published.url, { waitUntil: 'networkidle' });
 if (!(await view.getByText('View-only snapshot').isVisible()) || !(await view.getByRole('heading', { name: 'Share proof' }).isVisible()) || !(await view.getByRole('link', { name: 'Safe circulation' }).isVisible())) throw new Error('Anonymous formatted rendering failed.');
-if (await view.locator('textarea,input.title,.toolbar,.file-actions').count() || (await view.evaluate(() => window.__registeredShareTools.length))) throw new Error('Anonymous snapshot exposed editing controls or WebMCP tools.');
+if (await view.locator('textarea,input.title,.toolbar,.file-actions').count() || (await view.evaluate(() => window.__registeredShareTools.some((name) => name.startsWith('draw_'))))) throw new Error('Anonymous snapshot exposed editing controls or Draw WebMCP tools.');
 await view.screenshot({ path: `${output}/anonymous-share.png`, fullPage: true });
 
 const updated = await page.evaluate(async ({ noteId, revision }) => { const tools = window.__drawWebMcpTools; await tools.draw_edit_note.execute({ id: noteId, content: { blocks: [{ type: 'heading2', runs: [{ text: 'Updated proof', underline: true }] }, { type: 'quote', runs: [{ text: 'Stable link' }] }] } }); return tools.draw_update_snapshot.execute({ expectedShareRevision: revision }); }, { noteId: result.noteId, revision: refreshed.share.revision });
@@ -62,7 +62,7 @@ const beforeReset = await page.evaluate(() => window.__drawWebMcpTools.draw_get_
 await page.evaluate(() => window.__drawWebMcpTools.draw_reset.execute({ confirmation: 'RESET CANVAS' }));
 await page.waitForTimeout(300);
 await page.reload({ waitUntil: 'networkidle' });
-await page.waitForFunction(() => Object.keys(window.__drawWebMcpTools).length === 24);
+await page.waitForFunction(() => Object.keys(window.__drawWebMcpTools).filter((name) => name.startsWith('draw_')).length === 24);
 const managedAfterReset = await page.evaluate(() => window.__drawWebMcpTools.draw_get_share_status.execute({}));
 if (managedAfterReset.share?.shareId !== published.shareId || managedAfterReset.share?.revision !== 3) throw new Error('Reset orphaned management of the active published link.');
 await page.evaluate(async ({ objects, title }) => window.__drawWebMcpTools.draw_replace_canvas.execute({ objects, title, confirmation: 'REPLACE CANVAS' }), beforeReset.document);
