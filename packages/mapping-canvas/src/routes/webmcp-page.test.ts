@@ -22,8 +22,8 @@ describe('Draw WebMCP page integration', () => {
 
   it('keeps formatting changes undoable and preserves managed shares across imports', () => {
     expect(page).toContain("apply(withObjects(document, document.objects.map((entry) => entry.id === note.id ? changed : entry)), { type: 'put_object', object: changed });");
-    expect(page).toContain('const previousDocumentId = history.present.id, managed = currentManagedShare();');
-    expect(page).toContain('if (managed) rememberShare(managed, committed.id, previousDocumentId); else restoreManagedShare(committed.id);');
+    expect(page).toContain('const previous = history.present, managed = currentManagedShare();');
+    expect(page).toContain('await transferManagedShareAfterReplacement(managed, previous, committed);');
   });
 
   it('revokes a newly published snapshot when its capability cannot be persisted', () => {
@@ -47,12 +47,14 @@ describe('Draw WebMCP page integration', () => {
     expect(page).toContain("if (persisted && persisted.id !== documentId) throw new Error('Another tab replaced this canvas. Reload Draw before publishing.')");
     expect(page).toContain('try { await coordinateDocumentReplacement(async () =>');
     expect(page).toContain('await coordinateDocumentReplacement(async () => {');
-    expect(page).toContain("if (nativeRole === 'web') await saveDocument(committed); else queueSave(committed);");
-    expect(page).toContain("if (nativeRole === 'web') await saveDocument(next); else queueSave(next);");
+    expect(page).toContain("if (nativeRole === 'web') { await saveDocument(committed); await transferManagedShareAfterReplacement(managed, previous, committed); }");
+    expect(page).toContain("if (nativeRole === 'web') { await saveDocument(next); await transferManagedShareAfterReplacement(managed, previous, next); }");
     expect(page).toContain('noteInput.flushAll();');
     expect(page).toContain('clearTimeout(saveTimer); saveTimer = undefined;');
     expect(page).toContain("if (replacingDocument) { status = 'Wait for the document replacement to finish'; return false; }");
-    expect(page.indexOf("await saveDocument(committed)")).toBeLessThan(page.indexOf("rememberShare(managed, committed.id"));
+    expect(page).toContain('async function transferManagedShareAfterReplacement');
+    expect(page).toContain('await saveDocument(previous);');
+    expect(page).toContain('await transferManagedShareAfterReplacement(managed, previous, committed);');
     expect(page).toContain('finally { replacingDocument = false; }');
     expect(page).toContain('restoreManagedShare(documentId);');
   });

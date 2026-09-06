@@ -18,14 +18,20 @@
     try {
       const existing = await loadDocument();
       if (existing && !confirm(`Replace your local canvas "${existing.title}" with a copy of this snapshot? Export it first if you need to keep both.`)) return;
-      const now = new Date().toISOString(), next = { ...JSON.parse(JSON.stringify(document)), id: uid('canvas'), title: `${document.title} copy`, createdAt: now, updatedAt: now };
-      const oldKey = existing ? `draw-share:${existing.id}` : null, managed = oldKey ? localStorage.getItem(oldKey) : null, nextKey = `draw-share:${next.id}`;
-      await saveDocument(next);
-      if (managed) {
-        try { localStorage.setItem(nextKey, managed); }
-        catch (error) { if (existing) await saveDocument(existing); throw error; }
-        try { if (oldKey) localStorage.removeItem(oldKey); } catch { /* Both keys retain the same capability. */ }
-      }
+      const replace = async () => {
+        const current = await loadDocument();
+        if ((current?.id ?? null) !== (existing?.id ?? null)) throw new Error('Another tab replaced the local canvas.');
+        const now = new Date().toISOString(), next = { ...JSON.parse(JSON.stringify(document)), id: uid('canvas'), title: `${document.title} copy`, createdAt: now, updatedAt: now };
+        const oldKey = existing ? `draw-share:${existing.id}` : null, managed = oldKey ? localStorage.getItem(oldKey) : null, nextKey = `draw-share:${next.id}`;
+        await saveDocument(next);
+        if (managed) {
+          try { localStorage.setItem(nextKey, managed); }
+          catch (error) { if (existing) await saveDocument(existing); throw error; }
+          try { if (oldKey) localStorage.removeItem(oldKey); } catch { /* Both keys retain the same capability. */ }
+        }
+      };
+      const lockName = `draw-share-publish:${existing?.id ?? 'empty'}`;
+      if (navigator.locks) await navigator.locks.request(lockName, replace); else await replace();
       location.href = '/';
     } catch { copyStatus = 'Copy failed · your local canvas was preserved'; }
   }
