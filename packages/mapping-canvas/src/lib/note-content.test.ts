@@ -31,4 +31,10 @@ describe('formatted note content', () => {
     expect(lines.map((line) => line.segments.map((segment) => segment.text).join(''))).toEqual(['1. Alpha', 'beta', '2. ', 'Unbreaka', 'ble']);
     expect(lines[0].segments.some((segment) => segment.run.bold)).toBe(true);
   });
+
+  it('preserves explicit and blank line breaks inside a formatted run', () => {
+    const lines = layoutNoteContent({ blocks: [{ type: 'paragraph', runs: [{ text: 'Alpha\n\nOmega', bold: true }] }] }, 100, (text) => text.length);
+    expect(lines.map((line) => line.segments.map((segment) => segment.text).join(''))).toEqual(['Alpha', '', 'Omega']);
+    expect(lines[0].segments[0].run.bold).toBe(true);
+  });
 });

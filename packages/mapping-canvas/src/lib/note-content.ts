@@ -61,12 +61,13 @@ export function layoutNoteContent(content: NoteContent, maxWidth: number, measur
     const suffix = block.type === 'quote' ? '”' : '';
     const items = [
       ...(prefix ? [{ text: prefix, run: {} as Omit<NoteRun, 'text'> }] : []),
-      ...block.runs.flatMap(({ text, ...run }) => text.split(/(\s+)/).filter(Boolean).map((part) => ({ text: part, run }))),
+      ...block.runs.flatMap(({ text, ...run }) => text.split(/(\n|[^\S\n]+)/).filter(Boolean).map((part) => ({ text: part, run }))),
       ...(suffix ? [{ text: suffix, run: {} as Omit<NoteRun, 'text'> }] : [])
     ];
     let segments: NoteLayoutSegment[] = [], x = 0;
-    const flush = () => { if (segments.length) lines.push({ type: block.type, size, height, segments }); segments = []; x = 0; };
-    for (const item of items) {
+    const flush = (force = false) => { if (segments.length || force) lines.push({ type: block.type, size, height, segments }); segments = []; x = 0; };
+    for (const [index, item] of items.entries()) {
+      if (item.text === '\n') { flush(true); if (index === items.length - 1) flush(true); continue; }
       if (!segments.length && /^\s+$/.test(item.text)) continue;
       const width = measure(item.text, item.run, block.type, size);
       if (/^\s+$/.test(item.text) && x + width > maxWidth) { flush(); continue; }
