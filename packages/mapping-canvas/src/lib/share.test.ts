@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createDocument } from './document';
-import { capabilityHash, consumePublishLimit, createShare, purgeExpiredShares, readShare, revokeShare, updateShare, type ShareDb } from './share';
+import { capabilityHash, consumePublishLimit, createShare, purgeExpiredPublishLimits, purgeExpiredShares, readShare, revokeShare, updateShare, type ShareDb } from './share';
 
 class MemoryDb {
   shares = new Map<string, Record<string, unknown>>(); limits = new Map<string, { window_started_at: number; publish_count: number }>();
@@ -20,6 +20,7 @@ class MemoryStatement {
     if (this.sql.startsWith('UPDATE draw_shares SET document_json')) { const [document_json,title,revision,updated_at,share_id,expected]=this.args; const row=this.db.shares.get(String(share_id)); if (this.db.raceNextUpdate && row) { this.db.raceNextUpdate = false; row.revision = Number(expected) + 1; return {success:true,meta:{changes:0}}; } if (!row || row.revision!==expected || row.revoked_at) return {success:true,meta:{changes:0}}; Object.assign(row,{document_json,title,revision,updated_at}); return {success:true,meta:{changes:1}}; }
     if (this.sql.startsWith('UPDATE draw_shares SET revoked_at')) { const [revoked_at,document_json,share_id]=this.args; const row=this.db.shares.get(String(share_id)); if (!row || row.revoked_at) return {success:true,meta:{changes:0}}; Object.assign(row,{revoked_at,document_json}); return {success:true,meta:{changes:1}}; }
     if (this.sql.startsWith('DELETE FROM draw_shares')) { const [now,limit]=this.args; const expired=[...this.db.shares.entries()].filter(([,row])=>row.expires_at && String(row.expires_at)<=String(now)).slice(0,Number(limit)); expired.forEach(([id])=>this.db.shares.delete(id)); return {success:true,meta:{changes:expired.length}}; }
+    if (this.sql.startsWith('DELETE FROM draw_publish_limits')) { const [windowStart,limit]=this.args; const expired=[...this.db.limits.entries()].filter(([,row])=>row.window_started_at<Number(windowStart)).slice(0,Number(limit)); expired.forEach(([key])=>this.db.limits.delete(key)); return {success:true,meta:{changes:expired.length}}; }
     if (this.sql.startsWith('INSERT INTO draw_publish_limits')) { const [key,start]=this.args; const old=this.db.limits.get(String(key)); if (old && old.window_started_at===start && old.publish_count>=10) return {success:true,meta:{changes:0}}; this.db.limits.set(String(key),{window_started_at:Number(start),publish_count:old && old.window_started_at===start?old.publish_count+1:1}); return {success:true,meta:{changes:1}}; }
     return {success:false,meta:{changes:0}};
   }
@@ -61,5 +62,15 @@ describe('share snapshot domain', () => {
     expect(await purgeExpiredShares(db, '2150-01-01T00:00:00.000Z', 25)).toBe(1);
     expect(memory.shares.has(expired.shareId)).toBe(false);
     expect(memory.shares.has(retained.shareId)).toBe(true);
+  });
+
+  it('purges stale publish-limit buckets in bounded batches', async () => {
+    const memory = new MemoryDb(), db = memory as unknown as ShareDb;
+    memory.limits.set('old-a', { window_started_at: 0, publish_count: 1 });
+    memory.limits.set('old-b', { window_started_at: 0, publish_count: 1 });
+    memory.limits.set('current', { window_started_at: 600_000, publish_count: 1 });
+    expect(await purgeExpiredPublishLimits(db, 600_000, 1)).toBe(1);
+    expect(memory.limits.size).toBe(2);
+    expect(memory.limits.has('current')).toBe(true);
   });
 });

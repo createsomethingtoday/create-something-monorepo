@@ -1,6 +1,6 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { consumePublishLimit, createShare, purgeExpiredShares } from '$lib/share';
+import { consumePublishLimit, createShare, purgeExpiredPublishLimits, purgeExpiredShares } from '$lib/share';
 import { readJsonBodyBounded, RequestBodyTooLargeError } from '$lib/request-body';
 
 const headers = { 'Cache-Control': 'no-store, private', 'Referrer-Policy': 'no-referrer' };
@@ -10,6 +10,7 @@ export const POST: RequestHandler = async ({ request, platform, url, getClientAd
   if (!db || !secret) error(503, 'Sharing is temporarily unavailable.');
   if (!await consumePublishLimit(db, getClientAddress(), secret)) error(429, 'Try sharing again later.');
   await purgeExpiredShares(db);
+  await purgeExpiredPublishLimits(db);
   let body: unknown; try { body = await readJsonBodyBounded(request, 520_000); } catch (cause) { if (cause instanceof RequestBodyTooLargeError) error(413, 'Snapshot exceeds Draw sharing limits.'); error(400, 'Invalid sharing request.'); }
   if (!body || typeof body !== 'object' || Array.isArray(body)) error(400, 'Invalid sharing request.');
   try {
