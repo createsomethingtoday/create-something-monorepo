@@ -10,5 +10,6 @@ export function newsletterMetadata(url: URL): Record<string, string> | undefined
   if (url.pathname.startsWith('/admin') || url.searchParams.get('utm_source') !== 'newsletter' ||
       url.searchParams.get('utm_medium') !== 'email' ||
       !NEWSLETTER_CAMPAIGNS.some((id) => id === campaign)) return undefined;
-  return { newsletterCampaign: campaign!, newsletterMeasurement: 'first-party-v1' };
+  // Underscores keep the date from resembling a phone number to ingestion redaction.
+  return { newsletterCampaign: campaign!.replaceAll('-', '_'), newsletterMeasurement: 'first-party-v1' };
 }
