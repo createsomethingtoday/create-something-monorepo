@@ -6,8 +6,29 @@ export function verifyCheckout({ sourceSha, status }) {
   return { source_sha: sourceSha, dirty: false };
 }
 
+export function verifyModuleInventory(discovered, inventory) {
+  assert(inventory.length > 0, 'The reviewed module inventory must not be empty.');
+  assert.deepEqual([...discovered].sort(), inventory.map(item => item.module).sort(),
+    'Source module inventory changed; review additions, removals, and duplicates before promotion.');
+}
+
+export function verifyScanCoverage(actual, expected) {
+  for (const [field, count] of Object.entries(expected)) {
+    assert(Number.isSafeInteger(count) && count > 0, 'Reviewed scan coverage must be positive.');
+    assert.equal(actual[field], count, 'Scan coverage changed: ' + field);
+  }
+}
+
 export function verifyAdjudicatedExports({ modules, adjudication, publicIndex, packageExports }) {
   assert.equal(packageExports['.'].default, './dist/index.js');
+  verifyModuleInventory(modules.map(item => item.module), adjudication.inventory);
+  for (const module of modules) {
+    const expected = adjudication.inventory.find(item => item.module === module.module);
+    assert(Number.isSafeInteger(expected.total_exports) && expected.total_exports >= 0,
+      'Invalid reviewed export total for ' + module.module);
+    assert.equal(module.total_exports, expected.total_exports,
+      'Parsed export coverage changed for ' + module.module + '; review before promotion.');
+  }
   const detected = modules.flatMap(module => module.dead_exports.map(item => module.module + ':' + item.name)).sort();
   const reviewed = adjudication.modules.flatMap(module => module.symbols.map(name => module.module + ':' + name)).sort();
   assert.deepEqual(detected, reviewed, 'Detected and adjudicated export sets differ; review additions, omissions, and duplicates before promotion.');

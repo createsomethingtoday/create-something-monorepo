@@ -1,13 +1,28 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { verifyAdjudicatedExports, verifyCheckout } from '../ground-adoption-contract.mjs';
+import { verifyAdjudicatedExports, verifyCheckout, verifyScanCoverage } from '../ground-adoption-contract.mjs';
 
 const sourceSha = 'a'.repeat(40);
+
+test('scan coverage must retain its reviewed denominator', () => {
+  const expected = { files_discovered: 19, files_checked: 19 };
+  verifyScanCoverage({ ...expected, status: 'PASS' }, expected);
+  assert.throws(() => verifyScanCoverage({ files_discovered: 0, files_checked: 0 }, expected));
+  assert.throws(() => verifyScanCoverage({ files_discovered: 19, files_checked: 18 }, expected));
+});
+
+test('missing orphan scan counts cannot produce readiness', () => {
+  assert.throws(() => verifyScanCoverage({ status: 'PASS' }, { files_scanned: 18 }));
+});
 function evidence() {
   return {
-    modules: [{ module: 'packages/mcp-core/src/server.ts',
-      dead_exports: [{ name: 'createScopedServer' }, { name: 'jsonContent' }] }],
-    adjudication: { modules: [{ module: 'packages/mcp-core/src/server.ts',
+    modules: [{ module: 'packages/mcp-core/src/server.ts', total_exports: 2,
+      dead_exports: [{ name: 'createScopedServer' }, { name: 'jsonContent' }] },
+      { module: 'packages/mcp-core/src/auth.ts', total_exports: 1, dead_exports: [] }],
+    adjudication: { inventory: [
+      { module: 'packages/mcp-core/src/server.ts', total_exports: 2 },
+      { module: 'packages/mcp-core/src/auth.ts', total_exports: 1 }
+    ], modules: [{ module: 'packages/mcp-core/src/server.ts',
       symbols: ['createScopedServer', 'jsonContent'] }] },
     publicIndex: "export { createScopedServer, jsonContent } from './server.js';",
     packageExports: { '.': { default: './dist/index.js' } }
@@ -28,6 +43,30 @@ test('a detector omission cannot silently shrink the reviewed candidate set', ()
 test('a removed module cannot disappear from adjudication', () => {
   const input = evidence();
   input.modules = [];
+  assert.throws(() => verifyAdjudicatedExports(input));
+});
+
+test('removing a zero-candidate module must fail the inventory contract', () => {
+  const input = evidence();
+  input.modules.pop();
+  assert.throws(() => verifyAdjudicatedExports(input));
+});
+
+test('an extra zero-candidate module also requires baseline review', () => {
+  const input = evidence();
+  input.modules.push({ module: 'packages/mcp-core/src/new.ts', total_exports: 0, dead_exports: [] });
+  assert.throws(() => verifyAdjudicatedExports(input));
+});
+
+test('zero parsed exports cannot pass for a known exporting module', () => {
+  const input = evidence();
+  input.modules[1].total_exports = 0;
+  assert.throws(() => verifyAdjudicatedExports(input));
+});
+
+test('changed export totals require explicit re-adjudication', () => {
+  const input = evidence();
+  input.modules[1].total_exports = 2;
   assert.throws(() => verifyAdjudicatedExports(input));
 });
 

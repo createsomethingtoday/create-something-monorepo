@@ -28,8 +28,13 @@ It uses a temporary database and checks these reviewed cases:
 - `mcp-core` has complete duplicate and orphan coverage. Its ESLint configuration
   is a declared entry point because `scripts/evidence-lint-pilot.mjs` passes that
   exact file to ESLint using `--config`.
+- Duplicate and orphan scan counts must retain their reviewed denominators;
+  an empty or partial scan cannot replace the baseline and still pass.
 - Batch dead-export coverage remains `NOT_APPLICABLE`; the verifier separately
-  invokes `ground_find_dead_exports` for every TypeScript source module.
+  invokes `ground_find_dead_exports` for the exact reviewed set of 18 TypeScript
+  source modules, including modules with zero candidates. Discovered and checked
+  inventories must match the baseline, and every module must retain its reviewed
+  parsed-export count. Missing modules and reduced parser coverage fail verification.
 - Package-local dead-export candidates must exactly match the reviewed
   adjudication in both directions and still be explicitly re-exported through
   the public entry point. Additions, omissions, duplicate candidates, and public

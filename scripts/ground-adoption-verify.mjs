@@ -7,19 +7,20 @@ import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'n
 import { tmpdir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { verifyAdjudicatedExports, verifyCheckout } from './ground-adoption-contract.mjs';
+import { verifyAdjudicatedExports, verifyCheckout, verifyModuleInventory, verifyScanCoverage } from './ground-adoption-contract.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const manifest = JSON.parse(readFileSync(join(root, 'packages/ground/npm/package.json'), 'utf8'));
 const packageSpec = `${manifest.name}@${manifest.version}`;
+const adjudication = JSON.parse(readFileSync(join(root, 'docs/internal/ground-adoption-adjudication.v1.json'), 'utf8'));
 const temporary = mkdtempSync(join(tmpdir(), 'ground-adoption-'));
 const database = join(temporary, 'registry.db');
 const core = join(root, 'packages/mcp-core');
 const ground = join(root, 'packages/ground');
 
 function command(binary, args, input) {
-  const override = binary === 'ground' ? process.env.GROUND_BINARY : process.env.GROUND_MCP_BINARY;
-  const result = spawnSync(override || 'npm', override ? args : [
+  // Both commands must come from the same exact published package.
+  const result = spawnSync('npm', [
     'exec', '--yes', `--package=${packageSpec}`, '--', binary, ...args
   ], { cwd: root, input, encoding: 'utf8', timeout: 120_000, maxBuffer: 16 * 1024 * 1024 });
   assert.equal(result.status, 0, `${binary} failed: ${result.error || result.stderr}`);
@@ -35,6 +36,8 @@ function parse(result) {
 }
 
 function checkCore(result) {
+  verifyScanCoverage(result.coverage.duplicates, adjudication.coverage.core_duplicates);
+  verifyScanCoverage(result.coverage.orphans, adjudication.coverage.core_orphans);
   assert.equal(result.coverage.duplicates.status, 'PASS');
   assert.equal(result.coverage.orphans.status, 'PASS');
   assert.equal(result.coverage.orphans.scan_complete, true);
@@ -49,6 +52,7 @@ function checkCore(result) {
 }
 
 function checkGround(result) {
+  verifyScanCoverage(result.coverage.duplicates, adjudication.coverage.ground_duplicates);
   assert.equal(result.coverage.duplicates.status, 'FAIL');
   assert.equal(result.coverage.duplicates.files_checked, result.coverage.duplicates.files_discovered);
   assert.equal(result.findings.duplicates.length, 1, 'only the deliberate detector fixture should remain');
@@ -104,7 +108,7 @@ try {
   checkGround(groundAnalysis);
 
   const modules = sourceModules(join(core, 'src'));
-  assert(modules.length > 0);
+  verifyModuleInventory(modules.map(file => relative(root, file).replaceAll('\\', '/')), adjudication.dead_exports.inventory);
   const calls = [
     { name: 'ground_analyze', arguments: { directory: core, checks: ['duplicates', 'orphans', 'dead_exports'], timeout_ms: 15000 } },
     { name: 'ground_analyze', arguments: { directory: ground, checks: ['duplicates'], timeout_ms: 15000 } },
@@ -131,7 +135,6 @@ try {
     return { module: relative(root, modules[index]), total_exports: result.total_exports,
       dead_exports: result.dead_exports.map(item => ({ name: item.name, line: item.line })) };
   });
-  const adjudication = JSON.parse(readFileSync(join(root, 'docs/internal/ground-adoption-adjudication.v1.json'), 'utf8'));
   const publicIndex = readFileSync(join(core, 'src/index.ts'), 'utf8');
   const coreManifest = JSON.parse(readFileSync(join(core, 'package.json'), 'utf8'));
   const retainedCandidates = verifyAdjudicatedExports({
