@@ -105,7 +105,7 @@
   <section class="home-section foundation-example" aria-labelledby="foundation-example-title">
     <span>An example of the first project</span>
     <h2 id="foundation-example-title">Turn meeting notes into a draft action list.</h2>
-    <p>The agent reads your notes and drafts the next steps. Missing details stay marked for your team to confirm.</p>
+    <p>An agent is software that uses AI and connected tools to carry out a task. Here, it reads meeting notes and drafts the next steps. Missing details stay marked for your team to confirm.</p>
     <div class="example-comparison" aria-label="Illustrative meeting notes and draft action list">
       <div class="example-notes">
         <h3>Meeting notes</h3>

@@ -403,8 +403,10 @@ test('the homepage service steps preserve approvals, testing, and separate launc
 
 test('the homepage defines unfamiliar terms beside the example', () => {
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
-  assert.match(home, /An agent is software that uses AI and connected tools/);
-  assert.match(home, /Needs confirmation/);
+  const exampleStart = home.indexOf('<section class="home-section foundation-example"');
+  const example = home.slice(exampleStart, home.indexOf('</section>', exampleStart));
+  assert.match(example, /An agent is software that uses AI and connected tools/);
+  assert.match(example, /Needs confirmation/);
   assert.match(home, /OpenAI Codex, an AI coding tool/);
   assert.doesNotMatch(home, /Offense|Defense|PerformanceWorkflowMiniArtifact|HeroTrustArtifact/);
 });
@@ -412,6 +414,7 @@ test('the homepage defines unfamiliar terms beside the example', () => {
 test('the mobile homepage stacks the example and service steps for reading', () => {
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
   assert.match(home, /@media \(max-width: 640px\)[\s\S]*?\.home-steps\s*\{\s*grid-template-columns: 1fr/);
+  assert.match(home, /@media \(max-width: 640px\)[\s\S]*?\.example-comparison\s*\{\s*grid-template-columns: 1fr/);
   assert.doesNotMatch(home, /PublicSubstrateCanvas|MeridianEvidenceCarousel/);
 });
 
