@@ -6,7 +6,8 @@ export const NEWSLETTER_DELIVERIES = [
     'bdb288f4-ba0f-40eb-b0db-303ca0ba9f36', '02ac98bc-4570-4035-9856-a68d7e180175'
   ] },
   { campaign: NEWSLETTER_CAMPAIGNS[1], subject: 'The new bottleneck is proof', ids: [] },
-  { campaign: NEWSLETTER_CAMPAIGNS[2], subject: 'Test the checker before trusting the result', ids: [] }
+  { campaign: NEWSLETTER_CAMPAIGNS[2], subject: 'Test the checker before trusting the result', ids: [] },
+  { campaign: NEWSLETTER_CAMPAIGNS[3], subject: '“Deployed” is only one step', ids: ['aa9958b4-9e19-405f-b8c6-6a02f6c709e9'] }
 ];
 
 export const NEWSLETTER_ENGAGEMENT_SQL = `WITH landings AS (

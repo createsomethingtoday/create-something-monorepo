@@ -2,7 +2,8 @@
 export const NEWSLETTER_CAMPAIGNS = [
   '2026-09-01-the-interface-is-becoming-executable',
   '2026-09-03-the-receipt-must-name-the-state',
-  '2026-09-08-test-the-checker'
+  '2026-09-08-test-the-checker',
+  '2026-09-10-deployed-is-only-one-step'
 ] as const;
 
 export function newsletterMetadata(url: URL): Record<string, string> | undefined {
