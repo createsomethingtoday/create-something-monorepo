@@ -93,7 +93,7 @@ fn extract_svelte_scripts(source: &str, module_only: bool) -> Option<String> {
 }
 
 /// An import statement extracted from source
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ExtractedImport {
     /// Symbols imported (e.g., ["foo", "bar"])
     pub symbols: Vec<String>,
@@ -108,7 +108,7 @@ pub struct ExtractedImport {
 }
 
 /// An export statement extracted from source
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ExtractedExport {
     /// Symbol name being exported
     pub name: String,
@@ -125,6 +125,15 @@ pub fn extract_imports(path: &Path) -> Result<Vec<ExtractedImport>, String> {
     let source = fs::read_to_string(path)
         .map_err(|e| format!("Failed to read file: {}", e))?;
     
+    extract_imports_from_source(path, &source)
+}
+
+pub(crate) fn extract_imports_from_source(path: &Path, source: &str) -> Result<Vec<ExtractedImport>, String> {
+    super::derived_cache::parse(path, source, "extract_imports", || extract_imports_source(path, source))
+}
+
+fn extract_imports_source(path: &Path, source: &str) -> Result<Vec<ExtractedImport>, String> {
+    let source = source.to_string();
     let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
     
     // Handle Svelte files by extracting script content
@@ -161,6 +170,15 @@ pub fn extract_exports(path: &Path) -> Result<Vec<ExtractedExport>, String> {
     let source = fs::read_to_string(path)
         .map_err(|e| format!("Failed to read file: {}", e))?;
     
+    extract_exports_from_source(path, &source)
+}
+
+pub(crate) fn extract_exports_from_source(path: &Path, source: &str) -> Result<Vec<ExtractedExport>, String> {
+    super::derived_cache::parse(path, source, "extract_exports", || extract_exports_source(path, source))
+}
+
+fn extract_exports_source(path: &Path, source: &str) -> Result<Vec<ExtractedExport>, String> {
+    let source = source.to_string();
     let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
     
     // Svelte module exports exist only in module-context scripts. Instance
@@ -193,6 +211,7 @@ pub fn extract_exports(path: &Path) -> Result<Vec<ExtractedExport>, String> {
 }
 
 /// An export edge preserves both names. An empty source denotes a local binding.
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ReexportEdge {
     pub source: String,
     pub imported: String,
@@ -201,6 +220,15 @@ pub struct ReexportEdge {
 
 pub fn extract_reexport_edges(path: &Path) -> Result<Vec<ReexportEdge>, String> {
     let source = fs::read_to_string(path).map_err(|error| error.to_string())?;
+    extract_reexport_edges_from_source(path, &source)
+}
+
+pub(crate) fn extract_reexport_edges_from_source(path: &Path, source: &str) -> Result<Vec<ReexportEdge>, String> {
+    super::derived_cache::parse(path, source, "extract_reexport_edges", || extract_reexport_edges_source(path, source))
+}
+
+fn extract_reexport_edges_source(path: &Path, source: &str) -> Result<Vec<ReexportEdge>, String> {
+    let source = source.to_string();
     let ext = path.extension().and_then(|value| value.to_str()).unwrap_or("");
     let source = if ext == "svelte" {
         match extract_svelte_module_script(&source) { Some(script) => script, None => return Ok(Vec::new()) }

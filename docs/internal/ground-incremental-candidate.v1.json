@@ -1,0 +1,447 @@
+{
+  "schema_version": "ground-incremental-receipt.v1",
+  "execution": "local-native",
+  "package": null,
+  "baseline": false,
+  "fixture_sha256": "89f283364baed34b9507955ba18b56e7a00b903181b7a3d3c6728f6f57f0a025",
+  "cases": [
+    {
+      "id": "cold",
+      "passed": true,
+      "warm_ms": 2.201208000000065,
+      "fresh_ms": 0.9767499999999245,
+      "cache": {
+        "enabled": true,
+        "entries": 10,
+        "evictions": 0,
+        "graph_hits": 0,
+        "max_entries": 512,
+        "max_payload_bytes": 16777216,
+        "misses": 10,
+        "parse_hits": 1,
+        "payload_bytes": 3047
+      }
+    },
+    {
+      "id": "warm",
+      "passed": true,
+      "warm_ms": 1.1654590000000553,
+      "fresh_ms": 0.9435000000000855,
+      "cache": {
+        "enabled": true,
+        "entries": 10,
+        "evictions": 0,
+        "graph_hits": 1,
+        "max_entries": 512,
+        "max_payload_bytes": 16777216,
+        "misses": 10,
+        "parse_hits": 5,
+        "payload_bytes": 3047
+      }
+    },
+    {
+      "id": "same-size-edit",
+      "passed": true,
+      "warm_ms": 1.4218329999998787,
+      "fresh_ms": 0.9547080000002097,
+      "cache": {
+        "enabled": true,
+        "entries": 14,
+        "evictions": 0,
+        "graph_hits": 1,
+        "max_entries": 512,
+        "max_payload_bytes": 16777216,
+        "misses": 14,
+        "parse_hits": 12,
+        "payload_bytes": 5638
+      }
+    },
+    {
+      "id": "delete-consumer",
+      "passed": true,
+      "warm_ms": 1.16862500000002,
+      "fresh_ms": 0.6370839999999589,
+      "cache": {
+        "enabled": true,
+        "entries": 15,
+        "evictions": 0,
+        "graph_hits": 1,
+        "max_entries": 512,
+        "max_payload_bytes": 16777216,
+        "misses": 15,
+        "parse_hits": 19,
+        "payload_bytes": 7602
+      }
+    },
+    {
+      "id": "new-consumer",
+      "passed": true,
+      "warm_ms": 1.9541249999999764,
+      "fresh_ms": 0.7494160000001102,
+      "cache": {
+        "enabled": true,
+        "entries": 19,
+        "evictions": 0,
+        "graph_hits": 1,
+        "max_entries": 512,
+        "max_payload_bytes": 16777216,
+        "misses": 19,
+        "parse_hits": 26,
+        "payload_bytes": 10193
+      }
+    },
+    {
+      "id": "malformed-source",
+      "passed": true,
+      "warm_ms": 0.9290840000001026,
+      "fresh_ms": 0.693000000000211,
+      "cache": {
+        "enabled": true,
+        "entries": 19,
+        "evictions": 0,
+        "graph_hits": 1,
+        "max_entries": 512,
+        "max_payload_bytes": 16777216,
+        "misses": 22,
+        "parse_hits": 31,
+        "payload_bytes": 10193
+      }
+    },
+    {
+      "id": "repair-and-alias",
+      "passed": true,
+      "warm_ms": 1.3602920000000722,
+      "fresh_ms": 1.0212079999998878,
+      "cache": {
+        "enabled": true,
+        "entries": 23,
+        "evictions": 0,
+        "graph_hits": 1,
+        "max_entries": 512,
+        "max_payload_bytes": 16777216,
+        "misses": 26,
+        "parse_hits": 38,
+        "payload_bytes": 12921
+      }
+    },
+    {
+      "id": "alias-target-change",
+      "passed": true,
+      "warm_ms": 1.3715420000000904,
+      "fresh_ms": 1.0237079999999423,
+      "cache": {
+        "enabled": true,
+        "entries": 24,
+        "evictions": 0,
+        "graph_hits": 1,
+        "max_entries": 512,
+        "max_payload_bytes": 16777216,
+        "misses": 27,
+        "parse_hits": 48,
+        "payload_bytes": 15555
+      }
+    },
+    {
+      "id": "revision-restored",
+      "passed": true,
+      "warm_ms": 1.196583000000146,
+      "fresh_ms": 0.7824580000001333,
+      "cache": {
+        "enabled": true,
+        "entries": 25,
+        "evictions": 0,
+        "graph_hits": 1,
+        "max_entries": 512,
+        "max_payload_bytes": 16777216,
+        "misses": 28,
+        "parse_hits": 58,
+        "payload_bytes": 18187
+      }
+    },
+    {
+      "id": "warm-after-invalidation",
+      "passed": true,
+      "warm_ms": 0.9865409999999883,
+      "fresh_ms": 0.9907909999999447,
+      "cache": {
+        "enabled": true,
+        "entries": 25,
+        "evictions": 0,
+        "graph_hits": 2,
+        "max_entries": 512,
+        "max_payload_bytes": 16777216,
+        "misses": 28,
+        "parse_hits": 62,
+        "payload_bytes": 18187
+      }
+    },
+    {
+      "id": "worktree-isolation",
+      "passed": true,
+      "cache": {
+        "enabled": true,
+        "entries": 29,
+        "evictions": 0,
+        "graph_hits": 2,
+        "max_entries": 512,
+        "max_payload_bytes": 16777216,
+        "misses": 32,
+        "parse_hits": 63,
+        "payload_bytes": 19174
+      }
+    },
+    {
+      "id": "package-export-map-change",
+      "passed": true
+    },
+    {
+      "id": "restart-with-empty-derived-state",
+      "passed": true
+    }
+  ],
+  "real_queries": [
+    {
+      "repeat": 0,
+      "module": "packages/mcp-core/src/server.ts",
+      "warm_ms": 51.922999999999774,
+      "fresh_ms": 45.23833400000012,
+      "warm_rss_bytes": 12238848,
+      "fresh_rss_bytes": 11960320,
+      "cache": {
+        "enabled": true,
+        "entries": 55,
+        "evictions": 0,
+        "graph_hits": 0,
+        "max_entries": 512,
+        "max_payload_bytes": 16777216,
+        "misses": 55,
+        "parse_hits": 1,
+        "payload_bytes": 104771
+      }
+    },
+    {
+      "repeat": 0,
+      "module": "packages/mcp-core/src/auth.ts",
+      "warm_ms": 3.002042000000074,
+      "fresh_ms": 24.02341699999988,
+      "warm_rss_bytes": 12369920,
+      "fresh_rss_bytes": 12075008,
+      "cache": {
+        "enabled": true,
+        "entries": 55,
+        "evictions": 0,
+        "graph_hits": 1,
+        "max_entries": 512,
+        "max_payload_bytes": 16777216,
+        "misses": 55,
+        "parse_hits": 20,
+        "payload_bytes": 104771
+      }
+    },
+    {
+      "repeat": 1,
+      "module": "packages/mcp-core/src/server.ts",
+      "warm_ms": 25.284250000000156,
+      "fresh_ms": 45.35100000000011,
+      "warm_rss_bytes": 12402688,
+      "fresh_rss_bytes": 12009472,
+      "cache": {
+        "enabled": true,
+        "entries": 55,
+        "evictions": 0,
+        "graph_hits": 2,
+        "max_entries": 512,
+        "max_payload_bytes": 16777216,
+        "misses": 55,
+        "parse_hits": 39,
+        "payload_bytes": 104771
+      }
+    },
+    {
+      "repeat": 1,
+      "module": "packages/mcp-core/src/auth.ts",
+      "warm_ms": 2.896874999999909,
+      "fresh_ms": 22.231667000000016,
+      "warm_rss_bytes": 12484608,
+      "fresh_rss_bytes": 12124160,
+      "cache": {
+        "enabled": true,
+        "entries": 55,
+        "evictions": 0,
+        "graph_hits": 3,
+        "max_entries": 512,
+        "max_payload_bytes": 16777216,
+        "misses": 55,
+        "parse_hits": 58,
+        "payload_bytes": 104771
+      }
+    },
+    {
+      "repeat": 2,
+      "module": "packages/mcp-core/src/server.ts",
+      "warm_ms": 23.374459000000115,
+      "fresh_ms": 46.996208000000024,
+      "warm_rss_bytes": 12582912,
+      "fresh_rss_bytes": 11943936,
+      "cache": {
+        "enabled": true,
+        "entries": 55,
+        "evictions": 0,
+        "graph_hits": 4,
+        "max_entries": 512,
+        "max_payload_bytes": 16777216,
+        "misses": 55,
+        "parse_hits": 77,
+        "payload_bytes": 104771
+      }
+    },
+    {
+      "repeat": 2,
+      "module": "packages/mcp-core/src/auth.ts",
+      "warm_ms": 3.5899170000002414,
+      "fresh_ms": 22.69454199999973,
+      "warm_rss_bytes": 12582912,
+      "fresh_rss_bytes": 12091392,
+      "cache": {
+        "enabled": true,
+        "entries": 55,
+        "evictions": 0,
+        "graph_hits": 5,
+        "max_entries": 512,
+        "max_payload_bytes": 16777216,
+        "misses": 55,
+        "parse_hits": 96,
+        "payload_bytes": 104771
+      }
+    },
+    {
+      "repeat": 0,
+      "module": "packages/agency/src/lib/community/monitors/types.ts",
+      "warm_ms": 768.57575,
+      "fresh_ms": 598.3034170000001,
+      "warm_rss_bytes": 20824064,
+      "fresh_rss_bytes": 18497536,
+      "cache": {
+        "enabled": true,
+        "entries": 512,
+        "evictions": 752,
+        "graph_hits": 0,
+        "max_entries": 512,
+        "max_payload_bytes": 16777216,
+        "misses": 1264,
+        "parse_hits": 1,
+        "payload_bytes": 1634695
+      }
+    },
+    {
+      "repeat": 1,
+      "module": "packages/agency/src/lib/community/monitors/types.ts",
+      "warm_ms": 83.69608299999982,
+      "fresh_ms": 607.0216659999996,
+      "warm_rss_bytes": 21659648,
+      "fresh_rss_bytes": 18661376,
+      "cache": {
+        "enabled": true,
+        "entries": 512,
+        "evictions": 753,
+        "graph_hits": 1,
+        "max_entries": 512,
+        "max_payload_bytes": 16777216,
+        "misses": 1265,
+        "parse_hits": 422,
+        "payload_bytes": 1635073
+      }
+    },
+    {
+      "repeat": 2,
+      "module": "packages/agency/src/lib/community/monitors/types.ts",
+      "warm_ms": 80.40358299999934,
+      "fresh_ms": 611.2832920000001,
+      "warm_rss_bytes": 21659648,
+      "fresh_rss_bytes": 18661376,
+      "cache": {
+        "enabled": true,
+        "entries": 512,
+        "evictions": 753,
+        "graph_hits": 2,
+        "max_entries": 512,
+        "max_payload_bytes": 16777216,
+        "misses": 1265,
+        "parse_hits": 844,
+        "payload_bytes": 1635073
+      }
+    },
+    {
+      "repeat": 0,
+      "module": "packages/webflow-template-search/src/db.ts",
+      "warm_ms": 89.00004200000058,
+      "fresh_ms": 83.63054100000045,
+      "warm_rss_bytes": 13484032,
+      "fresh_rss_bytes": 13320192,
+      "cache": {
+        "enabled": true,
+        "entries": 52,
+        "evictions": 0,
+        "graph_hits": 0,
+        "max_entries": 512,
+        "max_payload_bytes": 16777216,
+        "misses": 52,
+        "parse_hits": 1,
+        "payload_bytes": 153007
+      }
+    },
+    {
+      "repeat": 1,
+      "module": "packages/webflow-template-search/src/db.ts",
+      "warm_ms": 6.023541999999907,
+      "fresh_ms": 82.13025000000016,
+      "warm_rss_bytes": 13697024,
+      "fresh_rss_bytes": 13238272,
+      "cache": {
+        "enabled": true,
+        "entries": 52,
+        "evictions": 0,
+        "graph_hits": 1,
+        "max_entries": 512,
+        "max_payload_bytes": 16777216,
+        "misses": 52,
+        "parse_hits": 19,
+        "payload_bytes": 153007
+      }
+    },
+    {
+      "repeat": 2,
+      "module": "packages/webflow-template-search/src/db.ts",
+      "warm_ms": 6.1169159999999465,
+      "fresh_ms": 81.83750000000055,
+      "warm_rss_bytes": 13762560,
+      "fresh_rss_bytes": 13221888,
+      "cache": {
+        "enabled": true,
+        "entries": 52,
+        "evictions": 0,
+        "graph_hits": 2,
+        "max_entries": 512,
+        "max_payload_bytes": 16777216,
+        "misses": 52,
+        "parse_hits": 37,
+        "payload_bytes": 153007
+      }
+    }
+  ],
+  "ready": true,
+  "build": {
+    "name": "ground",
+    "version": "0.4.3",
+    "source_sha": "2fb3f49e774cb5918d87a76396b5d5c1da670525",
+    "target_triple": "aarch64-apple-darwin",
+    "receipt_schema_version": "ground-review-receipt.v1"
+  },
+  "cli_parity": true,
+  "evidence_kind": "supporting dirty candidate release-build measurement, not published provenance",
+  "source_files": {
+    "packages/ground/src/computations/derived_cache.rs": "fe8ef463e589557f3dfd6ea2dfd1557126edf1e88e0b8c2716acd54cc17c0033",
+    "packages/ground/src/computations/graph.rs": "f913345f1443696f091434a25afea2b4fa472534f371cc3eda1f457e5dca7af1",
+    "packages/ground/src/computations/imports.rs": "81ac6e4fd719b27252af16caa19b044c9efba2a0bef99f9ae778eab04c7fb09d"
+  }
+}

@@ -24,7 +24,7 @@ use std::fs;
 use serde::{Serialize, Deserialize};
 use chrono::{DateTime, Utc};
 
-use super::imports::{extract_imports, extract_exports};
+use super::imports::{extract_imports_from_source, extract_exports_from_source};
 use crate::monorepo::discover_workspace_package_paths;
 
 /// Path alias configuration (e.g., $lib → src/lib)
@@ -154,8 +154,18 @@ impl SymbolGraph {
         
         // Collect all scannable files
         let mut files = Vec::new();
-        collect_files(root_dir, &mut files);
+        collect_files(root_dir, &mut files)?;
         graph.module_resolution = workspace_module_resolution(root_dir, &files);
+        let fingerprint = if super::derived_cache::enabled() {
+            Some(graph_fingerprint(root_dir, &files, &graph.path_aliases, &graph.module_resolution)?)
+        } else { None };
+        if let Some((key, _)) = &fingerprint {
+            if let Some(cached) = super::derived_cache::get::<Self>(key, true) {
+                if let Some(cb) = progress_callback { cb(files.len(), files.len()); }
+                return Ok(cached);
+            }
+        }
+
         
         let total_files = files.len();
         
@@ -167,8 +177,20 @@ impl SymbolGraph {
             
             graph.files_scanned += 1;
             
+            // Parse the exact bytes checked against the initial fingerprint.
+            let source = match fs::read_to_string(file) {
+                Ok(source) => source,
+                Err(_) => { graph.parse_errors += 1; graph.files.push(file.clone()); continue; }
+            };
+            if let Some((_, hashes)) = &fingerprint {
+                use sha2::{Digest, Sha256};
+                let actual: [u8; 32] = Sha256::digest(source.as_bytes()).into();
+                if actual != hashes[idx] {
+                    return Err("Source changed during graph construction; retry analysis".into());
+                }
+            }
             // Extract exports
-            match extract_exports(file) {
+            match extract_exports_from_source(file, &source) {
                 Ok(exports) => {
                     let exported: Vec<ExportedSymbol> = exports.iter().map(|e| {
                         let symbol = ExportedSymbol {
@@ -207,7 +229,7 @@ impl SymbolGraph {
             }
             
             // Extract imports
-            match extract_imports(file) {
+            match extract_imports_from_source(file, &source) {
                 Ok(imports) => {
                     let imported: Vec<ImportedSymbol> = imports.iter().flat_map(|i| {
                         i.symbols.iter().map(|s| {
@@ -238,6 +260,18 @@ impl SymbolGraph {
             graph.files.push(file.clone());
         }
         
+        if let Some((key, _)) = fingerprint {
+            let mut current_files = Vec::new();
+            collect_files(root_dir, &mut current_files)?;
+            let current_aliases = detect_path_aliases(root_dir);
+            let current_resolution = workspace_module_resolution(root_dir, &current_files);
+            if key != graph_fingerprint(root_dir, &current_files, &current_aliases, &current_resolution)?.0 {
+                return Err("Source or resolution inputs changed during graph construction; retry analysis".into());
+            }
+            if graph.parse_errors == 0 && graph.imports.len() == graph.files.len() {
+                super::derived_cache::put(key, &graph);
+            }
+        }
         Ok(graph)
     }
     
@@ -640,32 +674,43 @@ pub struct GraphStats {
 }
 
 /// Collect all TypeScript/JavaScript/Svelte files recursively
-fn collect_files(dir: &Path, files: &mut Vec<PathBuf>) {
-    let entries = match fs::read_dir(dir) {
-        Ok(e) => e,
-        Err(_) => return,
-    };
-    
-    for entry in entries.filter_map(|e| e.ok()) {
-        let path = entry.path();
-        
-        if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-            // Skip hidden and common non-source directories
-            if name.starts_with('.') || 
-               matches!(name, "node_modules" | "target" | "dist" | "build" | ".svelte-kit" | "coverage") {
-                continue;
+fn collect_files(dir: &Path, files: &mut Vec<PathBuf>) -> Result<(), String> {
+    fn visit(dir: &Path, files: &mut Vec<PathBuf>, ancestors: &mut HashSet<PathBuf>) -> Result<(), String> {
+        let canonical = dir.canonicalize().map_err(|e| format!("Cannot inspect {}: {e}", dir.display()))?;
+        if !ancestors.insert(canonical.clone()) { return Err(format!("Directory cycle prevents complete graph discovery: {}", dir.display())); }
+        for entry in fs::read_dir(dir).map_err(|e| format!("Cannot read {}: {e}", dir.display()))? {
+            let entry = entry.map_err(|e| e.to_string())?;
+            let path = entry.path();
+            if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+                if name.starts_with('.') || matches!(name, "node_modules" | "target" | "dist" | "build" | ".svelte-kit" | "coverage") { continue; }
             }
+            let metadata = fs::metadata(&path).map_err(|e| format!("Cannot inspect {}: {e}", path.display()))?;
+            if metadata.is_dir() { visit(&path, files, ancestors)?; }
+            else if metadata.is_file() && matches!(path.extension().and_then(|e| e.to_str()), Some("ts" | "tsx" | "js" | "jsx" | "svelte")) { files.push(path); }
         }
-        
-        if path.is_dir() {
-            collect_files(&path, files);
-        } else if path.is_file() {
-            let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
-            if matches!(ext, "ts" | "tsx" | "js" | "jsx" | "svelte") {
-                files.push(path);
-            }
-        }
+        ancestors.remove(&canonical);
+        Ok(())
     }
+    visit(dir, files, &mut HashSet::new())
+}
+
+// Resolve configuration on every request; hash actual source bytes, never mtime.
+// Input paths and canonical root distinguish relative scopes/worktrees. Resolution
+// facts are exactly those used by the graph, with stable map ordering.
+fn graph_fingerprint(root: &Path, files: &[PathBuf], aliases: &[PathAlias], resolution: &HashMap<String, PathBuf>) -> Result<([u8; 32], Vec<[u8; 32]>), String> {
+    use sha2::{Digest, Sha256};
+    let canonical = root.canonicalize().map_err(|e| e.to_string())?;
+    let sorted: std::collections::BTreeMap<_, _> = resolution.iter().collect();
+    let config = serde_json::to_vec(&(root, canonical, files, aliases, sorted)).map_err(|e| e.to_string())?;
+    let mut hasher = Sha256::new(); hasher.update(config);
+    let mut hashes = Vec::with_capacity(files.len());
+    for file in files {
+        let bytes = fs::read(file).map_err(|e| format!("Cannot read {}: {e}", file.display()))?;
+        hashes.push(Sha256::digest(&bytes).into());
+        hasher.update((bytes.len() as u64).to_le_bytes()); hasher.update(bytes);
+    }
+    let digest = hasher.finalize();
+    Ok((super::derived_cache::key(&[b"graph-v1", &digest]), hashes))
 }
 
 /// Detect path aliases from config files in the directory hierarchy

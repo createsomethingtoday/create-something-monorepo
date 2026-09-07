@@ -101,3 +101,5 @@ review workflow. Keep npm 0.4.0 pinned unless a separate native release regressi
 requires a release rollback. The positive fixture and all public APIs remain intact.
 
 For bounded parsing workers, measured tradeoffs, and execution verification, see [Ground performance](./GROUND_PERFORMANCE.md).
+
+For repeated MCP dependency analysis and fresh-source invalidation checks, see [Ground incremental analysis](./GROUND_INCREMENTAL.md).

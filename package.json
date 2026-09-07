@@ -251,6 +251,7 @@
     "ground:duplicates:json": "tsx scripts/ground-duplicates.ts --json",
     "ground:review": "node scripts/ground-review.mjs",
     "ground:adoption": "node scripts/ground-adoption-verify.mjs",
+    "ground:incremental:verify": "node scripts/ground-incremental-verify.mjs",
     "ground:execution:verify": "node scripts/ground-execution-verify.mjs",
     "ground:trial": "node scripts/ground-seeded-trial.mjs",
     "ground:review:json": "node scripts/ground-review.mjs --format json",

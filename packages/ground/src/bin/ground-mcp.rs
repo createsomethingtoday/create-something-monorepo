@@ -31,6 +31,10 @@ macro_rules! log {
 #[command(name = "ground-mcp")]
 #[command(about = "Ground MCP Server - Grounded claims for code")]
 struct Cli {
+    /// Disable process-local parsed records and graph reuse
+    #[arg(long, global = true)]
+    no_cache: bool,
+
     /// Path to registry database
     #[arg(long, default_value = ".ground/registry.db")]
     db: PathBuf,
@@ -154,6 +158,7 @@ fn shorten_path(path: &str) -> String {
 
 fn main() {
     let cli = Cli::parse();
+    ground::computations::derived_cache::set_enabled(!cli.no_cache);
     
     // Change to workspace directory if provided
     // This makes all relative paths work correctly
@@ -564,7 +569,8 @@ Summarize with a compatibility score: what percentage of the codebase is Workers
                             "content": [{
                                 "type": "text",
                                 "text": serde_json::to_string_pretty(&result.content).unwrap()
-                            }]
+                            }],
+                            "_meta": { "ground_cache": ground::computations::derived_cache::stats() }
                         }))
                     } else {
                         let error_msg = result.error.clone().unwrap_or_else(|| "Unknown error".to_string());
@@ -574,6 +580,7 @@ Summarize with a compatibility score: what percentage of the codebase is Workers
                                 "type": "text",
                                 "text": error_msg
                             }],
+                            "_meta": { "ground_cache": ground::computations::derived_cache::stats() },
                             "isError": true
                         }))
                     }
