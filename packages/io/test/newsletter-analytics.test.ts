@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { execFileSync } from 'node:child_process';
+import { classifyAnalyticsTraffic } from '../../canon/src/lib/analytics/server';
 import { newsletterMetadata } from '../src/lib/newsletter/measurement';
 import { NEWSLETTER_DELIVERIES, NEWSLETTER_ENGAGEMENT_SQL, readNewsletterDelivery } from '../src/lib/server/newsletter-analytics';
 
@@ -27,6 +28,8 @@ test('provider failures and mismatched receipts never become zero delivery', asy
 });
 
 test('SQL deduplicates visits, limits attribution and separates operator traffic', () => {
+  const classification = classifyAnalyticsTraffic({ url: 'https://createsomething.io/papers/proof-surface?traffic_class=test' });
+  assert.equal(classification.trafficClass, 'test');
   const result = execFileSync('python3', ['-c', `
 import sqlite3,json,sys
 c=sqlite3.connect(':memory:');c.row_factory=sqlite3.Row
@@ -38,12 +41,12 @@ add('reader','page_view',m,'-20 minutes');add('reader','page_view',m,'-19 minute
 add('reader','content_link_click',{'trafficClass':'external'},'-18 minutes');add('reader','content_link_click',{'trafficClass':'external'},'-17 minutes')
 add('reader','content_copy',{'trafficClass':'external'},'-25 minutes')
 add('old','page_view',m,'-2 hours');add('old','content_copy',{'trafficClass':'external'},'-1 minute')
-add('test','page_view',dict(m,trafficClass='operator'),'-5 minutes')
+add('test','page_view',dict(m,trafficClass=sys.argv[2]),'-5 minutes')
 print(json.dumps([dict(r) for r in c.execute(sys.argv[1])]))
-`, NEWSLETTER_ENGAGEMENT_SQL], { encoding: 'utf8' });
+`, NEWSLETTER_ENGAGEMENT_SQL, classification.trafficClass], { encoding: 'utf8' });
   const rows = JSON.parse(result);
   assert.deepEqual(rows.find((r: {traffic_class:string}) => r.traffic_class === 'external'), {
     campaign: '2026-09-08-test-the-checker', traffic_class: 'external', landing_sessions: 2, resource_click_sessions: 1, copy_sessions: 0
   });
-  assert.equal(rows.find((r: {traffic_class:string}) => r.traffic_class === 'operator').landing_sessions, 1);
+  assert.equal(rows.find((r: {traffic_class:string}) => r.traffic_class === 'test').landing_sessions, 1);
 });
