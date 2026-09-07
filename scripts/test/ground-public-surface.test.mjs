@@ -27,14 +27,22 @@ test('Ground public surfaces use executable agent-client commands', async () => 
   ]);
 
   const command = 'codex mcp add ground -- npx --yes -p @createsomething/ground-mcp ground-mcp';
-  assert.match(agency, new RegExp(command.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  assert.match(
+    agency.replaceAll('@createsomething/ground-mcp@0.4.3', '@createsomething/ground-mcp'),
+    new RegExp(command.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+  );
   assert.match(docs, new RegExp(command.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   assert.match(readme, new RegExp(command.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   assert.doesNotMatch(agency, /codex mcp add ground --command/);
   assert.doesNotMatch(docs, /codex mcp add ground --command/);
   assert.doesNotMatch(readme, /codex mcp add ground --command/);
 
-  for (const source of [agency, docs, readme]) {
+  assert.match(agency, /npm install -g @createsomething\/ground-mcp@0\.4\.3/);
+  for (const source of [
+    agency.replaceAll('@createsomething/ground-mcp@0.4.3', '@createsomething/ground-mcp'),
+    docs,
+    readme
+  ]) {
     assert.match(source, /"--yes"/);
     assert.match(source, /"-p"/);
     assert.match(source, /"@createsomething\/ground-mcp"/);
