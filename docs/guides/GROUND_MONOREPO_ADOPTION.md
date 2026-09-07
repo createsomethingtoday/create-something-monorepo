@@ -85,6 +85,8 @@ Run these commands from the updated checkout and keep its path with the handoff.
 
 Receipt output must be outside the analyzed checkout (for example, `/tmp/ground-adoption-receipt.json`). The verifier rejects checkout paths and symbolic links and atomically replaces external receipts to preserve analyzed source.
 
+The reviewed public API distinguishes 29 runtime values from 20 type-only exports. The verifier parses the entry point with TypeScript, rejecting changes in export kind, commented declarations, and renamed public symbols.
+
 These policy and pilot-support changes are delivered through the repository PR
 boundary. They do not change the published npm payload or native binary and do
 not require another npm version. Verify the exact existing published package

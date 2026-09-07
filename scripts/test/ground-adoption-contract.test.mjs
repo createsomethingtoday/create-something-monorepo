@@ -60,7 +60,8 @@ function evidence() {
       { module: 'packages/mcp-core/src/server.ts', total_exports: 2 },
       { module: 'packages/mcp-core/src/auth.ts', total_exports: 1 }
     ], modules: [{ module: 'packages/mcp-core/src/server.ts',
-      symbols: ['createScopedServer', 'jsonContent'] }] },
+      symbols: ['createScopedServer', 'jsonContent'],
+      export_kinds: { createScopedServer: 'value', jsonContent: 'value' } }] },
     publicIndex: "export { createScopedServer, jsonContent } from './server.js';",
     packageExports: { '.': { default: './dist/index.js' } }
   };
@@ -69,6 +70,24 @@ function evidence() {
 test('complete reviewed export evidence and clean source produce a ready contract', () => {
   assert.equal(verifyAdjudicatedExports(evidence()), 2);
   assert.deepEqual(verifyCheckout({ sourceSha, status: '' }), { source_sha: sourceSha, dirty: false });
+});
+
+for (const publicIndex of [
+  "export type { createScopedServer, jsonContent } from './server.js';",
+  "export { type createScopedServer, jsonContent } from './server.js';",
+  "// export { createScopedServer, jsonContent } from './server.js';",
+  "export { createScopedServer as renamed, jsonContent } from './server.js';"
+]) {
+  test('runtime API cannot be retained through type-only, commented or aliased exports: ' + publicIndex, () => {
+    assert.throws(() => verifyAdjudicatedExports({ ...evidence(), publicIndex }));
+  });
+}
+
+test('reviewed type exports are retained as types', () => {
+  const input = evidence();
+  input.adjudication.modules[0].export_kinds.createScopedServer = 'type';
+  input.publicIndex = "export { type createScopedServer, jsonContent } from './server.js';";
+  assert.equal(verifyAdjudicatedExports(input), 2);
 });
 
 test('a detector omission cannot silently shrink the reviewed candidate set', () => {
