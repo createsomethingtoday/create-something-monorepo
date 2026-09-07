@@ -700,8 +700,13 @@ fn collect_files(dir: &Path, files: &mut Vec<PathBuf>) -> Result<(), String> {
 fn graph_fingerprint(root: &Path, files: &[PathBuf], aliases: &[PathAlias], resolution: &HashMap<String, PathBuf>) -> Result<([u8; 32], Vec<[u8; 32]>), String> {
     use sha2::{Digest, Sha256};
     let canonical = root.canonicalize().map_err(|e| e.to_string())?;
-    let sorted: std::collections::BTreeMap<_, _> = resolution.iter().collect();
-    let config = serde_json::to_vec(&(root, canonical, files, aliases, sorted)).map_err(|e| e.to_string())?;
+    // JSON Path serialization rejects valid non-UTF-8 Unix names. Fingerprint
+    // platform bytes losslessly; graph storage may independently skip caching.
+    let sorted: std::collections::BTreeMap<_, _> = resolution.iter()
+        .map(|(name, path)| (name, path.as_os_str().as_encoded_bytes())).collect();
+    let file_paths: Vec<_> = files.iter().map(|path| path.as_os_str().as_encoded_bytes()).collect();
+    let config = serde_json::to_vec(&(root.as_os_str().as_encoded_bytes(),
+        canonical.as_os_str().as_encoded_bytes(), file_paths, aliases, sorted)).map_err(|e| e.to_string())?;
     let mut hasher = Sha256::new(); hasher.update(config);
     let mut hashes = Vec::with_capacity(files.len());
     for file in files {

@@ -6,7 +6,7 @@ MCP reuse is enabled by default. Pass `ground-mcp --no-cache` to disable it. CLI
 
 Every graph request discovers the current files, reads their bytes, and recomputes aliases and workspace package resolution. Keys include source content, scope and resolution inputs. New graphs parse the validated buffers and recheck their inputs before insertion. Discovery failures, directory cycles and detected concurrent changes return errors. Failed parses never populate a complete cached graph. This remains analysis of a live filesystem, not a transactional checkout snapshot; callers should avoid editing during a query.
 
-Derived data has a 16 MiB serialized-payload limit and a 512-entry limit with FIFO eviction. Deserialized graphs, source buffers and allocator overhead add memory beyond that limit. Tool responses expose `_meta.ground_cache` counters. No state is written to disk; restart, upgrade and `--no-cache` clear reuse. Final findings are recomputed, and existing evidence freshness checks remain in force.
+Derived data has a 16 MiB serialized-payload limit and a 512-entry limit with FIFO eviction. Encoding stops when the payload limit is reached; oversized values are not retained. Deserialized graphs, source buffers and allocator overhead add memory beyond that limit. Valid non-UTF-8 Unix paths use lossless fingerprint bytes; if a graph cannot be encoded for storage, analysis continues without retaining that graph. Tool responses expose `_meta.ground_cache` counters. No state is written to disk; restart, upgrade and `--no-cache` clear reuse. Final findings are recomputed, and existing evidence freshness checks remain in force.
 
 ## Verify
 

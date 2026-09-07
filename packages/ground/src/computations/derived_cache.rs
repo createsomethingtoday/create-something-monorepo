@@ -122,11 +122,31 @@ pub(crate) fn put<T: Serialize>(key: [u8; 32], value: &T) {
     if !enabled() {
         return;
     }
-    if let Ok(bytes) = serde_json::to_vec(value) {
+    if let Some(bytes) = serialize_bounded(value) {
         if let Ok(mut cache) = CACHE.get_or_init(|| Mutex::new(Cache::default())).lock() {
             cache.insert(key, bytes);
         }
     }
+}
+// Stop the serializer as soon as the retained-payload budget would be exceeded.
+// This also bounds transient encoded bytes for graphs that cannot be retained.
+fn serialize_bounded<T: Serialize>(value: &T) -> Option<Vec<u8>> {
+    struct LimitedWriter(Vec<u8>);
+    impl std::io::Write for LimitedWriter {
+        fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+            if bytes.len() > MAX_BYTES - self.0.len() {
+                return Err(std::io::Error::other("derived cache payload limit"));
+            }
+            self.0.extend_from_slice(bytes);
+            Ok(bytes.len())
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+    let mut writer = LimitedWriter(Vec::new());
+    serde_json::to_writer(&mut writer, value).ok()?;
+    Some(writer.0)
 }
 /// Parse exactly the bytes read for this request. Errors are never cached.
 pub(crate) fn parse<T: Serialize + DeserializeOwned>(
@@ -157,6 +177,30 @@ pub(crate) fn parse<T: Serialize + DeserializeOwned>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn serialization_stops_when_payload_budget_is_exceeded() {
+        use serde::ser::SerializeSeq;
+        use std::cell::Cell;
+        struct Large<'a>(&'a Cell<usize>);
+        impl Serialize for Large<'_> {
+            fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+                let mut seq = serializer.serialize_seq(None)?;
+                let chunk = "x".repeat(1024 * 1024);
+                for _ in 0..64 {
+                    self.0.set(self.0.get() + 1);
+                    seq.serialize_element(&chunk)?;
+                }
+                seq.end()
+            }
+        }
+        let count = Cell::new(0);
+        assert!(serialize_bounded(&Large(&count)).is_none());
+        assert!(
+            count.get() <= 16,
+            "serialization must stop before visiting all records"
+        );
+        assert_eq!(serialize_bounded(&vec![1, 2]), Some(b"[1,2]".to_vec()));
+    }
     #[test]
     fn payload_and_entry_limits_evict_without_exceeding_bounds() {
         let mut cache = Cache::default();

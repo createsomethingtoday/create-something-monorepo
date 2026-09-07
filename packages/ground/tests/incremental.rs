@@ -85,3 +85,27 @@ fn discovery_and_mid_build_changes_never_cache_a_clean_graph() {
         assert!(SymbolGraph::build(dir.path(), None).is_err());
     }
 }
+
+// Linux filesystems support byte names that macOS APFS refuses to create.
+#[cfg(target_os = "linux")]
+#[test]
+fn non_utf8_paths_do_not_make_cache_enabled_analysis_fail() {
+    use std::ffi::OsString;
+    use std::os::unix::ffi::OsStringExt;
+    let dir = tempfile::tempdir().unwrap();
+    let scope = dir.path().join(OsString::from_vec(vec![b's', 0xff]));
+    fs::create_dir(&scope).unwrap();
+    let module = scope.join("lib.ts");
+    fs::write(&module, "export const first = 1;").unwrap();
+    fs::write(
+        scope.join(OsString::from_vec(vec![0xfe, b'.', b't', b's'])),
+        "import { first } from './lib';",
+    )
+    .unwrap();
+    for _ in 0..2 {
+        assert!(find_dead_exports(&module, &scope)
+            .unwrap()
+            .dead_exports
+            .is_empty());
+    }
+}
