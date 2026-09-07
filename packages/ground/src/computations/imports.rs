@@ -192,6 +192,56 @@ pub fn extract_exports(path: &Path) -> Result<Vec<ExtractedExport>, String> {
     Ok(exports)
 }
 
+/// A barrel edge preserves both names, including renamed and wildcard exports.
+pub struct ReexportEdge {
+    pub source: String,
+    pub imported: String,
+    pub exported: String,
+}
+
+pub fn extract_reexport_edges(path: &Path) -> Result<Vec<ReexportEdge>, String> {
+    let source = fs::read_to_string(path).map_err(|error| error.to_string())?;
+    let ext = path.extension().and_then(|value| value.to_str()).unwrap_or("");
+    let source = if ext == "svelte" {
+        match extract_svelte_module_script(&source) { Some(script) => script, None => return Ok(Vec::new()) }
+    } else { source };
+    let language = match ext {
+        "tsx" => tree_sitter_typescript::LANGUAGE_TSX.into(),
+        "ts" | "svelte" => tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into(),
+        _ => tree_sitter_javascript::LANGUAGE.into(),
+    };
+    let mut parser = Parser::new();
+    parser.set_language(&language).map_err(|error| error.to_string())?;
+    let tree = parser.parse(&source, None).ok_or("Cannot parse barrel")?;
+    if tree.root_node().has_error() { return Err("Syntax errors prevent complete barrel analysis".to_string()); }
+    let mut edges = Vec::new();
+    let mut cursor = tree.root_node().walk();
+    for statement in tree.root_node().named_children(&mut cursor) {
+        if statement.kind() != "export_statement" { continue; }
+        let Some(from) = statement.child_by_field_name("source") else { continue; };
+        let from = from.utf8_text(source.as_bytes()).map_err(|error| error.to_string())?
+            .trim_matches(|character| character == '\'' || character == '"').to_string();
+        let mut children = statement.walk();
+        for child in statement.children(&mut children) {
+            if child.kind() == "*" {
+                edges.push(ReexportEdge { source: from.clone(), imported: "*".to_string(), exported: "*".to_string() });
+            } else if child.kind() == "export_clause" {
+                let mut specifiers = child.walk();
+                for specifier in child.named_children(&mut specifiers) {
+                    let Some(name) = specifier.child_by_field_name("name") else { continue; };
+                    let alias = specifier.child_by_field_name("alias").unwrap_or(name);
+                    edges.push(ReexportEdge {
+                        source: from.clone(),
+                        imported: name.utf8_text(source.as_bytes()).map_err(|error| error.to_string())?.to_string(),
+                        exported: alias.utf8_text(source.as_bytes()).map_err(|error| error.to_string())?.to_string(),
+                    });
+                }
+            }
+        }
+    }
+    Ok(edges)
+}
+
 fn extract_imports_from_node(node: Node, source: &str, imports: &mut Vec<ExtractedImport>) {
     // Handle import statements
     if node.kind() == "import_statement" {

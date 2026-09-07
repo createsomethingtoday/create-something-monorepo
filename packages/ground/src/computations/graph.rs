@@ -401,7 +401,7 @@ impl SymbolGraph {
         }
         
         // Handle alias-resolved absolute paths (relative to root)
-        if !module_spec.starts_with('.') && !module_spec.starts_with('/') {
+        if resolved_spec.is_some() || (!module_spec.starts_with('.') && !module_spec.starts_with('/')) {
             // This might be an alias-resolved path
             let resolved = self.root_dir.join(module_spec);
             
@@ -683,7 +683,7 @@ fn detect_path_aliases(root_dir: &Path) -> Vec<PathAlias> {
             if !aliases.iter().any(|alias| alias.pattern == "$lib") {
                 aliases.push(PathAlias {
                     pattern: "$lib".to_string(),
-                    target: "src/lib".to_string(),
+                    target: search_dir.canonicalize().unwrap_or_else(|_| search_dir.clone()).join("src/lib").to_string_lossy().into_owned(),
                 });
             }
         }
@@ -692,7 +692,7 @@ fn detect_path_aliases(root_dir: &Path) -> Vec<PathAlias> {
         let tsconfig_path = search_dir.join("tsconfig.json");
         if tsconfig_path.exists() {
             if let Ok(content) = fs::read_to_string(&tsconfig_path) {
-                aliases.extend(parse_tsconfig_paths(&content));
+                aliases.extend(configured_aliases(&content, &search_dir));
             }
         }
         
@@ -700,7 +700,7 @@ fn detect_path_aliases(root_dir: &Path) -> Vec<PathAlias> {
         let jsconfig_path = search_dir.join("jsconfig.json");
         if jsconfig_path.exists() {
             if let Ok(content) = fs::read_to_string(&jsconfig_path) {
-                aliases.extend(parse_tsconfig_paths(&content));
+                aliases.extend(configured_aliases(&content, &search_dir));
             }
         }
         
@@ -714,6 +714,17 @@ fn detect_path_aliases(root_dir: &Path) -> Vec<PathAlias> {
 }
 
 /// Parse path aliases from tsconfig.json content
+fn configured_aliases(content: &str, directory: &Path) -> Vec<PathAlias> {
+    let document = json5::from_str::<serde_json::Value>(content).unwrap_or_default();
+    let base = document.get("compilerOptions").and_then(|options| options.get("baseUrl"))
+        .and_then(|value| value.as_str()).unwrap_or(".");
+    let directory = directory.canonicalize().unwrap_or_else(|_| directory.to_path_buf());
+    parse_tsconfig_paths(content).into_iter().map(|mut alias| {
+        alias.target = directory.join(base).join(&alias.target).to_string_lossy().into_owned();
+        alias
+    }).collect()
+}
+
 fn parse_tsconfig_paths(content: &str) -> Vec<PathAlias> {
     let Ok(document) = json5::from_str::<serde_json::Value>(content) else {
         return Vec::new();
@@ -833,7 +844,7 @@ import { helper } from '$lib/utils';
         
         // Check alias resolution works
         let resolved = graph.resolve_alias("$lib/utils");
-        assert_eq!(resolved, Some("src/lib/utils".to_string()));
+        assert_eq!(resolved, Some(dir.path().canonicalize().unwrap().join("src/lib/utils").to_string_lossy().into_owned()));
     }
     
     #[test]
