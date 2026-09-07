@@ -200,10 +200,10 @@ test('commercial decision routes explain the task, delivery, ownership, and proo
   const layout = read('+layout.svelte');
   assert.match(layout, /label: 'How It Works', href: '\/services'/);
   assert.match(layout, /label: 'What You Keep', href: '\/stack'/);
-  assert.match(home, /Turn meeting notes into a reviewable action list\./);
+  assert.match(home, /Turn meeting notes into a draft action list\./);
   assert.match(home, /Illustrative example, not a measured client result/);
-  assert.match(home, /A person checks the draft before anything is saved to another tool/);
-  assert.match(home, /Source, rules, tests, and runbook/);
+  assert.match(home, /Approve before saving to another tool/);
+  assert.match(home, /Code, tests, and instructions/);
   assert.match(read('services/+page.svelte'), /Bring one task your team still handles manually/);
   assert.match(read('products/+page.svelte'), /Map and Control are subscriptions/);
   assert.match(read('products/+page.svelte'), /Control includes Map/);
@@ -396,22 +396,25 @@ test('the homepage service steps preserve approvals, testing, and separate launc
   const steps = home.slice(home.indexOf('const steps ='), home.indexOf('</script>'));
   assert.match(steps, /what AI may do and what needs approval/);
   assert.match(steps, /test environment/);
-  assert.match(steps, /Going live is a separate project/);
+  assert.match(steps, /Launch is a separate project, quoted before you commit/);
   assert.match(steps, /monitoring, incident response, and regular reviews/);
   for (const route of ['/map', '/agent-foundation', '/control']) assert.ok(steps.includes(route));
 });
 
 test('the homepage defines unfamiliar terms beside the example', () => {
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
-  assert.match(home, /An agent is software that uses AI and connected tools/);
-  assert.match(home, /A runbook is the guide to starting, running, and recovering the system/);
+  const exampleStart = home.indexOf('<section class="home-section foundation-example"');
+  const example = home.slice(exampleStart, home.indexOf('</section>', exampleStart));
+  assert.match(example, /An agent is software that uses AI and connected tools/);
+  assert.match(example, /Needs confirmation/);
   assert.match(home, /OpenAI Codex, an AI coding tool/);
   assert.doesNotMatch(home, /Offense|Defense|PerformanceWorkflowMiniArtifact|HeroTrustArtifact/);
 });
 
 test('the mobile homepage stacks the example and service steps for reading', () => {
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
-  assert.match(home, /@media \(max-width: 640px\)[\s\S]*?dl, \.home-steps\s*\{\s*grid-template-columns: 1fr/);
+  assert.match(home, /@media \(max-width: 640px\)[\s\S]*?\.home-steps\s*\{\s*grid-template-columns: 1fr/);
+  assert.match(home, /@media \(max-width: 640px\)[\s\S]*?\.example-comparison\s*\{\s*grid-template-columns: 1fr/);
   assert.doesNotMatch(home, /PublicSubstrateCanvas|MeridianEvidenceCarousel/);
 });
 
