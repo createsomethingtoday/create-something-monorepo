@@ -251,13 +251,13 @@ test('Products explains the product family and keeps operating surfaces inside C
     'utf8'
   );
 
-  assert.match(products, /Choose where the workflow is now\./);
+  assert.match(products, /Choose the help you need now\./);
   assert.match(products, /id: 'map'/);
   assert.match(products, /id: 'build'/);
   assert.match(products, /id: 'control'/);
   assert.doesNotMatch(products, /id: 'proof'/);
-  assert.match(products, /Two products and one implementation service\./);
-  assert.match(products, /Signal, Decision, and Proof are operator surfaces\./);
+  assert.match(products, /Map and Control are subscriptions\./);
+  assert.match(products, /views for incoming work, approvals, and results\./);
   assert.match(products, /Control includes Map/);
   assert.doesNotMatch(products, /Four inspectable surfaces/);
   assert.doesNotMatch(products, /Four visible jobs/);
@@ -266,12 +266,12 @@ test('Products explains the product family and keeps operating surfaces inside C
 test('booking carries the Field Report handoff into the owned mapping scheduler', () => {
   const book = readFileSync(new URL('../src/routes/book/+page.svelte', import.meta.url), 'utf8');
 
-  assert.match(book, /Review the handoff, then choose a time/);
+  assert.match(book, /Choose a time to talk through the task/);
   assert.match(book, /30- or 60-minute/);
   assert.match(book, /Choose 30 or 60 minutes/);
   assert.match(book, /first-party scheduler/);
   assert.match(book, /createBookingHandoffState/);
-  assert.match(book, /What will travel into booking/);
+  assert.match(book, /Details included with your booking/);
 });
 
 test('the homepage concentrates measured Field Report proof in one primary readback', () => {
@@ -285,12 +285,12 @@ test('the homepage concentrates measured Field Report proof in one primary readb
   assert.match(home, /<AgencyPerformanceReadback \/>/);
   assert.doesNotMatch(home, /class="service-proof-row"/);
   assert.doesNotMatch(home, /class="field-report"/);
-  assert.match(home, /class="ownership-callout"/);
-  assert.match(home, /import \{ templateReviewFieldReport \} from '\$lib\/data\/fieldReports'/);
-  assert.match(home, /templateReviewFieldReport\.id/);
+  assert.match(home, /class="home-section ownership-callout"/);
+  assert.match(readback, /import \{ templateReviewFieldReport \} from '\$lib\/data\/fieldReports'/);
+  assert.match(readback, /templateReviewFieldReport\.id/);
   assert.match(readback, /evidence\.usableCases/);
   assert.match(readback, /evidence\.selectedCases/);
-  assert.match(readback, /automated judgment[^.]*(?:cannot|blocked|remains)/i);
+  assert.match(readback, /The system cannot approve or reject submissions/i);
   assert.match(
     readback,
     /reviewer time savings[^.]*(?:not|never|remain)[^.]*(?:measured|verified)/i

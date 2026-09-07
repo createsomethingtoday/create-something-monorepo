@@ -18,16 +18,16 @@
       icon: 'folder',
       title: 'Substrate keeps the operating record.',
       detail:
-        'Use Substrate for source records, workflow state, human review, decisions, receipts, and the API/MCP boundary the system owns.',
+        'Substrate is our database and work view. It keeps records, tasks, approvals, and results together.',
       href: '/products',
       points: ['Operating state', 'Human review', 'Receipts']
     },
     {
       eyebrow: 'Agent environment',
       icon: 'check',
-      title: 'OpenAI is the primary reasoning and agent environment.',
+      title: 'OpenAI provides the AI models and coding tools we use.',
       detail:
-        'Use OpenAI for reasoning and agent-operable delivery, with scoped tools, approval behavior, and grounded evidence. MCP contracts, policy, and evals preserve the route to Claude, open-weight and custom models.',
+        'We use OpenAI with agreed permissions and tests. The same tool definitions and checks help us evaluate Claude, open-weight and custom models when needed.',
       href: '/stack',
       points: ['Reasoning layer', 'Agent delivery', 'Portable contracts']
     },
@@ -36,7 +36,7 @@
       icon: 'folder',
       title: 'Cloudflare runs the route.',
       detail:
-        'Use Cloudflare when the workflow needs owned runtime behavior, durable state, and rollback paths.',
+        'Cloudflare provides hosting, storage, and background tasks. We document ownership and recovery for the services we use.',
       href: '/cloudflare',
       points: ['Workers and Pages', 'Durable state', 'Rollback path']
     }
@@ -93,19 +93,19 @@
     {
       question: 'Why not lead with vendor badges?',
       answer:
-        'The durable value is the workflow boundary: what can run, what needs approval, what stops, who owns the account, and what evidence the operator keeps. Curated marks follow that boundary as compatibility evidence, while the full directory keeps availability distinct from a live connection.'
+        'Start with the task and the tools it needs. The directory lists available connections. A listing does not mean an account is connected or that access has been approved.'
     },
     {
       question: 'How does this help a team choose the right path?',
       answer:
-        'The page starts with the workflow, puts its operating state and review path in Substrate, then assigns a narrow job to OpenAI or Cloudflare before implementation begins.'
+        'We agree on the task first. Then we choose the tools, data storage, and hosting it needs, with permissions for each.'
     }
   ];
 </script>
 
 <SEO
-  title="Workflow Tool Stack | CREATE SOMETHING .agency"
-  description="CREATE SOMETHING maps one controlled workflow across its owned Substrate layer, Cloudflare infrastructure, and OpenAI intelligence."
+  title="Connected Tools | CREATE SOMETHING .agency"
+  description="Find connections for the tools your team uses, and see what provides the AI, hosting, and work records."
   keywords="workflow tool stack, AI workflow systems, Substrate database, OpenAI agents, Cloudflare workflow runtime, MCP tool boundary"
   ogImage="/og-image.png"
   propertyName="agency"
@@ -118,8 +118,8 @@
   titleLevel="h1"
   expression="editorial"
   eyebrow="Workflow Tool Stack"
-  title="Choose the right tool path for one controlled workflow."
-  description="Start with the workflow your team wants to delegate. CREATE SOMETHING maps the operating state you own first. Only then does an external tool get more authority."
+  title="Connect the tools your task needs."
+  description="Bring the task and the tools your team uses. We check which connections are available and agree on access before connecting your accounts."
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.selfMapHref}>
@@ -134,7 +134,7 @@
 <PerformancePageSection
   variant="white"
   eyebrow="Tool fit"
-  title="CREATE SOMETHING owns the record. Each external platform gets one job."
+  title="What each part of the system does."
   description="CREATE SOMETHING owns the system. Cloudflare provides infrastructure. OpenAI provides intelligence. Substrate keeps workflow state, operator review, decisions, and evidence under CREATE SOMETHING control."
 >
   {#snippet after()}
@@ -147,8 +147,8 @@
 <PerformancePageSection
   variant="soft"
   eyebrow="What you keep"
-  title="The useful output is a map, not a vendor diagram."
-  description="The first artifact should tell an operator what happens, who owns the decision, where the system stops, and what proof remains."
+  title="See how the tools work together."
+  description="The plan shows each step, who approves it, when the system stops, and what record is kept."
 >
   {#snippet after()}
     <PerformanceCardGrid
@@ -162,8 +162,8 @@
 <PerformanceConversionHandoff
   expression="editorial"
   eyebrow="Map the workflow"
-  title="Bring the workflow before choosing the stack."
-  description="Map the handoff and name its owner, then agree what the system may do on its own and where it has to stop. Deliver workflows for clients? Use the service-provider path to keep the client boundary attached."
+  title="Choose the task before choosing the tools."
+  description="Plan the task with the person responsible. Agree on what the system can do and when it must stop. If you deliver client work, read the service-provider guide."
   steps={ctaItems}
   handoff={{
     owner: 'Workflow owner',

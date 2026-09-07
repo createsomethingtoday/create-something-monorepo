@@ -18,21 +18,21 @@
       icon: 'user',
       title: 'Person and tenant boundary',
       detail:
-        'Portal sign-in establishes who is acting and which organization boundary the request belongs to.'
+        'Signing in identifies the person and the organization making the request.'
     },
     {
       eyebrow: 'Entitlement',
       icon: 'check',
       title: 'Live access check',
       detail:
-        'Membership, allowed workflow, contract standing, billing state, and policy acceptance are checked at request time.'
+        'Each request checks membership, workflow access, contract and billing status, and acceptance of the access policy.'
     },
     {
       eyebrow: 'Credential',
       icon: 'warning',
       title: 'Separate managed tokens',
       detail:
-        'Portal identity, managed bearer tokens, and hosted product credentials remain distinct so compromise and revocation stay deliberate.'
+        'Portal logins, access tokens, and hosted product credentials are separate. Access can be removed without treating every credential as the same login.'
     },
     {
       eyebrow: 'Control',
@@ -49,7 +49,7 @@
       icon: 'success',
       title: 'Run still needs the right lane',
       detail:
-        'A token can exist, but execution still depends on the allowed workflow, scoped action, owner, and current access state.'
+        'Having an access token does not allow every action. Each request must also pass the workflow and permission checks.'
     },
     {
       eyebrow: 'Blocked',
@@ -91,7 +91,7 @@
 
 <SEO
   title="Security"
-  description="How CREATE SOMETHING .agency turns identity, entitlement, blocked states, and audit trails into controlled execution for production automation."
+  description="How we check identity and permissions, limit access, record actions, and revoke credentials for live AI workflows."
   propertyName="agency"
 />
 
@@ -102,7 +102,7 @@
   expression="editorial"
   eyebrow="Security"
   title="A token can exist and access can still stop."
-  description="Credentials are not permission by themselves. Who you are, what you may touch, and who approves it are all resolved before delegated work runs."
+  description="The system checks who is asking, what they can access, and whether approval is needed before it acts. A login alone is not enough."
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
@@ -124,8 +124,8 @@
 <PerformancePageSection
   variant="white"
   eyebrow={`Last updated ${updatedDate}`}
-  title="Controlled delegation needs an explicit access chain."
-  description="Each request passes through a clear path so approval requirements, blocked states, and recovery paths stay legible instead of hiding inside a prompt or a vendor account."
+  title="Check access at every step."
+  description="Each request passes identity and permission checks. The system records approvals and reasons for stopping, so your team can review what happened."
 >
   {#snippet after()}
     <PerformanceCardGrid items={securityPath} columns={4} ariaLabel="Security control path" />
@@ -135,8 +135,8 @@
 <PerformanceConversionHandoff
   expression="editorial"
   eyebrow="Access boundary"
-  title="Name the boundary before you hand out credentials."
-  description="An agent should arrive at a workflow that already knows its permissions, its stop points, and who decides. Access is granted against that map, not ahead of it."
+  title="Agree on permissions before granting access."
+  description="Decide what the agent may do, when it must stop, and who approves exceptions. Grant access only after those rules are clear."
   steps={ctaItems}
   handoff={{ owner: 'Security owner', authority: 'Identity + entitlement boundary', proof: 'Audit trail', state: 'review' }}
 >

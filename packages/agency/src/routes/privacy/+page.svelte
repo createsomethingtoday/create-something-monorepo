@@ -14,7 +14,7 @@
   titleLevel="h1"
   eyebrow="Privacy"
   title="First-party analytics, no ad pixels."
-  description="CREATE SOMETHING uses privacy-conscious measurement to understand site performance and lead quality without selling behavior or installing ad-network trackers."
+  description="We measure how the site works and how people find our services. We do not sell browsing behavior or install ad-network trackers."
 >
   {#snippet after()}
     <PrivacyPolicyContent

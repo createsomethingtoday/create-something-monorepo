@@ -23,10 +23,10 @@
 	}
 </script>
 
-<SEO title="Map Subscription | CREATE SOMETHING AGENCY" description="Choose a CREATE SOMETHING Map subscription cadence." propertyName="agency" noindex={true} />
+<SEO title="Map Subscription | CREATE SOMETHING AGENCY" description="Choose monthly or yearly billing for a Map workspace." propertyName="agency" noindex={true} />
 
 <main>
-	<header><p>CREATE SOMETHING Map</p><h1>Keep the workflow definition alive.</h1><span>Account-scoped workspace · immutable history · review · share · export · Build handoff</span></header>
+	<header><p>CREATE SOMETHING Map</p><h1>Keep your workflow plan up to date.</h1><span>A saved workspace with version history, reviews, sharing, export, and handover for Build</span></header>
 	{#if data.checkoutEnabled}
 		<section class="plans">
 			<article><p>Monthly</p><h2>Map monthly</h2><span>Recurring subscription. Cancel from the billing support path.</span><button disabled={Boolean(busy)} onclick={() => startCheckout('map-monthly')}>{busy === 'map-monthly' ? 'Opening…' : 'Continue monthly'}</button></article>
@@ -34,14 +34,14 @@
 		</section>
 	{:else}
 		<section class="gate" aria-live="polite">
-			<p>Commercial launch gate</p>
+			<p>Workspace access</p>
 			<h2>Self-serve checkout is not active.</h2>
-			<span>No payment can be started until commercial approval and both approved price configurations are present. Existing invited pilots keep their governed access path.</span>
+			<span>Online purchases are not yet enabled. Contact us about access. Existing invited pilot users can continue using their approved access.</span>
 			<a href="/book?source=map-commercial-gate">Talk through access</a>
 		</section>
 	{/if}
 	{#if checkoutError}<p class="error" role="alert">{checkoutError}</p>{/if}
-	<footer>Taxes, invoices, refunds, cancellations, and payment failures follow the Map commercial operations runbook. Checkout never activates from a price ID alone.</footer>
+	<footer>Contact billing support for questions about taxes, invoices, refunds, cancellations, or a failed payment.</footer>
 </main>
 
 <style>

@@ -61,27 +61,27 @@
         {
           label: 'Try the method',
           href: '/practice',
-          description: 'See the embedded operating-partner model and delivery lanes.'
+          description: 'Try planning and reviewing an AI task.'
         },
         {
           label: 'Map a workflow',
           href: agencyCoreMessaging.selfMapHref,
-          description: 'Name the handoff, owner, and first controlled pilot.'
+          description: 'Plan the steps, tools, and people involved.'
         },
         {
           label: 'How it works',
           href: '/services',
-          description: 'Map, build, and control one AI-native operating path.'
+          description: 'See how we plan, build, and support your project.'
         },
         {
           label: 'Marketplace field report',
           href: '/field-reports/template-review',
-          description: 'Inspect a live workflow, evidence, and decision boundary.'
+          description: 'Read what was tested and what stayed with human reviewers.'
         }
       ]
     },
     { label: 'What You Keep', href: '/stack' },
-    { label: 'The System', href: '/products' },
+    { label: 'Services & Tools', href: '/products' },
     { label: 'Proof', href: '/field-reports' }
   ];
   // Derived from the product family so the footer cannot drift from the source of truth.
@@ -107,7 +107,7 @@
   );
   const footerQuickLinkGroups = [
     {
-      title: 'Commercial',
+      title: 'Services',
       ariaLabel: 'Commercial paths',
       links: [
         { label: 'How It Works', href: '/services' },
@@ -130,7 +130,7 @@
       title: 'Tool Stack',
       ariaLabel: 'Workflow tool stack',
       links: [
-        { label: 'Workflow Tool Stack', href: '/partners' },
+        { label: 'Connected tools', href: '/partners' },
         { label: 'Cloudflare', href: '/cloudflare' }
       ]
     },
@@ -174,7 +174,7 @@
     {
       id: 'nav-services',
       label: 'How It Works',
-      description: 'Workflow maps, controlled pilots, and operating evidence',
+      description: 'Planning, building, and supporting AI tasks',
       href: '/services',
       icon: '🔨',
       keywords: [
@@ -207,7 +207,7 @@
     },
     {
       id: 'nav-partners',
-      label: 'Workflow Tool Stack',
+      label: 'Connected tools',
       description:
         'Map one workflow across the app surface, runtime, workspace, reasoning layer, approvals, and evidence',
       href: '/partners',
@@ -469,15 +469,15 @@
   <Footer
     mode="agency"
     showNewsletter={false}
-    aboutText="Client-owned agent foundations and workflow systems: one bounded capability, explicit operating authority, evidence-backed delivery, and a continuation path your team keeps."
+    aboutText="We build AI agents for useful business tasks. You keep the code, instructions, and work history."
     quickLinkGroups={footerQuickLinkGroups}
     footerCta={routeOwnsPerformanceEnding
       ? undefined
       : {
-          title: 'Ready to turn your agent project into a working foundation?',
+          title: 'Ready to put AI to work on a useful task?',
           label: agencyCoreMessaging.reviewAgentFoundationLabel,
           href: primaryCtaHref,
-          description: 'Bring the repository or prototype and one useful job for the agent.',
+          description: 'Bring an idea or a project and one task you want help with.',
           media: agencyFooterMacroMedia
         }}
     showSocial={true}

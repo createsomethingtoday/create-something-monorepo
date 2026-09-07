@@ -14,17 +14,17 @@
     {
       question: 'What is the Proof product?',
       answer:
-        'Proof is the durable record of app governance work: evidence, decision, owner, outcome, receipt, rollback note, and audit trail.'
+        'Proof is the work history inside Control. It records the evidence, decision, person responsible, result, and recovery notes.'
     },
     {
       question: 'Is Proof the same as a ledger?',
       answer:
-        'Proof is the product surface for the ledger idea. It records what happened and why without exposing private logs, credentials, or sensitive client data.'
+        'Proof shows what happened and why. It keeps private logs, credentials, and sensitive client data out of the public view.'
     },
     {
       question: 'How does Proof connect back to Map?',
       answer:
-        'Proof records back onto Map so operators can see which workflow node produced the outcome and what evidence supports it.'
+        'Map links the result to the step that produced it and the evidence supporting it.'
     }
   ];
 
@@ -158,8 +158,8 @@
 
 <GovernanceProductPage
   {product}
-  title="The proof graph that records what happened and why."
-  description="Proof turns Signals and Decisions into a durable record operators can inspect without exposing private credentials, raw logs, or sensitive data."
+  title="See what happened and why."
+  description="Proof connects the original task, its approval, and the result. Your team can review the record without exposing credentials, raw logs, or sensitive data."
   {heroCards}
   {pathItems}
   {detailCards}

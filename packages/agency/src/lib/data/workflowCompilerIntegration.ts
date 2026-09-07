@@ -1,8 +1,8 @@
 import type { PerformanceNarrativeScene } from '@create-something/canon';
 
 export const workflowCompilerIntegrationHero = {
-  title: 'Install one governed workflow contract in your repository.',
-  lede: 'A paid, fixed-scope implementation for builders using the open-source Workflow Compiler: one repository, one consequential workflow, the required MCP or agent tools, a CI gate, and a portable client-owned handoff.',
+  title: 'Add a tested workflow to your existing project.',
+  lede: 'For teams with a developer: we use the open-source Workflow Compiler to add one workflow to your repository. The project includes the required tools, automated checks, and a handover your team keeps.',
   proof: [
     { label: 'Format', value: 'Paid · fixed scope' },
     { label: 'Boundary', value: '1 repo · 1 workflow' },
@@ -15,9 +15,9 @@ export const workflowCompilerIntegrationScenes: PerformanceNarrativeScene[] = [
     id: 'install',
     label: 'Install',
     summary: 'Compiler in your repository',
-    title: 'Model the workflow where your builders already work.',
+    title: 'Define the workflow in your project.',
     detail:
-      'We install Workflow Compiler in one repository, model one consequential workflow, and connect only the required MCP or agent tools. The definition remains local, inspectable, and portable.',
+      'We install Workflow Compiler in one repository and define one workflow. We connect only the MCP or agent tools it needs. Your team keeps the definition.',
     tone: 'neutral',
     receipts: ['versioned workflow definition', 'tool boundary', 'ownership record']
   },
@@ -25,9 +25,9 @@ export const workflowCompilerIntegrationScenes: PerformanceNarrativeScene[] = [
     id: 'compile',
     label: 'Compile',
     summary: 'Policy becomes an artifact',
-    title: 'Turn operating intent into a governed contract.',
+    title: 'Turn the plan into rules and tests.',
     detail:
-      'The compiler generates policies, approval contracts, golden cases, and receipts around the workflow. Pass, wait, and stop outcomes become explicit instead of living only in a prompt.',
+      'The compiler generates rules, approval definitions, test cases, and result records. These define when work can run, must wait, or must stop.',
     tone: 'review',
     receipts: ['policies', 'approval contracts', 'golden cases', 'receipts']
   },
@@ -35,9 +35,9 @@ export const workflowCompilerIntegrationScenes: PerformanceNarrativeScene[] = [
     id: 'gate',
     label: 'Handoff',
     summary: 'One CI gate and a portable system',
-    title: 'Prove the boundary before the workflow can expand.',
+    title: 'Check the workflow before giving it more access.',
     detail:
-      'We add a CI gate, verify the governed bundle, document the operator boundary, and hand the system back to your team. Your builders keep the code, workflow, policies, receipts, and approval authority.',
+      'We add automated checks to your release process and verify the generated files. Your team keeps the code, workflow, rules, results, and approval rights.',
     tone: 'allow',
     evidence: ['deterministic bundle', 'CI result', 'client-owned handoff']
   }
@@ -88,5 +88,5 @@ export const workflowCompilerIntegrationHandoff = {
 export const workflowCompilerIntegrationClose = {
   title: 'Bring the repository and one workflow.',
   description:
-    'Paid, fixed-scope implementation. Priced after fit. If the workflow still needs definition, start with Map. Ongoing operation is a separate Control engagement. No hosted control plane.'
+    'This is a paid project with an agreed scope, quoted after review. Start with Map if the task is unclear. Hosting is not included; ongoing support is a separate Control service.'
 } as const;

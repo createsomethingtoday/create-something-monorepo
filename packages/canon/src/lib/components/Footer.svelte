@@ -359,7 +359,7 @@
 
   {#if usesEditorialStyle && footerCta}
     <MeridianOfferPanel
-      eyebrow="Next possession"
+      eyebrow={mode === 'agency' ? 'Next step' : 'Next possession'}
       title={footerCta.title ?? footerCta.label}
       description={footerCta.description}
       actionLabel={footerCta.label}
@@ -378,7 +378,7 @@
         aria-label={`${brandAsset.label} home`}
       >
         <img class="footer-editorial-identity__asset" src={brandAsset.src} alt="" />
-        <p>Operating systems for work that has to hold up.</p>
+        <p>{mode === 'agency' ? 'AI for useful business tasks. Built for your team to keep.' : 'Operating systems for work that has to hold up.'}</p>
       </a>
     {:else}
       <a
@@ -390,7 +390,7 @@
           <span>CREATE</span>
           <span>SOMETHING</span>
         </div>
-        <p>Operating systems for work that has to hold up.</p>
+        <p>{mode === 'agency' ? 'AI for useful business tasks. Built for your team to keep.' : 'Operating systems for work that has to hold up.'}</p>
       </a>
     {/if}
   {/if}

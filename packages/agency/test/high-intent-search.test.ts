@@ -17,14 +17,14 @@ const expectedLandings = [
   {
     path: '/marketplace-review-automation',
     intent: 'marketplace-review',
-    headline: 'Automate marketplace evidence preparation. Keep final judgment human.',
+    headline: 'Prepare review evidence automatically. Keep decisions with people.',
     proof: ['49/50 packets', 'final approval blocked', '0 external writes'],
     playbookVariant: 'marketplace-review'
   },
   {
     path: '/ai-workflow-recovery',
     intent: 'workflow-recovery',
-    headline: 'Bring us the workflow that no longer holds up.',
+    headline: 'Get help with an AI workflow that keeps failing.',
     proof: ['Failure and decision map', 'Missing evidence diagnosis', 'Repair, replace, or stop'],
     playbookVariant: 'workflow-recovery'
   },

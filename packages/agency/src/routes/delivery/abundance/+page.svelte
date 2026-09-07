@@ -46,14 +46,14 @@
       label: 'Before',
       title: 'Nurse intake, job search, staff data, and review lived in separate places.',
       detail:
-        'The workflow needed one client-safe path from candidate conversation to recruiter judgment.',
+        'The project connects candidate intake to recruiter review without exposing private information.',
       tone: 'neutral'
     },
     {
       label: 'Now',
       title: 'The polished Concierge app is the nurse-facing front door.',
       detail:
-        'The delivery page now explains how intake, public job discovery, review, and evidence fit together.',
+        'Follow the steps from nurse intake and public job search to recruiter review.',
       tone: 'success'
     },
     {
@@ -67,7 +67,7 @@
       label: 'Next decision',
       title: 'Account, webhook, mapping, and roster choices remain visible.',
       detail:
-        'The open decisions are explicit, attributable, and separated from private token-bearing evidence.',
+        'The record names the open decisions and who must make them. Private access links remain excluded.',
       tone: 'warning'
     }
   ];
@@ -161,9 +161,7 @@
       <span class="product-kicker">Abundance delivery record</span>
       <h1>The nurse intake experience is now the front door.</h1>
       <p>
-        A client-safe view of the Abundance pilot: nurses start in Concierge, public role discovery
-        stays read-only, protected steps wait for verification, and recruiter judgment remains the
-        gate before candidates or clients are moved.
+        In this pilot, nurses start in Concierge and can search public jobs. Protected steps require verification. A recruiter must approve moving candidates or clients forward.
       </p>
       <div class="delivery-actions" aria-label="Primary Abundance delivery actions">
         <a
@@ -205,7 +203,7 @@
 <DeliveryOutcomeStrip
   eyebrow="Business outcome"
   title="The pilot reads as an operating path."
-  description="The decision owner can see what changed, what is safer, and which decisions still gate the next phase without reading private evidence."
+  description="Review what changed and which decisions are still needed before the next phase. Private records remain excluded."
   items={outcomeItems}
 />
 
@@ -215,9 +213,7 @@
       <span class="product-kicker">Review packet</span>
       <h2>Client-safe links and proof.</h2>
       <p>
-        Start with the live nurse intake surface, then use the walkthroughs and delivery package to
-        review the operating boundary. Token-bearing URLs, employee rows, and private notes stay out
-        of this page.
+        Start with the nurse intake app, then review the walkthroughs and delivery files. Private access links, employee records, and notes are not shown here.
       </p>
     </div>
 
@@ -244,8 +240,7 @@
         <span class="product-kicker">Delivery notes</span>
         <h2>Ask what is safe, blocked, or ready.</h2>
         <p>
-          This bounded agent answers from the sanitized delivery context. Use it to explain the
-          work, name the open decisions, and turn client replies into structured next steps.
+          This agent answers from the approved public project notes. Ask it about the work, open decisions, or next steps.
         </p>
       </div>
 

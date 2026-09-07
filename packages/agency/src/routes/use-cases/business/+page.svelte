@@ -30,7 +30,7 @@
       icon: 'document',
       title: 'Code, policy, and runbook',
       detail:
-        'The operator keeps the map, the control boundary, and the evidence needed to trust it.'
+        'Your team keeps the plan, permissions, and test results.'
     }
   ];
 
@@ -144,9 +144,9 @@
       id: 'path',
       label: 'Path',
       summary: 'Remove one manual bridge',
-      title: 'Do not re-platform. Control the first handoff.',
+      title: 'Connect the tools your team already uses.',
       detail:
-        'Map the manual bridge, connect only the smallest useful point, classify decision states, and leave the operator with receipts.',
+        'Find the step people repeat, connect the tools it needs, and agree on approvals. Keep a record of the result.',
       tone: 'allow',
       receipts: ['workflow map', 'first connection', 'decision states', 'runbook']
     },
@@ -154,9 +154,9 @@
       id: 'offer',
       label: 'Offer',
       summary: 'Expand after proof',
-      title: 'The engagement grows only when the first pilot earns it.',
+      title: 'Test one task before expanding.',
       detail:
-        'A controlled workflow pilot creates the evidence for a broader system map or ongoing reliability work instead of promising to automate everything at once.',
+        'Use the first test to decide whether a broader plan or ongoing support would help.',
       tone: 'review'
     },
     {
@@ -184,12 +184,12 @@
     {
       question: 'How should a small team start with workflow automation?',
       answer:
-        'Start with one painful workflow, map the manual bridge, build the first controlled pilot, and leave the operator with code, policy, and runbook evidence.'
+        'Choose one repeated task. Plan the steps, build and test a first version, then hand over the code, rules, and operating instructions.'
     },
     {
       question: 'What makes a workflow safe to delegate?',
       answer:
-        'A workflow is safer to delegate when it has named owners, source systems, scoped actions, approval-needed states, blocked states, and receipts.'
+        'Agree on who is responsible, which tools the agent can use, when it needs approval, and how to check the result.'
     },
     {
       question: 'Does the first pilot need full platform migration?',
@@ -236,7 +236,7 @@
   expression="editorial"
   eyebrow="For teams of 5-50"
   title="Your tools do not talk to each other. Your team fills the gap."
-  description="Start with the workflow that wastes the most time. CREATE SOMETHING maps the manual bridge, builds the first controlled pilot, and leaves your operator with a control path they can understand."
+  description="Start with a task that wastes time. We plan how it should work, build and test a first version, and leave your team with the code and instructions."
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.selfMapHref}>
@@ -260,8 +260,8 @@
 <PerformanceNarrativeStage
   id="business-pilot-story"
   eyebrow="One pilot story"
-  title="One manual bridge deserves the first pilot. Pick it deliberately."
-  description="A small team needs one legible decision: which manual bridge deserves the first controlled pilot, what that pilot costs, what useful proof looks like, and whether the operating conditions fit."
+  title="Choose the first task carefully."
+  description="Compare the task, likely cost, and checks needed before starting. A small first project helps you decide whether to expand."
   scenes={businessScenes}
   ariaLabel="Small-team workflow pilot story"
 >
@@ -294,7 +294,7 @@
   expression="editorial"
   eyebrow="Start with one workflow"
   title="Bring the workflow that wastes the most time."
-  description="I will help map the first controlled pilot before expanding authority, scope, or spend."
+  description="We’ll plan the first test before agreeing to more work or spending."
   steps={ctaItems}
   handoff={{
     owner: 'Business operator',

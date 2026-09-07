@@ -48,12 +48,12 @@
     {
       question: 'What is your primary service?',
       answer:
-        'Start with CREATE SOMETHING Map when the workflow still needs definition. Use CREATE SOMETHING Build for implementation, then CREATE SOMETHING Control when the workflow needs governed operation. Control includes Map.'
+        'Start with Map to plan the work. Build turns that plan into a working system. After launch, Control provides ongoing support and includes Map.'
     },
     {
       question: 'Are agents part of the workforce?',
       answer:
-        'Agents can add operating capacity, but Control is not sold as a human-equivalent employee. There are no per-agent fees; the managed production environment and its accountable operating boundary are what you buy.'
+        'Agents can help with tasks, but Control is not a replacement employee. You pay to manage the agreed live system, with no per-agent fees.'
     },
     {
       question: 'How are AI usage and new workflows billed?',
@@ -63,7 +63,7 @@
     {
       question: 'Do we need to understand MCP first?',
       answer:
-        'No. Bring the workflow and the accounts involved. I translate the technical choices into a stack boundary and implementation path.'
+        'No. Bring the task and the tools you use. We explain the technical choices and agree on what to build.'
     },
     {
       question: 'Do clients own the implementation?',
@@ -87,8 +87,8 @@
   <PerformanceCampaignOpening
     eyebrow="How It Works"
     expression="editorial"
-    title="Map the operation. Install the playbook."
-    lede="Bring one handoff your team still checks manually. We map its owners and limits, make approved Runbooks executable, and hand back the client-owned system."
+    title="Start with one task. Build from there."
+    lede="Bring one task your team still handles manually. We plan the steps, build and test the agent, then show your team how to keep working on it."
     media={playbookHeroMedia.services}
     mediaMobilePlacement="background"
     density="compact"

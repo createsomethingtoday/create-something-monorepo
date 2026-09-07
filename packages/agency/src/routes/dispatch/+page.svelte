@@ -15,7 +15,7 @@
 
 <SEO
   title="CREATE SOMETHING Dispatch | Work, Evidence, and Field Notes"
-  description="The CREATE SOMETHING publishing schedule: practical lessons from verified repository work, inspectable artifacts, and named limits."
+  description="Upcoming CREATE SOMETHING articles and demonstrations, based on work we can show and explain."
   keywords="AI workflow field notes, agent engineering demonstrations, governed automation evidence, CREATE SOMETHING dispatch"
   propertyName="agency"
 />
@@ -25,7 +25,7 @@
     eyebrow="Dispatch / Publishing schedule"
     expression="editorial"
     title="We publish the work after the evidence."
-    lede="Each week starts with one change worth explaining. We trace it to an operating lesson, check the artifact, name the limit, and show what another builder can use."
+    lede="Each week, we choose a change worth explaining. We show what happened, what we learned, and where the result has limits."
     density="compact"
     proof={[
       { label: 'Source', value: 'Repository' },
@@ -44,8 +44,7 @@
       <p class="eyebrow">Working rhythm</p>
       <h2 id="cadence-title">One lesson, carried across the right formats.</h2>
       <p class="lede">
-        LinkedIn is the main conversation. YouTube shows the complete workflow twice a month. Email
-        keeps only the lessons that have earned a durable record.
+        We share updates on LinkedIn, demonstrate a full workflow on YouTube twice a month, and send selected lessons by email.
       </p>
       <div class="cadence-grid">
         {#each marketingCadence as item}
@@ -62,8 +61,7 @@
       <p class="eyebrow">Current editorial queue</p>
       <h2 id="schedule-title">Four questions from work already in the repository.</h2>
       <p class="lede">
-        Dates reserve editorial attention. A topic publishes only after its public-safe evidence
-        passes review.
+        These dates are plans. We publish only after reviewing the supporting evidence and checking what can be shared.
       </p>
       <div class="schedule-list">
         {#each marketingSchedule as item, index}
@@ -111,7 +109,7 @@
     expression="editorial"
     eyebrow="Bring the next workflow"
     title="Show us the handoff your team still rebuilds by hand."
-    description="We will map its owner, tools, decision boundary, and proof before proposing a build."
+    description="We’ll look at the task, tools, approvals, and expected result before proposing a build."
     handoff={{
       owner: 'Workflow owner',
       authority: 'Human approval',

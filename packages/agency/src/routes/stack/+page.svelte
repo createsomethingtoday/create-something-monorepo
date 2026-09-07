@@ -20,21 +20,21 @@
       icon: 'folder',
       title: 'Map',
       detail:
-        'Name the workflow, source accounts, decision owner, first action boundary, and evidence needed before delegation.'
+        'List the steps, tools, and people involved. Agree on what AI may do and how you will check the result.'
     },
     {
       eyebrow: '02 Build',
       icon: 'settings',
       title: 'Build',
       detail:
-        'Turn one repeated handoff into scoped actions, durable state, receipts, and a runbook only after the safe path is clear.'
+        'Build and test one agreed task. Keep its code, work history, and instructions together.'
     },
     {
       eyebrow: '03 Control',
       icon: 'check',
       title: 'Control',
       detail:
-        'Classify live actions as auto-allowed, approval-needed, or blocked with a reason before the workflow touches risk.'
+        'Decide which tasks can run automatically, which need approval, and which must stop.'
     }
   ];
 
@@ -48,14 +48,14 @@
     {
       eyebrow: 'Boundary',
       icon: 'check',
-      title: 'Stack boundary',
+      title: 'Who owns what',
       detail: 'What your team owns, what CREATE SOMETHING owns, and what vendors provide.'
     },
     {
       eyebrow: 'Contract',
       icon: 'document',
       title: 'Tool/API contract',
-      detail: 'Tools, resources, auth scopes, allowed actions, and transport limits.'
+      detail: 'Which tools the agent can use, the access it needs, and the limits on each action.'
     },
     {
       eyebrow: 'Control',
@@ -67,65 +67,65 @@
       eyebrow: 'Operate',
       icon: 'refresh',
       title: 'Runbook',
-      detail: 'Recovery, release evidence, rollback notes, and operator handoff.'
+      detail: 'How to run the system, check a release, undo a change, and recover from failure.'
     },
     {
       eyebrow: 'Surface',
       icon: 'document',
       title: 'Operator brief',
-      detail: 'The visible state in Substrate or a client-owned application.'
+      detail: 'A view of current work in your application or our database system, Substrate.'
     }
   ];
 
   const platformConviction: PerformanceCardItem[] = [
     {
-      eyebrow: 'Current instrument',
+      eyebrow: 'Development tool',
       icon: 'info',
       title: 'OpenAI Codex',
       detail:
-        'The primary environment for setup, demonstration, repository work, and agent-operable delivery.'
+        'The AI coding tool we use to build the project and help your team make the next change.'
     },
     {
       eyebrow: 'Owned system',
       icon: 'check',
-      title: 'Context, policy, proof',
+      title: 'Code, rules, and work history',
       detail:
-        'The workflow boundary, organizational context, approval rules, evals, receipts, and recovery path stay inspectable and portable.'
+        'Your team keeps the business context, permissions, tests, work history, and recovery instructions.'
     },
     {
       eyebrow: 'Exit path',
       icon: 'refresh',
-      title: 'Route, compare, recover',
+      title: 'Test a different AI model',
       detail:
-        'The same contracts and golden tasks can evaluate Claude, compatible harnesses, open-weight executors, and custom models.'
+        'The same tool definitions and test tasks can help compare Claude, open-weight models, and custom models.'
     }
   ];
 
   const faqItems = [
     {
-      question: 'What is the stack boundary?',
+      question: 'Who owns the system?',
       answer:
-        'The stack boundary separates what the client owns, what CREATE SOMETHING delivers, and what vendors provide before delegated work becomes production work.'
+        'We agree on ownership before building: what your team keeps, what we deliver, and which services outside vendors provide.'
     },
     {
       question: 'Why does vendor ownership matter?',
       answer:
-        'Vendor services are replaceable infrastructure. The durable value is the workflow map, action contract, control rules, runbook, and evidence that travel with the handoff.'
+        'Changing a vendor should not erase your operating knowledge. Your team keeps the workflow plan, rules, instructions, and records needed to evaluate a replacement.'
     },
     {
-      question: 'What does the control layer decide?',
+      question: 'Who decides what the agent can do?',
       answer:
-        'The control layer classifies actions as auto-allowed, approval-needed, or blocked with a reason before execution touches customer, revenue, or production risk.'
+        'Your team sets the rules. The system checks whether each action is allowed, needs approval, or must stop before it affects live work.'
     }
   ];
 
   const stackRoles: PerformanceCardItem[] = [
     {
-      eyebrow: 'Owned substrate',
+      eyebrow: 'Database and work view',
       icon: 'folder',
       title: 'Substrate',
       detail:
-        'The CREATE SOMETHING database and operator layer owns source records, Atlas bindings, workflow actions, approvals, runs, receipts, and API/MCP access.',
+        'Our database system stores the records, tasks, approvals, and work history. APIs and MCP let approved software access it.',
       href: '/products'
     },
     {
@@ -133,7 +133,7 @@
       icon: 'settings',
       title: 'Cloudflare',
       detail:
-        'Workers, D1, Durable Objects, queues, and edge routes keep the workflow deployable while account ownership, billing, and rollback evidence stay explicit.',
+        'Cloudflare provides hosting and storage. We document who owns the account, who pays for it, and how to undo a release.',
       href: '/cloudflare'
     },
     {
@@ -141,7 +141,7 @@
       icon: 'info',
       title: 'OpenAI',
       detail:
-        'The primary reasoning and agent environment stays surrounded by scoped tools, approval behavior, evals, and traceable context instead of hidden authority.'
+        'OpenAI provides the AI models and coding tools. Your rules determine which tools an agent can use and when it needs approval.'
     }
   ];
 
@@ -150,9 +150,9 @@
       id: 'path',
       label: 'Path',
       summary: 'Map → pilot → control',
-      title: 'The stack should read like a handoff, not a vendor diagram.',
+      title: 'Know what happens at each stage.',
       detail:
-        'A non-technical team can follow one service path: map the boundary, pilot one safe workflow, then control risky actions only when live work needs it.',
+        'Plan the task, test a first version, then add ongoing support when the system is ready for live work.',
       tone: 'allow',
       receipts: ['workflow map', 'controlled pilot', 'operating control']
     },
@@ -160,9 +160,9 @@
       id: 'boundary',
       label: 'Boundary',
       summary: 'Show what must stop',
-      title: 'The workflow boundary decides what tools are allowed to do.',
+      title: 'Your team decides which actions are allowed.',
       detail:
-        'Source data, assistive work, human judgment, stop conditions, and the audit trail belong on one operating map.',
+        'The plan shows the information AI uses, the work it can prepare, who approves it, and the record kept afterward.',
       tone: 'block',
       evidence: ['allowed routing', 'named authority', 'stop conditions', 'audit trail']
     },
@@ -170,9 +170,9 @@
       id: 'ownership',
       label: 'Ownership',
       summary: 'Keep the durable assets',
-      title: 'You keep the receipts, not a mystery stack.',
+      title: 'Keep the instructions and work history.',
       detail:
-        'The technical stack can change. The durable asset is the workflow boundary: source accounts, scoped access, allowed actions, stop states, approval owners, runbooks, revocation paths, and evidence.',
+        'Your team keeps the account details, access rules, approvals, instructions, and work history. The handover also explains how to remove access.',
       tone: 'review',
       receipts: ['workflow map', 'tool contract', 'policy rules', 'runbook', 'operator brief']
     },
@@ -180,9 +180,9 @@
       id: 'portability',
       label: 'Portability',
       summary: 'Conviction without dependence',
-      title: 'Model-opinionated in practice. Model-portable by design.',
+      title: 'Built with OpenAI. Prepared for change.',
       detail:
-        'CREATE SOMETHING builds primarily with OpenAI Codex. The durable client asset is data, MCP contracts, harnesses, skills, prompts, policy, evals, receipts, routing, fallback, and recovery—not access to one model. CREATE SOMETHING owns the system. Cloudflare provides infrastructure. OpenAI provides intelligence. Substrate is the owned database and operator layer; it keeps workflow state, policy, and receipts under CREATE SOMETHING control.',
+        'We build primarily with OpenAI Codex. Your project keeps its data, code, tool definitions, instructions, tests, and recovery guide. A different model must pass the relevant checks before you switch. CREATE SOMETHING maintains the system layer; Cloudflare provides infrastructure and OpenAI provides intelligence.',
       tone: 'neutral',
       actions: [
         { label: 'Inspect Substrate products', href: '/products' },
@@ -218,7 +218,7 @@
 
 <SEO
   title="What You Keep | CREATE SOMETHING .agency"
-  description="CREATE SOMETHING separates what your team owns, what vendors provide, and what the workflow needs before delegated work becomes production work."
+  description="See what your team keeps after delivery: code, accounts, data, instructions, tests, and work history. Understand what outside vendors provide."
   keywords="delegated work control, workflow control layer, Substrate database, transparent AI stack, MCP stack, vendor boundaries, Cloudflare, OpenAI"
   ogImage="/og-image.png"
   propertyName="agency"
@@ -228,8 +228,8 @@
 <PerformanceCampaignOpening
   expression="editorial"
   eyebrow="What You Keep"
-  title="Know what you own before any tool acts."
-  lede="You keep the accounts, data, approval rights, and operating history. Vendors provide replaceable infrastructure, and the workflow makes every boundary visible."
+  title="Your system should stay yours."
+  lede="You keep the accounts, data, approval rights, and operating history. We document the system so your team can understand it, change it, and evaluate other tools."
   media={playbookHeroMedia.stack}
   mediaMobilePlacement="background"
   density="compact"
@@ -253,7 +253,7 @@
   id="stack-ownership-story"
   eyebrow="One ownership story"
   title="You should be able to leave with everything that matters."
-  description="The stack becomes useful when you can trace the service path and see where work stops. It shows what you keep and what each external platform provides."
+  description="See what we deliver, what your team controls, and which services come from outside vendors."
   scenes={stackScenes}
   ariaLabel="Stack ownership story"
 >
@@ -264,9 +264,9 @@
       <PublicAtlasStoryCanvas
         starterId="insurance-claims-intake"
         storyId="stack-insurance-claims-intake-story"
-        eyebrow="Stack boundary canvas"
-        title="The workflow boundary decides what tools are allowed to do."
-        description="This read-only map shows the stack promise in workflow terms. Tools can route and prepare, but anything consequential stops for named authority."
+        eyebrow="Who owns what canvas"
+        title="Your team decides which actions are allowed."
+        description="This example shows how a claim moves through review. AI can prepare the work; the responsible person approves consequential actions."
         compact
       />
     {:else if scene.id === 'ownership'}
@@ -278,7 +278,7 @@
     {:else}
       <div class="stack-proof-pair">
         <section aria-labelledby="platform-conviction-title">
-          <h4 id="platform-conviction-title">Current instrument and portable exit</h4>
+          <h4 id="platform-conviction-title">Development tool and portable exit</h4>
           <PerformanceCardGrid
             items={platformConviction}
             columns={3}
@@ -286,7 +286,7 @@
           />
         </section>
         <section aria-labelledby="stack-roles-title">
-          <h4 id="stack-roles-title">Owned system and platform roles</h4>
+          <h4 id="stack-roles-title">What each part does</h4>
           <PerformanceCardGrid
             items={stackRoles}
             columns={3}
@@ -302,7 +302,7 @@
   expression="editorial"
   eyebrow="Start with the workflow"
   title="Bring the workflow, the accounts, and the decision owner."
-  description="CREATE SOMETHING maps the stack boundary and defines the first controlled path. Before implementation starts, you can see what tools may do and what stays visible."
+  description="We’ll agree on the task, the tools it needs, and who can approve its actions before implementation starts."
   steps={ctaItems}
   handoff={{
     owner: 'Workflow owner',
