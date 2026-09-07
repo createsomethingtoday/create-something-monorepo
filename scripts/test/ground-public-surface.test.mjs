@@ -98,7 +98,7 @@ test('Agency production deployment waits for the released Ground source tree', a
   assert.match(workflow, /git merge-base --is-ancestor "\$release_sha" "\$GITHUB_SHA"/);
   assert.match(workflow, /git rev-parse "\$\{release_sha\}:\$\{release_path\}"/);
   assert.match(workflow, /git rev-parse "\$\{GITHUB_SHA\}:\$\{release_path\}"/);
-  assert.match(workflow, /packages\/ground/);
+  assert.match(workflow, /agency-ground-release-parity\.mjs "\$release_sha" "\$GITHUB_SHA"/);
   assert.match(workflow, /config\/ground-ga\.v1\.json/);
   assert.match(workflow, /scripts\/ground-calibration-verify\.mjs/);
   assert.match(workflow, /scripts\/ground-calibration-execution-receipt\.mjs/);
