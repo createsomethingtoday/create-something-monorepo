@@ -56,7 +56,7 @@ export const highIntentSearchLandings: HighIntentSearchLanding[] = [
     path: '/marketplace-review-automation',
     intent: 'marketplace-review',
     eyebrow: 'Marketplace workflow review',
-    headline: 'Automate marketplace evidence preparation. Keep final judgment human.',
+    headline: 'Prepare review evidence automatically. Keep decisions with people.',
     lede:
       'Turn scattered submissions, policy checks, and reviewer context into a complete evidence packet. The system prepares the case; your reviewer keeps approval authority.',
     seoTitle: 'Marketplace Review Automation | CREATE SOMETHING .agency',
@@ -79,9 +79,9 @@ export const highIntentSearchLandings: HighIntentSearchLanding[] = [
     ],
     stage: {
       eyebrow: 'Preparation is not approval',
-      title: 'Move the evidence. Protect the decision.',
+      title: 'Prepare the case for the reviewer.',
       description:
-        'The useful automation boundary ends before official marketplace judgment. These three states stay visible throughout the review.',
+        'Automation prepares the evidence. The reviewer retains the official decision. Any change to external records needs separate approval.',
       scenes: [
         {
           id: 'prepare',
@@ -106,10 +106,10 @@ export const highIntentSearchLandings: HighIntentSearchLanding[] = [
         {
           id: 'write',
           label: 'Write',
-          summary: 'No external mutation',
-          title: 'Require a separate, explicit write boundary.',
+          summary: 'No changes to external systems',
+          title: 'Approve changes to external records separately.',
           detail:
-            'The public proof lane is read-only. Submission status, reviewer messages, approvals, and external records do not change from this workflow.',
+            'This example is read-only. It cannot change submission status, send reviewer messages, approve items, or edit external records.',
           tone: 'review',
           receipts: ['0 external writes', 'approval required before mutation']
         }
@@ -137,7 +137,7 @@ export const highIntentSearchLandings: HighIntentSearchLanding[] = [
         },
         {
           label: 'Next move',
-          title: 'Receive a bounded first map.',
+          title: 'Review the first workflow plan.',
           detail: 'Review the owner, permissions, stops, and proof before any build decision.'
         }
       ]
@@ -147,9 +147,9 @@ export const highIntentSearchLandings: HighIntentSearchLanding[] = [
     path: '/ai-workflow-recovery',
     intent: 'workflow-recovery',
     eyebrow: 'AI workflow recovery',
-    headline: 'Bring us the workflow that no longer holds up.',
+    headline: 'Get help with an AI workflow that keeps failing.',
     lede:
-      'Recover a brittle agent or automation by tracing the failure, decision path, permissions, missing evidence, and safe stopping point before deciding what to repair.',
+      'We trace where the task failed, check permissions and missing information, and decide whether to repair, replace, or stop it.',
     seoTitle: 'AI Workflow Recovery | CREATE SOMETHING .agency',
     seoDescription:
       'Diagnose a broken AI agent or workflow with a failure map, permissions review, missing-evidence check, and a repair, replace, or stop recommendation.',
@@ -172,7 +172,7 @@ export const highIntentSearchLandings: HighIntentSearchLanding[] = [
       eyebrow: 'Diagnose before repair',
       title: 'Find where the workflow stopped being trustworthy.',
       description:
-        'Recovery starts with the Database, then the Automation path, then the Judgment policy. Each layer produces a distinct finding.',
+        'Check the information first, then whether the task ran correctly, then whether it followed the right rules.',
       scenes: [
         {
           id: 'failure',
@@ -200,7 +200,7 @@ export const highIntentSearchLandings: HighIntentSearchLanding[] = [
           summary: 'Name what is missing',
           title: 'Complete the Missing evidence diagnosis.',
           detail:
-            'Separate an automation failure from an observability failure. The recovery plan names the receipt, readback, or comparison required to trust the next run.',
+            'Check whether the task failed or whether the record is missing. The recovery plan explains what to verify before trying again.',
           tone: 'neutral',
           evidence: ['Missing evidence diagnosis', 'required readback', 'recovery proof']
         },

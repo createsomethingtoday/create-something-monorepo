@@ -10,9 +10,9 @@ use std::{
 mod transport;
 
 use create_something_draw_pairing_protocol::{
-    apply_canvas_operation, apply_envelope, digest_capability, prune_applied_receipts,
-    valid_document, AppliedOperation, CanvasOperation, OperationEnvelope, OperationResult,
-    PairedClient, PairingHostState, DOCUMENT_VERSION, PROTOCOL_VERSION,
+    apply_canvas_operation, apply_envelope, digest_capability, normalize_document_compat,
+    prune_applied_receipts, valid_document, AppliedOperation, CanvasOperation, OperationEnvelope,
+    OperationResult, PairedClient, PairingHostState, DOCUMENT_VERSION, PROTOCOL_VERSION,
 };
 use rand::{distr::Alphanumeric, Rng};
 use serde::Serialize;
@@ -97,7 +97,7 @@ fn is_safe_idempotent(document: &Value, operation: &CanvasOperation) -> bool {
                 object.get("kind").and_then(Value::as_str) == Some(expected_kind)
                     && object.get("sourceIds") == serde_json::to_value(selected_ids).ok().as_ref()
             }),
-        CanvasOperation::RestoreConversion { .. } => false,
+        CanvasOperation::RestoreConversion { .. } | CanvasOperation::ReplaceObjects { .. } => false,
     }
 }
 
@@ -128,8 +128,22 @@ fn operation_references_id(operation: &CanvasOperation, id: &str) -> bool {
             selected_ids.iter().any(|candidate| candidate == id)
         }
         CanvasOperation::RestoreConversion { id: restored } => restored == id,
-        CanvasOperation::SetTitle { .. } | CanvasOperation::SetViewport { .. } => false,
+        CanvasOperation::SetTitle { .. }
+        | CanvasOperation::SetViewport { .. }
+        | CanvasOperation::ReplaceObjects { .. } => false,
     }
+}
+
+fn discard_queue_with_replacement(queue: &mut VecDeque<OperationEnvelope>) -> usize {
+    if !queue
+        .iter()
+        .any(|envelope| matches!(envelope.operation, CanvasOperation::ReplaceObjects { .. }))
+    {
+        return 0;
+    }
+    let discarded = queue.len();
+    queue.clear();
+    discarded
 }
 
 pub(crate) struct DrawRuntime {
@@ -193,7 +207,7 @@ fn companion_session_from_grant(
     let revision = grant["revision"]
         .as_u64()
         .ok_or("Pairing grant omitted revision")?;
-    let document = grant["document"].clone();
+    let document = normalize_document_compat(grant["document"].clone());
     if !valid_document(&document) {
         return Err("Pairing grant contains an invalid canvas document".into());
     }
@@ -291,12 +305,13 @@ fn initial_state() -> PairingHostState {
 fn load_state(path: &Path) -> Result<PairingHostState, String> {
     match fs::read(path) {
         Ok(bytes) => {
-            let state: PairingHostState = serde_json::from_slice(&bytes).map_err(|error| {
+            let mut state: PairingHostState = serde_json::from_slice(&bytes).map_err(|error| {
                 format!(
                     "Canonical Draw state is unreadable at {}: {error}",
                     path.display()
                 )
             })?;
+            state.document = normalize_document_compat(state.document);
             if !valid_document(&state.document) {
                 return Err(format!(
                     "Canonical Draw document is invalid at {}",
@@ -375,6 +390,10 @@ fn load_companion_state(path: &Path) -> Option<StoredCompanionSession> {
     fs::read(path)
         .ok()
         .and_then(|bytes| serde_json::from_slice(&bytes).ok())
+        .map(|mut stored: StoredCompanionSession| {
+            stored.document = normalize_document_compat(stored.document);
+            stored
+        })
         .filter(|stored: &StoredCompanionSession| valid_document(&stored.document))
 }
 
@@ -720,7 +739,7 @@ fn install_companion_snapshot(
         return Ok(false);
     }
     session.revision = snapshot_revision;
-    session.document = snapshot["document"].clone();
+    session.document = normalize_document_compat(snapshot["document"].clone());
     Ok(true)
 }
 
@@ -802,6 +821,7 @@ fn replace_host_document(
     if cfg!(mobile) {
         return Err("Only the Mac authority can replace the canonical document".into());
     }
+    let document = normalize_document_compat(document);
     if !valid_document(&document) {
         return Err("Replacement document is invalid".into());
     }
@@ -939,7 +959,7 @@ async fn flush_companion(runtime: &DrawRuntime) -> Result<Value, String> {
                 session.revision = result["revision"]
                     .as_u64()
                     .ok_or("Host response omitted revision")?;
-                session.document = result["document"].clone();
+                session.document = normalize_document_compat(result["document"].clone());
                 if session
                     .queue
                     .front()
@@ -1017,7 +1037,7 @@ async fn flush_companion(runtime: &DrawRuntime) -> Result<Value, String> {
         session.revision = snapshot["revision"]
             .as_u64()
             .ok_or("Snapshot omitted revision")?;
-        session.document = snapshot["document"].clone();
+        session.document = normalize_document_compat(snapshot["document"].clone());
         if invalid_operation {
             let safely_reconciled = session
                 .queue
@@ -1035,6 +1055,18 @@ async fn flush_companion(runtime: &DrawRuntime) -> Result<Value, String> {
                 "revision": session.revision,
                 "document": optimistic_companion_document(session),
                 "code": "INVALID_OPERATION"
+            }));
+        }
+        let discarded_operations = discard_queue_with_replacement(&mut session.queue);
+        if discarded_operations > 0 {
+            persist_companion_state(&runtime.companion_state_path, session)?;
+            return Ok(json!({
+                "status": "conflict",
+                "queueDepth": session.queue.len(),
+                "revision": session.revision,
+                "document": session.document,
+                "code": "STALE_REVISION",
+                "discardedOperations": discarded_operations
             }));
         }
         let revision = session.revision;
@@ -1996,6 +2028,50 @@ mod tests {
         );
         drop(companion);
         let _ = fs::remove_dir_all(directory);
+    }
+
+    #[test]
+    fn stale_rebase_discards_the_whole_history_batch_around_a_replacement() {
+        let operation = |id: &str, operation| OperationEnvelope {
+            protocol_version: PROTOCOL_VERSION.into(),
+            document_version: DOCUMENT_VERSION.into(),
+            session_id: "session-test".into(),
+            operation_id: id.into(),
+            client_id: "iphone-test".into(),
+            base_revision: 4,
+            operation,
+            sent_at: "2026-08-29T16:00:00Z".into(),
+            capability: "fixture-secret".into(),
+        };
+        let mut queue = VecDeque::from([
+            operation(
+                "safe-before",
+                CanvasOperation::SetTitle {
+                    title: "Safe".into(),
+                },
+            ),
+            operation(
+                "unsafe-middle",
+                CanvasOperation::ReplaceObjects { objects: vec![] },
+            ),
+            operation(
+                "safe-after",
+                CanvasOperation::SetViewport {
+                    viewport: create_something_draw_pairing_protocol::Viewport {
+                        x: 1.0,
+                        y: 2.0,
+                        zoom: 1.0,
+                    },
+                },
+            ),
+            operation(
+                "unsafe-last",
+                CanvasOperation::ReplaceObjects { objects: vec![] },
+            ),
+        ]);
+
+        assert_eq!(discard_queue_with_replacement(&mut queue), 4);
+        assert!(queue.is_empty());
     }
 
     #[test]

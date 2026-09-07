@@ -18,23 +18,23 @@
   const systemConditions: PerformanceCondition[] = [
     {
       label: 'Database',
-      title: 'Is the operating truth available?',
+      title: 'Is the information correct?',
       detail:
-        'Inspect the records, state, policy versions, and proof artifacts the workflow is allowed to use.',
+        'Check the records, their dates, and the rules the task is allowed to use.',
       tone: 'signal'
     },
     {
       label: 'Automation',
-      title: 'Did the execution path succeed?',
+      title: 'Did the task run correctly?',
       detail:
-        'Trace the tools, stops, approvals, retries, and receipts without assigning judgment to motion alone.',
+        'Check the tools, approvals, retries, and results. A completed run does not always mean the result is correct.',
       tone: 'pressure'
     },
     {
       label: 'Judgment',
-      title: 'Was the right policy applied?',
+      title: 'Did it follow the right rules?',
       detail:
-        'Name who owns the decision, what boundary governed it, and when the system must escalate or stop.',
+        'Identify who decides, which rule applies, and when the agent should ask for help or stop.',
       tone: 'growth'
     }
   ];
@@ -55,7 +55,7 @@
       kind: 'Workflow model',
       title: 'Marketplace review queue',
       detail:
-        'A read-only Map story shows the signal, automated preparation, human review, stop condition, and proof landing zone.',
+        'A read-only Map story shows the signal, automated preparation, human review, stop condition, and result record.',
       state: 'verified',
       date: 'Representative local map',
       href: '/map'
@@ -88,7 +88,7 @@
       summary: 'Database → automation → judgment',
       title: 'Diagnose the system before changing the policy.',
       detail:
-        'The Three-Tier Framework keeps failures local: verify the Database, then the Automation, then the Judgment governing the next move.',
+        'Check three things in order: the information available, whether the task ran correctly, and whether it followed the right rules.',
       tone: 'review'
     },
     {
@@ -97,17 +97,17 @@
       summary: 'Run, wait, or stop',
       title: 'See where work may run, wait, or stop.',
       detail:
-        'The representative Marketplace review queue is a read-only teaching surface. It exposes a real operating shape without claiming production access or client proof.',
+        'This example shows a Marketplace review queue. It is for learning: it cannot access live systems and is not evidence of client results.',
       tone: 'block',
-      receipts: ['named owner', 'governed handoff', 'stop condition', 'proof landing zone']
+      receipts: ['named owner', 'governed handoff', 'stop condition', 'result record']
     },
     {
       id: 'rehearse',
       label: 'Rehearse',
       summary: 'Practice before authority',
-      title: 'Ten stages. Ten inspectable artifacts.',
+      title: 'Work through ten steps and review each result.',
       detail:
-        'The workbench turns the thesis into an operator journey whose workflow, authority, tests, evidence, and review state can be inspected before more authority is earned.',
+        'Use the workbench to plan a task, set permissions, and review tests and results before considering live access.',
       tone: 'allow'
     },
     {
@@ -118,14 +118,14 @@
       detail:
         'Verified, review, and draft records stay deliberately different. Governed Agent Delivery remains a proposed flagship defense until its artifacts, counterexamples, rollback, and independent verdict are examined.',
       tone: 'neutral',
-      actions: [{ label: 'Inspect the bounded proof', href: '/proof/marketplace-workflow' }]
+      actions: [{ label: 'Read the test results', href: '/proof/marketplace-workflow' }]
     }
   ];
 </script>
 
 <SEO
   title="The Delegation Practice | CREATE SOMETHING"
-  description="A working thesis and field school for accountable operators making delegated work trustworthy."
+  description="Practice planning an AI task, setting permissions, testing results, and reviewing what happened."
   keywords="AI workflow systems, accountable operators, delegated work, workflow governance, proof"
   propertyName="agency"
 />
@@ -133,8 +133,8 @@
 <main class="delegation-practice-page">
   <PerformanceCampaignOpening
     eyebrow="The Delegation Practice"
-    title="Make delegated work trustworthy."
-    lede="Map the work. Bound the authority. Test the system. Prove what happened. Earn the right to do more."
+    title="Try an AI workflow before connecting your tools."
+    lede="Use a practice workflow to decide what AI can do, when it needs approval, and how to check its work."
     media={playbookHeroMedia.practice}
     mediaMobilePlacement="background"
     density="compact"
@@ -153,9 +153,9 @@
 
   <PerformanceNarrativeStage
     id="delegation-practice-argument"
-    eyebrow="One practice argument"
-    title="Locate the failure before rehearsing the fix."
-    description="The Practice is one learning spine: locate the failure, make authority visible, rehearse the operator journey, and attach every claim to a current evidence state."
+    eyebrow="Practice steps"
+    title="Find the problem, then practice the fix."
+    description="Start by checking the information and rules. Then walk through a sample task and review the result."
     scenes={practiceScenes}
     ariaLabel="Delegation Practice argument"
     expression="editorial"
@@ -164,8 +164,8 @@
       {#if scene.id === 'diagnose'}
         <PerformanceThesisConditions
           eyebrow="Delegated Work Control"
-          title="Check the layers in order, or motion will look like progress."
-          description="Check the layers in order so motion never substitutes for operating truth or policy."
+          title="Check the information, the task, and the rules."
+          description="This order helps you find the cause before changing the system."
           conditions={systemConditions}
           ariaLabel="Database Automation and Judgment diagnostic order"
         />
@@ -181,7 +181,7 @@
           <PerformanceEvidenceIndex
             eyebrow="Source evidence"
             title="Verified, review, and draft are different states."
-            description="Open the owning surface before deciding what the system has earned."
+            description="Read the source record and its limits before relying on a result."
             items={evidenceRecords}
             ariaLabel="Delegation Practice source evidence"
           />
@@ -206,9 +206,9 @@
 
   <PerformanceConversionHandoff
     expression="editorial"
-    eyebrow="School + skeptical review"
-    title="Finish with a Practice Receipt, not a certificate."
-    description="Practice produces an inspectable workflow map, a tested authority envelope, and a review verdict you can act on. Skeptical review may support, revise, hold, or falsify the thesis. When you can name the workflow and accountable owner, the mapping-session path is ready."
+    eyebrow="Review your practice"
+    title="Leave with a plan and a record of your checks."
+    description="The practice result includes a workflow plan, tested permissions, and review notes. The review may call for changes or show that the approach does not work. When the task and person responsible are clear, bring the plan to a mapping session."
     handoff={{
       owner: 'Accountable practitioner',
       authority: 'One named workflow only',
@@ -224,7 +224,7 @@
           fullWidth>Request a mapping session</Button
         >
         <a class="practice-handoff-proof" href="/proof/marketplace-workflow">
-          Inspect the bounded proof <span aria-hidden="true">→</span>
+          Read the test results <span aria-hidden="true">→</span>
         </a>
         <a class="practice-handoff-audience" href="/for-service-providers">
           <span>For service providers</span>

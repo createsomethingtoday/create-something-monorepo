@@ -78,6 +78,7 @@ declare global {
 				WORKWAY_API_URL?: string;
 				AGENCY_INTERNAL_API_KEY?: string;
 				AGENCY_OPERATOR_EMAILS?: string;
+				NPG_HEALTHCARE_ANALYST_URL?: string;
 				CANON_OPERATOR_ORIGINS?: string;
 				// Governance source monitors
 				SLACK_BOT_TOKEN?: string;

@@ -14,7 +14,7 @@ const TEMPLATE_REQUIREMENTS = {
     'Canvas-first fit',
     'Atlas canvas source: existing starter map | new graph artifact | not applicable',
     'Canvas renderer: Atlas | static-story | sigma | cosmograph | not applicable',
-    'Canvas must show: owner | workflow artifact | automation | AI task | human judgment | stop boundary | receipt',
+    'Canvas must show: owner | workflow artifact | automation | AI task | human judgment | stop boundary | receipt'
   ],
   'image-prompt.md': [
     'Model: gpt-image-2',
@@ -24,12 +24,12 @@ const TEMPLATE_REQUIREMENTS = {
     'Canvas renderer: Atlas | static-story | sigma | cosmograph | not applicable',
     'Atlas graph source: existing starter map | new graph artifact | not applicable',
     'that source brief to generate the publishable OpenAI export',
-    'Style: Canon Clear image language',
-    'Use Ona.com as the communication foundation',
+    'Style: CREATE SOMETHING Performance Lab image language',
+    'screenshot evidence',
     'CREATE SOMETHING artifact language',
     'system maps, MCP boundaries, policy gates, receipts',
     'ocean `#0048ff`, moss `#1e3c2c`, and stop `#c41e3a` only as semantic state accents',
-    'Langfuse is not required unless a separate scored image-quality rubric exists',
+    'Langfuse is not required unless a separate scored image-quality rubric exists'
   ],
   'image-metadata.md': [
     '## Original Visuals',
@@ -45,20 +45,20 @@ const TEMPLATE_REQUIREMENTS = {
     '## Collected Screenshots',
     'Primary owned visual is placed in the article body',
     'No generated image is treated as durable source-of-truth evidence unless backed by workflow artifacts',
-    'Langfuse is excluded unless this asset is part of a separate scored rubric',
-  ],
+    'Langfuse is excluded unless this asset is part of a separate scored rubric'
+  ]
 };
 
 const METADATA_REQUIREMENTS = [
   'Article URL:',
   'Article asset ID:',
   'Updated:',
-  '## Original Visuals',
+  '## Original Visuals'
 ];
 
 function parseArgs(argv) {
   const args = {
-    format: 'text',
+    format: 'text'
   };
 
   for (let i = 2; i < argv.length; i += 1) {
@@ -99,7 +99,7 @@ function checkTextIncludes(pathname, content, requirements) {
     .map((detail) => ({
       target: relative(ROOT, pathname),
       ok: false,
-      detail,
+      detail
     }));
 }
 
@@ -112,7 +112,7 @@ function checkTemplates() {
       results.push({
         target: relative(ROOT, pathname),
         ok: false,
-        detail: 'Template is missing.',
+        detail: 'Template is missing.'
       });
       continue;
     }
@@ -124,7 +124,7 @@ function checkTemplates() {
       results.push({
         target: relative(ROOT, pathname),
         ok: true,
-        detail: 'Template includes required Canon/Ona image standard text.',
+        detail: 'Template includes the current image standard text.'
       });
     }
   }
@@ -152,7 +152,7 @@ function checkArticleMetadata() {
       results.push({
         target: relative(ROOT, metadataPath),
         ok: false,
-        detail: 'Article asset folder is missing metadata.md.',
+        detail: 'Article asset folder is missing metadata.md.'
       });
       continue;
     }
@@ -165,7 +165,7 @@ function checkArticleMetadata() {
       results.push({
         target: relative(ROOT, metadataPath),
         ok: true,
-        detail: 'Article image metadata includes required source fields.',
+        detail: 'Article image metadata includes required source fields.'
       });
     }
   }
@@ -174,18 +174,15 @@ function checkArticleMetadata() {
 }
 
 export function checkMarketingImageAssets() {
-  const results = [
-    ...checkTemplates(),
-    ...checkArticleMetadata(),
-  ];
+  const results = [...checkTemplates(), ...checkArticleMetadata()];
 
   return {
     audit: {
       command: 'marketing-image-assets-check',
       passed: results.every((result) => result.ok),
-      result_count: results.length,
+      result_count: results.length
     },
-    results,
+    results
   };
 }
 

@@ -50,48 +50,46 @@
     });
   });
 
-  // Primary nav intentionally uses plain meaning, not owned product names: a
-  // first-time visitor does not yet know what Map or Control are. The spine is
-  // named in the footer and on /products. See the plain-meaning assertion in
-  // test/public-marketing-copy.test.ts.
+  // Primary nav tells a first-time visitor what each destination contains.
+  // Owned product names remain available in the footer and on the system page.
   const navLinks = [
     { label: 'How It Works', href: '/services' },
     {
-      label: 'Practice',
+      label: 'Try a Workflow',
       href: '/practice',
       children: [
         {
-          label: 'Practice overview',
+          label: 'Try the method',
           href: '/practice',
-          description: 'See the embedded operating-partner model and delivery lanes.'
+          description: 'Try planning and reviewing an AI task.'
         },
         {
           label: 'Map a workflow',
           href: agencyCoreMessaging.selfMapHref,
-          description: 'Name the handoff, owner, and first controlled pilot.'
+          description: 'Plan the steps, tools, and people involved.'
         },
         {
           label: 'How it works',
           href: '/services',
-          description: 'Map, build, and control one AI-native operating path.'
+          description: 'See how we plan, build, and support your project.'
         },
         {
           label: 'Marketplace field report',
           href: '/field-reports/template-review',
-          description: 'Inspect a live workflow, evidence, and decision boundary.'
+          description: 'Read what was tested and what stayed with human reviewers.'
         }
       ]
     },
     { label: 'What You Keep', href: '/stack' },
-    { label: 'Products', href: '/products' },
-    { label: 'Field Reports', href: '/field-reports' }
+    { label: 'Services & Tools', href: '/products' },
+    { label: 'Proof', href: '/field-reports' }
   ];
   // Derived from the product family so the footer cannot drift from the source of truth.
   const spineLinks = PUBLIC_PRODUCT_SEQUENCE.map((id) => {
     const product = getPublicProduct(id);
     return { label: product.shortName, href: product.route };
   });
-  const primaryCtaHref = agencyCoreMessaging.startWithWorkflowHref;
+  const primaryCtaHref = agencyCoreMessaging.agentFoundationHref;
   const agencyFooterMacroMedia = {
     src: '/images/performance-lab/playbook-footer-decision-gate-macro.webp',
     alt: 'Macro-real Playbook decision gate: an ivory AI-agent marker held inside a black steel ring as amber and proof-green routes cross a physical court surface.'
@@ -109,14 +107,16 @@
   );
   const footerQuickLinkGroups = [
     {
-      title: 'Commercial',
+      title: 'Services',
       ariaLabel: 'Commercial paths',
       links: [
         { label: 'How It Works', href: '/services' },
+        { label: 'Agent Foundation', href: agencyCoreMessaging.agentFoundationHref },
         { label: 'AI Buyer Readiness Audit', href: '/agent-readiness' },
         { label: 'What You Keep', href: '/stack' },
         { label: 'Products', href: '/products' },
         { label: 'Field Reports', href: '/field-reports' },
+        { label: 'Dispatch', href: '/dispatch' },
         { label: 'Use With Clients', href: '/for-service-providers' },
         { label: 'About', href: '/about' }
       ]
@@ -130,7 +130,7 @@
       title: 'Tool Stack',
       ariaLabel: 'Workflow tool stack',
       links: [
-        { label: 'Workflow Tool Stack', href: '/partners' },
+        { label: 'Connected tools', href: '/partners' },
         { label: 'Cloudflare', href: '/cloudflare' }
       ]
     },
@@ -174,7 +174,7 @@
     {
       id: 'nav-services',
       label: 'How It Works',
-      description: 'Workflow maps, controlled pilots, and operating evidence',
+      description: 'Planning, building, and supporting AI tasks',
       href: '/services',
       icon: '🔨',
       keywords: [
@@ -207,7 +207,7 @@
     },
     {
       id: 'nav-partners',
-      label: 'Workflow Tool Stack',
+      label: 'Connected tools',
       description:
         'Map one workflow across the app surface, runtime, workspace, reasoning layer, approvals, and evidence',
       href: '/partners',
@@ -273,6 +273,22 @@
       href: '/for-service-providers',
       icon: 'SP',
       keywords: ['service provider', 'consultant', 'clients', 'delivery', 'workflow handoff']
+    },
+    {
+      id: 'nav-agent-foundation',
+      label: agencyCoreMessaging.agentFoundationLabel,
+      description:
+        'One useful agent capability in a client-owned repository, ready to continue with Codex',
+      href: agencyCoreMessaging.agentFoundationHref,
+      icon: 'AF',
+      keywords: [
+        'agent foundation',
+        'codex',
+        'agent project',
+        'repository',
+        'client owned',
+        'build'
+      ]
     },
     {
       id: 'nav-self-map',
@@ -433,7 +449,7 @@
     links={navLinks}
     currentPath={$page.url.pathname}
     fixed={true}
-    ctaLabel={agencyCoreMessaging.startWithWorkflowLabel}
+    ctaLabel={agencyCoreMessaging.reviewAgentFoundationLabel}
     ctaHref={primaryCtaHref}
     user={data.user}
     onLogout={handleLogout}
@@ -453,15 +469,15 @@
   <Footer
     mode="agency"
     showNewsletter={false}
-    aboutText="Calm, transparent, reliable workflow systems for operator-owned outcomes: clear operating boundaries, evidence-backed delivery, and escalation only when judgment is required."
+    aboutText="We build AI agents for useful business tasks. You keep the code, instructions, and work history."
     quickLinkGroups={footerQuickLinkGroups}
     footerCta={routeOwnsPerformanceEnding
       ? undefined
       : {
-          title: 'Ready to make one workflow AI-native?',
-          label: agencyCoreMessaging.startWithWorkflowLabel,
+          title: 'Ready to put AI to work on a useful task?',
+          label: agencyCoreMessaging.reviewAgentFoundationLabel,
           href: primaryCtaHref,
-          description: 'Start a lightweight workflow map before booking.',
+          description: 'Bring an idea or a project and one task you want help with.',
           media: agencyFooterMacroMedia
         }}
     showSocial={true}

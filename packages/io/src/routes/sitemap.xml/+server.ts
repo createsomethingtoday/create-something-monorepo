@@ -10,6 +10,7 @@ import {
 } from '$lib/config/experimentCatalog';
 import { getCatalogPaperCategories } from '$lib/config/paperCategories';
 import { getPublishedPaperMetas, getPublishedPaperSlugs } from '$lib/config/paperCatalog';
+import { getPublishedNewsletters } from '$lib/server/newsletterArchive';
 
 const paperMetas = getPublishedPaperMetas();
 const knownPaperSlugs = getPublishedPaperSlugs();
@@ -24,6 +25,7 @@ export const GET: RequestHandler = async ({ platform }) => {
 		'/',
 		'/experiments',
 		'/papers',
+		'/newsletters',
 		'/methodology',
 		'/categories',
 		'/mcp',
@@ -31,6 +33,10 @@ export const GET: RequestHandler = async ({ platform }) => {
 		'/about',
 		'/contact'
 	];
+
+	for (const edition of getPublishedNewsletters()) {
+		paths.push(`/newsletters/${edition.slug}`);
+	}
 
 	for (const card of PUBLIC_MCP_TRUST_CARDS) {
 		paths.push(`/mcp/${card.slug}`);

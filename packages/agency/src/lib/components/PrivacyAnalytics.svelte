@@ -13,6 +13,11 @@
     clearHighIntentSearchAttribution,
     type HighIntentSearchAttribution
   } from '$lib/analytics/high-intent-search';
+  import {
+    captureMarketingAttribution,
+    clearMarketingAttribution,
+    type MarketingAttribution
+  } from '$lib/analytics/marketing-attribution';
 
   interface Props {
     property?: Property;
@@ -41,20 +46,22 @@
   let compactPromptActive = $state(false);
   let consentState = $state<ConsentState | null>(null);
   let paidSearchAttribution = $state<HighIntentSearchAttribution | undefined>(undefined);
+  let marketingAttribution = $state<MarketingAttribution | undefined>(undefined);
 
   const hasStoredChoice = $derived(consentState !== null);
   const statusLabel = $derived(
     userOptedOut || consentState?.analytics === false ? 'Analytics off' : 'Analytics on'
   );
   const effectiveGlobalMetadata = $derived(
-    globalMetadata || paidSearchAttribution
-      ? { ...(globalMetadata ?? {}), ...(paidSearchAttribution ?? {}) }
+    globalMetadata || paidSearchAttribution || marketingAttribution
+      ? { ...(globalMetadata ?? {}), ...(paidSearchAttribution ?? {}), ...(marketingAttribution ?? {}) }
       : undefined
   );
 
   function syncPaidSearchAttribution(url: URL) {
     if (!analyticsAllowed) return;
     paidSearchAttribution = captureHighIntentSearchAttribution(url, window.sessionStorage);
+    marketingAttribution = captureMarketingAttribution(url, window.sessionStorage);
   }
 
   afterNavigate((navigation) => {
@@ -77,7 +84,9 @@
       syncPaidSearchAttribution(new URL(window.location.href));
     } else {
       clearHighIntentSearchAttribution(window.sessionStorage);
+      clearMarketingAttribution(window.sessionStorage);
       paidSearchAttribution = undefined;
+      marketingAttribution = undefined;
     }
     showPanel = false;
     compactPromptActive = false;

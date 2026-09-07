@@ -30,20 +30,20 @@
 
 <article class="guide-shell" data-performance-mode="proof">
   <header class="guide-opening">
-    <a class="guide-back" href="/workflows">Operator playbook</a>
+    <a class="guide-back" href="/workflows">Workflow guides</a>
     <p class="guide-eyebrow">{guide.eyebrow}</p>
     <h1>{guide.title}</h1>
     <p class="guide-answer">{guide.directAnswer}</p>
     <div class="guide-actions">
-      <Button href="#operating-path">Run the play</Button>
-      <Button href="/map" variant="secondary">Start a private workflow draft</Button>
+      <Button href="#operating-path">Read the steps</Button>
+      <Button href="/map" variant="secondary">Map your workflow</Button>
     </div>
-    <aside class="guide-route" aria-label="Operator playbook route">
-      <span>Playbook route</span>
+    <aside class="guide-route" aria-label="Workflow guides route">
+      <span>How to use this guide</span>
       <ol>
-        <li><i class="guide-route__mark guide-route__mark--ring" aria-hidden="true">O</i><strong>Read signal</strong></li>
-        <li><i class="guide-route__mark guide-route__mark--cross" aria-hidden="true">×</i><strong>Run play</strong></li>
-        <li><i class="guide-route__mark guide-route__mark--ring" aria-hidden="true">O</i><strong>Review receipt</strong></li>
+        <li><i class="guide-route__mark guide-route__mark--ring" aria-hidden="true">O</i><strong>Check the fit</strong></li>
+        <li><i class="guide-route__mark guide-route__mark--cross" aria-hidden="true">×</i><strong>Follow the steps</strong></li>
+        <li><i class="guide-route__mark guide-route__mark--ring" aria-hidden="true">O</i><strong>Check the result</strong></li>
       </ol>
     </aside>
     <dl class="guide-decision">
@@ -59,9 +59,9 @@
   </header>
 
   <section class="guide-section guide-signals" aria-labelledby="signals-heading">
-    <div class="section-label">01 / Read the signal</div>
+    <div class="section-label">01 / When to use it</div>
     <div>
-      <h2 id="signals-heading">Signals this play applies</h2>
+      <h2 id="signals-heading">When this approach helps</h2>
       <ul>
         {#each guide.signals as signal}
           <li>{signal}</li>
@@ -71,9 +71,9 @@
   </section>
 
   <section id="operating-path" class="guide-section" aria-labelledby="path-heading">
-    <div class="section-label">02 / Run the play</div>
+    <div class="section-label">02 / Read the steps</div>
     <div>
-      <h2 id="path-heading">A bounded way to move</h2>
+      <h2 id="path-heading">Follow these steps</h2>
       <ol class="step-list">
         {#each guide.steps as step, index}
           <li>
@@ -89,9 +89,9 @@
   </section>
 
   <section class="guide-section" aria-labelledby="artifacts-heading">
-    <div class="section-label">03 / Keep the system</div>
+    <div class="section-label">03 / What to keep</div>
     <div>
-      <h2 id="artifacts-heading">Playbook artifacts an operator can inspect</h2>
+      <h2 id="artifacts-heading">Documents and records to keep</h2>
       <div class="artifact-grid">
         {#each guide.artifacts as artifact}
           <article>
@@ -104,9 +104,9 @@
   </section>
 
   <section class="guide-section" aria-labelledby="proof-heading">
-    <div class="section-label">04 / Review the receipt</div>
+    <div class="section-label">04 / Supporting work</div>
     <div>
-      <h2 id="proof-heading">Follow the claim to live proof</h2>
+      <h2 id="proof-heading">Read the supporting examples</h2>
       <div class="proof-list">
         {#each guide.proofLinks as proof}
           <a href={proof.href}>
@@ -119,9 +119,9 @@
   </section>
 
   <section class="guide-section" aria-labelledby="faq-heading">
-    <div class="section-label">05 / Operator questions</div>
+    <div class="section-label">05 / Common questions</div>
     <div>
-      <h2 id="faq-heading">Questions operators ask</h2>
+      <h2 id="faq-heading">Common questions</h2>
       <div class="faq-list">
         {#each guide.faqs as faq}
           <details>
@@ -134,7 +134,7 @@
   </section>
 
   <footer class="guide-related">
-    <p class="section-label">Next plays</p>
+    <p class="section-label">Related guides</p>
     <div>
       {#each data.related as related}
         <a href={`/workflows/${related.slug}`}>

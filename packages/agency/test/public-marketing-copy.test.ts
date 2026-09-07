@@ -166,130 +166,49 @@ test('public agency copy guard rejects unauthorized OpenAI relationship claims',
   }
 });
 
-test('public agency surfaces state the OpenAI conviction and owned-system boundary', () => {
+test('public agency surfaces explain ownership and provider roles', () => {
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
   const stack = readFileSync(new URL('../src/routes/stack/+page.svelte', import.meta.url), 'utf8');
-  const partners = readFileSync(
-    new URL('../src/routes/partners/+page.svelte', import.meta.url),
-    'utf8'
-  );
-
-  assert.match(home, /<span>How we build<\/span>/);
+  const partners = readFileSync(new URL('../src/routes/partners/+page.svelte', import.meta.url), 'utf8');
   assert.match(home, /Built with OpenAI and Cloudflare\. Designed to remain yours\./);
-  assert.match(home, /We use OpenAI Codex to map, build, and maintain the workflow\./);
-  assert.match(
-    home,
-    /If the model\s+or agent environment\s+changes, the system does not have to start over\./
-  );
-  assert.match(home, />Why we build this way</);
-  assert.doesNotMatch(
-    home,
-    /Current agent environment|Designed to outlast any model|MCP contracts, harnesses/
-  );
-  assert.match(
-    home,
-    /https:\/\/createsomething\.ltd\/canon\/concepts\/conviction-without-dependence/
-  );
-  assert.match(stack, /Model-opinionated in practice\. Model-portable by design\./);
-  assert.match(stack, /data, MCP contracts, harnesses, skills, prompts, policy, evals, receipts/i);
-  assert.match(partners, /OpenAI is the primary reasoning and agent environment/i);
-  assert.match(partners, /open-weight and custom models/i);
+  assert.match(home, /Your team owns the system\./);
+  assert.match(home, /OpenAI Codex, an AI coding tool/);
+  assert.match(home, /A new setup still needs testing/);
+  assert.match(home, /https:\/\/createsomething\.ltd\/canon\/concepts\/conviction-without-dependence/);
+  assert.match(stack, /Your project keeps its data, code, tool definitions, instructions, tests, and recovery guide/);
+  assert.match(stack, /A different model must pass the relevant checks before you switch/);
+  assert.match(partners, /open-weight and custom models/);
 });
 
-test('the homepage leads with a Playbook-led operating-system message before its provider stack', () => {
+test('the homepage introduces a business task before developer and provider details', () => {
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
-  const opening = home.slice(
-    home.indexOf('<PerformanceCampaignOpening'),
-    home.indexOf('</PerformanceCampaignOpening>')
-  );
-  const ownership = home.slice(
-    home.indexOf('<aside class="ownership-callout">'),
-    home.indexOf('</aside>', home.indexOf('<aside class="ownership-callout">'))
-  );
-
-  assert.match(home, /title="AI Operating Systems \| CREATE SOMETHING \.agency"/);
-  assert.match(opening, /eyebrow="CREATE SOMETHING \.agency"/);
-  assert.match(opening, /propertyRole="Embedded AI operating partner"/);
-  assert.match(opening, /expression="editorial"/);
-  assert.match(opening, /title="Your people and AI need the same playbook\."/);
-  assert.match(
-    opening,
-    /We embed with operators to map one workflow, install its AI infrastructure, and hand back a client-owned Playbook\./
-  );
-  assert.match(
-    opening,
-    /Offense advances approved work\. Defense protects decisions, proof, and recovery\./
-  );
-  assert.match(opening, /The opposition is ambiguity, AI out of reach, and untrusted automation\./);
+  const opening = home.slice(home.indexOf('<PerformanceCampaignOpening'), home.indexOf('</PerformanceCampaignOpening>'));
+  assert.match(opening, /title="Put AI to work on one useful task\."/);
+  assert.match(opening, /Bring a task your team repeats, an idea, or a project you started/);
+  assert.match(opening, /Going live is scoped separately/);
   assert.match(opening, /media=\{playbookHomeHeroMedia\}/);
+  assert.match(opening, /expression="editorial"/);
   assert.match(opening, /mediaMobilePlacement="background"/);
-  assert.doesNotMatch(opening, /mode="paper"|paperOperatingRouteMedia/);
-  assert.match(ownership, /Built with OpenAI and Cloudflare\. Designed to remain yours\./);
-  assert.match(
-    ownership,
-    /CREATE SOMETHING owns the system\. OpenAI provides intelligence\. Cloudflare provides\s+infrastructure\./
-  );
-  assert.match(ownership, /Your\s+team\s+keeps the map, rules, history, and recovery path\./);
-  assert.doesNotMatch(home, /Cloudflare OS/);
+  assert.doesNotMatch(opening, /Codex|GitHub|governed|authority|MCP/);
+  assert.match(opening, /agencyCoreMessaging.agentFoundationHref/);
+  assert.ok(home.indexOf('An agent is software') < home.indexOf('<aside class="home-section ownership-callout"'));
 });
 
-test('commercial decision routes lead with plain meaning before owned terminology', () => {
-  const layout = readFileSync(new URL('../src/routes/+layout.svelte', import.meta.url), 'utf8');
-  const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
-  const services = readFileSync(
-    new URL('../src/routes/services/+page.svelte', import.meta.url),
-    'utf8'
-  );
-  const servicesMapPreview = readFileSync(
-    new URL('../src/lib/components/ServicesMapPreview.svelte', import.meta.url),
-    'utf8'
-  );
-  const productsPage = readFileSync(
-    new URL('../src/routes/products/+page.svelte', import.meta.url),
-    'utf8'
-  );
-  const stack = readFileSync(new URL('../src/routes/stack/+page.svelte', import.meta.url), 'utf8');
-  const proof = readFileSync(
-    new URL('../src/routes/proof/marketplace-workflow/+page.svelte', import.meta.url),
-    'utf8'
-  );
-
+test('commercial decision routes explain the task, delivery, ownership, and proof', () => {
+  const read = (route: string) => readFileSync(new URL(`../src/routes/${route}`, import.meta.url), 'utf8');
+  const home = read('+page.svelte');
+  const layout = read('+layout.svelte');
   assert.match(layout, /label: 'How It Works', href: '\/services'/);
   assert.match(layout, /label: 'What You Keep', href: '\/stack'/);
-  assert.doesNotMatch(layout, /label: 'How I Work'/);
-  assert.doesNotMatch(layout, /label: 'Stack Boundary'/);
-
-  assert.match(home, /title="Your people and AI need the same playbook\."/);
-  assert.match(home, /We embed with operators to map one workflow/);
-  assert.match(home, />See the Marketplace workflow</);
-  assert.match(home, /label: 'Control',[\s\S]*?value: 'Run \/ Wait \/ Stop'/);
-  const heroProof = home.slice(
-    home.indexOf('const heroProofItems'),
-    home.indexOf('const serviceFlowSteps')
-  );
-  const heroOpening = home.slice(
-    home.indexOf('<PerformanceCampaignOpening'),
-    home.indexOf('</PerformanceCampaignOpening>')
-  );
-  assert.doesNotMatch(heroOpening, /and easier to run|See a worked example/);
-  assert.doesNotMatch(heroProof, /label: 'Map'/);
-  assert.doesNotMatch(home, /Train the workflow/);
-
-  assert.match(services, /Bring one handoff your team still checks manually/);
-  assert.match(servicesMapPreview, /See the operating path before deciding to build/);
-  assert.doesNotMatch(services, /PerformanceFieldSequence|PerformanceThesisConditions/);
-
-  assert.match(productsPage, /title="One playbook\. Three operating paths\."/);
-  assert.match(productsPage, /Map defines the client-owned Playbook/);
-  assert.match(productsPage, /Build makes its approved Runbooks executable/);
-  assert.match(productsPage, /Control operates and improves the system/);
-  assert.doesNotMatch(productsPage, /Product hierarchy|Product protocol|Operating sequence/);
-
-  assert.match(stack, /You keep the accounts, data, approval rights, and operating history/);
-  assert.match(stack, /title="What You Keep \| CREATE SOMETHING \.agency"/);
-  assert.match(proof, /title="Turn a watched review queue into a testable workflow\."/);
-  assert.match(proof, /title(?:=|:)\s*["']Spend less time rebuilding context\.["']/);
-  assert.match(proof, /prototype measurements, not customer ROI claims/);
+  assert.match(home, /Turn meeting notes into a reviewable action list\./);
+  assert.match(home, /Illustrative example, not a measured client result/);
+  assert.match(home, /A person checks the draft before anything is saved to another tool/);
+  assert.match(home, /Source, rules, tests, and runbook/);
+  assert.match(read('services/+page.svelte'), /Bring one task your team still handles manually/);
+  assert.match(read('products/+page.svelte'), /Map and Control are subscriptions/);
+  assert.match(read('products/+page.svelte'), /Control includes Map/);
+  assert.match(read('stack/+page.svelte'), /You keep the accounts, data, approval rights, and operating history/);
+  assert.match(read('proof/marketplace-workflow/+page.svelte'), /prototype measurements, not customer ROI claims/);
 });
 
 test('public Agency commercial propositions declare the shared editorial expression', () => {
@@ -472,55 +391,28 @@ test('the Practice argument is editorial while its operating artifacts stay fiel
   );
 });
 
-test('the homepage operating story preserves the boundary in reader-facing language', () => {
+test('the homepage service steps preserve approvals, testing, and separate launch', () => {
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
-  const description = home.match(/id="agency-operating-story"[\s\S]*?description="([^"]+)"/)?.[1];
-
-  assert(description, 'Agency operating-story description is missing');
-  assert.doesNotMatch(description, /\b(?:the page|this page|this section|holds one argument)\b/i);
-  assert.doesNotMatch(description, /\b(?:consequential judgment|first lane|proof attached)\b/i);
-  assert.match(description, /\b(?:team|operator|you)\b/i, 'decision owner is not visible');
-  assert.match(
-    description,
-    /\b(?:limit|decide|approval|stop)\w*\b/i,
-    'authority boundary is missing'
-  );
-  assert.match(
-    description,
-    /\b(?:map|handoff|workflow|test|run)\w*\b/i,
-    'bounded workflow is missing'
-  );
-  assert.match(
-    description,
-    /\b(?:record|receipt|proof|evidence)\w*\b/i,
-    'inspectable proof is missing'
-  );
+  const steps = home.slice(home.indexOf('const steps ='), home.indexOf('</script>'));
+  assert.match(steps, /what AI may do and what needs approval/);
+  assert.match(steps, /test environment/);
+  assert.match(steps, /Going live is a separate project/);
+  assert.match(steps, /monitoring, incident response, and regular reviews/);
+  for (const route of ['/map', '/agent-foundation', '/control']) assert.ok(steps.includes(route));
 });
 
-test('the complete operating story translates its method into people, actions, and records', () => {
+test('the homepage defines unfamiliar terms beside the example', () => {
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
-  const story = home.slice(home.indexOf('const serviceFlowSteps'), home.indexOf('</script>'));
-
-  assert.doesNotMatch(
-    story,
-    /Authority scoped|Signal → proof|consequential authority|first lane|inspectable wake|Governance directs flow|Proof Graph/i
-  );
-  assert.match(story, /team decides what can run, what needs approval, and what must stop/i);
-  assert.match(
-    story,
-    /where work starts[^.]*what the agent may do[^.]*where a person must approve/i
-  );
-  assert.match(story, /every action leaves a record your team can review/i);
-  assert.match(story, /system cannot make the final decision/i);
+  assert.match(home, /An agent is software that uses AI and connected tools/);
+  assert.match(home, /A runbook is the guide to starting, running, and recovering the system/);
+  assert.match(home, /OpenAI Codex, an AI coding tool/);
+  assert.doesNotMatch(home, /Offense|Defense|PerformanceWorkflowMiniArtifact|HeroTrustArtifact/);
 });
 
-test('the mobile operating story removes decorative mini artifacts from the reading path', () => {
+test('the mobile homepage stacks the example and service steps for reading', () => {
   const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url), 'utf8');
-
-  assert.match(
-    home,
-    /@media \(max-width: 640px\)[\s\S]*?\.service-flow-artifact__visual\s*\{\s*display:\s*none;/
-  );
+  assert.match(home, /@media \(max-width: 640px\)[\s\S]*?dl, \.home-steps\s*\{\s*grid-template-columns: 1fr/);
+  assert.doesNotMatch(home, /PublicSubstrateCanvas|MeridianEvidenceCarousel/);
 });
 
 test('commercial decision routes use one primary and one conversational action', () => {
@@ -540,13 +432,16 @@ test('commercial decision routes use one primary and one conversational action',
     .map((route) => readFileSync(new URL(route, import.meta.url), 'utf8'))
     .join('\n');
 
-  assert.match(messaging, /startWithWorkflowLabel: 'Start a private workflow draft'/);
-  assert.match(messaging, /selfMapLabel: 'Start a private workflow draft'/);
+  assert.match(messaging, /startWithWorkflowLabel: 'Map your workflow'/);
+  assert.match(messaging, /selfMapLabel: 'Map your workflow'/);
   assert.match(messaging, /bookMappingSessionLabel: 'Book a mapping session'/);
-  assert.match(routes, /(?:>Start a private workflow draft<|secondaryLabel: 'Start a private workflow draft')/);
+  assert.match(
+    routes,
+    /(?:>Map your workflow<|secondaryLabel: 'Map your workflow')/
+  );
   assert.doesNotMatch(
     routes,
-    /Start Workflow Map|Talk Through a Workflow|Map the workflow first|Map your workflow/
+    /Start Workflow Map|Talk Through a Workflow|Map the workflow first|Start a private workflow draft/
   );
 });
 
@@ -563,7 +458,7 @@ test('public stack positioning names the owned Cloudflare and OpenAI boundary', 
   );
   const dify = readFileSync(new URL('../src/routes/dify/+page.svelte', import.meta.url), 'utf8');
 
-  assert.match(stack, /Substrate is the owned database and operator layer/i);
+  assert.match(stack, /Our database system stores the records, tasks, approvals, and work history/i);
   assert.match(partners, /CREATE SOMETHING owns the system/i);
   assert.match(partners, /Cloudflare provides infrastructure/i);
   assert.match(partners, /OpenAI provides intelligence/i);
@@ -640,12 +535,12 @@ test('integration proof keeps compatibility distinct from partnership and delive
     'utf8'
   );
 
-  assert.match(home, /IntegrationCompatibilityRail surface="homepage"/);
+  assert.doesNotMatch(home, /IntegrationCompatibilityRail surface="homepage"/);
   assert.match(partners, /IntegrationCompatibilityRail surface="partners"/);
   assert.match(partners, /<IntegrationCatalog \/>/);
-  assert.match(rail, /Brand marks identify tool paths, not partnerships or endorsements/);
-  assert.match(catalog, /Connector available ≠ connected or write-authorized/);
-  assert.match(catalog, /not a live customer connection/);
+  assert.match(rail, /They do not imply partnerships or endorsements/);
+  assert.match(catalog, /Available to connect\. Account access still needs approval/);
+  assert.match(catalog, /does not mean an account is connected/);
   assert.match(catalog, /integration_name=/);
   assert.match(map, /initialIntegration=/);
   assert.match(map, /initialIntegrationName=/);

@@ -69,7 +69,7 @@ export interface SyncConfig {
   sourceSchema: DataSourceSchema;
   targetSchema: DataSourceSchema;
   sourceStatusProperty: string;
-  sourceStatusMap: Record<string, string>;
+  sourceStatusMap: Record<string, string | null>;
   targetExtPageIdProperty: string;
   clientDisplayName: string;
   sourceDataSourceTitle: string;

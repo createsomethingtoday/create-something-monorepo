@@ -13,6 +13,7 @@ export type MarketingPageCluster =
   | 'delegation-practice'
   | 'products'
   | 'field-reports'
+  | 'dispatch'
   | 'proof-lab'
   | 'workflow-proof'
   | 'workflow-library'
@@ -170,21 +171,66 @@ const workflowMarketingDefinitions: Array<{
 
 export const marketingPagePortfolio: MarketingPageEntry[] = [
   {
+    path: '/dispatch',
+    cluster: 'dispatch',
+    role: 'pillar',
+    decision: 'index',
+    audience: 'Builders and workflow owners who want inspectable lessons from current agent work.',
+    funnelStage: 'understand',
+    intent:
+      'Publish the evidence-gated CREATE SOMETHING editorial cadence and current lesson queue.',
+    primaryAction: 'See the current schedule',
+    requiredTerms: ['LinkedIn', 'YouTube', 'evidence', 'repository', 'workflow'],
+    requiredLinks: ['/field-reports'],
+    schema: 'page',
+    search: { changefreq: 'weekly', priority: '0.72', lastmod: '2026-09-04' },
+    selfHealing: ['copy:heal', 'search-route:sync']
+  },
+  {
     path: '/',
     cluster: 'home',
     role: 'pillar',
     decision: 'index',
-    audience: 'Teams looking for a plain explanation of AI workflow systems.',
+    audience:
+      'Business owners and operations leads with a repeated task, an idea, or an existing AI project.',
     funnelStage: 'discover',
-    intent: 'Introduce the category and route readers toward workflow mapping.',
-    primaryAction: 'Request a workflow map',
-    requiredTerms: ['workflow', 'business operations', 'Signal', 'Decision', 'Proof'],
-    requiredLinks: ['/services', '/partners', '/products', '/field-reports/template-review'],
+    intent:
+      'Explain the first useful AI task, what the customer keeps, and how to discuss a project.',
+    primaryAction: 'See what we build',
+    requiredTerms: ['agent', 'task', 'code', 'workflow', 'Going live'],
+    requiredLinks: ['/agent-foundation', '/services', '/stack', '/proof/marketplace-workflow'],
     schema: 'page',
     search: {
       changefreq: 'weekly',
       priority: '1.0',
-      lastmod: '2026-06-19'
+      lastmod: '2026-09-04'
+    },
+    selfHealing: ['copy:heal', 'search-route:sync']
+  },
+  {
+    path: '/agent-foundation',
+    cluster: 'core-services',
+    role: 'implementation',
+    decision: 'index',
+    audience:
+      'Builders and operating teams with an agent idea, prototype, repository, or stalled Codex project.',
+    funnelStage: 'book',
+    intent:
+      'Explain the client-owned Agent Foundation, its Codex continuation proof, and its separate Production Promotion boundary.',
+    primaryAction: 'Book a Foundation fit call',
+    requiredTerms: [
+      'Agent Foundation',
+      'Codex',
+      'client-owned',
+      'useful job',
+      'Production Promotion'
+    ],
+    requiredLinks: ['/services'],
+    schema: 'page',
+    search: {
+      changefreq: 'monthly',
+      priority: '0.94',
+      lastmod: '2026-09-04'
     },
     selfHealing: ['copy:heal', 'search-route:sync']
   },
@@ -239,12 +285,14 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     cluster: 'core-services',
     role: 'support',
     decision: 'index',
-    audience: 'Business owners who need evidence of what AI buyers understand before implementation.',
+    audience:
+      'Business owners who need evidence of what AI buyers understand before implementation.',
     funnelStage: 'book',
-    intent: 'Diagnose AI buyer readiness with bounded questions, cited sources, and a prioritized plan.',
+    intent:
+      'Diagnose AI buyer readiness with bounded questions, cited sources, and a prioritized plan.',
     primaryAction: 'Book the audit',
-    requiredTerms: ['AI Buyer Readiness Audit', 'buyer questions', 'cited sources', 'Build', 'Control'],
-    requiredLinks: ['/services', '/control'],
+    requiredTerms: ['AI Buyer Readiness Audit', 'buyer questions', 'cited sources'],
+    requiredLinks: [],
     schema: 'page',
     search: {
       changefreq: 'monthly',
@@ -262,8 +310,8 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     funnelStage: 'book',
     intent: 'Convert a mapped workflow need into a scoped booking path.',
     primaryAction: 'Choose a time',
-    requiredTerms: ['workflow', 'handoff', 'owner', 'audit trail', 'controlled path'],
-    requiredLinks: ['/services'],
+    requiredTerms: ['workflow', 'handoff', 'owner'],
+    requiredLinks: [],
     schema: 'page',
     search: {
       changefreq: 'weekly',

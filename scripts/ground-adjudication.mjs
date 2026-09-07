@@ -66,6 +66,7 @@ export function validateLedger(ledger) {
   requireOptionalCount(thresholds.minimum_complete_receipts, 'minimum_complete_receipts');
   requireOptionalCount(thresholds.minimum_adjudicated_findings, 'minimum_adjudicated_findings');
   requireOptionalRate(thresholds.minimum_precision, 'minimum_precision', { positive: true });
+  requireOptionalRate(thresholds.minimum_recall, 'minimum_recall', { positive: true });
   requireOptionalRate(thresholds.maximum_false_positive_rate, 'maximum_false_positive_rate');
   requireOptionalCheckCounts(
     thresholds.minimum_adjudicated_by_check,
@@ -98,6 +99,18 @@ export function validateLedger(ledger) {
     }
     if (receipt.execution_failures !== undefined) {
       requireCount(receipt.execution_failures, `records[${index}].receipt.execution_failures`);
+    }
+    if (receipt.expected_findings !== undefined) {
+      const expected = requireCount(
+        receipt.expected_findings,
+        `records[${index}].receipt.expected_findings`
+      );
+      const missed = requireCount(
+        receipt.missed_findings,
+        `records[${index}].receipt.missed_findings`
+      );
+      if (missed > expected) fail(`records[${index}].receipt missed_findings exceeds expected_findings`);
+      if (expected > 0) requireString(receipt.recall_check, `records[${index}].receipt.recall_check`);
     }
     if (!Array.isArray(record.verdicts)) fail(`records[${index}].verdicts must be an array`);
     if (record.verdicts.length > observedFindings) {
@@ -135,10 +148,16 @@ export function summarizeLedger(ledger) {
   };
   const checks = {};
   const execution = { failures: 0 };
+  const recallEvidence = { expected: 0, detected: 0, missed: 0 };
 
   for (const record of ledger.records) {
     receipts[record.receipt.completion] += 1;
     execution.failures += record.receipt.execution_failures ?? 0;
+    if (record.receipt.expected_findings !== undefined) {
+      recallEvidence.expected += record.receipt.expected_findings;
+      recallEvidence.missed += record.receipt.missed_findings;
+      recallEvidence.detected += record.receipt.expected_findings - record.receipt.missed_findings;
+    }
     findings.observed += record.receipt.observed_findings;
     findings.classified += record.verdicts.length;
     for (const verdict of record.verdicts) {
@@ -159,6 +178,7 @@ export function summarizeLedger(ledger) {
   const decisionable = findings.confirmed + findings.false_positive;
   const precision = decisionable === 0 ? null : findings.confirmed / decisionable;
   const falsePositiveRate = decisionable === 0 ? null : findings.false_positive / decisionable;
+  const recall = recallEvidence.expected === 0 ? null : recallEvidence.detected / recallEvidence.expected;
   const reasons = [];
   const { thresholds } = ledger;
   if (thresholds.minimum_complete_receipts === null) {
@@ -175,6 +195,10 @@ export function summarizeLedger(ledger) {
   if (thresholds.minimum_precision === null) reasons.push('precision_threshold_not_configured');
   else if (precision === null) reasons.push('precision_unknown');
   else if (precision < thresholds.minimum_precision) reasons.push('precision_below_threshold');
+  if (thresholds.minimum_recall === null || thresholds.minimum_recall === undefined) {
+    reasons.push('recall_threshold_not_configured');
+  } else if (recall === null) reasons.push('recall_unknown');
+  else if (recall < thresholds.minimum_recall) reasons.push('recall_below_threshold');
   if (thresholds.maximum_false_positive_rate === null) {
     reasons.push('false_positive_rate_threshold_not_configured');
   } else if (
@@ -205,6 +229,8 @@ export function summarizeLedger(ledger) {
     checks,
     execution,
     precision,
+    recall,
+    recall_evidence: recallEvidence,
     false_positive_rate: falsePositiveRate,
     promotion: { ready: reasons.length === 0, reasons }
   };
@@ -221,6 +247,7 @@ export function formatMarkdown(summary) {
     `- Verdicts: ${summary.findings.confirmed} confirmed, ${summary.findings.false_positive} false positive, ${summary.findings.out_of_scope} out of scope`,
     `- Execution failures: ${summary.execution.failures}`,
     `- Precision: ${percent(summary.precision)}`,
+    `- Recall: ${percent(summary.recall)} (${summary.recall_evidence.detected}/${summary.recall_evidence.expected} seeded positives detected)`,
     `- False-positive rate: ${percent(summary.false_positive_rate)}`,
     `- Promotion readiness: ${summary.promotion.ready ? 'ready' : 'not ready'}`
   ];

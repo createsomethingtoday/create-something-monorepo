@@ -23,9 +23,7 @@ describe('scheduler public page', () => {
     expect(html).toContain('prefers-reduced-motion');
     expect(html).toContain('nonce="controlled-nonce"');
     expect(html).toContain('data-performance-surface="booking"');
-    expect(html).toContain(
-      `data-performance-contract="${PERFORMANCE_DOCUMENT_STYLE_VERSION}"`
-    );
+    expect(html).toContain(`data-performance-contract="${PERFORMANCE_DOCUMENT_STYLE_VERSION}"`);
     expect(html).toContain(performanceDocumentCss);
     expect(html).toContain('--color-performance-grid:rgb(9 9 9 / .055)');
     expect(html).toContain('--font-performance-display-weight:500');
@@ -95,9 +93,7 @@ describe('scheduler public page', () => {
     );
     expect(integration).toContain('<h1>Fit One Integration</h1>');
     expect(integration).toContain('one repository, one consequential workflow');
-    expect(integration).toContain(
-      '<span>Policy</span><strong>Compiler Integration / V1</strong>'
-    );
+    expect(integration).toContain('<span>Policy</span><strong>Compiler Integration / V1</strong>');
     expect(integration).toContain('const offerIntent="compiler-integration";');
     expect(integration).toContain(
       "history.replaceState({},'',canonicalBookingUrl(state.booking.bookingId));"
@@ -106,6 +102,20 @@ describe('scheduler public page', () => {
     expect(unknown).toContain('<title>Workflow Mapping Session | CREATE SOMETHING</title>');
     expect(unknown).toContain('<h1>Map One Workflow</h1>');
     expect(unknown).toContain('const offerIntent=null;');
+  });
+
+  it('renders and preserves the Agent Foundation offer intent', () => {
+    const foundation = schedulerPage({
+      nonce: 'controlled-nonce',
+      intent: 'agent-foundation'
+    });
+
+    expect(foundation).toContain('<title>Agent Foundation Fit Call | CREATE SOMETHING</title>');
+    expect(foundation).toContain('<h1>Fit One Agent Foundation</h1>');
+    expect(foundation).toContain('one agent project, one role, one job');
+    expect(foundation).toContain('<span>Policy</span><strong>Agent Foundation / V1</strong>');
+    expect(foundation).toContain('const offerIntent="agent-foundation";');
+    expect(foundation).not.toContain('<h1>Map One Workflow</h1>');
   });
 
   it('does not offer booking management actions after cancellation', () => {

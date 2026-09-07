@@ -91,7 +91,7 @@
       summary: 'Verify',
       title: 'Check first. Then record. Ground blocks an unverified claim.',
       detail:
-        'Ground turns verification from a suggestion into a required sequence before its claim tools record a code finding.',
+        'Ground requires a check before its claim tools can record a code finding.',
       tone: 'review',
       evidence: ['Check first', 'Then claim', 'Blocked otherwise'],
       receipts: ['Compared inputs', 'Evidence-bound claim']
@@ -100,9 +100,9 @@
       id: 'proof',
       label: 'Inspect the proof',
       summary: 'Trust',
-      title: 'A smaller tool surface produces stronger claims.',
+      title: 'Check the evidence before recording a finding.',
       detail:
-        'The tool inventory supports one operating rule across TypeScript, JavaScript, and SvelteKit codebases.',
+        'Ground provides code checks for TypeScript, JavaScript, and SvelteKit projects.',
       tone: 'neutral',
       evidence: ['21 MCP tools', 'Five native release targets', 'Public calibration policy'],
       receipts: ['Checksums + provenance', 'Adjudicated findings ledger'],
@@ -162,7 +162,7 @@
   id="ground-operating-path"
   eyebrow="Ground operating path"
   title="Verification belongs before the answer."
-  description="One indexed surface keeps installation, enforcement, and production evidence together."
+  description="For developers: installation commands, how the checks work, and release evidence."
   {scenes}
   ariaLabel="Ground operating path"
 >
@@ -274,7 +274,22 @@ ground claim duplicate utils.ts helpers.ts "same validation logic"
   {/snippet}
 </PerformanceConversionHandoff>
 
+<p class="product-family-link">Ground is part of the <a href="/products">product family</a>.</p>
+
 <style>
+  .product-family-link {
+    margin: 0;
+    padding: 1rem clamp(1.25rem, 5vw, 6rem);
+    border-bottom: 1px solid var(--color-performance-line, #d7d7d2);
+    color: var(--color-performance-muted, #5e6268);
+    font-size: 0.9rem;
+  }
+
+  .product-family-link a {
+    color: var(--color-performance-ink, #090909);
+    text-underline-offset: 0.18em;
+  }
+
   .install-grid,
   .tool-groups {
     display: grid;

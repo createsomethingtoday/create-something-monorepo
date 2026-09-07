@@ -25,6 +25,7 @@ use serde::{Serialize, Deserialize};
 use chrono::{DateTime, Utc};
 
 use super::imports::{extract_imports, extract_exports};
+use crate::monorepo::discover_workspace_package_paths;
 
 /// Path alias configuration (e.g., $lib → src/lib)
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -142,7 +143,7 @@ impl SymbolGraph {
             imports: HashMap::new(),
             symbol_exporters: HashMap::new(),
             symbol_importers: HashMap::new(),
-            module_resolution: HashMap::new(),
+            module_resolution: workspace_module_resolution(root_dir),
             path_aliases,
             reexport_chains: HashMap::new(),
             built_at: Utc::now(),
@@ -345,6 +346,25 @@ impl SymbolGraph {
     
     /// Check if a module specifier resolves to a target file
     fn resolves_to(&self, module_spec: &str, target: &Path, importer: &Path) -> bool {
+        if let Some(resolved) = self.module_resolution.get(module_spec) {
+            if module_target_matches(resolved, target) {
+                return true;
+            }
+        }
+
+        for (pattern, resolved) in &self.module_resolution {
+            let Some(prefix) = pattern.strip_suffix("/*") else {
+                continue;
+            };
+            let Some(remainder) = module_spec.strip_prefix(&format!("{prefix}/")) else {
+                continue;
+            };
+            let expanded = PathBuf::from(resolved.to_string_lossy().replace('*', remainder));
+            if module_target_matches(&expanded, target) {
+                return true;
+            }
+        }
+
         // First, try to resolve path aliases
         let resolved_spec = self.resolve_alias(module_spec);
         let module_spec = resolved_spec.as_deref().unwrap_or(module_spec);
@@ -376,13 +396,6 @@ impl SymbolGraph {
                     }
                 }
                 
-                // Fallback: check if paths end the same way
-                let target_str = target.to_string_lossy();
-                let module_clean = module_spec.trim_start_matches("./").trim_start_matches("../");
-                if target_str.ends_with(module_clean) || 
-                   target_str.contains(&format!("/{}", module_clean)) {
-                    return true;
-                }
             }
         }
         
@@ -410,13 +423,6 @@ impl SymbolGraph {
                     }
                 }
             }
-        }
-        
-        // Handle package imports (e.g., @scope/package)
-        // These would need package.json resolution - simplified for now
-        let target_str = target.to_string_lossy();
-        if target_str.contains(module_spec) {
-            return true;
         }
         
         false
@@ -515,6 +521,103 @@ impl SymbolGraph {
     }
 }
 
+fn paths_equal(left: &Path, right: &Path) -> bool {
+    match (left.canonicalize(), right.canonicalize()) {
+        (Ok(left), Ok(right)) => left == right,
+        _ => left == right,
+    }
+}
+
+fn module_target_matches(published_target: &Path, source_target: &Path) -> bool {
+    if paths_equal(published_target, source_target) {
+        return true;
+    }
+
+    let Some(package_root) = published_target
+        .ancestors()
+        .find(|ancestor| ancestor.join("package.json").is_file())
+    else {
+        return false;
+    };
+    let Ok(relative) = published_target.strip_prefix(package_root) else {
+        return false;
+    };
+    let relative_text = relative.to_string_lossy().replace('\\', "/");
+    let Some(dist_relative) = relative_text.strip_prefix("dist/") else {
+        return false;
+    };
+    let stem = strip_module_extension(dist_relative);
+
+    ["src/lib", "src"].iter().any(|source_root| {
+        ["ts", "tsx", "js", "jsx", "svelte", "css", "scss", "json"]
+            .iter()
+            .map(|extension| package_root.join(source_root).join(format!("{stem}.{extension}")))
+            .any(|candidate| paths_equal(&candidate, source_target))
+    })
+}
+
+fn strip_module_extension(path: &str) -> &str {
+    [".d.ts", ".d.mts", ".d.cts", ".svelte", ".tsx", ".jsx", ".mts", ".cts", ".ts", ".js", ".css", ".scss", ".json"]
+        .iter()
+        .find_map(|extension| path.strip_suffix(extension))
+        .unwrap_or(path)
+}
+
+fn workspace_module_resolution(root: &Path) -> HashMap<String, PathBuf> {
+    let mut resolution = HashMap::new();
+    for package in discover_workspace_package_paths(root) {
+        let Ok(content) = fs::read_to_string(package.join("package.json")) else {
+            continue;
+        };
+        let Ok(manifest) = serde_json::from_str::<serde_json::Value>(&content) else {
+            continue;
+        };
+        let Some(name) = manifest.get("name").and_then(|value| value.as_str()) else {
+            continue;
+        };
+
+        if let Some(exports) = manifest.get("exports") {
+            match exports {
+                serde_json::Value::String(target) => {
+                    resolution.insert(name.to_string(), package.join(target));
+                }
+                serde_json::Value::Object(entries) => {
+                    for (subpath, value) in entries {
+                        let Some(target) = export_target(value) else { continue };
+                        let specifier = if subpath == "." {
+                            name.to_string()
+                        } else if let Some(subpath) = subpath.strip_prefix("./") {
+                            format!("{}/{}", name, subpath)
+                        } else {
+                            continue;
+                        };
+                        resolution.insert(specifier, package.join(target));
+                    }
+                }
+                _ => {}
+            }
+        } else {
+            for field in ["svelte", "module", "main", "types"] {
+                if let Some(target) = manifest.get(field).and_then(|value| value.as_str()) {
+                    resolution.insert(name.to_string(), package.join(target));
+                    break;
+                }
+            }
+        }
+    }
+    resolution
+}
+
+fn export_target(value: &serde_json::Value) -> Option<&str> {
+    match value {
+        serde_json::Value::String(target) => Some(target),
+        serde_json::Value::Object(conditions) => ["types", "svelte", "import", "default", "require"]
+            .iter()
+            .find_map(|condition| conditions.get(*condition).and_then(export_target)),
+        _ => None,
+    }
+}
+
 /// Statistics about a symbol graph
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GraphStats {
@@ -556,21 +659,22 @@ fn collect_files(dir: &Path, files: &mut Vec<PathBuf>) {
 
 /// Detect path aliases from config files in the directory hierarchy
 fn detect_path_aliases(root_dir: &Path) -> Vec<PathAlias> {
-    let mut aliases = Vec::new();
+    let mut aliases: Vec<PathAlias> = Vec::new();
     
-    // Walk up to find config files
+    // Walk to the filesystem root so deeply nested monorepo packages still use
+    // their declared aliases.
     let mut search_dir = root_dir.to_path_buf();
-    for _ in 0..5 {
+    loop {
         // Check for svelte.config.js (SvelteKit)
         if search_dir.join("svelte.config.js").exists() || 
            search_dir.join("svelte.config.ts").exists() {
             // SvelteKit automatically provides $lib -> src/lib
-            aliases.push(PathAlias {
-                pattern: "$lib".to_string(),
-                target: "src/lib".to_string(),
-            });
-            // Also $app for SvelteKit internals (usually not in user code)
-            break;
+            if !aliases.iter().any(|alias| alias.pattern == "$lib") {
+                aliases.push(PathAlias {
+                    pattern: "$lib".to_string(),
+                    target: "src/lib".to_string(),
+                });
+            }
         }
         
         // Check for tsconfig.json
@@ -600,122 +704,27 @@ fn detect_path_aliases(root_dir: &Path) -> Vec<PathAlias> {
 
 /// Parse path aliases from tsconfig.json content
 fn parse_tsconfig_paths(content: &str) -> Vec<PathAlias> {
-    let mut aliases = Vec::new();
-    
-    // Simple JSON parsing for paths - avoid full JSON dependency
-    // Looking for "paths": { "@/*": ["./src/*"] } pattern
-    
-    // Find "compilerOptions" section
-    if let Some(compiler_pos) = content.find("\"compilerOptions\"") {
-        let rest = &content[compiler_pos..];
-        
-        // Find "paths" within compilerOptions
-        if let Some(paths_pos) = rest.find("\"paths\"") {
-            let paths_rest = &rest[paths_pos..];
-            
-            // Find the opening brace
-            if let Some(brace_pos) = paths_rest.find('{') {
-                let paths_content = &paths_rest[brace_pos..];
-                
-                // Find matching closing brace (simple heuristic)
-                let mut depth = 0;
-                let mut end_pos = 0;
-                for (i, c) in paths_content.char_indices() {
-                    match c {
-                        '{' => depth += 1,
-                        '}' => {
-                            depth -= 1;
-                            if depth == 0 {
-                                end_pos = i;
-                                break;
-                            }
-                        }
-                        _ => {}
-                    }
-                }
-                
-                if end_pos > 0 {
-                    let paths_block = &paths_content[1..end_pos];
-                    
-                    // Parse each alias: "pattern": ["target"]
-                    // Simple regex-like extraction
-                    let mut chars = paths_block.chars().peekable();
-                    while let Some(_) = chars.next() {
-                        // Look for quoted strings
-                        if let Some(pattern) = extract_quoted_string(paths_block, &mut 0) {
-                            // This is a simplified parser - for production, use serde_json
-                            if pattern.contains("/*") || pattern.starts_with('@') || pattern.starts_with('$') {
-                                // Find the corresponding array value
-                                if let Some(target_arr_start) = paths_block.find(&format!("\"{pattern}\"")) {
-                                    let after_pattern = &paths_block[target_arr_start + pattern.len() + 2..];
-                                    if let Some(arr_start) = after_pattern.find('[') {
-                                        if let Some(arr_end) = after_pattern[arr_start..].find(']') {
-                                            let arr_content = &after_pattern[arr_start + 1..arr_start + arr_end];
-                                            // Extract first string from array
-                                            if let Some(target) = extract_first_quoted(arr_content) {
-                                                aliases.push(PathAlias {
-                                                    pattern: pattern.clone(),
-                                                    target: target.trim_start_matches("./").to_string(),
-                                                });
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        break; // Simple parser - just get first one for now
-                    }
-                }
-            }
-        }
-    }
-    
-    // Common conventional aliases
-    // Check for @/ -> src/ pattern (very common in React/Next.js)
-    if aliases.is_empty() && content.contains("\"@/*\"") {
-        aliases.push(PathAlias {
-            pattern: "@/*".to_string(),
-            target: "src/*".to_string(),
-        });
-    }
-    
-    aliases
-}
+    let Ok(document) = json5::from_str::<serde_json::Value>(content) else {
+        return Vec::new();
+    };
+    let Some(paths) = document
+        .get("compilerOptions")
+        .and_then(|options| options.get("paths"))
+        .and_then(|paths| paths.as_object())
+    else {
+        return Vec::new();
+    };
 
-/// Extract first quoted string from text
-fn extract_quoted_string(text: &str, _start: &mut usize) -> Option<String> {
-    let mut in_string = false;
-    let mut result = String::new();
-    
-    for c in text.chars() {
-        if c == '"' {
-            if in_string {
-                return Some(result);
-            }
-            in_string = true;
-        } else if in_string {
-            result.push(c);
-        }
-    }
-    None
-}
-
-/// Extract first quoted string from an array-like string content
-fn extract_first_quoted(arr_content: &str) -> Option<String> {
-    let mut in_string = false;
-    let mut result = String::new();
-    
-    for c in arr_content.chars() {
-        if c == '"' {
-            if in_string {
-                return Some(result);
-            }
-            in_string = true;
-        } else if in_string {
-            result.push(c);
-        }
-    }
-    None
+    paths
+        .iter()
+        .filter_map(|(pattern, targets)| {
+            let target = targets.as_array()?.first()?.as_str()?;
+            Some(PathAlias {
+                pattern: pattern.clone(),
+                target: target.trim_start_matches("./").to_string(),
+            })
+        })
+        .collect()
 }
 
 #[cfg(test)]
@@ -819,9 +828,11 @@ import { helper } from '$lib/utils';
     #[test]
     fn test_parse_tsconfig_paths() {
         let content = r#"{
+            // JSONC comments and more than one alias are common in tsconfig files.
             "compilerOptions": {
                 "paths": {
-                    "@/*": ["./src/*"]
+                    "@/*": ["./src/*"],
+                    "$generated/*": ["./.generated/*"],
                 }
             }
         }"#;
@@ -829,7 +840,79 @@ import { helper } from '$lib/utils';
         let aliases = parse_tsconfig_paths(content);
         
         // Should detect @/* alias
-        assert!(aliases.iter().any(|a| a.pattern == "@/*" || a.pattern.contains("@")), 
-                "Should detect @/* alias pattern");
+        assert!(aliases.iter().any(|a| a.pattern == "@/*"));
+        assert!(aliases.iter().any(|a| a.pattern == "$generated/*"));
+    }
+
+    #[test]
+    fn workspace_package_exports_resolve_to_the_exporting_file() {
+        let dir = tempdir().unwrap();
+        fs::write(
+            dir.path().join("pnpm-workspace.yaml"),
+            "packages:\n  - 'apps/*'\n  - 'packages/*'\n",
+        )
+        .unwrap();
+        fs::create_dir_all(dir.path().join("packages/canon/src")).unwrap();
+        fs::create_dir_all(dir.path().join("apps/site/src")).unwrap();
+        fs::write(
+            dir.path().join("packages/canon/package.json"),
+            r#"{"name":"@create-something/canon","exports":{"./math":"./src/math.ts"}}"#,
+        )
+        .unwrap();
+        fs::write(
+            dir.path().join("apps/site/package.json"),
+            r#"{"name":"@create-something/site","dependencies":{"@create-something/canon":"workspace:*"}}"#,
+        )
+        .unwrap();
+        fs::write(
+            dir.path().join("packages/canon/src/math.ts"),
+            "export const add = (a: number, b: number) => a + b;\n",
+        )
+        .unwrap();
+        fs::write(
+            dir.path().join("apps/site/src/index.ts"),
+            "import { add } from '@create-something/canon/math';\nconsole.log(add(1, 2));\n",
+        )
+        .unwrap();
+
+        let graph = SymbolGraph::build(dir.path(), None).unwrap();
+        let report = graph.find_dead_exports();
+        assert!(!report.dead_exports.iter().any(|export| export.name == "add"));
+    }
+
+    #[test]
+    fn workspace_dist_and_wildcard_exports_resolve_to_source_files() {
+        let dir = tempdir().unwrap();
+        fs::write(
+            dir.path().join("pnpm-workspace.yaml"),
+            "packages:\n  - 'apps/*'\n  - 'packages/*'\n",
+        )
+        .unwrap();
+        fs::create_dir_all(dir.path().join("packages/canon/src/lib/components")).unwrap();
+        fs::create_dir_all(dir.path().join("apps/site/src")).unwrap();
+        fs::write(
+            dir.path().join("packages/canon/package.json"),
+            r#"{"name":"@create-something/canon","exports":{"./components/*":"./dist/components/*.js"}}"#,
+        )
+        .unwrap();
+        fs::write(
+            dir.path().join("apps/site/package.json"),
+            r#"{"name":"@create-something/site","dependencies":{"@create-something/canon":"workspace:*"}}"#,
+        )
+        .unwrap();
+        fs::write(
+            dir.path().join("packages/canon/src/lib/components/card.ts"),
+            "export const card = () => 'card';\n",
+        )
+        .unwrap();
+        fs::write(
+            dir.path().join("apps/site/src/index.ts"),
+            "import { card } from '@create-something/canon/components/card';\nconsole.log(card());\n",
+        )
+        .unwrap();
+
+        let graph = SymbolGraph::build(dir.path(), None).unwrap();
+        let report = graph.find_dead_exports();
+        assert!(!report.dead_exports.iter().any(|export| export.name == "card"));
     }
 }

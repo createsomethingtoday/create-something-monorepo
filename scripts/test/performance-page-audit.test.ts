@@ -172,10 +172,10 @@ test('covers every current CREATE SOMETHING page implementation and emits bounde
 
   assert.equal(result.ok, true, result.errors.join('\n'));
   assert.deepEqual(result.totals, {
-    discovered: 245,
-    registered: 245,
-    migrated: 49,
-    pending: 184,
+    discovered: 248,
+    registered: 248,
+    migrated: 51,
+    pending: 185,
     excluded: 12
   });
   assert.deepEqual(
@@ -185,7 +185,7 @@ test('covers every current CREATE SOMETHING page implementation and emits bounde
         result.entries.filter((entry) => entry.property === property).length
       ])
     ),
-    { agency: 78, ltd: 37, io: 100, lms: 12, space: 15, 'ona-agents': 3 }
+    { agency: 80, ltd: 37, io: 100, lms: 12, space: 16, 'ona-agents': 3 }
   );
   assert.ok(result.cohorts.every((cohort) => cohort.count > 0));
   assert.ok(result.cohorts.every((cohort) => cohort.sources.length === cohort.count));

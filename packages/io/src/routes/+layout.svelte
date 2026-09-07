@@ -100,6 +100,14 @@
       keywords: ['topics', 'browse']
     },
     {
+      id: 'nav-newsletters',
+      label: 'Newsletter archive',
+      description: 'Operator field notes and practical links',
+      href: '/newsletters',
+      icon: '✉️',
+      keywords: ['newsletter', 'field notes', 'archive', 'subscribe']
+    },
+    {
       id: 'nav-space',
       label: 'Go to .space',
       description: 'Interactive experiments',
@@ -227,6 +235,7 @@
           { label: 'Methodology', href: '/methodology' },
           { label: 'Categories', href: '/categories' },
           { label: 'About', href: '/about' },
+          { label: 'Newsletters', href: '/newsletters' },
           { label: 'Contact', href: '/contact' }
         ]}
         footerCta={footerHandoff.showCommercialCta

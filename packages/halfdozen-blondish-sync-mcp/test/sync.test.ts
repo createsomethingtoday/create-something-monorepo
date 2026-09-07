@@ -42,6 +42,10 @@ test('mapHdStatusToOsStatus maps only approved reverse statuses', () => {
   assert.equal(mapHdStatusToOsStatus('Backburner'), null);
 });
 
+test('mapHdStatusToOsStatus allows a client to disable Archive writeback', () => {
+  assert.equal(mapHdStatusToOsStatus('Archive', { Archive: null }), null);
+});
+
 test('reverse sync applies a client status-map override before writing', async (t) => {
   const sourceDataSourceId = '65f01384-61f7-824d-a699-076d37f9c91c';
   const sourcePageId = '34101384-1111-2222-3333-444444444444';
@@ -110,6 +114,150 @@ test('reverse sync applies a client status-map override before writing', async (
   assert.equal(result.ok, true);
   assert.equal(result.updated, 1);
   assert.deepEqual(writes, [{ Status: { status: { name: 'Completed' } } }]);
+});
+
+test('reverse sync applies the Cracked Client Action to Under Review policy', async (t) => {
+  const sourceDataSourceId = 'a2cbfa48-c9e9-839c-8dac-073ab7fcf300';
+  const sourcePageId = '34101384-1111-2222-3333-444444444444';
+  const targetPageId = '2a101384-aaaa-bbbb-cccc-000b97592481';
+  const sourcePage: NotionPage = {
+    id: sourcePageId,
+    parent: { data_source_id: sourceDataSourceId },
+    properties: {
+      'Page ID': { type: 'unique_id', unique_id: { prefix: 'CL', number: 68 } },
+      Status: { type: 'status', status: { name: 'Action Required' } },
+    },
+  };
+  const targetPage: NotionPage = {
+    id: targetPageId,
+    parent: { data_source_id: targetDataSourceId },
+    properties: {
+      'External Page ID': { type: 'rich_text', rich_text: [{ plain_text: 'CL-68' }] },
+      Status: { type: 'status', status: { name: 'Client Action' } },
+    },
+  };
+  const writes: unknown[] = [];
+  t.mock.method(globalThis, 'fetch', async (input: string | URL | Request, init?: RequestInit) => {
+    const url = String(input);
+    if (url.endsWith(`/data_sources/${sourceDataSourceId}`)) {
+      return jsonResponse({
+        properties: {
+          Status: { type: 'status', status: { options: [{ name: 'Action Required' }, { name: 'Under Review' }] } },
+        },
+      });
+    }
+    if (url.endsWith(`/data_sources/${targetDataSourceId}`)) {
+      return jsonResponse({
+        properties: {
+          Status: { type: 'status' },
+          'External Page ID': { type: 'rich_text' },
+        },
+      });
+    }
+    if (url.endsWith(`/data_sources/${sourceDataSourceId}/query`)) {
+      return jsonResponse({ results: [sourcePage], has_more: false });
+    }
+    if (url.endsWith(`/data_sources/${targetDataSourceId}/query`)) {
+      return jsonResponse({ results: [targetPage], has_more: false });
+    }
+    if (url.endsWith(`/pages/${sourcePageId}`) && init?.method === 'PATCH') {
+      const body = JSON.parse(String(init.body)) as { properties?: unknown };
+      writes.push(body.properties);
+      return jsonResponse(sourcePage);
+    }
+    return jsonResponse({ message: `Unexpected request: ${url}` }, 500);
+  });
+
+  const result = await syncHalfDozenStatusToSource({
+    CLIENT_NOTION_API_KEY: 'client-token',
+    HALFDOZEN_NOTION_API_KEY: 'hd-token',
+    CLIENT_SUPPORT_TICKETS_DATA_SOURCE_ID: sourceDataSourceId,
+    HALFDOZEN_TICKETS_DATA_SOURCE_ID: targetDataSourceId,
+    CLIENT_OS_STATUS_PROPERTY: 'Status',
+    CLIENT_OS_STATUS_MAP: '{"Not Started":"Submitted","Responded":"Under Review","Client Action":"Under Review","Assigned":"Under Review","Needs Review":"Under Review","Backburner":null,"Archive":null}',
+  } as Env, { targetPageIds: [sourcePageId] });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.updated, 1);
+  assert.deepEqual(writes, [{ Status: { status: { name: 'Under Review' } } }]);
+});
+
+test('reverse sync skips Archive when client writeback is disabled', async (t) => {
+  const sourceDataSourceId = '65f01384-61f7-824d-a699-076d37f9c91c';
+  const sourcePageId = '34101384-1111-2222-3333-444444444444';
+  const targetPageId = '2a101384-aaaa-bbbb-cccc-000b97592481';
+  const sourcePage: NotionPage = {
+    id: sourcePageId,
+    parent: { data_source_id: sourceDataSourceId },
+    properties: {
+      'Page ID': { type: 'unique_id', unique_id: { prefix: 'CL', number: 9 } },
+      Status: { type: 'status', status: { name: 'In Progress' } },
+    },
+  };
+  const targetPage: NotionPage = {
+    id: targetPageId,
+    parent: { data_source_id: targetDataSourceId },
+    properties: {
+      'External Page ID': { type: 'rich_text', rich_text: [{ plain_text: 'CL-9' }] },
+      Status: { type: 'status', status: { name: 'Archive' } },
+    },
+  };
+  const writes: unknown[] = [];
+  t.mock.method(globalThis, 'fetch', async (input: string | URL | Request, init?: RequestInit) => {
+    const url = String(input);
+    if (url.endsWith(`/data_sources/${sourceDataSourceId}`)) {
+      return jsonResponse({
+        properties: {
+          Status: { type: 'status', status: { options: [{ name: 'In Progress' }, { name: 'Archive' }] } },
+        },
+      });
+    }
+    if (url.endsWith(`/data_sources/${targetDataSourceId}`)) {
+      return jsonResponse({
+        properties: {
+          Status: { type: 'status' },
+          'External Page ID': { type: 'rich_text' },
+        },
+      });
+    }
+    if (url.endsWith(`/data_sources/${sourceDataSourceId}/query`)) {
+      return jsonResponse({ results: [sourcePage], has_more: false });
+    }
+    if (url.endsWith(`/data_sources/${targetDataSourceId}/query`)) {
+      return jsonResponse({ results: [targetPage], has_more: false });
+    }
+    if (url.endsWith(`/pages/${sourcePageId}`) && init?.method === 'PATCH') {
+      writes.push(JSON.parse(String(init.body)));
+      return jsonResponse(sourcePage);
+    }
+    return jsonResponse({ message: `Unexpected request: ${url}` }, 500);
+  });
+
+  const result = await syncHalfDozenStatusToSource({
+    CLIENT_NOTION_API_KEY: 'client-token',
+    HALFDOZEN_NOTION_API_KEY: 'hd-token',
+    CLIENT_SUPPORT_TICKETS_DATA_SOURCE_ID: sourceDataSourceId,
+    HALFDOZEN_TICKETS_DATA_SOURCE_ID: targetDataSourceId,
+    CLIENT_OS_STATUS_PROPERTY: 'Status',
+    CLIENT_OS_STATUS_MAP: '{"Archive":null}',
+  } as Env, { targetPageIds: [sourcePageId] });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.updated, 0);
+  assert.equal(result.skipped, 1);
+  assert.deepEqual(writes, []);
+  assert.deepEqual(result.details?.source_status_map, {
+    'Not Started': null,
+    Responded: null,
+    'Client Action': 'Action Required',
+    Assigned: 'Under Review',
+    'In Progress': 'In Progress',
+    'Needs Review': null,
+    Roadblock: 'Roadblock',
+    Backburner: null,
+    Complete: 'Complete',
+    Archive: null,
+  });
 });
 
 test('targetExtPageIdProperty prefers External Page ID when both aliases exist', () => {

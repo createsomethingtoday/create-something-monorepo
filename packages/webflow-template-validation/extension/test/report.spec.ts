@@ -57,4 +57,31 @@ describe('buildReportMarkdown', () => {
     expect(markdown).not.toContain('Validated publish from');
     expect(markdown).not.toContain('Outcome:');
   });
+
+  it('includes affected pages and duplicate metadata groups', () => {
+    const markdown = buildReportMarkdown({
+      generatedAt: '2026-09-01T00:00:00.000Z',
+      errors: 2,
+      warnings: 0,
+      infos: 0,
+      categories: [{
+        category: 'SEO Metadata',
+        issues: [
+          {
+            severity: 'error',
+            message: '1 page(s) are missing an SEO title.',
+            details: { pages: ['Log In (/log-in)'] }
+          },
+          {
+            severity: 'error',
+            message: '1 SEO title(s) are duplicated across multiple pages.',
+            details: { duplicates: [['About (/about)', 'Contact (/contact)']] }
+          }
+        ]
+      }]
+    });
+
+    expect(markdown).toContain('  - Affected page: Log In (/log-in)');
+    expect(markdown).toContain('  - Duplicate group: About (/about) · Contact (/contact)');
+  });
 });

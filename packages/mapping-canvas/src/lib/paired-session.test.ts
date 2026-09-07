@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DOCUMENT_VERSION, createDocument, type Stroke } from './document';
-import { PAIRING_PROTOCOL_VERSION, applyEnvelope, isOperationEnvelope, isValidCanvasTitle, type OperationEnvelope, type PairingHostState } from './paired-session';
+import { PAIRING_PROTOCOL_VERSION, applyCanvasOperation, applyEnvelope, isOperationEnvelope, isValidCanvasTitle, type OperationEnvelope, type PairingHostState } from './paired-session';
 
 const digest = (value: string) => `digest:${value}`;
 const stroke: Stroke = { id: 'stroke-1', kind: 'stroke', createdAt: '2026-08-29T00:00:00.000Z', points: [{ x: 1, y: 2 }, { x: 3, y: 4 }], color: '#f3ebe4', width: 3 };
@@ -26,11 +26,26 @@ const envelope = (overrides: Partial<OperationEnvelope> = {}): OperationEnvelope
 const apply = (state: PairingHostState, value: unknown) => applyEnvelope(state, value, { now: '2026-08-29T12:00:00.000Z', digestCapability: digest });
 
 describe('paired session protocol', () => {
+  it('accepts an older client text edit by dropping stale formatted content', () => {
+    const note = { id: 'legacy-note', kind: 'note' as const, createdAt: stroke.createdAt, x: 1, y: 2, width: 200, height: 100, text: 'Edited on old client', content: { blocks: [{ type: 'heading1' as const, runs: [{ text: 'Old formatting' }] }] } };
+    const applied = applyCanvasOperation(createDocument(), { type: 'put_object', object: note });
+    expect(applied).toMatchObject({ objects: [{ id: note.id, text: note.text }] });
+    expect(applied && 'content' in applied.objects[0]).toBe(false);
+  });
+
   it('commits an authorized operation at the next revision', () => {
     const result = apply(baseState(), envelope());
     expect(result.status).toBe('applied');
     expect(result.state.revision).toBe(1);
     expect(result.state.document.objects).toEqual([stroke]);
+  });
+
+  it('updates an existing object without changing its layer order', () => {
+    const second = { ...stroke, id: 'stroke-2' };
+    const document = { ...createDocument(), objects: [stroke, second] };
+    const next = applyCanvasOperation(document, { type: 'put_object', object: { ...stroke, width: 9 } });
+    expect(next?.objects.map(({ id }) => id)).toEqual([stroke.id, second.id]);
+    expect(next?.objects[0]).toMatchObject({ id: stroke.id, width: 9 });
   });
 
   it('returns the original receipt for an exactly repeated operation', () => {

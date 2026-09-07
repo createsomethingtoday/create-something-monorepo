@@ -26,6 +26,7 @@ use ground::VerifiedTriad;
 use ground::exceptions::{check_exception, load_config, smart_threshold};
 use ground::monorepo::{detect_monorepo, suggest_refactoring, generate_linear_command};
 use serde_json::json;
+use sha2::{Digest, Sha256};
 
 #[derive(Parser)]
 #[command(name = "ground")]
@@ -44,6 +45,16 @@ struct Cli {
 enum Commands {
     /// Print immutable build provenance for this Ground binary
     BuildInfo {
+        /// Emit machine-readable JSON
+        #[arg(long)]
+        json: bool,
+    },
+
+    /// Validate Ground policy, workspace discovery, and build provenance
+    Doctor {
+        /// Repository or package path to inspect
+        #[arg(default_value = ".")]
+        directory: PathBuf,
         /// Emit machine-readable JSON
         #[arg(long)]
         json: bool,
@@ -343,7 +354,7 @@ fn main() {
 }
 
 fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
-    if !matches!(&cli.command, Commands::BuildInfo { .. }) {
+    if !matches!(&cli.command, Commands::BuildInfo { .. } | Commands::Doctor { .. }) {
         if let Some(parent) = cli.db.parent().filter(|parent| !parent.as_os_str().is_empty()) {
             std::fs::create_dir_all(parent)?;
         }
@@ -359,6 +370,40 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                 println!("  Source SHA: {}", build.source_sha);
                 println!("  Target: {}", build.target_triple);
                 println!("  Receipt schema: {}", build.receipt_schema_version);
+            }
+            Ok(())
+        }
+        Commands::Doctor { directory, json: as_json } => {
+            let build = ground::build_info();
+            let (config, config_path) = ground::config::GroundConfig::load_for_path(&directory)?;
+            let policy_json = serde_json::to_vec(&config)?;
+            let policy_sha256 = format!("{:x}", Sha256::digest(&policy_json));
+            let monorepo = detect_monorepo(&directory);
+            let report = json!({
+                "verification_status": "PASS",
+                "build": build,
+                "policy": {
+                    "source": config_path.map(|path| path.to_string_lossy().to_string()),
+                    "sha256": policy_sha256,
+                    "version": config.version,
+                },
+                "workspace": monorepo.as_ref().map(|info| json!({
+                    "root": info.root,
+                    "is_create_something": info.is_create_something,
+                    "packages": info.packages.len(),
+                    "dependencies": info.dependencies.len(),
+                })),
+            });
+            if as_json {
+                println!("{}", serde_json::to_string_pretty(&report)?);
+            } else {
+                println!("Ground doctor: PASS");
+                println!("  Version: {}", build.version);
+                println!("  Policy SHA-256: {}", policy_sha256);
+                if let Some(info) = monorepo {
+                    println!("  Workspace packages: {}", info.packages.len());
+                    println!("  Workspace dependencies: {}", info.dependencies.len());
+                }
             }
             Ok(())
         }
@@ -1307,7 +1352,7 @@ fn mine_patterns_cmd(path: &Path, min_occurrences: usize, format: &str) -> Resul
         
         println!();
         println!("To add a suggested token to Canon:");
-        println!("  1. Add to packages/components/src/lib/styles/tokens.css");
+        println!("  1. Review the value against packages/canon/src/lib/styles/tokens.css");
         println!("  2. Update .ground/design-patterns.yml");
     }
     

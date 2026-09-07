@@ -1,30 +1,32 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { onMount } from 'svelte';
+	import { onMount, tick } from 'svelte';
 	import { Button, PerformanceConversionHandoff, SEO } from '@create-something/canon';
 	import { getAnalytics } from '@create-something/canon/analytics';
 	import { PUBLIC_ATLAS_STORAGE_KEYS } from '$lib/atlas/intake-policy';
 	import {
-		buildFirstPartySchedulerUrl,
+		createBookingHandoffState,
 		FIRST_PARTY_SCHEDULER_ORIGIN,
 		normalizeSchedulerAccessUrl,
 		normalizeSchedulerLifecycleMessage,
 		normalizeSchedulerResizeMessage,
-		schedulerHandoffContext,
-		schedulerHandoffSheet,
 		type SchedulerAccess,
 		type SchedulerHandoffSheet
 	} from '$lib/scheduling/first-party';
+	import type { PageData } from './$types';
+
+	export let data: PageData;
 
 	const mappingBookingOffer = {
 		seoTitle: 'Book a CREATE SOMETHING Mapping Session',
-		seoDescription: 'Choose a verified 30- or 60-minute opening for a scoped workflow mapping session.',
+		seoDescription:
+			'Choose a 30- or 60-minute time to discuss one workflow.',
 		eyebrow: 'Workflow mapping session',
-		title: 'Review the handoff, then choose a time.',
+		title: 'Choose a time to talk through the task.',
 		description:
-			'Use this scheduler for one real workflow, its decision owner, and the record your team needs next. If you started a private draft, review its handoff before choosing an opening.',
+			'Bring one task and the person responsible for it. If you made a draft in Map, review the summary below before choosing a time.',
 		secondaryHref: '/map',
-		secondaryLabel: 'Start a private workflow draft',
+		secondaryLabel: 'Map your workflow',
 		iframeTitle: 'Schedule a CREATE SOMETHING mapping session',
 		fallbackHref: '/services',
 		fallbackLabel: 'the workflow mapping service'
@@ -35,29 +37,57 @@
 		seoDescription:
 			'Choose a verified 30- or 60-minute opening to assess one fixed-scope Workflow Compiler Integration.',
 		eyebrow: 'Workflow Compiler Integration fit call',
-		title: 'Confirm the integration boundary, then choose a time.',
+		title: 'Choose a time to discuss the integration.',
 		description:
-			'Use this scheduler to assess one repository, one consequential workflow, the required MCP or agent tools, and fit for a fixed-scope Build.',
+			'Bring one code repository, the workflow you want to connect, and the tools it needs. We’ll assess the work and whether it fits a defined project.',
 		secondaryHref: '/workflow-compiler-integration',
 		secondaryLabel: 'Review the integration offer',
 		iframeTitle: 'Schedule a Workflow Compiler Integration fit call',
 		fallbackHref: '/workflow-compiler-integration',
 		fallbackLabel: 'the fixed-scope integration offer'
 	} as const;
-	type BookingOffer = typeof mappingBookingOffer | typeof compilerIntegrationBookingOffer;
 
-	let schedulerHref = buildFirstPartySchedulerUrl();
+	const agentFoundationBookingOffer = {
+		seoTitle: 'Book an Agent Foundation Fit Call | CREATE SOMETHING',
+		seoDescription:
+			'Choose a 30- or 60-minute time to discuss an AI project for your business.',
+		eyebrow: 'Agent Foundation fit call',
+		title: 'Choose a time to talk about your project.',
+		description:
+			'Bring an idea or a project, the team it should help, and an example of the work. We’ll discuss whether we can help and agree on the first useful task.',
+		secondaryHref: '/agent-foundation',
+		secondaryLabel: 'Review the Agent Foundation offer',
+		iframeTitle: 'Schedule an Agent Foundation fit call',
+		fallbackHref: '/agent-foundation',
+		fallbackLabel: 'the Agent Foundation offer'
+	} as const;
+	type BookingOffer =
+		| typeof mappingBookingOffer
+		| typeof compilerIntegrationBookingOffer
+		| typeof agentFoundationBookingOffer;
+
+	let schedulerHref = data.schedulerHref;
 	let schedulerFrame: HTMLIFrameElement;
-	let handoffContext = schedulerHandoffContext();
-	let handoffSheet: SchedulerHandoffSheet = schedulerHandoffSheet(handoffContext);
+	let handoffContext = data.handoffContext;
+	let handoffSheet: SchedulerHandoffSheet = data.handoffSheet;
 	let schedulerAccess: SchedulerAccess | null = null;
+	let warmupNotes: string | undefined;
 	let intent: string | null = null;
 	let bookingOffer: BookingOffer = mappingBookingOffer;
 
 	$: intent = $page.url.searchParams.get('intent');
-	$: bookingOffer = intent === 'compiler-integration'
-		? compilerIntegrationBookingOffer
-		: mappingBookingOffer;
+	$: bookingOffer =
+		intent === 'agent-foundation'
+			? agentFoundationBookingOffer
+			: intent === 'compiler-integration'
+				? compilerIntegrationBookingOffer
+				: mappingBookingOffer;
+	$: {
+		const bookingState = createBookingHandoffState($page.url.search, warmupNotes);
+		schedulerHref = bookingState.schedulerHref;
+		handoffContext = bookingState.handoffContext;
+		handoffSheet = bookingState.handoffSheet;
+	}
 
 	function sendSchedulerContext() {
 		schedulerFrame?.contentWindow?.postMessage(
@@ -102,20 +132,19 @@
 		if (schedulerAccess) {
 			window.history.replaceState(window.history.state, '', schedulerAccess.cleanPath);
 		}
-		schedulerHref = buildFirstPartySchedulerUrl(window.location.search);
-		const warmupNotes = window.localStorage.getItem(PUBLIC_ATLAS_STORAGE_KEYS.warmupSummary) ?? undefined;
-		handoffContext = schedulerHandoffContext(window.location.search, warmupNotes);
-		handoffSheet = schedulerHandoffSheet(handoffContext);
-		sendSchedulerContext();
-		getAnalytics()?.track('interaction', 'booking_handoff_viewed', {
-			metadata: {
-				surface: 'agency-booking',
-				state: handoffSheet.state,
-				fieldCount: handoffSheet.fields.length,
-				hasWarmupNotes: Boolean(handoffSheet.warmupNotes),
-				...(handoffContext.source ? { source: handoffContext.source } : {}),
-				...(handoffContext.intent ? { intent: handoffContext.intent } : {})
-			}
+		warmupNotes = window.localStorage.getItem(PUBLIC_ATLAS_STORAGE_KEYS.warmupSummary) ?? undefined;
+		void tick().then(() => {
+			sendSchedulerContext();
+			getAnalytics()?.track('interaction', 'booking_handoff_viewed', {
+				metadata: {
+					surface: 'agency-booking',
+					state: handoffSheet.state,
+					fieldCount: handoffSheet.fields.length,
+					hasWarmupNotes: Boolean(handoffSheet.warmupNotes),
+					...(handoffContext.source ? { source: handoffContext.source } : {}),
+					...(handoffContext.intent ? { intent: handoffContext.intent } : {})
+				}
+			});
 		});
 		return () => window.removeEventListener('message', receiveSchedulerMessage);
 	});
@@ -128,78 +157,36 @@
 />
 
 <main class="booking-page" data-performance-surface="booking">
-	<PerformanceConversionHandoff
-		eyebrow={bookingOffer.eyebrow}
-		title={bookingOffer.title}
-		description={bookingOffer.description}
-		handoff={{
-			owner: 'Micah Johnson',
-			authority: 'Conflict-checked scheduling policy',
-			proof: 'Calendar event and booking receipt',
-			state: 'ready'
-		}}
-		steps={[
-		{
-				label: 'Handoff',
-				title: 'Review what will be shared',
-				detail: 'Confirm the source, decision owner, and draft notes that will reach the scheduler.'
-			},
-			{
-				label: 'Time',
-				title: 'Choose 30 or 60 minutes',
-				detail: 'Every opening is checked against the live calendar before it is offered.'
-			},
-			{
-				label: 'Confirm',
-				title: 'Commit with explicit intent',
-				detail: 'Your name and email are used only when you explicitly create the calendar event and meeting receipt.'
-			}
-		]}
-		headingLevel="h1"
-		artifactPlacement="full-width"
-	>
-		{#snippet actions()}
-			<Button href="#first-party-scheduler">Choose a time</Button>
-			<Button href={bookingOffer.secondaryHref} variant="secondary">
-				{bookingOffer.secondaryLabel}
-			</Button>
-		{/snippet}
-		{#snippet aside()}
-			<section
-				class="booking-handoff"
-				data-booking-handoff-state={handoffSheet.state}
-				aria-labelledby="booking-handoff-title"
-			>
-				<div class="booking-handoff__heading">
-					<span>Incoming handoff</span>
-					<h2 id="booking-handoff-title">What will travel into booking</h2>
-					<p>{handoffSheet.summary}</p>
+	{#if intent === 'agent-foundation'}
+		<section
+			class="agent-booking"
+			data-agent-foundation-booking
+			aria-labelledby="agent-booking-title"
+		>
+			<div class="agent-booking__intro">
+				<p>{agentFoundationBookingOffer.eyebrow}</p>
+				<h1 id="agent-booking-title">{agentFoundationBookingOffer.title}</h1>
+				<p>{agentFoundationBookingOffer.description}</p>
+				<div class="agent-booking__outcome">
+					<span>What you leave with</span>
+					<p>A fit decision and, if it fits, a proposed scope and the basis for a quote.</p>
 				</div>
+				<Button href="#first-party-scheduler">Choose a time</Button>
+			</div>
 
-				{#if handoffSheet.state === 'ready'}
-					<dl class="booking-handoff__fields">
-						{#each handoffSheet.fields as field}
-							<div>
-								<dt>{field.label}</dt>
-								<dd>{field.value}</dd>
-							</div>
-						{/each}
-						{#if handoffSheet.warmupNotes}
-							<div class="booking-handoff__notes">
-								<dt>Private draft notes</dt>
-								<dd>{handoffSheet.warmupNotes}</dd>
-							</div>
-						{/if}
-					</dl>
-				{/if}
+			{#if handoffSheet.warmupNotes}
+				<aside class="agent-booking__context">
+					<span>Private draft attached</span>
+					<p>{handoffSheet.warmupNotes}</p>
+					<small>Do not include credentials, client secrets, or private records.</small>
+				</aside>
+			{/if}
 
-				<p class="booking-handoff__privacy">
-					Only these fields are shared with the scheduler below. Do not add credentials,
-					client secrets, or private records.
-				</p>
-			</section>
-
-			<section id="first-party-scheduler" class="scheduler-shell" aria-label="Choose a verified opening">
+			<section
+				id="first-party-scheduler"
+				class="scheduler-shell"
+				aria-label="Choose a verified opening"
+			>
 				<iframe
 					bind:this={schedulerFrame}
 					src={schedulerHref}
@@ -209,21 +196,185 @@
 					sandbox="allow-forms allow-popups allow-same-origin allow-scripts"
 					onload={sendSchedulerContext}
 				></iframe>
-
 				<p class="scheduler-shell__fallback">
 					If the embedded scheduler is unavailable,
-					<a href={schedulerHref} target="_blank" rel="noopener noreferrer">open the first-party scheduler</a>.
-					Review <a href={bookingOffer.fallbackHref}>{bookingOffer.fallbackLabel}</a> before choosing a time.
+					<a href={schedulerHref} target="_blank" rel="noopener noreferrer"
+						>open the first-party scheduler</a
+					>. Review <a href={bookingOffer.fallbackHref}>{bookingOffer.fallbackLabel}</a> before choosing
+					a time.
 				</p>
 			</section>
-		{/snippet}
-	</PerformanceConversionHandoff>
+		</section>
+	{:else}
+		<PerformanceConversionHandoff
+			eyebrow={bookingOffer.eyebrow}
+			title={bookingOffer.title}
+			description={bookingOffer.description}
+			handoff={{
+				owner: 'Micah Johnson',
+				authority: 'Conflict-checked scheduling policy',
+				proof: 'Calendar event and booking receipt',
+				state: 'ready'
+			}}
+			steps={[
+				{
+					label: 'Handoff',
+					title: 'Review what will be shared',
+					detail:
+						'Confirm the source, decision owner, and draft notes that will reach the scheduler.'
+				},
+				{
+					label: 'Time',
+					title: 'Choose 30 or 60 minutes',
+					detail: 'Every opening is checked against the live calendar before it is offered.'
+				},
+				{
+					label: 'Confirm',
+					title: 'Commit with explicit intent',
+					detail:
+						'Your name and email are used only when you explicitly create the calendar event and meeting receipt.'
+				}
+			]}
+			headingLevel="h1"
+			artifactPlacement="full-width"
+		>
+			{#snippet actions()}
+				<Button href="#first-party-scheduler">Choose a time</Button>
+				<Button href={bookingOffer.secondaryHref} variant="secondary">
+					{bookingOffer.secondaryLabel}
+				</Button>
+			{/snippet}
+			{#snippet aside()}
+				<section
+					class="booking-handoff"
+					data-booking-handoff-state={handoffSheet.state}
+					aria-labelledby="booking-handoff-title"
+				>
+					<div class="booking-handoff__heading">
+						<span>Incoming handoff</span>
+						<h2 id="booking-handoff-title">Details included with your booking</h2>
+						<p>{handoffSheet.summary}</p>
+					</div>
+
+					{#if handoffSheet.state === 'ready'}
+						<dl class="booking-handoff__fields">
+							{#each handoffSheet.fields as field}
+								<div>
+									<dt>{field.label}</dt>
+									<dd>{field.value}</dd>
+								</div>
+							{/each}
+							{#if handoffSheet.warmupNotes}
+								<div class="booking-handoff__notes">
+									<dt>Private draft notes</dt>
+									<dd>{handoffSheet.warmupNotes}</dd>
+								</div>
+							{/if}
+						</dl>
+					{/if}
+
+					<p class="booking-handoff__privacy">
+						Only these fields are shared with the scheduler below. Do not add credentials, client
+						secrets, or private records.
+					</p>
+				</section>
+
+				<section
+					id="first-party-scheduler"
+					class="scheduler-shell"
+					aria-label="Choose a verified opening"
+				>
+					<iframe
+						bind:this={schedulerFrame}
+						src={schedulerHref}
+						title={bookingOffer.iframeTitle}
+						loading="eager"
+						referrerpolicy="no-referrer"
+						sandbox="allow-forms allow-popups allow-same-origin allow-scripts"
+						onload={sendSchedulerContext}
+					></iframe>
+
+					<p class="scheduler-shell__fallback">
+						If the embedded scheduler is unavailable,
+						<a href={schedulerHref} target="_blank" rel="noopener noreferrer"
+							>open the first-party scheduler</a
+						>. Review <a href={bookingOffer.fallbackHref}>{bookingOffer.fallbackLabel}</a> before choosing
+						a time.
+					</p>
+				</section>
+			{/snippet}
+		</PerformanceConversionHandoff>
+	{/if}
 </main>
 
 <style>
 	.booking-page {
 		background: var(--color-performance-paper, #f3f3f0);
 		color: var(--color-performance-ink, #090909);
+	}
+
+	.agent-booking {
+		display: grid;
+		grid-template-columns: minmax(18rem, 0.72fr) minmax(0, 1.28fr);
+		gap: clamp(2rem, 6vw, 6rem);
+		width: min(85rem, 100%);
+		margin-inline: auto;
+		padding: clamp(4rem, 9vw, 8rem) clamp(1.25rem, 5vw, 4rem);
+	}
+
+	.agent-booking__intro {
+		align-self: start;
+	}
+
+	.agent-booking__intro > p:first-child,
+	.agent-booking__outcome span,
+	.agent-booking__context span {
+		color: var(--color-performance-signal, #0057b8);
+		font-family: var(--font-performance-mono, monospace);
+		font-size: 0.72rem;
+		font-weight: 700;
+		letter-spacing: 0.07em;
+		text-transform: uppercase;
+	}
+
+	.agent-booking h1 {
+		max-width: 12ch;
+		margin: 0.8rem 0 1.25rem;
+		font-size: clamp(2.75rem, 5.5vw, 5.7rem);
+		font-weight: 400;
+		letter-spacing: -0.06em;
+		line-height: 0.94;
+	}
+
+	.agent-booking__intro > p:nth-child(3),
+	.agent-booking__outcome p,
+	.agent-booking__context p,
+	.agent-booking__context small {
+		color: var(--color-performance-muted, #5e6268);
+		line-height: 1.55;
+	}
+
+	.agent-booking__outcome,
+	.agent-booking__context {
+		margin: 2rem 0;
+		padding: 1rem;
+		border-left: 3px solid var(--color-performance-signal, #0057b8);
+		background: var(--color-performance-panel, #fff);
+	}
+
+	.agent-booking__outcome p,
+	.agent-booking__context p {
+		margin: 0.5rem 0 0;
+	}
+
+	.agent-booking__context {
+		grid-column: 1 / -1;
+		margin: 0;
+	}
+
+	.agent-booking > .scheduler-shell {
+		grid-column: 2;
+		grid-row: 1;
 	}
 
 	.scheduler-shell {
@@ -346,6 +497,14 @@
 	}
 
 	@media (max-width: 720px) {
+		.agent-booking {
+			grid-template-columns: 1fr;
+		}
+
+		.agent-booking > .scheduler-shell {
+			grid-column: 1;
+			grid-row: auto;
+		}
 		.booking-handoff__fields {
 			grid-template-columns: 1fr;
 		}

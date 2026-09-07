@@ -40,14 +40,14 @@
       icon: 'folder',
       title: 'Cloudflare Runtime Stack',
       detail:
-        'Workers, Pages, D1, queues, routes, and durable primitives carry the deployable workflow substrate for operators, builders, and agencies.'
+        'Cloudflare can host the application, store its records, and queue tasks for later. We choose the services that fit the workflow.'
     },
     {
       eyebrow: 'Implementation proof',
       icon: 'settings',
       title: 'Remote MCP Fleet',
       detail:
-        'Cloudflare-hosted MCP endpoints expose scoped tools with bearer-token controls and tenant boundaries.'
+        'An MCP server lets AI use approved tools. We check access tokens and keep each customer’s data separate.'
     },
     {
       eyebrow: 'Control proof',
@@ -69,7 +69,7 @@
     {
       question: 'Why use Cloudflare for workflow systems?',
       answer:
-        'Cloudflare Workers, Pages, D1, queues, routes, and durable primitives provide a deployable runtime substrate for controlled workflow paths.'
+        'Cloudflare provides application hosting, data storage, and task queues. We connect these services to support the agreed workflow.'
     },
     {
       question: 'What does CREATE SOMETHING add around Cloudflare?',
@@ -150,9 +150,9 @@
       id: 'proof',
       label: 'Proof',
       summary: 'Routes, tools, evidence',
-      title: 'The runtime earns its place through an owned delivery path.',
+      title: 'Choose hosting that your team can manage.',
       detail:
-        'Cloudflare carries deployable workflow infrastructure while account boundaries, control checks, durable state, and client-safe evidence remain explicit.',
+        'Cloudflare hosts the workflow. We document account ownership, permissions, stored records, and the steps to recover from a failed release.',
       tone: 'allow',
       receipts: ['Workers + Pages', 'scoped MCP tools', 'control routes', 'review surfaces']
     },
@@ -160,9 +160,9 @@
       id: 'flow',
       label: 'Flow',
       summary: 'Route → gate → prove',
-      title: 'The runtime should be explainable before it becomes infrastructure.',
+      title: 'Follow a task from start to result.',
       detail:
-        'Every path names where work enters, how risk is classified, where state persists, what may act, and which receipt returns.',
+        'See how a task arrives, which checks it passes, what is saved, and what result comes back.',
       tone: 'review',
       evidence: ['Route', 'Control gate', 'Durable state', 'Scoped action', 'Handoff evidence']
     },
@@ -170,9 +170,9 @@
       id: 'ecosystem',
       label: 'Boundary',
       summary: 'One runtime role',
-      title: 'Cloudflare is the runtime, not the whole operating model.',
+      title: 'Understand what Cloudflare provides.',
       detail:
-        'Intelligence, owned operating state, and vendor infrastructure stay separate so the workflow can be inspected, transferred, and recovered.',
+        'Your team can see which services provide AI, store records, and host the application. That helps you review, move, or recover the system.',
       tone: 'neutral',
       actions: [
         { label: 'See what you keep', href: '/stack' },
@@ -220,7 +220,7 @@
   expression="editorial"
   eyebrow="Cloudflare Workflow Runtime"
   title="Cloudflare runtime with controlled workflows."
-  description="Cloudflare is the deployable runtime for controlled workflow surfaces. It carries the routes, the state, and the queues, and every handoff stays rollback-ready."
+  description="Cloudflare hosts the application, stores records, and runs background tasks. We build the workflow around your access rules and document how to undo a release."
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
@@ -242,8 +242,8 @@
 <PerformanceNarrativeStage
   id="cloudflare-runtime-story"
   eyebrow="One runtime story"
-  title="The runtime already carries more than most teams use."
-  description="Cloudflare becomes legible as one controlled path: show what the runtime already carries, trace how work moves through it, and keep the surrounding ownership boundary explicit."
+  title="Hosting, storage, and background work in one place."
+  description="See which services the workflow uses, how a task moves through them, and who owns the accounts."
   scenes={cloudflareScenes}
   ariaLabel="Cloudflare runtime story"
 >
@@ -270,7 +270,7 @@
   expression="editorial"
   eyebrow="Map the runtime"
   title="Bring the workflow that needs a controlled route."
-  description="I’ll map the route, the permissions, and the evidence your team needs before a Cloudflare build becomes production work."
+  description="We’ll plan the task, permissions, and checks before launching it on Cloudflare."
   steps={ctaItems}
   handoff={{
     owner: 'Runtime owner',

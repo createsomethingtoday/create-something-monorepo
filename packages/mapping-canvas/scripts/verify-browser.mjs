@@ -21,11 +21,20 @@ async function startPage(viewport) {
   const localRun = new URL(baseUrl).hostname === '127.0.0.1' || new URL(baseUrl).hostname === 'localhost';
   const context = await browser.newContext({ viewport, acceptDownloads: true, serviceWorkers: localRun ? 'block' : 'allow' });
   const page = await context.newPage();
+  await page.addInitScript(() => {
+    window.__drawWebMcpTools = {};
+    Object.defineProperty(document, 'modelContext', { configurable: true, value: { registerTool(tool) { window.__drawWebMcpTools[tool.name] = tool; } } });
+  });
   const errors = [];
   const failedRequests = [];
   page.on('console', (message) => message.type() === 'error' && errors.push(message.text()));
   page.on('pageerror', (error) => errors.push(error.message));
-  page.on('requestfailed', (request) => failedRequests.push(`${request.method()} ${request.url()}: ${request.failure()?.errorText ?? 'failed'}`));
+  page.on('requestfailed', (request) => {
+    const failure = request.failure()?.errorText ?? 'failed';
+    const url = new URL(request.url());
+    if (url.pathname === '/cdn-cgi/rum' && failure === 'net::ERR_ABORTED') return;
+    failedRequests.push(`${request.method()} ${request.url()}: ${failure}`);
+  });
   await page.goto(baseUrl, { waitUntil: 'networkidle' });
   await page.getByRole('button', { name: /Pen tool/ }).waitFor();
   await clearDatabase(page);
@@ -69,6 +78,325 @@ try {
   if (!schemas.some((value) => JSON.parse(value)['@type'] === 'WebApplication') || !schemas.some((value) => JSON.parse(value)['@type'] === 'Organization')) throw new Error('Draw structured identity is incomplete');
   const toolbarOverflows = await page.locator('.toolbar button').evaluateAll((buttons) => buttons.some((button) => button.scrollWidth > button.clientWidth));
   if (toolbarOverflows) throw new Error('Desktop tool sidebar text overflows its rail');
+  const agentFollow = await page.evaluate(async () => {
+    const tools = window.__drawWebMcpTools;
+    const before = await tools.draw_get_state.execute({});
+    const id = 'browser-agent-follow-note';
+    const receipt = await tools.draw_apply_operations.execute({ operations: [{ type: 'put_object', object: { id, kind: 'note', createdAt: new Date().toISOString(), x: 4000, y: 2800, width: 320, height: 180, text: 'Agent follow proof' } }] });
+    const camera = document.querySelector('[data-agent-camera]')?.getAttribute('data-agent-camera');
+    const state = await tools.draw_get_state.execute({});
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    const content = document.querySelector('[data-agent-camera]');
+    const renderedBeforePress = new DOMMatrixReadOnly(getComputedStyle(content).transform);
+    document.querySelector(`[data-object-id="${id}"]`)?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerId: 91, pointerType: 'mouse', button: 0 }));
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    const cameraAfterObjectPress = document.querySelector('[data-agent-camera]')?.getAttribute('data-agent-camera');
+    const interrupted = await tools.draw_get_state.execute({});
+    const renderedAfterPress = new DOMMatrixReadOnly(getComputedStyle(content).transform);
+    await tools.draw_undo.execute({});
+    const seed = { id: 'browser-agent-seed', kind: 'note', createdAt: new Date().toISOString(), x: 180, y: 160, width: 260, height: 132, text: 'Seed' };
+    await tools.draw_apply_operations.execute({ operations: [{ type: 'put_object', object: seed }] });
+    await tools.draw_apply_operations.execute({ operations: [{ type: 'remove_objects', ids: [seed.id] }, { type: 'put_object', object: { ...seed, id: 'browser-agent-mixed-note', x: 5200, y: 3600, text: 'Mixed replacement' } }] });
+    const mixedCamera = document.querySelector('[data-agent-camera]')?.getAttribute('data-agent-camera');
+    await tools.draw_undo.execute({});
+    await tools.draw_undo.execute({});
+    const explicitViewport = { x: -240, y: -160, zoom: .8 };
+    await tools.draw_apply_operations.execute({ operations: [{ type: 'put_object', object: { ...seed, id: 'browser-agent-explicit-frame', x: 6200, y: 4200 } }, { type: 'set_viewport', viewport: explicitViewport }] });
+    const explicitViewportState = (await tools.draw_get_state.execute({})).document.viewport;
+    await tools.draw_undo.execute({});
+    const restored = await tools.draw_get_state.execute({});
+    return { beforeCount: before.document.objects.length, receipt, camera, cameraAfterObjectPress, mixedCamera, viewport: state.document.viewport, explicitViewport, explicitViewportState, interruptedViewport: interrupted.document.viewport, renderedBeforePress: { x: renderedBeforePress.e, y: renderedBeforePress.f }, renderedAfterPress: { x: renderedAfterPress.e, y: renderedAfterPress.f }, restoredCount: restored.document.objects.length };
+  });
+  if (agentFollow.camera !== 'following' || !agentFollow.receipt.changeId || agentFollow.receipt.state) throw new Error(`Agent follow transition or compact receipt was invalid: ${JSON.stringify(agentFollow)}`);
+  if (agentFollow.cameraAfterObjectPress !== 'idle') throw new Error(`Object pointer-down did not cancel the agent camera: ${JSON.stringify(agentFollow)}`);
+  if (Math.abs(agentFollow.interruptedViewport.x - agentFollow.renderedBeforePress.x) > 2 || Math.abs(agentFollow.interruptedViewport.y - agentFollow.renderedBeforePress.y) > 2 || Math.abs(agentFollow.renderedAfterPress.x - agentFollow.renderedBeforePress.x) > 2 || Math.abs(agentFollow.renderedAfterPress.y - agentFollow.renderedBeforePress.y) > 2) throw new Error(`Agent camera interruption snapped away from its displayed frame: ${JSON.stringify(agentFollow)}`);
+  if (agentFollow.mixedCamera !== 'following') throw new Error('Mixed remove-and-create batch did not follow the surviving artifact');
+  if (JSON.stringify(agentFollow.explicitViewportState) !== JSON.stringify(agentFollow.explicitViewport)) throw new Error(`Agent follow replaced an explicit viewport: ${JSON.stringify(agentFollow)}`);
+  if (agentFollow.viewport.x === 0 && agentFollow.viewport.y === 0) throw new Error('Agent follow camera did not frame the offscreen artifact');
+  if (agentFollow.restoredCount !== agentFollow.beforeCount) throw new Error('Agent follow proof did not restore the original canvas');
+  const semantic = await page.evaluate(async () => {
+    const tools = window.__drawWebMcpTools;
+    const names = Object.keys(tools).sort();
+    const drawNames = names.filter((name) => name.startsWith('draw_'));
+    const before = await tools.draw_get_state.execute({});
+    const inspect = await tools.draw_inspect.execute({ limit: 10 });
+    const composed = await tools.draw_compose.execute({
+      expectedRevision: inspect.revision,
+      layout: { direction: 'row', gap: 96 },
+      placement: 'visible-center',
+      nodes: [{ ref: 'brief', text: 'Mission brief' }, { ref: 'launch', text: 'Spaceship launch' }],
+      edges: [{ ref: 'approval', from: 'brief', to: 'launch', label: 'approved' }],
+      groups: [{ ref: 'mission', label: 'Mission control', members: ['brief', 'launch'] }]
+    });
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    const composedState = await tools.draw_get_state.execute({});
+    const briefModelWidth = composedState.document.objects.find(({ id }) => id === composed.refs.brief)?.width;
+    const connectorLabel = [...document.querySelectorAll('.connector-label')].find((node) => node.textContent === 'approved');
+    const rawConnectorLabelBounds = connectorLabel?.getBoundingClientRect().toJSON();
+    const renderedGeometry = await tools.draw_get_rendered_geometry.execute({ ids: [composed.refs.brief, composed.refs.launch, composed.refs.approval, composed.refs.mission], limit: 10 });
+    const formatted = await tools.draw_edit_note.execute({ id: composed.refs.brief, content: { blocks: [{ type: 'heading1', runs: [{ text: 'Mission', bold: true }] }, { type: 'bullet', runs: [{ text: 'Evidence link', link: 'https://example.com/proof' }] }] } });
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    const formattedVisible = Boolean(document.querySelector(`[data-object-id="${composed.refs.brief}"] h1`) && document.querySelector(`[data-object-id="${composed.refs.brief}"] a[href="https://example.com/proof"]`));
+    const route = renderedGeometry.connectors[0].route, routeMiddle = { x: (route[0].x + route[1].x) / 2, y: (route[0].y + route[1].y) / 2 }, connectorCollisionId = 'browser-connector-collision';
+    const connectorCollisionChange = await tools.draw_apply_operations.execute({ operations: [{ type: 'put_object', object: { id: connectorCollisionId, kind: 'note', createdAt: new Date().toISOString(), x: routeMiddle.x - 60, y: routeMiddle.y - 40, width: 120, height: 80, text: 'Unrelated crossing' } }] });
+    const connectorCollisionGeometry = await tools.draw_get_rendered_geometry.execute({ ids: [composed.refs.approval, connectorCollisionId], limit: 10 });
+    await tools.draw_revert_change.execute({ changeId: connectorCollisionChange.changeId });
+    const diagonalIds = ['browser-diagonal-a', 'browser-diagonal-b', 'browser-diagonal-edge', 'browser-diagonal-clear-corner'];
+    const diagonalFixture = await tools.draw_apply_operations.execute({ operations: [
+      { type: 'put_object', object: { id: diagonalIds[0], kind: 'note', createdAt: new Date().toISOString(), x: 100, y: 100, width: 40, height: 40, text: 'A' } },
+      { type: 'put_object', object: { id: diagonalIds[1], kind: 'note', createdAt: new Date().toISOString(), x: 500, y: 500, width: 40, height: 40, text: 'B' } },
+      { type: 'put_object', object: { id: diagonalIds[2], kind: 'connector', createdAt: new Date().toISOString(), fromId: diagonalIds[0], toId: diagonalIds[1], label: '' } },
+      { type: 'put_object', object: { id: diagonalIds[3], kind: 'note', createdAt: new Date().toISOString(), x: 110, y: 450, width: 40, height: 40, text: 'Clear corner' } }
+    ] });
+    const diagonalClearGeometry = await tools.draw_get_rendered_geometry.execute({ ids: [diagonalIds[2], diagonalIds[3]], limit: 10 });
+    await tools.draw_revert_change.execute({ changeId: diagonalFixture.changeId });
+    const sparseIds = ['browser-sparse-stroke', 'browser-sparse-clear-corner'];
+    const sparseFixture = await tools.draw_apply_operations.execute({ operations: [
+      { type: 'put_object', object: { id: sparseIds[0], kind: 'stroke', createdAt: new Date().toISOString(), points: [{ x: 100, y: 100 }, { x: 500, y: 500 }], color: '#fcaa2d', width: 8 } },
+      { type: 'put_object', object: { id: sparseIds[1], kind: 'note', createdAt: new Date().toISOString(), x: 110, y: 450, width: 40, height: 40, text: 'Clear stroke corner' } }
+    ] });
+    const sparseClearGeometry = await tools.draw_get_rendered_geometry.execute({ ids: sparseIds, limit: 10 });
+    await tools.draw_revert_change.execute({ changeId: sparseFixture.changeId });
+    const markerCornerIds = ['browser-marker-arrow', 'browser-marker-clear-corner'];
+    const markerCornerFixture = await tools.draw_apply_operations.execute({ operations: [
+      { type: 'put_object', object: { id: markerCornerIds[0], kind: 'arrow', createdAt: new Date().toISOString(), from: { x: 100, y: 100 }, to: { x: 500, y: 100 }, color: '#fcaa2d' } },
+      { type: 'put_object', object: { id: markerCornerIds[1], kind: 'rectangle', createdAt: new Date().toISOString(), from: { x: 496, y: 93 }, to: { x: 499, y: 96 }, color: '#fcaa2d' } }
+    ] });
+    const markerCornerGeometry = await tools.draw_get_rendered_geometry.execute({ ids: markerCornerIds, limit: 10 });
+    await tools.draw_revert_change.execute({ changeId: markerCornerFixture.changeId });
+    const endpointCornerIds = ['browser-endpoint-corner-a', 'browser-endpoint-corner-b', 'browser-endpoint-corner-c', 'browser-endpoint-corner-diagonal', 'browser-endpoint-corner-labelled'];
+    const endpointCornerFixture = await tools.draw_apply_operations.execute({ operations: [
+      { type: 'put_object', object: { id: endpointCornerIds[0], kind: 'note', createdAt: new Date().toISOString(), x: 100, y: 100, width: 40, height: 40, text: 'A' } },
+      { type: 'put_object', object: { id: endpointCornerIds[1], kind: 'note', createdAt: new Date().toISOString(), x: 500, y: 500, width: 40, height: 40, text: 'B' } },
+      { type: 'put_object', object: { id: endpointCornerIds[2], kind: 'note', createdAt: new Date().toISOString(), x: -100, y: 620, width: 40, height: 40, text: 'C' } },
+      { type: 'put_object', object: { id: endpointCornerIds[3], kind: 'connector', createdAt: new Date().toISOString(), fromId: endpointCornerIds[0], toId: endpointCornerIds[1], label: '' } },
+      { type: 'put_object', object: { id: endpointCornerIds[4], kind: 'connector', createdAt: new Date().toISOString(), fromId: endpointCornerIds[3], toId: endpointCornerIds[2], label: 'x' } }
+    ] });
+    const endpointCornerGeometry = await tools.draw_get_rendered_geometry.execute({ ids: endpointCornerIds.slice(3), limit: 10 });
+    await tools.draw_revert_change.execute({ changeId: endpointCornerFixture.changeId });
+    const connectorEndpointOverlapIds = ['browser-connector-endpoint-a', 'browser-connector-endpoint-b', 'browser-connector-endpoint-base', 'browser-connector-endpoint-continuation'];
+    const connectorEndpointOverlapFixture = await tools.draw_apply_operations.execute({ operations: [
+      { type: 'put_object', object: { id: connectorEndpointOverlapIds[0], kind: 'note', createdAt: new Date().toISOString(), x: 0, y: 760, width: 40, height: 40, text: 'A' } },
+      { type: 'put_object', object: { id: connectorEndpointOverlapIds[1], kind: 'note', createdAt: new Date().toISOString(), x: 400, y: 760, width: 40, height: 40, text: 'B' } },
+      { type: 'put_object', object: { id: connectorEndpointOverlapIds[2], kind: 'connector', createdAt: new Date().toISOString(), fromId: connectorEndpointOverlapIds[0], toId: connectorEndpointOverlapIds[1], label: '' } },
+      { type: 'put_object', object: { id: connectorEndpointOverlapIds[3], kind: 'connector', createdAt: new Date().toISOString(), fromId: connectorEndpointOverlapIds[2], toId: connectorEndpointOverlapIds[0], label: '' } }
+    ] });
+    const connectorEndpointOverlapGeometry = await tools.draw_get_rendered_geometry.execute({ ids: connectorEndpointOverlapIds.slice(2), limit: 10 });
+    await tools.draw_revert_change.execute({ changeId: connectorEndpointOverlapFixture.changeId });
+    const ellipseIds = ['browser-large-ellipse', 'browser-large-ellipse-touch'];
+    const ellipseAngle = Math.PI / 48, ellipsePoint = { x: 10_000 + Math.cos(ellipseAngle) * 10_000, y: 10_000 + Math.sin(ellipseAngle) * 10_000 };
+    const ellipseFixture = await tools.draw_apply_operations.execute({ operations: [
+      { type: 'put_object', object: { id: ellipseIds[0], kind: 'ellipse', createdAt: new Date().toISOString(), from: { x: 0, y: 0 }, to: { x: 20_000, y: 20_000 }, color: '#fcaa2d' } },
+      { type: 'put_object', object: { id: ellipseIds[1], kind: 'rectangle', createdAt: new Date().toISOString(), from: { x: ellipsePoint.x - 1, y: ellipsePoint.y - 1 }, to: { x: ellipsePoint.x + 1, y: ellipsePoint.y + 1 }, color: '#fcaa2d' } }
+    ] });
+    const ellipseTouchGeometry = await tools.draw_get_rendered_geometry.execute({ ids: ellipseIds, limit: 10 });
+    await tools.draw_revert_change.execute({ changeId: ellipseFixture.changeId });
+    const hugeEllipseIds = ['browser-huge-ellipse', 'browser-huge-ellipse-clear'];
+    const hugeEllipseFixture = await tools.draw_apply_operations.execute({ operations: [
+      { type: 'put_object', object: { id: hugeEllipseIds[0], kind: 'ellipse', createdAt: new Date().toISOString(), from: { x: 0, y: 0 }, to: { x: 2e12, y: 2e12 }, color: '#fcaa2d' } },
+      { type: 'put_object', object: { id: hugeEllipseIds[1], kind: 'note', createdAt: new Date().toISOString(), x: 1e12, y: 1e12, width: 40, height: 40, text: 'Clear center' } }
+    ] });
+    const hugeEllipseGeometry = await tools.draw_get_rendered_geometry.execute({ ids: hugeEllipseIds, limit: 10 });
+    await tools.draw_revert_change.execute({ changeId: hugeEllipseFixture.changeId });
+    const cappedEllipseIds = ['browser-capped-ellipse', 'browser-capped-ellipse-touch'];
+    const cappedRadius = 10_000_000, cappedAngle = Math.PI / 4_096, cappedPoint = { x: Math.cos(cappedAngle) * cappedRadius, y: Math.sin(cappedAngle) * cappedRadius };
+    const cappedEllipseFixture = await tools.draw_apply_operations.execute({ operations: [
+      { type: 'put_object', object: { id: cappedEllipseIds[0], kind: 'ellipse', createdAt: new Date().toISOString(), from: { x: -cappedRadius, y: -cappedRadius }, to: { x: cappedRadius, y: cappedRadius }, color: '#fcaa2d' } },
+      { type: 'put_object', object: { id: cappedEllipseIds[1], kind: 'note', createdAt: new Date().toISOString(), x: cappedPoint.x - .5, y: cappedPoint.y - .5, width: 1, height: 1, text: '' } }
+    ] });
+    const cappedEllipseGeometry = await tools.draw_get_rendered_geometry.execute({ ids: cappedEllipseIds, limit: 10 });
+    await tools.draw_revert_change.execute({ changeId: cappedEllipseFixture.changeId });
+    const disjointEllipseIds = Array.from({ length: 200 }, (_, index) => `browser-disjoint-ellipse-${index}`);
+    const disjointEllipseOperations = disjointEllipseIds.map((id, index) => ({ type: 'put_object', object: { id, kind: 'ellipse', createdAt: new Date().toISOString(), from: { x: index * 100_000, y: 0 }, to: { x: index * 100_000 + 20_000, y: 20_000 }, color: '#fcaa2d' } }));
+    const disjointEllipseFixtureA = await tools.draw_apply_operations.execute({ operations: disjointEllipseOperations.slice(0, 100) });
+    const disjointEllipseFixtureB = await tools.draw_apply_operations.execute({ operations: disjointEllipseOperations.slice(100) });
+    const disjointEllipseGeometry = await tools.draw_get_rendered_geometry.execute({ ids: disjointEllipseIds, limit: 200 });
+    await tools.draw_revert_change.execute({ changeId: disjointEllipseFixtureB.changeId });
+    await tools.draw_revert_change.execute({ changeId: disjointEllipseFixtureA.changeId });
+    const concentricEllipseIds = Array.from({ length: 200 }, (_, index) => `browser-concentric-ellipse-${index}`);
+    const concentricEllipseOperations = concentricEllipseIds.map((id, index) => {
+      const radius = 10_000 + index * 20;
+      return { type: 'put_object', object: { id, kind: 'ellipse', createdAt: new Date().toISOString(), from: { x: -radius, y: -radius }, to: { x: radius, y: radius }, color: '#fcaa2d' } };
+    });
+    const concentricEllipseFixtureA = await tools.draw_apply_operations.execute({ operations: concentricEllipseOperations.slice(0, 100) });
+    const concentricEllipseFixtureB = await tools.draw_apply_operations.execute({ operations: concentricEllipseOperations.slice(100) });
+    const concentricEllipseGeometry = await tools.draw_get_rendered_geometry.execute({ ids: concentricEllipseIds, limit: 200 });
+    await tools.draw_revert_change.execute({ changeId: concentricEllipseFixtureB.changeId });
+    await tools.draw_revert_change.execute({ changeId: concentricEllipseFixtureA.changeId });
+    const groupGapIds = ['browser-long-label-group', 'browser-long-label-clear'];
+    const groupGapFixture = await tools.draw_apply_operations.execute({ operations: [
+      { type: 'put_object', object: { id: groupGapIds[0], kind: 'group', createdAt: new Date().toISOString(), x: 100, y: 100, width: 120, height: 80, label: 'A deliberately extended group ownership label', childIds: [] } },
+      { type: 'put_object', object: { id: groupGapIds[1], kind: 'note', createdAt: new Date().toISOString(), x: 300, y: 140, width: 20, height: 20, text: '' } }
+    ] });
+    const groupGapGeometry = await tools.draw_get_rendered_geometry.execute({ ids: groupGapIds, limit: 10 });
+    await tools.draw_revert_change.execute({ changeId: groupGapFixture.changeId });
+    await tools.draw_select.execute({ ids: [composed.refs.mission] });
+    const selectedGroupGeometry = await tools.draw_get_rendered_geometry.execute({ ids: [composed.refs.mission] });
+    await tools.draw_select.execute({ ids: [] });
+    const unselectedGroupGeometry = await tools.draw_get_rendered_geometry.execute({ ids: [composed.refs.mission] });
+    const autoLayouts = [];
+    for (const mode of ['flow', 'hierarchy', 'loop', 'orbit', 'swimlane']) {
+      const result = await tools.draw_auto_layout.execute({ ids: [composed.refs.launch, composed.refs.brief], mode, gap: 64, lanes: [{ id: composed.refs.brief, lane: 'Plan' }, { id: composed.refs.launch, lane: 'Launch' }] });
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const geometry = await tools.draw_get_rendered_geometry.execute({ ids: [composed.refs.brief, composed.refs.launch], limit: 10 });
+      autoLayouts.push({ mode: result.mode, placedIds: result.placedIds, peerOverlaps: geometry.overlaps.filter(({ classification }) => classification === 'peer').length });
+      await tools.draw_revert_change.execute({ changeId: result.changeId });
+    }
+    const arrow = await tools.draw_create_freehand_arrow.execute({ start: { x: 40, y: 480 }, end: { x: 440, y: 620 }, curvature: .35, looseness: .55, color: 'signal', weight: 6, arrowhead: 'triangle' });
+    const arrowGeometry = await tools.draw_get_rendered_geometry.execute({ ids: arrow.objectIds, limit: 10 });
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    const settledArrowGeometry = await tools.draw_get_rendered_geometry.execute({ ids: arrow.objectIds, limit: 10 });
+    const initialArrow = (await tools.draw_get_state.execute({})).document.objects.filter(({ id }) => arrow.objectIds.includes(id));
+    const headId = arrow.objectIds[1], shaftId = arrow.objectIds[0];
+    const selectedArrow = await tools.draw_select.execute({ ids: [headId] });
+    const movedArrow = await tools.draw_patch_objects.execute({ patches: [{ id: shaftId, translate: { dx: 37, dy: 23 } }] });
+    const movedObjects = (await tools.draw_get_state.execute({})).document.objects.filter(({ id }) => arrow.objectIds.includes(id));
+    const compoundMoved = movedObjects.every((object, index) => object.points.every((point, pointIndex) => point.x === initialArrow[index].points[pointIndex].x + 37 && point.y === initialArrow[index].points[pointIndex].y + 23));
+    const styledArrow = await tools.draw_patch_objects.execute({ patches: [{ id: headId, color: 'growth' }] });
+    const compoundStyled = (await tools.draw_get_state.execute({})).document.objects.filter(({ id }) => arrow.objectIds.includes(id)).every(({ color }) => color === '#007a4d');
+    const compoundLayout = await tools.draw_layout.execute({ ids: arrow.objectIds, direction: 'row' });
+    const compoundAutoLayout = await tools.draw_auto_layout.execute({ ids: arrow.objectIds, mode: 'flow' });
+    const compoundDelete = await tools.draw_delete.execute({ ids: [headId], confirmation: 'DELETE OBJECTS' });
+    const compoundDeleted = !(await tools.draw_get_state.execute({})).document.objects.some(({ id }) => arrow.objectIds.includes(id));
+    await tools.draw_revert_change.execute({ changeId: compoundDelete.changeId });
+    await tools.draw_revert_change.execute({ changeId: compoundAutoLayout.changeId });
+    await tools.draw_revert_change.execute({ changeId: compoundLayout.changeId });
+    await tools.draw_revert_change.execute({ changeId: styledArrow.changeId });
+    await tools.draw_revert_change.execute({ changeId: movedArrow.changeId });
+    await tools.draw_revert_change.execute({ changeId: arrow.changeId });
+    const edgeArrowId = 'browser-rendered-edge-arrow';
+    const edgeArrow = await tools.draw_apply_operations.execute({ operations: [{ type: 'put_object', object: { id: edgeArrowId, kind: 'arrow', createdAt: new Date().toISOString(), from: { x: inspect.visibleWorld.x + inspect.visibleWorld.width - 120, y: inspect.visibleWorld.y + 360 }, to: { x: inspect.visibleWorld.x + inspect.visibleWorld.width - 1, y: inspect.visibleWorld.y + 360 }, color: '#fcaa2d' } }] });
+    const edgeViewport = await tools.draw_apply_operations.execute({ operations: [{ type: 'set_viewport', viewport: before.document.viewport }] });
+    const edgeArrowGeometry = await tools.draw_get_rendered_geometry.execute({ ids: [edgeArrowId], limit: 10 });
+    await tools.draw_revert_change.execute({ changeId: edgeViewport.changeId });
+    await tools.draw_revert_change.execute({ changeId: edgeArrow.changeId });
+    const thickArrow = await tools.draw_create_freehand_arrow.execute({ start: { x: inspect.visibleWorld.x + inspect.visibleWorld.width - 80, y: inspect.visibleWorld.y + 420 }, end: { x: inspect.visibleWorld.x + inspect.visibleWorld.width - 1, y: inspect.visibleWorld.y + 420 }, curvature: 0, looseness: 0, color: 'signal', weight: 24, arrowhead: 'vee' });
+    const thickViewport = await tools.draw_apply_operations.execute({ operations: [{ type: 'set_viewport', viewport: before.document.viewport }] });
+    const thickArrowGeometry = await tools.draw_get_rendered_geometry.execute({ ids: thickArrow.objectIds, limit: 10 });
+    await tools.draw_revert_change.execute({ changeId: thickViewport.changeId });
+    await tools.draw_revert_change.execute({ changeId: thickArrow.changeId });
+    const zeroArrowId = 'browser-rendered-zero-arrow', zeroPoint = { x: inspect.visibleWorld.x + 240, y: inspect.visibleWorld.y + 420 };
+    const zeroArrow = await tools.draw_apply_operations.execute({ operations: [{ type: 'put_object', object: { id: zeroArrowId, kind: 'arrow', createdAt: new Date().toISOString(), from: zeroPoint, to: zeroPoint, color: '#fcaa2d' } }] });
+    const zeroArrowGeometry = await tools.draw_get_rendered_geometry.execute({ ids: [zeroArrowId], limit: 10 });
+    await tools.draw_revert_change.execute({ changeId: zeroArrow.changeId });
+    const zeroAreaIds = ['browser-zero-width-rectangle', 'browser-zero-radius-ellipse'];
+    const zeroArea = await tools.draw_apply_operations.execute({ operations: [
+      { type: 'put_object', object: { id: zeroAreaIds[0], kind: 'rectangle', createdAt: new Date().toISOString(), from: { x: 200, y: 800 }, to: { x: 200, y: 900 }, color: '#fcaa2d' } },
+      { type: 'put_object', object: { id: zeroAreaIds[1], kind: 'ellipse', createdAt: new Date().toISOString(), from: { x: 300, y: 800 }, to: { x: 400, y: 800 }, color: '#fcaa2d' } }
+    ] });
+    const zeroAreaGeometry = await tools.draw_get_rendered_geometry.execute({ ids: zeroAreaIds, limit: 10 });
+    await tools.draw_revert_change.execute({ changeId: zeroArea.changeId });
+    const transparentIds = ['browser-none-stroke', 'browser-zero-alpha-shape'];
+    const transparent = await tools.draw_apply_operations.execute({ operations: [
+      { type: 'put_object', object: { id: transparentIds[0], kind: 'stroke', createdAt: new Date().toISOString(), points: [{ x: 200, y: 800 }, { x: 400, y: 900 }], color: 'none', width: 20 } },
+      { type: 'put_object', object: { id: transparentIds[1], kind: 'rectangle', createdAt: new Date().toISOString(), from: { x: 200, y: 800 }, to: { x: 400, y: 900 }, color: 'rgba(0, 0, 0, 0)' } }
+    ] });
+    const transparentGeometry = await tools.draw_get_rendered_geometry.execute({ ids: transparentIds, limit: 10 });
+    await tools.draw_revert_change.execute({ changeId: transparent.changeId });
+    const endpointFixtureIds = ['browser-label-endpoint-a', 'browser-label-endpoint-b', 'browser-label-endpoint-edge', 'browser-label-endpoint-group'];
+    const endpointFixture = await tools.draw_apply_operations.execute({ operations: [
+      { type: 'put_object', object: { id: endpointFixtureIds[0], kind: 'note', createdAt: new Date().toISOString(), x: 200, y: 680, width: 120, height: 80, text: 'Endpoint A' } },
+      { type: 'put_object', object: { id: endpointFixtureIds[1], kind: 'note', createdAt: new Date().toISOString(), x: 350, y: 680, width: 120, height: 80, text: 'Endpoint B' } },
+      { type: 'put_object', object: { id: endpointFixtureIds[2], kind: 'connector', createdAt: new Date().toISOString(), fromId: endpointFixtureIds[0], toId: endpointFixtureIds[1], label: 'A deliberately long endpoint-covering approval label' } },
+      { type: 'put_object', object: { id: endpointFixtureIds[3], kind: 'group', createdAt: new Date().toISOString(), x: 180, y: 640, width: 170, height: 160, label: 'Endpoint boundary', childIds: [endpointFixtureIds[0]] } }
+    ] });
+    const endpointLabelGeometry = await tools.draw_get_rendered_geometry.execute({ ids: endpointFixtureIds, limit: 10 });
+    await tools.draw_revert_change.execute({ changeId: endpointFixture.changeId });
+    const sharedConnectorIds = ['browser-shared-a', 'browser-shared-b', 'browser-shared-c', 'browser-shared-short', 'browser-shared-long'];
+    const sharedConnectorFixture = await tools.draw_apply_operations.execute({ operations: [
+      { type: 'put_object', object: { id: sharedConnectorIds[0], kind: 'note', createdAt: new Date().toISOString(), x: 0, y: 900, width: 40, height: 40, text: 'A' } },
+      { type: 'put_object', object: { id: sharedConnectorIds[1], kind: 'note', createdAt: new Date().toISOString(), x: 300, y: 900, width: 40, height: 40, text: 'B' } },
+      { type: 'put_object', object: { id: sharedConnectorIds[2], kind: 'note', createdAt: new Date().toISOString(), x: 500, y: 900, width: 40, height: 40, text: 'C' } },
+      { type: 'put_object', object: { id: sharedConnectorIds[3], kind: 'connector', createdAt: new Date().toISOString(), fromId: sharedConnectorIds[0], toId: sharedConnectorIds[1], label: '' } },
+      { type: 'put_object', object: { id: sharedConnectorIds[4], kind: 'connector', createdAt: new Date().toISOString(), fromId: sharedConnectorIds[0], toId: sharedConnectorIds[2], label: '' } }
+    ] });
+    const sharedConnectorGeometry = await tools.draw_get_rendered_geometry.execute({ ids: sharedConnectorIds.slice(3), limit: 10 });
+    await tools.draw_revert_change.execute({ changeId: sharedConnectorFixture.changeId });
+    const fanConnectorIds = ['browser-fan-a', 'browser-fan-b', 'browser-fan-c', 'browser-fan-up', 'browser-fan-down'];
+    const fanConnectorFixture = await tools.draw_apply_operations.execute({ operations: [
+      { type: 'put_object', object: { id: fanConnectorIds[0], kind: 'note', createdAt: new Date().toISOString(), x: 0, y: 1100, width: 40, height: 40, text: 'A' } },
+      { type: 'put_object', object: { id: fanConnectorIds[1], kind: 'note', createdAt: new Date().toISOString(), x: 300, y: 1000, width: 40, height: 40, text: 'B' } },
+      { type: 'put_object', object: { id: fanConnectorIds[2], kind: 'note', createdAt: new Date().toISOString(), x: 300, y: 1200, width: 40, height: 40, text: 'C' } },
+      { type: 'put_object', object: { id: fanConnectorIds[3], kind: 'connector', createdAt: new Date().toISOString(), fromId: fanConnectorIds[0], toId: fanConnectorIds[1], label: '' } },
+      { type: 'put_object', object: { id: fanConnectorIds[4], kind: 'connector', createdAt: new Date().toISOString(), fromId: fanConnectorIds[0], toId: fanConnectorIds[2], label: '' } }
+    ] });
+    const fanConnectorGeometry = await tools.draw_get_rendered_geometry.execute({ ids: fanConnectorIds.slice(3), limit: 10 });
+    await tools.draw_revert_change.execute({ changeId: fanConnectorFixture.changeId });
+    const collision = await tools.draw_compose.execute({ nodes: [{ ref: 'collision-a', text: 'Collision A' }, { ref: 'collision-b', text: 'Collision B' }], layout: { direction: 'row', gap: 64 } });
+    const collisionState = await tools.draw_get_state.execute({});
+    const collisionA = collisionState.document.objects.find(({ id }) => id === collision.refs['collision-a']);
+    const collisionB = collisionState.document.objects.find(({ id }) => id === collision.refs['collision-b']);
+    const collisionPatch = await tools.draw_patch_objects.execute({ patches: [{ id: collisionB.id, translate: { dx: collisionA.x - collisionB.x, dy: collisionA.y - collisionB.y } }] });
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    const collisionGeometry = await tools.draw_get_rendered_geometry.execute({ ids: [collisionA.id, collisionB.id], limit: 10 });
+    const provenanceIds = ['browser-provenance-a', 'browser-provenance-b'];
+    const provenance = await tools.draw_apply_operations.execute({ operations: provenanceIds.map((id) => ({ type: 'put_object', object: { id, kind: 'stroke', createdAt: new Date().toISOString(), points: [{ x: 200, y: 200 }, { x: 400, y: 300 }], color: '#fcaa2d', width: 8, sourceIds: ['shared-import-source'] } })) });
+    const provenanceGeometry = await tools.draw_get_rendered_geometry.execute({ ids: provenanceIds, limit: 10 });
+    await tools.draw_revert_change.execute({ changeId: provenance.changeId });
+    const offscreenId = 'browser-rendered-offscreen';
+    const offscreen = await tools.draw_apply_operations.execute({ operations: [{ type: 'put_object', object: { id: offscreenId, kind: 'note', createdAt: new Date().toISOString(), x: 100000, y: 100000, width: 180, height: 100, text: 'Offscreen' } }, { type: 'set_viewport', viewport: collisionState.document.viewport }] });
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    const clippedGeometry = await tools.draw_get_rendered_geometry.execute({ ids: [offscreenId, 'missing-rendered-id'], limit: 10 });
+    await tools.draw_revert_change.execute({ changeId: offscreen.changeId });
+    await tools.draw_revert_change.execute({ changeId: collisionPatch.changeId });
+    await tools.draw_revert_change.execute({ changeId: collision.changeId });
+    const path = await tools.draw_path.execute({ kind: 'polygon', color: 'signal', width: 5, smooth: true, points: [{ x: 0, y: -100 }, { x: 75, y: 70 }, { x: 25, y: 50 }, { x: 0, y: 95 }, { x: -25, y: 50 }, { x: -75, y: 70 }] });
+    const patched = await tools.draw_patch_objects.execute({ patches: [{ id: composed.refs.launch, text: 'Launch ready', translate: { dx: 24, dy: 16 }, arrange: 'front' }] });
+    const staleRevision = inspect.revision;
+    let staleError = '';
+    try { await tools.draw_patch_objects.execute({ expectedRevision: staleRevision, patches: [{ id: composed.refs.brief, text: 'Stale write' }] }); }
+    catch (error) { staleError = error instanceof Error ? error.message : String(error); }
+    const layout = await tools.draw_layout.execute({ ids: [composed.refs.brief, composed.refs.launch], direction: 'column', gap: 56 });
+    const focus = await tools.draw_focus.execute({ scope: 'ids', ids: [composed.refs.brief, composed.refs.launch], padding: 84 });
+    let deleteError = '', replaceError = '';
+    try { await tools.draw_delete.execute({ ids: [composed.refs.brief] }); } catch (error) { deleteError = error instanceof Error ? error.message : String(error); }
+    try { await tools.draw_replace_canvas.execute({ objects: [] }); } catch (error) { replaceError = error instanceof Error ? error.message : String(error); }
+    await tools.draw_revert_change.execute({ changeId: layout.changeId });
+    await tools.draw_revert_change.execute({ changeId: patched.changeId });
+    await tools.draw_revert_change.execute({ changeId: path.changeId });
+    await tools.draw_revert_change.execute({ changeId: formatted.changeId });
+    await tools.draw_revert_change.execute({ changeId: composed.changeId });
+    const restored = await tools.draw_get_state.execute({});
+    return {
+      names, drawNames, version: inspect.version, compactBytes: JSON.stringify(inspect).length, fullBytes: JSON.stringify(before).length,
+      composed, formatted: { receipt: formatted, visible: formattedVisible }, renderedGeometry, connectorCollisionGeometry, diagonalClearGeometry, sparseClearGeometry, markerCornerGeometry, endpointCornerGeometry, connectorEndpointOverlapGeometry, ellipseTouchGeometry, hugeEllipseGeometry, cappedEllipseGeometry, disjointEllipseGeometry, concentricEllipseGeometry, groupGapGeometry, briefModelWidth, rawConnectorLabelBounds, selectedGroupGeometry, unselectedGroupGeometry, autoLayouts, arrow, arrowGeometry, settledArrowGeometry, compoundArrow: { selectedCount: selectedArrow.selectedCount, moved: compoundMoved, styled: compoundStyled, deleted: compoundDeleted }, edgeArrowGeometry, thickArrowGeometry, zeroArrowGeometry, zeroAreaGeometry, transparentGeometry, endpointLabelGeometry, sharedConnectorGeometry, fanConnectorGeometry, collisionGeometry, provenanceGeometry, clippedGeometry, connectorVisible: Boolean(connectorLabel && getComputedStyle(connectorLabel).display !== 'none'),
+      staleError, deleteError, replaceError, focus, restoredCount: restored.document.objects.length, beforeCount: before.document.objects.length
+    };
+  });
+  const requiredSemanticTools = ['draw_auto_layout', 'draw_compose', 'draw_create_freehand_arrow', 'draw_delete', 'draw_edit_note', 'draw_focus', 'draw_get_rendered_geometry', 'draw_get_share_status', 'draw_inspect', 'draw_layout', 'draw_patch_objects', 'draw_path', 'draw_publish_snapshot', 'draw_replace_canvas', 'draw_revert_change', 'draw_revoke_snapshot', 'draw_update_snapshot'];
+  if (!requiredSemanticTools.every((name) => semantic.drawNames.includes(name)) || semantic.drawNames.length !== 24) throw new Error(`Semantic Draw tool inventory is incomplete: ${JSON.stringify(semantic.drawNames)} (all registered tools: ${JSON.stringify(semantic.names)})`);
+  if (semantic.version !== '2026-09-06.1' || !semantic.composed.changeId || !semantic.connectorVisible) throw new Error(`Semantic composition or visible connector label failed: ${JSON.stringify(semantic)}`);
+  if (!semantic.formatted.receipt.formatted || !semantic.formatted.visible) throw new Error(`Formatted note did not render through its semantic WebMCP contract: ${JSON.stringify(semantic.formatted)}`);
+  const unexpectedSemanticPeers = semantic.renderedGeometry.overlaps.filter(({ firstId, secondId, classification }) => classification === 'peer' && !([firstId, secondId].includes(semantic.composed.refs.approval) && [firstId, secondId].includes(semantic.composed.refs.mission)));
+  if (semantic.renderedGeometry.objects.length !== 4 || semantic.renderedGeometry.connectors.length !== 1 || !semantic.renderedGeometry.connectors[0].labelBounds || unexpectedSemanticPeers.length || !semantic.renderedGeometry.overlaps.some(({ classification }) => classification === 'containment')) throw new Error(`Rendered geometry did not match the visible semantic graph: ${JSON.stringify(semantic.renderedGeometry)}`);
+  if (!semantic.briefModelWidth || semantic.renderedGeometry.objects.find(({ id }) => id === semantic.composed.refs.brief)?.worldBounds.width < semantic.briefModelWidth + .9) throw new Error(`Rendered note bounds omitted the painted child outline: ${JSON.stringify({ modelWidth: semantic.briefModelWidth, rendered: semantic.renderedGeometry.objects })}`);
+  if (!semantic.connectorCollisionGeometry.overlaps.some(({ classification }) => classification === 'peer')) throw new Error(`Rendered geometry omitted an unrelated connector collision: ${JSON.stringify(semantic.connectorCollisionGeometry)}`);
+  if (semantic.diagonalClearGeometry.overlaps.length) throw new Error(`Rendered geometry reported an AABB-only diagonal connector collision: ${JSON.stringify(semantic.diagonalClearGeometry)}`);
+  if (semantic.sparseClearGeometry.overlaps.length) throw new Error(`Rendered geometry reported an AABB-only sparse-stroke collision: ${JSON.stringify(semantic.sparseClearGeometry)}`);
+  if (semantic.markerCornerGeometry.overlaps.length) throw new Error(`Rendered geometry reported an AABB-only arrowhead-corner collision: ${JSON.stringify(semantic.markerCornerGeometry)}`);
+  if (semantic.endpointCornerGeometry.overlaps.length) throw new Error(`Rendered geometry reported an AABB-only endpoint-label collision: ${JSON.stringify(semantic.endpointCornerGeometry)}`);
+  if (!semantic.connectorEndpointOverlapGeometry.overlaps.some(({ classification }) => classification === 'peer')) throw new Error(`Rendered geometry suppressed a connector-as-endpoint shaft overlap: ${JSON.stringify(semantic.connectorEndpointOverlapGeometry)}`);
+  if (!semantic.ellipseTouchGeometry.overlaps.some(({ classification }) => classification === 'peer')) throw new Error(`Rendered geometry missed a visible large-ellipse arc collision: ${JSON.stringify(semantic.ellipseTouchGeometry)}`);
+  if (semantic.hugeEllipseGeometry.objects.length !== 2 || semantic.hugeEllipseGeometry.overlaps.length) throw new Error(`Rendered geometry did not bound a huge finite ellipse safely: ${JSON.stringify(semantic.hugeEllipseGeometry)}`);
+  if (!semantic.cappedEllipseGeometry.overlaps.some(({ classification }) => classification === 'peer')) throw new Error(`Rendered geometry missed a capped-subdivision ellipse arc collision: ${JSON.stringify(semantic.cappedEllipseGeometry)}`);
+  if (semantic.disjointEllipseGeometry.objects.length !== 200 || semantic.disjointEllipseGeometry.summary.comparisonCount !== 19_900 || semantic.disjointEllipseGeometry.overlaps.length) throw new Error(`Rendered geometry did not broad-phase disjoint ellipses: ${JSON.stringify(semantic.disjointEllipseGeometry)}`);
+  if (semantic.concentricEllipseGeometry.objects.length !== 200 || semantic.concentricEllipseGeometry.summary.comparisonCount !== 19_900 || semantic.concentricEllipseGeometry.overlaps.length) throw new Error(`Rendered geometry did not spatially bound concentric ellipses: ${JSON.stringify(semantic.concentricEllipseGeometry)}`);
+  if (semantic.groupGapGeometry.overlaps.length) throw new Error(`Rendered geometry treated the group-label union as solid paint: ${JSON.stringify(semantic.groupGapGeometry)}`);
+  if (!semantic.rawConnectorLabelBounds || semantic.renderedGeometry.connectors[0].labelBounds.viewportBounds.width < semantic.rawConnectorLabelBounds.width + 4 || semantic.renderedGeometry.connectors[0].labelBounds.viewportBounds.height < semantic.rawConnectorLabelBounds.height + 4) throw new Error(`Rendered connector-label bounds omitted the painted outline: ${JSON.stringify({ raw: semantic.rawConnectorLabelBounds, rendered: semantic.renderedGeometry.connectors[0].labelBounds })}`);
+  if (JSON.stringify(semantic.selectedGroupGeometry.objects[0]?.worldBounds) !== JSON.stringify(semantic.unselectedGroupGeometry.objects[0]?.worldBounds) || JSON.stringify(semantic.arrowGeometry.objects) !== JSON.stringify(semantic.settledArrowGeometry.objects)) throw new Error(`Rendered geometry changed with selection UI or after the tool declared the animation settled: ${JSON.stringify({ selected: semantic.selectedGroupGeometry, unselected: semantic.unselectedGroupGeometry, immediateArrow: semantic.arrowGeometry, settledArrow: semantic.settledArrowGeometry })}`);
+  if (semantic.autoLayouts.length !== 5 || semantic.autoLayouts.some(({ peerOverlaps }) => peerOverlaps) || semantic.arrow.geometry.arrowhead !== 'triangle' || semantic.arrowGeometry.objects.length !== 2 || semantic.arrowGeometry.overlaps.some(({ classification }) => classification === 'peer')) throw new Error(`Semantic auto-layout or freehand arrow proof failed: ${JSON.stringify({ autoLayouts: semantic.autoLayouts, arrow: semantic.arrow, arrowGeometry: semantic.arrowGeometry })}`);
+  if (semantic.compoundArrow.selectedCount !== 2 || !semantic.compoundArrow.moved || !semantic.compoundArrow.styled || !semantic.compoundArrow.deleted) throw new Error(`Semantic freehand arrow did not behave as one compound: ${JSON.stringify(semantic.compoundArrow)}`);
+  if (!semantic.edgeArrowGeometry.objects.some(({ clipped }) => clipped)) throw new Error(`Rendered arrowhead marker clipping was not included: ${JSON.stringify(semantic.edgeArrowGeometry)}`);
+  if (!semantic.thickArrowGeometry.objects.some(({ clipped }) => clipped)) throw new Error(`Rendered stroke-width clipping was not included: ${JSON.stringify(semantic.thickArrowGeometry)}`);
+  if (semantic.zeroArrowGeometry.objects[0]?.viewportBounds.width < 18 || semantic.zeroArrowGeometry.objects[0]?.viewportBounds.height < 14) throw new Error(`Rendered zero-length arrow omitted its marker footprint: ${JSON.stringify(semantic.zeroArrowGeometry)}`);
+  if (semantic.zeroAreaGeometry.objects.length || semantic.zeroAreaGeometry.unrenderedIds.length !== 2) throw new Error(`Rendered geometry treated zero-area SVG shapes as painted: ${JSON.stringify(semantic.zeroAreaGeometry)}`);
+  if (semantic.transparentGeometry.objects.length || semantic.transparentGeometry.unrenderedIds.length !== 2) throw new Error(`Rendered geometry treated fully transparent strokes as painted: ${JSON.stringify(semantic.transparentGeometry)}`);
+  if (!semantic.endpointLabelGeometry.overlaps.some(({ firstId, secondId }) => firstId.includes('endpoint-edge') || secondId.includes('endpoint-edge')) || !semantic.endpointLabelGeometry.overlaps.some(({ firstId, secondId }) => [firstId, secondId].includes('browser-label-endpoint-edge') && [firstId, secondId].includes('browser-label-endpoint-group'))) throw new Error(`Rendered geometry suppressed a visible connector-label overlap with its endpoint or containing group: ${JSON.stringify(semantic.endpointLabelGeometry)}`);
+  if (!semantic.sharedConnectorGeometry.overlaps.some(({ classification }) => classification === 'peer') || semantic.fanConnectorGeometry.overlaps.length) throw new Error(`Rendered geometry did not isolate shared-endpoint contact from visible connector overlap: ${JSON.stringify({ shared: semantic.sharedConnectorGeometry, fan: semantic.fanConnectorGeometry })}`);
+  if (!semantic.collisionGeometry.overlaps.some(({ classification }) => classification === 'peer') || !semantic.provenanceGeometry.overlaps.some(({ classification }) => classification === 'peer') || !semantic.clippedGeometry.objects[0]?.clipped || !semantic.clippedGeometry.missingIds.includes('missing-rendered-id')) throw new Error(`Rendered collision, provenance, clipping, or missing-ID evidence failed: ${JSON.stringify({ collision: semantic.collisionGeometry, provenance: semantic.provenanceGeometry, clipped: semantic.clippedGeometry })}`);
+  if (!semantic.staleError.includes('revision') || !semantic.deleteError.includes('DELETE OBJECTS') || !semantic.replaceError.includes('REPLACE CANVAS')) throw new Error(`Semantic safety boundary failed: ${JSON.stringify(semantic)}`);
+  if (semantic.restoredCount !== semantic.beforeCount || !semantic.focus.ok) throw new Error(`Semantic workflow did not restore its isolated fixture: ${JSON.stringify(semantic)}`);
+  await page.waitForTimeout(800);
   const toolbarBox = await page.locator('.toolbar').boundingBox();
   if (!toolbarBox || toolbarBox.width < 144 || toolbarBox.width > 160) throw new Error('Desktop tool sidebar lacks a deliberate readable width');
   const sidebarToggle = page.getByRole('button', { name: 'Collapse tool sidebar' });
@@ -112,6 +440,26 @@ try {
   const notes = page.locator('g[aria-label^="Note:"]');
   if (await notes.count() !== 2) throw new Error('Two spatial notes were not created');
   const noteEditor = page.locator('textarea[aria-label="Edit note"]').first();
+  const immediateTyping = await noteEditor.evaluate((input) => {
+    const text = 'But loves pink more!';
+    const started = performance.now();
+    input.value = '';
+    input.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'deleteContentBackward' }));
+    for (const character of text) {
+      input.value += character;
+      input.dispatchEvent(new InputEvent('input', { bubbles: true, data: character, inputType: 'insertText' }));
+    }
+    return { value: input.value, elapsed: performance.now() - started, label: input.closest('g')?.getAttribute('aria-label') };
+  });
+  if (immediateTyping.value !== 'But loves pink more!' || immediateTyping.elapsed > 50) throw new Error(`Note keystrokes did not paint immediately: ${JSON.stringify(immediateTyping)}`);
+  if (immediateTyping.label === 'Note: But loves pink more!') throw new Error('Note input rebuilt the canvas document during the keystroke burst');
+  const editingConflict = await page.evaluate(async () => {
+    try { await window.__drawWebMcpTools.draw_get_state.execute({}); return 'allowed'; }
+    catch (error) { return error instanceof Error ? error.message : String(error); }
+  });
+  if (!editingConflict.includes('Finish the active human gesture')) throw new Error(`Agent access was not paused for active note editing: ${editingConflict}`);
+  await notes.nth(1).dispatchEvent('pointerdown', { bubbles: true, button: 0, pointerId: 77, pointerType: 'mouse' });
+  if (await notes.first().getAttribute('aria-label') !== 'Note: But loves pink more!') throw new Error('Pointer gesture did not flush note text before capturing canvas state');
   await noteEditor.fill('MCP');
   await noteEditor.pressSequentially(' tools');
   if (await noteEditor.inputValue() !== 'MCP tools') throw new Error('Note editing did not preserve typed spaces');
@@ -122,6 +470,13 @@ try {
   await page.getByTestId('convert-menu').click();
   await page.getByTestId('convert-connector').click();
   if (await page.locator('line[aria-label="Connector"]').count() !== 1) throw new Error('Connector conversion failed');
+  await page.evaluate(async () => {
+    const state = await window.__drawWebMcpTools.draw_get_state.execute({});
+    const connector = state.document.objects.find((object) => object.kind === 'connector');
+    if (!connector) throw new Error('Connector unavailable for export-label proof');
+    await window.__drawWebMcpTools.draw_patch_objects.execute({ patches: [{ id: connector.id, label: 'Approved path' }] });
+  });
+  if (await page.locator('.connector-label').textContent() !== 'Approved path') throw new Error('Connector label patch was not rendered');
 
   await page.getByRole('button', { name: /Rectangle tool/ }).click();
   await page.mouse.move(box.x + 190, box.y + 350);
@@ -177,7 +532,15 @@ try {
   await page.mouse.move(box.x + 660, box.y + 350, { steps: 4 });
   await page.mouse.up();
   await page.mouse.move(box.x + 700, box.y + 400);
-  await page.mouse.wheel(0, -300);
+  const beforeTrackpad = await page.evaluate(() => window.__drawWebMcpTools.draw_get_state.execute({}));
+  await page.mouse.wheel(40, -30);
+  const afterPan = await page.evaluate(() => window.__drawWebMcpTools.draw_get_state.execute({}));
+  if (afterPan.document.viewport.zoom !== beforeTrackpad.document.viewport.zoom || afterPan.document.viewport.x !== beforeTrackpad.document.viewport.x - 40 || afterPan.document.viewport.y !== beforeTrackpad.document.viewport.y + 30) throw new Error('Unmodified trackpad scroll did not pan the canvas');
+  await page.keyboard.down('Control');
+  await page.mouse.wheel(0, -30);
+  await page.keyboard.up('Control');
+  const afterPinch = await page.evaluate(() => window.__drawWebMcpTools.draw_get_state.execute({}));
+  if (afterPinch.document.viewport.zoom <= afterPan.document.viewport.zoom) throw new Error('Modifier trackpad gesture did not zoom the canvas');
   await page.waitForTimeout(300);
 
   await page.locator('rect[aria-label="Rectangle"]').focus();
@@ -185,6 +548,7 @@ try {
   await page.getByTestId('convert-menu').click();
   await page.getByTestId('convert-note').click();
   await page.locator('textarea[aria-label="Edit note"]').last().fill('First export line\nSecond export line');
+  await page.locator('textarea[aria-label="Edit note"]').last().blur();
   await page.evaluate(() => {
     window.__mappingCanvasPngText = [];
     window.__mappingCanvasPngStrokes = [];
@@ -196,6 +560,31 @@ try {
     const strokeStyle = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'strokeStyle');
     if (strokeStyle?.get && strokeStyle.set) Object.defineProperty(CanvasRenderingContext2D.prototype, 'strokeStyle', { configurable: true, get: strokeStyle.get, set(value) { window.__mappingCanvasPngStrokes.push(String(value)); strokeStyle.set.call(this, value); } });
   });
+  const exportArrow = await page.evaluate(async () => {
+    const inspect = await window.__drawWebMcpTools.draw_inspect.execute({ limit: 1 });
+    const start = { x: inspect.visibleWorld.x + 160, y: inspect.visibleWorld.y + 160 };
+    return window.__drawWebMcpTools.draw_create_freehand_arrow.execute({ start, end: { x: start.x + 360, y: start.y + 140 }, curvature: -.3, looseness: .6, color: 'signal', weight: 7, arrowhead: 'barbed' });
+  });
+  const exportFormatted = await page.evaluate(async () => {
+    const tools = window.__drawWebMcpTools, composed = await tools.draw_compose.execute({ nodes: [{ ref: 'formatted-export', text: 'Formatted export' }], placement: 'visible-center' });
+    const edited = await tools.draw_edit_note.execute({ id: composed.refs['formatted-export'], content: { blocks: [
+      { type: 'numbered', runs: [{ text: 'First formatted export item', bold: true }] },
+      { type: 'numbered', runs: [{ text: 'Second formatted item with Supercalifragilisticexpialidocious', italic: true, link: 'https://example.com/export' }] }
+    ] } });
+    return { id: composed.refs['formatted-export'], composeChangeId: composed.changeId, editChangeId: edited.changeId };
+  });
+  const numberedStarts = await page.locator(`[data-object-id="${exportFormatted.id}"] ol`).evaluateAll((lists) => lists.map((list) => list.getAttribute('start')));
+  if (JSON.stringify(numberedStarts) !== JSON.stringify(['1', '2'])) throw new Error(`Formatted numbered list sequence restarted: ${JSON.stringify(numberedStarts)}`);
+  await page.evaluate((id) => window.__drawWebMcpTools.draw_select.execute({ ids: [id] }), exportFormatted.id);
+  await page.waitForFunction((id) => window.__drawWebMcpTools.draw_inspect.execute({ limit: 1 }).then((result) => result.selectedIds?.includes(id)), exportFormatted.id);
+  await page.getByRole('button', { name: 'Bold', exact: true }).click();
+  await page.getByRole('button', { name: 'Italic', exact: true }).click();
+  const retainedFormatting = await page.evaluate(async (id) => (await window.__drawWebMcpTools.draw_get_state.execute({})).document.objects.find((object) => object.id === id)?.content, exportFormatted.id);
+  if (retainedFormatting?.blocks.length !== 2 || !retainedFormatting.blocks.every((block) => block.type === 'numbered' && block.runs.every((run) => run.bold && run.italic)) || retainedFormatting.blocks[1].runs[0].link !== 'https://example.com/export') throw new Error('Human formatting flattened or replaced existing structured note content');
+  page.once('dialog', (dialog) => dialog.accept('https://'));
+  await page.getByRole('button', { name: 'Link', exact: true }).click();
+  const afterInvalidLink = await page.evaluate(async (id) => (await window.__drawWebMcpTools.draw_get_state.execute({})).document.objects.find((object) => object.id === id)?.content, exportFormatted.id);
+  if (JSON.stringify(afterInvalidLink) !== JSON.stringify(retainedFormatting)) throw new Error('Malformed human link corrupted structured note content');
 
   const exports = {};
   for (const extension of ['json', 'svg', 'png']) {
@@ -208,14 +597,23 @@ try {
     if (exports[extension] < 100) throw new Error(`${extension} export is empty`);
   }
   const svgExport = await readFile(`${outputRoot}canvas.svg`, 'utf8');
-  if (!svgExport.includes('New thought') || svgExport.includes('foreignObject') || !svgExport.includes('class="group-label"') || !svgExport.includes('fill="#fcaa2d"')) throw new Error('SVG export did not materialize portable note and label styles');
+  if (!svgExport.includes('New thought') || svgExport.includes('foreignObject') || !svgExport.includes('class="group-label"') || !svgExport.includes('Approved path') || !svgExport.includes('fill="#fcaa2d"')) throw new Error('SVG export did not materialize portable note and label styles');
   if (!svgExport.includes('First export line') || !svgExport.includes('Second export line') || !svgExport.includes('dy="1.35em"')) throw new Error('SVG export collapsed explicit note line breaks');
+  if (!svgExport.includes('First formatted') || !svgExport.includes('Supercalif') || !svgExport.includes('clip-path="url(#note-export-clip-')) throw new Error('SVG export did not wrap and clip formatted note content');
   if (!(await page.evaluate(() => window.__mappingCanvasPngText.some((text) => text.startsWith('CONVERTED · '))))) throw new Error('PNG export omitted conversion provenance');
+  if (!(await page.evaluate(() => window.__mappingCanvasPngText.includes('Approved path')))) throw new Error('PNG export omitted the visible connector label');
   if (!(await page.evaluate(() => window.__mappingCanvasPngText.includes('First export line') && window.__mappingCanvasPngText.includes('Second export line')))) throw new Error('PNG export collapsed explicit note line breaks');
+  if (!(await page.evaluate(() => window.__mappingCanvasPngText.includes('1. ') && window.__mappingCanvasPngText.includes('2. ') && window.__mappingCanvasPngText.some((text) => text.startsWith('Supercalif'))))) throw new Error('PNG export did not preserve wrapped numbered formatted content');
   const jsonExport = JSON.parse(await readFile(`${outputRoot}canvas.json`, 'utf8'));
-  const exportedDrawingColors = jsonExport.objects.filter((object) => ['stroke', 'rectangle', 'ellipse', 'arrow'].includes(object.kind)).map((object) => object.color);
+  const exportArrowIds = new Set(exportArrow.objectIds);
+  const exportedArrowObjects = jsonExport.objects.filter(({ id }) => exportArrowIds.has(id));
+  if (exportedArrowObjects.length !== 2 || !exportedArrowObjects.every(({ kind, color, points }) => kind === 'stroke' && color === '#0057b8' && points.length >= 3) || !svgExport.includes('stroke="#0057b8"')) throw new Error('Semantic freehand arrow was not retained in JSON and SVG exports');
+  const exportedDrawingColors = jsonExport.objects.filter((object) => ['stroke', 'rectangle', 'ellipse', 'arrow'].includes(object.kind) && !exportArrowIds.has(object.id)).map((object) => object.color);
   if (!exportedDrawingColors.length || !exportedDrawingColors.every((color) => color === '#007a4d') || !svgExport.includes('stroke="#007a4d"')) throw new Error('JSON or SVG export lost the resolved Growth color');
-  if (!(await page.evaluate(() => window.__mappingCanvasPngStrokes.includes('#007a4d') && window.__mappingCanvasPngStrokes.includes('#fcaa2d')))) throw new Error('PNG export lost drawing or structural colors');
+  if (!(await page.evaluate(() => window.__mappingCanvasPngStrokes.includes('#007a4d') && window.__mappingCanvasPngStrokes.includes('#0057b8') && window.__mappingCanvasPngStrokes.includes('#fcaa2d')))) throw new Error('PNG export lost drawing, semantic arrow, or structural colors');
+  await page.evaluate((changeId) => window.__drawWebMcpTools.draw_revert_change.execute({ changeId }), exportArrow.changeId);
+  await page.evaluate((id) => window.__drawWebMcpTools.draw_delete.execute({ ids: [id], confirmation: 'DELETE OBJECTS' }), exportFormatted.id);
+  await page.waitForTimeout(300);
 
   const countBeforeReload = await page.locator('[role="button"][aria-label]').count();
   await page.reload({ waitUntil: 'networkidle' });
@@ -278,7 +676,7 @@ try {
   await mobile.context.close();
 
   const offlineShell = await verifyOfflineShell();
-  console.log(JSON.stringify({ baseUrl, runLabel, desktop: { exports, countBeforeReload, countAfterReload }, mobile: mobileCritical, offlineShell, result: 'pass' }, null, 2));
+  console.log(JSON.stringify({ baseUrl, runLabel, semantic: { version: semantic.version, drawToolCount: semantic.drawNames.length, registeredToolCount: semantic.names.length, connectorVisible: semantic.connectorVisible, restored: semantic.restoredCount === semantic.beforeCount }, desktop: { exports, countBeforeReload, countAfterReload }, mobile: mobileCritical, offlineShell, result: 'pass' }, null, 2));
 } finally {
   await browser.close();
 }

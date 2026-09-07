@@ -3,6 +3,7 @@ import {
   performanceDocumentCss,
   performanceDocumentFontLinks
 } from '@create-something/canon/performance/scheduler-document';
+import { normalizeSchedulerOfferIntent } from '../offers/intent.js';
 
 export function renderBookingManagementActions(status: string): string {
   return status === 'cancelled'
@@ -23,8 +24,7 @@ const workflowMappingOffer: SchedulerPageOffer = {
     'Schedule a verified 30- or 60-minute workflow mapping session with Micah Johnson.',
   title: 'Workflow Mapping Session | CREATE SOMETHING',
   heading: 'Map One Workflow',
-  lede:
-    'Choose an open time for a focused, 30- or 60-minute workflow mapping session with Micah Johnson. Bring one real handoff, its decision owner, and the proof your team needs next.',
+  lede: 'Choose an open time for a focused, 30- or 60-minute workflow mapping session with Micah Johnson. Bring one real handoff, its decision owner, and the proof your team needs next.',
   policy: 'Workflow Mapping / V2'
 };
 
@@ -33,13 +33,24 @@ const compilerIntegrationOffer: SchedulerPageOffer = {
     'Schedule a verified 30- or 60-minute Workflow Compiler Integration fit call with Micah Johnson.',
   title: 'Workflow Compiler Integration Fit Call | CREATE SOMETHING',
   heading: 'Fit One Integration',
-  lede:
-    'Choose an open time for a focused, 30- or 60-minute integration fit call with Micah Johnson. Bring one repository, one consequential workflow, and the required MCP or agent tool boundary.',
+  lede: 'Choose an open time for a focused, 30- or 60-minute integration fit call with Micah Johnson. Bring one repository, one consequential workflow, and the required MCP or agent tool boundary.',
   policy: 'Compiler Integration / V1'
 };
 
+const agentFoundationOffer: SchedulerPageOffer = {
+  metaDescription:
+    'Schedule a verified 30- or 60-minute Agent Foundation fit call with Micah Johnson.',
+  title: 'Agent Foundation Fit Call | CREATE SOMETHING',
+  heading: 'Fit One Agent Foundation',
+  lede: 'Choose an open time for a focused, 30- or 60-minute Agent Foundation fit call with Micah Johnson. Bring one agent project, one role, one job, and one representative case.',
+  policy: 'Agent Foundation / V1'
+};
+
 export function resolveSchedulerPageOffer(intent: string | null | undefined): SchedulerPageOffer {
-  return intent === 'compiler-integration' ? compilerIntegrationOffer : workflowMappingOffer;
+  const offerIntent = normalizeSchedulerOfferIntent(intent);
+  if (offerIntent === 'agent-foundation') return agentFoundationOffer;
+  if (offerIntent === 'compiler-integration') return compilerIntegrationOffer;
+  return workflowMappingOffer;
 }
 
 export function schedulerPage(input: {
@@ -48,7 +59,7 @@ export function schedulerPage(input: {
   intent?: string | null;
 }): string {
   const offer = resolveSchedulerPageOffer(input.intent);
-  const offerIntent = input.intent === 'compiler-integration' ? input.intent : null;
+  const offerIntent = normalizeSchedulerOfferIntent(input.intent);
   const configuration = JSON.stringify({
     turnstileSiteKey: input.turnstileSiteKey ?? null
   }).replaceAll('<', '\\u003c');

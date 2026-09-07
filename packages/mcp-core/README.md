@@ -32,6 +32,10 @@ pnpm --filter @create-something/mcp-core build
 
 ## Related Packages
 
+Ground policy declares the ESLint pilot configuration as a tool entry point.
+See [Ground monorepo adoption](../../docs/guides/GROUND_MONOREPO_ADOPTION.md)
+for published CLI/MCP verification and the public-API finding dispositions.
+
 - `@create-something/mcp-authz`
 - `@create-something/observability`
 - `@create-something/cs-mcp-hub`

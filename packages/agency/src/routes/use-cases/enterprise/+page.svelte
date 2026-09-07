@@ -18,7 +18,7 @@
       icon: 'settings',
       title: 'CREATE SOMETHING Control',
       detail:
-        'A controlled execution layer for teams already running MCP servers, agents, or cross-system workflows.'
+        'Ongoing support for teams with AI agents or automated tasks already running across business tools.'
     },
     {
       eyebrow: 'State',
@@ -171,9 +171,9 @@
       id: 'risk',
       label: 'Risk',
       summary: 'Failure begins after launch',
-      title: 'Automation breaks when judgment has no operating home.',
+      title: 'Know who handles exceptions.',
       detail:
-        'Prompt drift, policy gaps, and orphaned connections become expensive when no owner, blocked state, evidence, or recovery path surrounds them.',
+        'Instructions become outdated and connections fail. Each workflow needs someone responsible, a work history, and a way to stop and recover.',
       tone: 'block',
       evidence: ['prompt drift', 'policy gaps', 'orphaned connections']
     },
@@ -181,9 +181,9 @@
       id: 'control',
       label: 'Control',
       summary: 'Keep work explainable',
-      title: 'The operating layer aligns capacity with authority.',
+      title: 'Keep permissions in step with the work.',
       detail:
-        'Optimization, orchestration, decision rules, monitoring, and receipts keep live agent work legible after deployment.',
+        'Regular reviews, clear rules, monitoring, and work records help your team understand the system after launch.',
       tone: 'review',
       receipts: ['prompt loop', 'orchestration', 'policy rules', 'operating evidence']
     },
@@ -193,7 +193,7 @@
       summary: 'Three layers, right cadence',
       title: 'Control only what the operating workflow needs.',
       detail:
-        'Database holds what exists, Automation moves work, and Judgment governs what should happen. The operating plan follows workflow count, action risk, and review rhythm.',
+        'The service plan depends on how many workflows you run, the risks of their actions, and how often they need review.',
       tone: 'allow'
     },
     {
@@ -263,7 +263,7 @@
   expression="editorial"
   eyebrow="The Judgment Layer"
   title="Reliability is what turns automation into operations."
-  description="For teams already running MCP-backed or cross-system workflows, CREATE SOMETHING Control adds the governed execution layer. Approvals, blocked states, and receipts keep working after launch."
+  description="Control supports AI workflows already running across your tools. It adds monitoring, approval rules, incident response, and records your team can review."
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.selfMapHref}>
@@ -287,8 +287,8 @@
 <PerformanceNarrativeStage
   id="enterprise-control-story"
   eyebrow="One reliability story"
-  title="Reliability is a decision sequence, not a feature."
-  description="Enterprise reliability becomes one decision sequence: name the post-launch risk, inspect the control layer, choose the operating model and cadence, then confirm the workflow has earned ongoing control."
+  title="Choose support that fits the risks."
+  description="Review what could go wrong, who handles it, and the support needed. Agree on the service and review schedule before expanding automation."
   scenes={enterpriseScenes}
   ariaLabel="Enterprise workflow reliability story"
 >
@@ -338,7 +338,7 @@
   expression="editorial"
   eyebrow="Start with the workflow"
   title="Bring the workflow, owner, and first risk boundary."
-  description="I will map the control states before expanding automation authority."
+  description="We’ll agree on approvals and reasons to stop before giving the system more access."
   steps={ctaItems}
   handoff={{
     owner: 'Decision owner',

@@ -5,6 +5,7 @@
     "minimum_complete_receipts": 14,
     "minimum_adjudicated_findings": 10,
     "minimum_precision": 0.9,
+    "minimum_recall": 0.9,
     "maximum_false_positive_rate": 0.1,
     "minimum_adjudicated_by_check": {
       "duplicates": 4,
@@ -327,7 +328,10 @@
         "source": "docs/internal/ground-ga-calibration-fixtures-2026-08-24.json#ga_duplicate_typescript_function_is_confirmed",
         "completion": "complete",
         "observed_findings": 1,
-        "execution_failures": 0
+        "execution_failures": 0,
+        "expected_findings": 1,
+        "missed_findings": 0,
+        "recall_check": "duplicates"
       },
       "verdicts": [
         {
@@ -344,7 +348,10 @@
         "source": "docs/internal/ground-ga-calibration-fixtures-2026-08-24.json#ga_duplicate_tsx_function_is_confirmed",
         "completion": "complete",
         "observed_findings": 1,
-        "execution_failures": 0
+        "execution_failures": 0,
+        "expected_findings": 1,
+        "missed_findings": 0,
+        "recall_check": "duplicates"
       },
       "verdicts": [
         {
@@ -361,7 +368,10 @@
         "source": "docs/internal/ground-ga-calibration-fixtures-2026-08-24.json#ga_duplicate_javascript_function_is_confirmed",
         "completion": "complete",
         "observed_findings": 1,
-        "execution_failures": 0
+        "execution_failures": 0,
+        "expected_findings": 1,
+        "missed_findings": 0,
+        "recall_check": "duplicates"
       },
       "verdicts": [
         {
@@ -378,7 +388,10 @@
         "source": "docs/internal/ground-ga-calibration-fixtures-2026-08-24.json#ga_duplicate_svelte_component_script_is_confirmed",
         "completion": "complete",
         "observed_findings": 1,
-        "execution_failures": 0
+        "execution_failures": 0,
+        "expected_findings": 1,
+        "missed_findings": 0,
+        "recall_check": "duplicates"
       },
       "verdicts": [
         {
@@ -395,7 +408,10 @@
         "source": "docs/internal/ground-ga-calibration-fixtures-2026-08-24.json#ga_orphan_typescript_module_is_confirmed",
         "completion": "complete",
         "observed_findings": 1,
-        "execution_failures": 0
+        "execution_failures": 0,
+        "expected_findings": 1,
+        "missed_findings": 0,
+        "recall_check": "orphans"
       },
       "verdicts": [
         {
@@ -412,7 +428,10 @@
         "source": "docs/internal/ground-ga-calibration-fixtures-2026-08-24.json#ga_orphan_javascript_module_is_confirmed",
         "completion": "complete",
         "observed_findings": 1,
-        "execution_failures": 0
+        "execution_failures": 0,
+        "expected_findings": 1,
+        "missed_findings": 0,
+        "recall_check": "orphans"
       },
       "verdicts": [
         {
@@ -429,7 +448,10 @@
         "source": "docs/internal/ground-ga-calibration-fixtures-2026-08-24.json#ga_orphan_svelte_component_is_confirmed",
         "completion": "complete",
         "observed_findings": 1,
-        "execution_failures": 0
+        "execution_failures": 0,
+        "expected_findings": 1,
+        "missed_findings": 0,
+        "recall_check": "orphans"
       },
       "verdicts": [
         {
@@ -446,7 +468,10 @@
         "source": "docs/internal/ground-ga-calibration-fixtures-2026-08-24.json#ga_dead_typescript_export_is_confirmed",
         "completion": "complete",
         "observed_findings": 1,
-        "execution_failures": 0
+        "execution_failures": 0,
+        "expected_findings": 1,
+        "missed_findings": 0,
+        "recall_check": "dead_exports"
       },
       "verdicts": [
         {
@@ -463,7 +488,10 @@
         "source": "docs/internal/ground-ga-calibration-fixtures-2026-08-24.json#ga_dead_javascript_export_is_confirmed",
         "completion": "complete",
         "observed_findings": 1,
-        "execution_failures": 0
+        "execution_failures": 0,
+        "expected_findings": 1,
+        "missed_findings": 0,
+        "recall_check": "dead_exports"
       },
       "verdicts": [
         {
@@ -480,7 +508,10 @@
         "source": "docs/internal/ground-ga-calibration-fixtures-2026-08-24.json#ga_dead_svelte_module_export_is_confirmed",
         "completion": "complete",
         "observed_findings": 1,
-        "execution_failures": 0
+        "execution_failures": 0,
+        "expected_findings": 1,
+        "missed_findings": 0,
+        "recall_check": "dead_exports"
       },
       "verdicts": [
         {

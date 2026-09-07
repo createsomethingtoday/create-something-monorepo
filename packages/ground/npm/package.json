@@ -1,6 +1,6 @@
 {
   "name": "@createsomething/ground-mcp",
-  "version": "0.3.6",
+  "version": "0.4.0",
   "description": "Evidence-first code analysis for agents in TypeScript, JavaScript, and Svelte codebases.",
   "author": "CREATE SOMETHING <hello@createsomething.io>",
   "license": "MIT",

@@ -40,6 +40,18 @@ function run(binary, args, options = {}) {
   return result;
 }
 
+function runExpectFailure(binary, args, options = {}) {
+  const resolvedBinary = resolve(binary);
+  const isJavaScriptWrapper = resolvedBinary.endsWith('.js');
+  const result = spawnSync(
+    isJavaScriptWrapper ? process.execPath : resolvedBinary,
+    [...(isJavaScriptWrapper ? [resolvedBinary] : []), ...args],
+    { encoding: 'utf8', ...options }
+  );
+  assert.notEqual(result.status, 0, `${binary} ${args.join(' ')} unexpectedly succeeded`);
+  return result;
+}
+
 function writeDuplicateFixture(directory, extension, functionName, contents) {
   mkdirSync(directory, { recursive: true });
   writeFileSync(join(directory, `primary.${extension}`), contents);
@@ -53,6 +65,9 @@ function analyzeDuplicate(binary, database, directory, expectedFunction) {
   assert.equal(analysis.coverage?.duplicates?.status, 'FAIL', JSON.stringify(analysis));
   assert.equal(analysis.findings?.duplicates?.length, 1, JSON.stringify(analysis));
   assert.equal(analysis.findings.duplicates[0].function, expectedFunction);
+  assert.equal(analysis.findings.duplicates[0].safe_to_auto_fix, false);
+  assert.equal(analysis.findings.duplicates[0].fix?.target, null);
+  assert.deepEqual(analysis.findings.duplicates[0].fix?.imports_to_update, []);
   return {
     verification_status: analysis.verification_status,
     finding: analysis.findings.duplicates[0].function,
@@ -106,6 +121,54 @@ try {
   };
   assert.equal(languageSmokes.svelte.framework, 'SvelteKit');
 
+  const invalidPolicyDirectory = join(fixtures, 'invalid-policy');
+  mkdirSync(invalidPolicyDirectory, { recursive: true });
+  writeFileSync(join(invalidPolicyDirectory, '.ground.yml'), 'thresholds: [broken\n');
+  writeFileSync(join(invalidPolicyDirectory, 'index.ts'), 'export const value = 1;\n');
+  const invalidPolicy = runExpectFailure(groundBinary, [
+    '--db',
+    database,
+    'analyze',
+    invalidPolicyDirectory,
+    '--checks',
+    'duplicates'
+  ]);
+  assert.match(invalidPolicy.stderr, /Invalid Ground configuration|Parse error/);
+
+  const staleDirectory = join(fixtures, 'stale-evidence');
+  mkdirSync(staleDirectory, { recursive: true });
+  const staleA = join(staleDirectory, 'a.ts');
+  const staleB = join(staleDirectory, 'b.ts');
+  const staleSource = 'export function total(values: number[]) {\n  return values.reduce((sum, value) => sum + value, 0);\n}\n';
+  writeFileSync(staleA, staleSource);
+  writeFileSync(staleB, staleSource);
+  run(groundBinary, ['--db', database, 'compare', staleA, staleB]);
+  writeFileSync(staleB, 'export const unrelated = true;\n');
+  const staleClaim = runExpectFailure(groundBinary, [
+    '--db',
+    database,
+    'claim',
+    'duplicate',
+    staleA,
+    staleB,
+    'release smoke'
+  ]);
+  assert.match(`${staleClaim.stdout}${staleClaim.stderr}`, /Evidence is stale/);
+
+  const workspaceDirectory = join(fixtures, 'workspace');
+  mkdirSync(join(workspaceDirectory, 'apps', 'studio'), { recursive: true });
+  mkdirSync(join(workspaceDirectory, 'packages', 'service', 'worker'), { recursive: true });
+  writeFileSync(join(workspaceDirectory, 'pnpm-workspace.yaml'), "packages:\n  - 'apps/*'\n  - 'packages/*/worker'\n");
+  writeFileSync(join(workspaceDirectory, 'package.json'), '{"name":"@create-something/monorepo"}\n');
+  writeFileSync(join(workspaceDirectory, '.ground.yml'), "version: '1'\n");
+  writeFileSync(join(workspaceDirectory, 'apps', 'studio', 'package.json'), '{"name":"@create-something/studio"}\n');
+  writeFileSync(join(workspaceDirectory, 'packages', 'service', 'worker', 'package.json'), '{"name":"@create-something/service-worker"}\n');
+  const doctor = JSON.parse(run(groundBinary, ['doctor', workspaceDirectory, '--json']).stdout);
+  assert.equal(doctor.verification_status, 'PASS');
+  assert.equal(doctor.workspace?.packages, 2);
+  assert.equal(doctor.workspace?.is_create_something, true);
+  assert.match(doctor.policy?.sha256 ?? '', /^[a-f0-9]{64}$/);
+
   const rpcInput =
     [
       { jsonrpc: '2.0', id: 1, method: 'initialize', params: {} },
@@ -142,6 +205,13 @@ try {
       required_tools: ['ground_analyze', 'ground_diff', 'ground_verify_fix']
     },
     language_smokes: languageSmokes,
+    trust_contract: {
+      invalid_policy_rejected: true,
+      stale_evidence_rejected: true,
+      inferred_fixes_review_only: true,
+      workspace_discovery_verified: true,
+      policy_digest_verified: true
+    },
     ready: true
   };
   writeFileSync(outputPath, `${JSON.stringify(receipt, null, 2)}\n`, { flag: 'wx' });

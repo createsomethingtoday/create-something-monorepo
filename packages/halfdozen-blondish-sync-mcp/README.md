@@ -73,17 +73,43 @@ external page ID, external URL, external files/media, and synced page body.
 
 Reverse sync updates only the client status property:
 
+- `Not Started` -> no write by default
+- `Responded` -> no write by default
 - `Assigned` -> `Under Review`
 - `In Progress` -> `In Progress`
 - `Client Action` -> `Action Required`
+- `Needs Review` -> no write by default
 - `Complete` -> `Complete`
 - `Archive` -> `Archive`
 - `Roadblock` -> `Roadblock`
+- `Backburner` -> no write by default
 
 Clients whose source database uses different option names can set
 `CLIENT_OS_STATUS_MAP` to a JSON object keyed by Half Dozen status. Lightswitch
 sets `{"Complete":"Completed"}`. Preflight validates the effective mapping
 overrides against the source status options before any write tool runs.
+
+Set a mapping value to `null` when a client must not receive writeback for that
+Half Dozen status.
+
+Cracked Live uses this transcript-backed tenant policy:
+
+| Half Dozen status | Cracked status | Behavior |
+| --- | --- | --- |
+| `Not Started` | `Submitted` | The incoming ticket is acknowledged without implying work began. |
+| `Responded` | `Under Review` | Half Dozen is reviewing the request. |
+| `Client Action` | `Under Review` | This HD state is pre-assignment and is not Cracked's later `Action Required` state. |
+| `Assigned` | `Under Review` | Assignment is internal; the client sees review underway. |
+| `In Progress` | `In Progress` | Work has started. |
+| `Needs Review` | `Under Review` | Internal review does not expose an additional client lifecycle state. |
+| `Roadblock` | `Roadblock` | Direct mapping. |
+| `Backburner` | — | No client status write. |
+| `Complete` | `Complete` | Direct mapping. |
+| `Archive` | — | No client status write. |
+
+`Action Required` remains available in Cracked for the distinct case where work
+is underway and the client must provide information; the transcript does not
+define an equivalent HD ticket status that should set it automatically.
 
 ## Scale path
 

@@ -941,6 +941,42 @@ function syncPageDescriptionVisibility(context: RouteContext): void {
   description.style.display = context.childCategorySlug ? 'none' : 'block';
 }
 
+/**
+ * Subscribe the filter bar to URL changes made outside the component.
+ *
+ * `pushState` and `replaceState` do not emit `popstate`, so WebMCP and the
+ * marketplace's other filter surfaces publish `templateFiltersChanged` after
+ * updating the URL. Ignore this bar's own events because its local state is
+ * already updated by the originating interaction.
+ */
+export function subscribeTemplateFilterBarExternalChanges(
+  win: EventTarget,
+  doc: EventTarget,
+  onChange: (event: Event) => void,
+): () => void {
+  const handleChange = (event: Event) => {
+    if (
+      event.type === 'templateFiltersChanged' &&
+      (event as CustomEvent<{ source?: string }>).detail?.source === 'TemplateFilterBar'
+    ) {
+      return;
+    }
+    onChange(event);
+  };
+
+  win.addEventListener('popstate', handleChange);
+  win.addEventListener('templateFiltersChanged', handleChange);
+  doc.addEventListener('templateFiltersChanged', handleChange);
+  doc.addEventListener('categoryFilterUpdated', handleChange);
+
+  return () => {
+    win.removeEventListener('popstate', handleChange);
+    win.removeEventListener('templateFiltersChanged', handleChange);
+    doc.removeEventListener('templateFiltersChanged', handleChange);
+    doc.removeEventListener('categoryFilterUpdated', handleChange);
+  };
+}
+
 // ─── TemplateFilterBar ────────────────────────────────────────────────────────
 
 export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
@@ -1089,18 +1125,18 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
     return () => ac.abort();
   }, [apiBase, hasHydrated, routeContext, showStyles, showSubcategoryPills, showTypes]);
 
-  // Re-sync filter state from URL on browser back/forward
+  // Re-sync filter state and route context when navigation or another
+  // marketplace surface changes the shared URL contract.
   useEffect(() => {
     setHasHydrated(true);
     setFilters(readUrlFilters(defaultSort));
     setRouteVersion((value) => value + 1);
 
-    const onPop = () => {
+    const syncExternalState = () => {
       setFilters(readUrlFilters(defaultSort));
       setRouteVersion((value) => value + 1);
     };
-    window.addEventListener('popstate', onPop);
-    return () => window.removeEventListener('popstate', onPop);
+    return subscribeTemplateFilterBarExternalChanges(window, document, syncExternalState);
   }, [defaultSort]);
 
   useEffect(() => {
@@ -1127,17 +1163,6 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
     if (!hasHydrated) return;
     syncPageDescriptionVisibility(routeContext);
   }, [hasHydrated, routeContext]);
-
-  // Re-sync when another page script or this component updates category params.
-  // pushState/replaceState do not emit popstate, so the custom event is the bridge.
-  useEffect(() => {
-    const onCat = () => {
-      setFilters(readUrlFilters(defaultSort));
-      setRouteVersion((value) => value + 1);
-    };
-    document.addEventListener('categoryFilterUpdated', onCat);
-    return () => document.removeEventListener('categoryFilterUpdated', onCat);
-  }, [defaultSort]);
 
   const applyFilter = useCallback((patch: Partial<LocalFilters>) => {
     setFilters((prev) => {

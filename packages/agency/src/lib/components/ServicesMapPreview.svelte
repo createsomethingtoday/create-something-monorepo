@@ -6,11 +6,9 @@
 <section class="map-preview" id="map-warmup" aria-labelledby="services-map-preview-title">
   <div class="map-preview__copy">
     <p class="map-preview__eyebrow">Map before booking</p>
-    <h2 id="services-map-preview-title">See the operating path before deciding to build.</h2>
+    <h2 id="services-map-preview-title">Try planning the task before you commit.</h2>
     <p>
-      Start with one real handoff. Map shows who owns it, where AI can prepare work, which action
-      needs approval, and what record proves the outcome. The public canvas is read-only and does
-      not touch production systems.
+      Choose a task. Map its steps, the people responsible, and where AI could help. The public canvas lets you draft a plan without connecting to live systems.
     </p>
     <div class="map-preview__actions">
       <Button href={agencyCoreMessaging.selfMapHref}>Open the public Map</Button>
@@ -30,12 +28,12 @@
     <article>
       <span>02 · Boundary</span>
       <strong>Prepare, then wait</strong>
-      <p>Agent work · named approval</p>
+      <p>AI drafts · a person approves</p>
     </article>
     <article>
       <span>03 · Proof</span>
-      <strong>Resolve with evidence</strong>
-      <p>Outcome · owner · next step</p>
+      <strong>Record the result</strong>
+      <p>What happened · who acts next</p>
     </article>
   </div>
 </section>

@@ -3,5 +3,6 @@
   "name": "create-something-mapping-canvas",
   "compatibility_date": "2026-08-27",
   "compatibility_flags": ["nodejs_compat"],
-  "pages_build_output_dir": ".svelte-kit/cloudflare"
+  "pages_build_output_dir": ".svelte-kit/cloudflare",
+  "d1_databases": [{ "binding": "DRAW_DB", "database_name": "create-something-draw", "database_id": "cec15f61-54ed-45ff-bd87-d86f9cf1b9c3", "migrations_dir": "migrations" }]
 }

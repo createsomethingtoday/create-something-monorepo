@@ -44,7 +44,7 @@ pub struct UsageEvidence {
 }
 
 /// A location where a symbol is used
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct UsageLocation {
     pub file: PathBuf,
     pub line: u32,

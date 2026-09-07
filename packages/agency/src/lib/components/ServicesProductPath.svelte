@@ -21,16 +21,16 @@
       id: 'build',
       number: '02',
       product: buildProduct,
-      role: 'Build the owned system',
+      role: 'Build and test the agent',
       model: 'Scoped implementation',
-      href: agencyCoreMessaging.workflowCompilerIntegrationHref,
-      linkLabel: 'View the fixed-scope Build'
+      href: agencyCoreMessaging.agentFoundationHref,
+      linkLabel: 'Explore Agent Foundation'
     },
     {
       id: 'control',
       number: '03',
       product: controlProduct,
-      role: 'Operate with approvals and proof',
+      role: 'Keep the live system working',
       model: `Managed AI Operations · ${PUBLIC_PRICING.managedControl.label} · includes Map`,
       href: controlProduct.route,
       linkLabel: 'Explore Control'
@@ -41,13 +41,12 @@
 <section class="product-path" aria-labelledby="services-product-path-title">
   <div class="product-path__heading">
     <div>
-      <p class="product-path__eyebrow">Product and service path</p>
-      <h2 id="services-product-path-title">From mapped workflow to governed operation.</h2>
+      <p class="product-path__eyebrow">Choose where to start</p>
+      <h2 id="services-product-path-title">Plan the work, build it, then support it.</h2>
     </div>
     <p class="product-path__description">
-      Map defines the work. Build turns the approved definition into an owned system. After launch,
-      Control provides Managed AI Operations {PUBLIC_PRICING.managedControl.label.toLowerCase()} for a
-      standard-risk environment. Control includes Map; new workflows and integrations return to Build.
+      Map helps you plan the work. Build creates a system your team owns. After launch, Control provides Managed AI Operations {PUBLIC_PRICING.managedControl.label.toLowerCase()} for a
+      standard-risk environment. Control includes Map. New workflows and integrations are quoted separately through Build.
       The supported public source distribution is {PUBLIC_PRICING.publicSource.label}.
     </p>
   </div>

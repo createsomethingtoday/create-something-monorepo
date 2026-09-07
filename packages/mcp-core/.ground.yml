@@ -1,0 +1,14 @@
+version: "1"
+extends:
+  - ../../.ground.yml
+
+# Ground 0.4.0 extends merges arrays; scalar thresholds must remain explicit.
+thresholds:
+  duplicate_similarity: 85
+  min_function_lines: 5
+
+# scripts/evidence-lint-pilot.mjs loads this exact file using ESLint --config.
+# Manual entries are relative to the analysis root, so declare package scope here.
+entry_points:
+  manual:
+    - eslint.evidence.config.mjs

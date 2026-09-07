@@ -7,19 +7,19 @@ const home = readFileSync(new URL('../src/routes/+page.svelte', import.meta.url)
 test('the mobile homepage keeps its primary journey visible and defers supporting records', () => {
   const mobileRecord = home.indexOf('<details class="home-mobile-supporting-record">');
   const earlySupport = home.indexOf('home-supporting-record__deferred--early');
-  const adoption = home.indexOf('<AdoptionPathChooser />');
+  const example = home.indexOf('<section class="foundation-example"');
   const lateSupport = home.indexOf('home-supporting-record__deferred--late');
   const handoff = home.indexOf('<PerformanceConversionHandoff');
 
   assert.notEqual(mobileRecord, -1, 'mobile needs one native supporting-record disclosure');
   assert.notEqual(earlySupport, -1, 'delivery and evidence need a mobile deferral boundary');
-  assert.notEqual(adoption, -1, 'the audience choice remains in the primary journey');
+  assert.notEqual(example, -1, 'the concrete job example remains in the primary journey');
   assert.notEqual(lateSupport, -1, 'tool and FAQ detail need a mobile deferral boundary');
   assert.notEqual(handoff, -1, 'the map handoff remains visible without opening supporting detail');
 
   assert.ok(mobileRecord < earlySupport);
-  assert.ok(earlySupport < adoption);
-  assert.ok(adoption < lateSupport);
+  assert.ok(example < mobileRecord);
+  assert.ok(earlySupport < lateSupport);
   assert.ok(lateSupport < handoff);
 
   assert.match(home, /<summary>[\s\S]*?Inspect the supporting record[\s\S]*?<\/summary>/);

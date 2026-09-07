@@ -1,8 +1,24 @@
 import { describe, expect, it } from 'vitest';
-import { DOCUMENT_VERSION, commit, convert, createDocument, objectBounds, parse, redo, removeObjects, restoreConversion, serialize, undo, withObjects, type Connector, type History, type Stroke } from './document';
+import { DOCUMENT_VERSION, commit, convert, createDocument, createObjectCenterResolver, expandCompoundIds, isDocument, objectBounds, objectCenter, parse, redo, removeObjects, resizeGroup, restoreConversion, selectObjectIdsInBounds, serialize, undo, withObjects, type CanvasObject, type Connector, type History, type Stroke } from './document';
 const stroke = (id: string, x = 10): Stroke => ({ id, kind: 'stroke', createdAt: '2026-08-27T00:00:00Z', points: [{ x, y: 20 }, { x: x + 40, y: 60 }], color: '#f7f4ee', width: 3 });
 describe('mapping canvas contract', () => {
   it('creates a versioned document', () => expect(createDocument().version).toBe(DOCUMENT_VERSION));
+  it('accepts formatted notes only when their canonical text projection matches', () => {
+    const base = createDocument();
+    const content = { blocks: [{ type: 'heading2' as const, runs: [{ text: 'Evidence', bold: true as const }] }, { type: 'numbered' as const, runs: [{ text: 'Verify' }] }] };
+    const note = { id: 'note-rich', kind: 'note' as const, createdAt: base.createdAt, x: 0, y: 0, width: 240, height: 120, text: 'Evidence\n1. Verify', content };
+    expect(isDocument({ ...base, objects: [note] })).toBe(true);
+    const legacyEdit = { ...base, objects: [{ ...note, text: 'drifted' }] };
+    expect(isDocument(legacyEdit)).toBe(false);
+    const repaired = parse(JSON.stringify(legacyEdit)).objects[0];
+    expect(repaired).toMatchObject({ id: note.id, text: 'drifted' });
+    expect('content' in repaired).toBe(false);
+  });
+  it('rejects ambiguous duplicate object ids', () => {
+    const document = createDocument();
+    const object = { id: 'duplicate', kind: 'note' as const, createdAt: document.createdAt, x: 10, y: 10, width: 200, height: 100, text: 'One' };
+    expect(() => parse(JSON.stringify({ ...document, objects: [object, { ...object, text: 'Two' }] }))).toThrow(/not a supported/);
+  });
   it('preserves source when converting ink to a note', () => {
     const source = withObjects(createDocument(), [stroke('a')]);
     const note = convert(source, ['a'], 'note').objects.at(-1)!;
@@ -47,10 +63,31 @@ describe('mapping canvas contract', () => {
     expect(restored.objects.some(({ id }) => id === connector.id)).toBe(false);
     expect(parse(serialize(restored))).toEqual(restored);
   });
-  it('rejects cyclic connector graphs', () => {
+  it('migrates cyclic connector graphs without discarding the canvas', () => {
     const source = createDocument();
     const cycle: Connector = { id: 'cycle', kind: 'connector', createdAt: 'now', fromId: 'cycle', toId: 'cycle', label: '' };
-    expect(() => parse(JSON.stringify({ ...source, objects: [cycle] }))).toThrow(/not a supported/);
+    expect(parse(JSON.stringify({ ...source, objects: [cycle] })).objects).toEqual([]);
+  });
+  it('removes many disjoint connector cycles in one normalization pass', () => {
+    const source = createDocument();
+    const cycles: Connector[] = Array.from({ length: 1_000 }, (_, index) => {
+      const pair = Math.floor(index / 2) * 2;
+      return { id: `cycle-${index}`, kind: 'connector', createdAt: 'now', fromId: `cycle-${index === pair ? pair + 1 : pair}`, toId: `cycle-${index === pair ? pair + 1 : pair}`, label: '' };
+    });
+    expect(parse(JSON.stringify({ ...source, objects: cycles })).objects).toEqual([]);
+  });
+  it('validates a 20,000-connector fan-in without copying reverse adjacency arrays', () => {
+    const source = createDocument(), origin = stroke('fan-origin'), anchor = stroke('fan-anchor', 100);
+    const hub: Connector = { id: 'fan-hub', kind: 'connector', createdAt: 'now', fromId: origin.id, toId: anchor.id, label: '' };
+    const fan: Connector[] = Array.from({ length: 20_000 }, (_, index) => ({ id: `fan-${index}`, kind: 'connector', createdAt: 'now', fromId: hub.id, toId: anchor.id, label: '' }));
+    expect(parse(JSON.stringify({ ...source, objects: [origin, anchor, hub, ...fan] })).objects).toHaveLength(fan.length + 3);
+  });
+  it('migrates connector self-loops and repairs legacy dangling group membership', () => {
+    const source = createDocument(), endpoint = stroke('endpoint');
+    const selfLoop: Connector = { id: 'self-loop', kind: 'connector', createdAt: 'now', fromId: endpoint.id, toId: endpoint.id, label: '' };
+    expect(parse(JSON.stringify({ ...source, objects: [endpoint, selfLoop] })).objects).toEqual([endpoint]);
+    const dangling = { id: 'dangling-group', kind: 'group', createdAt: 'now', x: 0, y: 0, width: 100, height: 80, label: '', childIds: ['missing'] };
+    expect(parse(JSON.stringify({ ...source, objects: [dangling] })).objects).toEqual([{ ...dangling, childIds: [] }]);
   });
   it('derives connector conversion bounds from its endpoints', () => {
     const source = withObjects(createDocument(), [stroke('a', 700), stroke('b', 900)]);
@@ -58,6 +95,33 @@ describe('mapping canvas contract', () => {
     const connector = connected.objects.at(-1)!;
     expect(objectBounds([connector], connected.objects).x).toBeGreaterThanOrEqual(700);
     expect(convert(connected, [connector.id], 'note').objects.at(-1)).toMatchObject({ kind: 'note', x: 700 });
+  });
+  it('resolves branching connector centers without exponential recomputation', () => {
+    const objects: CanvasObject[] = [stroke('origin', 0), stroke('second', 100)];
+    for (let index = 0; index < 45; index += 1) objects.push({ id: `edge-${index}`, kind: 'connector', createdAt: 'now', fromId: objects.at(-1)!.id, toId: objects.at(-2)!.id, label: '' });
+    expect(objectCenter(objects.at(-1)!, objects)).toMatchObject({ x: expect.any(Number), y: expect.any(Number) });
+  });
+  it('reuses one connector index and center cache across a document pass', () => {
+    const objects: CanvasObject[] = [stroke('origin', 0)];
+    for (let index = 0; index < 900; index += 1) objects.push({ id: `chain-${index}`, kind: 'connector', createdAt: 'now', fromId: objects.at(-1)!.id, toId: 'origin', label: '' });
+    const resolve = createObjectCenterResolver(objects), first = resolve(objects.at(-1)!);
+    expect(resolve(objects.at(-1)!)).toBe(first);
+    expect(objects.map(resolve)).toHaveLength(901);
+  });
+  it('resolves a deepest-first 20,000-connector chain without overflowing the stack', () => {
+    const origin = stroke('deep-origin', 0), objects: CanvasObject[] = [origin];
+    for (let index = 0; index < 20_000; index += 1) objects.unshift({ id: `deep-${index}`, kind: 'connector', createdAt: 'now', fromId: objects[0].id, toId: origin.id, label: '' });
+    expect(createObjectCenterResolver(objects)(objects[0])).toMatchObject({ x: expect.any(Number), y: expect.any(Number) });
+    expect(objectBounds([objects[0]], objects)).toMatchObject({ x: expect.any(Number), y: expect.any(Number) });
+  });
+  it('resizes a 20,000-level nested group without overflowing the stack', () => {
+    const leaf = stroke('nested-leaf'), objects: CanvasObject[] = [leaf];
+    for (let index = 0; index < 20_000; index += 1) objects.unshift({ id: `nested-${index}`, kind: 'group', createdAt: 'now', x: 0, y: 0, width: 100, height: 80, label: '', childIds: [objects[0].id] });
+    expect(resizeGroup({ ...createDocument(), objects }, objects[0].id, 200, 160).objects).toHaveLength(objects.length);
+  });
+  it('computes bounds for strokes larger than the function argument limit', () => {
+    const large: Stroke = { id: 'large', kind: 'stroke', createdAt: 'now', color: '#fff', width: 3, points: Array.from({ length: 200_000 }, (_, index) => ({ x: index, y: -index })) };
+    expect(objectBounds([large])).toEqual({ x: 0, y: -199_999, width: 199_999, height: 199_999 });
   });
   it('undoes and redoes committed states', () => {
     const first = createDocument(), second = withObjects(first, [stroke('a')]);
@@ -81,6 +145,48 @@ describe('mapping canvas contract', () => {
     const result = removeObjects(grouped, ['a']);
     expect(result.objects.some(({ kind }) => kind === 'connector')).toBe(false);
     expect(result.objects.find(({ kind }) => kind === 'group')).toMatchObject({ childIds: ['b'] });
+  });
+  it('selects and erases every member of a valid portable compound while leaving provenance alone', () => {
+    const first = { ...stroke('compound-a'), sourceIds: ['compound-a', 'compound-b'] };
+    const second = { ...stroke('compound-b', 100), sourceIds: ['compound-a', 'compound-b'] };
+    const provenance = { ...stroke('converted'), sourceIds: ['absent-source'] };
+    const document = withObjects(createDocument(), [first, second, provenance]);
+    expect([...expandCompoundIds(document, [second.id])]).toEqual([second.id, first.id]);
+    expect(removeObjects(document, [first.id]).objects).toEqual([provenance]);
+    expect(removeObjects(document, [provenance.id]).objects).toEqual([first, second]);
+  });
+  it('expands a lasso hit on one compound member to the complete semantic arrow', () => {
+    const shaft = { ...stroke('lasso-shaft', 10), sourceIds: ['lasso-shaft', 'lasso-head'] };
+    const head = { ...stroke('lasso-head', 500), sourceIds: ['lasso-shaft', 'lasso-head'] };
+    const document = withObjects(createDocument(), [shaft, head]);
+    expect(selectObjectIdsInBounds(document, { left: 490, right: 560, top: 0, bottom: 100 })).toEqual(['lasso-head', 'lasso-shaft']);
+  });
+  it('removes transitively dependent connector chains', () => {
+    const source = withObjects(createDocument(), [
+      stroke('a'),
+      stroke('b', 100),
+      { id: 'first-link', kind: 'connector', createdAt: 'now', fromId: 'a', toId: 'b', label: '' },
+      { id: 'second-link', kind: 'connector', createdAt: 'now', fromId: 'first-link', toId: 'b', label: '' }
+    ]);
+    const result = removeObjects(source, ['a']);
+    expect(result.objects.map(({ id }) => id)).toEqual(['b']);
+    expect(parse(serialize(result))).toEqual(result);
+  });
+  it('removes a large connector dependency chain in one indexed traversal', () => {
+    const objects: CanvasObject[] = [stroke('root')];
+    for (let index = 0; index < 20_000; index += 1) objects.push({ id: `dependent-${index}`, kind: 'connector', createdAt: 'now', fromId: objects.at(-1)!.id, toId: 'root', label: '' });
+    expect(removeObjects(withObjects(createDocument(), objects), ['root']).objects).toEqual([]);
+  });
+  it('resizes a group and its contained elements as one unit', () => {
+    const source = withObjects(createDocument(), [
+      { id: 'note', kind: 'note', createdAt: 'now', x: 20, y: 30, width: 40, height: 20, text: 'Together' },
+      { id: 'shape', kind: 'rectangle', createdAt: 'now', from: { x: 60, y: 50 }, to: { x: 90, y: 80 }, color: '#fff' },
+      { id: 'group', kind: 'group', createdAt: 'now', x: 10, y: 20, width: 100, height: 80, label: 'Working group', childIds: ['note', 'shape'] }
+    ]);
+    const resized = resizeGroup(source, 'group', 200, 160);
+    expect(resized.objects.find(({ id }) => id === 'group')).toMatchObject({ width: 200, height: 160 });
+    expect(resized.objects.find(({ id }) => id === 'note')).toMatchObject({ x: 30, y: 40, width: 80, height: 40 });
+    expect(resized.objects.find(({ id }) => id === 'shape')).toMatchObject({ from: { x: 110, y: 80 }, to: { x: 170, y: 140 } });
   });
   it('round trips arbitrarily nested operator conversion provenance', () => {
     let source = withObjects(createDocument(), [stroke('nested')]);

@@ -130,8 +130,16 @@ export interface ValidationSubmitRequest {
 			category?: string;
 			passed?: boolean;
 			issues?: Array<{
+				id?: string;
 				severity?: string;
 				message?: string;
+				howToFix?: string;
+				location?: string;
+				details?: {
+					pages?: unknown;
+					duplicates?: unknown;
+					[key: string]: unknown;
+				};
 			}>;
 		}>;
 		scope?: Partial<ValidationRunScope>;

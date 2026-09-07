@@ -21,7 +21,7 @@ Ground requires **verification before its claim tools record a finding**:
 - **ground_find_drift** — Find design system violations (hardcoded colors, spacing)
 - **ground_adoption_ratio** — Calculate design token adoption metrics
 
-The 0.3.6 advisory release gate uses a checked-in calibration ledger, native and published-package receipts, and a 21-tool MCP smoke test. The calibration is not a population-wide accuracy estimate.
+The 0.4.0 advisory release gate uses a checked-in calibration ledger, native and published-package receipts, a 21-tool MCP smoke test, and adversarial trust-contract checks. The calibration is not a population-wide accuracy estimate.
 
 ### Install Config
 

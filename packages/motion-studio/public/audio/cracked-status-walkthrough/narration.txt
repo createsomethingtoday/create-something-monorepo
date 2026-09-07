@@ -1,0 +1,11 @@
+Here's how it works. They send us a ticket in Cracked Live. We handle it in Half Dozen. The sync keeps them updated.
+
+When their ticket comes in, the sync looks for ours. If it finds one, it connects them. If not, it creates one. We assign the ticket and get to work.
+
+As we update our ticket, they see the matching status. Not Started becomes Submitted. Responded, Client Action, Assigned, and Needs Review all become Under Review. In Progress, Roadblock, and Complete stay the same.
+
+Two things work differently. Backburner and Archive do not change their status. Client Action shows as Under Review, not Action Required.
+
+If something looks wrong, we compare our ticket with theirs, fix the mismatch, and check again.
+
+That's it. They send it. We work it. They see the progress.

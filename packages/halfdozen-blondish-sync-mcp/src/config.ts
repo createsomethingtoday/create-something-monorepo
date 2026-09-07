@@ -6,8 +6,8 @@ import {
   DEFAULT_OWNER_LABEL,
   DEFAULT_SOURCE_LABEL,
   DEFAULT_SYNC_CLIENT_LABEL,
-  HD_TO_OS_STATUS,
 } from './constants.js';
+import { parseStatusWritebackMap } from './status-policy.js';
 import type { Env } from './types.js';
 
 export type RuntimeConfig = {
@@ -19,7 +19,7 @@ export type RuntimeConfig = {
   sourceDataSourceId?: string;
   sourceDataSourceTitle: string;
   sourceStatusProperty?: string;
-  sourceStatusMap: Record<string, string>;
+  sourceStatusMap: Record<string, string | null>;
   targetDataSourceId?: string;
   targetDatabaseId?: string;
   targetDataSourceTitle: string;
@@ -60,29 +60,8 @@ export function resolveRuntimeConfig(env: Env): RuntimeConfig {
   };
 }
 
-export function parseStatusMap(value?: string): Record<string, string> {
-  if (!value?.trim()) return {};
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(value);
-  } catch {
-    throw new Error('CLIENT_OS_STATUS_MAP must be a JSON object of Half Dozen status names to client status names.');
-  }
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-    throw new Error('CLIENT_OS_STATUS_MAP must be a JSON object of Half Dozen status names to client status names.');
-  }
-
-  const statusMap: Record<string, string> = {};
-  for (const [hdStatus, sourceStatus] of Object.entries(parsed)) {
-    if (typeof sourceStatus !== 'string' || !hdStatus.trim() || !sourceStatus.trim()) {
-      throw new Error('CLIENT_OS_STATUS_MAP entries must use non-empty string keys and values.');
-    }
-    if (!HD_TO_OS_STATUS[hdStatus.trim()]) {
-      throw new Error(`CLIENT_OS_STATUS_MAP cannot override unmapped Half Dozen status "${hdStatus.trim()}".`);
-    }
-    statusMap[hdStatus.trim()] = sourceStatus.trim();
-  }
-  return statusMap;
+export function parseStatusMap(value?: string): Record<string, string | null> {
+  return parseStatusWritebackMap(value);
 }
 
 export function toolName(env: Env, suffix: string): string {

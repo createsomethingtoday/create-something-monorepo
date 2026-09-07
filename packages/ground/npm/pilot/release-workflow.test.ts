@@ -1,18 +1,8 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { dirname, join, parse, resolve } from 'node:path';
-import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import test from 'node:test';
-
-function findWorkspaceRoot(start: string): string {
-  let current = resolve(start);
-  const root = parse(current).root;
-  while (current !== root) {
-    if (existsSync(join(current, 'pnpm-workspace.yaml'))) return current;
-    current = dirname(current);
-  }
-  throw new Error(`Unable to find workspace root from ${start}`);
-}
+import { findWorkspaceRoot } from './workspace-root.ts';
 
 const workspace = findWorkspaceRoot(process.cwd());
 

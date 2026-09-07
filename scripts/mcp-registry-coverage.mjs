@@ -49,6 +49,14 @@ const REQUIRED_FLEET_NOTION_DEPLOYMENTS = {
 };
 
 const PACKAGE_COVERAGE = {
+  'packages/abundance-healthcare-mcp': {
+    registry: ['abundance-healthcare-mcp'],
+    fleetDeployments: ['abundance-healthcare-mcp']
+  },
+  'packages/abundance-healthcare-mcp/worker': {
+    registry: ['abundance-healthcare-mcp'],
+    fleetDeployments: ['abundance-healthcare-mcp']
+  },
   'packages/abundance-jobs-mcp': {
     registry: ['abundance-jobs-mcp'],
     fleetDeployments: ['abundance-jobs-mcp']

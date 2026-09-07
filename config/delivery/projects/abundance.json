@@ -20,6 +20,9 @@
     "packages/agency/src/lib/abundance",
     "packages/agency/src/routes/api/abundance",
     "packages/agency/static/openapi-abundance.yaml",
+    "packages/agency/migrations/0044_abundance_healthcare_provider_coverage.sql",
+    "packages/agency/scripts/report-npg-healthcare-coverage.ts",
+    "docs/deliveries/abundance/2026-09-01-npg-healthcare-data-health.md",
     "config/dify-agents/abundance-hub.json",
     "config/dify/inventory.json",
     "evals/langfuse/dify/abundance-hub.eval.ts",
@@ -98,11 +101,13 @@
     ],
     "linearIssueIds": [
       "CRE-182",
-      "CRE-183"
+      "CRE-183",
+      "CRE-1913"
     ],
     "linearUrls": [
       "https://linear.app/createsomething/issue/CRE-182/ship-monorepo-generated-client-delivery-pages",
-      "https://linear.app/createsomething/issue/CRE-183/correct-abundance-delivery-client-context-to-npg"
+      "https://linear.app/createsomething/issue/CRE-183/correct-abundance-delivery-client-context-to-npg",
+      "https://linear.app/createsomething/issue/CRE-1913/abundance-build-provider-coverage-and-data-health-diagnostics"
     ]
   },
   "notionContext": {
@@ -136,6 +141,9 @@
       "summary": "The Abundance database model captures seekers/open demand, talent/nurse-side supply, matches, and intake history. The schema is intentionally small so the workflow can be explained and audited. The received Paylocity export is treated as private source data for the next staff/operator integration pass.",
       "evidence": [
         "packages/agency/migrations/0001_abundance_network.sql",
+        "packages/agency/migrations/0044_abundance_healthcare_provider_coverage.sql",
+        "packages/agency/src/lib/abundance/healthcare-providers.ts",
+        "packages/agency/src/lib/abundance/npg-healthcare-personas.ts",
         "packages/agency/src/app.d.ts",
         "packages/agency/docs/ABUNDANCE_NETWORK_SYSTEM_DOCUMENTATION.md"
       ]
@@ -150,6 +158,7 @@
       "evidence": [
         "packages/agency/static/openapi-abundance.yaml",
         "packages/agency/src/routes/api/abundance",
+        "packages/agency/src/lib/server/abundance-healthcare-providers.ts",
         "config/mcp-hub/registry.json",
         "config/mcp-hub/fleet.json"
       ]
@@ -166,6 +175,7 @@
         "config/dify-agents/abundance-hub.json",
         "config/dify/inventory.json",
         "packages/agency/src/lib/abundance/matching.ts",
+        "docs/deliveries/abundance/2026-09-01-npg-healthcare-data-health.md",
         "packages/agency/src/routes/api/abundance/match/+server.ts",
         "packages/agency/src/routes/api/abundance/whatsapp/+server.ts",
         "packages/ltd/src/routes/presentations/abundance-system/+page.svelte"

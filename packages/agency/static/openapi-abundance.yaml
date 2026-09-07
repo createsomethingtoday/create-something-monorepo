@@ -405,8 +405,121 @@ paths:
         '200':
           description: Match updated
 
+  /healthcare-providers:
+    get:
+      operationId: getHealthcareProviderCoverage
+      summary: Read stored nursing-persona coverage health
+      description: |
+        Evaluates the latest stored NPPES cohort for market coverage and applies
+        the fail-closed recruiting-readiness evidence policy. Reading a report
+        does not itself grant outreach authority.
+      parameters:
+        - { name: persona_id, in: query, required: true, schema: { type: string } }
+        - { name: label, in: query, required: true, schema: { type: string } }
+        - { name: taxonomy_description, in: query, required: true, schema: { type: string } }
+        - { name: state, in: query, schema: { type: string, minLength: 2, maxLength: 2 } }
+        - { name: city, in: query, schema: { type: string } }
+        - { name: postal_code, in: query, schema: { type: string } }
+        - { name: include_records, in: query, schema: { type: boolean, default: false } }
+      responses:
+        '200':
+          description: Coverage-health report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthcareCoverageResponse'
+        '400':
+          description: Missing persona or geography
+    post:
+      operationId: refreshHealthcareProviderCoverage
+      summary: Refresh a bounded nursing-persona cohort from NPPES
+      description: |
+        Fetches current public NPPES enumeration records, normalizes and stores
+        provenance, then returns aggregate health. An NPPES refresh creates
+        coverage candidates; it does not create recruiting verification evidence.
+        Individual records are omitted unless include_records is explicitly true.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HealthcareCoverageRefreshInput'
+      responses:
+        '201':
+          description: Cohort refreshed and evaluated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthcareCoverageResponse'
+        '400':
+          description: Missing persona, invalid geography, or invalid bound
+
 components:
   schemas:
+    HealthcareCoverageRefreshInput:
+      type: object
+      required: [id, label, taxonomy_description]
+      anyOf:
+        - required: [state]
+        - required: [city]
+        - required: [postal_code]
+      properties:
+        id: { type: string }
+        label: { type: string }
+        taxonomy_description: { type: string, example: "Nurse Practitioner, Family" }
+        state: { type: string, minLength: 2, maxLength: 2, example: MO }
+        city: { type: string, example: Springfield }
+        postal_code: { type: string }
+        max_records: { type: integer, minimum: 1, maximum: 1200, default: 1200 }
+        include_records: { type: boolean, default: false }
+
+    HealthcareCoverageResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success: { type: boolean }
+        data:
+          type: object
+          required: [report]
+          properties:
+            report:
+              type: object
+              description: Aggregate cohort health with separate market-coverage and recruiting-readiness gates.
+              required: [market_coverage_status, direct_outreach_status, recruiting_pipeline]
+              properties:
+                market_coverage_status:
+                  type: string
+                  enum: [ready, degraded, blocked]
+                direct_outreach_status:
+                  type: string
+                  enum: [ready, blocked]
+                recruiting_pipeline:
+                  type: object
+                  required: [coverage_candidate_count, recruiter_ready_count, required_evidence_kinds]
+                  properties:
+                    coverage_candidate_count: { type: integer, minimum: 0 }
+                    recruiter_ready_count: { type: integer, minimum: 0 }
+                    required_evidence_kinds:
+                      type: array
+                      items:
+                        type: string
+                        enum:
+                          - license_or_privilege
+                          - discipline
+                          - exclusion
+                          - practice_or_employment
+                          - contact_route
+                          - outreach_authority
+                          - recruiter_approval
+              additionalProperties: true
+            ingestion:
+              type: object
+              additionalProperties: true
+            providers:
+              type: array
+              description: Present only when include_records=true.
+              items: { type: object, additionalProperties: true }
+
     SeekerInput:
       type: object
       required:

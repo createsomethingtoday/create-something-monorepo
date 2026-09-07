@@ -22,6 +22,8 @@ Cloudflare Pages-ready surface under `.cloudflare/delivery-site`.
 
 ## Current Deliveries
 
+- `abundance/README.md` - The NP Group / NPG Abundance client-delivery wiki index.
+- `abundance/2026-09-01-npg-healthcare-data-health.md` - NPG Family NP coverage and data-health assessment.
 - `abundance/2026-05-06-project-update.md` - The NP Group / NPG Abundance nurse staffing DB/MCP/agent update.
 - `progress/2026-05-06-agent-progress-report.md` - Operator report for the delivery-update agent.
 - `webflow-marketplace/README.md` - Webflow Template Marketplace PM impact report collection.

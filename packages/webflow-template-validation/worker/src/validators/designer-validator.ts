@@ -537,7 +537,12 @@ function validateRequiredPages(pages: DesignerData['pages']): CategoryResult {
 function validatePageSEO(pages: DesignerData['pages']): CategoryResult {
   const issues: ValidationIssue[] = [];
   const eligiblePages = pages.filter(
-    p => !p.isDraft && (p.type === 'Page' || p.isCmsTemplate)
+    p => !p.isDraft &&
+      (p.type === 'Page' || p.isCmsTemplate) &&
+      // Webflow exposes the Ecommerce SKU collection template in Designer data,
+      // but /sku is a reserved system root rather than a public item page.
+      // Product variants resolve through their product page, and /sku returns 404.
+      !(p.isCmsTemplate && normalizePagePath(p) === '/sku')
   );
   // The extension sets `seo` to null when Designer API collection failed for a
   // page. Only judge pages whose SEO data was actually collected — a collection

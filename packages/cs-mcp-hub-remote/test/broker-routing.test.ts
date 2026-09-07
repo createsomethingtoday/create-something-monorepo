@@ -4,6 +4,7 @@ import test from 'node:test';
 import {
   buildAuthorizedVisibleProxyRoutes,
   buildVisibleProxyRoutes,
+  isDirectProxyToolAllowed,
   resolveDiscoveryPack,
   resolveIntentRouteCandidate,
   searchProxyTools,
@@ -223,6 +224,30 @@ test('buildVisibleProxyRoutes in full mode keeps all session-allowed routes', ()
     visible.toolDefinitions.map((tool) => tool.name),
     ['server_a__alpha', 'server_a__beta'],
   );
+});
+
+test('buildVisibleProxyRoutes excludes pack-denied tools from discovery and exact execution lookup', () => {
+  const runtime = createRuntime();
+  const prefs = {
+    mode: 'compact' as const,
+    activeServers: ['server_a'],
+    maxProxyTools: null,
+    excludedProxyTools: ['server_a__beta'],
+  };
+  const accountContext = {
+    accountId: 'acct_1',
+    tenantId: null,
+    userId: null,
+    sessionId: 'session_1',
+    authMode: 'session',
+    allowedToolPrefixes: ['server_a__'],
+    identitySource: 'session' as const,
+  };
+
+  const visible = buildVisibleProxyRoutes(runtime as any, prefs, accountContext);
+  assert.deepEqual(visible.toolDefinitions.map((tool) => tool.name), ['server_a__alpha']);
+  assert.equal(visible.routes.has('server_a__beta'), false);
+  assert.equal(visible.definitionByName.has('server_a__beta'), false);
 });
 
 test('buildAuthorizedVisibleProxyRoutes filters mutable discovery for read-only sessions', async () => {
@@ -582,6 +607,41 @@ test('resolveDiscoveryPack returns Danny operator pack with the expected active 
     'composio-toolkit-notion',
     'halfdozen-dm-mcp',
   ]);
+});
+
+test('NPG review pack excludes paid healthcare enrichment while retaining healthcare coverage', () => {
+  const runtime = createRuntime();
+  runtime.connected = [
+    { name: 'composio-toolkit-jotform' },
+    { name: 'composio-toolkit-mailchimp' },
+    { name: 'composio-toolkit-whatsapp' },
+    { name: 'abundance-healthcare-mcp' },
+  ] as any;
+
+  const pack = resolveDiscoveryPack('abundance-thenpgroup-review', runtime as any);
+
+  assert.ok(pack);
+  assert.ok(pack.preferences.activeServers.includes('abundance-healthcare-mcp'));
+  assert.deepEqual(pack.preferences.excludedProxyTools, [
+    'abundance-healthcare-mcp__enrich_provider_professional_contact',
+  ]);
+
+  const alternatePack = resolveDiscoveryPack('shared-auth-core', runtime as any, {
+    HUB_DISCOVERY_SHARED_PACK: 'abundance-thenpgroup-review',
+  } as any);
+  assert.ok(alternatePack);
+  assert.deepEqual(alternatePack.preferences.excludedProxyTools, [
+    'abundance-healthcare-mcp__enrich_provider_professional_contact',
+  ]);
+
+  assert.equal(isDirectProxyToolAllowed({
+    HUB_ALLOW_DIRECT_PROXY_TOOLS: 'true',
+    HUB_DISCOVERY_SHARED_PACK: 'abundance-thenpgroup-review',
+  } as any, 'abundance-healthcare-mcp__enrich_provider_professional_contact'), false);
+  assert.equal(isDirectProxyToolAllowed({
+    HUB_ALLOW_DIRECT_PROXY_TOOLS: 'true',
+    HUB_DISCOVERY_SHARED_PACK: 'abundance-thenpgroup-review',
+  } as any, 'abundance-healthcare-mcp__get_provider_contact_information'), true);
 });
 
 test('resolveDiscoveryPack returns C3Denver pack with the expected active services', () => {

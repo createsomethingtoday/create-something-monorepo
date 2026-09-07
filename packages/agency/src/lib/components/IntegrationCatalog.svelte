@@ -77,7 +77,7 @@
 
   <div class="integration-catalog__status" aria-live="polite">
     <span>{filteredIntegrations.length.toLocaleString()} results</span>
-    <span>Connector available ≠ connected or write-authorized</span>
+    <span>Available to connect. Account access still needs approval.</span>
   </div>
 
   {#if visibleIntegrations.length > 0}
@@ -106,14 +106,13 @@
   {:else}
     <div class="integration-catalog__empty">
       <h3>No matching connector is listed.</h3>
-      <p>The workflow may still have a custom API or MCP path. Bring the system to the map.</p>
+      <p>A custom connection may be possible. Tell us the tool and what you need it to do.</p>
       <a href="/map?source=integration-catalog&integration=custom">Map a custom path →</a>
     </div>
   {/if}
 
   <p class="integration-catalog__disclaimer">
-    Directory entries indicate a brokered connector path, not a live customer connection,
-    delivered integration, certification, partnership, or endorsement.
+    A listing means a connection is available. It does not mean an account is connected, an integration has been delivered, or a vendor has certified or endorsed us.
   </p>
 </section>
 
