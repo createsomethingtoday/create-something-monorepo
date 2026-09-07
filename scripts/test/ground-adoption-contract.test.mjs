@@ -63,7 +63,7 @@ function evidence() {
       symbols: ['createScopedServer', 'jsonContent'],
       export_kinds: { createScopedServer: 'value', jsonContent: 'value' } }] },
     publicIndex: "export { createScopedServer, jsonContent } from './server.js';",
-    packageExports: { '.': { default: './dist/index.js' } }
+    packageExports: { '.': { types: './dist/index.d.ts', default: './dist/index.js' } }
   };
 }
 
@@ -71,6 +71,14 @@ test('complete reviewed export evidence and clean source produce a ready contrac
   assert.equal(verifyAdjudicatedExports(evidence()), 2);
   assert.deepEqual(verifyCheckout({ sourceSha, status: '' }), { source_sha: sourceSha, dirty: false });
 });
+
+for (const types of [undefined, './dist/missing.d.ts']) {
+  test('missing or redirected type entry points require review: ' + types, () => {
+    const input = evidence();
+    input.packageExports['.'].types = types;
+    assert.throws(() => verifyAdjudicatedExports(input), /type declaration entry point/);
+  });
+}
 
 for (const publicIndex of [
   "export type { createScopedServer, jsonContent } from './server.js';",

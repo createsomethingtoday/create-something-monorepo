@@ -22,6 +22,7 @@ export function verifyScanCoverage(actual, expected) {
 
 export function verifyAdjudicatedExports({ modules, adjudication, publicIndex, packageExports }) {
   assert.equal(packageExports['.'].default, './dist/index.js');
+  assert.equal(packageExports['.'].types, './dist/index.d.ts', 'Public type declaration entry point changed.');
   verifyModuleInventory(modules.map(item => item.module), adjudication.inventory);
   for (const module of modules) {
     const expected = adjudication.inventory.find(item => item.module === module.module);
