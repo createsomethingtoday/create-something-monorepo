@@ -250,6 +250,7 @@
     "ground:duplicates": "tsx scripts/ground-duplicates.ts",
     "ground:duplicates:json": "tsx scripts/ground-duplicates.ts --json",
     "ground:review": "node scripts/ground-review.mjs",
+    "ground:adoption": "node scripts/ground-adoption-verify.mjs",
     "ground:review:json": "node scripts/ground-review.mjs --format json",
     "ground:native:build": "cargo build --release --manifest-path packages/ground/Cargo.toml --bin ground --bin ground-mcp",
     "ground:doctor": "packages/ground/target/release/ground doctor .",

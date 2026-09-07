@@ -1,0 +1,187 @@
+{
+  "schema_version": "ground-adoption-adjudication.v1",
+  "issue": "CRE-1944",
+  "baseline": "17da91e7684f5ee904cc3d32119d704f3d4b4779",
+  "duplicates": {
+    "consolidated": {
+      "function": "findWorkspaceRoot",
+      "pair_count": 21,
+      "files": [
+        "benchmark.ts",
+        "ground-benchmark.test.ts",
+        "ground-cli.test.ts",
+        "ground-native-client.test.ts",
+        "ground-provenance.test.ts",
+        "package-artifact.test.ts",
+        "release-workflow.test.ts"
+      ],
+      "directory": "packages/ground/npm/pilot",
+      "replacement": "packages/ground/npm/pilot/workspace-root.ts",
+      "reason": "Shared repository discovery is test setup, not an independent detector fixture."
+    },
+    "retained": {
+      "function": "normalizeCustomerId",
+      "pair_count": 1,
+      "files": [
+        "packages/ground/npm/pilot/fixtures/duplicate-analysis/customer-a.ts",
+        "packages/ground/npm/pilot/fixtures/duplicate-analysis/customer-b.ts"
+      ],
+      "reason": "Positive duplicate detector fixture; retain the finding and review-only action."
+    }
+  },
+  "orphans": [
+    {
+      "path": "packages/mcp-core/eslint.evidence.config.mjs",
+      "disposition": "loaded_tool_entry_point",
+      "evidence": [
+        "packages/mcp-core/package.json scripts.lint",
+        "scripts/evidence-lint-pilot.mjs --config",
+        "scripts/evidence-lint-inventory.mjs",
+        ".github/workflows/evidence-lint-pilot.yml"
+      ],
+      "policy": [
+        ".ground.yml",
+        "packages/mcp-core/.ground.yml"
+      ]
+    }
+  ],
+  "dead_exports": {
+    "scope": "packages/mcp-core",
+    "disposition": "retain_public_api",
+    "reason": "No package-local consumer does not establish unused public API. Every listed symbol is explicitly re-exported through src/index.ts and the package manifest exposes that entry point. Preserve external compatibility. This is not a claim that every symbol has an external consumer.",
+    "evidence": [
+      "packages/mcp-core/src/index.ts",
+      "packages/mcp-core/package.json exports",
+      "packages/notion-sync-mcp/src/server.ts",
+      "packages/notion-sync-mcp/src/tools/handlers.ts",
+      "packages/zendesk-mcp/src/server.ts",
+      "packages/halfdozen-notion-mcp/worker/index.ts"
+    ],
+    "modules": [
+      {
+        "module": "packages/mcp-core/src/feedback.ts",
+        "symbols": [
+          "FEEDBACK_TOOL_SCHEMA",
+          "createFeedbackToolHandler"
+        ]
+      },
+      {
+        "module": "packages/mcp-core/src/insight.ts",
+        "symbols": [
+          "scopedInsight",
+          "withInsight"
+        ]
+      },
+      {
+        "module": "packages/mcp-core/src/insight/console.ts",
+        "symbols": [
+          "ConsoleInsight"
+        ]
+      },
+      {
+        "module": "packages/mcp-core/src/insight/noop.ts",
+        "symbols": [
+          "NoopInsight"
+        ]
+      },
+      {
+        "module": "packages/mcp-core/src/insight/worker.ts",
+        "symbols": [
+          "InsightCollector",
+          "InsightDataPoint",
+          "WorkerInsight"
+        ]
+      },
+      {
+        "module": "packages/mcp-core/src/oauth-discovery.ts",
+        "symbols": [
+          "OAuthDiscoveryOptions",
+          "isOAuthAuthorizationServerPath",
+          "isOAuthProtectedResourcePath",
+          "buildOAuthAuthorizationServerMetadata",
+          "buildOAuthProtectedResourceMetadata"
+        ]
+      },
+      {
+        "module": "packages/mcp-core/src/providers/api-key.ts",
+        "symbols": [
+          "APIKeyConfig",
+          "APIKeyProvider"
+        ]
+      },
+      {
+        "module": "packages/mcp-core/src/providers/oauth.ts",
+        "symbols": [
+          "OAuthConfig",
+          "OAuthProvider"
+        ]
+      },
+      {
+        "module": "packages/mcp-core/src/providers/stdio.ts",
+        "symbols": [
+          "StdioConfig",
+          "StdioSingleUser"
+        ]
+      },
+      {
+        "module": "packages/mcp-core/src/server.ts",
+        "symbols": [
+          "ToolResult",
+          "ResourceResult",
+          "PromptResult",
+          "ScopedToolHandler",
+          "ScopedResourceHandler",
+          "ScopedPromptHandler",
+          "ScopedServerConfig",
+          "ScopedMcpServer",
+          "createScopedServer",
+          "jsonContent",
+          "errorContent"
+        ]
+      },
+      {
+        "module": "packages/mcp-core/src/stores/d1-feedback.ts",
+        "symbols": [
+          "D1FeedbackStore"
+        ]
+      },
+      {
+        "module": "packages/mcp-core/src/stores/d1.ts",
+        "symbols": [
+          "D1TokenStore"
+        ]
+      },
+      {
+        "module": "packages/mcp-core/src/stores/file.ts",
+        "symbols": [
+          "FileTokenStore"
+        ]
+      },
+      {
+        "module": "packages/mcp-core/src/stores/kv.ts",
+        "symbols": [
+          "KVNamespace",
+          "KVTokenStore"
+        ]
+      },
+      {
+        "module": "packages/mcp-core/src/telemetry.ts",
+        "symbols": [
+          "RunCountRow",
+          "ToolInvocationRow",
+          "UsageResult",
+          "HealthResult",
+          "ActivityResult",
+          "LangfuseTelemetryOptions",
+          "recordInvocation",
+          "getUsage",
+          "getHealth",
+          "getActivity",
+          "cleanupOldInvocations",
+          "enableTelemetry",
+          "TELEMETRY_MIGRATION"
+        ]
+      }
+    ]
+  }
+}
