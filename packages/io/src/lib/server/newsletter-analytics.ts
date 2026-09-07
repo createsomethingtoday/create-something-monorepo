@@ -29,7 +29,7 @@ export const NEWSLETTER_ENGAGEMENT_SQL = `WITH landings AS (
     AND COALESCE(json_extract(e.metadata, '$.trafficClass'), 'unknown') = l.traffic_class
   GROUP BY l.campaign, l.traffic_class, l.session_id
 )
-SELECT campaign, traffic_class, COUNT(*) AS landing_sessions,
+SELECT REPLACE(campaign, '_', '-') AS campaign, traffic_class, COUNT(*) AS landing_sessions,
   SUM(resource_click) AS resource_click_sessions, SUM(copied) AS copy_sessions
 FROM sessions GROUP BY campaign, traffic_class ORDER BY campaign, traffic_class`;
 
