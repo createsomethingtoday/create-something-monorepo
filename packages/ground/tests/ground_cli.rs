@@ -85,3 +85,20 @@ fn doctor_fails_when_repository_policy_is_invalid() {
     assert!(!output.status.success());
     assert!(String::from_utf8_lossy(&output.stderr).contains("Parse error"));
 }
+
+#[test]
+fn bounded_worker_option_reaches_duplicate_analysis() {
+    let dir = tempdir().unwrap();
+    fs::write(dir.path().join("a.ts"), "export function shared(x: number) {\n const value = x + 1;\n return value;\n}\n").unwrap();
+    let run = |workers: &str| Command::new(env!("CARGO_BIN_EXE_ground"))
+        .args(["--db"]).arg(dir.path().join("registry.db"))
+        .arg("analyze").arg(dir.path())
+        .args(["--checks", "duplicates", "--workers", workers]).output().unwrap();
+    for workers in ["0", "1", "4"] {
+        let output = run(workers);
+        assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+        let value: Value = serde_json::from_slice(&output.stdout).unwrap();
+        assert_eq!(value["coverage"]["duplicates"]["status"], "PASS");
+    }
+    assert!(!run("5").status.success());
+}

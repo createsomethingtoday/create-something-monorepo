@@ -99,3 +99,5 @@ against the merged repository state after promotion.
 To roll back the adoption changes, revert the CRE-1944 merge through the normal
 review workflow. Keep npm 0.4.0 pinned unless a separate native release regression
 requires a release rollback. The positive fixture and all public APIs remain intact.
+
+For bounded parsing workers, measured tradeoffs, and execution verification, see [Ground performance](./GROUND_PERFORMANCE.md).

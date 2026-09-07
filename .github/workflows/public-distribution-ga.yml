@@ -52,3 +52,4 @@ jobs:
           cargo test --manifest-path packages/ground/Cargo.toml
           cargo build --manifest-path packages/ground/Cargo.toml --bins
           node scripts/ground-seeded-trial.mjs --native-dir packages/ground/target/debug --output /tmp/ground-seeded-trial.json
+          node scripts/ground-execution-verify.mjs --native-dir packages/ground/target/debug --output /tmp/ground-execution.json
