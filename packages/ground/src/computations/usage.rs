@@ -428,6 +428,17 @@ pub fn find_dead_exports(module_path: &Path, search_scope: &Path) -> Result<Dead
         })?;
     
     let total_exports = ast_exports.len() as u32;
+    // Validate the complete scope before issuing absence evidence. The graph's
+    // resolver binds imports to package/relative targets instead of names alone.
+    fs::read_dir(search_scope)?;
+    let graph = super::graph::SymbolGraph::build(search_scope, None)
+        .map_err(|message| ComputationError::ParseError { file: search_scope.to_path_buf(), message })?;
+    if graph.parse_errors > 0 || graph.imports.len() != graph.files.len() {
+        return Err(ComputationError::ParseError {
+            file: search_scope.to_path_buf(),
+            message: "Incomplete source parsing in search scope; cannot establish unused exports".to_string(),
+        });
+    }
     
     // Convert to DeadExport format for checking
     let exports: Vec<DeadExport> = ast_exports.iter()
@@ -465,7 +476,11 @@ pub fn find_dead_exports(module_path: &Path, search_scope: &Path) -> Result<Dead
     
     for export in exports {
         // First: check for direct imports of this symbol
-        let is_directly_imported = check_import_in_dir_ast(&export.name, module_path, search_scope)?;
+        let is_directly_imported = graph.imports.iter().any(|(importer, imports)| {
+            importer != module_path && imports.iter().any(|import| {
+                import.name == export.name && graph.resolves_to(&import.from_module, module_path, importer)
+            })
+        });
         
         if is_directly_imported {
             continue; // Symbol is used directly
@@ -475,13 +490,13 @@ pub fn find_dead_exports(module_path: &Path, search_scope: &Path) -> Result<Dead
         if reexported_symbols.contains(&export.name) {
             // Symbol is re-exported - check if the barrel file's consumers import this symbol
             if let Some(ref barrel) = barrel_path {
-                let barrel_dir = barrel.parent()
-                    .and_then(|p| p.file_name())
-                    .and_then(|n| n.to_str())
-                    .unwrap_or("");
-                
-                // Check if anyone imports this symbol from the barrel's directory
-                if check_symbol_imported_from_barrel(&export.name, barrel_dir, barrel, search_scope)? {
+                // Require actual imports from this barrel, not another package
+                // with the same directory or exported symbol name.
+                if graph.imports.iter().any(|(importer, imports)| {
+                    importer != barrel && imports.iter().any(|import| {
+                        import.name == export.name && graph.resolves_to(&import.from_module, barrel, importer)
+                    })
+                }) {
                     continue; // Symbol is used via re-export
                 }
             }
@@ -498,124 +513,6 @@ pub fn find_dead_exports(module_path: &Path, search_scope: &Path) -> Result<Dead
         search_scope: search_scope.to_path_buf(),
         computed_at: Utc::now(),
     })
-}
-
-/// Check if a symbol is imported from a barrel file (e.g., import { X } from './core')
-fn check_symbol_imported_from_barrel(symbol: &str, barrel_dir: &str, barrel_path: &Path, search_scope: &Path) -> Result<bool, ComputationError> {
-    check_barrel_imports_in_dir(symbol, barrel_dir, barrel_path, search_scope)
-}
-
-fn check_barrel_imports_in_dir(symbol: &str, barrel_dir: &str, barrel_path: &Path, dir: &Path) -> Result<bool, ComputationError> {
-    use super::imports::extract_imports;
-    
-    let entries = match fs::read_dir(dir) {
-        Ok(e) => e,
-        Err(_) => return Ok(false),
-    };
-    
-    for entry in entries {
-        let entry = match entry {
-            Ok(e) => e,
-            Err(_) => continue,
-        };
-        let path = entry.path();
-        
-        if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-            if name.starts_with('.') || 
-               matches!(name, "node_modules" | "target" | "dist" | "build" | ".git") {
-                continue;
-            }
-        }
-        
-        if !path.exists() {
-            continue;
-        }
-        
-        if path.is_dir() {
-            if check_barrel_imports_in_dir(symbol, barrel_dir, barrel_path, &path)? {
-                return Ok(true);
-            }
-        } else if path.is_file() && path != *barrel_path {
-            let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
-            if matches!(ext, "ts" | "tsx" | "js" | "jsx" | "svelte") {
-                // Use tree-sitter to extract imports
-                if let Ok(imports) = extract_imports(&path) {
-                    for import in imports {
-                        // Check if this import is from the barrel directory
-                        // e.g., '../core', './core', '../core/index', '../core/index.js'
-                        let source_end = import.source.rsplit('/').next().unwrap_or(&import.source);
-                        let source_end = source_end
-                            .trim_end_matches(".js")
-                            .trim_end_matches(".ts")
-                            .trim_end_matches("/index");
-                        
-                        // Check if import source ends with barrel directory or is 'index'
-                        let is_barrel_import = source_end == barrel_dir || 
-                            source_end == "index" && import.source.contains(barrel_dir) ||
-                            import.source.ends_with(&format!("/{}", barrel_dir)) ||
-                            import.source.ends_with(&format!("/{}/index", barrel_dir)) ||
-                            import.source.ends_with(&format!("/{}/index.js", barrel_dir)) ||
-                            import.source.ends_with(&format!("/{}/index.ts", barrel_dir));
-                        
-                        if is_barrel_import && import.symbols.contains(&symbol.to_string()) {
-                            return Ok(true);
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
-    Ok(false)
-}
-
-/// Check directory for direct imports of a symbol using tree-sitter AST parsing
-fn check_import_in_dir_ast(symbol: &str, source_file: &Path, dir: &Path) -> Result<bool, ComputationError> {
-    use super::imports::extract_imports;
-    
-    let entries = match fs::read_dir(dir) {
-        Ok(e) => e,
-        Err(_) => return Ok(false),
-    };
-    
-    for entry in entries {
-        let entry = match entry {
-            Ok(e) => e,
-            Err(_) => continue,
-        };
-        let path = entry.path();
-        
-        if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-            if name.starts_with('.') || 
-               matches!(name, "node_modules" | "target" | "dist" | "build" | ".git") {
-                continue;
-            }
-        }
-        
-        if !path.exists() {
-            continue;
-        }
-        
-        if path.is_dir() {
-            if check_import_in_dir_ast(symbol, source_file, &path)? {
-                return Ok(true);
-            }
-        } else if path.is_file() && path != source_file {
-            let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
-            if matches!(ext, "ts" | "tsx" | "js" | "jsx" | "svelte") {
-                // Use tree-sitter to extract imports
-                if let Ok(imports) = extract_imports(&path) {
-                    for import in imports {
-                        if import.symbols.contains(&symbol.to_string()) {
-                            return Ok(true);
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
-    Ok(false)
 }
 
 #[cfg(test)]

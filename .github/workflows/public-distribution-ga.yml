@@ -50,3 +50,5 @@ jobs:
           node --test scripts/test/ground-public-surface.test.mjs
           node --test scripts/test/ground-adoption-contract.test.mjs
           cargo test --manifest-path packages/ground/Cargo.toml
+          cargo build --manifest-path packages/ground/Cargo.toml --bins
+          node scripts/ground-seeded-trial.mjs --native-dir packages/ground/target/debug --output /tmp/ground-seeded-trial.json

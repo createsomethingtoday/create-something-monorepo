@@ -10,6 +10,7 @@ From the updated repository checkout:
 pnpm bootstrap:worktree
 pnpm ground
 pnpm ground:adoption
+pnpm ground:trial
 ```
 
 `pnpm ground` builds the native engine, validates policy and workspace discovery,
@@ -51,6 +52,9 @@ It does not mean that every export has a consumer or that Ground replaces
 package-owned tests, compilers, lint rules, or runtime acceptance.
 
 ## Policy scope
+
+The [seeded regression trial](./GROUND_SEEDED_TRIAL.md) complements this reviewed
+real-package baseline with fixed positive, negative and incomplete-source cases.
 
 Manual entry-point paths in Ground 0.4.0 are relative to the analysis root.
 The repository `.ground.yml` declares the full package path, and

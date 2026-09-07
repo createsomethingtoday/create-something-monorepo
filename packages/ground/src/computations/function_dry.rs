@@ -310,7 +310,9 @@ pub fn extract_functions_ts(path: &Path) -> Result<Vec<ExtractedFunction>, Compu
     let source = fs::read_to_string(path)?;
     
     let mut parser = Parser::new();
-    let language = tree_sitter_typescript::LANGUAGE_TYPESCRIPT;
+    let language = if path.extension().and_then(|ext| ext.to_str()) == Some("tsx") {
+        tree_sitter_typescript::LANGUAGE_TSX
+    } else { tree_sitter_typescript::LANGUAGE_TYPESCRIPT };
     parser.set_language(&language.into())
         .map_err(|e| ComputationError::ParseError { 
             file: path.to_path_buf(), 
@@ -323,6 +325,7 @@ pub fn extract_functions_ts(path: &Path) -> Result<Vec<ExtractedFunction>, Compu
             message: "Failed to parse".to_string() 
         })?;
     
+    reject_syntax_errors(&tree, path)?;
     let mut functions = Vec::new();
     extract_functions_from_node(tree.root_node(), &source, &mut functions);
     
@@ -347,6 +350,7 @@ pub fn extract_functions_js(path: &Path) -> Result<Vec<ExtractedFunction>, Compu
             message: "Failed to parse".to_string() 
         })?;
     
+    reject_syntax_errors(&tree, path)?;
     let mut functions = Vec::new();
     extract_functions_from_node(tree.root_node(), &source, &mut functions);
     
@@ -404,8 +408,16 @@ pub fn extract_functions_svelte(path: &Path) -> Result<Vec<ExtractedFunction>, C
             message: "Failed to parse Svelte script".to_string(),
         })?;
     let mut functions = Vec::new();
+    reject_syntax_errors(&tree, path)?;
     extract_functions_from_node(tree.root_node(), &parse_source, &mut functions);
     Ok(functions)
+}
+
+fn reject_syntax_errors(tree: &tree_sitter::Tree, path: &Path) -> Result<(), ComputationError> {
+    if tree.root_node().has_error() {
+        return Err(ComputationError::ParseError { file: path.to_path_buf(), message: "Syntax errors prevent complete function analysis".to_string() });
+    }
+    Ok(())
 }
 
 /// Extract functions based on file extension
@@ -743,7 +755,8 @@ fn analyze_function_dry_internal(
             continue;
         }
         
-        if let Ok(functions) = extract_functions(path) {
+        {
+            let functions = extract_functions(path)?;
             // Filter by minimum lines if specified
             let filtered: Vec<_> = if let Some(min_lines) = options.min_function_lines {
                 functions.into_iter()

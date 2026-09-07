@@ -129,10 +129,14 @@ pub fn extract_imports(path: &Path) -> Result<Vec<ExtractedImport>, String> {
     
     // Handle Svelte files by extracting script content
     let (parse_source, language) = if ext == "svelte" {
-        let script = extract_svelte_script(&source)
-            .ok_or_else(|| "No script tag found in Svelte file".to_string())?;
+        let Some(script) = extract_svelte_script(&source) else {
+            if source.contains("<script") { return Err("Incomplete Svelte script tag".to_string()); }
+            return Ok(Vec::new());
+        };
         (script, tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into())
-    } else if ext == "ts" || ext == "tsx" {
+    } else if ext == "tsx" {
+        (source.clone(), tree_sitter_typescript::LANGUAGE_TSX.into())
+    } else if ext == "ts" {
         (source.clone(), tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into())
     } else {
         (source.clone(), tree_sitter_javascript::LANGUAGE.into())
@@ -145,6 +149,7 @@ pub fn extract_imports(path: &Path) -> Result<Vec<ExtractedImport>, String> {
     let tree = parser.parse(&parse_source, None)
         .ok_or_else(|| "Failed to parse file".to_string())?;
     
+    if tree.root_node().has_error() { return Err("Syntax errors prevent complete import analysis".to_string()); }
     let mut imports = Vec::new();
     extract_imports_from_node(tree.root_node(), &parse_source, &mut imports);
     
@@ -165,7 +170,9 @@ pub fn extract_exports(path: &Path) -> Result<Vec<ExtractedExport>, String> {
             return Ok(Vec::new());
         };
         (script, tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into())
-    } else if ext == "ts" || ext == "tsx" {
+    } else if ext == "tsx" {
+        (source.clone(), tree_sitter_typescript::LANGUAGE_TSX.into())
+    } else if ext == "ts" {
         (source.clone(), tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into())
     } else {
         (source.clone(), tree_sitter_javascript::LANGUAGE.into())
@@ -178,6 +185,7 @@ pub fn extract_exports(path: &Path) -> Result<Vec<ExtractedExport>, String> {
     let tree = parser.parse(&parse_source, None)
         .ok_or_else(|| "Failed to parse file".to_string())?;
     
+    if tree.root_node().has_error() { return Err("Syntax errors prevent complete export analysis".to_string()); }
     let mut exports = Vec::new();
     extract_exports_from_node(tree.root_node(), &parse_source, &mut exports);
     
@@ -906,9 +914,27 @@ export const moduleValue = 'ground';
         let mut f = File::create(&file).unwrap();
         writeln!(f, "<div>Just static content</div>").unwrap();
         
-        // Should return an error for Svelte files without script
+        // Static markup has no imports; it must not invalidate a complete scope scan.
         let result = extract_imports(&file);
-        assert!(result.is_err());
+        assert!(result.unwrap().is_empty());
+    }
+
+    #[test]
+    fn malformed_syntax_is_not_an_empty_success() {
+        let dir = tempdir().unwrap();
+        let file = dir.path().join("broken.ts");
+        fs::write(&file, "export function broken( { !!!").unwrap();
+        assert!(extract_exports(&file).is_err());
+        assert!(extract_imports(&file).is_err());
+    }
+
+    #[test]
+    fn valid_tsx_uses_jsx_grammar() {
+        let dir = tempdir().unwrap();
+        let file = dir.path().join("view.tsx");
+        fs::write(&file, "import { value } from './value'; export const View = () => <p>{value}</p>;").unwrap();
+        assert_eq!(extract_imports(&file).unwrap().len(), 1);
+        assert_eq!(extract_exports(&file).unwrap().len(), 1);
     }
 
     #[test]

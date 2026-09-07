@@ -1318,7 +1318,7 @@ fn handle_find_duplicate_functions(args: &Value) -> ToolResult {
             "functions_found": 0,
             "duplicates": [],
             "cross_package_duplicates": [],
-            "message": format!("FAIL: duplicate analysis could not complete: {}", e)
+            "message": format!("FAIL: source files could not be analyzed; duplicate analysis is incomplete: {}", e)
         })),
     }
 }
@@ -1900,6 +1900,8 @@ fn handle_find_dead_exports(args: &Value) -> ToolResult {
                 "dead_export_count": report.dead_exports.len(),
                 "dead_exports": dead_exports,
                 "all_used": report.dead_exports.is_empty(),
+                "safe_to_auto_fix": false,
+                "scope_limitation": "Candidates are limited to the scanned scope. Review public API, external consumers and dynamic loading before removal.",
                 "message": message
             }))
         }
@@ -2555,6 +2557,7 @@ fn handle_batch_analyze(args: &Value) -> ToolResult {
                 "status": verification_status_from_value(content.get("verification_status")),
                 "files_discovered": content.get("files_discovered"),
                 "files_checked": content.get("files_checked"),
+                "scan_complete": content.get("scan_complete"),
                 "timeout_ms": content.get("timeout_ms")
             });
             // Convert duplicates to structured findings with fixes

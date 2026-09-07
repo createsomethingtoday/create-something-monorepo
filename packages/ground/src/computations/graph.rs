@@ -143,7 +143,7 @@ impl SymbolGraph {
             imports: HashMap::new(),
             symbol_exporters: HashMap::new(),
             symbol_importers: HashMap::new(),
-            module_resolution: workspace_module_resolution(root_dir),
+            module_resolution: HashMap::new(),
             path_aliases,
             reexport_chains: HashMap::new(),
             built_at: Utc::now(),
@@ -155,6 +155,7 @@ impl SymbolGraph {
         // Collect all scannable files
         let mut files = Vec::new();
         collect_files(root_dir, &mut files);
+        graph.module_resolution = workspace_module_resolution(root_dir, &files);
         
         let total_files = files.len();
         
@@ -345,7 +346,7 @@ impl SymbolGraph {
     }
     
     /// Check if a module specifier resolves to a target file
-    fn resolves_to(&self, module_spec: &str, target: &Path, importer: &Path) -> bool {
+    pub(crate) fn resolves_to(&self, module_spec: &str, target: &Path, importer: &Path) -> bool {
         if let Some(resolved) = self.module_resolution.get(module_spec) {
             if module_target_matches(resolved, target) {
                 return true;
@@ -563,9 +564,19 @@ fn strip_module_extension(path: &str) -> &str {
         .unwrap_or(path)
 }
 
-fn workspace_module_resolution(root: &Path) -> HashMap<String, PathBuf> {
+fn workspace_module_resolution(root: &Path, files: &[PathBuf]) -> HashMap<String, PathBuf> {
     let mut resolution = HashMap::new();
-    for package in discover_workspace_package_paths(root) {
+    let mut packages = discover_workspace_package_paths(root).into_iter().collect::<std::collections::BTreeSet<_>>();
+    // A scoped analysis may not contain the workspace manifest. Named package
+    // manifests alongside scanned source still provide explicit export targets.
+    for file in files {
+        if let Some(package) = file.ancestors().skip(1)
+            .take_while(|ancestor| ancestor.starts_with(root))
+            .find(|ancestor| ancestor.join("package.json").is_file()) {
+            packages.insert(package.to_path_buf());
+        }
+    }
+    for package in packages {
         let Ok(content) = fs::read_to_string(package.join("package.json")) else {
             continue;
         };
