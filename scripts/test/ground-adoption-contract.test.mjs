@@ -1,8 +1,45 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, symlinkSync, linkSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { receiptDestination, writeReceipt } from '../ground-adoption-output.mjs';
 import { verifyAdjudicatedExports, verifyCheckout, verifyScanCoverage } from '../ground-adoption-contract.mjs';
 
 const sourceSha = 'a'.repeat(40);
+
+test('receipt destinations preserve source across direct paths, symlinks and hard links', () => {
+  const temporary = mkdtempSync(join(tmpdir(), 'ground-output-test-'));
+  try {
+    const root = join(temporary, 'repo');
+    mkdirSync(root);
+    const source = join(root, 'source.ts');
+    writeFileSync(source, 'original source');
+    assert.throws(() => receiptDestination(root, source), /outside/);
+    assert.throws(() => receiptDestination(root, join(root, 'new.json')), /outside/);
+    const alias = join(temporary, 'alias');
+    symlinkSync(root, alias);
+    assert.throws(() => receiptDestination(root, join(alias, 'new.json')), /outside/);
+    for (const [name, target] of [['linked.json', source], ['dangling.json', join(root, 'missing')]]) {
+      const output = join(temporary, name);
+      symlinkSync(target, output);
+      assert.throws(() => writeReceipt(root, output, 'receipt'), /symbolic link/);
+    }
+    const hardLink = join(temporary, 'hard.json');
+    linkSync(source, hardLink);
+    writeReceipt(root, hardLink, 'receipt');
+    assert.equal(readFileSync(source, 'utf8'), 'original source');
+    assert.equal(readFileSync(hardLink, 'utf8'), 'receipt');
+    const sibling = join(temporary, 'repo-receipts');
+    mkdirSync(sibling);
+    const safe = join(sibling, 'receipt.json');
+    writeReceipt(root, safe, 'first');
+    writeReceipt(root, safe, 'second');
+    assert.equal(readFileSync(safe, 'utf8'), 'second');
+  } finally {
+    rmSync(temporary, { recursive: true, force: true });
+  }
+});
 
 test('scan coverage must retain its reviewed denominator', () => {
   const expected = { files_discovered: 19, files_checked: 19 };

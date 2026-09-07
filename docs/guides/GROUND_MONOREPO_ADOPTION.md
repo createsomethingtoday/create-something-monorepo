@@ -83,6 +83,8 @@ Run these commands from the updated checkout and keep its path with the handoff.
 
 ## Promotion and rollback
 
+Receipt output must be outside the analyzed checkout (for example, `/tmp/ground-adoption-receipt.json`). The verifier rejects checkout paths and symbolic links and atomically replaces external receipts to preserve analyzed source.
+
 These policy and pilot-support changes are delivered through the repository PR
 boundary. They do not change the published npm payload or native binary and do
 not require another npm version. Verify the exact existing published package

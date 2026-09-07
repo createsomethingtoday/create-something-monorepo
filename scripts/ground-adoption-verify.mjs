@@ -3,13 +3,20 @@
 // Exercise the published package against real repository policy and source.
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { verifyAdjudicatedExports, verifyCheckout, verifyModuleInventory, verifyScanCoverage } from './ground-adoption-contract.mjs';
+import { receiptDestination, writeReceipt } from './ground-adoption-output.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const outputIndex = process.argv.indexOf('--output');
+let output;
+if (outputIndex >= 0) {
+  assert(process.argv[outputIndex + 1], '--output requires a path');
+  output = receiptDestination(root, process.argv[outputIndex + 1]);
+}
 const manifest = JSON.parse(readFileSync(join(root, 'packages/ground/npm/package.json'), 'utf8'));
 const packageSpec = `${manifest.name}@${manifest.version}`;
 const adjudication = JSON.parse(readFileSync(join(root, 'docs/internal/ground-adoption-adjudication.v1.json'), 'utf8'));
@@ -156,11 +163,7 @@ try {
     adjudication: { issue: adjudication.issue, public_api_candidates_retained: retainedCandidates },
     ready: true
   };
-  const outputIndex = process.argv.indexOf('--output');
-  if (outputIndex >= 0) {
-    assert(process.argv[outputIndex + 1], '--output requires a path');
-    writeFileSync(resolve(process.argv[outputIndex + 1]), JSON.stringify(receipt, null, 2) + '\n');
-  }
+  if (output) writeReceipt(root, output, JSON.stringify(receipt, null, 2) + '\n');
   process.stdout.write(JSON.stringify(receipt, null, 2) + '\n');
 } finally {
   rmSync(temporary, { recursive: true, force: true });
