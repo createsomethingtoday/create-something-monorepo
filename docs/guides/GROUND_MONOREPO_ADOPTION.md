@@ -18,7 +18,10 @@ experiment checks. It does not assert that all code in every package is clean.
 
 `pnpm ground:adoption` runs the exact npm version declared in
 `packages/ground/npm/package.json` against real repository source through CLI
-and MCP stdio. It uses a temporary database and checks these reviewed cases:
+and MCP stdio. It requires a clean checkout before and after analysis so the
+receipt identifies the actual analyzed commit. Commit reviewed changes first;
+use `pnpm ground` for development review of uncommitted changes.
+It uses a temporary database and checks these reviewed cases:
 
 - Ground's pilot helpers share one `workspace-root.ts`. The deliberate
   `normalizeCustomerId` duplicate fixture must still produce a review-only finding.
@@ -27,9 +30,10 @@ and MCP stdio. It uses a temporary database and checks these reviewed cases:
   exact file to ESLint using `--config`.
 - Batch dead-export coverage remains `NOT_APPLICABLE`; the verifier separately
   invokes `ground_find_dead_exports` for every TypeScript source module.
-- Package-local dead-export candidates must appear in the reviewed adjudication
-  and still be explicitly re-exported through the public entry point. An unknown
-  candidate fails the verifier and requires review.
+- Package-local dead-export candidates must exactly match the reviewed
+  adjudication in both directions and still be explicitly re-exported through
+  the public entry point. Additions, omissions, duplicate candidates, and public
+  API removals fail the verifier and require review.
 
 Save a receipt when handing off work:
 

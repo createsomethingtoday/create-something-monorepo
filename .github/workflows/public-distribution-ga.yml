@@ -34,4 +34,5 @@ jobs:
           node --test scripts/test/ground-adjudication.test.mjs
           node --test scripts/test/ground-ga-policy.test.mjs
           node --test scripts/test/ground-public-surface.test.mjs
+          node --test scripts/test/ground-adoption-contract.test.mjs
           cargo test --manifest-path packages/ground/Cargo.toml

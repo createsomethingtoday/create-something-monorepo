@@ -7,6 +7,7 @@ import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'n
 import { tmpdir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { verifyAdjudicatedExports, verifyCheckout } from './ground-adoption-contract.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const manifest = JSON.parse(readFileSync(join(root, 'packages/ground/npm/package.json'), 'utf8'));
@@ -68,7 +69,16 @@ function sourceModules(directory) {
   }).sort();
 }
 
+function checkoutState() {
+  const revision = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' });
+  const worktree = spawnSync('git', ['status', '--porcelain'], { cwd: root, encoding: 'utf8' });
+  assert.equal(revision.status, 0);
+  assert.equal(worktree.status, 0);
+  return verifyCheckout({ sourceSha: revision.stdout.trim(), status: worktree.stdout });
+}
+
 try {
+  const checkout = checkoutState();
   const doctor = parse(cli(['doctor', root, '--json']));
   assert.equal(doctor.verification_status, 'PASS');
   assert.equal(doctor.build.version, manifest.version);
@@ -84,10 +94,6 @@ try {
   const coreDoctor = parse(cli(['doctor', core, '--json']));
   assert.equal(coreDoctor.verification_status, 'PASS');
   assert.equal(coreDoctor.policy.source, join(core, '.ground.yml'));
-  const revision = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' });
-  const worktree = spawnSync('git', ['status', '--porcelain'], { cwd: root, encoding: 'utf8' });
-  assert.equal(revision.status, 0);
-  assert.equal(worktree.status, 0);
 
   const coreCommand = cli(['analyze', core, '--checks', 'duplicates,orphans,dead_exports', '--timeout-ms', '15000']);
   // In 0.4.0 extends merges arrays. Avoid silently changing the repository threshold.
@@ -128,23 +134,14 @@ try {
   const adjudication = JSON.parse(readFileSync(join(root, 'docs/internal/ground-adoption-adjudication.v1.json'), 'utf8'));
   const publicIndex = readFileSync(join(core, 'src/index.ts'), 'utf8');
   const coreManifest = JSON.parse(readFileSync(join(core, 'package.json'), 'utf8'));
-  assert.equal(coreManifest.exports['.'].default, './dist/index.js');
-  const publicExports = new Map();
-  for (const match of publicIndex.matchAll(/export\s+(?:type\s+)?\{([^}]+)\}\s+from\s+['"]\.\/([^'"]+)\.js['"]/g)) {
-    publicExports.set('packages/mcp-core/src/' + match[2] + '.ts',
-      [...(publicExports.get('packages/mcp-core/src/' + match[2] + '.ts') || []),
-        ...match[1].split(',').map(name => name.trim()).filter(Boolean)]);
-  }
-  for (const module of deadExports) {
-    const reviewed = adjudication.dead_exports.modules.find(item => item.module === module.module);
-    for (const item of module.dead_exports) {
-      assert(reviewed?.symbols.includes(item.name), 'Unreviewed dead-export finding: ' + module.module + ':' + item.name);
-      assert(publicExports.get(module.module)?.includes(item.name), 'Retained symbol is no longer in the reviewed public API: ' + item.name);
-    }
-  }
+  const retainedCandidates = verifyAdjudicatedExports({
+    modules: deadExports, adjudication: adjudication.dead_exports,
+    publicIndex, packageExports: coreManifest.exports
+  });
+  assert.deepEqual(checkoutState(), checkout, 'Checkout changed during verification; rerun on stable source.');
   const receipt = {
     schema_version: 'ground-adoption-receipt.v1', package: packageSpec,
-    checkout: { source_sha: revision.stdout.trim(), dirty: worktree.stdout.trim().length > 0 },
+    checkout,
     published: { source_sha: published.gitHead, integrity: published['dist.integrity'] },
     build: doctor.build, policy_sha256: doctor.policy.sha256, workspace: doctor.workspace,
     package_policy_sha256: coreDoctor.policy.sha256,
@@ -153,7 +150,7 @@ try {
       disposition: 'retain intentional normalizeCustomerId detector fixture' },
     mcp: { initialized: true, analyzed_packages: 2, explicit_modules_checked: modules.length },
     dead_exports: { scope: 'packages/mcp-core only; public API and external consumers require separate adjudication', modules: deadExports },
-    adjudication: { issue: adjudication.issue, public_api_candidates_retained: deadExports.reduce((sum, item) => sum + item.dead_exports.length, 0) },
+    adjudication: { issue: adjudication.issue, public_api_candidates_retained: retainedCandidates },
     ready: true
   };
   const outputIndex = process.argv.indexOf('--output');
