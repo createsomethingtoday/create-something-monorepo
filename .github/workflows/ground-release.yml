@@ -53,6 +53,7 @@ jobs:
         run: |
           cargo build --manifest-path packages/ground/Cargo.toml --bins
           node scripts/ground-seeded-trial.mjs --native-dir packages/ground/target/debug --output /tmp/ground-seeded-trial.json
+          node scripts/ground-execution-verify.mjs --native-dir packages/ground/target/debug --output /tmp/ground-execution.json
 
       - name: Preserve seeded trial receipt
         if: always()
@@ -60,6 +61,13 @@ jobs:
         with:
           name: ground-seeded-trial-receipt
           path: /tmp/ground-seeded-trial.json
+
+      - name: Preserve worker execution receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ground-execution-receipt
+          path: /tmp/ground-execution.json
 
       - name: Execute governed Ground calibration fixtures
         id: calibration-fixtures

@@ -100,6 +100,9 @@ enum Commands {
         /// Maximum duplicate-analysis time in milliseconds
         #[arg(long, default_value_t = 120_000)]
         timeout_ms: u64,
+        /// Duplicate parsing workers (0 = automatic, at most four; 1 = serial)
+        #[arg(long, default_value_t = 0, value_parser = clap::value_parser!(u8).range(0..=4))]
+        workers: u8,
     },
 
     /// Report only verified issues involving files changed since a git baseline
@@ -119,6 +122,9 @@ enum Commands {
         /// Maximum duplicate-analysis time in milliseconds
         #[arg(long, default_value_t = 120_000)]
         timeout_ms: u64,
+        /// Duplicate parsing workers (0 = automatic, at most four; 1 = serial)
+        #[arg(long, default_value_t = 0, value_parser = clap::value_parser!(u8).range(0..=4))]
+        workers: u8,
     },
     
     /// Make a claim (only works if you've checked first)
@@ -562,7 +568,7 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
         
         Commands::Find(find_cmd) => run_find(find_cmd, &cli.db),
 
-        Commands::Analyze { directory, checks, entry_points, cross_package, timeout_ms } => {
+        Commands::Analyze { directory, checks, entry_points, cross_package, timeout_ms, workers } => {
             run_mcp_analysis(
                 "ground_analyze",
                 &cli.db,
@@ -572,11 +578,12 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                     "entry_points": entry_points,
                     "cross_package": cross_package,
                     "timeout_ms": timeout_ms,
+                    "workers": workers,
                 }),
             )
         }
 
-        Commands::Diff { directory, base, checks, cross_package, timeout_ms } => {
+        Commands::Diff { directory, base, checks, cross_package, timeout_ms, workers } => {
             run_mcp_analysis(
                 "ground_diff",
                 &cli.db,
@@ -586,6 +593,7 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                     "checks": checks,
                     "cross_package": cross_package,
                     "timeout_ms": timeout_ms,
+                    "workers": workers,
                 }),
             )
         }

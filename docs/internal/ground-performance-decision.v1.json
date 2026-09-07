@@ -1,0 +1,941 @@
+{
+  "schema_version": "ground-performance-decision.v1",
+  "issue": "CRE-1948",
+  "baseline_source": "142d87b4702076c2f223c52792b54cc52d9d2d9c",
+  "candidate_version": "0.4.2",
+  "candidate_provenance": "Supporting pre-commit local measurements. Build source_sha is the parent revision, not a claim of a clean published artifact. Code hashes below identify the measured implementation. Published CLI/MCP proof is a separate release gate.",
+  "source_hashes": {
+    "packages/ground/src/computations/function_dry.rs": "e5a196801506abac766311ac18197df8420b1d2942d6381fcba260e03ddae102",
+    "packages/ground/src/bin/ground.rs": "337b3178e54482edbbd86321c12f38fa77f5c30c86b7d4ff93a8d3e348f1abf1",
+    "packages/ground/src/mcp/mod.rs": "e9053222a4f0868f036800c76dce4e262ffe02fe87cda5436f3a0ea139d92835",
+    "packages/ground/benchmarks/retrieval/src/main.rs": "53e569d17708b407bb3661937ddde5f078790e6b743a07a94a65fe407f96e8b4"
+  },
+  "decision": {
+    "ship": [
+      "bounded per-invocation parsing workers",
+      "exact name/file candidate buckets",
+      "same-call normalized token reuse",
+      "CLI/MCP workers control and execution receipt"
+    ],
+    "benchmark_only": [
+      "Tantivy 0.26.1 exact and top-10 retrieval",
+      "content-hash parsed-output cache with warm/edit/deletion/revision/worktree checks"
+    ],
+    "retain": [
+      "SQLite verification registry",
+      "existing structural similarity score",
+      "existing full-coverage and incomplete-scan contracts"
+    ],
+    "reason": "Parallel parsing and exact token reuse reduce actual CLI wall time with identical findings and coverage. Tantivy retrieval is not a substitute for structural verification; the cache prototype does not solve persistent graph/config/parser-version invalidation."
+  },
+  "experiments": [
+    {
+      "build": {
+        "name": "ground",
+        "receipt_schema_version": "ground-review-receipt.v1",
+        "source_sha": "142d87b4702076c2f223c52792b54cc52d9d2d9c",
+        "target_triple": "aarch64-apple-darwin",
+        "version": "0.4.2"
+      },
+      "corpus_sha256": "72077bf9662f30652176fc9cd7f5881fa1258c7cf28acccac76e9e645770e311",
+      "files": 18,
+      "limits": [
+        "No OS page-cache eviction; first run is process-cold only",
+        "Cache is parsed-output prototype with byte hashing and output cloning, not an incremental dependency graph",
+        "Registry is 100 repeated upsert/read operations, not a production workload",
+        "Tantivy queries measure exact name candidate retrieval, not structural verification",
+        "Parse failures remain explicit; benchmark is not a clean verification receipt"
+      ],
+      "machine": {
+        "arch": "aarch64",
+        "os": "macos"
+      },
+      "runs": [
+        {
+          "all_pairs_ms": 0.089,
+          "cache_prototype": {
+            "cold_parse_hash_ms": 14.793709,
+            "cold_parsed": 18,
+            "deletion_evicted": true,
+            "edited_parsed": 1,
+            "isolated_parsed": 18,
+            "one_file_edit_ms": 0.946375,
+            "replacement_parsed": 1,
+            "warm_parsed": 0,
+            "warm_validate_clone_ms": 0.7867500000000001
+          },
+          "duplicate_pairs": 1,
+          "exact_bucket_ms": 0.08399999999999999,
+          "exact_parity": true,
+          "functions": 84,
+          "graph_build_ms": 19.976375,
+          "graph_parse_errors": 0,
+          "graph_query_ms": 0.7640840000000001,
+          "parallel_parse": [
+            {
+              "ms_including_pool_start": 8.596,
+              "parity": true,
+              "workers": 2
+            },
+            {
+              "ms_including_pool_start": 5.3609160000000005,
+              "parity": true,
+              "workers": 4
+            }
+          ],
+          "parse_errors": [],
+          "production": [
+            {
+              "exhaustive_parity": true,
+              "parse_and_compare_ms": 10.707875,
+              "workers": 1
+            },
+            {
+              "exhaustive_parity": true,
+              "parse_and_compare_ms": 5.826708,
+              "workers": 4
+            }
+          ],
+          "registry_100_write_read_ms": 45.345834,
+          "registry_open_ms": 3.52025,
+          "serial_parse_ms": 10.881541,
+          "tantivy": {
+            "add_commit_reload_ms": 38.578292,
+            "delete_commit_reload_ms": 12.796167,
+            "exact_candidate_count": 84,
+            "index_bytes": 23409,
+            "index_ms": 88.593875,
+            "query_all_names_ms": 0.197792,
+            "top10_omitted_candidates": 1
+          }
+        },
+        {
+          "all_pairs_ms": 0.082792,
+          "cache_prototype": {
+            "cold_parse_hash_ms": 13.67075,
+            "cold_parsed": 18,
+            "deletion_evicted": true,
+            "edited_parsed": 1,
+            "isolated_parsed": 18,
+            "one_file_edit_ms": 0.834083,
+            "replacement_parsed": 1,
+            "warm_parsed": 0,
+            "warm_validate_clone_ms": 0.7865
+          },
+          "duplicate_pairs": 1,
+          "exact_bucket_ms": 0.083625,
+          "exact_parity": true,
+          "functions": 84,
+          "graph_build_ms": 20.201292,
+          "graph_parse_errors": 0,
+          "graph_query_ms": 0.836959,
+          "parallel_parse": [
+            {
+              "ms_including_pool_start": 7.188667000000001,
+              "parity": true,
+              "workers": 2
+            },
+            {
+              "ms_including_pool_start": 4.632167000000001,
+              "parity": true,
+              "workers": 4
+            }
+          ],
+          "parse_errors": [],
+          "production": [
+            {
+              "exhaustive_parity": true,
+              "parse_and_compare_ms": 10.695958000000001,
+              "workers": 1
+            },
+            {
+              "exhaustive_parity": true,
+              "parse_and_compare_ms": 5.383625,
+              "workers": 4
+            }
+          ],
+          "registry_100_write_read_ms": 37.590667,
+          "registry_open_ms": 2.7187919999999997,
+          "serial_parse_ms": 10.825292000000001,
+          "tantivy": {
+            "add_commit_reload_ms": 32.409917,
+            "delete_commit_reload_ms": 15.262958,
+            "exact_candidate_count": 84,
+            "index_bytes": 23018,
+            "index_ms": 93.138,
+            "query_all_names_ms": 0.15437499999999998,
+            "top10_omitted_candidates": 1
+          }
+        },
+        {
+          "all_pairs_ms": 0.083291,
+          "cache_prototype": {
+            "cold_parse_hash_ms": 14.123415999999999,
+            "cold_parsed": 18,
+            "deletion_evicted": true,
+            "edited_parsed": 1,
+            "isolated_parsed": 18,
+            "one_file_edit_ms": 0.85025,
+            "replacement_parsed": 1,
+            "warm_parsed": 0,
+            "warm_validate_clone_ms": 0.755
+          },
+          "duplicate_pairs": 1,
+          "exact_bucket_ms": 0.08808300000000001,
+          "exact_parity": true,
+          "functions": 84,
+          "graph_build_ms": 19.586875,
+          "graph_parse_errors": 0,
+          "graph_query_ms": 0.824584,
+          "parallel_parse": [
+            {
+              "ms_including_pool_start": 7.245583,
+              "parity": true,
+              "workers": 2
+            },
+            {
+              "ms_including_pool_start": 4.9295,
+              "parity": true,
+              "workers": 4
+            }
+          ],
+          "parse_errors": [],
+          "production": [
+            {
+              "exhaustive_parity": true,
+              "parse_and_compare_ms": 10.332083,
+              "workers": 1
+            },
+            {
+              "exhaustive_parity": true,
+              "parse_and_compare_ms": 5.368333000000001,
+              "workers": 4
+            }
+          ],
+          "registry_100_write_read_ms": 40.02675,
+          "registry_open_ms": 3.0695,
+          "serial_parse_ms": 10.985166,
+          "tantivy": {
+            "add_commit_reload_ms": 35.136417,
+            "delete_commit_reload_ms": 14.68825,
+            "exact_candidate_count": 84,
+            "index_bytes": 23018,
+            "index_ms": 87.14099999999999,
+            "query_all_names_ms": 0.159959,
+            "top10_omitted_candidates": 1
+          }
+        }
+      ],
+      "schema": "ground-performance-benchmark.v1",
+      "source_bytes": 100191,
+      "source_root": "packages/mcp-core/src",
+      "tantivy_version": "0.26.1",
+      "whole_experiment_peak_rss_bytes": 37421056
+    },
+    {
+      "build": {
+        "name": "ground",
+        "receipt_schema_version": "ground-review-receipt.v1",
+        "source_sha": "142d87b4702076c2f223c52792b54cc52d9d2d9c",
+        "target_triple": "aarch64-apple-darwin",
+        "version": "0.4.2"
+      },
+      "corpus_sha256": "b7a3fdb8b435224e3bd8a03945a89a9bd89b1e7f5b346927183b46195c635521",
+      "files": 428,
+      "limits": [
+        "No OS page-cache eviction; first run is process-cold only",
+        "Cache is parsed-output prototype with byte hashing and output cloning, not an incremental dependency graph",
+        "Registry is 100 repeated upsert/read operations, not a production workload",
+        "Tantivy queries measure exact name candidate retrieval, not structural verification",
+        "Parse failures remain explicit; benchmark is not a clean verification receipt"
+      ],
+      "machine": {
+        "arch": "aarch64",
+        "os": "macos"
+      },
+      "runs": [
+        {
+          "all_pairs_ms": 48.727,
+          "cache_prototype": {
+            "cold_parse_hash_ms": 396.282916,
+            "cold_parsed": 428,
+            "deletion_evicted": true,
+            "edited_parsed": 1,
+            "isolated_parsed": 428,
+            "one_file_edit_ms": 25.446083,
+            "replacement_parsed": 1,
+            "warm_parsed": 0,
+            "warm_validate_clone_ms": 31.440542
+          },
+          "duplicate_pairs": 125,
+          "exact_bucket_ms": 40.577541000000004,
+          "exact_parity": true,
+          "functions": 1397,
+          "graph_build_ms": 546.1881669999999,
+          "graph_parse_errors": 0,
+          "graph_query_ms": 34.189375,
+          "parallel_parse": [
+            {
+              "ms_including_pool_start": 208.945209,
+              "parity": true,
+              "workers": 2
+            },
+            {
+              "ms_including_pool_start": 94.05116600000001,
+              "parity": true,
+              "workers": 4
+            }
+          ],
+          "parse_errors": [],
+          "production": [
+            {
+              "exhaustive_parity": true,
+              "parse_and_compare_ms": 321.52412499999997,
+              "workers": 1
+            },
+            {
+              "exhaustive_parity": true,
+              "parse_and_compare_ms": 96.47812499999999,
+              "workers": 4
+            }
+          ],
+          "registry_100_write_read_ms": 40.903834,
+          "registry_open_ms": 5.357417,
+          "serial_parse_ms": 351.421667,
+          "tantivy": {
+            "add_commit_reload_ms": 37.354334,
+            "delete_commit_reload_ms": 15.547917,
+            "exact_candidate_count": 1397,
+            "index_bytes": 427216,
+            "index_ms": 107.943584,
+            "query_all_names_ms": 3.108417,
+            "top10_omitted_candidates": 145
+          }
+        },
+        {
+          "all_pairs_ms": 41.263625,
+          "cache_prototype": {
+            "cold_parse_hash_ms": 388.005583,
+            "cold_parsed": 428,
+            "deletion_evicted": true,
+            "edited_parsed": 1,
+            "isolated_parsed": 428,
+            "one_file_edit_ms": 26.229041000000002,
+            "replacement_parsed": 1,
+            "warm_parsed": 0,
+            "warm_validate_clone_ms": 25.073417
+          },
+          "duplicate_pairs": 125,
+          "exact_bucket_ms": 39.798291,
+          "exact_parity": true,
+          "functions": 1397,
+          "graph_build_ms": 534.201083,
+          "graph_parse_errors": 0,
+          "graph_query_ms": 35.821667000000005,
+          "parallel_parse": [
+            {
+              "ms_including_pool_start": 199.732667,
+              "parity": true,
+              "workers": 2
+            },
+            {
+              "ms_including_pool_start": 87.151125,
+              "parity": true,
+              "workers": 4
+            }
+          ],
+          "parse_errors": [],
+          "production": [
+            {
+              "exhaustive_parity": true,
+              "parse_and_compare_ms": 311.22583399999996,
+              "workers": 1
+            },
+            {
+              "exhaustive_parity": true,
+              "parse_and_compare_ms": 88.953959,
+              "workers": 4
+            }
+          ],
+          "registry_100_write_read_ms": 39.250375,
+          "registry_open_ms": 3.0007089999999996,
+          "serial_parse_ms": 312.627833,
+          "tantivy": {
+            "add_commit_reload_ms": 37.777208,
+            "delete_commit_reload_ms": 14.444792,
+            "exact_candidate_count": 1397,
+            "index_bytes": 428996,
+            "index_ms": 117.725959,
+            "query_all_names_ms": 2.864083,
+            "top10_omitted_candidates": 145
+          }
+        },
+        {
+          "all_pairs_ms": 42.011667,
+          "cache_prototype": {
+            "cold_parse_hash_ms": 399.2475,
+            "cold_parsed": 428,
+            "deletion_evicted": true,
+            "edited_parsed": 1,
+            "isolated_parsed": 428,
+            "one_file_edit_ms": 39.433416,
+            "replacement_parsed": 1,
+            "warm_parsed": 0,
+            "warm_validate_clone_ms": 60.554375
+          },
+          "duplicate_pairs": 125,
+          "exact_bucket_ms": 40.548541,
+          "exact_parity": true,
+          "functions": 1397,
+          "graph_build_ms": 543.2255,
+          "graph_parse_errors": 0,
+          "graph_query_ms": 41.10225,
+          "parallel_parse": [
+            {
+              "ms_including_pool_start": 201.558458,
+              "parity": true,
+              "workers": 2
+            },
+            {
+              "ms_including_pool_start": 85.717084,
+              "parity": true,
+              "workers": 4
+            }
+          ],
+          "parse_errors": [],
+          "production": [
+            {
+              "exhaustive_parity": true,
+              "parse_and_compare_ms": 312.697,
+              "workers": 1
+            },
+            {
+              "exhaustive_parity": true,
+              "parse_and_compare_ms": 90.305333,
+              "workers": 4
+            }
+          ],
+          "registry_100_write_read_ms": 44.358917,
+          "registry_open_ms": 3.007125,
+          "serial_parse_ms": 315.332458,
+          "tantivy": {
+            "add_commit_reload_ms": 36.550042,
+            "delete_commit_reload_ms": 13.75575,
+            "exact_candidate_count": 1397,
+            "index_bytes": 410713,
+            "index_ms": 112.6615,
+            "query_all_names_ms": 2.7751669999999997,
+            "top10_omitted_candidates": 145
+          }
+        }
+      ],
+      "schema": "ground-performance-benchmark.v1",
+      "source_bytes": 3034193,
+      "source_root": "packages/agency/src",
+      "tantivy_version": "0.26.1",
+      "whole_experiment_peak_rss_bytes": 65257472
+    },
+    {
+      "build": {
+        "name": "ground",
+        "receipt_schema_version": "ground-review-receipt.v1",
+        "source_sha": "142d87b4702076c2f223c52792b54cc52d9d2d9c",
+        "target_triple": "aarch64-apple-darwin",
+        "version": "0.4.2"
+      },
+      "corpus_sha256": "7c58d5f1f5cadedae54fe5015c9a9002e1f5b2e8eec50829c67f5c406de345bf",
+      "files": 17,
+      "limits": [
+        "No OS page-cache eviction; first run is process-cold only",
+        "Cache is parsed-output prototype with byte hashing and output cloning, not an incremental dependency graph",
+        "Registry is 100 repeated upsert/read operations, not a production workload",
+        "Tantivy queries measure exact name candidate retrieval, not structural verification",
+        "Parse failures remain explicit; benchmark is not a clean verification receipt"
+      ],
+      "machine": {
+        "arch": "aarch64",
+        "os": "macos"
+      },
+      "runs": [
+        {
+          "all_pairs_ms": 0.090458,
+          "cache_prototype": {
+            "cold_parse_hash_ms": 41.833625,
+            "cold_parsed": 17,
+            "deletion_evicted": true,
+            "edited_parsed": 1,
+            "isolated_parsed": 17,
+            "one_file_edit_ms": 3.952125,
+            "replacement_parsed": 1,
+            "warm_parsed": 0,
+            "warm_validate_clone_ms": 1.497459
+          },
+          "duplicate_pairs": 2,
+          "exact_bucket_ms": 0.048875,
+          "exact_parity": true,
+          "functions": 305,
+          "graph_build_ms": 68.128625,
+          "graph_parse_errors": 0,
+          "graph_query_ms": 5.4844170000000005,
+          "parallel_parse": [
+            {
+              "ms_including_pool_start": 20.216125,
+              "parity": true,
+              "workers": 2
+            },
+            {
+              "ms_including_pool_start": 18.193834,
+              "parity": true,
+              "workers": 4
+            }
+          ],
+          "parse_errors": [],
+          "production": [
+            {
+              "exhaustive_parity": true,
+              "parse_and_compare_ms": 37.338625,
+              "workers": 1
+            },
+            {
+              "exhaustive_parity": true,
+              "parse_and_compare_ms": 15.115584,
+              "workers": 4
+            }
+          ],
+          "registry_100_write_read_ms": 39.359917,
+          "registry_open_ms": 3.273417,
+          "serial_parse_ms": 36.798291,
+          "tantivy": {
+            "add_commit_reload_ms": 34.638917,
+            "delete_commit_reload_ms": 11.459208,
+            "exact_candidate_count": 305,
+            "index_bytes": 82984,
+            "index_ms": 94.254,
+            "query_all_names_ms": 0.7016249999999999,
+            "top10_omitted_candidates": 0
+          }
+        },
+        {
+          "all_pairs_ms": 0.08,
+          "cache_prototype": {
+            "cold_parse_hash_ms": 40.917042,
+            "cold_parsed": 17,
+            "deletion_evicted": true,
+            "edited_parsed": 1,
+            "isolated_parsed": 17,
+            "one_file_edit_ms": 3.7875,
+            "replacement_parsed": 1,
+            "warm_parsed": 0,
+            "warm_validate_clone_ms": 1.5248329999999999
+          },
+          "duplicate_pairs": 2,
+          "exact_bucket_ms": 0.047625,
+          "exact_parity": true,
+          "functions": 305,
+          "graph_build_ms": 67.03475,
+          "graph_parse_errors": 0,
+          "graph_query_ms": 6.031458,
+          "parallel_parse": [
+            {
+              "ms_including_pool_start": 21.015375,
+              "parity": true,
+              "workers": 2
+            },
+            {
+              "ms_including_pool_start": 16.563709,
+              "parity": true,
+              "workers": 4
+            }
+          ],
+          "parse_errors": [],
+          "production": [
+            {
+              "exhaustive_parity": true,
+              "parse_and_compare_ms": 37.101707999999995,
+              "workers": 1
+            },
+            {
+              "exhaustive_parity": true,
+              "parse_and_compare_ms": 12.849625,
+              "workers": 4
+            }
+          ],
+          "registry_100_write_read_ms": 38.237624999999994,
+          "registry_open_ms": 2.7775,
+          "serial_parse_ms": 37.347291,
+          "tantivy": {
+            "add_commit_reload_ms": 41.833041,
+            "delete_commit_reload_ms": 17.813417,
+            "exact_candidate_count": 305,
+            "index_bytes": 87230,
+            "index_ms": 92.136542,
+            "query_all_names_ms": 0.755375,
+            "top10_omitted_candidates": 0
+          }
+        },
+        {
+          "all_pairs_ms": 0.079459,
+          "cache_prototype": {
+            "cold_parse_hash_ms": 41.055583,
+            "cold_parsed": 17,
+            "deletion_evicted": true,
+            "edited_parsed": 1,
+            "isolated_parsed": 17,
+            "one_file_edit_ms": 3.968875,
+            "replacement_parsed": 1,
+            "warm_parsed": 0,
+            "warm_validate_clone_ms": 1.551625
+          },
+          "duplicate_pairs": 2,
+          "exact_bucket_ms": 0.046584,
+          "exact_parity": true,
+          "functions": 305,
+          "graph_build_ms": 66.844417,
+          "graph_parse_errors": 0,
+          "graph_query_ms": 5.728458,
+          "parallel_parse": [
+            {
+              "ms_including_pool_start": 19.178583,
+              "parity": true,
+              "workers": 2
+            },
+            {
+              "ms_including_pool_start": 14.979959,
+              "parity": true,
+              "workers": 4
+            }
+          ],
+          "parse_errors": [],
+          "production": [
+            {
+              "exhaustive_parity": true,
+              "parse_and_compare_ms": 37.588125,
+              "workers": 1
+            },
+            {
+              "exhaustive_parity": true,
+              "parse_and_compare_ms": 13.402416,
+              "workers": 4
+            }
+          ],
+          "registry_100_write_read_ms": 46.536208,
+          "registry_open_ms": 2.986834,
+          "serial_parse_ms": 37.718125,
+          "tantivy": {
+            "add_commit_reload_ms": 32.842708,
+            "delete_commit_reload_ms": 16.842,
+            "exact_candidate_count": 305,
+            "index_bytes": 84887,
+            "index_ms": 91.442041,
+            "query_all_names_ms": 0.731333,
+            "top10_omitted_candidates": 0
+          }
+        }
+      ],
+      "schema": "ground-performance-benchmark.v1",
+      "source_bytes": 281875,
+      "source_root": "packages/webflow-template-search/src",
+      "tantivy_version": "0.26.1",
+      "whole_experiment_peak_rss_bytes": 42106880
+    }
+  ],
+  "public_cli": {
+    "kind": "public-cli-comparison",
+    "runs": [
+      {
+        "scope": "packages/mcp-core/src",
+        "repeat": 0,
+        "variant": "baseline",
+        "ms": 40.71783402469009,
+        "peak_rss_bytes": 12042240,
+        "parity": true,
+        "exit_code": 0,
+        "findings": 0
+      },
+      {
+        "scope": "packages/mcp-core/src",
+        "repeat": 0,
+        "variant": "candidate_serial",
+        "ms": 42.12679201737046,
+        "peak_rss_bytes": 12107776,
+        "parity": true,
+        "exit_code": 0,
+        "findings": 0
+      },
+      {
+        "scope": "packages/mcp-core/src",
+        "repeat": 0,
+        "variant": "candidate_four",
+        "ms": 16.84970792848617,
+        "peak_rss_bytes": 12140544,
+        "parity": true,
+        "exit_code": 0,
+        "findings": 0
+      },
+      {
+        "scope": "packages/mcp-core/src",
+        "repeat": 1,
+        "variant": "baseline",
+        "ms": 20.61983395833522,
+        "peak_rss_bytes": 11894784,
+        "parity": true,
+        "exit_code": 0,
+        "findings": 0
+      },
+      {
+        "scope": "packages/mcp-core/src",
+        "repeat": 1,
+        "variant": "candidate_serial",
+        "ms": 21.5177919017151,
+        "peak_rss_bytes": 12075008,
+        "parity": true,
+        "exit_code": 0,
+        "findings": 0
+      },
+      {
+        "scope": "packages/mcp-core/src",
+        "repeat": 1,
+        "variant": "candidate_four",
+        "ms": 15.827415976673365,
+        "peak_rss_bytes": 12255232,
+        "parity": true,
+        "exit_code": 0,
+        "findings": 0
+      },
+      {
+        "scope": "packages/mcp-core/src",
+        "repeat": 2,
+        "variant": "baseline",
+        "ms": 22.161290980875492,
+        "peak_rss_bytes": 11911168,
+        "parity": true,
+        "exit_code": 0,
+        "findings": 0
+      },
+      {
+        "scope": "packages/mcp-core/src",
+        "repeat": 2,
+        "variant": "candidate_serial",
+        "ms": 21.686665946617723,
+        "peak_rss_bytes": 12091392,
+        "parity": true,
+        "exit_code": 0,
+        "findings": 0
+      },
+      {
+        "scope": "packages/mcp-core/src",
+        "repeat": 2,
+        "variant": "candidate_four",
+        "ms": 16.20675006415695,
+        "peak_rss_bytes": 12255232,
+        "parity": true,
+        "exit_code": 0,
+        "findings": 0
+      },
+      {
+        "scope": "packages/agency/src",
+        "repeat": 0,
+        "variant": "baseline",
+        "ms": 473.4857080038637,
+        "peak_rss_bytes": 19808256,
+        "parity": true,
+        "exit_code": 0,
+        "findings": 79
+      },
+      {
+        "scope": "packages/agency/src",
+        "repeat": 0,
+        "variant": "candidate_serial",
+        "ms": 335.3077080100775,
+        "peak_rss_bytes": 22757376,
+        "parity": true,
+        "exit_code": 0,
+        "findings": 79
+      },
+      {
+        "scope": "packages/agency/src",
+        "repeat": 0,
+        "variant": "candidate_four",
+        "ms": 137.6505420776084,
+        "peak_rss_bytes": 24887296,
+        "parity": true,
+        "exit_code": 0,
+        "findings": 79
+      },
+      {
+        "scope": "packages/agency/src",
+        "repeat": 1,
+        "variant": "baseline",
+        "ms": 410.3676250670105,
+        "peak_rss_bytes": 19513344,
+        "parity": true,
+        "exit_code": 0,
+        "findings": 79
+      },
+      {
+        "scope": "packages/agency/src",
+        "repeat": 1,
+        "variant": "candidate_serial",
+        "ms": 339.7814159980044,
+        "peak_rss_bytes": 22511616,
+        "parity": true,
+        "exit_code": 0,
+        "findings": 79
+      },
+      {
+        "scope": "packages/agency/src",
+        "repeat": 1,
+        "variant": "candidate_four",
+        "ms": 132.58270802907646,
+        "peak_rss_bytes": 24363008,
+        "parity": true,
+        "exit_code": 0,
+        "findings": 79
+      },
+      {
+        "scope": "packages/agency/src",
+        "repeat": 2,
+        "variant": "baseline",
+        "ms": 419.63712498545647,
+        "peak_rss_bytes": 19660800,
+        "parity": true,
+        "exit_code": 0,
+        "findings": 79
+      },
+      {
+        "scope": "packages/agency/src",
+        "repeat": 2,
+        "variant": "candidate_serial",
+        "ms": 368.0097080068663,
+        "peak_rss_bytes": 22446080,
+        "parity": true,
+        "exit_code": 0,
+        "findings": 79
+      },
+      {
+        "scope": "packages/agency/src",
+        "repeat": 2,
+        "variant": "candidate_four",
+        "ms": 200.85625001229346,
+        "peak_rss_bytes": 24772608,
+        "parity": true,
+        "exit_code": 0,
+        "findings": 79
+      },
+      {
+        "scope": "packages/webflow-template-search/src",
+        "repeat": 0,
+        "variant": "baseline",
+        "ms": 73.53762502316386,
+        "peak_rss_bytes": 13631488,
+        "parity": true,
+        "exit_code": 0,
+        "findings": 1
+      },
+      {
+        "scope": "packages/webflow-template-search/src",
+        "repeat": 0,
+        "variant": "candidate_serial",
+        "ms": 52.10262502077967,
+        "peak_rss_bytes": 14303232,
+        "parity": true,
+        "exit_code": 0,
+        "findings": 1
+      },
+      {
+        "scope": "packages/webflow-template-search/src",
+        "repeat": 0,
+        "variant": "candidate_four",
+        "ms": 28.50908401887864,
+        "peak_rss_bytes": 16220160,
+        "parity": true,
+        "exit_code": 0,
+        "findings": 1
+      },
+      {
+        "scope": "packages/webflow-template-search/src",
+        "repeat": 1,
+        "variant": "baseline",
+        "ms": 52.84916691016406,
+        "peak_rss_bytes": 13664256,
+        "parity": true,
+        "exit_code": 0,
+        "findings": 1
+      },
+      {
+        "scope": "packages/webflow-template-search/src",
+        "repeat": 1,
+        "variant": "candidate_serial",
+        "ms": 49.1558329667896,
+        "peak_rss_bytes": 14270464,
+        "parity": true,
+        "exit_code": 0,
+        "findings": 1
+      },
+      {
+        "scope": "packages/webflow-template-search/src",
+        "repeat": 1,
+        "variant": "candidate_four",
+        "ms": 30.20774992182851,
+        "peak_rss_bytes": 16121856,
+        "parity": true,
+        "exit_code": 0,
+        "findings": 1
+      },
+      {
+        "scope": "packages/webflow-template-search/src",
+        "repeat": 2,
+        "variant": "baseline",
+        "ms": 52.06587491557002,
+        "peak_rss_bytes": 13713408,
+        "parity": true,
+        "exit_code": 0,
+        "findings": 1
+      },
+      {
+        "scope": "packages/webflow-template-search/src",
+        "repeat": 2,
+        "variant": "candidate_serial",
+        "ms": 48.27520903199911,
+        "peak_rss_bytes": 14270464,
+        "parity": true,
+        "exit_code": 0,
+        "findings": 1
+      },
+      {
+        "scope": "packages/webflow-template-search/src",
+        "repeat": 2,
+        "variant": "candidate_four",
+        "ms": 26.652167085558176,
+        "peak_rss_bytes": 16023552,
+        "parity": true,
+        "exit_code": 0,
+        "findings": 1
+      }
+    ],
+    "builds": {
+      "baseline": {
+        "name": "ground",
+        "version": "0.4.1",
+        "source_sha": "4c7edb7fa6a177715098487dd306131229723279",
+        "target_triple": "aarch64-apple-darwin",
+        "receipt_schema_version": "ground-review-receipt.v1"
+      },
+      "candidate": {
+        "name": "ground",
+        "version": "0.4.2",
+        "source_sha": "142d87b4702076c2f223c52792b54cc52d9d2d9c",
+        "target_triple": "aarch64-apple-darwin",
+        "receipt_schema_version": "ground-review-receipt.v1"
+      }
+    }
+  },
+  "limitations": [
+    "Three repetitions on one macOS arm64 machine; not a cross-platform performance promise.",
+    "First run is process-cold, not OS-cache-cold.",
+    "Whole-experiment RSS includes every alternative and is not isolated Tantivy/cache memory. Public CLI peak RSS is measured separately per invocation.",
+    "Top-10 omissions count missing candidates, not independently measured missed duplicate findings.",
+    "No persistent graph or search cache is shipped.",
+    "Existing file discovery limits and unsupported source coverage remain in force."
+  ]
+}

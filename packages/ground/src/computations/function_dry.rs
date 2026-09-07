@@ -53,7 +53,7 @@
 //! - Reduce propagated bugs (same-file clones have ~18% higher bug rate)
 //! - Apply the Subtractive Triad: DRY at implementation level
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::fs;
 use std::time::Instant;
@@ -210,6 +210,10 @@ pub struct FunctionDryOptions {
     /// absolute deadline so a caller can apply one budget across discovery and
     /// duplicate comparison work.
     pub deadline: Option<Instant>,
+
+    /// File parsing workers: 0 selects available CPUs, bounded to four.
+    /// 1 forces serial execution. No parsed state survives a call.
+    pub max_workers: usize,
 }
 
 /// Default threshold for intra-file detection (higher than inter-file)
@@ -665,22 +669,14 @@ fn capitalize_first(s: &str) -> String {
 
 /// Compare two functions for similarity
 pub fn compare_functions(a: &ExtractedFunction, b: &ExtractedFunction) -> f64 {
-    // Use levenshtein-style similarity on normalized bodies
-    let a_body = &a.normalized_body;
-    let b_body = &b.normalized_body;
-    
-    if a_body.is_empty() && b_body.is_empty() {
-        return 1.0;
-    }
-    
-    if a_body.is_empty() || b_body.is_empty() {
-        return 0.0;
-    }
-    
-    // Token-based comparison
-    let a_tokens: Vec<&str> = a_body.split_whitespace().collect();
-    let b_tokens: Vec<&str> = b_body.split_whitespace().collect();
-    
+    let a_tokens: Vec<&str> = a.normalized_body.split_whitespace().collect();
+    let b_tokens: Vec<&str> = b.normalized_body.split_whitespace().collect();
+    compare_tokens(&a_tokens, &b_tokens, a.normalized_body.is_empty(), b.normalized_body.is_empty())
+}
+
+fn compare_tokens(a_tokens: &[&str], b_tokens: &[&str], a_empty: bool, b_empty: bool) -> f64 {
+    if a_empty && b_empty { return 1.0; }
+    if a_empty || b_empty { return 0.0; }
     let max_len = a_tokens.len().max(b_tokens.len()) as f64;
     if max_len == 0.0 {
         return 1.0;
@@ -733,6 +729,47 @@ pub fn analyze_function_dry_focused_with_options(
     analyze_function_dry_internal(files, Some(focus_files), threshold, options)
 }
 
+/// Bounded per-call workers; collect in input order so scheduling never changes
+/// evidence ordering or which parse error is reported. Workers never write files.
+fn extract_corpus(files: &[PathBuf], options: &FunctionDryOptions)
+    -> Result<Vec<Vec<ExtractedFunction>>, ComputationError>
+{
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    let requested = if options.max_workers == 0 {
+        std::thread::available_parallelism().map_or(1, |n| n.get())
+    } else { options.max_workers };
+    let workers = requested.clamp(1, 4).min(files.len().max(1));
+    let parse = |path: &PathBuf| {
+        if options.timed_out() { return Err(ComputationError::Timeout); }
+        let result = extract_functions(path);
+        if options.timed_out() { return Err(ComputationError::Timeout); }
+        result
+    };
+    if workers == 1 || files.len() < 8 { return files.iter().map(parse).collect(); }
+    let next = AtomicUsize::new(0);
+    let mut results = std::thread::scope(|scope| -> Result<Vec<_>, ComputationError> {
+        let mut handles = Vec::new();
+        for _ in 0..workers {
+            handles.push(std::thread::Builder::new().name("ground-parse".into()).spawn_scoped(scope, || {
+                let mut results = Vec::new();
+                loop {
+                    let i = next.fetch_add(1, Ordering::Relaxed);
+                    if i >= files.len() { break; }
+                    results.push((i, parse(&files[i])));
+                }
+                results
+            })?);
+        }
+        let mut results = Vec::new();
+        for handle in handles {
+            results.extend(handle.join().map_err(|_| std::io::Error::other("Ground parsing worker panicked"))?);
+        }
+        Ok(results)
+    })?;
+    results.sort_unstable_by_key(|(i, _)| *i);
+    results.into_iter().map(|(_, result)| result).collect()
+}
+
 fn analyze_function_dry_internal(
     files: &[PathBuf],
     focus_files: Option<&HashSet<PathBuf>>,
@@ -743,36 +780,31 @@ fn analyze_function_dry_internal(
     let mut skipped_files = Vec::new();
     let mut analyzed_files = Vec::new();
     
-    // Extract functions from all files
     for path in files {
-        if options.timed_out() {
-            return Err(ComputationError::Timeout);
-        }
-
-        // Check if we should skip this file
-        if options.should_exclude(path) {
-            skipped_files.push(path.clone());
-            continue;
-        }
-        
-        {
-            let functions = extract_functions(path)?;
-            // Filter by minimum lines if specified
-            let filtered: Vec<_> = if let Some(min_lines) = options.min_function_lines {
-                functions.into_iter()
-                    .filter(|f| f.end_line - f.start_line + 1 >= min_lines)
-                    .collect()
-            } else {
-                functions
-            };
-            
-            for func in filtered {
+        if options.timed_out() { return Err(ComputationError::Timeout); }
+        if options.should_exclude(path) { skipped_files.push(path.clone()); }
+        else { analyzed_files.push(path.clone()); }
+    }
+    let extracted = extract_corpus(&analyzed_files, options)?;
+    for (path, functions) in analyzed_files.iter().zip(extracted) {
+        for func in functions {
+            if options.min_function_lines.is_none_or(|min| func.end_line - func.start_line + 1 >= min) {
                 all_functions.push((path.clone(), func));
             }
-            analyzed_files.push(path.clone());
         }
     }
-    
+    // Reuse tokens only within this invocation. Name/file buckets enumerate all
+    // eligible pairs, without ranked retrieval, top-k limits or stale state.
+    let tokens: Vec<Vec<&str>> = all_functions.iter()
+        .map(|(_, f)| f.normalized_body.split_whitespace().collect()).collect();
+    let mut by_name: HashMap<&str, Vec<usize>> = HashMap::new();
+    let mut by_file: HashMap<&Path, Vec<usize>> = HashMap::new();
+    for (i, (path, func)) in all_functions.iter().enumerate() {
+        if options.timed_out() { return Err(ComputationError::Timeout); }
+        by_name.entry(&func.name).or_default().push(i);
+        if options.detect_intra_file { by_file.entry(path).or_default().push(i); }
+    }
+
     let total_functions = all_functions.len();
     let mut duplicates = Vec::new();
     let mut intra_file_duplicates = Vec::new();
@@ -787,7 +819,7 @@ fn analyze_function_dry_internal(
         let same_name = func_a.name == func_b.name;
 
         if !same_file && same_name {
-            let similarity = compare_functions(func_a, func_b);
+            let similarity = compare_tokens(&tokens[i], &tokens[j], func_a.normalized_body.is_empty(), func_b.normalized_body.is_empty());
             if similarity >= threshold {
                 duplicates.push(FunctionDryEvidence {
                     id: Uuid::new_v4(),
@@ -803,7 +835,7 @@ fn analyze_function_dry_internal(
         }
 
         if options.detect_intra_file && same_file && !same_name {
-            let similarity = compare_functions(func_a, func_b);
+            let similarity = compare_tokens(&tokens[i], &tokens[j], func_a.normalized_body.is_empty(), func_b.normalized_body.is_empty());
             if similarity >= intra_threshold {
                 intra_file_duplicates.push(IntraFileDryEvidence {
                     id: Uuid::new_v4(),
@@ -820,35 +852,25 @@ fn analyze_function_dry_internal(
         }
     };
 
-    if let Some(focus) = focus_files {
-        for i in 0..all_functions.len() {
-            if options.timed_out() {
-                return Err(ComputationError::Timeout);
-            }
-            if !focus.contains(&all_functions[i].0) {
-                continue;
-            }
-            for j in 0..all_functions.len() {
-                if options.timed_out() {
-                    return Err(ComputationError::Timeout);
-                }
-                if i == j || (focus.contains(&all_functions[j].0) && j < i) {
-                    continue;
-                }
-                compare_pair(i, j);
-            }
+    for i in 0..all_functions.len() {
+        if options.timed_out() { return Err(ComputationError::Timeout); }
+        if focus_files.is_some_and(|focus| !focus.contains(&all_functions[i].0)) { continue; }
+        let mut candidates = by_name[all_functions[i].1.name.as_str()].clone();
+        if options.detect_intra_file {
+            candidates.extend_from_slice(&by_file[all_functions[i].0.as_path()]);
+            candidates.sort_unstable();
+            candidates.dedup();
         }
-    } else {
-        for i in 0..all_functions.len() {
-            for j in (i + 1)..all_functions.len() {
-                if options.timed_out() {
-                    return Err(ComputationError::Timeout);
-                }
-                compare_pair(i, j);
-            }
+        for j in candidates {
+            if options.timed_out() { return Err(ComputationError::Timeout); }
+            let skip = if let Some(focus) = focus_files {
+                i == j || (focus.contains(&all_functions[j].0) && j < i)
+            } else { j <= i };
+            if !skip { compare_pair(i, j); }
         }
     }
-    
+    if options.timed_out() { return Err(ComputationError::Timeout); }
+
     Ok(FunctionDryReport {
         id: Uuid::new_v4(),
         files: analyzed_files,

@@ -9,3 +9,7 @@ Cargo.lock
 
 # OS
 .DS_Store
+
+# Freeze the isolated performance experiment without shipping its dependencies.
+!benchmarks/retrieval/Cargo.lock
+/benchmarks/retrieval/target/

@@ -175,6 +175,12 @@ pub fn list_tools() -> Vec<ToolDefinition> {
                         "type": "number",
                         "description": "Minimum function lines to analyze. Filters out trivial 1-3 line functions. Default: no minimum"
                     },
+                    "workers": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 4,
+                        "description": "Duplicate file parsing workers. 0 (default) selects available CPUs up to four; 1 forces serial. Does not change coverage or comparison semantics."
+                    },
                     "timeout_ms": {
                         "type": "number",
                         "minimum": 0,
@@ -371,6 +377,12 @@ pub fn list_tools() -> Vec<ToolDefinition> {
                         "type": "boolean",
                         "description": "Scan across packages in monorepo. Default: false"
                     },
+                    "workers": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 4,
+                        "description": "Duplicate file parsing workers. 0 (default) selects available CPUs up to four; 1 forces serial. Does not change coverage or comparison semantics."
+                    },
                     "timeout_ms": {
                         "type": "number",
                         "minimum": 0,
@@ -405,6 +417,12 @@ pub fn list_tools() -> Vec<ToolDefinition> {
                     "cross_package": {
                         "type": "boolean",
                         "description": "Scan across packages in monorepo. Default: false"
+                    },
+                    "workers": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 4,
+                        "description": "Duplicate file parsing workers. 0 (default) selects available CPUs up to four; 1 forces serial. Does not change coverage or comparison semantics."
                     },
                     "timeout_ms": {
                         "type": "number",
@@ -640,6 +658,14 @@ fn aggregate_verification_status<'a>(statuses: impl IntoIterator<Item = &'a Veri
         VerificationStatus::Pass
     } else {
         VerificationStatus::NotApplicable
+    }
+}
+
+fn duplicate_workers(args: &Value) -> Result<usize, String> {
+    match args.get("workers") {
+        None => Ok(0),
+        Some(value) => value.as_u64().filter(|n| *n <= 4).map(|n| n as usize)
+            .ok_or_else(|| "workers must be an integer from 0 to 4 (0 = automatic)".to_string()),
     }
 }
 
@@ -886,6 +912,10 @@ fn handle_check_connections(g: &mut VerifiedTriad, args: &Value) -> ToolResult {
 }
 
 fn handle_find_duplicate_functions(args: &Value) -> ToolResult {
+    let workers = match duplicate_workers(args) {
+        Ok(workers) => workers,
+        Err(error) => return ToolResult::error(error),
+    };
     let timeout_ms = duplicate_timeout_ms(args);
     let started_at = Instant::now();
     let deadline = started_at + Duration::from_millis(timeout_ms);
@@ -996,6 +1026,7 @@ fn handle_find_duplicate_functions(args: &Value) -> ToolResult {
         detect_intra_file,
         intra_file_threshold,
         deadline: Some(deadline),
+        max_workers: workers,
         ..Default::default()
     };
     
@@ -2487,6 +2518,10 @@ fn generate_structured_fix(
 }
 
 fn handle_batch_analyze(args: &Value) -> ToolResult {
+    let workers = match duplicate_workers(args) {
+        Ok(workers) => workers,
+        Err(error) => return ToolResult::error(error),
+    };
     let directory = match args.get("directory").and_then(|v| v.as_str()) {
         Some(d) => PathBuf::from(d),
         None => return ToolResult::error("Missing required parameter: directory"),
@@ -2549,7 +2584,8 @@ fn handle_batch_analyze(args: &Value) -> ToolResult {
             "directory": directory.to_string_lossy(),
             "cross_package": cross_package,
             "threshold": config.similarity_threshold(),
-            "timeout_ms": timeout_ms
+            "timeout_ms": timeout_ms,
+            "workers": workers
         });
         
         if let ToolResult { success: true, content, .. } = handle_find_duplicate_functions(&dup_args) {
@@ -3062,6 +3098,10 @@ fn canonicalize_parent(path: &Path) -> PathBuf {
 }
 
 fn handle_diff(args: &Value) -> ToolResult {
+    let workers = match duplicate_workers(args) {
+        Ok(workers) => workers,
+        Err(error) => return ToolResult::error(error),
+    };
     let directory = match args.get("directory").and_then(|v| v.as_str()) {
         Some(d) => PathBuf::from(d),
         None => return ToolResult::error("Missing required parameter: directory"),
@@ -3194,6 +3234,7 @@ fn handle_diff(args: &Value) -> ToolResult {
                 "cross_package": cross_package,
                 "threshold": config.similarity_threshold(),
                 "timeout_ms": timeout_ms,
+                "workers": workers,
                 "focus_files": relevant_files.iter()
                     .map(|file| file.to_string_lossy().to_string())
                     .collect::<Vec<_>>()
