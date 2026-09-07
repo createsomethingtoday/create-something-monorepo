@@ -12,10 +12,10 @@ export const NEWSLETTER_DELIVERIES = [
 export const NEWSLETTER_ENGAGEMENT_SQL = `WITH landings AS (
   SELECT session_id, json_extract(metadata, '$.newsletterCampaign') AS campaign,
     COALESCE(json_extract(metadata, '$.trafficClass'), 'unknown') AS traffic_class,
-    MIN(created_at) AS landed_at
+    MIN(julianday(created_at)) AS landed_at
   FROM unified_events
   WHERE property = 'io' AND action = 'page_view'
-    AND created_at >= datetime('now', '-30 days')
+    AND julianday(created_at) >= julianday('now', '-30 days')
     AND json_valid(metadata)
     AND json_extract(metadata, '$.newsletterMeasurement') = 'first-party-v1'
   GROUP BY session_id, campaign, traffic_class
@@ -24,8 +24,8 @@ export const NEWSLETTER_ENGAGEMENT_SQL = `WITH landings AS (
     MAX(CASE WHEN e.action = 'content_link_click' THEN 1 ELSE 0 END) AS resource_click,
     MAX(CASE WHEN e.action = 'content_copy' THEN 1 ELSE 0 END) AS copied
   FROM landings l LEFT JOIN unified_events e ON e.session_id = l.session_id
-    AND e.property = 'io' AND e.created_at >= l.landed_at
-    AND e.created_at <= datetime(l.landed_at, '+30 minutes')
+    AND e.property = 'io' AND julianday(e.created_at) >= l.landed_at
+    AND julianday(e.created_at) <= l.landed_at + (30.0 / 1440)
     AND COALESCE(json_extract(e.metadata, '$.trafficClass'), 'unknown') = l.traffic_class
   GROUP BY l.campaign, l.traffic_class, l.session_id
 )

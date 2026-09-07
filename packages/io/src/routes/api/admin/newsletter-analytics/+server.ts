@@ -15,7 +15,7 @@ export const GET: RequestHandler = async ({ platform }) => {
       db.prepare(`SELECT action, COALESCE(json_extract(metadata, '$.trafficClass'), 'unknown') AS traffic_class,
         COUNT(*) AS events, COUNT(DISTINCT session_id) AS sessions FROM unified_events
         WHERE property = 'io' AND (url LIKE 'https://createsomething.io/newsletters%' )
-          AND action IN ('page_view', 'content_link_click') AND created_at >= datetime('now', '-30 days')
+          AND action IN ('page_view', 'content_link_click') AND julianday(created_at) >= julianday('now', '-30 days')
         GROUP BY action, traffic_class`).all()
     ]);
     const deliveries = [];

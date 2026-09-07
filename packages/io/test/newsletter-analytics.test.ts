@@ -32,7 +32,7 @@ import sqlite3,json,sys
 c=sqlite3.connect(':memory:');c.row_factory=sqlite3.Row
 c.execute('CREATE TABLE unified_events(session_id TEXT,property TEXT,action TEXT,created_at TEXT,metadata TEXT)')
 def add(s,a,m,offset):
- c.execute("INSERT INTO unified_events VALUES(?, 'io', ?, datetime('now', ?), ?)",(s,a,offset,json.dumps(m)))
+ c.execute("INSERT INTO unified_events VALUES(?, 'io', ?, strftime('%Y-%m-%dT%H:%M:%fZ','now', ?), ?)",(s,a,offset,json.dumps(m)))
 m={'newsletterCampaign':'2026-09-08-test-the-checker','newsletterMeasurement':'first-party-v1','trafficClass':'external'}
 add('reader','page_view',m,'-20 minutes');add('reader','page_view',m,'-19 minutes')
 add('reader','content_link_click',{'trafficClass':'external'},'-18 minutes');add('reader','content_link_click',{'trafficClass':'external'},'-17 minutes')
