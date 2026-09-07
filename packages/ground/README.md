@@ -2,6 +2,9 @@
 
 Grounded claims for code.
 
+For CREATE SOMETHING checkout setup, real CLI/MCP verification, and reviewed
+findings, see [Ground monorepo adoption](../../docs/guides/GROUND_MONOREPO_ADOPTION.md).
+
 ---
 
 ## The Problem

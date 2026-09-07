@@ -10,6 +10,12 @@
 
 version: "1"
 
+# The lint runner loads this exact module through ESLint --config.
+# See scripts/evidence-lint-pilot.mjs and packages/mcp-core/package.json scripts.lint.
+entry_points:
+  manual:
+    - packages/mcp-core/eslint.evidence.config.mjs
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Native policy only. Specialized repository checks retain their own config in
 # `.ground/`; Ground must never imply those policies were enforced by parsing
