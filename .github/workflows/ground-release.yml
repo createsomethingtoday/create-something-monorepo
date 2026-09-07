@@ -55,6 +55,7 @@ jobs:
           node scripts/ground-seeded-trial.mjs --native-dir packages/ground/target/debug --output /tmp/ground-seeded-trial.json
 
       - name: Preserve seeded trial receipt
+        if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: ground-seeded-trial-receipt
