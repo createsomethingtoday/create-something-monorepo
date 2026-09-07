@@ -36,7 +36,7 @@
 
 <SEO
   title="AI Workflow Field Reports | CREATE SOMETHING .agency"
-  description="Inspectable CREATE SOMETHING field reports: what the workflow was meant to change, what the evidence proved, what failed, and what remains human-owned."
+  description="Read our test results: what worked, what failed, what was not measured, and which decisions stayed with a person."
   keywords="AI workflow field reports, workflow evidence, agent evaluation results, human approval workflow"
   propertyName="agency"
 />
@@ -44,8 +44,8 @@
 <PerformanceCampaignOpening
   eyebrow="Performance Lab / Public evidence"
   expression="editorial"
-  title="Review the film. Improve the playbook."
-  lede="Each Field Report replays a run against its evidence. It separates what was measured, blocked, and unknown so operators can improve the next Play."
+  title="Read the results, including the limits."
+  lede="Each report shows a test and its evidence. Read what was measured, what failed, and what remains unknown."
   media={playbookHeroMedia.fieldReports}
   mediaMobilePlacement="background"
   density="compact"
@@ -67,7 +67,7 @@
   id="reports"
   eyebrow="Report index"
   title="Start with the workflow under pressure."
-  description="Each report connects an operating map to measured facts, blocked judgment, unknown impact, and the decisions it was not allowed to make."
+  description="See the workflow, measured results, limits, and decisions that stayed with a person."
   items={reports}
   ariaLabel="CREATE SOMETHING Field Reports"
 />
@@ -75,8 +75,8 @@
 <PerformanceConversionHandoff
   expression="editorial"
   eyebrow="Bring the next field test"
-  title="Measure one workflow before expanding authority."
-  description="Name the repeated handoff, decision owner, objective work, and current baseline. The first map will show whether a controlled pilot is worth running."
+  title="Test one task before giving AI more to do."
+  description="Bring a repeated task, the person responsible, and an example of how it works today. We’ll assess whether a small test would help."
   handoff={{
     owner: 'Workflow owner',
     authority: 'Human decision',

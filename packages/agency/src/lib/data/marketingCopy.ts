@@ -1,9 +1,9 @@
 export const agencyCoreMessaging = {
   categoryLabel: 'AI workflow systems',
-  startWithWorkflowLabel: 'Start a private workflow draft',
+  startWithWorkflowLabel: 'Map your workflow',
   startWithWorkflowHref: '/map',
-  tryMapLabel: 'Start a private workflow draft',
-  selfMapLabel: 'Start a private workflow draft',
+  tryMapLabel: 'Map your workflow',
+  selfMapLabel: 'Map your workflow',
   selfMapHref: '/map',
   governanceChecklistLabel: 'Get Workflow Checklist',
   governanceChecklistHref: '/contact?source=resource&intent=governance-checklist&lane=not_sure',
@@ -19,15 +19,15 @@ export const agencyCoreMessaging = {
     '/book?source=workflow-compiler-integration&intent=compiler-integration&lane=workflow_infrastructure',
   agentFoundationLabel: 'Agent Foundation',
   agentFoundationHref: '/agent-foundation',
-  reviewAgentFoundationLabel: 'Review the Agent Foundation',
-  bookAgentFoundationLabel: 'Book a Foundation fit call',
+  reviewAgentFoundationLabel: 'See what we build',
+  bookAgentFoundationLabel: 'Talk about your project',
   agentFoundationBookingHref:
     '/book?source=agent-foundation&intent=agent-foundation&lane=workflow_infrastructure',
   agentReadinessAuditHref: '/agent-readiness',
   agentReadinessAuditBookingHref:
     '/book?source=agent-readiness&intent=ai-readiness-audit&lane=workflow_infrastructure',
-  engagementModelLabel: 'See the service path →',
-  workflowCtaHeading: 'Bring one workflow your team is ready to delegate.',
+  engagementModelLabel: 'See how it works →',
+  workflowCtaHeading: 'Tell us which task needs too much of your time.',
   workflowCtaDetail:
-    'I map the signals, decision owner, allowed actions, approval pauses, stop conditions, and proof record before AI runs it.'
+    'We’ll look at how the work happens today, where AI could help, and which decisions need a person.'
 } as const;

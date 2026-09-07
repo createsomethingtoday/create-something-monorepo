@@ -62,7 +62,7 @@
       id: 'result',
       label: 'Result',
       summary: '49 / 50 packets',
-      title: 'The collector worked. The quality judge stayed blocked.',
+      title: 'Evidence collection worked. Final decisions stayed human.',
       detail:
         'Evidence collection completed for 49 of 50 selected cases in a balanced shadow sample. That measures packet completion—not decision accuracy, reviewer capacity, or business impact.',
       tone: 'review',
@@ -144,7 +144,7 @@
     id="result"
     eyebrow="One evidence argument"
     title="Four questions, kept separate on purpose."
-    description="The report separates four questions: Did collection work? Did judgment earn promotion? What did one packet cost? Which claims remain measured or unresolved?"
+    description="Read four results: evidence collection, decision quality, the cost of one case, and what still needs measuring."
     scenes={fieldReportScenes}
     ariaLabel="Template review Field Report argument"
   >
@@ -154,7 +154,7 @@
           <header>
             <span>Decision summary</span>
             <div>
-              <h2 id="field-result-title">Collection worked. Judgment did not earn promotion.</h2>
+              <h2 id="field-result-title">The system could prepare cases. It could not approve them.</h2>
               <p>{templateReviewFieldReport.hypothesis}</p>
             </div>
           </header>
@@ -185,7 +185,7 @@
         />
         <section class="stage-evidence-block" aria-labelledby="synthetic-check-title">
           <h4 id="synthetic-check-title">
-            Five Dify agents held the boundary in controlled tests.
+            Five Dify agents passed the July 12 safety tests.
           </h4>
           <p>
             On July 12, the central Template Review Hub and four reviewer-specific agents passed
@@ -262,7 +262,7 @@
           <PerformanceEvidenceIndex
             eyebrow="Evidence basis"
             title="Open the dated source records."
-            description="The sample, the packet result, and the failed judgment gate all remain inspectable — including the business measurement we could not close."
+            description="The source records show the sample, the collection result, and the failed decision checks. Business impact still needs measuring."
             items={evidenceItems}
             ariaLabel="Template review Field Report evidence records"
           />
@@ -296,9 +296,7 @@
       <span>Operating proof</span>
       <h2 id="field-context-title">See exactly where preparation stops and human judgment begins.</h2>
       <p>
-        This read-only change view uses the same public workflow definition as Control. It exposes
-        the owner, authority boundary, dated evidence, and recovery path without exposing private
-        records or implying live execution.
+        This example shows who is responsible, which actions need approval, and the dated evidence. It cannot run live tasks or reveal private records.
       </p>
     </header>
     <SystemContextArtifact
@@ -311,8 +309,8 @@
   <PerformanceConversionHandoff
     expression="editorial"
     eyebrow="Business implication"
-    title="Use automation to prepare evidence—not to assume judgment."
-    description="Start with one repeated workflow, a named decision owner, and a measurable baseline. Expand authority only after the system proves both quality and business value."
+    title="Prepare the evidence. Let the reviewer decide."
+    description="Start with one repeated task, a person responsible, and a baseline you can measure. Check quality and business value before expanding what AI may do."
     handoff={{
       owner: 'Workflow + decision owner',
       authority: 'Human approval',

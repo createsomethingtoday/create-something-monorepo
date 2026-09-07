@@ -231,11 +231,11 @@ test('primary public entry points route visitors through Map -> Build -> Control
   ) as Array<{ path: string }>;
 
   assert.match(messaging, /selfMapHref: '\/map'/);
-  assert.match(services, /CREATE SOMETHING Map/);
-  assert.match(services, /CREATE SOMETHING Build/);
-  assert.match(services, /CREATE SOMETHING Control/);
+  assert.match(services, /getPublicProduct\('map'\)/);
+  assert.match(services, /getPublicProduct\('build'\)/);
+  assert.match(services, /getPublicProduct\('control'\)/);
   assert.match(services, /Control includes Map/);
-  assert.match(products, /Choose where the workflow is now\./);
+  assert.match(products, /Choose the help you need now\./);
   assert.match(products, /PUBLIC_PRODUCT_SEQUENCE\.map\(getPublicProduct\)/);
   assert.match(products, /Control includes Map/);
   assert.match(practice, /href: '\/map'/);

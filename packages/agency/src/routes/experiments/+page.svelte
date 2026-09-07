@@ -37,7 +37,7 @@
 
 <SEO
   title="Agency Experiments ({data.papers.length})"
-  description="Browse CREATE SOMETHING agency experiments: real projects, operating boundaries, and inspectable results."
+  description="Browse our experiments, the results we can show, and what still needs testing."
   propertyName="agency"
   noindex={true}
   breadcrumbs={[
@@ -50,7 +50,7 @@
   eyebrow="Experiment index"
   expression="editorial"
   title="Browse the work. Start with the result."
-  lede="These are working experiments, not a generic portfolio. Sort the collection, inspect one result, and follow its evidence and limits."
+  lede="Choose an experiment to see what was built, what was tested, and the limits of the result."
   density="compact"
   media={{
     src: '/images/performance-lab/pressure-boundary-natural.webp',
@@ -83,7 +83,7 @@
 <PapersGrid
   papers={sortedPapers}
   title="Choose one experiment."
-  subtitle="Each destination owns its result, evidence, and operating boundary."
+  subtitle="Each experiment includes its result, supporting evidence, and limits."
 />
 
 <style>

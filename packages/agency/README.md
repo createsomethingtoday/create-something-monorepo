@@ -81,35 +81,24 @@ iconography or unverified market claims to make the page feel bigger.
 Public `.agency` copy should read like a clear business conversation before it
 reads like a strategy memo.
 
+The primary reader is a business owner or operations lead who knows the task
+but does not know AI terminology. Apply On Writing Well to every active public
+page, shared component, form, guide, and metadata description.
+
 Use this order:
 
-1. Name the category in plain language: `AI workflow systems`. The homepage may add the outcome: `Operating systems for AI work`.
-2. Name the business situation: one messy handoff, repeated workflow, or live
-   operating risk.
-3. State the operating loop: Signals, Decisions, and Proof.
-4. Show the proof object: a CREATE SOMETHING Map, decision inbox, delivery record, or
-   audit trail.
-5. Explain the stack only after the workflow boundary is visible.
+1. Name the task or business problem.
+2. Explain what we do and what the customer receives.
+3. Give a supported result or an explicitly illustrative example.
+4. Keep pricing, ownership, approvals, known limits, and launch scope clear.
+5. Offer one useful next step; place developer detail beside the task it supports.
 
-Prefer public words like:
-
-- signal
-- decision
-- proof
-- workflow
-- handoff
-- map
-- pilot
-- owner
-- approval
-- stop point
-- audit trail
-- evidence
-- runbook
-- playbook
-- play
-- offense
-- defense
+Cut or combine repeated sections. Define agent, repository, runbook, MCP, and
+other unfamiliar terms where they are first needed. Map, Build, and Control are
+service names, not prerequisites for understanding the offer. Sports metaphors
+belong in the founder story or relevant demonstrations, not in the basic service
+explanation. Do not stack internal terms such as signal, boundary, authority,
+receipt, surface, and governed in place of a concrete actor and action.
 
 Avoid public words and frames like:
 

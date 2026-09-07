@@ -3,16 +3,16 @@
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
   export let eyebrow = 'Conversion Path';
-  export let title = 'Move from useful reading to a named workflow decision.';
+  export let title = 'Choose the next step that helps.';
   export let description =
-    'Start with a reusable checklist. Make a private draft. Request a workflow map when a review would help. Book when the owner and decision are named.';
+    'Use the checklist to get started, draft a plan in Map, or ask us to talk through a task.';
 
   const stages = [
     {
       label: 'Cold',
       title: 'Control checklist',
       detail:
-        'A low-friction resource for readers who need language for allowed, ask, blocked, logging, and recovery states.',
+        'Questions to help decide what AI may do, when it needs approval, and how to recover from a failure.',
       cta: agencyCoreMessaging.governanceChecklistLabel,
       href: agencyCoreMessaging.governanceChecklistHref,
       intent: 'governance-checklist'
@@ -21,7 +21,7 @@
       label: 'Warm',
       title: 'Private workflow draft',
       detail:
-        'A browser-local starting sheet for the owner, systems, approval points, risk boundary, and first workflow worth mapping.',
+        'A private browser draft of the task, tools, people, and approvals.',
       cta: agencyCoreMessaging.startWithWorkflowLabel,
       href: agencyCoreMessaging.startWithWorkflowHref,
       intent: 'private-workflow-draft'
@@ -30,7 +30,7 @@
       label: 'Review',
       title: 'Workflow-map request',
       detail:
-        'A short request for help reviewing the stack, bottleneck, risk boundary, and first workflow worth mapping.',
+        'Ask for help reviewing a task, its tools, and the problem you want to solve.',
       cta: agencyCoreMessaging.workflowTeardownLabel,
       href: agencyCoreMessaging.workflowTeardownHref,
       intent: 'workflow-teardown'
@@ -39,7 +39,7 @@
       label: 'Hot',
       title: 'Mapping session',
       detail:
-        'A calendar path for teams who already know the workflow, owner, approval authority, and decision timeline.',
+        'Choose a time to talk through a task with the person responsible for it.',
       cta: agencyCoreMessaging.bookMappingSessionLabel,
       href: '/book?source=funnel-ladder&intent=workflow-mapping&lane=not_sure',
       intent: 'workflow-mapping'

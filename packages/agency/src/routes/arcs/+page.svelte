@@ -17,7 +17,7 @@
   <title>Arc Catalog · CREATE SOMETHING</title>
   <meta
     name="description"
-    content="Presentation-native views over registered CREATE SOMETHING Playbooks and Runbooks."
+    content="Browse presentations of workflow plans and step-by-step operating instructions."
   />
   <meta name="robots" content="noindex, nofollow" />
 </svelte:head>
@@ -26,11 +26,10 @@
   <header class="arc-catalog__hero">
     <div>
       <a href="/products">Products / Arcs</a>
-      <p>Presentation registry · read only</p>
-      <h1>Every registered route can tell its operating story.</h1>
+      <p>Workflow presentations · read only</p>
+      <h1>See the workflow as a presentation.</h1>
       <p class="arc-catalog__lede">
-        55 presentation routes reuse the same typed Playbooks, Runbooks, maps, boundaries, and proof
-        contracts that operators and agents already read.
+        These 55 presentations use the existing workflow plans and instructions. They explain the steps, permissions, and records; they do not run the work.
       </p>
     </div>
     <dl>
@@ -56,10 +55,10 @@
   </header>
 
   <section class="arc-catalog__rule" aria-label="Arc product boundary">
-    <strong>Map is the source.</strong>
-    <span>Arc is the presentation route.</span>
-    <span>Playbook is the reusable method.</span>
-    <span>Runbook is the executable route.</span>
+    <strong>Map holds the workflow plan.</strong>
+    <span>Arc shows it as a presentation.</span>
+    <span>A Playbook is a reusable workflow plan.</span>
+    <span>A Runbook contains the steps to run.</span>
   </section>
 
   {#each groups as group}

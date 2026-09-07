@@ -80,9 +80,9 @@
       id: 'lessons',
       label: 'Inspect the lessons',
       summary: 'Why it mattered',
-      title: 'Continuity, routing, and receipts survive the tool.',
+      title: 'Keep task history when tools change.',
       detail:
-        'The archive is valuable because it makes three durable coordination requirements inspectable.',
+        'The archive shows three needs: remembering work, assigning tasks, and recording results.',
       tone: 'neutral',
       evidence: ['Continuity matters', 'Routing needs evidence', 'Progress needs receipts'],
       receipts: ['Checkpoints', 'Routing record', 'Completion evidence']
@@ -123,7 +123,7 @@
 <PerformanceCampaignOpening
   eyebrow="Historical proof"
   expression="editorial"
-  title="The continuity problem that led to Linear-first coordination."
+  title="How we learned to keep agent work organized."
   lede="Loom proved that agents need task ownership, checkpoints, routing, and recovery. Current CREATE SOMETHING repo work now uses Linear as the source of truth for tracked ownership, status, and evidence."
   density="compact"
   media={paperAttachedReceiptMedia}
@@ -142,7 +142,7 @@
   id="loom-archive-story"
   eyebrow="Coordination archive"
   title="Keep the lesson. Name the current owner."
-  description="The archive separates current authority, durable lessons, and legacy reference in one inspectable sequence."
+  description="Read what we learned, why current work uses Linear, and the original technical reference."
   {scenes}
   ariaLabel="Loom archive story"
 >
@@ -247,7 +247,7 @@ loom complete lm-abc --evidence "commit abc123"
 <PerformanceConversionHandoff
   expression="editorial"
   eyebrow="Current coordination path"
-  title="Route active work to its current source of truth."
+  title="Use Linear for current repository work."
   description="Use this page to understand the coordination lesson. Use Linear-backed workflows for current ownership and evidence, or inspect the archive directly when historical implementation detail matters."
   density="compact"
   handoff={{

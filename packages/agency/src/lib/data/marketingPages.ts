@@ -192,13 +192,13 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     role: 'pillar',
     decision: 'index',
     audience:
-      'Builders and operating teams with an agent idea, prototype, or stalled Codex project.',
+      'Business owners and operations leads with a repeated task, an idea, or an existing AI project.',
     funnelStage: 'discover',
     intent:
-      'Introduce Agent Foundation and route qualified builders toward one bounded fit decision.',
-    primaryAction: 'Review the Agent Foundation',
-    requiredTerms: ['agent', 'Codex', 'client-owned', 'workflow', 'Production Promotion'],
-    requiredLinks: ['/agent-foundation', '/services', '/stack', '/field-reports/template-review'],
+      'Explain the first useful AI task, what the customer keeps, and how to discuss a project.',
+    primaryAction: 'See what we build',
+    requiredTerms: ['agent', 'task', 'code', 'workflow', 'Going live'],
+    requiredLinks: ['/agent-foundation', '/services', '/stack', '/proof/marketplace-workflow'],
     schema: 'page',
     search: {
       changefreq: 'weekly',

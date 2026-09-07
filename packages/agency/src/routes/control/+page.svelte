@@ -28,8 +28,8 @@
     },
     {
       label: 'Boundary',
-      title: 'Limits are visible, not implied.',
-      detail: 'Scope, authority, and stop conditions are declared before the first run.',
+      title: 'Set clear permissions.',
+      detail: 'Agree on the task, permissions, and reasons to stop before the first run.',
       tone: 'signal'
     },
     {
@@ -40,8 +40,8 @@
     },
     {
       label: 'Settlement',
-      title: 'Every run reaches a resolved state.',
-      detail: 'Shipped, blocked, or recovered — with the receipt and the next owner attached.',
+      title: 'See how each task ended.',
+      detail: 'See whether it completed, stopped, or recovered, with a record and a person responsible for the next step.',
       tone: 'growth'
     }
   ];
@@ -56,7 +56,7 @@
     },
     {
       eyebrow: 'Decision',
-      title: 'Route the judgment',
+      title: 'Review the action',
       detail: 'Decide whether work can run, must wait for approval, or should stop with a reason.',
       href: '/products/decision',
       points: ['Run / wait / stop', 'Approval state', 'Policy reason']
@@ -65,7 +65,7 @@
       eyebrow: 'Proof',
       title: 'Preserve the result',
       detail:
-        'Keep the evidence, decision, outcome, receipt, rollback note, and next owner together.',
+        'See the result, who approved it, and how to undo it or recover if something failed.',
       href: '/products/proof',
       points: ['Audit trail', 'Recovery context', 'Workflow receipt']
     }
@@ -84,7 +84,7 @@
       eyebrow: 'Yearly',
       title: 'Review the operating boundary each year',
       detail:
-        'Keep the same governed product while risk, volume, and service expectations are reviewed explicitly.',
+        'Review changes in risk, workload, and support needs before renewing the service.',
       href: agencyCoreMessaging.workflowMappingSessionHref,
       points: ['Control includes Map', 'Annual boundary review', 'Higher-risk operation is custom']
     }
@@ -95,9 +95,9 @@
       id: 'inclusion',
       label: 'Boundary',
       summary: 'Control includes Map',
-      title: 'One governed workflow keeps one shared definition.',
+      title: 'The plan stays with the live work.',
       detail:
-        'Map supplies the approved workflow definition. Control adds live Signal intake, Decision routing, Proof, policy, approvals, runs, blocked states, receipts, and recovery without creating a second system of record.',
+        'Control includes Map, so the plan stays connected to the work. It adds incoming tasks, approval checks, work history, and recovery records.',
       tone: 'allow',
       evidence: ['Standalone subscription', 'One governed workflow', 'One shared definition'],
       actions: [{ label: 'See Map', href: mapProduct.route }]
@@ -106,16 +106,16 @@
       id: 'surfaces',
       label: 'Operate',
       summary: 'Signal → decision → proof',
-      title: 'Three operator surfaces form one governed product.',
-      detail: 'Signal, Decision, and Proof are included operating surfaces, not separate licenses.',
+      title: 'Three views help your team run the work.',
+      detail: 'Signal shows incoming work. Decision shows what needs approval. Proof records the outcome. All three views are included in Control.',
       tone: 'review',
       receipts: ['source context', 'policy reason', 'workflow receipt']
     },
     {
       id: 'cadence',
       label: 'Cadence',
-      summary: 'One fee for the operating boundary',
-      title: 'Pay for accountable operation, not an agent roster.',
+      summary: 'Pricing and usage',
+      title: 'One management fee, with AI usage reported separately.',
       detail:
         'AI usage stays in your account when practical or is separately metered and reported. At 75% of forecasted monthly coverage, we schedule a capacity review—not an automatic charge. New workflows and integrations are separately scoped through Build.',
       tone: 'neutral'
@@ -124,9 +124,9 @@
       id: 'context',
       label: 'System context',
       summary: 'Dependencies, authority, change, and proof',
-      title: 'See the operating boundary before work runs.',
+      title: 'Check access and recent changes.',
       detail:
-        'Inspect what the workflow depends on, who can act, what changed, and which evidence supports the current state. Unknown and stale claims stay visible instead of becoming implied permission.',
+        'See the connected tools, who has access, and what changed. Missing or outdated information remains marked for review.',
       tone: 'neutral',
       receipts: ['named owner', 'run / wait / stop', 'dated change', 'recovery path']
     }
@@ -144,8 +144,8 @@
   <PerformanceCampaignOpening
     eyebrow="CREATE SOMETHING Control"
     expression="editorial"
-    title="Run offense and defense from one playbook."
-    lede={`Control operates one standard-risk environment. ${PUBLIC_PRICING.managedControl.longLabel}. Supported public source stays ${PUBLIC_PRICING.publicSource.label}. Offense advances approved work. Defense holds exceptions, protects authority, and preserves recovery proof.`}
+    title="Keep your AI systems working after launch."
+    lede={`Control operates one standard-risk environment. ${PUBLIC_PRICING.managedControl.longLabel}. Supported public source stays ${PUBLIC_PRICING.publicSource.label}. We monitor the system, respond to incidents, and review its performance with you. Work that needs approval waits for a person.`}
     density="compact"
     artifactOwnsMedia
     artifactMobilePlacement="flow"
@@ -168,8 +168,8 @@
 
   <PerformanceThesisConditions
     eyebrow="Operating principle"
-    title="Governance holds the decision boundary."
-    description="Control keeps delegated work moving because the operating boundary, authority, and exception path are written down before the run begins."
+    title="Agree on the rules before the agent acts."
+    description="We record what the system may do, who approves exceptions, and how to recover when a task fails."
     conditions={controlConditions}
     ariaLabel="Control operating principle"
   />
@@ -177,8 +177,8 @@
   <PerformanceNarrativeStage
     id="control-operating-story"
     eyebrow="One governed product"
-    title="Control is one operating decision, made once and kept."
-    description="Control shows one operating decision at a time. Set the workflow boundary, see where judgment moves, choose a review rhythm, and keep every state in one owned system."
+    title="See what needs attention and what happened."
+    description="Review incoming work, approve actions, and check results in one system. Agree on a regular review schedule as the workload changes."
     scenes={controlScenes}
     ariaLabel="Control operating story"
   >
@@ -221,7 +221,7 @@
     expression="editorial"
     eyebrow="Choose the next boundary"
     title="Define the workflow or bring the one already running."
-    description="Use Map when the system still needs a shared definition. Use Build for new workflows and integrations. Bring a launched workflow to Control when it needs accountable operation, approvals, evidence, and recovery."
+    description="Bring a live workflow that needs monitoring and support. If you need a new workflow or integration, we’ll quote that separately through Build."
     handoff={{
       owner: 'Workflow operator',
       authority: 'Named approval boundary',

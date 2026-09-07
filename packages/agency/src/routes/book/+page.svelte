@@ -20,13 +20,13 @@
 	const mappingBookingOffer = {
 		seoTitle: 'Book a CREATE SOMETHING Mapping Session',
 		seoDescription:
-			'Choose a verified 30- or 60-minute opening for a scoped workflow mapping session.',
+			'Choose a 30- or 60-minute time to discuss one workflow.',
 		eyebrow: 'Workflow mapping session',
-		title: 'Review the handoff, then choose a time.',
+		title: 'Choose a time to talk through the task.',
 		description:
-			'Use this scheduler for one real workflow, its decision owner, and the record your team needs next. If you started a private draft, review its handoff before choosing an opening.',
+			'Bring one task and the person responsible for it. If you made a draft in Map, review the summary below before choosing a time.',
 		secondaryHref: '/map',
-		secondaryLabel: 'Start a private workflow draft',
+		secondaryLabel: 'Map your workflow',
 		iframeTitle: 'Schedule a CREATE SOMETHING mapping session',
 		fallbackHref: '/services',
 		fallbackLabel: 'the workflow mapping service'
@@ -37,9 +37,9 @@
 		seoDescription:
 			'Choose a verified 30- or 60-minute opening to assess one fixed-scope Workflow Compiler Integration.',
 		eyebrow: 'Workflow Compiler Integration fit call',
-		title: 'Confirm the integration boundary, then choose a time.',
+		title: 'Choose a time to discuss the integration.',
 		description:
-			'Use this scheduler to assess one repository, one consequential workflow, the required MCP or agent tools, and fit for a fixed-scope Build.',
+			'Bring one code repository, the workflow you want to connect, and the tools it needs. We’ll assess the work and whether it fits a defined project.',
 		secondaryHref: '/workflow-compiler-integration',
 		secondaryLabel: 'Review the integration offer',
 		iframeTitle: 'Schedule a Workflow Compiler Integration fit call',
@@ -50,11 +50,11 @@
 	const agentFoundationBookingOffer = {
 		seoTitle: 'Book an Agent Foundation Fit Call | CREATE SOMETHING',
 		seoDescription:
-			'Choose a verified 30- or 60-minute opening to assess one bounded, client-owned Agent Foundation.',
+			'Choose a 30- or 60-minute time to discuss an AI project for your business.',
 		eyebrow: 'Agent Foundation fit call',
-		title: 'Choose a time to review your agent project.',
+		title: 'Choose a time to talk about your project.',
 		description:
-			'Bring the project, the person or team the agent serves, and one representative example. We’ll decide whether Agent Foundation fits and define the first useful job.',
+			'Bring an idea or a project, the team it should help, and an example of the work. We’ll discuss whether we can help and agree on the first useful task.',
 		secondaryHref: '/agent-foundation',
 		secondaryLabel: 'Review the Agent Foundation offer',
 		iframeTitle: 'Schedule an Agent Foundation fit call',
@@ -252,7 +252,7 @@
 				>
 					<div class="booking-handoff__heading">
 						<span>Incoming handoff</span>
-						<h2 id="booking-handoff-title">What will travel into booking</h2>
+						<h2 id="booking-handoff-title">Details included with your booking</h2>
 						<p>{handoffSheet.summary}</p>
 					</div>
 

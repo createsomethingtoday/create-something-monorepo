@@ -11,16 +11,15 @@
 >
   <div class="performance-handoff__intro">
     <span class="performance-handoff__eyebrow">AI workflow system</span>
-    <h2 id="performance-handoff-title">Make the handoff faster without losing the judgment.</h2>
+    <h2 id="performance-handoff-title">Find the task where AI could help.</h2>
     <p>
-      Start with one manual handoff. Define the owner, allowed actions, approval pauses, and proof
-      before automation expands.
+      Start with one repeated task. Agree on what AI can do, who checks its work, and how to measure the result.
     </p>
     <div class="performance-handoff__actions">
       <a class="performance-handoff__primary" href={agencyCoreMessaging.selfMapHref}
         >{agencyCoreMessaging.selfMapLabel}</a
       >
-      <a href="/field-reports/template-review">Inspect the 49/50 field report</a>
+      <a href="/field-reports/template-review">Read the 49/50 field report</a>
     </div>
   </div>
 
@@ -28,11 +27,11 @@
 
   <ol class="performance-handoff__steps" aria-label="How a controlled workflow improves">
     <li>
-      <strong>Map the friction</strong><span>See the systems, handoffs, and decision owner.</span>
+      <strong>Map the friction</strong><span>List the tools, steps, and person responsible.</span>
     </li>
     <li>
       <strong>Test one path</strong><span
-        >Let routine work move while consequential work pauses.</span
+        >Test the routine work and check that approvals still work.</span
       >
     </li>
     <li>

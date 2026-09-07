@@ -21,8 +21,8 @@
 </script>
 
 <SEO
-  title="Agent Foundation | One Useful Job in Your Repository"
-  description="Bring the agent you started with Codex. CREATE SOMETHING gets one useful job working in your repository, then proves you can continue."
+  title="Agent Foundation | AI for One Business Task"
+  description="Get one AI task working, keep the code and instructions, and learn to make the next change. Launching it in your business is scoped separately."
   keywords="agent foundation, Codex agent development, client-owned AI agent, AI agent infrastructure, MCP agent tools, agent handoff, agent production promotion"
   propertyName="agency"
 />
@@ -30,7 +30,7 @@
 <main class="agent-foundation-page property-performance">
   <PerformanceCampaignOpening
     eyebrow="Agent Foundation"
-    propertyRole="One role · one job · your repository"
+    propertyRole="One useful task · your code · a clear handover"
     expression="editorial"
     title={agentFoundationHero.title}
     lede={agentFoundationHero.lede}
@@ -58,11 +58,10 @@
     <header class="foundation-proof__heading">
       <div>
         <p>The handoff</p>
-        <h2 id="foundation-proof-title">Inside your repository.</h2>
+        <h2 id="foundation-proof-title">What the first project includes.</h2>
       </div>
       <p>
-        We define the job, build it, and prove the handoff. You receive the working path and the
-        records needed to understand what the agent can do.
+        We agree on the task, build it, and test the result with you. Your GitHub repository is the folder of code and instructions your team keeps.
       </p>
     </header>
 
@@ -70,7 +69,7 @@
       <article class="repository-record" aria-labelledby="repository-record-title">
         <header>
           <div>
-            <span>Example handoff structure</span>
+            <span>Technical handover example</span>
             <h3 id="repository-record-title">agent-foundation/</h3>
           </div>
           <small>Illustrative · not a client result</small>
@@ -90,7 +89,7 @@
           </div>
           <div>
             <dt>Approval</dt>
-            <dd>Human review before any external write</dd>
+            <dd>A person checks the draft before it is saved to another tool</dd>
           </div>
         </dl>
         <ul>
@@ -114,7 +113,7 @@
             </li>
           {/each}
         </ol>
-        <p>Foundation proves this continuation path. It does not prove every future change.</p>
+        <p>We use Codex, an AI coding tool, to help you make one agreed change. Future changes still need testing.</p>
       </aside>
     </div>
   </section>
@@ -127,13 +126,10 @@
     <header class="foundation-boundary__heading">
       <div>
         <p>Ownership and production</p>
-        <h2 id="foundation-boundary-title">What works at handoff—and what going live adds.</h2>
+        <h2 id="foundation-boundary-title">What you receive, and what a launch adds.</h2>
       </div>
       <p>
-        You keep the repository and everything needed to understand it: source, schemas,
-        instructions, policies, tests, runbook, known limits, and project history. No hidden CREATE
-        SOMETHING account or undocumented credential is required for the agreed development
-        environment.
+        You keep the code, data definitions, instructions, rules, tests, setup guide, known limits, and project history. The agreed test environment needs no hidden CREATE SOMETHING account or undocumented login.
       </p>
     </header>
 
@@ -152,9 +148,7 @@
     </div>
 
     <p class="foundation-boundary__note">
-      We quote the Foundation after we review the project and agree on the job. Production
-      credentials, deployment, live writes, monitoring, and real-user acceptance require a
-      separately scoped Production Promotion.
+      We quote Agent Foundation after reviewing the project and agreeing on the job. Launching it is a separate project called Production Promotion. That includes live access, deployment, monitoring, and testing with real users.
     </p>
   </section>
 
@@ -162,7 +156,7 @@
     <div class="foundation-fit__inner">
       <div class="foundation-fit__copy">
         <p>Foundation fit</p>
-        <h2 id="foundation-fit-title">Bring your repository and one job for the agent.</h2>
+        <h2 id="foundation-fit-title">Tell us the job you want the agent to do.</h2>
         <p>
           On the call, we’ll agree on the first useful job. If there’s a fit, you leave with the
           proposed scope and the basis for a quote.
