@@ -4,7 +4,7 @@
   "package": {
     "path": "packages/ground/npm",
     "name": "@createsomething/ground-mcp",
-    "version": "0.4.0",
+    "version": "0.4.1",
     "releaseWorkflow": ".github/workflows/ground-release.yml",
     "minimumToolCount": 21
   },

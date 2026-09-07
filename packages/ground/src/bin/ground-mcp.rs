@@ -371,7 +371,7 @@ Use `ground_find_duplicate_functions` on the target path. Duplicates are the #1 
 - Duplicates often have subtle differences that reveal which version is canonical.
 
 ## Step 2: Find Dead Exports
-Use `ground_find_dead_exports` on each module in the target path. Dead exports are safe to remove because nothing depends on them. They're low-risk wins that:
+Use `ground_find_dead_exports` on each module in the target path. Findings are unused-export candidates within the supplied search scope, not proof that removal is safe. Check public package exports, external consumers, dynamic loading, and scan completeness before proposing removal. Reviewed internal candidates can help:
 - Reduce bundle size and API surface.
 - Simplify the dependency graph for later steps.
 

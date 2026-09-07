@@ -418,7 +418,7 @@ pub struct DeadExportsReport {
 
 /// Find exports in a module that are never imported elsewhere
 pub fn find_dead_exports(module_path: &Path, search_scope: &Path) -> Result<DeadExportsReport, ComputationError> {
-    use super::imports::{extract_exports as extract_exports_ast, get_reexported_symbols};
+    use super::imports::{extract_exports as extract_exports_ast, extract_reexport_edges};
     
     // Use tree-sitter to extract all exports (more accurate than string parsing)
     let ast_exports = extract_exports_ast(module_path)
@@ -428,6 +428,17 @@ pub fn find_dead_exports(module_path: &Path, search_scope: &Path) -> Result<Dead
         })?;
     
     let total_exports = ast_exports.len() as u32;
+    // Validate the complete scope before issuing absence evidence. The graph's
+    // resolver binds imports to package/relative targets instead of names alone.
+    fs::read_dir(search_scope)?;
+    let graph = super::graph::SymbolGraph::build(search_scope, None)
+        .map_err(|message| ComputationError::ParseError { file: search_scope.to_path_buf(), message })?;
+    if graph.parse_errors > 0 || graph.imports.len() != graph.files.len() {
+        return Err(ComputationError::ParseError {
+            file: search_scope.to_path_buf(),
+            message: "Incomplete source parsing in search scope; cannot establish unused exports".to_string(),
+        });
+    }
     
     // Convert to DeadExport format for checking
     let exports: Vec<DeadExport> = ast_exports.iter()
@@ -443,52 +454,41 @@ pub fn find_dead_exports(module_path: &Path, search_scope: &Path) -> Result<Dead
     // Then check each export for usage in the search scope
     let mut dead_exports = Vec::new();
     
-    // Get the module stem for re-export checking
-    let module_stem = module_path.file_stem()
-        .and_then(|s| s.to_str())
-        .unwrap_or("");
-    
-    // Find barrel file in same directory that might re-export from this module
-    let barrel_path = if let Some(parent) = module_path.parent() {
-        let index_files = ["index.ts", "index.js", "index.tsx", "index.jsx"];
-        index_files.iter()
-            .map(|f| parent.join(f))
-            .find(|p| p.exists() && p != module_path)
-    } else {
-        None
-    };
-    
-    // Get symbols that are re-exported through the barrel file
-    let reexported_symbols: Vec<String> = barrel_path.as_ref()
-        .map(|p| get_reexported_symbols(p, module_stem))
-        .unwrap_or_default();
+    let mut barrel_edges = Vec::new();
+    for file in &graph.files {
+        let edges = extract_reexport_edges(file).map_err(|message| ComputationError::ParseError { file: file.clone(), message })?;
+        barrel_edges.push((file, edges));
+    }
     
     for export in exports {
-        // First: check for direct imports of this symbol
-        let is_directly_imported = check_import_in_dir_ast(&export.name, module_path, search_scope)?;
-        
-        if is_directly_imported {
-            continue; // Symbol is used directly
-        }
-        
-        // Second: check if this symbol is re-exported through a barrel file
-        if reexported_symbols.contains(&export.name) {
-            // Symbol is re-exported - check if the barrel file's consumers import this symbol
-            if let Some(ref barrel) = barrel_path {
-                let barrel_dir = barrel.parent()
-                    .and_then(|p| p.file_name())
-                    .and_then(|n| n.to_str())
-                    .unwrap_or("");
-                
-                // Check if anyone imports this symbol from the barrel's directory
-                if check_symbol_imported_from_barrel(&export.name, barrel_dir, barrel, search_scope)? {
-                    continue; // Symbol is used via re-export
+        let mut pending = vec![(module_path.to_path_buf(), export.name.clone())];
+        let mut visited = std::collections::HashSet::new();
+        let mut used = false;
+        while let Some((target, name)) = pending.pop() {
+            if !visited.insert((target.clone(), name.clone())) { continue; }
+            if graph.imports.iter().any(|(importer, imports)| {
+                importer != &target && imports.iter().any(|import| {
+                    import.name == name && graph.resolves_to(&import.from_module, &target, importer)
+                })
+            }) {
+                used = true;
+                break;
+            }
+            for (barrel, edges) in &barrel_edges {
+                for edge in edges {
+                    if !edge.source.is_empty() && (edge.imported == name || (edge.imported == "*" && name != "default"))
+                        && graph.resolves_to(&edge.source, &target, barrel) {
+                        let exposed = if edge.exported == "*" { name.clone() } else { edge.exported.clone() };
+                        let bindings = exposed_bindings(&graph, &barrel_edges, barrel, &exposed, &mut std::collections::HashSet::new());
+                        let original = (module_path.canonicalize().unwrap_or_else(|_| module_path.to_path_buf()), export.name.clone());
+                        if bindings.len() == 1 && bindings.contains(&original) {
+                            pending.push(((*barrel).clone(), exposed));
+                        }
+                    }
                 }
             }
         }
-        
-        // Symbol is not used anywhere
-        dead_exports.push(export);
+        if !used { dead_exports.push(export); }
     }
     
     Ok(DeadExportsReport {
@@ -500,122 +500,36 @@ pub fn find_dead_exports(module_path: &Path, search_scope: &Path) -> Result<Dead
     })
 }
 
-/// Check if a symbol is imported from a barrel file (e.g., import { X } from './core')
-fn check_symbol_imported_from_barrel(symbol: &str, barrel_dir: &str, barrel_path: &Path, search_scope: &Path) -> Result<bool, ComputationError> {
-    check_barrel_imports_in_dir(symbol, barrel_dir, barrel_path, search_scope)
-}
-
-fn check_barrel_imports_in_dir(symbol: &str, barrel_dir: &str, barrel_path: &Path, dir: &Path) -> Result<bool, ComputationError> {
-    use super::imports::extract_imports;
-    
-    let entries = match fs::read_dir(dir) {
-        Ok(e) => e,
-        Err(_) => return Ok(false),
-    };
-    
-    for entry in entries {
-        let entry = match entry {
-            Ok(e) => e,
-            Err(_) => continue,
-        };
-        let path = entry.path();
-        
-        if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-            if name.starts_with('.') || 
-               matches!(name, "node_modules" | "target" | "dist" | "build" | ".git") {
-                continue;
-            }
-        }
-        
-        if !path.exists() {
-            continue;
-        }
-        
-        if path.is_dir() {
-            if check_barrel_imports_in_dir(symbol, barrel_dir, barrel_path, &path)? {
-                return Ok(true);
-            }
-        } else if path.is_file() && path != *barrel_path {
-            let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
-            if matches!(ext, "ts" | "tsx" | "js" | "jsx" | "svelte") {
-                // Use tree-sitter to extract imports
-                if let Ok(imports) = extract_imports(&path) {
-                    for import in imports {
-                        // Check if this import is from the barrel directory
-                        // e.g., '../core', './core', '../core/index', '../core/index.js'
-                        let source_end = import.source.rsplit('/').next().unwrap_or(&import.source);
-                        let source_end = source_end
-                            .trim_end_matches(".js")
-                            .trim_end_matches(".ts")
-                            .trim_end_matches("/index");
-                        
-                        // Check if import source ends with barrel directory or is 'index'
-                        let is_barrel_import = source_end == barrel_dir || 
-                            source_end == "index" && import.source.contains(barrel_dir) ||
-                            import.source.ends_with(&format!("/{}", barrel_dir)) ||
-                            import.source.ends_with(&format!("/{}/index", barrel_dir)) ||
-                            import.source.ends_with(&format!("/{}/index.js", barrel_dir)) ||
-                            import.source.ends_with(&format!("/{}/index.ts", barrel_dir));
-                        
-                        if is_barrel_import && import.symbols.contains(&symbol.to_string()) {
-                            return Ok(true);
-                        }
+/// Resolve the binding a barrel exposes: explicit declarations override stars;
+/// distinct star origins remain ambiguous, while repeated paths to one binding agree.
+fn exposed_bindings(
+    graph: &super::graph::SymbolGraph,
+    barrels: &[(&PathBuf, Vec<super::imports::ReexportEdge>)],
+    file: &Path,
+    name: &str,
+    visiting: &mut std::collections::HashSet<(PathBuf, String)>,
+) -> std::collections::HashSet<(PathBuf, String)> {
+    let key = (file.canonicalize().unwrap_or_else(|_| file.to_path_buf()), name.to_string());
+    let mut origins = std::collections::HashSet::new();
+    if !visiting.insert(key.clone()) { return origins; }
+    if let Some((_, edges)) = barrels.iter().find(|(path, _)| path.as_path() == file) {
+        let explicit = edges.iter().any(|edge| edge.exported == name);
+        for edge in edges {
+            if !(edge.exported == name || (!explicit && edge.exported == "*" && name != "default")) { continue; }
+            if edge.source.is_empty() {
+                origins.insert((key.0.clone(), edge.imported.clone()));
+            } else {
+                let imported = if edge.imported == "*" { name } else { &edge.imported };
+                for target in &graph.files {
+                    if graph.resolves_to(&edge.source, target, file) {
+                        origins.extend(exposed_bindings(graph, barrels, target, imported, visiting));
                     }
                 }
             }
         }
     }
-    
-    Ok(false)
-}
-
-/// Check directory for direct imports of a symbol using tree-sitter AST parsing
-fn check_import_in_dir_ast(symbol: &str, source_file: &Path, dir: &Path) -> Result<bool, ComputationError> {
-    use super::imports::extract_imports;
-    
-    let entries = match fs::read_dir(dir) {
-        Ok(e) => e,
-        Err(_) => return Ok(false),
-    };
-    
-    for entry in entries {
-        let entry = match entry {
-            Ok(e) => e,
-            Err(_) => continue,
-        };
-        let path = entry.path();
-        
-        if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-            if name.starts_with('.') || 
-               matches!(name, "node_modules" | "target" | "dist" | "build" | ".git") {
-                continue;
-            }
-        }
-        
-        if !path.exists() {
-            continue;
-        }
-        
-        if path.is_dir() {
-            if check_import_in_dir_ast(symbol, source_file, &path)? {
-                return Ok(true);
-            }
-        } else if path.is_file() && path != source_file {
-            let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
-            if matches!(ext, "ts" | "tsx" | "js" | "jsx" | "svelte") {
-                // Use tree-sitter to extract imports
-                if let Ok(imports) = extract_imports(&path) {
-                    for import in imports {
-                        if import.symbols.contains(&symbol.to_string()) {
-                            return Ok(true);
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
-    Ok(false)
+    visiting.remove(&key);
+    origins
 }
 
 #[cfg(test)]
@@ -624,6 +538,81 @@ mod tests {
     use tempfile::tempdir;
     use std::fs::File;
     use std::io::Write;
+
+    #[test]
+    fn review_wildcard_barrels_preserve_real_consumers() {
+        let dir = tempdir().unwrap();
+        let source = dir.path().join("types.ts");
+        fs::write(&source, "export const receipt = 1;").unwrap();
+        fs::write(dir.path().join("index.ts"), "export * from './middle.js';").unwrap();
+        fs::write(dir.path().join("middle.ts"), "export * from './types.js'; export * from './index.js';").unwrap();
+        fs::write(dir.path().join("consumer.ts"), "import { receipt } from './index.js'; console.log(receipt);").unwrap();
+        assert!(find_dead_exports(&source, dir.path()).unwrap().dead_exports.is_empty());
+    }
+
+    #[test]
+    fn review_svelte_alias_uses_owning_config_directory() {
+        let dir = tempdir().unwrap();
+        fs::create_dir_all(dir.path().join("src/lib")).unwrap();
+        fs::write(dir.path().join("svelte.config.js"), "export default {};").unwrap();
+        let source = dir.path().join("src/lib/data.ts");
+        fs::write(&source, "export const receipt = 1;").unwrap();
+        fs::write(dir.path().join("src/page.ts"), "import { receipt } from '$lib/data.js'; console.log(receipt);").unwrap();
+        assert!(find_dead_exports(&source, &dir.path().join("src")).unwrap().dead_exports.is_empty());
+    }
+
+    #[test]
+    fn review_barrel_aliases_match_source_identity() {
+        let dir = tempdir().unwrap();
+        let source = dir.path().join("types.ts");
+        fs::write(&source, "export const receipt = 1;").unwrap();
+        fs::write(dir.path().join("other.ts"), "export const receipt = 2;").unwrap();
+        fs::write(dir.path().join("index.ts"), "export { receipt as publicReceipt } from './types.js';").unwrap();
+        fs::write(dir.path().join("consumer.ts"), "import { publicReceipt } from './index.js'; console.log(publicReceipt);").unwrap();
+        assert!(find_dead_exports(&source, dir.path()).unwrap().dead_exports.is_empty());
+        assert_eq!(find_dead_exports(&dir.path().join("other.ts"), dir.path()).unwrap().dead_exports.len(), 1);
+    }
+
+    #[test]
+    fn review_tsconfig_base_url_is_relative_to_config() {
+        let dir = tempdir().unwrap();
+        fs::create_dir_all(dir.path().join("src/lib")).unwrap();
+        fs::write(dir.path().join("tsconfig.json"), r#"{"compilerOptions":{"baseUrl":"src","paths":{"@data/*":["lib/*"]}}}"#).unwrap();
+        let source = dir.path().join("src/lib/data.ts");
+        fs::write(&source, "export const receipt = 1;").unwrap();
+        fs::write(dir.path().join("src/page.ts"), "import { receipt } from '@data/data.js'; console.log(receipt);").unwrap();
+        assert!(find_dead_exports(&source, &dir.path().join("src")).unwrap().dead_exports.is_empty());
+    }
+
+    #[test]
+    fn review_wildcard_shadowing_and_ambiguity_do_not_hide_unused_exports() {
+        for barrel in [
+            "export * from './source.js'; export const receipt = 3;",
+            "export * from './source.js'; export { receipt } from './other.js';",
+            "export * from './source.js'; export * from './other.js';",
+            "export * from './source.js'; const own = 3; export { own as receipt };",
+        ] {
+            let dir = tempdir().unwrap();
+            let source = dir.path().join("source.ts");
+            fs::write(&source, "export const receipt = 1;").unwrap();
+            fs::write(dir.path().join("other.ts"), "export const receipt = 2;").unwrap();
+            fs::write(dir.path().join("index.ts"), barrel).unwrap();
+            fs::write(dir.path().join("consumer.ts"), "import { receipt } from './index.js'; console.log(receipt);").unwrap();
+            assert_eq!(find_dead_exports(&source, dir.path()).unwrap().dead_exports.len(), 1, "{barrel}");
+        }
+    }
+
+    #[test]
+    fn review_repeated_wildcard_paths_to_one_binding_are_not_ambiguous() {
+        let dir = tempdir().unwrap();
+        let source = dir.path().join("source.ts");
+        fs::write(&source, "export const receipt = 1;").unwrap();
+        fs::write(dir.path().join("left.ts"), "export * from './source.js';").unwrap();
+        fs::write(dir.path().join("right.ts"), "export * from './source.js';").unwrap();
+        fs::write(dir.path().join("index.ts"), "export * from './left.js'; export * from './right.js';").unwrap();
+        fs::write(dir.path().join("consumer.ts"), "import { receipt } from './index.js'; console.log(receipt);").unwrap();
+        assert!(find_dead_exports(&source, dir.path()).unwrap().dead_exports.is_empty());
+    }
     
     #[test]
     fn test_counts_symbol_usages() {

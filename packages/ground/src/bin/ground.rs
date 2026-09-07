@@ -822,7 +822,7 @@ fn find_dead_exports_cmd(module: &Path, scope: &Path) -> Result<(), Box<dyn std:
         
         println!();
         println!("These exports are not imported anywhere in {}.", scope.display());
-        println!("Consider removing them or marking them as internal.");
+        println!("Review public API, external consumers, and dynamic loading before removal; this result is limited to the search scope.");
         
         std::process::exit(1);
     }
