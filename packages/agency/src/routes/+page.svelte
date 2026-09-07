@@ -65,8 +65,8 @@
 
   const steps = [
     { name: 'Map', title: 'Agree on the task.', detail: 'We look at how the work happens today, the tools involved, and the person responsible. Together, we decide what AI may do and what needs approval.', href: '/map' },
-    { name: 'Build', title: 'Build it and test it.', detail: 'We get one agreed job working in a test environment. You keep the code, instructions, and checks, and learn how to make the next change.', href: '/agent-foundation' },
-    { name: 'Control', title: 'Support it after launch.', detail: 'Going live is a separate project. Once the system is running, Control adds monitoring, incident response, and regular reviews.', href: '/control' }
+    { name: 'Build', title: 'Build and test.', detail: 'We get one agreed job working in a test environment. You keep the code, instructions, and checks, and learn how to make the next change.', href: '/agent-foundation' },
+    { name: 'Control', title: 'Decide whether to launch.', detail: 'Review the test results with us. Launch is a separate project, quoted before you commit. After launch, Control adds monitoring, incident response, and regular reviews.', href: '/control' }
   ];
 </script>
 
@@ -104,18 +104,38 @@
 
   <section class="home-section foundation-example" aria-labelledby="foundation-example-title">
     <span>An example of the first project</span>
-    <h2 id="foundation-example-title">Turn meeting notes into a reviewable action list.</h2>
-    <p>An agent is software that uses AI and connected tools to carry out a task. Here, it reads meeting notes and drafts an action list. A person checks the draft before anything is saved to another tool.</p>
-    <dl aria-label="Illustrative Agent Foundation job">
-      <div><dt>Input</dt><dd>Meeting notes</dd></div>
-      <div><dt>Draft result</dt><dd>Actions with owners and due dates</dd></div>
-      <div><dt>Human review</dt><dd>Check the draft before saving</dd></div>
-      <div><dt>You keep</dt><dd>Source, rules, tests, and runbook</dd></div>
-    </dl>
-    <p class="note">Illustrative example, not a measured client result. A runbook is the guide to starting, running, and recovering the system.</p>
+    <h2 id="foundation-example-title">Turn meeting notes into a draft action list.</h2>
+    <p>An agent is software that uses AI and connected tools to carry out a task. Here, it reads meeting notes and drafts the next steps. Missing details stay marked for your team to confirm.</p>
+    <div class="example-comparison" aria-label="Illustrative meeting notes and draft action list">
+      <div class="example-notes">
+        <h3>Meeting notes</h3>
+        <blockquote>
+          <p>Sam will send the revised proposal by Friday.</p>
+          <p>We also need someone to check the budget. No owner or deadline was agreed.</p>
+        </blockquote>
+      </div>
+      <div class="example-draft">
+        <h3>Draft action list</h3>
+        <ol>
+          <li>
+            <strong>Send the revised proposal</strong>
+            <dl><div><dt>Owner</dt><dd>Sam</dd></div><div><dt>Due</dt><dd>Friday</dd></div></dl>
+          </li>
+          <li>
+            <strong>Check the budget</strong>
+            <dl><div><dt>Owner</dt><dd class="needs-confirmation">Needs confirmation</dd></div><div><dt>Due</dt><dd class="needs-confirmation">Needs confirmation</dd></div></dl>
+          </li>
+        </ol>
+      </div>
+    </div>
+    <div class="example-handover">
+      <p><strong>You review</strong> Approve before saving to another tool.</p>
+      <p><strong>You keep</strong> Code, tests, and instructions.</p>
+    </div>
+    <p class="note">Illustrative example, not a measured client result.</p>
   </section>
 
-  <section class="home-section" id="agency-operating-story" aria-labelledby="home-steps-title">
+  <section class="home-section process-section" id="agency-operating-story" aria-labelledby="home-steps-title">
     <span>How it works</span>
     <h2 id="home-steps-title">Plan it. Test it. Then decide what goes live.</h2>
     <div class="home-steps">
@@ -173,10 +193,30 @@
   h3 { font-size: 1.35rem; line-height: 1.25; margin: 0.7rem 0; }
   p { max-width: 65ch; line-height: 1.65; margin: 0 0 1.25rem; }
   .note { margin-top: 1.5rem; font-size: 0.9rem; }
-  dl, .home-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.5rem; margin: 2rem 0 0; }
-  dl > div, article { min-width: 0; border-top: 1px solid var(--color-performance-line-strong, #a9aaa5); padding-top: 1rem; }
-  dd { margin: 0.7rem 0 0; line-height: 1.5; }
+  .home-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.5rem; margin: 2rem 0 0; }
+  article { min-width: 0; border-top: 1px solid var(--color-performance-line-strong, #a9aaa5); padding-top: 1rem; }
   .home-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   a { display: inline-flex; align-items: center; min-height: 2.75rem; margin-right: 1.5rem; color: inherit; text-underline-offset: 0.2em; }
-  @media (max-width: 640px) { dl, .home-steps { grid-template-columns: 1fr; } }
+  .foundation-example, .process-section { padding-top: clamp(2rem, 3vw, 3rem); padding-bottom: clamp(2rem, 3vw, 3rem); }
+  .foundation-example h2, .process-section h2 { max-width: 32ch; font-size: clamp(1.9rem, 3vw, 2.6rem); margin-bottom: 1rem; }
+  .example-comparison { display: grid; grid-template-columns: 1fr 1fr; margin-top: 1.5rem; border: 1px solid var(--color-performance-line-strong, #a9aaa5); }
+  .example-notes, .example-draft { min-width: 0; padding: clamp(1.25rem, 2vw, 2rem); }
+  .example-draft { border-left: 1px solid var(--color-performance-line-strong, #a9aaa5); }
+  .example-comparison h3 { margin: 0 0 1rem; font-size: 1.1rem; }
+  blockquote { margin: 0; }
+  blockquote p:last-child { margin-bottom: 0; }
+  .example-draft ol { padding-left: 1.25rem; margin: 0; }
+  .example-draft li + li { border-top: 1px solid var(--color-performance-line, #d7d7d2); margin-top: 1rem; padding-top: 1rem; }
+  .example-draft strong { line-height: 1.5; }
+  .example-draft dl { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 0.6rem 0 0; }
+  .example-draft dt { color: var(--color-performance-muted, #5e6268); }
+  .example-draft dd { margin: 0.25rem 0 0; line-height: 1.5; }
+  .needs-confirmation { font-weight: 600; text-decoration: underline dotted; text-underline-offset: 0.25em; }
+  .example-handover { display: flex; flex-wrap: wrap; gap: 0.75rem 2rem; margin-top: 1.25rem; }
+  .example-handover p { margin: 0; }
+  .example-handover strong { display: block; }
+  .foundation-example .note { margin: 1rem 0 0; color: var(--color-performance-muted, #5e6268); }
+  .process-section .home-steps { margin-top: 1.25rem; }
+  @media (max-width: 640px) { .example-comparison { grid-template-columns: 1fr; } .example-draft { border-left: 0; border-top: 1px solid var(--color-performance-line-strong, #a9aaa5); } }
+  @media (max-width: 640px) { .home-steps { grid-template-columns: 1fr; } }
 </style>
