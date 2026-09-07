@@ -6,6 +6,7 @@
   import { UnifiedSearch } from '@create-something/canon/navigation';
   import { getIoFooterHandoff } from '$lib/config/footerHandoff';
   import { page } from '$app/stores';
+  import { newsletterMetadata } from '$lib/newsletter/measurement';
 
   // View Transitions API - Hermeneutic Navigation
   // "Navigation should feel like dwelling, not jumping"
@@ -177,6 +178,7 @@
 
 <Analytics
   property="io"
+  globalMetadata={newsletterMetadata($page.url)}
   userId={data.user?.id}
   userOptedOut={data.user?.analytics_opt_out ?? false}
 />
