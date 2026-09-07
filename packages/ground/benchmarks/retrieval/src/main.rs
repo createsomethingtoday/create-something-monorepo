@@ -70,6 +70,7 @@ fn cached_parse(
     Ok((out, reparsed))
 }
 fn main() -> anyhow::Result<()> {
+    ground::computations::derived_cache::set_enabled(false);
     let root =
         PathBuf::from(std::env::args().nth(1).expect("pass source directory")).canonicalize()?;
     let mut paths = vec![];

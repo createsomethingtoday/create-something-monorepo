@@ -33,6 +33,14 @@ use sha2::{Digest, Sha256};
 #[command(about = "Grounded claims for code. You can't claim something until you've checked it.")]
 #[command(version)]
 struct Cli {
+    /// Enable process-local parsed records and graph reuse for this invocation
+    #[arg(long, global = true, conflicts_with = "no_cache")]
+    cache: bool,
+
+    /// Disable process-local parsed records and graph reuse
+    #[arg(long, global = true)]
+    no_cache: bool,
+
     #[command(subcommand)]
     command: Commands,
     
@@ -360,6 +368,7 @@ fn main() {
 }
 
 fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
+    ground::computations::derived_cache::set_enabled(cli.cache && !cli.no_cache);
     if !matches!(&cli.command, Commands::BuildInfo { .. } | Commands::Doctor { .. }) {
         if let Some(parent) = cli.db.parent().filter(|parent| !parent.as_os_str().is_empty()) {
             std::fs::create_dir_all(parent)?;

@@ -135,3 +135,6 @@ pub enum ComputationError {
     #[error("Analysis timed out")]
     Timeout,
 }
+
+/// Process-local, bounded derived analysis reuse and diagnostics.
+pub mod derived_cache;
