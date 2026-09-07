@@ -1,6 +1,6 @@
 {
 	"name": "@create-something/io",
-	"description": "MCP Patterns for Builders — research, reference implementations, and documentation",
+	"description": "MCP Patterns for Builders \u2014 research, reference implementations, and documentation",
 	"private": true,
 	"version": "1.0.0",
 	"type": "module",
@@ -36,13 +36,14 @@
 		"test:newsletter-confirmation": "node --import tsx --test test/newsletter-confirmation-request.test.ts test/newsletter-lifecycle.test.ts",
 		"test:newsletter-archive": "vitest run test/newsletter-archive.test.ts",
 		"test:search": "vitest run src/routes/sitemap.xml/sitemap.test.ts",
-		"check": "pnpm --filter @create-something/spritz package && pnpm --filter @create-something/canon package && pnpm check:content && pnpm test:newsletter-confirmation && pnpm test:search && pnpm test:footer-handoff && pnpm test:legacy-paper-redirects && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
+		"check": "pnpm --filter @create-something/spritz package && pnpm --filter @create-something/canon package && pnpm check:content && pnpm test:newsletter-confirmation && pnpm test:newsletter-analytics && pnpm test:search && pnpm test:footer-handoff && pnpm test:legacy-paper-redirects && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings --watch",
 		"prelint": "pnpm --filter @create-something/eslint-plugin-canon build",
 		"lint": "eslint .",
 		"deploy": "pnpm build && CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=create-something-io --commit-dirty=true",
 		"deploy:preview": "pnpm build && CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=create-something-io --branch=preview --commit-dirty=true",
-		"cf-typegen": "node ../../scripts/run-wrangler.mjs types"
+		"cf-typegen": "node ../../scripts/run-wrangler.mjs types",
+		"test:newsletter-analytics": "node --import tsx --test test/newsletter-analytics.test.ts"
 	},
 	"dependencies": {
 		"@create-something/canon": "workspace:*",
