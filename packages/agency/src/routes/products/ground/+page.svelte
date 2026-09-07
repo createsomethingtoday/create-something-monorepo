@@ -13,26 +13,26 @@
       id: 'claude',
       label: 'Claude Code',
       command:
-        'claude mcp add --scope user --transport stdio ground -- npx --yes -p @createsomething/ground-mcp ground-mcp',
+        'claude mcp add --scope user --transport stdio ground -- npx --yes -p @createsomething/ground-mcp@0.4.3 ground-mcp',
       note: 'Register Ground for the current user'
     },
     {
       id: 'windsurf',
       label: 'Cursor or Windsurf',
       command:
-        '{"mcpServers":{"ground":{"command":"npx","args":["--yes","-p","@createsomething/ground-mcp","ground-mcp"]}}}',
+        '{"mcpServers":{"ground":{"command":"npx","args":["--yes","-p","@createsomething/ground-mcp@0.4.3","ground-mcp"]}}}',
       note: 'Paste into the client MCP configuration'
     },
     {
       id: 'codex',
       label: 'Codex CLI',
-      command: 'codex mcp add ground -- npx --yes -p @createsomething/ground-mcp ground-mcp',
+      command: 'codex mcp add ground -- npx --yes -p @createsomething/ground-mcp@0.4.3 ground-mcp',
       note: 'Register Ground as a local MCP server'
     },
     {
       id: 'npm',
       label: 'npm',
-      command: 'npm install -g @createsomething/ground-mcp',
+      command: 'npm install -g @createsomething/ground-mcp@0.4.3',
       note: 'Works with any MCP client'
     }
   ];
@@ -42,7 +42,7 @@
       title: 'Verify',
       tools: [
         ['ground_compare', 'See how similar two files actually are'],
-        ['ground_count_uses', 'Find whether a function is actually used'],
+        ['ground_count_uses', 'Count detected uses in the checked scope'],
         ['ground_check_connections', 'See whether a module is connected'],
         ['ground_check_environment', 'Catch runtime APIs in the wrong environment']
       ]
@@ -51,8 +51,8 @@
       title: 'Find problems',
       tools: [
         ['ground_find_duplicate_functions', 'Find copy-pasted code'],
-        ['ground_find_orphans', 'Find files nothing imports'],
-        ['ground_find_dead_exports', 'Find exports nobody uses'],
+        ['ground_find_orphans', 'Find files with no detected connection'],
+        ['ground_find_dead_exports', 'Find exports with no imports in the checked scope'],
         ['ground_find_drift', 'Find divergence from an owned pattern']
       ]
     },
@@ -80,18 +80,17 @@
       label: 'Install Ground',
       summary: 'Connect',
       title: 'Put the check beside the agent.',
-      detail: 'Choose one client. Every command points to the same open-source Ground MCP package.',
+      detail: 'Choose one client. These commands install the verified 0.4.3 release.',
       tone: 'allow',
       evidence: ['Four client-ready configurations', 'Commands remain visible without JavaScript'],
-      receipts: ['Free', 'Open source', '@createsomething/ground-mcp']
+      receipts: ['Free', 'Open source', 'Version 0.4.3']
     },
     {
       id: 'guardrail',
       label: 'Run the guardrail',
       summary: 'Verify',
       title: 'Check first. Then record. Ground blocks an unverified claim.',
-      detail:
-        'Ground requires a check before its claim tools can record a code finding.',
+      detail: 'Ground requires a check before its claim tools can record a code finding.',
       tone: 'review',
       evidence: ['Check first', 'Then claim', 'Blocked otherwise'],
       receipts: ['Compared inputs', 'Evidence-bound claim']
@@ -101,10 +100,9 @@
       label: 'Inspect the proof',
       summary: 'Trust',
       title: 'Check the evidence before recording a finding.',
-      detail:
-        'Ground provides code checks for TypeScript, JavaScript, and SvelteKit projects.',
+      detail: 'Ground provides code checks for TypeScript, JavaScript, and SvelteKit projects.',
       tone: 'neutral',
-      evidence: ['21 MCP tools', 'Five native release targets', 'Public calibration policy'],
+      evidence: ['21 MCP tools', 'Five verified platform installs', 'Public calibration policy'],
       receipts: ['Checksums + provenance', 'Adjudicated findings ledger'],
       actions: [
         {
@@ -135,7 +133,7 @@
 />
 
 <PerformanceCampaignOpening
-  eyebrow="Free and open source"
+  eyebrow="Ground 0.4.3 · Free and open source"
   expression="editorial"
   title="Give the agent evidence before it changes your codebase."
   lede="Ground computes evidence for TypeScript and JavaScript code claims. It also understands SvelteKit routes, aliases, component scripts, actions, stores, and entry points."
@@ -179,6 +177,12 @@
           </article>
         {/each}
       </div>
+      <p class="usage-note">
+        Persistent MCP sessions reuse parsed source and dependency graphs after checking current
+        files and resolution settings. Restart your MCP server after upgrading. CLI commands stay
+        uncached by default; use <code>--cache</code> to opt in or <code>--no-cache</code> to disable
+        reuse.
+      </p>
     {:else if index === 1}
       <div class="guardrail-artifact">
         <ol>
@@ -196,15 +200,19 @@
           </li>
         </ol>
         <pre aria-label="Ground verification example"><code
-            ><span># First, compare the files</span>
-ground compare utils.ts helpers.ts
-
-<span># Then make the evidence-bound claim</span>
+            ><span># A claim without a prior comparison</span>
 ground claim duplicate utils.ts helpers.ts "same validation logic"
+<strong>Claim blocked: compare these files first.</strong>
 
-<strong>Claim blocked: compare these files first.</strong></code
+<span># Check first, then retry the claim</span>
+ground compare utils.ts helpers.ts</code
           ></pre>
       </div>
+      <p class="usage-note">
+        Ground gates its own claim tools; it cannot stop an agent from answering outside them. An
+        unused export in the checked scope still needs review for public APIs, external consumers,
+        and dynamic loading before removal.
+      </p>
     {:else}
       <div class="proof-artifact">
         <div class="tool-groups">
@@ -219,6 +227,46 @@ ground claim duplicate utils.ts helpers.ts "same validation logic"
             </article>
           {/each}
         </div>
+        <aside class="case-proof" aria-label="Ground 0.4.3 measured performance">
+          <span>Measured on our Agency codebase</span>
+          <h3>Faster repeat checks. Fresh source still decides.</h3>
+          <p>
+            Repeated dependency queries in a persistent MCP session took about 72 ms in 0.4.3, down
+            from 724 ms in 0.4.2. Both published packages checked the same source corpus.
+          </p>
+          <dl>
+            <div>
+              <dt>0.4.2 repeated query</dt>
+              <dd>724 ms</dd>
+            </div>
+            <div>
+              <dt>0.4.3 repeated query</dt>
+              <dd>72 ms</dd>
+            </div>
+            <div>
+              <dt>This workload</dt>
+              <dd>~10× faster</dd>
+            </div>
+          </dl>
+          <p>
+            Duplicate scans also use up to four parsing workers. The timings above measure
+            dependency queries, not duplicate scans.
+          </p>
+          <p>
+            These are two-repeat medians from one macOS ARM64 machine, not a speed promise for every
+            command. The first 0.4.3 query took 722 ms with reuse enabled versus 536 ms uncached.
+            Small queries can also cost more. Cached data stays in memory for the life of the
+            process.
+          </p>
+          <p>
+            <a href="/evidence/ground-0.4.3-performance.json">Inspect the measurements</a>
+            ·
+            <a
+              href="https://github.com/createsomethingtoday/create-something-monorepo/releases/tag/ground-v0.4.3"
+              >Inspect the release and five-platform receipts</a
+            >
+          </p>
+        </aside>
         <aside class="case-proof">
           <span>Calibration policy</span>
           <h3>Accuracy is a release gate, not a slogan.</h3>
@@ -288,6 +336,19 @@ ground claim duplicate utils.ts helpers.ts "same validation logic"
   .product-family-link a {
     color: var(--color-performance-ink, #090909);
     text-underline-offset: 0.18em;
+  }
+
+  .usage-note {
+    margin: 1rem 0 0;
+    color: var(--color-performance-muted);
+    font-size: 0.85rem;
+    line-height: 1.6;
+  }
+
+  .case-proof a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
   }
 
   .install-grid,
