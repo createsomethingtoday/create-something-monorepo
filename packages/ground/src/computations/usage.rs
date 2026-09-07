@@ -476,10 +476,14 @@ pub fn find_dead_exports(module_path: &Path, search_scope: &Path) -> Result<Dead
             }
             for (barrel, edges) in &barrel_edges {
                 for edge in edges {
-                    if (edge.imported == name || (edge.imported == "*" && name != "default"))
+                    if !edge.source.is_empty() && (edge.imported == name || (edge.imported == "*" && name != "default"))
                         && graph.resolves_to(&edge.source, &target, barrel) {
                         let exposed = if edge.exported == "*" { name.clone() } else { edge.exported.clone() };
-                        pending.push(((*barrel).clone(), exposed));
+                        let bindings = exposed_bindings(&graph, &barrel_edges, barrel, &exposed, &mut std::collections::HashSet::new());
+                        let original = (module_path.canonicalize().unwrap_or_else(|_| module_path.to_path_buf()), export.name.clone());
+                        if bindings.len() == 1 && bindings.contains(&original) {
+                            pending.push(((*barrel).clone(), exposed));
+                        }
                     }
                 }
             }
@@ -494,6 +498,38 @@ pub fn find_dead_exports(module_path: &Path, search_scope: &Path) -> Result<Dead
         search_scope: search_scope.to_path_buf(),
         computed_at: Utc::now(),
     })
+}
+
+/// Resolve the binding a barrel exposes: explicit declarations override stars;
+/// distinct star origins remain ambiguous, while repeated paths to one binding agree.
+fn exposed_bindings(
+    graph: &super::graph::SymbolGraph,
+    barrels: &[(&PathBuf, Vec<super::imports::ReexportEdge>)],
+    file: &Path,
+    name: &str,
+    visiting: &mut std::collections::HashSet<(PathBuf, String)>,
+) -> std::collections::HashSet<(PathBuf, String)> {
+    let key = (file.canonicalize().unwrap_or_else(|_| file.to_path_buf()), name.to_string());
+    let mut origins = std::collections::HashSet::new();
+    if !visiting.insert(key.clone()) { return origins; }
+    if let Some((_, edges)) = barrels.iter().find(|(path, _)| path.as_path() == file) {
+        let explicit = edges.iter().any(|edge| edge.exported == name);
+        for edge in edges {
+            if !(edge.exported == name || (!explicit && edge.exported == "*" && name != "default")) { continue; }
+            if edge.source.is_empty() {
+                origins.insert((key.0.clone(), edge.imported.clone()));
+            } else {
+                let imported = if edge.imported == "*" { name } else { &edge.imported };
+                for target in &graph.files {
+                    if graph.resolves_to(&edge.source, target, file) {
+                        origins.extend(exposed_bindings(graph, barrels, target, imported, visiting));
+                    }
+                }
+            }
+        }
+    }
+    visiting.remove(&key);
+    origins
 }
 
 #[cfg(test)]
@@ -546,6 +582,36 @@ mod tests {
         fs::write(&source, "export const receipt = 1;").unwrap();
         fs::write(dir.path().join("src/page.ts"), "import { receipt } from '@data/data.js'; console.log(receipt);").unwrap();
         assert!(find_dead_exports(&source, &dir.path().join("src")).unwrap().dead_exports.is_empty());
+    }
+
+    #[test]
+    fn review_wildcard_shadowing_and_ambiguity_do_not_hide_unused_exports() {
+        for barrel in [
+            "export * from './source.js'; export const receipt = 3;",
+            "export * from './source.js'; export { receipt } from './other.js';",
+            "export * from './source.js'; export * from './other.js';",
+            "export * from './source.js'; const own = 3; export { own as receipt };",
+        ] {
+            let dir = tempdir().unwrap();
+            let source = dir.path().join("source.ts");
+            fs::write(&source, "export const receipt = 1;").unwrap();
+            fs::write(dir.path().join("other.ts"), "export const receipt = 2;").unwrap();
+            fs::write(dir.path().join("index.ts"), barrel).unwrap();
+            fs::write(dir.path().join("consumer.ts"), "import { receipt } from './index.js'; console.log(receipt);").unwrap();
+            assert_eq!(find_dead_exports(&source, dir.path()).unwrap().dead_exports.len(), 1, "{barrel}");
+        }
+    }
+
+    #[test]
+    fn review_repeated_wildcard_paths_to_one_binding_are_not_ambiguous() {
+        let dir = tempdir().unwrap();
+        let source = dir.path().join("source.ts");
+        fs::write(&source, "export const receipt = 1;").unwrap();
+        fs::write(dir.path().join("left.ts"), "export * from './source.js';").unwrap();
+        fs::write(dir.path().join("right.ts"), "export * from './source.js';").unwrap();
+        fs::write(dir.path().join("index.ts"), "export * from './left.js'; export * from './right.js';").unwrap();
+        fs::write(dir.path().join("consumer.ts"), "import { receipt } from './index.js'; console.log(receipt);").unwrap();
+        assert!(find_dead_exports(&source, dir.path()).unwrap().dead_exports.is_empty());
     }
     
     #[test]

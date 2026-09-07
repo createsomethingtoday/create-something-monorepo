@@ -192,7 +192,7 @@ pub fn extract_exports(path: &Path) -> Result<Vec<ExtractedExport>, String> {
     Ok(exports)
 }
 
-/// A barrel edge preserves both names, including renamed and wildcard exports.
+/// An export edge preserves both names. An empty source denotes a local binding.
 pub struct ReexportEdge {
     pub source: String,
     pub imported: String,
@@ -218,9 +218,18 @@ pub fn extract_reexport_edges(path: &Path) -> Result<Vec<ReexportEdge>, String> 
     let mut cursor = tree.root_node().walk();
     for statement in tree.root_node().named_children(&mut cursor) {
         if statement.kind() != "export_statement" { continue; }
-        let Some(from) = statement.child_by_field_name("source") else { continue; };
-        let from = from.utf8_text(source.as_bytes()).map_err(|error| error.to_string())?
-            .trim_matches(|character| character == '\'' || character == '"').to_string();
+        let from = statement.child_by_field_name("source")
+            .map(|node| node.utf8_text(source.as_bytes()).map(|text| text.trim_matches(|character| character == '\'' || character == '"').to_string()))
+            .transpose().map_err(|error| error.to_string())?.unwrap_or_default();
+        let mut local_cursor = statement.walk();
+        let has_clause = statement.children(&mut local_cursor).any(|child| child.kind() == "export_clause");
+        if from.is_empty() && !has_clause {
+            let mut declarations = Vec::new();
+            parse_export_statement(statement, &source, &mut declarations);
+            for declaration in declarations {
+                edges.push(ReexportEdge { source: String::new(), imported: declaration.name.clone(), exported: declaration.name });
+            }
+        }
         let mut children = statement.walk();
         for child in statement.children(&mut children) {
             if child.kind() == "*" {
