@@ -152,7 +152,7 @@ try {
   await host.page.screenshot({ path: `${outputRoot}mac-pairing.png`, fullPage: true });
   await host.page.getByRole('button', { name: 'Close pairing' }).click();
   if (await host.page.getByRole('button', { name: 'Publish view-only', exact: true }).count()) throw new Error('Mac native host exposed browser-only snapshot publishing');
-  const hostSurface = host.page.locator('svg');
+  const hostSurface = host.page.locator('svg[aria-label="Canvas objects"]');
   const hostBox = await hostSurface.boundingBox();
   if (!hostBox) throw new Error('Mac canvas surface unavailable');
   await host.page.getByRole('button', { name: /Note tool/ }).click();
@@ -170,7 +170,7 @@ try {
   await host.context.close();
 
   const unpaired = await nativePage('companion', { width: 393, height: 852 });
-  const unpairedSurface = unpaired.page.locator('svg');
+  const unpairedSurface = unpaired.page.locator('svg[aria-label="Canvas objects"]');
   const unpairedBox = await unpairedSurface.boundingBox();
   if (!unpairedBox) throw new Error('Unpaired iPhone canvas surface unavailable');
   await unpaired.page.getByRole('button', { name: /Note tool/ }).click();
@@ -207,7 +207,7 @@ try {
   const submittedAfterInvalidTitle = await page.evaluate(() => window.__nativeCalls.filter(({ command }) => command === 'draw_companion_submit').length);
   if (submittedAfterInvalidTitle !== submittedBeforeInvalidTitle) throw new Error('Over-limit UTF-8 title reached native transport');
 
-  const surface = page.locator('svg');
+  const surface = page.locator('svg[aria-label="Canvas objects"]');
   const box = await surface.boundingBox();
   if (!box) throw new Error('iPhone canvas surface unavailable');
   await title.fill('Wheel race');
