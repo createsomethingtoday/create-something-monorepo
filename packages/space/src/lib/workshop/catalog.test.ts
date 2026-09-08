@@ -44,7 +44,7 @@ describe('workshop palette endpoint', () => {
           body: JSON.stringify({ query })
         })
       } as Parameters<typeof POST>[0]);
-      const body = await response.json();
+      const body = (await response.json()) as { results: { path: string; url: string }[] };
       expect(body.results.some((item: { path: string }) => item.path === path)).toBe(true);
       expect(body.results.every((item: { url: string }) => item.url.startsWith('/'))).toBe(true);
     }
@@ -60,6 +60,7 @@ describe('workshop palette endpoint', () => {
       }) as Parameters<typeof POST>[0];
     expect((await POST(request('{'))).status).toBe(400);
     expect((await POST(request('{"query":42}'))).status).toBe(400);
-    expect((await (await POST(request('{"query":"zz-unlisted-958"}'))).json()).results).toEqual([]);
+    const empty = (await (await POST(request('{"query":"zz-unlisted-958"}'))).json()) as { results: unknown[] };
+    expect(empty.results).toEqual([]);
   });
 });
