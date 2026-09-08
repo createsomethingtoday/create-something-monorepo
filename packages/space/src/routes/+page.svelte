@@ -12,7 +12,7 @@
   propertyName="space"
 />
 <div class="workshop">
-  <section class="opening" aria-labelledby="workshop-title">
+  <section data-mobile-search-boundary class="opening" aria-labelledby="workshop-title">
     <div class="opening__copy">
       <p class="eyebrow">CREATE SOMETHING / The public workshop</p>
       <h1 id="workshop-title">Useful tools.<br />Shared openly.</h1>

@@ -166,6 +166,8 @@
   <!-- Unified Search - Cmd/Ctrl+K to open -->
   <UnifiedSearch
     currentProperty="space"
+    searchApiUrl="/api/workshop"
+    placeholder="Search workshop projects and tools..."
     localItems={quickAccessItems}
     showMobileButton={!mobileNavigationOpen}
     deferMobileButtonUntilCampaignExit={$page.url.pathname === '/'}

@@ -30,3 +30,36 @@ describe('public workshop discovery', () => {
     expect(paths).toContain('/data/nba/clutch');
   });
 });
+
+describe('workshop palette endpoint', () => {
+  it('finds retained tools and catalog entries without a remote index', async () => {
+    const { POST } = await import('../../routes/api/workshop/search/+server');
+    for (const [query, path] of [
+      ['Motion', '/motion'],
+      ['Ground', '/projects/ground']
+    ]) {
+      const response = await POST({
+        request: new Request('https://createsomething.space/api/workshop/search', {
+          method: 'POST',
+          body: JSON.stringify({ query })
+        })
+      } as Parameters<typeof POST>[0]);
+      const body = await response.json();
+      expect(body.results.some((item: { path: string }) => item.path === path)).toBe(true);
+      expect(body.results.every((item: { url: string }) => item.url.startsWith('/'))).toBe(true);
+    }
+  });
+  it('rejects malformed input and returns an empty result for an unknown query', async () => {
+    const { POST } = await import('../../routes/api/workshop/search/+server');
+    const request = (body: string) =>
+      ({
+        request: new Request('https://createsomething.space/api/workshop/search', {
+          method: 'POST',
+          body
+        })
+      }) as Parameters<typeof POST>[0];
+    expect((await POST(request('{'))).status).toBe(400);
+    expect((await POST(request('{"query":42}'))).status).toBe(400);
+    expect((await (await POST(request('{"query":"zz-unlisted-958"}'))).json()).results).toEqual([]);
+  });
+});

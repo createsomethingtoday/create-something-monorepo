@@ -16,7 +16,7 @@ Existing tools retain their addresses: `/playground`, `/praxis`, `/motion`, `/da
 
 ## Catalog ownership
 
-`src/lib/workshop/catalog.ts` is the curated public catalog. It supplies project pages, search, and sitemap entries. Keep source libraries distinct from installable packages. Adding an entry requires a verified public destination, a useful description, usage limits, and a source/installation distinction. Do not import the private discovery inventory or client operational material. Related slugs must resolve.
+`src/lib/workshop/catalog.ts` is the curated public catalog. It supplies project pages, search, and sitemap entries. `/api/workshop/search` powers the local command palette without relying on the historical cross-property index. Keep source libraries distinct from installable packages. Adding an entry requires a verified public destination, a useful description, usage limits, and a source/installation distinction. Do not import the private discovery inventory or client operational material. Related slugs must resolve.
 
 The supported source archive policy remains `config/public-distribution.v1.json`; catalog inclusion does not expand that archive or claim package GA. `.io` owns deeper research, `.agency` commissioned work, and GitHub source and contributions.
 
