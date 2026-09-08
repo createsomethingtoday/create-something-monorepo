@@ -1,4 +1,4 @@
-# Understanding .space
+# Understanding: .space
 
 .space is the public workshop: find, try, and reuse CREATE SOMETHING's work. .io explains research; .agency delivers commissioned systems.
 
@@ -8,7 +8,7 @@
 - Automation: SvelteKit routes render the catalog, filter queries, details, search, sitemap, and existing tools.
 - Judgment: publication requires public-source verification and honest usage limits. A source entry is not a tested standalone release.
 
-## Entry points
+## To Understand This Package, Read
 
 - `src/routes/+page.svelte`: curated workshop introduction.
 - `src/routes/projects`: searchable collection and project pages.

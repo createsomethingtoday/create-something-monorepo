@@ -35,3 +35,14 @@ Run `pnpm bootstrap:worktree` from a new worktree, then `pnpm --filter @create-s
 Before promotion, verify desktop/mobile project search, type filtering, empty results, detail/source links, Workbench access, old routes, and reload. Deployment follows the repository PR and production verification workflow.
 
 Browser build target follows Vite 7: Chrome/Edge 107+, Firefox 104+, Safari 16+. The top-level-await plugin receives this explicitly so it cannot restore its older implicit defaults.
+
+## Agent Legibility Contract
+
+| Field | Value |
+|-------|-------|
+| Entry point | `README.md`, `src/routes`, `src/lib/workshop/catalog.ts` |
+| Boot command | `pnpm --filter @create-something/space dev` |
+| Smoke command | `pnpm --filter @create-something/space check && pnpm --filter @create-something/space build` |
+| Validation surfaces | Svelte checks, catalog/search tests, build output, browser rendering, and Worker-backed API responses when changing retained tools |
+| UI validation path | Start at `/`, exercise `/projects` filters and details, then `/workbench` and the affected original tool route on desktop and mobile |
+| Escalation rule | Record the exact failing boundary if deployed Workers or remote data cannot be reproduced locally; do not claim runtime health from catalog or build checks. |
