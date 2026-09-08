@@ -102,6 +102,9 @@ test('the public CLI scaffolds and proves a local-only paired-agent runbook with
     assert.match(explained.stdout, /## Wait/);
     assert.match(explained.stdout, /## Stop/);
     assert.match(explained.stdout, /No live action is executed/);
+    assert.match(explained.stdout, /## Adapter contract readiness/);
+    assert.match(explained.stdout, /AUTHENTICATED_APPROVAL_REQUIRED/);
+    assert.match(explained.stdout, /Simulation pass does not establish invocation readiness/);
 
     const refused = run('init', '--template', 'local-runbook', '--dir', starterDir);
     assert.equal(refused.status, 2, refused.stderr || refused.stdout);
@@ -469,7 +472,9 @@ test('the Marketplace submission template requires a review-ready Airtable statu
 });
 
 test('the Marketplace submission template rejects a negative review-ready phrase', async () => {
-  const scratch = await mkdtemp(join(tmpdir(), 'workflow-compiler-marketplace-negative-review-status-'));
+  const scratch = await mkdtemp(
+    join(tmpdir(), 'workflow-compiler-marketplace-negative-review-status-')
+  );
   const starterDir = join(scratch, 'marketplace-submission');
 
   try {

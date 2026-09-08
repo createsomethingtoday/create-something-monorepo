@@ -1,0 +1,8 @@
+{
+  "schemaVersion": "workflow_artifact_attestation.v0.1",
+  "algorithm": "Ed25519",
+  "keyId": "terminal-owner-proof",
+  "publicKeyFingerprint": "sha256:b684e6ad850398faa05425133e1776470f6b70c1eb6cd139b2b4ee78cab598bf",
+  "manifestHash": "sha256:96026a9927dcf1e9f973ae4e2fe968f406c6c91bf4e4a5a709f5e71ade7e850a",
+  "signature": "EfdanEuJzCiREPuVY/1Qq7d5WZwScl6WOpx84V23ApitjAz5bg6mcsouu1it938G62qjA9PPPbspovq1cN5kCA=="
+}

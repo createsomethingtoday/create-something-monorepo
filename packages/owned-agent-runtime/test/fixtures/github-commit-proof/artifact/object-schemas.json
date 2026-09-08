@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "object_schemas.v0.1",
+  "workflowId": "internal.github.commit-observation",
+  "workflowVersion": "1.0.0",
+  "definitionHash": "sha256:5eede120873e8e1b59a7b5a51f0ec56836108ceff58d1be7ea03b5d1fb2d4c3a",
+  "objects": []
+}

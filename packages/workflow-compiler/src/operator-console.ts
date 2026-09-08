@@ -1,3 +1,4 @@
+import { createWorkflowAdapterReadiness, type WorkflowAdapterReadiness } from './readiness.js';
 import { createAcceptanceSummary, type WorkflowReplayArtifacts } from './replay.js';
 import type {
   CompiledWorkflowBundle,
@@ -6,7 +7,7 @@ import type {
   CompiledWorkflowBundleV0_3,
   WorkflowReplayReportV0_1,
   WorkflowReplayReportV0_2,
-  WorkflowReplayReportV0_3,
+  WorkflowReplayReportV0_3
 } from './types.js';
 
 interface WorkflowOperatorConsoleDataBase {
@@ -19,6 +20,7 @@ interface WorkflowOperatorConsoleDataBase {
   owners: CompiledWorkflowBundle['owners'];
   workflowMap: CompiledWorkflowBundle['workflowMap'];
   acceptanceSummary: ReturnType<typeof createAcceptanceSummary>;
+  adapterReadiness?: WorkflowAdapterReadiness;
 }
 
 export interface WorkflowOperatorConsoleDataV0_1 extends WorkflowOperatorConsoleDataBase {
@@ -49,7 +51,7 @@ export type WorkflowOperatorConsoleData =
 
 export function createOperatorConsoleData(
   bundle: CompiledWorkflowBundle,
-  replay: WorkflowReplayArtifacts,
+  replay: WorkflowReplayArtifacts
 ): WorkflowOperatorConsoleData {
   const common = () => ({
     workflowId: bundle.workflowId,
@@ -61,11 +63,14 @@ export function createOperatorConsoleData(
     owners: bundle.owners,
     workflowMap: bundle.workflowMap,
     acceptanceSummary: createAcceptanceSummary(bundle, replay.report),
+    adapterReadiness: createWorkflowAdapterReadiness(bundle)
   });
 
   if (bundle.schemaVersion === 'compiled_workflow_bundle.v0.3') {
     if (replay.report.schemaVersion !== 'workflow_replay_report.v0.3') {
-      throw new Error('Operator console requires matching compiled bundle and replay report schema versions.');
+      throw new Error(
+        'Operator console requires matching compiled bundle and replay report schema versions.'
+      );
     }
     assertReplayReportMatchesBundle(bundle, replay.report);
     return {
@@ -73,13 +78,15 @@ export function createOperatorConsoleData(
       ...common(),
       decisionInventory: bundle.decisionInventory,
       approvalSurfaces: bundle.approvalSurfaces,
-      replayReport: replay.report,
+      replayReport: replay.report
     };
   }
 
   if (bundle.schemaVersion === 'compiled_workflow_bundle.v0.2') {
     if (replay.report.schemaVersion !== 'workflow_replay_report.v0.2') {
-      throw new Error('Operator console requires matching compiled bundle and replay report schema versions.');
+      throw new Error(
+        'Operator console requires matching compiled bundle and replay report schema versions.'
+      );
     }
     assertReplayReportMatchesBundle(bundle, replay.report);
     return {
@@ -87,12 +94,14 @@ export function createOperatorConsoleData(
       ...common(),
       decisionInventory: bundle.decisionInventory,
       approvalSurfaces: bundle.approvalSurfaces,
-      replayReport: replay.report,
+      replayReport: replay.report
     };
   }
 
   if (replay.report.schemaVersion !== 'workflow_replay_report.v0.1') {
-    throw new Error('Operator console requires matching compiled bundle and replay report schema versions.');
+    throw new Error(
+      'Operator console requires matching compiled bundle and replay report schema versions.'
+    );
   }
   assertReplayReportMatchesBundle(bundle, replay.report);
   return {
@@ -100,20 +109,22 @@ export function createOperatorConsoleData(
     ...common(),
     decisionInventory: bundle.decisionInventory,
     approvalSurfaces: bundle.approvalSurfaces,
-    replayReport: replay.report,
+    replayReport: replay.report
   };
 }
 
 function assertReplayReportMatchesBundle(
   bundle: CompiledWorkflowBundle,
-  report: WorkflowReplayArtifacts['report'],
+  report: WorkflowReplayArtifacts['report']
 ): void {
   if (
     report.workflowId !== bundle.workflowId ||
     report.workflowVersion !== bundle.workflowVersion ||
     report.definitionHash !== bundle.definitionHash
   ) {
-    throw new Error('Operator console requires matching compiled bundle and replay report workflow identity.');
+    throw new Error(
+      'Operator console requires matching compiled bundle and replay report workflow identity.'
+    );
   }
 }
 
@@ -157,7 +168,8 @@ const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (character
 const list = (values, empty = 'None') => values?.length ? '<ul class="list">' + values.map((value) => '<li>' + escapeHtml(value) + '</li>').join('') + '</ul>' : '<p>' + empty + '</p>';
 const field = (label, value) => '<div class="field"><dt>' + escapeHtml(label) + '</dt><dd>' + value + '</dd></div>';
 
-function renderDetail(entry) {
+function renderDetail(entry, data) {
+  const readiness = data.adapterReadiness?.actions.find((action) => action.actionId === entry.actionId);
   const statusCopy = entry.observedOutcome === 'pass'
     ? 'Replay permits this transition. The console remains read-only.'
     : entry.observedOutcome === 'approval_required'
@@ -175,6 +187,7 @@ function renderDetail(entry) {
       field('Evidence references', list(entry.evidenceReferences)) +
       field('Missing evidence', list(entry.missingEvidence, 'Complete')) +
     '</div>' +
+    '<h3>Adapter contract readiness</h3><p>' + escapeHtml(readiness?.reasonCode ?? 'Readiness unavailable in this historical bundle.') + '</p><p>' + escapeHtml(readiness?.nextStep ?? 'Recompile the source workflow to inspect its tool contracts.') + '</p>' +
     '<h3>Recovery</h3><p>' + escapeHtml(entry.recovery.path) + '</p>' +
     '<h3>Receipt</h3><div class="hash">' + escapeHtml(JSON.stringify(entry.receipt.receiptFields)) + '</div>' +
     '<p class="policy ' + escapeHtml(entry.observedOutcome) + '">' + escapeHtml(statusCopy) + '</p>';
@@ -204,9 +217,10 @@ function render(data) {
   document.querySelectorAll('.case').forEach((button) => button.addEventListener('click', () => {
     document.querySelectorAll('.case').forEach((candidate) => candidate.setAttribute('aria-current','false'));
     button.setAttribute('aria-current','true');
-    renderDetail(cases.find((entry) => entry.caseId === button.dataset.caseId));
+    renderDetail(cases.find((entry) => entry.caseId === button.dataset.caseId), data);
   }));
-  renderDetail(cases[0]);
+  if (cases.length) renderDetail(cases[0], data);
+  else document.querySelector('#case-detail').textContent = 'No replay cases. Supply cases to inspect governed outcomes.';
 }
 
 fetch('./data.json')

@@ -79,3 +79,13 @@ routine rollback. Move the default dist-tag back to the last accepted version,
 deprecate the affected version with a precise message, and publish a corrected
 version through the same gates. Record the registry commands and readbacks in
 the owning release issue.
+
+## Independent registry verification
+
+After maintainer approval, dispatch this workflow with operation `verify` and
+the exact released version. It runs an isolated actual-npm installation on
+Node 22 and 24, registry signature/attestation checks, both starter loops,
+negative parser and tamper cases, and signed runtime-manifest verification.
+Locally run `npm run release:registry -- 0.5.0` after that version is public.
+Staging uses operation `stage` (the default); verification never publishes.
+Update the stable quickstart pin only after this registry gate passes.

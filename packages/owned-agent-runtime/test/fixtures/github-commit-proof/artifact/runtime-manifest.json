@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "workflow_runtime_manifest.v0.2",
+  "runtimeCompatibility": "workflow-runtime.v0.2",
+  "target": "create-something/control-runtime.v1",
+  "workflow": {
+    "id": "internal.github.commit-observation",
+    "version": "1.0.0",
+    "definitionHash": "sha256:5eede120873e8e1b59a7b5a51f0ec56836108ceff58d1be7ea03b5d1fb2d4c3a",
+    "compilerVersion": "workflow-compiler-v0.1",
+    "compiledBundleSchema": "compiled_workflow_bundle.v0.3"
+  },
+  "artifacts": {
+    "governedInteractionSha256": "sha256:b592fcf8d85fc971c085bd61597ea5bc170f8a2f7bb7e4c64f2447e2c4ebe3fa",
+    "decisionInventorySha256": "sha256:c2c878842a13d40e1a7d3789cee26603091a8c6a8f6ca4a64737ae1401c71682",
+    "approvalSurfacesSha256": "sha256:294f23e442359aa4e0acd6a9a44496d8584435e9412a6af947ae9bb91bcc4da6",
+    "toolContractsSha256": "sha256:18a80dffd58190200bfd301e09f000bcce2769bd0a90f04a1108c239887c6c51"
+  },
+  "steps": [
+    {
+      "id": "observe",
+      "actionId": "read_commit",
+      "dependsOn": [],
+      "evidenceDigest": "sha256:3e715d6a50be05f48ac0c7103695819073268f066f272d325683b7b46a7d8b94",
+      "recovery": "manual_fallback",
+      "disposition": "pass",
+      "capability": {
+        "id": "github:read_commit",
+        "parameterDigest": "sha256:b989a8af298124b6f883866796a1fcca6a1845ca27dd3eae7a7355471523cfcd"
+      }
+    },
+    {
+      "id": "review",
+      "actionId": "review_observation",
+      "dependsOn": [
+        "observe"
+      ],
+      "evidenceDigest": "sha256:c596c144a212323b1ff5493a667037a4e0659e2b01c8d49bc28369efc8f32d03",
+      "recovery": "manual_fallback",
+      "disposition": "wait",
+      "approval": {
+        "policyId": "createsomethingtoday",
+        "expiresAt": "2026-09-08T04:12:50.700Z"
+      }
+    }
+  ]
+}

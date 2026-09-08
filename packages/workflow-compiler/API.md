@@ -328,3 +328,13 @@ receipt evaluators, attestation receipts, and governed interaction host
 contracts. Treat the generated `.d.ts` files as the exact type source; this
 document describes the supported seams rather than duplicating every structural
 field.
+
+## Adapter contract readiness
+
+`createWorkflowAdapterReadiness(bundle)` returns `workflow_adapter_readiness.v0.1`
+with an `actions` array. Each entry identifies `actionId`, descriptive `status`
+(`contract_declared`, `wait`, or `stop`), `reasonCode`, `nextStep`, and
+`canInvoke: false`. It inspects declared contracts only; only the existing
+adapter APIs evaluate current evidence and construct a plan. Console envelopes
+optionally embed this separately versioned summary as `adapterReadiness`.
+Historical envelopes without it remain readable.

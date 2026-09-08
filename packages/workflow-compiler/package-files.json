@@ -1,6 +1,6 @@
 {
   "schemaVersion": "workflow_compiler_package_inventory.v1",
-  "packageVersion": "0.4.1",
+  "packageVersion": "0.5.0",
   "files": [
     "API.md",
     "CHANGELOG.md",
@@ -59,6 +59,10 @@
     "dist/operator-console.d.ts.map",
     "dist/operator-console.js",
     "dist/operator-console.js.map",
+    "dist/readiness.d.ts",
+    "dist/readiness.d.ts.map",
+    "dist/readiness.js",
+    "dist/readiness.js.map",
     "dist/replay.d.ts",
     "dist/replay.d.ts.map",
     "dist/replay.js",

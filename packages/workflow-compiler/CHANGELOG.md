@@ -4,6 +4,22 @@ All notable changes to this package are documented here. This project follows
 Semantic Versioning for its npm API and separately versions its workflow and
 artifact schemas.
 
+## 0.5.0
+
+- Reject unknown fields in every closed workflow and replay record, including
+  approval, receipt, recovery, tool parameters and transitions. Evidence maps
+  remain open. Previously ignored extension fields must be removed before
+  compilation; documented workflow schemas retain their meaning.
+- Publish the existing runtime-manifest projection and verification APIs for
+  versioned, signed, serial-chain handoff to the zero-write Workflow Runtime.
+  Preserve historical v0.1 recovery and current v0.2 recovery semantics.
+- Add descriptive adapter contract readiness to `explain` and the read-only
+  console. A passing replay is not a tool invocation or live execution proof.
+- Expose the exact npm build through `WORKFLOW_COMPILER_PACKAGE_VERSION` and
+  `workflow-compiler --version`, separately from the historical compiler
+  compatibility marker.
+- Add an actual-registry consumer verifier alongside tarball release checks.
+
 ## 0.4.1
 
 - Prepare the first post-bootstrap release candidate for stage-only GitHub

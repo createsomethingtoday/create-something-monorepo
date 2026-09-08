@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "workflow_artifact_manifest.v0.1",
+  "workflowId": "internal.github.commit-observation",
+  "workflowVersion": "1.0.0",
+  "definitionHash": "sha256:5eede120873e8e1b59a7b5a51f0ec56836108ceff58d1be7ea03b5d1fb2d4c3a",
+  "compilerVersion": "workflow-compiler-v0.1",
+  "files": [
+    {
+      "path": "agent-contracts.json",
+      "hash": "sha256:5c5249d0fb86cd41ba6816942c2ac4711102b3341bf98181dd0324a288ac749c"
+    },
+    {
+      "path": "approval-surfaces.json",
+      "hash": "sha256:294f23e442359aa4e0acd6a9a44496d8584435e9412a6af947ae9bb91bcc4da6"
+    },
+    {
+      "path": "compiled-workflow.json",
+      "hash": "sha256:57fcd4a6b3501d574699556b3dd95070d9d21b7cac39553a12801dce8e28e42a"
+    },
+    {
+      "path": "decision-inventory.json",
+      "hash": "sha256:c2c878842a13d40e1a7d3789cee26603091a8c6a8f6ca4a64737ae1401c71682"
+    },
+    {
+      "path": "evaluation-manifest.json",
+      "hash": "sha256:2576417b980a44eeb26d9943e2f583e51dd9692aeea948d8b03398e51d34e558"
+    },
+    {
+      "path": "event-schemas.json",
+      "hash": "sha256:eb09bcebdb68d2b67da40cf576c5e041bb225b6e646aa71d03305bb506500b82"
+    },
+    {
+      "path": "governed-interaction.json",
+      "hash": "sha256:b592fcf8d85fc971c085bd61597ea5bc170f8a2f7bb7e4c64f2447e2c4ebe3fa"
+    },
+    {
+      "path": "object-schemas.json",
+      "hash": "sha256:6adaaf6e9304791d34e844101c460cc5d9374574e1b2ceb66a911161274461f1"
+    },
+    {
+      "path": "runtime-manifest.json",
+      "hash": "sha256:4d339736641f6177e67725d06dd3a18ffae22f4bd8566bec58ed5216e121bb41"
+    },
+    {
+      "path": "runtime-targets.json",
+      "hash": "sha256:e3a84bece4e45ee968311fe7d0876a4d39343143215ca81e03c055225476c50f"
+    },
+    {
+      "path": "tool-contracts.json",
+      "hash": "sha256:18a80dffd58190200bfd301e09f000bcce2769bd0a90f04a1108c239887c6c51"
+    },
+    {
+      "path": "workflow-map.json",
+      "hash": "sha256:8b8542951bf2fb7ca5e4436f33b988a187dbbfbf83dc790aa4534fa1ff64d180"
+    }
+  ]
+}
