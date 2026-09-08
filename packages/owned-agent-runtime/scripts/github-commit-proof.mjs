@@ -216,7 +216,9 @@ export async function verifyCommitProof(out, trustedPublicKeyPath) {
     artifactManifestSha256: inventory.manifestHash,
     compilerPackageVersion: buildReleaseId.slice('workflow-compiler@'.length),
     nextDisposition: 'wait',
-    readDispatches: 1,
+    readDispatches: 2,
+    identityReadDispatches: 1,
+    commitReadDispatches: 1,
     restartNetworkCalls: 0
   };
 }

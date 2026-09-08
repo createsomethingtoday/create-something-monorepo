@@ -162,9 +162,10 @@ migration does not permit a historical row to be retroactively populated.
 ## Terminal read-only compiler integration proof
 
 `node scripts/github-commit-proof.mjs start <exact-reviewed-commit-sha> <new-output-directory>`
-performs one authenticated GET of that immutable commit in
-`createsomethingtoday/create-something-monorepo`, using the existing GitHub CLI
-account `createsomethingtoday`. It signs a compiler artifact, validates the
+performs two authenticated GitHub GETs: one `/user` request to verify the existing
+CLI account `createsomethingtoday`, then one request for that immutable commit in
+`createsomethingtoday/create-something-monorepo`. The proof reports both reads
+separately and a total of two; only the commit read is a runtime dispatch. It signs a compiler artifact, validates the
 source-bound plan, persists a runtime effect intent, reads the commit, signs
 the bounded source observation, and records a wait checkpoint. It then reopens
 and verifies the receipt in a separate process without another source read.
@@ -179,7 +180,7 @@ Keep the output and trusted key in operator-controlled local storage.
 This is a terminal-operated production source read with a local checkpoint
 ledger. Its bounded local policy is not an Agency customer activation, Identity
 approval, deployed Control executor, or Marketplace A3 acceptance. The runtime
-core remains zero-write; the source GET is owned by this verifier. No external
+core remains zero-write; both GETs are owned by this verifier. No external
 write, access grant, credential output, automatic approval or paid model call
 is involved. Set `WORKFLOW_COMPILER_CONSUMER_DIR` to a disposable npm consumer
 directory for post-release proof against the installed public compiler; otherwise

@@ -28,7 +28,9 @@ test('retained authenticated read proof reopens without replaying the source and
     const before = await readFile(join(out, 'checkpoint.json'), 'utf8');
     const first = await verifyCommitProof(out, key);
     assert.equal(first.nextDisposition, 'wait');
-    assert.equal(first.readDispatches, 1);
+    assert.equal(first.readDispatches, 2);
+    assert.equal(first.identityReadDispatches, 1);
+    assert.equal(first.commitReadDispatches, 1);
     assert.equal(first.restartNetworkCalls, 0);
     assert.deepEqual(await verifyCommitProof(out, key), first);
     assert.equal(await readFile(join(out, 'checkpoint.json'), 'utf8'), before);
