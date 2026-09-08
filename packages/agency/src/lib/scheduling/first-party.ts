@@ -154,7 +154,8 @@ export function schedulerHandoffContext(
 		}
 	}
 	const notes = warmupNotes?.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '').trim();
-	if (notes) context.warmupNotes = notes.slice(0, 2000);
+	// Persisted Map notes must not cross into an unrelated review, including normalized URLs.
+	if (notes && context.intent !== 'technical-review') context.warmupNotes = notes.slice(0, 2000);
 	return context;
 }
 
@@ -202,9 +203,7 @@ export function schedulerHandoffSheet(context: SchedulerHandoffContext): Schedul
 }
 
 export function createBookingHandoffState(search = '', warmupNotes?: string): BookingHandoffState {
-	// A saved Map draft belongs to the mapping flow, not a new project review.
-	const includeMapDraft = new URLSearchParams(search).get('intent') !== 'technical-review';
-	const handoffContext = schedulerHandoffContext(search, includeMapDraft ? warmupNotes : undefined);
+	const handoffContext = schedulerHandoffContext(search, warmupNotes);
 	return {
 		handoffContext,
 		handoffSheet: schedulerHandoffSheet(handoffContext),

@@ -357,3 +357,16 @@ test('an existing Map draft does not attach to a new technical review inquiry', 
   const mapping = createBookingHandoffState('?intent=workflow-map', 'Current Map draft.');
   assert.equal(mapping.handoffContext.warmupNotes, 'Current Map draft.');
 });
+
+
+test('normalized technical review intents cannot attach a saved draft through any handoff entry point', () => {
+  for (const intent of ['technical-review', 'Technical%20Review', '%00technical-review']) {
+    const query = '?intent=' + intent;
+    const context = schedulerHandoffContext(query, 'Saved unrelated Map draft.');
+    const handoff = createBookingHandoffState(query, 'Saved unrelated Map draft.');
+    assert.equal(context.intent, 'technical-review');
+    assert.equal(context.warmupNotes, undefined);
+    assert.equal(handoff.handoffSheet.warmupNotes, undefined);
+    assert.equal(new URL(handoff.schedulerHref).searchParams.get('intent'), 'technical-review');
+  }
+});
