@@ -108,6 +108,10 @@ jobs:
         node: ['22', '24']
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: main
+      - name: Verify protected verifier source
+        run: test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: ${{ matrix.node }}
