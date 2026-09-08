@@ -1,0 +1,22 @@
+1. Attempt a claim before comparison (expected: blocked)
+✗ Claim blocked
+
+  Claim rejected: No evidence found for DRY violation. Run: ground compare "draft.ts" "published.ts"
+
+  You need to compare the files first:
+  ground compare draft.ts published.ts
+
+2. Compare the two files
+Compared draft.ts ↔ published.ts
+
+  Similarity:  84.2%
+  Structure:   100.0%
+  Evidence ID: 8e90d36f-1279-4d4c-9480-5a2341550ba6
+
+  This looks like a duplicate (80%+ threshold).
+  You can now run: ground claim duplicate draft.ts published.ts "reason"
+
+3. Check the actual behavior
+draft.ts: draft=true, published=false
+published.ts: draft=false, published=true
+Same structure does not establish equivalent behavior.
