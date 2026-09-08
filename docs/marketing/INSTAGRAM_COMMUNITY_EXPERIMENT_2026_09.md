@@ -53,3 +53,5 @@ Worktree disposition: preserved at the CRE-1965 worktree/branch until October 5 
 - Published carousel: https://www.instagram.com/createsomething.ltd/p/DdB-w6LmxdR/ . Live caption, first-slide render, four-slide indicator and all four pre-submit alt values verified.
 - Post menu on desktop offers no pin control; pinning remains an optional mobile action.
 - The existing thread permits one heartbeat. Updated `create-something-x-community-experiment` to “CREATE SOMETHING X and Instagram community experiment,” preserving the weekday 09:30 schedule and original X instructions, adding Instagram and the October 5 final stop. This is a scheduled agent workflow, not a claim that future posts are delivered.
+- Account Status → Limits to your reach explicitly reports no account reach limits and eligibility for recommendations in Explore, Reels and feed. Eligibility does not guarantee distribution.
+- Community reply published and reloaded: https://www.instagram.com/p/DdAL50mEZtH/c/17947437576277562/ . Responded to the existing supportive comment and asked whether a Webflow form or visual workbench walkthrough would be more useful. No claimed audience response yet.
