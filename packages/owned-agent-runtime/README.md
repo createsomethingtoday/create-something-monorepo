@@ -184,3 +184,14 @@ write, access grant, credential output, automatic approval or paid model call
 is involved. Set `WORKFLOW_COMPILER_CONSUMER_DIR` to a disposable npm consumer
 directory for post-release proof against the installed public compiler; otherwise
 it uses the workspace compiler package. Build workflow-runtime first.
+
+## Agent Legibility Contract
+
+| Field | Value |
+| --- | --- |
+| Entry point | `src/index.ts`; terminal proof: `scripts/github-commit-proof.mjs` |
+| Boot command | `pnpm dev` |
+| Smoke command | `pnpm check && pnpm test`; deployed Control: `REQUIRE_CONTROL_CONFIGURED=true pnpm smoke` |
+| Validation surfaces | Typed runtime contracts, immutable receipts, signed compiler inventory, checkpoint verifier, and source readback |
+| UI validation path | No UI in this package. Verify consumer consoles in their owning browser surface. |
+| Escalation rule | Stop before expanded source access, customer activation, unregistered executors, source writes, or an unverified receipt. |

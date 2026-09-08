@@ -97,3 +97,5 @@ Exit criteria
 - Added a retained signed, public-metadata-only GitHub observation fixture and offline tamper/reopen regression. Policy tampering, response tampering, wrong trusted key and checkpoint corruption are rejected; repeated verify leaves checkpoint unchanged. No private key is persisted.
 - Candidate live source proof: /tmp/cre-1960-github-proof-final-candidate; receipt sha256:3b3c62188cbd8ea9112cf99be64b6b587c2d9bb4ca4e37eb4a6422f311a34bd9. One source read and actual child-process verification pass. Must repeat using installed public 0.5.0 after release.
 - Next: protected PR review/CI, then staged release. Source recommendation question remains open to user steering; default scoped GitHub proof is explicit.
+
+- Explicit legibility check found missing contract section in the touched owned-runtime README. Added its entry/boot/smoke/verification/escalation table; both package README contracts now pass. No runtime behavior changed.
