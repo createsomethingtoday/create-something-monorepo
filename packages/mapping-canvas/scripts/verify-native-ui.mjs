@@ -323,9 +323,11 @@ try {
   await page.evaluate(() => { window.__nativeViewportDelay = true; });
   await page.mouse.move(box.x + 180, box.y + 240);
   await page.mouse.wheel(6, -4);
-  await page.mouse.move(before.x + 5, before.y + 5);
+  // Drag the lower note border, clear of the responsive formatting toolbar.
+  const dragStart = { x: before.x + 5, y: before.y + before.height - 5 };
+  await page.mouse.move(dragStart.x, dragStart.y);
   await page.mouse.down();
-  await page.mouse.move(before.x + 55, before.y + 55, { steps: 4 });
+  await page.mouse.move(dragStart.x + 50, dragStart.y + 50, { steps: 4 });
   await page.waitForTimeout(300);
   const duringDelayedViewport = await note.boundingBox();
   if (!duringDelayedViewport || duringDelayedViewport.x < before.x + 40 || duringDelayedViewport.y < before.y + 40) throw new Error('Delayed wheel response erased an in-progress object drag');
