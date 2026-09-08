@@ -6,6 +6,54 @@ import type {
 
 export const performancePageRegistry: PerformancePageRegistryGroup[] = [
   group(
+    'agency-dispatch',
+    'agency',
+    ['dispatch'],
+    'pending',
+    contract(
+      'editorial',
+      'Understand the publication schedule and its evidence.',
+      'The planned editions name the work and source behind each story.',
+      'Follow a relevant edition'
+    )
+  ),
+  group(
+    'io-newsletters',
+    'io',
+    ['newsletters'],
+    'pending',
+    contract(
+      'index',
+      'Choose a published newsletter edition.',
+      'The archive lists editions and their reading destinations.',
+      'Read an edition'
+    )
+  ),
+  group(
+    'io-newsletter-detail',
+    'io',
+    ['newsletters/[slug]'],
+    'pending',
+    contract(
+      'editorial',
+      'Read the edition and choose a useful next step.',
+      'The edition includes its argument and supporting resources.',
+      'Open a relevant resource'
+    )
+  ),
+  group(
+    'io-newsletter-analytics',
+    'io',
+    ['admin/newsletter-analytics'],
+    'pending',
+    contract(
+      'tool',
+      'Inspect newsletter delivery and reader activity.',
+      'The protected dashboard exposes delivery, activity, and measurement limits.',
+      'Review the next publication decision'
+    )
+  ),
+  group(
     'agency-home',
     'agency',
     ['/'],
@@ -690,12 +738,60 @@ export const performancePageRegistry: PerformancePageRegistryGroup[] = [
     'space-home',
     'space',
     ['/'],
-    'pending',
+    'migrated',
     contract(
       'landing',
-      'Choose which material, data, or motion experiment to inspect.',
-      'The property index exposes current experiments and their operating states.',
-      'Open one experiment'
+      'Find a useful public tool or reusable method.',
+      'Selected projects link to public source and explain their use and boundaries.',
+      'Explore one project or open the Workbench'
+    )
+  ),
+  group(
+    'space-workshop-index',
+    'space',
+    ['projects'],
+    'migrated',
+    contract(
+      'index',
+      'Choose a relevant tool, skill, plugin, or building block.',
+      'The searchable collection exposes source distribution and practical purpose.',
+      'Open one project'
+    )
+  ),
+  group(
+    'space-workshop-detail',
+    'space',
+    ['projects/[slug]'],
+    'migrated',
+    contract(
+      'editorial',
+      'Decide whether this project fits the work.',
+      'Usage, limits, and public source make the project inspectable.',
+      'Open the source or installation instructions'
+    )
+  ),
+  group(
+    'space-workshop-about',
+    'space',
+    ['about'],
+    'migrated',
+    contract(
+      'editorial',
+      'Understand how to use and contribute to the workshop.',
+      'The publishing boundary distinguishes packages, source, and commissioned work.',
+      'Explore projects'
+    )
+  ),
+  group(
+    'space-workbench',
+    'space',
+    ['workbench'],
+    'migrated',
+    contract(
+      'landing',
+      'Choose a familiar interactive tool.',
+      'The retained tool collection exposes existing routes.',
+      'Open one tool'
     )
   ),
   group(

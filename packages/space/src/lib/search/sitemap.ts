@@ -1,3 +1,4 @@
+import { projects } from '$lib/workshop/catalog';
 import { discoverConcepts } from '$lib/config/discoverConcepts';
 
 const pageModules = import.meta.glob('/src/routes/**/+page.svelte');
@@ -14,5 +15,11 @@ export function getSpaceSitemapPaths(): string[] {
     .filter((path): path is string => path !== null);
   const conceptPaths = discoverConcepts.map((concept) => `/discover/${concept.slug}`);
 
-  return [...new Set([...staticPaths, ...conceptPaths])];
+  return [
+    ...new Set([
+      ...staticPaths,
+      ...conceptPaths,
+      ...projects.map((project) => `/projects/${project.slug}`)
+    ])
+  ];
 }

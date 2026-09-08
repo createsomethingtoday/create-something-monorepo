@@ -1,184 +1,186 @@
 <script lang="ts">
-  import {
-    Button,
-    PerformanceCampaignOpening,
-    PerformanceCardGrid,
-    PerformanceConversionHandoff,
-    PerformanceDecisionPanel,
-    PerformancePageSection,
-    paperPrototypeScoreMedia,
-    SEO,
-    type PerformanceCardItem,
-    type PerformanceDecisionItem
-  } from '@create-something/canon';
-
-  const proofMetrics = [
-    { value: '5', label: 'live tools and surfaces' },
-    { value: '3', label: 'runtime loops previewed in the shell' },
-    { value: '100%', label: 'Cloudflare Workers-first execution' },
-    { value: 'Direct', label: 'inspectable routes, outputs, and state' }
-  ];
-
-  const tools: PerformanceCardItem[] = [
-    {
-      eyebrow: 'Execution',
-      icon: 'settings',
-      title: 'Code Playground',
-      href: '/playground',
-      detail:
-        'Execute JavaScript directly in the Workers runtime with console streaming, async support, and an inspectable request surface.'
-    },
-    {
-      eyebrow: 'Guided practice',
-      icon: 'check',
-      title: 'Praxis',
-      href: '/praxis',
-      detail:
-        'Learn integration patterns through guided challenges that turn runtime ideas into operator habits instead of abstract lessons.'
-    },
-    {
-      eyebrow: 'Inspection',
-      icon: 'clock',
-      title: 'Motion Lab',
-      href: '/motion',
-      detail:
-        'Analyze animation systems from any public URL with extracted timing, easing, sequencing, and motion architecture notes.'
-    },
-    {
-      eyebrow: 'Realtime data',
-      icon: 'document',
-      title: 'Data Studio',
-      href: '/data/nba',
-      detail:
-        'Work with live dashboards, historical snapshots, and derived metrics that stay useful under real refresh and caching conditions.'
-    },
-    {
-      eyebrow: 'Concept graph',
-      icon: 'search',
-      title: 'Discover',
-      href: '/discover',
-      detail:
-        'Map concepts across CREATE SOMETHING properties and use the network to move from idea to implementation and back again.'
-    }
-  ];
-
-  const decisionStates: PerformanceDecisionItem[] = [
-    {
-      label: 'Run',
-      summary: 'Live surface',
-      title: 'Execute against the runtime.',
-      detail:
-        'The workbench earns its place when the visitor can run, inspect, or compare something real instead of reading a static promise.',
-      tone: 'allow',
-      evidence: [
-        'Route performs real work',
-        'Request and response shape stay visible',
-        'Output can be repeated or compared'
-      ],
-      receipts: ['console output', 'route state', 'timing result'],
-      actions: [{ label: 'Open Playground', href: '/playground' }]
-    },
-    {
-      label: 'Inspect',
-      summary: 'Behavior visible',
-      title: 'Show the state behind the result.',
-      detail:
-        'When timing, easing, cache state, or data refresh affects the outcome, the interaction should surface that behavior directly.',
-      tone: 'review',
-      evidence: [
-        'The user can see what changed',
-        'Failure modes are part of the surface',
-        'The next route is chosen by behavior, not hype'
-      ],
-      receipts: ['motion report', 'data snapshot', 'state trace'],
-      actions: [
-        { label: 'Inspect Motion', href: '/motion' },
-        { label: 'Open Data', href: '/data/nba' }
-      ]
-    },
-    {
-      label: 'Promote',
-      summary: 'Pattern survived',
-      title: 'Move useful behavior into the right property.',
-      detail:
-        'A successful workbench result should become research when it teaches, or delivery when the workflow needs controls and owners.',
-      tone: 'neutral',
-      evidence: [
-        'The runtime behavior is repeatable',
-        'The artifact has a clear receiving property',
-        'Promotion path names the owner and next decision'
-      ],
-      receipts: ['research note', 'handoff link', 'workflow cue'],
-      actions: [
-        { label: 'Read Pattern', href: 'https://createsomething.io' },
-        {
-          label: 'Map Workflow',
-          href: 'https://createsomething.agency/practice?source=space&intent=runtime-to-practice&stage=qualify&lane=workflow_infrastructure'
-        }
-      ]
-    }
-  ];
-
+  import { SEO } from '@create-something/canon';
+  import ProjectCard from '$lib/workshop/ProjectCard.svelte';
+  import { projects, workbenchTools } from '$lib/workshop/catalog';
+  import '$lib/workshop/workshop.css';
 </script>
 
 <SEO
-  title="Workbench | CREATE SOMETHING .space"
-  description="CREATE SOMETHING .space is the live workbench for testing tools, runtimes, and interaction patterns on Cloudflare Workers."
-  keywords="developer tools, code playground, motion analysis, realtime dashboards, Cloudflare Workers, live workbench, automation practice"
-  ogImage="/og-image.png"
+  title="The Public Workshop | CREATE SOMETHING .space"
+  description="Tools, workflows, skills, and building blocks from CREATE SOMETHING. Find something useful, inspect the source, and make it your own."
+  ogImage="/images/workshop/open-workshop.webp"
   propertyName="space"
 />
+<div class="workshop">
+  <section data-mobile-search-boundary class="opening" aria-labelledby="workshop-title">
+    <div class="opening__copy">
+      <p class="eyebrow">CREATE SOMETHING / The public workshop</p>
+      <h1 id="workshop-title">Useful tools.<br />Shared openly.</h1>
+      <p class="lead">
+        Workflows, systems, skills, and plugins shaped by the work we do. Find something useful.
+        Make it your own.
+      </p>
+      <div class="actions">
+        <a class="primary" href="/projects">Explore projects ↗</a><a
+          class="text-link"
+          href="/workbench">Open the Workbench</a
+        >
+      </div>
+    </div>
+    <figure>
+      <img
+        src="/images/workshop/open-workshop.webp"
+        alt="Ivory modules lift from a machined docking rail, a material study of tools made for reuse."
+        width="1536"
+        height="1024"
+        fetchpriority="high"
+      />
+      <figcaption class="eyebrow">Study 01 / Made to be taken apart</figcaption>
+    </figure>
+  </section>
+  <section class="section wrap" aria-labelledby="selected-title">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">01 / Selected work</p>
+        <h2 id="selected-title">A few good places<br />to begin.</h2>
+      </div>
+      <a class="text-link" href="/projects">All {projects.length} projects and building blocks ↗</a>
+    </div>
+    <div class="project-grid">
+      {#each projects.filter((project) => project.featured) as project, index}<ProjectCard
+          {project}
+          {index}
+        />{/each}
+    </div>
+  </section>
+  <section class="workbench section" aria-labelledby="workbench-title">
+    <div class="wrap workbench__grid">
+      <div>
+        <p class="eyebrow">02 / The Workbench</p>
+        <h2 id="workbench-title">Try it.<br />See what happens.</h2>
+        <p class="lead">
+          The playground, labs, and data tools are still here. Open a familiar tool or follow your
+          curiosity somewhere new.
+        </p>
+        <div class="actions"><a class="primary" href="/workbench">Open the Workbench ↗</a></div>
+      </div>
+      <div class="tool-list">
+        {#each workbenchTools as tool}<a href={tool.href}
+            ><span><strong>{tool.name}</strong><small>{tool.description}</small></span><span
+              aria-hidden="true">↗</span
+            ></a
+          >{/each}
+      </div>
+    </div>
+  </section>
+  <section class="section wrap closing" aria-labelledby="closing-title">
+    <p class="eyebrow">03 / In good company</p>
+    <h2 id="closing-title">Use the work.<br />Help it get better.</h2>
+    <p class="lead">
+      Read the source, report what breaks, or share what you build. The project repositories are
+      where the work continues.
+    </p>
+    <div class="actions">
+      <a class="primary" href="https://github.com/createsomethingtoday">Find us on GitHub ↗</a><a
+        class="text-link"
+        href="/about">About the workshop</a
+      >
+    </div>
+  </section>
+</div>
 
-<PerformanceCampaignOpening
-  mobileSearchBoundary
-  eyebrow="CREATE SOMETHING .space"
-  propertyRole="Public systems workbench"
-  expression="editorial"
-  title="A public workbench for testing runtime ideas."
-  lede="CREATE SOMETHING .space is where tools, routes, and interaction patterns get tested against real execution surfaces before they become research, policy, or production workflows."
-  media={paperPrototypeScoreMedia}
-  proof={proofMetrics.map((item) => ({ label: item.label, value: item.value }))}
-  mode="paper"
->
-  {#snippet actions()}
-    <Button href="/playground">Open The Playground</Button>
-    <Button href="/praxis" variant="secondary">Start Praxis</Button>
-  {/snippet}
-</PerformanceCampaignOpening>
-
-<PerformanceDecisionPanel
-  id="runtime-decision"
-  eyebrow="Runtime decision path"
-  title="Use interaction to show what can run, what needs inspection, and what should move."
-  description="The workbench should communicate through visible state changes: execute, inspect, then promote only what survives runtime contact."
-  items={decisionStates}
-  ariaLabel="Runtime decision path"
-/>
-
-<PerformancePageSection
-  variant="white"
-  eyebrow="Live surfaces"
-  title="Pick a route and work with the system directly."
-  description="Each route exposes execution, analysis, or learning as a working surface—not a static marketing panel."
->
-  {#snippet after()}
-    <PerformanceCardGrid items={tools} columns={3} ariaLabel="Live workbench surfaces" />
-  {/snippet}
-</PerformancePageSection>
-
-<PerformanceConversionHandoff
-  eyebrow="Pick a surface"
-  title="Start with the runtime you want to inspect."
-  description="Open the playground if you want to execute code, motion if you want to inspect interaction systems, or data if you want to work against a live refresh loop."
-  handoff={{
-    owner: 'Workbench operator',
-    authority: 'Runtime evidence',
-    proof: 'Output + state + handoff',
-    state: 'ready'
-  }}
->
-  {#snippet actions()}
-    <Button href="/motion">Inspect Motion</Button>
-    <Button href="/data/nba" variant="secondary">Open Data Studio</Button>
-  {/snippet}
-</PerformanceConversionHandoff>
+<style>
+  .opening {
+    padding: 0;
+    display: grid;
+    grid-template-columns: 1fr 1.12fr;
+    background: var(--color-performance-ink, #090909);
+    color: var(--color-performance-paper, #f3f3f0);
+    min-height: 620px;
+  }
+  .opening__copy {
+    padding: clamp(3rem, 6vw, 6rem) clamp(1.25rem, 4vw, 4rem);
+    align-self: center;
+  }
+  .opening .eyebrow {
+    color: var(--color-performance-paper, #f3f3f0);
+    margin-bottom: 2.5rem;
+    opacity: 0.75;
+  }
+  .opening .lead {
+    margin-top: 2rem;
+    color: #d4d4ce;
+    max-width: 31rem;
+  }
+  .opening .primary {
+    background: var(--color-performance-paper, #f3f3f0);
+    color: var(--color-performance-ink, #090909);
+  }
+  figure {
+    position: relative;
+    min-width: 0;
+    margin: 0;
+  }
+  figure img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  figcaption {
+    position: absolute;
+    bottom: 1.5rem;
+    left: 1.5rem;
+    background: rgba(9, 9, 9, 0.8);
+    padding: 0.5rem 0.75rem;
+    margin: 0 !important;
+  }
+  .workbench {
+    background: var(--color-performance-court, #e6e6e0);
+  }
+  .workbench__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5rem;
+  }
+  .workbench h2,
+  .closing h2 {
+    margin-block: 1.5rem;
+  }
+  .tool-list a {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.35rem 0;
+    border-bottom: 1px solid #b8b8b0;
+    text-decoration: none;
+  }
+  .tool-list strong {
+    font-size: 1.25rem;
+    font-weight: 500;
+  }
+  .tool-list small {
+    display: block;
+    margin-top: 0.4rem;
+    color: var(--color-performance-fg-secondary);
+    font-size: 0.9rem;
+  }
+  .closing {
+    max-width: 1280px;
+  }
+  @media (max-width: 900px) {
+    .opening {
+      padding: 0;
+      grid-template-columns: 1fr;
+    }
+    .opening__copy {
+      padding: 3.5rem 1.5rem;
+    }
+    figure {
+      height: min(70vw, 520px);
+    }
+    .workbench__grid {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+  }
+</style>
