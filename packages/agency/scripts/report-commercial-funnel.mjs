@@ -61,6 +61,8 @@ session_funnel AS (
       ELSE 'external'
     END AS traffic_class,
     MAX(CASE WHEN url LIKE 'https://createsomething.agency/technical-review%' OR intent = 'technical-review' THEN 1 ELSE 0 END) AS review_interest,
+    MAX(CASE WHEN action = 'booking_cta_click' AND intent = 'technical-review' THEN 1 ELSE 0 END) AS review_clicked_booking_cta,
+    MAX(CASE WHEN action = 'booking_completed' AND intent = 'technical-review' THEN 1 ELSE 0 END) AS review_completed_booking,
     MAX(CASE WHEN action = 'page_view' THEN 1 ELSE 0 END) AS visited,
     MAX(CASE WHEN action = 'booking_cta_click' THEN 1 ELSE 0 END) AS clicked_booking_cta,
     MAX(CASE WHEN action = 'booking_form_started' THEN 1 ELSE 0 END) AS started_booking_form,
@@ -86,8 +88,8 @@ SELECT
   COALESCE(SUM(session_funnel.initiated_booking), 0) AS booking_initiated_sessions,
   COALESCE(SUM(session_funnel.completed_booking), 0) AS booking_completed_sessions,
   COALESCE(SUM(session_funnel.review_interest), 0) AS review_interest_sessions,
-  COALESCE(SUM(CASE WHEN session_funnel.review_interest = 1 THEN session_funnel.clicked_booking_cta ELSE 0 END), 0) AS review_booking_cta_sessions,
-  COALESCE(SUM(CASE WHEN session_funnel.review_interest = 1 THEN session_funnel.completed_booking ELSE 0 END), 0) AS review_booking_completed_sessions
+  COALESCE(SUM(session_funnel.review_clicked_booking_cta), 0) AS review_booking_cta_sessions,
+  COALESCE(SUM(session_funnel.review_completed_booking), 0) AS review_booking_completed_sessions
 FROM traffic_classes
 LEFT JOIN session_funnel USING (traffic_class)
 GROUP BY traffic_classes.traffic_class

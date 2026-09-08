@@ -18,7 +18,7 @@ The client keeps the findings and any project-specific tests or instructions. Im
 
 ## Measure the buying path
 
-Run `pnpm --filter @create-something/agency analytics:commercial-funnel -- --days 30 --remote` with authorized D1 access. The report separates external, internal, preview, automated and test sessions. New review columns count sessions that viewed the review page or carried its intent, and booking actions in those sessions. They are associations, not a strict ordered funnel or causal attribution.
+Run `pnpm --filter @create-something/agency analytics:commercial-funnel -- --days 30 --remote` with authorized D1 access. The report separates external, internal, preview, automated and test sessions. Review interest counts sessions that viewed the review page or carried its intent. Review booking columns count only events explicitly carrying the technical-review intent. A visit followed by a booking for another service does not count as a review booking. These counts do not establish a strict ordered funnel or causal attribution.
 
 The existing consent-aware booking CTA and handoff events carry `intent=technical-review`; the scheduler receives the same intent. Do not add advertising pixels, bypass consent or count a click as a qualified inquiry. Tests must be labeled as test traffic. A missing event does not prove no booking happened.
 

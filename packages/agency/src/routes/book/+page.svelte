@@ -133,12 +133,17 @@
 		const lifecycle = normalizeSchedulerLifecycleMessage(event.data);
 		if (!lifecycle) return;
 
+		const lifecycleMetadata = {
+			...lifecycle.metadata,
+			...(handoffContext.intent ? { intent: handoffContext.intent } : {})
+		};
+
 		if (lifecycle.action === 'booking_form_started') {
-			getAnalytics()?.track('interaction', lifecycle.action, { metadata: lifecycle.metadata });
+			getAnalytics()?.track('interaction', lifecycle.action, { metadata: lifecycleMetadata });
 			return;
 		}
 
-		getAnalytics()?.conversion(lifecycle.action, lifecycle.metadata);
+		getAnalytics()?.conversion(lifecycle.action, lifecycleMetadata);
 	}
 
 	onMount(() => {
