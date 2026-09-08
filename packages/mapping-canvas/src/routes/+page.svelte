@@ -66,6 +66,7 @@
   let pairingOffer = $state<PairingOffer | null>(null), discoveredHosts = $state<DiscoveredHost[]>([]), selectedHost = $state<DiscoveredHost | null>(null), pairingCode = $state('');
   let nativeSession = $state<NativeSessionStatus>({});
   let sidebarCollapsed = $state(false);
+  let shortcutsDialog: HTMLDialogElement;
   let drawingColor = $state<DrawingColor>(DEFAULT_DRAWING_COLOR);
   let start = $state<Point | null>(null), draftPoints = $state<Point[]>([]), draftShape = $state<Shape | null>(null);
   let movingObjectId = $state<string | null>(null), dragLast = $state<Point | null>(null), dragOrigin = $state<CanvasDocument | null>(null), dragMoved = $state(false);
@@ -574,7 +575,7 @@
   }
 
   async function refreshMirroredState() {
-    if (!ready || nativeRole === 'web' || drawing || wheelTimer || window.document.activeElement?.closest('input,textarea,[contenteditable="true"]')) return;
+    if (!ready || nativeRole === 'web' || drawing || wheelTimer || window.document.activeElement?.closest('input,textarea,select,[contenteditable="true"]')) return;
     if (nativeRole === 'companion' && (!nativeSession.sessionId || nativeSession.online === false || (nativeSession.queueDepth || 0) > 0)) return;
     const optimisticVersion = nativeOptimisticVersion;
     try {
@@ -871,7 +872,7 @@
     const next = resizeGroup(document, id, width, height);
     if (next !== document) apply(next, { type: 'replace_objects', objects: next.objects });
   }
-  function isTextEditingEvent(event: KeyboardEvent) { return event.target instanceof Element && Boolean(event.target.closest('input,textarea,[contenteditable="true"]')); }
+  function isTextEditingEvent(event: KeyboardEvent) { return event.target instanceof Element && Boolean(event.target.closest('input,textarea,select,[contenteditable="true"]')); }
   function selectKeyboard(event: KeyboardEvent, id: string) { if (isTextEditingEvent(event) || (event.key !== 'Enter' && event.key !== ' ')) return; event.preventDefault(); const compoundIds = [...expandCompoundIds(document, [id])]; selectedIds = event.shiftKey ? [...new Set([...selectedIds, ...compoundIds])] : compoundIds; }
   function runConversion(target: 'note' | 'connector' | 'group') { const next = convert(document, selectedIds, target); if (next === document) { status = target === 'connector' ? 'Select two objects to make a connector' : 'Select source material first'; return; } const created = next.objects.at(-1)!; apply(next, { type: 'convert', selectedIds: [...selectedIds], target, resultId: created.id, createdAt: created.createdAt }); selectedIds = [created.id]; conversionOpen = false; status = `Converted to ${target}. Source preserved.`; }
   function restoreSelected() { const selected = selectedObjects[0]; if (!selected?.sourceSnapshot) return; const next = restoreConversion(document, selected.id); apply(next, { type: 'restore_conversion', id: selected.id }); selectedIds = selected.sourceIds || []; status = 'Conversion removed. Source restored.'; }
@@ -890,10 +891,19 @@
     updateViewport(fitViewportToBounds(viewport, objectBounds(document.objects, document.objects), { width: viewportWidth, height: viewportHeight }, { padding: Math.min(72, viewportWidth * .08), force: true }));
   }
 
+  function resetView() {
+    stopAgentCamera();
+    updateViewport({ x: 0, y: 0, zoom: 1 });
+  }
+
   function keydown(event: KeyboardEvent) {
-    if (replacingDocument || isTextEditingEvent(event)) return;
+    if (event.defaultPrevented || event.isComposing || shortcutsDialog?.open || replacingDocument || isTextEditingEvent(event)) return;
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'z') { event.preventDefault(); void (event.shiftKey ? doRedo() : doUndo()); return; }
     if (event.metaKey || event.ctrlKey || event.altKey) return;
+    if (event.key === '?') { event.preventDefault(); shortcutsDialog.showModal(); return; }
+    if (event.key === '+' || event.key === '=') { event.preventDefault(); zoomCanvas(1.25); return; }
+    if (event.key === '-') { event.preventDefault(); zoomCanvas(1 / 1.25); return; }
+    if (event.key === '0') { event.preventDefault(); resetView(); return; }
     if (event.key.toLowerCase() === 'f') { event.preventDefault(); fitDrawing(); return; }
     if ((event.key === 'Delete' || event.key === 'Backspace') && selectedIds.length) { event.preventDefault(); const ids = [...selectedIds]; apply(removeObjects(document, ids), { type: 'remove_objects', ids }); selectedIds = []; return; }
     const match = tools.find(({ key }) => key.toLowerCase() === event.key.toLowerCase());
@@ -1125,7 +1135,7 @@
     {#if nativeRole !== 'companion'}<div class="file-actions"><button onclick={() => fileInput?.click()} disabled={sharing || replacingDocument}>Import</button><button onclick={exportJson}>JSON</button><button onclick={exportSvg}>SVG</button><button onclick={exportPng}>PNG</button>{#if nativeRole === 'web'}{#if share}<button onclick={copyShareLink}>Copy link</button><button onclick={updateSnapshot} disabled={sharing || replacingDocument}>Update link</button><button onclick={revokeSnapshot} disabled={sharing || replacingDocument}>Revoke</button>{:else}<button class="share-action" onclick={publishSnapshot} disabled={sharing || replacingDocument}>Publish view-only</button>{/if}{/if}<button onclick={resetCanvas} disabled={sharing || replacingDocument}>Reset</button><input bind:this={fileInput} class="visually-hidden" type="file" accept="application/json,.json" disabled={sharing || replacingDocument} onchange={importJson} /></div>{/if}
   </header>
   <section class="workbench" class:tool-sidebar-collapsed={sidebarCollapsed} aria-label="Mapping canvas workbench">
-    <nav class="toolbar" aria-label="Canvas tools"><button class="sidebar-toggle" aria-expanded={!sidebarCollapsed} aria-label={sidebarCollapsed ? 'Expand tool sidebar' : 'Collapse tool sidebar'} title={sidebarCollapsed ? 'Expand tools' : 'Collapse tools'} onclick={toggleSidebar}><i aria-hidden="true">{sidebarCollapsed ? '›' : '‹'}</i><span>{sidebarCollapsed ? 'Expand' : 'Collapse'}</span></button>{#each tools as entry}<button class:active={tool === entry.id} aria-pressed={tool === entry.id} aria-label={`${entry.label} tool (${entry.key})`} title={`${entry.label} · ${entry.key}`} onclick={() => tool = entry.id}><ToolIcon tool={entry.id} /><span class="tool-label">{entry.label}</span><kbd class="tool-key" aria-hidden="true">{entry.key}</kbd></button>{/each}</nav>
+    <nav class="toolbar" aria-label="Canvas tools"><button class="sidebar-toggle" aria-expanded={!sidebarCollapsed} aria-label={sidebarCollapsed ? 'Expand tool sidebar' : 'Collapse tool sidebar'} title={sidebarCollapsed ? 'Expand tools' : 'Collapse tools'} onclick={toggleSidebar}><i aria-hidden="true">{sidebarCollapsed ? '›' : '‹'}</i><span>{sidebarCollapsed ? 'Expand' : 'Collapse'}</span></button>{#each tools as entry}<button class:active={tool === entry.id} aria-pressed={tool === entry.id} aria-label={`${entry.label} tool (${entry.key})`} aria-keyshortcuts={entry.key} title={`${entry.label} · ${entry.key}`} onclick={() => tool = entry.id}><ToolIcon tool={entry.id} /><span class="tool-label">{entry.label}</span><kbd class="tool-key" aria-hidden="true">{entry.key}</kbd></button>{/each}</nav>
     <div class="canvas-frame">
       <svg bind:this={surface} class:crosshair={tool !== 'select' && tool !== 'pan'} role="group" aria-label="Canvas objects" viewBox={`0 0 ${viewportWidth} ${viewportHeight}`} onpointerdowncapture={trackTouchPointer} onpointerdown={pointerDown} onpointermove={pointerMove} onpointerup={pointerUp} onpointercancel={pointerUp} onwheel={wheel}>
         <defs><pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0L0 0 0 32" fill="none" stroke="rgba(255,255,255,.055)" /></pattern><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="context-stroke" /></marker><filter id="selected"><feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#fcaa2d" flood-opacity=".6" /></filter></defs>
@@ -1149,10 +1159,10 @@
       <div class="history" role="group" aria-label="Canvas navigation">
         <button class="history-icon" aria-label="Undo" title="Undo (⌘/Ctrl Z)" onclick={() => void doUndo()} disabled={!history.past.length}>↶</button>
         <button class="history-icon" aria-label="Redo" title="Redo (⌘/Ctrl Shift Z)" onclick={() => void doRedo()} disabled={!history.future.length}>↷</button>
-        <button class="history-icon" aria-label="Zoom out" title="Zoom out" onclick={() => zoomCanvas(1 / 1.25)} disabled={viewport.zoom <= .25}>−</button>
-        <button class="zoom-level" aria-label="Reset view" title="Reset view to 100%" onclick={() => updateViewport({ x: 0, y: 0, zoom: 1 })}>{Math.round(viewport.zoom * 100)}%</button>
-        <button class="history-icon" aria-label="Zoom in" title="Zoom in" onclick={() => zoomCanvas(1.25)} disabled={viewport.zoom >= 3}>+</button>
-        <button onclick={fitDrawing} disabled={!document.objects.length} title="Fit drawing (F)">Fit drawing</button>
+        <button class="history-icon" aria-label="Zoom out" title="Zoom out (−)" aria-keyshortcuts="-" onclick={() => zoomCanvas(1 / 1.25)} disabled={viewport.zoom <= .25}>−</button>
+        <button class="zoom-level" aria-label="Reset view" title="Reset view to 100% (0)" aria-keyshortcuts="0" onclick={resetView}>{Math.round(viewport.zoom * 100)}%</button>
+        <button class="history-icon" aria-label="Zoom in" title="Zoom in (+)" aria-keyshortcuts="Plus =" onclick={() => zoomCanvas(1.25)} disabled={viewport.zoom >= 3}>+</button>
+        <button onclick={fitDrawing} disabled={!document.objects.length} title="Fit drawing (F)" aria-keyshortcuts="F">Fit drawing</button>
         {#if nativeRole === 'companion'}<button class:reset-confirm={companionResetArmed} aria-label={companionResetArmed ? 'Confirm reset' : 'Reset'} onclick={resetCanvas}>{companionResetArmed ? 'Confirm' : 'Reset'}</button>{/if}
       </div>
       {#if paletteVisible}<div class="palette" role="group" aria-label="Mark color" data-ui="true"><span>Mark color</span><div>{#each DRAWING_PALETTE as color}<button class:active={drawingColor === color.value} aria-pressed={drawingColor === color.value} aria-label={`${color.label} color`} data-testid={`color-${color.id}`} style={`--swatch:var(${color.token},${color.value})`} onclick={() => chooseColor(color.value, color.label)}><i aria-hidden="true"></i><small>{color.label}</small></button>{/each}</div></div>{/if}
@@ -1161,5 +1171,24 @@
       {#if pairingOpen}<section class="pairing-panel" data-ui="true" aria-label="Device pairing"><header><strong>{nativeRole === 'host' ? 'Pair iPhone' : 'Connect to Mac'}</strong><button aria-label="Close pairing" onclick={() => pairingOpen = false}>×</button></header>{#if pairingBusy}<p>Looking for the secure session…</p>{:else if nativeRole === 'host'}<p>Enter this one-time code on the iPhone. Both devices must be on the same local network.</p><output class="pairing-code">{pairingOffer?.code || '—'}</output><small>Mac fingerprint {nativeSession.transport?.certificateFingerprint?.slice(0, 16) || 'unavailable'} · expires {pairingOffer ? new Date(pairingOffer.expiresAt).toLocaleTimeString() : 'soon'}</small>{#if nativeSession.pairedClients?.length}<div class="paired-list">{#each nativeSession.pairedClients as client}<span>{client.clientId}<button disabled={Boolean(client.revokedAt)} onclick={async () => { await revokeCompanion(client.clientId); nativeSession = await hostStatus(); }}>Revoke</button></span>{/each}</div>{/if}{:else if nativeSession.sessionId}<p>{nativeSession.requiresRepair ? 'This Mac rejected the pairing credentials. Export if needed, then forget and re-pair.' : 'Securely linked to the Mac session.'}</p><small>{nativeSession.certificateFingerprint?.slice(0, 16)} · revision {nativeSession.revision} · {nativeSession.queueDepth || 0} queued</small><button disabled={nativeSession.requiresRepair} onclick={async () => { const result = await setCompanionOnline(nativeSession.online === false); nativeSession = { ...nativeSession, ...result }; if (result.document) history = { past: [], present: result.document, future: [] }; }}> {nativeSession.online === false ? 'Reconnect' : 'Test offline'} </button><button onclick={async () => { nativeSession = await forgetCompanion(); discoveredHosts = []; selectedHost = null; pairingCode = ''; status = 'Pairing removed · choose Link to pair again'; pairingOpen = false; }}>Forget and re-pair</button>{:else}<p>{discoveredHosts.length ? 'Confirm the Mac fingerprint, then enter its six-digit code.' : 'No Mac session found. Open Draw on Mac and choose Pair.'}</p>{#if selectedHost}<label>Mac session<select bind:value={selectedHost}>{#each discoveredHosts as host}<option value={host}>{host.endpoint}</option>{/each}</select></label><small>Fingerprint {selectedHost.certificateFingerprint.slice(0, 16)}</small><label>Pairing code<input inputmode="numeric" maxlength="6" bind:value={pairingCode} placeholder="000000" /></label><button class="convert" disabled={!/^\d{6}$/.test(pairingCode)} onclick={confirmCompanionPairing}>Pair securely</button>{/if}{/if}</section>{/if}
     </div>
   </section>
-  <footer class="statusbar"><span><i aria-hidden="true"></i>{status}</span><span>{nativeRole === 'host' ? 'MAC AUTHORITY' : nativeRole === 'companion' ? 'IPHONE COMPANION' : 'LOCAL DRAFT'} · CONVERSION IS OPERATOR-APPROVED</span></footer>
+  <footer class="statusbar"><span><i aria-hidden="true"></i>{status}</span><button class="shortcuts-trigger" aria-haspopup="dialog" title="Keyboard shortcuts (?)" onclick={() => shortcutsDialog.showModal()}>Shortcuts <b aria-hidden="true">?</b></button><span>{nativeRole === 'host' ? 'MAC AUTHORITY' : nativeRole === 'companion' ? 'IPHONE COMPANION' : 'LOCAL DRAFT'} · CONVERSION IS OPERATOR-APPROVED</span></footer>
+  <dialog bind:this={shortcutsDialog} class="shortcuts-dialog" aria-labelledby="shortcuts-title" aria-describedby="shortcuts-description">
+    <header><h2 id="shortcuts-title">Keyboard shortcuts</h2><button aria-label="Close keyboard shortcuts" onclick={() => shortcutsDialog.close()}>×</button></header>
+    <p id="shortcuts-description">Use these when you’re not typing in a title, note, or form.</p>
+    <h3>Drawing tools</h3>
+    <dl class="shortcut-tools">{#each tools as entry}<div><dt>{entry.label}</dt><dd><kbd>{entry.key}</kbd></dd></div>{/each}</dl>
+    <h3>Editing and navigation</h3>
+    <dl class="shortcut-commands">
+      <div><dt>Undo</dt><dd><kbd>⌘/Ctrl + Z</kbd></dd></div>
+      <div><dt>Redo</dt><dd><kbd>⌘/Ctrl + Shift + Z</kbd></dd></div>
+      <div><dt>Delete selection</dt><dd><kbd>Delete</kbd> <span>or</span> <kbd>Backspace</kbd></dd></div>
+      <div><dt>Zoom in</dt><dd><kbd>+</kbd> <span>or</span> <kbd>=</kbd></dd></div>
+      <div><dt>Zoom out</dt><dd><kbd>−</kbd></dd></div>
+      <div><dt>Reset view</dt><dd><kbd>0</kbd></dd></div>
+      <div><dt>Fit drawing</dt><dd><kbd>F</kbd></dd></div>
+      <div><dt>Show shortcuts</dt><dd><kbd>?</kbd></dd></div>
+      <div><dt>Close this guide</dt><dd><kbd>Esc</kbd></dd></div>
+    </dl>
+    <p class="shortcuts-platform">Use ⌘ on Mac or Ctrl on Windows and Linux.</p>
+  </dialog>
 </main>

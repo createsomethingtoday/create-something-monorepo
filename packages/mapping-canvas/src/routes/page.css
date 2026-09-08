@@ -58,3 +58,22 @@ svg .agent-camera{transition:transform 420ms cubic-bezier(.22,1,.36,1)}
   .native-shell .history button{padding-inline:5px}
   .native-shell .history .history-icon{width:28px}
 }
+
+.shortcuts-trigger{display:inline-flex;align-items:center;gap:8px;flex:0 0 auto;margin-left:auto;min-height:24px;padding:0 7px;font:10px var(--font-performance-mono);white-space:nowrap}
+.shortcuts-trigger b{color:var(--amber);font-weight:500}
+.shortcuts-dialog{width:min(520px,calc(100vw - 24px));max-height:calc(100dvh - 32px);padding:20px;overflow:auto;border:1px solid var(--line);border-radius:var(--radius-performance-sm,4px);background:var(--color-performance-shell-surface,#0d0d0d);color:var(--color-performance-fg-primary,#fff);box-shadow:var(--shadow-performance-panel);font-family:var(--font-performance-sans)}
+.shortcuts-dialog::backdrop{background:var(--color-performance-overlay-heavy,rgba(0,0,0,.75))}
+.shortcuts-dialog header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.shortcuts-dialog header button{flex:0 0 36px;padding:0;font-size:22px}
+.shortcuts-dialog h2{margin:0;font-size:18px}
+.shortcuts-dialog h3{margin:20px 0 8px;color:var(--amber);font:11px var(--font-performance-mono);text-transform:uppercase}
+.shortcuts-dialog p{margin:12px 0;color:var(--color-performance-fg-secondary);font-size:12px;line-height:1.5}
+.shortcuts-dialog dl{margin:0}
+.shortcut-tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:24px}
+.shortcuts-dialog dl>div{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:34px;border-bottom:1px solid var(--line)}
+.shortcuts-dialog dt{font-size:12px}
+.shortcuts-dialog dd{display:flex;align-items:center;gap:5px;margin:0;white-space:nowrap}
+.shortcuts-dialog dd span{font-size:10px;color:var(--color-performance-fg-muted)}
+.shortcuts-dialog kbd{display:inline-flex;width:auto;min-width:24px;height:24px;padding:0 5px;color:var(--color-performance-fg-primary);font-size:10px}
+.shortcuts-dialog .shortcuts-platform{margin-bottom:0;font-size:11px}
+@media(max-width:480px){.shortcuts-dialog{padding:14px}.shortcut-tools{column-gap:16px}.shortcuts-dialog dt{font-size:11px}.shortcuts-dialog kbd{font-size:9px;padding:0 3px}}
