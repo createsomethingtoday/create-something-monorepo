@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "approval_surfaces.v0.3",
+  "workflowId": "internal.github.commit-observation",
+  "workflowVersion": "1.0.0",
+  "definitionHash": "sha256:5eede120873e8e1b59a7b5a51f0ec56836108ceff58d1be7ea03b5d1fb2d4c3a",
+  "actions": [
+    {
+      "actionId": "review_observation",
+      "title": "Wait for human review",
+      "mode": "approval_required",
+      "owner": "createsomethingtoday",
+      "requiredEvidence": [
+        "observation_receipt"
+      ],
+      "recovery": {
+        "mode": "manual_fallback",
+        "owner": "createsomethingtoday",
+        "path": "Reconcile the retained attempt; never resend an ambiguous read automatically."
+      }
+    }
+  ]
+}

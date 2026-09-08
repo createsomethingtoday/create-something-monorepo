@@ -158,3 +158,41 @@ append-only wait-context column. It is required for new approval rows; existing
 historical rows remain intact but fail closed when requested through the v1
 proof projection until they have an explicitly governed legacy-read path. The
 migration does not permit a historical row to be retroactively populated.
+
+## Terminal read-only compiler integration proof
+
+`node scripts/github-commit-proof.mjs start <exact-reviewed-commit-sha> <new-output-directory>`
+performs two authenticated GitHub GETs: one `/user` request to verify the existing
+CLI account `createsomethingtoday`, then one request for that immutable commit in
+`createsomethingtoday/create-something-monorepo`. The proof reports both reads
+separately and a total of two; only the commit read is a runtime dispatch. It signs a compiler artifact, validates the
+source-bound plan, persists a runtime effect intent, reads the commit, signs
+the bounded source observation, and records a wait checkpoint. It then reopens
+and verifies the receipt in a separate process without another source read.
+
+Run `node scripts/github-commit-proof.mjs verify <output-directory> <trusted-public-key>`
+to inspect the same retained proof. The public key is written beside the output
+directory on the first run; pin that exact file independently. The private key
+exists only in memory. A start refuses an existing output directory; an
+incomplete intent requires reconciliation and never automatically resends.
+Keep the output and trusted key in operator-controlled local storage.
+
+This is a terminal-operated production source read with a local checkpoint
+ledger. Its bounded local policy is not an Agency customer activation, Identity
+approval, deployed Control executor, or Marketplace A3 acceptance. The runtime
+core remains zero-write; both GETs are owned by this verifier. No external
+write, access grant, credential output, automatic approval or paid model call
+is involved. Set `WORKFLOW_COMPILER_CONSUMER_DIR` to a disposable npm consumer
+directory for post-release proof against the installed public compiler; otherwise
+it uses the workspace compiler package. Build workflow-runtime first.
+
+## Agent Legibility Contract
+
+| Field | Value |
+| --- | --- |
+| Entry point | `src/index.ts`; terminal proof: `scripts/github-commit-proof.mjs` |
+| Boot command | `pnpm dev` |
+| Smoke command | `pnpm check && pnpm test`; deployed Control: `REQUIRE_CONTROL_CONFIGURED=true pnpm smoke` |
+| Validation surfaces | Typed runtime contracts, immutable receipts, signed compiler inventory, checkpoint verifier, and source readback |
+| UI validation path | No UI in this package. Verify consumer consoles in their owning browser surface. |
+| Escalation rule | Stop before expanded source access, customer activation, unregistered executors, source writes, or an unverified receipt. |

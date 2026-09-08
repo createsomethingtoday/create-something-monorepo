@@ -1,0 +1,384 @@
+{
+  "schemaVersion": "compiled_workflow_bundle.v0.3",
+  "compilerVersion": "workflow-compiler-v0.1",
+  "workflowId": "internal.github.commit-observation",
+  "workflowVersion": "1.0.0",
+  "title": "Verify one repository commit",
+  "businessObjective": "Bind an authenticated read of one owned repository commit to a durable runtime receipt.",
+  "owners": {
+    "workflow": "createsomethingtoday",
+    "policy": "createsomethingtoday",
+    "technical": "createsomethingtoday"
+  },
+  "definitionHash": "sha256:5eede120873e8e1b59a7b5a51f0ec56836108ceff58d1be7ea03b5d1fb2d4c3a",
+  "workflowMap": {
+    "schemaVersion": "workflow_map.v0.1",
+    "workflowId": "internal.github.commit-observation",
+    "workflowVersion": "1.0.0",
+    "nodes": [
+      {
+        "id": "action:read_commit",
+        "kind": "action",
+        "title": "Read exact commit"
+      },
+      {
+        "id": "action:review_observation",
+        "kind": "action",
+        "title": "Wait for human review"
+      },
+      {
+        "id": "actor:createsomethingtoday",
+        "kind": "actor",
+        "title": "Authenticated repository owner"
+      },
+      {
+        "id": "state:observed",
+        "kind": "state",
+        "title": "Observed"
+      },
+      {
+        "id": "state:ready",
+        "kind": "state",
+        "title": "Ready"
+      },
+      {
+        "id": "state:reviewed",
+        "kind": "state",
+        "title": "Reviewed"
+      }
+    ],
+    "edges": [
+      {
+        "id": "authority:createsomethingtoday:read_commit",
+        "kind": "authorizes",
+        "from": "actor:createsomethingtoday",
+        "to": "action:read_commit"
+      },
+      {
+        "id": "authority:createsomethingtoday:review_observation",
+        "kind": "authorizes",
+        "from": "actor:createsomethingtoday",
+        "to": "action:review_observation"
+      },
+      {
+        "id": "transition:observe:action",
+        "kind": "transitions",
+        "from": "state:ready",
+        "to": "action:read_commit"
+      },
+      {
+        "id": "transition:observe:state",
+        "kind": "transitions",
+        "from": "action:read_commit",
+        "to": "state:observed"
+      },
+      {
+        "id": "transition:review:action",
+        "kind": "transitions",
+        "from": "state:observed",
+        "to": "action:review_observation"
+      },
+      {
+        "id": "transition:review:state",
+        "kind": "transitions",
+        "from": "action:review_observation",
+        "to": "state:reviewed"
+      }
+    ]
+  },
+  "runtimeTargets": {
+    "schemaVersion": "runtime_targets.v0.1",
+    "workflowId": "internal.github.commit-observation",
+    "workflowVersion": "1.0.0",
+    "definitionHash": "sha256:5eede120873e8e1b59a7b5a51f0ec56836108ceff58d1be7ea03b5d1fb2d4c3a",
+    "systems": [
+      {
+        "id": "github",
+        "title": "Owned repository",
+        "tier": "database",
+        "owningSurface": "createsomethingtoday/create-something-monorepo",
+        "sourceOfTruth": true
+      }
+    ]
+  },
+  "objectSchemas": {
+    "schemaVersion": "object_schemas.v0.1",
+    "workflowId": "internal.github.commit-observation",
+    "workflowVersion": "1.0.0",
+    "definitionHash": "sha256:5eede120873e8e1b59a7b5a51f0ec56836108ceff58d1be7ea03b5d1fb2d4c3a",
+    "objects": []
+  },
+  "eventSchemas": {
+    "schemaVersion": "event_schemas.v0.1",
+    "workflowId": "internal.github.commit-observation",
+    "workflowVersion": "1.0.0",
+    "definitionHash": "sha256:5eede120873e8e1b59a7b5a51f0ec56836108ceff58d1be7ea03b5d1fb2d4c3a",
+    "events": []
+  },
+  "toolContracts": {
+    "schemaVersion": "tool_contracts.v0.3",
+    "workflowId": "internal.github.commit-observation",
+    "workflowVersion": "1.0.0",
+    "definitionHash": "sha256:5eede120873e8e1b59a7b5a51f0ec56836108ceff58d1be7ea03b5d1fb2d4c3a",
+    "tools": [
+      {
+        "actionId": "read_commit",
+        "name": "read_commit",
+        "targetSystemId": "github",
+        "authority": "createsomethingtoday",
+        "autonomy": "auto_allow",
+        "requiredEvidence": [
+          "commit_sha",
+          "repository"
+        ],
+        "receiptFields": [
+          "action_id",
+          "correlation_id",
+          "outcome",
+          "workflow_id"
+        ],
+        "parameters": [
+          {
+            "name": "commit_sha",
+            "type": "string",
+            "description": "Exact immutable commit"
+          },
+          {
+            "name": "repository",
+            "type": "string",
+            "description": "Exact owned repository"
+          }
+        ],
+        "requiredEvidenceValues": {
+          "commit_sha": "13ed8944c0babce358a08a70cd92347c8e78f830",
+          "repository": "createsomethingtoday/create-something-monorepo"
+        }
+      }
+    ]
+  },
+  "agentContracts": {
+    "schemaVersion": "agent_contracts.v0.1",
+    "workflowId": "internal.github.commit-observation",
+    "workflowVersion": "1.0.0",
+    "definitionHash": "sha256:5eede120873e8e1b59a7b5a51f0ec56836108ceff58d1be7ea03b5d1fb2d4c3a",
+    "agents": []
+  },
+  "approvalSurfaces": {
+    "schemaVersion": "approval_surfaces.v0.3",
+    "workflowId": "internal.github.commit-observation",
+    "workflowVersion": "1.0.0",
+    "definitionHash": "sha256:5eede120873e8e1b59a7b5a51f0ec56836108ceff58d1be7ea03b5d1fb2d4c3a",
+    "actions": [
+      {
+        "actionId": "review_observation",
+        "title": "Wait for human review",
+        "mode": "approval_required",
+        "owner": "createsomethingtoday",
+        "requiredEvidence": [
+          "observation_receipt"
+        ],
+        "recovery": {
+          "mode": "manual_fallback",
+          "owner": "createsomethingtoday",
+          "path": "Reconcile the retained attempt; never resend an ambiguous read automatically."
+        }
+      }
+    ]
+  },
+  "evaluationManifest": {
+    "schemaVersion": "evaluation_manifest.v0.1",
+    "workflowId": "internal.github.commit-observation",
+    "workflowVersion": "1.0.0",
+    "definitionHash": "sha256:5eede120873e8e1b59a7b5a51f0ec56836108ceff58d1be7ea03b5d1fb2d4c3a",
+    "evaluations": [
+      {
+        "id": "read-permitted",
+        "title": "Exact commit read is permitted",
+        "actionId": "read_commit",
+        "expectedOutcome": "pass",
+        "requiredEvidence": [
+          "commit_sha",
+          "repository"
+        ]
+      }
+    ]
+  },
+  "decisionInventory": {
+    "schemaVersion": "decision_inventory.v0.3",
+    "workflowId": "internal.github.commit-observation",
+    "workflowVersion": "1.0.0",
+    "definitionHash": "sha256:5eede120873e8e1b59a7b5a51f0ec56836108ceff58d1be7ea03b5d1fb2d4c3a",
+    "decisions": [
+      {
+        "actionId": "read_commit",
+        "title": "Read exact commit",
+        "kind": "read",
+        "authority": "createsomethingtoday",
+        "autonomy": "auto_allow",
+        "systemsTouched": [
+          "github"
+        ],
+        "requiredEvidence": [
+          "commit_sha",
+          "repository"
+        ],
+        "requiredEvidenceValues": {
+          "commit_sha": "13ed8944c0babce358a08a70cd92347c8e78f830",
+          "repository": "createsomethingtoday/create-something-monorepo"
+        },
+        "toolContract": {
+          "actionId": "read_commit",
+          "name": "read_commit",
+          "targetSystemId": "github",
+          "authority": "createsomethingtoday",
+          "autonomy": "auto_allow",
+          "requiredEvidence": [
+            "commit_sha",
+            "repository"
+          ],
+          "receiptFields": [
+            "action_id",
+            "correlation_id",
+            "outcome",
+            "workflow_id"
+          ],
+          "parameters": [
+            {
+              "name": "commit_sha",
+              "type": "string",
+              "description": "Exact immutable commit"
+            },
+            {
+              "name": "repository",
+              "type": "string",
+              "description": "Exact owned repository"
+            }
+          ],
+          "requiredEvidenceValues": {
+            "commit_sha": "13ed8944c0babce358a08a70cd92347c8e78f830",
+            "repository": "createsomethingtoday/create-something-monorepo"
+          }
+        },
+        "receiptFields": [
+          "action_id",
+          "correlation_id",
+          "outcome",
+          "workflow_id"
+        ],
+        "recovery": {
+          "mode": "manual_fallback",
+          "owner": "createsomethingtoday",
+          "path": "Reconcile the retained attempt; never resend an ambiguous read automatically."
+        }
+      },
+      {
+        "actionId": "review_observation",
+        "title": "Wait for human review",
+        "kind": "decision",
+        "authority": "createsomethingtoday",
+        "autonomy": "approval_required",
+        "systemsTouched": [
+          "github"
+        ],
+        "requiredEvidence": [
+          "observation_receipt"
+        ],
+        "approvalOwner": "createsomethingtoday",
+        "receiptFields": [
+          "action_id",
+          "correlation_id",
+          "outcome",
+          "workflow_id"
+        ],
+        "recovery": {
+          "mode": "manual_fallback",
+          "owner": "createsomethingtoday",
+          "path": "Reconcile the retained attempt; never resend an ambiguous read automatically."
+        }
+      }
+    ]
+  },
+  "governedInteraction": {
+    "schemaVersion": "governed_interaction_bundle.v0.3",
+    "language": "create-something/control",
+    "runtimeVersion": "0.1.0",
+    "workflowId": "internal.github.commit-observation",
+    "workflowVersion": "1.0.0",
+    "definitionHash": "sha256:5eede120873e8e1b59a7b5a51f0ec56836108ceff58d1be7ea03b5d1fb2d4c3a",
+    "entrySurfaceId": "operator-console",
+    "capabilities": [
+      "interaction.select",
+      "receipt.inspect",
+      "replay.inspect",
+      "workflow.inspect"
+    ],
+    "surfaces": [
+      {
+        "id": "operator-console",
+        "title": "Verify one repository commit",
+        "kind": "workflow_overview",
+        "operations": [
+          {
+            "kind": "select_replay_case"
+          }
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "actionId": "read_commit",
+        "title": "Read exact commit",
+        "kind": "read",
+        "authority": "createsomethingtoday",
+        "autonomy": "auto_allow",
+        "systemsTouched": [
+          "github"
+        ],
+        "requiredEvidence": [
+          "commit_sha",
+          "repository"
+        ],
+        "requiredEvidenceValues": {
+          "commit_sha": "13ed8944c0babce358a08a70cd92347c8e78f830",
+          "repository": "createsomethingtoday/create-something-monorepo"
+        },
+        "receiptFields": [
+          "action_id",
+          "correlation_id",
+          "outcome",
+          "workflow_id"
+        ],
+        "recovery": {
+          "mode": "manual_fallback",
+          "owner": "createsomethingtoday",
+          "path": "Reconcile the retained attempt; never resend an ambiguous read automatically."
+        }
+      },
+      {
+        "actionId": "review_observation",
+        "title": "Wait for human review",
+        "kind": "decision",
+        "authority": "createsomethingtoday",
+        "autonomy": "approval_required",
+        "systemsTouched": [
+          "github"
+        ],
+        "requiredEvidence": [
+          "observation_receipt"
+        ],
+        "approvalOwner": "createsomethingtoday",
+        "receiptFields": [
+          "action_id",
+          "correlation_id",
+          "outcome",
+          "workflow_id"
+        ],
+        "recovery": {
+          "mode": "manual_fallback",
+          "owner": "createsomethingtoday",
+          "path": "Reconcile the retained attempt; never resend an ambiguous read automatically."
+        }
+      }
+    ]
+  }
+}

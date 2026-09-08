@@ -2,6 +2,7 @@
 
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import { createWorkflowAdapterReadiness } from './readiness.js';
 
 import {
   verifyWorkflowArtifactBundle,
@@ -10,7 +11,12 @@ import {
   writeCompiledWorkflowArtifacts
 } from './artifacts.js';
 import { WorkflowArtifactAttestationError } from './attestation.js';
-import { compileWorkflowDefinition, WorkflowCompilationError } from './compile.js';
+import {
+  compileWorkflowDefinition,
+  WorkflowCompilationError,
+  WORKFLOW_COMPILER_VERSION,
+  WORKFLOW_COMPILER_PACKAGE_VERSION
+} from './compile.js';
 import { ReplayInputValidationError, WorkflowInputValidationError } from './input.js';
 import { replayWorkflow } from './replay.js';
 import { serveOperatorConsole } from './server.js';
@@ -97,6 +103,7 @@ interface StarterOptions {
 function usage(): string {
   return [
     'Usage:',
+    '  workflow-compiler --version',
     '  workflow-compiler init --template <local-runbook|marketplace-submission> --dir <new-directory>',
     '  workflow-compiler validate --workflow <definition.json>',
     '  workflow-compiler simulate --workflow <definition.json> --cases <cases.json>',
@@ -266,6 +273,13 @@ function explanation(
     ...(stop.length > 0 ? stop.map(describeDecision) : ['- No action is blocked by policy.']),
     ...replayLines,
     '',
+    '## Adapter contract readiness',
+    '',
+    'Simulation pass does not establish invocation readiness. These are contract checks only.',
+    ...createWorkflowAdapterReadiness(bundle).actions.map(
+      (action) => '- ' + action.actionId + ': ' + action.reasonCode + '. ' + action.nextStep
+    ),
+    '',
     'No live action is executed by this command. It only explains the compiled local contract.',
     ''
   ].join('\n');
@@ -273,6 +287,15 @@ function explanation(
 
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
+  if (args.length === 1 && args[0] === '--version') {
+    process.stdout.write(
+      JSON.stringify({
+        packageVersion: WORKFLOW_COMPILER_PACKAGE_VERSION,
+        compilerVersion: WORKFLOW_COMPILER_VERSION
+      }) + '\n'
+    );
+    return;
+  }
   if (args[0] === 'init') {
     const options = starterOptions(args);
     const starter = await writeWorkflowStarter(options.template, options.dir);

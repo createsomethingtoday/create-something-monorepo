@@ -1,7 +1,9 @@
+export { createWorkflowAdapterReadiness, type WorkflowAdapterReadiness } from './readiness.js';
 export {
   compileWorkflowDefinition,
   WorkflowCompilationError,
-  WORKFLOW_COMPILER_VERSION
+  WORKFLOW_COMPILER_VERSION,
+  WORKFLOW_COMPILER_PACKAGE_VERSION
 } from './compile.js';
 export {
   verifyWorkflowArtifactBundle,

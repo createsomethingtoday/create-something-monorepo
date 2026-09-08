@@ -4,12 +4,15 @@
 
 It gives builders a composable governance layer below any hosted control plane. The package does not call providers, hold credentials, choose a model, or mutate the systems named by a workflow.
 
+This README documents **0.5.0**. Run `workflow-compiler --version` to identify
+the exact package build separately from its compiler compatibility marker.
+
 ## Codex paired terminal quickstart
 
 Install the builder artifact in the repository where the workflow will live:
 
 ```bash
-npm install @createsomething/workflow-compiler@0.4.0
+npm install @createsomething/workflow-compiler@0.5.0
 ```
 
 Copy the shipped Codex skill into that repository, then ask Codex to turn a recurring operating task into a runbook. Codex can propose and revise the local files; the terminal commands below remain the deterministic proof surface:
@@ -62,7 +65,7 @@ execution host begins.
 Install the package with a supported Node release:
 
 ```bash
-npm install @createsomething/workflow-compiler@0.4.0
+npm install @createsomething/workflow-compiler@0.5.0
 ```
 
 Create `workflow.json` and optionally `cases.json` using the versioned schemas documented in [API.md](./API.md). Compile and independently verify a local bundle:
@@ -154,6 +157,28 @@ Both adapters return the same explicit disposition:
 Tool parameters are versioned in the workflow definition, type checked, and required to map to governed evidence. A tool target must also appear in the action's `systemsTouched` boundary. The MCP plan names a provider-neutral `tools/call` operation, target system, tool, and arguments; it does not select a transport, endpoint, session, or credential. The OpenAI plan emits the caller-selected `model`, `instructions`, `input`, one strict function tool, forced `tool_choice`, disabled parallel tool calls, and `store: false`; every function parameter has a single allowed value matching the governed argument, and the same canonical map is exposed as `expectedArguments`. It does not call the API or read an API key. This shape follows the official [OpenAI Responses create API](https://developers.openai.com/api/reference/cli/resources/responses/methods/create). A Codex or other OpenAI execution host remains responsible for transport, current model policy, tool-result validation, and receipt persistence.
 
 The adapter never accepts a replay result and a second unbound evidence object. It first detaches one structured-data snapshot, then replays and maps only that copy so caller mutation, getters, proxies, or a second evidence object cannot substitute values during or after the governance decision.
+
+## Adapter contract readiness
+
+A passing replay proves a permitted transition with the supplied evidence. It
+may still have no tool contract. Run `explain` or inspect **Adapter contract
+readiness** in the console to see the missing requirement. `MISSING_TOOL_CONTRACT`
+means the action needs a declared target and evidence-bound parameters;
+`MISSING_TOOL_PARAMETER_CONTRACT` means its parameter schema is absent. A declared
+contract still requires current evidence and an authenticated execution host.
+Approval-required and manual actions continue to wait.
+
+For a complete offline adapter example, use the shipped release-promotion
+fixture. Its `verify_release` action declares a `release_verify` tool with
+parameters bound to release evidence. `promote_release` waits for the release
+manager; bypass remains blocked. Compile it, then pass the first replay case to
+`createMcpToolCallPlan` as shown above. The result is a plan, not a CI or provider
+call. A host must validate the result and retain a receipt before advancing.
+
+`createWorkflowAdapterReadiness(bundle)` returns the versioned
+`workflow_adapter_readiness.v0.1` descriptive summary used by `explain` and the
+console. Every entry has `canInvoke: false`; this inspection API never creates
+an invocation or grants approval.
 
 ## Notion Custom Agent blueprints
 

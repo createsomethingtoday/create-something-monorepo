@@ -1,0 +1,75 @@
+{
+  "schemaVersion": "workflow_map.v0.1",
+  "workflowId": "internal.github.commit-observation",
+  "workflowVersion": "1.0.0",
+  "nodes": [
+    {
+      "id": "action:read_commit",
+      "kind": "action",
+      "title": "Read exact commit"
+    },
+    {
+      "id": "action:review_observation",
+      "kind": "action",
+      "title": "Wait for human review"
+    },
+    {
+      "id": "actor:createsomethingtoday",
+      "kind": "actor",
+      "title": "Authenticated repository owner"
+    },
+    {
+      "id": "state:observed",
+      "kind": "state",
+      "title": "Observed"
+    },
+    {
+      "id": "state:ready",
+      "kind": "state",
+      "title": "Ready"
+    },
+    {
+      "id": "state:reviewed",
+      "kind": "state",
+      "title": "Reviewed"
+    }
+  ],
+  "edges": [
+    {
+      "id": "authority:createsomethingtoday:read_commit",
+      "kind": "authorizes",
+      "from": "actor:createsomethingtoday",
+      "to": "action:read_commit"
+    },
+    {
+      "id": "authority:createsomethingtoday:review_observation",
+      "kind": "authorizes",
+      "from": "actor:createsomethingtoday",
+      "to": "action:review_observation"
+    },
+    {
+      "id": "transition:observe:action",
+      "kind": "transitions",
+      "from": "state:ready",
+      "to": "action:read_commit"
+    },
+    {
+      "id": "transition:observe:state",
+      "kind": "transitions",
+      "from": "action:read_commit",
+      "to": "state:observed"
+    },
+    {
+      "id": "transition:review:action",
+      "kind": "transitions",
+      "from": "state:observed",
+      "to": "action:review_observation"
+    },
+    {
+      "id": "transition:review:state",
+      "kind": "transitions",
+      "from": "action:review_observation",
+      "to": "state:reviewed"
+    }
+  ]
+}
