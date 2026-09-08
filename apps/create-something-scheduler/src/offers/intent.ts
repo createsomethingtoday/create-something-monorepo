@@ -1,4 +1,4 @@
-export const SCHEDULER_OFFER_INTENTS = ['compiler-integration', 'agent-foundation'] as const;
+export const SCHEDULER_OFFER_INTENTS = ['compiler-integration', 'agent-foundation', 'technical-review'] as const;
 
 export type SchedulerOfferIntent = (typeof SCHEDULER_OFFER_INTENTS)[number];
 

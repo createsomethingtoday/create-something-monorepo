@@ -61,10 +61,23 @@
 		fallbackHref: '/agent-foundation',
 		fallbackLabel: 'the Agent Foundation offer'
 	} as const;
+	const technicalReviewBookingOffer = {
+		seoTitle: 'Discuss Your Existing Project | CREATE SOMETHING',
+		seoDescription: 'Talk through a technical review before your customer pilot. Agree on scope and price before work starts.',
+		eyebrow: 'Technical review fit call',
+		title: 'Talk through the project you have built.',
+		description: 'Bring a demo, the problem you need help with, and any customer requirement or deadline. We will discuss fit and the scope of a paid review. Do not include credentials or private customer records in booking notes.',
+		secondaryHref: '/technical-review',
+		secondaryLabel: 'Review the technical review service',
+		iframeTitle: 'Schedule a technical review fit call',
+		fallbackHref: '/technical-review',
+		fallbackLabel: 'the technical review service'
+	} as const;
 	type BookingOffer =
 		| typeof mappingBookingOffer
 		| typeof compilerIntegrationBookingOffer
-		| typeof agentFoundationBookingOffer;
+		| typeof agentFoundationBookingOffer
+		| typeof technicalReviewBookingOffer;
 
 	let schedulerHref = data.schedulerHref;
 	let schedulerFrame: HTMLIFrameElement;
@@ -77,7 +90,9 @@
 
 	$: intent = $page.url.searchParams.get('intent');
 	$: bookingOffer =
-		intent === 'agent-foundation'
+		intent === 'technical-review'
+			? technicalReviewBookingOffer
+			: intent === 'agent-foundation'
 			? agentFoundationBookingOffer
 			: intent === 'compiler-integration'
 				? compilerIntegrationBookingOffer
@@ -118,12 +133,17 @@
 		const lifecycle = normalizeSchedulerLifecycleMessage(event.data);
 		if (!lifecycle) return;
 
+		const lifecycleMetadata = {
+			...lifecycle.metadata,
+			...(handoffContext.intent ? { intent: handoffContext.intent } : {})
+		};
+
 		if (lifecycle.action === 'booking_form_started') {
-			getAnalytics()?.track('interaction', lifecycle.action, { metadata: lifecycle.metadata });
+			getAnalytics()?.track('interaction', lifecycle.action, { metadata: lifecycleMetadata });
 			return;
 		}
 
-		getAnalytics()?.conversion(lifecycle.action, lifecycle.metadata);
+		getAnalytics()?.conversion(lifecycle.action, lifecycleMetadata);
 	}
 
 	onMount(() => {
@@ -157,16 +177,16 @@
 />
 
 <main class="booking-page" data-performance-surface="booking">
-	{#if intent === 'agent-foundation'}
+	{#if intent === 'agent-foundation' || intent === 'technical-review'}
 		<section
 			class="agent-booking"
 			data-agent-foundation-booking
 			aria-labelledby="agent-booking-title"
 		>
 			<div class="agent-booking__intro">
-				<p>{agentFoundationBookingOffer.eyebrow}</p>
-				<h1 id="agent-booking-title">{agentFoundationBookingOffer.title}</h1>
-				<p>{agentFoundationBookingOffer.description}</p>
+				<p>{bookingOffer.eyebrow}</p>
+				<h1 id="agent-booking-title">{bookingOffer.title}</h1>
+				<p>{bookingOffer.description}</p>
 				<div class="agent-booking__outcome">
 					<span>What you leave with</span>
 					<p>A fit decision and, if it fits, a proposed scope and the basis for a quote.</p>

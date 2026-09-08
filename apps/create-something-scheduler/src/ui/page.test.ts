@@ -118,6 +118,14 @@ describe('scheduler public page', () => {
     expect(foundation).not.toContain('<h1>Map One Workflow</h1>');
   });
 
+  it('keeps technical review fit and quote boundaries through the scheduler', () => {
+    const html = schedulerPage({ nonce: 'test-nonce', intent: 'technical-review' });
+    expect(html).toContain('<h1>Discuss Your Existing Project</h1>');
+    expect(html).toContain('before paid work starts');
+    expect(html).toContain('const offerIntent="technical-review";');
+    expect(html).not.toContain('<h1>Map One Workflow</h1>');
+  });
+
   it('does not offer booking management actions after cancellation', () => {
     const cancelledActions = renderBookingManagementActions('cancelled');
     const committedActions = renderBookingManagementActions('committed');

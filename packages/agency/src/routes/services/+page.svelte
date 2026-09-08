@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ProjectReviewEntry from '$lib/components/ProjectReviewEntry.svelte';
   import { Button, PerformanceCampaignOpening, SEO } from '@create-something/canon';
   import AgencyPerformanceReadback from '$lib/components/AgencyPerformanceReadback.svelte';
   import ServicesMapPreview from '$lib/components/ServicesMapPreview.svelte';
@@ -87,8 +88,8 @@
   <PerformanceCampaignOpening
     eyebrow="How It Works"
     expression="editorial"
-    title="Start with one task. Build from there."
-    lede="Bring one task your team still handles manually. We plan the steps, build and test the agent, then show your team how to keep working on it."
+    title="Start with what you have."
+    lede="Bring a task to automate or a product you have already built. We can review the existing work, plan a new workflow, or build and test an agent. We agree on the scope before you commit."
     media={playbookHeroMedia.services}
     mediaMobilePlacement="background"
     density="compact"
@@ -107,6 +108,8 @@
       </Button>
     {/snippet}
   </PerformanceCampaignOpening>
+
+  <ProjectReviewEntry />
 
   <ServicesProductPath />
   <AgencyPerformanceReadback embedded={true} />

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ProjectReviewEntry from '$lib/components/ProjectReviewEntry.svelte';
   import { Button, MeridianAccordion, PerformanceCampaignOpening, PerformanceConversionHandoff, SEO } from '@create-something/canon';
   import AgencyPerformanceReadback from '$lib/components/AgencyPerformanceReadback.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
@@ -101,6 +102,8 @@
       <Button href="/proof/marketplace-workflow" variant="secondary">See a verified result</Button>
     {/snippet}
   </PerformanceCampaignOpening>
+
+  <ProjectReviewEntry />
 
   <section class="home-section foundation-example" aria-labelledby="foundation-example-title">
     <span>An example of the first project</span>

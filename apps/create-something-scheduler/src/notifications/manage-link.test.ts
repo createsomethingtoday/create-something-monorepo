@@ -46,6 +46,13 @@ describe('booking management link contract', () => {
     );
   });
 
+  it('retains technical review intent in the management link without exposing the credential in the query', () => {
+    const url = new URL(buildBookingManageUrl({ publicOrigin: 'https://createsomething.agency', bookingId: 'booking_review', actionToken: 'controlled.token', intent: 'technical-review' }));
+    expect(url.searchParams.get('intent')).toBe('technical-review');
+    expect(url.search).not.toContain('controlled.token');
+    expect(url.hash).toBe('#access=controlled.token');
+  });
+
   it('expires access one day after the current meeting ends', () => {
     expect(bookingActionExpiresAt({ end: '2026-07-14T16:30:00Z' })).toBe('2026-07-15T16:30:00Z');
   });

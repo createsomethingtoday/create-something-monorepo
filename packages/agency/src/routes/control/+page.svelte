@@ -165,6 +165,9 @@
       <PlaybookField variant="control" />
     {/snippet}
   </PerformanceCampaignOpening>
+  <aside class="review-boundary">
+    <p><strong>Need help before launch?</strong> A <a href="/technical-review">technical review</a> checks an existing project and identifies what to fix before a pilot. Reviews and implementation are quoted separately. The $900/month starting price for Control covers agreed post-launch operations, not open-ended product development.</p>
+  </aside>
 
   <PerformanceThesisConditions
     eyebrow="Operating principle"
@@ -239,6 +242,9 @@
 </main>
 
 <style>
+  .review-boundary { padding: 2rem max(1.25rem, calc((100% - 80rem) / 2)); color: var(--color-performance-ink); background: var(--color-performance-paper); }
+  .review-boundary p { max-width: 70ch; line-height: 1.65; }
+  .review-boundary a { color: inherit; text-decoration: underline; }
   .control-loop {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
