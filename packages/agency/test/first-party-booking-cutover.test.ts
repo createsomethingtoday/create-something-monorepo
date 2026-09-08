@@ -347,3 +347,37 @@ test('technical review booking preserves its intent through scheduler handoff an
   assert.equal(scheduler.searchParams.get('source'), 'technical-review');
   assert.equal(scheduler.searchParams.has('secret'), false);
 });
+
+
+test('an existing Map draft does not attach to a new technical review inquiry', () => {
+  const review = createBookingHandoffState('?source=technical-review&intent=technical-review', 'Earlier unrelated Map draft.');
+  assert.equal(review.handoffContext.warmupNotes, undefined);
+  assert.equal(review.handoffSheet.warmupNotes, undefined);
+  assert.equal(review.handoffContext.intent, 'technical-review');
+  const mapping = createBookingHandoffState('?intent=workflow-map', 'Current Map draft.');
+  assert.equal(mapping.handoffContext.warmupNotes, 'Current Map draft.');
+});
+
+
+test('normalized technical review intents cannot attach a saved draft through any handoff entry point', () => {
+  for (const intent of ['technical-review', 'Technical%20Review', '%00technical-review']) {
+    const query = '?intent=' + intent;
+    const context = schedulerHandoffContext(query, 'Saved unrelated Map draft.');
+    const handoff = createBookingHandoffState(query, 'Saved unrelated Map draft.');
+    assert.equal(context.intent, 'technical-review');
+    assert.equal(context.warmupNotes, undefined);
+    assert.equal(handoff.handoffSheet.warmupNotes, undefined);
+    assert.equal(new URL(handoff.schedulerHref).searchParams.get('intent'), 'technical-review');
+  }
+});
+
+
+test('the same loaded draft survives switching between review and mapping handoffs', () => {
+  const loadedDraft = 'Saved mapping context.';
+  for (const intent of ['technical-review', 'workflow-map', 'Technical%20Review', 'workflow-map']) {
+    const state = createBookingHandoffState('?intent=' + intent, loadedDraft);
+    assert.equal(state.handoffSheet.warmupNotes, intent === 'workflow-map' ? loadedDraft : undefined);
+  }
+  assert.match(bookRoute, /warmupNotes = window\.localStorage\.getItem\(PUBLIC_ATLAS_STORAGE_KEYS\.warmupSummary\)/);
+  assert.match(bookRoute, /hasWarmupNotes: Boolean\(handoffSheet\.warmupNotes\)/);
+});

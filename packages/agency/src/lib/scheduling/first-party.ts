@@ -154,7 +154,8 @@ export function schedulerHandoffContext(
 		}
 	}
 	const notes = warmupNotes?.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '').trim();
-	if (notes) context.warmupNotes = notes.slice(0, 2000);
+	// Persisted Map notes must not cross into an unrelated review, including normalized URLs.
+	if (notes && context.intent !== 'technical-review') context.warmupNotes = notes.slice(0, 2000);
 	return context;
 }
 

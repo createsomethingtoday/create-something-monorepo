@@ -6,6 +6,7 @@
 	import { PUBLIC_ATLAS_STORAGE_KEYS } from '$lib/atlas/intake-policy';
 	import {
 		createBookingHandoffState,
+		schedulerHandoffContext,
 		FIRST_PARTY_SCHEDULER_ORIGIN,
 		normalizeSchedulerAccessUrl,
 		normalizeSchedulerLifecycleMessage,
@@ -88,7 +89,7 @@
 	let intent: string | null = null;
 	let bookingOffer: BookingOffer = mappingBookingOffer;
 
-	$: intent = $page.url.searchParams.get('intent');
+	$: intent = schedulerHandoffContext($page.url.search).intent ?? null;
 	$: bookingOffer =
 		intent === 'technical-review'
 			? technicalReviewBookingOffer
