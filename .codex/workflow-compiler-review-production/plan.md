@@ -109,3 +109,5 @@ Exit criteria
 - Second review finding: reopening a retained proof using a newer compiler reported the loaded version rather than the receipt-bound registration. Added a child-process alternate-consumer regression (red: 0.6.0 verifier mislabeled 0.5.0 fixture; green: explicit version mismatch), assert package version equals buildReleaseId, and report the bound version. Owning-runtime typecheck and 81 tests pass.
 
 - Third review finding: an internally valid receipt chain could register a different contract. Red regression recreated valid chains with substituted contract/activation; green now binds registration.contractSha256 to signed manifest definitionHash, checks the fixed source workflow definition, and binds terminal activation/run ID to signed policy. Owning runtime check and 82 tests pass. No core runtime or compiler package changes.
+
+- Fourth review finding: encoded module paths could silently skip direct CLI execution. Real spaced-path regression reproduced empty success output; fileURLToPath fixes CLI/restart paths, and realpathSync handles macOS /var aliases. Owning runtime 83 tests pass, typecheck and formatting pass.

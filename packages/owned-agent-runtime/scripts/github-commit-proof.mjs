@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 // Terminal-owned, read-only production proof. This is not a Control executor.
 import assert from 'node:assert/strict';
+import { realpathSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { createHash, generateKeyPairSync, sign, verify } from 'node:crypto';
 import { mkdir, readFile, writeFile, rename } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { resolve, join } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { pathToFileURL, fileURLToPath } from 'node:url';
 import {
   createWorkflowRuntimeRun,
   parseWorkflowRuntimeManifest,
@@ -367,7 +368,7 @@ async function start(commit, out) {
   // An actual separate process reopens the checkpoint; verify mode has no source call.
   const restarted = spawnSync(
     process.execPath,
-    [new URL(import.meta.url).pathname, 'verify', out, trustedKey],
+    [fileURLToPath(import.meta.url), 'verify', out, trustedKey],
     { encoding: 'utf8', timeout: 30000 }
   );
   assert.equal(restarted.status, 0, restarted.stderr);
@@ -391,7 +392,7 @@ async function start(commit, out) {
     })
   );
 }
-if (process.argv[1] && resolve(process.argv[1]) === new URL(import.meta.url).pathname) {
+if (process.argv[1] && realpathSync(resolve(process.argv[1])) === fileURLToPath(import.meta.url)) {
   const [command, arg, key] = process.argv.slice(2);
   if (command === 'start' && arg && key) await start(arg, resolve(key));
   else if (command === 'verify' && arg && key)

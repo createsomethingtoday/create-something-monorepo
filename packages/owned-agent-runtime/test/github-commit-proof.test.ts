@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { cp, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdtemp, readFile, rm, writeFile, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { generateKeyPairSync } from 'node:crypto';
@@ -162,6 +162,40 @@ test('valid receipt chains cannot substitute the signed contract or terminal act
         /does not match signed workflow|Terminal activation does not match policy/
       );
     }
+  } finally {
+    await rm(scratch, { recursive: true, force: true });
+  }
+});
+
+test('direct verification executes from paths containing spaces', async () => {
+  const scratch = await mkdtemp(join(tmpdir(), 'github proof path '));
+  try {
+    const script = join(scratch, 'commit proof.mjs');
+    await cp(new URL('../scripts/github-commit-proof.mjs', import.meta.url), script);
+    await symlink(
+      fileURLToPath(new URL('../node_modules', import.meta.url)),
+      join(scratch, 'node_modules')
+    );
+    const result = spawnSync(
+      process.execPath,
+      [
+        script,
+        'verify',
+        fileURLToPath(fixture),
+        fileURLToPath(new URL('./fixtures/github-commit-proof/trusted-public.pem', import.meta.url))
+      ],
+      {
+        encoding: 'utf8',
+        env: {
+          ...process.env,
+          WORKFLOW_COMPILER_CONSUMER_DIR: fileURLToPath(
+            new URL('../../workflow-compiler', import.meta.url)
+          )
+        }
+      }
+    );
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(JSON.parse(result.stdout).ok, true);
   } finally {
     await rm(scratch, { recursive: true, force: true });
   }
