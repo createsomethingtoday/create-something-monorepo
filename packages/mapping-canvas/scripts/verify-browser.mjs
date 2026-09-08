@@ -67,7 +67,7 @@ async function verifyOfflineShell() {
 try {
   const desktop = await startPage({ width: 1440, height: 900 });
   const { page } = desktop;
-  const svg = page.locator('svg');
+  const svg = page.locator('svg[aria-label="Canvas objects"]');
   const box = await svg.boundingBox();
   if (!box) throw new Error('Canvas surface unavailable');
   const brandLogo = page.getByRole('img', { name: 'CREATE SOMETHING .agency' });
@@ -76,6 +76,13 @@ try {
   if (await page.locator('meta[property="og:image"][content="https://draw.createsomething.agency/og-image.png"]').count() !== 1) throw new Error('Draw social image metadata is unavailable');
   const schemas = await page.locator('script[type="application/ld+json"]').allTextContents();
   if (!schemas.some((value) => JSON.parse(value)['@type'] === 'WebApplication') || !schemas.some((value) => JSON.parse(value)['@type'] === 'Organization')) throw new Error('Draw structured identity is incomplete');
+  await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
+  if (await page.getByRole('button', { name: 'Reset view', exact: true }).innerText() !== '125%') throw new Error('Zoom in did not update the camera');
+  await page.getByRole('button', { name: 'Zoom out', exact: true }).click();
+  if (await page.getByRole('button', { name: 'Reset view', exact: true }).innerText() !== '100%') throw new Error('Zoom out did not restore the camera');
+  if (await page.getByRole('button', { name: 'Fit drawing', exact: true }).isEnabled()) throw new Error('Empty canvas offered fit drawing');
+  await page.getByRole('button', { name: 'Pen tool (P)', exact: true }).press('Control+a');
+  if (await page.getByRole('button', { name: 'Pen tool (P)', exact: true }).getAttribute('aria-pressed') !== 'true') throw new Error('Modified browser shortcut switched drawing tools');
   const toolbarOverflows = await page.locator('.toolbar button').evaluateAll((buttons) => buttons.some((button) => button.scrollWidth > button.clientWidth));
   if (toolbarOverflows) throw new Error('Desktop tool sidebar text overflows its rail');
   const agentFollow = await page.evaluate(async () => {
@@ -407,7 +414,7 @@ try {
   const collapsedViewBoxWidth = await svg.evaluate((node) => node.viewBox.baseVal.width);
   if (!collapsedCanvasWidth || Math.abs(collapsedCanvasWidth - collapsedViewBoxWidth) > 1) throw new Error('Canvas viewBox did not follow the collapsed sidebar layout');
   if (await page.locator('.toolbar .tool-label:visible').count()) throw new Error('Collapsed tool sidebar still shows tool labels');
-  if (await page.locator('.toolbar .tool-key:visible').count() !== 10) throw new Error('Collapsed tool sidebar lost letter indicators');
+  if (await page.locator('.toolbar .tool-icon:visible').count() !== 10) throw new Error('Collapsed tool sidebar lost recognizable tool icons');
   await page.reload({ waitUntil: 'networkidle' });
   await page.getByRole('button', { name: 'Expand tool sidebar' }).waitFor();
   if ((await page.locator('.toolbar').boundingBox())?.width !== collapsedToolbarBox.width) throw new Error('Collapsed tool sidebar state did not persist locally');
@@ -629,6 +636,12 @@ try {
   await page.locator('input[type=file]').setInputFiles(`${outputRoot}canvas.json`);
   await page.waitForFunction(() => document.querySelector('.statusbar')?.textContent?.includes('Canvas imported'));
   if (await page.locator('g[aria-label^="Group:"]').count() !== 1) throw new Error('JSON import did not restore the group');
+  await page.getByRole('button', { name: 'Fit drawing', exact: true }).click();
+  const fittedCamera = await page.locator('[data-agent-camera]').getAttribute('transform');
+  await page.getByRole('button', { name: 'Zoom out', exact: true }).click();
+  await page.getByRole('button', { name: 'Zoom out', exact: true }).press('f');
+  if (await page.locator('[data-agent-camera]').getAttribute('transform') !== fittedCamera) throw new Error('Fit shortcut differs from Fit drawing');
+  await page.getByRole('button', { name: 'Reset view', exact: true }).click();
   await page.getByRole('button', { name: /Note tool/ }).click();
   await page.mouse.click(box.x + 520, box.y + 210);
   page.once('dialog', (dialog) => dialog.accept());
@@ -647,7 +660,16 @@ try {
 
   const mobile = await startPage({ width: 390, height: 844 });
   await mobile.page.emulateMedia({ reducedMotion: 'reduce' });
-  const mobileSvg = mobile.page.locator('svg');
+  for (const width of [320, 390, 820]) {
+    await mobile.page.setViewportSize({ width, height: 844 });
+    const clippedControls = await mobile.page.locator('.toolbar button:not(.sidebar-toggle),.file-actions button,.history button').evaluateAll((buttons) => buttons.filter((button) => {
+      const bounds = button.getBoundingClientRect();
+      return bounds.left < 0 || bounds.right > innerWidth || bounds.top < 0 || bounds.bottom > innerHeight || bounds.width < 24 || bounds.height < 24;
+    }).map((button) => button.getAttribute('aria-label') || button.textContent));
+    if (clippedControls.length) throw new Error(`Controls clipped at ${width}px: ${clippedControls.join(', ')}`);
+  }
+  await mobile.page.setViewportSize({ width: 390, height: 844 });
+  const mobileSvg = mobile.page.locator('svg[aria-label="Canvas objects"]');
   const mobileBox = await mobileSvg.boundingBox();
   if (!mobileBox) throw new Error('Mobile canvas unavailable');
   if (!(await mobile.page.getByRole('img', { name: 'CREATE SOMETHING .agency' }).isVisible())) throw new Error('Mobile CREATE SOMETHING logo is unavailable');

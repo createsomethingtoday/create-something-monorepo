@@ -152,7 +152,7 @@ try {
   await host.page.screenshot({ path: `${outputRoot}mac-pairing.png`, fullPage: true });
   await host.page.getByRole('button', { name: 'Close pairing' }).click();
   if (await host.page.getByRole('button', { name: 'Publish view-only', exact: true }).count()) throw new Error('Mac native host exposed browser-only snapshot publishing');
-  const hostSurface = host.page.locator('svg');
+  const hostSurface = host.page.locator('svg[aria-label="Canvas objects"]');
   const hostBox = await hostSurface.boundingBox();
   if (!hostBox) throw new Error('Mac canvas surface unavailable');
   await host.page.getByRole('button', { name: /Note tool/ }).click();
@@ -170,7 +170,19 @@ try {
   await host.context.close();
 
   const unpaired = await nativePage('companion', { width: 393, height: 852 });
-  const unpairedSurface = unpaired.page.locator('svg');
+  const safeAreaSession = await unpaired.context.newCDPSession(unpaired.page);
+  await safeAreaSession.send('Emulation.setSafeAreaInsetsOverride', { insets: { top: 47, bottom: 34, left: 0, right: 0 } });
+  const safeAreaLayout = await unpaired.page.evaluate(() => {
+    const footer = document.querySelector('.statusbar').getBoundingClientRect();
+    const toolbar = document.querySelector('.toolbar').getBoundingClientRect();
+    const topbar = document.querySelector('.topbar').getBoundingClientRect();
+    const buttons = [...document.querySelectorAll('.toolbar button:not(.sidebar-toggle)')].map((button) => button.getBoundingClientRect().bottom);
+    return { footerHeight: footer.height, footerTop: footer.top, footerBottom: footer.bottom, toolbarBottom: toolbar.bottom, buttonBottom: Math.max(...buttons), headerHeight: topbar.height, viewportHeight: innerHeight };
+  });
+  if (safeAreaLayout.footerHeight < 62 || safeAreaLayout.headerHeight < 101 || safeAreaLayout.footerBottom > safeAreaLayout.viewportHeight || safeAreaLayout.buttonBottom > safeAreaLayout.footerTop) throw new Error(`Native safe areas overlap controls: ${JSON.stringify(safeAreaLayout)}`);
+  await safeAreaSession.send('Emulation.setSafeAreaInsetsOverride', { insets: {} });
+  await safeAreaSession.detach();
+  const unpairedSurface = unpaired.page.locator('svg[aria-label="Canvas objects"]');
   const unpairedBox = await unpairedSurface.boundingBox();
   if (!unpairedBox) throw new Error('Unpaired iPhone canvas surface unavailable');
   await unpaired.page.getByRole('button', { name: /Note tool/ }).click();
@@ -207,7 +219,7 @@ try {
   const submittedAfterInvalidTitle = await page.evaluate(() => window.__nativeCalls.filter(({ command }) => command === 'draw_companion_submit').length);
   if (submittedAfterInvalidTitle !== submittedBeforeInvalidTitle) throw new Error('Over-limit UTF-8 title reached native transport');
 
-  const surface = page.locator('svg');
+  const surface = page.locator('svg[aria-label="Canvas objects"]');
   const box = await surface.boundingBox();
   if (!box) throw new Error('iPhone canvas surface unavailable');
   await title.fill('Wheel race');
@@ -271,14 +283,14 @@ try {
   if (await page.locator('g[aria-label^="Note:"]').count() !== notesBeforePinch) throw new Error('Pinch while the Note tool was active created a stray note');
   const putsAfterPinch = await page.evaluate(() => window.__nativeCalls.filter(({ command, args }) => command === 'draw_companion_submit' && args?.operation?.type === 'put_object').length);
   if (putsAfterPinch !== putsBeforePinch) throw new Error('Pinch while the Note tool was active submitted a stray object');
-  const zoomBeforeCancelledPinch = await page.locator('.history span').textContent();
+  const zoomBeforeCancelledPinch = await page.getByRole('button', { name: 'Reset view', exact: true }).textContent();
   const viewportSubmitsBeforeCancel = await page.evaluate(() => window.__nativeCalls.filter(({ command, args }) => command === 'draw_companion_submit' && args?.operation?.type === 'set_viewport').length);
   await surface.dispatchEvent('pointerdown', { pointerId: 25, pointerType: 'touch', button: 0, clientX: box.x + 90, clientY: box.y + 180 });
   await surface.dispatchEvent('pointerdown', { pointerId: 26, pointerType: 'touch', button: 0, clientX: box.x + 220, clientY: box.y + 180 });
   await surface.dispatchEvent('pointermove', { pointerId: 26, pointerType: 'touch', button: 0, clientX: box.x + 340, clientY: box.y + 250 });
   await surface.dispatchEvent('pointercancel', { pointerId: 26, pointerType: 'touch', button: 0, clientX: box.x + 340, clientY: box.y + 250 });
   await surface.dispatchEvent('pointerup', { pointerId: 25, pointerType: 'touch', button: 0, clientX: box.x + 90, clientY: box.y + 180 });
-  if (await page.locator('.history span').textContent() !== zoomBeforeCancelledPinch) throw new Error('Cancelled pinch did not restore its starting viewport');
+  if (await page.getByRole('button', { name: 'Reset view', exact: true }).textContent() !== zoomBeforeCancelledPinch) throw new Error('Cancelled pinch did not restore its starting viewport');
   const viewportSubmitsAfterCancel = await page.evaluate(() => window.__nativeCalls.filter(({ command, args }) => command === 'draw_companion_submit' && args?.operation?.type === 'set_viewport').length);
   if (viewportSubmitsAfterCancel !== viewportSubmitsBeforeCancel) throw new Error('Cancelled pinch submitted a tentative viewport');
   await surface.dispatchEvent('pointerdown', { pointerId: 24, pointerType: 'touch', button: 0, clientX: box.x + 130, clientY: box.y + 190 });
@@ -323,9 +335,11 @@ try {
   await page.evaluate(() => { window.__nativeViewportDelay = true; });
   await page.mouse.move(box.x + 180, box.y + 240);
   await page.mouse.wheel(6, -4);
-  await page.mouse.move(before.x + 5, before.y + 5);
+  // Drag the lower note border, clear of the responsive formatting toolbar.
+  const dragStart = { x: before.x + 5, y: before.y + before.height - 5 };
+  await page.mouse.move(dragStart.x, dragStart.y);
   await page.mouse.down();
-  await page.mouse.move(before.x + 55, before.y + 55, { steps: 4 });
+  await page.mouse.move(dragStart.x + 50, dragStart.y + 50, { steps: 4 });
   await page.waitForTimeout(300);
   const duringDelayedViewport = await note.boundingBox();
   if (!duringDelayedViewport || duringDelayedViewport.x < before.x + 40 || duringDelayedViewport.y < before.y + 40) throw new Error('Delayed wheel response erased an in-progress object drag');
