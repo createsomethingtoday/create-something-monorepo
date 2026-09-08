@@ -91,6 +91,7 @@
 
 <style>
   .opening {
+    padding: 0;
     display: grid;
     grid-template-columns: 1fr 1.12fr;
     background: var(--color-performance-ink, #090909);
@@ -102,6 +103,7 @@
     align-self: center;
   }
   .opening .eyebrow {
+    color: var(--color-performance-paper, #f3f3f0);
     margin-bottom: 2.5rem;
     opacity: 0.75;
   }
@@ -167,6 +169,7 @@
   }
   @media (max-width: 900px) {
     .opening {
+      padding: 0;
       grid-template-columns: 1fr;
     }
     .opening__copy {

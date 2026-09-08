@@ -33,3 +33,5 @@ Run `pnpm bootstrap:worktree` from a new worktree, then `pnpm --filter @create-s
 - `pnpm performance:pages:check`
 
 Before promotion, verify desktop/mobile project search, type filtering, empty results, detail/source links, Workbench access, old routes, and reload. Deployment follows the repository PR and production verification workflow.
+
+Browser build target follows Vite 7: Chrome/Edge 107+, Firefox 104+, Safari 16+. The top-level-await plugin receives this explicitly so it cannot restore its older implicit defaults.

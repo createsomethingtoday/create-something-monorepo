@@ -212,7 +212,9 @@
       }}
     />
 
-    <ModeIndicator current="space" />
+    {#if !['/', '/projects', '/about'].includes($page.url.pathname) && !$page.url.pathname.startsWith('/projects/')}
+      <ModeIndicator current="space" />
+    {/if}
   </div>
 {/if}
 
