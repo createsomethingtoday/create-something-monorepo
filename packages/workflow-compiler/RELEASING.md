@@ -88,4 +88,7 @@ Node 22 and 24, registry signature/attestation checks, both starter loops,
 negative parser and tamper cases, and signed runtime-manifest verification.
 Locally run `npm run release:registry -- 0.5.0` after that version is public.
 Staging uses operation `stage` (the default); verification never publishes.
-Update the stable quickstart pin only after this registry gate passes.
+The candidate README must pin its own version before packing so the immutable
+release does not instruct builders to install an older package. Do not report
+the candidate as public until the registry gate passes; retain the previously
+verified version for rollback.

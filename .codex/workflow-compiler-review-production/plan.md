@@ -101,3 +101,5 @@ Exit criteria
 - Explicit legibility check found missing contract section in the touched owned-runtime README. Added its entry/boot/smoke/verification/escalation table; both package README contracts now pass. No runtime behavior changed.
 
 - Legibility follow-up: README contracts passed, but package metadata opt-in and package-local AGENTS were also required. Added both, preserving all existing Control/activation boundaries; full targeted legibility now passes. Earlier note referred only to the README checks.
+
+- Prepublication review caught a documentation lifecycle issue: keeping the old quickstart in the packed README would permanently ship the old install instructions. Changed candidate README to explicitly document/pin 0.5.0 without claiming it is public; release runbook preserves 0.4.1 as the verified fallback until registry proof. The test now binds the documented pin to package.json, preventing future drift. This supersedes the earlier plan to update only after publication.

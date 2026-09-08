@@ -4,18 +4,15 @@
 
 It gives builders a composable governance layer below any hosted control plane. The package does not call providers, hold credentials, choose a model, or mutate the systems named by a workflow.
 
-The stable quickstart below pins the verified public **0.4.1** release while
-**0.5.0** completes staged promotion. Runtime-manifest APIs, strict closed-record
-validation, and adapter-readiness inspection described on this branch require
-0.5.0. Run `workflow-compiler --version` on 0.5.0 to identify the exact package
-build separately from its compiler compatibility marker.
+This README documents **0.5.0**. Run `workflow-compiler --version` to identify
+the exact package build separately from its compiler compatibility marker.
 
 ## Codex paired terminal quickstart
 
 Install the builder artifact in the repository where the workflow will live:
 
 ```bash
-npm install @createsomething/workflow-compiler@0.4.1
+npm install @createsomething/workflow-compiler@0.5.0
 ```
 
 Copy the shipped Codex skill into that repository, then ask Codex to turn a recurring operating task into a runbook. Codex can propose and revise the local files; the terminal commands below remain the deterministic proof surface:
@@ -68,7 +65,7 @@ execution host begins.
 Install the package with a supported Node release:
 
 ```bash
-npm install @createsomething/workflow-compiler@0.4.1
+npm install @createsomething/workflow-compiler@0.5.0
 ```
 
 Create `workflow.json` and optionally `cases.json` using the versioned schemas documented in [API.md](./API.md). Compile and independently verify a local bundle:
