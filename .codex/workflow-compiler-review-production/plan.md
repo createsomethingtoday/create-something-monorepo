@@ -99,3 +99,5 @@ Exit criteria
 - Next: protected PR review/CI, then staged release. Source recommendation question remains open to user steering; default scoped GitHub proof is explicit.
 
 - Explicit legibility check found missing contract section in the touched owned-runtime README. Added its entry/boot/smoke/verification/escalation table; both package README contracts now pass. No runtime behavior changed.
+
+- Legibility follow-up: README contracts passed, but package metadata opt-in and package-local AGENTS were also required. Added both, preserving all existing Control/activation boundaries; full targeted legibility now passes. Earlier note referred only to the README checks.

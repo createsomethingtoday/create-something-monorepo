@@ -26,5 +26,16 @@
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "wrangler": "^4.103.0"
+  },
+  "createSomething": {
+    "agentLegibilityContract": true,
+    "tier": "automation",
+    "surface": "worker",
+    "entrypoints": [
+      "src/index.ts",
+      "scripts/github-commit-proof.mjs"
+    ],
+    "boot": "pnpm dev",
+    "smoke": "pnpm check && pnpm test"
   }
 }
