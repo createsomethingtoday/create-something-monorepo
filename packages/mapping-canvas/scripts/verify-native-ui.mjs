@@ -271,14 +271,14 @@ try {
   if (await page.locator('g[aria-label^="Note:"]').count() !== notesBeforePinch) throw new Error('Pinch while the Note tool was active created a stray note');
   const putsAfterPinch = await page.evaluate(() => window.__nativeCalls.filter(({ command, args }) => command === 'draw_companion_submit' && args?.operation?.type === 'put_object').length);
   if (putsAfterPinch !== putsBeforePinch) throw new Error('Pinch while the Note tool was active submitted a stray object');
-  const zoomBeforeCancelledPinch = await page.locator('.history span').textContent();
+  const zoomBeforeCancelledPinch = await page.getByRole('button', { name: 'Reset view', exact: true }).textContent();
   const viewportSubmitsBeforeCancel = await page.evaluate(() => window.__nativeCalls.filter(({ command, args }) => command === 'draw_companion_submit' && args?.operation?.type === 'set_viewport').length);
   await surface.dispatchEvent('pointerdown', { pointerId: 25, pointerType: 'touch', button: 0, clientX: box.x + 90, clientY: box.y + 180 });
   await surface.dispatchEvent('pointerdown', { pointerId: 26, pointerType: 'touch', button: 0, clientX: box.x + 220, clientY: box.y + 180 });
   await surface.dispatchEvent('pointermove', { pointerId: 26, pointerType: 'touch', button: 0, clientX: box.x + 340, clientY: box.y + 250 });
   await surface.dispatchEvent('pointercancel', { pointerId: 26, pointerType: 'touch', button: 0, clientX: box.x + 340, clientY: box.y + 250 });
   await surface.dispatchEvent('pointerup', { pointerId: 25, pointerType: 'touch', button: 0, clientX: box.x + 90, clientY: box.y + 180 });
-  if (await page.locator('.history span').textContent() !== zoomBeforeCancelledPinch) throw new Error('Cancelled pinch did not restore its starting viewport');
+  if (await page.getByRole('button', { name: 'Reset view', exact: true }).textContent() !== zoomBeforeCancelledPinch) throw new Error('Cancelled pinch did not restore its starting viewport');
   const viewportSubmitsAfterCancel = await page.evaluate(() => window.__nativeCalls.filter(({ command, args }) => command === 'draw_companion_submit' && args?.operation?.type === 'set_viewport').length);
   if (viewportSubmitsAfterCancel !== viewportSubmitsBeforeCancel) throw new Error('Cancelled pinch submitted a tentative viewport');
   await surface.dispatchEvent('pointerdown', { pointerId: 24, pointerType: 'touch', button: 0, clientX: box.x + 130, clientY: box.y + 190 });
