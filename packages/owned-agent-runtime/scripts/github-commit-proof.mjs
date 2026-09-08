@@ -164,6 +164,12 @@ export async function verifyCommitProof(out, trustedPublicKeyPath) {
   assert.equal(policy.readOnly, true);
   assert.ok(Date.parse(observation.observedAt) < Date.parse(policy.expiresAt));
   await verifyWorkflowRuntimeRun(manifest, run);
+  const buildReleaseId = run.registration.buildReleaseId;
+  assert.equal(
+    buildReleaseId,
+    'workflow-compiler@' + api.WORKFLOW_COMPILER_PACKAGE_VERSION,
+    'Compiler release does not match checkpoint registration'
+  );
   const receipt = run.receipts.find((entry) => entry.eventType === 'step_succeeded');
   assert.ok(receipt, 'Missing successful read receipt');
   assert.equal(receipt.verifier, 'github-commit:' + hash(json(observation)));
@@ -187,7 +193,7 @@ export async function verifyCommitProof(out, trustedPublicKeyPath) {
     receiptId: receipt.id,
     receiptSha256: receipt.receiptSha256,
     artifactManifestSha256: inventory.manifestHash,
-    compilerPackageVersion: api.WORKFLOW_COMPILER_PACKAGE_VERSION,
+    compilerPackageVersion: buildReleaseId.slice('workflow-compiler@'.length),
     nextDisposition: 'wait',
     readDispatches: 1,
     restartNetworkCalls: 0

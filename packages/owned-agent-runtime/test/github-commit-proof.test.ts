@@ -4,6 +4,8 @@ import { cp, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { generateKeyPairSync } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
 const { verifyCommitProof } = await import(
   new URL('../scripts/github-commit-proof.mjs', import.meta.url).href
@@ -59,5 +61,38 @@ test('retained authenticated read proof reopens without replaying the source and
     await assert.rejects(() => verifyCommitProof(out, wrongKey));
   } finally {
     await rm(scratch, { recursive: true, force: true });
+  }
+});
+
+test('reopening with another compiler release cannot relabel the retained proof', async () => {
+  const consumer = await mkdtemp(join(tmpdir(), 'github-proof-version-'));
+  try {
+    await writeFile(
+      join(consumer, 'package.json'),
+      JSON.stringify({
+        name: '@createsomething/workflow-compiler',
+        type: 'module',
+        exports: './index.mjs'
+      })
+    );
+    const entry = new URL('../../workflow-compiler/dist/index.js', import.meta.url).href;
+    await writeFile(
+      join(consumer, 'index.mjs'),
+      `export * from ${JSON.stringify(entry)}; export const WORKFLOW_COMPILER_PACKAGE_VERSION = '0.6.0';`
+    );
+    const result = spawnSync(
+      process.execPath,
+      [
+        fileURLToPath(new URL('../scripts/github-commit-proof.mjs', import.meta.url)),
+        'verify',
+        fileURLToPath(fixture),
+        fileURLToPath(new URL('./fixtures/github-commit-proof/trusted-public.pem', import.meta.url))
+      ],
+      { encoding: 'utf8', env: { ...process.env, WORKFLOW_COMPILER_CONSUMER_DIR: consumer } }
+    );
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /Compiler release does not match checkpoint registration/);
+  } finally {
+    await rm(consumer, { recursive: true, force: true });
   }
 });

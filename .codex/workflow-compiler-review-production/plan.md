@@ -32,10 +32,10 @@ Exit criteria
 Status: in progress
 
 Implementation
-- [ ] Prepare new version, changelog, lock/inventory/docs and registry-consumer verifier; include current runtime-manifest APIs with accurate build identity.
+- [x] Prepare new version, changelog, lock/inventory/docs and registry-consumer verifier; include current runtime-manifest APIs with accurate build identity.
 
 Verification
-- [ ] Run Node 22/24 package, acceptance, clean tarball and downstream gates; review exact diff.
+- [x] Run Node 22/24 package, acceptance, clean tarball and downstream gates; review exact diff.
 
 Exit criteria
 - [ ] Protected PR reviewed and merged with rollback and release evidence.
@@ -103,3 +103,7 @@ Exit criteria
 - Legibility follow-up: README contracts passed, but package metadata opt-in and package-local AGENTS were also required. Added both, preserving all existing Control/activation boundaries; full targeted legibility now passes. Earlier note referred only to the README checks.
 
 - Prepublication review caught a documentation lifecycle issue: keeping the old quickstart in the packed README would permanently ship the old install instructions. Changed candidate README to explicitly document/pin 0.5.0 without claiming it is public; release runbook preserves 0.4.1 as the verified fallback until registry proof. The test now binds the documented pin to package.json, preventing future drift. This supersedes the earlier plan to update only after publication.
+
+- PR #1623 review found the registry verifier checkout inherited the dispatch ref. Commit b9ae90e41 pins main and verifies origin/main equality; review thread resolved after the fix. Exact-head CI is rerunning. Package implementation remains unchanged.
+
+- Second review finding: reopening a retained proof using a newer compiler reported the loaded version rather than the receipt-bound registration. Added a child-process alternate-consumer regression (red: 0.6.0 verifier mislabeled 0.5.0 fixture; green: explicit version mismatch), assert package version equals buildReleaseId, and report the bound version. Owning-runtime typecheck and 81 tests pass.
