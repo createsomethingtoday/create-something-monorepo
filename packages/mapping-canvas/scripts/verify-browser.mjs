@@ -83,6 +83,39 @@ try {
   if (await page.getByRole('button', { name: 'Fit drawing', exact: true }).isEnabled()) throw new Error('Empty canvas offered fit drawing');
   await page.getByRole('button', { name: 'Pen tool (P)', exact: true }).press('Control+a');
   if (await page.getByRole('button', { name: 'Pen tool (P)', exact: true }).getAttribute('aria-pressed') !== 'true') throw new Error('Modified browser shortcut switched drawing tools');
+  const shortcutsTrigger = page.getByRole('button', { name: 'Shortcuts', exact: true });
+  const shortcutsDialog = page.getByRole('dialog', { name: 'Keyboard shortcuts' });
+  await shortcutsTrigger.click();
+  if (!(await shortcutsDialog.isVisible()) || await shortcutsDialog.locator('.shortcut-tools kbd').count() !== 10) throw new Error('Shortcut guide did not list all ten drawing tools');
+  await page.keyboard.press('n');
+  await page.keyboard.press('+');
+  if (await page.locator('.toolbar button[aria-label="Pen tool (P)"]').getAttribute('aria-pressed') !== 'true' || await page.locator('.zoom-level').innerText() !== '100%') throw new Error('Guide allowed background drawing shortcuts');
+  // Native modal dialogs make background controls inert; browser chrome may still receive Tab.
+  await page.getByLabel('Canvas title').evaluate((input) => input.focus());
+  if (!(await shortcutsDialog.evaluate((dialog) => dialog.contains(document.activeElement)))) throw new Error('Shortcut dialog allowed focus into the canvas controls');
+  await page.keyboard.press('Escape');
+  if (await shortcutsDialog.isVisible() || !(await shortcutsTrigger.evaluate((button) => button === document.activeElement))) throw new Error('Escape did not close the guide and restore focus');
+  await shortcutsTrigger.press('?');
+  await shortcutsDialog.getByRole('button', { name: 'Close keyboard shortcuts' }).click();
+  await shortcutsTrigger.press('+');
+  if (await page.locator('.zoom-level').innerText() !== '125%') throw new Error('Plus shortcut did not zoom in');
+  await shortcutsTrigger.press('-');
+  if (await page.locator('.zoom-level').innerText() !== '100%') throw new Error('Minus shortcut did not zoom out');
+  await shortcutsTrigger.press('=');
+  await shortcutsTrigger.press('0');
+  if (await page.locator('.zoom-level').innerText() !== '100%') throw new Error('Zero shortcut did not reset the view');
+  for (const key of ['v', 'p', 'e', 'r', 'o', 'a', 'n', 'c', 'g', 'h']) {
+    await shortcutsTrigger.press(key);
+    if (await page.locator(`.toolbar button[aria-keyshortcuts="${key.toUpperCase()}"]`).getAttribute('aria-pressed') !== 'true') throw new Error(`Tool shortcut ${key} did not activate its tool`);
+  }
+  await shortcutsTrigger.press('p');
+  const canvasTitleInput = page.getByLabel('Canvas title');
+  const originalTitle = await canvasTitleInput.inputValue();
+  await canvasTitleInput.fill('Typing ');
+  await canvasTitleInput.pressSequentially('n?+-0');
+  if (await shortcutsDialog.isVisible() || await page.locator('.zoom-level').innerText() !== '100%' || await page.locator('.toolbar button[aria-label="Pen tool (P)"]').getAttribute('aria-pressed') !== 'true') throw new Error('Title typing triggered drawing shortcuts');
+  await canvasTitleInput.fill(originalTitle);
+  await shortcutsTrigger.focus();
   const toolbarOverflows = await page.locator('.toolbar button').evaluateAll((buttons) => buttons.some((button) => button.scrollWidth > button.clientWidth));
   if (toolbarOverflows) throw new Error('Desktop tool sidebar text overflows its rail');
   const agentFollow = await page.evaluate(async () => {
@@ -662,13 +695,18 @@ try {
   await mobile.page.emulateMedia({ reducedMotion: 'reduce' });
   for (const width of [320, 390, 820]) {
     await mobile.page.setViewportSize({ width, height: 844 });
-    const clippedControls = await mobile.page.locator('.toolbar button:not(.sidebar-toggle),.file-actions button,.history button').evaluateAll((buttons) => buttons.filter((button) => {
+    const clippedControls = await mobile.page.locator('.toolbar button:not(.sidebar-toggle),.file-actions button,.history button,.shortcuts-trigger').evaluateAll((buttons) => buttons.filter((button) => {
       const bounds = button.getBoundingClientRect();
       return bounds.left < 0 || bounds.right > innerWidth || bounds.top < 0 || bounds.bottom > innerHeight || bounds.width < 24 || bounds.height < 24;
     }).map((button) => button.getAttribute('aria-label') || button.textContent));
     if (clippedControls.length) throw new Error(`Controls clipped at ${width}px: ${clippedControls.join(', ')}`);
   }
   await mobile.page.setViewportSize({ width: 390, height: 844 });
+  await mobile.page.getByRole('button', { name: 'Shortcuts', exact: true }).click();
+  const mobileGuide = mobile.page.getByRole('dialog', { name: 'Keyboard shortcuts' });
+  const guideFits = await mobileGuide.evaluate((dialog) => { const bounds = dialog.getBoundingClientRect(); return bounds.left >= 0 && bounds.right <= innerWidth && bounds.top >= 0 && bounds.bottom <= innerHeight && dialog.scrollWidth === dialog.clientWidth; });
+  if (!guideFits) throw new Error('Mobile shortcut guide overflows the viewport');
+  await mobileGuide.getByRole('button', { name: 'Close keyboard shortcuts' }).click();
   const mobileSvg = mobile.page.locator('svg[aria-label="Canvas objects"]');
   const mobileBox = await mobileSvg.boundingBox();
   if (!mobileBox) throw new Error('Mobile canvas unavailable');
