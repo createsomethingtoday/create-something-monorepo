@@ -370,3 +370,14 @@ test('normalized technical review intents cannot attach a saved draft through an
     assert.equal(new URL(handoff.schedulerHref).searchParams.get('intent'), 'technical-review');
   }
 });
+
+
+test('the same loaded draft survives switching between review and mapping handoffs', () => {
+  const loadedDraft = 'Saved mapping context.';
+  for (const intent of ['technical-review', 'workflow-map', 'Technical%20Review', 'workflow-map']) {
+    const state = createBookingHandoffState('?intent=' + intent, loadedDraft);
+    assert.equal(state.handoffSheet.warmupNotes, intent === 'workflow-map' ? loadedDraft : undefined);
+  }
+  assert.match(bookRoute, /warmupNotes = window\.localStorage\.getItem\(PUBLIC_ATLAS_STORAGE_KEYS\.warmupSummary\)/);
+  assert.match(bookRoute, /hasWarmupNotes: Boolean\(handoffSheet\.warmupNotes\)/);
+});

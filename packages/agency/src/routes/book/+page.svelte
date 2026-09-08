@@ -153,9 +153,7 @@
 		if (schedulerAccess) {
 			window.history.replaceState(window.history.state, '', schedulerAccess.cleanPath);
 		}
-		warmupNotes = intent === 'technical-review'
-			? undefined
-			: window.localStorage.getItem(PUBLIC_ATLAS_STORAGE_KEYS.warmupSummary) ?? undefined;
+		warmupNotes = window.localStorage.getItem(PUBLIC_ATLAS_STORAGE_KEYS.warmupSummary) ?? undefined;
 		void tick().then(() => {
 			sendSchedulerContext();
 			getAnalytics()?.track('interaction', 'booking_handoff_viewed', {
