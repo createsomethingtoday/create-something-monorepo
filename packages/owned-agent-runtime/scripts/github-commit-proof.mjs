@@ -164,6 +164,26 @@ export async function verifyCommitProof(out, trustedPublicKeyPath) {
   assert.equal(policy.readOnly, true);
   assert.ok(Date.parse(observation.observedAt) < Date.parse(policy.expiresAt));
   await verifyWorkflowRuntimeRun(manifest, run);
+  assert.equal(
+    run.registration.contractSha256,
+    manifest.workflow.definitionHash,
+    'Registered contract does not match signed workflow'
+  );
+  assert.equal(
+    manifest.workflow.definitionHash,
+    api.compileWorkflowDefinition(definition(observation.commitSha)).definitionHash,
+    'Signed workflow does not match the fixed source contract'
+  );
+  assert.deepEqual(
+    run.activation,
+    {
+      id: 'terminal-owner:' + observation.policySha256,
+      version: 1,
+      policySha256: observation.policySha256
+    },
+    'Terminal activation does not match policy'
+  );
+  assert.equal(run.id, 'github-commit-' + observation.policySha256.slice(7));
   const buildReleaseId = run.registration.buildReleaseId;
   assert.equal(
     buildReleaseId,

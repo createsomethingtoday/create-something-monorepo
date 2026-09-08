@@ -6,6 +6,13 @@ import { join } from 'node:path';
 import { generateKeyPairSync } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import {
+  createWorkflowRuntimeRun,
+  parseWorkflowRuntimeManifest,
+  planWorkflowRuntimeStep,
+  reduceWorkflowRuntimeRun,
+  verifyWorkflowRuntimeRun
+} from '@createsomething/workflow-runtime';
 
 const { verifyCommitProof } = await import(
   new URL('../scripts/github-commit-proof.mjs', import.meta.url).href
@@ -94,5 +101,68 @@ test('reopening with another compiler release cannot relabel the retained proof'
     assert.match(result.stderr, /Compiler release does not match checkpoint registration/);
   } finally {
     await rm(consumer, { recursive: true, force: true });
+  }
+});
+
+test('valid receipt chains cannot substitute the signed contract or terminal activation', async () => {
+  const scratch = await mkdtemp(join(tmpdir(), 'github-proof-registration-'));
+  try {
+    await cp(fixture, scratch, { recursive: true });
+    const original = JSON.parse(await readFile(join(scratch, 'checkpoint.json'), 'utf8'));
+    const manifest = parseWorkflowRuntimeManifest(
+      JSON.parse(await readFile(join(scratch, 'artifact/runtime-manifest.json'), 'utf8'))
+    );
+    for (const mutation of ['contract', 'activation'] as const) {
+      let run = await createWorkflowRuntimeRun(manifest, {
+        runId: original.id,
+        activation: {
+          ...original.activation,
+          ...(mutation === 'activation' ? { id: 'other-activation' } : {})
+        },
+        registration: {
+          ...original.registration,
+          ...(mutation === 'contract' ? { contractSha256: 'sha256:' + '0'.repeat(64) } : {})
+        },
+        artifactManifestSha256: original.artifactManifestSha256,
+        runtimeManifestSha256: original.runtimeManifestSha256,
+        clock: original.receipts[0].createdAt
+      });
+      const intent = original.receipts.find((r: any) => r.eventType === 'effect_intent');
+      const success = original.receipts.find((r: any) => r.eventType === 'step_succeeded');
+      const wait = original.receipts.find((r: any) => r.eventType === 'wait_created');
+      const pass = await planWorkflowRuntimeStep(manifest, run);
+      assert.equal(pass.type, 'pass');
+      if (pass.type !== 'pass') throw new Error('Expected read capability');
+      run = await reduceWorkflowRuntimeRun(manifest, run, {
+        type: 'effect_intent',
+        stepId: 'observe',
+        attemptId: intent.attemptId,
+        capability: pass.capability,
+        observedAt: intent.createdAt
+      });
+      run = await reduceWorkflowRuntimeRun(manifest, run, {
+        type: 'step_succeeded',
+        stepId: 'observe',
+        attemptId: success.attemptId,
+        verifier: success.verifier,
+        observedAt: success.createdAt
+      });
+      const approval = await planWorkflowRuntimeStep(manifest, run);
+      if (approval.type !== 'wait') throw new Error('Expected approval boundary');
+      run = await reduceWorkflowRuntimeRun(manifest, run, {
+        type: 'wait_created',
+        stepId: 'review',
+        approval: approval.approval,
+        observedAt: wait.createdAt
+      });
+      await verifyWorkflowRuntimeRun(manifest, run);
+      await writeFile(join(scratch, 'checkpoint.json'), JSON.stringify(run));
+      await assert.rejects(
+        () => verifyCommitProof(scratch, join(scratch, 'trusted-public.pem')),
+        /does not match signed workflow|Terminal activation does not match policy/
+      );
+    }
+  } finally {
+    await rm(scratch, { recursive: true, force: true });
   }
 });
