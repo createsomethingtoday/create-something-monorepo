@@ -30,7 +30,7 @@ svg .agent-camera{transition:transform 420ms cubic-bezier(.22,1,.36,1)}
 .source-link:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
 @media(min-width:821px) and (max-width:1350px){.identity span{display:none}.topbar{gap:12px}.palette{bottom:72px}}
 @media(max-width:820px){
-  .app-shell{grid-template-rows:auto minmax(0,1fr) 28px}
+  .app-shell:not(.native-shell){grid-template-rows:auto minmax(0,1fr) 28px}
   .topbar{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto;gap:4px;padding:8px}
   .identity{justify-content:center;gap:12px}
   .title{height:32px;font-size:14px;text-align:center;text-overflow:ellipsis}

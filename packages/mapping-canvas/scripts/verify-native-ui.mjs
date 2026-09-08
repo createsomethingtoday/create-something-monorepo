@@ -170,6 +170,18 @@ try {
   await host.context.close();
 
   const unpaired = await nativePage('companion', { width: 393, height: 852 });
+  const safeAreaSession = await unpaired.context.newCDPSession(unpaired.page);
+  await safeAreaSession.send('Emulation.setSafeAreaInsetsOverride', { insets: { top: 47, bottom: 34, left: 0, right: 0 } });
+  const safeAreaLayout = await unpaired.page.evaluate(() => {
+    const footer = document.querySelector('.statusbar').getBoundingClientRect();
+    const toolbar = document.querySelector('.toolbar').getBoundingClientRect();
+    const topbar = document.querySelector('.topbar').getBoundingClientRect();
+    const buttons = [...document.querySelectorAll('.toolbar button:not(.sidebar-toggle)')].map((button) => button.getBoundingClientRect().bottom);
+    return { footerHeight: footer.height, footerTop: footer.top, footerBottom: footer.bottom, toolbarBottom: toolbar.bottom, buttonBottom: Math.max(...buttons), headerHeight: topbar.height, viewportHeight: innerHeight };
+  });
+  if (safeAreaLayout.footerHeight < 62 || safeAreaLayout.headerHeight < 101 || safeAreaLayout.footerBottom > safeAreaLayout.viewportHeight || safeAreaLayout.buttonBottom > safeAreaLayout.footerTop) throw new Error(`Native safe areas overlap controls: ${JSON.stringify(safeAreaLayout)}`);
+  await safeAreaSession.send('Emulation.setSafeAreaInsetsOverride', { insets: {} });
+  await safeAreaSession.detach();
   const unpairedSurface = unpaired.page.locator('svg[aria-label="Canvas objects"]');
   const unpairedBox = await unpairedSurface.boundingBox();
   if (!unpairedBox) throw new Error('Unpaired iPhone canvas surface unavailable');
