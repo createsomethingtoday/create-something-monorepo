@@ -347,3 +347,13 @@ test('technical review booking preserves its intent through scheduler handoff an
   assert.equal(scheduler.searchParams.get('source'), 'technical-review');
   assert.equal(scheduler.searchParams.has('secret'), false);
 });
+
+
+test('an existing Map draft does not attach to a new technical review inquiry', () => {
+  const review = createBookingHandoffState('?source=technical-review&intent=technical-review', 'Earlier unrelated Map draft.');
+  assert.equal(review.handoffContext.warmupNotes, undefined);
+  assert.equal(review.handoffSheet.warmupNotes, undefined);
+  assert.equal(review.handoffContext.intent, 'technical-review');
+  const mapping = createBookingHandoffState('?intent=workflow-map', 'Current Map draft.');
+  assert.equal(mapping.handoffContext.warmupNotes, 'Current Map draft.');
+});

@@ -202,7 +202,9 @@ export function schedulerHandoffSheet(context: SchedulerHandoffContext): Schedul
 }
 
 export function createBookingHandoffState(search = '', warmupNotes?: string): BookingHandoffState {
-	const handoffContext = schedulerHandoffContext(search, warmupNotes);
+	// A saved Map draft belongs to the mapping flow, not a new project review.
+	const includeMapDraft = new URLSearchParams(search).get('intent') !== 'technical-review';
+	const handoffContext = schedulerHandoffContext(search, includeMapDraft ? warmupNotes : undefined);
 	return {
 		handoffContext,
 		handoffSheet: schedulerHandoffSheet(handoffContext),
