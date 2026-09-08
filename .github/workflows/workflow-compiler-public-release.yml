@@ -120,4 +120,6 @@ jobs:
       - name: Verify the exact installed public release
         env:
           RELEASE_VERSION: ${{ inputs.version }}
-        run: node packages/workflow-compiler/scripts/registry-consumer.mjs "$RELEASE_VERSION"
+        run: |
+          test "$(node -p "require('./packages/workflow-compiler/package.json').version")" = "$RELEASE_VERSION"
+          node packages/workflow-compiler/scripts/registry-consumer.mjs "$RELEASE_VERSION"

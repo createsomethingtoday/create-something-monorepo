@@ -113,3 +113,5 @@ Exit criteria
 - Fourth review finding: encoded module paths could silently skip direct CLI execution. Real spaced-path regression reproduced empty success output; fileURLToPath fixes CLI/restart paths, and realpathSync handles macOS /var aliases. Owning runtime 83 tests pass, typecheck and formatting pass.
 
 - Fifth review finding corrected source-request accounting: start makes one identity GET plus one commit GET. Proof now reports readDispatches=2, identityReadDispatches=1 and commitReadDispatches=1; README explicitly distinguishes total source reads from the single runtime commit dispatch. Earlier single-read references in this log mean the commit dispatch and exclude identity preflight. Regression red/green, typecheck and 83 tests pass.
+
+- Release review follow-up: registry workflow now requires RELEASE_VERSION to equal protected-main package.json before installation; registry version parser matches the release manifest supported prerelease syntax. Syntax check, 8 release-contract tests and diff check pass. These do not change packed compiler files.

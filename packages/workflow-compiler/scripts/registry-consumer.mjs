@@ -9,7 +9,7 @@ import { dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const version = process.argv[2];
-if (!/^\d+\.\d+\.\d+$/.test(version ?? ''))
+if (!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(version ?? ''))
   throw new Error('Supply one exact public version: npm run release:registry -- 0.5.0');
 const packageName = '@createsomething/workflow-compiler';
 const root = await mkdtemp(join(tmpdir(), 'workflow-registry-consumer-'));
