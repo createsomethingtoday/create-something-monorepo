@@ -204,7 +204,7 @@ test('commercial decision routes explain the task, delivery, ownership, and proo
   assert.match(home, /Illustrative example, not a measured client result/);
   assert.match(home, /Approve before saving to another tool/);
   assert.match(home, /Code, tests, and instructions/);
-  assert.match(read('services/+page.svelte'), /Bring one task your team still handles manually/);
+  assert.match(read('services/+page.svelte'), /Bring a task to automate or a product you have already built/);
   assert.match(read('products/+page.svelte'), /Map and Control are subscriptions/);
   assert.match(read('products/+page.svelte'), /Control includes Map/);
   assert.match(read('stack/+page.svelte'), /You keep the accounts, data, approval rights, and operating history/);

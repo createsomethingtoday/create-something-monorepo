@@ -12,6 +12,7 @@ export function buildCommercialFunnelSql({ days = 30 } = {}) {
     session_id,
     action,
     url,
+    json_extract(metadata, '$.intent') AS intent,
     CASE
       WHEN json_extract(metadata, '$.trafficClass') = 'test' THEN 'test'
       WHEN json_extract(metadata, '$.trafficClass') = 'internal' THEN 'internal'
@@ -32,7 +33,7 @@ export function buildCommercialFunnelSql({ days = 30 } = {}) {
     END AS event_traffic_class
   FROM unified_events
   WHERE property = 'agency'
-    AND created_at >= datetime('now', '-${boundedDays} days')
+    AND datetime(created_at) >= datetime('now', '-${boundedDays} days')
 ),
 session_class_rank AS (
   SELECT
@@ -59,6 +60,7 @@ session_funnel AS (
       WHEN 2 THEN 'automated'
       ELSE 'external'
     END AS traffic_class,
+    MAX(CASE WHEN url LIKE 'https://createsomething.agency/technical-review%' OR intent = 'technical-review' THEN 1 ELSE 0 END) AS review_interest,
     MAX(CASE WHEN action = 'page_view' THEN 1 ELSE 0 END) AS visited,
     MAX(CASE WHEN action = 'booking_cta_click' THEN 1 ELSE 0 END) AS clicked_booking_cta,
     MAX(CASE WHEN action = 'booking_form_started' THEN 1 ELSE 0 END) AS started_booking_form,
@@ -82,7 +84,10 @@ SELECT
   COALESCE(SUM(session_funnel.clicked_booking_cta), 0) AS booking_cta_sessions,
   COALESCE(SUM(session_funnel.started_booking_form), 0) AS booking_form_sessions,
   COALESCE(SUM(session_funnel.initiated_booking), 0) AS booking_initiated_sessions,
-  COALESCE(SUM(session_funnel.completed_booking), 0) AS booking_completed_sessions
+  COALESCE(SUM(session_funnel.completed_booking), 0) AS booking_completed_sessions,
+  COALESCE(SUM(session_funnel.review_interest), 0) AS review_interest_sessions,
+  COALESCE(SUM(CASE WHEN session_funnel.review_interest = 1 THEN session_funnel.clicked_booking_cta ELSE 0 END), 0) AS review_booking_cta_sessions,
+  COALESCE(SUM(CASE WHEN session_funnel.review_interest = 1 THEN session_funnel.completed_booking ELSE 0 END), 0) AS review_booking_completed_sessions
 FROM traffic_classes
 LEFT JOIN session_funnel USING (traffic_class)
 GROUP BY traffic_classes.traffic_class

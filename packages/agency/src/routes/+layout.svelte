@@ -112,6 +112,7 @@
       links: [
         { label: 'How It Works', href: '/services' },
         { label: 'Agent Foundation', href: agencyCoreMessaging.agentFoundationHref },
+        { label: 'Technical Review', href: '/technical-review' },
         { label: 'AI Buyer Readiness Audit', href: '/agent-readiness' },
         { label: 'What You Keep', href: '/stack' },
         { label: 'Products', href: '/products' },

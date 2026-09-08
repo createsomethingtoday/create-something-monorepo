@@ -6,6 +6,10 @@
 
 ---
 
+## Existing-project inquiries
+
+Use [Technical review](technical-review.md) when a founder or team needs help checking an existing product before a customer pilot. Send `/technical-review` to explain the first engagement, findings, and quote boundary.
+
 ## Asset map
 
 1. **Control buyer brief (send before or after first call)**

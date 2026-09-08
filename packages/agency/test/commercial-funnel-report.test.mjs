@@ -17,7 +17,10 @@ test('commercial funnel report classifies sessions before counting booking stage
 		assert.ok(sql.includes(`'${action}'`), `missing ${action} stage`);
 	}
 	assert.ok(sql.includes("json_extract(metadata, '$.trafficClass')"));
-	assert.ok(sql.includes("datetime('now', '-30 days')"));
+	assert.ok(sql.includes("datetime(created_at) >= datetime('now', '-30 days')"));
+	for (const column of ['review_interest_sessions', 'review_booking_cta_sessions', 'review_booking_completed_sessions']) {
+		assert.ok(sql.includes(column));
+	}
 });
 
 test('commercial funnel report is read-only and bounds its date window', () => {

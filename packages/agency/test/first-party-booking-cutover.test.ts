@@ -181,7 +181,7 @@ test('the parent turns only the bounded scheduler context into a readable incomi
 	});
 	assert.ok(bookRoute.includes('createBookingHandoffState'));
 	assert.ok(bookRoute.includes('Incoming handoff'));
-	assert.ok(bookRoute.includes('What will travel into booking'));
+	assert.ok(bookRoute.includes('Details included with your booking'));
 	assert.ok(bookRoute.includes('booking_handoff_viewed'));
 	assert.ok(
 		bookRoute.indexOf('booking-handoff') < bookRoute.lastIndexOf('id="first-party-scheduler"')
@@ -336,4 +336,14 @@ test('the route starts from request attribution and layers private notes after h
 	assert.ok(bookRoute.includes('createBookingHandoffState($page.url.search, warmupNotes)'));
 	assert.ok(bookRoute.includes('onMount(() =>'));
 	assert.ok(bookRoute.includes('PUBLIC_ATLAS_STORAGE_KEYS.warmupSummary'));
+});
+
+
+test('technical review booking preserves its intent through scheduler handoff and drops unrelated input', () => {
+  const state = createBookingHandoffState('?source=technical-review&intent=technical-review&lane=workflow_infrastructure&secret=private');
+  const scheduler = new URL(state.schedulerHref);
+  assert.equal(state.handoffContext.intent, 'technical-review');
+  assert.equal(scheduler.searchParams.get('intent'), 'technical-review');
+  assert.equal(scheduler.searchParams.get('source'), 'technical-review');
+  assert.equal(scheduler.searchParams.has('secret'), false);
 });

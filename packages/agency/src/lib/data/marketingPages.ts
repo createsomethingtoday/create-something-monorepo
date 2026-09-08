@@ -208,6 +208,21 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
     selfHealing: ['copy:heal', 'search-route:sync']
   },
   {
+    path: '/technical-review',
+    cluster: 'core-services',
+    role: 'implementation',
+    decision: 'index',
+    audience: 'Founders and teams with an existing product to review before a customer pilot.',
+    funnelStage: 'book',
+    intent: 'Explain a scoped technical review, its findings report and separate implementation quote.',
+    primaryAction: 'Discuss your existing project',
+    requiredTerms: ['customer pilot', 'findings report', 'quoted separately'],
+    requiredLinks: ['/control', '/agent-foundation'],
+    schema: 'page',
+    search: { changefreq: 'monthly', priority: '0.9', lastmod: '2026-09-08' },
+    selfHealing: ['copy:heal', 'search-route:sync']
+  },
+  {
     path: '/agent-foundation',
     cluster: 'core-services',
     role: 'implementation',
