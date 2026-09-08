@@ -1161,7 +1161,7 @@
         <button class="history-icon" aria-label="Redo" title="Redo (⌘/Ctrl Shift Z)" onclick={() => void doRedo()} disabled={!history.future.length}>↷</button>
         <button class="history-icon" aria-label="Zoom out" title="Zoom out (−)" aria-keyshortcuts="-" onclick={() => zoomCanvas(1 / 1.25)} disabled={viewport.zoom <= .25}>−</button>
         <button class="zoom-level" aria-label="Reset view" title="Reset view to 100% (0)" aria-keyshortcuts="0" onclick={resetView}>{Math.round(viewport.zoom * 100)}%</button>
-        <button class="history-icon" aria-label="Zoom in" title="Zoom in (+)" aria-keyshortcuts="+ =" onclick={() => zoomCanvas(1.25)} disabled={viewport.zoom >= 3}>+</button>
+        <button class="history-icon" aria-label="Zoom in" title="Zoom in (+)" aria-keyshortcuts="Plus =" onclick={() => zoomCanvas(1.25)} disabled={viewport.zoom >= 3}>+</button>
         <button onclick={fitDrawing} disabled={!document.objects.length} title="Fit drawing (F)" aria-keyshortcuts="F">Fit drawing</button>
         {#if nativeRole === 'companion'}<button class:reset-confirm={companionResetArmed} aria-label={companionResetArmed ? 'Confirm reset' : 'Reset'} onclick={resetCanvas}>{companionResetArmed ? 'Confirm' : 'Reset'}</button>{/if}
       </div>
