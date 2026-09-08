@@ -46,8 +46,17 @@ const agentFoundationOffer: SchedulerPageOffer = {
   policy: 'Agent Foundation / V1'
 };
 
+const technicalReviewOffer: SchedulerPageOffer = {
+  metaDescription: 'Discuss a scoped technical review of your existing product with Micah Johnson.',
+  title: 'Technical Review Fit Call | CREATE SOMETHING',
+  heading: 'Discuss Your Existing Project',
+  lede: 'Choose a 30- or 60-minute conversation with Micah Johnson. Bring a demo, the question you need answered, and any customer deadline. We discuss fit and scope; review price and timing are agreed before paid work starts.',
+  policy: 'Technical Review / V1'
+};
+
 export function resolveSchedulerPageOffer(intent: string | null | undefined): SchedulerPageOffer {
   const offerIntent = normalizeSchedulerOfferIntent(intent);
+  if (offerIntent === 'technical-review') return technicalReviewOffer;
   if (offerIntent === 'agent-foundation') return agentFoundationOffer;
   if (offerIntent === 'compiler-integration') return compilerIntegrationOffer;
   return workflowMappingOffer;
