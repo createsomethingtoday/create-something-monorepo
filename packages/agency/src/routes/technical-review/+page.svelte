@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Button, SEO } from '@create-something/canon';
+  import InspectionScrollStory from '$lib/components/InspectionScrollStory.svelte';
   import TechnicalReviewVisual from '$lib/components/TechnicalReviewVisual.svelte';
   const bookingHref = '/book?source=technical-review&intent=technical-review&lane=workflow_infrastructure';
 </script>
@@ -26,11 +27,7 @@
 
   <section class="review-section" aria-labelledby="process-title">
     <h2 id="process-title">One workflow. A clear set of priorities.</h2>
-    <ol class="steps">
-      <li><h3>Agree on what to check.</h3><p>Show us the product, the customer journey, and your concern. We agree on access, scope, deliverables, price, and timing. The fit call does not include a code audit.</p></li>
-      <li><h3>Inspect and test the existing work.</h3><p>We review the relevant code and test the agreed workflow. Depending on the scope, checks may cover access to records, AI output, failed requests, or the customer requirement you need to answer.</p></li>
-      <li><h3>Decide what happens next.</h3><p>You receive a written findings report and a walkthrough: what to fix before the pilot, what can wait, and what to leave alone. Each finding includes the evidence, its limits, and a recommended next action.</p></li>
-    </ol>
+    <InspectionScrollStory />
     <p>You keep the report and any tests or instructions created for your project. Fixes, additional reviews, and launch work require a separate agreed scope.</p>
   </section>
 
@@ -73,7 +70,7 @@
   h1 { font-size: clamp(2.75rem, 6vw, 5.5rem); line-height: 1.05; max-width: 18ch; margin: 1rem 0 1.5rem; }
   h2 { font-size: clamp(2rem, 3.5vw, 3rem); line-height: 1.15; max-width: 28ch; margin: 0 0 1.5rem; }
   h3 { font-size: var(--text-h3); line-height: 1.3; margin: 1.5rem 0 .75rem; }
-  p, li { font-size: var(--text-body); line-height: 1.65; max-width: 68ch; }
+  p { font-size: var(--text-body); line-height: 1.65; max-width: 68ch; }
   p { margin: 0 0 1.25rem; }
   .opening :global(.btn), .review-section:last-child :global(.btn) { margin-bottom: 1rem; }
   .lede { font-size: var(--text-body-lg); }
@@ -81,8 +78,6 @@
   .opening h1 { font-size: clamp(2.75rem, 4.5vw, 4.5rem); }
   .findings-visual { max-width: 60rem; margin: 2rem 0 3rem; }
   a { color: inherit; text-decoration: underline; text-underline-offset: .2em; }
-  .steps { padding-left: 1.25rem; }
-  .steps li { padding-left: .5rem; }
   .findings { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2rem; }
   .findings article { border-top: 1px solid var(--color-performance-line); padding-top: 1.5rem; }
   @media (max-width: 1000px) { .opening { grid-template-columns: 1fr; } }
