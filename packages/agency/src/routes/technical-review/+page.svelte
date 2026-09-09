@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Button, SEO } from '@create-something/canon';
+  import TechnicalReviewVisual from '$lib/components/TechnicalReviewVisual.svelte';
   const bookingHref = '/book?source=technical-review&intent=technical-review&lane=workflow_infrastructure';
 </script>
 
@@ -7,11 +8,14 @@
 
 <div class="technical-review property-performance">
   <section class="review-section opening" aria-labelledby="review-title">
-    <p class="eyebrow">Technical review of an existing project</p>
-    <h1 id="review-title">Know what to fix before your first customer pilot.</h1>
-    <p class="lede">Your product works in a demo. You need to know what could fail when a customer uses it. We review the code and one agreed customer workflow, then help you decide what needs attention now.</p>
-    <Button href={bookingHref}>Discuss your existing project</Button>
-    <p>Review scope, price, and timing are agreed before paid work starts.</p>
+    <div class="opening-copy">
+      <p class="eyebrow">Technical review of an existing project</p>
+      <h1 id="review-title">Know what to fix before your first customer pilot.</h1>
+      <p class="lede">Your product works in a demo. You need to know what could fail when a customer uses it. We review the code and one agreed customer workflow, then help you decide what needs attention now.</p>
+      <Button href={bookingHref}>Discuss your existing project</Button>
+      <p>Review scope, price, and timing are agreed before paid work starts.</p>
+    </div>
+    <TechnicalReviewVisual portraitOnMobile priority />
   </section>
 
   <section class="review-section" aria-labelledby="fit-title">
@@ -34,6 +38,7 @@
     <p class="eyebrow">Illustrative findings report</p>
     <h2 id="sample-title">What the review helps you decide.</h2>
     <p>This fictional example shows the format for a customer portal. It is not a client result or a finding about your product.</p>
+    <div class="findings-visual"><TechnicalReviewVisual kind="findings" /></div>
     <div class="findings">
       <article><p class="eyebrow">Fix before the pilot</p><h3>A user can open another account’s file.</h3><p><strong>Example evidence:</strong> In the test environment, a request from account A returned a file belonging to account B.</p><p><strong>Next action:</strong> Enforce account access on the server and repeat the test with both accounts. This check covers the tested file route; other routes remain unreviewed.</p></article>
       <article><p class="eyebrow">Improve later</p><h3>Bulk export is still manual.</h3><p><strong>Example evidence:</strong> Single-file export worked in the agreed pilot journey. Bulk export was outside the pilot requirements.</p><p><strong>Next action:</strong> Keep the manual step for this pilot. Revisit it if customer volume or requirements change.</p></article>
@@ -72,10 +77,14 @@
   p { margin: 0 0 1.25rem; }
   .opening :global(.btn), .review-section:last-child :global(.btn) { margin-bottom: 1rem; }
   .lede { font-size: var(--text-body-lg); }
+  .opening { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: clamp(2rem, 4vw, 4rem); align-items: center; }
+  .opening h1 { font-size: clamp(2.75rem, 4.5vw, 4.5rem); }
+  .findings-visual { max-width: 60rem; margin: 2rem 0 3rem; }
   a { color: inherit; text-decoration: underline; text-underline-offset: .2em; }
   .steps { padding-left: 1.25rem; }
   .steps li { padding-left: .5rem; }
   .findings { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2rem; }
   .findings article { border-top: 1px solid var(--color-performance-line); padding-top: 1.5rem; }
+  @media (max-width: 1000px) { .opening { grid-template-columns: 1fr; } }
   @media (max-width: 800px) { .findings { grid-template-columns: 1fr; } }
 </style>
