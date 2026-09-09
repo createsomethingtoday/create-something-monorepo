@@ -17,7 +17,14 @@ export ZELLIJ_SOCKET_DIR=/tmp/zellij
 ln -sf ~/Code/create-something-monorepo/packages/dotfiles/zellij/config.kdl ~/.config/zellij/config.kdl
 ```
 
-## Repo Launcher
+## Claude cockpit extension
+
+For the dedicated sidebar and durable Codex controls, build and install the
+extension with `pnpm zellij:cockpit:build` and `pnpm zellij:cockpit:install`, then
+use `cs-zellij launch --id claude-review --title "Claude review"`. See the
+operating guide below for permissions, readiness, receipts and rollback.
+
+## Legacy generic repo launcher
 
 ```bash
 pnpm zellij:agent -- --name claude-webflow --pane-name claude --command 'claude'

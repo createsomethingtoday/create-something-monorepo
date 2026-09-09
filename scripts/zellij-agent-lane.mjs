@@ -17,7 +17,7 @@ function parseArgs(argv = process.argv.slice(2)) {
     sessionName: DEFAULT_SESSION_NAME,
     paneName: DEFAULT_PANE_NAME,
     cwd: process.cwd(),
-    command: DEFAULT_COMMAND,
+    command: DEFAULT_COMMAND
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -74,21 +74,21 @@ function createCommandFile(command, { prefix = 'zellij-agent-lane-' } = {}) {
 
 function buildInnerCommand(options) {
   const lines = [
-    `cd ${shellQuote(options.cwd)}`,
+    `cd ${shellQuote(options.cwd)} || exit 1`,
     'clear',
     'echo "CREATE SOMETHING / Zellij agent cockpit"',
-    `echo "Session: ${options.sessionName}"`,
-    `echo "Pane: ${options.paneName}"`,
-    `echo "CWD: ${options.cwd}"`,
-    `echo "Command: ${options.command}"`,
+    `printf '%s\n' ${shellQuote(`Session: ${options.sessionName}`)}`,
+    `printf '%s\n' ${shellQuote(`Pane: ${options.paneName}`)}`,
+    `printf '%s\n' ${shellQuote(`CWD: ${options.cwd}`)}`,
+    `printf '%s\n' ${shellQuote(`Command: ${options.command}`)}`,
     'echo "Authority: Codex/operator owns done; worker output requires evidence."',
     'echo',
     'echo "Codex inspect:"',
-    `echo "  zellij --session ${shellQuote(options.sessionName)} action dump-screen --pane-id <pane-id> --full"`,
-    `echo "  zellij --session ${shellQuote(options.sessionName)} subscribe --pane-id <pane-id> --format json --scrollback 200"`,
+    `printf '%s\n' ${shellQuote(`  zellij --session ${shellQuote(options.sessionName)} action dump-screen --pane-id <pane-id> --full`)}`,
+    `printf '%s\n' ${shellQuote(`  zellij --session ${shellQuote(options.sessionName)} subscribe --pane-id <pane-id> --format json --scrollback 200`)}`,
     'echo',
     'echo "---"',
-    `exec zsh -lc ${shellQuote(options.command)}`,
+    `exec zsh -lc ${shellQuote(options.command)}`
   ];
   return lines.join('\n');
 }
@@ -108,11 +108,20 @@ function buildZellijCommands(options, commandFilePath = '/tmp/zellij-agent-lane/
       options.cwd,
       '--',
       'zsh',
-      commandFilePath,
+      commandFilePath
     ],
     listSessions: ['zellij', 'list-sessions', '--short', '--no-formatting'],
     attach: ['zellij', 'attach', options.sessionName],
-    dumpScreen: ['zellij', '--session', options.sessionName, 'action', 'dump-screen', '--pane-id', '<pane-id>', '--full'],
+    dumpScreen: [
+      'zellij',
+      '--session',
+      options.sessionName,
+      'action',
+      'dump-screen',
+      '--pane-id',
+      '<pane-id>',
+      '--full'
+    ],
     streamJson: [
       'zellij',
       '--session',
@@ -123,11 +132,29 @@ function buildZellijCommands(options, commandFilePath = '/tmp/zellij-agent-lane/
       '--format',
       'json',
       '--scrollback',
-      '200',
+      '200'
     ],
-    sendText: ['zellij', '--session', options.sessionName, 'action', 'paste', '--pane-id', '<pane-id>', '<text>'],
-    sendEnter: ['zellij', '--session', options.sessionName, 'action', 'send-keys', '--pane-id', '<pane-id>', 'Enter'],
-    killSession: ['zellij', 'kill-session', options.sessionName],
+    sendText: [
+      'zellij',
+      '--session',
+      options.sessionName,
+      'action',
+      'paste',
+      '--pane-id',
+      '<pane-id>',
+      '<text>'
+    ],
+    sendEnter: [
+      'zellij',
+      '--session',
+      options.sessionName,
+      'action',
+      'send-keys',
+      '--pane-id',
+      '<pane-id>',
+      'Enter'
+    ],
+    killSession: ['zellij', 'kill-session', options.sessionName]
   };
 }
 
@@ -166,7 +193,7 @@ function upsertRegistryLane(options, paneId, commandFilePath) {
     commandFile: commandFilePath,
     socketDir: DEFAULT_SOCKET_DIR,
     createdAt: new Date().toISOString(),
-    authority: 'Codex/operator owns done; worker output requires evidence before use.',
+    authority: 'Codex/operator owns done; worker output requires evidence before use.'
   });
   writeRegistry(filePath, lanes);
   return filePath;
@@ -178,12 +205,14 @@ function runChecked(command, args, { cwd = process.cwd() } = {}) {
     cwd,
     env: { ...process.env, ZELLIJ_SOCKET_DIR: DEFAULT_SOCKET_DIR },
     encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'pipe'],
+    stdio: ['ignore', 'pipe', 'pipe']
   });
   if (result.status !== 0) {
     const stderr = result.stderr.trim();
     const stdout = result.stdout.trim();
-    throw new Error(`${command} ${args.join(' ')} failed${stderr ? `: ${stderr}` : stdout ? `: ${stdout}` : ''}`);
+    throw new Error(
+      `${command} ${args.join(' ')} failed${stderr ? `: ${stderr}` : stdout ? `: ${stdout}` : ''}`
+    );
   }
   return result.stdout.trim();
 }
@@ -208,11 +237,11 @@ function main() {
           commands: dryRunCommands,
           commandFile: '/tmp/zellij-agent-lane/run.zsh',
           commandFileContents: innerCommand,
-          safety: 'Codex/operator owns done; worker output requires evidence before use.',
+          safety: 'Codex/operator owns done; worker output requires evidence before use.'
         },
         null,
-        2,
-      ),
+        2
+      )
     );
     return;
   }
@@ -233,18 +262,22 @@ function main() {
         registry,
         commandFile: commandFilePath,
         attach: formatCommand(commands.attach),
-        inspect: formatCommand(commands.dumpScreen.map((part) => (part === '<pane-id>' ? paneId : part))),
-        streamJson: formatCommand(commands.streamJson.map((part) => (part === '<pane-id>' ? paneId : part))),
+        inspect: formatCommand(
+          commands.dumpScreen.map((part) => (part === '<pane-id>' ? paneId : part))
+        ),
+        streamJson: formatCommand(
+          commands.streamJson.map((part) => (part === '<pane-id>' ? paneId : part))
+        ),
         sendTextThenEnter: [
           formatCommand(commands.sendText.map((part) => (part === '<pane-id>' ? paneId : part))),
-          formatCommand(commands.sendEnter.map((part) => (part === '<pane-id>' ? paneId : part))),
+          formatCommand(commands.sendEnter.map((part) => (part === '<pane-id>' ? paneId : part)))
         ],
         board: 'pnpm zellij:board',
-        kill: formatCommand(commands.killSession),
+        kill: formatCommand(commands.killSession)
       },
       null,
-      2,
-    ),
+      2
+    )
   );
 }
 
@@ -264,5 +297,5 @@ export {
   formatCommand,
   parseArgs,
   registryPath,
-  shellQuote,
+  shellQuote
 };
