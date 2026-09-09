@@ -250,6 +250,7 @@ export async function launch({ id, title = id, issue = '', cwd = process.cwd(), 
   pane split_direction="vertical" {
     pane size="25%" name="CREATE SOMETHING" {
       plugin location=${JSON.stringify(`file:${plugin}`)} {
+        task_key ${JSON.stringify(id)}
         task_title ${JSON.stringify(title)}
         issue ${JSON.stringify(issue)}
         pane_id "0"

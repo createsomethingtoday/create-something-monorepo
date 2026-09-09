@@ -1,8 +1,8 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use zellij_tile::prelude::*;
 
-#[derive(Default, Deserialize)]
+#[derive(Default, Deserialize, Serialize)]
 struct Task {
     #[serde(default)]
     title: String,
@@ -22,6 +22,7 @@ struct State {
     present: bool,
     exited: bool,
     allowed: bool,
+    cache_file: Option<String>,
 }
 register_plugin!(State);
 
@@ -30,6 +31,25 @@ impl ZellijPlugin for State {
         self.task.title = config.get("task_title").cloned().unwrap_or_default();
         self.task.issue = config.get("issue").cloned().unwrap_or_default();
         self.task.pane_id = config.get("pane_id").and_then(|s| s.parse().ok());
+        self.cache_file = config
+            .get("task_key")
+            .filter(|key| {
+                !key.is_empty()
+                    && key.len() <= 64
+                    && key
+                        .chars()
+                        .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+            })
+            .map(|key| format!("/cache/create-something-{key}.json"));
+        if let Some(file) = &self.cache_file {
+            if let Ok(bytes) = std::fs::read(file) {
+                if let Ok(task) = serde_json::from_slice::<Task>(&bytes) {
+                    if task.pane_id == self.task.pane_id {
+                        self.task = task;
+                    }
+                }
+            }
+        }
         request_permission(&[
             PermissionType::ReadApplicationState,
             PermissionType::ChangeApplicationState,
@@ -72,6 +92,14 @@ impl ZellijPlugin for State {
                     self.present = false;
                 }
                 self.task = task;
+                if let Some(file) = &self.cache_file {
+                    if let Ok(bytes) = serde_json::to_vec(&self.task) {
+                        let temp = format!("{file}.{}.tmp", cache_writer_id());
+                        if std::fs::write(&temp, bytes).is_ok() {
+                            let _ = std::fs::rename(temp, file);
+                        }
+                    }
+                }
                 return true;
             }
         }
@@ -129,6 +157,18 @@ impl State {
                 focus_terminal_pane(id, false, false);
             }
         }
+    }
+}
+// Zellij host imports exist only in the WASM runtime. Native tests use the OS
+// process identity solely to keep temporary cache filenames distinct.
+fn cache_writer_id() -> u32 {
+    #[cfg(target_arch = "wasm32")]
+    {
+        u32::from(get_plugin_ids().client_id)
+    }
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        std::process::id()
     }
 }
 fn clean_line(text: &str, cols: usize) -> String {
