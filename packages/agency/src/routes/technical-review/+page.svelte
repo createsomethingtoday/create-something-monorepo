@@ -125,6 +125,7 @@
   .closing { background: var(--color-performance-ink); color: var(--color-performance-paper); }
   .closing .eyebrow { color: inherit; }
   .closing :global(.btn) { background: var(--color-performance-paper); color: var(--color-performance-ink); }
+  .closing :global(.btn.btn-primary:hover:not(:disabled)), .closing :global(.btn.btn-primary:focus-visible) { background: var(--color-performance-paper); color: var(--color-performance-ink); outline: 2px solid var(--color-performance-paper); outline-offset: 4px; }
   .preparation-list { padding-left: 1.25rem; margin: 0 0 1.5rem; }
   .preparation-list li { padding: .5rem 0; line-height: 1.5; }
   .other-paths { border-top: 1px solid currentColor; padding-top: 1.25rem; margin-top: 1rem; }
