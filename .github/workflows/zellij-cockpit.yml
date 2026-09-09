@@ -1,0 +1,35 @@
+name: Zellij cockpit
+on:
+  pull_request:
+    paths:
+      - 'packages/zellij-cockpit/**'
+      - 'scripts/zellij-*.mjs'
+      - 'scripts/test/zellij-*.test.mjs'
+      - '.github/workflows/zellij-cockpit.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'packages/zellij-cockpit/**'
+      - 'scripts/zellij-*.mjs'
+      - 'scripts/test/zellij-*.test.mjs'
+      - '.github/workflows/zellij-cockpit.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '22'
+      - name: Controller regressions
+        run: node --test scripts/test/zellij-*.test.mjs
+      - name: Install WASI target
+        run: rustup toolchain install 1.94.0 --profile minimal --component rustfmt --target wasm32-wasip1
+      - name: Rust checks
+        run: |
+          cargo +1.94.0 fmt --manifest-path packages/zellij-cockpit/Cargo.toml -- --check
+          cargo +1.94.0 test --manifest-path packages/zellij-cockpit/Cargo.toml --locked -j 2
+          cargo +1.94.0 build --manifest-path packages/zellij-cockpit/Cargo.toml --target wasm32-wasip1 --release --locked -j 2

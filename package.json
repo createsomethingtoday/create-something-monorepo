@@ -185,7 +185,7 @@
     "zellij:claude": "node scripts/zellij-agent-lane.mjs --pane-name claude --command claude",
     "zellij:board": "node scripts/zellij-agent-board.mjs",
     "zellij:workflow": "node scripts/zellij-agent-workflow.mjs",
-    "zellij:agent:test": "node --test scripts/test/zellij-agent-lane.test.mjs scripts/test/zellij-agent-board.test.mjs scripts/test/zellij-agent-workflow.test.mjs scripts/test/ornith-visible-chat.test.mjs",
+    "zellij:agent:test": "node --test scripts/test/zellij-agent-lane.test.mjs scripts/test/zellij-agent-board.test.mjs scripts/test/zellij-agent-workflow.test.mjs scripts/test/ornith-visible-chat.test.mjs scripts/test/zellij-cockpit.test.mjs scripts/test/zellij-cockpit-install.test.mjs",
     "agent:skills:test": "node --test scripts/test/agent-skills-effectiveness.test.mjs scripts/test/svg-education-precision.test.mjs",
     "prose:check": "node scripts/prose-quality/index.mjs check",
     "prose:audit": "node scripts/prose-quality/index.mjs audit",
@@ -430,7 +430,10 @@
     "langfuse:mcp:telemetry-smoke": "tsx scripts/langfuse-mcp-telemetry-smoke.ts",
     "langfuse:playbook-smoke": "tsx scripts/langfuse-playbook-mcp-smoke.ts",
     "ink:langfuse-quality": "pnpm --dir packages/calm-operator-ink-bridge post:langfuse-quality",
-    "operator:langfuse-quality": "pnpm --dir packages/calm-operator-ink-bridge post:langfuse-quality"
+    "operator:langfuse-quality": "pnpm --dir packages/calm-operator-ink-bridge post:langfuse-quality",
+    "zellij:cockpit": "node scripts/zellij-cockpit.mjs",
+    "zellij:cockpit:build": "cargo build --manifest-path packages/zellij-cockpit/Cargo.toml --target wasm32-wasip1 --release --locked",
+    "zellij:cockpit:install": "node scripts/zellij-cockpit-install.mjs"
   },
   "devDependencies": {
     "@create-something/observability": "workspace:*",

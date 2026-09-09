@@ -13,7 +13,7 @@ function parseArgs(argv = process.argv.slice(2)) {
     json: false,
     watch: false,
     intervalMs: 2000,
-    registry: DEFAULT_REGISTRY,
+    registry: DEFAULT_REGISTRY
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -28,7 +28,11 @@ function parseArgs(argv = process.argv.slice(2)) {
     else throw new Error(`Unknown argument: ${arg}`);
   }
 
-  if (!Number.isInteger(options.intervalMs) || options.intervalMs < 500 || options.intervalMs > 60_000) {
+  if (
+    !Number.isInteger(options.intervalMs) ||
+    options.intervalMs < 500 ||
+    options.intervalMs > 60_000
+  ) {
     throw new Error('--interval-ms must be an integer between 500 and 60000');
   }
 
@@ -58,12 +62,12 @@ function runZellij(args) {
     cwd: process.cwd(),
     env: { ...process.env, ZELLIJ_SOCKET_DIR: DEFAULT_SOCKET_DIR },
     encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'pipe'],
+    stdio: ['ignore', 'pipe', 'pipe']
   });
   return {
     ok: result.status === 0,
     stdout: stripAnsi(result.stdout).trim(),
-    stderr: stripAnsi(result.stderr).trim(),
+    stderr: stripAnsi(result.stderr).trim()
   };
 }
 
@@ -79,7 +83,11 @@ function readRegistry(filePath) {
 
 function parsePaneListOutput(stdout) {
   if (!stdout.startsWith('[') && !stdout.startsWith('{')) {
-    return { ok: false, panes: [], error: 'session not attachable; it may be exited and waiting for resurrection' };
+    return {
+      ok: false,
+      panes: [],
+      error: 'session not attachable; it may be exited and waiting for resurrection'
+    };
   }
   const parsed = JSON.parse(stdout);
   return { ok: true, panes: Array.isArray(parsed) ? parsed : [], error: null };
@@ -95,16 +103,41 @@ function listSessions() {
 }
 
 function listPanes(session) {
-  const result = runZellij(['--session', session, 'action', 'list-panes', '--json', '--state', '--command', '--tab', '--all']);
+  const result = runZellij([
+    '--session',
+    session,
+    'action',
+    'list-panes',
+    '--json',
+    '--state',
+    '--command',
+    '--tab',
+    '--all'
+  ]);
   if (!result.ok) return { ok: false, panes: [], error: result.stderr || result.stdout };
   try {
     return parsePaneListOutput(result.stdout);
   } catch (error) {
     if (result.stdout.includes('Session') && result.stdout.includes('not found')) {
-      return { ok: false, panes: [], error: 'session not attachable; it may be exited and waiting for resurrection' };
+      return {
+        ok: false,
+        panes: [],
+        error: 'session not attachable; it may be exited and waiting for resurrection'
+      };
     }
     return { ok: false, panes: [], error: error instanceof Error ? error.message : String(error) };
   }
+}
+
+// A missing registered identity must never silently select another terminal.
+function selectWorkerPane(lane, panes) {
+  const terminals = panes.filter((pane) => !pane.is_plugin);
+  if (lane.paneId != null) {
+    const id = Number(String(lane.paneId).replace(/^terminal_/, ''));
+    return terminals.find((pane) => pane.id === id) || null;
+  }
+  // Discovery can suggest a single terminal; multiple terminals are ambiguous.
+  return terminals.length === 1 ? terminals[0] : null;
 }
 
 function buildBoard(options) {
@@ -117,30 +150,25 @@ function buildBoard(options) {
   return allSessions.map((session) => {
     const lane = registry.find((candidate) => candidate.session === session) || {};
     const paneState = live.has(session) ? listPanes(session) : { ok: true, panes: [], error: null };
-    const targetPaneId = lane.paneId ? Number(String(lane.paneId).replace(/^terminal_/, '')) : null;
     const panes = paneState.panes;
-    const terminalPanes = panes.filter((candidate) => !candidate.is_plugin);
-    const pane =
-      terminalPanes.find((candidate) => targetPaneId !== null && candidate.id === targetPaneId) ||
-      terminalPanes.find((candidate) => candidate.title === lane.paneName) ||
-      terminalPanes[0] ||
-      panes[0] ||
-      null;
+    const pane = selectWorkerPane(lane, panes);
     const status = !live.has(session)
       ? 'stopped'
       : paneState.error?.includes('not attachable')
         ? 'exited'
-      : pane?.exited
-        ? `exited:${pane.exit_status ?? 'unknown'}`
-        : paneState.ok
-          ? 'active'
-          : 'unknown';
+        : registeredSessions.has(session) && !pane
+          ? 'missing-worker'
+          : pane?.exited
+            ? `exited:${pane.exit_status ?? 'unknown'}`
+            : paneState.ok
+              ? 'active'
+              : 'unknown';
 
     return {
       session,
       status,
       registered: registeredSessions.has(session),
-      paneId: lane.paneId || (pane ? `terminal_${pane.id}` : null),
+      paneId: pane ? `terminal_${pane.id}` : lane.paneId || null,
       paneName: lane.paneName || pane?.title || null,
       command: lane.command || pane?.terminal_command || null,
       cwd: lane.cwd || pane?.pane_cwd || null,
@@ -152,7 +180,7 @@ function buildBoard(options) {
       streamJson: pane
         ? `ZELLIJ_SOCKET_DIR=${shellQuote(DEFAULT_SOCKET_DIR)} zellij --session ${shellQuote(session)} subscribe --pane-id ${shellQuote(`terminal_${pane.id}`)} --format json --scrollback 200`
         : null,
-      error: paneState.error,
+      error: paneState.error
     };
   });
 }
@@ -162,13 +190,13 @@ function renderText(board) {
     'CREATE SOMETHING / Zellij Agent Board',
     `Updated: ${new Date().toISOString()}`,
     `Socket: ${DEFAULT_SOCKET_DIR}`,
-    '',
+    ''
   ];
 
   if (board.length === 0) {
     lines.push('No active or registered Zellij agent lanes.');
     lines.push('');
-    lines.push("Start one with: pnpm zellij:claude -- --name claude-webflow");
+    lines.push('Start one with: pnpm zellij:claude -- --name claude-webflow');
     return lines.join('\n');
   }
 
@@ -176,7 +204,8 @@ function renderText(board) {
     const marker = lane.status === 'active' ? '*' : lane.status.startsWith('exited') ? '!' : '-';
     lines.push(`${marker} ${lane.session}`);
     lines.push(`  status: ${lane.status}${lane.registered ? '' : ' (unregistered)'}`);
-    if (lane.paneName || lane.paneId) lines.push(`  pane: ${[lane.paneName, lane.paneId].filter(Boolean).join(' / ')}`);
+    if (lane.paneName || lane.paneId)
+      lines.push(`  pane: ${[lane.paneName, lane.paneId].filter(Boolean).join(' / ')}`);
     if (lane.command) lines.push(`  command: ${lane.command}`);
     if (lane.cwd) lines.push(`  cwd: ${lane.cwd}`);
     if (lane.createdAt) lines.push(`  created: ${lane.createdAt}`);
@@ -222,4 +251,13 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   });
 }
 
-export { buildBoard, listPanes, listSessions, parseArgs, parsePaneListOutput, renderText, stripAnsi };
+export {
+  selectWorkerPane,
+  buildBoard,
+  listPanes,
+  listSessions,
+  parseArgs,
+  parsePaneListOutput,
+  renderText,
+  stripAnsi
+};
