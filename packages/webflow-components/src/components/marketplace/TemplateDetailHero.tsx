@@ -1,3 +1,4 @@
+import { MarketplaceAgentTools } from './MarketplaceAgentTools';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { trackMarketplaceEvent } from './analytics';
@@ -674,6 +675,7 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
 
   return (
     <div className="wfdt" data-template-detail-hero="" ref={heroRootRef}>
+      <MarketplaceAgentTools />
       <style>{TEMPLATE_DETAIL_STYLES}</style>
       <section className="wfdt-hero">
         <div className="wfdt-hero-copy">
