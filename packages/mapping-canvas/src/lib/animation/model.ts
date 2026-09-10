@@ -442,7 +442,10 @@ export function applyOperations(
       op.type === 'remove_pose' ||
       op.type === 'remove_drawing'
     ) {
-      if (!next.drawings.some((d) => d.id === op.id)) throw new Error('Unknown drawing.');
+      const target = next.drawings.find((d) => d.id === op.id);
+      if (!target) throw new Error('Unknown drawing.');
+      if (op.type === 'remove_drawing' && target.source?.space === 'canvas')
+        throw new Error('This drawing is owned by Canvas. Remove it in Canvas instead.');
       next = {
         ...next,
         drawings: next.drawings

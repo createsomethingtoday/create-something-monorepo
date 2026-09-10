@@ -728,7 +728,8 @@
         ><button
           onclick={() =>
             run(() => commit([{ type: 'remove_drawing', id: current!.id }], project.revision))}
-          disabled={busy || exporting}>Remove drawing</button
+          disabled={busy || exporting || current.source?.space === 'canvas'}
+          title={current.source?.space === 'canvas' ? 'Remove this drawing in Canvas' : 'Remove drawing'}>Remove drawing</button
         >
       {:else}<p class="muted">
           Select a drawing to edit its pose. Each change at a new time creates a key pose.

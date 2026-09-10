@@ -104,6 +104,23 @@ describe('animation contract', () => {
       applyOperations(single, [{ type: 'remove_pose', id: 'line', time: 0 }], 0)
     ).toThrow();
   });
+  it('keeps Canvas-backed drawings owned by the Canvas space', () => {
+    const p = newProject();
+    p.drawings = [
+      {
+        ...drawing(),
+        source: {
+          space: 'canvas',
+          objectId: 'line',
+          origin: { x: 0, y: 0, scaleX: 1, scaleY: 1 }
+        }
+      }
+    ];
+    expect(() => applyOperations(p, [{ type: 'remove_drawing', id: 'line' }], 0)).toThrow(
+      'Remove it in Canvas'
+    );
+    expect(p.drawings).toHaveLength(1);
+  });
   it('rejects external image URLs and nonfinite coordinates', () => {
     const p = newProject();
     p.assets = [

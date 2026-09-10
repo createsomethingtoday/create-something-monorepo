@@ -4,6 +4,7 @@ import {
   clearCanvasProject,
   loadCanvasProject,
   loadProjectRecord,
+  migrateLegacyCanvasProject,
   saveCanvasProject
 } from './project-storage';
 
@@ -37,6 +38,11 @@ async function loadLegacyDocument(): Promise<CanvasDocument | null> {
 export async function loadDocument(id?: string): Promise<CanvasDocument | null> {
   const shared = await loadCanvasProject(id);
   if (shared) return shared;
+  const legacy = await loadLegacyDocument();
+  if (legacy) {
+    await migrateLegacyCanvasProject(legacy);
+    if (!id || legacy.id === id) return legacy;
+  }
   if (id) {
     const record = await loadProjectRecord(id);
     if (record?.motion) {
@@ -45,10 +51,7 @@ export async function loadDocument(id?: string): Promise<CanvasDocument | null> 
       return canvas;
     }
   }
-  const legacy = await loadLegacyDocument();
-  if (!legacy || (id && legacy.id !== id)) return null;
-  await saveCanvasProject(legacy);
-  return legacy;
+  return null;
 }
 
 export const saveDocument = saveCanvasProject;

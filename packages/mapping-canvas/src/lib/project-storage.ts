@@ -165,6 +165,26 @@ export async function saveCanvasProject(canvas: CanvasDocument): Promise<void> {
   });
 }
 
+/** Copy a legacy Canvas into the shared store once without replacing a migrated edit. */
+export async function migrateLegacyCanvasProject(canvas: CanvasDocument): Promise<void> {
+  const db = await open();
+  const portable = clone(canvas);
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction([STORE, META], 'readwrite');
+    const projects = transaction.objectStore(STORE);
+    const request = projects.get(canvas.id);
+    request.onsuccess = () => {
+      const current = request.result as DrawProjectRecord | undefined;
+      if (current?.canvas) return;
+      projects.put(mergeProjectRecord(current, { canvas: portable }));
+      transaction.objectStore(META).put(canvas.id, ACTIVE_CANVAS);
+    };
+    request.onerror = () => reject(request.error);
+    transaction.oncomplete = () => { db.close(); resolve(); };
+    transaction.onerror = () => reject(transaction.error);
+  });
+}
+
 export async function clearCanvasProject(id?: string): Promise<void> {
   const db = await open();
   return new Promise((resolve, reject) => {
