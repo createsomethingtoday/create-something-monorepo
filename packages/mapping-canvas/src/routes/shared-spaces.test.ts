@@ -11,7 +11,7 @@ it('navigates between Canvas and Motion using the same project identity', () => 
   expect(canvas).toContain('href={`/animate?project=${encodeURIComponent(document.id)}`}');
   expect(canvas).toContain('await persistCurrentDocument(document)');
   expect(canvas).toContain("if (!ready) { status = 'Canvas is still loading'; return; }");
-  expect(canvas).toContain("if (replacingDocument) { status = 'Wait for the document replacement to finish before opening Motion'; return; }");
+  expect(canvas).toContain("if (sharing || replacingDocument) { status = 'Wait for sharing or document replacement to finish before opening Motion'; return; }");
   expect(canvas).toContain("parsed.id === previous.id ? { ...parsed, updatedAt: mintReplacementTimestamp(previous.updatedAt) } : { ...parsed, id: crypto.randomUUID()");
   expect(canvas).toContain('await loadDocument(next.id)');
   expect(canvas).toContain('persistedCanvasVersions.get(next.id)');
