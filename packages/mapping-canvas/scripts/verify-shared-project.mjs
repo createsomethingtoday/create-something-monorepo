@@ -355,6 +355,11 @@ if (
   'A person approves\n• Work crosses the gate'
 )
   throw new Error('Undo did not persist against the loaded Canvas version.');
+await stalePage.getByRole('link', { name: 'Motion', exact: true }).click();
+await stalePage.waitForTimeout(500);
+const staleCanvasAfterUndoDenied = new URL(stalePage.url()).pathname === '/';
+if (!staleCanvasAfterUndoDenied)
+  throw new Error('Undo restored a stale Canvas revision token.');
 await page.evaluate(() => window.__drawWebMcpTools.draw_redo.execute({}));
 await page.waitForTimeout(300);
 if ((await persistedNoteText(page, canvas.projectId, canvas.noteId)) !== 'Newer Canvas state')
@@ -451,6 +456,7 @@ console.log(
       legacySourcesRetained: legacySourcesRetained.canvas && legacySourcesRetained.motion,
       concurrentLegacyMigrationSucceeded: true,
       staleCanvasNavigationDenied: staleCanvasDenied,
+      staleCanvasAfterUndoDenied,
       staleMotionSaveDenied: staleMotionDenied,
       undoRedoPersisted: true,
       motionOnlyCanvasProjectId: motionOnlyCanvas.projectId,
