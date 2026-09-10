@@ -213,6 +213,38 @@ if (!returned.objectIdsRetained || returned.noteText !== 'A person approves\n•
 if (!legacySourcesRetained.canvas || !legacySourcesRetained.motion)
   throw new Error('Legacy source data was deleted during migration.');
 
+const stalePage = await context.newPage();
+await stalePage.addInitScript(() => {
+  window.__drawWebMcpTools = {};
+  Object.defineProperty(document, 'modelContext', {
+    configurable: true,
+    value: { registerTool(tool) { window.__drawWebMcpTools[tool.name] = tool; } }
+  });
+});
+await stalePage.goto(`${baseUrl}/?project=${canvas.projectId}`, { waitUntil: 'networkidle' });
+await stalePage.waitForFunction(() => typeof window.__drawWebMcpTools?.draw_get_state?.execute === 'function');
+await page.evaluate(async (noteId) => {
+  await window.__drawWebMcpTools.draw_edit_note.execute({
+    id: noteId,
+    content: { blocks: [{ type: 'paragraph', runs: [{ text: 'Newer Canvas state' }] }] }
+  });
+}, canvas.noteId);
+await page.waitForTimeout(300);
+await stalePage.getByRole('link', { name: 'Motion', exact: true }).click();
+await stalePage.waitForTimeout(500);
+const staleCanvasDenied = new URL(stalePage.url()).pathname === '/';
+if (!staleCanvasDenied) throw new Error('A stale Canvas tab overwrote newer state while opening Motion.');
+await stalePage.close();
+await page.reload({ waitUntil: 'networkidle' });
+await page.waitForFunction(async (noteId) => {
+  try {
+    const state = await window.__drawWebMcpTools?.draw_get_state?.execute({});
+    return state?.document?.objects.find(({ id }) => id === noteId)?.text === 'Newer Canvas state';
+  } catch {
+    return false;
+  }
+}, canvas.noteId);
+
 await page.getByRole('link', { name: 'Motion', exact: true }).click();
 await page.waitForURL((url) => url.pathname === '/animate');
 await page.waitForLoadState('networkidle');
@@ -263,6 +295,7 @@ console.log(JSON.stringify({
   legacyCanvasMigrated: canvas.projectId === legacyCanvasId,
   legacyMotionPreserved: true,
   legacySourcesRetained: legacySourcesRetained.canvas && legacySourcesRetained.motion,
+  staleCanvasNavigationDenied: staleCanvasDenied,
   motionOnlyCanvasProjectId: motionOnlyCanvas.projectId,
   motionOnlyCanvasReloaded: motionOnlyCanvas.projectId === legacyMotionId,
   canvasObjectIds: [canvas.noteId, canvas.releaseId, canvas.connectorId],

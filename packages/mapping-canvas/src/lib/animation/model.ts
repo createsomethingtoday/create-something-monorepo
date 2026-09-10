@@ -108,6 +108,8 @@ const finite = (x: unknown, min: number, max: number) =>
   typeof x === 'number' && Number.isFinite(x) && x >= min && x <= max;
 const string = (x: unknown, max: number) => typeof x === 'string' && x.length <= max;
 const id = (x: unknown) => typeof x === 'string' && /^[a-zA-Z0-9_-]{1,120}$/.test(x);
+export const isMotionDrawingId = (x: unknown): x is string =>
+  typeof x === 'string' && x.length >= 1 && x.length <= 240;
 const keys = (x: object, allowed: string[]) => Object.keys(x).every((k) => allowed.includes(k));
 const color = (x: unknown) => typeof x === 'string' && /^#[\da-f]{6}$/i.test(x);
 const points = (x: unknown) =>
@@ -220,7 +222,7 @@ export function validateProject(value: unknown): asserts value is Project {
         'flipbook',
         'source'
       ]) ||
-      !id(d.id) ||
+      !isMotionDrawingId(d.id) ||
       drawingIds.has(d.id) ||
       !string(d.name, 240) ||
       !['stroke', 'image', 'text'].includes(d.kind) ||
@@ -242,7 +244,7 @@ export function validateProject(value: unknown): asserts value is Project {
       (!d.source ||
         !keys(d.source, ['space', 'objectId', 'origin']) ||
         d.source.space !== 'canvas' ||
-        !id(d.source.objectId) ||
+        !isMotionDrawingId(d.source.objectId) ||
         d.source.objectId !== d.id ||
         (d.source.origin !== undefined &&
           (!d.source.origin ||

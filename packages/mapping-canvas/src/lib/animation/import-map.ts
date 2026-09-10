@@ -1,5 +1,5 @@
 import { type CanvasDocument, objectBounds } from '../document';
-import { basePose, newProject, type Drawing, type Project } from './model';
+import { basePose, isMotionDrawingId, newProject, type Drawing, type Project } from './model';
 
 /** Materialize representable Canvas marks in Motion without changing their identity. */
 export function importMap(map: CanvasDocument): { drawings: Drawing[]; skipped: number } {
@@ -8,6 +8,10 @@ export function importMap(map: CanvasDocument): { drawings: Drawing[]; skipped: 
   let skipped = 0;
   const drawings: Drawing[] = [];
   for (const object of map.objects) {
+    if (!isMotionDrawingId(object.id)) {
+      skipped++;
+      continue;
+    }
     const common = {
       id: object.id,
       name: object.kind === 'note' ? object.text.slice(0, 80) : object.kind,

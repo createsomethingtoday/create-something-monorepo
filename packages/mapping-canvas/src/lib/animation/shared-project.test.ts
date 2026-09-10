@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createDocument, type CanvasDocument } from '../document';
-import { basePose, type Project } from './model';
+import { basePose, validateProject, type Project } from './model';
 import { importMap, syncMotionProject } from './import-map';
 import {
   canvasSpaceForProject,
@@ -131,6 +131,17 @@ describe('shared Draw project contract', () => {
       title: 'Motion-only project',
       objects: []
     });
+  });
+
+  it('preserves valid Canvas IDs that include punctuation', () => {
+    const source = canvas();
+    source.objects = source.objects
+      .map((object) => (object.id === 'note-stable' ? { ...object, id: 'approval.step' } : object))
+      .filter((object) => object.kind !== 'group');
+
+    const motion = syncMotionProject(source);
+    expect(motion.drawings.some(({ id }) => id === 'approval.step')).toBe(true);
+    expect(() => validateProject(motion)).not.toThrow();
   });
 
   it('merges Canvas and Motion writes without replacing the other space', () => {

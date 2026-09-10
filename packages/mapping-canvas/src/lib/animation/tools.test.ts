@@ -61,6 +61,18 @@ it('returns cloneable compact receipts and rejects stale agent edits', async () 
   });
   expect(() => structuredClone(read)).not.toThrow();
   expect(JSON.stringify(read)).not.toContain('base64');
+  expect(JSON.stringify(tools[2].inputSchema)).toContain('"source"');
+  const exact = (await tools[1].execute({ id: 'canvas-stroke' })) as {
+    drawing: Project['drawings'][number];
+  };
+  const roundTrip = await tools[2].execute({
+    expectedRevision: 0,
+    operations: [{ type: 'put_drawing', drawing: exact.drawing }]
+  });
+  expect(roundTrip).toMatchObject({
+    revision: 1,
+    drawings: [{ id: 'canvas-stroke', source: { objectId: 'canvas-stroke' } }]
+  });
   await expect(
     tools[2].execute({ expectedRevision: 99, operations: [{ type: 'settings', title: 'bad' }] })
   ).rejects.toThrow('Stale');
