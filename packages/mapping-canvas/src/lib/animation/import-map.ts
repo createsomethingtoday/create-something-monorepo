@@ -243,33 +243,10 @@ export function syncMotionProject(map: CanvasDocument, existing?: Project): Proj
     ]
   };
   const capacity = Math.max(0, LIMITS.drawings - priorMotionOnly.length);
-  const retainedMap = {
-    ...prioritizedMap,
-    objects: prioritizedMap.objects.filter(isImportableCanvasObject).slice(0, capacity)
-  };
-  const imported = importMap(retainedMap);
-  const eligibleCanvasDrawings = imported.drawings
-    .slice(0, capacity)
-    .map((drawing) => retainAnimation(drawing, prior.get(drawing.id)));
   const template = existing
     ? { ...existing, id: map.id, revision: existing.revision + 1 }
     : { ...newProject(), id: map.id, title: map.title.slice(0, 240) };
-  const fixedBytes = JSON.stringify({ ...template, drawings: priorMotionOnly }).length;
-  let projectedBytes = fixedBytes;
-  let projectedDrawingCount = priorMotionOnly.length;
-  const selectedCanvasDrawings: Drawing[] = [];
-  for (const drawing of eligibleCanvasDrawings) {
-    const priorDrawing = prior.get(drawing.id);
-    const choices = priorDrawing?.source?.space === 'canvas' ? [drawing, priorDrawing] : [drawing];
-    const selected = choices.find((choice) => {
-      const addedBytes = JSON.stringify(choice).length + (projectedDrawingCount ? 1 : 0);
-      return projectedBytes + addedBytes <= LIMITS.bytes;
-    });
-    if (!selected) continue;
-    selectedCanvasDrawings.push(selected);
-    projectedBytes += JSON.stringify(selected).length + (projectedDrawingCount ? 1 : 0);
-    projectedDrawingCount += 1;
-  }
+  const emptyProjectBytes = JSON.stringify({ ...template, drawings: [] }).length;
   const assemble = (selected: Drawing[]) => {
     const canvasDrawings = [...selected].sort(
       (a, b) => originalOrder.get(a.id)! - originalOrder.get(b.id)!
@@ -280,26 +257,61 @@ export function syncMotionProject(map: CanvasDocument, existing?: Project): Proj
     );
     return { ...template, drawings: [...canvasDrawings, ...motionOnly] };
   };
-  let candidate = assemble(selectedCanvasDrawings);
-  let candidateBytes = JSON.stringify(candidate).length;
-  while (candidateBytes > LIMITS.bytes && selectedCanvasDrawings.length) {
-    const removed = selectedCanvasDrawings.pop()!;
-    candidateBytes -= JSON.stringify(removed).length + 1;
+  const serializedBytes = (candidate: Project) =>
+    emptyProjectBytes - 2 + JSON.stringify(candidate.drawings).length;
+  const importableObjects = prioritizedMap.objects
+    .filter(isImportableCanvasObject)
+    .slice(0, capacity);
+  const existingObjects = importableObjects.filter((object) => priorCanvasIds.has(object.id));
+  let newObjects = importableObjects
+    .filter((object) => !priorCanvasIds.has(object.id))
+    .slice(0, capacity - existingObjects.length);
+  let candidate = assemble([]);
+  for (;;) {
+    const selectedMap = { ...map, objects: [...existingObjects, ...newObjects] };
+    const imported = importMap(selectedMap).drawings;
+    const importedById = new Map(imported.map((drawing) => [drawing.id, drawing]));
+    let selected = existingObjects
+      .map((object) => prior.get(object.id))
+      .filter((drawing): drawing is Drawing => drawing?.source?.space === 'canvas');
+    let current = assemble(selected);
+    if (serializedBytes(current) > LIMITS.bytes) {
+      if (existing) return existing;
+      selected = [];
+      current = assemble(selected);
+    }
+    for (const object of existingObjects) {
+      const updated = importedById.get(object.id);
+      if (!updated) continue;
+      const retained = retainAnimation(updated, prior.get(updated.id));
+      const trial = selected.map((drawing) => drawing.id === retained.id ? retained : drawing);
+      const next = assemble(trial);
+      if (serializedBytes(next) <= LIMITS.bytes) {
+        selected = trial;
+        current = next;
+      }
+    }
+    const retainedNewIds = new Set<string>();
+    for (const object of newObjects) {
+      const added = importedById.get(object.id);
+      if (!added) continue;
+      const trial = [...selected, added];
+      const next = assemble(trial);
+      if (serializedBytes(next) <= LIMITS.bytes) {
+        selected = trial;
+        current = next;
+        retainedNewIds.add(object.id);
+      }
+    }
+    if (retainedNewIds.size === newObjects.length) {
+      candidate = current;
+      break;
+    }
+    newObjects = newObjects.filter((object) => retainedNewIds.has(object.id));
   }
-  candidate = assemble(selectedCanvasDrawings);
-  while (JSON.stringify(candidate).length > LIMITS.bytes && selectedCanvasDrawings.length) {
-    selectedCanvasDrawings.pop();
-    candidate = assemble(selectedCanvasDrawings);
-  }
-  const canvasDrawings = candidate.drawings.filter((drawing) => drawing.source?.space === 'canvas');
-  const motionOnly = preserveMotionOnlyIds(
-    priorMotionOnly,
-    new Set(canvasDrawings.map(({ id }) => id))
-  );
-  const drawings = [...canvasDrawings, ...motionOnly];
-  if (!existing) return { ...candidate, drawings };
-  const unchangedCandidate = { ...candidate, revision: existing.revision, drawings };
+  if (!existing) return candidate;
+  const unchangedCandidate = { ...candidate, revision: existing.revision };
   return JSON.stringify(unchangedCandidate) === JSON.stringify(existing)
     ? existing
-    : { ...candidate, drawings };
+    : candidate;
 }

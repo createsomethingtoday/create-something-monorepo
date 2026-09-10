@@ -451,6 +451,95 @@ describe('shared Draw project contract', () => {
     }
   });
 
+  it('reserves byte capacity for every retained Canvas animation before applying updates', () => {
+    const source = canvas();
+    source.objects = [
+      {
+        id: 'animated-first',
+        kind: 'note',
+        createdAt: '2026-09-10T00:00:00.000Z',
+        x: 0,
+        y: 0,
+        width: 240,
+        height: 120,
+        text: 'First'
+      },
+      {
+        id: 'animated-second',
+        kind: 'note',
+        createdAt: '2026-09-10T00:00:00.000Z',
+        x: 300,
+        y: 0,
+        width: 240,
+        height: 120,
+        text: 'Second'
+      }
+    ];
+    const existing = syncMotionProject(source);
+    const edited = {
+      ...source,
+      objects: source.objects.map((object) =>
+        object.id === 'animated-first' ? { ...object, text: 'x'.repeat(2_000) } : object
+      )
+    };
+    const originalByteLimit = LIMITS.bytes;
+    LIMITS.bytes = JSON.stringify({ ...existing, revision: existing.revision + 1 }).length + 100;
+    try {
+      const synchronized = syncMotionProject(edited, existing);
+      expect(synchronized.drawings.map(({ id }) => id).sort()).toEqual([
+        'animated-first',
+        'animated-second'
+      ]);
+      expect(synchronized.drawings.find(({ id }) => id === 'animated-first')?.text).toBe('First');
+      expect(() => validateProject(synchronized)).not.toThrow();
+    } finally {
+      LIMITS.bytes = originalByteLimit;
+    }
+  });
+
+  it('refits retained layers after an over-budget distant Canvas object is omitted', () => {
+    const source = canvas();
+    source.objects = [{
+      id: 'retained-note',
+      kind: 'note',
+      createdAt: '2026-09-10T00:00:00.000Z',
+      x: 0,
+      y: 0,
+      width: 240,
+      height: 120,
+      text: 'Retained'
+    }];
+    const existing = syncMotionProject(source);
+    const edited = {
+      ...source,
+      objects: [
+        ...source.objects,
+        {
+          id: 'distant-over-budget',
+          kind: 'note' as const,
+          createdAt: '2026-09-10T00:00:00.000Z',
+          x: 1_000_000,
+          y: 1_000_000,
+          width: 240,
+          height: 120,
+          text: 'x'.repeat(2_000)
+        }
+      ]
+    };
+    const originalByteLimit = LIMITS.bytes;
+    LIMITS.bytes = JSON.stringify({ ...existing, revision: existing.revision + 1 }).length + 100;
+    try {
+      const synchronized = syncMotionProject(edited, existing);
+      expect(synchronized.drawings.some(({ id }) => id === 'distant-over-budget')).toBe(false);
+      expect(synchronized.drawings.find(({ id }) => id === 'retained-note')).toEqual(
+        existing.drawings.find(({ id }) => id === 'retained-note')
+      );
+      expect(() => validateProject(synchronized)).not.toThrow();
+    } finally {
+      LIMITS.bytes = originalByteLimit;
+    }
+  });
+
   it('bounds Canvas text and drawing counts without dropping Motion-only artwork', () => {
     const source = canvas();
     source.title = 'Title '.repeat(100);
