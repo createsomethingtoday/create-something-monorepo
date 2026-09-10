@@ -110,7 +110,7 @@ const isViewport = (value: unknown): value is Viewport => isPoint(value) && isFi
 export function isCanvasObject(value: unknown): value is CanvasObject {
   if (!value || typeof value !== 'object') return false;
   const object = value as Partial<CanvasObject>;
-  if (typeof object.id !== 'string' || typeof object.createdAt !== 'string' || typeof object.kind !== 'string') return false;
+  if (typeof object.id !== 'string' || object.id.length < 1 || object.id.length > 240 || typeof object.createdAt !== 'string' || typeof object.kind !== 'string') return false;
   if (object.sourceIds !== undefined && (!Array.isArray(object.sourceIds) || !object.sourceIds.every((id) => typeof id === 'string'))) return false;
   if (object.sourceSnapshot !== undefined && (!Array.isArray(object.sourceSnapshot) || !object.sourceSnapshot.every((source) => isCanvasObject(source)))) return false;
   if (object.kind === 'stroke') return Array.isArray(object.points) && object.points.length > 1 && object.points.every(isPoint) && typeof object.color === 'string' && isFiniteNumber(object.width) && object.width > 0;

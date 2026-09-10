@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createDocument, type CanvasDocument } from '../document';
+import { createDocument, isDocument, type CanvasDocument } from '../document';
 import { basePose, independentProjectCopy, LIMITS, validateProject, type Project } from './model';
 import { importMap, syncMotionProject } from './import-map';
 import {
@@ -115,13 +115,17 @@ describe('shared Draw project contract', () => {
     const synchronized = syncMotionProject(edited, animated);
 
     expect(synchronized.revision).toBe(2);
-    expect(synchronized.drawings.find(({ id }) => id === 'stroke-stable')?.points[1].x).toBe(210);
     const synchronizedStroke = synchronized.drawings.find(({ id }) => id === 'stroke-stable')!;
+    const oldStroke = animated.drawings.find(({ id }) => id === 'stroke-stable')!;
+    const importedStroke = importMap(edited).drawings.find(({ id }) => id === 'stroke-stable')!;
+    expect(synchronizedStroke.points).toEqual(importedStroke.points);
     expect(synchronizedStroke.poses.at(-1)?.x).toBe(90);
-    expect(synchronizedStroke.poses.at(-1)?.points).toEqual([
-      { x: 15, y: 24 },
-      { x: 220, y: 128 }
-    ]);
+    expect(synchronizedStroke.poses.at(-1)?.points).toEqual(
+      oldStroke.poses.at(-1)!.points!.map((point, index) => ({
+        x: importedStroke.points[index].x + (point.x - oldStroke.points[index].x),
+        y: importedStroke.points[index].y + (point.y - oldStroke.points[index].y)
+      }))
+    );
     const oldNote = animated.drawings.find(({ id }) => id === 'note-stable')!;
     const importedNote = importMap(edited).drawings.find(({ id }) => id === 'note-stable')!;
     const delta = importedNote.poses[0].x - oldNote.source!.origin!.x;
@@ -147,8 +151,8 @@ describe('shared Draw project contract', () => {
     const stroke = motion.drawings.find(({ id }) => id === 'stroke-stable')!;
 
     expect(stroke.points).toHaveLength(LIMITS.points);
-    expect(stroke.points[0]).toEqual({ x: 0, y: 0 });
-    expect(stroke.points.at(-1)).toEqual({ x: 2500, y: 20 });
+    expect(stroke.points[0]).toEqual({ x: 60, y: 60 });
+    expect(stroke.points.at(-1)?.x).toBe(1160);
     expect(stroke.weight).toBe(100);
     expect(() => validateProject(motion)).not.toThrow();
   });
@@ -190,6 +194,42 @@ describe('shared Draw project contract', () => {
 
     const motion = syncMotionProject(source);
     expect(motion.drawings.some(({ id }) => id === 'approval.step')).toBe(true);
+    expect(() => validateProject(motion)).not.toThrow();
+  });
+
+  it('rejects Canvas object IDs that cannot remain stable in Motion', () => {
+    const source = canvas();
+    source.objects = source.objects
+      .map((object) =>
+        object.id === 'note-stable' ? { ...object, id: 'x'.repeat(241) } : object
+      )
+      .filter((object) => object.kind !== 'group');
+
+    expect(isDocument(source)).toBe(false);
+  });
+
+  it('maps far-panned Canvas vectors into Motion scene coordinates', () => {
+    const source = canvas();
+    source.objects = source.objects
+      .map((object) =>
+        object.id === 'stroke-stable' && object.kind === 'stroke'
+          ? {
+              ...object,
+              points: [
+                { x: 50_000, y: -70_000 },
+                { x: 62_000, y: -64_000 }
+              ]
+            }
+          : object
+      )
+      .filter((object) => object.kind !== 'group');
+
+    const motion = syncMotionProject(source);
+    const stroke = motion.drawings.find(({ id }) => id === 'stroke-stable')!;
+
+    expect(Math.max(...stroke.points.flatMap(({ x, y }) => [Math.abs(x), Math.abs(y)]))).toBeLessThan(
+      10_000
+    );
     expect(() => validateProject(motion)).not.toThrow();
   });
 

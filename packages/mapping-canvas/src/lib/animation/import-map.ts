@@ -21,6 +21,10 @@ function boundedStrokePoints(points: Point[]): Point[] {
 export function importMap(map: CanvasDocument): { drawings: Drawing[]; skipped: number } {
   const bounds = objectBounds(map.objects);
   const scale = Math.min(1, 1100 / bounds.width, 560 / bounds.height);
+  const toScene = (point: Point): Point => ({
+    x: 60 + (point.x - bounds.x) * scale,
+    y: 60 + (point.y - bounds.y) * scale
+  });
   let skipped = 0;
   const drawings: Drawing[] = [];
   for (const object of map.objects) {
@@ -33,19 +37,11 @@ export function importMap(map: CanvasDocument): { drawings: Drawing[]; skipped: 
       name: object.kind === 'note' ? object.text.slice(0, 80) : object.kind,
       kind: 'stroke' as const,
       color: 'color' in object && /^#[\da-f]{6}$/i.test(object.color) ? object.color : '#282522',
-      weight: 3,
+      weight: Math.max(0.1, 3 * scale),
       text: '',
       width: 100,
       height: 100,
-      poses: [
-        {
-          ...basePose(),
-          x: 60 - bounds.x * scale,
-          y: 60 - bounds.y * scale,
-          scaleX: scale,
-          scaleY: scale
-        }
-      ]
+      poses: [basePose()]
     };
     const sourced = <T extends Drawing>(drawing: T): T => {
       const { x, y, scaleX, scaleY } = drawing.poses[0];
@@ -58,8 +54,8 @@ export function importMap(map: CanvasDocument): { drawings: Drawing[]; skipped: 
       drawings.push(
         sourced({
           ...common,
-          points: boundedStrokePoints(object.points),
-          weight: Math.min(100, Math.max(0.1, object.width))
+          points: boundedStrokePoints(object.points).map(toScene),
+          weight: Math.min(100, Math.max(0.1, object.width * scale))
         })
       );
     else if (object.kind === 'note')
@@ -69,14 +65,13 @@ export function importMap(map: CanvasDocument): { drawings: Drawing[]; skipped: 
         points: [],
         text: object.text,
         color: '#282522',
-        weight: 24,
-        width: object.width,
-        height: object.height,
+        weight: Math.max(0.1, 24 * scale),
+        width: Math.max(1, object.width * scale),
+        height: Math.max(1, object.height * scale),
         poses: [
           {
             ...common.poses[0],
-            x: 60 + (object.x - bounds.x) * scale,
-            y: 60 + (object.y - bounds.y) * scale
+            ...toScene({ x: object.x, y: object.y })
           }
         ]
       }));
@@ -108,7 +103,7 @@ export function importMap(map: CanvasDocument): { drawings: Drawing[]; skipped: 
                   }
                 ];
               })();
-      drawings.push(sourced({ ...common, points }));
+      drawings.push(sourced({ ...common, points: points.map(toScene) }));
     } else skipped++;
   }
   return { drawings, skipped };
