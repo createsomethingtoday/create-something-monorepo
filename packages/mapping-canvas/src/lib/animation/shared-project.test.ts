@@ -317,6 +317,30 @@ describe('shared Draw project contract', () => {
     expect(() => validateProject(motion)).not.toThrow();
   });
 
+  it('maps finite coordinates at both numeric extremes without overflow', () => {
+    const source = canvas();
+    source.objects = source.objects
+      .map((object) =>
+        object.id === 'stroke-stable' && object.kind === 'stroke'
+          ? {
+              ...object,
+              points: [
+                { x: -Number.MAX_VALUE, y: -Number.MAX_VALUE },
+                { x: Number.MAX_VALUE, y: Number.MAX_VALUE }
+              ]
+            }
+          : object
+      )
+      .filter((object) => object.kind !== 'group');
+
+    const motion = syncMotionProject(source);
+    const stroke = motion.drawings.find(({ id }) => id === 'stroke-stable')!;
+
+    expect(stroke.points.every(({ x, y }) => Number.isFinite(x) && Number.isFinite(y))).toBe(true);
+    expect(stroke.source!.origin!.scaleX).toBeGreaterThan(0);
+    expect(() => validateProject(motion)).not.toThrow();
+  });
+
   it('bounds Canvas text and drawing counts without dropping Motion-only artwork', () => {
     const source = canvas();
     source.title = 'Title '.repeat(100);

@@ -1095,7 +1095,7 @@
   async function importJson(event: Event) {
     const file = (event.currentTarget as HTMLInputElement).files?.[0];
     if (!file || nativeRole === 'companion' || sharing || replacingDocument) return;
-    try { await coordinateDocumentReplacement(async () => { const previous = history.present, managed = currentManagedShare(); const next = parse(await file.text()); const committed = await commitHostReplacement(() => next, (value) => value, (value) => history = { past: [], present: value, future: [] }, 'import'); selectedIds = []; if (nativeRole === 'web') { await writeCanvasDocument(committed); await transferManagedShareAfterReplacement(managed, previous, committed); } else { queueSave(committed); if (managed) rememberShare(managed, committed.id, previous.id); else restoreManagedShare(committed.id); } status = 'Canvas imported'; }); }
+    try { await coordinateDocumentReplacement(async () => { const previous = history.present, managed = currentManagedShare(); const parsed = parse(await file.text()); const next = parsed.id === previous.id ? parsed : { ...parsed, id: crypto.randomUUID(), updatedAt: new Date().toISOString() }; const committed = await commitHostReplacement(() => next, (value) => value, (value) => history = { past: [], present: value, future: [] }, 'import'); selectedIds = []; if (nativeRole === 'web') { await writeCanvasDocument(committed); await transferManagedShareAfterReplacement(managed, previous, committed); } else { queueSave(committed); if (managed) rememberShare(managed, committed.id, previous.id); else restoreManagedShare(committed.id); } status = 'Canvas imported'; }); }
     catch (error) { status = error instanceof Error ? error.message : 'Import failed'; }
     finally { if (fileInput) fileInput.value = ''; }
   }

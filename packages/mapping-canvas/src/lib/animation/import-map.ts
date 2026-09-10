@@ -1,4 +1,4 @@
-import { type CanvasDocument, objectBounds } from '../document';
+import { type CanvasDocument } from '../document';
 import {
   basePose,
   isMotionDrawingId,
@@ -19,14 +19,44 @@ function boundedStrokePoints(points: Point[]): Point[] {
 }
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
+function sceneFit(map: CanvasDocument) {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  const include = ({ x, y }: Point) => {
+    minX = Math.min(minX, x); minY = Math.min(minY, y);
+    maxX = Math.max(maxX, x); maxY = Math.max(maxY, y);
+  };
+  const includeBox = (x: number, y: number, width: number, height: number) => {
+    include({ x, y });
+    include({
+      x: Number.isFinite(x + width) ? x + width : Number.MAX_VALUE,
+      y: Number.isFinite(y + height) ? y + height : Number.MAX_VALUE
+    });
+  };
+  for (const object of map.objects) {
+    if (object.kind === 'stroke') object.points.forEach(include);
+    else if (object.kind === 'note' || object.kind === 'group')
+      includeBox(object.x, object.y, object.width, object.height);
+    else if (object.kind === 'rectangle' || object.kind === 'ellipse' || object.kind === 'arrow') {
+      include(object.from); include(object.to);
+    }
+  }
+  if (!Number.isFinite(minX)) {
+    minX = 100; minY = 100; maxX = 420; maxY = 280;
+  }
+  const unitsPerScene = Math.max(1, (maxX / 2 - minX / 2) / 550, (maxY / 2 - minY / 2) / 280);
+  const scale = 1 / unitsPerScene;
+  return {
+    scale,
+    toScene: (point: Point): Point => ({
+      x: 60 + point.x / unitsPerScene - minX / unitsPerScene,
+      y: 60 + point.y / unitsPerScene - minY / unitsPerScene
+    })
+  };
+}
+
 /** Materialize representable Canvas marks in Motion without changing their identity. */
 export function importMap(map: CanvasDocument): { drawings: Drawing[]; skipped: number } {
-  const bounds = objectBounds(map.objects);
-  const scale = Math.min(1, 1100 / bounds.width, 560 / bounds.height);
-  const toScene = (point: Point): Point => ({
-    x: 60 + (point.x - bounds.x) * scale,
-    y: 60 + (point.y - bounds.y) * scale
-  });
+  const { scale, toScene } = sceneFit(map);
   let skipped = 0;
   const drawings: Drawing[] = [];
   for (const object of map.objects) {

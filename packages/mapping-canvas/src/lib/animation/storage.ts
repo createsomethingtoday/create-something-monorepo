@@ -71,18 +71,26 @@ export async function loadProjects(): Promise<ProjectSummary[]> {
 
 export async function loadProject(id: string): Promise<Project> {
   await migrateLegacyProjects();
-  const record = await loadProjectRecord(id);
-  if (!record) throw new Error('Draw project was not found on this device.');
-  if (!record.canvas && record.motion) {
-    loadedCanvasVersions.set(id, null);
-    return record.motion;
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const record = await loadProjectRecord(id);
+    if (!record) throw new Error('Draw project was not found on this device.');
+    if (!record.canvas && record.motion) {
+      loadedCanvasVersions.set(id, null);
+      return record.motion;
+    }
+    if (!record.canvas) throw new Error('Draw project has no Canvas or Motion space.');
+    const synchronized = syncMotionProject(record.canvas, record.motion);
+    try {
+      if (!record.motion || synchronized !== record.motion)
+        await saveMotionProject(synchronized, record.motion?.revision ?? null, record.canvas.updatedAt);
+      loadedCanvasVersions.set(id, record.canvas.updatedAt);
+      return synchronized;
+    } catch (error) {
+      lastError = error;
+    }
   }
-  if (!record.canvas) throw new Error('Draw project has no Canvas or Motion space.');
-  const synchronized = syncMotionProject(record.canvas, record.motion);
-  if (!record.motion || synchronized !== record.motion)
-    await saveMotionProject(synchronized, record.motion?.revision ?? null, record.canvas.updatedAt);
-  loadedCanvasVersions.set(id, record.canvas.updatedAt);
-  return synchronized;
+  throw lastError;
 }
 
 export async function saveProject(
