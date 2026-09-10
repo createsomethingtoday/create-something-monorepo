@@ -432,7 +432,10 @@ export const TemplateCampaignVideoModal: React.FC<TemplateCampaignVideoModalProp
     if (typeof document === 'undefined') return;
     returnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const previousOverflow = document.body.style.overflow;
+    const previousPaddingRight = document.body.style.paddingRight;
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
     document.body.style.overflow = 'hidden';
+    if (scrollbarWidth > 0) document.body.style.paddingRight = `${scrollbarWidth}px`;
     closeRef.current?.focus();
 
     const onKeyDown = (event: KeyboardEvent) => {
@@ -460,6 +463,7 @@ export const TemplateCampaignVideoModal: React.FC<TemplateCampaignVideoModalProp
     return () => {
       document.removeEventListener('keydown', onKeyDown);
       document.body.style.overflow = previousOverflow;
+      document.body.style.paddingRight = previousPaddingRight;
       returnFocusRef.current?.focus();
     };
   }, []);

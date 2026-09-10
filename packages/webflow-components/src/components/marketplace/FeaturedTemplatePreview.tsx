@@ -135,6 +135,10 @@ const FEATURED_TEMPLATE_PREVIEW_STYLES = `
 .tmfeatured-edge-nav:hover { background: #fff; transform: translateY(-50%) scale(1.04); }
 .tmfeatured-edge-nav:focus-visible { outline: 2px solid #146ef5; outline-offset: 2px; }
 .tmfeatured-edge-nav:disabled { pointer-events: none; opacity: 0; }
+.tmfeatured-edge-nav[data-loading="true"] { pointer-events: none; cursor: default; opacity: .4; }
+@media (hover: none) {
+  .tmfeatured-edge-nav:not(:disabled) { opacity: .55; }
+}
 .tmfeatured-side { display: flex; min-height: 0; flex-direction: column; overflow: auto; padding: 24px 24px 0; border-left: 1px solid #dedede; background: #fff; }
 .tmfeatured-kicker { margin: 0 0 8px; color: #757575; font-size: 12px; font-weight: 600; letter-spacing: 0; line-height: 1.25; text-transform: uppercase; }
 .tmfeatured-title { margin: 0; font-size: 24px; font-weight: 600; line-height: 1.3; }
@@ -254,8 +258,11 @@ export const FeaturedTemplatePreview: React.FC<FeaturedTemplatePreviewProps> = (
     if (typeof document === 'undefined') return;
     returnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const previousOverflow = document.body.style.overflow;
+    const previousPaddingRight = document.body.style.paddingRight;
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
     document.body.style.overflow = 'hidden';
-    const restoreHost = applyHostInert(Array.from(document.body.children), dialogRef.current);
+    if (scrollbarWidth > 0) document.body.style.paddingRight = `${scrollbarWidth}px`;
+    const restoreHost = applyHostInert(Array.from(document.body?.children ?? []), dialogRef.current);
     closeRef.current?.focus();
 
     const onKeyDown = (event: KeyboardEvent) => {
@@ -295,6 +302,7 @@ export const FeaturedTemplatePreview: React.FC<FeaturedTemplatePreviewProps> = (
       document.removeEventListener('keydown', onKeyDown);
       restoreHost();
       document.body.style.overflow = previousOverflow;
+      document.body.style.paddingRight = previousPaddingRight;
       returnFocusRef.current?.focus();
     };
   }, []);
@@ -419,6 +427,7 @@ export const FeaturedTemplatePreview: React.FC<FeaturedTemplatePreviewProps> = (
               type="button"
               className="tmfeatured-edge-nav tmfeatured-edge-next"
               aria-label={navigationError ? 'Try loading the next featured template again' : 'Next featured template'}
+              data-loading={hasNext && loadingNext ? 'true' : undefined}
               disabled={!hasNext || loadingNext}
               onClick={() => onNavigate(1)}
             >

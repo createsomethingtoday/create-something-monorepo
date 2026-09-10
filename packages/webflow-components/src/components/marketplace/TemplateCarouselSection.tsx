@@ -274,11 +274,11 @@ const CAROUSEL_STYLES = `
 }
 
 .tmcarousel-nav[data-direction="prev"] {
-  left: -20px;
+  left: 0;
 }
 
 .tmcarousel-nav[data-direction="next"] {
-  right: -20px;
+  right: 0;
 }
 
 .tmcarousel-skeleton {
@@ -723,7 +723,7 @@ export const TemplateCarouselSection: React.FC<TemplateCarouselSectionProps> = (
                   >
                     <TemplateCard
                       templateName={item.name}
-                      templateLink={{ href: item.url ?? '#' }}
+                      templateLink={item.url ? { href: item.url } : undefined}
                       price={formatPrice(item)}
                       priceNumeric={priceNumeric(item)}
                       isFree={isFreeTemplate(item)}

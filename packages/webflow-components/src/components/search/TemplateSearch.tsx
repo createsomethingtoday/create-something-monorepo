@@ -85,6 +85,15 @@ export const TemplateSearch: React.FC<TemplateSearchProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const blurTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      if (blurTimerRef.current) clearTimeout(blurTimerRef.current);
+      abortRef.current?.abort();
+    };
+  }, []);
 
   // Keep input in sync when URL query param changes externally (e.g. back/forward)
   useEffect(() => {
@@ -213,7 +222,8 @@ export const TemplateSearch: React.FC<TemplateSearchProps> = ({
 
   const onBlur = () => {
     // Delay so mousedown on item fires first
-    setTimeout(() => {
+    if (blurTimerRef.current) clearTimeout(blurTimerRef.current);
+    blurTimerRef.current = setTimeout(() => {
       setIsOpen(false);
       setActiveIndex(-1);
     }, 150);

@@ -8,7 +8,6 @@ import {
   resetTelemetryFallbackForTests,
   sendTelemetryFallbackEvent,
   TELEMETRY_FALLBACK_ENDPOINT,
-  TELEMETRY_FALLBACK_ENDPOINT_SECONDARY,
 } from '../src/components/marketplace/telemetryFallback';
 
 type GlobalWithBrowser = typeof globalThis & {
@@ -257,7 +256,7 @@ test('falls back to keepalive fetch when sendBeacon rejects the payload', () => 
   try {
     sendTelemetryFallbackEvent('[Template Marketplace] Code Component Event', { scope: 'x' });
     assert.equal(fixture.fetchCalls.length, 1);
-    assert.equal(fixture.fetchCalls[0].url, TELEMETRY_FALLBACK_ENDPOINT_SECONDARY);
+    assert.equal(fixture.fetchCalls[0].url, TELEMETRY_FALLBACK_ENDPOINT);
     assert.ok(fixture.fetchCalls[0].body.includes('"events"'));
   } finally {
     fixture.restore();

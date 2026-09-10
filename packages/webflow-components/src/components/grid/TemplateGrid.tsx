@@ -325,6 +325,7 @@ function getCachedGridResponse(url: string): ApiResponse | null {
 }
 
 function setCachedGridResponse(url: string, data: ApiResponse): void {
+  if (!data.items?.length) return;
   gridResponseCache.delete(url);
   gridResponseCache.set(url, { timestamp: Date.now(), data });
   while (gridResponseCache.size > GRID_CACHE_MAX_ENTRIES) {
@@ -928,7 +929,6 @@ const GRID_STYLES = `
 }
 .tmgrid-grid-wrap[data-refreshing="true"] .tmgrid-grid {
   opacity: 0.58;
-  pointer-events: none;
   transition: opacity 160ms ease;
 }
 .tmgrid-refresh-indicator {
@@ -1025,6 +1025,8 @@ const S: Record<string, CSSProperties> = {
   countLabel: {
     paddingBottom: '20px',
     fontSize: '13px',
+    lineHeight: '16px',
+    minHeight: '16px',
     color: 'rgba(0,0,0,0.45)',
   },
   emptyBox: {
@@ -1324,6 +1326,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
   const featuredPreviewFetchAbortRef = useRef<AbortController | null>(null);
   const featuredPreviewRef = useRef<FeaturedPreviewSession | null>(null);
   const lastHrefRef = useRef(typeof window === 'undefined' ? '' : window.location.href);
+  const nativeEmptyDisplayRef = useRef('');
   featuredPreviewRef.current = featuredPreview;
 
   useEffect(() => {
@@ -1718,19 +1721,29 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
   // ── Drive the native Webflow empty-state element ─────────────────────────
   // Finsweet normally controls [fs-cmsfilter-element="empty"]; since we own
   // the filtering we hide/show it ourselves based on our result state.
+  useLayoutEffect(() => {
+    const emptyEl = document.querySelector<HTMLElement>('[fs-cmsfilter-element="empty"]');
+    if (!emptyEl) return;
+    nativeEmptyDisplayRef.current = emptyEl.style.display;
+    emptyEl.style.display = 'none';
+    return () => {
+      emptyEl.style.display = nativeEmptyDisplayRef.current;
+    };
+  }, []);
+
   useEffect(() => {
     const emptyEl = document.querySelector<HTMLElement>('[fs-cmsfilter-element="empty"]');
     if (!emptyEl) return;
     const shouldShow = !rendersComponentEmptyState && !loading && !error && items.length === 0;
-    emptyEl.style.display = shouldShow ? '' : 'none';
+    emptyEl.style.display = shouldShow ? nativeEmptyDisplayRef.current : 'none';
   }, [loading, error, items.length, rendersComponentEmptyState]);
 
   // Re-parse from URL on browser back/forward navigation
   useEffect(() => {
     const onPop = () => {
       lastHrefRef.current = window.location.href;
-      setFilters(
-        parseRouteState(
+      setFilters((prev) => {
+        const next = parseRouteState(
           initialSort,
           categorySlugProp || undefined,
           scopeOverride,
@@ -1738,8 +1751,9 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
           tagSlugProp || undefined,
           creatorSlugProp || undefined,
           creatorRecordIdProp || undefined,
-        ),
-      );
+        );
+        return areFiltersEqual(prev, next) ? prev : next;
+      });
     };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
@@ -2136,6 +2150,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
     return withFeaturedPreview(
       <div style={S.root} data-marketplace-component="template-grid">
         <style dangerouslySetInnerHTML={{ __html: GRID_STYLES }} />
+        <div style={S.countLabel} />
         <div className="tmgrid-grid">
           {Array.from({ length: Math.min(resolvedPageSize, 12) }).map((_, i) => (
             <SkeletonCard key={i} index={i} />
@@ -2237,11 +2252,13 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
   return withFeaturedPreview(
     <div style={S.root} data-marketplace-component="template-grid" aria-busy={isRefreshing ? true : undefined}>
       <style dangerouslySetInnerHTML={{ __html: GRID_STYLES }} />
-      {totalItems !== null && (
-        <div style={S.countLabel}>
-          {totalItems.toLocaleString()} template{totalItems !== 1 ? 's' : ''}
-        </div>
-      )}
+      <div style={S.countLabel}>
+        {totalItems !== null && (
+          <>
+            {totalItems.toLocaleString()} template{totalItems !== 1 ? 's' : ''}
+          </>
+        )}
+      </div>
 
       <div className="tmgrid-grid-wrap" data-refreshing={isRefreshing ? 'true' : undefined}>
         {isRefreshing && (

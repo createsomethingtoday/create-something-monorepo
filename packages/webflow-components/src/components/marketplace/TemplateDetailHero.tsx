@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { trackMarketplaceEvent } from './analytics';
 import type { MarketplaceAnalyticsData } from './analytics';
@@ -388,7 +388,7 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
       }),
     [categoryBaseUrl, categoryLink, categoryName, categoryNames, categoryLinks],
   );
-  const creatorHref = normalizeTemplateDetailLink(creatorLink).href || '#';
+  const creatorHref = normalizeTemplateDetailLink(creatorLink).href;
   const avatar = normalizeTemplateDetailImage(creatorAvatar);
   const browserPreview = normalizeTemplateDetailLink(browserPreviewUrl);
   const designerPreview = normalizeTemplateDetailLink(designerPreviewUrl);
@@ -582,7 +582,7 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
     };
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!hasPreviewIframe || typeof window === 'undefined') return undefined;
     const element = previewStageRef.current;
     if (!element) return undefined;
@@ -762,7 +762,16 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
               {summary ? <p className="wfdt-summary">{summary}</p> : null}
               <div className="wfdt-meta-row">
                 {creatorName ? (
-                  <a className="wfdt-creator-link" href={creatorHref}>
+                  <a
+                    className="wfdt-creator-link"
+                    {...(creatorHref && creatorHref !== '#'
+                      ? { href: creatorHref }
+                      : {
+                          'aria-disabled': true,
+                          tabIndex: -1,
+                          onClick: (event: React.MouseEvent<HTMLAnchorElement>) => event.preventDefault(),
+                        })}
+                  >
                     {avatar.src ? (
                       <img className="wfdt-avatar" src={avatar.src} alt={avatar.alt || creatorName} />
                     ) : (
