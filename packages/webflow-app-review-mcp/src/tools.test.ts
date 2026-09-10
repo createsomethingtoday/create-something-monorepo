@@ -869,3 +869,95 @@ describe('registerTools', () => {
   });
 
 });
+
+
+describe('review preparation mutation boundary', () => {
+  function setup() {
+    const harness = createServerHarness();
+    const client = {
+      getVersionById: vi.fn().mockResolvedValue({ versionId: 'recVersion', assetId: 'recAsset', reviewer: { id: 'usrShea' }, reviewStatus: '🆕Ready for Review' }),
+      getAssetById: vi.fn().mockResolvedValue({ assetId: 'recAsset' }),
+      listVersionsForAsset: vi.fn().mockResolvedValue([{ versionId: 'recVersion', assetId: 'recAsset', reviewStatus: '🆕Ready for Review' }]),
+      updateVersionReview: vi.fn().mockResolvedValue({ versionId: 'recVersion' }),
+      updateAssetMetadata: vi.fn(),
+    } as unknown as AirtableClient;
+    registerTools(harness.server, () => client);
+    return { ...harness, client };
+  }
+
+  it.each([{ id: 'usrMicah' }, { id: 'usrShea' }, null])('rejects explicit reviewer writes %j without any mutation', async (reviewer) => {
+    const { handlers, client } = setup();
+    const result = await handlers.get('app_review_update_version_review')!({ version_id: 'recVersion', reviewer, review_status: '🏃🏾In Review' });
+    expect(JSON.parse(result.content[0].text)).toMatchObject({ ok: false, error: { code: 'REVIEWER_ASSIGNMENT_READ_ONLY' } });
+    expect(client.updateVersionReview).not.toHaveBeenCalled();
+  });
+
+  it.each(['app_review_set_review_status', 'app_review_update_version_review', 'app_review_update_asset_metadata'])('rejects unconfirmed status changes via %s', async (name) => {
+    const { handlers, client } = setup();
+    const args = name === 'app_review_update_asset_metadata' ? { asset_id: 'recAsset', latest_review_status: '🏃🏾In Review' } : { version_id: 'recVersion', review_status: '🏃🏾In Review' };
+    const result = await handlers.get(name)!(args);
+    expect(JSON.parse(result.content[0].text)).toMatchObject({ ok: false, error: { code: 'REVIEW_STATUS_CONFIRMATION_REQUIRED' } });
+    expect(client.updateVersionReview).not.toHaveBeenCalled();
+    expect(client.updateAssetMetadata).not.toHaveBeenCalled();
+  });
+  it.each(['app_review_set_review_status', 'app_review_update_version_review', 'app_review_update_asset_metadata'])('rejects stale confirmation via %s and accepts current confirmation without assignment', async (name) => {
+    const { handlers, client } = setup();
+    const args = name === 'app_review_update_asset_metadata' ? { asset_id: 'recAsset', latest_review_status: '🏃🏾In Review' } : { version_id: 'recVersion', review_status: '🏃🏾In Review' };
+    const stale = await handlers.get(name)!({ ...args, status_change: { confirmed: true, expected_status: '📤Changes Requested' } });
+    expect(JSON.parse(stale.content[0].text)).toMatchObject({ ok: false, error: { code: 'REVIEW_STATUS_CONFLICT' } });
+    expect(client.updateVersionReview).not.toHaveBeenCalled();
+    const current = await handlers.get(name)!({ ...args, status_change: { confirmed: true, expected_status: '🆕Ready for Review' } });
+    expect(parsePayload(current).ok).toBe(true);
+    expect(client.updateVersionReview).toHaveBeenCalledExactlyOnceWith('recVersion', { review_status: '🏃🏾In Review' });
+  });
+
+  it('keeps the approval exception gate on the routed asset status path', async () => {
+    const { handlers, client } = setup();
+    vi.mocked(client.getVersionById).mockResolvedValue({ versionId: 'recVersion', assetId: 'recAsset', reviewStatus: '🆕Ready for Review', assetUndecidedExceptions: 1 } as never);
+    const result = await handlers.get('app_review_update_asset_metadata')!({ asset_id: 'recAsset', latest_review_status: '✅Approved', status_change: { confirmed: true, expected_status: '🆕Ready for Review' } });
+    expect(parsePayload(result).ok).toBe(false);
+    expect(client.updateVersionReview).not.toHaveBeenCalled();
+  });
+
+  it('draft feedback writes only feedback and context reads perform no writes', async () => {
+    const { handlers, client } = setup();
+    client.getReviewContext = vi.fn().mockResolvedValue({ versionId: 'recVersion', reviewer: { id: 'usrShea' }, reviewStatus: '🆕Ready for Review' });
+    const context = await handlers.get('app_review_get_review_context')!({ version_id: 'recVersion' });
+    expect(parsePayload(context).data?.context).toMatchObject({ reviewer: { id: 'usrShea' }, reviewStatus: '🆕Ready for Review' });
+    expect(client.updateVersionReview).not.toHaveBeenCalled();
+    await handlers.get('app_review_save_draft_feedback')!({ version_id: 'recVersion', review_feedback: 'Draft review' });
+    expect(client.updateVersionReview).toHaveBeenCalledExactlyOnceWith('recVersion', { review_feedback: 'Draft review' });
+  });
+
+  it('rejects a legacy reassignment at the real Airtable boundary and preserves fields in a draft PATCH', async () => {
+    const { server, handlers } = createServerHarness();
+    const fields: Record<string, unknown> = {
+      [FIELD_IDS.versions.assetLink]: ['recAsset'],
+      [FIELD_IDS.versions.assetRecordIdRollup]: ['recAsset'],
+      [FIELD_IDS.versions.reviewer]: { id: 'usrShea' },
+      [FIELD_IDS.versions.reviewStatus]: '🆕Ready for Review',
+    };
+    const patches: unknown[] = [];
+    const fetchFn = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => {
+      if (init?.method === 'PATCH') {
+        const patch = JSON.parse(String(init.body));
+        patches.push(patch.records[0].fields);
+        Object.assign(fields, patch.records[0].fields);
+        return new Response(JSON.stringify({ records: [{ id: 'recVersion', fields }] }));
+      }
+      if (String(_url).includes('recAsset')) return new Response(JSON.stringify({ id: 'recAsset', fields: { [FIELD_IDS.assets.name]: 'Backpack OS', [FIELD_IDS.assets.capabilities]: 'Data Client v2' } }));
+      return new Response(JSON.stringify({ id: 'recVersion', fields }));
+    });
+    const client = new AirtableClient({ apiKey: 'test-only', fetchFn });
+    registerTools(server, () => client);
+    const denied = await handlers.get('app_review_update_version_review')!({ version_id: 'recVersion', reviewer: { id: 'usrMicah' }, review_status: '🏃🏾In Review' });
+    expect(parsePayload(denied).ok).toBe(false);
+    expect(fetchFn).not.toHaveBeenCalled();
+    const saved = await handlers.get('app_review_save_draft_feedback')!({ version_id: 'recVersion', review_feedback: 'Draft only' });
+    expect(parsePayload(saved).ok).toBe(true);
+    expect(patches).toEqual([{ [FIELD_IDS.versions.reviewFeedback]: 'Draft only' }]);
+    expect(fields[FIELD_IDS.versions.reviewer]).toEqual({ id: 'usrShea' });
+    expect(fields[FIELD_IDS.versions.reviewStatus]).toBe('🆕Ready for Review');
+  });
+
+});

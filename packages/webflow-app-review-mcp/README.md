@@ -95,6 +95,22 @@ Write posture:
 
 - no reviewer session or assigned-reviewer context is required
 - queue filters can inspect assigned, unassigned, or all records without binding to a reviewer
+- reviewer assignment is read-only, including through `app_review_update_version_review`;
+  supplying `reviewer` (even null or the existing owner) fails the entire request
+  with `REVIEWER_ASSIGNMENT_READ_ONLY`. Assign or reassign in Airtable.
+- “start / kick off a new MCP review cycle” means read `app_review_get_review_context`,
+  preserve owner/status, and wait for the bundle if needed. It does not authorize
+  setting In Review. Never infer ownership from shared credentials or remembered IDs.
+- `app_review_set_review_status`, `app_review_update_version_review.review_status`,
+  and `app_review_update_asset_metadata.latest_review_status` require
+  `status_change: { confirmed: true, expected_status: "<current reviewStatus>" }`.
+  Use null only for an unset current status. Supply confirmation only after an
+  explicit operator request to change Airtable status. Missing confirmation fails
+  with `REVIEW_STATUS_CONFIRMATION_REQUIRED`; a changed starting status fails with
+  `REVIEW_STATUS_CONFLICT`. This is a fresh-read precondition, not an atomic Airtable
+  compare-and-swap or independent proof of human consent.
+- Narrow approve/reject/request-changes verbs retain their explicit decision
+  contracts. Approval exception gates also apply to routed asset status changes.
 - draft feedback and controlled status changes write explicit Airtable fields only
 - narrow decision verbs are available for request-changes, approve, and reject
 - broad metadata and marketplace-status updates should stay operator-gated

@@ -504,7 +504,6 @@ export const APP_REVIEW_FIELD_MAP = {
     writable: {
       review_status: FIELD_IDS.versions.reviewStatus,
       review_type: FIELD_IDS.versions.reviewType,
-      reviewer: FIELD_IDS.versions.reviewer,
       rejection_reason: FIELD_IDS.versions.rejectionReason,
       review_feedback: FIELD_IDS.versions.reviewFeedback,
       submission_datetime_override: FIELD_IDS.versions.submissionDatetimeOverride,
@@ -516,6 +515,7 @@ export const APP_REVIEW_FIELD_MAP = {
       hold_notes: FIELD_IDS.versions.holdNotes,
     },
     readOnly: {
+      reviewer: FIELD_IDS.versions.reviewer,
       submission_datetime: FIELD_IDS.versions.submissionDatetime,
       days_in_current_stage: FIELD_IDS.versions.daysInCurrentStage,
       version_number: FIELD_IDS.versions.versionNumber,

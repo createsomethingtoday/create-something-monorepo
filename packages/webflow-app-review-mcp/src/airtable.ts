@@ -428,6 +428,7 @@ export interface GovernanceFindingQuery {
 export interface VersionReviewUpdateInput {
   review_status?: string;
   review_type?: string;
+  /** Compatibility tripwire: assignment is managed in Airtable, never through this MCP. */
   reviewer?: CollaboratorRef | null;
   rejection_reason?: string;
   review_feedback?: string;
@@ -1690,6 +1691,7 @@ export class AirtableClient {
   }
 
   async updateVersionReview(versionId: string, input: VersionReviewUpdateInput): Promise<AppReviewVersion> {
+    assertReviewerAssignmentReadOnly(input.reviewer);
     assertNoRawHtmlInCreatorFeedback('review_feedback', input.review_feedback);
 
     const fields: Record<string, unknown> = {};
@@ -1712,10 +1714,6 @@ export class AirtableClient {
         });
       }
       fields[FIELD_IDS.versions.reviewType] = input.review_type;
-    }
-
-    if (input.reviewer !== undefined) {
-      fields[FIELD_IDS.versions.reviewer] = input.reviewer ? { id: input.reviewer.id } : null;
     }
 
     if (input.rejection_reason !== undefined) {
@@ -2234,5 +2232,16 @@ function mapWritableKeyToAssetFieldName(
       return 'previewSiteUrl';
     case 'promo_video_url':
       return 'promoVideoUrl';
+  }
+}
+
+/** Keep old clients loud: never silently strip a requested reassignment and apply other fields. */
+export function assertReviewerAssignmentReadOnly(reviewer: unknown): void {
+  if (reviewer !== undefined) {
+    throw new AirtableClientError(
+      'REVIEWER_ASSIGNMENT_READ_ONLY',
+      'Reviewer assignment is read-only in App Review MCP. Preserve the existing owner; an operator must assign or reassign in Airtable. Starting a review cycle is not an assignment request.',
+      403,
+    );
   }
 }
