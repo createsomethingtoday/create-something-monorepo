@@ -361,6 +361,66 @@ describe('shared Draw project contract', () => {
     expect(() => validateProject(motion)).not.toThrow();
   });
 
+  it('scales an overflowing note extent into valid Motion dimensions', () => {
+    const source = canvas();
+    source.objects = [
+      {
+        id: 'note-extreme-size',
+        kind: 'note',
+        createdAt: '2026-09-10T00:00:00.000Z',
+        x: Number.MAX_VALUE,
+        y: Number.MAX_VALUE,
+        width: Number.MAX_VALUE,
+        height: Number.MAX_VALUE,
+        text: 'Still representable'
+      }
+    ];
+
+    const motion = syncMotionProject(source);
+    const note = motion.drawings.find(({ id }) => id === 'note-extreme-size')!;
+
+    expect(note.width).toBeLessThanOrEqual(4_096);
+    expect(note.height).toBeLessThanOrEqual(4_096);
+    expect(() => validateProject(motion)).not.toThrow();
+  });
+
+  it('fits only Canvas objects that fit beside Motion-only layers', () => {
+    const source = canvas();
+    source.objects = Array.from({ length: LIMITS.drawings }, (_, index) => ({
+      id: `retained-${index}`,
+      kind: 'note' as const,
+      createdAt: '2026-09-10T00:00:00.000Z',
+      x: index * 10,
+      y: 0,
+      width: 240,
+      height: 120,
+      text: `Retained ${index}`
+    }));
+    source.objects.push({
+      id: 'omitted-distant',
+      kind: 'note',
+      createdAt: '2026-09-10T00:00:00.000Z',
+      x: Number.MAX_VALUE,
+      y: Number.MAX_VALUE,
+      width: 240,
+      height: 120,
+      text: 'Must not affect fit'
+    });
+    const seed = syncMotionProject(canvas());
+    const existing = {
+      ...seed,
+      drawings: [{ ...seed.drawings[0], id: 'motion-only', source: undefined }]
+    };
+    const expected = syncMotionProject({ ...source, objects: source.objects.slice(0, LIMITS.drawings - 1) }, existing);
+    const actual = syncMotionProject(source, existing);
+
+    expect(actual.drawings.find(({ id }) => id === 'retained-0')).toEqual(
+      expected.drawings.find(({ id }) => id === 'retained-0')
+    );
+    expect(actual.drawings.some(({ id }) => id === 'omitted-distant')).toBe(false);
+    expect(() => validateProject(actual)).not.toThrow();
+  });
+
   it('bounds Canvas text and drawing counts without dropping Motion-only artwork', () => {
     const source = canvas();
     source.title = 'Title '.repeat(100);

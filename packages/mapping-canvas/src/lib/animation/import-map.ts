@@ -19,13 +19,26 @@ function boundedStrokePoints(points: Point[]): Point[] {
 }
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
+function isImportableCanvasObject(object: CanvasDocument['objects'][number]) {
+  return (
+    isMotionDrawingId(object.id) &&
+    (object.kind === 'stroke' ||
+      object.kind === 'note' ||
+      object.kind === 'rectangle' ||
+      object.kind === 'ellipse' ||
+      object.kind === 'arrow')
+  );
+}
+
 function sceneFit(map: CanvasDocument) {
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  let widest = 0, tallest = 0;
   const include = ({ x, y }: Point) => {
     minX = Math.min(minX, x); minY = Math.min(minY, y);
     maxX = Math.max(maxX, x); maxY = Math.max(maxY, y);
   };
   const includeBox = (x: number, y: number, width: number, height: number) => {
+    widest = Math.max(widest, width); tallest = Math.max(tallest, height);
     include({ x, y });
     include({
       x: Number.isFinite(x + width) ? x + width : Number.MAX_VALUE,
@@ -43,7 +56,13 @@ function sceneFit(map: CanvasDocument) {
   if (!Number.isFinite(minX)) {
     minX = 100; minY = 100; maxX = 420; maxY = 280;
   }
-  const unitsPerScene = Math.max(1, (maxX / 2 - minX / 2) / 550, (maxY / 2 - minY / 2) / 280);
+  const unitsPerScene = Math.max(
+    1,
+    (maxX / 2 - minX / 2) / 550,
+    (maxY / 2 - minY / 2) / 280,
+    widest / 550,
+    tallest / 280
+  );
   const scale = 1 / unitsPerScene;
   return {
     scale,
@@ -56,14 +75,12 @@ function sceneFit(map: CanvasDocument) {
 
 /** Materialize representable Canvas marks in Motion without changing their identity. */
 export function importMap(map: CanvasDocument): { drawings: Drawing[]; skipped: number } {
-  const { scale, toScene } = sceneFit(map);
-  let skipped = 0;
+  const objects = map.objects.filter(isImportableCanvasObject).slice(0, LIMITS.drawings);
+  const retainedMap = { ...map, objects };
+  const { scale, toScene } = sceneFit(retainedMap);
+  const skipped = map.objects.length - objects.length;
   const drawings: Drawing[] = [];
-  for (const object of map.objects) {
-    if (drawings.length >= LIMITS.drawings || !isMotionDrawingId(object.id)) {
-      skipped++;
-      continue;
-    }
+  for (const object of objects) {
     const common = {
       id: object.id,
       name: object.kind === 'note' ? object.text.slice(0, 80) : object.kind,
@@ -147,7 +164,7 @@ export function importMap(map: CanvasDocument): { drawings: Drawing[]; skipped: 
                 ];
               })();
       drawings.push(sourced({ ...common, points: object.kind === 'ellipse' ? points : points.map(toScene) }));
-    } else skipped++;
+    }
   }
   return { drawings, skipped };
 }
@@ -226,7 +243,11 @@ export function syncMotionProject(map: CanvasDocument, existing?: Project): Proj
     ]
   };
   const capacity = Math.max(0, LIMITS.drawings - priorMotionOnly.length);
-  const imported = importMap(prioritizedMap);
+  const retainedMap = {
+    ...prioritizedMap,
+    objects: prioritizedMap.objects.filter(isImportableCanvasObject).slice(0, capacity)
+  };
+  const imported = importMap(retainedMap);
   const canvasDrawings = imported.drawings
     .slice(0, capacity)
     .sort((a, b) => originalOrder.get(a.id)! - originalOrder.get(b.id)!)
