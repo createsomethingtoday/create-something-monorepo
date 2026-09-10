@@ -25,7 +25,7 @@ export function createDocument(title = 'Untitled mapping session'): CanvasDocume
 export function isDocument(value: unknown): value is CanvasDocument {
   if (!value || typeof value !== 'object') return false;
   const candidate = value as Partial<CanvasDocument>;
-  if (candidate.version !== DOCUMENT_VERSION || typeof candidate.id !== 'string' || typeof candidate.title !== 'string' || typeof candidate.createdAt !== 'string' || typeof candidate.updatedAt !== 'string' || !Array.isArray(candidate.objects) || !isViewport(candidate.viewport) || !candidate.objects.every((object) => isCanvasObject(object))) return false;
+  if (candidate.version !== DOCUMENT_VERSION || typeof candidate.id !== 'string' || candidate.id.length < 1 || candidate.id.length > 240 || typeof candidate.title !== 'string' || typeof candidate.createdAt !== 'string' || typeof candidate.updatedAt !== 'string' || !Array.isArray(candidate.objects) || !isViewport(candidate.viewport) || !candidate.objects.every((object) => isCanvasObject(object))) return false;
   const ids = new Set(candidate.objects.map(({ id }) => id));
   return ids.size === candidate.objects.length && candidate.objects.every((object) => {
     if (object.kind === 'connector') return object.fromId !== object.toId && ids.has(object.fromId) && ids.has(object.toId);
@@ -37,7 +37,7 @@ export function isDocument(value: unknown): value is CanvasDocument {
 export function normalizeDocument(value: unknown): CanvasDocument | null {
   if (!value || typeof value !== 'object') return null;
   const candidate = value as Partial<CanvasDocument>;
-  if (candidate.version !== DOCUMENT_VERSION || typeof candidate.id !== 'string' || typeof candidate.title !== 'string' || typeof candidate.createdAt !== 'string' || typeof candidate.updatedAt !== 'string' || !Array.isArray(candidate.objects) || !isViewport(candidate.viewport)) return null;
+  if (candidate.version !== DOCUMENT_VERSION || typeof candidate.id !== 'string' || candidate.id.length < 1 || candidate.id.length > 240 || typeof candidate.title !== 'string' || typeof candidate.createdAt !== 'string' || typeof candidate.updatedAt !== 'string' || !Array.isArray(candidate.objects) || !isViewport(candidate.viewport)) return null;
   const objects = candidate.objects.map(normalizeCanvasObject);
   if (objects.some((object) => object === null)) return null;
   const normalizedObjects = objects as CanvasObject[];
@@ -110,7 +110,7 @@ const isViewport = (value: unknown): value is Viewport => isPoint(value) && isFi
 export function isCanvasObject(value: unknown): value is CanvasObject {
   if (!value || typeof value !== 'object') return false;
   const object = value as Partial<CanvasObject>;
-  if (typeof object.id !== 'string' || typeof object.createdAt !== 'string' || typeof object.kind !== 'string') return false;
+  if (typeof object.id !== 'string' || object.id.length < 1 || object.id.length > 240 || typeof object.createdAt !== 'string' || typeof object.kind !== 'string') return false;
   if (object.sourceIds !== undefined && (!Array.isArray(object.sourceIds) || !object.sourceIds.every((id) => typeof id === 'string'))) return false;
   if (object.sourceSnapshot !== undefined && (!Array.isArray(object.sourceSnapshot) || !object.sourceSnapshot.every((source) => isCanvasObject(source)))) return false;
   if (object.kind === 'stroke') return Array.isArray(object.points) && object.points.length > 1 && object.points.every(isPoint) && typeof object.color === 'string' && isFiniteNumber(object.width) && object.width > 0;

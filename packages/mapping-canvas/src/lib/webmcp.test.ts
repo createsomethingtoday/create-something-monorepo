@@ -730,7 +730,7 @@ describe('Draw WebMCP tools', () => {
   });
 
   it('bounds ID arrays in receipts and selection summaries', async () => {
-    const objects = Array.from({ length: 120 }, (_, index) => ({ id: `receipt-${index}-${'x'.repeat(300)}`, kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: index * 10, y: 0, width: 100, height: 80, text: `Note ${index}` }));
+    const objects = Array.from({ length: 120 }, (_, index) => ({ id: `receipt-${index}-${'x'.repeat(200)}`, kind: 'note' as const, createdAt: '2026-09-04T00:00:00.000Z', x: index * 10, y: 0, width: 100, height: 80, text: `Note ${index}` }));
     const controller = harness();
     const baseState = controller.getState;
     controller.getState = () => ({ ...baseState(), selectedIds: objects.map(({ id }) => id) });

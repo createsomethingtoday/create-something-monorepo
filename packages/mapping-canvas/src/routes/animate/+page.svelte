@@ -8,6 +8,8 @@
     newProject,
     basePose,
     makeId,
+    independentProjectCopy,
+    independentDrawingCopy,
     evaluate,
     applyOperations,
     parseProject,
@@ -31,7 +33,6 @@
   import { download, png, exportVideo } from '$lib/animation/export';
   import { importMap } from '$lib/animation/import-map';
   import { parse as parseMap } from '$lib/document';
-  import { loadDocument } from '$lib/persistence';
   import { registerDrawWebMcpTools } from '$lib/webmcp';
   import './page.css';
   let project = $state.raw<Project>(newProject()),
@@ -61,6 +62,7 @@
   let penPoints: Point[] = [];
   let preview = $state.raw<Drawing | null>(null);
   let queue = Promise.resolve();
+  let importQueue = Promise.resolve();
   const current = $derived(project.drawings.find((d) => d.id === selected));
   const pose = $derived(current ? evaluate(current, time) : undefined);
   const shown = $derived(
@@ -69,7 +71,7 @@
       : project
   );
   onMount(() => {
-    void (async () => {
+    const loading = (async () => {
       try {
         projects = await loadProjects();
         const requested = new URL(location.href).searchParams.get('project');
@@ -79,12 +81,14 @@
           await saveProject(project, null);
           projects = [{ id: project.id, title: project.title, revision: project.revision }];
         }
+        if (requested && project.id !== requested) window.history.replaceState(null, '', `/animate?project=${encodeURIComponent(project.id)}`);
         ready = true;
-        status = 'Saved on this device';
+        status = `Canvas + Motion · ${project.id}`;
       } catch (e) {
         status = message(e);
       }
     })();
+    queue = loading.catch(() => {});
     registerDrawWebMcpTools(
       animationTools({
         get: () => {
@@ -137,6 +141,11 @@
   const run = (action: () => Promise<unknown>) => {
     void action().catch((e) => (status = message(e)));
   };
+  function queueImport(action: () => Promise<void>): Promise<void> {
+    const work = importQueue.then(action);
+    importQueue = work.catch(() => {});
+    return work;
+  }
   function commit(ops: Operation[], revision: number): Promise<void> {
     const work = queue.then(async () => {
       if (!ready || busy || exporting) throw new Error('Editor is busy; retry after it is ready.');
@@ -164,39 +173,76 @@
     queue = work.catch(() => {});
     return work;
   }
-  async function history(direction: 'undo' | 'redo') {
-    if (busy || exporting) throw new Error('Editor is busy.');
-    const stack = direction === 'undo' ? past : future;
-    const target = stack.at(-1);
-    if (!target) return;
-    stop();
-    busy = true;
-    try {
-      const next = { ...target, revision: project.revision + 1 };
-      const prepared = renderer.fork();
-      await prepared.prepare(next.assets);
-      await saveProject(next, project.revision);
-      renderer = prepared;
-      if (direction === 'undo') {
-        past = past.slice(0, -1);
-        future = [...future, project];
-      } else {
-        future = future.slice(0, -1);
-        past = [...past, project];
+  function history(direction: 'undo' | 'redo'): Promise<void> {
+    const work = queue.then(async () => {
+      if (busy || exporting) throw new Error('Editor is busy.');
+      const stack = direction === 'undo' ? past : future;
+      const target = stack.at(-1);
+      if (!target) return;
+      stop();
+      busy = true;
+      try {
+        const next = { ...target, revision: project.revision + 1 };
+        const prepared = renderer.fork();
+        await prepared.prepare(next.assets);
+        await saveProject(next, project.revision);
+        renderer = prepared;
+        if (direction === 'undo') {
+          past = past.slice(0, -1);
+          future = [...future, project];
+        } else {
+          future = future.slice(0, -1);
+          past = [...past, project];
+        }
+        project = next;
+        projects = projects.map((p) =>
+          p.id === next.id ? { id: next.id, title: next.title, revision: next.revision } : p
+        );
+        time = Math.min(time, next.duration);
+        status = `${direction === 'undo' ? 'Undid' : 'Redid'} change · saved`;
+      } finally {
+        busy = false;
       }
-      project = next;
-      projects = projects.map((p) =>
-        p.id === next.id ? { id: next.id, title: next.title, revision: next.revision } : p
-      );
-      time = Math.min(time, next.duration);
-      status = `${direction === 'undo' ? 'Undid' : 'Redid'} change · saved`;
-    } finally {
-      busy = false;
-    }
+    });
+    queue = work.catch(() => {});
+    return work;
   }
   function stop() {
     playing = false;
     cancelAnimationFrame(raf);
+  }
+  async function openCanvas(event: MouseEvent) {
+    event.preventDefault();
+    await importQueue;
+    await queue;
+    if (!ready) {
+      status = 'Animation is still loading';
+      return;
+    }
+    location.href = `/?project=${encodeURIComponent(project.id)}`;
+  }
+  function loadSelectedProject(id: string): Promise<void> {
+    const work = queue.then(async () => {
+      stop();
+      busy = true;
+      try {
+        const p = await loadProject(id);
+        const prepared = renderer.fork();
+        await prepared.prepare(p.assets);
+        renderer = prepared;
+        project = p;
+        window.history.replaceState(null, '', `/animate?project=${encodeURIComponent(p.id)}`);
+        past = [];
+        future = [];
+        selected = '';
+        time = 0;
+        status = 'Saved on this device';
+      } finally {
+        busy = false;
+      }
+    });
+    queue = work.catch(() => {});
+    return work;
   }
   function play() {
     if (playing) {
@@ -236,27 +282,31 @@
   function changeSetting(key: 'title' | 'duration' | 'fps' | 'background', value: string | number) {
     run(() => commit([{ type: 'settings', [key]: value }], project.revision));
   }
-  async function fresh(p = newProject()) {
-    if (busy || exporting) throw new Error('Editor is busy.');
-    stop();
-    busy = true;
-    try {
-      validateProject(p);
-      const prepared = renderer.fork();
-      await prepared.prepare(p.assets);
-      await saveProject(p, null);
-      renderer = prepared;
-      project = p;
-      window.history.replaceState(null, '', `/animate?project=${p.id}`);
-      projects = [{ id: p.id, title: p.title, revision: p.revision }, ...projects];
-      past = [];
-      future = [];
-      time = 0;
-      selected = '';
-      status = 'New project saved · other projects preserved';
-    } finally {
-      busy = false;
-    }
+  function fresh(p = newProject()): Promise<void> {
+    const work = queue.then(async () => {
+      if (busy || exporting) throw new Error('Editor is busy.');
+      stop();
+      busy = true;
+      try {
+        validateProject(p);
+        const prepared = renderer.fork();
+        await prepared.prepare(p.assets);
+        await saveProject(p, null);
+        renderer = prepared;
+        project = p;
+        window.history.replaceState(null, '', `/animate?project=${encodeURIComponent(p.id)}`);
+        projects = [{ id: p.id, title: p.title, revision: p.revision }, ...projects];
+        past = [];
+        future = [];
+        time = 0;
+        selected = '';
+        status = 'New project saved · other projects preserved';
+      } finally {
+        busy = false;
+      }
+    });
+    queue = work.catch(() => {});
+    return work;
   }
   async function importFile(event: Event) {
     const input = event.target as HTMLInputElement,
@@ -273,7 +323,7 @@
       p = { ...newProject(), title: map.title, drawings: result.drawings };
       status = `Copied drawing; ${result.skipped} mapping-only objects omitted`;
     }
-    await fresh({ ...p, id: makeId(), revision: 0 });
+    await fresh(independentProjectCopy(p));
   }
   async function addAsset(asset: Asset, projectId: string, revision: number) {
     if (project.id !== projectId || project.revision !== revision)
@@ -315,13 +365,6 @@
       if (bundle.version !== 'draw.asset.v1') throw new Error('Expected a draw.asset.v1 bundle.');
       await addAsset({ ...bundle.asset, id: makeId() }, projectId, revision);
     } else await addAsset(await importImage(file), projectId, revision);
-  }
-  async function copyMap() {
-    const map = await loadDocument();
-    if (!map) throw new Error('No drawing saved on this device.');
-    const result = importMap(map);
-    await fresh({ ...newProject(), title: `${map.title} · animation`, drawings: result.drawings });
-    status = `Copied ${result.drawings.length} marks; ${result.skipped} mapping-only objects omitted. Original map preserved.`;
   }
   function add(kind: 'circle' | 'text') {
     const d: Drawing = {
@@ -486,7 +529,9 @@
 >
 <main>
   <header>
-    <a href="/" class="brand">DRAW <span>ANIMATION</span></a><input
+    <a href={`/?project=${encodeURIComponent(project.id)}`} onclick={openCanvas} class="brand"
+      >DRAW <span>MOTION</span></a
+    ><input
       aria-label="Animation title"
       value={project.title}
       onchange={(e) => changeSetting('title', e.currentTarget.value)}
@@ -503,7 +548,7 @@
           'animation.draw.json'
         )}
       disabled={!ready}>Save project</button
-    ><a href="/">Back to drawing</a>
+    ><a href={`/?project=${encodeURIComponent(project.id)}`} onclick={openCanvas}>Canvas</a>
   </header>
   {#if showHelp}<aside class="help">
       <strong>Create artwork in your Codex conversation.</strong> Ask Codex to generate an
@@ -521,25 +566,7 @@
         disabled={!ready || busy || exporting}
         onchange={(e) => {
           const id = e.currentTarget.value;
-          run(async () => {
-            stop();
-            busy = true;
-            try {
-              const p = await loadProject(id);
-              const prepared = renderer.fork();
-              await prepared.prepare(p.assets);
-              renderer = prepared;
-              project = p;
-              window.history.replaceState(null, '', `/animate?project=${p.id}`);
-              past = [];
-              future = [];
-              selected = '';
-              time = 0;
-              status = 'Saved on this device';
-            } finally {
-              busy = false;
-            }
-          });
+          run(() => loadSelectedProject(id));
         }}
         >{#each projects as p}<option value={p.id}>{p.title}</option>{/each}</select
       >
@@ -565,11 +592,9 @@
           run(async () => {
             const r = await fetch('/approval-pilot.draw.json');
             if (!r.ok) throw new Error('Sample could not load.');
-            await fresh({ ...parseProject(await r.text()), id: makeId(), revision: 0 });
+            await fresh(independentProjectCopy(parseProject(await r.text())));
           })}
         disabled={!ready || busy || exporting}>Open sample tutorial</button
-      ><button onclick={() => run(copyMap)} disabled={!ready || busy || exporting}
-        >Copy saved drawing</button
       >
       <div class="drawing-list">
         {#each project.drawings as d (d.id)}<button
@@ -701,7 +726,7 @@
                 [
                   {
                     type: 'put_drawing',
-                    drawing: { ...current!, id: makeId(), name: `${current!.name} copy` }
+                    drawing: independentDrawingCopy(current!)
                   }
                 ],
                 project.revision
@@ -711,7 +736,8 @@
         ><button
           onclick={() =>
             run(() => commit([{ type: 'remove_drawing', id: current!.id }], project.revision))}
-          disabled={busy || exporting}>Remove drawing</button
+          disabled={busy || exporting || current.source?.space === 'canvas'}
+          title={current.source?.space === 'canvas' ? 'Remove this drawing in Canvas' : 'Remove drawing'}>Remove drawing</button
         >
       {:else}<p class="muted">
           Select a drawing to edit its pose. Each change at a new time creates a key pose.
@@ -829,12 +855,12 @@
     bind:this={fileInput}
     type="file"
     accept="application/json,.json"
-    onchange={(e) => run(() => importFile(e))}
+    onchange={(e) => run(() => queueImport(() => importFile(e)))}
   /><input
     class="hidden"
     bind:this={imageInput}
     type="file"
     accept="image/png,image/jpeg,image/webp,application/json,.json"
-    onchange={(e) => run(() => imageFile(e))}
+    onchange={(e) => run(() => queueImport(() => imageFile(e)))}
   />
 </main>

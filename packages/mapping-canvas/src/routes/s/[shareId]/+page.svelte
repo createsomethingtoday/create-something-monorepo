@@ -2,7 +2,7 @@
   import type { PageData } from './$types';
   import RichNote from '$lib/RichNote.svelte';
   import { createObjectCenterResolver, objectBounds, uid } from '$lib/document';
-  import { loadDocument, saveDocument } from '$lib/persistence';
+  import { saveDocument } from '$lib/persistence';
   import { connectorLabelLayout } from '$lib/webmcp';
   let { data }: { data: PageData } = $props();
   const DRAW_DOCUMENT_LOCK = 'draw-active-document';
@@ -17,22 +17,13 @@
   const path = (points: { x: number; y: number }[]) => points.map((point, i) => `${i ? 'L' : 'M'}${point.x} ${point.y}`).join(' ');
   async function copyLocal() {
     try {
-      const existing = await loadDocument();
-      if (existing && !confirm(`Replace your local canvas "${existing.title}" with a copy of this snapshot? Export it first if you need to keep both.`)) return;
       const replace = async () => {
-        const current = await loadDocument();
-        if ((current?.id ?? null) !== (existing?.id ?? null)) throw new Error('Another tab replaced the local canvas.');
         const now = new Date().toISOString(), next = { ...JSON.parse(JSON.stringify(document)), id: uid('canvas'), title: `${document.title} copy`, createdAt: now, updatedAt: now };
-        const oldKey = existing ? `draw-share:${existing.id}` : null, managed = oldKey ? localStorage.getItem(oldKey) : null, nextKey = `draw-share:${next.id}`;
         await saveDocument(next);
-        if (managed) {
-          try { localStorage.setItem(nextKey, managed); }
-          catch (error) { if (existing) await saveDocument(existing); throw error; }
-          try { if (oldKey) localStorage.removeItem(oldKey); } catch { /* Both keys retain the same capability. */ }
-        }
+        return next.id;
       };
-      if (navigator.locks) await navigator.locks.request(DRAW_DOCUMENT_LOCK, replace); else await replace();
-      location.href = '/';
+      const projectId = navigator.locks ? await navigator.locks.request(DRAW_DOCUMENT_LOCK, replace) : await replace();
+      location.href = `/?project=${encodeURIComponent(projectId)}`;
     } catch { copyStatus = 'Copy failed · your local canvas was preserved'; }
   }
 </script>

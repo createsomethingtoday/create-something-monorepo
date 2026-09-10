@@ -104,6 +104,61 @@ describe('animation contract', () => {
       applyOperations(single, [{ type: 'remove_pose', id: 'line', time: 0 }], 0)
     ).toThrow();
   });
+  it('keeps Canvas-backed drawings owned by the Canvas space', () => {
+    const p = newProject();
+    p.drawings = [
+      {
+        ...drawing(),
+        source: {
+          space: 'canvas',
+          objectId: 'line',
+          origin: { x: 0, y: 0, scaleX: 1, scaleY: 1 }
+        }
+      }
+    ];
+    expect(() => applyOperations(p, [{ type: 'remove_drawing', id: 'line' }], 0)).toThrow(
+      'Remove it in Canvas'
+    );
+    expect(() =>
+      applyOperations(
+        p,
+        [
+          { type: 'put_drawing', drawing: { ...p.drawings[0], source: undefined } },
+          { type: 'remove_drawing', id: 'line' }
+        ],
+        0
+      )
+    ).toThrow('Canvas provenance');
+    expect(() =>
+      applyOperations(
+        newProject(),
+        [
+          {
+            type: 'put_drawing',
+            drawing: {
+              ...drawing(),
+              source: { space: 'canvas', objectId: 'line', origin: { x: 0, y: 0, scaleX: 1, scaleY: 1 } }
+            }
+          }
+        ],
+        0
+      )
+    ).toThrow('Canvas provenance');
+    expect(p.drawings).toHaveLength(1);
+  });
+  it('accepts unchanged Canvas provenance regardless of object key order', () => {
+    const p = newProject();
+    p.drawings = [{ ...drawing(), source: { space: 'canvas', objectId: 'line', origin: { x: 0, y: 0, scaleX: 1, scaleY: 1 } } }];
+    const updated = applyOperations(p, [{
+      type: 'put_drawing',
+      drawing: {
+        ...p.drawings[0],
+        color: '#ff0000',
+        source: { objectId: 'line', origin: { scaleY: 1, scaleX: 1, y: 0, x: 0 }, space: 'canvas' }
+      }
+    }], 0);
+    expect(updated.drawings[0].color).toBe('#ff0000');
+  });
   it('rejects external image URLs and nonfinite coordinates', () => {
     const p = newProject();
     p.assets = [

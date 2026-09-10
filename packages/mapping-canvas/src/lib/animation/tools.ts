@@ -43,11 +43,27 @@ const cameraPose = {
   },
   additionalProperties: false
 };
+const source = {
+  type: 'object',
+  required: ['space', 'objectId'],
+  properties: {
+    space: { const: 'canvas' },
+    objectId: { type: 'string' },
+    origin: {
+      type: 'object',
+      required: ['x', 'y', 'scaleX', 'scaleY'],
+      properties: { x: num, y: num, scaleX: num, scaleY: num },
+      additionalProperties: false
+    }
+  },
+  additionalProperties: false
+};
 const drawing = {
   type: 'object',
   required: ['id', 'name', 'kind', 'points', 'color', 'weight', 'text', 'width', 'height', 'poses'],
   properties: {
     id: { type: 'string' },
+    source,
     name: { type: 'string' },
     kind: { enum: ['stroke', 'image', 'text'] },
     points: { type: 'array', items: point },
@@ -104,6 +120,7 @@ export function animationTools(c: AnimationController): DrawWebMcpTool[] {
       assets: p.assets.map(({ data, ...a }) => ({ ...a, characters: data.length })),
       drawings: p.drawings.map((d) => ({
         id: d.id,
+        source: d.source,
         name: d.name,
         kind: d.kind,
         assetId: d.assetId,

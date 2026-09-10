@@ -1,4 +1,4 @@
-/** Animation owns a separate document: old mapping drafts are never migrated in place. */
+/** Motion is a separate editing space attached to the same logical Draw project. */
 export type Point = { x: number; y: number };
 export type Easing = 'linear' | 'ease' | 'hold';
 export type Pose = {
@@ -37,6 +37,11 @@ export type Flipbook = {
   registration: 'cell' | 'alpha';
 };
 export type Drawing = {
+  source?: {
+    space: 'canvas';
+    objectId: string;
+    origin?: { x: number; y: number; scaleX: number; scaleY: number };
+  };
   space?: 'world' | 'screen';
   boil?: Boil;
   flipbook?: Flipbook;
@@ -99,10 +104,27 @@ export const newProject = (): Project => ({
   assets: [],
   drawings: []
 });
+/** Create a Motion-only copy. Canvas provenance belongs to the original shared project ID. */
+export function independentProjectCopy(project: Project, projectId: string = makeId()): Project {
+  return {
+    ...project,
+    id: projectId,
+    revision: 0,
+    drawings: project.drawings.map(({ source: _source, ...drawing }) => drawing)
+  };
+}
+export function independentDrawingCopy(drawing: Drawing, drawingId: string = makeId()): Drawing {
+  const { source: _source, ...copy } = drawing;
+  return { ...copy, id: drawingId, name: `${drawing.name} copy` };
+}
 const finite = (x: unknown, min: number, max: number) =>
   typeof x === 'number' && Number.isFinite(x) && x >= min && x <= max;
 const string = (x: unknown, max: number) => typeof x === 'string' && x.length <= max;
 const id = (x: unknown) => typeof x === 'string' && /^[a-zA-Z0-9_-]{1,120}$/.test(x);
+export const isDrawProjectId = (x: unknown): x is string =>
+  typeof x === 'string' && x.length >= 1 && x.length <= 240;
+export const isMotionDrawingId = (x: unknown): x is string =>
+  typeof x === 'string' && x.length >= 1 && x.length <= 240;
 const keys = (x: object, allowed: string[]) => Object.keys(x).every((k) => allowed.includes(k));
 const color = (x: unknown) => typeof x === 'string' && /^#[\da-f]{6}$/i.test(x);
 const points = (x: unknown) =>
@@ -130,7 +152,7 @@ export function validateProject(value: unknown): asserts value is Project {
       'drawings'
     ]) ||
     p.version !== 'draw.animation.v1' ||
-    !id(p.id) ||
+    !isDrawProjectId(p.id) ||
     !Number.isSafeInteger(p.revision) ||
     p.revision < 0 ||
     !string(p.title, 240) ||
@@ -212,9 +234,10 @@ export function validateProject(value: unknown): asserts value is Project {
         'poses',
         'space',
         'boil',
-        'flipbook'
+        'flipbook',
+        'source'
       ]) ||
-      !id(d.id) ||
+      !isMotionDrawingId(d.id) ||
       drawingIds.has(d.id) ||
       !string(d.name, 240) ||
       !['stroke', 'image', 'text'].includes(d.kind) ||
@@ -231,6 +254,22 @@ export function validateProject(value: unknown): asserts value is Project {
       (d.kind === 'stroke' && d.points.length < 2)
     )
       throw new Error('Invalid drawing, asset reference or drawing limits.');
+    if (
+      d.source !== undefined &&
+      (!d.source ||
+        !keys(d.source, ['space', 'objectId', 'origin']) ||
+        d.source.space !== 'canvas' ||
+        !isMotionDrawingId(d.source.objectId) ||
+        d.source.objectId !== d.id ||
+        (d.source.origin !== undefined &&
+          (!d.source.origin ||
+            !keys(d.source.origin, ['x', 'y', 'scaleX', 'scaleY']) ||
+            !finite(d.source.origin.x, -10000, 10000) ||
+            !finite(d.source.origin.y, -10000, 10000) ||
+            !finite(d.source.origin.scaleX, Number.MIN_VALUE, 1) ||
+            !finite(d.source.origin.scaleY, Number.MIN_VALUE, 1))))
+    )
+      throw new Error('Canvas-backed motion drawings must preserve their source object ID.');
     if (d.space !== undefined && !['world', 'screen'].includes(d.space))
       throw new Error('Invalid drawing space.');
     if (
@@ -375,6 +414,12 @@ export type Operation =
       width?: number;
       height?: number;
     };
+function sameCanvasSource(a: Drawing['source'], b: Drawing['source']): boolean {
+  if (!a || !b) return a === b;
+  if (a.space !== b.space || a.objectId !== b.objectId) return false;
+  if (!a.origin || !b.origin) return a.origin === b.origin;
+  return a.origin.x === b.origin.x && a.origin.y === b.origin.y && a.origin.scaleX === b.origin.scaleX && a.origin.scaleY === b.origin.scaleY;
+}
 export function applyOperations(
   p: Project,
   operations: Operation[],
@@ -384,6 +429,9 @@ export function applyOperations(
     throw new Error('Stale animation revision. Inspect again before retrying.');
   if (!Array.isArray(operations) || !operations.length || operations.length > 100)
     throw new Error('Use 1–100 operations.');
+  const originalCanvasSources = new Map(
+    p.drawings.filter((drawing) => drawing.source?.space === 'canvas').map((drawing) => [drawing.id, drawing.source!])
+  );
   let next = { ...p };
   for (const op of operations) {
     if (op.type === 'set_camera') next = { ...next, camera: op.poses };
@@ -391,6 +439,11 @@ export function applyOperations(
       next = { ...next, assets: [...next.assets.filter((a) => a.id !== op.asset.id), op.asset] };
     else if (op.type === 'put_drawing') {
       const i = next.drawings.findIndex((d) => d.id === op.drawing.id);
+      const canvasSource = originalCanvasSources.get(op.drawing.id);
+      if (!canvasSource && op.drawing.source?.space === 'canvas')
+        throw new Error('Canvas provenance can only be created by Canvas synchronization.');
+      if (canvasSource && !sameCanvasSource(op.drawing.source, canvasSource))
+        throw new Error('Canvas provenance cannot be changed in Motion.');
       next = {
         ...next,
         drawings:
@@ -403,7 +456,10 @@ export function applyOperations(
       op.type === 'remove_pose' ||
       op.type === 'remove_drawing'
     ) {
-      if (!next.drawings.some((d) => d.id === op.id)) throw new Error('Unknown drawing.');
+      const target = next.drawings.find((d) => d.id === op.id);
+      if (!target) throw new Error('Unknown drawing.');
+      if (op.type === 'remove_drawing' && originalCanvasSources.has(op.id))
+        throw new Error('This drawing is owned by Canvas. Remove it in Canvas instead.');
       next = {
         ...next,
         drawings: next.drawings
