@@ -550,7 +550,7 @@
   async function initializeSession() {
     if (!nativeShell) {
       const requested = new URL(location.href).searchParams.get('project') ?? undefined;
-      await loadDocument(requested).then(async (saved) => { if (saved) { if (requested) await activateCanvasProject(saved.id); persistedCanvasVersions.set(saved.id, saved.updatedAt); history = { past: [], present: saved, future: [] }; restoreManagedShare(saved.id); status = 'Restored from this device'; } else { persistedCanvasVersions.set(document.id, null); status = 'New local session'; } }).catch(() => status = 'Local storage unavailable · export copies');
+      await loadDocument(requested).then(async (saved) => { if (saved) { if (requested) await activateCanvasProject(saved.id); persistedCanvasVersions.set(saved.id, saved.updatedAt); history = { past: [], present: saved, future: [] }; restoreManagedShare(saved.id); status = 'Restored from this device'; } else { if (requested) window.history.replaceState(null, '', `/?project=${encodeURIComponent(document.id)}`); persistedCanvasVersions.set(document.id, null); status = 'New local session'; } }).catch(() => status = 'Local storage unavailable · export copies');
       ready = true;
       return;
     }

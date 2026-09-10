@@ -263,12 +263,13 @@ export function syncMotionProject(map: CanvasDocument, existing?: Project): Proj
     .filter(isImportableCanvasObject)
     .slice(0, capacity);
   const existingObjects = importableObjects.filter((object) => priorCanvasIds.has(object.id));
+  let updateableExistingObjects = existingObjects;
   let newObjects = importableObjects
     .filter((object) => !priorCanvasIds.has(object.id))
     .slice(0, capacity - existingObjects.length);
   let candidate = assemble([]);
   for (;;) {
-    const selectedMap = { ...map, objects: [...existingObjects, ...newObjects] };
+    const selectedMap = { ...map, objects: [...updateableExistingObjects, ...newObjects] };
     const imported = importMap(selectedMap).drawings;
     const importedById = new Map(imported.map((drawing) => [drawing.id, drawing]));
     let selected = existingObjects
@@ -280,7 +281,8 @@ export function syncMotionProject(map: CanvasDocument, existing?: Project): Proj
       selected = [];
       current = assemble(selected);
     }
-    for (const object of existingObjects) {
+    const acceptedExistingUpdateIds = new Set<string>();
+    for (const object of updateableExistingObjects) {
       const updated = importedById.get(object.id);
       if (!updated) continue;
       const retained = retainAnimation(updated, prior.get(updated.id));
@@ -289,7 +291,14 @@ export function syncMotionProject(map: CanvasDocument, existing?: Project): Proj
       if (serializedBytes(next) <= LIMITS.bytes) {
         selected = trial;
         current = next;
+        acceptedExistingUpdateIds.add(object.id);
       }
+    }
+    if (acceptedExistingUpdateIds.size !== updateableExistingObjects.length) {
+      updateableExistingObjects = updateableExistingObjects.filter((object) =>
+        acceptedExistingUpdateIds.has(object.id)
+      );
+      continue;
     }
     const retainedNewIds = new Set<string>();
     for (const object of newObjects) {

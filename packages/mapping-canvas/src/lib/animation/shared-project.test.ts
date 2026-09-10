@@ -540,6 +540,26 @@ describe('shared Draw project contract', () => {
     }
   });
 
+  it('refits after rejecting an over-budget update to an existing distant Canvas object', () => {
+    const source = canvas();
+    source.objects = [
+      { id: 'steady-note', kind: 'note', createdAt: '2026-09-10T00:00:00.000Z', x: 0, y: 0, width: 240, height: 120, text: 'Steady' },
+      { id: 'moving-note', kind: 'note', createdAt: '2026-09-10T00:00:00.000Z', x: 300, y: 0, width: 240, height: 120, text: 'Moving' }
+    ];
+    const existing = syncMotionProject(source);
+    const edited = { ...source, objects: source.objects.map((object) => object.id === 'moving-note' ? { ...object, x: 1_000_000, y: 1_000_000, text: 'x'.repeat(2_000) } : object) };
+    const originalByteLimit = LIMITS.bytes;
+    LIMITS.bytes = JSON.stringify({ ...existing, revision: existing.revision + 1 }).length + 100;
+    try {
+      const synchronized = syncMotionProject(edited, existing);
+      expect(synchronized.drawings.find(({ id }) => id === 'moving-note')).toEqual(existing.drawings.find(({ id }) => id === 'moving-note'));
+      expect(synchronized.drawings.find(({ id }) => id === 'steady-note')).toEqual(existing.drawings.find(({ id }) => id === 'steady-note'));
+      expect(() => validateProject(synchronized)).not.toThrow();
+    } finally {
+      LIMITS.bytes = originalByteLimit;
+    }
+  });
+
   it('bounds Canvas text and drawing counts without dropping Motion-only artwork', () => {
     const source = canvas();
     source.title = 'Title '.repeat(100);
