@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { createDocument, isDocument, type CanvasDocument } from '../document';
-import { basePose, independentProjectCopy, LIMITS, validateProject, type Project } from './model';
+import {
+  basePose,
+  independentDrawingCopy,
+  independentProjectCopy,
+  LIMITS,
+  validateProject,
+  type Project
+} from './model';
 import { importMap, syncMotionProject } from './import-map';
 import {
   canvasSpaceForProject,
@@ -234,6 +241,17 @@ describe('shared Draw project contract', () => {
     expect(() => validateProject(copy)).not.toThrow();
   });
 
+  it('detaches Canvas provenance when a drawing is duplicated for Motion', () => {
+    const shared = syncMotionProject(canvas());
+    const source = shared.drawings[0];
+    const copy = independentDrawingCopy(source, 'motion-copy');
+
+    expect(copy.id).toBe('motion-copy');
+    expect(copy.name).toBe(`${source.name} copy`);
+    expect(copy.source).toBeUndefined();
+    expect(() => validateProject({ ...shared, drawings: [source, copy] })).not.toThrow();
+  });
+
   it('keeps a Motion-specific title while Canvas content is reconciled', () => {
     const source = canvas();
     const existing = { ...syncMotionProject(source), title: 'Motion cut' };
@@ -330,6 +348,56 @@ describe('shared Draw project contract', () => {
     expect(motion.drawings.at(-1)?.id).toBe('motion-only');
     expect(motion.drawings[0].text).toHaveLength(2_000);
     expect(() => validateProject(motion)).not.toThrow();
+  });
+
+  it('keeps existing Canvas-backed animation when reordered input exceeds the layer limit', () => {
+    const source = canvas();
+    source.objects = Array.from({ length: LIMITS.drawings }, (_, index) => ({
+      id: `note-${index}`,
+      kind: 'note' as const,
+      createdAt: '2026-09-10T00:00:00.000Z',
+      x: index * 10,
+      y: 0,
+      width: 240,
+      height: 120,
+      text: `Note ${index}`
+    }));
+    const initial = syncMotionProject(source);
+    const retainedId = `note-${LIMITS.drawings - 1}`;
+    const existing = {
+      ...initial,
+      drawings: initial.drawings.map((drawing) =>
+        drawing.id === retainedId
+          ? { ...drawing, poses: [...drawing.poses, { ...drawing.poses[0], time: 1, x: 900 }] }
+          : drawing
+      )
+    };
+    const prepended: CanvasDocument = {
+      ...source,
+      objects: [
+        {
+          id: 'new-first',
+          kind: 'note',
+          createdAt: '2026-09-10T00:00:00.000Z',
+          x: -100,
+          y: 0,
+          width: 240,
+          height: 120,
+          text: 'New first note'
+        },
+        ...source.objects
+      ]
+    };
+
+    const synchronized = syncMotionProject(prepended, existing);
+    const retained = synchronized.drawings.find(({ id }) => id === retainedId);
+
+    expect(synchronized.drawings).toHaveLength(LIMITS.drawings);
+    expect(retained?.poses).toHaveLength(2);
+    expect(retained?.poses.at(-1)?.time).toBe(1);
+    expect(retained?.poses.at(-1)?.x).not.toBe(retained?.poses[0].x);
+    expect(synchronized.drawings.some(({ id }) => id === 'new-first')).toBe(false);
+    expect(() => validateProject(synchronized)).not.toThrow();
   });
 
   it('preserves Motion-only artwork when Canvas introduces the same object ID', () => {

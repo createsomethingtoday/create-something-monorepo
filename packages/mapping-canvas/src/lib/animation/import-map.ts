@@ -174,12 +174,27 @@ function preserveMotionOnlyIds(drawings: Drawing[], canvasIds: Set<string>): Dra
 
 /** Reconcile the Canvas space into Motion while preserving poses and Motion-only artwork. */
 export function syncMotionProject(map: CanvasDocument, existing?: Project): Project {
-  const imported = importMap(map);
   const prior = new Map(existing?.drawings.map((drawing) => [drawing.id, drawing]));
   const priorMotionOnly =
     existing?.drawings.filter((drawing) => drawing.source?.space !== 'canvas') ?? [];
+  const priorCanvasIds = new Set(
+    existing?.drawings
+      .filter((drawing) => drawing.source?.space === 'canvas')
+      .map((drawing) => drawing.source!.objectId) ?? []
+  );
+  const originalOrder = new Map(map.objects.map((object, index) => [object.id, index]));
+  const prioritizedMap = {
+    ...map,
+    objects: [
+      ...map.objects.filter((object) => priorCanvasIds.has(object.id)),
+      ...map.objects.filter((object) => !priorCanvasIds.has(object.id))
+    ]
+  };
+  const capacity = Math.max(0, LIMITS.drawings - priorMotionOnly.length);
+  const imported = importMap(prioritizedMap);
   const canvasDrawings = imported.drawings
-    .slice(0, Math.max(0, LIMITS.drawings - priorMotionOnly.length))
+    .slice(0, capacity)
+    .sort((a, b) => originalOrder.get(a.id)! - originalOrder.get(b.id)!)
     .map((drawing) => retainAnimation(drawing, prior.get(drawing.id)));
   const motionOnly = preserveMotionOnlyIds(
     priorMotionOnly,

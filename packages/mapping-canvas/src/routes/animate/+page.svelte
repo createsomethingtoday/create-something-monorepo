@@ -9,6 +9,7 @@
     basePose,
     makeId,
     independentProjectCopy,
+    independentDrawingCopy,
     evaluate,
     applyOperations,
     parseProject,
@@ -707,7 +708,7 @@
                 [
                   {
                     type: 'put_drawing',
-                    drawing: { ...current!, id: makeId(), name: `${current!.name} copy` }
+                    drawing: independentDrawingCopy(current!)
                   }
                 ],
                 project.revision

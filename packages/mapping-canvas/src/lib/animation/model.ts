@@ -113,6 +113,10 @@ export function independentProjectCopy(project: Project, projectId: string = mak
     drawings: project.drawings.map(({ source: _source, ...drawing }) => drawing)
   };
 }
+export function independentDrawingCopy(drawing: Drawing, drawingId: string = makeId()): Drawing {
+  const { source: _source, ...copy } = drawing;
+  return { ...copy, id: drawingId, name: `${drawing.name} copy` };
+}
 const finite = (x: unknown, min: number, max: number) =>
   typeof x === 'number' && Number.isFinite(x) && x >= min && x <= max;
 const string = (x: unknown, max: number) => typeof x === 'string' && x.length <= max;
