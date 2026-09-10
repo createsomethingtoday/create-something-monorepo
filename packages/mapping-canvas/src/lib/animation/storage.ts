@@ -5,6 +5,7 @@ import { validateProject, type Project } from './model';
 const LEGACY_DATABASE = 'create-something-draw-animation';
 const LEGACY_STORE = 'projects';
 let migration: Promise<void> | undefined;
+const loadedCanvasVersions = new Map<string, string | null>();
 
 function openLegacy(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -45,7 +46,13 @@ async function migrateLegacyProjects(): Promise<void> {
   migration ??= (async () => {
     for (const project of await legacyProjects()) {
       const existing = await loadProjectRecord(project.id);
-      if (!existing?.motion) await saveMotionProject(project, null);
+      if (!existing?.motion) {
+        try {
+          await saveMotionProject(project, null, existing?.canvas?.updatedAt ?? null);
+        } catch (error) {
+          if (!(await loadProjectRecord(project.id))?.motion) throw error;
+        }
+      }
     }
   })();
   return migration;
@@ -66,12 +73,21 @@ export async function loadProject(id: string): Promise<Project> {
   await migrateLegacyProjects();
   const record = await loadProjectRecord(id);
   if (!record) throw new Error('Draw project was not found on this device.');
-  if (!record.canvas && record.motion) return record.motion;
+  if (!record.canvas && record.motion) {
+    loadedCanvasVersions.set(id, null);
+    return record.motion;
+  }
   if (!record.canvas) throw new Error('Draw project has no Canvas or Motion space.');
   const synchronized = syncMotionProject(record.canvas, record.motion);
   if (!record.motion || synchronized !== record.motion)
-    await saveMotionProject(synchronized, record.motion?.revision ?? null);
+    await saveMotionProject(synchronized, record.motion?.revision ?? null, record.canvas.updatedAt);
+  loadedCanvasVersions.set(id, record.canvas.updatedAt);
   return synchronized;
 }
 
-export const saveProject = saveMotionProject;
+export async function saveProject(
+  project: Project,
+  expectedRevision: number | null
+): Promise<void> {
+  await saveMotionProject(project, expectedRevision, loadedCanvasVersions.get(project.id) ?? null);
+}

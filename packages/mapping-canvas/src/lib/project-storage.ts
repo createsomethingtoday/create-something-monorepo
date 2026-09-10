@@ -198,7 +198,8 @@ export async function clearCanvasProject(id?: string): Promise<void> {
 
 export async function saveMotionProject(
   motion: Project,
-  expectedRevision: number | null
+  expectedRevision: number | null,
+  expectedCanvasUpdatedAt?: string | null
 ): Promise<void> {
   validateProject(motion);
   const portable = clone(motion);
@@ -207,11 +208,19 @@ export async function saveMotionProject(
     const transaction = db.transaction(STORE, 'readwrite');
     const projects = transaction.objectStore(STORE);
     const request = projects.get(motion.id);
-    let conflict = false;
+    let conflict: 'motion' | 'canvas' | null = null;
     request.onsuccess = () => {
       const current = request.result as DrawProjectRecord | undefined;
       if ((current?.motion?.revision ?? null) !== expectedRevision) {
-        conflict = true;
+        conflict = 'motion';
+        transaction.abort();
+        return;
+      }
+      if (
+        expectedCanvasUpdatedAt !== undefined &&
+        (current?.canvas?.updatedAt ?? null) !== expectedCanvasUpdatedAt
+      ) {
+        conflict = 'canvas';
         transaction.abort();
         return;
       }
@@ -226,9 +235,11 @@ export async function saveMotionProject(
       db.close();
       reject(
         new Error(
-          conflict
-            ? 'Another tab changed this project. Reload before editing; your draft has not overwritten it.'
-            : 'Could not save project. Export your draft before closing.'
+          conflict === 'canvas'
+            ? 'Canvas changed in another tab. Reload Motion before editing; your draft has not overwritten it.'
+            : conflict === 'motion'
+              ? 'Another tab changed this project. Reload before editing; your draft has not overwritten it.'
+              : 'Could not save project. Export your draft before closing.'
         )
       );
     };

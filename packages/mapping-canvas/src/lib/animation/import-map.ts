@@ -12,8 +12,9 @@ import {
 function boundedStrokePoints(points: Point[]): Point[] {
   if (points.length <= LIMITS.points) return points;
   const last = points.length - 1;
-  return Array.from({ length: LIMITS.points }, (_, index) =>
-    points[Math.round((index * last) / (LIMITS.points - 1))]
+  return Array.from(
+    { length: LIMITS.points },
+    (_, index) => points[Math.round((index * last) / (LIMITS.points - 1))]
   );
 }
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
@@ -45,10 +46,14 @@ export function importMap(map: CanvasDocument): { drawings: Drawing[]; skipped: 
       poses: [basePose()]
     };
     const sourced = <T extends Drawing>(drawing: T): T => {
-      const { x, y, scaleX, scaleY } = drawing.poses[0];
+      const { x, y } = drawing.poses[0];
       return {
         ...drawing,
-        source: { space: 'canvas', objectId: object.id, origin: { x, y, scaleX, scaleY } }
+        source: {
+          space: 'canvas',
+          objectId: object.id,
+          origin: { x, y, scaleX: scale, scaleY: scale }
+        }
       };
     };
     if (object.kind === 'stroke')
@@ -60,22 +65,24 @@ export function importMap(map: CanvasDocument): { drawings: Drawing[]; skipped: 
         })
       );
     else if (object.kind === 'note')
-      drawings.push(sourced({
-        ...common,
-        kind: 'text',
-        points: [],
-        text: object.text.slice(0, 2000),
-        color: '#282522',
-        weight: Math.max(0.1, 24 * scale),
-        width: Math.max(1, object.width * scale),
-        height: Math.max(1, object.height * scale),
-        poses: [
-          {
-            ...common.poses[0],
-            ...toScene({ x: object.x, y: object.y })
-          }
-        ]
-      }));
+      drawings.push(
+        sourced({
+          ...common,
+          kind: 'text',
+          points: [],
+          text: object.text.slice(0, 2000),
+          color: '#282522',
+          weight: Math.max(0.1, 24 * scale),
+          width: Math.max(1, object.width * scale),
+          height: Math.max(1, object.height * scale),
+          poses: [
+            {
+              ...common.poses[0],
+              ...toScene({ x: object.x, y: object.y })
+            }
+          ]
+        })
+      );
     else if (object.kind === 'rectangle' || object.kind === 'ellipse' || object.kind === 'arrow') {
       const a = object.from,
         b = object.to;
@@ -130,8 +137,16 @@ function retainAnimation(source: Drawing, prior: Drawing | undefined): Drawing {
       points:
         samePointCount && pose.points
           ? pose.points.map((point, index) => ({
-              x: clamp(source.points[index].x + (point.x - prior.points[index].x), -10_000, 10_000),
-              y: clamp(source.points[index].y + (point.y - prior.points[index].y), -10_000, 10_000)
+              x: clamp(
+                source.points[index].x + (point.x - prior.points[index].x) * scaleX,
+                -10_000,
+                10_000
+              ),
+              y: clamp(
+                source.points[index].y + (point.y - prior.points[index].y) * scaleY,
+                -10_000,
+                10_000
+              )
             }))
           : undefined
     }))

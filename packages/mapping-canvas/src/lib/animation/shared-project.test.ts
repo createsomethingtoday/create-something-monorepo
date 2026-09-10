@@ -108,7 +108,7 @@ describe('shared Draw project contract', () => {
             }
           : object.id === 'note-stable' && object.kind === 'note'
             ? { ...object, x: object.x + 120 }
-          : object
+            : object
       )
     };
 
@@ -133,6 +133,72 @@ describe('shared Draw project contract', () => {
     expect(synchronizedNote.poses.map(({ x }) => x)).toEqual(
       oldNote.poses.map(({ x }) => x + delta)
     );
+  });
+
+  it('rebases authored animation through the Canvas-to-scene fit scale', () => {
+    const source = canvas();
+    const initial = syncMotionProject(source);
+    const priorStroke = initial.drawings.find(({ id }) => id === 'stroke-stable')!;
+    const priorNote = initial.drawings.find(({ id }) => id === 'note-stable')!;
+    const animated: Project = {
+      ...initial,
+      drawings: initial.drawings.map((drawing) =>
+        drawing.id === 'stroke-stable'
+          ? {
+              ...drawing,
+              poses: [
+                drawing.poses[0],
+                {
+                  ...drawing.poses[0],
+                  time: 1,
+                  x: 100,
+                  scaleX: 2,
+                  points: drawing.points.map(({ x, y }) => ({ x: x + 50, y: y - 20 }))
+                }
+              ]
+            }
+          : drawing.id === 'note-stable'
+            ? {
+                ...drawing,
+                poses: [
+                  drawing.poses[0],
+                  { ...drawing.poses[0], time: 1, x: drawing.poses[0].x + 100 }
+                ]
+              }
+            : drawing
+      )
+    };
+    const expanded: CanvasDocument = {
+      ...source,
+      objects: [
+        ...source.objects,
+        {
+          id: 'far-object',
+          kind: 'rectangle',
+          createdAt: '2026-09-10T00:00:00.000Z',
+          color: '#282522',
+          from: { x: 10_000, y: 0 },
+          to: { x: 10_100, y: 100 }
+        }
+      ]
+    };
+
+    const synchronized = syncMotionProject(expanded, animated);
+    const nextStroke = synchronized.drawings.find(({ id }) => id === 'stroke-stable')!;
+    const nextNote = synchronized.drawings.find(({ id }) => id === 'note-stable')!;
+    const ratio = nextStroke.source!.origin!.scaleX / priorStroke.source!.origin!.scaleX;
+
+    expect(ratio).toBeLessThan(1);
+    expect(nextStroke.poses[1].x).toBeCloseTo(100 * ratio);
+    expect(nextStroke.poses[1].scaleX).toBeCloseTo(2 * ratio);
+    expect(nextStroke.poses[1].points![0].x - nextStroke.points[0].x).toBeCloseTo(50 * ratio);
+    expect(nextStroke.poses[1].points![0].y - nextStroke.points[0].y).toBeCloseTo(-20 * ratio);
+    expect(nextNote.poses[1].x - nextNote.source!.origin!.x).toBeCloseTo(
+      (animated.drawings.find(({ id }) => id === 'note-stable')!.poses[1].x -
+        priorNote.source!.origin!.x) *
+        ratio
+    );
+    expect(() => validateProject(synchronized)).not.toThrow();
   });
 
   it('bounds dense and wide Canvas strokes for a valid Motion project', () => {
@@ -172,7 +238,9 @@ describe('shared Draw project contract', () => {
     const source = canvas();
     const existing = { ...syncMotionProject(source), title: 'Motion cut' };
 
-    expect(syncMotionProject({ ...source, title: 'Canvas map' }, existing).title).toBe('Motion cut');
+    expect(syncMotionProject({ ...source, title: 'Canvas map' }, existing).title).toBe(
+      'Motion cut'
+    );
   });
 
   it('creates a Canvas space with the identity of a Motion-only project', () => {
@@ -200,9 +268,7 @@ describe('shared Draw project contract', () => {
   it('rejects Canvas object IDs that cannot remain stable in Motion', () => {
     const source = canvas();
     source.objects = source.objects
-      .map((object) =>
-        object.id === 'note-stable' ? { ...object, id: 'x'.repeat(241) } : object
-      )
+      .map((object) => (object.id === 'note-stable' ? { ...object, id: 'x'.repeat(241) } : object))
       .filter((object) => object.kind !== 'group');
 
     expect(isDocument(source)).toBe(false);
@@ -227,9 +293,9 @@ describe('shared Draw project contract', () => {
     const motion = syncMotionProject(source);
     const stroke = motion.drawings.find(({ id }) => id === 'stroke-stable')!;
 
-    expect(Math.max(...stroke.points.flatMap(({ x, y }) => [Math.abs(x), Math.abs(y)]))).toBeLessThan(
-      10_000
-    );
+    expect(
+      Math.max(...stroke.points.flatMap(({ x, y }) => [Math.abs(x), Math.abs(y)]))
+    ).toBeLessThan(10_000);
     expect(() => validateProject(motion)).not.toThrow();
   });
 
@@ -305,7 +371,10 @@ describe('shared Draw project contract', () => {
             time: 1,
             x: 9_950,
             scaleX: 100,
-            points: drawing.kind === 'stroke' ? drawing.points.map(() => ({ x: 9_990, y: -9_990 })) : undefined
+            points:
+              drawing.kind === 'stroke'
+                ? drawing.points.map(() => ({ x: 9_990, y: -9_990 }))
+                : undefined
           }
         ]
       }))
@@ -319,11 +388,22 @@ describe('shared Draw project contract', () => {
 
     const synchronized = syncMotionProject(moved, animated);
 
-    expect(synchronized.drawings.every((drawing) => drawing.poses.every((pose) =>
-      Math.abs(pose.x) <= 10_000 && Math.abs(pose.y) <= 10_000 && pose.scaleX <= 100 && pose.scaleY <= 100
-    ))).toBe(true);
-    expect(synchronized.drawings.flatMap((drawing) => drawing.poses.flatMap((pose) => pose.points ?? []))
-      .every(({ x, y }) => Math.abs(x) <= 10_000 && Math.abs(y) <= 10_000)).toBe(true);
+    expect(
+      synchronized.drawings.every((drawing) =>
+        drawing.poses.every(
+          (pose) =>
+            Math.abs(pose.x) <= 10_000 &&
+            Math.abs(pose.y) <= 10_000 &&
+            pose.scaleX <= 100 &&
+            pose.scaleY <= 100
+        )
+      )
+    ).toBe(true);
+    expect(
+      synchronized.drawings
+        .flatMap((drawing) => drawing.poses.flatMap((pose) => pose.points ?? []))
+        .every(({ x, y }) => Math.abs(x) <= 10_000 && Math.abs(y) <= 10_000)
+    ).toBe(true);
     expect(() => validateProject(synchronized)).not.toThrow();
   });
 

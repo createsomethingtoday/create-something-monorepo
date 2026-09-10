@@ -262,8 +262,8 @@ export function validateProject(value: unknown): asserts value is Project {
             !keys(d.source.origin, ['x', 'y', 'scaleX', 'scaleY']) ||
             !finite(d.source.origin.x, -10000, 10000) ||
             !finite(d.source.origin.y, -10000, 10000) ||
-            !finite(d.source.origin.scaleX, 0.01, 100) ||
-            !finite(d.source.origin.scaleY, 0.01, 100))))
+            !finite(d.source.origin.scaleX, Number.MIN_VALUE, 1) ||
+            !finite(d.source.origin.scaleY, Number.MIN_VALUE, 1))))
     )
       throw new Error('Canvas-backed motion drawings must preserve their source object ID.');
     if (d.space !== undefined && !['world', 'screen'].includes(d.space))
