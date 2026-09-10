@@ -28,7 +28,7 @@ export function importMap(map: CanvasDocument): { drawings: Drawing[]; skipped: 
   let skipped = 0;
   const drawings: Drawing[] = [];
   for (const object of map.objects) {
-    if (!isMotionDrawingId(object.id)) {
+    if (drawings.length >= LIMITS.drawings || !isMotionDrawingId(object.id)) {
       skipped++;
       continue;
     }
@@ -63,7 +63,7 @@ export function importMap(map: CanvasDocument): { drawings: Drawing[]; skipped: 
         ...common,
         kind: 'text',
         points: [],
-        text: object.text,
+        text: object.text.slice(0, 2000),
         color: '#282522',
         weight: Math.max(0.1, 24 * scale),
         width: Math.max(1, object.width * scale),
@@ -141,18 +141,18 @@ function retainAnimation(source: Drawing, prior: Drawing | undefined): Drawing {
 export function syncMotionProject(map: CanvasDocument, existing?: Project): Project {
   const imported = importMap(map);
   const prior = new Map(existing?.drawings.map((drawing) => [drawing.id, drawing]));
-  const canvasDrawings = imported.drawings.map((drawing) =>
-    retainAnimation(drawing, prior.get(drawing.id))
-  );
   const motionOnly =
     existing?.drawings.filter((drawing) => drawing.source?.space !== 'canvas') ?? [];
+  const canvasDrawings = imported.drawings
+    .slice(0, Math.max(0, LIMITS.drawings - motionOnly.length))
+    .map((drawing) => retainAnimation(drawing, prior.get(drawing.id)));
   const drawings = [
     ...canvasDrawings,
     ...motionOnly.filter(
       (drawing) => !prior.has(drawing.id) || !canvasDrawings.some(({ id }) => id === drawing.id)
     )
   ];
-  if (!existing) return { ...newProject(), id: map.id, title: map.title, drawings };
+  if (!existing) return { ...newProject(), id: map.id, title: map.title.slice(0, 240), drawings };
   const candidate = { ...existing, id: map.id, drawings };
   return JSON.stringify(candidate) === JSON.stringify(existing)
     ? existing

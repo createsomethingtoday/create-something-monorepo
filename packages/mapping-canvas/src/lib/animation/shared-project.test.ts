@@ -233,6 +233,39 @@ describe('shared Draw project contract', () => {
     expect(() => validateProject(motion)).not.toThrow();
   });
 
+  it('bounds Canvas text and drawing counts without dropping Motion-only artwork', () => {
+    const source = canvas();
+    source.title = 'Title '.repeat(100);
+    source.objects = Array.from({ length: LIMITS.drawings + 10 }, (_, index) => ({
+      id: `note-${index}`,
+      kind: 'note' as const,
+      createdAt: '2026-09-10T00:00:00.000Z',
+      x: index * 10,
+      y: 0,
+      width: 240,
+      height: 120,
+      text: 'x'.repeat(2_100)
+    }));
+    const motionOnly = {
+      ...syncMotionProject(canvas()),
+      drawings: [
+        {
+          ...syncMotionProject(canvas()).drawings[0],
+          id: 'motion-only',
+          source: undefined
+        }
+      ]
+    };
+
+    const motion = syncMotionProject(source, motionOnly);
+
+    expect(motion.title).toBe(motionOnly.title);
+    expect(motion.drawings).toHaveLength(LIMITS.drawings);
+    expect(motion.drawings.at(-1)?.id).toBe('motion-only');
+    expect(motion.drawings[0].text).toHaveLength(2_000);
+    expect(() => validateProject(motion)).not.toThrow();
+  });
+
   it('preserves and validates a bounded Canvas project ID with URL punctuation', () => {
     const source = { ...canvas(), id: 'project.v1 & review' };
     const motion = syncMotionProject(source);
