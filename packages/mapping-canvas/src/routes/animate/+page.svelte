@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import MotionControls from '$lib/animation/MotionControls.svelte';
   import {
+    evaluateCamera,
     screenToScene,
     sceneToScreen,
     newProject,
@@ -412,7 +413,9 @@
       renderer.paint(canvas.getContext('2d')!, project, time, { ghosts });
       const ctx = canvas.getContext('2d')!;
       ctx.strokeStyle = '#292522';
-      ctx.lineWidth = 3;
+      ctx.lineWidth = 3 * evaluateCamera(project, time).zoom;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
       ctx.beginPath();
       penPoints.forEach((pt, i) => {
         const q = sceneToScreen(pt, project, time);

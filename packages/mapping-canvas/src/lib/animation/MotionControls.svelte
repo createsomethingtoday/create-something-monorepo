@@ -79,6 +79,10 @@
     if (!current) return;
     const d = { ...current };
     delete d[key];
+    if (key === 'flipbook') {
+      const asset = project.assets.find((a) => a.id === d.assetId);
+      if (asset) d.height = (d.width * asset.height) / asset.width;
+    }
     apply([{ type: 'put_drawing', drawing: d }]);
   }
 </script>
