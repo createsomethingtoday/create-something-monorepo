@@ -67,6 +67,7 @@ const resetState = await page.evaluate(async () => ({ state: await window.__draw
 if (resetState.share.share || resetState.state.document.id === beforeReset.document.id || resetState.projectParam !== resetState.state.document.id) throw new Error('Reset transferred a retained project capability or left a stale project URL.');
 await page.goto(`${baseUrl}/?project=${encodeURIComponent(beforeReset.document.id)}`, { waitUntil: 'networkidle' });
 await page.waitForFunction(() => Object.keys(window.__drawWebMcpTools).filter((name) => name.startsWith('draw_')).length === 24);
+await page.waitForFunction(async (projectId) => { try { return (await window.__drawWebMcpTools.draw_get_state.execute({})).document.id === projectId; } catch { return false; } }, beforeReset.document.id);
 const retainedManagement = await page.evaluate(() => window.__drawWebMcpTools.draw_get_share_status.execute({}));
 if (retainedManagement.share?.shareId !== published.shareId || retainedManagement.share?.revision !== 3) throw new Error('Reset orphaned management of the retained published project.');
 await page.evaluate(async ({ objects, title }) => window.__drawWebMcpTools.draw_replace_canvas.execute({ objects, title, confirmation: 'REPLACE CANVAS' }), beforeReset.document);
