@@ -201,7 +201,7 @@
   async function openCanvas(event: MouseEvent) {
     event.preventDefault();
     await queue;
-    location.href = `/?project=${project.id}`;
+    location.href = `/?project=${encodeURIComponent(project.id)}`;
   }
   function play() {
     if (playing) {
@@ -252,7 +252,7 @@
       await saveProject(p, null);
       renderer = prepared;
       project = p;
-      window.history.replaceState(null, '', `/animate?project=${p.id}`);
+      window.history.replaceState(null, '', `/animate?project=${encodeURIComponent(p.id)}`);
       projects = [{ id: p.id, title: p.title, revision: p.revision }, ...projects];
       past = [];
       future = [];
@@ -484,7 +484,7 @@
 >
 <main>
   <header>
-    <a href={`/?project=${project.id}`} onclick={openCanvas} class="brand"
+    <a href={`/?project=${encodeURIComponent(project.id)}`} onclick={openCanvas} class="brand"
       >DRAW <span>MOTION</span></a
     ><input
       aria-label="Animation title"
@@ -503,7 +503,7 @@
           'animation.draw.json'
         )}
       disabled={!ready}>Save project</button
-    ><a href={`/?project=${project.id}`} onclick={openCanvas}>Canvas</a>
+    ><a href={`/?project=${encodeURIComponent(project.id)}`} onclick={openCanvas}>Canvas</a>
   </header>
   {#if showHelp}<aside class="help">
       <strong>Create artwork in your Codex conversation.</strong> Ask Codex to generate an
@@ -530,7 +530,7 @@
               await prepared.prepare(p.assets);
               renderer = prepared;
               project = p;
-              window.history.replaceState(null, '', `/animate?project=${p.id}`);
+              window.history.replaceState(null, '', `/animate?project=${encodeURIComponent(p.id)}`);
               past = [];
               future = [];
               selected = '';

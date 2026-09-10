@@ -117,6 +117,8 @@ const finite = (x: unknown, min: number, max: number) =>
   typeof x === 'number' && Number.isFinite(x) && x >= min && x <= max;
 const string = (x: unknown, max: number) => typeof x === 'string' && x.length <= max;
 const id = (x: unknown) => typeof x === 'string' && /^[a-zA-Z0-9_-]{1,120}$/.test(x);
+export const isDrawProjectId = (x: unknown): x is string =>
+  typeof x === 'string' && x.length >= 1 && x.length <= 240;
 export const isMotionDrawingId = (x: unknown): x is string =>
   typeof x === 'string' && x.length >= 1 && x.length <= 240;
 const keys = (x: object, allowed: string[]) => Object.keys(x).every((k) => allowed.includes(k));
@@ -146,7 +148,7 @@ export function validateProject(value: unknown): asserts value is Project {
       'drawings'
     ]) ||
     p.version !== 'draw.animation.v1' ||
-    !id(p.id) ||
+    !isDrawProjectId(p.id) ||
     !Number.isSafeInteger(p.revision) ||
     p.revision < 0 ||
     !string(p.title, 240) ||

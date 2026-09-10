@@ -25,7 +25,7 @@ export function createDocument(title = 'Untitled mapping session'): CanvasDocume
 export function isDocument(value: unknown): value is CanvasDocument {
   if (!value || typeof value !== 'object') return false;
   const candidate = value as Partial<CanvasDocument>;
-  if (candidate.version !== DOCUMENT_VERSION || typeof candidate.id !== 'string' || typeof candidate.title !== 'string' || typeof candidate.createdAt !== 'string' || typeof candidate.updatedAt !== 'string' || !Array.isArray(candidate.objects) || !isViewport(candidate.viewport) || !candidate.objects.every((object) => isCanvasObject(object))) return false;
+  if (candidate.version !== DOCUMENT_VERSION || typeof candidate.id !== 'string' || candidate.id.length < 1 || candidate.id.length > 240 || typeof candidate.title !== 'string' || typeof candidate.createdAt !== 'string' || typeof candidate.updatedAt !== 'string' || !Array.isArray(candidate.objects) || !isViewport(candidate.viewport) || !candidate.objects.every((object) => isCanvasObject(object))) return false;
   const ids = new Set(candidate.objects.map(({ id }) => id));
   return ids.size === candidate.objects.length && candidate.objects.every((object) => {
     if (object.kind === 'connector') return object.fromId !== object.toId && ids.has(object.fromId) && ids.has(object.toId);
@@ -37,7 +37,7 @@ export function isDocument(value: unknown): value is CanvasDocument {
 export function normalizeDocument(value: unknown): CanvasDocument | null {
   if (!value || typeof value !== 'object') return null;
   const candidate = value as Partial<CanvasDocument>;
-  if (candidate.version !== DOCUMENT_VERSION || typeof candidate.id !== 'string' || typeof candidate.title !== 'string' || typeof candidate.createdAt !== 'string' || typeof candidate.updatedAt !== 'string' || !Array.isArray(candidate.objects) || !isViewport(candidate.viewport)) return null;
+  if (candidate.version !== DOCUMENT_VERSION || typeof candidate.id !== 'string' || candidate.id.length < 1 || candidate.id.length > 240 || typeof candidate.title !== 'string' || typeof candidate.createdAt !== 'string' || typeof candidate.updatedAt !== 'string' || !Array.isArray(candidate.objects) || !isViewport(candidate.viewport)) return null;
   const objects = candidate.objects.map(normalizeCanvasObject);
   if (objects.some((object) => object === null)) return null;
   const normalizedObjects = objects as CanvasObject[];

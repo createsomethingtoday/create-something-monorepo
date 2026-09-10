@@ -193,6 +193,14 @@ describe('shared Draw project contract', () => {
     expect(() => validateProject(motion)).not.toThrow();
   });
 
+  it('preserves and validates a bounded Canvas project ID with URL punctuation', () => {
+    const source = { ...canvas(), id: 'project.v1 & review' };
+    const motion = syncMotionProject(source);
+
+    expect(motion.id).toBe(source.id);
+    expect(() => validateProject(motion)).not.toThrow();
+  });
+
   it('merges Canvas and Motion writes without replacing the other space', () => {
     const source = canvas();
     const motion = syncMotionProject(source);
