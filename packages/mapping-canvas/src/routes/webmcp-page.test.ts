@@ -66,6 +66,7 @@ describe('Draw WebMCP page integration', () => {
     expect(page).toContain("if (replacingDocument) { status = 'Wait for the document replacement to finish'; return false; }");
     expect(page).toContain('function restoreManagedShareAfterReplacement');
     expect(page).toContain('if (previous.id === next.id)');
+    expect(page).toContain("window.history.replaceState(null, '', `/?project=${encodeURIComponent(next.id)}`);");
     expect(page).toContain('restoreManagedShareAfterReplacement(managed, previous, committed);');
     expect(page).toContain('async function persistCurrentDocument(next: CanvasDocument)');
     expect(page).toContain('if (!persisted) await writeCanvasDocument(snapshot);');

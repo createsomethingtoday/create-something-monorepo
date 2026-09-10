@@ -1027,6 +1027,7 @@
     }
     share = null;
     clearTimeout(shareExpiryTimer); shareExpiryTimer = undefined;
+    window.history.replaceState(null, '', `/?project=${encodeURIComponent(next.id)}`);
     restoreStoredManagedShare(next.id);
   }
   async function refreshShareRevision(response: Response, managed: NonNullable<typeof share>) { if (response.status !== 409) return false; const result = await response.json().catch(() => null); if (Number.isSafeInteger(result?.revision) && result.revision > managed.revision) rememberShare({ ...managed, revision: result.revision }); return true; }
