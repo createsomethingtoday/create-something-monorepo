@@ -423,6 +423,9 @@ export function applyOperations(
     throw new Error('Stale animation revision. Inspect again before retrying.');
   if (!Array.isArray(operations) || !operations.length || operations.length > 100)
     throw new Error('Use 1–100 operations.');
+  const originalCanvasSources = new Map(
+    p.drawings.filter((drawing) => drawing.source?.space === 'canvas').map((drawing) => [drawing.id, drawing.source!])
+  );
   let next = { ...p };
   for (const op of operations) {
     if (op.type === 'set_camera') next = { ...next, camera: op.poses };
@@ -430,6 +433,9 @@ export function applyOperations(
       next = { ...next, assets: [...next.assets.filter((a) => a.id !== op.asset.id), op.asset] };
     else if (op.type === 'put_drawing') {
       const i = next.drawings.findIndex((d) => d.id === op.drawing.id);
+      const canvasSource = originalCanvasSources.get(op.drawing.id);
+      if (canvasSource && JSON.stringify(op.drawing.source) !== JSON.stringify(canvasSource))
+        throw new Error('Canvas provenance cannot be changed in Motion.');
       next = {
         ...next,
         drawings:
@@ -444,7 +450,7 @@ export function applyOperations(
     ) {
       const target = next.drawings.find((d) => d.id === op.id);
       if (!target) throw new Error('Unknown drawing.');
-      if (op.type === 'remove_drawing' && target.source?.space === 'canvas')
+      if (op.type === 'remove_drawing' && originalCanvasSources.has(op.id))
         throw new Error('This drawing is owned by Canvas. Remove it in Canvas instead.');
       next = {
         ...next,

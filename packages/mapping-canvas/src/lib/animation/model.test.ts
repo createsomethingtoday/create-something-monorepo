@@ -119,6 +119,16 @@ describe('animation contract', () => {
     expect(() => applyOperations(p, [{ type: 'remove_drawing', id: 'line' }], 0)).toThrow(
       'Remove it in Canvas'
     );
+    expect(() =>
+      applyOperations(
+        p,
+        [
+          { type: 'put_drawing', drawing: { ...p.drawings[0], source: undefined } },
+          { type: 'remove_drawing', id: 'line' }
+        ],
+        0
+      )
+    ).toThrow('Canvas provenance');
     expect(p.drawings).toHaveLength(1);
   });
   it('rejects external image URLs and nonfinite coordinates', () => {
