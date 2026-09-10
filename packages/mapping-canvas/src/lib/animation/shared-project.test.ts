@@ -341,6 +341,26 @@ describe('shared Draw project contract', () => {
     expect(() => validateProject(motion)).not.toThrow();
   });
 
+  it('maps ellipse endpoints at both numeric extremes without overflow', () => {
+    const source = canvas();
+    source.objects = [
+      {
+        id: 'ellipse-extremes',
+        kind: 'ellipse',
+        createdAt: '2026-09-10T00:00:00.000Z',
+        from: { x: -Number.MAX_VALUE, y: -Number.MAX_VALUE },
+        to: { x: Number.MAX_VALUE, y: Number.MAX_VALUE },
+        color: '#282522'
+      }
+    ];
+
+    const motion = syncMotionProject(source);
+    const ellipse = motion.drawings.find(({ id }) => id === 'ellipse-extremes')!;
+
+    expect(ellipse.points.every(({ x, y }) => Number.isFinite(x) && Number.isFinite(y))).toBe(true);
+    expect(() => validateProject(motion)).not.toThrow();
+  });
+
   it('bounds Canvas text and drawing counts without dropping Motion-only artwork', () => {
     const source = canvas();
     source.title = 'Title '.repeat(100);

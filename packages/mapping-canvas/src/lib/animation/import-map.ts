@@ -120,10 +120,15 @@ export function importMap(map: CanvasDocument): { drawings: Drawing[]; skipped: 
         object.kind === 'rectangle'
           ? [a, { x: b.x, y: a.y }, b, { x: a.x, y: b.y }, a]
           : object.kind === 'ellipse'
-            ? Array.from({ length: 49 }, (_, i) => ({
-                x: (a.x + b.x) / 2 + (Math.cos((i / 48) * Math.PI * 2) * Math.abs(b.x - a.x)) / 2,
-                y: (a.y + b.y) / 2 + (Math.sin((i / 48) * Math.PI * 2) * Math.abs(b.y - a.y)) / 2
-              }))
+            ? (() => {
+                const sceneA = toScene(a), sceneB = toScene(b);
+                const center = { x: sceneA.x / 2 + sceneB.x / 2, y: sceneA.y / 2 + sceneB.y / 2 };
+                const radius = { x: Math.abs(sceneB.x - sceneA.x) / 2, y: Math.abs(sceneB.y - sceneA.y) / 2 };
+                return Array.from({ length: 49 }, (_, i) => ({
+                  x: center.x + Math.cos((i / 48) * Math.PI * 2) * radius.x,
+                  y: center.y + Math.sin((i / 48) * Math.PI * 2) * radius.y
+                }));
+              })()
             : (() => {
                 const angle = Math.atan2(b.y - a.y, b.x - a.x);
                 const head = Math.min(18, Math.hypot(b.x - a.x, b.y - a.y) / 3);
@@ -141,7 +146,7 @@ export function importMap(map: CanvasDocument): { drawings: Drawing[]; skipped: 
                   }
                 ];
               })();
-      drawings.push(sourced({ ...common, points: points.map(toScene) }));
+      drawings.push(sourced({ ...common, points: object.kind === 'ellipse' ? points : points.map(toScene) }));
     } else skipped++;
   }
   return { drawings, skipped };

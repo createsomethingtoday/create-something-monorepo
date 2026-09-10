@@ -10,7 +10,7 @@ it('navigates between Canvas and Motion using the same project identity', () => 
   expect(canvas).toContain('href={`/animate?project=${encodeURIComponent(document.id)}`}');
   expect(canvas).toContain('await persistCurrentDocument(document)');
   expect(canvas).toContain("if (!ready) { status = 'Canvas is still loading'; return; }");
-  expect(canvas).toContain("parsed.id === previous.id ? parsed : { ...parsed, id: crypto.randomUUID()");
+  expect(canvas).toContain("parsed.id === previous.id ? { ...parsed, updatedAt: mintReplacementTimestamp(previous.updatedAt) } : { ...parsed, id: crypto.randomUUID()");
   expect(canvas).toContain('await loadDocument(next.id)');
   expect(canvas).toContain('persistedCanvasVersions.get(next.id)');
   expect(canvas).toContain('await activateCanvasProject(saved.id)');

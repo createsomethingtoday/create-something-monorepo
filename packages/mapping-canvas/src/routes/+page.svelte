@@ -660,6 +660,11 @@
   }
   async function writeCanvasDocument(next: CanvasDocument) { await saveDocument(next); persistedCanvasVersions.set(next.id, next.updatedAt); }
   function persistedVersionMatches(id: string, persisted: CanvasDocument | null) { return (persisted?.updatedAt ?? null) === (persistedCanvasVersions.get(id) ?? null); }
+  function mintReplacementTimestamp(reserved: string) {
+    let milliseconds = Date.now(), candidate = new Date(milliseconds).toISOString();
+    while (candidate === reserved) { milliseconds += 1; candidate = new Date(milliseconds).toISOString(); }
+    return candidate;
+  }
   function queueSave(next: CanvasDocument) { if (!browser || nativeRole !== 'web') return; clearTimeout(saveTimer); status = 'Saving locally…'; saveTimer = setTimeout(() => void persistCurrentDocument(next).then((saved) => status = saved ? 'Saved on this device' : 'Another tab replaced this canvas · reload to continue').catch(() => status = 'Local save failed · export a copy'), 120); }
   async function openMotion(event: MouseEvent) { event.preventDefault(); if (!ready) { status = 'Canvas is still loading'; return; } noteInput.flushAll(); clearTimeout(saveTimer); saveTimer = undefined; if (!await persistCurrentDocument(document)) { status = 'A newer Canvas is saved in another tab · reload before opening Motion'; return; } location.href = `/animate?project=${encodeURIComponent(document.id)}`; }
   function commitNoteText(id: string, text: string) { if (!companionCanEdit()) return; const current = document.objects.find((entry) => entry.id === id); if (!current || current.kind !== 'note' || (current.text === text && !current.content)) return; const changed = { ...current, text, content: undefined }; const next = withObjects(document, document.objects.map((entry) => entry.id === id ? changed : entry)); history = { ...history, present: next }; queueSave(next); sendNative([{ type: 'put_object', object: changed }]); }
@@ -1095,7 +1100,7 @@
   async function importJson(event: Event) {
     const file = (event.currentTarget as HTMLInputElement).files?.[0];
     if (!file || nativeRole === 'companion' || sharing || replacingDocument) return;
-    try { await coordinateDocumentReplacement(async () => { const previous = history.present, managed = currentManagedShare(); const parsed = parse(await file.text()); const next = parsed.id === previous.id ? parsed : { ...parsed, id: crypto.randomUUID(), updatedAt: new Date().toISOString() }; const committed = await commitHostReplacement(() => next, (value) => value, (value) => history = { past: [], present: value, future: [] }, 'import'); selectedIds = []; if (nativeRole === 'web') { await writeCanvasDocument(committed); await transferManagedShareAfterReplacement(managed, previous, committed); } else { queueSave(committed); if (managed) rememberShare(managed, committed.id, previous.id); else restoreManagedShare(committed.id); } status = 'Canvas imported'; }); }
+    try { await coordinateDocumentReplacement(async () => { const previous = history.present, managed = currentManagedShare(); const parsed = parse(await file.text()); const next = parsed.id === previous.id ? { ...parsed, updatedAt: mintReplacementTimestamp(previous.updatedAt) } : { ...parsed, id: crypto.randomUUID(), updatedAt: new Date().toISOString() }; const committed = await commitHostReplacement(() => next, (value) => value, (value) => history = { past: [], present: value, future: [] }, 'import'); selectedIds = []; if (nativeRole === 'web') { await writeCanvasDocument(committed); await transferManagedShareAfterReplacement(managed, previous, committed); } else { queueSave(committed); if (managed) rememberShare(managed, committed.id, previous.id); else restoreManagedShare(committed.id); } status = 'Canvas imported'; }); }
     catch (error) { status = error instanceof Error ? error.message : 'Import failed'; }
     finally { if (fileInput) fileInput.value = ''; }
   }

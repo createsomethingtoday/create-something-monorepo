@@ -25,6 +25,7 @@ describe('Draw WebMCP page integration', () => {
     expect(page).toContain('const previous = history.present, managed = currentManagedShare();');
     expect(page).toContain("(value) => history = { past: [], present: value, future: [] }, 'import'");
     expect(page).toContain('await transferManagedShareAfterReplacement(managed, previous, committed);');
+    expect(page).toContain('updatedAt: mintReplacementTimestamp(previous.updatedAt)');
   });
 
   it('retains management capability until the server confirms expiry', () => {
