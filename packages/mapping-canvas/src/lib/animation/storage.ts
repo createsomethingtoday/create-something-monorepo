@@ -43,18 +43,29 @@ async function legacyProjects(): Promise<Project[]> {
 }
 
 async function migrateLegacyProjects(): Promise<void> {
-  migration ??= (async () => {
-    for (const project of await legacyProjects()) {
-      const existing = await loadProjectRecord(project.id);
-      if (!existing?.motion) {
-        try {
-          await saveMotionProject(project, null, existing?.canvas?.updatedAt ?? null);
-        } catch (error) {
-          if (!(await loadProjectRecord(project.id))?.motion) throw error;
+  if (!migration) {
+    const activeMigration = (async () => {
+      for (const project of await legacyProjects()) {
+        let lastError: unknown;
+        for (let attempt = 0; attempt < 3; attempt++) {
+          const existing = await loadProjectRecord(project.id);
+          if (existing?.motion) break;
+          try {
+            await saveMotionProject(project, null, existing?.canvas?.updatedAt ?? null);
+            break;
+          } catch (error) {
+            lastError = error;
+            if ((await loadProjectRecord(project.id))?.motion) break;
+            if (attempt === 2) throw lastError;
+          }
         }
       }
-    }
-  })();
+    })();
+    migration = activeMigration;
+    void activeMigration.catch(() => {
+      if (migration === activeMigration) migration = undefined;
+    });
+  }
   return migration;
 }
 
@@ -83,7 +94,11 @@ export async function loadProject(id: string): Promise<Project> {
     const synchronized = syncMotionProject(record.canvas, record.motion);
     try {
       if (!record.motion || synchronized !== record.motion)
-        await saveMotionProject(synchronized, record.motion?.revision ?? null, record.canvas.updatedAt);
+        await saveMotionProject(
+          synchronized,
+          record.motion?.revision ?? null,
+          record.canvas.updatedAt
+        );
       loadedCanvasVersions.set(id, record.canvas.updatedAt);
       return synchronized;
     } catch (error) {

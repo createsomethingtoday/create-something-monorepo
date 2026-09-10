@@ -11,8 +11,12 @@ it('navigates between Canvas and Motion using the same project identity', () => 
   expect(canvas).toContain('href={`/animate?project=${encodeURIComponent(document.id)}`}');
   expect(canvas).toContain('await persistCurrentDocument(document)');
   expect(canvas).toContain("if (!ready) { status = 'Canvas is still loading'; return; }");
-  expect(canvas).toContain("if (sharing || replacingDocument) { status = 'Wait for sharing or document replacement to finish before opening Motion'; return; }");
-  expect(canvas).toContain("parsed.id === previous.id ? { ...parsed, updatedAt: mintReplacementTimestamp(previous.updatedAt) } : { ...parsed, id: crypto.randomUUID()");
+  expect(canvas).toContain(
+    "if (sharing || replacingDocument) { status = 'Wait for sharing or document replacement to finish before opening Motion'; return; }"
+  );
+  expect(canvas).toContain(
+    'parsed.id === previous.id ? { ...parsed, updatedAt: mintReplacementTimestamp(previous.updatedAt) } : { ...parsed, id: crypto.randomUUID()'
+  );
   expect(canvas).toContain('await loadDocument(next.id)');
   expect(canvas).toContain('persistedCanvasVersions.get(next.id)');
   expect(canvas).toContain('await activateCanvasProject(saved.id)');
@@ -34,11 +38,14 @@ it('navigates between Canvas and Motion using the same project identity', () => 
 
 it('guards Motion synchronization with the loaded Canvas version and makes migration idempotent', () => {
   expect(motionStorage).toContain('loadedCanvasVersions.set(id, record.canvas.updatedAt)');
-  expect(motionStorage).toContain('record.motion?.revision ?? null, record.canvas.updatedAt');
+  expect(motionStorage).toContain('record.motion?.revision ?? null');
+  expect(motionStorage).toContain('record.canvas.updatedAt');
   expect(motionStorage).toContain('for (let attempt = 0; attempt < 3; attempt++)');
-  expect(motionStorage).toContain(
-    'if (!(await loadProjectRecord(project.id))?.motion) throw error;'
-  );
+  expect(motionStorage).toContain('if ((await loadProjectRecord(project.id))?.motion) break;');
+  expect(motionStorage).toContain('const activeMigration = (async () => {');
+  expect(motionStorage).toContain('existing?.canvas?.updatedAt ?? null');
+  expect(motionStorage).toContain('if (attempt === 2) throw lastError;');
+  expect(motionStorage).toContain('if (migration === activeMigration) migration = undefined;');
   expect(projectStorage).toContain(
     '(current?.canvas?.updatedAt ?? null) !== expectedCanvasUpdatedAt'
   );
