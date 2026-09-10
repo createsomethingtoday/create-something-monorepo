@@ -146,6 +146,19 @@ describe('animation contract', () => {
     ).toThrow('Canvas provenance');
     expect(p.drawings).toHaveLength(1);
   });
+  it('accepts unchanged Canvas provenance regardless of object key order', () => {
+    const p = newProject();
+    p.drawings = [{ ...drawing(), source: { space: 'canvas', objectId: 'line', origin: { x: 0, y: 0, scaleX: 1, scaleY: 1 } } }];
+    const updated = applyOperations(p, [{
+      type: 'put_drawing',
+      drawing: {
+        ...p.drawings[0],
+        color: '#ff0000',
+        source: { objectId: 'line', origin: { scaleY: 1, scaleX: 1, y: 0, x: 0 }, space: 'canvas' }
+      }
+    }], 0);
+    expect(updated.drawings[0].color).toBe('#ff0000');
+  });
   it('rejects external image URLs and nonfinite coordinates', () => {
     const p = newProject();
     p.assets = [

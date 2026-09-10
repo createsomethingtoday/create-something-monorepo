@@ -414,6 +414,12 @@ export type Operation =
       width?: number;
       height?: number;
     };
+function sameCanvasSource(a: Drawing['source'], b: Drawing['source']): boolean {
+  if (!a || !b) return a === b;
+  if (a.space !== b.space || a.objectId !== b.objectId) return false;
+  if (!a.origin || !b.origin) return a.origin === b.origin;
+  return a.origin.x === b.origin.x && a.origin.y === b.origin.y && a.origin.scaleX === b.origin.scaleX && a.origin.scaleY === b.origin.scaleY;
+}
 export function applyOperations(
   p: Project,
   operations: Operation[],
@@ -436,7 +442,7 @@ export function applyOperations(
       const canvasSource = originalCanvasSources.get(op.drawing.id);
       if (!canvasSource && op.drawing.source?.space === 'canvas')
         throw new Error('Canvas provenance can only be created by Canvas synchronization.');
-      if (canvasSource && JSON.stringify(op.drawing.source) !== JSON.stringify(canvasSource))
+      if (canvasSource && !sameCanvasSource(op.drawing.source, canvasSource))
         throw new Error('Canvas provenance cannot be changed in Motion.');
       next = {
         ...next,
