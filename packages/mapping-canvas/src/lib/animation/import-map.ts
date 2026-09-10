@@ -248,18 +248,58 @@ export function syncMotionProject(map: CanvasDocument, existing?: Project): Proj
     objects: prioritizedMap.objects.filter(isImportableCanvasObject).slice(0, capacity)
   };
   const imported = importMap(retainedMap);
-  const canvasDrawings = imported.drawings
+  const eligibleCanvasDrawings = imported.drawings
     .slice(0, capacity)
-    .sort((a, b) => originalOrder.get(a.id)! - originalOrder.get(b.id)!)
     .map((drawing) => retainAnimation(drawing, prior.get(drawing.id)));
+  const template = existing
+    ? { ...existing, id: map.id, revision: existing.revision + 1 }
+    : { ...newProject(), id: map.id, title: map.title.slice(0, 240) };
+  const fixedBytes = JSON.stringify({ ...template, drawings: priorMotionOnly }).length;
+  let projectedBytes = fixedBytes;
+  let projectedDrawingCount = priorMotionOnly.length;
+  const selectedCanvasDrawings: Drawing[] = [];
+  for (const drawing of eligibleCanvasDrawings) {
+    const priorDrawing = prior.get(drawing.id);
+    const choices = priorDrawing?.source?.space === 'canvas' ? [drawing, priorDrawing] : [drawing];
+    const selected = choices.find((choice) => {
+      const addedBytes = JSON.stringify(choice).length + (projectedDrawingCount ? 1 : 0);
+      return projectedBytes + addedBytes <= LIMITS.bytes;
+    });
+    if (!selected) continue;
+    selectedCanvasDrawings.push(selected);
+    projectedBytes += JSON.stringify(selected).length + (projectedDrawingCount ? 1 : 0);
+    projectedDrawingCount += 1;
+  }
+  const assemble = (selected: Drawing[]) => {
+    const canvasDrawings = [...selected].sort(
+      (a, b) => originalOrder.get(a.id)! - originalOrder.get(b.id)!
+    );
+    const motionOnly = preserveMotionOnlyIds(
+      priorMotionOnly,
+      new Set(canvasDrawings.map(({ id }) => id))
+    );
+    return { ...template, drawings: [...canvasDrawings, ...motionOnly] };
+  };
+  let candidate = assemble(selectedCanvasDrawings);
+  let candidateBytes = JSON.stringify(candidate).length;
+  while (candidateBytes > LIMITS.bytes && selectedCanvasDrawings.length) {
+    const removed = selectedCanvasDrawings.pop()!;
+    candidateBytes -= JSON.stringify(removed).length + 1;
+  }
+  candidate = assemble(selectedCanvasDrawings);
+  while (JSON.stringify(candidate).length > LIMITS.bytes && selectedCanvasDrawings.length) {
+    selectedCanvasDrawings.pop();
+    candidate = assemble(selectedCanvasDrawings);
+  }
+  const canvasDrawings = candidate.drawings.filter((drawing) => drawing.source?.space === 'canvas');
   const motionOnly = preserveMotionOnlyIds(
     priorMotionOnly,
     new Set(canvasDrawings.map(({ id }) => id))
   );
   const drawings = [...canvasDrawings, ...motionOnly];
-  if (!existing) return { ...newProject(), id: map.id, title: map.title.slice(0, 240), drawings };
-  const candidate = { ...existing, id: map.id, drawings };
-  return JSON.stringify(candidate) === JSON.stringify(existing)
+  if (!existing) return { ...candidate, drawings };
+  const unchangedCandidate = { ...candidate, revision: existing.revision, drawings };
+  return JSON.stringify(unchangedCandidate) === JSON.stringify(existing)
     ? existing
-    : { ...candidate, revision: existing.revision + 1 };
+    : { ...candidate, drawings };
 }

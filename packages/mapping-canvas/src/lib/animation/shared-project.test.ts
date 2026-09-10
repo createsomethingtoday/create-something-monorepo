@@ -421,6 +421,36 @@ describe('shared Draw project contract', () => {
     expect(() => validateProject(actual)).not.toThrow();
   });
 
+  it('keeps a near-limit Motion project loadable when Canvas layers do not fit', () => {
+    const source = canvas();
+    source.objects = [{
+      id: 'canvas-note-over-budget',
+      kind: 'note',
+      createdAt: '2026-09-10T00:00:00.000Z',
+      x: 0,
+      y: 0,
+      width: 240,
+      height: 120,
+      text: 'This Canvas layer must be omitted when Motion has no byte capacity.'
+    }];
+    const seed = syncMotionProject(canvas());
+    const existing = {
+      ...seed,
+      id: source.id,
+      drawings: [{ ...seed.drawings[0], id: 'motion-only', source: undefined }]
+    };
+    const originalByteLimit = LIMITS.bytes;
+    LIMITS.bytes = JSON.stringify({ ...existing, revision: existing.revision + 1 }).length + 10;
+    try {
+      const synchronized = syncMotionProject(source, existing);
+      expect(synchronized.drawings).toEqual(existing.drawings);
+      expect(synchronized.drawings.some(({ id }) => id === 'canvas-note-over-budget')).toBe(false);
+      expect(() => validateProject(synchronized)).not.toThrow();
+    } finally {
+      LIMITS.bytes = originalByteLimit;
+    }
+  });
+
   it('bounds Canvas text and drawing counts without dropping Motion-only artwork', () => {
     const source = canvas();
     source.title = 'Title '.repeat(100);
