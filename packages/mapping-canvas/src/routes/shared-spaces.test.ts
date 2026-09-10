@@ -21,6 +21,7 @@ it('navigates between Canvas and Motion using the same project identity', () => 
   expect(canvas).toContain('persistedCanvasVersions.get(next.id)');
   expect(canvas).toContain('await activateCanvasProject(saved.id)');
   expect(motion).toContain('href={`/?project=${encodeURIComponent(project.id)}`}');
+  expect(motion).toContain("if (requested && project.id !== requested) window.history.replaceState(null, '', `/animate?project=${encodeURIComponent(project.id)}`);");
   expect(motion).toContain('await queue;');
   expect(motion).toContain('await importQueue;');
   expect(motion).toContain('importQueue = work.catch(() => {});');

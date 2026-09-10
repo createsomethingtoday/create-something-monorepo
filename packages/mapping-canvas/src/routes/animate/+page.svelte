@@ -81,6 +81,7 @@
           await saveProject(project, null);
           projects = [{ id: project.id, title: project.title, revision: project.revision }];
         }
+        if (requested && project.id !== requested) window.history.replaceState(null, '', `/animate?project=${encodeURIComponent(project.id)}`);
         ready = true;
         status = `Canvas + Motion · ${project.id}`;
       } catch (e) {
