@@ -29,3 +29,13 @@ For frame-exact MP4 rendering in the CREATE SOMETHING repository (after pnpm boo
     node packages/mapping-canvas/scripts/render-animation.mjs /absolute/path/to/animation.draw.json /absolute/path/to/output.mp4
 
 This uses Motion Studio's pinned Remotion runtime and the exact same Draw evaluator and canvas renderer. No image-generation API is called. The local MP4 can be assembled with narration in an existing Remotion project.
+
+## Hand-drawn motion
+
+Select a vector and enable Hand-drawn redraw. Line variation controls its roughness, Redraws / second controls the drawing cadence, and the seed makes that variation repeatable. Stored geometry stays editable; the first and last stroke endpoints stay anchored. Use Reveal key poses from 0 to 1 to grow a line along its length; time the next element to appear when the line arrives.
+
+For raster redraws, ask Codex for a transparent, evenly spaced image sheet with a few variations of the same illustration. Import it once, enable Play image variations, and set the sheet columns, rows and frame count. Cells play left to right, then down. Eight redraws per second is a useful starting point. Align transparent silhouettes normalizes each cell's visible bounds; Keep sheet cell positions preserves intentional differences in size and placement. Use consistently shaped variants for a steady silhouette. These are reusable raster cells, not editable vector points or new image-generation calls on every frame.
+
+Open Camera to set its world center X/Y and zoom at the current time. Camera poses use the same ease, linear and hold timing as artwork. Fixed to screen keeps captions or overlays outside the camera movement; new captions start fixed. Pointer movement and point editing account for the camera. Save project includes the camera and drawing effects, and both browser export and Remotion use them.
+
+Agents can replace the camera track with set_camera, set drawing.space to screen for overlays, and edit drawing.boil or drawing.flipbook through put_drawing. Inspect the current revision first. Redraw cadence is independent of output frame rate: camera motion can remain smooth while the pencil marks change in held steps. The sample uses one Codex-generated three-cell sheet, growing connectors, a hinged gate, and a camera that follows the request.

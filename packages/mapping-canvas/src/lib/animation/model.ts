@@ -26,7 +26,20 @@ export type Asset = {
     createdAt: string;
   };
 };
+export type CameraPose = { time: number; x: number; y: number; zoom: number; easing: Easing };
+export type Boil = { amplitude: number; fps: number; seed: number };
+export type Flipbook = {
+  columns: number;
+  rows: number;
+  frames: number;
+  fps: number;
+  seed: number;
+  registration: 'cell' | 'alpha';
+};
 export type Drawing = {
+  space?: 'world' | 'screen';
+  boil?: Boil;
+  flipbook?: Flipbook;
   id: string;
   name: string;
   kind: 'stroke' | 'image' | 'text';
@@ -41,6 +54,7 @@ export type Drawing = {
 };
 export type Project = {
   version: 'draw.animation.v1';
+  camera?: CameraPose[];
   id: string;
   revision: number;
   title: string;
@@ -103,6 +117,7 @@ export function validateProject(value: unknown): asserts value is Project {
     !p ||
     !keys(p, [
       'version',
+      'camera',
       'id',
       'revision',
       'title',
@@ -133,6 +148,25 @@ export function validateProject(value: unknown): asserts value is Project {
     p.drawings.length > LIMITS.drawings
   )
     throw new Error('Invalid animation project or project limits exceeded.');
+  if (p.camera !== undefined) {
+    if (!Array.isArray(p.camera) || !p.camera.length || p.camera.length > LIMITS.poses)
+      throw new Error('Invalid camera track.');
+    let prior = -1;
+    for (const k of p.camera) {
+      if (
+        !k ||
+        !keys(k, ['time', 'x', 'y', 'zoom', 'easing']) ||
+        !finite(k.time, 0, p.duration) ||
+        k.time <= prior ||
+        !finite(k.x, -10000, 10000) ||
+        !finite(k.y, -10000, 10000) ||
+        !finite(k.zoom, 0.25, 4) ||
+        !['linear', 'ease', 'hold'].includes(k.easing)
+      )
+        throw new Error('Invalid camera pose.');
+      prior = k.time;
+    }
+  }
   const ids = new Set<string>();
   for (const a of p.assets) {
     if (
@@ -175,7 +209,10 @@ export function validateProject(value: unknown): asserts value is Project {
         'assetId',
         'width',
         'height',
-        'poses'
+        'poses',
+        'space',
+        'boil',
+        'flipbook'
       ]) ||
       !id(d.id) ||
       drawingIds.has(d.id) ||
@@ -194,6 +231,39 @@ export function validateProject(value: unknown): asserts value is Project {
       (d.kind === 'stroke' && d.points.length < 2)
     )
       throw new Error('Invalid drawing, asset reference or drawing limits.');
+    if (d.space !== undefined && !['world', 'screen'].includes(d.space))
+      throw new Error('Invalid drawing space.');
+    if (
+      d.boil !== undefined &&
+      (d.kind !== 'stroke' ||
+        !d.boil ||
+        !keys(d.boil, ['amplitude', 'fps', 'seed']) ||
+        !finite(d.boil.amplitude, 0, 5) ||
+        !finite(d.boil.fps, 1, 24) ||
+        !Number.isInteger(d.boil.seed) ||
+        !finite(d.boil.seed, 0, 65535))
+    )
+      throw new Error('Invalid line boil.');
+    if (d.flipbook !== undefined) {
+      const f = d.flipbook;
+      if (
+        d.kind !== 'image' ||
+        !f ||
+        !keys(f, ['columns', 'rows', 'frames', 'fps', 'seed', 'registration']) ||
+        ![f.columns, f.rows, f.frames, f.seed].every(Number.isInteger) ||
+        !finite(f.columns, 1, 8) ||
+        !finite(f.rows, 1, 8) ||
+        !finite(f.frames, 1, 16) ||
+        f.frames > f.columns * f.rows ||
+        !finite(f.fps, 1, 24) ||
+        !finite(f.seed, 0, 65535) ||
+        !['cell', 'alpha'].includes(f.registration)
+      )
+        throw new Error('Invalid image variation sheet.');
+      const asset = p.assets.find((a) => a.id === d.assetId)!;
+      if (asset.width / f.columns < 8 || asset.height / f.rows < 8)
+        throw new Error('Variation cells are too small.');
+    }
     drawingIds.add(d.id);
     let prior = -1;
     for (const k of d.poses) {
@@ -292,6 +362,7 @@ export function putPose(d: Drawing, pose: Pose): Drawing {
 export type Operation =
   | { type: 'put_drawing'; drawing: Drawing }
   | { type: 'put_asset'; asset: Asset }
+  | { type: 'set_camera'; poses: CameraPose[] }
   | { type: 'put_pose'; id: string; pose: Pose }
   | { type: 'remove_drawing'; id: string }
   | { type: 'remove_pose'; id: string; time: number }
@@ -315,7 +386,8 @@ export function applyOperations(
     throw new Error('Use 1–100 operations.');
   let next = { ...p };
   for (const op of operations) {
-    if (op.type === 'put_asset')
+    if (op.type === 'set_camera') next = { ...next, camera: op.poses };
+    else if (op.type === 'put_asset')
       next = { ...next, assets: [...next.assets.filter((a) => a.id !== op.asset.id), op.asset] };
     else if (op.type === 'put_drawing') {
       const i = next.drawings.findIndex((d) => d.id === op.drawing.id);
@@ -361,4 +433,75 @@ export function applyOperations(
   next = { ...next, revision: p.revision + 1 };
   validateProject(next);
   return next;
+}
+
+/** Camera is a world-space center with zoom; overlays bypass it. */
+export function evaluateCamera(p: Project, time: number): CameraPose {
+  const ks = p.camera;
+  if (!ks?.length) return { time, x: p.width / 2, y: p.height / 2, zoom: 1, easing: 'linear' };
+  let a = ks[0],
+    b = a;
+  for (let i = 1; i < ks.length; i++) {
+    b = ks[i];
+    if (time < b.time) break;
+    a = b;
+  }
+  if (time <= a.time || a === b) return { ...a };
+  const t = timing((time - a.time) / (b.time - a.time), a.easing);
+  return {
+    time,
+    x: a.x + (b.x - a.x) * t,
+    y: a.y + (b.y - a.y) * t,
+    zoom: a.zoom + (b.zoom - a.zoom) * t,
+    easing: a.easing
+  };
+}
+export function sceneToScreen(pt: Point, p: Project, time: number): Point {
+  const c = evaluateCamera(p, time);
+  return { x: (pt.x - c.x) * c.zoom + p.width / 2, y: (pt.y - c.y) * c.zoom + p.height / 2 };
+}
+export function screenToScene(pt: Point, p: Project, time: number): Point {
+  const c = evaluateCamera(p, time);
+  return { x: (pt.x - p.width / 2) / c.zoom + c.x, y: (pt.y - p.height / 2) / c.zoom + c.y };
+}
+export function variationIndex(f: Flipbook, time: number): number {
+  return (Math.floor(Math.max(0, time) * f.fps + 1e-7) + f.seed) % f.frames;
+}
+/** Three repeatable redraws. Endpoints stay anchored so growing connections meet their targets. */
+export function boiledPoints(points: Point[], boil: Boil | undefined, time: number): Point[] {
+  if (!boil?.amplitude) return points;
+  const phase = Math.floor(Math.max(0, time) * boil.fps + 1e-7) % 3;
+  const noise = (i: number) => {
+    let n =
+      Math.imul(i + 1, 374761393) ^
+      Math.imul(boil.seed + 1, 668265263) ^
+      Math.imul(phase + 1, 1274126177);
+    n = Math.imul(n ^ (n >>> 13), 1274126177);
+    return (((n ^ (n >>> 16)) >>> 0) / 4294967295) * 2 - 1;
+  };
+  const total = points
+    .slice(1)
+    .reduce((sum, p, i) => sum + Math.hypot(p.x - points[i].x, p.y - points[i].y), 0);
+  const spacing = Math.max(10, total / 2000);
+  const out: Point[] = [points[0]];
+  let index = 0;
+  for (let i = 1; i < points.length; i++) {
+    const a = points[i - 1],
+      b = points[i],
+      length = Math.hypot(b.x - a.x, b.y - a.y),
+      steps = Math.max(1, Math.ceil(length / spacing));
+    for (let j = 1; j <= steps; j++) {
+      const t = j / steps,
+        amount = i === points.length - 1 && j === steps ? 0 : noise(index++) * boil.amplitude;
+      if (i === points.length - 1 && j === steps) {
+        out.push(b);
+        continue;
+      }
+      out.push({
+        x: a.x + (b.x - a.x) * t - ((b.y - a.y) / (length || 1)) * amount,
+        y: a.y + (b.y - a.y) * t + ((b.x - a.x) / (length || 1)) * amount
+      });
+    }
+  }
+  return out;
 }

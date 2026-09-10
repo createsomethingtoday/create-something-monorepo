@@ -1,5 +1,5 @@
 import type { DrawWebMcpTool } from '../webmcp';
-import { evaluate, type Project, type Operation } from './model';
+import { evaluateCamera, variationIndex, evaluate, type Project, type Operation } from './model';
 export type AnimationController = {
   get: () => Project;
   apply: (ops: Operation[], revision: number) => Promise<void>;
@@ -31,6 +31,18 @@ const pose = {
   },
   additionalProperties: false
 };
+const cameraPose = {
+  type: 'object',
+  required: ['time', 'x', 'y', 'zoom', 'easing'],
+  properties: {
+    time: num,
+    x: num,
+    y: num,
+    zoom: num,
+    easing: { enum: ['linear', 'ease', 'hold'] }
+  },
+  additionalProperties: false
+};
 const drawing = {
   type: 'object',
   required: ['id', 'name', 'kind', 'points', 'color', 'weight', 'text', 'width', 'height', 'poses'],
@@ -43,6 +55,26 @@ const drawing = {
     weight: num,
     text: { type: 'string' },
     assetId: { type: 'string' },
+    space: { enum: ['world', 'screen'] },
+    boil: {
+      type: 'object',
+      required: ['amplitude', 'fps', 'seed'],
+      properties: { amplitude: num, fps: num, seed: { type: 'integer' } },
+      additionalProperties: false
+    },
+    flipbook: {
+      type: 'object',
+      required: ['columns', 'rows', 'frames', 'fps', 'seed', 'registration'],
+      properties: {
+        columns: { type: 'integer' },
+        rows: { type: 'integer' },
+        frames: { type: 'integer' },
+        fps: num,
+        seed: { type: 'integer' },
+        registration: { enum: ['cell', 'alpha'] }
+      },
+      additionalProperties: false
+    },
     width: num,
     height: num,
     poses: { type: 'array', items: pose }
@@ -75,9 +107,13 @@ export function animationTools(c: AnimationController): DrawWebMcpTool[] {
         name: d.name,
         kind: d.kind,
         assetId: d.assetId,
+        space: d.space ?? 'world',
+        boil: d.boil,
+        flipbook: d.flipbook,
         pointCount: d.points.length,
         poseTimes: d.poses.map((k) => k.time)
       })),
+      evaluatedCamera: evaluateCamera(p, c.time()),
       time: c.time()
     };
   };
@@ -99,12 +135,17 @@ export function animationTools(c: AnimationController): DrawWebMcpTool[] {
       async (input) => {
         const d = c.get().drawings.find((d) => d.id === input.id);
         if (!d) throw new Error('Unknown drawing.');
-        return { revision: c.get().revision, drawing: d, evaluated: evaluate(d, c.time()) };
+        return {
+          revision: c.get().revision,
+          drawing: d,
+          evaluated: evaluate(d, c.time()),
+          variationFrame: d.flipbook ? variationIndex(d.flipbook, c.time()) : undefined
+        };
       }
     ),
     tool(
       'draw_animation_apply',
-      'Atomically edit persistent animation using the current revision. put_pose modifies only one key pose. The left pose easing controls transition to the next; hold switches at the next key. Reuse drawings and assets instead of redrawing every output frame. put_drawing can add a vector or instance an imported image asset. Import Codex-generated images through the Image/asset file control or .draw-asset.json bundle; no API calls occur here.',
+      'Atomically edit persistent animation using the current revision. put_pose modifies only one key pose. The left pose easing controls transition to the next; hold switches at the next key. Reuse drawings and assets instead of redrawing every output frame. set_camera replaces the bounded camera track (world center x/y and zoom); screen-space drawings remain fixed. boil adds deterministic stroke redraws; flipbook plays a registered grid of raster variations from one image asset. put_drawing can add a vector or instance an imported image asset. Import Codex-generated images through the Image/asset file control or .draw-asset.json bundle; no API calls occur here.',
       {
         expectedRevision: { type: 'integer' },
         operations: {
@@ -113,6 +154,15 @@ export function animationTools(c: AnimationController): DrawWebMcpTool[] {
           maxItems: 100,
           items: {
             oneOf: [
+              {
+                type: 'object',
+                required: ['type', 'poses'],
+                properties: {
+                  type: { const: 'set_camera' },
+                  poses: { type: 'array', minItems: 1, maxItems: 120, items: cameraPose }
+                },
+                additionalProperties: false
+              },
               {
                 type: 'object',
                 required: ['type', 'drawing'],

@@ -1,6 +1,10 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import MotionControls from '$lib/animation/MotionControls.svelte';
   import {
+    evaluateCamera,
+    screenToScene,
+    sceneToScreen,
     newProject,
     basePose,
     makeId,
@@ -324,6 +328,7 @@
       id: makeId(),
       name: kind === 'circle' ? 'Circle' : 'Caption',
       kind: kind === 'circle' ? 'stroke' : 'text',
+      space: kind === 'text' ? 'screen' : 'world',
       points:
         kind === 'circle'
           ? Array.from({ length: 49 }, (_, i) => ({
@@ -343,17 +348,18 @@
       selected = d.id;
     });
   }
-  function point(e: PointerEvent): Point {
+  function point(e: PointerEvent, space: 'world' | 'screen' = 'world'): Point {
     const r = canvas.getBoundingClientRect();
-    return {
+    const pt = {
       x: ((e.clientX - r.left) * project.width) / r.width,
       y: ((e.clientY - r.top) * project.height) / r.height
     };
+    return space === 'screen' ? pt : screenToScene(pt, project, time);
   }
   function pointerDown(e: PointerEvent) {
     if (busy || exporting || !ready || e.button !== 0) return;
     stop();
-    const p = point(e);
+    const p = point(e, tool === 'points' ? current?.space : 'world');
     canvas.setPointerCapture(e.pointerId);
     if (tool === 'pen') {
       penPoints = [p];
@@ -367,27 +373,37 @@
       if (i >= 0) drag = { start: p, drawing: current, pose: { ...pose, time }, pointIndex: i };
       return;
     }
-    const hit = [...project.drawings].reverse().find((d) => {
-      const k = evaluate(d, time),
-        local = toLocal(p, k);
-      if (k.opacity === 0) return false;
-      if (d.kind !== 'stroke')
-        return local.x >= 0 && local.y >= 0 && local.x <= d.width && local.y <= d.height;
-      const xs = k.points.map((pt) => pt.x),
-        ys = k.points.map((pt) => pt.y);
-      return (
-        local.x >= Math.min(...xs) - 12 &&
-        local.x <= Math.max(...xs) + 12 &&
-        local.y >= Math.min(...ys) - 12 &&
-        local.y <= Math.max(...ys) + 12
-      );
-    });
+    const hit = [
+      ...project.drawings.filter((d) => d.space !== 'screen'),
+      ...project.drawings.filter((d) => d.space === 'screen')
+    ]
+      .reverse()
+      .find((d) => {
+        const k = evaluate(d, time),
+          local = toLocal(point(e, d.space), k);
+        if (k.opacity === 0) return false;
+        if (d.kind !== 'stroke')
+          return local.x >= 0 && local.y >= 0 && local.x <= d.width && local.y <= d.height;
+        const xs = k.points.map((pt) => pt.x),
+          ys = k.points.map((pt) => pt.y);
+        return (
+          local.x >= Math.min(...xs) - 12 &&
+          local.x <= Math.max(...xs) + 12 &&
+          local.y >= Math.min(...ys) - 12 &&
+          local.y <= Math.max(...ys) + 12
+        );
+      });
     selected = hit?.id ?? '';
     if (hit)
-      drag = { start: p, drawing: hit, pose: { ...evaluate(hit, time), time }, pointIndex: -1 };
+      drag = {
+        start: point(e, hit.space),
+        drawing: hit,
+        pose: { ...evaluate(hit, time), time },
+        pointIndex: -1
+      };
   }
   function pointerMove(e: PointerEvent) {
-    const p = point(e);
+    const p = point(e, drag?.drawing.space);
     if (tool === 'pen' && penPoints.length) {
       if (
         penPoints.length < 1000 &&
@@ -397,9 +413,14 @@
       renderer.paint(canvas.getContext('2d')!, project, time, { ghosts });
       const ctx = canvas.getContext('2d')!;
       ctx.strokeStyle = '#292522';
-      ctx.lineWidth = 3;
+      ctx.lineWidth = 3 * evaluateCamera(project, time).zoom;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
       ctx.beginPath();
-      penPoints.forEach((pt, i) => (i ? ctx.lineTo(pt.x, pt.y) : ctx.moveTo(pt.x, pt.y)));
+      penPoints.forEach((pt, i) => {
+        const q = sceneToScreen(pt, project, time);
+        i ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y);
+      });
       ctx.stroke();
       return;
     }
@@ -514,6 +535,7 @@
               future = [];
               selected = '';
               time = 0;
+              status = 'Saved on this device';
             } finally {
               busy = false;
             }
@@ -694,6 +716,17 @@
       {:else}<p class="muted">
           Select a drawing to edit its pose. Each change at a new time creates a key pose.
         </p>{/if}
+      <MotionControls
+        {project}
+        {current}
+        {time}
+        disabled={!ready || busy || exporting}
+        apply={(ops) => run(() => commit(ops, project.revision))}
+        seek={(t) => {
+          stop();
+          time = t;
+        }}
+      />
       <div class="section-label">OUTPUT</div>
       <label
         >Duration (seconds)<input
