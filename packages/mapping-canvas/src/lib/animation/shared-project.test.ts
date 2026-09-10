@@ -190,7 +190,7 @@ describe('shared Draw project contract', () => {
 
     expect(ratio).toBeLessThan(1);
     expect(nextStroke.poses[1].x).toBeCloseTo(100 * ratio);
-    expect(nextStroke.poses[1].scaleX).toBeCloseTo(2 * ratio);
+    expect(nextStroke.poses[1].scaleX).toBe(2);
     expect(nextStroke.poses[1].points![0].x - nextStroke.points[0].x).toBeCloseTo(50 * ratio);
     expect(nextStroke.poses[1].points![0].y - nextStroke.points[0].y).toBeCloseTo(-20 * ratio);
     expect(nextNote.poses[1].x - nextNote.source!.origin!.x).toBeCloseTo(

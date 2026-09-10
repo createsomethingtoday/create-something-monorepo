@@ -132,8 +132,8 @@ function retainAnimation(source: Drawing, prior: Drawing | undefined): Drawing {
       ...pose,
       x: clamp(newOrigin.x + (pose.x - oldOrigin.x) * scaleX, -10_000, 10_000),
       y: clamp(newOrigin.y + (pose.y - oldOrigin.y) * scaleY, -10_000, 10_000),
-      scaleX: clamp(pose.scaleX * scaleX, 0.01, 100),
-      scaleY: clamp(pose.scaleY * scaleY, 0.01, 100),
+      scaleX: pose.scaleX,
+      scaleY: pose.scaleY,
       points:
         samePointCount && pose.points
           ? pose.points.map((point, index) => ({

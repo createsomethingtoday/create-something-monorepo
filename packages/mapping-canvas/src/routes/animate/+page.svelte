@@ -164,35 +164,39 @@
     queue = work.catch(() => {});
     return work;
   }
-  async function history(direction: 'undo' | 'redo') {
-    if (busy || exporting) throw new Error('Editor is busy.');
-    const stack = direction === 'undo' ? past : future;
-    const target = stack.at(-1);
-    if (!target) return;
-    stop();
-    busy = true;
-    try {
-      const next = { ...target, revision: project.revision + 1 };
-      const prepared = renderer.fork();
-      await prepared.prepare(next.assets);
-      await saveProject(next, project.revision);
-      renderer = prepared;
-      if (direction === 'undo') {
-        past = past.slice(0, -1);
-        future = [...future, project];
-      } else {
-        future = future.slice(0, -1);
-        past = [...past, project];
+  function history(direction: 'undo' | 'redo'): Promise<void> {
+    const work = queue.then(async () => {
+      if (busy || exporting) throw new Error('Editor is busy.');
+      const stack = direction === 'undo' ? past : future;
+      const target = stack.at(-1);
+      if (!target) return;
+      stop();
+      busy = true;
+      try {
+        const next = { ...target, revision: project.revision + 1 };
+        const prepared = renderer.fork();
+        await prepared.prepare(next.assets);
+        await saveProject(next, project.revision);
+        renderer = prepared;
+        if (direction === 'undo') {
+          past = past.slice(0, -1);
+          future = [...future, project];
+        } else {
+          future = future.slice(0, -1);
+          past = [...past, project];
+        }
+        project = next;
+        projects = projects.map((p) =>
+          p.id === next.id ? { id: next.id, title: next.title, revision: next.revision } : p
+        );
+        time = Math.min(time, next.duration);
+        status = `${direction === 'undo' ? 'Undid' : 'Redid'} change · saved`;
+      } finally {
+        busy = false;
       }
-      project = next;
-      projects = projects.map((p) =>
-        p.id === next.id ? { id: next.id, title: next.title, revision: next.revision } : p
-      );
-      time = Math.min(time, next.duration);
-      status = `${direction === 'undo' ? 'Undid' : 'Redid'} change · saved`;
-    } finally {
-      busy = false;
-    }
+    });
+    queue = work.catch(() => {});
+    return work;
   }
   function stop() {
     playing = false;
@@ -241,27 +245,31 @@
   function changeSetting(key: 'title' | 'duration' | 'fps' | 'background', value: string | number) {
     run(() => commit([{ type: 'settings', [key]: value }], project.revision));
   }
-  async function fresh(p = newProject()) {
-    if (busy || exporting) throw new Error('Editor is busy.');
-    stop();
-    busy = true;
-    try {
-      validateProject(p);
-      const prepared = renderer.fork();
-      await prepared.prepare(p.assets);
-      await saveProject(p, null);
-      renderer = prepared;
-      project = p;
-      window.history.replaceState(null, '', `/animate?project=${encodeURIComponent(p.id)}`);
-      projects = [{ id: p.id, title: p.title, revision: p.revision }, ...projects];
-      past = [];
-      future = [];
-      time = 0;
-      selected = '';
-      status = 'New project saved · other projects preserved';
-    } finally {
-      busy = false;
-    }
+  function fresh(p = newProject()): Promise<void> {
+    const work = queue.then(async () => {
+      if (busy || exporting) throw new Error('Editor is busy.');
+      stop();
+      busy = true;
+      try {
+        validateProject(p);
+        const prepared = renderer.fork();
+        await prepared.prepare(p.assets);
+        await saveProject(p, null);
+        renderer = prepared;
+        project = p;
+        window.history.replaceState(null, '', `/animate?project=${encodeURIComponent(p.id)}`);
+        projects = [{ id: p.id, title: p.title, revision: p.revision }, ...projects];
+        past = [];
+        future = [];
+        time = 0;
+        selected = '';
+        status = 'New project saved · other projects preserved';
+      } finally {
+        busy = false;
+      }
+    });
+    queue = work.catch(() => {});
+    return work;
   }
   async function importFile(event: Event) {
     const input = event.target as HTMLInputElement,
