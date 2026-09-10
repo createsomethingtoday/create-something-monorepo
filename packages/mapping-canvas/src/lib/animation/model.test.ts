@@ -129,6 +129,21 @@ describe('animation contract', () => {
         0
       )
     ).toThrow('Canvas provenance');
+    expect(() =>
+      applyOperations(
+        newProject(),
+        [
+          {
+            type: 'put_drawing',
+            drawing: {
+              ...drawing(),
+              source: { space: 'canvas', objectId: 'line', origin: { x: 0, y: 0, scaleX: 1, scaleY: 1 } }
+            }
+          }
+        ],
+        0
+      )
+    ).toThrow('Canvas provenance');
     expect(p.drawings).toHaveLength(1);
   });
   it('rejects external image URLs and nonfinite coordinates', () => {

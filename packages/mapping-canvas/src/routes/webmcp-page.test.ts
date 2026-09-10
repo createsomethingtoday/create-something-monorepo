@@ -24,7 +24,7 @@ describe('Draw WebMCP page integration', () => {
     expect(page).toContain("apply(withObjects(document, document.objects.map((entry) => entry.id === note.id ? changed : entry)), { type: 'put_object', object: changed });");
     expect(page).toContain('const previous = history.present, managed = currentManagedShare();');
     expect(page).toContain("(value) => history = { past: [], present: value, future: [] }, 'import'");
-    expect(page).toContain('await transferManagedShareAfterReplacement(managed, previous, committed);');
+    expect(page).toContain('restoreManagedShareAfterReplacement(managed, previous, committed);');
     expect(page).toContain('updatedAt: mintReplacementTimestamp(previous.updatedAt)');
     expect(page).toContain('function restoreHistoryWithFreshRevision');
     expect(page).toContain('restoreHistoryWithFreshRevision(undo(history))');
@@ -59,14 +59,14 @@ describe('Draw WebMCP page integration', () => {
     expect(page).toContain("if (!persistedVersionMatches(documentId, persisted)) throw new Error('Another tab changed this canvas. Reload Draw before publishing.')");
     expect(page).toContain('try { await coordinateDocumentReplacement(async () =>');
     expect(page).toContain('await coordinateDocumentReplacement(async () => {');
-    expect(page).toContain("if (nativeRole === 'web') { await writeCanvasDocument(committed); await transferManagedShareAfterReplacement(managed, previous, committed); }");
-    expect(page).toContain("if (nativeRole === 'web') { await writeCanvasDocument(next); await transferManagedShareAfterReplacement(managed, previous, next); }");
+    expect(page).toContain("if (nativeRole === 'web') await writeCanvasDocument(committed); else queueSave(committed); restoreManagedShareAfterReplacement(managed, previous, committed);");
+    expect(page).toContain("if (nativeRole === 'web') await writeCanvasDocument(next); else queueSave(next); restoreManagedShareAfterReplacement(managed, previous, next);");
     expect(page).toContain('noteInput.flushAll();');
     expect(page).toContain('clearTimeout(saveTimer); saveTimer = undefined;');
     expect(page).toContain("if (replacingDocument) { status = 'Wait for the document replacement to finish'; return false; }");
-    expect(page).toContain('async function transferManagedShareAfterReplacement');
-    expect(page).toContain('await writeCanvasDocument(previous);');
-    expect(page).toContain('await transferManagedShareAfterReplacement(managed, previous, committed);');
+    expect(page).toContain('function restoreManagedShareAfterReplacement');
+    expect(page).toContain('if (previous.id === next.id)');
+    expect(page).toContain('restoreManagedShareAfterReplacement(managed, previous, committed);');
     expect(page).toContain('async function persistCurrentDocument(next: CanvasDocument)');
     expect(page).toContain('if (!persisted) await writeCanvasDocument(snapshot);');
     expect(page).toContain('finally { replacingDocument = false; }');

@@ -434,6 +434,8 @@ export function applyOperations(
     else if (op.type === 'put_drawing') {
       const i = next.drawings.findIndex((d) => d.id === op.drawing.id);
       const canvasSource = originalCanvasSources.get(op.drawing.id);
+      if (!canvasSource && op.drawing.source?.space === 'canvas')
+        throw new Error('Canvas provenance can only be created by Canvas synchronization.');
       if (canvasSource && JSON.stringify(op.drawing.source) !== JSON.stringify(canvasSource))
         throw new Error('Canvas provenance cannot be changed in Motion.');
       next = {
