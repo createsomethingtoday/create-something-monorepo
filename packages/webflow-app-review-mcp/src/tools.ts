@@ -2,7 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 
 import type { AirtableClient, AppReviewVersion, CollaboratorRef } from './airtable.js';
-import { AirtableClientError } from './airtable.js';
+import { AirtableClientError, assertReviewerAssignmentReadOnly } from './airtable.js';
 import type { ZendeskClient } from './zendesk.js';
 import { ZendeskClientError, renderCreatorFacingHtml } from './zendesk.js';
 import {
@@ -31,6 +31,31 @@ type ZendeskFactory = () => ZendeskClient | null;
 const collaboratorRefSchema = z.object({
   id: z.string().min(1),
 });
+
+const statusChangeSchema = z.object({
+  confirmed: z.literal(true).describe('True only when the operator explicitly requested this Airtable status change. A request to prepare, start, or kick off an MCP review cycle is not confirmation.'),
+  expected_status: z.string().nullable().describe('Exact current reviewStatus from a fresh app_review_get_review_context read; null only when unset.'),
+});
+
+type StatusChange = z.infer<typeof statusChangeSchema>;
+
+function ensureStatusChangeConfirmed(version: AppReviewVersion, confirmation?: StatusChange): void {
+  if (confirmation?.confirmed !== true || confirmation.expected_status === undefined) {
+    throw new AirtableClientError(
+      'REVIEW_STATUS_CONFIRMATION_REQUIRED',
+      'Review preparation does not change Airtable status. Use app_review_get_review_context and preserve owner/status. For an explicitly requested status change, supply status_change.confirmed=true and status_change.expected_status from a fresh read.',
+      400,
+    );
+  }
+  if (confirmation.expected_status !== (version.reviewStatus ?? null)) {
+    throw new AirtableClientError(
+      'REVIEW_STATUS_CONFLICT',
+      'The review status differs from the confirmed starting state. Read current context and reconfirm before writing.',
+      409,
+      { expectedStatus: confirmation.expected_status, currentStatus: version.reviewStatus ?? null },
+    );
+  }
+}
 
 const APP_REVIEW_QUEUE_STATUS_OPTIONS = [
   'ready_to_review',
@@ -620,7 +645,7 @@ export function registerTools(
 
   server.tool(
     'app_review_get_review_context',
-    'Get normalized review context for one app version without reviewer-session scoping.',
+    'Read-only starting point to prepare, start, or kick off a new MCP review cycle, including asset updates. Reads the existing reviewer and status without changing either. Wait for the bundle if it has not been uploaded. Never assign a reviewer or set In Review merely to prepare a review.',
     {
       version_id: z.string().min(1),
     },
@@ -657,14 +682,16 @@ export function registerTools(
 
   server.tool(
     'app_review_set_review_status',
-    'Set an app review status on an Asset Version record without reviewer-session scoping.',
+    'Change Airtable review status only on explicit operator request, with status_change confirmation and a fresh expected status. Preparing or kicking off an MCP review cycle does not authorize this write. Preserves reviewer assignment.',
     {
       version_id: z.string().min(1),
       review_status: z.enum(REVIEWER_CONTROLLED_STATUS_OPTIONS),
+      status_change: statusChangeSchema.optional(),
     },
-    async ({ version_id, review_status }) => {
+    async ({ version_id, review_status, status_change }) => {
       try {
-        await requireAppVersion(getClient(), version_id);
+        const version = await requireAppVersion(getClient(), version_id);
+        ensureStatusChangeConfirmed(version, status_change);
         const updated = await getClient().updateVersionReview(version_id, {
           review_status,
         });
@@ -797,12 +824,13 @@ export function registerTools(
 
   server.tool(
     'app_review_update_version_review',
-    'Update review fields on an Asset Version record, including exception and hold fields. Exception sequencing rule: fill exception_type + exception_rationale first, then flip exception_status to 🆕Requested in a separate call — the status flip triggers the #app-review-exceptions Slack post. Refuses an approved review_status while any ⚖️exception on the app is undecided, and refuses exception_status ❌Denied while ⚖️Exceptions items are undecided.',
+    'Update review fields on an Asset Version record, including exception and hold fields. Reviewer assignment is read-only; never send reviewer, even null. review_status requires explicit operator status_change confirmation and a fresh expected status. Preparing a review cycle is read-only via app_review_get_review_context. Exception sequencing rule: fill exception_type + exception_rationale first, then flip exception_status to 🆕Requested in a separate call — the status flip triggers the #app-review-exceptions Slack post. Refuses an approved review_status while any ⚖️exception on the app is undecided, and refuses exception_status ❌Denied while ⚖️Exceptions items are undecided.',
     {
       version_id: z.string().min(1),
       review_status: z.enum(REVIEW_STATUS_OPTIONS).optional(),
       review_type: z.enum(REVIEW_TYPE_OPTIONS).optional(),
-      reviewer: z.union([collaboratorRefSchema, z.null()]).optional(),
+      reviewer: z.union([collaboratorRefSchema, z.null()]).optional().describe('Read-only compatibility field. Any supplied value is rejected; manage assignment in Airtable.'),
+      status_change: statusChangeSchema.optional(),
       rejection_reason: z.enum(REJECTION_REASON_OPTIONS).optional(),
       review_feedback: z.string().optional(),
       submission_datetime_override: z.union([z.string().datetime(), z.null()]).optional(),
@@ -815,10 +843,14 @@ export function registerTools(
     },
     async (params) => {
       try {
+        assertReviewerAssignmentReadOnly(params.reviewer);
         const client = getClient();
         const version = await requireAppVersion(client, params.version_id);
         if (params.review_status && APPROVAL_GATED_REVIEW_STATUSES.has(params.review_status)) {
           ensureApprovalUnblocked(version);
+        }
+        if (params.review_status !== undefined) {
+          ensureStatusChangeConfirmed(version, params.status_change);
         }
         if (params.exception_status === '❌Denied') {
           ensureVersionDenialUnblocked(version);
@@ -826,7 +858,6 @@ export function registerTools(
         const mutation = cleanObject({
           review_status: params.review_status,
           review_type: params.review_type,
-          reviewer: params.reviewer as CollaboratorRef | null | undefined,
           rejection_reason: params.rejection_reason,
           review_feedback: params.review_feedback,
           submission_datetime_override: params.submission_datetime_override,
@@ -1147,7 +1178,7 @@ export function registerTools(
 
   server.tool(
     'app_review_update_asset_metadata',
-    'Update writable app metadata fields on Assets. Read-only/computed fields are rejected or routed.',
+    'Update writable app metadata fields on Assets. Read-only/computed fields are rejected or routed. latest_review_status requires explicit status_change confirmation and a fresh expected status; never change status merely to prepare a review cycle.',
     {
       asset_id: z.string().min(1),
       app_name: z.string().optional(),
@@ -1176,6 +1207,7 @@ export function registerTools(
       promo_video_url: z.string().url().optional(),
       marketplace_status: z.enum(MARKETPLACE_STATUS_OPTIONS).optional(),
       latest_review_status: z.enum(REVIEW_STATUS_OPTIONS).optional(),
+      status_change: statusChangeSchema.optional(),
       days_in_current_review_stage: z.number().optional(),
       workspace_dashboard_url: z.string().optional(),
       app_id: z.string().optional(),
@@ -1261,6 +1293,12 @@ export function registerTools(
               getReadOnlyAssetWriteHint('latest_review_status'),
             );
           }
+
+          const currentVersion = await requireAppVersion(client, latestVersion.versionId);
+          if (APPROVAL_GATED_REVIEW_STATUSES.has(params.latest_review_status)) {
+            ensureApprovalUnblocked(currentVersion);
+          }
+          ensureStatusChangeConfirmed(currentVersion, params.status_change);
 
           const routed = await client.updateVersionReview(latestVersion.versionId, {
             review_status: params.latest_review_status,

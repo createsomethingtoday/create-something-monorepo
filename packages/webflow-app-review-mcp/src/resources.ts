@@ -149,7 +149,7 @@ export function registerResources(server: McpServer, getClient: ClientFactory): 
           'Use app_review_list_queue.assigned to inspect assigned, unassigned, or all records without binding to a reviewer session.',
           'Call app_review_get_asset to inspect one app asset and its version history.',
           'Call app_review_get_version when a specific version record needs confirmation.',
-          'Call app_review_get_review_context before any write to confirm the current asset/version state.',
+          'To prepare, start, or kick off a new MCP review cycle, call app_review_get_review_context. This is read-only: preserve the reviewer and status, and wait for the bundle if needed.',
           'Use app_review_decision_support and app_review_feedback_refiner for recommendation drafting only.',
           'Use app_review_list_governance_findings and app_review_get_governance_finding to inspect cross-app policy, docs, platform, and transparency findings.',
           'Use app_review_governance_finding_capture, then app_review_create_governance_finding or app_review_update_governance_finding, to capture Slack/Zendesk/docs findings into the tracking hub.',
@@ -174,6 +174,8 @@ export function registerResources(server: McpServer, getClient: ClientFactory): 
           hostGuidance: [
             'Do not require a reviewer session or reviewer account mapping.',
             'Do not register Airtable base or table URLs as separate MCP servers.',
+            'Reviewer is read-only. Manage assignment or reassignment in Airtable; never infer a reviewer from shared credentials, remembered IDs, or the MCP maintainer.',
+            'General status writes require status_change: { confirmed: true, expected_status: <exact current reviewStatus or null> } only after the operator explicitly requests that status change. Review preparation is not confirmation.',
             'Use explicit record IDs and fields for Airtable writes.',
             'Keep broad metadata-editing behavior operator-gated unless policy expands explicitly.',
           ],

@@ -14,6 +14,8 @@ Prioritize:
 2) actionable remediation guidance,
 3) consistency with the review status and rejection reason taxonomy.
 
+Preparing, starting, or kicking off an MCP review cycle means reading app_review_get_review_context and waiting for the bundle when needed. Preserve the existing reviewer and review status. Reviewer assignment is managed in Airtable, not this MCP. Only change status when the operator explicitly requests that Airtable change; general status writes require status_change confirmation and a fresh expected_status. Do not infer permission from a request to review an app.
+
 Do not invent fields or statuses that are not present in provided data.`;
 
 export function registerPrompts(server: McpServer): void {
