@@ -16,6 +16,7 @@ function boundedStrokePoints(points: Point[]): Point[] {
     points[Math.round((index * last) / (LIMITS.points - 1))]
   );
 }
+const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
 /** Materialize representable Canvas marks in Motion without changing their identity. */
 export function importMap(map: CanvasDocument): { drawings: Drawing[]; skipped: number } {
@@ -122,15 +123,15 @@ function retainAnimation(source: Drawing, prior: Drawing | undefined): Drawing {
     boil: source.kind === 'stroke' ? prior.boil : undefined,
     poses: prior.poses.map((pose) => ({
       ...pose,
-      x: newOrigin.x + (pose.x - oldOrigin.x) * scaleX,
-      y: newOrigin.y + (pose.y - oldOrigin.y) * scaleY,
-      scaleX: pose.scaleX * scaleX,
-      scaleY: pose.scaleY * scaleY,
+      x: clamp(newOrigin.x + (pose.x - oldOrigin.x) * scaleX, -10_000, 10_000),
+      y: clamp(newOrigin.y + (pose.y - oldOrigin.y) * scaleY, -10_000, 10_000),
+      scaleX: clamp(pose.scaleX * scaleX, 0.01, 100),
+      scaleY: clamp(pose.scaleY * scaleY, 0.01, 100),
       points:
         samePointCount && pose.points
           ? pose.points.map((point, index) => ({
-              x: source.points[index].x + (point.x - prior.points[index].x),
-              y: source.points[index].y + (point.y - prior.points[index].y)
+              x: clamp(source.points[index].x + (point.x - prior.points[index].x), -10_000, 10_000),
+              y: clamp(source.points[index].y + (point.y - prior.points[index].y), -10_000, 10_000)
             }))
           : undefined
     }))

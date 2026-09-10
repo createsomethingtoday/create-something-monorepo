@@ -81,6 +81,7 @@
   let shareExpiryTimer: ReturnType<typeof setTimeout> | undefined;
   let surface: SVGSVGElement, canvasContent: SVGGElement, fileInput = $state<HTMLInputElement | null>(null), viewportWidth = $state(1200), viewportHeight = $state(800);
   let saveTimer: ReturnType<typeof setTimeout> | undefined;
+  const persistedCanvasVersions = new Map<string, string | null>();
   let mirrorTimer: ReturnType<typeof setInterval> | undefined;
   let nativeTail: Promise<void> = Promise.resolve();
   let agentMutationTail: Promise<void> = Promise.resolve();
@@ -541,7 +542,7 @@
       const next = createDocument();
       await commitHostReplacement(() => next, (value) => value, (value) => history = { past: [], present: value, future: [] }, 'reset');
       selectedIds = [];
-      await saveDocument(next);
+      await writeCanvasDocument(next);
       await transferManagedShareAfterReplacement(managed, previous, next);
     });
   }
@@ -549,7 +550,7 @@
   async function initializeSession() {
     if (!nativeShell) {
       const requested = new URL(location.href).searchParams.get('project') ?? undefined;
-      await loadDocument(requested).then(async (saved) => { if (saved) { if (requested) await activateCanvasProject(saved.id); history = { past: [], present: saved, future: [] }; restoreManagedShare(saved.id); status = 'Restored from this device'; } else status = 'New local session'; }).catch(() => status = 'Local storage unavailable · export copies');
+      await loadDocument(requested).then(async (saved) => { if (saved) { if (requested) await activateCanvasProject(saved.id); persistedCanvasVersions.set(saved.id, saved.updatedAt); history = { past: [], present: saved, future: [] }; restoreManagedShare(saved.id); status = 'Restored from this device'; } else { persistedCanvasVersions.set(document.id, null); status = 'New local session'; } }).catch(() => status = 'Local storage unavailable · export copies');
       ready = true;
       return;
     }
@@ -654,9 +655,11 @@
   function point(event: PointerEvent): Point { const rect = surface.getBoundingClientRect(); return { x: (event.clientX - rect.left - viewport.x) / viewport.zoom, y: (event.clientY - rect.top - viewport.y) / viewport.zoom }; }
   function companionCanEdit() { if (replacingDocument) { status = 'Wait for the document replacement to finish'; return false; } if (nativeRole !== 'companion') return true; if (nativeSession.sessionId && !nativeSession.requiresRepair) return true; status = nativeSession.requiresRepair ? 'Pairing credentials rejected · export if needed, then forget and re-pair' : 'Pair this iPhone with a Mac before editing'; return false; }
   async function persistCurrentDocument(next: CanvasDocument) {
-    const run = async () => { const persisted = await loadDocument(next.id); if (persisted && Date.parse(persisted.updatedAt) > Date.parse(next.updatedAt)) return false; await saveDocument(next); return true; };
+    const run = async () => { const persisted = await loadDocument(next.id), expected = persistedCanvasVersions.get(next.id) ?? null; if ((persisted?.updatedAt ?? null) !== expected) return false; await writeCanvasDocument(next); return true; };
     return navigator.locks ? navigator.locks.request(`${DRAW_DOCUMENT_LOCK}:${next.id}`, run) : run();
   }
+  async function writeCanvasDocument(next: CanvasDocument) { await saveDocument(next); persistedCanvasVersions.set(next.id, next.updatedAt); }
+  function persistedVersionMatches(id: string, persisted: CanvasDocument | null) { return (persisted?.updatedAt ?? null) === (persistedCanvasVersions.get(id) ?? null); }
   function queueSave(next: CanvasDocument) { if (!browser || nativeRole !== 'web') return; clearTimeout(saveTimer); status = 'Saving locally…'; saveTimer = setTimeout(() => void persistCurrentDocument(next).then((saved) => status = saved ? 'Saved on this device' : 'Another tab replaced this canvas · reload to continue').catch(() => status = 'Local save failed · export a copy'), 120); }
   async function openMotion(event: MouseEvent) { event.preventDefault(); noteInput.flushAll(); clearTimeout(saveTimer); saveTimer = undefined; if (!await persistCurrentDocument(document)) { status = 'A newer Canvas is saved in another tab · reload before opening Motion'; return; } location.href = `/animate?project=${encodeURIComponent(document.id)}`; }
   function commitNoteText(id: string, text: string) { if (!companionCanEdit()) return; const current = document.objects.find((entry) => entry.id === id); if (!current || current.kind !== 'note' || (current.text === text && !current.content)) return; const changed = { ...current, text, content: undefined }; const next = withObjects(document, document.objects.map((entry) => entry.id === id ? changed : entry)); history = { ...history, present: next }; queueSave(next); sendNative([{ type: 'put_object', object: changed }]); }
@@ -982,14 +985,14 @@
     const snapshot = JSON.parse(JSON.stringify(document)) as CanvasDocument, documentId = snapshot.id;
     const run = async () => {
       if (document.id !== documentId) throw new Error('The canvas changed while waiting to publish. Review it and try again.');
-      const persisted = await loadDocument();
-      if (persisted && persisted.id !== documentId) throw new Error('Another tab replaced this canvas. Reload Draw before publishing.');
-      if (!persisted) await saveDocument(snapshot);
+      const persisted = await loadDocument(documentId);
+      if (!persistedVersionMatches(documentId, persisted)) throw new Error('Another tab changed this canvas. Reload Draw before publishing.');
+      if (!persisted) await writeCanvasDocument(snapshot);
       restoreManagedShare(documentId);
       if (currentManagedShare()) throw new Error('This canvas already has a managed snapshot. Update or revoke it first.');
       return action(snapshot);
     };
-    return navigator.locks ? navigator.locks.request(DRAW_DOCUMENT_LOCK, run) : run();
+    return navigator.locks ? navigator.locks.request(`${DRAW_DOCUMENT_LOCK}:${documentId}`, run) : run();
   }
   async function coordinateDocumentReplacement<T>(action: () => Promise<T>): Promise<T> {
     const documentId = document.id;
@@ -998,18 +1001,18 @@
     clearTimeout(saveTimer); saveTimer = undefined;
     try {
       const run = async () => {
-        const persisted = await loadDocument();
-        if (persisted && persisted.id !== documentId) throw new Error('Another tab replaced this canvas. Reload Draw before replacing it again.');
+        const persisted = await loadDocument(documentId);
+        if (!persistedVersionMatches(documentId, persisted)) throw new Error('Another tab changed this canvas. Reload Draw before replacing it again.');
         restoreStoredManagedShare(documentId);
         return action();
       };
-      return navigator.locks ? navigator.locks.request(DRAW_DOCUMENT_LOCK, run) : run();
+      return navigator.locks ? navigator.locks.request(`${DRAW_DOCUMENT_LOCK}:${documentId}`, run) : run();
     } finally { replacingDocument = false; }
   }
   async function transferManagedShareAfterReplacement(managed: ManagedShare | null, previous: CanvasDocument, next: CanvasDocument) {
     if (!managed) { restoreManagedShare(next.id); return; }
     if (rememberShare(managed, next.id, previous.id)) return;
-    await saveDocument(previous);
+    await writeCanvasDocument(previous);
     history = { past: history.past, present: previous, future: [] };
     rememberShare(managed, previous.id, next.id);
     throw new Error('Canvas replacement was rolled back because share management access could not be moved.');
@@ -1092,7 +1095,7 @@
   async function importJson(event: Event) {
     const file = (event.currentTarget as HTMLInputElement).files?.[0];
     if (!file || nativeRole === 'companion' || sharing || replacingDocument) return;
-    try { await coordinateDocumentReplacement(async () => { const previous = history.present, managed = currentManagedShare(); const next = parse(await file.text()); const committed = await commitHostReplacement(() => next, (value) => value, (value) => history = { past: [], present: value, future: [] }, 'import'); selectedIds = []; if (nativeRole === 'web') { await saveDocument(committed); await transferManagedShareAfterReplacement(managed, previous, committed); } else { queueSave(committed); if (managed) rememberShare(managed, committed.id, previous.id); else restoreManagedShare(committed.id); } status = 'Canvas imported'; }); }
+    try { await coordinateDocumentReplacement(async () => { const previous = history.present, managed = currentManagedShare(); const next = parse(await file.text()); const committed = await commitHostReplacement(() => next, (value) => value, (value) => history = { past: [], present: value, future: [] }, 'import'); selectedIds = []; if (nativeRole === 'web') { await writeCanvasDocument(committed); await transferManagedShareAfterReplacement(managed, previous, committed); } else { queueSave(committed); if (managed) rememberShare(managed, committed.id, previous.id); else restoreManagedShare(committed.id); } status = 'Canvas imported'; }); }
     catch (error) { status = error instanceof Error ? error.message : 'Import failed'; }
     finally { if (fileInput) fileInput.value = ''; }
   }
@@ -1101,7 +1104,7 @@
     if (nativeRole === 'companion') { if (!companionResetArmed) { companionResetArmed = true; clearTimeout(companionResetTimer); companionResetTimer = setTimeout(() => companionResetArmed = false, 5000); status = 'Tap Confirm reset to clear the Mac canvas'; return; } companionResetArmed = false; clearTimeout(companionResetTimer); const current = document; const next = { ...document, title: 'Untitled mapping session', objects: [], viewport: { x: 0, y: 0, zoom: 1 }, updatedAt: new Date().toISOString() }; history = commit(history, next); selectedIds = []; const operations: CanvasOperation[] = [{ type: 'replace_objects', objects: [] }]; if (current.title !== next.title) operations.push({ type: 'set_title', title: next.title }); if (JSON.stringify(current.viewport) !== JSON.stringify(next.viewport)) operations.push({ type: 'set_viewport', viewport: next.viewport }); sendNative(operations, true); status = 'Clear requested from iPhone'; return; }
     if (!confirm(nativeRole === 'host' ? 'Reset the Mac-authoritative canvas? Export first if you need a copy.' : share ? 'Reset this local canvas? Its published link will remain manageable here until you revoke it.' : 'Reset this local canvas? Export first if you need a copy.')) return;
     clearTimeout(saveTimer); saveTimer = undefined; status = 'Resetting canvas…';
-    try { await coordinateDocumentReplacement(async () => { const previous = history.present, managed = currentManagedShare(), next = createDocument(); await commitHostReplacement(() => next, (value) => value, (value) => history = { past: [], present: value, future: [] }, 'reset'); selectedIds = []; if (nativeRole === 'web') { await saveDocument(next); await transferManagedShareAfterReplacement(managed, previous, next); } else { queueSave(next); if (managed) rememberShare(managed, next.id, previous.id); } status = nativeRole === 'host' ? 'New Mac session document' : 'New local session'; }); }
+    try { await coordinateDocumentReplacement(async () => { const previous = history.present, managed = currentManagedShare(), next = createDocument(); await commitHostReplacement(() => next, (value) => value, (value) => history = { past: [], present: value, future: [] }, 'reset'); selectedIds = []; if (nativeRole === 'web') { await writeCanvasDocument(next); await transferManagedShareAfterReplacement(managed, previous, next); } else { queueSave(next); if (managed) rememberShare(managed, next.id, previous.id); } status = nativeRole === 'host' ? 'New Mac session document' : 'New local session'; }); }
     catch (error) { status = error instanceof Error ? error.message : 'Reset conflicted with an iPhone change'; }
   }
   function updateTitle(input: HTMLInputElement) { if (!companionCanEdit()) return; const title = input.value || 'Untitled mapping session'; if (!isValidCanvasTitle(title)) { input.value = document.title; status = 'Title must be 240 UTF-8 bytes or fewer'; return; } const next = { ...document, title, updatedAt: new Date().toISOString() }; history = { ...history, present: next }; queueSave(next); sendNative([{ type: 'set_title', title }]); }

@@ -291,6 +291,42 @@ describe('shared Draw project contract', () => {
     expect(() => validateProject(synchronized)).not.toThrow();
   });
 
+  it('bounds transforms and point overrides when Canvas geometry rebases animation', () => {
+    const source = canvas();
+    const initial = syncMotionProject(source);
+    const animated: Project = {
+      ...initial,
+      drawings: initial.drawings.map((drawing) => ({
+        ...drawing,
+        poses: [
+          ...drawing.poses,
+          {
+            ...drawing.poses[0],
+            time: 1,
+            x: 9_950,
+            scaleX: 100,
+            points: drawing.kind === 'stroke' ? drawing.points.map(() => ({ x: 9_990, y: -9_990 })) : undefined
+          }
+        ]
+      }))
+    };
+    const moved = {
+      ...source,
+      objects: source.objects.map((object) =>
+        object.kind === 'note' ? { ...object, x: object.x + 500 } : object
+      )
+    };
+
+    const synchronized = syncMotionProject(moved, animated);
+
+    expect(synchronized.drawings.every((drawing) => drawing.poses.every((pose) =>
+      Math.abs(pose.x) <= 10_000 && Math.abs(pose.y) <= 10_000 && pose.scaleX <= 100 && pose.scaleY <= 100
+    ))).toBe(true);
+    expect(synchronized.drawings.flatMap((drawing) => drawing.poses.flatMap((pose) => pose.points ?? []))
+      .every(({ x, y }) => Math.abs(x) <= 10_000 && Math.abs(y) <= 10_000)).toBe(true);
+    expect(() => validateProject(synchronized)).not.toThrow();
+  });
+
   it('preserves and validates a bounded Canvas project ID with URL punctuation', () => {
     const source = { ...canvas(), id: 'project.v1 & review' };
     const motion = syncMotionProject(source);

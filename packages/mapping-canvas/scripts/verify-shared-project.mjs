@@ -8,6 +8,22 @@ const page = await context.newPage();
 const legacyCanvasId = `legacy-canvas-${crypto.randomUUID()}`;
 const legacyMotionId = `legacy-motion-${crypto.randomUUID()}`;
 
+const persistedNoteText = (target, projectId, noteId) => target.evaluate(
+  ({ projectId, noteId }) => new Promise((resolve, reject) => {
+    const request = indexedDB.open('create-something-draw-projects', 1);
+    request.onsuccess = () => {
+      const db = request.result;
+      const transaction = db.transaction('projects');
+      const query = transaction.objectStore('projects').get(projectId);
+      query.onsuccess = () => resolve(query.result?.canvas?.objects?.find(({ id }) => id === noteId)?.text);
+      query.onerror = () => reject(query.error);
+      transaction.oncomplete = () => db.close();
+    };
+    request.onerror = () => reject(request.error);
+  }),
+  { projectId, noteId }
+);
+
 await page.addInitScript(() => {
   window.__drawWebMcpTools = {};
   Object.defineProperty(document, 'modelContext', {
@@ -230,6 +246,14 @@ await page.evaluate(async (noteId) => {
   });
 }, canvas.noteId);
 await page.waitForTimeout(300);
+await page.evaluate(() => window.__drawWebMcpTools.draw_undo.execute({}));
+await page.waitForTimeout(300);
+if (await persistedNoteText(page, canvas.projectId, canvas.noteId) !== 'A person approves\n• Work crosses the gate')
+  throw new Error('Undo did not persist against the loaded Canvas version.');
+await page.evaluate(() => window.__drawWebMcpTools.draw_redo.execute({}));
+await page.waitForTimeout(300);
+if (await persistedNoteText(page, canvas.projectId, canvas.noteId) !== 'Newer Canvas state')
+  throw new Error('Redo did not persist against the loaded Canvas version.');
 await stalePage.getByRole('link', { name: 'Motion', exact: true }).click();
 await stalePage.waitForTimeout(500);
 const staleCanvasDenied = new URL(stalePage.url()).pathname === '/';
@@ -296,6 +320,7 @@ console.log(JSON.stringify({
   legacyMotionPreserved: true,
   legacySourcesRetained: legacySourcesRetained.canvas && legacySourcesRetained.motion,
   staleCanvasNavigationDenied: staleCanvasDenied,
+  undoRedoPersisted: true,
   motionOnlyCanvasProjectId: motionOnlyCanvas.projectId,
   motionOnlyCanvasReloaded: motionOnlyCanvas.projectId === legacyMotionId,
   canvasObjectIds: [canvas.noteId, canvas.releaseId, canvas.connectorId],
