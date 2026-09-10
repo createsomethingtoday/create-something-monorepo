@@ -9,12 +9,15 @@ const projectStorage = readFileSync('src/lib/project-storage.ts', 'utf8');
 it('navigates between Canvas and Motion using the same project identity', () => {
   expect(canvas).toContain('href={`/animate?project=${encodeURIComponent(document.id)}`}');
   expect(canvas).toContain('await persistCurrentDocument(document)');
+  expect(canvas).toContain("if (!ready) { status = 'Canvas is still loading'; return; }");
   expect(canvas).toContain('await loadDocument(next.id)');
   expect(canvas).toContain('persistedCanvasVersions.get(next.id)');
   expect(canvas).toContain('await activateCanvasProject(saved.id)');
   expect(motion).toContain('href={`/?project=${encodeURIComponent(project.id)}`}');
   expect(motion).toContain('await queue;');
-  expect(motion.match(/queue = work\.catch\(\(\) => \{\}\);/g)).toHaveLength(3);
+  expect(motion).toContain("status = 'Animation is still loading'");
+  expect(motion).toContain('queue = loading.catch(() => {});');
+  expect(motion.match(/queue = work\.catch\(\(\) => \{\}\);/g)).toHaveLength(4);
   expect(motion).not.toContain('Copy saved drawing');
 });
 

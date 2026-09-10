@@ -70,7 +70,7 @@
       : project
   );
   onMount(() => {
-    void (async () => {
+    const loading = (async () => {
       try {
         projects = await loadProjects();
         const requested = new URL(location.href).searchParams.get('project');
@@ -86,6 +86,7 @@
         status = message(e);
       }
     })();
+    queue = loading.catch(() => {});
     registerDrawWebMcpTools(
       animationTools({
         get: () => {
@@ -206,7 +207,34 @@
   async function openCanvas(event: MouseEvent) {
     event.preventDefault();
     await queue;
+    if (!ready) {
+      status = 'Animation is still loading';
+      return;
+    }
     location.href = `/?project=${encodeURIComponent(project.id)}`;
+  }
+  function loadSelectedProject(id: string): Promise<void> {
+    const work = queue.then(async () => {
+      stop();
+      busy = true;
+      try {
+        const p = await loadProject(id);
+        const prepared = renderer.fork();
+        await prepared.prepare(p.assets);
+        renderer = prepared;
+        project = p;
+        window.history.replaceState(null, '', `/animate?project=${encodeURIComponent(p.id)}`);
+        past = [];
+        future = [];
+        selected = '';
+        time = 0;
+        status = 'Saved on this device';
+      } finally {
+        busy = false;
+      }
+    });
+    queue = work.catch(() => {});
+    return work;
   }
   function play() {
     if (playing) {
@@ -530,25 +558,7 @@
         disabled={!ready || busy || exporting}
         onchange={(e) => {
           const id = e.currentTarget.value;
-          run(async () => {
-            stop();
-            busy = true;
-            try {
-              const p = await loadProject(id);
-              const prepared = renderer.fork();
-              await prepared.prepare(p.assets);
-              renderer = prepared;
-              project = p;
-              window.history.replaceState(null, '', `/animate?project=${encodeURIComponent(p.id)}`);
-              past = [];
-              future = [];
-              selected = '';
-              time = 0;
-              status = 'Saved on this device';
-            } finally {
-              busy = false;
-            }
-          });
+          run(() => loadSelectedProject(id));
         }}
         >{#each projects as p}<option value={p.id}>{p.title}</option>{/each}</select
       >
