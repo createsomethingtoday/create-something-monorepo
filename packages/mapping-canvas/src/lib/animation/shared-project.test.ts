@@ -266,6 +266,31 @@ describe('shared Draw project contract', () => {
     expect(() => validateProject(motion)).not.toThrow();
   });
 
+  it('preserves Motion-only artwork when Canvas introduces the same object ID', () => {
+    const source = canvas();
+    const initial = syncMotionProject(source);
+    const priorStroke = initial.drawings.find(({ id }) => id === 'stroke-stable')!;
+    const existing: Project = {
+      ...initial,
+      drawings: [
+        { ...priorStroke, source: undefined, poses: [...priorStroke.poses, basePose(1)] },
+        ...initial.drawings.filter(({ id }) => id !== 'stroke-stable')
+      ]
+    };
+
+    const synchronized = syncMotionProject(source, existing);
+    const canvasStroke = synchronized.drawings.find(({ id }) => id === 'stroke-stable')!;
+    const retainedMotion = synchronized.drawings.find(
+      (drawing) => drawing.id !== 'stroke-stable' && drawing.name === priorStroke.name
+    )!;
+
+    expect(canvasStroke.source?.objectId).toBe('stroke-stable');
+    expect(retainedMotion.source).toBeUndefined();
+    expect(retainedMotion.poses).toEqual(existing.drawings[0].poses);
+    expect(synchronized.drawings).toHaveLength(existing.drawings.length + 1);
+    expect(() => validateProject(synchronized)).not.toThrow();
+  });
+
   it('preserves and validates a bounded Canvas project ID with URL punctuation', () => {
     const source = { ...canvas(), id: 'project.v1 & review' };
     const motion = syncMotionProject(source);

@@ -654,8 +654,8 @@
   function point(event: PointerEvent): Point { const rect = surface.getBoundingClientRect(); return { x: (event.clientX - rect.left - viewport.x) / viewport.zoom, y: (event.clientY - rect.top - viewport.y) / viewport.zoom }; }
   function companionCanEdit() { if (replacingDocument) { status = 'Wait for the document replacement to finish'; return false; } if (nativeRole !== 'companion') return true; if (nativeSession.sessionId && !nativeSession.requiresRepair) return true; status = nativeSession.requiresRepair ? 'Pairing credentials rejected · export if needed, then forget and re-pair' : 'Pair this iPhone with a Mac before editing'; return false; }
   async function persistCurrentDocument(next: CanvasDocument) {
-    const run = async () => { const persisted = await loadDocument(); if (persisted && (persisted.id !== next.id || Date.parse(persisted.updatedAt) > Date.parse(next.updatedAt))) return false; await saveDocument(next); return true; };
-    return navigator.locks ? navigator.locks.request(DRAW_DOCUMENT_LOCK, run) : run();
+    const run = async () => { const persisted = await loadDocument(next.id); if (persisted && Date.parse(persisted.updatedAt) > Date.parse(next.updatedAt)) return false; await saveDocument(next); return true; };
+    return navigator.locks ? navigator.locks.request(`${DRAW_DOCUMENT_LOCK}:${next.id}`, run) : run();
   }
   function queueSave(next: CanvasDocument) { if (!browser || nativeRole !== 'web') return; clearTimeout(saveTimer); status = 'Saving locally…'; saveTimer = setTimeout(() => void persistCurrentDocument(next).then((saved) => status = saved ? 'Saved on this device' : 'Another tab replaced this canvas · reload to continue').catch(() => status = 'Local save failed · export a copy'), 120); }
   async function openMotion(event: MouseEvent) { event.preventDefault(); noteInput.flushAll(); clearTimeout(saveTimer); saveTimer = undefined; if (!await persistCurrentDocument(document)) { status = 'A newer Canvas is saved in another tab · reload before opening Motion'; return; } location.href = `/animate?project=${encodeURIComponent(document.id)}`; }

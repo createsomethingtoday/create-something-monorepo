@@ -137,21 +137,39 @@ function retainAnimation(source: Drawing, prior: Drawing | undefined): Drawing {
   };
 }
 
+function preserveMotionOnlyIds(drawings: Drawing[], canvasIds: Set<string>): Drawing[] {
+  const used = new Set(canvasIds);
+  return drawings.map((drawing) => {
+    if (!used.has(drawing.id)) {
+      used.add(drawing.id);
+      return drawing;
+    }
+    let index = 0;
+    let id: string;
+    do {
+      const suffix = index ? `--motion-${index}` : '--motion';
+      id = `${drawing.id.slice(0, 240 - suffix.length)}${suffix}`;
+      index++;
+    } while (used.has(id));
+    used.add(id);
+    return { ...drawing, id };
+  });
+}
+
 /** Reconcile the Canvas space into Motion while preserving poses and Motion-only artwork. */
 export function syncMotionProject(map: CanvasDocument, existing?: Project): Project {
   const imported = importMap(map);
   const prior = new Map(existing?.drawings.map((drawing) => [drawing.id, drawing]));
-  const motionOnly =
+  const priorMotionOnly =
     existing?.drawings.filter((drawing) => drawing.source?.space !== 'canvas') ?? [];
   const canvasDrawings = imported.drawings
-    .slice(0, Math.max(0, LIMITS.drawings - motionOnly.length))
+    .slice(0, Math.max(0, LIMITS.drawings - priorMotionOnly.length))
     .map((drawing) => retainAnimation(drawing, prior.get(drawing.id)));
-  const drawings = [
-    ...canvasDrawings,
-    ...motionOnly.filter(
-      (drawing) => !prior.has(drawing.id) || !canvasDrawings.some(({ id }) => id === drawing.id)
-    )
-  ];
+  const motionOnly = preserveMotionOnlyIds(
+    priorMotionOnly,
+    new Set(canvasDrawings.map(({ id }) => id))
+  );
+  const drawings = [...canvasDrawings, ...motionOnly];
   if (!existing) return { ...newProject(), id: map.id, title: map.title.slice(0, 240), drawings };
   const candidate = { ...existing, id: map.id, drawings };
   return JSON.stringify(candidate) === JSON.stringify(existing)
