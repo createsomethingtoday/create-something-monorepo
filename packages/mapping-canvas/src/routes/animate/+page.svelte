@@ -62,6 +62,7 @@
   let penPoints: Point[] = [];
   let preview = $state.raw<Drawing | null>(null);
   let queue = Promise.resolve();
+  let importQueue = Promise.resolve();
   const current = $derived(project.drawings.find((d) => d.id === selected));
   const pose = $derived(current ? evaluate(current, time) : undefined);
   const shown = $derived(
@@ -139,6 +140,11 @@
   const run = (action: () => Promise<unknown>) => {
     void action().catch((e) => (status = message(e)));
   };
+  function queueImport(action: () => Promise<void>): Promise<void> {
+    const work = importQueue.then(action);
+    importQueue = work.catch(() => {});
+    return work;
+  }
   function commit(ops: Operation[], revision: number): Promise<void> {
     const work = queue.then(async () => {
       if (!ready || busy || exporting) throw new Error('Editor is busy; retry after it is ready.');
@@ -206,6 +212,7 @@
   }
   async function openCanvas(event: MouseEvent) {
     event.preventDefault();
+    await importQueue;
     await queue;
     if (!ready) {
       status = 'Animation is still loading';
@@ -847,12 +854,12 @@
     bind:this={fileInput}
     type="file"
     accept="application/json,.json"
-    onchange={(e) => run(() => importFile(e))}
+    onchange={(e) => run(() => queueImport(() => importFile(e)))}
   /><input
     class="hidden"
     bind:this={imageInput}
     type="file"
     accept="image/png,image/jpeg,image/webp,application/json,.json"
-    onchange={(e) => run(() => imageFile(e))}
+    onchange={(e) => run(() => queueImport(() => imageFile(e)))}
   />
 </main>
